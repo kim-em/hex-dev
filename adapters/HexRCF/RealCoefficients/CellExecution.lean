@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 module
 public import HexRCF.RealCoefficients.CellDecision
+public import HexRCF.RealCoefficients.CompleteReplay
 public section
 namespace Hex.RCF.RealCoefficients
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet HexPolyTheory.Interpret
@@ -233,6 +234,45 @@ theorem run_replay (original : Model parent ℝ) (values : Fin n → parent.Valu
   rw [frozen]
   exact CellBuild.packet_read data (guards.map input.value) domains input.context.codec rfl
     (input.context.codec_lawful.covers _)
+
+/-- The actual native producer yields accepted complete root-and-cell packets
+for both strict verdicts. Original coefficients retain their sentence meaning;
+the returned native context's codec supplies finite literal coverage. General
+frozen predecessor-history reconstruction remains separate. -/
+theorem run_complete (original : Model parent ℝ) (values : Fin n → parent.Value)
+    (guards : List parent.Value) (formula : RealFormula.QF (n+1))
+    (guarded : ∀ d ∈ guards, d ≠ 0) :
+    ∃ packet, run values guards formula = .ok packet ∧
+      let _ : Hashable packet.family.collection.input.context.Value :=
+        RowEncode.hashable packet.family.collection.input.context.codec
+      let _ : Hashable Signature := RowEncode.hashable Signature.codec
+      ∀ quantifier, ∃ verdict,
+        CompleteReplay.check packet.family.collection.input.context.codec
+          (packet.family.collection.input.value ∘ values) formula
+          (guards.map packet.family.collection.input.value) packet.radical quantifier
+          (Codec.graph packet.family.collection.input.context.codec Signature.codec
+            (Dag.encode packet.roots.replay)) packet.cells = .ok verdict ∧
+        (verdict = true ↔ (RealFormula.Prenex.quant quantifier (.matrix formula)).toProp
+          (fun i => original.value (values i))) := by
+  obtain ⟨packet,produced,trace⟩ := run_success original values guards formula guarded
+  let input := packet.family.collection.input
+  let _ : Hashable input.context.Value := RowEncode.hashable input.context.codec
+  let _ : Hashable Signature := RowEncode.hashable Signature.codec
+  obtain ⟨candidates,_,dimensions,data,_,frozen,verdicts⟩ := trace
+  refine ⟨packet,produced,?_⟩
+  dsimp only
+  intro quantifier
+  obtain ⟨verdict,checked,meaning⟩ := verdicts quantifier
+  have domains : ∀ d ∈ guards.map input.value, d ≠ 0 := by
+    intro d member
+    exact of_decide_eq_true (List.all_eq_true.mp
+      (CellReplay.check_parts _ formula _ packet.radical packet.roots data quantifier verdict checked).1 d member)
+  have restored := CompleteReplay.check_covered input.context.codec (input.value ∘ values)
+    formula (guards.map input.value) packet.radical packet.roots data quantifier domains
+    (input.context.codec_lawful.covers _)
+  refine ⟨verdict,?_,meaning⟩
+  rw [frozen]
+  exact restored.trans checked
 
 end CellDiscover
 end Hex.RCF.RealCoefficients

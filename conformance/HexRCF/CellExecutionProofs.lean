@@ -23,7 +23,7 @@ run_meta do
     ``BoundarySigns.left_sign, ``BoundarySigns.right_sign, ``CellBuild.bounds_success,
     ``CellBuild.evidence_success, ``CellBuild.build_success,
     ``CellAlignment.sector_vector, ``CellDiscover.run_success,
-    ``CellBuild.packet_read, ``CellDiscover.run_replay]
+    ``CellBuild.packet_read, ``CellDiscover.run_replay, ``CellDiscover.run_complete]
   for name in names do
     let .thmInfo declaration ← getConstInfo name | throwError "expected theorem: {name}"
     let _ ← Hex.RCF.checkProof name declaration.type declaration.value
@@ -48,5 +48,9 @@ run_meta do
       ``CellFootprint.read_packet, ``RootCodec.read_covered,
       ``Hex.SignDet.Codec.bindings_of_check, ``Hex.RealClosure.Tower.Context.codec_lawful] do
     unless replay.contains required do throwError "native payload progress omitted actual reader law: {required}"
-  logInfo "twelve actual public executable proof bodies kernel checked; construction and exact native literal restoration retained"
+  let full ← Hex.RCF.ProofEvidence.projectDependencies #[``CellDiscover.run_complete]
+  for required in #[``CompleteReplay.check_covered, ``RootTableCodec.read_roots,
+      ``CellDiscover.run_success, ``Hex.RealClosure.Tower.Context.codec_lawful] do
+    unless full.contains required do throwError "complete native packet progress omitted actual law: {required}"
+  logInfo "thirteen actual public executable proof bodies kernel checked; complete root-and-cell literal acceptance retained"
 end Hex.RCF.RealCoefficients.CellExecutionProofs
