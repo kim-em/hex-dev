@@ -7,7 +7,7 @@ replay, root/section/sector checking, radical identities and quotation.
 This is finite acceptance for a fixed lawful ordinary-real parent. General
 provider history, all-live changes of representation, automatic common-field
 certification, algebraic construction completeness and strict compiled
-checking with arbitrary missing predecessor records remain separate gates.
+checking with arbitrary missing predecessor records remain separate required checks.
 
 ## Shared readers and coefficient operations
 
@@ -141,26 +141,35 @@ Shared constructor syntax does not imply shared validation across row readers.
 The fixed packet establishes neither automatic certificate construction nor
 acceptance completeness for every algebraic presentation.
 
-The [source-bound validation record](data/hexrcf-algebraic-cells/context.json)
-binds the checked files to source commit `387922d3b0`, twelve successful
-command records, the fresh owner-writer output and the visual/structural
-artifacts. The full adapter/conformance/manual build passes 14,669 jobs;
-the complete manual render passes 14,249 jobs. Dependency/umbrella checks,
-615 admission cones covering 1,515 local modules, eleven scanner regressions,
-copyright, manual split, constructor regeneration, conformance wiring,
-affected relative links and diff checks pass. The earlier full rebuild's
-manual-name failure is retained separately, with no success claim.
+The [current source-bound validation record](data/hexrcf-algebraic-cells/review-context.json)
+binds the final checked implementation to source commit `616d7b4460`, including
+the theorem-wide axiom sweep and expanded refusal controls. Full
+adapter/conformance/manual validation passes 14,669 jobs and the complete HTML
+render passes 14,249 jobs. The affected fresh-module audit passes 11,005 jobs;
+the emitter separately rechecks the byte round-trip and writes fresh output.
+Dependency/umbrella checks, 615 admission cones covering 1,515 local modules,
+eleven scanner regressions, copyright, manual split, constructor regeneration,
+conformance wiring, affected relative links and diff checks pass. The complete
+rebuild uses a 15.3 GiB peak with no swap. Refusal checking took 220 seconds in
+the affected run; this is an operational observation, not a performance or
+scaling result.
 
-All twelve desktop/narrow captures were opened and inspected. The
+The [earlier source record](data/hexrcf-algebraic-cells/context.json) binds
+source `387922d3b0`; its [main integration record](data/hexrcf-algebraic-cells/integration.json)
+checks those same source bindings again. They describe the earlier accepted
+implementation, before the stronger controls and removal of unused helpers.
+The manual source is unchanged. All twelve retained desktop/narrow captures
+were opened and inspected: the
 [source proof at desktop width](data/hexrcf-algebraic-cells/algebraic-cell-desktop-source.png)
 and [root examples at narrow width](data/hexrcf-algebraic-cells/algebraic-cell-narrow-roots.png)
 show the checked examples. Target-level overflow checks cover this chapter;
 they do not assert that unrelated content in the complete manual has no
-horizontal overflow. The [earlier snapshot](data/hexrcf-algebraic-cells/before-theory/context.json)
+horizontal overflow. The [pre-rename snapshot](data/hexrcf-algebraic-cells/before-theory/context.json)
 retains its own source bindings and explicitly excludes visual acceptance.
 
-The [latest-main integration record](data/hexrcf-algebraic-cells/integration.json)
-checks all 42 source bindings again and records another successful full build
-and dependency check. The merged upstream changes affect documentation and
-planned-library metadata; no Lean source, Lake configuration or dependency pin
-changes from the checked source snapshot.
+Failed validation attempts are retained separately: the earlier manual-name
+ambiguity and an overbroad dependency ban reaching native sign implementation
+through semantic `SignFact` types. Neither is claimed successful. Actual
+producer execution remains prohibited by kernel reduction diagnostics; the
+final dependency audit separately excludes the earlier witness and the actual
+scalar packet producer declarations.
