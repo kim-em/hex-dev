@@ -2,7 +2,11 @@
 import copy
 import json
 from pathlib import Path
+import tempfile
 import unittest
+from unittest.mock import patch
+
+from scripts.ci import check_primality_factor_replay as replay
 
 from scripts.bench.primality_factor_corpus import candidate, composite_witness, validate
 
@@ -41,6 +45,43 @@ class CorpusTests(unittest.TestCase):
         # of a compositeness witness must reject this otherwise consistent row.
         with self.assertRaises(AssertionError):
             validate(self.corpus)
+
+
+class RetainedSourceTests(unittest.TestCase):
+    def test_retained_proof_still_matches_original_hash(self):
+        manifest = json.loads((replay.REPORTS / "kernel-certificates.json").read_text())
+        self.assertEqual(replay.digest(replay.retained_source(manifest["source"])),
+                         manifest["source_sha256"])
+
+    def test_retained_corpus_and_adoption_hashes(self):
+        corpus = json.loads((replay.REPORTS / "corpus-replay-v3.json").read_text())
+        for source, expected in corpus["hex_sources"].items():
+            with self.subTest(source=source):
+                self.assertEqual(replay.digest(replay.retained_source(source)), expected)
+        adoption = json.loads((replay.ROOT / "reports/primality/adoption/kernel-replay.json").read_text())
+        self.assertEqual(replay.digest(replay.retained_source(adoption["source"])),
+                         adoption["source_sha256"])
+
+    def test_only_directory_and_import_are_translated(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            current = root / replay.CURRENT_PREFIX / "Probe.lean"
+            current.parent.mkdir(parents=True)
+            current.write_text("public import HexPrimalityTheory.Prime\n"
+                               "namespace HexPrimalityTheory.X\n"
+                               "theorem test : True := by trivial\n")
+            name = replay.HISTORICAL_PREFIX + "Probe.lean"
+            expected = ("public import HexPrimalityMathlib.Prime\n"
+                        "namespace HexPrimalityTheory.X\ntheorem test : True := by trivial\n")
+            with patch.object(replay, "ROOT", root):
+                self.assertEqual(replay.retained_source(name), expected)
+                current.write_text(current.read_text().replace("True", "False"))
+                self.assertNotEqual(replay.digest(replay.retained_source(name)), replay.digest(expected))
+                current.write_text(expected)
+                with self.assertRaisesRegex(ValueError, "removed module"):
+                    replay.retained_source(name)
+                with self.assertRaises(FileNotFoundError):
+                    replay.retained_source(replay.HISTORICAL_PREFIX + "Missing.lean")
 
 
 if __name__ == '__main__':

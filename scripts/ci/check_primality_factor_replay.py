@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 from functools import cache
 import json
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -17,6 +18,27 @@ from primality_factor_corpus import validate
 
 def digest(text):
     return hashlib.sha256(text.encode()).hexdigest()
+
+
+HISTORICAL_PREFIX = "bench/HexPrimalityMathlib/"
+CURRENT_PREFIX = "bench/HexPrimalityTheory/"
+
+
+def retained_source(name):
+    """Authenticate current proof text against its pre-rename retained hash.
+
+    Only the renamed directory and import prefix are translated. All theorem
+    bodies, certificates and other bytes must still match the original hash.
+    Retained measurement manifests and their historical identities stay intact.
+    """
+    if name.startswith(HISTORICAL_PREFIX):
+        current = CURRENT_PREFIX + name.removeprefix(HISTORICAL_PREFIX)
+        text = (ROOT / current).read_text()
+        if re.search(r"^(?:public )?import HexPrimalityMathlib\.", text, re.M):
+            raise ValueError("renamed proof still imports the removed module")
+        return re.sub(r"^(public )?import HexPrimalityTheory\.",
+                      r"\1import HexPrimalityMathlib.", text, flags=re.M)
+    return (ROOT / name).read_text()
 
 
 @cache
@@ -49,7 +71,7 @@ def main():
     assert {c["subject"] for c in corpus["cases"]}.isdisjoint(
         c["subject"] for c in corrected["cases"])
     manifest = json.loads((REPORTS / "kernel-certificates.json").read_text())
-    assert digest((ROOT / manifest["source"]).read_text()) == manifest["source_sha256"]
+    assert digest(retained_source(manifest["source"])) == manifest["source_sha256"]
     certificates = {entry["certificate_sha256"]: entry for entry in manifest["certificates"]}
     for sha, entry in certificates.items():
         assert digest(entry["certificate"]) == sha
@@ -82,9 +104,10 @@ def main():
         data = json.loads(fresh.read_text())
         assert not data["partial"]
         for source, sha in data["hex_sources"].items():
-            assert digest((ROOT / source).read_text()) == sha
+            assert digest(retained_source(source)) == sha
         directory = ROOT / "bench/HexPrimalityTheory/ProofProbe/FactorCorpus"
-        assert set(data["hex_sources"]) == {str(p.relative_to(ROOT)) for p in directory.glob("*.lean")}
+        assert set(data["hex_sources"]) == {HISTORICAL_PREFIX + str(p.relative_to(ROOT)).removeprefix(CURRENT_PREFIX)
+                                             for p in directory.glob("*.lean")}
         for system, suffix in [("native", ".hex.log"), ("primecert", ".primecert.log")]:
             result = data[f"{system}_build"]
             if data[system]:
@@ -118,7 +141,7 @@ def main():
                 if system == "native":
                     source = "bench/" + entry["module"].replace(".", "/") + ".lean"
                     assert source in data["hex_sources"]
-                    source = (ROOT / source).read_text()
+                    source = retained_source(source)
                     assert f'theorem {entry["theorem"]} : _root_.Nat.Prime {entry["subject"]}' in source
                     assert f"(c := {literal}) (by decide +kernel)" in source
                 else:
@@ -152,7 +175,7 @@ def main():
     replay = json.loads((adoption / "kernel-replay.json").read_text())
     assert digest((adoption / "measurements.json").read_text()) == replay["measurements_sha256"]
     assert replay["build_returncode"] == 0
-    source = (ROOT / replay["source"]).read_text()
+    source = retained_source(replay["source"])
     assert digest(source) == replay["source_sha256"]
     assert digest((adoption / "kernel-replay.log").read_text()) == replay["log_sha256"]
     dispatch = json.loads((adoption / "dispatch.json").read_text())
