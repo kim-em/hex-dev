@@ -518,33 +518,21 @@ and strict compiled missing-record admission.
 Meta clients can prepare these native inputs from the original Lean statement
 with `AlgebraicPreparation.prepare`. It reuses the shared source translator and
 the checked algebraic interpretation of each coefficient and original divisor.
-The callback supplies an ordinary proof when a radical base needs a
-nonnegativity fact. Preparation checks that proof and retains one aggregate
-reflection budget across the source, coefficients and divisors:
+Its default proof callback, `FieldRuntime.nonnegative`, attempts routine
+nonnegativity facts and restores its state on decline. A caller can supply
+another callback returning an ordinary proof or `none`; thrown exceptions
+remain terminal. Preparation checks each supplied proof and retains one
+aggregate reflection budget across the source, coefficients and divisors:
 
 ```lean
 open Lean Meta Qq
 open Hex.RCF.RealCoefficients
 run_meta do
-  let nonnegative :
-      Expr → MetaM (Option Expr) :=
-    fun source => do
-      let source : Q(ℝ) := source
-      let goal ← mkFreshExprMVar
-        q(0 ≤ $source)
-      let rest ← Lean.Elab.runTactic'
-        goal.mvarId!
-        (← `(tactic| norm_num))
-      unless rest.isEmpty do
-        return none
-      return some
-        (← instantiateMVars goal)
   let .ok prepared ←
       AlgebraicPreparation.prepare
         q(∀ x : ℝ,
           x^2 + 1 /
             (Real.sqrt 2 + 1) > 0)
-        nonnegative
     | throwError "unsupported source"
   let guards := prepared.source.divisors
   unless guards.size == 1 do

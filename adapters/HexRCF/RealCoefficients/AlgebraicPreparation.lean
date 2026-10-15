@@ -26,7 +26,7 @@ structure Entry where
 
 /-- Shared source syntax and independently ordered coefficients and divisors.
 Divisors remain present when absent from the normalized matrix. -/
-structure Environment where
+structure Inputs where
   source : Reify.Source
   coefficients : Vector Entry source.coefficients.size
   divisors : Vector Entry source.divisors.size
@@ -36,39 +36,46 @@ structure Environment where
 
 /-- Keep coefficient coordinates first and every original divisor afterward.
 No equality of independently computed algebraic representations is assumed. -/
-def Environment.inputs (environment : Environment) :
+def Inputs.inputs (environment : Inputs) :
     Fin (environment.source.coefficients.size + environment.source.divisors.size) → RealAlgebraicNumber :=
   Fin.addCases (fun i => environment.coefficients[i].proposal)
     (fun i => environment.divisors[i].proposal)
 
-def Environment.indices (environment : Environment) : Fin environment.source.coefficients.size →
+def Inputs.indices (environment : Inputs) : Fin environment.source.coefficients.size →
     Fin (environment.source.coefficients.size + environment.source.divisors.size) :=
   Fin.castAdd environment.source.divisors.size
 
-def Environment.guards (environment : Environment) :
+def Inputs.guards (environment : Inputs) :
     List (Fin (environment.source.coefficients.size + environment.source.divisors.size)) :=
   (List.finRange environment.source.divisors.size).map (Fin.natAdd environment.source.coefficients.size)
 
 /-- The original selected presentations and their complete native packet. -/
-abbrev Environment.Result (environment : Environment) (registry : RealClosure.BaseContext.Registry) :=
+abbrev Inputs.Result (environment : Inputs) (registry : RealClosure.BaseContext.Registry) :=
   (sources : (i : Fin (environment.source.coefficients.size + environment.source.divisors.size)) →
     RealClosure.NumberField.Presentation (environment.inputs i) registry) ×
     AlgebraicCells.Packet sources environment.indices environment.guards environment.formula
 
 /-- Raw native packet production on the proposals. No compiled result
 authenticates a source expression or supplies an ordinary-kernel goal proof. -/
-def Environment.build (environment : Environment) (registry : RealClosure.BaseContext.Registry) :=
+def Inputs.build (environment : Inputs) (registry : RealClosure.BaseContext.Registry) :=
   AlgebraicCells.build registry environment.inputs environment.indices environment.guards environment.formula
+
+-- The strict argument to this non-inlined call is evaluated before its
+-- cancellation check. Keeping the packet in an argument also avoids returning
+-- its higher universe through MetaM/BaseIO, whose result lives in Type.
+@[noinline, nospecialize] private def consumeBuilt (inputs : Inputs) (registry : RealClosure.BaseContext.Registry)
+    (result : Except AlgebraicCells.Error (inputs.Result registry))
+    (consume : Except AlgebraicCells.Error (inputs.Result registry) → MetaM α) : MetaM α := do
+  Core.checkInterrupted
+  consume result
 
 /-- Observe cancellation before and after native production, then pass the
 complete higher-universe packet to a meta consumer. The compiled call itself
 has no internal interruption checkpoint. No failure starts a different solver. -/
-def Environment.buildWith (environment : Environment) (registry : RealClosure.BaseContext.Registry)
+def Inputs.buildWith (environment : Inputs) (registry : RealClosure.BaseContext.Registry)
     (consume : Except AlgebraicCells.Error (environment.Result registry) → MetaM α) : MetaM α := do
   Core.checkInterrupted
-  let result := environment.build registry
-  Core.checkInterrupted
-  consume result
+  consumeBuilt environment registry (environment.build registry) consume
 
 private def entry (source : Expr) (prepared : Coefficients.Prepared) : MetaM Entry := do
   let expression ← instantiateMVars prepared.value
@@ -85,10 +92,14 @@ private def entry (source : Expr) (prepared : Coefficients.Prepared) : MetaM Ent
 
 private def prepareCore (target : Expr) (nonnegative : Expr → MetaM (Option Expr))
     (config : Hex.RealFormula.Reify.Config) :
-    MetaM (Except Hex.RealFormula.Reify.Error Environment) := do
+    MetaM (Except Hex.RealFormula.Reify.Error Inputs) := do
   let source ← match ← Reify.prepare target config with
     | .ok source => pure source
     | .error error => return .error error
+  Core.checkInterrupted
+  let .quant quantifier (.matrix formula) ← FieldRuntime.evalFormula source.coefficients.size source.formula
+    | return .error (.unsupported target "expected exactly one real quantifier")
+  Core.checkInterrupted
   let interpreted ← ((do
     let coefficients ← Vector.ofFnM fun i : Fin source.coefficients.size =>
       Coefficients.interpret source.coefficients[i] nonnegative
@@ -99,10 +110,6 @@ private def prepareCore (target : Expr) (nonnegative : Expr → MetaM (Option Ex
   match interpreted with
   | .error error => return .error error
   | .ok ((coefficients,divisors),state) =>
-    Core.checkInterrupted
-    let .quant quantifier (.matrix formula) ← FieldRuntime.evalFormula source.coefficients.size source.formula
-      | return .error (.unsupported target "expected exactly one real quantifier")
-    Core.checkInterrupted
     let coefficients ← Vector.ofFnM fun i => entry source.coefficients[i] coefficients[i]
     let divisors ← Vector.ofFnM fun i => entry source.divisors[i] divisors[i]
     return .ok {
@@ -117,9 +124,9 @@ private def prepareCore (target : Expr) (nonnegative : Expr → MetaM (Option Ex
 presentations. Reuse shared source lowering, all original divisor obligations
 and aggregate reflection accounting. Unsupported syntax and resource failures
 remain distinct; failed attempts restore the complete elaborator state. -/
-def prepare (target : Expr) (nonnegative : Expr → MetaM (Option Expr))
+def prepare (target : Expr) (nonnegative : Expr → MetaM (Option Expr) := FieldRuntime.nonnegative)
     (config : Hex.RealFormula.Reify.Config := {}) :
-    MetaM (Except Hex.RealFormula.Reify.Error Environment) := do
+    MetaM (Except Hex.RealFormula.Reify.Error Inputs) := do
   let saved ← saveState
   let auxName := mkPrivateName (← getEnv) (← mkFreshUserName `AlgebraicPreparation)
   let (result,_) ← tryFinally' (withDeclNameForAuxNaming auxName <| withNewMCtxDepth <| withOptions (fun options =>
