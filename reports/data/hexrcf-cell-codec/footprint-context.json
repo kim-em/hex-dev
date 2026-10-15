@@ -95,5 +95,10 @@
     "No global coefficient-codec law, native replay fallback or frontend completeness claim.",
     "Earlier failed proof/syntax attempts are retained.",
     "Build observations reuse cached dependencies; no speedup/scaling claim."
-  ]
+  ],
+  "document_commit": "428da0d460756a3b76ee3f0c5421b7d7bff2f947",
+  "documents_sha256": {
+    "reports/hexrcf-cell-codec.md": "3b0860e33caee7cf39a0e6d8b5e689225da4ed509a9d4bc745d62c4431bbf1f2",
+    "reports/data/hexrcf-cell-codec/collect-footprint.py": "ffbeba11fb4d995c68838ef2b40f06bca34baf433e29df208422a3628a54b667"
+  }
 }
