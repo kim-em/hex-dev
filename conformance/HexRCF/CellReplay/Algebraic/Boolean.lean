@@ -46,7 +46,9 @@ elab "#boolean_algebraic_cells" : command => liftTermElabM do
     let run ← mkAppM ``CellReplay.Evidence.run #[data,q]
     let expected ← mkAppM ``Option.some #[toExpr verdict]
     let type ← mkEq run expected
-    let proof ← mkDecideProof type
+    let dictionary ← synthInstance (mkApp (mkConst ``Decidable) type)
+    let reflexive ← mkEqRefl (mkConst ``Bool.true)
+    let proof := mkAppN (mkConst ``of_decide_eq_true) #[type, dictionary, reflexive]
     Hex.RCF.SelectedRootTests.KernelCheck.addChecked (Name.str `Hex.RCF.RealCoefficients.CellReplayTests.Algebraic.Boolean suffix)
       type proof #[``Hex.SignDet.Descriptor.ofReplay?] #[``CellReplay.Evidence.run]
     logInfo m!"checked algebraic Boolean fold {suffix}"

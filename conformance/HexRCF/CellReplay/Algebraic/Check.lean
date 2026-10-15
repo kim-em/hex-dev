@@ -18,7 +18,9 @@ elab "#algebraic_cell_fold" : command => liftTermElabM do
     let run ← mkAppM ``CellReplay.Evidence.run #[Lean.mkConst ``evidence, Lean.mkConst quantifier]
     let rhs ← mkAppM ``Option.some #[toExpr verdict]
     let type ← mkEq run rhs
-    let proof ← mkDecideProof type
+    let dictionary ← synthInstance (mkApp (mkConst ``Decidable) type)
+    let reflexive ← mkEqRefl (mkConst ``Bool.true)
+    let proof := mkAppN (mkConst ``of_decide_eq_true) #[type, dictionary, reflexive]
     KernelCheck.addChecked name type proof #[``Descriptor.ofReplay?] #[``CellReplay.Evidence.run]
 #algebraic_cell_fold
 
