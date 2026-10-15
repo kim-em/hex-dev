@@ -123,3 +123,11 @@ If the host-local capture directory is cleaned, restore the archived
 original persistent host-state directory and all reservation markers intact.
 Restoring capture data does not create a new allowance, and copying an archived
 journal to another state directory is refused.
+
+The [retained preflight](cap-preflight-v1/manifest.json) binds tooling commit
+`cf2fa2eb64009e7df1d85672bd2315eab8af0642`, preserved by
+`audit/issue-10575-sturm-cap-tooling-v1`, separately from the unchanged producer
+commit. All 5,536 original candidate input hashes agree. It validates the complete
+58-family selection and eight native fixed controls per arm. Its context records
+no reservation and no measurements, and the original reservation remains
+byte-identical. These are binding/correctness checks, not a performance verdict.
