@@ -280,6 +280,37 @@ def parent_failure(arm, result, kind):
     return failure
 
 
+def below_resolution_export(code, path, name):
+    """Recognize complete parametric exports below the runner's signal floor.
+
+    LeanBench exits 2 after exporting a run with no verdict-eligible rows.
+    Preserve those rows for the native guard; they cannot supply a pass.
+    Other nonzero exits and incomplete/failed exports remain fatal.
+    """
+    if code != 2:
+        return False
+    try:
+        results = json.loads(path.read_text())["results"]
+        if len(results) != 1:
+            return False
+        result = results[0]
+        points = result["points"]
+        schedule = result["config"]["param_schedule"]
+        return (result["kind"] == "parametric" and result["function"] == name and
+                result["budget_truncated"] is False and result["verdict"] == "inconclusive" and
+                result["trial_summaries"] == [] and bool(points) and
+                schedule["kind"] == "custom" and result["config"]["outer_trials"] == 1 and
+                [point["param"] for point in points] == schedule["params"] and
+                all(point["status"] == "ok" and point["error"] is None and
+                    point["trial_index"] == 0 and
+                    point["result_hash"] is not None and point["below_signal_floor"] is True and
+                    point["inner_repeats"] > 0 and point["total_nanos"] > 0 and
+                    math.isfinite(point["per_call_nanos"]) and point["per_call_nanos"] > 0
+                    for point in points))
+    except (OSError, ValueError, KeyError, TypeError):
+        return False
+
+
 TOOL_SOURCES = ("scripts/bench/sturm_regression.py", "scripts/bench/cpu_lease.py",
                 "scripts/bench/sweep_freshness.py", "bench/HexSturm/CompareExports.lean")
 
@@ -747,7 +778,7 @@ def main(argv=None) -> int:
                         command += ["--max-seconds-per-call", str(decision["cap_protocol"]["seconds"])]
                     code, _ = run(command, stem)
                     context["measurements_collected"] = True
-                    if code:
+                    if code and not below_resolution_export(code, out / (stem + ".json"), name):
                         failure = {"arm": arm, "function": name, "returncode": code,
                                    "export": stem + ".json"}
                         exported = out / (stem + ".json")
@@ -758,6 +789,10 @@ def main(argv=None) -> int:
                                 failure["export_error"] = str(exc)
                         context["parent_failures"] = [failure]
                         raise RuntimeError("parent measurement failed: " + stem)
+                    if code == 2:
+                        context.setdefault("below_resolution_exports", []).append(
+                            {"arm": arm, "function": name, "returncode": code,
+                             "export": stem + ".json"})
                 documents = []
                 kind = "fixed" if name in timing_fixed(args.profile) else "parametric"
                 for arm in ("baseline", "candidate"):
@@ -796,9 +831,13 @@ def main(argv=None) -> int:
         context["guards"] = verdicts
         context["status"] = "completed"
         codes = {item["returncode"] for item in verdicts}
+        below_floor = {item["function"] for item in context.get("below_resolution_exports", [])}
+        context["below_resolution_guard_passes"] = [item["function"] for item in verdicts
+                                                   if item["returncode"] == 0 and
+                                                   item["function"] in below_floor]
         context["regression_findings"] = [item["function"] for item in verdicts if item["returncode"] == 1]
         context["outcome"] = ("preflight" if args.preflight else
-                              "invalid" if codes - {0, 1, 2} else
+                              "invalid" if codes - {0, 1, 2} or context["below_resolution_guard_passes"] else
                               "regression" if 1 in codes else
                               "inconclusive" if 2 in codes else "pass")
         if not args.preflight:
