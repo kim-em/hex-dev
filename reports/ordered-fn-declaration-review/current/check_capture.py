@@ -2,6 +2,7 @@
 import argparse
 import sys
 import hashlib
+import re
 import subprocess
 import json
 from pathlib import Path
@@ -53,6 +54,22 @@ def main():
         require(hashlib.sha256(committed).hexdigest() == expected, 'checkpoint source differs: ' + path)
         if args.current:
             require(digest(ROOT / path) == expected, 'current source differs: ' + path)
+    previous = record['predecessor']
+    previous_revision = subprocess.check_output(
+        ['git', 'rev-parse', '--verify', '--end-of-options',
+         'refs/tags/' + previous['source_tag'] + '^{commit}'], cwd=ROOT, text=True).strip()
+    require(previous_revision == previous['source_revision'], 'predecessor source tag differs')
+    require(set(previous['modules']) == set(record['modules']), 'predecessor module inventory differs')
+    for module, old_path in previous['modules'].items():
+        old_bytes = subprocess.check_output(['git', 'show', previous_revision + ':' + old_path], cwd=ROOT)
+        renamed = re.sub(rb'Hex([A-Za-z0-9_]*)Mathlib', rb'Hex\1Theory', old_bytes)
+        current_path = module.replace('.', '/') + '.lean'
+        current_bytes = subprocess.check_output(['git', 'show', revision + ':' + current_path], cwd=ROOT)
+        require(renamed == current_bytes, 'owned module changed beyond rename: ' + current_path)
+    required = record['required_client_modules']
+    require(set(required) <= set(imported), 'required project client missing from capture')
+    require(all(path in record['inputs'] for path in required.values()),
+            'required project client missing from source bindings')
     for name, expected in record['artifacts'].items():
         require(digest(BASE / name) == expected, 'artifact differs: ' + name)
     require(digest(BASE / 'audit.lean.txt') == record['producer_sha256'], 'producer differs')
