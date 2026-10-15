@@ -389,6 +389,13 @@ against the caller's sign operation and ordered query list.
 {name}`Hex.SignDet.Dag.decode_replays` identifies the returned checked
 tree with the parsed graph's actual replay result.
 
+The decode-time check {name Hex.SignDet.Codec.bindings}`Codec.bindings` fixes
+the node's and every stored moment's context, head and both endpoints.
+{name Hex.SignDet.Codec.bindings_iff}`bindings_iff` characterizes those four
+literal equalities. Replay separately binds query lists and query polynomials;
+equal coefficient meanings alone do not satisfy the decode-time check. Neither
+this binding nor reconstruction supplies an arithmetic or root-count conclusion.
+
 The parser bounds are recorded by
 {name Hex.SignDet.Codec.Shape}`Shape`: row and column lengths, basis-rank
 bounds, and indices in stored reductions and preparation. The theorem

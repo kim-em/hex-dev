@@ -73,6 +73,17 @@ class NamingTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'missing source end name'):
                 source_names(source)
 
+    def test_class_declaration_forms_are_in_source_inventory(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = Path(directory) / 'Example.lean'
+            source.write_text('namespace Outer\nclass Plain where\n'
+                              'protected class Protected where\n'
+                              'class inductive Choice where\nclass abbrev Alias := Plain\n'
+                              'end Outer\n')
+            self.assertEqual(source_names(source), {
+                'Plain': 'Outer.Plain', 'Protected': 'Outer.Protected',
+                'Choice': 'Outer.Choice', 'Alias': 'Outer.Alias'})
+
     def test_comment_declaration_is_not_source_inventory(self):
         with tempfile.TemporaryDirectory() as directory:
             source = Path(directory) / 'Example.lean'

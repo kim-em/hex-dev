@@ -1,7 +1,7 @@
 {
   "scope": "49 named declarations in six computational modules, Node/QueryReduction equality instances and structure fields; partial core review, no phase promotion or computational performance claim.",
   "files": {
-    "HexManual/Chapters/HexSignDet.lean": "80ac730ad0ca17e2761f681b74410f3a0b764ed7f4d0bcc81fd4f1fd397bcfdf",
+    "HexManual/Chapters/HexSignDet.lean": "731a9bcb4ac5dbc831d7cd1d6378f60165ee27749629fba2f2d62e567efbf2b4",
     "HexSignDet/Counts.lean": "f57e6f41c9ddcc5d1c075a768f036965d475d6d2e26b9efc4ed225c33c638696",
     "HexSignDet/Dag.lean": "d8de62d08d4fa038faa7978202177e04957f60befc13b161974f73cc81f354b8",
     "HexSignDet/DagReplay.lean": "4bc5c8a12517cca8b375db63360d6e607c55509518089c8c43483893e7bfb5a1",
@@ -10,10 +10,10 @@
     "HexSignDet/QueryReduction.lean": "9e467339e2f81781512983b7a130b47f44a2ca058b9c3f4351cb9d6f15152444",
     "HexSignDet/Replay.lean": "a1653641f119f76834e4942eb9d1fcbcfa56d35f9fa163866250409c86e51df8",
     "HexSignDet/Tensor.lean": "0346652cd8e57f896a7143b8a1ff9d9d1968ac04973c32a066be07051f13f74a",
-    "HexSignDetMathlib/TreeChecks.lean": "acfc84fb0f89ef8d235ce775709e7c85b15ad880cdf60729bbd2f4af0fb4a037",
-    "adapters/HexRealClosureMathlib/TransportReplay.lean": "5efde016d26eaf4de146317c8cbf616b7b95aa9bcc18bf14fea99e4cd09da64d",
-    "conformance/HexSignDet/Conformance.lean": "b5132d2ca1b5676772d90ef3d1f23e386f377c517170c4cfc9072d9b01f2d31c",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "5ccaddfeed9cdceefb15f1c6c390c5908c52c767372a3b26f2178f4c0a4ea100"
+    "HexSignDetTheory/TreeChecks.lean": "94a21a5d59530babf943cdc9d0fc5c3278d54507368f896ac5ba3af53a586627",
+    "adapters/HexRealClosureTheory/TransportReplay.lean": "99a6865e284ac48e8623c0cae0794edd7bac5ecca1ddbe49cb6d674fae0bb205",
+    "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "6c9148abf2bbab07059b56bc2594a6e698ec7b864eeb5d7e23389ff2fc1140bd"
   },
   "declarations": {
     "HexSignDet/Counts.lean": [
@@ -101,8 +101,8 @@
     "HexSignDet/QueryReduction.lean": "reviewed module",
     "HexSignDet/Replay.lean": "reviewed module",
     "HexSignDet/Tensor.lean": "reviewed module",
-    "HexSignDetMathlib/TreeChecks.lean": "proof client",
-    "adapters/HexRealClosureMathlib/TransportReplay.lean": "proof client",
+    "HexSignDetTheory/TreeChecks.lean": "proof client",
+    "adapters/HexRealClosureTheory/TransportReplay.lean": "proof client",
     "conformance/HexSignDet/Conformance.lean": "conformance evidence",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "binding checker"
   }
