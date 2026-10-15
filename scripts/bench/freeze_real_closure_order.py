@@ -13,8 +13,8 @@ ROOT = Path(__file__).resolve().parents[2]
 EXE = 'hexrealclosure_trivial_bench'
 FIXTURE = 'conformance-fixtures/HexRealClosure/trivial-distinct.jsonl'
 FILES = ('bench/HexRealClosure/TrivialMeasurements.lean', 'HexRealClosure/RootOrder.lean',
-         'HexRealClosure/RootOrderTests.lean', 'adapters/HexRealClosureTheory/RootOrder.lean',
-         'adapters/HexRealClosureTheory/TrivialTowerTests.lean',
+         'HexRealClosure/RootOrderTests.lean', 'adapters/HexRealClosureMathlib/RootOrder.lean',
+         'adapters/HexRealClosureMathlib/TrivialTowerTests.lean',
          'HexRealClosure/CompleteRoots.lean', 'HexRealClosure/Canonical.lean',
          'HexRealClosure/Trivial.lean', 'HexRealAlgebraic/Roots.lean',
          FIXTURE,

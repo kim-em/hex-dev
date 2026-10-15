@@ -13,9 +13,10 @@ from scripts.bench.analyze_real_closure_trivial import summarize
 
 EXE = 'hexrealclosure_trivial_bench'
 FAMILIES = {'Rational':[2,4,6,8], 'Quadratic':[2,4,6,8]}
+# Paths belong to the frozen pre-rename comparison, not the current checkout.
 CHANGED = sorted(('HexRealClosure/RootOrder.lean','HexRealClosure/RootOrderTests.lean',
-                  'adapters/HexRealClosureTheory/RootOrder.lean',
-                  'adapters/HexRealClosureTheory/TrivialTowerTests.lean'))
+                  'adapters/HexRealClosureMathlib/RootOrder.lean',
+                  'adapters/HexRealClosureMathlib/TrivialTowerTests.lean'))
 
 
 def digest(path):
