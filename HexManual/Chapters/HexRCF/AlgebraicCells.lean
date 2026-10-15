@@ -132,15 +132,18 @@ squarefree interpreted head:
 
 ```lean
 open Hex.RCF.RealCoefficients
+open Hex.RealClosure
+open HexPolyTheory.Interpret
 example
-    {r : Hex.RealClosure.BaseContext.Registry}
-    {c : Hex.RealClosure.Tower.Context r}
-    (model : Hex.RealClosure.Tower.Model c ℝ)
+    {r : BaseContext.Registry}
+    {c : Tower.Context r}
+    (model : Tower.Model c ℝ)
     (p : Hex.DensePoly c.Value)
     (sq : Squarefree
-      (HexPolyTheory.Interpret.interpret
-        model.value model.zero_iff p)) :
-    ∃ result, RootBuild.build p = .ok result :=
+      (interpret model.value
+        model.zero_iff p)) :
+    ∃ result,
+      RootBuild.build p = .ok result :=
   RootBuild.success model p sq
 ```
 
