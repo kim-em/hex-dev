@@ -1,0 +1,3911 @@
+{
+  "root_source_commit": "eec8df2e18233a37fccb323c9799cf954e99b265",
+  "measurement_context_commit": "5da4aa647ee82620cf23a296f1a0d089bc063eed",
+  "target": "HexRCF.CellReplay.Algebraic.Check",
+  "local_sources": {
+    "HexRCF.CellReplay.Algebraic.Check": {
+      "path": "conformance/HexRCF/CellReplay/Algebraic/Check.lean",
+      "sha256": "84c959308e45069b07fdb421be2b0f26a2aaee6c9a5c1ee90abad71795c93033"
+    },
+    "HexRCF.CellReplay.Algebraic.Radical": {
+      "path": "conformance/HexRCF/CellReplay/Algebraic/Radical.lean",
+      "sha256": "a89e6ca8937df182cf44a12e6ebed6c3589c953407dbaa34777367ccd72e89ae"
+    },
+    "HexRCF.CellReplay.Algebraic.Canonical": {
+      "path": "conformance/HexRCF/CellReplay/Algebraic/Canonical.lean",
+      "sha256": "ee3a97402bde9673c4d48cdfeae0a00d7eddeebe810abb8b766d03d1328721a9"
+    },
+    "HexRCF.CellReplay.Algebraic.Convert": {
+      "path": "conformance/HexRCF/CellReplay/Algebraic/Convert.lean",
+      "sha256": "23ce660e046752e4750ea45402585b651261f9dc758bc05e2a65230f3f1121b6"
+    },
+    "HexRCF.RealCoefficients.CellPacketTransport": {
+      "path": "adapters/HexRCF/RealCoefficients/CellPacketTransport.lean",
+      "sha256": "8069dcc99a44da24a9647a751873dacbc8570f5146691e14122efb05795bbe9e"
+    },
+    "HexRCF.RealCoefficients.CellPackets": {
+      "path": "adapters/HexRCF/RealCoefficients/CellPackets.lean",
+      "sha256": "df0ca6fb76a6f56d65c9c729d6d91ac47c16df42f4b0409e3eaf960c14432b24"
+    },
+    "HexRealClosure.RootReplay": {
+      "path": "HexRealClosure/RootReplay.lean",
+      "sha256": "2f07e625a7665a983444e299f532800450770a2758a99710087ef506525f875f"
+    },
+    "HexSignDet.Codec": {
+      "path": "HexSignDet/Codec.lean",
+      "sha256": "ee141a0f9665cba2a74fa2012f437936e0696f4ba9e52b5f8eac7484a464e7a0"
+    },
+    "HexSignDet.DagSelectedSigns": {
+      "path": "HexSignDet/DagSelectedSigns.lean",
+      "sha256": "3ffbfbe2cebf6ad7b5db0cf8b0a3c5a26142a46465d2577a08ddb292594eed26"
+    },
+    "HexSignDet.SelectedSigns": {
+      "path": "HexSignDet/SelectedSigns.lean",
+      "sha256": "09e68f73c3ce0170851dda6edb253fc1e1fb4c4698c2d3f048d5079c30bcd34e"
+    },
+    "HexSignDet.Descriptor": {
+      "path": "HexSignDet/Descriptor.lean",
+      "sha256": "7fbda360d1ff37e7540b4a0c7cc7c29b16a76d90448aa8179909e618ab654375"
+    },
+    "HexSignDet.Thom": {
+      "path": "HexSignDet/Thom.lean",
+      "sha256": "972e4b223b975297883e78831aa9d107a6eee4cfc0c5fafe2f9b175a355e4993"
+    },
+    "HexSignDet.TableProducer": {
+      "path": "HexSignDet/TableProducer.lean",
+      "sha256": "9bd5e8a1b3f7e41130d58f0db85cb56dfce1157e004502d993a2783b9dcf8636"
+    },
+    "HexSignDet.Produce": {
+      "path": "HexSignDet/Produce.lean",
+      "sha256": "95f70ff4c842d1fc626676d2f5fd8c0d31cb2966c9752294a6bcd588cb0b6edc"
+    },
+    "HexRowReduce.Inverse": {
+      "path": "HexRowReduce/Inverse.lean",
+      "sha256": "78d35ec2bb92eb2df15e343d5973ed6e3b183f1696ed1a0f791824590d16ceb8"
+    },
+    "HexRowReduce.Api": {
+      "path": "HexRowReduce/Api.lean",
+      "sha256": "4bd60e5a0b5bb95702459b7d019d4bc5243135ce80329f6161dd70eabd8264bb"
+    },
+    "HexRowReduce.Nullspace": {
+      "path": "HexRowReduce/Nullspace.lean",
+      "sha256": "0953f8ab82ea4916d3f0d4947c1f584983193b7026b6af6c31065e4a6473e0c7"
+    },
+    "HexRowReduce.Span": {
+      "path": "HexRowReduce/Span.lean",
+      "sha256": "a7eb4ed673fff9c62df21a4ea64bd8b46473d3fbf780855ab6a406e0ae8f00a6"
+    },
+    "HexRowReduce.Loop": {
+      "path": "HexRowReduce/Loop.lean",
+      "sha256": "9fd6163b40b840447302553bc6d9bfaca010a69a9245fc484f83bae8c47802c0"
+    },
+    "HexRowReduce.Pivot": {
+      "path": "HexRowReduce/Pivot.lean",
+      "sha256": "bc0e6b4b6ad04e4e0495ba5787406737afe42e99f7196c7a0a44b51cf1c355e3"
+    },
+    "HexRowReduce.RowEchelon": {
+      "path": "HexRowReduce/RowEchelon.lean",
+      "sha256": "065c06ee60d7e038666b7a8811dd5a2408d5b7f0ef09ec2c77e8816602b2e5d1"
+    },
+    "HexRowReduce.RowEchelon.Contracts": {
+      "path": "HexRowReduce/RowEchelon/Contracts.lean",
+      "sha256": "01a161bbd8e64f8820f26e444942b98b90e0e3934894fbb925dc425809dfab50"
+    },
+    "HexRowReduce.RowEchelon.Elementary": {
+      "path": "HexRowReduce/RowEchelon/Elementary.lean",
+      "sha256": "259be162fce1b0a82765f4cd01edd339e7866d7a398dcc71a994f1fac4bdf090"
+    },
+    "HexMatrix.ElementaryAlgebra": {
+      "path": "HexMatrix/ElementaryAlgebra.lean",
+      "sha256": "ae90a41a0663b895a28e9225e569df137cafded9335a7e84e6a6d51cca9d9c7d"
+    },
+    "HexMatrix.MatrixAlgebra": {
+      "path": "HexMatrix/MatrixAlgebra.lean",
+      "sha256": "fd22838a18c560e1becb14f04e534c8471a8dfe2e3a127c84510e0961a90201f"
+    },
+    "HexMatrix.DotProduct": {
+      "path": "HexMatrix/DotProduct.lean",
+      "sha256": "2f4bcc12e01f3a2707d6b7f2e4ca7f597fdeb459611647a54adbeac0340f97fa"
+    },
+    "HexMatrix.Basic": {
+      "path": "HexMatrix/Basic.lean",
+      "sha256": "2e5999bb94720060b1a9ba66012c71af7ed7a9e1cae684e13dd99057c9d713c3"
+    },
+    "HexBasic": {
+      "path": "HexBasic.lean",
+      "sha256": "b5ed4f5d882a321547f15e3b55386ee37bbffe2f05280f88f5ff98b6a7b74edb"
+    },
+    "HexBasic.Vector.Modify": {
+      "path": "HexBasic/Vector/Modify.lean",
+      "sha256": "f0131e4ac7f097328fca0cc2df3b3aa66289d51836f7544caf104dee0a7f5db4"
+    },
+    "HexBasic.Rand": {
+      "path": "HexBasic/Rand.lean",
+      "sha256": "f248f72b683384ebd8fa08898883c70928d96060eb821163243158785be54b0e"
+    },
+    "HexBasic.Sort": {
+      "path": "HexBasic/Sort.lean",
+      "sha256": "f572d565e4791b6810731c56b74ca3489b80bf64d7c7b139c7c815594e347709"
+    },
+    "HexBasic.OfFn": {
+      "path": "HexBasic/OfFn.lean",
+      "sha256": "63cd87f7e128845c403e44d17b97a26c504637fda9ce34839b1f0ea4148ac7eb"
+    },
+    "HexBasic.List": {
+      "path": "HexBasic/List.lean",
+      "sha256": "8a58906b3a24dc8d7a643ab63f7cefd2f0d482b88a7cc7767e151d9df19e54b7"
+    },
+    "HexBasic.ListShim": {
+      "path": "HexBasic/ListShim.lean",
+      "sha256": "d46b7ef8cb3509bc39beb44f9b20f861e0405148fa216730b63ca50bf11678f5"
+    },
+    "HexBasic.List.Nodup": {
+      "path": "HexBasic/List/Nodup.lean",
+      "sha256": "d1676ed161d5783d8b554b7fb6c7af1ae28e52979c7dcadfb538c353b00d15fd"
+    },
+    "HexBasic.Fold": {
+      "path": "HexBasic/Fold.lean",
+      "sha256": "2b18666881681f513dbc6dd745309ae6a2397f0a28038793fc8b6c8fca356aad"
+    },
+    "HexBasic.Kernel": {
+      "path": "HexBasic/Kernel.lean",
+      "sha256": "3f0972eefab4bb966a5786a691c146195c82b2ed6a6f833387ad298da8372411"
+    },
+    "HexBasic.ExtTreeMap": {
+      "path": "HexBasic/ExtTreeMap.lean",
+      "sha256": "64007c2b6a28ea63f228f04f417e6e0b0239ba781164f37e2ff99bf287f695eb"
+    },
+    "HexBasic.ExactDiv": {
+      "path": "HexBasic/ExactDiv.lean",
+      "sha256": "e8e697aa71caf065431996b5c37b29448dbdcef322a0eff4334972503f1ea9be"
+    },
+    "HexBasic.ArrayDecEq": {
+      "path": "HexBasic/ArrayDecEq.lean",
+      "sha256": "6ebc4dcb2e7f26ff9731b83cf9b0d16b6b293f1f44558ba516726ccdb3820af9"
+    },
+    "HexMatrix.Diagonal": {
+      "path": "HexMatrix/Diagonal.lean",
+      "sha256": "f019bb42e85e2d3b722ab3e189764ee549ad541daf5c79e94ef3463873ec5293"
+    },
+    "HexMatrix.Elementary": {
+      "path": "HexMatrix/Elementary.lean",
+      "sha256": "dbca8fb4fa217d539121c1004e64d21d59aede229787a679df88582b020881d9"
+    },
+    "HexMatrix.Pad": {
+      "path": "HexMatrix/Pad.lean",
+      "sha256": "0f8f79aea0f8fc46ddbaf0f9c362f30875200dbe9a2391ef83bbb9210a4741d2"
+    },
+    "HexMatrix.Submatrix": {
+      "path": "HexMatrix/Submatrix.lean",
+      "sha256": "63fcb59c82fe5affeb9482e681324803a54ba68965e79bbd77a66e06c1aafbaf"
+    },
+    "HexRank.Int": {
+      "path": "HexRank/Int.lean",
+      "sha256": "a6e7b24f8606e60cf3770f146ec4a3e5558d0fc7b6d098e237c1c7b129b0def9"
+    },
+    "HexArith.ExactDiv": {
+      "path": "HexArith/ExactDiv.lean",
+      "sha256": "2d04d055fe4977d4e8de4801fb08194f4d011ccebc6d3d2143c4dcc294a2aef2"
+    },
+    "HexRank.Produce": {
+      "path": "HexRank/Produce.lean",
+      "sha256": "42a20f328dd27a0a5eae1d54675f05e6bf69d9f8338ce7058fb95945ec9494a5"
+    },
+    "HexRank.ReduceImpl": {
+      "path": "HexRank/ReduceImpl.lean",
+      "sha256": "ead64131be0bb5c9127bea634f7167c955e75a54609906e9803afd67bc208091"
+    },
+    "HexRank.Reduce": {
+      "path": "HexRank/Reduce.lean",
+      "sha256": "6c49635de9a590d7ba30925cc13aa7d401545b08abb80373fe6dc451f066bc36"
+    },
+    "HexBareiss.Bareiss": {
+      "path": "HexBareiss/Bareiss.lean",
+      "sha256": "4a5e021df694cce75ec41301144ddd6851fe1fe8e79efb44e3aa2bb4b11cbd16"
+    },
+    "HexBareiss.BorderedMinor": {
+      "path": "HexBareiss/BorderedMinor.lean",
+      "sha256": "9bec40077a29ed25119c9d50483d1b3b87631da086bd8b665c7aba624d0cd992"
+    },
+    "HexDeterminant": {
+      "path": "HexDeterminant.lean",
+      "sha256": "b3421e3990bff4c3193dc2d3e393dcce922dd5a2ac6d7917f3d374912269e58f"
+    },
+    "HexDeterminant.Plucker": {
+      "path": "HexDeterminant/Plucker.lean",
+      "sha256": "dc466f45565336af09ce582e07369f12180e2fb69bb9174069cec9f02cc4e5e7"
+    },
+    "HexDeterminant.Adjugate": {
+      "path": "HexDeterminant/Adjugate.lean",
+      "sha256": "1a2bffada16e9a0ec57a58ed41e974562761ab43eb71c307cabb624d8b14e231"
+    },
+    "HexDeterminant.Gram": {
+      "path": "HexDeterminant/Gram.lean",
+      "sha256": "4cc1b2b2a9291f0a1c59d399da60d9c97e126749752d52a0011ea825d6a53a22"
+    },
+    "HexDeterminant.Triangular": {
+      "path": "HexDeterminant/Triangular.lean",
+      "sha256": "dce85455404730ae76ed8b5381ced78f0f004c10194d2a2860a789a826ea2128"
+    },
+    "HexDeterminant.RowOps": {
+      "path": "HexDeterminant/RowOps.lean",
+      "sha256": "50fb5b40222276d58a1d49979e43cd7edb3bf2cecf9a00e6df28a351defa73c1"
+    },
+    "HexDeterminant.Permutation": {
+      "path": "HexDeterminant/Permutation.lean",
+      "sha256": "84231ee35889e3681a2737b83a2679cc81108425a8231a09cb11615dc24c4d01"
+    },
+    "HexDeterminant.LastRow": {
+      "path": "HexDeterminant/LastRow.lean",
+      "sha256": "5a9ec9ba42bc7f3c193f6372e7d1d6052b9877b90ef4891d7602ba653eb7a098"
+    },
+    "HexDeterminant.Enumeration": {
+      "path": "HexDeterminant/Enumeration.lean",
+      "sha256": "d274d59fd3a41c4c24e42fe71db0f890785da88ea81842abc514f24d7e037153"
+    },
+    "HexMatrix.Vector.Insert": {
+      "path": "HexMatrix/Vector/Insert.lean",
+      "sha256": "8e8987345a632357a3fd8b83ee0ed7ba308e075c6f6b3eee20bb02216431fc12"
+    },
+    "HexDeterminant.Leibniz": {
+      "path": "HexDeterminant/Leibniz.lean",
+      "sha256": "36a21b9463e049417d73453aa563a3f302e87d60ba62ec690eedb7d5ba22e3a4"
+    },
+    "HexDeterminant.Minor": {
+      "path": "HexDeterminant/Minor.lean",
+      "sha256": "632c40130027c3a66a1f67daab15ea8b0b8b6e55cbf63ce54e18d5daae70c1cd"
+    },
+    "HexDeterminant.CauchyBinet": {
+      "path": "HexDeterminant/CauchyBinet.lean",
+      "sha256": "ff00e4c17e71cf1568e5c0218933719366771204ee294127ed95768f97d5e775"
+    },
+    "HexDeterminant.ColumnLinear": {
+      "path": "HexDeterminant/ColumnLinear.lean",
+      "sha256": "0bcaf662d3df8f88b73edd9704f10ce3a6a49e07510321c8dc3597f43470e4f6"
+    },
+    "HexMatrix.Gram": {
+      "path": "HexMatrix/Gram.lean",
+      "sha256": "b5ff954525f555a62e7ee153bee777da875c89b9039bc7d7e9c7610303043e30"
+    },
+    "HexDeterminant.Laplace": {
+      "path": "HexDeterminant/Laplace.lean",
+      "sha256": "950d50944f621a6be51726c78f1df30b95760cd2aaae82c274fe6a35c34b37a0"
+    },
+    "HexRank.Cert": {
+      "path": "HexRank/Cert.lean",
+      "sha256": "88aa08a29248a9967aecc5d04714ab541679dc06d05850916037cf21657009ee"
+    },
+    "HexSignDet.Tensor": {
+      "path": "HexSignDet/Tensor.lean",
+      "sha256": "0346652cd8e57f896a7143b8a1ff9d9d1968ac04973c32a066be07051f13f74a"
+    },
+    "HexSignDet.Support": {
+      "path": "HexSignDet/Support.lean",
+      "sha256": "27bdda357f8cf1aa9d5a28b3a8686f92279d26a900db0fbd653c4bf2a23cf061"
+    },
+    "HexSignDet.Matrix": {
+      "path": "HexSignDet/Matrix.lean",
+      "sha256": "d0a62d563c5d70280cccf5a8d81daaa48c9c55c9d867777fe3b085c5bfec0bc9"
+    },
+    "HexSignDet.Replay": {
+      "path": "HexSignDet/Replay.lean",
+      "sha256": "a1653641f119f76834e4942eb9d1fcbcfa56d35f9fa163866250409c86e51df8"
+    },
+    "HexSignDet.QueryReduction": {
+      "path": "HexSignDet/QueryReduction.lean",
+      "sha256": "9e467339e2f81781512983b7a130b47f44a2ca058b9c3f4351cb9d6f15152444"
+    },
+    "HexSignDet.Reduction": {
+      "path": "HexSignDet/Reduction.lean",
+      "sha256": "9b5f3a90380d3063bdc419b189fd2e6357c1544639313654578e3890f882273f"
+    },
+    "HexSignDet.Moment": {
+      "path": "HexSignDet/Moment.lean",
+      "sha256": "bb8b34b81436016d931d3810543e4f85968ed01a0e22a2e24effd02a7871c79b"
+    },
+    "HexSturm.Basic": {
+      "path": "HexSturm/Basic.lean",
+      "sha256": "8e32b2f98430439a0ab5d6b1f51035b7a3e95c3a90aaba51837341cde14a4430"
+    },
+    "HexRealRoots.TarskiShared": {
+      "path": "HexRealRoots/TarskiShared.lean",
+      "sha256": "d910644940aad917e19973cde4469c599e03c865b041a99ac0eaa9d6c03588af"
+    },
+    "HexRealRoots.Tarski": {
+      "path": "HexRealRoots/Tarski.lean",
+      "sha256": "959f1882c67b7068e6274cdfeef9296b9ce3683e84ca8d1c38e5e75da57857a7"
+    },
+    "HexRealRoots.Var": {
+      "path": "HexRealRoots/Var.lean",
+      "sha256": "a2b7cec06a3670ba860f4ce7b6cdbde0b94e1822f305c65edc635bd9f7188ec6"
+    },
+    "HexRealRoots.Chain": {
+      "path": "HexRealRoots/Chain.lean",
+      "sha256": "6a4e9b2373a6672491a096c67237d1f252cd12e76f85f0c8ad95b9581158e783"
+    },
+    "HexRealRoots.Basic": {
+      "path": "HexRealRoots/Basic.lean",
+      "sha256": "089494227717b849615e8661ce88eef0f82d60beae9a1fabbb0dcb07a99a3676"
+    },
+    "HexRealRoots.Sign": {
+      "path": "HexRealRoots/Sign.lean",
+      "sha256": "1d25492fcc7011b2f74972621e063d2c57731268bbc2544076e66d7d54cdad9b"
+    },
+    "HexPolyZ.IntegerPolynomial": {
+      "path": "HexPolyZ/IntegerPolynomial.lean",
+      "sha256": "d32d46ba1116313d0e36dbd352b6ac58f4a70dfdf8cb37a5d0afaf276098b0b4"
+    },
+    "HexPoly": {
+      "path": "HexPoly.lean",
+      "sha256": "7d54a680162588de4016e70d8e6558caa9b295529d35c9ec88d03bd794799f9a"
+    },
+    "HexPoly.PseudoInterpret": {
+      "path": "HexPoly/PseudoInterpret.lean",
+      "sha256": "0a7f26680ef0cfa75bb4978d1a9210afb26970adfedb6063c00bb3f2f8272355"
+    },
+    "HexPoly.Interpret": {
+      "path": "HexPoly/Interpret.lean",
+      "sha256": "9557c364d0a7c85581aec62cfb1c2c0a32e016ef792e1f28ff39cdba0d7cb2ed"
+    },
+    "HexPoly.Dense": {
+      "path": "HexPoly/Dense.lean",
+      "sha256": "7c358928a9151b55a854809295512857c7944f6ffb5372d7f26b115a7fc622c5"
+    },
+    "HexPoly.Instances": {
+      "path": "HexPoly/Instances.lean",
+      "sha256": "5556090c3f6f1a9e4b29da59a5416f3dba55ed2f958c0d47c57d9b066c27f7f9"
+    },
+    "HexPoly.Euclid.Reconstruction": {
+      "path": "HexPoly/Euclid/Reconstruction.lean",
+      "sha256": "528737ffe53931f488d3381b0fc7ac32aeac9533f777e2a33f7d1f77074624fc"
+    },
+    "HexPoly.Euclid.MulRing": {
+      "path": "HexPoly/Euclid/MulRing.lean",
+      "sha256": "4e6e7bf52fca3a5b9f5ebc703c6f8a6923b3628759653797f8bf9ca92b68a744"
+    },
+    "HexPoly.Euclid.DivGcd": {
+      "path": "HexPoly/Euclid/DivGcd.lean",
+      "sha256": "d56dbe5cf69e9abe58436486e4b3870afe1a07650d62aa2a36af0e528b73f149"
+    },
+    "HexPoly.Operations": {
+      "path": "HexPoly/Operations.lean",
+      "sha256": "4341cbad08c47a1cc5fbc28df296a07a7f220266b1526e369a96e71e9f416e1d"
+    },
+    "HexPoly.Lcm": {
+      "path": "HexPoly/Lcm.lean",
+      "sha256": "7a4df92652d683ce4e2213cc6949a5954de3a10f0623895fa171941fe7b3956a"
+    },
+    "HexPoly.Euclid": {
+      "path": "HexPoly/Euclid.lean",
+      "sha256": "9464b8af020de02dfef2d58331c9141d0462a0ce86d9c9420479d9604fb55799"
+    },
+    "HexPoly.Euclid.Content": {
+      "path": "HexPoly/Euclid/Content.lean",
+      "sha256": "7d9d7260e745447e55e8b353aaebe29ed0bff4fb95896451d148d34b4d05a4fa"
+    },
+    "HexPoly.Euclid.MonicUnique": {
+      "path": "HexPoly/Euclid/MonicUnique.lean",
+      "sha256": "b459d3db21dd6eeae12b34cd0e44fc609f77881d51960a1f2fd19f401001459b"
+    },
+    "HexPoly.Euclid.EvalMul": {
+      "path": "HexPoly/Euclid/EvalMul.lean",
+      "sha256": "5d3d3298f143257ee49b6c4c99afeb8c70c6231840b937f70e267fd6cba969b5"
+    },
+    "HexPoly.PseudoGcd": {
+      "path": "HexPoly/PseudoGcd.lean",
+      "sha256": "56583fa5dacfb5235b0de78f497a06f82e65c15740269e7b66506b16e7f87ea2"
+    },
+    "HexPoly.PseudoDiv": {
+      "path": "HexPoly/PseudoDiv.lean",
+      "sha256": "379f8cd699847db6e9648e5341be10f23a315ed83b733d33e192029e6f574a6e"
+    },
+    "HexPoly.Monic": {
+      "path": "HexPoly/Monic.lean",
+      "sha256": "89fa2249746c84dee9ad2cf762123ec0c8e6a69182bbaf90ed838c7d667a8a32"
+    },
+    "HexPoly.Coprime": {
+      "path": "HexPoly/Coprime.lean",
+      "sha256": "474bd098214ed1c9ef5538b77e8d1a5a1b0b8e286392c0b5d5111913cfca5e29"
+    },
+    "HexPoly.Field": {
+      "path": "HexPoly/Field.lean",
+      "sha256": "92fb1c28ac3a90db2b295e687743b5f57e88b677bf53c14a29104d5bd3b9a650"
+    },
+    "HexRealRoots.SignedRemainderChain": {
+      "path": "HexRealRoots/SignedRemainderChain.lean",
+      "sha256": "be56bd454a976838e2a3d87b7126100d26de92af686b556c4f31e9e36cd7e874"
+    },
+    "HexSignDet.MomentReplay": {
+      "path": "HexSignDet/MomentReplay.lean",
+      "sha256": "7052669c286e9a60d596139236451d36d0942f001d47e1c9230cdb64264f7b68"
+    },
+    "HexSignDet.Table": {
+      "path": "HexSignDet/Table.lean",
+      "sha256": "af47f06a2978911c515ae5623832a08e181ebab207ecfa411d1d071b9ebb019f"
+    },
+    "HexSignDet.Induction": {
+      "path": "HexSignDet/Induction.lean",
+      "sha256": "acd270591aae1e0e37621f638f9ef1649b1bea143bc81fefd24f64cc2c2a3c7e"
+    },
+    "HexSignDet.Counts": {
+      "path": "HexSignDet/Counts.lean",
+      "sha256": "f57e6f41c9ddcc5d1c075a768f036965d475d6d2e26b9efc4ed225c33c638696"
+    },
+    "HexSignDet.DagExpand": {
+      "path": "HexSignDet/DagExpand.lean",
+      "sha256": "6b051dc00bed5de01fc534d2aa3eef835641080693ea6f2cbfb4a908d302f8dc"
+    },
+    "HexSignDet.DagReplay": {
+      "path": "HexSignDet/DagReplay.lean",
+      "sha256": "4bc5c8a12517cca8b375db63360d6e607c55509518089c8c43483893e7bfb5a1"
+    },
+    "HexSignDet.DagMemo": {
+      "path": "HexSignDet/DagMemo.lean",
+      "sha256": "a8a6495f09f66126ff4f902dacb4c1e00b90b2148eaa6c8f3dd39a671344bc10"
+    },
+    "HexSignDet.DagEncode": {
+      "path": "HexSignDet/DagEncode.lean",
+      "sha256": "427be048fcb7f4bbc5a99c98c725f8d32a88a3c03a4429820268afa752ab6a17"
+    },
+    "HexSignDet.Dag": {
+      "path": "HexSignDet/Dag.lean",
+      "sha256": "d8de62d08d4fa038faa7978202177e04957f60befc13b161974f73cc81f354b8"
+    },
+    "HexSignDet.DagSigns": {
+      "path": "HexSignDet/DagSigns.lean",
+      "sha256": "11efde41cbb44dccd5abf214532c400d54b2adfbf72c28cb8999446318de342b"
+    },
+    "HexSignDet.SignOperands": {
+      "path": "HexSignDet/SignOperands.lean",
+      "sha256": "be2c50cf3e5a11ba36313f13759b9884942caf6ec26fadaea32f9e0ea019e8d0"
+    },
+    "HexRealRoots.SignOperands": {
+      "path": "HexRealRoots/SignOperands.lean",
+      "sha256": "71df1253cc7c1d7a46f6bd3aa8852058f2a421d6739ea021ffcf67b68df87c65"
+    },
+    "HexSignDet.Codec.Bytes": {
+      "path": "HexSignDet/Codec/Bytes.lean",
+      "sha256": "4a70f998b9c14956e52ba3c012d26c2c2d334642a2656b473caac45eb37d0968"
+    },
+    "HexSignDet.Codec.Laws": {
+      "path": "HexSignDet/Codec/Laws.lean",
+      "sha256": "80011d997bfdebaae3af1aa422fec4d3adb6326c1b61e5d335871372e1772358"
+    },
+    "HexSignDet.Codec.Json": {
+      "path": "HexSignDet/Codec/Json.lean",
+      "sha256": "6e9d644c19f24bfab3a4f46dc5a8b4da5fb71b97a92d64b567f29dcfd9b60eac"
+    },
+    "HexSignDet.Codec.Value": {
+      "path": "HexSignDet/Codec/Value.lean",
+      "sha256": "ba911f7aea6e08ffb762338f33b8be461bb24a317564381a6c88ea24745ceac5"
+    },
+    "HexSignDet.Codec.Token": {
+      "path": "HexSignDet/Codec/Token.lean",
+      "sha256": "4a9a80667b0e38e0449dd9d50f7338733b58d839af58884a2ba41219ecdbb087"
+    },
+    "HexSignDet.Codec.String": {
+      "path": "HexSignDet/Codec/String.lean",
+      "sha256": "8f8e153ff25428fd7322b667cdfaa0a0cd7f0e1d3fd23c1baf971ec9b2607f71"
+    },
+    "HexSignDet.Codec.Decimal": {
+      "path": "HexSignDet/Codec/Decimal.lean",
+      "sha256": "bf7e88e012893ae8fa1e8e3ccd0a4a85700a2bbe2c6aa9fba30393a8e659d966"
+    },
+    "HexSignDet.Codec.Basic": {
+      "path": "HexSignDet/Codec/Basic.lean",
+      "sha256": "2fa342ffebc930f00a29c8140c565b7e9ee36bab4ac706f7353f66c6d85452c9"
+    },
+    "HexSignDet.Codec.Node": {
+      "path": "HexSignDet/Codec/Node.lean",
+      "sha256": "ea4b6210c06925d0d0bbcfd98077770581e525bbf45bbec5a35ad8dd0d7da122"
+    },
+    "HexSignDet.Codec.Evidence": {
+      "path": "HexSignDet/Codec/Evidence.lean",
+      "sha256": "0fd06b0ec7cdae26183e41c67e913e6cb14fbb06c55468ba52926f00d1979b67"
+    },
+    "HexRealClosure.ContextOperations": {
+      "path": "HexRealClosure/ContextOperations.lean",
+      "sha256": "0fce62dc9d16d9a677eeb7d888180a01eec1561af60c4fc47524013fbf14f15b"
+    },
+    "HexSignDet.HandleOperations": {
+      "path": "HexSignDet/HandleOperations.lean",
+      "sha256": "fcbccd83eec5445be8a88c996a398f5ea404ae7ff0d91ebac4412b55029bc54b"
+    },
+    "HexSturm.DomainOperations": {
+      "path": "HexSturm/DomainOperations.lean",
+      "sha256": "c50227b4fc52759ec78bae222bde5733b59510ac1520107544363484f3f5ab5e"
+    },
+    "HexSignDet.DescriptorOperations": {
+      "path": "HexSignDet/DescriptorOperations.lean",
+      "sha256": "f03035f4df6d5777b6c07ac61b889e62266ac9acca6acb4db1806ac0ff0a6aa7"
+    },
+    "HexSignDet.QueryHandle": {
+      "path": "HexSignDet/QueryHandle.lean",
+      "sha256": "ca2d0ee3e4d6d79d29556158a9c080d42f25e793751f34a3646ca01c3a721f53"
+    },
+    "HexRealClosure.Algebraic": {
+      "path": "HexRealClosure/Algebraic.lean",
+      "sha256": "d05f9fb72fe9544ae9ddc685dff17080f876aa4c99c70e8992d511e011f6a454"
+    },
+    "HexRealClosure.SignRequests": {
+      "path": "HexRealClosure/SignRequests.lean",
+      "sha256": "2c11df72c3ce52bc4bc5bca3e93821458537ba106d08df97684346bcdca3caac"
+    },
+    "HexSignDet.Codec.Descriptor": {
+      "path": "HexSignDet/Codec/Descriptor.lean",
+      "sha256": "d2eadda0bb1f1ef2ce70da6b825de2fafe0e3d9de09e0f20f8ebc71d9d41240c"
+    },
+    "HexRealClosure.SignFacts": {
+      "path": "HexRealClosure/SignFacts.lean",
+      "sha256": "9c22837e93e6f50cc96310163e352ac608fbcfbd6275edab33751da2fd84f47c"
+    },
+    "HexRCF.RealCoefficients.RowOperations": {
+      "path": "adapters/HexRCF/RealCoefficients/RowOperations.lean",
+      "sha256": "a3fa437040302abb8971ac40128ef9c73c15004910d86c041d9490bf402a55fb"
+    },
+    "HexRealClosure.SignEvidence": {
+      "path": "HexRealClosure/SignEvidence.lean",
+      "sha256": "396289f52f5ef9cc52a089b236a7a66e915655e006769b24f3a4c90d59e5f6f1"
+    },
+    "HexSignDet.DagBounds": {
+      "path": "HexSignDet/DagBounds.lean",
+      "sha256": "1ff482fbcb51846b61348d1708062647fb0f61bf2eb04184b86fa17d7bac33a7"
+    },
+    "HexSignDet.Codec.FiniteGraph": {
+      "path": "HexSignDet/Codec/FiniteGraph.lean",
+      "sha256": "bb1e0611aa74d7c7b4a74f83f05e481ccd4584523e0aaeca7beba53c70a6895c"
+    },
+    "HexSignDet.Codec.FiniteLaws": {
+      "path": "HexSignDet/Codec/FiniteLaws.lean",
+      "sha256": "a30dbc456d8613e247bfc691376206a7da405b8a3e08ef7a550c0b857a234ab8"
+    },
+    "HexSignDet.Codec.Coefficients": {
+      "path": "HexSignDet/Codec/Coefficients.lean",
+      "sha256": "96f8f76a99c744be275cdb766273764896b90cdbbb46b95234aa0e4bcd29ee79"
+    },
+    "HexSignDet.Codec.GraphLaws": {
+      "path": "HexSignDet/Codec/GraphLaws.lean",
+      "sha256": "dc5ad1d2ce5dc7ef99b4ea2663cf675fe8f159f8f2cff02539f998e99e9d3dc2"
+    },
+    "HexSignDet.Codec.NodeLaws": {
+      "path": "HexSignDet/Codec/NodeLaws.lean",
+      "sha256": "77621bd2ab5c1d7c99d1a7355dd7418ed43a06c4ca5eb885bd37cc1ba6e394f2"
+    },
+    "HexSignDet.Codec.EvidenceLaws": {
+      "path": "HexSignDet/Codec/EvidenceLaws.lean",
+      "sha256": "ad9e74a940ae662208ad2d8a557867930a5a848a64c1e1f5c54969ea42f1d42b"
+    },
+    "HexRCF.RealCoefficients.RootReplay": {
+      "path": "adapters/HexRCF/RealCoefficients/RootReplay.lean",
+      "sha256": "35e5c09926534d79082443ffbaf1ccaa9bca6095f0250da4f0b45d23e185c023"
+    },
+    "HexSignDetTheory.ThomRoots": {
+      "path": "HexSignDetTheory/ThomRoots.lean",
+      "sha256": "9367d0dfc4ad40523e724bb6f86eb9f2677de0d2e9094ace78adc9273049347f"
+    },
+    "HexSignDetTheory.RootList": {
+      "path": "HexSignDetTheory/RootList.lean",
+      "sha256": "dabbd8a2756f9b60033c8b4c76598958d5de83df59c6cc6dff1c9a60b46ef118"
+    },
+    "HexSignDet.RootList": {
+      "path": "HexSignDet/RootList.lean",
+      "sha256": "5750478148e17a70acf64855f73e33b0b525dce4c8910488424016fabb53bcfa"
+    },
+    "HexSignDet.ThomOrder": {
+      "path": "HexSignDet/ThomOrder.lean",
+      "sha256": "bca9190e31fe7f29cc606c396e6d565a92bdeaf9b748991f30b3d5ae9e187898"
+    },
+    "HexSignDet.Complete": {
+      "path": "HexSignDet/Complete.lean",
+      "sha256": "a8d907cbfee4c14b98b668e4c34d4c2e0d463619760cafab327d0a94988eca64"
+    },
+    "HexSignDetTheory.RootProducer": {
+      "path": "HexSignDetTheory/RootProducer.lean",
+      "sha256": "14756255da09893b7e39fcb3ad4e358928433591a207d475cfa3ea92624352de"
+    },
+    "HexSignDetTheory.Derivatives": {
+      "path": "HexSignDetTheory/Derivatives.lean",
+      "sha256": "26205cd659b77ed368c9e5be46bc9b5cff33074e4c505ac53e8136dd06d8c879"
+    },
+    "HexPolyTheory.Interpret": {
+      "path": "HexPolyTheory/Interpret.lean",
+      "sha256": "7d3987bd2447036991a63ddec5c62726d74b8a22eae4719035c8b44fc7b87a8a"
+    },
+    "HexPolyTheory.Euclid": {
+      "path": "HexPolyTheory/Euclid.lean",
+      "sha256": "7dc805a19792253db0fd83ff3e4d00ca5925a03c2fdf60a716d6fa18d92e0223"
+    },
+    "HexPolyTheory.PolynomialEquivalence": {
+      "path": "HexPolyTheory/PolynomialEquivalence.lean",
+      "sha256": "93f2decacb7ecb9620dc9cd39c091ac0fff178dd0d021f97f2d7f6675a9895cb"
+    },
+    "HexSignDetTheory.TreeSolve": {
+      "path": "HexSignDetTheory/TreeSolve.lean",
+      "sha256": "60105793fcdea1d4ef1e410872465770df51ec57918047cd88f717abda10fd8a"
+    },
+    "HexSignDetTheory.TreeChecks": {
+      "path": "HexSignDetTheory/TreeChecks.lean",
+      "sha256": "94a21a5d59530babf943cdc9d0fc5c3278d54507368f896ac5ba3af53a586627"
+    },
+    "HexSignDetTheory.NodeChecks": {
+      "path": "HexSignDetTheory/NodeChecks.lean",
+      "sha256": "bc9d064ecad217ee2f7c17468a078b2e7d8067a9020b4e401b3734d667f6b629"
+    },
+    "HexSturmTheory.Domain": {
+      "path": "HexSturmTheory/Domain.lean",
+      "sha256": "7fb410a97e1bbc1ed10b666aabc65a44da9b2651ab4844768a5db65c1fa031f9"
+    },
+    "HexRealRootsTheory.TarskiGcd": {
+      "path": "HexRealRootsTheory/TarskiGcd.lean",
+      "sha256": "8c09f6667b41a7559969b58a5f2319bcbcbc303dddd6a2d06da2cbb1eaafad49"
+    },
+    "HexRealRootsTheory.TarskiInterpret": {
+      "path": "HexRealRootsTheory/TarskiInterpret.lean",
+      "sha256": "4f7a6ba584934f13477938b383fbdc6bc1cbb38d00cf6ece3e80ef74efbeccb3"
+    },
+    "HexPolyTheory.Pseudo": {
+      "path": "HexPolyTheory/Pseudo.lean",
+      "sha256": "1f14be75a83da811d2fbba655dcd7a8a9159d744f8bfd07b9a9463525787be78"
+    },
+    "HexRealRoots.TarskiProofs": {
+      "path": "HexRealRoots/TarskiProofs.lean",
+      "sha256": "22730bb5e12adf58a427a8546c3446b6115508778a1ed38f845c8f48f9889f75"
+    },
+    "HexSturm": {
+      "path": "HexSturm.lean",
+      "sha256": "2ba87e1d06770a87d89b21097ed43ee2b04b073aa3c4e4cdac4111ea17ff180c"
+    },
+    "HexSturm.Transport": {
+      "path": "HexSturm/Transport.lean",
+      "sha256": "f2449140033761129b8096beefa4683999488bde9fbce289477b7ec8de752bec"
+    },
+    "HexRealRoots.Map": {
+      "path": "HexRealRoots/Map.lean",
+      "sha256": "e2612cc982473996b5f77a2ce7f210fea37243ae1e90871bddf8ebe01fc9eb16"
+    },
+    "HexSturm.Reduced": {
+      "path": "HexSturm/Reduced.lean",
+      "sha256": "8b3ee4261f0c1d9ccbda74f687abfcaa80bc475888f29de58c12101ad2300632"
+    },
+    "HexSignDetTheory.QueryReduction": {
+      "path": "HexSignDetTheory/QueryReduction.lean",
+      "sha256": "079c68fe838592123f3376248df2c4c24ddb317934f1945429f8502d8647f0df"
+    },
+    "HexSignDetTheory.ReductionProducer": {
+      "path": "HexSignDetTheory/ReductionProducer.lean",
+      "sha256": "322602afc6b7ca728b6e91aeac624408200bf2fd85f012dd979958ca6df14160"
+    },
+    "HexSignDetTheory.Reduction": {
+      "path": "HexSignDetTheory/Reduction.lean",
+      "sha256": "db4c6ea70f7e34b0bbb18f1f82b60beab7be2cd444a61c7577b6a87ce4000fa1"
+    },
+    "HexSignDetTheory.NodeProducer": {
+      "path": "HexSignDetTheory/NodeProducer.lean",
+      "sha256": "165f107d11443aa1cbdc8c33baf4588e6bfb385522ba92b996a7f36eea5b0592"
+    },
+    "HexSignDetTheory.Basis": {
+      "path": "HexSignDetTheory/Basis.lean",
+      "sha256": "ce44d363d615e19d047c5b932baea4d0255f7943fe14d4407a17e426b02c9b81"
+    },
+    "HexRankTheory.Cert": {
+      "path": "HexRankTheory/Cert.lean",
+      "sha256": "5a8e18876e2de79ba2021ab8a5aa76adf672f8098e0e4926e58cdf56e309ee5b"
+    },
+    "HexRankTheory.Produce": {
+      "path": "HexRankTheory/Produce.lean",
+      "sha256": "27e624dc1ea3061539645648e6705493f09f266e6e9dedd690bc3c2042e2ec60"
+    },
+    "HexRankTheory.Invariant": {
+      "path": "HexRankTheory/Invariant.lean",
+      "sha256": "05ae4f0c7ff30c1092e61ae6e7de71ea428759ec390b86886c701424e005b522"
+    },
+    "HexBareissTheory.Bareiss": {
+      "path": "HexBareissTheory/Bareiss.lean",
+      "sha256": "73c5bbc61b4321c724c8cb3528a69b0a16690102da99924e7cd97e11dd11912d"
+    },
+    "HexDeterminantTheory.Core": {
+      "path": "HexDeterminantTheory/Core.lean",
+      "sha256": "565258d6aa633dbee5370e03e3e0b1f033d3e44b570450eab5a78d67caaa884c"
+    },
+    "HexDeterminantTheory.CorePlucker": {
+      "path": "HexDeterminantTheory/CorePlucker.lean",
+      "sha256": "26dc02804f5da61c2d7d6d0fac66a47376d5e13f9e9b9901363bfb0fb4901821"
+    },
+    "HexDeterminantTheory.CoreTransport": {
+      "path": "HexDeterminantTheory/CoreTransport.lean",
+      "sha256": "2423ad92361bf4e72bcc5886742ff61bba7529b73ad079c14b71729998b81681"
+    },
+    "HexDeterminantTheory.DesnanotJacobi": {
+      "path": "HexDeterminantTheory/DesnanotJacobi.lean",
+      "sha256": "06ef158c4b83bb000487319a4840527ea4c18d09f63f8fefaecccbc0fe4d0a6f"
+    },
+    "HexMatrixTheory.Submatrix": {
+      "path": "HexMatrixTheory/Submatrix.lean",
+      "sha256": "a08d550839785282a5083c03124d639a72f42d102ecb0a27c90e7eb29dce8a3f"
+    },
+    "HexMatrixTheory.Vector": {
+      "path": "HexMatrixTheory/Vector.lean",
+      "sha256": "a0c8b6e7c7dce3ad1080436e9dc34c5bfcc3c13fccc727792e9f83ef0aa7c491"
+    },
+    "HexMatrixTheory.Basic": {
+      "path": "HexMatrixTheory/Basic.lean",
+      "sha256": "5ad1b6fa79bee8bd16c630028ff52f8056a0593ef4a204f3b1bea7108f3fc176"
+    },
+    "HexMatrix": {
+      "path": "HexMatrix.lean",
+      "sha256": "02a009b12c9c7c865ad1d5138d8407f1e00ab4c29d8c34e18b9ce07f23507d3d"
+    },
+    "HexMatrix.Scaled": {
+      "path": "HexMatrix/Scaled.lean",
+      "sha256": "2fa3ff61245baf288f62084eddf093db5429c7fac1b319c6540111ddb9db62e1"
+    },
+    "HexMatrix.Lists": {
+      "path": "HexMatrix/Lists.lean",
+      "sha256": "cf563e5ed5860a6a9366636a798f455fbd78c748bddd194232273ebd2c081c5d"
+    },
+    "HexMatrix.Packed": {
+      "path": "HexMatrix/Packed.lean",
+      "sha256": "5e65290be61b593fa3e35df77e5a8d0ddbf6fdc22825c9fe738cff1931c4433e"
+    },
+    "HexMatrix.Certificate": {
+      "path": "HexMatrix/Certificate.lean",
+      "sha256": "6068533fde70aa1c7e35760319972b3ace0a8f90a678cf518abcc9fc939818c2"
+    },
+    "HexMatrix.Lattice": {
+      "path": "HexMatrix/Lattice.lean",
+      "sha256": "c1bf513604e7b537282d54fcc0dfbea9a8f81e3726d23c9d1fe0a32f4ea39b1e"
+    },
+    "HexMatrix.Strassen": {
+      "path": "HexMatrix/Strassen.lean",
+      "sha256": "7d957ca56a34da95bbb390fc9957ffdfa2997f4453352ef32cd6a7654b1d3a1f"
+    },
+    "HexMatrix.Winograd": {
+      "path": "HexMatrix/Winograd.lean",
+      "sha256": "adaa13dad552aa547d3ecfbad1335f5a3ba5aed36d793109d5a9bdd022522ae4"
+    },
+    "HexMatrix.Region": {
+      "path": "HexMatrix/Region.lean",
+      "sha256": "484915f4a0eeb13e541cef289292f5ef57040a65d6c06ca8cd75119ae65de529"
+    },
+    "HexMatrix.Block": {
+      "path": "HexMatrix/Block.lean",
+      "sha256": "66e7e9dc517d2d9c9ea00b05d6efcd8b56daa7f8cae740a32ca7fd8d19afae35"
+    },
+    "HexMatrix.Notation": {
+      "path": "HexMatrix/Notation.lean",
+      "sha256": "2e8c17ab502092dc7602f693ff2b4d79e025ba7a3afbb504c1e1d1929923bd0f"
+    },
+    "HexRankTheory.Bordered": {
+      "path": "HexRankTheory/Bordered.lean",
+      "sha256": "06d186b2cd0edecb55914cce442eb930673e2d3cd27b0b4d011ec1142f9e89a3"
+    },
+    "HexRankTheory.Sound": {
+      "path": "HexRankTheory/Sound.lean",
+      "sha256": "400f167463a10597be488bd78d82dc7c7062b63a9f8f3b7a10afde7f22470ca9"
+    },
+    "HexMatrixTheory.Algebra": {
+      "path": "HexMatrixTheory/Algebra.lean",
+      "sha256": "d6b6f458ac8c3afb10844975fd83b88d2a2220f484d20b328d52a281b46ddc5c"
+    },
+    "HexRank": {
+      "path": "HexRank.lean",
+      "sha256": "a1ea342a01567b4e72db2ae242097c99ea6f23593c7bf3979c6d474c479f3e51"
+    },
+    "HexRank.PolyProduce": {
+      "path": "HexRank/PolyProduce.lean",
+      "sha256": "df0bc7c380cfa303f88de4d36570510db443d6e191c760efa3935bbf088224d5"
+    },
+    "HexRank.Polynomial": {
+      "path": "HexRank/Polynomial.lean",
+      "sha256": "c10fef9fc109ad93d613f54cebd19d26e30af5605a4627901609e4bc636c31da"
+    },
+    "HexRank.Kernel": {
+      "path": "HexRank/Kernel.lean",
+      "sha256": "fc6f7601a1566f8c9bf4995c3f889338a734657fceba97435a0ee29ff76654ff"
+    },
+    "HexArith.ExtGcd": {
+      "path": "HexArith/ExtGcd.lean",
+      "sha256": "794aa255afc108edac9c6c496bae91a09fc59392bc919284613bd29407406ee7"
+    },
+    "HexArith.Nat.ExtendedGcd": {
+      "path": "HexArith/Nat/ExtendedGcd.lean",
+      "sha256": "1089e6a151576bf50637e56a45a61106f2e3e9a117e572015f9799c23115a138"
+    },
+    "HexRank.Check": {
+      "path": "HexRank/Check.lean",
+      "sha256": "75d79e7302df3329a91b7196041d7ca5825da04c0bca331330414b0f99d65d90"
+    },
+    "HexSignDetTheory.RationalSolve": {
+      "path": "HexSignDetTheory/RationalSolve.lean",
+      "sha256": "ef2cec9705284d7a59810b82790a326eac02ccb37660f009b768c792077a636d"
+    },
+    "HexMatrixTheory.Rational": {
+      "path": "HexMatrixTheory/Rational.lean",
+      "sha256": "45c2a85e9930ab88a4b75af637f97b5d933ac60cf7056fcf35a3684da060c9b5"
+    },
+    "HexMatrixTheory.Literal": {
+      "path": "HexMatrixTheory/Literal.lean",
+      "sha256": "5a19873a0953f42330db9a357bb2c3fb4a3df45df1878c0066482979654482d7"
+    },
+    "HexSignDetTheory.NodeSolve": {
+      "path": "HexSignDetTheory/NodeSolve.lean",
+      "sha256": "9dc8328de929f7534b3624eedcb49e839e5e4deb7410bcd2c933317771f847cc"
+    },
+    "HexSignDetTheory.ParentSystem": {
+      "path": "HexSignDetTheory/ParentSystem.lean",
+      "sha256": "db9fe3fb352abc9dcf1fa91d36f16bbb2c22bd6e5223e718cd4f9c2ee2659cf5"
+    },
+    "HexSignDetTheory.NodeBasis": {
+      "path": "HexSignDetTheory/NodeBasis.lean",
+      "sha256": "700468d4de68b4f1865b637903eb20eb7e003728803e8aeae7b906d38ff64c3e"
+    },
+    "HexSignDetTheory.Tensor": {
+      "path": "HexSignDetTheory/Tensor.lean",
+      "sha256": "ae082298d6d2169a6fc03387f9736998569fd33541858c7decb2b56f34218842"
+    },
+    "HexSignDetTheory.FiniteSolve": {
+      "path": "HexSignDetTheory/FiniteSolve.lean",
+      "sha256": "22921b7d88ce09b5d344b18dc80c8d85c39ee1cee581015622a77baabc9c2764"
+    },
+    "HexSignDetTheory.Foundation": {
+      "path": "HexSignDetTheory/Foundation.lean",
+      "sha256": "bd3f57d8643dda5ad6ad696f8a49c73c62808886ce4b123bc8ecaaa1ff3305fb"
+    },
+    "HexSignDetTheory.Solve": {
+      "path": "HexSignDetTheory/Solve.lean",
+      "sha256": "230933f5617b10ce4092ab58757c04d3d835ac2d32601eaa13261e97380260f9"
+    },
+    "HexSignDetTheory.RootModel": {
+      "path": "HexSignDetTheory/RootModel.lean",
+      "sha256": "317c0508b251d4502c95a9d7d82c2a13d23075904a291552e97caf040717ca06"
+    },
+    "HexSturmTheory.Soundness": {
+      "path": "HexSturmTheory/Soundness.lean",
+      "sha256": "a2eaf7006da1afd09589bcb645b166cce6008db20640ca4341690c4b600715c3"
+    },
+    "HexRealRootsTheory.TarskiSoundness": {
+      "path": "HexRealRootsTheory/TarskiSoundness.lean",
+      "sha256": "48bee608117b407e3558a2c5be613e59ce07705f2430a4f953a2ff12f261e77b"
+    },
+    "HexRealRootsTheory.TarskiSum": {
+      "path": "HexRealRootsTheory/TarskiSum.lean",
+      "sha256": "0971e66c9147c104f0460c3d2bf09b7b27824a473c6639529dcc22ce31433c43"
+    },
+    "HexRealRootsTheory.TarskiFoundation": {
+      "path": "HexRealRootsTheory/TarskiFoundation.lean",
+      "sha256": "2e86e328e7f2e0bff6995ce3162e6154efc981b80ace5c8cca03389f3e3e2d09"
+    },
+    "HexRealRootsTheory.SignVariations": {
+      "path": "HexRealRootsTheory/SignVariations.lean",
+      "sha256": "a45a574ae1266c50b2ed56fe09aaab369495f08da22c36cffb634d37f21ecf5f"
+    },
+    "HexRealRootsTheory.TarskiSigns": {
+      "path": "HexRealRootsTheory/TarskiSigns.lean",
+      "sha256": "eff56a2a21fab500aa4c5c4053b1d6309918111c919ceb3984c88688c262e9b6"
+    },
+    "HexRealRootsTheory.TarskiCompare": {
+      "path": "HexRealRootsTheory/TarskiCompare.lean",
+      "sha256": "d48a575518fceefa28f4dd34bb6ea4480bcd69717788cd0f0f14f0fcaafadc9b"
+    },
+    "HexSignDetTheory.SelectedRoot": {
+      "path": "HexSignDetTheory/SelectedRoot.lean",
+      "sha256": "052fce394feb3ce9b8f1485aad75f8acd609d3172e2d80dd715c1ffa541216cb"
+    },
+    "HexSignDetTheory.Reencode": {
+      "path": "HexSignDetTheory/Reencode.lean",
+      "sha256": "8a740808c49b881ab2f767e393f02b4177df82d13a896b57ad11c73d0d3edea3"
+    },
+    "HexSignDet.Reencode": {
+      "path": "HexSignDet/Reencode.lean",
+      "sha256": "c767d41ce4cbff48edc7d4af58aeb578698e7847a19ed0d0e5c45b8f3c243e1a"
+    },
+    "HexSignDet.Compare": {
+      "path": "HexSignDet/Compare.lean",
+      "sha256": "c145c522f8a31d2a6f86f04c7d1cdeb09b5adf49fde502e56d4d897292bc8eca"
+    },
+    "HexSignDet.CommonProduct": {
+      "path": "HexSignDet/CommonProduct.lean",
+      "sha256": "78a84ed8c0172573e2c607deedaae8ea0e15877f7a6ae2de9ba068e8b3f5ec87"
+    },
+    "HexSignDetTheory.Thom": {
+      "path": "HexSignDetTheory/Thom.lean",
+      "sha256": "7414a73176abda7363255ad6030fa5864f6671f63c34001bdbba0b9caf7eeda7"
+    },
+    "HexSignDetTheory.CompletionProducer": {
+      "path": "HexSignDetTheory/CompletionProducer.lean",
+      "sha256": "1f0f02fdb38b85979c0f657371c16d104d73abad57fd24068e3393ab4c74f4df"
+    },
+    "HexSignDetTheory.SelectedProducer": {
+      "path": "HexSignDetTheory/SelectedProducer.lean",
+      "sha256": "a90478def4bc84449a583bc1965a75d9b258d05ecc76347cd5af12aad8ff9836"
+    },
+    "HexRCF.RealCoefficients.RootTable": {
+      "path": "adapters/HexRCF/RealCoefficients/RootTable.lean",
+      "sha256": "e6d99d63d68415a6f4647fad6463e232942dce1d0e931edc4ae3efdf3cf5b91a"
+    },
+    "HexRCF.RealCoefficients.SectionReplay": {
+      "path": "adapters/HexRCF/RealCoefficients/SectionReplay.lean",
+      "sha256": "fbfd16a25e79c4fe6ef0c2a2e27be11bd354fbb428a51c4979063d3d3775509c"
+    },
+    "HexRCF.RealCoefficients.SelectedFormula": {
+      "path": "adapters/HexRCF/RealCoefficients/SelectedFormula.lean",
+      "sha256": "8f28b6e21f1ad2ad9a98e3071c22ccb19f0a46ad0df073dc66210652cc5522eb"
+    },
+    "HexRealClosureTheory.FactReplay": {
+      "path": "adapters/HexRealClosureTheory/FactReplay.lean",
+      "sha256": "d317431f063080c72a53180f146e83fb989cb179465e591a1e50e50ef61a141c"
+    },
+    "HexRealClosureTheory.SignEvidence": {
+      "path": "adapters/HexRealClosureTheory/SignEvidence.lean",
+      "sha256": "8ed05ddf093ccc7cc591994f731b07ce1ea9351861fad4db2a4fd04278886052"
+    },
+    "HexRealClosureTheory.SignFacts": {
+      "path": "adapters/HexRealClosureTheory/SignFacts.lean",
+      "sha256": "c2b8cf96de0cccc2c0c3cbe83f0afd7c40ab9736b75f377ec5bfedc0907f34e3"
+    },
+    "HexSignDetTheory.DagSelectedSigns": {
+      "path": "HexSignDetTheory/DagSelectedSigns.lean",
+      "sha256": "0dda76f732ab7919fc68aadecc2457a3bd57ec107959a8878b111e04045da4d6"
+    },
+    "HexRealClosureTheory.Algebraic": {
+      "path": "adapters/HexRealClosureTheory/Algebraic.lean",
+      "sha256": "2495153acbe4e468521913a2f5d6569831cd05f5ee48d5ddb26fc31a43438c7e"
+    },
+    "HexSignDetTheory.QueryHandle": {
+      "path": "HexSignDetTheory/QueryHandle.lean",
+      "sha256": "baa454de3dbbaa11bc1c2fc84c186a601eb4c24904f51df7abb7e7e4976b1ec1"
+    },
+    "HexRealClosure.SignCodec": {
+      "path": "HexRealClosure/SignCodec.lean",
+      "sha256": "7126323c97b77204386795a0f252f1babfd0ed7f3dba7ee3927a99b9d5c1852a"
+    },
+    "HexRealClosure.AlgebraicCodec": {
+      "path": "HexRealClosure/AlgebraicCodec.lean",
+      "sha256": "45ae831daed71fbeb5160f2f4fadd09c5120db37e7e623002f707141dbfa344c"
+    },
+    "HexRCF.RealCoefficients.Replay": {
+      "path": "adapters/HexRCF/RealCoefficients/Replay.lean",
+      "sha256": "aa52893723ce43581914545cd189e93efdd29126ef827482411e8dac9c18cd15"
+    },
+    "HexRCF.RealCoefficients.FieldBuildProgress": {
+      "path": "adapters/HexRCF/RealCoefficients/FieldBuildProgress.lean",
+      "sha256": "7e8c5d0a94bfd88dd53790f267b8364132cab58d8dc181efe0c6a98c053a71a4"
+    },
+    "HexNumberFieldTheory.Exact": {
+      "path": "HexNumberFieldTheory/Exact.lean",
+      "sha256": "5e36fcb2e5619648296566127e73ebd17408067a17daad9e87b4f79da11192aa"
+    },
+    "HexNumberFieldTheory.Approx": {
+      "path": "HexNumberFieldTheory/Approx.lean",
+      "sha256": "a987147a093cb66bcac4af3e1753e57626441bf7fc6e32e5c8c345b6d83fcdd4"
+    },
+    "HexNumberFieldTheory.AdjoinRoot": {
+      "path": "HexNumberFieldTheory/AdjoinRoot.lean",
+      "sha256": "8c7b4fa7b3b30fc0ca5a2bf4b8e6196bb87672bff89e6b265cb199af6795ee0a"
+    },
+    "HexNumberFieldTheory.Basic": {
+      "path": "HexNumberFieldTheory/Basic.lean",
+      "sha256": "d94e99912094c0ad7199172797b621806597fedd32cd0f98c4daf1fe6d5c3d9b"
+    },
+    "HexPolyZTheory": {
+      "path": "HexPolyZTheory.lean",
+      "sha256": "2bdc135370584d252fe2cd81f55911cd124aa41f65cb7d2fe7f58a34ea1afc36"
+    },
+    "HexPolyZTheory.Squarefree": {
+      "path": "HexPolyZTheory/Squarefree.lean",
+      "sha256": "d687db4ba14411051ffc4d7f7929c6d49c38354cfb9656e715e4ac1a3a661457"
+    },
+    "HexPolyZTheory.PolynomialEquivalence": {
+      "path": "HexPolyZTheory/PolynomialEquivalence.lean",
+      "sha256": "06917d1b5f630d9873ae91625eb3b4d3decb73dc6e1ca4ae3fd278e281908c47"
+    },
+    "HexPolyZ": {
+      "path": "HexPolyZ.lean",
+      "sha256": "8019a77d88940b5b6fa99343c02893b9921a438841d365db209153efb8cba9d7"
+    },
+    "HexPolyZ.Mignotte": {
+      "path": "HexPolyZ/Mignotte.lean",
+      "sha256": "8acb15326649cc346ef3219682d8c473edafeb4e40c13697e4c5d3b91564905b"
+    },
+    "HexPolyZ.Decomposition": {
+      "path": "HexPolyZ/Decomposition.lean",
+      "sha256": "3f0d0ba6351342453129e15f7c7f3bc2ebeb998a45992d1fc01ae3ad01284a26"
+    },
+    "HexPolyZ.Rational": {
+      "path": "HexPolyZ/Rational.lean",
+      "sha256": "da48edecc07591d0976dae2c4514c8decb021ff9d6161fd0be674fca944c41bd"
+    },
+    "HexArith.Nat.Sqrt": {
+      "path": "HexArith/Nat/Sqrt.lean",
+      "sha256": "02684a5167ec604cdf432554058be0c4674e926fdb356934e45bf1964c81746e"
+    },
+    "HexArith.Nat.Prime": {
+      "path": "HexArith/Nat/Prime.lean",
+      "sha256": "6c0fd0b40cc002ed4e00df47758743d5aa8dee345de9042133655c369e40ecc0"
+    },
+    "HexArith.Nat.ModArith": {
+      "path": "HexArith/Nat/ModArith.lean",
+      "sha256": "6b2d45ae4484cd864447360c51361f15525300d3b6d73e74c7bb40220304b8d1"
+    },
+    "HexPolyZ.NttMul": {
+      "path": "HexPolyZ/NttMul.lean",
+      "sha256": "c73b86621ed0992d379ef70c19d01458c0d11c6e402c046ee7de98637fa11de4"
+    },
+    "HexPolyZ.KroneckerMulti": {
+      "path": "HexPolyZ/KroneckerMulti.lean",
+      "sha256": "82832c3aae0266e4e585a2d93bd74317c2ea5f440d565ec2ae654f612f219535"
+    },
+    "HexPolyFast.Division": {
+      "path": "HexPolyFast/Division.lean",
+      "sha256": "904ec49a61e14e22004ca0d9075b463f0e79cf03353044e378ef3e5fab776dce"
+    },
+    "HexPolyFast.Reciprocal": {
+      "path": "HexPolyFast/Reciprocal.lean",
+      "sha256": "75dc6d72b5578bf9fbcbbdcae136a8d755628ae5197f5a21ac0096b961211eb3"
+    },
+    "HexTruncatedSeries.Inverse": {
+      "path": "HexTruncatedSeries/Inverse.lean",
+      "sha256": "ecf14f5a5356ca825aa4bee5a2318667965ccfd830b2175fef5bbd6e211f4174"
+    },
+    "HexTruncatedSeries.Newton": {
+      "path": "HexTruncatedSeries/Newton.lean",
+      "sha256": "71cdbbfa7b1a3f5ba85170299088d6086622898727b5979c8eabc774c64a5850"
+    },
+    "HexTruncatedSeries.Precision": {
+      "path": "HexTruncatedSeries/Precision.lean",
+      "sha256": "a583ea8f982a021adf2ac261e0bce930c7c360d132424bf412f122489c2c259f"
+    },
+    "HexTruncatedSeries.Classes": {
+      "path": "HexTruncatedSeries/Classes.lean",
+      "sha256": "81f438a4d160b064b1ec190efeecf7da2c6045c6ebe7110bb526edc21b936854"
+    },
+    "HexTruncatedSeries.Ring": {
+      "path": "HexTruncatedSeries/Ring.lean",
+      "sha256": "c12484de7fb880d9abe273a0ca16e2d9147e274105b980fe6f0fe5481f0e8881"
+    },
+    "HexTruncatedSeries.Defs": {
+      "path": "HexTruncatedSeries/Defs.lean",
+      "sha256": "dad1984a6096b3cefaeacf679900743192105a7a19e118388e187aab57a23bd8"
+    },
+    "HexPolyFast.Reverse": {
+      "path": "HexPolyFast/Reverse.lean",
+      "sha256": "62f958ee0a9e14a82996bbe5ca5cd52e133a02ca3c47f1e4ecdfa9045af01c2c"
+    },
+    "HexTruncatedSeries": {
+      "path": "HexTruncatedSeries.lean",
+      "sha256": "6b533aaa8d0fb01519b3bf39684fa45604af7050dfdde53079f057e29fca5d4d"
+    },
+    "HexTruncatedSeries.ModuleBoundaryTests": {
+      "path": "HexTruncatedSeries/ModuleBoundaryTests.lean",
+      "sha256": "e409d9f23f70199a1a75c892d7f5ee9185ccaf378d64f966da9f39770750a3e2"
+    },
+    "HexTruncatedSeries.Revert": {
+      "path": "HexTruncatedSeries/Revert.lean",
+      "sha256": "c8d7161c9dc23f17c7ff39035e0a2ad914948db4ac6e545333a95d56b1ddd73e"
+    },
+    "HexTruncatedSeries.Comp": {
+      "path": "HexTruncatedSeries/Comp.lean",
+      "sha256": "41f2a775527ed6ead820350df37d9edcc5a5130d260adf46f74569ebe3c68ab4"
+    },
+    "HexTruncatedSeries.ExpLog": {
+      "path": "HexTruncatedSeries/ExpLog.lean",
+      "sha256": "834ec68f4026833c09e146e0a763dd823e105266a61013154706ac6e243b6985"
+    },
+    "HexTruncatedSeries.Sqrt": {
+      "path": "HexTruncatedSeries/Sqrt.lean",
+      "sha256": "1b98f7a84e07ebd4ec26b7ee7090b01019234036eba4c4aeba961a86f96c1365"
+    },
+    "HexPolyFast.Plan": {
+      "path": "HexPolyFast/Plan.lean",
+      "sha256": "167ff763271a9fa05bf649907ed7c57c92a5effa0cd49ca87bd263684285280a"
+    },
+    "HexPolyZ.Kronecker": {
+      "path": "HexPolyZ/Kronecker.lean",
+      "sha256": "68179895a61ce4a3ab2fc5cd9cae313e3478d8a565550883128139b9272f470b"
+    },
+    "HexPolyFast.Karatsuba": {
+      "path": "HexPolyFast/Karatsuba.lean",
+      "sha256": "5c93b92bb9cf3e4961f9a1b16f1296a28cda1d94df8a829f0176cbe60e595ba9"
+    },
+    "HexModular.CrtPlan": {
+      "path": "HexModular/CrtPlan.lean",
+      "sha256": "4d0521c6998f0cfdebce5f8d0e5adeb4748b9f716bd2130e3e7fdff7919fa594"
+    },
+    "HexModular.Crt": {
+      "path": "HexModular/Crt.lean",
+      "sha256": "fcd9b0822dd47334f4e75dd0fbe9df1c752bc82bb5640e9f58eaa265582792f9"
+    },
+    "HexModular.SymMod": {
+      "path": "HexModular/SymMod.lean",
+      "sha256": "97124976f98bb2705ada0de01f4a9d01695d71e4a0720542f39f8e316ee4b0bf"
+    },
+    "HexArith": {
+      "path": "HexArith.lean",
+      "sha256": "eb4711cc12cb08a8ae8daa7afbc9ecc37b70fb30feab6cafe23103e4f3701137"
+    },
+    "HexArith.UInt64.Wide": {
+      "path": "HexArith/UInt64/Wide.lean",
+      "sha256": "91718b2b005886f59d8ea48615d9ecbefab0b6bc2db96e7b35c0e5fe2d55a1d2"
+    },
+    "HexArith.Montgomery.RedcNat": {
+      "path": "HexArith/Montgomery/RedcNat.lean",
+      "sha256": "7db051b63ea913ae0146babe68df4cbef3324124a42599e15d9a95c6cfc815f1"
+    },
+    "HexArith.Montgomery.Redc": {
+      "path": "HexArith/Montgomery/Redc.lean",
+      "sha256": "65a72425d4ade0c2060a04b4b3ce411282e94738db61799fd7c50f98f0bc5e9d"
+    },
+    "HexArith.Montgomery.InvNat": {
+      "path": "HexArith/Montgomery/InvNat.lean",
+      "sha256": "01ad6f1de38c959f7af715f630f99fdd8982e46fd16e5eb70915d9ad6edd297b"
+    },
+    "HexArith.Montgomery.Context": {
+      "path": "HexArith/Montgomery/Context.lean",
+      "sha256": "374f02939c659cfbf32c8c927e9bca0be9579ddb11df9ee746c992044a43b2f2"
+    },
+    "HexArith.Barrett.Accumulator": {
+      "path": "HexArith/Barrett/Accumulator.lean",
+      "sha256": "d363f9aaa4ae806083adfdb9c45992f59b9e326c16b32d96d89faa45af30d314"
+    },
+    "HexArith.Barrett.Reduce": {
+      "path": "HexArith/Barrett/Reduce.lean",
+      "sha256": "cbd8636dfd24ef347eb906761359e649dcbbea54f6f06b4b42ac109ae972e66d"
+    },
+    "HexArith.Barrett.ReduceNat": {
+      "path": "HexArith/Barrett/ReduceNat.lean",
+      "sha256": "0fded93eb3e4127009e1133fceaf954e0142fcf0e56ffbe08665501a7c9f0bbf"
+    },
+    "HexArith.Barrett.Context": {
+      "path": "HexArith/Barrett/Context.lean",
+      "sha256": "4c2f02160593b1e5d5039419a514de92460c87ffd6b31c6314aa26ed5e74b251"
+    },
+    "HexArith.Nat.Pow": {
+      "path": "HexArith/Nat/Pow.lean",
+      "sha256": "2c0751ce30e9c3cc2b2a145f9d7ff493434200f73f625bd4375fb2e3a850b550"
+    },
+    "HexModArith.Ntt.CrtInput": {
+      "path": "HexModArith/Ntt/CrtInput.lean",
+      "sha256": "57b1fd395c93b7761643b66aa067f7bf0730fe3051d33b52625a685775c864cf"
+    },
+    "HexModArith.Ntt.Catalogue": {
+      "path": "HexModArith/Ntt/Catalogue.lean",
+      "sha256": "d4439640661aa8b23111ef6af82cc157f42aefab261c284ba313875c6adf36ad"
+    },
+    "HexModArith.Ntt.Convolution": {
+      "path": "HexModArith/Ntt/Convolution.lean",
+      "sha256": "5e4d9633f17c6af16ae2c458624efad7f7f918d46f5d05840eeac44acaf95711"
+    },
+    "HexModArith.Ntt.Transform": {
+      "path": "HexModArith/Ntt/Transform.lean",
+      "sha256": "822b52e1794869ff6893b74f679e75428d1fbd0a346fc3a91fb2a9f3bb4d57cd"
+    },
+    "HexModArith.Ntt.Dft": {
+      "path": "HexModArith/Ntt/Dft.lean",
+      "sha256": "ac55411f4c16f41d531191f683e672e3594be2ba5918755a5d9920587ba1aa05"
+    },
+    "HexModArith.Ntt.Plan": {
+      "path": "HexModArith/Ntt/Plan.lean",
+      "sha256": "8ccc00ab8741d473caeb39431db380321731c58e5e0973e2ae7f96290522fa71"
+    },
+    "HexModArith.Prime": {
+      "path": "HexModArith/Prime.lean",
+      "sha256": "766d6d58a6a720c4b8903845457deb06dc7753d395c627b4b1ec46cb39d97972"
+    },
+    "HexModArith.Ring": {
+      "path": "HexModArith/Ring.lean",
+      "sha256": "8e84a97e79bda26cf8d128d7dc77681ada6c6055045f68ec363c2286df847393"
+    },
+    "HexModArith.Residue": {
+      "path": "HexModArith/Residue.lean",
+      "sha256": "8543f9acc6c1ff44bc1255ccf3e62585dcd38d64077c42b069a5f801b4bc4956"
+    },
+    "HexModArith.Ntt.Butterfly": {
+      "path": "HexModArith/Ntt/Butterfly.lean",
+      "sha256": "9e8e4047b65393443017d74d90cd6f7a861cf32c5752c580ef29e58538303431"
+    },
+    "HexPolyZ.ExactDivision": {
+      "path": "HexPolyZ/ExactDivision.lean",
+      "sha256": "e262fd6ac80ecc340d89dcc98c31121e973085dde61657b12647407f1f9e1ac5"
+    },
+    "HexModArithTheory": {
+      "path": "HexModArithTheory.lean",
+      "sha256": "58461495af8a0e421f6fa8698a2f634eb6d51e49972e4a2b8ff81115d72ab6a8"
+    },
+    "HexModArithTheory.WordMod": {
+      "path": "HexModArithTheory/WordMod.lean",
+      "sha256": "7ec98a97c611135158f1e4132fa391ab27c11616c5624a9021441e31c83668a3"
+    },
+    "HexModArith": {
+      "path": "HexModArith.lean",
+      "sha256": "a26035c42588a262b4393e40c3451b55eacd68138497252bc9cb803b6047a0c4"
+    },
+    "HexModArith.WordMod": {
+      "path": "HexModArith/WordMod.lean",
+      "sha256": "974a2d486643be8bd5dd957e1ff3154c88d63b3007934e20e0480bc01457a2f6"
+    },
+    "HexModArith.Field": {
+      "path": "HexModArith/Field.lean",
+      "sha256": "5197f623de668884423d4a20810097e664e203989de2cc4978563bc068fed335"
+    },
+    "HexModArith.Modulus": {
+      "path": "HexModArith/Modulus.lean",
+      "sha256": "a4627ac7911519bdcc4ff0c55b252cd8b011681d202a36b6c9d8b7c874ba1333"
+    },
+    "HexModArith.HotLoop": {
+      "path": "HexModArith/HotLoop.lean",
+      "sha256": "a5ab6b7f728b46427c6ed1b73bea9f72c2e3b63812270a64ee14c42553273ff5"
+    },
+    "HexModArithTheory.Ring": {
+      "path": "HexModArithTheory/Ring.lean",
+      "sha256": "4717296118fc2a38070ffed059aa12a03c64802dad81087c5b670394c367d407"
+    },
+    "HexModArithTheory.ZMod64Equiv": {
+      "path": "HexModArithTheory/ZMod64Equiv.lean",
+      "sha256": "80d4ef663af36584a3ce581a104f745eff5a0837ac414a77699e2abd7a7862c4"
+    },
+    "HexHensel.ModularPolynomial": {
+      "path": "HexHensel/ModularPolynomial.lean",
+      "sha256": "ef55b2feb785bf259e5426715e1967a739dd9e785a09715ea77086ffad0f0bad"
+    },
+    "HexPolyFp": {
+      "path": "HexPolyFp.lean",
+      "sha256": "bda55cceba91f16b9cc4798d9da3e9de78e0804074792ab9c9be62c6841b07a3"
+    },
+    "HexPolyFp.QuotientFrobenius": {
+      "path": "HexPolyFp/QuotientFrobenius.lean",
+      "sha256": "d711eb647adfd354a195412e4875f13af318c63be360cd4fde5ddf90f1095b43"
+    },
+    "HexPolyFp.SquareFree": {
+      "path": "HexPolyFp/SquareFree.lean",
+      "sha256": "62cbc52cd265ad9dc0711c76603e7b06fe47d2affaf1a0a912a378350a995da2"
+    },
+    "HexPolyFp.SquareFree.YunCorrect": {
+      "path": "HexPolyFp/SquareFree/YunCorrect.lean",
+      "sha256": "96cf3d596ef8eab79a80446656e62aa8d3ecde198e5167ff544d73d1eebb61cf"
+    },
+    "HexPolyFp.SquareFree.YunMeasure": {
+      "path": "HexPolyFp/SquareFree/YunMeasure.lean",
+      "sha256": "2c6e50538e3f2779a8b3f56fe1342adcb3bfba610059001f73bc44abd11aba7e"
+    },
+    "HexPolyFp.SquareFree.YunReduce": {
+      "path": "HexPolyFp/SquareFree/YunReduce.lean",
+      "sha256": "11b727998481b8a06da8f0d223165a094e4aec2af86fa67035b3347bfe61e6c6"
+    },
+    "HexPolyFp.SquareFree.YunContribution": {
+      "path": "HexPolyFp/SquareFree/YunContribution.lean",
+      "sha256": "29af95eb9df8aff0ae460bf4535df63f995885f6b1cf682c8674cf0bed7b151f"
+    },
+    "HexPolyFp.SquareFree.Algebra": {
+      "path": "HexPolyFp/SquareFree/Algebra.lean",
+      "sha256": "7e6fb53d31d51b1cf6ebe078cb290fb09b4bc1e2f4deac9425e99ad5985e881c"
+    },
+    "HexPolyFp.Degree": {
+      "path": "HexPolyFp/Degree.lean",
+      "sha256": "826a1bb030c8bc213567186388e74c2a7702616f9969692c294915945090f66e"
+    },
+    "HexPolyFp.Ring": {
+      "path": "HexPolyFp/Ring.lean",
+      "sha256": "2662ede1b938c0a54a843934a778486a28d0b121d7d547466d1c83af4a18ad0e"
+    },
+    "HexPolyFp.Field": {
+      "path": "HexPolyFp/Field.lean",
+      "sha256": "eaea9f9f405ccf2d70b5490f2db75b29ba061eada482dae55130846725c5b1a3"
+    },
+    "HexPolyFp.Frobenius": {
+      "path": "HexPolyFp/Frobenius.lean",
+      "sha256": "0bb30d1889c4abd1c02a67d74915eee0211a24d39f9df8619200b6f9061a61df"
+    },
+    "HexPolyFp.NttMul": {
+      "path": "HexPolyFp/NttMul.lean",
+      "sha256": "ccc280e572bca0e644dd516bbddc048924af2c60ceefc276200816f78b5b6245"
+    },
+    "HexPolyFp.PackedMul": {
+      "path": "HexPolyFp/PackedMul.lean",
+      "sha256": "d26cb5fae1bc581e6bd274d65af51c30d6a6fd6924d4d6c4616fb9e792b074be"
+    },
+    "HexPolyFp.Packed": {
+      "path": "HexPolyFp/Packed.lean",
+      "sha256": "c63be834ddea4b22213d8f3484d3a0c53a83de063eb2991548637eae6adb3a6b"
+    },
+    "HexPolyFp.Quotient": {
+      "path": "HexPolyFp/Quotient.lean",
+      "sha256": "a014fc0d7f9ed81c44edf28c02dff7f9ab1b6cee183b74820738995ca7b54116"
+    },
+    "HexPolyFp.Quotient.Ring": {
+      "path": "HexPolyFp/Quotient/Ring.lean",
+      "sha256": "1564f2038a44bf3bc5a94dc294c1b50eca1be7a224bafb3aee4b5e30610b0bcf"
+    },
+    "HexPolyFp.Enumeration": {
+      "path": "HexPolyFp/Enumeration.lean",
+      "sha256": "4e133000640bf65b9edf05b3d8d1af2cc20bfba55535408b510fe16fcc59f7a7"
+    },
+    "HexPolyFp.QuotientCompose": {
+      "path": "HexPolyFp/QuotientCompose.lean",
+      "sha256": "5352dcdb29970aa113d486cdcc745baaeb633dd74a5bbc90d4db99f6cffcfd5d"
+    },
+    "HexPolyFp.ModCompose": {
+      "path": "HexPolyFp/ModCompose.lean",
+      "sha256": "8d3a3ead18c142f1424350584ad38d1a7af97108576681d2765f9f273ceda554"
+    },
+    "HexPolyFp.Compose": {
+      "path": "HexPolyFp/Compose.lean",
+      "sha256": "26559fe28192db615a70063c4f0524c5d629eb9d74284668153ee9ede54bb32c"
+    },
+    "HexPolyFp.PrimeField": {
+      "path": "HexPolyFp/PrimeField.lean",
+      "sha256": "ce68c17b101ac6b6d8dee7af2c15d17fc84ef53b845db43ba8db98da539728b5"
+    },
+    "HexPolyZTheory.RobinsonForm": {
+      "path": "HexPolyZTheory/RobinsonForm.lean",
+      "sha256": "efb94c6e1aa54ed1ab7606feaaf1c5bd18ce3384193eb5bc7303f12d6ac0d0fd"
+    },
+    "HexPolyZTheory.PolyParse": {
+      "path": "HexPolyZTheory/PolyParse.lean",
+      "sha256": "301ed714de7c94b5d180792a0eeaea0afbae2aeec7afc14e44d97b00545bc1bf"
+    },
+    "HexPolyZTheory.Mignotte": {
+      "path": "HexPolyZTheory/Mignotte.lean",
+      "sha256": "85d5e716aaf87a048f91aa4849892fc67103cb9fc90f943c76ec4e9a98a863e0"
+    },
+    "HexPolyZTheory.MahlerSeparation": {
+      "path": "HexPolyZTheory/MahlerSeparation.lean",
+      "sha256": "979916b9cd241c3c6896311dce731e70ed446fae5e640b74f0eff2b93d083718"
+    },
+    "HexPolyZTheory.Hadamard": {
+      "path": "HexPolyZTheory/Hadamard.lean",
+      "sha256": "0046a8645367f688aba67112a6d6150b51055ddb96c69fcbe126a9c82b985142"
+    },
+    "HexMatrixTheory.Hadamard": {
+      "path": "HexMatrixTheory/Hadamard.lean",
+      "sha256": "b03fa95eaed79073e224c82334446f1f25104a796560f578cbfb48dfe47aff47"
+    },
+    "HexPolyZTheory.Discriminant": {
+      "path": "HexPolyZTheory/Discriminant.lean",
+      "sha256": "c29b0a61a34878db17c4066ddc5932aeec99406430783470774494118fed9e69"
+    },
+    "HexRootsTheory": {
+      "path": "HexRootsTheory.lean",
+      "sha256": "a255e7d563532b5558cb2786e4aac61fedb98cca0e8b7155f904c07ac5448c30"
+    },
+    "HexRootsTheory.Taylor": {
+      "path": "HexRootsTheory/Taylor.lean",
+      "sha256": "031d9920edbef59b6ff807bea7a1a7818bb872ac7a56ba8291ac349548303a3a"
+    },
+    "HexRootsTheory.Basic": {
+      "path": "HexRootsTheory/Basic.lean",
+      "sha256": "9323e88a5a46ad54fc0825bcf96baea048c945854ae9be4e9e87b3e67021eae4"
+    },
+    "HexRoots": {
+      "path": "HexRoots.lean",
+      "sha256": "83b96dd7350bd1dafa669394a32b33ec2c4f7133a95fd8a4508d88b0f67d00e1"
+    },
+    "HexRoots.Taylor": {
+      "path": "HexRoots/Taylor.lean",
+      "sha256": "0639853c8829fd77142c360bcfd426d281818db70d3db44a74a78b37d24f5eed"
+    },
+    "HexRoots.Basic": {
+      "path": "HexRoots/Basic.lean",
+      "sha256": "19c0440f57d0ab7ac4cba39265da42b7d56a0f3a202fe113aed6dd4751559b2f"
+    },
+    "HexRoots.SimpleRoot": {
+      "path": "HexRoots/SimpleRoot.lean",
+      "sha256": "60be0f3a022c1d1c65609aa9bfbeb778214153edc3f39fdf5df51370129dae13"
+    },
+    "HexRoots.MahlerPrec": {
+      "path": "HexRoots/MahlerPrec.lean",
+      "sha256": "4b7861257ca4702bf6c9a1baeac1c502a3e933cba48689f5e17887de0a13146d"
+    },
+    "HexRoots.Kantorovich": {
+      "path": "HexRoots/Kantorovich.lean",
+      "sha256": "b36dde3834698ef96557628c900a7139818804fbe0beeab617b55b480037b04a"
+    },
+    "HexRoots.Pellet": {
+      "path": "HexRoots/Pellet.lean",
+      "sha256": "e4d61eb70c98325cb45d6ef99352d85b0ddda23b474e1df0f68b9fa3ff6ee17e"
+    },
+    "HexRoots.SoftPellet": {
+      "path": "HexRoots/SoftPellet.lean",
+      "sha256": "630c8cef08c2ec0741facdc5b3e705c434790e80734d47729852413f5f37cba3"
+    },
+    "HexRoots.Refine": {
+      "path": "HexRoots/Refine.lean",
+      "sha256": "23c72182b59bd5b5122677d46bd112b88238909e563886ae521f784f06ae2b99"
+    },
+    "HexRoots.Cauchy": {
+      "path": "HexRoots/Cauchy.lean",
+      "sha256": "839565d81e5065faf766cbfd51409ef220c8567a67aea22d6d8d66c70109f7d5"
+    },
+    "HexRoots.Bisection": {
+      "path": "HexRoots/Bisection.lean",
+      "sha256": "d2cd554db0a4f6ff7852ec0503594112400c8230750f8811bcaa2dd5e00aadfc"
+    },
+    "HexRoots.Newton": {
+      "path": "HexRoots/Newton.lean",
+      "sha256": "84c16d9693cc28e8cffd86d944f87f654e3d08d1984f7ddb08831da639149aee"
+    },
+    "HexRoots.IsolateAll": {
+      "path": "HexRoots/IsolateAll.lean",
+      "sha256": "cfc975c4a5eb464b1d249149cb50f50d98dc641f997caf1cfd3ff7bde4a21eaa"
+    },
+    "HexRootsTheory.SimpleRoot": {
+      "path": "HexRootsTheory/SimpleRoot.lean",
+      "sha256": "f00e7453be995c438af28424cbe07f9c16ddc16bafb23ff640e02db09646bd62"
+    },
+    "HexRootsTheory.MahlerPrec": {
+      "path": "HexRootsTheory/MahlerPrec.lean",
+      "sha256": "a16cde12fd81ec31ee207acd73999b3b3ae5ecf8abea8757e158d8be0145baf6"
+    },
+    "HexRootsTheory.Geometry": {
+      "path": "HexRootsTheory/Geometry.lean",
+      "sha256": "9bff34f33c37ec8108fa7f3134f5271929b63de877f0396a7f2f2ec778f5dcf6"
+    },
+    "HexRootsTheory.HasOnlySimpleRoots": {
+      "path": "HexRootsTheory/HasOnlySimpleRoots.lean",
+      "sha256": "cdb427739e81d2f62fb14be68e596c7fa1b91dc65bf31afa960b2f862fcef890"
+    },
+    "HexRootsTheory.Driver": {
+      "path": "HexRootsTheory/Driver.lean",
+      "sha256": "7c7c6f128f86f3d2b0eedf4a61be0e2235c075303f5677a0f9f1f8810e267b1c"
+    },
+    "HexRootsTheory.Certificate": {
+      "path": "HexRootsTheory/Certificate.lean",
+      "sha256": "190398241672f5dea6384a58fc5f06d1182bc8608383122ed3e7d94a47900a39"
+    },
+    "HexRootsTheory.Pellet": {
+      "path": "HexRootsTheory/Pellet.lean",
+      "sha256": "c07dde49a9c4164d24dc4075ffc238131cf6a070ed207cf2f38e0e81250b84e0"
+    },
+    "HexRootsTheory.SoftPellet": {
+      "path": "HexRootsTheory/SoftPellet.lean",
+      "sha256": "6b5fc6a81ddcffc782106cfd80c46fa5124dfac064d2968d810fba30d85b896d"
+    },
+    "HexRootsTheory.ArgumentPrinciple": {
+      "path": "HexRootsTheory/ArgumentPrinciple.lean",
+      "sha256": "fc2ef987cbd45496d970e488f1bc16d87b3dd05d839d192dde201fa99dd03928"
+    },
+    "HexRootsTheory.CircleIntegralLemmas": {
+      "path": "HexRootsTheory/CircleIntegralLemmas.lean",
+      "sha256": "ff0fbaf3bcd6ff8f649bc2a22fa1ecbc05a82e768b52e161f52ca5b1b4e49c61"
+    },
+    "HexRootsTheory.RootFree": {
+      "path": "HexRootsTheory/RootFree.lean",
+      "sha256": "e1bf20d9fb3c4dcedb834515aa89d9baaebf3ddeb8b5024915e356b3d85ea018"
+    },
+    "HexRootsTheory.Rouche": {
+      "path": "HexRootsTheory/Rouche.lean",
+      "sha256": "b7a97f6c8607f785ce59fdc5c9ab5593e9f0c9382e2838ef6215b34f62091dcb"
+    },
+    "HexRootsTheory.RoucheHomotopy": {
+      "path": "HexRootsTheory/RoucheHomotopy.lean",
+      "sha256": "117dadb592d4ebe1a95bed613c3c1d0f9f1124135441a5be1b28cabed9a0efea"
+    },
+    "HexRootsTheory.ArgumentTopology": {
+      "path": "HexRootsTheory/ArgumentTopology.lean",
+      "sha256": "4e6766d8d783fd6a44790fffe949813afcbe906c30c0b1963ceace69de4c780f"
+    },
+    "HexRootsTheory.NKCertify": {
+      "path": "HexRootsTheory/NKCertify.lean",
+      "sha256": "f9c80d6c962440c06504e2ccb7c9bef7ed037eec8ed1293a5a5fa1b057e30684"
+    },
+    "HexRootsTheory.NKWitness": {
+      "path": "HexRootsTheory/NKWitness.lean",
+      "sha256": "da903a5762c9ad0a0d17d074eccaa963226f85cbca98c0046ab6dafbb368face"
+    },
+    "HexRootsTheory.KantorovichPoly": {
+      "path": "HexRootsTheory/KantorovichPoly.lean",
+      "sha256": "e04c7c89911bf65465a72c37c58a9f4b062e281f94964f4c95f4ddf3e68fe2a1"
+    },
+    "HexRootsTheory.Kantorovich": {
+      "path": "HexRootsTheory/Kantorovich.lean",
+      "sha256": "84ec66070abd38683e63b77e4c3ae27f30430aa173b9ed6cb066c4f8775772d9"
+    },
+    "HexRootsTheory.Loop": {
+      "path": "HexRootsTheory/Loop.lean",
+      "sha256": "65df64648fca17e963e12af5032928b720a4676c0c5ab83320ef37fa3d2d203b"
+    },
+    "HexRootsTheory.Component": {
+      "path": "HexRootsTheory/Component.lean",
+      "sha256": "221b77865b0cadb071998b0ea00afbd7693623584d931b297b6f9b1e59f96d5d"
+    },
+    "HexRootsTheory.Cauchy": {
+      "path": "HexRootsTheory/Cauchy.lean",
+      "sha256": "77ceee8480dea449c0418f99597349f87cdd49ac0007b93d8c398dda2605079d"
+    },
+    "HexRootsTheory.Glue": {
+      "path": "HexRootsTheory/Glue.lean",
+      "sha256": "a754806cb68473cf31e39ed3b13fe7a018cacba7e679f81a275e93ec09a96e33"
+    },
+    "HexRootsTheory.Bisection": {
+      "path": "HexRootsTheory/Bisection.lean",
+      "sha256": "b0ce533844169f21234a46d13ace4cd65eba2c04f8dfb231d78abd6a972649a2"
+    },
+    "HexRootsTheory.Refinement": {
+      "path": "HexRootsTheory/Refinement.lean",
+      "sha256": "98eb38ac9e0b07d3c36ecaff8f5888c7131fb300d8a7799e6160a62328cef513"
+    },
+    "HexRootsTheory.Isolate": {
+      "path": "HexRootsTheory/Isolate.lean",
+      "sha256": "25c4836d7654e86d221338763bee3fda334565c89d2c263e413cdb58800d87ce"
+    },
+    "HexRootsTheory.NKDriver": {
+      "path": "HexRootsTheory/NKDriver.lean",
+      "sha256": "53205b284b4c63ab47a4920e2d3062342b2385e260bfa5144598f9753c61b02b"
+    },
+    "HexRootsTheory.IsolateTotal": {
+      "path": "HexRootsTheory/IsolateTotal.lean",
+      "sha256": "d127b0260c6999e5cac213cd94d2f0d8677e19b43620805f525df52a98e9fe91"
+    },
+    "HexRootsTheory.Completeness.DriverCompleteness": {
+      "path": "HexRootsTheory/Completeness/DriverCompleteness.lean",
+      "sha256": "6d51bb2eba5424b98236697fa5c42c97f84ac2e4e7a1c7e48bc5303a26aaa5df"
+    },
+    "HexRootsTheory.Completeness.SurvivorComponent": {
+      "path": "HexRootsTheory/Completeness/SurvivorComponent.lean",
+      "sha256": "d2f57b97bb1259ed78c9688ebba2192a2687ba5c4a10c25c2270a084ba236b99"
+    },
+    "HexRootsTheory.Completeness.RootFreeConverse": {
+      "path": "HexRootsTheory/Completeness/RootFreeConverse.lean",
+      "sha256": "803c654ffbbfd8c38bd7e98d2081d3883e3869eacda2a95f35e89da1a1432831"
+    },
+    "HexRootsTheory.Completeness.PelletDyadic": {
+      "path": "HexRootsTheory/Completeness/PelletDyadic.lean",
+      "sha256": "edeb8b758a52cab66ce37935b5e98a6134e28b0c704ac06f1ee0560da32ce426"
+    },
+    "HexRootsTheory.Completeness.PelletConverse": {
+      "path": "HexRootsTheory/Completeness/PelletConverse.lean",
+      "sha256": "cb08bc9d52f1a5ecc61f5c9b2ec6649af4177c184e455383a76ae2959a58f39e"
+    },
+    "HexRootsTheory.Completeness.PelletTail": {
+      "path": "HexRootsTheory/Completeness/PelletTail.lean",
+      "sha256": "fcd10c7ec6db09163655b39c9cceea55df0a7ebfd73946ca190e6703bc8c881a"
+    },
+    "HexRootsTheory.Completeness.NKDepth": {
+      "path": "HexRootsTheory/Completeness/NKDepth.lean",
+      "sha256": "b843b62bbc1404b2dfadceffad56950c7c4262fab40302c1b3d39cd9aa789336"
+    },
+    "HexRootsTheory.Completeness.NKConverse": {
+      "path": "HexRootsTheory/Completeness/NKConverse.lean",
+      "sha256": "ccabb1fa051f4416f76a41664153cf83fc4e9bbd9383bca821e297b772ef291c"
+    },
+    "HexRootsTheory.Completeness.NKRecertification": {
+      "path": "HexRootsTheory/Completeness/NKRecertification.lean",
+      "sha256": "708610b556ce7d45d9c2b33ab9b4974e5439d0a883cc3fe630f2512b82f72518"
+    },
+    "HexRootsTheory.Completeness.NewtonContraction": {
+      "path": "HexRootsTheory/Completeness/NewtonContraction.lean",
+      "sha256": "fbd69072d06d0a62598d4f0c6cbe120d3720cbbddb5f1f79305382ff0e4309d0"
+    },
+    "HexRootsTheory.Completeness.RefinementCompleteness": {
+      "path": "HexRootsTheory/Completeness/RefinementCompleteness.lean",
+      "sha256": "40ca77b97e94277e263c97c9644a8c138af35229b6ef11f86ef4634456a346eb"
+    },
+    "HexRootsTheory.Conjugate": {
+      "path": "HexRootsTheory/Conjugate.lean",
+      "sha256": "f9e700b69bedd28ab27656d0e93a10f545efbb2d13f826bb1d96f83680b82663"
+    },
+    "HexBerlekampZassenhausTheory": {
+      "path": "HexBerlekampZassenhausTheory.lean",
+      "sha256": "b97e0a9818129c764b23d7b723f701fa3f4cd9314a5f8a42cf35a0cb8a8d2477"
+    },
+    "HexBerlekampZassenhausTheory.KernelFactorTactic": {
+      "path": "HexBerlekampZassenhausTheory/KernelFactorTactic.lean",
+      "sha256": "441ca193bc04c6c04907c5b94c3c270c400912fc0d3145a37ee5fb4534ce35f2"
+    },
+    "HexBerlekampZassenhausTheory.FactorTactic": {
+      "path": "HexBerlekampZassenhausTheory/FactorTactic.lean",
+      "sha256": "c0463e2abfd74cfebfe6eec25d83ed5cecb21a4913b2c3601e6bfdcd6ea36711"
+    },
+    "HexBerlekampZassenhausTheory.CertificateReplay": {
+      "path": "HexBerlekampZassenhausTheory/CertificateReplay.lean",
+      "sha256": "11214a5046e686fbb71f0a0f7b035e5b63d9a6d2538085fb804cc7a3ac7d570c"
+    },
+    "HexBerlekampZassenhausTheory.FactorTransport": {
+      "path": "HexBerlekampZassenhausTheory/FactorTransport.lean",
+      "sha256": "328ebd214b72f391d6e30970438020cd708537a779fb91a8eaf2c33907094fae"
+    },
+    "HexBerlekampTheory.FactorPoly": {
+      "path": "HexBerlekampTheory/FactorPoly.lean",
+      "sha256": "bc93cf70fc877a0fe3192a00469dc90fbed4c555056535751528cc22b40af5ee"
+    },
+    "HexBerlekamp.IrreducibleDecide": {
+      "path": "HexBerlekamp/IrreducibleDecide.lean",
+      "sha256": "c3418af96214139ebe027abadf8aa7a6f294405ab643be7df1d1042d48bbb9c3"
+    },
+    "HexBerlekamp.RabinSoundness": {
+      "path": "HexBerlekamp/RabinSoundness.lean",
+      "sha256": "a17ebdaa72eee3a89a9d2e38f4728e99806e46221dbe7adfb7766bebb3f24605"
+    },
+    "HexBerlekamp.RabinSoundness.KernelWitness": {
+      "path": "HexBerlekamp/RabinSoundness/KernelWitness.lean",
+      "sha256": "18c03bcd94515d98fcdc2ece82db59c8a263d43a898923aee4a8bad3a199ccaf"
+    },
+    "HexBerlekamp.RabinSoundness.RabinShape": {
+      "path": "HexBerlekamp/RabinSoundness/RabinShape.lean",
+      "sha256": "227208e78c343a516b154eca67323634ee8eab2974ff3721f2ae46f7109c4db9"
+    },
+    "HexBerlekamp.RabinSoundness.RabinCore": {
+      "path": "HexBerlekamp/RabinSoundness/RabinCore.lean",
+      "sha256": "86a0b8ffb9118f3e5123718db29eae53dd87ab0fb1c637c50d40100caa60df22"
+    },
+    "HexBerlekamp.Factor": {
+      "path": "HexBerlekamp/Factor.lean",
+      "sha256": "01a813de711aa3243d0ff26170faa91d7e4e145c583d8c8b1ce26aa4474ea660"
+    },
+    "HexBerlekamp.PackedKernel": {
+      "path": "HexBerlekamp/PackedKernel.lean",
+      "sha256": "4ad5ef310f125c5a75f7e389cb76226206464f6a5db9eea3efe43a8926604911"
+    },
+    "HexBerlekamp.BerlekampMatrix": {
+      "path": "HexBerlekamp/BerlekampMatrix.lean",
+      "sha256": "a5983b984ee8d4b7b90fec544ad58ba266309feb4ce10dbb54137ed4d12194f9"
+    },
+    "HexRowReduce": {
+      "path": "HexRowReduce.lean",
+      "sha256": "0fd3a17f41b41c95ded9fc3d9e5a4e93d6cac7459ce497cb4b06c8359a1f85ed"
+    },
+    "HexRowReduce.Witness": {
+      "path": "HexRowReduce/Witness.lean",
+      "sha256": "39ab732602e5a6d82ca28d7a1de7c0a439d64147bb31cd907f9b2c2da15706f4"
+    },
+    "HexRowReduce.Solve": {
+      "path": "HexRowReduce/Solve.lean",
+      "sha256": "27ecd9602eff30769b6f59dbbc29bbd064e65ab169075c50800b21d33b6e59dd"
+    },
+    "HexRowReduce.Kernel": {
+      "path": "HexRowReduce/Kernel.lean",
+      "sha256": "6857dee3aaabd088460386cac8b474ed598c07245cf8a5c0d93a7c8809c2715f"
+    },
+    "HexBerlekamp.LinearFactors": {
+      "path": "HexBerlekamp/LinearFactors.lean",
+      "sha256": "9a5f10a65caf948d5657012db76a0cafa2822091f62b840276aa97c12bac23e7"
+    },
+    "HexBerlekamp.Irreducibility": {
+      "path": "HexBerlekamp/Irreducibility.lean",
+      "sha256": "1f0460cbfd5ba663aab1ed44460ecef114745d8ae97398b65ccf45fdaf4bde6e"
+    },
+    "HexBerlekampTheory.Irreducibility": {
+      "path": "HexBerlekampTheory/Irreducibility.lean",
+      "sha256": "9970b20ffb20b38fb1fccc2bd5fef75211b48afca12cb18f7323dadae52147f2"
+    },
+    "HexPolyFpTheory": {
+      "path": "HexPolyFpTheory.lean",
+      "sha256": "b9c2a3450242ed6dfa34c56a804317c10614d3366a15ac492be6369c3f25051f"
+    },
+    "HexPolyFpTheory.SquareFree": {
+      "path": "HexPolyFpTheory/SquareFree.lean",
+      "sha256": "f39cb35306819e9566233c9ce15ef9d568f54ddc087814c6a8f9ce1842fc1586"
+    },
+    "HexPolyFpTheory.Basic": {
+      "path": "HexPolyFpTheory/Basic.lean",
+      "sha256": "8bc7d43b4a9ac8d07c214faf720540f9ed8a9d55454d1173d91689db91d8f7db"
+    },
+    "HexPolyTheory": {
+      "path": "HexPolyTheory.lean",
+      "sha256": "9b8842b805d5271e5caccc896995957739d40161098f46bdf00efd3ec4d987ad"
+    },
+    "HexPolyTheory.Literal": {
+      "path": "HexPolyTheory/Literal.lean",
+      "sha256": "e13628b3e3017bdbe9db39fec9cbcc11275c17d45dfaf75352a87f550174977f"
+    },
+    "HexPolyTheory.ScaledLiteral": {
+      "path": "HexPolyTheory/ScaledLiteral.lean",
+      "sha256": "9f80aadbdbcadd80fb4ea980a8e22b56808111215e7f7ae17fad1e99898cf947"
+    },
+    "HexPolyTheory.LiteralData": {
+      "path": "HexPolyTheory/LiteralData.lean",
+      "sha256": "27f2911106104ba7ce497f13816e6953b10ad2682489aeafd4922a4faf953d69"
+    },
+    "HexPolyTheory.GrindTransport": {
+      "path": "HexPolyTheory/GrindTransport.lean",
+      "sha256": "b14dbd525b3e703462d0a2738be7b6571daf60515fd281ced2f2084fd02cea81"
+    },
+    "HexBerlekampZassenhaus.Factored": {
+      "path": "HexBerlekampZassenhaus/Factored.lean",
+      "sha256": "67c4b99418cc015706714cfd01a32e13816ed52d93a2ad0eb2ae11f516b052e0"
+    },
+    "HexBerlekampZassenhaus.FactorIrreducibility": {
+      "path": "HexBerlekampZassenhaus/FactorIrreducibility.lean",
+      "sha256": "9c6da9bbc21382c44f3303a67d9e631b031892ecd395a35a6808330fbefe8078"
+    },
+    "HexBerlekampZassenhaus.Factorization": {
+      "path": "HexBerlekampZassenhaus/Factorization.lean",
+      "sha256": "13a1fa69f26eacbe5d4985bad8988cc34add80ee18b0f5dea07ab79347a2000a"
+    },
+    "HexBerlekampZassenhaus.Recombination": {
+      "path": "HexBerlekampZassenhaus/Recombination.lean",
+      "sha256": "91a21572575f5c2480da411326a584d6e52e9a32b5fe8dd4e49bff7ad095994a"
+    },
+    "HexBerlekampZassenhaus.BhksRecover": {
+      "path": "HexBerlekampZassenhaus/BhksRecover.lean",
+      "sha256": "00f1eca6a95f386ac2fd7459a7fa1ae66dbcb9e1905505f601210502ed811c72"
+    },
+    "HexBerlekampZassenhaus.BhksCandidates": {
+      "path": "HexBerlekampZassenhaus/BhksCandidates.lean",
+      "sha256": "9abbcf2e58128b773010b374a03f05bd30683a7b400d8207ad8e98e9b14c8a2f"
+    },
+    "HexBerlekampZassenhaus.Lattice": {
+      "path": "HexBerlekampZassenhaus/Lattice.lean",
+      "sha256": "c29ec063998b0ac83ea2e625f296616f35b9cd3d796b2fe4dd9399439de9c63d"
+    },
+    "HexBerlekampZassenhaus.FactorizationResult": {
+      "path": "HexBerlekampZassenhaus/FactorizationResult.lean",
+      "sha256": "87a501fcf5b271650e648bb9b49191344b6736abc3644ab8fe01c5cb28ee47ac"
+    },
+    "HexBerlekampZassenhaus.ChoosePrimeData": {
+      "path": "HexBerlekampZassenhaus/ChoosePrimeData.lean",
+      "sha256": "5eabe54849b2cdca9e6e73d6a1991e7ac60e1b1018e2bb91295fbcf9f5f9b0f9"
+    },
+    "HexBerlekampZassenhaus.Certificate": {
+      "path": "HexBerlekampZassenhaus/Certificate.lean",
+      "sha256": "6fdd35a531df27cfbb4683f991ee14511e498a87593386afdcbdbcc1d017efb5"
+    },
+    "HexBerlekampZassenhaus.FactorizationData": {
+      "path": "HexBerlekampZassenhaus/FactorizationData.lean",
+      "sha256": "d9d3d50b62163c1cc3961f40bbac5b0fe8a53978239f6a37de1c8c49c84d7b68"
+    },
+    "HexBerlekampZassenhaus.PrimeSelection": {
+      "path": "HexBerlekampZassenhaus/PrimeSelection.lean",
+      "sha256": "f1e649f9acb8a274cf1a2b58c8d5151830f01fc0afe0d61206364dcad5edf309"
+    },
+    "HexPrimality.Table": {
+      "path": "HexPrimality/Table.lean",
+      "sha256": "fff736ea2cab2da219b6d047e2a5dbf5d7f8d773a80c5b8ab8c6787b9f9adefd"
+    },
+    "HexPrimality.Sieve": {
+      "path": "HexPrimality/Sieve.lean",
+      "sha256": "eec42eea6037a8609bb9411c8402adf0de59f641e8f26fd234a0c73778059c33"
+    },
+    "HexLLL": {
+      "path": "HexLLL.lean",
+      "sha256": "40b461412d8e924e717b1bbd9877cd48be38bb0c0ddffaf5482163d981dede11"
+    },
+    "HexLLL.Reduction": {
+      "path": "HexLLL/Reduction.lean",
+      "sha256": "37f8788629ae04ba8f654bd07279a93aa630c8de49b5f39ba408c95e5a67bb7c"
+    },
+    "HexLLL.Native": {
+      "path": "HexLLL/Native.lean",
+      "sha256": "4ec3d53d1f86e1b912f2ef0e36ab0e32cbec8cd9c0bf8167518711dfbe3c94c7"
+    },
+    "HexLLL.Lattice": {
+      "path": "HexLLL/Lattice.lean",
+      "sha256": "becbcbd73f7d5e434baf50451e6787852dcbab6c0f31d2186d2d402a0058aed3"
+    },
+    "HexGramSchmidt": {
+      "path": "HexGramSchmidt.lean",
+      "sha256": "08c62b44e69bbc323c2e952bab80588d6d48e74729739f3abd0ee41a1e044416"
+    },
+    "HexGramSchmidt.Update": {
+      "path": "HexGramSchmidt/Update.lean",
+      "sha256": "195536d49c055024608db52f1a9c615755f830ddc02ae5f0b2b550b5ae8bec69"
+    },
+    "HexGramSchmidt.Int": {
+      "path": "HexGramSchmidt/Int.lean",
+      "sha256": "4f94688dffddad1b1318fb18b1ad7ff49f3165359f7c2c69daba764208b82ea9"
+    },
+    "HexGramSchmidt.Int.Combination": {
+      "path": "HexGramSchmidt/Int/Combination.lean",
+      "sha256": "f3eafb126112e36a779ec19a69434d4c36934dbec66cc534ecbd1b9e0b16cfa4"
+    },
+    "HexGramSchmidt.Int.Correspondence": {
+      "path": "HexGramSchmidt/Int/Correspondence.lean",
+      "sha256": "a8297878a4e5ab89a1d19f49204247881098668a83215e24c602bacc8dd5d80d"
+    },
+    "HexGramSchmidt.Int.Invariant": {
+      "path": "HexGramSchmidt/Int/Invariant.lean",
+      "sha256": "0f6f8205a674db74fc8081d19c36fd52923cf05bc0e83f572a94a768f61f80ac"
+    },
+    "HexGramSchmidt.Int.Canonical": {
+      "path": "HexGramSchmidt/Int/Canonical.lean",
+      "sha256": "928a32fc4c0e4fc51c870232482d54aa2f2f17cd44245d87e8f3eb18eef48962"
+    },
+    "HexGramSchmidt.Int.Scaled": {
+      "path": "HexGramSchmidt/Int/Scaled.lean",
+      "sha256": "5937066a40014b8d87a3e3fa6776f7a16dee3d9a263ca37ae9664a72dc74981a"
+    },
+    "HexGramSchmidt.Int.Core": {
+      "path": "HexGramSchmidt/Int/Core.lean",
+      "sha256": "62d24ec4e483b41dcbffaa62bad2bfd0f429e55d35877f1319392f81aec27c01"
+    },
+    "HexGramSchmidt.Basic": {
+      "path": "HexGramSchmidt/Basic.lean",
+      "sha256": "6111d414dc4fe885e579e1b71606b9bb53c34434ed4decfe49d1f1847c771dec"
+    },
+    "HexGramSchmidt.Basic.IntCast": {
+      "path": "HexGramSchmidt/Basic/IntCast.lean",
+      "sha256": "c7599b8013cf874aea20b9944c98e5c54f80423cfa344a9b7c58e0f2093f408d"
+    },
+    "HexGramSchmidt.Basic.Rat": {
+      "path": "HexGramSchmidt/Basic/Rat.lean",
+      "sha256": "906edcc2bb9fbabe3498ffca76dfc7f12d8d1ee460d71c9d7e2e0a1c67e6d160"
+    },
+    "HexGramSchmidt.Basic.Linearity": {
+      "path": "HexGramSchmidt/Basic/Linearity.lean",
+      "sha256": "89805da3c106ec522bf21535a4d3ee92b0bb0c7de1c7c2ec61675ff29c5042f4"
+    },
+    "HexGramSchmidt.Basic.Kernel": {
+      "path": "HexGramSchmidt/Basic/Kernel.lean",
+      "sha256": "f7f93250bc1ecd4e59778d60a6b61f82ca37d71e8e3d14e4c2ba9ae1d276157d"
+    },
+    "HexLLL.ExternalReducer": {
+      "path": "HexLLL/ExternalReducer.lean",
+      "sha256": "892afd065a2a61e3582ed4ed59af56ede5c687adb8c5a1ad24e357b71b3e9881"
+    },
+    "HexLLL.Checker": {
+      "path": "HexLLL/Checker.lean",
+      "sha256": "4462645708de1382c1c53b627e44d7662286c5b3c0f4169222025b33c6289be1"
+    },
+    "HexLLL.Interval": {
+      "path": "HexLLL/Interval.lean",
+      "sha256": "f428904a39779bf9871c3e5e40753d5b322c2783661be130f5e4dd8a5e43d80c"
+    },
+    "HexLLL.Certificate": {
+      "path": "HexLLL/Certificate.lean",
+      "sha256": "da613319fc444e00886b39ac543ffaed49e168aa4d6eb6b942a5a121ef08d2a4"
+    },
+    "HexLLL.Reduced": {
+      "path": "HexLLL/Reduced.lean",
+      "sha256": "e246b504c004ec1996cf5e85d47538f18c1517dec359590b18edaceebced1d82"
+    },
+    "HexHensel.QuadraticMultifactor": {
+      "path": "HexHensel/QuadraticMultifactor.lean",
+      "sha256": "da27db2150bd3b86c67e59f7018bf6066bc3cbfa2263ade0e30fb4138086f707"
+    },
+    "HexHensel.Quadratic": {
+      "path": "HexHensel/Quadratic.lean",
+      "sha256": "dc6cf843180ca77d019b9f1b5fed8b711116f1789b79686e2ad208907b41d604"
+    },
+    "HexHensel.WordMul": {
+      "path": "HexHensel/WordMul.lean",
+      "sha256": "76c3023eb6965c148fad6d5a3031cb6de9efb04f6a0e9824249291fe7d5caa64"
+    },
+    "HexHensel.WordTransport": {
+      "path": "HexHensel/WordTransport.lean",
+      "sha256": "ded9cdb425795a1d7221d505fad0ac868fa981d39c4abe74190559785d32e68d"
+    },
+    "HexHensel.WordStep": {
+      "path": "HexHensel/WordStep.lean",
+      "sha256": "0d742ced46b881dc15e31582b2dcf244a55091cbe3c555d185eb7195b84118c9"
+    },
+    "HexHensel.ModularDivision": {
+      "path": "HexHensel/ModularDivision.lean",
+      "sha256": "ba419baac25d4e5303943c8b52296a40870c802b055451bfa289b34ec116184f"
+    },
+    "HexHensel.Multifactor": {
+      "path": "HexHensel/Multifactor.lean",
+      "sha256": "40af28135a9a8e3b1fe2ea697d037359fc9216064b2fc6c8e2dc92f986a99e08"
+    },
+    "HexPolyFast.Tree": {
+      "path": "HexPolyFast/Tree.lean",
+      "sha256": "e0106e3c2799778cc53ae8f39040bcf31b57a66353fbd865029ad1f24c10f829"
+    },
+    "HexHensel.Linear": {
+      "path": "HexHensel/Linear.lean",
+      "sha256": "071c4b6237642dcd6dd2b02ab68edb9ef7d7d15badbc308a0cf27fd60a4a2019"
+    },
+    "HexBerlekampZassenhaus.SquareFreeModularCert": {
+      "path": "HexBerlekampZassenhaus/SquareFreeModularCert.lean",
+      "sha256": "0293b5d6d200cac6d5effa5e20579859c360eb1eb50da2ea864e93a9cdce6402"
+    },
+    "HexBerlekampZassenhaus.WordCld": {
+      "path": "HexBerlekampZassenhaus/WordCld.lean",
+      "sha256": "1bcc98ffcd7d7656c7b60c9ffd1700facda4a3eaaf7f1c9181a6fe98e2b5e245"
+    },
+    "HexBerlekampZassenhaus.QuadraticNormRecover": {
+      "path": "HexBerlekampZassenhaus/QuadraticNormRecover.lean",
+      "sha256": "79d067ee5527fd1c578016b3a23d46eced11d25d09d5d9329a0721a8ea9c3f87"
+    },
+    "HexBerlekampZassenhaus.QuadraticNorm": {
+      "path": "HexBerlekampZassenhaus/QuadraticNorm.lean",
+      "sha256": "842ac00a6a96baa17b7446af47342579e66c7971ea831c7491e65d1e8d475838"
+    },
+    "HexBerlekampZassenhaus.Classical.Factorization": {
+      "path": "HexBerlekampZassenhaus/Classical/Factorization.lean",
+      "sha256": "e6a7c9d4b7633c3e9d509a9fc6499cf95c7e3f6bf8b7d9c0e071a60394d68b06"
+    },
+    "HexBerlekampZassenhaus.Classical.Search": {
+      "path": "HexBerlekampZassenhaus/Classical/Search.lean",
+      "sha256": "a47c059cc019a71946da2d4f06d42f73584f83f2a3c94f305cc5f7310af8a9d4"
+    },
+    "HexBerlekampZassenhaus.Classical.CombinationIterator": {
+      "path": "HexBerlekampZassenhaus/Classical/CombinationIterator.lean",
+      "sha256": "2bb8f5d0cfa487084a29a4700e1229ee388624b5e0ce8c5a421141b30707fd2b"
+    },
+    "HexBerlekampZassenhaus.Classical.Candidate": {
+      "path": "HexBerlekampZassenhaus/Classical/Candidate.lean",
+      "sha256": "6c8fde9880fa54e200a290000465693f9f89ed78f3926c7f7af2f3e2154c934b"
+    },
+    "HexBerlekampZassenhaus.Hensel.DirectLift": {
+      "path": "HexBerlekampZassenhaus/Hensel/DirectLift.lean",
+      "sha256": "5d3083be529cb8d3a0fc99ffcc0f50d065babdd27b297f07abf59ba91bc4788c"
+    },
+    "HexBerlekampZassenhaus.Modular.PrimePlan": {
+      "path": "HexBerlekampZassenhaus/Modular/PrimePlan.lean",
+      "sha256": "28563bf8125eb6a0ef3b41cc04994b0620253357e7857767fd4108bbc7cf865d"
+    },
+    "HexBerlekampZassenhaus.SquareFreeInput": {
+      "path": "HexBerlekampZassenhaus/SquareFreeInput.lean",
+      "sha256": "e3f105e52c0c20ae09b0cc805e1d0b046b164a52c9a62492c93b472b0996c0fb"
+    },
+    "HexBerlekamp.DegreePattern": {
+      "path": "HexBerlekamp/DegreePattern.lean",
+      "sha256": "883098c0ed7454a9eb3e0573971c8cc39f85a00dbbae5e5902af6860e63055f5"
+    },
+    "HexBerlekamp.DistinctDegree": {
+      "path": "HexBerlekamp/DistinctDegree.lean",
+      "sha256": "71ca1c02542c7596c86f346ee62d907cd2d790e34622bfd5988e6127b09ffa39"
+    },
+    "HexBerlekampZassenhaus.Classical.Obstruction": {
+      "path": "HexBerlekampZassenhaus/Classical/Obstruction.lean",
+      "sha256": "31ac4a8551a579f27c5c1a1f11dcd42b0b69eecc0c08074a671d741647996c47"
+    },
+    "HexBerlekampZassenhaus.IrreducibleDecide": {
+      "path": "HexBerlekampZassenhaus/IrreducibleDecide.lean",
+      "sha256": "7497500b52a8e5c38c7b39721c434a701d92002e78f0f907e2df1d7734f6a669"
+    },
+    "HexBerlekampZassenhaus.EisensteinCriterion": {
+      "path": "HexBerlekampZassenhaus/EisensteinCriterion.lean",
+      "sha256": "dae415691b70cd3baf279278336256fc3fa2e73cedee07a3925d444f88dbe2f7"
+    },
+    "HexBerlekampZassenhausTheory.IrreducibilityCertificate": {
+      "path": "HexBerlekampZassenhausTheory/IrreducibilityCertificate.lean",
+      "sha256": "4999145809f752a924f2c073fccb532156dd8653c4b93765992e5d73096f8869"
+    },
+    "HexBerlekampZassenhausTheory.Factorization": {
+      "path": "HexBerlekampZassenhausTheory/Factorization.lean",
+      "sha256": "0897ef1090c637a997eb52ef42733b2d9d472c8c9ebc3c152fe71e745b7fe0f6"
+    },
+    "HexBerlekampZassenhausTheory.UFDPartition": {
+      "path": "HexBerlekampZassenhausTheory/UFDPartition.lean",
+      "sha256": "7d03c4d6148ce1a3f624d4d3fca6012b479f1e74141a9e1f5263a7b1d32ce79b"
+    },
+    "HexBerlekampZassenhaus": {
+      "path": "HexBerlekampZassenhaus.lean",
+      "sha256": "3c9ecd4e1d6ca2e0682ed3915b5e531098175185bcc15cdee1ec748c8be839bc"
+    },
+    "HexBerlekampZassenhaus.FactorTactic": {
+      "path": "HexBerlekampZassenhaus/FactorTactic.lean",
+      "sha256": "c8f7db3553597b4ebe5161f16f27f69bf8b90b966419dc932e007efc4b578981"
+    },
+    "HexBerlekampZassenhaus.CertificateSyntax": {
+      "path": "HexBerlekampZassenhaus/CertificateSyntax.lean",
+      "sha256": "f893b21787e48d1ab79fdb39b6cc641ade6c99911c4dee1a25cb92853ec54b56"
+    },
+    "HexBerlekamp.CertificateSyntax": {
+      "path": "HexBerlekamp/CertificateSyntax.lean",
+      "sha256": "e939f39fb365b3cf76810c7639cf105c1ce0bdcabc6e2196060428e58e047d7c"
+    },
+    "HexBerlekamp.PolynomialTactic": {
+      "path": "HexBerlekamp/PolynomialTactic.lean",
+      "sha256": "9455b162481bc52a8b3632913f02dd5747e7c580be7df32a2b9ed2cd500fc989"
+    },
+    "HexBerlekamp.Factored": {
+      "path": "HexBerlekamp/Factored.lean",
+      "sha256": "cc841a280911e83def4bf06afbc9b7587ca75d8070901f4a3f5be48940491756"
+    },
+    "HexBerlekamp.IrreducibilityElab": {
+      "path": "HexBerlekamp/IrreducibilityElab.lean",
+      "sha256": "53e71d376e49195be816f2f22bff296ad5064b343f776caa51c028a50ae33a54"
+    },
+    "HexBerlekamp.FactorPolyElab": {
+      "path": "HexBerlekamp/FactorPolyElab.lean",
+      "sha256": "e6d43260b42f5bd13d43b3b40f8ca0d7b6c8a981fcc93ca77eb2e5896dd5a960"
+    },
+    "HexBerlekampZassenhaus.RatSquarefree": {
+      "path": "HexBerlekampZassenhaus/RatSquarefree.lean",
+      "sha256": "e537bc68f93f9fa2710d9ca4cb175e4b79d85b596f79565793d3dc3f137b697a"
+    },
+    "HexBerlekampZassenhaus.FactorProduct": {
+      "path": "HexBerlekampZassenhaus/FactorProduct.lean",
+      "sha256": "2050f868933fcaa014e970cea7abb357915deb6becab655e1c04ad7af8861297"
+    },
+    "HexBerlekampZassenhaus.PrimitiveFactors": {
+      "path": "HexBerlekampZassenhaus/PrimitiveFactors.lean",
+      "sha256": "4bda2880fa8af611bf61574dec2e8fc08df35babc12b6d32d9774179fe0d0187"
+    },
+    "HexBerlekampZassenhaus.QuadraticFactors": {
+      "path": "HexBerlekampZassenhaus/QuadraticFactors.lean",
+      "sha256": "7dfc528481c958cb42721d0323d3d880c45f0ed9306d60dd0fb7526b5b520057"
+    },
+    "HexBerlekampZassenhaus.TrialFactorization": {
+      "path": "HexBerlekampZassenhaus/TrialFactorization.lean",
+      "sha256": "ce3767f3f433d3256062688d919f0e9ce11210205df6ba12a512accc956bc969"
+    },
+    "HexBerlekampZassenhaus.RecombinationFactors": {
+      "path": "HexBerlekampZassenhaus/RecombinationFactors.lean",
+      "sha256": "cb34fac0e5ae03a692fa5d115f4c575bee1e8abb63a999ba0dd5ad874caebf7e"
+    },
+    "HexBerlekampZassenhausTheory.ModularPolynomial": {
+      "path": "HexBerlekampZassenhausTheory/ModularPolynomial.lean",
+      "sha256": "5c78fc94165452ae0bf39ad7cb9c5f2a17ececf66c656c6065e37ed7cdee1522"
+    },
+    "HexBerlekampZassenhausTheory.FactorSoundness": {
+      "path": "HexBerlekampZassenhausTheory/FactorSoundness.lean",
+      "sha256": "a7fa6ac18e5ff990b2c3b39712f38586c5696d609ad3c166996fa645c210a667"
+    },
+    "HexBerlekampZassenhausTheory.FactorIrreducibility": {
+      "path": "HexBerlekampZassenhausTheory/FactorIrreducibility.lean",
+      "sha256": "91b707885184e6ed48754ff1ebf980b5a5bb719b46ff336e70ea293121010328"
+    },
+    "HexBerlekampZassenhausTheory.QuadraticNormIrreducible": {
+      "path": "HexBerlekampZassenhausTheory/QuadraticNormIrreducible.lean",
+      "sha256": "475f326128d125c5374f987627d48c90b25360b430c32a2eedb20a5530240f11"
+    },
+    "HexBerlekampZassenhausTheory.Multiquadratic": {
+      "path": "HexBerlekampZassenhausTheory/Multiquadratic.lean",
+      "sha256": "d8e47bd50025bc44d80f7a61e9fde9a4b1c3f84c1d896c7f80fbefd1e1e595f1"
+    },
+    "HexBerlekampZassenhausTheory.SquareClass": {
+      "path": "HexBerlekampZassenhausTheory/SquareClass.lean",
+      "sha256": "b01b46551c2dfed63e8a7b4d687c35c82b82c90c6b31ecae8282c33856245627"
+    },
+    "HexBerlekampZassenhausTheory.QuadraticNorm": {
+      "path": "HexBerlekampZassenhausTheory/QuadraticNorm.lean",
+      "sha256": "4e86d14dc9775de76a999b93dbe20f8dbcfa0e56e047bc6d8e55f1eda91f4146"
+    },
+    "HexBerlekampZassenhausTheory.LatticeFactorization": {
+      "path": "HexBerlekampZassenhausTheory/LatticeFactorization.lean",
+      "sha256": "0eabc8b511e692f16f82f4aa28b109ed4bf31f74d2c84f823b1502ddc61c60d6"
+    },
+    "HexBerlekampZassenhausTheory.RecombinationSplit": {
+      "path": "HexBerlekampZassenhausTheory/RecombinationSplit.lean",
+      "sha256": "7220926c2fcc2654f52b74a2aa5a90b3ae933cd0b0485f2f121829d627dc88a8"
+    },
+    "HexBerlekampZassenhausTheory.M1Recovery": {
+      "path": "HexBerlekampZassenhausTheory/M1Recovery.lean",
+      "sha256": "b70e4bd5304026ca462389135036b409860b864207224bb11942987178ce6bc6"
+    },
+    "HexBerlekampZassenhausTheory.LiftedFactor": {
+      "path": "HexBerlekampZassenhausTheory/LiftedFactor.lean",
+      "sha256": "d2359075f3318a47f72debc189118b3c84b70ca0774f535be89ddbfdd32c8afb"
+    },
+    "HexBerlekampZassenhausTheory.ModPFactor": {
+      "path": "HexBerlekampZassenhausTheory/ModPFactor.lean",
+      "sha256": "5fb8d79d5131bc13acf8ed00ccf47e51d0b3b3a4895fd4ba6e8ec8243cabc5ee"
+    },
+    "HexHenselTheory.HenselLemmas": {
+      "path": "HexHenselTheory/HenselLemmas.lean",
+      "sha256": "7cd38bc4d9e896f31d2892b6f123da2e1792ca8a76f6ac48d37c541a4a35a690"
+    },
+    "HexHenselTheory.CoprimeLift": {
+      "path": "HexHenselTheory/CoprimeLift.lean",
+      "sha256": "cd4b0c7dca89981e614f432c02b84b2bb6a68435821e4c01fe8e97383f63a662"
+    },
+    "HexHensel": {
+      "path": "HexHensel.lean",
+      "sha256": "f03148e031f6a196c10c590419c240deaae1a16a73d8bcbd348f0a19bd1dc190"
+    },
+    "HexBerlekampZassenhausTheory.FactorBound": {
+      "path": "HexBerlekampZassenhausTheory/FactorBound.lean",
+      "sha256": "b5fff5fe3616119fd1fb073afdddc66f6f35d6cfa4de8a50f80f04a3da4ab2b2"
+    },
+    "HexBerlekampZassenhausTheory.Lattice.DirectAdequacy": {
+      "path": "HexBerlekampZassenhausTheory/Lattice/DirectAdequacy.lean",
+      "sha256": "7ea242d668110cac5a829633dd7b8aceba3dbc58ed1dc9df4e679b2e05680a24"
+    },
+    "HexLLLTheory.ShortVector": {
+      "path": "HexLLLTheory/ShortVector.lean",
+      "sha256": "d8c14c8e27458c7e9c42adece7b765fb5455d395f6a579113412de0d8c75c16d"
+    },
+    "HexLLLTheory.Reduction": {
+      "path": "HexLLLTheory/Reduction.lean",
+      "sha256": "07a51b6ce69f8e70c251c57e5215f4fabc6a6c6a5e8f42e38be7b0ff91045971"
+    },
+    "HexLLLTheory.ReductionInvariant": {
+      "path": "HexLLLTheory/ReductionInvariant.lean",
+      "sha256": "0ad85d194e1b48439fb5f8b2ce34fa75ccd9000681a475d7d7d76236ec5a7027"
+    },
+    "HexGramSchmidtTheory.Update": {
+      "path": "HexGramSchmidtTheory/Update.lean",
+      "sha256": "b48b1eb83f86af6a9fbc7acb4cd99545f77d07ce2338f65c121845491fed9853"
+    },
+    "HexGramSchmidtTheory.Int": {
+      "path": "HexGramSchmidtTheory/Int.lean",
+      "sha256": "e09f70be8bd3a89d08ff3c8cfd84a9584940527b28a1cd72157f2897c5457fed"
+    },
+    "HexGramSchmidtTheory.Int.RowAdd": {
+      "path": "HexGramSchmidtTheory/Int/RowAdd.lean",
+      "sha256": "9913e8caa9cb27597577d4f414efa35a903222b9439d89694554ba9ef959e143"
+    },
+    "HexGramSchmidtTheory.Int.Swap": {
+      "path": "HexGramSchmidtTheory/Int/Swap.lean",
+      "sha256": "2111852f66a222adfd15eccc2a4dd0cbcca19dd67dfbd52e311a06e992277a0b"
+    },
+    "HexGramSchmidtTheory.Int.Augmented": {
+      "path": "HexGramSchmidtTheory/Int/Augmented.lean",
+      "sha256": "2f47ead06cb1907f619ece1bd0c1c4d01827222f2d39c7fa2675463b554a3c8b"
+    },
+    "HexGramSchmidtTheory.Int.GramDet": {
+      "path": "HexGramSchmidtTheory/Int/GramDet.lean",
+      "sha256": "ec36f2eabd0ac60786cd8571475876488643f932d8a1651f6e1c0ad81d026832"
+    },
+    "HexBareissTheory": {
+      "path": "HexBareissTheory.lean",
+      "sha256": "5030fa1e6e27c5e35f51564357ae1fa2e8baeeaaf93e166beb157a2ddfb16ecd"
+    },
+    "HexBareissTheory.Tactic": {
+      "path": "HexBareissTheory/Tactic.lean",
+      "sha256": "999d80fcde29b1515fc845f2632d68ab4f465c518349da4faf1740d3ada2c6a8"
+    },
+    "HexBareissTheory.Kernel": {
+      "path": "HexBareissTheory/Kernel.lean",
+      "sha256": "3ed26fc57855cdf0a98a6f9bfad1056d171fa2112f7975bc0cab6a585fc425fe"
+    },
+    "HexMatrixTheory.Packed": {
+      "path": "HexMatrixTheory/Packed.lean",
+      "sha256": "57de62e432762ef1b9999703fdf81623203a2d84ca33864310f5f1ad7230378d"
+    },
+    "HexBareiss.Kernel": {
+      "path": "HexBareiss/Kernel.lean",
+      "sha256": "aa8465ece53850c9eff0107f4f9151da1d2b0e0ca2ab06290c76db370eccf327"
+    },
+    "HexLLLTheory.Checker": {
+      "path": "HexLLLTheory/Checker.lean",
+      "sha256": "1c0ec642e3c3f7bef3db34d3807d476dce38283991e273f371575af37181006c"
+    },
+    "HexRowReduceTheory.RankSpanNullspace": {
+      "path": "HexRowReduceTheory/RankSpanNullspace.lean",
+      "sha256": "41e5969431794f832ebf45e51bea29aeb25608a950daef43538fbc2af1abd006"
+    },
+    "HexLLLTheory.Interval": {
+      "path": "HexLLLTheory/Interval.lean",
+      "sha256": "b11bcf72d253a55cf5a4526c1296507c805cc8a10975e2a0e053f8d62bbb16fd"
+    },
+    "HexLLLTheory.State": {
+      "path": "HexLLLTheory/State.lean",
+      "sha256": "f5764df032387290f75a1e44647544439b2e863791431ef76e221f3a5f104a67"
+    },
+    "HexLLLTheory.IntegerLattice": {
+      "path": "HexLLLTheory/IntegerLattice.lean",
+      "sha256": "3605e2a51cf8e72f058dd05bc98b3c11ef55501a99988a62ad0ee3400a78dc56"
+    },
+    "HexBerlekampZassenhausTheory.Termination": {
+      "path": "HexBerlekampZassenhausTheory/Termination.lean",
+      "sha256": "2d4825cebb513154741e64f7f44c4905e7e344ac36bf1cd2d91efb162ec0b976"
+    },
+    "HexBerlekampZassenhausTheory.Resultant": {
+      "path": "HexBerlekampZassenhausTheory/Resultant.lean",
+      "sha256": "60d4de6b4a2dc5d94f9b899e0e2f337206fc73c31f5844b80601947b3b691969"
+    },
+    "HexBerlekampZassenhausTheory.BadVector": {
+      "path": "HexBerlekampZassenhausTheory/BadVector.lean",
+      "sha256": "fbdfa697f9a18145687919a089644bf0557d99ebb922f1d5ac8465f09113e392"
+    },
+    "HexBerlekampZassenhausTheory.CLDColumnBound": {
+      "path": "HexBerlekampZassenhausTheory/CLDColumnBound.lean",
+      "sha256": "fdbe109da85e4274f8e90353d45c124aedb60313bfaa032f806034a9d8fc80c3"
+    },
+    "HexBerlekampZassenhausTheory.WordCld": {
+      "path": "HexBerlekampZassenhausTheory/WordCld.lean",
+      "sha256": "1c92437aa639d0647fd2b9fdd4c265d2ebb98853e4338d28c5050993a775c934"
+    },
+    "HexBerlekampZassenhausTheory.Lattice": {
+      "path": "HexBerlekampZassenhausTheory/Lattice.lean",
+      "sha256": "efb19f349de2c52fabc11c0d0a55047479b951196a9a759b90a2a9f9408a5dd7"
+    },
+    "HexBerlekampZassenhausTheory.Lattice.SupportEquivalence": {
+      "path": "HexBerlekampZassenhausTheory/Lattice/SupportEquivalence.lean",
+      "sha256": "b80c09151d1a56b4357ab14109e731fa4aed255f580f03e2eb1dc93b38005290"
+    },
+    "HexBerlekampZassenhausTheory.Lattice.CutProjection": {
+      "path": "HexBerlekampZassenhausTheory/Lattice/CutProjection.lean",
+      "sha256": "54be39b7b1fee916ab2d0c7177f2edba2e0ab54e85cd2e6cfe25faaa9fb7e34c"
+    },
+    "HexBerlekampZassenhausTheory.Lattice.ProjectedRows": {
+      "path": "HexBerlekampZassenhausTheory/Lattice/ProjectedRows.lean",
+      "sha256": "86d4b687e1a750cae97af20a99992f0eb7331e0634360d15b36d07aa52d2ccec"
+    },
+    "HexBerlekampZassenhausTheory.SignatureClasses": {
+      "path": "HexBerlekampZassenhausTheory/SignatureClasses.lean",
+      "sha256": "a0940a1e188097246739c86c1917de2c492c7ac9891ca057b0cfd4d17ed0dd02"
+    },
+    "HexBerlekampZassenhausTheory.PartitionRefinement": {
+      "path": "HexBerlekampZassenhausTheory/PartitionRefinement.lean",
+      "sha256": "7e3acc6346b79dcb47d62f3068cc1ae846aade6e852c6d9de31c0054082f0299"
+    },
+    "HexBerlekampZassenhausTheory.Recovery": {
+      "path": "HexBerlekampZassenhausTheory/Recovery.lean",
+      "sha256": "f41bef3d18ba7956e9073c965a60c2c78a41c2cb4bb6bb431ccc3ce1519a9075"
+    },
+    "HexBerlekampZassenhausTheory.Modular.PrimePlan": {
+      "path": "HexBerlekampZassenhausTheory/Modular/PrimePlan.lean",
+      "sha256": "21ff4edd4374fefb4368c6fc223f233b4d2486fef554dab78e0d7d64a1567971"
+    },
+    "HexBerlekampZassenhausTheory.IntReductionMod.Descent": {
+      "path": "HexBerlekampZassenhausTheory/IntReductionMod/Descent.lean",
+      "sha256": "eba155aad26024bfa4904c73c3fae4b87786b5e100abd23233ffe26a45de2ba4"
+    },
+    "HexBerlekampZassenhausTheory.SubsetCoprimality": {
+      "path": "HexBerlekampZassenhausTheory/SubsetCoprimality.lean",
+      "sha256": "d6495011d978da643f586b96fecf44cf58fc8e56d0bcb1004ee56fb6d6517277"
+    },
+    "HexBerlekampZassenhausTheory.ModPFactorization": {
+      "path": "HexBerlekampZassenhausTheory/ModPFactorization.lean",
+      "sha256": "1cceb95fdf2652c35092ebd6b0738a64b33310f63d3bb76cabe1b9df128beb2e"
+    },
+    "HexBerlekampZassenhausTheory.LocalFactors": {
+      "path": "HexBerlekampZassenhausTheory/LocalFactors.lean",
+      "sha256": "23c06575f64613c9252ee3fbac7a8c279c8856d61c8ca5d0965677d0cfce8363"
+    },
+    "HexBerlekampZassenhausTheory.Modular.FactorCoprimality": {
+      "path": "HexBerlekampZassenhausTheory/Modular/FactorCoprimality.lean",
+      "sha256": "b768c5d6df345adc96003a73c998f2ab2269c892d2f11da1854ce88388a4468a"
+    },
+    "HexBerlekampZassenhausTheory.RecombinationCandidate": {
+      "path": "HexBerlekampZassenhausTheory/RecombinationCandidate.lean",
+      "sha256": "9bb6c6deddc9f13ac5fec66d53ab30dc40a65470f37dc63aed715ff5967ca9dc"
+    },
+    "HexBerlekampZassenhausTheory.Modular.FactorProduct": {
+      "path": "HexBerlekampZassenhausTheory/Modular/FactorProduct.lean",
+      "sha256": "2d09ab479036671c4d1f972a15ceafe3cc1160f54cb6feb688c03b5941211628"
+    },
+    "HexBerlekampZassenhausTheory.Hensel.LiftedFactors": {
+      "path": "HexBerlekampZassenhausTheory/Hensel/LiftedFactors.lean",
+      "sha256": "75c7dee99b29c7862d7d73b835f26b66760cda043795fe1169e6c9781db57e6e"
+    },
+    "HexBerlekampZassenhausTheory.ModPPartition": {
+      "path": "HexBerlekampZassenhausTheory/ModPPartition.lean",
+      "sha256": "3b4b423d755e48f4b6878957bdb8ffac247d4077f9680813fee3f1bbc5091223"
+    },
+    "HexBerlekampZassenhausTheory.Lattice.DirectSupport": {
+      "path": "HexBerlekampZassenhausTheory/Lattice/DirectSupport.lean",
+      "sha256": "ed679e4065ff5de3c7ccab92c665e5ed0af44f1b8660eb0a97b778bf1b22ee4f"
+    },
+    "HexBerlekampZassenhausTheory.Classical.SupportPartition": {
+      "path": "HexBerlekampZassenhausTheory/Classical/SupportPartition.lean",
+      "sha256": "39b0b9026ac219e4c639b57dca0d9d004c6df6c727c2ea654e5b02aadb3d8f52"
+    },
+    "HexBerlekampZassenhausTheory.Hensel.DirectLift": {
+      "path": "HexBerlekampZassenhausTheory/Hensel/DirectLift.lean",
+      "sha256": "393bccd4ca459a6478658a8e9eb4d52b0e08ba8daa8dfbc0316eff24e85ec96c"
+    },
+    "HexBerlekampZassenhausTheory.Classical.Recovery": {
+      "path": "HexBerlekampZassenhausTheory/Classical/Recovery.lean",
+      "sha256": "ac9f977e0fabb0716dfaeb3df3becf7e12375033e4ef22a5739150768215089d"
+    },
+    "HexBerlekampZassenhausTheory.ForwardHenselTransport": {
+      "path": "HexBerlekampZassenhausTheory/ForwardHenselTransport.lean",
+      "sha256": "2fb7bb6d601e7ab96917f932a7a1bb409a54f5193c19d2e4cb34586777501b8c"
+    },
+    "HexBerlekampZassenhausTheory.Lattice.DirectRecovery": {
+      "path": "HexBerlekampZassenhausTheory/Lattice/DirectRecovery.lean",
+      "sha256": "17e9ee520cb06a21c3bec08f02735b1df9dc242de17b1539ecc65f781816b293"
+    },
+    "HexBerlekampZassenhausTheory.Lattice.CandidateCorrectness": {
+      "path": "HexBerlekampZassenhausTheory/Lattice/CandidateCorrectness.lean",
+      "sha256": "117ed5c5b5048d6c3f834f1bb93f2233bdf02454c1301d1409546c7d86a474df"
+    },
+    "HexBerlekampZassenhausTheory.IntReductionMod": {
+      "path": "HexBerlekampZassenhausTheory/IntReductionMod.lean",
+      "sha256": "bd60a93f1796c9e4af126afeb373c8115e96f5789a235b1d7a4c57b6ada8bda6"
+    },
+    "HexBerlekampZassenhausTheory.IntReductionMod.Transport": {
+      "path": "HexBerlekampZassenhausTheory/IntReductionMod/Transport.lean",
+      "sha256": "339851b24d522365c3d39417c3e8c5f147c34b246abefcf4b76888c67a591753"
+    },
+    "HexBerlekampZassenhausTheory.Classical.Factorization": {
+      "path": "HexBerlekampZassenhausTheory/Classical/Factorization.lean",
+      "sha256": "4566e3045c1134048072cd4ba720aff05181887ec15e5f82a61ca0aae59c2daa"
+    },
+    "HexBerlekampZassenhausTheory.Classical.SearchCompleteness": {
+      "path": "HexBerlekampZassenhausTheory/Classical/SearchCompleteness.lean",
+      "sha256": "c422a503e71354ab93d252981a238acb779ae17e691ef05aab2e77902b48b58b"
+    },
+    "HexBerlekampZassenhausTheory.Classical.CombinationIterator": {
+      "path": "HexBerlekampZassenhausTheory/Classical/CombinationIterator.lean",
+      "sha256": "71390405f1439f4f49d8605992be42536a43da9dd23da7c20f7b4bfec52d06fe"
+    },
+    "HexResultantTheory": {
+      "path": "HexResultantTheory.lean",
+      "sha256": "7adde2c91bfd816448aafff1e91a08d07e6cedfe5c797a45803708449942efd5"
+    },
+    "HexResultantTheory.Discriminant": {
+      "path": "HexResultantTheory/Discriminant.lean",
+      "sha256": "05a6ba377dc0674e3f00f83ab9efbc9013d39885b985d73613ad403febb7e291"
+    },
+    "HexResultantTheory.Sylvester": {
+      "path": "HexResultantTheory/Sylvester.lean",
+      "sha256": "cd0c588d905dfa3ace09d3755ee60242361dc6141ad5ffcc7798fbeeab062db4"
+    },
+    "HexResultantTheory.Basic": {
+      "path": "HexResultantTheory/Basic.lean",
+      "sha256": "c6c34fc84721515c1f19d6f2654630e7d6fd7a51cbbe478659ee5750fac7d69f"
+    },
+    "HexResultant": {
+      "path": "HexResultant.lean",
+      "sha256": "f0b5a7b7ec56f20d6fe6fd3879eeaadf45e88622ff2b334039c1c25395c8c125"
+    },
+    "HexResultant.Discriminant": {
+      "path": "HexResultant/Discriminant.lean",
+      "sha256": "217b5d6951eedc708100df4ceb94a270f378b43b915f42ed09a603e62b310939"
+    },
+    "HexResultant.Subresultant": {
+      "path": "HexResultant/Subresultant.lean",
+      "sha256": "f97ec8ec960e21da65f0b6a53f19def0a3d0d29ab446a42dc0b01e52225e053f"
+    },
+    "HexResultant.ExactDiv": {
+      "path": "HexResultant/ExactDiv.lean",
+      "sha256": "9efed8d5462ccbecad0d81912073d78a7eb258bbe20eaeef398e2c9082f1d75b"
+    },
+    "HexResultant.BrownTraub": {
+      "path": "HexResultant/BrownTraub.lean",
+      "sha256": "5c8a57fbdee6b0b0f202d946944c280686d33af855180e0f6bc44c4d9be9d1e4"
+    },
+    "HexResultant.BlockDeterminant": {
+      "path": "HexResultant/BlockDeterminant.lean",
+      "sha256": "5984d99f5620f86100ec0a39c07fd5dba577fdb16e09ca24820aba91d62f28b2"
+    },
+    "HexResultant.DeterminantAlgebra": {
+      "path": "HexResultant/DeterminantAlgebra.lean",
+      "sha256": "685ca83a11715861b2b83dad479c5ca36dc05710f7eafa0df4bc58a81df9fdce"
+    },
+    "HexResultant.SubresultantMinor": {
+      "path": "HexResultant/SubresultantMinor.lean",
+      "sha256": "1b8b7d1210aa004155e418ba4d60534e3c2a758254d3b4348b0df909c4a9ca72"
+    },
+    "HexResultant.FractionPoly": {
+      "path": "HexResultant/FractionPoly.lean",
+      "sha256": "33015153f812cff87ae40c5861452f239fae87c08375c66c94f807b59d06d29e"
+    },
+    "HexResultant.PseudoDivMod": {
+      "path": "HexResultant/PseudoDivMod.lean",
+      "sha256": "5446097ca4fcce1c60fe5b1342b0065794e9a07c6da37e078c42a23490fb0dae"
+    },
+    "HexResultant.Basic": {
+      "path": "HexResultant/Basic.lean",
+      "sha256": "712afccace7dab647c17e4db75b63048859a892845cfa9852fe1feb79c1ea8b5"
+    },
+    "HexResultant.Fraction": {
+      "path": "HexResultant/Fraction.lean",
+      "sha256": "82787f5c59d722fb28a31e5f7547f987a26ed9ff2b4c178398e5a382e9e32161"
+    },
+    "HexResultant.SubresultantExt": {
+      "path": "HexResultant/SubresultantExt.lean",
+      "sha256": "5e22ea95579e46401ae8921d79f5f78b4fd816aaf3094da4568bc992d1270b8f"
+    },
+    "HexResultant.SubresultantCofactor": {
+      "path": "HexResultant/SubresultantCofactor.lean",
+      "sha256": "a64d8f8f2b00e62f657eebb23e1b6a90ae05a45922d960c5d6bd82aeb8b2a195"
+    },
+    "HexResultantTheory.Roots": {
+      "path": "HexResultantTheory/Roots.lean",
+      "sha256": "46f05f5895a240ba014968801e3943626dd16a98ffa0ceda9f43771f6632bafe"
+    },
+    "HexResultantTheory.Specialize": {
+      "path": "HexResultantTheory/Specialize.lean",
+      "sha256": "948ac574d43add021045e4df8a654db605c9150f08fc559fcadd6f51c3135f9e"
+    },
+    "HexResultantTheory.Chain": {
+      "path": "HexResultantTheory/Chain.lean",
+      "sha256": "1da28f0c95c28a2285c05a7bda73bcc5150872c6db9dc654406e1c19138f889a"
+    },
+    "HexResultantTheory.PseudoDivMod": {
+      "path": "HexResultantTheory/PseudoDivMod.lean",
+      "sha256": "b0c0217d27e89351872b5ea2802aa23fd372dcfc41637839d25cbe619de302e8"
+    },
+    "HexNumberFieldTheory.Orientation": {
+      "path": "HexNumberFieldTheory/Orientation.lean",
+      "sha256": "effbc9ab579586f3c26320f8af1dd4c40214f6743e7a8144a8699d561565c041"
+    },
+    "HexNumberField.Basic": {
+      "path": "HexNumberField/Basic.lean",
+      "sha256": "e374d771186d66c31b72e86c120cdcc818152ce03cea25830ebe50e9280e41bb"
+    },
+    "HexNumberField": {
+      "path": "HexNumberField.lean",
+      "sha256": "3f631c005615025b44d64e4b59383f0e2b6e6e70401ea0f9e5f12fd10221b0df"
+    },
+    "HexNumberField.RealSign": {
+      "path": "HexNumberField/RealSign.lean",
+      "sha256": "1adc01bc0fd9bb670562dbeea050c7fac65a6a0c406748b08714901edc70e568"
+    },
+    "HexNumberField.Roots": {
+      "path": "HexNumberField/Roots.lean",
+      "sha256": "97a28eaefb7c85221b4f1af7fb2c5d3aa603734118839d5d5651adf97027bfea"
+    },
+    "HexNumberField.AlgebraicPoly": {
+      "path": "HexNumberField/AlgebraicPoly.lean",
+      "sha256": "c06edb753be2a685e3f55bd79b9faad5992f497e2053dd327f2427616a819915"
+    },
+    "HexNumberField.Disambiguate": {
+      "path": "HexNumberField/Disambiguate.lean",
+      "sha256": "3b7ae8fe2af4488f5987030d78d3fe24f4538ad92b900c84c5cda742cbb28ebe"
+    },
+    "HexNumberField.Lazy": {
+      "path": "HexNumberField/Lazy.lean",
+      "sha256": "363f11c728ccdd25ea10d34bf38e1786507abd15f26e7cef0e838df8f0da4ef2"
+    },
+    "HexNumberField.Convert": {
+      "path": "HexNumberField/Convert.lean",
+      "sha256": "e19fb55f0df34369c67669914c87894065300dad915b065784725c13df6aa56f"
+    },
+    "HexNumberField.PolyQuot": {
+      "path": "HexNumberField/PolyQuot.lean",
+      "sha256": "89fa9439caf0f5bc28947226c8af1d3333e5e4b3742461fafb341f313b95d384"
+    },
+    "HexNumberField.Approx": {
+      "path": "HexNumberField/Approx.lean",
+      "sha256": "70a836121595f9ef6cf4bb60229e9a1760beb5b9f9f729976a259a1656f689d7"
+    },
+    "HexNumberField.Nearest": {
+      "path": "HexNumberField/Nearest.lean",
+      "sha256": "c3e19fdb5ce4e970d47980fbd5442831f730bc5b7da29bea6a02f0f05fbccf11"
+    },
+    "HexNumberField.Interval": {
+      "path": "HexNumberField/Interval.lean",
+      "sha256": "3d5195d640ff7ecfa6880e0ba2cfb761f9ba3f8ced0777f027361e9b2e0191be"
+    },
+    "HexNumberField.IntegerRoots": {
+      "path": "HexNumberField/IntegerRoots.lean",
+      "sha256": "c91503cf16117cafe31873f4b8ccb676f0d58fdf560e4e301940be8a583d441b"
+    },
+    "HexNumberField.Radical": {
+      "path": "HexNumberField/Radical.lean",
+      "sha256": "f637f576d2eb0c749600406c4c16adb4f246bf2dbe9ae7a47d0d4ae7b1a27bcc"
+    },
+    "HexNumberField.Unity": {
+      "path": "HexNumberField/Unity.lean",
+      "sha256": "8530fa6a55fc025964996299b1c93dab3f648983b636e197d43321f17f6412ba"
+    },
+    "HexNumberField.RootSelection": {
+      "path": "HexNumberField/RootSelection.lean",
+      "sha256": "438a361c636dc7e8677f69f596f25ee009ab70b1b5db35083f9e94fce1af4092"
+    },
+    "HexNumberField.Order": {
+      "path": "HexNumberField/Order.lean",
+      "sha256": "5a773f5bbf817955690ce99674244a419da70cf641988f7a0cea09755f6d1115"
+    },
+    "HexNumberField.CommonField": {
+      "path": "HexNumberField/CommonField.lean",
+      "sha256": "60add450d3ea5d4367835efe591cd24efbb594fe95201ded624eeda0208914c9"
+    },
+    "HexRCF.RealCoefficients.IsolationSemantics": {
+      "path": "adapters/HexRCF/RealCoefficients/IsolationSemantics.lean",
+      "sha256": "93a26f3c9a5d6744b871ef06add6ed9247b44f491c25b85417421230712c8048"
+    },
+    "HexRealAlgebraicTheory.Roots": {
+      "path": "HexRealAlgebraicTheory/Roots.lean",
+      "sha256": "2b437ef9f2f8b9fa5be884f870dd724c4d03a864e3cd30343945bf634fbcb0a2"
+    },
+    "HexRealAlgebraicTheory.Polynomial": {
+      "path": "HexRealAlgebraicTheory/Polynomial.lean",
+      "sha256": "55003863083d004dfc447a1dae9a937ebf2917523417ce96260839c349791305"
+    },
+    "HexNumberFieldTheory.Polynomial": {
+      "path": "HexNumberFieldTheory/Polynomial.lean",
+      "sha256": "c137dc0c853e4de08f91c362b21e47a99bf338b10ad717aa97b8ba1b150764ec"
+    },
+    "HexNumberFieldTheory.AlgebraicPoly": {
+      "path": "HexNumberFieldTheory/AlgebraicPoly.lean",
+      "sha256": "0300b7d2ecf5c0f212a0f0dd27743c4640eb00fa81332be1de75831ed6b3b8c0"
+    },
+    "HexNumberFieldTheory.Lazy": {
+      "path": "HexNumberFieldTheory/Lazy.lean",
+      "sha256": "00ce13773d5852a1485bcf37b0ae5670998ac7be032379111b0ff6cd5fc35b31"
+    },
+    "HexNumberFieldTheory.Embedding": {
+      "path": "HexNumberFieldTheory/Embedding.lean",
+      "sha256": "3d2dae020264ac2670529981ed4dc53097e4f9509cff0ed1e43ad4bcf0c88409"
+    },
+    "HexNumberFieldTheory.Field": {
+      "path": "HexNumberFieldTheory/Field.lean",
+      "sha256": "1d75324796137e02a1c6225776998e972fb81a04e9ae486f245057897d654f44"
+    },
+    "HexNumberFieldTheory.Presentation": {
+      "path": "HexNumberFieldTheory/Presentation.lean",
+      "sha256": "af0ce6ac7286c71fa6446f3c7ce31230ad9d4dd43a1552ef5ce9de6b6bebff40"
+    },
+    "HexNumberFieldTheory.AlgebraicRoots": {
+      "path": "HexNumberFieldTheory/AlgebraicRoots.lean",
+      "sha256": "8b0b44c1fa0648801592d2e7d127ca9f5e1fcc7cbe30f426cb715931a42c6697"
+    },
+    "HexNumberFieldTheory.PresentationSemantics": {
+      "path": "HexNumberFieldTheory/PresentationSemantics.lean",
+      "sha256": "6124a1aee839a9e3c40750655966857168d1552cc24a7403ef916028e918c631"
+    },
+    "HexNumberFieldTheory.Coordinates": {
+      "path": "HexNumberFieldTheory/Coordinates.lean",
+      "sha256": "24ce2e5d4bc533ada4b5ad910c79b2e662dd0a243a5e560979bac742a7201125"
+    },
+    "HexNumberFieldTheory.Primitive": {
+      "path": "HexNumberFieldTheory/Primitive.lean",
+      "sha256": "e8c603b8a71d29822d83abccb005b273bb5c692a1a7b75d8d75d9381524b1094"
+    },
+    "HexNumberFieldTheory.ComponentRoots": {
+      "path": "HexNumberFieldTheory/ComponentRoots.lean",
+      "sha256": "0c1c9745b57f8be402798e01c06c4ba150831c4fcde69bb0d86fcfbb8b9b1f8c"
+    },
+    "HexNumberFieldTheory.Roots": {
+      "path": "HexNumberFieldTheory/Roots.lean",
+      "sha256": "47795e8606af58953fd5abf814bc8adf1aec534114b685d1fe2d65dfd6a36f27"
+    },
+    "HexNumberFieldTheory.Yun": {
+      "path": "HexNumberFieldTheory/Yun.lean",
+      "sha256": "1ada7503f3dc306345d59279051652764439e35c8cbe5e508e4e50aaed99a762"
+    },
+    "HexNumberFieldTheory.RootDisambiguation": {
+      "path": "HexNumberFieldTheory/RootDisambiguation.lean",
+      "sha256": "8d2630bf51e0e7ec8d9b9cb8ab37474ac1880e491cf6d01007d8a8d4e4e7768d"
+    },
+    "HexRealAlgebraicTheory.Order": {
+      "path": "HexRealAlgebraicTheory/Order.lean",
+      "sha256": "69bbece8a3ae2e0ca30b704675e1caa2418c464f253b4bcccb2b430e8df52250"
+    },
+    "HexRealAlgebraicTheory.Field": {
+      "path": "HexRealAlgebraicTheory/Field.lean",
+      "sha256": "531bdfee92d55c0788793ee5f172cd060d6a58cb1602afb24f3cab3fe4c0b020"
+    },
+    "HexRealAlgebraicTheory.Basic": {
+      "path": "HexRealAlgebraicTheory/Basic.lean",
+      "sha256": "70d49d73fb7f866f44cbd3826d61d49704157183e0c0d31457c859fbcb844b77"
+    },
+    "HexNumberFieldTheory.Nearest": {
+      "path": "HexNumberFieldTheory/Nearest.lean",
+      "sha256": "4752ff97a5998c4d28a9759fc734e8e49c7fda07a6601519f2482fb974f5cd97"
+    },
+    "HexNumberFieldTheory.Interval": {
+      "path": "HexNumberFieldTheory/Interval.lean",
+      "sha256": "0b3893f0df3d9118787ece03f87326b2142a7852264c9c4dcb9587aeb6c11adf"
+    },
+    "HexNumberFieldTheory.IntegerRoots": {
+      "path": "HexNumberFieldTheory/IntegerRoots.lean",
+      "sha256": "a136c6d67bfd2b8ec781a3c1b04c08c256362983c3409629c6c98bba1169df42"
+    },
+    "HexRealAlgebraic.Order": {
+      "path": "HexRealAlgebraic/Order.lean",
+      "sha256": "4b3ef510f4358d75de4d90f267f067572585be83421aa06958a4246a8245a66a"
+    },
+    "HexRealAlgebraic.Basic": {
+      "path": "HexRealAlgebraic/Basic.lean",
+      "sha256": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd"
+    },
+    "HexRealAlgebraic.Roots": {
+      "path": "HexRealAlgebraic/Roots.lean",
+      "sha256": "f104f80aabb5dc83e4a45ed79b34a53c4a6b0995fe4675348af8e3ff67b20009"
+    },
+    "HexRealAlgebraicTheory.Approx": {
+      "path": "HexRealAlgebraicTheory/Approx.lean",
+      "sha256": "5d6fd4f2af89eb0d470c427c1b9cb48cb5c8e4544e3268097870f7800130e5f3"
+    },
+    "HexRCF.RealCoefficients.Carrier": {
+      "path": "adapters/HexRCF/RealCoefficients/Carrier.lean",
+      "sha256": "98fb15262cecc2bd1c202d1ff0619e6e2b14b213655123ab1db5db665318b29a"
+    },
+    "HexRCF.RealCoefficients.Specialize": {
+      "path": "adapters/HexRCF/RealCoefficients/Specialize.lean",
+      "sha256": "37e71ebfb0b0b30e40ef76d9bbec3e1f924540b0d68671c2120205d572e6a0d5"
+    },
+    "HexRealAlgebraicTheory.Laws": {
+      "path": "HexRealAlgebraicTheory/Laws.lean",
+      "sha256": "c416a08a414169c874618f530d824d0db06929bc192c07956e894cc78ed3c3e2"
+    },
+    "HexRealAlgebraic.Laws": {
+      "path": "HexRealAlgebraic/Laws.lean",
+      "sha256": "9c2f1125b7f5ccb90a8687970afefd38748de918627b27808b2b0419e197a75b"
+    },
+    "HexRealFormulaTheory.Semantics": {
+      "path": "HexRealFormulaTheory/Semantics.lean",
+      "sha256": "d27396d1dc6abfb98a399151de59195ef0fbe10b86031b873d1fb5246f8470ed"
+    },
+    "HexMvPolyTheory.Correspondence": {
+      "path": "HexMvPolyTheory/Correspondence.lean",
+      "sha256": "2f02d53fd633e44251a8251b4c7fd1278b3e569d247f9bb5c6563f69a9623156"
+    },
+    "HexMvPolyTheory.Recursive": {
+      "path": "HexMvPolyTheory/Recursive.lean",
+      "sha256": "449fa8baa2623073a03dbe433f272c22b4caef72efee64b65bfc03be49627489"
+    },
+    "HexMvPolyTheory.Equiv": {
+      "path": "HexMvPolyTheory/Equiv.lean",
+      "sha256": "6674cb3bab198cf7ce10fe8a899f34f6ecf6e7591d30cea942aeb0f6f9b6b360"
+    },
+    "HexMvPoly": {
+      "path": "HexMvPoly.lean",
+      "sha256": "951ecc7de77da71f4f3fc84127bd0f14e38e3af5ace9980821bf16a6b8db3566"
+    },
+    "HexMvPoly.KernelResidue.Denote": {
+      "path": "HexMvPoly/KernelResidue/Denote.lean",
+      "sha256": "82a237588cc25c818d340e06d09cb8bf8993f9c92a5819dafb4b8cbccee11588"
+    },
+    "HexMvPoly.KernelResidue": {
+      "path": "HexMvPoly/KernelResidue.lean",
+      "sha256": "470628ab1bcd9032b1e9e59976b71052553813926cf8aba860d0cebe02a3f1e8"
+    },
+    "HexMvPoly.KernelMap": {
+      "path": "HexMvPoly/KernelMap.lean",
+      "sha256": "afe0fadace39acf245ad945349c77783e320d7732b2deab74ffc9adf274430b6"
+    },
+    "HexMvPoly.Kernel": {
+      "path": "HexMvPoly/Kernel.lean",
+      "sha256": "c4c4176643f3fbbb78feb29478184df6ef5052bb9704e5f321197b6445b4642d"
+    },
+    "HexMvPoly.Structural": {
+      "path": "HexMvPoly/Structural.lean",
+      "sha256": "788a6ab1e77bbbd1f21280819d124623a5df2db786db24c41a784a735ae7be30"
+    },
+    "HexMvPoly.Eval": {
+      "path": "HexMvPoly/Eval.lean",
+      "sha256": "e3b823ea9ad0660af5b22938733bbd4f3c3f0f9c298b25ed4f483a83979583ba"
+    },
+    "HexMvPoly.Query": {
+      "path": "HexMvPoly/Query.lean",
+      "sha256": "9bfe38acae99b1213e87485602a0512d8485ea03b85c73702a2132ceec90ef63"
+    },
+    "HexMvPoly.Operations": {
+      "path": "HexMvPoly/Operations.lean",
+      "sha256": "3704a32f80e3bda8327e73a03a386b2187db7abbec6cb71de20b937473911db6"
+    },
+    "HexMvPoly.Basic": {
+      "path": "HexMvPoly/Basic.lean",
+      "sha256": "7d2df3110916f4c5d469ef74ece0da060cd32ef7c31569a1ff5ca0aafd84c43c"
+    },
+    "HexMvPoly.Mono": {
+      "path": "HexMvPoly/Mono.lean",
+      "sha256": "2c90e92f4ac8765034b0452099a0ead9c415ba8ae67a71493d1e45fe50d877ad"
+    },
+    "HexMvPoly.Ring": {
+      "path": "HexMvPoly/Ring.lean",
+      "sha256": "552ab319dde036cd6533414bdb498972abf71622fc0544235aa4477bb64bc909"
+    },
+    "HexMvPoly.Recursive": {
+      "path": "HexMvPoly/Recursive.lean",
+      "sha256": "9e4ccedd91b6d2271d0144758fd0102a976e38695f814f67df7378a6a612ef55"
+    },
+    "HexMvPolyTheory.Aeval": {
+      "path": "HexMvPolyTheory/Aeval.lean",
+      "sha256": "adea6d556ed4cab7e9926960b413522eebccccfe0c68243083c906daa3f71a6f"
+    },
+    "HexRealFormula": {
+      "path": "HexRealFormula.lean",
+      "sha256": "11cae1e36e3c7297e57e8710e1aee6a78b230d30b427821e767b5adbbe98f0ad"
+    },
+    "HexRealFormula.Prenex": {
+      "path": "HexRealFormula/Prenex.lean",
+      "sha256": "23bab8134bc652fe19a5c007d81fb35f3ee0bc62043f8f31e087ac776a4904d3"
+    },
+    "HexRealFormula.Kernel": {
+      "path": "HexRealFormula/Kernel.lean",
+      "sha256": "d48a926e86b6c18e7bd8bdbd9dc9fb5597d6294d18d5263365cc0529ef9fb421"
+    },
+    "HexRealFormula.Syntax": {
+      "path": "HexRealFormula/Syntax.lean",
+      "sha256": "3a1c18451579765e787cb5388300d9be5a9855eb476723d9d72067da43317f56"
+    },
+    "HexRCF.RealCoefficients.FieldSpecialize": {
+      "path": "adapters/HexRCF/RealCoefficients/FieldSpecialize.lean",
+      "sha256": "165b219ebdb689d99db9340ab2ab054163221d108fbab44c4f90a61641ab3127"
+    },
+    "HexRCF.RealCoefficients.Field": {
+      "path": "adapters/HexRCF/RealCoefficients/Field.lean",
+      "sha256": "c6e2295359475b7a23860ed020abadffd052a08e4be471bbfeb7bbe50aa08bc3"
+    },
+    "HexRCF.RealCoefficients.LiteralSign": {
+      "path": "adapters/HexRCF/RealCoefficients/LiteralSign.lean",
+      "sha256": "b7a7dec0425028c9f2a36e8655ca3d6d19a97cd94ed2d65bf7ee40e92cd947ba"
+    },
+    "HexRCF.RealCoefficients.IntervalSign": {
+      "path": "adapters/HexRCF/RealCoefficients/IntervalSign.lean",
+      "sha256": "165d7a0e5984e9b376934986b16c06676f366b03cfb8bd92ffda7e7e17db269c"
+    },
+    "HexOrderedFnTheory.Real": {
+      "path": "HexOrderedFnTheory/Real.lean",
+      "sha256": "0d07b3d1a5b02937e42a1086c40cc44d47e622b98d00032e8a2e96ded30b9ec8"
+    },
+    "HexOrderedFnTheory.Oracle": {
+      "path": "HexOrderedFnTheory/Oracle.lean",
+      "sha256": "f2afa0b4d739b856a504a95c40a1807b216d05025434b647f18875c7cff235d3"
+    },
+    "HexOrderedFnTheory.Sign": {
+      "path": "HexOrderedFnTheory/Sign.lean",
+      "sha256": "e1f33aa0698346968556aed33c3ee85db7f1bc40d27bf9980985713d7bb222af"
+    },
+    "HexOrderedFn.Oracle": {
+      "path": "HexOrderedFn/Oracle.lean",
+      "sha256": "b89a4b6f24340218744966956b0f6bdbe679bbe04e773b697e6bd81b977be17f"
+    },
+    "HexOrderedFn.Real": {
+      "path": "HexOrderedFn/Real.lean",
+      "sha256": "1b1e7b3c2f35bc73db8e17bfc08892fb83580c45f2833c424fd3efec06076f44"
+    },
+    "HexRationalFn": {
+      "path": "HexRationalFn.lean",
+      "sha256": "93478ebc49618fb3cfac1dc781cf9f2c58bcf6fa13ef958a91da420e9c22e270"
+    },
+    "HexRationalFn.Split": {
+      "path": "HexRationalFn/Split.lean",
+      "sha256": "e7bfa4b91b915a398aac20bcc3b8205225f482df23e927ae3ce2dc64a8132a13"
+    },
+    "HexRationalFn.Eval": {
+      "path": "HexRationalFn/Eval.lean",
+      "sha256": "96fafa0dc02829160c06651524994e8bb1b179cd117e4e55a9579da366b07411"
+    },
+    "HexRationalFn.Field": {
+      "path": "HexRationalFn/Field.lean",
+      "sha256": "3af49f197fa3ca65754277fb51e4210110c6f5c6f738dd745c9b40e7a4bc62ae"
+    },
+    "HexRationalFn.Arithmetic": {
+      "path": "HexRationalFn/Arithmetic.lean",
+      "sha256": "d28f16bb94d67c176d210e304aac97861b1c38a0337b518f8da19387fe7b2faa"
+    },
+    "HexRationalFn.Normalize": {
+      "path": "HexRationalFn/Normalize.lean",
+      "sha256": "de9a95e5624a5b794d3e72648579efd2aa1c7eb227eb6afaf498ac142ea05cf5"
+    },
+    "HexPolyFast.HalfGcd": {
+      "path": "HexPolyFast/HalfGcd.lean",
+      "sha256": "7fe62a1b143d90c8dea01d30f4c1d96afd0e6e3252a478eafba3db60c04a5247"
+    },
+    "HexRationalFn.Basic": {
+      "path": "HexRationalFn/Basic.lean",
+      "sha256": "f1af62a5e23d0242681540ec7f8b4eccfd00d9e5de7baafeabc91de838900566"
+    },
+    "HexRationalFn.Derivative": {
+      "path": "HexRationalFn/Derivative.lean",
+      "sha256": "f34abb8a6f6603c580eed66fccf597d4256f232048bea7556ba7f1d571abb66a"
+    },
+    "HexRationalFn.Cert": {
+      "path": "HexRationalFn/Cert.lean",
+      "sha256": "e2f2812ff5571594dec88168a68e7488dd965c2dd686e43631a77b7f674fcd47"
+    },
+    "HexRationalFn.Map": {
+      "path": "HexRationalFn/Map.lean",
+      "sha256": "bbf892ce8eab4ba0776b276035df758767c48a114a9baa0e51f889429630098c"
+    },
+    "HexOrderedFn.Search": {
+      "path": "HexOrderedFn/Search.lean",
+      "sha256": "94d4c0dcb8a7bd8fd9a725c672dd22865d779f4c84cb8f634050751a1c348cc0"
+    },
+    "HexRealRootsTheory.RealClosed": {
+      "path": "HexRealRootsTheory/RealClosed.lean",
+      "sha256": "5513afec50a0d4423a15fd32b119bd592b9a13f6eba2c35465004f7fa6021981"
+    },
+    "HexRCF.RealCoefficients.Coefficients": {
+      "path": "adapters/HexRCF/RealCoefficients/Coefficients.lean",
+      "sha256": "03f6d64d669f03dc93babbd0786eb717f0b125847d07c3ccbf91d27fcbddc984"
+    },
+    "HexNumberFieldTheory.CommonField": {
+      "path": "HexNumberFieldTheory/CommonField.lean",
+      "sha256": "4c1bce61b746a971a027461d3d88aa12ccd3318c449986666e28ddb8bacd26e1"
+    },
+    "HexRCF.RealCoefficients.Isolations": {
+      "path": "adapters/HexRCF/RealCoefficients/Isolations.lean",
+      "sha256": "22bcfd3aed4ba13a46774406b541ca6bed7b454ce31d0eaccfb3d92c70d87bad"
+    },
+    "HexRCF.Cells": {
+      "path": "HexRCF/Cells.lean",
+      "sha256": "a3b76aaadb40fc20aa5b820362aea4fc13f9b7e1ae23cafbb2afaff404ff5b8a"
+    },
+    "HexRCF.Separation": {
+      "path": "HexRCF/Separation.lean",
+      "sha256": "90f03c5e23c8c143a91d507a0bb46b5cad939ee866d9bf0b99bed529fabb94f5"
+    },
+    "HexRCF.Isolations": {
+      "path": "HexRCF/Isolations.lean",
+      "sha256": "57d8835dea9b51ef1fe024dc65456e91424ae0b4a59c83086e615eef034ea34d"
+    },
+    "HexRealRootsTheory.LiteralIsolations": {
+      "path": "HexRealRootsTheory/LiteralIsolations.lean",
+      "sha256": "e6f321e7a0b2b1c62dfd00ce5811349785530e44b29483f653c76983e9f8d547"
+    },
+    "HexRealRootsTheory.LiteralChain": {
+      "path": "HexRealRootsTheory/LiteralChain.lean",
+      "sha256": "1340aa4bbea7c92820c5ffe0c1223ebd9913b967e06cd2e8fe7020bc5013f5d9"
+    },
+    "HexRealRootsTheory.ChainCorrespond": {
+      "path": "HexRealRootsTheory/ChainCorrespond.lean",
+      "sha256": "31b7abb9d54b5eab7e44c8dcff08f903aee435d282858b5a4e4903c986900e1a"
+    },
+    "HexRealRootsTheory.Separation": {
+      "path": "HexRealRootsTheory/Separation.lean",
+      "sha256": "74363241c8105cb055224eb7e1606a46c3d7dbc9f58b1e88c42adfa7ffbf1a93"
+    },
+    "HexRealRoots.Prec": {
+      "path": "HexRealRoots/Prec.lean",
+      "sha256": "1ed70176af6e1f740b67306dd014dbe766531a59a21b9afbbf8572963ce77c4f"
+    },
+    "HexRealRootsTheory.SturmTheorem": {
+      "path": "HexRealRootsTheory/SturmTheorem.lean",
+      "sha256": "649e621cef8151abed88e0777dc923fbb33154ff400c32ed0c739939c5494e0a"
+    },
+    "HexRealRootsTheory.Sign": {
+      "path": "HexRealRootsTheory/Sign.lean",
+      "sha256": "d8e2f81d7292114ff88f42dd59afb4a410b6bc48ff9fee4d8cdd7cd8a188b339"
+    },
+    "HexRealRootsTheory.SturmChainDefs": {
+      "path": "HexRealRootsTheory/SturmChainDefs.lean",
+      "sha256": "f3099873c1c91321b35fe1554492d4b5e51596fa6fa5d30a3728b2c5b4f728d5"
+    },
+    "HexRCF.SturmReplay": {
+      "path": "HexRCF/SturmReplay.lean",
+      "sha256": "99e2e8336e3e84a8f6ab0a3871b82181f34f8847e27f1ee3bb1d0da03e5616d8"
+    },
+    "HexRCF.SturmCheck": {
+      "path": "HexRCF/SturmCheck.lean",
+      "sha256": "29232eb6823d9f6282832280305e284b55f556fe529b6018f5851064f85a5e4d"
+    },
+    "HexRCF.IsolationCheck": {
+      "path": "HexRCF/IsolationCheck.lean",
+      "sha256": "769624f6a791875b2858369648ed952f27aed15ca7da3409f6cbd46530e89d39"
+    },
+    "HexRCF.SeparationCheck": {
+      "path": "HexRCF/SeparationCheck.lean",
+      "sha256": "25c7540bb2c8f8a22f7b513991c42145b0b77918a6809a8a00177e57b6d23082"
+    },
+    "HexRCF.Regions": {
+      "path": "HexRCF/Regions.lean",
+      "sha256": "c6fb23eff85793d03c96ac57a4f411a1ff0d0ffe8cb120fac4836595f30aedad"
+    },
+    "HexRCF.CellsCheck": {
+      "path": "HexRCF/CellsCheck.lean",
+      "sha256": "ef1ead3f50c30dbfd8c4a19d9c377908aca53f5343590f8bcb815f5012b1a680"
+    },
+    "HexRCF.RealCoefficients.IsolationCheck": {
+      "path": "adapters/HexRCF/RealCoefficients/IsolationCheck.lean",
+      "sha256": "a8d2a0e2d085022a0a07557c2df1524bd04c1163741a7c98fe88bf3ddfbb057f"
+    },
+    "HexRCF.RealCoefficients.IsolationBuild": {
+      "path": "adapters/HexRCF/RealCoefficients/IsolationBuild.lean",
+      "sha256": "e4339a6a7f9409accc9bf9d7f839c2648290c3ee112154c9b23a6187c5a92e38"
+    },
+    "HexRCF.RealCoefficients.IsolationProgress": {
+      "path": "adapters/HexRCF/RealCoefficients/IsolationProgress.lean",
+      "sha256": "0143eb23006edba0511ff7ccb96df356d4c930010f68682cf49ea1b2d769328c"
+    },
+    "HexRCF.RealCoefficients.IsolationAssembly": {
+      "path": "adapters/HexRCF/RealCoefficients/IsolationAssembly.lean",
+      "sha256": "bda13933d1458a99ba11a53bc9426d45675a3cab78bb6ca7ffcac30573deb367"
+    },
+    "HexRCF.RealCoefficients.FieldRootSignsProgress": {
+      "path": "adapters/HexRCF/RealCoefficients/FieldRootSignsProgress.lean",
+      "sha256": "9d7cea0147cbfe2c3842ed849390eb1b4f98557c21a58b847f45bc17734cb0b2"
+    },
+    "HexRCF.RealCoefficients.FieldRootSigns": {
+      "path": "adapters/HexRCF/RealCoefficients/FieldRootSigns.lean",
+      "sha256": "361fb207d8165659ab82a901733fef39120468cddbe1e89a445fe2e4346dd2b9"
+    },
+    "HexRCF.RealCoefficients.FieldDecision": {
+      "path": "adapters/HexRCF/RealCoefficients/FieldDecision.lean",
+      "sha256": "18bd824f86f6483c942caa44826c2947d7c24cea655e65e7530d430bfbd12cac"
+    },
+    "HexRCF.RealCoefficients.CellFormula": {
+      "path": "adapters/HexRCF/RealCoefficients/CellFormula.lean",
+      "sha256": "9ebf19f62eb39ed68d9d46adcee8757475e60abe86bf5dd2d897f28b3a45494a"
+    },
+    "HexRCF.Soundness": {
+      "path": "HexRCF/Soundness.lean",
+      "sha256": "d473058c8aa02d1f28a802a9ffa503143098c63ee1f2ea97beade438c55d999b"
+    },
+    "HexRCF.SignMatrix": {
+      "path": "HexRCF/SignMatrix.lean",
+      "sha256": "dce59a8be6149f2a2ef28727ade244796637ecf3db18b2b488167cea383478d2"
+    },
+    "HexRCF.CommonRoot": {
+      "path": "HexRCF/CommonRoot.lean",
+      "sha256": "128b609121b85c26932c1f2aa1f92e01f996c420f37b9be83d0dbd2feda8fc33"
+    },
+    "HexRCF.CommonRootCheck": {
+      "path": "HexRCF/CommonRootCheck.lean",
+      "sha256": "f45da726a3ba88245ef9d7125de0a3af21b4cef1dd50c1a71c36f09458d3bd38"
+    },
+    "HexRCF.Carrier": {
+      "path": "HexRCF/Carrier.lean",
+      "sha256": "579bd8396ec6f9599ba659ad09580515b014824945e2578933c087d7d6d64465"
+    },
+    "HexRealRootsTheory.SquareFreeCore": {
+      "path": "HexRealRootsTheory/SquareFreeCore.lean",
+      "sha256": "dca211434ad46baba6f1d4f0855007e2a101d58edcc31fbb50b0955b8793a25f"
+    },
+    "HexRCF.Language": {
+      "path": "HexRCF/Language.lean",
+      "sha256": "7ab9b97b75b2d7af84223698adf10bb5c9e9d13ce42af22bbebb9c4e5307f87b"
+    },
+    "HexRCF.Syntax": {
+      "path": "HexRCF/Syntax.lean",
+      "sha256": "824b803171d41e8e2bfc2ea1102de0eea296c716e9aaa65317e4d06015005aad"
+    },
+    "HexRCF.CarrierCheck": {
+      "path": "HexRCF/CarrierCheck.lean",
+      "sha256": "cb37a313a64f6ee4a2ada2edecb950259c8509557fa480ac1f354ca63e8f2127"
+    },
+    "HexRCF.SignMatrixCheck": {
+      "path": "HexRCF/SignMatrixCheck.lean",
+      "sha256": "b42be458081e50c41b3c282c6e4fa04fa7f50e69907b1b1b1a875a6c553381ed"
+    },
+    "HexRCF.Certificate": {
+      "path": "HexRCF/Certificate.lean",
+      "sha256": "1c9abbd46087f15abe8aed320c3d41d7bff3722d163bb2fda503643c41d4c567"
+    },
+    "HexRCF.RealCoefficients.Formula": {
+      "path": "adapters/HexRCF/RealCoefficients/Formula.lean",
+      "sha256": "d60e91f42615d84c2f8213ee6d57c0be39e646cc31dde8cab205f31015a15cd3"
+    },
+    "HexRCF.RealFormula": {
+      "path": "adapters/HexRCF/RealFormula.lean",
+      "sha256": "c76d5affb9db96b1f1d8cace2c555b1948e0112d59fee0c1190208a22d534d87"
+    },
+    "HexRCF.Decision": {
+      "path": "HexRCF/Decision.lean",
+      "sha256": "5c0abcad920ffe863b580508dc7e78e4413c378bd4e93851a1d4464fbcdbaba1"
+    },
+    "HexRCF.DecisionCheck": {
+      "path": "HexRCF/DecisionCheck.lean",
+      "sha256": "e1ef755965a960fb3b42e70d141edfe443042b216cbe06f827b756f6be6fdab4"
+    },
+    "HexRealRoots.Isolate": {
+      "path": "HexRealRoots/Isolate.lean",
+      "sha256": "9248ecadd46f159a0cf21ed4e37d63ed7b122c9e680954f4e3b4a0a584c94f55"
+    },
+    "HexRealRoots.IsolateDescartes": {
+      "path": "HexRealRoots/IsolateDescartes.lean",
+      "sha256": "3c541ac7d4fae67153434667623fc817044f8d7c1200232084894fff281d1081"
+    },
+    "HexRealRoots.Mobius": {
+      "path": "HexRealRoots/Mobius.lean",
+      "sha256": "698ecdfb72258d14c7017787dc1e6119dfda1e5c309ab4f409e59c4a7421698b"
+    },
+    "HexRealRoots.IsolateSturm": {
+      "path": "HexRealRoots/IsolateSturm.lean",
+      "sha256": "aa312354af4b86ac09301efce9074b00fe7b99d8aca2bee6df7a7525fc09c4b2"
+    },
+    "HexRCF.Builder": {
+      "path": "HexRCF/Builder.lean",
+      "sha256": "6edc1b56b972da86ab2afd0fcd3e5d7623ac3bb65d43006d1440262357ed56c4"
+    },
+    "HexRCF.SturmBuilder": {
+      "path": "HexRCF/SturmBuilder.lean",
+      "sha256": "f1eef6d75c7db40400430c45f25412bd32c09922cc4155126e300e75a6b2a573"
+    },
+    "HexRealFormulaTheory.Variables": {
+      "path": "HexRealFormulaTheory/Variables.lean",
+      "sha256": "4799b86987bd8881739856a809fb670c93b26987645f2f083da148928382da37"
+    },
+    "HexRealFormulaTheory.ReifyProof": {
+      "path": "HexRealFormulaTheory/ReifyProof.lean",
+      "sha256": "134e9d930be2a69672dd6d24603c34cc56d9edb7c8db02c326157ace304af261"
+    },
+    "HexReflectTheory.Carrier": {
+      "path": "HexReflectTheory/Carrier.lean",
+      "sha256": "d429b7777fd5bb54fbaf879e6856208c35beaa05281d8b107ac0d8d85e932b37"
+    },
+    "HexReflect": {
+      "path": "HexReflect.lean",
+      "sha256": "68eccb13fd8df771854a3ab1810e8d30ca083c5d7de22e2fd2096c092cf6d5e2"
+    },
+    "HexReflect.KernelResidue": {
+      "path": "HexReflect/KernelResidue.lean",
+      "sha256": "7a3037b554a172584322e05dbdb6ab9f28816f7d6a1051ef693804e7918eab25"
+    },
+    "HexReflect.Kernel": {
+      "path": "HexReflect/Kernel.lean",
+      "sha256": "2147d1a318babcffcce1a3f86069a647355724843567b6daa8e20e4a3dbe25c5"
+    },
+    "HexReflect.Convert": {
+      "path": "HexReflect/Convert.lean",
+      "sha256": "f22951be9512010a9370aef91fe2516cda7484e10ad211566f72b1fb17b4ece3"
+    },
+    "HexReflect.Session": {
+      "path": "HexReflect/Session.lean",
+      "sha256": "7fadcc3ae2c1bc86fc78e759f49f10cb77ef76bd7c241574926694c804b4fc5f"
+    },
+    "HexReflect.Proof": {
+      "path": "HexReflect/Proof.lean",
+      "sha256": "def6dd65ecd36548626a53751b8223c6da0f600b1ab298031e01cd5d70372b48"
+    },
+    "HexReflect.Provider": {
+      "path": "HexReflect/Provider.lean",
+      "sha256": "c3f3927d45b499a4b8444c1e28e4495dbe1ef9a8d07e8512d2296b13db9c30e3"
+    },
+    "HexReflect.Result": {
+      "path": "HexReflect/Result.lean",
+      "sha256": "af9acb6611c7d666fd2d16b73b229574e052cc635fd306df8a9627a4222fd695"
+    },
+    "HexReflect.Budget": {
+      "path": "HexReflect/Budget.lean",
+      "sha256": "3b4785c8aa4d48694f74feadc912845636c73d56b960dd759890afc35f6b03e6"
+    },
+    "HexReflect.State": {
+      "path": "HexReflect/State.lean",
+      "sha256": "ab9fcd14311beee8fbb06ac5f71e4b68cba0ecb6d92199302b8acff21cd5f2ff"
+    },
+    "HexRealFormulaTheory.Normalization": {
+      "path": "HexRealFormulaTheory/Normalization.lean",
+      "sha256": "7e130c67747cc56b053dcbb7c8071f60a33bd4db4148e0520844d3b79ed01bc9"
+    },
+    "HexRCF.RealCoefficients.Radical": {
+      "path": "adapters/HexRCF/RealCoefficients/Radical.lean",
+      "sha256": "419fe5c6e4c9f552b39b398ad58a87511ec87d3881f21737daba507a06216428"
+    },
+    "HexRCF.RealCoefficients.RadicalCheck": {
+      "path": "adapters/HexRCF/RealCoefficients/RadicalCheck.lean",
+      "sha256": "419e46cde9112eac26957cffd864733423101bfa19b08f2d055769957956ffd9"
+    },
+    "HexRCF.RealCoefficients.FieldCarrier": {
+      "path": "adapters/HexRCF/RealCoefficients/FieldCarrier.lean",
+      "sha256": "4ca5508db4952a9dd9bf55930cda57b34aa197edc894e81dfbc0558d6ee6b5d7"
+    },
+    "HexRCF.RealCoefficients.RadicalProgress": {
+      "path": "adapters/HexRCF/RealCoefficients/RadicalProgress.lean",
+      "sha256": "d9b58db19d634b20af7aa9dca7fe2718130b1592bc9cbd5dbc93d2f2a6545c8c"
+    },
+    "HexRealClosureTheory.YunInvariant": {
+      "path": "adapters/HexRealClosureTheory/YunInvariant.lean",
+      "sha256": "ba152314b8c1dd26c58f53186abdf0a97531860e4128ddd7a415383c65bb95bf"
+    },
+    "HexRealClosureTheory.Yun": {
+      "path": "adapters/HexRealClosureTheory/Yun.lean",
+      "sha256": "5b73d2a0af4d87a5fd1b4e9fa957f4afd4fa7932c967c5a649894d4fd0e2a6d8"
+    },
+    "HexRealClosureTheory.Element": {
+      "path": "adapters/HexRealClosureTheory/Element.lean",
+      "sha256": "efa011b7ef68299aa03028e2757aeec638f98379c571795b118488db293a6e06"
+    },
+    "HexRealClosure.Element": {
+      "path": "HexRealClosure/Element.lean",
+      "sha256": "5ee14c68a711310c3615f46b8a449ec5d322e68f7aea1042d67dc6cbe9280d09"
+    },
+    "HexRealClosure.Canonical": {
+      "path": "HexRealClosure/Canonical.lean",
+      "sha256": "808faa1b7aa08bd9eb05213713c1ec51b9ece3c37c73e9fd6f7c51453af0a893"
+    },
+    "HexRealClosure.Basic": {
+      "path": "HexRealClosure/Basic.lean",
+      "sha256": "01647f2a863cb75e35a6558b1f3b247896adffbc459ea98e1ec80276788031b0"
+    },
+    "HexRealClosureTheory.Canonical": {
+      "path": "adapters/HexRealClosureTheory/Canonical.lean",
+      "sha256": "adf43dde2cf2e731bd618b0736d81c76cce40e2ebb4826d8d793e3ef1a8376f7"
+    },
+    "HexSturmTheory.Rational": {
+      "path": "HexSturmTheory/Rational.lean",
+      "sha256": "2719949bc639d9f85e44692c94fa08e088f146fe76fadf170372b44a46ad8d47"
+    },
+    "HexRealRootsTheory.TarskiCount": {
+      "path": "HexRealRootsTheory/TarskiCount.lean",
+      "sha256": "1582179a5add04f7c72f215b22c01ced3e9180a905e76ba20233204210f77256"
+    },
+    "HexRealRootsTheory.TarskiDomain": {
+      "path": "HexRealRootsTheory/TarskiDomain.lean",
+      "sha256": "508631002acf50a01d00679e39565ce9d42308cd7d5b7c2e6219b4aeed80e743"
+    },
+    "HexRealRootsTheory.TarskiInteger": {
+      "path": "HexRealRootsTheory/TarskiInteger.lean",
+      "sha256": "6f32ac226de3a18be3b4512a1752b90bcef6737a1d59ea5caee0e28ef5ac8e4f"
+    },
+    "HexRealAlgebraicTheory.IntegerRoots": {
+      "path": "HexRealAlgebraicTheory/IntegerRoots.lean",
+      "sha256": "ff78731e091ca2dc901f3ada9317ebaccc888129f724f90bdf0feabd266ee90d"
+    },
+    "HexRealClosureTheory.SelectedRoot": {
+      "path": "adapters/HexRealClosureTheory/SelectedRoot.lean",
+      "sha256": "598d711da0245fe4df85ee1a1a6d2a2bb3b31d4775a85ece286cff8595f425fd"
+    },
+    "HexRealClosure.Yun": {
+      "path": "HexRealClosure/Yun.lean",
+      "sha256": "72c048fe4e818757e1ce2862d3076dc0a72b427fa14c90ddf301f1732592b390"
+    },
+    "HexRCF.RealCoefficients.RadicalBuild": {
+      "path": "adapters/HexRCF/RealCoefficients/RadicalBuild.lean",
+      "sha256": "69839559fe9a283e25ffdcafe456e30b7092bd5e7d86c425018aeb21c1d08345"
+    },
+    "HexRCF.RealCoefficients.FieldSignProgress": {
+      "path": "adapters/HexRCF/RealCoefficients/FieldSignProgress.lean",
+      "sha256": "a18402adf580d9144ca5b84e7ab24ac87141e49a609804b3b4fb32aa8202fa99"
+    },
+    "HexRCF.RealCoefficients.FieldRoots": {
+      "path": "adapters/HexRCF/RealCoefficients/FieldRoots.lean",
+      "sha256": "65c4f700c4da95dd7a04946865a01920d24bfb1906873070d4b606b579ab90ba"
+    },
+    "HexRCF.RealCoefficients.FieldBuild": {
+      "path": "adapters/HexRCF/RealCoefficients/FieldBuild.lean",
+      "sha256": "ce2574b3c89bde40d26d9a610e5537313dbb5f68aca28dff93b764e328f5736f"
+    },
+    "HexRCF.RealCoefficients.SignInputs": {
+      "path": "adapters/HexRCF/RealCoefficients/SignInputs.lean",
+      "sha256": "5cde4c91aabfe82fa5cb5e638d6a9057e3ee93ee9cb2edfb3b9d4c26b8ab1a09"
+    },
+    "HexRCF.RealCoefficients.FieldReplay": {
+      "path": "adapters/HexRCF/RealCoefficients/FieldReplay.lean",
+      "sha256": "40e9c09f5b823acca1894631236eb906935239ee81ece2599e029ed26446ce47"
+    },
+    "HexRCF.RealCoefficients.FieldIsolate": {
+      "path": "adapters/HexRCF/RealCoefficients/FieldIsolate.lean",
+      "sha256": "e8f7e93828f69b8be8434537a3efabbaddccf67d4fffcabde27ed7a05f6f4ea9"
+    },
+    "HexRCF.RealCoefficients.FieldBuildBudget": {
+      "path": "adapters/HexRCF/RealCoefficients/FieldBuildBudget.lean",
+      "sha256": "5581f2c288929b2e9ee7c7e6716f89eb7c04025dd4bdfbc408c2d8c2b75f6305"
+    },
+    "HexRCF.RealCoefficients.FiniteReplay": {
+      "path": "adapters/HexRCF/RealCoefficients/FiniteReplay.lean",
+      "sha256": "533f4a327592f2ec3350a478d636cfb0988d869caa4d5729e1bb2011608b8a9c"
+    },
+    "HexRCF.RealCoefficients.FieldDecisionProgress": {
+      "path": "adapters/HexRCF/RealCoefficients/FieldDecisionProgress.lean",
+      "sha256": "0fb2408c46dde473aecfe56dadae8ea5086711287d9de2f7191430ac24a6120a"
+    },
+    "HexRCF.RealCoefficients.Samples": {
+      "path": "adapters/HexRCF/RealCoefficients/Samples.lean",
+      "sha256": "8e67db0e8f6b4be76f778586dd6cb31431a676670305781cab3385a48a4bdf5a"
+    },
+    "HexRealClosureTheory.LocalSample": {
+      "path": "adapters/HexRealClosureTheory/LocalSample.lean",
+      "sha256": "6648106815f808bd5594468fd713658495e4eb7b3ed7759cf1680aaf7d47a39c"
+    },
+    "HexRealClosureTheory.Sample": {
+      "path": "adapters/HexRealClosureTheory/Sample.lean",
+      "sha256": "f272dd6c0efff84084e1a19fc9277d47f736fe2e63c2aa7d26f9ea6467691b8d"
+    },
+    "HexRealClosure.Sample": {
+      "path": "HexRealClosure/Sample.lean",
+      "sha256": "ad739f262a30e89bab2f3a51710cbfc46f4c224a14df7675f6412d5d0f4c4b27"
+    },
+    "HexRealClosure.TowerOrder": {
+      "path": "HexRealClosure/TowerOrder.lean",
+      "sha256": "43d0bafae150de3fb4074f73174dfc8ea5c9f6579e892985831f4ba77c2bdaf0"
+    },
+    "HexRealClosure.TowerContext": {
+      "path": "HexRealClosure/TowerContext.lean",
+      "sha256": "82ec62fe7dd9afc09867fc0c0c8815738137acd1d71ec1d8e121ec8ccb8a1385"
+    },
+    "HexRealClosure.BaseCatalog": {
+      "path": "HexRealClosure/BaseCatalog.lean",
+      "sha256": "64c5e5a1e7ca921376b4e17e9b1bbd4b1a68493d9bd16c11d47405a48cc2aa86"
+    },
+    "HexRealClosure.BasePolynomial": {
+      "path": "HexRealClosure/BasePolynomial.lean",
+      "sha256": "6b63c1095933de727be7df4b083fe3030961927cb4dabbae2223cf027db3c870"
+    },
+    "HexRealClosure.BaseCodec": {
+      "path": "HexRealClosure/BaseCodec.lean",
+      "sha256": "e4461aa8da5f318897c6fcaf45a87a35954e726cabff80f3b060369dc478ae3f"
+    },
+    "HexRealClosure.BaseContext": {
+      "path": "HexRealClosure/BaseContext.lean",
+      "sha256": "b89579a7cf1603f9e00073aa56c90bf2ae3eeaefe7a3b2673861fe0a3c147c1d"
+    },
+    "HexRealClosure.BaseMap": {
+      "path": "HexRealClosure/BaseMap.lean",
+      "sha256": "c817da33236bbc10ae4fe1d8181e08427158bc1aac03bfbd676565ae4b316ccd"
+    },
+    "HexOrderedFn.Infinitesimal": {
+      "path": "HexOrderedFn/Infinitesimal.lean",
+      "sha256": "07150528a009eae5b0bbacc1df73e871d10a5412d35e5b62ae180b87fe918672"
+    },
+    "HexOrderedFn.Extension": {
+      "path": "HexOrderedFn/Extension.lean",
+      "sha256": "3f336ac83236b9378d62aa680fcf714683de79c1ef8ba0a5a4c6aafa7bf00246"
+    },
+    "HexRealClosure.BaseJson": {
+      "path": "HexRealClosure/BaseJson.lean",
+      "sha256": "a2545fb9cb7636d20808b24293a3d68d27d807d1b6aeda53acf46822a31da231"
+    },
+    "HexRealClosure.ContextData": {
+      "path": "HexRealClosure/ContextData.lean",
+      "sha256": "ca29790752b8d25f10d03a9877690a5ff40f1fdf6815c96fe9693941206e662c"
+    },
+    "HexRealClosure.TowerCatalog": {
+      "path": "HexRealClosure/TowerCatalog.lean",
+      "sha256": "e7391b05d1cc1afdf106968b0e9dc4ebe1f86e7699a3aeb9f38653307973cae7"
+    },
+    "HexRealClosure.RootList": {
+      "path": "HexRealClosure/RootList.lean",
+      "sha256": "0288bb848378c80eaff786e3a7a30b486f57732e6dfd08a58f9a6b5665daab66"
+    },
+    "HexRealClosure.TowerRoots": {
+      "path": "HexRealClosure/TowerRoots.lean",
+      "sha256": "7417fbfedf2cf69deadd5adaa37506ecaf225e434924204f9d382ea27a632bca"
+    },
+    "HexRealClosure.TowerTransport": {
+      "path": "HexRealClosure/TowerTransport.lean",
+      "sha256": "40a9f978ebc3e37673497196bff70d770d2fb5911297d9c1223a20526a353d14"
+    },
+    "HexRealClosure.BaseReconciliation": {
+      "path": "HexRealClosure/BaseReconciliation.lean",
+      "sha256": "07d52a1fdbb2152ed34af13c1b0e6676cb354ad0a3803fced9b419c36d4c6b04"
+    },
+    "HexRealClosure.BaseStagedReorder": {
+      "path": "HexRealClosure/BaseStagedReorder.lean",
+      "sha256": "68a092300cf4e9c7fb879e712da7fc5ee36bac70ab80d810d42d49770b1c11fc"
+    },
+    "HexRealClosure.BaseSubsequence": {
+      "path": "HexRealClosure/BaseSubsequence.lean",
+      "sha256": "1099d01be156626950eb4ce1541a37b23036974ebd6b8236c4d242a11ada2ae9"
+    },
+    "HexRealClosure.BasePermutationTotal": {
+      "path": "HexRealClosure/BasePermutationTotal.lean",
+      "sha256": "c4838d184dce525d264655c37a244f9242be5452655abcbf0b53459ce65efac1"
+    },
+    "HexRealClosure.BaseTower": {
+      "path": "HexRealClosure/BaseTower.lean",
+      "sha256": "39d0c6465eb9f751754baad3b4422e75ed54a0c271e970afd8981531e6309d98"
+    },
+    "HexRealClosure.BaseEvaluate": {
+      "path": "HexRealClosure/BaseEvaluate.lean",
+      "sha256": "8e3746a3c64d1f1057885345cf5c29388c4bd01d128fd43a6395789f98652ecb"
+    },
+    "HexRealClosure.BasePermutation": {
+      "path": "HexRealClosure/BasePermutation.lean",
+      "sha256": "52eb34c3b2c9582a930cc539d0a052d35722ca8fea17d6aa611e285145bdeac7"
+    },
+    "HexRealClosure.BasePresentation": {
+      "path": "HexRealClosure/BasePresentation.lean",
+      "sha256": "3b40458e8b53b207d6e701e9a8e085c1b1b9058cbec4b2adc57f4aa2494cf084"
+    },
+    "HexRealClosure.BaseInclusion": {
+      "path": "HexRealClosure/BaseInclusion.lean",
+      "sha256": "30d2fc7ecf861a66256667473e1f4a74182d0071ed6477f6b1bdbc46f594f590"
+    },
+    "HexRealClosure.TowerRefinement": {
+      "path": "HexRealClosure/TowerRefinement.lean",
+      "sha256": "ee04274c112655df6d4b2ff14022eb193876843874f6a49301a439942a5fce1c"
+    },
+    "HexRealClosure.TowerPolynomial": {
+      "path": "HexRealClosure/TowerPolynomial.lean",
+      "sha256": "ea4fe88e83cfbf441a7f249e524649c2efc2682322c9d9675742dc964f4f518c"
+    },
+    "HexRealClosure.FrameFormat": {
+      "path": "HexRealClosure/FrameFormat.lean",
+      "sha256": "c8b496f9648efcea52a470e4fd8bf53782d64dcc83aa9fc20dc1f258fef30526"
+    },
+    "HexRealClosure.CompleteRoots": {
+      "path": "HexRealClosure/CompleteRoots.lean",
+      "sha256": "5904cc9dfdea225a519c42d1f133f5993b0b428ee4b935626d8e4c8935dfe2f1"
+    },
+    "HexRealClosure.RootFactors": {
+      "path": "HexRealClosure/RootFactors.lean",
+      "sha256": "8b78e8a3f7fa51b71b78409ada018ec590972b93b077504354e7322b35612a50"
+    },
+    "HexRealClosure.ZeroFactor": {
+      "path": "HexRealClosure/ZeroFactor.lean",
+      "sha256": "82f59fd07f390db80ddf1541a586ac0f53387fd6e49b972a0cc2095300be6f76"
+    },
+    "HexRealClosure.RootOrder": {
+      "path": "HexRealClosure/RootOrder.lean",
+      "sha256": "99490abdde000647df41d8cb95d32ff96a94198a3c8ac0a9ea25be71632e6fdd"
+    },
+    "HexRealClosure.IsolationRoots": {
+      "path": "HexRealClosure/IsolationRoots.lean",
+      "sha256": "8a7dfd4999699d12e699157f7c930cb663b7f90ed358e90caeee8d741beeeee0"
+    },
+    "HexRealClosure.Isolation": {
+      "path": "HexRealClosure/Isolation.lean",
+      "sha256": "486241c30c0c623b22ea6fbd1f9ccac846d37e3882b00aabac6f72a823d88d37"
+    },
+    "HexRealClosure.BisectionFrontier": {
+      "path": "HexRealClosure/BisectionFrontier.lean",
+      "sha256": "0afa9cea6d4710f8b7a795b0e1696998655fd0bfd208a162a5b33f212d4ddbfe"
+    },
+    "HexRealClosure.Bisection": {
+      "path": "HexRealClosure/Bisection.lean",
+      "sha256": "a2bdcfe1e3652909fd1bed81922e859548a48943d98e811c381c238086aeb085"
+    },
+    "HexRealClosure.Deflation": {
+      "path": "HexRealClosure/Deflation.lean",
+      "sha256": "8fac96a8ef6f7f899e53de7ccada1d0ecf5228662bb497a982a8348504546d0d"
+    },
+    "HexRealClosure.Bounds": {
+      "path": "HexRealClosure/Bounds.lean",
+      "sha256": "ac0f65596a501a8ea515cb70db535d8fbfd9f6ea054cb45ebded4557608eab82"
+    },
+    "HexRealClosure.RootCollection": {
+      "path": "HexRealClosure/RootCollection.lean",
+      "sha256": "ffac6c0ac0017abca8723e956bb97083bf8de969c3f54626c851215064bc3221"
+    },
+    "HexRealClosure.RootTransport": {
+      "path": "HexRealClosure/RootTransport.lean",
+      "sha256": "5bed6b443546f2e62dab178efe367556209a8eb2308b0fbe9e1a1d77dedf9d68"
+    },
+    "HexRealClosureTheory.RootCollection": {
+      "path": "adapters/HexRealClosureTheory/RootCollection.lean",
+      "sha256": "0b08b37772ad977732427b6dd9e278b7018c10ddb6fd7f5c62ca9547db0677e9"
+    },
+    "HexRealClosureTheory.TowerNaturality": {
+      "path": "adapters/HexRealClosureTheory/TowerNaturality.lean",
+      "sha256": "a8933deac46fb0e04362f4075fc87bdca1627515d4df3df75f626cb58ccb2fb7"
+    },
+    "HexRealClosureTheory.TransportPolynomial": {
+      "path": "adapters/HexRealClosureTheory/TransportPolynomial.lean",
+      "sha256": "a90c2dba4f47dc0f4130dab23a8daf00810442731783ca197d2acb73f6588fca"
+    },
+    "HexRealClosureTheory.TowerTransport": {
+      "path": "adapters/HexRealClosureTheory/TowerTransport.lean",
+      "sha256": "019b03cc90fe9535306c31f2663f43214650fc5b3082229df5a00454f248f5ac"
+    },
+    "HexRealClosureTheory.Ambient": {
+      "path": "adapters/HexRealClosureTheory/Ambient.lean",
+      "sha256": "f5f335afb21046ce035f37482e0d764d5cb1d355279e6b36edf223bb6608d29a"
+    },
+    "HexOrderedFnTheory.Infinitesimal": {
+      "path": "HexOrderedFnTheory/Infinitesimal.lean",
+      "sha256": "794e3f0dfc3606dc86a67282f0d160f4a5a67ca8401075d7c0d7df3489e3897a"
+    },
+    "HexRationalFnTheory.Correspondence": {
+      "path": "HexRationalFnTheory/Correspondence.lean",
+      "sha256": "cee9670c11ec3b8f052e555780b8185f3fe79818441b14dd4656a6f27351f3b7"
+    },
+    "HexOrderedFnTheory.Hahn": {
+      "path": "HexOrderedFnTheory/Hahn.lean",
+      "sha256": "e3cb714ae3469c1dd74cabf31071e14f811db69fd4ca2dd556b2f54353603415"
+    },
+    "HexRealClosureTheory.TowerAlgebraic": {
+      "path": "adapters/HexRealClosureTheory/TowerAlgebraic.lean",
+      "sha256": "8b712f381bf707dbdf3ce204254309608b452511ad782a1cd28a893558697182"
+    },
+    "HexRealClosureTheory.TowerModel": {
+      "path": "adapters/HexRealClosureTheory/TowerModel.lean",
+      "sha256": "70d0e57e8ecc78eb9b7675d875157462d27cf9494d49d72bba019eaa6dd1d788"
+    },
+    "HexRealClosureTheory.TowerRefinement": {
+      "path": "adapters/HexRealClosureTheory/TowerRefinement.lean",
+      "sha256": "3a9c999a7d5de7b8a938c69df869a0b0c2c69c3bb74bdee62824c9ee7fa96fb9"
+    },
+    "HexRealClosure.TowerSuffix": {
+      "path": "HexRealClosure/TowerSuffix.lean",
+      "sha256": "89ffb40ed89b45bcdd521a7dc85dee75aafcbdef7e971e0ee191cb216de118a5"
+    },
+    "HexRealClosureTheory.RootTransport": {
+      "path": "adapters/HexRealClosureTheory/RootTransport.lean",
+      "sha256": "e23d22033db04290a3ea13546e476284cc32e74a2a2f4eeb13dfe1f2a3a20a8e"
+    },
+    "HexRealClosureTheory.TowerRoots": {
+      "path": "adapters/HexRealClosureTheory/TowerRoots.lean",
+      "sha256": "0067b8dbdc458417484a474976b86037107c12515357e2b15c55bd801e5bb8c8"
+    },
+    "HexRealClosureTheory.RootTotal": {
+      "path": "adapters/HexRealClosureTheory/RootTotal.lean",
+      "sha256": "fbaa258fff927a0b7c641c3b99a7dbc6f667d56bcacb612aa3526f7e14583c46"
+    },
+    "HexRealClosureTheory.IsolationTotal": {
+      "path": "adapters/HexRealClosureTheory/IsolationTotal.lean",
+      "sha256": "8d1956d2a86a0a8e37dbf9fc20b77269fcdc84cd99b48fd444ef2dd639754ead"
+    },
+    "HexRealClosureTheory.IsolationRoots": {
+      "path": "adapters/HexRealClosureTheory/IsolationRoots.lean",
+      "sha256": "759f9ec00a49137eae527ca101b733c5579575c519b37c3a5b49dba0450b5c0f"
+    },
+    "HexRealClosureTheory.BisectionCounts": {
+      "path": "adapters/HexRealClosureTheory/BisectionCounts.lean",
+      "sha256": "885482c049dbf2081c36ed5dc81a9811b38604e4aec6687f00fc321cd44240d2"
+    },
+    "HexRealClosureTheory.BisectionFrontier": {
+      "path": "adapters/HexRealClosureTheory/BisectionFrontier.lean",
+      "sha256": "1a15ed13cbc21df0bc0ab27729491134ef64dc64f48bb4fa3978b4a68540dee2"
+    },
+    "HexRealClosureTheory.BisectionRoots": {
+      "path": "adapters/HexRealClosureTheory/BisectionRoots.lean",
+      "sha256": "bac2fecc456e18abe74dcbcdfeca109fd85933769f8c566cdc2952eee718660d"
+    },
+    "HexRealClosureTheory.Bisection": {
+      "path": "adapters/HexRealClosureTheory/Bisection.lean",
+      "sha256": "9db48cc22fc429ecd040402bd873378039d63e4a63dcb5ef9e3651cee2842996"
+    },
+    "HexRealClosureTheory.Deflation": {
+      "path": "adapters/HexRealClosureTheory/Deflation.lean",
+      "sha256": "3e13e4d7091fffe7130fb8d3b206c628495ba0533d62989a70ac858d482f90f8"
+    },
+    "HexRealClosureTheory.Isolation": {
+      "path": "adapters/HexRealClosureTheory/Isolation.lean",
+      "sha256": "98109612554afc9ad6ae740e6fb967f5b39138d6091d1854ef3df5a72d01f0d2"
+    },
+    "HexRealClosureTheory.Bounds": {
+      "path": "adapters/HexRealClosureTheory/Bounds.lean",
+      "sha256": "08d13162d6e9a16954daf01cd44e54035487c199ba81d243648449c687877749"
+    },
+    "HexRealClosureTheory.RootFactors": {
+      "path": "adapters/HexRealClosureTheory/RootFactors.lean",
+      "sha256": "3292c5c601183ea4cefc51a287ef77be328ef4a48bb3e56a73292edf7ea4a0c1"
+    },
+    "HexRealClosureTheory.ZeroFactor": {
+      "path": "adapters/HexRealClosureTheory/ZeroFactor.lean",
+      "sha256": "0d011076da685588e08f134c501c6bd0ea935b80e61d6206ee94859f1a643ec8"
+    },
+    "HexRealClosureTheory.RootOrder": {
+      "path": "adapters/HexRealClosureTheory/RootOrder.lean",
+      "sha256": "6dbb6203ff88345d17cd04efe2911e1e1b9ceed2e1e598ddfc1aad66d97948e7"
+    },
+    "HexSignDetTheory.ComparisonProducer": {
+      "path": "HexSignDetTheory/ComparisonProducer.lean",
+      "sha256": "ebeadad6504a5ac012ce478edcd1875412d8063faf2f84435f3a77f829a90523"
+    },
+    "HexSignDetTheory.CommonProduct": {
+      "path": "HexSignDetTheory/CommonProduct.lean",
+      "sha256": "b85b5704710fc9efde8132865a795a6965dacca9885c66e9b1d94a56e4e83bd7"
+    },
+    "HexSignDetTheory.ThomReencoding": {
+      "path": "HexSignDetTheory/ThomReencoding.lean",
+      "sha256": "a88a4db82c234971cd0670dfa3e13e5903d0d9ce16bf2d5cc774aeb19d43d82c"
+    },
+    "HexSignDetTheory.ReencodingRefinement": {
+      "path": "HexSignDetTheory/ReencodingRefinement.lean",
+      "sha256": "b714a008e88915db9d4a5c03eb3902c8b36e1bd3cd2c1777939a389d48c8b901"
+    },
+    "HexSignDetTheory.ReencodingProducer": {
+      "path": "HexSignDetTheory/ReencodingProducer.lean",
+      "sha256": "e749be16fca6aec993f2a9f2cc3df375e4ff1e395a375a58b1447ae604ed6146"
+    },
+    "HexRealClosureTheory.RootIntervals": {
+      "path": "adapters/HexRealClosureTheory/RootIntervals.lean",
+      "sha256": "974a9580af37bc21b518efdcc0657dad7389c7a3faace83a6a1914a004838cdd"
+    },
+    "HexRealClosureTheory.RootList": {
+      "path": "adapters/HexRealClosureTheory/RootList.lean",
+      "sha256": "eaa61bcdea92d22671c6e08fdf0e725ca9b620b6a35b434f3572eec6f730192c"
+    },
+    "HexRCF.RealCoefficients.RepresentationSpecialize": {
+      "path": "adapters/HexRCF/RealCoefficients/RepresentationSpecialize.lean",
+      "sha256": "ea71612596ca8548139081f8a41fdcc36946252ddb7d066b188aac6d0bff0a7b"
+    },
+    "HexRCF.CellReplay.Algebraic.Read": {
+      "path": "conformance/HexRCF/CellReplay/Algebraic/Read.lean",
+      "sha256": "0184c3da8d136a185aba7edb47f28ecccf6297fe2a1447c0553cf73f397924a4"
+    },
+    "HexRCF.RealCoefficients.CellPacketRead": {
+      "path": "adapters/HexRCF/RealCoefficients/CellPacketRead.lean",
+      "sha256": "4b52740fe4072d39fceb0cc1b9d92e0ad30c75ed5af2c5e8ee4366102d98efec"
+    },
+    "HexRCF.CellReplay.Algebraic.Records": {
+      "path": "conformance/HexRCF/CellReplay/Algebraic/Records.lean",
+      "sha256": "9c670e9600f5af561810d92902a6c47a7a6a5e3cfa55faf78b9b76459eff0795"
+    },
+    "HexRCF.RealCoefficients.ScalarPacket": {
+      "path": "adapters/HexRCF/RealCoefficients/ScalarPacket.lean",
+      "sha256": "edcab9ea8c6b9d6ac633203cc2c97a83d8400b00e4e0a5017e428d0ef3c45872"
+    },
+    "HexRCF.SelectedRoot.RowTools": {
+      "path": "conformance/HexRCF/SelectedRoot/RowTools.lean",
+      "sha256": "fc28b905c2f53523467acb9247c236a5d117b5869490afff314e4c78ce68942d"
+    },
+    "HexRCF.SelectedRoot.ReplayTools": {
+      "path": "conformance/HexRCF/SelectedRoot/ReplayTools.lean",
+      "sha256": "2e508afa478b6bd8095366285f67be278a27febae3631afafd43b4677db3790e"
+    },
+    "HexRealClosureTheory.KernelReplay": {
+      "path": "adapters/HexRealClosureTheory/KernelReplay.lean",
+      "sha256": "0615707961886997a8079a428c771800472e93bd1067228c927feed0cbb019b0"
+    },
+    "HexRealClosure.InverseReplay": {
+      "path": "HexRealClosure/InverseReplay.lean",
+      "sha256": "712d4197a9cddfea50a5f2b2982ad4a0e2a2a0438d4de0a6782ce4ca4692f190"
+    },
+    "HexRealClosure.ReplayOperations": {
+      "path": "HexRealClosure/ReplayOperations.lean",
+      "sha256": "4647ab9c169a6bff3e9d4b3d2e5f3e1f6740668a5725b3c456aabc9708b051c0"
+    },
+    "HexRealClosure.Packing": {
+      "path": "HexRealClosure/Packing.lean",
+      "sha256": "3fb35810012cf56785d92398da9ab7accedf25d37eb9d383bfc157f09b92c13e"
+    },
+    "HexRealClosure.InversePacking": {
+      "path": "HexRealClosure/InversePacking.lean",
+      "sha256": "96c68d568157826045d993310d9c7cd6d6800a001e4b653ca0ab15d36716ea7c"
+    },
+    "HexRealClosure.ValueSigns": {
+      "path": "HexRealClosure/ValueSigns.lean",
+      "sha256": "a864e53caa1096667dda3177bcdd785bf8d84500408444005c1a72de23f80c75"
+    },
+    "HexRCF.SelectedRoot.Packets": {
+      "path": "conformance/HexRCF/SelectedRoot/Packets.lean",
+      "sha256": "ae9dd1cc60897dffad8394e4e824bff0295077ec594482805a271b445de93860"
+    },
+    "HexRCF.SelectedRoot.PacketFields": {
+      "path": "conformance/HexRCF/SelectedRoot/PacketFields.lean",
+      "sha256": "20e39b32e55f7dd1bf9cbe4ce58fa0c9205ef756ce4ef1de916fad017cd76791"
+    },
+    "HexRCF.SelectedRoot.Read": {
+      "path": "conformance/HexRCF/SelectedRoot/Read.lean",
+      "sha256": "7ed6bb9402c562879604a4d32d93f8abb60d06d83160adb76e565c6342410b8e"
+    },
+    "HexRCF.SelectedRoot.Literals": {
+      "path": "conformance/HexRCF/SelectedRoot/Literals.lean",
+      "sha256": "8ea46de6f8cfdb6990723cedf445a85c1b64a7885d5939c4c69857a6404ab0e6"
+    },
+    "HexRealClosure.FactOperations": {
+      "path": "HexRealClosure/FactOperations.lean",
+      "sha256": "4998b829d8f878c05363973e940e223ae72efe11a32a7f2c3049304560c7e720"
+    },
+    "HexRCF.SelectedRoot.Data": {
+      "path": "conformance/HexRCF/SelectedRoot/Data.lean",
+      "sha256": "8a5c6bd992a418552513844f31d82ffb894487a0f8bb7b15d6f731d063c96a9e"
+    },
+    "HexRCF.RealCoefficients.NumberField": {
+      "path": "adapters/HexRCF/RealCoefficients/NumberField.lean",
+      "sha256": "6227a4158bc87a476fa73ce59e3114f1f8ab6f7f6b4c75f239add3dc69836ee0"
+    },
+    "HexRealClosureTheory.NumberFieldTower": {
+      "path": "adapters/HexRealClosureTheory/NumberFieldTower.lean",
+      "sha256": "28e2428e3ac950943dcc6ddd693e1b4804149e8aecc8c651e43595442c7b7561"
+    },
+    "HexRealClosureTheory.TrivialTower": {
+      "path": "adapters/HexRealClosureTheory/TrivialTower.lean",
+      "sha256": "a9975fa90da0b93c467e5d133c4ff0237df8c8709f87ab51fd0f8b64525a74b1"
+    },
+    "HexRealClosureTheory.Trivial": {
+      "path": "adapters/HexRealClosureTheory/Trivial.lean",
+      "sha256": "daa68dee38b96b30f60eec7ea9034a667f14b0861addc8827182b6641b8805c4"
+    },
+    "HexRealClosure.Trivial": {
+      "path": "HexRealClosure/Trivial.lean",
+      "sha256": "e2696b8767184265f0813b319d23c007cad9d487b391b210667476ba6f6454fd"
+    },
+    "HexRealClosure.TrivialTower": {
+      "path": "HexRealClosure/TrivialTower.lean",
+      "sha256": "7be2934f3076ca452ced7a0fee606f59a0b97668bd8805448a8cfc968981deca"
+    },
+    "HexRealClosureTheory.NumberField": {
+      "path": "adapters/HexRealClosureTheory/NumberField.lean",
+      "sha256": "f6fe0b4817fa336022565c8b90306a233c76e6ddf67ecf93565875548f17dc69"
+    },
+    "HexRealAlgebraicTheory.FieldSign": {
+      "path": "HexRealAlgebraicTheory/FieldSign.lean",
+      "sha256": "4380c4510c6e9b2ed24f1b21a03843fd230cb48472cdc340869259bfc435a25d"
+    },
+    "HexNumberFieldTheory.RealSign": {
+      "path": "HexNumberFieldTheory/RealSign.lean",
+      "sha256": "b4e783610c92a2abe763377a732d87ff28f396015de6b2b2db5cee251b629ef1"
+    },
+    "HexNumberFieldTheory.RealSignBound": {
+      "path": "HexNumberFieldTheory/RealSignBound.lean",
+      "sha256": "65c0b081f49f12976d73f001fe295172093dce87d4961d3370b654f787bc6345"
+    },
+    "HexRealAlgebraic.FieldSign": {
+      "path": "HexRealAlgebraic/FieldSign.lean",
+      "sha256": "248696d782ede78640fc95ac1abae2914a34c8818f26369b5439d75500900fd1"
+    },
+    "HexRealClosure.NumberField": {
+      "path": "HexRealClosure/NumberField.lean",
+      "sha256": "824bfe0efd7aae88a17ebb5e0640635442da6ac27f57a76b8e744d05f82cddaf"
+    },
+    "HexRealClosure.NumberFieldTower": {
+      "path": "HexRealClosure/NumberFieldTower.lean",
+      "sha256": "57d282e21ec388dad4ef40a8e477c491817843cc178c51ddddba9186e6c11092"
+    },
+    "HexRCF.SelectedRoot.KernelCheck": {
+      "path": "conformance/HexRCF/SelectedRoot/KernelCheck.lean",
+      "sha256": "12e7e2e3f4667a76dc89c4b36796bff177f3c187b81adc5eb5e049ff1ce6669d"
+    },
+    "HexRealClosure.RootPolicy": {
+      "path": "HexRealClosure/RootPolicy.lean",
+      "sha256": "45ddaaab271ab5ac16f79f4c4ac5997f8cab32c15f2ca03ca4970bfb6e7dc784"
+    },
+    "HexRealClosure.IsolationPolicy": {
+      "path": "HexRealClosure/IsolationPolicy.lean",
+      "sha256": "96672fb561cc8ac235336ba068fc092e4b8d4c14f6b498b9345db41dc43a6e8a"
+    },
+    "HexRCF.SelectedRoot.Row": {
+      "path": "conformance/HexRCF/SelectedRoot/Row.lean",
+      "sha256": "d625dfed6fa404d90182da47d0da111eb9b8beba1bb2fa994b7552a402f7ff3b"
+    },
+    "HexRCF.SelectedRoot.Upper": {
+      "path": "conformance/HexRCF/SelectedRoot/Upper.lean",
+      "sha256": "1c519d0e673f8cf7cd94f112ab3e5668a71b08c6b90933a078ad84e2cb432e9c"
+    },
+    "HexRCF.SelectedRoot.FrozenCollect": {
+      "path": "conformance/HexRCF/SelectedRoot/FrozenCollect.lean",
+      "sha256": "a2b14e2e673a09868bee85db3cb5a987819d2c4750f2e4e97c112223a4f6199c"
+    },
+    "HexRCF.SelectedRoot.Frozen": {
+      "path": "conformance/HexRCF/SelectedRoot/Frozen.lean",
+      "sha256": "2a85cbd9787097d80e34225e8a66f7fcc5fa36321fe979592e274bab2ce99bd1"
+    },
+    "HexRCF.SelectedRoot.Collect": {
+      "path": "conformance/HexRCF/SelectedRoot/Collect.lean",
+      "sha256": "4a87b1ae2332a0481a779889faf0a7b266eea54c8cbc200bf11d5f76c82cd554"
+    },
+    "HexRCF.SelectedRoot.Intermediates": {
+      "path": "conformance/HexRCF/SelectedRoot/Intermediates.lean",
+      "sha256": "2da4e76f34bbaac347e0f67804b6fb5db9ef98b63b4c2ed14fa57bd83d1899e1"
+    },
+    "HexRCF.CellReplay.Algebraic.Scalars": {
+      "path": "conformance/HexRCF/CellReplay/Algebraic/Scalars.lean",
+      "sha256": "0df74426b3749af2948e2280d5f62fb551b3884498d81d63cffaf70e33713a42"
+    },
+    "HexRCF.CellReplay.Algebraic.ScalarData1": {
+      "path": "conformance/HexRCF/CellReplay/Algebraic/ScalarData1.lean",
+      "sha256": "d0faf9a212fdfe1bbbaf82ef2b7d1883b0a67c3016de7fa95adbd2d9c3b4f37c"
+    },
+    "HexRCF.CellReplay.Algebraic.ScalarData0": {
+      "path": "conformance/HexRCF/CellReplay/Algebraic/ScalarData0.lean",
+      "sha256": "070c3910d0452ba5b756a50f7043a59fae2c55aa7a8cd515ea21971a9f0e3ff2"
+    },
+    "HexRCF.CellReplay.Algebraic.Sections": {
+      "path": "conformance/HexRCF/CellReplay/Algebraic/Sections.lean",
+      "sha256": "aba104d43d044b7b9ed7814f7605bf6517305b0c12fc8969815779426a5e4c14"
+    },
+    "HexRCF.RealCoefficients.CellRead": {
+      "path": "adapters/HexRCF/RealCoefficients/CellRead.lean",
+      "sha256": "471429e82e29cf6dfefdb1475159f35f004f85ea7e24441c1e021fe2c40c6518"
+    },
+    "HexRCF.RealCoefficients.RowReplay": {
+      "path": "adapters/HexRCF/RealCoefficients/RowReplay.lean",
+      "sha256": "5ebf3f264fbcf64b0a5099b96b5de2b5dd702e52359984f36d53e4fb48d5f20c"
+    },
+    "HexRCF.RealCoefficients.SectorReplay": {
+      "path": "adapters/HexRCF/RealCoefficients/SectorReplay.lean",
+      "sha256": "695619cbb730df5408b73e00f41e0e8da6be9c504cc5099265c3ea24b12345e5"
+    },
+    "HexRCF.RealCoefficients.CellPacketConvert": {
+      "path": "adapters/HexRCF/RealCoefficients/CellPacketConvert.lean",
+      "sha256": "a3036274f685ff28e3f1804170d3685d6d3eddb45e497cc37065bb844b2e2c84"
+    },
+    "HexRCF.RealCoefficients.SectorSamples": {
+      "path": "adapters/HexRCF/RealCoefficients/SectorSamples.lean",
+      "sha256": "4c8a824d3edac974cb0f6822e49cd7ec9d7f71c582555b30b91ce52c290efa84"
+    },
+    "HexRCF.RealCoefficients.BoundarySigns": {
+      "path": "adapters/HexRCF/RealCoefficients/BoundarySigns.lean",
+      "sha256": "eff79c82c489d9342d736efcb49b720638399def180065667a4f71a2b4eada03"
+    },
+    "HexRCF.RealCoefficients.RootCells": {
+      "path": "adapters/HexRCF/RealCoefficients/RootCells.lean",
+      "sha256": "994296b1984a09c8f62f38662a3425fe22ce45a89e33587e61a8c58870064d66"
+    },
+    "HexRCF.RealCoefficients.PointRows": {
+      "path": "adapters/HexRCF/RealCoefficients/PointRows.lean",
+      "sha256": "804a9d34e290e0f04630e5783c828f9f80a39c1645e0a0745ed49751f622f7df"
+    },
+    "HexRCF.RealCoefficients.CellReplay": {
+      "path": "adapters/HexRCF/RealCoefficients/CellReplay.lean",
+      "sha256": "b651d03f2da34444564405f1adc47778d0e0385b62d34aacba2b96f9983a6b5e"
+    },
+    "HexRCF.RealCoefficients.RepresentationCells": {
+      "path": "adapters/HexRCF/RealCoefficients/RepresentationCells.lean",
+      "sha256": "7662780d9958fc6601bcdefa1523e5c4adb6cbedcdad2774b8e8a0caad33124b"
+    },
+    "HexRCF.RealCoefficients.RepresentationCarrier": {
+      "path": "adapters/HexRCF/RealCoefficients/RepresentationCarrier.lean",
+      "sha256": "b3f31487c1e330f5146068948e59845d7da0e3cf3be391c1c582cc4a0823972f"
+    },
+    "HexRCF.CellReplay.Algebraic.Inputs": {
+      "path": "conformance/HexRCF/CellReplay/Algebraic/Inputs.lean",
+      "sha256": "250f7092bf30ca4b0f214ebf17d5b163c27428cb924005e910dec30b4bd85117"
+    },
+    "HexRCF.CellReplay.Algebraic.Literals": {
+      "path": "conformance/HexRCF/CellReplay/Algebraic/Literals.lean",
+      "sha256": "df237644ea8158a58161a8d9a0cef1a398cfdedca6d06995c4a96b623a340980"
+    },
+    "HexRCF.CellReplay.Algebraic.LiteralData1": {
+      "path": "conformance/HexRCF/CellReplay/Algebraic/LiteralData1.lean",
+      "sha256": "26134651bb1f9664862c9fac294e08dd8e1e09a381319a630286a76469bcd0d5"
+    },
+    "HexRCF.CellReplay.Algebraic.LiteralData0": {
+      "path": "conformance/HexRCF/CellReplay/Algebraic/LiteralData0.lean",
+      "sha256": "09ce4eeb6d68e68e8a59f6bbebcf83d5a708d84639921e1e83fd3d2fd2a2251c"
+    },
+    "HexRCF.CellReplay.Algebraic.Schema": {
+      "path": "conformance/HexRCF/CellReplay/Algebraic/Schema.lean",
+      "sha256": "f5d831117ff3d3d7e0bf5ca44c3a842328c61d954cd928885a0dfe9abdd34f7d"
+    }
+  },
+  "external_imports": [
+    "Batteries.Util.Panic",
+    "Init",
+    "Init.Data.AC",
+    "Init.Data.Array.Lemmas",
+    "Init.Data.Char.Lemmas",
+    "Init.Data.Dyadic.Basic",
+    "Init.Data.Dyadic.Round",
+    "Init.Data.Int.Basic",
+    "Init.Data.Int.Lemmas",
+    "Init.Data.Int.Repr",
+    "Init.Data.Int.ToString",
+    "Init.Data.List.FinRange",
+    "Init.Data.List.Lemmas",
+    "Init.Data.List.Nat.Sum",
+    "Init.Data.List.Perm",
+    "Init.Data.List.Sort.Basic",
+    "Init.Data.List.TakeDrop",
+    "Init.Data.Nat.Gcd",
+    "Init.Data.Nat.Sqrt",
+    "Init.Data.Nat.ToString",
+    "Init.Data.Order",
+    "Init.Data.Order.Lemmas",
+    "Init.Data.Rat.Lemmas",
+    "Init.Data.Repr",
+    "Init.Data.String.Basic",
+    "Init.Data.String.Lemmas.Basic",
+    "Init.Data.Zero",
+    "Init.Grind",
+    "Init.Grind.Ring.Basic",
+    "Init.Grind.Ring.Field",
+    "Init.GrindInstances.Ring.Rat",
+    "Init.Omega",
+    "Init.TacticsExtra",
+    "Lean",
+    "Lean.Data.RArray",
+    "Lean.Elab.Command",
+    "Lean.Message",
+    "Lean.Meta.Check",
+    "Lean.Meta.Reduce",
+    "Lean.Meta.Sym.Arith",
+    "Lean.Meta.Sym.ExprPtr",
+    "Lean.Meta.Tactic.Cbv",
+    "Lean.Meta.Tactic.Simp",
+    "Lean.Meta.Tactic.Simp.Main",
+    "Lean.Util.CollectAxioms",
+    "Mathlib",
+    "Mathlib.Algebra.BigOperators.Fin",
+    "Mathlib.Algebra.BigOperators.Ring.Multiset",
+    "Mathlib.Algebra.CharP.Defs",
+    "Mathlib.Algebra.EuclideanDomain.Int",
+    "Mathlib.Algebra.Field.Basic",
+    "Mathlib.Algebra.Field.MinimalAxioms",
+    "Mathlib.Algebra.Field.ZMod",
+    "Mathlib.Algebra.GCDMonoid.Nat",
+    "Mathlib.Algebra.MvPolynomial.Basic",
+    "Mathlib.Algebra.MvPolynomial.CommRing",
+    "Mathlib.Algebra.MvPolynomial.Equiv",
+    "Mathlib.Algebra.MvPolynomial.Monad",
+    "Mathlib.Algebra.MvPolynomial.PDeriv",
+    "Mathlib.Algebra.Order.BigOperators.Group.Finset",
+    "Mathlib.Algebra.Order.BigOperators.GroupWithZero.Multiset",
+    "Mathlib.Algebra.Order.Field.Basic",
+    "Mathlib.Algebra.Order.Field.Subfield",
+    "Mathlib.Algebra.Order.Ring.Abs",
+    "Mathlib.Algebra.Order.Ring.Basic",
+    "Mathlib.Algebra.Order.Ring.InjSurj",
+    "Mathlib.Algebra.Order.Ring.Int",
+    "Mathlib.Algebra.Polynomial.Basic",
+    "Mathlib.Algebra.Polynomial.BigOperators",
+    "Mathlib.Algebra.Polynomial.Coeff",
+    "Mathlib.Algebra.Polynomial.Degree.Defs",
+    "Mathlib.Algebra.Polynomial.Degree.Domain",
+    "Mathlib.Algebra.Polynomial.Degree.IsMonicOfDegree",
+    "Mathlib.Algebra.Polynomial.Degree.Lemmas",
+    "Mathlib.Algebra.Polynomial.Degree.Operations",
+    "Mathlib.Algebra.Polynomial.Degree.TrailingDegree",
+    "Mathlib.Algebra.Polynomial.Degree.Units",
+    "Mathlib.Algebra.Polynomial.Derivative",
+    "Mathlib.Algebra.Polynomial.Div",
+    "Mathlib.Algebra.Polynomial.Eval.Coeff",
+    "Mathlib.Algebra.Polynomial.Eval.Defs",
+    "Mathlib.Algebra.Polynomial.Eval.Degree",
+    "Mathlib.Algebra.Polynomial.Eval.Irreducible",
+    "Mathlib.Algebra.Polynomial.Expand",
+    "Mathlib.Algebra.Polynomial.FieldDivision",
+    "Mathlib.Algebra.Polynomial.Monic",
+    "Mathlib.Algebra.Polynomial.Monomial",
+    "Mathlib.Algebra.Polynomial.RingDivision",
+    "Mathlib.Algebra.Polynomial.Roots",
+    "Mathlib.Algebra.Polynomial.SpecificDegree",
+    "Mathlib.Algebra.Polynomial.Splits",
+    "Mathlib.Algebra.Polynomial.Taylor",
+    "Mathlib.Algebra.Ring.GeomSum",
+    "Mathlib.Algebra.Ring.GrindInstances",
+    "Mathlib.Algebra.Ring.InjSurj",
+    "Mathlib.Algebra.Ring.Int.Parity",
+    "Mathlib.Algebra.Ring.Int.Units",
+    "Mathlib.Algebra.Ring.MinimalAxioms",
+    "Mathlib.Algebra.Ring.TransferInstance",
+    "Mathlib.Algebra.Squarefree.Basic",
+    "Mathlib.Analysis.Analytic.Polynomial",
+    "Mathlib.Analysis.Calculus.Deriv.Polynomial",
+    "Mathlib.Analysis.Calculus.FDeriv.Add",
+    "Mathlib.Analysis.Calculus.FDeriv.Prod",
+    "Mathlib.Analysis.Calculus.FDeriv.RestrictScalars",
+    "Mathlib.Analysis.Complex.Basic",
+    "Mathlib.Analysis.Complex.CauchyIntegral",
+    "Mathlib.Analysis.Complex.Norm",
+    "Mathlib.Analysis.Complex.Polynomial.Basic",
+    "Mathlib.Analysis.Complex.Polynomial.GaussLucas",
+    "Mathlib.Analysis.Convex.Integral",
+    "Mathlib.Analysis.InnerProductSpace.GramSchmidtOrtho",
+    "Mathlib.Analysis.Matrix.Normed",
+    "Mathlib.Analysis.Normed.Module.Convex",
+    "Mathlib.Analysis.Polynomial.CauchyBound",
+    "Mathlib.Analysis.Polynomial.MahlerMeasure",
+    "Mathlib.Analysis.Polynomial.Order",
+    "Mathlib.Analysis.Real.Sqrt",
+    "Mathlib.Analysis.SpecialFunctions.Integrals.Basic",
+    "Mathlib.Analysis.SpecialFunctions.Pow.Real",
+    "Mathlib.Basic.Real.Basic",
+    "Mathlib.Basic.Sign.Basic",
+    "Mathlib.Basic.Sign.Defs",
+    "Mathlib.Data.Fin.Rev",
+    "Mathlib.Data.Fin.Tuple.Basic",
+    "Mathlib.Data.Fin.VecNotation",
+    "Mathlib.Data.Int.Cast.Lemmas",
+    "Mathlib.Data.List.OfFn",
+    "Mathlib.Data.List.SignVariations",
+    "Mathlib.Data.List.Sort",
+    "Mathlib.Data.Nat.Choose.Bounds",
+    "Mathlib.Data.Nat.Digits.Defs",
+    "Mathlib.Data.Nat.Find",
+    "Mathlib.Data.Prod.Lex",
+    "Mathlib.Data.Rat.Cast.Order",
+    "Mathlib.Data.Rat.Defs",
+    "Mathlib.Data.Rat.Lemmas",
+    "Mathlib.Data.Sym.NatCard",
+    "Mathlib.Data.ZMod.Basic",
+    "Mathlib.FieldTheory.AlgebraicClosure",
+    "Mathlib.FieldTheory.Finite.Extension",
+    "Mathlib.FieldTheory.Finite.GaloisField",
+    "Mathlib.FieldTheory.Galois.Basic",
+    "Mathlib.FieldTheory.IsAlgClosed.AlgebraicClosure",
+    "Mathlib.FieldTheory.IsAlgClosed.Basic",
+    "Mathlib.FieldTheory.IsRealClosed.Basic",
+    "Mathlib.FieldTheory.Minpoly.Field",
+    "Mathlib.FieldTheory.Minpoly.Finite",
+    "Mathlib.FieldTheory.Perfect",
+    "Mathlib.FieldTheory.PrimitiveElement",
+    "Mathlib.FieldTheory.RatFunc.AsPolynomial",
+    "Mathlib.FieldTheory.RatFunc.Basic",
+    "Mathlib.FieldTheory.Relrank",
+    "Mathlib.FieldTheory.Separable",
+    "Mathlib.Lean.Expr.Basic",
+    "Mathlib.LinearAlgebra.Dimension.Constructions",
+    "Mathlib.LinearAlgebra.Finsupp.LinearCombination",
+    "Mathlib.LinearAlgebra.Matrix.AbsoluteValue",
+    "Mathlib.LinearAlgebra.Matrix.Adjugate",
+    "Mathlib.LinearAlgebra.Matrix.Block",
+    "Mathlib.LinearAlgebra.Matrix.Determinant.Basic",
+    "Mathlib.LinearAlgebra.Matrix.Kronecker",
+    "Mathlib.LinearAlgebra.Matrix.Nondegenerate",
+    "Mathlib.LinearAlgebra.Matrix.NonsingularInverse",
+    "Mathlib.LinearAlgebra.Matrix.Notation",
+    "Mathlib.LinearAlgebra.Matrix.Rank",
+    "Mathlib.LinearAlgebra.Matrix.Reindex",
+    "Mathlib.LinearAlgebra.Matrix.Swap",
+    "Mathlib.LinearAlgebra.Matrix.ToLinearEquiv",
+    "Mathlib.LinearAlgebra.Matrix.Transvection",
+    "Mathlib.Logic.Equiv.Fin.Basic",
+    "Mathlib.MeasureTheory.Integral.CircleIntegral",
+    "Mathlib.MeasureTheory.Integral.DominatedConvergence",
+    "Mathlib.NumberTheory.MahlerMeasure",
+    "Mathlib.Order.Preorder.Finite",
+    "Mathlib.RingTheory.AdjoinRoot",
+    "Mathlib.RingTheory.Algebraic.Integral",
+    "Mathlib.RingTheory.Coprime.Lemmas",
+    "Mathlib.RingTheory.HahnSeries.Lex",
+    "Mathlib.RingTheory.HahnSeries.Summable",
+    "Mathlib.RingTheory.LaurentSeries",
+    "Mathlib.RingTheory.MvPolynomial.Basic",
+    "Mathlib.RingTheory.MvPolynomial.Homogeneous",
+    "Mathlib.RingTheory.Nilpotent.Basic",
+    "Mathlib.RingTheory.Polynomial.Content",
+    "Mathlib.RingTheory.Polynomial.GaussLemma",
+    "Mathlib.RingTheory.Polynomial.Radical",
+    "Mathlib.RingTheory.Polynomial.Resultant.Basic",
+    "Mathlib.RingTheory.Polynomial.UniqueFactorization",
+    "Mathlib.RingTheory.Polynomial.Vieta",
+    "Mathlib.RingTheory.PrincipalIdealDomain",
+    "Mathlib.RingTheory.Trace.Basic",
+    "Mathlib.RingTheory.UniqueFactorizationDomain.Multiplicative",
+    "Mathlib.RingTheory.UniqueFactorizationDomain.NormalizedFactors",
+    "Mathlib.Tactic.Contrapose",
+    "Mathlib.Tactic.Echelon.Rat",
+    "Mathlib.Tactic.FieldSimp",
+    "Mathlib.Tactic.Linarith",
+    "Mathlib.Tactic.LinearCombination",
+    "Mathlib.Tactic.NormNum",
+    "Mathlib.Tactic.NormNum.Result",
+    "Mathlib.Tactic.Positivity",
+    "Mathlib.Tactic.Ring",
+    "Mathlib.Tactic.Ring.Basic",
+    "Mathlib.Topology.Algebra.Polynomial",
+    "Mathlib.Topology.Connected.TotallyDisconnected",
+    "Mathlib.Topology.Instances.Nat",
+    "Mathlib.Topology.Instances.Real.Lemmas",
+    "Mathlib.Topology.Instances.Sign",
+    "Mathlib.Topology.MetricSpace.Contracting",
+    "Mathlib.Topology.Order.IntermediateValue",
+    "Std",
+    "Std.Data.ExtTreeMap.Lemmas",
+    "Std.Data.HashMap",
+    "Std.Data.HashMap.Lemmas",
+    "TauCeti.Algebra.Polynomial.Squarefree",
+    "TauCeti.Algebra.Polynomial.Sturm.Infinity",
+    "TauCeti.Algebra.Polynomial.Thom",
+    "TauCeti.Data.Matrix.OccCount",
+    "TauCeti.FieldTheory.RealClosure.AbstractRolle",
+    "TauCeti.FieldTheory.RealClosure.Basic",
+    "TauCeti.FieldTheory.RealClosure.IVT"
+  ],
+  "excluded_adapter_modules": [
+    "HexRCF.RealCoefficients.CellEncode",
+    "HexRCF.RealCoefficients.CellCodec",
+    "HexRCF.RealCoefficients.SectorEncode",
+    "HexRCF.RealCoefficients.CellBuild",
+    "HexRCF.RealCoefficients.CellDiscover",
+    "HexRCF.RealCoefficients.RootBuild"
+  ]
+}
