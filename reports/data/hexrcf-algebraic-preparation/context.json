@@ -204,5 +204,11 @@
     "The detailed trace identifies completed radical/root-table/sector work and entry to unfinished cell-row production, not a specific inner query.",
     "The build-only probes import Mathlib and are not executable benchmark evidence.",
     "Operational build observations with different scopes are not performance comparisons."
-  ]
+  ],
+  "document_commit": "fb758914c0191bfb7751b31fe5424cfb6bda2790",
+  "documents_sha256": {
+    "reports/hexrcf-algebraic-preparation.md": "4c170bb859db56ce8ffaa15cd2b2ba04a3803d4f1d8139d5ae279b160142f181",
+    "reports/data/hexrcf-algebraic-preparation/collect.py": "698c7b5a7d9b9330ade7ab6946f32ae8536be0648c0eae8df22566036a8a4d84"
+  },
+  "artifact_commit": "fb758914c0191bfb7751b31fe5424cfb6bda2790"
 }
