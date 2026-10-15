@@ -20,7 +20,8 @@
     "HexSignDetTheory/Solve.lean": "230933f5617b10ce4092ab58757c04d3d835ac2d32601eaa13261e97380260f9",
     "HexSignDetTheory/TreeSolve.lean": "60105793fcdea1d4ef1e410872465770df51ec57918047cd88f717abda10fd8a",
     "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "6b45715bd743f5a431e07229ebb205e4ca3448c53a7c79ea05938ebb3de9eb4c"
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "6b45715bd743f5a431e07229ebb205e4ca3448c53a7c79ea05938ebb3de9eb4c",
+    "reports/sign-det-declaration-review/core-foundation.md": "714fe90322ce91c2bf2773a4f8ff942fc181a76d5275168dd091d9e1516c6a7f"
   },
   "validation": {
     "commands": [
@@ -60,6 +61,16 @@
     "HexSignDetTheory/Solve.lean": "proof client",
     "HexSignDetTheory/TreeSolve.lean": "proof client",
     "conformance/HexSignDet/Conformance.lean": "conformance evidence",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "binding checker"
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "binding checker",
+    "reports/sign-det-declaration-review/core-foundation.md": "individual declaration assessment"
+  },
+  "source_ref": "audit/issue-10575-sign-det-current-reviewed-input-v8",
+  "input_revision": "eb96fe89eb059cd42cb6058707a4c65b86d475e9",
+  "archive_files": {
+    "HexSignDet/Matrix.lean": "ec0ebfa5c3dff773822fd90df81457cfbd12795f53dca053869b19a12d37bf6c",
+    "HexSignDet/Support.lean": "27bdda357f8cf1aa9d5a28b3a8686f92279d26a900db0fbd653c4bf2a23cf061",
+    "HexSignDet/Reference.lean": "f404298e34f49088a25d2bd8c16c1545b1f73257b58f211be3f36f9d23dba739",
+    "HexSignDet/SignOperands.lean": "be2c50cf3e5a11ba36313f13759b9884942caf6ec26fadaea32f9e0ea019e8d0",
+    "reports/sign-det-declaration-review/core-foundation.md": "714fe90322ce91c2bf2773a4f8ff942fc181a76d5275168dd091d9e1516c6a7f"
   }
 }
