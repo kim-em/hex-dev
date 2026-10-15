@@ -372,9 +372,9 @@ run_tuple() {
   fi
 
   if [ "$oracle" = "scripts/oracle/real_closure_metitarski_scaling.py" ]; then
-    if ! python3 -m unittest scripts.bench.test_meti_counts \
+    if ! HEX_METI_COUNTS_DRIVER=".lake/build/bin/$emit" python3 -m unittest scripts.bench.test_meti_counts \
         scripts.bench.test_meti_counts_observer scripts.bench.test_meti_capture \
-        scripts.bench.test_meti_archive; then
+        scripts.bench.test_meti_archive scripts.bench.test_meti_mode; then
       echo "FAIL: $lib :: MetiTarski counter protocol tests failed"
       return 1
     fi

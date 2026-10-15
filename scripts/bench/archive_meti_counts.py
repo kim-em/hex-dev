@@ -20,6 +20,7 @@ import tarfile
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from scripts.bench.meti_counts import KINDS, _distinct, check_packet, instrument, parse_record
 from scripts.bench.real_closure_meti_counts import DEGREES, SOURCES
+from scripts.bench.meti_recipes import validate as validate_recipes
 
 ARCHIVE = Path('reports/bench-results/real-closure-metitarski-counts')
 BEGIN, END = '<!-- meti-counts -->', '<!-- /meti-counts -->'
@@ -54,9 +55,10 @@ def omissions(record, build):
     return result
 
 
-def summarize(files, omitted):
+def summarize(files, omitted, recipes):
     """Check raw bindings independently of the archive's outer checksum index."""
     record, build = document(files['manifest.json']), document(files['build/build.json'])
+    validate_recipes(record, build, recipes)
     require(record['schema'] == 1 and record['status'] == 'completed' and
             record['degrees'] == DEGREES and record['paper_degree'] == 3 and
             record['derived_degrees'] == [5, 7, 9] and record['warmup'] is False and
@@ -76,6 +78,9 @@ def summarize(files, omitted):
         require((omitted[name] if name in omitted else sha(files[name])) == checksum,
                 'changed captured artifact: ' + name)
     require(set(record['source_hashes']) == set(SOURCES), 'changed source inventory')
+    require(sha(Path(__file__).with_name('meti_counts.py').read_bytes()) ==
+            record['source_hashes']['scripts/bench/meti_counts.py'],
+            'counter selector changed: use a new archive schema')
     for name, checksum in record['source_hashes'].items():
         require(artifacts['sources/' + name] == checksum, 'changed frozen source binding')
     source_build = [('builder_sha256', 'scripts/bench/build_meti_counts.py'),
@@ -134,8 +139,19 @@ def summarize(files, omitted):
             files['18.stdout'].decode().strip() and not files['1.stdout'].strip() and
             not files['19.stdout'].strip(), 'changed source during capture')
     require(files['2.stdout'].decode().strip() == record['lean_version'] and
+            'version 4.35.0-rc3,' in record['lean_version'] and
             files['5.stdout'].decode().strip() == record['oracle_version'],
             'changed toolchain/oracle version')
+    capture = Path(commands[4]['argv'][2]).parent
+    require(Path(commands[4]['argv'][2]).is_absolute() and
+            commands[4]['argv'][1] == 'scripts/bench/build_meti_counts.py', 'changed build invocation')
+    setup = {0: ['git', 'rev-parse', 'HEAD'], 1: ['git', 'status', '--porcelain'],
+             2: ['lake', 'env', 'lean', '--version'], 3: ['lscpu', '--json'],
+             18: ['git', 'rev-parse', 'HEAD'], 19: ['git', 'status', '--porcelain']}
+    require(all(commands[i]['argv'] == argv for i, argv in setup.items()), 'changed setup command')
+    require(commands[5]['argv'][1:] ==
+            ['-c', 'import flint; print(flint.__version__,flint.__FLINT_VERSION__)'],
+            'changed oracle version invocation')
     fixture = {document(line)['degree']: line + '\n' for line in
                files['sources/conformance-fixtures/HexRealClosure/metitarski-scaling.jsonl'].decode().splitlines()}
     require(sorted(fixture) == DEGREES, 'changed functional fixture inventory')
@@ -146,11 +162,12 @@ def summarize(files, omitted):
         require(row['degree'] == degree and row['ordinary'] == control['stdout'] and
                 row['fixture'] == observed['stdout'] and row['counters'] == observed['stderr'] and
                 row['oracle'] == oracle['stdout'], 'changed row/command binding')
-        require(Path(control['argv'][0]).name == 'ordinary' and
-                Path(observed['argv'][0]).name == 'metitarski-counts' and
+        require(control['argv'][0] == str(capture / 'ordinary') and
+                observed['argv'][0] == str(capture / 'build/metitarski-counts') and
                 control['argv'][1:] == observed['argv'][1:] == ['metitarski', 'counts', str(degree)] and
                 oracle['argv'][1] == 'scripts/oracle/real_closure_metitarski_scaling.py' and
-                Path(oracle['argv'][2]).name == row['fixture'], 'changed executed input')
+                oracle['argv'][0] == commands[5]['argv'][0] and
+                oracle['argv'][2] == str(capture / row['fixture']), 'changed executed input')
         check_packet(files[row['ordinary']].decode(), fixture[degree], degree)
         packet = check_packet(files[row['fixture']].decode(), fixture[degree], degree)
         events = [s for s in files[control['stderr']].decode().splitlines() if s.startswith('METI ')]
@@ -202,13 +219,16 @@ def verify(folder):
     index = document((folder / 'archive.json').read_bytes())
     require(index['schema'] == 'metitarski-counts-v1', 'wrong archive schema')
     require({p.name for p in folder.iterdir()} ==
-            {'capture.tar.gz', 'archive.json', 'analysis.json', 'README.md'}, 'changed archive inventory')
+            {'capture.tar.gz', 'archive.json', 'analysis.json', 'README.md', 'recipes.json'},
+            'changed archive inventory')
     require(sha((folder / 'capture.tar.gz').read_bytes()) == index['archive_sha256'],
             'changed compressed archive')
     files = unpack(folder / 'capture.tar.gz')
     require({name: sha(data) for name, data in files.items()} == index['files'],
             'changed archive member index')
-    result = summarize(files, index['omitted_snapshots'])
+    recipe_data = (folder / 'recipes.json').read_bytes()
+    require(sha(recipe_data) == index['recipes_sha256'], 'changed recipe supplement')
+    result = summarize(files, index['omitted_snapshots'], document(recipe_data))
     require(index['source'] == result['source'], 'changed archive source')
     require(document((folder / 'analysis.json').read_bytes()) == result, 'changed derived analysis')
     report = (folder / 'README.md').read_text()
@@ -231,7 +251,9 @@ def create(capture, folder):
                     'changed raw artifact: ' + name)
     files = {name: (capture / name).read_bytes() for name in
              (set(record['artifacts']) - set(omitted)) | {'manifest.json'}}
-    result = summarize(files, omitted)
+    from scripts.bench.meti_recipes import collect
+    recipes = collect(capture, Path(__file__).resolve().parents[2])
+    result = summarize(files, omitted, recipes)
     # The report is authored first; never overwrite a pre-existing capture.
     require({p.name for p in folder.iterdir()} == {'README.md'}, 'archive destination is not new')
     with (folder / 'capture.tar.gz').open('wb') as out, gzip.GzipFile(fileobj=out, mode='wb', mtime=0) as compressed:
@@ -243,6 +265,9 @@ def create(capture, folder):
     index = dict(schema='metitarski-counts-v1', source=record['commit'],
                  archive_sha256=sha((folder / 'capture.tar.gz').read_bytes()),
                  omitted_snapshots=omitted, files={name: sha(data) for name, data in sorted(files.items())})
+    recipe_data = (json.dumps(recipes, indent=2, sort_keys=True) + '\n').encode()
+    (folder / 'recipes.json').write_bytes(recipe_data)
+    index['recipes_sha256'] = sha(recipe_data)
     for name, data in [('archive.json', index), ('analysis.json', result)]:
         (folder / name).write_text(json.dumps(data, indent=2, sort_keys=True) + '\n')
     report = folder / 'README.md'

@@ -35,6 +35,8 @@ field-operation counts. In particular, `algebraic_sign_poly` includes constant,
 interval and prepared-query dispatch; each entry need not perform an expensive
 sign determination. The implementation retains each of the 23 instrumented
 modules and every selected function name.
+Lean compiler inlining can remove a worker entry at an inlined call site;
+these counts therefore need not include all source-level executions.
 
 The native observer also wraps Lean natural gcd, GMP gcd and GMP gcdext. A
 wrapped call forwards its arguments exactly once. Lean and GMP are distinct,
@@ -49,6 +51,8 @@ tests, signed-chain entries/tests and BKR entries stay constant on this ladder.
 No bisection node is visited. Algebraic `signPoly` dispatch and both integer
 gcd observation layers increase. This directs further investigation toward
 work inside the selected coefficient field and its rational arithmetic.
+The Lean and GMP gcd totals coincide at all four degrees; they are redundant
+observations here, rather than independent corroboration.
 
 An independent algebraic observation explains why a degree-linear initial
 Euclidean chain is not available as a justification for this particular family.
@@ -58,7 +62,9 @@ Writing `c = α³ + 1`, the retained predecessor interval lies in `(-1,0)`, so
 `n, n−1, 0`, followed by zero. Its squarefree Yun step emits `p` at multiplicity
 one, then terminates on the next degree-zero test. The first root bound is
 2, the odd binomial has one root in `(-2,2)`, and singleton completion uses
-an empty derivative-query list. These statements concern interpreted field
+an empty derivative-query list. This argument also independently supports the
+absence of bisection; dynamically, no selected `Frontier.advance?` entry was
+observed. These statements concern interpreted field
 values; executing their zero/sign checks and arithmetic still has a cost.
 
 The full producer also prepares and validates signed queries over changing
@@ -75,12 +81,21 @@ remain unchanged. Choosing a new model requires an independent derivation.
 instrumented packets, oracle outputs, the original manifest, frozen driver/
 observer/oracle/fixture sources, build metadata, labels and instrumented C.
 `archive.json` indexes all retained members and the exact omitted snapshots.
+`recipes.json` supplements this evidence with the original response file,
+compiler/link traces and build configuration, collected after the capture.
+At collection, every original linked object/archive and the ordinary binary
+matched the identities recorded during capture. The response file also
+matches its capture-time digest. Module traces had no capture-time digest;
+they are supplementary matching-build evidence, not historical snapshots.
 The two executables and 24 object files are omitted; their original hashes
 remain bound to the capture and build metadata. Build metadata records all
 421 original object/archive link inputs and all instrumentation/compiler/link
 commands. Original generated C is recovered by removing the inserted observer
 declaration/calls, checked against its original hash, then instrumented again
 to verify every insertion and selected function.
+The verifier compares full ordered link arguments and module compiler commands
+with these recipes, allowing only the recorded source/object substitutions,
+observer object and four wrappers. It also checks the observer compiler command.
 
 Generated modules use the pinned toolchain's clang. The final link command
 uses the external task-local `lean-cc` wrapper recorded in `build.json`;
@@ -89,6 +104,11 @@ the capture. Their historical bytes cannot be authenticated from this archive.
 The source tag, dependency pins and recorded executable/object hashes identify
 the observed build; the archive does not promise bit-identical rebuilding on
 another host. Full linked objects remain outside the portable archive.
+The resolved `-l` library files and GMP's static/dynamic linkage are not
+identified. Static linkage can expose additional internal GMP calls to the
+wrapper; the GMP totals describe this executable and are not portable totals
+for every GMP build. Future captures need resolved-library/link-map evidence
+to distinguish those cases.
 
 Verify the retained archive and recompute `analysis.json` and the table:
 
@@ -109,7 +129,8 @@ The capture runner is `scripts/bench/real_closure_meti_counts.py`. A fresh
 capture requires a committed clean source tree and the pinned oracle; it is
 not part of routine CI or an automatic retry of this diagnostic. Existing CI
 runs the observer/selector/protocol and archive mutation checks and the
-independent functional oracle in its existing single job.
+independent functional oracle in its existing single job. It exercises the
+actual ordinary counts-mode degree-three packet and its two region markers.
 
 <!-- meti-counts -->
 Source: `bff9b56cb6f222df142433a351409c0fd046c969`; CPU 46; 20 commands; 23 instrumented modules; 421 original link inputs.
