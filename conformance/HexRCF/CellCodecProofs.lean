@@ -32,7 +32,9 @@ run_meta do
       ``CellCodec.read_of_descriptors, ``Hex.RealClosure.Tower.Signature.codec_lawful] do
     unless footprint.contains required do throwError "finite inventory composition omitted actual law: {required}"
   let restored ← Hex.RCF.ProofEvidence.projectDependencies #[``CellFootprint.read_packet]
-  for required in #[``RootCodec.read_covered, ``RootCodec.graph_covered,
+  for required in #[``RootCodec.read_covered,
+      ``Hex.RealClosure.Algebraic.RootReplay.readDescriptor_covered,
+      ``Hex.SignDet.Codec.bindings_of_validate, ``Hex.SignDet.Dag.validate_encode,
       ``Hex.SignDet.Codec.bindings_of_check, ``Hex.SignDet.Codec.read_graph_covered,
       ``CellFootprint.descriptor_covered] do
     unless restored.contains required do throwError "payload restoration omitted actual owner law: {required}"
