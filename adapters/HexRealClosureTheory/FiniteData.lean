@@ -205,6 +205,7 @@ private def finiteRange? (type : Expr) : MetaM (Option Nat) := do
   else
     unless arguments.size == 2 do return none
   unless arguments[arguments.size - 2]! == .bvar 0 do return none
+  if arguments.back!.hasLooseBVars then return none
   withTransparency .all do
     getNatValue? (← reduce arguments.back!)
 
@@ -276,6 +277,14 @@ private partial def traverse (goal : MVarId) (supply : Supplier)
           (goal.apply (mkApp (mkConst ``Transport.Finite.empty) predicate))
         | throwError "empty finite-data range did not close"
       return
+    let mut signature := (← getConstInfo ``Transport.Finite.bounded).type
+    for expected in #[`n, `p, `earlier, `last, `i, `h] do
+      let .forallE actual _ body _ := signature |
+        throwError "bounded traversal changed its theorem arity"
+      unless actual == expected do throwError "bounded traversal changed its theorem layout"
+      signature := body
+    unless signature == mkApp2 (.bvar 4) (.bvar 1) (.bvar 0) do
+      throwError "bounded traversal changed its dependent conclusion"
     let rangeProof := mkApp2 (mkConst ``Transport.Finite.bounded) (toExpr (count - 1)) predicate
     -- Keep the original dependent predicate without rechecking its computed
     -- size during application. Discovery uses the standard Nat relation and

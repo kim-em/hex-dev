@@ -55,22 +55,49 @@ private def discovery (count : Expr) : MetaM Unit := do
           unless (leaf.context.find? id).isSome do
             throwError "finite discovery lost a dependent local hypothesis"
 
+private def unsupported (order : Expr) (checkBuild : Bool := true) : MetaM Unit := do
+  let type ← withLocalDeclD `i (mkConst ``Nat) fun i => do
+    let bound := mkAppN (mkConst ``LT.lt [Level.zero])
+      #[mkConst ``Nat, order, i, toExpr (3 : Nat)]
+    withLocalDeclD `bound bound fun h => do
+      let equal ← mkAppM ``Nat.beq #[i, toExpr (0 : Nat)]
+      mkForallFVars #[i, h] (← mkEq equal (mkConst ``Bool.true))
+  for leaves in #[← FiniteData.leaves type (fun _ => pure none),
+      ← frontier type (fun type => pure (type.getAppFn.isConstOf ``Eq))] do
+    let some leaf := leaves[0]? | throwError "finite discovery dropped an unresolved Nat relation"
+    let same ← withNewMCtxDepth do withTransparency .all (isDefEq leaf.type type)
+    unless leaves.size == 1 && same do
+      throwError "finite discovery changed an unresolved Nat relation"
+  if checkBuild then
+    let rejected ← try
+      let _ ← buildClosed type (fun _ => pure none)
+      pure false
+    catch error =>
+      unless (← error.toMessageData.toString).startsWith "missing finite replay evidence" do
+        throw error
+      pure true
+    unless rejected do throwError "finite construction accepted an unspecified Nat relation"
+
 private def nonstandard : MetaM Unit := do
   let relation ← withLocalDeclD `a (mkConst ``Nat) fun a => do
     withLocalDeclD `b (mkConst ``Nat) fun b => do
       mkLambdaFVars #[a, b] (← mkAppM ``Nat.lt #[b, a])
-  let reversed ← mkAppM ``LT.mk #[relation]
-  let type ← withLocalDeclD `i (mkConst ``Nat) fun i => do
-    let bound := mkAppN (mkConst ``LT.lt [Level.zero])
-      #[mkConst ``Nat, reversed, i, toExpr (3 : Nat)]
+  unsupported (← mkAppM ``LT.mk #[relation])
+  let orderType := mkApp (mkConst ``LT [Level.zero]) (mkConst ``Nat)
+  withLocalDeclD `order orderType fun order => unsupported order
+  let unknown ← mkFreshExprMVar orderType
+  unsupported unknown false
+  if ← unknown.mvarId!.isAssigned then
+    throwError "finite relation recognition assigned the caller's order metavariable"
+  let symbolic ← withLocalDeclD `i (mkConst ``Nat) fun i => do
+    let bound ← mkAppM ``Nat.lt #[i, ← mkAppM ``Nat.add #[i, toExpr (1 : Nat)]]
     withLocalDeclD `bound bound fun h => do
       let equal ← mkAppM ``Nat.beq #[i, toExpr (0 : Nat)]
       mkForallFVars #[i, h] (← mkEq equal (mkConst ``Bool.true))
-  let leaves ← frontier type (fun type => pure (type.getAppFn.isConstOf ``Eq))
-  let some leaf := leaves[0]? | throwError "finite discovery dropped a nonstandard Nat relation"
-  let same ← withNewMCtxDepth do withTransparency .all (isDefEq leaf.type type)
-  unless leaves.size == 1 && same do
-    throwError "finite discovery changed a nonstandard Nat relation: leaves={leaves.size}, actual={leaf.type}, original={type}"
+  let leaves ← frontier symbolic (fun type => pure (type.getAppFn.isConstOf ``Eq))
+  let some leaf := leaves[0]? | throwError "finite discovery dropped an index-dependent bound"
+  unless leaves.size == 1 && leaf.type.isForall do
+    throwError "finite discovery enumerated an index-dependent bound"
 
 syntax (name := finiteRange) "#finite_range" : command
 @[command_elab finiteRange]
@@ -94,10 +121,14 @@ def elaborate : CommandElab := fun _ => liftTermElabM do
     #[← mkListLit (mkConst ``Nat) [toExpr (7 : Nat), toExpr (8 : Nat), toExpr (9 : Nat)]]
   for instance? in #[none, some (mkConst ``instLTNat)] do
     let type ← computed count instance?
+    let reached ← IO.mkRef (0 : Nat)
     let _ ← buildClosed type fun type => do
       let args := type.getAppArgs
-      unless type.getAppFn.isConstOf ``Eq && args.size == 3 do return none
+      unless type.getAppFn.isConstOf ``Eq && args.size == 3 &&
+          args[0]!.getAppFn.isConstOf ``Fin do return none
+      reached.modify (· + 1)
       return some (← mkEqRefl args[1]!)
+    unless (← reached.get) == 3 do throwError "computed range did not visit its actual indices"
   discovery count
   nonstandard
   let falseStatement ← statement 3 false

@@ -1037,10 +1037,13 @@ dependent predicates; construction supplies the bounded theorem's two actual
 premises, and proof-producing callers kernel-check the complete result.
 Discovery returns obligations without asserting a theorem. Nonstandard Nat
 order instances remain unresolved rather than enumerating unrelated indices.
+The generic logical simplifier may normalize an unresolved quantified range.
 The CI-built `KernelReplay.FiniteRange` checks empty, singleton and dependent
 ranges, computed bounds through both `Nat.lt` and standard `LT.lt`, discovery
 order and local hypotheses, and rejection of an unsupported index. It checks
 that a reversed Nat order remains one unresolved quantified obligation.
+Opaque local order instances and order metavariables remain unresolved without
+assigning the caller's metavariables. Index-dependent bounds remain unresolved.
 `Level.lower` maps reached
 operations, literal replays and scalar casts to their exact predecessor
 premises, using local reader variables before points are chosen. `descend`
