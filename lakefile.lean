@@ -1360,9 +1360,10 @@ lean_lib HexConformance where
 
     ++ #[`HexReflect.TestProviders, `HexReflect.Conformance, `HexReflect.ScopeConformance, `HexReflect.ResidueConformance].map Glob.one
 
-    ++ #[.one `HexRCF.PublicGraphCodec]
+    -- Kernel reduction of structured readers through ordinary public imports.
+    ++ #[`HexSignDet.PublicCodec, `HexRCF.PublicGraphCodec].map Glob.one
 
-    ++ #[`HexSignDet.CommonField, `HexSignDet.Conformance, `HexSignDet.CrossCheck, `HexSignDet.FastCheck, `HexSignDet.JsonBytes, `HexSignDet.PublicCodec, `HexSignDet.DescriptorCodec, `HexSignDet.Infinitesimal].map Glob.one
+    ++ #[`HexSignDet.CommonField, `HexSignDet.Conformance, `HexSignDet.CrossCheck, `HexSignDet.FastCheck, `HexSignDet.JsonBytes, `HexSignDet.DescriptorCodec, `HexSignDet.Infinitesimal].map Glob.one
 
     ++ #[`HexRealClosure.BisectionFrontierTests, `HexRealClosure.IsolationTests,
       `HexRealClosureTheory.CoefficientSignsConformance,

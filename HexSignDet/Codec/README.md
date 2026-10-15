@@ -2,6 +2,8 @@
 
 `Codec.readGraph` and its supporting structured readers expose their definitions
 through ordinary public imports for kernel reduction on concrete inputs.
+These bodies are kernel-facing APIs: runtime optimizations should use a proved
+`@[csimp]` implementation twin while preserving the reference definitions.
 Reading constructs raw graph data; successful decoding still needs independent
 replay before it supplies mathematical evidence. The
 [public-reader audit](../../reports/sign-det-public-codec.md) records the scope

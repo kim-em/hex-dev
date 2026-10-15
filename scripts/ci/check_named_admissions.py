@@ -218,6 +218,7 @@ def check() -> None:
              "RealClosureConsumer.Query", "RealClosureConsumer.Sign",
              "RealClosureConsumer.Ordered", "RealClosureConsumer.Tower",
              "HexRCF.RealCoefficients", "HexRCF.SignDetFieldProofs",
+             "HexRCF.PublicGraphCodec", "HexSignDet.PublicCodec",
              "HexSignDet.FieldChecks", "HexSignDetTheory", "HexRealClosure.BaseTests",
              "HexRealClosure.QAdjoinTests", "HexRealClosure.NumberField",
              "HexRealClosureTheory.NumberField", "HexRealClosure.NumberFieldConformance",
