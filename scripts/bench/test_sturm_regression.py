@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check the declared comparison scope without taking performance samples."""
 from copy import deepcopy
-from contextlib import redirect_stdout
+from contextlib import redirect_stdout, nullcontext
 import hashlib
 import gzip
 import io
@@ -205,7 +205,7 @@ elif sys.argv[1]=='run':
         Path(__file__+'.worker-pid').write_text(str(worker.pid))
         os.kill(os.getppid(),signal.SIGINT)
         time.sleep(60)
-    if mode=='exit-worker' and arm=='candidate':
+    if mode in ('exit-worker','ok-worker') and arm=='candidate':
         worker=subprocess.Popen([sys.executable,'-c','import time; time.sleep(60)'])
         Path(__file__+'.worker-pid').write_text(str(worker.pid))
     if mode in ('exit','exit-worker') and arm=='candidate':sys.exit(7)
@@ -229,7 +229,7 @@ elif sys.argv[1]=='run':
             self.sources[arm] = source
         self.decision = self.base / "decision.json"
         self.lease_exception = None
-        self.state_root = self.base / 'state'
+        self.account_home = self.base / 'account'
         self.bind_decision()
 
     def bind_decision(self):
@@ -248,7 +248,7 @@ elif sys.argv[1]=='run':
             'tool_sources': {p: collector.digest(self.root / p) for p in collector.TOOL_SOURCES},
             **{arm + '_source_sha256': collector.digest(path) for arm, path in self.sources.items()}}))
 
-    def run_collector(self, name='capture', extra=()):
+    def run_collector(self, name='capture', extra=(), legacy_state=None):
         output = self.base / name
         args = [str(x) for pair in (
             ('--root', self.root), ('--guard', self.guard), ('--decision', self.decision),
@@ -256,7 +256,9 @@ elif sys.argv[1]=='run':
             *[("--" + arm + '-source', path) for arm, path in self.sources.items()]) for x in pair]
         with patch.object(collector, 'cpu_lease', return_value=(0, io.StringIO()), side_effect=self.lease_exception) as lease, \
              patch.object(collector.os, 'sched_setaffinity'), \
-             patch.object(collector, 'state_directory', return_value=self.state_root), \
+             patch.object(collector.pwd, 'getpwuid', return_value=SimpleNamespace(pw_dir=str(self.account_home))), \
+             (patch.object(collector, 'state_directory', return_value=legacy_state)
+              if legacy_state is not None else nullcontext()), \
              redirect_stdout(io.StringIO()):
             try:
                 result = collector.main([*args, *map(str, extra)])
@@ -403,9 +405,11 @@ elif sys.argv[1]=='run':
         target.parent.mkdir(parents=True)
         target.write_bytes(original.read_bytes())
         self.bind_cap(first)
-        self.state_root = relocated
-        with self.assertRaisesRegex(RuntimeError, 'original reservation path'):
-            self.run_collector('relocated', ['--cap-from', first])
+        self.run_collector('adapted', ['--cap-from', first])
+        with patch.dict(collector.os.environ, {'XDG_STATE_HOME': str(relocated)}):
+            with self.assertRaisesRegex(RuntimeError, 'decision already used'):
+                self.run_collector('relocated', ['--cap-from', first])
+        self.assertFalse(target.with_name(target.stem + '-cap.json').exists())
         self.assertEqual(self.lease_calls, 0)
 
     def test_state_directory_ignores_environment_and_path_home(self):
@@ -422,17 +426,16 @@ elif sys.argv[1]=='run':
         with patch.dict(collector.os.environ, {'XDG_STATE_HOME': str(relocated)}):
             with self.assertRaisesRegex(RuntimeError, 'decision already used'):
                 self.run_collector('again')
+        self.assertTrue(Path(self.context['decision_reservation']).is_relative_to(
+            self.account_home / '.local/state'))
         self.assertFalse(relocated.exists())
 
     def test_original_regenerated_in_relocated_state_cannot_authorize_adaptation(self):
         self.cap_failure()
-        canonical = self.state_root
         # Emulate the old collector's environment-selected state directory.
-        self.state_root = self.base / 'old-relocated-state'
         with self.assertRaisesRegex(RuntimeError, 'failed parent'):
-            self.run_collector('regenerated-original')
+            self.run_collector('regenerated-original', legacy_state=self.base / 'old-relocated-state')
         regenerated = self.base / 'regenerated-original'
-        self.state_root = canonical
         self.bind_cap(regenerated)
         with self.assertRaisesRegex(RuntimeError, 'original reservation path'):
             self.run_collector('adapted', ['--cap-from', regenerated])
@@ -552,6 +555,14 @@ elif sys.argv[1]=='run':
         self.assertFalse(self.context['measurements_collected'])
         self.assertEqual(self.lease_calls, 0)
         self.assertFalse(Path(self.context['decision_reservation']).exists())
+
+    def test_consumed_adaptation_is_not_preflight_eligible(self):
+        first = self.cap_failure()
+        self.bind_cap(first)
+        self.run_collector('adapted', ['--cap-from', first])
+        with self.assertRaisesRegex(RuntimeError, 'decision already used'):
+            self.run_collector('preflight', ['--cap-from', first, '--preflight'])
+        self.assertEqual(self.lease_calls, 0)
 
     def test_later_block_failure_preserves_earlier_completed_pairs(self):
         first = self.cap_failure('cap-later')
@@ -823,6 +834,11 @@ elif sys.argv[1]=='run':
             self.run_collector()
         self.assert_worker_stopped()
 
+    def test_successful_parent_also_stops_its_worker(self):
+        self.mode('ok-worker')
+        self.assertEqual(self.run_collector()[0], 0)
+        self.assert_worker_stopped()
+
     def test_interruption_consumes_reserved_first_attempt(self):
         self.mode('interrupt')
         with self.assertRaises(KeyboardInterrupt):
@@ -863,11 +879,6 @@ class RuntimeSetupTest(unittest.TestCase):
         for call in install.call_args_list:
             with self.assertRaises(KeyboardInterrupt):
                 call.args[1](call.args[0], None)
-
-    def test_empty_and_relative_state_paths_use_home(self):
-        for value in ('', 'relative'):
-            with patch.dict(collector.os.environ, {'XDG_STATE_HOME': value}):
-                self.assertEqual(collector.state_directory(), Path.home() / '.local/state')
 
 
 if __name__ == "__main__":

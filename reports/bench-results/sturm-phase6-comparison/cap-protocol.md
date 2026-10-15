@@ -55,13 +55,14 @@ bindings and decision bytes. The unchanged-rerun reservation is also stored
 persistently beside the original journal; deleting its output-directory receipt
 cannot unlock another rerun. Passing or regressing captures cannot retry.
 
-Preflight validates the same bindings and native correctness controls without
+Preflight also refuses a consumed reservation slot. It validates the same
+bindings and native correctness controls without
 leasing a CPU, reserving an attempt or collecting measurements. A real capture
 still uses the existing CPU lease and records shared-host activity without
 sample rejection or a quiet-core condition. Linux `MemTotal` and `MemAvailable`
 are recorded before and after commands as context only; unavailable memory
-metadata does not reject or postpone a run. Interrupted or failed parent commands
-have their process group killed so workers do not continue outside the collector.
+metadata does not reject or postpone a run. Every parent command has its private process group cleaned up, including
+successful exits, so workers do not continue outside the collector.
 
 ## Proposed complete campaign
 
