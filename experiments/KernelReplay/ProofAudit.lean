@@ -10,6 +10,21 @@ public meta import HexRealClosureTheory.KernelReplay
 import all HexRealClosureTheory.KernelReplay
 import all KernelReplay.FiniteBase
 
+public section
+namespace Hex.RealClosure.Algebraic.KernelReplay.ProofAudit
+
+noncomputable def index : Nat := Classical.choice ⟨0⟩
+
+-- The inductive and its constructors form a dependency cycle. The leaf's
+-- index contributes an axiom through its type, even when another constructor
+-- is the first audited declaration.
+inductive Branch : Nat → Type where
+  | leaf : Branch index
+  | node {n : Nat} : Branch n → Branch n
+
+end Hex.RealClosure.Algebraic.KernelReplay.ProofAudit
+end
+
 public meta section
 namespace Hex.RealClosure.Algebraic.KernelReplay.ProofAudit
 open Lean Meta Elab Command
@@ -41,6 +56,8 @@ private def restoration : MetaM Unit := do
       throwError "constructive branch acquired an axiom"
     unless (auditedConstants.getState (← getEnv) |>.find? name) == some #[] do
       throwError "local constructive audit was not retained"
+    unless (auditedConstants.getState (← getEnv) |>.find? dependency) == some #[] do
+      throwError "checked local dependency audit was not reused recursively"
     unless (← check (mkConst name) (mkConst ``True)).isEmpty do
       throwError "reused constructive audit changed dependencies"
     saved.restore
@@ -79,6 +96,26 @@ private def restoration : MetaM Unit := do
       pure true
     unless rejected && !(← incomplete.mvarId!.isAssigned) do
       throwError "proof audit accepted or assigned an incomplete proof"
+  finally saved.restore
+
+private def cycles : MetaM Unit := do
+  let saved ← Meta.saveState
+  try
+    let names := #[``Branch, ``Branch.leaf, ``Branch.node]
+    for name in names do
+      modifyEnv fun environment => auditedConstants.modifyState environment (fun _ => {})
+      let actual := (← auditedAxioms name).qsort Name.lt
+      unless actual == (← collectAxioms name).qsort Name.lt &&
+          actual == #[`Classical.choice] do
+        throwError "recursive declaration audit omitted its constructor's type dependency"
+      for dependency in names do
+        let expected := (← collectAxioms dependency).qsort Name.lt
+        let some retained := auditedConstants.getState (← getEnv) |>.find? dependency |
+          throwError "recursive declaration audit was not retained"
+        unless retained.qsort Name.lt == expected do
+          throwError "recursive declaration retained a provisional dependency set"
+    let proof ← mkEqRefl (mkConst ``Branch.leaf)
+    let _ ← check proof (← inferType proof)
   finally saved.restore
 
 private def compare (proof type : Expr) (cached : Bool) : MetaM Unit := do
@@ -155,6 +192,7 @@ syntax (name := proofAudit) "#proof_audit" : command
 @[command_elab proofAudit]
 def elaborate : CommandElab := fun _ => liftTermElabM do
   restoration
+  cycles
   rejectArgument
   let name ← mkFreshUserName `auditProduct
   let .thmInfo original ← getConstInfo ``FiniteBaseProbe.product |
