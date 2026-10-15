@@ -325,7 +325,7 @@ theorem approx_contains (ha : ApproximationCorrect ι τ r.source)
   exact Real.approx_contains ha f.val δ _
 
 /-- Changing providers for the same subject and embedding preserves evaluation. -/
-theorem eval_transport (s : Registration K) (ht : RelativeTranscendence ι τ)
+@[simp] theorem eval_transport (s : Registration K) (ht : RelativeTranscendence ι τ)
     (f : Extension r) : evalHom ht (transport s f) = evalHom ht f := rfl
 
 /-- Provider transport preserves order only after both sources are checked

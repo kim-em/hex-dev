@@ -114,6 +114,19 @@ example (f g : Second) : towerEmbed f < towerEmbed g ↔ f < g := towerEmbed_lt 
 example (a : First) :
     towerEmbed (RationalFn.C a) = toLex (HahnSeries.single 0 (embed a)) := towerEmbed_C a
 
+-- Interpret an outer affine expression while retaining its nonconstant inner coefficient.
+example :
+    towerEmbed (RationalFn.C (RationalFn.X : First) + (RationalFn.X : Second)) =
+      toLex (HahnSeries.single 0 (embed (RationalFn.X : First))) +
+        toLex (HahnSeries.single 1 (1 : Lex (HahnSeries ℤ Rat))) := by
+  simp only [map_add, towerEmbed_C, towerEmbed_X]
+
+-- Bundled coefficient maps expose leading-term data without unfolding mapHom.
+example (x : Lex (HahnSeries ℤ Rat)) :
+    (ofLex (Hahn.mapHom (Rat.castHom ℝ) x)).leadingCoeff =
+      (ofLex x).leadingCoeff := by
+  simp
+
 /-- The coefficient map from ℚ(ε) to ℝ(ε) preserves signs and order. -/
 noncomputable example (q : First) :
     sign orderSign (HexRationalFnTheory.mapHom (Rat.castHom ℝ) q) =

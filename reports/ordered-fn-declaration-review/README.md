@@ -39,12 +39,13 @@ The inventory is not an axiom audit of unrelated dependencies added afterwards.
 
 The [performance follow-up](../bench-results/ordered-fn-regression-followup/README.md)
 still has four flagged parameters under the declared comparison rule. This review
-**does not attest Phase 6** or advance Phase 7. The existing manual and Phase-5
-proof/API work remain available while the performance finding is unresolved.
+keeps `HexOrderedFn` at Phase 5. Its computational performance acceptance remains
+unresolved. The [Theory acceptance](theory-acceptance.md) establishes the
+companion’s independent Phases 6–7, including its subsequent API polishing.
 
 [Automation, imports and naming](quality.md) record the remaining quality
-assessment and the shared sign module. Final Phase-6 acceptance is
-still required.
+assessment and the shared sign module. Final computational Phase-6 acceptance
+is still required.
 
 The original benchmark sources are likewise retained by
 `audit/issue-10575-orderedfn-baseline` (`ee490f54889e2db8170c8b9fc6e8568f8a978bbe`)
@@ -55,3 +56,10 @@ are separate from release-version tags and do not change publication eligibility
 The [later compiler capture](current/README.md) records the fourteen-module
 source layout and a larger example/import environment. It preserves the
 earlier snapshot and explains the changed named references separately.
+
+The v7 `current/` directory is an immutable pre-polishing snapshot. Its README
+and artifacts remain byte-bound to its complete tag. Its historical statements
+about outstanding Theory acceptance apply at that tag; the subsequent
+[Theory acceptance](theory-acceptance.md) supersedes them. Default archive checks
+remain available in this tree. Current-source checks intentionally refuse the
+later proof/API changes; reproduce that snapshot using its complete-tag checkout.

@@ -210,6 +210,6 @@ The compiled audit's 545 production constants have only `propext`,
 `Classical.choice`, `Quot.sound` as axioms. The prior full builds and lint target
 provide diagnostics; the substantive source assessments above provide a different
 part of Phase 6. The pinned source's import finding is resolved by the shared
-`Sign` module described in [quality.md](quality.md). Final performance acceptance
-and acceptance of the zero-reference API dispositions remain outstanding. No phase counters are changed
-by this review.
+`Sign` module described in [quality.md](quality.md). The [Theory acceptance](theory-acceptance.md) completes the companion’s
+API-retention decisions and records subsequent proof/API improvements. The
+computational library’s final performance acceptance remains outstanding.
