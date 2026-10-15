@@ -674,10 +674,25 @@ separates the routine controls from the interrupted stronger stress case.
 
 `AlgebraicPreparation.prepare` returns ordered `AlgebraicPreparation.Inputs`
 from a source goal, with ordinary-kernel coefficient/divisor identities and one
-shared reflection budget. Its environment retains separate ordered indices
+shared reflection budget. Its prepared record retains separate ordered indices
 and can invoke the native packet producer without a primitive common-field
 certificate. Computed proposals still require literal authentication before
 quotation; this API installs no additional tactic handler.
+
+`CellOperations.check` replays a complete packet with the owner's existing
+checked `Replay.Operations` dictionary. `check_eq` preserves every canonical
+result and error, including original guard preflight, both verdicts and the
+root/cut indices. `accept?` exposes only true acceptance to record assembly;
+the public checker retains its typed failures and diagnostic false result.
+`RealModel.build` constructs the ordinary-real interpretation of a closed
+retained base/root context from its actual descriptors, encoding proofs and
+supplied real base model. Original source-value identities remain required.
+`CellQuote.finishOperations` checks an ordinary proof of the exact supplied
+predicate, transports acceptance to the canonical checker and authenticates
+the original goal, fixed valuation and every source divisor. Failed calls
+restore metavariables and auxiliary declarations.
+[Supplied-operation evidence](../reports/hexrcf-cell-operations.md) records
+the proof, packet and model validation scopes.
 
 These results do not reconstruct general frozen source/provider/predecessor
 histories, collect every intermediate reached arithmetic record, establish

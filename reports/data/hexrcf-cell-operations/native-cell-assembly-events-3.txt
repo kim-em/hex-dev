@@ -1,0 +1,10 @@
+205066439: actual closed literal context extraction begins
+205069093: actual original context extracted: 1 owners, 7 bindings
+205069116: reference prefix models retained: 2
+205069117: actual owner assembly created; reached-operation collection begins
+205123832: actual closed literal context extraction begins
+205127388: actual original context extracted: 1 owners, 7 bindings
+205127405: reference prefix models retained: 2
+205127406: actual owner assembly created; reached-operation collection begins
+205426296: reached operations collected; ordinary kernel acceptance begins
+205464162: original complete packet acceptance checked; record=PUnit.unit

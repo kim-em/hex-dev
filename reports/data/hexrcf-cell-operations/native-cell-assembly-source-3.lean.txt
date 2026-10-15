@@ -1,0 +1,45 @@
+import HexRCF.CellReplay.Operations
+import HexRCF.RealCoefficients.AlgebraicCells
+import HexRCF.RealCoefficients.CellOperations
+import HexRealClosureTheory.NativeAssemblyModels
+open Hex Lean Meta Elab Command
+open Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
+open Hex.RealClosure.Algebraic.KernelReplay
+open Hex.RealClosure.Algebraic.KernelReplay.FiniteData
+open Hex.RCF.RealCoefficients.CellReplayTests.Algebraic
+set_option maxHeartbeats 12000000
+set_option maxRecDepth 32768
+private def frozenCells : Codec.Json := .arr #[Literals.sections,Literals.sectors]
+private def note (message : String) : MetaM Unit := do
+  IO.FS.withFile "/home/kim/.codex/tasks/hex-10358/native-cell-assembly.events" .append fun file => do
+    file.putStrLn s!"{← IO.monoMsNow}: {message}"
+    file.flush
+syntax (name := nativeCellAssembly) "#native_cell_assembly" : command
+@[command_elab nativeCellAssembly]
+unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
+  note "actual closed literal context extraction begins"
+  let native ← NativeChain.ofContext (mkConst ``Hex.RCF.SelectedRootTests.Data.parent)
+  note s!"actual original context extracted: {native.owners.size} owners, {native.bindings.size} bindings"
+  unless native.owners.size == 1 do throwError "fixed selected field lost its original owner"
+  let following ← mkAppM ``AlgebraicCells.following #[mkConst ``Hex.RCF.SelectedRootTests.Data.registry]
+  let models ← native.models following
+  note s!"reference prefix models retained: {models.models.size}"
+  let assembly ← models.assembly native
+  note "actual owner assembly created; reached-operation collection begins"
+  let program ← assembly.complete native.owners.size fun operations => do
+    let core ← operations.core
+    let empty ← mkListLit (← mkAppM ``Tower.Context.Value #[mkConst ``Schema.parent]) []
+    let accept ← mkAppOptM ``CellOperations.accept? #[none, some (mkConst ``Schema.parent)]
+    mkAppM' accept #[core,
+      mkConst ``Hex.RCF.RealCoefficients.CellReplayTests.Operations.codec,
+      mkConst ``Schema.values, mkConst ``Schema.formula, empty, mkConst ``Canonical.cert,
+      mkConst ``Hex.RealFormula.Quantifier.existsReal,
+      mkConst ``Literals.roots, mkConst ``frozenCells]
+  note "reached operations collected; ordinary kernel acceptance begins"
+  let (record,proof) ← checkedRecordProof program
+  let type ← inferType proof
+  let _ ← auditProof proof type
+  kernelCheck `__nativeCompleteCellAcceptance type proof
+  note s!"original complete packet acceptance checked; record={record.getAppFn.constName!}"
+  logInfo "actual NativeChain/NativeModels/NativeAssembly supplied complete checker acceptance"
+#native_cell_assembly

@@ -1,0 +1,47 @@
+import HexRCF.RealCoefficients
+import HexRCF.SelectedRoot.Data
+open Hex Lean Meta Qq Hex.RCF.RealCoefficients
+
+namespace NativeRealModelProbe
+/-- Construct only the ordinary-real interpretation of the retained tower.
+Each root uses the actual descriptor, frame and encoding proof. The supplied
+base model must match the actual base; no new root or source identity is chosen. -/
+private def build (context baseModel : Expr) (fuel : Nat := 256) : MetaM Expr := do
+  let packed ← withTransparency .all (whnf context)
+  unless packed.getAppFn.isConstOf ``RealClosure.Tower.Context.pack do
+    throwError "expected a retained packed tower"
+  let model ← go fuel packed.getAppArgs.back!
+  let expected ← mkAppOptM ``RealClosure.Tower.Model #[none, some context, some (mkConst ``Real), none, none]
+  let binding ← mkAppOptM ``Eq.refl #[some expected, some model]
+  let _ ← Hex.RCF.checkProof `nativeRealModel (← inferType binding) binding
+  return model
+where
+  go (fuel : Nat) (chain : Expr) : MetaM Expr := do
+    let fuel+1 := fuel | throwError "real tower model exhausted its depth bound"
+    Core.checkSystem "rcf real tower model"
+    let constructor ← withTransparency .all (whnf chain)
+    let result ← if constructor.getAppFn.isConstOf ``RealClosure.Tower.Chain.base then
+      pure baseModel
+    else if constructor.getAppFn.isConstOf ``RealClosure.Tower.Chain.root then do
+      let arguments := constructor.getAppArgs
+      unless arguments.size ≥ 4 do throwError "invalid retained root constructor"
+      let parent := arguments[arguments.size-4]!
+      let before ← go fuel parent
+      mkAppM ``RealClosure.Tower.Model.root #[parent,before,arguments[arguments.size-3]!,
+        arguments[arguments.size-2]!,arguments.back!]
+    else throwError "real tower model requires base/root constructors"
+    let prefixContext ← mkAppM ``RealClosure.Tower.Context.pack #[chain]
+    let expected ← mkAppOptM ``RealClosure.Tower.Model #[none,some prefixContext,some (mkConst ``Real),none,none]
+    unless ← withTransparency .all (isDefEq (← inferType result) expected) do
+      throwError "base or root model has a different retained context"
+    return result
+
+run_meta do
+  let base ← mkAppM ``RealClosure.NumberField.rationalModel #[mkConst ``Hex.RCF.SelectedRootTests.Data.registry]
+  let model ← build (mkConst ``Hex.RCF.SelectedRootTests.Data.parent) base
+  let expected := mkConst ``Hex.RCF.SelectedRootTests.Data.original
+  unless ← withTransparency .all (isDefEq model expected) do
+    throwError "constructed ordinary-real model differs from the actual selected-root model"
+  let _ ← Hex.RCF.checkProof `nativeRealModelIdentity (← mkEq model expected) (← mkEqRefl model)
+  logInfo "ordinary-real model constructed from the actual retained base/root frame"
+end NativeRealModelProbe
