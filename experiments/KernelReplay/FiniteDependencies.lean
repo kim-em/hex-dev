@@ -49,6 +49,11 @@ private def delayedNat : Nat → Nat
 private def deferred (n : Nat) : Prop :=
   if delayedNat n == n then True else False
 
+@[instance_reducible] private def cacheZero : Zero Rat := inferInstance
+
+private def inventoryAlias (entries : List (Hex.RealClosure.Algebraic.Packing
+    Hex.RealClosure.Algebraic.KernelReplay.FiniteTower.first)) := entries
+
 public meta section
 namespace Hex.RealClosure.Algebraic.KernelReplay.FiniteDependenciesProbe
 open Lean Meta Elab Command
@@ -177,6 +182,17 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
         (fun _ _ => throwError "zero-fuel dependency discovery invoked a producer")
       unless !absent.saturated && absent.requests.isEmpty do
         throwError "dependency discovery accepted missing records"
+      -- With no insertion budget, an unavailable inventory remains unresolved.
+      -- Inspecting the frontier must not attempt to produce or register it.
+      let foreignKey ← mkAppM ``DensePoly.C #[toExpr (1 : Rat)]
+      let foreignFound ← mkAppM ``Packing.find #[level.entries, foreignKey]
+      let foreignRequest ← mkEq (← mkAppM ``Option.isSome #[foreignFound])
+        (mkConst ``Bool.true)
+      let foreign ← FiniteData.collectDependencies 0 #[empty]
+        (fun _ => pure #[foreignRequest]) (fun _ => pure none)
+        (fun _ _ => throwError "zero-fuel foreign lookup invoked a producer")
+      unless !foreign.saturated && foreign.requests.isEmpty do
+        throwError "zero-fuel foreign lookup lost its unresolved obligation"
       let wrongPolynomial ← mkAppM ``DensePoly.C #[toExpr (3 : Rat)]
       let wrong ← FiniteTowerPackets.packing wrongPolynomial
       try
@@ -199,6 +215,114 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
         (fun _ _ => throwError "cached dependency discovery invoked a producer")
       unless cached.saturated && cached.requests.isEmpty do
         throwError "cached dependency discovery did not replay"
+      let passes ← IO.mkRef (0 : Nat)
+      let batch (levels : Array FiniteData.Level) : MetaM (Array Expr) := do
+        passes.modify (· + 1)
+        let some current := levels[0]? | throwError "batch discovery lost its level"
+        let mut requested := #[]
+        for number in [1, 2, 3, 1] do
+          let polynomial ← mkAppM ``DensePoly.C #[toExpr (number : Rat)]
+          let found ← mkAppM ``Packing.find #[current.entries, polynomial]
+          requested := requested.push
+            (← mkEq (← mkAppM ``Option.isSome #[found]) (mkConst ``Bool.true))
+        return requested
+      let produce (lookup : FiniteData.Lookup) (_ : Array FiniteData.Level) := do
+        return some (← FiniteTowerPackets.packing lookup.request.polynomial)
+      let decisionCount ← IO.mkRef (0 : Nat)
+      let counted : FiniteData.Supplier := fun type => do
+        decisionCount.modify (· + 1)
+        decisions type
+      let batched ← FiniteData.collectDependencies 3 #[empty] batch counted produce
+      unless batched.saturated && batched.requests.size == 3 && batched.leaves.isEmpty do
+        throwError "batch discovery lost a key or charged a repeated request twice"
+      unless (← passes.get) == 2 do
+        throwError "dependency discovery rebuilt the full frontier after individual records"
+      unless (← decisionCount.get) == 6 do
+        throwError "exact lookup reuse expected six decisions, got {← decisionCount.get}"
+      let known ← IO.mkRef batched.known
+      let cachedLookup := FiniteData.lookupSupplier known
+        (fun _ => throwError "retained closed lookup invoked its decision procedure")
+      for type in ← batch batched.levels do
+        let some proof ← cachedLookup type | throwError "retained lookup lost its exact key"
+        unless (← inferType proof) == type do
+          throwError "retained lookup changed the exact statement"
+        let _ ← auditProof proof type
+        kernelCheck `__finiteKnownLookup type proof
+      -- Exact inserted bindings suffice even when the external decider cannot
+      -- normalize these lookups. Repeated keys must not consume more records.
+      let noDecisions ← FiniteData.collectDependencies 10 #[empty] batch
+        (fun _ => pure none) produce
+      unless noDecisions.saturated && noDecisions.requests.size == 3 do
+        throwError "checked insertion bindings did not prevent duplicate collection"
+      let aliasKey ← mkAppM ``DensePoly.C #[toExpr (1 : Rat)]
+      let some firstKnown := batched.known[0]? | throwError "alias control lost its checked record"
+      unless firstKnown.lookup.key == aliasKey do throwError "alias control has a different key"
+      let literal := firstKnown.lookup.inventory
+      let parameters := literal.getAppArgs
+      unless literal.getAppFn.isConstOf ``List.cons && parameters.size == 3 do
+        throwError "alias control has no literal inserted record"
+      let aliasFact := parameters[1]!
+      let aliasRequests (levels : Array FiniteData.Level) : MetaM (Array Expr) := do
+        let some current := levels[0]? | throwError "alias control lost its level"
+        let aliased ← mkAppM ``inventoryAlias #[current.entries]
+        let mut statements := #[]
+        for inventory in #[current.entries, aliased] do
+          let found ← mkAppM ``Packing.find #[inventory, aliasKey]
+          statements := statements.push
+            (← mkEq (← mkAppM ``Option.isSome #[found]) (mkConst ``Bool.true))
+        return statements
+      let aliases ← FiniteData.collectDependencies 2 #[empty] aliasRequests
+        (fun _ => pure none) (fun _ _ => pure (some aliasFact))
+      unless !aliases.saturated && !aliases.leaves.isEmpty && aliases.requests.size == 1 do
+        throwError "inventory alias reported saturation with an unresolved lookup"
+      let foreignPositive ← FiniteData.collectDependencies 1 #[empty]
+        (fun _ => pure #[foreignRequest]) (fun _ => pure none)
+        (fun _ _ => throwError "foreign inventory invoked a producer with positive fuel")
+      unless !foreignPositive.saturated && foreignPositive.requests.isEmpty do
+        throwError "foreign inventory changed refusal policy with positive fuel"
+      let fallbackCount ← IO.mkRef (0 : Nat)
+      let fallback := FiniteData.lookupSupplier known (fun _ => do
+        fallbackCount.modify (· + 1)
+        return none)
+      let query (finder inventory key : Expr) : MetaM Unit := do
+        let type ← mkEq (← mkAppM ``Option.isSome #[← mkAppM finder.constName! #[inventory, key]])
+          (mkConst ``Bool.true)
+        unless (← fallback type).isNone do throwError "lookup cache accepted a different request"
+      let unitKey ← mkAppM ``DensePoly.C #[toExpr (1 : Rat)]
+      let otherKey ← mkAppM ``DensePoly.C #[toExpr (4 : Rat)]
+      let some complete := batched.levels[0]? | throwError "batch discovery lost its owner"
+      query (mkConst ``Packing.find) complete.entries otherKey
+      query (mkConst ``Packing.find) level.entries unitKey
+      let otherOwner ← Elab.Term.elabTerm
+        (← `(Context.adjoin FiniteTower.firstRoot (fun _ => false))) none
+      Elab.Term.synthesizeSyntheticMVarsNoPostponing
+      let otherEntries ← mkListLit (← mkAppM ``Packing #[← instantiateMVars otherOwner]) []
+      query (mkConst ``Packing.find) otherEntries unitKey
+      let value ← Elab.Term.elabTerm
+        (← `(Element.ofPoly (context := FiniteTower.first) (DensePoly.C (1 : Rat)))) none
+      Elab.Term.synthesizeSyntheticMVarsNoPostponing
+      let value ← instantiateMVars value
+      query (mkConst ``ValueSign.find) level.records value
+      let typed ← mkAppM ``Packing.find #[complete.entries, unitKey]
+      let arguments := typed.getAppArgs
+      let changed := mkAppN typed.getAppFn (arguments.set! 2 (mkConst ``cacheZero))
+      let changedType ← mkEq (← mkAppM ``Option.isSome #[changed]) (mkConst ``Bool.true)
+      check changedType
+      unless (← fallback changedType).isNone do
+        throwError "lookup cache ignored a changed implicit instance"
+      unless (← fallbackCount.get) == 5 do
+        throwError "lookup cache failed to delegate a changed key, inventory, owner, kind or instance"
+      let uncached ← IO.mkRef (#[] : Array FiniteData.KnownLookup)
+      let reflexive := FiniteData.lookupSupplier uncached
+        (fun _ => return some (← mkEqRefl (mkConst ``Bool.true)))
+      let originalType ← mkEq (← mkAppM ``Option.isSome #[typed]) (mkConst ``Bool.true)
+      let some proof ← reflexive originalType | throwError "ordinary lookup proof was discarded"
+      kernelCheck `__finiteReflexiveLookup originalType proof
+      unless (← uncached.get).isEmpty do
+        throwError "lookup cache retained a proof with a different syntactic type"
+      let limited ← FiniteData.collectDependencies 1 #[empty] batch decisions produce
+      unless !limited.saturated && limited.requests.size == 1 && !limited.leaves.isEmpty do
+        throwError "batch discovery accepted a missing key after exhausting its record budget"
       let three ← mkAppOptM ``Nat.cast #[some source, none, some (toExpr (3 : Nat))]
       let realThree ← mkAppOptM ``Nat.cast #[some (mkConst ``Real), none, some (toExpr (3 : Nat))]
       let castType ← mkEq (mkApp reader three) realThree
@@ -219,6 +343,7 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
 
 set_option maxRecDepth 32768 in
 set_option maxHeartbeats 5000000 in
+set_option smartUnfolding false in
 /-- info: dependency discovery lowered product and cast premises with unchosen readers; original operands retained -/
 #guard_msgs in
 #finite_dependencies_probe

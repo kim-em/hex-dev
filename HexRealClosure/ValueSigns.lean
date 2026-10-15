@@ -73,6 +73,21 @@ representative. Values with the same denotation need not have the same key. -/
   | record :: rest =>
     if record.value = value then some record else ValueSign.find rest value
 
+/-- An exact binding supplies lookup success without evaluating the key again. -/
+theorem ValueSign.find_head (rest : List (ValueSign context)) (key : Element context)
+    (record : ValueSign context) (binding : record.value = key) :
+    (ValueSign.find (record :: rest) key).isSome = true := by
+  simp only [ValueSign.find, binding, ite_eq_left, Option.isSome_some]
+
+/-- Adding a record preserves an already checked successful lookup. -/
+theorem ValueSign.find_cons (rest : List (ValueSign context)) (key : Element context)
+    (record : ValueSign context) (found : (ValueSign.find rest key).isSome = true) :
+    (ValueSign.find (record :: rest) key).isSome = true := by
+  unfold ValueSign.find
+  split
+  · rfl
+  · exact found
+
 theorem ValueSign.find_value (records : List (ValueSign context)) (value : Element context)
     {record : ValueSign context} (found : ValueSign.find records value = some record) :
     record.value = value := by

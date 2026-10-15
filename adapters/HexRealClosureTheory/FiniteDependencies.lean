@@ -157,6 +157,9 @@ structure Discovery where
   requests : Array Request
   leaves : Array Leaf
   saturated : Bool
+  /-- Closed proof terms retained in the environment that declared their
+  generated constants. Reuse the discovery with that environment intact. -/
+  known : Array KnownLookup
 
 private def levelInventories (levels : Array Level) : Array Inventory :=
   levels.flatMap (fun level => #[⟨level.entries⟩, ⟨level.records⟩, ⟨level.facts⟩])
@@ -174,9 +177,19 @@ private def replaceInventories (levels : Array Level) (inventories : Array Inven
       entries := entries.facts, records := records.facts, facts := facts.facts }
   return result
 
+/-- Bind a reached lookup to the current version of its original inventory.
+Keys and owners are unchanged; the next discovery pass checks the resulting
+inventory against every requested premise. -/
+private def refreshLookup (lookup : Lookup) (before after : Array Inventory) :
+    MetaM (Option (Lookup × Nat)) := lookup.leaf.withContext do
+  unless before.size == after.size do throwError "dependency inventory arity changed"
+  let some index ← lookup.inventoryIndex? before | return none
+  let some current := after[index]? | throwError "dependency current inventory missing"
+  return some (lookup.withInventory current.facts, index)
+
 /-- Close the reached native lookup dependencies across all retained levels
-before interpreting coefficients. Rebuild the requested premises after each
-checked insertion. Only exact lookup checks can be discharged during this
+before interpreting coefficients. Insert the missing records from one frontier
+before rebuilding the requested premises. Only exact lookup checks can be discharged during this
 pass, so supplied proofs cannot hide arithmetic inputs. The returned base
 operations and guards still need the staged bootstrap and verified prefix
 suppliers; this discovery pass chooses no real points and proves no theorem. -/
@@ -185,26 +198,60 @@ def collectDependencies (fuel : Nat) (initial : Array Level)
     (record : Lookup → Array Level → MetaM (Option Expr)) : MetaM Discovery := do
   let _ ← collectSupport 0 (levelInventories initial) (fun _ => pure (mkConst ``True))
     (fun _ => pure none) (fun _ _ => throwError "inventory validation invoked a producer")
-  go fuel initial #[]
+  let known ← IO.mkRef (#[] : Array KnownLookup)
+  go known fuel initial #[]
 where
-  go (remaining : Nat) (levels : Array Level) (requests : Array Request) : MetaM Discovery := do
-    let lookupDecisions : Supplier := fun type => do
-      let leaf : Leaf := ⟨type, ← getLCtx, ← getLocalInstances⟩
-      if (← leaf.lookup?).isSome then decisions type else pure none
+  go (known : IO.Ref (Array KnownLookup)) (remaining : Nat) (levels : Array Level)
+      (requests : Array Request) : MetaM Discovery := do
+    let lookupDecisions := lookupSupplier known decisions
     let mut roots := #[]
     for type in ← types levels do
       if type.hasMVar || type.hasSorry then throwError "incomplete dependency statement"
       unless ← isProp type do throwError "dependency statement must be a proposition"
       roots := roots ++ (← frontier type dependencyBoundary lookupDecisions)
     let leaves ← descend (levels.size + 1) levels roots lookupDecisions
+    let original := levelInventories levels
+    let mut current := levels
+    let mut requests := requests
+    let mut budget := remaining
+    let mut inserted := false
+    let mut missing := false
     for leaf in leaves do
       if let some lookup ← leaf.lookup? then
-        let n + 1 := remaining | return ⟨levels, requests, leaves, false⟩
-        let some fact ← leaf.withContext (record lookup levels) |
-          return ⟨levels, requests, leaves, false⟩
-        let inventories ← lookup.insert fact (levelInventories levels)
-        let levels ← replaceInventories levels inventories
-        return ← go n levels (requests.push lookup.request)
-    return ⟨levels, requests, leaves, true⟩
+        if budget == 0 then
+          missing := true
+          continue
+        let inventories := levelInventories current
+        let some (refreshed, index) ← refreshLookup lookup original inventories | do
+          missing := true
+          continue
+        let some previousInventory := original[index]? |
+          throwError "dependency original inventory missing"
+        let some currentInventory := inventories[index]? |
+          throwError "dependency current inventory missing"
+        -- A changed slot forces a new pass. An unchanged alias remains an
+        -- unresolved original statement, even if the canonical lookup is known.
+        let changed := currentInventory.facts != previousInventory.facts
+        if changed || refreshed.inventory != lookup.inventory then
+          let pending ← refreshed.leaf.withContext do
+            frontier refreshed.leaf.type dependencyBoundary lookupDecisions
+          if pending.isEmpty then
+            if !changed then missing := true
+            continue
+        let lookup := refreshed
+        missing := true
+        let n + 1 := budget | continue
+        let some fact ← lookup.leaf.withContext (record lookup current) | continue
+        let (inventories, entry) ← lookup.insertKnown fact (levelInventories current)
+        if let some entry := entry then known.modify (·.push entry)
+        current ← replaceInventories current inventories
+        requests := requests.push lookup.request
+        budget := n
+        inserted := true
+    if inserted then
+      if _decreased : budget < remaining then return ← go known budget current requests
+      throwError "dependency insertion did not consume its record budget"
+    return ⟨levels, requests, leaves, !missing, ← known.get⟩
+  termination_by remaining
 
 end Hex.RealClosure.Algebraic.KernelReplay.FiniteData
