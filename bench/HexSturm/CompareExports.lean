@@ -116,12 +116,18 @@ private def combineFixed (paths : Array String) : IO LeanBench.FixedResult := do
     minNanos? := sorted[0]?
     maxNanos? := sorted[sorted.size - 1]? }
 
-/-- Apply the pinned fixed-result comparison after exact source/hash agreement.
+/-- Apply the pinned fixed-result comparison after source/hash agreement.
 Fixed workloads retain their declared repeated calls in each source block. -/
 private def compareFixed (args : List String) : IO UInt32 := do
   let base ← combineFixed (args.toArray.extract 1 5)
   let current ← combineFixed (args.toArray.extract 5 9)
-  unless base.function == current.function && base.config == current.config &&
+  -- Historical registrations may acquire an expected hash without changing
+  -- the measured workload. Permit that strengthening only: both arms already
+  -- agree on every result hash, and combineFixed checked the new expected hash.
+  let configMatches := base.config == current.config ||
+    (base.config.expectedHash.isNone &&
+      base.config == { current.config with expectedHash := none })
+  unless base.function == current.function && configMatches &&
       base.observedHash? == current.observedHash? do
     throw <| IO.userError "different fixed functions, configurations or result hashes"
   let report := LeanBench.Export.compareFixed base current 10.0

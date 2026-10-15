@@ -312,6 +312,21 @@ class FixedExportGuardTest(unittest.TestCase):
             self.result(arm)['config']['expected_hash'] = self.result(arm)['observed_hash']
         self.check(0)
 
+    def test_historical_expected_hash_can_be_added(self):
+        for arm in range(4, 8):
+            self.result(arm)['config']['expected_hash'] = self.result(arm)['observed_hash']
+        self.check(0)
+
+    def test_declared_expected_hash_cannot_be_removed(self):
+        for arm in range(4):
+            self.result(arm)['config']['expected_hash'] = self.result(arm)['observed_hash']
+        self.check('refuse')
+
+    def test_added_expected_hash_must_match(self):
+        for arm in range(4, 8):
+            self.result(arm)['config']['expected_hash'] = '0x1'
+        self.check('refuse')
+
     def test_integer_normalization_at_threshold(self):
         for arm in range(4, 8):
             for point in self.result(arm)['points']:
