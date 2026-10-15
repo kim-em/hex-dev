@@ -316,10 +316,102 @@ private def agreementLookup (agreement : Expr) : Supplier := fun type => do
     earlier := earlier.push value
   return none
 
+-- Unfold closed, unapplied support aliases, stopping before coefficient
+-- enumeration or opaque packet inventories. Unsupported shapes use the
+-- existing literal membership supplier.
+private def supportHead (value : Expr) : MetaM Expr := do
+  let mut value := value
+  for _ in [:64] do
+    if value.getAppFn.isConstOf ``List.append || value.getAppFn.isConstOf ``List.cons ||
+        value.getAppFn.isConstOf ``List.nil ||
+        value.getAppFn.isConstOf ``Transport.Inventory.coefficients then return value
+    let .const name levels := value | return value
+    let .defnInfo info ← getConstInfo name | return value
+    value := info.value.instantiateLevelParams info.levelParams levels
+  return value
+
+private def coefficientPath (inventory function : Expr) : MetaM (Option (Array Nat)) := do
+  let mut pending := [(inventory, #[])]
+  for _ in [:10000] do
+    let (value, path) :: rest := pending | return none
+    pending := rest
+    let value ← supportHead value
+    let args := value.getAppArgs
+    if value.getAppFn.isConstOf ``Transport.Inventory.coefficients then
+      if args == function.getAppArgs then return some path
+    else if value.getAppFn.isConstOf ``List.append then
+      pending := (args[args.size - 2]!, path.push 0) ::
+        (args.back!, path.push 1) :: pending
+    else if value.getAppFn.isConstOf ``List.cons then
+      pending := (args.back!, path.push 2) :: pending
+  return none
+
+-- A whole coefficient list was retained before choosing this interpretation.
+-- Project its agreement rather than enumerate its indices and prove each
+-- global list position separately. The complete original quantified type,
+-- including its bound, coefficient dictionaries and guarded predicate, must
+-- match. These are ordinary theorem applications, checked with the enclosing
+-- finite-data proof; this adds no proof cache or new trusted boundary.
+private def agreementMembers (agreement : Expr) : Supplier := fun type =>
+    withNewMCtxDepth <| withTransparency .all do
+  let type ← instantiateMVars type
+  let agreement ← instantiateMVars agreement
+  if type.hasMVar || agreement.hasMVar || type.hasSorry || agreement.hasSorry then return none
+  let .forallE _ indexType (.forallE _ bound body _) _ := type | return none
+  unless indexType.isConstOf ``Nat do return none
+  let .app predicate coefficient := body | return none
+  unless coefficient.getAppFn.isConstOf ``DensePoly.coeff do return none
+  let args := coefficient.getAppArgs
+  unless args.size ≥ 3 && args.back! == .bvar 1 do return none
+  let polynomial := args[args.size - 2]!
+  if polynomial.hasLooseBVars || predicate.hasLooseBVars then return none
+  let bounds := bound.getAppArgs
+  if bound.getAppFn.isConstOf ``Nat.lt then
+    unless bounds.size == 2 do return none
+  else if bound.getAppFn.isConstOf ``LT.lt then
+    unless bounds.size == 4 && bounds[0]! == mkConst ``Nat do return none
+    unless ← withTransparency .instances (isDefEq bounds[1]! (mkConst ``instLTNat)) do return none
+  else return none
+  unless bounds[bounds.size - 2]! == .bvar 0 do return none
+  let size := bounds.back!
+  unless size.getAppFn.isConstOf ``DensePoly.size && size.getAppArgs.back! == polynomial do
+    return none
+  let agreementType ← inferType agreement
+  unless agreementType.getAppFn.isConstOf ``Transport.Inventory.Agreement do return none
+  let parameters := agreementType.getAppArgs
+  unless predicate == parameters[parameters.size - 4]! do return none
+  let inventory := parameters.back!
+  if inventory.hasFVar || inventory.hasMVar then return none
+  let before ← IO.getNumHeartbeats
+  let some path ← coefficientPath inventory coefficient.appFn! | return none
+  let mut data := agreement
+  for direction in path do
+    if direction < 2 then
+      let split ← mkAppM ``Transport.Inventory.Agreement.append #[data]
+      data ← mkAppM (if direction == 0 then ``And.left else ``And.right) #[split]
+    else
+      let inventory := (← inferType data).getAppArgs.back!
+      let literal ← supportHead inventory
+      unless literal.getAppFn.isConstOf ``List.cons do return none
+      let args := literal.getAppArgs
+      let subset ← withLocalDeclD `value args[0]! fun value => do
+        let memberType ← mkAppM ``List.Mem #[value, args[2]!]
+        withLocalDeclD `member memberType fun member => do
+          let lifted ← mkAppM ``List.mem_cons_of_mem #[args[1]!, member]
+          mkLambdaFVars #[value, member] lifted
+      data ← mkAppM ``Transport.Inventory.Agreement.mono #[data, subset]
+  let proof ← mkAppM ``Transport.Inventory.Agreement.members #[data]
+  let proof ← instantiateMVars proof
+  if proof.hasMVar || proof.hasSorry then return none
+  unless ← withTransparency .all (isDefEq (← inferType proof) type) do return none
+  diagnostic s!"base support: whole coefficient memberships supplied, depth={path.size} supplyHB={((← IO.getNumHeartbeats)-before)/1000}"
+  return some proof
+
 /-- Preserve leading coefficients from the same finite sign/zero agreement,
 and supply its exact coefficient guards. No nonzero interpretation is assumed
 for an unretained coefficient. -/
 def agreementSupplier (agreement : Expr) : Supplier := fun type => do
+  if let some proof ← agreementMembers agreement type then return some proof
   if type.getAppFn.isConstOf ``Transport.Leading then
     let dataType ← inferType agreement
     unless dataType.getAppFn.isConstOf ``Transport.Inventory.Agreement do
