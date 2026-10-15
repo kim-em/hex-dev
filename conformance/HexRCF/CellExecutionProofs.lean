@@ -22,7 +22,8 @@ run_meta do
   let names := #[``CellRead.collectWith_success, ``CellBuild.point_success, ``CellBuild.pointWith_success,
     ``BoundarySigns.left_sign, ``BoundarySigns.right_sign, ``CellBuild.bounds_success,
     ``CellBuild.evidence_success, ``CellBuild.build_success,
-    ``CellAlignment.sector_vector, ``CellDiscover.run_success]
+    ``CellAlignment.sector_vector, ``CellDiscover.run_success,
+    ``CellBuild.packet_read, ``CellDiscover.run_replay]
   for name in names do
     let .thmInfo declaration ← getConstInfo name | throwError "expected theorem: {name}"
     let _ ← Hex.RCF.checkProof name declaration.type declaration.value
@@ -42,5 +43,10 @@ run_meta do
   for forbidden in #[``CellProgress.evidence, ``CellProgress.sector, ``CellAlignment.sector_points,
       ``CellProgress.point_packet, ``CellDecision.complete] do
     if seen.contains forbidden then throwError "executable proof retained the chosen-point existence route: {forbidden}"
-  logInfo "ten actual public executable proof bodies kernel checked; standard axioms and actual owner construction laws retained"
+  let replay ← Hex.RCF.ProofEvidence.projectDependencies #[``CellDiscover.run_replay]
+  for required in #[``CellDiscover.run_success, ``CellBuild.packet_read,
+      ``CellFootprint.read_packet, ``RootCodec.read_covered,
+      ``Hex.SignDet.Codec.bindings_of_check, ``Hex.RealClosure.Tower.Context.codec_lawful] do
+    unless replay.contains required do throwError "native payload progress omitted actual reader law: {required}"
+  logInfo "twelve actual public executable proof bodies kernel checked; construction and exact native literal restoration retained"
 end Hex.RCF.RealCoefficients.CellExecutionProofs

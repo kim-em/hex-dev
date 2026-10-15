@@ -12,7 +12,8 @@ run_meta do
   for name in #[``SectorEncode.read_row, ``SectorEncode.read_of_descriptor,
       ``CellCodec.packet_eq, ``CellCodec.tuple_fin, ``CellCodec.collect_eq,
       ``CellCodec.read_of_descriptors, ``CellFootprint.sector_covered,
-      ``CellFootprint.descriptor_covered, ``CellFootprint.covered, ``CellFootprint.read_covered] do
+      ``CellFootprint.descriptor_covered, ``CellFootprint.covered, ``CellFootprint.read_covered,
+      ``RootCodec.graph_covered, ``RootCodec.read_covered, ``CellFootprint.read_packet] do
     let .thmInfo declaration ← getConstInfo name | throwError "expected theorem: {name}"
     let _ ← Hex.RCF.checkProof name declaration.type declaration.value
     let axioms ← collectAxioms name
@@ -27,10 +28,15 @@ run_meta do
   for required in #[``CellFootprint.covered, ``CellFootprint.sector_covered,
       ``CellCodec.read_of_descriptors, ``Hex.RealClosure.Tower.Signature.codec_lawful] do
     unless footprint.contains required do throwError "finite inventory composition omitted actual law: {required}"
+  let restored ← Hex.RCF.ProofEvidence.projectDependencies #[``CellFootprint.read_packet]
+  for required in #[``RootCodec.read_covered, ``RootCodec.graph_covered,
+      ``Hex.SignDet.Codec.bindings_of_check, ``Hex.SignDet.Codec.read_graph_covered,
+      ``CellFootprint.descriptor_covered] do
+    unless restored.contains required do throwError "payload restoration omitted actual owner law: {required}"
   let environment ← getEnv
   for forbidden in #[`HexRCF.RealCoefficients.CellBuild, `HexRCF.RealCoefficients.RootBuild,
       `HexRCF.RealCoefficients.CellDiscover] do
     if environment.header.moduleNames.contains forbidden then
       throwError "cell serialization audit imported producer module: {forbidden}"
-  logInfo "ten actual cell serialization proof bodies kernel checked; finite row laws retained and descriptor premise explicit"
+  logInfo "thirteen actual cell serialization proof bodies kernel checked; finite payload restoration derives descriptor success from owner laws"
 end Hex.RCF.RealCoefficients.CellCodecProofs

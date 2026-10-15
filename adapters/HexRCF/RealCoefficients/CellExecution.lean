@@ -197,5 +197,42 @@ theorem run_success (original : Model parent ℝ) (values : Fin n → parent.Val
         (fun i => original.value (values i)) := funext (fun i => model.input.value (values i))
     simpa only [same] using meaning
 
+/-- The actual public producer's frozen cell payload is accepted by its
+independent literal reader in the returned native context. Both verdicts retain
+the original shared-sentence semantics. This uses native codec lawfulness;
+restoration of a general frozen predecessor history is a separate obligation. -/
+theorem run_replay (original : Model parent ℝ) (values : Fin n → parent.Value)
+    (guards : List parent.Value) (formula : RealFormula.QF (n+1))
+    (guarded : ∀ d ∈ guards, d ≠ 0) :
+    ∃ packet, run values guards formula = .ok packet ∧
+      ∃ data : CellReplay.Evidence packet.roots
+          (packet.family.collection.input.value ∘ values) formula,
+        CellRead.read packet.family.collection.input.context.codec
+          (guards.map packet.family.collection.input.value) packet.roots
+          (packet.family.collection.input.value ∘ values) formula packet.cells = .ok data ∧
+        ∀ quantifier, ∃ verdict,
+          CellReplay.check (packet.family.collection.input.value ∘ values) formula
+            (guards.map packet.family.collection.input.value) packet.radical packet.roots
+            data quantifier = .ok verdict ∧
+          (verdict = true ↔ (RealFormula.Prenex.quant quantifier (.matrix formula)).toProp
+            (fun i => original.value (values i))) := by
+  obtain ⟨packet,produced,trace⟩ := run_success original values guards formula guarded
+  let input := packet.family.collection.input
+  let _ : Hashable input.context.Value := RowEncode.hashable input.context.codec
+  let _ : Hashable Signature := RowEncode.hashable Signature.codec
+  obtain ⟨candidates,_,dimensions,data,_,frozen,verdicts⟩ := trace
+  obtain ⟨model⟩ := packet.model original
+  have domains : ∀ d ∈ guards.map input.value, d ≠ 0 := by
+    intro d member zero
+    obtain ⟨old,present,rfl⟩ := List.mem_map.mp member
+    apply guarded old present
+    apply (original.zero_iff old).mp
+    rw [← model.input.value old]
+    exact (model.input.target.zero_iff _).mpr zero
+  refine ⟨packet,produced,data,?_,verdicts⟩
+  rw [frozen]
+  exact CellBuild.packet_read data (guards.map input.value) domains input.context.codec rfl
+    (input.context.codec_lawful.covers _)
+
 end CellDiscover
 end Hex.RCF.RealCoefficients

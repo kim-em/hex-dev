@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 module
 public import HexRCF.RealCoefficients.CellCodec
+public import HexRCF.RealCoefficients.RootCodec
 public section
 namespace Hex.RCF.RealCoefficients.CellFootprint
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet
@@ -137,6 +138,24 @@ theorem read_covered (value : ValueCodec parent.Value)
   obtain ⟨sections,points,left,right,rows⟩ := covered value data hv
     (Signature.codec_lawful.covers (contexts data))
   exact CellCodec.read_of_descriptors value data guards guarded sections points left right rows descriptors
+
+/-- Finite coverage of the stored coefficient inventory is sufficient for
+exact full-payload restoration. Point descriptors are restored by the actual
+owner graph/binding laws, rather than supplied as reader-success premises. -/
+theorem read_packet (value : ValueCodec parent.Value)
+    (data : CellReplay.Evidence table values formula) (guards : List parent.Value)
+    (guarded : ∀ d ∈ guards, d ≠ 0)
+    (hv : value.Covers (coefficients data)) :
+    CellRead.read value guards table values formula (CellEncode.packet value data) = .ok data := by
+  apply read_covered value data guards guarded hv
+  intro cut
+  have all := hv
+  simp only [coefficients, ValueCodec.covers_append, ValueCodec.covers_flatMap] at all
+  obtain ⟨head,lower,upper,graph,context,contexts⟩ := descriptor_covered value Signature.codec
+    (CellEncode.sector data cut) (all.2 cut (List.mem_finRange cut))
+    (Signature.codec_lawful.covers _)
+  exact RootCodec.read_covered value Signature.codec (data.sectorRows cut).root
+    head lower upper graph context contexts
 
 end Cells
 end Hex.RCF.RealCoefficients.CellFootprint

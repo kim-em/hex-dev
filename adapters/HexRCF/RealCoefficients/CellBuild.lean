@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 module
 public import HexRCF.RealCoefficients.CellEncode
+public import HexRCF.RealCoefficients.CellFootprint
 public import HexRCF.RealCoefficients.RowEncode
 public import HexRCF.RealCoefficients.RootBuild
 public section
@@ -124,6 +125,19 @@ rerunning a root or selected-sign producer. -/
     {values : Fin n → parent.Value} {formula : RealFormula.QF (n+1)}
     (data : CellReplay.Evidence roots values formula) : Codec.Json :=
   CellEncode.packet parent.codec data
+
+/-- A partial reader sharing the native writer restores the exact complete
+typed cells when it covers their finite stored coefficient inventory. -/
+theorem packet_read [Hashable parent.Value] [Hashable Signature]
+    {p : DensePoly parent.Value} {roots : RootReplay.Result p .negInf .posInf}
+    {values : Fin n → parent.Value} {formula : RealFormula.QF (n+1)}
+    (data : CellReplay.Evidence roots values formula) (guards : List parent.Value)
+    (guarded : ∀ d ∈ guards, d ≠ 0) (value : ValueCodec parent.Value)
+    (same : value.encode = parent.codec.encode)
+    (covered : value.Covers (CellFootprint.coefficients data)) :
+    CellRead.read value guards roots values formula (packet data) = .ok data := by
+  rw [packet, ← CellCodec.packet_eq value parent.codec same data]
+  exact CellFootprint.read_packet value data guards guarded covered
 
 /-- Produce and freeze complete cells at proposed ordinary points. The typed
 producer retains every checked row; serialization preserves the established
