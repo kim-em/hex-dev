@@ -67,6 +67,51 @@ def registration_paths(profile):
     return tuple("bench/HexSignDet/" + name + ".lean" for name in names)
 
 
+def source_layout(text):
+    """Mask comments without moving any following code or string literals."""
+    masked = list(text)
+    i = 0
+    while i < len(text):
+        if text[i] == "'":
+            char = re.match(r"'(?:\\.|[^'\\\n])'", text[i:])
+            if char:
+                i += char.end()
+                continue
+        if text[i] == '"':
+            i += 1
+            while i < len(text):
+                if text[i] == "\\":
+                    i += 2
+                elif text[i] == '"':
+                    i += 1
+                    break
+                else:
+                    i += 1
+            continue
+        start = i
+        if text.startswith("/-", i):
+            depth, i = 1, i + 2
+            while i < len(text) and depth:
+                if text.startswith("/-", i):
+                    depth, i = depth + 1, i + 2
+                elif text.startswith("-/", i):
+                    depth, i = depth - 1, i + 2
+                else:
+                    i += 1
+            if depth:
+                raise RuntimeError("unclosed source comment")
+        elif text.startswith("--", i):
+            while i < len(text) and text[i] != "\n":
+                i += 1
+        else:
+            i += 1
+            continue
+        for position in range(start, i):
+            if masked[position] != "\n":
+                masked[position] = " "
+    return "".join(masked)
+
+
 def registration_source(text):
     """Preserve layout outside simple fixed configurations and string bytes.
 
@@ -74,7 +119,7 @@ def registration_source(text):
     Callback code, identifiers and meaningful indentation remain exact. Actual
     exports separately check result hashes and one-way guard strengthening.
     """
-    text = strip_lean_comments(text)
+    text = source_layout(text)
     token_pattern = r'"(?:\\.|[^"\\])*"|[\w\x27.\u00ab\u00bb]+|[^\s]'
     matches = list(re.finditer(token_pattern, text))
     tokens = [match.group() for match in matches]
@@ -98,6 +143,13 @@ def registration_source(text):
         # exact rather than treating their whitespace as harmless formatting.
         if any(token in {"do", "by", "match", "let", "fun", "if", "where", "{"}
                for token in values[4:-1]):
+            i = j
+            continue
+        # A comma-free field boundary can depend on indentation, even without
+        # a do/match expression. Reformat only explicit comma-separated fields.
+        if any("\n" in text[matches[k].end():matches[k + 1].start()] and
+               tokens[k] not in {",", "{"} and tokens[k + 1] != "}"
+               for k in range(i + 3, j - 1)):
             i = j
             continue
         kept = values[:4]
@@ -589,7 +641,7 @@ def main(argv=None) -> int:
             if hashlib.sha256(old).hexdigest() != sources["baseline"]["sources"][path]:
                 raise RuntimeError("baseline registration source differs from snapshot")
             if args.profile == "sturm":
-                tokens = lambda text: [line.rstrip() for line in strip_lean_comments(text).splitlines() if line.strip()]
+                tokens = lambda text: [line.rstrip() for line in source_layout(text).splitlines() if line.strip()]
             else:
                 tokens = registration_source
             if tokens(old.decode()) != tokens((root / path).read_text()):
