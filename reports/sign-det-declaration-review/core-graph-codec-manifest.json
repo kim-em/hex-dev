@@ -10,7 +10,7 @@
     "HexManual/Chapters/HexSignDet.lean": "6cf774c0d04b484265c361d16b061b8e57039511c025810520f383169ecfb8e1",
     "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "83520887f6307511e2db9aa18862adaa47d66df6aadcdf2870cd6c2b635c8928",
-    "reports/sign-det-declaration-review/README.md": "754a4ddd60d3e2680a20feabd22017b7854ad9456fcc3e82f9991b3a549ad0bf",
+    "reports/sign-det-declaration-review/README.md": "0060b699872628380d168e2e67b5507d42fc4e0bbba92e83a3f34c63b0c6791e",
     "scripts/ci/check_benches_mathlib_free.py": "a8da3bef100b50fdd923d609ad03a3a9bd55229467f5652abe6e3f0b3d1ed0e5",
     "scripts/libgraph.py": "7c250cb801b6b5f4ae34ae90d98c2afc39d65f04e1b6770cc1f8871349af5ef7",
     "reports/sign-det-declaration-review/core-graph-codec.md": "59c8bb7e793884cc79f77e5ce607ac968667cb43e92436d129bc5cb009b053be",
@@ -138,8 +138,8 @@
       "lake build HexRealClosureTheory.SignEvidenceConformance HexManual"
     ]
   },
-  "source_ref": "audit/issue-10575-sign-det-integration-review-input-v2",
-  "input_revision": "7cc9fb5c2d3401d9f67b0fefd016246a3acddd0f",
+  "source_ref": "audit/issue-10575-sign-det-integration-review-input-v3",
+  "input_revision": "2782781b5f0aecc222a9170a4d66ed0a4b983807",
   "archive_files": {
     "HexSignDet/Codec/GraphLaws.lean": "292cebb2c9ea1131ddd0458de3997aac95cfc1422e99dbd8fb5e7f6d08fcdaa5",
     "HexSignDet/Codec/FiniteLaws.lean": "a30dbc456d8613e247bfc691376206a7da405b8a3e08ef7a550c0b857a234ab8",

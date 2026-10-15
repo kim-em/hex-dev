@@ -12,9 +12,9 @@
     "HexSignDet/DagSelectedSigns.lean": "3ffbfbe2cebf6ad7b5db0cf8b0a3c5a26142a46465d2577a08ddb292594eed26",
     "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
     "HexManual/Chapters/HexSignDet.lean": "6cf774c0d04b484265c361d16b061b8e57039511c025810520f383169ecfb8e1",
-    "reports/sign-det-declaration-review/core-dag-support.md": "1bfda563e2bcec64d1a7898124415e7364729ec83a25682b556f3e802e49a6fc",
+    "reports/sign-det-declaration-review/core-dag-support.md": "0f828ef1958ad190efc5eae7fe1969b1b4fafa4797d1ed1c0e950fe49610c498",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "83520887f6307511e2db9aa18862adaa47d66df6aadcdf2870cd6c2b635c8928",
-    "reports/sign-det-declaration-review/README.md": "754a4ddd60d3e2680a20feabd22017b7854ad9456fcc3e82f9991b3a549ad0bf",
+    "reports/sign-det-declaration-review/README.md": "0060b699872628380d168e2e67b5507d42fc4e0bbba92e83a3f34c63b0c6791e",
     "reports/sign-det-declaration-review/current/normalize.py": "7c34629b7ef6e1727b340e3623b1e774b761e565d24a74ece7745053fa46735f",
     "reports/sturm-declaration-review/audit_tools.py": "de536ebeafd2ee355ac6e3349efaeaf2a5f0c37ecceed4457f4be51b664a963a",
     "scripts/ci/check_benches_mathlib_free.py": "a8da3bef100b50fdd923d609ad03a3a9bd55229467f5652abe6e3f0b3d1ed0e5",
@@ -271,8 +271,8 @@
       "lake build HexRealClosureTheory.SignEvidenceConformance HexManual"
     ]
   },
-  "source_ref": "audit/issue-10575-sign-det-integration-review-input-v2",
-  "input_revision": "7cc9fb5c2d3401d9f67b0fefd016246a3acddd0f",
+  "source_ref": "audit/issue-10575-sign-det-integration-review-input-v3",
+  "input_revision": "2782781b5f0aecc222a9170a4d66ed0a4b983807",
   "archive_files": {
     "HexSignDet/DagBounds.lean": "1ff482fbcb51846b61348d1708062647fb0f61bf2eb04184b86fa17d7bac33a7",
     "HexSignDet/DagEncode.lean": "ec752303ec1488ae8e16b10ac280e83b0d4039df8829ca16052c38880396919a",
@@ -283,6 +283,6 @@
     "HexSignDet/DagOperations.lean": "e9e23da40110faaa2a0e1cf2551f7ae3cd98e5e21b6589681de24ec9319f947c",
     "HexSignDet/DagSigns.lean": "11efde41cbb44dccd5abf214532c400d54b2adfbf72c28cb8999446318de342b",
     "HexSignDet/DagSelectedSigns.lean": "3ffbfbe2cebf6ad7b5db0cf8b0a3c5a26142a46465d2577a08ddb292594eed26",
-    "reports/sign-det-declaration-review/core-dag-support.md": "1bfda563e2bcec64d1a7898124415e7364729ec83a25682b556f3e802e49a6fc"
+    "reports/sign-det-declaration-review/core-dag-support.md": "0f828ef1958ad190efc5eae7fe1969b1b4fafa4797d1ed1c0e950fe49610c498"
   }
 }

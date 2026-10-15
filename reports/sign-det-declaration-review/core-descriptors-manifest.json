@@ -72,8 +72,8 @@
       "Descriptor.build_ambiguous_ofCount"
     ]
   },
-  "source_ref": "audit/issue-10575-sign-det-integration-review-input-v2",
-  "input_revision": "7cc9fb5c2d3401d9f67b0fefd016246a3acddd0f",
+  "source_ref": "audit/issue-10575-sign-det-integration-review-input-v3",
+  "input_revision": "2782781b5f0aecc222a9170a4d66ed0a4b983807",
   "archive_files": {
     "HexSignDet/Thom.lean": "972e4b223b975297883e78831aa9d107a6eee4cfc0c5fafe2f9b175a355e4993",
     "HexSignDet/Descriptor.lean": "6f48615c779889877692b3027440f97bc14094e55b9a131a689295ac95dbb149",
