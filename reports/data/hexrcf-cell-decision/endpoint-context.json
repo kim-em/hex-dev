@@ -31,7 +31,7 @@
     "reports/hexrcf-adapter-evidence.md": "4a5f2047fa33d7cf5e197a6407300df41a9a292506821bc7ada98c4cdb7c6154",
     "reports/hexrcf-cell-build.md": "45f8cab37defc0ddbdbd231266d5d9cea131b105fda2f7130b52707000387650",
     "reports/hexrcf-cell-discovery.md": "1e46d3cead3fd88986e15e1d7b6bc24e36098448c33ee8586ef93d8ce6c76c30",
-    "reports/hexrcf-cell-decision.md": "d70e4bc36844532e5c46447ad2060cfd5be3be0af0ff89e7ed58f79842ba5077"
+    "reports/hexrcf-cell-decision.md": "79199667eee0d7546865349bc45705505f66f6863a723dc116f4ae650352a712"
   },
   "historical_context": "context.json and its original source checkpoints are retained separately; this record validates the public endpoint route.",
   "successful_checks": [
@@ -341,5 +341,9 @@
     "lean_threads": 2,
     "concurrent_own_builds": 1
   },
-  "scope": "Public discovery and mathematical sector progress use the same checked endpoint requests. Full executable/serialization/reader acceptance is still separate. The expensive four-boundary regression is retained in an explicit manual stress target; six representative matrices remain in regular conformance. Historical records in context.json remain bound to their original sources."
+  "scope": "Public discovery and mathematical sector progress use the same checked endpoint requests. Full executable/serialization/reader acceptance is still separate. The expensive four-boundary regression is retained in an explicit manual stress target; six representative matrices remain in regular conformance. Historical records in context.json remain bound to their original sources.",
+  "document_commit": "774345eaca1a20feeb53f694c67b15ff949b1db9",
+  "document_scope": "document_hashes bind the exact files at document_commit. source_commit and selected_source_hashes bind the independently validated implementation snapshot. Repeated paths preserve distinct source/document revisions.",
+  "entry_count": 71,
+  "distinct_repository_paths": 66
 }
