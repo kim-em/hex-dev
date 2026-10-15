@@ -26,13 +26,18 @@ and include theorem documentation.
 -- Audit every owned constant, including generated declarations, rather than just examples.
 run_cmd do
   let env ← Lean.getEnv
-  let modules := [`HexOrderedFnTheory.Convergence, `HexOrderedFnTheory.Evaluation,
+  let expected := [`HexOrderedFnTheory, `HexOrderedFnTheory.Convergence,
+    `HexOrderedFnTheory.Evaluation,
     `HexOrderedFnTheory.Extension, `HexOrderedFnTheory.Hahn, `HexOrderedFnTheory.Infinitesimal,
     `HexOrderedFnTheory.Oracle, `HexOrderedFnTheory.Progress, `HexOrderedFnTheory.Real,
     `HexOrderedFnTheory.Sign]
-  for moduleName in modules do
+  let modules := env.allImportedModuleNames.filter (`HexOrderedFnTheory).isPrefixOf
+  for moduleName in expected do
     unless env.allImportedModuleNames.contains moduleName do
       throwError "missing OrderedFn Theory module: {moduleName}"
+  for moduleName in modules do
+    unless expected.contains moduleName do
+      throwError "unreviewed OrderedFn Theory module: {moduleName}"
   let mut count := 0
   for (name, info) in env.constants.toList do
     let some idx := env.getModuleIdxFor? name | continue
@@ -44,4 +49,4 @@ run_cmd do
         throwError "unexpected axiom in {name}: {axiomName}"
     count := count + 1
   if count == 0 then throwError "empty OrderedFn Theory axiom audit"
-  Lean.logInfo m!"Checked axioms of {count} OrderedFn Theory constants in {modules.length} modules."
+  Lean.logInfo m!"Checked axioms of {count} OrderedFn Theory constants in {modules.size} modules."

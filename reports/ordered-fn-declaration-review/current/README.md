@@ -39,13 +39,9 @@ All fourteen owned source files match the preserved v4 files after the global
 Mathlib-to-Theory module rename. This is a source-identity check, not a proof
 that every imported dependency or elaborated type is identical. The checker also
 compares declaration names, owning modules, kinds and axiom lists with the
-renamed v4 capture. This is an immutable snapshot before the proof/API improvements recorded in
-[Theory acceptance](../theory-acceptance.md). Its source-identity and reference
-claims apply at the tags below. Reproduce it in an isolated checkout of its
-complete tag: subsequent source and report changes intentionally fail the
-current-tree checks. The Theory acceptance supplies current axiom checks and
-individual retention decisions; computational regression findings remain open.
-This snapshot alone changes no phase, performance verdict or publication eligibility.
+renamed v4 capture. The individual source assessments remain applicable; final
+API-use acceptance and the retained computational regression findings remain
+open. No phase, performance verdict or publication eligibility advances here.
 
 ## Source and artifact checkpoints
 

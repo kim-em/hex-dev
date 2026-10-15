@@ -17,20 +17,19 @@ them. The two sign lemmas moved to `Sign` without changing their public names or
 proofs. The bare `mul_bounds` row in the Oracle assessment refers to
 `Hex.OrderedFn.Oracle.Contains.mul_bounds`.
 
-The inventory cross-check accounts for 150 handwritten declarations, including
+The inventory cross-check accounts for 151 handwritten declarations, including
 four named field/order instances. The two projections of `ApproximationCorrect`
 are assessed with that structure: coefficient and constant containment bind the
-same provider, embedding, subject and positive request. The retained pre-polishing compiler capture attributes 292 constants to these
-modules. The current CI-built axiom audit checks all 299 compiled constants,
-including generated declarations. Counts describe the environment; they are not
-quality or performance gates.
+same provider, embedding, subject and positive request. The current CI-built
+axiom audit checks all 300 owned compiled constants, including generated declarations.
+Counts describe the environment; they are not quality or performance gates.
 
 | Module | Handwritten declarations | Individual assessment |
 | --- | ---: | --- |
 | `Convergence` | 11 | [Assessment](companion.md#convergence) |
 | `Evaluation` | 10 | [Assessment](companion.md#evaluation) |
 | `Extension` | 36 | [Assessment](companion.md#extension) |
-| `Hahn` | 9 | [Assessment](companion.md#hahn) |
+| `Hahn` | 10 | [Assessment](companion.md#hahn) |
 | `Infinitesimal` | 47 | [Assessment](companion.md#infinitesimal) |
 | `Oracle` | 17 | [Assessment](companion.md#oracle) |
 | `Progress` | 7 | [Assessment](companion.md#progress) |
@@ -46,6 +45,7 @@ The existing individual assessments are supplemented by these API decisions:
 
 | Declaration/change | Review and application |
 | --- | --- |
+| `Hahn.ofLex_mapHom` | Definitional bundled-map characterization; makes support, exponent and leading-coefficient simplification available on the public homomorphism. |
 | `Hahn.map_coeff` | Definitional coefficient characterization of the actual homomorphism; used in `map_lt` instead of unfolding it. |
 | `Hahn.map_single` | General monomial characterization from Mathlib’s map theorem; specializes to the existing `map_C`. It supplies the single simp rule for both. |
 | `Infinitesimal.towerEmbed_X` | Composes the outer rational-function embedding with the coefficient embedding; `map_one` identifies its coefficient. |
@@ -54,11 +54,13 @@ The existing individual assessments are supplemented by these API decisions:
 
 The mixed two-level example interprets `C ε + δ` as the sum of an outer
 constant with inner coefficient `embed ε` and the outer exponent-one monomial.
-It combines addition and both generator characterizations. This exercises the
-iterated Hahn embedding separately from `X_lt_pow`, whose proof uses another route.
+It combines addition and both generator characterizations. This checks composition of the
+iterated Hahn generator characterizations, without claiming an independent order
+proof. `X_lt_pow` proves the successive-level inequality by another route.
 The current lint target rejects an owned axiom declaration or any dependency
 outside `propext`, `Classical.choice`, `Quot.sound` for every constant attributed
-to the nine production modules, and refuses missing modules or an empty selection.
+to the production import closure, including the umbrella. It refuses missing or
+unexpected modules and an empty constant selection.
 
 ## Public use and encapsulation
 
@@ -177,14 +179,14 @@ semantic real is used as a runtime implementation.
 
 | Requirement | Evidence and disposition |
 | --- | --- |
-| Per-declaration API quality | All 150 handwritten declarations are covered by the individual assessment and the three additions above; the two fields, named instances and 33 public retention decisions are addressed above. |
+| Per-declaration API quality | All 151 handwritten declarations are covered by the individual assessment and the four additions above; the two fields, named instances and 33 public retention decisions are addressed above. |
 | Characterizations and generality | Stored-fraction evaluation, arbitrary successful trials, separate progress assumptions, same-subject transport, arbitrary fraction presentations and ordered coefficient maps have public lemmas with explicit hypotheses. |
 | Automation/imports/naming | The existing quality assessment applies. Local/scoped instances retain the intended dictionary; constructor/sign normalization uses simp, while unbounded progress and conditional semantic witnesses remain explicit. Generic sign laws import the generic sign layer. |
 | Lint and documentation | The existing `HexOrderedFnTheory.LintTests` checks the public computational and companion roots with theorem documentation. Public declarations, the two fields and non-obvious private helpers meet the documentation rule. |
 | Dead implementation helpers | Each of the six private helpers has the recorded proof consumers; the public zero-reference cases are intentional characterized API, not unused implementations. |
 | Computational regression | The owning SPEC assigns runtime algorithms and benchmarks to `HexOrderedFn`; this semantic library has no compiled benchmark track under the Phase-4 policy. Existing theorem-application timings remain diagnostic. No computational performance pass is inferred. |
 | Native execution and field evidence | The core dictionary identity, erased progress construction and existing 23-case compiled Liouville integration establish the actual execution route. Localization, Hahn and field/order transfer use Lean proofs as described above. |
-| Ordinary-kernel trust | All 299 owned compiled constants have only `propext`, `Classical.choice`, `Quot.sound` as axioms. The existing kernel-built tests and source/admission audits reject proof holes, new axioms and `native_decide`. |
+| Ordinary-kernel trust | All 300 owned compiled constants have only `propext`, `Classical.choice`, `Quot.sound` as axioms. The existing kernel-built tests and source/admission audits reject proof holes, new axioms and `native_decide`. |
 | User documentation | The partner chapter includes the correspondence section, source-derived signatures and compiled examples; current rendered desktop/mobile inspection includes finite signs, registration, successive infinitesimals and the genuine Liouville provider. |
 
 The current build completes the public companion, complete `HexOrderedFnTests`

@@ -56,3 +56,10 @@ are separate from release-version tags and do not change publication eligibility
 The [later compiler capture](current/README.md) records the fourteen-module
 source layout and a larger example/import environment. It preserves the
 earlier snapshot and explains the changed named references separately.
+
+The v7 `current/` directory is an immutable pre-polishing snapshot. Its README
+and artifacts remain byte-bound to its complete tag. Its historical statements
+about outstanding Theory acceptance apply at that tag; the subsequent
+[Theory acceptance](theory-acceptance.md) supersedes them. Default archive checks
+remain available in this tree. Current-source checks intentionally refuse the
+later proof/API changes; reproduce that snapshot using its complete-tag checkout.

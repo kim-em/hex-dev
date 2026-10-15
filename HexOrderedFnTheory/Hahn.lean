@@ -29,8 +29,12 @@ def mapHom (ι : K →+* L) : Lex (HahnSeries ℤ K) →+* Lex (HahnSeries ℤ L
   map_add' _ _ := congrArg toLex (HahnSeries.map_add ι.toAddMonoidHom)
   map_mul' _ _ := congrArg toLex (HahnSeries.map_mul ι.toNonUnitalRingHom)
 
+/-- The bundled coefficient embedding agrees with the underlying series map. -/
+@[simp] theorem ofLex_mapHom (ι : K →+* L) (x : Lex (HahnSeries ℤ K)) :
+    ofLex (mapHom ι x) = (ofLex x).map ι := rfl
+
 /-- Coefficient extension applies the specified embedding at each exponent. -/
-@[simp] theorem map_coeff (ι : K →+* L) (x : Lex (HahnSeries ℤ K)) (i : ℤ) :
+theorem map_coeff (ι : K →+* L) (x : Lex (HahnSeries ℤ K)) (i : ℤ) :
     (ofLex (mapHom ι x)).coeff i = ι ((ofLex x).coeff i) := rfl
 
 /-- Coefficient extension preserves a monomial's exponent. -/

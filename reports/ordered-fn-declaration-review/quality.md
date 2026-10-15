@@ -18,7 +18,7 @@ companion’s Phases 6–7; computational acceptance remains separate.
 | Convergence | Analytic estimates and eventual statements use their stated containment/width hypotheses. Making all of them global automation rules would not replace those proof obligations. `add_converges` uses the existing width-add characterization without unfolding endpoints. |
 | Progress | Accessibility follows the same executed trials. Eventual success is applied explicitly rather than installed as a generic search/automation rule. |
 | Extension (companion) | Constructor evaluations and same-subject evaluation transport normalize with simp. Order instances need an explicit `OrderValid`; same-subject transport requires both providers. Unconditional simp/grind rules for these existential subjects would be misleading. |
-| Hahn | Coefficient and monomial mapping, support, order and leading coefficients normalize with simp. `map_C` specializes `map_single` without a duplicate simp rule. Order-reflection laws keep their explicit monotonicity hypothesis. |
+| Hahn | The bundled-map equation, monomial mapping, support, order and leading coefficients normalize with simp. `map_C` specializes `map_single` without a duplicate simp rule. Order-reflection laws keep their explicit monotonicity hypothesis. |
 | Infinitesimal (companion) | Constant/indeterminate and two-level generator equations, sign negation/multiplication/zero and constant inequalities normalize with simp. Arbitrary fraction, normalization and successive-level order results remain explicit. Scoped instances select the intended order. |
 
 The source has no `@[grind]` declarations. This is not itself a quality failure:

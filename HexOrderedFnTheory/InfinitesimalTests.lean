@@ -121,6 +121,12 @@ example :
         toLex (HahnSeries.single 1 (1 : Lex (HahnSeries ℤ Rat))) := by
   simp only [map_add, towerEmbed_C, towerEmbed_X]
 
+-- Bundled coefficient maps expose leading-term data without unfolding mapHom.
+example (x : Lex (HahnSeries ℤ Rat)) :
+    (ofLex (Hahn.mapHom (Rat.castHom ℝ) x)).leadingCoeff =
+      (ofLex x).leadingCoeff := by
+  simp
+
 /-- The coefficient map from ℚ(ε) to ℝ(ε) preserves signs and order. -/
 noncomputable example (q : First) :
     sign orderSign (HexRationalFnTheory.mapHom (Rat.castHom ℝ) q) =
