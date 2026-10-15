@@ -1,0 +1,92 @@
+# Native algebraic source preparation
+
+[`AlgebraicPreparation.prepare`](../adapters/HexRCF/RealCoefficients/AlgebraicPreparation.lean)
+connects the shared source frontend to the original-input native packet API.
+It preserves the reifier's coefficient order and original divisor inventory,
+interprets both through `Coefficients.interpret`, and checks each resulting
+source equality in the ordinary kernel. Preparation shares reflection
+accounting with the source reifier rather than restarting the budget for each
+coordinate. A caller can supply ordinary proofs of radical-base nonnegativity;
+an incorrect proof is rejected.
+
+The environment stores executable coefficient proposals first, followed by
+every original divisor proposal. Separate finite indices retain the two roles,
+including a divisor absent from the normalized coefficient tuple. `build` calls
+the existing `AlgebraicCells.build`; it does not require an adapter primitive
+common-field irreducibility certificate. This is a source preparation API, not
+a new tactic handler. Its identities concern the retained algebraic expressions.
+They do not establish that independently quoted literals denote the compiled
+proposals, nor reconstruct frozen source/provider/predecessor histories.
+
+The [conformance module](../conformance/HexRCF/AlgebraicPreparationConformance.lean)
+checks independent square-root inputs, the actual source identity bodies and
+their transitive axioms, ordered original guards, guard-only constants, both
+true and false native verdicts, and retained half-open domain atoms. A budget
+that fits source reification alone refuses additional coefficient work.
+Incorrect nonnegativity proofs, unregistered constants and variable-dependent
+denominators remain failures. Failure restores metavariables and a deliberately
+created declaration; a cancelled zero divisor cannot enter root production.
+
+Preparation scopes its proof auxiliaries under a fresh private prefix. The
+conformance checks that property directly. The initial full manual import
+exposed a collision between an unscoped `_proof_2` and another chapter; its
+failed log is retained. The scoped implementation at
+`91d504b1aac6a43b580e1e6d2a1b95fd38c2e439` passes the 11,768-job affected
+selection, including the optional umbrella, conformance and changed manual
+chapter (15.494 s, 2 GiB peak, zero swap). This is an operational build
+observation, not a timing comparison. The later full render checks the combined
+manual import as well as this chapter's code.
+
+The scoped implementation's 14,297-job full render also passes. Its first
+narrow capture exposed five pixels of local code overflow. The retained failed
+capture identifies the guard-count line; the corrected example binds that
+inventory before checking its size. The resulting source at
+`694e85356ca2d19eaadb15ae87130dbc1791ca4b` passes the same 11,768-job affected
+selection (12.867 s, 1.7 GiB peak, zero swap). This change concerns manual
+layout; it does not change the preparation implementation.
+The corrected full render passes 14,297 jobs (2m31.605s, 2.2 GiB peak,
+zero swap). All six final desktop/narrow API and scope captures were opened;
+the changed code and prose have zero local overflow. Start and end captures
+show the same code block at distinct scroll offsets, with all its lines visible.
+
+## Retained native stress diagnosis
+
+The previously interrupted automatic-input stress case is unchanged:
+x² = √2 with 1 < x < √3, its selected negative-conjugate control, and every
+original guard. Two instrumented build-only probes call the same public
+presentation, gathering, specialization, partition, carrier/root and cell
+APIs. Their explicit event files identify completed stages even while Lake
+buffers command output. These are Mathlib-facing diagnostic probes, not
+Mathlib-free executable benchmarks or proofs of the original real goal.
+
+Both probes were operator-interrupted and have no final accepted verdict.
+Their sources retain the negative-conjugate control, but neither run reached it.
+The first ran 2m37.652s; the more detailed second ran 5m10.943s. Both report
+1 GiB peak and zero swap. The wrapper's `result: success` accompanies
+`code=killed, status=15/TERM`; it is not a completed Lake build.
+
+The detailed positive-input trace records original guard preflight, selected
+presentations and gathering, three specialized atoms, and a native partition
+with four distinct roots. Converted guard preflight and construction of the
+degree-four product also complete. Radical reduction completes after 30.907 s
+in that trace, retaining degree four. `RootBuild.build` then completes the
+four-root table in 227.667 s, followed by 4.327 s for sector requests. The
+last event starts cell-row production; no completed cell packet or replay
+verdict is recorded before interruption. Thus the retained trace separates
+complete root-table construction from the earlier partition and radical stages
+and the subsequent row work. It does not identify a particular inner query,
+establish a scaling law or prove a speedup.
+
+These diagnostics narrow the unresolved cost in the complete native path;
+they do not replace the stronger stress acceptance or the full #10358
+performance obligations. Earlier interrupted samples and source-bound reports
+remain preserved. The [record](data/hexrcf-algebraic-preparation/context.json)
+binds the exact implementation and probe sources, raw failed and successful
+logs, event files and validation artifacts. All own Lean/Lake/rendering work
+remains serial under aggregate 32 GiB/no swap/two Lean threads.
+
+The general extension still needs authenticated quoted proposals and frozen
+history/reached-data assembly, strict rejection of arbitrary missing records
+in compiled replay, general source quotation and accepted completeness, and
+the remaining transport, realization and performance evidence. Native source
+identities and packet production do not discharge those obligations.
