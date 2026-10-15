@@ -9,7 +9,7 @@
     "conformance/HexSignDet/FieldChecks.lean": "157447991ac47fe7a9c7491636b46849667c18803a8e5711a370114a3d92c9f6",
     "HexManual/Chapters/HexSignDet.lean": "6cf774c0d04b484265c361d16b061b8e57039511c025810520f383169ecfb8e1",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "83520887f6307511e2db9aa18862adaa47d66df6aadcdf2870cd6c2b635c8928",
-    "reports/sign-det-declaration-review/README.md": "754a4ddd60d3e2680a20feabd22017b7854ad9456fcc3e82f9991b3a549ad0bf",
+    "reports/sign-det-declaration-review/README.md": "0060b699872628380d168e2e67b5507d42fc4e0bbba92e83a3f34c63b0c6791e",
     "reports/sign-det-declaration-review/current/normalize.py": "7c34629b7ef6e1727b340e3623b1e774b761e565d24a74ece7745053fa46735f",
     "reports/sturm-declaration-review/audit_tools.py": "de536ebeafd2ee355ac6e3349efaeaf2a5f0c37ecceed4457f4be51b664a963a",
     "scripts/ci/check_benches_mathlib_free.py": "a8da3bef100b50fdd923d609ad03a3a9bd55229467f5652abe6e3f0b3d1ed0e5",
