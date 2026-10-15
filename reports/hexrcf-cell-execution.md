@@ -177,3 +177,20 @@ is outside this source scan and receives its actual proof-body kernel audits.
 The eleven DAG tests and eleven scanner tests pass. The saved wrappers retain
 the serial 32 GiB/no-swap/two-thread policy. These are source-scoped validation
 observations, not a new timing comparison or a general finite-codec result.
+
+## Integration with current main
+
+The [combined integration record](data/hexrcf-field-cells/main-integration-context.json)
+binds the complete adapter delta to `6910dfddc586f8d141cdf83ffb24598443d3a7dd`,
+including the actual main merge and both conformance-list resolutions.
+The exact union retains all 344 target entries. The optional library, thirteen
+execution/source proof-body audits, fresh algebraic/Boolean original-source
+quotations and affected manual chapter passed 11,757 Lake jobs in
+17 minutes 12.060 seconds, peaking at 18.1 GiB with zero swap under the
+unchanged 32 GiB cap. Metadata checks and their 22 unit tests also pass;
+the source scan covers 632 cones and 1,532 modules with its documented scope.
+This affected-target build is distinct from the earlier source-bound
+14,693-job full-target validation. The earlier visual artifacts retain their
+own source versions; integration changes neither the displayed example text
+nor its styles. These records make no timing comparison or general frontend
+acceptance claim.
