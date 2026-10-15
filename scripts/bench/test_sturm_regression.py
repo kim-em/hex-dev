@@ -863,6 +863,191 @@ elif sys.argv[1]=='run':
         self.assertEqual(self.context['regression_findings'], ['Hex.SturmFrontendBench.runPrepared'])
 
 
+class SignDetScopeTest(unittest.TestCase):
+    def listing(self, profile):
+        params = collector.SIGN_DET_PARAMETRIC if profile == 'sign-det' else set()
+        fixed = collector.timing_fixed(profile) | (collector.SIGN_DET_REFERENCES if params else set())
+        return '\n'.join([*[name + ' expected complexity: n' for name in sorted(params)],
+                          *[name + ' [fixed] repeats=1' for name in sorted(fixed)]])
+
+    def test_primary_complete_scope(self):
+        names, fixed, excluded = registrations(self.listing('sign-det'), 'sign-det')
+        self.assertEqual(set(names), collector.SIGN_DET_PARAMETRIC | collector.SIGN_DET_FIXED)
+        self.assertEqual(len(names), 31)
+        self.assertEqual(set(fixed), collector.SIGN_DET_FIXED | collector.SIGN_DET_REFERENCES)
+        self.assertEqual(set(excluded), collector.SIGN_DET_REFERENCES)
+
+    def test_interacting_complete_scope(self):
+        names, fixed, excluded = registrations(self.listing('sign-det-interacting'), 'sign-det-interacting')
+        self.assertEqual(set(names), collector.INTERACTING_FIXED)
+        self.assertEqual(names, fixed)
+        self.assertEqual(excluded, [])
+
+    def test_missing_duplicate_extra_and_unhashed_refused(self):
+        for profile in ('sign-det', 'sign-det-interacting'):
+            lines = self.listing(profile).splitlines()
+            for text in ('\n'.join(lines[1:]), '\n'.join(lines + lines[:1]),
+                         '\n'.join(lines + ['Other.run [fixed] repeats=1']),
+                         '\n'.join(lines) + '\n(no Hashable)'):
+                with self.subTest(profile=profile, text=text), self.assertRaises(RuntimeError):
+                    registrations(text, profile)
+
+    def test_registration_hash_addition_and_formatting_only(self):
+        old = 'setup_fixed_benchmark run where { repeats := 1, minTotalSeconds := 0.1 }'
+        new = 'setup_fixed_benchmark run where {\n repeats := 1, minTotalSeconds := 0.1,\n expectedHash := some 0x1234 }'
+        self.assertEqual(collector.registration_tokens(old), collector.registration_tokens(new))
+        for changed in (new.replace('0.1', '0.2'), new.replace('run where', 'other where')):
+            self.assertNotEqual(collector.registration_tokens(old), collector.registration_tokens(changed))
+
+    def test_registration_string_spaces_are_significant(self):
+        self.assertNotEqual(collector.registration_tokens('def s := "a b"'),
+                            collector.registration_tokens('def s := "ab"'))
+
+    def test_hash_text_in_strings_and_callback_records_is_not_erased(self):
+        for old, new in (
+                ('def s := "x"', 'def s := "x, expectedHash := some 0x1234"'),
+                ('def r := { other := 1 }', 'def r := { other := 1, expectedHash := some 0x1234 }'),
+                ('setup_fixed_benchmark run where config\ndef r := { other := 1 }',
+                 'setup_fixed_benchmark run where config\ndef r := { other := 1, expectedHash := some 0x1234 }')):
+            self.assertNotEqual(collector.registration_tokens(old), collector.registration_tokens(new))
+
+    def test_hash_field_first_middle_and_only(self):
+        for old, new in (
+                ('{ repeats := 1 }', '{ expectedHash := some 0x1234, repeats := 1 }'),
+                ('{ repeats := 1, warmup := true }', '{ repeats := 1, expectedHash := some 0x1234, warmup := true }'),
+                ('{}', '{ expectedHash := some 0x1234 }')):
+            prefix = 'setup_fixed_benchmark run where '
+            self.assertEqual(collector.registration_tokens(prefix + old),
+                             collector.registration_tokens(prefix + new))
+
+    def test_fixed_pair_guard_strengthening_and_integer_ratios(self):
+        base = {'kind': 'fixed', 'function': 'case', 'budget_truncated': False,
+                'hashable': True, 'hashes_agree': True, 'observed_hash': 'same',
+                'config': {'repeats': 1, 'expected_hash': None, 'min_total_seconds': 0.1},
+                'points': [{'repeat_index': 0, 'result_hash': 'same', 'status': 'ok',
+                            'total_nanos': 1005, 'inner_repeats': 10}]}
+        current = deepcopy(base)
+        current['config']['expected_hash'] = 'same'
+        current['points'][0]['total_nanos'] = 1105
+        collector.validate_pair(base, current, 'case', 'fixed')
+        self.assertEqual(collector.paired_ratios(base, current, 'fixed'),
+                         [{'repeat_index': 0, 'candidate_over_baseline': 1.1}])
+        for mutation in ('removal', 'timing', 'hash', 'observed', 'kind', 'subject', 'unhashable'):
+            a, b = deepcopy(base), deepcopy(current)
+            if mutation == 'removal':
+                a['config']['expected_hash'], b['config']['expected_hash'] = 'same', None
+            elif mutation == 'timing':
+                b['config']['min_total_seconds'] = 0.2
+            elif mutation == 'hash':
+                b['config']['expected_hash'] = 'wrong'
+            elif mutation == 'observed':
+                b['observed_hash'] = 'wrong'
+            elif mutation == 'kind':
+                b['kind'] = 'parametric'
+            elif mutation == 'subject':
+                b['function'] = 'other'
+            else:
+                b['hashable'] = False
+            with self.subTest(mutation=mutation), self.assertRaises(RuntimeError):
+                collector.validate_pair(a, b, 'case', 'fixed')
+
+
+class SignDetCollectorTest(unittest.TestCase):
+    """Exercise the existing collector's complete mixed/fixed paths, without timings."""
+    setUp = CollectorTest.setUp
+    bind_decision = CollectorTest.bind_decision
+    run_collector = CollectorTest.run_collector
+
+    def prepare(self, profile, mode='ok'):
+        for name in collector.registration_paths(profile):
+            target = self.root / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text('def callback := 1\n')
+        subprocess.check_call(['git', 'add', '.'], cwd=self.root, stdout=subprocess.DEVNULL)
+        subprocess.check_call(['git', '-c', 'user.name=Control', '-c', 'user.email=control@example.test',
+                               'commit', '-qm', 'synthetic sign-determination registrations'], cwd=self.root)
+        head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=self.root, text=True).strip()
+        for path in self.sources.values():
+            source = json.loads(path.read_text())
+            source['head'] = head
+            source['sources'].update({name: collector.digest(self.root / name)
+                                      for name in collector.registration_paths(profile)})
+            path.write_text(json.dumps(source))
+        listing = SignDetScopeTest().listing(profile)
+        for arm, path in self.binaries.items():
+            program = path.read_text()
+            start = program.index('    print(')
+            end = program.index('\n', start)
+            program = program[:start] + '    print(' + repr(listing) + ')' + program[end:]
+            fixed = '''
+    if sys.argv[2] in FIXED:
+        result.update(kind='fixed',hashable=True,hashes_agree=True,observed_hash='same')
+        result['config'].update(repeats=1,min_total_seconds=0.1,
+                                expected_hash='same' if arm=='candidate' else None)
+        result['points']=[{'repeat_index':0,'result_hash':'same','status':'ok',
+                           'inner_repeats':1,'total_nanos':100_000_000}]
+        if MODE=='kind' and arm=='candidate':result['kind']='parametric'
+'''.replace('FIXED', repr(sorted(collector.timing_fixed(profile)))).replace('MODE', repr(mode))
+            program = program.replace('    target.write_text(', fixed + '    target.write_text(')
+            path.write_text(program)
+        self.bind_decision()
+        decision = json.loads(self.decision.read_text())
+        decision['profile'] = profile
+        self.decision.write_text(json.dumps(decision))
+
+    def test_complete_primary_mixed_blocks_and_fixed_options(self):
+        self.prepare('sign-det')
+        code, _ = self.run_collector(extra=['--profile', 'sign-det'])
+        self.assertEqual(code, 0)
+        self.assertEqual(len(self.context['guards']), 31)
+        runs = [r['command'] for r in self.context['commands'] if r['command'][1:2] == ['run']]
+        self.assertEqual(len(runs), 31 * 4 * 2)
+        for command in runs:
+            self.assertEqual('--outer-trials' in command, command[2] in collector.SIGN_DET_PARAMETRIC)
+        for pair in range(0, len(runs), 2):
+            block = pair // (31 * 2)
+            self.assertEqual([Path(c[0]).name for c in runs[pair:pair+2]],
+                             ['baseline', 'candidate'] if block % 2 == 0 else ['candidate', 'baseline'])
+        for record in self.context['commands']:
+            command = record['command']
+            if command[1:2] == ['verify']:
+                self.assertEqual(len(command[2:]), 34)
+                self.assertEqual(len(set(command[2:])), 34)
+        self.assertEqual(set(self.context['excluded_registrations']), collector.SIGN_DET_REFERENCES)
+
+    def test_complete_interacting_fixed_blocks(self):
+        self.prepare('sign-det-interacting')
+        code, _ = self.run_collector(extra=['--profile', 'sign-det-interacting'])
+        self.assertEqual(code, 0)
+        self.assertEqual(len(self.context['guards']), 2)
+        self.assertEqual(self.context['outcome'], 'pass')
+        runs = [r['command'] for r in self.context['commands'] if r['command'][1:2] == ['run']]
+        self.assertEqual(len(runs), 16)
+        self.assertTrue(all('--outer-trials' not in c for c in runs))
+
+    def test_fixed_preflight_without_measurements(self):
+        self.prepare('sign-det-interacting')
+        code, _ = self.run_collector(extra=['--profile', 'sign-det-interacting', '--preflight'])
+        self.assertEqual(code, 0)
+        self.assertFalse(self.context['measurements_collected'])
+        self.assertFalse(self.context['attempt_reserved'])
+        self.assertEqual(self.lease_calls, 0)
+
+    def test_wrong_profile_refused_before_reservation(self):
+        self.prepare('sign-det-interacting')
+        with self.assertRaisesRegex(RuntimeError, 'profile differs'):
+            self.run_collector(extra=['--profile', 'sign-det'])
+        self.assertFalse(self.context['attempt_reserved'])
+
+    def test_wrong_fixed_kind_retains_consumed_failure(self):
+        self.prepare('sign-det-interacting', mode='kind')
+        with self.assertRaisesRegex(RuntimeError, 'invalid parent result'):
+            self.run_collector(extra=['--profile', 'sign-det-interacting'])
+        self.assertEqual(self.context['status'], 'failed')
+        self.assertTrue(self.context['measurements_collected'])
+        self.assertTrue(self.context['attempt_reserved'])
+
+
 class RuntimeSetupTest(unittest.TestCase):
     def test_ignored_hangup_is_preserved(self):
         def disposition(sig):

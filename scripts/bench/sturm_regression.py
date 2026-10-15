@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare frozen native Sturm sources with the pinned LeanBench baseline rule.
+"""Compare frozen native sources with the pinned LeanBench baseline rule.
 
 Four trial-major AB/BA blocks run each full declared parent ladder once per
 arm. Parameters, tuning, warmup and
@@ -37,6 +37,73 @@ AUXILIARY = "Hex.SturmBench.runSigns"
 NATIVE_FIXED = {"Hex.SturmExternalBench.runNative" + suffix
                 for suffix in ("Count", "Mixed", "Negative", "Common", "4", "16", "32", "64")}
 
+SIGN_DET_PARAMETRIC = {"Hex.SignDetBench." + name for name in (
+    "runProduce", "runDirect", "runTree", "runGraph", "runQueries", "runProducts",
+    "runMatrices", "runSolvers", "runSigns", "runSmallReduced", "runSmallFull",
+    "Height.runReduce", "Height.runCheck", "Joint.runCompletion", "Joint.runComparison",
+    "Joint.runReduced", "Joint.runDirect", "Joint.runCheckReduced", "Joint.runCheckDirect",
+    "MaximalMatrix.runTensorCheck", "NestedSigns.runSign", "NestedTables.runProduce1",
+    "NestedTables.runTree1", "NestedTables.runProduce2", "NestedTables.runTree2")}
+SIGN_DET_FIXED = {"Hex.SignDetBench." + name for name in (
+    "maximalOne", "maximalTwo", "maximalThree", "SharedRoots.runOne",
+    "SharedRoots.runTwo", "SharedRoots.runThree")}
+SIGN_DET_REFERENCES = {"Hex.SignDetBench.MaximalMatrix.reference" + str(n) for n in (1, 2, 3)}
+INTERACTING_FIXED = {"Hex.SignDetBench.InteractingBench." + name
+                     for name in ("depthOne", "depthTwo")}
+PROFILES = ("sturm", "sign-det", "sign-det-interacting")
+
+
+def timing_fixed(profile):
+    return SIGN_DET_FIXED if profile == "sign-det" else (
+        INTERACTING_FIXED if profile == "sign-det-interacting" else set())
+
+
+def registration_paths(profile):
+    if profile == "sturm":
+        return ("bench/HexSturm/Bench.lean", "bench/HexSturm/Frontend.lean")
+    names = ("InteractingBench", "InteractingTrace") if profile == "sign-det-interacting" else (
+        "Bench", "Small", "Joint", "NestedSigns", "NestedTables", "SharedRoots", "MaximalMatrix", "Height")
+    return tuple("bench/HexSignDet/" + name + ".lean" for name in names)
+
+
+def registration_tokens(text):
+    """Ignore formatting and literal expected-hash guards, preserving strings.
+
+    Result hashes and one-way guard strengthening are checked on actual exports.
+    Callback code and every timing setting must otherwise remain unchanged.
+    """
+    tokens = re.findall(r'"(?:\\.|[^"\\])*"|[A-Za-z0-9_\u00ab\u00bb\x27.]+|[^\s]',
+                        strip_lean_comments(text))
+    kept, state, depth, i = [], None, 0, 0
+    while i < len(tokens):
+        token = tokens[i]
+        if token == "setup_fixed_benchmark":
+            state = "where"
+        elif state == "where" and token == "where":
+            state = "brace"
+        elif state == "brace":
+            state = "config" if token == "{" else None
+            depth = 1 if state == "config" else 0
+        elif state == "config":
+            if (depth == 1 and tokens[i:i + 4] == ["expectedHash", ":", "=", "some"] and
+                    i + 5 < len(tokens) and re.fullmatch(r"0x[0-9a-fA-F]+", tokens[i + 4]) and
+                    tokens[i + 5] in {",", "}"} and kept[-1] in {",", "{"}):
+                if kept[-1] == ",":
+                    kept.pop()
+                    i += 5
+                else:
+                    i += 6 if tokens[i + 5] == "," else 5
+                continue
+            if token == "{":
+                depth += 1
+            elif token == "}":
+                depth -= 1
+                if depth == 0:
+                    state = None
+        kept.append(token)
+        i += 1
+    return kept
+
 
 def native_harness_pins(manifest: dict) -> dict:
     """Keep the runner and its CLI dependency fixed; ignore proof-only pins."""
@@ -48,13 +115,23 @@ def native_harness_pins(manifest: dict) -> dict:
     return selected
 
 
-def registrations(text: str) -> tuple[list[str], list[str], list[str]]:
+def registrations(text: str, profile="sturm") -> tuple[list[str], list[str], list[str]]:
     """Select claimed timing ladders and require every known native hash control."""
     if "no Hashable" in text:
         raise RuntimeError("unhashed benchmark registration")
     parametric = sorted(line.strip().split()[0] for line in text.splitlines()
                         if "expected complexity:" in line)
     fixed = sorted(line.strip().split()[0] for line in text.splitlines() if "[fixed]" in line)
+    if profile != "sturm":
+        expected_params = SIGN_DET_PARAMETRIC if profile == "sign-det" else set()
+        references = SIGN_DET_REFERENCES if profile == "sign-det" else set()
+        selected_fixed = timing_fixed(profile)
+        if (profile not in PROFILES or set(parametric) != expected_params or
+                len(parametric) != len(expected_params) or
+                set(fixed) != selected_fixed | references or
+                len(fixed) != len(selected_fixed | references)):
+            raise RuntimeError("unexpected sign-determination registration scope")
+        return sorted(expected_params | selected_fixed), fixed, sorted(references)
     if not parametric or len(set(parametric)) != len(parametric) or not all(
             name.startswith(("Hex.SturmBench.", "Hex.SturmFrontendBench.")) for name in parametric):
         raise RuntimeError("unexpected computational benchmark registration")
@@ -68,6 +145,50 @@ def registrations(text: str) -> tuple[list[str], list[str], list[str]]:
     if not selected:
         raise RuntimeError("empty timing selection")
     return selected, native, excluded
+
+
+def validate_pair(a, b, name, kind):
+    """Check paired parent exports before the native guard pools all blocks."""
+    for result in (a, b):
+        if (result.get("kind") != kind or result.get("function") != name or
+                result.get("budget_truncated") or not result.get("points") or
+                any(point.get("status") != "ok" or point.get("result_hash") is None
+                    for point in result["points"])):
+            raise RuntimeError("incomplete/failed parent measurement: " + name)
+    left_config, right_config = a["config"], b["config"]
+    if kind == "fixed":
+        left_config, right_config = dict(left_config), dict(right_config)
+        expected_a = left_config.pop("expected_hash", None)
+        expected_b = right_config.pop("expected_hash", None)
+        if expected_a is not None and expected_a != expected_b:
+            raise RuntimeError("fixed expected hash removed or changed: " + name)
+        for result, expected in ((a, expected_a), (b, expected_b)):
+            if (not result.get("hashable") or not result.get("hashes_agree") or
+                    any(point["result_hash"] != result.get("observed_hash") or
+                        (expected is not None and point["result_hash"] != expected)
+                        for point in result["points"])):
+                raise RuntimeError("fixed result hash mismatch: " + name)
+    key = "repeat_index" if kind == "fixed" else "param"
+    points = lambda result: [(point[key], point["result_hash"]) for point in result["points"]]
+    if left_config != right_config or points(a) != points(b):
+        raise RuntimeError("cross-arm input/configuration/hash mismatch: " + name)
+
+
+def paired_ratios(a, b, kind):
+    """Descriptive paired ratios; verdicts remain with the native export guard."""
+    ratios = []
+    for left, right in zip(a["points"], b["points"]):
+        if kind == "fixed":
+            per_call = lambda point: (point["total_nanos"] // point["inner_repeats"]
+                                      if point.get("inner_repeats", 0) > 0 else None)
+            x, y = per_call(left), per_call(right)
+        else:
+            x, y = left.get("per_call_nanos"), right.get("per_call_nanos")
+        valid = all(isinstance(value, (int, float)) and math.isfinite(value) and value > 0
+                    for value in (x, y))
+        key = "repeat_index" if kind == "fixed" else "param"
+        ratios.append({key: left[key], "candidate_over_baseline": y / x if valid else None})
+    return ratios
 
 
 TOOL_SOURCES = ("scripts/bench/sturm_regression.py", "scripts/bench/cpu_lease.py",
@@ -297,6 +418,8 @@ def main(argv=None) -> int:
     for key in ("baseline", "candidate", "baseline-source", "candidate-source", "guard", "root", "output"):
         parser.add_argument("--" + key, type=Path, required=True)
     parser.add_argument("--decision", type=Path, required=True)
+    parser.add_argument("--profile", choices=PROFILES, default="sturm",
+                        help="complete declared timing and correctness workload selection")
     parser.add_argument("--preflight", action="store_true",
                         help="validate bindings and correctness controls without leasing a CPU or timing")
     parser.add_argument("--rerun-of", type=Path,
@@ -304,6 +427,8 @@ def main(argv=None) -> int:
     parser.add_argument("--cap-from", type=Path,
                         help="one reviewed cap increase after the retained original two-arm cap failure")
     args = parser.parse_args(argv)
+    if args.profile != "sturm" and args.cap_from is not None:
+        parser.error("the retained cap adaptation applies only to the Sturm profile")
     root = args.root.resolve()
     out = args.output.resolve()
     if out == root or root in out.parents:
@@ -312,7 +437,8 @@ def main(argv=None) -> int:
     binaries = {arm: getattr(args, arm).resolve() for arm in ("baseline", "candidate")}
     sources = {}
     guard = args.guard.resolve()
-    context = {"question": "Does the current native Sturm computation regress against the most recent committed measured source?",
+    context = {"question": "Does the current native computation regress against the most recent committed measured source?",
+               "profile": args.profile,
                "classification": "Computational baseline comparison; no new complexity or proof-cost verdict",
                "trials": 4, "order": "trial-major, full-ladder adjacent source arms, AB on even blocks and BA on odd blocks",
                "threshold_percent": 10, "script_sha256": digest(Path(__file__)),
@@ -351,6 +477,9 @@ def main(argv=None) -> int:
         save()
         decision_bytes = args.decision.read_bytes()
         decision = json.loads(decision_bytes)
+        if decision.get("profile", "sturm") != args.profile:
+            raise RuntimeError("profile differs from bound decision")
+        context["question"] = decision.get("question")
         if (args.cap_from is None) != (decision.get("cap_protocol") is None):
             raise RuntimeError("--cap-from and the bound cap_protocol are required together")
         (out / "decision.json").write_bytes(decision_bytes)
@@ -418,12 +547,15 @@ def main(argv=None) -> int:
         context["native_harness_pins"] = new_pins
         # Bind the old source read from git to its retained snapshot, then
         # allow comments and trailing whitespace, preserving meaningful indentation.
-        for path in ("bench/HexSturm/Bench.lean", "bench/HexSturm/Frontend.lean"):
+        for path in registration_paths(args.profile):
             old = subprocess.check_output(["git", "show", sources["baseline"]["head"] + ":" + path], cwd=root)
             if hashlib.sha256(old).hexdigest() != sources["baseline"]["sources"][path]:
                 raise RuntimeError("baseline registration source differs from snapshot")
-            lines = lambda text: [line.rstrip() for line in strip_lean_comments(text).splitlines() if line.strip()]
-            if lines(old.decode()) != lines((root / path).read_text()):
+            if args.profile == "sturm":
+                tokens = lambda text: [line.rstrip() for line in strip_lean_comments(text).splitlines() if line.strip()]
+            else:
+                tokens = registration_tokens
+            if tokens(old.decode()) != tokens((root / path).read_text()):
                 raise RuntimeError("registration inputs/configuration changed: " + path)
         if digest(guard) != context["guard_sha256"]:
             raise RuntimeError("guard changed during binding validation")
@@ -472,21 +604,28 @@ def main(argv=None) -> int:
             code, text = run([str(binary), "list"], arm + "-list")
             if code:
                 raise RuntimeError("cannot inspect frozen benchmark registrations")
-            lists[arm], fixed_lists[arm], excluded_lists[arm] = registrations(text)
+            lists[arm], fixed_lists[arm], excluded_lists[arm] = registrations(text, args.profile)
         if lists["baseline"] != lists["candidate"] or fixed_lists["baseline"] != fixed_lists["candidate"] or excluded_lists["baseline"] != excluded_lists["candidate"]:
             raise RuntimeError("source arms have different benchmark registrations")
         names = lists["candidate"]
         context["benchmarks"] = names
         context["verified_native_fixed"] = fixed_lists["candidate"]
         context["excluded_registrations"] = excluded_lists["candidate"]
-        context["excluded"] = "The auxiliary runSigns traversal has no timing claim under the existing owner disposition. Fixed expected-hash cases have no timing claim in hex-sturm-performance.md; native cases are verified. External FLINT/Z3 comparisons remain informational owner evidence."
+        context["excluded"] = ("The auxiliary runSigns traversal has no timing claim under the existing owner disposition. Fixed expected-hash cases have no timing claim in hex-sturm-performance.md; native cases are verified. External FLINT/Z3 comparisons remain informational owner evidence."
+                               if args.profile == "sturm" else
+                               "Three tiny MaximalMatrix reference solves are correctness controls only; all 25 parameterized and six fixed primary timing workloads are selected."
+                               if args.profile == "sign-det" else
+                               "Both interacting fixed timing workloads are selected; none is excluded.")
+        context["fixed_timing_benchmarks"] = sorted(timing_fixed(args.profile))
         if args.cap_from is not None:
             context["cap_protocol"] = validate_cap_protocol(
                 args.cap_from, decision["cap_protocol"], sources, context["comparison_identity"],
                 original_marker, names, root)
         save()
         for arm, binary in binaries.items():
-            code, _ = run([str(binary), "verify", *names, AUXILIARY, *fixed_lists[arm]], arm + "-verify")
+            auxiliary = [AUXILIARY] if args.profile == "sturm" else []
+            verify_names = list(dict.fromkeys([*names, *auxiliary, *fixed_lists[arm]]))
+            code, _ = run([str(binary), "verify", *verify_names], arm + "-verify")
             if code:
                 raise RuntimeError("frozen native correctness verification failed")
         if not args.preflight:
@@ -511,7 +650,10 @@ def main(argv=None) -> int:
             for index, name in enumerate(names):
                 for arm in (("baseline", "candidate") if trial % 2 == 0 else ("candidate", "baseline")):
                     stem = f"{trial}-{index}-{arm}"
-                    command = [str(binaries[arm]), "run", name, "--outer-trials", "1", "--export-file", str(out / (stem + ".json"))]
+                    command = [str(binaries[arm]), "run", name]
+                    if name not in timing_fixed(args.profile):
+                        command += ["--outer-trials", "1"]
+                    command += ["--export-file", str(out / (stem + ".json"))]
                     if args.cap_from is not None:
                         command += ["--max-seconds-per-call", str(decision["cap_protocol"]["seconds"])]
                     code, _ = run(command, stem)
@@ -528,10 +670,11 @@ def main(argv=None) -> int:
                         context["parent_failures"] = [failure]
                         raise RuntimeError("parent measurement failed: " + stem)
                 documents = []
+                kind = "fixed" if name in timing_fixed(args.profile) else "parametric"
                 for arm in ("baseline", "candidate"):
                     document = json.loads((out / f"{trial}-{index}-{arm}.json").read_text())
                     results = document["results"]
-                    if len(results) != 1 or results[0]["kind"] != "parametric":
+                    if len(results) != 1 or results[0]["kind"] != kind:
                         raise RuntimeError("invalid parent result: " + name)
                     documents.append(results[0])
                 a, b = documents
@@ -549,16 +692,8 @@ def main(argv=None) -> int:
                                     for point in result["points"]]}
                         for arm, result in zip(("baseline", "candidate"), documents)]
                     raise RuntimeError("incomplete/failed parent measurement: " + name)
-                signature = lambda result: (result["function"], result["config"],
-                                            [(point["param"], point["result_hash"]) for point in result["points"]])
-                if a["function"] != name or signature(a) != signature(b):
-                    raise RuntimeError("cross-arm input/configuration/hash mismatch: " + name)
-                ratios = []
-                for left, right in zip(a["points"], b["points"]):
-                    x, y = left.get("per_call_nanos"), right.get("per_call_nanos")
-                    valid = all(isinstance(value, (int, float)) and math.isfinite(value) and value > 0
-                                for value in (x, y))
-                    ratios.append({"param": left["param"], "candidate_over_baseline": y / x if valid else None})
+                validate_pair(a, b, name, kind)
+                ratios = paired_ratios(a, b, kind)
                 context.setdefault("paired_ratios", []).append(
                     {"block": trial, "function": name, "scope": "descriptive only; does not change guard verdict", "ratios": ratios})
                 print(f"block {trial}: {name} source pair retained", flush=True)
