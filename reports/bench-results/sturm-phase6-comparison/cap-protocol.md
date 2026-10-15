@@ -23,9 +23,9 @@ only when the bound decision includes `cap_protocol`. The collector checks:
   unchanged. The native binary pair, guard and complete recorded producer,
   registration and dependency inputs agree. A separate tooling commit may
   descend from the original candidate only through the collector, its test and
-  additions of non-Lean files under this report directory. Existing report files
-  may change only for `README.md`, `cap-protocol.md` and `cap-proposal.json`;
-  existing raw evidence cannot be modified or deleted. Its actual head is bound separately
+  additions of non-Lean files under this report directory. Among report files
+  present at the original candidate commit, only `README.md`, `cap-protocol.md`
+  and `cap-proposal.json` may be modified; deletions are refused. Its actual head is bound separately
   by `tooling_root_head`; it is never substituted for the producer build head.
 - The new decision binds the original context and failed export hashes. Export
   subjects, statuses and parameters must agree with the reserved failure.
