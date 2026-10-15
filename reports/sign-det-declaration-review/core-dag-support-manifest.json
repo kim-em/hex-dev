@@ -24,7 +24,11 @@
     "conformance/HexSignDet/FieldChecks.lean": "157447991ac47fe7a9c7491636b46849667c18803a8e5711a370114a3d92c9f6",
     "conformance/HexSignDet/CrossCheck.lean": "b385a463de209eb7825e12934999a5dc7e3f7a46b2dd10b2f5d3b7c9a1a6c644",
     "reports/sign-det-declaration-review/current/test_tools.py": "52046cca19c1831043725a57de52cfe70f3f20754a31810b179c5c37754821f4",
-    "HexSignDet/Codec/Value.lean": "ba911f7aea6e08ffb762338f33b8be461bb24a317564381a6c88ea24745ceac5"
+    "HexSignDet/Codec/Value.lean": "ba911f7aea6e08ffb762338f33b8be461bb24a317564381a6c88ea24745ceac5",
+    "HexRealClosure/RootFrame.lean": "9c84cb8c3b992d9c7ceef118a81e5376120c99bb90fd19838ae6d8e078b66ac5",
+    "HexRealClosure/SignEvidence.lean": "374f9a75fe401831ffe439d89daad9773ba272b9fc9a4832a2d742e3f392cf2d",
+    "HexRealClosure/RootReplay.lean": "3ff6adf0f06f4fe7c2eaf4d5ca6732b83b096b44d4b26d7edbb35e3c43c4a179",
+    "conformance/HexRealClosureTheory/SignEvidenceConformance.lean": "156eedb48bba3dd530ebc128ad04090eb076f1b344b15aac367236a290b1da3c"
   },
   "file_roles": {
     "HexSignDet/DagBounds.lean": "reviewed module",
@@ -50,7 +54,11 @@
     "conformance/HexSignDet/FieldChecks.lean": "existing memo selection controls",
     "conformance/HexSignDet/CrossCheck.lean": "existing graph cross checks",
     "reports/sign-det-declaration-review/current/test_tools.py": "namespace extraction regression controls",
-    "HexSignDet/Codec/Value.lean": "namespace extraction control input"
+    "HexSignDet/Codec/Value.lean": "namespace extraction control input",
+    "HexRealClosure/RootFrame.lean": "integration reader proof client",
+    "HexRealClosure/SignEvidence.lean": "integration reader proof client",
+    "HexRealClosure/RootReplay.lean": "integration reader proof client",
+    "conformance/HexRealClosureTheory/SignEvidenceConformance.lean": "integration kernel examples and axiom guards"
   },
   "declarations": {
     "HexSignDet/DagBounds.lean": [
@@ -257,7 +265,11 @@
       "propext",
       "Quot.sound"
     ],
-    "scope": "Individual source/proof/API review of integration additions; existing kernel guards and public reader uses. No new compiler capture, computational performance or phase acceptance."
+    "integration_scope": "Individual source/API assessment of the integration additions. Reader clients and axiom-guard source files are bound current contexts; no new compiler capture, computational regression or phase acceptance.",
+    "integration_commands": [
+      "lake build HexRealClosureTheory.SignEvidenceConformance HexSignDet.CrossCheck",
+      "lake build HexRealClosureTheory.SignEvidenceConformance HexManual"
+    ]
   },
   "source_ref": "audit/issue-10575-sign-det-integration-review-input-v2",
   "input_revision": "7cc9fb5c2d3401d9f67b0fefd016246a3acddd0f",

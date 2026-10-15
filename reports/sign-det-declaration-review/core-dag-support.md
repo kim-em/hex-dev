@@ -11,13 +11,13 @@ and arithmetic replay use separate instances of the same prefix invariant.
 | `Dag.Expansion.fold_bounds` | Private induction follows the actual expansion fold and growing prefix size, bounding every child reference at its stored entry index. |
 | `Dag.encode_root` | Actual encoding of any replay tree selects an existing entry, independently of arithmetic acceptance. |
 | `Dag.encode_bounds` | Every encoded child refers strictly backward; uses actual encoder expansion and fold bounds. |
-| `Replay.nodes` | Lists every literal node occurrence in left-to-right tree order, including repeated children. It performs no hashing, deduplication or replay. Its size follows tree occurrences and can exceed the size of a shared encoded graph. |
+| `Replay.nodes` | Preorder specification traversal for coverage premises: parent, then left and right subtrees, retaining repeated occurrences. Its length can be exponential in encoded entries; list append also recopies left-subtree lists. This is not a runtime traversal for already shared expanded evidence. |
 | `Dag.Encoder` | Stores entries and an index cache as producer state; its type alone certifies neither index coherence nor arithmetic validity. |
 | `Dag.Encoder.insert` | Reuses an exact cached entry or appends the new literal entry at the old array size. Arbitrary supplied cache state needs the separate invariant. |
 | `Dag.encodeFrom` | Traverses children left-to-right before interning their parent; cached entries retain child indices and literal node identity. |
 | `Dag.Encoder.insert_nodes` | Private proof preserves any supplied node property through both cache-hit and append branches of the actual insertion. It does not assume the cache is coherent: even an arbitrary hit leaves the prior entries unchanged. |
 | `Dag.encodeFrom_nodes` | Private structural induction carries the supplied property from the previous entry array and every node of the input tree through child traversal and parent insertion. Child indices carry no additional node coefficients. |
-| `Dag.encode_nodes` | Every entry produced from the empty encoder inherits any property of the literal tree nodes under arbitrary caller hash instances. This proves finite coefficient/context coverage without evaluating hash lookups; it makes no distinctness, sharing-size or arithmetic-acceptance claim. |
+| `Dag.encode_nodes` | Every entry produced from the empty encoder inherits any property of the literal tree nodes under arbitrary caller hash instances. This lets callers derive finite coefficient/context coverage without evaluating hash lookups; it makes no distinctness, sharing-size or arithmetic-acceptance claim. |
 | `Dag.encode` | Starts from empty state, shares exact entries and retains the first index. Visits every tree occurrence; complexity is not bounded by distinct graph entries when expansion is large. |
 | `Dag.mapNodes` | Transforms each stored node once and retains all indices, edges and the selected root across carrier/context types. It transports no arithmetic acceptance. |
 | `Dag.size_mapNodes` | Preserves array length, including unreachable entries. |
