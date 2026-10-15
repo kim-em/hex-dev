@@ -987,8 +987,9 @@ Cast recognition visits coefficient arithmetic and native wrappers, without
 traversing context signatures or dictionaries. A fixed total node budget and
 visited-expression set bound this optional search. Reached natural casts are
 candidate proofs: acceptance requires definitional equality of the complete
-guarded proposition. Closed computations can therefore be accepted without
-using symbolic field identities or constructing arithmetic-membership proofs.
+guarded proposition. A closed computation is accepted when definitionally
+equal to a single reached cast; symbolic field identities and structural
+arithmetic-membership proofs are not used by this hint search.
 Matching leaves caller coefficient and interpretation metavariables unchanged.
 `Base.bindAgreement` retargets the bootstrap's finite agreement to its shared
 named reader and domain, preserving the original signs and support. Closed
@@ -1007,11 +1008,11 @@ The CI-built `KernelReplay.BaseLookup` checks literal and aliased membership
 through 256 repeated padding entries, closed zero/unit/computed and symbolic
 natural casts, and binding of closed and open choice agreements. It rejects
 foreign or unspecified interpretations without assigning caller metavariables.
-The fixture uses the default options, also checks the computed cast with smart
+The fixture uses the default unfolding options, also checks the computed cast with smart
 unfolding disabled, rejects a shared expression with 48 arithmetic layers within
-its ordinary command budget, and exercises the composed membership/operation
-supplier with coefficients outside the inventory. Unretained coefficients and
-unspecified operation/leading readers remain rejected.
+the fixture's heartbeat limit, and exercises the composed membership/operation
+supplier with coefficients outside the inventory. Unretained leading guards
+and unspecified operation/leading readers remain rejected.
 The CI-built `KernelReplay.FiniteBase` fixture obtains
 one interpretation over two successive infinitesimals, derives all six
 operation proofs and a leading guard, and rejects an unretained coefficient.

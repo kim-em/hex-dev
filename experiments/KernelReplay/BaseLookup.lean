@@ -181,10 +181,10 @@ def elaborate : CommandElab := fun _ => liftTermElabM do
     levelParams := [], type := productType, value := productProof })
   let original := base.domains (FiniteData.agreementSupplier (mkConst ``FiniteBaseProbe.agreement))
   let absent ← mkAppM ``HSub.hSub #[mkConst ``epsilon, mkConst ``delta]
-  let rejected ← mkAppM ``Transport.Evaluation #[base.read, mkConst ``FiniteBaseProbe.left, absent]
+  let rejected ← mkAppM ``Transport.Leading #[base.read, ← mkAppM ``DensePoly.C #[absent]]
   try
     let _ ← FiniteData.buildClosed rejected (base.supply original original)
-    throwError "composed base supplier accepted an unretained coefficient guard"
+    throwError "composed base supplier supplied an unretained leading guard"
   catch error =>
     unless (← error.toMessageData.toString).startsWith "missing finite replay evidence" do throw error
   let unspecifiedReader ← mkFreshExprMVar (some (← inferType base.read))
@@ -259,6 +259,23 @@ def elaborate : CommandElab := fun _ => liftTermElabM do
       let accepted ← observing? (base.bindAgreement foreign)
       if accepted.isSome then
         throwError "base agreement binding accepted a foreign interpretation"
+  if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
+    let coefficient ← mkAppM ``DensePoly.coeff #[mkConst ``FiniteBaseProbe.left, toExpr (1 : Nat)]
+    for (label, value) in #[("epsilon", mkConst ``epsilon), ("retained-coefficient", coefficient)] do
+      let requested := mkApp base.domain value
+      for order in #[#[false, true], #[true, false]] do
+        for hints in order do
+          let saved ← saveState
+          let began ← IO.getNumHeartbeats
+          let some supplied ← (if hints then composed else rebound) requested
+            | throwError "lookup cost control lost its retained membership"
+          let suppliedAt ← IO.getNumHeartbeats
+          kernelCheck `__baseLookupCost requested supplied
+          let checkedAt ← IO.getNumHeartbeats
+          saved.restore
+          IO.FS.withFile path .append fun handle => do
+            handle.putStrLn s!"base domain cost: case={label} hints={hints} supplyHeartbeats={(suppliedAt-began)/1000} kernelHeartbeats={(checkedAt-suppliedAt)/1000}"
+            handle.flush
   logInfo "retained base coefficient found after 256 repeated padding entries"
 end
 
