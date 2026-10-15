@@ -1,5 +1,13 @@
 {
   "source_commit": "9336360f98e5690b6a1027476061f57825fe4430",
+  "code_identity_check": "git diff --quiet SOURCE HEAD -- . :!reports; working tree checked too",
+  "post_source_non_report_changes": [],
+  "metadata_exit_status": {
+    "dag": 0,
+    "admissions": 0,
+    "copyright": 0,
+    "literals": 0
+  },
   "sources_sha256": {
     "adapters/HexRCF/RealCoefficients/AlgebraicCells.lean": "52d1428cc9a09c7b85c7cdb4891ebe1a16a4fb9edb84587e302742b938f22d0b",
     "adapters/HexRCF/RealCoefficients/GatherCells.lean": "c5cb21cfa98ec356bb95f54ff283b349a7a56c6d5a3f196b2d904f019fd51b7d",
@@ -91,6 +99,22 @@
     "reports/data/hexrcf-algebraic-input-cells/original-input-reviewed-manual-render-1.log.gz": {
       "sha256": "0a3589e99854188a80c4d6bf5261b2e0b2145ab04b71021627cbb7cf325aee3e",
       "uncompressed_sha256": "d1f4b62062ddd50724e860ce655dde50e4832d1623552240db4db68d0c58f293"
+    },
+    "reports/data/hexrcf-algebraic-input-cells/original-input-final-admissions-2.log.gz": {
+      "sha256": "1bee1b33672b3d0ae90ff3716a1d4c3ca6e476b0301dbb2eb9c59390cfc24ff9",
+      "uncompressed_sha256": "f885ef692aa8208be85a71c42e594e6111b7c08c83afc9ad3a0a8d8e99a5453b"
+    },
+    "reports/data/hexrcf-algebraic-input-cells/original-input-final-copyright-2.log.gz": {
+      "sha256": "89b12fa0be4a440fd82e7e15dfb79ec5acf5eb2b4b42d7ceab0bc8393408a788",
+      "uncompressed_sha256": "a4bca921b577964339a0bb1003d40b0e13e9006fc28274733a8188e126ddad15"
+    },
+    "reports/data/hexrcf-algebraic-input-cells/original-input-final-dag-2.log.gz": {
+      "sha256": "89b12fa0be4a440fd82e7e15dfb79ec5acf5eb2b4b42d7ceab0bc8393408a788",
+      "uncompressed_sha256": "a4bca921b577964339a0bb1003d40b0e13e9006fc28274733a8188e126ddad15"
+    },
+    "reports/data/hexrcf-algebraic-input-cells/original-input-final-literals-2.log.gz": {
+      "sha256": "e858a9207dc9800a4c4f9df91b44f925fe08a7ae462bc2a0db45645de1119411",
+      "uncompressed_sha256": "b83e0cf8827bc5757b80c247fadd1bf387fb44ca0da61eba65c01c6dc97f4093"
     }
   },
   "artifacts_sha256": {
@@ -128,6 +152,7 @@
   },
   "limits": [
     "The initial context is historical and predates main integration; it is not final-head evidence.",
+    "Earlier silent metadata logs are retained as historical artifacts; the final status-bearing checks and collector assertions establish their current passes.",
     "Every declared algebraic input is presented and gathered; an unused irrational input can enlarge the tower.",
     "Acceptance wrappers derive guard validity from successful production; native contexts still do not establish general source-goal quotation.",
     "The exact model definition remains an import-all dependency pending an owning public equation; no owning source file is edited by this adapter.",
@@ -136,11 +161,11 @@
     "The prior interrupted stress case remains without a recorded acceptance or completed timing; IR interpreter frames are visible in its samples.",
     "Build observations have different incremental scopes and are not before/after timing comparisons."
   ],
-  "document_commit": "516f3e2c3933afbc073dfc7ba7f2c9b7abe08dbf",
+  "document_commit": "21905a8ec4d9d5b063fd60a336e26342cee478d7",
   "documents_sha256": {
-    "reports/hexrcf-algebraic-input-cells.md": "b165e44238700a53c9c4f7024010b443332525df3a03cb21677d58a2a108ab48",
+    "reports/hexrcf-algebraic-input-cells.md": "6d111c7ec45258b36e8be63156939b2fb0350ed3dc09f0d9905ea29fe9d164e1",
     "reports/hexrcf-gather-cells.md": "71060edd7ef95dcdbc5953da195e833c14259cd16010a53ce5a24133b95ef31b",
-    "reports/data/hexrcf-algebraic-input-cells/collect-reviewed.py": "07760e00c2b9da4a87991b9df3c3d1824e1888b22ad0de6c9f0bd2b6a73ddbf5"
+    "reports/data/hexrcf-algebraic-input-cells/collect-reviewed.py": "0d680fad02a1a491d9460a75f747b26131460a00da53dd29778008cb32b051c4"
   },
-  "artifact_commit": "516f3e2c3933afbc073dfc7ba7f2c9b7abe08dbf"
+  "artifact_commit": "21905a8ec4d9d5b063fd60a336e26342cee478d7"
 }
