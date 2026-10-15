@@ -162,3 +162,22 @@ eligible trials; the guard uses the pinned median comparator and 10-percent
 rule. Its compiled controls validate these refusals. Reusing this guard for
 OrderedFn requires four balanced blocks and the applicable source/configuration
 bindings; it does not make the retained three-block capture acceptance evidence.
+
+The same export guard also accepts fixed workloads. Each of the four exports per
+source must contain the complete declared repeat schedule, with successful
+hashed calls that reach the pinned runner's minimum total measurement duration.
+It pools the calls, normalizes each by integer `total_nanos / inner_repeats`,
+and recomputes the pinned runner's upper-middle median before applying the
+10-percent comparison. Nanosecond rounding is the runner's existing behavior.
+Fixed mode returns 0 for stable/improved results, 1 for regression and 3 for
+invalid evidence; incomplete fixed exports do not receive code 2 or authorize
+an inconclusive-result retry.
+
+Historical exports may lack `expected_hash`; when present, it must match every
+call. Cross-source and cross-repeat hash agreement is always required, but is
+not independent correctness evidence and does not waive the SPEC requirement
+that fixed registrations declare `expectedHash`. Applicable correctness checks
+and source/configuration bindings remain prerequisites for performance
+acceptance. The Sturm collector still selects only its existing parameterized
+timing workloads; fixed collection requires its own applicable protocol and
+bindings.
