@@ -111,12 +111,54 @@ run_meta do
     (parameters.set! (parameters.size - 1) zeroInventory)
   withLocalDeclD `agreement zeroAgreement fun agreement => do
     refused agreement (mkApp base.domain (mkApp zeroFunction (toExpr (0 : Nat))))
-  let original := mkConst ``FiniteBaseProbe.agreement
-  let target := mkApp base.domain (mkApp function (toExpr (0 : Nat)))
-  refused original target
-  let some fallback ← agreementSupplier original target |
-    throwError "existing individual coefficient fallback was lost"
-  kernelCheck `__coefficientEntryFallback target fallback
+  -- A literal list deliberately lacks the polynomial-block structure. Its
+  -- individual coefficient remains available through the original fallback.
+  let literal ← mkListLit element [mkApp function (toExpr (0 : Nat))]
+  let literalAgreement := mkAppN originalType.getAppFn
+    (parameters.set! (parameters.size - 1) literal)
+  withLocalDeclD `agreement literalAgreement fun agreement => do
+    let target := mkApp base.domain (mkApp function (toExpr (0 : Nat)))
+    refused agreement target
+    let some fallback ← agreementSupplier agreement target |
+      throwError "existing individual coefficient fallback was lost"
+    let locals := (← getLCtx).getFVarIds.map mkFVar
+    kernelCheck `__coefficientEntryFallback (← mkForallFVars locals target)
+      (← mkLambdaFVars locals fallback)
+  -- These dictionaries are ordinary parameters, unavailable to instance
+  -- search. An unsupported inventory must refuse the well-typed request.
+  withLocalDeclD `E (mkSort (.succ .zero)) fun carrier => do
+    withLocalDeclD `zero (← mkAppM ``Zero #[carrier]) fun zero => do
+      withLocalDeclD `decidable (← mkAppM ``DecidableEq #[carrier]) fun decidable => do
+        let polynomialType := mkAppN (mkConst ``DensePoly [.zero]) #[carrier, zero, decidable]
+        withLocalDeclD `polynomial polynomialType fun polynomial => do
+          let realZero ← mkAppOptM ``OfNat.ofNat
+            #[some (mkConst ``Real), some (toExpr (0 : Nat)), none]
+          let read ← withLocalDeclD `x carrier fun x => mkLambdaFVars #[x] realZero
+          let domain ← withLocalDeclD `x carrier fun x =>
+            mkLambdaFVars #[x] (mkConst ``True)
+          let source ← withLocalDeclD `x carrier fun x =>
+            mkLambdaFVars #[x] (toExpr (0 : Int))
+          let mut args := parameters
+          for i in [:parameters.size - 5] do
+            if args[i]! == element then args := args.set! i carrier
+            else if (← inferType args[i]!) == (← mkAppM ``Zero #[element]) then
+              args := args.set! i zero
+            else if (← inferType args[i]!) == (← mkAppM ``DecidableEq #[element]) then
+              args := args.set! i decidable
+          args := args.set! (args.size - 5) read |>.set! (args.size - 4) domain
+            |>.set! (args.size - 3) source |>.set! (args.size - 1) (← mkListLit carrier [])
+          let agreementType := mkAppN originalType.getAppFn args
+          withLocalDeclD `agreement agreementType fun agreement => do
+            withLCtx (← getLCtx) #[] do
+              let coefficient := mkAppN (mkConst ``DensePoly.coeff [.zero])
+                #[carrier, zero, decidable, polynomial, toExpr (0 : Nat)]
+              let target := mkApp domain coefficient
+              let locals := (← getLCtx).getFVarIds.map mkFVar
+              let proof ← mkEqRefl target
+              kernelCheck `__coefficientRequestType (← mkForallFVars locals (← inferType proof))
+                (← mkLambdaFVars locals proof)
+              if (← agreementSupplier agreement target).isSome then
+                throwError "empty inventory supplied a coefficient with unavailable instances"
   let lifted := mkAppN (mkConst ``ULift.up [Level.param `u, Level.zero])
     #[mkConst ``Nat, toExpr (1 : Nat)]
   let liftedType ← inferType lifted
