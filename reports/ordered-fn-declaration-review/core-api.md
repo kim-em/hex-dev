@@ -3,7 +3,7 @@
 The five production computational modules match the assessed source bytes in
 the individual [source assessment](computational.md) and [manifest](manifest.json), at
 `79b991882a486a8c8d05fd26aaf1656358834b7e`. This adopts their proof/API judgments
-for the computational library, including the public interfaces and private
+for the computational library with the statement corrections below, including the public interfaces and private
 termination instance discussed below. It does not complete Phase 6: the four
 flagged regressions in the [retained comparison](../bench-results/ordered-fn-regression-followup/README.md)
 remain unresolved, and no further unchanged comparison is permitted.
@@ -32,7 +32,7 @@ that environment, not claims about the current repository or runtime use.
 | `Oracle.Bounds.width_neg` | 0 | Retain exact width preservation as simp normalization for negated enclosures. External error-bound proofs should not need to unfold both rational endpoints. |
 | `Oracle.Bounds.width_add` | 1 | Retain width additivity for composed enclosure estimates. The retained named user is `Oracle.Contains.add_converges`; this is a proof client, not a runtime performance result. |
 | `Real.requestWidth_of_nonpos` | 0 | Retain the nonpositive-request normalization to width one. Users must be able to explain coarse requests without claiming a zero-width approximation succeeds. |
-| `accessibleWf` | 0 | Keep private. The search termination elaborator uses its accessible-subtype well-founded relation; the reference model may unfold it rather than retain a named edge. Making it public adds no useful search contract, and deleting it breaks the declared recursion interface. |
+| `accessibleWf` | 0 | Keep private. `firstSome` uses the accessible-subtype relation in its `termination_by` subtype and `decreasing_by` proof. Without this instance, those annotations do not establish the same termination argument. The inventory records no named edge; it does not identify the cause of that absence. |
 
 The companion separately adopts its own [33 public decisions](theory-acceptance.md).
 No discovered caller is claimed for a zero-user row. An exported characterization,
@@ -63,7 +63,8 @@ these definitions. Retain it here to preserve the existing public re-exports;
 a future narrowing must review that compatibility change explicitly. This is an
 API compatibility decision, not a claim of minimal transitive imports or a
 performance benefit. The direct-import table describes the reviewed main source;
-its transitive RationalFn closure can differ from the original source checkpoint. The shared sign split described in [quality.md](quality.md) resolves a
+its transitive RationalFn closure can differ from the original source
+checkpoint. The shared sign split described in [quality.md](quality.md) resolves a
 companion import concern; it does not add a computational dependency. The core
 imports neither its Theory companion nor Mathlib/Tau Ceti. The independent
 import-DAG checks remain required for later source changes.
@@ -83,9 +84,9 @@ LE/LT and decidability instances defined by sign; they supply no order laws.
 
 ## Verification scope and remaining acceptance
 
-The original source manifest and both compiler captures remain unchanged.
-The review index, automation wording and two example citations are clarified
-without altering the historical reference counts. The five module
+The original source manifest and both compiler captures retain their source
+checkpoints and historical reference counts. The range examples cited above
+are outside the original HexManual scan and included in v7. The five module
 hashes agree with the original manifest, and the retained v7 rows match every
 declaration and count in the table above. The v7 archive checker verifies its
 source/complete tags, graph data, declared client coverage and axiom inventory.
