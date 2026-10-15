@@ -174,5 +174,11 @@
     "The final integrated build reuses typed/Boolean source quotations rebuilt by the retained preceding11768-job build.",
     "The initial import-removal, dsimp and zero-preflight test failures and both overflowing layout attempts are retained.",
     "Operational build/render observations are not a performance comparison or frontend completeness evidence."
-  ]
+  ],
+  "document_commit": "4ae275c526c9b1aaeae890f8fcce1e5787cce03b",
+  "artifact_commit": "4ae275c526c9b1aaeae890f8fcce1e5787cce03b",
+  "documents_sha256": {
+    "reports/hexrcf-cell-codec.md": "03345057bd7ea257f0a68ee21a2dba1e3c5f56b792e17b8656106a8624d30352",
+    "reports/data/hexrcf-cell-codec/collect-cell-codec-integration.py": "c8b5512685e2f8bf7a4e22eb814508376c0c6fcbc567f2e61dd7a900441e0a13"
+  }
 }
