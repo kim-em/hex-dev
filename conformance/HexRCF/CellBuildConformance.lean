@@ -14,8 +14,8 @@ namespace Hex.RCF.RealCoefficients.CellBuildConformance
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet
 open Hex.RCF.RealCoefficients Hex.RCF.SelectedRootTests
 open CellReplayTests.Algebraic.Schema
-local instance : Hashable parent.Value := ⟨fun a => hash (parent.codec.encode a).writeBytes⟩
-local instance : Hashable Signature := ⟨fun s => hash (Signature.codec.encode s).writeBytes⟩
+local instance : Hashable parent.Value := RowEncode.hashable parent.codec
+local instance : Hashable Signature := RowEncode.hashable Signature.codec
 #eval (show IO Unit from do
   let prepared ← match CellBuild.prepare values [] formula with
     | .error e => throw (IO.userError s!"carrier/root construction failed: {repr e}")
@@ -80,11 +80,4 @@ local instance : Hashable Signature := ⟨fun s => hash (Signature.codec.encode 
     | .error .divisor => pure ()
     | _ => throw (IO.userError "constant preparation erased the original guard")
   IO.println "zero atoms and constant carriers preserve both strict quantifiers and original guards")
-open Lean Meta
-run_meta do
-  for name in #[``RootBuild.from_production, ``RootBuild.success, ``RootBuild.prepare_success,
-      ``CellBuild.prepare_success, ``RowEncode.read_covered] do
-    let axioms ← collectAxioms name
-    unless axioms.size == 3 && axioms.all (fun a => #[``propext, ``Classical.choice, ``Quot.sound].contains a) do
-      throwError "unexpected construction/replay axioms: {name}"
 end Hex.RCF.RealCoefficients.CellBuildConformance

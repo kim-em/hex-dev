@@ -186,10 +186,13 @@ example
     {r : BaseContext.Registry}
     {c : Tower.Context r}
     {ps : List c.Poly}
-    (family : Tower.Sample.Partition c ps) :
-    (CellDiscover.points family).length =
-      family.values.length + 1 :=
-  CellAlignment.points_length family
+    (family : Tower.Sample.Partition c ps)
+    (cut : Fin (family.values.length+1)) :
+    Tower.Cell.sector
+      (SectorRequest.Cut.lower family cut)
+      (SectorRequest.Cut.upper family cut)
+        ∈ family.cells :=
+  SectorRequest.Cut.adjacent family cut
 ```
 
 `CellAlignment.aligned` derives exact equality between the partition's ordered
@@ -203,13 +206,12 @@ half-open domain guards, including equal and reversed endpoints.
 
 This is native production followed by independent cell replay. The returned
 collection retains native conversion history; it is not a frozen certificate of
-that history. The direct-index discovery path still needs its sector positions
-related to the common ordered boundary list. The general frozen history, strict compiled missing-record checks and automatic
+that history. General frozen history, strict compiled missing-record checks and automatic
 source quotation retain their separate obligations. No native verdict is a
 proof of a real sentence.
 
-The separate `SectorRequest` route uses the owner's proved boundary-request
-API. `Cut.adjacent` establishes the requested endpoints for every sector index,
+`CellDiscover.run` uses `SectorRequest.points` and the owner's proved
+boundary-request API. `Cut.adjacent` establishes the requested endpoints for every sector index,
 including both rays and an empty table's whole line. `CellAlignment.sector_points`
 then transports those endpoint inequalities to the independently checked radical
 table. The adapter proves this index correspondence using public cell-membership

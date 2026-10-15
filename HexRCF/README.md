@@ -596,11 +596,11 @@ assuming a carrier, squarefreeness or a returned root list. `CellBuild.build`
 produces all rows at proposed ordinary points, whose strict boundary signs
 are checked. [Construction controls](../reports/hexrcf-cell-build.md) reproduce
 the existing algebraic packet and retain constant/zero cases and refusals.
-Automatic ordinary-point discovery, complete algebraic source production,
+Complete algebraic source production,
 source/provider history, automatic common-field certification and accepted
 algebraic completeness remain separate obligations.
 
-`CellDiscover.run` instead obtains ordinary sector points from the owner’s
+`CellDiscover.run` obtains ordinary sector points from the owner’s
 complete partition and converts every coefficient and original divisor into
 its actual common context. `CellAlignment.aligned` proves exact agreement of
 the partition’s ordered real boundaries with the independently checked radical
@@ -611,8 +611,8 @@ refusal, selected conjugates, zero atoms and half-open endpoint guards. Native
 conversion history is not frozen history evidence, and total frontend
 acceptance and strict arbitrary-missing-record compiled replay remain open.
 
-`SectorRequest.Cut` instead selects points through the owner’s proved endpoint
-requests. `CellAlignment.sector_points` relates every requested point to the
+`CellDiscover.run` uses `SectorRequest.points` and `SectorRequest.Cut` to select
+points through the owner’s proved endpoint requests. `CellAlignment.sector_points` relates every requested point to the
 independently checked ordered root cells. `CellProgress` constructs typed
 section, sector and exact ordinary-point rows from the actual owner producers.
 `CellDecision.complete` proves mathematical existence of accepted typed evidence

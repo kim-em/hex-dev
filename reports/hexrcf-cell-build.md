@@ -88,7 +88,7 @@ overflow and failed checks are retained separately. The [narrow API example](dat
 fits its code block. Target-level overflow checks make no claim about unrelated
 content elsewhere in the full manual.
 
-Every own build shares one32GiB cgroup, no swap and two Lean workers. The full
+Every own build shares one 32GiB cgroup, no swap and two Lean workers. The full
 build's recorded peak was12G. These are operational validation observations,
 not performance, scaling or speedup evidence. The final record binds both
 source versions rather than attributing the earlier full build to the later

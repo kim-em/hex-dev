@@ -16,7 +16,11 @@ the returned sample’s value in the actual common context and the same compatib
 collection model. `Cut.adjacent` derives the requested endpoints for each cut
 from the public whole-line, left-ray, right-ray and bounded-sector membership
 laws, using list identities. `Cut.witness` supplies a point with proved
-membership at those exact endpoints. No new owner index theorem is needed.
+membership at those exact endpoints. `points` collects those executable
+requests as a fixed-size vector; `points_spec` proves that every request
+succeeds and every returned coordinate has the required membership. Both the
+public `CellDiscover.run` and `sector_points` use this route. No new owner index
+theorem is needed.
 
 [CellAlignment](../adapters/HexRCF/RealCoefficients/CellAlignment.lean) relates
 each boundary coordinate to the independently checked radical root list.
@@ -48,7 +52,7 @@ remain diagnostic for the tactic. Source reification must separately bind those
 coordinates and supplied divisor expressions to a Lean goal.
 
 The [fresh proof audit](../conformance/HexRCF/CellDecisionProofs.lean) rechecks
-all 21 actual proof bodies. It requires the real owner constructor, collection,
+all 28 actual construction, reuse and decision proof bodies. It requires the real owner constructor, collection,
 root/point and sign-law dependencies. The only permitted axioms are `propext`,
 `Classical.choice` and `Quot.sound`. Existing supplied-cell quotation regressions
 remain separate evidence for actual source-goal proof emission.
@@ -57,18 +61,21 @@ remain separate evidence for actual source-goal proof emission.
 
 The [native regression](../conformance/HexRCF/CellRequestedConformance.lean)
 uses generic finite cut indices and the actual boundary-request API to select
-all points. It produces and reads complete cell packets for seven matrices:
+all points through the public `CellDiscover.run`. Regular conformance produces
+and reads complete packets for six small matrices; the explicit
+`lake build HexRCFCellRequestedStress` target retains the four-boundary union.
+Together these seven matrices cover
 an algebraic equation, true/false zero atoms, a repeated equation, its union
 with literal half-open guards, and both endpoint controls. The complete
 four-boundary union has roots `-sqrt(sqrt 2)`, `1`, `sqrt(sqrt 2)` and `2`.
 No explicit list of sector points is supplied.
 
-A retained scratch version of these seven cases passed in329 seconds with
-an observed1.5G memory peak and zero swap. A separate diagnostic four-boundary
-trace records81 ms partition construction,533 ms requested-point selection,
-11,923 ms radical/root preparation,258,044 ms complete cell-row production and
+A retained scratch version of these seven cases passed in 329 seconds with
+an observed 1.5G memory peak and zero swap. A separate diagnostic four-boundary
+trace records 81 ms partition construction, 533 ms requested-point selection,
+11,923 ms radical/root preparation, 258,044 ms complete cell-row production and
 24,284 ms literal reading plus both folds. The whole diagnostic build took
-317 seconds with an observed7G peak and zero swap. These are build-only
+317 seconds with an observed 7G peak and zero swap. These are build-only
 observations on a shared host with Mathlib imports, not Mathlib-free runtime
 benchmarks, scaling evidence or a speedup comparison. They identify row
 production as the substantial unresolved cost in this input. The retained raw
@@ -78,9 +85,9 @@ is retained.
 
 The [child-timed diagnostic](data/hexrcf-cell-decision/row-cost.json) runs the
 actual existing child functions and validates the resulting complete matrix.
-Its22 calls record71,140 ms for four section rows,180,479 ms for eight
-adjacent-root selected-sign queries,368 ms for five ordinary-point descriptors
-and5,722 ms for their rows. These figures identify selected-sign production at
+Its 22 calls record 71,140 ms for four section rows, 180,479 ms for eight
+adjacent-root selected-sign queries, 368 ms for five ordinary-point descriptors
+and 5,722 ms for their rows. These figures identify selected-sign production at
 the carrier roots as the substantial cost in that trace. They do not establish
 a general speedup or scaling result. The [existing owner API question](https://github.com/kim-em/hex-dev/issues/10377#issuecomment-6185385739)
 asks whether prepared joint tables can be reused across descriptors with exact
@@ -109,9 +116,9 @@ native row cost also needs further investigation before any performance claim.
 The [source-bound record](data/hexrcf-cell-decision/context.json) binds the ten
 implementation/manual/target files at `5a37b7f022`, retaining the full-build
 source at `ebb48a914d` separately. The complete optional
-adapter, conformance and manual build passes14,689 jobs. It rechecks all21
+adapter, conformance and manual build passes 14,689 jobs. It rechecks all 21
 actual theorem bodies and required owner dependencies, and the public seven-case
-native regression passes in327 seconds. All seven structural checks pass,
+native regression passes in 327 seconds. All seven structural checks pass,
 including628 admission cones covering1,528 local modules and eleven scanner
 regressions. Original rational and algebraic tactic examples remain in that
 same full build.
@@ -119,10 +126,10 @@ same full build.
 The first full attempt at `b64a2b22df` passed the code and conformance targets
 but rejected an ambiguous signature name in the manual example. A manual-only
 change qualifies `Tower.Signature`; the subsequent full build passes. Both
-attempts are retained. Their observed peaks were14.5G and3G respectively,
+attempts are retained. Their observed peaks were 14.5G and 3G respectively,
 with zero swap; the second run reused completed build artifacts, so these
 observations are not a before/after memory comparison. Every own build runs
-serially in one aggregate32GiB cgroup with zero swap and two Lean threads.
+serially in one aggregate 32GiB cgroup with zero swap and two Lean threads.
 
 The [diagnostic record](data/hexrcf-cell-decision/diagnostics.json) separately
 retains the earlier prototype source, seven-case result, per-stage timestamps,
@@ -133,7 +140,7 @@ and successful pre-cleanup audit separately from final-source validation.
 
 The final manual-only layout revision at `5a37b7f022` splits long bindings and
 uses the shared `QF` name through a namespace open. Its full manual build passes
-14,260 jobs and the complete renderer passes14,262. The earlier45-pixel narrow
+14,260 jobs and the complete renderer passes 14,262. The earlier 45-pixel narrow
 code overflow, its four partial captures and the failed browser record are
 retained separately from the final desktop/narrow checks. The implementation
 and conformance sources are unchanged by either manual correction.

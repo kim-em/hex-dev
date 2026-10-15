@@ -11,7 +11,7 @@ open Lean Meta
 run_meta do
   for name in #[``CellDiscover.Packet.model, ``CellDiscover.Packet.values,
       ``CellDiscover.Packet.sound, ``CellDiscover.Packet.domains,
-      ``CellAlignment.points_length, ``CellAlignment.product_roots,
+      ``CellAlignment.product_roots,
       ``CellAlignment.polynomial_eq, ``CellAlignment.source_roots,
       ``CellAlignment.aligned, ``CellAlignment.dimensions] do
     let .thmInfo declaration ← getConstInfo name | throwError "expected theorem: {name}"
@@ -28,5 +28,5 @@ run_meta do
     let seen ← Hex.RCF.ProofEvidence.projectDependencies #[name]
     for target in required do
       unless seen.contains target do throwError "discovery law omitted actual owner evidence: {name}, {target}"
-  logInfo "all ten actual discovery proof bodies rechecked, standard axioms and required source/coverage laws retained"
+  logInfo "all nine actual discovery proof bodies rechecked, standard axioms and required source/coverage laws retained"
 end Hex.RCF.RealCoefficients.CellDiscoverProofs

@@ -122,4 +122,27 @@ theorem witness (family : Tower.Sample.Partition parent polynomials)
         model.input.target (model.input.target.value point) :=
   SectorRequest.point_witness family original model _ _ (adjacent family cut)
 end Cut
+
+/-- Request every open cell in cut order through the owner's checked endpoint API. -/
+@[expose] def points {polynomials : List parent.Poly}
+    (family : Tower.Sample.Partition parent polynomials) :
+    Option (Vector family.collection.input.context.Value (family.values.length+1)) :=
+  Vector.ofFnM fun cut => point? family (Cut.lower family cut) (Cut.upper family cut)
+
+/-- The executable requests succeed together, and each returned value belongs
+ to its requested ordinary sector in the same compatible collection model. -/
+theorem points_spec {polynomials : List parent.Poly}
+    (family : Tower.Sample.Partition parent polynomials) (original : Model parent ℝ)
+    (model : Collection.Model family.collection original) :
+    ∃ values : Fin (family.values.length+1) → family.collection.input.context.Value,
+      points family = some (Vector.ofFn values) ∧
+      ∀ cut, (Tower.Cell.sector (Cut.lower family cut) (Cut.upper family cut)).Mem
+        model.input.target (model.input.target.value (values cut)) := by
+  choose values produced inside using Cut.witness family original model
+  refine ⟨values, ?_, inside⟩
+  unfold points
+  have same : (fun cut => point? family (Cut.lower family cut) (Cut.upper family cut)) =
+      (fun cut => pure (values cut)) := funext produced
+  rw [same, Vector.ofFnM_pure]
+  rfl
 end Hex.RCF.RealCoefficients.SectorRequest

@@ -22,7 +22,7 @@ theorem. `Packet.values` preserves each source coordinate. `Packet.sound`
 composes accepted complete cell replay with that model to prove the original
 shared sentence at its original fixed real coefficients. `Packet.domains`
 recovers every original divisor’s nonzero real value, even when normalization
-removed it from the matrix. Both conclusions use the same compatible model.
+removed it from the matrix. Each conclusion uses a compatible model of the actual collection.
 These theorems require accepted replay; they do not infer acceptance from a
 native producer result.
 
@@ -40,7 +40,7 @@ explicit checked premise. `dimensions` derives the number of ordinary sector
 points from this correspondence.
 
 The fresh [proof audit](../conformance/HexRCF/CellDiscoverProofs.lean) rechecks
-all ten actual theorem bodies. Each uses exactly `propext`, `Classical.choice`
+all nine actual theorem bodies. Each uses exactly `propext`, `Classical.choice`
 and `Quot.sound`. Required transitive dependencies include the actual owner
 partition coverage/order and complete root replay coverage/order laws.
 
@@ -69,11 +69,13 @@ The returned native collection is not frozen context/provider/history
 evidence. The existing compiled fallback on arbitrary missing predecessor
 records remains outside strict replay. This API installs no new tactic handler
 and does not prove general frontend acceptance or algebraic-only completeness.
-A total discovery acceptance proof still needs the owner’s indexed sector
-position to be connected to the common ordered boundaries, including the two
-unbounded sectors and the empty-root whole line. The existing general sector
-membership theorem alone does not identify that index. No duplicate owner
-index/arithmetic proof or assumed correspondence replaces that obligation.
+`SectorRequest.points` now requests every open cell through the owner's checked
+endpoint API, including the two unbounded sectors and the empty-root whole
+line. Both `CellDiscover.run` and the sector existence proof use that route.
+`SectorRequest.points_spec` proves joint request success and sector membership;
+`CellAlignment` connects those endpoints to the checked root table. The
+[decision report](hexrcf-cell-decision.md) distinguishes that progress from the
+remaining full executable build, serialization and reader acceptance proof.
 
 The [existing construction report](hexrcf-cell-build.md) documents the
 explicit-point producer; the [evidence inventory](hexrcf-adapter-evidence.md)
@@ -83,8 +85,8 @@ keeps its scope separate from automatic discovery and frozen acceptance.
 
 The [source-bound record](data/hexrcf-cell-discovery/context.json) binds the nine
 implementation/manual/target files at `56cccab8bf`. The full optional adapter,
-conformance and manual build passes14,684 jobs. The separate manual build
-passes14,257 jobs and the fresh complete renderer passes14,259. The focused
+conformance and manual build passes 14,684 jobs. The separate manual build
+passes 14,257 jobs and the fresh complete renderer passes 14,259. The focused
 producer regressions and fresh proof-body audit pass separately. The DAG and
 umbrella check,625 admission cones covering1,525 local modules, eleven scanner
 regressions, copyright, manual split, literal regeneration, conformance wiring,
@@ -96,6 +98,6 @@ All six desktop/narrow captures were opened and inspected. The
 [narrow code example](data/hexrcf-cell-discovery/discovery-cell-narrow-source.png)
 and changed prose fit their targets, with zero descendant overflow. This is a
 check of the changed section, not of unrelated horizontal overflow elsewhere
-in the complete manual. Each own build uses one aggregate32GiB cgroup, zero
+in the complete manual. Each own build uses one aggregate 32GiB cgroup, zero
 swap and two Lean threads; the full build records an8.8G peak. These are build
 validation observations, not scaling measurements or a speedup claim.

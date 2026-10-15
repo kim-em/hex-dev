@@ -4,20 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 module
-public import HexRCF.RealCoefficients.CellBuild
+public import HexRCF.RealCoefficients.SectorRequest
 public import HexRealClosureTheory.Sample
 public import HexSignDet.Codec.Bytes
 public section
 namespace Hex.RCF.RealCoefficients.CellDiscover
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet
 variable {registry : BaseContext.Registry} {parent : Tower.Context registry}
-
-/-- Extract the owner's actual ordinary sector points in its common context. -/
-@[expose] def points {required : List parent.Poly} (family : Tower.Sample.Partition parent required) :
-    List family.collection.input.context.Value :=
-  family.sectors.attach.map fun entry =>
-    cast (congrArg (fun input : Conversion parent => input.context.Value)
-      (family.sectors_input entry.property)) entry.val.value
 
 structure Packet (values : Fin n → parent.Value) (guards : List parent.Value)
     (formula : RealFormula.QF (n+1)) where
@@ -29,6 +22,7 @@ structure Packet (values : Fin n → parent.Value) (guards : List parent.Value)
 inductive Error where
   | divisor
   | preparation (cause : CellBuild.Error)
+  | points
   | dimensions
   | cells (cause : CellBuild.Error)
   deriving Repr
@@ -46,15 +40,17 @@ def run (values : Fin n → parent.Value) (guards : List parent.Value)
     match CellBuild.prepare (parent := input.context) converted original formula with
     | .error cause => .error (.preparation cause)
     | .ok ⟨radical, roots⟩ =>
-      let candidates := points family
-      if aligned : candidates.length = roots.roots.length+1 then
-        let _ : Hashable input.context.Value := ⟨fun a => hash (input.context.codec.encode a).writeBytes⟩
-        let _ : Hashable Signature := ⟨fun a => hash (Signature.codec.encode a).writeBytes⟩
-        match CellBuild.build roots converted original formula
-            (fun i => candidates.get (Fin.cast aligned.symm i)) with
-        | .error cause => .error (.cells cause)
-        | .ok cells => .ok ⟨family, radical, roots, cells⟩
-      else .error .dimensions
+      match SectorRequest.points family with
+      | none => .error .points
+      | some candidates =>
+        if aligned : family.values.length+1 = roots.roots.length+1 then
+          let _ : Hashable input.context.Value := RowEncode.hashable input.context.codec
+          let _ : Hashable Signature := RowEncode.hashable Signature.codec
+          match CellBuild.build roots converted original formula
+              (fun i => candidates[Fin.cast aligned.symm i]) with
+          | .error cause => .error (.cells cause)
+          | .ok cells => .ok ⟨family, radical, roots, cells⟩
+        else .error .dimensions
   else .error .divisor
 
 /-- The owner's actual collection theorem supplies a compatible ordinary model
@@ -94,7 +90,7 @@ theorem Packet.sound {values : Fin n → parent.Value} {guards : List parent.Val
   simpa only [same] using truth
 
 /-- Accepted replay retains each original supplied divisor at its original
-source value, using the same compatible model as the entire source matrix. -/
+source value, using a compatible model of the actual collection. -/
 theorem Packet.domains {values : Fin n → parent.Value} {guards : List parent.Value}
     {formula : RealFormula.QF (n+1)} (packet : Packet values guards formula)
     (original : Model parent ℝ)

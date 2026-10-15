@@ -103,5 +103,5 @@ All six desktop/narrow captures were opened and inspected. The
 and [narrow examples](data/hexrcf-boolean-cells/boolean-cell-narrow-source.png)
 fit their code blocks. Target-level overflow checks do not assert that
 unrelated content in the whole manual has no horizontal overflow. Builds use
-one aggregate32GiB cgroup, no swap and two Lean workers; these operational
+one aggregate 32GiB cgroup, no swap and two Lean workers; these operational
 records are not performance or scaling evidence.

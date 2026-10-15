@@ -12,12 +12,6 @@ namespace Hex.RCF.RealCoefficients.CellAlignment
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet HexPolyTheory.Interpret
 variable {registry : BaseContext.Registry} {parent : Tower.Context registry}
 
-theorem points_length {required : List parent.Poly}
-    (family : Tower.Sample.Partition parent required) :
-    (CellDiscover.points family).length = family.values.length+1 := by
-  simp only [CellDiscover.points, List.length_map, List.length_attach,
-    Tower.Sample.Partition.sectors_length]
-
 /-- Exact root-union correspondence for the source atom carrier, omitting
 only zero polynomial factors and retaining all repeated atom occurrences. -/
 theorem product_roots (model : Model parent ℝ) (ps : List parent.Poly) (x : ℝ) :
@@ -151,8 +145,7 @@ theorem dimensions (values : Fin n → parent.Value) (formula : RealFormula.QF (
     (checked : cert.check family.collection.input.context.signature
       (RepresentationCarrier.product
         (RepresentationSpecialize.prepare (family.collection.input.value ∘ values) formula)) = true) :
-    (CellDiscover.points family).length = roots.roots.length+1 := by
-  rw [points_length]
+    family.values.length+1 = roots.roots.length+1 := by
   have lengths := congrArg List.length (aligned values formula family original model cert roots checked)
   simp only [RootReplay.Result.values, List.length_map] at lengths
   exact congrArg (fun size => size+1) lengths
@@ -220,11 +213,10 @@ theorem sector_points (family : Tower.Sample.Partition parent polynomials)
   have lengths : family.values.length = roots.roots.length := by
     have same := congrArg List.length aligned
     simpa only [RootReplay.Result.values, List.length_map] using same
-  have each (cut : Fin (roots.roots.length+1)) : ∃ point,
-      Cell.Region (RootCells.points roots model.input.target) (.open cut) (model.input.target.value point) := by
-    obtain ⟨point, _, member⟩ := SectorRequest.Cut.witness family original model
-      (Fin.cast (congrArg (·+1) lengths.symm) cut)
-    exact ⟨point, requested_inside family original model roots aligned cut point lengths member⟩
-  exact Classical.axiomOfChoice each
+  obtain ⟨values, _, inside⟩ := SectorRequest.points_spec family original model
+  refine ⟨fun cut => values (Fin.cast (congrArg (·+1) lengths.symm) cut), ?_⟩
+  intro cut
+  exact requested_inside family original model roots aligned cut _ lengths
+    (inside (Fin.cast (congrArg (·+1) lengths.symm) cut))
 
 end Hex.RCF.RealCoefficients.CellAlignment

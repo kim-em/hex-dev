@@ -26,7 +26,7 @@ def formula : QF 1 := .and (.atom ⟨atom,.ge⟩) (.and (.atom ⟨atom,.le⟩) (
     unless (CellReplay.check converted formula guards packet.radical packet.roots data .forallReal).toOption == some false do
       throw (IO.userError "false universal changed")
     unless packet.roots.roots.length == 1 do throw (IO.userError "root union not deduplicated")
-    unless (CellDiscover.points packet.family).length == 2 do throw (IO.userError "sector discovery incomplete")
+    unless packet.family.values.length+1 == 2 do throw (IO.userError "sector discovery incomplete")
     match CellDiscover.run values [0] formula with
     | .error .divisor => pure ()
     | _ => throw (IO.userError "original zero guard accepted")

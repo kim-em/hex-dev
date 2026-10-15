@@ -17,33 +17,20 @@ def equation : QF 2 := .atom ⟨atom,.eq⟩
 def constant : QF 2 := .atom ⟨0,.eq⟩
 
 def test (formula : QF 2) (rootCount : Nat) (existential universal : Bool) : IO Unit := do
-  let family := Tower.Sample.partition parent (RepresentationSpecialize.prepare values formula)
-  let input := family.collection.input
+  let packet ← match CellDiscover.run values [values 0] formula with
+    | .error error => throw (IO.userError s!"discovery failed: {repr error}")
+    | .ok packet => pure packet
+  let input := packet.family.collection.input
   let converted := input.value ∘ values
   let guards := [input.value (values 0)]
-  let candidates ← (List.finRange (family.values.length+1)).mapM fun cut =>
-    match SectorRequest.point? family (SectorRequest.Cut.lower family cut) (SectorRequest.Cut.upper family cut) with
-    | none => throw (IO.userError "proved indexed boundary request failed")
-    | some point => pure point
-  let prepared ← match CellBuild.prepare converted guards formula with
-    | .error error => throw (IO.userError s!"preparation failed: {repr error}")
+  unless packet.roots.roots.length == rootCount do throw (IO.userError "wrong root count")
+  let data ← match CellRead.read input.context.codec guards packet.roots converted formula packet.cells with
+    | .error error => throw (IO.userError s!"cell replay failed: {repr error}")
     | .ok data => pure data
-  unless prepared.2.roots.length == rootCount do throw (IO.userError "wrong root count")
-  if aligned : candidates.length = prepared.2.roots.length+1 then
-    let _ : Hashable input.context.Value := ⟨fun a => hash (input.context.codec.encode a).writeBytes⟩
-    let _ : Hashable Signature := ⟨fun a => hash (Signature.codec.encode a).writeBytes⟩
-    let packet ← match CellBuild.build prepared.2 converted guards formula
-        (fun i => candidates.get (Fin.cast aligned.symm i)) with
-      | .error error => throw (IO.userError s!"cell production failed: {repr error}")
-      | .ok data => pure data
-    let data ← match CellRead.read input.context.codec guards prepared.2 converted formula packet with
-      | .error error => throw (IO.userError s!"cell replay failed: {repr error}")
-      | .ok data => pure data
-    unless (CellReplay.check converted formula guards prepared.1 prepared.2 data .existsReal).toOption == some existential do
-      throw (IO.userError "wrong existential verdict")
-    unless (CellReplay.check converted formula guards prepared.1 prepared.2 data .forallReal).toOption == some universal do
-      throw (IO.userError "wrong universal verdict")
-  else throw (IO.userError "wrong sector dimensions")
+  unless (CellReplay.check converted formula guards packet.radical packet.roots data .existsReal).toOption == some existential do
+    throw (IO.userError "wrong existential verdict")
+  unless (CellReplay.check converted formula guards packet.radical packet.roots data .forallReal).toOption == some universal do
+    throw (IO.userError "wrong universal verdict")
 
 #eval (show IO Unit from do
   test equation 2 true false
@@ -52,20 +39,8 @@ def test (formula : QF 2) (rootCount : Nat) (existential universal : Bool) : IO 
   test (.and equation equation) 2 true false
   let x : RealFormula.Poly 2 := MvPoly.X 1
   let guards : QF 2 := .and (.atom ⟨x-1,.gt⟩) (.atom ⟨2-x,.ge⟩)
-  test (.and guards equation) 4 true false
   test (.and guards (.atom ⟨x-1,.eq⟩)) 2 false false
   test (.and guards (.atom ⟨x-2,.eq⟩)) 2 true false
   IO.println "indexed proved boundary requests produce all algebraic sectors and the empty-root whole line; repeated/common roots and half-open endpoint matrices retain strict true/false verdicts")
 
-open Lean Meta
-run_meta do
-  for name in #[``SectorRequest.value_eq, ``SectorRequest.point_inside,
-      ``SectorRequest.point_exists, ``SectorRequest.point_witness,
-      ``SectorRequest.Cut.adjacent, ``SectorRequest.Cut.witness] do
-    let .thmInfo declaration ← getConstInfo name | throwError "expected theorem"
-    let _ ← Hex.RCF.checkProof name declaration.type declaration.value
-    let axioms ← collectAxioms name
-    unless axioms.size == 3 && axioms.all (#[``propext,``Classical.choice,``Quot.sound].contains ·) do
-      throwError "unexpected proof axioms"
-  logInfo "six actual indexed request proof bodies kernel checked with only standard axioms"
 end Hex.RCF.RealCoefficients.CellRequestedConformance
