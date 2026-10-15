@@ -4,8 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 -- This audit driver intentionally loads full private import data. Under the
--- module system, ordinary imports replace hidden noncomputable definitions
--- by axiom placeholders; those cannot support an independent body audit.
+-- module system, ordinary imports can hide theorem bodies, unexposed
+-- definitions and opaques behind placeholders, and omit private declarations.
 
 import KernelReplay.AxiomClosure
 import KernelReplay.ProofAudit
@@ -50,6 +50,8 @@ run_meta do
     let actual ← AxiomClosure.collect #[name]
     unless actual == #[`Classical.choice] do
       throwError "direct body audit for {name} expected Classical.choice, got {actual}"
+    unless (← collectAxioms name).all actual.contains do
+      throwError "direct body audit omitted a reported dependency"
   let expected := #[`propext, `Classical.choice, `Quot.sound].qsort Name.lt
   let roots := names ++ #[``propext, ``Quot.sound]
   unless (← AxiomClosure.collect roots) == expected &&
@@ -66,7 +68,14 @@ run_meta do
     throwError "direct body audit omitted a proposition-only dependency"
   let .thmInfo info ← getConstInfo ``FiniteBaseProbe.product |
     throwError "finite-base product theorem missing"
-  let _ ← AxiomClosure.audit info.value info.type
+  unless (← AxiomClosure.audit info.value info.type) == expected do
+    throwError "finite-base product dependencies changed"
+  -- Its proposition has no choice dependency; this checks an imported proof body.
+  unless (← AxiomClosure.collect #[``Classical.em]).contains `Classical.choice do
+    throwError "direct body audit omitted an imported theorem body"
+  reject "dependency audit refuses unsafe or partial declaration" do
+    let _ ← AxiomClosure.collect #[``Lean.evalConst]
+    pure ()
   let missing ← mkFreshUserName `missingClosure
   reject "axiom closure cannot inspect checked declaration" do
     let _ ← AxiomClosure.collect #[missing]
@@ -78,7 +87,7 @@ run_meta do
   reject "independent axiom audit needs a complete closed" do
     let _ ← AxiomClosure.audit (mkConst ``True.intro) incomplete
     pure ()
-  unless !(← incomplete.mvarId!.isAssigned) do
+  if ← incomplete.mvarId!.isAssigned then
     throwError "direct body audit assigned an incomplete expression"
   withLocalDeclD `hypothesis (mkConst ``True) fun hypothesis => do
     reject "independent axiom audit needs a complete closed" do

@@ -2493,6 +2493,7 @@ lean_lib KernelReplayExperiment where
     .one `KernelReplay.LookupReplay,
     .one `KernelReplay.ProofAudit,
     .one `KernelReplay.AxiomClosure, .one `KernelReplay.AxiomClosureTest,
+    .one `KernelReplay.AxiomClosureImports,
     .one `KernelReplay.FiniteRange,
     .one `KernelReplay.NativeAssemblyUse,
     .one `KernelReplay.Packing,
