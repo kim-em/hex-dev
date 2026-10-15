@@ -106,16 +106,12 @@ theorem cellsWith_complete
     (guards : List (QAdjoin generator.toAlgebraic))
     (formula : RealFormula.QF (n+1)) (guarded : ∀ d ∈ guards, d ≠ 0) :
     ∃ packet, cellsWith source values guards formula = .ok packet ∧
-      let _ : Hashable packet.family.collection.input.context.Value :=
-        RowEncode.hashable packet.family.collection.input.context.codec
-      let _ : Hashable Signature := RowEncode.hashable Signature.codec
       ∀ quantifier, ∃ verdict,
         CompleteReplay.check packet.family.collection.input.context.codec
           (packet.family.collection.input.value ∘ (source.pack ∘ values)) formula
           ((guards.map source.pack).map packet.family.collection.input.value)
           packet.radical quantifier
-          (Codec.graph packet.family.collection.input.context.codec Signature.codec
-            (Dag.encode packet.roots.replay)) packet.cells = .ok verdict ∧
+          packet.rootGraph packet.cells = .ok verdict ∧
         (verdict = true ↔ (RealFormula.Prenex.quant quantifier (.matrix formula)).toProp
           (fun i => (Coefficients.ofField generator (values i)).toReal)) := by
   have packed : ∀ d ∈ guards.map source.pack, d ≠ 0 := by
@@ -135,16 +131,12 @@ theorem cells_complete (generator : RealAlgebraicNumber) (registry : BaseContext
     (guarded : ∀ d ∈ guards, d ≠ 0) :
     ∃ source packet, cells generator registry values guards formula = .ok ⟨source,packet⟩ ∧
       Hex.RealClosure.NumberField.present? generator registry = some source ∧
-      let _ : Hashable packet.family.collection.input.context.Value :=
-        RowEncode.hashable packet.family.collection.input.context.codec
-      let _ : Hashable Signature := RowEncode.hashable Signature.codec
       ∀ quantifier, ∃ verdict,
         CompleteReplay.check packet.family.collection.input.context.codec
           (packet.family.collection.input.value ∘ (source.pack ∘ values)) formula
           ((guards.map source.pack).map packet.family.collection.input.value)
           packet.radical quantifier
-          (Codec.graph packet.family.collection.input.context.codec Signature.codec
-            (Dag.encode packet.roots.replay)) packet.cells = .ok verdict ∧
+          packet.rootGraph packet.cells = .ok verdict ∧
         (verdict = true ↔ (RealFormula.Prenex.quant quantifier (.matrix formula)).toProp
           (fun i => (Coefficients.ofField generator (values i)).toReal)) := by
   obtain ⟨source, ready⟩ := Hex.RealClosure.NumberField.present?_success generator registry

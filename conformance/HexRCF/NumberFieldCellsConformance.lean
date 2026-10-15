@@ -38,13 +38,9 @@ private def trial (coefficients : List Int) (lower upper : Rat)
         throw (IO.userError "original selected-field existential verdict changed")
       unless (CellReplay.check converted formula original packet.radical packet.roots data .forallReal).toOption == some false do
         throw (IO.userError "original selected-field universal verdict changed")
-      let _ : Hashable input.context.Value := RowEncode.hashable input.context.codec
-      let _ : Hashable Tower.Signature := RowEncode.hashable Tower.Signature.codec
-      let rootGraph := Hex.SignDet.Codec.graph input.context.codec Tower.Signature.codec
-        (Hex.SignDet.Dag.encode packet.roots.replay)
       for (quantifier,verdict) in [(RealFormula.Quantifier.existsReal,expected),(.forallReal,false)] do
         unless (CompleteReplay.check input.context.codec converted formula original packet.radical
-            quantifier rootGraph packet.cells).toOption == some verdict do
+            quantifier packet.rootGraph packet.cells).toOption == some verdict do
           throw (IO.userError "complete packet changed the selected-field source verdict")
       match NumberField.cells generator registry values [0] .ff with
       | .error .divisor => pure ()

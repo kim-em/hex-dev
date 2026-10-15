@@ -659,6 +659,8 @@ acceptance. Native codec lawfulness is not a replacement for those obligations.
 selected real algebraic generator and its `QAdjoin` coordinates. It preflights
 original guards before the existing owner factory, and `cellsWith` reuses a
 checked presentation. `cellsWith_spec` retains the actual execution trace and
-both original-coefficient verdicts without a supplied parent model. This is
-native construction; general frozen-history restoration and frontend acceptance
-remain separate. The algebraic-cell manual gives a runnable API example.
+both original-coefficient verdicts without a supplied parent model.
+`cellsWith_complete` and `cells_complete` extend that composition to independent
+checking of both emitted root/cell fields at the original selected-coordinate
+values. General frozen-history restoration and frontend acceptance remain
+separate. The algebraic-cell manual gives a runnable API example.

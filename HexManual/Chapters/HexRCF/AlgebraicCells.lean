@@ -317,6 +317,13 @@ produce exact diagnostic verdicts for both quantifiers at the original fixed
 coefficients. The returned vector itself is related to the indexed open cells
 by `CellAlignment.sector_vector`.
 
+The discovery result emits its full `rootGraph` as well as `cells`.
+`Packet.rootGraph_eq` binds the graph to the actual typed root table and native
+writer. `CellDiscover.run_complete` proves that independently checking both
+emitted fields preserves both quantifier verdicts at the original coefficient
+values. It uses the returned native context's codec law; it does not restore
+an arbitrary frozen predecessor history.
+
 ```lean
 open Hex.RealClosure
 open Hex.RealFormula
@@ -360,7 +367,10 @@ retains its `Coefficients.ofField` interpretation. Original zero divisors are
 rejected before this factory runs, even for a constant or empty-domain matrix.
 `NumberField.cellsWith` reuses a checked presentation; its progress theorem
 retains the same actual vector, typed producer equation and frozen matrix as
-`CellDiscover.run_success`. No caller-supplied parent model is needed:
+`CellDiscover.run_success`. `cellsWith_complete` further checks both emitted
+root/cell fields; `cells_complete` composes that acceptance with the actual
+presentation factory. Both verdicts retain the original selected-coordinate
+interpretation. No caller-supplied parent model is needed:
 
 ```lean
 open Hex
