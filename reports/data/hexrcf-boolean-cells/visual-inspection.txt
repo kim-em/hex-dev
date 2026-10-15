@@ -1,0 +1,1 @@
+All six captures were opened and inspected: changed source-example block, binding/refusal explanation and scope at1440px and390px. The examples are legible and fit their blocks. DOM metadata checks only changed targets; the complete manual retains unrelated horizontal overflow.
