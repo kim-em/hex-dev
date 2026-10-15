@@ -75,6 +75,34 @@ def elaborate : CommandElab := fun _ => liftTermElabM do
   let originalType ← inferType (mkConst ``FiniteBaseProbe.agreement)
   let parameters := originalType.getAppArgs
   let target ← statement base.domain coefficient left
+  -- The kernel must unfold support aliases before inspecting a sibling's
+  -- polynomial. This whole-block proof never needs the sibling's size.
+  let element ← inferType (mkApp coefficient (toExpr (0 : Nat)))
+  let repeated ← mkAppM ``Array.replicate
+    #[toExpr (128 : Nat), mkConst ``FiniteBaseProbe.epsilon]
+  let polynomial ← mkAppM ``DensePoly.ofCoeffs #[repeated]
+  let heavyName := mkPrivateName (← getEnv) (← mkFreshUserName `__costlyPolynomial)
+  addDecl (.defnDecl {
+    name := heavyName, levelParams := [], type := ← inferType left,
+    value := polynomial, hints := .regular 1, safety := .safe })
+  let sibling ← mkAppM ``Transport.Inventory.coefficients #[mkConst heavyName]
+  let shared ← appendSupport element #[sibling, lefts]
+  let sharedAgreement := mkAppN originalType.getAppFn
+    (parameters.set! (parameters.size - 1) shared)
+  withLocalDeclD `agreement sharedAgreement fun agreement => do
+    let some proof ← agreementSupplier agreement target |
+      throwError "shared whole-block proof missing"
+    let locals := (← getLCtx).getFVarIds.map mkFVar
+    let type ← mkForallFVars locals target
+    let proof ← mkLambdaFVars locals proof
+    let _ ← auditProof proof type
+    let options := (← getOptions).setBool `debug.skipKernelTC false |>.setBool `diagnostics true
+    let environment := (← getEnv).toKernelEnv |>.enableDiag true |>.resetDiag
+    let checked ← ofExceptKernelException <| environment.addDecl options
+      (.thmDecl { name := `__supportNoSiblingReduction, levelParams := [], type, value := proof })
+    let unfolds := checked.getDiagnostics.unfoldCounter.find? heavyName |>.getD 0
+    unless unfolds == 0 do
+      throwError "shared coefficient proof unfolded an unrelated polynomial {unfolds} times"
   let standardLT := mkApp2 (mkConst ``LT.lt [Level.zero])
     (mkConst ``Nat) (mkConst ``instLTNat)
   for inventory in #[lefts, appended, nested, consed, mkConst supportName,

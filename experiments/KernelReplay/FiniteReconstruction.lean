@@ -131,6 +131,19 @@ private def supportLists : MetaM Unit := do
   let expected ← mkListLit type [nat, mkConst ``Bool, nat,
     nat, mkConst ``Bool, nat, nat, mkConst ``Bool, nat]
   kernelCheck `__finiteSupportTypes (← mkEq combined expected) (← mkEqRefl expected)
+  let level := Level.param `u
+  let carrier := mkSort (.succ level)
+  let value := mkSort level
+  let block ← mkListLit carrier [value]
+  let combined ← FiniteData.appendSupport carrier #[block, block, block]
+  let expected ← mkListLit carrier [value, value, value]
+  let type ← mkEq combined expected
+  let proof ← mkEqRefl expected
+  let options := (← getOptions).setBool `debug.skipKernelTC false
+  ofExceptKernelException <| ((← getEnv).toKernelEnv.addDecl options
+    (.thmDecl {
+      name := `__finiteSupportUniverses, levelParams := [`u],
+      type, value := proof })).map (fun _ => ())
   -- A mismatched block fails only after sharing has introduced declarations.
   -- None of those declarations may survive the failed construction.
   let names := (← getEnv).constants.foldStage2 (fun result name _ => result.push name) #[]
