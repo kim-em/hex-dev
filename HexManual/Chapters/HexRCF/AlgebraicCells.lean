@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 import VersoManual
 import HexRCF.CellReplay.Algebraic.BooleanQuoted
+import HexRCF.CellReplay.Algebraic.CompleteQuoted
 import HexRCF.RealCoefficients.RootBuild
 import HexRCF.RealCoefficients.NumberFieldCells
 open Verso.Genre Manual
@@ -34,6 +35,66 @@ example : ∃ x : ℝ,
     x ^ 2 - Real.sqrt 2 ≤ 0 ∧
     (0 : ℝ) = 0 := Algebraic.Quote.source
 ```
+
+The complete-packet interface reads the full root table before its cell rows.
+`CompleteReplay.check` then checks the radical identities and strict quantifier
+fold. Its soundness theorem accepts untrusted root and cell packets and proves
+the shared sentence at the supplied fixed real interpretation:
+
+```lean
+open Hex Hex.RealClosure Hex.SignDet
+open Hex.RealFormula
+open Hex.RCF.RealCoefficients
+example
+    {r : BaseContext.Registry}
+    {c : Tower.Context r} {n : Nat}
+    (model : Tower.Model c ℝ)
+    (codec : ValueCodec c.Value)
+    (values : Fin n → c.Value)
+    (formula : QF (n + 1))
+    (guards : List c.Value)
+    (cert : RadicalCert c.Value
+      Tower.Signature)
+    (quantifier : Quantifier)
+    (roots cells : Codec.Json)
+    (accepted : CompleteReplay.check
+      codec values formula guards
+      cert quantifier roots cells =
+        .ok true) :
+    (Prenex.quant quantifier
+      (.matrix formula)).toProp
+        (fun i =>
+          model.value (values i)) :=
+  CompleteReplay.check_sound
+    model codec values formula
+    guards cert quantifier
+    roots cells accepted
+```
+
+`CellQuote.finishPacket` additionally binds this checked shared sentence to a
+freshly reified original source, its fixed coefficient valuation and all ordered
+original divisors. These fresh source proofs use the same algebraic matrix,
+including a divisor whose value disappears from the normalized zero atom:
+
+```lean
+open Hex.RCF.RealCoefficients
+open CellReplayTests.Algebraic
+example : ∃ x : ℝ,
+    x ^ 2 - Real.sqrt 2 ≥ 0 ∧
+    x ^ 2 - Real.sqrt 2 ≤ 0 ∧
+    0 / (-1 : ℝ) = 0 := by
+  exact CompleteQuote.guarded_source
+```
+
+The source-boundary checks refuse a false verdict, a different original
+formula, missing divisor identities and a cancelled zero divisor. A separate
+`CompleteReplay.check_domains` theorem proves every original guard nonzero in
+the supplied model. The new source proofs reuse the independently checked
+frozen fixture and finite codec laws. They do not claim a fresh reduction of
+the serialized readers. The supplied real model and coefficient codec also do
+not reconstruct general frozen provider or predecessor histories. In
+particular, the compiled supplied-operation fallback described below still
+prevents treating this as strict replay with arbitrary missing records.
 
 The table's exact root set and strict order are proved conclusions of the
 supplied replay. The positive and negative fourth roots of 2 have the same
