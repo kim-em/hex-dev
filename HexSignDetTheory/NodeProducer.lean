@@ -8,8 +8,6 @@ module
 public import HexSignDetTheory.RationalSolve
 public import HexSignDetTheory.Basis
 
-set_option autoImplicit false
-
 public section
 
 universe u v

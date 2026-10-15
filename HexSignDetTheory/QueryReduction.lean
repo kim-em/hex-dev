@@ -9,8 +9,6 @@ public import HexSignDet.QueryReduction
 public import HexSignDet.Replay
 public import HexSignDetTheory.ReductionProducer
 
-set_option autoImplicit false
-
 public section
 
 universe u v w

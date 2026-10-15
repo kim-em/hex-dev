@@ -11,8 +11,6 @@ public import HexMatrixTheory.Rational
 public import HexRankTheory.Sound
 public import Mathlib.LinearAlgebra.Matrix.NonsingularInverse
 
-set_option autoImplicit false
-
 public section
 
 namespace Hex.SignDet

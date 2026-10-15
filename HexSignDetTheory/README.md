@@ -10,7 +10,7 @@ support, matrix and root correspondence proofs live in `HexSignDetTheory/`
 and are exported by the normal `HexSignDetTheory` target and public umbrella.
 This development companion is not yet released.
 The [individual proof/API assessment](../reports/sign-det-declaration-review/README.md)
-covers its 37 production modules; whole-pair Phase-6 acceptance remains separate.
+covers its 37 production modules; final computational acceptance remains separate.
 
 The companion records Phases 6–7 through its
 [proof/API and manual acceptance](../reports/sign-det-declaration-review/theory-acceptance.md). The [proof acceptance](../reports/sign-det-proof-acceptance.md)

@@ -9,8 +9,6 @@ public import HexSignDet.Induction
 public import HexSignDetTheory.RationalSolve
 public import HexSignDetTheory.Foundation
 
-set_option autoImplicit false
-
 public section
 
 namespace Hex.SignDet

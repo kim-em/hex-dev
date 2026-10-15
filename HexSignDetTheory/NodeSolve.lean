@@ -9,8 +9,6 @@ public import HexSignDetTheory.NodeProducer
 public import HexSignDetTheory.Solve
 public import HexSignDetTheory.ParentSystem
 
-set_option autoImplicit false
-
 public section
 
 universe u v

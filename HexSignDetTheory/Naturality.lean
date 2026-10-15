@@ -17,8 +17,6 @@ public import HexSignDetTheory.ThomRoots
 Literal certificate data is checked again; the conclusions concern the actual
 computed signs, comparisons and complete root counts. -/
 
-set_option autoImplicit false
-
 public section
 
 universe u v w u' v'

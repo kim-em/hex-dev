@@ -55,8 +55,8 @@ not replace these statement, proof and API-design judgments.
 | `TreeSolve` | 11 | [Assessment](companion.md#treesolve) |
 
 The [source manifest](manifest.json) binds the current reviewed modules while
-preserving the original snapshot hashes. All production modules now disable
-`autoImplicit`. Their universe parameters are explicit, and
+preserving the original snapshot hashes. The production Lake target disables `autoImplicit` for all its modules,
+including future additions. Their universe parameters are explicit, and
 `productVector_toList` explicitly binds its generic coefficient type. Long
 production lines are wrapped within 100 columns. After removing these annotations
 and the explicit binder, ignoring whitespace and the record field separator,
@@ -113,6 +113,20 @@ The namespace and import review retains the existing short public names;
 interpretation parameters and local `open` directives do not install field or
 order instances on stored coefficients.
 
+The interpretation laws remain explicit arguments, as in the shared Sturm
+interface. Their order varies between one-interpretation, source/target and
+producer statements. The final API decision preserves these existing public
+signatures and the minimal hypotheses of each theorem. Bundling the laws would
+be a family architecture change; it is not applied here. The manual’s existing
+producer example now uses named law arguments, showing callers how to avoid
+positional-order assumptions without changing the mathematical example.
+
+`Descriptor.refinement_fiber` is deliberately retained as the same-head,
+smaller-domain specialization of `reencoding_fiber`. It saves callers from
+rebuilding that target-polynomial specialization and its full-derivative query.
+This is an explicit convenience-API decision under the public-API rule, with
+no production caller or extra mathematical invariant claimed.
+
 ## Kernel trust and reference evidence
 
 The [v10 compiler archive](current/README.md) remains byte-for-byte intact at
@@ -124,12 +138,13 @@ source polishing; the archive is not presented as a new current-source capture.
 The CI-built `Diagnostics.Lint` additionally checks every constant attributed
 to the current production import closure, including the umbrella. It derives
 that closure by module prefix and compares it in both directions with the
-reviewed module list. It refuses missing/unreviewed modules, an empty selection,
+reviewed module list. It checks representative public interfaces, all five structure projections and
+private proof bodies by name, and refuses missing/unreviewed modules, an empty selection,
 owned axiom declarations and any axiom outside `propext`, `Classical.choice`,
 `Quot.sound`.
 
-The current root-only environment contains all 228 handwritten declarations,
-all five fields and all seventeen private helpers. Its attributed generated
+A local inspection of the current root import environment confirms all 228
+handwritten declarations, all five fields and all seventeen private helpers. Its attributed generated
 constants differ from the older, larger capture: eight lazily generated core
 equations from the old environment are absent and an imported-domain equation
 is present. Numerical constant counts are observations of an environment, not
@@ -138,7 +153,9 @@ archive give their exact, distinct scopes.
 
 A local negative control replaces the proof of `convert_endpoint` by a temporary
 proof hole and is rejected specifically on `sorryAx`. Restoring byte-identical
-source restores a passing lint/axiom build. Ordinary-kernel proof examples cover
+source restores a passing lint/axiom build. A separate temporary production
+module is rejected as unreviewed; removing it restores the passing guard.
+Ordinary-kernel proof examples cover
 producer success, arbitrary replay, noncanonical carriers and selected roots.
 The existing source/admission audit additionally checks the integrated cones.
 
@@ -167,7 +184,7 @@ links the partner chapter. There is no anchored tutorial for this library.
 The public companion, declared proof examples, diagnostics, field-proof consumers
 and manual build complete 14,258 jobs. The full monorepo build completes 14,629
 jobs. The source/assessment checks, preserved archive checker, DAG, phase/manual
-checks and admission audit pass; the latter scans 587 cones and 1,487 local
+checks and admission audit pass; the latter scans 588 cones and 1,488 local
 modules without admissions. Rendered desktop and 390px inspection covers tables,
 selected roots, shared evidence, conversions and the correspondence; document
 width equals viewport width.

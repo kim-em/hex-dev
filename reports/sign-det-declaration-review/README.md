@@ -5,7 +5,7 @@ Phases 6–7. The computational library remains at Phase 5. The source assessmen
 and earlier compiler captures below retain their stated checkpoints and scopes.
 
 The [assessment](companion.md) treats all 228 handwritten declarations in the 37
-production modules exported by `HexSignDetMathlib`, including private helpers and the
+production modules exported by `HexSignDetTheory`, including private helpers and the
 fields of `Node.Counted`. The [manifest](manifest.json) records the current declaration names and
 reviewed module hashes. Its `sha256` fields retain the source snapshot at
 `7433524020514b3907653c5a3fe3b95212ae8f59`; `reviewed_sha256` binds the
@@ -18,8 +18,8 @@ assessments below cover 728 named declarations, including newly added APIs; the
 source inventory now has an individual assessment for every inventoried named
 computational declaration. The checker enforces coverage of every production
 module under `HexSignDet/`; the import-only root umbrella is outside that set. Named declaration forms are those recorded and extracted by each group;
-anonymous instances, constructors and fields have separate dispositions. This companion review does not attest completion of the whole pair or any
-release phase.
+anonymous instances, constructors and fields have separate dispositions. These individual tables supply proof/API assessment; the final companion
+attestation above and the core’s final computational acceptance are separate.
 
 The per-group source bindings are review snapshots checked locally, rather
 than automatic CI currency checks. The complete handle-review source is

@@ -13,8 +13,6 @@ public import HexSignDet.Counts
 public import TauCeti.Data.Matrix.OccCount
 public import Mathlib.Data.List.OfFn
 
-set_option autoImplicit false
-
 public section
 
 universe u v

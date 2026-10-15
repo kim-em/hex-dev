@@ -8,8 +8,6 @@ module
 public import HexSignDetTheory.Reduction
 public import HexSturmTheory.Domain
 
-set_option autoImplicit false
-
 public section
 
 universe u v

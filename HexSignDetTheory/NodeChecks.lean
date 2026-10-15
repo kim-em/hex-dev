@@ -9,8 +9,6 @@ public import HexSignDetTheory.NodeProducer
 public import HexSignDetTheory.QueryReduction
 public import HexSturmTheory.Domain
 
-set_option autoImplicit false
-
 public section
 
 universe u v w
