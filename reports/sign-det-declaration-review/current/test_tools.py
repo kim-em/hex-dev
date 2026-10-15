@@ -5,7 +5,7 @@ import unittest
 from unittest.mock import patch
 from pathlib import Path
 
-from normalize import compiler_kind, source_names, lexical_references, SourceIndex, check_production_imports
+from normalize import compiler_kind, source_names, lexical_references, SourceIndex, check_production_imports, family_evidence
 from audit_tools import family_test_modules
 
 
@@ -168,6 +168,14 @@ class CheckpointTest(unittest.TestCase):
                 check_production_imports({'Accepted': 'Accepted.lean'},
                                          {'HexRealClosureTheory.FutureData'}.__contains__)
 
+    def test_family_evidence_predicate_uses_actual_roles(self):
+        index = SourceIndex()
+        for name in ('HexOrderedFnTheory.LiouvilleRun', 'HexRealClosure.TrivialChecks',
+                     'HexRealClosureTheory.ReprProviderData'):
+            self.assertTrue(family_evidence(index, name), name)
+        self.assertFalse(family_evidence(index, 'HexRealClosureTheory.BaseContext'))
+        self.assertFalse(family_evidence(index, 'HexRationalFnTheory.Tests'))
+
     def test_liouville_runner_is_test_evidence(self):
         index = SourceIndex()
         self.assertEqual(index.resolve('HexOrderedFnTheory.LiouvilleRun')['category'],
@@ -175,7 +183,7 @@ class CheckpointTest(unittest.TestCase):
         from audit_tools import ROOT, lakefile_blocks
         body = lakefile_blocks((ROOT / 'lakefile.lean').read_text())[
             'lean_exe hexorderedfn_liouville_test']
-        self.assertIn('root := `HexOrderedFnTheory.LiouvilleRun', body)
+        self.assertRegex(body, r'(?m)^\s*root := `HexOrderedFnTheory\.LiouvilleRun\s*$')
 
     def test_new_family_fixture_is_read_from_actual_test_globs(self):
         with tempfile.TemporaryDirectory() as directory:

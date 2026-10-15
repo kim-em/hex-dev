@@ -121,6 +121,12 @@ def reference_disposition(row):
     return 'Retained as an explicit public API decision; no existing term or matched qualified manual/SPEC mention is claimed.'
 
 
+def family_evidence(index, module):
+    """Identify evidence modules in the four family pairs using actual source roles."""
+    return (module.startswith(('HexSturm', 'HexSignDet', 'HexOrderedFn', 'HexRealClosure'))
+            and index.resolve(module)['category'] == 'tests/conformance/manual')
+
+
 def check_production_imports(production, is_evidence):
     """Refuse production imports of modules classified as test evidence."""
     evidence_imports = {name: sorted(module for module in _parse_imports(ROOT / path) if is_evidence(module))
@@ -205,9 +211,7 @@ def derive(directory):
                         "Sturm production", "SignDet companion production",
                         "other Hex production", "other root-package production"}:
                     production[name] = file
-    check_production_imports(production, lambda module:
-        module.startswith(('HexSturm', 'HexSignDet', 'HexOrderedFn', 'HexRealClosure'))
-        and index.resolve(module)['category'] == 'tests/conformance/manual')
+    check_production_imports(production, lambda module: family_evidence(index, module))
     cache = {}
 
     def reaches(name, visiting=frozenset()):
