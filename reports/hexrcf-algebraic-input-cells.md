@@ -4,8 +4,10 @@
 constructs the actual selected presentation of every original
 `RealAlgebraicNumber`, gathers its owner and produces complete emitted packets.
 Separate finite indices retain coefficient order, repeated coordinates and
-all original guards, including guard-only inputs. Original zero guards reject
-before presentation construction. Presentation and native cell errors retain
+all original guards, including guard-only inputs. Every declared input is
+presented and gathered, including unused inputs; an unused irrational input
+can enlarge the tower. Original zero guards reject before presentation
+construction. Presentation and native cell errors retain
 their distinct causes.
 
 `presentations_success` consumes the owner's `NumberField.present?_success`.
@@ -20,8 +22,10 @@ rational origins through `Root.origin_base`.
 complete-replay verdicts at the original real values, given nonzero original
 guards. It assumes neither presentation/gathering success nor a chosen enlarged
 model. `build_domains` concludes that all original real divisors are nonzero
-from successful production. These results use the existing shared formula
-language and native fields; they introduce no primitive number-field model.
+from successful production. `build_sound` derives both accepted verdicts from
+the successful build equation alone, obtaining guard validity from that checked
+conclusion rather than an additional premise. These results use the existing
+shared formula language and native fields; they introduce no primitive number-field model.
 
 [`AlgebraicCellsConformance`](../conformance/HexRCF/AlgebraicCellsConformance.lean)
 uses both selected signs of √2 with independent positive √3. Its simultaneous
@@ -29,16 +33,36 @@ conditions contain a repeated zero root and distinguish the selected conjugate.
 Both quantified verdicts are true for the positive input and false for the
 negative one. Guard-only one, an unused zero input, repeated original guard
 indices, late original zero rejection and empty true/false constant inputs are
-covered. These `#eval` controls are separate from eleven actual theorem-body
-and transitive axiom audits, restricted to the standard three axioms.
+covered. Additional linear constraints a < x < 1 give existential true and
+universal false for a = −√2, and both false for a = √2. They test a coefficient
+in variable-dependent atoms and separate the two quantifiers. These `#eval`
+controls are separate from twelve actual automatic-input theorem-body and
+transitive axiom audits, restricted to the standard three axioms.
 
-The 11,767-job selected proof/optional-library build passes with these eleven
-body audits (14.438 s, 1.6 GiB peak, zero swap). Its manual source predates the
-new automatic-input example; that example has its own successful 11,658-job
-chapter build (10.628 s, 1.3 GiB). The full 14,296-job renderer and ten inspected
-desktop/narrow captures separately validate the changed displayed content.
-The DAG/umbrella and admission checks cover 646 cones/1,546 modules; eleven
-admission-checker and eleven DAG-checker tests pass. The explicit stress build
+The original source-scoped record precedes the merge at f9f3b4d054. Its
+11,767-job selection checked eleven then-existing automatic-input bodies
+(14.438 s, 1.6 GiB peak, zero swap) and the earlier manual text. The subsequent
+automatic-input example has a separate 11,658-job chapter build (10.628 s,
+1.3 GiB), a full 14,296-job renderer and ten inspected desktop/narrow captures.
+These versions retain their own exact hashes; they do not claim final-head
+validation.
+
+Current-main integration at f9f3b4d054 passes the expanded 11,772-job selection
+(14m9.918s, 13.6 GiB peak, zero swap), including the new actual bodies and fresh
+algebraic/Boolean source quotations. The revised 10 gathering and 12 automatic
+input bodies, guard-concluding acceptance theorems and linear controls pass
+their 10,999-job selection (11.896s, 1.7 GiB). The combined source at
+9336360f98 passes 11,773 jobs (5m7.728s, 6 GiB peak, zero swap), including the
+direct owner descriptor reuse and fresh algebraic/Boolean source quotations.
+The separate revised renderer passes 14,296 jobs (3m31.899s, 2.8 GiB) and all
+ten captures were opened, with zero local overflow. API captures share a
+paragraph anchor but record distinct scroll offsets and code-box bounds.
+The [current integration record](data/hexrcf-algebraic-input-cells/review-context.json)
+retains these versions separately from the initial context.
+
+Current DAG/umbrella and admission checks cover 647 cones/1,547 modules; the
+initial pre-merge scan covers 646/1,546. Eleven admission-checker and eleven
+DAG-checker tests pass. The explicit stress build
 is an auxiliary Lake target, separate from default conformance, with matching
 structural metadata.
 
@@ -54,7 +78,8 @@ Lake build distinguish this interruption from a passing run.
 
 Three retained stack samples, expanded to identify more callers, show nested
 `Algebraic.Element.inversePolynomial`/`inverseFactors`, polynomial gcd/xgcd,
-Sturm queries and sign work. They explain an observed execution problem without
+Sturm queries and sign work beneath an IR interpreter call chain. They
+identify sampled work during an observed execution problem without
 establishing a scaling law or a repeatable speedup. The stronger case remains
 an unresolved performance requirement; routine controls do not discharge it.
 The interrupted source and the separately retained stress target are both

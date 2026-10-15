@@ -12,7 +12,9 @@ zero original divisor, gathering refusal and the actual discovery error.
 base interpretation imply successful gathering and both accepted emitted
 quantifier verdicts at the original owner values. Neither child success nor a
 chosen enlarged model is an additional premise. `build_domains` derives
-nonzero original typed guards from production success; `build_zero` rejects
+nonzero original typed guards from production success. `build_sound` derives
+compatible origins, a gathered interpretation and both accepted verdicts from
+the successful build equation without a nonzero-guard premise. `build_zero` rejects
 before gathering, including constant formulas with an empty coefficient tuple.
 
 [`NumberField.model_read`](../adapters/HexRCF/RealCoefficients/NumberField.lean)
@@ -58,8 +60,7 @@ progress theorem. The intermediate eight-proof rebuild passes 11,766 jobs in
 9 min 18.680 s at 15 GiB peak with zero swap, including the fresh algebraic and
 Boolean source quotation audits. The final affected rebuild checks nine actual
 proof bodies, each restricted to the standard three axioms. These operational
-observations are not a before/after comparison. Build/render observations
-are operational evidence, not a timing comparison. Every own Lean build and
+observations are operational evidence, not a before/after timing comparison. Every own Lean build and
 render uses one aggregate 32 GiB cgroup with swap disabled and two Lean threads;
 only one such invocation runs at a time.
 
@@ -70,3 +71,11 @@ missing records, certify a new primitive common-field presentation, or prove
 general frontend acceptance completeness. The ordinary base model and original
 nonzero guards remain mathematical hypotheses of the progress theorem.
 The existing full #10358 obligations remain open.
+
+The initial context is source-scoped before the current-main merge at
+f9f3b4d054. Its final nine-proof source remains available at its recorded commit.
+The expanded current-main build passes 11,772 jobs; the revised acceptance
+wrapper and ten actual gathering/source-binding bodies pass with the
+[combined integration validation](data/hexrcf-algebraic-input-cells/review-context.json),
+which checks 11,773 jobs and records the changed manual's separate render.
+Earlier render/build records retain their original sources.
