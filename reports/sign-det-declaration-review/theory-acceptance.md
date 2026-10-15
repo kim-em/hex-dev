@@ -56,11 +56,14 @@ not replace these statement, proof and API-design judgments.
 
 The [source manifest](manifest.json) binds the current reviewed modules while
 preserving the original snapshot hashes. The production Lake target disables `autoImplicit` for all its modules,
-including future additions. Their universe parameters are explicit, and
+including future additions in the monorepo. Their universe parameters are explicit, and
 `productVector_toList` explicitly binds its generic coefficient type. Long
-production lines are wrapped within 100 columns. After removing these annotations
-and the explicit binder, ignoring whitespace and the record field separator,
-the statement and proof source agrees with the reviewed parent. The complete
+production lines are wrapped within 100 columns. Apart from the explicit declarations, interpretation-law and domain-binding labels,
+whitespace and a record field separator, the statement and proof source agrees
+with the reviewed parent. A local comparison of all 228 handwritten declarations
+and five structure projections also checks their elaborated types and universe
+argument order against that parent. All 233 agree after normalizing universe
+parameter names and binder labels. The complete
 companion builds under the stricter option; no implicit identifier has been
 silently replaced by a different mathematical hypothesis.
 
@@ -115,15 +118,18 @@ order instances on stored coefficients.
 
 The interpretation laws remain explicit arguments, as in the shared Sturm
 interface. Their order varies between one-interpretation, source/target and
-producer statements. The final API decision preserves these existing public
-signatures and the minimal hypotheses of each theorem. Bundling the laws would
+producer statements. The final API decision preserves positional application and the minimal
+hypotheses of each theorem. The cast-law binder in `Derivatives` is named
+`hnat`, and the positivity-law binder in `Reduction` is named `hpos`, matching
+the rest of the library. Seven domain/sign equality hypotheses in node and
+tree statements use `binding`; there are no named callers of the replaced labels. Bundling the laws would
 be a family architecture change; it is not applied here. The manual’s existing
 producer example now uses named law arguments, showing callers how to avoid
 positional-order assumptions without changing the mathematical example.
 
 `Descriptor.refinement_fiber` is deliberately retained as the same-head,
-smaller-domain specialization of `reencoding_fiber`. It saves callers from
-rebuilding that target-polynomial specialization and its full-derivative query.
+smaller-domain specialization of `reencoding_fiber`. It omits the repeated `source.raw.head` argument and its reflexive equality
+witness; it is a convenience restatement, not a stronger fiber theorem.
 This is an explicit convenience-API decision under the public-API rule, with
 no production caller or extra mathematical invariant claimed.
 
@@ -136,10 +142,11 @@ verification remains valid. Current-source mode correctly refuses the later
 source polishing; the archive is not presented as a new current-source capture.
 
 The CI-built `Diagnostics.Lint` additionally checks every constant attributed
-to the current production import closure, including the umbrella. It derives
+to the current umbrella import closure, including the umbrella itself. It derives
 that closure by module prefix and compares it in both directions with the
 reviewed module list. It checks representative public interfaces, all five structure projections and
-private proof bodies by name, and refuses missing/unreviewed modules, an empty selection,
+two representative private proof bodies (`ordered_cols`, `quotient_lcm`)
+bound to their modules, and refuses missing/unreviewed modules, an empty selection,
 owned axiom declarations and any axiom outside `propext`, `Classical.choice`,
 `Quot.sound`.
 

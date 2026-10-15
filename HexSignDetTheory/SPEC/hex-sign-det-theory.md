@@ -61,6 +61,12 @@ These hypotheses are explicit arguments to the correspondence theorems.
 `f` need not be injective. Semantic polynomial equations use zero differences;
 integer matrix identities and literal context bindings retain actual equality.
 
+Interpretation-law argument names distinguish natural casts (`hnat`), negation
+(`hn`), positivity (`hpos`) and full sign agreement (`hsign`). Conversion laws
+prefix the source and target names with `f` and `g`. Theorems retain their own
+minimal hypotheses and positional order; named applications should use the
+names in their source-derived statements.
+
 A coefficient field `K` may be interpreted in `R` by an order-preserving field
 homomorphism `ι : K →+* R`. Compose its coefficient interpretation with `ι` to
 instantiate the interface above. Existence of such `R,ι` is a separate family

@@ -1,7 +1,7 @@
 {
   "scope": "35 named declarations in Matrix, Support, Reference and SignOperands plus System equality instance. Checked-system clients use the complete characterization or named guard projections without changing their statements. Partial core review; no phase promotion or computational performance claim.",
   "files": {
-    "HexManual/Chapters/HexSignDet.lean": "742fc64274837ffca05a77de77769c3ed0540fed37275683614482e208c10d1d",
+    "HexManual/Chapters/HexSignDet.lean": "47b72e891fbceb02abbcb1191c573712b413e517aa52a76a467872a7871cc441",
     "HexSignDet/Codec/GraphLaws.lean": "aee17063cc5b0dda1a7102c187f3a7cf59c23b2718f3390a265a01a781fc05aa",
     "HexSignDet/Counts.lean": "f57e6f41c9ddcc5d1c075a768f036965d475d6d2e26b9efc4ed225c33c638696",
     "HexSignDet/Matrix.lean": "ec0ebfa5c3dff773822fd90df81457cfbd12795f53dca053869b19a12d37bf6c",
@@ -13,12 +13,12 @@
     "HexSignDetTheory/FiniteSolve.lean": "b023c750402de712ccdc669b763dec1ec4503edac41d90c8b98bb773462a8418",
     "HexSignDetTheory/Foundation.lean": "9381b25165b6a84e952f886ed5a1982760326c4694790a79ecc1833dbd567248",
     "HexSignDetTheory/NodeBasis.lean": "78453b48dabc9860668d052bc54ba48de65e57a57a30a511d4a266d1b3ff0902",
-    "HexSignDetTheory/NodeChecks.lean": "641016aaffae70a67d365687edc068ab93c3de35422952a2f4d66940ede2498f",
+    "HexSignDetTheory/NodeChecks.lean": "102d6ce77f1790f063a15367b4b50105b3d0ebcdd46212ddad4e81c4127ee4b4",
     "HexSignDetTheory/NodeSolve.lean": "aa0c3bbc82339af112cc9ca5b6ef2412a4d3aac043aeca9ed3ee3c71072f12ae",
     "HexSignDetTheory/ParentSystem.lean": "a9c9e3f04ce68104597c90020dd9f9472a4d0e85e9665e2ea33f0f05331af741",
     "HexSignDetTheory/RationalSolve.lean": "4767e5e90a8133f091260e8817563cd43e842eda23b1fc40bf57e78599dc330a",
     "HexSignDetTheory/Solve.lean": "230933f5617b10ce4092ab58757c04d3d835ac2d32601eaa13261e97380260f9",
-    "HexSignDetTheory/TreeSolve.lean": "12aa5ee792c190bd035e37ffdd7288135d543ff1ae208076432b7108cd35d59b",
+    "HexSignDetTheory/TreeSolve.lean": "caddb0fc607b06d7af39afb5bcd821e374442acab5d53ddb28353b0b3bc77588",
     "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "c3b86c2cef0c53175e43cc40db0dc02ec93de147414c9378e0d914bfb5149132",
     "reports/sign-det-declaration-review/core-foundation.md": "714fe90322ce91c2bf2773a4f8ff942fc181a76d5275168dd091d9e1516c6a7f"

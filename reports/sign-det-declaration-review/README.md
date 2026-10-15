@@ -122,8 +122,8 @@ no compiled declaration refers to them.
 
 ## Remaining acceptance
 
-The companion and core record Phase 5 through their
-[proof acceptance](../sign-det-proof-acceptance.md). The prerequisite
+The companion and core have completed their
+[Phase-5 proof acceptance](../sign-det-proof-acceptance.md). The prerequisite
 [#10861](https://github.com/kim-em/hex-dev/pull/10861) completed the
 [#10377](https://github.com/kim-em/hex-dev/issues/10377) owner Phase-4 attestation.
 The Theory acceptance separately discharges the companion’s final API/use,
@@ -167,8 +167,8 @@ computational review; whole-library Phase-6 checks remain.
 The [common-polynomial comparison assessment](core-comparison.md) covers 27
 named declarations and sixteen source structure fields. Bidirectional common
 product and joint re-encoding acceptance laws replace guard unfolding in
-existing producer proofs. Remaining computational modules and whole-pair
-Phase-6 checks are still outstanding.
+existing producer proofs. The computational source assessments are complete;
+final core Phase-6 acceptance remains separate.
 
 The supplied-replay exports `Descriptor.rootsFrom_coverage` and
 `Descriptor.rootsFrom_ordered` generalize the existing producer compositions.

@@ -30,7 +30,7 @@ include hz h1 ha hs hm hn hi hpos hneg in
 omit [DecidableEq Ctx] in
 /-- The selected query preprocessing is valid before matrix solving. -/
 theorem nodePreparation_checks (domain : Sturm.PreparedDomain E)
-    (hsign : domain.sign = sign) (qs : List (DensePoly E)) (reduced : Bool)
+    (binding : domain.sign = sign) (qs : List (DensePoly E)) (reduced : Bool)
     (preparation : Option (QueryReduction E))
     (hp : (match preparation with | none => true | some r => r.check sign domain.head qs) = true) :
     (match nodePreparation reduced domain qs preparation with
@@ -52,7 +52,7 @@ omit [DecidableEq Ctx] in
 /-- Node construction either retains the checked supplied preprocessing or
 builds valid preprocessing itself. The disabled path carries none. -/
 theorem buildNode_preparation (context : Ctx) (domain : Sturm.PreparedDomain E)
-    (hsign : domain.sign = sign)
+    (binding : domain.sign = sign)
     (qs : List (DensePoly E)) (rows : List (List Nat)) (columns : List (List Int))
     (reduced : Bool) (inverse : Option (Int × Matrix Int rows.length rows.length))
     (preparation : Option (QueryReduction E)) {n : Node E Ctx}
@@ -61,14 +61,14 @@ theorem buildNode_preparation (context : Ctx) (domain : Sturm.PreparedDomain E)
     (match n.preparation with | none => true | some r => r.check sign domain.head qs) = true := by
   rw [(buildNode_evidence context domain qs rows columns reduced inverse preparation h).1]
   exact nodePreparation_checks f hz h1 ha hs hm hn hi sign hpos hneg
-    domain hsign qs reduced preparation hp
+    domain binding qs reduced preparation hp
 
 include hz h1 ha hs hm hn hi hpos hneg in
 /-- Every successful node passes local replay under the generic coefficient
 laws and valid supplied preprocessing. This proves acceptance of the actual
 query certificates; it does not interpret their values as root sums. -/
 theorem buildNode_checks (hbound : ∀ a, -1 ≤ sign a ∧ sign a ≤ 1)
-    (context : Ctx) (domain : Sturm.PreparedDomain E) (hsign : domain.sign = sign)
+    (context : Ctx) (domain : Sturm.PreparedDomain E) (binding : domain.sign = sign)
     (qs : List (DensePoly E)) (rows : List (List Nat)) (columns : List (List Int))
     (reduced : Bool) (inverse : Option (Int × Matrix Int rows.length rows.length))
     (preparation : Option (QueryReduction E)) {n : Node E Ctx}
