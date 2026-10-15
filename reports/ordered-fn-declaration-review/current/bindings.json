@@ -11,7 +11,7 @@
   ],
   "checker_sha256": "9a2d8bdfc577adb4057ee7e5152d9084828f7f0ff2b08632d6553df702053fd6",
   "compiled_constants": 545,
-  "complete_tag": "audit/issue-10575-orderedfn-current-complete-v5",
+  "complete_tag": "audit/issue-10575-orderedfn-current-complete-v5-context",
   "excluded_executable_modules": {
     "HexOrderedFnTheory.LiouvilleRun": "HexOrderedFnTheory/LiouvilleRun.lean",
     "HexRealClosure.TowerTransportTests": "HexRealClosure/TowerTransportTests.lean",
@@ -3012,7 +3012,7 @@
     "source_tag": "audit/issue-10575-orderedfn-current-input-v4"
   },
   "producer_sha256": "ba2cbff80a7e90898b43c2337342b3e385d714c0eb014472702510ce6a5eef4c",
-  "readme_sha256": "3abf700a4665bf7217f2eae96ab96e321334d477594a114df86962cfb22d6f71",
+  "readme_sha256": "8057ac9c91edf190fe64fff1f499ab88a6c99e7987c7fe1209e0c1598fbda565",
   "required_client_modules": {
     "HexManual": "HexManual.lean",
     "HexManual.Chapters.HexOrderedFn": "HexManual/Chapters/HexOrderedFn.lean",

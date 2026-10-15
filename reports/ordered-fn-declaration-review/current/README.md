@@ -29,7 +29,7 @@ supply a new assessment for every generated constant or establish Phase 6.
 `bindings.json` records the exact imported root-package Lean source closure,
 the assessments and the lock/toolchain bytes. The source tag
 `audit/issue-10575-orderedfn-current-input-v5` preserves those inputs; the complete
-tag `audit/issue-10575-orderedfn-current-complete-v5` preserves the report.
+tag `audit/issue-10575-orderedfn-current-complete-v5-context` preserves the report.
 The default checker verifies source bytes at the recorded source tag and report
 bytes in the current tree, including byte equality of every report file with
 the complete archive tag. The recorded Lean input set must match the imported
@@ -46,8 +46,9 @@ module coverage, unique constant/field inventories and the axiom union. Run:
 python3 -I -B reports/ordered-fn-declaration-review/current/check_capture.py
 ```
 
-For reproduction, fetch both named tags and use an isolated checkout of the
-complete tag with its pinned dependencies. To force a new capture, use a fresh directory, copy `audit.lean.txt` to the
+For reproduction, fetch the source and complete tags above, plus
+`audit/issue-10575-orderedfn-current-input-v4` for the predecessor comparison.
+Use an isolated checkout of the complete tag with its pinned dependencies. To force a new capture, use a fresh directory, copy `audit.lean.txt` to the
 otherwise absent `HexOrderedFnTheory/UsageAudit.lean`, and remove only that
 temporary module's `.lake/build/{lib/lean,ir}/HexOrderedFnTheory/UsageAudit.*`
 build artifacts. Set `HEX_ORDEREDFN_AUDIT_OUTPUT` to the fresh directory and
