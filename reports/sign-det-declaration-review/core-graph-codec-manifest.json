@@ -13,7 +13,12 @@
     "reports/sign-det-declaration-review/README.md": "754a4ddd60d3e2680a20feabd22017b7854ad9456fcc3e82f9991b3a549ad0bf",
     "scripts/ci/check_benches_mathlib_free.py": "a8da3bef100b50fdd923d609ad03a3a9bd55229467f5652abe6e3f0b3d1ed0e5",
     "scripts/libgraph.py": "7c250cb801b6b5f4ae34ae90d98c2afc39d65f04e1b6770cc1f8871349af5ef7",
-    "reports/sign-det-declaration-review/core-graph-codec.md": "59c8bb7e793884cc79f77e5ce607ac968667cb43e92436d129bc5cb009b053be"
+    "reports/sign-det-declaration-review/core-graph-codec.md": "59c8bb7e793884cc79f77e5ce607ac968667cb43e92436d129bc5cb009b053be",
+    "HexRealClosure/RootFrame.lean": "9c84cb8c3b992d9c7ceef118a81e5376120c99bb90fd19838ae6d8e078b66ac5",
+    "HexRealClosure/SignEvidence.lean": "374f9a75fe401831ffe439d89daad9773ba272b9fc9a4832a2d742e3f392cf2d",
+    "HexRealClosure/RootReplay.lean": "3ff6adf0f06f4fe7c2eaf4d5ca6732b83b096b44d4b26d7edbb35e3c43c4a179",
+    "conformance/HexSignDet/CrossCheck.lean": "b385a463de209eb7825e12934999a5dc7e3f7a46b2dd10b2f5d3b7c9a1a6c644",
+    "conformance/HexRealClosureTheory/SignEvidenceConformance.lean": "156eedb48bba3dd530ebc128ad04090eb076f1b344b15aac367236a290b1da3c"
   },
   "file_roles": {
     "HexSignDet/Codec/GraphLaws.lean": "reviewed module",
@@ -28,7 +33,12 @@
     "reports/sign-det-declaration-review/README.md": "assessment index",
     "scripts/ci/check_benches_mathlib_free.py": "unchanged extractor import dependency",
     "scripts/libgraph.py": "unchanged extractor import dependency",
-    "reports/sign-det-declaration-review/core-graph-codec.md": "individual declaration assessments"
+    "reports/sign-det-declaration-review/core-graph-codec.md": "individual declaration assessments",
+    "HexRealClosure/RootFrame.lean": "integration reader proof client",
+    "HexRealClosure/SignEvidence.lean": "integration reader proof client",
+    "HexRealClosure/RootReplay.lean": "integration reader proof client",
+    "conformance/HexSignDet/CrossCheck.lean": "integration kernel examples and axiom guards",
+    "conformance/HexRealClosureTheory/SignEvidenceConformance.lean": "integration kernel examples and axiom guards"
   },
   "declarations": {
     "HexSignDet/Codec/GraphLaws.lean": [
@@ -122,7 +132,11 @@
       "Classical.choice",
       "Quot.sound"
     ],
-    "scope": "Individual source/proof/API review of integration additions; existing kernel guards and public reader uses. No new compiler capture, computational performance or phase acceptance."
+    "integration_scope": "Individual source/API assessment of the integration additions. Reader clients and axiom-guard source files are bound current contexts; no new compiler capture, computational regression or phase acceptance.",
+    "integration_commands": [
+      "lake build HexRealClosureTheory.SignEvidenceConformance HexSignDet.CrossCheck",
+      "lake build HexRealClosureTheory.SignEvidenceConformance HexManual"
+    ]
   },
   "source_ref": "audit/issue-10575-sign-det-integration-review-input-v2",
   "input_revision": "7cc9fb5c2d3401d9f67b0fefd016246a3acddd0f",
