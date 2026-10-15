@@ -67,6 +67,32 @@ their import sets omit the native `CellBuild` and `CellDiscover` modules. Their
 actual source proof bodies retain the existing checked readers and ordinary
 axiom/dependency audits.
 
+## Original selected number-field inputs
+
+[NumberFieldCells](../adapters/HexRCF/RealCoefficients/NumberFieldCells.lean)
+connects this producer to the existing owner `NumberField.present?` factory.
+`cells` preflights every supplied original guard before constructing the
+presentation. `cellsWith` reuses a checked presentation and invokes the same
+public discovery. No arithmetic, canonical conversion or root-existence proof
+is duplicated. Guard, presentation and discovery failures remain distinct;
+there is no fallback to another solver.
+
+`cellsWith_spec` retains the actual returned vector, dimension proof, typed
+producer equation, frozen equality and both verdicts at the original
+`Coefficients.ofField` real values. The model comes from the actual factory;
+there is no extra parent-model premise. `cells_success` retains both the
+actual presentation equation and the actual cell-producer equation for the
+returned pair. `cells_zero` proves rejection before presentation construction,
+including with constant or empty-domain matrices.
+
+The [source-connection conformance](../conformance/HexRCF/NumberFieldCellsConformance.lean)
+constructs both selected quadratic embeddings and a computed cubic-field
+coordinate. It checks native production, native literal reading and both
+quantifier verdicts. Separate ordinary-kernel audits check the three actual
+generic proof bodies and require the existing selected-presentation,
+coordinate-value, zero-reflection and cell-construction laws. These tests do
+not turn native round trips into general finite-codec acceptance proofs.
+
 ## Remaining acceptance obligations
 
 Freezing the correct typed data does not establish that a partial coefficient

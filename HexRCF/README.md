@@ -630,3 +630,11 @@ an ordinary-real parent model and nonzero original guards. The exact returned
 vector is covered by `CellAlignment.sector_vector`. [Executable-cell evidence](../reports/hexrcf-cell-execution.md)
 distinguishes this progress from the remaining finite-codec literal-reader,
 frozen-history and frontend acceptance obligations.
+
+`NumberField.cells` starts native complete-cell production from an original
+selected real algebraic generator and its `QAdjoin` coordinates. It preflights
+original guards before the existing owner factory, and `cellsWith` reuses a
+checked presentation. `cellsWith_spec` retains the actual execution trace and
+both original-coefficient verdicts without a supplied parent model. This is
+native construction; general finite-codec replay and frontend quotation remain
+separate. The algebraic-cell manual gives a runnable API example.
