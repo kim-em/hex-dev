@@ -1,0 +1,92 @@
+{
+  "completed": 24,
+  "errors": [],
+  "cases": [
+    {
+      "name": "height",
+      "param": 128,
+      "observations": {
+        "baseline": [
+          71.928952,
+          69.933469,
+          70.631704
+        ],
+        "zero": [
+          57.448933,
+          57.662392,
+          58.552565
+        ]
+      },
+      "medians_ns": {
+        "baseline": 70.631704,
+        "zero": 57.662392
+      },
+      "percent_change": -18.361884629032875
+    },
+    {
+      "name": "height",
+      "param": 2048,
+      "observations": {
+        "baseline": [
+          70.02941,
+          70.748033,
+          70.024892
+        ],
+        "zero": [
+          57.841311,
+          58.162996,
+          57.824395
+        ]
+      },
+      "medians_ns": {
+        "baseline": 70.02941,
+        "zero": 57.841311
+      },
+      "percent_change": -17.404257725432792
+    },
+    {
+      "name": "third",
+      "param": 1024,
+      "observations": {
+        "baseline": [
+          59052.123657,
+          63101.019592,
+          58634.193665
+        ],
+        "zero": [
+          65362.952637,
+          62622.975708,
+          63011.383972
+        ]
+      },
+      "medians_ns": {
+        "baseline": 59052.123657,
+        "zero": 63011.383972
+      },
+      "percent_change": 6.704687435115941
+    },
+    {
+      "name": "approximation",
+      "param": 12288,
+      "observations": {
+        "baseline": [
+          4357420024.0,
+          4403291534.0,
+          4346902341.0
+        ],
+        "zero": [
+          4390073379.0,
+          4365406182.0,
+          4372292578.0
+        ]
+      },
+      "medians_ns": {
+        "baseline": 4357420024.0,
+        "zero": 4372292578.0
+      },
+      "percent_change": 0.3413155931281331
+    }
+  ],
+  "preregistered_probe_expansion_criterion_met": false,
+  "scope": "One matched-parent source-change diagnostic; no historical comparison acceptance. Child git_commit describes invocation checkout, source/builds are separate decision/binary bindings."
+}

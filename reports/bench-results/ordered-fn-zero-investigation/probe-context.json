@@ -1,0 +1,40 @@
+{
+  "cpu": 49,
+  "load_before": [
+    10.18701171875,
+    11.845703125,
+    15.54638671875
+  ],
+  "binaries": {
+    "baseline": "0b260f7a83bab62a936c7cbb9a1334f55524ebe94bf366d715fb1378614fdeb5",
+    "zero": "d1c209138a0f6974c4fcbec3ac7826f87220ab8457aca6280be698fb66a918d6"
+  },
+  "source_commit": "67ac425cf1",
+  "started_unix": 1792068461.369519,
+  "cases": [
+    [
+      "height",
+      128
+    ],
+    [
+      "height",
+      2048
+    ],
+    [
+      "third",
+      1024
+    ],
+    [
+      "approximation",
+      12288
+    ]
+  ],
+  "trials": 3,
+  "order": "trial-major; adjacent AB/BA; AB on even trials, BA on odd trials",
+  "finished_unix": 1792068508.482729,
+  "load_after": [
+    8.4404296875,
+    11.17578125,
+    15.14404296875
+  ]
+}

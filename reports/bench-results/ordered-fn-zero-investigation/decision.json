@@ -1,0 +1,48 @@
+{
+  "question": "Does replacing the compiled polynomial-zero equality with the equivalent normalized-storage emptiness test remove the zero-polynomial allocation seen in the retained sign assembly, and improve the observed OrderedFn slow paths?",
+  "source_change": "Private implementations for Infinitesimal.sign, Real.attempt and Real.approxAttempt, selected only by kernel-proved csimp equalities. Public definitions and hypotheses remain unchanged.",
+  "evidence": "Retained exact candidate rational-sign assembly allocates a DecidableEq closure and calls DensePoly.instOfNat before comparing numerator to zero; both sign and Real trial definitions contain this guard. This identifies avoidable compiled work, not the historical cause of all four median findings.",
+  "sequence": [
+    "Build core and existing semantic/conformance targets.",
+    "Inspect generated native code from the changed source and retain the zero-guard evidence.",
+    "Only after actual native allocation removal, collect one named source-change probe against the clean unmodified current parent using identical toolchain and requirements. Its compiled hash differs from the historical retained candidate; no historical finding is discharged by this probe.",
+    "Preserve every completed observation and failure; no quiet-core filters or unchanged reruns. A probe does not attest full Phase6 acceptance. Expand to full comparison only if the stated improvement criterion is met."
+  ],
+  "probe_if_justified": {
+    "parameters": [
+      [
+        "height",
+        128
+      ],
+      [
+        "height",
+        2048
+      ],
+      [
+        "third",
+        1024
+      ],
+      [
+        "approximation",
+        12288
+      ]
+    ],
+    "trials": 3,
+    "order": "fixed trial-major adjacent AB/BA, alternate by trial",
+    "target_nanos": 1000000000,
+    "comparison": "Independent-arm medians, pinned existing10percent rule. No pooling or paired-median replacement.",
+    "expand_rule": "Both height medians and third improve by more than10percent relative to the unchanged current candidate. Approximation remains a required unresolved path and must not regress by more than10percent. If this fails, retain the failed investigation and do not label any old finding resolved."
+  },
+  "architecture": "No architecture or contract change; only proved compilation shortcut. No measurements collected.",
+  "source_revision": "67ac425cf1",
+  "native_binary_sha256": "d1c209138a0f6974c4fcbec3ac7826f87220ab8457aca6280be698fb66a918d6",
+  "build_result": "Core68jobsPASS, semantic+conformance+native3256PASS, explicitcsimpaxiomguards70PASS; onlystdaxioms.",
+  "code_finding": "Actual rational-sign native path no longer calls lean_alloc_object, DensePoly.instOfNat or Array equality; current9directcalls vs prior13. Fullrawsymbolassembly retained, not a whole-operation equivalence/timing claim.",
+  "baseline": {
+    "source_revision": "446b7f29910d2e2d4bbc0fa8c195b5cae830a9e7",
+    "binary_sha256": "0b260f7a83bab62a936c7cbb9a1334f55524ebe94bf366d715fb1378614fdeb5",
+    "build": "PASS212jobs in clean unmodified base checkout, same shared exact packages/toolchain as variant.",
+    "historical_note": "This current unmodified baseline differs from frozen6479candidate. The probe isolates the three-file change against its actual parent; it cannot by itself discharge any original historical comparison finding."
+  },
+  "comparison_scope": "Attribution against actual unmodified parent only; full historical acceptance remains required. No observations collected before this baseline specification."
+}
