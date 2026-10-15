@@ -14,11 +14,13 @@ declaration/API changes, fixed-result checker, five expected-hash controls and
 collector. All those changes are merged through
 `8572e4a1e5bc03c51438decb8ea796cfe118abad`. The primary and interacting native
 import closures have respectively 188 and 175 monorepo files; every one is
-byte-identical on that main commit. The remaining source differences concern
-tactic/proof controls and documentation. Dependency pins and native build
+byte-identical on that main commit. The remaining source differences include original-input algebraic adapter
+modules, companion proof helpers, their conformance/CI controls and documentation. Dependency pins and native build
 settings are unchanged. The retained
 [source reconciliation](integrated-main-native-reconciliation-v1.json) lists
-the exact paths; the Lake changes add proof/conformance modules and targets.
+all changed paths; each archived candidate-source inventory supplies the exact
+native closure paths and resolver hash. The Lake changes add algebraic adapter
+modules and proof/conformance targets.
 
 The baselines are fresh builds of unmodified committed sources:
 
@@ -37,7 +39,9 @@ The primary selection contains all 25 parameterized and six fixed timing
 workloads; three tiny reference solves are correctness controls only. The
 interacting selection contains both fixed workloads. Four trial-major adjacent
 AB/BA/AB/BA blocks were specified, with original ladders, repeats, targets,
-floors and deadlines. Both correctness/source preflights passed before timing.
+floors and deadlines. The archived in-run native verifications pass before timing. Separate source
+preflights also passed; their output directories remain local and are not part
+of this archive.
 
 ## Primary stopped attempt
 
@@ -47,10 +51,19 @@ both first-pair exports, raw stdout/stderr and terminal context. Only the first
 block of `Hex.SignDetBench.Height.runCheck` was measured. Each arm completed
 all seven parameters, 8192 through 524288, and the answer hashes match.
 
-The candidate's measured spawn floor was 113.739337 ms. Its declared multiplier
+The baseline measured a spawn floor of 57.392388 ms, with six of seven rows
+eligible; its 16384 row was below floor. The candidate's measured spawn floor
+was 113.739337 ms. Its declared multiplier
 of ten therefore required about 1.137 seconds per measurement. All seven
 measurements took between 0.552 and 0.959 seconds and were marked below floor.
-The pinned runner exported them and returned 2, documenting that it had zero
+The per-call times in the two arms differ by less than 0.6%. LeanBench measures
+the spawn floor with one child launch per export, so the two floor probes
+changed eligibility despite similar workload timings. Both arms retain the
+same one-second inner-work target and multiplier; the baseline's missing row
+alone would also prevent a complete native comparison pass. No causal claim
+about host activity or a workload regression follows from these observations.
+
+The pinned runner exported the candidate rows and returned 2, documenting that it had zero
 verdict-eligible rows. This is insufficient timing resolution, with no observed
 arithmetic or hash failure. It is not a performance pass or a regression finding.
 
@@ -65,7 +78,8 @@ retains it for the existing native checker. Failed/unhashed/truncated exports
 and other nonzero exits still stop collection. The checker still requires every
 declared parameter and all four eligible source trials. Retaining below-floor
 rows cannot make this attempted comparison pass. The correction supplies no
-permission to reset an already consumed attempt.
+permission to reset an already consumed attempt. It applies to future bound
+collector sources, not to the immutable candidate used in this capture.
 
 ## Interacting result
 
@@ -80,7 +94,8 @@ it does not retry the primary selection.
 | `depthTwo` | 27,981,454 | 26,128,237 | −6.623019% | Pass |
 
 The native checker computes the integer per-call, upper-middle pooled median
-from the original fixed repeats. Both reports contain zero regressions. The
+from the original fixed repeats. Each export has one repeat, so each pooled
+median has four observations per arm. Both reports contain zero regressions. The
 final source, tool, helper, executable and checker integrity checks pass.
 These are observations on this host, without a general speedup claim.
 
@@ -109,8 +124,11 @@ python3 scripts/bench/test_sturm_regression.py
 
 The actual stopped export is a regression-test fixture for exit-2 handling.
 The tests also refuse failed, truncated, malformed, unhashed and wrong-subject
-exports and exercise completion of all simulated blocks to an inconclusive
-checker result. They collect no benchmark measurements.
+exports and exercise completion of all simulated blocks with a stub checker returning
+2. The existing `ExportGuardTest.test_all_source_trials_below_floor` in
+`scripts/bench/test_sturm_compare_exports.py` separately checks that the actual
+compiled checker returns 2 on below-floor rows. An inconsistent checker pass is
+also refused by the collector. These controls collect no benchmark measurements.
 
 The unresolved requirement is a complete primary computational comparison with
 adequate timing resolution under an explicitly agreed protocol. No library

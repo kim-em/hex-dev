@@ -79,11 +79,16 @@ class BelowResolutionTest(unittest.TestCase):
                 self.assertFalse(self.accepted())
         for key, value in [('status', 'timedOut'), ('error', 'failed'), ('result_hash', None),
                            ('below_signal_floor', False), ('inner_repeats', 0),
-                           ('total_nanos', 0), ('per_call_nanos', float('nan'))]:
+                           ('total_nanos', 0), ('per_call_nanos', float('nan')),
+                           ('trial_index', 1), ('param', 7)]:
             with self.subTest(key=key):
                 self.document = json.loads(self.raw)
                 self.document['results'][0]['points'][0][key] = value
                 self.assertFalse(self.accepted())
+
+    def test_partial_schedule_is_not_complete(self):
+        self.document['results'][0]['points'].pop()
+        self.assertFalse(self.accepted())
 
     def test_malformed_or_missing_export_remains_fatal(self):
         self.assertFalse(collector.below_resolution_export(2, self.path, self.name))
@@ -247,8 +252,11 @@ elif sys.argv[1]=='run':
                                   'result_hash':None if mode=='cap-null' else arm})
     if mode=='below-resolution' and arm=='candidate':
         result.update(verdict='inconclusive', trial_summaries=[])
+        result['config'].update(outer_trials=1, param_schedule={'kind':'custom','params':[64]})
         result['points'][0].update(error=None, below_signal_floor=True,
-                                   total_nanos=100, inner_repeats=1)
+                                   total_nanos=100, inner_repeats=1, trial_index=0)
+    elif mode=='below-resolution':
+        result['config'].update(outer_trials=1, param_schedule={'kind':'custom','params':[64]})
     target.write_text(json.dumps({'results':[result]}))
     if mode=='below-resolution' and arm=='candidate':sys.exit(2)
     if (mode=='interrupt' or (mode=='cap-interrupt' and adapted)) and arm=='candidate':
@@ -891,6 +899,9 @@ elif sys.argv[1]=='run':
 
     def test_below_resolution_continues_all_blocks_to_native_guard(self):
         self.mode('below-resolution')
+        baseline = self.binaries['baseline']
+        baseline.write_text(baseline.read_text().replace("mode='ok'", "mode='below-resolution'"))
+        self.bind_decision()
         self.guard_code(2)
         code, _ = self.run_collector()
         self.assertEqual(code, 1)
@@ -900,6 +911,18 @@ elif sys.argv[1]=='run':
         self.assertEqual(len(self.context['below_resolution_exports']), 4)
         self.assertEqual(len(self.context['paired_ratios']), 4)
         self.assertEqual(len(self.context['guards']), 1)
+
+    def test_below_resolution_cannot_pass_with_wrong_checker_result(self):
+        self.mode('below-resolution')
+        baseline = self.binaries['baseline']
+        baseline.write_text(baseline.read_text().replace("mode='ok'", "mode='below-resolution'"))
+        self.bind_decision()
+        self.assertEqual(self.run_collector()[0], 1)
+        self.assertEqual(self.context['outcome'], 'invalid')
+        self.assertFalse(self.context['pass'])
+        self.assertEqual(self.context['guards'][0]['returncode'], 0)
+        self.assertEqual(self.context['below_resolution_guard_passes'],
+                         ['Hex.SturmBench.runInteger'])
 
     def test_nonzero_parent_exit_also_stops_its_worker(self):
         self.mode('exit-worker')

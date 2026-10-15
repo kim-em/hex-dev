@@ -295,10 +295,14 @@ def below_resolution_export(code, path, name):
             return False
         result = results[0]
         points = result["points"]
+        schedule = result["config"]["param_schedule"]
         return (result["kind"] == "parametric" and result["function"] == name and
                 result["budget_truncated"] is False and result["verdict"] == "inconclusive" and
                 result["trial_summaries"] == [] and bool(points) and
+                schedule["kind"] == "custom" and result["config"]["outer_trials"] == 1 and
+                [point["param"] for point in points] == schedule["params"] and
                 all(point["status"] == "ok" and point["error"] is None and
+                    point["trial_index"] == 0 and
                     point["result_hash"] is not None and point["below_signal_floor"] is True and
                     point["inner_repeats"] > 0 and point["total_nanos"] > 0 and
                     math.isfinite(point["per_call_nanos"]) and point["per_call_nanos"] > 0
@@ -827,9 +831,13 @@ def main(argv=None) -> int:
         context["guards"] = verdicts
         context["status"] = "completed"
         codes = {item["returncode"] for item in verdicts}
+        below_floor = {item["function"] for item in context.get("below_resolution_exports", [])}
+        context["below_resolution_guard_passes"] = [item["function"] for item in verdicts
+                                                   if item["returncode"] == 0 and
+                                                   item["function"] in below_floor]
         context["regression_findings"] = [item["function"] for item in verdicts if item["returncode"] == 1]
         context["outcome"] = ("preflight" if args.preflight else
-                              "invalid" if codes - {0, 1, 2} else
+                              "invalid" if codes - {0, 1, 2} or context["below_resolution_guard_passes"] else
                               "regression" if 1 in codes else
                               "inconclusive" if 2 in codes else "pass")
         if not args.preflight:
