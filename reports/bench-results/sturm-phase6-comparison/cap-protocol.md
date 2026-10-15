@@ -4,8 +4,8 @@ Question: can the complete frozen native comparison finish with a larger
 operational per-call timeout, preserving its inputs, balanced schedule and
 pinned regression rule? The original run stopped when both arms hit 120 seconds
 at the largest `runRationalHigh` parameter. Its consumed reservation and every
-completed output remain retained. This is an unresolved Phase-6 comparison,
-not a new complexity claim or another unchanged attempt.
+completed output remain retained. The [complete adapted capture](cap-complete-v3/README.md) now supplies the
+Phase-6 comparison pass. It is not a new complexity claim or an unchanged retry.
 
 ## Collector contract
 

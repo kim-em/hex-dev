@@ -1,96 +1,118 @@
-# Sturm proof acceptance
+# Sturm proof, API and manual acceptance
 
-HexSturm and HexSturmMathlib satisfy the [Phase-5 criteria](../PLAN/Phase5.md):
-complete proofs, a successful build on the pinned toolchain and passing
-conformance. HexSturm records Phase 5; HexSturmMathlib additionally records
-Phases 6–7 through its individual API review and completed manual. The owner Phase-4 attestation is merged in
+HexSturm and HexSturmTheory satisfy Phases 5–7. This is local library
+acceptance, not publication eligibility or acceptance of the whole
+real-closure family. The owner Phase-4 attestation is merged in
 [#10860](https://github.com/kim-em/hex-dev/pull/10860); its
 [readiness matrix](real-closure-prerequisites.md) and
 [performance report](hex-sturm-performance.md) retain evidence and limits.
-The companion acceptance does not advance the computational library or establish
-publication eligibility.
 
-## Build and conformance
+## Individual API assessment
 
-A full monorepo `lake build` passes on `leanprover/lean4:v4.35.0-rc3`.
-The focused command also passes:
+The [declaration review](sturm-declaration-review/README.md) assesses all
+48 handwritten computational declarations in four production modules and
+96 companion declarations. Every computational module still matches its
+`reviewed_sha256` byte for byte. The review covers prepared-domain
+reconstruction/projections, whole-`Option` producer agreement, reduced
+queries, literal certificate bindings, cached/plain checker equality and
+certificate transport. Characterizing lemmas expose these contracts without
+forcing clients to unfold private representations. The public umbrella
+imports all four modules.
+
+The [individual computational assessments](sturm-declaration-review/computational.md),
+[zero-reference dispositions](sturm-declaration-review/zero-references.md) and
+[helper paths](sturm-declaration-review/helper-paths.json) distinguish
+intentional public API from dead declarations. Each retained public
+characterization has an individual contract and disposition; production
+reference counts alone do not decide usefulness. The private computational
+helper `modImpl_eq_mod` reaches the public reduced-query characterization.
+PreparedDomain's private constructor supports checked reconstruction.
+No declaration is accepted solely because it compiled or passed a linter.
+
+The compiler inventory is historical, preserved at
+`audit/issue-10575-sturm-companion-phase7-complete` before the Theory rename.
+It is not a freshly generated reference graph for current main. Unchanged
+core source permits reuse of the individual API decisions and helper paths;
+current public imports, lints, kernel tests and manual examples are checked
+separately. The historical manifest and compiler capture remain unchanged.
+
+## Native regression comparison
+
+The [complete comparison](bench-results/sturm-phase6-comparison/cap-complete-v3/README.md)
+passes all 58 declared timing families and all 246 parameter comparisons under
+the pinned 10-percent rule. All four balanced AB/BA blocks completed: 464
+parent exports, 1,968 measurement points and 58 successful native guards.
+The largest median increase is 5.156 percent. There is no integrity failure,
+inconclusive rerun, or omitted family/parameter. This checks computational
+regression against the most recent committed benchmark baseline; it is not
+a new complexity attestation or theorem timing pass.
+
+The producer is `8e5b3e40a69117c84bb6f0c19aaad93a26049ab8`, against baseline
+`75fbfa04550ae0f76df074176f44bf0f2533334a`. The
+[current reconciliation](bench-results/sturm-phase6-comparison/cap-complete-v3/current-source.json)
+covers the benchmark's complete 62-file resolved import cone. Its only two
+changes from recorded candidate files are documentation edits in
+`bench/HexSturm/Bench.lean` and `HexRealRoots/Chain.lean`. The computational
+code and registrations are unchanged. The original capture records the exact CLI pin,
+but not individual hashes for three CLI source files. The current CLI checkout
+is clean at that pin; the reconciliation distinguishes this check from an
+attestation of unrecorded original file bytes. Executable
+digests and exact harness pins remain in the archived context. Comment changes
+do not warrant new measurements.
+
+Sturm computes natively in Lean without calling the test oracles at runtime;
+its native import cone excludes Mathlib and Tau Ceti. It exposes no
+irreducibility or field-construction claim. HexSturmTheory is proof-only:
+its SPEC uses representative kernel examples and axiom audits, not a compiled
+benchmark baseline. Those inapplicable criteria do not create timing work.
+
+## Build, conformance and trust checks
+
+The full monorepo builds on `leanprover/lean4:v4.35.0-rc3`. Focused acceptance
+also uses ordinary public imports:
 
 ```sh
-lake build HexSturm HexSturmMathlib HexSturmMathlibTests \
-  +HexSturm.Conformance \
-  +HexSturmMathlib.Tests.Replay.Semantics \
-  +HexSturmMathlib.Tests.Replay.SemanticsBaseline
+lake build HexSturm HexSturmTheory HexSturmTheoryTests HexQuerySemantics \
+  +HexSturm.Conformance hexsturm_emit_fixtures HexManual.Chapters.HexSturm
+python3 scripts/check_dag.py
+python3 scripts/ci/check_benches_mathlib_free.py
+python3 scripts/ci/check_named_admissions.py
+python3 scripts/check_phase7.py
 ```
 
-The computational conformance checks actual ordinary/prepared queries, root
-counts, certificates, cached/plain replay, endpoint retargeting and positive
-certificate transport through its Lean `#guard` suite. It includes constants, invalid domains, repeated heads,
-noncanonical storage, changed literal bindings and corrupted evidence. Its
-integer/field comparisons are differential controls; they do not replace the
-ordinary-kernel semantic proofs or the shared integer owner's exact oracle.
-The [direct Sturm oracle](sturm-direct-conformance/README.md) independently
-checks rational and noncanonical frontend query/count results, prepared
-results and domain refusal from original serialized inputs. Its pinned FLINT
-qqbar roots supply exact selected-root signs. The inherited HexRealRoots
-integer fixtures remain supplementary evidence for squarefree integer heads
-at finite dyadic endpoints. The readiness matrix's FLINT/Z3 comparisons are
-performance orientation, and its Z3 de Moura–Passmore check is downstream
-consumer evidence. The direct corpus discharges the previously tracked
-absence of Sturm-owned exact sign fixtures; it does not replace the arbitrary
-certificate/kernel proofs or the complete integrated-family audit.
+The tests include environment lints (including public/theorem docstrings) on
+both production roots and ordinary-kernel
+replay checks. Semantic replay in `HexQuerySemantics` retains explicit axiom
+guards allowing only `propext`, `Classical.choice` and `Quot.sound`. The named
+admission check scans the relevant production cones. A separate comment/string-aware
+scan covers both Sturm umbrellas, both library directories, companion adapters
+and computational conformance. No completed claim uses a sorry, new axiom or
+`native_decide`.
 
-The companion tests apply domain/query contracts to canonical and noninjective
-coefficient storage and accepted/rejected literal replay. Semantic replay and
-root-count guards build through the existing adapter test modules. Their axiom
-inventories admit only `propext`, `Classical.choice` and `Quot.sound`.
-The named-admission import cones cover the production modules and pass. A
-separate source scan of both umbrellas and `HexSturm/`, `HexSturmMathlib/`,
-`adapters/HexSturmMathlib/` and `conformance/HexSturm/` finds no admission tokens
-outside comments and strings. Compiled kernel guards and that source scan
-establish the absence of sorries, new axioms and `native_decide` in completed
-production claims. The published trust scan checks released inputs; the Sturm
-pair is unreleased and is not covered by that scan.
+Conformance checks ordinary/prepared queries and counts, cached/plain replay,
+endpoint retargeting and positive certificate transport. Controls include
+zero/constant/repeated heads, invalid domains, noncanonical storage, changed
+literal bindings and corrupted evidence. The
+[direct independent oracle](sturm-direct-conformance/README.md) passes all
+192 serialized frontend cases with python-flint 0.9.0 / FLINT 3.6.0 and nine
+refusal-control tests. Fresh native emission is byte-identical to the retained
+fixtures. Integer/field differential controls supplement exact qqbar sign
+answers; examples and oracles do not replace arbitrary-certificate soundness
+or producer-totality proofs.
 
-## Scope and remaining work
+## User documentation and boundary
 
-The [declaration assessment](sturm-declaration-review/README.md) covers the
-48 computational and 96 companion handwritten production declarations.
-All eleven reviewed production modules match the manifest's
-`reviewed_sha256` values byte for byte. The source scan and manifest comparison
-can be reproduced from the repository root:
+The [Verso chapter](../HexManual/Chapters/HexSturm.lean) explains the success
+domain, counts versus sign sums, preparation, reduced queries, endpoint
+retargeting, literal replay, transport and mathematical correspondence.
+Its live examples build. Rendered content and navigation are inspected at
+desktop and narrow widths. No tutorial is anchored to Sturm. The
+[README](../HexSturm/README.md) states the computational/proof boundary and
+unreleased status; its two quickstart guards are already exercised in
+`conformance/HexSturm/Conformance.lean`.
 
-```sh
-python3 - <<'PY'
-import hashlib
-import json
-from pathlib import Path
-from scripts.ci.check_named_admissions import ADMISSION, code_only
-
-paths = [Path("HexSturm.lean"), Path("HexSturmMathlib.lean")]
-for directory in ("HexSturm", "HexSturmMathlib", "adapters/HexSturmMathlib",
-                  "conformance/HexSturm"):
-    paths.extend(sorted(Path(directory).rglob("*.lean")))
-for path in paths:
-    assert not ADMISSION.search(code_only(path.read_text(encoding="utf-8"))), path
-manifest = json.loads(Path("reports/sturm-declaration-review/manifest.json").read_text(encoding="utf-8"))
-for module in manifest["modules"]:
-    assert hashlib.sha256(Path(module["path"]).read_bytes()).hexdigest() == module["reviewed_sha256"], module["path"]
-print(f"Admission scan: {len(paths)} files; manifest: {len(manifest['modules'])} modules")
-PY
-```
-
-Phase 5 requires proof completion rather than a new implementation or repeated
-performance measurements.
-
-Phase 6 requires final proof/API, lint/docstring and use acceptance for each
-library. HexSturm additionally requires its computational regression comparison
-against the prescribed committed benchmark baseline. HexSturmMathlib supplies
-correspondence proofs and has no compiled track or computational baseline;
-its owning SPEC requires kernel examples and axiom audits instead of theorem
-timing sweeps. The local phase rules permit separate acceptance. HexSturmMathlib now records
-Phases 6–7 through the [individual API and documentation review](sturm-declaration-review/README.md);
-HexSturm remains at Phase 5 pending its computational comparison. The completed [manual chapter](../HexManual/Chapters/HexSturm.lean) supplies the
-companion documentation; it does not discharge the core computational comparison.
-The [publication plan](real-closure-publication.md) retains companion dependency
-pins, split fixtures, candidate consumer checks and external distribution
-requirements. Real-algebraic and rank Phases 5–7 remain outside this pair's scope.
+The [publication plan](real-closure-publication.md) retains dependency pins,
+candidate consumer checks and external distribution requirements. This
+acceptance changes only HexSturm's remaining local phase counter. It does not
+promote transitive dependencies, add released manifest entries or accept
+unfinished tower/tactic owner contracts.

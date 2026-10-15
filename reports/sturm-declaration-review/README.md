@@ -161,9 +161,11 @@ are diagnostic rather than computational benchmark baselines. The
 [local coupling rules](../../PLAN/Conventions.md) permit acceptance
 without waiting for later local phases of dependencies.
 
-HexSturm remains at Phase 5. Its declared native regression comparison and
-final computational Phase-6 acceptance remain separate requirements. No
-computational performance pass follows from this companion acceptance.
+HexSturm also records Phases 6–7 through its separate
+[final acceptance](../sturm-proof-acceptance.md), reusing the unchanged core
+declarations and individual dispositions here, with the complete native
+comparison, current imports/lints/kernel tests and manual checks. The historical
+compiler capture is not relabeled as a current-main reference graph.
 Publication eligibility, companion dependency pins and unrelated input phases
 remain in the [publication plan](../real-closure-publication.md).
 

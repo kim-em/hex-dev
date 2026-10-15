@@ -1,0 +1,299 @@
+{
+  "archive_files": 1579,
+  "all_archive_hashes_valid": true,
+  "guard_sha256": "9fb1fa9c1b2c24b2a2bfa91a7f4d4575ad09d191903130545723b2ff0d1ce12f",
+  "guard_replays": [
+    {
+      "function": "Hex.SturmBench.runChain",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmBench.runClearing",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmBench.runClearingWide",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmBench.runDomain",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmBench.runEndpoints",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmBench.runInitial",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmBench.runInitialHigh",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmBench.runInitialWide",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmBench.runInteger",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmBench.runIntegerHigh",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmBench.runRational",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmBench.runRationalHigh",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmBench.runRationalValue",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmBench.runReducedRational",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmBench.runReplay",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmBench.runReplayHigh",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runCachedReplay",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runCachedReplayBits",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runCertificate",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runCertificateBits",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runClear",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runClearBits",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runCoefficientBits",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runCount",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runCountBits",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runCountCertificate",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runCountCertificateBits",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runEmbed",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runEmbedSparse",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runEndpointBits",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runFieldReplay",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runFieldReplayBits",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runFractionalBits",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runInfinite",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runInfiniteBits",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runPrepared",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runPreparedBits",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runPreparedCertificate",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runPreparedCertificateBits",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runPreparedCertificateHigh",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runPreparedCount",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runPreparedCountBits",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runPreparedHigh",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runRetarget",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runRetargetWide",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runSparseCachedReplay",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runSparseCertificate",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runSparseClear",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runSparseCount",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runSparseCountCertificate",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runSparseDomain",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runSparseEmbed",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runSparseInteger",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runSparsePrepared",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runSparsePreparedCertificate",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runSparsePreparedCount",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runSparseQuery",
+      "returncode": 0,
+      "report_equal": true
+    },
+    {
+      "function": "Hex.SturmFrontendBench.runSparseReplay",
+      "returncode": 0,
+      "report_equal": true
+    }
+  ],
+  "all_reports_equal": true,
+  "new_measurements": false
+}
