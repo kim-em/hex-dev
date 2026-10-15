@@ -270,24 +270,28 @@ example
     (guards : List c.Value)
     (formula : QF (n+1))
     (nonzero : ∀ d ∈ guards, d ≠ 0) :
-    ∃ packet,
-      CellDiscover.run values guards formula =
-        .ok packet ∧
-      let input := packet.family.collection.input
-      ∃ data : CellReplay.Evidence packet.roots
-          (input.value ∘ values) formula,
+    ∃ p,
+      CellDiscover.run values guards
+        formula = .ok p ∧
+      let family := p.family
+      let input := family.collection.input
+      ∃ data : CellReplay.Evidence
+          p.roots (input.value ∘ values)
+          formula,
       ∃ verdict,
-        CellReplay.check (input.value ∘ values)
+        CellReplay.check
+          (input.value ∘ values)
           formula (guards.map input.value)
-          packet.radical packet.roots data
+          p.radical p.roots data
           .forallReal = .ok verdict := by
-  obtain ⟨packet, returned, _, _, _, data,
+  obtain ⟨p, returned, _, _, _, data,
       _, _, answers⟩ :=
-    CellDiscover.run_success model values
-      guards formula nonzero
+    CellDiscover.run_success model
+      values guards formula nonzero
   obtain ⟨verdict, accepted, _⟩ :=
     answers .forallReal
-  exact ⟨packet, returned, data, verdict, accepted⟩
+  exact ⟨p, returned, data,
+    verdict, accepted⟩
 ```
 
 Literal-reader acceptance still needs finite coverage of every serialized
