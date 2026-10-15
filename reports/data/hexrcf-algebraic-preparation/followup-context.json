@@ -63,5 +63,10 @@
     "The strict-boundary compiler trace, broader integration and unchanged manual rendering retain their own exact source bindings in corrective-context.json.",
     "These incremental observations establish no speedup or full-issue completion.",
     "Noncompilable native proposals and callback exceptions are documented terminal exceptions; no arbitrary exception classification or solver fallback was introduced."
-  ]
+  ],
+  "artifact_commit": "d4e32fb1ded140f85787ff1374a52e84ad68610c",
+  "document_commit": "d4e32fb1ded140f85787ff1374a52e84ad68610c",
+  "documents_sha256": {
+    "reports/hexrcf-algebraic-preparation.md": "a9070102994e2bfeee3d48ea55e1c6b085a4cb685b0cdc03ef8a716daa4060ad"
+  }
 }
