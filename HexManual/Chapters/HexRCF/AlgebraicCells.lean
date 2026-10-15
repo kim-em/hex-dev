@@ -10,6 +10,7 @@ import HexRCF.RealCoefficients.RootBuild
 import HexRCF.RealCoefficients.NumberFieldCells
 import HexRCF.RealCoefficients.GatherCells
 import HexRCF.RealCoefficients.AlgebraicCells
+import HexRCF.RealCoefficients.AlgebraicPreparation
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -513,6 +514,51 @@ equation, without assuming guard validity; `GatherCells.build_sound` also derive
 compatible owner origins from successful gathering. They do not assemble
 frozen provider/predecessor histories or prove general source-goal quotation
 and strict compiled missing-record admission.
+
+Meta clients can prepare these native inputs from the original Lean statement
+with `AlgebraicPreparation.prepare`. It reuses the shared source translator and
+the checked algebraic interpretation of each coefficient and original divisor.
+The callback supplies an ordinary proof when a radical base needs a
+nonnegativity fact. Preparation checks that proof and retains one aggregate
+reflection budget across the source, coefficients and divisors:
+
+```lean
+open Lean Meta Qq
+open Hex.RCF.RealCoefficients
+run_meta do
+  let nonnegative :
+      Expr → MetaM (Option Expr) :=
+    fun source => do
+      let source : Q(ℝ) := source
+      let goal ← mkFreshExprMVar
+        q(0 ≤ $source)
+      let rest ← Lean.Elab.runTactic'
+        goal.mvarId!
+        (← `(tactic| norm_num))
+      unless rest.isEmpty do
+        return none
+      return some
+        (← instantiateMVars goal)
+  let .ok prepared ←
+      AlgebraicPreparation.prepare
+        q(∀ x : ℝ,
+          x^2 + 1 /
+            (Real.sqrt 2 + 1) > 0)
+        nonnegative
+    | throwError "unsupported source"
+  unless
+      prepared.source.divisors.size == 1 do
+    throwError "missing original guard"
+```
+
+The resulting environment stores coefficient proposals first and every original
+divisor afterward, with separate ordered indices for each role. Its `build`
+method runs `AlgebraicCells.build` on those proposals. It does not first require
+a primitive common-field irreducibility certificate. The source identities are
+ordinary-kernel proofs about the retained algebraic expressions; they do not
+authenticate quoted literals for the computed proposals. This preparation API
+does not install a new `rcf` handler or close the remaining frozen-context,
+literal-authentication and general source-quotation obligations.
 
 The automatic-input conformance uses both selected signs of √2 alongside an
 independent positive √3. It checks simultaneous conditions and a repeated zero

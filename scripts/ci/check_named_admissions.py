@@ -352,7 +352,8 @@ def check() -> None:
              "HexRealClosure.InverseEquation", "HexRealClosureTheory.InverseEquation",
              "HexRealClosureTheory.SuppliedInverse",
              "HexRealClosureTheory.QAdjoin", "HexRCF.GatherCellsConformance",
-             "HexRCF.AlgebraicCellsConformance", "HexRCF.AlgebraicCellsStress"] + [
+             "HexRCF.AlgebraicCellsConformance", "HexRCF.AlgebraicPreparationConformance",
+             "HexRCF.AlgebraicCellsStress"] + [
         ".".join(path.relative_to(ROOT / "adapters").with_suffix("").parts)
         for path in sorted((ROOT / "adapters").rglob("*.lean"))] + [
         ".".join(path.relative_to(ROOT / "conformance").with_suffix("").parts)
