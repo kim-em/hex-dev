@@ -582,6 +582,12 @@ and an empty root table with one unbounded sector. The
 [algebraic matrix](../conformance/HexRCF/CellReplay/Algebraic/Quoted.lean)
 uses `CellRead.collect` with the shared operation-parametric row/sector readers
 and transports their accepted data into `CellReplay.check_sound`.
+`CellReplay.Evidence.changeFormula` reuses checked rows only when the entire
+ordered specialization list is equal, including repeated, zero and domain-guard
+atoms. The new formula still needs a fresh strict fold and original-source
+quotation. [Comparison/Boolean controls](../reports/hexrcf-boolean-cells.md)
+cover both quantifiers, all six comparisons and changed-order refusal over the
+same algebraic packet.
 Complete algebraic production,
 source/provider history, automatic common-field certification and accepted
 algebraic completeness remain separate obligations.
