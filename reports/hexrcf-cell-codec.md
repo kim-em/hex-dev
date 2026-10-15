@@ -66,6 +66,24 @@ source/provider/context/reached-data assembly, all-live transport, automatic
 common-field certification, strict missing-record compiled replay, general
 frontend acceptance/completeness and the remaining realization obligations.
 
+`CellQuote.finishPacket` authenticates an accepted complete-packet checker
+against the freshly reified original goal, fixed coefficient valuation and
+ordered original divisors. It shares those checks and failure-state rollback
+with the existing typed-cell quotation entrypoint. A false checker verdict,
+a different source formula and a typed-only checker are refused.
+
+Fresh `CompleteQuote` source proofs cover the algebraic matrix with and without
+an original divisor erased by zero multiplication. Their acceptance proofs
+compose the independently checked frozen fixture with the finite codec laws.
+They do not claim a fresh kernel reduction of a serialized reader or strict
+compiled admission with missing predecessor records. `CompleteQuoted` rechecks
+the actual source bodies and their three standard axioms, requires the complete
+checker/owner reader laws and excludes earlier source witnesses and the
+adapter's producer imports. The domain theorem is rechecked separately: erased
+divisor proofs are validated before quotation but need not remain in the final
+source proof. Missing original-divisor identities and an erased zero divisor
+are refused.
+
 ## Source-scoped validation records
 
 The [validation record](data/hexrcf-cell-codec/context.json) binds 19 source
@@ -187,3 +205,27 @@ quotations and cached dependencies; no new rendering or comparative timing
 claim is made. The fixed native predecessor context and typed radical input
 remain supplied. Full frozen source/provider/history reconstruction and all
 reached arithmetic obligations are separate from complete root/cell replay.
+
+## Complete-packet source quotation
+
+The [quotation record](data/hexrcf-cell-codec/complete-quote-context.json)
+binds the quotation/source tests to `c0e47952d2a235a3af2ab58dcf4229c9c75bfd25`,
+whose source tree also includes the actual parent squash merge
+`0b8fb8fa5c175e2888f66d46c85b5622ad9952d0`. That integration changes no
+source bytes from the quotation implementation at `8fd406d6fd`.
+
+The final selected quotation/audit/library/manual build passes 11,766 jobs
+in 14.988 seconds with a 1.4 GiB peak and no swap. It rebuilds both new source
+proofs, their fresh body/dependency audit and a separate original-domain
+proof; the preceding build had already rebuilt the unchanged typed and Boolean
+quotation regressions and affected manual but failed the new audit assertion.
+The corrected audit tests the checked original-domain theorem directly, since
+divisor proofs checked before quotation need not occur in an erased source
+formula's final proof. The initial failed assertion and proof/elaboration
+attempts remain in the raw logs.
+
+DAG/umbrella, copyright, literal matching and whitespace checks pass; the
+admission scan covers 641 cones and 1,541 local modules. All own builds remain
+serial under the aggregate 32 GiB/no-swap/two-thread cap. These are incremental
+integration observations, not a new literal-reader reduction, performance
+comparison or manual-rendering result.
