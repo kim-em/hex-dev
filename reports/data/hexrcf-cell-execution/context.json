@@ -375,5 +375,19 @@
     "lean_threads": 2,
     "concurrent_own_builds": 1
   },
-  "scope": "Actual native ordinary-model construction, exact candidate-vector and typed-producer equations, frozen equality and both original shared-sentence verdicts. Not general literal-reader, frozen-history, strict missing-record, named-model or frontend acceptance."
+  "scope": "Actual native ordinary-model construction, exact candidate-vector and typed-producer equations, frozen equality and both original shared-sentence verdicts. Not general literal-reader, frozen-history, strict missing-record, named-model or frontend acceptance.",
+  "document_commit": "6d6a56e761fe8e705884c1f93c11b15c1261605f",
+  "selected_document_hashes": {
+    "HexRCF/README.md": "8aeb2d2b1307e9754b534261eab77d3c289ae9cde40e2782e76d82e01c69b411",
+    "reports/hexrcf-cell-decision.md": "a5015bee064bfd4c8e4c671c2241ad1af16afb6e315789864fabcc979503ab71",
+    "reports/hexrcf-cell-execution.md": "01313430a07f25fe246a9a718f78a833243754b028677b0e9f15d06d4014a423",
+    "reports/hexrcf-adapter-evidence.md": "e37b053410fdae6d8ef09a53b412a58a1cfc1f0121dfc7c7c5c46eab6653c355"
+  },
+  "final_document_validation": {
+    "relative_link_targets": 176,
+    "missing_local_targets": 0,
+    "versioned_source_document_artifact_bindings": 71,
+    "distinct_bound_paths": 67,
+    "scope": "All artifact bytes/gzip payloads and versioned source/document hashes independently checked; core adapter and conformance source unchanged between the full-build and final rendered-manual commits."
+  }
 }
