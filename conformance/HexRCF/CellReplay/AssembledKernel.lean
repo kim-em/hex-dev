@@ -10,6 +10,8 @@ set_option maxHeartbeats 2400000
 set_option maxRecDepth 32768
 
 namespace Hex.RCF.RealCoefficients.CellReplayTests.AssembledKernel
+example : True := Assembled.controlsComplete
+
 /-- A fresh consumer of the actual assembled original-goal proof. -/
 theorem witness : ∃ x : ℝ, x ^ 2 = Real.sqrt 2 := by
   obtain ⟨x, lower, upper, _⟩ := Assembled.source
@@ -25,11 +27,10 @@ run_meta do
     throwError "fresh real witness checked-body dependencies changed"
   let seen ← Hex.RCF.ProofEvidence.projectDependencies #[``witness]
   for required in #[``Assembled.source,``CellOperations.accept?_iff,
-      ``CompleteReplay.check_sound,``Hex.RealClosure.Tower.Model.root] do
+      ``CompleteReplay.check_sound,``Hex.RealClosure.Tower.Model.root,
+      ``Hex.RealClosure.Algebraic.Element.replayMul_eq] do
     unless seen.contains required do throwError "fresh real witness omitted actual assembly: {required}"
-  for forbidden in #[``Hex.RCF.RealCoefficients.CellReplayTests.Algebraic.CompleteQuote.checked,
-      ``Hex.RCF.RealCoefficients.CellReplayTests.Algebraic.CompleteQuote.source,
-      ``Hex.RCF.RealCoefficients.CellReplayTests.Operations.checked] do
+  for forbidden in Assembled.forbidden do
     if seen.contains forbidden then throwError "fresh witness reused fixture acceptance: {forbidden}"
   logInfo "fresh ordinary-kernel real witness checked from actual record assembly; complete body audit has standard three axioms"
   addDecl (.thmDecl {

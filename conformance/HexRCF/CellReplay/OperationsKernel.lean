@@ -17,13 +17,14 @@ set_option maxHeartbeats 12000000
 /- The public quotation entrypoint checks the supplied acceptance equation
 and transports it to the canonical checker. This reuses checked fixture/codec
 laws, rather than fresh literal reduction or automatic record discovery. -/
-private meta def rejected (action : MetaM Expr) : MetaM Bool :=
+private meta def rejected (expected : String) (action : MetaM Expr) : MetaM Bool :=
   fun metaContext metaState coreContext coreState => do
     try
       let _ ← action metaContext metaState coreContext coreState
       return false
     catch error =>
       if error.isInterrupt || error.isMaxHeartbeat || error.isMaxRecDepth then throw error
+      unless (← error.toMessageData.toString).startsWith expected do throw error
       return true
 elab "#operation_source_quote" : command => liftTermElabM do
   let target ← elabType (← `(∃ x : ℝ, x ^ 2 - Real.sqrt 2 ≥ 0 ∧ x ^ 2 - Real.sqrt 2 ≤ 0 ∧ (0 : ℝ) = 0))
@@ -53,14 +54,16 @@ elab "#operation_source_quote" : command => liftTermElabM do
   let falseProgram ← instantiateMVars falseProgram
   let wrongGoal ← instantiateMVars wrongGoal
   let trivial ← mkAppM ``Option.some #[Lean.mkConst ``Unit.unit]
-  for (goal,program,candidate) in [
-      (target,falseProgram,Lean.mkConst ``Operations.accepted),
-      (target,trivial,← mkEqRefl trivial),
-      (target,program,Lean.mkConst ``True.intro),
-      (wrongGoal,program,Lean.mkConst ``Operations.accepted)] do
+  for (goal,program,candidate,expected) in [
+      (target,falseProgram,Lean.mkConst ``Operations.false_refused,"(kernel) application type mismatch"),
+      (target,trivial,← mkEqRefl trivial,"rcf: expected the supplied-operation complete checker"),
+      (target,program,Lean.mkConst ``True.intro,"(kernel) application type mismatch"),
+      (wrongGoal,program,Lean.mkConst ``Operations.accepted,
+        "rcf: handler CellQuote.valuationIdentity proposed a proof of a different goal")] do
     let before := (← getMCtx).decls.toList.length
     let declarations := (← getEnv).checked.get.constants.map₂.toList.length
-    unless ← rejected (CellQuote.finishOperations goal program candidate (Lean.mkConst ``original) identity) do
+    unless ← rejected expected
+        (CellQuote.finishOperations goal program candidate (Lean.mkConst ``original) identity) do
       throwError "supplied quotation accepted a false/malformed predicate, wrong proof or changed source"
     unless (← getMCtx).decls.toList.length == before &&
         (← getEnv).checked.get.constants.map₂.toList.length == declarations do

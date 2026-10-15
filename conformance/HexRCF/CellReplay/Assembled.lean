@@ -25,14 +25,25 @@ private def note (message : String) : MetaM Unit := do
       file.flush
 
 -- Observe failure without restoring state on behalf of the quotation API.
-private meta def rejected (action : MetaM Expr) : MetaM Bool :=
+private meta def rejected (expected : String) (action : MetaM Expr) : MetaM Bool :=
   fun metaContext metaState coreContext coreState => do
     try
       let _ ← action metaContext metaState coreContext coreState
       return false
     catch error =>
       if error.isInterrupt || error.isMaxHeartbeat || error.isMaxRecDepth then throw error
+      -- Assert this control's diagnostic; every unrelated failure, including
+      -- an untagged kernel resource error, remains a test failure.
+      unless (← error.toMessageData.toString).startsWith expected do throw error
       return true
+
+def forbidden : Array Name := #[
+  ``CompleteQuote.checked, ``CompleteQuote.source,
+  ``Hex.RCF.RealCoefficients.CellReplayTests.Operations.checked,
+  ``Hex.RCF.RealCoefficients.CellReplayTests.Operations.accepted,
+  ``Hex.RCF.RealCoefficients.CellReplayTests.Operations.source,
+  ``Hex.RCF.RealCoefficients.CellReplayTests.Operations.operations,
+  ``Check.source, ``CellBuild.build, ``ScalarPacket.build, ``ScalarPacket.buildLiteral]
 
 syntax (name := assembledSource) "#assembled_source" : command
 @[command_elab assembledSource]
@@ -66,6 +77,10 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
   unless negativeSource.coefficients.size == 1 &&
       (← isDefEq negativeSource.coefficients[0]! (← elabTerm (← `((Real.sqrt 2 : ℝ))) none)) do
     throwError "negative source did not retain its positive generator"
+  let foreign ← elabType (← `(∃ x : ℝ, x ^ 2 - Real.sqrt 3 ≥ 0 ∧
+    x ^ 2 - Real.sqrt 3 ≤ 0 ∧ (0 : ℝ) = 0))
+  synthesizeSyntheticMVarsNoPostponing
+  let foreign ← instantiateMVars foreign
   let guarded ← elabType (← `(∃ x : ℝ, x ^ 2 - Real.sqrt 2 ≥ 0 ∧
     x ^ 2 - Real.sqrt 2 ≤ 0 ∧ (0 : ℝ) / (Real.sqrt 2 * Real.sqrt 2 - 2) = 0))
   synthesizeSyntheticMVarsNoPostponing
@@ -95,11 +110,10 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
   note "reached operations collected; ordinary kernel acceptance begins"
   let (record,rawProof) ← checkedRecordProof program
   let statement ← mkEq program (← mkAppM ``Option.some #[record])
+  -- Share one typed acceptance theorem across the refusal controls. Passing
+  -- raw conversion proofs there would repeat the complete reader reduction.
   let proof ← Hex.RCF.checkProof `nativeCompleteCellAcceptance statement
     (mkExpectedPropHint rawProof statement)
-  let type ← inferType proof
-  let _ ← auditProof proof type
-  kernelCheck `__nativeCompleteCellAcceptance type proof
   note s!"original complete packet acceptance checked; record={record.getAppFn.constName!}"
   let quoted ← CellQuote.finishOperations target program rawProof realModel identity
   let name := `Hex.RCF.RealCoefficients.CellReplayTests.Assembled.source
@@ -113,21 +127,29 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
     throwError "fresh assembled source proof has unexpected axioms"
   let seen ← Hex.RCF.ProofEvidence.projectDependencies #[name]
   for required in #[``CellOperations.accept?_iff,``CompleteReplay.check_sound,
-      ``Tower.Model.root,``Hex.RCF.SelectedRootTests.Data.alpha_value] do
+      ``Tower.Model.root,``Hex.RCF.SelectedRootTests.Data.alpha_value,
+      ``Hex.RealClosure.Algebraic.Element.replayMul_eq] do
     unless seen.contains required do throwError "fresh source proof omitted an actual bridge: {required}"
-  for forbidden in #[``CompleteQuote.checked,``CompleteQuote.source,``Hex.RCF.RealCoefficients.CellReplayTests.Operations.checked,
-      ``Hex.RCF.RealCoefficients.CellReplayTests.Operations.source,``Check.source,``CellBuild.build,``ScalarPacket.build] do
-    if seen.contains forbidden then throwError "fresh source proof reused fixture acceptance or a producer: {forbidden}"
-  for rejectedTarget in [negative,guarded] do
+  for name in forbidden do
+    if seen.contains name then throwError "fresh source proof reused fixture acceptance, its dictionary or a producer: {name}"
+  for (rejectedTarget,guardIdentities,expected) in [
+      (negative,#[],"rcf: checked formula has a different polynomial leaf"),
+      (foreign,#[],"rcf: handler CellQuote.valuationIdentity proposed a proof of a different goal"),
+      (guarded,#[],"rcf: cell checker has a different original divisor identity count"),
+      (guarded,#[Lean.mkConst ``True.intro],"rcf: cell checker has a different original divisor count")] do
     let before := (← getMCtx).decls.toList.length
     let declarations := (← getEnv).checked.get.constants.map₂.toList.length
-    unless ← rejected (CellQuote.finishOperations rejectedTarget program proof realModel identity) do
-      throwError "fresh packet accepted a wrong selected value or omitted original guard"
+    unless ← rejected expected
+        (CellQuote.finishOperations rejectedTarget program proof realModel identity guardIdentities) do
+      throwError "fresh packet accepted a changed formula, fixed valuation or omitted original guard"
     unless (← getMCtx).decls.toList.length == before &&
         (← getEnv).checked.get.constants.map₂.toList.length == declarations do
       throwError "failed original-goal quotation leaked metavariables or proof declarations"
-  note "fresh original-goal proof checked; actual records/model/source bridges and selected-value/guard refusals audited"
+  note "fresh original-goal proof checked; actual record equations, model/source bridges and exact formula/valuation/guard refusals audited"
   logInfo "fresh original real goal proved from actual reached-record assembly; standard three axioms, no fixture acceptance theorem"
+  addDecl (.thmDecl {
+    name := `Hex.RCF.RealCoefficients.CellReplayTests.Assembled.controlsComplete
+    levelParams := [], type := Lean.mkConst ``True, value := Lean.mkConst ``True.intro })
 #assembled_source
 
 end Hex.RCF.RealCoefficients.CellReplayTests.Assembled
