@@ -8,6 +8,7 @@ import io
 import json
 import os
 from pathlib import Path
+import runpy
 import subprocess
 import shutil
 import tempfile
@@ -44,6 +45,56 @@ class ArchivedCapProposalTest(unittest.TestCase):
             self.assertEqual(policy['previous_exports'][name], hashlib.sha256(exported).hexdigest())
             self.assertGreater(policy['seconds'], json.loads(exported)['results'][0]['config']['max_seconds_per_call'])
         self.assertEqual(set(policy['previous_exports']), expected)
+
+
+class BelowResolutionTest(unittest.TestCase):
+    def setUp(self):
+        root = Path(collector.__file__).resolve().parents[2]
+        archive = root / 'reports/bench-results/sign-det-phase6-comparison/initial-capture'
+        self.raw = gzip.decompress((archive / '0-0-candidate.json.gz').read_bytes())
+        self.document = json.loads(self.raw)
+        self.name = self.document['results'][0]['function']
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.path = Path(self.temp.name) / 'export.json'
+
+    def accepted(self, code=2):
+        self.path.write_text(json.dumps(self.document))
+        return collector.below_resolution_export(code, self.path, self.name)
+
+    def test_actual_complete_below_floor_export_is_retained(self):
+        self.assertTrue(self.accepted())
+
+    def test_other_exit_codes_remain_fatal(self):
+        for code in (1, 7, -15):
+            self.assertFalse(self.accepted(code))
+
+    def test_failure_and_integrity_mutations_are_refused(self):
+        for key, value in [('kind', 'fixed'), ('function', 'different'),
+                           ('budget_truncated', True), ('verdict', 'consistent_with_declared_complexity'),
+                           ('trial_summaries', [{}]), ('points', [])]:
+            with self.subTest(key=key):
+                self.document = json.loads(self.raw)
+                self.document['results'][0][key] = value
+                self.assertFalse(self.accepted())
+        for key, value in [('status', 'timedOut'), ('error', 'failed'), ('result_hash', None),
+                           ('below_signal_floor', False), ('inner_repeats', 0),
+                           ('total_nanos', 0), ('per_call_nanos', float('nan')),
+                           ('trial_index', 1), ('param', 7)]:
+            with self.subTest(key=key):
+                self.document = json.loads(self.raw)
+                self.document['results'][0]['points'][0][key] = value
+                self.assertFalse(self.accepted())
+
+    def test_partial_schedule_is_not_complete(self):
+        self.document['results'][0]['points'].pop()
+        self.assertFalse(self.accepted())
+
+    def test_malformed_or_missing_export_remains_fatal(self):
+        self.assertFalse(collector.below_resolution_export(2, self.path, self.name))
+        for raw in ('not json', '{}', '{"results":[null]}'):
+            self.path.write_text(raw)
+            self.assertFalse(collector.below_resolution_export(2, self.path, self.name))
 
 
 class RegistrationTest(unittest.TestCase):
@@ -199,7 +250,15 @@ elif sys.argv[1]=='run':
     if mode in ('cap-null','cap-mismatch'):
         result['points'].insert(0,{'param':32,'status':'ok','error':None,'per_call_nanos':50,
                                   'result_hash':None if mode=='cap-null' else arm})
+    if mode=='below-resolution' and arm=='candidate':
+        result.update(verdict='inconclusive', trial_summaries=[])
+        result['config'].update(outer_trials=1, param_schedule={'kind':'custom','params':[64]})
+        result['points'][0].update(error=None, below_signal_floor=True,
+                                   total_nanos=100, inner_repeats=1, trial_index=0)
+    elif mode=='below-resolution':
+        result['config'].update(outer_trials=1, param_schedule={'kind':'custom','params':[64]})
     target.write_text(json.dumps({'results':[result]}))
+    if mode=='below-resolution' and arm=='candidate':sys.exit(2)
     if (mode=='interrupt' or (mode=='cap-interrupt' and adapted)) and arm=='candidate':
         worker=subprocess.Popen([sys.executable,'-c','import time; time.sleep(60)'])
         Path(__file__+'.worker-pid').write_text(str(worker.pid))
@@ -274,6 +333,7 @@ elif sys.argv[1]=='run':
         runs = [r['command'] for r in commands if r['command'][1:2] == ['run']]
         self.assertEqual([Path(c[0]).name for c in runs],
                          ['baseline','candidate','candidate','baseline','baseline','candidate','candidate','baseline'])
+        self.assertTrue(all(c[c.index('--outer-trials') + 1] == '1' for c in runs))
         guard = commands[-1]['command']
         self.assertEqual(guard[2:], [str(output / f'{trial}-0-{arm}.json')
                                     for arm in ('baseline','candidate') for trial in range(4)])
@@ -286,6 +346,15 @@ elif sys.argv[1]=='run':
         self.assertEqual(self.context['outcome'], 'preflight')
         self.assertFalse(self.context['measurements_collected'])
         self.assertNotIn('pass', self.context)
+
+    def test_sturm_function_mismatch_keeps_cross_arm_error(self):
+        path = self.binaries['candidate']
+        path.write_text(path.read_text().replace(
+            '    target.write_text(', "    result['function']='wrong'\n    target.write_text("))
+        self.bind_decision()
+        with self.assertRaisesRegex(RuntimeError, 'cross-arm input/configuration/hash mismatch'):
+            self.run_collector()
+        self.assertEqual(self.context['parent_failures'][1]['function'], 'wrong')
 
     def mode(self, value):
         path = self.binaries['candidate']
@@ -828,6 +897,33 @@ elif sys.argv[1]=='run':
         self.assertEqual(failure['returncode'], 7)
         self.assertEqual(failure['results'][0]['points'][0]['status'], 'timedOut')
 
+    def test_below_resolution_continues_all_blocks_to_native_guard(self):
+        self.mode('below-resolution')
+        baseline = self.binaries['baseline']
+        baseline.write_text(baseline.read_text().replace("mode='ok'", "mode='below-resolution'"))
+        self.bind_decision()
+        self.guard_code(2)
+        code, _ = self.run_collector()
+        self.assertEqual(code, 1)
+        self.assertEqual(self.context['status'], 'completed')
+        self.assertEqual(self.context['outcome'], 'inconclusive')
+        self.assertFalse(self.context['pass'])
+        self.assertEqual(len(self.context['below_resolution_exports']), 4)
+        self.assertEqual(len(self.context['paired_ratios']), 4)
+        self.assertEqual(len(self.context['guards']), 1)
+
+    def test_below_resolution_cannot_pass_with_wrong_checker_result(self):
+        self.mode('below-resolution')
+        baseline = self.binaries['baseline']
+        baseline.write_text(baseline.read_text().replace("mode='ok'", "mode='below-resolution'"))
+        self.bind_decision()
+        self.assertEqual(self.run_collector()[0], 1)
+        self.assertEqual(self.context['outcome'], 'invalid')
+        self.assertFalse(self.context['pass'])
+        self.assertEqual(self.context['guards'][0]['returncode'], 0)
+        self.assertEqual(self.context['below_resolution_guard_passes'],
+                         ['Hex.SturmBench.runInteger'])
+
     def test_nonzero_parent_exit_also_stops_its_worker(self):
         self.mode('exit-worker')
         with self.assertRaisesRegex(RuntimeError, 'parent measurement failed'):
@@ -861,6 +957,303 @@ elif sys.argv[1]=='run':
         self.assertEqual(code, 1)
         self.assertEqual(self.context['outcome'], 'invalid')
         self.assertEqual(self.context['regression_findings'], ['Hex.SturmFrontendBench.runPrepared'])
+
+
+class SignDetScopeTest(unittest.TestCase):
+    def test_real_bench_local_import_closure(self):
+        root = Path(collector.__file__).resolve().parents[2]
+        parse_imports = runpy.run_path(str(root / 'scripts/ci/check_benches_mathlib_free.py'))['_parse_imports']
+        for profile, first in (('sign-det', 'HexSignDet.Bench'),
+                               ('sign-det-interacting', 'HexSignDet.InteractingBench')):
+            pending, found = [first], set()
+            while pending:
+                module = pending.pop()
+                path = root / 'bench' / Path(*module.split('.')).with_suffix('.lean')
+                if not path.exists() or str(path.relative_to(root)) in found:
+                    continue
+                found.add(str(path.relative_to(root)))
+                pending.extend(parse_imports(path))
+            self.assertEqual(set(collector.registration_paths(profile)), found)
+
+    def listing(self, profile):
+        params = collector.SIGN_DET_PARAMETRIC if profile == 'sign-det' else set()
+        fixed = collector.timing_fixed(profile) | (collector.SIGN_DET_REFERENCES if params else set())
+        return '\n'.join([*[name + ' expected complexity: n' for name in sorted(params)],
+                          *[name + ' [fixed] repeats=1' for name in sorted(fixed)]])
+
+    def test_primary_complete_scope(self):
+        names, fixed, excluded = registrations(self.listing('sign-det'), 'sign-det')
+        self.assertEqual(set(names), collector.SIGN_DET_PARAMETRIC | collector.SIGN_DET_FIXED)
+        self.assertEqual(len(names), 31)
+        self.assertEqual(set(fixed), collector.SIGN_DET_FIXED | collector.SIGN_DET_REFERENCES)
+        self.assertEqual(set(excluded), collector.SIGN_DET_REFERENCES)
+
+    def test_interacting_complete_scope(self):
+        names, fixed, excluded = registrations(self.listing('sign-det-interacting'), 'sign-det-interacting')
+        self.assertEqual(set(names), collector.INTERACTING_FIXED)
+        self.assertEqual(names, fixed)
+        self.assertEqual(excluded, [])
+
+    def test_missing_duplicate_extra_and_unhashed_refused(self):
+        for profile in ('sign-det', 'sign-det-interacting'):
+            lines = self.listing(profile).splitlines()
+            for text in ('\n'.join(lines[1:]), '\n'.join(lines + lines[:1]),
+                         '\n'.join(lines + ['Other.run [fixed] repeats=1']),
+                         '\n'.join(lines) + '\n(no Hashable)'):
+                with self.subTest(profile=profile, text=text), self.assertRaises(RuntimeError):
+                    registrations(text, profile)
+
+    def test_registration_hash_addition_and_formatting_only(self):
+        old = 'setup_fixed_benchmark run where { repeats := 1, minTotalSeconds := 0.1 }'
+        new = 'setup_fixed_benchmark run where {\n repeats := 1, minTotalSeconds := 0.1,\n expectedHash := some 0x1234 }'
+        self.assertEqual(collector.registration_source(old), collector.registration_source(new))
+        for changed in (new.replace('0.1', '0.2'), new.replace('run where', 'other where')):
+            self.assertNotEqual(collector.registration_source(old), collector.registration_source(changed))
+
+    def test_registration_string_spaces_are_significant(self):
+        self.assertNotEqual(collector.registration_source('def s := "a b"'),
+                            collector.registration_source('def s := "ab"'))
+
+    def test_callback_indentation_and_unicode_identifier_boundaries(self):
+        for old, new in (
+                ('def f := do\n  for i in xs do\n    a\n    b\n  return x',
+                 'def f := do\n  for i in xs do\n    a\n  b\n  return x'),
+                ('def f := x₁ y', 'def f := x₁y'),
+                ('def s := "a  \nb"', 'def s := "a\nb"')):
+            self.assertNotEqual(collector.registration_source(old), collector.registration_source(new))
+
+    def test_complex_fixed_configuration_layout_is_preserved(self):
+        old = 'setup_fixed_benchmark f where {\n expectedHash := some (Id.run do\n   a\n   b) }'
+        new = old.replace('   b', ' b')
+        self.assertNotEqual(collector.registration_source(old), collector.registration_source(new))
+
+    def test_comment_mask_preserves_code_columns_and_nested_comments(self):
+        for old, new in (
+                ('def f := do\n    a\n    /- c -/ b', 'def f := do\n    a\n    /- c\n-/ b'),
+                ('def f := do\n    /- c -/ a', 'def f := do\n    /- longer -/ a')):
+            self.assertNotEqual(collector.registration_source(old), collector.registration_source(new))
+        self.assertEqual(collector.registration_source('def f := 1 /- x /- y -/ z -/'),
+                         collector.registration_source('def f := 1'))
+        text = 'def s := "-- /- literal -/"\ndef c := \'"\' -- comment\ndef f := 1'
+        self.assertIn('"-- /- literal -/"', collector.source_layout(text))
+        self.assertTrue(collector.source_layout(text).endswith('def f := 1'))
+
+    def test_comma_free_configuration_fields_keep_layout(self):
+        old = 'setup_fixed_benchmark f where { a := f\n  b }'
+        new = old.replace('\n  b', '\n      b')
+        self.assertNotEqual(collector.registration_source(old), collector.registration_source(new))
+
+    def test_current_fixed_registrations_match_unguarded_form(self):
+        root = Path(collector.__file__).resolve().parents[2]
+        for module, names, repeats in (('SharedRoots', ('runOne', 'runTwo', 'runThree'), 6),
+                                       ('InteractingBench', ('depthOne', 'depthTwo'), 1)):
+            new = (root / 'bench/HexSignDet' / (module + '.lean')).read_text()
+            old = new
+            for name in names:
+                pattern = r'setup_fixed_benchmark ' + name + r'\s+where\s+\{[^}]+\}'
+                old, count = collector.re.subn(pattern,
+                    f'setup_fixed_benchmark {name} where {{ repeats := {repeats}, '
+                    'minTotalSeconds := 0.1, maxSecondsPerCall := 10 }', old)
+                self.assertEqual(count, 1)
+            self.assertEqual(collector.registration_source(old), collector.registration_source(new))
+
+    def test_hash_text_in_strings_and_callback_records_is_not_erased(self):
+        for old, new in (
+                ('def s := "x"', 'def s := "x, expectedHash := some 0x1234"'),
+                ('def r := { other := 1 }', 'def r := { other := 1, expectedHash := some 0x1234 }'),
+                ('setup_fixed_benchmark run where config\ndef r := { other := 1 }',
+                 'setup_fixed_benchmark run where config\ndef r := { other := 1, expectedHash := some 0x1234 }')):
+            self.assertNotEqual(collector.registration_source(old), collector.registration_source(new))
+
+    def test_hash_field_first_middle_and_only(self):
+        for old, new in (
+                ('{ repeats := 1 }', '{ expectedHash := some 0x1234, repeats := 1 }'),
+                ('{ repeats := 1, warmup := true }', '{ repeats := 1, expectedHash := some 0x1234, warmup := true }'),
+                ('{}', '{ expectedHash := some 0x1234 }')):
+            prefix = 'setup_fixed_benchmark run where '
+            self.assertEqual(collector.registration_source(prefix + old),
+                             collector.registration_source(prefix + new))
+
+    def test_fixed_pair_guard_strengthening_and_integer_ratios(self):
+        base = {'kind': 'fixed', 'function': 'case', 'budget_truncated': False,
+                'hashable': True, 'hashes_agree': True, 'observed_hash': 'same',
+                'config': {'repeats': 1, 'expected_hash': None, 'min_total_seconds': 0.1},
+                'points': [{'repeat_index': 0, 'result_hash': 'same', 'status': 'ok',
+                            'total_nanos': 1005, 'inner_repeats': 10}]}
+        current = deepcopy(base)
+        current['config']['expected_hash'] = 'same'
+        current['points'][0]['total_nanos'] = 1105
+        collector.validate_pair(base, current, 'case', 'fixed')
+        self.assertEqual(collector.paired_ratios(base, current, 'fixed'),
+                         [{'repeat_index': 0, 'candidate_over_baseline': 1.1}])
+        for mutation in ('removal', 'timing', 'hash', 'observed', 'kind', 'subject', 'unhashable'):
+            a, b = deepcopy(base), deepcopy(current)
+            if mutation == 'removal':
+                a['config']['expected_hash'], b['config']['expected_hash'] = 'same', None
+            elif mutation == 'timing':
+                b['config']['min_total_seconds'] = 0.2
+            elif mutation == 'hash':
+                b['config']['expected_hash'] = 'wrong'
+            elif mutation == 'observed':
+                b['observed_hash'] = 'wrong'
+            elif mutation == 'kind':
+                b['kind'] = 'parametric'
+            elif mutation == 'subject':
+                b['function'] = 'other'
+            else:
+                b['hashable'] = False
+            with self.subTest(mutation=mutation), self.assertRaises(RuntimeError):
+                collector.validate_pair(a, b, 'case', 'fixed')
+
+
+class SignDetCollectorTest(unittest.TestCase):
+    """Exercise the existing collector's complete mixed/fixed paths, without timings."""
+    setUp = CollectorTest.setUp
+    bind_decision = CollectorTest.bind_decision
+    run_collector = CollectorTest.run_collector
+
+    def prepare(self, profile, mode='ok'):
+        for name in collector.registration_paths(profile):
+            target = self.root / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text('def callback := 1\n')
+        subprocess.check_call(['git', 'add', '.'], cwd=self.root, stdout=subprocess.DEVNULL)
+        subprocess.check_call(['git', '-c', 'user.name=Control', '-c', 'user.email=control@example.test',
+                               'commit', '-qm', 'synthetic sign-determination registrations'], cwd=self.root)
+        head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=self.root, text=True).strip()
+        for path in self.sources.values():
+            source = json.loads(path.read_text())
+            source['head'] = head
+            source['sources'].update({name: collector.digest(self.root / name)
+                                      for name in collector.registration_paths(profile)})
+            path.write_text(json.dumps(source))
+        listing = SignDetScopeTest().listing(profile)
+        for arm, path in self.binaries.items():
+            program = path.read_text()
+            start = program.index('    print(')
+            end = program.index('\n', start)
+            program = program[:start] + '    print(' + repr(listing) + ')' + program[end:]
+            fixed = '''
+    if sys.argv[2] in FIXED:
+        result.update(kind='fixed',hashable=True,hashes_agree=True,observed_hash='same')
+        result['config'].update(repeats=1,min_total_seconds=0.1,
+                                expected_hash='same' if arm=='candidate' else None)
+        result['points']=[{'repeat_index':0,'result_hash':'same','status':'ok',
+                           'inner_repeats':1,'total_nanos':100_000_000}]
+        if MODE=='kind' and arm=='candidate':result['kind']='parametric'
+        if MODE=='error' and arm=='candidate':
+            result['points'][0].update(status='error',error='fixed failure')
+        if MODE=='hash' and arm=='candidate':result['hashes_agree']=False
+'''.replace('FIXED', repr(sorted(collector.timing_fixed(profile)))).replace('MODE', repr(mode))
+            program = program.replace('    target.write_text(', fixed + '    target.write_text(')
+            path.write_text(program)
+        self.bind_decision()
+        decision = json.loads(self.decision.read_text())
+        decision['profile'] = profile
+        self.decision.write_text(json.dumps(decision))
+
+    def test_complete_primary_mixed_blocks_and_fixed_options(self):
+        self.prepare('sign-det')
+        code, _ = self.run_collector(extra=['--profile', 'sign-det'])
+        self.assertEqual(code, 0)
+        self.assertEqual(self.context['outcome'], 'pass')
+        self.assertEqual(len(self.context['guards']), 31)
+        runs = [r['command'] for r in self.context['commands'] if r['command'][1:2] == ['run']]
+        self.assertEqual(len(runs), 31 * 4 * 2)
+        for command in runs:
+            self.assertEqual('--outer-trials' in command, command[2] in collector.SIGN_DET_PARAMETRIC)
+        for pair in range(0, len(runs), 2):
+            block = pair // (31 * 2)
+            self.assertEqual([Path(c[0]).name for c in runs[pair:pair+2]],
+                             ['baseline', 'candidate'] if block % 2 == 0 else ['candidate', 'baseline'])
+        for record in self.context['commands']:
+            command = record['command']
+            if command[1:2] == ['verify']:
+                self.assertEqual(len(command[2:]), 34)
+                self.assertEqual(len(set(command[2:])), 34)
+        self.assertEqual(set(self.context['excluded_registrations']), collector.SIGN_DET_REFERENCES)
+
+    def test_complete_interacting_fixed_blocks(self):
+        self.prepare('sign-det-interacting')
+        code, _ = self.run_collector(extra=['--profile', 'sign-det-interacting'])
+        self.assertEqual(code, 0)
+        self.assertEqual(len(self.context['guards']), 2)
+        self.assertEqual(self.context['outcome'], 'pass')
+        runs = [r['command'] for r in self.context['commands'] if r['command'][1:2] == ['run']]
+        self.assertEqual(len(runs), 16)
+        self.assertTrue(all('--outer-trials' not in c for c in runs))
+
+    def test_fixed_preflight_without_measurements(self):
+        self.prepare('sign-det-interacting')
+        code, _ = self.run_collector(extra=['--profile', 'sign-det-interacting', '--preflight'])
+        self.assertEqual(code, 0)
+        self.assertFalse(self.context['measurements_collected'])
+        self.assertFalse(self.context['attempt_reserved'])
+        self.assertEqual(self.lease_calls, 0)
+
+    def test_wrong_profile_refused_before_reservation(self):
+        self.prepare('sign-det-interacting')
+        with self.assertRaisesRegex(RuntimeError, 'profile differs'):
+            self.run_collector(extra=['--profile', 'sign-det'])
+        self.assertFalse(self.context['attempt_reserved'])
+
+    def test_non_sturm_cap_adaptation_is_refused(self):
+        with redirect_stdout(io.StringIO()), patch('sys.stderr', new=io.StringIO()):
+            with self.assertRaises(SystemExit) as error:
+                collector.main(['--profile', 'sign-det-interacting', '--cap-from', 'old',
+                                '--root', str(self.root), '--guard', str(self.guard),
+                                '--decision', str(self.decision), '--output', str(self.base / 'unused'),
+                                '--baseline', str(self.binaries['baseline']),
+                                '--candidate', str(self.binaries['candidate']),
+                                '--baseline-source', str(self.sources['baseline']),
+                                '--candidate-source', str(self.sources['candidate'])])
+        self.assertEqual(error.exception.code, 2)
+        self.assertFalse((self.base / 'unused').exists())
+
+    def test_changed_helper_source_refused_before_reservation(self):
+        self.prepare('sign-det')
+        path = 'bench/HexSignDet/Phases.lean'
+        (self.root / path).write_text('def callback := 2\n')
+        subprocess.check_call(['git', 'add', path], cwd=self.root, stdout=subprocess.DEVNULL)
+        subprocess.check_call(['git', '-c', 'user.name=Control', '-c', 'user.email=control@example.test',
+                               'commit', '-qm', 'changed timed work'], cwd=self.root)
+        candidate = json.loads(self.sources['candidate'].read_text())
+        candidate['head'] = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=self.root, text=True).strip()
+        candidate['sources'][path] = collector.digest(self.root / path)
+        self.sources['candidate'].write_text(json.dumps(candidate))
+        self.bind_decision()
+        decision = json.loads(self.decision.read_text())
+        decision['profile'] = 'sign-det'
+        self.decision.write_text(json.dumps(decision))
+        with self.assertRaisesRegex(RuntimeError, 'registration inputs/configuration changed'):
+            self.run_collector(extra=['--profile', 'sign-det'])
+        self.assertFalse(self.context['attempt_reserved'])
+        self.assertFalse(self.context['measurements_collected'])
+
+    def test_wrong_fixed_kind_retains_consumed_failure(self):
+        self.prepare('sign-det-interacting', mode='kind')
+        with self.assertRaisesRegex(RuntimeError, 'invalid parent result'):
+            self.run_collector(extra=['--profile', 'sign-det-interacting'])
+        self.assertEqual(self.context['status'], 'failed')
+        self.assertTrue(self.context['measurements_collected'])
+        self.assertTrue(self.context['attempt_reserved'])
+
+    def test_failed_fixed_repeat_keeps_index(self):
+        self.prepare('sign-det-interacting', mode='error')
+        with self.assertRaisesRegex(RuntimeError, 'incomplete/failed parent measurement'):
+            self.run_collector(extra=['--profile', 'sign-det-interacting'])
+        point = self.context['parent_failures'][1]['points'][0]
+        self.assertEqual(point['repeat_index'], 0)
+        self.assertEqual(point['error'], 'fixed failure')
+        self.assertNotIn('param', point)
+        self.assertTrue(self.context['attempt_reserved'])
+
+    def test_failed_fixed_hash_keeps_arm_status(self):
+        self.prepare('sign-det-interacting', mode='hash')
+        with self.assertRaisesRegex(RuntimeError, 'fixed result hash mismatch'):
+            self.run_collector(extra=['--profile', 'sign-det-interacting'])
+        self.assertFalse(self.context['parent_failures'][1]['hashes_agree'])
+        self.assertTrue(self.context['attempt_reserved'])
 
 
 class RuntimeSetupTest(unittest.TestCase):

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare frozen native Sturm sources with the pinned LeanBench baseline rule.
+"""Compare frozen native sources with the pinned LeanBench baseline rule.
 
 Four trial-major AB/BA blocks run each full declared parent ladder once per
 arm. Parameters, tuning, warmup and
@@ -37,6 +37,144 @@ AUXILIARY = "Hex.SturmBench.runSigns"
 NATIVE_FIXED = {"Hex.SturmExternalBench.runNative" + suffix
                 for suffix in ("Count", "Mixed", "Negative", "Common", "4", "16", "32", "64")}
 
+SIGN_DET_PARAMETRIC = {"Hex.SignDetBench." + name for name in (
+    "runProduce", "runDirect", "runTree", "runGraph", "runQueries", "runProducts",
+    "runMatrices", "runSolvers", "runSigns", "runSmallReduced", "runSmallFull",
+    "Height.runReduce", "Height.runCheck", "Joint.runCompletion", "Joint.runComparison",
+    "Joint.runReduced", "Joint.runDirect", "Joint.runCheckReduced", "Joint.runCheckDirect",
+    "MaximalMatrix.runTensorCheck", "NestedSigns.runSign", "NestedTables.runProduce1",
+    "NestedTables.runTree1", "NestedTables.runProduce2", "NestedTables.runTree2")}
+SIGN_DET_FIXED = {"Hex.SignDetBench." + name for name in (
+    "maximalOne", "maximalTwo", "maximalThree", "SharedRoots.runOne",
+    "SharedRoots.runTwo", "SharedRoots.runThree")}
+SIGN_DET_REFERENCES = {"Hex.SignDetBench.MaximalMatrix.reference" + str(n) for n in (1, 2, 3)}
+INTERACTING_FIXED = {"Hex.SignDetBench.InteractingBench." + name
+                     for name in ("depthOne", "depthTwo")}
+PROFILES = ("sturm", "sign-det", "sign-det-interacting")
+
+
+def timing_fixed(profile):
+    return SIGN_DET_FIXED if profile == "sign-det" else (
+        INTERACTING_FIXED if profile == "sign-det-interacting" else set())
+
+
+def registration_paths(profile):
+    if profile == "sturm":
+        return ("bench/HexSturm/Bench.lean", "bench/HexSturm/Frontend.lean")
+    names = ("InteractingBench", "InteractingTrace") if profile == "sign-det-interacting" else (
+        "Bench", "Phases", "Small", "Joint", "Paired", "Maximal", "MaximalMatrix",
+        "Height", "NestedSigns", "NestedTables", "SharedRoots", "Input")
+    return tuple("bench/HexSignDet/" + name + ".lean" for name in names)
+
+
+def source_layout(text):
+    """Mask comments without moving any following code or string literals."""
+    masked = list(text)
+    i = 0
+    while i < len(text):
+        if text[i] == "'":
+            char = re.match(r"'(?:\\.|[^'\\\n])'", text[i:])
+            if char:
+                i += char.end()
+                continue
+        if text[i] == '"':
+            i += 1
+            while i < len(text):
+                if text[i] == "\\":
+                    i += 2
+                elif text[i] == '"':
+                    i += 1
+                    break
+                else:
+                    i += 1
+            continue
+        start = i
+        if text.startswith("/-", i):
+            depth, i = 1, i + 2
+            while i < len(text) and depth:
+                if text.startswith("/-", i):
+                    depth, i = depth + 1, i + 2
+                elif text.startswith("-/", i):
+                    depth, i = depth - 1, i + 2
+                else:
+                    i += 1
+            if depth:
+                raise RuntimeError("unclosed source comment")
+        elif text.startswith("--", i):
+            while i < len(text) and text[i] != "\n":
+                i += 1
+        else:
+            i += 1
+            continue
+        for position in range(start, i):
+            if masked[position] != "\n":
+                masked[position] = " "
+    return "".join(masked)
+
+
+def registration_source(text):
+    """Preserve layout outside simple fixed configurations and string bytes.
+
+    Only flat, layout-independent fixed registration records are canonicalized.
+    Callback code, identifiers and meaningful indentation remain exact. Actual
+    exports separately check result hashes and one-way guard strengthening.
+    """
+    text = source_layout(text)
+    token_pattern = r'"(?:\\.|[^"\\])*"|[\w\x27.\u00ab\u00bb]+|[^\s]'
+    matches = list(re.finditer(token_pattern, text))
+    tokens = [match.group() for match in matches]
+    replacements = []
+    i = 0
+    while i + 3 < len(tokens):
+        if tokens[i] != "setup_fixed_benchmark" or tokens[i + 2:i + 4] != ["where", "{"]:
+            i += 1
+            continue
+        depth, j = 1, i + 4
+        while j < len(tokens) and depth:
+            if tokens[j] == "{":
+                depth += 1
+            elif tokens[j] == "}":
+                depth -= 1
+            j += 1
+        if depth:
+            raise RuntimeError("unclosed fixed registration configuration")
+        values = tokens[i:j]
+        # Complex Lean expressions can themselves depend on layout. Leave them
+        # exact rather than treating their whitespace as harmless formatting.
+        if any(token in {"do", "by", "match", "let", "fun", "if", "where", "{"}
+               for token in values[4:-1]):
+            i = j
+            continue
+        # A comma-free field boundary can depend on indentation, even without
+        # a do/match expression. Reformat only explicit comma-separated fields.
+        if any("\n" in text[matches[k].end():matches[k + 1].start()] and
+               tokens[k] not in {",", "{"} and tokens[k + 1] != "}"
+               for k in range(i + 3, j - 1)):
+            i = j
+            continue
+        kept = values[:4]
+        k = 4
+        while k < len(values):
+            if (values[k:k + 4] == ["expectedHash", ":", "=", "some"] and
+                    k + 5 < len(values) and re.fullmatch(r"0x[0-9a-fA-F]+", values[k + 4]) and
+                    values[k + 5] in {",", "}"} and kept[-1] in {",", "{"}):
+                if kept[-1] == ",":
+                    kept.pop()
+                    k += 5
+                else:
+                    k += 6 if values[k + 5] == "," else 5
+                continue
+            kept.append(values[k])
+            k += 1
+        replacements.append((matches[i].start(), matches[j - 1].end(), " ".join(kept)))
+        i = j
+    for start, end, replacement in reversed(replacements):
+        text = text[:start] + replacement + text[end:]
+    # Keep the complete literal bytes as well: rstrip/blank-line removal must
+    # not hide whitespace changes inside a multiline string.
+    strings = tuple(re.findall(r'"(?:\\.|[^"\\])*"', text))
+    return tuple(line.rstrip() for line in text.splitlines() if line.strip()), strings
+
 
 def native_harness_pins(manifest: dict) -> dict:
     """Keep the runner and its CLI dependency fixed; ignore proof-only pins."""
@@ -48,13 +186,23 @@ def native_harness_pins(manifest: dict) -> dict:
     return selected
 
 
-def registrations(text: str) -> tuple[list[str], list[str], list[str]]:
+def registrations(text: str, profile="sturm") -> tuple[list[str], list[str], list[str]]:
     """Select claimed timing ladders and require every known native hash control."""
     if "no Hashable" in text:
         raise RuntimeError("unhashed benchmark registration")
     parametric = sorted(line.strip().split()[0] for line in text.splitlines()
                         if "expected complexity:" in line)
     fixed = sorted(line.strip().split()[0] for line in text.splitlines() if "[fixed]" in line)
+    if profile != "sturm":
+        expected_params = SIGN_DET_PARAMETRIC if profile == "sign-det" else set()
+        references = SIGN_DET_REFERENCES if profile == "sign-det" else set()
+        selected_fixed = timing_fixed(profile)
+        if (profile not in PROFILES or set(parametric) != expected_params or
+                len(parametric) != len(expected_params) or
+                set(fixed) != selected_fixed | references or
+                len(fixed) != len(selected_fixed | references)):
+            raise RuntimeError("unexpected sign-determination registration scope")
+        return sorted(expected_params | selected_fixed), fixed, sorted(references)
     if not parametric or len(set(parametric)) != len(parametric) or not all(
             name.startswith(("Hex.SturmBench.", "Hex.SturmFrontendBench.")) for name in parametric):
         raise RuntimeError("unexpected computational benchmark registration")
@@ -68,6 +216,99 @@ def registrations(text: str) -> tuple[list[str], list[str], list[str]]:
     if not selected:
         raise RuntimeError("empty timing selection")
     return selected, native, excluded
+
+
+def validate_pair(a, b, name, kind):
+    """Check paired parent exports before the native guard pools all blocks."""
+    for result in (a, b):
+        if result.get("function") != name:
+            raise RuntimeError("cross-arm input/configuration/hash mismatch: " + name)
+        if (result.get("kind") != kind or result.get("budget_truncated") or not result.get("points") or
+                any(point.get("status") != "ok" or point.get("result_hash") is None
+                    for point in result["points"])):
+            raise RuntimeError("incomplete/failed parent measurement: " + name)
+    left_config, right_config = a["config"], b["config"]
+    if kind == "fixed":
+        left_config, right_config = dict(left_config), dict(right_config)
+        expected_a = left_config.pop("expected_hash", None)
+        expected_b = right_config.pop("expected_hash", None)
+        if expected_a is not None and expected_a != expected_b:
+            raise RuntimeError("fixed expected hash removed or changed: " + name)
+        for result, expected in ((a, expected_a), (b, expected_b)):
+            if (not result.get("hashable") or not result.get("hashes_agree") or
+                    any(point["result_hash"] != result.get("observed_hash") or
+                        (expected is not None and point["result_hash"] != expected)
+                        for point in result["points"])):
+                raise RuntimeError("fixed result hash mismatch: " + name)
+    key = "repeat_index" if kind == "fixed" else "param"
+    points = lambda result: [(point[key], point["result_hash"]) for point in result["points"]]
+    if left_config != right_config or points(a) != points(b):
+        raise RuntimeError("cross-arm input/configuration/hash mismatch: " + name)
+
+
+def paired_ratios(a, b, kind):
+    """Descriptive paired ratios; verdicts remain with the native export guard."""
+    ratios = []
+    for left, right in zip(a["points"], b["points"]):
+        if kind == "fixed":
+            per_call = lambda point: (point["total_nanos"] // point["inner_repeats"]
+                                      if point.get("inner_repeats", 0) > 0 else None)
+            x, y = per_call(left), per_call(right)
+        else:
+            x, y = left.get("per_call_nanos"), right.get("per_call_nanos")
+        valid = all(isinstance(value, (int, float)) and math.isfinite(value) and value > 0
+                    for value in (x, y))
+        key = "repeat_index" if kind == "fixed" else "param"
+        ratios.append({key: left[key], "candidate_over_baseline": y / x if valid else None})
+    return ratios
+
+
+def parent_failure(arm, result, kind):
+    """Retain the actual subject, repeat/parameter and hash status of a pair."""
+    key = "repeat_index" if kind == "fixed" else "param"
+    fields = (key, "status", "error") + (("result_hash",) if kind == "fixed" else ())
+    failure = {"arm": arm, "function": result.get("function"),
+               "budget_truncated": result.get("budget_truncated"),
+               "points": [{field: point.get(field) for field in fields}
+                          for point in result.get("points", [])]}
+    # The existing cap protocol authenticates the exact parametric failure
+    # shape. Add fixed-only diagnostics without changing that retained format.
+    if kind == "fixed":
+        failure.update(hashable=result.get("hashable"), hashes_agree=result.get("hashes_agree"),
+                       observed_hash=result.get("observed_hash"),
+                       expected_hash=result.get("config", {}).get("expected_hash"))
+    return failure
+
+
+def below_resolution_export(code, path, name):
+    """Recognize complete parametric exports below the runner's signal floor.
+
+    LeanBench exits 2 after exporting a run with no verdict-eligible rows.
+    Preserve those rows for the native guard; they cannot supply a pass.
+    Other nonzero exits and incomplete/failed exports remain fatal.
+    """
+    if code != 2:
+        return False
+    try:
+        results = json.loads(path.read_text())["results"]
+        if len(results) != 1:
+            return False
+        result = results[0]
+        points = result["points"]
+        schedule = result["config"]["param_schedule"]
+        return (result["kind"] == "parametric" and result["function"] == name and
+                result["budget_truncated"] is False and result["verdict"] == "inconclusive" and
+                result["trial_summaries"] == [] and bool(points) and
+                schedule["kind"] == "custom" and result["config"]["outer_trials"] == 1 and
+                [point["param"] for point in points] == schedule["params"] and
+                all(point["status"] == "ok" and point["error"] is None and
+                    point["trial_index"] == 0 and
+                    point["result_hash"] is not None and point["below_signal_floor"] is True and
+                    point["inner_repeats"] > 0 and point["total_nanos"] > 0 and
+                    math.isfinite(point["per_call_nanos"]) and point["per_call_nanos"] > 0
+                    for point in points))
+    except (OSError, ValueError, KeyError, TypeError):
+        return False
 
 
 TOOL_SOURCES = ("scripts/bench/sturm_regression.py", "scripts/bench/cpu_lease.py",
@@ -297,6 +538,8 @@ def main(argv=None) -> int:
     for key in ("baseline", "candidate", "baseline-source", "candidate-source", "guard", "root", "output"):
         parser.add_argument("--" + key, type=Path, required=True)
     parser.add_argument("--decision", type=Path, required=True)
+    parser.add_argument("--profile", choices=PROFILES, default="sturm",
+                        help="complete declared timing and correctness workload selection")
     parser.add_argument("--preflight", action="store_true",
                         help="validate bindings and correctness controls without leasing a CPU or timing")
     parser.add_argument("--rerun-of", type=Path,
@@ -304,6 +547,8 @@ def main(argv=None) -> int:
     parser.add_argument("--cap-from", type=Path,
                         help="one reviewed cap increase after the retained original two-arm cap failure")
     args = parser.parse_args(argv)
+    if args.profile != "sturm" and args.cap_from is not None:
+        parser.error("the retained cap adaptation applies only to the Sturm profile")
     root = args.root.resolve()
     out = args.output.resolve()
     if out == root or root in out.parents:
@@ -312,7 +557,8 @@ def main(argv=None) -> int:
     binaries = {arm: getattr(args, arm).resolve() for arm in ("baseline", "candidate")}
     sources = {}
     guard = args.guard.resolve()
-    context = {"question": "Does the current native Sturm computation regress against the most recent committed measured source?",
+    context = {"question": "Does the current native computation regress against the most recent committed measured source?",
+               "profile": args.profile,
                "classification": "Computational baseline comparison; no new complexity or proof-cost verdict",
                "trials": 4, "order": "trial-major, full-ladder adjacent source arms, AB on even blocks and BA on odd blocks",
                "threshold_percent": 10, "script_sha256": digest(Path(__file__)),
@@ -351,6 +597,9 @@ def main(argv=None) -> int:
         save()
         decision_bytes = args.decision.read_bytes()
         decision = json.loads(decision_bytes)
+        if decision.get("profile", "sturm") != args.profile:
+            raise RuntimeError("profile differs from bound decision")
+        context["question"] = decision.get("question")
         if (args.cap_from is None) != (decision.get("cap_protocol") is None):
             raise RuntimeError("--cap-from and the bound cap_protocol are required together")
         (out / "decision.json").write_bytes(decision_bytes)
@@ -418,12 +667,15 @@ def main(argv=None) -> int:
         context["native_harness_pins"] = new_pins
         # Bind the old source read from git to its retained snapshot, then
         # allow comments and trailing whitespace, preserving meaningful indentation.
-        for path in ("bench/HexSturm/Bench.lean", "bench/HexSturm/Frontend.lean"):
+        for path in registration_paths(args.profile):
             old = subprocess.check_output(["git", "show", sources["baseline"]["head"] + ":" + path], cwd=root)
             if hashlib.sha256(old).hexdigest() != sources["baseline"]["sources"][path]:
                 raise RuntimeError("baseline registration source differs from snapshot")
-            lines = lambda text: [line.rstrip() for line in strip_lean_comments(text).splitlines() if line.strip()]
-            if lines(old.decode()) != lines((root / path).read_text()):
+            if args.profile == "sturm":
+                tokens = lambda text: [line.rstrip() for line in source_layout(text).splitlines() if line.strip()]
+            else:
+                tokens = registration_source
+            if tokens(old.decode()) != tokens((root / path).read_text()):
                 raise RuntimeError("registration inputs/configuration changed: " + path)
         if digest(guard) != context["guard_sha256"]:
             raise RuntimeError("guard changed during binding validation")
@@ -472,21 +724,28 @@ def main(argv=None) -> int:
             code, text = run([str(binary), "list"], arm + "-list")
             if code:
                 raise RuntimeError("cannot inspect frozen benchmark registrations")
-            lists[arm], fixed_lists[arm], excluded_lists[arm] = registrations(text)
+            lists[arm], fixed_lists[arm], excluded_lists[arm] = registrations(text, args.profile)
         if lists["baseline"] != lists["candidate"] or fixed_lists["baseline"] != fixed_lists["candidate"] or excluded_lists["baseline"] != excluded_lists["candidate"]:
             raise RuntimeError("source arms have different benchmark registrations")
         names = lists["candidate"]
         context["benchmarks"] = names
         context["verified_native_fixed"] = fixed_lists["candidate"]
         context["excluded_registrations"] = excluded_lists["candidate"]
-        context["excluded"] = "The auxiliary runSigns traversal has no timing claim under the existing owner disposition. Fixed expected-hash cases have no timing claim in hex-sturm-performance.md; native cases are verified. External FLINT/Z3 comparisons remain informational owner evidence."
+        context["excluded"] = ("The auxiliary runSigns traversal has no timing claim under the existing owner disposition. Fixed expected-hash cases have no timing claim in hex-sturm-performance.md; native cases are verified. External FLINT/Z3 comparisons remain informational owner evidence."
+                               if args.profile == "sturm" else
+                               "Three tiny MaximalMatrix reference solves are correctness controls only; all 25 parameterized and six fixed primary timing workloads are selected."
+                               if args.profile == "sign-det" else
+                               "Both interacting fixed timing workloads are selected; none is excluded.")
+        context["fixed_timing_benchmarks"] = sorted(timing_fixed(args.profile))
         if args.cap_from is not None:
             context["cap_protocol"] = validate_cap_protocol(
                 args.cap_from, decision["cap_protocol"], sources, context["comparison_identity"],
                 original_marker, names, root)
         save()
         for arm, binary in binaries.items():
-            code, _ = run([str(binary), "verify", *names, AUXILIARY, *fixed_lists[arm]], arm + "-verify")
+            auxiliary = [AUXILIARY] if args.profile == "sturm" else []
+            verify_names = list(dict.fromkeys([*names, *auxiliary, *fixed_lists[arm]]))
+            code, _ = run([str(binary), "verify", *verify_names], arm + "-verify")
             if code:
                 raise RuntimeError("frozen native correctness verification failed")
         if not args.preflight:
@@ -511,12 +770,15 @@ def main(argv=None) -> int:
             for index, name in enumerate(names):
                 for arm in (("baseline", "candidate") if trial % 2 == 0 else ("candidate", "baseline")):
                     stem = f"{trial}-{index}-{arm}"
-                    command = [str(binaries[arm]), "run", name, "--outer-trials", "1", "--export-file", str(out / (stem + ".json"))]
+                    command = [str(binaries[arm]), "run", name]
+                    if name not in timing_fixed(args.profile):
+                        command += ["--outer-trials", "1"]
+                    command += ["--export-file", str(out / (stem + ".json"))]
                     if args.cap_from is not None:
                         command += ["--max-seconds-per-call", str(decision["cap_protocol"]["seconds"])]
                     code, _ = run(command, stem)
                     context["measurements_collected"] = True
-                    if code:
+                    if code and not below_resolution_export(code, out / (stem + ".json"), name):
                         failure = {"arm": arm, "function": name, "returncode": code,
                                    "export": stem + ".json"}
                         exported = out / (stem + ".json")
@@ -527,11 +789,16 @@ def main(argv=None) -> int:
                                 failure["export_error"] = str(exc)
                         context["parent_failures"] = [failure]
                         raise RuntimeError("parent measurement failed: " + stem)
+                    if code == 2:
+                        context.setdefault("below_resolution_exports", []).append(
+                            {"arm": arm, "function": name, "returncode": code,
+                             "export": stem + ".json"})
                 documents = []
+                kind = "fixed" if name in timing_fixed(args.profile) else "parametric"
                 for arm in ("baseline", "candidate"):
                     document = json.loads((out / f"{trial}-{index}-{arm}.json").read_text())
                     results = document["results"]
-                    if len(results) != 1 or results[0]["kind"] != "parametric":
+                    if len(results) != 1 or results[0]["kind"] != kind:
                         raise RuntimeError("invalid parent result: " + name)
                     documents.append(results[0])
                 a, b = documents
@@ -543,22 +810,16 @@ def main(argv=None) -> int:
                        any(point["status"] != "ok" or point["result_hash"] is None for point in result["points"])
                        for result in documents):
                     context["parent_failures"] = [
-                        {"arm": arm, "function": result["function"],
-                         "budget_truncated": result["budget_truncated"],
-                         "points": [{key: point.get(key) for key in ("param", "status", "error")}
-                                    for point in result["points"]]}
+                        parent_failure(arm, result, kind)
                         for arm, result in zip(("baseline", "candidate"), documents)]
                     raise RuntimeError("incomplete/failed parent measurement: " + name)
-                signature = lambda result: (result["function"], result["config"],
-                                            [(point["param"], point["result_hash"]) for point in result["points"]])
-                if a["function"] != name or signature(a) != signature(b):
-                    raise RuntimeError("cross-arm input/configuration/hash mismatch: " + name)
-                ratios = []
-                for left, right in zip(a["points"], b["points"]):
-                    x, y = left.get("per_call_nanos"), right.get("per_call_nanos")
-                    valid = all(isinstance(value, (int, float)) and math.isfinite(value) and value > 0
-                                for value in (x, y))
-                    ratios.append({"param": left["param"], "candidate_over_baseline": y / x if valid else None})
+                try:
+                    validate_pair(a, b, name, kind)
+                except RuntimeError:
+                    context["parent_failures"] = [parent_failure(arm, result, kind)
+                                                  for arm, result in zip(("baseline", "candidate"), documents)]
+                    raise
+                ratios = paired_ratios(a, b, kind)
                 context.setdefault("paired_ratios", []).append(
                     {"block": trial, "function": name, "scope": "descriptive only; does not change guard verdict", "ratios": ratios})
                 print(f"block {trial}: {name} source pair retained", flush=True)
@@ -570,9 +831,13 @@ def main(argv=None) -> int:
         context["guards"] = verdicts
         context["status"] = "completed"
         codes = {item["returncode"] for item in verdicts}
+        below_floor = {item["function"] for item in context.get("below_resolution_exports", [])}
+        context["below_resolution_guard_passes"] = [item["function"] for item in verdicts
+                                                   if item["returncode"] == 0 and
+                                                   item["function"] in below_floor]
         context["regression_findings"] = [item["function"] for item in verdicts if item["returncode"] == 1]
         context["outcome"] = ("preflight" if args.preflight else
-                              "invalid" if codes - {0, 1, 2} else
+                              "invalid" if codes - {0, 1, 2} or context["below_resolution_guard_passes"] else
                               "regression" if 1 in codes else
                               "inconclusive" if 2 in codes else "pass")
         if not args.preflight:
