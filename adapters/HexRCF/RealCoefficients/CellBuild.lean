@@ -4,7 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 module
-public import HexRCF.RealCoefficients.CellRead
+public import HexRCF.RealCoefficients.CellEncode
+public import HexRCF.RealCoefficients.CellFootprint
 public import HexRCF.RealCoefficients.RowEncode
 public import HexRCF.RealCoefficients.RootBuild
 public section
@@ -123,18 +124,20 @@ rerunning a root or selected-sign producer. -/
     {p : DensePoly parent.Value} {roots : RootReplay.Result p .negInf .posInf}
     {values : Fin n → parent.Value} {formula : RealFormula.QF (n+1)}
     (data : CellReplay.Evidence roots values formula) : Codec.Json :=
-  let sections := (List.finRange roots.roots.length).map fun i =>
-    RowEncode.packet parent.codec Signature.codec (data.sections i)
-  let sectors := (List.finRange (roots.roots.length+1)).map fun cut =>
-    let sector := data.sectors cut
-    let row := data.sectorRows cut
-    let left := if h : 0 < cut.val then RowEncode.packet parent.codec Signature.codec (sector.left h) else .null
-    let right := if h : cut.val < roots.roots.length then RowEncode.packet parent.codec Signature.codec (sector.right h) else .null
-    Codec.Json.arr #[parent.codec.encode sector.point,left,right,
-      Codec.descriptor parent.codec Signature.codec row.root.raw,
-      Codec.graph parent.codec Signature.codec (Dag.encode row.root.evidence),
-      RowEncode.packet parent.codec Signature.codec row.signs]
-  .arr #[.arr sections.toArray,.arr sectors.toArray]
+  CellEncode.packet parent.codec data
+
+/-- A partial reader sharing the native writer restores the exact complete
+typed cells when it covers their finite stored coefficient inventory. -/
+theorem packet_read [Hashable parent.Value] [Hashable Signature]
+    {p : DensePoly parent.Value} {roots : RootReplay.Result p .negInf .posInf}
+    {values : Fin n → parent.Value} {formula : RealFormula.QF (n+1)}
+    (data : CellReplay.Evidence roots values formula) (guards : List parent.Value)
+    (guarded : ∀ d ∈ guards, d ≠ 0) (value : ValueCodec parent.Value)
+    (same : value.encode = parent.codec.encode)
+    (covered : value.Covers (CellFootprint.coefficients data)) :
+    CellRead.read value guards roots values formula (packet data) = .ok data := by
+  rw [packet, ← CellCodec.packet_eq value parent.codec same data]
+  exact CellFootprint.read_packet value data guards guarded covered
 
 /-- Produce and freeze complete cells at proposed ordinary points. The typed
 producer retains every checked row; serialization preserves the established

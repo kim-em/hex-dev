@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 module
 public import HexRCF.RealCoefficients.CellDecision
+public import HexRCF.RealCoefficients.CompleteReplay
 public section
 namespace Hex.RCF.RealCoefficients
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet HexPolyTheory.Interpret
@@ -127,7 +128,8 @@ variable {registry : BaseContext.Registry} {parent : Tower.Context registry}
 
 /-- The public native discovery returns a complete frozen matrix whose actual
 constructed typed rows give both exact original shared-sentence diagnostic verdicts.
-This does not yet assert literal-reader or frontend quotation progress. -/
+This theorem retains the typed production trace; `run_replay` and `run_complete`
+state its independent literal-reader acceptance. -/
 theorem run_success (original : Model parent ℝ) (values : Fin n → parent.Value)
     (guards : List parent.Value) (formula : RealFormula.QF (n+1))
     (guarded : ∀ d ∈ guards, d ≠ 0) :
@@ -176,7 +178,9 @@ theorem run_success (original : Model parent ℝ) (values : Fin n → parent.Val
     apply List.all_eq_true.mpr
     intro d present
     simpa only [decide_eq_true_eq] using guarded d present
-  refine ⟨⟨family, prepared.1, prepared.2, CellBuild.packet data⟩, ?_,
+  refine ⟨⟨family, prepared.1, prepared.2,
+    Codec.graph input.context.codec Signature.codec (Dag.encode prepared.2.replay), rfl,
+    CellBuild.packet data⟩, ?_,
     candidates, requested, dimensions, data, built, rfl, ?_⟩
   · unfold run
     simp only [all, ↓reduceIte]
@@ -196,6 +200,77 @@ theorem run_success (original : Model parent ℝ) (values : Fin n → parent.Val
     have same : (fun i => model.input.target.value ((input.value ∘ values) i)) =
         (fun i => original.value (values i)) := funext (fun i => model.input.value (values i))
     simpa only [same] using meaning
+
+/-- The actual public producer's frozen cell payload is accepted by its
+independent literal reader in the returned native context. Both verdicts retain
+the original shared-sentence semantics. This uses native codec lawfulness;
+restoration of a general frozen predecessor history is a separate obligation. -/
+theorem run_replay (original : Model parent ℝ) (values : Fin n → parent.Value)
+    (guards : List parent.Value) (formula : RealFormula.QF (n+1))
+    (guarded : ∀ d ∈ guards, d ≠ 0) :
+    ∃ packet, run values guards formula = .ok packet ∧
+      ∃ data : CellReplay.Evidence packet.roots
+          (packet.family.collection.input.value ∘ values) formula,
+        CellRead.read packet.family.collection.input.context.codec
+          (guards.map packet.family.collection.input.value) packet.roots
+          (packet.family.collection.input.value ∘ values) formula packet.cells = .ok data ∧
+        ∀ quantifier, ∃ verdict,
+          CellReplay.check (packet.family.collection.input.value ∘ values) formula
+            (guards.map packet.family.collection.input.value) packet.radical packet.roots
+            data quantifier = .ok verdict ∧
+          (verdict = true ↔ (RealFormula.Prenex.quant quantifier (.matrix formula)).toProp
+            (fun i => original.value (values i))) := by
+  obtain ⟨packet,produced,trace⟩ := run_success original values guards formula guarded
+  let input := packet.family.collection.input
+  let _ : Hashable input.context.Value := RowEncode.hashable input.context.codec
+  let _ : Hashable Signature := RowEncode.hashable Signature.codec
+  obtain ⟨candidates,_,dimensions,data,_,frozen,verdicts⟩ := trace
+  obtain ⟨model⟩ := packet.model original
+  have domains : ∀ d ∈ guards.map input.value, d ≠ 0 := by
+    intro d member zero
+    obtain ⟨old,present,rfl⟩ := List.mem_map.mp member
+    apply guarded old present
+    apply (original.zero_iff old).mp
+    rw [← model.input.value old]
+    exact (model.input.target.zero_iff _).mpr zero
+  refine ⟨packet,produced,data,?_,verdicts⟩
+  rw [frozen]
+  exact CellBuild.packet_read data (guards.map input.value) domains input.context.codec rfl
+    (input.context.codec_lawful.covers _)
+
+/-- The actual native producer yields accepted complete root-and-cell packets
+for both strict verdicts. Original coefficients retain their sentence meaning;
+the returned native context's codec supplies finite literal coverage. General
+frozen predecessor-history reconstruction remains separate. -/
+theorem run_complete (original : Model parent ℝ) (values : Fin n → parent.Value)
+    (guards : List parent.Value) (formula : RealFormula.QF (n+1))
+    (guarded : ∀ d ∈ guards, d ≠ 0) :
+    ∃ packet, run values guards formula = .ok packet ∧
+      ∀ quantifier, ∃ verdict,
+        CompleteReplay.check packet.family.collection.input.context.codec
+          (packet.family.collection.input.value ∘ values) formula
+          (guards.map packet.family.collection.input.value) packet.radical quantifier
+          packet.rootGraph packet.cells = .ok verdict ∧
+        (verdict = true ↔ (RealFormula.Prenex.quant quantifier (.matrix formula)).toProp
+          (fun i => original.value (values i))) := by
+  obtain ⟨packet,produced,trace⟩ := run_success original values guards formula guarded
+  let input := packet.family.collection.input
+  let _ : Hashable input.context.Value := RowEncode.hashable input.context.codec
+  let _ : Hashable Signature := RowEncode.hashable Signature.codec
+  obtain ⟨candidates,_,dimensions,data,_,frozen,verdicts⟩ := trace
+  refine ⟨packet,produced,?_⟩
+  intro quantifier
+  obtain ⟨verdict,checked,meaning⟩ := verdicts quantifier
+  have domains : ∀ d ∈ guards.map input.value, d ≠ 0 := by
+    intro d member
+    exact of_decide_eq_true (List.all_eq_true.mp
+      (CellReplay.check_parts _ formula _ packet.radical packet.roots data quantifier verdict checked).1 d member)
+  have restored := CompleteReplay.check_covered input.context.codec (input.value ∘ values)
+    formula (guards.map input.value) packet.radical packet.roots data quantifier domains
+    (input.context.codec_lawful.covers _)
+  refine ⟨verdict,?_,meaning⟩
+  rw [packet.rootGraph_eq, frozen]
+  exact restored.trans checked
 
 end CellDiscover
 end Hex.RCF.RealCoefficients

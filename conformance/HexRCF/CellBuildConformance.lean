@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 import HexRCF.RealCoefficients.CellBuild
+import HexRCF.RealCoefficients.CompleteReplay
 import HexRCF.RealCoefficients.RootBuild
 import HexRCF.RealCoefficients.RowEncode
 import HexRCF.CellReplay.Algebraic.Schema
@@ -31,6 +32,28 @@ local instance : Hashable Signature := RowEncode.hashable Signature.codec
   let typed ← match CellBuild.evidence roots values [] formula points with
     | .error error => throw (IO.userError s!"typed cell production failed: {repr error}")
     | .ok data => pure data
+  let inventory := CellFootprint.coefficients typed
+  let restricted (stored : List parent.Value) : ValueCodec parent.Value := {
+    encode := parent.codec.encode
+    decode := fun literal =>
+      match stored.find? (fun value => parent.codec.encode value == literal) with
+      | some value => .ok value
+      | none => .error "coefficient absent from finite payload inventory" }
+  let restored ← match CellRead.read (restricted inventory) [] roots values formula cells with
+    | .error error => throw (IO.userError s!"finite literal inventory omitted stored data: {repr error}")
+    | .ok restored => pure restored
+  unless (CellReplay.check values formula [] radical roots restored .existsReal).toOption == some true do
+    throw (IO.userError "finite payload reader changed the original verdict")
+  unless inventory.any (fun value => parent.codec.encode value == parent.codec.encode 0) do
+    throw (IO.userError "finite inventory lost stored zero coefficients")
+  let missingZero := inventory.filter (fun value => parent.codec.encode value != parent.codec.encode 0)
+  match CellRead.read (restricted missingZero) [] roots values formula cells with
+  | .error .evidence => pure ()
+  | _ => throw (IO.userError "missing stored zero coefficient was not rejected")
+  match CellRead.read (restricted []) [0] roots values formula .null with
+  | .error .divisor => pure ()
+  | _ => throw (IO.userError "original zero guard did not precede payload decoding")
+  IO.println "complete finite payload inventory restores rows; omitted zero literals reject; original guard preflight remains first"
   unless CellBuild.packet typed == cells do
     throw (IO.userError "typed and public frozen cell packets differ")
   unless (CellReplay.check values formula [] radical roots typed .existsReal).toOption == some true do
@@ -38,6 +61,44 @@ local instance : Hashable Signature := RowEncode.hashable Signature.codec
   unless (CellReplay.check values formula [] radical roots typed .forallReal).toOption == some false do
     throw (IO.userError "typed false universal changed")
   let rootGraph := Codec.graph parent.codec Signature.codec (Dag.encode roots.replay)
+  let completeInventory := CompleteReplay.coefficients typed
+  for (quantifier,expected) in [(RealFormula.Quantifier.existsReal,true),(.forallReal,false)] do
+    unless (CompleteReplay.check (restricted completeInventory) values formula [] radical
+        quantifier rootGraph cells).toOption == some expected do
+      throw (IO.userError "combined root/cell restricted reader changed the strict verdict")
+  match CompleteReplay.check (restricted completeInventory) values formula [] radical
+      .existsReal .null cells with
+  | .error .evidence => pure ()
+  | _ => throw (IO.userError "malformed complete root graph was accepted")
+  let tree := Dag.encode roots.replay
+  let corrupt : Dag parent.Value Signature := { tree with
+    entries := tree.entries.map (fun entry => { entry with
+      node := { entry.node with system := { entry.node.system with denominator := 0 } } }) }
+  let corruptGraph := Codec.graph parent.codec Signature.codec corrupt
+  match Codec.readGraph (restricted completeInventory) Signature.codec parent.signature
+      radical.core .negInf .posInf corruptGraph with
+  | .error error => throw (IO.userError s!"tampering did not reach semantic replay: {error}")
+  | .ok _ => pure ()
+  match RootReplay.read (restricted completeInventory) [] radical.core .negInf .posInf corruptGraph with
+  | .error .evidence => pure ()
+  | _ => throw (IO.userError "root replay accepted the invalid moment-system denominator")
+  match CompleteReplay.check (restricted completeInventory) values formula [] radical
+      .existsReal corruptGraph cells with
+  | .error .evidence => pure ()
+  | _ => throw (IO.userError "structurally valid zero-denominator root system was accepted")
+  let fields ← match Codec.tuple 2 cells with
+    | .error error => throw (IO.userError error)
+    | .ok fields => pure fields
+  let missingSectors := Codec.Json.arr #[fields[0], .arr #[]]
+  match CompleteReplay.check (restricted completeInventory) values formula [] radical
+      .existsReal rootGraph missingSectors with
+  | .error .evidence => pure ()
+  | _ => throw (IO.userError "complete replay accepted the wrong number of sectors")
+  match CompleteReplay.check (restricted []) values formula [0] radical
+      .existsReal .null .null with
+  | .error .divisor => pure ()
+  | _ => throw (IO.userError "complete packet erased original zero guard preflight")
+  IO.println "complete restricted root-and-cell replay retains both verdicts and refuses malformed roots before folds"
   let fresh ← match RootReplay.read parent.codec [] radical.core .negInf .posInf rootGraph with
     | .error e => throw (IO.userError s!"root replay failed: {repr e}")
     | .ok fresh => pure fresh

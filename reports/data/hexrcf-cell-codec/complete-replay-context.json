@@ -1,0 +1,117 @@
+{
+  "source_commit": "8af549f0b11e53dfcd97a3e073c9ec2169c6a3b3",
+  "table_source_commit": "3a6078b0a35b4ea7e40a36d11b0ce2e1a540ef15",
+  "sources_sha256": {
+    "adapters/HexRCF/RealCoefficients.lean": "0639163d2d662a0cafd22f8b9e1feeba34e4a106839537e7d5100b86a8241028",
+    "adapters/HexRCF/RealCoefficients/RootCodec.lean": "cca61a48f3e6609d082bd6179ac2e8d9fb3d28c714d67a0d7e82cce09b113b9c",
+    "adapters/HexRCF/RealCoefficients/RootTableCodec.lean": "407dbb6b2cb2e90aa57777acbff3d8a03d7ae48dcdaf1f632cfed494f63e6ec7",
+    "adapters/HexRCF/RealCoefficients/CompleteReplay.lean": "2592a270747184492d69bdd7c1aa25a437d5a0e4a7ed4d8c5cb7e463fee8870d",
+    "adapters/HexRCF/RealCoefficients/CellFootprint.lean": "def0d16e838455c42152362f61705c99a201dc766586a37a8b9c177ec486c948",
+    "adapters/HexRCF/RealCoefficients/CellExecution.lean": "ccdff8c78c11eb08ae25dfb3fd8b4ba8b69c209502243a65a7622c7edd672602",
+    "adapters/HexRCF/RealCoefficients/CellBuild.lean": "fd3dea832bbcca47f883911c203a92681de109420c9d90bbf5f7a0bda11c0205",
+    "adapters/HexRCF/RealCoefficients/RootTable.lean": "e6d99d63d68415a6f4647fad6463e232942dce1d0e931edc4ae3efdf3cf5b91a",
+    "adapters/HexRCF/RealCoefficients/RootReplay.lean": "35e5c09926534d79082443ffbaf1ccaa9bca6095f0250da4f0b45d23e185c023",
+    "conformance/HexRCF/CellCodecProofs.lean": "06f008e837e2cbea3b4933d8a497968f60132719b596cb4ab96e93ee1bf86571",
+    "conformance/HexRCF/CellExecutionProofs.lean": "62d4eb2b12ad5b9d8714915b19eb8978dd26f58e101f5e32ab5cd879d7b0b84c",
+    "conformance/HexRCF/CellBuildConformance.lean": "9a2f602431b736f10fbc990cc14f9962a2f4759d6e3e2aaa436f35e0e75b2f3e",
+    "HexSignDet/Codec/GraphLaws.lean": "290d321792cc0c940ca7bea9ab872a2214784733ed87da8f5ede69036aac8791",
+    "HexSignDet/DagReplay.lean": "4bc5c8a12517cca8b375db63360d6e607c55509518089c8c43483893e7bfb5a1",
+    "HexRealClosure/TowerContext.lean": "82ec62fe7dd9afc09867fc0c0c8815738137acd1d71ec1d8e121ec8ccb8a1385",
+    "lakefile.lean": "508f28b4c8db925390883c80569d1c0606d1ed7f4b2b2f4df054c9cd5e7efd84",
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "87c6f122fb5c47f38d3f9532c5552ae231c0aab91f4328bb15b3dad9292db023"
+  },
+  "logs": {
+    "reports/data/hexrcf-cell-codec/complete-replay-admissions-1.log.gz": {
+      "sha256": "9d34ef35307953e5bb6f6433099ce7c2a28ae0f5d7ad3b063453271a2112539a",
+      "uncompressed_sha256": "b33dc64d947667f046be3bbb7d95cfb351b7fd3f32c30d3d04b995513506c6e8"
+    },
+    "reports/data/hexrcf-cell-codec/complete-replay-affected-build-1.log.gz": {
+      "sha256": "c181495cdb8a2cc59fdef387f61495e8b7d44e4cb362905aeaa54f643b5c6464",
+      "uncompressed_sha256": "1933155bbf54831929beea201d7196bab015ae883e0ad0e8792ed1f82c3ba5f8"
+    },
+    "reports/data/hexrcf-cell-codec/complete-replay-audits-1.log.gz": {
+      "sha256": "d3a9dcf6dc2f07464f66a98cb7c99217b21e4e7d8c7c66f772f1e83c4887d36a",
+      "uncompressed_sha256": "5d2e7ea58f9b2b2c4f00c914c2e174e907cb63d3e8e587b36ea87c2c2393d9e6"
+    },
+    "reports/data/hexrcf-cell-codec/complete-replay-copyright-1.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-cell-codec/complete-replay-dag-1.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-cell-codec/complete-replay-final-build-1.log.gz": {
+      "sha256": "faf5d653e1f4eae20b4d887cb2a27cad9154d25d26c3d3f180896fcfcc1b5f51",
+      "uncompressed_sha256": "a89a0ebe7ec372d167be6de38b5b8ce4ce964e502b7642b9812163339237ad58"
+    },
+    "reports/data/hexrcf-cell-codec/complete-replay-literals-1.log.gz": {
+      "sha256": "d363c41d04cc71aaa8b2bb97d1faf6ff4b311e5874c10d339f87aba4d4b97158",
+      "uncompressed_sha256": "5b2703a612f8c434ac4e53bb05bfeef0dbca1d91cc9125441d5bd447be3dfbc3"
+    },
+    "reports/data/hexrcf-cell-codec/complete-replay-proof-1.log.gz": {
+      "sha256": "c6d36fc5cf7e9c8f6eeb18c2217066219f22eed79af73bf8c54ce7cf379fa72f",
+      "uncompressed_sha256": "13c9b561b7bbd677c50fd57372a102136b2dc7e6f1d5f728f81dbe328146e80c"
+    },
+    "reports/data/hexrcf-cell-codec/complete-replay-proof-2.log.gz": {
+      "sha256": "53c302cc3e139e506fa28e254713da27509d14ff4ad4a14bc4d7b213d5d62884",
+      "uncompressed_sha256": "483094b8bc8287935b51f93afe5775d3e54f7355a3fd5df12bf636d8cbb9d7f6"
+    },
+    "reports/data/hexrcf-cell-codec/complete-replay-proof-3.log.gz": {
+      "sha256": "0a5a2f91f01814aeee60468b7f2de63c484313f066d7f4612e508e02fe5a955f",
+      "uncompressed_sha256": "a0b4e494f0e3c086b2d03b18aaf555e8ee7e3589de7d349f73a26eb81bc6865d"
+    },
+    "reports/data/hexrcf-cell-codec/complete-replay-run-1.log.gz": {
+      "sha256": "93e6e85f527e2ed45c992176f1608f52690676945be6ad60e4a77046ccbce128",
+      "uncompressed_sha256": "104aa211c92dcfdb2fd7d5dbd2e8eb06fc37f6ad5d50cb0e7d0bc06f85fcaae7"
+    },
+    "reports/data/hexrcf-cell-codec/complete-replay-run-2.log.gz": {
+      "sha256": "fa78ba112917bbdc379c8b72d442280575bc2d6555f7d1ca95b9a5e331ca1400",
+      "uncompressed_sha256": "cbfa03bb0828fdadff405dc5d918958eb1acd0e15209a70adf6c5a0358ae6a9f"
+    },
+    "reports/data/hexrcf-cell-codec/complete-replay-run-3.log.gz": {
+      "sha256": "e82e0783ab378f9a51edc1412823c254b034b56a86da0e99c60e90a174bcc3d9",
+      "uncompressed_sha256": "858d7f9e01a072ef10a908e5b08eef1f883484b22aa636dd41343f16ecee7fe4"
+    },
+    "reports/data/hexrcf-cell-codec/root-table-codec-general-1.log.gz": {
+      "sha256": "3dc4888ff648897d739b91d15760118a278d844c396c1fd55268821aab2c48b6",
+      "uncompressed_sha256": "b6e36e93c3a6754b2b297f46618a874351d0ec26a6c4dd2301a6355e23a75ce6"
+    },
+    "reports/data/hexrcf-cell-codec/root-table-codec-proof-1.log.gz": {
+      "sha256": "f2c79b31ddcadb3ac2859b7085810d95e2900488824e142abeb79bd654dc317b",
+      "uncompressed_sha256": "d176ba86771e2866585e29472161497c29fc3b59d0e8981b6c0576e8fb86e666"
+    },
+    "reports/data/hexrcf-cell-codec/root-table-codec-proof-2.log.gz": {
+      "sha256": "91d35f630cd2fbc5bc58da10b902d09bfc6d60fc4f12d02264e03eacdc8312c6",
+      "uncompressed_sha256": "ee45ba7a7b5813676334e27aee79e67f6ebe59ecf46256a4850264b02d67dec2"
+    },
+    "reports/data/hexrcf-cell-codec/root-table-codec-proof-3.log.gz": {
+      "sha256": "ce2626cec5c00f89e1158520d2ef9c2c690a894a33ee4d35e13f716be882ff2a",
+      "uncompressed_sha256": "330aefa056e6557fb912eb0dd87f12a171096e1832b0b19aab6501e73206130b"
+    }
+  },
+  "validation": {
+    "serialization_actual_bodies": 21,
+    "execution_actual_bodies": 13,
+    "other_retained_audit_bodies": 40,
+    "complete_checker": "CompleteReplay.check",
+    "acceptance_theorem": "CellDiscover.run_complete",
+    "memory_bytes": 34359738368,
+    "swap_bytes": 0,
+    "lean_threads": 2,
+    "own_build_concurrency": 1
+  },
+  "limits": [
+    "CompleteReplay.check authenticates the typed radical certificate against the specialized source after reading full root/cell data.",
+    "The fixed context, original coefficient valuation and source formula are supplied; general frozen source/provider/predecessor histories are not reconstructed.",
+    "Stored literal coverage does not collect every reached intermediate arithmetic record.",
+    "Strict arbitrary-missing-predecessor compiled replay and general frontend completeness remain.",
+    "Initial proof/elaboration errors are retained; no final admissions or new axioms are used.",
+    "The selected final API/audit/manual build reuses previously validated fresh quotations and cached dependencies."
+  ],
+  "document_commit": "750c5f7e3d41644eacb09988054950c7b338b8b3",
+  "documents_sha256": {
+    "reports/hexrcf-cell-codec.md": "e1cdb156d2ff0c0bd8fd85b68dbc1d24a4fc28073f33547b645950db1f5c3bd5",
+    "reports/data/hexrcf-cell-codec/collect-complete-replay.py": "ec0297d47c1bf77d3f4bbfc26af456bd8c7ea02e5cbb23a6ea0ec425953defd3"
+  }
+}

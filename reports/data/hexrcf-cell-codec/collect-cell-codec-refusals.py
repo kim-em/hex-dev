@@ -1,0 +1,11 @@
+from pathlib import Path
+import gzip,hashlib,json,subprocess
+root=Path.cwd();scratch=Path('/home/kim/.codex/tasks/hex-10358');out=root/'reports/data/hexrcf-cell-codec';commit=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip();h=lambda b:hashlib.sha256(b).hexdigest()
+paths=['adapters/HexRCF/RealCoefficients/CellExecution.lean','adapters/HexRCF/RealCoefficients/NumberFieldCells.lean','conformance/HexRCF/CellBuildConformance.lean','conformance/HexRCF/CellReplay/Algebraic/CompleteQuote.lean','conformance/HexRCF/CellReplay/Algebraic/CompleteQuoted.lean','conformance/HexRCF/NumberFieldCellsConformance.lean','HexManual/Chapters/HexRCF/AlgebraicCells.lean']
+raw=(scratch/'cell-codec-refusal-final-1.log').read_bytes();assert b'Build completed successfully (11624 jobs)' in raw and b'status=0/SUCCESS' in raw
+manual='HexManual/Chapters/HexRCF/AlgebraicCells.lean';assert subprocess.check_output(['git','show',commit+':'+manual])==subprocess.check_output(['git','show','442501b826828c7acca085074d01b77e5d92124c:'+manual])
+logs={}
+for p in sorted(scratch.glob('cell-codec-refusal-*.log')):
+ raw=p.read_bytes();dest=out/(p.name+'.gz');dest.write_bytes(gzip.compress(raw,mtime=0));logs[dest.relative_to(root).as_posix()]={'sha256':h(dest.read_bytes()),'uncompressed_sha256':h(raw)}
+d={'source_commit':commit,'sources_sha256':{p:h(subprocess.check_output(['git','show',commit+':'+p])) for p in paths},'logs':logs,'validation':{'selected_build_jobs':11624,'scan_cones':641,'scan_modules':1541,'memory_bytes':34359738368,'swap_bytes':0,'lean_threads':2,'own_build_concurrency':1},'limits':['Changes strengthen test attribution/state-restoration coverage and correct theorem/module comments; no executable producer/checker algorithm changes.','The zero-divisor source is known to fail preflight; its finishPacket test verifies rollback through that failure, not later guard-identity rejection.','Each complete selected-field theorem has its own dependency audit for run_complete/check_covered.','The affected manual chapter was rebuilt; displayed manual source bytes equal the earlier rendered442501source, so no new rendering result is claimed.','Earlier source-scoped records and their native-history/partial-codec limitations remain.']}
+(out/'refusal-context.json').write_text(json.dumps(d,indent=2)+'\n');print(commit,len(paths),'sources',len(logs),'logs')

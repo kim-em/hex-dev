@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 import HexRCF.RealCoefficients.CellDiscover
+import HexRCF.RealCoefficients.CompleteReplay
 import HexRCF.SelectedRoot.Data
 namespace Hex.RCF.RealCoefficients.CellDiscoverLinear
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.RealFormula
@@ -18,6 +19,10 @@ def formula : QF 1 := .and (.atom ⟨atom,.ge⟩) (.and (.atom ⟨atom,.le⟩) (
     let input := packet.family.collection.input
     let converted := input.value ∘ values
     let guards := ([-1] : List parent.Value).map input.value
+    for (quantifier,expected) in [(RealFormula.Quantifier.existsReal,true),(.forallReal,false)] do
+      unless (CompleteReplay.check input.context.codec converted formula guards packet.radical
+          quantifier packet.rootGraph packet.cells).toOption == some expected do
+        throw (IO.userError "emitted complete root/cell packets changed the strict verdict")
     let data ← match CellRead.read input.context.codec guards packet.roots converted formula packet.cells with
       | .error cause => throw (IO.userError s!"replay failed: {repr cause}")
       | .ok data => pure data

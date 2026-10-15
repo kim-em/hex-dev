@@ -1,0 +1,55 @@
+{
+  "source_commit": "9ecdfa96b245b8cf163d83e5ec285ecffc687d1e",
+  "sources_sha256": {
+    "adapters/HexRCF/RealCoefficients/CellExecution.lean": "c4eb754e8714fedcfb326920d99c6daf93af4be3931e60d5586077d8e18e98a2",
+    "adapters/HexRCF/RealCoefficients/NumberFieldCells.lean": "472b44e3626d14484cff6d956147dcd4eea48b4827a7bddf1802faa0ae38ef1b",
+    "conformance/HexRCF/CellBuildConformance.lean": "6e94d313b2128b39eae2aa842511b006de36ce4e1a72cd4af806c040970769d0",
+    "conformance/HexRCF/CellReplay/Algebraic/CompleteQuote.lean": "5e3f79fbdef3e50f0f9e7b5e6e5bbf9027d1a78a1afdebf68c7da0b8775af53e",
+    "conformance/HexRCF/CellReplay/Algebraic/CompleteQuoted.lean": "d2ef2e21c403bf86716d6ff3107ef8120cd60d5c66a14e1e07f5e091cdbaa3fc",
+    "conformance/HexRCF/NumberFieldCellsConformance.lean": "8e857eb5fa3ac46174f610421720cd6dc3ddf1638268284ede42a10721965c82",
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "f86efc4d598a508f33990a9b6678bb9f486c09a98a3ae0b5e2f32c695e4db078"
+  },
+  "logs": {
+    "reports/data/hexrcf-cell-codec/cell-codec-refusal-admissions-1.log.gz": {
+      "sha256": "7c20706acb584699a0f4118ca4c91771aea8afef3a106ba5a37552d6be387986",
+      "uncompressed_sha256": "0ef4f24b67f9615edd9ea91a7ed2abbb9e843f600fd4a6439a294f3835c0feec"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-refusal-copyright-1.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-refusal-dag-1.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-refusal-final-1.log.gz": {
+      "sha256": "9ce5953be4f6eb4a036e8833eac368d851e0ce22be33a43073fbe619b6f89172",
+      "uncompressed_sha256": "ec8c3ce82ccb471feb805ad020ea4eea6404545ba2c5d2fcb1a98aae6342eec2"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-refusal-literals-1.log.gz": {
+      "sha256": "d363c41d04cc71aaa8b2bb97d1faf6ff4b311e5874c10d339f87aba4d4b97158",
+      "uncompressed_sha256": "5b2703a612f8c434ac4e53bb05bfeef0dbca1d91cc9125441d5bd447be3dfbc3"
+    }
+  },
+  "validation": {
+    "selected_build_jobs": 11624,
+    "scan_cones": 641,
+    "scan_modules": 1541,
+    "memory_bytes": 34359738368,
+    "swap_bytes": 0,
+    "lean_threads": 2,
+    "own_build_concurrency": 1
+  },
+  "limits": [
+    "Changes strengthen test attribution/state-restoration coverage and correct theorem/module comments; no executable producer/checker algorithm changes.",
+    "The zero-divisor source is known to fail preflight; its finishPacket test verifies rollback through that failure, not later guard-identity rejection.",
+    "Each complete selected-field theorem has its own dependency audit for run_complete/check_covered.",
+    "The affected manual chapter was rebuilt; displayed manual source bytes equal the earlier rendered442501source, so no new rendering result is claimed.",
+    "Earlier source-scoped records and their native-history/partial-codec limitations remain."
+  ],
+  "document_commit": "398d1a0b80aa68196ef37479310ab1a6c23d517e",
+  "documents_sha256": {
+    "reports/hexrcf-cell-codec.md": "c91dd8dcb5bc514ec4f9f86208487b46032c652fb63ab5ce449a5c0154e204b1",
+    "reports/data/hexrcf-cell-codec/collect-cell-codec-refusals.py": "21f1244c2a3e53b70386b98be3fbf7162d35500ce5357cfa608b6039a3f925d7"
+  }
+}
