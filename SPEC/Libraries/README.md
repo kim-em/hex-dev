@@ -253,7 +253,7 @@ Theory companion libraries (each also depends on Mathlib):
 - **hex-real-algebraic-theory**: hex-real-algebraic, hex-number-field-theory, Mathlib
 - **hex-number-field-tower-theory**: hex-number-field-tower, hex-number-field-theory, hex-resultant-theory, hex-berlekamp-zassenhaus-theory, hex-row-reduce-theory
 - **hex-matrix-theory**: hex-matrix
-- **hex-pos-def-theory** (planned): hex-pos-def, hex-matrix-theory
+- **hex-pos-def-theory** (planned): hex-pos-def, hex-matrix-theory, hex-bareiss-theory
 - **hex-row-reduce-theory**: hex-row-reduce, hex-matrix-theory
 - **hex-determinant-theory**: hex-determinant, hex-bareiss, hex-matrix-theory
 - **hex-bareiss-theory**: hex-determinant-theory

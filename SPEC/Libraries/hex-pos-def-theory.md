@@ -7,10 +7,9 @@ theorems are proved locally in Hex against the pinned Mathlib dependency.
 
 ## Scope and dependencies
 
-`HexPosDefTheory` depends directly on `HexPosDef` and `HexMatrixTheory`,
-plus Mathlib, and uses the namespace `Hex.PosDefTheory`. The `Theory`
-suffix names this library's role. Existing dependencies retain their
-names. The library owns mathematical interpretation, certificate
+`HexPosDefTheory` depends directly on `HexPosDef`, `HexMatrixTheory`, and
+`HexBareissTheory`, plus Mathlib, and uses the namespace `Hex.PosDefTheory`.
+The library owns mathematical interpretation, certificate
 soundness, producer correctness, entry quotation, and tactic elaboration.
 It does not own a second implementation of elimination or solving.
 
@@ -93,13 +92,23 @@ positive or negative certificate, without an unsupported-method result
 or a rejected-certificate error. State the positive outcome equivalently
 to `Matrix.PosDef` of the decoded matrix. For Gaussian data, this is its
 interpretation in `Complex`. For integer data, it is `Matrix.PosDef` over
-integers, with the other carrier interpretations as consequences.
+integers. Obtain the corresponding equivalences over other carriers
+through the classification and certificate soundness: positive definiteness
+over the larger carrier restricts to integer test vectors, forcing a
+positive producer outcome, whose certificate is sound in that carrier.
 
 Establish the no-swap augmented-minor invariant, exactness of division,
 reality of Gaussian diagonal pivots, and validity of the first nonpositive
 pivot's vector. These obligations concern the algorithm the executable
 runs. They do not require a separate spectral algorithm, a general
 Sylvester criterion, or symmetric pivoting for inertia.
+
+Reuse the generic no-pivot invariant in `HexBareissTheory/Bareiss.lean`
+and `HexMatrixTheory.desnanot_jacobi_borderedMinor` as the starting point.
+Extend the bordered-minor argument to the augmented right block `[B | I]`
+and prove the transform relation for this producer's recurrence. The
+existing square-matrix loop theorem alone does not cover that block.
+Reusing these theory lemmas does not call the determinant producer.
 
 The positive-vector method needs soundness on success. It is an explicitly
 selected specialization, and need not prove that every positive definite
@@ -272,6 +281,9 @@ executable conversion confined to the proof. Follow
 Include the chapter in `HexManual.lean` under the applicable released or
 unreleased section. Both libraries use this chapter through the standard
 Theory-companion ownership checks, rather than a separate Theory chapter.
+When adding the chapter, register both libraries in the `HexPosDef` entry
+of `CHAPTER_LIBRARIES` in `scripts/release/check_manual_split.py`, so its
+released placement depends on both libraries.
 Build the chapter through `lake build HexManual` and inspect the rendered examples
 as part of the implementation's documentation work.
 

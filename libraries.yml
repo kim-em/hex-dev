@@ -385,7 +385,7 @@ libraries:
     done_through: 7
     status: active
   HexPosDefTheory:
-    deps: [HexPosDef, HexMatrixTheory]
+    deps: [HexPosDef, HexMatrixTheory, HexBareissTheory]
     mathlib: true
     done_through: 0
     status: planned

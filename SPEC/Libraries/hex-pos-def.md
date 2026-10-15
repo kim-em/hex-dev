@@ -28,7 +28,7 @@ definiteness. Classifying all eigenvalue signs is a different operation.
 
 ## Scalars and input encoding
 
-The real arithmetic path uses `Int` directly. Supply a `GaussianInt` type
+The real arithmetic path uses `Int` directly. Supply a `Gaussian` type
 in `Hex.PosDef`, with integer `re` and `im` components, exact equality,
 addition, negation, multiplication, conjugation, zero, and one. Its
 arithmetic is the usual arithmetic of `a + b i`. Keep this representation
@@ -52,7 +52,7 @@ The Theory library proves transport along the checked equation `s • A = B`.
 ## Certificates and public operations
 
 Use the following data and operation names under `Hex.PosDef`. Here `R`
-is `Int` or `GaussianInt`, and all certificate rows are lists.
+is `Int` or `Gaussian`, and all certificate rows are lists.
 
 | Name | Data or contract |
 | --- | --- |
@@ -64,7 +64,7 @@ is `Int` or `GaussianInt`, and all certificate rows are lists.
 | `Int.checkPositive`, `Gaussian.checkPositive` | Check a positive certificate against a dimension and the original integer or Gaussian-integer row list. |
 | `Int.checkNegative`, `Gaussian.checkNegative` | Check a negative certificate against the same input representation. |
 | `Int.certify` | Classify a square executable integer matrix using the selected method, returning `Except Error (Certificate Int)`. |
-| `Gaussian.certify` | Classify a square executable Gaussian-integer matrix using the general method, returning `Except Error (Certificate GaussianInt)`. |
+| `Gaussian.certify` | Classify a square executable Gaussian-integer matrix using the general method, returning `Except Error (Certificate Gaussian)`. |
 
 `Gaussian.checkPositive` rejects the `positiveVector` constructor. Real
 complex inputs that use that method are encoded by the integer path and
