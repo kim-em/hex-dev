@@ -344,6 +344,7 @@ class AdmissionScannerTests(unittest.TestCase):
                 "experiments/KernelReplay/NativeModels.lean",
                 "experiments/KernelReplay/FiniteDependencies.lean",
                 "experiments/KernelReplay/FiniteBase.lean",
+                "experiments/KernelReplay/BaseLookup.lean",
                 "experiments/KernelReplay/FiniteLift.lean",
                 "experiments/KernelReplay/FiniteOperands.lean",
                 "experiments/KernelReplay/FiniteSupport.lean",

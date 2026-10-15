@@ -981,12 +981,39 @@ closed before choosing predecessor points; it does not perform the general
 support collection or interleaved context reconstruction.
 
 `FiniteData.Base.ofClosed` retains the guarded base interpretation constructed
-by the staged bootstrap. `Base.supply` derives the six reached polynomial
+by the staged bootstrap. `Base.domains` uses the reader's proved zero, unit
+and reached natural-cast memberships before searching the finite inventory.
+Cast recognition visits coefficient arithmetic and native wrappers, without
+traversing context signatures or dictionaries. A fixed total node budget and
+visited-expression set bound this optional search. Reached natural casts are
+candidate proofs: acceptance requires definitional equality of the complete
+guarded proposition. A closed computation is accepted when definitionally
+equal to a single reached cast; symbolic field identities and structural
+arithmetic-membership proofs are not used by this hint search.
+Matching leaves caller coefficient and interpretation metavariables unchanged.
+`Base.bindAgreement` retargets the bootstrap's finite agreement to its shared
+named reader and domain, preserving the original signs and support. Closed
+agreements become ordinary-kernel-checked theorems; open agreements retain
+their hypotheses for the enclosing kernel check.
+`Base.supply` derives the reached polynomial
 operation premises from exact coefficient and scalar domain memberships.
 `agreementSupplier` supplies retained domain, sign, zero-reflection and leading
 coefficient guards from the same finite base agreement. Original guards are
 passed to suppliers before weak-head reduction, so their native polynomial
-keys remain available. The CI-built `KernelReplay.FiniteBase` fixture obtains
+keys remain available. Each agreement lookup reduces its requested coefficient
+once and compares each retained coefficient before constructing its membership
+proof. The original complete guarded proposition is checked afterward.
+Definitionally equal coefficients remain supported.
+The CI-built `KernelReplay.BaseLookup` checks literal and aliased membership
+through 256 repeated padding entries, closed zero/unit/computed and symbolic
+natural casts, and binding of closed and open choice agreements. It rejects
+foreign or unspecified interpretations without assigning caller metavariables.
+The fixture uses the default unfolding options, also checks the computed cast with smart
+unfolding disabled, rejects a shared expression with 48 arithmetic layers within
+the fixture's heartbeat limit, and exercises the composed membership/operation
+supplier with coefficients outside the inventory. Unretained leading guards
+and unspecified operation/leading readers remain rejected.
+The CI-built `KernelReplay.FiniteBase` fixture obtains
 one interpretation over two successive infinitesimals, derives all six
 operation proofs and a leading guard, and rejects an unretained coefficient.
 Its cancelling sum keeps both original coefficient lists before choosing the
