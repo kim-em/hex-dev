@@ -19,6 +19,7 @@ inductive Error where
   | descriptor (error : DescriptorError)
   | boundary
   | binding
+  | index
   deriving Repr
 
 /-- Original guard preflight precedes specialization, radical reduction and
@@ -52,7 +53,7 @@ theorem prepare_success (model : Model parent ℝ) (values : Fin n → parent.Va
 
 variable [Hashable parent.Value] [Hashable Signature]
 
-/-- Freeze an independently produced joint sign row with its exact descriptor. -/
+/-- Standalone helper freezing an independently produced joint sign row with its exact descriptor. -/
 @[expose] def row (root : Descriptor parent.Value Signature parent.sign parent.signature)
     (queries : List (DensePoly parent.Value)) : Except Error Codec.Json := do
   let signs ← root.buildSigns queries |>.mapError Error.production
@@ -60,16 +61,23 @@ variable [Hashable parent.Value] [Hashable Signature]
 
 /-- Construct a checked linear descriptor and complete source row at one
 ordinary proposed point, retaining the literal head binding. -/
-@[expose] def point (value : parent.Value) (values : Fin n → parent.Value)
-    (formula : RealFormula.QF (n+1)) : Except Error (PointRows.Packet value values formula) := do
+@[expose] def pointWith (value : parent.Value) (values : Fin n → parent.Value)
+    (formula : RealFormula.QF (n+1)) (queries : List parent.Poly)
+    (same : queries = RepresentationSpecialize.prepare values formula) :
+    Except Error (PointRows.Packet value values formula) := do
   let raw : RawDescriptor parent.Value Signature :=
     ⟨parent.signature, Isolation.pointQuery value, .negInf, .posInf, [], []⟩
   let result ← Descriptor.build parent.sign parent.signature raw |>.mapError Error.production
   let root ← result.mapError Error.descriptor
   if bound : (root.raw.head - Isolation.pointQuery value).isZero = true then
-    let signs ← root.buildSigns (RepresentationSpecialize.prepare values formula) |>.mapError Error.production
-    return ⟨root,bound,signs⟩
+    let signs ← root.buildSigns queries |>.mapError Error.production
+    return ⟨root,bound,same ▸ signs⟩
   else throw .binding
+
+/-- Construct a standalone point row, preparing its source polynomials once. -/
+@[expose] def point (value : parent.Value) (values : Fin n → parent.Value)
+    (formula : RealFormula.QF (n+1)) : Except Error (PointRows.Packet value values formula) :=
+  pointWith value values formula (RepresentationSpecialize.prepare values formula) rfl
 
 /-- Check strict selected signs at every present adjacent boundary. -/
 @[expose] def bounds {p : DensePoly parent.Value}
@@ -102,11 +110,11 @@ guards are preflighted before any section or sector work. -/
     Except Error (CellReplay.Evidence roots values formula) := do
   unless guards.all (fun d => Decidable.decide (d ≠ 0)) do throw .divisor
   let queries := RepresentationSpecialize.prepare values formula
-  let sections ← CellRead.collectWith Error.binding (fun i => SelectedSigns (roots.roots.get i) queries)
+  let sections ← CellRead.collectWith Error.index (fun i => SelectedSigns (roots.roots.get i) queries)
     (fun i => (roots.roots.get i).buildSigns queries |>.mapError Error.production)
-  let sectors ← CellRead.collectWith Error.binding (fun cut => SectorReplay.Result roots cut values formula) (fun cut => do
+  let sectors ← CellRead.collectWith Error.index (fun cut => SectorReplay.Result roots cut values formula) (fun cut => do
     let sector ← bounds roots cut (points cut)
-    let row ← point sector.point values formula
+    let row ← pointWith sector.point values formula queries rfl
     return ⟨sector,row⟩)
   return ⟨sections,fun cut => (sectors cut).sector,fun cut => (sectors cut).row⟩
 

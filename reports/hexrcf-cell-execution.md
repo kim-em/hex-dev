@@ -13,7 +13,7 @@ acceptance theorem.
 
 [CellRead.collectWith](../adapters/HexRCF/RealCoefficients/CellRead.lean)
 collects every dependent entry in index order and checks its index before
-transport. The existing `collect` reader retains its original binding error;
+transport. Its progress law retains each actual child return equation. The existing `collect` reader retains its original binding error;
 the native producer uses the same implementation with its own binding error.
 No missing entry receives a default record.
 
@@ -21,7 +21,9 @@ No missing entry receives a default record.
 sections through the existing selected-sign producer. `bounds` checks the
 negative and positive signs at every present adjacent root. `point` constructs
 the linear ordinary-point descriptor, checks its actual head binding and
-retains the entire source sign row at that point. `evidence` assembles those
+retains the entire source sign row at that point. `pointWith` consumes the
+already prepared query list, which `evidence` shares across all sectors.
+`evidence` assembles those
 sections, sectors and rows only after original guard preflight. `packet`
 serializes that data in the established layout; the public `build` composes
 those two functions. Serialization invokes no root or selected-sign search.
@@ -40,8 +42,8 @@ proves progress of the actual point, boundary, dependent-collection, typed
 matrix and frozen-matrix functions. `CellDiscover.run_success` composes the
 actual collection model, coefficient/guard conversion, radical/root
 preparation, returned vector and typed production. It returns the public
-packet together with its constructed data and exact equality of the frozen
-cells. Both quantifier verdicts refer to the original coefficient valuation,
+packet together with the actual requested vector, dimension proof, typed
+producer return equation and exact equality of the frozen cells. Both quantifier verdicts refer to the original coefficient valuation,
 using that same compatible model and the actual typed checker.
 
 No chosen carrier, root list, point function or successful child-sign premise
@@ -52,7 +54,7 @@ diagnostic rather than a proof of the sentence.
 ## Kernel proofs and compatibility
 
 The [fresh audit](../conformance/HexRCF/CellExecutionProofs.lean) rechecks all
-nine actual executable proof bodies in the ordinary kernel. Its dependency
+ten actual executable proof bodies in the ordinary kernel. Its dependency
 checks require the real radical, root, selected-sign and collection laws. It
 allows only a subset of `propext`, `Classical.choice` and `Quot.sound`.
 
@@ -60,8 +62,10 @@ The [construction regression](../conformance/HexRCF/CellBuildConformance.lean)
 checks agreement between the typed API and public JSON output, exact equality
 with the existing frozen algebraic fixture, true existential and false
 universal verdicts, constant/zero cases and original-guard/exterior refusals.
-Fresh algebraic and Boolean source quotations additionally exclude the new
-native cell-production functions from their actual proof dependencies.
+The fresh algebraic and Boolean quotation modules additionally assert that
+their import sets omit the native `CellBuild` and `CellDiscover` modules. Their
+actual source proof bodies retain the existing checked readers and ordinary
+axiom/dependency audits.
 
 ## Remaining acceptance obligations
 

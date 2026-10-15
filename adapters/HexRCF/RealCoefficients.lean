@@ -67,6 +67,7 @@ public import HexRCF.RealCoefficients.CellBuild
 public import HexRCF.RealCoefficients.CellDiscover
 public import HexRCF.RealCoefficients.CellAlignment
 public import HexRCF.RealCoefficients.CellDecision
+public import HexRCF.RealCoefficients.CellExecution
 public import HexRCF.RealCoefficients.RowEncode
 public import HexRCF.RealCoefficients.CellReuse
 public meta import HexRCF.RealCoefficients.CellQuote
@@ -115,7 +116,6 @@ public meta import HexRCF.RealCoefficients.AlgebraicRoot
 public meta import HexRCF.RealCoefficients.CommonTactic
 public meta import HexRCF.RealCoefficients.FiniteQuote
 public import HexRCF.RealCoefficients.CellFormula
-public import HexRCF.RealCoefficients.CellExecution
 
 /-! Algebraic coefficient conversion, source preparation, fixed-field
 specialization, root-isolation search and checked cell decisions for the

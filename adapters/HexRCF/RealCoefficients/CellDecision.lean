@@ -75,7 +75,9 @@ theorem check_spec (model : Model parent ℝ) (values : Fin n → parent.Value)
 /-- Mathematical existence of accepted typed cells in the actual common context.
 The parent model and original guards are the explicit domain hypotheses. Root
 coverage, order and ordinary sector points are derived from actual owner laws.
-This does not assert serialization or general frontend execution progress. -/
+This interface asserts existence. `CellDiscover.run_success` separately binds
+the actual executable construction; literal-reader and frontend acceptance
+remain separate. -/
 theorem complete (original : Model parent ℝ) (values : Fin n → parent.Value)
     (formula : QF (n+1)) (guards : List parent.Value)
     (guarded : ∀ d ∈ guards, d ≠ 0) :

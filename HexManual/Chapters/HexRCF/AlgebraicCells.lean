@@ -6,7 +6,6 @@ Authors: Kim Morrison
 import VersoManual
 import HexRCF.CellReplay.Algebraic.BooleanQuoted
 import HexRCF.RealCoefficients.RootBuild
-import HexRCF.RealCoefficients.CellDecision
 import HexRCF.RealCoefficients.CellExecution
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean

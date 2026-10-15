@@ -28,6 +28,36 @@ receives a default record. -/
     (read : (i : Fin m) → Except Replay.Error (P i)) : Except Replay.Error ((i : Fin m) → P i) :=
   collectWith .binding P read
 
+/-- Successful child calls produce the complete dependent family in index order. -/
+theorem collectWith_success {ε : Type} {m : Nat} (failure : ε) (P : Fin m → Type)
+    (read : (i : Fin m) → Except ε (P i))
+    (total : ∀ i, ∃ value, read i = .ok value) :
+    ∃ values, collectWith failure P read = .ok values ∧ ∀ i, read i = .ok (values i) := by
+  classical
+  choose values produced using total
+  have same : (fun i => (do return ⟨i, ← read i⟩ : Except ε (Sigma P))) =
+      (fun i => (pure ⟨i, values i⟩ : Except ε (Sigma P))) := by
+    funext i
+    simp [produced i, bind, Except.bind, pure, Except.pure]
+  refine ⟨values, ?_, produced⟩
+  unfold collectWith
+  rw [same, Vector.ofFnM_pure]
+  simp only [bind, Except.bind, pure, Except.pure]
+  have aligned : ∀ i : Fin m,
+      (Vector.ofFn (fun i => (⟨i,values i⟩ : Sigma P)))[i].1 = i := by
+    intro i
+    simp only [Fin.getElem_fin, Vector.getElem_ofFn]
+  rw [dite_eq_left aligned]
+  simp only [Except.ok.injEq]
+  funext i
+  have cast_entry (entry : Sigma P) (same : entry = ⟨i,values i⟩) (index : entry.1 = i) :
+      index ▸ entry.2 = values i := by
+    cases same
+    rfl
+  apply cast_entry
+  simp only [Fin.getElem_fin, Vector.getElem_ofFn]
+
+
 /-- Restore every section and sector in exact order after original guard
 preflight. All child errors propagate through the strict finite collection. -/
 @[expose] def read (value : ValueCodec parent.Value) (guards : List parent.Value)

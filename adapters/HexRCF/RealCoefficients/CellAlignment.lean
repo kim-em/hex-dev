@@ -237,10 +237,8 @@ theorem sector_points (family : Tower.Sample.Partition parent polynomials)
   have lengths : family.values.length = roots.roots.length := by
     have same := congrArg List.length aligned
     simpa only [RootReplay.Result.values, List.length_map] using same
-  obtain ⟨values, _, inside⟩ := SectorRequest.points_spec family original model
-  refine ⟨fun cut => values (Fin.cast (congrArg (·+1) lengths.symm) cut), ?_⟩
-  intro cut
-  exact requested_inside family original model roots aligned cut _ lengths
-    (inside (Fin.cast (congrArg (·+1) lengths.symm) cut))
+  obtain ⟨candidates, _, inside⟩ := sector_vector family original model roots aligned
+  exact ⟨fun cut => candidates[Fin.cast (congrArg (·+1) lengths).symm cut],
+    inside (congrArg (·+1) lengths)⟩
 
 end Hex.RCF.RealCoefficients.CellAlignment
