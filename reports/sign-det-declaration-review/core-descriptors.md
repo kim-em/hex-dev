@@ -46,7 +46,7 @@ the constructor equality theorem, including slot order and every sign.
 | `Descriptor.ofChecked_eq` | Restoration of an existing checked value is equal to that complete value; proof irrelevance handles proof fields. |
 | `Descriptor.ofReplay?` | Checks arbitrary supplied replay and returns `none` on refusal. Refusal does not prove mathematical absence. |
 | `Descriptor.ofReplay_data` | Whole-Option data characterization covers both success and rejection while preserving constructor privacy. |
-| `Descriptor.ofReplay_self` | Rechecks the existing descriptor's exact raw subject and evidence and restores that same descriptor. Uses its retained literal acceptance and proof irrelevance, without a producer equation or a semantic model. It replaces the private frame-restoration argument. |
+| `Descriptor.ofReplay_self` | Rechecks the existing descriptor's exact raw subject and evidence and restores that same descriptor. Uses its retained literal acceptance and proof irrelevance, without a producer equation or a semantic model. Shared by the root-frame reader and the finite-covered descriptor reader. |
 | `Descriptor.ofTable` | Reuses an accepted table and exact count-one row. Its proof applies `check_iff`; the computational data and guards are unchanged. |
 | `Descriptor.ofTable_raw` | Exact raw projection from table reuse. Its hypotheses retain the same table/check/count rather than inventing producer provenance. |
 | `Descriptor.ofTable_evidence` | Exact replay projection from table reuse, with the same dependent acceptance proof. |
