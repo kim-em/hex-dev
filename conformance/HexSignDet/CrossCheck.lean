@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexSignDet.Conformance
+public import HexSignDet.Codec.GraphLaws
 public meta import HexSignDet.Dag
 public meta import HexSignDet.DagSigns
 public meta import HexSignDet.DagEncode
@@ -547,3 +548,7 @@ end Hex.SignDet.CrossCheck
 /-- info: 'Hex.SignDet.Dag.descriptor_encode' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Dag.descriptor_encode
+
+/-- info: 'Hex.SignDet.Codec.bindings_of_check' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Codec.bindings_of_check

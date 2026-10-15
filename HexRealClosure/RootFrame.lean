@@ -13,7 +13,6 @@ public import HexSignDet.DagExpand
 public import HexSignDet.DagBounds
 import all HexSignDet.Codec.Basic
 import all HexSignDet.Codec.Json
-import all HexSignDet.Codec.Node
 
 public section
 
@@ -21,23 +20,6 @@ namespace Hex.RealClosure.Tower
 open SignDet
 open SignDet.Codec (Json)
 variable {registry : BaseContext.Registry}
-
-private theorem node_bindings {E C : Type} [Zero E] [DecidableEq E] [DecidableEq C]
-    [One E] [Add E] [Sub E] [Mul E] [NatCast E] {sign : E → Int} {parent : C}
-    {head : DensePoly E} {lower upper : Endpoint E} {queries : List (DensePoly E)}
-    {node : Node E C} (h : node.check sign parent head lower upper queries = true) :
-    Codec.bindings parent head lower upper node = true := by
-  obtain ⟨subject, _⟩ := Node.check_bindings h
-  simp only [Codec.bindings, subject.1, subject.2.1, subject.2.2.1,
-    subject.2.2.2.1, and_self, decide_true, Bool.true_and]
-  apply List.all_eq_true.mpr
-  intro cert mem
-  obtain ⟨i, hi, same⟩ := Vector.mem_iff_getElem.mp (Vector.mem_toList_iff.mp mem)
-  subst cert
-  have checked := Sturm.check_bindings sign parent head _ lower upper _ node.moments[i]
-    (checkMoment_query (Node.check_moment h ⟨i, hi⟩))
-  simp only [checked.1, checked.2.1, checked.2.2.2.1, checked.2.2.2.2.1,
-    and_self, decide_true]
 
 /-- Checked descriptors provide every graph parser bound and literal binding.
 Decoding uses the actual shared graph codec and retains the original tree. -/
@@ -70,7 +52,7 @@ theorem Context.readGraph_data (parent : Context registry)
     rw [← nodes] at mapped
     obtain ⟨checked, _, same⟩ := Array.mem_map.mp mapped
     rw [← same]
-    exact node_bindings (Replay.check_node checked.accepted)
+    exact Codec.bindings_of_check (Replay.check_node checked.accepted)
 
 private theorem descriptor_replay (parent : Context registry)
     (descriptor : Descriptor parent.Value Signature parent.sign parent.signature) :
