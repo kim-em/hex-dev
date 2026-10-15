@@ -37,7 +37,7 @@
     "HexRealClosure/RootFrame.lean": "integration reader proof client",
     "HexRealClosure/SignEvidence.lean": "integration reader proof client",
     "HexRealClosure/RootReplay.lean": "integration reader proof client",
-    "conformance/HexSignDet/CrossCheck.lean": "integration kernel examples and axiom guards",
+    "conformance/HexSignDet/CrossCheck.lean": "graph conformance and kernel axiom guards",
     "conformance/HexRealClosureTheory/SignEvidenceConformance.lean": "integration kernel examples and axiom guards"
   },
   "declarations": {
@@ -132,10 +132,9 @@
       "Classical.choice",
       "Quot.sound"
     ],
-    "integration_scope": "Individual source/API assessment of the integration additions. Reader clients and axiom-guard source files are bound current contexts; no new compiler capture, computational regression or phase acceptance.",
+    "integration_scope": "Individual source/API assessment of the integration additions. Bound reader clients and kernel axiom guards have a targeted integration build; no new compiler capture, computational regression or phase acceptance.",
     "integration_commands": [
-      "lake build HexRealClosureTheory.SignEvidenceConformance HexSignDet.CrossCheck",
-      "lake build HexRealClosureTheory.SignEvidenceConformance HexManual"
+      "lake build HexSignDet.CrossCheck HexRealClosureTheory.SignEvidenceConformance HexRealClosure.RootFrame HexRealClosure.RootReplay"
     ]
   },
   "source_ref": "audit/issue-10575-sign-det-integration-review-input-v3",
