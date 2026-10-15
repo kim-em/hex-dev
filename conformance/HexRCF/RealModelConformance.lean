@@ -7,6 +7,15 @@ import HexRCF.RealCoefficients.RealModel
 import HexRCF.SelectedRoot.Data
 open Hex Lean Meta Qq Hex.RCF.RealCoefficients
 namespace Hex.RCF.RealModelConformance
+private meta def rejected (action : MetaM Expr) : MetaM Bool :=
+  fun metaContext metaState coreContext coreState => do
+    try
+      let _ ← action metaContext metaState coreContext coreState
+      return false
+    catch error =>
+      if error.isInterrupt || error.isMaxHeartbeat || error.isMaxRecDepth then throw error
+      return true
+
 run_meta do
   let base ← mkAppM ``RealClosure.NumberField.rationalModel #[mkConst ``SelectedRootTests.Data.registry]
   let context ← mkAppM ``RealClosure.Tower.Context.pack #[← mkAppM ``RealClosure.Tower.Chain.base
@@ -29,9 +38,15 @@ run_meta do
   for action in [RealModel.build context model,
       RealModel.build (mkConst ``SelectedRootTests.Data.parent) base 1] do
     let before := (← getMCtx).decls.toList.length
-    let declined ← try (do let _ ← action; pure false) catch _ => pure true
-    unless declined do throwError "mismatched base or exhausted model depth accepted"
-    unless (← getMCtx).decls.toList.length == before do
-      throwError "failed real model construction leaked metavariables"
+    let declarations := (← getEnv).checked.get.constants.map₂.toList.length
+    unless ← rejected action do throwError "mismatched base or exhausted model depth accepted"
+    unless (← getMCtx).decls.toList.length == before &&
+        (← getEnv).checked.get.constants.map₂.toList.length == declarations do
+      throwError "failed real model construction leaked metavariables or proof declarations"
   logInfo "retained rational and selected-root ordinary-real models checked; original coefficient, wrong base and depth refusal audited"
+  addDecl (.thmDecl {
+    name := `Hex.RCF.RealModelConformance.auditComplete
+    levelParams := [], type := mkConst ``True, value := mkConst ``True.intro })
+
+example : True := auditComplete
 end Hex.RCF.RealModelConformance

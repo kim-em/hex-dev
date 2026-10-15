@@ -555,8 +555,14 @@ checker retains its typed failures and diagnostic false result. These
 interfaces do not authenticate source coefficients, construct general frozen
 histories or establish strict compiled rejection of missing intermediate
 arithmetic records. The compiled controls and ordinary proofs are separate;
-the quoted source regression reuses the independently checked fixture and
-finite codec laws rather than claiming a fresh reduction of the literal reader.
+one source regression reuses independently checked fixture acceptance and finite
+codec laws as a transport check. A separate assembled-source regression collects
+actual reached records, checks complete literal packet acceptance in the ordinary
+kernel, and quotes the original statement ∃ x, x² - √2 ≥ 0 ∧ x² - √2 ≤ 0 ∧ 0 = 0.
+Its fresh consuming module derives ∃ x, x² = √2 and audits the actual proof
+bodies with only the standard three axioms, excluding the older fixture
+acceptance and source theorems. This uses a fixed retained field and finite
+coefficient codec; it does not reconstruct arbitrary frozen histories.
 
 For a closed retained base/root context, `RealModel.build` constructs its
 ordinary-real interpretation from a caller-supplied real base model and each
