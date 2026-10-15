@@ -405,7 +405,9 @@ tree with the parsed graph's actual replay result.
 The decode-time check {name Hex.SignDet.Codec.bindings}`Codec.bindings` fixes
 the node's and every stored moment's context, head and both endpoints.
 {name Hex.SignDet.Codec.bindings_iff}`bindings_iff` characterizes those four
-literal equalities. Replay separately binds query lists and query polynomials;
+literal equalities.
+{name Hex.SignDet.Codec.bindings_of_check}`bindings_of_check` derives them
+from an accepted node check. Replay separately binds query lists and query polynomials;
 equal coefficient meanings alone do not satisfy the decode-time check. Neither
 this binding nor reconstruction supplies an arithmetic or root-count conclusion.
 

@@ -178,23 +178,6 @@ theorem check_ofSigns [Hashable E] [Hashable Ctx]
   · rename_i different
     exact (different rfl).elim
 
-omit [Neg E] [Inv E] [Div E] in
-private theorem node_bindings {sign : E → Int} {parent : Ctx}
-    {head : DensePoly E} {lower upper : Endpoint E} {queries : List (DensePoly E)}
-    {node : Node E Ctx} (h : node.check sign parent head lower upper queries = true) :
-    Codec.bindings parent head lower upper node = true := by
-  obtain ⟨subject, _⟩ := Node.check_bindings h
-  simp only [Codec.bindings, subject.1, subject.2.1, subject.2.2.1,
-    subject.2.2.2.1, and_self, decide_true, Bool.true_and]
-  apply List.all_eq_true.mpr
-  intro cert mem
-  obtain ⟨i, hi, same⟩ := Vector.mem_iff_getElem.mp (Vector.mem_toList_iff.mp mem)
-  subst cert
-  have checked := Sturm.check_bindings sign parent head _ lower upper _ node.moments[i]
-    (checkMoment_query (Node.check_moment h ⟨i, hi⟩))
-  simp only [checked.1, checked.2.1, checked.2.2.2.1, checked.2.2.2.2.1,
-    and_self, decide_true]
-
 /-- The actual encoder retains every node and moment's literal root-domain
 binding from checked production. No coefficient interpretation is needed. -/
 theorem ofSigns_bindings [Hashable E] [Hashable Ctx]
@@ -217,7 +200,7 @@ theorem ofSigns_bindings [Hashable E] [Hashable Ctx]
     rw [← nodes] at member
     obtain ⟨checked, _, same⟩ := Array.mem_map.mp member
     rw [← same, (RawDescriptor.check_eq context.root.accepted).2.1]
-    exact node_bindings (Replay.check_node checked.accepted)
+    exact Codec.bindings_of_check (Replay.check_node checked.accepted)
 
 /-- Every node encoded from checked joint signs meets the parser's dimensions
 and reduction-index bounds. -/

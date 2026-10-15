@@ -100,6 +100,21 @@ private theorem reduction_indices {sign : E → Int} {p prev result : DensePoly 
 
 variable [DecidableEq Ctx]
 
+/-- An accepted node and all its stored moments retain the caller's literal
+context, head and endpoints. No interpretation of the coefficients is needed. -/
+theorem bindings_of_check {sign : E → Int} {context : Ctx} {p : DensePoly E}
+    {lo hi : Endpoint E} {qs : List (DensePoly E)} {n : Node E Ctx}
+    (h : n.check sign context p lo hi qs = true) : bindings context p lo hi n = true := by
+  obtain ⟨subject, _⟩ := Node.check_bindings h
+  apply bindings_iff.mpr
+  refine ⟨⟨subject.1, subject.2.1, subject.2.2.1, subject.2.2.2.1⟩, ?_⟩
+  intro cert mem
+  obtain ⟨i, bound, same⟩ := Vector.mem_iff_getElem.mp (Vector.mem_toList_iff.mp mem)
+  subst cert
+  have checked := Sturm.check_bindings sign context p _ lo hi _ n.moments[i]
+    (checkMoment_query (Node.check_moment h ⟨i, bound⟩))
+  exact ⟨checked.1, checked.2.1, checked.2.2.2.1, checked.2.2.2.2.1⟩
+
 /-- Every accepted node meets the decoder's dimension and index bounds.
 These follow from the existing checker; callers need no additional shape
 certificate or coefficient interpretation. -/
