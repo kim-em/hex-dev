@@ -19,6 +19,29 @@ def digest(text):
     return hashlib.sha256(text.encode()).hexdigest()
 
 
+def retained_path(name, root=ROOT):
+    """Locate the recorded proof source across the companion-directory rename."""
+    path = root / name
+    old = "bench/HexPrimalityMathlib/"
+    if not path.exists() and name.startswith(old):
+        return root / name.replace(old, "bench/HexPrimalityTheory/", 1)
+    return path
+
+
+def retained_source(name, root=ROOT):
+    """Undo only the renamed Prime import before checking the original hash.
+
+    Historical manifests and certificate bytes stay fixed. Every other source
+    byte must still match the recorded digest, including theorem bodies.
+    """
+    path = retained_path(name, root)
+    source = path.read_text()
+    if path != root / name:
+        source = source.replace("public import HexPrimalityTheory.Prime\n",
+                                "public import HexPrimalityMathlib.Prime\n")
+    return source
+
+
 @cache
 def load_report(name):
     """Read immutable retained reports once when checking many sample links."""
@@ -49,7 +72,7 @@ def main():
     assert {c["subject"] for c in corpus["cases"]}.isdisjoint(
         c["subject"] for c in corrected["cases"])
     manifest = json.loads((REPORTS / "kernel-certificates.json").read_text())
-    assert digest((ROOT / manifest["source"]).read_text()) == manifest["source_sha256"]
+    assert digest(retained_source(manifest["source"])) == manifest["source_sha256"]
     certificates = {entry["certificate_sha256"]: entry for entry in manifest["certificates"]}
     for sha, entry in certificates.items():
         assert digest(entry["certificate"]) == sha
@@ -82,9 +105,9 @@ def main():
         data = json.loads(fresh.read_text())
         assert not data["partial"]
         for source, sha in data["hex_sources"].items():
-            assert digest((ROOT / source).read_text()) == sha
+            assert digest(retained_source(source)) == sha
         directory = ROOT / "bench/HexPrimalityTheory/ProofProbe/FactorCorpus"
-        assert set(data["hex_sources"]) == {str(p.relative_to(ROOT)) for p in directory.glob("*.lean")}
+        assert {retained_path(name) for name in data["hex_sources"]} == set(directory.glob("*.lean"))
         for system, suffix in [("native", ".hex.log"), ("primecert", ".primecert.log")]:
             result = data[f"{system}_build"]
             if data[system]:
@@ -118,7 +141,7 @@ def main():
                 if system == "native":
                     source = "bench/" + entry["module"].replace(".", "/") + ".lean"
                     assert source in data["hex_sources"]
-                    source = (ROOT / source).read_text()
+                    source = retained_source(source)
                     assert f'theorem {entry["theorem"]} : _root_.Nat.Prime {entry["subject"]}' in source
                     assert f"(c := {literal}) (by decide +kernel)" in source
                 else:
@@ -152,7 +175,7 @@ def main():
     replay = json.loads((adoption / "kernel-replay.json").read_text())
     assert digest((adoption / "measurements.json").read_text()) == replay["measurements_sha256"]
     assert replay["build_returncode"] == 0
-    source = (ROOT / replay["source"]).read_text()
+    source = retained_source(replay["source"])
     assert digest(source) == replay["source_sha256"]
     assert digest((adoption / "kernel-replay.log").read_text()) == replay["log_sha256"]
     dispatch = json.loads((adoption / "dispatch.json").read_text())
