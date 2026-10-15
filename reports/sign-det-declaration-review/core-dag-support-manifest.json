@@ -1,30 +1,34 @@
 {
-  "scope": "69 named declarations, five fields and the entry hashing instance; partial computational review, no phase promotion",
+  "scope": "74 named declarations, five fields and the entry hashing instance; partial computational review, no phase promotion",
   "files": {
     "HexSignDet/DagBounds.lean": "1ff482fbcb51846b61348d1708062647fb0f61bf2eb04184b86fa17d7bac33a7",
-    "HexSignDet/DagEncode.lean": "427be048fcb7f4bbc5a99c98c725f8d32a88a3c03a4429820268afa752ab6a17",
+    "HexSignDet/DagEncode.lean": "b6551e81e610f7fe69e6015f97be602a3b2dbcf6c4959ee81bf974479fdb7d66",
     "HexSignDet/DagMap.lean": "282384b03d9ccec90817d8e38962f184edb66c58b06fe391f92c332a1bb4f7fd",
     "HexSignDet/DagMemo.lean": "a8a6495f09f66126ff4f902dacb4c1e00b90b2148eaa6c8f3dd39a671344bc10",
     "HexSignDet/DagExpand.lean": "6b051dc00bed5de01fc534d2aa3eef835641080693ea6f2cbfb4a908d302f8dc",
-    "HexSignDet/DagReplay.lean": "4bc5c8a12517cca8b375db63360d6e607c55509518089c8c43483893e7bfb5a1",
+    "HexSignDet/DagReplay.lean": "be3317f306194a18a314e9f8fca021eefda76ea17704c5ec89daeff9a2867f42",
     "HexSignDet/DagOperations.lean": "e9e23da40110faaa2a0e1cf2551f7ae3cd98e5e21b6589681de24ec9319f947c",
     "HexSignDet/DagSigns.lean": "11efde41cbb44dccd5abf214532c400d54b2adfbf72c28cb8999446318de342b",
     "HexSignDet/DagSelectedSigns.lean": "3ffbfbe2cebf6ad7b5db0cf8b0a3c5a26142a46465d2577a08ddb292594eed26",
     "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
-    "HexManual/Chapters/HexSignDet.lean": "47b72e891fbceb02abbcb1191c573712b413e517aa52a76a467872a7871cc441",
-    "reports/sign-det-declaration-review/core-dag-support.md": "34b9b328cc0b2be7f66347452ed2617cae4e9a22a78b748560bf0131a4b815d8",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "c3b86c2cef0c53175e43cc40db0dc02ec93de147414c9378e0d914bfb5149132",
-    "reports/sign-det-declaration-review/README.md": "6f5bca1235a9b05ddfe3f0b2d04babf177cf4d6a75003847e89e3b7c615ecd88",
+    "HexManual/Chapters/HexSignDet.lean": "6cf774c0d04b484265c361d16b061b8e57039511c025810520f383169ecfb8e1",
+    "reports/sign-det-declaration-review/core-dag-support.md": "0f828ef1958ad190efc5eae7fe1969b1b4fafa4797d1ed1c0e950fe49610c498",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "83520887f6307511e2db9aa18862adaa47d66df6aadcdf2870cd6c2b635c8928",
+    "reports/sign-det-declaration-review/README.md": "91f20367d85a39c654a41ca448ebc01d5a9060f0273992f5681dfe2ce6bb3c54",
     "reports/sign-det-declaration-review/current/normalize.py": "7c34629b7ef6e1727b340e3623b1e774b761e565d24a74ece7745053fa46735f",
     "reports/sturm-declaration-review/audit_tools.py": "de536ebeafd2ee355ac6e3349efaeaf2a5f0c37ecceed4457f4be51b664a963a",
     "scripts/ci/check_benches_mathlib_free.py": "a8da3bef100b50fdd923d609ad03a3a9bd55229467f5652abe6e3f0b3d1ed0e5",
-    "scripts/libgraph.py": "7c250cb801b6b5f4ae34ae90d98c2afc39d65f04e1b6770cc1f8871349af5ef7",
+    "scripts/libgraph.py": "39a537d8b0623d6770a1470e0868a6571675f477a970328e11373937f6ee6589",
     "scripts/bench/sweep_freshness.py": "882e1d255d32fe2a8c97d3ed5e16ff050e8bcbaffbbe20529a80517923f36ad2",
     "conformance/HexSignDet/FastCheck.lean": "2a7d8133571cfc134c7f5dd33d9cb9409a3e5e4eb98f21af4b8e015a809a4930",
     "conformance/HexSignDet/FieldChecks.lean": "157447991ac47fe7a9c7491636b46849667c18803a8e5711a370114a3d92c9f6",
-    "conformance/HexSignDet/CrossCheck.lean": "9789b395991648450d1dd5a1c8b4908980273fcf84fc0c95c295b560907cf4a9",
+    "conformance/HexSignDet/CrossCheck.lean": "b385a463de209eb7825e12934999a5dc7e3f7a46b2dd10b2f5d3b7c9a1a6c644",
     "reports/sign-det-declaration-review/current/test_tools.py": "52046cca19c1831043725a57de52cfe70f3f20754a31810b179c5c37754821f4",
-    "HexSignDet/Codec/Value.lean": "ba911f7aea6e08ffb762338f33b8be461bb24a317564381a6c88ea24745ceac5"
+    "HexSignDet/Codec/Value.lean": "ba911f7aea6e08ffb762338f33b8be461bb24a317564381a6c88ea24745ceac5",
+    "HexRealClosure/RootFrame.lean": "9c84cb8c3b992d9c7ceef118a81e5376120c99bb90fd19838ae6d8e078b66ac5",
+    "HexRealClosure/SignEvidence.lean": "374f9a75fe401831ffe439d89daad9773ba272b9fc9a4832a2d742e3f392cf2d",
+    "HexRealClosure/RootReplay.lean": "3ff6adf0f06f4fe7c2eaf4d5ca6732b83b096b44d4b26d7edbb35e3c43c4a179",
+    "conformance/HexRealClosureTheory/SignEvidenceConformance.lean": "156eedb48bba3dd530ebc128ad04090eb076f1b344b15aac367236a290b1da3c"
   },
   "file_roles": {
     "HexSignDet/DagBounds.lean": "reviewed module",
@@ -48,9 +52,13 @@
     "scripts/bench/sweep_freshness.py": "shared extractor import",
     "conformance/HexSignDet/FastCheck.lean": "existing graph rejection controls",
     "conformance/HexSignDet/FieldChecks.lean": "existing memo selection controls",
-    "conformance/HexSignDet/CrossCheck.lean": "existing graph cross checks",
+    "conformance/HexSignDet/CrossCheck.lean": "graph conformance and kernel axiom guards",
     "reports/sign-det-declaration-review/current/test_tools.py": "namespace extraction regression controls",
-    "HexSignDet/Codec/Value.lean": "namespace extraction control input"
+    "HexSignDet/Codec/Value.lean": "namespace extraction control input",
+    "HexRealClosure/RootFrame.lean": "integration reader proof client",
+    "HexRealClosure/SignEvidence.lean": "integration reader proof client",
+    "HexRealClosure/RootReplay.lean": "integration reader proof client",
+    "conformance/HexRealClosureTheory/SignEvidenceConformance.lean": "integration kernel examples and axiom guards"
   },
   "declarations": {
     "HexSignDet/DagBounds.lean": [
@@ -60,10 +68,14 @@
       "encode_bounds"
     ],
     "HexSignDet/DagEncode.lean": [
+      "nodes",
       "Encoder",
       "Encoder.insert",
       "encodeFrom",
-      "encode"
+      "encode",
+      "Encoder.insert_nodes",
+      "encodeFrom_nodes",
+      "encode_nodes"
     ],
     "HexSignDet/DagMap.lean": [
       "mapNodes",
@@ -105,6 +117,7 @@
       "step_split",
       "encodeFrom_checks",
       "replay_encode",
+      "validate_encode",
       "check_encode"
     ],
     "HexSignDet/DagOperations.lean": [
@@ -149,10 +162,14 @@
       "Dag.encode_bounds"
     ],
     "HexSignDet/DagEncode.lean": [
+      "Replay.nodes",
       "Dag.Encoder",
       "Dag.Encoder.insert",
       "Dag.encodeFrom",
-      "Dag.encode"
+      "Dag.encode",
+      "Dag.Encoder.insert_nodes",
+      "Dag.encodeFrom_nodes",
+      "Dag.encode_nodes"
     ],
     "HexSignDet/DagMap.lean": [
       "Dag.mapNodes",
@@ -194,6 +211,7 @@
       "Dag.step_split",
       "Dag.encodeFrom_checks",
       "Dag.replay_encode",
+      "Dag.validate_encode",
       "Dag.check_encode"
     ],
     "HexSignDet/DagOperations.lean": [
@@ -246,20 +264,24 @@
     "step_isSome_axioms": [
       "propext",
       "Quot.sound"
+    ],
+    "integration_scope": "Individual source/API assessment of the integration additions. Bound reader clients and kernel axiom guards have a targeted integration build; no new compiler capture, computational regression or phase acceptance.",
+    "integration_commands": [
+      "lake build HexSignDet.CrossCheck HexRealClosureTheory.SignEvidenceConformance HexRealClosure.RootFrame HexRealClosure.RootReplay"
     ]
   },
-  "source_ref": "audit/issue-10575-sign-det-dag-support-input-v3",
-  "input_revision": "e58f956fca29eb5fce9df7abd24fcdecf474dc0b",
+  "source_ref": "audit/issue-10575-sign-det-integration-review-input-v4",
+  "input_revision": "e68d39aef73d8e88f6a30862d9b4c4dab03f74ee",
   "archive_files": {
     "HexSignDet/DagBounds.lean": "1ff482fbcb51846b61348d1708062647fb0f61bf2eb04184b86fa17d7bac33a7",
-    "HexSignDet/DagEncode.lean": "427be048fcb7f4bbc5a99c98c725f8d32a88a3c03a4429820268afa752ab6a17",
+    "HexSignDet/DagEncode.lean": "b6551e81e610f7fe69e6015f97be602a3b2dbcf6c4959ee81bf974479fdb7d66",
     "HexSignDet/DagMap.lean": "282384b03d9ccec90817d8e38962f184edb66c58b06fe391f92c332a1bb4f7fd",
     "HexSignDet/DagMemo.lean": "a8a6495f09f66126ff4f902dacb4c1e00b90b2148eaa6c8f3dd39a671344bc10",
     "HexSignDet/DagExpand.lean": "6b051dc00bed5de01fc534d2aa3eef835641080693ea6f2cbfb4a908d302f8dc",
-    "HexSignDet/DagReplay.lean": "4bc5c8a12517cca8b375db63360d6e607c55509518089c8c43483893e7bfb5a1",
+    "HexSignDet/DagReplay.lean": "be3317f306194a18a314e9f8fca021eefda76ea17704c5ec89daeff9a2867f42",
     "HexSignDet/DagOperations.lean": "e9e23da40110faaa2a0e1cf2551f7ae3cd98e5e21b6589681de24ec9319f947c",
     "HexSignDet/DagSigns.lean": "11efde41cbb44dccd5abf214532c400d54b2adfbf72c28cb8999446318de342b",
     "HexSignDet/DagSelectedSigns.lean": "3ffbfbe2cebf6ad7b5db0cf8b0a3c5a26142a46465d2577a08ddb292594eed26",
-    "reports/sign-det-declaration-review/core-dag-support.md": "34b9b328cc0b2be7f66347452ed2617cae4e9a22a78b748560bf0131a4b815d8"
+    "reports/sign-det-declaration-review/core-dag-support.md": "0f828ef1958ad190efc5eae7fe1969b1b4fafa4797d1ed1c0e950fe49610c498"
   }
 }

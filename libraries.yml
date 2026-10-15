@@ -644,7 +644,7 @@ libraries:
   HexSturm:
     deps: [HexPoly, HexRealRoots]
     mathlib: false
-    done_through: 5
+    done_through: 7
     status: active
   HexSignDet:
     deps: [HexSturm, HexPoly, HexMatrix, HexRowReduce, HexRank]

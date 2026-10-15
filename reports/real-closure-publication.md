@@ -278,9 +278,9 @@ manifest state:
    libraries' Phases 5–7, including real API review and built Verso chapters.
    The inventory records source counters: ordered pair 5; Sturm and sign pairs 3;
    tower pair 0. These are the inventory snapshot's counters. Current Sturm
-   counters are 5 for the core through [proof acceptance](sturm-proof-acceptance.md)
-   and 7 for the companion through the [API/manual assessment](sturm-declaration-review/README.md); SignDet
-   counters are 5 after [proof acceptance](sign-det-proof-acceptance.md), following
+   counters are 7 for both libraries through [final acceptance](sturm-proof-acceptance.md),
+   including the [complete native comparison](bench-results/sturm-phase6-comparison/cap-complete-v3/README.md). SignDet
+   records core Phase 5 and companion Phase 7 after [proof/API acceptance](sign-det-proof-acceptance.md), following
    the owner Phase-4 attestation in [#10861](https://github.com/kim-em/hex-dev/pull/10861).
    These phase counters do not establish publication eligibility.
 2. Separately obtain distribution eligibility for every transitive input.

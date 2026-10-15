@@ -384,7 +384,7 @@ ordinary theorem applications require no blanket timing sweep.
 HexSignDet and HexSignDetMathlib record Phase 5 in `libraries.yml`; their
 [proof acceptance](sign-det-proof-acceptance.md) follows the owner Phase-4
 attestation. This performance report retains the source-scoped Phase-4 evidence.
-The computational library's declared direct prerequisites are HexSturm (Phase 5),
+The computational library's declared direct prerequisites are HexSturm (Phase 7),
 HexPoly, HexMatrix and HexRowReduce (Phase 7), and HexRank (Phase 4).
 The companion additionally uses HexSturmMathlib (Phase 7) and HexRankMathlib (Phase 4),
 HexPolyMathlib and HexMatrixMathlib (Phase 7), and HexSignDet (Phase 5).
