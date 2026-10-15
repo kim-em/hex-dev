@@ -6,7 +6,7 @@ Authors: Kim Morrison
 import VersoManual
 import HexRCF.CellReplay.Algebraic.BooleanQuoted
 import HexRCF.RealCoefficients.RootBuild
-import HexRCF.RealCoefficients.CellAlignment
+import HexRCF.RealCoefficients.CellDecision
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -203,8 +203,53 @@ half-open domain guards, including equal and reversed endpoints.
 
 This is native production followed by independent cell replay. The returned
 collection retains native conversion history; it is not a frozen certificate of
-that history. A complete acceptance proof for discovery still needs each sector
-point's indexed position to be related to the common ordered boundary list.
-The general frozen history, strict compiled missing-record checks and automatic
+that history. The direct-index discovery path still needs its sector positions
+related to the common ordered boundary list. The general frozen history, strict compiled missing-record checks and automatic
 source quotation retain their separate obligations. No native verdict is a
 proof of a real sentence.
+
+The separate `SectorRequest` route uses the owner's proved boundary-request
+API. `Cut.adjacent` establishes the requested endpoints for every sector index,
+including both rays and an empty table's whole line. `CellAlignment.sector_points`
+then transports those endpoint inequalities to the independently checked radical
+table. The adapter proves this index correspondence using public cell-membership
+laws and list identities; no new owner index theorem is needed.
+
+`CellProgress` obtains each selected-sign row and each ordinary-point descriptor
+from the owner's actual construction theorems. A checked linear head binds the
+point row to its proposed value:
+
+```lean
+open Hex Hex.RealClosure
+open Hex.RCF.RealCoefficients
+example
+    {r : BaseContext.Registry}
+    {c : Tower.Context r} {n : Nat}
+    [Hashable c.Value] [Hashable Signature]
+    (model : Tower.Model c ℝ) (point : c.Value)
+    (values : Fin n → c.Value)
+    (formula : RealFormula.QF (n + 1)) :
+    Nonempty
+      (PointRows.Packet point values formula) :=
+  CellProgress.point_packet model point
+    values formula
+```
+
+`CellDecision.complete` composes the actual collection, source conversion,
+radical/root preparation, requested sector points and complete typed rows.
+Given a lawful ordinary-real parent and nonzero original divisors, it derives
+accepted typed evidence and a total diagnostic verdict for each quantifier.
+The verdict is true exactly when the shared sentence holds at the original
+fixed coefficient values. False verdicts remain diagnostics. The construction
+requires no supplied carrier, chosen root table, sector-point function or
+successful child-sign assumption. Its ordinary model remains an explicit domain
+hypothesis; this does not supply faithful models for arbitrary named constants.
+
+The theorem establishes mathematical existence of accepted typed evidence.
+An execution/serialization theorem for the general native builder, frozen
+provider/context histories, strict compiled missing-record checking and fresh
+source-goal quotation still retain their own obligations. The seven-matrix
+native regression includes a four-boundary union of the algebraic equation and
+half-open guards. Its retained diagnostic trace exposes a substantial cost in
+cell-row production; this is a performance limitation, without a scaling or
+speedup claim.

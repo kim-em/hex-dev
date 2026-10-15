@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 module
 public import HexRCF.RealCoefficients.CellDiscover
+public import HexRCF.RealCoefficients.SectorRequest
 public import Mathlib.Data.List.Sort
 public section
 namespace Hex.RCF.RealCoefficients.CellAlignment
@@ -155,5 +156,75 @@ theorem dimensions (values : Fin n → parent.Value) (formula : RealFormula.QF (
   have lengths := congrArg List.length (aligned values formula family original model cert roots checked)
   simp only [RootReplay.Result.values, List.length_map] at lengths
   exact congrArg (fun size => size+1) lengths
+
+variable {polynomials : List parent.Poly}
+
+theorem boundary (family : Tower.Sample.Partition parent polynomials)
+    (original : Model parent ℝ) (model : Collection.Model family.collection original)
+    {p : DensePoly family.collection.input.context.Value}
+    (roots : @RootReplay.Result registry family.collection.input.context p .negInf .posInf)
+    (aligned : family.values.map model.input.target.value = roots.values model.input.target)
+    (i : Nat) (left : i < family.values.length) (right : i < roots.roots.length) :
+    model.input.target.value family.values[i] = RootCells.points roots model.input.target ⟨i,right⟩ := by
+  have same := congrArg (fun xs : List ℝ => xs[i]?) aligned
+  simp only [RootReplay.Result.values, List.getElem?_map, List.getElem?_eq_getElem left,
+    List.getElem?_eq_getElem right, Option.map_some, Option.some.injEq] at same
+  exact same
+
+theorem requested_inside (family : Tower.Sample.Partition parent polynomials)
+    (original : Model parent ℝ) (model : Collection.Model family.collection original)
+    {p : DensePoly family.collection.input.context.Value}
+    (roots : @RootReplay.Result registry family.collection.input.context p .negInf .posInf)
+    (aligned : family.values.map model.input.target.value = roots.values model.input.target)
+    (cut : Fin (roots.roots.length+1))
+    (point : family.collection.input.context.Value)
+    (lengths : family.values.length = roots.roots.length)
+    (member : (Tower.Cell.sector
+      (SectorRequest.Cut.lower family (Fin.cast (congrArg (·+1) lengths.symm) cut))
+      (SectorRequest.Cut.upper family (Fin.cast (congrArg (·+1) lengths.symm) cut))).Mem
+        model.input.target (model.input.target.value point)) :
+    Cell.Region (RootCells.points roots model.input.target) (.open cut) (model.input.target.value point) := by
+  by_cases empty : roots.roots.length = 0
+  · simp [Cell.Region, empty]
+  · by_cases first : cut.val = 0
+    · have present : 0 < family.values.length := by omega
+      have right : 0 < roots.roots.length := by omega
+      have upper := (boundary family original model roots aligned 0 present right)
+      simp [SectorRequest.Cut.lower, SectorRequest.Cut.upper, Tower.Cell.Mem, first, present] at member
+      simpa [Cell.Region, empty, first, ← upper] using member
+    · have previous : cut.val-1 < family.values.length := by have := cut.isLt; omega
+      have rootPrevious : cut.val-1 < roots.roots.length := by omega
+      have lower := boundary family original model roots aligned (cut.val-1) previous rootPrevious
+      by_cases last : cut.val = roots.roots.length
+      · have final : ¬cut.val < family.values.length := by omega
+        simp [SectorRequest.Cut.lower, SectorRequest.Cut.upper, Tower.Cell.Mem, first, final] at member
+        have actual : RootCells.points roots model.input.target ⟨cut.val-1,rootPrevious⟩ <
+            model.input.target.value point := by
+          rw [← lower]
+          exact member
+        simpa [Cell.Region, empty, first, last] using actual
+      · have bounded : cut.val < family.values.length := by have := cut.isLt; omega
+        have rootBounded : cut.val < roots.roots.length := by omega
+        have upper := boundary family original model roots aligned cut.val bounded rootBounded
+        simp [SectorRequest.Cut.lower, SectorRequest.Cut.upper, Tower.Cell.Mem, first, bounded] at member
+        simpa [Cell.Region, empty, first, last, ← lower, ← upper] using member
+
+theorem sector_points (family : Tower.Sample.Partition parent polynomials)
+    (original : Model parent ℝ) (model : Collection.Model family.collection original)
+    {p : DensePoly family.collection.input.context.Value}
+    (roots : @RootReplay.Result registry family.collection.input.context p .negInf .posInf)
+    (aligned : family.values.map model.input.target.value = roots.values model.input.target) :
+    ∃ points : Fin (roots.roots.length+1) → family.collection.input.context.Value,
+      ∀ cut, Cell.Region (RootCells.points roots model.input.target) (.open cut)
+        (model.input.target.value (points cut)) := by
+  have lengths : family.values.length = roots.roots.length := by
+    have same := congrArg List.length aligned
+    simpa only [RootReplay.Result.values, List.length_map] using same
+  have each (cut : Fin (roots.roots.length+1)) : ∃ point,
+      Cell.Region (RootCells.points roots model.input.target) (.open cut) (model.input.target.value point) := by
+    obtain ⟨point, _, member⟩ := SectorRequest.Cut.witness family original model
+      (Fin.cast (congrArg (·+1) lengths.symm) cut)
+    exact ⟨point, requested_inside family original model roots aligned cut point lengths member⟩
+  exact Classical.axiomOfChoice each
 
 end Hex.RCF.RealCoefficients.CellAlignment

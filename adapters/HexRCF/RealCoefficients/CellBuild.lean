@@ -52,7 +52,7 @@ theorem prepare_success (model : Model parent ℝ) (values : Fin n → parent.Va
 variable [Hashable parent.Value] [Hashable Signature]
 
 /-- Freeze an independently produced joint sign row with its exact descriptor. -/
-def row (root : Descriptor parent.Value Signature parent.sign parent.signature)
+@[expose] def row (root : Descriptor parent.Value Signature parent.sign parent.signature)
     (queries : List (DensePoly parent.Value)) : Except Error Codec.Json := do
   let signs ← root.buildSigns queries |>.mapError Error.production
   return RowEncode.packet parent.codec Signature.codec signs

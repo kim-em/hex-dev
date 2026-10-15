@@ -66,6 +66,7 @@ public import HexRCF.RealCoefficients.CellRead
 public import HexRCF.RealCoefficients.CellBuild
 public import HexRCF.RealCoefficients.CellDiscover
 public import HexRCF.RealCoefficients.CellAlignment
+public import HexRCF.RealCoefficients.CellDecision
 public import HexRCF.RealCoefficients.RowEncode
 public import HexRCF.RealCoefficients.CellReuse
 public meta import HexRCF.RealCoefficients.CellQuote
