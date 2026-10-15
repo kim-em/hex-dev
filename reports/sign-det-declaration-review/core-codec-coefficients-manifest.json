@@ -2,7 +2,7 @@
   "scope": "18 named stored-coefficient and finite coverage declarations; partial computational review, no phase/performance attestation",
   "files": {
     "HexSignDet/Codec/Coefficients.lean": "0fef85cb8c11fe614705ca230f437785c9c7c6b76d9362449f834bb25e82d3aa",
-    "reports/sign-det-declaration-review/current/normalize.py": "791bff8c93e99fa3d7ff0dfd8c4b2b8afc5cea50d0366bfe239cbfbb0492dc61",
+    "reports/sign-det-declaration-review/current/normalize.py": "7c34629b7ef6e1727b340e3623b1e774b761e565d24a74ece7745053fa46735f",
     "reports/sturm-declaration-review/audit_tools.py": "de536ebeafd2ee355ac6e3349efaeaf2a5f0c37ecceed4457f4be51b664a963a",
     "scripts/bench/sweep_freshness.py": "882e1d255d32fe2a8c97d3ed5e16ff050e8bcbaffbbe20529a80517923f36ad2",
     "HexManual/Chapters/HexSignDet.lean": "1886de363194f3beab7cd75bf854b9b9c919f8499d8da4f05b23fbc893e5db0b",

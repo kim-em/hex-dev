@@ -1,7 +1,7 @@
 {
-  "archive_tag": "audit/issue-10575-sign-det-current-reviewed-complete-v10",
+  "archive_tag": "audit/issue-10575-sign-det-current-reviewed-complete-v10-context",
   "artifacts": {
-    "reports/sign-det-declaration-review/current/README.md": "c87f1e4e7705b19b630d158e718262940be1fab0a50a7efc434e714773f5ae06",
+    "reports/sign-det-declaration-review/current/README.md": "27046d38380a0ae39c81ad0f452d2236e666aa338a4970d82f4260d9d36d5fa6",
     "reports/sign-det-declaration-review/current/audit-imports.json": "e5c1280461fcfc229647f644663be46c9616a1ff0d6cabfbb378406d5e4f5b0b",
     "reports/sign-det-declaration-review/current/declaration-use.json": "67e0d6a52a847e20b0d8a17be0b48e64cca56008d80ee99b5bbec6ac635b32ab",
     "reports/sign-det-declaration-review/current/downstream-use.json": "310c96e8e354cf9964339123979b89e0e648d37cec4e30b2fdf1adbeb71c801b",
