@@ -3005,7 +3005,9 @@ readers at both boundaries. Missing literals remain decoder refusals.
 `treeContexts`, traversing literal tree occurrences without evaluating hashing.
 `Dag.encode_nodes` transfers those node properties to every encoded entry.
 The existing conformance proof uses this form, so its finite coverage proofs do
-not depend on the caller's hash implementation.
+not depend on the caller's hash implementation. The tree form retains every
+occurrence and can be much larger than a shared graph; use the graph form for
+already shared evidence or establish tree coverage by structural induction.
 `RootReplay.decodeDescriptor` parses both the subject and graph byte records
 through `Codec.decodePair` before applying that reader. This differs from
 `SignDet.Dag.decodeDescriptor`, which receives a typed subject and graph bytes.

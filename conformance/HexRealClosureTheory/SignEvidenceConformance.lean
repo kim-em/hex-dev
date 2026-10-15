@@ -280,10 +280,9 @@ nested-root fixture. It has no global roundtrip law. -/
     let n ← ValueCodec.nat.decode json
     if n = 8 then return n else throw "context literal missing"
 
-set_option maxRecDepth 32768 in
 set_option maxHeartbeats 1000000 in
 /-- The existing finite predecessor facts cover the descriptor's endpoints,
-head and every retained moment coefficient, under arbitrary caller hashing. -/
+head and every retained moment coefficient read from the literal evidence tree. -/
 theorem descriptor_coverage :
     kernelLowerReader.Covers (RootReplay.treeCoefficients NestedSignsConformance.root.raw
       NestedSignsConformance.root.evidence) := by
@@ -305,7 +304,7 @@ theorem descriptor_contexts :
   unfold ValueCodec.Covers
   decide +kernel
 
-/-- Two child occurrences share the same literal node. Finite coverage passes
+/-- Three occurrences use one literal node. Finite coverage passes
 through the real hash-consing encoder without reducing its caller hash instances.
 This inventory test does not assert acceptance of the artificial split replay. -/
 theorem shared_descriptor_coverage [Hashable (Element context)] [Hashable Nat] :
@@ -368,19 +367,26 @@ theorem descriptor_endpoint_missing (evidence : Codec.Json) :
     decide +kernel
   simp [RootReplay.readDescriptor, rejected, bind, Except.bind]
 
-/-- A foreign subject binding is rejected by the actual descriptor reader. -/
-theorem descriptor_foreign_context (evidence : Codec.Json) :
-    RootReplay.readDescriptor kernelLowerReader rootContextReader Element.sign 8
-      (Codec.descriptor kernelLowerReader rootContextReader
-        {NestedSignsConformance.root.raw with context := 9}) evidence =
-      .error "context literal missing" := by
-  have rejected : SignRequests.readRoot kernelLowerReader rootContextReader
-      (Codec.descriptor kernelLowerReader rootContextReader
+/-- Even a total context decoder cannot restore a foreign subject binding,
+for any supplied graph or claimed checked descriptor. -/
+theorem descriptor_foreign_context (evidence : Codec.Json)
+    (root : Descriptor (Element context) Nat Element.sign 8) :
+    RootReplay.readDescriptor kernelLowerReader ValueCodec.nat Element.sign 8
+      (Codec.descriptor kernelLowerReader ValueCodec.nat
+        {NestedSignsConformance.root.raw with context := 9}) evidence ≠ .ok root := by
+  intro accepted
+  have subject : SignRequests.readRoot kernelLowerReader ValueCodec.nat
+      (Codec.descriptor kernelLowerReader ValueCodec.nat
         {NestedSignsConformance.root.raw with context := 9}) =
-      .error "context literal missing" := by
+      .ok {NestedSignsConformance.root.raw with context := 9} := by
     rw [NestedSignsConformance.root_raw]
     decide +kernel
-  simp [RootReplay.readDescriptor, rejected, bind, Except.bind]
+  have raw := RootReplay.readDescriptor_subject _ _ _ _ _ _ _ accepted
+  have same := Except.ok.inj (subject.symm.trans raw)
+  have binding := (RawDescriptor.check_eq root.accepted).2.1
+  rw [← same] at binding
+  change 9 = 8 at binding
+  omega
 
 /-- The child table is checked by the imported ordinary-kernel fixture. -/
 @[expose] def kernelSigns : SelectedSigns context.root [NestedSignsConformance.endpointQuery] :=
