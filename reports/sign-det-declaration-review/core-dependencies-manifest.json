@@ -13,7 +13,7 @@
     "reports/sign-det-declaration-review/current/normalize.py": "7c34629b7ef6e1727b340e3623b1e774b761e565d24a74ece7745053fa46735f",
     "reports/sturm-declaration-review/audit_tools.py": "de536ebeafd2ee355ac6e3349efaeaf2a5f0c37ecceed4457f4be51b664a963a",
     "scripts/ci/check_benches_mathlib_free.py": "a8da3bef100b50fdd923d609ad03a3a9bd55229467f5652abe6e3f0b3d1ed0e5",
-    "scripts/libgraph.py": "7c250cb801b6b5f4ae34ae90d98c2afc39d65f04e1b6770cc1f8871349af5ef7",
+    "scripts/libgraph.py": "39a537d8b0623d6770a1470e0868a6571675f477a970328e11373937f6ee6589",
     "scripts/bench/sweep_freshness.py": "882e1d255d32fe2a8c97d3ed5e16ff050e8bcbaffbbe20529a80517923f36ad2",
     "reports/sign-det-declaration-review/current/test_tools.py": "52046cca19c1831043725a57de52cfe70f3f20754a31810b179c5c37754821f4",
     "HexSignDet/Codec/Value.lean": "ba911f7aea6e08ffb762338f33b8be461bb24a317564381a6c88ea24745ceac5",

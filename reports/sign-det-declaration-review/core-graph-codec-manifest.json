@@ -12,7 +12,7 @@
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "83520887f6307511e2db9aa18862adaa47d66df6aadcdf2870cd6c2b635c8928",
     "reports/sign-det-declaration-review/README.md": "91f20367d85a39c654a41ca448ebc01d5a9060f0273992f5681dfe2ce6bb3c54",
     "scripts/ci/check_benches_mathlib_free.py": "a8da3bef100b50fdd923d609ad03a3a9bd55229467f5652abe6e3f0b3d1ed0e5",
-    "scripts/libgraph.py": "7c250cb801b6b5f4ae34ae90d98c2afc39d65f04e1b6770cc1f8871349af5ef7",
+    "scripts/libgraph.py": "39a537d8b0623d6770a1470e0868a6571675f477a970328e11373937f6ee6589",
     "reports/sign-det-declaration-review/core-graph-codec.md": "091273d199f39bf7a586019bd533075aa4e5fb2d56a7d679bbf66e8dd55063fd",
     "HexRealClosure/RootFrame.lean": "9c84cb8c3b992d9c7ceef118a81e5376120c99bb90fd19838ae6d8e078b66ac5",
     "HexRealClosure/SignEvidence.lean": "374f9a75fe401831ffe439d89daad9773ba272b9fc9a4832a2d742e3f392cf2d",
