@@ -122,7 +122,7 @@ private def compareFixed (args : List String) : IO UInt32 := do
   let base ← combineFixed (args.toArray.extract 1 5)
   let current ← combineFixed (args.toArray.extract 5 9)
   -- Historical registrations may acquire an expected hash without changing
-  -- the measured workload. Permit that strengthening only: both arms already
+  -- the measured workload. Permit that strengthening only: both arms must
   -- agree on every result hash, and combineFixed checked the new expected hash.
   let configMatches := base.config == current.config ||
     (base.config.expectedHash.isNone &&
