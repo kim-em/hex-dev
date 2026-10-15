@@ -221,17 +221,19 @@ point row to its proposed value:
 
 ```lean
 open Hex Hex.RealClosure
+open Hex.RealFormula
 open Hex.RCF.RealCoefficients
 example
     {r : BaseContext.Registry}
     {c : Tower.Context r} {n : Nat}
     [Hashable c.Value]
     [Hashable Tower.Signature]
-    (model : Tower.Model c ℝ) (point : c.Value)
+    (model : Tower.Model c ℝ)
+    (point : c.Value)
     (values : Fin n → c.Value)
-    (formula : RealFormula.QF (n + 1)) :
-    Nonempty
-      (PointRows.Packet point values formula) :=
+    (formula : QF (n + 1)) :
+    Nonempty (PointRows.Packet
+      point values formula) :=
   CellProgress.point_packet model point
     values formula
 ```
