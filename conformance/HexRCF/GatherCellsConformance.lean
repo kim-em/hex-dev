@@ -79,7 +79,8 @@ run_meta do
   for name in #[``GatherCells.values_real,``GatherCells.guards_nonzero,
       ``GatherCells.buildWith_complete,``GatherCells.build_complete,
       ``GatherCells.build_zero,``GatherCells.build_domains,
-      ``NumberField.model_read,``GatherCells.field_value,``GatherCells.build_fields_complete] do
+      ``NumberField.model_read,``GatherCells.field_value,``GatherCells.build_fields_complete,
+      ``GatherCells.build_sound] do
     let .thmInfo declaration ← Lean.getConstInfo name | throwError "expected actual gathering theorem"
     let _ ← Hex.RCF.checkProof name declaration.type declaration.value
     let axioms ← Lean.collectAxioms name
@@ -96,5 +97,5 @@ run_meta do
       ``Hex.RealClosure.NumberField.Presentation.pack_value,``NumberField.value_eq_ofField] do
     unless sourceSeen.contains required do
       throwError "selected-field gathering omitted original source law: {required}"
-  Lean.logInfo "nine cross-owner packet and original selected-field proof bodies checked"
+  Lean.logInfo "ten cross-owner packet and original selected-field proof bodies checked"
 end Hex.RCF.RealCoefficients.GatherCellsConformance

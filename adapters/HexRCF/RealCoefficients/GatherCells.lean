@@ -228,4 +228,40 @@ theorem build_domains (base : BaseContext.PackedContext registry)
   intro entry member zero
   rw [build_zero base coefficients original formula entry member zero] at accepted
   cases accepted
+/-- Accepted production supplies a compatible gathered interpretation and
+both verdicts without assuming original guard validity or compatible origins. -/
+theorem build_sound (following : base.Realization)
+    (reference : Model (Context.ofBase base) ℝ)
+    (coefficients : Fin n → Source owners) (original : List (Source owners))
+    (formula : RealFormula.QF (n+1))
+    (result : (shared : Shared base owners) ×
+      CellDiscover.Packet (values shared coefficients) (guards shared original) formula)
+    (accepted : build base coefficients original formula = .ok result) :
+    ∃ model : Shared.Model result.1 following reference,
+    ∀ quantifier, ∃ verdict,
+      CompleteReplay.check result.2.family.collection.input.context.codec
+        (result.2.family.collection.input.value ∘ values result.1 coefficients) formula
+        ((guards result.1 original).map result.2.family.collection.input.value)
+        result.2.radical quantifier result.2.rootGraph result.2.cells = .ok verdict ∧
+      (verdict = true ↔ (RealFormula.Prenex.quant quantifier (.matrix formula)).toProp
+        (fun i => (model.owners.get (coefficients i).1).1.value (coefficients i).2)) := by
+  have nonzero := build_domains base coefficients original formula result.1 result.2 accepted
+  have valid : domains original = true := by
+    apply List.all_eq_true.mpr
+    intro entry member
+    exact decide_eq_true (nonzero entry member)
+  have returned := accepted
+  simp only [build,valid,↓reduceIte] at returned
+  cases gathered : Shared.gather? base owners with
+  | none =>
+    simp only [gathered] at returned
+    cases returned
+  | some shared =>
+    obtain ⟨shared,packet,produced,_gathered,model,checked⟩ :=
+      build_complete following reference (Shared.gather?_compatible base owners shared gathered)
+        coefficients original formula nonzero
+    have same : result = ⟨shared,packet⟩ := Except.ok.inj (accepted.symm.trans produced)
+    cases same
+    exact ⟨model,checked⟩
+
 end Hex.RCF.RealCoefficients.GatherCells

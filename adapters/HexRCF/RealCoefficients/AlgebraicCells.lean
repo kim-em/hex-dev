@@ -40,7 +40,8 @@ theorem presentations_success (registry : BaseContext.Registry)
     simp only [presentations,first,rest]
     rfl
 
-/-- Preserve each original input as its own checked native owner. -/
+/-- Preserve every declared input as a native owner, including inputs absent
+from both index collections. Unused irrational inputs can enlarge the tower. -/
 @[expose] def owners {generators : Fin n → RealAlgebraicNumber}
     (sources : (i : Fin n) → Hex.RealClosure.NumberField.Presentation (generators i) registry) :=
   List.ofFn fun i => (sources i).context
@@ -170,7 +171,9 @@ inductive Error where
   | cells (cause : GatherCells.Error)
   deriving Repr
 
-/-- Preflight original divisors before constructing presentations and packets. -/
+/-- Preflight original divisors before constructing presentations and packets.
+All declared inputs are presented and gathered; callers can avoid unused
+irrational inputs when assembling the input tuple. -/
 @[expose] def build (registry : BaseContext.Registry) (generators : Fin m → RealAlgebraicNumber)
     (indices : Fin n → Fin m) (original : List (Fin m)) (formula : Hex.RealFormula.QF (n+1)) :
     Except Error ((sources : (i : Fin m) →
@@ -262,5 +265,33 @@ theorem build_domains (registry : BaseContext.Registry) (generators : Fin m → 
     (by simpa only [RealAlgebraicNumber.zero_toReal] using zero)
   rw [build_zero registry generators indices original formula i member native] at accepted
   cases accepted
+
+/-- Successful construction yields both checked verdicts at the original
+values. Original guard validity is a checked conclusion, not a premise. -/
+theorem build_sound (registry : BaseContext.Registry) (generators : Fin m → RealAlgebraicNumber)
+    (indices : Fin n → Fin m) (original : List (Fin m)) (formula : Hex.RealFormula.QF (n+1))
+    (result : (sources : (i : Fin m) →
+      Hex.RealClosure.NumberField.Presentation (generators i) registry) ×
+      Packet sources indices original formula)
+    (accepted : build registry generators indices original formula = .ok result) :
+    let sources := result.1
+    let shared := result.2.1
+    let packet := result.2.2
+    ∀ quantifier, ∃ verdict,
+      CompleteReplay.check packet.family.collection.input.context.codec
+        (packet.family.collection.input.value ∘ GatherCells.values shared (coefficients sources indices)) formula
+        ((GatherCells.guards shared (guards sources original)).map packet.family.collection.input.value)
+        packet.radical quantifier packet.rootGraph packet.cells = .ok verdict ∧
+      (verdict = true ↔ (Hex.RealFormula.Prenex.quant quantifier (.matrix formula)).toProp
+        (fun i => (generators (indices i)).toReal)) := by
+  have nonzero : ∀ i ∈ original, generators i ≠ 0 := by
+    intro i member zero
+    apply build_domains registry generators indices original formula result.1 result.2 accepted i member
+    simp only [zero,RealAlgebraicNumber.zero_toReal]
+  obtain ⟨sources,shared,packet,produced,checked⟩ :=
+    build_complete registry generators indices original formula nonzero
+  have same : result = ⟨sources,shared,packet⟩ := Except.ok.inj (accepted.symm.trans produced)
+  cases same
+  exact checked
 
 end Hex.RCF.RealCoefficients.AlgebraicCells

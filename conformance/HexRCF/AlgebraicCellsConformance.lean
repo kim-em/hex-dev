@@ -49,6 +49,31 @@ private def trial (negative : Bool) : IO Unit := do
 #eval trial false
 #eval trial true
 
+private def linearTrial (negative : Bool) : IO Unit := do
+  let a ← match selected [-2,0,1] (if negative then -2 else 1) (if negative then -1 else 2) with
+    | none => throw (IO.userError "linear source root construction failed")
+    | some value => pure value
+  let inputs := fun _ : Fin 1 => a
+  let indices := fun i : Fin 1 => i
+  let x : Poly 2 := MvPoly.X 1
+  let formula : QF 2 := .and (.atom ⟨x-MvPoly.X 0,.gt⟩) (.atom ⟨x-1,.lt⟩)
+  match AlgebraicCells.build registry inputs indices [0] formula with
+  | .error cause => throw (IO.userError s!"linear source production failed: {repr cause}")
+  | .ok ⟨sources,shared,packet⟩ => do
+    let input := packet.family.collection.input
+    let values := input.value ∘ GatherCells.values shared (AlgebraicCells.coefficients sources indices)
+    let guards := (GatherCells.guards shared (AlgebraicCells.guards sources [0])).map input.value
+    unless packet.roots.roots.length == 2 do
+      throw (IO.userError "linear conjugate constraints changed their exact two roots")
+    for (quantifier,expected) in [(Quantifier.existsReal,negative),(.forallReal,false)] do
+      unless (CompleteReplay.check input.context.codec values formula guards packet.radical
+          quantifier packet.rootGraph packet.cells).toOption == some expected do
+        throw (IO.userError "linear constraints lost the variable's selected embedding or quantifier")
+    IO.println s!"linear original source negative={negative}: exists={negative}, forall=false"
+
+#eval linearTrial false
+#eval linearTrial true
+
 #eval (show IO Unit from do
   let inputs : Fin 0 → RealAlgebraicNumber := fun i => i.elim0
   let indices : Fin 0 → Fin 0 := fun i => i.elim0
@@ -67,7 +92,7 @@ private def trial (negative : Bool) : IO Unit := do
 
 run_meta do
   for name in #[``AlgebraicCells.presentations_success,``AlgebraicCells.original_base,
-      ``AlgebraicCells.owner_eq,``AlgebraicCells.stored_heq,``AlgebraicCells.build_domains,
+      ``AlgebraicCells.owner_eq,``AlgebraicCells.stored_heq,``AlgebraicCells.build_domains,``AlgebraicCells.build_sound,
       ``AlgebraicCells.entry_real,``AlgebraicCells.compatible,``AlgebraicCells.entry_nonzero,
       ``AlgebraicCells.buildWith_complete,``AlgebraicCells.build_complete,``AlgebraicCells.build_zero] do
     let .thmInfo declaration ← Lean.getConstInfo name | throwError "expected actual algebraic-input theorem"
@@ -75,11 +100,11 @@ run_meta do
     let axioms ← Lean.collectAxioms name
     unless axioms.all (#[``propext,``Classical.choice,``Quot.sound].contains ·) do
       throwError "unexpected original algebraic-input axiom: {name}"
-  let seen ← Hex.RCF.ProofEvidence.projectDependencies #[``AlgebraicCells.build_complete]
-  for required in #[``Hex.RealClosure.NumberField.present?_success,
+  let seen ← Hex.RCF.ProofEvidence.projectDependencies #[``AlgebraicCells.build_complete,``AlgebraicCells.build_sound]
+  for required in #[``Hex.RealClosure.NumberField.present?_success,``AlgebraicCells.build_domains,
       ``Hex.RealClosure.NumberField.Presentation.generator_value,``NumberField.model_read,
       ``Hex.RealClosure.Tower.Shared.Model.value_of_model,``GatherCells.build_complete,
       ``CellDiscover.run_complete,``CompleteReplay.check_covered] do
     unless seen.contains required do throwError "automatic algebraic input omitted owner law: {required}"
-  Lean.logInfo "eleven automatic algebraic-input proof bodies and actual owner dependencies checked"
+  Lean.logInfo "twelve automatic algebraic-input proof bodies and actual owner dependencies checked"
 end Hex.RCF.AlgebraicCellsConformance

@@ -465,7 +465,7 @@ histories, and do not discharge strict compiled missing-record admission.
 
 The native conformance combines separate positive √2 and √3 owners, repeats
 one source coordinate, and checks a leading cancellation and repeated zero root.
-It independently reads both emitted packets, refuses swapped coefficient
+It reads both emitted packets, refuses swapped coefficient
 coordinates, and checks a false constant with no coefficient parameters but
 retained guards. A late original zero guard still rejects that constant case.
 Compiled verdicts remain controls; the generic construction and transport
@@ -476,6 +476,9 @@ It constructs their checked selected presentations and gathers the resulting
 owners automatically. Separate finite indices specify the coefficient tuple
 and the original guards; repeated indices and guard-only inputs are retained.
 An original zero guard rejects before any presentation construction.
+Every declared input is presented and gathered, even when absent from both
+index collections. An unused irrational input can enlarge the tower, so a
+focused input tuple avoids that additional cost.
 
 The automatic constructor needs only the original nonzero guards for its
 progress theorem. The rational interpretation, owner compatibility and
@@ -505,19 +508,25 @@ example (r : BaseContext.Registry)
 These native-input theorems preserve both emitted quantifier verdicts at the
 original selected real values. `build_domains` concludes every original real
 divisor nonzero from production success, including for constant formulas.
-They do not assemble frozen provider/predecessor histories or prove general
-source-goal quotation and strict compiled missing-record admission.
+`build_sound` derives both accepted verdicts from the exact successful build
+equation, without assuming guard validity; `GatherCells.build_sound` also derives
+compatible owner origins from successful gathering. They do not assemble
+frozen provider/predecessor histories or prove general source-goal quotation
+and strict compiled missing-record admission.
 
 The automatic-input conformance uses both selected signs of √2 alongside an
 independent positive √3. It checks simultaneous conditions and a repeated zero
 root, both true and false quantified verdicts, an unused zero input, a late
-original zero guard, and empty true/false constant inputs. Eleven actual proof
-bodies are separately checked with only the standard three axioms.
+original zero guard, and empty true/false constant inputs. Separate linear
+constraints a < x < 1 distinguish the variable's selected coefficient: a = −√2
+gives an existential true and universal false verdict; a = √2 gives both false.
+Twelve actual automatic-input proof bodies are separately checked with only
+the standard three axioms.
 
 The explicit `HexRCFAlgebraicCellsStress` target retains the stronger condition
 x² = √2 with 1 < x < √3 and its negative-conjugate control. A recorded
 run was interrupted after 12 min 33 s at 1.4 GiB peak without a final module
 result; this is neither a completed timing nor an acceptance result. Stack
-samples show nested native inversion, gcd and Sturm sign work, without
-identifying a particular case or phase. The cost remains a limitation of this
+samples show nested native inversion, gcd and Sturm sign work below an IR
+interpreter call chain, without identifying a particular case or phase. The cost remains a limitation of this
 complete native route.
