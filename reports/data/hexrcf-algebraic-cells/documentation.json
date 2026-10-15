@@ -1,10 +1,11 @@
 {
   "schema": "hex-rcf-algebraic-cell-documentation-v1",
-  "source_commit": "8974f35987e53519d5ffe42acd54c43c4423f005",
+  "source_commit": "d987755644b2ecc9a5bff6a03702fbaed8113dde",
   "checked_implementation_commit": "616d7b44608b6d58729694cfbc6b53e00f203502",
   "selected_source_hashes": {
-    "HexRCF/README.md": "35a5ee3a0dbc66077c5210fa4f9fc40b352444e88a1dad6d07ae1f2c965d2da0",
-    "reports/hexrcf-adapter-evidence.md": "ba082bda0ec2b3676e1ed324d775507c2aeee062c87467bf386c13ebacc6f46b"
+    "HexRCF/README.md": "aa15963e8dd459150f2be3c5650f77d151a70c11397ebc35fe9c1560efcac79f",
+    "reports/hexrcf-adapter-evidence.md": "ba082bda0ec2b3676e1ed324d775507c2aeee062c87467bf386c13ebacc6f46b",
+    "reports/hexrcf-algebraic-cells.md": "71293e124faa8a895eaedeb9f8f1ab1fd9a728c734a5f43f19deb8417a0bfa65"
   },
   "local_links_resolve": true,
   "lean_lake_pin_changes": [],
