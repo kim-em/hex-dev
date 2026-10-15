@@ -155,6 +155,11 @@ measurement, mismatched hashes, retained timeout status, mid-run binary mutation
 early binding failures and the single unchanged-rerun reservation. These tool tests are not computational performance
 evidence.
 
+Sign-determination controls also check the actual bench-local import closure,
+all mixed and fixed workload commands, source changes before reservation, Lean
+indentation and Unicode identifiers, literal hash additions, fixed-repeat
+failure indices and hash diagnostics, and rejection of non-Sturm cap adaptation.
+
 The export guard requires exactly four complete parent exports per source,
 independently of a benchmark registration's default trial count. Three-export
 and two-export input are refused. Every declared parameter needs all four
@@ -208,8 +213,10 @@ same native guard applies its pinned comparison rule after collection.
 
 Each profile requires its own frozen source manifests, successful native guard
 build, decision, preflight and persistent attempt reservation. Registration
-sources must preserve callback code and timing settings: comments and formatting
-may differ, and fixed registrations may add literal expected-hash guards. The
+sources must preserve callback code, meaningful indentation, identifiers and
+timing settings. Comments, blank lines and trailing whitespace may differ;
+only simple fixed configuration records may be reformatted and gain literal
+expected-hash guards. The complete string literal bytes remain checked. The
 actual export checks permit only adding such a guard, require every call to
 match it and require the two sources' result hashes to agree. Changes to string
 literals and callback records are preserved by the source comparison. This
