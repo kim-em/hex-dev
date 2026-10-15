@@ -1,5 +1,19 @@
 # Complete-cell serialization composition
 
+[`CompleteReplay.check`](../adapters/HexRCF/RealCoefficients/CompleteReplay.lean)
+independently reads the serialized full root table and complete-cell payload,
+then checks the radical identities and strict quantified fold. `check_sound`
+and `check_domains` apply to arbitrary supplied packets, retaining the original
+fixed coefficient interpretation and every original guard. Finite coverage of
+`CompleteReplay.coefficients` restores the exact root table and cell data;
+`check_covered` retains the typed check's true/false result and errors.
+
+[`RootTableCodec.read_covered`](../adapters/HexRCF/RealCoefficients/RootTableCodec.lean)
+restores the supplied full table and complete ordered extracted roots without
+a native producer-success premise. The shared `RootCodec.replay_covered` handles
+arbitrary accepted query trees, independently of root count. Point-descriptor
+and full-root-table replay use the same owner binding/finite-graph laws.
+
 [`CellFootprint.read_packet`](../adapters/HexRCF/RealCoefficients/CellFootprint.lean)
 proves exact full cell-payload restoration from finite coverage of its stored
 coefficient inventory and validity of the original guards. Point-descriptor
@@ -38,11 +52,12 @@ native context's proved codec law. This does not reconstruct a general frozen
 predecessor history through a partial codec or prove strict compiled replay
 with arbitrary missing intermediate scalar records.
 
-The fresh `CellCodecProofs` target checks thirteen actual serialization proof
+The fresh `CellCodecProofs` target checks twenty-one actual serialization proof
 bodies using only the standard three axioms. It requires the actual new owner
 binding/finite-reader laws and excludes the adapter's three producer modules
-from imports. `CellExecutionProofs` additionally audits the actual native
-producer/restoration bridge. These exclusions do not claim all owner producer
+from imports. `CellExecutionProofs` checks thirteen execution bodies, including
+`CellDiscover.run_complete`, which binds both complete serialized root-and-cell
+verdicts to the actual producer and the original sentence. These exclusions do not claim all owner producer
 definitions are absent from the imported environment.
 
 The finite-covered descriptor question at #10378 comment 6189246677 is addressed
@@ -150,3 +165,25 @@ rebuilding affected owner imports and make no performance comparison with the
 earlier cached builds. Displayed manual text/styles remain unchanged. The
 record establishes stored-payload and native-context restoration under the
 stated laws, not the remaining general history/arithmetic/frontend obligations.
+
+## Complete root-and-cell acceptance
+
+The [complete-reader record](data/hexrcf-cell-codec/complete-replay-context.json)
+binds the final producer bridge to `8af549f0b11e53dfcd97a3e073c9ec2169c6a3b3`.
+The first selected root-table/checker integration at `3a6078b0a3` passes 11,768
+jobs in 37.760 seconds, peaking at 2.1 GiB with no swap. The final producer
+bridge/audit/library/manual build passes 11,768 jobs in 14.802 seconds,
+peaking at 1.8 GiB with no swap. Twenty-one actual serialization bodies and
+thirteen execution bodies, plus the retained 28 + 9 + 3 groups, are checked.
+The regression also runs both complete-packet verdicts through the restricted
+inventory reader, rejects malformed root graphs and checks original guard
+preflight with an empty reader and malformed root/cell packets.
+
+The new source audit covers 639 cones and 1,539 local modules. DAG/umbrella,
+copyright, literal and whitespace checks pass. Initial dependent-match and
+hash-instance elaboration failures are retained alongside the successful
+builds. These final selected builds reuse the previously checked fresh source
+quotations and cached dependencies; no new rendering or comparative timing
+claim is made. The fixed native predecessor context and typed radical input
+remain supplied. Full frozen source/provider/history reconstruction and all
+reached arithmetic obligations are separate from complete root/cell replay.
