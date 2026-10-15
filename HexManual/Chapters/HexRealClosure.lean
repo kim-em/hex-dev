@@ -343,6 +343,18 @@ the reader does not manufacture missing progress proofs or roots.
 Hash lookup still checks the full literal binding. A successful payload
 roundtrip is separate from mathematical certificate acceptance.
 
+For a checked algebraic root,
+{name}`Hex.RealClosure.Algebraic.RootReplay.readDescriptor_covered` restores the
+same descriptor from its complete subject and encoded evidence. Its hypotheses
+require the supplied readers to cover only the finite lists
+{name}`Hex.RealClosure.Algebraic.RootReplay.coefficients` and
+{name}`Hex.RealClosure.Algebraic.RootReplay.contexts`. These include every retained
+graph entry and moment, including entries outside the selected root's reachable
+graph. Partial predecessor readers are allowed, and hashing uses the caller's
+instances. The byte theorem
+{name}`Hex.RealClosure.Algebraic.RootReplay.decodeDescriptor_covered` additionally
+requires the subject and evidence to pass the lexical resource checks.
+
 For univariate exploration, {name}`Hex.RealClosure.Tower.Sample.family`
 orders and deduplicates root handles before constructing sections and open
 sectors. Sections and rays reuse their root's cached context; a bounded sector
