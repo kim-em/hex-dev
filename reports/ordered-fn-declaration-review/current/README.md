@@ -16,7 +16,7 @@ The source checker independently resolves library roots and globs from the pinne
 the fourteen production modules and requires exact agreement with the recorded
 client set. It supports the literal arrays, concatenations, glob maps and the
 explicit parked-conformance filter used by this configuration; unsupported
-expressions are refused. The same computation on the live tree detects added
+expressions are refused. The same computation on the live tree includes untracked Lean files and detects added
 or removed clients in `--current` mode. Controls exercise the previously omitted
 consumer, conformance, diagnostic and benchmark-support modules.
 
@@ -45,8 +45,8 @@ open. No phase, performance verdict or publication eligibility advances here.
 
 ## Source and artifact checkpoints
 
-The source tag is `audit/issue-10575-orderedfn-current-input-v6`; the complete tag
-is `audit/issue-10575-orderedfn-current-complete-v6`. The binding record covers
+The source tag is `audit/issue-10575-orderedfn-current-input-v7`; the complete tag
+is `audit/issue-10575-orderedfn-current-complete-v7`. The binding record covers
 the imported root-package Lean closure, the source assessments, audit tools,
 the Lake block parser, toolchain and lock. Imported Hex modules must resolve to
 one tracked path. External source bytes follow the pinned dependencies.
@@ -88,3 +88,9 @@ The capture imports 15,241 modules. 100 of the selected constants have no
 named users in this environment. `RealClosureConsumer.successive_order` is
 recorded as a user of both `Infinitesimal.X_pos` and `X_lt_pow`. These
 observations retain the reference-model limits above.
+
+Runtime executable consumers and independent Lake projects under `experiments/`
+are outside this library-reference environment. No complete runtime-use census
+is claimed. The four recorded `main` exclusions use the ordinary declaration
+syntax in this source snapshot; their root-level placement was reviewed.
+The client total includes the fourteen selected production modules themselves.

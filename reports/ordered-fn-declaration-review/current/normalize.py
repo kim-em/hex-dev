@@ -17,10 +17,12 @@ def require(condition, message):
 def sources(root, revision=None):
     """Read tracked source bytes, including unimported prospective clients."""
     paths = subprocess.check_output(
-        ['git', 'ls-tree', '-r', '--name-only', revision] if revision else
-        ['git', 'ls-files'], cwd=root, text=True).splitlines()
+        ['git', 'ls-tree', '-rz', '--name-only', revision] if revision else
+        ['git', 'ls-files', '-z', '--cached', '--others', '--exclude-standard'],
+        cwd=root, text=True).split('\0')
     paths = [p for p in paths if p.endswith('.lean') or
              p == 'scripts/bench/sweep_freshness.py']
+    require(all('\n' not in p for p in paths), 'newline in source path is unsupported')
     if revision is None:
         return {p: (root / p).read_bytes() for p in paths}
     result = {}
@@ -79,12 +81,18 @@ def library_clients(root, roots, revision=None):
     strip = helper.strip_lean_comments
     blocks = helper.lakefile_blocks(files['lakefile.lean'].decode())
     require('command uncertain' not in blocks, 'uncertain Lake configuration')
+    for key, raw in blocks.items():
+        if key.startswith('package '):
+            require(not re.search(r'\bsrcDir\s*:=', strip(raw)),
+                    'package-level srcDir is unsupported')
     modules = {}
     for key, raw in blocks.items():
         if not key.startswith('lean_lib '):
             continue
         target = key.removeprefix('lean_lib ')
         body = strip(raw)
+        header = re.search(r'(?m)^\s*(?:@\[[^\]]*\]\s*)*lean_lib\s+\S+\s+where([^\n]*)', body)
+        require(header is None or not header[1].strip(), 'inline library fields are unsupported')
         fields = dict(re.findall(
             r'(?ms)^\s+(\w+)\s*:=\s*(.*?)(?=^\s+\w+\s*:=|\Z)', body))
         source = fields.get('srcDir', '""').strip()
@@ -126,12 +134,18 @@ def library_clients(root, roots, revision=None):
     for name, path in modules.items():
         text = strip(files[path].decode())
         imports[name] = []
-        for line in text.splitlines():
+        lines = text.splitlines()
+        for line in lines:
             line = line.strip()
             if not line or re.fullmatch(r'(?:module(?:\s+[\w.]+)?|prelude)', line):
                 continue
             match = re.fullmatch(r'(?:(?:public|private|meta)\s+)*import\s+(.+)', line)
             if match is None:
+                # Later Verso code blocks can contain textual imports. Only
+                # the real header is an import block in a valid Lean module.
+                require(not re.match(r'(?:(?:public|private|meta)\s+)*import\b', line)
+                        and line not in {'public', 'private', 'meta'},
+                        'unsupported import layout in ' + path)
                 break
             names = match[1].split()
             require(all(n == 'all' or re.fullmatch(r'[A-Za-z_][\w.]*', n) for n in names),

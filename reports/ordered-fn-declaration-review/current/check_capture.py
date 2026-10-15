@@ -37,19 +37,20 @@ def main():
     require(revision == record['source_revision'], 'source tag differs')
     complete = tag_revision(record['complete_tag'])
     subprocess.run(['git', 'merge-base', '--is-ancestor', revision, complete], cwd=ROOT, check=True)
-    paths = subprocess.check_output(['git', 'ls-tree', '-r', '--name-only', revision], cwd=ROOT, text=True).splitlines()
+    paths = subprocess.check_output(['git', 'ls-tree', '-rz', '--name-only', revision], cwd=ROOT, text=True).split('\0')
     imported = json.loads((BASE / 'audit-imports.json').read_text(encoding='utf-8'))
     require({'lakefile.lean', 'lake-manifest.json', 'lean-toolchain'} <= set(record['inputs']), 'missing package/toolchain inputs')
     expected_lean = {'lakefile.lean'}
     for module in imported:
         suffix = module.replace('.', '/') + '.lean'
         matches = {prefix + suffix for prefix in ('', 'adapters/', 'conformance/', 'bench/', 'examples/', 'experiments/') if prefix + suffix in paths}
-        if module.startswith('Hex'):
+        if module.startswith(('Hex', 'KernelReplay', 'RealClosureConsumer', 'CadSampleCosts')):
             require(len(matches) == 1, 'missing or ambiguous local import: ' + module)
         expected_lean.update(matches)
     require({path for path in record['inputs'] if path.endswith('.lean')} == expected_lean, 'imported source closure differs')
     directory = str(BASE.relative_to(ROOT))
-    archived_files = subprocess.check_output(['git', 'ls-tree', '-r', '--name-only', complete, '--', directory], cwd=ROOT, text=True).splitlines()
+    archived_files = subprocess.check_output(['git', 'ls-tree', '-rz', '--name-only', complete, '--', directory], cwd=ROOT, text=True).split('\0')
+    archived_files = [path for path in archived_files if path]
     expected_files = {directory + '/' + name for name in ('README.md', 'audit.lean.txt', 'normalize.py', 'check_capture.py', 'test_capture.py', 'bindings.json', 'audit-imports.json', 'declaration-use.json', 'structure-fields.json')}
     require(set(archived_files) == expected_files, 'complete archive file inventory differs')
     for path in archived_files:
@@ -107,8 +108,10 @@ def main():
     require(sorted({axiom for row in rows for axiom in row['axioms']}) == record['axioms'] ==
             ['Classical.choice', 'Quot.sound', 'propext'], 'unexpected axioms')
     require(all(row['kind'] != 'axiom' for row in rows), 'owned axiom declaration')
+    previous_complete = tag_revision(previous['complete_tag'])
+    require(previous_complete == previous['complete_revision'], 'predecessor complete tag differs')
     previous_rows = json.loads(subprocess.check_output([
-        'git', 'show', tag_revision(previous['complete_tag']) + ':' + directory + '/declaration-use.json'], cwd=ROOT))
+        'git', 'show', previous_complete + ':' + directory + '/declaration-use.json'], cwd=ROOT))
     def declaration_signature(row):
         return (re.sub(r'Hex([A-Za-z0-9_]*)Mathlib', r'Hex\1Theory', row['name']),
                 re.sub(r'Hex([A-Za-z0-9_]*)Mathlib', r'Hex\1Theory', row['module']),

@@ -88,6 +88,20 @@ class CoverageTest(unittest.TestCase):
             with self.subTest(expression=expression), self.assertRaises(ValueError):
                 tools.glob_list(expression)
 
+    def test_inline_fields_and_multiline_imports_are_refused(self):
+        files = fixture()
+        files['lakefile.lean'] = b'lean_lib Core where srcDir := "elsewhere"\n'
+        with self.assertRaisesRegex(ValueError, 'inline library fields'):
+            self.clients(files)
+        files = fixture()
+        files['Core.lean'] = b'import\n  Core.Value\n'
+        with self.assertRaisesRegex(ValueError, 'unsupported import layout'):
+            self.clients(files)
+        files = fixture()
+        files['lakefile.lean'] = b'package sample where\n  srcDir := "elsewhere"\n' + files['lakefile.lean']
+        with self.assertRaisesRegex(ValueError, 'package-level srcDir'):
+            self.clients(files)
+
     def test_real_omitted_clients_are_discovered(self):
         modules = ['HexOrderedFn.Search', 'HexOrderedFn.Oracle', 'HexOrderedFn.Real',
                    'HexOrderedFn.Extension', 'HexOrderedFn.Infinitesimal',
@@ -120,11 +134,27 @@ class CoverageTest(unittest.TestCase):
                 'commit', '-qm', 'fixture')
             revision = git('rev-parse', 'HEAD')
             (root / 'Core/Future.lean').write_text('import Core.Value\n')
-            git('add', 'Core/Future.lean')
             archived, _ = tools.library_clients(root, ['Core.Value'], revision)
             live, _ = tools.library_clients(root, ['Core.Value'])
             self.assertNotIn('Core.Future', archived)
             self.assertIn('Core.Future', live)
+            (root / 'Core/Future.lean').unlink()
+            (root / 'Core/Value.lean').unlink()
+            with self.assertRaises(FileNotFoundError):
+                tools.library_clients(root, ['Core.Value'])
+
+    def test_untracked_unicode_module_is_visible(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            for path, data in fixture().items():
+                destination = root / path
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.write_bytes(data)
+            subprocess.run(['git', 'init', '-q'], cwd=root, check=True,
+                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            (root / 'Core/É.lean').write_text('import Core.Value\n')
+            required, _ = tools.library_clients(root, ['Core.Value'])
+            self.assertIn('Core.É', required)
 
     def test_changed_parked_filter_is_refused(self):
         files = tools.sources(ROOT)
