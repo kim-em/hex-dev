@@ -18,18 +18,18 @@ theorem graph_empty : (Codec.readGraph ValueCodec.rat ValueCodec.nat (0 : Nat)
   decide +kernel
 
 /-- Empty literal field. -/
-@[expose] def empty : Codec.Json := .arr #[]
+def empty : Codec.Json := .arr #[]
 /-- Natural-number literal field. -/
-@[expose] def natural (n : Nat) : Codec.Json := Codec.Json.of n
+def natural (n : Nat) : Codec.Json := Codec.Json.of n
 /-- A size-zero raw node; parsing asserts no mathematical certificate. -/
-@[expose] def node : Codec.Json := .arr #[natural 0,
+def node : Codec.Json := .arr #[natural 0,
   .arr #[.arr #[Codec.Json.of (1 : Int), natural 1]],
   .arr #[natural 0], .arr #[natural 2], empty, natural 0,
   .arr #[empty, empty, empty, empty, empty, Codec.Json.of (1 : Int)],
   empty, empty, empty,
   .arr #[natural 0, empty, empty, Codec.Json.of (1 : Int), empty]]
 /-- One raw node without children. -/
-@[expose] def graph : Codec.Json := .arr #[natural 1, natural 0,
+def graph : Codec.Json := .arr #[natural 1, natural 0,
   .arr #[.arr #[node, empty]]]
 
 /-- Reduction reaches a complete node, rather than only an early shape error. -/
@@ -39,23 +39,23 @@ theorem graph_node : (Codec.readGraph ValueCodec.rat ValueCodec.nat (0 : Nat)
 
 
 /-- Raw rational zero used in evidence fields. -/
-@[expose] def zero : Codec.Json := .arr #[Codec.Json.of (0 : Int), natural 1]
+def zero : Codec.Json := .arr #[Codec.Json.of (0 : Int), natural 1]
 /-- Raw unit polynomial. -/
-@[expose] def one : Codec.Json := .arr #[.arr #[Codec.Json.of (1 : Int), natural 1]]
+def one : Codec.Json := .arr #[.arr #[Codec.Json.of (1 : Int), natural 1]]
 /-- A raw remainder record, with no assertion of its arithmetic identity. -/
-@[expose] def remainder : Codec.Json := .arr #[zero, empty, zero]
+def remainder : Codec.Json := .arr #[zero, empty, zero]
 /-- A raw chain with an optional terminal record. -/
-@[expose] def chain : Codec.Json := .arr #[.arr #[one], .arr #[natural 0],
+def chain : Codec.Json := .arr #[.arr #[one], .arr #[natural 0],
   remainder, .arr #[remainder], .arr #[.arr #[zero, empty]]]
 /-- Literal Tarski fields bound to the caller's context and domain. -/
-@[expose] def moment : Codec.Json := .arr #[natural 0, one, empty,
+def moment : Codec.Json := .arr #[natural 0, one, empty,
   .arr #[natural 0], .arr #[natural 2], chain, chain,
   .arr #[Codec.Json.of (0 : Int)], .arr #[Codec.Json.of (0 : Int)],
   natural 0, natural 0, Codec.Json.of (0 : Int)]
 /-- One original-query reduction step with an in-range index. -/
-@[expose] def steps : Codec.Json := .arr #[.arr #[natural 0, empty, remainder]]
+def steps : Codec.Json := .arr #[.arr #[natural 0, empty, remainder]]
 /-- A node exercising nested witnesses, optional reductions and preparation. -/
-@[expose] def nestedNode : Codec.Json := .arr #[natural 0, one,
+def nestedNode : Codec.Json := .arr #[natural 0, one,
   .arr #[natural 0], .arr #[natural 2], .arr #[empty], natural 1,
   .arr #[.arr #[.arr #[natural 0]], .arr #[.arr #[Codec.Json.of (0 : Int)]],
     .arr #[Codec.Json.of (0 : Int)], .arr #[Codec.Json.of (0 : Int)],
@@ -63,7 +63,7 @@ theorem graph_node : (Codec.readGraph ValueCodec.rat ValueCodec.nat (0 : Nat)
   .arr #[moment], .arr #[.arr #[.arr #[steps, empty]]], .arr #[steps],
   .arr #[natural 0, empty, empty, Codec.Json.of (0 : Int), empty]]
 /-- Wrap one literal raw node, without replaying its arithmetic. -/
-@[expose] def wrap (entry : Codec.Json) : Codec.Json :=
+def wrap (entry : Codec.Json) : Codec.Json :=
   .arr #[natural 1, natural 0, .arr #[.arr #[entry, empty]]]
 
 /-- Kernel reduction traverses every nested evidence reader on public imports. -/
@@ -103,6 +103,19 @@ theorem graph_right_child : (Codec.readGraph ValueCodec.rat ValueCodec.nat (0 : 
       .arr #[nestedNode, .arr #[.arr #[natural 0, natural 1]]]]])).toOption.isNone = true := by
   decide +kernel
 
+/-- Changing the caller's polynomial rejects an otherwise decodable graph. -/
+theorem graph_wrong_head : (Codec.readGraph ValueCodec.rat ValueCodec.nat (0 : Nat)
+    (DensePoly.ofList ([2] : List Rat)) .negInf .posInf (wrap nestedNode)).toOption.isNone = true := by
+  decide +kernel
+
+/-- Both caller endpoints retain their literal identities. -/
+theorem graph_wrong_endpoints :
+    (Codec.readGraph ValueCodec.rat ValueCodec.nat (0 : Nat)
+      (DensePoly.ofList ([1] : List Rat)) (.finite 0) .posInf (wrap nestedNode)).toOption.isNone = true ∧
+    (Codec.readGraph ValueCodec.rat ValueCodec.nat (0 : Nat)
+      (DensePoly.ofList ([1] : List Rat)) .negInf (.finite 0) (wrap nestedNode)).toOption.isNone = true := by
+  decide +kernel
+
 /-- info: 'Hex.SignDet.PublicCodec.graph_empty' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms graph_empty
@@ -129,5 +142,13 @@ theorem graph_right_child : (Codec.readGraph ValueCodec.rat ValueCodec.nat (0 : 
 /-- info: 'Hex.SignDet.PublicCodec.graph_right_child' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms graph_right_child
+
+/-- info: 'Hex.SignDet.PublicCodec.graph_wrong_head' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms graph_wrong_head
+
+/-- info: 'Hex.SignDet.PublicCodec.graph_wrong_endpoints' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms graph_wrong_endpoints
 
 end Hex.SignDet.PublicCodec
