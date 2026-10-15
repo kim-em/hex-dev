@@ -456,6 +456,8 @@ class AdmissionScannerTests(unittest.TestCase):
                 "public import HexExtra.SelectedField\n", encoding="utf-8")
             gather_cells.with_name("AlgebraicCellsConformance.lean").write_text(
                 "public import HexExtra.SelectedField\n", encoding="utf-8")
+            gather_cells.with_name("AlgebraicPreparationConformance.lean").write_text(
+                "public import HexExtra.SelectedField\n", encoding="utf-8")
             live_probes = []
             for module in ("HexRealClosure.LiveRequest", "HexRealClosure.LiveRequestTests",
                            "HexRealClosureTheory.LiveRequest", "HexRealClosureTheory.LiveRequestTests",

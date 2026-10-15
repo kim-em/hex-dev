@@ -1,0 +1,214 @@
+{
+  "source_commit": "694e85356ca2d19eaadb15ae87130dbc1791ca4b",
+  "sources_sha256": {
+    "adapters/HexRCF/RealCoefficients/AlgebraicPreparation.lean": "6df97ae439083c5547efe5185a47158a7821cd381527d8d735d4f6c89a8e1d5b",
+    "adapters/HexRCF/RealCoefficients.lean": "fcffa756d74c99fabf10c6fbaaf206e093c52f578d257245c290a9c613b1b73b",
+    "conformance/HexRCF/AlgebraicPreparationConformance.lean": "35635d08296f31d5e3d44b4c78b968de33476e4699e5427811cda32f6660711a",
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "5b3746e0f4401482c0acbab12e56ef096d5b32a7f9fd8097c38ef87732917204",
+    "HexRCF/README.md": "3531856b6f9ff429092d5ff980f4f7ea7530b71bff7a958f67017f4095eee962",
+    "lakefile.lean": "079a0c927b32714fe95d01864588ca54019e9d33183f038fbce5827da479753e",
+    "scripts/ci/check_named_admissions.py": "6400348d2e009fb0bce8ed7b89921ded8f40242dea8a878ab98dbab64711db0e",
+    "scripts/ci/test_check_named_admissions.py": "201270e54e27ec09fea1bc69cb8d645ee089e715f590d08e2078ff0567409c63"
+  },
+  "probe_source_commit": "fb8f4664979df08f4525aa6a4f25629645ea6481",
+  "probe_sources_sha256": {
+    "adapters/HexRCF/RealCoefficients/AlgebraicCells.lean": "52d1428cc9a09c7b85c7cdb4891ebe1a16a4fb9edb84587e302742b938f22d0b",
+    "adapters/HexRCF/RealCoefficients/GatherCells.lean": "c5cb21cfa98ec356bb95f54ff283b349a7a56c6d5a3f196b2d904f019fd51b7d",
+    "adapters/HexRCF/RealCoefficients/RepresentationSpecialize.lean": "ea71612596ca8548139081f8a41fdcc36946252ddb7d066b188aac6d0bff0a7b",
+    "adapters/HexRCF/RealCoefficients/CellDiscover.lean": "15c4d7d5e69b742c3ce277e9a2c3ada51d4099e4b3aa19cffa399d2c7c63aff9",
+    "adapters/HexRCF/RealCoefficients/CellBuild.lean": "fd3dea832bbcca47f883911c203a92681de109420c9d90bbf5f7a0bda11c0205",
+    "adapters/HexRCF/RealCoefficients/RootBuild.lean": "be8e2b24aad8e67946afbe70d48a83ff2ca6db75cb62cca0185ec309f596994a",
+    "adapters/HexRCF/RealCoefficients/RadicalBuild.lean": "69839559fe9a283e25ffdcafe456e30b7092bd5e7d86c425018aeb21c1d08345",
+    "adapters/HexRCF/RealCoefficients/SectorRequest.lean": "61477fc094730ba88dca3848ae2a7275a7d7d1ea956fb34588a62d17dd00602a"
+  },
+  "logs": {
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-admission-tests-3.log.gz": {
+      "sha256": "92b59652c5f05e9f773015a57be23a1e8d13c670d7f325a5cc747f56576c7804",
+      "uncompressed_sha256": "16aa284d8e3a83c184a4f9bfdd1bbc8b3047127fdd338074729249fa1cb62b24"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-admissions-1.log.gz": {
+      "sha256": "304847a643ccd64cadcbc4548b64a88a04eed01863bb3a2a944f115eeef0748b",
+      "uncompressed_sha256": "4c940bd5f0636c99e84cfea028c163fc74349a65804b5a6ed4cedf9f302b80b4"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-admissions-2.log.gz": {
+      "sha256": "02c403cf0afa3baa17e24c4e9cb881eaa83a5b46e0ec647617908a7a8f12a701",
+      "uncompressed_sha256": "41715f3f8db5ad75813de0ce1dabcb1511e4ccbfffbd92c4d658f9ab22447631"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-affected-1.log.gz": {
+      "sha256": "e57927bb421f9fa63862311050be891ff742d831f90d7df5495296dafc2b8d2b",
+      "uncompressed_sha256": "9dc0d7c02a0a8213507757391037b79e0fe302edba68e3cf2b68aa2d1b4967f9"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-affected-2.log.gz": {
+      "sha256": "3a130ca48e387719e7e443b003c25875dc1fc42fc577211577681775d9cc9a74",
+      "uncompressed_sha256": "d982ba4ecf893f5bb77012a80e452a9612e5a50a594c43ec9e44c163ed6ef48e"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-affected-3.log.gz": {
+      "sha256": "a466b0abeba01eab33f42efb99fbb6ab0d69e276ce5b1bc7081054359ccf5345",
+      "uncompressed_sha256": "a4e3fad17a49fcb343ca11b73f646d346c05bf8c503d54bdc56799b87b2b4df8"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-affected-4.log.gz": {
+      "sha256": "a6145d101c4ad0fc86fec204ec3ec6c90ab6aae6a60f0cbf80497f6babfb32e7",
+      "uncompressed_sha256": "6fea75cd263805ff2f33ded61c57e6f6c76b88058d4dcb107c03f7168b8ba5e8"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-affected-5.log.gz": {
+      "sha256": "2238601c011618bdb0ed23a1a2c861fba80c89ffc6efef969968bb59b3b1523c",
+      "uncompressed_sha256": "da3551bc56dea417f8e9bd2f4597aca9a3c46385bd01bf236258099581be0395"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-api-1.log.gz": {
+      "sha256": "e889d8722d6eea8a2f85ea974fc624c9b27840227a6224c4813fe750c6a46594",
+      "uncompressed_sha256": "0d4e789be6221ce771e19e725cfd199e23eb7ce36f3fbdec2c57002354ea3fd6"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-api-2.log.gz": {
+      "sha256": "21094feb7f16cff5c6a95905b1ec936f0f3134d401eaf7ce33dd37afec49927e",
+      "uncompressed_sha256": "f0f1d8a2e06d5013932123152d984e0955761da6fe3933bdc889d8c818b98219"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-conformance-1.log.gz": {
+      "sha256": "b1830121c8fa9a44409778c3f5127e93763fd238cffa4150c5a899cb6d30a301",
+      "uncompressed_sha256": "bb344676bb8ec85ca07f60f83fd87c9a31454652bdf57ccf8290facecdc58440"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-conformance-2.log.gz": {
+      "sha256": "038a9742f2b10cb5e31562497e39c4bb546a6be00d4b058c38e1623aa4681622",
+      "uncompressed_sha256": "50cc408b3d7795b9e9b5d615109060e650c6fa065ad008951e15380053f5f116"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-conformance-3.log.gz": {
+      "sha256": "0c7fbccde5cff8366b48ce911ef389929991e63ea7f4a6c5ef8bc4dd7e2546e5",
+      "uncompressed_sha256": "0adb765c46a9ab00c6021af6d023307b4cfbe11edbd6177f775e0c79f2fe967f"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-conformance-4.log.gz": {
+      "sha256": "b2a742ae0af3cd425061996da47473b12e7f9ad76d3ee837a78507f1948bd9ef",
+      "uncompressed_sha256": "7e8360bc0af27eb3d8e66874c5f0286967b5aeda436485bf5aec995639c67a78"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-copyright-1.log.gz": {
+      "sha256": "dd21e110956f352b84633a7971b5a721876230fe527915624388b4f02207faf2",
+      "uncompressed_sha256": "94fe1932e0d6fc0e99044c81f8fd058a93e8773ff67bc9925b3ed966cf774677"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-copyright-2.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-dag-1.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-dag-2.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-dag-tests-3.log.gz": {
+      "sha256": "23d078523879b6d8536f09d72a027901e02d7e2829a1234edaf5fc6890706b07",
+      "uncompressed_sha256": "1716b47a03188bc918a0e69af2d063dbf3f51ded577934827cd953a60bd6070d"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-final-admissions.log.gz": {
+      "sha256": "31d81a24ce72babdb711e196b25d88e02c96c178b36c3dc4277712a07f01afdf",
+      "uncompressed_sha256": "de13007e6806e6e3adbb1f40c8902120facb8a71490e7026eb32b4a1f9002274"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-final-copyright.log.gz": {
+      "sha256": "89b12fa0be4a440fd82e7e15dfb79ec5acf5eb2b4b42d7ceab0bc8393408a788",
+      "uncompressed_sha256": "a4bca921b577964339a0bb1003d40b0e13e9006fc28274733a8188e126ddad15"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-final-dag.log.gz": {
+      "sha256": "89b12fa0be4a440fd82e7e15dfb79ec5acf5eb2b4b42d7ceab0bc8393408a788",
+      "uncompressed_sha256": "a4bca921b577964339a0bb1003d40b0e13e9006fc28274733a8188e126ddad15"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-final-literals.log.gz": {
+      "sha256": "e858a9207dc9800a4c4f9df91b44f925fe08a7ae462bc2a0db45645de1119411",
+      "uncompressed_sha256": "b83e0cf8827bc5757b80c247fadd1bf387fb44ca0da61eba65c01c6dc97f4093"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-literals-1.log.gz": {
+      "sha256": "d363c41d04cc71aaa8b2bb97d1faf6ff4b311e5874c10d339f87aba4d4b97158",
+      "uncompressed_sha256": "5b2703a612f8c434ac4e53bb05bfeef0dbca1d91cc9125441d5bd447be3dfbc3"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-manual-browser-1.log.gz": {
+      "sha256": "1690fe86ab4165d79bd463e9e9d404d4e12e07b7fdbd0621d31fefb3f9a83574",
+      "uncompressed_sha256": "19f5833ae00efc5d3ed48075810b62428182008f1189a4627824fbf175d84e12"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-manual-browser-2.log.gz": {
+      "sha256": "519925c1dcb7fc82794c6b4ab54a90f06aeb565cf1aff381d868827c22c483cc",
+      "uncompressed_sha256": "09bf5c2b4bd99c46583a1dec05ce8a7da50e7640de2bcbdc74990c18c27f17b3"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-manual-render-1.log.gz": {
+      "sha256": "7399b9589c4af97a8de1d5c7d8145d16d06625ccb53997713a198c3fa7c17889",
+      "uncompressed_sha256": "8c4cc0a1d1e880aa1c73a8defa5b4b9390fefb2616f482b6796e5d0713d606a2"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-manual-render-2.log.gz": {
+      "sha256": "69114d5b406ba5a82de70208b245bd20946aeeaab3425fa42732400975f16901",
+      "uncompressed_sha256": "651030a3873e1301056bf58ae40b402d1b885ed329a9dc2446494184794c51e1"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-manual-render-3.log.gz": {
+      "sha256": "f6958de3e2d0d6cfd835026851305fb665c7d72fb7e78e748cb595f21efbf912",
+      "uncompressed_sha256": "cff1f47b15c32a595c9838a6ad4164115d0e61722450f81eb6309749e1a4d8f6"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-metadata-tests-2.log.gz": {
+      "sha256": "390a64772ce8db231c4f779a615dcde75d9b482f120a3eac64950fcdb71a1d65",
+      "uncompressed_sha256": "3d9d046822462f06d6913ca89402ed93d212e0c449030e5590458561a42cbfaf"
+    },
+    "reports/data/hexrcf-algebraic-preparation/original-input-stages-1.log.gz": {
+      "sha256": "d6a9aa49149943fbc666793f9dd682d15b3b2d75db1d3b2c5d4c264e3eaea62d",
+      "uncompressed_sha256": "4e374ff63c13424b2754ae03eda283884e45feef87c23e0082bcadabcc89f0e7"
+    },
+    "reports/data/hexrcf-algebraic-preparation/original-input-stages-2.log.gz": {
+      "sha256": "7d07f5bdaa39072061116913d5519ae7ffdce8c055b79a75982b23d5a1855e16",
+      "uncompressed_sha256": "7d2e64780518511f3c53f06bed0c0ca32596a863b70acc96c8bcc5b87ff679a4"
+    },
+    "reports/data/hexrcf-algebraic-preparation/original-input-stages-3.log.gz": {
+      "sha256": "225aaf73ecc2ad0a8e32fc9b46d3340a98622b0de91bbcb7444808e5328f41b0",
+      "uncompressed_sha256": "20c53d1b614a0d928603a700634ff5e345fa2a3a48e5abc2615978558232be50"
+    }
+  },
+  "artifacts_sha256": {
+    "reports/data/hexrcf-algebraic-preparation/original-input-stages-1-source.lean.txt": "bb637e84238f5bc68d0baedc28102081f8d5acc3b7eb6e94ef0773876ec2b477",
+    "reports/data/hexrcf-algebraic-preparation/original-input-stages-2-source.lean.txt": "3708532c14e301e6354be3d182d41e0e80cca25e90d82b4b7a603a5415d2f3b0",
+    "reports/data/hexrcf-algebraic-preparation/original-input-stages-3-source.lean.txt": "ac098611e17e67abf5186770647ecd071fcbf6657120afd222b3b9d0cb6b8ab9",
+    "reports/data/hexrcf-algebraic-preparation/original-input-stages-2.events": "f9bda6d2a3f293079cd806d9c592fa335003b9f380ad7c07853f00d56b630ec9",
+    "reports/data/hexrcf-algebraic-preparation/original-input-stages-3-current.events": "13e4bc51833160f012852a9f1fa87e479f7c0cdf84da57145e0b57e729df8908",
+    "reports/data/hexrcf-algebraic-preparation/original-input-stages-3-current.properties": "ff91753591f2ddd92bfe4c595f0fae8e204a94b3dd57099522fc15410132c6fa",
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-browser.mjs": "fc19faebde913432a12aa73b17e045e6eafb37c68f7ba31af14d242841e6e33f",
+    "reports/data/hexrcf-algebraic-preparation/overflow-1-algebraic-preparation-desktop-api-end.png": "ad59be213d23b0f7b010e01f759adcde57f77fb3e6f97e686f5f83be8bef0b7b",
+    "reports/data/hexrcf-algebraic-preparation/overflow-1-algebraic-preparation-desktop-api-start.png": "629fa75aa948f7dde1e5b5128762cdac84d137bd0790fee242d9fb254c1c276c",
+    "reports/data/hexrcf-algebraic-preparation/overflow-1-algebraic-preparation-desktop-scope.png": "f98c3647f3211c09cc30a98bf39adaac5146036485a52bfc3ce4e0e964c61b99",
+    "reports/data/hexrcf-algebraic-preparation/overflow-1-algebraic-preparation-narrow-api-start.png": "46b4668b35582500279c4a5570ab4f504dab8a11ad5a232e16d057761bb11951",
+    "reports/data/hexrcf-algebraic-preparation/overflow-1-overflow.json": "8d8b6fa10237ea691ef5386b1aa54c3a70693f2aeaf452dcd86082215c6d7f75",
+    "reports/data/hexrcf-algebraic-preparation/run-bounded": "63bc5f97337e6b039bb3a9b1ba2a500be96fd1c2a2f73b43dae284aa9b18dda8",
+    "reports/data/hexrcf-algebraic-preparation/lake-bounded": "aa8d54eac4cf88e9bcff9f0caedf5f73013b9b30919b25a1513bd3a2b01bb43d",
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-desktop-api-end.png": "0ff536b823a8e60edc578d8729c0634e3dd8ae0474d40358d5e891ee552686ea",
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-desktop-api-start.png": "fe8c3cb9bdfb595d6860a84aafc41604808432a35f721ec4bd6cb75928f89769",
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-desktop-scope.png": "e7e6b83d647e10458b0b538f7117bc05a2110f3122f31ac322a522925d223a7a",
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-narrow-api-end.png": "a102a29c3279694fb9ce2ef4d12303a8ffbc12422117bf855ef50c3354c7c595",
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-narrow-api-start.png": "8fc90e8e83fa9bf90e23fa346cc0ab56b2ec73bd407520518988209132fb510f",
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-narrow-scope.png": "e102f6ae771b4ff1475a845f34a4232e0b7362d41faeb9bad65992666c01506b",
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-inspection.json": "96f52cc36b891c0e6c9788665f0587d0e9a4b2ac207dc8547529c22fba137823"
+  },
+  "rendered_html_sha256": "2b8784b4c9a5a6a20da703589b25a5262edaa8d056c3567e4157d2ef9c802aad",
+  "validation": {
+    "affected_jobs": 11768,
+    "renderer_jobs": 14297,
+    "admission_unit_tests": 11,
+    "dag_unit_tests": 11,
+    "source_identity_allowed_axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "captures_opened": 6,
+    "local_overflow_pixels": 0,
+    "memory_bytes": 34359738368,
+    "swap_bytes": 0,
+    "lean_threads": 2,
+    "own_build_concurrency": 1
+  },
+  "limits": [
+    "Source identities authenticate expressions, not separately quoted compiled proposals.",
+    "No new tactic handler or general frozen-history acceptance is claimed.",
+    "Earlier failed attempts remain raw diagnostic artifacts; validated current sources are distinguished.",
+    "Both instrumented native stress runs were operator-interrupted, with no accepted verdict.",
+    "The detailed trace identifies completed radical/root-table/sector work and entry to unfinished cell-row production, not a specific inner query.",
+    "The build-only probes import Mathlib and are not executable benchmark evidence.",
+    "Operational build observations with different scopes are not performance comparisons."
+  ],
+  "document_commit": "fb758914c0191bfb7751b31fe5424cfb6bda2790",
+  "documents_sha256": {
+    "reports/hexrcf-algebraic-preparation.md": "4c170bb859db56ce8ffaa15cd2b2ba04a3803d4f1d8139d5ae279b160142f181",
+    "reports/data/hexrcf-algebraic-preparation/collect.py": "698c7b5a7d9b9330ade7ab6946f32ae8536be0648c0eae8df22566036a8a4d84"
+  },
+  "artifact_commit": "fb758914c0191bfb7751b31fe5424cfb6bda2790"
+}

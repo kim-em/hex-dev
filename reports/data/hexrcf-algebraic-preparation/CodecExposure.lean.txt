@@ -1,0 +1,7 @@
+module
+public import HexRCF.RealCoefficients
+public section
+open Hex Hex.SignDet
+example : (Codec.readGraph ValueCodec.rat ValueCodec.nat (0 : Nat)
+    (DensePoly.ofList ([1] : List Rat)) .negInf .posInf (.arr #[])).toOption.isNone = true := by
+  decide +kernel

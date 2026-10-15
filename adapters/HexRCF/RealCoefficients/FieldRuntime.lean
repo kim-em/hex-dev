@@ -56,18 +56,30 @@ private meta unsafe def evalFormulaUnsafe (n : Nat) (e : Expr) :
 @[implemented_by evalFormulaUnsafe]
 meta opaque evalFormula (n : Nat) (e : Expr) : MetaM (RealFormula.Prenex n)
 
-/-- Prove routine closed nonnegativity obligations of radical bases. -/
-private meta def nonnegative (source : Expr) : MetaM (Option Expr) := do
-  let x : Q(ℝ) := source
-  let goal : Q(Prop) := q(0 ≤ $x)
-  let candidate ← mkFreshExprMVar goal
+/-- Prove routine closed nonnegativity obligations of radical bases.
+Decline restores state; interruption and elaboration resource failures remain
+terminal. System checks keep ordinary proof-search decline separate from
+exhausted elaboration. -/
+meta def nonnegative (source : Expr) : MetaM (Option Expr) := do
   let saved ← saveState
-  try
-    let remaining ← Lean.Elab.runTactic' candidate.mvarId! (← `(tactic| norm_num))
-    if remaining.isEmpty then return some (← instantiateMVars candidate)
-  catch _ => pure ()
-  saved.restore
-  return none
+  let (result,_) ← tryFinally' (withIncRecDepth do
+    Core.checkSystem "rcf nonnegativity"
+    let x : Q(ℝ) := source
+    let goal : Q(Prop) := q(0 ≤ $x)
+    let candidate ← mkFreshExprMVar goal
+    try
+      let remaining ← Lean.Elab.runTactic' candidate.mvarId! (← `(tactic| norm_num))
+      Core.checkSystem "rcf nonnegativity"
+      if remaining.isEmpty then return some (← instantiateMVars candidate)
+    catch _ =>
+      -- Core's standard handler already rethrows tagged resource/interrupt
+      -- exceptions. Recheck limits before an ordinary proof-search decline.
+      Core.checkSystem "rcf nonnegativity"
+    return none) fun result => do
+      match result with
+      | some (some _) => pure ()
+      | _ => saved.restore
+  return result
 
 /-- Interpret one source scalar through the existing algebraic-number API,
 then run only that executable construction during certificate search. -/

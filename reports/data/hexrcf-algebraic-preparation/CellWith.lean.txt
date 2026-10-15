@@ -1,0 +1,40 @@
+import HexRCF.RealCoefficients.CompleteReplay
+import HexRealClosure.RecordReaders
+open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet
+namespace Hex.RCF.RealCoefficients.CellWith
+variable {registry : BaseContext.Registry} {parent : Tower.Context registry}
+
+def prepare (operations : Hex.RealClosure.Replay.Operations parent.sign)
+    (values : Fin n → parent.Value) (formula : RealFormula.QF (n+1)) : List parent.Poly :=
+  @RepresentationSpecialize.prepare parent.Value (Tower.instZeroValue parent)
+    (Tower.instDecidableEqValue parent) operations.one operations.add operations.mul
+    operations.neg operations.natCast n values formula
+
+theorem prepare_eq (operations : Hex.RealClosure.Replay.Operations parent.sign)
+    (values : Fin n → parent.Value) (formula : RealFormula.QF (n+1)) :
+    prepare operations values formula = RepresentationSpecialize.prepare values formula := by
+  cases operations with
+  | mk one add neg sub mul inv div nat ho ha hn hs hm hi hd hc sign hsign =>
+    cases ho; cases ha; cases hn; cases hs; cases hm; cases hi; cases hd; cases hc
+    rfl
+
+def radical (operations : Hex.RealClosure.Replay.Operations parent.sign)
+    (values : Fin n → parent.Value) (formula : RealFormula.QF (n+1))
+    (cert : RadicalCert parent.Value Signature) : Bool :=
+  let product := @RepresentationCarrier.product parent.Value (Tower.instZeroValue parent)
+    (Tower.instDecidableEqValue parent) operations.one operations.add operations.mul
+    (prepare operations values formula)
+  @RadicalCert.check parent.Value Signature (Tower.instZeroValue parent)
+    (Tower.instDecidableEqValue parent) operations.one operations.add operations.sub operations.mul
+    inferInstance parent.signature product cert
+
+theorem radical_eq (operations : Hex.RealClosure.Replay.Operations parent.sign)
+    (values : Fin n → parent.Value) (formula : RealFormula.QF (n+1))
+    (cert : RadicalCert parent.Value Signature) :
+    radical operations values formula cert = cert.check parent.signature
+      (RepresentationCarrier.product (RepresentationSpecialize.prepare values formula)) := by
+  cases operations with
+  | mk one add neg sub mul inv div nat ho ha hn hs hm hi hd hc sign hsign =>
+    cases ho; cases ha; cases hn; cases hs; cases hm; cases hi; cases hd; cases hc
+    rfl
+end Hex.RCF.RealCoefficients.CellWith

@@ -1,0 +1,73 @@
+import HexRCF.RealCoefficients.AlgebraicCells
+open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.RealFormula Hex.RCF.RealCoefficients
+namespace OriginalInputStages
+set_option maxHeartbeats 12000000
+set_option maxRecDepth 32768
+private def registry : BaseContext.Registry := fun _ => none
+private def event (message : String) : IO Unit := do
+  IO.FS.withFile "/home/kim/.codex/tasks/hex-10358/original-input-stages.events" .append fun handle => do
+    handle.putStrLn s!"{← IO.monoMsNow}: {message}"
+    handle.flush
+
+private def selected (coefficients : List Int) (lower upper : Rat) : Option RealAlgebraicNumber := do
+  let d ← Root.validate 7
+    {context := 7, head := DensePoly.ofList coefficients,
+      lower := .finite lower, upper := .finite upper, indices := [], signs := []}
+  pure d.handle.canonical
+
+private def trial (negative : Bool) : IO Unit := do
+  event s!"negative={negative}: original selected inputs begin"
+  let some a := selected [-2,0,1] (if negative then -2 else 1) (if negative then -1 else 2)
+    | throw (IO.userError "first original root failed")
+  let some b := selected [-3,0,1] 1 2 | throw (IO.userError "second original root failed")
+  let inputs : Fin 4 → RealAlgebraicNumber := fun i =>
+    if i.val = 0 then a else if i.val = 1 then b else if i.val = 2 then .ofRat 1 else 0
+  let indices : Fin 2 → Fin 4 := fun i => ⟨i.val,Nat.lt_trans i.isLt (by decide)⟩
+  let original : List (Fin 4) := [2,1,0,1]
+  unless original.all (fun i => decide (inputs i ≠ 0)) do
+    throw (IO.userError "original nonzero preflight failed")
+  event "original guard preflight done; selected presentations begin"
+  let some sources := AlgebraicCells.presentations registry inputs
+    | throw (IO.userError "presentation failed")
+  event "selected presentations done; actual owner gathering begin"
+  let some shared := Shared.gather? (.pack (BaseContext.rational registry)) (AlgebraicCells.owners sources)
+    | throw (IO.userError "owner gathering failed")
+  let values := GatherCells.values shared (AlgebraicCells.coefficients sources indices)
+  let guards := GatherCells.guards shared (AlgebraicCells.guards sources original)
+  let x : Poly 3 := MvPoly.X 2
+  let formula : QF 3 := .and (.atom ⟨x^2 - MvPoly.X 0,.eq⟩)
+    (.and (.atom ⟨x-1,.gt⟩) (.atom ⟨x - MvPoly.X 1,.lt⟩))
+  event "actual owner gathering done; formula specialization begin"
+  let polynomials := RepresentationSpecialize.prepare values formula
+  event s!"specialization done: {polynomials.length} atoms; native complete partition begin"
+  let family := Tower.Sample.partition shared.input.context polynomials
+  event s!"native complete partition done: {family.values.length} distinct roots"
+  let input := family.collection.input
+  let converted := input.value ∘ values
+  let original := guards.map input.value
+  event "carrier and full-root preparation begin"
+  let .ok ⟨radical,roots⟩ := CellBuild.prepare converted original formula
+    | throw (IO.userError "carrier/root preparation failed")
+  event s!"carrier/full-root preparation done: {roots.roots.length} roots; sector requests begin"
+  let some candidates := SectorRequest.points family
+    | throw (IO.userError "sector request failed")
+  event "sector requests done; cell rows begin"
+  if aligned : family.values.length+1 = roots.roots.length+1 then
+    let _ : Hashable input.context.Value := RowEncode.hashable input.context.codec
+    let _ : Hashable Signature := RowEncode.hashable Signature.codec
+    let .ok cells := CellBuild.build roots converted original formula
+        (fun i => candidates[Fin.cast aligned.symm i])
+      | throw (IO.userError "cell row production failed")
+    event "cell rows done; complete root graph encoding begin"
+    let graph := SignDet.Codec.graph input.context.codec Signature.codec (SignDet.Dag.encode roots.replay)
+    event s!"root graph encoded: {graph.writeBytes.size} bytes; complete replay begin"
+    for (quantifier,expected) in [(Quantifier.existsReal,!negative),(.forallReal,false)] do
+      unless (CompleteReplay.check input.context.codec converted formula original radical quantifier graph cells).toOption
+          == some expected do
+        throw (IO.userError "complete replay changed the expected verdict")
+      event s!"complete replay done: {repr quantifier}, expected={expected}"
+  else throw (IO.userError "root dimensions disagree")
+
+#eval trial false
+#eval trial true
+end OriginalInputStages
