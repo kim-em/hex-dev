@@ -10,10 +10,10 @@
     "HexManual/Chapters/HexSignDet.lean": "6cf774c0d04b484265c361d16b061b8e57039511c025810520f383169ecfb8e1",
     "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "83520887f6307511e2db9aa18862adaa47d66df6aadcdf2870cd6c2b635c8928",
-    "reports/sign-det-declaration-review/README.md": "19664cb558ed17617c083ff358383281ebc6061ea9e57ef7479e4ece28ae0d8a",
+    "reports/sign-det-declaration-review/README.md": "754a4ddd60d3e2680a20feabd22017b7854ad9456fcc3e82f9991b3a549ad0bf",
     "scripts/ci/check_benches_mathlib_free.py": "a8da3bef100b50fdd923d609ad03a3a9bd55229467f5652abe6e3f0b3d1ed0e5",
     "scripts/libgraph.py": "7c250cb801b6b5f4ae34ae90d98c2afc39d65f04e1b6770cc1f8871349af5ef7",
-    "reports/sign-det-declaration-review/core-graph-codec.md": "9677850d4bed7a94a51628ce0199c9692eba37e41ed40acaf79669ff9e7b1d9a"
+    "reports/sign-det-declaration-review/core-graph-codec.md": "59c8bb7e793884cc79f77e5ce607ac968667cb43e92436d129bc5cb009b053be"
   },
   "file_roles": {
     "HexSignDet/Codec/GraphLaws.lean": "reviewed module",
@@ -124,12 +124,12 @@
     ],
     "scope": "Individual source/proof/API review of integration additions; existing kernel guards and public reader uses. No new compiler capture, computational performance or phase acceptance."
   },
-  "source_ref": "audit/issue-10575-sign-det-integration-review-input-v1",
-  "input_revision": "95a5e107f9ff50b928041ca1a84dba22c309784b",
+  "source_ref": "audit/issue-10575-sign-det-integration-review-input-v2",
+  "input_revision": "7cc9fb5c2d3401d9f67b0fefd016246a3acddd0f",
   "archive_files": {
     "HexSignDet/Codec/GraphLaws.lean": "292cebb2c9ea1131ddd0458de3997aac95cfc1422e99dbd8fb5e7f6d08fcdaa5",
     "HexSignDet/Codec/FiniteLaws.lean": "a30dbc456d8613e247bfc691376206a7da405b8a3e08ef7a550c0b857a234ab8",
     "HexSignDet/Codec/FiniteGraph.lean": "bb1e0611aa74d7c7b4a74f83f05e481ccd4584523e0aaeca7beba53c70a6895c",
-    "reports/sign-det-declaration-review/core-graph-codec.md": "9677850d4bed7a94a51628ce0199c9692eba37e41ed40acaf79669ff9e7b1d9a"
+    "reports/sign-det-declaration-review/core-graph-codec.md": "59c8bb7e793884cc79f77e5ce607ac968667cb43e92436d129bc5cb009b053be"
   }
 }
