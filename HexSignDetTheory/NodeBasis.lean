@@ -9,8 +9,6 @@ public import HexSignDet.Replay
 public import HexSignDetTheory.Basis
 public import HexSignDetTheory.Tensor
 
-set_option autoImplicit false
-
 public section
 
 universe u v

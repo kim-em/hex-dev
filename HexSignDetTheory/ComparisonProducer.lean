@@ -9,8 +9,6 @@ public import HexSignDetTheory.ThomReencoding
 public import HexSignDetTheory.CommonProduct
 public import HexSignDetTheory.CompletionProducer
 
-set_option autoImplicit false
-
 public section
 
 universe u v w

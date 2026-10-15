@@ -7,8 +7,6 @@ module
 
 public import HexSignDetTheory.NodeChecks
 
-set_option autoImplicit false
-
 public section
 
 universe u v w

@@ -555,6 +555,11 @@ soundness proved by {name}`Hex.SignDet.Replay.count_roots`.
 
 {docstring Hex.SignDet.Descriptor.buildRoots_roots}
 
+Interpretation laws are explicit arguments, including separate source and
+target laws for conversion. The required laws and their positional order
+vary with the theorem. Use named arguments for these laws, as below, so the
+application records their meaning without depending on a shared argument order.
+
 The following specialization reuses the same complete-producer theorem
 as the downstream sign consumer. Given a mathematical root in a valid
 domain, it obtains a descriptor from the actual returned list without
@@ -590,13 +595,15 @@ example (member : x ∈ Tarski.rootsIn
           .ok (some out) ∧
       ∃ d ∈ out, value d = x := by
   obtain ⟨out, produced, coverage, _, _⟩ :=
-    Descriptor.buildRoots_roots id
-      (fun _ => Iff.rfl) rfl
-      (fun _ _ => rfl) (fun _ _ => rfl)
-      (fun _ _ => rfl) (fun _ => rfl)
-      HexSturmTheory.orderSign_eq
-      (fun _ => rfl) (fun _ => rfl)
-      7 p a b domain
+    Descriptor.buildRoots_roots
+      (f := id) (hz := fun _ => Iff.rfl)
+      (h1 := rfl) (ha := fun _ _ => rfl)
+      (hs := fun _ _ => rfl)
+      (hm := fun _ _ => rfl)
+      (hnat := fun _ => rfl)
+      (hsign := HexSturmTheory.orderSign_eq)
+      (hn := fun _ => rfl)
+      (hi := fun _ => rfl) 7 p a b domain
   refine ⟨out, produced, ?_⟩
   exact List.mem_map.mp
     ((coverage x).mp member)

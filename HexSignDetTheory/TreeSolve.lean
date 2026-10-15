@@ -8,8 +8,6 @@ module
 public import HexSignDetTheory.NodeSolve
 public import HexSignDetTheory.TreeChecks
 
-set_option autoImplicit false
-
 public section
 
 universe u v w

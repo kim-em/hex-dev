@@ -9,8 +9,6 @@ public import HexSignDet.Tensor
 public import HexRankTheory.Sound
 public import Mathlib.LinearAlgebra.Matrix.Kronecker
 
-set_option autoImplicit false
-
 public section
 
 universe u
@@ -22,7 +20,8 @@ open scoped Kronecker
 
 /-- The dimension-indexed product is exactly the existing ordered list
 product used by the recursive checker, rather than a permutation of it. -/
-theorem productVector_toList {α : Type u} {r s : Nat} (xs : Vector (List α) r) (ys : Vector (List α) s) :
+theorem productVector_toList {α : Type u} {r s : Nat}
+    (xs : Vector (List α) r) (ys : Vector (List α) s) :
     (productVector xs ys).toList = product xs.toList ys.toList := by
   have hv {n : Nat} (v : Vector (List α) n) :
       v.toList = List.ofFn (fun i : Fin n => v[i]) := by

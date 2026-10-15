@@ -10,13 +10,13 @@
     "Existing recursive producer proof consumes full leaf/split acceptance equivalences; statements and recursion invariants are preserved.",
     "Common-product and re-encoding producer proofs consume the full check_iff/checkReencoding_iff equivalences; statements are unchanged.",
     "Supplied-replay rootsFrom_coverage and rootsFrom_ordered generalize existing proof compositions; buildRoots_coverage and buildRoots_ordered delegate without changed statements. No coefficient Neg/Inv assumptions on supplied-replay exports.",
-    "Declare universe parameters and the generic tensor coefficient type explicitly; disable autoImplicit in all 37 production modules and wrap long lines. Proof and statement source otherwise agrees after whitespace normalization."
+    "Declare universe parameters and the generic tensor coefficient type explicitly; disable autoImplicit on the production Lake target and wrap long lines. Proof and statement source otherwise agrees after whitespace normalization and the record field separator change."
   ],
   "modules": [
     {
       "path": "HexSignDetTheory/Basis.lean",
       "sha256": "194178b29b569efad10089c481eb4fbbf316a5601ac479e265974b6b8a3c8916",
-      "reviewed_sha256": "39129ba3237c875a08842d7a65988cc693d37269cf83f9a9a95cc6a625b0dcfc",
+      "reviewed_sha256": "ce44d363d615e19d047c5b932baea4d0255f7943fe14d4407a17e426b02c9b81",
       "handwritten_declarations": [
         "rank_selectCols",
         "System.retained_rank",
@@ -32,7 +32,7 @@
     {
       "path": "HexSignDetTheory/CommonProduct.lean",
       "sha256": "90690853995a70b7b306cfc61170f98b055a7ca98acf79a7927214ca83fed281",
-      "reviewed_sha256": "acd23aef8ee9c852dba0e71f83898ed9b50bdd625b30a9f42839680b593663e6",
+      "reviewed_sha256": "b369200b08015c511319cbac79cde33cb611646cc2592bdfc2202812de244c6e",
       "handwritten_declarations": [
         "CommonProduct.check_roots",
         "quotient_lcm",
@@ -44,7 +44,7 @@
     {
       "path": "HexSignDetTheory/ComparisonProducer.lean",
       "sha256": "6df83c461ae06501d789bbfd4dc8282be2a6e462e9baa1f7278fc086c1f227da",
-      "reviewed_sha256": "d8fd9c591812df8d16842340c6bfd632dd37274772339737f25157ec3dc00e18",
+      "reviewed_sha256": "3c4b528cdd639ec52dae1f52e0d87c2bfd063f659e816f6b3c98ddc0807286e9",
       "handwritten_declarations": [
         "Descriptor.buildComparison_success",
         "Descriptor.buildOrder_roots",
@@ -59,7 +59,7 @@
     {
       "path": "HexSignDetTheory/CompletionProducer.lean",
       "sha256": "f7c72b927bd532b74366a22d88d7d87bb80db66f4151ecf2a589c66af2617ec6",
-      "reviewed_sha256": "f96431cf7a15fbe8809aa64772013bf550ed1603ff5bd432b7cdd723c9f8d8cc",
+      "reviewed_sha256": "1ca42ac2e12c6e8695873763c1a9071b39c733654ff844dff9fc5a10377bbfb9",
       "handwritten_declarations": [
         "RawDescriptor.full_at",
         "RawDescriptor.full_congr",
@@ -75,7 +75,7 @@
     {
       "path": "HexSignDetTheory/Convert.lean",
       "sha256": "5d1c52649eedd3a319f6eea8e8a4139ca26d9cb703478fed8d8e9df9cb48bfea",
-      "reviewed_sha256": "84da8ba8a5f74d0281c3747a6a27dec5c17479f56cba8c9e16a19b31b6d6d656",
+      "reviewed_sha256": "edf230e1543fa4454783e913ce55b36af57851f98e33b7b1ddaa7623e10fe6fc",
       "handwritten_declarations": [
         "convert_interpret",
         "convert_endpoint",
@@ -90,7 +90,7 @@
     {
       "path": "HexSignDetTheory/DagSelectedSigns.lean",
       "sha256": "681d80f7bcd20c382d4ed068db23e2c42f4b2ffab2fdd10b4c851d661834b4fb",
-      "reviewed_sha256": "501d9402062b01bbae68c138f46288d399f1a80a9410ca52a9f38f034085c487",
+      "reviewed_sha256": "0a3b182da113e796149642fe361e728d98d61444a2ea874fa8db04abfcf89b15",
       "handwritten_declarations": [
         "selectedSigns_values",
         "memo_values",
@@ -101,7 +101,7 @@
     {
       "path": "HexSignDetTheory/Derivatives.lean",
       "sha256": "60082d1e0067b400220f9d041f126282cd355c0a8548b61eec57bc7024f63d58",
-      "reviewed_sha256": "0ecce10a9d377c3f1f146e02a7eb67ae3895254be13fd679e2ed91d47e302613",
+      "reviewed_sha256": "4452656904153188bb58cd49bf822c7593f9ce32bc78ed8d502f2bc27a23e12a",
       "handwritten_declarations": [
         "derivativesFrom_get",
         "RawDescriptor.querySigns"
@@ -111,7 +111,7 @@
     {
       "path": "HexSignDetTheory/Embedding.lean",
       "sha256": "ce60f48dd68346f4587efb307cdc2d6aebd473c51fd07de2cd66d0d8b966fcdf",
-      "reviewed_sha256": "53b4019f7347aec0c7dfc7097ad3efe79dd2face8d7c878cb2931d039c4e1fd3",
+      "reviewed_sha256": "c11e0c3860d02b5353e39e3c21a8b1515f78bbdced7c723bbe8d95502d82d8f8",
       "handwritten_declarations": [
         "interpret_embedding",
         "signsAt_embedding",
@@ -125,7 +125,7 @@
     {
       "path": "HexSignDetTheory/FiniteSolve.lean",
       "sha256": "d427c99e42655e7233e675c2b0b54fd70b728457b4428b3737eb27fa61232849",
-      "reviewed_sha256": "59f071890e1f103377545ca1970437e4ab758642bd778900bc5edc15723be3f2",
+      "reviewed_sha256": "b023c750402de712ccdc669b763dec1ec4503edac41d90c8b98bb773462a8418",
       "handwritten_declarations": [
         "columns_distinct",
         "counts_nonneg",
@@ -139,7 +139,7 @@
     {
       "path": "HexSignDetTheory/Foundation.lean",
       "sha256": "d7aae350a5f494cc2ce2ac1ea1a90a3ca39ea893f7e76054af01145fb0d1a635",
-      "reviewed_sha256": "7f8851b69c2fc78ce408c574b1a9cad0b903e23951580b6fb2981aaf71e066c9",
+      "reviewed_sha256": "9381b25165b6a84e952f886ed5a1982760326c4694790a79ecc1833dbd567248",
       "handwritten_declarations": [
         "occCount_getElem",
         "sum_getElem",
@@ -152,7 +152,7 @@
     {
       "path": "HexSignDetTheory/Naturality.lean",
       "sha256": "84bebbbaf2d15b065e1e29bb94781b77e569d977e643eccc1b698b09b814d0cd",
-      "reviewed_sha256": "237e63eb8a5535a8a16d6e82ceee8ac1d287ea1a5ff685a561708875c72b366c",
+      "reviewed_sha256": "a5111fafcceed4f5d5dc39ef5343b1ce814c88a5be70d077e5c0e1ac7edc4c25",
       "handwritten_declarations": [
         "signsAt_convert",
         "Descriptor.convert_signAt",
@@ -167,7 +167,7 @@
     {
       "path": "HexSignDetTheory/NodeBasis.lean",
       "sha256": "3e664b4da28caafc81d7610bd83d72379227877cd62168b291ef29e24b6b626d",
-      "reviewed_sha256": "84d6481461d828f34c068de1bf550a53bcc8f5f7ad14c4e9c1add5f7d89c856e",
+      "reviewed_sha256": "78453b48dabc9860668d052bc54ba48de65e57a57a30a511d4a266d1b3ff0902",
       "handwritten_declarations": [
         "Node.basisRows",
         "Node.basisCols",
@@ -183,7 +183,7 @@
     {
       "path": "HexSignDetTheory/NodeChecks.lean",
       "sha256": "f76bca898146b02c0ccd7ddc88ed955188d739adc35c0011b93f1e09c8a0c2d6",
-      "reviewed_sha256": "972567397de5eb29a040a0995b18ee9fabb2e8765515ddf5150499be47df31e7",
+      "reviewed_sha256": "641016aaffae70a67d365687edc068ab93c3de35422952a2f4d66940ede2498f",
       "handwritten_declarations": [
         "nodePreparation_checks",
         "buildNode_preparation",
@@ -194,7 +194,7 @@
     {
       "path": "HexSignDetTheory/NodeProducer.lean",
       "sha256": "6e1da03929119323a491e70e9ee0885c44511375694d1e9c79ab0179c5886fbd",
-      "reviewed_sha256": "06cc29e119d9963a321c694a5ee1454334903a745d9b134c10c23ddb13ed449f",
+      "reviewed_sha256": "8de9cfed386e22752f9d32a38a8502cb5c285a03c5803037939ba5af62e49349",
       "handwritten_declarations": [
         "solveSystem_spec",
         "solveScaled_spec",
@@ -208,7 +208,7 @@
     {
       "path": "HexSignDetTheory/NodeSolve.lean",
       "sha256": "af7885cb3ec6e1de7218d0f61efb14d1a6048f42817e3358396bcaebeb458545",
-      "reviewed_sha256": "a26a75eaa3ccc250284ba100f4f23eabe5cd2986246e667bc0e26e3b47c8bae5",
+      "reviewed_sha256": "aa0c3bbc82339af112cc9ca5b6ef2412a4d3aac043aeca9ed3ee3c71072f12ae",
       "handwritten_declarations": [
         "buildNode_complete",
         "Node.parent_system"
@@ -218,7 +218,7 @@
     {
       "path": "HexSignDetTheory/ParentSystem.lean",
       "sha256": "9c183b2d254f9272f94fda0d1e169ccf5280a02f88f0b885562c8fb2d47fba27",
-      "reviewed_sha256": "9291ca4e5994e95236f958c71c8defee3de2396c6a2186c56a7413e76e077453",
+      "reviewed_sha256": "a9c9e3f04ce68104597c90020dd9f9472a4d0e85e9665e2ea33f0f05331af741",
       "handwritten_declarations": [
         "product_all",
         "support_valid",
@@ -230,7 +230,7 @@
     {
       "path": "HexSignDetTheory/QueryHandle.lean",
       "sha256": "b06d9a0fee3d111361fda54c7dbb63f2ea50a6a5b93d318944e64aa00582597b",
-      "reviewed_sha256": "0a33239ebfb49d9c4124afee13836c8ba8803130c61c95af03e30ce37d468e23",
+      "reviewed_sha256": "c4d6312ac2ddf552529cfcc6a5d3915115db2a53dd9a6db885743cccce39e8ec",
       "handwritten_declarations": [
         "Descriptor.prepareQueries_success",
         "QueryHandle.buildSigns_success",
@@ -243,7 +243,7 @@
     {
       "path": "HexSignDetTheory/QueryReduction.lean",
       "sha256": "19e1ff74b0b6e71c7952c8e3ba6db5613699930b37a869f5e977c73fa44f37bd",
-      "reviewed_sha256": "c2295d145530dab04c1eb232f3a8da04f92652aa6a7454f2c32e6049c88ef05f",
+      "reviewed_sha256": "0abc795cd3c21148748f001b2939e4917166cf379dfaa1558bb9b90b456a7219",
       "handwritten_declarations": [
         "QueryReduction.checkFrom_signs",
         "QueryReduction.check_signs",
@@ -256,7 +256,7 @@
     {
       "path": "HexSignDetTheory/RationalSolve.lean",
       "sha256": "b051cf667048973bf0af206b14854acfdeb81aa3782324d32a12b26ef597a695",
-      "reviewed_sha256": "9f37403bb544921ca418e3da4c08232e4f15aaeb41c01d6bc97a312927c1c300",
+      "reviewed_sha256": "4767e5e90a8133f091260e8817563cd43e842eda23b1fc40bf57e78599dc330a",
       "handwritten_declarations": [
         "System.rationalInverse",
         "System.rationalCounts",
@@ -270,7 +270,7 @@
     {
       "path": "HexSignDetTheory/Reduction.lean",
       "sha256": "bb0d284e958dc21d8cdece666b70752735bc644032fe6b758cf1cb9a84a230ca",
-      "reviewed_sha256": "ada9371f43c97e7616fd5834f4ae65d9e1b8429c43e2c6ac9329c3029761e93c",
+      "reviewed_sha256": "198a3ff0f3f868405c9c53ac100a851748b051b2f3c19eabc27e3c62545e1611",
       "handwritten_declarations": [
         "ReductionStep.check_sign",
         "Reduction.checkFrom_sign",
@@ -287,7 +287,7 @@
     {
       "path": "HexSignDetTheory/ReductionProducer.lean",
       "sha256": "327008785311b0ba72f8ac033aa051f8b00714fd364cd39ae0dde4d5efb95383",
-      "reviewed_sha256": "8056e69400366731c2eb75d9da29cee0322b278eafcf87bcadbdf42017d26cc5",
+      "reviewed_sha256": "a11d66f44af50edd271e5a86c0629bbb19bf8308484bd300e1d7b3aecf3d2d74",
       "handwritten_declarations": [
         "ReductionStep.build_checks",
         "Reduction.buildFrom_checks",
@@ -298,7 +298,7 @@
     {
       "path": "HexSignDetTheory/Reencode.lean",
       "sha256": "e68c6c30c144ffab8f5caf9c71cb2f7c41f8be4a92a4dbd24164b4d1a4f51c0e",
-      "reviewed_sha256": "06370fa3fa5ad9e00ede8de5219ab4da8f49b11509c43fbfa146a15703c1d38e",
+      "reviewed_sha256": "37f727fb7bb2490101d7810fce8192768da4238834c4932926a1a237ac9569ee",
       "handwritten_declarations": [
         "endpoint_eval",
         "endpoint_lower",
@@ -309,7 +309,7 @@
     {
       "path": "HexSignDetTheory/ReencodingProducer.lean",
       "sha256": "9fe1040a8e32a3c2de90722df7e62c30f07faa37a79a67e3fbb8c37ab924f1f3",
-      "reviewed_sha256": "3232c5d031e84e691cfe8c24495775a9630ca56e5c80d79848ca3a955d7df0d8",
+      "reviewed_sha256": "a52f46d775b5f057432ed39f8d0cc95f63efa2f8cca9af6149dbba70a13850d4",
       "handwritten_declarations": [
         "Descriptor.buildReencoding_invalid",
         "Descriptor.buildReencoding_absent"
@@ -319,7 +319,7 @@
     {
       "path": "HexSignDetTheory/ReencodingRefinement.lean",
       "sha256": "25a45f2d86aa5c5828474a816e73cb5851548f6e09641046dfcf063f8a4b60dc",
-      "reviewed_sha256": "4f7e8d6ac6c19464c7d276f3185eabe98ac8367266582a9b1bf715c774a515a7",
+      "reviewed_sha256": "ab8aaa08d13bff551009528ab9afdc53c69ba31dae219d69a5f0980b6ea72903",
       "handwritten_declarations": [
         "Descriptor.reencoding_rows",
         "Descriptor.reencoding_fiber",
@@ -332,7 +332,7 @@
     {
       "path": "HexSignDetTheory/RootList.lean",
       "sha256": "de0b65c019f14797b46624aa12c8b2f4720d572c44ad6d04bf11654eae8531bc",
-      "reviewed_sha256": "7a7b07e368322d91b25bbf7590a69dd5e1bc903c927473192b74d6de3ce812b2",
+      "reviewed_sha256": "aead98f0d004fb1407a437c0eacec5235287a8669e56a6856bad4e3d7ec3d088",
       "handwritten_declarations": [
         "Descriptor.buildRoots_empty",
         "Descriptor.buildRoots_subsingleton",
@@ -348,7 +348,7 @@
     {
       "path": "HexSignDetTheory/RootModel.lean",
       "sha256": "05af9f36fd7eb89d351f738004c53d1dd57561cd6cea8708daa21d50d65767ec",
-      "reviewed_sha256": "ba7bc58d64e359b40a9f561954346032ca08875fa7e274fe45eceec81b447260",
+      "reviewed_sha256": "30c9db13255a19ff4f8e6b339658202865d0205830880fb30a13967fc8309403",
       "handwritten_declarations": [
         "signsAt",
         "rootObservations",
@@ -367,7 +367,7 @@
     {
       "path": "HexSignDetTheory/RootProducer.lean",
       "sha256": "a59557bf0e693ec3ffda539daea751cad626baa5af451b66ac9190d7554f8647",
-      "reviewed_sha256": "4c95ee4a790143a9cc57003d773c8974f4f8c7044a7f4a3b9b2dba3035a8aabe",
+      "reviewed_sha256": "41d1709e48faeed524c2a6ac3776fbb82357d7dd2d26c7b2a3e8f50a14b5fa9a",
       "handwritten_declarations": [
         "query_values",
         "query_model",
@@ -385,7 +385,7 @@
     {
       "path": "HexSignDetTheory/SelectedProducer.lean",
       "sha256": "8d9f41b3abdfbfe9443558b1f9c0eb4b742f218426e89a2a8ccb99843560dd6d",
-      "reviewed_sha256": "6aca3c59151161a811b0d4c9b5152a4ab306a99338b3981e2c48541c3e7b9e96",
+      "reviewed_sha256": "1d178018f1d4ee22bdabb7235f012b2bed78d43196dc73acc00ff4ce6cef04ae",
       "handwritten_declarations": [
         "Descriptor.signs_rows",
         "Descriptor.buildSigns_success",
@@ -398,7 +398,7 @@
     {
       "path": "HexSignDetTheory/SelectedRoot.lean",
       "sha256": "bcfaf28d692b447c023017950b9219acc6197e20c4dfe8f1a812d68a83710aca",
-      "reviewed_sha256": "eb566c030b212ed6b3185226fcb9e4bdd1520f96d3e1d15d4256156e0f34d9a3",
+      "reviewed_sha256": "823bdf5706fb4aa496cb6ebb76caab03c06ea51fa8309d6f92275718c996ddff",
       "handwritten_declarations": [
         "Descriptor.existsUnique_root",
         "Descriptor.root",
@@ -431,7 +431,7 @@
     {
       "path": "HexSignDetTheory/Solve.lean",
       "sha256": "0cb51483db044119ba748c8fec73fc4910fc3fd4c68690bf50c46be8a1d271a7",
-      "reviewed_sha256": "51dc8f2be976ed8662dd4bd12512bb581acc1493235bba1fc8858ebce8dae232",
+      "reviewed_sha256": "230933f5617b10ce4092ab58757c04d3d835ac2d32601eaa13261e97380260f9",
       "handwritten_declarations": [
         "solveScaled_eq"
       ],
@@ -440,7 +440,7 @@
     {
       "path": "HexSignDetTheory/TableProducer.lean",
       "sha256": "5e01a83de1c9d6d61516a1ffb58cd0a5b7ddeb5b7b2ff61275e592dada3cad24",
-      "reviewed_sha256": "f34a90b9bc7c894846b411601d8f2bedfc1cef355518bb647650a8d149b5de55",
+      "reviewed_sha256": "b57acda0a825e1cb877975fb4a1ed82c28df128439ea5918070d0622fda2838c",
       "handwritten_declarations": [
         "buildTablePrepared_success",
         "determinePrepared_success",
@@ -453,7 +453,7 @@
     {
       "path": "HexSignDetTheory/Tensor.lean",
       "sha256": "c3379d19c642802dc982c54aa13947544cf65f1456075e05f63135fbe2261028",
-      "reviewed_sha256": "fbce21238a6c7d8b92d35d3f24ebc02b9c5bc561169de50ff752539f35c1fb3b",
+      "reviewed_sha256": "2581926ab9efc1c87f4ef81417eddf350303c43ccbca570bb5a2af0de81ce40b",
       "handwritten_declarations": [
         "productVector_toList",
         "momentMatrix_product",
@@ -467,7 +467,7 @@
     {
       "path": "HexSignDetTheory/Thom.lean",
       "sha256": "06f885dee14de99a0d7f024979b1eb169fc36ba8c3b18d2e897cdf7edf403b4d",
-      "reviewed_sha256": "94368f036d1500f6a0e9601edb8a0c73978e23a1de856f73efcdaf2395c88ba5",
+      "reviewed_sha256": "a8851fdcd9a9419fc8ec5ba10698bf959242dcf7fab864baddd80ddc91c3220e",
       "handwritten_declarations": [
         "sign_int_inj",
         "sign_int_lt",
@@ -485,7 +485,7 @@
     {
       "path": "HexSignDetTheory/ThomReencoding.lean",
       "sha256": "e73e02ef5f75369056a9ede7cbee2c5dc9056947983cd8735cce2df50c0c9706",
-      "reviewed_sha256": "68f6f0508d83347f85088fba5d8fe2c26d09466612d51894802b8c85361b16db",
+      "reviewed_sha256": "b76556b6cd71c1000bde0803f45c9c7a7c9718b5be96fb940cce8766a2700c5b",
       "handwritten_declarations": [
         "Descriptor.buildReencoding_success",
         "Descriptor.buildReencoding_isSome"
@@ -495,7 +495,7 @@
     {
       "path": "HexSignDetTheory/ThomRoots.lean",
       "sha256": "7520fb76253d5c300e242f15601ac6d6d19cfca073d2062f6489c73e5efd126d",
-      "reviewed_sha256": "8a173ecc2e9f98549284e311f0ffadce1aa8b0790835ae565209e7669b83bc8d",
+      "reviewed_sha256": "b37b36fec150e23165101ecf05b4105ba429c52050efb3452df496cecc0a456e",
       "handwritten_declarations": [
         "Descriptor.fullOrder_strict",
         "Descriptor.rootsFromTable_success",
@@ -510,7 +510,7 @@
     {
       "path": "HexSignDetTheory/TreeChecks.lean",
       "sha256": "d2ffb35ee653504152d30d1980b49841829543488f1ee20f2799d94a22836523",
-      "reviewed_sha256": "710a76fc7af666ba85290ae123313bf9579368795ca29f7ab2b9a5e1484f511d",
+      "reviewed_sha256": "3d6a051bd2e848a0abac7c2f6565dc86a125293d3604045682290a0f7c40eb95",
       "handwritten_declarations": [
         "buildTreeFrom_checks",
         "buildTree_checks",
@@ -521,7 +521,7 @@
     {
       "path": "HexSignDetTheory/TreeSolve.lean",
       "sha256": "3631bd139ae9c8f7355d3dc5c551f75e0051e0cb9b4dc37980796b85386f35de",
-      "reviewed_sha256": "5dd7a7e96952ca64833e0701121f1acdec33c2c623256a26aab311ba45b26bae",
+      "reviewed_sha256": "12aa5ee792c190bd035e37ffdd7288135d543ff1ae208076432b7108cd35d59b",
       "handwritten_declarations": [
         "QueryValues",
         "QueryModel",

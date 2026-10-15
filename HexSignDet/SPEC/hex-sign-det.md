@@ -12,10 +12,12 @@ and theorem statements below remain required shapes unless implemented there;
 registration does not claim phase completion. The combined computational and
 companion assignment is [#10377](https://github.com/kim-em/hex-dev/issues/10377). Its
 implementation and Phase-4 attestation are merged in
-[#10861](https://github.com/kim-em/hex-dev/pull/10861). Both libraries record
-Phase 5; the [proof acceptance](../../reports/sign-det-proof-acceptance.md)
-records complete proofs and passing conformance. Phases 6–7 and publication
-eligibility remain separate.
+[#10861](https://github.com/kim-em/hex-dev/pull/10861). The
+[proof acceptance](../../reports/sign-det-proof-acceptance.md) records complete
+proofs and passing conformance. This computational library remains at Phase 5;
+the companion's independent
+[proof/API and manual acceptance](../../reports/sign-det-declaration-review/theory-acceptance.md)
+completes its Phases 6–7. Publication eligibility remains separate.
 
 `HexSignDet`, in namespace `Hex.SignDet`, depends on `HexSturm`, `HexPoly`,
 `HexMatrix`, `HexRowReduce` and `HexRank`. Matrix construction and exact

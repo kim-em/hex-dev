@@ -7,7 +7,7 @@
     "adapters/HexRealClosureTheory/CoefficientSelected.lean": "13895fa758fb98884550beba3d8fe5d238ab82803329b09d2a96633ad9868745",
     "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "c3b86c2cef0c53175e43cc40db0dc02ec93de147414c9378e0d914bfb5149132",
-    "HexManual/Chapters/HexSignDet.lean": "1886de363194f3beab7cd75bf854b9b9c919f8499d8da4f05b23fbc893e5db0b"
+    "HexManual/Chapters/HexSignDet.lean": "742fc64274837ffca05a77de77769c3ed0540fed37275683614482e208c10d1d"
   },
   "file_roles": {
     "HexSignDet/SelectedSigns.lean": "reviewed module",

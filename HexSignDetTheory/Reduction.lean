@@ -10,8 +10,6 @@ public import HexSignDet.Matrix
 public import HexPolyTheory.Interpret
 public import Mathlib.Basic.Sign.Basic
 
-set_option autoImplicit false
-
 public section
 
 universe u v w

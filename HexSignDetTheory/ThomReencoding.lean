@@ -8,8 +8,6 @@ module
 public import HexSignDetTheory.Thom
 public import HexSignDetTheory.ReencodingRefinement
 
-set_option autoImplicit false
-
 public section
 
 universe u v w

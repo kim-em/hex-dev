@@ -86,8 +86,19 @@ run_cmd do
   for moduleName in modules do
     unless expected.contains moduleName do
       throwError "unreviewed SignDet Theory module: {moduleName}"
+  let constants := env.constants.toList
+  for name in [``Hex.SignDet.determine_correct, ``Hex.SignDet.Descriptor.root_spec,
+      ``Hex.SignDet.Node.Counted, ``Hex.SignDet.Node.Counted.basis,
+      ``Hex.SignDet.Node.Counted.checked, ``Hex.SignDet.Node.Counted.counts,
+      ``Hex.SignDet.Node.Counted.cover, ``Hex.SignDet.Node.Counted.values] do
+    unless (env.find? name).isSome do
+      throwError "missing reviewed SignDet declaration: {name}"
+  for userName in [`Hex.SignDet.ordered_cols, `Hex.SignDet.quotient_lcm] do
+    unless constants.any (fun (name, _) =>
+        Lean.privateToUserName name == userName && name != userName) do
+      throwError "missing private SignDet proof body: {userName}"
   let mut count := 0
-  for (name, info) in env.constants.toList do
+  for (name, info) in constants do
     let some idx := env.getModuleIdxFor? name | continue
     unless modules.contains env.allImportedModuleNames[idx.toNat]! do continue
     if info matches .axiomInfo _ then

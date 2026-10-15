@@ -125,6 +125,12 @@ statement shapes have an explicit implemented-name mapping.
 
 ## Remaining work
 
+The subsequent [Theory acceptance](sign-det-declaration-review/theory-acceptance.md)
+completes the companion’s own Phases 6–7. The separate computational source
+assessments cover 728 named declarations; final computational acceptance,
+including its applicable regression checks, remains separate from that review.
+
+
 The [companion assessment](sign-det-declaration-review/README.md) treats its
 228 handwritten production declarations, retains compiled references and
 axiom inventories, and disposes of its public zero-reference statements.

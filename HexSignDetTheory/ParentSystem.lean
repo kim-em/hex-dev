@@ -8,8 +8,6 @@ module
 public import HexSignDetTheory.FiniteSolve
 public import HexSignDetTheory.NodeBasis
 
-set_option autoImplicit false
-
 public section
 
 universe u v

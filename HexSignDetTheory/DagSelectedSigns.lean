@@ -8,8 +8,6 @@ module
 public import HexSignDet.DagSelectedSigns
 public import HexSignDetTheory.SelectedRoot
 
-set_option autoImplicit false
-
 public section
 
 universe u v w
