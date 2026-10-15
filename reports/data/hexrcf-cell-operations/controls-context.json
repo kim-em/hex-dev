@@ -84,5 +84,11 @@
     "One fixed retained depth-one fixture, not general source/provider/predecessor history reconstruction.",
     "No public Codec.readGraph exposure or strict compiled arbitrary-missing-record rejection is established.",
     "Incremental builds and targeted assembly observations are not speedup comparisons or algorithm scaling."
-  ]
+  ],
+  "document_commit": "007dcb81b888f121e6949c006b0ee8a1c8b1014b",
+  "artifact_commit": "007dcb81b888f121e6949c006b0ee8a1c8b1014b",
+  "documents_sha256": {
+    "reports/hexrcf-cell-operations.md": "7b7a083658cbf0ae3c1442fc9770ebf2e5c59f1dcee1814e4bac3c2784d3d370",
+    "reports/data/hexrcf-cell-operations/collect_controls.py": "b1f77503d4be3dc99db851608950ab43fe5b587359d08b764407d941cc8469e2"
+  }
 }
