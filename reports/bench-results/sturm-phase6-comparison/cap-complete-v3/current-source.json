@@ -80,5 +80,82 @@
   "cli_revision": "843844fa601dd56767b1eb22b7ada5b64d5e567a",
   "cli_clean": true,
   "cli_binding_scope": "Original capture records exact harness pin and executable digests, but not per-file CLI hashes. Native_import_files records current CLI bytes, not an attestation of unrecorded original bytes.",
-  "compiler_inventory_scope": "Historical pre-Theory-rename graph; reuse individually assessed unchanged core declarations, not a newly captured whole-current-main graph."
+  "compiler_inventory_scope": "Historical pre-Theory-rename graph; reuse individually assessed unchanged core declarations, not a newly captured whole-current-main graph.",
+  "build_configuration": {
+    "lean_toolchain": "leanprover/lean4:v4.35.0-rc3",
+    "lake_manifest_sha256": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "lakefile_sha256": "730c6bcfe9ecd89d29293b845cbbe13de71dec0b677bbc254fd1cac2731b95b1",
+    "reconciliation": "Toolchain and dependency manifest identical to measured producer. Lakefile changes are Theory renames/reordering and unrelated targets; HexSturm, HexPoly, HexRealRoots and hexsturm_bench configurations unchanged.",
+    "measured_lakefile_sha256": "4e5c423f0f22df3f344d639a13cd5dc7470cfff6e7500cbad7111207e400514c",
+    "unchanged_native_target_block_sha256": {
+      "HexSturm": "2bdbfadf5d3ea7c193387fb1f68155434e2737d0161e0eb6eced04f1af396ff8",
+      "HexPoly": "f9f6b3da5c3cf73725bba5bfea98a6563a71badf69f7b516706251aac896123b",
+      "HexRealRoots": "145eb982a34f55e97934de22d5b04332c3e6446b4da1e7a36d165ab54955e3ca",
+      "hexsturm_bench": "8a1639aee0b10889fefdedbc86ed167611c3c4afc7b013fe9ef34d57062970a0"
+    },
+    "toolchain_and_manifest_byte_identical": true
+  },
+  "companion_rename_check": {
+    "source_tag": "audit/issue-10575-sturm-companion-phase7-complete",
+    "normalization": "byte regex \\b(Hex[A-Za-z0-9]*)Mathlib\\b -> \\1Theory; literal hex-sturm-mathlib -> hex-sturm-theory",
+    "modules": [
+      {
+        "historical_path": "HexSturmMathlib/Domain.lean",
+        "historical_sha256": "fdeb5483777738083a94b2bdd2753fd91f7c009da44ef9566fde8535e4971d53",
+        "current_path": "HexSturmTheory/Domain.lean",
+        "current_sha256": "7fb410a97e1bbc1ed10b666aabc65a44da9b2651ab4844768a5db65c1fa031f9",
+        "normalized_bytes_equal": true,
+        "handwritten_declarations": 36
+      },
+      {
+        "historical_path": "HexSturmMathlib/Soundness.lean",
+        "historical_sha256": "f4f2aa3144ee23bea6beb108e214386a7b7f00c84750ebef7a22469a25ad7ecf",
+        "current_path": "HexSturmTheory/Soundness.lean",
+        "current_sha256": "a2eaf7006da1afd09589bcb645b166cce6008db20640ca4341690c4b600715c3",
+        "normalized_bytes_equal": true,
+        "handwritten_declarations": 17
+      },
+      {
+        "historical_path": "HexSturmMathlib/Reduced.lean",
+        "historical_sha256": "c11f81def09f71d5e4b2bd5213a9b2081033dab3153efb97872d04948fa46851",
+        "current_path": "HexSturmTheory/Reduced.lean",
+        "current_sha256": "1bf6dc8ba08e8df88ec4deed315fbcfd5ecd9341a0facc544b29e0e27b28ff8c",
+        "normalized_bytes_equal": true,
+        "handwritten_declarations": 2
+      },
+      {
+        "historical_path": "HexSturmMathlib/Compare.lean",
+        "historical_sha256": "0ad51f2532f2a9f1cf29e6a6572d723667f14796fb230bfa7432bf31ff47d596",
+        "current_path": "HexSturmTheory/Compare.lean",
+        "current_sha256": "a47a01306ea5c49c76d6c7fe1a64cc90e5a144d8416b87cbc9570bcc59d748c0",
+        "normalized_bytes_equal": true,
+        "handwritten_declarations": 5
+      },
+      {
+        "historical_path": "HexSturmMathlib/Rational.lean",
+        "historical_sha256": "399d17f67a99b8035ddbb2e6b5e5e92a22dfb5ec9ab2c8cefb2710352ecee1e0",
+        "current_path": "HexSturmTheory/Rational.lean",
+        "current_sha256": "2719949bc639d9f85e44692c94fa08e088f146fe76fadf170372b44a46ad8d47",
+        "normalized_bytes_equal": true,
+        "handwritten_declarations": 9
+      },
+      {
+        "historical_path": "HexSturmMathlib/IntCast.lean",
+        "historical_sha256": "cb1440f5617fbe0ba84b4d3d66ca0fe8adfb6228cd6c8a97c021562792d0398a",
+        "current_path": "HexSturmTheory/IntCast.lean",
+        "current_sha256": "7a912fb5c0fa43d3fd382413cfc89c77cbf37c1a5894cb45e278920560a9d282",
+        "normalized_bytes_equal": true,
+        "handwritten_declarations": 7
+      },
+      {
+        "historical_path": "HexSturmMathlib/DenominatorClearing.lean",
+        "historical_sha256": "8c7494586fb0953e844670dd02e1338a7726592f600c86ebabe7f69ea1948929",
+        "current_path": "HexSturmTheory/DenominatorClearing.lean",
+        "current_sha256": "10019bf28e9881f3c9108db4c3d78efdfb331d2dcaa63fc2bd66905562429ed1",
+        "normalized_bytes_equal": true,
+        "handwritten_declarations": 20
+      }
+    ],
+    "declarations": 96
+  }
 }

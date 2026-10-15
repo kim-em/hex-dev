@@ -1,4 +1,6 @@
 {
+  "driver_sha256": "7c2048bbe647c751847815da854647e206dc3d8460a712000eb8f468a5f23e50",
+  "host": "chungus2",
   "archive_files": 1579,
   "all_archive_hashes_valid": true,
   "guard_sha256": "9fb1fa9c1b2c24b2a2bfa91a7f4d4575ad09d191903130545723b2ff0d1ce12f",

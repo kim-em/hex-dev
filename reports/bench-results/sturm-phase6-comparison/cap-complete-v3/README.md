@@ -38,16 +38,39 @@ comment-only differences in the 62-file native import cone and the original
 CLI pin's scope. The [Sturm acceptance](../../../sturm-proof-acceptance.md)
 separately assesses proof/API, conformance and documentation criteria.
 
+The original 120-second high-bit deadline remains an operational concern for
+future complete comparisons. In this capture, the eight timed
+`runRationalHigh` observations at 1,048,576 range from 96.978 to 100.331 seconds,
+all below 120 seconds. Timed samples alone do not prove that an entire
+invocation, including untimed setup, fits the original deadline; the earlier
+cap failure remains evidence. Future complete comparisons must account for
+that failure when choosing a matched operational timeout. This result does
+not change the registrations or establish that every future comparison will
+fail under their defaults.
+
 ## Retention and replay
 
 [manifest.json](manifest.json) binds all 1,579 archived files by compressed and
 original SHA-256, and original byte length. Deterministic gzip preserves every
 capture file plus the finalized reservation. [archive-replay.json](archive-replay.json)
-records verification of every binding and exact reproduction of all 58 report
-JSON values using the original hash-bound native guard. That replay collects
+records the replay driver SHA-256, host, verification of every binding and exact
+reproduction of all 58 report JSON values using the original hash-bound native guard. That replay collects
 no new measurements. The original executable retention is described in
 [../binary-retention.json](../binary-retention.json); binaries are host-local,
 not included in this portable data archive.
+
+The committed [replay driver](replay.py) verifies all archive bindings and,
+when given the original guard, extracts into a temporary directory and
+reproduces all 58 reports. Its exact invocation is:
+
+```sh
+python3 reports/bench-results/sturm-phase6-comparison/cap-complete-v3/replay.py \
+  --guard /home/kim/.local/state/hex/issue-10575-sturm-phase6/compare-exports
+```
+
+Omit `--guard` to verify archive bindings alone on another host. The driver
+refuses a changed archive or guard digest; both refusal controls were checked.
+It does not rebuild or execute a benchmark workload.
 
 To extract and verify the data from the repository root:
 

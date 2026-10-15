@@ -26,7 +26,8 @@ intervals after positive denominator clearing. It also proves whole-`Option`
 congruence across field representations, with finite or infinite endpoints,
 and acceptance of literal certificate translations by denominator clearing
 and integer-to-rational embedding. The shared root-sum theorem supplies replay semantics, `rootCount` and
-singleton/sign bounds. `libraries.yml` records both libraries through Phase 7;
+singleton/sign bounds. Current phase counters are maintained in
+[libraries.yml](../../libraries.yml);
 the [readiness audit](../../reports/real-closure-prerequisites.md) gives the
 dependency checks, retained evidence dispositions and supported limits.
 The [proof acceptance](../../reports/sturm-proof-acceptance.md) records the
