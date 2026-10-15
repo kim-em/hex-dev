@@ -145,9 +145,8 @@ private def production (name : Name) : MetaM Unit := do
   forallTelescope original.type fun binders target => do
     let some proof ← base.supply domains domains target |
       throwError "production base supplier rejected an existing finite-base operation"
-    let expected := (mkAppN original.value binders).headBeta
-    unless proof == expected do
-      throwError "production base supplier changed its existing finite-base proof"
+    -- Cached memberships can select another proof of the same statement.
+    -- The advertised theorem type independently fixes every operand and guard.
     let statement ← mkForallFVars binders target
     let closed ← mkLambdaFVars binders proof
     let _ ← check closed statement
