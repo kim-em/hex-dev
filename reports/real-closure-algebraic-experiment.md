@@ -222,7 +222,7 @@ statements, proof dependencies, and conformance/performance acceptance criteria:
 Specify the first rational-algebraic slice explicitly: its owning library,
 reuse of existing real-algebraic functionality, general sign interface,
 `valid d = true` hypotheses, and interpretation in ℝ. Name the available
-`HexRealRootsMathlib.sturmCount_eq_card_roots` theorem, its positive-degree and
+`HexRealRootsTheory.sturmCount_eq_card_roots` theorem, its positive-degree and
 rational-squarefreeness assumptions, and the required primitive-part/divisor
 bridges. This is theorem and API specification; proving those statements is
 stage C. Likewise, specifying root-preserving transport is distinct from
