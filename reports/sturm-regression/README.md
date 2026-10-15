@@ -180,6 +180,39 @@ guard is refused. Cross-source and cross-repeat hash agreement is always
 required, but is not independent correctness evidence and does not waive the SPEC requirement
 that fixed registrations declare `expectedHash`. Applicable correctness checks
 and source/configuration bindings remain prerequisites for performance
-acceptance. The Sturm collector still selects only its existing parameterized
-timing workloads; fixed collection requires its own applicable protocol and
-bindings.
+acceptance.
+
+## Workload selection
+
+The existing collector accepts three `--profile` values, each bound by the
+decision's `profile` field (omitting both retains the original `sturm` default):
+
+- `sturm` preserves the existing 58 parameterized timing families and native
+  fixed correctness controls. Its retained cap adaptation remains specific to
+  that campaign.
+- `sign-det` selects the complete 25 parameterized primary workloads and six
+  fixed workloads: the three maximal workflows and three shared-root workflows.
+  The three small `MaximalMatrix.reference*` solves are verified as correctness
+  controls, with no timing claim or inclusion in the regression verdict.
+- `sign-det-interacting` selects both fixed interacting-infinitesimal workloads,
+  including preparation, all three construction modes, replay and encoding.
+
+Both sign-determination profiles must pass for the complete computational
+regression requirement. Each profile refuses missing, additional, duplicate or
+unhashed registrations. All selected workloads use the same four trial-major
+adjacent source blocks, alternating AB/BA. Parameterized workloads retain the
+complete custom schedule with one parent trial per block; fixed workloads retain
+their complete declared repeat count per block. No fixed workload receives
+parameterized CLI overrides. Every raw export and failure is retained, and the
+same native guard applies its pinned comparison rule after collection.
+
+Each profile requires its own frozen source manifests, successful native guard
+build, decision, preflight and persistent attempt reservation. Registration
+sources must preserve callback code and timing settings: comments and formatting
+may differ, and fixed registrations may add literal expected-hash guards. The
+actual export checks permit only adding such a guard, require every call to
+match it and require the two sources' result hashes to agree. Changes to string
+literals and callback records are preserved by the source comparison. This
+source check does not waive any remaining source/build or correctness bindings.
+The three profile selections and their synthetic tests supply no computational
+performance pass; collection starts only with the applicable complete bindings.
