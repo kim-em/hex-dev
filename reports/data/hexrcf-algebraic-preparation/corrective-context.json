@@ -181,5 +181,11 @@
     "The first three records retain their distinct historical source/document bindings.",
     "Build/render observations have distinct incremental scopes and are not performance comparisons.",
     "No general frozen quotation, literal authentication or strict arbitrary-missing-record compiled replay is established."
-  ]
+  ],
+  "document_commit": "daaf14352197270f5a1199d9cc67e6cec5ae3449",
+  "documents_sha256": {
+    "reports/hexrcf-algebraic-preparation.md": "2eaa1838f70231296998dae7f78a298304640e668f3efd4055214f184a889a7f",
+    "reports/data/hexrcf-algebraic-preparation/collect-corrective.py": "8cad9800ebda52a3fb9b8e08a67fbbfcad3cd2cb2d0fb6682fa52d789502a12f"
+  },
+  "artifact_commit": "daaf14352197270f5a1199d9cc67e6cec5ae3449"
 }
