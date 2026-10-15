@@ -1,10 +1,12 @@
 # Complete replay with supplied operations
 
-The [context record](data/hexrcf-cell-operations/context.json) binds the selected
-source trees, retained logs and artifacts. Eight corrected desktop/narrow
+The [baseline context record](data/hexrcf-cell-operations/context.json) binds
+the selected source trees, retained logs and artifacts. Eight corrected desktop/narrow
 captures were opened and inspected; the changed targets have zero local
 horizontal overflow. The live memory-limit properties and bounded build
 wrappers are retained with the validation evidence.
+The [control validation record](data/hexrcf-cell-operations/controls-context.json)
+binds the expanded refusal and actual-record dependency checks separately.
 
 [`CellOperations`](../adapters/HexRCF/RealCoefficients/CellOperations.lean)
 uses the owners' existing `Replay.Operations` dictionary to check a complete
@@ -57,10 +59,15 @@ derives `∃ x : ℝ, x² = √2` and audits the actual checked bodies, rather t
 only cached axiom metadata. Required dependencies include the supplied-operation
 acceptance law, canonical soundness and selected-root model. The audits forbid
 the older fixture acceptance/source theorems and producers in the proof.
-Wrong-conjugate and omitted-original-zero-divisor controls must fail without
-leaking metavariables or declarations; interrupts and resource exhaustion remain
-terminal. A final declaration reference also requires the fresh consumer's
-audit to finish. These are default conformance roots, without a new CI job.
+Separate controls reject the negative-conjugate formula, a √3 source with the
+supplied √2 valuation identity, and both caller-identity and program-side guard
+count mismatches. Each control asserts its expected diagnostic, checks
+metavariable/declaration rollback and propagates every unrelated exception,
+including untagged kernel resource failures. Both body audits require
+`Element.replayMul_eq` and share a forbidden list covering fixture acceptance,
+source proofs, the fixture operation dictionary and producers. A fresh consumer
+requires completion of every source refusal, and a declaration reference requires
+its audit to finish. These are default conformance roots, without a new CI job.
 
 `CellQuote.finishOperations` first checks the exact supplied acceptance
 equation in the ordinary kernel. An expected-proposition annotation retains
@@ -75,11 +82,9 @@ checks the rational base, the actual selected-root model's coefficient identity
 with √2, mismatched base models and depth refusal. Source preparation also
 checks a nonzero coefficient with an original zero divisor nested under its
 square-root subject. Both proposals' zero statuses are checked before native
-production must return exactly `.divisor`. The initial flat/grouped controls
-incorrectly expected one coefficient: the existing source translator abstracts
-named subjects while leaving surrounding arithmetic in the shared schema.
-The final control retains one named coefficient and one original divisor.
-The diagnostic failures remain retained and are not final-source validations.
+production must return exactly `.divisor`. The retained mixed-role control has
+one named coefficient and one original divisor. Source versions and narrower
+diagnostic attempts are identified in the context record.
 
 A separate build-only experiment composes the actual merged
 `NativeChain.ofContext`, `NativeChain.models`, `NativeModels.assembly` and
@@ -92,46 +97,40 @@ reached-record collection and full packet acceptance. It does not authenticate
 arbitrary quoted proposals or construct general frozen histories.
 
 The standalone packet selection passes 11,201 jobs (5m52.876s, 6 GiB peak,
-zero swap). Its final trace records 298.890s in reached-record collection and
-37.866s between collection completion and final acceptance. Earlier appended
-lines belong to a failed type-inference attempt; the successful segment is
-identified separately. One stack observation sees kernel theorem checking;
+zero swap). Its successful trace segment records 298.890s in reached-record
+collection and 37.866s between collection completion and final acceptance.
+The context record identifies the segment. One stack observation sees kernel theorem checking;
 it is not a cumulative cost profile. This is a targeted assembly diagnostic,
 not a numerical benchmark, scaling law or speedup comparison.
 
-The first successful original-source assembly experiment takes 6m31.165s
-at 5.5 GiB peak, followed by a fresh consuming module in 13.743s at 1.3 GiB
-with its source dependency cached. The same experiment using the public
-quotation API takes 6m57.341s at 6.3 GiB, including its fresh consumer. These
-observations use different source versions and do not establish a comparison.
-The first portable repository regression passes 11,137 jobs in 10m28.442s
-at 8.8 GiB, with both source and consumer completion markers. Its subsequent
-refusal-test corrections propagate interrupts and observe declaration rollback
-without a test-side state-restoring catch. Intermediate failed or stopped
-experiments remain recorded with their narrower scopes.
+These build-only observations use different source versions and cache states.
+The context record identifies their exact scopes and retains the completed,
+failed and interrupted runs. They are not matched performance comparisons.
 
-An earlier manual/optional/conformance selection passes 14,304 jobs. This is
-a cached completion after the first selection built the manual and other
-regressions but failed the initial mixed-zero test. The final selection takes
-6.681s at 618.1 MiB peak with zero swap; those incremental values are not a
-before/after comparison. After the public quotation API was added, its broader
-selection passes 14,304 jobs in 7m14.992s at 6.4 GiB peak. The corrected
-assembled-source selection passes 14,337 jobs in 6m51.985s at 6.1 GiB,
-including both completion markers. Neither is a controlled comparison.
-At source `d00786311dc609adc8b842102f09b4b27ecb726d`, the selection
-passes 14,337 jobs in 3m6.947s at 5.9 GiB with zero swap. It reuses the
-assembled proof modules and rebuilds the strengthened real-model tests and
-updated manual. These assembly costs remain a limitation of this retained-field
-route; they do not establish practical general tactic performance.
-The final source `73d0818c4125caf101f45b37e702ee262b14364a` shortens the
-manual example's displayed namespace and splits its long type line after a
-narrow capture found clipping. Its manual rebuild passes in 2m55.436s at
-3.7 GiB; the subsequent cached 14,337-job validation takes 5.246s at
-334.9 MiB, with both assembled-proof completion markers. The failed capture
-and its exact manual source are retained separately from the corrected captures.
-The failed broader run and focused corrections remain retained. All own
-Lean/Lake/render/browser work is serial under an aggregate
-32 GiB limit with no swap and two Lean threads.
+| Retained log | Validation scope | Wall time | Peak memory |
+| --- | --- | --- | --- |
+| `native-source-assembly-4.log` | Original source, inline quotation and body audit | 6m31.165s | 5.5 GiB |
+| `native-source-ordinary-1.log` | Fresh consumer with cached source | 13.743s | 1.3 GiB |
+| `native-source-assembly-5.log` | Public quotation API and fresh consumer | 6m57.341s | 6.3 GiB |
+| `cell-assembled-1.log` | 11,137 jobs, baseline portable controls | 10m28.442s | 8.8 GiB |
+| `cell-assembled-2.log` | 14,337 jobs, corrected portable controls | 6m51.985s | 6.1 GiB |
+| `cell-assembled-3.log` | Model/manual validation, assembled modules cached | 3m6.947s | 5.9 GiB |
+| `cell-operations-model-manual-3.log` | Narrow-layout manual rebuild | 2m55.436s | 3.7 GiB |
+| `cell-assembled-final.log` | 14,337 jobs, cached validation at `73d0818c41` | 5.246s | 334.9 MiB |
+| `cell-operations-review-assembly-1.log` | Expanded source refusals and actual-record audits | 6m52.875s | 10.5 GiB |
+| `cell-operations-review-integration-1.log` | 14,337 jobs, cached assembled proof modules | 14.740s | 1.3 GiB |
+
+The source/consumer selections have both completion markers. The assembled
+costs remain a limitation of this retained-field route and do not establish
+practical general tactic performance. The typed acceptance theorem is shared
+across refusal controls; the positive source check separately exercises the raw
+conversion proof through the public quotation API.
+
+The manual example uses a short `Operations` name and a split `RadicalCert`
+type to fit narrow pages. The clipped diagnostic capture and its exact source
+are retained separately from the eight inspected corrected views. All own
+Lean/Lake/render/browser work is serial under an aggregate 32 GiB limit with
+no swap and two Lean threads.
 
 General frozen source/provider/predecessor histories, authenticated quoted
 proposals, all-live transport, strict compiled rejection of arbitrary omitted
