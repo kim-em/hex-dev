@@ -6,7 +6,6 @@ Authors: Kim Morrison
 module
 
 public import HexSignDet.Conformance
-public import HexSignDet.Codec.GraphLaws
 public meta import HexSignDet.Dag
 public meta import HexSignDet.DagSigns
 public meta import HexSignDet.DagEncode
