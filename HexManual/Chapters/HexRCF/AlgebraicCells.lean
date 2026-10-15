@@ -13,6 +13,7 @@ import HexRCF.RealCoefficients.AlgebraicCells
 import HexRCF.RealCoefficients.AlgebraicPreparation
 import HexRCF.RealCoefficients.CellOperations
 import HexRCF.RealCoefficients.RealModel
+import HexRCF.RealCoefficients.CellQuote
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -563,6 +564,13 @@ root's actual descriptor, frame and encoding proof. It checks every prefix's
 context, rejects a mismatched base model or exhausted depth bound, and restores
 elaborator state on failure. This interpretation still needs checked identities
 connecting its coefficient and divisor values to the original source statement.
+
+`CellQuote.finishOperations` takes the supplied-operation acceptance expression
+and an ordinary proof that its result is `some ()`. It kernel-checks that exact
+equation, transports it to the canonical checker, and performs the original
+source, valuation and divisor checks of `CellQuote.finishPacket`. A reduced
+conversion proof can retain its original expected equation through this API.
+Failure restores both metavariables and auxiliary proof declarations.
 
 Meta clients can prepare these native inputs from the original Lean statement
 with `AlgebraicPreparation.prepare`. It reuses the shared source translator and

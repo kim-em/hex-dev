@@ -14,9 +14,17 @@ open Lean Meta Elab Command Term
 set_option maxRecDepth 32768
 set_option maxHeartbeats 12000000
 
-/- Quotation transports the actual supplied-operation acceptance equation to
-its canonical checker. It reuses checked fixture/codec laws and does not claim
-fresh literal-reader reduction or automatic record discovery. -/
+/- The public quotation entrypoint checks the supplied acceptance equation
+and transports it to the canonical checker. This reuses checked fixture/codec
+laws, rather than fresh literal reduction or automatic record discovery. -/
+private meta def rejected (action : MetaM Expr) : MetaM Bool :=
+  fun metaContext metaState coreContext coreState => do
+    try
+      let _ ← action metaContext metaState coreContext coreState
+      return false
+    catch error =>
+      if error.isInterrupt || error.isMaxHeartbeat || error.isMaxRecDepth then throw error
+      return true
 elab "#operation_source_quote" : command => liftTermElabM do
   let target ← elabType (← `(∃ x : ℝ, x ^ 2 - Real.sqrt 2 ≥ 0 ∧ x ^ 2 - Real.sqrt 2 ≤ 0 ∧ (0 : ℝ) = 0))
   synthesizeSyntheticMVarsNoPostponing
@@ -29,18 +37,34 @@ elab "#operation_source_quote" : command => liftTermElabM do
     (← mkEq valuation source.valuation)
   synthesizeSyntheticMVarsNoPostponing
   let identity ← instantiateMVars identity
-  let checker ← elabTerm (← `(CompleteReplay.check parent.codec values formula [] cert .existsReal
-    CompleteQuote.rootGraph CompleteQuote.cells)) none
-  let equality ← elabTerm (← `(CellOperations.check_eq Operations.operations parent.codec values formula [] cert
+  let program ← elabTerm (← `(CellOperations.accept? Operations.operations parent.codec values formula [] cert
     .existsReal CompleteQuote.rootGraph CompleteQuote.cells)) none
   synthesizeSyntheticMVarsNoPostponing
-  let checker ← instantiateMVars checker
-  let equality ← instantiateMVars equality
-  let accepted ← mkAppM ``Eq.trans #[← mkAppM ``Eq.symm #[equality], mkConst ``Operations.checked]
-  let proof ← CellQuote.finishPacket target checker accepted (mkConst ``original) identity
+  let program ← instantiateMVars program
+  let proof ← CellQuote.finishOperations target program (Lean.mkConst ``Operations.accepted)
+    (Lean.mkConst ``original) identity
   let name := `Hex.RCF.RealCoefficients.CellReplayTests.OperationsKernel.source
   let proof ← Hex.RCF.checkProof name target proof
   addDecl (.thmDecl {name, levelParams := [], type := target, value := proof})
+  let falseProgram ← elabTerm (← `(CellOperations.accept? Operations.operations parent.codec values formula [] cert
+    .forallReal CompleteQuote.rootGraph CompleteQuote.cells)) none
+  let wrongGoal ← elabType (← `(∃ x : ℝ, x ^ 2 - Real.sqrt 3 ≥ 0 ∧ x ^ 2 - Real.sqrt 3 ≤ 0 ∧ (0 : ℝ) = 0))
+  synthesizeSyntheticMVarsNoPostponing
+  let falseProgram ← instantiateMVars falseProgram
+  let wrongGoal ← instantiateMVars wrongGoal
+  let trivial ← mkAppM ``Option.some #[Lean.mkConst ``Unit.unit]
+  for (goal,program,candidate) in [
+      (target,falseProgram,Lean.mkConst ``Operations.accepted),
+      (target,trivial,← mkEqRefl trivial),
+      (target,program,Lean.mkConst ``True.intro),
+      (wrongGoal,program,Lean.mkConst ``Operations.accepted)] do
+    let before := (← getMCtx).decls.toList.length
+    let declarations := (← getEnv).checked.get.constants.map₂.toList.length
+    unless ← rejected (CellQuote.finishOperations goal program candidate (Lean.mkConst ``original) identity) do
+      throwError "supplied quotation accepted a false/malformed predicate, wrong proof or changed source"
+    unless (← getMCtx).decls.toList.length == before &&
+        (← getEnv).checked.get.constants.map₂.toList.length == declarations do
+      throwError "failed supplied quotation leaked metavariables or proof declarations"
 #operation_source_quote
 
 run_meta do
@@ -50,11 +74,11 @@ run_meta do
   unless axioms.size == 3 && axioms.all (#[``propext, ``Classical.choice, ``Quot.sound].contains ·) do
     throwError "unexpected original-goal quotation axioms"
   let seen ← Hex.RCF.ProofEvidence.projectDependencies #[``source]
-  for required in #[``CellOperations.check_eq, ``Operations.checked, ``CompleteReplay.check_sound,
+  for required in #[``CellOperations.check_eq, ``Operations.accepted, ``Operations.checked, ``CompleteReplay.check_sound,
       ``RowOperations.retarget_read, ``CompleteReplay.check_covered] do
     unless seen.contains required do throwError "original-goal proof omitted actual supplied-operation law: {required}"
   for forbidden in #[``CompleteQuote.source, ``Check.source, ``Operations.source,
       ``CellBuild.build, ``ScalarPacket.build, ``ScalarPacket.buildLiteral] do
     if seen.contains forbidden then throwError "original-goal proof reused a source witness or producer: {forbidden}"
-  logInfo "fresh original-goal quotation checked; supplied-operation equality and standard three axioms retained"
+  logInfo "fresh original-goal quotation checked; supplied-operation equality, rollback/refusals and standard three axioms retained"
 end Hex.RCF.RealCoefficients.CellReplayTests.OperationsKernel

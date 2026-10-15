@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 public import HexRCF.RealCoefficients.CellReplay
 public import HexRCF.RealCoefficients.CompleteReplay
+public import HexRCF.RealCoefficients.CellOperations
 public meta import HexRCF.RealCoefficients.Quote
 public meta section
 namespace Hex.RCF.RealCoefficients.CellQuote
@@ -110,5 +111,49 @@ source formula, fixed valuation, original divisor and state-restoration checks. 
 def finishPacket (target checker accepted model valuationIdentity : Expr)
     (guardIdentities : Array Expr := #[]) : MetaM Expr :=
   finishWith true target checker accepted model valuationIdentity guardIdentities
+
+/-- Quote an owner's supplied-operation acceptance proof at the original goal.
+The exact `accept?` equation is kernel checked before transport to the canonical
+checker. A reduced conversion proof receives its original expected type without
+asking the elaborator to repeat the reader reduction. All original source,
+valuation and divisor checks remain those of `finishPacket`. -/
+def finishOperations (target program accepted model valuationIdentity : Expr)
+    (guardIdentities : Array Expr := #[]) : MetaM Expr := do
+  let saved ← saveState
+  let auxName := mkPrivateName (← getEnv) (← mkFreshUserName `CellQuote)
+  let (result,_) ← tryFinally' (withDeclNameForAuxNaming auxName <| withNewMCtxDepth <|
+      withOptions (fun options => debug.skipKernelTC.set (Elab.async.set options false) false) do
+    let program ← Hex.RCF.checkExpr `CellQuote.program program
+    let function := program.getAppFn
+    unless function.isConstOf ``CellOperations.accept? do
+      throwError "rcf: expected the supplied-operation complete checker"
+    let arguments := program.getAppArgs
+    let information ← getFunInfoNArgs function arguments.size
+    let mut count := 0
+    let mut operation : Option Nat := none
+    for i in [:min arguments.size information.paramInfo.size] do
+      if information.paramInfo[i]!.binderInfo.isExplicit then
+        count := count + 1
+        if operation.isNone then operation := some i
+    unless count == 9 && arguments.size == information.paramInfo.size do
+      throwError "rcf: incorrect supplied-operation checker arity"
+    let some operationIndex := operation
+      | throwError "rcf: supplied-operation checker lost its dictionary"
+    let statement ← mkEq program (← mkAppM ``Option.some #[mkConst ``Unit.unit])
+    let accepted ← Hex.RCF.checkProof `CellQuote.operationAcceptance statement
+      (mkExpectedPropHint accepted statement)
+    -- These declarations have the same parameters; the canonical checker
+    -- omits only the first explicit argument, the operation dictionary.
+    let equivalent := mkAppN (mkConst ``CellOperations.accept?_iff function.constLevels!) arguments
+    let accepted ← mkAppM ``Iff.mp #[equivalent,accepted]
+    let canonical := arguments.extract 0 operationIndex ++ arguments.extract (operationIndex+1) arguments.size
+    let checker := mkAppN (mkConst ``CompleteReplay.check function.constLevels!) canonical
+    finishPacket target checker accepted model valuationIdentity guardIdentities) fun outcome => do
+      match outcome with
+      | some _ => modify fun state => {state with
+          mctx := saved.meta.mctx, postponed := saved.meta.postponed,
+          zetaDeltaFVarIds := saved.meta.zetaDeltaFVarIds}
+      | none => saved.restore
+  return result
 
 end Hex.RCF.RealCoefficients.CellQuote

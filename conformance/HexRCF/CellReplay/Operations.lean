@@ -51,6 +51,11 @@ theorem false_checked : CellOperations.check operations parent.codec values form
   (CellOperations.check_eq operations parent.codec values formula [] cert .forallReal
     CompleteQuote.rootGraph CompleteQuote.cells).trans CompleteQuote.false_checked
 
+theorem accepted : CellOperations.accept? operations parent.codec values formula [] cert
+    .existsReal CompleteQuote.rootGraph CompleteQuote.cells = some () := by
+  unfold CellOperations.accept?
+  rw [checked]
+
 theorem false_refused : CellOperations.accept? operations parent.codec values formula [] cert
     .forallReal CompleteQuote.rootGraph CompleteQuote.cells = none := by
   unfold CellOperations.accept?
@@ -107,7 +112,7 @@ run_meta do
     ``CellOperations.sector_eq, ``CellOperations.formulaRow_eq, ``CellOperations.formulaSector_eq,
     ``CellOperations.readCells_eq, ``CellOperations.fold_eq, ``CellOperations.read_eq,
     ``CellOperations.check_eq, ``CellOperations.accept?_iff, ``CellOperations.check_domains,
-    ``CellOperations.check_sound, ``checked, ``false_checked, ``false_refused,
+    ``CellOperations.check_sound, ``checked, ``accepted, ``false_checked, ``false_refused,
     ``guarded_checked, ``domains, ``zero_first, ``source]
   for name in names do
     let .thmInfo declaration ← getConstInfo name | throwError "expected theorem: {name}"
