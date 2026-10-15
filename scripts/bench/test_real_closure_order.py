@@ -7,7 +7,14 @@ from pathlib import Path
 import tarfile
 import unittest
 from scripts.bench.fixed_conversion_paired import validate_tower_row, check_tower_cohort
-from scripts.bench.analyze_real_closure_order import analyze
+from scripts.bench.analyze_real_closure_order import analyze, CHANGED
+from scripts.bench.freeze_real_closure_order import FILES
+
+
+class ProtocolTests(unittest.TestCase):
+    def test_frozen_files_retain_registered_historical_paths(self):
+        self.assertTrue(set(CHANGED).issubset(FILES))
+        self.assertTrue(any("HexRealClosureMathlib/" in name for name in CHANGED))
 
 
 class BatchTests(unittest.TestCase):

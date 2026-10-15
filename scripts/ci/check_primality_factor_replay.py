@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 from functools import cache
 import json
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -19,27 +20,32 @@ def digest(text):
     return hashlib.sha256(text.encode()).hexdigest()
 
 
-def retained_path(name, root=ROOT):
-    """Locate the recorded proof source across the companion-directory rename."""
-    path = root / name
-    old = "bench/HexPrimalityMathlib/"
-    if not path.exists() and name.startswith(old):
-        return root / name.replace(old, "bench/HexPrimalityTheory/", 1)
-    return path
+HISTORICAL_PREFIX = "bench/HexPrimalityMathlib/"
+CURRENT_PREFIX = "bench/HexPrimalityTheory/"
 
 
-def retained_source(name, root=ROOT):
-    """Undo only the renamed Prime import before checking the original hash.
+def retained_path(name, root=None):
+    """Resolve only the known historical directory to its current source."""
+    root = ROOT if root is None else root
+    if name.startswith(HISTORICAL_PREFIX):
+        return root / (CURRENT_PREFIX + name.removeprefix(HISTORICAL_PREFIX))
+    return root / name
 
-    Historical manifests and certificate bytes stay fixed. Every other source
-    byte must still match the recorded digest, including theorem bodies.
+
+def retained_source(name, root=None):
+    """Authenticate current proof text against its pre-rename retained hash.
+
+    Only the renamed directory and import prefix are translated. All theorem
+    bodies, certificates and other bytes must still match the original hash.
+    Retained measurement manifests and their historical identities stay intact.
     """
-    path = retained_path(name, root)
-    source = path.read_text()
-    if path != root / name:
-        source = source.replace("public import HexPrimalityTheory.Prime\n",
-                                "public import HexPrimalityMathlib.Prime\n")
-    return source
+    text = retained_path(name, root).read_text()
+    if name.startswith(HISTORICAL_PREFIX):
+        if re.search(r"^(?:public )?import HexPrimalityMathlib\.", text, re.M):
+            raise ValueError("renamed proof still imports the removed module")
+        return re.sub(r"^(public )?import HexPrimalityTheory\.",
+                      r"\1import HexPrimalityMathlib.", text, flags=re.M)
+    return text
 
 
 @cache
@@ -107,7 +113,8 @@ def main():
         for source, sha in data["hex_sources"].items():
             assert digest(retained_source(source)) == sha
         directory = ROOT / "bench/HexPrimalityTheory/ProofProbe/FactorCorpus"
-        assert {retained_path(name) for name in data["hex_sources"]} == set(directory.glob("*.lean"))
+        assert set(data["hex_sources"]) == {HISTORICAL_PREFIX + str(p.relative_to(ROOT)).removeprefix(CURRENT_PREFIX)
+                                             for p in directory.glob("*.lean")}
         for system, suffix in [("native", ".hex.log"), ("primecert", ".primecert.log")]:
             result = data[f"{system}_build"]
             if data[system]:

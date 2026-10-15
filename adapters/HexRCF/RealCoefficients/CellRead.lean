@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 public import HexRCF.RealCoefficients.CellReplay
 public import HexRCF.RealCoefficients.SectorReplay
+public import HexRCF.RealCoefficients.RowReplay
 public section
 namespace Hex.RCF.RealCoefficients.CellRead
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet

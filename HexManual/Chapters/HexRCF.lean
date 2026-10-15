@@ -10,6 +10,7 @@ import HexManual.Chapters.HexRCF.CallerBounds
 import HexManual.Chapters.HexRCF.NativeSamples
 import HexManual.Chapters.HexRCF.NativeSources
 import HexManual.Chapters.HexRCF.CellReplay
+import HexManual.Chapters.HexRCF.AlgebraicCells
 
 import HexRCF
 import HexRCF.RealCoefficients
@@ -2759,6 +2760,8 @@ inputs that connect them to general frozen source-goal replay remains incomplete
 {include 1 HexManual.Chapters.HexRCF.NativeSources}
 
 {include 1 HexManual.Chapters.HexRCF.CellReplay}
+
+{include 1 HexManual.Chapters.HexRCF.AlgebraicCells}
 
 # Ordinary witnesses from one infinitesimal replay
 %%%

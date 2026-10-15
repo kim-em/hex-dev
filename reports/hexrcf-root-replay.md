@@ -67,17 +67,23 @@ Default adapter, optional umbrella, existing conformance targets and the
 include this surface. The published rational umbrella remains independent of
 the family. There are no AGENTS.md/PLAN.md or workflow/job edits.
 
-Complete interpreted-root coverage, value Nodup and mathematical ordering
-still require the SignDet owner's semantic exports for arbitrary supplied
-replay. `buildRoots_coverage` and `buildRoots_ordered` presently assume native
-production; that equation is not a frozen certificate premise. The precise
-[coverage request](https://github.com/kim-em/hex-dev/issues/10331#issuecomment-6126809036)
-and [ordering follow-up](https://github.com/kim-em/hex-dev/issues/10331#issuecomment-6129572591)
-remain with the coordinator and owner. No generic owner proof is copied here.
-General recursive history restoration, complete frozen cell replay, all-live
-transport, automatic source/common-field certification and accepted algebraic
-completeness remain part of #10358. This is neither a new handler nor closure
-of that issue. #10633/#10634's delivered fixed-field interfaces are preserved.
+`RootReplay.Result.coverage` now proves exact interpreted-root coverage and
+value Nodup for arbitrary accepted full derivative replay in a lawful
+real-closed model. `Result.ordered` proves strict interpreted ordering. These
+reuse the supplied-replay exports from [owner PR #10903](https://github.com/kim-em/hex-dev/pull/10903),
+integrated by [PR #10907](https://github.com/kim-em/hex-dev/pull/10907), without
+a native producer equation or a copied owner proof.
+[Complete supplied cells](hexrcf-cell-replay.md) compose these laws with
+checked radical identities, ordinary sample membership and whole same-point
+rows. Whole-line `.ok true` establishes the quantified formula in a lawful
+ordinary-real parent model; false remains diagnostic. The
+[fixed-algebraic matrix](hexrcf-algebraic-cells.md) exercises both roots and all
+three sectors over ℚ(√2). General recursive source/provider history and
+reached-data assembly, all-live transport, automatic source/common-field
+certification, accepted algebraic completeness, full native/infinitesimal
+coverage and strict missing-predecessor compiled replay remain part of
+#10358. This is neither a new handler nor closure of that issue.
+#10633/#10634's delivered fixed-field interfaces are preserved.
 
 The [pre-query validation snapshot](data/hexrcf-root-replay/context.json),
 bound to `25d4aa6fae`, separates

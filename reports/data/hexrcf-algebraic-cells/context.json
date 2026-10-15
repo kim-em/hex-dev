@@ -1,0 +1,264 @@
+{
+  "schema": "hex-rcf-algebraic-cell-validation-v1",
+  "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+  "selected_source_hashes": {
+    "HexManual/Chapters/HexRCF.lean": "9af76398a303a3eff13c5cb33200fdcbdbc4b3f44832ae2fd62cd1d60b3884bb",
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "693a317982543353d2fe0c0d02a90adcad455ca16637ce1d610848081ea2209d",
+    "HexManual/Chapters/HexRCF/CellReplay.lean": "382279468cc04d68313b5ddba46df2d3f4faac4d3c7966d8c99051fb1151b7bd",
+    "adapters/HexRCF/RealCoefficients.lean": "d7d29aaf42df2c79a6eb8def79eed79c95a19cb1518669722fc7081be74b1574",
+    "adapters/HexRCF/RealCoefficients/CellPacketConvert.lean": "a3036274f685ff28e3f1804170d3685d6d3eddb45e497cc37065bb844b2e2c84",
+    "adapters/HexRCF/RealCoefficients/CellPacketRead.lean": "4b52740fe4072d39fceb0cc1b9d92e0ad30c75ed5af2c5e8ee4366102d98efec",
+    "adapters/HexRCF/RealCoefficients/CellPacketTransport.lean": "7ab917e1103917806f51a1a6426c71433f14cf173361567f5574d07778895305",
+    "adapters/HexRCF/RealCoefficients/CellPackets.lean": "df0ca6fb76a6f56d65c9c729d6d91ac47c16df42f4b0409e3eaf960c14432b24",
+    "adapters/HexRCF/RealCoefficients/CellRead.lean": "d395253326c1af40e47a254386cb8008d2212f482e62a72b208f9d445af0e272",
+    "adapters/HexRCF/RealCoefficients/RowOperations.lean": "49d8428c3d1dce6b2b4c57bea9de03ed0fd6fe809c0991078ac9f3b9756515fc",
+    "adapters/HexRCF/RealCoefficients/RowReplay.lean": "5ebf3f264fbcf64b0a5099b96b5de2b5dd702e52359984f36d53e4fb48d5f20c",
+    "adapters/HexRCF/RealCoefficients/SectorReplay.lean": "695619cbb730df5408b73e00f41e0e8da6be9c504cc5099265c3ea24b12345e5",
+    "conformance-fixtures/HexRCF/cell-algebraic-mutations.json": "fa033e4c28106990aac2c090b1347f456073831c079787334888cdd9db0a1085",
+    "conformance-fixtures/HexRCF/cell-algebraic-scalars.json": "b63c2223e4f59792355385f09b358f8d15427828d7c1882012d758a3a50b28bf",
+    "conformance-fixtures/HexRCF/cell-algebraic.json": "a2dc4beb9a19e2349ef3b9540145876db879211a73664b69ec9c467fdb2754b7",
+    "conformance/HexRCF/CellReplay/Algebraic/Canonical.lean": "ee3a97402bde9673c4d48cdfeae0a00d7eddeebe810abb8b766d03d1328721a9",
+    "conformance/HexRCF/CellReplay/Algebraic/Check.lean": "0bed50d5122efb92833638ea155b619f0d19954807ded7123d1595f7b1f4e62c",
+    "conformance/HexRCF/CellReplay/Algebraic/Convert.lean": "23ce660e046752e4750ea45402585b651261f9dc758bc05e2a65230f3f1121b6",
+    "conformance/HexRCF/CellReplay/Algebraic/Emit.lean": "55c2c00438d699cbc279e33e7e8cf2e479d9739bbde5cb4008c46d97b218c32f",
+    "conformance/HexRCF/CellReplay/Algebraic/Guards.lean": "533e07da56635f6a74cbaac23f3f6f7124d866a41002a537a48e993d682471a9",
+    "conformance/HexRCF/CellReplay/Algebraic/Inputs.lean": "250f7092bf30ca4b0f214ebf17d5b163c27428cb924005e910dec30b4bd85117",
+    "conformance/HexRCF/CellReplay/Algebraic/LiteralData0.lean": "09ce4eeb6d68e68e8a59f6bbebcf83d5a708d84639921e1e83fd3d2fd2a2251c",
+    "conformance/HexRCF/CellReplay/Algebraic/LiteralData1.lean": "26134651bb1f9664862c9fac294e08dd8e1e09a381319a630286a76469bcd0d5",
+    "conformance/HexRCF/CellReplay/Algebraic/Literals.lean": "df237644ea8158a58161a8d9a0cef1a398cfdedca6d06995c4a96b623a340980",
+    "conformance/HexRCF/CellReplay/Algebraic/Meaning.lean": "b50f76b0b3eff22f8fcbce3e6ec51bd5c85ac629ac4fea859af9961469f6e55e",
+    "conformance/HexRCF/CellReplay/Algebraic/MutationData0.lean": "61336c73c6dcc3f5c5a498ef51eb584196e6c30af5edac0b7c185669f2a5b108",
+    "conformance/HexRCF/CellReplay/Algebraic/Mutations.lean": "99c3d35466012e412abc2cd2bd92a88b3c1a05e0236ff21fdbd6e20a6a430fd0",
+    "conformance/HexRCF/CellReplay/Algebraic/Quote.lean": "a8b1b81eb5813c35c38b003acafc705fe74a8351232a8531ae7b66eeb0651aef",
+    "conformance/HexRCF/CellReplay/Algebraic/Quoted.lean": "5351ed3d53228ba950fca980990623c99a4159d717bafaf54cae642374847545",
+    "conformance/HexRCF/CellReplay/Algebraic/Radical.lean": "a89e6ca8937df182cf44a12e6ebed6c3589c953407dbaa34777367ccd72e89ae",
+    "conformance/HexRCF/CellReplay/Algebraic/Read.lean": "0184c3da8d136a185aba7edb47f28ecccf6297fe2a1447c0553cf73f397924a4",
+    "conformance/HexRCF/CellReplay/Algebraic/Records.lean": "9c670e9600f5af561810d92902a6c47a7a6a5e3cfa55faf78b9b76459eff0795",
+    "conformance/HexRCF/CellReplay/Algebraic/Refusals.lean": "41910113a92efc7fdf55aed1cd07f754249c500a4318c416d04f46fba80e7c75",
+    "conformance/HexRCF/CellReplay/Algebraic/ScalarData0.lean": "070c3910d0452ba5b756a50f7043a59fae2c55aa7a8cd515ea21971a9f0e3ff2",
+    "conformance/HexRCF/CellReplay/Algebraic/ScalarData1.lean": "d0faf9a212fdfe1bbbaf82ef2b7d1883b0a67c3016de7fa95adbd2d9c3b4f37c",
+    "conformance/HexRCF/CellReplay/Algebraic/Scalars.lean": "0df74426b3749af2948e2280d5f62fb551b3884498d81d63cffaf70e33713a42",
+    "conformance/HexRCF/CellReplay/Algebraic/Schema.lean": "f5d831117ff3d3d7e0bf5ca44c3a842328c61d954cd928885a0dfe9abdd34f7d",
+    "conformance/HexRCF/CellReplay/Algebraic/Sections.lean": "aba104d43d044b7b9ed7814f7605bf6517305b0c12fc8969815779426a5e4c14",
+    "lakefile.lean": "bd9233e07bc12d0d9bec4e570ea341068a1868ee6f95c7ac61efd97e11699e51",
+    "reports/hexrcf-nested-root-replay.md": "ef4ff02b2153fdae8c739a6cb43f87044cf19d53da8a990067f9c95a704e10a6",
+    "reports/hexrcf-root-replay.md": "e9a073ddf116405ab00ee0e4cddc61cffa1236191b2231052dccde53658dfa80",
+    "scripts/rcf/selected_literals.py": "36a243d80f72fd886c94aad9b6ee1feb34e047fccab3c690aea35164ed99d573"
+  },
+  "validation_records": [
+    {
+      "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+      "file": "cell-algebraic-theory-full-build-2.log.gz",
+      "sha256": "cb3592aa68ee13918c64bcc6c9b15088aa51fb79f5c54c958f8d7a213a45ac73",
+      "decoded_sha256": "692471049bfa07ca0719627ca7709f600bf1be366b29fa86fbf71f1cb0e59382",
+      "command": "bounded Lake build HexRCFRealCoefficients HexConformance HexManual",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+      "file": "cell-algebraic-theory-render-1.log.gz",
+      "sha256": "f8ea22c8c325ca59d6b9e30d7ca275f8497470523bd63efaadae67f1cc4ed60c",
+      "decoded_sha256": "75427a4fa4df929b12f1bfb64f35677357ac4a940961d5f03dc24aab4b210867",
+      "command": "bounded Lake build FullRender (external scratch package)",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+      "file": "cell-algebraic-theory-emitter-2.log.gz",
+      "sha256": "0071e8fe8972e1d5752dd57fb8e8ae6f29c886ab6f9a728221d9d5a7b57127eb",
+      "decoded_sha256": "6a7542d3fe7329e9db901826ffbbb22dfa054412f84dfe563218aba8844be540",
+      "command": "HEX_RCF_ALGEBRAIC_CELL_OUTPUT=<scratch> bounded Lake build +HexRCF.CellReplay.Algebraic.Emit",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+      "file": "cell-algebraic-theory-browser-1.log.gz",
+      "sha256": "72164181667d0d4de7ae74bcadde15e432aab30aff45d1e27b71411385428687",
+      "decoded_sha256": "322f71df75949802268f06d2f22f6f322b9c36e47febf7415ef51165f8c11ffc",
+      "command": "node algebraic-cell-browser.mjs <scratch render directory>",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+      "file": "cell-algebraic-theory-links-lines.log.gz",
+      "sha256": "2b1b2ab7acfcfc19d946441a5775f41ddc2ba8867181212fcce2c48061a9862c",
+      "decoded_sha256": "a7903041b33c370529aec12b2a1ea9a237f5a7d205c71577061a2a191fb9f8cb",
+      "command": "affected relative links, changed Lean line limits, protected paths and git diff --check",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+      "file": "cell-algebraic-theory-dag.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": "python3 scripts/check_dag.py",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+      "file": "cell-algebraic-theory-admissions.log.gz",
+      "sha256": "0983f3d209d8bab33a0356bc9a5b6015d659329f62ded7429d8af888774e3c5e",
+      "decoded_sha256": "83cd98afd85c6c52c034f4c02f1e5b9e54ddeb827ba2420ac61c96ab279dac9b",
+      "command": "python3 scripts/ci/check_named_admissions.py",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+      "file": "cell-algebraic-theory-admission-tests.log.gz",
+      "sha256": "557ba67616845af4e4e3bf0095f714b86118377df4051a704f8dcfb6bdba38f8",
+      "decoded_sha256": "1e4be4d78efcc30028a28fc951e2f2ddd2702896ee0dd20a9b6e3be44142c7c4",
+      "command": "python3 scripts/ci/test_check_named_admissions.py",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+      "file": "cell-algebraic-theory-copyright.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": "python3 scripts/check_copyright_headers.py",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+      "file": "cell-algebraic-theory-manual-split.log.gz",
+      "sha256": "48a9e140081495d1ab8296879fffbda28bea260c48c63a9e7a2bfa5754ef1009",
+      "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "command": "python3 scripts/release/check_manual_split.py",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+      "file": "cell-algebraic-theory-literals.log.gz",
+      "sha256": "d363c41d04cc71aaa8b2bb97d1faf6ff4b311e5874c10d339f87aba4d4b97158",
+      "decoded_sha256": "5b2703a612f8c434ac4e53bb05bfeef0dbca1d91cc9125441d5bd447be3dfbc3",
+      "command": "python3 scripts/rcf/selected_literals.py --check",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+      "file": "cell-algebraic-theory-conformance-targets.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": "python3 scripts/conformance_targets.py --check",
+      "exit_code": 0
+    }
+  ],
+  "retained_attempts": [
+    {
+      "source_commit": "a5aaaebaf8",
+      "file": "cell-algebraic-theory-full-build-1.log.gz",
+      "sha256": "7979aab19d1272413075586085982c3dccc28f3f0d6d9cf59bf3190942f63ac2",
+      "decoded_sha256": "be3885b7571846390d32d176fbcb92fd06973c9d887143051a1a3c25203c2f6b",
+      "outcome": "failed",
+      "reason": "Ambiguous shortened manual names; corrected before final validation. Core/source/refusal audits and round-trip passed in this run.",
+      "observed_peak_bytes": 21123629056
+    }
+  ],
+  "packet_roundtrip": {
+    "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+    "file": "roundtrip.json.gz",
+    "sha256": "2b77c58af806aa89fae8eeed505b87f10241d94747516cd228f9ab9e37393201",
+    "decoded_sha256": "98a0e36a23eb7e1aedbeb292d53cd7a14087ab2c31043c1c7587836200e196b0",
+    "source_file": "conformance-fixtures/HexRCF/cell-algebraic.json",
+    "source_sha256": "a2dc4beb9a19e2349ef3b9540145876db879211a73664b69ec9c467fdb2754b7",
+    "parsed_equal": true
+  },
+  "artifacts": [
+    {
+      "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+      "file": "algebraic-cell-desktop-guards.png",
+      "sha256": "a7649ec35d611721398bee9e26c1808decf1dbace45b55f2ab4c6ec17f2d06d2"
+    },
+    {
+      "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+      "file": "algebraic-cell-desktop-inventory.png",
+      "sha256": "76102fca864461e22cc111ce8d4fa8e159d037fab422d35f767570f1c261707d"
+    },
+    {
+      "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+      "file": "algebraic-cell-desktop-parent.png",
+      "sha256": "b63591d635b63a8fa978bb7e2696b288f60c94eb74f074cdbf5c8da783c98242"
+    },
+    {
+      "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+      "file": "algebraic-cell-desktop-roots.png",
+      "sha256": "4b210bc6fc0cbea7579c0ae745c5a0ac07fe17b1051848f8b5478f8b8c89dc5c"
+    },
+    {
+      "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+      "file": "algebraic-cell-desktop-scope.png",
+      "sha256": "dd09a17dc42ec46dc433b07329970e97cc3ece7f563243adef1c320d723dc9da"
+    },
+    {
+      "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+      "file": "algebraic-cell-desktop-source.png",
+      "sha256": "05740b1020280561d40f8b11e597cc07fab4df105609fbf4f2786f59b9630881"
+    },
+    {
+      "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+      "file": "algebraic-cell-narrow-guards.png",
+      "sha256": "7456fcfe6feb254669e83777c85abebeca4a2f3a55a5780ce7e351390758171e"
+    },
+    {
+      "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+      "file": "algebraic-cell-narrow-inventory.png",
+      "sha256": "5240f7bf932318bbbacefe37f3dd1cd6888e9ee6fb4f55bd2fc0a531c3383318"
+    },
+    {
+      "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+      "file": "algebraic-cell-narrow-parent.png",
+      "sha256": "921ea75c2d871371db0ab9d110014556843901fe74ba04b3fb64dcc7f72a335c"
+    },
+    {
+      "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+      "file": "algebraic-cell-narrow-roots.png",
+      "sha256": "1f1e9f7435e1b2bcc80d1335c56bc51411c9e8f75254cf0ec078fd739b305809"
+    },
+    {
+      "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+      "file": "algebraic-cell-narrow-scope.png",
+      "sha256": "60da2472b388367b00199d73ced6c08cbec5fcdca9ebd0ff6b78205e6392876e"
+    },
+    {
+      "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+      "file": "algebraic-cell-narrow-source.png",
+      "sha256": "e21e6515661a1d6cca4dc4c48d6c8a846ab50bf12b88c90d073bff2c883663cc"
+    },
+    {
+      "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+      "file": "browser.mjs",
+      "sha256": "25e88ed9573d304b6ceeaae80d3457edfdcbc6d2ef8e12d0c004d867f48a699c"
+    },
+    {
+      "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+      "file": "build-limits.txt",
+      "sha256": "9a7da38bcadb9de760b3c0a1f3f55c4f14044ed052a70b15df16f3d714c88ff1"
+    },
+    {
+      "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+      "file": "inspection.json",
+      "sha256": "5d060631320d32cdd168866b9286fc91464477d4031cf41edc7723acf068e2ea"
+    },
+    {
+      "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+      "file": "structure.json",
+      "sha256": "474e3b019e85b8cf1afd55bbb046be4dfa650fd8e03ee8e5fa0b6433653cfce5"
+    },
+    {
+      "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+      "file": "structure.py",
+      "sha256": "84760bbc9296ba458deaf16a67bf4f6c4cf1fae7ee6d592f49b4889ee268e9e3"
+    },
+    {
+      "source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+      "file": "visual-inspection.txt",
+      "sha256": "ef3e3a56b62cc043c04b54810cfde5b46b066bc6185f50f903f9098a03263834"
+    }
+  ],
+  "resource_limits": {
+    "memory_max_bytes": 34359738368,
+    "swap_max_bytes": 0,
+    "lean_num_threads": 2
+  },
+  "scope": "Complete supplied fixed-algebraic ordinary-model replay and two freshly authenticated original-source quotations; 21 scalar packets, two sections, three ordinary sectors. No general algebraic producer/completeness, source/provider history, all-live transport, arbitrary missing-record compiled acceptance or performance/scaling claim."
+}

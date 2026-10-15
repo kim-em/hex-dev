@@ -101,8 +101,8 @@ separate row readers share validation work.
 
 This generic checked-cell interface assumes an actual lawful model of the
 parent in ℝ. It neither constructs that model from arbitrary provider history
-nor interprets an infinitesimal as a real number. Its frozen rational regression
-is evidence for the complete-cell assembly and source quotation; it does not
+nor interprets an infinitesimal as a real number. Its frozen rational and fixed algebraic regressions
+are evidence for finite complete-cell assembly and source quotation; they do not
 establish general algebraic production, accepted completeness, automatic
 common-field construction or a strict compiled checker with arbitrary missing
 predecessor records. Nested contexts still require their checked arithmetic

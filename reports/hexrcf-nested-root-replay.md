@@ -59,15 +59,21 @@ core and nested fixture. The existing manual source chapter documents the
 operation equality and fixed-parent example. No base rational import, owner
 library, AGENTS.md, PLAN.md or CI job/workflow is changed.
 
-Complete interpreted-root coverage, value Nodup and mathematical ordering for
-supplied replay remain with the SignDet owner under the existing
-[coverage request](https://github.com/kim-em/hex-dev/issues/10331#issuecomment-6126809036)
-and [ordering request](https://github.com/kim-em/hex-dev/issues/10331#issuecomment-6129572591).
-Arbitrary recursive provider/context history, nonlinear sample conversion,
-complete cell replay, all-live transport, automatic common-field certification
-and accepted algebraic completeness remain part of #10358. This component does
-not register another handler or close the issue. #10633/#10634's interfaces and
-measurement limits are preserved.
+`RootReplay.Result.coverage` and `ordered` now reuse the
+[owner's supplied-replay laws](https://github.com/kim-em/hex-dev/pull/10903)
+to establish exact interpreted-root coverage, value Nodup and strict ordering
+for arbitrary accepted full derivative replay in a lawful real-closed model,
+without a native producer equation. The
+[complete supplied-cell checker](hexrcf-cell-replay.md) derives quantified
+soundness from whole-line `.ok true` in a lawful ordinary-real parent model;
+false remains diagnostic. The [fixed-algebraic matrix](hexrcf-algebraic-cells.md)
+checks both sections and all three ordinary sectors for X²−√2 and quotes its
+original real source. Arbitrary recursive source/provider/context history and
+reached-data assembly, nonlinear sample conversion, all-live transport,
+automatic common-field certification, accepted algebraic completeness, full
+native/infinitesimal coverage and strict missing-predecessor compiled replay
+remain part of #10358. This component does not register another handler or
+close the issue. #10633/#10634's interfaces and measurement limits are preserved.
 
 The [validation records](data/hexrcf-nested-root-replay/context.json) bind
 selected source hashes, ordinary build/render outputs and the exact offline

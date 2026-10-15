@@ -1,0 +1,71 @@
+{
+  "schema": "hex-rcf-algebraic-cell-integration-v1",
+  "source_commit": "8fd6a4af4f6291565978c03b9531156f890b27fd",
+  "checked_source_commit": "387922d3b08f2ca24fcc69c99ee08793ea42e922",
+  "selected_source_hashes": {
+    "HexManual/Chapters/HexRCF.lean": "9af76398a303a3eff13c5cb33200fdcbdbc4b3f44832ae2fd62cd1d60b3884bb",
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "693a317982543353d2fe0c0d02a90adcad455ca16637ce1d610848081ea2209d",
+    "HexManual/Chapters/HexRCF/CellReplay.lean": "382279468cc04d68313b5ddba46df2d3f4faac4d3c7966d8c99051fb1151b7bd",
+    "adapters/HexRCF/RealCoefficients.lean": "d7d29aaf42df2c79a6eb8def79eed79c95a19cb1518669722fc7081be74b1574",
+    "adapters/HexRCF/RealCoefficients/CellPacketConvert.lean": "a3036274f685ff28e3f1804170d3685d6d3eddb45e497cc37065bb844b2e2c84",
+    "adapters/HexRCF/RealCoefficients/CellPacketRead.lean": "4b52740fe4072d39fceb0cc1b9d92e0ad30c75ed5af2c5e8ee4366102d98efec",
+    "adapters/HexRCF/RealCoefficients/CellPacketTransport.lean": "7ab917e1103917806f51a1a6426c71433f14cf173361567f5574d07778895305",
+    "adapters/HexRCF/RealCoefficients/CellPackets.lean": "df0ca6fb76a6f56d65c9c729d6d91ac47c16df42f4b0409e3eaf960c14432b24",
+    "adapters/HexRCF/RealCoefficients/CellRead.lean": "d395253326c1af40e47a254386cb8008d2212f482e62a72b208f9d445af0e272",
+    "adapters/HexRCF/RealCoefficients/RowOperations.lean": "49d8428c3d1dce6b2b4c57bea9de03ed0fd6fe809c0991078ac9f3b9756515fc",
+    "adapters/HexRCF/RealCoefficients/RowReplay.lean": "5ebf3f264fbcf64b0a5099b96b5de2b5dd702e52359984f36d53e4fb48d5f20c",
+    "adapters/HexRCF/RealCoefficients/SectorReplay.lean": "695619cbb730df5408b73e00f41e0e8da6be9c504cc5099265c3ea24b12345e5",
+    "conformance-fixtures/HexRCF/cell-algebraic-mutations.json": "fa033e4c28106990aac2c090b1347f456073831c079787334888cdd9db0a1085",
+    "conformance-fixtures/HexRCF/cell-algebraic-scalars.json": "b63c2223e4f59792355385f09b358f8d15427828d7c1882012d758a3a50b28bf",
+    "conformance-fixtures/HexRCF/cell-algebraic.json": "a2dc4beb9a19e2349ef3b9540145876db879211a73664b69ec9c467fdb2754b7",
+    "conformance/HexRCF/CellReplay/Algebraic/Canonical.lean": "ee3a97402bde9673c4d48cdfeae0a00d7eddeebe810abb8b766d03d1328721a9",
+    "conformance/HexRCF/CellReplay/Algebraic/Check.lean": "0bed50d5122efb92833638ea155b619f0d19954807ded7123d1595f7b1f4e62c",
+    "conformance/HexRCF/CellReplay/Algebraic/Convert.lean": "23ce660e046752e4750ea45402585b651261f9dc758bc05e2a65230f3f1121b6",
+    "conformance/HexRCF/CellReplay/Algebraic/Emit.lean": "55c2c00438d699cbc279e33e7e8cf2e479d9739bbde5cb4008c46d97b218c32f",
+    "conformance/HexRCF/CellReplay/Algebraic/Guards.lean": "533e07da56635f6a74cbaac23f3f6f7124d866a41002a537a48e993d682471a9",
+    "conformance/HexRCF/CellReplay/Algebraic/Inputs.lean": "250f7092bf30ca4b0f214ebf17d5b163c27428cb924005e910dec30b4bd85117",
+    "conformance/HexRCF/CellReplay/Algebraic/LiteralData0.lean": "09ce4eeb6d68e68e8a59f6bbebcf83d5a708d84639921e1e83fd3d2fd2a2251c",
+    "conformance/HexRCF/CellReplay/Algebraic/LiteralData1.lean": "26134651bb1f9664862c9fac294e08dd8e1e09a381319a630286a76469bcd0d5",
+    "conformance/HexRCF/CellReplay/Algebraic/Literals.lean": "df237644ea8158a58161a8d9a0cef1a398cfdedca6d06995c4a96b623a340980",
+    "conformance/HexRCF/CellReplay/Algebraic/Meaning.lean": "b50f76b0b3eff22f8fcbce3e6ec51bd5c85ac629ac4fea859af9961469f6e55e",
+    "conformance/HexRCF/CellReplay/Algebraic/MutationData0.lean": "61336c73c6dcc3f5c5a498ef51eb584196e6c30af5edac0b7c185669f2a5b108",
+    "conformance/HexRCF/CellReplay/Algebraic/Mutations.lean": "99c3d35466012e412abc2cd2bd92a88b3c1a05e0236ff21fdbd6e20a6a430fd0",
+    "conformance/HexRCF/CellReplay/Algebraic/Quote.lean": "a8b1b81eb5813c35c38b003acafc705fe74a8351232a8531ae7b66eeb0651aef",
+    "conformance/HexRCF/CellReplay/Algebraic/Quoted.lean": "5351ed3d53228ba950fca980990623c99a4159d717bafaf54cae642374847545",
+    "conformance/HexRCF/CellReplay/Algebraic/Radical.lean": "a89e6ca8937df182cf44a12e6ebed6c3589c953407dbaa34777367ccd72e89ae",
+    "conformance/HexRCF/CellReplay/Algebraic/Read.lean": "0184c3da8d136a185aba7edb47f28ecccf6297fe2a1447c0553cf73f397924a4",
+    "conformance/HexRCF/CellReplay/Algebraic/Records.lean": "9c670e9600f5af561810d92902a6c47a7a6a5e3cfa55faf78b9b76459eff0795",
+    "conformance/HexRCF/CellReplay/Algebraic/Refusals.lean": "41910113a92efc7fdf55aed1cd07f754249c500a4318c416d04f46fba80e7c75",
+    "conformance/HexRCF/CellReplay/Algebraic/ScalarData0.lean": "070c3910d0452ba5b756a50f7043a59fae2c55aa7a8cd515ea21971a9f0e3ff2",
+    "conformance/HexRCF/CellReplay/Algebraic/ScalarData1.lean": "d0faf9a212fdfe1bbbaf82ef2b7d1883b0a67c3016de7fa95adbd2d9c3b4f37c",
+    "conformance/HexRCF/CellReplay/Algebraic/Scalars.lean": "0df74426b3749af2948e2280d5f62fb551b3884498d81d63cffaf70e33713a42",
+    "conformance/HexRCF/CellReplay/Algebraic/Schema.lean": "f5d831117ff3d3d7e0bf5ca44c3a842328c61d954cd928885a0dfe9abdd34f7d",
+    "conformance/HexRCF/CellReplay/Algebraic/Sections.lean": "aba104d43d044b7b9ed7814f7605bf6517305b0c12fc8969815779426a5e4c14",
+    "lakefile.lean": "bd9233e07bc12d0d9bec4e570ea341068a1868ee6f95c7ac61efd97e11699e51",
+    "reports/hexrcf-nested-root-replay.md": "ef4ff02b2153fdae8c739a6cb43f87044cf19d53da8a990067f9c95a704e10a6",
+    "reports/hexrcf-root-replay.md": "e9a073ddf116405ab00ee0e4cddc61cffa1236191b2231052dccde53658dfa80",
+    "scripts/rcf/selected_literals.py": "36a243d80f72fd886c94aad9b6ee1feb34e047fccab3c690aea35164ed99d573"
+  },
+  "lean_lake_pin_changes": [],
+  "validation_records": [
+    {
+      "file": "cell-algebraic-main-integration-build.log.gz",
+      "sha256": "9a7b085a847bb0f906681b2ae161a33f39686825e4010a3b2f395a1ed9cbb839",
+      "decoded_sha256": "d65c6d53574e721ac0d8fa918ce358833d144d7dd8ac0556bb80b04a0ca40e93",
+      "command": "bounded Lake build HexRCFRealCoefficients HexConformance HexManual",
+      "exit_code": 0
+    },
+    {
+      "file": "cell-algebraic-main-integration-dag.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": "python3 scripts/check_dag.py",
+      "exit_code": 0
+    }
+  ],
+  "resource_limits": {
+    "memory_max_bytes": 34359738368,
+    "swap_max_bytes": 0,
+    "lean_num_threads": 2
+  }
+}

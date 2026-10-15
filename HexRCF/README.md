@@ -402,9 +402,11 @@ word and the exact head/open endpoints; supplied guards are checked first.
 The [frozen tests](../conformance/HexRCF/RootReplayConformance.lean) check both
 roots of X²−2, constant/empty tables and exact evidence/divisor rejection.
 A [fresh ordinary proof](../conformance/HexRCF/RootReplayOrdinaryConformance.lean)
-consumes emitted-root and domain laws. Complete interpreted coverage and
-mathematical ordering require the owner's supplied-replay exports; this is
-neither complete cell replay nor a new handler. Query heads must be squarefree.
+consumes emitted-root and domain laws. `RootReplay.Result.coverage` and
+`ordered` compose the owner's supplied-replay exports to prove exact
+interpreted-root coverage, value Nodup and strict ordering in a lawful
+real-closed parent model, without a native producer equation. Query heads must
+be squarefree; this reader installs no new handler.
 
 `RootReplay.readWith` uses five equal supplied predecessor operations during
 graph replay and derivative extraction. The shared `RootTable` implementation
@@ -418,8 +420,16 @@ real witness and [fresh import audit](../conformance/HexRCF/NestedRootOrdinaryCo
 use the authenticated positive √2 parent. Missing records, same-degree changed heads
 and changed endpoints reject; a zero collection budget exposes a missing record without production.
 Arbitrary recursive history assembly remains required. The generic
-ordinary-model `CellRead` interface below derives coverage from accepted
-rows; its current complete-cell regressions use the rational base.
+ordinary-model `CellReplay.check_sound` theorem derives complete-cell soundness
+from the accepted whole-line root table, checked radical identities,
+adjacent-root bounds and whole same-point rows. Regressions cover both the rational base
+and ℚ(√2). The [fixed algebraic matrix](../reports/hexrcf-algebraic-cells.md)
+checks two root sections and three ordinary sectors for X²−√2 with 21 frozen
+scalar packets, quotes two original real sources and audits their actual proof
+bodies. Original divisor preflight precedes decoding; accepted false remains
+diagnostic. These are finite supplied certificates, not general algebraic
+construction, source/provider-history reconstruction, all-live transport or a
+strict compiled checker with arbitrary missing predecessor records.
 
 The exact path also accepts visible checked `AlgebraicNumber.ofNormalized`
 constructions packaged with `RealAlgebraicNumber.ofAlgebraic`, and their
@@ -568,6 +578,10 @@ changed point/root identities, invalid context indices, cyclic graphs, missing b
 and an invalid later row. The reader decodes all rows regardless of the matrix. These frozen rational
 regressions validate the generic assembly. Additional controls authenticate a
 nonempty coefficient valuation, two ordered original divisors, endpoint presence
-and an empty root table with one unbounded sector. Complete algebraic production,
+and an empty root table with one unbounded sector. The
+[algebraic matrix](../conformance/HexRCF/CellReplay/Algebraic/Quoted.lean)
+uses `CellRead.collect` with the shared operation-parametric row/sector readers
+and transports their accepted data into `CellReplay.check_sound`.
+Complete algebraic production,
 source/provider history, automatic common-field certification and accepted
 algebraic completeness remain separate obligations.

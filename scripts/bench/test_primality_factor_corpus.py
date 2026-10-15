@@ -1,10 +1,14 @@
 """Reject corrupt corpus identities and skipped earlier prime candidates."""
 import copy
-import json
 import hashlib
-import tempfile
+import json
+import re
 from pathlib import Path
+import tempfile
 import unittest
+from unittest.mock import patch
+
+from scripts.ci import check_primality_factor_replay as replay
 
 from scripts.bench.primality_factor_corpus import candidate, composite_witness, validate
 
@@ -46,6 +50,36 @@ class CorpusTests(unittest.TestCase):
 
 
 class RetainedSourceTests(unittest.TestCase):
+    def test_retained_corpus_and_adoption_hashes(self):
+        corpus = json.loads((replay.REPORTS / "corpus-replay-v3.json").read_text())
+        for source, expected in corpus["hex_sources"].items():
+            with self.subTest(source=source):
+                self.assertEqual(replay.digest(replay.retained_source(source)), expected)
+        adoption = json.loads((replay.ROOT / "reports/primality/adoption/kernel-replay.json").read_text())
+        self.assertEqual(replay.digest(replay.retained_source(adoption["source"])),
+                         adoption["source_sha256"])
+
+    def test_only_directory_and_import_are_translated(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            current = root / replay.CURRENT_PREFIX / "Probe.lean"
+            current.parent.mkdir(parents=True)
+            current.write_text("public import HexPrimalityTheory.Prime\n"
+                               "namespace HexPrimalityTheory.X\n"
+                               "theorem test : True := by trivial\n")
+            name = replay.HISTORICAL_PREFIX + "Probe.lean"
+            expected = ("public import HexPrimalityMathlib.Prime\n"
+                        "namespace HexPrimalityTheory.X\ntheorem test : True := by trivial\n")
+            with patch.object(replay, "ROOT", root):
+                self.assertEqual(replay.retained_source(name), expected)
+                current.write_text(current.read_text().replace("True", "False"))
+                self.assertNotEqual(replay.digest(replay.retained_source(name)), replay.digest(expected))
+                current.write_text(expected)
+                with self.assertRaisesRegex(ValueError, "removed module"):
+                    replay.retained_source(name)
+                with self.assertRaises(FileNotFoundError):
+                    replay.retained_source(replay.HISTORICAL_PREFIX + "Missing.lean")
+
     def test_recorded_source_after_companion_rename(self):
         from scripts.ci.check_primality_factor_replay import ROOT, retained_source
         manifest = json.loads((ROOT / 'reports/primality/factor-policy/kernel-certificates.json').read_text())
@@ -60,13 +94,24 @@ class RetainedSourceTests(unittest.TestCase):
             root = Path(directory)
             path = root / 'bench/HexPrimalityTheory/ProofProbe/FactorExperiment.lean'
             path.parent.mkdir(parents=True)
-            path.write_text(original.replace('theorem case0', 'theorem changedCase0', 1))
-            self.assertNotEqual(hashlib.sha256(retained_source(manifest['source'], root).encode()).hexdigest(),
-                                manifest['source_sha256'])
+            changed_certificate = re.sub(
+                r'(\(c := Hex\.Nat\.PrimeCert\.\w+\s+)([0-9])',
+                lambda m: m[1] + str((int(m[2]) + 1) % 10), original, count=1)
+            for changed in (original.replace('theorem case0', 'theorem changedCase0', 1),
+                            changed_certificate):
+                with self.subTest(changed_certificate=changed == changed_certificate):
+                    self.assertNotEqual(changed, original)
+                    path.write_text(changed)
+                    self.assertNotEqual(
+                        hashlib.sha256(retained_source(manifest['source'], root).encode()).hexdigest(),
+                        manifest['source_sha256'])
 
     def test_missing_unrelated_source_is_not_redirected(self):
         from scripts.ci.check_primality_factor_replay import retained_source
         with tempfile.TemporaryDirectory() as directory:
+            alternate = Path(directory) / 'bench/OtherTheory/Probe.lean'
+            alternate.parent.mkdir(parents=True)
+            alternate.write_text('theorem unrelated : True := by trivial\n')
             with self.assertRaises(FileNotFoundError):
                 retained_source('bench/OtherMathlib/Probe.lean', Path(directory))
 
