@@ -325,8 +325,10 @@ private partial def prove (target : Expr) (witness : Expr) : MetaM Expr := do
     goal.mvarId!.assign (← mkAppOptM ``Exists.intro
       #[some (← inferType witness), some body, some witness, some proof])
   else
+    -- Keep polynomial containment facts polynomial: unrestricted simp can
+    -- replace a squared lower bound by an absolute-value inequality.
     let rest ← runStrict goal.mvarId!
-      (← `(tactic| norm_num [mkRat, div_eq_mul_inv] at * <;> nlinarith))
+      (← `(tactic| norm_num only [mkRat, div_eq_mul_inv] at * <;> nlinarith))
     unless rest.isEmpty do throwError "rcf: supplied bounds did not establish the goal"
   return ← instantiateMVars goal
 

@@ -348,22 +348,12 @@ private def normalize (registered : Array Expr) (source : Expr) : MetaM Expr := 
       return .continue (some q($a * ((1 : ℝ) / $b)))
     return .continue) (skipInstances := true)
 
-private def isNamedCoefficient (registered : Array Expr) (e : Expr) : MetaM Bool := do
-  if e.isAppOfArity ``Hex.RealAlgebraicNumber.toReal 1 ||
-      e.isAppOfArity ``Real.sqrt 1 || e.isAppOfArity ``Real.rpow 2 ||
-      e.isConstOf ``Real.pi || e.isAppOfArity ``Real.exp 1 then return true
-  if e.isAppOfArity ``Inv.inv 3 || e.isAppOfArity ``HDiv.hDiv 6 then
-    return ← e.getAppArgs.anyM (hasNamedSource registered)
-  if e.isAppOfArity ``HPow.hPow 6 then
-    return (← inferType e.getAppArgs[5]!).isConstOf ``Real
-  return false
-
-/-- Abstract named algebraic inputs, leaving rational arithmetic to the
-shared polynomial reifier. Thus `2 * sqrt 2` uses the same one-dimensional
-field as `sqrt 2`, rather than creating another unrelated coefficient. -/
+/-- Abstract maximal closed coefficients containing named or registered
+inputs. Purely rational arithmetic remains in the shared polynomial reifier;
+the coefficient interpreter retains arithmetic within each abstracted subject. -/
 private def collect (registered : Array Expr) (source : Expr) : MetaM (Array Expr) := do
   let (_, (values, _)) ← (Meta.transformWithCache (m := StateRefT (Array Expr × ExprSet) MetaM) source {} (pre := fun e => do
-    if isClosed e && (← isReal e) && ((← registered.anyM (fun value => liftM (Registration.sameSubject e value))) || (← isNamedCoefficient registered e)) then
+    if isClosed e && (← isReal e) && (← hasNamedSource registered e) then
       let (values, seen) ← get
       unless seen.contains e do set (values.push e, seen.insert e)
       return .done e
