@@ -16,7 +16,7 @@ open Lean Meta
 private def diagnostic (message : String) : MetaM Unit := do
   if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
     IO.FS.withFile path .append fun handle => do
-      handle.putStrLn message
+      handle.putStrLn s!"{message} [heartbeats={(← IO.getNumHeartbeats) / 1000}]"
       handle.flush
 
 /-- A guarded base interpretation. Its closure proof is supplied by the
@@ -33,8 +33,98 @@ def Base.ofClosed (closed : Expr) : MetaM Base := do
   let args := type.getAppArgs
   return ⟨args[args.size - 2]!, args.back!, closed⟩
 
+/-- Retain the finite agreement at this reader and guarded domain. A chosen
+interpretation may have a shared name while its existence proof still uses
+the original choice expression. Closed agreements become kernel-checked
+theorems; open agreements retain their hypotheses for subsequent kernel checks. -/
+def Base.bindAgreement (base : Base) (agreement : Expr) : MetaM Expr := do
+  diagnostic "base agreement: begin named reader binding"
+  let obtained ← inferType agreement
+  unless obtained.getAppFn.isConstOf ``Transport.Inventory.Agreement do
+    throwError "expected a finite base agreement proof"
+  let args := obtained.getAppArgs
+  let required := mkAppN obtained.getAppFn
+    (args.set! (args.size - 5) base.read |>.set! (args.size - 4) base.domain)
+  let proof ← withTransparency .all do
+    mkAppOptM ``id #[some required, some agreement]
+  diagnostic "base agreement: named reader conversion checked"
+  let proof ← instantiateMVars proof
+  let required ← instantiateMVars required
+  if required.hasMVar || proof.hasMVar || proof.hasSorry then
+    throwError "incomplete finite base agreement"
+  if required.hasFVar || proof.hasFVar then return proof
+  let _ ← auditProof proof required
+  let name := mkPrivateName (← getEnv) (← mkFreshUserName `__finiteBaseAgreement)
+  let levels := collectLevelParams (collectLevelParams {} required) proof |>.params.toList
+  let declaration := Declaration.thmDecl {
+    name, levelParams := levels, type := required, value := proof }
+  let options := (← getOptions).setBool `debug.skipKernelTC false
+  setEnv (← ofExceptKernelException <| (← getEnv).addDeclCore
+    (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
+    declaration none (doCheck := true))
+  diagnostic "base agreement: named proof kernel checked"
+  return mkConst name (levels.map Level.param)
+
 private def sameType (proof type : Expr) : MetaM Bool :=
-  withTransparency .all do isDefEq (← inferType proof) type
+  withNewMCtxDepth do
+    withTransparency .all do isDefEq (← inferType proof) type
+
+-- Follow arithmetic operands and native coefficient wrappers, without
+-- traversing dictionaries or context signatures. A reached natural cast is
+-- only a proof-search hint: its complete guarded proposition must still match.
+private def naturalCasts : Nat → Expr → MetaM (Array Expr)
+  | 0, _ => pure #[]
+  | fuel + 1, value => do
+    let head := value.getAppFn
+    let args := value.getAppArgs
+    let candidate := if head.isConstOf ``Nat.cast || head.isConstOf ``NatCast.natCast then
+        args.back?
+      else if head.isConstOf ``OfNat.ofNat then args[1]?
+      else none
+    if let some n := candidate then
+      if ← withNewMCtxDepth do isDefEq (← inferType n) (mkConst ``Nat) then
+        if n.rawNatLit? == some 0 || n.rawNatLit? == some 1 then return #[]
+        return #[n]
+    let children := if head.isConstOf ``BaseContext.Element.mk ||
+        head.isConstOf ``BaseContext.Element.stored || head.isConstOf ``RationalFn.C then
+        args.extract (args.size - 1) args.size
+      else if head.isConstOf ``HAdd.hAdd || head.isConstOf ``HMul.hMul ||
+          head.isConstOf ``HSub.hSub || head.isConstOf ``Add.add ||
+          head.isConstOf ``Mul.mul || head.isConstOf ``Sub.sub then
+        args.extract (args.size - 2) args.size
+      else #[]
+    if children.isEmpty then
+      let reduced ← withTransparency .all (whnf value)
+      if reduced != value then return ← naturalCasts fuel reduced
+      return #[]
+    let mut result := #[]
+    for child in children do
+      for n in (← naturalCasts fuel child) do
+        unless result.contains n do result := result.push n
+    return result
+
+/-- Use the guarded reader's zero, unit and reached natural-cast memberships
+before searching its finite inventory. Match the complete guarded proposition
+without assigning caller metavariables. -/
+def Base.domains (base : Base) (previous : Supplier) : Supplier := fun type => do
+  unless type.getAppFn == base.domain.getAppFn do return ← previous type
+  let some wanted := type.getAppArgs.back? | return ← previous type
+  for theoremName in #[``Transport.Closed.zero, ``Transport.Closed.one] do
+    let proof ← mkAppM theoremName #[base.closed]
+    let supplied ← inferType proof
+    let some value := supplied.getAppArgs.back? | continue
+    let same ← withNewMCtxDepth do
+      withTransparency .all (isDefEq value wanted)
+    if same then
+      if ← sameType proof type then
+        diagnostic s!"base domain: closed membership supplied by {theoremName}"
+        return some proof
+  for n in (← withNewMCtxDepth (naturalCasts 32 wanted)) do
+    let proof ← mkAppM ``Transport.Closed.natCast #[base.closed, n]
+    if ← withNewMCtxDepth (sameType proof type) then
+      diagnostic "base domain: closed natural-cast membership supplied"
+      return some proof
+  previous type
 
 private initialize membershipCache : EnvExtension (PHashMap (Array Expr) Expr) ←
   registerEnvExtension (pure {}) (asyncMode := .local)
@@ -106,21 +196,78 @@ def Base.supply (base : Base) (domains previous : Supplier) : Supplier := fun ty
           if ← sameType proof type then return some proof
   previous type
 
+private def agreementMember (elementType value rest : Expr) (earlier : Array Expr) :
+    MetaM Expr := do
+  let mut member ← mkAppOptM ``List.mem_cons_self #[some elementType, some value, some rest]
+  for head in earlier.reverse do
+    member ← mkAppM ``List.mem_cons_of_mem #[head, member]
+  return member
+
 /-- Supply a retained coefficient's domain, sign and zero-reflection premises
 from one finite agreement proof. Membership proofs follow the actual literal
 list; missing coefficients return no proof. The agreement itself must come
 from the base bootstrap, rather than an independent real-sign assumption. -/
 private def agreementLookup (agreement : Expr) : Supplier := fun type => do
+  let domainRequest := type.getAppFn.isConstOf ``BaseContext.Context.partialDomain
+  if domainRequest then diagnostic "base domain: begin agreement type inference"
   let dataType ← inferType agreement
+  if domainRequest then diagnostic "base domain: agreement type inferred"
   unless dataType.getAppFn.isConstOf ``Transport.Inventory.Agreement do
     throwError "expected a finite base agreement proof"
   let dataArgs := dataType.getAppArgs
   let domain := dataArgs[dataArgs.size - 4]!
+  if domainRequest then
+    diagnostic s!"base domain: requested head {type.getAppFn.constName?}, agreement domain head {domain.getAppFn.constName?}"
   -- The agreement supplies only these three atomic predicates. In particular,
   -- comparing its domain membership with a structural or quantified premise
   -- can unfold the chosen interpretation's domain before traversal has begun.
   unless type.getAppFn == domain.getAppFn || type.getAppFn.isConstOf ``Eq ||
       type.getAppFn.isConstOf ``Iff do return none
+  -- Compare coefficients before constructing membership proofs for unrelated
+  -- entries. Definitional equality identifies the complete
+  -- guarded proposition; enclosing kernel checks validate the projected proof.
+  -- The final pass retains general predicate lookup.
+  if type.getAppFn == domain.getAppFn then
+    if let some wanted := type.getAppArgs.back? then
+      if domainRequest then
+        diagnostic s!"base domain: coefficient request head {wanted.getAppFn.constName?}"
+        if wanted.getAppFn.isConstOf ``DensePoly.coeff then
+          diagnostic s!"base domain: requested index {reprStr wanted.getAppArgs.back!}"
+      if domainRequest then diagnostic "base domain: begin coefficient scan"
+      -- Reduce the requested coefficient once before comparing it with each
+      -- retained entry. The complete guarded proposition is still checked
+      -- against the original request before returning its proof.
+      let reduced ← withTransparency .all (whnf wanted)
+      if domainRequest then
+        if (← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE").isSome then
+          let printed ← withOptions (fun options => pp.maxSteps.set options 200) do
+            ppExpr reduced
+          diagnostic s!"base domain: reduced coefficient {printed}"
+      let mut rest := dataArgs.back!
+      let mut earlier : Array Expr := #[]
+      while true do
+        let literal ← withTransparency .all (whnf rest)
+        if literal.getAppFn.isConstOf ``List.nil then break
+        unless literal.getAppFn.isConstOf ``List.cons do
+          throwError "base agreement requires a literal finite inventory"
+        let args := literal.getAppArgs
+        let value := args[1]!
+        rest := args[2]!
+        let exact := value == wanted
+        let same ← if exact then pure true else withNewMCtxDepth do
+          withTransparency .all (isDefEq value reduced)
+        if same then
+          if domainRequest then
+            diagnostic s!"base domain: coefficient matched after {earlier.size} entries, aliases {!exact}"
+          let member ← agreementMember args[0]! value rest earlier
+          let proof ← mkAppM ``And.left #[mkApp2 agreement value member]
+          if domainRequest then diagnostic "base domain: matching membership projected"
+          if ← sameType proof type then
+            if domainRequest then diagnostic "base domain: complete guarded type checked"
+            return some proof
+        earlier := earlier.push value
+      if domainRequest then
+        diagnostic s!"base domain: exhausted {earlier.size} coefficient entries"
   let mut rest := dataArgs.back!
   let mut earlier : Array Expr := #[]
   while true do
@@ -131,9 +278,7 @@ private def agreementLookup (agreement : Expr) : Supplier := fun type => do
     let args := literal.getAppArgs
     let value := args[1]!
     rest := args[2]!
-    let mut member ← mkAppOptM ``List.mem_cons_self #[some args[0]!, some value, some rest]
-    for head in earlier.reverse do
-      member ← mkAppM ``List.mem_cons_of_mem #[head, member]
+    let member ← agreementMember args[0]! value rest earlier
     let data := mkApp2 agreement value member
     let mut proofs := #[]
     if type.getAppFn == domain.getAppFn then
