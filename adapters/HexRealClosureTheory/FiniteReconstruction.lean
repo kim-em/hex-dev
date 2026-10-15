@@ -189,6 +189,7 @@ def reconstruct (base following baseReader : Expr) (discovery : Discovery) (extr
   let fixed ← mkAppM ``And.right #[specification]
   let closed ← mkAppM ``BaseContext.Context.partialClosed #[base, interpretation]
   let origin ← Base.ofClosed closed
+  let agreement ← origin.bindAgreement agreement
   if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
     IO.FS.withFile path .append fun handle => do
       handle.putStrLn "reconstruction: guarded base reader constructed"
@@ -198,7 +199,7 @@ def reconstruct (base following baseReader : Expr) (discovery : Discovery) (extr
   if let some first := levels[0]? then
     unless ← withTransparency .all (isDefEq first.read baseReader) do
       throwError "first finite level does not follow the base reader"
-  let domains := agreementSupplier agreement
+  let domains := origin.domains (agreementSupplier agreement)
   let checks : Supplier := fun type => do
     if type.getAppFn.isConstOf ``Eq && type.getAppArgs[0]!.isConstOf ``Bool then
       decisions type

@@ -1,5 +1,6 @@
 """Reject corrupt corpus identities and skipped earlier prime candidates."""
 import copy
+import hashlib
 import json
 from pathlib import Path
 import tempfile
@@ -82,6 +83,31 @@ class RetainedSourceTests(unittest.TestCase):
                     replay.retained_source(name)
                 with self.assertRaises(FileNotFoundError):
                     replay.retained_source(replay.HISTORICAL_PREFIX + "Missing.lean")
+
+
+    def test_recorded_source_after_companion_rename(self):
+        from scripts.ci.check_primality_factor_replay import ROOT, retained_source
+        manifest = json.loads((ROOT / 'reports/primality/factor-policy/kernel-certificates.json').read_text())
+        self.assertEqual(hashlib.sha256(retained_source(manifest['source']).encode()).hexdigest(),
+                         manifest['source_sha256'])
+
+    def test_certificate_edits_are_not_normalized(self):
+        from scripts.ci.check_primality_factor_replay import ROOT, retained_source, retained_path
+        manifest = json.loads((ROOT / 'reports/primality/factor-policy/kernel-certificates.json').read_text())
+        original = retained_path(manifest['source']).read_text()
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = root / 'bench/HexPrimalityTheory/ProofProbe/FactorExperiment.lean'
+            path.parent.mkdir(parents=True)
+            path.write_text(original.replace('theorem case0', 'theorem changedCase0', 1))
+            self.assertNotEqual(hashlib.sha256(retained_source(manifest['source'], root).encode()).hexdigest(),
+                                manifest['source_sha256'])
+
+    def test_missing_unrelated_source_is_not_redirected(self):
+        from scripts.ci.check_primality_factor_replay import retained_source
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaises(FileNotFoundError):
+                retained_source('bench/OtherMathlib/Probe.lean', Path(directory))
 
 
 if __name__ == '__main__':

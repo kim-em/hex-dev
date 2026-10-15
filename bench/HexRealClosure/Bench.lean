@@ -432,11 +432,12 @@ private def metiConfig : LeanBench.BenchmarkConfig := {
     signalFloorMultiplier := 1.0
   }
 
-/- Cost model: cubic degree scaling is a hypothesis for this fixed coefficient
-context. The Euclidean factor recurrence and signed-remainder chains each use
-quadratic dense polynomial operations through a degree-linear sequence. Bit
-sizes and repeated algebraic sign checks may exceed this degree-only model;
-the measured ladder must test that hypothesis. -/
+/- Cubic degree scaling remains a hypothesis for this fixed coefficient context.
+The binomial's initial Euclidean chain has degrees n, n-1, 0; a degree-linear
+chain does not justify this model for this family. Selected native counters
+and their limits are recorded in real-closure-metitarski-counts. Deriving the
+complete coefficient-field and bit costs remains necessary; the retained
+timing capture is inconclusive. -/
 setup_benchmark runMetiSecond n => n ^ 3
   with prep := metiSecondInput where metiConfig
 

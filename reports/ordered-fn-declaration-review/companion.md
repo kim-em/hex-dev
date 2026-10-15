@@ -4,7 +4,7 @@ Scope: eight production companion modules at
 `79b991882a486a8c8d05fd26aaf1656358834b7e`. Each handwritten nontrivial
 semantic declaration is assessed below. This complements the computational
 review; it does not discharge the outstanding performance finding or attest
-Phase 6. All semantic constructions stay in the Mathlib companion.
+Phase 6. All semantic constructions stay in the Theory companion.
 
 ## Oracle
 

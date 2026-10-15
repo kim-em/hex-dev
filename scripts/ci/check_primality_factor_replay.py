@@ -24,21 +24,28 @@ HISTORICAL_PREFIX = "bench/HexPrimalityMathlib/"
 CURRENT_PREFIX = "bench/HexPrimalityTheory/"
 
 
-def retained_source(name):
+def retained_path(name, root=None):
+    """Resolve only the known historical directory to its current source."""
+    root = ROOT if root is None else root
+    if name.startswith(HISTORICAL_PREFIX):
+        return root / (CURRENT_PREFIX + name.removeprefix(HISTORICAL_PREFIX))
+    return root / name
+
+
+def retained_source(name, root=None):
     """Authenticate current proof text against its pre-rename retained hash.
 
     Only the renamed directory and import prefix are translated. All theorem
     bodies, certificates and other bytes must still match the original hash.
     Retained measurement manifests and their historical identities stay intact.
     """
+    text = retained_path(name, root).read_text()
     if name.startswith(HISTORICAL_PREFIX):
-        current = CURRENT_PREFIX + name.removeprefix(HISTORICAL_PREFIX)
-        text = (ROOT / current).read_text()
         if re.search(r"^(?:public )?import HexPrimalityMathlib\.", text, re.M):
             raise ValueError("renamed proof still imports the removed module")
         return re.sub(r"^(public )?import HexPrimalityTheory\.",
                       r"\1import HexPrimalityMathlib.", text, flags=re.M)
-    return (ROOT / name).read_text()
+    return text
 
 
 @cache

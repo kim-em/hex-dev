@@ -30,10 +30,10 @@ The public names use short forms within their semantic namespaces (`sign_eq`,
 `eval_lt`, `map_support`, `X_lt_C`). Long generated elaborator names are not
 handwritten API. Local `open` and instance directives remain scoped; computational
 modules use Init/native Hex requirements, and semantic interpretation stays in
-the Mathlib companion. Production umbrellas omit the API lint target.
+the Theory companion. Production umbrellas omit the API lint target.
 
 The generic `Oracle.cast_sign_neg` and `Oracle.cast_sign_nonpos` proofs live in
-`HexOrderedFnMathlib.Sign`, which imports only Mathlib's generic sign layer.
+`HexOrderedFnTheory.Sign`, which imports only Mathlib's generic sign layer.
 `Oracle` and `Infinitesimal` share that module; the infinitesimal interpretation
 does not import real interval containment. Existing names and umbrella access are
 preserved. This is an internal companion module split, with no package or
