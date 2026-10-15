@@ -2,13 +2,13 @@
   "scope": "18 named stored-coefficient and finite coverage declarations; partial computational review, no phase/performance attestation",
   "files": {
     "HexSignDet/Codec/Coefficients.lean": "0fef85cb8c11fe614705ca230f437785c9c7c6b76d9362449f834bb25e82d3aa",
-    "reports/sign-det-declaration-review/current/normalize.py": "b39fa4af34f308018a5952f7afcd8719771f6e078dc1fd49813a62f15621479c",
-    "reports/sturm-declaration-review/audit_tools.py": "21964eccb454270a6716649067c1579387fe767516a6b0f19fac581159c47fb4",
+    "reports/sign-det-declaration-review/current/normalize.py": "9a0482b432cf4325e3e036afbb539d3305ed490343c8359b7d8f80df018753fa",
+    "reports/sturm-declaration-review/audit_tools.py": "de536ebeafd2ee355ac6e3349efaeaf2a5f0c37ecceed4457f4be51b664a963a",
     "scripts/bench/sweep_freshness.py": "882e1d255d32fe2a8c97d3ed5e16ff050e8bcbaffbbe20529a80517923f36ad2",
     "HexManual/Chapters/HexSignDet.lean": "1886de363194f3beab7cd75bf854b9b9c919f8499d8da4f05b23fbc893e5db0b",
     "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "a5d79a9d2f56fcc376158f81498c43ebd42e278388b21984aa16686c31575fec",
-    "reports/sign-det-declaration-review/README.md": "b7bb45781d03f91e6c406d1c44eb7918093b1b4b03f7dfd0135836f8e2d3d8fe",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "6b45715bd743f5a431e07229ebb205e4ca3448c53a7c79ea05938ebb3de9eb4c",
+    "reports/sign-det-declaration-review/README.md": "90972494804ea646f20a0fd9ca676c20adc1a7d31b06b5664a9bd2b6ab474076",
     "scripts/ci/check_benches_mathlib_free.py": "a8da3bef100b50fdd923d609ad03a3a9bd55229467f5652abe6e3f0b3d1ed0e5",
     "scripts/libgraph.py": "4c23bcf5c7fe6e1ea5ca30f922975a6f413ccc314b88b06e8dc7c28a10e0c0b5",
     "reports/sign-det-declaration-review/core-codec-coefficients.md": "5bf1459f784da495b072c7eba031336f6c385ede2004251b7ebf8a427c767c9f"

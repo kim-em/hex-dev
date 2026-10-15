@@ -44,15 +44,15 @@ lock/toolchain. External source bytes follow those pins. It does not establish
 mathematical API quality or external-client completeness mechanically.
 
 The source checkpoint tag is
-`audit/issue-10575-sign-det-current-reviewed-input-v7`. The complete archive is
-`audit/issue-10575-sign-det-current-reviewed-complete-v7`. Fetch both tags and
+`audit/issue-10575-sign-det-current-reviewed-input-v8`. The complete archive is
+`audit/issue-10575-sign-det-current-reviewed-complete-v8`. Fetch both tags and
 use an isolated checkout at the complete archive:
 
 ```sh
-git fetch origin tag audit/issue-10575-sign-det-current-reviewed-input-v7
-git fetch origin tag audit/issue-10575-sign-det-current-reviewed-complete-v7
+git fetch origin tag audit/issue-10575-sign-det-current-reviewed-input-v8
+git fetch origin tag audit/issue-10575-sign-det-current-reviewed-complete-v8
 git worktree add /tmp/signdet-audit-source \
-  audit/issue-10575-sign-det-current-reviewed-complete-v7
+  audit/issue-10575-sign-det-current-reviewed-complete-v8
 ```
 
 Build with the exact pinned dependencies, then run `reproduce.py` from that
@@ -91,8 +91,12 @@ omitted, so this supplementary inventory is intentionally incomplete.
 Rows without either kind of client state an explicit public API retention
 decision rather than claiming an example exists.
 
-Family test-evidence roles are read from the literal module globs of their
-existing Lake test targets. This includes `ReprProviderData` and
-`ReprProviderTests`; naming alone cannot promote a new fixture to a production
-client. The control uses the real source-root configuration and keeps
-`BaseContext` production. Unsupported expressions require explicit review.
+For the four family pairs, test-evidence roles are read from literal module
+globs in Lake libraries whose names start with the family name and end in
+`Tests`. This includes `ReprProviderData` and `ReprProviderTests`. Unsupported
+expressions refuse classification. Other target names and other families still
+use the existing source-role rules and require manual review.
+`HexOrderedFnTheory.LiouvilleRun` is explicitly classified as evidence: its
+Lake executable runs test-local integration checks. Production modules are
+checked for imports of family test-glob modules. The controls use the actual
+source-root configuration and keep `BaseContext` production.

@@ -379,7 +379,7 @@
     "HexSignDetTheory.TreeSolve": "HexSignDetTheory/TreeSolve.lean"
   },
   "missing_modules": {},
-  "production_modules": 3201,
+  "production_modules": 3200,
   "required_modules": 377,
   "scope": "All tracked Hex production modules resolved with the existing source-role index and import parser, following transitive imports to either SignDet module root. Evidence modules and external projects are outside this production coverage model."
 }
