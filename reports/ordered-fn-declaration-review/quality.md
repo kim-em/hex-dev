@@ -8,7 +8,7 @@ companion’s Phases 6–7; computational acceptance remains separate.
 | --- | --- |
 | Search | Public search equations remain explicit: uncontrolled rewriting of recursion or accessibility evidence is unsuitable for simp/grind. `firstSome_spec` and `firstSome_eq` give consumers finite proof routes. |
 | Oracle | Endpoint extensionality uses ext; intersection success and exact width identities use simp. These terminating normalizations expose behavior without recursive unfolding. |
-| Real | Positive/nonpositive width normalization and formal-zero laws use simp. General search soundness/progress require the exact provider hypotheses and remain explicit. |
+| Real | Positive/nonpositive width normalization uses simp. Real.attempt_zero and Real.sign_zero are explicit public equations without simp registration. General search soundness/progress require the exact provider hypotheses and remain explicit. |
 | Extension (core) | Extensionality and constructor/transport storage equations support ordinary normalization. The native field dictionary is separate from conditional order laws. |
 | Infinitesimal (core) | Canonical-zero sign is simp; scan and range statements remain explicit. Scoped relations avoid an unproved global order. |
 | Sign (companion) | The shared integer-sign/order equivalences retain their generic zero and linear-order hypotheses. Both interpretations use them explicitly without choosing a semantic subject. |
@@ -56,3 +56,7 @@ statements specify their meaning. This audit uses environment linters, including
 slow checks and theorem documentation, rather than claiming that every Mathlib
 source-style option is enabled. Production Theory files declare their universe
 parameters explicitly and keep lines within 100 columns.
+
+The [computational API decision](core-api.md) adopts the core retention and
+direct-import judgments, including the compatibility reason for keeping the
+RationalFn umbrella re-exports. It makes no minimal-transitive-import claim.

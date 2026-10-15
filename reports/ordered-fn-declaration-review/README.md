@@ -63,3 +63,7 @@ about outstanding Theory acceptance apply at that tag; the subsequent
 [Theory acceptance](theory-acceptance.md) supersedes them. Default archive checks
 remain available in this tree. Current-source checks intentionally refuse the
 later proof/API changes; reproduce that snapshot using its complete-tag checkout.
+
+The [core API and import decisions](core-api.md) adopt the ten computational
+retention judgments against the larger capture. The four flagged regressions
+and remaining final phase checks keep the computational library at Phase 5.

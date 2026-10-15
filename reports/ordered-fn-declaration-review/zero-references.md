@@ -33,7 +33,7 @@ relation for `firstSome`. Its `termination_by` subtype and
 | `Oracle.Bounds.width_neg` | retain: public characterizing API | [HexOrderedFn/Oracle.lean:137](../../HexOrderedFn/Oracle.lean#L137) |
 | `Oracle.Bounds.width_add` | retain: public characterizing API | [HexOrderedFn/Oracle.lean:141](../../HexOrderedFn/Oracle.lean#L141) |
 | `Real.requestWidth_of_nonpos` | retain: public characterizing API | [HexOrderedFn/Real.lean:63](../../HexOrderedFn/Real.lean#L63) |
-| `accessibleWf` | retain: termination elaboration instance | [HexOrderedFn/Search.lean:71](../../HexOrderedFn/Search.lean#L71) |
+| `accessibleWf` | retain: termination elaboration instance | [HexOrderedFn/Search.lean:57](../../HexOrderedFn/Search.lean#L57) |
 | `Real.RelativeTranscendence.ne_image` | retain: existing anonymous compiled example | [HexOrderedFnMathlib/LiouvilleTests.lean:263](../../HexOrderedFnMathlib/LiouvilleTests.lean#L263) |
 | `Real.evalHom_injective` | retain: public characterizing API | [HexOrderedFnMathlib/Evaluation.lean:66](../../HexOrderedFnMathlib/Evaluation.lean#L66) |
 | `Real.evalHom_eq_ratFunc` | retain: public characterizing API | [HexOrderedFnMathlib/Evaluation.lean:79](../../HexOrderedFnMathlib/Evaluation.lean#L79) |
@@ -73,3 +73,7 @@ relation for `firstSome`. Its `termination_by` subtype and
 | `Oracle.Contains.inter_isSome` | retain: existing anonymous compiled example | [HexOrderedFnMathlib/Tests.lean:35](../../HexOrderedFnMathlib/Tests.lean#L35) |
 | `Oracle.Contains.inter` | retain: existing anonymous compiled example | [HexOrderedFnMathlib/Tests.lean:38](../../HexOrderedFnMathlib/Tests.lean#L38) |
 | `Real.sign?_sound` | retain: existing anonymous compiled example | [HexOrderedFnMathlib/Tests.lean:92](../../HexOrderedFnMathlib/Tests.lean#L92) |
+
+The [core API decision](core-api.md) gives the final retention reasons for the
+ten computational rows. It preserves the original table’s source/reference
+scope and does not attest computational Phase 6.

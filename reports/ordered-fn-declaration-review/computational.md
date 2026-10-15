@@ -83,7 +83,7 @@ not additional handwritten algorithms.
 | --- | --- |
 | `Registration` | Fixes the exact executable providers and erased progress proofs for all field queries. It supplies no field-order or semantic correctness claim by itself. |
 | `Extension` | Wraps one canonical rational function at a fixed registration; its value field is the computational representation. |
-| `ext` / `ext_iff` | Equality is equality of the stored fraction; registration proof fields are not compared. Useful public extensionality. |
+| `ext` / `ext_iff` | Equality is equality of the stored fraction; the fixed registration is a shared type parameter, not a compared field. Useful public extensionality. |
 | decidable equality | Derived from the stored canonical fraction; no real equality oracle. |
 | native field instance | Transfers existing canonical-fraction operations and laws. Companion `coreField_eq` checks equality with the Mathlib field dictionary rather than introducing different runtime arithmetic. |
 | `C` / `X` | Coefficient and indeterminate constructors of this fixed registration. |
