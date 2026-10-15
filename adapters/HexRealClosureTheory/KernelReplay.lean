@@ -72,10 +72,30 @@ private initialize auditedConstants : EnvExtension (PHashMap Name (Array Name)) 
 -- are immutable in descendants of the environment that checked them. Rollback
 -- discards entries even when an unchanged declaration later refers to a reused
 -- dependency name. Lean already precomputes imported declarations' axiom sets.
-private def auditedAxioms (name : Name) : MetaM (Array Name) := do
+private partial def auditedAxioms (name : Name) (active : NameSet := {}) : MetaM (Array Name) := do
   let environment ← getEnv
   if let some axioms := auditedConstants.getState environment |>.find? name then return axioms
-  let axioms ← collectAxioms name
+  -- Imported declarations use Lean's precomputed data. A recursive local
+  -- dependency also uses the complete collector, never a provisional empty
+  -- cache entry: every retained entry must contain its full axiom closure.
+  let axioms ← if environment.isImportedConst name || active.contains name then
+      collectAxioms name
+    else do
+      let dependencies ← match environment.checked.get.find? name with
+        | some (.defnInfo info) => pure (some (info.type.getUsedConstants ++ info.value.getUsedConstants))
+        | some (.thmInfo info) => pure (some (info.type.getUsedConstants ++ info.value.getUsedConstants))
+        | some (.opaqueInfo info) => pure (some (info.type.getUsedConstants ++ info.value.getUsedConstants))
+        | some (.ctorInfo info) => pure (some info.type.getUsedConstants)
+        | some (.recInfo info) => pure (some info.type.getUsedConstants)
+        | some (.inductInfo info) => pure (some (info.type.getUsedConstants ++ info.ctors.toArray))
+        | _ => pure none
+      let some dependencies := dependencies | collectAxioms name
+      let mut result := #[]
+      let active := active.insert name
+      for dependency in dependencies do
+        for axiomName in ← auditedAxioms dependency active do
+          unless result.contains axiomName do result := result.push axiomName
+      pure (result.qsort Name.lt)
   for axiomName in axioms do
     unless #[`propext, `Classical.choice, `Quot.sound].contains axiomName do
       throwError "unexpected axiom {axiomName} through {name}"
