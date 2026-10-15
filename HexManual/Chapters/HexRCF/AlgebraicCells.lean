@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 import VersoManual
-import HexRCF.CellReplay.Algebraic.Quoted
+import HexRCF.CellReplay.Algebraic.BooleanQuoted
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -83,6 +83,37 @@ requires the actual frozen readers and carrier acceptance, and excludes earlier
 source witnesses. Their only axioms are `propext`, `Classical.choice` and
 `Quot.sound`. Kernel reduction diagnostics separately prohibit native root,
 sign and scalar production while checking replay acceptance.
+
+The same checked rows can be reused when the entire ordered specialized
+polynomial list is unchanged, including repeated and zero atoms. Changing a
+comparison or Boolean connective still requires a fresh strict fold and source
+quotation. The transfer preserves every stored row; it does not identify the
+old and new propositions. These universal and between-root examples reuse the
+same packet:
+
+```lean
+open Hex.RCF.RealCoefficients
+open CellReplayTests
+example : ∀ x : ℝ,
+    (x ^ 2 - Real.sqrt 2 < 0 ∨
+      x ^ 2 - Real.sqrt 2 ≥ 0) ∧
+    (0 : ℝ) = 0 :=
+  Algebraic.BooleanSources.lt_or_ge
+
+example : ∃ x : ℝ,
+    (x ^ 2 - Real.sqrt 2 ≤ 0 ∧
+      x ^ 2 - Real.sqrt 2 ≠ 0) ∧
+    (0 : ℝ) = 0 :=
+  Algebraic.BooleanSources.negative
+```
+
+Additional fresh proofs cover equality/non-equality and positive outer
+sectors. All six comparisons, conjunction, disjunction and negation are
+checked, including incompatible existential and false universal verdicts.
+Moving the zero atom changes the ordered polynomial list and the literal row
+reader rejects the reused packet. The fresh proof-body audit excludes the
+earlier source witnesses and scalar suppliers. Original divisor preflight
+and original-goal authentication remain mandatory for every new quotation.
 
 This example uses one supplied lawful ordinary-real parent and one fixed
 complete packet. It establishes finite replay over a non-rational stored

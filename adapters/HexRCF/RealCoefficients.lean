@@ -62,6 +62,7 @@ public import HexRCF.RealCoefficients.CellPacketConvert
 public import HexRCF.RealCoefficients.CellPacketTransport
 public import HexRCF.RealCoefficients.SectorReplay
 public import HexRCF.RealCoefficients.CellRead
+public import HexRCF.RealCoefficients.CellReuse
 public meta import HexRCF.RealCoefficients.CellQuote
 public import HexRCF.RealCoefficients.RootTable
 public import HexRCF.RealCoefficients.RootTransport
