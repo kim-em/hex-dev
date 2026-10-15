@@ -49,6 +49,49 @@ zero swap). All six final desktop/narrow API and scope captures were opened;
 the changed code and prose have zero local overflow. Start and end captures
 show the same code block at distinct scroll offsets, with all its lines visible.
 
+The checkpoint implementation at `6db3d5f7cd4f9cf9c52b6f11c0838d17b58fbb1c`
+additionally observes cancellation before and after coefficient/formula
+evaluation. `Environment.build` retains its raw native operation;
+`Environment.buildWith` checks cancellation around that operation and passes
+its complete higher-universe packet to a meta continuation. The compiled call
+itself has no internal checkpoint. These checks do not turn reflection limits
+into an arithmetic budget. The full 14,296-job manual/optional/conformance
+integration passes (3m39.505s, 6.4 GiB peak, zero swap). The displayed chapter
+is byte-identical to the rendered source; the separate
+[checkpoint record](data/hexrcf-algebraic-preparation/checkpoint-context.json)
+retains this implementation and validation scope.
+
+## Quotation boundaries
+
+Whole-coefficient presentations remain the native API's input convention.
+Frozen quotation can instead retain atomic algebraic generators and derive
+compound coordinate and divisor identities through the actual model's
+arithmetic laws, while keeping the source schema's maximal closed coefficients.
+Native preparation alone does not select or authenticate such a frozen layout.
+
+A direct probe applying the public `NativeChain.ofContext` to a closed selected
+presentation factory expression reaches the extraction call, then exhausts
+2,400,000 heartbeats in `isDefEq` (57.109s, 12.3 GiB peak, zero swap). This
+identifies a costly reduction path; it does not prove a mathematical API is
+missing or that a different reconstruction is impossible.
+
+The ordinary public-module reduction boundary has a smaller independent probe.
+A fresh `module` importing only `HexRCF.RealCoefficients` cannot prove rejection
+of an empty malformed rational `Codec.readGraph` input with `decide +kernel`:
+reduction remains stuck at that reader. The otherwise identical control with
+`import all HexSignDet.Codec` passes ordinary kernel checking. The private
+import is retained solely as a diagnostic control, not introduced into the
+adapter or proposed as the production boundary. A public reader equation or
+exposure is needed for this direct reduction path. This probe does not claim
+complete packet acceptance or audit every deeper reader dependency.
+
+The retained `CellWith` prototype verifies supplied-operation specialization
+and radical-check equalities against the canonical operations. Complete
+operation-parametric root/cell parsing and final fold acceptance are separate
+remaining implementation work. Existing owner record assembly can supply
+checked arithmetic dictionaries; its compiled missing-record fallback is
+still distinct from strict rejection of arbitrary omitted records.
+
 ## Retained native stress diagnosis
 
 The previously interrupted automatic-input stress case is unchanged:
