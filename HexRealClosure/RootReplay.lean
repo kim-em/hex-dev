@@ -21,7 +21,7 @@ variable [one : One E] [add : Add E] [neg : Neg E] [sub : Sub E]
 variable [mul : Mul E] [inv : Inv E] [div : Div E] [natCast : NatCast E]
 
 /-- Every coefficient in the serialized subject and complete retained graph.
-The list includes moment witnesses and unreachable entries, with duplicates. -/
+The list includes moment witnesses and duplicates. -/
 @[expose] def coefficients (raw : RawDescriptor E Ctx) (graph : Dag E Ctx) : List E :=
   Codec.Coefficients.poly raw.head ++
     (Codec.Coefficients.endpoint raw.lower ++
@@ -30,6 +30,18 @@ The list includes moment witnesses and unreachable entries, with duplicates. -/
 /-- Every literal context in the subject and retained graph, including moments. -/
 @[expose] def contexts (raw : RawDescriptor E Ctx) (graph : Dag E Ctx) : List Ctx :=
   raw.context :: Codec.graphContexts graph
+
+/-- Finite coefficient requirements read directly from the supplied evidence
+tree, without running hash consing. Repeated node occurrences remain present. -/
+@[expose] def treeCoefficients (raw : RawDescriptor E Ctx) (tree : Replay E Ctx) : List E :=
+  Codec.Coefficients.poly raw.head ++
+    (Codec.Coefficients.endpoint raw.lower ++
+      (Codec.Coefficients.endpoint raw.upper ++ tree.nodes.flatMap Codec.Coefficients.node))
+
+/-- Literal contexts in the supplied subject and tree, without hash lookups.
+Accepted evidence binds every node and moment context to the subject context. -/
+@[expose] def treeContexts (raw : RawDescriptor E Ctx) (tree : Replay E Ctx) : List Ctx :=
+  raw.context :: tree.nodes.flatMap Codec.nodeContexts
 
 /-- Decode the complete root subject and all supplied graph entries before
 checking a count-one descriptor. The predecessor codec may require exact
@@ -61,19 +73,38 @@ theorem readDescriptor_covered [Hashable E] [Hashable Ctx]
     (fun x hx => lower x (by simp [Codec.Coefficients.endpoint, hx]))
     (fun x hx => upper x (by simp [Codec.Coefficients.endpoint, hx]))
   obtain ⟨_, _, accepted, _⟩ := RawDescriptor.check_eq root.accepted
-  have replay := Dag.replay_encode accepted
+  obtain ⟨memo, checked⟩ := Dag.validate_encode accepted
   have restored : Codec.readGraph value ctx binding root.raw.head root.raw.lower root.raw.upper
       (Codec.graph value ctx (Dag.encode root.evidence)) = .ok (Dag.encode root.evidence) := by
-    cases checked : (Dag.encode root.evidence).validate? sign binding root.raw.head
-        root.raw.lower root.raw.upper with
-    | none => simp [Dag.replay?, checked, bind, Option.bind] at replay
-    | some memo =>
-      exact Codec.read_graph_covered value ctx binding root.raw.head root.raw.lower root.raw.upper
-        (Dag.encode root.evidence) graph hc.2 (Dag.encode_root root.evidence)
-        (Codec.Shape.of_validate checked) (Codec.bindings_of_validate checked)
-        (Dag.encode_bounds root.evidence)
+    exact Codec.read_graph_covered value ctx binding root.raw.head root.raw.lower root.raw.upper
+      (Dag.encode root.evidence) graph hc.2 (Dag.encode_root root.evidence)
+      (Codec.Shape.of_validate checked) (Codec.bindings_of_validate checked)
+      (Dag.encode_bounds root.evidence)
   simp [readDescriptor, subject, restored, Dag.descriptor_encode, Descriptor.ofReplay_self,
     bind, Except.bind, pure, Except.pure]
+
+omit neg inv div in
+/-- Tree coverage implies exact restoration under any caller hash instances.
+The caller need not evaluate the encoder to establish either finite premise. -/
+theorem readDescriptor_tree [Hashable E] [Hashable Ctx]
+    (value : ValueCodec E) (ctx : ValueCodec Ctx) {sign : E → Int} {binding : Ctx}
+    (root : Descriptor E Ctx sign binding)
+    (hv : value.Covers (treeCoefficients root.raw root.evidence))
+    (hc : ctx.Covers (treeContexts root.raw root.evidence)) :
+    readDescriptor value ctx sign binding (Codec.descriptor value ctx root.raw)
+      (Codec.graph value ctx (Dag.encode root.evidence)) = .ok root := by
+  simp only [treeCoefficients, ValueCodec.covers_append, ValueCodec.covers_flatMap] at hv
+  simp only [treeContexts, ValueCodec.covers_cons, ValueCodec.covers_flatMap] at hc
+  apply readDescriptor_covered value ctx root
+  · simp only [coefficients, ValueCodec.covers_append]
+    refine ⟨hv.1, hv.2.1, hv.2.2.1, ?_⟩
+    simpa only [Codec.Coefficients.graph, ValueCodec.covers_flatMap,
+      Array.mem_toList_iff] using
+      Dag.encode_nodes (fun n => value.Covers (Codec.Coefficients.node n)) root.evidence hv.2.2.2
+  · simp only [contexts, ValueCodec.covers_cons]
+    refine ⟨hc.1, ?_⟩
+    simpa only [Codec.graphContexts, ValueCodec.covers_flatMap, Array.mem_toList_iff] using
+      Dag.encode_nodes (fun n => ctx.Covers (Codec.nodeContexts n)) root.evidence hc.2
 
 omit neg inv div in
 /-- An accepted descriptor retains the entire decoded subject literally,

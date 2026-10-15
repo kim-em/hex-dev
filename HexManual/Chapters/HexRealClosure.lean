@@ -349,9 +349,13 @@ same descriptor from its complete subject and encoded evidence. Its hypotheses
 require the supplied readers to cover only the finite lists
 {name}`Hex.RealClosure.Algebraic.RootReplay.coefficients` and
 {name}`Hex.RealClosure.Algebraic.RootReplay.contexts`. These include every retained
-graph entry and moment, including entries outside the selected root's reachable
-graph. Partial predecessor readers are allowed, and hashing uses the caller's
-instances. The byte theorem
+graph entry and moment; their contexts equal the checked subject's context.
+Partial predecessor readers are allowed, and hashing uses the caller's instances.
+{name}`Hex.RealClosure.Algebraic.RootReplay.readDescriptor_tree` takes coverage
+of {name}`Hex.RealClosure.Algebraic.RootReplay.treeCoefficients` and
+{name}`Hex.RealClosure.Algebraic.RootReplay.treeContexts` instead, so coverage
+can be proved from the original tree without evaluating hash-table lookups.
+The byte theorem
 {name}`Hex.RealClosure.Algebraic.RootReplay.decodeDescriptor_covered` additionally
 requires the subject and evidence to pass the lexical resource checks.
 

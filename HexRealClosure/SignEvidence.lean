@@ -187,13 +187,9 @@ theorem ofSigns_bindings [Hashable E] [Hashable Ctx]
       Codec.bindings context.root.raw.context context.root.raw.head
         context.root.raw.lower context.root.raw.upper entry.node = true := by
   obtain ⟨accepted, _⟩ := signs.check_eq
-  have replay := Dag.replay_encode accepted
-  cases hv : (Dag.encode signs.evidence).validate? coeffSign parent context.root.raw.head
-      context.root.raw.lower context.root.raw.upper with
-  | none => simp [Dag.replay?, hv, bind, Option.bind] at replay
-  | some memo =>
-    rw [(RawDescriptor.check_eq context.root.accepted).2.1]
-    exact Codec.bindings_of_validate hv
+  obtain ⟨memo, hv⟩ := Dag.validate_encode accepted
+  rw [(RawDescriptor.check_eq context.root.accepted).2.1]
+  exact Codec.bindings_of_validate hv
 
 /-- Every node encoded from checked joint signs meets the parser's dimensions
 and reduction-index bounds. -/
@@ -202,11 +198,8 @@ theorem ofSigns_shape [Hashable E] [Hashable Ctx]
     (signs : SelectedSigns context.root queries) :
     ∀ entry ∈ (ofSigns signs).graph.entries, Codec.Shape entry.node := by
   obtain ⟨accepted, _⟩ := signs.check_eq
-  have replay := Dag.replay_encode accepted
-  cases hv : (Dag.encode signs.evidence).validate? coeffSign parent context.root.raw.head
-      context.root.raw.lower context.root.raw.upper with
-  | none => simp [Dag.replay?, hv, bind, Option.bind] at replay
-  | some memo => exact Codec.Shape.of_validate hv
+  obtain ⟨memo, hv⟩ := Dag.validate_encode accepted
+  exact Codec.Shape.of_validate hv
 
 /-- Producer output satisfies every graph parser bound and literal binding.
 Only lawful coefficient and context codecs are required. -/

@@ -34,17 +34,12 @@ theorem Context.readGraph_data (parent : Context registry)
   letI : Hashable parent.Value := ⟨fun a => hash (parent.codec.encode a)⟩
   letI : Hashable Signature := ⟨fun _ => 0⟩
   obtain ⟨_, _, accepted, _⟩ := RawDescriptor.check_eq descriptor.accepted
-  have replay := Dag.replay_encode accepted
-  cases hv : (Dag.encode descriptor.evidence).validate? parent.sign parent.signature
-      descriptor.raw.head descriptor.raw.lower descriptor.raw.upper with
-  | none => simp [Dag.replay?, hv, bind, Option.bind] at replay
-  | some memo =>
-    apply Codec.read_graph parent.codec (contextCodec parent.signature) parent.codec_lawful
-      (contextCodec_lawful parent.signature) parent.signature descriptor.raw.head
-      descriptor.raw.lower descriptor.raw.upper (Dag.encode descriptor.evidence)
-      (Dag.encode_root descriptor.evidence) (Codec.Shape.of_validate hv)
-      (Codec.bindings_of_validate hv)
-      (Dag.encode_bounds descriptor.evidence)
+  obtain ⟨memo, hv⟩ := Dag.validate_encode accepted
+  exact Codec.read_graph parent.codec (contextCodec parent.signature) parent.codec_lawful
+    (contextCodec_lawful parent.signature) parent.signature descriptor.raw.head
+    descriptor.raw.lower descriptor.raw.upper (Dag.encode descriptor.evidence)
+    (Dag.encode_root descriptor.evidence) (Codec.Shape.of_validate hv)
+    (Codec.bindings_of_validate hv) (Dag.encode_bounds descriptor.evidence)
 
 /-- Read the descriptor fields and independently replay the supplied graph
 over the exact native predecessor. All mathematical acceptance comes from
