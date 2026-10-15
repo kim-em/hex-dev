@@ -12,20 +12,17 @@ public meta section
 namespace Hex.RealClosure.Algebraic.KernelReplay.CoefficientMembers
 open Lean Meta Elab Command FiniteData
 
-private def statement (domain coefficient polynomial : Expr) (bound? : Option Expr := none) :
-    MetaM Expr := do
+private def statement (domain coefficient polynomial : Expr) (bound? : Option Expr := none)
+    (less? : Option Expr := none) : MetaM Expr := do
   let size ← match bound? with
     | some bound => pure bound
     | none => mkAppM ``DensePoly.size #[polynomial]
   withLocalDeclD `i (mkConst ``Nat) fun i => do
-    withLocalDeclD `bound (← mkAppM ``Nat.lt #[i, size]) fun bound => do
+    let less := less?.getD (mkConst ``Nat.lt)
+    withLocalDeclD `bound (mkApp2 less i size) fun bound => do
       mkForallFVars #[i, bound] (mkApp domain (mkApp coefficient i))
 
-private def check (agreement type : Expr) : MetaM Unit := do
-  let some proof ← agreementSupplier agreement none type |
-    throwError "whole retained coefficient list was not supplied"
-  unless proof.getAppFn.isConstOf ``Transport.Inventory.Agreement.members do
-    throwError "test did not exercise the whole-list theorem"
+private def checkProof (type proof : Expr) : MetaM Unit := do
   let locals := (← getLCtx).getFVarIds.map mkFVar
   let type ← mkForallFVars locals type
   let proof ← mkLambdaFVars locals proof
@@ -36,6 +33,13 @@ private def check (agreement type : Expr) : MetaM Unit := do
     (.thmDecl {
       name := `__wholeCoefficientMembers, levelParams := levels,
       type, value := proof })).map (fun _ => ())
+
+private def check (agreement type : Expr) : MetaM Unit := do
+  let some proof ← agreementSupplier agreement none type |
+    throwError "whole retained coefficient list was not supplied"
+  unless proof.getAppFn.isConstOf ``Transport.Inventory.Agreement.members do
+    throwError "test did not exercise the whole-list theorem"
+  checkProof type proof
 
 private def refused (label : String) (agreement type : Expr) : MetaM Unit := do
   if (← agreementSupplier agreement none type).isSome then
@@ -71,18 +75,26 @@ def elaborate : CommandElab := fun _ => liftTermElabM do
   let originalType ← inferType (mkConst ``FiniteBaseProbe.agreement)
   let parameters := originalType.getAppArgs
   let target ← statement base.domain coefficient left
+  let standardLT := mkApp2 (mkConst ``LT.lt [Level.zero])
+    (mkConst ``Nat) (mkConst ``instLTNat)
   for inventory in #[lefts, appended, nested, consed, mkConst supportName,
       mkConst chainName, underAppend, underCons, duplicate] do
     let agreementType := mkAppN originalType.getAppFn
       (parameters.set! (parameters.size - 1) inventory)
     withLocalDeclD `agreement agreementType fun agreement => do
       check agreement target
+      check agreement (← statement base.domain coefficient left (less? := some standardLT))
+      withLocalDeclD `order (← mkAppM ``LT #[mkConst ``Nat]) fun order => do
+        let customLT := mkApp2 (mkConst ``LT.lt [Level.zero]) (mkConst ``Nat) order
+        refused "unverified natural-number order" agreement
+          (← statement base.domain coefficient left (less? := some customLT))
       let assigned ← mkFreshExprMVar (some (← inferType left))
       assigned.mvarId!.assign left
       let args := coefficient.getAppArgs
       let aliased := mkAppN coefficient.getAppFn (args.set! (args.size - 1) assigned)
       check agreement (← statement base.domain aliased assigned)
       refused "different bound" agreement (← statement base.domain coefficient left (some (toExpr (1 : Nat))))
+      -- Pin conservative fallback shapes, rather than soundness restrictions.
       let wrappedSize ← mkAppM ``Nat.add #[← mkAppM ``DensePoly.size #[left], toExpr (0 : Nat)]
       refused "nonstructural size bound" agreement
         (← statement base.domain coefficient left (some wrappedSize))
@@ -100,10 +112,21 @@ def elaborate : CommandElab := fun _ => liftTermElabM do
       refused "polynomial metavariable" agreement (← statement base.domain incomplete unknown)
       if ← unknown.mvarId!.isAssigned then throwError "supplier assigned caller polynomial"
       let args := coefficient.getAppArgs
-      withLocalDeclD `zero (← inferType args[1]!) fun zero => do
-        let changed := mkAppN coefficient.getAppFn (args.set! 1 zero)
-        refused "coefficient dictionary" agreement (← statement base.domain changed left)
+      for index in #[1, 2] do
+        withLocalDeclD `dictionary (← inferType args[index]!) fun dictionary => do
+          let changed := mkAppN coefficient.getAppFn (args.set! index dictionary)
+          refused "coefficient dictionary" agreement (← statement base.domain changed left)
+  let composedType := mkAppN originalType.getAppFn
+    (parameters.set! (parameters.size - 1) appended)
+  withLocalDeclD `agreement composedType fun agreement => do
+    let domains := agreementSupplier agreement none
+    let required ← mkAppM ``Transport.Sum #[base.read, left, right]
+    let proof ← build required (base.supply domains domains)
+    unless (proof.find? (·.isConstOf ``Transport.Inventory.Agreement.members)).isSome do
+      throwError "composed base supplier did not use whole coefficient agreements"
+    checkProof required proof
   let original := mkConst ``FiniteBaseProbe.agreement
+  -- This notation shape currently uses the existing enumeration fallback.
   refused "notation inventory shape" original target
   let fallback ← build target (agreementSupplier original none)
   let _ ← auditProof fallback target
@@ -134,7 +157,9 @@ def elaborate : CommandElab := fun _ => liftTermElabM do
   let aliasName := mkPrivateName (← getEnv) (← mkFreshUserName `__polymorphicSupport)
   let aliasType ← inferType inventory
   addDecl (.defnDecl {
-    name := aliasName, levelParams := [`u], type := aliasType, value := inventory,
+    name := aliasName, levelParams := [`v],
+    type := aliasType.instantiateLevelParams [`u] [Level.param `v],
+    value := inventory.instantiateLevelParams [`u] [Level.param `v],
     hints := .regular 0, safety := .safe })
   setReducibilityStatus aliasName .irreducible
   let inventory := mkConst aliasName [Level.param `u]
