@@ -317,6 +317,12 @@ class FixedExportGuardTest(unittest.TestCase):
             self.result(arm)['config']['expected_hash'] = self.result(arm)['observed_hash']
         self.check(0)
 
+    def test_adding_hash_does_not_allow_other_configuration_changes(self):
+        for arm in range(4, 8):
+            self.result(arm)['config']['expected_hash'] = self.result(arm)['observed_hash']
+            self.result(arm)['config']['min_total_seconds'] *= 2
+        self.check('refuse')
+
     def test_declared_expected_hash_cannot_be_removed(self):
         for arm in range(4):
             self.result(arm)['config']['expected_hash'] = self.result(arm)['observed_hash']

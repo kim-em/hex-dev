@@ -176,8 +176,8 @@ an inconclusive-result retry.
 Historical exports may lack `expected_hash`; when present, it must match every
 call. A candidate may add this guard to an unguarded baseline, provided every
 other configuration field and every result hash agree. Removing a baseline
-guard is refused. Cross-source and cross-repeat hash agreement is always required, but is
-not independent correctness evidence and does not waive the SPEC requirement
+guard is refused. Cross-source and cross-repeat hash agreement is always
+required, but is not independent correctness evidence and does not waive the SPEC requirement
 that fixed registrations declare `expectedHash`. Applicable correctness checks
 and source/configuration bindings remain prerequisites for performance
 acceptance. The Sturm collector still selects only its existing parameterized
