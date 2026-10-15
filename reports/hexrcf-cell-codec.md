@@ -301,3 +301,22 @@ retains 23 raw logs and 24 browser artifacts, including failed proof/test and
 layout attempts. These are source-scoped integration and rendering observations,
 not a speedup comparison. The fixed native model/codec and original-source
 quotation limits above remain unchanged.
+
+## Refusal attribution and state restoration
+
+The [refusal record](data/hexrcf-cell-codec/refusal-context.json) binds seven
+source files to `9ecdfa96b245b8cf163d83e5ec285ecffc687d1e` and retains five raw
+logs. Every quotation refusal now checks restoration of the metavariable
+declaration count and an unrelated unassigned marker. The known-zero source
+case tests rollback through its established preflight error; a separate
+nonzero-divisor mismatch reaches the divisor-identity check. The corrupted
+moment system is refused directly by `RootReplay.read` as well as complete
+replay. Each selected-field complete theorem independently requires its own
+`run_complete` and `check_covered` dependencies.
+
+The selected refusal/audit/field/manual build passes 11,624 jobs in 26.795
+seconds, with a 2 GiB peak and no swap. Metadata checks pass with 641 import
+cones/1,541 local modules. Only tests and theorem/module comments change;
+producer/checker algorithms and displayed manual source bytes are unchanged.
+The earlier inspected rendering retains its separate source scope. All general
+frozen-history, strict missing-record and frontend obligations remain open.
