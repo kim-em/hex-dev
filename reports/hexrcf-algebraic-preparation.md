@@ -6,8 +6,13 @@ It preserves the reifier's coefficient order and original divisor inventory,
 interprets both through `Coefficients.interpret`, and checks each resulting
 source equality in the ordinary kernel. Preparation shares reflection
 accounting with the source reifier rather than restarting the budget for each
-coordinate. The default callback attempts routine radical-base nonnegativity; callers may
+coordinate. A divisor occurring inside a coefficient is interpreted and charged
+again as an original guard; this conservative accounting can refuse earlier.
+The default callback attempts routine radical-base nonnegativity; callers may
 supply other ordinary proofs. Incorrect proofs are rejected.
+The native proposals require executable closed algebraic constructions;
+noncompilable constructions and callback exceptions remain terminal exceptions,
+with state restored. They do not select a different solver.
 
 The environment stores executable coefficient proposals first, followed by
 every original divisor proposal. Separate finite indices retain the two roles,
@@ -18,14 +23,15 @@ a new tactic handler. Its identities concern the retained algebraic expressions.
 They do not establish that independently quoted literals denote the compiled
 proposals, nor reconstruct frozen source/provider/predecessor histories.
 
-The [conformance module](../conformance/HexRCF/AlgebraicPreparationConformance.lean)
+The [conformance cases](../conformance/HexRCF/AlgebraicPreparationCases.lean) and
+[independent completion check](../conformance/HexRCF/AlgebraicPreparationConformance.lean)
 checks independent square-root inputs, the actual source identity bodies and
 their transitive axioms, ordered original guards, guard-only constants, both
 true and false native verdicts, and retained half-open domain atoms. A budget
 that fits source reification alone refuses additional coefficient work.
 Incorrect nonnegativity proofs, unregistered constants and variable-dependent
 denominators remain failures. Failure restores metavariables and a deliberately
-created declaration; a cancelled zero divisor cannot enter root production.
+created declaration; an algebraically zero divisor yields exactly `.divisor`.
 
 Preparation scopes its proof auxiliaries under a fresh private prefix. The
 conformance checks that property directly. The initial full manual import
@@ -84,7 +90,7 @@ already preserves resource tags; the callback now uses a finalizer to restore
 state on those exceptions as well as normal decline.
 
 The [corrected-source record](data/hexrcf-algebraic-preparation/corrective-context.json)
-binds the current implementation, compiler trace and completed regressions to
+binds the strict-boundary implementation, compiler trace and completed regressions to
 their source commit. Its 14,302-job optional/conformance/fresh-quotation/full-manual
 selection passes in 4m14.374s at 4 GiB peak with zero swap. Both the cases' own
 completion message and the separate importing module's check are present.
@@ -96,6 +102,18 @@ passes 14,297 jobs (25.061s, 2.3 GiB peak, zero swap); its browser inspection
 takes 10.401s at 2.9 GiB peak with zero swap. All six final desktop/narrow captures
 were opened and have zero local overflow. These incremental build/render
 observations are separate scopes, not performance comparisons.
+
+The [final conformance record](data/hexrcf-algebraic-preparation/followup-context.json)
+adds two post-mutation callback failures: an ordinary exception and an
+interrupt, each after creating a metavariable and declaration. Both escape
+with the expected exception kind and restore that state. Mixed-role packets
+contain positive √2 coefficients and an original negative rational divisor;
+the universal positive and existential negative tests yield true and false,
+respectively. Swapping those roles changes both verdicts. This focused
+11,024-job selection passes (1m21.761s, 4.1 GiB peak, zero swap) with both
+completion markers. The production change after the strict-boundary source
+is documentation only; the manual source and its inspected rendering are
+unchanged. This selection adds conformance coverage, not a performance result.
 
 The [current-main integration](data/hexrcf-algebraic-preparation/main-context.json)
 at `e9b99f9f9fb8ffdd03f67a6b29979e13d5caad1c` consumes the actual merged

@@ -83,6 +83,8 @@ private def entry (source : Expr) (prepared : Coefficients.Prepared) : MetaM Ent
   unless !expression.hasFVar && !expression.hasMVar && !expression.hasLooseBVars do
     throwError "rcf: native algebraic input is not closed"
   let expression ← Hex.RCF.checkExpr `AlgebraicPreparation.input expression
+  -- Interpretation's debug kernel check does not enforce this exact target
+  -- or screen its axioms. Retain the checked, private source identity.
   let identity ← Hex.RCF.checkProof `AlgebraicPreparation.identity
     (← mkEq (← mkAppM ``RealAlgebraicNumber.toReal #[expression]) source) identity
   Core.checkInterrupted
@@ -123,7 +125,9 @@ private def prepareCore (target : Expr) (nonnegative : Expr → MetaM (Option Ex
 /-- Prepare closed algebraic coefficients directly for native selected
 presentations. Reuse shared source lowering, all original divisor obligations
 and aggregate reflection accounting. Unsupported syntax and resource failures
-remain distinct; failed attempts restore the complete elaborator state. -/
+remain distinct; failed attempts restore the complete elaborator state.
+Proposals require executable closed constructions. Native compilation failures
+and exceptions from callbacks are terminal, rather than syntax declines. -/
 def prepare (target : Expr) (nonnegative : Expr → MetaM (Option Expr) := FieldRuntime.nonnegative)
     (config : Hex.RealFormula.Reify.Config := {}) :
     MetaM (Except Hex.RealFormula.Reify.Error Inputs) := do
