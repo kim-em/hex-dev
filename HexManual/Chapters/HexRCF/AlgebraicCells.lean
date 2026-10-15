@@ -225,7 +225,8 @@ open Hex.RCF.RealCoefficients
 example
     {r : BaseContext.Registry}
     {c : Tower.Context r} {n : Nat}
-    [Hashable c.Value] [Hashable Signature]
+    [Hashable c.Value]
+    [Hashable Tower.Signature]
     (model : Tower.Model c ℝ) (point : c.Value)
     (values : Fin n → c.Value)
     (formula : RealFormula.QF (n + 1)) :
