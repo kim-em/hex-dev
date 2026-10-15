@@ -27,11 +27,10 @@ specialization, complete cell replay and quotation:
 ```lean
 open Hex.RCF.RealCoefficients
 open CellReplayTests
-open Algebraic
 example : ∃ x : ℝ,
     x ^ 2 - Real.sqrt 2 ≥ 0 ∧
     x ^ 2 - Real.sqrt 2 ≤ 0 ∧
-    (0 : ℝ) = 0 := Quote.source
+    (0 : ℝ) = 0 := Algebraic.Quote.source
 ```
 
 The table's exact root set and strict order are proved conclusions of the
@@ -41,18 +40,19 @@ square but different selected identities:
 ```lean
 open Hex.RCF.RealCoefficients
 open CellReplayTests
-open Algebraic
-open Canonical (roots)
-open Schema (original)
 example (x : ℝ) :
-    x ∈ roots.values original ↔
+    x ∈
+      Algebraic.Canonical.roots.values
+        Algebraic.Schema.original ↔
       x = Real.sqrt (Real.sqrt 2) ∨
       x = -Real.sqrt (Real.sqrt 2) :=
-  Meaning.roots_eq x
+  Algebraic.Meaning.roots_eq x
 
 example :
-    (roots.values original).Pairwise
-      (· < ·) := Meaning.ordered
+    (Algebraic.Canonical.roots.values
+      Algebraic.Schema.original).Pairwise
+      (· < ·) :=
+  Algebraic.Meaning.ordered
 ```
 
 All coefficient signs used by these readers come from 21 distinct frozen
@@ -70,11 +70,11 @@ value from the normalized matrix. This source retains and authenticates −1:
 ```lean
 open Hex.RCF.RealCoefficients
 open CellReplayTests
-open Algebraic
 example : ∃ x : ℝ,
     x ^ 2 - Real.sqrt 2 ≥ 0 ∧
     x ^ 2 - Real.sqrt 2 ≤ 0 ∧
-    0 / (-1 : ℝ) = 0 := Guards.source
+    0 / (-1 : ℝ) = 0 :=
+  Algebraic.Guards.source
 ```
 
 A supplied zero divisor is rejected before decoding, including with a malformed
