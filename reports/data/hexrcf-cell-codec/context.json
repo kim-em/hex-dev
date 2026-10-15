@@ -147,5 +147,10 @@
     "Build times are incremental operational observations, not a performance comparison.",
     "Manual text/styles are unchanged; no new rendering claim is made.",
     "Earlier failed proof attempts and the incorrect combined unittest invocation are retained."
-  ]
+  ],
+  "artifact_commit": "7ca496b83f4ce3b98bd169f9730e66d042f3f448",
+  "artifacts_sha256": {
+    "reports/hexrcf-cell-codec.md": "bdbb86d8db11c92de25a7950d744376e8029dcd03e1e1d557ae35b84a1c8b127",
+    "reports/data/hexrcf-cell-codec/collect.py": "685028a871a9027ecfe771ffde843b22a02778ee8ea054f38cd5e033d7796c29"
+  }
 }
