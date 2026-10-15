@@ -1,0 +1,175 @@
+{
+  "schema": 1,
+  "source_commit": "56cccab8bf5134a194407b9fc99a565e1e39bd55",
+  "selected_source_hashes": {
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "818738e025bc4aec4ca2fbc0b536c1df36ca8ff83ea150c349fab5e6cd014ba1",
+    "adapters/HexRCF/RealCoefficients.lean": "24928bf1688628a829ee8c7dd67961908dcc6b164e27fd1dda8be95c78e28ae4",
+    "adapters/HexRCF/RealCoefficients/CellAlignment.lean": "685ec948864ed64e2b3d73e643038b748a03199f9199c4acee3654af530a811b",
+    "adapters/HexRCF/RealCoefficients/CellDiscover.lean": "d0ed0010468b063620e39500da8f50ccd1bab87ec703e5e6cd0d443228af3091",
+    "conformance/HexRCF/CellDiscoverAlgebraic.lean": "80666ca8f921d0d5fd39492d8d91dd975d3f5a2cbfe6a1cc982ca1d428fe5c1e",
+    "conformance/HexRCF/CellDiscoverCases.lean": "c43f428f7cbfb02f15417604d36199630081c7f469f4ca28e56d59479c5ea6fe",
+    "conformance/HexRCF/CellDiscoverLinear.lean": "3a01516d5143521a82e3bd6cd487d6b8251fdfd5a80f60909520b287e800d3cd",
+    "conformance/HexRCF/CellDiscoverProofs.lean": "899d32067cf8a73d6bff2c72f85e1905b9ef127a3743bb77aa930a40d740d12c",
+    "lakefile.lean": "b5f675ac9c6f2eb447f9be0c08e9f2432a09b2bbadf14a46c3e22bf7d474fcc4"
+  },
+  "validation_records": [
+    {
+      "file": "discovery-repository-focused-1.log.gz",
+      "sha256": "d5295ab5492dcb24f172372fd1a17f39c262d05ffb960812126a4a8f858828e9",
+      "decoded_sha256": "262a9459e8919bec4efd6eeacd2ba0096e05d6bb3fa15ded6a80f743f4cd2257",
+      "command": "bounded lake build +HexRCF.CellDiscoverLinear +HexRCF.CellDiscoverAlgebraic +HexRCF.CellDiscoverCases +HexRCF.RealCoefficients.CellAlignment",
+      "source_commit": "56cccab8bf5134a194407b9fc99a565e1e39bd55",
+      "exit_code": 0
+    },
+    {
+      "file": "discovery-repository-proof-audit-1.log.gz",
+      "sha256": "9ab6b5130ebdbca0c95ada2af4f2354007bb34f5cb58261811f39c34199c9491",
+      "decoded_sha256": "d901ba9924e71bd9eb796871bb171259dc33ce45e74663cbdd927639fd88518b",
+      "command": "bounded lake build +HexRCF.CellDiscoverProofs HexRCFRealCoefficients",
+      "source_commit": "56cccab8bf5134a194407b9fc99a565e1e39bd55",
+      "exit_code": 0
+    },
+    {
+      "file": "discovery-repository-full-build-1.log.gz",
+      "sha256": "13995f1f2964aae167c907f736eab9468658f942ea7460d7d13f725c9b04a9a9",
+      "decoded_sha256": "6aa47d5b84556ac28db58eb2811021ffd448a789e2b50d028b46ae61296b2514",
+      "command": "bounded lake build HexRCFRealCoefficients HexConformance HexManual",
+      "source_commit": "56cccab8bf5134a194407b9fc99a565e1e39bd55",
+      "exit_code": 0
+    },
+    {
+      "file": "discovery-manual-build-1.log.gz",
+      "sha256": "125df00b50529ab141ee73e835945205901a7cca02d3574cbb38d37502ac4304",
+      "decoded_sha256": "541049f35a78db83f5238335a8184464e7c5a37d146d94001f322f39dac77571",
+      "command": "bounded lake build HexManual",
+      "source_commit": "56cccab8bf5134a194407b9fc99a565e1e39bd55",
+      "exit_code": 0
+    },
+    {
+      "file": "discovery-manual-render-1.log.gz",
+      "sha256": "8cb4b52cb7dcfa77a1e3b7e08e797dc708f6fe77d6939e31beb59f77cf3c95ab",
+      "decoded_sha256": "61c174ab9d17adb9a22609fc308068e60cba72c2c4703aee8172cfe8b536dafa",
+      "command": "bounded lake build FullRender",
+      "source_commit": "56cccab8bf5134a194407b9fc99a565e1e39bd55",
+      "exit_code": 0
+    },
+    {
+      "file": "discovery-manual-browser-1.log.gz",
+      "sha256": "e35419276ccab5f2b6308c63e5e51640efc325b842f6c6eb7cb1c0886d2eab31",
+      "decoded_sha256": "d76cc0614e03e0151438826656e2f8db3d746e1d843618fe066748c4b4119033",
+      "command": "node discovery-cell-browser.mjs <render-directory>",
+      "source_commit": "56cccab8bf5134a194407b9fc99a565e1e39bd55",
+      "exit_code": 0
+    },
+    {
+      "file": "discovery-repository-dag.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": "python3 scripts/check_dag.py",
+      "source_commit": "56cccab8bf5134a194407b9fc99a565e1e39bd55",
+      "exit_code": 0
+    },
+    {
+      "file": "discovery-repository-admissions.log.gz",
+      "sha256": "237f1f00fb16689e9d36ef8742b7c81315d25de7d1c3806e7c8fe50d5ecfe905",
+      "decoded_sha256": "5a17737f98a9919603e3dde677d703d10fa6021ca4354aec637d6f3e22f39bc2",
+      "command": "python3 scripts/ci/check_named_admissions.py",
+      "source_commit": "56cccab8bf5134a194407b9fc99a565e1e39bd55",
+      "exit_code": 0
+    },
+    {
+      "file": "discovery-repository-admission-tests-2.log.gz",
+      "sha256": "28fae37766a159f3854f1c21064c8e08f3961fcee18ee260f74fcf168a2d061c",
+      "decoded_sha256": "66a8cac3c42f6043670bed7863945d7ec27a51b75ebba22ba05ac7a0f3d0f5cb",
+      "command": "python3 scripts/ci/test_check_named_admissions.py",
+      "source_commit": "56cccab8bf5134a194407b9fc99a565e1e39bd55",
+      "exit_code": 0
+    },
+    {
+      "file": "discovery-repository-copyright.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": "python3 scripts/check_copyright_headers.py",
+      "source_commit": "56cccab8bf5134a194407b9fc99a565e1e39bd55",
+      "exit_code": 0
+    },
+    {
+      "file": "discovery-repository-manual-split.log.gz",
+      "sha256": "48a9e140081495d1ab8296879fffbda28bea260c48c63a9e7a2bfa5754ef1009",
+      "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "command": "python3 scripts/release/check_manual_split.py",
+      "source_commit": "56cccab8bf5134a194407b9fc99a565e1e39bd55",
+      "exit_code": 0
+    },
+    {
+      "file": "discovery-repository-literals.log.gz",
+      "sha256": "d363c41d04cc71aaa8b2bb97d1faf6ff4b311e5874c10d339f87aba4d4b97158",
+      "decoded_sha256": "5b2703a612f8c434ac4e53bb05bfeef0dbca1d91cc9125441d5bd447be3dfbc3",
+      "command": "python3 scripts/rcf/selected_literals.py --check",
+      "source_commit": "56cccab8bf5134a194407b9fc99a565e1e39bd55",
+      "exit_code": 0
+    },
+    {
+      "file": "discovery-repository-targets.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": "python3 scripts/conformance_targets.py --check",
+      "source_commit": "56cccab8bf5134a194407b9fc99a565e1e39bd55",
+      "exit_code": 0
+    }
+  ],
+  "retained_attempts": [
+    {
+      "file": "discovery-repository-admission-tests.log.gz",
+      "sha256": "04d16816d993ba89795666f72ebc56cc8be3393c5d4a5d097fdadecd6692e4d0",
+      "decoded_sha256": "e4f1aa2aefee994795d8fb2146f103db3dd6a6e3b2cec155cf63c3403434de13",
+      "outcome": "failed",
+      "reason": "Package-style unittest invocation lacked the script directory on sys.path. The direct script invocation passes all eleven tests."
+    }
+  ],
+  "artifacts": [
+    {
+      "file": "discovery-cell-desktop-preflight.png",
+      "sha256": "3df6b0ad8ba3c34c547fa9c53baa561456f94e2ab34b3d6815e496ce404e9de4"
+    },
+    {
+      "file": "discovery-cell-desktop-scope.png",
+      "sha256": "73bcfb6e52d12df321bf552e76d01741c3c0c8c6efd85195531f8227c9604984"
+    },
+    {
+      "file": "discovery-cell-desktop-source.png",
+      "sha256": "c52c4c34d9a3bb43ab24e6f6a6fb2e0cd202ceef4b518ffc5caadaf950847853"
+    },
+    {
+      "file": "discovery-cell-narrow-preflight.png",
+      "sha256": "c28c3edaf6ec79a2a5a545d62c674a213b00dafecceb2e4ed8e254cdfbf7608c"
+    },
+    {
+      "file": "discovery-cell-narrow-scope.png",
+      "sha256": "5ce1ec0aa65548c60e65ceb6d02c87b9555307669858f391b49085df966704a3"
+    },
+    {
+      "file": "discovery-cell-narrow-source.png",
+      "sha256": "699ab3aca5931aa5146e411370681824fe22fa1b1691300d2c303412369c8782"
+    },
+    {
+      "file": "discovery-cell-browser.mjs",
+      "sha256": "d8ee5d5b97afe367c13417abff30bd33e3551832ebe4fbaed6a8a2be8b357bb3"
+    },
+    {
+      "file": "discovery-cell-inspection.json",
+      "sha256": "e77ef0f7f64dc7a49803049c431e3699339d0e5fd7c065da39d483cb85dd135d"
+    },
+    {
+      "file": "discovery-cell-visual-inspection.txt",
+      "sha256": "6d94bafb06acee5e0f54637162ceba39ca59fc823ee69e61b9cddb0587073374"
+    }
+  ],
+  "limits": {
+    "aggregate_memory_bytes": 34359738368,
+    "swap_bytes": 0,
+    "lean_threads": 2,
+    "concurrent_own_builds": 1
+  },
+  "scope": "Native automatic ordinary-point discovery and independent cell replay, with conditional original-source/guard soundness and ordered boundary alignment. No general frozen history, strict arbitrary-missing-record compiled check or frontend completeness claim."
+}

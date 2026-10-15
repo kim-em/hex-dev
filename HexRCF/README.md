@@ -599,3 +599,14 @@ the existing algebraic packet and retain constant/zero cases and refusals.
 Automatic ordinary-point discovery, complete algebraic source production,
 source/provider history, automatic common-field certification and accepted
 algebraic completeness remain separate obligations.
+
+`CellDiscover.run` instead obtains ordinary sector points from the owner’s
+complete partition and converts every coefficient and original divisor into
+its actual common context. `CellAlignment.aligned` proves exact agreement of
+the partition’s ordered real boundaries with the independently checked radical
+root table; `dimensions` derives the sector count. Accepted replay preserves
+the original shared sentence and guards through the actual collection model.
+[Discovery controls](../reports/hexrcf-cell-discovery.md) cover enlarged-context
+refusal, selected conjugates, zero atoms and half-open endpoint guards. Native
+conversion history is not frozen history evidence, and total frontend
+acceptance and strict arbitrary-missing-record compiled replay remain open.
