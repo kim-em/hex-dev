@@ -6,7 +6,6 @@ Authors: Kim Morrison
 module
 public import HexRCF.RealCoefficients.SectorRequest
 public import HexRealClosureTheory.Sample
-public import HexSignDet.Codec.Bytes
 public section
 namespace Hex.RCF.RealCoefficients.CellDiscover
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet

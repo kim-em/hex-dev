@@ -111,15 +111,25 @@ common-field certification, complete frontend execution/quotation and the
 remaining native/infinitesimal obligations keep #10358 open. The substantial
 native row cost also needs further investigation before any performance claim.
 
-## Validation
+## Current endpoint-route validation
+
+The public producer and sector construction now share `SectorRequest.points`.
+The fresh audit rechecks 28 construction, reuse and decision proof bodies,
+including actual radical/root producer dependencies; the nine discovery bodies
+retain their separate audit. The earlier source-bound records below preserve
+their original checkpoints. New records must separately bind the endpoint
+route, public-path regressions, explicit stress target and current manual.
+
+## Historical validation
 
 The [source-bound record](data/hexrcf-cell-decision/context.json) binds the ten
 implementation/manual/target files at `5a37b7f022`, retaining the full-build
 source at `ebb48a914d` separately. The complete optional
 adapter, conformance and manual build passes 14,689 jobs. It rechecks all 21
-actual theorem bodies and required owner dependencies, and the public seven-case
-native regression passes in 327 seconds. All seven structural checks pass,
-including628 admission cones covering1,528 local modules and eleven scanner
+actual theorem bodies and required owner dependencies, and the seven-case
+native regression, which called `SectorRequest` directly from its driver,
+passes in 327 seconds. All seven structural checks pass,
+including 628 admission cones covering 1,528 local modules and eleven scanner
 regressions. Original rational and algebraic tactic examples remain in that
 same full build.
 

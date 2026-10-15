@@ -10,7 +10,7 @@ public import HexSignDet.Codec.Bytes
 public section
 namespace Hex.RCF.RealCoefficients.RowEncode
 open Hex Hex.RealClosure Hex.SignDet
-/-- Hash the frozen codec representation consistently at every row producer. -/
+/-- Hash frozen codec bytes for the complete-cell producers and their progress proofs. -/
 @[expose, instance_reducible] def hashable {α : Type} (codec : ValueCodec α) : Hashable α :=
   ⟨fun value => hash (codec.encode value).writeBytes⟩
 

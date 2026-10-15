@@ -55,7 +55,8 @@ algebraic fixture byte for byte. The points -2,0,2 are explicit proposals.
 Controls retain the false universal verdict and refuse a zero original divisor,
 an incorrect exterior point and an invalid zero carrier domain. Zero-atom true and false constant matrices exercise empty-root carriers and
 both strict quantifiers while retaining original guards. The new construction
-and row-round-trip theorem axioms are checked directly.
+and row-round-trip theorem bodies and permitted axioms are checked in the
+[fresh construction/decision audit](../conformance/HexRCF/CellDecisionProofs.lean).
 
 The existing fresh original-source quotations still consume independently
 checked frozen data and exclude native producers. A compiled successful test
@@ -76,7 +77,7 @@ joint finite-realization obligations. #10358 remains open for that full scope.
 The [source-bound record](data/hexrcf-cell-build/context.json) retains the full
 adapter/conformance/manual build at `beeee8b24b` (14,678 jobs), the focused
 construction check, all seven structural checks, 623 admission cones covering
-1,523 local modules and eleven scanner regressions. All five new construction
+1,523 local modules and eleven scanner regressions. At that source, all five new construction
 and row-encoding theorems have exactly the standard three axioms. No admission
 is accepted.
 
@@ -89,7 +90,7 @@ fits its code block. Target-level overflow checks make no claim about unrelated
 content elsewhere in the full manual.
 
 Every own build shares one 32GiB cgroup, no swap and two Lean workers. The full
-build's recorded peak was12G. These are operational validation observations,
+build's recorded peak was 12G. These are operational validation observations,
 not performance, scaling or speedup evidence. The final record binds both
 source versions rather than attributing the earlier full build to the later
 manual source. No implementation changes follow the full build.

@@ -618,7 +618,7 @@ section, sector and exact ordinary-point rows from the actual owner producers.
 `CellDecision.complete` proves mathematical existence of accepted typed evidence
 and exact true/false diagnostic semantics at the original coefficient values,
 under an explicit ordinary-real parent model and nonzero original guards.
-[Cell-decision evidence](../reports/hexrcf-cell-decision.md) records the 21 proof
+[Cell-decision evidence](../reports/hexrcf-cell-decision.md) records the 28 proof
 audits, native cases and substantial observed row-production cost. General
 executable serialization/reader progress, source quotation, frozen histories
 and strict arbitrary-missing-record compiled checking remain separate.

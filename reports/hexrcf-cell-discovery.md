@@ -88,7 +88,7 @@ implementation/manual/target files at `56cccab8bf`. The full optional adapter,
 conformance and manual build passes 14,684 jobs. The separate manual build
 passes 14,257 jobs and the fresh complete renderer passes 14,259. The focused
 producer regressions and fresh proof-body audit pass separately. The DAG and
-umbrella check,625 admission cones covering1,525 local modules, eleven scanner
+umbrella check, 625 admission cones covering 1,525 local modules, eleven scanner
 regressions, copyright, manual split, literal regeneration, conformance wiring,
 relative links and `git diff --check` pass. The initial package-style unittest
 invocation failed because its script directory was absent from the import path;
@@ -99,5 +99,5 @@ All six desktop/narrow captures were opened and inspected. The
 and changed prose fit their targets, with zero descendant overflow. This is a
 check of the changed section, not of unrelated horizontal overflow elsewhere
 in the complete manual. Each own build uses one aggregate 32GiB cgroup, zero
-swap and two Lean threads; the full build records an8.8G peak. These are build
+swap and two Lean threads; the full build records an 8.8G peak. These are build
 validation observations, not scaling measurements or a speedup claim.

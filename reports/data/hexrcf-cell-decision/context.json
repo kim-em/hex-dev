@@ -137,7 +137,7 @@
       "decoded_sha256": "01efe7605b1abdc901ba3080947d2bbeaeb5278f24b709a009c79f102f520868",
       "source_commit": "b64a2b22df13eb3077b4618565224c48a51f482f",
       "outcome": "failed",
-      "reason": "The code, all21 proof audits and seven native matrices passed, but the manual example bound the wrong Signature hash type. A manual-only commit qualifies Tower.Signature; the second full build validates that final source."
+      "reason": "The code, all 21 proof audits and seven native matrices passed, but the manual example bound the wrong Signature hash type. A manual-only commit qualifies Tower.Signature; the second full build validates that final source."
     },
     {
       "file": "cell-decision-manual-render-1.log.gz",
@@ -145,7 +145,7 @@
       "decoded_sha256": "1f43257b70d223dc21b075ed2fa5cde4626fd9bf9cbe0ef90a1cec3f163ff51e",
       "source_commit": "ebb48a914d5e5b8ff5205d641f876fd7d68d029e",
       "outcome": "passed prior render",
-      "reason": "The first render compiled, but the narrow source block overflowed45 pixels. The manual-only layout correction and final rendering/browser checks use the final source."
+      "reason": "The first render compiled, but the narrow source block overflowed 45 pixels. The manual-only layout correction and final rendering/browser checks use the final source."
     },
     {
       "file": "cell-decision-manual-browser-1.log.gz",
@@ -153,7 +153,7 @@
       "decoded_sha256": "a66d97e91e69cb52d2d0d12bdfd6b270b0c33f2d4a60337dcbbcbbc6084d04ca",
       "source_commit": "ebb48a914d5e5b8ff5205d641f876fd7d68d029e",
       "outcome": "failed narrow layout",
-      "reason": "The first render compiled, but the narrow source block overflowed45 pixels. The manual-only layout correction and final rendering/browser checks use the final source."
+      "reason": "The first render compiled, but the narrow source block overflowed 45 pixels. The manual-only layout correction and final rendering/browser checks use the final source."
     }
   ],
   "artifacts": [
