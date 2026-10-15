@@ -79,6 +79,9 @@ local instance : Hashable Signature := RowEncode.hashable Signature.codec
       radical.core .negInf .posInf corruptGraph with
   | .error error => throw (IO.userError s!"tampering did not reach semantic replay: {error}")
   | .ok _ => pure ()
+  match RootReplay.read (restricted completeInventory) [] radical.core .negInf .posInf corruptGraph with
+  | .error .evidence => pure ()
+  | _ => throw (IO.userError "root replay accepted the invalid moment-system denominator")
   match CompleteReplay.check (restricted completeInventory) values formula [] radical
       .existsReal corruptGraph cells with
   | .error .evidence => pure ()

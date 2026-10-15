@@ -128,7 +128,8 @@ variable {registry : BaseContext.Registry} {parent : Tower.Context registry}
 
 /-- The public native discovery returns a complete frozen matrix whose actual
 constructed typed rows give both exact original shared-sentence diagnostic verdicts.
-This does not yet assert literal-reader or frontend quotation progress. -/
+This theorem retains the typed production trace; `run_replay` and `run_complete`
+state its independent literal-reader acceptance. -/
 theorem run_success (original : Model parent ℝ) (values : Fin n → parent.Value)
     (guards : List parent.Value) (formula : RealFormula.QF (n+1))
     (guarded : ∀ d ∈ guards, d ≠ 0) :

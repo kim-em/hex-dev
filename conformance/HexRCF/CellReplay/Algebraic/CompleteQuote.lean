@@ -14,6 +14,21 @@ set_option maxHeartbeats 12000000
 local instance : Hashable parent.Value := RowEncode.hashable parent.codec
 local instance : Hashable Signature := RowEncode.hashable Signature.codec
 
+/-- Every failing quotation restores the declaration count and leaves an
+unrelated metavariable unassigned, including failures in source preflight. -/
+private meta def refuse (label : String) (action : MetaM Expr) : MetaM Unit := do
+  let marker ← mkFreshExprMVar (mkConst ``Nat)
+  let before := (← getMCtx).decls.toList.length
+  let refused ← try
+    let _ ← action
+    pure false
+  catch _ => pure true
+  unless refused do throwError "packet quotation unexpectedly accepted: {label}"
+  unless (← getMCtx).decls.toList.length == before do
+    throwError "failed packet quotation changed metavariable state: {label}"
+  unless !(← marker.mvarId!.isAssigned) do
+    throwError "failed packet quotation assigned unrelated state: {label}"
+
 /- These laws reuse the independently checked frozen fixture and the finite
 codec roundtrip. They do not claim a fresh reduction of the serialized reader. -/
 def rootGraph := Codec.graph parent.codec Signature.codec (Dag.encode roots.replay)
@@ -76,27 +91,16 @@ elab "#complete_original_quote" : command => liftTermElabM do
   let wrongTarget ← instantiateMVars wrongTarget
   let .ok _ ← Reify.prepare wrongTarget
     | throwError "different-formula control failed during source preparation"
-  let refused ← try
-    let _ ← CellQuote.finishPacket wrongTarget checker (Lean.mkConst ``checked)
-      (Lean.mkConst ``original) identity
-    pure false
-  catch _ => pure true
-  unless refused do throwError "packet quotation accepted a different original formula"
+  refuse "different original formula" (CellQuote.finishPacket wrongTarget checker
+    (Lean.mkConst ``checked) (Lean.mkConst ``original) identity)
   -- A false verdict and a typed-only checker cannot enter packet quotation.
   for (candidate,accepted) in #[
       (← elabTerm (← `(CompleteReplay.check parent.codec values formula [] Canonical.cert
         .forallReal rootGraph cells)) none, Lean.mkConst ``false_checked),
       (← elabTerm (← `(CellReplay.check values formula [] Canonical.cert roots evidence .existsReal)) none,
         Lean.mkConst ``Check.exists_checked)] do
-    let marker ← mkFreshExprMVar (mkConst ``Nat)
-    let before := (← getMCtx).decls.toList.length
-    let refused ← try
-      let _ ← CellQuote.finishPacket target candidate accepted (Lean.mkConst ``original) identity
-      pure false
-    catch _ => pure true
-    unless refused do throwError "packet quotation accepted a false verdict or a non-packet checker"
-    unless (← getMCtx).decls.toList.length == before do throwError "failed packet quotation changed metavariable state"
-    unless !(← marker.mvarId!.isAssigned) do throwError "failed packet quotation assigned unrelated state"
+    refuse "false verdict or non-packet checker"
+      (CellQuote.finishPacket target candidate accepted (Lean.mkConst ``original) identity)
 #complete_original_quote
 #print axioms source
 
@@ -117,24 +121,18 @@ elab "#complete_guarded_quote" : command => liftTermElabM do
   synthesizeSyntheticMVarsNoPostponing
   let checker ← instantiateMVars checker
   let identity ← instantiateMVars identity
-  let refused ← try
-    let _ ← CellQuote.finishPacket target checker (Lean.mkConst ``guarded_checked)
-      (Lean.mkConst ``original) identity
-    pure false
-  catch _ => pure true
-  unless refused do throwError "complete quotation accepted a missing original divisor identity"
+  refuse "missing original divisor identity" (CellQuote.finishPacket target checker
+    (Lean.mkConst ``guarded_checked) (Lean.mkConst ``original) identity)
   let zeroTarget ← elabType (← `(∃ x : ℝ, x ^ 2 - Real.sqrt 2 ≥ 0 ∧ x ^ 2 - Real.sqrt 2 ≤ 0 ∧ 0 / (0 : ℝ) = 0))
   synthesizeSyntheticMVarsNoPostponing
   let zeroTarget ← instantiateMVars zeroTarget
   -- Known zero divisors are rejected during source preflight itself.
   let .error _ ← Reify.prepare zeroTarget
     | throwError "source preflight accepted a cancelled zero divisor"
-  let refused ← try
-    let _ ← CellQuote.finishPacket zeroTarget checker (Lean.mkConst ``guarded_checked)
-      (Lean.mkConst ``original) identity #[Lean.mkConst ``Guards.negativeOne_value]
-    pure false
-  catch _ => pure true
-  unless refused do throwError "complete quotation erased a cancelled original zero divisor"
+  -- This tests rollback through the already established source-preflight error.
+  refuse "zero-divisor source preflight" (CellQuote.finishPacket zeroTarget checker
+    (Lean.mkConst ``guarded_checked) (Lean.mkConst ``original) identity
+    #[Lean.mkConst ``Guards.negativeOne_value])
   let mismatched ← elabType (← `(∃ x : ℝ, x ^ 2 - Real.sqrt 2 ≥ 0 ∧ x ^ 2 - Real.sqrt 2 ≤ 0 ∧ 0 / (-2 : ℝ) = 0))
   synthesizeSyntheticMVarsNoPostponing
   let mismatched ← instantiateMVars mismatched
@@ -142,12 +140,9 @@ elab "#complete_guarded_quote" : command => liftTermElabM do
     | throwError "nonzero-divisor identity control failed during source preparation"
   unless different.divisors.size == 1 do
     throwError "nonzero-divisor identity control lost its original guard"
-  let refused ← try
-    let _ ← CellQuote.finishPacket mismatched checker (Lean.mkConst ``guarded_checked)
-      (Lean.mkConst ``original) identity #[Lean.mkConst ``Guards.negativeOne_value]
-    pure false
-  catch _ => pure true
-  unless refused do throwError "complete quotation accepted a different original divisor identity"
+  refuse "different original divisor identity" (CellQuote.finishPacket mismatched checker
+    (Lean.mkConst ``guarded_checked) (Lean.mkConst ``original) identity
+    #[Lean.mkConst ``Guards.negativeOne_value])
   let proof ← CellQuote.finishPacket target checker (Lean.mkConst ``guarded_checked)
     (Lean.mkConst ``original) identity #[Lean.mkConst ``Guards.negativeOne_value]
   let name := `Hex.RCF.RealCoefficients.CellReplayTests.Algebraic.CompleteQuote.guarded_source

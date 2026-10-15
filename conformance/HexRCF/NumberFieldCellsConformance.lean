@@ -64,5 +64,9 @@ run_meta do
       ``Hex.RealClosure.NumberField.Presentation.pack_value,
       ``Hex.RealClosure.NumberField.Presentation.pack_zero, ``NumberField.value_eq_ofField] do
     unless deps.contains required do throwError "original selected-source law missing: {required}"
+  for name in #[``NumberField.cellsWith_complete,``NumberField.cells_complete] do
+    let own ← Hex.RCF.ProofEvidence.projectDependencies #[name]
+    for required in #[``CellDiscover.run_complete,``CompleteReplay.check_covered] do
+      unless own.contains required do throwError "complete selected-source proof omitted its own law: {name}: {required}"
   Lean.logInfo "actual factory/source/cell proof bodies kernel checked with original selected-field laws"
 end Hex.RCF.NumberFieldCellsConformance

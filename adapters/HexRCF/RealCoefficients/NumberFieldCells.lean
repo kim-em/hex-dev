@@ -10,7 +10,7 @@ public section
 /-!
 Complete native cell packets from original selected number-field coordinates.
 The existing owner factory supplies the checked embedding. Original guards
-precede presentation construction; finite-codec replay remains separate.
+precede presentation construction; general frozen-history replay remains separate.
 -/
 namespace Hex.RCF.RealCoefficients.NumberField
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet
