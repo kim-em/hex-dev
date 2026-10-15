@@ -27,7 +27,7 @@ variable {queries : List (DensePoly E)}
 
 /-- Finite coverage of every stored selected-sign row, including unreachable
 graph entries. This is a condition on a partial reader, not global lawfulness. -/
-def RowCovered (value : ValueCodec E) (ctx : ValueCodec Ctx)
+@[expose] def RowCovered (value : ValueCodec E) (ctx : ValueCodec Ctx)
     {root : Descriptor E Ctx sign binding} {qs : List (DensePoly E)}
     (row : SelectedSigns root qs) : Prop :=
   value.Covers (Algebraic.SignEvidence.coefficients root.raw (Algebraic.SignEvidence.ofSigns row)) ∧

@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 import HexRCF.RealCoefficients.CellBuild
+import HexRCF.RealCoefficients.CellFootprint
 import HexRCF.RealCoefficients.RootBuild
 import HexRCF.RealCoefficients.RowEncode
 import HexRCF.CellReplay.Algebraic.Schema
@@ -31,6 +32,28 @@ local instance : Hashable Signature := RowEncode.hashable Signature.codec
   let typed ← match CellBuild.evidence roots values [] formula points with
     | .error error => throw (IO.userError s!"typed cell production failed: {repr error}")
     | .ok data => pure data
+  let inventory := CellFootprint.coefficients typed
+  let restricted (stored : List parent.Value) : ValueCodec parent.Value := {
+    encode := parent.codec.encode
+    decode := fun literal =>
+      match stored.find? (fun value => parent.codec.encode value == literal) with
+      | some value => .ok value
+      | none => .error "coefficient absent from finite payload inventory" }
+  let restored ← match CellRead.read (restricted inventory) [] roots values formula cells with
+    | .error error => throw (IO.userError s!"finite literal inventory omitted stored data: {repr error}")
+    | .ok restored => pure restored
+  unless (CellReplay.check values formula [] radical roots restored .existsReal).toOption == some true do
+    throw (IO.userError "finite payload reader changed the original verdict")
+  unless inventory.any (fun value => parent.codec.encode value == parent.codec.encode 0) do
+    throw (IO.userError "finite inventory lost stored zero coefficients")
+  let missingZero := inventory.filter (fun value => parent.codec.encode value != parent.codec.encode 0)
+  match CellRead.read (restricted missingZero) [] roots values formula cells with
+  | .error .evidence => pure ()
+  | _ => throw (IO.userError "missing stored zero coefficient was not rejected")
+  match CellRead.read (restricted []) [0] roots values formula .null with
+  | .error .divisor => pure ()
+  | _ => throw (IO.userError "original zero guard did not precede payload decoding")
+  IO.println "complete finite payload inventory restores rows; omitted zero literals reject; original guard preflight remains first"
   unless CellBuild.packet typed == cells do
     throw (IO.userError "typed and public frozen cell packets differ")
   unless (CellReplay.check values formula [] radical roots typed .existsReal).toOption == some true do
