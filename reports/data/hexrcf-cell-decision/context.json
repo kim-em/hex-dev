@@ -1,0 +1,234 @@
+{
+  "schema": 1,
+  "source_commit": "5a37b7f02248ece886a1b91470718fde3f47f70d",
+  "selected_source_hashes": {
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "4658e28cefbab6d96c7c1caceca174351d170c160ba3020a6aa02a07e6283129",
+    "adapters/HexRCF/RealCoefficients.lean": "4c084657ff257822527135aff016a21968f31dfedc541bb829b53cde57ac6223",
+    "adapters/HexRCF/RealCoefficients/CellAlignment.lean": "87efb3cb7c45e33076dccf669dff6675cfc769d72e690008173b7d338ad39983",
+    "adapters/HexRCF/RealCoefficients/CellBuild.lean": "87a8142dfcd0402f63447e54028dd390b0b01af930d92dccc795b4376b1535dd",
+    "adapters/HexRCF/RealCoefficients/CellDecision.lean": "fd7450ff052c3dc7ce52dc822f4e3e76faa7ab7f29595ba4a9f9a18eaa6b8bf5",
+    "adapters/HexRCF/RealCoefficients/CellProgress.lean": "26a9fda6b0d369bbacedbfe67ee83cbeb477fb58e18ec81d17c62f5e6085d5d6",
+    "adapters/HexRCF/RealCoefficients/SectorRequest.lean": "9fbf4228df780bf7b69c0cc9b9684dfa30649b45aa6c4ce4dece564baa057b72",
+    "conformance/HexRCF/CellDecisionProofs.lean": "a38eeabb55e2b55bf1844a83f1b0e2b80f1a9d78c9c41e89e59454fd754f39e9",
+    "conformance/HexRCF/CellRequestedConformance.lean": "8bd96698fbd8f1afd4ec02a890e98b6bb3750cc2dd80f3856dd293aecb59ba23",
+    "lakefile.lean": "5b489b01f3eee8ac99c66effcf7c7b3b6b92ab1bcc954e40bf38972e57761e59"
+  },
+  "full_build_source_commit": "ebb48a914d5e5b8ff5205d641f876fd7d68d029e",
+  "full_build_source_hashes": {
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "0c072795147c7092a21a5c92f81bffd976da416227d9410402271ff01c21a661",
+    "adapters/HexRCF/RealCoefficients.lean": "4c084657ff257822527135aff016a21968f31dfedc541bb829b53cde57ac6223",
+    "adapters/HexRCF/RealCoefficients/CellAlignment.lean": "87efb3cb7c45e33076dccf669dff6675cfc769d72e690008173b7d338ad39983",
+    "adapters/HexRCF/RealCoefficients/CellBuild.lean": "87a8142dfcd0402f63447e54028dd390b0b01af930d92dccc795b4376b1535dd",
+    "adapters/HexRCF/RealCoefficients/CellDecision.lean": "fd7450ff052c3dc7ce52dc822f4e3e76faa7ab7f29595ba4a9f9a18eaa6b8bf5",
+    "adapters/HexRCF/RealCoefficients/CellProgress.lean": "26a9fda6b0d369bbacedbfe67ee83cbeb477fb58e18ec81d17c62f5e6085d5d6",
+    "adapters/HexRCF/RealCoefficients/SectorRequest.lean": "9fbf4228df780bf7b69c0cc9b9684dfa30649b45aa6c4ce4dece564baa057b72",
+    "conformance/HexRCF/CellDecisionProofs.lean": "a38eeabb55e2b55bf1844a83f1b0e2b80f1a9d78c9c41e89e59454fd754f39e9",
+    "conformance/HexRCF/CellRequestedConformance.lean": "8bd96698fbd8f1afd4ec02a890e98b6bb3750cc2dd80f3856dd293aecb59ba23",
+    "lakefile.lean": "5b489b01f3eee8ac99c66effcf7c7b3b6b92ab1bcc954e40bf38972e57761e59"
+  },
+  "validation_records": [
+    {
+      "file": "cell-decision-repository-full-build-2.log.gz",
+      "sha256": "97cb273e0ccba3d63c05ab7c1ec71412c1d202b577aae7107ce79e1d88279423",
+      "decoded_sha256": "2fc6771d4ff31ff2d70c192f34929f41c4d84c612d33068e8f9bef01e02ee6b1",
+      "command": "bounded lake build HexRCFRealCoefficients HexConformance HexManual",
+      "source_commit": "ebb48a914d5e5b8ff5205d641f876fd7d68d029e",
+      "exit_code": 0
+    },
+    {
+      "file": "cell-decision-manual-build-1.log.gz",
+      "sha256": "3e47ebd8e3fd4eb73ec7aa0649a2e45f0670a52b7a639dd05f6b070469ad70c0",
+      "decoded_sha256": "0b54cf9707657bf12ca24da16429f3d4b9df3b6558ec2940fed1273d8c520b8c",
+      "command": "bounded lake build HexManual",
+      "source_commit": "5a37b7f02248ece886a1b91470718fde3f47f70d",
+      "exit_code": 0
+    },
+    {
+      "file": "cell-decision-manual-render-2.log.gz",
+      "sha256": "a05dc58c0e3c82b0797c547c264bf746a45146c75b3dd71d14cd005dc10c6c87",
+      "decoded_sha256": "ae6cdadf9a66011006be9295de8d49a6f47a5690efafe34f1d409e469b656b30",
+      "command": "bounded lake build FullRender",
+      "source_commit": "5a37b7f02248ece886a1b91470718fde3f47f70d",
+      "exit_code": 0
+    },
+    {
+      "file": "cell-decision-manual-browser-2.log.gz",
+      "sha256": "4081adc30ab13e082116bf80c838f67afaa03a857e1f29e084298fd5a140e966",
+      "decoded_sha256": "49fbd248bdac5154e2e5d70ffcfa880b8d2ce14bc09adec5441b84542196d578",
+      "command": "bounded node cell-decision-browser.mjs <render-directory>",
+      "source_commit": "5a37b7f02248ece886a1b91470718fde3f47f70d",
+      "exit_code": 0
+    },
+    {
+      "file": "cell-decision-repository-dag.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": "python3 scripts/check_dag.py",
+      "source_commit": "5a37b7f02248ece886a1b91470718fde3f47f70d",
+      "exit_code": 0
+    },
+    {
+      "file": "cell-decision-repository-admissions.log.gz",
+      "sha256": "611a481d27fd11dda2f1042b7341270c7e4e670dd2a14363ec88d90e099572e9",
+      "decoded_sha256": "b179ca73198cd480501ca2f6a1ba356b1a49140aa4e4ea94f57c2d4696ec1770",
+      "command": "python3 scripts/ci/check_named_admissions.py",
+      "source_commit": "5a37b7f02248ece886a1b91470718fde3f47f70d",
+      "exit_code": 0
+    },
+    {
+      "file": "cell-decision-repository-admission-tests.log.gz",
+      "sha256": "062d6d1ae6f405ef005d650353d7eb9e7da9fdab0512c56f5be78191c33e254f",
+      "decoded_sha256": "350738a7656e8a2e974946814047560c0219c058103460d102bc390240c88b0f",
+      "command": "python3 scripts/ci/test_check_named_admissions.py",
+      "source_commit": "5a37b7f02248ece886a1b91470718fde3f47f70d",
+      "exit_code": 0
+    },
+    {
+      "file": "cell-decision-repository-copyright.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": "python3 scripts/check_copyright_headers.py",
+      "source_commit": "5a37b7f02248ece886a1b91470718fde3f47f70d",
+      "exit_code": 0
+    },
+    {
+      "file": "cell-decision-repository-manual-split.log.gz",
+      "sha256": "48a9e140081495d1ab8296879fffbda28bea260c48c63a9e7a2bfa5754ef1009",
+      "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "command": "python3 scripts/release/check_manual_split.py",
+      "source_commit": "5a37b7f02248ece886a1b91470718fde3f47f70d",
+      "exit_code": 0
+    },
+    {
+      "file": "cell-decision-repository-literals.log.gz",
+      "sha256": "d363c41d04cc71aaa8b2bb97d1faf6ff4b311e5874c10d339f87aba4d4b97158",
+      "decoded_sha256": "5b2703a612f8c434ac4e53bb05bfeef0dbca1d91cc9125441d5bd447be3dfbc3",
+      "command": "python3 scripts/rcf/selected_literals.py --check",
+      "source_commit": "5a37b7f02248ece886a1b91470718fde3f47f70d",
+      "exit_code": 0
+    },
+    {
+      "file": "cell-decision-repository-targets.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": "python3 scripts/conformance_targets.py --check",
+      "source_commit": "5a37b7f02248ece886a1b91470718fde3f47f70d",
+      "exit_code": 0
+    }
+  ],
+  "retained_attempts": [
+    {
+      "file": "cell-decision-repository-focused-1.log.gz",
+      "sha256": "cd9e3d9b8314858d28c8aa8c162c83d5fcdb82acfcbad9bebc1a6d2ab57f5a0f",
+      "decoded_sha256": "20d0de69ba4793dbae3dab00db46363362ab100da788d33d08a61218abcca702",
+      "outcome": "failed earlier port",
+      "reason": "Retained pre-final port validation. The exposed row body was corrected, and redundant section variables/typeclass instances were removed before the final source commit. These records are not attributed to the final source."
+    },
+    {
+      "file": "cell-decision-repository-focused-2.log.gz",
+      "sha256": "423fcbd56705f0e958a2e726fc294429273cec0b1ed72b08c05ff42a1819c9dd",
+      "decoded_sha256": "9edaa82fb176cc878576116059155b0bc49c0723271c3eeaaf7a1456c9838a4e",
+      "outcome": "passed earlier port",
+      "reason": "Retained pre-final port validation. The exposed row body was corrected, and redundant section variables/typeclass instances were removed before the final source commit. These records are not attributed to the final source."
+    },
+    {
+      "file": "cell-decision-repository-full-build-1.log.gz",
+      "sha256": "ec2cc64e8ff0f3d9786272b161a3ee4e1d047d1c06822afe4d7be8668730ee7c",
+      "decoded_sha256": "01efe7605b1abdc901ba3080947d2bbeaeb5278f24b709a009c79f102f520868",
+      "source_commit": "b64a2b22df13eb3077b4618565224c48a51f482f",
+      "outcome": "failed",
+      "reason": "The code, all21 proof audits and seven native matrices passed, but the manual example bound the wrong Signature hash type. A manual-only commit qualifies Tower.Signature; the second full build validates that final source."
+    },
+    {
+      "file": "cell-decision-manual-render-1.log.gz",
+      "sha256": "c9cff51a5b0787b23ba9aae9293d33715a954bb6f49f5201308bfadb07700682",
+      "decoded_sha256": "1f43257b70d223dc21b075ed2fa5cde4626fd9bf9cbe0ef90a1cec3f163ff51e",
+      "source_commit": "ebb48a914d5e5b8ff5205d641f876fd7d68d029e",
+      "outcome": "passed prior render",
+      "reason": "The first render compiled, but the narrow source block overflowed45 pixels. The manual-only layout correction and final rendering/browser checks use the final source."
+    },
+    {
+      "file": "cell-decision-manual-browser-1.log.gz",
+      "sha256": "b013eb8d2c5c8702f2995235721eb68f81f24ae9f30900113fe96c973f4c23b4",
+      "decoded_sha256": "a66d97e91e69cb52d2d0d12bdfd6b270b0c33f2d4a60337dcbbcbbc6084d04ca",
+      "source_commit": "ebb48a914d5e5b8ff5205d641f876fd7d68d029e",
+      "outcome": "failed narrow layout",
+      "reason": "The first render compiled, but the narrow source block overflowed45 pixels. The manual-only layout correction and final rendering/browser checks use the final source."
+    }
+  ],
+  "artifacts": [
+    {
+      "file": "cell-decision-desktop-source.png",
+      "sha256": "8b77a5d1de6900d042e2ffa9579c0d38ad05462a51081f3d7a6051d9143c823f"
+    },
+    {
+      "file": "cell-decision-desktop-preflight.png",
+      "sha256": "cef10ba75a8b51dda6203adf897982303d2392b6380844576df09707d8f6ba76"
+    },
+    {
+      "file": "cell-decision-desktop-scope.png",
+      "sha256": "d315068a2b51c53280095cf45881e5ee5fe3426e8a8e8de8f39f70773dafc380"
+    },
+    {
+      "file": "cell-decision-narrow-source.png",
+      "sha256": "604dbac8c414d8debcca44ea546f8171e414889322697970f72d9e497a1fe42c"
+    },
+    {
+      "file": "cell-decision-narrow-preflight.png",
+      "sha256": "1b709918266448ba3271d3f299159df1ddcca46dc1fede4ee4981e24b5b19785"
+    },
+    {
+      "file": "cell-decision-narrow-scope.png",
+      "sha256": "b476bf64e2774f3493bf457dd4dcce75a8d4130e901c40d1b265685b11d938c1"
+    },
+    {
+      "file": "cell-decision-browser.mjs",
+      "sha256": "7089a7227c1f7959ef355d7a67cbd3b75acb972c9edf19de553cba262e136f23"
+    },
+    {
+      "file": "cell-decision-inspection.json",
+      "sha256": "161fbc62bfadba617436519c729babe4d7fd8076528526449afaa8fe9f4c2508"
+    },
+    {
+      "file": "cell-decision-visual-inspection.txt",
+      "sha256": "d2aa595a6280b9007b7deb503023d1ce5c00c52b7de7fe03b326184005891e36"
+    },
+    {
+      "file": "attempt1/cell-decision-desktop-preflight.png",
+      "sha256": "5a70f79f5a0cd138fae42ae8a20f6da821e6ba2b07083388d33700db9e003a94",
+      "source_commit": "ebb48a914d5e5b8ff5205d641f876fd7d68d029e",
+      "status": "prior narrow overflow attempt"
+    },
+    {
+      "file": "attempt1/cell-decision-desktop-scope.png",
+      "sha256": "2d6e4adc0c334c13c0cbb5e5306f49af04d47bbad4d04d2aa00a1787431355d2",
+      "source_commit": "ebb48a914d5e5b8ff5205d641f876fd7d68d029e",
+      "status": "prior narrow overflow attempt"
+    },
+    {
+      "file": "attempt1/cell-decision-desktop-source.png",
+      "sha256": "43fe12008ce17e10b67ed90b8482c8ec5c5edc6bdf328fd26a509e35995c5227",
+      "source_commit": "ebb48a914d5e5b8ff5205d641f876fd7d68d029e",
+      "status": "prior narrow overflow attempt"
+    },
+    {
+      "file": "attempt1/cell-decision-narrow-source.png",
+      "sha256": "01d6d9b25c2bec03bcd96a774ad4e45d273791fbd990a8a7843fd4a5e38acc16",
+      "source_commit": "ebb48a914d5e5b8ff5205d641f876fd7d68d029e",
+      "status": "prior narrow overflow attempt"
+    },
+    {
+      "file": "attempt1/overflow.json",
+      "sha256": "3a3acf4de66662c22eb96265b209009775159c1697b156d9248bdbfe8c32918f",
+      "source_commit": "ebb48a914d5e5b8ff5205d641f876fd7d68d029e",
+      "status": "prior narrow overflow attempt"
+    }
+  ],
+  "limits": {
+    "aggregate_memory_bytes": 34359738368,
+    "swap_bytes": 0,
+    "lean_threads": 2,
+    "concurrent_own_builds": 1
+  },
+  "scope": "Mathematical existence of accepted complete typed cell evidence and exact shared-sentence diagnostic semantics under an explicit ordinary-real parent model and nonzero original guards. Not general executable/serialization/frontend progress, named-constant faithful model construction or strict arbitrary-missing-record compiled checking."
+}

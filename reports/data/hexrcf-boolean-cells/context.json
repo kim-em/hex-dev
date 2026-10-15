@@ -1,0 +1,148 @@
+{
+  "schema": "hexrcf-boolean-cell-validation-v1",
+  "source_commit": "f29be3a0e0b9035ce7870cc86f923f127c31b660",
+  "selected_source_hashes": {
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "dd9a161c7b006d41571c0c9b442167bb65a1295c51ff847fc9b778fe60fcb393",
+    "adapters/HexRCF/RealCoefficients.lean": "beeede340be75c5459150a7028c7ab06ba8f23565e564bff667b78a478c6e129",
+    "adapters/HexRCF/RealCoefficients/CellReuse.lean": "6fc2124cbc66b4ac8ad247f494c1b5dc2ed1748f1c8bf9d2498685adb03c7e1f",
+    "conformance/HexRCF/CellReplay/Algebraic/Boolean.lean": "ba6ab53fa70e054da29256a9e35969cc8ea8a19351833a263f58a7eeae5cc774",
+    "conformance/HexRCF/CellReplay/Algebraic/BooleanBinding.lean": "445a77e00d5b77969c851b3322a0fc7a2f45ea914d8e2e504439351fb3fca0cf",
+    "conformance/HexRCF/CellReplay/Algebraic/BooleanQuoted.lean": "fc3cf52dc7690098c37b25e0058b4bf594efa2c912d09e92e10908b9a65a530a",
+    "conformance/HexRCF/CellReplay/Algebraic/BooleanSources.lean": "dd0aee584360170e1b315d61198fa9a90aa8da6f027307508859abfecd99ebbd",
+    "lakefile.lean": "272c9ae7185d9c79b1c4d070c54d78af5fc457452af6070a26fe699800ee641c"
+  },
+  "validation_records": [
+    {
+      "file": "boolean-repository-focused-2.log.gz",
+      "sha256": "b064468b93e091b431192a266357aa62bf8283a29ca6d818f36d81f916c8d94f",
+      "decoded_sha256": "48d99514fa26856f8f2ad568246902605f0488b7b1bc13dc75cca005cedc8d7b",
+      "command": "bounded Lake build HexRCFRealCoefficients +HexRCF.CellReplay.Algebraic.BooleanQuoted",
+      "exit_code": 0
+    },
+    {
+      "file": "boolean-repository-full-build-1.log.gz",
+      "sha256": "121602cd26fc3f999259fafe4a828d07762edbf3ed09930048bc402f070125b9",
+      "decoded_sha256": "305607bb4d2bd046e8976d7dbeb72e585ee3dc0ca4b85969a04e64e4bd8cad9e",
+      "command": "bounded Lake build HexRCFRealCoefficients HexConformance HexManual",
+      "exit_code": 0
+    },
+    {
+      "file": "boolean-manual-render-1.log.gz",
+      "sha256": "eb8a4dbe2e9e20ddba89240f34dbfb836e4fba9395832061b5e5854d1501c69d",
+      "decoded_sha256": "137eb4c777073c566c1a8f47c3e6fb1700c27986f2d8b5fd2fd88f968b8ed0c0",
+      "command": "bounded Lake build FullRender (isolated external render package)",
+      "exit_code": 0
+    },
+    {
+      "file": "boolean-manual-browser-1.log.gz",
+      "sha256": "05570a31557d60acbdf5ff1d86bb45b89b82f6927db10ccac8af5bf54dcdd427",
+      "decoded_sha256": "9c7b5ea4ded07dc258d25ea06630fee7ead50d451c096889bf8d99eee6f16501",
+      "command": "node boolean-cell-browser.mjs <isolated render directory>",
+      "exit_code": 0
+    },
+    {
+      "file": "boolean-repository-dag.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": "python3 scripts/check_dag.py",
+      "exit_code": 0
+    },
+    {
+      "file": "boolean-repository-admissions.log.gz",
+      "sha256": "4f0aef9d84ecc9d847c8e7c51c4ec5d49556addf2132c41daee8a2ea54259158",
+      "decoded_sha256": "c3ee577d24445107536b9dced9220e1ae0b829f6483c12e091ca71503da22b30",
+      "command": "python3 scripts/ci/check_named_admissions.py",
+      "exit_code": 0
+    },
+    {
+      "file": "boolean-repository-admission-tests.log.gz",
+      "sha256": "ddfee0c049fcb815f5f2488907606956f926f664f775fc02167be96a36dc93cb",
+      "decoded_sha256": "13bcc1e78c862b2617bbb781e3c7b306fb88872d2a741445dbed88d07cf416d9",
+      "command": "python3 scripts/ci/test_check_named_admissions.py",
+      "exit_code": 0
+    },
+    {
+      "file": "boolean-repository-copyright.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": "python3 scripts/check_copyright_headers.py",
+      "exit_code": 0
+    },
+    {
+      "file": "boolean-repository-manual-split.log.gz",
+      "sha256": "48a9e140081495d1ab8296879fffbda28bea260c48c63a9e7a2bfa5754ef1009",
+      "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "command": "python3 scripts/release/check_manual_split.py",
+      "exit_code": 0
+    },
+    {
+      "file": "boolean-repository-literals.log.gz",
+      "sha256": "d363c41d04cc71aaa8b2bb97d1faf6ff4b311e5874c10d339f87aba4d4b97158",
+      "decoded_sha256": "5b2703a612f8c434ac4e53bb05bfeef0dbca1d91cc9125441d5bd447be3dfbc3",
+      "command": "python3 scripts/rcf/selected_literals.py --check",
+      "exit_code": 0
+    },
+    {
+      "file": "boolean-repository-conformance-targets.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": "python3 scripts/conformance_targets.py --check",
+      "exit_code": 0
+    }
+  ],
+  "retained_attempts": [
+    {
+      "file": "boolean-repository-focused-1.log.gz",
+      "sha256": "ff38d65788fa477c3e348d05489405a9083ab55a783ea7c1fb1ea14a8d151c3d",
+      "decoded_sha256": "130d7a2343dd7b549894a9865de332ac033feb0e44607bd7fc1df51be21d5c42",
+      "outcome": "failed",
+      "reason": "New umbrella import was placed after module documentation; moved into the import block before final successful validation."
+    }
+  ],
+  "artifacts": [
+    {
+      "file": "boolean-cell-desktop-binding.png",
+      "sha256": "15417aadbfac4eed9e26d522365fe6f87e2a965f96c2a9858ea6e8dfd9a83a92"
+    },
+    {
+      "file": "boolean-cell-desktop-scope.png",
+      "sha256": "33a5382f5a7b4e14670aca5f26c8057e082fbcd5d91cc608f4501c0b63cf191d"
+    },
+    {
+      "file": "boolean-cell-desktop-source.png",
+      "sha256": "77246de1b3b726ddbfbf5ff522bdcca83a27297bb9c6fa2cfc99ba74ada699c9"
+    },
+    {
+      "file": "boolean-cell-narrow-binding.png",
+      "sha256": "b981407a665b7d73be20097322fbb8e950509a5ee74991270d80ec2e3342e2f4"
+    },
+    {
+      "file": "boolean-cell-narrow-scope.png",
+      "sha256": "cf4283fa60282829bb12eacd62d448931a0938312192acb7839bc20cbfceb2e3"
+    },
+    {
+      "file": "boolean-cell-narrow-source.png",
+      "sha256": "5fa96d7f6e5f1b3eac1d4fe5f413fe3fdd4835c7499ca38df3d31a861d2b64ba"
+    },
+    {
+      "file": "browser.mjs",
+      "sha256": "86c38dfb9618438eed90d04be3cecf87d04ff35d0753a0a524dfe762709e26ff"
+    },
+    {
+      "file": "inspection.json",
+      "sha256": "145654e77562d8c8a16f41c82ea84257b8832977b286283165571d3c6c01be2b"
+    },
+    {
+      "file": "visual-inspection.txt",
+      "sha256": "a285d89347fe9c57465abb36dbcec59a32fae3f1e6d83d8c17e7044f33ce4574"
+    }
+  ],
+  "reused_fixture": "conformance-fixtures/HexRCF/cell-algebraic.json",
+  "reused_fixture_sha256": "a2dc4beb9a19e2349ef3b9540145876db879211a73664b69ec9c467fdb2754b7",
+  "resource_limits": {
+    "memory_max_bytes": 34359738368,
+    "swap_max_bytes": 0,
+    "lean_num_threads": 2
+  },
+  "scope": "Identical ordered specialization lists permit data-only transfer; six strict comparison/Boolean folds, four fresh original-source proofs, actual proof-body/axiom audits and changed-order refusal. No new dataset, producer, tactic handler, general history, completeness or performance claim."
+}
