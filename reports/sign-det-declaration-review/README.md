@@ -14,7 +14,7 @@ clients use the foundation acceptance API; their updated bindings are also
 recorded in the foundation manifest. Generated projections and elaborator
 declarations are not separate assessment entries. The computational library's earlier inventory contains 693 handwritten
 declarations in 58 production modules. The foundation, replay, table, selected-sign, descriptor, completion, common-polynomial comparison, graph, root-list, prepared-handle, graph-codec, stored-coefficient, DAG-support, dependency-envelope, serialization and parser
-assessments below cover 728 named declarations, including newly added APIs; the
+assessments below cover 736 named declarations, including newly added APIs; the
 source inventory now has an individual assessment for every inventoried named
 computational declaration. The checker enforces coverage of every production
 module under `HexSignDet/`; the import-only root umbrella is outside that set. Named declaration forms are those recorded and extracted by each group;
@@ -31,6 +31,16 @@ of the changed inputs. The three handle modules have exact namespace checks. The
 and four codec modules use the shared namespace-aware extractor; older groups
 retain their own naming conventions. The declaration-list check covers the declaration forms listed
 in those records, while the file hashes bind the complete source bytes.
+
+The eight integration additions have individual assessments in the descriptor,
+DAG-support and graph-codec tables. The generic node-property transfer and
+validated-binding laws are used by exact root restoration, including partial
+predecessor readers. The [728-declaration compiler-use capture](core-use/README.md), retained at
+`audit/issue-10575-sign-det-core-use-input-v1`, remains bound to that source checkpoint; it does not supply reference counts or axiom
+inventories for these additions. Their reader uses and kernel axiom guards in [#10936](https://github.com/kim-em/hex-dev/pull/10936)
+and [#10939](https://github.com/kim-em/hex-dev/pull/10939) are
+bound as current context files in the three affected source-review manifests. No new compiler
+capture, computational regression pass or core phase acceptance is claimed.
 
 ## Contracts and hypotheses
 
@@ -153,10 +163,12 @@ declarations and the certificate fields. Full raw/validated acceptance
 characterizations replace Boolean guard unfolding in graph, finite-transport and
 coefficient-substitution proofs. This remains partial core review.
 
-The [descriptor and Thom-vector assessment](core-descriptors.md) covers 45
+The [descriptor and Thom-vector assessment](core-descriptors.md) covers 46
 named declarations, the raw equality instance, nine fields and the five
 input-error constructors. Full shape and arbitrary-replay acceptance
 characterizations support the existing descriptor construction proofs.
+The descriptor module/assessment archive uses
+`audit/issue-10575-sign-det-integration-review-input-v4`.
 This remains partial computational review.
 
 The [completion and full-order assessment](core-completion.md) covers all 17
@@ -191,7 +203,7 @@ ordinary descriptor checker. Equal-operation transport preserves literal data,
 rather than substituting a merely semantically equivalent descriptor.
 This remains partial computational review.
 
-The [graph roundtrip assessment](core-graph-codec.md) covers 28 named
+The [graph roundtrip assessment](core-graph-codec.md) covers 30 named
 declarations and the six parser-bound fields. The
 [stored-coefficient assessment](core-codec-coefficients.md) covers 18 named
 traversals and finite-coverage laws. Both distinguish complete literal
@@ -201,7 +213,9 @@ local review snapshots rather than a new automatic CI requirement.
 
 The earlier graph-codec and coefficient snapshots remain preserved at
 `audit/issue-10575-sign-det-codec-reviewed-v3`. The retained tags are not checked by the current manifests. Their current module and
-assessment archives use `audit/issue-10575-sign-det-lint-reviewed-input`.
+assessment archive for graph-codec uses
+`audit/issue-10575-sign-det-integration-review-input-v4`; the coefficient archive
+retains `audit/issue-10575-sign-det-lint-reviewed-input`.
 Current byte bindings separately cover the shared documentation, guards and
 extractor context. These are local checks; changed inputs require assessment
 before rebinding. Complete module hashes also cover fields and anonymous instances
@@ -213,7 +227,7 @@ These hashes identify the reviewed files; the extractor uses the checkout's
 existing import paths. The bindings are checked locally, not by a CI-wide
 currency gate.
 
-The [DAG support assessment](core-dag-support.md) covers 69 named declarations
+The [DAG support assessment](core-dag-support.md) covers 74 named declarations
 in nine modules, five structure fields and the entry hashing instance.
 `Expansion.step_isSome` characterizes success using exactly the supplied
 child lookups; the existing bounds proof uses it. Literal encoding and
@@ -222,8 +236,9 @@ The namespace-aware inventory uses the shared extractor, including the
 `Expansion.Valid` abbreviation. This remains partial computational review;
 no performance or phase acceptance follows from it.
 
+The earlier `audit/issue-10575-sign-det-dag-support-input-v3` checkpoint remains preserved.
 The DAG-support source snapshot is preserved at
-`audit/issue-10575-sign-det-dag-support-input-v3`. Its archive check binds the nine reviewed modules and individual assessment
+`audit/issue-10575-sign-det-integration-review-input-v4`. Its archive check binds the nine reviewed modules and individual assessment
 to that input commit. Current byte checks separately bind shared documentation,
 guards and source-extraction helpers. Later context-file edits require assessment
 before updating their current bindings; they do not move the historical module
@@ -251,7 +266,7 @@ With `input_revision` it identifies the byte-checked module/assessment archive;
 are checked against current bytes, including context files outside the archive.
 
 The graph-codec and stored-coefficient archives use the same module/assessment
-scope. Their earlier `codec-reviewed-v3` checkpoint remains preserved. Shared
+scope. Shared
 manual, conformance, index and checker files are current context bindings, so
 subsequent assessed edits do not move those archives.
 
@@ -325,9 +340,8 @@ documentation covers the moment-system fields, coefficient coverage laws and
 structural node reconstruction. The endpoint roundtrip requires no zero or
 equality instance on its coefficient type.
 
-The current graph-codec, coefficient-codec and serialization assessments use
-`audit/issue-10575-sign-det-lint-reviewed-input` for their module/assessment
-archives. Earlier codec and serialization checkpoints remain preserved.
+The graph-codec and coefficient-codec archive references are specified above.
+The serialization archive retains `audit/issue-10575-sign-det-lint-reviewed-input`.
 
 Current companion imports use the `HexSignDetTheory` names. The retained
 Mathlib-named source archives keep their original paths and bytes; current

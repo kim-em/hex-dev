@@ -8,6 +8,8 @@ import HexRCF.CellReplay.Algebraic.BooleanQuoted
 import HexRCF.CellReplay.Algebraic.CompleteQuoted
 import HexRCF.RealCoefficients.RootBuild
 import HexRCF.RealCoefficients.NumberFieldCells
+import HexRCF.RealCoefficients.GatherCells
+import HexRCF.RealCoefficients.AlgebraicCells
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -413,3 +415,118 @@ own obligations. A separate manually run stress target checks a four-boundary
 union of the algebraic equation and half-open guards. Its retained diagnostic trace exposes a substantial cost in
 cell-row production; this is a performance limitation, without a scaling or
 speedup claim.
+
+Independently constructed coefficient contexts can enter complete packet
+production through `GatherCells.build`. Each input retains its original owner;
+several coefficients can share an owner, and a guard can be absent from the
+coefficient tuple. The coefficient order, guard order and schema arity remain
+independent. A zero original guard is rejected before gathering, including
+for a constant matrix with no coefficient parameters.
+
+`buildWith` reuses the actual owner's gathering result. A compatible ordinary
+model proves complete packet production without assuming a successful child
+producer or choosing a new primitive common field:
+
+```lean
+open Hex Hex.RealClosure
+open Hex.RealClosure.Tower
+open Hex.RealFormula
+open Hex.RCF.RealCoefficients
+example
+    {r : BaseContext.Registry}
+    {b : BaseContext.PackedContext r}
+    {os : List (Context r)} {n : Nat}
+    (shared : Shared b os)
+    (target : Model
+      shared.input.context ℝ)
+    (models : Inclusions.Models
+      target shared.maps)
+    (cs : Fin n →
+      GatherCells.Source os)
+    (gs : List (GatherCells.Source os))
+    (f : QF (n+1))
+    (nonzero : ∀ g ∈ gs, g.2 ≠ 0) :
+    ∃ p, GatherCells.buildWith
+      shared cs gs f = .ok p := by
+  obtain ⟨p,built,_⟩ :=
+    GatherCells.buildWith_complete
+      shared target models cs gs f
+      nonzero
+  exact ⟨p,built⟩
+```
+
+`build_complete` additionally derives successful gathering from the original
+owners' compatible base signatures and an ordinary base interpretation. Both
+quantifier verdicts are proved equivalent to the shared sentence at the
+original owner values. `build_domains` establishes every original typed guard
+nonzero from successful production. These are native-context results: they
+supply neither source-expression identities nor frozen provider/predecessor
+histories, and do not discharge strict compiled missing-record admission.
+
+The native conformance combines separate positive √2 and √3 owners, repeats
+one source coordinate, and checks a leading cancellation and repeated zero root.
+It reads both emitted packets, refuses swapped coefficient
+coordinates, and checks a false constant with no coefficient parameters but
+retained guards. A late original zero guard still rejects that constant case.
+Compiled verdicts remain controls; the generic construction and transport
+laws are separate ordinary-kernel proofs.
+
+`AlgebraicCells.build` starts from original `RealAlgebraicNumber` inputs.
+It constructs their checked selected presentations and gathers the resulting
+owners automatically. Separate finite indices specify the coefficient tuple
+and the original guards; repeated indices and guard-only inputs are retained.
+An original zero guard rejects before any presentation construction.
+Every declared input is presented and gathered, even when absent from both
+index collections. An unused irrational input can enlarge the tower, so a
+focused input tuple avoids that additional cost.
+
+The automatic constructor needs only the original nonzero guards for its
+progress theorem. The rational interpretation, owner compatibility and
+selected coordinate identities are derived:
+
+```lean
+open Hex Hex.RealClosure
+open Hex.RealFormula
+open Hex.RCF.RealCoefficients
+example (r : BaseContext.Registry)
+    {m n : Nat}
+    (vs : Fin m →
+      RealAlgebraicNumber)
+    (cs : Fin n → Fin m)
+    (gs : List (Fin m))
+    (f : QF (n+1))
+    (nonzero : ∀ i ∈ gs, vs i ≠ 0) :
+    ∃ s p,
+      AlgebraicCells.build
+        r vs cs gs f = .ok ⟨s,p⟩ := by
+  obtain ⟨s,shared,packet,built,_⟩ :=
+    AlgebraicCells.build_complete
+      r vs cs gs f nonzero
+  exact ⟨s,⟨shared,packet⟩,built⟩
+```
+
+These native-input theorems preserve both emitted quantifier verdicts at the
+original selected real values. `build_domains` concludes every original real
+divisor nonzero from production success, including for constant formulas.
+`build_sound` derives both accepted verdicts from the exact successful build
+equation, without assuming guard validity; `GatherCells.build_sound` also derives
+compatible owner origins from successful gathering. They do not assemble
+frozen provider/predecessor histories or prove general source-goal quotation
+and strict compiled missing-record admission.
+
+The automatic-input conformance uses both selected signs of √2 alongside an
+independent positive √3. It checks simultaneous conditions and a repeated zero
+root, both true and false quantified verdicts, an unused zero input, a late
+original zero guard, and empty true/false constant inputs. Separate linear
+constraints a < x < 1 distinguish the variable's selected coefficient: a = −√2
+gives an existential true and universal false verdict; a = √2 gives both false.
+Twelve actual automatic-input proof bodies are separately checked with only
+the standard three axioms.
+
+The explicit `HexRCFAlgebraicCellsStress` target retains the stronger condition
+x² = √2 with 1 < x < √3 and its negative-conjugate control. A recorded
+run was interrupted after 12 min 33 s at 1.4 GiB peak without a final module
+result; this is neither a completed timing nor an acceptance result. Stack
+samples show nested native inversion, gcd and Sturm sign work below an IR
+interpreter call chain, without identifying a particular case or phase. The cost remains a limitation of this
+complete native route.

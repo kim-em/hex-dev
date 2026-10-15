@@ -1,19 +1,24 @@
 {
-  "scope": "28 named declarations and six Shape fields; partial computational graph codec review, no phase or performance attestation",
+  "scope": "30 named declarations and six Shape fields; partial computational graph codec review, no phase or performance attestation",
   "files": {
-    "HexSignDet/Codec/GraphLaws.lean": "aee17063cc5b0dda1a7102c187f3a7cf59c23b2718f3390a265a01a781fc05aa",
+    "HexSignDet/Codec/GraphLaws.lean": "292cebb2c9ea1131ddd0458de3997aac95cfc1422e99dbd8fb5e7f6d08fcdaa5",
     "HexSignDet/Codec/FiniteLaws.lean": "a30dbc456d8613e247bfc691376206a7da405b8a3e08ef7a550c0b857a234ab8",
     "HexSignDet/Codec/FiniteGraph.lean": "bb1e0611aa74d7c7b4a74f83f05e481ccd4584523e0aaeca7beba53c70a6895c",
     "reports/sign-det-declaration-review/current/normalize.py": "7c34629b7ef6e1727b340e3623b1e774b761e565d24a74ece7745053fa46735f",
     "reports/sturm-declaration-review/audit_tools.py": "de536ebeafd2ee355ac6e3349efaeaf2a5f0c37ecceed4457f4be51b664a963a",
     "scripts/bench/sweep_freshness.py": "882e1d255d32fe2a8c97d3ed5e16ff050e8bcbaffbbe20529a80517923f36ad2",
-    "HexManual/Chapters/HexSignDet.lean": "47b72e891fbceb02abbcb1191c573712b413e517aa52a76a467872a7871cc441",
+    "HexManual/Chapters/HexSignDet.lean": "6cf774c0d04b484265c361d16b061b8e57039511c025810520f383169ecfb8e1",
     "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "c3b86c2cef0c53175e43cc40db0dc02ec93de147414c9378e0d914bfb5149132",
-    "reports/sign-det-declaration-review/README.md": "6f5bca1235a9b05ddfe3f0b2d04babf177cf4d6a75003847e89e3b7c615ecd88",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "83520887f6307511e2db9aa18862adaa47d66df6aadcdf2870cd6c2b635c8928",
+    "reports/sign-det-declaration-review/README.md": "91f20367d85a39c654a41ca448ebc01d5a9060f0273992f5681dfe2ce6bb3c54",
     "scripts/ci/check_benches_mathlib_free.py": "a8da3bef100b50fdd923d609ad03a3a9bd55229467f5652abe6e3f0b3d1ed0e5",
-    "scripts/libgraph.py": "7c250cb801b6b5f4ae34ae90d98c2afc39d65f04e1b6770cc1f8871349af5ef7",
-    "reports/sign-det-declaration-review/core-graph-codec.md": "56c7ca24fcdd7d9b7b56d3dae216cb81e70b9e5c12bb396b3ea529085bb0eb66"
+    "scripts/libgraph.py": "39a537d8b0623d6770a1470e0868a6571675f477a970328e11373937f6ee6589",
+    "reports/sign-det-declaration-review/core-graph-codec.md": "091273d199f39bf7a586019bd533075aa4e5fb2d56a7d679bbf66e8dd55063fd",
+    "HexRealClosure/RootFrame.lean": "9c84cb8c3b992d9c7ceef118a81e5376120c99bb90fd19838ae6d8e078b66ac5",
+    "HexRealClosure/SignEvidence.lean": "374f9a75fe401831ffe439d89daad9773ba272b9fc9a4832a2d742e3f392cf2d",
+    "HexRealClosure/RootReplay.lean": "3ff6adf0f06f4fe7c2eaf4d5ca6732b83b096b44d4b26d7edbb35e3c43c4a179",
+    "conformance/HexSignDet/CrossCheck.lean": "b385a463de209eb7825e12934999a5dc7e3f7a46b2dd10b2f5d3b7c9a1a6c644",
+    "conformance/HexRealClosureTheory/SignEvidenceConformance.lean": "156eedb48bba3dd530ebc128ad04090eb076f1b344b15aac367236a290b1da3c"
   },
   "file_roles": {
     "HexSignDet/Codec/GraphLaws.lean": "reviewed module",
@@ -28,7 +33,12 @@
     "reports/sign-det-declaration-review/README.md": "assessment index",
     "scripts/ci/check_benches_mathlib_free.py": "unchanged extractor import dependency",
     "scripts/libgraph.py": "unchanged extractor import dependency",
-    "reports/sign-det-declaration-review/core-graph-codec.md": "individual declaration assessments"
+    "reports/sign-det-declaration-review/core-graph-codec.md": "individual declaration assessments",
+    "HexRealClosure/RootFrame.lean": "integration reader proof client",
+    "HexRealClosure/SignEvidence.lean": "integration reader proof client",
+    "HexRealClosure/RootReplay.lean": "integration reader proof client",
+    "conformance/HexSignDet/CrossCheck.lean": "graph conformance and kernel axiom guards",
+    "conformance/HexRealClosureTheory/SignEvidenceConformance.lean": "integration kernel examples and axiom guards"
   },
   "declarations": {
     "HexSignDet/Codec/GraphLaws.lean": [
@@ -37,8 +47,10 @@
       "query_indices",
       "factor_indices",
       "reduction_indices",
+      "bindings_of_check",
       "Shape.of_check",
       "Shape.of_validate",
+      "bindings_of_validate",
       "read_children",
       "read_entry",
       "read_entries",
@@ -73,8 +85,10 @@
       "Codec.query_indices",
       "Codec.factor_indices",
       "Codec.reduction_indices",
+      "Codec.bindings_of_check",
       "Codec.Shape.of_check",
       "Codec.Shape.of_validate",
+      "Codec.bindings_of_validate",
       "Codec.read_children",
       "Codec.read_entry",
       "Codec.read_entries",
@@ -117,14 +131,18 @@
       "propext",
       "Classical.choice",
       "Quot.sound"
+    ],
+    "integration_scope": "Individual source/API assessment of the integration additions. Bound reader clients and kernel axiom guards have a targeted integration build; no new compiler capture, computational regression or phase acceptance.",
+    "integration_commands": [
+      "lake build HexSignDet.CrossCheck HexRealClosureTheory.SignEvidenceConformance HexRealClosure.RootFrame HexRealClosure.RootReplay"
     ]
   },
-  "source_ref": "audit/issue-10575-sign-det-lint-reviewed-input",
-  "input_revision": "bb980658ac23e86c8c3ff43328c96ba0b89c7d31",
+  "source_ref": "audit/issue-10575-sign-det-integration-review-input-v4",
+  "input_revision": "e68d39aef73d8e88f6a30862d9b4c4dab03f74ee",
   "archive_files": {
-    "HexSignDet/Codec/GraphLaws.lean": "aee17063cc5b0dda1a7102c187f3a7cf59c23b2718f3390a265a01a781fc05aa",
+    "HexSignDet/Codec/GraphLaws.lean": "292cebb2c9ea1131ddd0458de3997aac95cfc1422e99dbd8fb5e7f6d08fcdaa5",
     "HexSignDet/Codec/FiniteLaws.lean": "a30dbc456d8613e247bfc691376206a7da405b8a3e08ef7a550c0b857a234ab8",
     "HexSignDet/Codec/FiniteGraph.lean": "bb1e0611aa74d7c7b4a74f83f05e481ccd4584523e0aaeca7beba53c70a6895c",
-    "reports/sign-det-declaration-review/core-graph-codec.md": "56c7ca24fcdd7d9b7b56d3dae216cb81e70b9e5c12bb396b3ea529085bb0eb66"
+    "reports/sign-det-declaration-review/core-graph-codec.md": "091273d199f39bf7a586019bd533075aa4e5fb2d56a7d679bbf66e8dd55063fd"
   }
 }
