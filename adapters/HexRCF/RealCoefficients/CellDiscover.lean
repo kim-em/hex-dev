@@ -29,7 +29,7 @@ inductive Error where
 /-- Native discovery through the owner's complete partition, followed by the
 existing carrier/root/row producers after its actual coefficient conversion.
 This retains native conversion history, not a frozen history certificate. -/
-def run (values : Fin n → parent.Value) (guards : List parent.Value)
+@[expose] def run (values : Fin n → parent.Value) (guards : List parent.Value)
     (formula : RealFormula.QF (n+1)) : Except Error (Packet values guards formula) :=
   if guards.all (fun d => Decidable.decide (d ≠ 0)) then
     let family := Tower.Sample.partition parent (RepresentationSpecialize.prepare values formula)

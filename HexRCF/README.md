@@ -612,13 +612,29 @@ conversion history is not frozen history evidence, and total frontend
 acceptance and strict arbitrary-missing-record compiled replay remain open.
 
 `CellDiscover.run` uses `SectorRequest.points` and `SectorRequest.Cut` to select
-points through the owner’s proved endpoint requests. `CellAlignment.sector_points` relates every requested point to the
-independently checked ordered root cells. `CellProgress` constructs typed
+points through the owner’s proved endpoint requests. `CellAlignment.sector_vector` relates the exact returned points to the
+independently checked ordered root cells. `CellProgress` proves existence of typed
 section, sector and exact ordinary-point rows from the actual owner producers.
 `CellDecision.complete` proves mathematical existence of accepted typed evidence
 and exact true/false diagnostic semantics at the original coefficient values,
 under an explicit ordinary-real parent model and nonzero original guards.
 [Cell-decision evidence](../reports/hexrcf-cell-decision.md) records the 28 proof
-audits, native cases and substantial observed row-production cost. General
-executable serialization/reader progress, source quotation, frozen histories
-and strict arbitrary-missing-record compiled checking remain separate.
+audits, native cases and substantial observed row-production cost. Literal-reader
+progress, source quotation, frozen histories and strict arbitrary-missing-record
+compiled checking remain separate.
+
+`CellBuild.evidence` produces typed cells before freezing them in the existing
+layout. `CellDiscover.run_success` proves that the actual native discovery
+returns those frozen rows and both exact original-coefficient verdicts under
+an ordinary-real parent model and nonzero original guards. The exact returned
+vector is covered by `CellAlignment.sector_vector`. [Executable-cell evidence](../reports/hexrcf-cell-execution.md)
+distinguishes this progress from the remaining finite-codec literal-reader,
+frozen-history and frontend acceptance obligations.
+
+`NumberField.cells` starts native complete-cell production from an original
+selected real algebraic generator and its `QAdjoin` coordinates. It preflights
+original guards before the existing owner factory, and `cellsWith` reuses a
+checked presentation. `cellsWith_spec` retains the actual execution trace and
+both original-coefficient verdicts without a supplied parent model. This is
+native construction; general finite-codec replay and frontend quotation remain
+separate. The algebraic-cell manual gives a runnable API example.

@@ -13,7 +13,7 @@ open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet HexPolyTheory.Interpr
 variable {registry : BaseContext.Registry} {parent : Tower.Context registry}
 variable [Hashable parent.Value] [Hashable Signature]
 
-/-- The actual selected-sign producer supplies every requested row. -/
+/-- The standalone frozen-row helper progresses through the actual selected-sign producer. -/
 theorem row_success (model : Model parent ℝ)
     (root : Descriptor parent.Value Signature parent.sign parent.signature)
     (queries : List (DensePoly parent.Value)) :
@@ -105,26 +105,16 @@ theorem sector (roots : RootReplay.Result p .negInf .posInf) (model : Model pare
   have left (positive : 0 < cut.val) : ∃ signs : SelectedSigns
       (roots.roots.get ⟨cut.val-1, by have := cut.isLt; omega⟩) [Isolation.pointQuery point],
       signs.value = -1 := by
-    obtain ⟨signs, _⟩ := (roots.roots.get ⟨cut.val-1, by have := cut.isLt; omega⟩).buildSigns_success
-      model.value model.zero_iff model.one model.add model.sub model.mul model.nat model.sign
-      model.neg model.inv [Isolation.pointQuery point]
-    refine ⟨signs, ?_⟩
-    rw [BoundarySigns.difference model _ point signs]
-    have negative := sign_eq_neg_one_iff.mpr (sub_neg.mpr (left_bound roots model cut point inside positive))
-    dsimp only [RootCells.points] at negative
-    rw [negative]
-    rfl
+    obtain ⟨signs, _, code⟩ := BoundarySigns.left_sign model
+      (roots.roots.get ⟨cut.val-1, by have := cut.isLt; omega⟩) point
+      (left_bound roots model cut point inside positive)
+    exact ⟨signs, code⟩
   have right (bounded : cut.val < roots.roots.length) : ∃ signs : SelectedSigns
       (roots.roots.get ⟨cut.val,bounded⟩) [Isolation.pointQuery point], signs.value = 1 := by
-    obtain ⟨signs, _⟩ := (roots.roots.get ⟨cut.val,bounded⟩).buildSigns_success
-      model.value model.zero_iff model.one model.add model.sub model.mul model.nat model.sign
-      model.neg model.inv [Isolation.pointQuery point]
-    refine ⟨signs, ?_⟩
-    rw [BoundarySigns.difference model _ point signs]
-    have positive := sign_eq_one_iff.mpr (sub_pos.mpr (right_bound roots model cut point inside bounded))
-    dsimp only [RootCells.points] at positive
-    rw [positive]
-    rfl
+    obtain ⟨signs, _, code⟩ := BoundarySigns.right_sign model
+      (roots.roots.get ⟨cut.val,bounded⟩) point
+      (right_bound roots model cut point inside bounded)
+    exact ⟨signs, code⟩
   choose left leftSign using left
   choose right rightSign using right
   exact ⟨⟨point, left, leftSign, right, rightSign⟩, rfl⟩

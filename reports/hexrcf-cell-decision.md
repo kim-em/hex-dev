@@ -19,12 +19,12 @@ laws, using list identities. `Cut.witness` supplies a point with proved
 membership at those exact endpoints. `points` collects those executable
 requests as a fixed-size vector; `points_spec` proves that every request
 succeeds and every returned coordinate has the required membership. Both the
-public `CellDiscover.run` and `sector_points` use this route. No new owner index
+public `CellDiscover.run` and `sector_vector` use this route. No new owner index
 theorem is needed.
 
 [CellAlignment](../adapters/HexRCF/RealCoefficients/CellAlignment.lean) relates
 each boundary coordinate to the independently checked radical root list.
-`sector_points` transports all requested memberships to the actual indexed
+`sector_vector` retains the request equation and transports memberships to the actual indexed
 root cells. Its ordered-list equality is supplied by `aligned`, which derives
 that equality from source conversion, carrier identities and the owner’s
 complete coverage/order laws. The headline construction does not assume the

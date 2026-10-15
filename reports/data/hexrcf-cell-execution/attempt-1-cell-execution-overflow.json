@@ -1,0 +1,13 @@
+{
+  "label": "narrow",
+  "kind": "source",
+  "text": "\n                  CellBuild.evidence now produces those typed rows before freezing them.\nThe public CellBuild.build serializes that same result in the existing packet\nlayout. CellDiscover.run_success proves that the actual native discovery\nreturns a packet: its cells equal the frozen constructed rows, and those rows\nproduce exact diagnostic verdicts for both quantifiers at the original fixed\ncoefficients. The returned vector itself is related to the indexed open cells\nby CellAlignment.sector_vector.",
+  "viewport": 390,
+  "scrollY": 425742,
+  "paragraphWidth": 343,
+  "scrollWidth": 343,
+  "targetTag": "CODE",
+  "targetWidth": 331,
+  "targetScrollWidth": 415,
+  "descendantOverflow": 84
+}

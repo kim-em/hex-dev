@@ -1,0 +1,80 @@
+[
+  {
+    "label": "desktop",
+    "kind": "source",
+    "text": "\n                  CellBuild.evidence now produces those typed rows before freezing them.\nThe public CellBuild.build serializes that same result in the existing packet\nlayout. CellDiscover.run_success proves that the actual native discovery\nreturns a packet: its cells equal the frozen constructed rows, and those rows\nproduce exact diagnostic verdicts for both quantifiers at the original fixed\ncoefficients. The returned vector itself is related to the indexed open cells\nby CellAlignment.sector_vector.",
+    "viewport": 1440,
+    "scrollY": 265667,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "CODE",
+    "targetWidth": 740,
+    "targetScrollWidth": 740,
+    "descendantOverflow": 0
+  },
+  {
+    "label": "desktop",
+    "kind": "binding",
+    "text": "\n                  CellBuild.evidence now produces those typed rows before freezing them.\nThe public CellBuild.build serializes that same result in the existing packet\nlayout. CellDiscover.run_success proves that the actual native discovery\nreturns a packet: its cells equal the frozen constructed rows, and those rows\nproduce exact diagnostic verdicts for both quantifiers at the original fixed\ncoefficients. The returned vector itself is related to the indexed open cells\nby CellAlignment.sector_vector.",
+    "viewport": 1440,
+    "scrollY": 265268,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752,
+    "descendantOverflow": 0
+  },
+  {
+    "label": "desktop",
+    "kind": "scope",
+    "text": "\n                  Literal-reader acceptance still needs finite coverage of every serialized\ncoefficient and context. Frozen provider/context histories, strict compiled\nmissing-record checking and fresh general source-goal quotation retain their\nown obligations. The seven-matrix\nnative regression includes a four-boundary union of the algebraic equation and\nhalf-open guards. Its retained diagnostic trace exposes a substantial cost in\ncell-row production; this is a performance limitation, without a scaling or\nspeedup claim.\n",
+    "viewport": 1440,
+    "scrollY": 266066,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752,
+    "descendantOverflow": 0
+  },
+  {
+    "label": "narrow",
+    "kind": "source",
+    "text": "\n                  CellBuild.evidence now produces those typed rows before freezing them.\nThe public CellBuild.build serializes that same result in the existing packet\nlayout. CellDiscover.run_success proves that the actual native discovery\nreturns a packet: its cells equal the frozen constructed rows, and those rows\nproduce exact diagnostic verdicts for both quantifiers at the original fixed\ncoefficients. The returned vector itself is related to the indexed open cells\nby CellAlignment.sector_vector.",
+    "viewport": 390,
+    "scrollY": 425772,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "CODE",
+    "targetWidth": 331,
+    "targetScrollWidth": 331,
+    "descendantOverflow": 0
+  },
+  {
+    "label": "narrow",
+    "kind": "binding",
+    "text": "\n                  CellBuild.evidence now produces those typed rows before freezing them.\nThe public CellBuild.build serializes that same result in the existing packet\nlayout. CellDiscover.run_success proves that the actual native discovery\nreturns a packet: its cells equal the frozen constructed rows, and those rows\nproduce exact diagnostic verdicts for both quantifiers at the original fixed\ncoefficients. The returned vector itself is related to the indexed open cells\nby CellAlignment.sector_vector.",
+    "viewport": 390,
+    "scrollY": 425292,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343,
+    "descendantOverflow": 0
+  },
+  {
+    "label": "narrow",
+    "kind": "scope",
+    "text": "\n                  Literal-reader acceptance still needs finite coverage of every serialized\ncoefficient and context. Frozen provider/context histories, strict compiled\nmissing-record checking and fresh general source-goal quotation retain their\nown obligations. The seven-matrix\nnative regression includes a four-boundary union of the algebraic equation and\nhalf-open guards. Its retained diagnostic trace exposes a substantial cost in\ncell-row production; this is a performance limitation, without a scaling or\nspeedup claim.\n",
+    "viewport": 390,
+    "scrollY": 426252,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343,
+    "descendantOverflow": 0
+  }
+]
