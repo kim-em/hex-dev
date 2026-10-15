@@ -11,6 +11,7 @@ public meta import HexRealClosureTheory.NativeFactory
 public meta import HexRealClosureTheory.NativeReaders
 public import HexRealClosureTheory.FiniteSupport
 public meta import HexRealClosureTheory.FiniteSupport
+public meta import HexRealClosureTheory.NativeBatch
 import all HexRealClosure.InversePacking
 import all HexRealClosure.Algebraic
 import all HexSignDet.Codec
@@ -52,7 +53,7 @@ private def checkBinding (name : Name) (value expected : Expr) : MetaM Unit := d
   let _ ← auditProof proof type
   kernelCheck name type proof
 
-private def checkLookup (finder : Name) (record key : Expr) : MetaM Unit := do
+private unsafe def checkLookup (finder : Name) (record key : Expr) : MetaM Unit := do
   let empty ← mkListLit (← inferType record) []
   let found ← mkAppM finder #[empty, key]
   let type ← mkEq (← mkAppM ``Option.isSome #[found]) (mkConst ``Bool.true)
@@ -68,6 +69,14 @@ private def checkLookup (finder : Name) (record key : Expr) : MetaM Unit := do
     throwError "native record lookup changed its exact statement"
   let _ ← auditProof proof target.leaf.type
   kernelCheck `__nativeLookupCons target.leaf.type proof
+  let prepared ← NativeBatch.prepare #[known.lookup.leaf, target.leaf]
+  unless prepared.size == 2 do throwError "native batch lost a lookup kind"
+  let expected := #[known.lookup.leaf.type, target.leaf.type]
+  for i in [:prepared.size] do
+    let some entry := prepared[i]? | throwError "native batch lost an original lookup"
+    unless entry.lookup.leaf.type == expected[i]! do throwError "native batch changed its lookup kind or order"
+    let _ ← auditProof entry.proof entry.lookup.leaf.type
+    kernelCheck `__nativeBatchLookup entry.lookup.leaf.type entry.proof
 
 syntax (name := nativeReadersProbe) "#native_readers_probe" : command
 @[command_elab nativeReadersProbe]
@@ -91,6 +100,7 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
     let entry ← checkedRecord (← operations.packingReader context codec ctx reduce reduceEq
       facts polynomial (jsonExpr packet))
     checkBinding `__nativePackingOriginal (← mkAppM ``Packing.original #[entry]) polynomial
+    checkLookup ``Packing.find entry polynomial
     let value ← mkAppM ``Packing.value #[entry]
     let packet ← NativePackets.storedSign codec ctx value #[context]
     let record ← checkedRecord (← operations.valueSignReader context codec ctx value (jsonExpr packet))

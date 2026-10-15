@@ -497,12 +497,13 @@ jobs:
           lake -d experiments/NestedReplay build
           lake build hexsigndet_kernel_replay_probe hexsigndet_inprocess_replay_probe KernelReplay.LowerProof KernelReplay.PackingProbe KernelReplay.Inverse KernelReplay.ValueSigns KernelReplay.InverseDemand KernelReplay.FiniteTower KernelReplay.FiniteTowerProbe KernelReplay.FiniteTowerThom KernelReplay.FiniteTowerUse KernelReplay.FiniteTowerReal \
             KernelReplay.FiniteSupport KernelReplay.FiniteOperands KernelReplay.FiniteLift \
-            KernelReplay.FiniteBase KernelReplay.BaseLookup KernelReplay.FiniteDependencies KernelReplay.FiniteReconstruction KernelReplay.LookupReplay \
+            KernelReplay.FiniteBase KernelReplay.BaseLookup KernelReplay.CoefficientLookup KernelReplay.CoefficientSuffix KernelReplay.CoefficientMembers \
+            KernelReplay.FiniteDependencies KernelReplay.FiniteReconstruction KernelReplay.LookupReplay \
             KernelReplay.FiniteThomJoint KernelReplay.FiniteChain KernelReplay.NativePackets \
             KernelReplay.NativeModels KernelReplay.NativeReplay \
             KernelReplay.NativeValues KernelReplay.NativeFactory KernelReplay.NativeChildren \
             KernelReplay.NativeReaders KernelReplay.NativeAssembly KernelReplay.NativeAssemblyModels \
-            KernelReplay.NativeAssemblyStaged KernelReplay.NativeAssemblyUse \
+            KernelReplay.NativeAssemblyStaged KernelReplay.NativeAssemblyUse KernelReplay.FrameOperand KernelReplay.FramePublic \
             KernelReplay.FiniteData KernelReplay.FiniteWitness KernelReplay.FiniteJoint
           experiments/RealClosureRepresentation/.lake/build/bin/representationPrototype
           probe_dir=$(mktemp -d)

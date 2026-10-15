@@ -9,6 +9,7 @@ public import HexRealClosureTheory.FiniteData
 public meta import HexRealClosureTheory.FiniteData
 public import KernelReplay.FiniteTowerProbe
 public meta import KernelReplay.FiniteTowerProbe
+public meta import KernelReplay.DecisionTrace
 import all HexRealClosure.Algebraic
 import all HexRealClosureTheory.PackingArithmetic
 import all HexPoly.Dense
@@ -71,6 +72,22 @@ theorem casts (n : Nat) : read (n : Rat) = (n : ℝ) := by simp [read]
 public meta section
 open Lean Meta Elab Command
 
+-- A literal empty native inventory cannot satisfy a lookup-success equation.
+-- Retain the original missing obligation without constructing a failing rfl
+-- candidate. Other Boolean predicates still use the ordinary kernel below.
+private def emptyLookup (type : Expr) : Bool := Id.run do
+  let args := type.getAppArgs
+  unless type.getAppFn.isConstOf ``Eq && args.size == 3 &&
+      args[0]!.isConstOf ``Bool && args[2]!.isConstOf ``Bool.true do return false
+  let left := args[1]!
+  unless left.getAppFn.isConstOf ``Option.isSome do return false
+  let some found := left.getAppArgs.back? | return false
+  unless found.getAppFn.isConstOf ``Packing.find || found.getAppFn.isConstOf ``ValueSign.find ||
+      found.getAppFn.isConstOf ``InverseFact.find do return false
+  let parameters := found.getAppArgs
+  return parameters.size ≥ 2 &&
+    parameters[parameters.size - 2]!.getAppFn.isConstOf ``List.nil
+
 /-- Supply rational predecessor operations and kernel-checked literal lookups. -/
 def supply (type : Expr) : MetaM (Option Expr) := do
   let arguments := type.getAppArgs
@@ -90,6 +107,12 @@ def supply (type : Expr) : MetaM (Option Expr) := do
           let proof ← mkAppM ``casts #[n]
           if ← isDefEq (← inferType proof) type then return some proof
   unless type.getAppFn.isConstOf ``Eq && arguments[0]!.isConstOf ``Bool do return none
+  if emptyLookup type then
+    if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
+      IO.FS.withFile path .append fun handle => do
+        handle.putStrLn "literal decision: empty inventory candidate retained"
+        handle.flush
+    return none
   let reflexive ← mkEqRefl arguments[2]!
   let used ← (Lean.collectFVars (Lean.collectFVars {} type) reflexive).addDependencies
   let binders := (← getLCtx).getFVarIds.map mkFVar |>.filter
@@ -100,15 +123,19 @@ def supply (type : Expr) : MetaM (Option Expr) := do
   let name ← mkFreshUserName `finiteDataLookup
   let declaration := Declaration.thmDecl {
     name, levelParams := [], type := closedType, value := closed }
+  let trace ← DecisionTrace.begin closedType
   -- A failed literal equality is a missing lookup. Resource errors still
   -- propagate; only the ordinary kernel can accept the candidate.
   let env ← match (← getEnv).addDeclCore
       (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
       declaration none (doCheck := true) with
     | .ok env => pure env
-    | .error (.declTypeMismatch _ _ _) => return none
+    | .error (.declTypeMismatch _ _ _) =>
+      DecisionTrace.finish trace binders.size false
+      return none
     | .error exception => throwKernelException exception
   setEnv env
+  DecisionTrace.finish trace binders.size true
   return some (mkAppN (mkConst name) binders)
 
 private def productType (entries : Expr) : MetaM Expr :=
@@ -118,6 +145,19 @@ private def productType (entries : Expr) : MetaM Expr :=
 syntax (name := finiteDataProbe) "#finite_data_probe" : command
 @[command_elab finiteDataProbe]
 def elaborateProbe : CommandElab := fun _ => liftTermElabM do
+  let owner := mkConst ``FiniteTower.first
+  let element ← mkAppM ``DensePoly.coeff #[mkConst ``unit, toExpr (0 : Nat)]
+  let polynomial ← mkAppM ``Element.polynomial #[element]
+  for (record, find, key) in #[(``Packing, ``Packing.find, polynomial),
+      (``ValueSign, ``ValueSign.find, element), (``InverseFact, ``InverseFact.find, element)] do
+    let inventory ← mkListLit (← mkAppM record #[owner]) []
+    let found ← mkAppM find #[inventory, key]
+    let observed ← mkAppM ``Option.isSome #[found]
+    let absent ← mkEq observed (mkConst ``Bool.true)
+    if (← supply absent).isSome then throwError "empty inventory supplied lookup success"
+    let rejected ← mkEq observed (mkConst ``Bool.false)
+    let some proof ← supply rejected | throwError "empty inventory lost its checked false result"
+    kernelCheck `__finiteEmptyLookup rejected proof
   let entries := mkConst ``FiniteTowerProbe.nestedEntries
   let type ← productType entries
   let proof ← FiniteData.buildClosed type supply
@@ -207,18 +247,21 @@ end
 
 set_option maxRecDepth 32768 in
 set_option maxHeartbeats 5000000 in
+set_option smartUnfolding false in
 /-- info: finite product data built from retained original keys; missing inventory rejected -/
 #guard_msgs in
 #finite_data_probe
 
 set_option maxRecDepth 32768 in
 set_option maxHeartbeats 5000000 in
+set_option smartUnfolding false in
 /-- info: nested derivative data checked from retained original packing keys -/
 #guard_msgs in
 #finite_descriptor_probe
 
 set_option maxRecDepth 32768 in
 set_option maxHeartbeats 5000000 in
+set_option smartUnfolding false in
 /-- info: decoded nested node data checked from retained original packing and sign keys -/
 #guard_msgs in
 #finite_node_probe

@@ -7,6 +7,7 @@ module
 
 public import HexRealClosureTheory.FiniteReconstruction
 public meta import HexRealClosureTheory.FiniteReconstruction
+import all HexRealClosureTheory.FiniteReconstruction
 public import KernelReplay.FiniteBase
 public import KernelReplay.FiniteJoint
 public meta import KernelReplay.FiniteData
@@ -84,9 +85,52 @@ private def reject (message : String) (action : MetaM α) : MetaM Unit := do
   catch error =>
     unless (← error.toMessageData.toString).startsWith message do throw error
 
+private def supportShape (blocks : Array Expr) (combined : Expr) : MetaM Unit := do
+  if blocks.isEmpty then return
+  let mut pending := [(combined, 0)]
+  let mut obtained : Array Expr := #[]
+  let mut depth := 0
+  while !pending.isEmpty do
+    let (value, current) :: rest := pending | throwError "support traversal lost its next block"
+    pending := rest
+    if value.getAppFn.isConstOf ``List.append then
+      let args := value.getAppArgs
+      pending := (args[args.size - 2]!, current + 1) ::
+        (args.back!, current + 1) :: pending
+    else
+      obtained := obtained.push value
+      depth := max depth current
+  unless obtained == blocks do throwError "support reassociation changed its ordered blocks"
+  let mut width := 1
+  let mut bound := 0
+  while width < blocks.size do
+    width := 2 * width
+    bound := bound + 1
+  unless depth ≤ bound do throwError "support reassociation retained a linear append chain"
+
+private def supportLists : MetaM Unit := do
+  let nat := mkConst ``Nat
+  for count in #[0, 1, 2, 3, 5, 17] do
+    let mut blocks := #[]
+    let mut values := []
+    for i in [:count] do
+      let current := [toExpr (i % 3), toExpr (i + 1)]
+      blocks := blocks.push (← mkListLit nat current)
+      values := values ++ current
+    let combined ← FiniteData.appendSupport nat blocks
+    supportShape blocks combined
+    let expected ← mkListLit nat values
+    kernelCheck `__finiteSupportOrder (← mkEq combined expected) (← mkEqRefl expected)
+  -- The shape check also covers many opaque blocks without evaluating them.
+  withLocalDeclD `block (← mkAppM ``List #[nat]) fun block => do
+    let blocks := Array.replicate 2049 block
+    let combined ← FiniteData.appendSupport nat blocks
+    supportShape blocks combined
+
 syntax (name := finiteReconstructionProbe) "#finite_reconstruction_probe" : command
 @[command_elab finiteReconstructionProbe]
 def elaborate : CommandElab := fun _ => liftTermElabM do
+  supportLists
   let base := mkConst ``FiniteBaseProbe.base
   let coefficient ← mkAppM ``BaseContext.Element #[base]
   let readType ← mkArrow coefficient (mkConst ``Real)

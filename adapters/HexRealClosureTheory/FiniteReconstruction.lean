@@ -142,6 +142,22 @@ def Prefix.joint (levels : Array Prefix) : MetaM (Expr × Expr) := do
   kernelCheck `__finitePrefixJoint type proof
   return (type, proof)
 
+-- Combine the retained coefficient blocks without a linear chain of append
+-- projections. Pairing adjacent blocks keeps their original order and copies.
+private def appendSupport (coefficient : Expr) (blocks : Array Expr) : MetaM Expr := do
+  let mut blocks := blocks
+  while blocks.size > 1 do
+    let mut next : Array Expr := #[]
+    for i in [:(blocks.size + 1) / 2] do
+      let some left := blocks[2 * i]? | throwError "finite support block missing"
+      let value ← if let some right := blocks[2 * i + 1]? then
+          mkAppM ``List.append #[left, right]
+        else pure left
+      next := next.push value
+    blocks := next
+  if let some block := blocks[0]? then return block
+  mkListLit coefficient []
+
 /-- Reconstruct saturated native inventories through their validated staged
 base history, then choose every algebraic coordinate in predecessor order.
 All original arithmetic inputs and the first level's replay support are
@@ -163,13 +179,14 @@ def reconstruct (base following baseReader : Expr) (discovery : Discovery) (extr
   let temporaryReaders := #[baseReader] ++ levels.flatMap (fun level => #[level.read, level.reader])
   let .app _ coefficient := (← inferType extra) |
     throwError "expected a base coefficient list"
-  let mut additional := extra
+  let mut blocks := #[extra]
   for leaf in discovery.leaves do
     if let some coefficients ← leaf.coefficients? then
       nativeOnly coefficients temporaryReaders
       unless ← withTransparency .all (isDefEq (← inferType coefficients) (← inferType extra)) do
         throwError "dependency lowering did not reach the base coefficient carrier"
-      additional ← mkAppM ``List.append #[additional, coefficients]
+      blocks := blocks.push coefficients
+  let additional ← appendSupport coefficient blocks
   nativeOnly additional temporaryReaders
   let firstSupport ← if let some first := levels[0]? then
       mkAppM ``Packing.Inventory.level #[first.context, first.entries, first.records, first.facts]
@@ -202,7 +219,10 @@ def reconstruct (base following baseReader : Expr) (discovery : Discovery) (extr
   if let some first := levels[0]? then
     unless ← withTransparency .all (isDefEq first.read baseReader) do
       throwError "first finite level does not follow the base reader"
-  let domains := origin.domains (agreementSupplier agreement)
+  -- Share only the deterministic walk of this closed inventory. Every
+  -- coefficient proof still checks its original list position and predicate.
+  let coefficientCache ← IO.mkRef (none : Option CoefficientWalk)
+  let domains := origin.domains (agreementSupplier agreement (some coefficientCache))
   let known ← IO.mkRef discovery.known
   let retained := lookupSupplier known (fun _ => pure none)
   let checks : Supplier := fun type => do

@@ -1020,6 +1020,21 @@ Its cancelling sum keeps both original coefficient lists before choosing the
 interpretation. This base supplier and the recursive prefix supplier require
 the general collector to supply the complete dependency support first.
 
+When the retained support contains an entire `Inventory.coefficients p` block,
+`agreementSupplier` derives all its guarded coefficient memberships with
+`Agreement.members`. It projects through syntactic list append and cons nodes
+and closed, unapplied definition aliases, without enumerating the coefficients.
+The retained block must match the original coefficient function, including its
+dictionaries. The range retains the polynomial's structural size bound and standard natural
+order; the complete guarded predicate must match, and caller metavariables
+remain unassigned. Unsupported support shapes use the
+existing membership supplier. These ordinary theorem applications retain the
+same enclosing kernel and axiom checks. `KernelReplay.CoefficientMembers` checks
+whole lists, empty polynomials, append/cons projections, repeated blocks,
+irreducible and universe-polymorphic aliases, and fallback for `++` notation.
+Foreign predicates, bounds, dictionaries, missing blocks and incomplete
+requests are refused.
+
 `FiniteData.frontier` retains original operation and replay boundaries with
 their local hypotheses before scalar expansion. `Level.lower` maps reached
 operations, literal replays and scalar casts to their exact predecessor
@@ -1318,13 +1333,27 @@ and included in the same predicate, in addition to their lowered discovery
 premises. `Reconstruction.requested` retains their exact translated types. The joint
 fixture exercises a polynomial sum-law request on `1 + X` with coefficients
 from a checked native unit packing. All eight discovered/requested guards are
-exported. Direct computed coefficient operands and product-law requests reach the same
-export path but are not covered by a successful end-to-end fixture; their
-dependency traversal currently exceeds the local 8 GiB experiment limit. Closed support and
+exported. Computed coefficient operands and product-law requests enter the same
+export path. The nested product fixture and its joint selected-root consumer
+remain unproved. Closed support and
 witness terms are shared through kernel-checked definitions or theorems; the
 existential predicate binds its interpretation directly from the bootstrap
 predicate. This fixture consumes a retained algebraic suffix over a staged base;
 normalization of arbitrary interleaved live contexts remains required.
+
+`FrameOperand` checks the scalar sign of the original second generator's
+computed remainder. `Element.ofPoly_restore` identifies its cached constructor
+with the original native generator, including the actual storage reduction.
+`beta_native` and `request_native` retain exact native-value and polynomial
+identities. A normalized one-element coefficient array has literal size one;
+its equality to the original constant polynomial follows from the checked
+nonzero generator. `request_bound` and `request_coeff` prove that index zero
+exists and contains that original generator. `FramePublic.product` consumes a
+finite product at one fixed reader, interpretation and pair of coordinates,
+and derives the original native generator's square equation. It does not
+choose witnesses: their simultaneous existence and both selected-root
+equations still require the joint reconstruction.
+
 This kernel experiment accesses opaque Sturm preparation internals through
 its exact DAG allowlist entry to inspect the validated native producer result.
 It does not construct unchecked prepared domains; public consumers retain the

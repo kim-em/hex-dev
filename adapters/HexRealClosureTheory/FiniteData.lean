@@ -115,7 +115,7 @@ abbrev Supplier := Expr → MetaM (Option Expr)
 private def diagnostic (message : String) : MetaM Unit := do
   if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
     IO.FS.withFile path .append fun handle => do
-      handle.putStrLn message
+      handle.putStrLn s!"{message} [heartbeats={(← IO.getNumHeartbeats) / 1000}]"
       handle.flush
 
 private def diagnoseTypes (obtained required : Expr) : MetaM Unit := do
@@ -197,9 +197,22 @@ private def finiteRange? (type : Expr) : MetaM (Option Nat) := do
   let .forallE _ bound _ _ := body | return none
   unless bound.getAppFn.isConstOf ``Nat.lt || bound.getAppFn.isConstOf ``LT.lt do return none
   let arguments := bound.getAppArgs
-  unless arguments.size ≥ 2 && arguments[arguments.size - 2]! == .bvar 0 do return none
+  if bound.getAppFn.isConstOf ``LT.lt then
+    unless arguments.size == 4 && arguments[0]! == mkConst ``Nat do return none
+    let standard ← withNewMCtxDepth do
+      withTransparency .instances (isDefEq arguments[1]! (mkConst ``instLTNat))
+    unless standard do return none
+  else
+    unless arguments.size == 2 do return none
+  unless arguments[arguments.size - 2]! == .bvar 0 do return none
+  if arguments.back!.hasLooseBVars then return none
   withTransparency .all do
     getNatValue? (← reduce arguments.back!)
+
+private def dataContainer (type : Expr) : Bool :=
+  type.getAppFn.constName?.any fun name => #[``Packing.DerivativeData, ``Packing.ReplayData,
+    ``Packing.PowerData, ``Packing.FoldData, ``Packing.ReductionData,
+    ``Packing.PreparationData, ``Transport.PowerData].contains name
 
 /-- Construct finite replay data by following structures, actual list members
 and literal bounded indices. Primitive arithmetic, lookup and sign obligations
@@ -228,6 +241,18 @@ private partial def traverse (goal : MVarId) (supply : Supplier)
     let some record := missing | throwError "finite discovery cannot construct a stopped premise"
     record ⟨original, ← getLCtx, ← getLocalInstances⟩
     return
+  -- Logical recursion must unfold at its public boundary. With global smart
+  -- unfolding disabled, reducing first can leave a Nat.brecOn helper whose
+  -- container name is no longer visible. Keep this local to finite data;
+  -- owner/model reduction and stopped arithmetic retain the caller's options.
+  if dataContainer original then
+    let changed? ← withOptions (fun options => smartUnfolding.set options true) do
+      let reduced ← withTransparency .all (whnf original)
+      if reduced == original then return none
+      return some (← withTransparency .all (goal.change reduced))
+    if let some changed := changed? then
+      traverse changed supply missing terminal
+      return
   let type ← goal.getType'
   let supplied ← if original == type then pure none else supply type
   if let some proof := supplied then
@@ -269,9 +294,29 @@ private partial def traverse (goal : MVarId) (supply : Supplier)
           (goal.apply (mkApp (mkConst ``Transport.Finite.empty) predicate))
         | throwError "empty finite-data range did not close"
       return
+    let mut signature := (← getConstInfo ``Transport.Finite.bounded).type
+    for expected in #[`n, `p, `earlier, `last, `i, `h] do
+      let .forallE actual _ body _ := signature |
+        throwError "bounded traversal changed its theorem arity"
+      unless actual == expected do throwError "bounded traversal changed its theorem layout"
+      signature := body
+    unless signature == mkApp2 (.bvar 4) (.bvar 1) (.bvar 0) do
+      throwError "bounded traversal changed its dependent conclusion"
     let rangeProof := mkApp2 (mkConst ``Transport.Finite.bounded) (toExpr (count - 1)) predicate
-    let children ← withTransparency .all (goal.apply rangeProof)
-    for child in children do traverse child supply missing terminal
+    -- Keep the original dependent predicate without rechecking its computed
+    -- size during application. Discovery uses the standard Nat relation and
+    -- its reduced bound; proof-producing callers kernel-check the conversion
+    -- and both actual theorem premises before exposing a theorem.
+    let .forallE firstName earlier following _ ← inferType rangeProof |
+      throwError "bounded traversal lost its preceding range"
+    unless firstName == `earlier do throwError "bounded traversal changed its preceding premise"
+    let first ← mkFreshExprMVar earlier
+    let .forallE lastName last _ _ := following.instantiate1 first |
+      throwError "bounded traversal lost its last index"
+    unless lastName == `last do throwError "bounded traversal changed its final premise"
+    let second ← mkFreshExprMVar last
+    goal.assign (mkApp2 rangeProof first second)
+    for child in [first.mvarId!, second.mvarId!] do traverse child supply missing terminal
     return
   if let .forallE _ domain (.forallE _ member _ _) _ := type then
     if member.getAppFn.isConstOf ``Membership.mem && member.getAppArgs.size == 5 then
@@ -359,11 +404,7 @@ private partial def traverse (goal : MVarId) (supply : Supplier)
         let proof := mkAppN proof #[first, second, predicate, left[1]!, right[1]!]
         for child in ← withTransparency .all (goal.apply proof) do traverse child supply missing terminal
         return
-  let name := type.getAppFn.constName?
-  let expand := name.any fun name => #[``Packing.DerivativeData, ``Packing.ReplayData,
-    ``Packing.PowerData, ``Packing.FoldData, ``Packing.ReductionData,
-    ``Packing.PreparationData, ``Transport.PowerData].contains name
-  let reduced ← if expand then withTransparency .all (whnf type) else whnf type
+  let reduced ← if dataContainer type then withTransparency .all (whnf type) else whnf type
   unless ← withTransparency .all (isDefEq reduced type) do
     throwError "finite replay reduction changed its obligation"
   if reduced != type then

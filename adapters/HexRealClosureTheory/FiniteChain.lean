@@ -194,7 +194,8 @@ checked native evidence; no interpretation or selected point is chosen
 until dependency discovery has finished. -/
 def NativeChain.reconstruct (native : NativeChain) (following extra : Expr)
     (statements : Expr → Array Level → MetaM (Array Expr)) (decisions : Supplier)
-    (record : Lookup → Array Level → MetaM (Option Expr)) (fuel : Nat := 500) :
+    (record : Lookup → Array Level → MetaM (Option Expr)) (fuel : Nat := 500)
+    (prepare : Option LookupPreparation := none) :
     MetaM Reconstruction := do
   let carrier ← mkAppM ``BaseContext.Element #[native.base]
   diagnostic "chain: base carrier constructed"
@@ -222,7 +223,7 @@ def NativeChain.reconstruct (native : NativeChain) (following extra : Expr)
           diagnostic "chain: original zero/unit premises constructed"
         return required
       diagnostic "chain: begin dependency discovery"
-      let discovery ← collectDependencies fuel levels types decisions record
+      let discovery ← collectDependencies fuel levels types decisions record prepare
       diagnostic "chain: dependency discovery returned"
       let requested ← statements read discovery.levels
       FiniteData.reconstruct native.base following read discovery extra decisions requested

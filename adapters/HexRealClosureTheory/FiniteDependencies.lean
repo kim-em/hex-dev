@@ -157,8 +157,9 @@ structure Discovery where
   requests : Array Request
   leaves : Array Leaf
   saturated : Bool
-  /-- Closed proof terms retained in the environment that declared their
-  generated constants. Reuse the discovery with that environment intact. -/
+  /-- Closed lookup terms, including projections of checked batches and
+  compositions of checked key bindings. Consumers must kernel-check the terms
+  and keep the producing environment intact. -/
   known : Array KnownLookup
 
 private def levelInventories (levels : Array Level) : Array Inventory :=
@@ -187,6 +188,37 @@ private def refreshLookup (lookup : Lookup) (before after : Array Inventory) :
   let some current := after[index]? | throwError "dependency current inventory missing"
   return some (lookup.withInventory current.facts, index)
 
+/-- Prepare checked closed lookups reached by a preliminary discovery pass.
+The ordinary pass still calls its original decision supplier for every request
+not covered by the returned exact proofs. After an insertion, preparation also
+checks the remaining lookups against the updated inventories. Preparation
+consumes no record fuel; only native record insertion consumes that budget. -/
+abbrev LookupPreparation := Array Leaf → MetaM (Array KnownLookup)
+
+private def prepareKnown (known : IO.Ref (Array KnownLookup)) (prepare : LookupPreparation)
+    (pending : Array Leaf) : MetaM Nat := do
+  let mut allowed : ExprSet := {}
+  for leaf in pending do allowed := allowed.insert (← instantiateMVars leaf.type)
+  let entries ← prepare pending
+  for entry in entries do
+    unless allowed.contains entry.lookup.leaf.type do
+      throwError "lookup preparation returned an unrequested predicate"
+    let some lookup ← entry.lookup.leaf.lookup? |
+      throwError "lookup preparation returned a non-lookup predicate"
+    let some retained ← lookup.remember entry.proof |
+      throwError "lookup preparation returned incomplete or mismatched evidence"
+    known.modify (·.push retained)
+  return entries.size
+
+private def dependencyLeaves (levels : Array Level) (types : Array Expr)
+    (decisions : Supplier) : MetaM (Array Leaf) := do
+  let mut roots := #[]
+  for type in types do
+    if type.hasMVar || type.hasSorry then throwError "incomplete dependency statement"
+    unless ← isProp type do throwError "dependency statement must be a proposition"
+    roots := roots ++ (← frontier type dependencyBoundary decisions)
+  descend (levels.size + 1) levels roots decisions
+
 /-- Close the reached native lookup dependencies across all retained levels
 before interpreting coefficients. Insert the missing records from one frontier
 before rebuilding the requested premises. Only exact lookup checks can be discharged during this
@@ -195,7 +227,8 @@ operations and guards still need the staged bootstrap and verified prefix
 suppliers; this discovery pass chooses no real points and proves no theorem. -/
 def collectDependencies (fuel : Nat) (initial : Array Level)
     (types : Array Level → MetaM (Array Expr)) (decisions : Supplier)
-    (record : Lookup → Array Level → MetaM (Option Expr)) : MetaM Discovery := do
+    (record : Lookup → Array Level → MetaM (Option Expr))
+    (prepare : Option LookupPreparation := none) : MetaM Discovery := do
   let _ ← collectSupport 0 (levelInventories initial) (fun _ => pure (mkConst ``True))
     (fun _ => pure none) (fun _ _ => throwError "inventory validation invoked a producer")
   let known ← IO.mkRef (#[] : Array KnownLookup)
@@ -203,20 +236,34 @@ def collectDependencies (fuel : Nat) (initial : Array Level)
 where
   go (known : IO.Ref (Array KnownLookup)) (remaining : Nat) (levels : Array Level)
       (requests : Array Request) : MetaM Discovery := do
-    let lookupDecisions := lookupSupplier known decisions
-    let mut roots := #[]
-    for type in ← types levels do
-      if type.hasMVar || type.hasSorry then throwError "incomplete dependency statement"
-      unless ← isProp type do throwError "dependency statement must be a proposition"
-      roots := roots ++ (← frontier type dependencyBoundary lookupDecisions)
-    let leaves ← descend (levels.size + 1) levels roots lookupDecisions
+    let required ← types levels
+    let began ← IO.getNumHeartbeats
+    let mut preliminary := 0
+    let mut preparation := 0
+    let fallbacks ← IO.mkRef (0 : Nat)
+    let mut refreshedChecks := 0
+    let mut insertedPreparation := 0
+    if remaining > 0 then
+      if let some prepare := prepare then
+        let pending ← dependencyLeaves levels required (lookupSupplier known (fun _ => pure none))
+        let inspected ← IO.getNumHeartbeats
+        preliminary := inspected - began
+        let _ ← prepareKnown known prepare pending
+        preparation := (← IO.getNumHeartbeats) - inspected
+    let lookupDecisions := lookupSupplier known (fun type => do
+      fallbacks.modify (· + 1)
+      decisions type)
+    let finalBegan ← IO.getNumHeartbeats
+    let leaves ← dependencyLeaves levels required lookupDecisions
+    let finalCost := (← IO.getNumHeartbeats) - finalBegan
     let original := levelInventories levels
     let mut current := levels
     let mut requests := requests
     let mut budget := remaining
     let mut inserted := false
     let mut missing := false
-    for leaf in leaves do
+    for position in [:leaves.size] do
+      let some leaf := leaves[position]? | throwError "dependency frontier lost a leaf"
       if let some lookup ← leaf.lookup? then
         if budget == 0 then
           missing := true
@@ -233,6 +280,7 @@ where
         -- unresolved original statement, even if the canonical lookup is known.
         let changed := currentInventory.facts != previousInventory.facts
         if changed || refreshed.inventory != lookup.inventory then
+          refreshedChecks := refreshedChecks + 1
           let pending ← refreshed.leaf.withContext do
             frontier refreshed.leaf.type dependencyBoundary lookupDecisions
           if pending.isEmpty then
@@ -248,6 +296,29 @@ where
         requests := requests.push lookup.request
         budget := n
         inserted := true
+        if let some prepare := prepare then
+          let preparing ← IO.getNumHeartbeats
+          let retained := lookupSupplier known (fun _ => pure none)
+          let mut pending := #[]
+          let updated := levelInventories current
+          for leaf in leaves.extract (position + 1) leaves.size do
+            let type ← instantiateMVars leaf.type
+            if type.hasFVar || type.hasMVar || type.hasSorry then continue
+            if let some lookup ← ({ leaf with type } : Leaf).lookup? then
+              if let some (refreshed, _) ← refreshLookup lookup original updated then
+                let supplied ← refreshed.leaf.withContext (retained refreshed.leaf.type)
+                if supplied.isNone then pending := pending.push refreshed.leaf
+          let prepared ← if pending.isEmpty then pure 0 else prepareKnown known prepare pending
+          let cost := (← IO.getNumHeartbeats) - preparing
+          insertedPreparation := insertedPreparation + cost
+          if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
+            IO.FS.withFile path .append fun handle => do
+              handle.putStrLn s!"dependency insertion: position={position} pending={pending.size} prepared={prepared} preparationHB={cost/1000}"
+              handle.flush
+    if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
+      IO.FS.withFile path .append fun handle => do
+        handle.putStrLn s!"dependency pass: preliminaryHB={preliminary/1000} preparationHB={preparation/1000} finalHB={finalCost/1000} insertionPreparationHB={insertedPreparation/1000} fallbacks={(← fallbacks.get)} refreshed={refreshedChecks} leaves={leaves.size} inserted={requests.size}"
+        handle.flush
     if inserted then
       if _decreased : budget < remaining then return ← go known budget current requests
       throwError "dependency insertion did not consume its record budget"

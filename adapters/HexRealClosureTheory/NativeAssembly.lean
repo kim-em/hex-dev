@@ -17,10 +17,10 @@ initialize registerTraceClass `Hex.RealClosure.nativeAssembly
 private def diagnostic (message : String) : MetaM Unit := do
   if (← isTracingEnabledFor `Hex.RealClosure.nativeAssembly) then
     trace[Hex.RealClosure.nativeAssembly] "{message}"
-    if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
-      IO.FS.withFile path .append fun handle => do
-        handle.putStrLn message
-        handle.flush
+  if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
+    IO.FS.withFile path .append fun handle => do
+      handle.putStrLn message
+      handle.flush
 
 /-- Original owners in predecessor order and their independent scalar reader.
 The callback receives equal cached predecessor operations and a strict codec.

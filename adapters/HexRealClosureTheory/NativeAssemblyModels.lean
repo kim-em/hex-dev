@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public meta import HexRealClosureTheory.NativeAssembly
+public meta import HexRealClosureTheory.NativeBatch
 
 public meta section
 namespace Hex.RealClosure.Algebraic.KernelReplay.FiniteData
@@ -46,7 +47,10 @@ unsafe def NativeChain.reconstructModels (native : NativeChain) (models : Native
     (following extra : Expr) (statements : Expr → Array Level → MetaM (Array Expr))
     (decisions : Supplier) (fuel : Nat := 500) : MetaM Reconstruction := do
   let assembly ← models.assembly native fuel
+  let prepare : Option LookupPreparation :=
+    if Hex.RealClosure.batchLookups.get (← getOptions) then some NativeBatch.prepare else none
   native.reconstruct following extra statements decisions
     (fun lookup _ => assembly.supply native.owners.size lookup.request #[]) fuel
+    prepare
 
 end Hex.RealClosure.Algebraic.KernelReplay.FiniteData
