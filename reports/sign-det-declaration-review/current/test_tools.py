@@ -9,6 +9,26 @@ from normalize import compiler_kind, source_names, lexical_references
 
 
 class NamingTest(unittest.TestCase):
+    def test_new_or_missing_production_module_refuses_coverage(self):
+        spec = importlib.util.spec_from_file_location(
+            'sign_det_bindings', Path(__file__).resolve().parents[1] / 'check_foundation_bindings.py')
+        checker = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(checker)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / 'HexSignDet').mkdir()
+            source = root / 'HexSignDet/Existing.lean'
+            source.write_text('def existing : Nat := 0\n')
+            reviewed = {'HexSignDet/Existing.lean'}
+            checker.check_module_coverage(root, reviewed)
+            (root / 'HexSignDet/Added.lean').write_text('def added : Nat := 1\n')
+            with self.assertRaisesRegex(ValueError, 'module coverage differs'):
+                checker.check_module_coverage(root, reviewed)
+            (root / 'HexSignDet/Added.lean').unlink()
+            source.unlink()
+            with self.assertRaisesRegex(ValueError, 'module coverage differs'):
+                checker.check_module_coverage(root, reviewed)
+
     def test_nested_namespace_and_global_override(self):
         with tempfile.TemporaryDirectory() as directory:
             source = Path(directory) / 'Example.lean'
@@ -33,11 +53,11 @@ class NamingTest(unittest.TestCase):
     def test_json_value_mutual_definitions_are_qualified(self):
         root = Path(__file__).resolve().parents[3]
         names = source_names(root / 'HexSignDet/Codec/Value.lean')
-        self.assertEqual(len(names), 38)
+        self.assertEqual(len(names), 39)
         self.assertTrue(all(value == 'Hex.SignDet.Codec.Json.' + name
                             for name, value in names.items()))
         for name in ('Value', 'Values', 'Fields', 'readLoop', 'Value.tokensLoop_eq',
-                     'readBytes_write'):
+                     'readLoop_tokens', 'readBytes_write'):
             self.assertEqual(names[name], 'Hex.SignDet.Codec.Json.' + name)
 
     def test_indented_mutual_and_component_namespace_ends(self):
