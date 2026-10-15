@@ -78,6 +78,31 @@ run_meta do
       return some (← mkEqRefl (mkNatLit 0)))
       | throwError "native preparation accepted a wrong nonnegativity proof"
     unless !(← getEnv).contains name do throwError "failed native source preparation leaked a declaration"
+  -- These exceptions arrive after actual callback mutations. The observer
+  -- shares the state references and cannot restore on production's behalf.
+  for interrupted in [false,true] do
+    unchanged do
+      let name := if interrupted then
+        `Hex.RCF.AlgebraicPreparationConformance.interruptMarker
+        else `Hex.RCF.AlgebraicPreparationConformance.exceptionMarker
+      unless !(← getEnv).contains name do throwError "exception marker already exists"
+      let raised ← observeTerminal (do
+        let _ ← AlgebraicPreparation.prepare target (fun _ => do
+          let _ ← mkFreshExprMVar (mkConst ``Nat)
+          let type ← mkEq (mkNatLit 0) (mkNatLit 0)
+          addDecl (.thmDecl {name,levelParams := [],type,value := ← mkEqRefl (mkNatLit 0)})
+          if interrupted then throwInterruptException
+          else throwError "deliberate callback failure")
+        pure false) (fun error => do
+          if interrupted then
+            unless error.isInterrupt do throw error
+          else
+            match error with
+            | .error _ _ => pure ()
+            | _ => throw error
+          pure true)
+      unless raised do throwError "callback exception became a structured return"
+      unless !(← getEnv).contains name do throwError "callback exception leaked a declaration"
   unchanged do
     let .error (.unsupported _ _) ← AlgebraicPreparation.prepare q(∀ x : ℝ, x^2 + Real.pi > 0)
       | throwError "unregistered constant entered the exact algebraic producer"
@@ -164,6 +189,27 @@ run_meta do
           (input.value ∘ GatherCells.values shared (AlgebraicCells.coefficients sources algebraic.indices))
           algebraic.formula [] packet.radical algebraic.quantifier packet.rootGraph packet.cells).toOption == some expected do
         throwError "prepared irrational source changed its quantified verdict"
+  -- Both roles are nonempty and have opposite signs. Swapping a coefficient
+  -- for the divisor changes each verdict. The zero numerator preserves the
+  -- original guard without creating another irrational generator.
+  for (target,expected) in [
+      (q(∀ x : ℝ, x^2 + Real.sqrt 2 + 0 / (-1 : ℝ) > 0),true),
+      (q(∃ x : ℝ, x^2 + Real.sqrt 2 + 0 / (-1 : ℝ) < 0),false)] do
+    let mixed ← checked target
+    unless mixed.source.coefficients.size == 1 && mixed.source.divisors.size == 1 do
+      throwError "mixed source lost a coefficient or original divisor"
+    unless (← isDefEq mixed.source.coefficients[0]! q(Real.sqrt 2)) &&
+        (← isDefEq mixed.source.divisors[0]! q((-1 : ℝ))) do
+      throwError "mixed source roles changed"
+    mixed.buildWith (fun _ => none) fun result => do
+      let .ok ⟨sources,shared,packet⟩ := result
+        | throwError "mixed prepared source did not produce a complete packet"
+      let input := packet.family.collection.input
+      unless (CompleteReplay.check input.context.codec
+          (input.value ∘ GatherCells.values shared (AlgebraicCells.coefficients sources mixed.indices))
+          mixed.formula ((GatherCells.guards shared (AlgebraicCells.guards sources mixed.guards)).map input.value)
+          packet.radical mixed.quantifier packet.rootGraph packet.cells).toOption == some expected do
+        throwError "mixed coefficient/divisor layout changed the quantified verdict"
   addDecl (.thmDecl {
     name := `Hex.RCF.AlgebraicPreparationConformance.runFinished
     levelParams := [], type := mkConst ``True, value := mkConst ``True.intro })
