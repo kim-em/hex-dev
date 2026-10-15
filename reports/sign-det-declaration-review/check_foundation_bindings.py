@@ -55,6 +55,7 @@ def main():
     require(set(foundation["file_roles"]) == set(foundation["files"]), "unclassified binding")
     for path, expected in foundation["files"].items():
         require(hashlib.sha256((ROOT / path).read_bytes()).hexdigest() == expected, path)
+    require("input_revision" in foundation, "foundation archive is required")
     verify_review_archive(foundation, "core-foundation",
                           ["HexSignDet/" + name + ".lean" for name in FOUNDATION_MODULES])
     groups = (
@@ -133,10 +134,22 @@ print(json.dumps({path:module.source_names(root/path) for path in sys.argv[2:]})
                         (BASE / "README.md").read_text())
     require(summary is not None and int(summary.group(1)) == total, "README review total differs")
     companion = json.loads((BASE / "manifest.json").read_text())
+    try:
+        original = subprocess.check_output(
+            ["git", "rev-parse", "--verify", "--end-of-options",
+             "refs/tags/" + companion["source_ref"] + "^{commit}"],
+            cwd=ROOT, text=True, stderr=subprocess.PIPE).strip()
+    except subprocess.CalledProcessError as error:
+        raise ValueError("Missing companion snapshot; fetch " + companion["source_ref"] +
+                         " from origin (see the review README)") from error
+    require(original == companion["source_revision"], "companion source ref moved")
     for module in companion["modules"]:
         snapshot_path = module.get("snapshot_path", module["path"])
-        snapshot = subprocess.check_output(
-            ["git", "show", companion["source_revision"] + ":" + snapshot_path], cwd=ROOT)
+        try:
+            snapshot = subprocess.check_output(
+                ["git", "show", original + ":" + snapshot_path], cwd=ROOT, stderr=subprocess.PIPE)
+        except subprocess.CalledProcessError as error:
+            raise ValueError("Companion snapshot lacks " + snapshot_path) from error
         require(hashlib.sha256(snapshot).hexdigest() == module["sha256"],
                 "original companion snapshot differs: " + snapshot_path)
         path = module["path"]

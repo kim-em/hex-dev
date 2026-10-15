@@ -196,7 +196,7 @@ reuse the existing namespace-aware extractor for these groups; they are
 local review snapshots rather than a new automatic CI requirement.
 
 The earlier graph-codec and coefficient snapshots remain preserved at
-`audit/issue-10575-sign-det-codec-reviewed-v3`. Their current module and
+`audit/issue-10575-sign-det-codec-reviewed-v3`. The retained tags are not checked by the current manifests. Their current module and
 assessment archives use `audit/issue-10575-sign-det-lint-reviewed-input`.
 Current byte bindings separately cover the shared documentation, guards and
 extractor context. These are local checks; changed inputs require assessment
@@ -285,7 +285,7 @@ includes the public JSON classes in the namespace-aware group inventory.
 Whole-pair lint/reference/performance acceptance remains separate.
 
 The earlier serialization/producer snapshot remains preserved at
-`audit/issue-10575-sign-det-serialization-input-v3`. Its current module and
+`audit/issue-10575-sign-det-serialization-input-v3`. The retained tag is not checked by the current manifest. Its current module and
 assessment archive uses `audit/issue-10575-sign-det-lint-reviewed-input`.
 The existing SignDet tag fetch command covers both checkpoints. Current
 context bindings remain separate from the module and assessment archive.
