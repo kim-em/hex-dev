@@ -211,7 +211,7 @@ local review snapshots rather than a new automatic CI requirement.
 The earlier graph-codec and coefficient snapshots remain preserved at
 `audit/issue-10575-sign-det-codec-reviewed-v3`. The retained tags are not checked by the current manifests. Their current module and
 assessment archive for graph-codec uses
-`audit/issue-10575-sign-det-integration-review-input-v1`; the coefficient archive
+`audit/issue-10575-sign-det-integration-review-input-v2`; the coefficient archive
 retains `audit/issue-10575-sign-det-lint-reviewed-input`.
 Current byte bindings separately cover the shared documentation, guards and
 extractor context. These are local checks; changed inputs require assessment
@@ -234,7 +234,7 @@ The namespace-aware inventory uses the shared extractor, including the
 no performance or phase acceptance follows from it.
 
 The DAG-support source snapshot is preserved at
-`audit/issue-10575-sign-det-integration-review-input-v1`. Its archive check binds the nine reviewed modules and individual assessment
+`audit/issue-10575-sign-det-integration-review-input-v2`. Its archive check binds the nine reviewed modules and individual assessment
 to that input commit. Current byte checks separately bind shared documentation,
 guards and source-extraction helpers. Later context-file edits require assessment
 before updating their current bindings; they do not move the historical module

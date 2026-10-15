@@ -1,10 +1,10 @@
 {
   "scope": "49 named declarations in six computational modules, Node/QueryReduction equality instances and structure fields; partial core review, no phase promotion or computational performance claim.",
   "files": {
-    "HexManual/Chapters/HexSignDet.lean": "47b72e891fbceb02abbcb1191c573712b413e517aa52a76a467872a7871cc441",
+    "HexManual/Chapters/HexSignDet.lean": "6cf774c0d04b484265c361d16b061b8e57039511c025810520f383169ecfb8e1",
     "HexSignDet/Counts.lean": "f57e6f41c9ddcc5d1c075a768f036965d475d6d2e26b9efc4ed225c33c638696",
     "HexSignDet/Dag.lean": "d8de62d08d4fa038faa7978202177e04957f60befc13b161974f73cc81f354b8",
-    "HexSignDet/DagReplay.lean": "4bc5c8a12517cca8b375db63360d6e607c55509518089c8c43483893e7bfb5a1",
+    "HexSignDet/DagReplay.lean": "be3317f306194a18a314e9f8fca021eefda76ea17704c5ec89daeff9a2867f42",
     "HexSignDet/Moment.lean": "bb8b34b81436016d931d3810543e4f85968ed01a0e22a2e24effd02a7871c79b",
     "HexSignDet/MomentReplay.lean": "7052669c286e9a60d596139236451d36d0942f001d47e1c9230cdb64264f7b68",
     "HexSignDet/QueryReduction.lean": "9e467339e2f81781512983b7a130b47f44a2ca058b9c3f4351cb9d6f15152444",
@@ -13,7 +13,7 @@
     "HexSignDetTheory/TreeChecks.lean": "2326cd521f40ae4cc6838cba88c3263de05bfc83f6792b8ea8720ddd60f7a327",
     "adapters/HexRealClosureTheory/TransportReplay.lean": "99a6865e284ac48e8623c0cae0794edd7bac5ecca1ddbe49cb6d674fae0bb205",
     "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "c3b86c2cef0c53175e43cc40db0dc02ec93de147414c9378e0d914bfb5149132"
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "83520887f6307511e2db9aa18862adaa47d66df6aadcdf2870cd6c2b635c8928"
   },
   "declarations": {
     "HexSignDet/Counts.lean": [
