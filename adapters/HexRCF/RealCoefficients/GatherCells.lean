@@ -166,6 +166,41 @@ theorem build_complete (following : base.Realization)
   simp only [build,valid,↓reduceIte,gathered,produced,Except.mapError,
     bind,Except.bind,pure,Except.pure]
 
+/-- Complete emitted replay at independently presented original selected-field
+values. Exact owner/coordinate bindings replace any semantic agreement premise. -/
+theorem build_fields_complete
+    (following : (BaseContext.PackedContext.pack (BaseContext.rational registry)).Realization)
+    (compatible : ∀ owner ∈ owners,
+      owner.origin.base.signature.constants <+ (BaseContext.rational registry).signature.constants ∧
+      owner.origin.base.signature.infinitesimals ≤ (BaseContext.rational registry).signature.infinitesimals)
+    (generators : Fin n → RealAlgebraicNumber)
+    (sources : (i : Fin n) → Hex.RealClosure.NumberField.Presentation (generators i) registry)
+    (coordinates : (i : Fin n) → QAdjoin (generators i).toAlgebraic)
+    (coefficients : Fin n → Source owners)
+    (owner : ∀ i, owners[(coefficients i).1] = (sources i).context)
+    (binding : ∀ i, HEq (coefficients i).2 ((sources i).pack (coordinates i)))
+    (original : List (Source owners)) (formula : RealFormula.QF (n+1))
+    (nonzero : ∀ entry ∈ original, entry.2 ≠ 0) :
+    ∃ shared : Shared (.pack (BaseContext.rational registry)) owners, ∃ packet,
+      build (.pack (BaseContext.rational registry)) coefficients original formula = .ok ⟨shared,packet⟩ ∧
+      ∀ quantifier, ∃ verdict,
+        CompleteReplay.check packet.family.collection.input.context.codec
+          (packet.family.collection.input.value ∘ values shared coefficients) formula
+          ((guards shared original).map packet.family.collection.input.value)
+          packet.radical quantifier packet.rootGraph packet.cells = .ok verdict ∧
+        (verdict = true ↔ (RealFormula.Prenex.quant quantifier (.matrix formula)).toProp
+          (fun i => (Coefficients.ofField (generators i) (coordinates i)).toReal)) := by
+  obtain ⟨shared,packet,produced,_gathered,model,checked⟩ :=
+    build_complete following (Hex.RealClosure.NumberField.rationalModel registry)
+      compatible coefficients original formula nonzero
+  have agreed : (fun i => (model.owners.get (coefficients i).1).1.value (coefficients i).2) =
+      (fun i => (Coefficients.ofField (generators i) (coordinates i)).toReal) := by
+    funext i
+    rw [← model.value]
+    exact field_value following model (sources i) (coefficients i).1 (owner i)
+      (coefficients i).2 (coordinates i) (binding i)
+  exact ⟨shared,packet,produced,by simpa only [agreed] using checked⟩
+
 /-- A known original zero rejects before any gathering or carrier work. -/
 theorem build_zero (base : BaseContext.PackedContext registry)
     (coefficients : Fin n → Source owners) (original : List (Source owners))

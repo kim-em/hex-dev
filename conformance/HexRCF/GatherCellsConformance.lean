@@ -79,7 +79,7 @@ run_meta do
   for name in #[``GatherCells.values_real,``GatherCells.guards_nonzero,
       ``GatherCells.buildWith_complete,``GatherCells.build_complete,
       ``GatherCells.build_zero,``GatherCells.build_domains,
-      ``NumberField.model_read,``GatherCells.field_value] do
+      ``NumberField.model_read,``GatherCells.field_value,``GatherCells.build_fields_complete] do
     let .thmInfo declaration ← Lean.getConstInfo name | throwError "expected actual gathering theorem"
     let _ ← Hex.RCF.checkProof name declaration.type declaration.value
     let axioms ← Lean.collectAxioms name
@@ -90,10 +90,11 @@ run_meta do
       ``GatherCells.values_real,``GatherCells.guards_nonzero,``CompleteReplay.check_covered,
       ``Inclusions.Models.value] do
     unless seen.contains required do throwError "cross-owner progress omitted actual law: {required}"
-  let sourceSeen ← Hex.RCF.ProofEvidence.projectDependencies #[``GatherCells.field_value]
-  for required in #[``NumberField.model_read,``Shared.Model.value_of_model,
+  let sourceSeen ← Hex.RCF.ProofEvidence.projectDependencies #[``GatherCells.build_fields_complete]
+  for required in #[``NumberField.model_read,``Shared.Model.value_of_model,``GatherCells.build_complete,
+      ``GatherCells.field_value,
       ``Hex.RealClosure.NumberField.Presentation.pack_value,``NumberField.value_eq_ofField] do
     unless sourceSeen.contains required do
       throwError "selected-field gathering omitted original source law: {required}"
-  Lean.logInfo "eight cross-owner packet and original selected-field proof bodies checked"
+  Lean.logInfo "nine cross-owner packet and original selected-field proof bodies checked"
 end Hex.RCF.RealCoefficients.GatherCellsConformance
