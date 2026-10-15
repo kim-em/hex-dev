@@ -48,6 +48,18 @@ def retained_source(name, root=None):
     return text
 
 
+def check_retained_sources(sources, directory):
+    """Check archived hashes and one-to-one membership in the current corpus."""
+    for source, sha in sources.items():
+        assert digest(retained_source(source)) == sha
+    resolved = {retained_path(source) for source in sources}
+    assert len(resolved) == len(sources), "duplicate resolved proof source"
+    assert resolved == set(directory.glob("*.lean")), "proof corpus membership differs"
+    expected = {HISTORICAL_PREFIX + str(path.relative_to(ROOT)).removeprefix(CURRENT_PREFIX)
+                for path in directory.glob("*.lean")}
+    assert set(sources) == expected, "proof corpus namespace differs"
+
+
 @cache
 def load_report(name):
     """Read immutable retained reports once when checking many sample links."""
@@ -110,11 +122,8 @@ def main():
     if fresh.exists():
         data = json.loads(fresh.read_text())
         assert not data["partial"]
-        for source, sha in data["hex_sources"].items():
-            assert digest(retained_source(source)) == sha
         directory = ROOT / "bench/HexPrimalityTheory/ProofProbe/FactorCorpus"
-        assert set(data["hex_sources"]) == {HISTORICAL_PREFIX + str(p.relative_to(ROOT)).removeprefix(CURRENT_PREFIX)
-                                             for p in directory.glob("*.lean")}
+        check_retained_sources(data["hex_sources"], directory)
         for system, suffix in [("native", ".hex.log"), ("primecert", ".primecert.log")]:
             result = data[f"{system}_build"]
             if data[system]:
