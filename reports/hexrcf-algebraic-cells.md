@@ -153,3 +153,9 @@ show the checked examples. Target-level overflow checks cover this chapter;
 they do not assert that unrelated content in the complete manual has no
 horizontal overflow. The [earlier snapshot](data/hexrcf-algebraic-cells/before-theory/context.json)
 retains its own source bindings and explicitly excludes visual acceptance.
+
+The [latest-main integration record](data/hexrcf-algebraic-cells/integration.json)
+checks all 42 source bindings again and records another successful full build
+and dependency check. The merged upstream changes affect documentation and
+planned-library metadata; no Lean source, Lake configuration or dependency pin
+changes from the checked source snapshot.
