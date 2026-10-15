@@ -1,85 +1,90 @@
 # OrderedFn compiler capture snapshot
 
-The current compiler capture records 545 constants in fourteen production
-modules: the five computational modules and nine companion modules, including
-`HexOrderedFnTheory.Sign`. Lean metadata records thirteen structure fields.
-The transitive axiom union is `propext`, `Classical.choice`, `Quot.sound`;
-none of the selected constants is an axiom declaration.
+The capture inventories 545 constants attributed to fourteen production modules:
+five computational modules and nine Theory modules. Lean metadata records
+thirteen structure fields. The selected constants have exactly the axiom union
+`propext`, `Classical.choice`, `Quot.sound`, with no owned axiom declaration.
 
-The producer imports the full manual, API lint checks, infinitesimal examples
-and every tracked client in the root or adapter libraries that transitively imports one of the
-fourteen production modules. Explicit imports include evidence clients;
-reference counts do not promote those clients to production. Separate
-benchmark and conformance sub-projects, executable entry points and their
-importers are outside this single-environment import-coverage claim. Executable
-modules can define conflicting root `main` declarations. Its reference counts describe named constant types and
-bodies in that environment. They do not establish production liveness:
-anonymous examples, elaborator reductions and external clients can leave no
-named edge, and evidence modules can supply references. Generated declarations
-are included. The earlier 545-constant inventory and its 49 handwritten
-zero-reference dispositions remain separate retained evidence.
+The producer imports the manual, API lint checks, existing infinitesimal examples
+and all 591 library clients selected from the root Lake configuration. This
+includes libraries with source directories under `examples/`, `conformance/`,
+`bench/` and `experiments/`, as well as root and adapter sources. Evidence clients
+remain evidence; import coverage does not establish production liveness.
 
-The fourteen owned modules are byte-identical to the v4 source checkpoint
-after applying the Mathlib-to-Theory module rename. The existing assessment
-already covers the shared sign-lemma relocation and use of `Bounds.width_add`
-in convergence. The rename changes no proof statement or executable body. The
-existing individual assessments still apply; the current capture does not
-supply a new assessment for every generated constant or establish Phase 6.
+The source checker independently resolves library roots and globs from the pinned
+`lakefile.lean`, using Lake's library-module rules. It walks reverse imports from
+the fourteen production modules and requires exact agreement with the recorded
+client set. It supports the literal arrays, concatenations, glob maps and the
+explicit parked-conformance filter used by this configuration; unsupported
+expressions are refused. The same computation on the live tree detects added
+or removed clients in `--current` mode. Controls exercise the previously omitted
+consumer, conformance, diagnostic and benchmark-support modules.
 
-`bindings.json` records the exact imported root-package Lean source closure,
-the assessments and the lock/toolchain bytes. The source tag
-`audit/issue-10575-orderedfn-current-input-v5` preserves those inputs; the complete
-tag `audit/issue-10575-orderedfn-current-complete-v5-context` preserves the report.
-The default checker verifies source bytes at the recorded source tag and report
-bytes in the current tree, including byte equality of every report file with
-the complete archive tag. The recorded Lean input set must match the imported
-local source closure at the input revision. Every imported Hex module must
-resolve to exactly one tracked path, and the package/lock/toolchain inputs
-are required explicitly. This checks the capture-reported imported module list;
-it does not independently reconstruct Lean imports. `--current` additionally requires current source
-bytes to match. Later source drift can preserve the archive while correctly
-refusing a current attestation. The current snapshot uses the Theory import names; the earlier Mathlib-named
-capture remains available at its v4 checkpoint. External source bytes follow the dependency pins. `check_capture.py` verifies those bindings, selected
-module coverage, unique constant/field inventories and the axiom union. Run:
+Four executable modules define conflicting `main` declarations and cannot share
+one imported environment: `HexOrderedFnTheory.LiouvilleRun`,
+`HexRealClosure.TowerTransportTests`, `HexRealClosure.TrivialTowerTests` and
+`HexRCF.InverseFixture`. Their exclusions are derived from source and checked
+against the record and imported-module list. A library client that imports one
+of these executable modules is refused. Executable drivers outside the library
+source sets are outside this coverage claim.
+
+The producer's reference counts describe named constant types and bodies in this
+imported environment. Anonymous examples, elaborator reductions and external
+clients can leave no named edge. Tests can supply references, and generated
+constants are included. The original declaration assessment and its 49
+zero-reference dispositions remain separate retained evidence; counts alone do
+not decide whether an API should remain public.
+
+All fourteen owned source files match the preserved v4 files after the global
+Mathlib-to-Theory module rename. This is a source-identity check, not a proof
+that every imported dependency or elaborated type is identical. The checker also
+compares declaration names, owning modules, kinds and axiom lists with the
+renamed v4 capture. The individual source assessments remain applicable; final
+API-use acceptance and the retained computational regression findings remain
+open. No phase, performance verdict or publication eligibility advances here.
+
+## Source and artifact checkpoints
+
+The source tag is `audit/issue-10575-orderedfn-current-input-v6`; the complete tag
+is `audit/issue-10575-orderedfn-current-complete-v6`. The binding record covers
+the imported root-package Lean closure, the source assessments, audit tools,
+the Lake block parser, toolchain and lock. Imported Hex modules must resolve to
+one tracked path. External source bytes follow the pinned dependencies.
+
+Fetch the source and complete tags, together with
+`audit/issue-10575-orderedfn-current-input-v4` and
+`audit/issue-10575-orderedfn-current-complete-v4` for the predecessor comparison.
+Use an isolated checkout of the complete tag with its pinned dependencies:
 
 ```sh
 python3 -I -B reports/ordered-fn-declaration-review/current/check_capture.py
+python3 -I -B reports/ordered-fn-declaration-review/current/check_capture.py --current
+python3 reports/ordered-fn-declaration-review/current/test_capture.py
 ```
 
-For reproduction, fetch the source and complete tags above, plus
-`audit/issue-10575-orderedfn-current-input-v4` for the predecessor comparison.
-Use an isolated checkout of the complete tag with its pinned dependencies. To force a new capture, use a fresh directory, copy `audit.lean.txt` to the
+The default checker verifies source bytes and coverage at the source tag, report
+bytes against the complete tag, normalization, selected-module coverage, unique
+constant/field inventories and the axiom union. `--current` additionally checks
+live input bytes and library-client coverage. Later source changes can preserve
+the archive while correctly refusing a current attestation. This inventories
+imported compiled declarations; it does not independently replay every olean
+through the kernel.
+
+For reproduction, create a fresh output directory, copy `audit.lean.txt` to the
 otherwise absent `HexOrderedFnTheory/UsageAudit.lean`, and remove only that
 temporary module's `.lake/build/{lib/lean,ir}/HexOrderedFnTheory/UsageAudit.*`
-build artifacts. Set `HEX_ORDEREDFN_AUDIT_OUTPUT` to the fresh directory and
-build `+HexOrderedFnTheory.UsageAudit` through Lake. Refuse missing output files;
-then remove the temporary source. Run `normalize.py <fresh-directory>` to sort declaration rows, reference and
-axiom lists, field rows and JSON object keys into the recorded layout; compare
-all three normalized JSON files with the archived report. The imported-module
-list retains its captured ordering. The producer refuses
-an absent output variable. A capture is an axiom inventory of the imported
-compiled declarations, rather than a separate kernel replay of all oleans. The environment variable alone cannot invalidate
-an unchanged Lake trace.
+artifacts. Set `HEX_ORDEREDFN_AUDIT_OUTPUT` to the fresh directory and build
+`+HexOrderedFnTheory.UsageAudit` through Lake. Refuse missing outputs and remove
+the temporary source afterwards. Run `normalize.py <fresh-directory>` and compare
+all three JSON files with the archive. The import list retains its captured
+ordering. An output variable alone does not invalidate an unchanged Lake trace.
 
-Final proof/API, production-reference and manual acceptance remains necessary.
-The computational comparison findings are retained with their existing owners
-and reports. This capture changes no operation, phase counter, performance
-verdict or publication eligibility.
+The v4 tags preserve the earlier Mathlib-named capture. The v5 input and both
+`complete-v5` and `complete-v5-context` tags preserve an incomplete library-client
+capture; its omissions are corrected here. Those tags remain historical evidence
+and do not establish the complete client-coverage claim above.
 
-## Retained evidence
-
-The v4 source and complete tags preserve the earlier import environment,
-reference counts and explanation of six changed references from the original
-assessment. Current counts are observations of the current capture. Neither
-snapshot establishes runtime use or computational performance.
-
-The imported environment contains 14,908 modules. The 336 required
-library clients are listed in the binding record and are all present. The
-checker verifies that coverage list and the exact rename-only comparison of
-all fourteen owned modules with the preserved v4 source. It does not
-independently reconstruct the entire import graph.
-
-The three omitted executable modules are `HexOrderedFnTheory.LiouvilleRun`,
-`HexRealClosure.TowerTransportTests` and `HexRealClosure.TrivialTowerTests`.
-The number of selected constants without named users is 101. These counts
-include generated declarations and retain the reference-model limits above.
+The capture imports 15,241 modules. 100 of the selected constants have no
+named users in this environment. `RealClosureConsumer.successive_order` is
+recorded as a user of both `Infinitesimal.X_pos` and `X_lt_pow`. These
+observations retain the reference-model limits above.

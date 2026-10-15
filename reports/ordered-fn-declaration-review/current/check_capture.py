@@ -22,14 +22,20 @@ def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def tag_revision(tag):
+    return subprocess.check_output(
+        ['git', 'rev-parse', '--verify', '--end-of-options',
+         'refs/tags/' + tag + '^{commit}'], cwd=ROOT, text=True).strip()
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--current', action='store_true', help='also require live source bytes')
     args = parser.parse_args()
     record = json.loads((BASE / 'bindings.json').read_text(encoding='utf-8'))
-    revision = subprocess.check_output(['git', 'rev-parse', record['source_tag'] + '^{commit}'], cwd=ROOT, text=True).strip()
+    revision = tag_revision(record['source_tag'])
     require(revision == record['source_revision'], 'source tag differs')
-    complete = record['complete_tag']
+    complete = tag_revision(record['complete_tag'])
     subprocess.run(['git', 'merge-base', '--is-ancestor', revision, complete], cwd=ROOT, check=True)
     paths = subprocess.check_output(['git', 'ls-tree', '-r', '--name-only', revision], cwd=ROOT, text=True).splitlines()
     imported = json.loads((BASE / 'audit-imports.json').read_text(encoding='utf-8'))
@@ -44,7 +50,7 @@ def main():
     require({path for path in record['inputs'] if path.endswith('.lean')} == expected_lean, 'imported source closure differs')
     directory = str(BASE.relative_to(ROOT))
     archived_files = subprocess.check_output(['git', 'ls-tree', '-r', '--name-only', complete, '--', directory], cwd=ROOT, text=True).splitlines()
-    expected_files = {directory + '/' + name for name in ('README.md', 'audit.lean.txt', 'normalize.py', 'check_capture.py', 'bindings.json', 'audit-imports.json', 'declaration-use.json', 'structure-fields.json')}
+    expected_files = {directory + '/' + name for name in ('README.md', 'audit.lean.txt', 'normalize.py', 'check_capture.py', 'test_capture.py', 'bindings.json', 'audit-imports.json', 'declaration-use.json', 'structure-fields.json')}
     require(set(archived_files) == expected_files, 'complete archive file inventory differs')
     for path in archived_files:
         saved = subprocess.check_output(['git', 'show', complete + ':' + path], cwd=ROOT)
@@ -82,6 +88,16 @@ def main():
     exec(compile(normalizer_bytes, str(BASE / 'normalize.py'), 'exec'), normalizer)
     for name, data in normalizer['normalized'](BASE).items():
         require((BASE / name).read_text(encoding='utf-8') == json.dumps(data, indent=2, sort_keys=True) + '\n', 'normalized artifact differs: ' + name)
+    expected_clients, expected_exclusions = normalizer['library_clients'](
+        ROOT, record['modules'], revision)
+    require(required == expected_clients, 'Lake library client inventory differs')
+    require(record['excluded_executable_modules'] == expected_exclusions,
+            'executable exclusion inventory differs')
+    require(not (set(expected_exclusions) & set(imported)), 'excluded executable was imported')
+    if args.current:
+        live_clients, live_exclusions = normalizer['library_clients'](ROOT, record['modules'])
+        require((live_clients, live_exclusions) == (expected_clients, expected_exclusions),
+                'current Lake library client inventory differs')
     rows = json.loads((BASE / 'declaration-use.json').read_text(encoding='utf-8'))
     fields = json.loads((BASE / 'structure-fields.json').read_text(encoding='utf-8'))
     imports = json.loads((BASE / 'audit-imports.json').read_text(encoding='utf-8'))
@@ -91,6 +107,15 @@ def main():
     require(sorted({axiom for row in rows for axiom in row['axioms']}) == record['axioms'] ==
             ['Classical.choice', 'Quot.sound', 'propext'], 'unexpected axioms')
     require(all(row['kind'] != 'axiom' for row in rows), 'owned axiom declaration')
+    previous_rows = json.loads(subprocess.check_output([
+        'git', 'show', tag_revision(previous['complete_tag']) + ':' + directory + '/declaration-use.json'], cwd=ROOT))
+    def declaration_signature(row):
+        return (re.sub(r'Hex([A-Za-z0-9_]*)Mathlib', r'Hex\1Theory', row['name']),
+                re.sub(r'Hex([A-Za-z0-9_]*)Mathlib', r'Hex\1Theory', row['module']),
+                row['kind'], tuple(row['axioms']))
+    require({declaration_signature(row) for row in previous_rows} ==
+            {declaration_signature(row) for row in rows},
+            'declaration names, kinds or axioms differ from predecessor')
     require(len(fields) == len({field['projection'] for field in fields}) == record['fields'], 'field inventory differs')
     require({field['projection'] for field in fields} <= {row['name'] for row in rows}, 'field projection not captured')
     print(f"Verified {len(rows)} constants, {len(fields)} fields and {len(record['modules'])} production modules.")
