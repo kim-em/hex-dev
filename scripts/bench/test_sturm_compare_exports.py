@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exercise the compiled Sturm export guard with synthetic parent documents.
+"""Exercise the compiled export guard with synthetic parametric and fixed documents.
 
 These tests cover acceptance, regression and refusal, without collecting timing
 samples or replacing LeanBench's statistical implementation.
@@ -166,6 +166,135 @@ class ExportGuardTest(unittest.TestCase):
             result = document['results'][0]
             result['config']['param_schedule']['params'] = []
             result['points'] = []
+        self.check('refuse')
+
+
+class FixedExportGuardTest(unittest.TestCase):
+    check = ExportGuardTest.check
+
+    def setUp(self):
+        template = ROOT / 'reports/data/sign-det-maximal/workflow-9c6565e68e/0-maximalOne.json'
+        export = json.loads(template.read_text())
+        result = export['results'][0]
+        result['config']['repeats'] = 2
+        point = result['points'][0]
+        result['points'] = [dict(point, repeat_index=i, inner_repeats=1,
+                                 total_nanos=100, status='ok') for i in range(2)]
+        result['hashes_agree'] = True
+        result['observed_hash'] = point['result_hash']
+        # Supplied statistics must not replace statistics of the actual points.
+        result.update(median_nanos=1, min_nanos=1, max_nanos=1)
+        self.documents = [deepcopy(export) for _ in range(8)]
+
+    def result(self, arm):
+        return self.documents[arm]['results'][0]
+
+    def test_stable_and_recomputed_summaries(self):
+        report = self.check(0)
+        self.assertEqual(report['kind'], 'fixed')
+        self.assertEqual(report['baseline_median'], 100)
+        self.assertEqual(report['current_median'], 100)
+
+    def test_regression(self):
+        for arm in range(4, 8):
+            for point in self.result(arm)['points']:
+                point['total_nanos'] = 112
+        self.assertEqual(self.check(1)['regression_count'], 1)
+
+    def test_improvement(self):
+        for arm in range(4, 8):
+            for point in self.result(arm)['points']:
+                point['total_nanos'] = 80
+        self.assertEqual(self.check(0)['improvement_count'], 1)
+
+    def test_pinned_upper_middle_median(self):
+        for arm in range(4, 8):
+            for point in self.result(arm)['points']:
+                point['total_nanos'] = 80 if arm < 6 else 140
+        self.assertEqual(self.check(1)['current_median'], 140)
+
+    def test_normalize_inner_repeats(self):
+        for arm in range(4, 8):
+            for point in self.result(arm)['points']:
+                point.update(inner_repeats=10, total_nanos=1000)
+        self.check(0)
+
+    def test_one_outlier_preserves_median(self):
+        self.result(4)['points'][0]['total_nanos'] = 1000
+        self.check(0)
+
+    def test_missing_repeat(self):
+        self.result(4)['points'].pop()
+        self.check('refuse')
+
+    def test_empty_schedule(self):
+        for arm in range(8):
+            self.result(arm)['config']['repeats'] = 0
+            self.result(arm)['points'] = []
+        self.check('refuse')
+
+    def test_duplicate_repeat(self):
+        self.result(4)['points'][1]['repeat_index'] = 0
+        self.check('refuse')
+
+    def test_reordered_repeat(self):
+        self.result(4)['points'].reverse()
+        self.check('refuse')
+
+    def test_failed_repeat(self):
+        self.result(4)['points'][0]['status'] = 'timeout'
+        self.check('refuse')
+
+    def test_zero_repeat_count(self):
+        self.result(4)['points'][0]['inner_repeats'] = 0
+        self.check('refuse')
+
+    def test_zero_per_call_time(self):
+        self.result(4)['points'][0].update(total_nanos=1, inner_repeats=2)
+        self.check('refuse')
+
+    def test_unhashed_repeat(self):
+        self.result(4)['points'][0]['result_hash'] = None
+        self.check('refuse')
+
+    def test_missing_observed_hash(self):
+        self.result(4)['observed_hash'] = None
+        self.check('refuse')
+
+    def test_hash_disagreement(self):
+        self.result(4)['hashes_agree'] = False
+        self.check('refuse')
+
+    def test_zero_result_hash_is_valid(self):
+        for arm in range(8):
+            self.result(arm)['observed_hash'] = '0x0'
+            for point in self.result(arm)['points']:
+                point['result_hash'] = '0x0'
+        self.check(0)
+
+    def test_source_hashes_differ(self):
+        for arm in range(4, 8):
+            self.result(arm)['observed_hash'] = '0x1'
+            for point in self.result(arm)['points']:
+                point['result_hash'] = '0x1'
+        self.check('refuse')
+
+    def test_expected_hash_is_checked(self):
+        for arm in range(8):
+            self.result(arm)['config']['expected_hash'] = '0x1'
+        self.check('refuse')
+
+    def test_source_configurations_differ(self):
+        for arm in range(4, 8):
+            self.result(arm)['config']['min_total_seconds'] *= 2
+        self.check('refuse')
+
+    def test_budget_truncation(self):
+        self.result(4)['budget_truncated'] = True
+        self.check('refuse')
+
+    def test_result_kind_changes(self):
+        self.documents[4] = json.loads(TEMPLATE.read_text())
         self.check('refuse')
 
 
