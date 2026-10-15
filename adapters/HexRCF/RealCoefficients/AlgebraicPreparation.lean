@@ -49,10 +49,26 @@ def Environment.guards (environment : Environment) :
     List (Fin (environment.source.coefficients.size + environment.source.divisors.size)) :=
   (List.finRange environment.source.divisors.size).map (Fin.natAdd environment.source.coefficients.size)
 
-/-- Run only native packet production on the proposals. No compiled result
+/-- The original selected presentations and their complete native packet. -/
+abbrev Environment.Result (environment : Environment) (registry : RealClosure.BaseContext.Registry) :=
+  (sources : (i : Fin (environment.source.coefficients.size + environment.source.divisors.size)) →
+    RealClosure.NumberField.Presentation (environment.inputs i) registry) ×
+    AlgebraicCells.Packet sources environment.indices environment.guards environment.formula
+
+/-- Raw native packet production on the proposals. No compiled result
 authenticates a source expression or supplies an ordinary-kernel goal proof. -/
 def Environment.build (environment : Environment) (registry : RealClosure.BaseContext.Registry) :=
   AlgebraicCells.build registry environment.inputs environment.indices environment.guards environment.formula
+
+/-- Observe cancellation before and after native production, then pass the
+complete higher-universe packet to a meta consumer. The compiled call itself
+has no internal interruption checkpoint. No failure starts a different solver. -/
+def Environment.buildWith (environment : Environment) (registry : RealClosure.BaseContext.Registry)
+    (consume : Except AlgebraicCells.Error (environment.Result registry) → MetaM α) : MetaM α := do
+  Core.checkInterrupted
+  let result := environment.build registry
+  Core.checkInterrupted
+  consume result
 
 private def entry (source : Expr) (prepared : Coefficients.Prepared) : MetaM Entry := do
   let expression ← instantiateMVars prepared.value
@@ -62,7 +78,10 @@ private def entry (source : Expr) (prepared : Coefficients.Prepared) : MetaM Ent
   let expression ← Hex.RCF.checkExpr `AlgebraicPreparation.input expression
   let identity ← Hex.RCF.checkProof `AlgebraicPreparation.identity
     (← mkEq (← mkAppM ``RealAlgebraicNumber.toReal #[expression]) source) identity
-  return ⟨expression,identity,← FieldRuntime.evalReal expression⟩
+  Core.checkInterrupted
+  let proposal ← FieldRuntime.evalReal expression
+  Core.checkInterrupted
+  return ⟨expression,identity,proposal⟩
 
 private def prepareCore (target : Expr) (nonnegative : Expr → MetaM (Option Expr))
     (config : Hex.RealFormula.Reify.Config) :
@@ -80,8 +99,10 @@ private def prepareCore (target : Expr) (nonnegative : Expr → MetaM (Option Ex
   match interpreted with
   | .error error => return .error error
   | .ok ((coefficients,divisors),state) =>
+    Core.checkInterrupted
     let .quant quantifier (.matrix formula) ← FieldRuntime.evalFormula source.coefficients.size source.formula
       | return .error (.unsupported target "expected exactly one real quantifier")
+    Core.checkInterrupted
     let coefficients ← Vector.ofFnM fun i => entry source.coefficients[i] coefficients[i]
     let divisors ← Vector.ofFnM fun i => entry source.divisors[i] divisors[i]
     return .ok {

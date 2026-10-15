@@ -87,9 +87,10 @@ run_meta do
       (some <$> AlgebraicPreparation.prepare q(∀ _ : ℝ, 0 / (Real.sqrt 2 - Real.sqrt 2) = 0) nonnegative)
       (fun _ => pure none)
     if let some (.ok prepared) := result then
-      match prepared.build (fun _ => none) with
-      | .error .divisor => pure ()
-      | _ => throwError "cancelled original zero divisor entered native root production"
+      prepared.buildWith (fun _ => none) fun result => do
+        match result with
+        | .error .divisor => pure ()
+        | _ => throwError "cancelled original zero divisor entered native root production"
   let guarded ← checked q(∀ _ : ℝ, 0 / (Real.sqrt 2 + 1) = 0 ∧ 0 / (Real.sqrt 3 + 1) = 0)
   unless guarded.source.divisors.size == 2 do
     throwError "native preparation erased independent original divisors"
@@ -109,14 +110,15 @@ run_meta do
     unless constantInput.source.coefficients.isEmpty && constantInput.source.divisors.size == 1 do
       throwError "native preparation erased a rational guard-only input"
     let registry : RealClosure.BaseContext.Registry := fun _ => none
-    let .ok ⟨sources,shared,packet⟩ := constantInput.build registry
-      | throwError "guard-only prepared source did not produce a native packet"
-    let input := packet.family.collection.input
-    for quantifier in [RealFormula.Quantifier.existsReal,.forallReal] do
-      unless (CompleteReplay.check input.context.codec
-          (input.value ∘ GatherCells.values shared (AlgebraicCells.coefficients sources constantInput.indices))
-          constantInput.formula ((GatherCells.guards shared (AlgebraicCells.guards sources constantInput.guards)).map input.value)
-          packet.radical quantifier packet.rootGraph packet.cells).toOption == some expected do
-        throwError "guard-only prepared source changed its checked constant verdict"
+    constantInput.buildWith registry fun result => do
+      let .ok ⟨sources,shared,packet⟩ := result
+        | throwError "guard-only prepared source did not produce a native packet"
+      let input := packet.family.collection.input
+      for quantifier in [RealFormula.Quantifier.existsReal,.forallReal] do
+        unless (CompleteReplay.check input.context.codec
+            (input.value ∘ GatherCells.values shared (AlgebraicCells.coefficients sources constantInput.indices))
+            constantInput.formula ((GatherCells.guards shared (AlgebraicCells.guards sources constantInput.guards)).map input.value)
+            packet.radical quantifier packet.rootGraph packet.cells).toOption == some expected do
+          throwError "guard-only prepared source changed its checked constant verdict"
   logInfo "native source identities, ordered guard-only inputs, aggregate budget and transactional refusals checked"
 end Hex.RCF.AlgebraicPreparationConformance
