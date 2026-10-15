@@ -322,7 +322,8 @@ example
         values guards formula =
           .ok ⟨source,p⟩ ∧
       NumberField.cellsWith source
-        values guards formula = .ok p := by
+        values guards formula =
+          .ok p := by
   obtain ⟨source,p,returned,_,built⟩ :=
     NumberField.cells_success g registry
       values guards formula guarded
