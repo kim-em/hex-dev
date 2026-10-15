@@ -49,7 +49,8 @@ run_meta do
       ``Hex.SignDet.Codec.bindings_of_check, ``Hex.RealClosure.Tower.Context.codec_lawful] do
     unless replay.contains required do throwError "native payload progress omitted actual reader law: {required}"
   let full ← Hex.RCF.ProofEvidence.projectDependencies #[``CellDiscover.run_complete]
-  for required in #[``CompleteReplay.check_covered, ``RootTableCodec.read_roots,
+  for required in #[``CellDiscover.Packet.rootGraph_eq,
+      ``CompleteReplay.check_covered, ``RootTableCodec.read_roots,
       ``CellDiscover.run_success, ``Hex.RealClosure.Tower.Context.codec_lawful] do
     unless full.contains required do throwError "complete native packet progress omitted actual law: {required}"
   logInfo "thirteen actual public executable proof bodies kernel checked; complete root-and-cell literal acceptance retained"

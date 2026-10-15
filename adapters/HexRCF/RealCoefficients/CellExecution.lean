@@ -177,7 +177,9 @@ theorem run_success (original : Model parent ℝ) (values : Fin n → parent.Val
     apply List.all_eq_true.mpr
     intro d present
     simpa only [decide_eq_true_eq] using guarded d present
-  refine ⟨⟨family, prepared.1, prepared.2, CellBuild.packet data⟩, ?_,
+  refine ⟨⟨family, prepared.1, prepared.2,
+    Codec.graph input.context.codec Signature.codec (Dag.encode prepared.2.replay), rfl,
+    CellBuild.packet data⟩, ?_,
     candidates, requested, dimensions, data, built, rfl, ?_⟩
   · unfold run
     simp only [all, ↓reduceIte]
@@ -243,15 +245,11 @@ theorem run_complete (original : Model parent ℝ) (values : Fin n → parent.Va
     (guards : List parent.Value) (formula : RealFormula.QF (n+1))
     (guarded : ∀ d ∈ guards, d ≠ 0) :
     ∃ packet, run values guards formula = .ok packet ∧
-      let _ : Hashable packet.family.collection.input.context.Value :=
-        RowEncode.hashable packet.family.collection.input.context.codec
-      let _ : Hashable Signature := RowEncode.hashable Signature.codec
       ∀ quantifier, ∃ verdict,
         CompleteReplay.check packet.family.collection.input.context.codec
           (packet.family.collection.input.value ∘ values) formula
           (guards.map packet.family.collection.input.value) packet.radical quantifier
-          (Codec.graph packet.family.collection.input.context.codec Signature.codec
-            (Dag.encode packet.roots.replay)) packet.cells = .ok verdict ∧
+          packet.rootGraph packet.cells = .ok verdict ∧
         (verdict = true ↔ (RealFormula.Prenex.quant quantifier (.matrix formula)).toProp
           (fun i => original.value (values i))) := by
   obtain ⟨packet,produced,trace⟩ := run_success original values guards formula guarded
@@ -260,7 +258,6 @@ theorem run_complete (original : Model parent ℝ) (values : Fin n → parent.Va
   let _ : Hashable Signature := RowEncode.hashable Signature.codec
   obtain ⟨candidates,_,dimensions,data,_,frozen,verdicts⟩ := trace
   refine ⟨packet,produced,?_⟩
-  dsimp only
   intro quantifier
   obtain ⟨verdict,checked,meaning⟩ := verdicts quantifier
   have domains : ∀ d ∈ guards.map input.value, d ≠ 0 := by
@@ -271,7 +268,7 @@ theorem run_complete (original : Model parent ℝ) (values : Fin n → parent.Va
     formula (guards.map input.value) packet.radical packet.roots data quantifier domains
     (input.context.codec_lawful.covers _)
   refine ⟨verdict,?_,meaning⟩
-  rw [frozen]
+  rw [packet.rootGraph_eq, frozen]
   exact restored.trans checked
 
 end CellDiscover

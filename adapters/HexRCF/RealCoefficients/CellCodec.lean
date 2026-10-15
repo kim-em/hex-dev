@@ -6,6 +6,9 @@ Authors: Kim Morrison
 module
 public import HexRCF.RealCoefficients.CellEncode
 public import HexRCF.RealCoefficients.SectorEncode
+-- `packet_eq` unfolds the non-exposed writers `Codec.graph`, `Codec.node`
+-- and the query-certificate encoders in `Codec.Evidence` to show that only
+-- the encoder field is used. Public tuple/array laws alone do not prove this.
 import all HexSignDet.Codec
 import all HexSignDet.Codec.Node
 import all HexSignDet.Codec.Evidence
@@ -52,8 +55,8 @@ theorem collect_eq {ε : Type} {m : Nat} (failure : ε) (P : Fin m → Type)
   simpa only [same] using done
 
 /-- Finite row coverage and descriptor restoration assemble the exact complete
-cell reader result. This is the adapter composition theorem, not a proof of the
-remaining owner descriptor round trip or predecessor-inventory construction. -/
+cell reader result. `RootCodec.read_covered` supplies the descriptor restoration
+for the higher-level finite-inventory theorem. Predecessor histories remain separate. -/
 theorem read_of_descriptors [Hashable parent.Value] [Hashable Signature] (value : ValueCodec parent.Value)
     (data : CellReplay.Evidence roots values formula) (guards : List parent.Value)
     (guarded : ∀ d ∈ guards, d ≠ 0)

@@ -19,6 +19,13 @@ codec roundtrip. They do not claim a fresh reduction of the serialized reader. -
 def rootGraph := Codec.graph parent.codec Signature.codec (Dag.encode roots.replay)
 def cells := CellEncode.packet parent.codec evidence
 
+#eval (show IO Unit from do
+  let encoded := Codec.Json.arr #[rootGraph,cells]
+  let frozen := Codec.Json.arr #[Literals.roots, .arr #[Literals.sections,Literals.sectors]]
+  unless encoded.writeBytes == frozen.writeBytes do
+    throw (IO.userError "checked fixture re-encoding changed its frozen bytes")
+  IO.println "checked typed fixture re-encoding matches the frozen complete packet bytes")
+
 theorem checked : CompleteReplay.check parent.codec values formula [] Canonical.cert
     .existsReal rootGraph cells = .ok true := by
   unfold rootGraph cells
@@ -67,6 +74,8 @@ elab "#complete_original_quote" : command => liftTermElabM do
   let wrongTarget ← elabType (← `(∃ x : ℝ, x ^ 2 - Real.sqrt 2 > 0 ∧ x ^ 2 - Real.sqrt 2 ≤ 0 ∧ (0 : ℝ) = 0))
   synthesizeSyntheticMVarsNoPostponing
   let wrongTarget ← instantiateMVars wrongTarget
+  let .ok _ ← Reify.prepare wrongTarget
+    | throwError "different-formula control failed during source preparation"
   let refused ← try
     let _ ← CellQuote.finishPacket wrongTarget checker (Lean.mkConst ``checked)
       (Lean.mkConst ``original) identity
@@ -116,12 +125,29 @@ elab "#complete_guarded_quote" : command => liftTermElabM do
   unless refused do throwError "complete quotation accepted a missing original divisor identity"
   let zeroTarget ← elabType (← `(∃ x : ℝ, x ^ 2 - Real.sqrt 2 ≥ 0 ∧ x ^ 2 - Real.sqrt 2 ≤ 0 ∧ 0 / (0 : ℝ) = 0))
   synthesizeSyntheticMVarsNoPostponing
+  let zeroTarget ← instantiateMVars zeroTarget
+  -- Known zero divisors are rejected during source preflight itself.
+  let .error _ ← Reify.prepare zeroTarget
+    | throwError "source preflight accepted a cancelled zero divisor"
   let refused ← try
-    let _ ← CellQuote.finishPacket (← instantiateMVars zeroTarget) checker (Lean.mkConst ``guarded_checked)
+    let _ ← CellQuote.finishPacket zeroTarget checker (Lean.mkConst ``guarded_checked)
       (Lean.mkConst ``original) identity #[Lean.mkConst ``Guards.negativeOne_value]
     pure false
   catch _ => pure true
   unless refused do throwError "complete quotation erased a cancelled original zero divisor"
+  let mismatched ← elabType (← `(∃ x : ℝ, x ^ 2 - Real.sqrt 2 ≥ 0 ∧ x ^ 2 - Real.sqrt 2 ≤ 0 ∧ 0 / (-2 : ℝ) = 0))
+  synthesizeSyntheticMVarsNoPostponing
+  let mismatched ← instantiateMVars mismatched
+  let .ok different ← Reify.prepare mismatched
+    | throwError "nonzero-divisor identity control failed during source preparation"
+  unless different.divisors.size == 1 do
+    throwError "nonzero-divisor identity control lost its original guard"
+  let refused ← try
+    let _ ← CellQuote.finishPacket mismatched checker (Lean.mkConst ``guarded_checked)
+      (Lean.mkConst ``original) identity #[Lean.mkConst ``Guards.negativeOne_value]
+    pure false
+  catch _ => pure true
+  unless refused do throwError "complete quotation accepted a different original divisor identity"
   let proof ← CellQuote.finishPacket target checker (Lean.mkConst ``guarded_checked)
     (Lean.mkConst ``original) identity #[Lean.mkConst ``Guards.negativeOne_value]
   let name := `Hex.RCF.RealCoefficients.CellReplayTests.Algebraic.CompleteQuote.guarded_source

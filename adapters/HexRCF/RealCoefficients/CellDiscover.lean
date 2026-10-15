@@ -16,6 +16,13 @@ structure Packet (values : Fin n → parent.Value) (guards : List parent.Value)
   family : Tower.Sample.Partition parent (RepresentationSpecialize.prepare values formula)
   radical : RadicalCert family.collection.input.context.Value Signature
   roots : @RootReplay.Result registry family.collection.input.context radical.core .negInf .posInf
+  rootGraph : Codec.Json
+  rootGraph_eq :
+    let _ : Hashable family.collection.input.context.Value :=
+      RowEncode.hashable family.collection.input.context.codec
+    let _ : Hashable Signature := RowEncode.hashable Signature.codec
+    rootGraph = Codec.graph family.collection.input.context.codec Signature.codec
+      (Dag.encode roots.replay)
   cells : Codec.Json
 
 inductive Error where
@@ -48,7 +55,8 @@ This retains native conversion history, not a frozen history certificate. -/
           match CellBuild.build roots converted original formula
               (fun i => candidates[Fin.cast aligned.symm i]) with
           | .error cause => .error (.cells cause)
-          | .ok cells => .ok ⟨family, radical, roots, cells⟩
+          | .ok cells => .ok ⟨family, radical, roots,
+              Codec.graph input.context.codec Signature.codec (Dag.encode roots.replay), rfl, cells⟩
         else .error .dimensions
   else .error .divisor
 

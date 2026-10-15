@@ -619,22 +619,46 @@ section, sector and exact ordinary-point rows from the actual owner producers.
 and exact true/false diagnostic semantics at the original coefficient values,
 under an explicit ordinary-real parent model and nonzero original guards.
 [Cell-decision evidence](../reports/hexrcf-cell-decision.md) records the 28 proof
-audits, native cases and substantial observed row-production cost. Literal-reader
-progress, source quotation, frozen histories and strict arbitrary-missing-record
-compiled checking remain separate.
+audits, native cases and substantial observed row-production cost. Frozen histories and strict arbitrary-missing-record compiled checking remain
+separate from the finite-codec restoration and quotation laws below.
 
 `CellBuild.evidence` produces typed cells before freezing them in the existing
 layout. `CellDiscover.run_success` proves that the actual native discovery
 returns those frozen rows and both exact original-coefficient verdicts under
 an ordinary-real parent model and nonzero original guards. The exact returned
 vector is covered by `CellAlignment.sector_vector`. [Executable-cell evidence](../reports/hexrcf-cell-execution.md)
-distinguishes this progress from the remaining finite-codec literal-reader,
-frozen-history and frontend acceptance obligations.
+distinguishes native construction from frozen-history and general frontend
+acceptance obligations.
+
+`CompleteReplay.read` independently restores the full root table and complete
+cell payload before `check` validates the radical identities and strict fold.
+`check_sound` and `check_domains` apply to arbitrary supplied literal packets.
+`RootCodec.read_covered` and `RootTableCodec.read_covered` derive exact descriptor
+and full-table restoration from finite literal coverage through the public
+owner binding and graph laws. `CellFootprint.coefficients` retains every stored
+row/point/graph coefficient, including unreachable entries and duplicates.
+`CellBuild.packet_read` requires the same encoder when replacing a decoder.
+
+`CellDiscover.run` emits both `rootGraph` and `cells`; `Packet.rootGraph_eq`
+binds its serialized root graph to its actual typed root table under the native
+writer's hashing. `run_replay` restores the cell payload, and `run_complete`
+checks both emitted packets with the returned native context's codec, retaining
+both original-coefficient verdicts. `CellQuote.finishPacket` authenticates that
+complete check against the freshly reified original goal, ordered original
+divisors and fixed coefficient valuation. Its fresh source-body audits reuse
+independently checked typed fixture data and finite codec laws; this is not a
+new literal-reader reduction measurement. [Serialization evidence](../reports/hexrcf-cell-codec.md)
+records the exact scopes and retained failures.
+
+These results do not reconstruct general frozen source/provider/predecessor
+histories, collect every intermediate reached arithmetic record, establish
+strict compiled rejection of arbitrary missing records or complete frontend
+acceptance. Native codec lawfulness is not a replacement for those obligations.
 
 `NumberField.cells` starts native complete-cell production from an original
 selected real algebraic generator and its `QAdjoin` coordinates. It preflights
 original guards before the existing owner factory, and `cellsWith` reuses a
 checked presentation. `cellsWith_spec` retains the actual execution trace and
 both original-coefficient verdicts without a supplied parent model. This is
-native construction; general finite-codec replay and frontend quotation remain
-separate. The algebraic-cell manual gives a runnable API example.
+native construction; general frozen-history restoration and frontend acceptance
+remain separate. The algebraic-cell manual gives a runnable API example.

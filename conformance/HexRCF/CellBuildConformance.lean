@@ -70,6 +70,27 @@ local instance : Hashable Signature := RowEncode.hashable Signature.codec
       .existsReal .null cells with
   | .error .evidence => pure ()
   | _ => throw (IO.userError "malformed complete root graph was accepted")
+  let tree := Dag.encode roots.replay
+  let corrupt : Dag parent.Value Signature := { tree with
+    entries := tree.entries.map (fun entry => { entry with
+      node := { entry.node with system := { entry.node.system with denominator := 0 } } }) }
+  let corruptGraph := Codec.graph parent.codec Signature.codec corrupt
+  match Codec.readGraph (restricted completeInventory) Signature.codec parent.signature
+      radical.core .negInf .posInf corruptGraph with
+  | .error error => throw (IO.userError s!"tampering did not reach semantic replay: {error}")
+  | .ok _ => pure ()
+  match CompleteReplay.check (restricted completeInventory) values formula [] radical
+      .existsReal corruptGraph cells with
+  | .error .evidence => pure ()
+  | _ => throw (IO.userError "structurally valid zero-denominator root system was accepted")
+  let fields ← match Codec.tuple 2 cells with
+    | .error error => throw (IO.userError error)
+    | .ok fields => pure fields
+  let missingSectors := Codec.Json.arr #[fields[0], .arr #[]]
+  match CompleteReplay.check (restricted completeInventory) values formula [] radical
+      .existsReal rootGraph missingSectors with
+  | .error .evidence => pure ()
+  | _ => throw (IO.userError "complete replay accepted the wrong number of sectors")
   match CompleteReplay.check (restricted []) values formula [0] radical
       .existsReal .null .null with
   | .error .divisor => pure ()
