@@ -9,6 +9,10 @@ import HexRCF.ProofEvidence
 namespace Hex.RCF.RealCoefficients.CellReplayTests.Algebraic.BooleanQuoted
 open Lean Meta
 run_meta do
+  let modules := (← getEnv).header.moduleNames
+  for forbidden in #[`HexRCF.RealCoefficients.CellBuild, `HexRCF.RealCoefficients.CellDiscover] do
+    if modules.contains forbidden then
+      throwError "literal quotation imports native cell production: {forbidden}"
   for name in #[``Hex.RCF.RealCoefficients.CellReplayTests.Algebraic.BooleanSources.lt_or_ge, ``Hex.RCF.RealCoefficients.CellReplayTests.Algebraic.BooleanSources.eq_or_ne,
       ``Hex.RCF.RealCoefficients.CellReplayTests.Algebraic.BooleanSources.positive, ``Hex.RCF.RealCoefficients.CellReplayTests.Algebraic.BooleanSources.negative] do
     let .thmInfo source ← getConstInfo name | throwError "expected source theorem"
@@ -29,10 +33,6 @@ run_meta do
         ``Hex.RCF.RealCoefficients.ScalarPacket.build,
         ``Hex.RCF.RealCoefficients.ScalarPacket.buildLiteral] do
       if seen.contains forbidden then throwError "Boolean source reused old witness/supplier {forbidden}"
-    let modules := (← getEnv).header.moduleNames
-    for forbidden in #[`HexRCF.RealCoefficients.CellBuild, `HexRCF.RealCoefficients.CellDiscover] do
-      if modules.contains forbidden then
-        throwError "literal quotation imports native cell production: {forbidden}"
     logInfo m!"fresh Boolean source body rechecked with actual cells, standard axioms and no prior source witness: {name}"
   for name in #[``Hex.RCF.RealCoefficients.CellReplay.Evidence.changeFormula_row,
       ``Hex.RCF.RealCoefficients.CellReplayTests.Algebraic.BooleanBinding.refused,

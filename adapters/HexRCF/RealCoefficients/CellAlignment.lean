@@ -225,7 +225,7 @@ theorem sector_vector {polynomials : List parent.Poly}
     (values (Fin.cast lengths.symm cut)) equal member
   simpa only [Fin.getElem_fin, Vector.getElem_ofFn] using region
 
-
+/-- Forget the executable trace and retain point existence in every indexed cell. -/
 theorem sector_points (family : Tower.Sample.Partition parent polynomials)
     (original : Model parent ℝ) (model : Collection.Model family.collection original)
     {p : DensePoly family.collection.input.context.Value}

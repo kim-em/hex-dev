@@ -212,8 +212,8 @@ proof of a real sentence.
 
 `CellDiscover.run` uses `SectorRequest.points` and the owner's proved
 boundary-request API. `Cut.adjacent` establishes the requested endpoints for every sector index,
-including both rays and an empty table's whole line. `CellAlignment.sector_points`
-then transports those endpoint inequalities to the independently checked radical
+including both rays and an empty table's whole line. `CellAlignment.sector_vector`
+retains the request equation and transports those endpoint inequalities to the independently checked radical
 table. The adapter proves this index correspondence using public cell-membership
 laws and list identities; no new owner index theorem is needed.
 
@@ -272,11 +272,22 @@ example
     (nonzero : ∀ d ∈ guards, d ≠ 0) :
     ∃ packet,
       CellDiscover.run values guards formula =
-        .ok packet := by
-  obtain ⟨packet, returned, _⟩ :=
+        .ok packet ∧
+      let input := packet.family.collection.input
+      ∃ data : CellReplay.Evidence packet.roots
+          (input.value ∘ values) formula,
+      ∃ verdict,
+        CellReplay.check (input.value ∘ values)
+          formula (guards.map input.value)
+          packet.radical packet.roots data
+          .forallReal = .ok verdict := by
+  obtain ⟨packet, returned, _, _, _, data,
+      _, _, answers⟩ :=
     CellDiscover.run_success model values
       guards formula nonzero
-  exact ⟨packet, returned⟩
+  obtain ⟨verdict, accepted, _⟩ :=
+    answers .forallReal
+  exact ⟨packet, returned, data, verdict, accepted⟩
 ```
 
 Literal-reader acceptance still needs finite coverage of every serialized

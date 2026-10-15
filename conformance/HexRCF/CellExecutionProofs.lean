@@ -9,6 +9,14 @@ import HexRCF.Tactic
 namespace Hex.RCF.RealCoefficients.CellExecutionProofs
 open Lean Meta
 run_meta do
+  let environment ← getEnv
+  for (declaration, expected) in #[
+      (``CellBuild.evidence, `HexRCF.RealCoefficients.CellBuild),
+      (``CellDiscover.run, `HexRCF.RealCoefficients.CellDiscover)] do
+    let some index := environment.getModuleIdxFor? declaration |
+      throwError "native producer has no owning module: {declaration}"
+    unless environment.header.moduleNames[index]! == expected do
+      throwError "quotation import boundary no longer matches producer owner: {declaration}"
   let names := #[``CellRead.collectWith_success, ``CellBuild.point_success, ``CellBuild.pointWith_success,
     ``BoundarySigns.left_sign, ``BoundarySigns.right_sign, ``CellBuild.bounds_success,
     ``CellBuild.evidence_success, ``CellBuild.build_success,
@@ -25,10 +33,12 @@ run_meta do
       ``CellBuild.prepare_success, ``CellDecision.check_spec,
       ``RadicalCert.buildMonic_success_real, ``Hex.SignDet.Descriptor.buildRoots_success,
       ``Hex.SignDet.Descriptor.buildSigns_success, ``Hex.SignDet.Descriptor.build_success_iff,
-      ``BoundarySigns.difference,
+      ``BoundarySigns.difference, ``CellBuild.pointWith_success,
+      ``BoundarySigns.left_sign, ``BoundarySigns.right_sign,
       ``Hex.RealClosure.Tower.Sample.Partition.model] do
     unless seen.contains required do throwError "executable acceptance omitted actual law: {required}"
-  for forbidden in #[``CellProgress.evidence, ``CellProgress.sector, ``CellAlignment.sector_points] do
+  for forbidden in #[``CellProgress.evidence, ``CellProgress.sector, ``CellAlignment.sector_points,
+      ``CellProgress.point_packet, ``CellDecision.complete] do
     if seen.contains forbidden then throwError "executable proof retained the chosen-point existence route: {forbidden}"
   logInfo "ten actual public executable proof bodies kernel checked; standard axioms and actual owner construction laws retained"
 end Hex.RCF.RealCoefficients.CellExecutionProofs

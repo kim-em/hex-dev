@@ -57,7 +57,6 @@ theorem collectWith_success {ε : Type} {m : Nat} (failure : ε) (P : Fin m → 
   apply cast_entry
   simp only [Fin.getElem_fin, Vector.getElem_ofFn]
 
-
 /-- Restore every section and sector in exact order after original guard
 preflight. All child errors propagate through the strict finite collection. -/
 @[expose] def read (value : ValueCodec parent.Value) (guards : List parent.Value)

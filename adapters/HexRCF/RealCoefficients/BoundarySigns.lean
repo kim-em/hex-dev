@@ -6,7 +6,6 @@ Authors: Kim Morrison
 module
 public import HexRCF.RealCoefficients.RootReplay
 public import HexRealClosureTheory.RootOrder
-public import HexSignDetTheory.SelectedProducer
 
 public section
 namespace Hex.RCF.RealCoefficients.BoundarySigns

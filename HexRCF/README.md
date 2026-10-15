@@ -612,8 +612,8 @@ conversion history is not frozen history evidence, and total frontend
 acceptance and strict arbitrary-missing-record compiled replay remain open.
 
 `CellDiscover.run` uses `SectorRequest.points` and `SectorRequest.Cut` to select
-points through the owner’s proved endpoint requests. `CellAlignment.sector_points` relates every requested point to the
-independently checked ordered root cells. `CellProgress` constructs typed
+points through the owner’s proved endpoint requests. `CellAlignment.sector_vector` relates the exact returned points to the
+independently checked ordered root cells. `CellProgress` proves existence of typed
 section, sector and exact ordinary-point rows from the actual owner producers.
 `CellDecision.complete` proves mathematical existence of accepted typed evidence
 and exact true/false diagnostic semantics at the original coefficient values,

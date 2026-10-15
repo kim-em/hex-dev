@@ -14,7 +14,7 @@ acceptance theorem.
 [CellRead.collectWith](../adapters/HexRCF/RealCoefficients/CellRead.lean)
 collects every dependent entry in index order and checks its index before
 transport. Its progress law retains each actual child return equation. The existing `collect` reader retains its original binding error;
-the native producer uses the same implementation with its own binding error.
+the native producer uses the same implementation with its own index-alignment error.
 No missing entry receives a default record.
 
 [CellBuild](../adapters/HexRCF/RealCoefficients/CellBuild.lean) constructs
