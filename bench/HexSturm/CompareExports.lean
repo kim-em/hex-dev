@@ -7,13 +7,17 @@ module
 
 import LeanBench.Export
 import LeanBench.Stats
+-- Use the pinned runFixedBenchmark helper rather than a second median implementation.
 import all LeanBench.Run
 
 /-! Apply the pinned LeanBench regression rule to paired parent exports.
 Parametric parents own signal-floor and verdict eligibility; their points and
 trial summaries use LeanBench's existing implementation. Fixed results require
 every declared repeat and use the pinned runner's integer per-call times and
-upper-middle median. No new complexity verdict is supplied. -/
+upper-middle median. Integer division retains the runner's nanosecond rounding.
+Optional historical expected hashes are checked when present; cross-source hash
+agreement alone does not establish benchmark correctness or waive the SPEC's
+expectedHash requirement for registrations. No new complexity verdict is supplied. -/
 
 /-- Merge parent results, preserving their eligibility flags and recomputing
 trial medians with the pinned runner. Refuse incomplete or mismatched inputs. -/
@@ -84,8 +88,10 @@ private def combineFixed (paths : Array String) : IO LeanBench.FixedResult := do
       throw <| IO.userError "expected one fixed result per parent export"
     results := results.push fixed[0]!
   let first := results[0]!
-  unless first.config.repeats > 0 do
-    throw <| IO.userError "empty fixed repeat schedule"
+  match first.config.validate with
+  | .error error => throw <| IO.userError error
+  | .ok () => pure ()
+  let minTotalNanos := (first.config.minTotalSeconds * 1_000_000_000.0).toUInt64.toNat
   let expected := first.points[0]?.bind (·.resultHash)
   unless expected.isSome do
     throw <| IO.userError "missing fixed result hash"
@@ -97,7 +103,8 @@ private def combineFixed (paths : Array String) : IO LeanBench.FixedResult := do
       throw <| IO.userError "mismatched or incomplete fixed parent export"
     for (point, index) in result.points.zipIdx do
       unless point.repeatIndex == index && point.status == .ok &&
-          point.innerRepeats > 0 && point.totalNanos / point.innerRepeats > 0 &&
+          point.innerRepeats > 0 && point.totalNanos ≥ minTotalNanos &&
+          point.totalNanos / point.innerRepeats > 0 &&
           point.resultHash == expected &&
           result.config.expectedHash.all (fun hash => point.resultHash == some hash) do
         throw <| IO.userError "failed, unhashed or reordered fixed repeat"
@@ -136,7 +143,9 @@ private def compare (args : List String) : IO UInt32 := do
   else
     throw <| IO.userError "expected exactly one result kind in every source export"
 
-/-- Return distinct statuses for regressions, insufficient evidence and invalid exports. -/
+/-- Exit 0 for a stable/improved comparison, 1 for a regression, 2 for
+insufficient eligible parametric evidence, and 3 for invalid exports.
+Incomplete fixed exports are invalid, not an inconclusive comparison. -/
 public def main (args : List String) : IO UInt32 := do
   try compare args
   catch error =>

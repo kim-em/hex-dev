@@ -176,10 +176,10 @@ class FixedExportGuardTest(unittest.TestCase):
         template = ROOT / 'reports/data/sign-det-maximal/workflow-9c6565e68e/0-maximalOne.json'
         export = json.loads(template.read_text())
         result = export['results'][0]
-        result['config']['repeats'] = 2
+        result['config'].update(repeats=2, min_total_seconds=0.01)
         point = result['points'][0]
-        result['points'] = [dict(point, repeat_index=i, inner_repeats=1,
-                                 total_nanos=100, status='ok') for i in range(2)]
+        result['points'] = [dict(point, repeat_index=i, inner_repeats=1_000_000,
+                                 total_nanos=100_000_000, status='ok') for i in range(2)]
         result['hashes_agree'] = True
         result['observed_hash'] = point['result_hash']
         # Supplied statistics must not replace statistics of the actual points.
@@ -198,29 +198,29 @@ class FixedExportGuardTest(unittest.TestCase):
     def test_regression(self):
         for arm in range(4, 8):
             for point in self.result(arm)['points']:
-                point['total_nanos'] = 112
+                point['total_nanos'] = 112_000_000
         self.assertEqual(self.check(1)['regression_count'], 1)
 
     def test_improvement(self):
         for arm in range(4, 8):
             for point in self.result(arm)['points']:
-                point['total_nanos'] = 80
+                point['total_nanos'] = 80_000_000
         self.assertEqual(self.check(0)['improvement_count'], 1)
 
     def test_pinned_upper_middle_median(self):
         for arm in range(4, 8):
             for point in self.result(arm)['points']:
-                point['total_nanos'] = 80 if arm < 6 else 140
+                point['total_nanos'] = 80_000_000 if arm < 6 else 140_000_000
         self.assertEqual(self.check(1)['current_median'], 140)
 
     def test_normalize_inner_repeats(self):
         for arm in range(4, 8):
             for point in self.result(arm)['points']:
-                point.update(inner_repeats=10, total_nanos=1000)
+                point.update(inner_repeats=10_000_000, total_nanos=1_000_000_000)
         self.check(0)
 
     def test_one_outlier_preserves_median(self):
-        self.result(4)['points'][0]['total_nanos'] = 1000
+        self.result(4)['points'][0]['total_nanos'] = 1_000_000_000
         self.check(0)
 
     def test_missing_repeat(self):
@@ -250,7 +250,7 @@ class FixedExportGuardTest(unittest.TestCase):
         self.check('refuse')
 
     def test_zero_per_call_time(self):
-        self.result(4)['points'][0].update(total_nanos=1, inner_repeats=2)
+        self.result(4)['points'][0].update(total_nanos=20_000_000, inner_repeats=40_000_000)
         self.check('refuse')
 
     def test_unhashed_repeat(self):
@@ -297,6 +297,58 @@ class FixedExportGuardTest(unittest.TestCase):
         self.documents[4] = json.loads(TEMPLATE.read_text())
         self.check('refuse')
 
+
+    def test_below_tuning_floor(self):
+        self.result(4)['points'][0]['total_nanos'] = 9_999_999
+        self.check('refuse')
+
+    def test_invalid_configuration(self):
+        for arm in range(8):
+            self.result(arm)['config']['min_total_seconds'] = -1
+        self.check('refuse')
+
+    def test_matching_expected_hash(self):
+        for arm in range(8):
+            self.result(arm)['config']['expected_hash'] = self.result(arm)['observed_hash']
+        self.check(0)
+
+    def test_integer_normalization_at_threshold(self):
+        for arm in range(4, 8):
+            for point in self.result(arm)['points']:
+                point['total_nanos'] = 110_999_999
+        self.assertEqual(self.check(0)['current_median'], 110)
+
+    def test_one_repeat_per_block(self):
+        for arm in range(8):
+            self.result(arm)['config']['repeats'] = 1
+            self.result(arm)['points'] = self.result(arm)['points'][:1]
+        self.check(0)
+
+    def test_pool_points_before_taking_median(self):
+        for arm, times in zip(range(4, 8), [(50, 50), (50, 50), (50, 200), (200, 200)]):
+            for point, time in zip(self.result(arm)['points'], times):
+                point['total_nanos'] = time * 1_000_000
+        self.assertEqual(self.check(0)['current_median'], 50)
+
+    def test_unhashable_result(self):
+        self.result(4)['hashable'] = False
+        self.check('refuse')
+
+    def test_one_block_configuration_differs(self):
+        self.result(4)['config']['min_total_seconds'] *= 2
+        self.check('refuse')
+
+    def test_one_block_function_differs(self):
+        self.result(4)['function'] = 'different'
+        self.check('refuse')
+
+    def test_multiple_results(self):
+        self.documents[4]['results'].append(deepcopy(self.result(4)))
+        self.check('refuse')
+
+    def test_mixed_result_kinds(self):
+        self.documents[4]['results'].append(json.loads(TEMPLATE.read_text())['results'][0])
+        self.check('refuse')
 
 if __name__ == '__main__':
     unittest.main()
