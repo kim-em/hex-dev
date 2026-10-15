@@ -271,6 +271,11 @@ partial def matchLiteral? (n m : Nat) (R : Expr) (A : Expr) (budget : Nat := unf
     MetaM (Option Recognized) := do
   if (!allowOpen && A.hasFVar) || A.hasMVar then return none
   if let some es ← matchChain? n m A then return some ⟨n, m, R, es, .chain⟩
+  let ofFn? ← do
+    let_expr DFunLike.coe _ _ _ _ f v := A | pure none
+    unless f.getAppFn.isConstOf ``Matrix.of do return none
+    matchFn? n m v
+  if let some es := ofFn? then return some ⟨n, m, R, es, .entrywise⟩
   if let some es ← matchFn? n m A then return some ⟨n, m, R, es, .entrywise⟩
   if let some es ← matchOfArray? n m A then return some ⟨n, m, R, es, .entrywise⟩
   if budget = 0 then return none

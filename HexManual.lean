@@ -22,6 +22,7 @@ import HexManual.Chapters.HexRoots
 import HexManual.Chapters.HexRealRoots
 import HexManual.Chapters.HexMatrix
 import HexManual.Chapters.HexRowReduce
+import HexManual.Chapters.HexPosDef
 import HexManual.Chapters.HexBerlekamp
 import HexManual.Chapters.HexGF2
 import HexManual.Chapters.HexGFqField
@@ -202,6 +203,8 @@ These libraries are still incubating in the
 [`hex-dev`](https://github.com/kim-em/hex-dev) monorepo and have not been
 split out for release yet, so their APIs may still change. They are grouped
 here to keep the reference chapters above focused on the released libraries.
+
+{include 2 HexManual.Chapters.HexPosDef}
 
 {include 2 HexManual.Chapters.HexRealAlgebraic}
 

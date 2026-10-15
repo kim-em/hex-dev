@@ -1,0 +1,75 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+module
+
+public import HexPosDefTheory.Tactic
+public import HexPosDefTheory.Completeness
+public import Mathlib.LinearAlgebra.Matrix.Cartan.Basic
+
+/-! Closed positivity and refutation examples, including direct Cartan expressions. -/
+
+open Matrix
+open scoped ComplexOrder
+
+example : (CartanMatrix.E 6).PosDef := by pos_def
+example : (CartanMatrix.E 7).PosDef := by pos_def
+public theorem posDefE8 : (CartanMatrix.E 8).PosDef := by pos_def
+example : (CartanMatrix.E 8).PosDef := by pos_def (method := .positiveVector)
+example : ¬ (CartanMatrix.E 9).PosDef := by pos_def
+example : ¬ (CartanMatrix.E 10).PosDef := by pos_def
+
+example : ∃ d : Fin 8 → ℤ, (∀ i, 0 < d i) ∧
+    (Matrix.diagonal d * CartanMatrix.E 8).PosDef := by
+  refine ⟨fun _ => 1, by simp, ?_⟩
+  simpa using (show (CartanMatrix.E 8).PosDef from by pos_def)
+
+example : (Matrix.of fun (_ _ : Fin 0) => (0 : ℤ)).PosDef := by pos_def
+example : (!![(3 : ℤ)]).PosDef := by pos_def
+example : ¬ (!![(0 : ℤ)]).PosDef := by pos_def
+example : (!![(2 : ℤ), 1, 1; 1, 2, 1; 1, 1, 2]).PosDef := by pos_def
+example : (!![(1 / 2 : ℚ), 1 / 3; 1 / 3, 2 / 5]).PosDef := by pos_def
+example : (!![(1 / 2 : ℝ), 1 / 3; 1 / 3, 2 / 5]).PosDef := by pos_def
+public theorem posDefComplex : (!![(2 : ℂ), Complex.I; -Complex.I, 2]).PosDef := by pos_def
+example : ¬ (!![(1 : ℂ), Complex.I; -Complex.I, 1]).PosDef := by pos_def
+example : ¬ (!![(1 : ℂ), 2 * Complex.I; -2 * Complex.I, 1]).PosDef := by pos_def
+example : ¬ (!![(2 : ℂ), Complex.I; Complex.I, 2]).PosDef := by pos_def
+example : (!![(2 : ℂ), -1; -1, 2]).PosDef := by pos_def (method := .positiveVector)
+
+/-- error: pos_def: the matrix has a checked positive certificate -/
+#guard_msgs in
+example : ¬ (!![(1 : ℤ)]).PosDef := by pos_def
+
+/-- error: pos_def: declined: the positive-vector method accepts positive goals only -/
+#guard_msgs in
+example : ¬ (!![(0 : ℤ)]).PosDef := by pos_def (method := .positiveVector)
+
+/-- error: pos_def: declined: the matrix has no accepted positive-vector certificate from the solve -/
+#guard_msgs in
+example : (!![(2 : ℤ), 1; 1, 2]).PosDef := by pos_def (method := .positiveVector)
+
+/-- info: 'posDefE8' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms posDefE8
+
+/-- info: 'posDefComplex' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms posDefComplex
+
+example : (!![(2 : ℂ), Complex.I; -Complex.I, 2]).PosDef := by
+  fail_if_success pos_def (method := .positiveVector)
+  pos_def
+
+example : ¬ (!![(0 : ℤ)]).PosDef := by
+  fail_if_success have : (!![(0 : ℤ)]).PosDef := by pos_def
+  pos_def
+
+/-- info: 'Hex.PosDefTheory.Int.certify_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.PosDefTheory.Int.certify_complete
+
+/-- info: 'Hex.PosDefTheory.Gaussian.certify_complete' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.PosDefTheory.Gaussian.certify_complete
