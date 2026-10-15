@@ -35,10 +35,12 @@ rerun under the frozen decision. A changed operational-cap protocol over the sam
 requires a reviewed collector change: the existing reservation key contains
 only the two benchmark binaries and the guard, so a new question or output
 directory cannot authorize another attempt. LeanBench supports a matched
-`--max-seconds-per-call` override; the current collector provides no such
+`--max-seconds-per-call` override; the collector retained with this capture provides no such
 protocol adaptation. Any changed protocol or meaningful source correction
 needs its own decision and bindings, preserving this failed capture, every
-declared parameter, balanced blocks and the pinned comparison rule. No cap adaptation or new measurement is included here.
+declared parameter, balanced blocks and the pinned comparison rule. The [cap adaptation contract](cap-protocol.md) describes the separate collector
+support and proposed complete campaign. These retained artifacts contain no
+revised-campaign measurements.
 Any proposed cap protocol must address the complete selected family list,
 including the unattempted reduced/replay high-bit families and repeated
 prepared-query families, before reserving a new campaign. The existing
