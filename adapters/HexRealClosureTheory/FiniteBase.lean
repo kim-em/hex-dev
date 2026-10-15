@@ -39,7 +39,11 @@ the original choice expression. Closed agreements become kernel-checked
 theorems; open agreements retain their hypotheses for subsequent kernel checks. -/
 def Base.bindAgreement (base : Base) (agreement : Expr) : MetaM Expr := do
   diagnostic "base agreement: begin named reader binding"
-  let obtained ← inferType agreement
+  let agreement ← instantiateMVars agreement
+  let obtained ← instantiateMVars (← inferType agreement)
+  for value in #[agreement, obtained, base.read, base.domain, base.closed] do
+    if (← instantiateMVars value).hasMVar then
+      throwError "incomplete finite base agreement"
   unless obtained.getAppFn.isConstOf ``Transport.Inventory.Agreement do
     throwError "expected a finite base agreement proof"
   let args := obtained.getAppArgs
@@ -69,12 +73,23 @@ private def sameType (proof type : Expr) : MetaM Bool :=
   withNewMCtxDepth do
     withTransparency .all do isDefEq (← inferType proof) type
 
+private def same (left right : Expr) : MetaM Bool := do
+  if left == right then return true
+  withNewMCtxDepth do withTransparency .all (isDefEq left right)
+
 -- Follow arithmetic operands and native coefficient wrappers, without
 -- traversing dictionaries or context signatures. A reached natural cast is
 -- only a proof-search hint: its complete guarded proposition must still match.
-private def naturalCasts : Nat → Expr → MetaM (Array Expr)
-  | 0, _ => pure #[]
-  | fuel + 1, value => do
+private def naturalCasts (limit : Nat) (coefficient : Expr) : MetaM (Array Expr) := do
+  let carrier ← inferType coefficient
+  let mut pending := [coefficient]
+  let mut seen : ExprSet := {}
+  let mut result := #[]
+  for _ in [:limit] do
+    let value :: rest := pending | break
+    pending := rest
+    if seen.contains value then continue
+    seen := seen.insert value
     let head := value.getAppFn
     let args := value.getAppArgs
     let candidate := if head.isConstOf ``Nat.cast || head.isConstOf ``NatCast.natCast then
@@ -82,9 +97,14 @@ private def naturalCasts : Nat → Expr → MetaM (Array Expr)
       else if head.isConstOf ``OfNat.ofNat then args[1]?
       else none
     if let some n := candidate then
-      if ← withNewMCtxDepth do isDefEq (← inferType n) (mkConst ``Nat) then
-        if n.rawNatLit? == some 0 || n.rawNatLit? == some 1 then return #[]
-        return #[n]
+      let target ← inferType value
+      let allowed ← if target.isConstOf ``Rat || target.getAppFn.isConstOf ``RationalFn then
+          pure true
+        else same target carrier
+      if allowed && (← same (← inferType n) (mkConst ``Nat)) then
+        unless n.rawNatLit? == some 0 || n.rawNatLit? == some 1 || result.contains n do
+          result := result.push n
+        continue
     let children := if head.isConstOf ``BaseContext.Element.mk ||
         head.isConstOf ``BaseContext.Element.stored || head.isConstOf ``RationalFn.C then
         args.extract (args.size - 1) args.size
@@ -95,33 +115,26 @@ private def naturalCasts : Nat → Expr → MetaM (Array Expr)
       else #[]
     if children.isEmpty then
       let reduced ← withTransparency .all (whnf value)
-      if reduced != value then return ← naturalCasts fuel reduced
-      return #[]
-    let mut result := #[]
-    for child in children do
-      for n in (← naturalCasts fuel child) do
-        unless result.contains n do result := result.push n
-    return result
+      if reduced != value then pending := reduced :: pending
+    else
+      pending := children.toList ++ pending
+  return result
 
 /-- Use the guarded reader's zero, unit and reached natural-cast memberships
 before searching its finite inventory. Match the complete guarded proposition
 without assigning caller metavariables. -/
 def Base.domains (base : Base) (previous : Supplier) : Supplier := fun type => do
   unless type.getAppFn == base.domain.getAppFn do return ← previous type
-  let some wanted := type.getAppArgs.back? | return ← previous type
+  let .app predicate wanted := type | return ← previous type
+  unless ← same predicate base.domain do return ← previous type
   for theoremName in #[``Transport.Closed.zero, ``Transport.Closed.one] do
     let proof ← mkAppM theoremName #[base.closed]
-    let supplied ← inferType proof
-    let some value := supplied.getAppArgs.back? | continue
-    let same ← withNewMCtxDepth do
-      withTransparency .all (isDefEq value wanted)
-    if same then
-      if ← sameType proof type then
-        diagnostic s!"base domain: closed membership supplied by {theoremName}"
-        return some proof
-  for n in (← withNewMCtxDepth (naturalCasts 32 wanted)) do
+    if ← sameType proof type then
+      diagnostic s!"base domain: closed membership supplied by {theoremName}"
+      return some proof
+  for n in (← withNewMCtxDepth (naturalCasts 128 wanted)) do
     let proof ← mkAppM ``Transport.Closed.natCast #[base.closed, n]
-    if ← withNewMCtxDepth (sameType proof type) then
+    if ← sameType proof type then
       diagnostic "base domain: closed natural-cast membership supplied"
       return some proof
   previous type
@@ -161,7 +174,7 @@ def Base.supply (base : Base) (domains previous : Supplier) : Supplier := fun ty
       (``Transport.PowerData, ``Transport.PowerData.of_closed, 2)] do
     if type.getAppFn.isConstOf target then
       diagnostic s!"base: begin {target}"
-      unless ← withTransparency .all (isDefEq args[args.size - count - 1]! base.read) do
+      unless ← same args[args.size - count - 1]! base.read do
         return ← previous type
       let operands := args.extract (args.size - count) args.size
       diagnostic "base: original reader checked"
@@ -181,7 +194,7 @@ def Base.supply (base : Base) (domains previous : Supplier) : Supplier := fun ty
       return some proof
   if type.getAppFn.isConstOf ``Eq && args.size == 3 then
     let .app read value := args[1]! | return ← previous type
-    if ← withTransparency .all (isDefEq read base.read) then
+    if ← same read base.read then
       for theoremName in #[``Transport.Closed.read_zero, ``Transport.Closed.read_one] do
         let proof ← mkAppM theoremName #[base.closed]
         if ← sameType proof type then return some proof
@@ -191,7 +204,7 @@ def Base.supply (base : Base) (domains previous : Supplier) : Supplier := fun ty
         else if value.getAppFn.isConstOf ``OfNat.ofNat then cast[1]?
         else none
       if let some n := n? then
-        if ← isDefEq (← inferType n) (mkConst ``Nat) then
+        if ← same (← inferType n) (mkConst ``Nat) then
           let proof ← mkAppM ``Transport.Closed.read_natCast #[base.closed, n]
           if ← sameType proof type then return some proof
   previous type
@@ -228,11 +241,16 @@ private def agreementLookup (agreement : Expr) : Supplier := fun type => do
   -- guarded proposition; enclosing kernel checks validate the projected proof.
   -- The final pass retains general predicate lookup.
   if type.getAppFn == domain.getAppFn then
+    let .app predicate _ := type | return none
+    unless ← same predicate domain do return none
     if let some wanted := type.getAppArgs.back? then
       if domainRequest then
         diagnostic s!"base domain: coefficient request head {wanted.getAppFn.constName?}"
         if wanted.getAppFn.isConstOf ``DensePoly.coeff then
-          diagnostic s!"base domain: requested index {reprStr wanted.getAppArgs.back!}"
+          if (← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE").isSome then
+            let printed ← withOptions (fun options => pp.maxSteps.set options 100) do
+              ppExpr wanted.getAppArgs.back!
+            diagnostic s!"base domain: requested index {printed}"
       if domainRequest then diagnostic "base domain: begin coefficient scan"
       -- Reduce the requested coefficient once before comparing it with each
       -- retained entry. The complete guarded proposition is still checked
@@ -304,7 +322,7 @@ def agreementSupplier (agreement : Expr) : Supplier := fun type => do
       throwError "expected a finite base agreement proof"
     let args := type.getAppArgs
     let dataArgs := dataType.getAppArgs
-    unless ← withTransparency .all (isDefEq args[args.size - 2]! dataArgs[dataArgs.size - 5]!) do
+    unless ← same args[args.size - 2]! dataArgs[dataArgs.size - 5]! do
       return none
     let coefficients ← mkAppM ``Transport.Inventory.coefficients #[args.back!]
     let required := mkAppN dataType.getAppFn (dataArgs.set! (dataArgs.size - 1) coefficients)
