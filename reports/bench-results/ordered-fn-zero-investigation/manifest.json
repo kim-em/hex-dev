@@ -43,7 +43,8 @@
     "probe-2-third-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "probe-2-third-zero.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "probe-2-approximation-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-    "probe-2-approximation-zero.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    "probe-2-approximation-zero.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "README.md": "56c2efc821b49ac163a939fc769802841e746beafc539472d152b930e46df097"
   },
   "local_native_inputs": {
     "hexorderedfn_bench-unmodified": "0b260f7a83bab62a936c7cbb9a1334f55524ebe94bf366d715fb1378614fdeb5",
@@ -55,5 +56,6 @@
     "unmodified": "446b7f29910d2e2d4bbc0fa8c195b5cae830a9e7",
     "zero": "67ac425cf12303eade7a6d4d3615838fa2da64eb"
   },
-  "scope": "Unsuccessful named source-change probe; not full native comparison, historical finding resolution or phase acceptance."
+  "scope": "Unsuccessful named source-change probe; not full native comparison, historical finding resolution or phase acceptance.",
+  "recording_limitation": "Raw stem omitted height parameter, so six original height128 stdout/stderr pairs were overwritten. All24 parsed observations remain in JSONL;18raw pairs survive. No replacement rerun."
 }

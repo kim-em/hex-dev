@@ -26,8 +26,13 @@ The decision and manifest bind the separate source and binary identities.
 | approximation | 12288 | 4357420024 | 4372292578 | +0.34% |
 
 All 24 scheduled arms completed, in three fixed trial-major adjacent AB/BA
-blocks pinned to one automatically selected CPU. Every raw stdout/stderr and
-host observation is retained. Nothing was discarded. Independent-arm medians
+blocks pinned to one automatically selected CPU. Every parsed observation and host observation is retained in the append-only
+JSONL record. The reused probe driver omitted the parameter from its raw-file
+stem: `height@2048` overwrote the same trial/arm's `height@128` stdout/stderr.
+Eighteen original stdout/stderr pairs survive, not 24. The six earlier height
+observations remain in full in the JSONL record, but their original raw byte
+files are lost. This recording defect prevents a claim of complete raw-output
+retention. Do not rerun to hide or replace it. Independent-arm medians
 use the existing comparison arithmetic; paired medians do not replace it.
 Small returned hashes are consistency observations, not mathematical oracles.
 
