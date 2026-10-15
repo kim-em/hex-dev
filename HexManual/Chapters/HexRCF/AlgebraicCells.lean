@@ -528,15 +528,16 @@ sector evidence is read. The result preserves every error and both verdicts:
 open Hex Hex.RealClosure Hex.SignDet
 open Hex.RealFormula
 open Hex.RCF.RealCoefficients
+open Hex.RealClosure.Replay
 example {r : BaseContext.Registry}
     {p : Tower.Context r}
-    (o :
-      Hex.RealClosure.Replay.Operations p.sign)
+    (o : Operations p.sign)
     (v : ValueCodec p.Value)
     {n : Nat} (vs : Fin n → p.Value)
     (f : QF (n+1))
     (gs : List p.Value)
-    (c : RadicalCert p.Value Tower.Signature)
+    (c : RadicalCert p.Value
+      Tower.Signature)
     (q : Quantifier)
     (graph cells : Codec.Json) :
     CellOperations.check o v vs f gs c q
