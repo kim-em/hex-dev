@@ -1,0 +1,23 @@
+{
+  "root": "/home/kim/worktrees/hex-dev/hex-dev-issue-10575-sign-det-integrated-candidate",
+  "base": "5a08ebf27cd2d46383dfa510957f83867119222d",
+  "head": "560daa57dc04d54e59faaaf60327733194bfbc92",
+  "applied_reviewed_commits": [
+    "d1bad07e69003fe7e18b35b17f9d9aa612aa8dd3",
+    "1c11db6eeb4641d30050102600ca515a6d08e642",
+    "748faee0a082aec7deb89f9194c8dca454fac9c3",
+    "3d8044fe8327437beb95b9cb898592379d3643a7",
+    "33250a53853da63c74670bfbb4ef332097734518",
+    "3de9eb60bec4fc273dcf28209231ace8786574d3",
+    "6a18df459a591469ac8050ab0cab0b23e56ef07e",
+    "a8a2d0d5608125333e34ba037a4247cd1131e434",
+    "08ad4926fa21b75e972649430194fd22304b2bcf",
+    "81b5f245783f21a90ee0877be705e8efb8139e3a",
+    "528f5c67c977cad08eae4e6ff64a70b97f82a1d8",
+    "4bcf7b2beca0ad0b72385544f7fa09581fb18f40",
+    "2d46af9359b391315e51ddcc4fee94d1466940f2",
+    "223bb658f91815fb09cb30315838c8ff0908328d",
+    "6cca0356214390bb15ee6698ec668921821c6b5c"
+  ],
+  "scope": "Local candidate composition of reviewed pending10940/10943/10945 on main already containing10944. No new algorithm or source edits; no measurements yet. Final acceptance conditional on parentPRs landing and verified native comparison."
+}

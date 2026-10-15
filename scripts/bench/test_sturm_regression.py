@@ -47,6 +47,51 @@ class ArchivedCapProposalTest(unittest.TestCase):
         self.assertEqual(set(policy['previous_exports']), expected)
 
 
+class BelowResolutionTest(unittest.TestCase):
+    def setUp(self):
+        root = Path(collector.__file__).resolve().parents[2]
+        archive = root / 'reports/bench-results/sign-det-phase6-comparison/initial-capture'
+        self.raw = gzip.decompress((archive / '0-0-candidate.json.gz').read_bytes())
+        self.document = json.loads(self.raw)
+        self.name = self.document['results'][0]['function']
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.path = Path(self.temp.name) / 'export.json'
+
+    def accepted(self, code=2):
+        self.path.write_text(json.dumps(self.document))
+        return collector.below_resolution_export(code, self.path, self.name)
+
+    def test_actual_complete_below_floor_export_is_retained(self):
+        self.assertTrue(self.accepted())
+
+    def test_other_exit_codes_remain_fatal(self):
+        for code in (1, 7, -15):
+            self.assertFalse(self.accepted(code))
+
+    def test_failure_and_integrity_mutations_are_refused(self):
+        for key, value in [('kind', 'fixed'), ('function', 'different'),
+                           ('budget_truncated', True), ('verdict', 'consistent_with_declared_complexity'),
+                           ('trial_summaries', [{}]), ('points', [])]:
+            with self.subTest(key=key):
+                self.document = json.loads(self.raw)
+                self.document['results'][0][key] = value
+                self.assertFalse(self.accepted())
+        for key, value in [('status', 'timedOut'), ('error', 'failed'), ('result_hash', None),
+                           ('below_signal_floor', False), ('inner_repeats', 0),
+                           ('total_nanos', 0), ('per_call_nanos', float('nan'))]:
+            with self.subTest(key=key):
+                self.document = json.loads(self.raw)
+                self.document['results'][0]['points'][0][key] = value
+                self.assertFalse(self.accepted())
+
+    def test_malformed_or_missing_export_remains_fatal(self):
+        self.assertFalse(collector.below_resolution_export(2, self.path, self.name))
+        for raw in ('not json', '{}', '{"results":[null]}'):
+            self.path.write_text(raw)
+            self.assertFalse(collector.below_resolution_export(2, self.path, self.name))
+
+
 class RegistrationTest(unittest.TestCase):
     def setUp(self):
         self.lines = ["registered benchmarks:",
@@ -200,7 +245,12 @@ elif sys.argv[1]=='run':
     if mode in ('cap-null','cap-mismatch'):
         result['points'].insert(0,{'param':32,'status':'ok','error':None,'per_call_nanos':50,
                                   'result_hash':None if mode=='cap-null' else arm})
+    if mode=='below-resolution' and arm=='candidate':
+        result.update(verdict='inconclusive', trial_summaries=[])
+        result['points'][0].update(error=None, below_signal_floor=True,
+                                   total_nanos=100, inner_repeats=1)
     target.write_text(json.dumps({'results':[result]}))
+    if mode=='below-resolution' and arm=='candidate':sys.exit(2)
     if (mode=='interrupt' or (mode=='cap-interrupt' and adapted)) and arm=='candidate':
         worker=subprocess.Popen([sys.executable,'-c','import time; time.sleep(60)'])
         Path(__file__+'.worker-pid').write_text(str(worker.pid))
@@ -838,6 +888,18 @@ elif sys.argv[1]=='run':
         failure = self.context['parent_failures'][0]
         self.assertEqual(failure['returncode'], 7)
         self.assertEqual(failure['results'][0]['points'][0]['status'], 'timedOut')
+
+    def test_below_resolution_continues_all_blocks_to_native_guard(self):
+        self.mode('below-resolution')
+        self.guard_code(2)
+        code, _ = self.run_collector()
+        self.assertEqual(code, 1)
+        self.assertEqual(self.context['status'], 'completed')
+        self.assertEqual(self.context['outcome'], 'inconclusive')
+        self.assertFalse(self.context['pass'])
+        self.assertEqual(len(self.context['below_resolution_exports']), 4)
+        self.assertEqual(len(self.context['paired_ratios']), 4)
+        self.assertEqual(len(self.context['guards']), 1)
 
     def test_nonzero_parent_exit_also_stops_its_worker(self):
         self.mode('exit-worker')
