@@ -423,7 +423,7 @@ Arbitrary recursive history assembly remains required. The generic
 ordinary-model `CellReplay.check_sound` theorem derives complete-cell soundness
 from the accepted whole-line root table, checked radical identities,
 adjacent-root bounds and whole same-point rows. Regressions cover both the rational base
-and ℚ(√2). The [fixed algebraic matrix](../reports/hexrcf-algebraic-input-cells.md)
+and ℚ(√2). The [fixed algebraic matrix](../reports/hexrcf-algebraic-cells.md)
 checks two root sections and three ordinary sectors for X²−√2 with 21 frozen
 scalar packets, quotes two original real sources and audits their actual proof
 bodies. Original divisor preflight precedes decoding; accepted false remains
