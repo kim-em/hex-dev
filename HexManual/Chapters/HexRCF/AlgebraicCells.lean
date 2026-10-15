@@ -7,6 +7,7 @@ import VersoManual
 import HexRCF.CellReplay.Algebraic.BooleanQuoted
 import HexRCF.RealCoefficients.RootBuild
 import HexRCF.RealCoefficients.CellDecision
+import HexRCF.RealCoefficients.CellExecution
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -250,10 +251,39 @@ requires no supplied carrier, chosen root table, sector-point function or
 successful child-sign assumption. Its ordinary model remains an explicit domain
 hypothesis; this does not supply faithful models for arbitrary named constants.
 
-The theorem establishes mathematical existence of accepted typed evidence.
-An execution/serialization theorem for the general native builder, frozen
-provider/context histories, strict compiled missing-record checking and fresh
-source-goal quotation still retain their own obligations. The seven-matrix
+`CellBuild.evidence` now produces those typed rows before freezing them.
+The public `CellBuild.build` serializes that same result in the existing packet
+layout. `CellDiscover.run_success` proves that the actual native discovery
+returns a packet: its cells equal the frozen constructed rows, and those rows
+produce exact diagnostic verdicts for both quantifiers at the original fixed
+coefficients. The returned vector itself is related to the indexed open cells
+by `CellAlignment.sector_vector`.
+
+```lean
+open Hex.RealClosure
+open Hex.RealFormula
+open Hex.RCF.RealCoefficients
+example
+    {r : BaseContext.Registry}
+    {c : Tower.Context r} {n : Nat}
+    (model : Tower.Model c ℝ)
+    (values : Fin n → c.Value)
+    (guards : List c.Value)
+    (formula : QF (n+1))
+    (nonzero : ∀ d ∈ guards, d ≠ 0) :
+    ∃ packet,
+      CellDiscover.run values guards formula =
+        .ok packet := by
+  obtain ⟨packet, returned, _⟩ :=
+    CellDiscover.run_success model values
+      guards formula nonzero
+  exact ⟨packet, returned⟩
+```
+
+Literal-reader acceptance still needs finite coverage of every serialized
+coefficient and context. Frozen provider/context histories, strict compiled
+missing-record checking and fresh general source-goal quotation retain their
+own obligations. The seven-matrix
 native regression includes a four-boundary union of the algebraic equation and
 half-open guards. Its retained diagnostic trace exposes a substantial cost in
 cell-row production; this is a performance limitation, without a scaling or

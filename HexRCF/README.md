@@ -619,6 +619,14 @@ section, sector and exact ordinary-point rows from the actual owner producers.
 and exact true/false diagnostic semantics at the original coefficient values,
 under an explicit ordinary-real parent model and nonzero original guards.
 [Cell-decision evidence](../reports/hexrcf-cell-decision.md) records the 28 proof
-audits, native cases and substantial observed row-production cost. General
-executable serialization/reader progress, source quotation, frozen histories
-and strict arbitrary-missing-record compiled checking remain separate.
+audits, native cases and substantial observed row-production cost. Literal-reader
+progress, source quotation, frozen histories and strict arbitrary-missing-record
+compiled checking remain separate.
+
+`CellBuild.evidence` produces typed cells before freezing them in the existing
+layout. `CellDiscover.run_success` proves that the actual native discovery
+returns those frozen rows and both exact original-coefficient verdicts under
+an ordinary-real parent model and nonzero original guards. The exact returned
+vector is covered by `CellAlignment.sector_vector`. [Executable-cell evidence](../reports/hexrcf-cell-execution.md)
+distinguishes this progress from the remaining finite-codec literal-reader,
+frozen-history and frontend acceptance obligations.

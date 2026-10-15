@@ -29,6 +29,12 @@ run_meta do
         ``Hex.RCF.RealCoefficients.ScalarPacket.build,
         ``Hex.RCF.RealCoefficients.ScalarPacket.buildLiteral] do
       if seen.contains forbidden then throwError "Boolean source reused old witness/supplier {forbidden}"
+    for forbidden in #[`Hex.RCF.RealCoefficients.CellBuild.build,
+        `Hex.RCF.RealCoefficients.CellBuild.evidence,
+        `Hex.RCF.RealCoefficients.CellBuild.point,
+        `Hex.RCF.RealCoefficients.CellBuild.bounds,
+        `Hex.RCF.RealCoefficients.CellDiscover.run] do
+      if seen.contains forbidden then throwError "literal quotation retained native cell production: {forbidden}"
     logInfo m!"fresh Boolean source body rechecked with actual cells, standard axioms and no prior source witness: {name}"
   for name in #[``Hex.RCF.RealCoefficients.CellReplay.Evidence.changeFormula_row,
       ``Hex.RCF.RealCoefficients.CellReplayTests.Algebraic.BooleanBinding.refused,

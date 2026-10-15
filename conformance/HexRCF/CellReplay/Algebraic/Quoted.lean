@@ -30,6 +30,12 @@ run_meta do
     -- KernelCheck separately forbids executing those producers during replay.
     for forbidden in #[``Check.source, ``ScalarPacket.build, ``ScalarPacket.buildLiteral] do
       if seen.contains forbidden then throwError "fresh algebraic quotation retained production or earlier witness: {forbidden}"
+    for forbidden in #[`Hex.RCF.RealCoefficients.CellBuild.build,
+        `Hex.RCF.RealCoefficients.CellBuild.evidence,
+        `Hex.RCF.RealCoefficients.CellBuild.point,
+        `Hex.RCF.RealCoefficients.CellBuild.bounds,
+        `Hex.RCF.RealCoefficients.CellDiscover.run] do
+      if seen.contains forbidden then throwError "literal quotation retained native cell production: {forbidden}"
     logInfo "fresh algebraic source body rechecked; frozen readers and standard three axioms verified"
   let environment ← getEnv
   let modules := environment.header.moduleNames

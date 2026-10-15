@@ -28,6 +28,15 @@ local instance : Hashable Signature := RowEncode.hashable Signature.codec
   let cells ← match CellBuild.build roots values [] formula points with
     | .error e => throw (IO.userError s!"cell construction failed: {repr e}")
     | .ok cells => pure cells
+  let typed ← match CellBuild.evidence roots values [] formula points with
+    | .error error => throw (IO.userError s!"typed cell production failed: {repr error}")
+    | .ok data => pure data
+  unless CellBuild.packet typed == cells do
+    throw (IO.userError "typed and public frozen cell packets differ")
+  unless (CellReplay.check values formula [] radical roots typed .existsReal).toOption == some true do
+    throw (IO.userError "typed existential acceptance changed")
+  unless (CellReplay.check values formula [] radical roots typed .forallReal).toOption == some false do
+    throw (IO.userError "typed false universal changed")
   let rootGraph := Codec.graph parent.codec Signature.codec (Dag.encode roots.replay)
   let fresh ← match RootReplay.read parent.codec [] radical.core .negInf .posInf rootGraph with
     | .error e => throw (IO.userError s!"root replay failed: {repr e}")

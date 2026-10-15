@@ -115,6 +115,7 @@ public meta import HexRCF.RealCoefficients.AlgebraicRoot
 public meta import HexRCF.RealCoefficients.CommonTactic
 public meta import HexRCF.RealCoefficients.FiniteQuote
 public import HexRCF.RealCoefficients.CellFormula
+public import HexRCF.RealCoefficients.CellExecution
 
 /-! Algebraic coefficient conversion, source preparation, fixed-field
 specialization, root-isolation search and checked cell decisions for the

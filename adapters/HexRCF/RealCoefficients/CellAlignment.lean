@@ -202,6 +202,30 @@ theorem requested_inside (family : Tower.Sample.Partition parent polynomials)
         simp [SectorRequest.Cut.lower, SectorRequest.Cut.upper, Tower.Cell.Mem, first, bounded] at member
         simpa [Cell.Region, empty, first, last, ← lower, ← upper] using member
 
+/-- The exact vector returned to the executable builder lies in its indexed
+open cells, for every proof of the required dimension equality. -/
+theorem sector_vector {polynomials : List parent.Poly}
+    (family : Tower.Sample.Partition parent polynomials)
+    (original : Model parent ℝ) (model : Collection.Model family.collection original)
+    {p : DensePoly family.collection.input.context.Value}
+    (roots : @RootReplay.Result registry family.collection.input.context p .negInf .posInf)
+    (aligned : family.values.map model.input.target.value = roots.values model.input.target) :
+    ∃ candidates : Vector family.collection.input.context.Value (family.values.length+1),
+      SectorRequest.points family = some candidates ∧
+      ∀ lengths : family.values.length+1 = roots.roots.length+1,
+        ∀ cut : Fin (roots.roots.length+1),
+          Cell.Region (RootCells.points roots model.input.target) (.open cut)
+            (model.input.target.value candidates[Fin.cast lengths.symm cut]) := by
+  obtain ⟨values, produced, inside⟩ := SectorRequest.points_spec family original model
+  refine ⟨Vector.ofFn values, produced, ?_⟩
+  intro lengths cut
+  have equal : family.values.length = roots.roots.length := Nat.add_right_cancel lengths
+  have member := inside (Fin.cast lengths.symm cut)
+  have region := CellAlignment.requested_inside family original model roots aligned cut
+    (values (Fin.cast lengths.symm cut)) equal member
+  simpa only [Fin.getElem_fin, Vector.getElem_ofFn] using region
+
+
 theorem sector_points (family : Tower.Sample.Partition parent polynomials)
     (original : Model parent ℝ) (model : Collection.Model family.collection original)
     {p : DensePoly family.collection.input.context.Value}
