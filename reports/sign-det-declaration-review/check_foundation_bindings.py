@@ -60,9 +60,9 @@ def main():
                           ["HexSignDet/" + name + ".lean" for name in FOUNDATION_MODULES])
     groups = (
         ("core-replay", 49), ("core-tables", 42), ("core-selected", 19),
-        ("core-descriptors", 45), ("core-completion", 17), ("core-comparison", 27),
+        ("core-descriptors", 46), ("core-completion", 17), ("core-comparison", 27),
         ("core-dag", 28), ("core-root-list", 40), ("core-handles", 25),
-        ("core-dag-support", 69), ("core-graph-codec", 28),
+        ("core-dag-support", 74), ("core-graph-codec", 30),
         ("core-codec-coefficients", 18), ("core-dependencies", 34),
         ("core-serialization", 147), ("core-parser", 105),
     )
