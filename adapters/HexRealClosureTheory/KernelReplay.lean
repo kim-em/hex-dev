@@ -65,15 +65,37 @@ def request (application : Expr) : MetaM Request := do
     throwError "unexpected algebraic element type"
   return { context := element.getAppArgs.back!, polynomial := application.getAppArgs.back! }
 
+private initialize auditedConstants : EnvExtension (PHashMap Name (Array Name)) ←
+  registerEnvExtension (pure {}) (asyncMode := .local)
+
+-- Environment scoping is essential: a declaration and all its dependencies
+-- are immutable in descendants of the environment that checked them. Rollback
+-- discards entries even when an unchanged declaration later refers to a reused
+-- dependency name. Lean already precomputes imported declarations' axiom sets.
+private def auditedAxioms (name : Name) : MetaM (Array Name) := do
+  let environment ← getEnv
+  if let some axioms := auditedConstants.getState environment |>.find? name then return axioms
+  let axioms ← collectAxioms name
+  for axiomName in axioms do
+    unless #[`propext, `Classical.choice, `Quot.sound].contains axiomName do
+      throwError "unexpected axiom {axiomName} through {name}"
+  if !environment.isImportedConst name && (environment.checked.get.find? name).isSome then
+    modifyEnv fun environment => auditedConstants.modifyState environment (·.insert name axioms)
+  return axioms
+
 def auditProof (proof type : Expr) : MetaM (Array Name) := do
+  let began ← IO.getNumHeartbeats
   if proof.hasSorry || proof.hasMVar || type.hasSorry || type.hasMVar then
     throwError "incomplete proof"
   let mut axioms : Array Name := #[]
-  for decl in (proof.getUsedConstants ++ type.getUsedConstants) do
-    for axiomName in (← collectAxioms decl) do
+  let constants := proof.getUsedConstants ++ type.getUsedConstants
+  for decl in constants do
+    for axiomName in (← auditedAxioms decl) do
       if !axioms.contains axiomName then axioms := axioms.push axiomName
-      unless #[`propext, `Classical.choice, `Quot.sound].contains axiomName do
-        throwError "unexpected axiom {axiomName} through {decl}"
+  if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
+    IO.FS.withFile path .append fun handle => do
+      handle.putStrLn s!"proof audit: constants={constants.size} heartbeats={((← IO.getNumHeartbeats) - began) / 1000}"
+      handle.flush
   return axioms
 
 def kernelCheck (name : Name) (type proof : Expr) : MetaM Unit := do

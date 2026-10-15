@@ -208,6 +208,7 @@ def check() -> None:
              "KernelReplay.NativeAssemblyStaged", "KernelReplay.NativeAssemblyUse",
              "KernelReplay.FiniteDependencies",
              "KernelReplay.LookupReplay",
+             "KernelReplay.ProofAudit",
              "KernelReplay.FiniteBase", "KernelReplay.BaseLookup", "KernelReplay.FiniteLift", "KernelReplay.FiniteOperands",
              "KernelReplay.FiniteSupport", "KernelReplay.FiniteData", "KernelReplay.FiniteWitness", "KernelReplay.FiniteJoint",
              "RealClosureConsumer.Query", "RealClosureConsumer.Sign",
