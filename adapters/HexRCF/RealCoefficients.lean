@@ -64,6 +64,8 @@ public import HexRCF.RealCoefficients.CellPacketTransport
 public import HexRCF.RealCoefficients.SectorReplay
 public import HexRCF.RealCoefficients.CellRead
 public import HexRCF.RealCoefficients.CellBuild
+public import HexRCF.RealCoefficients.CellDiscover
+public import HexRCF.RealCoefficients.CellAlignment
 public import HexRCF.RealCoefficients.RowEncode
 public import HexRCF.RealCoefficients.CellReuse
 public meta import HexRCF.RealCoefficients.CellQuote

@@ -1,0 +1,159 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+module
+public import HexRCF.RealCoefficients.CellDiscover
+public import Mathlib.Data.List.Sort
+public section
+namespace Hex.RCF.RealCoefficients.CellAlignment
+open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet HexPolyTheory.Interpret
+variable {registry : BaseContext.Registry} {parent : Tower.Context registry}
+
+theorem points_length {required : List parent.Poly}
+    (family : Tower.Sample.Partition parent required) :
+    (CellDiscover.points family).length = family.values.length+1 := by
+  simp only [CellDiscover.points, List.length_map, List.length_attach,
+    Tower.Sample.Partition.sectors_length]
+
+/-- Exact root-union correspondence for the source atom carrier, omitting
+only zero polynomial factors and retaining all repeated atom occurrences. -/
+theorem product_roots (model : Model parent ℝ) (ps : List parent.Poly) (x : ℝ) :
+    (interpret model.value model.zero_iff (RepresentationCarrier.product ps)).IsRoot x ↔
+      ∃ p ∈ ps, p ≠ 0 ∧ (interpret model.value model.zero_iff p).IsRoot x := by
+  induction ps with
+  | nil => simp [RepresentationCarrier.product, interpret_one, model.one, Polynomial.IsRoot]
+  | cons p ps ih =>
+    by_cases zero : p = 0
+    · subst p
+      have expansion : RepresentationCarrier.product ((0 : parent.Poly)::ps) =
+          RepresentationCarrier.product ps := by rfl
+      rw [expansion]
+      constructor
+      · intro root
+        obtain ⟨q, member, nz, root⟩ := ih.mp root
+        exact ⟨q, List.mem_cons_of_mem _ member, nz, root⟩
+      · rintro ⟨q, member, nz, root⟩
+        apply ih.mpr
+        rcases List.mem_cons.mp member with same | member
+        · subst q
+          exact False.elim (nz rfl)
+        · exact ⟨q, member, nz, root⟩
+    · have nonzero : p.isZero = false := by
+        cases h : p.isZero with
+        | false => rfl
+        | true => exact False.elim (zero ((DensePoly.size_eq_zero_iff p).mp
+            ((DensePoly.isZero_eq_true_iff p).mp h)))
+      have expansion : RepresentationCarrier.product (p::ps) =
+          p * RepresentationCarrier.product ps := by
+        simp [RepresentationCarrier.product, nonzero]
+      rw [expansion, interpret_mul model.value model.zero_iff model.add model.mul]
+      simp only [Polynomial.IsRoot, Polynomial.eval_mul, mul_eq_zero] at ih ⊢
+      rw [ih]
+      constructor
+      · rintro (root | ⟨q, member, nz, root⟩)
+        · exact ⟨p, List.mem_cons_self, zero, root⟩
+        · exact ⟨q, List.mem_cons_of_mem _ member, nz, root⟩
+      · rintro ⟨q, member, nz, root⟩
+        rcases List.mem_cons.mp member with same | member
+        · subst q
+          exact Or.inl root
+        · exact Or.inr ⟨q, member, nz, root⟩
+theorem polynomial_eq (values : Fin n → parent.Value) (formula : RealFormula.QF (n+1))
+    (family : Tower.Sample.Partition parent (RepresentationSpecialize.prepare values formula))
+    (original : Model parent ℝ) (model : Collection.Model family.collection original)
+    (q : RealFormula.Poly (n+1)) :
+    interpret model.input.target.value model.input.target.zero_iff
+      (RepresentationSpecialize.polynomial (family.collection.input.value ∘ values) q) =
+    interpret original.value original.zero_iff (RepresentationSpecialize.polynomial values q) := by
+  apply Polynomial.funext
+  intro x
+  change RepresentationSpecialize.evaluate model.input.target.value model.input.target.zero_iff x _ =
+    RepresentationSpecialize.evaluate original.value original.zero_iff x _
+  rw [RepresentationSpecialize.polynomial_eval₂ model.input.target.value model.input.target.zero_iff
+      model.input.target.one model.input.target.add model.input.target.mul model.input.target.nat
+      model.input.target.neg,
+    RepresentationSpecialize.polynomial_eval₂ original.value original.zero_iff original.one
+      original.add original.mul original.nat original.neg]
+  have same : (fun i => model.input.target.value ((family.collection.input.value ∘ values) i)) =
+      (fun i => original.value (values i)) := funext (fun i => model.input.value (values i))
+  rw [same]
+
+theorem source_roots (values : Fin n → parent.Value) (formula : RealFormula.QF (n+1))
+    (family : Tower.Sample.Partition parent (RepresentationSpecialize.prepare values formula))
+    (original : Model parent ℝ) (model : Collection.Model family.collection original) (x : ℝ) :
+    (∃ p ∈ RepresentationSpecialize.prepare values formula,
+      interpret original.value original.zero_iff p ≠ 0 ∧
+        (interpret original.value original.zero_iff p).IsRoot x) ↔
+    ∃ p ∈ RepresentationSpecialize.prepare (family.collection.input.value ∘ values) formula,
+      p ≠ 0 ∧ (interpret model.input.target.value model.input.target.zero_iff p).IsRoot x := by
+  constructor
+  · rintro ⟨p, member, nonzero, root⟩
+    obtain ⟨q, qmem, rfl⟩ := List.mem_map.mp member
+    let converted := RepresentationSpecialize.polynomial (family.collection.input.value ∘ values) q
+    have same := polynomial_eq values formula family original model q
+    refine ⟨converted, List.mem_map.mpr ⟨q, qmem, rfl⟩, ?_, ?_⟩
+    · intro zero
+      apply nonzero
+      rw [← same]
+      change interpret model.input.target.value model.input.target.zero_iff converted = 0
+      rw [zero, interpret_zero]
+    · change (interpret model.input.target.value model.input.target.zero_iff
+        (RepresentationSpecialize.polynomial (family.collection.input.value ∘ values) q)).IsRoot x
+      rw [same]
+      exact root
+  · rintro ⟨p, member, nonzero, root⟩
+    obtain ⟨q, qmem, rfl⟩ := List.mem_map.mp member
+    have same := polynomial_eq values formula family original model q
+    refine ⟨RepresentationSpecialize.polynomial values q, List.mem_map.mpr ⟨q, qmem, rfl⟩, ?_, ?_⟩
+    · intro zero
+      apply nonzero
+      apply (interpret_eq_zero model.input.target.value model.input.target.zero_iff _).mp
+      rw [same, zero]
+    · rw [← same]
+      exact root
+
+/-- The owner partition and independently checked radical table have exactly
+one common ordered real boundary list. No root-list equality is assumed. -/
+theorem aligned (values : Fin n → parent.Value) (formula : RealFormula.QF (n+1))
+    (family : Tower.Sample.Partition parent (RepresentationSpecialize.prepare values formula))
+    (original : Model parent ℝ) (model : Collection.Model family.collection original)
+    (cert : RadicalCert family.collection.input.context.Value Signature)
+    (roots : @RootReplay.Result registry family.collection.input.context cert.core .negInf .posInf)
+    (checked : cert.check family.collection.input.context.signature
+      (RepresentationCarrier.product
+        (RepresentationSpecialize.prepare (family.collection.input.value ∘ values) formula)) = true) :
+    family.values.map model.input.target.value = roots.values model.input.target := by
+  apply List.Pairwise.eq_of_mem_iff
+    (List.pairwise_map.mpr (family.sorted original model)) (roots.ordered model.input.target)
+  intro x
+  have table : x ∈ roots.values model.input.target ↔
+      (interpret model.input.target.value model.input.target.zero_iff cert.core).IsRoot x := by
+    rw [← (roots.coverage model.input.target).1 x]
+    change x ∈ HexRealRootsTheory.Tarski.rootsIn
+      (interpret model.input.target.value model.input.target.zero_iff cert.core) .negInf .posInf ↔ _
+    rw [HexRealRootsTheory.Tarski.mem_rootsIn_iff _ (RootCells.nonzero roots model.input.target)]
+    simp
+  rw [family.coverage original model x, table,
+    cert.roots model.input.target.value model.input.target.zero_iff model.input.target.one
+      model.input.target.add model.input.target.sub model.input.target.mul
+      family.collection.input.context.signature _ checked x,
+    product_roots model.input.target]
+  exact source_roots values formula family original model x
+
+theorem dimensions (values : Fin n → parent.Value) (formula : RealFormula.QF (n+1))
+    (family : Tower.Sample.Partition parent (RepresentationSpecialize.prepare values formula))
+    (original : Model parent ℝ) (model : Collection.Model family.collection original)
+    (cert : RadicalCert family.collection.input.context.Value Signature)
+    (roots : @RootReplay.Result registry family.collection.input.context cert.core .negInf .posInf)
+    (checked : cert.check family.collection.input.context.signature
+      (RepresentationCarrier.product
+        (RepresentationSpecialize.prepare (family.collection.input.value ∘ values) formula)) = true) :
+    (CellDiscover.points family).length = roots.roots.length+1 := by
+  rw [points_length]
+  have lengths := congrArg List.length (aligned values formula family original model cert roots checked)
+  simp only [RootReplay.Result.values, List.length_map] at lengths
+  exact congrArg (fun size => size+1) lengths
+
+end Hex.RCF.RealCoefficients.CellAlignment

@@ -6,6 +6,7 @@ Authors: Kim Morrison
 import VersoManual
 import HexRCF.CellReplay.Algebraic.BooleanQuoted
 import HexRCF.RealCoefficients.RootBuild
+import HexRCF.RealCoefficients.CellAlignment
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -162,8 +163,48 @@ X²−√2 and verifies their exact match with the frozen packet used above. Nat
 construction supplies proposals; the quoted proofs continue to consume the
 independently checked frozen data.
 
-This interface does not discover ordinary sector points in arbitrary parents,
-assemble missing scalar/provider histories or prove general frontend acceptance.
+This explicit-point interface does not discover ordinary sector points in
+arbitrary parents, assemble missing scalar/provider histories or prove general
+frontend acceptance.
 `RowEncode.read_covered` proves the shared row reader recovers an encoded checked
 row from finite predecessor-codec coverage. It neither supplies that coverage
 nor turns a compiled verdict into proof evidence.
+
+The separate native `CellDiscover.run` API obtains ordinary points from the
+owner's complete partition. Its actual collection converts all fixed source
+coefficients and original divisors into the same common context before carrier,
+root and row construction. It needs no supplied point function. The original
+parent's model extends through that collection, so accepted cells prove the
+shared sentence at the original coefficient values, and accepted divisor checks
+establish the original guards. Those semantic results do not assume that source
+and target representations are identical.
+
+```lean
+open Hex.RCF.RealCoefficients
+open Hex.RealClosure
+example
+    {r : BaseContext.Registry}
+    {c : Tower.Context r}
+    {ps : List c.Poly}
+    (family : Tower.Sample.Partition c ps) :
+    (CellDiscover.points family).length =
+      family.values.length + 1 :=
+  CellAlignment.points_length family
+```
+
+`CellAlignment.aligned` derives exact equality between the partition's ordered
+real boundaries and the independently checked radical root table. It uses the
+source coefficient conversion, complete root coverage and strict ordering;
+equality of the two root lists is not an extra premise. Its `dimensions` theorem
+also derives the required sector count. Compilation tests construct and replay
+X²−√2 with automatically selected points in an enlarged context, reject the
+result in the old context, and check true/false formulas, zero atoms and literal
+half-open domain guards, including equal and reversed endpoints.
+
+This is native production followed by independent cell replay. The returned
+collection retains native conversion history; it is not a frozen certificate of
+that history. A complete acceptance proof for discovery still needs each sector
+point's indexed position to be related to the common ordered boundary list.
+The general frozen history, strict compiled missing-record checks and automatic
+source quotation retain their separate obligations. No native verdict is a
+proof of a real sentence.
