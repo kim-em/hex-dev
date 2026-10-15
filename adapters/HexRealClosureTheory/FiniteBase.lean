@@ -386,12 +386,13 @@ private def agreementMembers (agreement : Expr) : Supplier := fun type =>
   let some path ← coefficientPath inventory coefficient.appFn! | return none
   let mut data := agreement
   for direction in path do
+    let inventory := (← inferType data).getAppArgs.back!
+    let literal ← supportHead inventory
     if direction < 2 then
+      unless literal.getAppFn.isConstOf ``List.append do return none
       let split ← mkAppM ``Transport.Inventory.Agreement.append #[data]
       data ← mkAppM (if direction == 0 then ``And.left else ``And.right) #[split]
     else
-      let inventory := (← inferType data).getAppArgs.back!
-      let literal ← supportHead inventory
       unless literal.getAppFn.isConstOf ``List.cons do return none
       let args := literal.getAppArgs
       let subset ← withLocalDeclD `value args[0]! fun value => do
@@ -407,8 +408,10 @@ private def agreementMembers (agreement : Expr) : Supplier := fun type =>
   diagnostic s!"base support: whole coefficient memberships supplied, depth={path.size} supplyHB={((← IO.getNumHeartbeats)-before)/1000}"
   return some proof
 
-/-- Preserve leading coefficients from the same finite sign/zero agreement,
-and supply its exact coefficient guards. No nonzero interpretation is assumed
+/-- Supply coefficient guards and leading coefficients from the same finite
+sign/zero agreement. Bounded coefficient-domain goals first project a retained
+whole coefficient block, matching its domain, bound and dictionaries. Other
+shapes use individual membership search. No nonzero interpretation is assumed
 for an unretained coefficient. -/
 def agreementSupplier (agreement : Expr) : Supplier := fun type => do
   if let some proof ← agreementMembers agreement type then return some proof
