@@ -588,6 +588,14 @@ atoms. The new formula still needs a fresh strict fold and original-source
 quotation. [Comparison/Boolean controls](../reports/hexrcf-boolean-cells.md)
 cover both quantifiers, all six comparisons and changed-order refusal over the
 same algebraic packet.
-Complete algebraic production,
+
+`CellBuild.prepare` preflights original guards, then constructs the actual
+radical carrier and complete root table through `RootBuild.prepare`. Its
+progress theorem consumes the ordinary parent model and owner laws without
+assuming a carrier, squarefreeness or a returned root list. `CellBuild.build`
+produces all rows at proposed ordinary points, whose strict boundary signs
+are checked. [Construction controls](../reports/hexrcf-cell-build.md) reproduce
+the existing algebraic packet and retain constant/zero cases and refusals.
+Automatic ordinary-point discovery, complete algebraic source production,
 source/provider history, automatic common-field certification and accepted
 algebraic completeness remain separate obligations.
