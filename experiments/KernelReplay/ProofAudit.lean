@@ -10,6 +10,23 @@ public meta import HexRealClosureTheory.KernelReplay
 import all HexRealClosureTheory.KernelReplay
 import all KernelReplay.FiniteBase
 
+public section
+namespace Hex.RealClosure.Algebraic.KernelReplay.ProofAudit
+
+noncomputable def index : Nat := Classical.choice ⟨0⟩
+
+noncomputable opaque opaqueIndex : Nat := index
+
+-- The inductive and its constructors form a dependency cycle. The leaf's
+-- index contributes an axiom through its type, even when another constructor
+-- is the first audited declaration.
+inductive Branch : Nat → Type where
+  | leaf : Branch index
+  | node {n : Nat} : Branch n → Branch n
+
+end Hex.RealClosure.Algebraic.KernelReplay.ProofAudit
+end
+
 public meta section
 namespace Hex.RealClosure.Algebraic.KernelReplay.ProofAudit
 open Lean Meta Elab Command
@@ -28,6 +45,22 @@ private def check (proof type : Expr) : MetaM (Array Name) := do
   kernelCheck `__proofAudit type proof
   return actual
 
+private def shared (dependency : Name) : MetaM Unit := do
+  let saved ← Meta.saveState
+  try
+    -- Fault injection tests cache use, without exporting a mathematical claim.
+    -- The deliberately conservative extra dependency must reach two parents;
+    -- finally restores both the declarations and their temporary cache state.
+    modifyEnv fun environment => auditedConstants.modifyState environment
+      (·.insert dependency #[`Classical.choice])
+    for _ in [:2] do
+      let parent ← mkFreshUserName `auditSharedParent
+      addDecl (.thmDecl {
+        name := parent, levelParams := [], type := mkConst ``True, value := mkConst dependency })
+      unless (← auditedAxioms parent) == #[`Classical.choice] do
+        throwError "recursive audit recomputed a retained shared dependency"
+  finally saved.restore
+
 private def restoration : MetaM Unit := do
   let name ← mkFreshUserName `auditBranch
   let dependency ← mkFreshUserName `auditDependency
@@ -41,8 +74,13 @@ private def restoration : MetaM Unit := do
       throwError "constructive branch acquired an axiom"
     unless (auditedConstants.getState (← getEnv) |>.find? name) == some #[] do
       throwError "local constructive audit was not retained"
+    unless (auditedConstants.getState (← getEnv) |>.find? dependency) == some #[] do
+      throwError "checked local dependency audit was not reused recursively"
     unless (← check (mkConst name) (mkConst ``True)).isEmpty do
       throwError "reused constructive audit changed dependencies"
+    shared dependency
+    unless (auditedConstants.getState (← getEnv) |>.find? dependency) == some #[] do
+      throwError "fault-injection cache state escaped its branch"
     saved.restore
     unless (auditedConstants.getState (← getEnv) |>.find? name).isNone do
       throwError "environment restoration kept another branch's audit"
@@ -79,6 +117,39 @@ private def restoration : MetaM Unit := do
       pure true
     unless rejected && !(← incomplete.mvarId!.isAssigned) do
       throwError "proof audit accepted or assigned an incomplete proof"
+  finally saved.restore
+
+private def cycles : MetaM Unit := do
+  let saved ← Meta.saveState
+  try
+    let cyclic := #[``Branch, ``Branch.leaf, ``Branch.node]
+    let names := cyclic ++ #[``Branch.rec, ``Branch.casesOn]
+    for name in names do
+      modifyEnv fun environment => auditedConstants.modifyState environment (fun _ => {})
+      let actual := (← auditedAxioms name).qsort Name.lt
+      unless actual == (← collectAxioms name).qsort Name.lt &&
+          actual == #[`Classical.choice] do
+        throwError "recursive declaration audit omitted its constructor's type dependency"
+      for dependency in cyclic do
+        let expected := (← collectAxioms dependency).qsort Name.lt
+        let some retained := auditedConstants.getState (← getEnv) |>.find? dependency |
+          throwError "recursive declaration audit was not retained"
+        unless retained.qsort Name.lt == expected do
+          throwError "recursive declaration retained a provisional dependency set"
+    let proof ← mkEqRefl (mkConst ``Branch.leaf)
+    let _ ← check proof (← inferType proof)
+    unless (← auditedAxioms ``opaqueIndex) == (← collectAxioms ``opaqueIndex) &&
+        (← auditedAxioms ``opaqueIndex) == #[`Classical.choice] do
+      throwError "opaque declaration audit omitted its body dependency"
+    for imported in #[``Quot, ``Quot.mk, ``Quot.sound] do
+      unless (← auditedAxioms imported) == (← collectAxioms imported) do
+        throwError "primitive declaration audit changed imported dependencies"
+      unless (auditedConstants.getState (← getEnv) |>.find? imported).isNone do
+        throwError "primitive imported declaration acquired a local cache entry"
+    let missing ← mkFreshUserName `undeclaredAudit
+    unless (← auditedAxioms missing).isEmpty &&
+        (auditedConstants.getState (← getEnv) |>.find? missing).isNone do
+      throwError "undeclared name acquired a dependency or cache entry"
   finally saved.restore
 
 private def compare (proof type : Expr) (cached : Bool) : MetaM Unit := do
@@ -155,6 +226,7 @@ syntax (name := proofAudit) "#proof_audit" : command
 @[command_elab proofAudit]
 def elaborate : CommandElab := fun _ => liftTermElabM do
   restoration
+  cycles
   rejectArgument
   let name ← mkFreshUserName `auditProduct
   let .thmInfo original ← getConstInfo ``FiniteBaseProbe.product |
