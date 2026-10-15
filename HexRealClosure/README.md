@@ -2996,10 +2996,16 @@ and validates a count-one descriptor through the shared checker.
 `readDescriptor_covered` restores the exact original checked descriptor when the
 coefficient and context readers cover the finite lists `RootReplay.coefficients`
 and `RootReplay.contexts` for its subject and encoded evidence. These lists include
-all retained entries and moment witnesses, even unreachable entries. The proof
+all retained entries and moment witnesses. For checked evidence, these contexts
+all equal the subject context. The proof
 uses the caller's hash instances and requires no global codec roundtrip law or
 real interpretation. The existing nested-root conformance example uses partial
 readers at both boundaries. Missing literals remain decoder refusals.
+`readDescriptor_tree` instead takes finite coverage of `treeCoefficients` and
+`treeContexts`, traversing literal tree occurrences without evaluating hashing.
+`Dag.encode_nodes` transfers those node properties to every encoded entry.
+The existing conformance proof uses this form, so its finite coverage proofs do
+not depend on the caller's hash implementation.
 `RootReplay.decodeDescriptor` parses both the subject and graph byte records
 through `Codec.decodePair` before applying that reader. This differs from
 `SignDet.Dag.decodeDescriptor`, which receives a typed subject and graph bytes.
