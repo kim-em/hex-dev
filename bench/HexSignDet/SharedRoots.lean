@@ -59,9 +59,16 @@ constructions, joint tables and all checking performed by the public APIs. -/
 @[noinline, never_extract] def runThree : Unit → Option UInt64 := fun () => run 3
 
 -- Fixed examples: degrees three, four and five. No asymptotic timing law.
-setup_fixed_benchmark runOne where { repeats := 6, minTotalSeconds := 0.1, maxSecondsPerCall := 10 }
-setup_fixed_benchmark runTwo where { repeats := 6, minTotalSeconds := 0.1, maxSecondsPerCall := 10 }
-setup_fixed_benchmark runThree where { repeats := 6, minTotalSeconds := 0.1, maxSecondsPerCall := 10 }
+-- Expected hashes match the retained shared-root input inventory.
+setup_fixed_benchmark runOne where {
+  repeats := 6, minTotalSeconds := 0.1, maxSecondsPerCall := 10,
+  expectedHash := some 0x51caaa6c95a50294 }
+setup_fixed_benchmark runTwo where {
+  repeats := 6, minTotalSeconds := 0.1, maxSecondsPerCall := 10,
+  expectedHash := some 0xdf1e0e12cf9bf01b }
+setup_fixed_benchmark runThree where {
+  repeats := 6, minTotalSeconds := 0.1, maxSecondsPerCall := 10,
+  expectedHash := some 0xbaaedf7ed5887965 }
 
 private def polynomial (p : DensePoly Rat) : Lean.Json := Lean.toJson <|
   p.toArray.toList.map fun c => (c.num, c.den)
