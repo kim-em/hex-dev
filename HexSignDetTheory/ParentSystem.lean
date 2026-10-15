@@ -10,6 +10,8 @@ public import HexSignDetTheory.NodeBasis
 
 public section
 
+universe u v
+
 namespace Hex.SignDet
 
 /-- Concatenating checked child words preserves their combined length and every entry guard. -/

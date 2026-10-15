@@ -7,6 +7,7 @@ import HexSignDet
 import HexSignDetTheory
 import Batteries.Tactic.Lint
 import Mathlib.Tactic.Linter.Lint
+import Lean.Util.CollectAxioms
 
 /-! Environment lints cover both production module roots, including theorem
 documentation. The imported modules supply the docstring metadata used by these
@@ -36,3 +37,78 @@ This linter can be disabled with `@[nolint docBlameThm]`. -/
 #guard_msgs (whitespace := lax) in
 #lint- docBlame docBlameThm in HexSignDet
 #lint- docBlame docBlameThm in HexSignDetTheory
+
+-- Check the complete owned proof surface, including generated constants and fields.
+run_cmd do
+  let env ← Lean.getEnv
+  let expected := [`HexSignDetTheory,
+    `HexSignDetTheory.Basis,
+    `HexSignDetTheory.CommonProduct,
+    `HexSignDetTheory.ComparisonProducer,
+    `HexSignDetTheory.CompletionProducer,
+    `HexSignDetTheory.Convert,
+    `HexSignDetTheory.DagSelectedSigns,
+    `HexSignDetTheory.Derivatives,
+    `HexSignDetTheory.Embedding,
+    `HexSignDetTheory.FiniteSolve,
+    `HexSignDetTheory.Foundation,
+    `HexSignDetTheory.Naturality,
+    `HexSignDetTheory.NodeBasis,
+    `HexSignDetTheory.NodeChecks,
+    `HexSignDetTheory.NodeProducer,
+    `HexSignDetTheory.NodeSolve,
+    `HexSignDetTheory.ParentSystem,
+    `HexSignDetTheory.QueryHandle,
+    `HexSignDetTheory.QueryReduction,
+    `HexSignDetTheory.RationalSolve,
+    `HexSignDetTheory.Reduction,
+    `HexSignDetTheory.ReductionProducer,
+    `HexSignDetTheory.Reencode,
+    `HexSignDetTheory.ReencodingProducer,
+    `HexSignDetTheory.ReencodingRefinement,
+    `HexSignDetTheory.RootList,
+    `HexSignDetTheory.RootModel,
+    `HexSignDetTheory.RootProducer,
+    `HexSignDetTheory.SelectedProducer,
+    `HexSignDetTheory.SelectedRoot,
+    `HexSignDetTheory.Solve,
+    `HexSignDetTheory.TableProducer,
+    `HexSignDetTheory.Tensor,
+    `HexSignDetTheory.Thom,
+    `HexSignDetTheory.ThomReencoding,
+    `HexSignDetTheory.ThomRoots,
+    `HexSignDetTheory.TreeChecks,
+    `HexSignDetTheory.TreeSolve]
+  let modules := env.allImportedModuleNames.filter (`HexSignDetTheory).isPrefixOf
+  for moduleName in expected do
+    unless modules.contains moduleName do
+      throwError "missing SignDet Theory module: {moduleName}"
+  for moduleName in modules do
+    unless expected.contains moduleName do
+      throwError "unreviewed SignDet Theory module: {moduleName}"
+  let constants := env.constants.toList.filter fun (name, _) =>
+    match env.getModuleIdxFor? name with
+    | none => false
+    | some idx => modules.contains env.allImportedModuleNames[idx.toNat]!
+  for name in [``Hex.SignDet.determine_correct, ``Hex.SignDet.Descriptor.root_spec,
+      ``Hex.SignDet.Node.Counted, ``Hex.SignDet.Node.Counted.basis,
+      ``Hex.SignDet.Node.Counted.checked, ``Hex.SignDet.Node.Counted.counts,
+      ``Hex.SignDet.Node.Counted.cover, ``Hex.SignDet.Node.Counted.values] do
+    unless constants.any (fun (owned, _) => owned == name) do
+      throwError "missing owned SignDet declaration: {name}"
+  for (userName, moduleName) in [(`Hex.SignDet.ordered_cols, `HexSignDetTheory.Basis),
+      (`Hex.SignDet.quotient_lcm, `HexSignDetTheory.CommonProduct)] do
+    unless constants.any (fun (name, _) =>
+        Lean.privateToUserName name == userName && name != userName &&
+          env.allImportedModuleNames[(env.getModuleIdxFor? name).get!.toNat]! == moduleName) do
+      throwError "missing private SignDet proof body: {userName}"
+  let mut count := 0
+  for (name, info) in constants do
+    if info matches .axiomInfo _ then
+      throwError "owned axiom declaration: {name}"
+    for axiomName in ← Lean.collectAxioms name do
+      unless [``propext, ``Classical.choice, ``Quot.sound].contains axiomName do
+        throwError "unexpected axiom in {name}: {axiomName}"
+    count := count + 1
+  if count == 0 then throwError "empty SignDet Theory axiom audit"
+  Lean.logInfo m!"Checked axioms of {count} SignDet Theory constants in {modules.size} modules."

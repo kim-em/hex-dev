@@ -10,6 +10,8 @@ public import HexSignDetTheory.TreeChecks
 
 public section
 
+universe u v w
+
 namespace Hex.SignDet
 
 variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
@@ -92,7 +94,8 @@ theorem buildNode_counted (context : Ctx) (domain : Sturm.PreparedDomain E)
       n.Counted qs.length xs := by
   have valid {r : Nat} (u : System r) (hu : u.check qs.length = true) (i : Fin r) :
       u.rows[i].length = qs.length ∧ u.rows[i].all (· ≤ 2) = true := by
-    have hh := List.all_eq_true.mp (System.rows_valid hu) _ (List.getElem_mem (l := u.rows.toList) (n := i.val) (by simp))
+    have hh := List.all_eq_true.mp (System.rows_valid hu) _
+      (List.getElem_mem (l := u.rows.toList) (n := i.val) (by simp))
     simpa only [Bool.and_eq_true, decide_eq_true_eq, Vector.getElem_toList,
       Fin.getElem_fin] using hh
   obtain ⟨n, hn, _⟩ := buildNode_complete context domain qs rows columns reduced inverse
@@ -177,9 +180,11 @@ theorem buildTreeFrom_complete (context : Ctx) (domain : Sturm.PreparedDomain E)
   · have halves := hv.2
     simp only [small, ↓reduceIte] at halves
     obtain ⟨l, hl, lc, li⟩ := buildTreeFrom_complete context domain _ reduced _
-      (xs.map (List.take (qs.length / 2))) (by simpa only [List.length_take] using ho.take _) halves.1
+      (xs.map (List.take (qs.length / 2)))
+      (by simpa only [List.length_take] using ho.take _) halves.1
     obtain ⟨r, hr, rc, ri⟩ := buildTreeFrom_complete context domain _ reduced _
-      (xs.map (List.drop (qs.length / 2))) (by simpa only [List.length_drop] using ho.drop _) halves.2
+      (xs.map (List.drop (qs.length / 2)))
+      (by simpa only [List.length_drop] using ho.drop _) halves.2
     have mid : qs.length / 2 ≤ qs.length := Nat.div_le_self _ _
     have hlc : l.node.system.check (qs.length / 2) = true := by
       simpa only [List.length_take, Nat.min_eq_left mid] using lc.node.checked
@@ -243,7 +248,7 @@ theorem buildPrepared_complete (f : E → K) (hz : ∀ a, f a = 0 ↔ a = 0)
     (hn : ∀ a, f (-a) = -f a) (hi : ∀ a, f a⁻¹ = (f a)⁻¹)
     (sign : E → Int) (hpos : ∀ a, sign a = 1 ↔ 0 < f a)
     (hneg : ∀ a, sign a < 0 ↔ f a < 0) (hbound : ∀ a, -1 ≤ sign a ∧ sign a ≤ 1)
-    (context : Ctx) (domain : Sturm.PreparedDomain E) (hsign : domain.sign = sign)
+    (context : Ctx) (domain : Sturm.PreparedDomain E) (binding : domain.sign = sign)
     (qs : List (DensePoly E)) (reduced : Bool) (xs : List (List Int))
     (ho : Observations qs.length xs)
     (hv : QueryModel context domain qs reduced (nodePreparation reduced domain qs none) xs) :
@@ -251,7 +256,7 @@ theorem buildPrepared_complete (f : E → K) (hz : ∀ a, f a = 0 ↔ a = 0)
       t.val.Counted qs.length xs ∧ t.val.Interprets qs.length xs := by
   obtain ⟨t, ht, counted, interprets⟩ := buildTree_complete context domain qs reduced xs ho hv
   obtain ⟨hc, hchecked⟩ := buildPrepared_eq f hz h1 ha hs hm hn hi sign hpos hneg hbound
-    context domain hsign qs reduced ht
+    context domain binding qs reduced ht
   exact ⟨⟨t, hc⟩, hchecked, counted, interprets⟩
 
 end Hex.SignDet

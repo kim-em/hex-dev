@@ -11,6 +11,8 @@ public import HexSignDetTheory.SelectedRoot
 
 public section
 
+universe u v w u' v'
+
 namespace Hex.SignDet
 
 open HexPolyTheory.Interpret HexRealRootsTheory
@@ -132,7 +134,8 @@ theorem Descriptor.convert_root {context : Ctx} (newContext : NewCtx)
   apply source.root_unique f hfz hf1 hfa hfs hfm hfnat hfsign
   · simpa only [RawDescriptor.map, convert_interpret f hfz g hgz convert hcz hvalue,
       convert_endpoint f g convert hvalue] using hmem
-  · rw [source.raw.map_signs f hfz g hgz convert hcz hvalue hfnat hfm hgnat hgm newContext hw] at hsigns
+  · rw [source.raw.map_signs f hfz g hgz convert hcz hvalue hfnat hfm hgnat hgm
+      newContext hw] at hsigns
     exact hsigns
 
 end Hex.SignDet

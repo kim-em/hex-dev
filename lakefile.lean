@@ -350,6 +350,7 @@ lean_lib HexSignDet where
 
 @[default_target]
 lean_lib HexSignDetTheory where
+  leanOptions := #[⟨`autoImplicit, false⟩]
 
 lean_lib HexRealClosure where
   -- The runnable selected-root tests use `#eval` across the library boundary.

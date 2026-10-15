@@ -10,6 +10,8 @@ public import HexSturmTheory.Domain
 
 public section
 
+universe u v
+
 namespace Hex.SignDet
 
 open HexPolyTheory.Interpret

@@ -11,6 +11,8 @@ public import Mathlib.Basic.Sign.Defs
 
 public section
 
+universe u v w
+
 namespace Hex.SignDet
 
 open HexPolyTheory.Interpret
@@ -18,9 +20,9 @@ open HexPolyTheory.Interpret
 variable {E : Type u} {K : Type v} [Zero E] [DecidableEq E] [NatCast E] [Mul E]
 variable [Field K] [DecidableEq K]
 variable (f : E → K) (hz : ∀ a, f a = 0 ↔ a = 0)
-variable (hn : ∀ n : Nat, f (n : E) = (n : K)) (hm : ∀ a b, f (a * b) = f a * f b)
+variable (hnat : ∀ n : Nat, f (n : E) = (n : K)) (hm : ∀ a b, f (a * b) = f a * f b)
 
-include hn hm in
+include hnat hm in
 /-- Every emitted derivative is exactly the formal iterated derivative under
 interpretation. No monic normalization or sign-changing scale is inserted. -/
 theorem derivativesFrom_get (p : DensePoly E) (n i : Nat) (hi : i < n) :
@@ -30,15 +32,15 @@ theorem derivativesFrom_get (p : DensePoly E) (n i : Nat) (hi : i < n) :
   | zero => omega
   | succ n ih =>
     cases i with
-    | zero => simp [derivativesFrom, interpret_derivative f hz hn hm]
+    | zero => simp [derivativesFrom, interpret_derivative f hz hnat hm]
     | succ i =>
       simp only [derivativesFrom, List.getElem_cons_succ,
-        ih p.derivative i (by omega), interpret_derivative f hz hn hm]
+        ih p.derivative i (by omega), interpret_derivative f hz hnat hm]
       exact (Function.iterate_succ_apply Polynomial.derivative (i + 1) (interpret f hz p)).symm
 
 variable [LinearOrder K]
 
-include hn hm in
+include hnat hm in
 /-- A well-formed raw descriptor's executable query word is the formal
 derivative-sign word at any point. -/
 theorem RawDescriptor.querySigns {Ctx : Type w} (raw : RawDescriptor E Ctx)
@@ -61,7 +63,7 @@ theorem RawDescriptor.querySigns {Ctx : Type w} (raw : RawDescriptor E Ctx)
     exact hlt
   simp only [Function.comp_apply, derivatives]
   rw [List.getElem?_eq_getElem hindex, Option.getD_some]
-  rw [derivativesFrom_get f hz hn hm raw.head raw.head.natDegree (j - 1) hlt]
+  rw [derivativesFrom_get f hz hnat hm raw.head raw.head.natDegree (j - 1) hlt]
   simp only [Nat.sub_add_cancel hjpos]
 
 end Hex.SignDet

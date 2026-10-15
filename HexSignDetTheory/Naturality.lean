@@ -19,6 +19,8 @@ computed signs, comparisons and complete root counts. -/
 
 public section
 
+universe u v w u' v'
+
 namespace Hex.SignDet
 
 open HexPolyTheory.Interpret HexRealRootsTheory
@@ -74,7 +76,8 @@ theorem Descriptor.convert_signAt {context : Ctx} (newContext : NewCtx)
     (convert := convert) (hcz := hcz) (hvalue := hvalue)
     (hfnat := hfnat) (hfm := hfm) (hgnat := hgnat) (hgm := hgm)
     (hf1 := hf1) (hfa := hfa) (hfs := hfs) (hfsign := hfsign)
-    (hg1 := hg1) (hga := hga) (hgs := hgs) (hgsign := hgsign) (newSign := newSign) newContext target checked
+    (hg1 := hg1) (hga := hga) (hgs := hgs) (hgsign := hgsign) (newSign := newSign)
+    newContext target checked
   rw [target.signAt_correct g hgz hg1 hga hgs hgm hgnat hgsign hgn hgi,
     source.signAt_correct f hfz hf1 hfa hfs hfm hfnat hfsign hfn hfi,
     convert_interpret f hfz g hgz convert hcz hvalue, same]
@@ -97,12 +100,14 @@ theorem Descriptor.convert_compare {context : Ctx} (newContext : NewCtx)
     (convert := convert) (hcz := hcz) (hvalue := hvalue)
     (hfnat := hfnat) (hfm := hfm) (hgnat := hgnat) (hgm := hgm)
     (hf1 := hf1) (hfa := hfa) (hfs := hfs) (hfsign := hfsign)
-    (hg1 := hg1) (hga := hga) (hgs := hgs) (hgsign := hgsign) (newSign := newSign) newContext left' hl
+    (hg1 := hg1) (hga := hga) (hgs := hgs) (hgsign := hgsign) (newSign := newSign)
+    newContext left' hl
   have sameRight := right.convert_root (f := f) (hfz := hfz) (g := g) (hgz := hgz)
     (convert := convert) (hcz := hcz) (hvalue := hvalue)
     (hfnat := hfnat) (hfm := hfm) (hgnat := hgnat) (hgm := hgm)
     (hf1 := hf1) (hfa := hfa) (hfs := hfs) (hfsign := hfsign)
-    (hg1 := hg1) (hga := hga) (hgs := hgs) (hgsign := hgsign) (newSign := newSign) newContext right' hr
+    (hg1 := hg1) (hga := hga) (hgs := hgs) (hgsign := hgsign) (newSign := newSign)
+    newContext right' hr
   rw [left'.compare_correct g hgz hg1 hga hgs hgm hgnat hgsign hgn hgi hgd right',
     left.compare_correct f hfz hf1 hfa hfs hfm hfnat hfsign hfn hfi hfd right,
     sameLeft, sameRight]

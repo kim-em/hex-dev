@@ -405,7 +405,9 @@ tree with the parsed graph's actual replay result.
 The decode-time check {name Hex.SignDet.Codec.bindings}`Codec.bindings` fixes
 the node's and every stored moment's context, head and both endpoints.
 {name Hex.SignDet.Codec.bindings_iff}`bindings_iff` characterizes those four
-literal equalities. Replay separately binds query lists and query polynomials;
+literal equalities.
+{name Hex.SignDet.Codec.bindings_of_check}`bindings_of_check` derives them
+from an accepted node check. Replay separately binds query lists and query polynomials;
 equal coefficient meanings alone do not satisfy the decode-time check. Neither
 this binding nor reconstruction supplies an arithmetic or root-count conclusion.
 
@@ -555,6 +557,11 @@ soundness proved by {name}`Hex.SignDet.Replay.count_roots`.
 
 {docstring Hex.SignDet.Descriptor.buildRoots_roots}
 
+Interpretation laws are explicit arguments, including separate source and
+target laws for conversion. The required laws and their positional order
+vary with the theorem. Use named arguments for these laws, as below, so the
+application records their meaning without depending on a shared argument order.
+
 The following specialization reuses the same complete-producer theorem
 as the downstream sign consumer. Given a mathematical root in a valid
 domain, it obtains a descriptor from the actual returned list without
@@ -569,10 +576,13 @@ noncomputable section
 
 def value (d : Descriptor ℝ Nat
     Sturm.orderSign 7) : ℝ :=
-  d.root id (fun _ => Iff.rfl) rfl
-    (fun _ _ => rfl) (fun _ _ => rfl)
-    (fun _ _ => rfl) (fun _ => rfl)
-    HexSturmTheory.orderSign_eq
+  d.root (f := id)
+    (hz := fun _ => Iff.rfl) (h1 := rfl)
+    (ha := fun _ _ => rfl)
+    (hs := fun _ _ => rfl)
+    (hm := fun _ _ => rfl)
+    (hnat := fun _ => rfl)
+    (hsign := HexSturmTheory.orderSign_eq)
 
 variable (p : DensePoly ℝ)
 variable (a b : Endpoint ℝ)
@@ -590,13 +600,15 @@ example (member : x ∈ Tarski.rootsIn
           .ok (some out) ∧
       ∃ d ∈ out, value d = x := by
   obtain ⟨out, produced, coverage, _, _⟩ :=
-    Descriptor.buildRoots_roots id
-      (fun _ => Iff.rfl) rfl
-      (fun _ _ => rfl) (fun _ _ => rfl)
-      (fun _ _ => rfl) (fun _ => rfl)
-      HexSturmTheory.orderSign_eq
-      (fun _ => rfl) (fun _ => rfl)
-      7 p a b domain
+    Descriptor.buildRoots_roots
+      (f := id) (hz := fun _ => Iff.rfl)
+      (h1 := rfl) (ha := fun _ _ => rfl)
+      (hs := fun _ _ => rfl)
+      (hm := fun _ _ => rfl)
+      (hnat := fun _ => rfl)
+      (hsign := HexSturmTheory.orderSign_eq)
+      (hn := fun _ => rfl)
+      (hi := fun _ => rfl) 7 p a b domain
   refine ⟨out, produced, ?_⟩
   exact List.mem_map.mp
     ((coverage x).mp member)

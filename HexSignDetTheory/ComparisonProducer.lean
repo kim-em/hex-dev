@@ -11,6 +11,8 @@ public import HexSignDetTheory.CompletionProducer
 
 public section
 
+universe u v w
+
 namespace Hex.SignDet
 
 open HexPolyTheory.Interpret HexRealRootsTheory
@@ -149,7 +151,8 @@ theorem Descriptor.compare_lt_iff {context : Ctx}
   rw [left.compare_correct f hz h1 ha hs hm hnat hsign hn hi hd right]
   by_cases hxy : left.root f hz h1 ha hs hm hnat hsign < right.root f hz h1 ha hs hm hnat hsign
   · simp [hxy]
-  · by_cases hyx : right.root f hz h1 ha hs hm hnat hsign < left.root f hz h1 ha hs hm hnat hsign <;>
+  · by_cases hyx : right.root f hz h1 ha hs hm hnat hsign <
+        left.root f hz h1 ha hs hm hnat hsign <;>
       simp [hxy, hyx]
 
 include hz h1 ha hs hm hnat hsign hn hi hd in
@@ -162,7 +165,8 @@ theorem Descriptor.compare_gt_iff {context : Ctx}
   rw [left.compare_correct f hz h1 ha hs hm hnat hsign hn hi hd right]
   by_cases hxy : left.root f hz h1 ha hs hm hnat hsign < right.root f hz h1 ha hs hm hnat hsign
   · simp [hxy, lt_asymm hxy]
-  · by_cases hyx : right.root f hz h1 ha hs hm hnat hsign < left.root f hz h1 ha hs hm hnat hsign <;>
+  · by_cases hyx : right.root f hz h1 ha hs hm hnat hsign <
+        left.root f hz h1 ha hs hm hnat hsign <;>
       simp [hxy, hyx]
 
 end Hex.SignDet

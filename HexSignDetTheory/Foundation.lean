@@ -15,6 +15,8 @@ public import Mathlib.Data.List.OfFn
 
 public section
 
+universe u v
+
 namespace Hex.SignDet
 
 open HexMatrixTheory
