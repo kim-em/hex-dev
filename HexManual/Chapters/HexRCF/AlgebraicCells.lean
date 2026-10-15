@@ -56,16 +56,18 @@ example
     (cert : RadicalCert c.Value
       Tower.Signature)
     (quantifier : Quantifier)
-    (roots cells : Hex.SignDet.Codec.Json)
+    (roots cells : Codec.Json)
     (accepted : CompleteReplay.check
       codec values formula guards cert
-      quantifier roots cells = .ok true) :
+      quantifier roots cells =
+        .ok true) :
     (Prenex.quant quantifier
       (.matrix formula)).toProp
-        (fun i => model.value (values i)) :=
+        (fun i =>
+          model.value (values i)) :=
   CompleteReplay.check_sound model codec
-    values formula guards cert quantifier
-    roots cells accepted
+    values formula guards cert
+    quantifier roots cells accepted
 ```
 
 `CellQuote.finishPacket` additionally binds this checked shared sentence to a

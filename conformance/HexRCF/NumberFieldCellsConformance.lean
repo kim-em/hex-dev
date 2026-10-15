@@ -38,6 +38,14 @@ private def trial (coefficients : List Int) (lower upper : Rat)
         throw (IO.userError "original selected-field existential verdict changed")
       unless (CellReplay.check converted formula original packet.radical packet.roots data .forallReal).toOption == some false do
         throw (IO.userError "original selected-field universal verdict changed")
+      let _ : Hashable input.context.Value := RowEncode.hashable input.context.codec
+      let _ : Hashable Tower.Signature := RowEncode.hashable Tower.Signature.codec
+      let rootGraph := Hex.SignDet.Codec.graph input.context.codec Tower.Signature.codec
+        (Hex.SignDet.Dag.encode packet.roots.replay)
+      for (quantifier,verdict) in [(RealFormula.Quantifier.existsReal,expected),(.forallReal,false)] do
+        unless (CompleteReplay.check input.context.codec converted formula original packet.radical
+            quantifier rootGraph packet.cells).toOption == some verdict do
+          throw (IO.userError "complete packet changed the selected-field source verdict")
       match NumberField.cells generator registry values [0] .ff with
       | .error .divisor => pure ()
       | _ => throw (IO.userError "zero original guard bypassed preflight")
@@ -46,14 +54,17 @@ private def trial (coefficients : List Int) (lower upper : Rat)
 #eval trial [-2,0,1] (-2) (-1) false false
 #eval trial [-2,0,0,1] 1 2 true true
 run_meta do
-  for name in #[``NumberField.cellsWith_spec, ``NumberField.cells_success, ``NumberField.cells_zero] do
+  for name in #[``NumberField.cellsWith_spec, ``NumberField.cells_success, ``NumberField.cells_zero,
+      ``NumberField.cellsWith_complete, ``NumberField.cells_complete] do
     let .thmInfo info ← Lean.getConstInfo name | throwError "expected theorem"
     let _ ← Hex.RCF.checkProof name info.type info.value
     let axioms ← Lean.collectAxioms name
     unless axioms.all (#[``propext,``Classical.choice,``Quot.sound].contains ·) do
       throwError "unexpected axiom in original-field cell construction: {name}"
-  let deps ← Hex.RCF.ProofEvidence.projectDependencies #[``NumberField.cellsWith_spec,``NumberField.cells_success]
-  for required in #[``CellDiscover.run_success, ``Hex.RealClosure.NumberField.present?_success,
+  let deps ← Hex.RCF.ProofEvidence.projectDependencies #[``NumberField.cellsWith_spec,``NumberField.cells_success,
+    ``NumberField.cellsWith_complete,``NumberField.cells_complete]
+  for required in #[``CellDiscover.run_complete, ``CompleteReplay.check_covered,
+      ``CellDiscover.run_success, ``Hex.RealClosure.NumberField.present?_success,
       ``Hex.RealClosure.NumberField.Presentation.pack_value,
       ``Hex.RealClosure.NumberField.Presentation.pack_zero, ``NumberField.value_eq_ofField] do
     unless deps.contains required do throwError "original selected-source law missing: {required}"

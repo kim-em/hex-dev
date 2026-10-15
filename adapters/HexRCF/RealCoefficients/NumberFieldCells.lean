@@ -98,6 +98,65 @@ theorem cells_success (generator : RealAlgebraicNumber) (registry : BaseContext.
   simp only [cells,all,↓reduceIte,ready,returned,Except.mapError,
     bind,Except.bind,pure,Except.pure]
 
+/-- The selected-field coordinates yield independently accepted complete root
+and cell packets. Both verdicts retain their original selected real values. -/
+theorem cellsWith_complete
+    (source : Hex.RealClosure.NumberField.Presentation generator registry)
+    (values : Fin n → QAdjoin generator.toAlgebraic)
+    (guards : List (QAdjoin generator.toAlgebraic))
+    (formula : RealFormula.QF (n+1)) (guarded : ∀ d ∈ guards, d ≠ 0) :
+    ∃ packet, cellsWith source values guards formula = .ok packet ∧
+      let _ : Hashable packet.family.collection.input.context.Value :=
+        RowEncode.hashable packet.family.collection.input.context.codec
+      let _ : Hashable Signature := RowEncode.hashable Signature.codec
+      ∀ quantifier, ∃ verdict,
+        CompleteReplay.check packet.family.collection.input.context.codec
+          (packet.family.collection.input.value ∘ (source.pack ∘ values)) formula
+          ((guards.map source.pack).map packet.family.collection.input.value)
+          packet.radical quantifier
+          (Codec.graph packet.family.collection.input.context.codec Signature.codec
+            (Dag.encode packet.roots.replay)) packet.cells = .ok verdict ∧
+        (verdict = true ↔ (RealFormula.Prenex.quant quantifier (.matrix formula)).toProp
+          (fun i => (Coefficients.ofField generator (values i)).toReal)) := by
+  have packed : ∀ d ∈ guards.map source.pack, d ≠ 0 := by
+    intro d member zero
+    obtain ⟨old, present, rfl⟩ := List.mem_map.mp member
+    exact guarded old present ((source.pack_zero old).mp zero)
+  simpa only [cellsWith, Function.comp_apply,
+    Hex.RealClosure.NumberField.Presentation.pack_value, value_eq_ofField] using
+    CellDiscover.run_complete source.model (source.pack ∘ values)
+      (guards.map source.pack) formula packed
+
+/-- The actual selected-field presentation factory and native cell producer
+return complete serialized evidence with both original-coordinate verdicts. -/
+theorem cells_complete (generator : RealAlgebraicNumber) (registry : BaseContext.Registry)
+    (values : Fin n → QAdjoin generator.toAlgebraic)
+    (guards : List (QAdjoin generator.toAlgebraic)) (formula : RealFormula.QF (n+1))
+    (guarded : ∀ d ∈ guards, d ≠ 0) :
+    ∃ source packet, cells generator registry values guards formula = .ok ⟨source,packet⟩ ∧
+      Hex.RealClosure.NumberField.present? generator registry = some source ∧
+      let _ : Hashable packet.family.collection.input.context.Value :=
+        RowEncode.hashable packet.family.collection.input.context.codec
+      let _ : Hashable Signature := RowEncode.hashable Signature.codec
+      ∀ quantifier, ∃ verdict,
+        CompleteReplay.check packet.family.collection.input.context.codec
+          (packet.family.collection.input.value ∘ (source.pack ∘ values)) formula
+          ((guards.map source.pack).map packet.family.collection.input.value)
+          packet.radical quantifier
+          (Codec.graph packet.family.collection.input.context.codec Signature.codec
+            (Dag.encode packet.roots.replay)) packet.cells = .ok verdict ∧
+        (verdict = true ↔ (RealFormula.Prenex.quant quantifier (.matrix formula)).toProp
+          (fun i => (Coefficients.ofField generator (values i)).toReal)) := by
+  obtain ⟨source, ready⟩ := Hex.RealClosure.NumberField.present?_success generator registry
+  obtain ⟨packet, returned, checked⟩ := cellsWith_complete source values guards formula guarded
+  have all : guards.all (fun d => Decidable.decide (d ≠ 0)) = true := by
+    apply List.all_eq_true.mpr
+    intro d member
+    exact decide_eq_true (guarded d member)
+  refine ⟨source,packet,?_,ready,checked⟩
+  simp only [cells,all,↓reduceIte,ready,returned,Except.mapError,
+    bind,Except.bind,pure,Except.pure]
+
 /-- An original zero divisor rejects even before presentation construction. -/
 theorem cells_zero (generator : RealAlgebraicNumber) (registry : BaseContext.Registry)
     (values : Fin n → QAdjoin generator.toAlgebraic)
