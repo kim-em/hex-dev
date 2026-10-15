@@ -20,8 +20,8 @@ No asymptotic model or general nested-field speed claim is made. -/
 @[noinline, never_extract] def depthOne : Unit → Option UInt64 := fun () => run 1
 @[noinline, never_extract] def depthTwo : Unit → Option UInt64 := fun () => run 2
 
--- Each executable invocation supplies one fixed observation. The paired
--- collector runs six adjacent AB/BA trials with identical registration settings.
+-- Each executable invocation supplies one fixed observation. Callers choose
+-- the number of balanced adjacent AB/BA blocks.
 -- Expected hashes match both arms of the retained paired operand-work archive.
 setup_fixed_benchmark depthOne where {
   repeats := 1, minTotalSeconds := 0.1, maxSecondsPerCall := 10,
