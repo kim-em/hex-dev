@@ -10,10 +10,10 @@
     "HexManual/Chapters/HexSignDet.lean": "6cf774c0d04b484265c361d16b061b8e57039511c025810520f383169ecfb8e1",
     "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "83520887f6307511e2db9aa18862adaa47d66df6aadcdf2870cd6c2b635c8928",
-    "reports/sign-det-declaration-review/README.md": "0060b699872628380d168e2e67b5507d42fc4e0bbba92e83a3f34c63b0c6791e",
+    "reports/sign-det-declaration-review/README.md": "91f20367d85a39c654a41ca448ebc01d5a9060f0273992f5681dfe2ce6bb3c54",
     "scripts/ci/check_benches_mathlib_free.py": "a8da3bef100b50fdd923d609ad03a3a9bd55229467f5652abe6e3f0b3d1ed0e5",
     "scripts/libgraph.py": "7c250cb801b6b5f4ae34ae90d98c2afc39d65f04e1b6770cc1f8871349af5ef7",
-    "reports/sign-det-declaration-review/core-graph-codec.md": "59c8bb7e793884cc79f77e5ce607ac968667cb43e92436d129bc5cb009b053be",
+    "reports/sign-det-declaration-review/core-graph-codec.md": "091273d199f39bf7a586019bd533075aa4e5fb2d56a7d679bbf66e8dd55063fd",
     "HexRealClosure/RootFrame.lean": "9c84cb8c3b992d9c7ceef118a81e5376120c99bb90fd19838ae6d8e078b66ac5",
     "HexRealClosure/SignEvidence.lean": "374f9a75fe401831ffe439d89daad9773ba272b9fc9a4832a2d742e3f392cf2d",
     "HexRealClosure/RootReplay.lean": "3ff6adf0f06f4fe7c2eaf4d5ca6732b83b096b44d4b26d7edbb35e3c43c4a179",
@@ -137,12 +137,12 @@
       "lake build HexSignDet.CrossCheck HexRealClosureTheory.SignEvidenceConformance HexRealClosure.RootFrame HexRealClosure.RootReplay"
     ]
   },
-  "source_ref": "audit/issue-10575-sign-det-integration-review-input-v3",
-  "input_revision": "2782781b5f0aecc222a9170a4d66ed0a4b983807",
+  "source_ref": "audit/issue-10575-sign-det-integration-review-input-v4",
+  "input_revision": "e68d39aef73d8e88f6a30862d9b4c4dab03f74ee",
   "archive_files": {
     "HexSignDet/Codec/GraphLaws.lean": "292cebb2c9ea1131ddd0458de3997aac95cfc1422e99dbd8fb5e7f6d08fcdaa5",
     "HexSignDet/Codec/FiniteLaws.lean": "a30dbc456d8613e247bfc691376206a7da405b8a3e08ef7a550c0b857a234ab8",
     "HexSignDet/Codec/FiniteGraph.lean": "bb1e0611aa74d7c7b4a74f83f05e481ccd4584523e0aaeca7beba53c70a6895c",
-    "reports/sign-det-declaration-review/core-graph-codec.md": "59c8bb7e793884cc79f77e5ce607ac968667cb43e92436d129bc5cb009b053be"
+    "reports/sign-det-declaration-review/core-graph-codec.md": "091273d199f39bf7a586019bd533075aa4e5fb2d56a7d679bbf66e8dd55063fd"
   }
 }
