@@ -366,6 +366,8 @@ class AdmissionScannerTests(unittest.TestCase):
                 "experiments/KernelReplay/PackingLookup.lean",
                 "experiments/KernelReplay/LookupReplay.lean",
                 "experiments/KernelReplay/ProofAudit.lean",
+                "experiments/KernelReplay/AxiomClosure.lean",
+                "experiments/KernelReplay/AxiomClosureNative.lean",
                 "experiments/KernelReplay/FiniteRange.lean",
                 "experiments/KernelReplay/FiniteLift.lean",
                 "experiments/KernelReplay/FiniteOperands.lean",

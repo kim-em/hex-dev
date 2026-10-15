@@ -503,7 +503,7 @@ jobs:
             KernelReplay.NativeModels KernelReplay.NativeReplay \
             KernelReplay.NativeValues KernelReplay.NativeFactory KernelReplay.NativeChildren \
             KernelReplay.NativeReaders KernelReplay.NativeAssembly KernelReplay.NativeAssemblyModels \
-            KernelReplay.NativeAssemblyStaged KernelReplay.NativeAssemblyUse KernelReplay.FrameOperand KernelReplay.FramePublic \
+            KernelReplay.NativeAssemblyStaged KernelReplay.NativeAssemblyUse KernelReplay.FrameOperand KernelReplay.FramePublic KernelReplay.AxiomClosureNative \
             KernelReplay.FiniteData KernelReplay.FiniteWitness KernelReplay.FiniteJoint
           experiments/RealClosureRepresentation/.lake/build/bin/representationPrototype
           probe_dir=$(mktemp -d)
