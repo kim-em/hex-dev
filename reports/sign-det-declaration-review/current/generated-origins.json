@@ -12,1546 +12,1546 @@
   "extra_constants": [
     {
       "base_declaration": "Hex.SignDet.Descriptor.completion_rows",
-      "base_module": "HexSignDetMathlib.CompletionProducer",
+      "base_module": "HexSignDetTheory.CompletionProducer",
       "kind": "proof",
-      "module": "HexSignDetMathlib.CompletionProducer",
-      "name": "_private.HexSignDetMathlib.CompletionProducer.0.Hex.SignDet.Descriptor.completion_rows._proof_1_1"
+      "module": "HexSignDetTheory.CompletionProducer",
+      "name": "_private.HexSignDetTheory.CompletionProducer.0.Hex.SignDet.Descriptor.completion_rows._proof_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.completion_rows",
-      "base_module": "HexSignDetMathlib.CompletionProducer",
+      "base_module": "HexSignDetTheory.CompletionProducer",
       "kind": "proof",
-      "module": "HexSignDetMathlib.CompletionProducer",
-      "name": "_private.HexSignDetMathlib.CompletionProducer.0.Hex.SignDet.Descriptor.completion_rows._proof_1_2"
+      "module": "HexSignDetTheory.CompletionProducer",
+      "name": "_private.HexSignDetTheory.CompletionProducer.0.Hex.SignDet.Descriptor.completion_rows._proof_1_2"
     },
     {
       "base_declaration": "Hex.SignDet.RawDescriptor.map",
       "base_module": "HexSignDet.Convert",
       "kind": "simp",
-      "module": "HexSignDetMathlib.Convert",
+      "module": "HexSignDetTheory.Convert",
       "name": "Hex.SignDet.RawDescriptor.map.congr_simp"
     },
     {
       "base_declaration": "Hex.SignDet.derivatives",
       "base_module": "HexSignDet.Thom",
       "kind": "equation",
-      "module": "HexSignDetMathlib.Derivatives",
+      "module": "HexSignDetTheory.Derivatives",
       "name": "Hex.SignDet.derivatives.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.derivativesFrom_get",
-      "base_module": "HexSignDetMathlib.Derivatives",
+      "base_module": "HexSignDetTheory.Derivatives",
       "kind": "proof",
-      "module": "HexSignDetMathlib.Derivatives",
+      "module": "HexSignDetTheory.Derivatives",
       "name": "Hex.SignDet.derivativesFrom_get._proof_1"
     },
     {
       "base_declaration": "Hex.SignDet.RawDescriptor.querySigns",
-      "base_module": "HexSignDetMathlib.Derivatives",
+      "base_module": "HexSignDetTheory.Derivatives",
       "kind": "proof",
-      "module": "HexSignDetMathlib.Derivatives",
-      "name": "_private.HexSignDetMathlib.Derivatives.0.Hex.SignDet.RawDescriptor.querySigns._proof_1_1"
+      "module": "HexSignDetTheory.Derivatives",
+      "name": "_private.HexSignDetTheory.Derivatives.0.Hex.SignDet.RawDescriptor.querySigns._proof_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.derivativesFrom_get",
-      "base_module": "HexSignDetMathlib.Derivatives",
+      "base_module": "HexSignDetTheory.Derivatives",
       "kind": "proof",
-      "module": "HexSignDetMathlib.Derivatives",
-      "name": "_private.HexSignDetMathlib.Derivatives.0.Hex.SignDet.derivativesFrom_get._proof_1_1"
+      "module": "HexSignDetTheory.Derivatives",
+      "name": "_private.HexSignDetTheory.Derivatives.0.Hex.SignDet.derivativesFrom_get._proof_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.derivativesFrom_get",
-      "base_module": "HexSignDetMathlib.Derivatives",
+      "base_module": "HexSignDetTheory.Derivatives",
       "kind": "proof",
-      "module": "HexSignDetMathlib.Derivatives",
-      "name": "_private.HexSignDetMathlib.Derivatives.0.Hex.SignDet.derivativesFrom_get._proof_1_2"
+      "module": "HexSignDetTheory.Derivatives",
+      "name": "_private.HexSignDetTheory.Derivatives.0.Hex.SignDet.derivativesFrom_get._proof_1_2"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.root_comp",
-      "base_module": "HexSignDetMathlib.Embedding",
+      "base_module": "HexSignDetTheory.Embedding",
       "kind": "proof",
-      "module": "HexSignDetMathlib.Embedding",
+      "module": "HexSignDetTheory.Embedding",
       "name": "Hex.SignDet.Descriptor.root_comp._proof_1"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.root_comp",
-      "base_module": "HexSignDetMathlib.Embedding",
+      "base_module": "HexSignDetTheory.Embedding",
       "kind": "proof",
-      "module": "HexSignDetMathlib.Embedding",
+      "module": "HexSignDetTheory.Embedding",
       "name": "Hex.SignDet.Descriptor.root_comp._proof_2"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.root_comp",
-      "base_module": "HexSignDetMathlib.Embedding",
+      "base_module": "HexSignDetTheory.Embedding",
       "kind": "proof",
-      "module": "HexSignDetMathlib.Embedding",
+      "module": "HexSignDetTheory.Embedding",
       "name": "Hex.SignDet.Descriptor.root_comp._proof_3"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.root_comp",
-      "base_module": "HexSignDetMathlib.Embedding",
+      "base_module": "HexSignDetTheory.Embedding",
       "kind": "proof",
-      "module": "HexSignDetMathlib.Embedding",
+      "module": "HexSignDetTheory.Embedding",
       "name": "Hex.SignDet.Descriptor.root_comp._proof_4"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.root_comp",
-      "base_module": "HexSignDetMathlib.Embedding",
+      "base_module": "HexSignDetTheory.Embedding",
       "kind": "proof",
-      "module": "HexSignDetMathlib.Embedding",
+      "module": "HexSignDetTheory.Embedding",
       "name": "Hex.SignDet.Descriptor.root_comp._proof_5"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.root_comp",
-      "base_module": "HexSignDetMathlib.Embedding",
+      "base_module": "HexSignDetTheory.Embedding",
       "kind": "proof",
-      "module": "HexSignDetMathlib.Embedding",
+      "module": "HexSignDetTheory.Embedding",
       "name": "Hex.SignDet.Descriptor.root_comp._proof_6"
     },
     {
       "base_declaration": "Hex.SignDet.interval_embedding",
-      "base_module": "HexSignDetMathlib.Embedding",
+      "base_module": "HexSignDetTheory.Embedding",
       "kind": "simp",
-      "module": "HexSignDetMathlib.Embedding",
-      "name": "_private.HexSignDetMathlib.Embedding.0.Hex.SignDet.interval_embedding._simp_1_1"
+      "module": "HexSignDetTheory.Embedding",
+      "name": "_private.HexSignDetTheory.Embedding.0.Hex.SignDet.interval_embedding._simp_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.root_mem_embedding",
-      "base_module": "HexSignDetMathlib.Embedding",
+      "base_module": "HexSignDetTheory.Embedding",
       "kind": "simp",
-      "module": "HexSignDetMathlib.Embedding",
-      "name": "_private.HexSignDetMathlib.Embedding.0.Hex.SignDet.root_mem_embedding._simp_1_1"
+      "module": "HexSignDetTheory.Embedding",
+      "name": "_private.HexSignDetTheory.Embedding.0.Hex.SignDet.root_mem_embedding._simp_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.System.check_counts",
-      "base_module": "HexSignDetMathlib.FiniteSolve",
+      "base_module": "HexSignDetTheory.FiniteSolve",
       "kind": "simp",
-      "module": "HexSignDetMathlib.FiniteSolve",
-      "name": "_private.HexSignDetMathlib.FiniteSolve.0.Hex.SignDet.System.check_counts._simp_1_1"
+      "module": "HexSignDetTheory.FiniteSolve",
+      "name": "_private.HexSignDetTheory.FiniteSolve.0.Hex.SignDet.System.check_counts._simp_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.columns_distinct",
-      "base_module": "HexSignDetMathlib.FiniteSolve",
+      "base_module": "HexSignDetTheory.FiniteSolve",
       "kind": "simp",
-      "module": "HexSignDetMathlib.FiniteSolve",
-      "name": "_private.HexSignDetMathlib.FiniteSolve.0.Hex.SignDet.columns_distinct._simp_1_1"
+      "module": "HexSignDetTheory.FiniteSolve",
+      "name": "_private.HexSignDetTheory.FiniteSolve.0.Hex.SignDet.columns_distinct._simp_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.empty_system",
-      "base_module": "HexSignDetMathlib.FiniteSolve",
+      "base_module": "HexSignDetTheory.FiniteSolve",
       "kind": "proof",
-      "module": "HexSignDetMathlib.FiniteSolve",
-      "name": "_private.HexSignDetMathlib.FiniteSolve.0.Hex.SignDet.empty_system._proof_1_1"
+      "module": "HexSignDetTheory.FiniteSolve",
+      "name": "_private.HexSignDetTheory.FiniteSolve.0.Hex.SignDet.empty_system._proof_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.singleton_system",
-      "base_module": "HexSignDetMathlib.FiniteSolve",
+      "base_module": "HexSignDetTheory.FiniteSolve",
       "kind": "proof",
-      "module": "HexSignDetMathlib.FiniteSolve",
-      "name": "_private.HexSignDetMathlib.FiniteSolve.0.Hex.SignDet.singleton_system._proof_1_1"
+      "module": "HexSignDetTheory.FiniteSolve",
+      "name": "_private.HexSignDetTheory.FiniteSolve.0.Hex.SignDet.singleton_system._proof_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.system_counts",
-      "base_module": "HexSignDetMathlib.FiniteSolve",
+      "base_module": "HexSignDetTheory.FiniteSolve",
       "kind": "simp",
-      "module": "HexSignDetMathlib.FiniteSolve",
-      "name": "_private.HexSignDetMathlib.FiniteSolve.0.Hex.SignDet.system_counts._simp_1_1"
+      "module": "HexSignDetTheory.FiniteSolve",
+      "name": "_private.HexSignDetTheory.FiniteSolve.0.Hex.SignDet.system_counts._simp_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.momentMatrix",
       "base_module": "HexSignDet.Matrix",
       "kind": "equation",
-      "module": "HexSignDetMathlib.Foundation",
+      "module": "HexSignDetTheory.Foundation",
       "name": "Hex.SignDet.momentMatrix.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.occCount_getElem",
-      "base_module": "HexSignDetMathlib.Foundation",
+      "base_module": "HexSignDetTheory.Foundation",
       "kind": "proof",
-      "module": "HexSignDetMathlib.Foundation",
+      "module": "HexSignDetTheory.Foundation",
       "name": "Hex.SignDet.occCount_getElem._proof_2"
     },
     {
       "base_declaration": "Hex.SignDet.System.foundation_counts",
-      "base_module": "HexSignDetMathlib.Foundation",
+      "base_module": "HexSignDetTheory.Foundation",
       "kind": "proof",
-      "module": "HexSignDetMathlib.Foundation",
-      "name": "_private.HexSignDetMathlib.Foundation.0.Hex.SignDet.System.foundation_counts._proof_1_1"
+      "module": "HexSignDetTheory.Foundation",
+      "name": "_private.HexSignDetTheory.Foundation.0.Hex.SignDet.System.foundation_counts._proof_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.System.foundation_counts",
-      "base_module": "HexSignDetMathlib.Foundation",
+      "base_module": "HexSignDetTheory.Foundation",
       "kind": "proof",
-      "module": "HexSignDetMathlib.Foundation",
-      "name": "_private.HexSignDetMathlib.Foundation.0.Hex.SignDet.System.foundation_counts._proof_1_2"
+      "module": "HexSignDetTheory.Foundation",
+      "name": "_private.HexSignDetTheory.Foundation.0.Hex.SignDet.System.foundation_counts._proof_1_2"
     },
     {
       "base_declaration": "Hex.SignDet.foundation_moments",
-      "base_module": "HexSignDetMathlib.Foundation",
+      "base_module": "HexSignDetTheory.Foundation",
       "kind": "proof",
-      "module": "HexSignDetMathlib.Foundation",
-      "name": "_private.HexSignDetMathlib.Foundation.0.Hex.SignDet.foundation_moments._proof_1_1"
+      "module": "HexSignDetTheory.Foundation",
+      "name": "_private.HexSignDetTheory.Foundation.0.Hex.SignDet.foundation_moments._proof_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.foundation_moments",
-      "base_module": "HexSignDetMathlib.Foundation",
+      "base_module": "HexSignDetTheory.Foundation",
       "kind": "proof",
-      "module": "HexSignDetMathlib.Foundation",
-      "name": "_private.HexSignDetMathlib.Foundation.0.Hex.SignDet.foundation_moments._proof_1_2"
+      "module": "HexSignDetTheory.Foundation",
+      "name": "_private.HexSignDetTheory.Foundation.0.Hex.SignDet.foundation_moments._proof_1_2"
     },
     {
       "base_declaration": "Hex.SignDet.occCount_getElem",
-      "base_module": "HexSignDetMathlib.Foundation",
+      "base_module": "HexSignDetTheory.Foundation",
       "kind": "proof",
-      "module": "HexSignDetMathlib.Foundation",
-      "name": "_private.HexSignDetMathlib.Foundation.0.Hex.SignDet.occCount_getElem._proof_1"
+      "module": "HexSignDetTheory.Foundation",
+      "name": "_private.HexSignDetTheory.Foundation.0.Hex.SignDet.occCount_getElem._proof_1"
     },
     {
       "base_declaration": "Hex.SignDet.Node.basis_width",
-      "base_module": "HexSignDetMathlib.NodeBasis",
+      "base_module": "HexSignDetTheory.NodeBasis",
       "kind": "proof",
-      "module": "HexSignDetMathlib.NodeBasis",
+      "module": "HexSignDetTheory.NodeBasis",
       "name": "Hex.SignDet.Node.basis_width._proof_2"
     },
     {
       "base_declaration": "Hex.SignDet.System.retainedMatrix",
       "base_module": "HexSignDet.Support",
       "kind": "equation",
-      "module": "HexSignDetMathlib.NodeBasis",
+      "module": "HexSignDetTheory.NodeBasis",
       "name": "Hex.SignDet.System.retainedMatrix.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.Node.basisCols",
-      "base_module": "HexSignDetMathlib.NodeBasis",
+      "base_module": "HexSignDetTheory.NodeBasis",
       "kind": "proof",
-      "module": "HexSignDetMathlib.NodeBasis",
-      "name": "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisCols._proof_1"
+      "module": "HexSignDetTheory.NodeBasis",
+      "name": "_private.HexSignDetTheory.NodeBasis.0.Hex.SignDet.Node.basisCols._proof_1"
     },
     {
       "base_declaration": "Hex.SignDet.Node.basisCols",
-      "base_module": "HexSignDetMathlib.NodeBasis",
+      "base_module": "HexSignDetTheory.NodeBasis",
       "kind": "proof",
-      "module": "HexSignDetMathlib.NodeBasis",
-      "name": "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisCols._proof_2"
+      "module": "HexSignDetTheory.NodeBasis",
+      "name": "_private.HexSignDetTheory.NodeBasis.0.Hex.SignDet.Node.basisCols._proof_2"
     },
     {
       "base_declaration": "Hex.SignDet.Node.basisCols",
-      "base_module": "HexSignDetMathlib.NodeBasis",
+      "base_module": "HexSignDetTheory.NodeBasis",
       "kind": "proof",
-      "module": "HexSignDetMathlib.NodeBasis",
-      "name": "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisCols._proof_3"
+      "module": "HexSignDetTheory.NodeBasis",
+      "name": "_private.HexSignDetTheory.NodeBasis.0.Hex.SignDet.Node.basisCols._proof_3"
     },
     {
       "base_declaration": "Hex.SignDet.Node.basisCols",
-      "base_module": "HexSignDetMathlib.NodeBasis",
+      "base_module": "HexSignDetTheory.NodeBasis",
       "kind": "proof",
-      "module": "HexSignDetMathlib.NodeBasis",
-      "name": "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisCols._proof_4"
+      "module": "HexSignDetTheory.NodeBasis",
+      "name": "_private.HexSignDetTheory.NodeBasis.0.Hex.SignDet.Node.basisCols._proof_4"
     },
     {
       "base_declaration": "Hex.SignDet.Node.basisCols",
-      "base_module": "HexSignDetMathlib.NodeBasis",
+      "base_module": "HexSignDetTheory.NodeBasis",
       "kind": "equation",
-      "module": "HexSignDetMathlib.NodeBasis",
-      "name": "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisCols.eq_1"
+      "module": "HexSignDetTheory.NodeBasis",
+      "name": "_private.HexSignDetTheory.NodeBasis.0.Hex.SignDet.Node.basisCols.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.Node.basisRows",
-      "base_module": "HexSignDetMathlib.NodeBasis",
+      "base_module": "HexSignDetTheory.NodeBasis",
       "kind": "proof",
-      "module": "HexSignDetMathlib.NodeBasis",
-      "name": "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisRows._proof_1"
+      "module": "HexSignDetTheory.NodeBasis",
+      "name": "_private.HexSignDetTheory.NodeBasis.0.Hex.SignDet.Node.basisRows._proof_1"
     },
     {
       "base_declaration": "Hex.SignDet.Node.basisRows",
-      "base_module": "HexSignDetMathlib.NodeBasis",
+      "base_module": "HexSignDetTheory.NodeBasis",
       "kind": "proof",
-      "module": "HexSignDetMathlib.NodeBasis",
-      "name": "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisRows._proof_2"
+      "module": "HexSignDetTheory.NodeBasis",
+      "name": "_private.HexSignDetTheory.NodeBasis.0.Hex.SignDet.Node.basisRows._proof_2"
     },
     {
       "base_declaration": "Hex.SignDet.Node.basisRows",
-      "base_module": "HexSignDetMathlib.NodeBasis",
+      "base_module": "HexSignDetTheory.NodeBasis",
       "kind": "equation",
-      "module": "HexSignDetMathlib.NodeBasis",
-      "name": "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisRows.eq_1"
+      "module": "HexSignDetTheory.NodeBasis",
+      "name": "_private.HexSignDetTheory.NodeBasis.0.Hex.SignDet.Node.basisRows.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.Node.basis_width",
-      "base_module": "HexSignDetMathlib.NodeBasis",
+      "base_module": "HexSignDetTheory.NodeBasis",
       "kind": "proof",
-      "module": "HexSignDetMathlib.NodeBasis",
-      "name": "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basis_width._proof_1"
+      "module": "HexSignDetTheory.NodeBasis",
+      "name": "_private.HexSignDetTheory.NodeBasis.0.Hex.SignDet.Node.basis_width._proof_1"
     },
     {
       "base_declaration": "Hex.SignDet.Node.basis_width",
-      "base_module": "HexSignDetMathlib.NodeBasis",
+      "base_module": "HexSignDetTheory.NodeBasis",
       "kind": "proof",
-      "module": "HexSignDetMathlib.NodeBasis",
-      "name": "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basis_width._proof_1_1"
+      "module": "HexSignDetTheory.NodeBasis",
+      "name": "_private.HexSignDetTheory.NodeBasis.0.Hex.SignDet.Node.basis_width._proof_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.Node.basis_width",
-      "base_module": "HexSignDetMathlib.NodeBasis",
+      "base_module": "HexSignDetTheory.NodeBasis",
       "kind": "proof",
-      "module": "HexSignDetMathlib.NodeBasis",
-      "name": "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basis_width._proof_1_2"
+      "module": "HexSignDetTheory.NodeBasis",
+      "name": "_private.HexSignDetTheory.NodeBasis.0.Hex.SignDet.Node.basis_width._proof_1_2"
     },
     {
       "base_declaration": "Hex.SignDet.Node.basis_width",
-      "base_module": "HexSignDetMathlib.NodeBasis",
+      "base_module": "HexSignDetTheory.NodeBasis",
       "kind": "proof",
-      "module": "HexSignDetMathlib.NodeBasis",
-      "name": "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basis_width._proof_1_3"
+      "module": "HexSignDetTheory.NodeBasis",
+      "name": "_private.HexSignDetTheory.NodeBasis.0.Hex.SignDet.Node.basis_width._proof_1_3"
     },
     {
       "base_declaration": "Hex.SignDet.nodePreparation_checks",
-      "base_module": "HexSignDetMathlib.NodeChecks",
+      "base_module": "HexSignDetTheory.NodeChecks",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.NodeChecks",
+      "module": "HexSignDetTheory.NodeChecks",
       "name": "Hex.SignDet.nodePreparation_checks.match_1"
     },
     {
       "base_declaration": "Hex.SignDet.useReduction",
       "base_module": "HexSignDet.Produce",
       "kind": "equation",
-      "module": "HexSignDetMathlib.NodeChecks",
+      "module": "HexSignDetTheory.NodeChecks",
       "name": "Hex.SignDet.useReduction.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.buildNode_checks",
-      "base_module": "HexSignDetMathlib.NodeChecks",
+      "base_module": "HexSignDetTheory.NodeChecks",
       "kind": "proof",
-      "module": "HexSignDetMathlib.NodeChecks",
-      "name": "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.buildNode_checks._proof_1_1"
+      "module": "HexSignDetTheory.NodeChecks",
+      "name": "_private.HexSignDetTheory.NodeChecks.0.Hex.SignDet.buildNode_checks._proof_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.nodePreparation.match_1",
       "base_module": "HexSignDet.Produce",
       "kind": "equation",
-      "module": "HexSignDetMathlib.NodeChecks",
-      "name": "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.nodePreparation.match_1.eq_1"
+      "module": "HexSignDetTheory.NodeChecks",
+      "name": "_private.HexSignDetTheory.NodeChecks.0.Hex.SignDet.nodePreparation.match_1.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.nodePreparation.match_1",
       "base_module": "HexSignDet.Produce",
       "kind": "equation",
-      "module": "HexSignDetMathlib.NodeChecks",
-      "name": "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.nodePreparation.match_1.eq_2"
+      "module": "HexSignDetTheory.NodeChecks",
+      "name": "_private.HexSignDetTheory.NodeChecks.0.Hex.SignDet.nodePreparation.match_1.eq_2"
     },
     {
       "base_declaration": "Hex.SignDet.nodePreparation.match_1",
       "base_module": "HexSignDet.Produce",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.NodeChecks",
-      "name": "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.nodePreparation.match_1.splitter"
+      "module": "HexSignDetTheory.NodeChecks",
+      "name": "_private.HexSignDetTheory.NodeChecks.0.Hex.SignDet.nodePreparation.match_1.splitter"
     },
     {
       "base_declaration": "Hex.SignDet.nodePreparation_checks.match_1",
-      "base_module": "HexSignDetMathlib.NodeChecks",
+      "base_module": "HexSignDetTheory.NodeChecks",
       "kind": "equation",
-      "module": "HexSignDetMathlib.NodeChecks",
-      "name": "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.nodePreparation_checks.match_1.eq_1"
+      "module": "HexSignDetTheory.NodeChecks",
+      "name": "_private.HexSignDetTheory.NodeChecks.0.Hex.SignDet.nodePreparation_checks.match_1.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.nodePreparation_checks.match_1",
-      "base_module": "HexSignDetMathlib.NodeChecks",
+      "base_module": "HexSignDetTheory.NodeChecks",
       "kind": "equation",
-      "module": "HexSignDetMathlib.NodeChecks",
-      "name": "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.nodePreparation_checks.match_1.eq_2"
+      "module": "HexSignDetTheory.NodeChecks",
+      "name": "_private.HexSignDetTheory.NodeChecks.0.Hex.SignDet.nodePreparation_checks.match_1.eq_2"
     },
     {
       "base_declaration": "Hex.SignDet.nodePreparation_checks.match_1",
-      "base_module": "HexSignDetMathlib.NodeChecks",
+      "base_module": "HexSignDetTheory.NodeChecks",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.NodeChecks",
-      "name": "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.nodePreparation_checks.match_1.splitter"
+      "module": "HexSignDetTheory.NodeChecks",
+      "name": "_private.HexSignDetTheory.NodeChecks.0.Hex.SignDet.nodePreparation_checks.match_1.splitter"
     },
     {
       "base_declaration": "Hex.SignDet.queryPoly.match_1",
       "base_module": "HexSignDet.MomentReplay",
       "kind": "equation",
-      "module": "HexSignDetMathlib.NodeChecks",
-      "name": "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.queryPoly.match_1.eq_1"
+      "module": "HexSignDetTheory.NodeChecks",
+      "name": "_private.HexSignDetTheory.NodeChecks.0.Hex.SignDet.queryPoly.match_1.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.queryPoly.match_1",
       "base_module": "HexSignDet.MomentReplay",
       "kind": "equation",
-      "module": "HexSignDetMathlib.NodeChecks",
-      "name": "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.queryPoly.match_1.eq_2"
+      "module": "HexSignDetTheory.NodeChecks",
+      "name": "_private.HexSignDetTheory.NodeChecks.0.Hex.SignDet.queryPoly.match_1.eq_2"
     },
     {
       "base_declaration": "Hex.SignDet.queryPoly.match_1",
       "base_module": "HexSignDet.MomentReplay",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.NodeChecks",
-      "name": "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.queryPoly.match_1.splitter"
+      "module": "HexSignDetTheory.NodeChecks",
+      "name": "_private.HexSignDetTheory.NodeChecks.0.Hex.SignDet.queryPoly.match_1.splitter"
     },
     {
       "base_declaration": "Hex.SignDet.Node.check_of_basis",
-      "base_module": "HexSignDetMathlib.NodeProducer",
+      "base_module": "HexSignDetTheory.NodeProducer",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.NodeProducer",
+      "module": "HexSignDetTheory.NodeProducer",
       "name": "Hex.SignDet.Node.check_of_basis.match_1"
     },
     {
       "base_declaration": "Hex.SignDet.buildNode_evidence",
-      "base_module": "HexSignDetMathlib.NodeProducer",
+      "base_module": "HexSignDetTheory.NodeProducer",
       "kind": "proof",
-      "module": "HexSignDetMathlib.NodeProducer",
+      "module": "HexSignDetTheory.NodeProducer",
       "name": "Hex.SignDet.buildNode_evidence._proof_2"
     },
     {
       "base_declaration": "Except.map.match_1",
       "base_module": "Init.Control.Except",
       "kind": "equation",
-      "module": "HexSignDetMathlib.NodeProducer",
-      "name": "_private.HexSignDetMathlib.NodeProducer.0.Except.map.match_1.eq_1"
+      "module": "HexSignDetTheory.NodeProducer",
+      "name": "_private.HexSignDetTheory.NodeProducer.0.Except.map.match_1.eq_1"
     },
     {
       "base_declaration": "Except.map.match_1",
       "base_module": "Init.Control.Except",
       "kind": "equation",
-      "module": "HexSignDetMathlib.NodeProducer",
-      "name": "_private.HexSignDetMathlib.NodeProducer.0.Except.map.match_1.eq_2"
+      "module": "HexSignDetTheory.NodeProducer",
+      "name": "_private.HexSignDetTheory.NodeProducer.0.Except.map.match_1.eq_2"
     },
     {
       "base_declaration": "Except.map.match_1",
       "base_module": "Init.Control.Except",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.NodeProducer",
-      "name": "_private.HexSignDetMathlib.NodeProducer.0.Except.map.match_1.splitter"
+      "module": "HexSignDetTheory.NodeProducer",
+      "name": "_private.HexSignDetTheory.NodeProducer.0.Except.map.match_1.splitter"
     },
     {
       "base_declaration": "Hex.SignDet.Node.check.match_1",
       "base_module": "HexSignDet.Replay",
       "kind": "equation",
-      "module": "HexSignDetMathlib.NodeProducer",
-      "name": "_private.HexSignDetMathlib.NodeProducer.0.Hex.SignDet.Node.check.match_1.eq_1"
+      "module": "HexSignDetTheory.NodeProducer",
+      "name": "_private.HexSignDetTheory.NodeProducer.0.Hex.SignDet.Node.check.match_1.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.Node.check.match_1",
       "base_module": "HexSignDet.Replay",
       "kind": "equation",
-      "module": "HexSignDetMathlib.NodeProducer",
-      "name": "_private.HexSignDetMathlib.NodeProducer.0.Hex.SignDet.Node.check.match_1.eq_2"
+      "module": "HexSignDetTheory.NodeProducer",
+      "name": "_private.HexSignDetTheory.NodeProducer.0.Hex.SignDet.Node.check.match_1.eq_2"
     },
     {
       "base_declaration": "Hex.SignDet.Node.check.match_1",
       "base_module": "HexSignDet.Replay",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.NodeProducer",
-      "name": "_private.HexSignDetMathlib.NodeProducer.0.Hex.SignDet.Node.check.match_1.splitter"
+      "module": "HexSignDetTheory.NodeProducer",
+      "name": "_private.HexSignDetTheory.NodeProducer.0.Hex.SignDet.Node.check.match_1.splitter"
     },
     {
       "base_declaration": "Hex.SignDet.buildNode.match_3",
       "base_module": "HexSignDet.Produce",
       "kind": "equation",
-      "module": "HexSignDetMathlib.NodeProducer",
-      "name": "_private.HexSignDetMathlib.NodeProducer.0.Hex.SignDet.buildNode.match_3.eq_1"
+      "module": "HexSignDetTheory.NodeProducer",
+      "name": "_private.HexSignDetTheory.NodeProducer.0.Hex.SignDet.buildNode.match_3.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.buildNode.match_3",
       "base_module": "HexSignDet.Produce",
       "kind": "equation",
-      "module": "HexSignDetMathlib.NodeProducer",
-      "name": "_private.HexSignDetMathlib.NodeProducer.0.Hex.SignDet.buildNode.match_3.eq_2"
+      "module": "HexSignDetTheory.NodeProducer",
+      "name": "_private.HexSignDetTheory.NodeProducer.0.Hex.SignDet.buildNode.match_3.eq_2"
     },
     {
       "base_declaration": "Hex.SignDet.buildNode.match_3",
       "base_module": "HexSignDet.Produce",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.NodeProducer",
-      "name": "_private.HexSignDetMathlib.NodeProducer.0.Hex.SignDet.buildNode.match_3.splitter"
+      "module": "HexSignDetTheory.NodeProducer",
+      "name": "_private.HexSignDetTheory.NodeProducer.0.Hex.SignDet.buildNode.match_3.splitter"
     },
     {
       "base_declaration": "Hex.SignDet.buildNode_evidence",
-      "base_module": "HexSignDetMathlib.NodeProducer",
+      "base_module": "HexSignDetTheory.NodeProducer",
       "kind": "proof",
-      "module": "HexSignDetMathlib.NodeProducer",
-      "name": "_private.HexSignDetMathlib.NodeProducer.0.Hex.SignDet.buildNode_evidence._proof_1"
+      "module": "HexSignDetTheory.NodeProducer",
+      "name": "_private.HexSignDetTheory.NodeProducer.0.Hex.SignDet.buildNode_evidence._proof_1"
     },
     {
       "base_declaration": "Hex.SignDet.solveSystem_spec",
-      "base_module": "HexSignDetMathlib.NodeProducer",
+      "base_module": "HexSignDetTheory.NodeProducer",
       "kind": "proof",
-      "module": "HexSignDetMathlib.NodeProducer",
-      "name": "_private.HexSignDetMathlib.NodeProducer.0.Hex.SignDet.solveSystem_spec._proof_1_1"
+      "module": "HexSignDetTheory.NodeProducer",
+      "name": "_private.HexSignDetTheory.NodeProducer.0.Hex.SignDet.solveSystem_spec._proof_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.buildNode",
       "base_module": "HexSignDet.Produce",
       "kind": "equation",
-      "module": "HexSignDetMathlib.NodeSolve",
+      "module": "HexSignDetTheory.NodeSolve",
       "name": "Hex.SignDet.buildNode.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.buildNode_complete",
-      "base_module": "HexSignDetMathlib.NodeSolve",
+      "base_module": "HexSignDetTheory.NodeSolve",
       "kind": "proof",
-      "module": "HexSignDetMathlib.NodeSolve",
+      "module": "HexSignDetTheory.NodeSolve",
       "name": "Hex.SignDet.buildNode_complete._proof_2"
     },
     {
       "base_declaration": "Hex.SignDet.buildNode.match_1",
       "base_module": "HexSignDet.Produce",
       "kind": "equation",
-      "module": "HexSignDetMathlib.NodeSolve",
-      "name": "_private.HexSignDetMathlib.NodeSolve.0.Hex.SignDet.buildNode.match_1.eq_1"
+      "module": "HexSignDetTheory.NodeSolve",
+      "name": "_private.HexSignDetTheory.NodeSolve.0.Hex.SignDet.buildNode.match_1.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.buildNode.match_1",
       "base_module": "HexSignDet.Produce",
       "kind": "equation",
-      "module": "HexSignDetMathlib.NodeSolve",
-      "name": "_private.HexSignDetMathlib.NodeSolve.0.Hex.SignDet.buildNode.match_1.eq_2"
+      "module": "HexSignDetTheory.NodeSolve",
+      "name": "_private.HexSignDetTheory.NodeSolve.0.Hex.SignDet.buildNode.match_1.eq_2"
     },
     {
       "base_declaration": "Hex.SignDet.buildNode.match_1",
       "base_module": "HexSignDet.Produce",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.NodeSolve",
-      "name": "_private.HexSignDetMathlib.NodeSolve.0.Hex.SignDet.buildNode.match_1.splitter"
+      "module": "HexSignDetTheory.NodeSolve",
+      "name": "_private.HexSignDetTheory.NodeSolve.0.Hex.SignDet.buildNode.match_1.splitter"
     },
     {
       "base_declaration": "Hex.SignDet.buildNode.match_3",
       "base_module": "HexSignDet.Produce",
       "kind": "equation",
-      "module": "HexSignDetMathlib.NodeSolve",
-      "name": "_private.HexSignDetMathlib.NodeSolve.0.Hex.SignDet.buildNode.match_3.eq_1"
+      "module": "HexSignDetTheory.NodeSolve",
+      "name": "_private.HexSignDetTheory.NodeSolve.0.Hex.SignDet.buildNode.match_3.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.buildNode.match_3",
       "base_module": "HexSignDet.Produce",
       "kind": "equation",
-      "module": "HexSignDetMathlib.NodeSolve",
-      "name": "_private.HexSignDetMathlib.NodeSolve.0.Hex.SignDet.buildNode.match_3.eq_2"
+      "module": "HexSignDetTheory.NodeSolve",
+      "name": "_private.HexSignDetTheory.NodeSolve.0.Hex.SignDet.buildNode.match_3.eq_2"
     },
     {
       "base_declaration": "Hex.SignDet.buildNode.match_3",
       "base_module": "HexSignDet.Produce",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.NodeSolve",
-      "name": "_private.HexSignDetMathlib.NodeSolve.0.Hex.SignDet.buildNode.match_3.splitter"
+      "module": "HexSignDetTheory.NodeSolve",
+      "name": "_private.HexSignDetTheory.NodeSolve.0.Hex.SignDet.buildNode.match_3.splitter"
     },
     {
       "base_declaration": "Hex.SignDet.buildNode_complete",
-      "base_module": "HexSignDetMathlib.NodeSolve",
+      "base_module": "HexSignDetTheory.NodeSolve",
       "kind": "proof",
-      "module": "HexSignDetMathlib.NodeSolve",
-      "name": "_private.HexSignDetMathlib.NodeSolve.0.Hex.SignDet.buildNode_complete._proof_1"
+      "module": "HexSignDetTheory.NodeSolve",
+      "name": "_private.HexSignDetTheory.NodeSolve.0.Hex.SignDet.buildNode_complete._proof_1"
     },
     {
       "base_declaration": "Hex.SignDet.buildNode_complete",
-      "base_module": "HexSignDetMathlib.NodeSolve",
+      "base_module": "HexSignDetTheory.NodeSolve",
       "kind": "proof",
-      "module": "HexSignDetMathlib.NodeSolve",
-      "name": "_private.HexSignDetMathlib.NodeSolve.0.Hex.SignDet.buildNode_complete._proof_1_1"
+      "module": "HexSignDetTheory.NodeSolve",
+      "name": "_private.HexSignDetTheory.NodeSolve.0.Hex.SignDet.buildNode_complete._proof_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.buildNode_complete",
-      "base_module": "HexSignDetMathlib.NodeSolve",
+      "base_module": "HexSignDetTheory.NodeSolve",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.NodeSolve",
-      "name": "_private.HexSignDetMathlib.NodeSolve.0.Hex.SignDet.buildNode_complete.match_1_2"
+      "module": "HexSignDetTheory.NodeSolve",
+      "name": "_private.HexSignDetTheory.NodeSolve.0.Hex.SignDet.buildNode_complete.match_1_2"
     },
     {
       "base_declaration": "Hex.SignDet.buildNode_complete",
-      "base_module": "HexSignDetMathlib.NodeSolve",
+      "base_module": "HexSignDetTheory.NodeSolve",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.NodeSolve",
-      "name": "_private.HexSignDetMathlib.NodeSolve.0.Hex.SignDet.buildNode_complete.match_1_7"
+      "module": "HexSignDetTheory.NodeSolve",
+      "name": "_private.HexSignDetTheory.NodeSolve.0.Hex.SignDet.buildNode_complete.match_1_7"
     },
     {
       "base_declaration": "Hex.SignDet.Node.check_sign",
-      "base_module": "HexSignDetMathlib.QueryReduction",
+      "base_module": "HexSignDetTheory.QueryReduction",
       "kind": "proof",
-      "module": "HexSignDetMathlib.QueryReduction",
+      "module": "HexSignDetTheory.QueryReduction",
       "name": "Hex.SignDet.Node.check_sign._proof_2"
     },
     {
       "base_declaration": "Hex.SignDet.QueryReduction.build",
       "base_module": "HexSignDet.QueryReduction",
       "kind": "equation",
-      "module": "HexSignDetMathlib.QueryReduction",
+      "module": "HexSignDetTheory.QueryReduction",
       "name": "Hex.SignDet.QueryReduction.build.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.QueryReduction.buildFrom",
       "base_module": "HexSignDet.QueryReduction",
       "kind": "equation",
-      "module": "HexSignDetMathlib.QueryReduction",
+      "module": "HexSignDetTheory.QueryReduction",
       "name": "Hex.SignDet.QueryReduction.buildFrom.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.QueryReduction.buildFrom",
       "base_module": "HexSignDet.QueryReduction",
       "kind": "equation",
-      "module": "HexSignDetMathlib.QueryReduction",
+      "module": "HexSignDetTheory.QueryReduction",
       "name": "Hex.SignDet.QueryReduction.buildFrom.eq_2"
     },
     {
       "base_declaration": "Hex.SignDet.QueryReduction.buildFrom",
       "base_module": "HexSignDet.QueryReduction",
       "kind": "equation",
-      "module": "HexSignDetMathlib.QueryReduction",
+      "module": "HexSignDetTheory.QueryReduction",
       "name": "Hex.SignDet.QueryReduction.buildFrom.eq_def"
     },
     {
       "base_declaration": "Hex.SignDet.Node.check_sign",
-      "base_module": "HexSignDetMathlib.QueryReduction",
+      "base_module": "HexSignDetTheory.QueryReduction",
       "kind": "proof",
-      "module": "HexSignDetMathlib.QueryReduction",
-      "name": "_private.HexSignDetMathlib.QueryReduction.0.Hex.SignDet.Node.check_sign._proof_1"
+      "module": "HexSignDetTheory.QueryReduction",
+      "name": "_private.HexSignDetTheory.QueryReduction.0.Hex.SignDet.Node.check_sign._proof_1"
     },
     {
       "base_declaration": "Hex.SignDet.QueryReduction.buildFrom.match_1",
       "base_module": "HexSignDet.QueryReduction",
       "kind": "equation",
-      "module": "HexSignDetMathlib.QueryReduction",
-      "name": "_private.HexSignDetMathlib.QueryReduction.0.Hex.SignDet.QueryReduction.buildFrom.match_1.eq_1"
+      "module": "HexSignDetTheory.QueryReduction",
+      "name": "_private.HexSignDetTheory.QueryReduction.0.Hex.SignDet.QueryReduction.buildFrom.match_1.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.QueryReduction.buildFrom.match_1",
       "base_module": "HexSignDet.QueryReduction",
       "kind": "equation",
-      "module": "HexSignDetMathlib.QueryReduction",
-      "name": "_private.HexSignDetMathlib.QueryReduction.0.Hex.SignDet.QueryReduction.buildFrom.match_1.eq_2"
+      "module": "HexSignDetTheory.QueryReduction",
+      "name": "_private.HexSignDetTheory.QueryReduction.0.Hex.SignDet.QueryReduction.buildFrom.match_1.eq_2"
     },
     {
       "base_declaration": "Hex.SignDet.QueryReduction.buildFrom.match_1",
       "base_module": "HexSignDet.QueryReduction",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.QueryReduction",
-      "name": "_private.HexSignDetMathlib.QueryReduction.0.Hex.SignDet.QueryReduction.buildFrom.match_1.splitter"
+      "module": "HexSignDetTheory.QueryReduction",
+      "name": "_private.HexSignDetTheory.QueryReduction.0.Hex.SignDet.QueryReduction.buildFrom.match_1.splitter"
     },
     {
       "base_declaration": "Hex.Matrix.Lists.Scaled.encode",
       "base_module": "HexMatrix.Scaled",
       "kind": "equation",
-      "module": "HexSignDetMathlib.RationalSolve",
+      "module": "HexSignDetTheory.RationalSolve",
       "name": "Hex.Matrix.Lists.Scaled.encode.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.System.rationalInverse",
-      "base_module": "HexSignDetMathlib.RationalSolve",
+      "base_module": "HexSignDetTheory.RationalSolve",
       "kind": "proof",
-      "module": "HexSignDetMathlib.RationalSolve",
+      "module": "HexSignDetTheory.RationalSolve",
       "name": "Hex.SignDet.System.rationalInverse._proof_2"
     },
     {
       "base_declaration": "Hex.SignDet.inverse_den",
-      "base_module": "HexSignDetMathlib.RationalSolve",
+      "base_module": "HexSignDetTheory.RationalSolve",
       "kind": "proof",
-      "module": "HexSignDetMathlib.RationalSolve",
+      "module": "HexSignDetTheory.RationalSolve",
       "name": "Hex.SignDet.inverse_den._proof_1"
     },
     {
       "base_declaration": "Hex.SignDet.solveSystem",
       "base_module": "HexSignDet.Produce",
       "kind": "equation",
-      "module": "HexSignDetMathlib.RationalSolve",
+      "module": "HexSignDetTheory.RationalSolve",
       "name": "Hex.SignDet.solveSystem.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.System.rationalInverse",
-      "base_module": "HexSignDetMathlib.RationalSolve",
+      "base_module": "HexSignDetTheory.RationalSolve",
       "kind": "proof",
-      "module": "HexSignDetMathlib.RationalSolve",
-      "name": "_private.HexSignDetMathlib.RationalSolve.0.Hex.SignDet.System.rationalInverse._proof_1"
+      "module": "HexSignDetTheory.RationalSolve",
+      "name": "_private.HexSignDetTheory.RationalSolve.0.Hex.SignDet.System.rationalInverse._proof_1"
     },
     {
       "base_declaration": "Hex.SignDet.Reduction.check",
       "base_module": "HexSignDet.Reduction",
       "kind": "equation",
-      "module": "HexSignDetMathlib.Reduction",
+      "module": "HexSignDetTheory.Reduction",
       "name": "Hex.SignDet.Reduction.check.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.Reduction.checkFrom._sparseCasesOn_1",
       "base_module": "HexSignDet.Reduction",
       "kind": "equation",
-      "module": "HexSignDetMathlib.Reduction",
+      "module": "HexSignDetTheory.Reduction",
       "name": "Hex.SignDet.Reduction.checkFrom._sparseCasesOn_1.else_eq"
     },
     {
       "base_declaration": "Hex.SignDet.Reduction.checkFrom._sparseCasesOn_2",
       "base_module": "HexSignDet.Reduction",
       "kind": "equation",
-      "module": "HexSignDetMathlib.Reduction",
+      "module": "HexSignDetTheory.Reduction",
       "name": "Hex.SignDet.Reduction.checkFrom._sparseCasesOn_2.else_eq"
     },
     {
       "base_declaration": "Hex.SignDet.Reduction.checkFrom",
       "base_module": "HexSignDet.Reduction",
       "kind": "equation",
-      "module": "HexSignDetMathlib.Reduction",
+      "module": "HexSignDetTheory.Reduction",
       "name": "Hex.SignDet.Reduction.checkFrom.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.Reduction.checkFrom",
       "base_module": "HexSignDet.Reduction",
       "kind": "equation",
-      "module": "HexSignDetMathlib.Reduction",
+      "module": "HexSignDetTheory.Reduction",
       "name": "Hex.SignDet.Reduction.checkFrom.eq_2"
     },
     {
       "base_declaration": "Hex.SignDet.Reduction.checkFrom",
       "base_module": "HexSignDet.Reduction",
       "kind": "equation",
-      "module": "HexSignDetMathlib.Reduction",
+      "module": "HexSignDetTheory.Reduction",
       "name": "Hex.SignDet.Reduction.checkFrom.eq_3"
     },
     {
       "base_declaration": "Hex.SignDet.Reduction.checkFrom",
       "base_module": "HexSignDet.Reduction",
       "kind": "equation",
-      "module": "HexSignDetMathlib.Reduction",
+      "module": "HexSignDetTheory.Reduction",
       "name": "Hex.SignDet.Reduction.checkFrom.eq_def"
     },
     {
       "base_declaration": "Hex.SignDet.moment",
       "base_module": "HexSignDet.Moment",
       "kind": "equation",
-      "module": "HexSignDetMathlib.Reduction",
+      "module": "HexSignDetTheory.Reduction",
       "name": "Hex.SignDet.moment.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.Reduction.checkFrom.match_1",
       "base_module": "HexSignDet.Reduction",
       "kind": "equation",
-      "module": "HexSignDetMathlib.Reduction",
-      "name": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_1"
+      "module": "HexSignDetTheory.Reduction",
+      "name": "_private.HexSignDetTheory.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.Reduction.checkFrom.match_1",
       "base_module": "HexSignDet.Reduction",
       "kind": "equation",
-      "module": "HexSignDetMathlib.Reduction",
-      "name": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_2"
+      "module": "HexSignDetTheory.Reduction",
+      "name": "_private.HexSignDetTheory.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_2"
     },
     {
       "base_declaration": "Hex.SignDet.Reduction.checkFrom.match_1",
       "base_module": "HexSignDet.Reduction",
       "kind": "equation",
-      "module": "HexSignDetMathlib.Reduction",
-      "name": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_3"
+      "module": "HexSignDetTheory.Reduction",
+      "name": "_private.HexSignDetTheory.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_3"
     },
     {
       "base_declaration": "Hex.SignDet.Reduction.checkFrom.match_1",
       "base_module": "HexSignDet.Reduction",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.Reduction",
-      "name": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.splitter"
+      "module": "HexSignDetTheory.Reduction",
+      "name": "_private.HexSignDetTheory.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.splitter"
     },
     {
-      "base_declaration": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.splitter",
-      "base_module": "HexSignDetMathlib.Reduction",
+      "base_declaration": "_private.HexSignDetTheory.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.splitter",
+      "base_module": "HexSignDetTheory.Reduction",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.Reduction",
-      "name": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.splitter._sparseCasesOn_3"
+      "module": "HexSignDetTheory.Reduction",
+      "name": "_private.HexSignDetTheory.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.splitter._sparseCasesOn_3"
     },
     {
-      "base_declaration": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.splitter",
-      "base_module": "HexSignDetMathlib.Reduction",
+      "base_declaration": "_private.HexSignDetTheory.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.splitter",
+      "base_module": "HexSignDetTheory.Reduction",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.Reduction",
-      "name": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.splitter._sparseCasesOn_5"
+      "module": "HexSignDetTheory.Reduction",
+      "name": "_private.HexSignDetTheory.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.splitter._sparseCasesOn_5"
     },
     {
-      "base_declaration": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.interpret_power",
-      "base_module": "HexSignDetMathlib.Reduction",
+      "base_declaration": "_private.HexSignDetTheory.Reduction.0.Hex.SignDet.interpret_power",
+      "base_module": "HexSignDetTheory.Reduction",
       "kind": "proof",
-      "module": "HexSignDetMathlib.Reduction",
-      "name": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.interpret_power._proof_1_1"
+      "module": "HexSignDetTheory.Reduction",
+      "name": "_private.HexSignDetTheory.Reduction.0.Hex.SignDet.interpret_power._proof_1_1"
     },
     {
-      "base_declaration": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.interpret_power",
-      "base_module": "HexSignDetMathlib.Reduction",
+      "base_declaration": "_private.HexSignDetTheory.Reduction.0.Hex.SignDet.interpret_power",
+      "base_module": "HexSignDetTheory.Reduction",
       "kind": "proof",
-      "module": "HexSignDetMathlib.Reduction",
-      "name": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.interpret_power._proof_1_2"
+      "module": "HexSignDetTheory.Reduction",
+      "name": "_private.HexSignDetTheory.Reduction.0.Hex.SignDet.interpret_power._proof_1_2"
     },
     {
-      "base_declaration": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.interpret_power",
-      "base_module": "HexSignDetMathlib.Reduction",
+      "base_declaration": "_private.HexSignDetTheory.Reduction.0.Hex.SignDet.interpret_power",
+      "base_module": "HexSignDetTheory.Reduction",
       "kind": "proof",
-      "module": "HexSignDetMathlib.Reduction",
-      "name": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.interpret_power._proof_1_3"
+      "module": "HexSignDetTheory.Reduction",
+      "name": "_private.HexSignDetTheory.Reduction.0.Hex.SignDet.interpret_power._proof_1_3"
     },
     {
       "base_declaration": "Hex.SignDet.moment_congr",
-      "base_module": "HexSignDetMathlib.Reduction",
+      "base_module": "HexSignDetTheory.Reduction",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.Reduction",
-      "name": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.moment_congr.match_1_1"
+      "module": "HexSignDetTheory.Reduction",
+      "name": "_private.HexSignDetTheory.Reduction.0.Hex.SignDet.moment_congr.match_1_1"
     },
     {
-      "base_declaration": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.moment_sign",
-      "base_module": "HexSignDetMathlib.Reduction",
+      "base_declaration": "_private.HexSignDetTheory.Reduction.0.Hex.SignDet.moment_sign",
+      "base_module": "HexSignDetTheory.Reduction",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.Reduction",
-      "name": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.moment_sign.match_1_1"
+      "module": "HexSignDetTheory.Reduction",
+      "name": "_private.HexSignDetTheory.Reduction.0.Hex.SignDet.moment_sign.match_1_1"
     },
     {
-      "base_declaration": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.moment_sign",
-      "base_module": "HexSignDetMathlib.Reduction",
+      "base_declaration": "_private.HexSignDetTheory.Reduction.0.Hex.SignDet.moment_sign",
+      "base_module": "HexSignDetTheory.Reduction",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.Reduction",
-      "name": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.moment_sign.match_1_3"
+      "module": "HexSignDetTheory.Reduction",
+      "name": "_private.HexSignDetTheory.Reduction.0.Hex.SignDet.moment_sign.match_1_3"
     },
     {
       "base_declaration": "Hex.SignDet.Reduction.build",
       "base_module": "HexSignDet.Reduction",
       "kind": "equation",
-      "module": "HexSignDetMathlib.ReductionProducer",
+      "module": "HexSignDetTheory.ReductionProducer",
       "name": "Hex.SignDet.Reduction.build.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.Reduction.buildFrom",
       "base_module": "HexSignDet.Reduction",
       "kind": "equation",
-      "module": "HexSignDetMathlib.ReductionProducer",
+      "module": "HexSignDetTheory.ReductionProducer",
       "name": "Hex.SignDet.Reduction.buildFrom.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.Reduction.buildFrom",
       "base_module": "HexSignDet.Reduction",
       "kind": "equation",
-      "module": "HexSignDetMathlib.ReductionProducer",
+      "module": "HexSignDetTheory.ReductionProducer",
       "name": "Hex.SignDet.Reduction.buildFrom.eq_2"
     },
     {
       "base_declaration": "Hex.SignDet.Reduction.buildFrom",
       "base_module": "HexSignDet.Reduction",
       "kind": "equation",
-      "module": "HexSignDetMathlib.ReductionProducer",
+      "module": "HexSignDetTheory.ReductionProducer",
       "name": "Hex.SignDet.Reduction.buildFrom.eq_def"
     },
     {
       "base_declaration": "Hex.SignDet.Reduction.buildFrom.match_1",
       "base_module": "HexSignDet.Reduction",
       "kind": "equation",
-      "module": "HexSignDetMathlib.ReductionProducer",
-      "name": "_private.HexSignDetMathlib.ReductionProducer.0.Hex.SignDet.Reduction.buildFrom.match_1.eq_1"
+      "module": "HexSignDetTheory.ReductionProducer",
+      "name": "_private.HexSignDetTheory.ReductionProducer.0.Hex.SignDet.Reduction.buildFrom.match_1.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.Reduction.buildFrom.match_1",
       "base_module": "HexSignDet.Reduction",
       "kind": "equation",
-      "module": "HexSignDetMathlib.ReductionProducer",
-      "name": "_private.HexSignDetMathlib.ReductionProducer.0.Hex.SignDet.Reduction.buildFrom.match_1.eq_2"
+      "module": "HexSignDetTheory.ReductionProducer",
+      "name": "_private.HexSignDetTheory.ReductionProducer.0.Hex.SignDet.Reduction.buildFrom.match_1.eq_2"
     },
     {
       "base_declaration": "Hex.SignDet.Reduction.buildFrom.match_1",
       "base_module": "HexSignDet.Reduction",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.ReductionProducer",
-      "name": "_private.HexSignDetMathlib.ReductionProducer.0.Hex.SignDet.Reduction.buildFrom.match_1.splitter"
+      "module": "HexSignDetTheory.ReductionProducer",
+      "name": "_private.HexSignDetTheory.ReductionProducer.0.Hex.SignDet.Reduction.buildFrom.match_1.splitter"
     },
     {
       "base_declaration": "Hex.SignDet.ReductionStep.build_checks",
-      "base_module": "HexSignDetMathlib.ReductionProducer",
+      "base_module": "HexSignDetTheory.ReductionProducer",
       "kind": "simp",
-      "module": "HexSignDetMathlib.ReductionProducer",
-      "name": "_private.HexSignDetMathlib.ReductionProducer.0.Hex.SignDet.ReductionStep.build_checks._simp_1_1"
+      "module": "HexSignDetTheory.ReductionProducer",
+      "name": "_private.HexSignDetTheory.ReductionProducer.0.Hex.SignDet.ReductionStep.build_checks._simp_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.endpoint_upper",
-      "base_module": "HexSignDetMathlib.Reencode",
+      "base_module": "HexSignDetTheory.Reencode",
       "kind": "proof",
-      "module": "HexSignDetMathlib.Reencode",
-      "name": "_private.HexSignDetMathlib.Reencode.0.Hex.SignDet.endpoint_upper._proof_1_1"
+      "module": "HexSignDetTheory.Reencode",
+      "name": "_private.HexSignDetTheory.Reencode.0.Hex.SignDet.endpoint_upper._proof_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.endpoint_upper",
-      "base_module": "HexSignDetMathlib.Reencode",
+      "base_module": "HexSignDetTheory.Reencode",
       "kind": "proof",
-      "module": "HexSignDetMathlib.Reencode",
-      "name": "_private.HexSignDetMathlib.Reencode.0.Hex.SignDet.endpoint_upper._proof_1_2"
+      "module": "HexSignDetTheory.Reencode",
+      "name": "_private.HexSignDetTheory.Reencode.0.Hex.SignDet.endpoint_upper._proof_1_2"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.reencoding_rows",
-      "base_module": "HexSignDetMathlib.ReencodingRefinement",
+      "base_module": "HexSignDetTheory.ReencodingRefinement",
       "kind": "proof",
-      "module": "HexSignDetMathlib.ReencodingRefinement",
-      "name": "_private.HexSignDetMathlib.ReencodingRefinement.0.Hex.SignDet.Descriptor.reencoding_rows._proof_1_1"
+      "module": "HexSignDetTheory.ReencodingRefinement",
+      "name": "_private.HexSignDetTheory.ReencodingRefinement.0.Hex.SignDet.Descriptor.reencoding_rows._proof_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.reencoding_rows",
-      "base_module": "HexSignDetMathlib.ReencodingRefinement",
+      "base_module": "HexSignDetTheory.ReencodingRefinement",
       "kind": "proof",
-      "module": "HexSignDetMathlib.ReencodingRefinement",
-      "name": "_private.HexSignDetMathlib.ReencodingRefinement.0.Hex.SignDet.Descriptor.reencoding_rows._proof_1_2"
+      "module": "HexSignDetTheory.ReencodingRefinement",
+      "name": "_private.HexSignDetTheory.ReencodingRefinement.0.Hex.SignDet.Descriptor.reencoding_rows._proof_1_2"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.buildRoots_constant_success",
-      "base_module": "HexSignDetMathlib.RootList",
+      "base_module": "HexSignDetTheory.RootList",
       "kind": "proof",
-      "module": "HexSignDetMathlib.RootList",
-      "name": "_private.HexSignDetMathlib.RootList.0.Hex.SignDet.Descriptor.buildRoots_constant_success._proof_1_1"
+      "module": "HexSignDetTheory.RootList",
+      "name": "_private.HexSignDetTheory.RootList.0.Hex.SignDet.Descriptor.buildRoots_constant_success._proof_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.buildRoots_empty",
-      "base_module": "HexSignDetMathlib.RootList",
+      "base_module": "HexSignDetTheory.RootList",
       "kind": "proof",
-      "module": "HexSignDetMathlib.RootList",
-      "name": "_private.HexSignDetMathlib.RootList.0.Hex.SignDet.Descriptor.buildRoots_empty._proof_1_1"
+      "module": "HexSignDetTheory.RootList",
+      "name": "_private.HexSignDetTheory.RootList.0.Hex.SignDet.Descriptor.buildRoots_empty._proof_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.buildRoots_subsingleton",
-      "base_module": "HexSignDetMathlib.RootList",
+      "base_module": "HexSignDetTheory.RootList",
       "kind": "proof",
-      "module": "HexSignDetMathlib.RootList",
-      "name": "_private.HexSignDetMathlib.RootList.0.Hex.SignDet.Descriptor.buildRoots_subsingleton._proof_1_1"
+      "module": "HexSignDetTheory.RootList",
+      "name": "_private.HexSignDetTheory.RootList.0.Hex.SignDet.Descriptor.buildRoots_subsingleton._proof_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.buildRoots_subsingleton",
-      "base_module": "HexSignDetMathlib.RootList",
+      "base_module": "HexSignDetTheory.RootList",
       "kind": "proof",
-      "module": "HexSignDetMathlib.RootList",
-      "name": "_private.HexSignDetMathlib.RootList.0.Hex.SignDet.Descriptor.buildRoots_subsingleton._proof_1_3"
+      "module": "HexSignDetTheory.RootList",
+      "name": "_private.HexSignDetTheory.RootList.0.Hex.SignDet.Descriptor.buildRoots_subsingleton._proof_1_3"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.buildRoots_subsingleton",
-      "base_module": "HexSignDetMathlib.RootList",
+      "base_module": "HexSignDetTheory.RootList",
       "kind": "simp",
-      "module": "HexSignDetMathlib.RootList",
-      "name": "_private.HexSignDetMathlib.RootList.0.Hex.SignDet.Descriptor.buildRoots_subsingleton._simp_1_2"
+      "module": "HexSignDetTheory.RootList",
+      "name": "_private.HexSignDetTheory.RootList.0.Hex.SignDet.Descriptor.buildRoots_subsingleton._simp_1_2"
     },
     {
       "base_declaration": "Hex.SignDet.rootObservations",
-      "base_module": "HexSignDetMathlib.RootModel",
+      "base_module": "HexSignDetTheory.RootModel",
       "kind": "simp",
-      "module": "HexSignDetMathlib.RootModel",
+      "module": "HexSignDetTheory.RootModel",
       "name": "Hex.SignDet.rootObservations.congr_simp"
     },
     {
       "base_declaration": "Hex.SignDet.rootObservations",
-      "base_module": "HexSignDetMathlib.RootModel",
+      "base_module": "HexSignDetTheory.RootModel",
       "kind": "equation",
-      "module": "HexSignDetMathlib.RootModel",
+      "module": "HexSignDetTheory.RootModel",
       "name": "Hex.SignDet.rootObservations.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.signsAt",
-      "base_module": "HexSignDetMathlib.RootModel",
+      "base_module": "HexSignDetTheory.RootModel",
       "kind": "simp",
-      "module": "HexSignDetMathlib.RootModel",
+      "module": "HexSignDetTheory.RootModel",
       "name": "Hex.SignDet.signsAt.congr_simp"
     },
     {
       "base_declaration": "Hex.SignDet.signsAt",
-      "base_module": "HexSignDetMathlib.RootModel",
+      "base_module": "HexSignDetTheory.RootModel",
       "kind": "equation",
-      "module": "HexSignDetMathlib.RootModel",
+      "module": "HexSignDetTheory.RootModel",
       "name": "Hex.SignDet.signsAt.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.Replay.check_support",
-      "base_module": "HexSignDetMathlib.RootModel",
+      "base_module": "HexSignDetTheory.RootModel",
       "kind": "simp",
-      "module": "HexSignDetMathlib.RootModel",
-      "name": "_private.HexSignDetMathlib.RootModel.0.Hex.SignDet.Replay.check_support._simp_1_2"
+      "module": "HexSignDetTheory.RootModel",
+      "name": "_private.HexSignDetTheory.RootModel.0.Hex.SignDet.Replay.check_support._simp_1_2"
     },
     {
       "base_declaration": "Hex.SignDet.Replay.check_support",
-      "base_module": "HexSignDetMathlib.RootModel",
+      "base_module": "HexSignDetTheory.RootModel",
       "kind": "simp",
-      "module": "HexSignDetMathlib.RootModel",
-      "name": "_private.HexSignDetMathlib.RootModel.0.Hex.SignDet.Replay.check_support._simp_1_3"
+      "module": "HexSignDetTheory.RootModel",
+      "name": "_private.HexSignDetTheory.RootModel.0.Hex.SignDet.Replay.check_support._simp_1_3"
     },
     {
       "base_declaration": "Hex.SignDet.QueryReduction.operands",
       "base_module": "HexSignDet.QueryReduction",
       "kind": "equation",
-      "module": "HexSignDetMathlib.RootProducer",
+      "module": "HexSignDetTheory.RootProducer",
       "name": "Hex.SignDet.QueryReduction.operands.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.QueryReduction.operands",
       "base_module": "HexSignDet.QueryReduction",
       "kind": "equation",
-      "module": "HexSignDetMathlib.RootProducer",
+      "module": "HexSignDetTheory.RootProducer",
       "name": "Hex.SignDet.QueryReduction.operands.eq_2"
     },
     {
       "base_declaration": "Hex.SignDet.query_model",
-      "base_module": "HexSignDetMathlib.RootProducer",
+      "base_module": "HexSignDetTheory.RootProducer",
       "kind": "recursion",
-      "module": "HexSignDetMathlib.RootProducer",
+      "module": "HexSignDetTheory.RootProducer",
       "name": "Hex.SignDet.query_model._unary"
     },
     {
       "base_declaration": "Hex.SignDet.query_values",
-      "base_module": "HexSignDetMathlib.RootProducer",
+      "base_module": "HexSignDetTheory.RootProducer",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.RootProducer",
+      "module": "HexSignDetTheory.RootProducer",
       "name": "Hex.SignDet.query_values.match_1"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.build_valid_cases",
-      "base_module": "HexSignDetMathlib.RootProducer",
+      "base_module": "HexSignDetTheory.RootProducer",
       "kind": "proof",
-      "module": "HexSignDetMathlib.RootProducer",
-      "name": "_private.HexSignDetMathlib.RootProducer.0.Hex.SignDet.Descriptor.build_valid_cases._proof_1_1"
+      "module": "HexSignDetTheory.RootProducer",
+      "name": "_private.HexSignDetTheory.RootProducer.0.Hex.SignDet.Descriptor.build_valid_cases._proof_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.validate_success_formal",
-      "base_module": "HexSignDetMathlib.RootProducer",
+      "base_module": "HexSignDetTheory.RootProducer",
       "kind": "simp",
-      "module": "HexSignDetMathlib.RootProducer",
-      "name": "_private.HexSignDetMathlib.RootProducer.0.Hex.SignDet.Descriptor.validate_success_formal._simp_1_1"
+      "module": "HexSignDetTheory.RootProducer",
+      "name": "_private.HexSignDetTheory.RootProducer.0.Hex.SignDet.Descriptor.validate_success_formal._simp_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.validate_success_iff",
-      "base_module": "HexSignDetMathlib.RootProducer",
+      "base_module": "HexSignDetTheory.RootProducer",
       "kind": "simp",
-      "module": "HexSignDetMathlib.RootProducer",
-      "name": "_private.HexSignDetMathlib.RootProducer.0.Hex.SignDet.Descriptor.validate_success_iff._simp_1_1"
+      "module": "HexSignDetTheory.RootProducer",
+      "name": "_private.HexSignDetTheory.RootProducer.0.Hex.SignDet.Descriptor.validate_success_iff._simp_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.QueryReduction.operands.match_1",
       "base_module": "HexSignDet.QueryReduction",
       "kind": "equation",
-      "module": "HexSignDetMathlib.RootProducer",
-      "name": "_private.HexSignDetMathlib.RootProducer.0.Hex.SignDet.QueryReduction.operands.match_1.eq_1"
+      "module": "HexSignDetTheory.RootProducer",
+      "name": "_private.HexSignDetTheory.RootProducer.0.Hex.SignDet.QueryReduction.operands.match_1.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.QueryReduction.operands.match_1",
       "base_module": "HexSignDet.QueryReduction",
       "kind": "equation",
-      "module": "HexSignDetMathlib.RootProducer",
-      "name": "_private.HexSignDetMathlib.RootProducer.0.Hex.SignDet.QueryReduction.operands.match_1.eq_2"
+      "module": "HexSignDetTheory.RootProducer",
+      "name": "_private.HexSignDetTheory.RootProducer.0.Hex.SignDet.QueryReduction.operands.match_1.eq_2"
     },
     {
       "base_declaration": "Hex.SignDet.QueryReduction.operands.match_1",
       "base_module": "HexSignDet.QueryReduction",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.RootProducer",
-      "name": "_private.HexSignDetMathlib.RootProducer.0.Hex.SignDet.QueryReduction.operands.match_1.splitter"
+      "module": "HexSignDetTheory.RootProducer",
+      "name": "_private.HexSignDetTheory.RootProducer.0.Hex.SignDet.QueryReduction.operands.match_1.splitter"
     },
     {
       "base_declaration": "Hex.SignDet.query_model",
-      "base_module": "HexSignDetMathlib.RootProducer",
+      "base_module": "HexSignDetTheory.RootProducer",
       "kind": "simp",
-      "module": "HexSignDetMathlib.RootProducer",
-      "name": "_private.HexSignDetMathlib.RootProducer.0.Hex.SignDet.query_model._simp_1_1"
+      "module": "HexSignDetTheory.RootProducer",
+      "name": "_private.HexSignDetTheory.RootProducer.0.Hex.SignDet.query_model._simp_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.query_values",
-      "base_module": "HexSignDetMathlib.RootProducer",
+      "base_module": "HexSignDetTheory.RootProducer",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.RootProducer",
-      "name": "_private.HexSignDetMathlib.RootProducer.0.Hex.SignDet.query_values.match_1_4"
+      "module": "HexSignDetTheory.RootProducer",
+      "name": "_private.HexSignDetTheory.RootProducer.0.Hex.SignDet.query_values.match_1_4"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.signs_rows",
-      "base_module": "HexSignDetMathlib.SelectedProducer",
+      "base_module": "HexSignDetTheory.SelectedProducer",
       "kind": "proof",
-      "module": "HexSignDetMathlib.SelectedProducer",
-      "name": "_private.HexSignDetMathlib.SelectedProducer.0.Hex.SignDet.Descriptor.signs_rows._proof_1_1"
+      "module": "HexSignDetTheory.SelectedProducer",
+      "name": "_private.HexSignDetTheory.SelectedProducer.0.Hex.SignDet.Descriptor.signs_rows._proof_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.signs_rows",
-      "base_module": "HexSignDetMathlib.SelectedProducer",
+      "base_module": "HexSignDetTheory.SelectedProducer",
       "kind": "proof",
-      "module": "HexSignDetMathlib.SelectedProducer",
-      "name": "_private.HexSignDetMathlib.SelectedProducer.0.Hex.SignDet.Descriptor.signs_rows._proof_1_2"
+      "module": "HexSignDetTheory.SelectedProducer",
+      "name": "_private.HexSignDetTheory.SelectedProducer.0.Hex.SignDet.Descriptor.signs_rows._proof_1_2"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.constraints_bounds",
-      "base_module": "HexSignDetMathlib.SelectedRoot",
+      "base_module": "HexSignDetTheory.SelectedRoot",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.SelectedRoot",
+      "module": "HexSignDetTheory.SelectedRoot",
       "name": "Hex.SignDet.Descriptor.constraints_bounds._sparseCasesOn_1"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.constraints_bounds._sparseCasesOn_1",
-      "base_module": "HexSignDetMathlib.SelectedRoot",
+      "base_module": "HexSignDetTheory.SelectedRoot",
       "kind": "equation",
-      "module": "HexSignDetMathlib.SelectedRoot",
+      "module": "HexSignDetTheory.SelectedRoot",
       "name": "Hex.SignDet.Descriptor.constraints_bounds._sparseCasesOn_1.else_eq"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.constraints_bounds",
-      "base_module": "HexSignDetMathlib.SelectedRoot",
+      "base_module": "HexSignDetTheory.SelectedRoot",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.SelectedRoot",
+      "module": "HexSignDetTheory.SelectedRoot",
       "name": "Hex.SignDet.Descriptor.constraints_bounds.match_1"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.root",
-      "base_module": "HexSignDetMathlib.SelectedRoot",
+      "base_module": "HexSignDetTheory.SelectedRoot",
       "kind": "simp",
-      "module": "HexSignDetMathlib.SelectedRoot",
+      "module": "HexSignDetTheory.SelectedRoot",
       "name": "Hex.SignDet.Descriptor.root.congr_simp"
     },
     {
       "base_declaration": "Hex.SignDet.RawDescriptor.constraintSigns",
       "base_module": "HexSignDet.Reencode",
       "kind": "equation",
-      "module": "HexSignDetMathlib.SelectedRoot",
+      "module": "HexSignDetTheory.SelectedRoot",
       "name": "Hex.SignDet.RawDescriptor.constraintSigns.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.RawDescriptor.constraints._sparseCasesOn_1",
       "base_module": "HexSignDet.Reencode",
       "kind": "equation",
-      "module": "HexSignDetMathlib.SelectedRoot",
+      "module": "HexSignDetTheory.SelectedRoot",
       "name": "Hex.SignDet.RawDescriptor.constraints._sparseCasesOn_1.else_eq"
     },
     {
       "base_declaration": "Hex.SignDet.RawDescriptor.constraints",
       "base_module": "HexSignDet.Reencode",
       "kind": "equation",
-      "module": "HexSignDetMathlib.SelectedRoot",
+      "module": "HexSignDetTheory.SelectedRoot",
       "name": "Hex.SignDet.RawDescriptor.constraints.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.Thom.compareSigns",
       "base_module": "HexSignDet.Thom",
       "kind": "equation",
-      "module": "HexSignDetMathlib.SelectedRoot",
+      "module": "HexSignDetTheory.SelectedRoot",
       "name": "Hex.SignDet.Thom.compareSigns.eq_1"
     },
     {
-      "base_declaration": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.root_eq",
-      "base_module": "HexSignDetMathlib.SelectedRoot",
+      "base_declaration": "_private.HexSignDetTheory.SelectedRoot.0.Hex.SignDet.Comparison.root_eq",
+      "base_module": "HexSignDetTheory.SelectedRoot",
       "kind": "proof",
-      "module": "HexSignDetMathlib.SelectedRoot",
-      "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.root_eq._proof_1_1"
+      "module": "HexSignDetTheory.SelectedRoot",
+      "name": "_private.HexSignDetTheory.SelectedRoot.0.Hex.SignDet.Comparison.root_eq._proof_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.constraints_at_root",
-      "base_module": "HexSignDetMathlib.SelectedRoot",
+      "base_module": "HexSignDetTheory.SelectedRoot",
       "kind": "simp",
-      "module": "HexSignDetMathlib.SelectedRoot",
-      "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_at_root._simp_1_1"
+      "module": "HexSignDetTheory.SelectedRoot",
+      "name": "_private.HexSignDetTheory.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_at_root._simp_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.constraints_bounds.match_1",
-      "base_module": "HexSignDetMathlib.SelectedRoot",
+      "base_module": "HexSignDetTheory.SelectedRoot",
       "kind": "equation",
-      "module": "HexSignDetMathlib.SelectedRoot",
-      "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.eq_1"
+      "module": "HexSignDetTheory.SelectedRoot",
+      "name": "_private.HexSignDetTheory.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.constraints_bounds.match_1",
-      "base_module": "HexSignDetMathlib.SelectedRoot",
+      "base_module": "HexSignDetTheory.SelectedRoot",
       "kind": "equation",
-      "module": "HexSignDetMathlib.SelectedRoot",
-      "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.eq_2"
+      "module": "HexSignDetTheory.SelectedRoot",
+      "name": "_private.HexSignDetTheory.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.eq_2"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.constraints_bounds.match_1",
-      "base_module": "HexSignDetMathlib.SelectedRoot",
+      "base_module": "HexSignDetTheory.SelectedRoot",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.SelectedRoot",
-      "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.splitter"
+      "module": "HexSignDetTheory.SelectedRoot",
+      "name": "_private.HexSignDetTheory.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.splitter"
     },
     {
-      "base_declaration": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.splitter",
-      "base_module": "HexSignDetMathlib.SelectedRoot",
+      "base_declaration": "_private.HexSignDetTheory.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.splitter",
+      "base_module": "HexSignDetTheory.SelectedRoot",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.SelectedRoot",
-      "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.splitter._sparseCasesOn_2"
+      "module": "HexSignDetTheory.SelectedRoot",
+      "name": "_private.HexSignDetTheory.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.splitter._sparseCasesOn_2"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.constraints_interval",
-      "base_module": "HexSignDetMathlib.SelectedRoot",
+      "base_module": "HexSignDetTheory.SelectedRoot",
       "kind": "simp",
-      "module": "HexSignDetMathlib.SelectedRoot",
-      "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_interval._simp_1_1"
+      "module": "HexSignDetTheory.SelectedRoot",
+      "name": "_private.HexSignDetTheory.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_interval._simp_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.constraints_interval",
-      "base_module": "HexSignDetMathlib.SelectedRoot",
+      "base_module": "HexSignDetTheory.SelectedRoot",
       "kind": "simp",
-      "module": "HexSignDetMathlib.SelectedRoot",
-      "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_interval._simp_1_2"
+      "module": "HexSignDetTheory.SelectedRoot",
+      "name": "_private.HexSignDetTheory.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_interval._simp_1_2"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.constraints_interval",
-      "base_module": "HexSignDetMathlib.SelectedRoot",
+      "base_module": "HexSignDetTheory.SelectedRoot",
       "kind": "simp",
-      "module": "HexSignDetMathlib.SelectedRoot",
-      "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_interval._simp_1_3"
+      "module": "HexSignDetTheory.SelectedRoot",
+      "name": "_private.HexSignDetTheory.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_interval._simp_1_3"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.derivatives_at",
-      "base_module": "HexSignDetMathlib.SelectedRoot",
+      "base_module": "HexSignDetTheory.SelectedRoot",
       "kind": "proof",
-      "module": "HexSignDetMathlib.SelectedRoot",
-      "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.derivatives_at._proof_1_1"
+      "module": "HexSignDetTheory.SelectedRoot",
+      "name": "_private.HexSignDetTheory.SelectedRoot.0.Hex.SignDet.Descriptor.derivatives_at._proof_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.head_ne_zero",
-      "base_module": "HexSignDetMathlib.SelectedRoot",
+      "base_module": "HexSignDetTheory.SelectedRoot",
       "kind": "proof",
-      "module": "HexSignDetMathlib.SelectedRoot",
-      "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.head_ne_zero._proof_1_1"
+      "module": "HexSignDetTheory.SelectedRoot",
+      "name": "_private.HexSignDetTheory.SelectedRoot.0.Hex.SignDet.Descriptor.head_ne_zero._proof_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.RawDescriptor.constraints.match_1",
       "base_module": "HexSignDet.Reencode",
       "kind": "equation",
-      "module": "HexSignDetMathlib.SelectedRoot",
-      "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.RawDescriptor.constraints.match_1.eq_1"
+      "module": "HexSignDetTheory.SelectedRoot",
+      "name": "_private.HexSignDetTheory.SelectedRoot.0.Hex.SignDet.RawDescriptor.constraints.match_1.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.RawDescriptor.constraints.match_1",
       "base_module": "HexSignDet.Reencode",
       "kind": "equation",
-      "module": "HexSignDetMathlib.SelectedRoot",
-      "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.RawDescriptor.constraints.match_1.eq_2"
+      "module": "HexSignDetTheory.SelectedRoot",
+      "name": "_private.HexSignDetTheory.SelectedRoot.0.Hex.SignDet.RawDescriptor.constraints.match_1.eq_2"
     },
     {
       "base_declaration": "Hex.SignDet.RawDescriptor.constraints.match_1",
       "base_module": "HexSignDet.Reencode",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.SelectedRoot",
-      "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.RawDescriptor.constraints.match_1.splitter"
+      "module": "HexSignDetTheory.SelectedRoot",
+      "name": "_private.HexSignDetTheory.SelectedRoot.0.Hex.SignDet.RawDescriptor.constraints.match_1.splitter"
     },
     {
-      "base_declaration": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.RawDescriptor.constraints.match_1.splitter",
-      "base_module": "HexSignDetMathlib.SelectedRoot",
+      "base_declaration": "_private.HexSignDetTheory.SelectedRoot.0.Hex.SignDet.RawDescriptor.constraints.match_1.splitter",
+      "base_module": "HexSignDetTheory.SelectedRoot",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.SelectedRoot",
-      "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.RawDescriptor.constraints.match_1.splitter._sparseCasesOn_2"
+      "module": "HexSignDetTheory.SelectedRoot",
+      "name": "_private.HexSignDetTheory.SelectedRoot.0.Hex.SignDet.RawDescriptor.constraints.match_1.splitter._sparseCasesOn_2"
     },
     {
       "base_declaration": "Hex.SignDet.Reencoding.exists_root",
-      "base_module": "HexSignDetMathlib.SelectedRoot",
+      "base_module": "HexSignDetTheory.SelectedRoot",
       "kind": "proof",
-      "module": "HexSignDetMathlib.SelectedRoot",
-      "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Reencoding.exists_root._proof_1_1"
+      "module": "HexSignDetTheory.SelectedRoot",
+      "name": "_private.HexSignDetTheory.SelectedRoot.0.Hex.SignDet.Reencoding.exists_root._proof_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.SelectedSigns.values_at_root",
-      "base_module": "HexSignDetMathlib.SelectedRoot",
+      "base_module": "HexSignDetTheory.SelectedRoot",
       "kind": "simp",
-      "module": "HexSignDetMathlib.SelectedRoot",
-      "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.SelectedSigns.values_at_root._simp_1_1"
+      "module": "HexSignDetTheory.SelectedRoot",
+      "name": "_private.HexSignDetTheory.SelectedRoot.0.Hex.SignDet.SelectedSigns.values_at_root._simp_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.SelectedSigns.values_at_root",
-      "base_module": "HexSignDetMathlib.SelectedRoot",
+      "base_module": "HexSignDetTheory.SelectedRoot",
       "kind": "simp",
-      "module": "HexSignDetMathlib.SelectedRoot",
-      "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.SelectedSigns.values_at_root._simp_1_2"
+      "module": "HexSignDetTheory.SelectedRoot",
+      "name": "_private.HexSignDetTheory.SelectedRoot.0.Hex.SignDet.SelectedSigns.values_at_root._simp_1_2"
     },
     {
       "base_declaration": "Hex.SignDet.solveScaled",
       "base_module": "HexSignDet.Produce",
       "kind": "equation",
-      "module": "HexSignDetMathlib.Solve",
+      "module": "HexSignDetTheory.Solve",
       "name": "Hex.SignDet.solveScaled.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.determine",
       "base_module": "HexSignDet.TableProducer",
       "kind": "equation",
-      "module": "HexSignDetMathlib.TableProducer",
+      "module": "HexSignDetTheory.TableProducer",
       "name": "Hex.SignDet.determine.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.determinePrepared",
       "base_module": "HexSignDet.TableProducer",
       "kind": "simp",
-      "module": "HexSignDetMathlib.TableProducer",
+      "module": "HexSignDetTheory.TableProducer",
       "name": "Hex.SignDet.determinePrepared.congr_simp"
     },
     {
       "base_declaration": "Hex.SignDet.momentMatrix_product",
-      "base_module": "HexSignDetMathlib.Tensor",
+      "base_module": "HexSignDetTheory.Tensor",
       "kind": "proof",
-      "module": "HexSignDetMathlib.Tensor",
+      "module": "HexSignDetTheory.Tensor",
       "name": "Hex.SignDet.momentMatrix_product._proof_2"
     },
     {
       "base_declaration": "Hex.SignDet.productVector",
       "base_module": "HexSignDet.Tensor",
       "kind": "equation",
-      "module": "HexSignDetMathlib.Tensor",
+      "module": "HexSignDetTheory.Tensor",
       "name": "Hex.SignDet.productVector.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.tensor",
       "base_module": "HexSignDet.Tensor",
       "kind": "equation",
-      "module": "HexSignDetMathlib.Tensor",
+      "module": "HexSignDetTheory.Tensor",
       "name": "Hex.SignDet.tensor.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.momentMatrix_product",
-      "base_module": "HexSignDetMathlib.Tensor",
+      "base_module": "HexSignDetTheory.Tensor",
       "kind": "proof",
-      "module": "HexSignDetMathlib.Tensor",
-      "name": "_private.HexSignDetMathlib.Tensor.0.Hex.SignDet.momentMatrix_product._proof_1"
+      "module": "HexSignDetTheory.Tensor",
+      "name": "_private.HexSignDetTheory.Tensor.0.Hex.SignDet.momentMatrix_product._proof_1"
     },
     {
       "base_declaration": "Hex.SignDet.productVector_toList",
-      "base_module": "HexSignDetMathlib.Tensor",
+      "base_module": "HexSignDetTheory.Tensor",
       "kind": "proof",
-      "module": "HexSignDetMathlib.Tensor",
-      "name": "_private.HexSignDetMathlib.Tensor.0.Hex.SignDet.productVector_toList._proof_1_1"
+      "module": "HexSignDetTheory.Tensor",
+      "name": "_private.HexSignDetTheory.Tensor.0.Hex.SignDet.productVector_toList._proof_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.RawDescriptor.full_lt",
-      "base_module": "HexSignDetMathlib.Thom",
+      "base_module": "HexSignDetTheory.Thom",
       "kind": "proof",
-      "module": "HexSignDetMathlib.Thom",
-      "name": "_private.HexSignDetMathlib.Thom.0.Hex.SignDet.RawDescriptor.full_lt._proof_1_1"
+      "module": "HexSignDetTheory.Thom",
+      "name": "_private.HexSignDetTheory.Thom.0.Hex.SignDet.RawDescriptor.full_lt._proof_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.RawDescriptor.full_lt",
-      "base_module": "HexSignDetMathlib.Thom",
+      "base_module": "HexSignDetTheory.Thom",
       "kind": "proof",
-      "module": "HexSignDetMathlib.Thom",
-      "name": "_private.HexSignDetMathlib.Thom.0.Hex.SignDet.RawDescriptor.full_lt._proof_1_2"
+      "module": "HexSignDetTheory.Thom",
+      "name": "_private.HexSignDetTheory.Thom.0.Hex.SignDet.RawDescriptor.full_lt._proof_1_2"
     },
     {
       "base_declaration": "Hex.SignDet.RawDescriptor.full_order",
-      "base_module": "HexSignDetMathlib.Thom",
+      "base_module": "HexSignDetTheory.Thom",
       "kind": "simp",
-      "module": "HexSignDetMathlib.Thom",
-      "name": "_private.HexSignDetMathlib.Thom.0.Hex.SignDet.RawDescriptor.full_order._simp_1_1"
+      "module": "HexSignDetTheory.Thom",
+      "name": "_private.HexSignDetTheory.Thom.0.Hex.SignDet.RawDescriptor.full_order._simp_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.Descriptor.buildReencoding_success",
-      "base_module": "HexSignDetMathlib.ThomReencoding",
+      "base_module": "HexSignDetTheory.ThomReencoding",
       "kind": "proof",
-      "module": "HexSignDetMathlib.ThomReencoding",
-      "name": "_private.HexSignDetMathlib.ThomReencoding.0.Hex.SignDet.Descriptor.buildReencoding_success._proof_1_1"
+      "module": "HexSignDetTheory.ThomReencoding",
+      "name": "_private.HexSignDetTheory.ThomReencoding.0.Hex.SignDet.Descriptor.buildReencoding_success._proof_1_1"
     },
     {
       "base_declaration": "Hex.SignDet.buildPrepared",
       "base_module": "HexSignDet.Produce",
       "kind": "equation",
-      "module": "HexSignDetMathlib.TreeChecks",
+      "module": "HexSignDetTheory.TreeChecks",
       "name": "Hex.SignDet.buildPrepared.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.buildTreeFrom",
       "base_module": "HexSignDet.Produce",
       "kind": "equation",
-      "module": "HexSignDetMathlib.TreeChecks",
+      "module": "HexSignDetTheory.TreeChecks",
       "name": "Hex.SignDet.buildTreeFrom.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.buildTreeFrom_checks",
-      "base_module": "HexSignDetMathlib.TreeChecks",
+      "base_module": "HexSignDetTheory.TreeChecks",
       "kind": "recursion",
-      "module": "HexSignDetMathlib.TreeChecks",
+      "module": "HexSignDetTheory.TreeChecks",
       "name": "Hex.SignDet.buildTreeFrom_checks._unary"
     },
     {
       "base_declaration": "Hex.SignDet.buildTreeFrom_checks",
-      "base_module": "HexSignDetMathlib.TreeChecks",
+      "base_module": "HexSignDetTheory.TreeChecks",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.TreeChecks",
+      "module": "HexSignDetTheory.TreeChecks",
       "name": "Hex.SignDet.buildTreeFrom_checks.match_1"
     },
     {
       "base_declaration": "Except.map.match_1",
       "base_module": "Init.Control.Except",
       "kind": "equation",
-      "module": "HexSignDetMathlib.TreeChecks",
-      "name": "_private.HexSignDetMathlib.TreeChecks.0.Except.map.match_1.eq_1"
+      "module": "HexSignDetTheory.TreeChecks",
+      "name": "_private.HexSignDetTheory.TreeChecks.0.Except.map.match_1.eq_1"
     },
     {
       "base_declaration": "Except.map.match_1",
       "base_module": "Init.Control.Except",
       "kind": "equation",
-      "module": "HexSignDetMathlib.TreeChecks",
-      "name": "_private.HexSignDetMathlib.TreeChecks.0.Except.map.match_1.eq_2"
+      "module": "HexSignDetTheory.TreeChecks",
+      "name": "_private.HexSignDetTheory.TreeChecks.0.Except.map.match_1.eq_2"
     },
     {
       "base_declaration": "Except.map.match_1",
       "base_module": "Init.Control.Except",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.TreeChecks",
-      "name": "_private.HexSignDetMathlib.TreeChecks.0.Except.map.match_1.splitter"
+      "module": "HexSignDetTheory.TreeChecks",
+      "name": "_private.HexSignDetTheory.TreeChecks.0.Except.map.match_1.splitter"
     },
     {
       "base_declaration": "Hex.SignDet.buildTreeFrom_checks",
-      "base_module": "HexSignDetMathlib.TreeChecks",
+      "base_module": "HexSignDetTheory.TreeChecks",
       "kind": "proof",
-      "module": "HexSignDetMathlib.TreeChecks",
-      "name": "_private.HexSignDetMathlib.TreeChecks.0.Hex.SignDet.buildTreeFrom_checks._proof_1_4"
+      "module": "HexSignDetTheory.TreeChecks",
+      "name": "_private.HexSignDetTheory.TreeChecks.0.Hex.SignDet.buildTreeFrom_checks._proof_1_4"
     },
     {
       "base_declaration": "Hex.SignDet.buildTreeFrom_checks",
-      "base_module": "HexSignDetMathlib.TreeChecks",
+      "base_module": "HexSignDetTheory.TreeChecks",
       "kind": "simp",
-      "module": "HexSignDetMathlib.TreeChecks",
-      "name": "_private.HexSignDetMathlib.TreeChecks.0.Hex.SignDet.buildTreeFrom_checks._simp_1_3"
+      "module": "HexSignDetTheory.TreeChecks",
+      "name": "_private.HexSignDetTheory.TreeChecks.0.Hex.SignDet.buildTreeFrom_checks._simp_1_3"
     },
     {
       "base_declaration": "Hex.SignDet.Node.Counted",
-      "base_module": "HexSignDetMathlib.TreeSolve",
+      "base_module": "HexSignDetTheory.TreeSolve",
       "kind": "structure",
-      "module": "HexSignDetMathlib.TreeSolve",
+      "module": "HexSignDetTheory.TreeSolve",
       "name": "Hex.SignDet.Node.Counted.casesOn"
     },
     {
       "base_declaration": "Hex.SignDet.Node.Counted",
-      "base_module": "HexSignDetMathlib.TreeSolve",
+      "base_module": "HexSignDetTheory.TreeSolve",
       "kind": "constructor",
-      "module": "HexSignDetMathlib.TreeSolve",
+      "module": "HexSignDetTheory.TreeSolve",
       "name": "Hex.SignDet.Node.Counted.mk"
     },
     {
       "base_declaration": "Hex.SignDet.Node.Counted.mk",
-      "base_module": "HexSignDetMathlib.TreeSolve",
+      "base_module": "HexSignDetTheory.TreeSolve",
       "kind": "structure",
-      "module": "HexSignDetMathlib.TreeSolve",
+      "module": "HexSignDetTheory.TreeSolve",
       "name": "Hex.SignDet.Node.Counted.mk._flat_ctor"
     },
     {
       "base_declaration": "Hex.SignDet.Node.Counted",
-      "base_module": "HexSignDetMathlib.TreeSolve",
+      "base_module": "HexSignDetTheory.TreeSolve",
       "kind": "recursor",
-      "module": "HexSignDetMathlib.TreeSolve",
+      "module": "HexSignDetTheory.TreeSolve",
       "name": "Hex.SignDet.Node.Counted.rec"
     },
     {
       "base_declaration": "Hex.SignDet.Node.Counted",
-      "base_module": "HexSignDetMathlib.TreeSolve",
+      "base_module": "HexSignDetTheory.TreeSolve",
       "kind": "structure",
-      "module": "HexSignDetMathlib.TreeSolve",
+      "module": "HexSignDetTheory.TreeSolve",
       "name": "Hex.SignDet.Node.Counted.recOn"
     },
     {
       "base_declaration": "Hex.SignDet.QueryModel",
-      "base_module": "HexSignDetMathlib.TreeSolve",
+      "base_module": "HexSignDetTheory.TreeSolve",
       "kind": "recursion",
-      "module": "HexSignDetMathlib.TreeSolve",
+      "module": "HexSignDetTheory.TreeSolve",
       "name": "Hex.SignDet.QueryModel._unary"
     },
     {
       "base_declaration": "Hex.SignDet.QueryModel._unary",
-      "base_module": "HexSignDetMathlib.TreeSolve",
+      "base_module": "HexSignDetTheory.TreeSolve",
       "kind": "proof",
-      "module": "HexSignDetMathlib.TreeSolve",
+      "module": "HexSignDetTheory.TreeSolve",
       "name": "Hex.SignDet.QueryModel._unary._proof_1"
     },
     {
       "base_declaration": "Hex.SignDet.QueryModel._unary",
-      "base_module": "HexSignDetMathlib.TreeSolve",
+      "base_module": "HexSignDetTheory.TreeSolve",
       "kind": "proof",
-      "module": "HexSignDetMathlib.TreeSolve",
+      "module": "HexSignDetTheory.TreeSolve",
       "name": "Hex.SignDet.QueryModel._unary._proof_2"
     },
     {
       "base_declaration": "Hex.SignDet.QueryModel._unary",
-      "base_module": "HexSignDetMathlib.TreeSolve",
+      "base_module": "HexSignDetTheory.TreeSolve",
       "kind": "equation",
-      "module": "HexSignDetMathlib.TreeSolve",
+      "module": "HexSignDetTheory.TreeSolve",
       "name": "Hex.SignDet.QueryModel._unary.eq_def"
     },
     {
       "base_declaration": "Hex.SignDet.QueryModel",
-      "base_module": "HexSignDetMathlib.TreeSolve",
+      "base_module": "HexSignDetTheory.TreeSolve",
       "kind": "recursion",
-      "module": "HexSignDetMathlib.TreeSolve",
+      "module": "HexSignDetTheory.TreeSolve",
       "name": "Hex.SignDet.QueryModel._unsafe_rec"
     },
     {
       "base_declaration": "Hex.SignDet.QueryModel",
-      "base_module": "HexSignDetMathlib.TreeSolve",
+      "base_module": "HexSignDetTheory.TreeSolve",
       "kind": "equation",
-      "module": "HexSignDetMathlib.TreeSolve",
+      "module": "HexSignDetTheory.TreeSolve",
       "name": "Hex.SignDet.QueryModel.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.QueryModel",
-      "base_module": "HexSignDetMathlib.TreeSolve",
+      "base_module": "HexSignDetTheory.TreeSolve",
       "kind": "equation",
-      "module": "HexSignDetMathlib.TreeSolve",
+      "module": "HexSignDetTheory.TreeSolve",
       "name": "Hex.SignDet.QueryModel.eq_def"
     },
     {
       "base_declaration": "Hex.SignDet.Replay.Counted",
-      "base_module": "HexSignDetMathlib.TreeSolve",
+      "base_module": "HexSignDetTheory.TreeSolve",
       "kind": "recursion",
-      "module": "HexSignDetMathlib.TreeSolve",
+      "module": "HexSignDetTheory.TreeSolve",
       "name": "Hex.SignDet.Replay.Counted._f"
     },
     {
       "base_declaration": "Hex.SignDet.Replay.Counted",
-      "base_module": "HexSignDetMathlib.TreeSolve",
+      "base_module": "HexSignDetTheory.TreeSolve",
       "kind": "recursion",
-      "module": "HexSignDetMathlib.TreeSolve",
+      "module": "HexSignDetTheory.TreeSolve",
       "name": "Hex.SignDet.Replay.Counted._sunfold"
     },
     {
       "base_declaration": "Hex.SignDet.Replay.Counted",
-      "base_module": "HexSignDetMathlib.TreeSolve",
+      "base_module": "HexSignDetTheory.TreeSolve",
       "kind": "recursion",
-      "module": "HexSignDetMathlib.TreeSolve",
+      "module": "HexSignDetTheory.TreeSolve",
       "name": "Hex.SignDet.Replay.Counted._unsafe_rec"
     },
     {
       "base_declaration": "Hex.SignDet.Replay.Counted",
-      "base_module": "HexSignDetMathlib.TreeSolve",
+      "base_module": "HexSignDetTheory.TreeSolve",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.TreeSolve",
+      "module": "HexSignDetTheory.TreeSolve",
       "name": "Hex.SignDet.Replay.Counted.match_1"
     },
     {
       "base_declaration": "Hex.SignDet.buildTreeFrom_complete",
-      "base_module": "HexSignDetMathlib.TreeSolve",
+      "base_module": "HexSignDetTheory.TreeSolve",
       "kind": "recursion",
-      "module": "HexSignDetMathlib.TreeSolve",
+      "module": "HexSignDetTheory.TreeSolve",
       "name": "Hex.SignDet.buildTreeFrom_complete._unary"
     },
     {
       "base_declaration": "Hex.SignDet.leafRows",
       "base_module": "HexSignDet.Replay",
       "kind": "equation",
-      "module": "HexSignDetMathlib.TreeSolve",
+      "module": "HexSignDetTheory.TreeSolve",
       "name": "Hex.SignDet.leafRows.eq_1"
     },
     {
       "base_declaration": "Hex.SignDet.buildNode_counted",
-      "base_module": "HexSignDetMathlib.TreeSolve",
+      "base_module": "HexSignDetTheory.TreeSolve",
       "kind": "proof",
-      "module": "HexSignDetMathlib.TreeSolve",
-      "name": "_private.HexSignDetMathlib.TreeSolve.0.Hex.SignDet.buildNode_counted._proof_1_1"
+      "module": "HexSignDetTheory.TreeSolve",
+      "name": "_private.HexSignDetTheory.TreeSolve.0.Hex.SignDet.buildNode_counted._proof_1_1"
     },
     {
-      "base_declaration": "_private.HexSignDetMathlib.TreeSolve.0.Hex.SignDet.leaf_system",
-      "base_module": "HexSignDetMathlib.TreeSolve",
+      "base_declaration": "_private.HexSignDetTheory.TreeSolve.0.Hex.SignDet.leaf_system",
+      "base_module": "HexSignDetTheory.TreeSolve",
       "kind": "proof",
-      "module": "HexSignDetMathlib.TreeSolve",
-      "name": "_private.HexSignDetMathlib.TreeSolve.0.Hex.SignDet.leaf_system._proof_1_2"
+      "module": "HexSignDetTheory.TreeSolve",
+      "name": "_private.HexSignDetTheory.TreeSolve.0.Hex.SignDet.leaf_system._proof_1_2"
     },
     {
       "base_declaration": "List.map_unattach.match_1",
       "base_module": "Init.Data.List.Attach",
       "kind": "equation",
-      "module": "HexSignDetMathlib.TreeSolve",
-      "name": "_private.HexSignDetMathlib.TreeSolve.0.List.map_unattach.match_1.eq_1"
+      "module": "HexSignDetTheory.TreeSolve",
+      "name": "_private.HexSignDetTheory.TreeSolve.0.List.map_unattach.match_1.eq_1"
     },
     {
       "base_declaration": "List.map_unattach.match_1",
       "base_module": "Init.Data.List.Attach",
       "kind": "matcher",
-      "module": "HexSignDetMathlib.TreeSolve",
-      "name": "_private.HexSignDetMathlib.TreeSolve.0.List.map_unattach.match_1.splitter"
+      "module": "HexSignDetTheory.TreeSolve",
+      "name": "_private.HexSignDetTheory.TreeSolve.0.List.map_unattach.match_1.splitter"
     },
     {
       "base_declaration": "PSigma.casesOn",
       "base_module": "Init.Core",
       "kind": "recursion",
-      "module": "HexSignDetMathlib.TreeSolve",
-      "name": "_private.HexSignDetMathlib.TreeSolve.0.PSigma.casesOn._arg_pusher"
+      "module": "HexSignDetTheory.TreeSolve",
+      "name": "_private.HexSignDetTheory.TreeSolve.0.PSigma.casesOn._arg_pusher"
     }
   ],
   "fields": 5,
-  "handwritten": 226,
+  "handwritten": 228,
   "scope": "Additional attributed constants classified by recognized compiler naming conventions and constant kinds. This is not a proof of compiler provenance. Source-written manifest declarations and field projections are accounted separately; unmatched extras are refused."
 }

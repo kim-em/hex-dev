@@ -31,6 +31,7 @@ INCLUDE = re.compile(r"^\{include (?P<level>\d+) HexManual\.Chapters\.(?P<chapte
 # Chapters whose name is not a library name, mapped to the libraries they
 # document. A chapter is released when all of them are.
 CHAPTER_LIBRARIES = {
+    "HexPosDef": ["HexPosDef", "HexPosDefTheory"],
     "FactorTactics": ["HexBerlekampTheory", "HexBerlekampZassenhausTheory"],
     "HexSmith": ["HexSmith", "HexSmithTheory"],
     "NautyAlgorithm": ["HexGraphIso"],

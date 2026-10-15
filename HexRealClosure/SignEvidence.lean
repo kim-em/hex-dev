@@ -178,23 +178,6 @@ theorem check_ofSigns [Hashable E] [Hashable Ctx]
   · rename_i different
     exact (different rfl).elim
 
-omit [Neg E] [Inv E] [Div E] in
-private theorem node_bindings {sign : E → Int} {parent : Ctx}
-    {head : DensePoly E} {lower upper : Endpoint E} {queries : List (DensePoly E)}
-    {node : Node E Ctx} (h : node.check sign parent head lower upper queries = true) :
-    Codec.bindings parent head lower upper node = true := by
-  obtain ⟨subject, _⟩ := Node.check_bindings h
-  simp only [Codec.bindings, subject.1, subject.2.1, subject.2.2.1,
-    subject.2.2.2.1, and_self, decide_true, Bool.true_and]
-  apply List.all_eq_true.mpr
-  intro cert mem
-  obtain ⟨i, hi, same⟩ := Vector.mem_iff_getElem.mp (Vector.mem_toList_iff.mp mem)
-  subst cert
-  have checked := Sturm.check_bindings sign parent head _ lower upper _ node.moments[i]
-    (checkMoment_query (Node.check_moment h ⟨i, hi⟩))
-  simp only [checked.1, checked.2.1, checked.2.2.2.1, checked.2.2.2.2.1,
-    and_self, decide_true]
-
 /-- The actual encoder retains every node and moment's literal root-domain
 binding from checked production. No coefficient interpretation is needed. -/
 theorem ofSigns_bindings [Hashable E] [Hashable Ctx]
@@ -204,20 +187,9 @@ theorem ofSigns_bindings [Hashable E] [Hashable Ctx]
       Codec.bindings context.root.raw.context context.root.raw.head
         context.root.raw.lower context.root.raw.upper entry.node = true := by
   obtain ⟨accepted, _⟩ := signs.check_eq
-  have replay := Dag.replay_encode accepted
-  cases hv : (Dag.encode signs.evidence).validate? coeffSign parent context.root.raw.head
-      context.root.raw.lower context.root.raw.upper with
-  | none => simp [Dag.replay?, hv, bind, Option.bind] at replay
-  | some memo =>
-    intro entry he
-    have nodes := Dag.validate_nodes coeffSign parent context.root.raw.head
-      context.root.raw.lower context.root.raw.upper (Dag.encode signs.evidence) memo hv
-    have member : entry.node ∈ (Dag.encode signs.evidence).entries.map Dag.Entry.node :=
-      Array.mem_map.mpr ⟨entry, he, rfl⟩
-    rw [← nodes] at member
-    obtain ⟨checked, _, same⟩ := Array.mem_map.mp member
-    rw [← same, (RawDescriptor.check_eq context.root.accepted).2.1]
-    exact node_bindings (Replay.check_node checked.accepted)
+  obtain ⟨memo, hv⟩ := Dag.validate_encode accepted
+  rw [(RawDescriptor.check_eq context.root.accepted).2.1]
+  exact Codec.bindings_of_validate hv
 
 /-- Every node encoded from checked joint signs meets the parser's dimensions
 and reduction-index bounds. -/
@@ -226,11 +198,8 @@ theorem ofSigns_shape [Hashable E] [Hashable Ctx]
     (signs : SelectedSigns context.root queries) :
     ∀ entry ∈ (ofSigns signs).graph.entries, Codec.Shape entry.node := by
   obtain ⟨accepted, _⟩ := signs.check_eq
-  have replay := Dag.replay_encode accepted
-  cases hv : (Dag.encode signs.evidence).validate? coeffSign parent context.root.raw.head
-      context.root.raw.lower context.root.raw.upper with
-  | none => simp [Dag.replay?, hv, bind, Option.bind] at replay
-  | some memo => exact Codec.Shape.of_validate hv
+  obtain ⟨memo, hv⟩ := Dag.validate_encode accepted
+  exact Codec.Shape.of_validate hv
 
 /-- Producer output satisfies every graph parser bound and literal binding.
 Only lawful coefficient and context codecs are required. -/

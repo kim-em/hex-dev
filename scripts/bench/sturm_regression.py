@@ -2,10 +2,12 @@
 """Compare frozen native Sturm sources with the pinned LeanBench baseline rule.
 
 Four trial-major AB/BA blocks run each full declared parent ladder once per
-arm. Only outer-trial placement is changed; parameters, tuning, warmup and
+arm. Parameters, tuning, warmup and
 signal-floor policy remain with the registration. All parent exports and
 failures are retained. This is a computational regression check, not a new
 Phase-4 complexity attestation or another sign-model rerun.
+An explicitly bound cap adaptation may increase the safety timeout in both
+arms after one original two-arm cap failure; it cannot change the verdict rule.
 """
 from __future__ import annotations
 
@@ -16,6 +18,8 @@ import math
 import os
 from pathlib import Path
 import platform
+import pwd
+import re
 import signal
 import subprocess
 import sys
@@ -71,8 +75,213 @@ TOOL_SOURCES = ("scripts/bench/sturm_regression.py", "scripts/bench/cpu_lease.py
 
 
 def state_directory():
-    value = os.environ.get("XDG_STATE_HOME", "")
-    return Path(value) if value and Path(value).is_absolute() else Path.home() / ".local/state"
+    """Keep consumed attempts at the OS account's fixed state directory."""
+    return Path(pwd.getpwuid(os.getuid()).pw_dir) / ".local/state"
+
+
+MAX_CAP_SECONDS = 86400  # Whole seconds up to one day roundtrip through jFloat and fit UInt32 ms.
+
+
+def registered_cap(root):
+    """Read the frozen registrations and their pinned runner default."""
+    core = strip_lean_comments((root / ".lake/packages/lean-bench/LeanBench/Core.lean").read_text())
+    header = re.search(r"(?m)^structure BenchmarkConfig where[ \t]*\n", core)
+    if header is None:
+        raise RuntimeError("cannot identify the frozen parametric runner configuration")
+    body = []
+    for line in core[header.end():].splitlines():
+        if line.strip() and not line[0].isspace():
+            break
+        body.append(line)
+    default = re.findall(r"maxSecondsPerCall\s*:\s*Float\s*:=\s*([0-9]+(?:\.[0-9]+)?)", "\n".join(body))
+    if len(default) != 1:
+        raise RuntimeError("cannot identify the frozen runner's default cap")
+    caps = [float(default[0])]
+    for name in ("Bench", "Frontend"):
+        text = strip_lean_comments((root / "bench/HexSturm" / (name + ".lean")).read_text())
+        for match in re.finditer(r"maxSecondsPerCall\s*:=\s*([^,\n}]+)", text):
+            literal = match[1].strip()
+            if not re.fullmatch(r"[0-9]+(?:\.[0-9]+)?", literal):
+                raise RuntimeError("unsupported frozen registration cap: " + literal)
+            caps.append(float(literal))
+    return max(caps)
+
+
+def original_decision(directory):
+    """Read the original decision authenticated by its retained context."""
+    context = json.loads((directory / "context.json").read_text())
+    path = directory / "decision.json"
+    if digest(path) != context.get("decision_sha256"):
+        raise RuntimeError("original decision differs from retained context")
+    return json.loads(path.read_text())
+
+
+def tooling_checkout(root, source_head, decision, cap_from):
+    """Keep build provenance at the original commit; bind new tooling separately."""
+    head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
+    if cap_from is None:
+        if head != source_head:
+            raise RuntimeError("candidate tree differs from frozen commit")
+        return head
+    previous = original_decision(cap_from.resolve())
+    for arm in ("baseline", "candidate"):
+        field = arm + "_source_sha256"
+        if decision.get(field) != previous.get(field):
+            raise RuntimeError("cap adaptation must retain original source manifests")
+    if decision["guard_build"] != previous.get("guard_build"):
+        raise RuntimeError("cap adaptation must retain original guard-build provenance")
+    if decision.get("tooling_root_head") != head:
+        raise RuntimeError("tooling root differs from decision binding")
+    if subprocess.run(["git", "merge-base", "--is-ancestor", source_head, head], cwd=root).returncode:
+        raise RuntimeError("tooling checkout does not descend from the frozen candidate")
+    changed = subprocess.check_output(
+        ["git", "diff", "--name-status", "--no-renames", "-z", source_head, head], cwd=root).decode().split("\0")
+    if changed[-1] != "" or len(changed[:-1]) % 2:
+        raise RuntimeError("invalid tooling change list")
+    allowed = {"scripts/bench/sturm_regression.py", "scripts/bench/test_sturm_regression.py"}
+    prefix = "reports/bench-results/sturm-phase6-comparison/"
+    summaries = {prefix + name for name in ("README.md", "cap-protocol.md", "cap-proposal.json")}
+    bad = [p for status, p in zip(changed[0:-1:2], changed[1:-1:2]) if not (
+        status in {"A", "M"} and p in allowed | summaries or
+        status == "A" and p.startswith(prefix) and not p.endswith(".lean"))]
+    if bad:
+        raise RuntimeError("tooling checkout changes unapproved paths: " + str(bad))
+    for path, expected in decision["tool_sources"].items():
+        raw = subprocess.check_output(["git", "show", head + ":" + path], cwd=root)
+        if hashlib.sha256(raw).hexdigest() != expected:
+            raise RuntimeError("tool source differs from the tooling commit: " + path)
+    return head
+
+
+def memory_context():
+    """Record Linux memory availability without using it to admit or reject runs."""
+    try:
+        fields = dict(line.split(":", 1) for line in Path("/proc/meminfo").read_text().splitlines())
+        return {name + "_KiB": int(fields[name].split()[0]) for name in ("MemTotal", "MemAvailable")}
+    except (OSError, KeyError, ValueError):
+        return None
+
+
+def run_process(command, root, environment, stdout, stderr):
+    """Reap the parent and clean up its private process group after every command."""
+    process = subprocess.Popen(command, cwd=root, env=environment, stdout=stdout,
+                               stderr=stderr, start_new_session=True)
+    def kill_group():
+        try:
+            os.killpg(process.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+    try:
+        code = process.wait()
+    except BaseException:
+        kill_group()
+        process.wait()
+        raise
+    kill_group()
+    return code
+
+
+def validate_cap_protocol(previous_dir, policy, sources, identity, reservation, names, root):
+    """Bind one cap increase to the retained, consumed two-arm cap failure.
+
+    The new collector may have a new tooling commit, but the native binaries,
+    guard and every recorded producer/registration input must remain unchanged.
+    A different cap or decision cannot create another adaptation reservation.
+    """
+    if not isinstance(policy, dict) or set(policy) != {
+            "seconds", "reason", "benchmarks", "previous_context_sha256", "previous_exports"}:
+        raise RuntimeError("incomplete cap protocol")
+    seconds = policy["seconds"]
+    if type(seconds) is not int or not 0 < seconds <= MAX_CAP_SECONDS:
+        raise RuntimeError("cap must use whole seconds, at most one day")
+    if seconds < registered_cap(root):
+        raise RuntimeError("cap adaptation cannot lower a frozen registration limit")
+    if not isinstance(policy["reason"], str) or not policy["reason"].strip():
+        raise RuntimeError("missing cap protocol reason")
+    previous_dir = previous_dir.resolve()
+    previous_path = previous_dir / "context.json"
+    previous = json.loads(previous_path.read_text())
+    if previous.get("decision_reservation") != str(reservation):
+        raise RuntimeError("cap adaptation moved the original reservation path")
+    if previous.get("host") != platform.node():
+        raise RuntimeError("cap adaptation moved the original host")
+    journal = json.loads(reservation.read_text())
+    previous_hash = digest(previous_path)
+    if (journal.get("first_output") != str(previous_dir) or
+            journal.get("context_sha256") != previous_hash or
+            policy["previous_context_sha256"] != previous_hash):
+        raise RuntimeError("cap protocol differs from retained first attempt")
+    if (previous.get("status") != "failed" or previous.get("integrity_failure") or
+            previous.get("attempt_reserved") is not True or
+            previous.get("measurements_collected") is not True or
+            previous.get("reruns") != 0 or previous.get("cap_protocol") is not None):
+        raise RuntimeError("cap adaptation requires an intact original failed comparison")
+    if previous.get("comparison_identity") != identity or previous.get("guard_unchanged") is not True:
+        raise RuntimeError("cap adaptation changes the native binaries or guard")
+    if policy["benchmarks"] != names or previous.get("benchmarks") != names:
+        raise RuntimeError("cap protocol must cover every original timing family")
+    for arm, source in sources.items():
+        old_source = previous.get("sources", {}).get(arm, {})
+        if (old_source.get("binary_sha256") != source["binary_sha256"] or
+                old_source.get("sources") != source["sources"]):
+            raise RuntimeError("cap adaptation changes frozen producer inputs: " + arm)
+    failures = previous.get("parent_failures", [])
+    if len(failures) != 2 or [f.get("arm") for f in failures] != ["baseline", "candidate"]:
+        raise RuntimeError("cap adaptation requires both original source arms")
+    if failures[0].get("function") != failures[1].get("function"):
+        raise RuntimeError("cap failures concern different timing families")
+    if previous.get("error") != "incomplete/failed parent measurement: " + failures[0]["function"]:
+        raise RuntimeError("original failure occurred outside the incomplete-pair check")
+    exports = {}
+    failed_params = []
+    completed = []
+    for failure in failures:
+        points = failure.get("points", [])
+        killed = [p.get("param") for p in points if p.get("status") == "killed_at_cap"]
+        if (failure.get("budget_truncated") is not False or not killed or
+                any(p.get("status") not in {"ok", "killed_at_cap"} for p in points)):
+            raise RuntimeError("original failure is not a per-call cap termination")
+        failed_params.append(killed)
+        # Identify the source arm by the actual retained source-pair filenames,
+        # rather than assuming that executable basenames are "baseline"/"candidate".
+        commands = [r["command"] for r in previous.get("commands", [])
+                    if len(r.get("command", [])) > 2 and r["command"][1:3] == ["run", failure["function"]]
+                    and "--export-file" in r["command"]
+                    and Path(r["command"][r["command"].index("--export-file") + 1]).name.endswith(
+                        "-" + failure["arm"] + ".json")]
+        if not commands:
+            raise RuntimeError("missing original failed export")
+        command = commands[-1]
+        path = Path(command[command.index("--export-file") + 1])
+        if path.parent.resolve() != previous_dir:
+            raise RuntimeError("original failed export is outside its retained directory")
+        exports[path.name] = digest(path)
+        document = json.loads(path.read_text())
+        results = document.get("results", [])
+        if (len(results) != 1 or results[0].get("kind") != "parametric" or
+                results[0].get("function") != failure["function"]):
+            raise RuntimeError("original failed export has a different subject")
+        result = results[0]
+        statuses = [{k: p.get(k) for k in ("param", "status", "error")} for p in result.get("points", [])]
+        if statuses != points or result.get("budget_truncated") is not False:
+            raise RuntimeError("original failed export differs from reserved failure")
+        successful = [(p.get("param"), p.get("result_hash")) for p in result["points"]
+                      if p["status"] == "ok"]
+        if any(value is None for _, value in successful):
+            raise RuntimeError("original completed rung has no result hash")
+        completed.append(successful)
+        old_cap = result.get("config", {}).get("max_seconds_per_call")
+        if (isinstance(old_cap, bool) or not isinstance(old_cap, (int, float)) or
+                not math.isfinite(old_cap) or old_cap <= 0 or seconds <= old_cap):
+            raise RuntimeError("cap protocol must increase the failed per-call limit")
+    if failed_params[0] != failed_params[1]:
+        raise RuntimeError("source arms hit different cap parameters")
+    if completed[0] != completed[1]:
+        raise RuntimeError("original completed rung parameters or hashes differ")
+    if policy["previous_exports"] != exports:
+        raise RuntimeError("cap protocol differs from retained failed export hashes")
+    return {"directory": str(previous_dir), "context_sha256": previous_hash,
+            "exports": exports, "policy": policy}
 
 
 def install_signals():
@@ -92,6 +301,8 @@ def main(argv=None) -> int:
                         help="validate bindings and correctness controls without leasing a CPU or timing")
     parser.add_argument("--rerun-of", type=Path,
                         help="one unchanged rerun of a completed inconclusive comparison")
+    parser.add_argument("--cap-from", type=Path,
+                        help="one reviewed cap increase after the retained original two-arm cap failure")
     args = parser.parse_args(argv)
     root = args.root.resolve()
     out = args.output.resolve()
@@ -105,7 +316,7 @@ def main(argv=None) -> int:
                "classification": "Computational baseline comparison; no new complexity or proof-cost verdict",
                "trials": 4, "order": "trial-major, full-ladder adjacent source arms, AB on even blocks and BA on odd blocks",
                "threshold_percent": 10, "script_sha256": digest(Path(__file__)),
-               "commands": [], "sources": sources,
+               "commands": [], "sources": sources, "memory_before": memory_context(),
                "launch_directory": str(root),
                "env_scope": "Parent export git fields describe the launch directory. Frozen source manifests and binary hashes identify each executable's implementation.",
                "reruns": 0, "status": "running"}
@@ -121,19 +332,27 @@ def main(argv=None) -> int:
 
     def run(command: list[str], label: str) -> tuple[int, str]:
         record = {"command": command, "stdout": label + ".stdout", "stderr": label + ".stderr",
-                  "load_before": os.getloadavg(), "status": "running"}
+                  "load_before": os.getloadavg(), "memory_before": memory_context(), "status": "running"}
         context["commands"].append(record)
         save()
-        with (out / record["stdout"]).open("w") as stdout, (out / record["stderr"]).open("w") as stderr:
-            result = subprocess.run(command, cwd=root, env=environment, stdout=stdout, stderr=stderr)
-        record.update(returncode=result.returncode, load_after=os.getloadavg(), status="completed")
+        try:
+            with (out / record["stdout"]).open("w") as stdout, (out / record["stderr"]).open("w") as stderr:
+                code = run_process(command, root, environment, stdout, stderr)
+        except BaseException as exc:
+            record.update(status="interrupted" if isinstance(exc, (KeyboardInterrupt, SystemExit)) else "failed",
+                          error=str(exc), load_after=os.getloadavg(), memory_after=memory_context())
+            save()
+            raise
+        record.update(returncode=code, load_after=os.getloadavg(), memory_after=memory_context(), status="completed")
         save()
-        return result.returncode, (out / record["stdout"]).read_text()
+        return code, (out / record["stdout"]).read_text()
 
     try:
         save()
         decision_bytes = args.decision.read_bytes()
         decision = json.loads(decision_bytes)
+        if (args.cap_from is None) != (decision.get("cap_protocol") is None):
+            raise RuntimeError("--cap-from and the bound cap_protocol are required together")
         (out / "decision.json").write_bytes(decision_bytes)
         context["decision_sha256"] = hashlib.sha256(decision_bytes).hexdigest()
         for field in ("question", "interruption", "regression", "inconclusive_rerun"):
@@ -176,8 +395,8 @@ def main(argv=None) -> int:
         for path, expected in sources["candidate"]["sources"].items():
             if digest(root / path) != expected:
                 raise RuntimeError("candidate source changed: " + path)
-        if subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip() != sources["candidate"]["head"]:
-            raise RuntimeError("candidate tree differs from frozen commit")
+        context["tooling_root_head"] = tooling_checkout(
+            root, sources["candidate"]["head"], decision, args.cap_from)
         if build.get("source_head") != sources["candidate"]["head"]:
             raise RuntimeError("guard build attestation names a different source")
         if subprocess.check_output(["git", "status", "--porcelain"], cwd=root, text=True).strip():
@@ -218,9 +437,14 @@ def main(argv=None) -> int:
             json.dumps(identity, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
         state_root = state_directory()
         reservation_dir = state_root / "hex" / "sturm-comparisons"
-        decision_marker = reservation_dir / (context["comparison_identity"] + ".json")
+        original_marker = reservation_dir / (context["comparison_identity"] + ".json")
+        decision_marker = original_marker
+        if args.cap_from is not None:
+            # One stable slot per native comparison, independent of the chosen
+            # cap, decision wording or collector digest. Never replace the old slot.
+            decision_marker = reservation_dir / (context["comparison_identity"] + "-cap.json")
         context["decision_reservation"] = str(decision_marker)
-        if args.rerun_of is None and decision_marker.exists() and not args.preflight:
+        if args.rerun_of is None and decision_marker.exists():
             raise RuntimeError("decision already used; an eligible --rerun-of is required")
         if args.rerun_of is not None:
             previous_path = args.rerun_of.resolve() / "context.json"
@@ -235,11 +459,12 @@ def main(argv=None) -> int:
             reservation = json.loads(decision_marker.read_text())
             if reservation.get("first_output") != str(args.rerun_of.resolve()) or reservation.get("context_sha256") != digest(previous_path):
                 raise RuntimeError("rerun does not match retained first decision attempt")
-            marker = args.rerun_of.resolve() / "unchanged-rerun.json"
-            if marker.exists():
+            receipt = args.rerun_of.resolve() / "unchanged-rerun.json"
+            marker = decision_marker.with_name(decision_marker.stem + "-rerun.json")
+            if marker.exists() or receipt.exists():
                 raise RuntimeError("unchanged rerun already reserved")
             context.update(reruns=1, rerun_of=str(args.rerun_of.resolve()),
-                           previous_context_sha256=digest(previous_path))
+                           previous_context_sha256=digest(previous_path), rerun_reservation=str(marker))
         lists = {}
         fixed_lists = {}
         excluded_lists = {}
@@ -255,6 +480,10 @@ def main(argv=None) -> int:
         context["verified_native_fixed"] = fixed_lists["candidate"]
         context["excluded_registrations"] = excluded_lists["candidate"]
         context["excluded"] = "The auxiliary runSigns traversal has no timing claim under the existing owner disposition. Fixed expected-hash cases have no timing claim in hex-sturm-performance.md; native cases are verified. External FLINT/Z3 comparisons remain informational owner evidence."
+        if args.cap_from is not None:
+            context["cap_protocol"] = validate_cap_protocol(
+                args.cap_from, decision["cap_protocol"], sources, context["comparison_identity"],
+                original_marker, names, root)
         save()
         for arm, binary in binaries.items():
             code, _ = run([str(binary), "verify", *names, AUXILIARY, *fixed_lists[arm]], arm + "-verify")
@@ -269,6 +498,8 @@ def main(argv=None) -> int:
                 with marker.open("x") as handle:
                     context["attempt_reserved"] = True
                     json.dump({"output": str(out), "previous_context_sha256": digest(previous_path)}, handle)
+                with receipt.open("x") as handle:
+                    json.dump({"output": str(out), "reservation": str(marker)}, handle)
             else:
                 reservation_dir.mkdir(parents=True, exist_ok=True)
                 with decision_marker.open("x") as handle:
@@ -281,6 +512,8 @@ def main(argv=None) -> int:
                 for arm in (("baseline", "candidate") if trial % 2 == 0 else ("candidate", "baseline")):
                     stem = f"{trial}-{index}-{arm}"
                     command = [str(binaries[arm]), "run", name, "--outer-trials", "1", "--export-file", str(out / (stem + ".json"))]
+                    if args.cap_from is not None:
+                        command += ["--max-seconds-per-call", str(decision["cap_protocol"]["seconds"])]
                     code, _ = run(command, stem)
                     context["measurements_collected"] = True
                     if code:
@@ -302,6 +535,10 @@ def main(argv=None) -> int:
                         raise RuntimeError("invalid parent result: " + name)
                     documents.append(results[0])
                 a, b = documents
+                if args.cap_from is not None and any(
+                        result["config"].get("max_seconds_per_call") != decision["cap_protocol"]["seconds"]
+                        for result in documents):
+                    raise RuntimeError("parent did not apply the bound per-call cap")
                 if any(result["budget_truncated"] or not result["points"] or
                        any(point["status"] != "ok" or point["result_hash"] is None for point in result["points"])
                        for result in documents):
@@ -349,7 +586,8 @@ def main(argv=None) -> int:
                 return digest(path)
             except OSError:
                 return None
-        context.update(load_after=os.getloadavg(), binaries_after={arm: digest_after(binary) for arm, binary in binaries.items()})
+        context.update(load_after=os.getloadavg(), memory_after=memory_context(),
+                       binaries_after={arm: digest_after(binary) for arm, binary in binaries.items()})
         changed = [path for path, expected in sources.get("candidate", {}).get("sources", {}).items()
                    if digest_after(root / path) != expected]
         context["candidate_source_changes"] = changed

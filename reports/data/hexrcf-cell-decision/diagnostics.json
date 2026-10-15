@@ -1,0 +1,80 @@
+{
+  "schema": 1,
+  "adapter_source_commit": "03b99c6be4250ac1c26c6081d545c0426c6a80fd",
+  "purpose": "Earlier build-only native diagnostic cases and raw profiles. Not final-source acceptance, scaling evidence or a speedup comparison.",
+  "sources": [
+    {
+      "file": "diagnostic-sources/RequestedSector.lean.txt",
+      "sha256": "0b50127bdacff85ddfb3408a438d7e6009e9684709b62dfdc4cf183bc4f29989"
+    },
+    {
+      "file": "diagnostic-sources/RequestedCut.lean.txt",
+      "sha256": "2f003adb5076795968548e54afea9f002169a535b0fe5daf98f4232f65f4cc95"
+    },
+    {
+      "file": "diagnostic-sources/RequestedCutTest.lean.txt",
+      "sha256": "5a4bfeb83a059c74eecf7fa6978a3f67fd7c5a5a83430628309c0f83feca7ba6"
+    },
+    {
+      "file": "diagnostic-sources/RequestedStages.lean.txt",
+      "sha256": "1c0e136a3bbf35539e8cf85ad47027d72c2ddf48ada1b4c245da75f6a760958e"
+    }
+  ],
+  "records": [
+    {
+      "file": "requested-cut-test-1.log.gz",
+      "sha256": "918dd6279175b32e94e7c081a5e29101782b0eb8fd70c573913913d553f59b3b",
+      "decoded_sha256": "d1f127e8ee7ddea8fcc99f2ccc5069b72279ab49e5d2c953def6b2c4850d8674"
+    },
+    {
+      "file": "requested-stages-1.log.gz",
+      "sha256": "dcc00da779d67f37e1e504ff0da25aa49ac34baa7a9bd0d27e449d087a91d5d3",
+      "decoded_sha256": "465f5e62e2a4c9bbc9db6599598cd46f212a16dbc11f0df2ad87e0701dbeb137"
+    },
+    {
+      "file": "requested-stages-context.json.gz",
+      "sha256": "c8e02ba211f1b32a4107db9e779d4868bdb1b3d423e41db404a9f09f8724de4b",
+      "decoded_sha256": "eb9106058c7a85f111ceb8d2428f9f8c18ac53f3711ccd311be032a9ec2ee068"
+    },
+    {
+      "file": "requested-cut-slow.perf.gz",
+      "sha256": "c2f08f0ec4b2c187040adb3049684bcfa094e4257b94f81bfbeaf2fe54884489",
+      "decoded_sha256": "bb625bf7020090762791813b3d09a4e65d5783d40937fd240d93027a492b41af"
+    },
+    {
+      "file": "requested-cut-profile.log.gz",
+      "sha256": "ecea3e8a46a7aba49be964d9b7c9c70f28d8364416fa6db93310aec72862c4e9",
+      "decoded_sha256": "de24270c834028e50720ba6baf6a6808b4c1b6feead98ee3b1a7e6473683ea30"
+    },
+    {
+      "file": "requested-cut-profile-report.txt.gz",
+      "sha256": "be2f058fa25643bcf8276b587fa6b7ae46bd6f1ffbdf4f04c99848123413d2df",
+      "decoded_sha256": "99fe5bb6446c09e32a89b176b1d041ff7ce2514379a0d2e4f7040cd826d8c3ef"
+    },
+    {
+      "file": "requested-cut-slow-2.perf.gz",
+      "sha256": "0f39c1f38dc0b3fe5af5344bad06dca83dd6ef3d67fd836c0f8fd76d30439357",
+      "decoded_sha256": "a1cc3ad8b7509c297eb84b67f4b92d3635fce951dd69f73b41f82040af300109"
+    },
+    {
+      "file": "requested-cut-profile-2.log.gz",
+      "sha256": "8ed7272bac1e4475679eaefc50a8dd3733a9736456c3575f26eb0949ccbb09da",
+      "decoded_sha256": "e7cfadc5c018b843b4bcbdc3b2ca8345ae5e50968c77c908f7ac05b04fc2d8de"
+    },
+    {
+      "file": "requested-cut-profile-report-2.txt.gz",
+      "sha256": "f367b4796285124b48180d346d1d748f93c00376d26e11f279255b2631cd5fbe",
+      "decoded_sha256": "bbcfc1ce5a90314623c820e126026185248023f1d531574510ed42189120f44f"
+    },
+    {
+      "file": "requested-cut-profile-callers.txt.gz",
+      "sha256": "dd1302bce3e354af099bf0e4d118fa9d013a0aa3cc2c691642e6bb8cedf7451d",
+      "decoded_sha256": "1cecd62ee174da34d15cbff265326ff41ab95e4d60200efca023fb221395c65b"
+    },
+    {
+      "file": "requested-cut-profile-context.json.gz",
+      "sha256": "28645b14ceb69fce6b0d6851af2b220510ee8fc1c14562dfb50b2be03e4a3a92",
+      "decoded_sha256": "fb3b80fcbce3ad2339697e6d0f8580921227316f0fdc122b6b9911a347747c5b"
+    }
+  ]
+}

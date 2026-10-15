@@ -10,6 +10,8 @@ public import HexSignDetTheory.SelectedRoot
 
 public section
 
+universe u v w
+
 namespace Hex.SignDet.Dag
 
 variable {E : Type u} {K : Type v} {Ctx : Type w} [Zero E] [DecidableEq E]

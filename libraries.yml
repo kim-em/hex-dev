@@ -126,8 +126,8 @@ libraries:
   HexPosDef:
     deps: [HexBasic, HexArith, HexMatrix, HexRowReduce]
     mathlib: false
-    done_through: 0
-    status: planned
+    done_through: 1
+    status: active
   HexDeterminant:
     deps: [HexMatrix]
     mathlib: false
@@ -387,8 +387,9 @@ libraries:
   HexPosDefTheory:
     deps: [HexPosDef, HexMatrixTheory, HexBareissTheory]
     mathlib: true
-    done_through: 0
-    status: planned
+    proof_probes: [bench/HexPosDefTheory/ProofProbe]
+    done_through: 1
+    status: active
   HexRowReduceTheory:
     deps: [HexMatrixTheory, HexRowReduce]
     mathlib: true
@@ -654,7 +655,7 @@ libraries:
     deps: [HexSignDet, HexSturmTheory, HexPolyTheory, HexMatrixTheory, HexRankTheory]
     mathlib: true
     proof_probes: [bench/HexSignDetTheory/ProofProbe]
-    done_through: 5
+    done_through: 7
     status: active
   HexRealClosure:
     deps: [HexSignDet, HexSturm, HexPoly, HexRealAlgebraic, HexOrderedFn]

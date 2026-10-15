@@ -1,0 +1,190 @@
+{
+  "excluded_entry_points": {
+    "HexSignDet.ArithmeticTrace": {
+      "path": "bench/HexSignDet/ArithmeticTrace.lean",
+      "reason": "Standalone entry point with a root main; other executable entry points cannot share its declaration name in one import environment."
+    },
+    "HexSignDet.Bench": {
+      "path": "bench/HexSignDet/Bench.lean",
+      "reason": "Standalone entry point with a root main; other executable entry points cannot share its declaration name in one import environment."
+    },
+    "HexSignDet.EmitCommonFields": {
+      "path": "conformance/HexSignDet/EmitCommonFields.lean",
+      "reason": "Standalone entry point with a root main; other executable entry points cannot share its declaration name in one import environment."
+    },
+    "HexSignDet.EmitFieldSigns": {
+      "path": "conformance/HexSignDet/EmitFieldSigns.lean",
+      "reason": "Standalone entry point with a root main; other executable entry points cannot share its declaration name in one import environment."
+    },
+    "HexSignDet.EmitFixtures": {
+      "path": "conformance/HexSignDet/EmitFixtures.lean",
+      "reason": "Standalone entry point with a root main; other executable entry points cannot share its declaration name in one import environment."
+    },
+    "HexSignDet.EmitInfinitesimal": {
+      "path": "conformance/HexSignDet/EmitInfinitesimal.lean",
+      "reason": "Standalone entry point with a root main; other executable entry points cannot share its declaration name in one import environment."
+    },
+    "HexSignDet.EmitNestedFields": {
+      "path": "conformance/HexSignDet/EmitNestedFields.lean",
+      "reason": "Standalone entry point with a root main; other executable entry points cannot share its declaration name in one import environment."
+    },
+    "HexSignDet.FieldChecks": {
+      "path": "conformance/HexSignDet/FieldChecks.lean",
+      "reason": "Standalone executable root is not owned by an importable library target; Lake tries the computational source directory. Its native checks remain separately built/run by CI."
+    },
+    "HexSignDet.InteractingBench": {
+      "path": "bench/HexSignDet/InteractingBench.lean",
+      "reason": "Standalone entry point with a root main; other executable entry points cannot share its declaration name in one import environment."
+    },
+    "HexSignDet.InteractingTraceMain": {
+      "path": "bench/HexSignDet/InteractingTraceMain.lean",
+      "reason": "Standalone entry point with a root main; other executable entry points cannot share its declaration name in one import environment."
+    },
+    "HexSignDet.JsonBytesDriver": {
+      "path": "conformance/HexSignDet/JsonBytesDriver.lean",
+      "reason": "Standalone entry point with a root main; other executable entry points cannot share its declaration name in one import environment."
+    },
+    "HexSignDet.NestedTrace": {
+      "path": "bench/HexSignDet/NestedTrace.lean",
+      "reason": "Standalone entry point with a root main; other executable entry points cannot share its declaration name in one import environment."
+    },
+    "KernelReplay.InProcessMain": {
+      "path": "experiments/KernelReplay/InProcessMain.lean",
+      "reason": "Standalone entry point with a root main; other executable entry points cannot share its declaration name in one import environment."
+    },
+    "KernelReplay.Main": {
+      "path": "experiments/KernelReplay/Main.lean",
+      "reason": "Standalone public meta main; entry-point wrapper excluded from the single import environment."
+    }
+  },
+  "folders": [
+    "conformance/HexSignDet",
+    "bench/HexSignDet",
+    "conformance/HexRCF/SelectedRoot",
+    "conformance/HexRealClosureTheory",
+    "experiments/KernelReplay"
+  ],
+  "required_modules": {
+    "HexRCF.SelectedRoot.Audit": "conformance/HexRCF/SelectedRoot/Audit.lean",
+    "HexRCF.SelectedRoot.ByteAudit": "conformance/HexRCF/SelectedRoot/ByteAudit.lean",
+    "HexRCF.SelectedRoot.ByteBounds": "conformance/HexRCF/SelectedRoot/ByteBounds.lean",
+    "HexRCF.SelectedRoot.ByteChecks": "conformance/HexRCF/SelectedRoot/ByteChecks.lean",
+    "HexRCF.SelectedRoot.ByteData": "conformance/HexRCF/SelectedRoot/ByteData.lean",
+    "HexRCF.SelectedRoot.ByteProofs": "conformance/HexRCF/SelectedRoot/ByteProofs.lean",
+    "HexRCF.SelectedRoot.Catalog": "conformance/HexRCF/SelectedRoot/Catalog.lean",
+    "HexRCF.SelectedRoot.CatalogAudit": "conformance/HexRCF/SelectedRoot/CatalogAudit.lean",
+    "HexRCF.SelectedRoot.CatalogByteData": "conformance/HexRCF/SelectedRoot/CatalogByteData.lean",
+    "HexRCF.SelectedRoot.CatalogBytes": "conformance/HexRCF/SelectedRoot/CatalogBytes.lean",
+    "HexRCF.SelectedRoot.CatalogControls": "conformance/HexRCF/SelectedRoot/CatalogControls.lean",
+    "HexRCF.SelectedRoot.CatalogData": "conformance/HexRCF/SelectedRoot/CatalogData.lean",
+    "HexRCF.SelectedRoot.CatalogSource": "conformance/HexRCF/SelectedRoot/CatalogSource.lean",
+    "HexRCF.SelectedRoot.Checks": "conformance/HexRCF/SelectedRoot/Checks.lean",
+    "HexRCF.SelectedRoot.Collect": "conformance/HexRCF/SelectedRoot/Collect.lean",
+    "HexRCF.SelectedRoot.Controls": "conformance/HexRCF/SelectedRoot/Controls.lean",
+    "HexRCF.SelectedRoot.Data": "conformance/HexRCF/SelectedRoot/Data.lean",
+    "HexRCF.SelectedRoot.Frozen": "conformance/HexRCF/SelectedRoot/Frozen.lean",
+    "HexRCF.SelectedRoot.FrozenCollect": "conformance/HexRCF/SelectedRoot/FrozenCollect.lean",
+    "HexRCF.SelectedRoot.Intermediates": "conformance/HexRCF/SelectedRoot/Intermediates.lean",
+    "HexRCF.SelectedRoot.InverseControls": "conformance/HexRCF/SelectedRoot/InverseControls.lean",
+    "HexRCF.SelectedRoot.InverseData": "conformance/HexRCF/SelectedRoot/InverseData.lean",
+    "HexRCF.SelectedRoot.InverseReplay": "conformance/HexRCF/SelectedRoot/InverseReplay.lean",
+    "HexRCF.SelectedRoot.KernelCheck": "conformance/HexRCF/SelectedRoot/KernelCheck.lean",
+    "HexRCF.SelectedRoot.Literals": "conformance/HexRCF/SelectedRoot/Literals.lean",
+    "HexRCF.SelectedRoot.PacketFields": "conformance/HexRCF/SelectedRoot/PacketFields.lean",
+    "HexRCF.SelectedRoot.Packets": "conformance/HexRCF/SelectedRoot/Packets.lean",
+    "HexRCF.SelectedRoot.Packing": "conformance/HexRCF/SelectedRoot/Packing.lean",
+    "HexRCF.SelectedRoot.PackingAudit": "conformance/HexRCF/SelectedRoot/PackingAudit.lean",
+    "HexRCF.SelectedRoot.PackingData": "conformance/HexRCF/SelectedRoot/PackingData.lean",
+    "HexRCF.SelectedRoot.PackingMissing": "conformance/HexRCF/SelectedRoot/PackingMissing.lean",
+    "HexRCF.SelectedRoot.PackingReplay": "conformance/HexRCF/SelectedRoot/PackingReplay.lean",
+    "HexRCF.SelectedRoot.Proofs": "conformance/HexRCF/SelectedRoot/Proofs.lean",
+    "HexRCF.SelectedRoot.Read": "conformance/HexRCF/SelectedRoot/Read.lean",
+    "HexRCF.SelectedRoot.Refusals": "conformance/HexRCF/SelectedRoot/Refusals.lean",
+    "HexRCF.SelectedRoot.ReplayTools": "conformance/HexRCF/SelectedRoot/ReplayTools.lean",
+    "HexRCF.SelectedRoot.Row": "conformance/HexRCF/SelectedRoot/Row.lean",
+    "HexRCF.SelectedRoot.RowCollect": "conformance/HexRCF/SelectedRoot/RowCollect.lean",
+    "HexRCF.SelectedRoot.RowIntermediates": "conformance/HexRCF/SelectedRoot/RowIntermediates.lean",
+    "HexRCF.SelectedRoot.RowTools": "conformance/HexRCF/SelectedRoot/RowTools.lean",
+    "HexRCF.SelectedRoot.Source": "conformance/HexRCF/SelectedRoot/Source.lean",
+    "HexRCF.SelectedRoot.Upper": "conformance/HexRCF/SelectedRoot/Upper.lean",
+    "HexRealClosureTheory.CoefficientSignsConformance": "conformance/HexRealClosureTheory/CoefficientSignsConformance.lean",
+    "HexRealClosureTheory.ContextOperationsConformance": "conformance/HexRealClosureTheory/ContextOperationsConformance.lean",
+    "HexRealClosureTheory.ContextOperationsPublic": "conformance/HexRealClosureTheory/ContextOperationsPublic.lean",
+    "HexRealClosureTheory.DependenciesConformance": "conformance/HexRealClosureTheory/DependenciesConformance.lean",
+    "HexRealClosureTheory.NestedSignsConformance": "conformance/HexRealClosureTheory/NestedSignsConformance.lean",
+    "HexRealClosureTheory.PackingConformance": "conformance/HexRealClosureTheory/PackingConformance.lean",
+    "HexRealClosureTheory.SignCodecConformance": "conformance/HexRealClosureTheory/SignCodecConformance.lean",
+    "HexRealClosureTheory.SignEvidenceConformance": "conformance/HexRealClosureTheory/SignEvidenceConformance.lean",
+    "HexRealClosureTheory.SignFactsConformance": "conformance/HexRealClosureTheory/SignFactsConformance.lean",
+    "HexRealClosureTheory.SignRequestsConformance": "conformance/HexRealClosureTheory/SignRequestsConformance.lean",
+    "HexSignDet.CommonField": "conformance/HexSignDet/CommonField.lean",
+    "HexSignDet.Conformance": "conformance/HexSignDet/Conformance.lean",
+    "HexSignDet.CrossCheck": "conformance/HexSignDet/CrossCheck.lean",
+    "HexSignDet.DescriptorCodec": "conformance/HexSignDet/DescriptorCodec.lean",
+    "HexSignDet.FastCheck": "conformance/HexSignDet/FastCheck.lean",
+    "HexSignDet.Height": "bench/HexSignDet/Height.lean",
+    "HexSignDet.Infinitesimal": "conformance/HexSignDet/Infinitesimal.lean",
+    "HexSignDet.Input": "bench/HexSignDet/Input.lean",
+    "HexSignDet.InteractingTrace": "bench/HexSignDet/InteractingTrace.lean",
+    "HexSignDet.Joint": "bench/HexSignDet/Joint.lean",
+    "HexSignDet.JsonBytes": "conformance/HexSignDet/JsonBytes.lean",
+    "HexSignDet.Maximal": "bench/HexSignDet/Maximal.lean",
+    "HexSignDet.MaximalMatrix": "bench/HexSignDet/MaximalMatrix.lean",
+    "HexSignDet.NestedSigns": "bench/HexSignDet/NestedSigns.lean",
+    "HexSignDet.NestedTables": "bench/HexSignDet/NestedTables.lean",
+    "HexSignDet.Paired": "bench/HexSignDet/Paired.lean",
+    "HexSignDet.Phases": "bench/HexSignDet/Phases.lean",
+    "HexSignDet.SharedRoots": "bench/HexSignDet/SharedRoots.lean",
+    "HexSignDet.Small": "bench/HexSignDet/Small.lean",
+    "KernelReplay.Assemble": "experiments/KernelReplay/Assemble.lean",
+    "KernelReplay.BaseLookup": "experiments/KernelReplay/BaseLookup.lean",
+    "KernelReplay.FactOperations": "experiments/KernelReplay/FactOperations.lean",
+    "KernelReplay.FactOperationsProbe": "experiments/KernelReplay/FactOperationsProbe.lean",
+    "KernelReplay.FiniteBase": "experiments/KernelReplay/FiniteBase.lean",
+    "KernelReplay.FiniteChain": "experiments/KernelReplay/FiniteChain.lean",
+    "KernelReplay.FiniteData": "experiments/KernelReplay/FiniteData.lean",
+    "KernelReplay.FiniteDependencies": "experiments/KernelReplay/FiniteDependencies.lean",
+    "KernelReplay.FiniteJoint": "experiments/KernelReplay/FiniteJoint.lean",
+    "KernelReplay.FiniteLift": "experiments/KernelReplay/FiniteLift.lean",
+    "KernelReplay.FiniteOperands": "experiments/KernelReplay/FiniteOperands.lean",
+    "KernelReplay.FiniteReconstruction": "experiments/KernelReplay/FiniteReconstruction.lean",
+    "KernelReplay.FiniteSupport": "experiments/KernelReplay/FiniteSupport.lean",
+    "KernelReplay.FiniteThomJoint": "experiments/KernelReplay/FiniteThomJoint.lean",
+    "KernelReplay.FiniteThomWitness": "experiments/KernelReplay/FiniteThomWitness.lean",
+    "KernelReplay.FiniteTower": "experiments/KernelReplay/FiniteTower.lean",
+    "KernelReplay.FiniteTowerPackets": "experiments/KernelReplay/FiniteTowerPackets.lean",
+    "KernelReplay.FiniteTowerProbe": "experiments/KernelReplay/FiniteTowerProbe.lean",
+    "KernelReplay.FiniteTowerReal": "experiments/KernelReplay/FiniteTowerReal.lean",
+    "KernelReplay.FiniteTowerThom": "experiments/KernelReplay/FiniteTowerThom.lean",
+    "KernelReplay.FiniteTowerUse": "experiments/KernelReplay/FiniteTowerUse.lean",
+    "KernelReplay.FiniteWitness": "experiments/KernelReplay/FiniteWitness.lean",
+    "KernelReplay.Generated": "experiments/KernelReplay/Generated.lean",
+    "KernelReplay.InProcessProbe": "experiments/KernelReplay/InProcessProbe.lean",
+    "KernelReplay.Inverse": "experiments/KernelReplay/Inverse.lean",
+    "KernelReplay.InverseDemand": "experiments/KernelReplay/InverseDemand.lean",
+    "KernelReplay.Json": "experiments/KernelReplay/Json.lean",
+    "KernelReplay.LowerProbe": "experiments/KernelReplay/LowerProbe.lean",
+    "KernelReplay.LowerProof": "experiments/KernelReplay/LowerProof.lean",
+    "KernelReplay.NativeAssembly": "experiments/KernelReplay/NativeAssembly.lean",
+    "KernelReplay.NativeAssemblyModels": "experiments/KernelReplay/NativeAssemblyModels.lean",
+    "KernelReplay.NativeAssemblyStaged": "experiments/KernelReplay/NativeAssemblyStaged.lean",
+    "KernelReplay.NativeAssemblyUse": "experiments/KernelReplay/NativeAssemblyUse.lean",
+    "KernelReplay.NativeChildren": "experiments/KernelReplay/NativeChildren.lean",
+    "KernelReplay.NativeFactory": "experiments/KernelReplay/NativeFactory.lean",
+    "KernelReplay.NativeModels": "experiments/KernelReplay/NativeModels.lean",
+    "KernelReplay.NativePackets": "experiments/KernelReplay/NativePackets.lean",
+    "KernelReplay.NativeReaders": "experiments/KernelReplay/NativeReaders.lean",
+    "KernelReplay.NativeReplay": "experiments/KernelReplay/NativeReplay.lean",
+    "KernelReplay.NativeValues": "experiments/KernelReplay/NativeValues.lean",
+    "KernelReplay.Nested": "experiments/KernelReplay/Nested.lean",
+    "KernelReplay.NestedProbe": "experiments/KernelReplay/NestedProbe.lean",
+    "KernelReplay.Packing": "experiments/KernelReplay/Packing.lean",
+    "KernelReplay.PackingProbe": "experiments/KernelReplay/PackingProbe.lean",
+    "KernelReplay.ProofProbe": "experiments/KernelReplay/ProofProbe.lean",
+    "KernelReplay.RationalRoot": "experiments/KernelReplay/RationalRoot.lean",
+    "KernelReplay.Root": "experiments/KernelReplay/Root.lean",
+    "KernelReplay.RootProbe": "experiments/KernelReplay/RootProbe.lean",
+    "KernelReplay.ValueSigns": "experiments/KernelReplay/ValueSigns.lean"
+  },
+  "scope": "Evidence files in the five stated directories, with standalone executable roots explicitly excluded. Counts concern the captured environment; quoted-name uses and excluded wrapper/helper declarations are outside this term inventory."
+}

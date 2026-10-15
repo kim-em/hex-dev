@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "adapter_source_commit": "5a37b7f02248ece886a1b91470718fde3f47f70d",
+  "question": "Locate the expensive actual child calls within complete row production, without changing numerical algorithms.",
+  "sources": [
+    {
+      "file": "diagnostic-sources/RowStages.lean.txt",
+      "sha256": "71d44945dabf7eaa2cbffb97f5bd82972906605ed2a5a16db15e2e1ec3d01d89"
+    },
+    {
+      "file": "diagnostic-sources/DetailedRows.lean.txt",
+      "sha256": "1dbf9a41233c6c93d6b8866d9eb441e613bf314271df4fc4f31856d28773da33"
+    }
+  ],
+  "records": [
+    {
+      "file": "detailed-rows-1.log.gz",
+      "sha256": "ecae0abfb8505826533a25aace82d9ac0d2c3501386fb6dd1a00aa31df8262cf",
+      "decoded_sha256": "04ea06cc8fb247cff73e6d0031aa3acc44f3b2bf6ae5c1a5211aaab361cc92b9"
+    },
+    {
+      "file": "detailed-rows-context.json.gz",
+      "sha256": "d5f5c27780266211a640e882ba9a6d50503aedeeb1bc4853aaffbecae3b1deb6",
+      "decoded_sha256": "ab6b4c1bc4cd778272a2f1c8f212539e32041e9a643bfa7fa11afd2c80ff1ac8"
+    }
+  ],
+  "observations_ms": {
+    "section": 71140,
+    "right": 91082,
+    "point-descriptor": 368,
+    "point-row": 5722,
+    "left": 89397
+  },
+  "limitations": "Single build-only diagnostic on a shared host. All prior completed samples remain retained; no speedup/scaling inference. Actual complete-cell reading and both strict folds validate the produced matrix."
+}

@@ -11,6 +11,8 @@ public import HexSignDetTheory.ReductionProducer
 
 public section
 
+universe u v w
+
 namespace Hex.SignDet
 
 open HexPolyTheory.Interpret

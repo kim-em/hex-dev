@@ -812,6 +812,41 @@ def _check_dixon(*, case_id, lib, matrix_record, lean_value, failure_dir,
                  oracle_version=oracle_version, failure_dir=failure_dir, profile=profile, seed=seed)
 
 
+def _check_pos_def(*, case_id, lib, matrix_record, lean_value, failure_dir,
+                   profile, seed, oracle_version):
+    """Exact Sylvester classification and independent negative-witness checks.
+
+    Gaussian fixtures supply their integer realification. Its real quadratic
+    form is the real part of the original Hermitian quadratic form.
+    """
+    rows = _rows(matrix_record)
+    n = len(rows)
+    square = all(len(row) == n for row in rows)
+    symmetric = square and all(rows[i][j] == rows[j][i]
+                               for i in range(n) for j in range(n))
+    positive = symmetric and all(
+        _fmpz_mat([row[:k] for row in rows[:k]]).det() > 0
+        for k in range(1, n + 1))
+    context = dict(library=lib, input_record=matrix_record, oracle_name="python-flint",
+                   oracle_version=oracle_version, failure_dir=failure_dir,
+                   profile=profile, seed=seed)
+    assert_equal(lean_value["positive"], positive, case_id=f"{case_id}:classification",
+                 kind="pos-def", **context)
+    if positive:
+        return
+    if "vector" in lean_value:
+        v = lean_value["vector"]
+        valid = (square and len(v) == n and any(v) and
+                 sum(v[i] * rows[i][j] * v[j]
+                     for i in range(n) for j in range(n)) <= 0)
+    elif "notHermitian" in lean_value:
+        i, j = lean_value["notHermitian"]
+        valid = square and 0 <= i < n and 0 <= j < n and rows[i][j] != rows[j][i]
+    else:
+        valid = False
+    assert_equal(valid, True, case_id=f"{case_id}:witness", kind="pos-def-witness", **context)
+
+
 def check(
     source: str | Path | None,
     *,
@@ -824,6 +859,7 @@ def check(
     failures = 0
     checked = 0
     handlers = {
+        "pos-def": _check_pos_def,
         "det":       _check_det,
         "det-divisor": _check_det,
         "dixon-solve": _check_dixon,

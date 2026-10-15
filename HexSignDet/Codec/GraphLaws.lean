@@ -35,6 +35,8 @@ structure Shape (n : Node E Ctx) : Prop where
   /-- Every stored query-preparation step refers to an existing query. -/
   preparation : ∀ t ∈ n.preparation, ∀ s ∈ t.steps, s.index < n.queries.length
 
+/-- Structural bounds and lawful readers reconstruct the literal node;
+the roundtrip asserts no arithmetic acceptance. -/
 theorem Shape.read_node (h : Shape n) (value : ValueCodec E) (context : ValueCodec Ctx)
     (hv : value.Lawful) (hc : context.Lawful) :
     readNode value context (node value context n) = .ok n :=
@@ -97,6 +99,21 @@ private theorem reduction_indices {sign : E → Int} {p prev result : DensePoly 
       · exact ih h.2 (fun f hf => bounds f (by simp [hf])) t ht
 
 variable [DecidableEq Ctx]
+
+/-- An accepted node and all its stored moments retain the caller's literal
+context, head and endpoints. No interpretation of the coefficients is needed. -/
+theorem bindings_of_check {sign : E → Int} {context : Ctx} {p : DensePoly E}
+    {lo hi : Endpoint E} {qs : List (DensePoly E)} {n : Node E Ctx}
+    (h : n.check sign context p lo hi qs = true) : bindings context p lo hi n = true := by
+  obtain ⟨subject, _⟩ := Node.check_bindings h
+  apply bindings_iff.mpr
+  refine ⟨⟨subject.1, subject.2.1, subject.2.2.1, subject.2.2.2.1⟩, ?_⟩
+  intro cert mem
+  obtain ⟨i, bound, same⟩ := Vector.mem_iff_getElem.mp (Vector.mem_toList_iff.mp mem)
+  subst cert
+  have checked := Sturm.check_bindings sign context p _ lo hi _ n.moments[i]
+    (checkMoment_query (Node.check_moment h ⟨i, bound⟩))
+  exact ⟨checked.1, checked.2.1, checked.2.2.2.1, checked.2.2.2.2.1⟩
 
 /-- Every accepted node meets the decoder's dimension and index bounds.
 These follow from the existing checker; callers need no additional shape
@@ -163,6 +180,22 @@ theorem Shape.of_validate {sign : E → Int} {context : Ctx} {p : DensePoly E}
   obtain ⟨checked, _, same⟩ := Array.mem_map.mp member
   rw [← same]
   exact Shape.of_check (Replay.check_node checked.accepted)
+
+/-- Whole-graph validation binds every retained node and moment to the caller's
+literal root domain, including entries not reachable from the selected root. -/
+theorem bindings_of_validate {sign : E → Int} {context : Ctx} {p : DensePoly E}
+    {lo hi : Endpoint E} {d : Dag E Ctx}
+    {memo : Array (Dag.Checked sign context p lo hi)}
+    (h : d.validate? sign context p lo hi = some memo) :
+    ∀ e ∈ d.entries, bindings context p lo hi e.node = true := by
+  intro e he
+  have nodes := Dag.validate_nodes sign context p lo hi d memo h
+  have member : e.node ∈ d.entries.map Dag.Entry.node :=
+    Array.mem_map.mpr ⟨e, he, rfl⟩
+  rw [← nodes] at member
+  obtain ⟨checked, _, same⟩ := Array.mem_map.mp member
+  rw [← same]
+  exact bindings_of_check (Replay.check_node checked.accepted)
 
 /-- info: 'Hex.SignDet.Codec.Shape.of_validate' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

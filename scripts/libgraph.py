@@ -23,6 +23,8 @@ NATIVE_CARRIER_LIBS = {"HexArithNative", "HexModArithNative"}
 # `bench/`, `conformance/` and `examples/`. They are not project libraries (no libraries.yml
 # entry, no repo-root file); exempt them from the Lake-config alignment check only.
 BUILD_ONLY_LIBS = {
+    "HexPosDefTheoryTests",
+    "HexPosDefTheoryProofProbe",
     "RealClosureConsumer",
     "HexOrderedFnTests",
     "HexRealClosureTests",
@@ -90,6 +92,7 @@ BUILD_ONLY_LIBS = {
     "HexRCFBenchSupport",
     "HexRCFProofProbe",
     "HexRCFProofProbeMeasurements",
+    "HexRCFCellRequestedStress",
     "HexRealFormulaProofProbe",
     "HexRCFRealFormula",
     "HexRCFRealCoefficients",

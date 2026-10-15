@@ -115,6 +115,62 @@ class RetainedSourceTests(unittest.TestCase):
             with self.assertRaises(FileNotFoundError):
                 retained_source('bench/OtherMathlib/Probe.lean', Path(directory))
 
+    def test_all_recorded_corpus_sources(self):
+        from scripts.ci.check_primality_factor_replay import ROOT, check_retained_sources
+        report = json.loads((ROOT / 'reports/primality/factor-policy/corpus-replay-v3.json').read_text())
+        check_retained_sources(report['hex_sources'],
+                               ROOT / 'bench/HexPrimalityTheory/ProofProbe/FactorCorpus')
+
+    def make_corpus(self, root):
+        old = 'bench/HexPrimalityMathlib/ProofProbe/FactorCorpus/'
+        directory = root / 'bench/HexPrimalityTheory/ProofProbe/FactorCorpus'
+        directory.mkdir(parents=True)
+        sources = {}
+        for index in range(2):
+            name = f'Chunk{index:03}.lean'
+            text = ('public import HexPrimalityTheory.Prime\n'
+                    f'theorem case{index} : True := by trivial\n')
+            (directory / name).write_text(text)
+            legacy = text.replace('HexPrimalityTheory.Prime', 'HexPrimalityMathlib.Prime')
+            sources[old + name] = hashlib.sha256(legacy.encode()).hexdigest()
+        return sources, directory
+
+    def test_changed_proof_rejected_by_corpus_checker(self):
+        from scripts.ci.check_primality_factor_replay import check_retained_sources
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            sources, directory = self.make_corpus(root)
+            check_retained_sources(sources, directory, root)
+            path = directory / 'Chunk000.lean'
+            original = path.read_text()
+            changed = original.replace('by trivial', 'by exact True.intro')
+            self.assertNotEqual(changed, original)
+            path.write_text(changed)
+            with self.assertRaisesRegex(AssertionError, 'source hash differs'):
+                check_retained_sources(sources, directory, root)
+
+    def test_corpus_membership_refusals(self):
+        from scripts.ci.check_primality_factor_replay import check_retained_sources
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            sources, directory = self.make_corpus(root)
+            missing = dict(sources)
+            source, _ = missing.popitem()
+            with self.assertRaisesRegex(AssertionError, 'membership differs'):
+                check_retained_sources(missing, directory, root)
+            duplicate = dict(sources)
+            path = directory / Path(source).name
+            duplicate[str(path.relative_to(root))] = replay.digest(replay.retained_source(str(path.relative_to(root)), root))
+            with self.assertRaisesRegex(AssertionError, 'duplicate resolved'):
+                check_retained_sources(duplicate, directory, root)
+            current_keys = {str((directory / Path(name).name).relative_to(root)):
+                            replay.digest(replay.retained_source(str((directory / Path(name).name).relative_to(root)), root))
+                            for name in sources}
+            with self.assertRaisesRegex(AssertionError, 'namespace differs'):
+                check_retained_sources(current_keys, directory, root)
+            (directory / 'Extra.lean').write_text('-- extra proof file\n')
+            with self.assertRaisesRegex(AssertionError, 'membership differs'):
+                check_retained_sources(sources, directory, root)
 
 if __name__ == '__main__':
     unittest.main()

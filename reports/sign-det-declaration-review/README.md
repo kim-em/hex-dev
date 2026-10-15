@@ -1,7 +1,11 @@
 # Sign-determination companion proof and API review
 
+The [Theory acceptance](theory-acceptance.md) completes the companion’s independent
+Phases 6–7. The computational library remains at Phase 5. The source assessments
+and earlier compiler captures below retain their stated checkpoints and scopes.
+
 The [assessment](companion.md) treats all 228 handwritten declarations in the 37
-production modules exported by `HexSignDetMathlib`, including private helpers and the
+production modules exported by `HexSignDetTheory`, including private helpers and the
 fields of `Node.Counted`. The [manifest](manifest.json) records the current declaration names and
 reviewed module hashes. Its `sha256` fields retain the source snapshot at
 `7433524020514b3907653c5a3fe3b95212ae8f59`; `reviewed_sha256` binds the
@@ -14,8 +18,8 @@ assessments below cover 728 named declarations, including newly added APIs; the
 source inventory now has an individual assessment for every inventoried named
 computational declaration. The checker enforces coverage of every production
 module under `HexSignDet/`; the import-only root umbrella is outside that set. Named declaration forms are those recorded and extracted by each group;
-anonymous instances, constructors and fields have separate dispositions. This companion review does not attest completion of the whole pair or any
-release phase.
+anonymous instances, constructors and fields have separate dispositions. These individual tables supply proof/API assessment; the final companion
+attestation above and the core’s final computational acceptance are separate.
 
 The per-group source bindings are review snapshots checked locally, rather
 than automatic CI currency checks. The complete handle-review source is
@@ -118,13 +122,13 @@ no compiled declaration refers to them.
 
 ## Remaining acceptance
 
-The companion and core record Phase 5 through their
-[proof acceptance](../sign-det-proof-acceptance.md). The prerequisite
+The companion and core have completed their
+[Phase-5 proof acceptance](../sign-det-proof-acceptance.md). The prerequisite
 [#10861](https://github.com/kim-em/hex-dev/pull/10861) completed the
 [#10377](https://github.com/kim-em/hex-dev/issues/10377) owner Phase-4 attestation.
-This declaration assessment does not itself establish Phases 6–7. The separate computational declaration review, final lint/docstring/use
-acceptance, applicable conformance and declared computational regression checks
-remain before Phase 6. Publication still requires the
+The Theory acceptance separately discharges the companion’s final API/use,
+lint, kernel and documentation requirements. Final computational acceptance,
+including its applicable regression checks, remains before the core’s Phase 6. Publication still requires the
 [package prerequisites](../real-closure-publication.md).
 
 The [computational foundation assessment](core-foundation.md) separately covers
@@ -132,7 +136,7 @@ The [computational foundation assessment](core-foundation.md) separately covers
 `System.check_eq` guard characterization and updates the core/companion
 count-recovery, table, codec, rank-basis and solve clients without changing
 their statements or algorithms. The
-remaining core modules and whole-pair Phase-6 checks are still outstanding.
+foundation assessment is separate from the core’s remaining final acceptance.
 
 The [counting and recursive replay assessment](core-replay.md) covers 49 named
 declarations in six additional computational modules, both literal equality
@@ -163,16 +167,17 @@ computational review; whole-library Phase-6 checks remain.
 The [common-polynomial comparison assessment](core-comparison.md) covers 27
 named declarations and sixteen source structure fields. Bidirectional common
 product and joint re-encoding acceptance laws replace guard unfolding in
-existing producer proofs. Remaining computational modules and whole-pair
-Phase-6 checks are still outstanding.
+existing producer proofs. The computational source assessments are complete;
+final core Phase-6 acceptance remains separate.
 
 The supplied-replay exports `Descriptor.rootsFrom_coverage` and
 `Descriptor.rootsFrom_ordered` generalize the existing producer compositions.
 The producer theorems reuse them. Coverage requires accepted full replay and
 extraction of the complete actual table; order alone also applies to a partial
 row list. The [root-list assessment](core-root-list.md) explains the boundary.
-The retained reference captures still describe their recorded 226-declaration
-environments; they are not current reference counts for the enlarged API.
+The original reference capture retains its recorded environment. The refreshed
+companion capture covers the current 228-declaration API; source review and
+compiled-reference evidence remain separate.
 
 The [literal graph and memo assessment](core-dag.md) covers 28 named
 declarations, its equality instance and six fields. Validation checks every
@@ -194,8 +199,9 @@ reconstruction from arithmetic replay acceptance. The source-name checks
 reuse the existing namespace-aware extractor for these groups; they are
 local review snapshots rather than a new automatic CI requirement.
 
-The graph-codec and coefficient archives preserve their reviewed modules
-and individual assessments at `audit/issue-10575-sign-det-codec-reviewed-v3`.
+The earlier graph-codec and coefficient snapshots remain preserved at
+`audit/issue-10575-sign-det-codec-reviewed-v3`. The retained tags are not checked by the current manifests. Their current module and
+assessment archives use `audit/issue-10575-sign-det-lint-reviewed-input`.
 Current byte bindings separately cover the shared documentation, guards and
 extractor context. These are local checks; changed inputs require assessment
 before rebinding. Complete module hashes also cover fields and anonymous instances
@@ -234,10 +240,10 @@ git fetch origin 'refs/tags/audit/issue-10575-sign-det-*:refs/tags/audit/issue-1
 python3 reports/sign-det-declaration-review/check_foundation_bindings.py
 ```
 
-The original compiler-reference archive still describes its recorded source.
-`current/check_bindings.py --current` refuses the changed DAG source hashes;
-its archive mode retains the earlier audit. The current individual declaration
-assessments and their source bindings do not replace that reference capture.
+The original compiler-reference archive describes its recorded source. The
+`current/` capture covers the current Theory modules; its `--current` checker
+verifies their live source bindings and derived reference evidence. Earlier
+reference captures remain reproducible at their preserved checkpoints.
 
 Manifest `source_ref` without `input_revision` is a historical review reference.
 With `input_revision` it identifies the byte-checked module/assessment archive;
@@ -245,9 +251,9 @@ With `input_revision` it identifies the byte-checked module/assessment archive;
 are checked against current bytes, including context files outside the archive.
 
 The graph-codec and stored-coefficient archives use the same module/assessment
-scope, preserving their existing `codec-reviewed-v3` checkpoint and current
-assessments. Shared manual, conformance, index and checker files are current
-context bindings, so subsequent assessed edits do not move those archives.
+scope. Their earlier `codec-reviewed-v3` checkpoint remains preserved. Shared
+manual, conformance, index and checker files are current context bindings, so
+subsequent assessed edits do not move those archives.
 
 The shared namespace extractor retains namespaces across `mutual` blocks,
 handles indentation consistently and checks explicit closing scope names.
@@ -282,10 +288,11 @@ reconstruction and arithmetic replay remain distinct. The source extractor
 includes the public JSON classes in the namespace-aware group inventory.
 Whole-pair lint/reference/performance acceptance remains separate.
 
-The serialization/producer modules and individual assessment are preserved at
-`audit/issue-10575-sign-det-serialization-input-v3`. The existing SignDet tag
-fetch command covers this checkpoint. Current context bindings remain
-separate from its reviewed module and assessment archive.
+The earlier serialization/producer snapshot remains preserved at
+`audit/issue-10575-sign-det-serialization-input-v3`. The retained tag is not checked by the current manifest. Its current module and
+assessment archive uses `audit/issue-10575-sign-det-lint-reviewed-input`.
+The existing SignDet tag fetch command covers both checkpoints. Current
+context bindings remain separate from the module and assessment archive.
 
 `Codec.read_nat` and `Codec.read_int` are the natural/integer scalar roundtrip
 simp lemmas. The false-graph control proves decode-time bindings through
@@ -309,3 +316,34 @@ The four parser modules and their individual assessment are preserved at
 `audit/issue-10575-sign-det-parser-input-v3`. The SignDet tag fetch command
 above includes this checkpoint. Current certificate-policy and conformance
 inputs are bound separately from the reviewed source archive.
+
+The current lint diagnostic imports both public umbrellas and checks both
+production roots, including theorem documentation. Its exact diagnostic guard
+permits only three recursive equality auxiliaries and two enum identities
+generated by the pinned Lean deriving handler; every additional finding fails. Source
+documentation covers the moment-system fields, coefficient coverage laws and
+structural node reconstruction. The endpoint roundtrip requires no zero or
+equality instance on its coefficient type.
+
+The current graph-codec, coefficient-codec and serialization assessments use
+`audit/issue-10575-sign-det-lint-reviewed-input` for their module/assessment
+archives. Earlier codec and serialization checkpoints remain preserved.
+
+Current companion imports use the `HexSignDetTheory` names. The retained
+Mathlib-named source archives keep their original paths and bytes; current
+module records preserve `snapshot_path` for their earlier module hashes.
+Family fixture roles follow literal modules in the existing Lake test targets.
+Unsupported test-glob expressions fail instead of inventing a production role.
+
+The foundation module and assessment archive uses
+`audit/issue-10575-sign-det-current-reviewed-input-v8`. Original companion
+snapshot paths and hashes are also checked against their recorded source commit.
+
+## Theory acceptance
+
+The [Theory acceptance](theory-acceptance.md) records the companion's subsequent
+Phases 6–7, including explicit source parameters, current kernel checks and the
+individual API-retention decisions. The older `current/` compiler capture is a
+preserved v10 snapshot; default archive verification remains valid and its
+current-source mode refuses the later source changes. Computational Phase-6
+acceptance and publication eligibility remain separate.

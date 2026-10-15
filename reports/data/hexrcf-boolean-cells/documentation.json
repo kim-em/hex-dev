@@ -1,0 +1,11 @@
+{
+  "schema": "hexrcf-boolean-cell-documentation-v1",
+  "source_commit": "ff0c483baae0634347dea63ad10a4afa124acd73",
+  "checked_implementation_commit": "f29be3a0e0b9035ce7870cc86f923f127c31b660",
+  "selected_source_hashes": {
+    "HexRCF/README.md": "cf7e7cf1ff5c5ca42ed96318ce0bfc607488e703e4cf3eca2b3341fe5b7471ee",
+    "reports/hexrcf-adapter-evidence.md": "df47b20e660d5c550b24d939590f475f678851f7af0cc7c30a16f4ca1c169f4e"
+  },
+  "local_links_resolve": true,
+  "lean_lake_pin_changes": []
+}

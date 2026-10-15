@@ -59,7 +59,8 @@ theorem System.rationalCounts {r arity : Nat} (s : System r) (h : s.check arity 
     (inv : Matrix Rat r r)
     (hinv : Matrix.inverse? (Matrix.ofFn fun (i j : Fin r) =>
       (entry s.rows[i] s.columns[j] : Rat)) = some inv) :
-    inv * s.values.map (fun (z : Int) => (z : Rat)) = s.counts.map (fun (z : Int) => (z : Rat)) := by
+    inv * s.values.map (fun (z : Int) => (z : Rat)) =
+      s.counts.map (fun (z : Int) => (z : Rat)) := by
   let m : Matrix Rat r r := Matrix.ofFn fun i j => (entry s.rows[i] s.columns[j] : Rat)
   have hm : matrixEquiv m = (matrixEquiv (momentMatrix s.rows s.columns)).map
       (Int.castRingHom Rat) := by
@@ -69,7 +70,8 @@ theorem System.rationalCounts {r arity : Nat} (s : System r) (h : s.check arity 
       (Int.castRingHom Rat) ∘ vectorEquiv v := by
     funext i
     simp
-  have hc : m * s.counts.map (fun (z : Int) => (z : Rat)) = s.values.map (fun (z : Int) => (z : Rat)) := by
+  have hc : m * s.counts.map (fun (z : Int) => (z : Rat)) =
+      s.values.map (fun (z : Int) => (z : Rat)) := by
     apply vectorEquiv.injective
     rw [vectorEquiv_mulVec, hm, hv, hv]
     funext i

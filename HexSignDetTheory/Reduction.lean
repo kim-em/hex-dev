@@ -12,6 +12,8 @@ public import Mathlib.Basic.Sign.Basic
 
 public section
 
+universe u v w
+
 /-! Algebraic soundness of reduced moments under the shared noninjective
 coefficient interpretation. These identities require no real-closed-field
 foundation or Tarski root-sum theorem. -/
@@ -26,9 +28,9 @@ variable [Add E] [Sub E] [Mul E]
 variable (ha : ∀ a b, f (a + b) = f a + f b)
 variable (hs : ∀ a b, f (a - b) = f a - f b)
 variable (hm : ∀ a b, f (a * b) = f a * f b)
-variable (sign : E → Int) (hsign : ∀ a, sign a = 1 ↔ 0 < f a)
+variable (sign : E → Int) (hpos : ∀ a, sign a = 1 ↔ 0 < f a)
 
-include ha hs hm hsign in
+include ha hs hm hpos in
 /-- Every accepted reduction preserves the product sign at every root of the
 head, including roots shared with either factor. The certificate need not
 have come from the producer. -/
@@ -46,13 +48,13 @@ theorem ReductionStep.check_sign (p prev factor : DensePoly E) (index : Nat)
   simp only [Polynomial.eval_mul, Polynomial.eval_C, Polynomial.eval_add, hp,
     mul_zero, zero_add] at hv
   have hleft : SignType.sign (f s.witness.leftScale) = 1 :=
-    sign_eq_one_iff.mpr ((hsign _).mp hl)
+    sign_eq_one_iff.mpr ((hpos _).mp hl)
   have hright : SignType.sign (f s.witness.rightScale) = 1 :=
-    sign_eq_one_iff.mpr ((hsign _).mp hr)
+    sign_eq_one_iff.mpr ((hpos _).mp hr)
   have h := congrArg SignType.sign hv
   simpa only [sign_mul, hleft, hright, one_mul] using h.symm
 
-include ha hs hm hsign in
+include ha hs hm hpos in
 /-- The complete accepted chain preserves signs of its ordered factors,
 without expanding their polynomial product during replay. -/
 theorem Reduction.checkFrom_sign (p prev : DensePoly E)
@@ -79,7 +81,7 @@ theorem Reduction.checkFrom_sign (p prev : DensePoly E)
         simpa only [Reduction.checkFrom, Bool.and_eq_true] using h
       obtain ⟨hstep, htail⟩ := hh
       rw [ih s.next ss htail,
-        ReductionStep.check_sign f hz ha hs hm sign hsign p prev q i s hstep a hp]
+        ReductionStep.check_sign f hz ha hs hm sign hpos p prev q i s hstep a hp]
       simp only [List.map_cons, List.prod_cons, mul_assoc]
 
 variable [One E] (h1 : f (1 : E) = 1)
@@ -184,7 +186,7 @@ theorem moment_congr (qs rs : List (DensePoly E)) (es : List Nat) (a : K)
     Polynomial.eval_one, sign_one, one_mul, List.map_map, Function.comp_def,
     interpret_power f hz ha hm h1, Polynomial.eval_pow, sign_pow] using hh
 
-include ha hs hm hsign h1 in
+include ha hs hm hpos h1 in
 /-- An arbitrary accepted reduced-moment certificate has the same sign as the
 specified full moment at every root. Positive scaling changes values but not
 signs; no numerical isolation or root-sum theorem is used. -/
@@ -194,13 +196,13 @@ theorem Reduction.check_sign (p : DensePoly E) (qs : List (DensePoly E)) (es : L
     SignType.sign ((interpret f hz r.result).eval a) =
       SignType.sign ((interpret f hz (moment qs es)).eval a) := by
   simp only [Reduction.check, Bool.and_eq_true] at h
-  have hc := Reduction.checkFrom_sign f hz ha hs hm sign hsign p 1
+  have hc := Reduction.checkFrom_sign f hz ha hs hm sign hpos p 1
     (factors qs es) r.steps r.result h.2 a hp
   rw [interpret_one f hz h1, Polynomial.eval_one, sign_one, one_mul] at hc
   rw [moment_sign f hz ha hm h1]
   exact hc
 
-include ha hs hm hsign h1 in
+include ha hs hm hpos h1 in
 /-- The operand of every accepted moment query has the requested moment's
 sign at every root, whether supplied directly or through arbitrary reduction
 evidence. Root-sum correspondence is a separate theorem. -/
@@ -215,7 +217,7 @@ theorem checkMoment_sign {Ctx : Type w} [DecidableEq Ctx] [NatCast E]
   cases reduction with
   | none => rfl
   | some r =>
-    exact Reduction.check_sign f hz ha hs hm sign hsign h1 p qs es r
+    exact Reduction.check_sign f hz ha hs hm sign hpos h1 p qs es r
       (checkMoment_reduction h) a hp
 
 end Hex.SignDet

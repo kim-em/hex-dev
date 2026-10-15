@@ -13,7 +13,6 @@ public import HexSignDet.DagExpand
 public import HexSignDet.DagBounds
 import all HexSignDet.Codec.Basic
 import all HexSignDet.Codec.Json
-import all HexSignDet.Codec.Node
 
 public section
 
@@ -21,23 +20,6 @@ namespace Hex.RealClosure.Tower
 open SignDet
 open SignDet.Codec (Json)
 variable {registry : BaseContext.Registry}
-
-private theorem node_bindings {E C : Type} [Zero E] [DecidableEq E] [DecidableEq C]
-    [One E] [Add E] [Sub E] [Mul E] [NatCast E] {sign : E → Int} {parent : C}
-    {head : DensePoly E} {lower upper : Endpoint E} {queries : List (DensePoly E)}
-    {node : Node E C} (h : node.check sign parent head lower upper queries = true) :
-    Codec.bindings parent head lower upper node = true := by
-  obtain ⟨subject, _⟩ := Node.check_bindings h
-  simp only [Codec.bindings, subject.1, subject.2.1, subject.2.2.1,
-    subject.2.2.2.1, and_self, decide_true, Bool.true_and]
-  apply List.all_eq_true.mpr
-  intro cert mem
-  obtain ⟨i, hi, same⟩ := Vector.mem_iff_getElem.mp (Vector.mem_toList_iff.mp mem)
-  subst cert
-  have checked := Sturm.check_bindings sign parent head _ lower upper _ node.moments[i]
-    (checkMoment_query (Node.check_moment h ⟨i, hi⟩))
-  simp only [checked.1, checked.2.1, checked.2.2.2.1, checked.2.2.2.2.1,
-    and_self, decide_true]
 
 /-- Checked descriptors provide every graph parser bound and literal binding.
 Decoding uses the actual shared graph codec and retains the original tree. -/
@@ -52,47 +34,12 @@ theorem Context.readGraph_data (parent : Context registry)
   letI : Hashable parent.Value := ⟨fun a => hash (parent.codec.encode a)⟩
   letI : Hashable Signature := ⟨fun _ => 0⟩
   obtain ⟨_, _, accepted, _⟩ := RawDescriptor.check_eq descriptor.accepted
-  have replay := Dag.replay_encode accepted
-  cases hv : (Dag.encode descriptor.evidence).validate? parent.sign parent.signature
-      descriptor.raw.head descriptor.raw.lower descriptor.raw.upper with
-  | none => simp [Dag.replay?, hv, bind, Option.bind] at replay
-  | some memo =>
-    apply Codec.read_graph parent.codec (contextCodec parent.signature) parent.codec_lawful
-      (contextCodec_lawful parent.signature) parent.signature descriptor.raw.head
-      descriptor.raw.lower descriptor.raw.upper (Dag.encode descriptor.evidence)
-      (Dag.encode_root descriptor.evidence) (Codec.Shape.of_validate hv) _
-      (Dag.encode_bounds descriptor.evidence)
-    intro entry member
-    have nodes := Dag.validate_nodes parent.sign parent.signature descriptor.raw.head
-      descriptor.raw.lower descriptor.raw.upper (Dag.encode descriptor.evidence) memo hv
-    have mapped : entry.node ∈ (Dag.encode descriptor.evidence).entries.map Dag.Entry.node :=
-      Array.mem_map.mpr ⟨entry, member, rfl⟩
-    rw [← nodes] at mapped
-    obtain ⟨checked, _, same⟩ := Array.mem_map.mp mapped
-    rw [← same]
-    exact node_bindings (Replay.check_node checked.accepted)
-
-private theorem descriptor_replay (parent : Context registry)
-    (descriptor : Descriptor parent.Value Signature parent.sign parent.signature) :
-    Descriptor.ofReplay? parent.sign parent.signature descriptor.raw descriptor.evidence =
-      some descriptor := by
-  have accepted := (Descriptor.ofReplay_isSome parent.sign parent.signature
-    descriptor.raw descriptor.evidence).mpr descriptor.accepted
-  cases produced : Descriptor.ofReplay? parent.sign parent.signature
-      descriptor.raw descriptor.evidence with
-  | none => simp [produced] at accepted
-  | some restored =>
-    have raw := Descriptor.ofReplay_raw produced
-    have evidence := Descriptor.ofReplay_evidence produced
-    have same : restored = descriptor := by
-      have factories : Descriptor.ofChecked parent.sign parent.signature
-          restored.raw restored.evidence restored.accepted =
-          Descriptor.ofChecked parent.sign parent.signature descriptor.raw
-            descriptor.evidence descriptor.accepted := by
-        congr 1
-      exact (Descriptor.ofChecked_eq restored).symm.trans
-        (factories.trans (Descriptor.ofChecked_eq descriptor))
-    exact congrArg some same
+  obtain ⟨memo, hv⟩ := Dag.validate_encode accepted
+  exact Codec.read_graph parent.codec (contextCodec parent.signature) parent.codec_lawful
+    (contextCodec_lawful parent.signature) parent.signature descriptor.raw.head
+    descriptor.raw.lower descriptor.raw.upper (Dag.encode descriptor.evidence)
+    (Dag.encode_root descriptor.evidence) (Codec.Shape.of_validate hv)
+    (Codec.bindings_of_validate hv) (Dag.encode_bounds descriptor.evidence)
 
 /-- Read the descriptor fields and independently replay the supplied graph
 over the exact native predecessor. All mathematical acceptance comes from
@@ -143,7 +90,7 @@ theorem Context.readDescriptor_data (parent : Context registry)
     ctx, binding, indices, signs, Codec.read_poly parent.codec parent.codec_lawful,
     Codec.read_endpoint parent.codec parent.codec_lawful, graph,
     bind, Except.bind, pure, Except.pure, Dag.descriptor_encode, raw,
-    descriptor_replay parent descriptor]
+    Descriptor.ofReplay_self descriptor]
 
 /-- A reconstructed root owns both the checked descriptor and the actual
 native extension. Exact frame equality retains the requested full identity,

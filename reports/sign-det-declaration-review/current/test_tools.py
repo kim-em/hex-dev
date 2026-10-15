@@ -5,7 +5,8 @@ import unittest
 from unittest.mock import patch
 from pathlib import Path
 
-from normalize import compiler_kind, source_names, lexical_references
+from normalize import compiler_kind, source_names, lexical_references, SourceIndex, check_production_imports, family_evidence
+from audit_tools import family_test_modules
 
 
 class NamingTest(unittest.TestCase):
@@ -145,6 +146,72 @@ class ReferenceTest(unittest.TestCase):
 
 
 class CheckpointTest(unittest.TestCase):
+    def test_registered_provider_fixture_is_not_production(self):
+        index = SourceIndex()
+        self.assertEqual(index.resolve('HexRealClosureTheory.ReprProviderData')['category'],
+                         'tests/conformance/manual')
+        self.assertEqual(index.resolve('HexRealClosureTheory.ReprProviderTests')['category'],
+                         'tests/conformance/manual')
+        self.assertEqual(index.resolve('HexRealClosureTheory.BaseContext')['category'],
+                         'other Hex production')
+
+    def test_production_import_of_test_fixture_is_refused(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / 'Production.lean'
+            source.write_text('import HexRealClosureTheory.FutureData\n')
+            with patch('normalize.ROOT', root):
+                with self.assertRaisesRegex(ValueError, 'production imports family test evidence'):
+                    check_production_imports({'Production': 'Production.lean'},
+                                             {'HexRealClosureTheory.FutureData'}.__contains__)
+                (root / 'Accepted.lean').write_text('import HexRealClosureTheory.BaseContext\n')
+                check_production_imports({'Accepted': 'Accepted.lean'},
+                                         {'HexRealClosureTheory.FutureData'}.__contains__)
+
+    def test_family_evidence_predicate_uses_actual_roles(self):
+        index = SourceIndex()
+        for name in ('HexOrderedFnTheory.LiouvilleRun', 'HexRealClosure.TrivialChecks',
+                     'HexRealClosureTheory.ReprProviderData'):
+            self.assertTrue(family_evidence(index, name), name)
+        self.assertFalse(family_evidence(index, 'HexRealClosureTheory.BaseContext'))
+        self.assertFalse(family_evidence(index, 'HexRationalFnTheory.Tests'))
+
+    def test_liouville_runner_is_test_evidence(self):
+        index = SourceIndex()
+        self.assertEqual(index.resolve('HexOrderedFnTheory.LiouvilleRun')['category'],
+                         'tests/conformance/manual')
+        from audit_tools import ROOT, lakefile_blocks
+        body = lakefile_blocks((ROOT / 'lakefile.lean').read_text())[
+            'lean_exe hexorderedfn_liouville_test']
+        self.assertRegex(body, r'(?m)^\s*root := `HexOrderedFnTheory\.LiouvilleRun\s*$')
+
+    def test_new_family_fixture_is_read_from_actual_test_globs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            lakefile = Path(directory) / 'lakefile.lean'
+            lakefile.write_text('lean_lib HexRealClosureTheoryTests where\n'
+                                '  globs := #[.one `HexRealClosureTheory.FutureData]\n')
+            self.assertEqual(family_test_modules(lakefile),
+                             {'HexRealClosureTheory.FutureData'})
+            lakefile.write_text('lean_lib HexRealClosureTheoryTests where\n'
+                                '  globs := dynamicGlobs\n')
+            with self.assertRaisesRegex(ValueError, 'requires literal'):
+                family_test_modules(lakefile)
+
+    def test_glob_suffixes_cannot_hide_more_fixture_modules(self):
+        with tempfile.TemporaryDirectory() as directory:
+            lakefile = Path(directory) / 'lakefile.lean'
+            prefix = 'lean_lib HexRealClosureTheoryTests where\n  globs := #[`A]'
+            for suffix in (' ++ extra', '.map Glob.submodules', '.map Glob.andSubmodules'):
+                with self.subTest(suffix=suffix):
+                    lakefile.write_text(prefix + suffix + '\n')
+                    with self.assertRaisesRegex(ValueError, 'unsupported test glob suffix'):
+                        family_test_modules(lakefile)
+            lakefile.write_text(prefix + '.map Glob.one\n')
+            self.assertEqual(family_test_modules(lakefile), {'A'})
+            with patch('audit_tools.lakefile_blocks', return_value={'command uncertain': ''}):
+                with self.assertRaisesRegex(ValueError, 'uncertain Lake'):
+                    family_test_modules(lakefile)
+
     def test_local_checkpoint_is_not_shadowed_by_sturm_helpers(self):
         base = Path(__file__).resolve().parent
         spec = importlib.util.spec_from_file_location('_test_signdet_reproduce', base / 'reproduce.py')

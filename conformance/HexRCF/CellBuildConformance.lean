@@ -1,0 +1,153 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+import HexRCF.RealCoefficients.CellBuild
+import HexRCF.RealCoefficients.CompleteReplay
+import HexRCF.RealCoefficients.RootBuild
+import HexRCF.RealCoefficients.RowEncode
+import HexRCF.CellReplay.Algebraic.Schema
+import HexRCF.CellReplay.Algebraic.Literals
+import HexRCF.RealCoefficients.RadicalBuild
+import HexSignDet.Codec.Bytes
+namespace Hex.RCF.RealCoefficients.CellBuildConformance
+open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet
+open Hex.RCF.RealCoefficients Hex.RCF.SelectedRootTests
+open CellReplayTests.Algebraic.Schema
+local instance : Hashable parent.Value := RowEncode.hashable parent.codec
+local instance : Hashable Signature := RowEncode.hashable Signature.codec
+#eval (show IO Unit from do
+  let prepared ← match CellBuild.prepare values [] formula with
+    | .error e => throw (IO.userError s!"carrier/root construction failed: {repr e}")
+    | .ok prepared => pure prepared
+  let radical := prepared.1
+  let roots := prepared.2
+  unless roots.roots.length == 2 do throw (IO.userError "unexpected complete root count")
+  let points (cut : Fin (roots.roots.length+1)) : parent.Value :=
+    if cut.val = 0 then -2 else if cut.val = 1 then 0 else 2
+  let cells ← match CellBuild.build roots values [] formula points with
+    | .error e => throw (IO.userError s!"cell construction failed: {repr e}")
+    | .ok cells => pure cells
+  let typed ← match CellBuild.evidence roots values [] formula points with
+    | .error error => throw (IO.userError s!"typed cell production failed: {repr error}")
+    | .ok data => pure data
+  let inventory := CellFootprint.coefficients typed
+  let restricted (stored : List parent.Value) : ValueCodec parent.Value := {
+    encode := parent.codec.encode
+    decode := fun literal =>
+      match stored.find? (fun value => parent.codec.encode value == literal) with
+      | some value => .ok value
+      | none => .error "coefficient absent from finite payload inventory" }
+  let restored ← match CellRead.read (restricted inventory) [] roots values formula cells with
+    | .error error => throw (IO.userError s!"finite literal inventory omitted stored data: {repr error}")
+    | .ok restored => pure restored
+  unless (CellReplay.check values formula [] radical roots restored .existsReal).toOption == some true do
+    throw (IO.userError "finite payload reader changed the original verdict")
+  unless inventory.any (fun value => parent.codec.encode value == parent.codec.encode 0) do
+    throw (IO.userError "finite inventory lost stored zero coefficients")
+  let missingZero := inventory.filter (fun value => parent.codec.encode value != parent.codec.encode 0)
+  match CellRead.read (restricted missingZero) [] roots values formula cells with
+  | .error .evidence => pure ()
+  | _ => throw (IO.userError "missing stored zero coefficient was not rejected")
+  match CellRead.read (restricted []) [0] roots values formula .null with
+  | .error .divisor => pure ()
+  | _ => throw (IO.userError "original zero guard did not precede payload decoding")
+  IO.println "complete finite payload inventory restores rows; omitted zero literals reject; original guard preflight remains first"
+  unless CellBuild.packet typed == cells do
+    throw (IO.userError "typed and public frozen cell packets differ")
+  unless (CellReplay.check values formula [] radical roots typed .existsReal).toOption == some true do
+    throw (IO.userError "typed existential acceptance changed")
+  unless (CellReplay.check values formula [] radical roots typed .forallReal).toOption == some false do
+    throw (IO.userError "typed false universal changed")
+  let rootGraph := Codec.graph parent.codec Signature.codec (Dag.encode roots.replay)
+  let completeInventory := CompleteReplay.coefficients typed
+  for (quantifier,expected) in [(RealFormula.Quantifier.existsReal,true),(.forallReal,false)] do
+    unless (CompleteReplay.check (restricted completeInventory) values formula [] radical
+        quantifier rootGraph cells).toOption == some expected do
+      throw (IO.userError "combined root/cell restricted reader changed the strict verdict")
+  match CompleteReplay.check (restricted completeInventory) values formula [] radical
+      .existsReal .null cells with
+  | .error .evidence => pure ()
+  | _ => throw (IO.userError "malformed complete root graph was accepted")
+  let tree := Dag.encode roots.replay
+  let corrupt : Dag parent.Value Signature := { tree with
+    entries := tree.entries.map (fun entry => { entry with
+      node := { entry.node with system := { entry.node.system with denominator := 0 } } }) }
+  let corruptGraph := Codec.graph parent.codec Signature.codec corrupt
+  match Codec.readGraph (restricted completeInventory) Signature.codec parent.signature
+      radical.core .negInf .posInf corruptGraph with
+  | .error error => throw (IO.userError s!"tampering did not reach semantic replay: {error}")
+  | .ok _ => pure ()
+  match RootReplay.read (restricted completeInventory) [] radical.core .negInf .posInf corruptGraph with
+  | .error .evidence => pure ()
+  | _ => throw (IO.userError "root replay accepted the invalid moment-system denominator")
+  match CompleteReplay.check (restricted completeInventory) values formula [] radical
+      .existsReal corruptGraph cells with
+  | .error .evidence => pure ()
+  | _ => throw (IO.userError "structurally valid zero-denominator root system was accepted")
+  let fields ← match Codec.tuple 2 cells with
+    | .error error => throw (IO.userError error)
+    | .ok fields => pure fields
+  let missingSectors := Codec.Json.arr #[fields[0], .arr #[]]
+  match CompleteReplay.check (restricted completeInventory) values formula [] radical
+      .existsReal rootGraph missingSectors with
+  | .error .evidence => pure ()
+  | _ => throw (IO.userError "complete replay accepted the wrong number of sectors")
+  match CompleteReplay.check (restricted []) values formula [0] radical
+      .existsReal .null .null with
+  | .error .divisor => pure ()
+  | _ => throw (IO.userError "complete packet erased original zero guard preflight")
+  IO.println "complete restricted root-and-cell replay retains both verdicts and refuses malformed roots before folds"
+  let fresh ← match RootReplay.read parent.codec [] radical.core .negInf .posInf rootGraph with
+    | .error e => throw (IO.userError s!"root replay failed: {repr e}")
+    | .ok fresh => pure fresh
+  let rows ← match CellRead.read parent.codec [] fresh values formula cells with
+    | .error e => throw (IO.userError s!"cell replay failed: {repr e}")
+    | .ok rows => pure rows
+  unless (CellReplay.check values formula [] radical fresh rows .existsReal).toOption == some true do
+    throw (IO.userError "constructed certificate rejected")
+  let packet := Codec.Json.arr #[rootGraph,cells]
+  let expected := Codec.Json.arr #[CellReplayTests.Algebraic.Literals.roots,
+    .arr #[CellReplayTests.Algebraic.Literals.sections, CellReplayTests.Algebraic.Literals.sectors]]
+  unless packet.writeBytes == expected.writeBytes do
+    throw (IO.userError "native construction changed the complete kernel-checked fixture")
+  unless (CellReplay.check values formula [] radical fresh rows .forallReal).toOption == some false do
+    throw (IO.userError "false universal verdict changed")
+  match CellBuild.prepare values [0] formula with
+  | .error .divisor => pure ()
+  | _ => throw (IO.userError "zero divisor reached carrier construction")
+  match CellBuild.build roots values [0] formula points with
+  | .error .divisor => pure ()
+  | _ => throw (IO.userError "zero original divisor accepted")
+  match CellBuild.build roots values [] formula (fun _ => 0) with
+  | .error .boundary => pure ()
+  | _ => throw (IO.userError "invalid exterior point accepted")
+  match RootBuild.build (0 : parent.Poly) with
+  | .error .domain => pure ()
+  | _ => throw (IO.userError "zero carrier domain accepted")
+  IO.println "specialization, radical, complete roots and all cell rows produced, frozen and independently replayed")
+#eval (show IO Unit from do
+  for comparison in [RealFormula.Cmp.eq, RealFormula.Cmp.gt] do
+    let matrix : RealFormula.QF 2 := .atom ⟨0, comparison⟩
+    let prepared ← match CellBuild.prepare values [] matrix with
+      | .error e => throw (IO.userError s!"constant preparation failed: {repr e}")
+      | .ok prepared => pure prepared
+    let radical := prepared.1
+    let roots := prepared.2
+    unless roots.roots.isEmpty do throw (IO.userError "constant carrier has roots")
+    let cells ← match CellBuild.build roots values [] matrix (fun _ => 0) with
+      | .error e => throw (IO.userError s!"constant cells failed: {repr e}")
+      | .ok cells => pure cells
+    let rows ← match CellRead.read parent.codec [] roots values matrix cells with
+      | .error e => throw (IO.userError s!"constant replay failed: {repr e}")
+      | .ok rows => pure rows
+    for quantifier in [RealFormula.Quantifier.existsReal, RealFormula.Quantifier.forallReal] do
+      unless (CellReplay.check values matrix [] radical roots rows quantifier).toOption ==
+          some (comparison == RealFormula.Cmp.eq) do
+        throw (IO.userError "constant strict fold changed")
+    match CellBuild.prepare values [0] matrix with
+    | .error .divisor => pure ()
+    | _ => throw (IO.userError "constant preparation erased the original guard")
+  IO.println "zero atoms and constant carriers preserve both strict quantifiers and original guards")
+end Hex.RCF.RealCoefficients.CellBuildConformance

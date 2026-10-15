@@ -11,6 +11,8 @@ public import HexSignDetTheory.Tensor
 
 public section
 
+universe u v
+
 namespace Hex.SignDet
 
 variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]

@@ -60,6 +60,8 @@ SEALED_IMPORT_ALL_ALLOWLIST: dict[str, frozenset[Path]] = {
 }
 
 UMBRELLA_BUILD_TARGETS = {
+    "HexPosDefTheoryTests",
+    "HexPosDefTheoryProofProbe",
     "HexOrderedFnTests",
     "HexRealClosureTests",
     "HexRealClosureConformanceSupport",
@@ -117,6 +119,7 @@ UMBRELLA_BUILD_TARGETS = {
     "HexRCFBenchSupport",
     "HexRCFProofProbe",
     "HexRCFProofProbeMeasurements",
+    "HexRCFCellRequestedStress",
     "HexRealFormulaProofProbe",
     "HexRCFRealFormula",
     "HexRCFRealCoefficients",

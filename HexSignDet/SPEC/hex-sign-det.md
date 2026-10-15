@@ -12,10 +12,12 @@ and theorem statements below remain required shapes unless implemented there;
 registration does not claim phase completion. The combined computational and
 companion assignment is [#10377](https://github.com/kim-em/hex-dev/issues/10377). Its
 implementation and Phase-4 attestation are merged in
-[#10861](https://github.com/kim-em/hex-dev/pull/10861). Both libraries record
-Phase 5; the [proof acceptance](../../reports/sign-det-proof-acceptance.md)
-records complete proofs and passing conformance. Phases 6–7 and publication
-eligibility remain separate.
+[#10861](https://github.com/kim-em/hex-dev/pull/10861). The
+[proof acceptance](../../reports/sign-det-proof-acceptance.md) records complete
+proofs and passing conformance. This computational library remains at Phase 5;
+the companion’s independent
+[proof/API and manual acceptance](../../reports/sign-det-declaration-review/theory-acceptance.md)
+completes the companion’s Phases 6–7. Publication eligibility remains separate.
 
 `HexSignDet`, in namespace `Hex.SignDet`, depends on `HexSturm`, `HexPoly`,
 `HexMatrix`, `HexRowReduce` and `HexRank`. Matrix construction and exact
@@ -604,7 +606,7 @@ Z3 and python-flint end-to-end comparisons are for orientation where an exact
 matching operation is available; root isolation time must not be labelled
 matrix-solving time. No external oracle supplies a comparable Lean proof
 checker. Kernel replay has representative CI-built examples in the
-companion's declared proof-example roots, with ordinary kernel checking and
+companion’s declared proof-example roots, with ordinary kernel checking and
 axiom inspection, including valid and rejected nested evidence. This is
 separate from Mathlib-free executable benches and imposes no generic theorem
 timing sweep. Computational profiles attribute arithmetic, matrix and
