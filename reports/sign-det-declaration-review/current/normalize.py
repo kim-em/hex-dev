@@ -121,6 +121,15 @@ def reference_disposition(row):
     return 'Retained as an explicit public API decision; no existing term or matched qualified manual/SPEC mention is claimed.'
 
 
+def check_production_imports(production, test_modules):
+    """Refuse production imports of modules classified by family test globs."""
+    evidence_imports = {name: sorted(set(_parse_imports(ROOT / path)) & test_modules)
+                        for name, path in production.items()}
+    require(not any(evidence_imports.values()),
+            ('production imports family test evidence',
+             {name: imports for name, imports in evidence_imports.items() if imports}))
+
+
 def derive(directory):
     rows = json.loads((directory / "declaration-use.json").read_text())
     fields = json.loads((directory / "structure-fields.json").read_text())
@@ -196,6 +205,7 @@ def derive(directory):
                         "Sturm production", "SignDet companion production",
                         "other Hex production", "other root-package production"}:
                     production[name] = file
+    check_production_imports(production, index.test_modules)
     cache = {}
 
     def reaches(name, visiting=frozenset()):
