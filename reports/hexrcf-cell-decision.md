@@ -70,8 +70,9 @@ with literal half-open guards, and both endpoint controls. The complete
 four-boundary union has roots `-sqrt(sqrt 2)`, `1`, `sqrt(sqrt 2)` and `2`.
 No explicit list of sector points is supplied.
 
-A retained scratch version of these seven cases passed in 329 seconds with
-an observed 1.5G memory peak and zero swap. A separate diagnostic four-boundary
+An earlier scratch driver called `SectorRequest` directly, before the
+public-run driver existed. Its seven cases passed in 329 seconds with an
+observed 1.5G memory peak and zero swap. A separate diagnostic four-boundary
 trace records 81 ms partition construction, 533 ms requested-point selection,
 11,923 ms radical/root preparation, 258,044 ms complete cell-row production and
 24,284 ms literal reading plus both folds. The whole diagnostic build took
@@ -137,7 +138,8 @@ were opened and inspected, and the targeted source, endpoint-binding and scope
 blocks have zero descendant overflow. This checks the changed material rather
 than unrelated horizontal overflow elsewhere in the full manual. The
 [endpoint record](data/hexrcf-cell-decision/endpoint-context.json) retains the
-final source hashes, successful checks, earlier attempts and visual artifacts.
+final source hashes, successful checks, earlier attempts and visual artifacts:
+71 versioned entries spanning 66 distinct repository paths.
 
 ## Historical validation
 

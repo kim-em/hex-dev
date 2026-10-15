@@ -1285,6 +1285,12 @@ lean_lib HexRCFProofProbeMeasurements where
     `HexRCF.ProofProbe.Supplied.Reuse,
     `HexRCF.ProofProbe.Points.Section, `HexRCF.ProofProbe.Points.Point].map Glob.one
 
+-- Deliberately explicit: the four-boundary enlarged-tower stress case is
+-- retained without adding its multi-minute producer cost to every CI build.
+lean_lib HexRCFCellRequestedStress where
+  srcDir := "conformance"
+  globs := #[.one `HexRCF.CellRequestedStress]
+
 -- Conformance #guard drivers live under `conformance/` and are built by this
 -- library (mirroring the released conformance sub-projects). Alongside each
 -- library's `Conformance` core module, the heavier cross-check sweeps and
@@ -1292,12 +1298,6 @@ lean_lib HexRCFProofProbeMeasurements where
 -- implementation-vs-testing boundary stays legible; they elaborate their
 -- `#guard`s in the same `lake build`. EmitFixtures drivers are the
 -- `*_emit_fixtures` exes below, carrying `srcDir := "conformance"`.
--- Deliberately explicit: the four-boundary enlarged-tower stress case is
--- retained without adding its multi-minute producer cost to every CI build.
-lean_lib HexRCFCellRequestedStress where
-  srcDir := "conformance"
-  globs := #[.one `HexRCF.CellRequestedStress]
-
 /-- Libraries whose conformance modules are not built while they are parked.
 HexInterval is parked: none of its libraries, executables or conformance
 modules are built in CI. Remove a prefix here to restore its conformance. -/
