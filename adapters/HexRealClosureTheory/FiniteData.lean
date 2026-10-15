@@ -197,7 +197,14 @@ private def finiteRange? (type : Expr) : MetaM (Option Nat) := do
   let .forallE _ bound _ _ := body | return none
   unless bound.getAppFn.isConstOf ``Nat.lt || bound.getAppFn.isConstOf ``LT.lt do return none
   let arguments := bound.getAppArgs
-  unless arguments.size ≥ 2 && arguments[arguments.size - 2]! == .bvar 0 do return none
+  if bound.getAppFn.isConstOf ``LT.lt then
+    unless arguments.size == 4 && arguments[0]! == mkConst ``Nat do return none
+    let standard ← withNewMCtxDepth do
+      withTransparency .instances (isDefEq arguments[1]! (mkConst ``instLTNat))
+    unless standard do return none
+  else
+    unless arguments.size == 2 do return none
+  unless arguments[arguments.size - 2]! == .bvar 0 do return none
   withTransparency .all do
     getNatValue? (← reduce arguments.back!)
 
@@ -270,8 +277,20 @@ private partial def traverse (goal : MVarId) (supply : Supplier)
         | throwError "empty finite-data range did not close"
       return
     let rangeProof := mkApp2 (mkConst ``Transport.Finite.bounded) (toExpr (count - 1)) predicate
-    let children ← withTransparency .all (goal.apply rangeProof)
-    for child in children do traverse child supply missing terminal
+    -- Keep the original dependent predicate without rechecking its computed
+    -- size during application. Discovery uses the standard Nat relation and
+    -- its reduced bound; proof-producing callers kernel-check the conversion
+    -- and both actual theorem premises before exposing a theorem.
+    let .forallE firstName earlier following _ ← inferType rangeProof |
+      throwError "bounded traversal lost its preceding range"
+    unless firstName == `earlier do throwError "bounded traversal changed its preceding premise"
+    let first ← mkFreshExprMVar earlier
+    let .forallE lastName last _ _ := following.instantiate1 first |
+      throwError "bounded traversal lost its last index"
+    unless lastName == `last do throwError "bounded traversal changed its final premise"
+    let second ← mkFreshExprMVar last
+    goal.assign (mkApp2 rangeProof first second)
+    for child in [first.mvarId!, second.mvarId!] do traverse child supply missing terminal
     return
   if let .forallE _ domain (.forallE _ member _ _) _ := type then
     if member.getAppFn.isConstOf ``Membership.mem && member.getAppArgs.size == 5 then

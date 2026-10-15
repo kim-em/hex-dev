@@ -1030,7 +1030,18 @@ a natural-number binder. Repeated heartbeat comparisons run only when
 `HEX_NATIVE_ASSEMBLY_TRACE` is set; CI runs the correctness checks without them.
 
 `FiniteData.frontier` retains original operation and replay boundaries with
-their local hypotheses before scalar expansion. `Level.lower` maps reached
+their local hypotheses before scalar expansion. Traversal enumerates
+bounded natural indices only when their relation is the standard Nat order and
+their bound reduces to a literal. Computed bounds retain their original
+dependent predicates; construction supplies the bounded theorem's two actual
+premises, and proof-producing callers kernel-check the complete result.
+Discovery returns obligations without asserting a theorem. Nonstandard Nat
+order instances remain unresolved rather than enumerating unrelated indices.
+The CI-built `KernelReplay.FiniteRange` checks empty, singleton and dependent
+ranges, computed bounds through both `Nat.lt` and standard `LT.lt`, discovery
+order and local hypotheses, and rejection of an unsupported index. It checks
+that a reversed Nat order remains one unresolved quantified obligation.
+`Level.lower` maps reached
 operations, literal replays and scalar casts to their exact predecessor
 premises, using local reader variables before points are chosen. `descend`
 follows these dependencies through the supplied levels. `collectDependencies`
