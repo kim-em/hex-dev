@@ -2,7 +2,9 @@
 
 HexSignDet and HexSignDetTheory satisfy the [Phase-5 criteria](../PLAN/Phase5.md):
 complete proofs, a successful build on the pinned toolchain and passing existing
-conformance. Both counters are 5. The owner Phase-4 attestation is merged in
+conformance. The core remains at Phase 5; the companion’s independent
+[Theory acceptance](sign-det-declaration-review/theory-acceptance.md) records
+its subsequent Phases 6–7. The owner Phase-4 attestation is merged in
 [#10861](https://github.com/kim-em/hex-dev/pull/10861). Its
 [performance report](sign-det-performance.md) and
 [conformance report](sign-det-final-conformance.md) retain the independent
@@ -125,13 +127,12 @@ statement shapes have an explicit implemented-name mapping.
 
 ## Remaining work
 
-The [companion assessment](sign-det-declaration-review/README.md) treats its
-228 handwritten production declarations, retains compiled references and
-axiom inventories, and disposes of its public zero-reference statements.
-The computational core still needs its separate declaration assessment.
-Phase 6 also needs final lint/docstring/use acceptance and the computational
-comparison against the prescribed benchmark baseline. The built manual does
-not complete the Phase-6 requirements or advance Phase 7.
+The [Theory acceptance](sign-det-declaration-review/theory-acceptance.md)
+completes the companion’s own proof/API and manual requirements. The separate
+computational source assessments cover 728 named declarations. Final core
+acceptance still requires its applicable computational regression check and
+final API/use decisions; source review alone does not discharge those criteria.
+Publication eligibility also remains separate.
 
 Upstream nested numeral construction is repaired in
 [#10871](https://github.com/kim-em/hex-dev/pull/10871), closing

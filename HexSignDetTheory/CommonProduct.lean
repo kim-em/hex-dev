@@ -11,6 +11,8 @@ public import Mathlib.Algebra.Squarefree.Basic
 
 public section
 
+universe u v w
+
 namespace Hex.SignDet
 
 open HexPolyTheory.Interpret

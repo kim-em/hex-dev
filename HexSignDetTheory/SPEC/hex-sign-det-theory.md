@@ -17,11 +17,13 @@ import individual correspondence modules. This layout does not introduce a
 dependency on the real-closure tower implementation. The companion remains
 unreleased; these development imports do not establish publication eligibility.
 
-Both libraries record Phase 5 after the owner Phase-4 attestation in
-[#10861](https://github.com/kim-em/hex-dev/pull/10861). The
-[proof acceptance](../../reports/sign-det-proof-acceptance.md) records complete
-proofs and passing conformance. The separate declaration review and subsequent
-Phases 6–7 do not follow automatically from proof completion.
+The owner Phase-4 attestation in
+[#10861](https://github.com/kim-em/hex-dev/pull/10861) and the
+[proof acceptance](../../reports/sign-det-proof-acceptance.md) establish complete
+proofs and passing conformance. The companion's independent
+[proof/API and manual acceptance](../../reports/sign-det-declaration-review/theory-acceptance.md)
+completes Phases 6–7. The computational library remains at Phase 5 with separate
+final computational acceptance; publication eligibility is also separate.
 
 [hex-sturm-theory](../../HexSturmTheory/SPEC/hex-sturm-theory.md) supplies
 query, domain and exact coefficient correspondence through the shared
@@ -58,6 +60,12 @@ preservation of negation and inverse; comparison uses preservation of division.
 These hypotheses are explicit arguments to the correspondence theorems.
 `f` need not be injective. Semantic polynomial equations use zero differences;
 integer matrix identities and literal context bindings retain actual equality.
+
+Interpretation-law argument names distinguish natural casts (`hnat`), negation
+(`hn`), positivity (`hpos`) and full sign agreement (`hsign`). Conversion laws
+prefix the source and target names with `f` and `g`. Theorems retain their own
+minimal hypotheses and positional order; named applications should use the
+names in their source-derived statements.
 
 A coefficient field `K` may be interpreted in `R` by an order-preserving field
 homomorphism `ι : K →+* R`. Compose its coefficient interpretation with `ι` to

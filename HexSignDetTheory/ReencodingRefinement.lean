@@ -10,6 +10,8 @@ public import HexSignDetTheory.CompletionProducer
 
 public section
 
+universe u v w
+
 namespace Hex.SignDet
 
 open HexPolyTheory.Interpret HexRealRootsTheory
@@ -158,7 +160,8 @@ theorem Descriptor.refinement_fiber {context : Ctx}
     ((Tarski.rootsIn (interpret f hz source.raw.head) (a.map f) (b.map f)).filter
       (fun y => signsAt f hz
         ((⟨context, source.raw.head, a, b, [], []⟩ : RawDescriptor E Ctx).full []).queries y =
-        signsAt f hz ((⟨context, source.raw.head, a, b, [], []⟩ : RawDescriptor E Ctx).full []).queries
+        signsAt f hz
+          ((⟨context, source.raw.head, a, b, [], []⟩ : RawDescriptor E Ctx).full []).queries
           (source.root f hz h1 ha hs hm hnat hsign))) =
       {source.root f hz h1 ha hs hm hnat hsign} := by
   exact source.reencoding_fiber f hz h1 ha hs hm hnat hsign source.raw.head a b
@@ -250,7 +253,8 @@ theorem Descriptor.buildReencoding_congr {context : Ctx}
       simp only [hraw]
       exact ⟨⟨rfl, rfl, rfl⟩, hc, hcount⟩
     have htake : word.take fullQueries.length = fullWord := by
-      have hl : fullWord.length = fullQueries.length := by simp only [fullWord, signsAt, List.length_map]
+      have hl : fullWord.length = fullQueries.length := by
+        simp only [fullWord, signsAt, List.length_map]
       simp only [word, ← hl, List.take_left]
     obtain ⟨r, hr⟩ := source.buildReencoding_ofTable head a b domain hd t ht
       word hrows target (by

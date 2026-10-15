@@ -12,6 +12,8 @@ public import TauCeti.FieldTheory.RealClosure.AbstractRolle
 
 public section
 
+universe u v w
+
 namespace Hex.SignDet
 
 open HexPolyTheory.Interpret HexRealRootsTheory

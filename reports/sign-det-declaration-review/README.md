@@ -1,7 +1,11 @@
 # Sign-determination companion proof and API review
 
+The [Theory acceptance](theory-acceptance.md) completes the companion’s independent
+Phases 6–7. The computational library remains at Phase 5. The source assessments
+and earlier compiler captures below retain their stated checkpoints and scopes.
+
 The [assessment](companion.md) treats all 228 handwritten declarations in the 37
-production modules exported by `HexSignDetMathlib`, including private helpers and the
+production modules exported by `HexSignDetTheory`, including private helpers and the
 fields of `Node.Counted`. The [manifest](manifest.json) records the current declaration names and
 reviewed module hashes. Its `sha256` fields retain the source snapshot at
 `7433524020514b3907653c5a3fe3b95212ae8f59`; `reviewed_sha256` binds the
@@ -14,8 +18,8 @@ assessments below cover 728 named declarations, including newly added APIs; the
 source inventory now has an individual assessment for every inventoried named
 computational declaration. The checker enforces coverage of every production
 module under `HexSignDet/`; the import-only root umbrella is outside that set. Named declaration forms are those recorded and extracted by each group;
-anonymous instances, constructors and fields have separate dispositions. This companion review does not attest completion of the whole pair or any
-release phase.
+anonymous instances, constructors and fields have separate dispositions. These individual tables supply proof/API assessment; the final companion
+attestation above and the core’s final computational acceptance are separate.
 
 The per-group source bindings are review snapshots checked locally, rather
 than automatic CI currency checks. The complete handle-review source is
@@ -118,13 +122,13 @@ no compiled declaration refers to them.
 
 ## Remaining acceptance
 
-The companion and core record Phase 5 through their
-[proof acceptance](../sign-det-proof-acceptance.md). The prerequisite
+The companion and core have completed their
+[Phase-5 proof acceptance](../sign-det-proof-acceptance.md). The prerequisite
 [#10861](https://github.com/kim-em/hex-dev/pull/10861) completed the
 [#10377](https://github.com/kim-em/hex-dev/issues/10377) owner Phase-4 attestation.
-This declaration assessment does not itself establish Phases 6–7. The separate computational declaration review, final lint/docstring/use
-acceptance, applicable conformance and declared computational regression checks
-remain before Phase 6. Publication still requires the
+The Theory acceptance separately discharges the companion’s final API/use,
+lint, kernel and documentation requirements. Final computational acceptance,
+including its applicable regression checks, remains before the core’s Phase 6. Publication still requires the
 [package prerequisites](../real-closure-publication.md).
 
 The [computational foundation assessment](core-foundation.md) separately covers
@@ -132,7 +136,7 @@ The [computational foundation assessment](core-foundation.md) separately covers
 `System.check_eq` guard characterization and updates the core/companion
 count-recovery, table, codec, rank-basis and solve clients without changing
 their statements or algorithms. The
-remaining core modules and whole-pair Phase-6 checks are still outstanding.
+foundation assessment is separate from the core’s remaining final acceptance.
 
 The [counting and recursive replay assessment](core-replay.md) covers 49 named
 declarations in six additional computational modules, both literal equality
@@ -163,8 +167,8 @@ computational review; whole-library Phase-6 checks remain.
 The [common-polynomial comparison assessment](core-comparison.md) covers 27
 named declarations and sixteen source structure fields. Bidirectional common
 product and joint re-encoding acceptance laws replace guard unfolding in
-existing producer proofs. Remaining computational modules and whole-pair
-Phase-6 checks are still outstanding.
+existing producer proofs. The computational source assessments are complete;
+final core Phase-6 acceptance remains separate.
 
 The supplied-replay exports `Descriptor.rootsFrom_coverage` and
 `Descriptor.rootsFrom_ordered` generalize the existing producer compositions.
@@ -334,3 +338,12 @@ Unsupported test-glob expressions fail instead of inventing a production role.
 The foundation module and assessment archive uses
 `audit/issue-10575-sign-det-current-reviewed-input-v8`. Original companion
 snapshot paths and hashes are also checked against their recorded source commit.
+
+## Theory acceptance
+
+The [Theory acceptance](theory-acceptance.md) records the companion's subsequent
+Phases 6–7, including explicit source parameters, current kernel checks and the
+individual API-retention decisions. The older `current/` compiler capture is a
+preserved v10 snapshot; default archive verification remains valid and its
+current-source mode refuses the later source changes. Computational Phase-6
+acceptance and publication eligibility remain separate.

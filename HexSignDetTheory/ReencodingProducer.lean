@@ -9,6 +9,8 @@ public import HexSignDetTheory.SelectedProducer
 
 public section
 
+universe u v w
+
 namespace Hex.SignDet
 
 open HexPolyTheory.Interpret HexRealRootsTheory
