@@ -1,0 +1,60 @@
+{
+  "source_commit": "7c22ec379626c148e9e23495a4aa4eee1d6dfeff",
+  "sources_sha256": {
+    "adapters/HexRCF/RealCoefficients/RootCodec.lean": "4002a2b97cb9c93af5f84aabfafd3769af79262fe42d9213b7a0cd37694d9c6b",
+    "conformance/HexRCF/CellCodecProofs.lean": "f38ea1556c42c57340d8335651e574a1748578b07d0b805e9eea7b689caba598",
+    "HexRealClosure/RootReplay.lean": "3ff6adf0f06f4fe7c2eaf4d5ca6732b83b096b44d4b26d7edbb35e3c43c4a179",
+    "HexSignDet/Codec/GraphLaws.lean": "292cebb2c9ea1131ddd0458de3997aac95cfc1422e99dbd8fb5e7f6d08fcdaa5",
+    "HexSignDet/DagEncode.lean": "ec752303ec1488ae8e16b10ac280e83b0d4039df8829ca16052c38880396919a",
+    "HexSignDet/Descriptor.lean": "6f48615c779889877692b3027440f97bc14094e55b9a131a689295ac95dbb149",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4"
+  },
+  "logs": {
+    "reports/data/hexrcf-owner-descriptor-reuse/root-codec-owner-reuse-1.log.gz": {
+      "sha256": "4b519bf3df534c0aaba35b2788bc729c73e0455b632139cb34fcd0a023a1f4d5",
+      "uncompressed_sha256": "f6c5bd96c31d496de661d18e3470d28f198624f39b749af0f99cd15a0fce800e"
+    },
+    "reports/data/hexrcf-owner-descriptor-reuse/root-codec-owner-dag-1.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-owner-descriptor-reuse/root-codec-owner-admissions-1.log.gz": {
+      "sha256": "83db4788e454bfa7ee5d7ee71b38cc768ae22ca43ba05f2ff67507895f2f32e6",
+      "uncompressed_sha256": "d556e15d4c4b8ea386d4b50641f701832a11c68a83ac9fb9e0502d8f17285ce6"
+    },
+    "reports/data/hexrcf-owner-descriptor-reuse/root-codec-owner-copyright-1.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-owner-descriptor-reuse/root-codec-owner-literals-1.log.gz": {
+      "sha256": "d363c41d04cc71aaa8b2bb97d1faf6ff4b311e5874c10d339f87aba4d4b97158",
+      "uncompressed_sha256": "5b2703a612f8c434ac4e53bb05bfeef0dbca1d91cc9125441d5bd447be3dfbc3"
+    },
+    "reports/data/hexrcf-owner-descriptor-reuse/root-main-82d5-merge.log.gz": {
+      "sha256": "670ebeb0a21b227f0a5f642ec81b5dbf1bc08b1bae45a076fd72be6ec784236c",
+      "uncompressed_sha256": "4d1124f2943c3c152772e5408ecfc13029860a9a8dd2ca50affda152d8d38ef2"
+    }
+  },
+  "validation": {
+    "selected_jobs": 10962,
+    "actual_bodies": 21,
+    "scan_cones": 642,
+    "scan_modules": 1542,
+    "memory_bytes": 34359738368,
+    "swap_bytes": 0,
+    "lean_threads": 2,
+    "own_build_concurrency": 1
+  },
+  "limits": [
+    "Only theorem bodies and the direct-owner dependency audit change; no executable decoder/encoder changes.",
+    "No source-goal or manual rendering result is added.",
+    "No proof of general frozen history assembly, reached-record completeness or strict arbitrary-missing-record compiled replay is inferred.",
+    "The incremental build observation is not a timing comparison."
+  ],
+  "document_commit": "3bf6bf33b9ddcdca18d18c60516ff69198b115da",
+  "documents_sha256": {
+    "reports/hexrcf-owner-descriptor-reuse.md": "2d331411030bec453afc1609aa264a3265c50c0c6c0e4ca0f674344c880c7879"
+  },
+  "artifact_commit": "3bf6bf33b9ddcdca18d18c60516ff69198b115da"
+}

@@ -93,6 +93,7 @@ BUILD_ONLY_LIBS = {
     "HexRCFProofProbe",
     "HexRCFProofProbeMeasurements",
     "HexRCFCellRequestedStress",
+    "HexRCFAlgebraicCellsStress",
     "HexRealFormulaProofProbe",
     "HexRCFRealFormula",
     "HexRCFRealCoefficients",

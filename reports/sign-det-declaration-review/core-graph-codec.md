@@ -1,9 +1,10 @@
 # Graph codec proof assessment
 
-This assessment covers the 28 named declarations and six `Shape` fields
+This assessment covers the 30 named declarations and six `Shape` fields
 in `GraphLaws`, `FiniteLaws` and `FiniteGraph`. It concerns literal reconstruction and
 parser bounds. Arithmetic replay, root semantics and producer totality are
-separate obligations. Lawful scalar/context codecs are explicit premises.
+separate obligations. Global scalar/context laws or finite literal coverage
+are explicit hypotheses of the respective roundtrip theorems.
 
 | Declaration | Assessment |
 | --- | --- |
@@ -13,6 +14,8 @@ separate obligations. Lawful scalar/context codecs are explicit premises.
 | `Codec.factor_indices` | Private factor-list bound follows the actual zip/replicate construction, including differing exponent/query lengths. It asserts no product identity. |
 | `Codec.reduction_indices` | Private induction follows checked factor reduction steps and transfers the supplied factor-index bounds to every accepted step. |
 | `Codec.Shape.of_check` | Accepted node checks give all six parser bounds, using literal query bindings, positive-column rank equality, preparation length and the actual checked moment reductions. No semantic model is needed. |
+| `Codec.bindings_of_check` | Accepted local node checking supplies exact context, head and endpoint binding for that node and every retained moment. Uses the public binding characterization rather than unfolding the reader implementation; no mathematical interpretation or producer provenance is assumed. |
+| `Codec.bindings_of_validate` | Lifts exact local binding to every stored entry using the validated memo/node equality, including entries outside the selected root's reachable subgraph. Shared by the root-frame, sign-evidence and descriptor readers; preserves the distinction between literal binding and semantic evidence. |
 | `Codec.Shape.of_validate` | Successful graph validation supplies shape for every entry, including unreachable entries; uses exact validated memo/node correspondence. |
 | `Codec.read_children` | Preserves ordered left/right references under strict earlier-index bounds. Does not check child query semantics. |
 | `Codec.read_entry` | Reconstructs the complete literal node and both child references from lawful codecs, shape, exact subject bindings and earlier-index bounds. |
