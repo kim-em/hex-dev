@@ -64,5 +64,11 @@
     "This integration has a distinct incremental scope and is not a timing comparison.",
     "The earlier source, checkpoint, render and probe records retain their own exact versions.",
     "No general frozen history or strict arbitrary-missing-record compiled replay is established."
-  ]
+  ],
+  "document_commit": "be9796920e9a36b197a7db3dd72aed89539f17e2",
+  "documents_sha256": {
+    "reports/hexrcf-algebraic-preparation.md": "6bccffde91a19deb8b026f0cf5ff65e8345c58e60a1892e9dff957af2568e3ac",
+    "reports/data/hexrcf-algebraic-preparation/collect-main.py": "1c795dc6e7a95d59e372d27732e82e70f140547f5557db5d6f7fa219fa00bd8f"
+  },
+  "artifact_commit": "be9796920e9a36b197a7db3dd72aed89539f17e2"
 }
