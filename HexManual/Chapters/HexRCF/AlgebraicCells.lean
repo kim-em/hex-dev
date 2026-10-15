@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 import VersoManual
 import HexRCF.CellReplay.Algebraic.BooleanQuoted
+import HexRCF.RealCoefficients.RootBuild
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -123,3 +124,43 @@ their separate obligations. The supplied-operation interface remains kernel
 assembly: compiled evaluation can use its documented native fallback when
 records are missing, so it is not a strict checker for arbitrary compiled
 packets. This example installs no tactic handler or numerical provider.
+
+The native construction API can produce the same complete packet. `RootBuild.build`
+retains the owner's full derivative table and its extracted roots. For a lawful
+ordinary real model, the owner theorem proves construction succeeds for every
+squarefree interpreted head:
+
+```lean
+open Hex.RCF.RealCoefficients
+example
+    {r : Hex.RealClosure.BaseContext.Registry}
+    {c : Hex.RealClosure.Tower.Context r}
+    (model : Hex.RealClosure.Tower.Model c ℝ)
+    (p : Hex.DensePoly c.Value)
+    (sq : Squarefree
+      (HexPolyTheory.Interpret.interpret
+        model.value model.zero_iff p)) :
+    ∃ result, RootBuild.build p = .ok result :=
+  RootBuild.success model p sq
+```
+
+`CellBuild.prepare` first checks the original divisors, then specializes the
+shared atoms and constructs their radical carrier and complete root table.
+`prepare_success` derives progress and the literal radical check from the
+ordinary parent model, without assuming squarefreeness or a root list. Zero
+and repeated atoms retain their original positions in the source matrix.
+
+`CellBuild.build` constructs every section row and every sector record for that
+complete root table and proposed ordinary parent-field points. Strict adjacent
+signs check each point; incorrect exterior points are refused. Original divisor
+preflight comes first, and production errors retain their structured cause.
+The construction conformance produces the radical, roots and all rows for
+X²−√2 and verifies their exact match with the frozen packet used above. Native
+construction supplies proposals; the quoted proofs continue to consume the
+independently checked frozen data.
+
+This interface does not discover ordinary sector points in arbitrary parents,
+assemble missing scalar/provider histories or prove general frontend acceptance.
+`RowEncode.read_covered` proves the shared row reader recovers an encoded checked
+row from finite predecessor-codec coverage. It neither supplies that coverage
+nor turns a compiled verdict into proof evidence.
