@@ -8,6 +8,7 @@ import HexRCF.CellReplay.Algebraic.BooleanQuoted
 import HexRCF.CellReplay.Algebraic.CompleteQuoted
 import HexRCF.RealCoefficients.RootBuild
 import HexRCF.RealCoefficients.NumberFieldCells
+import HexRCF.RealCoefficients.GatherCells
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -413,3 +414,58 @@ own obligations. A separate manually run stress target checks a four-boundary
 union of the algebraic equation and half-open guards. Its retained diagnostic trace exposes a substantial cost in
 cell-row production; this is a performance limitation, without a scaling or
 speedup claim.
+
+Independently constructed coefficient contexts can enter complete packet
+production through `GatherCells.build`. Each input retains its original owner;
+several coefficients can share an owner, and a guard can be absent from the
+coefficient tuple. The coefficient order, guard order and schema arity remain
+independent. A zero original guard is rejected before gathering, including
+for a constant matrix with no coefficient parameters.
+
+`buildWith` reuses the actual owner's gathering result. A compatible ordinary
+model proves complete packet production without assuming a successful child
+producer or choosing a new primitive common field:
+
+```lean
+open Hex Hex.RealClosure
+open Hex.RealClosure.Tower
+open Hex.RealFormula
+open Hex.RCF.RealCoefficients
+example
+    {r : BaseContext.Registry}
+    {b : BaseContext.PackedContext r}
+    {os : List (Context r)} {n : Nat}
+    (shared : Shared b os)
+    (target : Model
+      shared.input.context ℝ)
+    (models : Inclusions.Models
+      target shared.maps)
+    (cs : Fin n →
+      GatherCells.Source os)
+    (gs : List (GatherCells.Source os))
+    (f : QF (n+1))
+    (nonzero : ∀ g ∈ gs, g.2 ≠ 0) :
+    ∃ p, GatherCells.buildWith
+      shared cs gs f = .ok p := by
+  obtain ⟨p,built,_⟩ :=
+    GatherCells.buildWith_complete
+      shared target models cs gs f
+      nonzero
+  exact ⟨p,built⟩
+```
+
+`build_complete` additionally derives successful gathering from the original
+owners' compatible base signatures and an ordinary base interpretation. Both
+quantifier verdicts are proved equivalent to the shared sentence at the
+original owner values. `build_domains` establishes every original typed guard
+nonzero from successful production. These are native-context results: they
+supply neither source-expression identities nor frozen provider/predecessor
+histories, and do not discharge strict compiled missing-record admission.
+
+The native conformance combines separate positive √2 and √3 owners, repeats
+one source coordinate, and checks a leading cancellation and repeated zero root.
+It independently reads both emitted packets, refuses swapped coefficient
+coordinates, and checks a false constant with no coefficient parameters but
+retained guards. A late original zero guard still rejects that constant case.
+Compiled verdicts remain controls; the generic construction and transport
+laws are separate ordinary-kernel proofs.
