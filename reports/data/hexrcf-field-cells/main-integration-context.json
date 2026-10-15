@@ -116,5 +116,11 @@
   },
   "core_context": "../hexrcf-cell-execution/context.json",
   "selected_field_context": "context.json",
-  "scope": "Affected optional library,13 actual execution/source body audits, fresh algebraic/Boolean source quotations and affected manual built against actual merged main. This is separate from the earlier14,693-job full-target source. Target-list resolution preserves all344 entries. Earlier native/visual evidence retains its own source versions; no general finite-codec/frontend completeness or speedup claim."
+  "scope": "Affected optional library,13 actual execution/source body audits, fresh algebraic/Boolean source quotations and affected manual built against actual merged main. This is separate from the earlier14,693-job full-target source. Target-list resolution preserves all344 entries. Earlier native/visual evidence retains its own source versions; no general finite-codec/frontend completeness or speedup claim.",
+  "document_commit": "7e9abbe952cd6d3abf3facd5fc5e8ee2b0ebf76e",
+  "document_hashes": {
+    "HexRCF/README.md": "cd8a07c220359c15b4a8393ab09e3a7fcc059a6d1c79294bdc06664b79f52ddd",
+    "reports/hexrcf-cell-execution.md": "7431d78521d8a567c76edd73b90506ca007a7ae8b2005386eabae089c171576c",
+    "reports/hexrcf-adapter-evidence.md": "fd4acbca48f2fae0c0f6960aef81e6a7b46d7187ff47e2f5ffb183f954fd32d0"
+  }
 }
