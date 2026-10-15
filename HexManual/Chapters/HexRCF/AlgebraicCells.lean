@@ -546,8 +546,8 @@ run_meta do
             (Real.sqrt 2 + 1) > 0)
         nonnegative
     | throwError "unsupported source"
-  unless
-      prepared.source.divisors.size == 1 do
+  let guards := prepared.source.divisors
+  unless guards.size == 1 do
     throwError "missing original guard"
 ```
 
