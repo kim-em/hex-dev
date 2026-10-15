@@ -6,10 +6,12 @@ import hashlib
 import gzip
 import io
 import json
+import os
 from pathlib import Path
 import subprocess
 import shutil
 import tempfile
+import time
 import unittest
 from unittest.mock import patch
 
@@ -151,6 +153,10 @@ class CollectorTest(unittest.TestCase):
             target = self.root / name
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text("synthetic frozen input\n")
+        (self.root / 'bench/HexSturm/Bench.lean').write_text('def config := { maxSecondsPerCall := 1800 }\n')
+        (self.root / '.lake/packages/lean-bench/LeanBench/Core.lean').write_text(
+            'structure BenchmarkConfig where\n  maxSecondsPerCall : Float := 1.0\n'
+            'structure FixedBenchmarkConfig where\n  maxSecondsPerCall : Float := 60.0\n')
         manifest = {"packages": [{"name": name, "type": "git", "rev": "stub", "url": "stub"}
                                  for name in ("Cli", "«lean-bench»")]}
         (self.root / "lake-manifest.json").write_text(json.dumps(manifest))
@@ -167,7 +173,7 @@ class CollectorTest(unittest.TestCase):
         for arm in ("baseline", "candidate"):
             path = self.base / arm
             program = '''#!/usr/bin/env python3
-import json,sys
+import json,sys,os,signal,subprocess,time
 from pathlib import Path
 arm=ARM
 mode=MODE
@@ -181,10 +187,20 @@ elif sys.argv[1]=='run':
     status='killed_at_cap' if killed else 'ok'
     result={'kind':'parametric','function':sys.argv[2],
             'config':{'max_seconds_per_call':120 if mode=='cap-ignore' else cap},'budget_truncated':False,
-            'points':[{'param':64,'result_hash':'wrong' if mode=='mismatch' and arm=='candidate' else 'same',
-                       'status':'timedOut' if mode in ('timeout','exit') and arm=='candidate' else status,
+            'points':[{'param':65 if mode=='cap-split' and arm=='candidate' else 64,
+                       'result_hash':'wrong' if mode=='mismatch' and arm=='candidate' else 'same',
+                       'status':'error' if mode=='cap-error' and arm=='candidate' else
+                                'timedOut' if mode in ('timeout','exit') and arm=='candidate' else status,
                        'per_call_nanos':100,'error':None}]}
+    if mode in ('cap-null','cap-mismatch'):
+        result['points'].insert(0,{'param':32,'status':'ok','error':None,'per_call_nanos':50,
+                                  'result_hash':None if mode=='cap-null' else arm})
     target.write_text(json.dumps({'results':[result]}))
+    if (mode=='interrupt' or (mode=='cap-interrupt' and adapted)) and arm=='candidate':
+        worker=subprocess.Popen([sys.executable,'-c','import time; time.sleep(60)'])
+        Path(__file__+'.worker-pid').write_text(str(worker.pid))
+        os.kill(os.getppid(),signal.SIGINT)
+        time.sleep(60)
     if mode=='exit' and arm=='candidate':sys.exit(7)
     if mode=='mutate' and arm=='candidate':
         with open(__file__,'a') as handle:handle.write('\\n# mutation\\n')
@@ -196,7 +212,8 @@ elif sys.argv[1]=='run':
         self.guard.write_text("#!/usr/bin/env python3\nimport sys,json\nfrom pathlib import Path\nPath(sys.argv[1]).write_text('{}')\nsys.exit(0)\n")
         self.guard.chmod(0o755)
         hashes = {str(path.relative_to(self.root)): collector.digest(path)
-                  for path in self.root.rglob('*') if path.is_file() and '.git' not in path.parts}
+                  for path in self.root.rglob('*') if path.is_file() and '.git' not in path.parts
+                  and (path.suffix == '.lean' or path.name in {'lean-toolchain', 'lake-manifest.json'})}
         self.sources = {}
         for arm, binary in self.binaries.items():
             source = self.base / (arm + "-source.json")
@@ -276,6 +293,8 @@ elif sys.argv[1]=='run':
     def bind_cap(self, previous, seconds=3600):
         context = json.loads((previous / 'context.json').read_text())
         decision = json.loads(self.decision.read_text())
+        decision['tooling_root_head'] = subprocess.check_output(
+            ['git', 'rev-parse', 'HEAD'], cwd=self.root, text=True).strip()
         exports = {}
         for failure in context['parent_failures']:
             commands = [r['command'] for r in context['commands']
@@ -291,6 +310,148 @@ elif sys.argv[1]=='run':
             'previous_context_sha256': collector.digest(previous / 'context.json'),
             'previous_exports': exports}
         self.decision.write_text(json.dumps(decision))
+
+    def tooling_commit(self, path, contents):
+        target = self.root / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(contents)
+        subprocess.check_call(['git', 'add', path], cwd=self.root, stdout=subprocess.DEVNULL)
+        subprocess.check_call(['git', '-c', 'user.name=Control', '-c', 'user.email=control@example.test',
+                               'commit', '-qm', 'tooling input'], cwd=self.root)
+
+    def assert_worker_stopped(self):
+        worker = int(Path(str(self.binaries['candidate']) + '.worker-pid').read_text())
+        deadline = time.monotonic() + 5
+        while time.monotonic() < deadline:
+            try:
+                os.kill(worker, 0)
+            except ProcessLookupError:
+                return
+            stat = Path('/proc') / str(worker) / 'stat'
+            try:
+                if stat.read_text().split()[2] == 'Z':
+                    return
+            except FileNotFoundError:
+                pass
+            time.sleep(0.01)
+        os.kill(worker, 9)
+        self.fail('benchmark worker survived parent interruption')
+
+    def test_cap_tooling_commit_preserves_original_build_manifests(self):
+        first = self.cap_failure()
+        original = {arm: path.read_bytes() for arm, path in self.sources.items()}
+        source_head = json.loads(self.sources['candidate'].read_text())['head']
+        self.tooling_commit('reports/bench-results/sturm-phase6-comparison/note.md', 'tooling only\n')
+        self.bind_cap(first)
+        code, _ = self.run_collector('adapted', ['--cap-from', first])
+        self.assertEqual(code, 0)
+        self.assertEqual(self.context['sources']['candidate']['head'], source_head)
+        self.assertNotEqual(self.context['tooling_root_head'], source_head)
+        self.assertEqual({arm: path.read_bytes() for arm, path in self.sources.items()}, original)
+
+    def test_cap_tooling_commit_refuses_other_changes(self):
+        first = self.cap_failure()
+        self.tooling_commit('unapproved.md', 'outside the tooling allowlist\n')
+        self.bind_cap(first)
+        with self.assertRaisesRegex(RuntimeError, 'unapproved paths'):
+            self.run_collector('adapted', ['--cap-from', first])
+
+    def test_default_mode_still_requires_exact_build_commit(self):
+        self.tooling_commit('reports/bench-results/sturm-phase6-comparison/note.md', 'tooling only\n')
+        with self.assertRaisesRegex(RuntimeError, 'candidate tree differs'):
+            self.run_collector()
+
+    def test_parametric_default_is_separate_from_fixed_benchmark_default(self):
+        path = self.root / '.lake/packages/lean-bench/LeanBench/Core.lean'
+        path.write_text(path.read_text().replace('60.0', '50000.0'))
+        self.assertEqual(collector.registered_cap(self.root), 1800)
+
+    def test_cap_cannot_relabel_old_build_to_new_tooling_commit(self):
+        first = self.cap_failure()
+        self.tooling_commit('reports/bench-results/sturm-phase6-comparison/note.md', 'tooling only\n')
+        source = self.sources['candidate']
+        document = json.loads(source.read_text())
+        document['head'] = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=self.root, text=True).strip()
+        source.write_text(json.dumps(document))
+        self.bind_decision()
+        self.bind_cap(first)
+        with self.assertRaisesRegex(RuntimeError, 'original source manifests'):
+            self.run_collector('adapted', ['--cap-from', first])
+
+    def test_cap_keeps_original_guard_build_provenance(self):
+        first = self.cap_failure()
+        self.bind_cap(first)
+        decision = json.loads(self.decision.read_text())
+        decision['guard_build']['command'] = ['a', 'different', 'build']
+        self.decision.write_text(json.dumps(decision))
+        with self.assertRaisesRegex(RuntimeError, 'original guard-build provenance'):
+            self.run_collector('adapted', ['--cap-from', first])
+
+    def test_cap_refuses_relocated_state_even_with_copied_journal(self):
+        first = self.cap_failure()
+        original = Path(self.context['decision_reservation'])
+        relocated = self.base / 'relocated-state'
+        target = relocated / 'hex/sturm-comparisons' / original.name
+        target.parent.mkdir(parents=True)
+        target.write_bytes(original.read_bytes())
+        self.bind_cap(first)
+        with patch.object(collector, 'state_directory', return_value=relocated):
+            with self.assertRaisesRegex(RuntimeError, 'original reservation path'):
+                self.run_collector('relocated', ['--cap-from', first])
+        self.assertEqual(self.lease_calls, 0)
+
+    def test_cap_refuses_different_host(self):
+        with patch.object(collector.platform, 'node', return_value='another-host'):
+            first = self.cap_failure()
+        self.bind_cap(first)
+        with self.assertRaisesRegex(RuntimeError, 'original host'):
+            self.run_collector('foreign-host', ['--cap-from', first])
+
+    def test_cap_refuses_different_killed_parameters(self):
+        first = self.cap_failure('cap-split')
+        self.bind_cap(first)
+        with self.assertRaisesRegex(RuntimeError, 'different cap parameters'):
+            self.run_collector('adapted', ['--cap-from', first])
+
+    def test_cap_refuses_one_arm_error(self):
+        first = self.cap_failure('cap-error')
+        self.bind_cap(first)
+        with self.assertRaisesRegex(RuntimeError, 'per-call cap termination'):
+            self.run_collector('adapted', ['--cap-from', first])
+
+    def test_cap_refuses_missing_completed_hash(self):
+        first = self.cap_failure('cap-null')
+        self.bind_cap(first)
+        with self.assertRaisesRegex(RuntimeError, 'no result hash'):
+            self.run_collector('adapted', ['--cap-from', first])
+
+    def test_cap_refuses_mismatched_completed_hashes(self):
+        first = self.cap_failure('cap-mismatch')
+        self.bind_cap(first)
+        with self.assertRaisesRegex(RuntimeError, 'parameters or hashes differ'):
+            self.run_collector('adapted', ['--cap-from', first])
+
+    def test_interrupted_cap_capture_consumes_slot_and_kills_worker(self):
+        first = self.cap_failure('cap-interrupt')
+        self.bind_cap(first)
+        with self.assertRaises(KeyboardInterrupt):
+            self.run_collector('adapted', ['--cap-from', first])
+        self.assertEqual(self.context['status'], 'interrupted')
+        self.assertTrue(self.context['attempt_reserved'])
+        self.assertEqual(self.context['commands'][-1]['status'], 'interrupted')
+        self.assert_worker_stopped()
+        with self.assertRaisesRegex(RuntimeError, 'decision already used'):
+            self.run_collector('retry', ['--cap-from', first])
+
+    def test_deleting_cap_rerun_receipt_does_not_allow_another_rerun(self):
+        self.guard_code(2)
+        first = self.cap_failure()
+        self.bind_cap(first)
+        _, adapted = self.run_collector('adapted', ['--cap-from', first])
+        self.run_collector('repeat', ['--cap-from', first, '--rerun-of', adapted])
+        (adapted / 'unchanged-rerun.json').unlink()
+        with self.assertRaisesRegex(RuntimeError, 'already reserved'):
+            self.run_collector('again', ['--cap-from', first, '--rerun-of', adapted])
 
     def test_cap_adaptation_preserves_original_reservation_and_balanced_schedule(self):
         first = self.cap_failure()
@@ -340,10 +501,11 @@ elif sys.argv[1]=='run':
 
     def test_cap_policy_rejects_invalid_limits(self):
         first = self.cap_failure()
-        for index, cap in enumerate([True, 0, -1, '3600', float('inf'), float('nan'), 120]):
+        for index, cap in enumerate([True, 0, -1, '3600', float('inf'), float('nan'),
+                                     120, 300, 1800.1234567, collector.MAX_CAP_SECONDS + 1]):
             with self.subTest(cap=cap):
                 self.bind_cap(first, cap)
-                with self.assertRaisesRegex(RuntimeError, 'cap seconds|increase'):
+                with self.assertRaisesRegex(RuntimeError, 'whole seconds|registration limit'):
                     self.run_collector('bad-cap-' + str(index), ['--cap-from', first])
                 self.assertEqual(self.lease_calls, 0)
 
@@ -378,7 +540,7 @@ elif sys.argv[1]=='run':
         source.write_text(json.dumps(document))
         self.bind_decision()
         self.bind_cap(first)
-        with self.assertRaisesRegex(RuntimeError, 'frozen producer inputs'):
+        with self.assertRaisesRegex(RuntimeError, 'original source manifests'):
             self.run_collector('changed-inputs', ['--cap-from', first])
 
     def test_non_cap_failure_does_not_authorize_cap_adaptation(self):
@@ -585,16 +747,12 @@ elif sys.argv[1]=='run':
         self.assertEqual(failure['results'][0]['points'][0]['status'], 'timedOut')
 
     def test_interruption_consumes_reserved_first_attempt(self):
-        original = collector.subprocess.run
-        def interrupt(command, *args, **kwargs):
-            if command[0] == str(self.binaries['candidate']) and command[1] == 'run':
-                raise KeyboardInterrupt()
-            return original(command, *args, **kwargs)
-        with patch.object(collector.subprocess, 'run', side_effect=interrupt):
-            with self.assertRaises(KeyboardInterrupt):
-                self.run_collector()
+        self.mode('interrupt')
+        with self.assertRaises(KeyboardInterrupt):
+            self.run_collector()
         self.assertEqual(self.context['status'], 'interrupted')
         self.assertTrue(self.context['attempt_reserved'])
+        self.assert_worker_stopped()
         with self.assertRaisesRegex(RuntimeError, 'decision already used'):
             self.run_collector('fresh')
 
