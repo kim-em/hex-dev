@@ -181,6 +181,22 @@ theorem Shape.of_validate {sign : E → Int} {context : Ctx} {p : DensePoly E}
   rw [← same]
   exact Shape.of_check (Replay.check_node checked.accepted)
 
+/-- Whole-graph validation binds every retained node and moment to the caller's
+literal root domain, including entries not reachable from the selected root. -/
+theorem bindings_of_validate {sign : E → Int} {context : Ctx} {p : DensePoly E}
+    {lo hi : Endpoint E} {d : Dag E Ctx}
+    {memo : Array (Dag.Checked sign context p lo hi)}
+    (h : d.validate? sign context p lo hi = some memo) :
+    ∀ e ∈ d.entries, bindings context p lo hi e.node = true := by
+  intro e he
+  have nodes := Dag.validate_nodes sign context p lo hi d memo h
+  have member : e.node ∈ d.entries.map Dag.Entry.node :=
+    Array.mem_map.mpr ⟨e, he, rfl⟩
+  rw [← nodes] at member
+  obtain ⟨checked, _, same⟩ := Array.mem_map.mp member
+  rw [← same]
+  exact bindings_of_check (Replay.check_node checked.accepted)
+
 /-- info: 'Hex.SignDet.Codec.Shape.of_validate' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Shape.of_validate

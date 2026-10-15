@@ -102,6 +102,14 @@ theorem Descriptor.ofReplay_data (sign : E → Int) (context : Ctx)
   unfold ofReplay?
   split <;> rfl
 
+/-- Rechecking an existing descriptor restores its exact subject and evidence. -/
+theorem Descriptor.ofReplay_self {sign : E → Int} {context : Ctx}
+    (descriptor : Descriptor E Ctx sign context) :
+    ofReplay? sign context descriptor.raw descriptor.evidence = some descriptor := by
+  cases descriptor
+  rename_i raw evidence accepted
+  simp [ofReplay?, accepted]
+
 /-- Reuse an already checked table with exact input bindings and count one.
 The proof arguments avoid rerunning the same replay during row extraction. -/
 def Descriptor.ofTable {sign : E → Int} {context : Ctx}
