@@ -76,6 +76,17 @@ profiles have limited caller attribution and do not identify a specific child
 producer. Every completed sample, including the first profile’s map timeout,
 is retained.
 
+The [child-timed diagnostic](data/hexrcf-cell-decision/row-cost.json) runs the
+actual existing child functions and validates the resulting complete matrix.
+Its22 calls record71,140 ms for four section rows,180,479 ms for eight
+adjacent-root selected-sign queries,368 ms for five ordinary-point descriptors
+and5,722 ms for their rows. These figures identify selected-sign production at
+the carrier roots as the substantial cost in that trace. They do not establish
+a general speedup or scaling result. The [existing owner API question](https://github.com/kim-em/hex-dev/issues/10377#issuecomment-6185385739)
+asks whether prepared joint tables can be reused across descriptors with exact
+context/head/domain/query bindings. No reusable search or replay implementation
+is duplicated in the adapter.
+
 ## Remaining obligations
 
 The headline theorem establishes mathematical existence of accepted typed
