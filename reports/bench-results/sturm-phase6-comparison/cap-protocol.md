@@ -133,19 +133,24 @@ original persistent host-state directory and all reservation markers intact.
 Restoring capture data does not create a new allowance, and copying an archived
 journal to another state directory is refused.
 
-The [current preflight](cap-preflight-v2/manifest.json) binds tooling commit
-`d2625a5b026ad993366931e249f2d1f75c02df06`, preserved by
-`audit/issue-10575-sturm-cap-tooling-v2`, separately from the unchanged producer
-commit. It uses the canonical OS-account state directory and a concrete decision
-that explicitly consumes errors and allocation failures after reservation.
-All 5,536 original candidate input hashes agree. It validates the complete
-58-family selection and eight native fixed controls per arm. Its context records
-no reservation and no measurements, and the original reservation remains
-byte-identical. The collector and test hashes match the corresponding repository
-files. These are binding/correctness checks, not a performance verdict.
+The [current preflight](cap-preflight-v3/manifest.json) binds tooling commit
+`f80b63bd857d58e0acff89cb3954a81bba56fa9c`, preserved by
+`audit/issue-10575-sturm-cap-tooling-v3`, separately from the unchanged producer
+commit. It uses the canonical OS-account state directory, checks slot
+availability, and binds a concrete decision that explicitly consumes errors and
+allocation failures after reservation. All 5,536 original candidate input hashes
+agree. It validates the complete 58-family selection and eight native fixed
+controls per arm. It reserves no attempt, collects no measurements and leaves
+the original journal byte-identical. The collector and test hashes match their
+repository files. These are binding/correctness checks, not a performance verdict.
 
-The [earlier preflight](cap-preflight-v1/manifest.json) retains the original
-build/tooling-separation check at
-`audit/issue-10575-sturm-cap-tooling-v1`. Its recorded collector used the
-previous state-directory selection. It also reserved no attempt and collected
-no measurements; its source-specific records remain unchanged.
+The earlier source-specific preflights remain unchanged:
+
+- [v2](cap-preflight-v2/manifest.json), at
+  `audit/issue-10575-sturm-cap-tooling-v2`, uses canonical state and the explicit
+  allocation-failure policy; its preflight did not reject an already used slot.
+- [v1](cap-preflight-v1/manifest.json), at
+  `audit/issue-10575-sturm-cap-tooling-v1`, records the initial build/tooling
+  separation with the previous state-directory selection.
+
+Neither earlier preflight reserved an attempt or collected measurements.
