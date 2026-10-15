@@ -188,7 +188,7 @@ def Base.supply (base : Base) (domains previous : Supplier) : Supplier := fun ty
           pure #[← base.members operands[0]! domains]
         else pure #[← base.members operands[0]! domains, ← base.members operands[1]! domains]
       diagnostic "base: coefficient memberships proved"
-      -- Elaborate the guarded reader and dictionaries once. The actual
+      -- Elaborate the guarded reader and dictionaries. The actual
       -- operands and membership proofs remain explicit theorem arguments,
       -- checked by the enclosing ordinary-kernel proof boundary.
       let guarded ← withTransparency .all

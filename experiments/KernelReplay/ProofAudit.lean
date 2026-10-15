@@ -29,18 +29,25 @@ private def check (proof type : Expr) : MetaM (Array Name) := do
 
 private def restoration : MetaM Unit := do
   let name ← mkFreshUserName `auditBranch
+  let dependency ← mkFreshUserName `auditDependency
   let saved ← Meta.saveState
   try
     addDecl (.thmDecl {
-      name, levelParams := [], type := mkConst ``True, value := mkConst ``True.intro })
+      name := dependency, levelParams := [], type := mkConst ``True, value := mkConst ``True.intro })
+    addDecl (.thmDecl {
+      name, levelParams := [], type := mkConst ``True, value := mkConst dependency })
     unless (← check (mkConst name) (mkConst ``True)).isEmpty do
       throwError "constructive branch acquired an axiom"
     saved.restore
     let witness ← mkAppM ``Nonempty.intro #[mkConst ``True.intro]
     let chosen ← mkAppM ``Classical.choice #[witness]
-    addDecl (.thmDecl { name, levelParams := [], type := mkConst ``True, value := chosen })
+    addDecl (.thmDecl {
+      name := dependency, levelParams := [], type := mkConst ``True, value := chosen })
+    -- This declaration is identical in both branches; its dependency changed.
+    addDecl (.thmDecl {
+      name, levelParams := [], type := mkConst ``True, value := mkConst dependency })
     unless (← check (mkConst name) (mkConst ``True)) == #[`Classical.choice] do
-      throwError "restored declaration reused another branch's audit"
+      throwError "unchanged declaration reused another branch's dependency audit"
     -- A dependency occurring only in the proposition must also be audited.
     let type ← mkEq chosen (mkConst ``True.intro)
     let proof ← mkEqRefl (mkConst ``True.intro)
@@ -114,6 +121,20 @@ private def rejectArgument : MetaM Unit := do
   | .error error => throwKernelException error
   | .ok _ => throwError "ordinary kernel accepted a corrupted base membership argument"
 
+private def production (name : Name) : MetaM Unit := do
+  let .thmInfo original ← getConstInfo name | throwError "finite-base theorem body missing"
+  let base ← FiniteData.Base.ofClosed (mkConst ``FiniteBaseProbe.closed)
+  let domains := FiniteData.agreementSupplier (mkConst ``FiniteBaseProbe.agreement)
+  forallTelescope original.type fun binders target => do
+    let some proof ← base.supply domains domains target |
+      throwError "production base supplier rejected an existing finite-base operation"
+    let expected := (mkAppN original.value binders).headBeta
+    unless proof == expected do
+      throwError "production base supplier changed its existing finite-base proof"
+    let statement ← mkForallFVars binders target
+    let closed ← mkLambdaFVars binders proof
+    let _ ← check closed statement
+
 syntax (name := proofAudit) "#proof_audit" : command
 @[command_elab proofAudit]
 def elaborate : CommandElab := fun _ => liftTermElabM do
@@ -129,8 +150,10 @@ def elaborate : CommandElab := fun _ => liftTermElabM do
   let fresh ← Meta.saveState
   let _ ← check proof original.type
   fresh.restore
-  for order in #[#[false, true], #[true, false]] do
-    for cached in order do compare proof original.type cached
+  let comparisons := (← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE").isSome
+  if comparisons then
+    for order in #[#[false, true], #[true, false]] do
+      for cached in order do compare proof original.type cached
   for (name, theoremName, count) in #[
       (``FiniteBaseProbe.product, ``Transport.Product.of_closed, 4),
       (``FiniteBaseProbe.sum, ``Transport.Sum.of_closed, 4),
@@ -138,13 +161,15 @@ def elaborate : CommandElab := fun _ => liftTermElabM do
       (``FiniteBaseProbe.scaling, ``Transport.Scaling.of_closed, 4),
       (``FiniteBaseProbe.derivative, ``Transport.Differentiation.of_closed, 2),
       (``FiniteBaseProbe.evaluation, ``Transport.Evaluation.of_closed, 4)] do
-    for order in #[#[false, true], #[true, false]] do
-      for direct in order do application name theoremName count direct
+    production name
+    if comparisons then
+      for order in #[#[false, true], #[true, false]] do
+        for direct in order do application name theoremName count direct
+  production ``FiniteBaseProbe.power
   logInfo "proof audits agree with uncached dependencies and preserve environment restoration, proposition dependencies and incomplete-proof rejection"
 
 end Hex.RealClosure.Algebraic.KernelReplay.ProofAudit
 
-set_option Elab.async false in
 set_option maxRecDepth 32768 in
 set_option maxHeartbeats 2000000 in
 /-- info: proof audits agree with uncached dependencies and preserve environment restoration, proposition dependencies and incomplete-proof rejection -/

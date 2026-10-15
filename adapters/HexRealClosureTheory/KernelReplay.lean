@@ -65,25 +65,22 @@ def request (application : Expr) : MetaM Request := do
     throwError "unexpected algebraic element type"
   return { context := element.getAppArgs.back!, polynomial := application.getAppArgs.back! }
 
-private initialize auditedConstants : EnvExtension (PHashMap Name (ConstantInfo × Array Name)) ←
+private initialize auditedConstants : EnvExtension (PHashMap Name (Array Name)) ←
   registerEnvExtension (pure {}) (asyncMode := .local)
 
--- Generated proofs share immutable checked declarations. Keep their actual
--- axiom sets with the producing environment, so rollback also discards entries
--- for declarations whose names might subsequently be reused. Compare the
--- checked declaration as well; unresolved constants are never cached.
+-- Environment scoping is essential: a declaration and all its dependencies
+-- are immutable in descendants of the environment that checked them. Rollback
+-- discards entries even when an unchanged declaration later refers to a reused
+-- dependency name. Lean already precomputes imported declarations' axiom sets.
 private def auditedAxioms (name : Name) : MetaM (Array Name) := do
   let environment ← getEnv
-  let checked := environment.checked.get.find? name
-  if let some info := checked then
-    if let some (previous, axioms) := auditedConstants.getState environment |>.find? name then
-      if previous == info then return axioms
+  if let some axioms := auditedConstants.getState environment |>.find? name then return axioms
   let axioms ← collectAxioms name
   for axiomName in axioms do
     unless #[`propext, `Classical.choice, `Quot.sound].contains axiomName do
       throwError "unexpected axiom {axiomName} through {name}"
-  if let some info := checked then
-    modifyEnv fun environment => auditedConstants.modifyState environment (·.insert name (info, axioms))
+  if !environment.isImportedConst name && (environment.checked.get.find? name).isSome then
+    modifyEnv fun environment => auditedConstants.modifyState environment (·.insert name axioms)
   return axioms
 
 def auditProof (proof type : Expr) : MetaM (Array Name) := do

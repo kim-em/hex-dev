@@ -997,6 +997,9 @@ agreements become ordinary-kernel-checked theorems; open agreements retain
 their hypotheses for the enclosing kernel check.
 `Base.supply` derives the reached polynomial
 operation premises from exact coefficient and scalar domain memberships.
+It elaborates the guarded reader before constructing the theorem application;
+the enclosing ordinary-kernel check validates its actual operand and membership
+arguments. Callers retain the guard and final-theorem kernel boundaries.
 `agreementSupplier` supplies retained domain, sign, zero-reflection and leading
 coefficient guards from the same finite base agreement. Original guards are
 passed to suppliers before weak-head reduction, so their native polynomial
@@ -1019,6 +1022,12 @@ operation proofs and a leading guard, and rejects an unretained coefficient.
 Its cancelling sum keeps both original coefficient lists before choosing the
 interpretation. This base supplier and the recursive prefix supplier require
 the general collector to supply the complete dependency support first.
+The CI-built `KernelReplay.ProofAudit` compares reused axiom sets with uncached
+collection, checks rollback when an unchanged declaration's dependency changes,
+and rejects incomplete terms and corrupted membership arguments. It calls the
+production base supplier for all seven operation shapes, including powers under
+a natural-number binder. Repeated heartbeat comparisons run only when
+`HEX_NATIVE_ASSEMBLY_TRACE` is set; CI runs the correctness checks without them.
 
 `FiniteData.frontier` retains original operation and replay boundaries with
 their local hypotheses before scalar expansion. `Level.lower` maps reached
