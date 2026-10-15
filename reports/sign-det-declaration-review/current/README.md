@@ -45,14 +45,14 @@ mathematical API quality or external-client completeness mechanically.
 
 The source checkpoint tag is
 `audit/issue-10575-sign-det-current-reviewed-input-v10`. The complete archive is
-`audit/issue-10575-sign-det-current-reviewed-complete-v10`. Fetch both tags and
+`audit/issue-10575-sign-det-current-reviewed-complete-v10-context`. Fetch both tags and
 use an isolated checkout at the complete archive:
 
 ```sh
 git fetch origin tag audit/issue-10575-sign-det-current-reviewed-input-v10
-git fetch origin tag audit/issue-10575-sign-det-current-reviewed-complete-v10
+git fetch origin tag audit/issue-10575-sign-det-current-reviewed-complete-v10-context
 git worktree add /tmp/signdet-audit-source \
-  audit/issue-10575-sign-det-current-reviewed-complete-v10
+  audit/issue-10575-sign-det-current-reviewed-complete-v10-context
 ```
 
 Build with the exact pinned dependencies, then run `reproduce.py` from that
