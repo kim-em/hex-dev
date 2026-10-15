@@ -38,6 +38,18 @@ def attempt (a : Approximation K) (f : RationalFn K) (n : Nat) : Option Int :=
     let t ← (enclose a f.den (precision n)).sign?
     pure (s * t)
 
+/-- Native trials test normalized zero storage without constructing a zero polynomial. -/
+def attemptImpl (a : Approximation K) (f : RationalFn K) (n : Nat) : Option Int :=
+  if f.num.isZero then some 0 else do
+    let s ← (enclose a f.num (precision n)).sign?
+    let t ← (enclose a f.den (precision n)).sign?
+    pure (s * t)
+
+/-- The native zero shortcut preserves the full trial result. -/
+@[csimp] theorem attempt_impl : @attempt = @attemptImpl := by
+  funext K _ _ a f n
+  simp only [attempt, attemptImpl, DensePoly.isZero_eq_true_iff, DensePoly.size_eq_zero_iff]
+
 /-- Total sign for one query, given an erased proof that its refinement terminates.
 Semantic correctness additionally needs containment for these exact providers. -/
 def sign (a : Approximation K) (f : RationalFn K)
@@ -51,6 +63,21 @@ def approxAttempt (a : Approximation K) (f : RationalFn K) (δ : Rat) (n : Nat) 
   else do
     let b ← (enclose a f.num (precision n)).div? (enclose a f.den (precision n))
     if b.width ≤ δ then some b else none
+
+/-- Native approximation trials use the same normalized zero-storage test. -/
+def approxAttemptImpl (a : Approximation K) (f : RationalFn K) (δ : Rat) (n : Nat) :
+    Option Bounds :=
+  if f.num.isZero then
+    if 0 ≤ δ then some (.singleton 0) else none
+  else do
+    let b ← (enclose a f.num (precision n)).div? (enclose a f.den (precision n))
+    if b.width ≤ δ then some b else none
+
+/-- The compiled shortcut preserves approximation success and refusal exactly. -/
+@[csimp] theorem approxAttempt_impl : @approxAttempt = @approxAttemptImpl := by
+  funext K _ _ a f δ n
+  simp only [approxAttempt, approxAttemptImpl, DensePoly.isZero_eq_true_iff,
+    DensePoly.size_eq_zero_iff]
 
 /-- Nonpositive requests ask for a coarse width-one enclosure. -/
 def requestWidth (δ : Rat) : Rat := if 0 < δ then δ else 1

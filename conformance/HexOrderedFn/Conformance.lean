@@ -168,3 +168,13 @@ private def e : DensePoly First := DensePoly.C epsilon
 
 
 end InfinitesimalChecks
+
+/-- info: 'Hex.OrderedFn.Infinitesimal.sign_impl' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.OrderedFn.Infinitesimal.sign_impl
+/-- info: 'Hex.OrderedFn.Real.attempt_impl' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.OrderedFn.Real.attempt_impl
+/-- info: 'Hex.OrderedFn.Real.approxAttempt_impl' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.OrderedFn.Real.approxAttempt_impl

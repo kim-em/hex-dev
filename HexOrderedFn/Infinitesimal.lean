@@ -47,6 +47,17 @@ def sign [Lean.Grind.Field K] [DecidableEq K] (baseSign : K → Int)
   if f.num = 0 then 0 else
     baseSign (lowestCoeff f.num) * baseSign (lowestCoeff f.den)
 
+/-- Native sign avoids constructing a polynomial zero for structural equality. -/
+def signImpl [Lean.Grind.Field K] [DecidableEq K] (baseSign : K → Int)
+    (f : RationalFn K) : Int :=
+  if f.num.isZero then 0 else
+    baseSign (lowestCoeff f.num) * baseSign (lowestCoeff f.den)
+
+/-- The compiler uses the equivalent empty-storage zero test. -/
+@[csimp] theorem sign_impl : @sign = @signImpl := by
+  funext K _ _ baseSign f
+  simp only [sign, signImpl, DensePoly.isZero_eq_true_iff, DensePoly.size_eq_zero_iff]
+
 /-- Formal zero is detected without calling the predecessor sign. -/
 @[simp] theorem sign_zero [Lean.Grind.Field K] [DecidableEq K] (baseSign : K → Int) :
     sign baseSign (0 : RationalFn K) = 0 := by
