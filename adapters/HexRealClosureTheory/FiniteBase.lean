@@ -443,14 +443,55 @@ private def agreementMembers (agreement : Expr) : Supplier := fun type =>
   diagnostic s!"base support: whole coefficient memberships supplied, depth={path.size} supplyHB={((← IO.getNumHeartbeats)-before)/1000}"
   return some proof
 
+-- Project a reached closed index from its retained whole coefficient block.
+-- The natural bound is checked on the original polynomial; no global list
+-- position or new proof cache is needed. Unsupported requests keep the
+-- individual membership fallback.
+private def agreementCoefficient (agreement : Expr) : Supplier := fun type =>
+    withNewMCtxDepth <| withTransparency .all do
+  let agreement ← instantiateMVars agreement
+  let type ← instantiateMVars type
+  if agreement.hasMVar || type.hasMVar || agreement.hasSorry || type.hasSorry ||
+      type.hasLooseBVars then return none
+  let .app predicate coefficient := type | return none
+  unless coefficient.getAppFn.isConstOf ``DensePoly.coeff do return none
+  let args := coefficient.getAppArgs
+  unless args.size ≥ 3 do return none
+  let polynomial := args[args.size - 2]!
+  let index := args.back!
+  if index.hasFVar || index.hasLooseBVars then return none
+  let size ← mkAppM ``DensePoly.size #[polynomial]
+  let whole ← withLocalDeclD `i (mkConst ``Nat) fun i => do
+    let bound ← mkAppM ``Nat.lt #[i, size]
+    withLocalDeclD `bound bound fun h => do
+      mkForallFVars #[i, h] (mkApp predicate (mkApp coefficient.appFn! i))
+  let some members ← agreementMembers agreement whole | return none
+  let some n ← getNatValue? (← whnf index) | return none
+  let some count ← getNatValue? (← whnf size) | return none
+  unless n < count do return none
+  let bound ← mkAppM ``Nat.lt #[index, size]
+  -- Supply Nat's standard decision procedure explicitly: instance search
+  -- need not identify a raw Nat.lt application with notation's LT.lt.
+  let decision := mkApp2 (mkConst ``Nat.decLt) index size
+  let boundProof := mkAppN (mkConst ``of_decide_eq_true)
+    #[bound, decision, ← mkEqRefl (mkConst ``Bool.true)]
+  let proof := mkApp2 members index boundProof
+  let proof ← instantiateMVars proof
+  if proof.hasMVar || proof.hasSorry then return none
+  unless ← isDefEq (← inferType proof) type do return none
+  diagnostic "base support: indexed coefficient supplied from retained block"
+  return some proof
+
 /-- Supply coefficient guards and leading coefficients from the same finite
 sign/zero agreement. Bounded coefficient-domain goals first project a retained
-whole coefficient block, matching its domain, bound and dictionaries. Other
-shapes use individual membership search. No nonzero interpretation is assumed
+whole coefficient block, matching its domain, bound and dictionaries. Closed
+indices in retained blocks use that same projection and a checked natural
+bound. Other shapes use individual membership search. No nonzero interpretation is assumed
 for an unretained coefficient. -/
 def agreementSupplier (agreement : Expr) (cache : Option CoefficientCache := none) : Supplier :=
     fun type => do
   if let some proof ← agreementMembers agreement type then return some proof
+  if let some proof ← agreementCoefficient agreement type then return some proof
   if type.getAppFn.isConstOf ``Transport.Leading then
     let dataType ← inferType agreement
     unless dataType.getAppFn.isConstOf ``Transport.Inventory.Agreement do
