@@ -8,7 +8,11 @@ module
 public import HexSignDetTheory.RationalSolve
 public import HexSignDetTheory.Basis
 
+set_option autoImplicit false
+
 public section
+
+universe u v
 
 namespace Hex.SignDet
 
@@ -96,13 +100,15 @@ theorem buildNode_spec (context : Ctx) (domain : Sturm.PreparedDomain E)
               refine ⟨?_, ?_, hh.2.2.2⟩
               · rw [hh.1]; simp
               · rw [hh.2.1]
-                simpa using Vector.toList_transport hdim (columns.toArray.toVector : Vector _ columns.length)
+                simpa using Vector.toList_transport hdim
+                  (columns.toArray.toVector : Vector _ columns.length)
             | some pair =>
               have hh := solveScaled_spec hs
               refine ⟨?_, ?_, hh.2.2.2.2.2⟩
               · rw [hh.1]; simp
               · rw [hh.2.1]
-                simpa using Vector.toList_transport hdim (columns.toArray.toVector : Vector _ columns.length)
+                simpa using Vector.toList_transport hdim
+                  (columns.toArray.toVector : Vector _ columns.length)
           exact ⟨rfl, rfl, rfl, rfl, rfl, hf.1, hf.2.1, hf.2.2, rfl⟩
   · contradiction
 

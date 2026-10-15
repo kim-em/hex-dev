@@ -1,5 +1,9 @@
 # Sign-determination companion proof and API review
 
+The [Theory acceptance](theory-acceptance.md) completes the companion’s independent
+Phases 6–7. The computational library remains at Phase 5. The source assessments
+and earlier compiler captures below retain their stated checkpoints and scopes.
+
 The [assessment](companion.md) treats all 228 handwritten declarations in the 37
 production modules exported by `HexSignDetMathlib`, including private helpers and the
 fields of `Node.Counted`. The [manifest](manifest.json) records the current declaration names and
@@ -122,9 +126,9 @@ The companion and core record Phase 5 through their
 [proof acceptance](../sign-det-proof-acceptance.md). The prerequisite
 [#10861](https://github.com/kim-em/hex-dev/pull/10861) completed the
 [#10377](https://github.com/kim-em/hex-dev/issues/10377) owner Phase-4 attestation.
-This declaration assessment does not itself establish Phases 6–7. The separate computational declaration review, final lint/docstring/use
-acceptance, applicable conformance and declared computational regression checks
-remain before Phase 6. Publication still requires the
+The Theory acceptance separately discharges the companion’s final API/use,
+lint, kernel and documentation requirements. Final computational acceptance,
+including its applicable regression checks, remains before the core’s Phase 6. Publication still requires the
 [package prerequisites](../real-closure-publication.md).
 
 The [computational foundation assessment](core-foundation.md) separately covers
@@ -132,7 +136,7 @@ The [computational foundation assessment](core-foundation.md) separately covers
 `System.check_eq` guard characterization and updates the core/companion
 count-recovery, table, codec, rank-basis and solve clients without changing
 their statements or algorithms. The
-remaining core modules and whole-pair Phase-6 checks are still outstanding.
+foundation assessment is separate from the core’s remaining final acceptance.
 
 The [counting and recursive replay assessment](core-replay.md) covers 49 named
 declarations in six additional computational modules, both literal equality
@@ -334,3 +338,12 @@ Unsupported test-glob expressions fail instead of inventing a production role.
 The foundation module and assessment archive uses
 `audit/issue-10575-sign-det-current-reviewed-input-v8`. Original companion
 snapshot paths and hashes are also checked against their recorded source commit.
+
+## Theory acceptance
+
+The [Theory acceptance](theory-acceptance.md) records the companion's subsequent
+Phases 6–7, including explicit source parameters, current kernel checks and the
+individual API-retention decisions. The older `current/` compiler capture is a
+preserved v10 snapshot; default archive verification remains valid and its
+current-source mode refuses the later source changes. Computational Phase-6
+acceptance and publication eligibility remain separate.

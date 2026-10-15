@@ -12,7 +12,8 @@ This development companion is not yet released.
 The [individual proof/API assessment](../reports/sign-det-declaration-review/README.md)
 covers its 37 production modules; whole-pair Phase-6 acceptance remains separate.
 
-The companion records Phase 5. The [proof acceptance](../reports/sign-det-proof-acceptance.md)
+The companion records Phases 6–7 through its
+[proof/API and manual acceptance](../reports/sign-det-declaration-review/theory-acceptance.md). The [proof acceptance](../reports/sign-det-proof-acceptance.md)
 records complete proofs and passing conformance. CI builds the declared
 [proof examples](../bench/HexSignDetTheory/ProofProbe/README.md), diagnostics,
 semantic correspondence and ordinary-kernel axiom guards. Compiled performance

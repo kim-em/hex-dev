@@ -8,7 +8,11 @@ module
 public import HexSignDetTheory.Reduction
 public import HexSturmTheory.Domain
 
+set_option autoImplicit false
+
 public section
+
+universe u v
 
 /-! Acceptance of produced positive-scaled moment reductions. The shared
 pseudo-division and normalization correspondence supplies the arithmetic; no
@@ -58,7 +62,8 @@ theorem ReductionStep.build_checks (p prev factor : DensePoly E) (index : Nat) (
     rw [Polynomial.natDegree_C_mul (ne_of_gt hnorm.1)] at hd
     simp only [natDegree_interpret] at hd
     have hsmall : (Sturm.normalize sign
-        (DensePoly.positivePseudoDiv sign (prev * factor) p).remainder).2.natDegree < p.natDegree := by
+        (DensePoly.positivePseudoDiv sign (prev * factor) p).remainder).2.natDegree <
+      p.natDegree := by
       rcases hdeg with hzero | hlt
       · exact False.elim (hrne ((interpret_eq_zero f hz _).mp hzero))
       · simpa only [natDegree_interpret, hd] using hlt
@@ -74,7 +79,8 @@ include hz h1 ha hs hm hn hi hpos hneg in
 /-- Every finite produced chain passes replay, including an empty factor list. -/
 theorem Reduction.buildFrom_checks (p prev : DensePoly E) (fs : List (Nat × DensePoly E))
     (hp : p ≠ 0) :
-    checkFrom sign p prev fs (buildFrom sign p prev fs).steps (buildFrom sign p prev fs).result = true := by
+    checkFrom sign p prev fs (buildFrom sign p prev fs).steps
+      (buildFrom sign p prev fs).result = true := by
   induction fs generalizing prev with
   | nil =>
     exact (sub_isZero f hz hs prev prev).mpr rfl

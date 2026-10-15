@@ -7,7 +7,11 @@ module
 
 public import HexSignDetTheory.SelectedProducer
 
+set_option autoImplicit false
+
 public section
+
+universe u v w
 
 namespace Hex.SignDet
 

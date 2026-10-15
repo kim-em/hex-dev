@@ -7,7 +7,11 @@ module
 
 public import HexSignDetTheory.NodeChecks
 
+set_option autoImplicit false
+
 public section
+
+universe u v w
 
 namespace Hex.SignDet
 
@@ -60,13 +64,15 @@ theorem buildTreeFrom_checks (hbound : ∀ a, -1 ≤ sign a ∧ sign a ≤ 1)
         · rename_i n hnode
           cases h
           have hpl : (match preparation.map (fun r => r.slice 0 (qs.length / 2)) with
-              | none => true | some r => r.check sign domain.head (qs.take (qs.length / 2))) = true := by
+              | none => true
+              | some r => r.check sign domain.head (qs.take (qs.length / 2))) = true := by
             cases preparation with
             | none => rfl
             | some prep => simpa using QueryReduction.slice_checks hp 0 (qs.length / 2)
           have hpr : (match preparation.map
                 (fun r => r.slice (qs.length / 2) (qs.length - qs.length / 2)) with
-              | none => true | some r => r.check sign domain.head (qs.drop (qs.length / 2))) = true := by
+              | none => true
+              | some r => r.check sign domain.head (qs.drop (qs.length / 2))) = true := by
             cases preparation with
             | none => rfl
             | some prep =>

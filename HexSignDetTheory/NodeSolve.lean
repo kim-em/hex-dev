@@ -9,7 +9,11 @@ public import HexSignDetTheory.NodeProducer
 public import HexSignDetTheory.Solve
 public import HexSignDetTheory.ParentSystem
 
+set_option autoImplicit false
+
 public section
+
+universe u v
 
 namespace Hex.SignDet
 
@@ -81,8 +85,10 @@ theorem buildNode_complete (context : Ctx) (domain : Sturm.PreparedDomain E)
   simp only [buildNode, hdim, ↓reduceDIte, hr, hc, hd, Bool.not_true,
     Bool.false_or, Bool.false_eq_true, ↓reduceIte, hes, hcs]
   change ∃ n : Node E Ctx, (match (match inverse with
-      | none => solveSystem qs.length s.rows s.columns (certs.map fun (c : TarskiCertificate E E Ctx) => c.value)
-      | some (d, a) => solveScaled qs.length s.rows s.columns (certs.map fun (c : TarskiCertificate E E Ctx) => c.value) d a) with
+      | none => solveSystem qs.length s.rows s.columns
+          (certs.map fun (c : TarskiCertificate E E Ctx) => c.value)
+      | some (d, a) => solveScaled qs.length s.rows s.columns
+          (certs.map fun (c : TarskiCertificate E E Ctx) => c.value) d a) with
       | .error err => Except.error err
       | .ok u => Except.ok ({
           context := context

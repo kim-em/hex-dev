@@ -10,7 +10,11 @@ public import HexSignDetTheory.TreeSolve
 public import HexSignDetTheory.Derivatives
 public import HexSignDet.Descriptor
 
+set_option autoImplicit false
+
 public section
+
+universe u v w
 
 namespace Hex.SignDet
 

@@ -9,6 +9,8 @@ public import HexSignDet.Support
 public import HexRankTheory.Cert
 public import Mathlib.Order.Preorder.Finite
 
+set_option autoImplicit false
+
 public section
 
 /-! Full column rank after pruning and acceptance of the existing integer

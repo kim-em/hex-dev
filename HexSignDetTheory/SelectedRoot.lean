@@ -12,7 +12,11 @@ public import HexSignDetTheory.RootModel
 public import HexSignDetTheory.Derivatives
 public import HexSignDetTheory.Reencode
 
+set_option autoImplicit false
+
 public section
+
+universe u v w
 
 namespace Hex.SignDet
 

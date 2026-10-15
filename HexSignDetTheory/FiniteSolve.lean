@@ -9,6 +9,8 @@ public import HexSignDet.Induction
 public import HexSignDetTheory.RationalSolve
 public import HexSignDetTheory.Foundation
 
+set_option autoImplicit false
+
 public section
 
 namespace Hex.SignDet
@@ -78,7 +80,9 @@ finite counts to pass the system checker. No count or moment equality is
 assumed for the new observations. -/
 theorem System.check_counts {r arity : Nat} (s : System r) (h : s.check arity = true)
     (xs : List (List Int)) (cover : ∀ x ∈ xs, x ∈ s.columns.toList) :
-    ({s with counts := SignDet.counts s.columns xs, values := moments s.rows xs} : System r).check arity =
+    ({s with
+      counts := SignDet.counts s.columns xs
+      values := moments s.rows xs} : System r).check arity =
       true := by
   obtain ⟨hr, hc, hn, _, hd, hi, _⟩ := (s.check_eq arity).mp h
   have hm := foundation_moments s.rows s.columns (System.columns_nodup h) xs cover

@@ -11,7 +11,11 @@ public import HexSignDetTheory.QueryReduction
 public import HexSignDetTheory.Foundation
 public import HexSturmTheory.Soundness
 
+set_option autoImplicit false
+
 public section
+
+universe u v w
 
 namespace Hex.SignDet
 

@@ -9,7 +9,11 @@ public import HexSignDet.Thom
 public import HexPolyTheory.Interpret
 public import Mathlib.Basic.Sign.Defs
 
+set_option autoImplicit false
+
 public section
+
+universe u v w
 
 namespace Hex.SignDet
 

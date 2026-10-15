@@ -10,7 +10,11 @@ public import HexSignDet.Matrix
 public import HexPolyTheory.Interpret
 public import Mathlib.Basic.Sign.Basic
 
+set_option autoImplicit false
+
 public section
+
+universe u v w
 
 /-! Algebraic soundness of reduced moments under the shared noninjective
 coefficient interpretation. These identities require no real-closed-field

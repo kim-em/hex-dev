@@ -8,7 +8,11 @@ module
 public import HexSignDetTheory.Thom
 public import HexSignDetTheory.RootList
 
+set_option autoImplicit false
+
 public section
+
+universe u v w
 
 namespace Hex.SignDet
 

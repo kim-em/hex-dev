@@ -8,7 +8,11 @@ module
 public import HexSignDetTheory.NodeSolve
 public import HexSignDetTheory.TreeChecks
 
+set_option autoImplicit false
+
 public section
+
+universe u v w
 
 namespace Hex.SignDet
 
@@ -92,7 +96,8 @@ theorem buildNode_counted (context : Ctx) (domain : Sturm.PreparedDomain E)
       n.Counted qs.length xs := by
   have valid {r : Nat} (u : System r) (hu : u.check qs.length = true) (i : Fin r) :
       u.rows[i].length = qs.length ∧ u.rows[i].all (· ≤ 2) = true := by
-    have hh := List.all_eq_true.mp (System.rows_valid hu) _ (List.getElem_mem (l := u.rows.toList) (n := i.val) (by simp))
+    have hh := List.all_eq_true.mp (System.rows_valid hu) _
+      (List.getElem_mem (l := u.rows.toList) (n := i.val) (by simp))
     simpa only [Bool.and_eq_true, decide_eq_true_eq, Vector.getElem_toList,
       Fin.getElem_fin] using hh
   obtain ⟨n, hn, _⟩ := buildNode_complete context domain qs rows columns reduced inverse
@@ -177,9 +182,11 @@ theorem buildTreeFrom_complete (context : Ctx) (domain : Sturm.PreparedDomain E)
   · have halves := hv.2
     simp only [small, ↓reduceIte] at halves
     obtain ⟨l, hl, lc, li⟩ := buildTreeFrom_complete context domain _ reduced _
-      (xs.map (List.take (qs.length / 2))) (by simpa only [List.length_take] using ho.take _) halves.1
+      (xs.map (List.take (qs.length / 2)))
+      (by simpa only [List.length_take] using ho.take _) halves.1
     obtain ⟨r, hr, rc, ri⟩ := buildTreeFrom_complete context domain _ reduced _
-      (xs.map (List.drop (qs.length / 2))) (by simpa only [List.length_drop] using ho.drop _) halves.2
+      (xs.map (List.drop (qs.length / 2)))
+      (by simpa only [List.length_drop] using ho.drop _) halves.2
     have mid : qs.length / 2 ≤ qs.length := Nat.div_le_self _ _
     have hlc : l.node.system.check (qs.length / 2) = true := by
       simpa only [List.length_take, Nat.min_eq_left mid] using lc.node.checked

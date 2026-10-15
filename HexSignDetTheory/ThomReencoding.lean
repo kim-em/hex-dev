@@ -8,7 +8,11 @@ module
 public import HexSignDetTheory.Thom
 public import HexSignDetTheory.ReencodingRefinement
 
+set_option autoImplicit false
+
 public section
+
+universe u v w
 
 namespace Hex.SignDet
 
@@ -107,7 +111,8 @@ theorem Descriptor.buildReencoding_success {context : Ctx}
       simp only [hraw]
       exact ⟨⟨rfl, rfl, rfl⟩, hc, hcount⟩
     have htake : word.take fullQueries.length = fullWord := by
-      have hl : fullWord.length = fullQueries.length := by simp only [fullWord, signsAt, List.length_map]
+      have hl : fullWord.length = fullQueries.length := by
+        simp only [fullWord, signsAt, List.length_map]
       simp only [word, ← hl, List.take_left]
     obtain ⟨r, hr⟩ := source.buildReencoding_ofTable head a b domain hd t ht
       word hrows target (by
