@@ -150,9 +150,12 @@ the emitter separately rechecks the byte round-trip and writes fresh output.
 Dependency/umbrella checks, 615 admission cones covering 1,515 local modules,
 eleven scanner regressions, copyright, manual split, constructor regeneration,
 conformance wiring, affected relative links and diff checks pass. The complete
-rebuild uses a 15.3 GiB peak with no swap. Refusal checking took 220 seconds in
-the affected run; this is an operational observation, not a performance or
-scaling result.
+rebuild log records a rounded `Memory peak: 15.3G (swap: 0B)`; the affected
+audit log records `Refusals (220s)`. The record's `operational_observations`
+field binds both literal log lines to their retained archives. They are
+operational observations, not performance or scaling results. Current browser
+revalidation at this source produced twelve byte-identical copies of the
+inspected captures; its log and hashes are bound in `visual_revalidation`.
 
 The [earlier source record](data/hexrcf-algebraic-cells/context.json) binds
 source `387922d3b0`; its [main integration record](data/hexrcf-algebraic-cells/integration.json)

@@ -214,5 +214,17 @@
         "sha256": "e21e6515661a1d6cca4dc4c48d6c8a846ab50bf12b88c90d073bff2c883663cc"
       }
     ]
-  }
+  },
+  "operational_observations": [
+    {
+      "file": "algebraic-review-full-build.log.gz",
+      "literal_log_line": "Memory peak: 15.3G (swap: 0B)",
+      "scope": "systemd aggregate cgroup resource observation; rounded display, not a matched performance measurement"
+    },
+    {
+      "file": "algebraic-review-audit-2.log.gz",
+      "literal_log_line": "\u2714 [11004/11005] Built HexRCF.CellReplay.Algebraic.Refusals (220s)",
+      "scope": "Lake module wall-time observation on the shared host; not a scaling measurement"
+    }
+  ]
 }

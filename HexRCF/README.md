@@ -420,9 +420,9 @@ real witness and [fresh import audit](../conformance/HexRCF/NestedRootOrdinaryCo
 use the authenticated positive √2 parent. Missing records, same-degree changed heads
 and changed endpoints reject; a zero collection budget exposes a missing record without production.
 Arbitrary recursive history assembly remains required. The generic
-ordinary-model `CellRead` interface derives complete-cell soundness from the
-accepted whole-line root table, checked radical identities, adjacent-root
-bounds and whole same-point rows. Its regressions cover both the rational base
+ordinary-model `CellReplay.check_sound` theorem derives complete-cell soundness
+from the accepted whole-line root table, checked radical identities,
+adjacent-root bounds and whole same-point rows. Regressions cover both the rational base
 and ℚ(√2). The [fixed algebraic matrix](../reports/hexrcf-algebraic-cells.md)
 checks two root sections and three ordinary sectors for X²−√2 with 21 frozen
 scalar packets, quotes two original real sources and audits their actual proof
@@ -578,6 +578,10 @@ changed point/root identities, invalid context indices, cyclic graphs, missing b
 and an invalid later row. The reader decodes all rows regardless of the matrix. These frozen rational
 regressions validate the generic assembly. Additional controls authenticate a
 nonempty coefficient valuation, two ordered original divisors, endpoint presence
-and an empty root table with one unbounded sector. Complete algebraic production,
+and an empty root table with one unbounded sector. The
+[algebraic matrix](../conformance/HexRCF/CellReplay/Algebraic/Quoted.lean)
+uses `CellRead.collect` with the shared operation-parametric row/sector readers
+and transports their accepted data into `CellReplay.check_sound`.
+Complete algebraic production,
 source/provider history, automatic common-field certification and accepted
 algebraic completeness remain separate obligations.
