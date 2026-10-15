@@ -1,0 +1,63 @@
+cut: write error: Broken pipe
+sort: write failed: 'standard output': Broken pipe
+sort: write error
+I found no soundness defect in this tranche. The kernel-facing pieces hold up. Each identity is checked as an ordinary-kernel theorem of `toReal expression = source`. The axiom screen rejects `sorry` and `ofReduceBool`. Every failure path calls `saved.restore`. The auxiliary theorems sit under a fresh private prefix. The findings below are about cancellation, test strength and evidence binding.
+
+I couldn't read the `.gz` logs because decompression was blocked by permissions. Statements about log contents therefore come from the collector scripts and context JSONs.
+
+## Findings
+
+**1. Medium (correctness of a documented guarantee): the "after build" cancellation check probably runs before the build.**
+- Location: `AlgebraicPreparation.lean:68-71`.
+- `let result := environment.build registry` is a pure `let`, so nothing forces it to run before the effect that follows. After `MetaM`'s bind is inlined, `Core.checkInterrupted` becomes a `cases` on the result. `result` is only used in the success branch, so the compiler's let-floating pass will very likely move the native build into that branch, after the second check.
+- In that case a cancellation that arrives during the build is not observed before `consume` runs. The docstring, the report and `checkpoint-context.json` all claim the check happens after native production.
+- This affects responsiveness only, not soundness.
+- Fix: put the build behind a real monadic barrier, for example a `@[noinline]` `BaseIO` helper that returns the `Except`. Then confirm the order with `set_option trace.Compiler.result true`. Alternatively, weaken the claim.
+
+**2. Medium (conformance strength): the zero-divisor test accepts any outcome.**
+- Location: `AlgebraicPreparationConformance.lean:85-93`.
+- The test passes if `prepare` throws (`tryCatchRuntimeEx` swallows everything, heartbeat exhaustion included), if it returns any `.error`, or if it returns `.ok` and the build gives `.divisor`.
+- The report's sentence "a cancelled zero divisor cannot enter root production" depends on this test, and a regression that moved the refusal elsewhere would go unnoticed.
+- Fix: decide which outcome is intended (most likely `.ok` followed by `.error .divisor`) and require exactly that one.
+
+**3. Medium (conformance strength): no prepared environment with real coefficients is ever built.**
+- The only `buildWith` verdict checks (lines 106-122) use guard-only constants, where `coefficients.isEmpty` holds. So the coefficients-first layout and `indices` are never run through `AlgebraicCells.build` with a non-empty, irrational coefficient tuple.
+- The ordering checks at lines 97-102 are tautologies: `guards` is defined as `natAdd` of `finRange`, and `inputs ∘ natAdd` reduces to `divisors[i].proposal` by definition. They cannot detect a reordering.
+- Fix: add one cheap irrational case, such as `∀ x, x^2 + √2 > 0` (true) together with a false control. Also check `source.divisors[0]` and `[1]` against the expected `√2 + 1` and `√3 + 1`, rather than against the definitions themselves.
+
+**4. Low-medium (API usability): the documented callback turns a structured decline into an exception.**
+- Locations: `nonnegative` in the manual example and at conformance lines 13-18.
+- If `norm_num` fails it throws, so `prepare` throws instead of returning `.unsupported "radical base is not known to be nonnegative"`.
+- A safe version already exists: `FieldRuntime.nonnegative` (try/catch with restore), but it is private.
+- Fix: expose that version, or make it the default argument, and show the catch-and-restore form in the manual.
+
+**5. Low (performance): every coordinate is checked twice, and divisors are interpreted separately.**
+- `Coefficients.interpret` already runs `checkWithKernel`. `entry` then runs `checkProof`, which adds another kernel check through `mkAuxTheorem` plus two axiom scans.
+- Divisors that are subterms of coefficients are re-interpreted and charged to the budget a second time, so the shared budget is conservatively double-counted.
+- The quantifier-shape check at line 103 runs only after all interpretation and kernel work is done. It could run first and fail fast.
+- Fix: drop one kernel pass and move the shape check to the front.
+
+**6. Evidence binding: no retained validation describes head `b23d570a63`.**
+- `main-context.json` validates `e9b99f9f9f`. The head merge changes `lakefile.lean`, `ci.yml`, `check_named_admissions.py` and its tests, `FiniteBase.lean` and `CoefficientMembers.lean`; the current `lakefile.lean` hash is `44536f…`, not the `0c2162…` that record shows. The integration build you mentioned is the only head-level evidence.
+- `context.json` binds `694e85`, where `AlgebraicPreparation.lean` hashes to `6df97…`; the current file is `28aed4…`. Even so, the final report section still says that record "binds the exact implementation".
+- Fix: once the running integration finishes, add a record bound to the head commit and reword that sentence.
+
+**7. Low (evidence quality):**
+- The collectors assert aggregate strings ("Build completed successfully", other modules' recheck markers) but never this conformance module's own `logInfo` line. Asserting it would prove the module actually ran.
+- `affected-6.log` is retained but the report never explains it.
+- `original-input-stages-3-current.events` begins with the seven events from the stage-2 run (identical lines, because the probe appends to the same file). Truncate it or say so in the report.
+
+**8. Low (maintainability):**
+- `import HexRCF.ProofEvidence` in the conformance file appears unused.
+- `Environment` collides with `Lean.Environment` whenever someone opens both namespaces. A more specific noun would avoid that.
+- The budget test never confirms that `Reify.prepare` alone succeeds under the tightened config. A source-reification change could therefore make the test pass for the wrong reason.
+- The `marker` assignment check in `unchanged` can never fail, because `withNewMCtxDepth` makes outer mvars unassignable.
+
+## Retained full-issue obligations (not defects in this PR)
+
+These are correctly disclosed:
+- Native evaluation is unbudgeted and has no internal checkpoints. `evalReal`, `evalFormula` and `AlgebraicCells.build` canonicalize whole coefficients, which can reach degree 2^k for k radicals.
+- Each original divisor is gathered as a separate generator and can enlarge the tower.
+- Still open: literal authentication of the proposals, frozen history assembly, general source quotation, strict rejection of arbitrary missing records, and stress acceptance (both stress probes were interrupted, with no verdict).
+
+The wiring is consistent across lakefile globs, the umbrella `public meta import`, the `HexConformance` glob, the admission roots and their unit test. The manual chapter and README hashes are unchanged from the rendered version.

@@ -1,0 +1,43 @@
+[
+  {
+    "command": [
+      "python3",
+      "scripts/ci/check_named_admissions.py"
+    ],
+    "exit_code": 0,
+    "log": "/home/kim/.codex/tasks/hex-10358/algebraic-preparation-review-admissions-1.log"
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/check_copyright_headers.py"
+    ],
+    "exit_code": 0,
+    "log": "/home/kim/.codex/tasks/hex-10358/algebraic-preparation-review-copyright-1.log"
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/rcf/selected_literals.py",
+      "--check"
+    ],
+    "exit_code": 0,
+    "log": "/home/kim/.codex/tasks/hex-10358/algebraic-preparation-review-literals-1.log"
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/ci/test_check_named_admissions.py"
+    ],
+    "exit_code": 0,
+    "log": "/home/kim/.codex/tasks/hex-10358/algebraic-preparation-review-admission-tests-1.log"
+  },
+  {
+    "command": [
+      "python3",
+      "scripts/test_check_dag.py"
+    ],
+    "exit_code": 0,
+    "log": "/home/kim/.codex/tasks/hex-10358/algebraic-preparation-review-dag-tests-1.log"
+  }
+]
