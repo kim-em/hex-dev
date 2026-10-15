@@ -114,6 +114,7 @@ UMBRELLA_BUILD_TARGETS = {
     "HexRCFBenchSupport",
     "HexRCFProofProbe",
     "HexRCFProofProbeMeasurements",
+    "HexRCFCellRequestedStress",
     "HexRealFormulaProofProbe",
     "HexRCFRealFormula",
     "HexRCFRealCoefficients",

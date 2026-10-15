@@ -55,4 +55,32 @@ theorem above (signs : SelectedSigns root [Isolation.pointQuery point]) (observe
     | zero => norm_num at code
     | pos => rfl
   exact sub_pos.mp (sign_eq_one_iff.mp positive)
+/-- A root below the point produces the checked negative boundary sign. -/
+theorem left_sign (model : Model parent ℝ)
+    (root : Descriptor parent.Value Signature parent.sign parent.signature) (point : parent.Value)
+    (less : root.root model.value model.zero_iff model.one model.add model.sub model.mul model.nat model.sign
+      < model.value point) :
+    ∃ signs, root.buildSigns [Isolation.pointQuery point] = .ok signs ∧ signs.value = -1 := by
+  obtain ⟨signs, produced⟩ := root.buildSigns_success model.value model.zero_iff model.one model.add
+    model.sub model.mul model.nat model.sign model.neg model.inv [Isolation.pointQuery point]
+  refine ⟨signs, produced, ?_⟩
+  rw [BoundarySigns.difference model root point signs]
+  have observed := sign_eq_neg_one_iff.mpr (sub_neg.mpr less)
+  rw [observed]
+  rfl
+
+/-- A root above the point produces the checked positive boundary sign. -/
+theorem right_sign (model : Model parent ℝ)
+    (root : Descriptor parent.Value Signature parent.sign parent.signature) (point : parent.Value)
+    (less : model.value point < root.root model.value model.zero_iff model.one model.add model.sub
+      model.mul model.nat model.sign) :
+    ∃ signs, root.buildSigns [Isolation.pointQuery point] = .ok signs ∧ signs.value = 1 := by
+  obtain ⟨signs, produced⟩ := root.buildSigns_success model.value model.zero_iff model.one model.add
+    model.sub model.mul model.nat model.sign model.neg model.inv [Isolation.pointQuery point]
+  refine ⟨signs, produced, ?_⟩
+  rw [BoundarySigns.difference model root point signs]
+  have observed := sign_eq_one_iff.mpr (sub_pos.mpr less)
+  rw [observed]
+  rfl
+
 end Hex.RCF.RealCoefficients.BoundarySigns
