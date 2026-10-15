@@ -148,7 +148,7 @@ def verify_structure(manifest, current):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--write', metavar='INPUT_REVISION')
-    parser.add_argument('--tag', default='audit/issue-10575-sign-det-current-reviewed-input-v9')
+    parser.add_argument('--tag', default='audit/issue-10575-sign-det-current-reviewed-input-v10')
     parser.add_argument('--current', action='store_true', help='also require current source bytes and recompute derived evidence')
     args = parser.parse_args()
     binding = BASE / "bindings.json"
