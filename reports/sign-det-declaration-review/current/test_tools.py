@@ -163,15 +163,19 @@ class CheckpointTest(unittest.TestCase):
             with patch('normalize.ROOT', root):
                 with self.assertRaisesRegex(ValueError, 'production imports family test evidence'):
                     check_production_imports({'Production': 'Production.lean'},
-                                             {'HexRealClosureTheory.FutureData'})
+                                             {'HexRealClosureTheory.FutureData'}.__contains__)
                 (root / 'Accepted.lean').write_text('import HexRealClosureTheory.BaseContext\n')
                 check_production_imports({'Accepted': 'Accepted.lean'},
-                                         {'HexRealClosureTheory.FutureData'})
+                                         {'HexRealClosureTheory.FutureData'}.__contains__)
 
     def test_liouville_runner_is_test_evidence(self):
         index = SourceIndex()
         self.assertEqual(index.resolve('HexOrderedFnTheory.LiouvilleRun')['category'],
                          'tests/conformance/manual')
+        from audit_tools import ROOT, lakefile_blocks
+        body = lakefile_blocks((ROOT / 'lakefile.lean').read_text())[
+            'lean_exe hexorderedfn_liouville_test']
+        self.assertIn('root := `HexOrderedFnTheory.LiouvilleRun', body)
 
     def test_new_family_fixture_is_read_from_actual_test_globs(self):
         with tempfile.TemporaryDirectory() as directory:
