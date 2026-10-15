@@ -1,0 +1,68 @@
+{
+  "source_commit": "e9b99f9f9fb8ffdd03f67a6b29979e13d5caad1c",
+  "upstream_commit": "370a081b4496976be1de8fd8bf400230f99752ad",
+  "sources_sha256": {
+    "adapters/HexRCF/RealCoefficients/AlgebraicPreparation.lean": "28aed4a2694985ea1e26fc4b1914f8c312d259be7bfda054bfdb23cc6d6b2e8a",
+    "adapters/HexRCF/RealCoefficients.lean": "fcffa756d74c99fabf10c6fbaaf206e093c52f578d257245c290a9c613b1b73b",
+    "conformance/HexRCF/AlgebraicPreparationConformance.lean": "3f9fd0404e50451057a4a81e00b74a8870094e9f06d98bafc1c9cabe083c9734",
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "5b3746e0f4401482c0acbab12e56ef096d5b32a7f9fd8097c38ef87732917204",
+    "HexRCF/README.md": "3531856b6f9ff429092d5ff980f4f7ea7530b71bff7a958f67017f4095eee962",
+    "lakefile.lean": "0c21627c44e08fb3cfbf16b84180089f1470a3d8e32a01c35a6a1d676d583d44",
+    "scripts/ci/check_named_admissions.py": "cb47a001b39f1855b80627557812881823633033f3254f36ba3f16ba755a8c05",
+    "scripts/ci/test_check_named_admissions.py": "5b414ded86c38e7f3f02341d69636ddd7de5d8c0308d5c681f54b86ad7e4b003",
+    "adapters/HexRealClosureTheory/FiniteData.lean": "872bc121f689b25e8695b249baf55c45905dfb516889b39854e499b32055c4e9",
+    "libraries.yml": "2d774a6de86747fbc73c4b708d74afe63cba75b98291f76b889c657d5fc7fa2f",
+    "HexSignDet/Codec.lean": "ee141a0f9665cba2a74fa2012f437936e0696f4ba9e52b5f8eac7484a464e7a0",
+    "HexSignDet/DagEncode.lean": "b6551e81e610f7fe69e6015f97be602a3b2dbcf6c4959ee81bf974479fdb7d66",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47"
+  },
+  "logs": {
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-main-admission-tests-1.log.gz": {
+      "sha256": "de5fcee469c888efa9598e23bb494f1d94e2ad20aae915539ebafbe32cd05cb2",
+      "uncompressed_sha256": "b7955bdfefeba116184cac5cdf6b3d023dc1e97e72994ee4b5e920e387f029b4"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-main-admissions-1.log.gz": {
+      "sha256": "609c9886b4e16d68d981bf48a8cdc5815102d3f0b8d124b7760bb62000f469c1",
+      "uncompressed_sha256": "a528ec61cd270e6553c73ca2c1718abe5e925d5025eb0b91fb6c650b8673c155"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-main-copyright-1.log.gz": {
+      "sha256": "89b12fa0be4a440fd82e7e15dfb79ec5acf5eb2b4b42d7ceab0bc8393408a788",
+      "uncompressed_sha256": "a4bca921b577964339a0bb1003d40b0e13e9006fc28274733a8188e126ddad15"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-main-dag-1.log.gz": {
+      "sha256": "89b12fa0be4a440fd82e7e15dfb79ec5acf5eb2b4b42d7ceab0bc8393408a788",
+      "uncompressed_sha256": "a4bca921b577964339a0bb1003d40b0e13e9006fc28274733a8188e126ddad15"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-main-dag-tests-1.log.gz": {
+      "sha256": "8ce7910f3fac2a40ff3999e5392442fff196694572bb8a84bfd46e022cb5091c",
+      "uncompressed_sha256": "1e9354c7a9903687506946e937b08a57f8172374b057b16b26c52a8221067967"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-main-integration-1.log.gz": {
+      "sha256": "c7244cdf5176a5874ecf4d5c45df46fda64bf51840ece65aa5def7a583fee57b",
+      "uncompressed_sha256": "11b71167a9ed9e00d71f23098938789a6f4a1968f9e4bb5f8036dd66e6514564"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-main-literals-1.log.gz": {
+      "sha256": "e858a9207dc9800a4c4f9df91b44f925fe08a7ae462bc2a0db45645de1119411",
+      "uncompressed_sha256": "b83e0cf8827bc5757b80c247fadd1bf387fb44ca0da61eba65c01c6dc97f4093"
+    }
+  },
+  "artifacts_sha256": {},
+  "validation": {
+    "selected_jobs": 14300,
+    "admission_cones": 650,
+    "admission_modules": 1550,
+    "admission_unit_tests": 11,
+    "dag_unit_tests": 11,
+    "protected_or_owner_diff": [],
+    "memory_bytes": 34359738368,
+    "swap_bytes": 0,
+    "lean_threads": 2,
+    "own_build_concurrency": 1
+  },
+  "limits": [
+    "This integration has a distinct incremental scope and is not a timing comparison.",
+    "The earlier source, checkpoint, render and probe records retain their own exact versions.",
+    "No general frozen history or strict arbitrary-missing-record compiled replay is established."
+  ]
+}

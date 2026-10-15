@@ -61,6 +61,18 @@ is byte-identical to the rendered source; the separate
 [checkpoint record](data/hexrcf-algebraic-preparation/checkpoint-context.json)
 retains this implementation and validation scope.
 
+The [current-main integration](data/hexrcf-algebraic-preparation/main-context.json)
+at `e9b99f9f9fb8ffdd03f67a6b29979e13d5caad1c` consumes the actual merged
+bounded-range replay optimization from #10941 and the subsequent owner/API and
+library acceptance changes through upstream `370a081b44`. Its expanded
+14,300-job selection passes, including fresh original guarded/unguarded and
+Boolean quotation bodies, both native input suites, serialization/execution
+audits, the optional umbrella and the full manual (13m19.132s, 13.2 GiB peak,
+zero swap). Metadata checks cover 650 cones/1,550 modules, with both eleven-test
+checker suites passing. No protected-instruction, SPEC, workflow or owner-source
+changes remain in the adapter's diff against that upstream tree. This wider
+rebuild is a distinct validation scope, not a before/after performance result.
+
 ## Quotation boundaries
 
 Whole-coefficient presentations remain the native API's input convention.
