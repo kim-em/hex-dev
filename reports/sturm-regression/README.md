@@ -214,7 +214,8 @@ same native guard applies its pinned comparison rule after collection.
 Each profile requires its own frozen source manifests, successful native guard
 build, decision, preflight and persistent attempt reservation. Registration
 sources must preserve callback code, meaningful indentation, identifiers and
-timing settings. Comments, blank lines and trailing whitespace may differ;
+timing settings. Comments may differ when surrounding Lean layout stays the same; blank lines
+and trailing whitespace may differ;
 only simple fixed configuration records may be reformatted and gain literal
 expected-hash guards. The complete string literal bytes remain checked. The
 actual export checks permit only adding such a guard, require every call to
