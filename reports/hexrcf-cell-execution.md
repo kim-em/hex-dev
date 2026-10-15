@@ -84,3 +84,41 @@ predecessors, frontend quotation/completeness and the remaining infinitesimal
 path retain their own obligations. This result supplies no faithful formal
 model for arbitrary named constants and infers no independence of separately
 registered constants. #10358 remains open.
+
+## Validation and source binding
+
+The [retained evidence](data/hexrcf-cell-execution/context.json) distinguishes
+the integrated implementation commit `8d5fdb0ebec9814a12bacd6c73655d99e675eb5a`
+from the manual wrapping commit `dc850edeb4296c4421a13bbb1220ae7be0feed97`.
+The four-target Lake build (`HexRCFRealCoefficients`, `HexConformance`,
+`HexManual`, `HexRCFCellRequestedStress`) passed all 14,693 jobs at the first
+commit. It took 47 minutes 11.640 seconds and peaked at 15.1 GiB with zero swap.
+The four-boundary stress regression passed in that build; this is validation,
+not a new performance comparison.
+
+The only intervening source change wraps the runnable manual proof without
+changing its proposition. Its targeted Lake build passed 11,611 jobs; the
+complete manual render passed 14,263 jobs. The final browser pass and actual
+inspection cover the new proof example, execution binding and remaining-scope
+paragraph at desktop and 390-pixel widths. All six changed-content targets have
+zero local overflow. The earlier 84-pixel narrow overflow, four captures and
+failed browser log are retained separately. Other manual chapters retain their
+existing warnings and page-wide layout limitations; this inspection establishes
+only the changed content's layout.
+
+DAG/umbrella checks, eleven DAG tests, the 630-cone/1,530-module admission scan,
+eleven scanner tests, copyright, manual split, selected-root literals and
+build-target checks passed at the integrated implementation commit. All 174
+changed-document relative link targets also passed before adding these evidence
+links. Final link and binding validation accompanies the documentation record.
+The ten new actual proof bodies and existing fresh algebraic/Boolean source
+proofs were rechecked in the successful integrated build.
+
+The evidence contains nineteen selected source hashes, fourteen final logs,
+fourteen narrower earlier logs, five retained interrupted/failed attempts and
+fifteen visual/support artifacts. Earlier logs keep their original scope;
+they do not attest the final source. Every own Lean/Lake build and browser pass
+used the same serial aggregate 32 GiB cgroup with swap disabled; Lean builds
+used two threads. Direct cgroup and process-environment observations accompany
+the full build. These host/cache-dependent validation times do not establish a
+speedup for the shared prepared queries.
