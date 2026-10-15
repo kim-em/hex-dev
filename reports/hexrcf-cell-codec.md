@@ -73,3 +73,40 @@ The admission scan covers 635 cones and 1,535 modules, and both checker suites
 pass 11 tests. The displayed manual text and styles are unchanged. This
 integration does not discharge the descriptor-restoration premise or the
 remaining full extension requirements.
+
+## Finite payload inventory
+
+[`CellFootprint`](../adapters/HexRCF/RealCoefficients/CellFootprint.lean)
+collects every serialized coefficient and full context from sections, boundary
+rows, point descriptors and point rows. The traversal retains duplicates and
+all stored graph entries, including unreachable entries. It performs no
+coefficient arithmetic. The inventory excludes separately authenticated source
+guards and does not claim to collect every intermediate arithmetic request.
+
+`CellFootprint.read_covered` replaces the separate row and point coverage
+premises with coverage of this one finite coefficient list. Context roundtrips
+come from the actual owner's `Signature.codec_lawful`. Original guard validity
+and point-descriptor restoration remain explicit; literal coverage alone
+establishes neither. The generic `covered` and `descriptor_covered` laws retain
+all individual components for subsequent owner integration.
+
+The native regression decodes the existing complete algebraic matrix through
+a reader restricted to exactly the collected coefficient literals. It retains
+the original verdict and fixture bytes. Removing every stored zero literal
+rejects with the evidence error; an original zero divisor still rejects first,
+even with a malformed payload and empty reader. These compiled controls do
+not replace the generic ordinary-kernel proofs or establish strict replay of
+arbitrary missing intermediate scalar records.
+
+The [inventory record](data/hexrcf-cell-codec/footprint-context.json) binds the
+source at `f1ca215b5912c71652a3662017069651ef708c38` and retains the initial
+proof/syntax failures. Ten actual parser/inventory proof bodies pass the fresh
+kernel audit with standard axioms and the producer-module import exclusions.
+The selected 11,769-job affected build passes at a 2.6 GiB peak with zero swap;
+the final API/library/manual build passes 11,761 jobs at a 992.3 MiB peak.
+The earlier affected build preceded removal of the unnecessary context-codec
+premise from `read_covered`; the final audit/library build covers that exact
+source. Both reuse cached dependencies and do not establish a performance
+comparison. DAG/umbrella, copyright, literal and whitespace checks pass; the
+source admission scan covers 636 cones and 1,536 local modules. The earlier
+22 checker unit tests retain their separate unchanged source scope.

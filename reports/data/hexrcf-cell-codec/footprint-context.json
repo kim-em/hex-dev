@@ -1,0 +1,99 @@
+{
+  "source_commit": "f1ca215b5912c71652a3662017069651ef708c38",
+  "sources_sha256": {
+    "adapters/HexRCF/RealCoefficients.lean": "b6d2b64ea8a485e82ccd4ce53b4f51b14032b803ed74096c38e6253b15fdc124",
+    "adapters/HexRCF/RealCoefficients/SectorEncode.lean": "d8901cb13a0523530d91a0b8a5cc5727a85c6c171084b2f983d8db9286409b6e",
+    "adapters/HexRCF/RealCoefficients/CellFootprint.lean": "93f2d925db0ac26387400bfb99b7d1746a9b99d36e00e7f056e76ee8c56746b5",
+    "adapters/HexRCF/RealCoefficients/CellCodec.lean": "123dde4976c70a0537bb087b7ed5abfa53583b52dd6cb138518be9001b810bb4",
+    "adapters/HexRCF/RealCoefficients/CellEncode.lean": "e56572fa8b91b70e0abd1271adcc1ce6a73a6944873576cabac191ac44f1261b",
+    "conformance/HexRCF/CellBuildConformance.lean": "6aeea69ee6f0b47a76682257fbbd6890da36a8104aebc00e6891784ff48610bc",
+    "conformance/HexRCF/CellCodecProofs.lean": "e1ec87d62ec7a8f8c0b62b83ff18af9ede63bd2250faa7b579e610a5143e8845",
+    "lakefile.lean": "2890497bf1f0d8b5845402041f91303c37b1ac08cdd7f7a029d4296a9e04267a",
+    "HexRealClosure/TowerContext.lean": "82ec62fe7dd9afc09867fc0c0c8815738137acd1d71ec1d8e121ec8ccb8a1385",
+    "HexRealClosure/SignEvidence.lean": "396289f52f5ef9cc52a089b236a7a66e915655e006769b24f3a4c90d59e5f6f1",
+    "HexSignDet/Codec/Coefficients.lean": "0fef85cb8c11fe614705ca230f437785c9c7c6b76d9362449f834bb25e82d3aa",
+    "HexSignDet/Codec/FiniteGraph.lean": "bb1e0611aa74d7c7b4a74f83f05e481ccd4584523e0aaeca7beba53c70a6895c"
+  },
+  "logs": {
+    "reports/data/hexrcf-cell-codec/cell-footprint-proof-1.log.gz": {
+      "sha256": "d00a907efa889ab06a1f05f04817d22cf31b28da53e0e3da4ac6fc584aa9bacd",
+      "uncompressed_sha256": "b762baf7f4a426c96c909d7effebc8beafda2fa29ca95e959fb002a5438b8f94"
+    },
+    "reports/data/hexrcf-cell-codec/cell-footprint-proof-2.log.gz": {
+      "sha256": "cae6dbb41cbfd4482b84d88179500e3636a41d15e9a2788377f8ab9dc7cbded2",
+      "uncompressed_sha256": "d8a1f677ed7adbb64f8fe2628f7e22ffa3b88ab894d561e97f9071ba063c4278"
+    },
+    "reports/data/hexrcf-cell-codec/cell-footprint-proof-3.log.gz": {
+      "sha256": "f93d44860e4b22fb39b4d73d76ee824a3e8b5ff798d250ce26c48b6364262f63",
+      "uncompressed_sha256": "1c7643371854fbfab1396023d77f35222152c0ae9a57281113f59936a08cdaf4"
+    },
+    "reports/data/hexrcf-cell-codec/cell-footprint-proof-4.log.gz": {
+      "sha256": "abfe4945d2d359e1c95196f01067b1e2050def22a59e0b75d0f273ec079369bd",
+      "uncompressed_sha256": "08beefc081e46ed62052ea213451350305d32b896ca5acdf755c58578394e230"
+    },
+    "reports/data/hexrcf-cell-codec/cell-footprint-proof-5.log.gz": {
+      "sha256": "a8ad5f2731ae550af7178e7054566f73d12641d16864f320497570c54fcbc201",
+      "uncompressed_sha256": "8642a86c42ca1046308fcae0c83482d6002aece308fc4f021d045f0c7177d351"
+    },
+    "reports/data/hexrcf-cell-codec/cell-footprint-audits-regressions-1.log.gz": {
+      "sha256": "c36c941bc8e802ce8fa29995bcd6cc57442ffc587fbbdf738ccd90d51a9d381c",
+      "uncompressed_sha256": "e319e84571028dd6302cbddbb747cb7b1729cdd8d0060e94ca623ba42d3a7f8b"
+    },
+    "reports/data/hexrcf-cell-codec/cell-footprint-audits-regressions-2.log.gz": {
+      "sha256": "e95bacd1d7092528a480be322a5a3b8096e3bca87cf315c000c6b3bde32a7012",
+      "uncompressed_sha256": "3f2ea674c05d52ded91f79e286b0fcd4b8b84d19c3b319376842a94cd19b15e0"
+    },
+    "reports/data/hexrcf-cell-codec/cell-footprint-audits-regressions-3.log.gz": {
+      "sha256": "05ba6de224d2d68ae8a177452b2a6ebf17d50cc9dfa6516c31439a0a3bb7845a",
+      "uncompressed_sha256": "eca0e4001ef05360c4430c485bc801f7d0ce6e1f4bab54bfe7bddaa34ce5db4d"
+    },
+    "reports/data/hexrcf-cell-codec/cell-footprint-affected-build-1.log.gz": {
+      "sha256": "06607864b87c580bd6f898abf48d9a414f0e9ef613735db7b2e095448cf6b587",
+      "uncompressed_sha256": "692c760f8aaa233fb3bf358fb6497df915ee5a1f33425d5edf1c31e349a2808e"
+    },
+    "reports/data/hexrcf-cell-codec/cell-footprint-final-build-1.log.gz": {
+      "sha256": "f71a30e7233dd0cbd0c0c2f1f8959b6439edee439e0340eae768b8d6e14c69ff",
+      "uncompressed_sha256": "829f66ab8b151e88bb6ac71e8affa725c842adb0dd0338e7defff6ba09ddefe8"
+    },
+    "reports/data/hexrcf-cell-codec/cell-footprint-dag-1.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-cell-codec/cell-footprint-admissions-1.log.gz": {
+      "sha256": "09c18b4ae3275ea434837ad4f6311c353e2fb3337b2a79d7716007806ace41f7",
+      "uncompressed_sha256": "4c8c4cb0fa714ef24cf935e16a9eaad6e4461ee31f5968cb11a9b56f7f6dfa5c"
+    },
+    "reports/data/hexrcf-cell-codec/cell-footprint-copyright-1.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-cell-codec/cell-footprint-literals-1.log.gz": {
+      "sha256": "d363c41d04cc71aaa8b2bb97d1faf6ff4b311e5874c10d339f87aba4d4b97158",
+      "uncompressed_sha256": "5b2703a612f8c434ac4e53bb05bfeef0dbca1d91cc9125441d5bd447be3dfbc3"
+    }
+  },
+  "validation": {
+    "new_actual_proof_bodies": 10,
+    "affected_build": "cell-footprint-affected-build-1.log",
+    "final_api_build": "cell-footprint-final-build-1.log",
+    "finite_decoder_controls": [
+      "Complete payload inventory replays the actual complete algebraic matrix.",
+      "Removing every literal encoded as zero rejects with evidence.",
+      "Original zero divisor rejects before malformed packet/empty-reader decoding."
+    ],
+    "scan_cones": 636,
+    "scan_local_modules": 1536,
+    "memory_bytes": 34359738368,
+    "swap_bytes": 0,
+    "lean_threads": 2,
+    "own_build_concurrency": 1
+  },
+  "limits": [
+    "Inventories cover stored payload scalars/contexts, including unreachable graph entries, not all intermediate arithmetic requests.",
+    "Descriptor restoration remains an explicit owner premise.",
+    "Context coverage uses the actual lawful Signature codec.",
+    "No global coefficient-codec law, native replay fallback or frontend completeness claim.",
+    "Earlier failed proof/syntax attempts are retained.",
+    "Build observations reuse cached dependencies; no speedup/scaling claim."
+  ]
+}
