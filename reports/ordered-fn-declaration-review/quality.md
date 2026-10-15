@@ -1,13 +1,14 @@
 # Automation, imports and naming
 
 This supplements the individual source assessments. It records the current
-import structure without claiming all Phase-6 quality gates passed.
+import structure. [Theory acceptance](theory-acceptance.md) completes the
+companion’s Phases 6–7; computational acceptance remains separate.
 
 | Module | Automation and API assessment |
 | --- | --- |
 | Search | Public search equations remain explicit: uncontrolled rewriting of recursion or accessibility evidence is unsuitable for simp/grind. `firstSome_spec` and `firstSome_eq` give consumers finite proof routes. |
 | Oracle | Endpoint extensionality uses ext; intersection success and exact width identities use simp. These terminating normalizations expose behavior without recursive unfolding. |
-| Real | Positive/nonpositive width normalization and formal-zero laws use simp. General search soundness/progress require the exact provider hypotheses and remain explicit. |
+| Real | Positive/nonpositive width normalization uses simp. Real.attempt_zero and Real.sign_zero are explicit public equations without simp registration. General search soundness/progress require the exact provider hypotheses and remain explicit. |
 | Extension (core) | Extensionality and constructor/transport storage equations support ordinary normalization. The native field dictionary is separate from conditional order laws. |
 | Infinitesimal (core) | Canonical-zero sign is simp; scan and range statements remain explicit. Scoped relations avoid an unproved global order. |
 | Sign (companion) | The shared integer-sign/order equivalences retain their generic zero and linear-order hypotheses. Both interpretations use them explicitly without choosing a semantic subject. |
@@ -16,9 +17,9 @@ import structure without claiming all Phase-6 quality gates passed.
 | Real (companion) | Successful-trial soundness and total-search correctness remain explicit to avoid kernel reduction of unbounded computation. |
 | Convergence | Analytic estimates and eventual statements use their stated containment/width hypotheses. Making all of them global automation rules would not replace those proof obligations. `add_converges` uses the existing width-add characterization without unfolding endpoints. |
 | Progress | Accessibility follows the same executed trials. Eventual success is applied explicitly rather than installed as a generic search/automation rule. |
-| Extension (companion) | Constructor evaluations normalize with simp. Order instances need an explicit `OrderValid`; same-subject transport requires both providers. Unconditional simp/grind rules for these existential subjects would be misleading. |
-| Hahn | Constant mapping uses simp; support, leading coefficient and order-reflection laws retain their embedding/monotonicity hypotheses. |
-| Infinitesimal (companion) | Constant/indeterminate embedding equations use simp; arbitrary fraction, normalization and successive-level order results remain explicit. Scoped instances select the intended order. |
+| Extension (companion) | Constructor evaluations and same-subject evaluation transport normalize with simp. Order instances need an explicit `OrderValid`; same-subject transport requires both providers. Unconditional simp/grind rules for these existential subjects would be misleading. |
+| Hahn | The bundled-map equation, monomial mapping, support, order and leading coefficients normalize with simp. `map_C` specializes `map_single` without a duplicate simp rule. Order-reflection laws keep their explicit monotonicity hypothesis. |
+| Infinitesimal (companion) | Constant/indeterminate and two-level generator equations, sign negation/multiplication/zero and constant inequalities normalize with simp. Arbitrary fraction, normalization and successive-level order results remain explicit. Scoped instances select the intended order. |
 
 The source has no `@[grind]` declarations. This is not itself a quality failure:
 existing simp normalization, explicit characterizations and conditional transfer
@@ -45,5 +46,17 @@ public statements, automation choices and semantic hypotheses are identical.
 
 The zero-reference table records why public characterizing laws remain exported;
 intentional API is distinct from a discovered production caller. Final acceptance
-must consider those dispositions along with the unresolved
-computational regression evidence. No phase counter advances here.
+for the computational library must consider those dispositions along with the
+unresolved regression evidence. The companion’s separate acceptance records its
+public API decisions.
+
+Existing public names (`strictOrderedRing`, `sign_neg`) and comparison-iff
+directions are retained for downstream compatibility. Their namespaces and
+statements specify their meaning. This audit uses environment linters, including
+slow checks and theorem documentation, rather than claiming that every Mathlib
+source-style option is enabled. Production Theory files declare their universe
+parameters explicitly and keep lines within 100 columns.
+
+The [computational API decision](core-api.md) adopts the core retention and
+direct-import judgments, including the compatibility reason for keeping the
+RationalFn umbrella re-exports. It makes no minimal-transitive-import claim.

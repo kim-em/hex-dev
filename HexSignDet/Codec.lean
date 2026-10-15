@@ -30,6 +30,7 @@ field count, so extra fields cannot be silently ignored. -/
 def graph (value : ValueCodec E) (context : ValueCodec Ctx) (d : Dag E Ctx) : Json :=
   .arr #[Json.of (1 : Nat), Json.of d.root, array (entry value context) d.entries]
 
+/-- Read an optional ordered pair, requiring both child indices below the actual prefix size. -/
 def readChildren (earlier : Nat) (j : Json) : Except String (Option (Nat × Nat)) :=
   readOption (fun j => do
     let a ← tuple 2 j

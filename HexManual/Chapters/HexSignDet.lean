@@ -381,6 +381,19 @@ coefficient reader to cover the stored head and finite endpoints, and the
 context reader to cover this actual context. A partial coefficient reader
 need not satisfy a roundtrip law for every possible coefficient.
 
+The low-level integer-only JSON parser
+{name Hex.SignDet.Codec.Json.readBytes}`Json.readBytes` reconstructs a complete
+value and rejects trailing tokens. It applies no byte, nesting or integer-digit
+limit; certificate APIs run
+{name Hex.SignDet.Codec.checkBytes}`Codec.checkBytes` before parsing.
+The native value parser's
+{name Hex.SignDet.Codec.Json.readLoop_tokens}`readLoop_tokens` law reconstructs
+emitted tokens with an arbitrary suffix when fuel exceeds the value's structural
+rank, which accounts for width and depth. The byte-roundtrip theorem
+{name Hex.SignDet.Codec.Json.readBytes_write}`readBytes_write` uses this law.
+Object field order and
+duplicate keys remain literal data; reconstruction asserts no arithmetic truth.
+
 For full replay graphs, {name}`Hex.SignDet.Dag.encodeBytes` prints the
 literal graph and {name}`Hex.SignDet.Codec.decodeGraph` parses it after
 the byte syntax and resource checks. Parsing checks references, context and domain
@@ -388,6 +401,13 @@ bindings; {name}`Hex.SignDet.Dag.decodeBytes` additionally runs replay
 against the caller's sign operation and ordered query list.
 {name}`Hex.SignDet.Dag.decode_replays` identifies the returned checked
 tree with the parsed graph's actual replay result.
+
+The decode-time check {name Hex.SignDet.Codec.bindings}`Codec.bindings` fixes
+the node's and every stored moment's context, head and both endpoints.
+{name Hex.SignDet.Codec.bindings_iff}`bindings_iff` characterizes those four
+literal equalities. Replay separately binds query lists and query polynomials;
+equal coefficient meanings alone do not satisfy the decode-time check. Neither
+this binding nor reconstruction supplies an arithmetic or root-count conclusion.
 
 The parser bounds are recorded by
 {name Hex.SignDet.Codec.Shape}`Shape`: row and column lengths, basis-rank

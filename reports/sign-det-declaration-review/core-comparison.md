@@ -50,8 +50,9 @@ The existing comparison and re-encoding conformance cases retain different
 heads, old endpoint constraints, no matching root and invalid target domains.
 They are reused rather than assigning new direct examples. The full producer
 success and selected-root preservation proofs remain in the companion.
-Other core modules, current whole-library reference assessment and the
-specified Phase-6 computational checks remain outstanding.
+Other core modules have separate group assessments. Current whole-library
+reference assessment and the specified Phase-6 computational checks remain
+outstanding.
 
 The axiom checks expect only `propext` for `CommonProduct.check_iff` and
 `propext`, `Classical.choice`, `Quot.sound` for

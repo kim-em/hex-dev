@@ -17,7 +17,9 @@ open Codec (Json)
 independent graph replay still checks all mathematical and context bindings.
 A codec used for roundtrips must preserve the entire value, not a context hash. -/
 structure ValueCodec (α : Type) where
+  /-- Encode the whole supplied value as literal JSON data. -/
   encode : α → Json
+  /-- Read a literal value or return a decoding error, without mathematical validation. -/
   decode : Json → Except String α
 
 namespace ValueCodec
@@ -49,12 +51,16 @@ namespace Codec
   if h : a.size = n then return ⟨a, h⟩
   else throw "wrong field count"
 
+/-- Encode every array element in order without validating its meaning. -/
 @[expose] def array (encode : α → Json) (a : Array α) : Json := .arr (a.map encode)
+/-- Encode every list element in its literal order. -/
 @[expose] def list (encode : α → Json) (a : List α) : Json := array encode a.toArray
 
+/-- Read all array elements in order, retaining the first decoder error. -/
 @[expose] def readArray (read : Json → Except String α) (j : Json) : Except String (Array α) := do
   (← j.getArr?).mapM read
 
+/-- Read every array element and return the same ordered list. -/
 @[expose] def readList (read : Json → Except String α) (j : Json) : Except String (List α) :=
   Array.toList <$> readArray read j
 
@@ -67,20 +73,25 @@ def vector (n : Nat) (read : Json → Except String α) (j : Json) : Except Stri
   if h : values.size = n then return ⟨values, h⟩
   else throw "wrong decoded vector length"
 
+/-- Read every integer row against both declared matrix dimensions. -/
 def matrix (n m : Nat) (j : Json) : Except String (Matrix Int n m) :=
   Matrix.ofRows <$> vector n (vector m Json.decode) j
 
+/-- Encode all integer matrix entries in row order. -/
 def encodeMatrix (a : Matrix Int n m) : Json :=
   array (array Json.of) (a.rows.toArray.map Vector.toArray)
 
+/-- Read a natural-number index and require it to be strictly below the supplied bound. -/
 def index (n : Nat) (j : Json) : Except String (Fin n) := do
   let i ← Json.decode (α := Nat) j
   if h : i < n then return ⟨i, h⟩ else throw "index out of range"
 
+/-- Encode absence as an empty array and presence as a singleton array. -/
 def option (encode : α → Json) : Option α → Json
   | none => .arr #[]
   | some a => .arr #[encode a]
 
+/-- Accept only empty or singleton arrays, using the supplied reader for presence. -/
 def readOption (read : Json → Except String α) (j : Json) : Except String (Option α) := do
   let a ← j.getArr?
   match a.toList with
@@ -101,11 +112,13 @@ polynomial's coefficient vector. Coefficient equations are checked by replay. -/
   let p := DensePoly.ofCoeffs coefficients
   if p.toArray == coefficients then return p else throw "noncanonical polynomial vector"
 
+/-- Encode a signed infinity tag or the literal finite coefficient. -/
 @[expose] def endpoint (value : ValueCodec E) : Endpoint E → Json
   | .negInf => .arr #[Json.of (0 : Nat)]
   | .finite a => .arr #[Json.of (1 : Nat), value.encode a]
   | .posInf => .arr #[Json.of (2 : Nat)]
 
+/-- Require the exact endpoint tag and field count before reading a finite value. -/
 @[expose] def readEndpoint (value : ValueCodec E) (j : Json) : Except String (Endpoint E) := do
   let a ← j.getArr?
   match a.toList with
