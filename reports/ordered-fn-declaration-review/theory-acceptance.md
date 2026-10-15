@@ -8,9 +8,9 @@ or publication eligibility.
 
 ## Scope and individual review
 
-The [individual semantic assessment](companion.md) covers every handwritten
-nontrivial definition, theorem and named instance in the nine production
-modules. The [import and automation assessment](quality.md) records the shared
+The [individual semantic assessment](companion.md), together with the four
+additional characterizations reviewed below, covers every handwritten nontrivial
+definition, theorem and named instance in the nine production modules. The [import and automation assessment](quality.md) records the shared
 sign layer, scoped instances, characterizing lemmas and normalization choices.
 Those assessments are reused here; a linter or reference count does not replace
 them. The two sign lemmas moved to `Sign` without changing their public names or
@@ -18,10 +18,11 @@ proofs. The bare `mul_bounds` row in the Oracle assessment refers to
 `Hex.OrderedFn.Oracle.Contains.mul_bounds`.
 
 The inventory cross-check accounts for 151 handwritten declarations, including
-four named field/order instances. The two projections of `ApproximationCorrect`
+four named field/order instances. The module totals below combine the older
+individual assessment with the four additions reviewed in this report. The two projections of `ApproximationCorrect`
 are assessed with that structure: coefficient and constant containment bind the
 same provider, embedding, subject and positive request. The current CI-built
-axiom audit checks all 300 owned compiled constants, including generated declarations.
+axiom audit checks every owned compiled constant, including generated declarations.
 Counts describe the environment; they are not quality or performance gates.
 
 | Module | Handwritten declarations | Individual assessment |
@@ -186,7 +187,7 @@ semantic real is used as a runtime implementation.
 | Dead implementation helpers | Each of the six private helpers has the recorded proof consumers; the public zero-reference cases are intentional characterized API, not unused implementations. |
 | Computational regression | The owning SPEC assigns runtime algorithms and benchmarks to `HexOrderedFn`; this semantic library has no compiled benchmark track under the Phase-4 policy. Existing theorem-application timings remain diagnostic. No computational performance pass is inferred. |
 | Native execution and field evidence | The core dictionary identity, erased progress construction and existing 23-case compiled Liouville integration establish the actual execution route. Localization, Hahn and field/order transfer use Lean proofs as described above. |
-| Ordinary-kernel trust | All 300 owned compiled constants have only `propext`, `Classical.choice`, `Quot.sound` as axioms. The existing kernel-built tests and source/admission audits reject proof holes, new axioms and `native_decide`. |
+| Ordinary-kernel trust | All owned compiled constants have only `propext`, `Classical.choice`, `Quot.sound` as axioms. The existing kernel-built tests and source/admission audits reject proof holes, new axioms and `native_decide`. |
 | User documentation | The partner chapter includes the correspondence section, source-derived signatures and compiled examples; current rendered desktop/mobile inspection includes finite signs, registration, successive infinitesimals and the genuine Liouville provider. |
 
 The current build completes the public companion, complete `HexOrderedFnTests`
@@ -199,7 +200,9 @@ examples and no document overflow. The full monorepo build completes 14,629 jobs
 phase/manual checks and admission audit pass; the latter scans 587
 adapter/conformance cones and 1,487 local modules without admissions.
 The earlier compiler archive remains reproducible at its immutable complete tag;
-the new axiom check covers the current polished source.
+the new axiom check covers the current polished source. A local negative control
+with a temporary proof hole in an owned Hahn theorem fails specifically on
+`sorryAx`; restoring the byte-identical source restores a passing lint/axiom build.
 
 The [companion SPEC](../../SPEC/Libraries/hex-ordered-fn-theory.md#conformance-and-phase-4-evidence)
 and [Phase-4 policy](../../PLAN/Phase4.md#theory-libraries) assign this library
