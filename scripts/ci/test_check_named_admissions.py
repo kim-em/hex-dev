@@ -346,6 +346,7 @@ class AdmissionScannerTests(unittest.TestCase):
                 "experiments/KernelReplay/FiniteBase.lean",
                 "experiments/KernelReplay/BaseLookup.lean",
                 "experiments/KernelReplay/LookupReplay.lean",
+                "experiments/KernelReplay/ProofAudit.lean",
                 "experiments/KernelReplay/FiniteLift.lean",
                 "experiments/KernelReplay/FiniteOperands.lean",
                 "experiments/KernelReplay/FiniteSupport.lean",
