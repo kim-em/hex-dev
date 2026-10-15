@@ -46,8 +46,11 @@ justify decoding different native bytes. `CellBuild.packet_read` composes that
 identity with finite payload coverage. The frozen algebraic fixture remains
 byte-identical.
 
-`CellDiscover.run_replay` binds literal acceptance to the actual public native
-producer, retaining both original shared-sentence verdicts. It uses the returned
+`CellDiscover.run` emits both its serialized `rootGraph` and complete `cells`.
+`Packet.rootGraph_eq` binds the emitted graph to the canonical encoding of its
+actual typed table under the native writer's hashing. `CellDiscover.run_replay`
+binds cell-payload acceptance to the actual public native producer, retaining
+both original shared-sentence verdicts. It uses the returned
 native context's proved codec law. This does not reconstruct a general frozen
 predecessor history through a partial codec or prove strict compiled replay
 with arbitrary missing intermediate scalar records.
@@ -229,3 +232,72 @@ admission scan covers 641 cones and 1,541 local modules. All own builds remain
 serial under the aggregate 32 GiB/no-swap/two-thread cap. These are incremental
 integration observations, not a new literal-reader reduction, performance
 comparison or manual-rendering result.
+
+## Emitted root packets and refusal controls
+
+The public discovery result retains the emitted root graph as data and a
+`rootGraph_eq` proof binding it to the actual typed table and writer instances.
+`CellDiscover.run_complete` checks that field together with the emitted cell
+payload. Its progress statement no longer constructs the root serialization
+only inside the theorem. Native discovery controls feed both actual emitted
+fields into `CompleteReplay.check` for both quantifiers, including the enlarged
+algebraic context, the empty table and literal-domain cases.
+
+The re-encoding in `CompleteQuote` is additionally compared byte-for-byte with
+the original frozen root/section/sector literals in a compiled regression.
+This establishes literal equality of these two supplied artifacts, not a new
+ordinary-kernel reader reduction. Both fresh source proofs still use the
+independently checked typed fixture and finite codec laws; their coverage uses
+the native codec's law. A genuinely partial reader is currently exercised in
+the compiled restricted-inventory tests, not by a new kernel instance.
+
+The malformed-graph controls include a structurally valid graph whose moment
+systems have zero inverse denominators. The existing graph decoder must accept
+its syntax before complete replay rejects its evidence. A wrong sector count
+is refused separately. The quotation controls check successful source
+preparation for changed formulas and mismatched nonzero divisor identities;
+known zero divisors are instead rejected during source preflight. Tests do not
+classify failures by diagnostic strings.
+
+Encoder equality uses non-exposed `Codec.graph`, `Codec.node` and the query
+writers in `Codec.Evidence`. Removing those `import all` declarations fails
+`CellCodec.packet_eq`; they remain with an explicit reason. The public
+array/tuple laws suffice for the other parser proofs. README and theorem
+comments distinguish the proved finite-codec boundary from the remaining
+frozen-history and frontend obligations.
+
+The selected-number-field composition also supplies `cellsWith_complete` and
+`cells_complete`. The latter consumes the actual presentation factory, with
+original guard preflight, and obtains accepted emitted root/cell packets for
+both quantifiers at the original `Coefficients.ofField` values. No caller model,
+child producer-success equation or coordinate-faithfulness premise is assumed.
+The positive/negative quadratic and computed-cubic controls feed the actual
+emitted fields to the complete checker. The manual includes runnable complete
+checker and guarded quotation examples and documents the native-history limit.
+
+## Integrated source and manual validation
+
+The [integration record](data/hexrcf-cell-codec/integration-context.json) binds
+25 changed source/manual/build files to
+`442501b826828c7acca085074d01b77e5d92124c`. The final selected build passes
+11,769 jobs in 15.587 seconds, with a 1.7 GiB peak and no swap. Its actual-body
+audits cover 21 serialization, 13 execution, 28 typed-decision, nine discovery
+and five selected-field proofs, two fresh original-source bodies and one
+separate domain body. The preceding retained 11,768-job build rebuilds the
+existing typed/Boolean quotation regressions and importing chapter in
+4 minutes 44.447 seconds, peaking at 5.6 GiB with no swap.
+
+The final full manual renderer passes 14,294 jobs in 3 minutes 8.362 seconds,
+with a 2.3 GiB peak and no swap. All eight final desktop/narrow captures were
+opened and inspected; every changed target fits within the existing one-pixel
+rounding tolerance (the narrow quotation reports one pixel). Both earlier
+24-pixel-overflow attempts and their captured images remain retained. The
+final browser probe peaks at 6.3 GiB with no swap. All probes use the same
+aggregate 32 GiB/no-swap cap and run serially.
+
+DAG/umbrella, copyright, literal, relative-link and whitespace checks pass. The
+source admission scan covers 641 cones and 1,541 local modules. The record
+retains 23 raw logs and 24 browser artifacts, including failed proof/test and
+layout attempts. These are source-scoped integration and rendering observations,
+not a speedup comparison. The fixed native model/codec and original-source
+quotation limits above remain unchanged.
