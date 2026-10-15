@@ -3,6 +3,7 @@
 from copy import deepcopy
 from contextlib import redirect_stdout
 import hashlib
+import gzip
 import io
 import json
 from pathlib import Path
@@ -14,6 +15,32 @@ from unittest.mock import patch
 
 import sturm_regression as collector
 from sturm_regression import AUXILIARY, NATIVE_FIXED, native_harness_pins, registrations
+
+
+class ArchivedCapProposalTest(unittest.TestCase):
+    """The proposed real campaign names exactly the retained failure inputs."""
+
+    def test_proposal_matches_archived_context_and_failed_exports(self):
+        root = Path(collector.__file__).resolve().parents[2]
+        archive = root / 'reports/bench-results/sturm-phase6-comparison'
+        raw = gzip.decompress((archive / 'capture/context.json.gz').read_bytes())
+        context = json.loads(raw)
+        policy = json.loads((archive / 'cap-proposal.json').read_text())['cap_protocol']
+        self.assertEqual(policy['previous_context_sha256'], hashlib.sha256(raw).hexdigest())
+        self.assertEqual(policy['benchmarks'], context['benchmarks'])
+        expected = set()
+        for failure in context['parent_failures']:
+            matching = [r['command'] for r in context['commands']
+                        if r['command'][1:3] == ['run', failure['function']]
+                        and Path(r['command'][r['command'].index('--export-file') + 1]).name.endswith(
+                            '-' + failure['arm'] + '.json')]
+            command = matching[-1]
+            name = Path(command[command.index('--export-file') + 1]).name
+            expected.add(name)
+            exported = gzip.decompress((archive / 'capture' / (name + '.gz')).read_bytes())
+            self.assertEqual(policy['previous_exports'][name], hashlib.sha256(exported).hexdigest())
+            self.assertGreater(policy['seconds'], json.loads(exported)['results'][0]['config']['max_seconds_per_call'])
+        self.assertEqual(set(policy['previous_exports']), expected)
 
 
 class RegistrationTest(unittest.TestCase):
@@ -148,9 +175,14 @@ if sys.argv[1]=='list':
     print(LISTING)
 elif sys.argv[1]=='run':
     target=Path(sys.argv[sys.argv.index('--export-file')+1])
-    result={'kind':'parametric','function':sys.argv[2],'config':{},'budget_truncated':False,
+    adapted='--max-seconds-per-call' in sys.argv
+    cap=float(sys.argv[sys.argv.index('--max-seconds-per-call')+1]) if adapted else 120
+    killed=mode.startswith('cap') and not adapted and (mode!='cap-later' or target.name.startswith('1-'))
+    status='killed_at_cap' if killed else 'ok'
+    result={'kind':'parametric','function':sys.argv[2],
+            'config':{'max_seconds_per_call':120 if mode=='cap-ignore' else cap},'budget_truncated':False,
             'points':[{'param':64,'result_hash':'wrong' if mode=='mismatch' and arm=='candidate' else 'same',
-                       'status':'timedOut' if mode in ('timeout','exit') and arm=='candidate' else 'ok',
+                       'status':'timedOut' if mode in ('timeout','exit') and arm=='candidate' else status,
                        'per_call_nanos':100,'error':None}]}
     target.write_text(json.dumps({'results':[result]}))
     if mode=='exit' and arm=='candidate':sys.exit(7)
@@ -232,6 +264,166 @@ elif sys.argv[1]=='run':
         path = self.binaries['candidate']
         path.write_text(path.read_text().replace("mode='ok'", 'mode=' + repr(value)))
         self.bind_decision()
+
+    def cap_failure(self, mode='cap'):
+        for path in self.binaries.values():
+            path.write_text(path.read_text().replace("mode='ok'", 'mode=' + repr(mode)))
+        self.bind_decision()
+        with self.assertRaisesRegex(RuntimeError, 'failed parent'):
+            self.run_collector('original')
+        return self.base / 'original'
+
+    def bind_cap(self, previous, seconds=3600):
+        context = json.loads((previous / 'context.json').read_text())
+        decision = json.loads(self.decision.read_text())
+        exports = {}
+        for failure in context['parent_failures']:
+            commands = [r['command'] for r in context['commands']
+                        if r['command'][1:3] == ['run', failure['function']]
+                        and Path(r['command'][r['command'].index('--export-file')+1]).name.endswith(
+                            '-' + failure['arm'] + '.json')]
+            command = commands[-1]
+            path = Path(command[command.index('--export-file')+1])
+            exports[path.name] = collector.digest(path)
+        decision['cap_protocol'] = {
+            'seconds': seconds, 'reason': 'Increase only the operational cap for every original family',
+            'benchmarks': context['benchmarks'],
+            'previous_context_sha256': collector.digest(previous / 'context.json'),
+            'previous_exports': exports}
+        self.decision.write_text(json.dumps(decision))
+
+    def test_cap_adaptation_preserves_original_reservation_and_balanced_schedule(self):
+        first = self.cap_failure()
+        journal = Path(self.context['decision_reservation'])
+        original = journal.read_bytes()
+        self.bind_cap(first)
+        code, _ = self.run_collector('adapted', ['--cap-from', first])
+        self.assertEqual(code, 0)
+        self.assertEqual(journal.read_bytes(), original)
+        self.assertNotEqual(str(journal), self.context['decision_reservation'])
+        runs = [r['command'] for r in self.context['commands'] if r['command'][1:2] == ['run']]
+        self.assertEqual([Path(c[0]).name for c in runs],
+                         ['baseline','candidate','candidate','baseline','baseline','candidate','candidate','baseline'])
+        self.assertTrue(all(c[c.index('--max-seconds-per-call') + 1] == '3600' for c in runs))
+        with self.assertRaisesRegex(RuntimeError, 'decision already used'):
+            self.run_collector('another', ['--cap-from', first])
+        self.bind_cap(first, 7200)
+        with self.assertRaisesRegex(RuntimeError, 'decision already used'):
+            self.run_collector('larger', ['--cap-from', first])
+
+    def test_cap_preflight_neither_reserves_nor_measures(self):
+        first = self.cap_failure()
+        self.bind_cap(first)
+        code, _ = self.run_collector('preflight', ['--cap-from', first, '--preflight'])
+        self.assertEqual(code, 0)
+        self.assertFalse(self.context['attempt_reserved'])
+        self.assertFalse(self.context['measurements_collected'])
+        self.assertEqual(self.lease_calls, 0)
+        self.assertFalse(Path(self.context['decision_reservation']).exists())
+
+    def test_later_block_failure_preserves_earlier_completed_pairs(self):
+        first = self.cap_failure('cap-later')
+        original = {p.name: p.read_bytes() for p in first.glob('[0-9]*.json')}
+        self.assertEqual(len(original), 4)
+        self.bind_cap(first)
+        code, _ = self.run_collector('adapted', ['--cap-from', first])
+        self.assertEqual(code, 0)
+        self.assertEqual({p.name: p.read_bytes() for p in first.glob('[0-9]*.json')}, original)
+
+    def test_cap_protocol_and_input_are_required_together(self):
+        first = self.cap_failure()
+        with self.assertRaisesRegex(RuntimeError, 'required together'):
+            self.run_collector('missing-policy', ['--cap-from', first])
+        self.bind_cap(first)
+        with self.assertRaisesRegex(RuntimeError, 'required together'):
+            self.run_collector('missing-input')
+
+    def test_cap_policy_rejects_invalid_limits(self):
+        first = self.cap_failure()
+        for index, cap in enumerate([True, 0, -1, '3600', float('inf'), float('nan'), 120]):
+            with self.subTest(cap=cap):
+                self.bind_cap(first, cap)
+                with self.assertRaisesRegex(RuntimeError, 'cap seconds|increase'):
+                    self.run_collector('bad-cap-' + str(index), ['--cap-from', first])
+                self.assertEqual(self.lease_calls, 0)
+
+    def test_cap_policy_cannot_drop_original_families(self):
+        first = self.cap_failure()
+        self.bind_cap(first)
+        decision = json.loads(self.decision.read_text())
+        decision['cap_protocol']['benchmarks'] = []
+        self.decision.write_text(json.dumps(decision))
+        with self.assertRaisesRegex(RuntimeError, 'every original timing family'):
+            self.run_collector('subset', ['--cap-from', first])
+        self.assertEqual(self.lease_calls, 0)
+
+    def test_cap_policy_refuses_context_and_export_tampering(self):
+        first = self.cap_failure()
+        self.bind_cap(first)
+        export = next(first.glob('[0-9]*-baseline.json'))
+        export.write_text(export.read_text() + '\n')
+        with self.assertRaisesRegex(RuntimeError, 'export hashes'):
+            self.run_collector('changed-export', ['--cap-from', first])
+        original = first / 'context.json'
+        original.write_text(original.read_text() + '\n')
+        self.bind_cap(first)
+        with self.assertRaisesRegex(RuntimeError, 'retained first attempt'):
+            self.run_collector('changed-context', ['--cap-from', first])
+
+    def test_cap_adaptation_refuses_changed_native_inputs(self):
+        first = self.cap_failure()
+        source = self.sources['baseline']
+        document = json.loads(source.read_text())
+        document['sources']['extra.lean'] = 'changed'
+        source.write_text(json.dumps(document))
+        self.bind_decision()
+        self.bind_cap(first)
+        with self.assertRaisesRegex(RuntimeError, 'frozen producer inputs'):
+            self.run_collector('changed-inputs', ['--cap-from', first])
+
+    def test_non_cap_failure_does_not_authorize_cap_adaptation(self):
+        self.mode('timeout')
+        with self.assertRaises(RuntimeError):
+            self.run_collector('original')
+        first = self.base / 'original'
+        self.bind_cap(first)
+        with self.assertRaisesRegex(RuntimeError, 'per-call cap termination'):
+            self.run_collector('wrong-failure', ['--cap-from', first])
+
+    def test_cap_adaptation_verifies_parent_applied_the_limit(self):
+        first = self.cap_failure('cap-ignore')
+        self.bind_cap(first)
+        with self.assertRaisesRegex(RuntimeError, 'parent did not apply'):
+            self.run_collector('ignored', ['--cap-from', first])
+        self.assertTrue(self.context['attempt_reserved'])
+
+    def test_cap_adaptation_keeps_one_inconclusive_rerun(self):
+        self.guard_code(2)
+        first = self.cap_failure()
+        self.bind_cap(first)
+        _, adapted = self.run_collector('adapted', ['--cap-from', first])
+        self.assertEqual(self.context['outcome'], 'inconclusive')
+        self.run_collector('repeat', ['--cap-from', first, '--rerun-of', adapted])
+        self.assertEqual(self.context['reruns'], 1)
+        with self.assertRaisesRegex(RuntimeError, 'already reserved'):
+            self.run_collector('repeat-again', ['--cap-from', first, '--rerun-of', adapted])
+
+    def test_cap_regression_cannot_be_retried_as_inconclusive(self):
+        self.guard_code(1)
+        first = self.cap_failure()
+        self.bind_cap(first)
+        _, adapted = self.run_collector('adapted', ['--cap-from', first])
+        self.assertEqual(self.context['outcome'], 'regression')
+        with self.assertRaisesRegex(RuntimeError, 'completed inconclusive'):
+            self.run_collector('repeat', ['--cap-from', first, '--rerun-of', adapted])
+
+    def test_cap_adaptation_does_not_free_the_original_default_slot(self):
+        first = self.cap_failure()
+        self.bind_cap(first)
+        self.run_collector('adapted', ['--cap-from', first])
+        self.bind_decision()
+        with self.assertRaisesRegex(RuntimeError, 'decision already used'):
+            self.run_collector('default-again')
 
     def test_hash_mismatch_aborts(self):
         self.mode('mismatch')
