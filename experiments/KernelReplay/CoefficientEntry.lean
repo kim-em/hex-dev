@@ -54,7 +54,9 @@ run_meta do
   setReducibilityStatus supportName .irreducible
   let originalType ← inferType (mkConst ``FiniteBaseProbe.agreement)
   let parameters := originalType.getAppArgs
-  for inventory in #[lefts, appended, nested, consed, duplicate, mkConst supportName] do
+  let carrier ← inferType (mkApp function (toExpr (0 : Nat)))
+  let shared ← appendSupport carrier #[rights, lefts, empty, lefts, rights]
+  for inventory in #[lefts, appended, nested, consed, duplicate, mkConst supportName, shared] do
     let agreementType := mkAppN originalType.getAppFn
       (parameters.set! (parameters.size - 1) inventory)
     withLocalDeclD `agreement agreementType fun agreement => do
