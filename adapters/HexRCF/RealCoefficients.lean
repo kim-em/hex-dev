@@ -81,6 +81,7 @@ public import HexRCF.RealCoefficients.RootTable
 public import HexRCF.RealCoefficients.RootTransport
 public import HexRCF.RealCoefficients.Gather
 public import HexRCF.RealCoefficients.GatherCells
+public import HexRCF.RealCoefficients.AlgebraicCells
 public import HexRCF.RealCoefficients.RegisteredGather
 public import HexRCF.RealCoefficients.ReconciledGather
 public import HexRCF.RealCoefficients.InverseReplay
