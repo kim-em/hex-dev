@@ -9,7 +9,7 @@
     "HexSignDetTheory/ReencodingRefinement.lean": "b714a008e88915db9d4a5c03eb3902c8b36e1bd3cd2c1777939a389d48c8b901",
     "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
     "HexManual/Chapters/HexSignDet.lean": "1886de363194f3beab7cd75bf854b9b9c919f8499d8da4f05b23fbc893e5db0b",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "6b45715bd743f5a431e07229ebb205e4ca3448c53a7c79ea05938ebb3de9eb4c"
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "c3b86c2cef0c53175e43cc40db0dc02ec93de147414c9378e0d914bfb5149132"
   },
   "file_roles": {
     "HexSignDet/CommonProduct.lean": "reviewed module",

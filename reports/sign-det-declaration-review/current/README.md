@@ -44,15 +44,15 @@ lock/toolchain. External source bytes follow those pins. It does not establish
 mathematical API quality or external-client completeness mechanically.
 
 The source checkpoint tag is
-`audit/issue-10575-sign-det-current-reviewed-input-v8`. The complete archive is
-`audit/issue-10575-sign-det-current-reviewed-complete-v8`. Fetch both tags and
+`audit/issue-10575-sign-det-current-reviewed-input-v9`. The complete archive is
+`audit/issue-10575-sign-det-current-reviewed-complete-v9`. Fetch both tags and
 use an isolated checkout at the complete archive:
 
 ```sh
-git fetch origin tag audit/issue-10575-sign-det-current-reviewed-input-v8
-git fetch origin tag audit/issue-10575-sign-det-current-reviewed-complete-v8
+git fetch origin tag audit/issue-10575-sign-det-current-reviewed-input-v9
+git fetch origin tag audit/issue-10575-sign-det-current-reviewed-complete-v9
 git worktree add /tmp/signdet-audit-source \
-  audit/issue-10575-sign-det-current-reviewed-complete-v8
+  audit/issue-10575-sign-det-current-reviewed-complete-v9
 ```
 
 Build with the exact pinned dependencies, then run `reproduce.py` from that
@@ -98,5 +98,6 @@ expressions refuse classification. Other target names and other families still
 use the existing source-role rules and require manual review.
 `HexOrderedFnTheory.LiouvilleRun` is explicitly classified as evidence: its
 Lake executable runs test-local integration checks. Production modules are
-checked for imports of family test-glob modules. The controls use the actual
+checked for imports of any module in the four family pairs classified as test evidence.
+This guard does not enforce production/test separation in unrelated libraries. The controls use the actual
 source-root configuration and keep `BaseContext` production.

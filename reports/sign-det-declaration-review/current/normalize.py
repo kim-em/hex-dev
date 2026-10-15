@@ -121,9 +121,9 @@ def reference_disposition(row):
     return 'Retained as an explicit public API decision; no existing term or matched qualified manual/SPEC mention is claimed.'
 
 
-def check_production_imports(production, test_modules):
-    """Refuse production imports of modules classified by family test globs."""
-    evidence_imports = {name: sorted(set(_parse_imports(ROOT / path)) & test_modules)
+def check_production_imports(production, is_evidence):
+    """Refuse production imports of modules classified as test evidence."""
+    evidence_imports = {name: sorted(module for module in _parse_imports(ROOT / path) if is_evidence(module))
                         for name, path in production.items()}
     require(not any(evidence_imports.values()),
             ('production imports family test evidence',
@@ -205,7 +205,9 @@ def derive(directory):
                         "Sturm production", "SignDet companion production",
                         "other Hex production", "other root-package production"}:
                     production[name] = file
-    check_production_imports(production, index.test_modules)
+    check_production_imports(production, lambda module:
+        module.startswith(('HexSturm', 'HexSignDet', 'HexOrderedFn', 'HexRealClosure'))
+        and index.resolve(module)['category'] == 'tests/conformance/manual')
     cache = {}
 
     def reaches(name, visiting=frozenset()):

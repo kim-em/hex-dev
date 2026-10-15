@@ -593,5 +593,6 @@
       "HexSignDetMathlib/TreeSolve.lean": "6daf10f0cc605ff9fadd844634cb66145f4d401bd876d9d47bc6c8d705988e1e"
     },
     "scope": "Retained compiled-use snapshot of the earlier reviewed source hashes recorded here. Later proof-client polishing preserves statements but does not regenerate this inventory; current reviewed source hashes are in the module entries."
-  }
+  },
+  "source_ref": "audit/issue-10575-sign-det-companion-source"
 }
