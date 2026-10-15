@@ -111,7 +111,7 @@ path retain their own obligations. This result supplies no faithful formal
 model for arbitrary named constants and infers no independence of separately
 registered constants. #10358 remains open.
 
-## Validation and source binding
+## Core progress validation and source binding
 
 The [retained evidence](data/hexrcf-cell-execution/context.json) distinguishes
 the integrated implementation commit `8d5fdb0ebec9814a12bacd6c73655d99e675eb5a`
@@ -148,3 +148,32 @@ used the same serial aggregate 32 GiB cgroup with swap disabled; Lean builds
 used two threads. Direct cgroup and process-environment observations accompany
 the full build. These host/cache-dependent validation times do not establish a
 speedup for the shared prepared queries.
+
+## Selected-field validation
+
+The [separate selected-field evidence](data/hexrcf-field-cells/context.json)
+binds the factory connection to implementation commit
+`5b489eee3d` and the wrapped manual source `abae613acf`.
+The implementation/conformance build passed 10,955 jobs. The optional-library,
+new-conformance and manual-target build passed 11,756 jobs in 8.232 seconds,
+peaking at 1.5 GiB with zero swap. All three actual proof bodies were rechecked
+in the ordinary kernel with the selected-source and construction dependencies.
+The earlier public test also exercises both quadratic embeddings and the
+computed cubic-field coordinate; it is retained with its narrower scope.
+
+After the single manual line wrap, its targeted build passed 11,612 jobs.
+The complete manual render passed 14,264 jobs in 2 minutes 59.327 seconds,
+peaking at 2.1 GiB with zero swap. All six final desktop/narrow captures were
+opened and inspected, with zero local overflow. The preceding 15-pixel narrow
+overflow and its four captures remain in the evidence. Earlier scratch errors
+and checks run from the wrong worktree are retained and excluded from the
+final validation claims.
+
+The final metadata checks cover the optional umbrella, one implementation
+and one default conformance glob, base-library independence, DAG, copyright,
+manual split and selected-root literals. The source admission scan covers
+631 cones and 1,531 modules; as its own contract states, RCF conformance
+is outside this source scan and receives its actual proof-body kernel audits.
+The eleven DAG tests and eleven scanner tests pass. The saved wrappers retain
+the serial 32 GiB/no-swap/two-thread policy. These are source-scoped validation
+observations, not a new timing comparison or a general finite-codec result.

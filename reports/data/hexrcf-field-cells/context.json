@@ -1,0 +1,338 @@
+{
+  "schema": 1,
+  "source_commit": "abae613acff67a36e77024c8f57ce85413b12766",
+  "implementation_commit": "5b489eee3d40b4e17615e3b5b97e606a613d02bb",
+  "baseline_context": "../hexrcf-cell-execution/context.json",
+  "selected_source_hashes": {
+    "adapters/HexRCF/RealCoefficients/NumberFieldCells.lean": "8e1b442d2e64f22cf14dfb6a3ae42ecbd75eb8780d3d37b6a30816f4518d3591",
+    "conformance/HexRCF/NumberFieldCellsConformance.lean": "4402abc6f5a7251dd5314c8885e657597938369a42464df8123e8bf3f9f0a10d",
+    "adapters/HexRCF/RealCoefficients.lean": "4496240b1f0b3ac6afc558d50e71009ee1fa388990aba24b0af70ea2c375dbcb",
+    "lakefile.lean": "e0ea6915ba9cd8a9f631f0b7d068385d6f45f9385467cd335017b468434579fe",
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "df0d8c7681cff8abba075835a7f3716f7c41de50e1b6d0af436838306dac7b1c",
+    "HexRCF/README.md": "cd8a07c220359c15b4a8393ab09e3a7fcc059a6d1c79294bdc06664b79f52ddd",
+    "reports/hexrcf-cell-execution.md": "47c62206afe00a3922736735e6e4dccf38e99e1a721099b88c5b4d7e9b1879e6"
+  },
+  "successful_checks": [
+    {
+      "path": "number-field-cells-public-2.log.gz",
+      "bytes": 9352,
+      "sha256": "b8519a1369d00c79a53e1298585390fe7e9e8dba1d4dd7bdf844e624dcb23246",
+      "uncompressed_bytes": 122166,
+      "uncompressed_sha256": "11aa4d8906da61b8194c7dd563afb4b7e66b4b701270e8a53e3836ddab58ae32",
+      "source_commit": "5b489eee3d40b4e17615e3b5b97e606a613d02bb"
+    },
+    {
+      "path": "number-field-cells-manual-wrap-1.log.gz",
+      "bytes": 6944,
+      "sha256": "b52c3822b52587172a5461cc4f1485344880b452caa36aabf9c04e62af2a40f2",
+      "uncompressed_bytes": 74310,
+      "uncompressed_sha256": "71cda9f7da028b601d4fb4ced2a9046bbebfabdd8a58b10e734e4c3d69fc913d",
+      "source_commit": "abae613acff67a36e77024c8f57ce85413b12766"
+    },
+    {
+      "path": "number-field-cells-manual-render-2.log.gz",
+      "bytes": 13807,
+      "sha256": "90daf745035ce233ba98da34421cbcec89a49736866cb6ecd11ca24c668c3f80",
+      "uncompressed_bytes": 190915,
+      "uncompressed_sha256": "ac7f370943e11d902df6a30d2b871fab43338861a09fa3dc984c61c40a58bce7",
+      "source_commit": "abae613acff67a36e77024c8f57ce85413b12766"
+    },
+    {
+      "path": "number-field-cells-manual-browser-2.log.gz",
+      "bytes": 244,
+      "sha256": "b27a1c7d60957a4afb9d881977667137cf771132f1230d9a21cce83ef79b97e8",
+      "uncompressed_bytes": 328,
+      "uncompressed_sha256": "2d53061bc97d67ee75e23f25fdb1eb3df1241df9d1be7b58c41d334d1e06f49e",
+      "source_commit": "abae613acff67a36e77024c8f57ce85413b12766"
+    },
+    {
+      "path": "number-field-cells-dag-1.log.gz",
+      "bytes": 20,
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_bytes": 0,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_commit": "5b489eee3d40b4e17615e3b5b97e606a613d02bb"
+    },
+    {
+      "path": "number-field-cells-admissions-1.log.gz",
+      "bytes": 99,
+      "sha256": "492fe925672cd283a94ab6b3ccde6c7f6facbe7ffcf576b5eab38253c4023ea1",
+      "uncompressed_bytes": 95,
+      "uncompressed_sha256": "47e5ac8a8b7257661913facc39a42f08ab208b07d9550d6b1d5602879444c53a",
+      "source_commit": "5b489eee3d40b4e17615e3b5b97e606a613d02bb"
+    },
+    {
+      "path": "number-field-cells-copyright-3.log.gz",
+      "bytes": 20,
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_bytes": 0,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_commit": "5b489eee3d40b4e17615e3b5b97e606a613d02bb"
+    },
+    {
+      "path": "number-field-cells-dag-tests-2.log.gz",
+      "bytes": 55,
+      "sha256": "23d078523879b6d8536f09d72a027901e02d7e2829a1234edaf5fc6890706b07",
+      "uncompressed_bytes": 110,
+      "uncompressed_sha256": "1716b47a03188bc918a0e69af2d063dbf3f51ded577934827cd953a60bd6070d",
+      "source_commit": "5b489eee3d40b4e17615e3b5b97e606a613d02bb"
+    },
+    {
+      "path": "number-field-cells-admission-tests-2.log.gz",
+      "bytes": 55,
+      "sha256": "2d682ac799f442905abd8064f454bd26edb45b46aeb05478649c94465f9f7433",
+      "uncompressed_bytes": 111,
+      "uncompressed_sha256": "b8b1be9ee42764317716a945412ef066175adc3a9fbddaff9dedb6f519636684",
+      "source_commit": "5b489eee3d40b4e17615e3b5b97e606a613d02bb"
+    },
+    {
+      "path": "number-field-cells-manual-split-2.log.gz",
+      "bytes": 88,
+      "sha256": "48a9e140081495d1ab8296879fffbda28bea260c48c63a9e7a2bfa5754ef1009",
+      "uncompressed_bytes": 84,
+      "uncompressed_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "source_commit": "5b489eee3d40b4e17615e3b5b97e606a613d02bb"
+    },
+    {
+      "path": "number-field-cells-literals-1.log.gz",
+      "bytes": 49,
+      "sha256": "d363c41d04cc71aaa8b2bb97d1faf6ff4b311e5874c10d339f87aba4d4b97158",
+      "uncompressed_bytes": 29,
+      "uncompressed_sha256": "5b2703a612f8c434ac4e53bb05bfeef0dbca1d91cc9125441d5bd447be3dfbc3",
+      "source_commit": "5b489eee3d40b4e17615e3b5b97e606a613d02bb"
+    },
+    {
+      "path": "number-field-cells-targets-1.log.gz",
+      "bytes": 104,
+      "sha256": "d107d91007e370868cc0e13453c9a1145d7b4dbcc55b40c315e1903abe89aae2",
+      "uncompressed_bytes": 116,
+      "uncompressed_sha256": "c9ae1fe61902ef7256a29fba23299d136bfbe2c55f34edcabbeccf5b2e5e95e5",
+      "source_commit": "5b489eee3d40b4e17615e3b5b97e606a613d02bb"
+    }
+  ],
+  "interim_scope": "Earlier scratch and public checks have their own narrower scope and do not attest the final manual. The public-1 implementation and conformance match the implementation commit. The first render passed at that commit before the retained visual failure.",
+  "interim_checks": [
+    {
+      "path": "field-cells-prototype-1.log.gz",
+      "bytes": 6226,
+      "sha256": "a8967646af07dcb9a6848d8ebdf2a229690cd73afaca6775d4259eb767848b94",
+      "uncompressed_bytes": 68143,
+      "uncompressed_sha256": "772bee63cb314e63ac89dbab425bc1dd8f7370931c60963a7034d3cf766af84d"
+    },
+    {
+      "path": "field-cells-prototype-2.log.gz",
+      "bytes": 6219,
+      "sha256": "f5c11cac08601782148926efe6f60904169d3046d6025c0646b9ca6b0719d308",
+      "uncompressed_bytes": 68147,
+      "uncompressed_sha256": "a7a150c8c2206c075af0442705c82e04ff3e8402401782938479dc007cdadc7a"
+    },
+    {
+      "path": "field-cells-prototype-5.log.gz",
+      "bytes": 6223,
+      "sha256": "c43e9875370bc22d7fe6994e56f5714bab5e35726c0afb3e0543d2a9bf63d197",
+      "uncompressed_bytes": 68148,
+      "uncompressed_sha256": "16d9e2c2723c3815e322f95ae6752da736ca7e5a26a22fb54e78f86d0e3871f0"
+    },
+    {
+      "path": "field-cells-native-2.log.gz",
+      "bytes": 6351,
+      "sha256": "12ec898142222675389076c73681d401fd5e4176479ee9e690864e2533ef8b40",
+      "uncompressed_bytes": 68500,
+      "uncompressed_sha256": "626b2afc308407b7dc85803445fa3b9fe456289e2e7d0d6c8b8500708c1e3134"
+    },
+    {
+      "path": "number-field-cells-public-1.log.gz",
+      "bytes": 6385,
+      "sha256": "c5ce194e3261c9df81ed63029c03cc0c01135dbd0c4afd4797a744010f9aeb58",
+      "uncompressed_bytes": 68837,
+      "uncompressed_sha256": "452b5d0a8cb7ad10e6f17889ce328ff0ecd31b28fdb44627b6046c126503ad9c"
+    },
+    {
+      "path": "number-field-cells-manual-render-1.log.gz",
+      "bytes": 13859,
+      "sha256": "400924cfec720e57f1668246109f1c19e4f712a047a69550be0d66d4d88190b0",
+      "uncompressed_bytes": 191128,
+      "uncompressed_sha256": "cf701519653cdfdf218315354eb5cc3be0f323de5f445628bfa6d46f9b4c9c19"
+    }
+  ],
+  "retained_attempts": [
+    {
+      "path": "field-cells-prototype-3.log.gz",
+      "bytes": 7153,
+      "sha256": "8abf8661a7cf5383c0c47c8f2a2f57cc277cc4b5718bd3e3feb8fa96c076924a",
+      "uncompressed_bytes": 72951,
+      "uncompressed_sha256": "82d729862ac648facb4855fba9a5f5cd03f2aafc520d21ebe4cfa5aac9130a3f",
+      "reason": "Scratch attempt used unqualified decide in the RCF namespace; it resolved to the sentence decision function. No failed declaration entered the public module."
+    },
+    {
+      "path": "field-cells-prototype-4.log.gz",
+      "bytes": 7019,
+      "sha256": "3163d2d052ace27a3adef4a5e1b54f4854810094a2b879d2e3501eb111af3071",
+      "uncompressed_bytes": 71795,
+      "uncompressed_sha256": "ab9999345f4098c8ed796909b6183ca4864148e0abd39ad959f305cc979f9843",
+      "reason": "Scratch zero-preflight proof simplified the all predicate before applying its false equation. Fixed by rewriting before reduction."
+    },
+    {
+      "path": "field-cells-native-1.log.gz",
+      "bytes": 6699,
+      "sha256": "f8b56d20774e9353c6c71bb421d16358b64e7d5923df618b3f24408b9fe4b6e3",
+      "uncompressed_bytes": 70634,
+      "uncompressed_sha256": "91f8c5b03a733d35814315c7802692b998323d83478369f66a3284ed1d354254",
+      "reason": "Both native cases ran, but the module failed on an unqualified logInfo in its audit block. The corrected native-2 run includes the actual completed audit."
+    },
+    {
+      "path": "number-field-cells-manual-browser-1.log.gz",
+      "bytes": 421,
+      "sha256": "d52ea28e705b151eda5b623c53040c7c0981f22a15de074e770d2058ba7b1cbc",
+      "uncompressed_bytes": 833,
+      "uncompressed_sha256": "227811fea719a798c44d7cd8aa3251eca33c63c894be8b095fd090a1b654b8fb",
+      "reason": "At the implementation commit, the new 390-pixel code target overflowed by15 pixels. Geometry and four captures are retained; the final source wraps this line."
+    },
+    {
+      "path": "number-field-cells-admission-tests-1.log.gz",
+      "bytes": 384,
+      "sha256": "cb1d792d17f03d2e76bc4d411fa65bf76460b5cef9bd3d4c94a5ca978b394fb1",
+      "uncompressed_bytes": 857,
+      "uncompressed_sha256": "149716a946f830341a8de0b73265e20a1b1ac44b47d95274fa5816f92fe020a6",
+      "reason": "Incorrect unittest import path in ROOT, not the source worktree; the later discover invocation in the correct worktree passes."
+    },
+    {
+      "path": "number-field-cells-dag-tests-1.log.gz",
+      "bytes": 55,
+      "sha256": "23d078523879b6d8536f09d72a027901e02d7e2829a1234edaf5fc6890706b07",
+      "uncompressed_bytes": 110,
+      "uncompressed_sha256": "1716b47a03188bc918a0e69af2d063dbf3f51ded577934827cd953a60bd6070d",
+      "reason": "Passed in ROOT rather than the source worktree; retained but not evidence for the final source. The correctly scoped -2 run is final."
+    },
+    {
+      "path": "number-field-cells-copyright-2.log.gz",
+      "bytes": 20,
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_bytes": 0,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Passed in ROOT rather than the source worktree; retained but not evidence for the new files. The correctly scoped -3 run is final."
+    },
+    {
+      "path": "number-field-cells-manual-split-1.log.gz",
+      "bytes": 88,
+      "sha256": "48a9e140081495d1ab8296879fffbda28bea260c48c63a9e7a2bfa5754ef1009",
+      "uncompressed_bytes": 84,
+      "uncompressed_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "reason": "Passed in ROOT rather than the source worktree; retained but not evidence for the final source. The correctly scoped -2 run is final."
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "number-field-cells-desktop-source.png",
+      "bytes": 266013,
+      "sha256": "ec7ff3cdc6c6b2d17b9c0e2d6b3f9b37cd0143c3b24dc2762821e17e5115b1d7",
+      "source_commit": "abae613acff67a36e77024c8f57ce85413b12766"
+    },
+    {
+      "path": "number-field-cells-desktop-binding.png",
+      "bytes": 248110,
+      "sha256": "bad351e3be364aae6d98e5c59a6e3cc25a75a4c089f94626ae792d3df2ad388a",
+      "source_commit": "abae613acff67a36e77024c8f57ce85413b12766"
+    },
+    {
+      "path": "number-field-cells-desktop-scope.png",
+      "bytes": 270474,
+      "sha256": "1e78ff1a00d43ddb87808a02178f11732beb2e602b93c19ac6a25b0dd6c46cfe",
+      "source_commit": "abae613acff67a36e77024c8f57ce85413b12766"
+    },
+    {
+      "path": "number-field-cells-narrow-source.png",
+      "bytes": 105057,
+      "sha256": "2996ca4b2463a50c70ba92e2b4a6ab4ca2d47662c619591f15a3c084ebf77e53",
+      "source_commit": "abae613acff67a36e77024c8f57ce85413b12766"
+    },
+    {
+      "path": "number-field-cells-narrow-binding.png",
+      "bytes": 103685,
+      "sha256": "d798b5dc582e16c20a11c6111d2c6f6029af43310b7e95a9780c565ef9dd8102",
+      "source_commit": "abae613acff67a36e77024c8f57ce85413b12766"
+    },
+    {
+      "path": "number-field-cells-narrow-scope.png",
+      "bytes": 99283,
+      "sha256": "352c030db869957f306f1c777208f2c3276c109b9336f31a8074042335100c50",
+      "source_commit": "abae613acff67a36e77024c8f57ce85413b12766"
+    },
+    {
+      "path": "number-field-cells-inspection.json",
+      "bytes": 5034,
+      "sha256": "a0670abee60100f1cdf6ad673ace222801791a822185ab02338f73363123bc84",
+      "source_commit": "abae613acff67a36e77024c8f57ce85413b12766"
+    },
+    {
+      "path": "number-field-cells-browser.mjs",
+      "bytes": 4446,
+      "sha256": "5a0ee6624f8bbd0ac8c4ed8c3b9fec24441aec75ab61ebd00b471ff2dff03aa7",
+      "source_commit": "abae613acff67a36e77024c8f57ce85413b12766"
+    },
+    {
+      "path": "attempt-1-number-field-cells-browser.mjs",
+      "bytes": 4446,
+      "sha256": "5a0ee6624f8bbd0ac8c4ed8c3b9fec24441aec75ab61ebd00b471ff2dff03aa7",
+      "source_commit": "5b489eee3d40b4e17615e3b5b97e606a613d02bb",
+      "scope": "Retained failed narrow-screen pass."
+    },
+    {
+      "path": "attempt-1-number-field-cells-desktop-binding.png",
+      "bytes": 251147,
+      "sha256": "9e1f15b5cb4d10a9f3dc9944d2b35d5b29e150b1229dd4ce0f855cb5542a9c3c",
+      "source_commit": "5b489eee3d40b4e17615e3b5b97e606a613d02bb",
+      "scope": "Retained failed narrow-screen pass."
+    },
+    {
+      "path": "attempt-1-number-field-cells-desktop-scope.png",
+      "bytes": 272832,
+      "sha256": "c35dc9bb5841e1f364553460689d96908cf9ca660505f68f8478573ed3aa408b",
+      "source_commit": "5b489eee3d40b4e17615e3b5b97e606a613d02bb",
+      "scope": "Retained failed narrow-screen pass."
+    },
+    {
+      "path": "attempt-1-number-field-cells-desktop-source.png",
+      "bytes": 271318,
+      "sha256": "c40bddc26cf76c0b6f20c2b9ad57340a4d63e109fbfe5ee3fad1da71b245a2cc",
+      "source_commit": "5b489eee3d40b4e17615e3b5b97e606a613d02bb",
+      "scope": "Retained failed narrow-screen pass."
+    },
+    {
+      "path": "attempt-1-number-field-cells-narrow-source.png",
+      "bytes": 104550,
+      "sha256": "f3b9ee69f5edc8e4ae11c55feb41d30f66f9d138b5599bc91a82e3b5e2c7976e",
+      "source_commit": "5b489eee3d40b4e17615e3b5b97e606a613d02bb",
+      "scope": "Retained failed narrow-screen pass."
+    },
+    {
+      "path": "attempt-1-number-field-cells-overflow.json",
+      "bytes": 853,
+      "sha256": "7d5b5e17dadd7851d509714c3577b1c7d8045c3a84222f18cf0e865953b81bb7",
+      "source_commit": "5b489eee3d40b4e17615e3b5b97e606a613d02bb",
+      "scope": "Retained failed narrow-screen pass."
+    },
+    {
+      "path": "lake-bounded.sh",
+      "bytes": 603,
+      "sha256": "aa8d54eac4cf88e9bcff9f0caedf5f73013b9b30919b25a1513bd3a2b01bb43d"
+    },
+    {
+      "path": "run-bounded.sh",
+      "bytes": 302,
+      "sha256": "63bc5f97337e6b039bb3a9b1ba2a500be96fd1c2a2f73b43dae284aa9b18dda8"
+    },
+    {
+      "path": "collect.py",
+      "bytes": 5713,
+      "sha256": "17878b59610f6d3f59d3114962ac38f8edf3ac51150df1c25cda5d7adc83797a"
+    }
+  ],
+  "limits": {
+    "aggregate_memory_bytes": 34359738368,
+    "swap_bytes": 0,
+    "lean_threads": 2,
+    "concurrent_own_builds": 1
+  },
+  "scope": "Actual selected-number-field factory and complete-cell production, exact original Coefficients.ofField semantics, original guard preflight and three generic ordinary-kernel proof audits. Concrete positive/negative quadratic and computed cubic native round trips are regressions, not arbitrary finite-codec kernel acceptance, source reification or frontend completeness."
+}

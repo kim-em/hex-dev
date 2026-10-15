@@ -262,3 +262,5 @@ They do not defer the implemented ordinary-point and fixed-field surfaces while
 unrelated owner measurements are unfinished.
 
 The executable-cell progress contract has [source-bound validation](data/hexrcf-cell-execution/context.json), including the complete target build, ordinary-kernel audits, actual desktop/narrow inspection and retained failed layout attempt. This evidence does not discharge the remaining general literal-reader or frontend obligations.
+
+The same execution report documents the [original selected-field factory connection](hexrcf-cell-execution.md#original-selected-number-field-inputs) and its [separate validation](data/hexrcf-field-cells/context.json). The three additional ordinary-kernel laws preserve the original `QAdjoin` values and original guard preflight. Native positive/negative quadratic and computed cubic round trips remain distinct from general finite-codec or frontend acceptance.
