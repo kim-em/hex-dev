@@ -88,6 +88,8 @@ private theorem Encoder.insert_nodes (P : Node E Ctx → Prop)
     · subst e
       exact current
 
+/-- Carry a node property through postorder encoding from a possibly nonempty
+state. Both prior entries and inserted tree nodes retain the property. -/
 private theorem encodeFrom_nodes (P : Node E Ctx → Prop) (tree : Replay E Ctx)
     (state : Encoder E Ctx) (before : ∀ e ∈ state.entries, P e.node)
     (covered : ∀ n ∈ tree.nodes, P n) :

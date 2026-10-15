@@ -1,6 +1,6 @@
 # Selected descriptor and Thom-vector API review
 
-Names are relative to `Hex.SignDet`. This assessment treats all 45 named
+Names are relative to `Hex.SignDet`. This assessment treats all 46 named
 production declarations in `Thom` and `Descriptor`, the raw equality instance,
 nine source-written structure fields and the five descriptor-error constructors.
 Raw inputs carry no validity proof. Shape acceptance and accepted literal replay
@@ -46,6 +46,7 @@ the constructor equality theorem, including slot order and every sign.
 | `Descriptor.ofChecked_eq` | Restoration of an existing checked value is equal to that complete value; proof irrelevance handles proof fields. |
 | `Descriptor.ofReplay?` | Checks arbitrary supplied replay and returns `none` on refusal. Refusal does not prove mathematical absence. |
 | `Descriptor.ofReplay_data` | Whole-Option data characterization covers both success and rejection while preserving constructor privacy. |
+| `Descriptor.ofReplay_self` | Rechecks the existing descriptor's exact raw subject and evidence and restores that same descriptor. Uses its retained literal acceptance and proof irrelevance, without a producer equation or a semantic model. Shared by the root-frame reader and the finite-covered descriptor reader. |
 | `Descriptor.ofTable` | Reuses an accepted table and exact count-one row. Its proof applies `check_iff`; the computational data and guards are unchanged. |
 | `Descriptor.ofTable_raw` | Exact raw projection from table reuse. Its hypotheses retain the same table/check/count rather than inventing producer provenance. |
 | `Descriptor.ofTable_evidence` | Exact replay projection from table reuse, with the same dependent acceptance proof. |
@@ -75,8 +76,8 @@ The new characterizations preserve all computational definitions and guards.
 `wellFormed_bounds`, `wellFormed_length`, `ofTable` and the existing forward
 acceptance theorem use them. The owning companion proves selected-root
 realization and lawful producer success; this finite API review does not
-replace those proofs or the separate missing exports for arbitrary accepted
-root-table coverage, distinct values and strict mathematical order.
+replace those proofs. Ordinary-root coverage, distinctness and strict
+mathematical order require the companion's interpretation and sign hypotheses.
 
 This is partial computational Phase-6 review. Remaining modules, whole-library
 use/lint acceptance and the declared computational regression checks remain

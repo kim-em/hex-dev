@@ -1,8 +1,8 @@
 {
   "scope": "35 named declarations in Matrix, Support, Reference and SignOperands plus System equality instance. Checked-system clients use the complete characterization or named guard projections without changing their statements. Partial core review; no phase promotion or computational performance claim.",
   "files": {
-    "HexManual/Chapters/HexSignDet.lean": "47b72e891fbceb02abbcb1191c573712b413e517aa52a76a467872a7871cc441",
-    "HexSignDet/Codec/GraphLaws.lean": "aee17063cc5b0dda1a7102c187f3a7cf59c23b2718f3390a265a01a781fc05aa",
+    "HexManual/Chapters/HexSignDet.lean": "6cf774c0d04b484265c361d16b061b8e57039511c025810520f383169ecfb8e1",
+    "HexSignDet/Codec/GraphLaws.lean": "292cebb2c9ea1131ddd0458de3997aac95cfc1422e99dbd8fb5e7f6d08fcdaa5",
     "HexSignDet/Counts.lean": "f57e6f41c9ddcc5d1c075a768f036965d475d6d2e26b9efc4ed225c33c638696",
     "HexSignDet/Matrix.lean": "ec0ebfa5c3dff773822fd90df81457cfbd12795f53dca053869b19a12d37bf6c",
     "HexSignDet/README.md": "2321b96f77fa63b89a5e4fe408b5dfbebc345a61bb09467ccb778abe10c6279d",
@@ -20,7 +20,7 @@
     "HexSignDetTheory/Solve.lean": "230933f5617b10ce4092ab58757c04d3d835ac2d32601eaa13261e97380260f9",
     "HexSignDetTheory/TreeSolve.lean": "caddb0fc607b06d7af39afb5bcd821e374442acab5d53ddb28353b0b3bc77588",
     "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
-    "reports/sign-det-declaration-review/check_foundation_bindings.py": "c3b86c2cef0c53175e43cc40db0dc02ec93de147414c9378e0d914bfb5149132",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "83520887f6307511e2db9aa18862adaa47d66df6aadcdf2870cd6c2b635c8928",
     "reports/sign-det-declaration-review/core-foundation.md": "714fe90322ce91c2bf2773a4f8ff942fc181a76d5275168dd091d9e1516c6a7f"
   },
   "validation": {
