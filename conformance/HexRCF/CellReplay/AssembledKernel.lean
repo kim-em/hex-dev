@@ -28,7 +28,8 @@ run_meta do
   let seen ← Hex.RCF.ProofEvidence.projectDependencies #[``witness]
   for required in #[``Assembled.source,``CellOperations.accept?_iff,
       ``CompleteReplay.check_sound,``Hex.RealClosure.Tower.Model.root,
-      ``Hex.RealClosure.Algebraic.Element.replayMul_eq] do
+      ``Hex.RealClosure.Algebraic.Element.replayMul_eq,
+      ``Hex.RCF.RealCoefficients.CellReplayTests.Algebraic.Records.facts] do
     unless seen.contains required do throwError "fresh real witness omitted actual assembly: {required}"
   for forbidden in Assembled.forbidden do
     if seen.contains forbidden then throwError "fresh witness reused fixture acceptance: {forbidden}"

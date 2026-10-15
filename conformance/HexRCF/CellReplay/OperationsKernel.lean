@@ -46,7 +46,6 @@ elab "#operation_source_quote" : command => liftTermElabM do
     (Lean.mkConst ``original) identity
   let name := `Hex.RCF.RealCoefficients.CellReplayTests.OperationsKernel.source
   let proof ← Hex.RCF.checkProof name target proof
-  addDecl (.thmDecl {name, levelParams := [], type := target, value := proof})
   let falseProgram ← elabTerm (← `(CellOperations.accept? Operations.operations parent.codec values formula [] cert
     .forallReal CompleteQuote.rootGraph CompleteQuote.cells)) none
   let wrongGoal ← elabType (← `(∃ x : ℝ, x ^ 2 - Real.sqrt 3 ≥ 0 ∧ x ^ 2 - Real.sqrt 3 ≤ 0 ∧ (0 : ℝ) = 0))
@@ -55,6 +54,7 @@ elab "#operation_source_quote" : command => liftTermElabM do
   let wrongGoal ← instantiateMVars wrongGoal
   let trivial ← mkAppM ``Option.some #[Lean.mkConst ``Unit.unit]
   for (goal,program,candidate,expected) in [
+      (target,falseProgram,Lean.mkConst ``Operations.accepted,"(kernel) application type mismatch"),
       (target,falseProgram,Lean.mkConst ``Operations.false_refused,"(kernel) application type mismatch"),
       (target,trivial,← mkEqRefl trivial,"rcf: expected the supplied-operation complete checker"),
       (target,program,Lean.mkConst ``True.intro,"(kernel) application type mismatch"),
@@ -68,6 +68,7 @@ elab "#operation_source_quote" : command => liftTermElabM do
     unless (← getMCtx).decls.toList.length == before &&
         (← getEnv).checked.get.constants.map₂.toList.length == declarations do
       throwError "failed supplied quotation leaked metavariables or proof declarations"
+  addDecl (.thmDecl {name, levelParams := [], type := target, value := proof})
 #operation_source_quote
 
 run_meta do

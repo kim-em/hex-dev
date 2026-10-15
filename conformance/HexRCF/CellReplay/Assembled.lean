@@ -110,8 +110,8 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
   note "reached operations collected; ordinary kernel acceptance begins"
   let (record,rawProof) ← checkedRecordProof program
   let statement ← mkEq program (← mkAppM ``Option.some #[record])
-  -- Share one typed acceptance theorem across the refusal controls. Passing
-  -- raw conversion proofs there would repeat the complete reader reduction.
+  -- This additional kernel check creates one typed acceptance theorem shared
+  -- by all refusal controls.
   let proof ← Hex.RCF.checkProof `nativeCompleteCellAcceptance statement
     (mkExpectedPropHint rawProof statement)
   note s!"original complete packet acceptance checked; record={record.getAppFn.constName!}"
@@ -128,10 +128,11 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
   let seen ← Hex.RCF.ProofEvidence.projectDependencies #[name]
   for required in #[``CellOperations.accept?_iff,``CompleteReplay.check_sound,
       ``Tower.Model.root,``Hex.RCF.SelectedRootTests.Data.alpha_value,
-      ``Hex.RealClosure.Algebraic.Element.replayMul_eq] do
+      ``Hex.RealClosure.Algebraic.Element.replayMul_eq,``Records.facts] do
     unless seen.contains required do throwError "fresh source proof omitted an actual bridge: {required}"
-  for name in forbidden do
-    if seen.contains name then throwError "fresh source proof reused fixture acceptance, its dictionary or a producer: {name}"
+  for excluded in forbidden do
+    if seen.contains excluded then
+      throwError "fresh source proof reused complete-cell fixture acceptance, its dictionary or a producer: {excluded}"
   for (rejectedTarget,guardIdentities,expected) in [
       (negative,#[],"rcf: checked formula has a different polynomial leaf"),
       (foreign,#[],"rcf: handler CellQuote.valuationIdentity proposed a proof of a different goal"),
@@ -146,7 +147,7 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
         (← getEnv).checked.get.constants.map₂.toList.length == declarations do
       throwError "failed original-goal quotation leaked metavariables or proof declarations"
   note "fresh original-goal proof checked; actual record equations, model/source bridges and exact formula/valuation/guard refusals audited"
-  logInfo "fresh original real goal proved from actual reached-record assembly; standard three axioms, no fixture acceptance theorem"
+  logInfo "fresh original real goal proved from actual reached-record assembly; standard three axioms, no fixture complete-cell acceptance theorem"
   addDecl (.thmDecl {
     name := `Hex.RCF.RealCoefficients.CellReplayTests.Assembled.controlsComplete
     levelParams := [], type := Lean.mkConst ``True, value := Lean.mkConst ``True.intro })
