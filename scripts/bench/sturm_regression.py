@@ -18,6 +18,7 @@ import math
 import os
 from pathlib import Path
 import platform
+import pwd
 import re
 import signal
 import subprocess
@@ -74,8 +75,8 @@ TOOL_SOURCES = ("scripts/bench/sturm_regression.py", "scripts/bench/cpu_lease.py
 
 
 def state_directory():
-    value = os.environ.get("XDG_STATE_HOME", "")
-    return Path(value) if value and Path(value).is_absolute() else Path.home() / ".local/state"
+    """Keep consumed attempts at the OS account's fixed state directory."""
+    return Path(pwd.getpwuid(os.getuid()).pw_dir) / ".local/state"
 
 
 MAX_CAP_SECONDS = 86400  # Whole seconds up to one day roundtrip through jFloat and fit UInt32 ms.
@@ -134,10 +135,15 @@ def tooling_checkout(root, source_head, decision, cap_from):
     if subprocess.run(["git", "merge-base", "--is-ancestor", source_head, head], cwd=root).returncode:
         raise RuntimeError("tooling checkout does not descend from the frozen candidate")
     changed = subprocess.check_output(
-        ["git", "diff", "--name-only", "--no-renames", "-z", source_head, head], cwd=root).decode().split("\0")
+        ["git", "diff", "--name-status", "--no-renames", "-z", source_head, head], cwd=root).decode().split("\0")
+    if changed[-1] != "" or len(changed[:-1]) % 2:
+        raise RuntimeError("invalid tooling change list")
     allowed = {"scripts/bench/sturm_regression.py", "scripts/bench/test_sturm_regression.py"}
-    bad = [p for p in changed if p and p not in allowed and not (
-        p.startswith("reports/bench-results/sturm-phase6-comparison/") and not p.endswith(".lean"))]
+    prefix = "reports/bench-results/sturm-phase6-comparison/"
+    summaries = {prefix + name for name in ("README.md", "cap-protocol.md", "cap-proposal.json")}
+    bad = [p for status, p in zip(changed[0:-1:2], changed[1:-1:2]) if not (
+        status in {"A", "M"} and p in allowed | summaries or
+        status == "A" and p.startswith(prefix) and not p.endswith(".lean"))]
     if bad:
         raise RuntimeError("tooling checkout changes unapproved paths: " + str(bad))
     for path, expected in decision["tool_sources"].items():
@@ -148,7 +154,7 @@ def tooling_checkout(root, source_head, decision, cap_from):
 
 
 def memory_context():
-    """Record Linux memory availability as context, never as an admission gate."""
+    """Record Linux memory availability without using it to admit or reject runs."""
     try:
         fields = dict(line.split(":", 1) for line in Path("/proc/meminfo").read_text().splitlines())
         return {name + "_KiB": int(fields[name].split()[0]) for name in ("MemTotal", "MemAvailable")}
@@ -179,7 +185,7 @@ def run_process(command, root, environment, stdout, stderr):
 def validate_cap_protocol(previous_dir, policy, sources, identity, reservation, names, root):
     """Bind one cap increase to the retained, consumed two-arm cap failure.
 
-    The new collector may have a new source commit, but the native binaries,
+    The new collector may have a new tooling commit, but the native binaries,
     guard and every recorded producer/registration input must remain unchanged.
     A different cap or decision cannot create another adaptation reservation.
     """
