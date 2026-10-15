@@ -23,16 +23,22 @@ def family_test_modules(lakefile):
     """
     modules = set()
     families = ('HexSturm', 'HexSignDet', 'HexOrderedFn', 'HexRealClosure')
-    for key, body in lakefile_blocks(lakefile.read_text()).items():
+    blocks = lakefile_blocks(lakefile.read_text())
+    if 'command uncertain' in blocks:
+        raise ValueError('uncertain Lake configuration cannot classify test evidence')
+    for key, body in blocks.items():
         if not key.startswith('lean_lib '):
             continue
         name = key.removeprefix('lean_lib ')
         if not name.endswith('Tests') or not name.startswith(families):
             continue
         body = strip_lean_comments(body)
-        match = re.search(r'\bglobs\s*:=\s*#\[([^\]]*)\]', body, re.DOTALL)
+        match = re.search(r'\bglobs\s*:=\s*#\[([^\]]*)\](.*)', body, re.DOTALL)
         if match is None:
             raise ValueError('test target requires literal module globs: ' + name)
+        suffix = match.group(2).strip()
+        if suffix not in ('', '.map Glob.one'):
+            raise ValueError('unsupported test glob suffix: ' + name + ': ' + suffix)
         entries = match.group(1).split(',')
         for entry in entries:
             entry = entry.strip()
@@ -94,7 +100,8 @@ class SourceIndex:
                 for part in parts) or Path(path).stem.endswith(('Tests', 'Conformance', 'Examples'))
             owner = module.split('.')[0]
             evidence = evidence or owner in {'HexManual', 'RealClosureConsumer'} or (
-                module == 'HexRealClosure.TrivialChecks' or module in self.test_modules)
+                module in {'HexRealClosure.TrivialChecks', 'HexOrderedFnTheory.LiouvilleRun'}
+                or module in self.test_modules)
             category = 'tests/conformance/manual' if evidence else (
                 'Sturm production' if owner in {'HexSturm', 'HexSturmMathlib'}
                 else 'other Hex production' if owner.startswith('Hex') else 'other root-package production')
