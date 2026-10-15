@@ -356,8 +356,9 @@ of {name}`Hex.RealClosure.Algebraic.RootReplay.treeCoefficients` and
 {name}`Hex.RealClosure.Algebraic.RootReplay.treeContexts` instead, so coverage
 can be proved from the original tree without evaluating hash-table lookups.
 The byte theorem
-{name}`Hex.RealClosure.Algebraic.RootReplay.decodeDescriptor_covered` additionally
-requires the subject and evidence to pass the lexical resource checks.
+{name}`Hex.RealClosure.Algebraic.RootReplay.decodeDescriptor_covered` takes the
+graph-form inventories and lexical resource checks on the encoded subject and
+evidence bytes.
 
 For univariate exploration, {name}`Hex.RealClosure.Tower.Sample.family`
 orders and deduplicates root handles before constructing sections and open
