@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosureTheory.SignEvidence
+public import HexRealClosure.RootReplay
 public meta import HexRealClosureTheory.SignEvidence
 public import HexRealClosureTheory.SignFactsConformance
 public meta import HexRealClosureTheory.SignFactsConformance
@@ -271,6 +272,68 @@ theorem upper_roundtrip :
   SignEvidence.codec_ofSigns_covered _ _ _ upperKernelSigns upper_coverage
     (ValueCodec.nat_lawful.covers _)
 
+/-- This context reader accepts only the literal binding of the existing
+nested-root fixture. It has no global roundtrip law. -/
+@[expose] def rootContextReader : ValueCodec Nat where
+  encode := ValueCodec.nat.encode
+  decode json := do
+    let n ← ValueCodec.nat.decode json
+    if n = 8 then return n else throw "context literal missing"
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 1000000 in
+/-- The existing finite predecessor facts cover the descriptor's endpoints,
+head and every retained moment coefficient, under arbitrary caller hashing. -/
+theorem descriptor_coverage [Hashable (Element context)] [Hashable Nat] :
+    kernelLowerReader.Covers (RootReplay.coefficients NestedSignsConformance.root.raw
+      (Dag.encode NestedSignsConformance.root.evidence)) := by
+  have evidence : NestedSignsConformance.root.evidence =
+      .leaf NestedSignsConformance.linearNode := by
+    simp only [NestedSignsConformance.root, Descriptor.ofTable_evidence]
+  rw [NestedSignsConformance.root_raw, evidence, Dag.encode_leaf]
+  unfold ValueCodec.Covers
+  decide +kernel
+
+set_option maxRecDepth 32768 in
+/-- Every context retained by this fixture is accepted by the partial reader. -/
+theorem descriptor_contexts [Hashable (Element context)] [Hashable Nat] :
+    rootContextReader.Covers (RootReplay.contexts NestedSignsConformance.root.raw
+      (Dag.encode NestedSignsConformance.root.evidence)) := by
+  have evidence : NestedSignsConformance.root.evidence =
+      .leaf NestedSignsConformance.linearNode := by
+    simp only [NestedSignsConformance.root, Descriptor.ofTable_evidence]
+  rw [NestedSignsConformance.root_raw, evidence, Dag.encode_leaf]
+  unfold ValueCodec.Covers
+  decide +kernel
+
+/-- Exact descriptor restoration uses partial readers at both boundaries and
+the caller's hash instances, with no global codec law or replay-success premise. -/
+theorem descriptor_roundtrip [Hashable (Element context)] [Hashable Nat] :
+    RootReplay.readDescriptor kernelLowerReader rootContextReader Element.sign 8
+      (Codec.descriptor kernelLowerReader rootContextReader NestedSignsConformance.root.raw)
+      (Codec.graph kernelLowerReader rootContextReader
+        (Dag.encode NestedSignsConformance.root.evidence)) = .ok NestedSignsConformance.root :=
+  RootReplay.readDescriptor_covered _ _ _ descriptor_coverage descriptor_contexts
+
+/-- The context decoder is deliberately partial outside the retained binding. -/
+theorem descriptor_context_missing :
+    rootContextReader.decode (rootContextReader.encode 9) = .error "context literal missing" := by
+  decide +kernel
+
+/-- Missing predecessor facts reject the root subject before graph replay. -/
+theorem descriptor_missing (evidence : Codec.Json) :
+    RootReplay.readDescriptor (Element.signCodec ValueCodec.rat ([] : List (SignFact context)))
+      rootContextReader Element.sign 8
+      (Codec.descriptor kernelLowerReader rootContextReader NestedSignsConformance.root.raw)
+      evidence = .error "stored sign fact missing or mismatched" := by
+  have rejected : SignRequests.readRoot
+      (Element.signCodec ValueCodec.rat ([] : List (SignFact context))) rootContextReader
+      (Codec.descriptor kernelLowerReader rootContextReader NestedSignsConformance.root.raw) =
+      .error "stored sign fact missing or mismatched" := by
+    rw [NestedSignsConformance.root_raw]
+    decide +kernel
+  simp [RootReplay.readDescriptor, rejected, bind, Except.bind]
+
 /-- The child table is checked by the imported ordinary-kernel fixture. -/
 @[expose] def kernelSigns : SelectedSigns context.root [NestedSignsConformance.endpointQuery] :=
   ⟨#v[1], .leaf NestedSignsConformance.endpointNode, by
@@ -331,3 +394,19 @@ end Hex.RealClosure.Algebraic.SignEvidenceConformance
 /-- info: 'Hex.RealClosure.Algebraic.SignEvidenceConformance.upper_roundtrip' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms Hex.RealClosure.Algebraic.SignEvidenceConformance.upper_roundtrip
+
+/-- info: 'Hex.RealClosure.Algebraic.RootReplay.readDescriptor_covered' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.RootReplay.readDescriptor_covered
+
+/-- info: 'Hex.RealClosure.Algebraic.RootReplay.decodeDescriptor_covered' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.RootReplay.decodeDescriptor_covered
+
+/-- info: 'Hex.RealClosure.Algebraic.SignEvidenceConformance.descriptor_roundtrip' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.RealClosure.Algebraic.SignEvidenceConformance.descriptor_roundtrip
+
+/-- info: 'Hex.SignDet.Descriptor.ofReplay_self' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Descriptor.ofReplay_self

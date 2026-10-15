@@ -7,7 +7,9 @@ module
 
 public import HexRealClosure.SignRequests
 public import HexRealClosure.ContextOperations
-public import HexSignDet.Codec
+public import HexSignDet.Codec.FiniteGraph
+import HexSignDet.DagExpand
+import HexSignDet.DagBounds
 
 public section
 
@@ -17,6 +19,17 @@ open SignDet
 variable {E Ctx : Type} [zero : Zero E] [dec : DecidableEq E] [decCtx : DecidableEq Ctx]
 variable [one : One E] [add : Add E] [neg : Neg E] [sub : Sub E]
 variable [mul : Mul E] [inv : Inv E] [div : Div E] [natCast : NatCast E]
+
+/-- Every coefficient in the serialized subject and complete retained graph.
+The list includes moment witnesses and unreachable entries, with duplicates. -/
+@[expose] def coefficients (raw : RawDescriptor E Ctx) (graph : Dag E Ctx) : List E :=
+  Codec.Coefficients.poly raw.head ++
+    (Codec.Coefficients.endpoint raw.lower ++
+      (Codec.Coefficients.endpoint raw.upper ++ Codec.Coefficients.graph graph))
+
+/-- Every literal context in the subject and retained graph, including moments. -/
+@[expose] def contexts (raw : RawDescriptor E Ctx) (graph : Dag E Ctx) : List Ctx :=
+  raw.context :: Codec.graphContexts graph
 
 /-- Decode the complete root subject and all supplied graph entries before
 checking a count-one descriptor. The predecessor codec may require exact
@@ -29,6 +42,38 @@ supplied sign facts; this reader does not replace missing coefficients. -/
   match graph.descriptor? sign binding raw with
   | none => throw "root descriptor replay rejected"
   | some descriptor => return descriptor
+
+omit neg inv div in
+/-- Finite coverage restores a checked descriptor from its literal subject and
+encoded evidence, using the caller's hashing. No global codec law is required. -/
+theorem readDescriptor_covered [Hashable E] [Hashable Ctx]
+    (value : ValueCodec E) (ctx : ValueCodec Ctx) {sign : E → Int} {binding : Ctx}
+    (root : Descriptor E Ctx sign binding)
+    (hv : value.Covers (coefficients root.raw (Dag.encode root.evidence)))
+    (hc : ctx.Covers (contexts root.raw (Dag.encode root.evidence))) :
+    readDescriptor value ctx sign binding (Codec.descriptor value ctx root.raw)
+      (Codec.graph value ctx (Dag.encode root.evidence)) = .ok root := by
+  simp only [coefficients, ValueCodec.covers_append] at hv
+  obtain ⟨head, lower, upper, graph⟩ := hv
+  simp only [contexts, ValueCodec.covers_cons] at hc
+  have subject := SignRequests.readRoot_binding value ctx root.raw hc.1
+    (fun x hx => head x (by simpa [Codec.Coefficients.poly] using hx))
+    (fun x hx => lower x (by simp [Codec.Coefficients.endpoint, hx]))
+    (fun x hx => upper x (by simp [Codec.Coefficients.endpoint, hx]))
+  obtain ⟨_, _, accepted, _⟩ := RawDescriptor.check_eq root.accepted
+  have replay := Dag.replay_encode accepted
+  have restored : Codec.readGraph value ctx binding root.raw.head root.raw.lower root.raw.upper
+      (Codec.graph value ctx (Dag.encode root.evidence)) = .ok (Dag.encode root.evidence) := by
+    cases checked : (Dag.encode root.evidence).validate? sign binding root.raw.head
+        root.raw.lower root.raw.upper with
+    | none => simp [Dag.replay?, checked, bind, Option.bind] at replay
+    | some memo =>
+      exact Codec.read_graph_covered value ctx binding root.raw.head root.raw.lower root.raw.upper
+        (Dag.encode root.evidence) graph hc.2 (Dag.encode_root root.evidence)
+        (Codec.Shape.of_validate checked) (Codec.bindings_of_validate checked)
+        (Dag.encode_bounds root.evidence)
+  simp [readDescriptor, subject, restored, Dag.descriptor_encode, Descriptor.ofReplay_self,
+    bind, Except.bind, pure, Except.pure]
 
 omit neg inv div in
 /-- An accepted descriptor retains the entire decoded subject literally,
@@ -75,6 +120,24 @@ theorem decodeDescriptor_write (value : ValueCodec E) (ctx : ValueCodec Ctx)
     decodeDescriptor value ctx sign binding subject.writeBytes evidence.writeBytes limits =
       readDescriptor value ctx sign binding subject evidence := by
   exact Codec.decodePair_write _ subject evidence limits subjectBound evidenceBound
+
+omit neg inv div in
+/-- The bounded byte reader restores the same checked descriptor under finite
+literal coverage. The only additional premises are the lexical resource checks. -/
+theorem decodeDescriptor_covered [Hashable E] [Hashable Ctx]
+    (value : ValueCodec E) (ctx : ValueCodec Ctx) {sign : E → Int} {binding : Ctx}
+    (root : Descriptor E Ctx sign binding)
+    (hv : value.Covers (coefficients root.raw (Dag.encode root.evidence)))
+    (hc : ctx.Covers (contexts root.raw (Dag.encode root.evidence)))
+    (limits : Codec.Limits)
+    (subjectBound : Codec.checkBytes limits
+      (Codec.descriptor value ctx root.raw).writeBytes = .ok ())
+    (evidenceBound : Codec.checkBytes limits
+      (Codec.graph value ctx (Dag.encode root.evidence)).writeBytes = .ok ()) :
+    decodeDescriptor value ctx sign binding (Codec.descriptor value ctx root.raw).writeBytes
+      (Codec.graph value ctx (Dag.encode root.evidence)).writeBytes limits = .ok root := by
+  rw [decodeDescriptor_write value ctx sign binding _ _ limits subjectBound evidenceBound]
+  exact readDescriptor_covered value ctx root hv hc
 
 omit neg inv div in
 /-- Every accepted byte descriptor retains the full decoded subject. -/

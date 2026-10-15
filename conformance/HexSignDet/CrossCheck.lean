@@ -551,3 +551,7 @@ end Hex.SignDet.CrossCheck
 /-- info: 'Hex.SignDet.Codec.bindings_of_check' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Codec.bindings_of_check
+
+/-- info: 'Hex.SignDet.Codec.bindings_of_validate' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Codec.bindings_of_validate

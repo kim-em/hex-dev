@@ -192,15 +192,8 @@ theorem ofSigns_bindings [Hashable E] [Hashable Ctx]
       context.root.raw.lower context.root.raw.upper with
   | none => simp [Dag.replay?, hv, bind, Option.bind] at replay
   | some memo =>
-    intro entry he
-    have nodes := Dag.validate_nodes coeffSign parent context.root.raw.head
-      context.root.raw.lower context.root.raw.upper (Dag.encode signs.evidence) memo hv
-    have member : entry.node ∈ (Dag.encode signs.evidence).entries.map Dag.Entry.node :=
-      Array.mem_map.mpr ⟨entry, he, rfl⟩
-    rw [← nodes] at member
-    obtain ⟨checked, _, same⟩ := Array.mem_map.mp member
-    rw [← same, (RawDescriptor.check_eq context.root.accepted).2.1]
-    exact Codec.bindings_of_check (Replay.check_node checked.accepted)
+    rw [(RawDescriptor.check_eq context.root.accepted).2.1]
+    exact Codec.bindings_of_validate hv
 
 /-- Every node encoded from checked joint signs meets the parser's dimensions
 and reduction-index bounds. -/
