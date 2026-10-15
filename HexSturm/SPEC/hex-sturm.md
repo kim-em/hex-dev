@@ -26,8 +26,8 @@ intervals after positive denominator clearing. It also proves whole-`Option`
 congruence across field representations, with finite or infinite endpoints,
 and acceptance of literal certificate translations by denominator clearing
 and integer-to-rational embedding. The shared root-sum theorem supplies replay semantics, `rootCount` and
-singleton/sign bounds. `libraries.yml` records HexSturm through Phase 5 and its proof companion
-through Phase 7;
+singleton/sign bounds. Current phase counters are maintained in
+[libraries.yml](../../libraries.yml);
 the [readiness audit](../../reports/real-closure-prerequisites.md) gives the
 dependency checks, retained evidence dispositions and supported limits.
 The [proof acceptance](../../reports/sturm-proof-acceptance.md) records the
@@ -407,6 +407,6 @@ rerun of an inconclusive result. No performance measurements or phase
 advancement follow merely from this contract.
 
 Phase attestation is recorded in `libraries.yml`. The
-[proof acceptance](../../reports/sturm-proof-acceptance.md) records Phase 5; the
+[proof acceptance](../../reports/sturm-proof-acceptance.md) records Phases 5–7; the
 [readiness audit](../../reports/real-closure-prerequisites.md) gives Phase-4
 conformance/correctness evidence and supported limits.
