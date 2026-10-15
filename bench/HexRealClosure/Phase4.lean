@@ -99,7 +99,7 @@ private def json (value : SignDet.Codec.Json) : IO Lean.Json := do
 /-- Functional records for the declared odd-degree ladder over the same least
 MetiTarski root. Root equations, multiplicities, and stored descriptor data
 are emitted outside scientific timing. Only degree three is the paper input. -/
-def scaling (degree : Nat) : IO Unit := do
+def scaling (degree : Nat) (counts : Bool := false) : IO Unit := do
   unless degree ∈ [3,5,7,9] do throw (IO.userError "unsupported scaling degree")
   let some input ← nativeInput.get | throw (IO.userError "missing scaling input")
   let .ok (.finite (first :: rest)) := base.roots? input
@@ -116,8 +116,21 @@ def scaling (degree : Nat) : IO Unit := do
   let y : owner.Poly := DensePoly.ofCoeffs #[0,1]
   let power := (List.range degree).foldl (fun p _ => p*y) (DensePoly.C 1)
   let head := power + DensePoly.C (alpha*alpha*alpha+1)
-  let .ok (.finite [entry]) := owner.roots? head
+  let current ← if counts then do
+      let input ← IO.mkRef head
+      let error ← IO.getStderr
+      error.putStr "METI BEGIN\n"
+      error.flush
+      input.get
+    else pure head
+  -- The result lives in Type 1. Its pure single-root match also makes
+  -- successful production a prerequisite of the closing IO marker.
+  let .ok (.finite [entry]) := owner.roots? current
     | throw (IO.userError "scaling complete roots failed")
+  if counts then
+    let error ← IO.getStderr
+    error.putStr "METI END\n"
+    error.flush
   let .selected descriptor _ _ := entry.root
     | throw (IO.userError "scaling root must be selected")
   unless entry.multiplicity == 1 && entry.root.signAt head == 0 &&
@@ -178,7 +191,10 @@ def main (args : List String) : IO UInt32 := do
   | ["metitarski", "scaling", degree] =>
     let some n := degree.toNat? | throw (IO.userError "degree must be natural")
     Hex.RealClosure.Phase4.scaling n
+  | ["metitarski", "counts", degree] =>
+    let some n := degree.toNat? | throw (IO.userError "degree must be natural")
+    Hex.RealClosure.Phase4.scaling n true
   | ["metitarski", "native"] => Hex.RealClosure.Phase4.native
   | ["metitarski", "canonical"] | ["metitarski", "trivial"] => Hex.RealClosure.Phase4.canonical
-  | _ => throw (IO.userError "usage: hexrealclosure_phase4 metitarski native|canonical|scaling DEGREE")
+  | _ => throw (IO.userError "usage: hexrealclosure_phase4 metitarski native|canonical|scaling DEGREE|counts DEGREE")
   return 0
