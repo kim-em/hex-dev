@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "documentation_commit": "0050740354dfcf9168ee7e6cda70640957f34753",
+  "implementation_commit": "5a37b7f02248ece886a1b91470718fde3f47f70d",
+  "full_build_commit": "ebb48a914d5e5b8ff5205d641f876fd7d68d029e",
+  "source_hashes": {
+    "HexRCF/README.md": "f0d315476db590733864caeb4f2174b7dcd381df1d00c2b62bf559755d0b84fe",
+    "reports/hexrcf-adapter-evidence.md": "2b0af26efbe044816d30afe3ef075bc57d6f4eea014cba9cf68030884d115bce",
+    "reports/hexrcf-cell-decision.md": "65603941b7d41daec99745efae3c4c5f13f4ece708cced68652e6c9d228e69c7"
+  },
+  "scope": "Documented mathematical typed-evidence existence and ordinary-model domain; general executable/serialization/frontend progress remains open."
+}
