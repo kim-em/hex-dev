@@ -6,7 +6,7 @@
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "83520887f6307511e2db9aa18862adaa47d66df6aadcdf2870cd6c2b635c8928",
     "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
     "HexManual/Chapters/HexSignDet.lean": "6cf774c0d04b484265c361d16b061b8e57039511c025810520f383169ecfb8e1",
-    "reports/sign-det-declaration-review/core-descriptors.md": "acdc7edf7b2d778e22fe9ceac565b4c621f699197ff5e45c00f99bfa0e73d8a3",
+    "reports/sign-det-declaration-review/core-descriptors.md": "054b6f44d2ca7b588fe5813a6344f951e981c6f3ad80bbb95443aa63af204f9f",
     "HexRealClosure/RootFrame.lean": "9c84cb8c3b992d9c7ceef118a81e5376120c99bb90fd19838ae6d8e078b66ac5",
     "conformance/HexRealClosureTheory/SignEvidenceConformance.lean": "156eedb48bba3dd530ebc128ad04090eb076f1b344b15aac367236a290b1da3c",
     "HexRealClosure/RootReplay.lean": "3ff6adf0f06f4fe7c2eaf4d5ca6732b83b096b44d4b26d7edbb35e3c43c4a179"
@@ -74,12 +74,12 @@
       "Descriptor.build_ambiguous_ofCount"
     ]
   },
-  "source_ref": "audit/issue-10575-sign-det-integration-review-input-v3",
-  "input_revision": "2782781b5f0aecc222a9170a4d66ed0a4b983807",
+  "source_ref": "audit/issue-10575-sign-det-integration-review-input-v4",
+  "input_revision": "e68d39aef73d8e88f6a30862d9b4c4dab03f74ee",
   "archive_files": {
     "HexSignDet/Thom.lean": "972e4b223b975297883e78831aa9d107a6eee4cfc0c5fafe2f9b175a355e4993",
     "HexSignDet/Descriptor.lean": "6f48615c779889877692b3027440f97bc14094e55b9a131a689295ac95dbb149",
-    "reports/sign-det-declaration-review/core-descriptors.md": "acdc7edf7b2d778e22fe9ceac565b4c621f699197ff5e45c00f99bfa0e73d8a3"
+    "reports/sign-det-declaration-review/core-descriptors.md": "054b6f44d2ca7b588fe5813a6344f951e981c6f3ad80bbb95443aa63af204f9f"
   },
   "validation": {
     "integration_scope": "Individual source/API assessment of the integration additions. Bound reader clients and kernel axiom guards have a targeted integration build; no new compiler capture, computational regression or phase acceptance.",

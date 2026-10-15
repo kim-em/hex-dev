@@ -18,7 +18,7 @@
     "conformance/HexSignDet/DescriptorCodec.lean": "ecd086fe807846384b2eace2e032c9ba4ca2dbc407972015c10d288314d72dbb",
     "HexManual/Chapters/HexSignDet.lean": "6cf774c0d04b484265c361d16b061b8e57039511c025810520f383169ecfb8e1",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "83520887f6307511e2db9aa18862adaa47d66df6aadcdf2870cd6c2b635c8928",
-    "reports/sign-det-declaration-review/README.md": "0060b699872628380d168e2e67b5507d42fc4e0bbba92e83a3f34c63b0c6791e",
+    "reports/sign-det-declaration-review/README.md": "91f20367d85a39c654a41ca448ebc01d5a9060f0273992f5681dfe2ce6bb3c54",
     "reports/sign-det-declaration-review/current/normalize.py": "7c34629b7ef6e1727b340e3623b1e774b761e565d24a74ece7745053fa46735f",
     "reports/sign-det-declaration-review/current/test_tools.py": "52046cca19c1831043725a57de52cfe70f3f20754a31810b179c5c37754821f4",
     "reports/sturm-declaration-review/audit_tools.py": "de536ebeafd2ee355ac6e3349efaeaf2a5f0c37ecceed4457f4be51b664a963a",

@@ -2,7 +2,7 @@
   "scope": "74 named declarations, five fields and the entry hashing instance; partial computational review, no phase promotion",
   "files": {
     "HexSignDet/DagBounds.lean": "1ff482fbcb51846b61348d1708062647fb0f61bf2eb04184b86fa17d7bac33a7",
-    "HexSignDet/DagEncode.lean": "ec752303ec1488ae8e16b10ac280e83b0d4039df8829ca16052c38880396919a",
+    "HexSignDet/DagEncode.lean": "b6551e81e610f7fe69e6015f97be602a3b2dbcf6c4959ee81bf974479fdb7d66",
     "HexSignDet/DagMap.lean": "282384b03d9ccec90817d8e38962f184edb66c58b06fe391f92c332a1bb4f7fd",
     "HexSignDet/DagMemo.lean": "a8a6495f09f66126ff4f902dacb4c1e00b90b2148eaa6c8f3dd39a671344bc10",
     "HexSignDet/DagExpand.lean": "6b051dc00bed5de01fc534d2aa3eef835641080693ea6f2cbfb4a908d302f8dc",
@@ -14,7 +14,7 @@
     "HexManual/Chapters/HexSignDet.lean": "6cf774c0d04b484265c361d16b061b8e57039511c025810520f383169ecfb8e1",
     "reports/sign-det-declaration-review/core-dag-support.md": "0f828ef1958ad190efc5eae7fe1969b1b4fafa4797d1ed1c0e950fe49610c498",
     "reports/sign-det-declaration-review/check_foundation_bindings.py": "83520887f6307511e2db9aa18862adaa47d66df6aadcdf2870cd6c2b635c8928",
-    "reports/sign-det-declaration-review/README.md": "0060b699872628380d168e2e67b5507d42fc4e0bbba92e83a3f34c63b0c6791e",
+    "reports/sign-det-declaration-review/README.md": "91f20367d85a39c654a41ca448ebc01d5a9060f0273992f5681dfe2ce6bb3c54",
     "reports/sign-det-declaration-review/current/normalize.py": "7c34629b7ef6e1727b340e3623b1e774b761e565d24a74ece7745053fa46735f",
     "reports/sturm-declaration-review/audit_tools.py": "de536ebeafd2ee355ac6e3349efaeaf2a5f0c37ecceed4457f4be51b664a963a",
     "scripts/ci/check_benches_mathlib_free.py": "a8da3bef100b50fdd923d609ad03a3a9bd55229467f5652abe6e3f0b3d1ed0e5",
@@ -270,11 +270,11 @@
       "lake build HexSignDet.CrossCheck HexRealClosureTheory.SignEvidenceConformance HexRealClosure.RootFrame HexRealClosure.RootReplay"
     ]
   },
-  "source_ref": "audit/issue-10575-sign-det-integration-review-input-v3",
-  "input_revision": "2782781b5f0aecc222a9170a4d66ed0a4b983807",
+  "source_ref": "audit/issue-10575-sign-det-integration-review-input-v4",
+  "input_revision": "e68d39aef73d8e88f6a30862d9b4c4dab03f74ee",
   "archive_files": {
     "HexSignDet/DagBounds.lean": "1ff482fbcb51846b61348d1708062647fb0f61bf2eb04184b86fa17d7bac33a7",
-    "HexSignDet/DagEncode.lean": "ec752303ec1488ae8e16b10ac280e83b0d4039df8829ca16052c38880396919a",
+    "HexSignDet/DagEncode.lean": "b6551e81e610f7fe69e6015f97be602a3b2dbcf6c4959ee81bf974479fdb7d66",
     "HexSignDet/DagMap.lean": "282384b03d9ccec90817d8e38962f184edb66c58b06fe391f92c332a1bb4f7fd",
     "HexSignDet/DagMemo.lean": "a8a6495f09f66126ff4f902dacb4c1e00b90b2148eaa6c8f3dd39a671344bc10",
     "HexSignDet/DagExpand.lean": "6b051dc00bed5de01fc534d2aa3eef835641080693ea6f2cbfb4a908d302f8dc",
