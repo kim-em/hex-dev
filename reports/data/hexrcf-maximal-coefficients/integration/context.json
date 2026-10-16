@@ -210,5 +210,10 @@
     "lean_threads": 2,
     "own_build_concurrency": 1,
     "sampled_properties_are_not_completed_peaks": true
+  },
+  "artifact_commit": "7cc02723392040cf1054cd065646e5090cc3edaa",
+  "document_commit": "7cc02723392040cf1054cd065646e5090cc3edaa",
+  "documents_sha256": {
+    "reports/hexrcf-maximal-coefficients.md": "5fe12f6d71c7ee6d93df3ea07e0adb03f357076daed2e8054554d0391ba277bd"
   }
 }
