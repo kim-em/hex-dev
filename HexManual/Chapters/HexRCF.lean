@@ -498,10 +498,31 @@ examples, the power in `(2 : ℝ) ^ (1 / 3 : ℝ)` defines a closed coefficient;
 the quantified variable still occurs in an ordinary polynomial. Products with
 rational constants are supported. Closed division is also supported for the
 selected and reconstructed Hex inputs and these checked positive-root aliases.
+The frontend keeps a whole closed arithmetic expression as one coefficient.
+For example, `Real.sqrt 2 + Real.sqrt 3` is one coordinate, as are its square
+and its negative; repeated occurrences share that coordinate. The coefficient
+interpreter evaluates the expression in the selected common field.
 The adapter checks every original divisor before solving the target,
 including divisors erased by cancellation, zero multiplication or an empty
 domain. Named square/cube aliases keep their existing direct path when all
 original divisors are rational; algebraic division uses the common field.
+
+```lean
+example : ∀ x : ℝ, x ^ 2 + (Real.sqrt 2 + Real.sqrt 3) > 0 := by
+  rcf
+
+example : ∀ x : ℝ, x ^ 2 + (Real.sqrt 2 + Real.sqrt 3) ^ 2 > 0 := by
+  rcf
+
+example : ∃ x : ℝ, x = -(Real.sqrt 2 + Real.sqrt 3) ∧ x < -3 := by
+  rcf
+```
+
+These examples use the real-coefficient certificate checker. Fresh-module
+checks verify their actual proof bodies and their transitive axiom dependencies.
+Extracting a whole coefficient never removes an original divisor condition:
+even `0 * (1 / (Real.sqrt 2 - Real.sqrt 2))` retains its zero divisor and is
+refused by the decision procedure.
 
 Visible `RealAlgebraicNumber.ofRat` constructors also retain their proved
 rational value. They use the rational decision path after checked source
