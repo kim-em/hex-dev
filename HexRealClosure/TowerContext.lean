@@ -279,6 +279,16 @@ Those stages are assembled through the native base-context constructors. -/
 @[expose] def Context.base {K : Type} [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
     (context : BaseContext.Context registry K sign) : Context registry := .pack (.base context)
 
+private theorem Context.base_codec_proof {K : Type} [Lean.Grind.Field K] [DecidableEq K]
+    {sign : K → Int} (context : BaseContext.Context registry K sign) :
+    (Context.base context).codec = BaseContext.Element.codec context := rfl
+
+/-- Packing a base context retains its original coefficient codec. -/
+theorem Context.base_codec {K : Type} [Lean.Grind.Field K] [DecidableEq K]
+    {sign : K → Int} (context : BaseContext.Context registry K sign) :
+    (Context.base context).codec = BaseContext.Element.codec context :=
+  Context.base_codec_proof context
+
 private theorem Context.base_signature_proof {K : Type} [Lean.Grind.Field K] [DecidableEq K]
     {sign : K → Int} (context : BaseContext.Context registry K sign) :
     (Context.base context).signature = ⟨context.signature, []⟩ := rfl
