@@ -144,15 +144,19 @@ private def prepareCore (target : Expr) (nonnegative : Expr → MetaM (Option Ex
 presentations. Reuse shared source lowering, all original divisor obligations
 and aggregate reflection accounting. Unsupported syntax and resource failures
 remain distinct; failed attempts restore the complete elaborator state.
+The source equivalence consumes proof budget during reification and again
+when retained as a checked private theorem for later composition.
 Proposals require executable closed constructions. Native compilation failures
 and exceptions from callbacks are terminal, rather than syntax declines. -/
 def prepare (target : Expr) (nonnegative : Expr → MetaM (Option Expr) := FieldRuntime.nonnegative)
     (config : Hex.RealFormula.Reify.Config := {}) :
     MetaM (Except Hex.RealFormula.Reify.Error Inputs) := do
   let saved ← saveState
+  let depthLimit := (← readThe Core.Context).maxRecDepth
   let auxName := mkPrivateName (← getEnv) (← mkFreshUserName `AlgebraicPreparation)
-  let (result,_) ← tryFinally' (withDeclNameForAuxNaming auxName <| withNewMCtxDepth <| withOptions (fun options =>
-      debug.skipKernelTC.set (Elab.async.set options false) false)
+  let (result,_) ← tryFinally' (withDeclNameForAuxNaming auxName <| withNewMCtxDepth <| Core.withIncRecDepth <|
+      withOptions (fun options => maxRecDepth.set
+        (debug.skipKernelTC.set (Elab.async.set options false) false) depthLimit)
       (prepareCore target nonnegative config)) fun result => do
     match result with
     | some (.ok _) => modify fun state => {state with
@@ -168,6 +172,7 @@ private def sourceFunction (entries : Array Entry) (sources : Array Expr)
   let mut values : Array Expr := #[]
   let mut proofs : Array Expr := #[]
   for (entry, source) in entries.zip sources do
+    Core.checkInterrupted
     let value ← instantiateMVars entry.expression
     unless !value.hasFVar && !value.hasMVar && !value.hasLooseBVars do
       throwError "source acceptance requires closed algebraic expressions"
@@ -175,6 +180,7 @@ private def sourceFunction (entries : Array Entry) (sources : Array Expr)
     let type ← mkEq (← mkAppM ``RealAlgebraicNumber.toReal #[value]) source
     Hex.RealFormula.Reify.accountProof entry.identity
     let proof ← Hex.RCF.checkProof `sourceAcceptanceIdentity type entry.identity
+    Core.checkInterrupted
     values := values.push value
     proofs := proofs.push proof
   let function ← FieldLiteral.finiteExpr (mkConst ``RealAlgebraicNumber) values zero
@@ -183,6 +189,7 @@ private def sourceFunction (entries : Array Entry) (sources : Array Expr)
     let actual ← mkAppM ``RealAlgebraicNumber.toReal #[mkApp function i]
     mkForallFVars #[i] (← mkEq actual (mkApp expected i))
   let identity ← mkAppM ``funext #[← FieldLiteral.proveFinCases pointwise proofs]
+  Core.checkInterrupted
   return (function, identity)
 
 private def acceptanceCore (prepared : Inputs) (target registry : Expr) :
@@ -192,6 +199,10 @@ private def acceptanceCore (prepared : Inputs) (target registry : Expr) :
   let original ← instantiateMVars source.original
   let target ← instantiateMVars target
   unless original == target do throwError "source acceptance has a different original target"
+  let divisors ← Reify.guardSources target
+  let retained ← source.divisors.mapM instantiateMVars
+  unless divisors == retained do
+    throwError "source acceptance has a different original divisor inventory"
   let sourceType ← mkAppM ``Iff
     #[← mkAppM ``RealFormula.Prenex.toProp #[source.formula, source.valuation], original]
   Hex.RealFormula.Reify.accountProof source.proof
@@ -224,7 +235,8 @@ alias substitution. This returns an equivalence, not evidence of acceptance.
 It does not authenticate runtime proposals or frozen source histories.
 
 Each proof is charged before checking it. The returned usage continues the
-preparation's aggregate budget and must be retained by later proof stages.
+preparation's aggregate budget, including a fresh original-divisor inventory
+scan. Callers must thread it into later stages with `{prepared with usage}`.
 Exhaustion, failure and interruption restore the complete saved state. -/
 def Inputs.acceptanceIff (prepared : Inputs) (target registry : Expr) :
     MetaM (Except Hex.RealFormula.Reify.Error (Expr × Hex.Reflect.BudgetUsage)) := do

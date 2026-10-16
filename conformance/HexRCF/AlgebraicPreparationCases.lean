@@ -228,6 +228,9 @@ run_meta do
           packet.radical mixed.quantifier packet.rootGraph packet.cells).toOption == some expected do
         throwError "mixed coefficient/divisor layout changed the quantified verdict"
   let registry : Q(RealClosure.BaseContext.Registry) := q(fun _ => none)
+  let replacementGuard ← checked q(∀ _ : ℝ, 0 / (1 : ℝ) = 0)
+  unless replacementGuard.source.divisors.size == 1 do
+    throwError "replacement guard control has the wrong inventory"
   for (label, target, guardCount) in #[
       (`rationalAcceptance, q(∀ x : ℝ, x^2 ≥ 0), 0),
       (`algebraicAcceptance, q(∀ x : ℝ, x^2 + Real.sqrt 2 > 0), 0),
@@ -327,6 +330,20 @@ run_meta do
             unless expectedException error do throw error
             pure true)
         unless terminal do throwError "source acceptance swallowed terminal {resource}"
+    if label == `algebraicAcceptance then
+      -- Entry passes at depth zero; these must fail inside the operation.
+      -- Resetting the caller's context limit from options would hide failure.
+      for (operation, action) in [
+          ("acceptance", prepared.acceptanceIff target registry *> pure ()),
+          ("preparation", AlgebraicPreparation.prepare target *> pure ())] do
+        unchanged do
+          let terminal ← observeTerminal (withTheReader Core.Context
+              (fun context => {context with maxRecDepth := 8, currRecDepth := 0}) do
+            action
+            pure false) (fun error => do
+              unless error.isMaxRecDepth do throw error
+              pure true)
+          unless terminal do throwError "source {operation} reset an inner recursion limit"
     unless (← (← getEnv).getLocalConstantInfos).map (·.name) == beforeNames do
       throwError "terminal source acceptance failure leaked auxiliary declarations"
     if h : 0 < prepared.source.coefficients.size then
@@ -339,6 +356,32 @@ run_meta do
         unless failed do throwError "source acceptance trusted an edited coefficient identity"
       unless (← (← getEnv).getLocalConstantInfos).map (·.name) == beforeNames do
         throwError "rejected source acceptance leaked auxiliary declarations"
+    if h : 0 < prepared.source.divisors.size then
+      let i : Fin prepared.source.divisors.size := ⟨0,h⟩
+      let edited := {prepared.divisors[i] with identity := q(True.intro)}
+      let corrupt := {prepared with divisors := prepared.divisors.set i edited}
+      unchanged do
+        let failed ← tryCatchRuntimeEx (corrupt.acceptanceIff target registry *> pure false) (fun _ => pure true)
+        unless failed do throwError "source acceptance trusted an edited divisor identity"
+      let omitted := {prepared with
+        source := {prepared.source with divisors := #[]}
+        divisors := Vector.ofFn (fun i : Fin 0 => i.elim0)}
+      unchanged do
+        let failed ← tryCatchRuntimeEx (omitted.acceptanceIff target registry *> pure false) (fun _ => pure true)
+        unless failed do throwError "source acceptance trusted an omitted original divisor inventory"
+      unless (← (← getEnv).getLocalConstantInfos).map (·.name) == beforeNames do
+        throwError "rejected divisor acceptance leaked auxiliary declarations"
+    if label == `zeroGuardAcceptance then
+      unless prepared.source.divisors.size == replacementGuard.source.divisors.size do
+        throwError "guard replacement control changed its coordinate count"
+      let substituted := {prepared with
+        source := {prepared.source with divisors := replacementGuard.source.divisors}
+        divisors := replacementGuard.divisors}
+      unchanged do
+        let failed ← tryCatchRuntimeEx (substituted.acceptanceIff target registry *> pure false) (fun _ => pure true)
+        unless failed do throwError "source acceptance trusted a different valid divisor inventory"
+      unless (← (← getEnv).getLocalConstantInfos).map (·.name) == beforeNames do
+        throwError "replaced divisor acceptance leaked auxiliary declarations"
   withLocalDeclD `c q(ℝ) fun c => do
     let identity ← mkEq c q(Real.sqrt 2)
     withLocalDeclD `identity identity fun identity => do
@@ -352,7 +395,7 @@ run_meta do
       addDecl (.thmDecl {
         name := `Hex.RCF.AlgebraicPreparationConformance.aliasAcceptance
         levelParams := [], type, value })
-  logInfo "exact original algebraic producer acceptance, false source, original zero guards, empty domains, aggregate proof budgets and rollback checked"
+  logInfo "exact original algebraic producer acceptance, false source, original zero guards, empty domains, aggregate proof budgets, inner recursion limits and forged guard inventories checked"
   addDecl (.thmDecl {
     name := `Hex.RCF.AlgebraicPreparationConformance.runFinished
     levelParams := [], type := mkConst ``True, value := mkConst ``True.intro })

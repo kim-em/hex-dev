@@ -20,11 +20,15 @@ conjuncts: an empty domain with an original zero divisor remains invalid.
 retained kernel algebraic expressions. It checks each expression and its exact
 `toReal` equality, constructs the ordered finite functions, reads the quantifier
 and matrix from the checked source formula, and checks the source equivalence.
+It reconstructs the ordered divisor inventory from the original target and
+rejects omitted or replaced guards, even when both public arrays are edited.
 It does not use the separately evaluated runtime proposals or the editable
 runtime formula/quantifier fields as proof evidence. The result's right side
 is exactly the original real target together with all original nonzero guards.
 
-The helper continues the preparation's aggregate proof budget. It charges
+The helper continues the preparation's aggregate reflection budget, including
+the additional source scan and alias-proof check. Callers thread returned usage
+with `{prepared with usage}` into subsequent stages. It charges
 proofs before checking them, returns the updated aggregate usage for later
 stages, preserves caller metavariables on success and
 restores the complete state after exhaustion or failure. Successful private
@@ -39,9 +43,13 @@ Editing runtime proposals, the runtime matrix and the runtime quantifier must
 leave the returned theorem type unchanged. Continued usage must increase;
 one node below the measured cumulative proof limit refuses, and the exact
 limit succeeds. Heartbeat, recursion and interruption entry checks remain
-terminal, with state/declaration rollback. Those resource tests do not force
-a failure halfway through kernel checking. Edited identity and exhausted-budget
-cases separately exercise rollback after auxiliary proof work.
+terminal, with state/declaration rollback. Separate lowered-depth tests enter
+both preparation and acceptance at depth zero and require a recursion exception
+inside the operation. They do not force interruption halfway through kernel
+checking. Edited coefficient/divisor identities and exhausted-budget cases
+exercise rollback after auxiliary proof work. Missing guards and same-count
+replacement guards with valid identities are rejected independently of those
+identity-mutation tests.
 
 A fresh importing module checks the actual theorem bodies and their transitive
 axiom closure, requiring the real producer completeness and domain laws. An
@@ -53,9 +61,9 @@ Its body is included in the fresh audit. The only axioms are `propext`,
 The expanded consumer selection at `b1f0c80539` has 11,036 jobs, takes
 3m14.332s and peaks at 4 GiB with no swap. Its manual/dependency selection
 passes 11,681 jobs in 6m19.764s at 13.1 GiB; the actual revised chapter rebuilds
-in 5.9s. The final identity-retention correction puts every retained identity
-inside the same cumulative preparation budget and preserves a caller's lowered
-recursion limit through the options wrapper. Its combined consumer, fresh
+in 5.9s. At `466e399045`, retained identities consume the cumulative
+preparation budget and acceptance preserves a caller's lowered recursion limit
+through the options wrapper. The combined consumer, fresh
 body-audit, public-import and manual selection passes 11,681 jobs in 2m44.798s
 at 3.6 GiB. The chapter takes 5.2s. These observations include incremental
 dependency work and different test scopes; they are not matched performance
@@ -80,10 +88,10 @@ probes and the full manual passes 14,610 jobs in 51m21.530s, with a 12.8 GiB
 peak and no swap. This is a build observation with dependency work included,
 not an isolated algorithm measurement or a matched comparison.
 
-The complete-manual import check requires a module-private auxiliary name for
-the runnable example's extra kernel check. Without that scope it collides
-with a generated theorem in another chapter; the failed render is retained
-as a diagnostic, not a pass. The corrected full manual passes 14,311 jobs in
+The runnable example's extra kernel check uses a module-private auxiliary name
+to avoid generated-theorem collisions across chapters. The diagnostic archive
+contains the unscoped failure separately from successful checks. The full manual
+at `25c5f7afac` passes 14,311 jobs in
 2m36.421s at 2.1 GiB. The final single-page HTML render passes 14,313 jobs in
 11.503s at 1.4 GiB. All six desktop and narrow captures of the acceptance
 paragraph, runnable example and limitation paragraph were opened. Their local
@@ -95,8 +103,9 @@ the complete manual together. It passes 14,317 jobs in 15.473s at 3.3 GiB,
 so the retained audit is composable with the corrected manual.
 
 The [parent integration record](data/hexrcf-source-acceptance/integration/record.json)
-binds the merged parent `2bde7905ed` to the final focused checks. Every Lean
-source, the Lake manifest, toolchain and library metadata are unchanged from
+binds the merged parent `2bde7905ed` to focused checks at `dd32822835`.
+At that snapshot, every Lean source, the Lake manifest, toolchain and library
+metadata are unchanged from
 the complete selection at `25c5f7afac`. The focused integration passes 14,322
 jobs in 4.965s at 307.2 MiB with no swap; this is a warm build, not a matched
 performance comparison. DAG/umbrella, copyright, line and admission checks

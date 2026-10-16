@@ -602,7 +602,9 @@ Its default proof callback, `FieldRuntime.nonnegative`, attempts routine
 nonnegativity facts and restores its state on decline. A caller can supply
 another callback returning an ordinary proof or `none`; thrown exceptions
 remain terminal. Preparation checks each supplied proof and retains one
-aggregate reflection budget across the source, coefficients and divisors:
+aggregate reflection budget across the source, coefficients and divisors.
+The source equivalence is charged during reification and again when retained
+as a private theorem for later composition:
 
 ```lean
 open Lean Meta Qq
@@ -634,6 +636,8 @@ to return a complete packet and that packet's checker to accept `true`. The
 right side contains both the original real statement and every original
 divisor's nonzero condition. Guard validity is a conclusion of acceptance,
 even when cancellation or an empty interval makes the statement trivial.
+The helper reconstructs the ordered original guard inventory from the target;
+editing both stored guard arrays cannot remove or replace an obligation.
 The existing producer completeness and domain laws prove this equivalence;
 no successful child calculation is assumed.
 
@@ -678,6 +682,8 @@ reconstruct provider histories, or add a tactic handler. Those authentication
 and quotation obligations remain separate. The helper continues the same
 aggregate reflection budget, returns its updated usage for later stages, and
 restores caller state on exhaustion or failure.
+Callers continue with `{prepared with usage}` when constructing further proofs.
+Both preparation and acceptance preserve a caller's lowered recursion limit.
 Fresh importing regressions check its actual theorem bodies, true and false
 sources, retained zero guards and reversed intervals, with exactly the standard
 three axioms.
