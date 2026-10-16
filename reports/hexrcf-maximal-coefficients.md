@@ -97,3 +97,39 @@ The retained earlier render failure identifies an invalid subsection placement;
 the final include follows the parent section's blocks as Verso requires.
 Production frontend code and the audited conformance proof bodies are unchanged
 by this documentation split. The earlier record and images remain intact.
+
+The [integration record](data/hexrcf-maximal-coefficients/integration/context.json)
+binds 38 selected files, nine logs and the active memory-limit snapshot. Its
+source at `05180c1e6c` integrates owner main `7244ae8f3c` and reviewed parent
+`4bc1dd7bb0`; it checks the assembled original goal and a fresh real witness
+under maximal abstraction. The negative-conjugate control now retains the
+whole negative coefficient and rejects the wrong valuation. A separate
+positive-coefficient control preserves rejection of a changed polynomial.
+The foreign-coefficient and both original-guard count controls remain, each
+checking the expected diagnostic and state restoration.
+
+That focused 11,205-job selection passes in 13m15.053s at 9.1 GiB peak;
+the assembled source module takes 422 seconds and its fresh consumer 7.2 seconds.
+Source `0a041add65` preserves the existing target order while adding the three
+new default roots. Its broader 14,350-job selection passes in 13m14.764s at
+9.6 GiB peak, including the optional umbrella, actual assembled proof,
+ordinary-real models, source preparation, caller-constant compatibility,
+handler tests and full manual. These selections have different rebuild scopes;
+their similar command times are not a performance comparison. Existing checked
+modules may be replayed from the cache in the broader selection.
+The integrated metadata checks cover 662 import cones and 1,563 modules;
+both eleven-test checker suites pass. The retained failed joint Python test
+invocation concerns its import path; the documented discovery invocation passes.
+The maximal-coefficient manual sources are byte-identical to their separately
+inspected layout source. Local integration with a reviewed parent is not a
+claim that the parent PR has landed or that the general backend is complete.
+
+A [separate compiled probe](data/hexrcf-maximal-coefficients/missing-records/context.json)
+constructs `NativeOperations.extend` with empty packing, stored-sign and inverse
+inventories. Using the existing strict scalar codec and the same valid literal
+root/cell packet, `CellOperations.accept?` returns `some ()`. The build-only
+probe completes 11,112 selected jobs in 22.877s at 3.3 GiB peak with zero swap.
+It requests no ordinary-kernel acceptance proof. This confirms the documented
+compiled native fallback; it is not evidence of mathematical unsoundness or a
+strict checker. The general frozen frontend still needs the owner's strict
+inventory-replay or coverage boundary to reject every missing reached record.

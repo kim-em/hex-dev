@@ -1,0 +1,36 @@
+import HexRCF.CellReplay.Operations
+import HexRealClosureTheory.NativeAssemblyModels
+open Hex Lean Meta Elab Command Term
+open Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
+open Hex.RealClosure.Algebraic.KernelReplay.FiniteData
+open Hex.RCF.RealCoefficients.CellReplayTests.Algebraic
+set_option maxHeartbeats 12000000
+set_option maxRecDepth 32768
+namespace MissingArithmetic
+private def cells : Codec.Json := .arr #[Literals.sections,Literals.sectors]
+syntax (name := missingArithmetic) "#missing_arithmetic" : command
+@[command_elab missingArithmetic]
+unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
+  let native ← NativeChain.ofContext (mkConst ``Hex.RCF.SelectedRootTests.Data.parent)
+  unless native.owners.size == 1 do throwError "expected the retained depth-one owner"
+  let owner := native.owners[0]!
+  let type ← withTransparency .all (whnf (← inferType owner))
+  unless type.getAppFn.isConstOf ``Algebraic.Context do throwError "not an algebraic owner"
+  let arguments := type.getAppArgs
+  let base ← NativeOperations.native arguments[0]! arguments[arguments.size-2]!
+  let entries ← mkListLit (← mkAppM ``Algebraic.Packing #[owner]) []
+  let signs ← mkListLit (← mkAppM ``Algebraic.ValueSign #[owner]) []
+  let inverses ← mkListLit (← mkAppM ``Algebraic.InverseFact #[owner]) []
+  let emptyOperations ← NativeOperations.extend base owner entries signs inverses
+  let core ← emptyOperations.core
+  let guards ← mkListLit (← mkAppM ``Tower.Context.Value #[mkConst ``Schema.parent]) []
+  let accept ← mkAppOptM ``CellOperations.accept? #[none,some (mkConst ``Schema.parent)]
+  let program ← mkAppM' accept #[core,
+    mkConst ``Hex.RCF.RealCoefficients.CellReplayTests.Operations.codec,
+    mkConst ``Schema.values,mkConst ``Schema.formula,guards,mkConst ``Canonical.cert,
+    mkConst ``Hex.RealFormula.Quantifier.existsReal,mkConst ``Literals.roots,mkConst ``cells]
+  let result ← evalExpr (Option Unit) (mkApp (mkConst ``Option [.zero]) (mkConst ``Unit)) program
+  unless result.isSome do throwError "empty-inventory compiled replay did not accept the literal packet"
+  logInfo "compiled literal complete packet accepted with zero packing, stored-sign and inverse records; no kernel acceptance proof was requested"
+#missing_arithmetic
+end MissingArithmetic
