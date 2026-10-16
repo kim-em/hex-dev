@@ -242,3 +242,18 @@ checks identify the route; the positive square-witness case and inspected
 `Exists.intro` argument provide the additional witness evidence. These targeted
 results supplement the completed earlier broad selection. Current-head hosted
 CI must still validate the full integration before merge.
+
+The [final scoped record](data/hexrcf-source-identities/final/context.json) binds
+source `8940124edf`, its successful library/base/probe selection and the final
+full manual render. The library selection passes 11,166 jobs in 4.075s at
+276.5 MiB, reusing already checked artifacts. It is not a cold-build or speed
+measurement. The 14,310-job manual render passes in 3m13.179s at 3 GiB; the
+separate browser capture passes in 10.536s at 3.1 GiB. All six desktop/narrow
+images were opened, and the three changed paragraphs have zero local overflow.
+Whole-book horizontal overflow and earlier blocks are outside that claim.
+The record retains exact source/tree and command bindings, raw logs, inspection
+results, the capture script and report snapshots. The final scoped independent
+review finds no correctness, soundness, trust or compatibility defect. It notes
+that frozen-default-witness metadata has less direct coverage than the tested
+equality-witness metadata; both use the same recursive metadata erasure.
+No benchmark result is attributed to these final witness changes.

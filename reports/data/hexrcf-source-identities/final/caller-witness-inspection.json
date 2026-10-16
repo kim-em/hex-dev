@@ -1,0 +1,80 @@
+[
+  {
+    "label": "desktop",
+    "kind": "normalization",
+    "text": "\n                  Reconstruction normalizes rational constants and division without the general\nsimplifier's rewrites of containment inequalities, so square bounds stay\npolynomial. Negated comparisons and disequality use the same guarded source.",
+    "viewport": 1440,
+    "scrollY": 280720,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752,
+    "descendantOverflow": 0
+  },
+  {
+    "label": "desktop",
+    "kind": "witness",
+    "text": "\n                  This finite path uses nonlinear proof reconstruction from the supplied bounds,\nwith conjunctions and a proposed ordinary real existential witness. The current\nwitness comes from an equality conjunct x = c or c = x when present.\nOtherwise it is the first named or registered subject in coefficient order,\nretaining a closed reciprocal or quotient as a whole witness, or zero when\nthere is none. This is one attempt, without witness search. The precision\nrequest stays at 1/16, without refinement. It may fail on a true statement, and such a failure is an unresolved proof attempt, not a\nfalse verdict. False and unresolved goals can both fail proof reconstruction;\nthis path does not distinguish them by a decision verdict.\nLean's execution limits can also interrupt it. Failures restore\ncaller state and stop handler dispatch. The existing algebraic cell solver\ncontinues to handle its documented inputs. Registrations alone do not complete\nthe general coefficient-field decision procedure.",
+    "viewport": 1440,
+    "scrollY": 280899,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752,
+    "descendantOverflow": 0
+  },
+  {
+    "label": "desktop",
+    "kind": "guards",
+    "text": "\n                    These examples use the real-coefficient certificate checker. Fresh-module\nchecks verify the corresponding named conformance proofs and their actual\nbody dependencies.\nExtracting a whole coefficient never removes an original divisor condition:\neven 0 * (1 / (Real.sqrt 2 - Real.sqrt 2)) keeps its zero divisor through source\npreparation. The handler rejects it when preparing guards.\n",
+    "viewport": 1440,
+    "scrollY": 219217,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752,
+    "descendantOverflow": 0
+  },
+  {
+    "label": "narrow",
+    "kind": "normalization",
+    "text": "\n                  Reconstruction normalizes rational constants and division without the general\nsimplifier's rewrites of containment inequalities, so square bounds stay\npolynomial. Negated comparisons and disequality use the same guarded source.",
+    "viewport": 390,
+    "scrollY": 450674,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343,
+    "descendantOverflow": 0
+  },
+  {
+    "label": "narrow",
+    "kind": "witness",
+    "text": "\n                  This finite path uses nonlinear proof reconstruction from the supplied bounds,\nwith conjunctions and a proposed ordinary real existential witness. The current\nwitness comes from an equality conjunct x = c or c = x when present.\nOtherwise it is the first named or registered subject in coefficient order,\nretaining a closed reciprocal or quotient as a whole witness, or zero when\nthere is none. This is one attempt, without witness search. The precision\nrequest stays at 1/16, without refinement. It may fail on a true statement, and such a failure is an unresolved proof attempt, not a\nfalse verdict. False and unresolved goals can both fail proof reconstruction;\nthis path does not distinguish them by a decision verdict.\nLean's execution limits can also interrupt it. Failures restore\ncaller state and stop handler dispatch. The existing algebraic cell solver\ncontinues to handle its documented inputs. Registrations alone do not complete\nthe general coefficient-field decision procedure.",
+    "viewport": 390,
+    "scrollY": 451050,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343,
+    "descendantOverflow": 0
+  },
+  {
+    "label": "narrow",
+    "kind": "guards",
+    "text": "\n                    These examples use the real-coefficient certificate checker. Fresh-module\nchecks verify the corresponding named conformance proofs and their actual\nbody dependencies.\nExtracting a whole coefficient never removes an original divisor condition:\neven 0 * (1 / (Real.sqrt 2 - Real.sqrt 2)) keeps its zero divisor through source\npreparation. The handler rejects it when preparing guards.\n",
+    "viewport": 390,
+    "scrollY": 347553,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343,
+    "descendantOverflow": 0
+  }
+]
