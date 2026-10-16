@@ -212,7 +212,7 @@ def check() -> None:
              "KernelReplay.AxiomClosure", "KernelReplay.AxiomClosureTest",
              "KernelReplay.AxiomClosureImports",
              "KernelReplay.FiniteRange",
-             "KernelReplay.CoefficientMembers",
+             "KernelReplay.CoefficientMembers", "KernelReplay.CoefficientEntry",
              "KernelReplay.FiniteBase", "KernelReplay.BaseLookup", "KernelReplay.FiniteLift", "KernelReplay.FiniteOperands",
              "KernelReplay.FiniteSupport", "KernelReplay.FiniteData", "KernelReplay.FiniteWitness", "KernelReplay.FiniteJoint",
              "RealClosureConsumer.Query", "RealClosureConsumer.Sign",
