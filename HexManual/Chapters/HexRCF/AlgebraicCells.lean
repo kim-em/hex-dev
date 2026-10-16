@@ -13,6 +13,7 @@ import HexRCF.RealCoefficients.AlgebraicCells
 import HexRCF.RealCoefficients.AlgebraicPreparation
 import HexRCF.RealCoefficients.CellOperations
 import HexRCF.RealCoefficients.RealModel
+import HexRCF.RealCoefficients.SourceIdentity
 import HexRCF.RealCoefficients.CellQuote
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
