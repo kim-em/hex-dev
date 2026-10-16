@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import VersoManual
 import HexRCF.RealCoefficients
 import HexRCF.ScalarQuoteCases
+import HexRCF.SharedQuoteCases
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -164,6 +165,55 @@ bodies use the existing producer guard with nonempty diagnostic traces.
 Regressions cover continued/exact/exhausted proof budgets, rollback after the
 strict stage succeeds, missing or mismatched facts, zero without a fact,
 malformed codec applications and rejection of admitted fact proposals.
+
+For a polynomial over the same selected extension,
+{name Hex.RCF.RealCoefficients.ScalarQuote.quotePolyWith}`ScalarQuote.quotePolyWith`
+quotes its finite sign reader and composes the owner's `Codec.readPoly_refines`.
+Pass the complete `Codec.readPoly` expression: the helper keeps its exact
+coefficient type, zero and equality instances, codec arguments and literal.
+The resulting equation concerns that original canonical polynomial reader.
+
+```lean
+open Lean Hex.RealFormula in
+open Hex.Reflect in
+open Hex.RCF.RealCoefficients in
+meta def quoteSuppliedPolynomial
+    (reader facts : Expr)
+    (predecessor : RootQuote.DecoderM)
+    (config : Reify.Config)
+    (used : BudgetUsage) :=
+  RootQuote.runWith
+    (ScalarQuote.quotePolyWith reader facts
+      predecessor) config used
+```
+
+The regression polynomial contains two copies of −2√2. The checked original
+reader restores both positions. Its first coefficient has this ordinary-real
+interpretation in the selected context:
+
+```lean
+open Hex.RCF.SelectedRootTests in
+open Hex.RCF.SharedQuoteTests in
+example :
+    Data.original.value (restored.coeff 0) =
+      -2 * Real.sqrt 2 :=
+  value_zero
+```
+
+The fresh importing audit pins six reachable theorem bodies, their actual
+owner refinement and supplied sign evidence, and the complete standard-three
+axiom closure. All six pass the existing producer-reduction guard. This
+polynomial quote consumes 1,065 proof nodes; composing scalar and polynomial
+quotation consumes 1,882 in the same request.
+
+`RootQuote.runWith` supplies the transaction for a sequence of `quoteWith`
+actions. `RootQuote.run` supplies it for a reader with `DecoderM` callbacks.
+Callbacks in this monad consume the same reflection budget. A decline restores
+the callback's environment changes while retaining its charges; a structured
+failure is terminal. The returned usage also includes charges made after the
+last quoted proof. Exact and one-below composed limits, missing scalar facts,
+and rejection after successful polynomial quotation are checked. Rejection
+restores all auxiliaries created earlier in the request.
 
 This scalar API does not reconstruct provider or predecessor histories,
 produce missing signs, or install a general source-goal solver. The strict
