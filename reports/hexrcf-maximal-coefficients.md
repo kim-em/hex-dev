@@ -147,3 +147,54 @@ It requests no ordinary-kernel acceptance proof. This confirms the documented
 compiled native fallback; it is not evidence of mathematical unsoundness or a
 strict checker. The general frozen frontend still needs the owner's strict
 inventory-replay or coverage boundary to reject every missing reached record.
+
+## Registered equality witnesses and compatibility
+
+Maximal abstraction can change handler eligibility. A bare supported generator
+retains the original single-coordinate handler; arithmetic such as `2 * sqrt 2`
+uses the common-field handler. The latter reuses one selected field when there
+is only one generator. The `ReplayModes`, `TotalAlgebraicProofs`, `CarrierModes`
+and registered-constant modules all rebuild successfully, including their
+existing option and diagnostic assertions. No source schema is changed back to
+leaf abstraction to preserve an optimization.
+
+For a registered existential, coefficient order need not put the required
+witness first. In `∃ x, x < c + 1 ∧ x = c`, the first maximal coefficient is
+`c + 1`. Finite proof construction now prefers the value directly stated by
+`x = c` or `c = x` in a conjunction. It never searches below a binder or through
+disjunction, implication or negation. Loose bound variables and metavariables
+are excluded. Metadata on the existential predicate is stripped before matching
+its lambda; other shapes keep the existing witness fallback. The selected
+witness remains a proof-search proposal checked against the original goal.
+This does not establish total named-constant witness search.
+
+The [witness validation record](data/hexrcf-maximal-coefficients/witnesses/context.json)
+binds fifty source files, seventeen logs and eleven artifacts. The actual
+three algebraic theorem types now have assertions for their whole ordered
+coefficient inventory. The exact zero-product/zero-divisor example in the manual
+also has a direct `rcf` refusal test. The negative-source control checks that its
+formula agrees with the positive source before testing the changed valuation.
+The registered square-bound theorem is named and included in the fresh body
+audit. Both reordered equality orientations and the metadata case assert that
+the first coordinate differs from the witness and require the caller's
+registration dependency. A nonlinear aliased existential also requires that
+dependency. The fresh importing module checks all eight named bodies and their
+combined transitive axiom closure, requiring exactly the standard three axioms.
+
+| Completed selection | Source | Observation |
+| --- | --- | --- |
+| Affected routing and option regressions | `9a78ec535b` | 11,137 jobs; 2m46.137s; 4.5 GiB peak |
+| Whole inventory, zero refusal and six proof bodies | `dc7c722689` | 11,138 jobs; 27.447s; 1.6 GiB peak |
+| Full integration and unchanged-formula control | `dc7c722689` | 14,347 jobs; 8m20.196s; 9.2 GiB peak |
+| Metadata, aliases and eight proof bodies | `9483d01c03` | 11,138 jobs; 37.457s; 1.6 GiB peak |
+| Explicit alias-provider dependency | `c6ea8386fd` | 11,138 jobs; 32.364s; 1.4 GiB peak |
+| Final manual render | `9483d01c03` | 14,300 jobs; 3m37.019s; 3.7 GiB peak |
+| Final inspected desktop/narrow captures | `9483d01c03` | 11.553s; 8.2 GiB peak |
+
+These are incremental validation scopes, not matched comparisons. All use the
+same aggregate 32 GiB/no-swap limit and serial own-build discipline. Metadata
+checks pass on the final production source; the later change adds only the
+alias dependency assertion. Earlier failed inventory assertions are retained
+and excluded from successful selections. The final manual source is unchanged
+by that assertion; all eight captures were opened and the changed targets have
+zero local overflow. Earlier evidence records and captures remain intact.
