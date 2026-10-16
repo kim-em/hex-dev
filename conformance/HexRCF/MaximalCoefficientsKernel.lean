@@ -19,7 +19,9 @@ run_meta do
     ``Hex.RCF.MaximalCoefficientsConformance.negative_witness,
     ``Hex.RCF.RegisteredConstants.positiveSquaredCoefficient,
     ``Hex.RCF.RegisteredConstants.reorderedWitness,
-    ``Hex.RCF.RegisteredConstants.reversedWitness]
+    ``Hex.RCF.RegisteredConstants.reversedWitness,
+    ``Hex.RCF.RegisteredConstants.aliasedWitness,
+    `Hex.RCF.RegisteredConstants.metadataWitness]
   for name in names do
     let .thmInfo declaration ← getConstInfo name | throwError "missing maximal coefficient theorem"
     let _ ← Hex.RCF.checkProof name declaration.type declaration.value

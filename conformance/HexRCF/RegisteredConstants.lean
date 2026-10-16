@@ -9,6 +9,7 @@ public import HexRCF.RealCoefficients
 public import Mathlib.Analysis.Real.Sqrt
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
 public meta import Lean.Elab.Command
+public meta import HexRCF.ProofEvidence
 
 public section
 
@@ -59,6 +60,32 @@ example : ∀ x : ℝ, x / supplied = x * supplied⁻¹ := by rcf
 theorem positiveSquaredCoefficient : ∀ x : ℝ, x ^ 2 + supplied ^ 2 > 0 := by rcf
 theorem reorderedWitness : ∃ x : ℝ, x < supplied + 1 ∧ x = supplied := by rcf
 theorem reversedWitness : ∃ x : ℝ, x < supplied + 1 ∧ supplied = x := by rcf
+theorem aliasedWitness (a : ℝ) (identity : a = supplied) :
+    ∃ x : ℝ, x < supplied + 1 ∧ x = a ∧ x^2 < 5 := by rcf
+
+run_meta do
+  let original : Q(Prop) := q(∃ x : ℝ, x < supplied + 1 ∧ x = supplied)
+  let arguments := original.getAppArgs
+  let target := mkAppN original.getAppFn
+    (arguments.set! 1 (.mdata {} arguments[1]!))
+  let proof ← Hex.RCF.proveGoal target
+  let checked ← Hex.RCF.checkProof `registeredMetadataWitness target proof
+  addDecl (.thmDecl {
+    name := `Hex.RCF.RegisteredConstants.metadataWitness
+    levelParams := [], type := target, value := checked })
+  for name in #[``reorderedWitness, ``reversedWitness,
+      `Hex.RCF.RegisteredConstants.metadataWitness] do
+    let .thmInfo declaration ← getConstInfo name | throwError "missing registered witness"
+    let .ok source ← Reify.prepare declaration.type {} #[q(supplied)]
+      | throwError "registered witness source was not recognized: {name}"
+    unless source.coefficients.size == 2 &&
+        (← isDefEq source.coefficients[0]! q(supplied + 1)) &&
+        (← isDefEq source.coefficients[1]! q(supplied)) do
+      throwError "registered witness no longer distinguishes equality selection from the first coefficient"
+    let dependencies ← Hex.RCF.ProofEvidence.projectDependencies #[name]
+    unless dependencies.contains ``suppliedRegistration do
+      throwError "registered witness bypassed the caller's containment evidence"
+  logInfo "registered equality witnesses retain first-coordinate distinction, provider evidence, metadata and aliases"
 example : ∀ x : ℝ, x ^ 2 + supplied⁻¹ > 0 := by rcf
 example (a : ℝ) (h : a = supplied) : ∀ x : ℝ, x ^ 2 + a > 0 := by rcf
 example (a : ℝ) (h : supplied = a) : ∀ x : ℝ, x ^ 2 + a > 0 := by rcf

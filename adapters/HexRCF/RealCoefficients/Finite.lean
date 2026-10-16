@@ -336,7 +336,10 @@ private partial def prove (target : Expr) (witness : Expr) : MetaM Expr := do
     goal.mvarId!.assign (← mkAppM ``And.intro #[← prove args[0]! witness, ← prove args[1]! witness])
   else if target.isAppOfArity ``Exists 2 then
     let body := target.getAppArgs[1]!
-    let witness := (equalityWitness? body.bindingBody!).getD witness
+    let selected := match body.consumeMData with
+      | .lam _ _ statement _ => equalityWitness? statement
+      | _ => none
+    let witness := selected.getD witness
     let proof ← prove (mkApp body witness).headBeta witness
     goal.mvarId!.assign (← mkAppOptM ``Exists.intro
       #[some (← inferType witness), some body, some witness, some proof])

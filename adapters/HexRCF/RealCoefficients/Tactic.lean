@@ -238,8 +238,7 @@ private meta def shiftedCoefficient (argument : Expr) : MetaM Bool := do
 The common-field frontend uses the same predicate, together with rational
 original divisors, to preserve its priority for these coordinates. Maximal
 closed arithmetic around a named generator uses the common-field frontend.
-Closed
-field computations are classified by their constructors, without reducing the
+Closed field computations are classified by their constructors, without reducing the
 canonical-number conversion merely to compare with a named fixture. -/
 meta def handlesCoefficient (coefficient : Expr) : MetaM Bool := do
   if (← selectedArgs? coefficient).isSome then return true
