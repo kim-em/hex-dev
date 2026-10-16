@@ -10,6 +10,9 @@ binds the expanded refusal and actual-record dependency checks separately.
 The [final control record](data/hexrcf-cell-operations/controls-final-context.json)
 also binds the scalar-codec dependency, different-program refusal and isolated
 memory observation.
+The [checked record](data/hexrcf-cell-operations/checked-context.json) additionally
+requires the final assembly/control completion messages and identifies the
+selected metadata-check logs.
 
 [`CellOperations`](../adapters/HexRCF/RealCoefficients/CellOperations.lean)
 uses the owners' existing `Replay.Operations` dictionary to check a complete
@@ -52,6 +55,8 @@ only the standard three axioms. The quotation controls reject false or malformed
 predicates, an unrelated proposed proof and a changed source, while a test-only
 observer checks both metavariable and local-declaration rollback without
 restoring state on behalf of the API.
+They also reject a valid existential acceptance proof offered for the distinct
+universal program.
 
 The default [assembled source](../conformance/HexRCF/CellReplay/Assembled.lean)
 instead obtains its operation records through the actual native assembly APIs,
@@ -143,6 +148,9 @@ bounded unit before this single-module selection. The observation does not
 explain the variation between source-distinct aggregate peaks or establish CI
 headroom; the required GitHub run remains the merge gate. The raw time report
 is retained without another unchanged rerun.
+Live-limit artifacts are snapshots taken during a run; their current/peak
+values are sampled values. Completed-run peaks come from the successful
+systemd log summaries in the table.
 
 The manual example uses a short `Operations` name and a split `RadicalCert`
 type to fit narrow pages. The clipped diagnostic capture and its exact source
