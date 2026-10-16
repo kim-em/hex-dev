@@ -23,6 +23,7 @@ public import HexRCF.RealCoefficients.Specialize
 public import HexRCF.RealCoefficients.Formula
 public import HexRCF.RealCoefficients.Field
 public import HexRCF.RealCoefficients.CommonPresentation
+public import HexRCF.RealCoefficients.SourceIdentity
 public import HexRCF.RealCoefficients.LiteralSign
 public import HexRCF.RealCoefficients.SignIndex
 public import HexRCF.RealCoefficients.FieldIndex

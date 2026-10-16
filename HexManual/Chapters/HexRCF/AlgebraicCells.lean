@@ -572,6 +572,21 @@ context, rejects a mismatched base model or exhausted depth bound, and restores
 elaborator state on failure. This interpretation still needs checked identities
 connecting its coefficient and divisor values to the original source statement.
 
+A source equation alone does not distinguish real conjugates.
+{name Hex.RCF.RealCoefficients.SourceIdentity.observe}`SourceIdentity.observe`
+reads a checked scalar sign at the native descriptor's selected root and binds
+every polynomial coefficient to its rational source query.
+{name Hex.RCF.RealCoefficients.SourceIdentity.margin}`SourceIdentity.margin`
+expresses membership in the source's isolating disc as a positive rational
+polynomial value. The equation and margin must hold at the same root;
+{name Hex.RCF.RealCoefficients.SourceIdentity.select}`SourceIdentity.select`
+then identifies that value with the source's selected embedding. The
+[checked source-identity example](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/SourceIdentityCases.lean)
+uses independently replayed equation and margin packets for the retained √2
+coordinate, with a separate ordinary-kernel body audit. These are source
+interpretation lemmas and a fixed-input example; general frozen source-history
+reconstruction still needs its own checked assembly.
+
 `CellQuote.finishOperations` takes the supplied-operation acceptance expression
 and an ordinary proof that its result is `some ()`. It kernel-checks that exact
 equation, transports it to the canonical checker, and performs the original
