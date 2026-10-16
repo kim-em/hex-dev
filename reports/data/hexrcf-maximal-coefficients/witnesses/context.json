@@ -410,5 +410,10 @@
     "own_build_concurrency": 1,
     "active_snapshot_usage_is_not_final_peak": true
   },
-  "scope": "Ordinary-kernel source/witness compatibility, actual proof dependencies and inspected manual layout; no generic backend completeness or performance claim."
+  "scope": "Ordinary-kernel source/witness compatibility, actual proof dependencies and inspected manual layout; no generic backend completeness or performance claim.",
+  "artifact_commit": "4257d8c82bfeb66bf1ace7c5055fb4f79c53ccd7",
+  "document_commit": "4257d8c82bfeb66bf1ace7c5055fb4f79c53ccd7",
+  "documents_sha256": {
+    "reports/hexrcf-maximal-coefficients.md": "e4789918387872b253c7cebb6bd4ca94a9244874f49079e3b31c17a1f1503e19"
+  }
 }
