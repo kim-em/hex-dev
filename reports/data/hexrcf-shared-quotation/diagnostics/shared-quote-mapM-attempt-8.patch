@@ -1,0 +1,266 @@
+diff --git a/adapters/HexRCF/RealCoefficients/RootQuote.lean b/adapters/HexRCF/RealCoefficients/RootQuote.lean
+index d5f89da2ab..b68bc8c386 100644
+--- a/adapters/HexRCF/RealCoefficients/RootQuote.lean
++++ b/adapters/HexRCF/RealCoefficients/RootQuote.lean
+@@ -9,6 +9,20 @@ public import HexRealClosure.RootReplay
+ public import HexRealClosure.TowerContext
+ public meta import HexRCF.RealCoefficients.Reify
+ public meta import HexRCF.Tactic
++
++public section
++namespace Hex.RCF.RealCoefficients.RootQuote
++
++/-- Restore the exact successful reader equation from its optional result. -/
++theorem read_eq {ε α : Type} (reader : Except ε α) (value : α)
++    (checked : reader.toOption = some value) : reader = .ok value := by
++  cases reader with
++  | error message => contradiction
++  | ok result =>
++    exact congrArg Except.ok (by simpa only [Except.toOption, Option.some.injEq] using checked)
++
++end Hex.RCF.RealCoefficients.RootQuote
++
+ public meta section
+ 
+ namespace Hex.RCF.RealCoefficients.RootQuote
+@@ -19,6 +33,10 @@ proposal leaves other literal rules available. Proposed equations are checked
+ against that exact decode before being used. -/
+ abbrev Decoder := Expr → MetaM (Option Expr)
+ 
++/-- A scalar proposal in the enclosing reflection request. Work performed by
++the callback consumes the same budget even when the callback declines. -/
++abbrev DecoderM := Expr → ReifyM (Option Expr)
++
+ /-- Reconstructed data and the checked equation from the original reader to
+ that data. Usage continues the caller's reflection request. -/
+ structure Result where
+@@ -35,6 +53,7 @@ private def replayRules : Array (Name × Name × Bool) := #[
+   (``TarskiCertificate.checkCached, ``TarskiCertificate.checkCached_eq, false),
+   (``TarskiCertificate.check, ``TarskiCertificate.check_eq, false),
+   (``Array.toList, ``Array.toList_range, false),
++  (``Array.mapM, ``Array.mapM_eq_foldlM_push, false),
+   (``Array.all, ``Array.all_toList, true),
+   (``Array.foldlM, ``Array.foldlM_toList, true)]
+ 
+@@ -69,8 +88,9 @@ private partial def irreducible? (protectedNames : Array Name) (expression : Exp
+ 
+ private def replayWhnf (expression : Expr) : ReifyM Expr :=
+   withoutModifyingEnv <| withFreshCache do
+-    let protectedNames := replayRules.filterMap fun rule =>
+-      if #[``Array.toList,``Array.all,``Array.foldlM].contains rule.1 then none else some rule.1
++    let protectedNames := (replayRules.filterMap fun rule =>
++      if #[``Array.toList,``Array.all,``Array.foldlM].contains rule.1 then none else some rule.1).push
++        ``Algebraic.Element.codec
+     for name in protectedNames do setReducibilityStatus name .irreducible
+     while true do
+       charge .proofNodes 1
+@@ -88,19 +108,26 @@ private def replayProof? (expression : Expr) : ReifyM (Option Expr) := do
+   for (key,name,inverse) in replayRules do
+     if head == key then
+       let ruleConst ← mkConstWithFreshMVarLevels name
+-      let (parameters,_,_) ← forallMetaTelescopeReducing (← inferType ruleConst)
++      let (parameters,binders,_) ← forallMetaTelescopeReducing (← inferType ruleConst)
+       let proof := mkAppN ruleConst parameters
+       let proof ← if inverse then mkEqSymm proof else pure proof
+       let type ← inferType proof
+       unless type.isAppOfArity ``Eq 3 do throwError "public replay rule is not an equation"
+       let lhs := type.getAppArgs[1]!
+       if ← withTransparency .all <| isDefEq lhs expression then
++        for index in [:parameters.size] do
++          if binders[index]! == .instImplicit then
++            let parameter ← instantiateMVars parameters[index]!
++            if parameter.isMVar then
++              let evidence ← synthInstance (← inferType parameter)
++              unless ← isDefEq parameter evidence do
++                throwError "public replay rule has an incompatible instance"
+         let proof ← instantiateMVars proof
+         unless !proof.hasMVar do throwError "public replay rule left unresolved arguments"
+         return some proof
+   return none
+ 
+-private def codecProof? (decode : Decoder) (expression : Expr) : ReifyM (Option Expr) := do
++private def codecProof? (decode : DecoderM) (expression : Expr) : ReifyM (Option Expr) := do
+   charge .proofNodes 1
+   if expression.hasLooseBVars || expression.hasMVar then return none
+   if let .proj ``ValueCodec 1 codec := expression.getAppFn then
+@@ -134,7 +161,7 @@ private def reflexiveProof? (expression : Expr) : ReifyM (Option Expr) := do
+   unless ← withTransparency .all <| withNewMCtxDepth (isDefEq args[1]! args[2]!) do return none
+   let accepted := mkApp2 (mkConst ``Decidable.isTrue) proposition (← mkEqRefl args[1]!)
+   return some (← mkAppM ``Subsingleton.elim #[expression,accepted])
+-private partial def demanded (decode : Decoder) (dependent : Expr → ReifyM Expr) (expression : Expr) :
++private partial def demanded (decode : DecoderM) (dependent : Expr → ReifyM Expr) (expression : Expr) :
+     ReifyM (Option (Expr × Expr × Expr)) := Core.withIncRecDepth do
+   charge .proofNodes 1
+   Core.checkSystem "demanded literal-reader boundary"
+@@ -183,8 +210,8 @@ private partial def demanded (decode : Decoder) (dependent : Expr → ReifyM Exp
+     return none
+ 
+ private def checkedStep (current whole subject law : Expr) : ReifyM (Expr × Expr) := do
+-  let type ← inferType subject
+   let lawType ← inferType law
++  let type := lawType.getAppArgs[0]!
+   let rhs := lawType.getAppArgs[2]!
+   let motive ← withLocalDeclD `boundary type fun boundary => do
+     let body := whole.replace fun expression => if expression == subject then some boundary else none
+@@ -194,13 +221,16 @@ private def checkedStep (current whole subject law : Expr) : ReifyM (Expr × Exp
+   let next := motive.bindingBody!.instantiate1 rhs
+   if next == whole then throwError "demanded boundary made no change"
+   let statement ← mkEq current next
+-  let candidate := mkExpectedPropHint (← mkAppM ``congrArg #[motive,law]) statement
++  let resultType ← inferType current
++  let congruence := mkApp6 (mkConst ``congrArg [← getLevel type,← getLevel resultType])
++    type resultType subject rhs motive law
++  let candidate := mkExpectedPropHint congruence statement
+   accountProof candidate
+   let proof ← Hex.RCF.checkProof `RootQuote.step statement candidate
+   return (next,proof)
+ 
+ 
+-private def checkedBool (decode : Decoder) (dependent : Expr → ReifyM Expr) (original : Expr) : ReifyM (Bool × Expr) := do
++private def checkedBool (decode : DecoderM) (dependent : Expr → ReifyM Expr) (original : Expr) : ReifyM (Bool × Expr) := do
+   let mut current := original
+   let mut transport ← mkEqRefl original
+   while true do
+@@ -221,7 +251,7 @@ private def checkedBool (decode : Decoder) (dependent : Expr → ReifyM Expr) (o
+     transport ← mkEqTrans transport proof
+   throwError "rcf: literal Boolean loop terminated unexpectedly"
+ 
+-private partial def discharge (decode : Decoder) (node : Expr) : ReifyM Expr := Core.withIncRecDepth do
++private partial def discharge (decode : DecoderM) (node : Expr) : ReifyM Expr := Core.withIncRecDepth do
+   Core.checkSystem "dependent decision discharge"
+   unless node.isAppOfArity ``Bool.rec 5 do
+     throwError "dependent sibling is not a single Boolean reflects_decide argument: {node.getAppFn.constName?}, arguments={node.getAppNumArgs}"
+@@ -258,7 +288,7 @@ private partial def discharge (decode : Decoder) (node : Expr) : ReifyM Expr :=
+   let proof ← Hex.RCF.checkProof `RootQuote.discharge statement candidate
+   return proof
+ 
+-private partial def quoteCore (reader : Expr) (decode : Decoder) : ReifyM Result := do
++private partial def quoteCore (reader : Expr) (decode : DecoderM) : ReifyM Result := do
+   accountProof reader
+   let reader ← Hex.RCF.checkExpr `RootQuote.reader reader
+   let type ← whnf (← inferType reader)
+@@ -291,6 +321,13 @@ private partial def quoteCore (reader : Expr) (decode : Decoder) : ReifyM Result
+     transport ← mkEqTrans transport proof
+   throwError "rcf: literal quotation loop terminated unexpectedly"
+ 
++/-- Quote inside an existing reflection request. Scalar callbacks, replay and
++the final checked proof share its budget. Structured callback failures propagate
++without trying another rule. The caller supplies the enclosing transaction;
++`quote` provides that boundary for an ordinary `MetaM` callback. -/
++def quoteWith (reader : Expr) (decode : DecoderM := fun _ => pure none) : ReifyM Result :=
++  quoteCore reader decode
++
+ /-- Quote a supplied literal replay reader with an ordinary-kernel equation
+ `Except.toOption reader = some value`. Public replay laws eliminate checked
+ caches, and core conditional laws retain dependent proof arguments. Every
+@@ -298,15 +335,16 @@ step consumes the existing reflection budget. Success restores caller
+ metavariables and retains checked auxiliaries and accepted decoder callbacks'
+ environment effects; rejection or failure restores
+ the complete saved state. Source identities and real semantics compose with
+-this reader equation separately. No handler is registered here. -/
+-def quote (reader : Expr) (decode : Decoder := fun _ => pure none)
++this reader equation separately. Scalar callbacks share the same reflection
++state and budget. No handler is registered here. -/
++def run (reader : Expr) (decode : DecoderM := fun _ => pure none)
+     (config : Hex.RealFormula.Reify.Config := {})
+     (usage : Hex.Reflect.BudgetUsage := Hex.Reflect.Budget.zero) :
+     MetaM (Except Hex.RealFormula.Reify.Error Result) := do
+   let saved ← saveState
+   let depthLimit := (← readThe Core.Context).maxRecDepth
+   let auxName := mkPrivateName (← getEnv) (← mkFreshUserName `RootQuote)
+-  let action := ((quoteCore reader decode).run
++  let action := ((quoteWith reader decode).run
+     {config,budget := {initial := config.ring.budget,consumed := usage}}).run
+   let (result,_) ← tryFinally' (withDeclNameForAuxNaming auxName <| withNewMCtxDepth <|
+       Core.withIncRecDepth <| withOptions (fun options => maxRecDepth.set
+@@ -319,4 +357,13 @@ def quote (reader : Expr) (decode : Decoder := fun _ => pure none)
+       | _ => saved.restore
+   return result.map (·.1)
+ 
++/-- Quote with an ordinary `MetaM` scalar callback. This preserves the original
++API; callbacks which perform nested quotation use `run` and `quoteWith` to
++keep that work in the enclosing reflection request. -/
++def quote (reader : Expr) (decode : Decoder := fun _ => pure none)
++    (config : Hex.RealFormula.Reify.Config := {})
++    (usage : Hex.Reflect.BudgetUsage := Hex.Reflect.Budget.zero) :
++    MetaM (Except Hex.RealFormula.Reify.Error Result) :=
++  run reader (fun expression => liftM (decode expression)) config usage
++
+ end Hex.RCF.RealCoefficients.RootQuote
+diff --git a/adapters/HexRCF/RealCoefficients/ScalarQuote.lean b/adapters/HexRCF/RealCoefficients/ScalarQuote.lean
+index 388e4453a3..17c7e90301 100644
+--- a/adapters/HexRCF/RealCoefficients/ScalarQuote.lean
++++ b/adapters/HexRCF/RealCoefficients/ScalarQuote.lean
+@@ -43,6 +43,23 @@ private def finish (codec facts literal : Expr) (result : RootQuote.Result) : Re
+   let proof ← Hex.RCF.checkProof `ScalarQuote.accepted (← inferType proof) proof
+   return {result with proof, usage := (← get).budget.consumed}
+ 
++/-- Quote a supplied scalar inside an existing reflection request. The strict
++reader, predecessor proposals and canonical transport all consume that request.
++The caller supplies the enclosing transaction; `quote` provides one for an
++ordinary `MetaM` predecessor callback. -/
++def quoteWith (codec facts literal : Expr)
++    (decode : RootQuote.DecoderM := fun _ => pure none) : ReifyM RootQuote.Result := do
++  unless codec.getAppFn.isConstOf ``Algebraic.Element.codec do
++    throwError "rcf: scalar quotation expects an Element.codec application"
++  let parameters := (← getConstInfo ``Algebraic.Element.codec).type.getNumHeadForalls
++  unless codec.getAppNumArgs == parameters do
++    throwError "rcf: scalar quotation expects a complete codec application"
++  let strict := mkAppN (mkConst ``Algebraic.Element.signCodec codec.getAppFn.constLevels!)
++    (codec.getAppArgs.push facts)
++  let reader := mkApp (.proj ``ValueCodec 1 strict) literal
++  let result ← RootQuote.quoteWith reader decode
++  finish codec facts literal result
++
+ /-- Quote a literal through the owner's finite supplied-sign codec and return
+ an ordinary-kernel equation for its canonical decoder. The canonical
+ `Element.codec` application retains all original implicit arguments; reinference
+@@ -59,31 +76,16 @@ def quote (codec facts literal : Expr) (decode : RootQuote.Decoder := fun _ => p
+   let saved ← saveState
+   let depthLimit := (← readThe Core.Context).maxRecDepth
+   let auxName := mkPrivateName (← getEnv) (← mkFreshUserName `ScalarQuote)
++  let action := ((quoteWith codec facts literal (fun expression => liftM (decode expression))).run
++    {config,budget := {initial := config.ring.budget,consumed := usage}}).run
+   let (result,_) ← tryFinally' (withDeclNameForAuxNaming auxName <| withNewMCtxDepth <|
+       Core.withIncRecDepth <| withOptions (fun options => maxRecDepth.set
+-        (debug.skipKernelTC.set (Elab.async.set options false) false) depthLimit) do
+-    unless codec.getAppFn.isConstOf ``Algebraic.Element.codec do
+-      throwError "rcf: scalar quotation expects an Element.codec application"
+-    let parameters := (← getConstInfo ``Algebraic.Element.codec).type.getNumHeadForalls
+-    unless codec.getAppNumArgs == parameters do
+-      throwError "rcf: scalar quotation expects a complete codec application"
+-    let strict := mkAppN (mkConst ``Algebraic.Element.signCodec codec.getAppFn.constLevels!)
+-      (codec.getAppArgs.push facts)
+-    let reader := mkApp (.proj ``ValueCodec 1 strict) literal
+-    let quoted ← RootQuote.quote reader decode config usage
+-    let result ← match quoted with
+-      | .error error => return .error error
+-      | .ok result => pure result
+-    let action := (finish codec facts literal result).run
+-      {config,budget := {initial := config.ring.budget,consumed := result.usage}}
+-    match ← action.run with
+-    | .error error => return .error error
+-    | .ok (result,_) => return .ok result) fun result => do
++        (debug.skipKernelTC.set (Elab.async.set options false) false) depthLimit) action) fun result => do
+       match result with
+       | some (.ok _) => modify fun state => {state with
+           mctx := saved.meta.mctx, postponed := saved.meta.postponed,
+           zetaDeltaFVarIds := saved.meta.zetaDeltaFVarIds}
+       | _ => saved.restore
+-  return result
++  return result.map (·.1)
+ 
+ end Hex.RCF.RealCoefficients.ScalarQuote
+diff --git a/lakefile.lean b/lakefile.lean
+index 6f5bf7d203..88c8eee47c 100644
+--- a/lakefile.lean
++++ b/lakefile.lean
+@@ -1338,7 +1338,7 @@ lean_lib HexConformance where
+   globs := Array.filter (fun g => !isParkedGlob g) <| #[
+ `HexPosDef.Conformance, `HexArith.Conformance, `HexArith.CrossCheck, `HexBerlekamp.Conformance, `HexBerlekampZassenhaus.Conformance, `HexBerlekampZassenhaus.CrossCheck, `HexBerlekampZassenhausTheory.Conformance, `HexConway.Conformance, `HexGF2.Conformance, `HexGF2.CrossCheck, `HexGF2.FastCheck, `HexGFq.Conformance, `HexGFq.CrossCheck, `HexGFqField.Conformance, `HexGFqRing.Conformance, `HexGramSchmidt.Conformance, `HexGraphIso.Conformance, `HexHensel.Conformance, `HexHensel.CrossCheck, `HexInterval.Conformance, `HexIntervalTheory.IntervalConformance, `HexInterval.CenterConformance, `HexInterval.ScaleConformance, `HexInterval.PropagatorConformance, `HexInterval.ScopeConformance, `HexInterval.StructuralMatcherConformance, `HexInterval.MatcherSchedulerConformance, `HexInterval.NestedBranchConformance, `HexInterval.StructureViewConformance, `HexInterval.PolicyConformance, `HexInterval.PolicyFrontierConformance, `HexInterval.PolicyDriverConformance, `HexInterval.PackageRegistryConformance, `HexInterval.DyadicIntervalConformance, `HexInterval.DyadicRulesConformance, `HexInterval.PayloadArenaConformance, `HexInterval.PayloadSessionConformance, `HexInterval.PolicySessionConformance, `HexInterval.PolicyFunctionConformance, `HexInterval.SemanticReplayConformance, `HexInterval.ChronologicalReplayConformance, `HexInterval.GenericInstanceReconstructionConformance, `HexInterval.ProofEmitterConformance, `HexInterval.TraceReplayConformance, `HexInterval.SinTenIntervalConformance, `HexIntervalTheory.DyadicIntervalConformance, `HexIntervalTheory.CenteredConformance, `HexIntervalTheory.SineSignConformance, `HexIntervalTheory.SineProofConformance, `HexIntervalTheory.SineTacticConformance, `HexIntervalTheory.ProofRegistryConformance, `HexIntervalTheory.ExpSignConformance, `HexIntervalTheory.ReluConformance, `HexIntervalTheory.RefuteConformance, `HexIntervalTheory.PntLogTableConformance, `HexIntervalTheory.PntNestedLogConformance, `HexIntervalTheory.PntExpTailConformance, `HexIntervalTheory.PntTable12Conformance, `HexIntervalTheory.PntTable12OrdinaryConformance, `HexIntervalAlgebraic.PolynomialDispatchConformance, `HexIntervalTheory.PntTable12LogConformance, `HexIntervalTheory.PntFks2ShardConformance, `HexIntervalTheory.LogTablePrecisionConformance, `HexIntervalTheory.IntegralCanaryConformance, `HexIntervalTheory.PntBKLNWExpConformance, `HexIntervalTheory.PntBKLNWPowConformance, `HexIntervalTheory.PntPrimeLogSmallConformance, `HexIntervalTheory.PntDusartExpConformance, `HexIntervalTheory.SinTenConformance, `HexIntervalTheory.SinTenIntervalConformance, `HexIntervalTheory.CosBillionConformance, `HexHermite.Conformance, `HexLLL.Conformance, `HexMatrix.Conformance, `HexRealFormula.Conformance, `HexRealFormulaTheory.Conformance, `HexRealFormulaTheory.Arithmetic, `HexMvPolyFixtures, `HexMvPoly.Conformance, `HexMvPolyTheory.Conformance, `HexSparsePolyFixtures, `HexSparsePoly.Conformance, `HexRowReduce.Conformance, `HexDeterminant.Conformance, `HexDeterminantalIdealFixtures, `HexDeterminantalIdeal.Conformance, `HexDeterminant.Carriers, `HexBareiss.Fixtures, `HexBareiss.Conformance, `HexModularMatrix.Fixtures, `HexModularMatrix.Conformance, `HexDet.Conformance, `HexDet.Carriers, `HexCharPoly.Fixtures, `HexCharPoly.Carriers, `HexCharPoly.Conformance, `HexModArith.Conformance, `HexModArith.FastCheck, `HexModular.Conformance, `HexPolyZGcd.Conformance, `HexMvGcd.Conformance, `HexNumberField.Conformance, `HexNumberFieldTower.Conformance, `HexPoly.Conformance, `HexPrimality.CertificateProducer, `HexPrimality.ConstructionConformance, `HexPrimality.ConstructionRetry, `HexPrimality.ConstructionRegistration, `HexPrimality.Curve25519Replay, `HexPrimality.Curve448Replay, `HexPrimality.SqufofConformance, `HexPrimality.Conformance, `HexECPP.NativeConformance, `HexECPP.Conformance, `HexECPP.Fixture17, `HexECPP.PolicyProbe, `HexECPP.Fixture65, `HexECPP.Fixture256, `HexECPP.Fixture512, `HexECPP.PariFixtures, `HexECPP.ImportConformance, `HexECPPTheory.NativeConformance, `HexECPPTheory.NativeFixtures, `HexECPPTheory.Conformance, `HexECPPTheory.CompactFixtures, `HexECPPTheory.CompactReject, `HexECPPTheory.PariProcess, `HexECPPTheory.Reject, `HexECPPTheory.HasseAudit, `HexECPPTheory.SoundnessAudit, `HexPrimalityTheory.Conformance, `HexPrimalityTheoryConformance.OptIn, `HexPolyFp.Conformance, `HexPolyZ.Conformance, `HexRCF.Conformance, `HexRealRoots.Conformance, `HexRealRootsTheory.Conformance, `HexResultant.Conformance, `HexRoots.Conformance].map Glob.one ++
+     #[`HexRCF.RootQuoteData, `HexRCF.RootQuoteCases,
+-      `HexRCF.RootQuoteSource, `HexRCF.RootQuoteConformance, `HexRCF.RationalQuoteData, `HexRCF.RationalQuoteCases, `HexRCF.RationalQuoteConformance, `HexRCF.ScalarQuoteCases, `HexRCF.ScalarQuoteConformance,
++      `HexRCF.RootQuoteSource, `HexRCF.RootQuoteConformance, `HexRCF.RationalQuoteData, `HexRCF.RationalQuoteCases, `HexRCF.RationalQuoteConformance, `HexRCF.ScalarQuoteCases, `HexRCF.ScalarQuoteConformance, `HexRCF.SharedQuoteCases, `HexRCF.SharedQuoteConformance,
+       `HexRCF.SourceIdentityKernel, `HexRCF.SourceIdentityCases, `HexRCF.MaximalCoefficientsKernel, `HexRCF.MaximalCoefficientsConformance, `HexRCF.MaximalCoefficients, `HexRCF.CellReplay.AssembledKernel, `HexRCF.CellReplay.Assembled, `HexRCF.CellReplay.OperationsPublic, `HexRCF.CellReplay.OperationsKernel, `HexRCF.CellReplay.Operations, `HexRCF.CellReplay.Algebraic.Emit, `HexRCF.CellReplay.Algebraic.MutationData0, `HexRCF.CellReplay.Algebraic.Mutations, `HexRCF.CellReplay.Algebraic.Refusals, `HexRCF.CellReplay.Algebraic.Guards, `HexRCF.CellReplay.Algebraic.Meaning, `HexRCF.CellReplay.Algebraic.Boolean, `HexRCF.CellReplay.Algebraic.BooleanSources, `HexRCF.CellReplay.Algebraic.BooleanBinding, `HexRCF.CellReplay.Algebraic.BooleanQuoted, `HexRCF.CellBuildConformance, `HexRCF.CellDiscoverLinear, `HexRCF.CellDiscoverAlgebraic, `HexRCF.CellDiscoverCases, `HexRCF.CellDiscoverProofs, `HexRCF.CellRequestedConformance, `HexRCF.CellDecisionProofs, `HexRCF.CellCodecProofs, `HexRCF.CellExecutionProofs, `HexRCF.NumberFieldCellsConformance, `HexRCF.GatherCellsConformance, `HexRCF.RealModelConformance, `HexRCF.AlgebraicPreparationCases, `HexRCF.AlgebraicPreparationConformance, `HexRCF.SourceAcceptancePublic, `HexRCF.AlgebraicCellsConformance, `HexRCF.CellReplay.Algebraic.Canonical, `HexRCF.CellReplay.Algebraic.Check, `HexRCF.CellReplay.Algebraic.Convert, `HexRCF.CellReplay.Algebraic.Inputs, `HexRCF.CellReplay.Algebraic.LiteralData0, `HexRCF.CellReplay.Algebraic.LiteralData1, `HexRCF.CellReplay.Algebraic.Literals, `HexRCF.CellReplay.Algebraic.Quote, `HexRCF.CellReplay.Algebraic.Quoted, `HexRCF.CellReplay.Algebraic.CompleteQuote, `HexRCF.CellReplay.Algebraic.CompleteQuoted, `HexRCF.CellReplay.Algebraic.Radical, `HexRCF.CellReplay.Algebraic.Read, `HexRCF.CellReplay.Algebraic.Records, `HexRCF.CellReplay.Algebraic.ScalarData0, `HexRCF.CellReplay.Algebraic.ScalarData1, `HexRCF.CellReplay.Algebraic.Scalars, `HexRCF.CellReplay.Algebraic.Schema, `HexRCF.CellReplay.Algebraic.Sections, `HexPolyDet.Conformance, `HexRank.Conformance, `HexGenericRank.Conformance, `HexGenericRank.Fixtures, `HexRowReduce.FieldFixtures, `HexRealFormulaTheory.ReifierConformance, `HexRCF.RealFormulaConformance, `HexRCF.RealCoefficientsConformance, `HexRCF.AlgebraicProgress, `HexRCF.IsolationProgress, `HexRCF.RadicalProgress, `HexRCF.ProductionProgress, `HexRCF.FieldRootsConformance, `HexRCF.CertificationInputs, `HexRCF.RationalSources, `HexRCF.ProofEvidence, `HexRCF.CheckedConversions, `HexRCF.ReplayModes, `HexRCF.CarrierModes, `HexRCF.SignIndex, `HexRCF.PreparedCoefficients, `HexRCF.FiniteReplay, `HexRCF.FiniteSignsConformance, `HexRCF.CellReplay.OutsideLiterals, `HexRCF.CellReplay.Zero, `HexRCF.CellReplay.ZeroLiterals, `HexRCF.CellReplay.Valuation, `HexRCF.CellReplay.ModuleCheck, `HexRCF.CellReplay.Schema, `HexRCF.CellReplay.Check, `HexRCF.CellReplay.Ordinary, `HexRCF.CellReplay.Quote, `HexRCF.CellReplay.Controls, `HexRCF.CellReplay.Quoted, `HexRCF.CellReplay.Refusals, `HexRCF.CellReplay.Emit, `HexRCF.CellReplay.LiteralData0, `HexRCF.CellReplay.Literals, `HexRCF.CellReplay.MutationData0, `HexRCF.CellReplay.Mutations, `HexRCF.FiniteMatrix.Binding, `HexRCF.FiniteMatrix.Guards.Binding, `HexRCF.FiniteMatrix.Guards.Quotient.Binding, `HexRCF.FiniteMatrix.Guards.Quotient.Controls, `HexRCF.FiniteMatrix.Guards.Quotient.Emit, `HexRCF.FiniteMatrix.Guards.Quotient.Literals, `HexRCF.FiniteMatrix.Guards.Quotient.Ordinary, `HexRCF.FiniteMatrix.Guards.Quotient.Quote, `HexRCF.FiniteMatrix.Guards.Quotient.Reader, `HexRCF.FiniteMatrix.Guards.Quotient.Records, `HexRCF.FiniteMatrix.Guards.Quotient.Source, `HexRCF.FiniteMatrix.Guards.Controls, `HexRCF.FiniteMatrix.Guards.Data, `HexRCF.FiniteMatrix.Guards.Domains, `HexRCF.FiniteMatrix.Guards.Emit, `HexRCF.FiniteMatrix.Guards.LiteralData0, `HexRCF.FiniteMatrix.Guards.Literals, `HexRCF.FiniteMatrix.Guards.Meaning, `HexRCF.FiniteMatrix.Guards.MutationData0, `HexRCF.FiniteMatrix.Guards.Mutations, `HexRCF.FiniteMatrix.Guards.Ordinary, `HexRCF.FiniteMatrix.Guards.Quote, `HexRCF.FiniteMatrix.Guards.Read, `HexRCF.FiniteMatrix.Guards.Records, `HexRCF.FiniteMatrix.Guards.Refusals, `HexRCF.FiniteMatrix.Guards.Schema, `HexRCF.FiniteMatrix.Data, `HexRCF.FiniteMatrix.Emit, `HexRCF.FiniteMatrix.Inputs, `HexRCF.FiniteMatrix.KernelControls, `HexRCF.FiniteMatrix.LiteralData0, `HexRCF.FiniteMatrix.LiteralData1, `HexRCF.FiniteMatrix.LiteralData2, `HexRCF.FiniteMatrix.LiteralData3, `HexRCF.FiniteMatrix.LiteralData4, `HexRCF.FiniteMatrix.LiteralData5, `HexRCF.FiniteMatrix.Literals, `HexRCF.FiniteMatrix.ModuleCheck, `HexRCF.FiniteMatrix.Ordinary, `HexRCF.FiniteMatrix.Packings, `HexRCF.FiniteMatrix.Quote, `HexRCF.FiniteMatrix.Controls, `HexRCF.FiniteMatrix.Refusals, `HexRCF.FiniteMatrix.Read, `HexRCF.FiniteMatrix.Restore, `HexRCF.FiniteMatrix.Schema, `HexRCF.FiniteMatrix.Selected, `HexRCF.FiniteMatrix.Semantics, `HexRCF.FiniteMatrix.Signs, `HexRCF.TowerSamples, `HexRCF.Samples, `HexRCF.RealizationData, `HexRCF.Realization, `HexRCF.NumberField, `HexRCF.Gather, `HexRCF.GatherCatalog, `HexRCF.RegisteredGatherConformance, `HexRCF.GeneratorWindowInputs, `HexRCF.GeneratorWindow, `HexRCF.CertificationProofs, `HexRCF.SuppliedIrreducible, `HexRCF.SuppliedIrreducibleProofs, `HexRCF.SuppliedBudget, `HexRCF.NativeFormulaConformance, `HexRCF.NativeSpecializeConformance, `HexRCF.NativeSamplesConformance, `HexRCF.NativeSampleModelConformance, `HexRCF.NativeSampleModelLiterals, `HexRCF.NativeSourcesConformance, `HexRCF.NativeSelectionLiterals, `HexRCF.NativeSelectionConformance, `HexRCF.NativeSelectionOrdinaryConformance, `HexRCF.NativeSelectionOrderedConformance, `HexRCF.SectionReplayConformance, `HexRCF.SectionProduceConformance, `HexRCF.SectionOrdinaryConformance, `HexRCF.PointReplayConformance, `HexRCF.PointProduceConformance, `HexRCF.PointOrdinaryConformance, `HexRCF.RootReplayLiterals, `HexRCF.RootReplayConformance, `HexRCF.RootReplayOrdinaryConformance, `HexRCF.NestedRootLiterals, `HexRCF.NestedRootProduceConformance, `HexRCF.NestedRootOrdinaryConformance, `HexRCF.RootTransportData, `HexRCF.RootTransportLiterals, `HexRCF.RootTransportConformance, `HexRCF.RootTransportOrdinaryConformance, `HexRCF.NestedTransport.Frame, `HexRCF.NestedTransport.Context, `HexRCF.NestedTransport.Map, `HexRCF.NestedTransport.Conversion, `HexRCF.NestedTransport.Fields, `HexRCF.NestedTransport.Restore, `HexRCF.NestedTransport.Predecessor, `HexRCF.NestedTransport.Facts, `HexRCF.NestedTransport.Constants, `HexRCF.NestedTransport.Operations, `HexRCF.NestedTransport.RootRead, `HexRCF.NestedTransport.Read, `HexRCF.NestedTransport.Model, `HexRCF.NestedTransport.Source, `HexRCF.NestedTransport.Ordinary, `HexRCF.NestedTransport.Controls, `HexRCF.NestedTransport.Literals, `HexRCF.NestedTransport.EndpointLiterals, `HexRCF.NestedTransport.SignLiterals, `HexRCF.NestedTransport.SignData, `HexRCF.TotalAlgebraicProofs, `HexRCF.AlgebraicDivision, `HexRCF.NormalizedCoefficients, `HexRCF.NormalizedInputs, `HexRCF.RegisteredConstants, `HexRCF.NamedConstants, `HexRCF.NamedConstantProofs, `HexRCF.MixedConstants, `HexRCF.CoarseConstants, `HexRCF.RealCoefficientTactic, `HexRCF.RealCoefficientCommonField, `HexRCF.CommonFieldPresentation, `HexRCF.RootAliasesConformance, `HexRCF.RationalRoots, `HexRCF.AlgebraicRoots, `HexRCF.FormulaConformance, `HexRCF.LiteralSignConformance, `HexRCF.FieldSpecializeConformance, `HexRCF.SignDetFieldProofs, `HexRCF.AdmissionConformance, `HexRCF.IsolationConformance].map Glob.one
+ 
+     ++ #[

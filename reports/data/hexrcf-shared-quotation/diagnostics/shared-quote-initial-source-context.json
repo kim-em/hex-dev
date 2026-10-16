@@ -1,0 +1,32 @@
+{
+  "source_commit": "cde546ecf995374706bfa99e4ec5e788f8470d25",
+  "capturedAt": "2026-10-16T22:08:46.639440+00:00",
+  "sources": {
+    "adapters/HexRCF/RealCoefficients/RootQuote.lean": "f65b106ba5f13c40e29be31aef69c5f9b56637210669b61e7d29aa985188c6c4",
+    "adapters/HexRCF/RealCoefficients/ScalarQuote.lean": "6968ab66ac0a7b526674726790ca564a599d0973cef67293b9f11b68f87f7117",
+    "conformance/HexRCF/SharedQuoteCases.lean": "3eb88e084a200c68252cc83ea0581912e396df4bf0ecd0a9db792d3b513690ba",
+    "conformance/HexRCF/SharedQuoteConformance.lean": "4d003b32b1222232fce973ee7d993151410f59a77b8504ed32a2e3d597e4b179",
+    "HexManual/Chapters/HexRCF/RootQuote.lean": "74fc1402846f87ff5736bc27e6d91158b5bfe39e3cc70665da0a6b28eff00ab6",
+    "lakefile.lean": "c61d77c536560c06770424901cb16095e7fe67f6eb88ecf26e2f7955f84de2f6"
+  },
+  "validation_log": "shared-quote-validation-1.log",
+  "validation": "11784 jobs; 1min41.734s; CPU2min55.675s; peak3.4GiB/noSwap",
+  "resource_policy": "Serial aggregate32GiB, MemorySwapMax0, LEAN_NUM_THREADS2; live renderer properties captured separately",
+  "original_scalar_pr": 10973,
+  "original_scalar_pr_head": "6c99a1898d21a4ff84a0e2317b211633498be9d7",
+  "baseline_tree": "bc8e1ba7601daab18bba1310f5d9c70acfd6766c",
+  "proof_nodes": {
+    "scalar": 817,
+    "polynomial": 1065,
+    "composed": 1882
+  },
+  "scope": "Supplied finite sign facts and exact polynomial reader; not generic source/provider/predecessor histories, strict compiled whole-reader missing-record behavior or complete extension.",
+  "render_properties": {
+    "ActiveState": "active",
+    "MainPID": "494942",
+    "ExecStart": "{ path=/run/current-system/sw/bin/env ; argv[]=/run/current-system/sw/bin/env LAKE_NO_CACHE=true lake build SharedQuoteRender ; ignore_errors=no ; start_time=[Fri 2026-10-16 22:08:46 UTC] ; stop_time=[n/a] ; pid=494942 ; code=(null) ; status=0/0 }",
+    "MemoryMax": "34359738368",
+    "MemorySwapMax": "0",
+    "Environment": "PATH=/home/kim/.claude-patched:/home/kim/.local/bin:/home/kim/bin:/home/kim/.npm-global/bin:/run/wrappers/bin:/home/kim/.nix-profile/bin:/nix/profile/bin:/home/kim/.local/state/nix/profile/bin:/etc/profiles/per-user/kim/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin LEAN_NUM_THREADS=2"
+  }
+}
