@@ -137,12 +137,25 @@ There is no separately anchored tutorial for this library. The READMEs accuratel
 state that both packages are unreleased; ordinary monorepo imports do not imply
 availability from published companion packages.
 
-Validation includes both public libraries, complete tests and lint/axiom target,
-the native Liouville integration, the full monorepo build and manual, import/DAG,
-benchmark/proof boundary, named-admission and phase/manual checks. The current
-manual is rendered and inspected at desktop and narrow widths. The native source
-and configuration bytes are checked against the measured candidate; unchanged
-benchmark inputs and fixtures are reused rather than measured again.
+Validation passes both public libraries, complete tests and lint/axiom target,
+the 23-case native Liouville integration, the 14,731-job full monorepo build and
+manual, import/DAG, benchmark/proof boundary, named-admission and phase/manual
+checks. The current manual is rendered and visually inspected at 1440px and
+390px, including finite signs, registered order, successive infinitesimals,
+Liouville integration and the computational/proof boundary. No horizontal
+overflow is observed.
+
+After merging #10960/#10962, the global Lake file adds test/semantic and
+provider-history experiment globs. The original comparison's strict current-mode
+check correctly refuses that difference. A separate
+[current build reconstruction](ordered-fn-declaration-review/core-runtime/README.md)
+binds all 5,172 current source/configuration inputs and reproduces the measured
+executable, SDK, sixteen pins, complete 89-file native closure and captured
+generated C byte-for-byte. Its build and correctness verification collect no
+measurements. The readonly checker verifies retained and current inputs without
+weakening the original replay. The production/manual sources remain unchanged
+through this rebase; their existing full build and visual inspection are reused.
+Unchanged benchmark inputs and fixtures are not measured again.
 
 Only `HexOrderedFn.done_through` advances from 5 to 7. The companion remains at 7;
 all other phase counters and the release manifest remain unchanged. This is local
