@@ -49,8 +49,10 @@ without a fixed list of permitted numerators. It recognizes canonical
 `[0,n,d]` payloads with a positive coprime denominator and requires the whole
 codec record to match the supplied registry's rational base codec under
 reducible transparency. Other contexts decline without unfolding their producer.
-The registry expression is type checked; an ill-typed argument is an input
-error. Numerator and denominator identities are ordinary proofs; the
+The argument's inferred type must be `BaseContext.Registry`; complete proof
+checking still occurs when the enclosing quotation consumes the equation.
+The codec must be reducibly the rational base codec: ordinary definition aliases
+or already unfolded codecs may decline. Numerator and denominator identities are ordinary proofs; the
 enclosing quotation checks the proposed equation against the original decode.
 
 ```lean

@@ -6,8 +6,9 @@ fixture-specific finite scalar whitelist. It recognizes `[0,n,d]`, with a
 positive denominator coprime to the numerator.
 The complete codec record must be definitionally equal to the supplied
 registry's rational-base codec under reducible transparency. Eligibility does
-not unfold a selected-root child context. An ill-typed registry is a terminal
-input error. Matching a decoding application alone is
+not unfold a selected-root child context. An argument whose inferred type is not the registry type is a terminal
+input error. Complete checking still occurs when quotation consumes its proof.
+Ordinary definition aliases or already unfolded base codecs may decline. Matching a decoding application alone is
 insufficient: a regression keeps the decoding function unchanged while
 replacing the encoder and requires refusal.
 
@@ -58,7 +59,7 @@ render/capture artifacts and scope are in the
 [source-bound record](data/hexrcf-rational-quotation/context.json).
 
 This quotes supplied rational-base readers. It does not authenticate original
-source coefficients, proposals, registry/provider or predecessor histories,
+source coefficients, proposals, registry/provider or predecessor histories, handle extension-context scalars,
 supply a general tactic handler, establish accepted completeness, or fix strict
 compiled missing-record rejection. The stronger native algebraic-input case
 still reaches its diagnostic deadline; see the separate
@@ -70,8 +71,8 @@ pins `0b3ed6a720d1716d11ffb648b84c4728bc5635e8`. Its 11,766-job selection
 passes both quotation audits, rational compatibility, algebraic source/input
 consumers and the checked manual chapter. Its 188 generated theorem bodies are
 required exactly, including a separate frozen negative-fraction input with raw
-`Int.negSucc`. A well-typed selected-root child codec declines within 200,000
-heartbeats. The all-rational original-input build retains every owner as a parent
+`Int.negSucc`. A well-typed selected-root child codec declines within 200,000 raw
+heartbeats (`maxHeartbeats 200`). The all-rational original-input build retains every owner as a parent
 point, checks both quantifier verdicts and refuses a late original zero guard.
 The revised full 14,316-job renderer passes in 4 min 14.158 s, peak 5.8 GiB/no
 swap. All eight revised captures were opened; the same 11 quotation-section

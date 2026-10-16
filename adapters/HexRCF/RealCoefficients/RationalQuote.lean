@@ -46,7 +46,10 @@ proofs establish its exact numerator and denominator. Use this callback with
 `RootQuote.quote`, which checks its equation against the demanded input and
 accounts for the proof. Codec eligibility uses reducible transparency, so a
 foreign selected-root context is not unfolded. A different codec or noncanonical
-payload declines. An ill-typed registry is a terminal input error.
+payload declines. The base must be reducibly `NumberField.base registry`;
+ordinary definition aliases or already unfolded codecs may decline as well.
+An argument whose inferred type is not `BaseContext.Registry` is a terminal
+input error. The enclosing quotation kernel-checks the proposed equation.
 This does not authenticate a source coefficient, registry or context history. -/
 def decoder (registry : Expr) : RootQuote.Decoder := fun expression => do
   if expression.hasMVar || registry.hasMVar then return none

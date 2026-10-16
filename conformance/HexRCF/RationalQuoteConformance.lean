@@ -37,8 +37,7 @@ run_meta do
       throwError "independent quotation fixture imported a previous acceptance theorem: {previous}"
   let .defnInfo frozen ← getConstInfo ``negativeFraction | throwError "frozen fraction missing"
   for used in frozen.value.getUsedConstants do
-    let harmless := #[``instOfNat,``instOfNatNat].contains used ||
-      ((← getEnv).getProjectionFnInfo? used).isSome ||
+    let harmless := #[``OfNat.ofNat,``instOfNatNat].contains used ||
       match ← getConstInfo used with
       | .ctorInfo _ | .inductInfo _ => true
       | _ => false

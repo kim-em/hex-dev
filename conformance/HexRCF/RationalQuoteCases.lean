@@ -130,6 +130,6 @@ run_meta do
       | .error _ _ => pure true
       | _ => throw error
     unless failed do throwError "rational decoder accepted an ill-typed registry"
-    logInfo "frozen negative fraction quoted; well-typed selected-child codec declines within 200000 heartbeats; ill-typed registry rejected"
+    logInfo "frozen negative fraction quoted; selected-child codec declines within 200000 raw heartbeats (maxHeartbeats 200); wrong registry type rejected"
 
 end Hex.RCF.RationalQuoteTests

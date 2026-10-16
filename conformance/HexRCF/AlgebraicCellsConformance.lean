@@ -53,7 +53,9 @@ private def selected (coefficients : List Int) (lower upper : Rat) : Option Real
     | throw (IO.userError "all-rational original inputs failed to build")
   for i in List.finRange 2 do
     match (sources i).root with
-    | .point _ => pure ()
+    | .point value =>
+      unless value.stored == (if i.val = 0 then (7/3 : Rat) else 0) do
+        throw (IO.userError "rational coefficient build changed a stored original value")
     | .selected .. => throw (IO.userError "rational coefficient build added an owner extension")
   let input := packet.family.collection.input
   let values := input.value ∘ GatherCells.values shared (AlgebraicCells.coefficients sources indices)
