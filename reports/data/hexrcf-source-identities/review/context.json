@@ -594,5 +594,11 @@
     "quiet_checks": "Earlier metadata stdout is quiet by design and did not record argv. The added command records include exact argv/cwd/tree/script hashes and exit codes.",
     "typed_coefficient": "The final coefficient representation retains its original sign proof and its earlier root-fact dependencies. The stricter exclusion of earlier root facts applies to source_selected.",
     "explicit_queries": "Scalar polynomial bindings are to queries explicitly requested by the frontend, not arbitrary independently proposed source polynomials."
+  },
+  "artifact_commit": "07e92d8100bf8b340615d666f01c5f7f3452da1f",
+  "document_commit": "07e92d8100bf8b340615d666f01c5f7f3452da1f",
+  "documents_sha256": {
+    "reports/hexrcf-source-identities.md": "027080b1fcec232a200f9ece75d2769e9d9b0166122964d80a28ea4931f09913",
+    "reports/hexrcf-maximal-coefficients.md": "9b82fc03d7ace1cb7e894333b8579a86c06a2d4473c8062a49072c3576c2f98a"
   }
 }
