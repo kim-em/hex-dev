@@ -830,6 +830,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureTheory.ReconciledRealizationTests,
     `HexRealClosureTheory.ReconciledCatalog,
     `HexRealClosureTheory.ConstructedCatalog,
+    `HexRealClosureTheory.BaseHistoryTests,
     `HexRealClosureTheory.ReconciledCatalogTests,
     `HexRealClosureTheory.OwnerReader,
     `HexRealClosureTheory.BaseFactory,

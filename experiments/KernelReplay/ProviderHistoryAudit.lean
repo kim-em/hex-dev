@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import KernelReplay.AxiomClosure
 import HexRealClosure.BaseHistoryTests
 import HexRealClosureTheory.ConstructedCatalog
+import HexRealClosureTheory.BaseHistoryTests
 
 open Lean Meta Elab
 open Hex.RealClosure.BaseContext Hex.RealClosure.Tower
@@ -24,7 +25,7 @@ run_meta do
     ``Catalog.Construction.preserved, ``Catalog.Construction.covers,
     ``Live.Request.providerKeys, ``Live.Request.gatherConstructed?,
     ``Live.Request.gatherConstructed?_of_success, ``Live.Request.gatherConstructed?_gathered,
-    ``RealPrefix.Model.StepCorrect, ``RealPrefix.Model.append, ``RealPrefix.Model.append_context,
+    ``RealPrefix.Model.Valid, ``RealPrefix.Model.StepCorrect, ``RealPrefix.Model.append, ``RealPrefix.Model.append_context,
     ``RealPrefix.Model.progress, ``RealPrefix.Model.progress_correct,
     ``RealPrefix.Model.extend?_model, ``RealPrefix.Model.extend?_success,
     ``RealPrefix.Model.extend?_embedding, ``Catalog.Construction.models,
@@ -33,7 +34,9 @@ run_meta do
     ``HistoryTests.offer, ``HistoryTests.reader, ``HistoryTests.construct_two,
     ``HistoryTests.duplicate_keys, ``HistoryTests.missing_second, ``HistoryTests.reuse_existing,
     ``HistoryTests.ready_two, ``HistoryTests.install_two, ``HistoryTests.installed_reused,
-    ``HistoryTests.install_missing, ``HistoryTests.rationalControls]
+    ``HistoryTests.install_missing, ``HistoryTests.reinstall_two, ``HistoryTests.rationalControls,
+    ``HistoryModelTests.reader, ``HistoryModelTests.read_first, ``HistoryModelTests.read_second,
+    ``HistoryModelTests.ready_two, ``HistoryModelTests.valid_two, ``HistoryModelTests.install_two]
   for name in roots do
     let info ← getConstInfo name
     let some body := info.value? (allowOpaque := true) |

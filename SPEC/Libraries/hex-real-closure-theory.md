@@ -410,8 +410,9 @@ predecessors actually visited. `extend?_isSome` characterizes native success by
 this predicate. No progress at unrelated registry histories is required.
 `RealPrefix.Model.progress` derives each step's progress from containment, width
 and relative transcendence at the constructed predecessor. `extend?_model`
-constructs the provider model from validity of accepted reader steps;
-`extend?_success` needs only path readiness. `extend?_embedding` preserves every
+constructs the provider model from `RealPrefix.Model.Valid`, which follows
+only this same path and supplies the new provider's analytic premises at each
+model just constructed. `extend?_success` needs only path readiness. `extend?_embedding` preserves every
 original coefficient through the native inclusion. No joint target model is a
 premise.
 
@@ -426,11 +427,18 @@ that target. The success theorem requires relative validity of accepted steps,
 progress along the actual request path and distinct original owner paths. It
 requires neither absence of the output path nor models of unrelated catalog
 entries. Its model theorem derives the actual collection's canonical
-interpretation from the constructed history. The ordinary-kernel tests unfold
+interpretation from the constructed history. Only the final target is installed;
+intermediate prefixes can be constructed and installed separately. Key order
+follows owner order, so reuse is for the same completed path, including the
+same seed and requested order. The ordinary-kernel tests unfold
 two-stage native construction, skip duplicate keys, reject missing progress,
 prove readiness for a reader restricted to the two required predecessors, and
-retain the installed output. Compiled rational-base controls cover empty
-requests, installed-path reuse, subsequent catalog reads and repeated gathering.
+retain the installed output. A nonempty two-stage kernel test rebuilds the
+same path and proves catalog reuse. The companion's two-stage test derives both
+path readiness and semantic validity from the two local provider premises, then
+constructs an installed history with its staged realization. Compiled rational-base
+controls cover empty requests, reuse of the empty installed path, subsequent
+catalog reads and repeated gathering.
 The independent checked-body audit covers the native constructors, semantic
 construction and gathering laws, and these tests.
 The separate ordinary-real finite-sign conclusion for

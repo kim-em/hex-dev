@@ -11,7 +11,7 @@ public section
 namespace Hex.RealClosure.BaseContext.HistoryTests
 
 /-- A test reader offers progress only at its exact requested predecessor. -/
-def offer {registry : Registry} (source : RealPrefix registry) (key : ConstantKey)
+@[expose] def offer {registry : Registry} (source : RealPrefix registry) (key : ConstantKey)
     (step : source.Step key) (parent : RealPrefix registry) (wanted : ConstantKey) :
     Option (parent.Step wanted) := by
   if path : parent.keys = source.keys then
@@ -32,7 +32,7 @@ private theorem append_ne {registry : Registry} (parent : RealPrefix registry)
 
 /-- The second offered packet is bound to the newly constructed predecessor,
 not to the original seed or an installed target. -/
-def reader {registry : Registry} (parent : RealPrefix registry)
+@[expose] def reader {registry : Registry} (parent : RealPrefix registry)
     (first second : ConstantKey) (one : parent.Step first)
     (two : (parent.append first one).Step second)
     (current : RealPrefix registry) (wanted : ConstantKey) : Option (current.Step wanted) :=
@@ -120,6 +120,23 @@ theorem install_missing {registry : Registry} (catalog : Catalog registry)
     catalog.construct? (offer parent first one) parent [first, second] = none := by
   exact catalog.construct?_missing (offer parent first one) parent [first, second]
     (missing_second parent first second one freshFirst freshSecond)
+
+/-- Rebuilding this same nonempty two-stage path reuses its installed catalog. -/
+theorem reinstall_two {registry : Registry} (catalog : Catalog registry)
+    (parent : RealPrefix registry) (first second : ConstantKey) (one : parent.Step first)
+    (two : (parent.append first one).Step second)
+    (freshFirst : first ∉ parent.keys) (freshSecond : second ∉ (parent.append first one).keys) :
+    ∃ packet : catalog.Construction (reader parent first second one two) parent [first, second],
+      catalog.construct? (reader parent first second one two) parent [first, second] = some packet ∧
+      packet.target = (parent.append first one).append second two ∧
+      ∃ again : packet.next.Construction (reader parent first second one two) parent [first, second],
+        packet.next.construct? (reader parent first second one two) parent [first, second] = some again ∧
+        again.next = packet.next ∧ again.target = packet.target := by
+  obtain ⟨packet, produced, target, available⟩ :=
+    install_two catalog parent first second one two freshFirst freshSecond
+  obtain ⟨again, rebuilt, unchanged, same⟩ := packet.next.construct?_reuse
+    (reader parent first second one two) parent [first, second] packet.target packet.built available
+  exact ⟨packet, produced, target, again, rebuilt, unchanged, same⟩
 
 /-- Compiled controls cover rational construction, existing-path reuse, later
 catalog reads, empty gathering and repeated gathering with a rational owner. -/

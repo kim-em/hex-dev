@@ -75,37 +75,55 @@ noncomputable def RealPrefix.Model.progress {registry : Registry}
     let generated := native.registration compatible key present valid
     exact ⟨present, generated.signProgress, generated.approxProgress⟩
 
+/-- Semantic validity follows only this request's actual predecessor path.
+Each accepted new step supplies its provider value and the validity of the
+remaining steps at the model just constructed. -/
+@[expose] def RealPrefix.Model.Valid {registry : Registry}
+    (read : (parent : RealPrefix registry) → (key : ConstantKey) → Option (parent.Step key)) :
+    RealPrefix.Model registry → List ConstantKey → Prop
+  | _, [] => True
+  | parent, key :: rest =>
+    if key ∈ parent.context.keys then RealPrefix.Model.Valid read parent rest
+    else ∀ step, read parent.context key = some step →
+      ∃ (τ : ℝ) (contained : ∀ δ, 0 < δ → Contains ((registry key).get step.present δ) τ)
+        (transcendental : letI : Field parent.context.Carrier := HexPolyTheory.fieldOfGrind
+          Real.RelativeTranscendence parent.interpretation.hom τ),
+        RealPrefix.Model.Valid read (parent.append key step τ contained transcendental) rest
+
 /-- Accepted successive construction has a provider model. Each new semantic
 premise is checked against the model constructed so far, not against a supplied
 joint target history. This also handles an empty list and duplicate keys. -/
 theorem RealPrefix.Model.extend?_model {registry : Registry}
     (read : (parent : RealPrefix registry) → (key : ConstantKey) → Option (parent.Step key))
-    (valid : ∀ (parent : RealPrefix.Model registry) (key : ConstantKey)
-      (step : parent.context.Step key), read parent.context key = some step →
-        parent.StepCorrect key step)
-    (parent : RealPrefix.Model registry) (keys : List ConstantKey) {result : RealPrefix registry}
+    (parent : RealPrefix.Model registry) (keys : List ConstantKey)
+    (valid : parent.Valid read keys) {result : RealPrefix registry}
     (accepted : RealPrefix.extend? read parent.context keys = some result) :
     ∃ model : RealPrefix.Model registry, model.context = result := by
-  induction keys generalizing parent result with
+  induction keys generalizing parent with
   | nil =>
     simp only [RealPrefix.extend?, Option.some.injEq] at accepted
     exact ⟨parent, accepted⟩
   | cons key rest ih =>
     simp only [RealPrefix.extend?] at accepted
+    simp only [RealPrefix.Model.Valid] at valid
     split at accepted
-    · exact ih parent accepted
-    · cases supplied : read parent.context key with
+    · rename_i present
+      rw [ite_eq_left present] at valid
+      exact ih parent valid accepted
+    · rename_i absent
+      rw [ite_eq_right absent] at valid
+      cases supplied : read parent.context key with
       | none => simp only [supplied, reduceCtorEq] at accepted
       | some step =>
         simp only [supplied] at accepted
-        obtain ⟨τ, contained, transcendental⟩ := valid parent key step supplied
+        obtain ⟨τ, contained, transcendental, followingValid⟩ := valid step supplied
         let child := parent.append key step τ contained transcendental
         have same : child.context = parent.context.append key step :=
           parent.append_context key step τ contained transcendental
         have following : RealPrefix.extend? read child.context rest = some result := by
           rw [same]
           exact accepted
-        exact ih child following
+        exact ih child followingValid following
 
 /-- The progress adapter retains the same provider's semantic premises. -/
 theorem RealPrefix.Model.progress_correct {registry : Registry}
@@ -131,16 +149,14 @@ every old coefficient. Both interpretations are constructed from the same
 registered providers, rather than supplied with an agreement hypothesis. -/
 theorem RealPrefix.Model.extend?_embedding {registry : Registry}
     (read : (parent : RealPrefix registry) → (key : ConstantKey) → Option (parent.Step key))
-    (valid : ∀ (parent : RealPrefix.Model registry) (key : ConstantKey)
-      (step : parent.context.Step key), read parent.context key = some step →
-        parent.StepCorrect key step)
-    (parent : RealPrefix.Model registry) (keys : List ConstantKey) {result : RealPrefix registry}
+    (parent : RealPrefix.Model registry) (keys : List ConstantKey)
+    (valid : parent.Valid read keys) {result : RealPrefix registry}
     (accepted : RealPrefix.extend? read parent.context keys = some result) :
     ∃ model : RealPrefix.Model registry, model.context = result ∧
       ∃ map : FieldEmbedding parent.context.Carrier model.context.Carrier,
         parent.context.embedding? model.context = some map ∧
         ∀ a, model.interpretation.hom (map.value a) = parent.interpretation.hom a := by
-  obtain ⟨model, same⟩ := parent.extend?_model read valid keys accepted
+  obtain ⟨model, same⟩ := parent.extend?_model read keys valid accepted
   have before : parent.context.keys <+: model.context.keys := by
     rw [same]
     exact RealPrefix.extend?_prefix read parent.context keys accepted
