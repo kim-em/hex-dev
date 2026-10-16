@@ -400,7 +400,28 @@ and use owner and target inverse arithmetic in the prescribed union.
 identification through registration and extension.
 `toUnion_ordered_reconciled` compares the two reader paths wherever the
 ordered owner factory accepts.
-Constructing a missing joint provider history remains a separate obligation.
+`RealPrefix.extend?` constructs a missing joint history by applying the actual
+native constant constructor at each new predecessor. Its reader supplies the
+registered provider's search progress at that exact predecessor; existing keys
+are skipped, and missing progress rejects. Successful construction retains the
+original ordered prefix and exactly the union of original and requested keys.
+`RealPrefix.Model.progress` derives each step's progress from containment, width
+and relative transcendence at the constructed predecessor. `extend?_model` and
+`extend?_success` construct the provider history from those local premises,
+and `extend?_embedding` preserves every original coefficient through the native
+inclusion. No joint target model is a premise.
+
+`Catalog.construct?` installs that actual constructed history without rebinding
+an existing path; an already installed complete path rejects like `insert`.
+`Live.Request.gatherConstructed?` collects the original owners' provider keys,
+constructs and installs the missing history, and runs the existing reconciled
+factory on the returned catalog. Its success theorem requires relative validity
+and progress for requested new steps, absence of the constructed path from the
+old catalog and distinct original owner paths. Its model theorem derives the
+actual returned live collection's canonical interpretation. The ordinary-kernel
+tests build two native stages, skip duplicate keys, reject a missing second
+packet and reuse existing keys. The independent checked-body audit covers the
+native constructors, semantic construction and gathering laws, and these tests.
 The separate ordinary-real finite-sign conclusion for
 arbitrary interleaved stages is not supplied by these ambient `Model.next`
 interpretations. Root agreement also retains the parent model at the current
