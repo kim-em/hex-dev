@@ -255,10 +255,11 @@ are evaluated and bound into finite evidence.
 
 This finite path uses nonlinear proof reconstruction from the supplied bounds,
 with conjunctions and a proposed ordinary real existential witness. The current
-witness is the first collected coefficient, or zero when there are none; it
-does not search for witnesses. The precision request stays at `1/16`, without
-refinement. It may fail
-on a true statement, and such a failure is an unresolved proof attempt, not a
+witness comes from an equality conjunct `x = c` or `c = x` when present.
+Otherwise it is the first named or registered subject in coefficient order,
+retaining a closed reciprocal or quotient as a whole witness, or zero when
+there is none. This is one attempt, without witness search. The precision
+request stays at `1/16`, without refinement. It may fail on a true statement, and such a failure is an unresolved proof attempt, not a
 false verdict. False and unresolved goals can both fail proof reconstruction;
 this path does not distinguish them by a decision verdict.
 Lean's execution limits can also interrupt it. Failures restore

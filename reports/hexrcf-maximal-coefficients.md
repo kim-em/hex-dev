@@ -168,7 +168,8 @@ witness first. In `∃ x, x < c + 1 ∧ x = c`, the first maximal coefficient is
 `x = c` or `c = x` in a conjunction. It never searches below a binder or through
 disjunction, implication or negation. Loose bound variables and metavariables
 are excluded. Metadata on the existential predicate is stripped before matching
-its lambda; other shapes keep the existing witness fallback. The selected
+its lambda. Other shapes use the first named or registered subject, preserving
+closed reciprocal and quotient witnesses, or zero when there is none. The selected
 witness remains a proof-search proposal checked against the original goal.
 This does not establish total named-constant witness search.
 
