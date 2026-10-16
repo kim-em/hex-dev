@@ -1575,6 +1575,14 @@ roundtrips. Parsing a signature supplies an identity, not a validated root.
 Exact equality uses the core pointer shortcut for shared immutable signatures;
 context hashes are constant when indexing replay nodes with one predecessor.
 The relative context reader rejects a full duplicate of its parent reference.
+`Tower.contextCodec_encode_self` identifies the enclosing signature's encoding
+as the one-element JSON array `[0]`; `Tower.contextCodec_self` reads that reference
+back. `Tower.contextCodec_self_iff` proves that exactly this parsed array decodes
+to the supplied parent. These public lemmas simplify the parsed parent reference, including
+inside decoder binds. The decoder body remains abstract through ordinary imports, so these
+lemmas do not enable kernel computation through the whole decoder. Reading the
+reference validates neither the supplied signature nor its selected roots;
+catalog and descriptor checks remain required.
 Literal arrays are emitted by an accumulator with `Array.push`.
 
 `Tower.Catalog` is an immutable catalog of caller-constructed validated prefixes.
