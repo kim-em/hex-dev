@@ -66,7 +66,219 @@ import all HexRealClosure.RecordQueries
 import all HexRealClosureTheory.SignReplay
 import all HexRealClosure.SignCodec
 
+public meta import HexRealClosureTheory.FiniteReconstruction
+import all HexRealClosureTheory.FiniteReconstruction
+import all HexRealClosureTheory.FiniteChain
+
 public meta section
+namespace Hex.RealClosure.Algebraic.KernelReplay.FiniteData
+open Lean Meta
+
+private def emitCapture (name : Name) (type value : Expr) : MetaM Unit := do
+  let type ← instantiateMVars type
+  let value ← instantiateMVars value
+  let (type, value) ← closeStatement type value
+  for expression in #[type, value] do
+    if expression.hasFVar || expression.hasMVar || expression.hasSorry || expression.hasLooseBVars then
+      throwError "guard capture retained incomplete data"
+  let _ ← auditProof value type
+  let levels := collectLevelParams (collectLevelParams {} type) value |>.params.toList
+  let declaration ← if ← isProp type then
+      pure (Declaration.thmDecl { name, levelParams := levels, type, value })
+    else pure (Declaration.defnDecl {
+      name, levelParams := levels, type, value, hints := .regular 0, safety := .safe })
+  withOptions (fun options => options.setBool `debug.skipKernelTC false) do
+    addDecl declaration (forceExpose := true)
+
+private def captureReconstruction (base following baseReader : Expr) (discovery : Discovery) (extra : Expr)
+    (decisions : Supplier) (statements : Array Expr := #[]) : MetaM Unit := do
+  unless discovery.saturated do throwError "unsaturated finite dependencies"
+  let levels := discovery.levels
+  let temporaryReaders := #[baseReader] ++ levels.flatMap (fun level => #[level.read, level.reader])
+  let .app _ coefficient := (← inferType extra) |
+    throwError "expected a base coefficient list"
+  nativeOnly extra temporaryReaders
+  let mut blocks := #[extra]
+  for leaf in discovery.leaves do
+    if let some coefficients ← leaf.coefficients? then
+      nativeOnly coefficients temporaryReaders
+      unless ← withTransparency .all (isDefEq (← inferType coefficients) (← inferType extra)) do
+        throwError "dependency lowering did not reach the base coefficient carrier"
+      blocks := blocks.push coefficients
+  let additional ← appendSupport coefficient blocks
+  nativeOnly additional temporaryReaders
+  let firstSupport ← if let some first := levels[0]? then
+      mkAppM ``Packing.Inventory.level #[first.context, first.entries, first.records, first.facts]
+    else mkListLit coefficient []
+  nativeOnly firstSupport temporaryReaders
+  let support ← retain (← mkAppM ``List.append #[firstSupport, additional])
+  if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
+    IO.FS.withFile path .append fun handle => do
+      handle.putStrLn "reconstruction: support collected"
+      handle.flush
+  let existence ← retain (← instantiateMVars
+    (← mkAppM ``BaseContext.Context.partial_exists #[base, following, support]))
+  let existential ← inferType existence
+  unless existential.getAppFn.isConstOf ``Exists do throwError "base bootstrap did not produce an existential"
+  let args := existential.getAppArgs
+  let interpretation ← retain (← mkAppOptM ``Classical.choose
+    #[some args[0]!, some args[1]!, some existence])
+  let specification ← mkAppOptM ``Classical.choose_spec #[some args[0]!, some args[1]!, some existence]
+  let agreement ← mkAppM ``And.left #[specification]
+  let fixed ← mkAppM ``And.right #[specification]
+  let closed ← mkAppM ``BaseContext.Context.partialClosed #[base, interpretation]
+  let origin ← Base.ofClosed closed
+  let agreement ← origin.bindAgreement agreement
+  if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
+    IO.FS.withFile path .append fun handle => do
+      handle.putStrLn "reconstruction: guarded base reader constructed"
+      handle.flush
+  unless ← withTransparency .all (isDefEq (← inferType baseReader) (← inferType origin.read)) do
+    throwError "discovery base reader has a different coefficient carrier"
+  if let some first := levels[0]? then
+    unless ← withTransparency .all (isDefEq first.read baseReader) do
+      throwError "first finite level does not follow the base reader"
+  -- Share only the deterministic walk of this closed inventory. Every
+  -- coefficient proof still checks its original list position and predicate.
+  let coefficientCache ← IO.mkRef (none : Option CoefficientWalk)
+  let domains := origin.domains (agreementSupplier agreement (some coefficientCache))
+  let known ← IO.mkRef discovery.known
+  let retained := lookupSupplier known (fun _ => pure none)
+  let checks : Supplier := fun type => do
+    if type.getAppFn.isConstOf ``Eq && type.getAppArgs[0]!.isConstOf ``Bool then
+      if let some proof ← retained type then return some proof
+      decisions type
+    else pure none
+  let baseSupplier := origin.supply domains (fun type => do
+    if type.getAppFn.isConstOf ``Eq && type.getAppArgs[0]!.isConstOf ``Bool then
+      return ← checks type
+    if let some proof ← domains type then return some proof
+    checks type)
+  let mut supplier := baseSupplier
+  let mut verified : Array Prefix := #[]
+  let mut readers := #[origin.read]
+  let mut conditions := #[agreement, fixed]
+  for level in levels do
+    for value in #[level.context, level.entries, level.records, level.facts] do nativeOnly value temporaryReaders
+    if verified.size > 0 then
+      if let some preceding := levels[verified.size - 1]? then
+        unless ← withTransparency .all (isDefEq level.read preceding.reader) do
+          throwError "finite levels are not in predecessor order"
+    let current ← if let some previous := verified.back? then
+        previous.extend supplier level.context level.entries level.records level.facts
+      else do
+        let firstAgreement ← mkAppM ``Transport.Inventory.Agreement.append #[agreement]
+        let firstAgreement ← mkAppM ``And.left #[firstAgreement]
+        let data ← mkAppM ``Packing.Inventory.level_data
+          #[level.context, level.entries, level.records, level.facts,
+            origin.read, origin.domain, origin.closed, firstAgreement]
+        let zero ← mkAppM ``Transport.Closed.read_zero #[closed]
+        let unit ← mkAppM ``Transport.Closed.read_one #[closed]
+        Prefix.ofData data zero unit
+    conditions := conditions.push (← mkAppM ``Packing.Inventory.Data.conditions
+      #[current.data, current.zero, current.unit])
+    supplier := current.supplyFrom readers supplier
+    readers := readers.push current.reader
+    verified := verified.push current
+    if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
+      IO.FS.withFile path .append fun handle => do
+        handle.putStrLn "reconstruction: ordinary-real prefix constructed"
+        handle.flush
+  let oldReaders := #[baseReader] ++ levels.flatMap (fun level => #[level.read, level.reader])
+  let realReaders := #[origin.read] ++ verified.flatMap (fun level => #[level.read, level.reader])
+  let guardScope ← getLCtx
+  let guardInstances ← getLocalInstances
+  let globalLocals := guardScope.getFVarIds.map mkFVar
+  for statement in statements do
+    if statement.hasMVar || statement.hasSorry then
+      throwError "incomplete requested reconstruction statement"
+    unless ← isProp statement do
+      throwError "requested reconstruction statement must be a proposition"
+  let requestedLeaves := statements.map fun type => (⟨type, guardScope, guardInstances⟩ : Leaf)
+  let leaves := discovery.leaves ++ requestedLeaves
+  unless verified.size == 2 && requestedLeaves.size == 1 do
+    throwError "actual guard capture changed its two owners or native product request"
+  unless discovery.leaves.size == 3772 do throwError "expensive capture changed its discovery count"
+  let some leaf := leaves[131]? | throwError "actual guard capture has no guard131"
+  let (required, guard) ← leaf.withContext do
+    let hypotheses := (← getLCtx).getFVarIds.filter fun id =>
+      (guardScope.find? id).isNone
+    let required ← mkForallFVars (hypotheses.map mkFVar) leaf.type (usedOnly := true)
+    let required := required.replace fun expression => do
+      let i ← oldReaders.findIdx? (· == expression)
+      realReaders[i]?
+    unless required.getAppFn.isConstOf ``Transport.Sum do
+      throwError "guard131 changed its original operation"
+    let guard ← withLCtx guardScope guardInstances do
+      build required supplier
+    return (required, guard)
+  withLCtx guardScope guardInstances do
+    let root := `Hex.RealClosure.Algebraic.KernelReplay.GuardCapture
+    let fullType ← mkForallFVars globalLocals required
+    let fullProof ← mkLambdaFVars globalLocals guard
+    emitCapture (root ++ `index) (mkConst ``Nat) (toExpr (131 : Nat))
+    emitCapture (root ++ `withReaders) fullType fullProof
+    emitCapture (root ++ `guard) required guard
+    let some requestedLeaf := requestedLeaves[0]? | throwError "requested leaf missing"
+    let requested := requestedLeaf.type.replace fun expression => do
+      let i ← oldReaders.findIdx? (· == expression)
+      realReaders[i]?
+    emitCapture (root ++ `request) (mkSort .zero) requested
+    for (name, value) in #[(`support, support), (`interpretation, interpretation),
+        (`closed, origin.closed), (`read, origin.read), (`domain, origin.domain)] do
+      emitCapture (root ++ name) (← inferType value) value
+    let some first := verified[0]? | throwError "first captured prefix missing"
+    let some second := verified[1]? | throwError "second captured prefix missing"
+    for (tag, current) in #[(`first, first), (`second, second)] do
+      for (field, value) in #[(`context, current.context), (`data, current.data),
+          (`point, current.point), (`read, current.read), (`reader, current.reader),
+          (`zero, current.zero), (`unit, current.unit)] do
+        emitCapture (root ++ tag ++ field) (← inferType value) value
+
+private def NativeChain.capture (native : NativeChain) (following extra : Expr)
+    (statements : Expr → Array Level → MetaM (Array Expr)) (decisions : Supplier)
+    (record : Lookup → Array Level → MetaM (Option Expr)) (fuel : Nat := 500)
+    (prepare : Option LookupPreparation := none) :
+    MetaM Unit := do
+  let carrier ← mkAppM ``BaseContext.Element #[native.base]
+  diagnostic "chain: base carrier constructed"
+  withLocalDeclD `baseReader (← mkArrow carrier (mkConst ``Real)) fun read => do
+    native.withLevels read fun levels => do
+      diagnostic "chain: original levels constructed"
+      let types (current : Array Level) : MetaM (Array Expr) := do
+        let mut required ← statements read current
+        for level in current do
+          required := required.push (← mkAppM ``Packing.Inventory.Data
+            #[level.context, level.entries, level.records, level.facts, level.read])
+          diagnostic "chain: inventory premises constructed"
+          let contextType ← withTransparency .all (whnf (← inferType level.context))
+          let parameters := contextType.getAppArgs
+          let coefficientLevel := contextType.getAppFn.constLevels![0]!
+          let coefficientOne := mkAppN (mkConst ``One.one [coefficientLevel])
+            #[parameters[0]!, parameters[4]!]
+          let constantOne := mkAppN (mkConst ``DensePoly.C [coefficientLevel])
+            #[parameters[0]!, parameters[2]!, parameters[3]!, coefficientOne]
+          let nativeZero ← recordType ``Element.zero level.context
+          let nativeOne := mkApp (← recordType ``Element.ofPoly level.context) constantOne
+          for (input, realConstant) in #[(nativeZero, ``Zero.zero), (nativeOne, ``One.one)] do
+            let output ← mkAppOptM realConstant #[some (mkConst ``Real), none]
+            required := required.push (← mkEq (mkApp level.reader input) output)
+          diagnostic "chain: original zero/unit premises constructed"
+        return required
+      diagnostic "chain: begin dependency discovery"
+      let discovery ← collectDependencies fuel levels types decisions record prepare
+      diagnostic "chain: dependency discovery returned"
+      unless discovery.levels.size == native.owners.size do
+        throwError "guard capture changed its original owner count"
+      for i in [:native.owners.size] do
+        let some actual := discovery.levels[i]? | throwError "captured owner missing"
+        unless actual.context == native.owners[i]! do
+          throwError "guard capture changed an original native owner"
+      let requested ← statements read discovery.levels
+      captureReconstruction native.base following read discovery extra decisions requested
+
+end Hex.RealClosure.Algebraic.KernelReplay.FiniteData
+
 namespace Hex.RealClosure.Algebraic.KernelReplay.FrameJoint
 open Lean Meta Elab Command FiniteData
 
@@ -76,25 +288,8 @@ private def diagnostic (message : String) : MetaM Unit := do
       handle.putStrLn message
       handle.flush
 
-private def checkWitnesses : List Expr → Expr → MetaM Unit
-  | [], type => do
-    let type ← withTransparency .all (whnf type)
-    if type.getAppFn.isConstOf ``Exists || type.isForall then
-      throwError "nested reconstruction retained an unexpected witness or hypothesis"
-  | expected :: remaining, type => do
-    let type ← withTransparency .all (whnf type)
-    unless type.getAppFn.isConstOf ``Exists do
-      throwError "nested reconstruction lost a joint existential binder"
-    let .lam name domain body _ := type.getAppArgs.back! |
-      throwError "nested reconstruction has no explicit witness predicate"
-    kernelCheck `__nestedWitnessDomain (← mkEq domain expected) (← mkEqRefl expected)
-    unless body.hasLooseBVar 0 do
-      throwError "nested reconstruction has an unused witness"
-    withLocalDeclD name domain fun witness =>
-      checkWitnesses remaining (body.instantiate1 witness)
-
-syntax (name := frameJoint) "#frame_joint" : command
-@[command_elab frameJoint]
+syntax (name := frameGuardCapture) "#frame_guard_capture" : command
+@[command_elab frameGuardCapture]
 unsafe def elaborate : CommandElab := fun _ => liftTermElabM <|
   withOptions (fun options => smartUnfolding.set options false) do
     diagnostic "nested: extract original owners"
@@ -120,44 +315,18 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM <|
         throwError "nested product changed its original second owner"
       return #[← mkAppM ``Transport.Product #[level.reader, polynomial, polynomial]]
     diagnostic "nested: reconstruct joint ordinary-real conditions and native generator product"
-    let result ← native.reconstructModels models following extra statements FiniteDataProbe.supply
-    unless result.prefixes.size == 2 && !result.type.hasFVar && !result.proof.hasFVar do
-      throwError "nested reconstruction lost its original levels or retained temporary readers"
-    for i in [:2] do
-      let some retained := result.prefixes[i]? | throwError "nested prefix missing"
-      unless retained.context == native.owners[i]! do
-        throwError "nested reconstruction changed an original owner"
-    unless result.requested.size == 1 do
-      throwError "nested reconstruction lost its requested native product"
-    let expected ← statements result.interpretation (result.prefixes.map fun current => {
-      context := current.context, entries := current.entries, records := current.records,
-      facts := current.facts, read := current.read, reader := current.reader : FiniteData.Level })
-    unless expected.size == 1 &&
-        (← instantiateMVars result.requested[0]!) == (← instantiateMVars expected[0]!) do
-      throwError "nested reconstruction changed its requested product or real reader"
-    checkWitnesses [← inferType result.interpretation, mkConst ``Real, mkConst ``Real] result.type
-    let _ ← auditProof result.proof result.type
-    let statementName := `Hex.RealClosure.Algebraic.KernelReplay.FrameJoint.statement
-    addDecl (.defnDecl {
-      name := statementName, levelParams := [], type := mkSort .zero, value := result.type,
-      hints := .regular 0, safety := .safe }) (forceExpose := true)
-    let declaration := Declaration.thmDecl {
-      name := `Hex.RealClosure.Algebraic.KernelReplay.FrameJoint.exists_joint,
-      levelParams := [], type := mkConst statementName, value := result.proof }
-    let options := (← getOptions).setBool `debug.skipKernelTC false
-    setEnv (← ofExceptKernelException <| (← getEnv).addDeclCore
-      (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
-      declaration none (doCheck := true))
-    logInfo "two native selected extensions and the second generator product reconstructed jointly in the ordinary reals"
+    let assembly ← models.assembly native
+    let prepare : Option LookupPreparation :=
+      if Hex.RealClosure.batchLookups.get (← getOptions) then some NativeBatch.prepare else none
+    native.capture following extra statements FiniteDataProbe.supply
+      (fun lookup _ => assembly.supply native.owners.size lookup.request #[]) 500 prepare
+    logInfo "original two-prefix preparation and actual guard131 retained with ordinary kernel checking"
 
 end Hex.RealClosure.Algebraic.KernelReplay.FrameJoint
+end
 
 set_option maxRecDepth 32768 in
 set_option maxHeartbeats 16000000 in
-/-- info: two native selected extensions and the second generator product reconstructed jointly in the ordinary reals -/
+/-- info: original two-prefix preparation and actual guard131 retained with ordinary kernel checking -/
 #guard_msgs in
-#frame_joint
-
-/-- info: 'Hex.RealClosure.Algebraic.KernelReplay.FrameJoint.exists_joint' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms Hex.RealClosure.Algebraic.KernelReplay.FrameJoint.exists_joint
+#frame_guard_capture
