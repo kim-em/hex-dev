@@ -48,10 +48,13 @@ set_option maxRecDepth 32768 in
 set_option maxHeartbeats 2000000 in
 run_meta do
   for name in #[``FiniteReconstructionProbe.inventoryReplay,
-      ``FiniteReconstructionProbe.inventoryDifference, ``FiniteReconstructionProbe.delegatedProduct,
+      ``FiniteReconstructionProbe.inventoryDifference, ``FiniteReconstructionProbe.inventorySign,
+      ``FiniteReconstructionProbe.delegatedProduct,
       ``FiniteReconstructionProbe.inversePacking, ``FiniteReconstructionProbe.inverseOriginal,
       ``FiniteReconstructionProbe.inverseReplay, ``FiniteReconstructionProbe.inverseProduct,
       ``FiniteReconstructionProbe.inverseDifference] do
     let .thmInfo info ← getConstInfo name | throwError "inventory control theorem missing: {name}"
     let axioms ← AxiomClosure.audit info.value info.type
+    unless axioms == (#[`propext, `Classical.choice, `Quot.sound].qsort Name.lt) do
+      throwError "inventory control changed its complete axiom closure: {name}"
     logInfo m!"inventory direct body audit {name}: {axioms}"

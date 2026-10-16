@@ -112,7 +112,20 @@ private def inventoryControls (first : FiniteData.Prefix) : MetaM Unit := do
     let type ← inferType original
     let some proof ← first.supplyAll noPrior type |
       throwError "retained packing projection disappeared"
+    unless proof == original do throwError "packing inventory changed its first matching proof"
     inventoryProof name type proof
+  let literal ← withTransparency .all (whnf first.records)
+  unless literal.getAppFn.isConstOf ``List.cons do
+    throwError "inventory control requires an actual retained sign record"
+  let args := literal.getAppArgs
+  let member ← mkAppOptM ``List.mem_cons_self
+    #[some args[0]!, some args[1]!, some args[2]!]
+  let original ← mkAppM ``ValueSign.Data.replay #[mkApp2 first.signs args[1]! member]
+  let type ← inferType original
+  let some proof ← first.supplyAll noPrior type |
+    throwError "retained sign replay projection disappeared"
+  unless proof == original do throwError "sign inventory changed its first matching proof"
+  inventoryProof `inventorySign type proof
   let polynomial ← mkAppM ``DensePoly.C #[toExpr (1 : Rat)]
   let product ← mkAppM ``Transport.Product #[first.read, polynomial, polynomial]
   let calls ← IO.mkRef (0 : Nat)
@@ -130,6 +143,21 @@ private def inventoryControls (first : FiniteData.Prefix) : MetaM Unit := do
     throwError "inventory control lost the rational predecessor proof"
   unless (← calls.get) == 1 do throwError "successful predecessor was queried more than once"
   inventoryProof `delegatedProduct product proof
+  -- Product has no packing/sign projection. Those unrelated lists may remain
+  -- opaque when the actual predecessor supplies the complete checked proof.
+  let entryType ← mkAppM ``List #[← mkAppM ``Packing #[first.context]]
+  let recordType ← mkAppM ``List #[← mkAppM ``ValueSign #[first.context]]
+  withLocalDeclD `entries entryType fun entries =>
+    withLocalDeclD `records recordType fun records => do
+      let dataType ← mkAppM ``Packing.Inventory.Data
+        #[first.context, entries, records, first.facts, first.read]
+      withLocalDeclD `data dataType fun data => do
+        let level ← FiniteData.Prefix.ofData data first.zero first.unit
+        calls.set 0
+        let some proof ← level.supplyAll previous product |
+          throwError "unrelated opaque inventories blocked the predecessor proof"
+        unless (← calls.get) == 1 do throwError "opaque inventories repeated predecessor search"
+        kernelCheck `__opaqueInventoryProduct product proof
   -- A nonempty inverse inventory must retain all five original projections,
   -- even when its predecessor cannot supply any of those propositions.
   let factType ← mkAppM ``InverseFact #[first.context]
@@ -152,6 +180,7 @@ private def inventoryControls (first : FiniteData.Prefix) : MetaM Unit := do
         let type ← instantiateMVars (← inferType original)
         let some proof ← level.supplyAll noPrior type |
           throwError "retained inverse projection disappeared"
+        unless proof == original do throwError "inverse inventory changed its first matching proof"
         let proof ← mkLambdaFVars #[fact, data] (← instantiateMVars proof)
         let type ← mkForallFVars #[fact, data] type
         inventoryProof name type proof
