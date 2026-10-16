@@ -112,5 +112,10 @@
     "own_build_concurrency": 1,
     "sampled_usage_is_not_completed_peak": true
   },
-  "scope": "Final local validation against the actual merged parent and owner APIs; earlier records and their independently bound document versions remain unchanged."
+  "scope": "Final local validation against the actual merged parent and owner APIs; earlier records and their independently bound document versions remain unchanged.",
+  "artifact_commit": "aa450f3a4043e189ba3635f6a5ad2bd218e1257f",
+  "document_commit": "aa450f3a4043e189ba3635f6a5ad2bd218e1257f",
+  "documents_sha256": {
+    "reports/hexrcf-maximal-coefficients.md": "87655194e5a156106391cb8f3be8789a4d96e9cdcf472791449027b1a6e122cf"
+  }
 }
