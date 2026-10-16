@@ -5,15 +5,15 @@ Authors: Kim Morrison
 -/
 module
 
+public import Init.Data.Int.OfNat
 public import HexRealClosure.NumberFieldTower
 public import HexRealClosure.RootReplay
 public section
 open Hex Hex.RealClosure Hex.SignDet
 namespace Hex.RCF.RootQuoteTests
 
-/-! An independent cubic subject and complete finite replay. Scalars use the
-base encoder; the remaining JSON fields are constructors. This fixture tests
-literal quotation without asserting frozen rational payload support. -/
+/-! An independent cubic subject and complete finite replay. Every JSON field,
+including rational scalar payloads, consists only of frozen constructors. -/
 
 @[expose] def registry : BaseContext.Registry := fun _ => none
 abbrev base := NumberField.base registry
@@ -22,15 +22,15 @@ abbrev base := NumberField.base registry
 @[expose] def j1 : Codec.Json := .array (.cons j0 .nil)
 @[expose] def j2 : Codec.Json := .number (-3)
 @[expose] def j3 : Codec.Json := .number (1)
-@[expose] def j4 : Codec.Json := base.codec.encode (⟨(-3 : Rat)⟩ : base.Value)
-@[expose] def j5 : Codec.Json := base.codec.encode (⟨(0 : Rat)⟩ : base.Value)
-@[expose] def j6 : Codec.Json := base.codec.encode (⟨(1 : Rat)⟩ : base.Value)
+@[expose] def j4 : Codec.Json := .array (.cons (.number 0) (.cons (.number (-3)) (.cons (.number 1) .nil)))
+@[expose] def j5 : Codec.Json := .array (.cons (.number 0) (.cons (.number (0)) (.cons (.number 1) .nil)))
+@[expose] def j6 : Codec.Json := .array (.cons (.number 0) (.cons (.number (1)) (.cons (.number 1) .nil)))
 @[expose] def j7 : Codec.Json := .array (.cons j4 (.cons j5 (.cons j5 (.cons j6 .nil))))
 @[expose] def j8 : Codec.Json := .number (-8)
-@[expose] def j9 : Codec.Json := base.codec.encode (⟨(-8 : Rat)⟩ : base.Value)
+@[expose] def j9 : Codec.Json := .array (.cons (.number 0) (.cons (.number (-8)) (.cons (.number 1) .nil)))
 @[expose] def j10 : Codec.Json := .array (.cons j3 (.cons j9 .nil))
 @[expose] def j11 : Codec.Json := .number (8)
-@[expose] def j12 : Codec.Json := base.codec.encode (⟨(8 : Rat)⟩ : base.Value)
+@[expose] def j12 : Codec.Json := .array (.cons (.number 0) (.cons (.number (8)) (.cons (.number 1) .nil)))
 @[expose] def j13 : Codec.Json := .array (.cons j3 (.cons j12 .nil))
 @[expose] def j14 : Codec.Json := .array .nil
 @[expose] def j15 : Codec.Json := .array (.cons contextToken (.cons j7 (.cons j10 (.cons j13 (.cons j14 (.cons j14 .nil))))))
@@ -44,7 +44,7 @@ abbrev base := NumberField.base registry
 @[expose] def j23 : Codec.Json := .number (3)
 @[expose] def j24 : Codec.Json := .number (2)
 @[expose] def j25 : Codec.Json := .array (.cons j23 (.cons j24 (.cons j0 .nil)))
-@[expose] def j26 : Codec.Json := base.codec.encode (⟨(3 : Rat)⟩ : base.Value)
+@[expose] def j26 : Codec.Json := .array (.cons (.number 0) (.cons (.number (3)) (.cons (.number 1) .nil)))
 @[expose] def j27 : Codec.Json := .array (.cons j6 (.cons j14 (.cons j26 .nil)))
 @[expose] def j28 : Codec.Json := .array (.cons j5 (.cons j6 .nil))
 @[expose] def j29 : Codec.Json := .array (.cons j6 (.cons j28 (.cons j26 .nil)))
@@ -80,11 +80,28 @@ abbrev base := NumberField.base registry
     exact (by decide : (1 : Rat) ≠ 0) zero)⟩
 @[expose] def rawSubject : RawDescriptor base.Value Tower.Signature :=
   ⟨base.signature, cubicHead, .finite ⟨-8⟩, .finite ⟨8⟩, [], []⟩
+theorem encode_integer (n : Int) :
+    base.codec.encode (⟨(n : Rat)⟩ : base.Value) =
+      .arr #[.number 0,.number n,.number 1] := by
+  have encoded := NumberField.base_encode registry (n : Rat)
+  have denominator : ((n : Rat).den : Int) = 1 := by
+    rw [Rat.den_intCast]
+    exact Nat.ToInt.natCast_ofNat 1
+  rw [Rat.num_intCast,denominator] at encoded
+  exact encoded
+
 theorem subject_encoded :
     Codec.descriptor base.codec (Tower.contextCodec base.signature) rawSubject = subject := by
   simp only [Codec.descriptor, rawSubject, Codec.poly, Codec.array, Codec.list,
     Codec.endpoint, Tower.contextCodec_encode_self, cubicHead, DensePoly.toArray]
   simp only [Codec.Json.arr, Array.toList_map, List.map_nil]
+  change Codec.Json.arr #[contextToken,
+    .arr #[base.codec.encode ⟨((-3 : Int) : Rat)⟩,base.codec.encode ⟨((0 : Int) : Rat)⟩,
+      base.codec.encode ⟨((0 : Int) : Rat)⟩,base.codec.encode ⟨((1 : Int) : Rat)⟩],
+    .arr #[.number 1,base.codec.encode ⟨((-8 : Int) : Rat)⟩],
+    .arr #[.number 1,base.codec.encode ⟨((8 : Int) : Rat)⟩],j14,j14] = subject
+  rw [encode_integer (-3),encode_integer 0,encode_integer 1,
+    encode_integer (-8),encode_integer 8]
   rfl
 theorem subject_read :
     Algebraic.SignRequests.readRoot base.codec (Tower.contextCodec base.signature) subject = .ok rawSubject := by
@@ -98,8 +115,11 @@ theorem subject_read :
   · intro value same
     exact base.codec_lawful value
 
-theorem decode_value (value : base.Value) :
-    base.codec.decode (base.codec.encode value) = .ok value := base.codec_lawful value
+theorem decode_integer (n : Int) :
+    base.codec.decode (.arr #[.number 0,.number n,.number 1]) =
+      .ok (⟨(n : Rat)⟩ : base.Value) := by
+  exact NumberField.decode_payload registry (n : Rat) n 1
+    (Rat.num_intCast n) (by rw [Rat.den_intCast]; exact Nat.ToInt.natCast_ofNat 1)
 
 @[expose] def nodeReader := Codec.readNode base.codec (Tower.contextCodec base.signature) j43
 

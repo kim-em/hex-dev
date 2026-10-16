@@ -14,15 +14,14 @@ set_option maxHeartbeats 12000000
 set_option maxRecDepth 8192
 
 private meta def scalarProof? (expression : Expr) : MetaM (Option Expr) := do
-  if let .proj ``ValueCodec 1 codec := expression.getAppFn then
+  if let .proj ``ValueCodec 1 _ := expression.getAppFn then
     if expression.getAppNumArgs == 1 then
-      let payload ← withTransparency .all (whnf expression.appArg!)
-      if let .proj ``ValueCodec 0 encodedCodec := payload.getAppFn then
-        if payload.getAppNumArgs == 1 then
-          let expected ← mkAppM ``Tower.Context.codec #[mkConst ``base]
-          if ← withTransparency .all <| withNewMCtxDepth (isDefEq codec expected) then
-            if ← withTransparency .all <| withNewMCtxDepth (isDefEq codec encodedCodec) then
-              return some (← mkAppM ``decode_value #[payload.appArg!])
+      for n in ([-3,0,1,-8,8,3] : List Int) do
+        let proof ← mkAppM ``decode_integer #[toExpr n]
+        let type ← inferType proof
+        if ← withTransparency .all <| withNewMCtxDepth
+            (isDefEq expression type.getAppArgs[1]!) then
+          return some proof
   return none
 
 -- Observe underlying EIO without supplying rollback on behalf of the API.

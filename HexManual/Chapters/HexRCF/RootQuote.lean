@@ -48,9 +48,12 @@ The [cubic regression](../../../conformance/HexRCF/RootQuoteSource.lean) reads a
 supplied replay for `X³−3` on the open interval `(−8,8)`. A fresh public consumer
 proves that the accepted descriptor retains the exact context, polynomial,
 endpoints and root-selection metadata. A separate audit checks the actual proof
-bodies and complete standard-three axiom closure. Scalar payloads in this
-regression use the base encoder and its proved decoding law. Fully frozen
-rational payloads and generic context reconstruction remain separate work.
+bodies and complete standard-three axiom closure. All supplied JSON fields are
+frozen constructors, including the rational scalar arrays `[0,n,1]`. The test's
+scalar callback supplies the public rational decoding equations, which are
+checked at every demanded decode. A separate constructor audit excludes producer
+calls from the supplied data. Generic scalar recognition, source/provider-history
+authentication and context reconstruction remain separate work.
 
 Invalid replay returns structured invalid-provider evidence. An exhausted
 reflection budget remains exhaustion; exceptions, heartbeat limits, recursion

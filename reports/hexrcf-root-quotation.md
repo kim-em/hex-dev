@@ -26,9 +26,11 @@ state. Invalid evidence is terminal invalid-provider evidence, not an unsupporte
 coefficient decline.
 
 The independent cubic fixture supplies `X³−3`, open endpoints −8 and 8 and a
-complete finite replay graph. Its scalar fields use the base encoder and the
-proved base decoding law. This is a hybrid fixture, not fully frozen rational
-payload authentication. A public fresh-module consumer proves the accepted
+complete finite replay graph. All its JSON fields are frozen constructors, including rational payload arrays
+`[0,n,1]`. The finite scalar callback uses the public `NumberField.decode_payload`
+equation delivered by merged PR #10970; each proposal is checked at the exact
+demanded expression. A separate strict constructor-closure audit excludes
+producer calls from the supplied JSON. A public fresh-module consumer proves the accepted
 reader retains the original context, polynomial, endpoints and selection
 metadata using the owner's subject-preservation theorem. A non-module audit
 checks the actual theorem bodies and their complete transitive axiom closure,
@@ -48,6 +50,6 @@ reader still succeeds after all failures.
 This does not register a general tactic handler, authenticate provider or
 predecessor histories, prove complete root coverage or discharge a real-model
 obligation. A reader equation composes with those separate source and semantic
-proofs. Fully frozen scalar decoding, strict compiled missing-record rejection,
+proofs. Generic scalar recognition, strict compiled missing-record rejection,
 general original-source quotation, realization and the remaining performance
 and completeness evidence remain obligations of #10358.
