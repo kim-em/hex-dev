@@ -724,5 +724,11 @@
     ],
     "local_overflow_pixels_max": 0
   },
-  "failed_scope": "rcf-all-conformance-1.log is a completed failed 262-root selection at aa0; its two old guard schema bindings are corrected in the completed second selection. guard-schema-migration-1.log fails at an intermediate Fin 1 binding proof. All other archived failed/uncommitted intermediate development attempts are retained but excluded from completed validation claims. source-identity-compatibility-1.log failed the obsolete RationalSources assertion. Both atomic-roundtrip probes remain unsuccessful public-decoder experiments; only the second source snapshot is retained here."
+  "failed_scope": "rcf-all-conformance-1.log is a completed failed 262-root selection at aa0; its two old guard schema bindings are corrected in the completed second selection. guard-schema-migration-1.log fails at an intermediate Fin 1 binding proof. All other archived failed/uncommitted intermediate development attempts are retained but excluded from completed validation claims. source-identity-compatibility-1.log failed the obsolete RationalSources assertion. Both atomic-roundtrip probes remain unsuccessful public-decoder experiments; only the second source snapshot is retained here.",
+  "artifact_commit": "434261e889b2b773d0e854742e853338ab60d219",
+  "document_commit": "434261e889b2b773d0e854742e853338ab60d219",
+  "documents_sha256": {
+    "reports/hexrcf-source-identities.md": "9e057bb26e86c83769f68f8407e60c41cdccc71e694ebd802ed47ba6ce5b1a4c",
+    "reports/hexrcf-maximal-coefficients.md": "c85bbfad97e7ec81d6ce764194c00f53b8a9c2da2dc1d9fd1d8e1c6050ad7e02"
+  }
 }
