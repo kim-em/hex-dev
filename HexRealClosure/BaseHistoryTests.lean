@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosure.ConstructedCatalog
+public import HexRealClosure.ConstructedGather
 
 public section
 namespace Hex.RealClosure.BaseContext.HistoryTests
@@ -76,5 +76,71 @@ theorem reuse_existing {registry : Registry} (parent : RealPrefix registry)
     (key : ConstantKey) (present : key ∈ parent.keys) :
     RealPrefix.extend? (fun _ _ => none) parent [key, key] = some parent := by
   simp [RealPrefix.extend?, present]
+
+/-- The finite two-stage reader satisfies readiness on its actual path; it
+provides no progress at unrelated registry histories. -/
+theorem ready_two {registry : Registry} (parent : RealPrefix registry)
+    (first second : ConstantKey) (one : parent.Step first)
+    (two : (parent.append first one).Step second)
+    (freshFirst : first ∉ parent.keys) (freshSecond : second ∉ (parent.append first one).keys) :
+    RealPrefix.Ready (reader parent first second one two) parent [first, second] := by
+  have different := append_ne parent first one
+  simp [RealPrefix.Ready, freshFirst, freshSecond, reader, offer, different]
+
+/-- Native two-stage construction installs its exact output for later reads. -/
+theorem install_two {registry : Registry} (catalog : Catalog registry)
+    (parent : RealPrefix registry) (first second : ConstantKey) (one : parent.Step first)
+    (two : (parent.append first one).Step second)
+    (freshFirst : first ∉ parent.keys) (freshSecond : second ∉ (parent.append first one).keys) :
+    ∃ packet : catalog.Construction (reader parent first second one two) parent [first, second],
+      catalog.construct? (reader parent first second one two) parent [first, second] = some packet ∧
+      packet.target = (parent.append first one).append second two ∧
+      packet.next.lookup packet.target.keys = some packet.target := by
+  have built := construct_two parent first second one two freshFirst freshSecond
+  have success := catalog.construct?_success (reader parent first second one two)
+    parent [first, second] (by rw [built]; rfl)
+  obtain ⟨packet, produced⟩ := Option.isSome_iff_exists.mp success
+  exact ⟨packet, produced, Option.some.inj (packet.built.symm.trans built), packet.available⟩
+
+/-- An installed complete output returns the original catalog unchanged. -/
+theorem installed_reused {registry : Registry} (catalog : Catalog registry)
+    (read : (parent : RealPrefix registry) → (key : ConstantKey) → Option (parent.Step key))
+    (parent : RealPrefix registry) (keys : List ConstantKey) (target : RealPrefix registry)
+    (built : RealPrefix.extend? read parent keys = some target)
+    (found : catalog.lookup target.keys = some target) :
+    ∃ packet : catalog.Construction read parent keys,
+      catalog.construct? read parent keys = some packet ∧ packet.next = catalog ∧
+        packet.target = target := by
+  exact catalog.construct?_reuse read parent keys target built found
+
+/-- Missing second-stage progress rejects before modifying a catalog. -/
+theorem install_missing {registry : Registry} (catalog : Catalog registry)
+    (parent : RealPrefix registry) (first second : ConstantKey) (one : parent.Step first)
+    (freshFirst : first ∉ parent.keys) (freshSecond : second ∉ (parent.append first one).keys) :
+    catalog.construct? (offer parent first one) parent [first, second] = none := by
+  exact catalog.construct?_missing (offer parent first one) parent [first, second]
+    (missing_second parent first second one freshFirst freshSecond)
+
+/-- Compiled controls cover rational construction, existing-path reuse, later
+catalog reads, empty gathering and repeated gathering with a rational owner. -/
+def rationalControls : Bool := Id.run do
+  let registry : Registry := fun _ => none
+  let catalog := Catalog.empty registry
+  let parent : RealPrefix registry := .pack (.rational registry)
+  let read := fun (p : RealPrefix registry) (k : ConstantKey) => (none : Option (p.Step k))
+  let some packet := catalog.construct? read parent [] | return false
+  unless packet.next.read parent.finish.signature |>.isSome do return false
+  unless (packet.next.construct? read parent []).isSome do return false
+  let empty : Tower.Live.Request registry := []
+  let some ⟨emptyPacket, _⟩ := empty.gatherConstructed? packet.next read parent | return false
+  unless (empty.gatherConstructed? emptyPacket.next read parent).isSome do return false
+  let request : Tower.Live.Request registry := [⟨Tower.Context.ofBase parent.finish, {}⟩]
+  let some ⟨gathered, _⟩ := request.gatherConstructed? emptyPacket.next read parent | return false
+  unless (gathered.next.read parent.finish.signature).isSome do return false
+  return (request.gatherConstructed? gathered.next read parent).isSome
+
+/-- info: true -/
+#guard_msgs in
+#eval rationalControls
 
 end Hex.RealClosure.BaseContext.HistoryTests

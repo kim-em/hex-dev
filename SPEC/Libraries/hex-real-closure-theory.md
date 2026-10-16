@@ -405,23 +405,34 @@ native constant constructor at each new predecessor. Its reader supplies the
 registered provider's search progress at that exact predecessor; existing keys
 are skipped, and missing progress rejects. Successful construction retains the
 original ordered prefix and exactly the union of original and requested keys.
+`RealPrefix.Ready` follows this same path, requiring progress only at the new
+predecessors actually visited. `extend?_isSome` characterizes native success by
+this predicate. No progress at unrelated registry histories is required.
 `RealPrefix.Model.progress` derives each step's progress from containment, width
-and relative transcendence at the constructed predecessor. `extend?_model` and
-`extend?_success` construct the provider history from those local premises,
-and `extend?_embedding` preserves every original coefficient through the native
-inclusion. No joint target model is a premise.
+and relative transcendence at the constructed predecessor. `extend?_model`
+constructs the provider model from validity of accepted reader steps;
+`extend?_success` needs only path readiness. `extend?_embedding` preserves every
+original coefficient through the native inclusion. No joint target model is a
+premise.
 
-`Catalog.construct?` installs that actual constructed history without rebinding
-an existing path; an already installed complete path rejects like `insert`.
+`Catalog.construct?` installs the actual constructed history without rebinding
+an existing path; an already installed complete path returns the unchanged
+catalog. A failed native construction still rejects before lookup.
 `Live.Request.gatherConstructed?` collects the original owners' provider keys,
-constructs and installs the missing history, and runs the existing reconciled
-factory on the returned catalog. Its success theorem requires relative validity
-and progress for requested new steps, absence of the constructed path from the
-old catalog and distinct original owner paths. Its model theorem derives the
-actual returned live collection's canonical interpretation. The ordinary-kernel
-tests build two native stages, skip duplicate keys, reject a missing second
-packet and reuse existing keys. The independent checked-body audit covers the
-native constructors, semantic construction and gathering laws, and these tests.
+constructs or reuses that history, and reconciles all requested frames at that
+exact target with the maximum requested infinitesimal depth. Its dependent
+return type retains the construction packet, updated catalog and collection at
+that target. The success theorem requires relative validity of accepted steps,
+progress along the actual request path and distinct original owner paths. It
+requires neither absence of the output path nor models of unrelated catalog
+entries. Its model theorem derives the actual collection's canonical
+interpretation from the constructed history. The ordinary-kernel tests unfold
+two-stage native construction, skip duplicate keys, reject missing progress,
+prove readiness for a reader restricted to the two required predecessors, and
+retain the installed output. Compiled rational-base controls cover empty
+requests, installed-path reuse, subsequent catalog reads and repeated gathering.
+The independent checked-body audit covers the native constructors, semantic
+construction and gathering laws, and these tests.
 The separate ordinary-real finite-sign conclusion for
 arbitrary interleaved stages is not supplied by these ambient `Model.next`
 interpretations. Root agreement also retains the parent model at the current

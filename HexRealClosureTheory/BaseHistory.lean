@@ -117,40 +117,14 @@ theorem RealPrefix.Model.progress_correct {registry : Registry}
     parent.StepCorrect key (parent.progress key present τ contained width transcendental) := by
   exact ⟨τ, contained, transcendental⟩
 
-/-- Construction succeeds when every new requested provider supplies progress
-and semantic validity at each actual lawful predecessor. These premises concern
-single steps; no installed target context or model is supplied. -/
+/-- Progress along this request's actual predecessors suffices for native
+construction. Semantic validity is needed separately to interpret the result. -/
 theorem RealPrefix.Model.extend?_success {registry : Registry}
     (read : (parent : RealPrefix registry) → (key : ConstantKey) → Option (parent.Step key))
-    (valid : ∀ (parent : RealPrefix.Model registry) (key : ConstantKey)
-      (step : parent.context.Step key), read parent.context key = some step →
-        parent.StepCorrect key step)
     (parent : RealPrefix.Model registry) (keys : List ConstantKey)
-    (ready : ∀ (current : RealPrefix.Model registry) (key : ConstantKey), key ∈ keys →
-      key ∉ current.context.keys → (read current.context key).isSome = true) :
-    (RealPrefix.extend? read parent.context keys).isSome = true := by
-  induction keys generalizing parent with
-  | nil => rfl
-  | cons key rest ih =>
-    have following : ∀ (current : RealPrefix.Model registry) (next : ConstantKey), next ∈ rest →
-        next ∉ current.context.keys → (read current.context next).isSome = true := by
-      intro current next member absent
-      exact ready current next (List.mem_cons_of_mem key member) absent
-    unfold RealPrefix.extend?
-    split
-    · exact ih parent following
-    · rename_i absent
-      have existsStep := ready parent key (List.mem_cons_self) absent
-      cases supplied : read parent.context key with
-      | none => simp only [supplied, Option.isSome_none, Bool.false_eq_true] at existsStep
-      | some step =>
-        obtain ⟨τ, contained, transcendental⟩ := valid parent key step supplied
-        let child := parent.append key step τ contained transcendental
-        have same : child.context = parent.context.append key step :=
-          parent.append_context key step τ contained transcendental
-        change (RealPrefix.extend? read (parent.context.append key step) rest).isSome = true
-        rw [← same]
-        exact ih child following
+    (ready : RealPrefix.Ready read parent.context keys) :
+    (RealPrefix.extend? read parent.context keys).isSome = true :=
+  (RealPrefix.extend?_isSome read parent.context keys).mpr ready
 
 /-- The native predecessor inclusion into the constructed history preserves
 every old coefficient. Both interpretations are constructed from the same

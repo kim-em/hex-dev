@@ -18,7 +18,9 @@ run_meta do
   let roots := #[``RealPrefix.Step.present, ``RealPrefix.append,
     ``RealPrefix.append_keys, ``RealPrefix.append_embedding, ``RealPrefix.extend?,
     ``RealPrefix.extend?_prefix, ``RealPrefix.extend?_mem,
-    ``Catalog.construct?, ``Catalog.construct?_success, ``Catalog.Construction.installed,
+    ``RealPrefix.Ready, ``RealPrefix.extend?_isSome, ``Catalog.lookup_mem,
+    ``Catalog.construct?, ``Catalog.construct?_success, ``Catalog.construct?_reuse,
+    ``Catalog.construct?_missing, ``Catalog.Construction.installed,
     ``Catalog.Construction.preserved, ``Catalog.Construction.covers,
     ``Live.Request.providerKeys, ``Live.Request.gatherConstructed?,
     ``Live.Request.gatherConstructed?_of_success, ``Live.Request.gatherConstructed?_gathered,
@@ -26,9 +28,12 @@ run_meta do
     ``RealPrefix.Model.progress, ``RealPrefix.Model.progress_correct,
     ``RealPrefix.Model.extend?_model, ``RealPrefix.Model.extend?_success,
     ``RealPrefix.Model.extend?_embedding, ``Catalog.Construction.models,
+    ``Catalog.Construction.realization,
     ``Live.Request.gatherConstructed?_success, ``Live.Request.gatherConstructed?_model,
     ``HistoryTests.offer, ``HistoryTests.reader, ``HistoryTests.construct_two,
-    ``HistoryTests.duplicate_keys, ``HistoryTests.missing_second, ``HistoryTests.reuse_existing]
+    ``HistoryTests.duplicate_keys, ``HistoryTests.missing_second, ``HistoryTests.reuse_existing,
+    ``HistoryTests.ready_two, ``HistoryTests.install_two, ``HistoryTests.installed_reused,
+    ``HistoryTests.install_missing, ``HistoryTests.rationalControls]
   for name in roots do
     let info ← getConstInfo name
     let some body := info.value? (allowOpaque := true) |

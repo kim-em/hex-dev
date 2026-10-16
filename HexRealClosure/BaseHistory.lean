@@ -73,6 +73,33 @@ missing progress rejects rather than selecting an unrelated installed history. -
       | none => none
       | some step => extend? read (parent.append key step) rest
 
+/-- Progress is required only along the predecessors this request actually
+visits. No unrelated registry history is quantified over. -/
+@[expose] def RealPrefix.Ready {registry : Registry}
+    (read : (parent : RealPrefix registry) → (key : ConstantKey) → Option (parent.Step key)) :
+    RealPrefix registry → List ConstantKey → Prop
+  | _, [] => True
+  | parent, key :: rest =>
+    if key ∈ parent.keys then RealPrefix.Ready read parent rest
+    else ∃ step, read parent key = some step ∧
+      RealPrefix.Ready read (parent.append key step) rest
+
+/-- Native construction succeeds exactly when progress is supplied along its
+actual path, including skips of keys already present. -/
+theorem RealPrefix.extend?_isSome {registry : Registry}
+    (read : (parent : RealPrefix registry) → (key : ConstantKey) → Option (parent.Step key))
+    (parent : RealPrefix registry) (keys : List ConstantKey) :
+    (RealPrefix.extend? read parent keys).isSome = true ↔ RealPrefix.Ready read parent keys := by
+  induction keys generalizing parent with
+  | nil => simp [RealPrefix.extend?, RealPrefix.Ready]
+  | cons key rest ih =>
+    simp only [RealPrefix.extend?, RealPrefix.Ready]
+    split
+    · exact ih parent
+    · cases supplied : read parent key with
+      | none => simp
+      | some step => simpa [supplied] using ih (parent.append key step)
+
 /-- A successful construction retains the original ordered provider history. -/
 theorem RealPrefix.extend?_prefix {registry : Registry}
     (read : (parent : RealPrefix registry) → (key : ConstantKey) → Option (parent.Step key))
