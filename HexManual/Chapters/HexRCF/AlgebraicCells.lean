@@ -481,6 +481,10 @@ It constructs their checked selected presentations and gathers the resulting
 owners automatically. Separate finite indices specify the coefficient tuple
 and the original guards; repeated indices and guard-only inputs are retained.
 An original zero guard rejects before any presentation construction.
+Recognized rational inputs use checked points in the rational predecessor,
+including guard-only inputs. This avoids adjoining a root of a linear
+polynomial just to represent a rational. Other inputs retain the owner's
+selected-root factory and its check of the original embedding.
 Every declared input is presented and gathered, even when absent from both
 index collections. An unused irrational input can enlarge the tower, so a
 focused input tuple avoids that additional cost.
@@ -694,7 +698,7 @@ root, both true and false quantified verdicts, an unused zero input, a late
 original zero guard, and empty true/false constant inputs. Separate linear
 constraints a < x < 1 distinguish the variable's selected coefficient: a = −√2
 gives an existential true and universal false verdict; a = √2 gives both false.
-Twelve actual automatic-input proof bodies are separately checked with only
+Thirteen actual automatic-input proof bodies are separately checked with only
 the standard three axioms.
 
 The explicit `HexRCFAlgebraicCellsStress` target retains the stronger condition

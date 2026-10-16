@@ -44,6 +44,35 @@ meta def quoteSuppliedRoot
     config used
 ```
 
+For a rational predecessor, `RationalQuote.decoder` supplies these proposals
+without a fixed list of permitted numerators. It recognizes canonical
+`[0,n,d]` payloads with a positive coprime denominator and requires the whole
+codec record to be definitionally equal to the supplied registry's rational
+base codec. Numerator and denominator identities are ordinary proofs; the
+enclosing quotation checks the proposed equation against the original decode.
+
+```lean
+open Lean Hex.RealFormula in
+open Hex.Reflect in
+open Hex.RCF.RealCoefficients in
+meta def quoteRationalRoot
+    (reader registry : Expr)
+    (config : Reify.Config)
+    (used : BudgetUsage) :=
+  RootQuote.quote reader
+    (RationalQuote.decoder registry)
+    config used
+```
+
+The registry argument is a Lean expression of type
+`Hex.RealClosure.BaseContext.Registry`. This helper supplies scalar equations;
+it does not reconstruct registry or provider histories. Regression tests check
+positive and negative fractions, noncanonical or malformed payloads, and a
+different codec whose decoding function is unchanged. The generic callback
+also quotes the same frozen cubic independently of the original finite callback.
+Its fresh importing audit checks 183 actual generated theorem bodies under
+kernel producer diagnostics, with only the standard three axioms.
+
 The [cubic regression](../../../conformance/HexRCF/RootQuoteSource.lean) reads a
 supplied replay for `X³−3` on the open interval `(−8,8)`. A fresh public consumer
 proves that the accepted descriptor retains the exact context, polynomial,
@@ -55,7 +84,7 @@ bodies and complete standard-three axiom closure. All supplied JSON fields are
 frozen constructors, including the rational scalar arrays `[0,n,1]`. The test's
 scalar callback supplies the public rational decoding equations, which are
 checked at every demanded decode. A separate constructor audit excludes producer
-calls from the supplied data. Generic scalar recognition, source/provider-history
+calls from the supplied data. Scalar recognition beyond the rational base, source/provider-history
 authentication and context reconstruction remain separate work.
 
 A reader that rejects its input or replay returns structured invalid-provider
