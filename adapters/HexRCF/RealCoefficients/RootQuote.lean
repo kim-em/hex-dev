@@ -166,9 +166,16 @@ private partial def demanded (decode : Decoder) (dependent : Expr → ReifyM Exp
     if let .const name _ := reduced.getAppFn then
       if let .recInfo recursor ← getConstInfo name then
         let args := reduced.getAppArgs
-        if name == ``Bool.rec && args.size > recursor.getMajorIdx+1 then
-          let proof ← dependent reduced
-          return some (reduced,reduced,proof)
+        if name == ``Bool.rec && args.size ≥ 5 then
+          let witness := args[4]!
+          let reflected := witness.isAppOfArity ``Decidable.reflects_decide 2 ||
+            match witness with
+            | .proj ``Decidable 1 _ => true
+            | _ => false
+          if reflected then
+            let applied := mkAppN reduced.getAppFn (args.extract 0 5)
+            let proof ← dependent applied
+            return some (reduced,applied,proof)
         if let some major := args[recursor.getMajorIdx]? then
           let some (expanded,subject,proof) ← demanded decode dependent major | return none
           return some (mkAppN reduced.getAppFn

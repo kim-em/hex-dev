@@ -58,7 +58,8 @@ checked at every demanded decode. A separate constructor audit excludes producer
 calls from the supplied data. Generic scalar recognition, source/provider-history
 authentication and context reconstruction remain separate work.
 
-Invalid input or replay returns structured invalid-provider evidence. An exhausted
+A reader that rejects its input or replay returns structured invalid-provider
+evidence. Non-readers and unsupported shapes raise terminal exceptions. An exhausted
 reflection budget remains exhaustion; exceptions, heartbeat limits, recursion
 limits and cancellation remain terminal. No error selects another solver.
 The failure regressions include a changed count with its unchanged matrix,

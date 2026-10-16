@@ -52,7 +52,7 @@ run_meta do
     | .error _ _ => pure true
     | _ => throw error
   unless rejected do throwError "constructor audit accepted a raw recursor"
-  let roots := #[``exists_cubic,``realRoot_spec,``cubic_interpret,``function_read,``true_read,``nativeRoot_read,``subject_encoded,``subject_read,``reader_ok,``root_raw,``root_subject]
+  let roots := #[``exists_cubic,``realRoot_spec,``cubic_interpret,``function_read,``boolFunction_read,``dependentFunction_read,``true_read,``nativeRoot_read,``subject_encoded,``subject_read,``reader_ok,``root_raw,``root_subject]
   for name in roots do
     let .thmInfo declaration ← getConstInfo name | throwError "checked root theorem missing"
     let _ ← Hex.RCF.checkProof name declaration.type declaration.value
@@ -80,7 +80,7 @@ run_meta do
         Hex.RCF.SelectedRootTests.KernelCheck.addChecked
           (← mkFreshUserName `__rootQuoteData) statement (← mkEqRefl declaration.value)
       | _ => pure ()
-  unless checked == 182 do throwError "quotation body count changed: {checked}"
+  unless checked == 220 do throwError "quotation body count changed: {checked}"
   logInfo m!"actual cubic and conditional quotation bodies under kernel producer diagnostics: {checked}"
   for name in #[``Tower.contextCodec_self,``NumberField.decode_payload,
       ``Dag.replay_eq,``Dag.step_eq,``Node.check_eq,``checkMoment_eq,
@@ -90,8 +90,12 @@ run_meta do
       ``dite_eq_left,``of_decide_eq_true,``Subsingleton.elim] do
     unless dependencies.contains name do
       throwError "quotation omitted proof dependency {name}"
+    if #[``TarskiCertificate.checkCached_eq,``Array.toList_range,
+        ``Array.all_toList,``Array.foldlM_toList].contains name then
+      logInfo m!"generated bodies directly use {name}: {direct.contains name}"
   for name in #[``Tower.contextCodec_self,``Dag.replay_eq,``Dag.step_eq,
       ``Node.check_eq,``checkMoment_eq,``TarskiCertificate.check_eq,
+      ``Array.toList_range,``Array.all_toList,``Array.foldlM_toList,
       ``Replay.table_lookup,``dite_eq_right,``of_decide_eq_false,
       ``dite_eq_left,``of_decide_eq_true,``Subsingleton.elim] do
     unless direct.contains name do
@@ -100,5 +104,5 @@ run_meta do
     throwError "temporary checker reducibility escaped: {repr (← getReducibilityStatus ``Node.check)}"
   unless (← getReducibilityStatus ``Array.mapM.map) == .irreducible do
     throwError "temporary core reducibility escaped"
-  logInfo "fresh original-reader and six literal bindings checked; actual public replay/core laws present; complete standard-three axiom closure; reducibility restored"
+  logInfo "fresh reader bindings, conditional controls and selected realRoot_spec checked; actual public replay/core laws present; complete standard-three axiom closure; reducibility restored"
 end Hex.RCF.RootQuoteTests

@@ -104,6 +104,32 @@ run_meta do
         name := `Hex.RCF.RootQuoteTests.function_read,levelParams := [],
         type := statement,value := mkExpectedPropHint result.proof statement })
 
+/-- A Boolean recursor's fifth argument can be an ordinary function input. -/
+@[expose] noncomputable def boolFunctionReader : Except String Nat :=
+  cond (Node.check Sturm.orderSign 7 Hex.Sturm.Fixtures.p (.finite (-2)) (.finite 2)
+    [] Hex.SignDet.Conformance.literalNode)
+    (fun value => .ok (value+2)) (fun _ => .error "false branch") 5
+
+/-- A dependent conditional can itself return a function. -/
+@[expose] noncomputable def dependentFunctionReader : Except String Nat :=
+  (if _accepted : Node.check Sturm.orderSign 7 Hex.Sturm.Fixtures.p
+      (.finite (-2)) (.finite 2) [] Hex.SignDet.Conformance.literalNode = true then
+    fun value => .ok (value+2)
+  else fun _ => .error "false dependent branch") 5
+
+run_meta do
+  withExporting (isExporting := false) do
+    for (reader,name) in #[(``boolFunctionReader,`Hex.RCF.RootQuoteTests.boolFunction_read),
+        (``dependentFunctionReader,`Hex.RCF.RootQuoteTests.dependentFunction_read)] do
+      let .ok result ← RootQuote.quote (mkConst reader)
+        | throwError "function-valued Boolean reader declined"
+      let someSeven ← mkAppM ``Option.some #[mkNatLit 7]
+      let statement ← mkEq (← mkAppM ``Except.toOption #[mkConst reader]) someSeven
+      withExporting (isExporting := true) do
+        addDecl (.thmDecl {
+          name,levelParams := [],type := statement,
+          value := mkExpectedPropHint result.proof statement})
+
 /-- Acceptance is used as dependent returned data, exercising the true branch. -/
 @[expose] noncomputable def trueReader : Except String (PLift
     (Node.check Sturm.orderSign 7 Hex.Sturm.Fixtures.p (.finite (-2)) (.finite 2)

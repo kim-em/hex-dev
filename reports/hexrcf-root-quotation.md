@@ -44,8 +44,9 @@ requiring exactly `propext`, `Classical.choice` and `Quot.sound`. It also verifi
 that actual public codec, replay and core conditional laws occur in the proof
 closure and that temporary reducibility metadata has not escaped. Generated
 quotation bodies must directly use the asserted graph, node, moment, table,
-core conditional and subsingleton laws; codec and remaining traversal laws are
-also required in the transitive closure. This is not exhaustive coverage of
+Array traversal, core conditional and subsingleton laws. The cached-checking
+rule is present transitively but does not occur directly in these generated
+bodies; these fixtures do not exercise that rule. This is not exhaustive coverage of
 every possible expression or alternative witness form.
 
 Regressions test continued aggregate usage, exact proof limits and limits one
@@ -109,6 +110,6 @@ term size; normalization also reopens its scoped cache at successive cuts.
 The cubic's 191,702 charged nodes use about 19% of the default million-node
 reflection budget. This explicitly accounts for expansion and is not a physical
 sharing or scalability claim. Quotation regressions use 12,000,000 Lean
-heartbeats and recursion depth 8192; the fresh body audit uses depth32768.
+heartbeats and recursion depth 8192; the fresh body audit uses depth 32768.
 Success under Lean's default options has not been established. These limits
 remain caller-controlled and are not reset by the helper.
