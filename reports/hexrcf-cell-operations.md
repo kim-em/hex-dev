@@ -7,6 +7,9 @@ horizontal overflow. The live memory-limit properties and bounded build
 wrappers are retained with the validation evidence.
 The [control validation record](data/hexrcf-cell-operations/controls-context.json)
 binds the expanded refusal and actual-record dependency checks separately.
+The [final control record](data/hexrcf-cell-operations/controls-final-context.json)
+also binds the scalar-codec dependency, different-program refusal and isolated
+memory observation.
 
 [`CellOperations`](../adapters/HexRCF/RealCoefficients/CellOperations.lean)
 uses the owners' existing `Replay.Operations` dictionary to check a complete
@@ -58,13 +61,17 @@ Its [fresh consumer](../conformance/HexRCF/CellReplay/AssembledKernel.lean)
 derives `∃ x : ℝ, x² = √2` and audits the actual checked bodies, rather than
 only cached axiom metadata. Required dependencies include the supplied-operation
 acceptance law, canonical soundness and selected-root model. The audits forbid
-the older fixture acceptance/source theorems and producers in the proof.
+the older complete-cell fixture acceptance/source theorems and producers in the proof.
+The coefficient codec still uses kernel-checked fixture scalar facts through
+`Records.facts` and `Records.accepted*`; both audits require that dependency.
+Actual assembly supplies the operation dictionary. The complete-cell acceptance
+proof is freshly checked, with those frozen scalar facts as codec inputs.
 Separate controls reject the negative-conjugate formula, a √3 source with the
 supplied √2 valuation identity, and both caller-identity and program-side guard
 count mismatches. Each control asserts its expected diagnostic, checks
 metavariable/declaration rollback and propagates every unrelated exception,
 including untagged kernel resource failures. Both body audits require
-`Element.replayMul_eq` and share a forbidden list covering fixture acceptance,
+`Element.replayMul_eq` and share a forbidden list covering complete-cell fixture acceptance,
 source proofs, the fixture operation dictionary and producers. A fresh consumer
 requires completion of every source refusal, and a declaration reference requires
 its audit to finish. These are default conformance roots, without a new CI job.
@@ -119,12 +126,23 @@ failed and interrupted runs. They are not matched performance comparisons.
 | `cell-assembled-final.log` | 14,337 jobs, cached validation at `73d0818c41` | 5.246s | 334.9 MiB |
 | `cell-operations-review-assembly-1.log` | Expanded source refusals and actual-record audits | 6m52.875s | 10.5 GiB |
 | `cell-operations-review-integration-1.log` | 14,337 jobs, cached assembled proof modules | 14.740s | 1.3 GiB |
+| `cell-operations-review-assembly-2.log` | Isolated assembly module, imports cached | 7m21.578s | 10 GiB cgroup |
+| `cell-operations-review-integration-2.log` | 14,337 jobs, complete optional/conformance/manual selection | 10m30.593s | 8.3 GiB |
 
 The source/consumer selections have both completion markers. The assembled
 costs remain a limitation of this retained-field route and do not establish
 practical general tactic performance. The typed acceptance theorem is shared
 across refusal controls; the positive source check separately exercises the raw
 conversion proof through the public quotation API.
+
+The isolated assembly selection records GNU time's maximum resident set size
+as 12,411,592 KiB (11.84 GiB), with zero swaps. Its systemd cgroup peak is
+10 GiB. These use different accounting for shared pages and cannot be compared
+as a common memory measure. Import/control preparation runs in a separate
+bounded unit before this single-module selection. The observation does not
+explain the variation between source-distinct aggregate peaks or establish CI
+headroom; the required GitHub run remains the merge gate. The raw time report
+is retained without another unchanged rerun.
 
 The manual example uses a short `Operations` name and a split `RadicalCert`
 type to fit narrow pages. The clipped diagnostic capture and its exact source
