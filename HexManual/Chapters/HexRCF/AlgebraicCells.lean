@@ -669,7 +669,7 @@ run_meta do
   unless usage.proofNodes >
       before.proofNodes do
     throwError
-      "missing accumulated proof usage"
+      "proof usage did not increase"
 ```
 
 This proof uses the checked algebraic expressions and their source identities.
