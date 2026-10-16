@@ -1,0 +1,277 @@
+{
+  "source_commit": "0b3ed6a720d1716d11ffb648b84c4728bc5635e8",
+  "capturedAt": "2026-10-16T20:30:11.192491+00:00",
+  "sources": {
+    "adapters/HexRCF/RealCoefficients/RationalQuote.lean": {
+      "sha256": "1a58d1e67b487c0ea62a0ac5ac0bb76c6554f0ef0f68c1206b763249f072132a",
+      "bytes": 4092
+    },
+    "conformance/HexRCF/RationalQuoteData.lean": {
+      "sha256": "13ce694bac3ead6fb3aa027634e3048dc5fffe14ba5ad8a1ddab578769742c90",
+      "bytes": 698
+    },
+    "conformance/HexRCF/RationalQuoteCases.lean": {
+      "sha256": "ce139410600d801a378b8732892715fa7f9c5d3cc701c6470700c69c64b2455f",
+      "bytes": 7938
+    },
+    "conformance/HexRCF/RationalQuoteConformance.lean": {
+      "sha256": "5963d9b4636dda17dd58406aad46ea040e69c954b1905fd8504f67ec5ac8ff29",
+      "bytes": 3746
+    },
+    "conformance/HexRCF/AlgebraicCellsConformance.lean": {
+      "sha256": "23f46c6b65464a46195b968fefa8b032d6e8b198100841f550740aea6e3e59be",
+      "bytes": 10365
+    },
+    "HexManual/Chapters/HexRCF/RootQuote.lean": {
+      "sha256": "076a350729627243d13439c8bf40afbabeef9998ecb348a9cf58483c2d47e4de",
+      "bytes": 5651
+    },
+    "HexRCF/README.md": {
+      "sha256": "5a9be404cbdf6722e9c25a8b93fa13d54d02626af04f66e294edd19a82dd65d8",
+      "bytes": 49507
+    },
+    "lakefile.lean": {
+      "sha256": "575e410dcaf9f85b9042bf0f20632e414004ecaaf95e9f4962200d4690aad379",
+      "bytes": 109880
+    }
+  },
+  "artifacts": [
+    {
+      "path": "rational-quote-review-fix-1.log.gz",
+      "sha256": "bee72003beef497c5846fe6264b9af0c03f5a1b31c07f2bc283816ce7ab47482",
+      "bytes": 6937,
+      "uncompressed_sha256": "55e2911dc5ff0581b15885a9265d5d0f9443c6f1cb7141bdb5677869d5000f08",
+      "uncompressed_bytes": 75672
+    },
+    {
+      "path": "rational-quote-review-fix-2.log.gz",
+      "sha256": "0a243c3c8a82a1a0a513ac6a55aaed7f21d3752c93e6ce93c3c7804f65fb42f1",
+      "bytes": 5305,
+      "uncompressed_sha256": "5b1b80609abe505096fea7d783e4353bfd98879b0fe9c06aa749384b75c6d694",
+      "uncompressed_bytes": 51373
+    },
+    {
+      "path": "rational-quote-review-fix-3.log.gz",
+      "sha256": "90391e38f35cca5259eba6313678ef973734071fed52bfebb4652a15d020e8c0",
+      "bytes": 7274,
+      "uncompressed_sha256": "23c35718c335990bc4b72950e079029ad6e69168d1adb8df172e2290174c9c37",
+      "uncompressed_bytes": 77997
+    },
+    {
+      "path": "rational-quote-review-fix-4.log.gz",
+      "sha256": "e6c2c4429a0ee6cf8845688831e10e20e3619e686ef4e06e7bdd05fe9a452293",
+      "bytes": 7268,
+      "uncompressed_sha256": "80c56cb2b88f1cb0d5cf2cc77ce7cafb3215c8163a1d548e3642e99ea029a212",
+      "uncompressed_bytes": 77901
+    },
+    {
+      "path": "rational-quote-review-fix-5.log.gz",
+      "sha256": "cbca4f002a69a42d4cfc87c9ce7c0634acf4ec42fa0a0a17ae1f4ab126e42466",
+      "bytes": 7020,
+      "uncompressed_sha256": "dc8e5bb16861c5c422bff23c4fe8a0c22b70ff7f1dc0b7ab863778ef7f62eae6",
+      "uncompressed_bytes": 75842
+    },
+    {
+      "path": "rational-quote-review-fix-6.log.gz",
+      "sha256": "626c413900bca5a831fd1c13af6cc0ed12a3588467b08bd6880bb24e79523329",
+      "bytes": 8591,
+      "uncompressed_sha256": "cf6eeba32c0e9ecabc895cd63a66a5cc8c1d36e1b0ac6563d7cdff54a67d17da",
+      "uncompressed_bytes": 97821
+    },
+    {
+      "path": "rational-quote-review-fix-7.log.gz",
+      "sha256": "435d6fd6c3d590c6a1a33f47fea5498566514f6afbaafa1ca609c2d573520f28",
+      "bytes": 8047,
+      "uncompressed_sha256": "2c69823f2f53cf9f17f30932c4ca62c6448541ee8a63c09a9b7db1550ffa8737",
+      "uncompressed_bytes": 94442
+    },
+    {
+      "path": "rational-quote-review-validation-1.log.gz",
+      "sha256": "f3f550b20233f8d6b737a7403b2897efddea7a032e7b44c551bffe53c8ad30dc",
+      "bytes": 9926,
+      "uncompressed_sha256": "31b99712b8f9169831c051585856a4b3554d2be9716cbc67cfab6a33f5d0b269",
+      "uncompressed_bytes": 119806
+    },
+    {
+      "path": "rational-quote-review-render-1.log.gz",
+      "sha256": "9dacda740305eddaeb5284b4660a49682183ebc54b671771edc5b6bd22770507",
+      "bytes": 14453,
+      "uncompressed_sha256": "001f1cd7fbae73cfde75514097cda70bf2dbdfffd3f347bf28ded831cd9accc8",
+      "uncompressed_bytes": 191752
+    },
+    {
+      "path": "rational-quote-review-browser-1.log.gz",
+      "sha256": "1b36be628297e45d55d03d622111aada5a12bc8d086dd152c412d849636e198c",
+      "bytes": 240,
+      "uncompressed_sha256": "161c88283a9d4a3760cd1363cb66c308d446df0d6d8ba6f3c91b82d1cbfb2977",
+      "uncompressed_bytes": 327
+    },
+    {
+      "path": "rational-quote-review-metadata-0.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "rational-quote-review-metadata-1.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "rational-quote-review-metadata-2.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "rational-quote-review-metadata-3.log.gz",
+      "sha256": "10241bb8de97db250fd3a2adb18bcb978456218c13e89020f1789db74229d9e9",
+      "bytes": 100,
+      "uncompressed_sha256": "dd56c41e4d8e656705ca1d2a23d2489ed216c948cef116d7763b6f3f5aa72ef8",
+      "uncompressed_bytes": 95
+    },
+    {
+      "path": "rational-quote-review-metadata-4.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "rational-quote-desktop-equivalence.png",
+      "sha256": "955b33fbabf7708a2ec1132f8682c3848b5fd7c98609abb9f178afaed8605678",
+      "bytes": 268867
+    },
+    {
+      "path": "rational-quote-desktop-example.png",
+      "sha256": "391574b90f74735f9600a35f0c9172c41e3f4eb06c376ce43b1392bef2580438",
+      "bytes": 286458
+    },
+    {
+      "path": "rational-quote-desktop-registry.png",
+      "sha256": "65b9cf28f0a9330b7207aa4738826a4209c45334fbccd599af0d36e3df0229da",
+      "bytes": 297238
+    },
+    {
+      "path": "rational-quote-desktop-boundary.png",
+      "sha256": "e7cdc22b883cbf0055c2ef15489a63705783c5e02c75b6e020d24d87dd9d704b",
+      "bytes": 296125
+    },
+    {
+      "path": "rational-quote-narrow-equivalence.png",
+      "sha256": "42e3cf52d0948a3bbfbc5d3832c915aa4c78b054d3ae97c876bcc57a5f6e7e37",
+      "bytes": 95683
+    },
+    {
+      "path": "rational-quote-narrow-example.png",
+      "sha256": "fa8702953d33064b28b7eef9a3392c19e0a4cd3c233c1ada1785495cb5dd825d",
+      "bytes": 98048
+    },
+    {
+      "path": "rational-quote-narrow-registry.png",
+      "sha256": "9ab1d7d059483a3ba8913f20df517de1e25790e6b1d58f6bba85fba9a4b133c4",
+      "bytes": 102180
+    },
+    {
+      "path": "rational-quote-narrow-boundary.png",
+      "sha256": "7970afe22216a523d03579cb07a4e03b212c41bf2a2b97ea7ca03fdb8abbbf65",
+      "bytes": 91599
+    },
+    {
+      "path": "rational-quote-inspection.json",
+      "sha256": "8dce3f3e075de47311990f252fe81f370979038aa93ad7bfadbd033ee3ec3f89",
+      "bytes": 6426
+    },
+    {
+      "path": "rational-quote-section-overflow.json",
+      "sha256": "0a84e473d1b882e82601fade7eac4f0cdf32b5891e729b80c25322b2c2cbed23",
+      "bytes": 5464
+    }
+  ],
+  "final_verification": {
+    "jobs": 11766,
+    "runtime": "9.702s",
+    "peak_memory": "1.4GiB",
+    "swap_bytes": 0,
+    "proof_bodies": 188,
+    "proof_body_count_pinned": true,
+    "cubic_specific_decode_payload_dependency": true,
+    "old_finite_callback_law_forbidden": true,
+    "old_acceptance_modules_absent": true,
+    "raw_negative_fraction_constructor_audit": true,
+    "selected_child_codec_heartbeat_limit": 200000,
+    "all_base_rational_coefficient_build": true,
+    "all_base_both_quantifiers_and_late_zero_guard": true,
+    "axiom_closure": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ]
+  },
+  "render": {
+    "jobs": 14316,
+    "runtime": "4min14.158s",
+    "peak_memory": "5.8GiB",
+    "swap_bytes": 0,
+    "all_eight_captures_opened": true,
+    "local_targets_per_width": 11,
+    "viewports": [
+      1440,
+      390
+    ],
+    "local_overflow": 0
+  },
+  "metadata": [
+    {
+      "argv": [
+        "python3",
+        "scripts/check_dag.py"
+      ],
+      "exit_code": 0,
+      "log": "rational-quote-review-metadata-0.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_copyright_headers.py"
+      ],
+      "exit_code": 0,
+      "log": "rational-quote-review-metadata-1.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_file_line_counts.py"
+      ],
+      "exit_code": 0,
+      "log": "rational-quote-review-metadata-2.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/ci/check_named_admissions.py"
+      ],
+      "exit_code": 0,
+      "log": "rational-quote-review-metadata-3.log.gz"
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "rational-quote-review-metadata-4.log.gz"
+    }
+  ],
+  "resource_policy": "Every own build and browser render is serial in the same MemoryMax34359738368/MemorySwapMax0 service; LEAN_NUM_THREADS2. Exact wrapper retained in the parent record. Service output records peak/no swap. No matched comparison.",
+  "limitations": [
+    "Historical development failures have raw logs but not every transient source snapshot.",
+    "No source/provider/predecessor authentication, extension scalar recognition or general tactic/completeness claim.",
+    "No stress repair or scientific timing comparison."
+  ]
+}

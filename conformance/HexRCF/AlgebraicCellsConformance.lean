@@ -42,6 +42,33 @@ private def selected (coefficients : List Int) (lower upper : Rat) : Option Real
     throw (IO.userError "rational tuple changed repeated original guard indices")
   IO.println "checked rational points preserve values, repeated coordinates and original guards; wrong points reject")
 
+#eval (show IO Unit from do
+  let inputs : Fin 2 → RealAlgebraicNumber := fun i =>
+    RealAlgebraicNumber.ofRat (if i.val = 0 then 7/3 else 0)
+  let indices : Fin 1 → Fin 2 := fun _ => 0
+  let original : List (Fin 2) := [0,0]
+  let x : Poly 2 := MvPoly.X 1
+  let formula : QF 2 := .and (.atom ⟨x-MvPoly.X 0,.eq⟩) (.atom ⟨x-3,.lt⟩)
+  let .ok ⟨sources,shared,packet⟩ := AlgebraicCells.build registry inputs indices original formula
+    | throw (IO.userError "all-rational original inputs failed to build")
+  for i in List.finRange 2 do
+    match (sources i).root with
+    | .point value =>
+      unless value.stored == (if i.val = 0 then (7/3 : Rat) else 0) do
+        throw (IO.userError "rational coefficient build changed a stored original value")
+    | .selected .. => throw (IO.userError "rational coefficient build added an owner extension")
+  let input := packet.family.collection.input
+  let values := input.value ∘ GatherCells.values shared (AlgebraicCells.coefficients sources indices)
+  let guards := (GatherCells.guards shared (AlgebraicCells.guards sources original)).map input.value
+  for (quantifier,expected) in [(Quantifier.existsReal,true),(.forallReal,false)] do
+    unless (CompleteReplay.check input.context.codec values formula guards packet.radical
+        quantifier packet.rootGraph packet.cells).toOption == some expected do
+      throw (IO.userError "all-rational coefficient build changed a quantified verdict")
+  match AlgebraicCells.build registry inputs indices (original ++ [1]) formula with
+  | .error .divisor => pure ()
+  | _ => throw (IO.userError "all-rational coefficient build lost an original zero guard")
+  IO.println "all-rational original coefficient build retains parent owners, both verdicts and zero preflight")
+
 private def trial (negative : Bool) : IO Unit := do
   let a ← match selected [-2,0,1] (if negative then -2 else 1) (if negative then -1 else 2) with
     | none => throw (IO.userError "original selected square root failed")
