@@ -1,0 +1,247 @@
+{
+  "source_commit": "e574e3fc3b29722124d11daec11510a8dcd1c52a",
+  "sources": {
+    "adapters/HexRCF/RealCoefficients/RootQuote.lean": "ac2d1f646834309cc88a476feb27273ef610bf61ede7f18dc535a3254e8216df",
+    "adapters/HexRCF/RealCoefficients/ScalarQuote.lean": "e50791fa845ca9621e134d0bdaf6f33e04b0f6377bb5b3173abea59d090820ee",
+    "conformance/HexRCF/SharedQuoteCases.lean": "b253ebcaa0b6f00645d130f694d7d948303b1de5fbe82b307dd4737b24d08af1",
+    "conformance/HexRCF/SharedQuoteConformance.lean": "02c392c283bc55b0d301ca4743443f9df28fd273496ae3a86b94d638c263b587",
+    "HexManual/Chapters/HexRCF/RootQuote.lean": "a2e47dac1f842b1efc7a0c7d53b4b20fd905da7c2f1b77e6f386248a915c26c9",
+    "lakefile.lean": "179ce59200f976ce5ed7590f9428d7071e07903adb428f0b78a0fd82ddf78ca5",
+    "conformance/HexRCF/ScalarQuotePublic.lean": "c2b3dc6750abcb288ba817ce70972ad579cdf723d93d87f04cb8f09d38315019",
+    "adapters/HexRCF/RealCoefficients.lean": "79fdd2daa760cee15fdd27122243d5d7ae0f1817189972917ea5d8de0039682a",
+    "conformance/HexRCF/ScalarQuoteCases.lean": "47fb709b32df6893c3de72f078bf536954d926ec8dde93d169e76a8c056c4db8",
+    "conformance/HexRCF/ScalarQuoteConformance.lean": "fdfd1c1da04eda20f7ea22601fcf4d0f60efd150ca3b933d0d3318876d9744c5",
+    "conformance/HexRCF/NamedConstantProofs.lean": "54b6e99c42e5f43a254607fb438f77c10597a600cc39ed683c436d9a4bc74dd9"
+  },
+  "validation_log": "shared-quote-transport-validation-1.log",
+  "validation": "11785 jobs; 1min27.126s; CPU2min32.959s; peak1.9GiB/noSwap",
+  "resource_policy": "Serial aggregate32GiB, MemorySwapMax0, LEAN_NUM_THREADS2; live renderer properties captured separately",
+  "original_scalar_pr": 10973,
+  "original_scalar_pr_head": "6c99a1898d21a4ff84a0e2317b211633498be9d7",
+  "baseline_tree": "bc8e1ba7601daab18bba1310f5d9c70acfd6766c",
+  "proof_nodes": {
+    "scalar": 818,
+    "polynomial": 1066,
+    "composed": 1884
+  },
+  "scope": "The original fixed codec and the declared sign-fact list element type stay bound; scalar/poly helpers share one request, instantiate assigned inputs, check explicit original-reader targets and retain exact final transport charging. Not generic source/provider/predecessor histories, whole-reader strict compiled rejection or complete extension.",
+  "proof_audit": {
+    "theorem_bodies": 6,
+    "data_definitions": 3,
+    "scalar_theorem_bodies": 13,
+    "scalar_data_definitions": 3,
+    "named_theorem_bodies": 42,
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ]
+  },
+  "initial_source": "cde546ecf995374706bfa99e4ec5e788f8470d25",
+  "layout_change": "Split two long example lines after retained narrow-screen overflow16px/4px at initial source; final rerender and inspection recorded separately.",
+  "initial_render": "14323 jobs; 3min56.321s; CPU4min27.032s; peak4.1GiB/noSwap; sourcecde546ecf995374706bfa99e4ec5e788f8470d25",
+  "current_scalar_pr_head": "f0fc30516d70e2da5ca259012ff8f1551c59f6a8",
+  "current_scalar_pr_code": "5a7a8314e66a4c74d98dea774a6e0848e9f93498",
+  "final_render_log": "shared-quote-render-4.log",
+  "validation_source": "55edc30ad0941239144004260cd5ca1af63580b5",
+  "live_limit_verification": {
+    "ActiveState": "active",
+    "MainPID": "1456351",
+    "MemoryMax": "34359738368",
+    "MemorySwapMax": "0",
+    "Environment": "PATH=/home/kim/.claude-patched:/home/kim/.local/bin:/home/kim/bin:/home/kim/.npm-global/bin:/run/wrappers/bin:/home/kim/.nix-profile/bin:/nix/profile/bin:/home/kim/.local/state/nix/profile/bin:/etc/profiles/per-user/kim/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin LEAN_NUM_THREADS=2",
+    "sampledWhileRunning": true
+  },
+  "artifacts": [
+    {
+      "path": "logs/shared-quote-transport-validation-1.log.gz",
+      "sha256": "6eeecf42cf76fb38e838bbfb0b8d41f73645b0a9098864b46bef02b4fa076945",
+      "bytes": 10347,
+      "uncompressed_sha256": "743813bba16d6e02e9d86b8d7bfbf95daf4b461cdbf255bd7e55d192369eea9c",
+      "uncompressed_bytes": 124188
+    },
+    {
+      "path": "logs/shared-quote-transport-metadata-0.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "logs/shared-quote-transport-metadata-1.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "logs/shared-quote-transport-metadata-2.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "logs/shared-quote-transport-metadata-3.log.gz",
+      "sha256": "b409d67a3a037936236130f7dc5c82bc279551dcaa501f4fdee7275c7bc3baef",
+      "bytes": 99,
+      "uncompressed_sha256": "d2dd145dfbb85665677c83dfa50f34878e648a170c291230b82ce0749ec0eb97",
+      "uncompressed_bytes": 95
+    },
+    {
+      "path": "logs/shared-quote-transport-metadata-4.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "logs/shared-quote-render-4.log.gz",
+      "sha256": "94b4f39073996e6f3b2b43f6005ede668d5dae87de82efa5f6611ff79e8dfedc",
+      "bytes": 14412,
+      "uncompressed_sha256": "d9eb847028280e170b26c27cf5d4002cb7baf017d92e6279cd88a2f221d94851",
+      "uncompressed_bytes": 192082
+    },
+    {
+      "path": "logs/shared-quote-browser-4.log.gz",
+      "sha256": "ed84472adc0a14a3acc058393a70d9117f43810fc837864cd5e7be395ca1cb59",
+      "bytes": 242,
+      "uncompressed_sha256": "2bf7c0552a956e7c636d016a27651132d53d925d12a289fafef7f7b0c55f3698",
+      "uncompressed_bytes": 327
+    },
+    {
+      "path": "validation-command.json",
+      "sha256": "9b8c3147b51fbd3770aa17c07b6c1907cc4142f5a87dedb5be93ecf4fb03d700",
+      "bytes": 478
+    },
+    {
+      "path": "../resource/final/shared-quote-desktop-boundary.png",
+      "sha256": "75d5a81ba17d3755ff4a89e402c9c67be4ea0c041255bbe61c7db0d398937257",
+      "bytes": 277414
+    },
+    {
+      "path": "../resource/final/shared-quote-desktop-equivalence.png",
+      "sha256": "26b195893fe6421deafe12cd176a306a081cc098c71611a9880daff1c469cdcf",
+      "bytes": 263113
+    },
+    {
+      "path": "final/shared-quote-desktop-example.png",
+      "sha256": "e006d9e90ad31269017f708d1e049c5bb13a2804dd0296440936b4c2e4f57754",
+      "bytes": 269420
+    },
+    {
+      "path": "../resource/final/shared-quote-desktop-value.png",
+      "sha256": "204d38f5ffb39d572bbc80c7061eedf62ed51b2a56f510ac7dd5f1351844489e",
+      "bytes": 257808
+    },
+    {
+      "path": "final/shared-quote-narrow-boundary.png",
+      "sha256": "700bef20c8179b9003d989ba96180d593c72aab5cf80615c7cb2fdda1ec372e4",
+      "bytes": 90533
+    },
+    {
+      "path": "final/shared-quote-narrow-equivalence.png",
+      "sha256": "ec54cf6685edb9499ef1b03a0098ad252fd518504be5be459ad36c3868702439",
+      "bytes": 91879
+    },
+    {
+      "path": "final/shared-quote-narrow-example.png",
+      "sha256": "c54e18957169e0bf0806682a63b77e0978ca7ecb8ed585a41744848c307d115c",
+      "bytes": 98307
+    },
+    {
+      "path": "final/shared-quote-narrow-value.png",
+      "sha256": "e1e244f19112908d38c6e5c2a082a6720af35fe1fd78f0ef387f0fe706f34d0c",
+      "bytes": 97504
+    },
+    {
+      "path": "final/shared-quote-inspection.json",
+      "sha256": "6bef0e55ea55a0db6fe2deaf20d1be4233dae55096c5781784c5e03496f06102",
+      "bytes": 5846
+    },
+    {
+      "path": "final/shared-quote-section-overflow.json",
+      "sha256": "c518ff7639656bf1a73d361cdbf5f825c0424f077fbbf4b00f08ffc39d42c108",
+      "bytes": 12278
+    },
+    {
+      "path": "renderer.lean.txt",
+      "sha256": "4d33c8324da890bc696d11dce729aad59fbb2024c9dd03ae56437fe771c68963",
+      "bytes": 205
+    },
+    {
+      "path": "renderer-lakefile.lean.txt",
+      "sha256": "b517509d2e0ab87edca6b417f6e266443613b516c37b365a43020935fae8815e",
+      "bytes": 148
+    },
+    {
+      "path": "run-bounded.sh",
+      "sha256": "63bc5f97337e6b039bb3a9b1ba2a500be96fd1c2a2f73b43dae284aa9b18dda8",
+      "bytes": 302
+    }
+  ],
+  "metadata": [
+    {
+      "argv": [
+        "python3",
+        "scripts/check_dag.py"
+      ],
+      "exit_code": 0,
+      "log": "logs/shared-quote-transport-metadata-0.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_copyright_headers.py"
+      ],
+      "exit_code": 0,
+      "log": "logs/shared-quote-transport-metadata-1.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_file_line_counts.py"
+      ],
+      "exit_code": 0,
+      "log": "logs/shared-quote-transport-metadata-2.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/ci/check_named_admissions.py"
+      ],
+      "exit_code": 0,
+      "log": "logs/shared-quote-transport-metadata-3.log.gz"
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "logs/shared-quote-transport-metadata-4.log.gz"
+    }
+  ],
+  "visual": {
+    "captures": 8,
+    "widths": [
+      1440,
+      390
+    ],
+    "targets_per_width": [
+      25,
+      25
+    ],
+    "all_local_overflow_at_most_one_pixel": true,
+    "opened_captures": true
+  },
+  "render_summary": "evices and other narrow contexts. Long lines are likely to be truncated in the rendered output.\n\nHint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.\n\u2714 [14321/14323] Built HexManual (3.6s)\n\u2139 [14322/14323] Built SharedQuoteRender (6.5s)\ninfo: SharedQuoteRender.lean:3:0: 0\nBuild completed successfully (14323 jobs).\n          Finished with result: success\nMain processes terminated with: code=exited, status=0/SUCCESS\n               Service runtime: 2min 52.701s\n             CPU time consumed: 3min 19.058s\n                   Memory peak: 2.3G (swap: 0B)\n",
+  "limitations": [
+    "Validation source55edc30a and render sourcee574e3fc have identical listed code hashes; the intervening merge only adds Rootf0fc reports. Earlier source31bc27b919 evidence remains separately pinned at../resource/context.json.",
+    "Earlier wrong-target and array-map attempts remain in the historical records with their actual failed/interrupted states; they do not establish current-source properties.",
+    "One array-map experiment was operator-interrupted; its process signal15 is not a passing audit despite systemd reporting operator-stop success.",
+    "Proof-node counts are deterministic request accounting, not physical-sharing or executed-work scaling claims; build times include reused dependencies.",
+    "No generic original source/provider/predecessor authentication, general handler/accepted completeness, arbitrary-depth realization, strict compiled whole-reader missing-record or native stress repair claim."
+  ]
+}

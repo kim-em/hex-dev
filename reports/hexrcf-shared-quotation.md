@@ -17,11 +17,11 @@ quotes the owner's finite `Element.signCodec` reader, and composes the existing
 `Codec.readPoly_refines` / `Element.signCodec_sound` laws. The resulting ordinary
 kernel equation is for the original canonical polynomial reader with the same
 predecessor codec. Scalar and polynomial quotation use the same checked codec
-signature boundary. Assigned inputs instantiate before work accounting. Input size is charged
-before type checking and reduction. Both helpers require the facts list's declared element type to use the original
-context under reducible transparency; aliases in that index require explicit
-checked type transport. Their final proofs are checked against explicit original-reader
-targets. An assigned polynomial reader has the same charge as its expanded
+signature boundary. Assigned inputs instantiate before work accounting. Input
+size is charged before type checking and reduction. Both helpers require the
+facts list's declared element type to use the original context under reducible
+transparency; aliases in that index require explicit checked type transport.
+Their final proofs are checked against explicit original-reader targets. An assigned polynomial reader has the same charge as its expanded
 input.
 
 The [case driver](../conformance/HexRCF/SharedQuoteCases.lean) restores both
@@ -42,27 +42,31 @@ terminal callback failure and late rejection after successful polynomial
 quotation are checked. These are request-accounting counts, not claims of
 physical sharing or expanded execution cost.
 
-At source `31bc27b91906882443f77490510a4d929f6a4e61`, the six-body/three-definition
-shared audit and inherited 13-body/three-definition scalar audit pass the
-ordinary kernel and producer guard. The updated focused chapter/audit selection
-passes 11,767 jobs in 15.015 s, peak 1.7 GiB/no swap. The full 11,785-job
-compatibility selection passes in 4.389 s, peak 269.5 MiB, reusing dependencies
-from the retained preceding attempt. That attempt exits1 solely for three
-nonexistent target names; its successful actual proof audits do not make the
-whole attempt a passing build. The corrected selection includes the actual
-`HandlerTests`, `ReifyTests` and `DecisionTests` modules, both libraries,
-root/rational/scalar/shared audits, the ordinary umbrella consumer, named
-constants and manual chapter. These times include cached dependencies.
+The inherited scalar controls check expanded assigned fact lists and pin the
+final transport charge separately from fact preflight. The one-below budget
+report must identify that final charge. At validation source
+`55edc30ad0941239144004260cd5ca1af63580b5`, the full 11,785-job selection passes
+in 1 min 27.126 s, CPU 2 min 32.959 s, peak 1.9 GiB/no swap. It includes both
+libraries, all root/rational/scalar/shared quotation audits, the ordinary module
+consumer, 42 named-constant theorem bodies, the actual `HandlerTests`,
+`ReifyTests` and `DecisionTests` modules and the manual chapter. The subsequent
+merge at `e574e3fc3b29722124d11daec11510a8dcd1c52a` adds only scalar report
+artifacts; all listed code hashes match the validated source.
 
-Source hashes, commands, full rendering, metadata scopes and inspected
-1440 px/390 px captures are in the [current record](data/hexrcf-shared-quotation/resource/context.json).
-The [earlier record](data/hexrcf-shared-quotation/context.json) retains the
-independently pinned d951490 evidence, initial cde546ecf9 rendering, observed
-16 px/4 px narrow-example overflows, all captures and their changed examples.
-A live service-limit observation is distinguished from the terminal result
-summary. Dependency/umbrella/copyright/line/admission/relative-link/diff checks
-pass with their recorded scopes. Own Lean/browser jobs are serial under a
-shared hard 32 GiB cap, no swap and two Lean threads.
+The final 14,323-job full manual rendering passes in 2 min 52.701 s, peak
+2.3 GiB/no swap. All eight final captures were opened, and local targets fit
+both 1440 px and 390 px. Source hashes, commands, logs and metadata scopes are
+in the [current record](data/hexrcf-shared-quotation/transport/context.json).
+The [31bc27b919 record](data/hexrcf-shared-quotation/resource/context.json) keeps
+the earlier resource checks and rendering. Its failed first full selection
+used three nonexistent target names; the corrected selection passed. The
+[d951490 record](data/hexrcf-shared-quotation/context.json) also retains the
+initial cde546ecf9 rendering, observed 16 px/4 px narrow-example overflows,
+all captures and changed examples. A live service-limit observation is
+separate from each terminal result summary. Dependency/umbrella/copyright/
+line/admission/relative-link/diff checks pass with their recorded scopes.
+Own Lean/browser jobs are serial under a shared hard 32 GiB cap, no swap and
+two Lean threads. Build observations include cached dependencies.
 
 The retained failed diagnostics explain the choice of the existing whole-reader
 refinement law. Direct canonical-array transport triggers a prohibited native
