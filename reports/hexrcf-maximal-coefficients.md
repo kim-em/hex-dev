@@ -55,8 +55,11 @@ selected source files, nineteen raw compressed logs and twenty-two artifacts.
 Its validation groups identify the source commit of each completed selection;
 older failures and narrower checks are retained separately. The broad
 compatibility selection includes rational/algebraic tactic conformance,
-registered/named/mixed/coarse constants and native source preparation. The
-initial squared-bound failure is retained and excluded from successful checks.
+registered/named/mixed/coarse constants and selected native source preparation.
+These are selected targets, not a check of every HexRCF conformance root.
+They do not establish `RationalSources`' registered zero-product regression;
+that coverage has its own explicit selection below. The initial squared-bound
+failure is retained and excluded from successful checks.
 
 | Selection | Source | Completed observation |
 | --- | --- | --- |
@@ -113,8 +116,9 @@ the assembled source module takes 422 seconds and its fresh consumer 7.2 seconds
 Source `0a041add65` preserves the existing target order while adding the three
 new default roots. Its broader 14,350-job selection passes in 13m14.764s at
 9.6 GiB peak, including the optional umbrella, actual assembled proof,
-ordinary-real models, source preparation, caller-constant compatibility,
-handler tests and full manual. These selections have different rebuild scopes;
+ordinary-real models, selected source-preparation targets, caller-constant
+compatibility, handler tests and full manual. This is not all-root conformance
+coverage and does not cover the `RationalSources` assertion. These selections have different rebuild scopes;
 their similar command times are not a performance comparison. Existing checked
 modules may be replayed from the cache in the broader selection.
 The integrated metadata checks cover 662 import cones and 1,563 modules;
@@ -193,8 +197,41 @@ combined transitive axiom closure, requiring exactly the standard three axioms.
 
 These are incremental validation scopes, not matched comparisons. All use the
 same aggregate 32 GiB/no-swap limit and serial own-build discipline. Metadata
-checks pass on the final production source; the later change adds only the
-alias dependency assertion. Earlier failed inventory assertions are retained
+checks pass on that source-scoped production version; its change at
+`c6ea8386fd` adds only the alias dependency assertion. Earlier failed inventory assertions are retained
 and excluded from successful selections. The final manual source is unchanged
 by that assertion; all eight captures were opened and the changed targets have
 zero local overflow. Earlier evidence records and captures remain intact.
+
+## Registered zero-product payloads
+
+[RationalSources](../conformance/HexRCF/RationalSources.lean) checks a registered
+whole subject containing `RealAlgebraicNumber.ofRat (0 / (1 - 1))`. Its source
+coefficient is the entire `0 * subject`, as required by maximal closed-term
+abstraction. The original rational zero-divisor expression is retained exactly.
+The test independently checks the unchanged original sentence and the exact
+`Prenex.toProp formula valuation ↔ original` proof, including its axiom screen.
+An exact whole-product check already pins the subject inside that product;
+there is no additional purportedly independent subexpression check.
+
+A synthetic caller registration supplies existing universal sine bounds.
+Actual `rcf` invocations reject its internal zero divisor beneath both zero
+multiplication and a zero power. These are extension-input errors even though
+Lean's total arithmetic makes the displayed propositions true. The registration
+adds neither an analytic provider to the adapter nor a convergence claim.
+
+The earlier selected compatibility tables do not certify this regression.
+Only selections explicitly naming this module or every HexRCF conformance root
+supply that coverage. Retained failed intermediate assertions are excluded from
+successful validation claims. The all-root selection manifest lists each
+selected module, rather than inferring coverage from a job count.
+
+
+The [source-identity compatibility record](data/hexrcf-source-identities/context.json)
+now supplies that explicit all-root coverage at `4a857a1587`, including this
+registered payload regression and both guarded source quotations. It retains
+the earlier two stale schema failures and their corrected passing selections.
+All 262 HexRCF conformance roots, the base and optional libraries and the full
+manual pass; the warm 14,576-job selection takes 12.388s at 2 GiB peak with no
+swap. This checks the declared compatibility scope and makes no general backend
+completeness or performance claim.

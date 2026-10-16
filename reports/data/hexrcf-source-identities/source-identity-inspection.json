@@ -1,0 +1,80 @@
+[
+  {
+    "label": "desktop",
+    "kind": "identity",
+    "text": "\n                  A source equation alone does not distinguish real conjugates.\nSourceIdentity.observe\nreads a checked scalar sign at the native descriptor's selected root and binds\nevery polynomial coefficient to its rational source query.\nSourceIdentity.margin\nexpresses membership in the source's isolating disc as a positive rational\npolynomial value. The equation and margin must hold at the same root;\nSourceIdentity.select\nthen identifies that value with the source's selected embedding. The\nchecked source-identity example\nuses independently replayed equation and margin packets for the retained √2\ncoordinate, with a separate ordinary-kernel body audit. These are source\ninterpretation lemmas and a fixed-input example; general frozen source-history\nreconstruction still needs its own checked assembly.",
+    "viewport": 1440,
+    "scrollY": 271714,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752,
+    "descendantOverflow": 0
+  },
+  {
+    "label": "desktop",
+    "kind": "model",
+    "text": "\n                  For a closed retained base/root context, RealModel.build constructs its\nordinary-real interpretation from a caller-supplied real base model and each\nroot's actual descriptor, frame and encoding proof. It checks every prefix's\ncontext, rejects a mismatched base model or exhausted depth bound, and restores\nelaborator state on failure. This interpretation still needs checked identities\nconnecting its coefficient and divisor values to the original source statement.",
+    "viewport": 1440,
+    "scrollY": 271524,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752,
+    "descendantOverflow": 0
+  },
+  {
+    "label": "desktop",
+    "kind": "quotation",
+    "text": "\n                  CellQuote.finishOperations takes the supplied-operation acceptance expression\nand an ordinary proof that its result is some (). It kernel-checks that exact\nequation, transports it to the canonical checker, and performs the original\nsource, valuation and divisor checks of CellQuote.finishPacket. A reduced\nconversion proof can retain its original expected equation through this API.\nFailure restores both metavariables and auxiliary proof declarations.",
+    "viewport": 1440,
+    "scrollY": 271892,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752,
+    "descendantOverflow": 0
+  },
+  {
+    "label": "narrow",
+    "kind": "identity",
+    "text": "\n                  A source equation alone does not distinguish real conjugates.\nSourceIdentity.observe\nreads a checked scalar sign at the native descriptor's selected root and binds\nevery polynomial coefficient to its rational source query.\nSourceIdentity.margin\nexpresses membership in the source's isolating disc as a positive rational\npolynomial value. The equation and margin must hold at the same root;\nSourceIdentity.select\nthen identifies that value with the source's selected embedding. The\nchecked source-identity example\nuses independently replayed equation and margin packets for the retained √2\ncoordinate, with a separate ordinary-kernel body audit. These are source\ninterpretation lemmas and a fixed-input example; general frozen source-history\nreconstruction still needs its own checked assembly.",
+    "viewport": 390,
+    "scrollY": 435080,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343,
+    "descendantOverflow": 0
+  },
+  {
+    "label": "narrow",
+    "kind": "model",
+    "text": "\n                  For a closed retained base/root context, RealModel.build constructs its\nordinary-real interpretation from a caller-supplied real base model and each\nroot's actual descriptor, frame and encoding proof. It checks every prefix's\ncontext, rejects a mismatched base model or exhausted depth bound, and restores\nelaborator state on failure. This interpretation still needs checked identities\nconnecting its coefficient and divisor values to the original source statement.",
+    "viewport": 390,
+    "scrollY": 434682,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343,
+    "descendantOverflow": 0
+  },
+  {
+    "label": "narrow",
+    "kind": "quotation",
+    "text": "\n                  CellQuote.finishOperations takes the supplied-operation acceptance expression\nand an ordinary proof that its result is some (). It kernel-checks that exact\nequation, transports it to the canonical checker, and performs the original\nsource, valuation and divisor checks of CellQuote.finishPacket. A reduced\nconversion proof can retain its original expected equation through this API.\nFailure restores both metavariables and auxiliary proof declarations.",
+    "viewport": 390,
+    "scrollY": 435479,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343,
+    "descendantOverflow": 0
+  }
+]

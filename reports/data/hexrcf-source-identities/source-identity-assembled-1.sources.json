@@ -1,0 +1,15 @@
+{
+  "base_commit": "8038da1bb64e7f7776c4e3637e4e32036d549dd3",
+  "sources_sha256": {
+    "adapters/HexRCF/RealCoefficients/SourceIdentity.lean": "5da392816a6182d5280349e4414540fe3804028ff20f8048d1ca4acd704fc4f0",
+    "adapters/HexRCF/RealCoefficients/CommonPresentation.lean": "91a44a23d41419d550fdd699700cbfb7fa00e863db56a823875731d2bfd1a7e8",
+    "adapters/HexRCF/RealCoefficients.lean": "38c773f411bbc398a104212af4ff642cadc133524872b8cd097c1f901c44287e",
+    "conformance/HexRCF/SourceIdentityCases.lean": "4f3c39f9e97e5418cf13e7940219703e78f1a294e02ee3c051bbf18de85e6132",
+    "conformance/HexRCF/SourceIdentityKernel.lean": "4fabd48b7fc8eba01c57b050e4d39f5892433ac02628efb7329afd74e92012ab",
+    "conformance/HexRCF/CellReplay/Assembled.lean": "d38663d67d986a36cbc6760daaa2472ddee59c765f375f8af67ee65de91190d5",
+    "conformance/HexRCF/CellReplay/AssembledKernel.lean": "c85c77fb03ab328737f17ee4e6d742442b4d73660e32665193109e12621f2302",
+    "lakefile.lean": "7541d103508533be1ff7005e7790c454044474922458898c54c05386ac856c2d"
+  },
+  "build": "lake-bounded build +HexRCF.CellReplay.AssembledKernel +HexRCF.SourceIdentityKernel",
+  "scope": "Source/complete-cell proofs; manual and report edits are outside this invocation."
+}

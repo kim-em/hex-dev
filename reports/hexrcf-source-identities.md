@@ -62,3 +62,49 @@ by #10358. The separate unrelated-cubic public-decoder experiments do not
 establish accepted source reconstruction. No general performance improvement
 is claimed. Existing #10633/#10634 implementations and measured limitations
 remain unchanged.
+
+## Source-scoped proof observations
+
+The completed source-selection/body-audit selection has 11,084 jobs and takes
+59.257s, with 8.3 GiB aggregate peak memory and no swap. Its source-identity
+regression module takes 31s and the separate consuming audit 12s. The new
+complete-cell source selection has 11,143 jobs and takes 15m14.587s, with
+12.8 GiB aggregate peak and no swap; the actual assembly module takes 414s
+and its fresh consumer 9.7s. These observations include their respective
+incremental dependency rebuilds. They are neither isolated tactic timings nor
+a matched before/after comparison. No scaling or speedup follows from them.
+
+Every local Lean/Lake/render/browser command uses one shared systemd unit with
+`MemoryMax=34359738368`, `MemorySwapMax=0`, two Lean threads and one own build
+invocation across worktrees. The retained active snapshot establishes those
+limits; its sampled usage is not the final memory peak. Completed command logs
+record their own aggregate peaks, including charged file cache.
+
+## Compatibility and retained evidence
+
+The [retained record](data/hexrcf-source-identities/context.json) binds the
+source-selection, actual complete-cell quotation, registered guard and full
+compatibility selections to their exact source commits and file hashes.
+It includes compressed raw logs, the two all-root manifests, source snapshots,
+check exit statuses and the six inspected desktop/narrow captures.
+
+At `4a857a1587`, all 262 HexRCF roots explicitly listed by the authoritative
+`HexConformance` globs pass together with `HexRCF`,
+`HexRCFRealCoefficients` and the full `HexManual`. The 14,576-job warm selection
+takes 12.388s at 2 GiB aggregate peak with no swap. It reuses the earlier
+successful artifacts; it is not a cold-build or proof-speed measurement.
+The earlier all-root selection is retained as failed: its two guarded fixture
+bindings used the older split-coefficient schema. The corrected fixtures
+retain their original propositions and both divisor obligations, reusing the
+existing one-coordinate schema. Their focused ordinary-kernel/refusal audits
+pass in 1m5.375s at 3.1 GiB peak, before the successful full selection.
+
+The full manual render has 14,301 jobs, takes 23.326s and peaks at 4.6 GiB.
+The separate browser capture takes 10.916s and peaks at 3 GiB. All six images
+were opened; the three inspected paragraphs have zero local overflow at both
+1,440px and 390px viewport widths. The whole book and older code blocks are
+outside that layout claim. Dependency/umbrella, admission, copyright and
+line-count checks pass at the same source commit. The registered guard
+regression also checks the exact original-goal equivalence and two actual
+terminal tactic refusals. Earlier unsuccessful assertions and unrelated
+public-decoder experiments remain excluded from completed validation claims.
