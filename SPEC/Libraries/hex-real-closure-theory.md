@@ -400,7 +400,50 @@ and use owner and target inverse arithmetic in the prescribed union.
 identification through registration and extension.
 `toUnion_ordered_reconciled` compares the two reader paths wherever the
 ordered owner factory accepts.
-Constructing a missing joint provider history remains a separate obligation.
+`RealPrefix.extend?` constructs a missing joint history by applying the actual
+native constant constructor at each new predecessor. Its reader supplies the
+registered provider's search progress at that exact predecessor; existing keys
+are skipped, and missing progress rejects. Successful construction retains the
+original ordered prefix and exactly the union of original and requested keys.
+`RealPrefix.Ready` follows this same path, requiring progress only at the new
+predecessors actually visited. `extend?_isSome` characterizes native success by
+this predicate. No progress at unrelated registry histories is required.
+`RealPrefix.Model.progress` derives each step's progress from containment, width
+and relative transcendence at the constructed predecessor. `extend?_model`
+constructs the provider model from `RealPrefix.Model.Valid`, which follows
+only this same path and supplies the new provider's analytic premises at each
+model just constructed. `extend?_success` needs only path readiness. `extend?_embedding` preserves every
+original coefficient through the native inclusion. No joint target model is a
+premise.
+
+`Catalog.construct?` installs the actual constructed history without rebinding
+an existing path; an already installed complete path returns the unchanged
+catalog. A failed native construction still rejects before lookup.
+`Live.Request.gatherConstructed?` collects the original owners' provider keys,
+constructs or reuses that history, and reconciles all requested frames at that
+exact target with the maximum requested infinitesimal depth. Its dependent
+return type retains the construction packet, updated catalog and collection at
+that target. The success theorem requires relative validity of accepted steps,
+progress along the actual request path and distinct original owner paths. It
+requires neither absence of the output path nor models of unrelated catalog
+entries. Its model theorem derives the actual collection's canonical
+interpretation from the constructed history. Only the final target is installed;
+intermediate prefixes can be constructed and installed separately. Key order
+follows owner order, so reuse is for the same completed path, including the
+same seed and requested order. The ordinary-kernel tests unfold
+two-stage native construction, skip duplicate keys, reject missing progress,
+prove readiness for a reader restricted to the two required predecessors, and
+retain the installed output. A nonempty two-stage kernel test rebuilds the
+same path and proves catalog reuse. The companion's two-stage test derives both
+path readiness and semantic validity for supplied native packets, then
+constructs an installed history with its staged realization. Its
+`HistoryModelTests.install_providers` theorem derives both packets through
+`Model.progress` from containment, width and relative transcendence, and proves
+readiness, validity and installation with no progress-packet hypotheses. Compiled rational-base
+controls cover empty requests, reuse of the empty installed path, subsequent
+catalog reads and repeated gathering.
+The independent checked-body audit covers the native constructors, semantic
+construction and gathering laws, and these tests.
 The separate ordinary-real finite-sign conclusion for
 arbitrary interleaved stages is not supplied by these ambient `Model.next`
 interpretations. Root agreement also retains the parent model at the current
