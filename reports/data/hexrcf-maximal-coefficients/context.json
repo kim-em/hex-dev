@@ -215,5 +215,10 @@
     "own_build_concurrency": 1
   },
   "memory_snapshot_scope": "The .limits file records sampled current/peak values during the active run; completed human-readable aggregate peaks are retained in systemd logs.",
-  "measurement_scope": "Incremental build and rendering observations only; no controlled timing comparison, algorithm scaling or general backend completion claim."
+  "measurement_scope": "Incremental build and rendering observations only; no controlled timing comparison, algorithm scaling or general backend completion claim.",
+  "document_commit": "4dc14eab4b9ca0a47d2d1b7e1ecd2212f946bcb0",
+  "artifact_commit": "4dc14eab4b9ca0a47d2d1b7e1ecd2212f946bcb0",
+  "documents_sha256": {
+    "reports/hexrcf-maximal-coefficients.md": "dd65cdc0e9f9c836636cf2ace85cd5b3d868acdc44c844819ffb5bc7ed6d055a"
+  }
 }
