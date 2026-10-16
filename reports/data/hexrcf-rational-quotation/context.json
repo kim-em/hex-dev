@@ -1,0 +1,325 @@
+{
+  "source_commit": "d938fb5aa97c0c520eca47ef0ac8d492f6000cf8",
+  "sources": {
+    "adapters/HexRCF/RealCoefficients/RationalQuote.lean": "18cb67de3004a04248ed5fac53fce45869bacbf6725aea526142807af844c0b4",
+    "adapters/HexRCF/RealCoefficients.lean": "d729580c7e85c30f23298b056d9eef0fb1e616b05dda25fb571c41d451f06ad2",
+    "conformance/HexRCF/RationalQuoteCases.lean": "c77799b27f469c069d3fe5165e53de5ab31a96c471525436dc9d7f30b1387855",
+    "conformance/HexRCF/RationalQuoteConformance.lean": "ab7dc48f356a574e84c6beb528c2fc994b352224fec5787d304ca04c7a7334fa",
+    "HexManual/Chapters/HexRCF/RootQuote.lean": "4a4191b82209618ff68fb7f46271d401944a89448af71e21773251a0170df58c",
+    "lakefile.lean": "d756083a293de4f90ed723be8fadaad304ee19d34e245ba71d9f8ef991a0b617"
+  },
+  "capturedAt": "2026-10-16T19:28:20.732908+00:00",
+  "validation_jobs": 11765,
+  "quoted_cubic_proofNodes": 195128,
+  "kernel_audited_generated_bodies": 183,
+  "scope": "Generic rational-base quotation and affected consumers; no new general tactic or source/context/provider-history authentication.",
+  "render_properties": "ActiveState=active\nMainPID=2345815\nControlGroup=/user.slice/user-1003.slice/user@1003.service/app.slice/hex-10358-lean-build.service\nMemoryCurrent=2023485440\nMemoryMax=34359738368\nMemorySwapMax=0\n",
+  "render_command": "/home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/lake build RationalQuoteRender ",
+  "LEAN_NUM_THREADS": 2,
+  "artifacts": [
+    {
+      "path": "rational-decoder-probe-1.log.gz",
+      "sha256": "de3ab3f5835fc315a4f1a5f8e83f24a9bd6e329764569658d3d02018d5868bac",
+      "bytes": 5177,
+      "uncompressed_sha256": "67c497af9873bf6d6703e6ec0c49748f8581ec27a0ec96a9958f8c6a42764a81",
+      "uncompressed_bytes": 51009,
+      "scope": "Historical development diagnostic; not final-source acceptance evidence"
+    },
+    {
+      "path": "rational-decoder-probe-2.log.gz",
+      "sha256": "b2660d3888217168e670622a5a130fd2f0c7285c5eb1d29143088b70d475fcf7",
+      "bytes": 5220,
+      "uncompressed_sha256": "bbee9b9883efa727f862ebfbd20b6c8f08a38cc9b695063394c9514e488033fb",
+      "uncompressed_bytes": 51147,
+      "scope": "Historical development diagnostic; not final-source acceptance evidence"
+    },
+    {
+      "path": "rational-quote-build-1.log.gz",
+      "sha256": "4aa2af69bb98b7a4ff4e588866f1c2353cf51e48bf645a0a1dce54a445cad17d",
+      "bytes": 5137,
+      "uncompressed_sha256": "c11ec81fdb23510638fd15b6f6e64a52e22f4eb38834702822f6f1ad6671f24f",
+      "uncompressed_bytes": 50937,
+      "scope": "Historical development diagnostic; not final-source acceptance evidence"
+    },
+    {
+      "path": "rational-quote-cases-1.log.gz",
+      "sha256": "25ba4a20b71f307514b256aebed49f199da8a17bb8bd66a6c86f5154ee3d9bcf",
+      "bytes": 5491,
+      "uncompressed_sha256": "66108fb94e5020225c53e5c7d68c8723b1ecccf1aed5cf6ef9b7bd0e9dbe0711",
+      "uncompressed_bytes": 53316,
+      "scope": "Historical development diagnostic; not final-source acceptance evidence"
+    },
+    {
+      "path": "rational-quote-cases-2.log.gz",
+      "sha256": "5a624b2958b564595192b5f87f6da867dc3b0b44ebd2a9cba39adc8e0167583f",
+      "bytes": 5621,
+      "uncompressed_sha256": "62fe547fd884bb781b883e8b7a21d0a9497778d41d7cef0b90ebef0c4f736d41",
+      "uncompressed_bytes": 53510,
+      "scope": "Historical development diagnostic; not final-source acceptance evidence"
+    },
+    {
+      "path": "rational-quote-cases-3.log.gz",
+      "sha256": "c48eee982a8fd2d05f1f8ca06a809cb035d6795bc08b327d43a49346564c363d",
+      "bytes": 5244,
+      "uncompressed_sha256": "6bd8bfd0e9cca4d436f82a93f0e043ab6ca1fad04a270a6fb1687da1b2106b16",
+      "uncompressed_bytes": 51182,
+      "scope": "Historical development diagnostic; not final-source acceptance evidence"
+    },
+    {
+      "path": "rational-quote-conformance-1.log.gz",
+      "sha256": "beb766d74232ad61d95f888a2cfc32f60d5c3580cc314c2ef06ba3c6c66425b2",
+      "bytes": 6916,
+      "uncompressed_sha256": "67dc5c51719a8cca1ff0f5fd231bc7f2ffa50d9719493ae8a5a41ffe5698b3cb",
+      "uncompressed_bytes": 75604,
+      "scope": "Historical development diagnostic; not final-source acceptance evidence"
+    },
+    {
+      "path": "rational-quote-conformance-2.log.gz",
+      "sha256": "c473d1ca1542506e3f9cf189d99e6a32dee5d83305daa45bd60a003ccf6c34ee",
+      "bytes": 7163,
+      "uncompressed_sha256": "3be76168dcb57fa147966b6ff85c6859895490be8489d31171f4f4f260b750cc",
+      "uncompressed_bytes": 77567,
+      "scope": "Historical development diagnostic; not final-source acceptance evidence"
+    },
+    {
+      "path": "rational-quote-conformance-3.log.gz",
+      "sha256": "715814ae38dfccb552400fd768ec06d029dfa2b3c9d1e05b35b8361c6262c475",
+      "bytes": 6914,
+      "uncompressed_sha256": "8ec2d6404e7bafbd00d04db305bb8dddd855f034170f1cfd6f95d83eceaa71a5",
+      "uncompressed_bytes": 75606,
+      "scope": "Final source-bound validation"
+    },
+    {
+      "path": "rational-quote-validation-1.log.gz",
+      "sha256": "aa72a1a0f56346aa93c6dfd26bfafa50ccb7af66ed82855d39815e6975504a82",
+      "bytes": 9828,
+      "uncompressed_sha256": "dc58e172cd72db2472e3ec03957ff61d808c1149d9b9fcd5155cecb817831aaa",
+      "uncompressed_bytes": 119459,
+      "scope": "Final source-bound validation"
+    },
+    {
+      "path": "rational-quote-render-1.log.gz",
+      "sha256": "b0aa28bfb2f1137183adc32815befde9214c9da60a55113767d092369f231286",
+      "bytes": 14419,
+      "uncompressed_sha256": "a5e0d45a67552fa922e9a99f98d7f903a18759b09d2b5bccccc8ab0e10c41bc4",
+      "uncompressed_bytes": 191746,
+      "scope": "Final source-bound validation"
+    },
+    {
+      "path": "rational-quote-browser-1.log.gz",
+      "sha256": "09d70653b0002225fa6b3d90780bbb756540c71f346b7a19efda537f2fd4be75",
+      "bytes": 241,
+      "uncompressed_sha256": "c2eb6a42386845f68a887d64432d5999bce04d53f47e8d6e369f4b1fe5c85612",
+      "uncompressed_bytes": 327,
+      "scope": "Final source-bound validation"
+    },
+    {
+      "path": "rational-quote-metadata-0.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "rational-quote-metadata-1.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "rational-quote-metadata-2.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "rational-quote-metadata-3.log.gz",
+      "sha256": "10241bb8de97db250fd3a2adb18bcb978456218c13e89020f1789db74229d9e9",
+      "bytes": 100,
+      "uncompressed_sha256": "dd56c41e4d8e656705ca1d2a23d2489ed216c948cef116d7763b6f3f5aa72ef8",
+      "uncompressed_bytes": 95
+    },
+    {
+      "path": "rational-quote-metadata-4.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "rational-quote-inspection.json",
+      "sha256": "36f6533aa03a488be09102e3be62d784685a8d94a8af07c6a4201df1a7127692",
+      "bytes": 6128
+    },
+    {
+      "path": "rational-quote-section-overflow.json",
+      "sha256": "0a84e473d1b882e82601fade7eac4f0cdf32b5891e729b80c25322b2c2cbed23",
+      "bytes": 5464
+    },
+    {
+      "path": "rational-quote-desktop-equivalence.png",
+      "sha256": "955b33fbabf7708a2ec1132f8682c3848b5fd7c98609abb9f178afaed8605678",
+      "bytes": 268867
+    },
+    {
+      "path": "rational-quote-desktop-example.png",
+      "sha256": "96e30217bca9ab71cdfacb30ac38f8eeb0429e6479134224760c44b7b2115b24",
+      "bytes": 282101
+    },
+    {
+      "path": "rational-quote-desktop-registry.png",
+      "sha256": "aed9dd4437ab1d068a6e4db9d3d6cfa40199fd64d342e59b975b382b6dc803d8",
+      "bytes": 294200
+    },
+    {
+      "path": "rational-quote-desktop-boundary.png",
+      "sha256": "387cdb70d2522833d2bc08e962c4742aa36f4d89050eac8eaeccd808dbf097be",
+      "bytes": 295751
+    },
+    {
+      "path": "rational-quote-narrow-equivalence.png",
+      "sha256": "42e3cf52d0948a3bbfbc5d3832c915aa4c78b054d3ae97c876bcc57a5f6e7e37",
+      "bytes": 95683
+    },
+    {
+      "path": "rational-quote-narrow-example.png",
+      "sha256": "fa410337eb7aa602a92c7b2c7581824a885568223a901c8110ab0e1964053b77",
+      "bytes": 97149
+    },
+    {
+      "path": "rational-quote-narrow-registry.png",
+      "sha256": "bfd9f7f1ed0f7d1de4088aedbc27c65bb5224700f4693578c422c872f823bb5b",
+      "bytes": 103107
+    },
+    {
+      "path": "rational-quote-narrow-boundary.png",
+      "sha256": "e67b82392b777c49829503f0fd7cb4a434269213a7b025541ac756bb0009382f",
+      "bytes": 92144
+    },
+    {
+      "path": "RationalQuoteRender.lean.txt",
+      "sha256": "e7ff1b79e38bf26e94a11ac3e030a48acc7a14348abdf75fbf79ddf85cf19312",
+      "bytes": 207
+    },
+    {
+      "path": "renderer-lakefile.lean.txt",
+      "sha256": "05f86938fddc7fe8babea8df9947189888a93e25b0238681b818d0569ee4a13b",
+      "bytes": 152
+    },
+    {
+      "path": "renderer-lean-toolchain.txt",
+      "sha256": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+      "bytes": 29
+    },
+    {
+      "path": "rational-quote-browser.mjs",
+      "sha256": "0bf2d81225fe0039495b6c4331cc855addd2505c3fd2a13c1034aabdf0da29b9",
+      "bytes": 5643
+    },
+    {
+      "path": "run-bounded.sh",
+      "sha256": "63bc5f97337e6b039bb3a9b1ba2a500be96fd1c2a2f73b43dae284aa9b18dda8",
+      "bytes": 302
+    },
+    {
+      "path": "RationalDecodeProbe.lean.txt",
+      "sha256": "584380769e7045c44d1e9b9d21faaa41c71bff68e4bf6b7f2d9f037fc06a79b3",
+      "bytes": 5240
+    }
+  ],
+  "metadata": [
+    {
+      "argv": [
+        "python3",
+        "scripts/check_dag.py"
+      ],
+      "exit_code": 0,
+      "log": "rational-quote-metadata-0.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_copyright_headers.py"
+      ],
+      "exit_code": 0,
+      "log": "rational-quote-metadata-1.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_file_line_counts.py"
+      ],
+      "exit_code": 0,
+      "log": "rational-quote-metadata-2.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/ci/check_named_admissions.py"
+      ],
+      "exit_code": 0,
+      "log": "rational-quote-metadata-3.log.gz"
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "rational-quote-metadata-4.log.gz"
+    }
+  ],
+  "opened_images": [
+    "rational-quote-desktop-equivalence.png",
+    "rational-quote-desktop-example.png",
+    "rational-quote-desktop-registry.png",
+    "rational-quote-desktop-boundary.png",
+    "rational-quote-narrow-equivalence.png",
+    "rational-quote-narrow-example.png",
+    "rational-quote-narrow-registry.png",
+    "rational-quote-narrow-boundary.png"
+  ],
+  "render": {
+    "jobs": 14316,
+    "runtime": "3min33.170s",
+    "peak_memory": "3.5GiB",
+    "swap_bytes": 0
+  },
+  "validation": {
+    "jobs": 11765,
+    "runtime": "10.880s",
+    "peak_memory": "1.5GiB",
+    "swap_bytes": 0,
+    "reuse": "Unchanged dependencies and prior successful conformance runs reused; not a cold build or comparison."
+  },
+  "fresh_audit": {
+    "bodies": 183,
+    "runtime": "12s in final conformance build",
+    "axiom_closure": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "previous_acceptance_theorems_rejected": true,
+    "kernel_producer_diagnostics": true
+  },
+  "visual_inspection": {
+    "opened_all_eight": true,
+    "viewports": [
+      1440,
+      390
+    ],
+    "section_targets_per_viewport": 11,
+    "local_overflow": 0,
+    "limitation": "This concerns the quotation section, not the entire manual. The book-wide horizontal scrollbar is outside this local claim."
+  },
+  "limits": "Own builds and browser rendering serial under aggregate MemoryMax34359738368, MemorySwapMax0 and LEAN_NUM_THREADS2.",
+  "limitations": [
+    "No general tactic handler, provider/source/predecessor authentication or completeness claim.",
+    "No matched AB/BA timing, scaling or sharing claim.",
+    "Historical failed attempts retain logs but not each transient source snapshot; only final logs support final-source claims."
+  ]
+}

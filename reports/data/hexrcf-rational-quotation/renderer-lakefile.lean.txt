@@ -1,0 +1,5 @@
+import Lake
+open Lake DSL
+package rationalQuoteRender
+require Hex from "/home/kim/.codex/tasks/hex-10358/boolean-worktree"
+lean_lib RationalQuoteRender
