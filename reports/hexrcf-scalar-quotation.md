@@ -10,9 +10,9 @@ refinement to a different predecessor decoder.
 The complete original codec argument spine is retained for the strict reader
 and transport theorem. Monomorphic universe and signature arity checks guard
 that construction. Assigned metavariables are instantiated before input and proof work is
-charged. Reader type checking and reduction follow that charge. Fact contexts
-must match the original context under reducible transparency; other aliases
-require explicit checked type transport. Wrong-context facts reject before
+charged. Reader type checking and reduction follow that charge. The facts list's declared element type
+must use the original context under reducible transparency; aliases in that
+index require explicit checked type transport. Wrong-context facts reject before
 decoder callbacks run. The final proof target is constructed explicitly from
 the original named `ValueCodec.decode` application.
 
@@ -42,13 +42,15 @@ literals and admitted proposals are checked. Failure restores all state,
 including auxiliaries from an earlier successful strict quotation. Missing
 evidence does not start another solver.
 
-At source `973997c0c15e8059ecf14929c2743613f8e874f9`, the 11,783-job
+At source `5a7a8314e66a4c74d98dea774a6e0848e9f93498`, the 11,783-job
 affected selection passes both libraries, rational compatibility,
 root/rational/scalar quotation, the ordinary-module consumer, the 42-body
-supplied pi/e audit and the checked manual chapter. Runtime 1 min 26.754 s,
-CPU 2 min 19.767 s and peak 1.8 GiB/no swap include reused dependencies.
-Assigned readers and expanded assigned literals receive the same charges as
-their direct forms. Wrong-context rejection is checked with a fresh actual
+supplied pi/e audit and the checked manual chapter. Runtime 1 min 32.390 s,
+CPU 2 min 26.779 s and peak 2.4 GiB/no swap include reused dependencies.
+Assigned readers, expanded literals and expanded facts receive the same
+charges as their direct forms. The exact preflight charge is excluded when
+checking that final transport is charged; one-below exhaustion must occur at
+that final transport charge. Wrong-context rejection is checked with a fresh actual
 `Core.Context.maxHeartbeats` limit of 2,000,000 raw heartbeats; heartbeat and
 recursion-depth errors are rethrown rather than counted as successful refusal.
 The earlier `withOptions` setting did not enforce that core limit; its
@@ -58,7 +60,7 @@ declaration signatures is not a test control.
 
 The full renderer, inspected captures, exact source/artifact hashes, commands,
 name inventories and successful/failed diagnostics are retained in the
-[current source-bound record](data/hexrcf-scalar-quotation/final/context.json).
+[current source-bound record](data/hexrcf-scalar-quotation/transport/context.json).
 Earlier [source-bound evidence](data/hexrcf-scalar-quotation/context.json)
 remains separately pinned. Transient failed-development sources are not all
 retained. Dependency/umbrella/copyright/line/relative-link/diff checks pass.
