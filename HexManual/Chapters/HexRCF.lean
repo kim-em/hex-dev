@@ -504,8 +504,6 @@ including divisors erased by cancellation, zero multiplication or an empty
 domain. Named square/cube aliases keep their existing direct path when all
 original divisors are rational; algebraic division uses the common field.
 
-{include 2 HexManual.Chapters.HexRCF.ClosedCoefficients}
-
 Visible `RealAlgebraicNumber.ofRat` constructors also retain their proved
 rational value. They use the rational decision path after checked source
 lowering; mixed expressions may still use the algebraic path. Divisions inside
@@ -1219,6 +1217,8 @@ Its exclusive kernel type-checking category totals 30.1 seconds; the smaller
 literal-replay category excludes those child checks. The report retains source
 identities, memory, serialized sizes, unique syntax and expanded-reference
 counts. It does not claim a complexity law or complete Phase-4 attestation.
+
+{include 2 HexManual.Chapters.HexRCF.ClosedCoefficients}
 
 # Simultaneous signs and repeated roots over a cubic field
 %%%
