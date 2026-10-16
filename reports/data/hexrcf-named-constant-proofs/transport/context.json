@@ -1,0 +1,42 @@
+{
+  "source_commit": "5a7a8314e66a4c74d98dea774a6e0848e9f93498",
+  "sources": {
+    "adapters/HexRCF/RealCoefficients.lean": "495ff7a8a52b4f62c343fbf54934217263222cbde1ea0b1ad091723a08f6c51d",
+    "adapters/HexRCF/RealCoefficients/RootQuote.lean": "077ebdef38b44d8351fc5311c9ab460275a0282c6f594a0e5254482d28a7cd48",
+    "adapters/HexRCF/RealCoefficients/ScalarQuote.lean": "caafbbbfbb11a28f3eccfa7deb775698ba28f913b33943d9d582387d11f559d8",
+    "conformance/HexRCF/ScalarQuoteCases.lean": "47fb709b32df6893c3de72f078bf536954d926ec8dde93d169e76a8c056c4db8",
+    "conformance/HexRCF/ScalarQuoteConformance.lean": "fdfd1c1da04eda20f7ea22601fcf4d0f60efd150ca3b933d0d3318876d9744c5",
+    "conformance/HexRCF/ScalarQuotePublic.lean": "2418c0c2d932a5d7353005f49f1920fb95a2b4dd52ee4b96096c09d3b85217ae",
+    "conformance/HexRCF/NamedConstantProofs.lean": "54b6e99c42e5f43a254607fb438f77c10597a600cc39ed683c436d9a4bc74dd9",
+    "conformance/HexRCF/NamedConstants.lean": "3cc4f75fe7c1fc17863e5ca00cb4b5d154991ae1c155e1c2287efe35085d7c63",
+    "HexManual/Chapters/HexRCF/RootQuote.lean": "2e8323d3d0b5cd7b6a81ac622113dc7776de2f8a7190b90decabfcb25728d4d3",
+    "lakefile.lean": "d92a2aa95274bcabcad2272fc8094f698058a63fa74083a86c72447bbaa60527"
+  },
+  "theorem_bodies": 42,
+  "goals": [
+    "Hex.RCF.NamedConstants.pi_square",
+    "Hex.RCF.NamedConstants.exp_square",
+    "Hex.RCF.NamedConstants.exp_witness",
+    "Hex.RCF.NamedConstants.pi_inverse"
+  ],
+  "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "maxHeartbeats": 12000000,
+  "maxRecDepth": 32768,
+  "resource_policy": "serial aggregate32GiB/noSwap/LeanThreads2",
+  "combined_evidence": "../../hexrcf-scalar-quotation/transport/context.json",
+  "artifacts": [
+    {
+      "path": "../../hexrcf-scalar-quotation/transport/affected-validation.log.gz",
+      "sha256": "b393a570a9bc3d0656a870edb9ec6bd60aa22c2f08c5dd574ef1e59a25583303",
+      "uncompressed_sha256": "7bd58de5806420a223a3f93a02bdad7d5577d5ff3d7cbbf93e739fee4b747d1b",
+      "bytes": 10216,
+      "uncompressed_bytes": 123415
+    }
+  ],
+  "shared_log": "The inventory artifact is the same retained affected-validation log, linked rather than copied.",
+  "scope": "All reachable theorem bodies in the original NamedConstants module, including auxiliary proofs; imported library bodies are not all re-added. Complete transitive axioms and each actual registration dependency are checked. No provider convergence/transcendence claim."
+}
