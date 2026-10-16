@@ -47,11 +47,12 @@ theorem bind (x : ℝ) :
     (fun a b => closed.read_mul a b trivial trivial) closed.read_natCast negative
     Source.values Source.formula x
 
-theorem valuation_eq : valuation = RealFormula.append Fin.elim0 (1 / (Real.sqrt 2 - 1)) := by
+theorem valuation_eq : valuation = RealFormula.append Fin.elim0
+    (1 / (Real.sqrt 2 - 1) + 0 / (-1 : ℝ)) := by
   funext i
-  rcases i with ⟨_ | i, hi⟩
-  · change read Reader.entry.value = _
-    exact inverse
-  · omega
+  have index : i = 0 := Fin.eq_zero i
+  subst i
+  change read Reader.entry.value = 1 / (Real.sqrt 2 - 1) + 0 / (-1 : ℝ)
+  simpa only [zero_div, add_zero] using inverse
 
 end Hex.RCF.RealCoefficients.FiniteMatrixTests.Guards.Quotient.Binding
