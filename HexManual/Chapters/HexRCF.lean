@@ -508,13 +508,16 @@ domain. Named square/cube aliases keep their existing direct path when all
 original divisors are rational; algebraic division uses the common field.
 
 ```lean
-example : ∀ x : ℝ, x ^ 2 + (Real.sqrt 2 + Real.sqrt 3) > 0 := by
+example : ∀ x : ℝ,
+    x ^ 2 + (Real.sqrt 2 + Real.sqrt 3) > 0 := by
   rcf
 
-example : ∀ x : ℝ, x ^ 2 + (Real.sqrt 2 + Real.sqrt 3) ^ 2 > 0 := by
+example : ∀ x : ℝ,
+    x ^ 2 + (Real.sqrt 2 + Real.sqrt 3) ^ 2 > 0 := by
   rcf
 
-example : ∃ x : ℝ, x = -(Real.sqrt 2 + Real.sqrt 3) ∧ x < -3 := by
+example : ∃ x : ℝ,
+    x = -(Real.sqrt 2 + Real.sqrt 3) ∧ x < -3 := by
   rcf
 ```
 
