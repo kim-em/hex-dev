@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 public import HexRCF.RealCoefficients.GatherCells
 public import HexRealClosure.SharedPresentation
+public import HexRealAlgebraicTheory.Rational
 public section
 /-! Complete native packets from original real algebraic values. Every input
 gets the owner's checked selected presentation. Separate index collections retain
@@ -17,24 +18,55 @@ open scoped List
 namespace Hex.RCF.RealCoefficients.AlgebraicCells
 variable {registry : BaseContext.Registry}
 
-/-- Construct every input through the actual selected-generator factory. -/
+/-- Recognized rationals retain the rational predecessor. Other generators
+use the owner's complete selected-root factory. Both paths check the original
+generator; rejection of a proposed point never starts another search. -/
+@[expose] def presentation (generator : RealAlgebraicNumber) (registry : BaseContext.Registry) :
+    Option (Hex.RealClosure.NumberField.Presentation generator registry) :=
+  match generator.toRat? with
+  | some q => Hex.RealClosure.NumberField.Presentation.ofRoot? generator registry (.point ⟨q⟩)
+  | none => Hex.RealClosure.NumberField.present? generator registry
+
+private theorem point_success (generator : RealAlgebraicNumber) (registry : BaseContext.Registry)
+    (q : Rat) (recognized : generator.toRat? = some q) :
+    ∃ source, Hex.RealClosure.NumberField.Presentation.ofRoot? generator registry (.point ⟨q⟩) =
+      some source := by
+  apply Option.isSome_iff_exists.mp
+  apply (Hex.RealClosure.NumberField.Presentation.ofRoot?_isSome generator registry (.point ⟨q⟩)).mpr
+  apply (RealAlgebraicNumber.beq_iff _ _).mpr
+  change (Trivial.Map.rational registry).value ⟨q⟩ = generator
+  exact (Trivial.Map.rational_value registry ⟨q⟩).trans
+    ((RealAlgebraicNumber.toRat?_eq_some generator q).mp recognized).symm
+
+/-- Rational recognition and the complete owner factory cover every original
+selected real algebraic input without changing its embedding. -/
+theorem presentation_success (generator : RealAlgebraicNumber) (registry : BaseContext.Registry) :
+    ∃ source, presentation generator registry = some source := by
+  cases recognized : generator.toRat? with
+  | none =>
+    simpa only [presentation, recognized] using
+      Hex.RealClosure.NumberField.present?_success generator registry
+  | some q =>
+    simpa only [presentation, recognized] using point_success generator registry q recognized
+
+/-- Construct every input through its checked rational point or selected root. -/
 @[expose] def presentations (registry : BaseContext.Registry) :
     {n : Nat} → (generators : Fin n → RealAlgebraicNumber) →
       Option ((i : Fin n) → Hex.RealClosure.NumberField.Presentation (generators i) registry)
   | 0, _ => some (fun i => i.elim0)
   | _+1, generators => do
-    let head ← Hex.RealClosure.NumberField.present? (generators 0) registry
+    let head ← presentation (generators 0) registry
     let tail ← presentations registry (fun i => generators i.succ)
     pure (Fin.cases head tail)
 
-/-- The total owner factory supplies every finite tuple of presentations. -/
+/-- Checked point preparation and the owner factory supply every finite tuple. -/
 theorem presentations_success (registry : BaseContext.Registry)
     (generators : Fin n → RealAlgebraicNumber) :
     ∃ sources, presentations registry generators = some sources := by
   induction n with
   | zero => exact ⟨fun i => i.elim0,rfl⟩
   | succ n ih =>
-    obtain ⟨head,first⟩ := Hex.RealClosure.NumberField.present?_success (generators 0) registry
+    obtain ⟨head,first⟩ := presentation_success (generators 0) registry
     obtain ⟨tail,rest⟩ := ih (fun i => generators i.succ)
     refine ⟨Fin.cases head tail,?_⟩
     simp only [presentations,first,rest]
