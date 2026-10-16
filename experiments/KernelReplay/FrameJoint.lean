@@ -330,3 +330,57 @@ set_option maxHeartbeats 16000000 in
 /-- info: original two-prefix preparation and actual guard131 retained with ordinary kernel checking -/
 #guard_msgs in
 #frame_guard_capture
+
+meta section
+namespace Hex.RealClosure.Algebraic.KernelReplay.GuardInline
+open Lean Meta Elab
+
+private def kernelCost (type proof : Expr) : MetaM Nat := do
+  let levels := collectLevelParams (collectLevelParams {} type) proof |>.params.toList
+  let options := (← getOptions).setBool `debug.skipKernelTC false
+  let began ← IO.getNumHeartbeats
+  let _ ← ofExceptKernelException <| (← getEnv).toKernelEnv.addDecl options
+    (.thmDecl {
+      name := `__guardCost, levelParams := levels, type, value := proof })
+  return ((← IO.getNumHeartbeats) - began) / 1000
+
+private def retainedCost (required proof : Expr) (requestedHeader : Bool) :
+    MetaM (Nat × Nat) := do
+  let saved ← Meta.saveState
+  try
+    let type ← if requestedHeader then pure required else inferType proof
+    let levels := collectLevelParams (collectLevelParams {} type) proof |>.params.toList
+    let name := mkPrivateName (← getEnv) (← mkFreshUserName `__guardCost)
+    let options := (← getOptions).setBool `debug.skipKernelTC false
+    let declaration := Declaration.thmDecl { name, levelParams := levels, type, value := proof }
+    let began ← IO.getNumHeartbeats
+    let environment ← ofExceptKernelException <| (← getEnv).addDeclCore
+      (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
+      declaration none (doCheck := true)
+    let declarationHB := ((← IO.getNumHeartbeats) - began) / 1000
+    setEnv environment
+    let reference := mkConst name (levels.map Level.param)
+    let useHB ← kernelCost required reference
+    return (declarationHB, useHB)
+  finally saved.restore
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 2000000 in
+run_meta do
+  let .defnInfo index ← getConstInfo ``GuardCapture.index | throwError "missing captured guard index"
+  unless index.value == toExpr (131 : Nat) do throwError "inline cost selected another guard"
+  let .thmInfo guard ← getConstInfo ``GuardCapture.guard | throwError "missing actual guard131"
+  let .thmInfo full ← getConstInfo ``GuardCapture.withReaders | throwError "missing reader-bound guard131"
+  for info in #[guard, full] do
+    Core.checkSystem "actual guard inline kernel cost"
+    let rawHB ← kernelCost info.type info.value
+    let referenceHB ← kernelCost info.type (mkConst info.name)
+    logInfo m!"inline guard131 {info.name}: rawKernelHB={rawHB} referenceKernelHB={referenceHB} typeHash={toString (hash info.type)} proofHash={toString (hash info.value)}"
+  for mode in #[false, true, true, false] do
+    Core.checkSystem "actual guard inline header cost"
+    let (declarationHB, useHB) ← retainedCost guard.type guard.value mode
+    logInfo m!"inline guard131 header: requested={mode} declarationHB={declarationHB} useHB={useHB}"
+  Core.checkSystem "actual guard inline cost complete"
+
+end Hex.RealClosure.Algebraic.KernelReplay.GuardInline
+end
