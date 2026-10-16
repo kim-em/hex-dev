@@ -1,0 +1,288 @@
+{
+  "source_commit": "d2627df9111717a92029321280b2b92955e095d8",
+  "sources": {
+    "adapters/HexRCF/RealCoefficients.lean": "495ff7a8a52b4f62c343fbf54934217263222cbde1ea0b1ad091723a08f6c51d",
+    "adapters/HexRCF/RealCoefficients/RootQuote.lean": "d71cd9471db6952c05584d0f18ae1087ec241281a61a9aeff8d58f3404ffa760",
+    "adapters/HexRCF/RealCoefficients/ScalarQuote.lean": "95621c9134f30795d93866e7d628c0a031433732d0c94094bf1e2c5f2fa4f74d",
+    "conformance/HexRCF/ScalarQuoteCases.lean": "81de82e83a890da70f4212eabbf1cf573084f4b87bbc2d2dd972e6bdd6304510",
+    "conformance/HexRCF/ScalarQuoteConformance.lean": "033985eb3b3defd1d5fa79bc72ab770317f70b49862d218bec9b04c0f85daef9",
+    "conformance/HexRCF/ScalarQuotePublic.lean": "2418c0c2d932a5d7353005f49f1920fb95a2b4dd52ee4b96096c09d3b85217ae",
+    "conformance/HexRCF/NamedConstantProofs.lean": "54b6e99c42e5f43a254607fb438f77c10597a600cc39ed683c436d9a4bc74dd9",
+    "conformance/HexRCF/NamedConstants.lean": "3cc4f75fe7c1fc17863e5ca00cb4b5d154991ae1c155e1c2287efe35085d7c63",
+    "HexManual/Chapters/HexRCF/RootQuote.lean": "e4ca5e3a57a0166fb6bdffaedb23ecbf461f412f39b2f9ecf84e093d5631245c",
+    "lakefile.lean": "d92a2aa95274bcabcad2272fc8094f698058a63fa74083a86c72447bbaa60527"
+  },
+  "proof_nodes": 817,
+  "scalar_theorem_bodies": 12,
+  "scalar_data_definitions": [
+    "Hex.RCF.ScalarQuoteTests.restored",
+    "Hex.RCF.ScalarQuoteTests.literal",
+    "Hex.RCF.ScalarQuoteTests.empty"
+  ],
+  "named_theorem_bodies": 42,
+  "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "resource_policy": "serial aggregate32GiB/noSwap/LeanThreads2",
+  "review_findings_addressed": [
+    "named auxiliaries rechecked",
+    "scalar definitions rechecked under producer guard",
+    "input charged and type-checked before reduction",
+    "signature arity/universe guards",
+    "ordinary umbrella export and module consumer",
+    "wrong-context before callbacks",
+    "success caller metavariables",
+    "wrong field count/nonarray/trailing zeros"
+  ],
+  "render_properties": {
+    "ActiveState": "active",
+    "MainPID": "759763",
+    "ExecStart": "{ path=/run/current-system/sw/bin/env ; argv[]=/run/current-system/sw/bin/env LAKE_NO_CACHE=true lake build ScalarReviewRender ; ignore_errors=no ; start_time=[Fri 2026-10-16 22:30:54 UTC] ; stop_time=[n/a] ; pid=759763 ; code=(null) ; status=0/0 }",
+    "MemoryMax": "34359738368",
+    "MemorySwapMax": "0",
+    "Environment": "PATH=/home/kim/.claude-patched:/home/kim/.local/bin:/home/kim/bin:/home/kim/.npm-global/bin:/run/wrappers/bin:/home/kim/.nix-profile/bin:/nix/profile/bin:/home/kim/.local/state/nix/profile/bin:/etc/profiles/per-user/kim/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin LEAN_NUM_THREADS=2"
+  },
+  "visual": {
+    "captures": 8,
+    "widths": [
+      1440,
+      390
+    ],
+    "targets_per_width": [
+      19,
+      19
+    ],
+    "all_local_overflow_at_most_one_pixel": true,
+    "opened_captures": true
+  },
+  "render": {
+    "log": "manual-render.log.gz",
+    "terminal_summary": "vices and other narrow contexts. Long lines are likely to be truncated in the rendered output.\n\nHint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.\n\u2714 [14316/14318] Built HexManual (5.4s)\n\u2139 [14317/14318] Built ScalarReviewRender (8.2s)\ninfo: ScalarReviewRender.lean:3:0: 0\nBuild completed successfully (14318 jobs).\n          Finished with result: success\nMain processes terminated with: code=exited, status=0/SUCCESS\n               Service runtime: 3min 39.250s\n             CPU time consumed: 4min 4.190s\n                   Memory peak: 4.3G (swap: 0B)\n"
+  },
+  "artifacts": [
+    {
+      "path": "auxiliary-audit-development.log.gz",
+      "sha256": "fe8b2450d0e5bf9f3a86c6db45b1e174a085c27f82f1bd09717dfa7f91061f28",
+      "bytes": 9200,
+      "uncompressed_sha256": "cbf0fceebef2888a85cbd2b87c2590a5c8735c3a2924e9e359aa5415c256bde5",
+      "uncompressed_bytes": 117009
+    },
+    {
+      "path": "public-module-development.log.gz",
+      "sha256": "f0739d50e4a3e978b3fc091674682751ab62af15f27353e56b132bc1328bc85d",
+      "bytes": 9606,
+      "uncompressed_sha256": "005183461720de0958a615163c27e56fa53d070f79c4c34291b1b7b5cb72b470",
+      "uncompressed_bytes": 119385
+    },
+    {
+      "path": "public-module-style-diagnostic.log.gz",
+      "sha256": "e3292e39ecf9ffe8e26c841cedb8b96f8fbf2dc2b099bf1a60fa09a74a5e01a0",
+      "bytes": 8819,
+      "uncompressed_sha256": "86829237f816b00191ec4fbb7c2f105f596b581fca14caa677250652202588f1",
+      "uncompressed_bytes": 115892
+    },
+    {
+      "path": "affected-validation.log.gz",
+      "sha256": "114f3428931d6b91c0bf9e5484aa9112c5e70b7a32698b5c7a847d878dc5dd1e",
+      "bytes": 9821,
+      "uncompressed_sha256": "ef1cfa9e773ec7f5229acf36116bfd970d6f426cfcf2032e16cd22a548f9a387",
+      "uncompressed_bytes": 119038
+    },
+    {
+      "path": "proof-inventories.log.gz",
+      "sha256": "84b54d3cc384a78eedbb4d3596a32660df885c367ec6e580cb001dd58cb819d0",
+      "bytes": 9563,
+      "uncompressed_sha256": "19cc14978fe6ea5942b6cf9707a04645b07007cf4582b25e2892354ba7ba25f0",
+      "uncompressed_bytes": 120971
+    },
+    {
+      "path": "final-validation.log.gz",
+      "sha256": "289afa9cb6c7d9d8f73e46f17cf32f72b69510986c55dd1787db74872b2b2ef0",
+      "bytes": 10034,
+      "uncompressed_sha256": "d62626562f2c2b4c29ca707b76abafd152cf869a7f69bc00ebc1ac29bd83f651",
+      "uncompressed_bytes": 122861
+    },
+    {
+      "path": "manual-render.log.gz",
+      "sha256": "f367083d3ea80377ca32ea14ac8143c6e5db1222d04da510c2370319ffe85d3b",
+      "bytes": 14309,
+      "uncompressed_sha256": "262211c8eccea870e5962e583bcfe7c81881ed11478dc4e847f3cdabb5163283",
+      "uncompressed_bytes": 191619
+    },
+    {
+      "path": "browser-inspection.log.gz",
+      "sha256": "8896d4bb35c15ba16d09037873887f7a6ec2c77e6c48cb051f96719b01fc4e90",
+      "bytes": 241,
+      "uncompressed_sha256": "d97d19f4e22b4346d6b26f0a28f32dab17e4b073e400dca31fbce0fa5b78834f",
+      "uncompressed_bytes": 327
+    },
+    {
+      "path": "metadata-0.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "metadata-1.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "metadata-2.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "metadata-3.log.gz",
+      "sha256": "b409d67a3a037936236130f7dc5c82bc279551dcaa501f4fdee7275c7bc3baef",
+      "bytes": 99,
+      "uncompressed_sha256": "d2dd145dfbb85665677c83dfa50f34878e648a170c291230b82ce0749ec0eb97",
+      "uncompressed_bytes": 95
+    },
+    {
+      "path": "metadata-4.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "browser.mjs",
+      "sha256": "17ed77c513c82314e7a7757e06632a63ad28b7a3849fff28709de84947c34f04",
+      "bytes": 5677
+    },
+    {
+      "path": "run-bounded.sh",
+      "sha256": "63bc5f97337e6b039bb3a9b1ba2a500be96fd1c2a2f73b43dae284aa9b18dda8",
+      "bytes": 302
+    },
+    {
+      "path": "renderer-lakefile.lean.txt",
+      "sha256": "568afb61e6829eb111a6b0c3c1ea83382f9d8ccd4f2a96f08fcc2b72c2107d42",
+      "bytes": 148
+    },
+    {
+      "path": "renderer.lean.txt",
+      "sha256": "664d37e07421cd5f5ee5df6e4fdb3f18fb67b1e58e3688267ff6ca6909180ef3",
+      "bytes": 206
+    },
+    {
+      "path": "scalar-quotation-desktop-boundary.png",
+      "sha256": "69b82c861051a91cb7b55b35b73592acf25b4fae3dc517888363d6421b74fd3e",
+      "bytes": 290248
+    },
+    {
+      "path": "scalar-quotation-desktop-equivalence.png",
+      "sha256": "310957cc04764df4191f58bd7bbb4240e9fd2ed45296aff943a142216e2db9b4",
+      "bytes": 284417
+    },
+    {
+      "path": "scalar-quotation-desktop-example.png",
+      "sha256": "93f571f97ab549238123aa3909f2aa3529c10d3e224c6f474857cd24ad3a6e57",
+      "bytes": 275049
+    },
+    {
+      "path": "scalar-quotation-desktop-value.png",
+      "sha256": "dc73d0e7c96becbdd65c18ffe8a7ca7bd5e132a33fa1d391c8d1466fee88bc75",
+      "bytes": 271130
+    },
+    {
+      "path": "scalar-quotation-narrow-boundary.png",
+      "sha256": "4483203bb8eba82714ac36a600c219d1dc005d905c1d135a3916b210b9a864cc",
+      "bytes": 90963
+    },
+    {
+      "path": "scalar-quotation-narrow-equivalence.png",
+      "sha256": "1702a913a1e1fac7e91b05f1e4af7042cdc9106746f69f6313d7f3be56cee958",
+      "bytes": 95466
+    },
+    {
+      "path": "scalar-quotation-narrow-example.png",
+      "sha256": "f16b4d892fb725a8811a8889d100449dc583ef165b907919670fbc45b554185a",
+      "bytes": 97734
+    },
+    {
+      "path": "scalar-quotation-narrow-value.png",
+      "sha256": "ec548d95f3c68784bed23c555660f54850b3b32f65198f1d7b99c1c652df5d63",
+      "bytes": 98489
+    },
+    {
+      "path": "scalar-quotation-inspection.json",
+      "sha256": "1420f943823c345aa247a01ea3ebd4da1f87e4b14b8bd86a5a9551bbde872c9a",
+      "bytes": 5054
+    },
+    {
+      "path": "scalar-quotation-section-overflow.json",
+      "sha256": "ff2b8a3e6cb5cbbf457303b770025979cfd9b4be7f1dd76faadaabacdbbfe152",
+      "bytes": 9350
+    }
+  ],
+  "metadata": [
+    {
+      "argv": [
+        "python3",
+        "scripts/check_dag.py"
+      ],
+      "exit_code": 0,
+      "log": "metadata-0.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_copyright_headers.py"
+      ],
+      "exit_code": 0,
+      "log": "metadata-1.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_file_line_counts.py"
+      ],
+      "exit_code": 0,
+      "log": "metadata-2.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/ci/check_named_admissions.py"
+      ],
+      "exit_code": 0,
+      "log": "metadata-3.log.gz"
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "metadata-4.log.gz"
+    }
+  ],
+  "verification": {
+    "affected": "11783 jobs; 1min26.026s; CPU2min24.959s; peak3.4GiB/noSwap",
+    "final_audit_and_manual": "11765 jobs; 23.652s; CPU31.530s; peak4.3GiB/noSwap",
+    "final_cached_selection": "11783 jobs; 5.003s; CPU6.178s; peak443.4MiB/noSwap; includes reused dependencies"
+  },
+  "scope": {
+    "theorems": "12 scalar case bodies with complete standard-three axiom closure; source alias has identical type/body constant and zero reductions; other theorem checks require nonempty diagnostics",
+    "definitions": "3 reachable scalar case definitions checked by the ordinary kernel with producer diagnostics; literal definitions may have empty traces",
+    "named": "42 reachable NamedConstants theorem bodies, including auxiliaries, re-added with fresh kernel checks; actual supplied registrations required",
+    "negative_inputs": "Wrong-context facts reject before callbacks under maxHeartbeats2000; wrong field count, nonarray, trailing zeros, missing/wrong facts, admitted proposals and malformed codec signatures refuse",
+    "state_and_budget": "Caller metavariables preserved on success; continued/exact/one-below and late transport-exhaustion rollback tested"
+  },
+  "limitations": [
+    "Earlier failed diagnostics are retained separately; their transient source snapshots are not all retained.",
+    "The fixed admission scanner covers its existing675 cones/1585 modules; the generated source proof closures have separate complete axiom audits.",
+    "Build observations include cached dependencies and are not matched scaling or speedup measurements.",
+    "No generic source/provider/predecessor histories, general tactic/accepted completeness, realization or strict compiled whole-reader missing-record claim."
+  ]
+}

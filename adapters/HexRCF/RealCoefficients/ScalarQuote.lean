@@ -43,19 +43,28 @@ private def finish (codec facts literal : Expr) (result : RootQuote.Result) : Re
   let proof ← Hex.RCF.checkProof `ScalarQuote.accepted (← inferType proof) proof
   return {result with proof, usage := (← get).budget.consumed}
 
+private def strictCodec (codec facts : Expr) : ReifyM Expr := do
+  unless codec.getAppFn.isConstOf ``Algebraic.Element.codec do
+    throwError "rcf: scalar quotation expects an Element.codec application"
+  let parameters := (← getConstInfo ``Algebraic.Element.codec).type.getNumHeadForalls
+  unless codec.getAppNumArgs == parameters do
+    throwError "rcf: scalar quotation expects a complete codec application"
+  let strictInfo ← getConstInfo ``Algebraic.Element.signCodec
+  let acceptedInfo ← getConstInfo ``accepted
+  unless codec.getAppFn.constLevels!.isEmpty && strictInfo.levelParams.isEmpty &&
+      acceptedInfo.levelParams.isEmpty && strictInfo.type.getNumHeadForalls == parameters+1 &&
+      acceptedInfo.type.getNumHeadForalls == parameters+4 do
+    throwError "rcf: scalar quotation codec signatures do not match"
+  return mkAppN (mkConst ``Algebraic.Element.signCodec codec.getAppFn.constLevels!)
+    (codec.getAppArgs.push facts)
+
 /-- Quote a supplied scalar inside an existing reflection request. The strict
 reader, predecessor proposals and canonical transport all consume that request.
 The caller supplies the enclosing transaction; `quote` provides one for an
 ordinary `MetaM` predecessor callback. -/
 def quoteWith (codec facts literal : Expr)
     (decode : RootQuote.DecoderM := fun _ => pure none) : ReifyM RootQuote.Result := do
-  unless codec.getAppFn.isConstOf ``Algebraic.Element.codec do
-    throwError "rcf: scalar quotation expects an Element.codec application"
-  let parameters := (← getConstInfo ``Algebraic.Element.codec).type.getNumHeadForalls
-  unless codec.getAppNumArgs == parameters do
-    throwError "rcf: scalar quotation expects a complete codec application"
-  let strict := mkAppN (mkConst ``Algebraic.Element.signCodec codec.getAppFn.constLevels!)
-    (codec.getAppArgs.push facts)
+  let strict ← strictCodec codec facts
   let reader := mkApp (.proj ``ValueCodec 1 strict) literal
   let result ← RootQuote.quoteWith reader decode
   finish codec facts literal result
@@ -69,11 +78,7 @@ def quotePolyWith (reader facts : Expr)
     throwError "rcf: polynomial quotation expects a complete readPoly application"
   let args := reader.getAppArgs
   let codec := args[3]!
-  unless codec.getAppFn.isConstOf ``Algebraic.Element.codec &&
-      codec.getAppNumArgs == (← getConstInfo ``Algebraic.Element.codec).type.getNumHeadForalls do
-    throwError "rcf: polynomial quotation expects a complete Element.codec application"
-  let strict := mkAppN (mkConst ``Algebraic.Element.signCodec codec.getAppFn.constLevels!)
-    (codec.getAppArgs.push facts)
+  let strict ← strictCodec codec facts
   let strictReader := mkAppN reader.getAppFn (args.set! 3 strict)
   let result ← RootQuote.quoteWith strictReader decode
   let valueType ← inferType result.value
