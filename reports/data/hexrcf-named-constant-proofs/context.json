@@ -72,7 +72,7 @@
       ],
       "exit_code": 0,
       "log": "named-proof-metadata-0.log.gz",
-      "source": "807e97dfa1 (same Lean sources as05732a9e1b)"
+      "source": "807e97dfa1 (same Lean sources as 05732a9e1b)"
     },
     {
       "argv": [
@@ -81,7 +81,7 @@
       ],
       "exit_code": 0,
       "log": "named-proof-metadata-1.log.gz",
-      "source": "807e97dfa1 (same Lean sources as05732a9e1b)"
+      "source": "807e97dfa1 (same Lean sources as 05732a9e1b)"
     },
     {
       "argv": [
@@ -90,7 +90,7 @@
       ],
       "exit_code": 0,
       "log": "named-proof-metadata-2.log.gz",
-      "source": "807e97dfa1 (same Lean sources as05732a9e1b)"
+      "source": "807e97dfa1 (same Lean sources as 05732a9e1b)"
     },
     {
       "argv": [
@@ -99,7 +99,7 @@
       ],
       "exit_code": 0,
       "log": "named-proof-metadata-3.log.gz",
-      "source": "807e97dfa1 (same Lean sources as05732a9e1b)"
+      "source": "807e97dfa1 (same Lean sources as 05732a9e1b)"
     },
     {
       "argv": [
@@ -109,7 +109,7 @@
       ],
       "exit_code": 0,
       "log": "named-proof-metadata-4.log.gz",
-      "source": "807e97dfa1 (same Lean sources as05732a9e1b)"
+      "source": "807e97dfa1 (same Lean sources as 05732a9e1b)"
     }
   ]
 }

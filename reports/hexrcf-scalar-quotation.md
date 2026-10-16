@@ -2,71 +2,66 @@
 
 [`ScalarQuote.quote`](../adapters/HexRCF/RealCoefficients/ScalarQuote.lean)
 quotes the owner's finite `Element.signCodec` reader using supplied checked
-`SignFact` values. It then composes the public `Element.signCodec_sound`
-theorem to return an ordinary-kernel equation for the exact canonical
-`Element.codec` application and original literal. This is canonical at the
-current level with the same supplied predecessor codec, not an unproved
-refinement to a different lower-level decoder.
+`SignFact` values, then composes `Element.signCodec_sound`. It returns an
+ordinary-kernel equation for the exact original `Element.codec` application
+and literal, with the same supplied predecessor codec. It does not assert a
+refinement to a different predecessor decoder.
 
-The caller supplies a complete `Element.codec` expression and predecessor
-quoting support. Every original implicit codec argument is retained when
-constructing the strict reader and transport theorem. This avoids a kernel
-type-comparison path that can unfold native sign production merely because
-definitionally equal base aliases were reinferred differently. The helper
-uses the existing owner records, codecs and laws; it introduces no arithmetic,
-coefficient carrier or per-operation framework.
+The complete original codec argument spine is retained for the strict reader
+and transport theorem. Monomorphic universe and signature arity checks guard
+that construction. The reader's size is charged before its type check and
+reduction. Wrong-context facts reject before decoder callbacks run.
 
-The [case driver](../conformance/HexRCF/ScalarQuoteCases.lean) uses the existing
-independently checked scalar packet for polynomial `[0,-2]` in the selected
-positive square-root-of-two context. It proves the returned value's exact
-stored polynomial/sign and **its own** ordinary-real value `−2 * Real.sqrt 2`.
-The independent public source equation has exactly the intended codec and
-literal. Its declaration type is structurally identical to the returned
-reader equation; the source proof is that previously checked constant.
+The [case driver](../conformance/HexRCF/ScalarQuoteCases.lean) restores the
+coefficient for polynomial `[0,-2]` in the selected positive square-root-of-two
+context. Its exact stored polynomial/sign and its own ordinary-real value
+`−2 * Real.sqrt 2` are proved. The independent public source equation has the
+same type as the returned equation and uses its already checked constant.
 
 The [fresh importing audit](../conformance/HexRCF/ScalarQuoteConformance.lean)
-pins 12 reachable theorem bodies in the quotation-case module. Eleven pass
-the existing kernel producer guard with nonempty diagnostics. The source
-constant is separately checked with diagnostics enabled and is required to
-perform zero reductions. This is stronger than accepting an empty trace
-without checking why: its body and type must first be exactly the expected
-constant and type. All twelve are ordinary-kernel checks. Their complete
-transitive axiom closure is precisely `propext`, `Classical.choice` and
-`Quot.sound`; actual owner decoder/sign laws and checked scalar evidence
-are required dependencies.
+pins 12 reachable theorem bodies and the three reachable data definitions
+`restored`, `literal` and `empty`. All are re-added to the ordinary kernel
+with enabled producer diagnostics. The exact source alias is required to
+perform zero reductions; the other theorem checks require nonempty traces.
+Literal data definitions may have empty traces. No prohibited producer reduces.
+The complete transitive axiom closure is exactly `propext`, `Classical.choice`
+and `Quot.sound`. Actual owner decoder/sign laws and checked scalar evidence
+are required dependencies. The full name inventories are in the retained log.
 
-The literal example consumes 817 proof nodes. Exact and one-below limits,
-continued proof/source usage, zero without a sign fact, missing or wrong
-facts, malformed/partial codecs and admitted fact proposals are checked.
-The one-below limit is verified to exhaust **after** the strict quotation
-succeeds; declaration/metavariable inventories must still be restored.
-Neither missing evidence nor a failed transport starts the canonical decoder
-or another solver. Imported predecessor facts and their own decoding remain
-explicit prerequisites.
+[`ScalarQuotePublic`](../conformance/HexRCF/ScalarQuotePublic.lean) also uses
+the ordinary bridge in a `module` consumer importing only the optional
+umbrella. The scalar example consumes 817 proof nodes. Exact and one-below
+limits, continued proof/source usage, caller metavariables after success,
+late transport exhaustion, zero without facts, missing/wrong facts, wrong
+contexts, malformed/partial codecs, non-array/wrong-field-count/trailing-zero
+literals and admitted proposals are checked. Failure restores all state,
+including auxiliaries from an earlier successful strict quotation. Missing
+evidence does not start another solver.
 
-At source `def227e02ae1ba6fbebdd1c7d60c58c3a99d473d`, the 11,775-job selection
-passes both RCF libraries, rational compatibility, scalar and rational
-quotation audits, the fresh supplied pi/e body audit and the checked manual
-chapter. The 20.340 s runtime includes cached dependencies. The final manual
-paragraph breaks are included in the separate full renderer. Full rendering
-passes 14,318 jobs in 7 min 52.410 s, CPU 7 min 15.772 s, peak 9.8 GiB/no swap.
-All eight final desktop/narrow captures were opened; all 19 quotation-section
-targets fit both 1440 px and 390 px widths. Metadata/DAG/umbrella/copyright/
-line/admission/diff checks pass; the admission scan covers 675 cones and
-1,585 local modules. The [source-bound record](data/hexrcf-scalar-quotation/context.json)
-retains hashes, raw successes and failed diagnostics, exact live cap/command
-settings, figures and scope. Earlier failed experiments are not final-source
-proof evidence, and their transient sources are not all retained.
+Source `d2627df9111717a92029321280b2b92955e095d8` passes the 11,783-job
+affected selection: both libraries, rational compatibility, root/rational/scalar
+quotation, the ordinary-module consumer, the deep supplied pi/e audit and the
+checked manual chapter. The 1 min 26.026 s build peaks at 3.4 GiB/no swap;
+final audit inventories/manual text pass an 11,765-job selection in 23.652 s,
+peak 4.3 GiB/no swap. The final cached 11,783-job selection takes 5.003 s,
+peak 443.4 MiB. These include reused dependencies, not isolated tactic timings.
+The full 14,318-job renderer passes in 3 min 39.250 s, peak 4.3 GiB/no swap.
+All eight captures were opened; all 19 local targets fit both 1440 px and 390 px.
+Exact hashes, commands,
+all name inventories and successful/failed diagnostics are in the
+[current source-bound record](data/hexrcf-scalar-quotation/revision/context.json).
+Earlier [source-bound evidence](data/hexrcf-scalar-quotation/context.json)
+remains separately pinned; transient failed-development sources are not all
+retained. Dependency/umbrella/copyright/line/relative-link/diff checks pass.
+The fixed admission scanner covers 675 existing cones / 1,585 modules; generated
+proof dependencies receive the separate complete axiom audit above.
 
-All own Lean builds and browser rendering are serial under a hard aggregate
-32 GiB cap with swap disabled; Lean uses two threads. These shared-host build
-observations and proof-node counts are not matched AB/BA performance samples,
-a scaling result or a speedup claim. The initially observed native sign
-reductions remain in the raw failed logs; the final producer guard is unchanged.
+All own Lean and browser jobs are serial under a shared hard 32 GiB limit,
+with no swap and two Lean threads. Build observations and proof-node counts
+are not matched AB/BA samples, scaling results or speedup claims.
 
-This authenticates supplied scalar literals in a given selected context. It
-does not reconstruct generic original source/proposal/provider/predecessor
-histories, produce missing evidence, install a general tactic handler, prove
-accepted completeness or complete finite realization. Strict compiled
-missing-record rejection for whole replay readers and the stronger native
-stress requirement remain open. Full #10358 is not complete.
+This authenticates supplied scalar literals in a given selected context.
+Generic original source/proposal/provider/predecessor authentication, missing
+evidence production, the general tactic/accepted completeness, realization,
+strict compiled whole-reader missing-record behavior and remaining runtime/
+scaling obligations are not completed by this API. Full #10358 remains open.
