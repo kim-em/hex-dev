@@ -3,8 +3,11 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.RealCoefficients.Reify
+import HexRCF.RealCoefficients.Tactic
 open Hex Lean Meta Elab Command Term Qq
+
+set_option maxRecDepth 32768
+set_option maxHeartbeats 5000000
 
 namespace Hex.RCF.RealCoefficients.MaximalCoefficientsTests
 
@@ -43,6 +46,23 @@ elab "#maximal_coefficient_sources" : command => liftTermElabM do
   let wrapped : Q(ℝ) := .mdata {} q(Real.sqrt 2)
   let product : Q(ℝ) := q((2 : ℝ) * $wrapped)
   check q(∀ x : ℝ, x^2 + $product > 0) #[product] #[]
+  for (name, target) in #[
+      (`metadataBare, q(∀ x : ℝ, x^2 + $wrapped > 0)),
+      (`metadataDedup, q(∀ x : ℝ, x^2 + $wrapped + Real.sqrt 2 > 0))] do
+    let .ok source ← Reify.prepare target | throwError "metadata source rejected"
+    unless source.coefficients == #[q(Real.sqrt 2)] do
+      throwError "metadata did not canonicalize and deduplicate the bare coordinate"
+    unless ← Tactic.handlesCoefficient source.coefficients[0]! do
+      throwError "metadata changed the direct algebraic handler"
+    let proof ← Hex.RCF.proveGoal target
+    let checked ← Hex.RCF.checkProof name target proof
+    addDecl (.thmDecl {
+      name := `Hex.RCF.RealCoefficients.MaximalCoefficientsTests ++ name,
+      levelParams := [], type := target, value := checked })
+  let mut rational : Q(ℝ) := q((1 : ℝ))
+  for _ in [:64] do rational := q($rational + 1)
+  check q(∀ x : ℝ, x^2 + $rational + Real.sqrt 2 > 0)
+    #[q(Real.sqrt 2)] #[]
   check q(∀ x : ℝ, x^2 + (-Real.sqrt 2) > 0)
     #[q(-Real.sqrt 2)] #[]
   check q(∀ x : ℝ, x^2 + (Real.sqrt 2 + Real.sqrt 3)^2 > 0)

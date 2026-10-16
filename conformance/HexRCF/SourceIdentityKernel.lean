@@ -11,6 +11,8 @@ set_option maxHeartbeats 12000000
 set_option maxRecDepth 32768
 run_meta do
   let names := #[``SourceIdentity.observe, ``SourceIdentity.margin_eval, ``SourceIdentity.select,
+    ``embed_value, ``observed, ``equation_binding, ``equation_sign,
+    ``margin_binding, ``margin_sign,
     ``source_zero, ``source_margin, ``source_selected, ``coefficient,
     ``negative_witness, ``negative_precision, ``negative_binding,
     ``negative_sign, ``negative_observed, ``wrong_margin]

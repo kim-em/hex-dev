@@ -50,6 +50,12 @@ theorem positiveSquare : ∀ x : ℝ, x ^ 2 + supplied > 0 := by rcf
 
 theorem positiveInverse : ∀ x : ℝ, x ^ 2 + 1 / supplied > 0 := by rcf
 
+theorem squareWitness : ∃ x : ℝ, x ^ 2 = supplied ^ 2 := by rcf
+
+theorem intervalWitness : ∃ x : ℝ, 0 < x ∧ x < 2 * supplied := by rcf
+
+theorem nestedWitness : ∃ x : ℝ, 0 < x ∧ (x < 2 * supplied ∧ x^2 < 5) := by rcf
+
 theorem suppliedWitness : ∃ x : ℝ, x = supplied ∧ 0 < x ∧ x < 3 := by rcf
 
 /-- error: rcf: missing rcf_constant registration for Real.pi -/
@@ -211,6 +217,20 @@ run_elab do
     { certificate with prepared := { prepared with coefficients := missingProof } })
   refuses (Finite.prepare q(∀ x : ℝ, x ^ 2 + supplied + 0 / (supplied - supplied) > 0))
   refuses (Finite.prepare q(∀ x : ℝ, x ^ 2 + supplied + 0 / uncertain > 0))
+  let interval ← Finite.prepare q(∃ x : ℝ, 0 < x ∧ x < 2 * supplied)
+  let some witness := interval.witness | throwError "missing frozen leaf witness"
+  unless witness.source == q(supplied) && witness.observations.size == 1 do
+    throwError "compound coefficient changed the finite witness or lost its bounds"
+  let intervalCertificate ← Finite.build interval
+  let _ ← Finite.check interval.source intervalCertificate
+  refuses (Finite.check interval.source { intervalCertificate with prepared :=
+    { interval with witness := none } })
+  refuses (Finite.check interval.source { intervalCertificate with prepared :=
+    { interval with witness := some { witness with source := q(uncertain) } } })
+  refuses (Finite.check interval.source { intervalCertificate with prepared :=
+    { interval with witness := some { witness with observations := #[] } } })
+  refuses (Finite.check interval.source { intervalCertificate with prepared :=
+    { interval with witness := some { witness with proof := q(True.intro) } } })
   let unresolved ← Finite.prepare q(∀ x : ℝ, x ^ 2 + uncertain > 0)
   refuses (Finite.build unresolved)
   refuses (Finite.prepare target 0)

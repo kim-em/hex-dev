@@ -46,6 +46,9 @@ structure Prepared where
   registry : Array (Name × Expr)
   request : Rat
   coefficients : Array Enclosure
+  /-- Frozen bounds for the first named source used as the default witness.
+  Replay checks these without running a provider again. -/
+  witness : Option Enclosure := none
   guards : Array (Expr × Expr)
   guardBounds : Array Enclosure
 
@@ -301,9 +304,12 @@ private def prepareCore (target : Expr) (request : Rat := 1 / 16)
     guardBounds := guardBounds.push evidence
     guards := guards.push (divisor, ← ordinary nonzero (← mkAppM ``Ne #[divisor, q((0 : ℝ))]))
   let coefficients ← source.coefficients.mapM (enclose cache entries request)
+  let witness ← match ← Reify.firstNamed? (entries.map Prod.snd) source.coefficients with
+    | some value => some <$> enclose cache entries request value
+    | none => pure none
   let registry ← entries.mapM fun (name, _) => do
     return (name, mkNatLit (← evalNat (← mkAppM ``Registration.version #[mkConst name])))
-  return { source, registry, request, coefficients, guards, guardBounds }
+  return { source, registry, request, coefficients, witness, guards, guardBounds }
 
 /-- Prepare transactionally, preserving caller metavariables on success and
 restoring the complete saved state on every failure or interruption. -/
@@ -363,14 +369,14 @@ private def buildCore (prepared : Prepared) : MetaM Certificate := do
   let vars := (← getLCtx).getFVarIds.map mkFVar
   let (lctx, instances, _) ← removeUnused vars used
   withLCtx lctx instances do
-    let facts ← prepared.coefficients.flatMapM fun e => do
+    let facts ← (prepared.coefficients ++ prepared.witness.toArray).flatMapM fun e => do
       return #[← mkAppM ``And.left #[e.proof], ← mkAppM ``And.right #[e.proof]]
     let rec withFacts (i : Nat) (parameters : Array Expr) : MetaM Expr := do
       if h : i < facts.size then
         withLocalDeclD (Name.mkSimple s!"bound{i}") (← inferType facts[i]) fun p =>
           withFacts (i + 1) (parameters.push p)
       else
-        let witness := prepared.coefficients[0]?.map (·.source) |>.getD q((0 : ℝ))
+        let witness := prepared.witness.map (·.source) |>.getD q((0 : ℝ))
         let proof ← prove prepared.source.original witness
         return mkAppN (← mkLambdaFVars parameters proof) facts
     termination_by facts.size - i
@@ -430,6 +436,10 @@ private def checkCore (source : Reify.Source) (certificate : Certificate)
       throwError "rcf: finite certificate has a stale provider version"
   unless prepared.coefficients.size == source.coefficients.size && prepared.guards.size == source.divisors.size && prepared.guardBounds.size == source.divisors.size do
     throwError "rcf: finite certificate omits source evidence"
+  let witness ← Reify.firstNamed? (entries.map Prod.snd) source.coefficients
+  unless witness == prepared.witness.map (·.source) do
+    throwError "rcf: finite certificate has a different witness subject"
+  if let some evidence := prepared.witness then checkEnclosure entries request evidence
   for (coefficient, evidence) in source.coefficients.zip prepared.coefficients do
     unless evidence.source == coefficient do
       throwError "rcf: finite certificate swaps coefficient subjects"

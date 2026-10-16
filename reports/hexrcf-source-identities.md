@@ -49,7 +49,11 @@ uses this coefficient identity when quoting the original real proposition.
 Its independent audit also excludes both older alias theorems. Changed
 polynomials, the negative embedding with an unchanged formula, a foreign
 coefficient and omitted original divisors retain their existing refusal and
-state-restoration controls. Its separate fresh consumer requires both the new
+state-restoration controls. The negative-embedding and foreign-coefficient
+controls both reject a mismatched fixed-valuation proof; they do not distinguish
+conjugates at that boundary. The separate `negative_observed` and `wrong_margin`
+controls check the conjugate-specific sign at the reflected selected root.
+Its separate fresh consumer requires both the new
 coefficient identity and `SourceIdentity.select`. The scalar codec still contains
 legitimate checked fixture facts; this work does not remove that finite-input restriction.
 
@@ -148,3 +152,33 @@ retained. The rebuilt assembled source takes 441s and its fresh consumer 9s;
 the latter requires both the new coefficient identity and selected-root bridge.
 These times include different incremental rebuild scopes and do not measure
 a change in isolated tactic cost.
+
+## Witness and metadata compatibility
+
+Maximal abstraction retains the whole coefficient while finite supplied-bound
+search selects the first named or registered subject as its default witness.
+An explicit existential equality still takes priority. The selected leaf has
+its own frozen containment proof, obtained through the preparation cache;
+checking binds its source, observations, request and version without calling
+an approximation procedure. Missing, transplanted and malformed witness
+evidence is rejected transactionally. This remains a single witness attempt,
+not a complete existential search.
+
+Metadata is removed once from the normalized abstraction input. Bare annotated
+generators therefore share their coordinate and direct handler with the same
+unannotated generator. Named-source detection memoizes closed subexpressions
+and excludes type, proof and instance arguments. A nested rational subtree
+regression checks the exact source equivalence and coefficient inventory;
+it does not establish an asymptotic timing bound.
+
+The focused selection for these changes passes 11,184 jobs in 42.299s at
+3.1 GiB aggregate peak with no swap. It proves square, interval and nested
+existential goals over compound registered coefficients, checks witness
+corruption refusals and audits their actual bodies in a fresh module.
+It also quotes both bare-metadata and duplicate-metadata goals, checks exact
+structural coordinate deduplication and direct-handler eligibility, and audits
+the six positive source-packet facts as well as the existing negative controls.
+The earlier timing study describes its recorded source trees; it does not
+measure these subsequent memoization and witness changes. Full current-source
+conformance and hosted CI remain required before merge. The interrupted
+selection at `41f1aba4b2` is not a completed validation result.
