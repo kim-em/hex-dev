@@ -435,8 +435,11 @@ two-stage native construction, skip duplicate keys, reject missing progress,
 prove readiness for a reader restricted to the two required predecessors, and
 retain the installed output. A nonempty two-stage kernel test rebuilds the
 same path and proves catalog reuse. The companion's two-stage test derives both
-path readiness and semantic validity from the two local provider premises, then
-constructs an installed history with its staged realization. Compiled rational-base
+path readiness and semantic validity for supplied native packets, then
+constructs an installed history with its staged realization. Its
+`HistoryModelTests.install_providers` theorem derives both packets through
+`Model.progress` from containment, width and relative transcendence, and proves
+readiness, validity and installation with no progress-packet hypotheses. Compiled rational-base
 controls cover empty requests, reuse of the empty installed path, subsequent
 catalog reads and repeated gathering.
 The independent checked-body audit covers the native constructors, semantic

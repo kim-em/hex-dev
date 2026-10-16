@@ -20,6 +20,8 @@ def reader {registry : Registry} (parent child : RealPrefix registry)
   | some step => some step
   | none => HistoryTests.offer child second two current wanted
 
+section
+
 variable {registry : Registry} (parent : RealPrefix.Model registry)
 variable (first second : ConstantKey) (one : parent.context.Step first)
 variable (τ : ℝ) (contained : ∀ δ, 0 < δ → Contains ((registry first).get one.present δ) τ)
@@ -113,5 +115,40 @@ theorem install_two (catalog : Catalog registry) (depth : Nat) (σ : ℝ)
         transcendental).context first second one two) parent.context [first, second] built)
   exact ⟨packet, produced, packet.realization (reader parent.context (parent.append first one τ
       contained transcendental).context first second one two) parent [first, second] valid depth⟩
+
+end
+
+/-- Containment, width and relative transcendence derive both native progress
+packets, path readiness, path validity and the actual installed realization.
+No native progress packet or model of the completed history is supplied. -/
+theorem install_providers {registry : Registry} (catalog : Catalog registry) (depth : Nat)
+    (parent : RealPrefix.Model registry) (first second : ConstantKey)
+    (present : (registry first).isSome = true) (τ : ℝ)
+    (contained : ∀ δ, 0 < δ → Contains ((registry first).get present δ) τ)
+    (width : ∀ δ, 0 < δ → ((registry first).get present δ).width ≤ δ)
+    (transcendental : letI : Field parent.context.Carrier := HexPolyTheory.fieldOfGrind
+      Real.RelativeTranscendence parent.interpretation.hom τ) :
+    let one := parent.progress first present τ contained width transcendental
+    let child := parent.append first one τ contained transcendental
+    ∀ (secondPresent : (registry second).isSome = true) (σ : ℝ)
+      (secondContained : ∀ δ, 0 < δ → Contains ((registry second).get secondPresent δ) σ)
+      (secondWidth : ∀ δ, 0 < δ → ((registry second).get secondPresent δ).width ≤ δ)
+      (secondTranscendental : letI : Field child.context.Carrier := HexPolyTheory.fieldOfGrind
+        Real.RelativeTranscendence child.interpretation.hom σ)
+      (_freshFirst : first ∉ parent.context.keys) (_freshSecond : second ∉ child.context.keys),
+    let two := child.progress second secondPresent σ secondContained secondWidth secondTranscendental
+    let read := reader parent.context child.context first second one two
+    RealPrefix.Ready read parent.context [first, second] ∧
+      parent.Valid read [first, second] ∧
+      ∃ packet : catalog.Construction read parent.context [first, second],
+        catalog.construct? read parent.context [first, second] = some packet ∧
+        Nonempty (packet.target.finish.extend depth).Realization := by
+  intro one child secondPresent σ secondContained secondWidth secondTranscendental
+    freshFirst freshSecond two read
+  exact ⟨ready_two parent first second one τ contained transcendental two freshFirst freshSecond,
+    valid_two parent first second one τ contained transcendental two σ secondContained
+      secondTranscendental freshFirst freshSecond,
+    install_two parent first second one τ contained transcendental two catalog depth σ
+      secondContained secondTranscendental freshFirst freshSecond⟩
 
 end Hex.RealClosure.BaseContext.HistoryModelTests

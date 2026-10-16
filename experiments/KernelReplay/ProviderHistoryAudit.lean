@@ -36,7 +36,8 @@ run_meta do
     ``HistoryTests.ready_two, ``HistoryTests.install_two, ``HistoryTests.installed_reused,
     ``HistoryTests.install_missing, ``HistoryTests.reinstall_two, ``HistoryTests.rationalControls,
     ``HistoryModelTests.reader, ``HistoryModelTests.read_first, ``HistoryModelTests.read_second,
-    ``HistoryModelTests.ready_two, ``HistoryModelTests.valid_two, ``HistoryModelTests.install_two]
+    ``HistoryModelTests.ready_two, ``HistoryModelTests.valid_two, ``HistoryModelTests.install_two,
+    ``HistoryModelTests.install_providers]
   for name in roots do
     let info ← getConstInfo name
     let some body := info.value? (allowOpaque := true) |
