@@ -46,3 +46,41 @@ general original-source certificate acceptance, strict missing-record
 rejection, realization and the remaining completeness/stress obligations are
 separate requirements of #10358. The fixed-field proof examples establish
 neither those results nor a general performance improvement.
+
+## Validation evidence
+
+The [context record](data/hexrcf-maximal-coefficients/context.json) binds eight
+selected source files, nineteen raw compressed logs and twenty-two artifacts.
+Its validation groups identify the source commit of each completed selection;
+older failures and narrower checks are retained separately. The broad
+compatibility selection includes rational/algebraic tactic conformance,
+registered/named/mixed/coarse constants and native source preparation. The
+initial squared-bound failure is retained and excluded from successful checks.
+
+| Selection | Source | Completed observation |
+| --- | --- | --- |
+| Corrected compatibility | `45abf28d48` | 11,143 jobs; 3m1.684s; 12.2 GiB peak |
+| Actual tactic proofs and fresh body audit | `ba113787c4` | 11,135 jobs; 2m0.177s; 2.3 GiB peak |
+| Full manual and fresh proof audit | `febb5f0410` | 14,299 jobs; 12m22.220s; 18.9 GiB peak |
+| Corrected full render | `8469a5a700` | 14,297 jobs; 2m50.730s; 2.3 GiB peak |
+| Corrected desktop/narrow capture | `8469a5a700` | 11.220s; 5.1 GiB peak |
+
+The actual three-example proof module takes 12 seconds in the retained
+proof selection, including its dependency checks; the fresh importing body
+audit takes 8.8 seconds. These are module observations with cached imports,
+not isolated timings of each tactic invocation. Broader command times include
+other selected rebuilds. All completed Lean, Lake and browser runs use the aggregate 32 GiB cap,
+zero swap, two Lean threads and one own build invocation across worktrees.
+The retained active-unit snapshot proves the limit; its sampled usage is not
+the completed peak. Systemd reports aggregate cgroup memory, including charged
+file cache. These host-specific incremental observations are not controlled
+comparisons or scaling measurements.
+
+The first narrow capture exposed 96 pixels of local code overflow. Its source,
+failed capture and metadata remain under
+[`overflow-1`](data/hexrcf-maximal-coefficients/overflow-1/overflow.json).
+The corrected examples use ordinary square-root notation and preserve the same
+Lean expressions. All eight final captures were opened and inspected. Their
+[inspection metadata](data/hexrcf-maximal-coefficients/maximal-coefficients-inspection.json)
+reports zero local overflow for the changed targets; the whole book and older
+code blocks are outside that layout claim.
