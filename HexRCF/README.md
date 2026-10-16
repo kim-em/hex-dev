@@ -171,6 +171,12 @@ coefficient coordinate: `Real.sqrt 2 + Real.sqrt 3`, its negation
 or a natural power stays whole. Purely rational arithmetic remains in the shared
 polynomial syntax. All original divisor obligations are collected before this
 abstraction, including inside zero products and quotients.
+Bare named generators retain their single-coordinate handler. Closed arithmetic
+such as `2 * Real.sqrt 2` uses the common-field handler, which reuses a single
+selected field when there is only one generator. Its checked coefficient
+valuation still contains the entire expression. In the supplied-bound path,
+an equality in an existential conjunction selects its stated witness before
+the first coefficient is considered.
 The optional adapter is validated through the default `HexRCFRealCoefficients` Lake target
 and is not yet published to the split repository. See the
 [SPEC](SPEC/hex-rcf.md#planned-real-coefficient-extension).

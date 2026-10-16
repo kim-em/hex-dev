@@ -310,6 +310,21 @@ restoring the complete saved state on every failure or interruption. -/
 def prepare (target : Expr) (request : Rat := 1 / 16) : MetaM Prepared :=
   transaction (prepareCore target request)
 
+/-- Prefer the witness fixed by an equality in an existential conjunction.
+Coefficient traversal order need not put that value first. -/
+private partial def equalityWitness? (expression : Expr) : Option Expr := do
+  let expression := expression.consumeMData
+  if expression.isAppOfArity ``And 2 then
+    let args := expression.getAppArgs
+    return ← equalityWitness? args[0]! <|> equalityWitness? args[1]!
+  unless expression.isAppOfArity ``Eq 3 do none
+  let args := expression.getAppArgs
+  for (candidate, value) in [(args[1]!.consumeMData,args[2]!),
+      (args[2]!.consumeMData,args[1]!)] do
+    if candidate == .bvar 0 && !value.hasLooseBVars && !value.hasMVar then
+      return value
+  none
+
 private partial def prove (target : Expr) (witness : Expr) : MetaM Expr := do
   let goal ← mkFreshExprMVar target
   if target.isForall then
@@ -321,6 +336,7 @@ private partial def prove (target : Expr) (witness : Expr) : MetaM Expr := do
     goal.mvarId!.assign (← mkAppM ``And.intro #[← prove args[0]! witness, ← prove args[1]! witness])
   else if target.isAppOfArity ``Exists 2 then
     let body := target.getAppArgs[1]!
+    let witness := (equalityWitness? body.bindingBody!).getD witness
     let proof ← prove (mkApp body witness).headBeta witness
     goal.mvarId!.assign (← mkAppOptM ``Exists.intro
       #[some (← inferType witness), some body, some witness, some proof])

@@ -22,13 +22,25 @@ theorem square_positive : ∀ x : ℝ, x^2 + (Real.sqrt 2 + Real.sqrt 3)^2 > 0 :
 
 theorem negative_witness : ∃ x : ℝ, x = -(Real.sqrt 2 + Real.sqrt 3) ∧ x < -3 := by rcf
 
-open Lean Meta in
+/-- error: rcf: original closed divisor is zero -/
+#guard_msgs in
+example : ∀ x : ℝ,
+    x^2 + 0 * (1 / (Real.sqrt 2 - Real.sqrt 2)) = x^2 := by rcf
+
+open Lean Meta Qq in
 run_meta do
-  for (name,soundness) in #[
-      (``sum_positive, ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkForall_sound),
-      (``square_positive, ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkForall_sound),
-      (``negative_witness, ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkExists_sound)] do
+  for (name,soundness,coefficient) in #[
+      (``sum_positive, ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkForall_sound,
+        q(Real.sqrt 2 + Real.sqrt 3)),
+      (``square_positive, ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkForall_sound,
+        q((Real.sqrt 2 + Real.sqrt 3)^2)),
+      (``negative_witness, ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkExists_sound,
+        q(-(Real.sqrt 2 + Real.sqrt 3)))] do
     let .thmInfo declaration ← getConstInfo name | throwError "missing maximal coefficient proof"
+    let .ok source ← Hex.RCF.RealCoefficients.Reify.prepare declaration.type
+      | throwError "actual maximal proof source was not recognized"
+    unless source.coefficients.size == 1 && (← isDefEq source.coefficients[0]! coefficient) do
+      throwError "actual tactic proof did not retain its maximal coefficient"
     let _ ← Hex.RCF.checkProof name declaration.type declaration.value
     let seen ← Hex.RCF.ProofEvidence.projectDependencies #[name]
     unless seen.contains soundness do

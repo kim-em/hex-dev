@@ -20,6 +20,8 @@ The frontend keeps a whole closed arithmetic expression as one coefficient.
 For example, `Real.sqrt 2 + Real.sqrt 3` is one coordinate, as are its square
 and its negative; repeated occurrences share that coordinate. The coefficient
 interpreter evaluates the expression in the selected common field.
+Bare named generators keep their direct handler; arithmetic around them uses
+the common-field handler, reusing that same field for a single generator.
 
 Here `√2` is Lean's notation for `Real.sqrt 2`.
 
@@ -38,7 +40,8 @@ example : ∃ x : ℝ,
 ```
 
 These examples use the real-coefficient certificate checker. Fresh-module
-checks verify their actual proof bodies and their transitive axiom dependencies.
+checks verify the corresponding named conformance proofs and their actual
+body dependencies.
 Extracting a whole coefficient never removes an original divisor condition:
 even `0 * (1 / (Real.sqrt 2 - Real.sqrt 2))` retains its zero divisor and is
 refused by the decision procedure.

@@ -56,7 +56,9 @@ theorem suppliedWitness : ∃ x : ℝ, x = supplied ∧ 0 < x ∧ x < 3 := by rc
 example : ∀ x : ℝ, x ^ 2 + Real.pi > 0 := by rcf
 
 example : ∀ x : ℝ, x / supplied = x * supplied⁻¹ := by rcf
-example : ∀ x : ℝ, x ^ 2 + supplied ^ 2 > 0 := by rcf
+theorem positiveSquaredCoefficient : ∀ x : ℝ, x ^ 2 + supplied ^ 2 > 0 := by rcf
+theorem reorderedWitness : ∃ x : ℝ, x < supplied + 1 ∧ x = supplied := by rcf
+theorem reversedWitness : ∃ x : ℝ, x < supplied + 1 ∧ supplied = x := by rcf
 example : ∀ x : ℝ, x ^ 2 + supplied⁻¹ > 0 := by rcf
 example (a : ℝ) (h : a = supplied) : ∀ x : ℝ, x ^ 2 + a > 0 := by rcf
 example (a : ℝ) (h : supplied = a) : ∀ x : ℝ, x ^ 2 + a > 0 := by rcf

@@ -77,6 +77,8 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
   unless negativeSource.coefficients.size == 1 &&
       (← isDefEq negativeSource.coefficients[0]! (← elabTerm (← `((-Real.sqrt 2 : ℝ))) none)) do
     throwError "negative source did not retain its whole negative coefficient"
+  unless ← isDefEq negativeSource.formula source.formula do
+    throwError "negative source changed the formula in the valuation-only control"
   let changedFormula ← elabType (← `(∃ x : ℝ, x ^ 2 + Real.sqrt 2 ≥ 0 ∧
     x ^ 2 + Real.sqrt 2 ≤ 0 ∧ (0 : ℝ) = 0))
   synthesizeSyntheticMVarsNoPostponing
