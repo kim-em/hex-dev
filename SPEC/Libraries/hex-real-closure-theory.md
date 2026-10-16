@@ -971,8 +971,17 @@ traverse those premises. The ordinary-kernel cancellation fixture retains
 predecessor reader and one selected point. `supplyAll` derives reached
 arithmetic and replay premises from the exact retained records at this point;
 zero needs no lookup, while unit and natural casts use their original constant
-keys and predecessor cast proofs. Missing keys reject. `extend` constructs the
-successor's finite data with this supplier and retains its point and reader.
+keys and predecessor cast proofs. Missing keys reject. Inventory search selects
+only projections with the requested replay, product or difference head; an empty
+inverse list needs no inverse-data projection. Retained inventory proofs keep
+priority over predecessor reconstruction. A product obligation without an
+inventory proof is passed to the predecessor once. Inventories with no field
+of the requested head need not be inspected; in particular, opaque packing and
+sign lists do not block a product proof from the predecessor. The reconstruction
+controls check the exact original packing and sign projections, all five
+inverse projections and predecessor delegation through the ordinary kernel
+and independent checked-body axiom audits. `extend` constructs the successor's
+finite data with this supplier and retains its point and reader.
 The predecessor supplier can itself come from an earlier prefix. The CI-built
 `KernelReplay.FiniteLift` fixture generates nested arithmetic, complete
 descriptor and successor-data proofs, checks the selected successor point,

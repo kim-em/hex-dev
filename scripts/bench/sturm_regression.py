@@ -8,6 +8,8 @@ failures are retained. This is a computational regression check, not a new
 Phase-4 complexity attestation or another sign-model rerun.
 An explicitly bound cap adaptation may increase the safety timeout in both
 arms after one original two-arm cap failure; it cannot change the verdict rule.
+A bound SignDet resolution adaptation may increase the inner-work target after
+the retained complete below-floor failure, preserving the original signal floor.
 """
 from __future__ import annotations
 
@@ -50,6 +52,8 @@ SIGN_DET_FIXED = {"Hex.SignDetBench." + name for name in (
 SIGN_DET_REFERENCES = {"Hex.SignDetBench.MaximalMatrix.reference" + str(n) for n in (1, 2, 3)}
 INTERACTING_FIXED = {"Hex.SignDetBench.InteractingBench." + name
                      for name in ("depthOne", "depthTwo")}
+SIGN_DET_RESOLUTION = {"Hex.SignDetBench." + name for name in
+                       ("Height.runReduce", "Height.runCheck", "runSmallReduced", "runSmallFull")}
 PROFILES = ("sturm", "sign-det", "sign-det-interacting")
 
 
@@ -357,20 +361,21 @@ def original_decision(directory):
     return json.loads(path.read_text())
 
 
-def tooling_checkout(root, source_head, decision, cap_from):
+def tooling_checkout(root, source_head, decision, adaptation_from):
     """Keep build provenance at the original commit; bind new tooling separately."""
     head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
-    if cap_from is None:
+    if adaptation_from is None:
         if head != source_head:
             raise RuntimeError("candidate tree differs from frozen commit")
         return head
-    previous = original_decision(cap_from.resolve())
+    previous = original_decision(adaptation_from.resolve())
+    kind = "cap" if decision.get("cap_protocol") is not None else "resolution"
     for arm in ("baseline", "candidate"):
         field = arm + "_source_sha256"
         if decision.get(field) != previous.get(field):
-            raise RuntimeError("cap adaptation must retain original source manifests")
+            raise RuntimeError(kind + " adaptation must retain original source manifests")
     if decision["guard_build"] != previous.get("guard_build"):
-        raise RuntimeError("cap adaptation must retain original guard-build provenance")
+        raise RuntimeError(kind + " adaptation must retain original guard-build provenance")
     if decision.get("tooling_root_head") != head:
         raise RuntimeError("tooling root differs from decision binding")
     if subprocess.run(["git", "merge-base", "--is-ancestor", source_head, head], cwd=root).returncode:
@@ -380,8 +385,8 @@ def tooling_checkout(root, source_head, decision, cap_from):
     if changed[-1] != "" or len(changed[:-1]) % 2:
         raise RuntimeError("invalid tooling change list")
     allowed = {"scripts/bench/sturm_regression.py", "scripts/bench/test_sturm_regression.py"}
-    prefix = "reports/bench-results/sturm-phase6-comparison/"
-    summaries = {prefix + name for name in ("README.md", "cap-protocol.md", "cap-proposal.json")}
+    prefix = "reports/bench-results/" + ("sturm" if kind == "cap" else "sign-det") + "-phase6-comparison/"
+    summaries = {prefix + name for name in ("README.md", kind + "-protocol.md", kind + "-proposal.json")}
     bad = [p for status, p in zip(changed[0:-1:2], changed[1:-1:2]) if not (
         status in {"A", "M"} and p in allowed | summaries or
         status == "A" and p.startswith(prefix) and not p.endswith(".lean"))]
@@ -525,6 +530,166 @@ def validate_cap_protocol(previous_dir, policy, sources, identity, reservation, 
             "exports": exports, "policy": policy}
 
 
+def resolution_budget(root, policy):
+    """Check the pinned runner's clamp at a declared planning floor, without sampling.
+
+    The floor is a planning envelope, never a host admission or sample-discard rule.
+    A later larger observed floor or effective-target mismatch remains retained.
+    """
+    if policy.get("target_benchmarks") != sorted(SIGN_DET_RESOLUTION):
+        raise RuntimeError("resolution target must cover exactly the four filtered workloads")
+    planning_floor = policy.get("planning_spawn_floor_nanos")
+    if type(planning_floor) is not int or planning_floor != 1_000_000_000:
+        raise RuntimeError("resolution protocol requires the declared planning floor")
+    core = strip_lean_comments((root / ".lake/packages/lean-bench/LeanBench/Core.lean").read_text())
+    header = re.search(r"(?m)^structure BenchmarkConfig where[ \t]*\n", core)
+    if header is None:
+        raise RuntimeError("cannot identify the frozen runner configuration")
+    body = []
+    for line in core[header.end():].splitlines():
+        if line.strip() and not line[0].isspace():
+            break
+        body.append(line)
+    defaults = "\n".join(body)
+    grace = re.findall(r"killGraceMs\s*:\s*Nat\s*:=\s*([0-9]+)\b", defaults)
+    multiplier = re.findall(r"signalFloorMultiplier\s*:\s*Float\s*:=\s*([0-9]+(?:\.[0-9]+)?)\b", defaults)
+    if len(grace) != 1 or len(multiplier) != 1 or float(multiplier[0]) <= 1:
+        raise RuntimeError("unsupported frozen grace or floor default")
+    text = strip_lean_comments((root / "bench/HexSignDet/Bench.lean").read_text())
+    budgets = {}
+    for name in sorted(SIGN_DET_RESOLUTION):
+        short = name.removeprefix("Hex.SignDetBench.")
+        blocks = re.findall(r"\bsetup_benchmark\s+" + re.escape(short) +
+                            r"(?=\s)(?:(?!\bsetup_benchmark\b).)*?\bwhere\s*\{([^}]*)\}", text, re.S)
+        if len(blocks) != 1:
+            raise RuntimeError("cannot identify frozen resolution registration: " + name)
+        fields = {}
+        for field in ("targetInnerNanos", "maxSecondsPerCall", "signalFloorMultiplier", "killGraceMs"):
+            values = re.findall(r"\b" + field + r"\s*:=\s*([^,\n}]+)", blocks[0])
+            if len(values) > 1 or any(not re.fullmatch(r"[0-9]+(?:\.[0-9]+)?", v.strip()) for v in values):
+                raise RuntimeError("unsupported frozen resolution configuration: " + field)
+            if values:
+                fields[field] = float(values[0].strip())
+        if (fields.get("targetInnerNanos") != 1_000_000_000 or
+                fields.get("signalFloorMultiplier", float(multiplier[0])) <= 1 or
+                fields.get("maxSecondsPerCall", 0) <= 0):
+            raise RuntimeError("resolution registration differs from the original filtered target")
+        deadline = int(fields["maxSecondsPerCall"] * 1e9 + fields.get("killGraceMs", int(grace[0])) * 1e6)
+        budget = (deadline - planning_floor) // 4
+        if not 1_000_000_000 < policy["target_inner_nanos"] <= budget:
+            raise RuntimeError("resolution target would be clamped within the planning envelope: " + name)
+        budgets[name] = dict(max_seconds_per_call=fields["maxSecondsPerCall"],
+                             planning_spawn_floor_nanos=planning_floor, maximum_target_nanos=budget)
+    return budgets
+
+
+def validate_resolution_protocol(previous_dir, policy, sources, identity, reservation, names, root):
+    """Bind one matched target increase to the intact SignDet floor failure.
+
+    This slot is independent of output names, wording and collector revisions.
+    It authenticates both original exports and their matching successful answers;
+    it grants no permission to lower floors or discard parameters or observations.
+    """
+    if not isinstance(policy, dict) or set(policy) != {
+            "target_inner_nanos", "target_benchmarks", "planning_spawn_floor_nanos",
+            "reason", "benchmarks", "previous_context_sha256", "previous_exports"}:
+        raise RuntimeError("incomplete resolution protocol")
+    target = policy["target_inner_nanos"]
+    if type(target) is not int or target != 2_250_000_000:
+        raise RuntimeError("resolution protocol requires the declared 2.25-second target")
+    if not {"bench/HexSignDet/Bench.lean", ".lake/packages/lean-bench/LeanBench/Core.lean"}.issubset(
+            sources.get("candidate", {}).get("sources", {})):
+        raise RuntimeError("resolution budget inputs are absent from the authenticated inventory")
+    budgets = resolution_budget(root, policy)
+    if not isinstance(policy["reason"], str) or not policy["reason"].strip():
+        raise RuntimeError("missing resolution protocol reason")
+    previous_dir = previous_dir.resolve()
+    previous_path = previous_dir / "context.json"
+    previous = json.loads(previous_path.read_text())
+    if previous.get("decision_reservation") != str(reservation) or previous.get("host") != platform.node():
+        raise RuntimeError("resolution adaptation moved the original reservation or host")
+    journal = json.loads(reservation.read_text())
+    previous_hash = digest(previous_path)
+    if (journal.get("first_output") != str(previous_dir) or
+            journal.get("context_sha256") != previous_hash or
+            policy["previous_context_sha256"] != previous_hash):
+        raise RuntimeError("resolution protocol differs from retained first attempt")
+    if (previous.get("profile") != "sign-det" or previous.get("status") != "failed" or
+            previous.get("integrity_failure") or previous.get("attempt_reserved") is not True or
+            previous.get("measurements_collected") is not True or previous.get("reruns") != 0 or
+            previous.get("cap_protocol") is not None or previous.get("resolution_protocol") is not None):
+        raise RuntimeError("resolution adaptation requires the intact original SignDet failure")
+    if previous.get("comparison_identity") != identity or previous.get("guard_unchanged") is not True:
+        raise RuntimeError("resolution adaptation changes native binaries or guard")
+    if policy["benchmarks"] != names or previous.get("benchmarks") != names:
+        raise RuntimeError("resolution protocol must retain every original timing family")
+    if previous.get("sources") != sources:
+        raise RuntimeError("resolution adaptation changes frozen producer inputs")
+    original_decision(previous_dir)
+    failures = previous.get("parent_failures", [])
+    if len(failures) != 1 or failures[0].get("returncode") != 2:
+        raise RuntimeError("resolution adaptation requires the original below-floor exit")
+    failure = failures[0]
+    name = failure.get("function")
+    if name not in SIGN_DET_PARAMETRIC or name not in names:
+        raise RuntimeError("resolution failure is not a declared parametric workload")
+    records = [record for record in previous.get("commands", [])
+               if record.get("command", [])[1:3] == ["run", name]]
+    if len(records) != 2:
+        raise RuntimeError("resolution adaptation requires one complete original source pair")
+    exports = {}
+    results = []
+    for arm, record in zip(("baseline", "candidate"), records):
+        command = record["command"]
+        stem = "0-0-" + arm
+        expected_path = previous_dir / (stem + ".json")
+        if command != [sources[arm]["binary"], "run", name, "--outer-trials", "1",
+                       "--export-file", str(expected_path)]:
+            raise RuntimeError("resolution protocol changes the original pair commands")
+        if record.get("status") != "completed" or record.get("returncode") not in (0, 2):
+            raise RuntimeError("original source arm did not complete")
+        document = json.loads(expected_path.read_text())
+        if len(document.get("results", [])) != 1:
+            raise RuntimeError("original resolution export has multiple subjects")
+        result = document["results"][0]
+        if record["returncode"] == 2:
+            if (not below_resolution_export(2, expected_path, name) or failure.get("arm") != arm or
+                    failure.get("export") != expected_path.name or failure.get("results") != document["results"] or
+                    previous.get("error") != "parent measurement failed: " + stem):
+                raise RuntimeError("original failure is not the authenticated complete below-floor export")
+            floor = result.get("spawn_floor_nanos")
+            multiplier = result.get("config", {}).get("signal_floor_multiplier")
+            if (type(floor) not in (int, float) or not math.isfinite(floor) or floor <= 0 or
+                    type(multiplier) not in (int, float) or not math.isfinite(multiplier) or multiplier <= 0 or
+                    not math.isfinite(floor * multiplier) or
+                    any(point["total_nanos"] >= floor * multiplier for point in result["points"])):
+                raise RuntimeError("original measurements are not below their declared signal floor")
+        if result.get("kind") != "parametric" or result.get("function") != name:
+            raise RuntimeError("original resolution export has a different subject")
+        if result.get("config", {}).get("target_inner_nanos") != 1_000_000_000:
+            raise RuntimeError("resolution protocol requires the original one-second target")
+        exports[expected_path.name] = digest(expected_path)
+        results.append(result)
+    validate_pair(*results, name, "parametric")
+    if (results[0]["config"] != results[1]["config"] or any(
+            result.get("budget_truncated") is not False or
+            [point.get("param") for point in result.get("points", [])] !=
+            result["config"]["param_schedule"].get("params") or any(
+                point.get("trial_index") != 0 or point.get("status") != "ok" or
+                point.get("error") is not None or point.get("result_hash") is None or
+                type(point.get("inner_repeats")) is not int or point["inner_repeats"] <= 0 or
+                type(point.get("total_nanos")) not in (int, float) or
+                not math.isfinite(point["total_nanos"]) or point["total_nanos"] <= 0 or
+                type(point.get("per_call_nanos")) not in (int, float) or
+                not math.isfinite(point["per_call_nanos"]) or point["per_call_nanos"] <= 0
+                for point in result.get("points", [])) for result in results)):
+        raise RuntimeError("original resolution pair is incomplete or changed")
+    if policy["previous_exports"] != exports:
+        raise RuntimeError("resolution protocol differs from original export hashes")
+    return {"directory": str(previous_dir), "context_sha256": previous_hash,
+            "exports": exports, "policy": policy, "clamp_planning": budgets}
+
+
 def install_signals():
     def interrupt(signum, _frame):
         raise KeyboardInterrupt("signal " + str(signum))
@@ -546,9 +711,13 @@ def main(argv=None) -> int:
                         help="one unchanged rerun of a completed inconclusive comparison")
     parser.add_argument("--cap-from", type=Path,
                         help="one reviewed cap increase after the retained original two-arm cap failure")
+    parser.add_argument("--resolution-from", type=Path,
+                        help="one matched target increase after the retained SignDet below-floor failure")
     args = parser.parse_args(argv)
     if args.profile != "sturm" and args.cap_from is not None:
         parser.error("the retained cap adaptation applies only to the Sturm profile")
+    if args.resolution_from is not None and (args.profile != "sign-det" or args.cap_from is not None):
+        parser.error("the resolution adaptation applies only to the primary SignDet profile")
     root = args.root.resolve()
     out = args.output.resolve()
     if out == root or root in out.parents:
@@ -602,6 +771,8 @@ def main(argv=None) -> int:
         context["question"] = decision.get("question")
         if (args.cap_from is None) != (decision.get("cap_protocol") is None):
             raise RuntimeError("--cap-from and the bound cap_protocol are required together")
+        if (args.resolution_from is None) != (decision.get("resolution_protocol") is None):
+            raise RuntimeError("--resolution-from and the bound resolution_protocol are required together")
         (out / "decision.json").write_bytes(decision_bytes)
         context["decision_sha256"] = hashlib.sha256(decision_bytes).hexdigest()
         for field in ("question", "interruption", "regression", "inconclusive_rerun"):
@@ -645,7 +816,7 @@ def main(argv=None) -> int:
             if digest(root / path) != expected:
                 raise RuntimeError("candidate source changed: " + path)
         context["tooling_root_head"] = tooling_checkout(
-            root, sources["candidate"]["head"], decision, args.cap_from)
+            root, sources["candidate"]["head"], decision, args.cap_from or args.resolution_from)
         if build.get("source_head") != sources["candidate"]["head"]:
             raise RuntimeError("guard build attestation names a different source")
         if subprocess.check_output(["git", "status", "--porcelain"], cwd=root, text=True).strip():
@@ -695,6 +866,8 @@ def main(argv=None) -> int:
             # One stable slot per native comparison, independent of the chosen
             # cap, decision wording or collector digest. Never replace the old slot.
             decision_marker = reservation_dir / (context["comparison_identity"] + "-cap.json")
+        if args.resolution_from is not None:
+            decision_marker = reservation_dir / (context["comparison_identity"] + "-resolution.json")
         context["decision_reservation"] = str(decision_marker)
         if args.rerun_of is None and decision_marker.exists():
             raise RuntimeError("decision already used; an eligible --rerun-of is required")
@@ -741,6 +914,10 @@ def main(argv=None) -> int:
             context["cap_protocol"] = validate_cap_protocol(
                 args.cap_from, decision["cap_protocol"], sources, context["comparison_identity"],
                 original_marker, names, root)
+        if args.resolution_from is not None:
+            context["resolution_protocol"] = validate_resolution_protocol(
+                args.resolution_from, decision["resolution_protocol"], sources,
+                context["comparison_identity"], original_marker, names, root)
         save()
         for arm, binary in binaries.items():
             auxiliary = [AUXILIARY] if args.profile == "sturm" else []
@@ -776,6 +953,8 @@ def main(argv=None) -> int:
                     command += ["--export-file", str(out / (stem + ".json"))]
                     if args.cap_from is not None:
                         command += ["--max-seconds-per-call", str(decision["cap_protocol"]["seconds"])]
+                    if args.resolution_from is not None and name in SIGN_DET_RESOLUTION:
+                        command += ["--target-inner-nanos", str(decision["resolution_protocol"]["target_inner_nanos"])]
                     code, _ = run(command, stem)
                     context["measurements_collected"] = True
                     if code and not below_resolution_export(code, out / (stem + ".json"), name):
@@ -806,6 +985,10 @@ def main(argv=None) -> int:
                         result["config"].get("max_seconds_per_call") != decision["cap_protocol"]["seconds"]
                         for result in documents):
                     raise RuntimeError("parent did not apply the bound per-call cap")
+                if args.resolution_from is not None and name in SIGN_DET_RESOLUTION and any(
+                        result["config"].get("target_inner_nanos") !=
+                        decision["resolution_protocol"]["target_inner_nanos"] for result in documents):
+                    raise RuntimeError("exported inner-work target differs from the binding (including runner clamp)")
                 if any(result["budget_truncated"] or not result["points"] or
                        any(point["status"] != "ok" or point["result_hash"] is None for point in result["points"])
                        for result in documents):
