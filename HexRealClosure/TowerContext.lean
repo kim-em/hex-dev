@@ -119,16 +119,27 @@ def contextCodec (parent : Signature) : ValueCodec Signature where
         if context = parent then .error "noncanonical context reference" else .ok context
     | _ => .error "invalid relative context reference"
 
-/-- The enclosing signature has the canonical zero-token encoding. -/
+/-- The enclosing signature is encoded as the JSON array `[0]`. -/
 @[simp] theorem contextCodec_encode_self (parent : Signature) :
-    (contextCodec parent).encode parent = .arr #[.number 0] := by
-  simp [contextCodec]
+    (contextCodec parent).encode parent = .array (.cons (.number 0) .nil) := by
+  simp [contextCodec, Codec.Json.arr, Codec.Json.Values.ofList]
 
 /-- The parent-reference token restores the supplied enclosing signature.
 Reading this token does not validate that signature or its selected roots. -/
 @[simp] theorem contextCodec_self (parent : Signature) :
-    (contextCodec parent).decode (.arr #[.number 0]) = .ok parent := by
+    (contextCodec parent).decode (.array (.cons (.number 0) .nil)) = .ok parent := by
   rfl
+
+/-- Exactly the JSON array `[0]` decodes to the enclosing signature. -/
+@[simp] theorem contextCodec_self_iff (parent : Signature) (j : Codec.Json) :
+    (contextCodec parent).decode j = .ok parent ↔ j = .array (.cons (.number 0) .nil) := by
+  simp only [contextCodec, Literal.ofJson]
+  split
+  · simp_all
+  · split
+    · simp_all
+    · split <;> simp_all
+  · simp_all
 
 theorem contextCodec_lawful (parent : Signature) : (contextCodec parent).Lawful := by
   intro context
