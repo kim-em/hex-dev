@@ -628,6 +628,46 @@ authenticate quoted literals for the computed proposals. This preparation API
 does not install a new `rcf` handler or close the remaining frozen-context,
 literal-authentication and general source-quotation obligations.
 
+For the retained algebraic expressions, `prepared.acceptanceIff` proves an exact
+acceptance equivalence. The left side requires the actual algebraic producer
+to return a complete packet and that packet's checker to accept `true`. The
+right side contains both the original real statement and every original
+divisor's nonzero condition. Guard validity is a conclusion of acceptance,
+even when cancellation or an empty interval makes the statement trivial.
+The existing producer completeness and domain laws prove this equivalence;
+no successful child calculation is assumed.
+
+```lean
+open Hex Lean Meta Qq
+open Hex.RCF.RealCoefficients
+run_meta do
+  let target : Q(Prop) :=
+    q(∀ x : ℝ, x^2 + Real.sqrt 2 > 0)
+  let .ok prepared ←
+      AlgebraicPreparation.prepare target
+    | throwError "unsupported source"
+  let registry : Q(RealClosure.BaseContext.Registry) :=
+    q(fun _ => none)
+  let .ok (equivalence, usage) ←
+      prepared.acceptanceIff target registry
+    | throwError "source equivalence could not be prepared"
+  let _ ← Hex.RCF.checkProof
+    `sourceAcceptance
+    (← inferType equivalence) equivalence
+  unless usage.proofNodes > prepared.usage.proofNodes do
+    throwError "missing accumulated proof usage"
+```
+
+This proof uses the checked algebraic expressions and their source identities.
+It does not identify separately computed proposals with frozen literals,
+reconstruct provider histories, or add a tactic handler. Those authentication
+and quotation obligations remain separate. The helper continues the same
+aggregate reflection budget, returns its updated usage for later stages, and
+restores caller state on exhaustion or failure.
+Fresh importing regressions check its actual theorem bodies, true and false
+sources, retained zero guards and reversed intervals, with exactly the standard
+three axioms.
+
 The automatic-input conformance uses both selected signs of √2 alongside an
 independent positive √3. It checks simultaneous conditions and a repeated zero
 root, both true and false quantified verdicts, an unused zero input, a late

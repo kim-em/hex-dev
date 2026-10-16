@@ -79,7 +79,8 @@ def Inputs.buildWith (environment : Inputs) (registry : RealClosure.BaseContext.
   Core.checkInterrupted
   consumeBuilt environment registry (environment.build registry) consume
 
-private def entry (source : Expr) (prepared : Coefficients.Prepared) : MetaM Entry := do
+private def entry (source : Expr) (prepared : Coefficients.Prepared) :
+    Hex.RealFormula.Reify.ReifyM Entry := do
   let expression ← instantiateMVars prepared.value
   let identity ← instantiateMVars prepared.proof
   unless !expression.hasFVar && !expression.hasMVar && !expression.hasLooseBVars do
@@ -87,6 +88,7 @@ private def entry (source : Expr) (prepared : Coefficients.Prepared) : MetaM Ent
   let expression ← Hex.RCF.checkExpr `AlgebraicPreparation.input expression
   -- Interpretation's debug kernel check does not enforce this exact target
   -- or screen its axioms. Retain the checked, private source identity.
+  Hex.RealFormula.Reify.accountProof identity
   let identity ← Hex.RCF.checkProof `AlgebraicPreparation.identity
     (← mkEq (← mkAppM ``RealAlgebraicNumber.toReal #[expression]) source) identity
   Core.checkInterrupted
@@ -122,13 +124,13 @@ private def prepareCore (target : Expr) (nonnegative : Expr → MetaM (Option Ex
       Coefficients.interpret source.coefficients[i] nonnegative
     let divisors ← Vector.ofFnM fun i : Fin source.divisors.size =>
       Coefficients.interpret source.divisors[i] nonnegative
+    let coefficients ← Vector.ofFnM fun i => entry source.coefficients[i] coefficients[i]
+    let divisors ← Vector.ofFnM fun i => entry source.divisors[i] divisors[i]
     pure (coefficients,divisors)).run
       {config,budget := {initial := config.ring.budget,consumed := usage}}).run
   match interpreted with
   | .error error => return .error error
   | .ok ((coefficients,divisors),state) =>
-    let coefficients ← Vector.ofFnM fun i => entry source.coefficients[i] coefficients[i]
-    let divisors ← Vector.ofFnM fun i => entry source.divisors[i] divisors[i]
     return .ok {
       source := source
       formula := formula
@@ -227,9 +229,11 @@ Exhaustion, failure and interruption restore the complete saved state. -/
 def Inputs.acceptanceIff (prepared : Inputs) (target registry : Expr) :
     MetaM (Except Hex.RealFormula.Reify.Error (Expr × Hex.Reflect.BudgetUsage)) := do
   let saved ← saveState
+  let depthLimit := (← readThe Core.Context).maxRecDepth
   let auxName := mkPrivateName (← getEnv) (← mkFreshUserName `SourceAcceptance)
   let (result, _) ← tryFinally' (withDeclNameForAuxNaming auxName <| withNewMCtxDepth <| Core.withIncRecDepth <|
-      withOptions (fun options => debug.skipKernelTC.set (Elab.async.set options false) false) do
+      withOptions (fun options => maxRecDepth.set
+        (debug.skipKernelTC.set (Elab.async.set options false) false) depthLimit) do
     let action := acceptanceCore prepared target registry
     let state : Hex.RealFormula.Reify.State := {
       config := prepared.config
