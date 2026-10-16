@@ -40,14 +40,6 @@
   },
   "initial_source": "cde546ecf995374706bfa99e4ec5e788f8470d25",
   "layout_change": "Split two long example lines after retained narrow-screen overflow16px/4px at initial source; final rerender and inspection recorded separately.",
-  "render_properties": {
-    "ActiveState": "active",
-    "MainPID": "920936",
-    "ExecStart": "{ path=/run/current-system/sw/bin/env ; argv[]=/run/current-system/sw/bin/env LAKE_NO_CACHE=true lake build SharedQuoteRender ; ignore_errors=no ; start_time=[Fri 2026-10-16 22:45:12 UTC] ; stop_time=[n/a] ; pid=920936 ; code=(null) ; status=0/0 }",
-    "MemoryMax": "34359738368",
-    "MemorySwapMax": "0",
-    "Environment": "PATH=/home/kim/.claude-patched:/home/kim/.local/bin:/home/kim/bin:/home/kim/.npm-global/bin:/run/wrappers/bin:/home/kim/.nix-profile/bin:/nix/profile/bin:/home/kim/.local/state/nix/profile/bin:/etc/profiles/per-user/kim/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin LEAN_NUM_THREADS=2"
-  },
   "final_render_log": "shared-quote-render-2.log",
   "initial_render": "14323 jobs; 3min56.321s; CPU4min27.032s; peak4.1GiB/noSwap; sourcecde546ecf995374706bfa99e4ec5e788f8470d25",
   "current_scalar_pr_head": "ffe8e98c7591c213ca4e29901107d6bb73ec96f9",
@@ -398,7 +390,7 @@
       "bytes": 12278
     },
     {
-      "path": "initial-layout/browser.log",
+      "path": "initial-layout/browser.log.gz",
       "sha256": "64388fb9741d55bd94137e47fe8a5d1f5e79d7f8ac229eaa4cebbb2482abbc94",
       "bytes": 362,
       "uncompressed_sha256": "9f23b10e9a448587295df9014e473036207af6f7708fc2d27a85a884c675b681",
@@ -569,5 +561,14 @@
     "Proof-node counts are deterministic request accounting, not physical-sharing or executed-work scaling claims; build times include reused dependencies.",
     "No generic original source/provider/predecessor authentication, general handler/accepted completeness, arbitrary-depth realization, strict compiled whole-reader missing-record or native stress repair claim.",
     "This d951490 source precedes the instantiated-input, explicit-target and actual Core.Context heartbeat fixes at973997; historical inherited wrong-context controls do not establish that later resource bound."
-  ]
+  ],
+  "live_limit_verification": {
+    "ActiveState": "active",
+    "MainPID": "920936",
+    "ExecStart": "{ path=/run/current-system/sw/bin/env ; argv[]=/run/current-system/sw/bin/env LAKE_NO_CACHE=true lake build SharedQuoteRender ; ignore_errors=no ; start_time=[Fri 2026-10-16 22:45:12 UTC] ; stop_time=[n/a] ; pid=920936 ; code=(null) ; status=0/0 }",
+    "MemoryMax": "34359738368",
+    "MemorySwapMax": "0",
+    "Environment": "PATH=/home/kim/.claude-patched:/home/kim/.local/bin:/home/kim/bin:/home/kim/.npm-global/bin:/run/wrappers/bin:/home/kim/.nix-profile/bin:/nix/profile/bin:/home/kim/.local/state/nix/profile/bin:/etc/profiles/per-user/kim/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin LEAN_NUM_THREADS=2",
+    "sampledWhileRunning": true
+  }
 }
