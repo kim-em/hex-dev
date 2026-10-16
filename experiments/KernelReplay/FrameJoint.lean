@@ -325,12 +325,6 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM <|
 end Hex.RealClosure.Algebraic.KernelReplay.FrameJoint
 end
 
-set_option maxRecDepth 32768 in
-set_option maxHeartbeats 16000000 in
-/-- info: original two-prefix preparation and actual guard131 retained with ordinary kernel checking -/
-#guard_msgs in
-#frame_guard_capture
-
 meta section
 namespace Hex.RealClosure.Algebraic.KernelReplay.GuardInline
 open Lean Meta Elab
@@ -364,13 +358,11 @@ private def retainedCost (required proof : Expr) (requestedHeader : Bool) :
     return (declarationHB, useHB)
   finally saved.restore
 
-set_option maxRecDepth 32768 in
-set_option maxHeartbeats 2000000 in
-run_meta do
-  let .defnInfo index ← getConstInfo ``GuardCapture.index | throwError "missing captured guard index"
+private def measure : MetaM Unit := do
+  let .defnInfo index ← getConstInfo `Hex.RealClosure.Algebraic.KernelReplay.GuardCapture.index | throwError "missing captured guard index"
   unless index.value == toExpr (131 : Nat) do throwError "inline cost selected another guard"
-  let .thmInfo guard ← getConstInfo ``GuardCapture.guard | throwError "missing actual guard131"
-  let .thmInfo full ← getConstInfo ``GuardCapture.withReaders | throwError "missing reader-bound guard131"
+  let .thmInfo guard ← getConstInfo `Hex.RealClosure.Algebraic.KernelReplay.GuardCapture.guard | throwError "missing actual guard131"
+  let .thmInfo full ← getConstInfo `Hex.RealClosure.Algebraic.KernelReplay.GuardCapture.withReaders | throwError "missing reader-bound guard131"
   for info in #[guard, full] do
     Core.checkSystem "actual guard inline kernel cost"
     let rawHB ← kernelCost info.type info.value
@@ -382,5 +374,18 @@ run_meta do
     logInfo m!"inline guard131 header: requested={mode} declarationHB={declarationHB} useHB={useHB}"
   Core.checkSystem "actual guard inline cost complete"
 
+
 end Hex.RealClosure.Algebraic.KernelReplay.GuardInline
 end
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 16000000 in
+/-- info: original two-prefix preparation and actual guard131 retained with ordinary kernel checking -/
+#guard_msgs in
+#frame_guard_capture
+
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 2000000 in
+run_meta do
+  Hex.RealClosure.Algebraic.KernelReplay.GuardInline.measure
