@@ -1,0 +1,184 @@
+{
+  "source_commit": "53cc610c67d9c1eb2aa6f320a7262ceb4786f716",
+  "scope": "Checked rational-point preparation and affected source/manual consumers. Operational observations, not a matched performance experiment. The changed stronger stress result is not included in this record.",
+  "sources": {
+    "adapters/HexRCF/RealCoefficients/AlgebraicCells.lean": {
+      "sha256": "8724486f600df488db9ced120f4107ff597d5b8a91e56055a8515d054e43cfa2",
+      "bytes": 24423
+    },
+    "conformance/HexRCF/AlgebraicCellsConformance.lean": {
+      "sha256": "618890c126bd3d6059783311717d013875b2d4b3968f25476ef03ec798210936",
+      "bytes": 8746
+    },
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": {
+      "sha256": "edf698a4ab79e4728f2979be53fe47e081922d0c9bacab4323855599706d7aca",
+      "bytes": 32021
+    }
+  },
+  "artifacts": [
+    {
+      "path": "rational-presentation-probe-1.log.gz",
+      "sha256": "d4d9b429da24a2f9d15ffb9e4ca04fa66550138465b56176cca9de61f5ce7b4c",
+      "uncompressed_sha256": "e5ec19f20847dec0ad2e62d6b12e1ef1fe67c66d8718ef4b94c9dc8a9634cc63",
+      "uncompressed_bytes": 91329,
+      "role": "retained diagnostic or metadata; no accepted proof claim from failed/interrupted attempts"
+    },
+    {
+      "path": "rational-point-build-1.log.gz",
+      "sha256": "002d47b1dbe1cff9f35b6c890a04c945575cd1d83dc25bec72aa86d27c71833d",
+      "uncompressed_sha256": "ab1f691614f00b5cb4169e8148707226e107c60949c4693f1d58532e26f21403",
+      "uncompressed_bytes": 93684,
+      "role": "retained diagnostic or metadata; no accepted proof claim from failed/interrupted attempts"
+    },
+    {
+      "path": "rational-point-build-2.log.gz",
+      "sha256": "eab5b7adbbc79910f50c924052d476b39959966ed178c415c13d0a967635fe0b",
+      "uncompressed_sha256": "21a4a8b4adef4f54da46bf13eed4a4953a756eb96ee7cf857a640845ae4f1053",
+      "uncompressed_bytes": 93874,
+      "role": "retained diagnostic or metadata; no accepted proof claim from failed/interrupted attempts"
+    },
+    {
+      "path": "rational-point-build-3.log.gz",
+      "sha256": "3f98c70b5d1dec85f550641ba21d330af75780ec6a7e7272027df2f4e2544494",
+      "uncompressed_sha256": "406ee2a882cc47a9489ebe76596da225eacb91b6850c2b9998db4f8d90f1e28a",
+      "uncompressed_bytes": 93625,
+      "role": "retained diagnostic or metadata; no accepted proof claim from failed/interrupted attempts"
+    },
+    {
+      "path": "rational-point-build-4.log.gz",
+      "sha256": "d49d583b34408525586b5feca636b7795d373c1240a7164b20810b3502007d4d",
+      "uncompressed_sha256": "c7b9185d52e3b6e01f42369a63f3e58cf8074f44c8c2460b5dd7274f8758856f",
+      "uncompressed_bytes": 91135,
+      "role": "accepted verification"
+    },
+    {
+      "path": "rational-point-conformance-1.log.gz",
+      "sha256": "31d3782f62bcfb43e751bb65c774d8aafe46fc98c81e793151840f3435e2a1e7",
+      "uncompressed_sha256": "94ebc8e8ca5de6dbc5e009ccb9e2d3490bf75c46610a3fcf90de93b7367e5413",
+      "uncompressed_bytes": 92135,
+      "role": "accepted verification"
+    },
+    {
+      "path": "rational-point-validation-1.log.gz",
+      "sha256": "473f6d452f7a6c511a6926f0c755ec74a86b570d73b2520865e5c8e33ba98900",
+      "uncompressed_sha256": "55ace0837183319469b6ea56561f68f358e049500d11685f7eb7c324ef2c6746",
+      "uncompressed_bytes": 123910,
+      "role": "retained diagnostic or metadata; no accepted proof claim from failed/interrupted attempts"
+    },
+    {
+      "path": "rational-point-validation-2.log.gz",
+      "sha256": "8d8097581ac8af9c2d038c609d63777d917f075e60bec07ddf01fd28682835e9",
+      "uncompressed_sha256": "333833fe69fc8ebed761e943375eb25867e0680fb18960766e6ec9e43558288e",
+      "uncompressed_bytes": 123395,
+      "role": "accepted verification"
+    },
+    {
+      "path": "algebraic-stress-continued-1.log.gz",
+      "sha256": "8fcf9d4a74088c0ac5d7d1eb2fe691bfc4fa61d3e6e40595c9987e8b1c286938",
+      "uncompressed_sha256": "0f3a41ab280785c4fb4d4a1199109e684cb90a3724083afc6b54b647281da558",
+      "uncompressed_bytes": 91032,
+      "role": "retained diagnostic or metadata; no accepted proof claim from failed/interrupted attempts"
+    },
+    {
+      "path": "algebraic-stress-continued-1-stack.log.gz",
+      "sha256": "aae8204979010205a1a60d423e6f9072d63a1f52a350a15e049d06ea9e7a010f",
+      "uncompressed_sha256": "dfcd0f6b8ca3de6dc7c309e830ca3fdf0178bc5a5cff15c1b80fc30d79824ac6",
+      "uncompressed_bytes": 38166,
+      "role": "retained diagnostic or metadata; no accepted proof claim from failed/interrupted attempts"
+    },
+    {
+      "path": "rational-point-metadata-0.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0,
+      "role": "retained diagnostic or metadata; no accepted proof claim from failed/interrupted attempts"
+    },
+    {
+      "path": "rational-point-metadata-1.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0,
+      "role": "retained diagnostic or metadata; no accepted proof claim from failed/interrupted attempts"
+    },
+    {
+      "path": "rational-point-metadata-2.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0,
+      "role": "retained diagnostic or metadata; no accepted proof claim from failed/interrupted attempts"
+    },
+    {
+      "path": "rational-point-metadata-3.log.gz",
+      "sha256": "e2ff8a87bc5f660d6f271dd0331391b27750ad1f2c55b42afc8d5c11d0ea6eec",
+      "uncompressed_sha256": "f9057dbf10066250562b256e42c5fd64ff8e58fee39b24c9112442f46aa188fc",
+      "uncompressed_bytes": 95,
+      "role": "retained diagnostic or metadata; no accepted proof claim from failed/interrupted attempts"
+    },
+    {
+      "path": "rational-point-metadata-4.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0,
+      "role": "retained diagnostic or metadata; no accepted proof claim from failed/interrupted attempts"
+    },
+    {
+      "path": "rational-point-validation-context.json",
+      "sha256": "770c1dacf2a5922f6d61e0e6410777c0e945a64de0d4efedc23e651827c5b128",
+      "bytes": 840
+    },
+    {
+      "path": "rational-point-metadata.json",
+      "sha256": "20bfc7e213d1d31b1a1a3573c36b5758692c116cfba68ddcdf9c5cdc786797e7",
+      "bytes": 1471
+    },
+    {
+      "path": "algebraic-stress-continued-1.context.json",
+      "sha256": "6081797965c01c05bf9082116b576aa0d701a7da3f1acd4e79924bd28be7cf55",
+      "bytes": 698
+    },
+    {
+      "path": "algebraic-stress-continued-1-profile.json",
+      "sha256": "88847b4085b4396756bc67870628a8c0340514c017c9149d5519cc56dbdd7a63",
+      "bytes": 1048
+    },
+    {
+      "path": "algebraic-stress-continued-1-interruption.json",
+      "sha256": "f0efc0b26c4d21a76375e99ff6db2b2c8fa4ab232cd072ac89e01516dcda099a",
+      "bytes": 1817
+    },
+    {
+      "path": "RationalPresentation.lean.txt",
+      "sha256": "0e9d5a225e05d242caa6c4afd3a9fb7330940110fcd5b51a4587409d0fd10a32",
+      "bytes": 2226
+    },
+    {
+      "path": "run-bounded.sh",
+      "sha256": "63bc5f97337e6b039bb3a9b1ba2a500be96fd1c2a2f73b43dae284aa9b18dda8",
+      "bytes": 302
+    }
+  ],
+  "validation": {
+    "completed_jobs": 11793,
+    "corrected_run_runtime": "4.139s",
+    "corrected_run_peak": "284.1MiB",
+    "reuse": "Corrected invocation reused the source-authentication case/audit compiled by the preceding invocation. Not a cold build or speedup.",
+    "source_cases_first_rebuild": "222s",
+    "source_importing_audit_first_rebuild": "10s",
+    "initial_command_failure": "Only requested nonexistent HexRCF.HandlerConformance target; corrected command uses HexRCF.HandlerTests.",
+    "audited_theorem_bodies": 13,
+    "allowed_axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "max_memory_bytes": 34359738368,
+    "swap_bytes": 0,
+    "Lean_threads": 2
+  },
+  "limitations": [
+    "Failed proof-development attempts retain logs but not each transient source snapshot and are not accepted evidence.",
+    "Original stress was manually interrupted at 14min53.256s, not completed or passing.",
+    "No matched AB/BA performance comparison.",
+    "General frozen source/provider/predecessor authentication and strict missing-record behavior are not established."
+  ]
+}

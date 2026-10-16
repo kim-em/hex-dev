@@ -1,0 +1,12 @@
+{
+  "source": "53cc610c67d9c1eb2aa6f320a7262ceb4786f716",
+  "capturedAt": "2026-10-16T18:50:25.403013+00:00",
+  "properties": "MainPID=1875532\nControlGroup=/user.slice/user-1003.slice/user@1003.service/app.slice/hex-10358-lean-build.service\nMemoryCurrent=3276312576\nMemoryMax=34359738368\nMemorySwapMax=0\n",
+  "sources": {
+    "adapters/HexRCF/RealCoefficients/AlgebraicCells.lean": "8724486f600df488db9ced120f4107ff597d5b8a91e56055a8515d054e43cfa2",
+    "conformance/HexRCF/AlgebraicCellsConformance.lean": "618890c126bd3d6059783311717d013875b2d4b3968f25476ef03ec798210936",
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "edf698a4ab79e4728f2979be53fe47e081922d0c9bacab4323855599706d7aca"
+  },
+  "LEAN_NUM_THREADS": 2,
+  "scope": "Source-bound build observations and structural regressions. No matched performance comparison."
+}

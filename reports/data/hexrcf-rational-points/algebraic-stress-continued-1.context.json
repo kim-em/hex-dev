@@ -1,0 +1,17 @@
+{
+  "ActiveState": "active",
+  "MainPID": "1683902",
+  "MemoryCurrent": "1116180480",
+  "MemoryMax": "34359738368",
+  "MemorySwapMax": "0",
+  "argv": [
+    "/home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/lake",
+    "build",
+    "HexRCFAlgebraicCellsStress"
+  ],
+  "source_commit": "51420aab0e5efe9601626aaa0da03ef58f74000a",
+  "source_tree": "30e28c883bf354037059c88f36e900f71fada101",
+  "LEAN_NUM_THREADS": "2",
+  "driver_sha256": "12aab0afe004260b0717ec7c114a4369a3dbdf2fbce987ef3ea47eaa17946fa1",
+  "scope": "Existing original-input operational stress verification, not a matched performance sample. Same process must be observed to terminal completion; no host-quiet reruns."
+}
