@@ -94,6 +94,14 @@ A fresh ordinary-import probe also imports the source-acceptance audit and
 the complete manual together. It passes 14,317 jobs in 15.473s at 3.3 GiB,
 so the retained audit is composable with the corrected manual.
 
+The [parent integration record](data/hexrcf-source-acceptance/integration/record.json)
+binds the merged parent `2bde7905ed` to the final focused checks. Every Lean
+source, the Lake manifest, toolchain and library metadata are unchanged from
+the complete selection at `25c5f7afac`. The focused integration passes 14,322
+jobs in 4.965s at 307.2 MiB with no swap; this is a warm build, not a matched
+performance comparison. DAG/umbrella, copyright, line and admission checks
+also pass at the integrated source.
+
 The [source-bound record](data/hexrcf-source-acceptance/context.json) retains
 the exact selection, code and script hashes, scoped proof/build logs,
 metadata commands and captures. The
