@@ -1,6 +1,6 @@
 {
   "source_commit": "53cc610c67d9c1eb2aa6f320a7262ceb4786f716",
-  "scope": "Checked rational-point preparation and affected source/manual consumers. Operational observations, not a matched performance experiment. The changed stronger stress result is not included in this record.",
+  "scope": "Checked rational-point preparation, affected source/manual consumers and retained stronger stress diagnostics. Operational observations, not a matched performance experiment.",
   "sources": {
     "adapters/HexRCF/RealCoefficients/AlgebraicCells.lean": {
       "sha256": "8724486f600df488db9ced120f4107ff597d5b8a91e56055a8515d054e43cfa2",
@@ -155,6 +155,40 @@
       "path": "run-bounded.sh",
       "sha256": "63bc5f97337e6b039bb3a9b1ba2a500be96fd1c2a2f73b43dae284aa9b18dda8",
       "bytes": 302
+    },
+    {
+      "path": "rational-point-stress-1.log.gz",
+      "sha256": "bbba09b1283976c1e63e3f3d930e146ea73284cac7133cd1aa24ec36771695a6",
+      "uncompressed_sha256": "4a592d40b347c911d81076e108b9ba2d2838d13da30680e528d8d978814b19a4",
+      "uncompressed_bytes": 91030,
+      "role": "Timed-out diagnostic; no completed timing or acceptance claim"
+    },
+    {
+      "path": "rational-point-stress-1-stack.log.gz",
+      "sha256": "cd31dc5dc9e8257446c2ada8b4f4a10eda0535eaf57e24940bd72c8880154c34",
+      "uncompressed_sha256": "64e9ca60a3bc3b0919b4a2a520ca73e2bb340d709d0935adb24172a22266b387",
+      "uncompressed_bytes": 37227,
+      "role": "Timed-out diagnostic; no completed timing or acceptance claim"
+    },
+    {
+      "path": "rational-point-stress-1.context.json",
+      "sha256": "1e3f4e46e15621fa8de1780664ac06acf4a67102bd9a2ad2d5dc442517007d5f",
+      "bytes": 1026
+    },
+    {
+      "path": "rational-point-stress-1-profile.json",
+      "sha256": "262231c90f4dc4a49ef5457f6c9738fddd60e59d2652a92d770622b081128e31",
+      "bytes": 1186
+    },
+    {
+      "path": "rational-point-stress-1-final.json",
+      "sha256": "4d08a88a896602089e32be31cd0b07b66e468e1266012f712f29393cf4cb7347",
+      "bytes": 1360
+    },
+    {
+      "path": "run-stress-bounded.sh",
+      "sha256": "3fec496e054cfaa2cc7005d7c138602822ab9fee8245c62b8350a704df0a7fc3",
+      "bytes": 337
     }
   ],
   "validation": {
@@ -180,5 +214,15 @@
     "Original stress was manually interrupted at 14min53.256s, not completed or passing.",
     "No matched AB/BA performance comparison.",
     "General frozen source/provider/predecessor authentication and strict missing-record behavior are not established."
-  ]
+  ],
+  "changed_stress": {
+    "status": "timeout",
+    "exit_code": 1,
+    "signal": "15/TERM",
+    "runtime": "15min 71ms",
+    "CPU_time": "14min 58.454s",
+    "peak_memory": "1.2GiB",
+    "swap_bytes": 0,
+    "result": "No recorded completed module or trial result; not a passing stress test, false verdict or completed timing sample."
+  }
 }

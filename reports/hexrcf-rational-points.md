@@ -44,6 +44,17 @@ native GMP/Rat arithmetic, nested polynomial gcd and inverse frames identify
 work, not a coefficient-growth theorem. Removing the unnecessary rational
 owner does not by itself establish that this stronger case is repaired.
 
+The stronger stress case with the revised rational-point preparation also
+reached its 15-minute deadline: exit 1, `result: timeout`, signal15/TERM,
+runtime15min71ms, CPU14min58.454s and peak1.2GiB/no swap. No completed module
+or trial result was recorded. A sample from that same process still reaches
+native rational arithmetic through `xgcdLeftAux`, `xgcdLeft`,
+`Algebraic.Element.inversePolynomial` and `Sturm.normalize`, with additional
+nested inversions. This preserves the evidence of a remaining owner arithmetic
+bottleneck. The adapter change does not discharge this stronger performance
+requirement. Neither interrupted run is a completed measurement or a
+mathematical false verdict; no relative speedup follows from these deadlines.
+
 These are shared-host operational build observations and a structural
 representation change, not adjacent alternating AB/BA samples or a matched
 performance claim. All own builds are serial with a hard aggregate 32 GiB
