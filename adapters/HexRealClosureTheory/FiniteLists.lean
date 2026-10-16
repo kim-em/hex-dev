@@ -57,7 +57,7 @@ private def checkedData (type value : Expr) : MetaM Expr := do
   let levels := collectLevelParams (collectLevelParams {} type) value |>.params.toList
   let options := (← getOptions).setBool `debug.skipKernelTC false
   let declaration := Declaration.defnDecl {
-    name, levelParams := levels, type, value, hints := .regular 0, safety := .safe }
+    name, levelParams := levels, type, value, hints := .abbrev, safety := .safe }
   setEnv (← ofExceptKernelException <| (← getEnv).addDeclCore
     (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
     declaration none (doCheck := true))
@@ -110,8 +110,9 @@ private def functions (carrier sourceType : Expr) :
 /-- Combine finite support blocks in their original order, keeping duplicates.
 Closed blocks share one checked tuple and small fold functions. Each generated
 definition is checked by the ordinary kernel, and the complete resulting graph
-passes the existing dependency audit before it is returned. Failed construction
-rolls back declarations and their environment-scoped audit results. Open blocks
+passes the existing dependency audit before it is returned. Non-interrupt errors,
+including resource-limit failures, roll back declarations and their environment-
+scoped audit results. Open blocks
 retain the same balanced append expression without creating global declarations. -/
 def appendSupport (coefficient : Expr) (blocks : Array Expr) : MetaM Expr := do
   if blocks.size ≤ 1 then return ← combine coefficient blocks
@@ -120,7 +121,7 @@ def appendSupport (coefficient : Expr) (blocks : Array Expr) : MetaM Expr := do
       throwError "incomplete finite support"
   if coefficient.hasFVar || blocks.any (·.hasFVar) then return ← combine coefficient blocks
   let saved ← Meta.saveState
-  try
+  tryCatchRuntimeEx (do
     let carrier ← checkedData (← inferType coefficient) coefficient
     let listTypeValue ← mkAppM ``List #[carrier]
     let listType ← checkedData (← inferType listTypeValue) listTypeValue
@@ -130,9 +131,8 @@ def appendSupport (coefficient : Expr) (blocks : Array Expr) : MetaM Expr := do
     let function ← functions carrier type tree #[]
     let result := mkApp function data
     let _ ← auditProof result listType
-    return result
-  catch error =>
-    saved.restore
-    throw error
+    return result) fun error => do
+      saved.restore
+      throw error
 
 end Hex.RealClosure.Algebraic.KernelReplay.FiniteData

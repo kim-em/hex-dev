@@ -113,6 +113,24 @@ def Prefix.supplyAll (level : Prefix) (previous : Supplier) : Supplier := fun ty
   if let some proof ← level.scalar previous type then return some proof
   level.supply previous type
 
+/-- Try a retained predecessor reader's supplier before searching this prefix's
+inventory. `earlier` includes its immediate predecessor and earlier readers.
+If that supplier has no proof, keep the ordinary inventory and reader matching.
+This changes search order only; every returned proof still passes the caller's
+complete ordinary-kernel check. -/
+def Prefix.supplyFrom (level : Prefix) (earlier : Array Expr)
+    (previous : Supplier) : Supplier := fun type => do
+  let args := type.getAppArgs
+  let count := if #[``Transport.Sum, ``Transport.Product, ``Transport.Difference,
+      ``Transport.Scaling, ``Transport.Evaluation, ``Transport.PowerData].any
+        (type.getAppFn.isConstOf ·) then 3
+    else if #[``Transport.Differentiation, ``Transport.Leading].any
+        (type.getAppFn.isConstOf ·) then 2
+    else 0
+  if count > 0 && args.size ≥ count && earlier.contains args[args.size - count]! then
+    if let some proof ← previous type then return some proof
+  level.supplyAll previous type
+
 /-- Construct a successor's actual finite data with the current supplier,
 then retain its one selected point and reader. The supplied inventories must
 already cover every reached key: this operation does not add records after
