@@ -276,7 +276,7 @@
     "theorems": "12 scalar case bodies with complete standard-three axiom closure; source alias has identical type/body constant and zero reductions; other theorem checks require nonempty diagnostics",
     "definitions": "3 reachable scalar case definitions checked by the ordinary kernel with producer diagnostics; literal definitions may have empty traces",
     "named": "42 reachable NamedConstants theorem bodies, including auxiliaries, re-added with fresh kernel checks; actual supplied registrations required",
-    "negative_inputs": "Wrong-context facts reject before callbacks under maxHeartbeats2000; wrong field count, nonarray, trailing zeros, missing/wrong facts, admitted proposals and malformed codec signatures refuse",
+    "negative_inputs": "Wrong-context facts reject before callbacks; the historical withOptions maxHeartbeats2000 setting did not change Core.Context.maxHeartbeats and establishes no enforced heartbeat bound. Wrong field count, nonarray, trailing zeros, missing/wrong facts, admitted proposals and malformed codec applications refuse. Declaration signature corruption is not tested.",
     "state_and_budget": "Caller metavariables preserved on success; continued/exact/one-below and late transport-exhaustion rollback tested"
   },
   "limitations": [

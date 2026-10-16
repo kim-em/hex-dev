@@ -8,7 +8,7 @@ Each goal must depend on its actual pi or exp registration. The complete
 transitive axiom closure is exactly `propext`, `Classical.choice` and
 `Quot.sound`. Imported library bodies are not all re-added. The exact original
 module theorem inventory is retained in the
-[current source-bound record](data/hexrcf-named-constant-proofs/revision/context.json).
+[current source-bound record](data/hexrcf-named-constant-proofs/final/context.json).
 
 The goals are `∀ x, x² > π−4`, `∀ x, x²+exp 1>2`,
 `∃ x, x=exp 1 ∧ 2<x ∧ x<3` and a positive quadratic with guarded
@@ -17,9 +17,8 @@ zero pi denominators and deliberately uninformative zero-containing bounds.
 The importing audit's positive body coverage does not claim a new evaluation
 of every negative control.
 
-At source `d2627df9111717a92029321280b2b92955e095d8`, the deep audit is included
-in the 11,783-job compatibility selection and final 11,765-job audit/manual
-selection. Complete logs and exact source hashes, including the current
+At source `973997c0c15e8059ecf14929c2743613f8e874f9`, the deep audit is included
+in the passing 11,783-job compatibility and manual selection. Complete logs and exact source hashes, including the current
 Lake file, are linked from the record. The audit uses `maxHeartbeats := 12000000`
 and `maxRecDepth := 32768`. Own builds are serial under a shared hard 32 GiB cap,
 with no swap and two Lean threads. Build times include reused dependencies
