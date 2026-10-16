@@ -640,24 +640,36 @@ no successful child calculation is assumed.
 ```lean
 open Hex Lean Meta Qq
 open Hex.RCF.RealCoefficients
+open Hex.RealClosure.BaseContext
 run_meta do
   let target : Q(Prop) :=
     q(∀ x : ℝ, x^2 + Real.sqrt 2 > 0)
   let .ok prepared ←
-      AlgebraicPreparation.prepare target
+      AlgebraicPreparation.prepare
+        target
     | throwError "unsupported source"
-  let registry : Q(RealClosure.BaseContext.Registry) :=
+  let before := prepared.usage
+  let registry : Q(Registry) :=
     q(fun _ => none)
   let .ok (equivalence, usage) ←
-      prepared.acceptanceIff target registry
-    | throwError "source equivalence could not be prepared"
-  let auxName := mkPrivateName (← getEnv)
-    (← mkFreshUserName `manualSourceAcceptance)
-  let _ ← withDeclNameForAuxNaming auxName do
-    Hex.RCF.checkProof `sourceAcceptance
-      (← inferType equivalence) equivalence
-  unless usage.proofNodes > prepared.usage.proofNodes do
-    throwError "missing accumulated proof usage"
+      prepared.acceptanceIff
+        target registry
+    | throwError
+        "source equivalence failed"
+  let auxName := mkPrivateName
+    (← getEnv)
+    (← mkFreshUserName `sourceDoc)
+  let _ ←
+    withDeclNameForAuxNaming
+      auxName do
+        Hex.RCF.checkProof
+          `sourceAcceptance
+          (← inferType equivalence)
+          equivalence
+  unless usage.proofNodes >
+      before.proofNodes do
+    throwError
+      "missing accumulated proof usage"
 ```
 
 This proof uses the checked algebraic expressions and their source identities.
