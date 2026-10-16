@@ -506,18 +506,19 @@ The adapter checks every original divisor before solving the target,
 including divisors erased by cancellation, zero multiplication or an empty
 domain. Named square/cube aliases keep their existing direct path when all
 original divisors are rational; algebraic division uses the common field.
+Here `√2` is Lean's notation for `Real.sqrt 2`.
 
 ```lean
 example : ∀ x : ℝ,
-    x ^ 2 + (Real.sqrt 2 + Real.sqrt 3) > 0 := by
+    x ^ 2 + (√2 + √3) > 0 := by
   rcf
 
 example : ∀ x : ℝ,
-    x ^ 2 + (Real.sqrt 2 + Real.sqrt 3) ^ 2 > 0 := by
+    x ^ 2 + (√2 + √3) ^ 2 > 0 := by
   rcf
 
 example : ∃ x : ℝ,
-    x = -(Real.sqrt 2 + Real.sqrt 3) ∧ x < -3 := by
+    x = -(√2 + √3) ∧ x < -3 := by
   rcf
 ```
 
