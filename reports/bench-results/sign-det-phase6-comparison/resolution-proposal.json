@@ -1,5 +1,5 @@
 {
-  "question": "Does the unchanged integrated SignDet computation pass the complete primary baseline comparison with a matched four-second inner-work target and the original signal-floor policy?",
+  "question": "Does the unchanged integrated SignDet computation pass the complete primary baseline comparison with matched 2.25-second targets for the four floor-filtered workloads and all other registration settings preserved?",
   "classification": "One explicitly authenticated resolution adaptation; not an unchanged rerun of the failed original attempt, new complexity attestation or proof-cost experiment.",
   "comparison_identity": "53b341e737808d743124423db16b1ebf7af65096c9b200c8d0fe10bf0556f621",
   "source_heads": {
@@ -12,8 +12,8 @@
   },
   "guard_sha256": "c8a34269886f35471e5cdf3ebb459e6f0c5a85e22c5038b22d0fb54e475720b5",
   "resolution_protocol": {
-    "target_inner_nanos": 4000000000,
-    "reason": "The original candidate completed every scheduled row with matching hashes, but all measurements were below its declared signal floor. Increase timed work for both unchanged arms; retain every floor annotation and the native verdict rule.",
+    "target_inner_nanos": 2250000000,
+    "reason": "The original candidate completed every scheduled row with matching hashes, but all measurements were below its declared signal floor. Increase timed work in the four floor-filtered workloads for both unchanged arms. The 2.25-second target fits the frozen ten-second cap and 100ms grace with a one-second planning spawn floor; this envelope is not a host-admission or sample-discard rule.",
     "benchmarks": [
       "Hex.SignDetBench.Height.runCheck",
       "Hex.SignDetBench.Height.runReduce",
@@ -51,11 +51,19 @@
     "previous_exports": {
       "0-0-baseline.json": "da4e5345e03285b2582beb93c66730dc9366eee685cbcc42c2cb0a61268456fc",
       "0-0-candidate.json": "c805cd3bd1868a2987d5151bcf93735de2a9601226cfcae4e080b8b3fc54dd78"
-    }
+    },
+    "target_benchmarks": [
+      "Hex.SignDetBench.Height.runCheck",
+      "Hex.SignDetBench.Height.runReduce",
+      "Hex.SignDetBench.runSmallFull",
+      "Hex.SignDetBench.runSmallReduced"
+    ],
+    "planning_spawn_floor_nanos": 1000000000
   },
-  "preserved": "Four trial-major adjacent AB/BA/AB/BA blocks; all25parameterized and6fixed timing families; original parameters, warmup, signal floors, deadlines, fixed repeats and native checker. No quiet-core admission or discarded observations.",
-  "slot": "One account-global resolution slot keyed by the original binaries and guard, independent of target wording, tooling digest and output paths. The original reservation is retained. Interruptions after reservation consume the new slot.",
+  "preserved": "All 25 parameterized and six fixed timing families; four trial-major adjacent AB/BA/AB/BA blocks; original parameters, warmup, signal floors, deadlines and fixed repeats; native checker. The other 21 parameterized registrations retain their original 100ms target and disabled floor filter. No quiet-core admission or discarded observations.",
+  "slot": "The reviewed collector uses one account-global resolution slot keyed by the original binaries and guard, independent of decision wording and output paths. The original reservation is retained. Interruptions after reservation consume the new slot; the frozen tool-source binding also remains required.",
   "failure": "Preserve failures, regressions and inconclusive outcomes. An unchanged rerun may only use the existing completed-inconclusive rule; no further target adaptation or automatic repeat.",
   "collection_precondition": "A clean frozen tooling descendant of the original candidate containing only admitted collector/test/report changes, reviewed protocol, original manifests and guard-build attestation, successful controls and a bound decision.",
-  "measurements_started": false
+  "measurements_started": false,
+  "resolution_margin": "The observed candidate spawn floor113.739337ms gives a tenfold signal threshold1.13739337s. The pinned autotuner batch range about0.55T to1.1T gives about1.2375s to2.475s at T2.25s, only about8.8percent lower-end margin above that observed threshold. A larger future floor or short batch can remain inconclusive; no filtering, lower threshold or additional target adaptation is permitted."
 }

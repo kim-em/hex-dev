@@ -52,6 +52,8 @@ SIGN_DET_FIXED = {"Hex.SignDetBench." + name for name in (
 SIGN_DET_REFERENCES = {"Hex.SignDetBench.MaximalMatrix.reference" + str(n) for n in (1, 2, 3)}
 INTERACTING_FIXED = {"Hex.SignDetBench.InteractingBench." + name
                      for name in ("depthOne", "depthTwo")}
+SIGN_DET_RESOLUTION = {"Hex.SignDetBench." + name for name in
+                       ("Height.runReduce", "Height.runCheck", "runSmallReduced", "runSmallFull")}
 PROFILES = ("sturm", "sign-det", "sign-det-interacting")
 
 
@@ -528,19 +530,74 @@ def validate_cap_protocol(previous_dir, policy, sources, identity, reservation, 
             "exports": exports, "policy": policy}
 
 
-def validate_resolution_protocol(previous_dir, policy, sources, identity, reservation, names):
-    """Bind one matched four-second target to the intact SignDet floor failure.
+def resolution_budget(root, policy):
+    """Check the pinned runner's clamp at a declared planning floor, without sampling.
+
+    The floor is a planning envelope, never a host admission or sample-discard rule.
+    A later larger observed floor or effective-target mismatch remains retained.
+    """
+    if policy.get("target_benchmarks") != sorted(SIGN_DET_RESOLUTION):
+        raise RuntimeError("resolution target must cover exactly the four filtered workloads")
+    planning_floor = policy.get("planning_spawn_floor_nanos")
+    if type(planning_floor) is not int or planning_floor != 1_000_000_000:
+        raise RuntimeError("resolution protocol requires the declared planning floor")
+    core = strip_lean_comments((root / ".lake/packages/lean-bench/LeanBench/Core.lean").read_text())
+    header = re.search(r"(?m)^structure BenchmarkConfig where[ \t]*\n", core)
+    if header is None:
+        raise RuntimeError("cannot identify the frozen runner configuration")
+    body = []
+    for line in core[header.end():].splitlines():
+        if line.strip() and not line[0].isspace():
+            break
+        body.append(line)
+    defaults = "\n".join(body)
+    grace = re.findall(r"killGraceMs\s*:\s*Nat\s*:=\s*([0-9]+)\b", defaults)
+    multiplier = re.findall(r"signalFloorMultiplier\s*:\s*Float\s*:=\s*([0-9]+(?:\.[0-9]+)?)\b", defaults)
+    if len(grace) != 1 or len(multiplier) != 1 or float(multiplier[0]) <= 1:
+        raise RuntimeError("unsupported frozen grace or floor default")
+    text = strip_lean_comments((root / "bench/HexSignDet/Bench.lean").read_text())
+    budgets = {}
+    for name in sorted(SIGN_DET_RESOLUTION):
+        short = name.removeprefix("Hex.SignDetBench.")
+        blocks = re.findall(r"\bsetup_benchmark\s+" + re.escape(short) +
+                            r"(?=\s)(?:(?!\bsetup_benchmark\b).)*?\bwhere\s*\{([^}]*)\}", text, re.S)
+        if len(blocks) != 1:
+            raise RuntimeError("cannot identify frozen resolution registration: " + name)
+        fields = {}
+        for field in ("targetInnerNanos", "maxSecondsPerCall", "signalFloorMultiplier", "killGraceMs"):
+            values = re.findall(r"\b" + field + r"\s*:=\s*([^,\n}]+)", blocks[0])
+            if len(values) > 1 or any(not re.fullmatch(r"[0-9]+(?:\.[0-9]+)?", v.strip()) for v in values):
+                raise RuntimeError("unsupported frozen resolution configuration: " + field)
+            if values:
+                fields[field] = float(values[0].strip())
+        if (fields.get("targetInnerNanos") != 1_000_000_000 or
+                fields.get("signalFloorMultiplier", float(multiplier[0])) <= 1 or
+                fields.get("maxSecondsPerCall", 0) <= 0):
+            raise RuntimeError("resolution registration differs from the original filtered target")
+        deadline = int(fields["maxSecondsPerCall"] * 1e9 + fields.get("killGraceMs", int(grace[0])) * 1e6)
+        budget = (deadline - planning_floor) // 4
+        if not 1_000_000_000 < policy["target_inner_nanos"] <= budget:
+            raise RuntimeError("resolution target would be clamped within the planning envelope: " + name)
+        budgets[name] = dict(max_seconds_per_call=fields["maxSecondsPerCall"],
+                             planning_spawn_floor_nanos=planning_floor, maximum_target_nanos=budget)
+    return budgets
+
+
+def validate_resolution_protocol(previous_dir, policy, sources, identity, reservation, names, root):
+    """Bind one matched target increase to the intact SignDet floor failure.
 
     This slot is independent of output names, wording and collector revisions.
     It authenticates both original exports and their matching successful answers;
     it grants no permission to lower floors or discard parameters or observations.
     """
     if not isinstance(policy, dict) or set(policy) != {
-            "target_inner_nanos", "reason", "benchmarks", "previous_context_sha256", "previous_exports"}:
+            "target_inner_nanos", "target_benchmarks", "planning_spawn_floor_nanos",
+            "reason", "benchmarks", "previous_context_sha256", "previous_exports"}:
         raise RuntimeError("incomplete resolution protocol")
     target = policy["target_inner_nanos"]
-    if type(target) is not int or target != 4_000_000_000:
-        raise RuntimeError("resolution protocol requires the declared four-second target")
+    if type(target) is not int or target != 2_250_000_000:
+        raise RuntimeError("resolution protocol requires the declared 2.25-second target")
+    budgets = resolution_budget(root, policy)
     if not isinstance(policy["reason"], str) or not policy["reason"].strip():
         raise RuntimeError("missing resolution protocol reason")
     previous_dir = previous_dir.resolve()
@@ -627,7 +684,7 @@ def validate_resolution_protocol(previous_dir, policy, sources, identity, reserv
     if policy["previous_exports"] != exports:
         raise RuntimeError("resolution protocol differs from original export hashes")
     return {"directory": str(previous_dir), "context_sha256": previous_hash,
-            "exports": exports, "policy": policy}
+            "exports": exports, "policy": policy, "clamp_planning": budgets}
 
 
 def install_signals():
@@ -857,7 +914,7 @@ def main(argv=None) -> int:
         if args.resolution_from is not None:
             context["resolution_protocol"] = validate_resolution_protocol(
                 args.resolution_from, decision["resolution_protocol"], sources,
-                context["comparison_identity"], original_marker, names)
+                context["comparison_identity"], original_marker, names, root)
         save()
         for arm, binary in binaries.items():
             auxiliary = [AUXILIARY] if args.profile == "sturm" else []
@@ -893,7 +950,7 @@ def main(argv=None) -> int:
                     command += ["--export-file", str(out / (stem + ".json"))]
                     if args.cap_from is not None:
                         command += ["--max-seconds-per-call", str(decision["cap_protocol"]["seconds"])]
-                    if args.resolution_from is not None and name not in timing_fixed(args.profile):
+                    if args.resolution_from is not None and name in SIGN_DET_RESOLUTION:
                         command += ["--target-inner-nanos", str(decision["resolution_protocol"]["target_inner_nanos"])]
                     code, _ = run(command, stem)
                     context["measurements_collected"] = True
@@ -925,10 +982,10 @@ def main(argv=None) -> int:
                         result["config"].get("max_seconds_per_call") != decision["cap_protocol"]["seconds"]
                         for result in documents):
                     raise RuntimeError("parent did not apply the bound per-call cap")
-                if args.resolution_from is not None and kind == "parametric" and any(
+                if args.resolution_from is not None and name in SIGN_DET_RESOLUTION and any(
                         result["config"].get("target_inner_nanos") !=
                         decision["resolution_protocol"]["target_inner_nanos"] for result in documents):
-                    raise RuntimeError("parent did not apply the bound inner-work target")
+                    raise RuntimeError("exported inner-work target differs from the binding (including runner clamp)")
                 if any(result["budget_truncated"] or not result["points"] or
                        any(point["status"] != "ok" or point["result_hash"] is None for point in result["points"])
                        for result in documents):
