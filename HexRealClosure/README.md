@@ -1587,6 +1587,19 @@ reference validates neither the supplied signature nor its selected roots;
 catalog and descriptor checks remain required.
 Literal arrays are emitted by an accumulator with `Array.push`.
 
+`NumberField.base_encode` and `NumberField.base_decode` rewrite symbolic
+rational coefficient arrays `[0, q.num, q.den]` through ordinary public imports,
+including inside decoder binds when the decode equation is instantiated with
+`q`. Numeric JSON literals use `NumberField.decode_payload`, with proofs that
+the numerator and denominator are the intended rational's exact components.
+The lower-level equations are `BaseContext.Context.write_rational`,
+`BaseContext.Element.codec_encode_rational` and
+`BaseContext.Element.codec_decode_rational`; `Tower.Context.base_codec`
+identifies the packed base's codec. `BaseContext.rational_chain` identifies the
+initial staged chain. These equations describe canonical rational payloads.
+The decoder body remains abstract through ordinary imports, so the equations
+do not enable kernel computation through the whole decoder.
+
 `Tower.Catalog` is an immutable catalog of caller-constructed validated prefixes.
 Insertion rejects rebinding. Its separate base catalog supplies real search
 progress and reconstructs infinitesimal stages. An algebraic signature is
