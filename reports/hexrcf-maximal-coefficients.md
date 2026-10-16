@@ -124,6 +124,20 @@ The maximal-coefficient manual sources are byte-identical to their separately
 inspected layout source. Local integration with a reviewed parent is not a
 claim that the parent PR has landed or that the general backend is complete.
 
+The [landed-main record](data/hexrcf-maximal-coefficients/landed-main/context.json)
+subsequently verifies the actual parent squash `e2cffe51a4` and its successful
+exact-head CI, with the source branch retained. Source `795fab86b3` also
+consumes the merged public graph-reader export (`3c0e1df6cf`) and shared
+finite-support implementation (`768d2768a3`). Its 14,340-job selection passes
+in 17m33.791s at 13.4 GiB aggregate peak with zero swap. The actual assembled
+source module takes 424 seconds and its fresh consumer 5.4 seconds in that
+selection. The optional-umbrella public graph-reader regression now passes;
+the earlier private-import diagnostic is no longer an unresolved export gate.
+The metadata audit covers 666 import cones and 1,567 modules, and both
+eleven-test checker suites pass. The record binds 45 files, seven logs and four
+validation artifacts. It preserves the earlier local-integration records and
+does not turn their observations into controlled timing comparisons.
+
 A [separate compiled probe](data/hexrcf-maximal-coefficients/missing-records/context.json)
 constructs `NativeOperations.extend` with empty packing, stored-sign and inverse
 inventories. Using the existing strict scalar codec and the same valid literal

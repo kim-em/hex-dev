@@ -1,0 +1,116 @@
+{
+  "source_commit": "795fab86b375d5007591b34e395d76c86e0a8649",
+  "sources_sha256": {
+    "adapters/HexRCF/RealCoefficients/Reify.lean": "42eee2d20f60046a3bd4aba8d658b392c83e7d89e9f66b95f1ea17036e03c9e1",
+    "adapters/HexRCF/RealCoefficients/Finite.lean": "f9b93914a036e125f0d1ade9fe8908ecbc1efb89507cf6cf60662a69fde4ec02",
+    "conformance/HexRCF/MaximalCoefficients.lean": "c1accdf485291496e4f507b05c1ae506067e08cd55a37026fda4aee385e115db",
+    "conformance/HexRCF/MaximalCoefficientsConformance.lean": "9dbff8f99ae78be6ad44c4e2a67a70f9d863e5bacd94298a37dc25eea379645f",
+    "conformance/HexRCF/MaximalCoefficientsKernel.lean": "3ca065fc79d5100e03634ed41c7ce36593685eede8c5e2244ea37219bad53bbe",
+    "HexManual/Chapters/HexRCF.lean": "ee31a680d1e791e4c66b0a3ac3b5931ac86c79c55e0af471cc458b48271d1259",
+    "HexRCF/README.md": "62d77156865e3e57aa105a66ed9d9b20a6e31fafbcbd796deb49bf97b175262b",
+    "lakefile.lean": "107fedbc3caa5a37d3dc14fe0035b36d71b24f0ac24062c760743bbb89a87883",
+    "HexManual/Chapters/HexRCF/ClosedCoefficients.lean": "e9e85ec3706aca45abf62c569818be2de3145b8a90d79c827d68c47d132cf685",
+    "adapters/HexRCF/RealCoefficients/CellOperations.lean": "7e2daf9265c6b627512b2040a2b01cde9c7d18ae8d373c11fc0419ada6d025d0",
+    "adapters/HexRCF/RealCoefficients/CellQuote.lean": "7e936e28b82954681347a73c4939bf30acb026c2a1594d482034cc231ffcc4a2",
+    "adapters/HexRCF/RealCoefficients/RealModel.lean": "712b4fd3edff8eaa6f93e501da5debf04529d1ea8c11a18389820f866d179c43",
+    "adapters/HexRCF/RealCoefficients/CellPacketRead.lean": "0d48398c57c9be2e822c6e5383cddb735755b266dff73f752d01b9d37e9d6ac0",
+    "adapters/HexRCF/RealCoefficients/RowOperations.lean": "137f7f8abaf9f4904058b3532b7d89ebaa472026564aefff8d7a7f17a7f34be6",
+    "adapters/HexRCF/RealCoefficients/SectorEncode.lean": "68727a10fdcdf8a5c469ce9913be6e02b9a469edac29ec47ddefa9ac67b7e1a0",
+    "adapters/HexRCF/RealCoefficients/AlgebraicCells.lean": "c159dbeff3e6eeb248d9dfe1743a0691d919e8097682e149373f2e8fcedb2c98",
+    "adapters/HexRCF/RealCoefficients.lean": "39b68f6b6307f9377e93101390ed58a269cf1c81d748bb043dfc88d9691b23de",
+    "HexRCF/Tactic.lean": "09d895ba1dd2c1af0bfffca197494f2614380ded268ff13e4e0b02fea22b9224",
+    "conformance/HexRCF/CellReplay/Operations.lean": "039b763a74a6ad9a2c625aecd74f64f174beb8197fb0f987a4fd811cb6e2228a",
+    "conformance/HexRCF/CellReplay/OperationsKernel.lean": "bfbc63c947d3fe88ea761c257fd79c16c9fde785e3e1449942f01c5873fdcd97",
+    "conformance/HexRCF/CellReplay/OperationsPublic.lean": "7bac43d7e8e13b88772a3fb246767a79321e8f7c17a9991c5b3d058d22cf9c02",
+    "conformance/HexRCF/CellReplay/Assembled.lean": "2690d5009637c575e6f7a69b0e2aca93130808b98b03f6346ab5fa3dba04ba9c",
+    "conformance/HexRCF/CellReplay/AssembledKernel.lean": "c85c77fb03ab328737f17ee4e6d742442b4d73660e32665193109e12621f2302",
+    "conformance/HexRCF/RealModelConformance.lean": "c192d538ca4dad68c8a008ea8201a950d61dc41f7f9e08ef847b3a21d3ac1bb6",
+    "conformance/HexRCF/AlgebraicPreparationCases.lean": "888738b1b2e0374d64a5fe149b81d30e018e682c7118180c4be9d16531978fef",
+    "conformance/HexRCF/SelectedRoot/Data.lean": "8a5c6bd992a418552513844f31d82ffb894487a0f8bb7b15d6f731d063c96a9e",
+    "conformance/HexRCF/CellReplay/Algebraic/Records.lean": "9c670e9600f5af561810d92902a6c47a7a6a5e3cfa55faf78b9b76459eff0795",
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "33d20bfd999f351cd77444d89af5197d88ecd223f75cba2bc80a7b3a549a1dcb",
+    "adapters/HexRealClosureTheory/NativeRecords.lean": "88197c2a335b1ad09a8c96ef91ee890cc1c0c884214f11127b4311d876b8163b",
+    "adapters/HexRealClosureTheory/NativeAssembly.lean": "55ed9848f66acf746e5403371bc0cd2c759c4861c5677b34bb8002d14a7fab69",
+    "adapters/HexRealClosureTheory/NativeAssemblyModels.lean": "cb6c5c68415029523e439a2eb634bdff1f1ec7bf7a3adc089e7f51eb47001c9e",
+    "adapters/HexRealClosureTheory/KernelReplay.lean": "ab246676ee7f1acd3b0ab6a2c7ab3b1bda72c5ef659eec1ad5d5cde977805424",
+    "experiments/KernelReplay/AxiomClosure.lean": "f49377265f05f52b633b10a59255a03731e08d022cc54763de9851c5b5325034",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "libraries.yml": "2d774a6de86747fbc73c4b708d74afe63cba75b98291f76b889c657d5fc7fa2f",
+    "adapters/HexRealClosureTheory/FiniteBase.lean": "d19b2b25a67f8cfa546727efc2c60a4712fc7ef1e30a1d090f756929522c78a0",
+    "adapters/HexRealClosureTheory/NativeModels.lean": "f67450b1f48b678b97021d7eceb0bd474e06f9beb49bd271e96be1306cc44f9f",
+    "HexSignDet/Codec.lean": "f1869f236b0a3edc3edfba80c959965072a7e047b1be255f83e8a7b00a07f002",
+    "HexSignDet/Codec/Basic.lean": "722b1f8cba5fd486e1688aac29cfa8c7e09c4cae2c653797972d9ad7cc6e76df",
+    "HexSignDet/Codec/Evidence.lean": "5352b3857ebde1162ac4dd3f09ae2f7137bb3151e480cdbccd9ef959cec51058",
+    "HexSignDet/Codec/Node.lean": "20efa3bdd081236d7e5db1afc2116c98b4b3e89a6723c6dc19ad0aed1f04637f",
+    "adapters/HexRealClosureTheory/FiniteLists.lean": "e6504318665887251b540bdcd5ed4cb97585d5f67dae6de0347ed249c711d7e6",
+    "adapters/HexRealClosureTheory/FiniteReconstruction.lean": "938ca5ce8c997343fc9112ddad9490255de9f1263f32ca2c5dcc85d942598075",
+    "conformance/HexRCF/PublicGraphCodec.lean": "e18f5090b1afaf26578f0f9d7bd6ea5b1227726afd91adfe39c5999f84a05c0e"
+  },
+  "prior_record": "reports/data/hexrcf-maximal-coefficients/integration/context.json",
+  "prior_record_sha256": "c212194b90141ed4027a338709c4279572eba89933299aae4ea2e57a04dd5920",
+  "merged_main": "e2cffe51a45df24529acbe578e1ee9b3d3381161",
+  "owner_artifacts": {
+    "public_graph_reader": "3c0e1df6cf",
+    "shared_support": "768d2768a3"
+  },
+  "logs": {
+    "reports/data/hexrcf-maximal-coefficients/landed-main/maximal-coefficients-landed-main-1.log.gz": {
+      "sha256": "f2a0863e05e3422a08b1a3538a333ceae193f5255dab251567602da2b3711a98",
+      "uncompressed_sha256": "f4c7afbd388a0d0a0412aac772cf124e9cf40ab7b698b07e1ee4c2b3dcfb6120"
+    },
+    "reports/data/hexrcf-maximal-coefficients/landed-main/maximal-coefficients-dag-7.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-maximal-coefficients/landed-main/maximal-coefficients-admissions-7.log.gz": {
+      "sha256": "7acbb779c4c61af659e6c1fd224fb46e1abf4021f5d2e628ebd23373e8d32456",
+      "uncompressed_sha256": "3319498769aef866a7782ba7442fe0f040bef5e09b7fe0853fa9d3260efb272a"
+    },
+    "reports/data/hexrcf-maximal-coefficients/landed-main/maximal-coefficients-copyright-7.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-maximal-coefficients/landed-main/maximal-coefficients-lines-7.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-maximal-coefficients/landed-main/maximal-coefficients-dag-tests-7.log.gz": {
+      "sha256": "b60e32971797d442756ae44de0adc398b31f8d689682933cd638717f47d23356",
+      "uncompressed_sha256": "588ca9b54347f483de815e6714c84bdaaa9b93c4094dd97192aa6dde4b344a9a"
+    },
+    "reports/data/hexrcf-maximal-coefficients/landed-main/maximal-coefficients-admissions-tests-7.log.gz": {
+      "sha256": "1896b7604dfa21160b227fd18631230d67b578f7cc65442e78c70c5749a30cf9",
+      "uncompressed_sha256": "7e43d6806783eac4e74132e03229d5c771d942935a6a0c3bef715c745a0d489a"
+    }
+  },
+  "artifacts_sha256": {
+    "reports/data/hexrcf-maximal-coefficients/landed-main/maximal-coefficients-landed-main-1.limits": "42d203a8508cfebc40f93b165267104a20733af1175e8c3c5c87f366d81af2ee",
+    "reports/data/hexrcf-maximal-coefficients/landed-main/ci-10956-38828591687-final.json": "ca7c302a50f1f3d2c9841f407bef2cffa493fc8beb514603097ade85b189073e",
+    "reports/data/hexrcf-maximal-coefficients/landed-main/pr-10956-final-state.json": "7c856b07590b3aca077d8680938216d66a196b82f7b06316b442e63fafa529ca",
+    "reports/data/hexrcf-maximal-coefficients/landed-main/pr-10956-retained-branch.txt": "af0cabfe9118a149ba359f4e34def1ca1d6bc51d19cf27062b05684b7a7f0622"
+  },
+  "checks": {
+    "metadata_exit_status": {
+      "dag-7": 0,
+      "admissions-7": 0,
+      "copyright-7": 0,
+      "lines-7": 0
+    },
+    "checker_tests": {
+      "dag": 11,
+      "admissions": 11
+    },
+    "public_graph_reader_via_optional_umbrella": true,
+    "actual_assembled_source_and_fresh_consumer": true,
+    "actual_maximal_goal_body_audits": true
+  },
+  "limits": {
+    "memory_max_bytes": 34359738368,
+    "swap_max_bytes": 0,
+    "lean_threads": 2,
+    "own_build_concurrency": 1,
+    "sampled_usage_is_not_completed_peak": true
+  },
+  "scope": "Final local validation against the actual merged parent and owner APIs; earlier records and their independently bound document versions remain unchanged."
+}
