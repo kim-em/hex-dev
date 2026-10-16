@@ -20,16 +20,13 @@ abbrev base := NumberField.base registry
 @[expose] def contextToken : Codec.Json := .array (.cons (.number 0) .nil)
 @[expose] def j0 : Codec.Json := .number (0)
 @[expose] def j1 : Codec.Json := .array (.cons j0 .nil)
-@[expose] def j2 : Codec.Json := .number (-3)
 @[expose] def j3 : Codec.Json := .number (1)
 @[expose] def j4 : Codec.Json := .array (.cons (.number 0) (.cons (.number (-3)) (.cons (.number 1) .nil)))
 @[expose] def j5 : Codec.Json := .array (.cons (.number 0) (.cons (.number (0)) (.cons (.number 1) .nil)))
 @[expose] def j6 : Codec.Json := .array (.cons (.number 0) (.cons (.number (1)) (.cons (.number 1) .nil)))
 @[expose] def j7 : Codec.Json := .array (.cons j4 (.cons j5 (.cons j5 (.cons j6 .nil))))
-@[expose] def j8 : Codec.Json := .number (-8)
 @[expose] def j9 : Codec.Json := .array (.cons (.number 0) (.cons (.number (-8)) (.cons (.number 1) .nil)))
 @[expose] def j10 : Codec.Json := .array (.cons j3 (.cons j9 .nil))
-@[expose] def j11 : Codec.Json := .number (8)
 @[expose] def j12 : Codec.Json := .array (.cons (.number 0) (.cons (.number (8)) (.cons (.number 1) .nil)))
 @[expose] def j13 : Codec.Json := .array (.cons j3 (.cons j12 .nil))
 @[expose] def j14 : Codec.Json := .array .nil
@@ -65,10 +62,8 @@ abbrev base := NumberField.base registry
 @[expose] def j44 : Codec.Json := .array (.cons j43 (.cons j14 .nil))
 @[expose] def j45 : Codec.Json := .array (.cons j44 .nil)
 @[expose] def j46 : Codec.Json := .array (.cons j3 (.cons j0 (.cons j45 .nil)))
-@[expose] def j47 : Codec.Json := .array (.cons j1 (.cons j7 (.cons j10 (.cons j13 (.cons j14 (.cons j14 (.cons j46 .nil)))))))
 @[expose] def subject := j15
 @[expose] def evidence := j46
-@[expose] def frameJson := j47
 @[expose] def read := Algebraic.RootReplay.readDescriptor base.codec
   (Tower.contextCodec base.signature) base.sign base.signature subject evidence
 @[expose] def cubicHead : DensePoly base.Value :=
@@ -121,7 +116,6 @@ theorem decode_integer (n : Int) :
   exact NumberField.decode_payload registry (n : Rat) n 1
     (Rat.num_intCast n) (by rw [Rat.den_intCast]; exact Nat.ToInt.natCast_ofNat 1)
 
-@[expose] def nodeReader := Codec.readNode base.codec (Tower.contextCodec base.signature) j43
 
 /-- A graph with an unsupported version. -/
 @[expose] def wrongVersion := Algebraic.RootReplay.readDescriptor base.codec
@@ -136,5 +130,9 @@ theorem decode_integer (n : Int) :
 @[expose] def wrongCount := Algebraic.RootReplay.readDescriptor base.codec
   (Tower.contextCodec base.signature) base.sign base.signature subject
   (.arr #[j3,j0,.arr #[.arr #[wrongNode,j14]]])
+
+/-- Deliberately computed input for the constructor-audit negative control. -/
+@[expose] def recursiveJson : Codec.Json :=
+  Nat.rec (motive := fun _ => Codec.Json) (.number 0) (fun _ previous => previous) 1
 
 end Hex.RCF.RootQuoteTests

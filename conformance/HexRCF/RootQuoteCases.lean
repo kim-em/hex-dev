@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RootQuoteData
+public import HexSignDet.Conformance
 public meta import HexRCF.RealCoefficients.RootQuote
 public section
 open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
@@ -23,6 +24,17 @@ private meta def scalarProof? (expression : Expr) : MetaM (Option Expr) := do
             (isDefEq expression type.getAppArgs[1]!) then
           return some proof
   return none
+
+-- The statement is well typed, but the supplied proof proves reflexivity.
+-- Its expected-type hint defeats a Meta-only type-agreement check.
+private meta def forgedProof (expression : Expr) : MetaM Expr := do
+  let resultType ← whnf (← inferType expression)
+  let rejected ← mkAppOptM ``Except.error #[some resultType.getAppArgs[0]!,
+    some resultType.getAppArgs[1]!,some (mkStrLit "forged rejection")]
+  let statement ← mkEq expression rejected
+  let _ ← Hex.RCF.checkProof `wellTypedFalseEquation (← mkEq statement statement)
+    (← mkEqRefl statement)
+  return mkExpectedPropHint (← mkEqRefl expression) statement
 
 -- Observe underlying EIO without supplying rollback on behalf of the API.
 private meta def observeTerminal (action : MetaM α) (handler : Exception → MetaM α) : MetaM α :=
@@ -73,6 +85,49 @@ run_meta do
         name := `Hex.RCF.RootQuoteTests.nativeRoot_read,levelParams := [],
         type := statement,value := mkExpectedPropHint result.proof statement })
 
+/-- A recursor returning a function has an extra argument without a Boolean
+reflection proof. Its major remains blocked until the public table law applies. -/
+@[expose] noncomputable def functionReader : Except String Nat :=
+  Nat.rec (motive := fun _ => Nat → Except String Nat)
+    (fun value => .ok value) (fun _ previous value => previous (value+1))
+    (((Replay.leaf Hex.SignDet.Conformance.literalNode).table
+      Hex.SignDet.Conformance.literal_accepts).count []) 5
+
+run_meta do
+  withExporting (isExporting := false) do
+    let .ok result ← RootQuote.quote (mkConst ``functionReader)
+      | throwError "non-Boolean recursor reader declined"
+    let someSeven ← mkAppM ``Option.some #[mkNatLit 7]
+    let statement ← mkEq (← mkAppM ``Except.toOption #[mkConst ``functionReader]) someSeven
+    withExporting (isExporting := true) do
+      addDecl (.thmDecl {
+        name := `Hex.RCF.RootQuoteTests.function_read,levelParams := [],
+        type := statement,value := mkExpectedPropHint result.proof statement })
+
+/-- Acceptance is used as dependent returned data, exercising the true branch. -/
+@[expose] noncomputable def trueReader : Except String (PLift
+    (Node.check Sturm.orderSign 7 Hex.Sturm.Fixtures.p (.finite (-2)) (.finite 2)
+      [] Hex.SignDet.Conformance.literalNode = true)) :=
+  if accepted : Node.check Sturm.orderSign 7 Hex.Sturm.Fixtures.p
+      (.finite (-2)) (.finite 2) [] Hex.SignDet.Conformance.literalNode = true then
+    .ok ⟨accepted⟩
+  else .error "checked literal node rejected"
+
+run_meta do
+  withExporting (isExporting := false) do
+    let .ok result ← RootQuote.quote (mkConst ``trueReader) scalarProof?
+      | throwError "dependent true reader declined"
+    withExporting (isExporting := true) do
+      let name := `Hex.RCF.RootQuoteTests.trueValue
+      addDecl (.defnDecl {
+        name,levelParams := [],type := ← inferType result.value,value := result.value,
+        hints := .regular 0,safety := .safe }) (forceExpose := true)
+      let statement ← mkEq (← mkAppM ``Except.toOption #[mkConst ``trueReader])
+        (← mkAppM ``Option.some #[mkConst name])
+      addDecl (.thmDecl {
+        name := `Hex.RCF.RootQuoteTests.true_read,levelParams := [],
+        type := statement,value := mkExpectedPropHint result.proof statement })
+
 run_meta do
   withExporting (isExporting := false) do
     let reader := mkConst ``read
@@ -114,19 +169,36 @@ run_meta do
         !(← getEnv).contains `Hex.RCF.RootQuoteTests.rollbackMarker do
       throwError "declined scalar proposal did not restore caller state"
     -- Reach a real scalar boundary before lying or raising an exception.
-    for mode in [0,1,2] do
+    withoutModifyingEnv do
+      let accepted ← IO.mkRef false
+      let .ok _ ← RootQuote.quote reader (fun expression => do
+        let proof ← scalarProof? expression
+        if proof.isSome && !(← accepted.get) then
+          mutate sentinel
+          accepted.set true
+        return proof)
+        | throwError "accepted scalar callback failed"
+      unless (← accepted.get) && !(← sentinel.mvarId!.isAssigned) &&
+          (← getEnv).contains `Hex.RCF.RootQuoteTests.rollbackMarker do
+        throwError "accepted callback effects did not follow success-state policy"
+    for mode in [0,1,2,3,4] do
       unchanged do
         let reached ← IO.mkRef false
         let raised ← observeTerminal (do
-          let _ ← RootQuote.quote reader (fun expression => do
-            let proof ← scalarProof? expression
-            if proof.isSome then
-              reached.set true
-              mutate sentinel
-              if mode == 0 then return some (← mkEqRefl (mkNatLit 0))
-              if mode == 1 then throwError "deliberate scalar callback failure"
-              throwInterruptException
-            return none)
+          let _ ← withOptions (debug.skipKernelTC.set · true) do
+            RootQuote.quote reader (fun expression => do
+              let proof ← scalarProof? expression
+              if let some good := proof then
+                let proposed ← if mode == 0 then mkEqRefl (mkNatLit 0)
+                  else if mode == 3 then forgedProof expression
+                  else if mode == 4 then mkSorry (← inferType good) false
+                  else pure good
+                reached.set true
+                mutate sentinel
+                if mode == 1 then throwError "deliberate scalar callback failure"
+                if mode == 2 then throwInterruptException
+                return some proposed
+              return none)
           pure false) (fun error => do
             if mode == 2 then
               unless error.isInterrupt do throw error
@@ -161,8 +233,9 @@ run_meta do
           | .error _ _ => pure true
           | _ => throw error)
       unless failed do throwError "quotation accepted a non-reader"
-    let .ok _ ← RootQuote.quote reader scalarProof?
-      | throwError "quotation did not recover after terminal failures"
+    let .ok _ ← withOptions (debug.skipKernelTC.set · true) <|
+        RootQuote.quote reader scalarProof?
+      | throwError "quotation did not recover with caller kernel checking disabled"
     withExporting (isExporting := true) do
       let name := `Hex.RCF.RootQuoteTests.runFinished
       addDecl (.thmDecl {

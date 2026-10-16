@@ -47,7 +47,10 @@ meta def quoteSuppliedRoot
 The [cubic regression](../../../conformance/HexRCF/RootQuoteSource.lean) reads a
 supplied replay for `X³−3` on the open interval `(−8,8)`. A fresh public consumer
 proves that the accepted descriptor retains the exact context, polynomial,
-endpoints and root-selection metadata. A separate audit checks the actual proof
+endpoints and root-selection metadata. The same descriptor, interpreted through
+the proved rational model, yields an ordinary real witness `x³ = 3` with
+`−8 < x < 8`. No assumed real root or infinitesimal is supplied.
+A separate audit checks the actual proof
 bodies and complete standard-three axiom closure. All supplied JSON fields are
 frozen constructors, including the rational scalar arrays `[0,n,1]`. The test's
 scalar callback supplies the public rational decoding equations, which are
@@ -55,13 +58,22 @@ checked at every demanded decode. A separate constructor audit excludes producer
 calls from the supplied data. Generic scalar recognition, source/provider-history
 authentication and context reconstruction remain separate work.
 
-Invalid replay returns structured invalid-provider evidence. An exhausted
+Invalid input or replay returns structured invalid-provider evidence. An exhausted
 reflection budget remains exhaustion; exceptions, heartbeat limits, recursion
 limits and cancellation remain terminal. No error selects another solver.
 The failure regressions include a changed count with its unchanged matrix,
-a wrong scalar proof and callback mutations before decline or failure. A
-successful call retains its checked proof auxiliaries and restores caller
-metavariables. Rejection and failure restore the complete saved state.
+well-typed forged equations, inadmissible proposals and callback mutations before
+decline or failure. Both dependent conditional branches are checked. The helper
+forces ordinary kernel checking even when the caller disables it. A successful
+call restores caller metavariables and retains checked auxiliaries together
+with the environment effects of accepted callbacks. Rejection and failure restore
+the complete saved state.
+
+The quote regressions use `maxHeartbeats := 12000000` and `maxRecDepth := 8192`;
+the fresh body audit uses depth 32768. Success under Lean's default limits has
+not been established. Each rewrite motive contains the current reader, so
+proof storage and charged work can grow with the number of steps times the
+reader size. Larger packets can exhaust the default reflection budget.
 
 This API does not register a tactic handler or establish complete root coverage.
 The acceptance equation alone does not authenticate original source coefficients,

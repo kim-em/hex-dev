@@ -166,7 +166,7 @@ private partial def demanded (decode : Decoder) (dependent : Expr → ReifyM Exp
     if let .const name _ := reduced.getAppFn then
       if let .recInfo recursor ← getConstInfo name then
         let args := reduced.getAppArgs
-        if args.size > recursor.getMajorIdx+1 then
+        if name == ``Bool.rec && args.size > recursor.getMajorIdx+1 then
           let proof ← dependent reduced
           return some (reduced,reduced,proof)
         if let some major := args[recursor.getMajorIdx]? then
@@ -217,7 +217,7 @@ private def checkedBool (decode : Decoder) (dependent : Expr → ReifyM Expr) (o
 private partial def discharge (decode : Decoder) (node : Expr) : ReifyM Expr := Core.withIncRecDepth do
   Core.checkSystem "dependent decision discharge"
   unless node.isAppOfArity ``Bool.rec 5 do
-    throwError "dependent sibling is not a single Boolean reflects_decide argument"
+    throwError "dependent sibling is not a single Boolean reflects_decide argument: {node.getAppFn.constName?}, arguments={node.getAppNumArgs}"
   let args := node.getAppArgs
   let witness := args[4]!
   let (condition,decision) ← do
@@ -276,7 +276,7 @@ private partial def quoteCore (reader : Expr) (decode : Decoder) : ReifyM Result
       return ⟨value,proof,(← get).budget.consumed⟩
     if reduced.getAppFn.isConstOf ``Option.none then
       abort (.providerFailure (.invalidProviderEvidence ⟨`Hex.RCF.RealCoefficients.RootQuote,0⟩
-        "literal replay rejected its supplied evidence") #[])
+        "literal reader rejected its supplied input") #[])
     let some (whole,subject,law) ← demanded decode (discharge decode) reduced
       | throwError "rcf: literal root replay remains at {reduced.getAppFn.constName?}"
     let (next,proof) ← checkedStep current whole subject law
@@ -288,7 +288,8 @@ private partial def quoteCore (reader : Expr) (decode : Decoder) : ReifyM Result
 `Except.toOption reader = some value`. Public replay laws eliminate checked
 caches, and core conditional laws retain dependent proof arguments. Every
 step consumes the existing reflection budget. Success restores caller
-metavariables and retains checked auxiliaries; rejection or failure restores
+metavariables and retains checked auxiliaries and accepted decoder callbacks'
+environment effects; rejection or failure restores
 the complete saved state. Source identities and real semantics compose with
 this reader equation separately. No handler is registered here. -/
 def quote (reader : Expr) (decode : Decoder := fun _ => pure none)
