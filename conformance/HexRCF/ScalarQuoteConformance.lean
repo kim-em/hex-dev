@@ -14,11 +14,14 @@ set_option maxHeartbeats 12000000
 set_option maxRecDepth 32768
 
 run_meta do
-  let .thmInfo first ← getConstInfo ``canonical_read | throwError "missing read"
-  let .thmInfo second ← getConstInfo ``canonical_source | throwError "missing source"
-  unless first.type == second.type && second.value.consumeMData.isConstOf ``canonical_read do
-    throwError "independent canonical source differs from its exact reader equation"
-  let roots := #[``canonical_read,``canonical_source,``zero_read,``restored_polynomial,``restored_sign,
+  for (reader,source) in #[( ``canonical_read,``canonical_source),( ``zero_read,``zero_source)] do
+    let .thmInfo first ← getConstInfo reader | throwError "missing read"
+    let .thmInfo second ← getConstInfo source | throwError "missing source"
+    unless first.type == second.type && second.value.consumeMData.isConstOf reader do
+      logInfo m!"reader type: {first.type}"
+      logInfo m!"source type: {second.type}"
+      throwError "independent source {source} differs from its exact reader equation"
+  let roots := #[``canonical_read,``canonical_source,``zero_read,``zero_source,``restored_polynomial,``restored_sign,
     ``restored_value]
   let axioms ← Algebraic.KernelReplay.AxiomClosure.collect roots
   unless axioms == (#[``propext,``Classical.choice,``Quot.sound].qsort Name.lt) do
@@ -36,7 +39,7 @@ run_meta do
   for name in dependencies.toArray do
     if (← getEnv).getModuleIdxFor? name == some index then
       if let .thmInfo declaration ← getConstInfo name then
-        if name == ``canonical_source then
+        if name == ``canonical_source || name == ``zero_source then
           -- This proof is exactly the already audited constant with the same
           -- type. Assert zero reductions; the common helper requires a
           -- nonempty trace for the nontrivial replay bodies instead.
@@ -71,7 +74,7 @@ run_meta do
         setEnv (Kernel.enableDiag env false)
         definitions := definitions+1
         definitionNames := definitionNames.push name
-  unless checked == 12 do throwError "scalar quotation body coverage changed: {checked}"
+  unless checked == 13 do throwError "scalar quotation body coverage changed: {checked}"
   unless definitions == 3 do throwError "scalar value definition coverage changed: {definitions}"
   let .thmInfo bridge ← getConstInfo ``ScalarQuote.accepted
     | throwError "canonical scalar transport theorem missing"

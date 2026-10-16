@@ -155,10 +155,10 @@ example :
   restored_value
 ```
 
-The fresh audit rechecks 12 reachable quotation-case theorem bodies, including this value
+The fresh audit rechecks 13 reachable quotation-case theorem bodies, including this value
 identity, with only the standard three axioms and no producer reduction.
-One source equation is the exact previously checked constant with an identical
-type; its diagnostic trace is required to contain zero reductions. The other
+The nonzero and zero source equations use their exact previously checked
+constants with identical types; their diagnostic traces must contain zero reductions. The other
 bodies use the existing producer guard with nonempty diagnostic traces.
 The three reachable data definitions, `restored`, `literal` and `empty`,
 are also re-added to the ordinary kernel with that producer guard. Literal
@@ -172,6 +172,12 @@ facts reject before scalar callbacks run; malformed field counts, non-array
 literals and trailing polynomial zeros also reject. A successful call preserves
 the caller's metavariables. The ordinary bridge is tested in a `module` consumer
 that imports only the optional umbrella.
+Assigned input metavariables are instantiated before size accounting; expanded
+readers and literals have the same charges when passed through assigned
+metavariables. The facts' context index must match the codec under reducible
+transparency. Ordinary definition or opaque aliases require explicit type
+transport. The wrong-context test uses a fresh heartbeat epoch and an actual
+2,000,000-raw-heartbeat limit; heartbeat/depth exhaustion is rethrown.
 
 This scalar API does not reconstruct provider or predecessor histories,
 produce missing signs, or install a general source-goal solver. The strict

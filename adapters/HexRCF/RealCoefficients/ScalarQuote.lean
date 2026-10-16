@@ -35,12 +35,29 @@ public meta section
 namespace Hex.RCF.RealCoefficients.ScalarQuote
 open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RealFormula.Reify
 
+private def checkFacts (codec facts : Expr) (parameters : Nat) : ReifyM Unit := do
+  accountProof facts
+  let factsType ← withTransparency .reducible <| whnf (← inferType facts)
+  unless factsType.isAppOfArity ``List 1 do
+    throwError "rcf: scalar quotation expects a list of sign facts"
+  let factType ← withTransparency .reducible <| whnf factsType.appArg!
+  unless factType.getAppFn.isConstOf ``Algebraic.SignFact && factType.getAppNumArgs > 0 do
+    throwError "rcf: scalar quotation expects sign facts for its original context"
+  let originalContext := codec.getAppArgs[parameters-2]!
+  unless ← withNewMCtxDepth <| withTransparency .reducible <|
+      isDefEq factType.getAppArgs.back! originalContext do
+    throwError "rcf: scalar facts must use the codec's original context under reducible transparency"
+
 private def finish (codec facts literal : Expr) (result : RootQuote.Result) : ReifyM RootQuote.Result := do
   Core.checkSystem "checked scalar quotation"
   let proof := mkAppN (mkConst ``accepted codec.getAppFn.constLevels!)
     (codec.getAppArgs ++ #[facts,literal,result.value,result.proof])
   accountProof proof
-  let proof ← Hex.RCF.checkProof `ScalarQuote.accepted (← inferType proof) proof
+  let codecType ← inferType codec
+  let reader := mkApp3 (mkConst ``ValueCodec.decode) codecType.appArg! codec literal
+  let statement ← mkEq (← mkAppM ``Except.toOption #[reader])
+    (← mkAppM ``Option.some #[result.value])
+  let proof ← Hex.RCF.checkProof `ScalarQuote.accepted statement proof
   return {result with proof, usage := (← get).budget.consumed}
 
 /-- Quote a literal through the owner's finite supplied-sign codec and return
@@ -49,6 +66,9 @@ an ordinary-kernel equation for its canonical decoder. The canonical
 can unfold a native decoder merely to compare definitionally equal aliases.
 The predecessor decoder and already checked sign facts are explicit inputs. Missing/mismatched facts
 reject; a failed quote never starts the canonical decoder or another solver.
+The facts' context index must match the original codec under reducible
+transparency; opaque or ordinary definition aliases need an explicit type
+transport. Assigned inputs are instantiated before their work is charged.
 Reader quotation and final transport continue one reflection request. Failure
 restores all state, including auxiliaries from an earlier successful stage.
 This does not reconstruct source coefficients, models or context histories. -/
@@ -62,6 +82,9 @@ def quote (codec facts literal : Expr) (decode : RootQuote.Decoder := fun _ => p
   let (result,_) ← tryFinally' (withDeclNameForAuxNaming auxName <| withNewMCtxDepth <|
       Core.withIncRecDepth <| withOptions (fun options => maxRecDepth.set
         (debug.skipKernelTC.set (Elab.async.set options false) false) depthLimit) do
+    let codec ← instantiateMVars codec
+    let facts ← instantiateMVars facts
+    let literal ← instantiateMVars literal
     unless codec.getAppFn.isConstOf ``Algebraic.Element.codec do
       throwError "rcf: scalar quotation expects an Element.codec application"
     let parameters := (← getConstInfo ``Algebraic.Element.codec).type.getNumHeadForalls
@@ -73,6 +96,11 @@ def quote (codec facts literal : Expr) (decode : RootQuote.Decoder := fun _ => p
         acceptedInfo.levelParams.isEmpty && strictInfo.type.getNumHeadForalls == parameters+1 &&
         acceptedInfo.type.getNumHeadForalls == parameters+4 do
       throwError "rcf: scalar quotation codec signatures do not match"
+    let preflight ← ((checkFacts codec facts parameters).run
+      {config,budget := {initial := config.ring.budget,consumed := usage}}).run
+    let usage ← match preflight with
+      | .error error => return .error error
+      | .ok (_,state) => pure state.budget.consumed
     let strict := mkAppN (mkConst ``Algebraic.Element.signCodec codec.getAppFn.constLevels!)
       (codec.getAppArgs.push facts)
     let reader := mkApp (.proj ``ValueCodec 1 strict) literal
