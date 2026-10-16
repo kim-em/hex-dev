@@ -1,0 +1,15 @@
+Running as unit: hex-10358-lean-build.service
+file:///home/kim/.codex/tasks/hex-10358/root-quote-browser.mjs:34
+ const evaluate=async expression=>{const r=await call('Runtime.evaluate',{expression,returnByValue:true});if(r.exceptionDetails)throw new Error(JSON.stringify(r.exceptionDetails));return r.result.value;};
+                                                                                                                                      ^
+
+Error: {"exceptionId":1,"text":"Uncaught","lineNumber":0,"columnNumber":181,"scriptId":"22","exception":{"type":"object","subtype":"error","className":"Error","description":"Error: missing paragraph\n    at <anonymous>:1:188\n    at <anonymous>:1:1038","objectId":"-8751434122390280031.2.2"}}
+    at evaluate (file:///home/kim/.codex/tasks/hex-10358/root-quote-browser.mjs:34:135)
+    at async file:///home/kim/.codex/tasks/hex-10358/root-quote-browser.mjs:39:16
+
+Node.js v24.20.0
+          Finished with result: exit-code
+Main processes terminated with: code=exited, status=1/FAILURE
+               Service runtime: 2.823s
+             CPU time consumed: 3.839s
+                   Memory peak: 1.3G (swap: 0B)
