@@ -1,0 +1,61 @@
+{
+  "question": "Does the unchanged integrated SignDet computation pass the complete primary baseline comparison with a matched four-second inner-work target and the original signal-floor policy?",
+  "classification": "One explicitly authenticated resolution adaptation; not an unchanged rerun of the failed original attempt, new complexity attestation or proof-cost experiment.",
+  "comparison_identity": "53b341e737808d743124423db16b1ebf7af65096c9b200c8d0fe10bf0556f621",
+  "source_heads": {
+    "baseline": "61153ea57efbef51a909cead7d0cd4e6be679541",
+    "candidate": "560daa57dc04d54e59faaaf60327733194bfbc92"
+  },
+  "binaries": {
+    "baseline": "549b146a930ad6eadbb99ca0eb02cd4d25950d5a06d853a867565626104aa94b",
+    "candidate": "b5fa5cfed9ad0b046e1205512ba5e2af2f2d21bd29c840556d2fc8859af359b2"
+  },
+  "guard_sha256": "c8a34269886f35471e5cdf3ebb459e6f0c5a85e22c5038b22d0fb54e475720b5",
+  "resolution_protocol": {
+    "target_inner_nanos": 4000000000,
+    "reason": "The original candidate completed every scheduled row with matching hashes, but all measurements were below its declared signal floor. Increase timed work for both unchanged arms; retain every floor annotation and the native verdict rule.",
+    "benchmarks": [
+      "Hex.SignDetBench.Height.runCheck",
+      "Hex.SignDetBench.Height.runReduce",
+      "Hex.SignDetBench.Joint.runCheckDirect",
+      "Hex.SignDetBench.Joint.runCheckReduced",
+      "Hex.SignDetBench.Joint.runComparison",
+      "Hex.SignDetBench.Joint.runCompletion",
+      "Hex.SignDetBench.Joint.runDirect",
+      "Hex.SignDetBench.Joint.runReduced",
+      "Hex.SignDetBench.MaximalMatrix.runTensorCheck",
+      "Hex.SignDetBench.NestedSigns.runSign",
+      "Hex.SignDetBench.NestedTables.runProduce1",
+      "Hex.SignDetBench.NestedTables.runProduce2",
+      "Hex.SignDetBench.NestedTables.runTree1",
+      "Hex.SignDetBench.NestedTables.runTree2",
+      "Hex.SignDetBench.SharedRoots.runOne",
+      "Hex.SignDetBench.SharedRoots.runThree",
+      "Hex.SignDetBench.SharedRoots.runTwo",
+      "Hex.SignDetBench.maximalOne",
+      "Hex.SignDetBench.maximalThree",
+      "Hex.SignDetBench.maximalTwo",
+      "Hex.SignDetBench.runDirect",
+      "Hex.SignDetBench.runGraph",
+      "Hex.SignDetBench.runMatrices",
+      "Hex.SignDetBench.runProduce",
+      "Hex.SignDetBench.runProducts",
+      "Hex.SignDetBench.runQueries",
+      "Hex.SignDetBench.runSigns",
+      "Hex.SignDetBench.runSmallFull",
+      "Hex.SignDetBench.runSmallReduced",
+      "Hex.SignDetBench.runSolvers",
+      "Hex.SignDetBench.runTree"
+    ],
+    "previous_context_sha256": "f29cac98d5a4b8500520c0e003b7dfe45d43ab89ab959dd0fdd1089b20e5c506",
+    "previous_exports": {
+      "0-0-baseline.json": "da4e5345e03285b2582beb93c66730dc9366eee685cbcc42c2cb0a61268456fc",
+      "0-0-candidate.json": "c805cd3bd1868a2987d5151bcf93735de2a9601226cfcae4e080b8b3fc54dd78"
+    }
+  },
+  "preserved": "Four trial-major adjacent AB/BA/AB/BA blocks; all25parameterized and6fixed timing families; original parameters, warmup, signal floors, deadlines, fixed repeats and native checker. No quiet-core admission or discarded observations.",
+  "slot": "One account-global resolution slot keyed by the original binaries and guard, independent of target wording, tooling digest and output paths. The original reservation is retained. Interruptions after reservation consume the new slot.",
+  "failure": "Preserve failures, regressions and inconclusive outcomes. An unchanged rerun may only use the existing completed-inconclusive rule; no further target adaptation or automatic repeat.",
+  "collection_precondition": "A clean frozen tooling descendant of the original candidate containing only admitted collector/test/report changes, reviewed protocol, original manifests and guard-build attestation, successful controls and a bound decision.",
+  "measurements_started": false
+}

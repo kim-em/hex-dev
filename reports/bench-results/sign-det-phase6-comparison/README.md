@@ -81,6 +81,12 @@ rows cannot make this attempted comparison pass. The correction supplies no
 permission to reset an already consumed attempt. It applies to future bound
 collector sources, not to the immutable candidate used in this capture.
 
+The [matched resolution protocol](resolution-protocol.md) specifies one separately
+authenticated increase of the inner-work target for both unchanged source arms.
+Its [proposal](resolution-proposal.json) binds this original failure and both
+exports. The protocol and controls are preparation; they are not a collected
+primary comparison or a performance pass.
+
 ## Interacting result
 
 [`interacting-complete-v1`](interacting-complete-v1/manifest.json) retains all
