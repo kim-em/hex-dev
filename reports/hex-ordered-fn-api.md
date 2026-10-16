@@ -1,7 +1,7 @@
 # Ordered-function proof and API review
 
 Both OrderedFn libraries complete Phases 6–7. The
-[computational acceptance](ordered-fn-proof-acceptance.md) is merged in
+[final acceptance](ordered-fn-proof-acceptance.md) is merged in
 [#10965](https://github.com/kim-em/hex-dev/pull/10965); the
 [Theory acceptance](ordered-fn-declaration-review/theory-acceptance.md) records
 the companion's independent proof and manual checks.
@@ -11,11 +11,11 @@ reproduction. Its original companion name was `HexOrderedFnMathlib`; current
 source links below use `HexOrderedFnTheory`. The frozen comparison records retain
 their source commits, executables, compiler versions, failures and verdicts.
 The individual assessments and subsequent native changes are reconciled by the
-final acceptance; these earlier tables are not a complete inventory of its
-additional declarations. The retained Phase-4 models and their limitations are
+final acceptance; these earlier tables are not a complete inventory of the
+current source's additional declarations. The retained Phase-4 models and their limitations are
 in [the performance report](hex-ordered-fn-performance.md).
 
-## Computational declarations
+## Computational declarations (Phase-5 checkpoint)
 
 | Module | Definitions and proof boundary reviewed | Result |
 | --- | --- | --- |
@@ -25,7 +25,7 @@ in [the performance report](hex-ordered-fn-performance.md).
 | [Extension](../HexOrderedFn/Extension.lean) | Fixed `Registration`, canonical-fraction wrapper, native field dictionary, coefficient/indeterminate constructors, sign/comparison/approximation, provider transport and next-level approximation | Termination alone supplies no ordered-field laws. `val_C` and `val_X` expose storage independently of proofs. Transport preserves the canonical fraction literally; preserving order requires the companion's same-subject hypotheses. |
 | [Infinitesimal](../HexOrderedFn/Infinitesimal.lean) | Lowest nonzero coefficient scan, canonical fraction sign, comparison and scoped decidable relations | Both numerator and denominator affect sign. The four scoped instances have short explicit names. A native field dictionary and decidable relations are separate from Mathlib ordered-field laws. |
 
-## Semantic declarations
+## Semantic declarations (Phase-5 checkpoint)
 
 | Module | Definitions and proof boundary reviewed | Result |
 | --- | --- | --- |
@@ -46,6 +46,9 @@ environment linters. The extensionality laws have source docstrings, so
 the lint checks need no declaration exemptions. The production umbrellas do not
 import the lint target.
 
+The following private-helper summary describes the Phase-5 checkpoint. The
+current quotient helpers and subsequent additions are covered by the
+[final acceptance](ordered-fn-proof-acceptance.md).
 The private production helpers are used by their owning proofs: `accessibleWf`
 implements the accessible-subtype recursion; `mul_bounds` proves multiplication
 and division containment;
@@ -94,7 +97,7 @@ annotation change is integrated.
 
 The frozen candidate executable has SHA-256
 `6479b2306cb778b7f34ec681020322212607e518577ecae9912f06e0a1ab0fed`,
-which `lake build HexOrderedFn hexorderedfn_bench` at integrated source
+which `lake build HexOrderedFn hexorderedfn_bench` at API-candidate source
 commit `205cd87bc672cc29daedd246b0dd8c9015f09076`, preserved by
 `audit/issue-10575-orderedfn-reproduction`, reproduces (215 jobs). The compared pinned builds use different
 Lean versions. Invocation-checkout metadata is distinct from frozen executable
@@ -108,7 +111,8 @@ The native quotient and combined sign/scan implementations have whole-function
 kernel equalities and individual API assessments. The fresh historical build
 was selected before timing and differs from the older retained executable; the
 passing comparison is a whole pinned-source/toolchain result. It does not
-reclassify either older capture or attribute all differences to API polishing.
+reclassify either older capture or attribute the differences solely to API
+polishing or either native optimization.
 
 The [final acceptance](ordered-fn-proof-acceptance.md) combines that comparison
 with the individual declarations and retention decisions, ordinary public
