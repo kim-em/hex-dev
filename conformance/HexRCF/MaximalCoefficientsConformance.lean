@@ -16,6 +16,8 @@ example : True := Hex.RCF.RealCoefficients.MaximalCoefficientsTests.complete
 
 namespace Hex.RCF.MaximalCoefficientsConformance
 
+theorem multiple_positive : ∀ x : ℝ, x^2 + 2 * Real.sqrt 2 > 0 := by rcf
+
 theorem sum_positive : ∀ x : ℝ, x^2 + (Real.sqrt 2 + Real.sqrt 3) > 0 := by rcf
 
 theorem square_positive : ∀ x : ℝ, x^2 + (Real.sqrt 2 + Real.sqrt 3)^2 > 0 := by rcf
@@ -30,6 +32,8 @@ example : ∀ x : ℝ,
 open Lean Meta Qq in
 run_meta do
   for (name,soundness,coefficient) in #[
+      (``multiple_positive, ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkForall_sound,
+        q((2 : ℝ) * Real.sqrt 2)),
       (``sum_positive, ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkForall_sound,
         q(Real.sqrt 2 + Real.sqrt 3)),
       (``square_positive, ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkForall_sound,

@@ -17,7 +17,12 @@ open Lean Meta in
 run_meta do
   let names := #[``Hex.RCF.RealCoefficients.MaximalCoefficientsTests.metadataBare,
     ``Hex.RCF.RealCoefficients.MaximalCoefficientsTests.metadataDedup,
+    ``Hex.RCF.MaximalCoefficientsConformance.multiple_positive,
     ``Hex.RCF.MaximalCoefficientsConformance.sum_positive,
+    ``Hex.RCF.RegisteredConstants.notNegative, ``Hex.RCF.RegisteredConstants.notNonpositive,
+    ``Hex.RCF.RegisteredConstants.nonzeroSquare, ``Hex.RCF.RegisteredConstants.positiveSquareWitness,
+    `Hex.RCF.RegisteredConstants.metadataOuterWitness,
+    `Hex.RCF.RegisteredConstants.metadataBodyWitness,
     ``Hex.RCF.MaximalCoefficientsConformance.square_positive,
     ``Hex.RCF.MaximalCoefficientsConformance.negative_witness,
     ``Hex.RCF.RegisteredConstants.positiveSquaredCoefficient,
@@ -46,7 +51,19 @@ run_meta do
   -- is emitted only by the direct frontend and distinguishes this route.
   unless direct.contains ``Hex.RCF.RealCoefficients.FieldBuild.Result.checkForall_sound do
     throwError "metadata proof omitted the shared ordinary field checker"
-  for name in #[``Hex.RCF.RegisteredConstants.squareWitness,
+  for name in #[``Hex.RCF.MaximalCoefficientsConformance.multiple_positive,
+      ``Hex.RCF.MaximalCoefficientsConformance.sum_positive,
+      ``Hex.RCF.MaximalCoefficientsConformance.square_positive] do
+    let common ← Hex.RCF.ProofEvidence.projectDependencies #[name]
+    unless common.contains ``Hex.RCF.RealCoefficients.CommonPresentation.checkPolynomials_sound do
+      throwError "compound proof omitted the common-presentation checker"
+    if common.contains ``Hex.RCF.RealCoefficients.SquareTwo.valuation then
+      throwError "compound proof unexpectedly used the bare-generator valuation"
+  for name in #[``Hex.RCF.RegisteredConstants.notNegative,
+      ``Hex.RCF.RegisteredConstants.notNonpositive, ``Hex.RCF.RegisteredConstants.nonzeroSquare,
+      ``Hex.RCF.RegisteredConstants.positiveSquareWitness,
+      `Hex.RCF.RegisteredConstants.metadataOuterWitness, `Hex.RCF.RegisteredConstants.metadataBodyWitness,
+      ``Hex.RCF.RegisteredConstants.squareWitness,
       ``Hex.RCF.RegisteredConstants.intervalWitness, ``Hex.RCF.RegisteredConstants.nestedWitness,
       ``Hex.RCF.RegisteredConstants.quotientWitness, ``Hex.RCF.RegisteredConstants.inverseWitness,
       ``Hex.RCF.RegisteredConstants.halfWitness, ``Hex.RCF.RegisteredConstants.compoundEquality] do

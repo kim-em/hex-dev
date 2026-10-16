@@ -48,8 +48,9 @@ structure Prepared where
   registry : Array (Name × Expr)
   request : Rat
   coefficients : Array Enclosure
-  /-- Frozen bounds for the first named source used as the default witness.
-  Replay checks these without running a provider again. -/
+  /-- Frozen bounds for a default existential witness, matching the recomputed
+  named source. Universal and explicit-equality goals use `none`. A hand-built
+  default-witness preparation must supply this checked enclosure. -/
   witness : Option Enclosure := none
   guards : Array (Expr × Expr)
   guardBounds : Array Enclosure
@@ -344,6 +345,7 @@ def prepare (target : Expr) (request : Rat := 1 / 16) : MetaM Prepared :=
   transaction (prepareCore target request)
 
 private partial def prove (target : Expr) (witness : Expr) : MetaM Expr := do
+  let target := target.consumeMData
   let goal ← mkFreshExprMVar target
   if target.isForall then
     let (_, body) ← goal.mvarId!.intro1
@@ -382,7 +384,7 @@ private def buildCore (prepared : Prepared) : MetaM Certificate := do
   let (lctx, instances, _) ← removeUnused vars used
   withLCtx lctx instances do
     let extra := prepared.witness.toArray.filter fun witness =>
-      !prepared.coefficients.any (fun coefficient => coefficient.source == witness.source)
+      !prepared.coefficients.contains witness
     let facts ← (prepared.coefficients ++ extra).flatMapM fun e => do
       return #[← mkAppM ``And.left #[e.proof], ← mkAppM ``And.right #[e.proof]]
     let rec withFacts (i : Nat) (parameters : Array Expr) : MetaM Expr := do
