@@ -15,6 +15,60 @@ private def selected (coefficients : List Int) (lower upper : Rat) : Option Real
       lower := .finite lower,upper := .finite upper,indices := [],signs := []}
   pure d.handle.canonical
 
+#eval (show IO Unit from do
+  for q in ([0,1,-1,7/3] : List Rat) do
+    let generator := RealAlgebraicNumber.ofRat q
+    let some source := AlgebraicCells.presentation generator registry
+      | throw (IO.userError "recognized rational presentation was rejected")
+    match source.root with
+    | .point value =>
+      unless value.stored == q do
+        throw (IO.userError "rational point changed its original value")
+    | .selected .. => throw (IO.userError "rational coefficient added a selected-root extension")
+    unless (Hex.RealClosure.NumberField.Presentation.ofRoot? generator registry
+        (.point ⟨q+1⟩)).isNone do
+      throw (IO.userError "checked point factory accepted a different rational")
+  let coordinates : Fin 3 → Rat := fun i => if i.val = 1 then -1 else 7/3
+  let some sources := AlgebraicCells.presentations registry (RealAlgebraicNumber.ofRat ∘ coordinates)
+    | throw (IO.userError "repeated rational coordinates were rejected")
+  for i in List.finRange 3 do
+    match (sources i).root with
+    | .point value =>
+      unless value.stored == coordinates i do
+        throw (IO.userError "rational tuple changed its coordinate order")
+    | .selected .. => throw (IO.userError "rational tuple added a selected-root extension")
+  let original : List (Fin 3) := [2,0,2,1]
+  unless ((AlgebraicCells.guards sources original).map (fun guard => guard.1.val)) == [2,0,2,1] do
+    throw (IO.userError "rational tuple changed repeated original guard indices")
+  IO.println "checked rational points preserve values, repeated coordinates and original guards; wrong points reject")
+
+#eval (show IO Unit from do
+  let inputs : Fin 2 → RealAlgebraicNumber := fun i =>
+    RealAlgebraicNumber.ofRat (if i.val = 0 then 7/3 else 0)
+  let indices : Fin 1 → Fin 2 := fun _ => 0
+  let original : List (Fin 2) := [0,0]
+  let x : Poly 2 := MvPoly.X 1
+  let formula : QF 2 := .and (.atom ⟨x-MvPoly.X 0,.eq⟩) (.atom ⟨x-3,.lt⟩)
+  let .ok ⟨sources,shared,packet⟩ := AlgebraicCells.build registry inputs indices original formula
+    | throw (IO.userError "all-rational original inputs failed to build")
+  for i in List.finRange 2 do
+    match (sources i).root with
+    | .point value =>
+      unless value.stored == (if i.val = 0 then (7/3 : Rat) else 0) do
+        throw (IO.userError "rational coefficient build changed a stored original value")
+    | .selected .. => throw (IO.userError "rational coefficient build added an owner extension")
+  let input := packet.family.collection.input
+  let values := input.value ∘ GatherCells.values shared (AlgebraicCells.coefficients sources indices)
+  let guards := (GatherCells.guards shared (AlgebraicCells.guards sources original)).map input.value
+  for (quantifier,expected) in [(Quantifier.existsReal,true),(.forallReal,false)] do
+    unless (CompleteReplay.check input.context.codec values formula guards packet.radical
+        quantifier packet.rootGraph packet.cells).toOption == some expected do
+      throw (IO.userError "all-rational coefficient build changed a quantified verdict")
+  match AlgebraicCells.build registry inputs indices (original ++ [1]) formula with
+  | .error .divisor => pure ()
+  | _ => throw (IO.userError "all-rational coefficient build lost an original zero guard")
+  IO.println "all-rational original coefficient build retains parent owners, both verdicts and zero preflight")
+
 private def trial (negative : Bool) : IO Unit := do
   let a ← match selected [-2,0,1] (if negative then -2 else 1) (if negative then -1 else 2) with
     | none => throw (IO.userError "original selected square root failed")
@@ -91,7 +145,7 @@ private def linearTrial (negative : Bool) : IO Unit := do
   IO.println "empty automatic presentation preserves both strict constant verdicts")
 
 run_meta do
-  for name in #[``AlgebraicCells.presentations_success,``AlgebraicCells.original_base,
+  for name in #[``AlgebraicCells.presentation_success,``AlgebraicCells.presentations_success,``AlgebraicCells.original_base,
       ``AlgebraicCells.owner_eq,``AlgebraicCells.stored_heq,``AlgebraicCells.build_domains,``AlgebraicCells.build_sound,
       ``AlgebraicCells.entry_real,``AlgebraicCells.compatible,``AlgebraicCells.entry_nonzero,
       ``AlgebraicCells.buildWith_complete,``AlgebraicCells.build_complete,``AlgebraicCells.build_zero] do
@@ -102,9 +156,10 @@ run_meta do
       throwError "unexpected original algebraic-input axiom: {name}"
   let seen ← Hex.RCF.ProofEvidence.projectDependencies #[``AlgebraicCells.build_complete,``AlgebraicCells.build_sound]
   for required in #[``Hex.RealClosure.NumberField.present?_success,``AlgebraicCells.build_domains,
+      ``Hex.RealClosure.NumberField.Presentation.ofRoot?_isSome,``RealAlgebraicNumber.toRat?_eq_some,
       ``Hex.RealClosure.NumberField.Presentation.generator_value,``NumberField.model_read,
       ``Hex.RealClosure.Tower.Shared.Model.value_of_model,``GatherCells.build_complete,
       ``CellDiscover.run_complete,``CompleteReplay.check_covered] do
     unless seen.contains required do throwError "automatic algebraic input omitted owner law: {required}"
-  Lean.logInfo "twelve automatic algebraic-input proof bodies and actual owner dependencies checked"
+  Lean.logInfo "thirteen automatic algebraic-input proof bodies and actual owner dependencies checked"
 end Hex.RCF.AlgebraicCellsConformance
