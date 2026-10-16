@@ -42,7 +42,11 @@ They compare the exact original target and ordered source-expression tuple.
 Editing runtime proposals, the runtime matrix and the runtime quantifier must
 leave the returned theorem type unchanged. Continued usage must increase;
 one node below the measured cumulative proof limit refuses, and the exact
-limit succeeds. Heartbeat, recursion and interruption entry checks remain
+limit succeeds. Source-node tests check continued growth and exact limits as
+well. The alias consumer uses distinct original and substituted source sizes,
+so charging the original view twice cannot satisfy its accounting assertion.
+Unchanged records succeed after the forgery tests with caller metavariables
+preserved. Heartbeat, recursion and interruption entry checks remain
 terminal, with state/declaration rollback. Separate lowered-depth tests enter
 both preparation and acceptance at depth zero and require a recursion exception
 inside the operation. They do not force interruption halfway through kernel
@@ -57,6 +61,25 @@ ordinary-public-import consumer unfolds `accepts` and constructs an accepted
 empty-input packet from `build_complete`, without an acceptance premise.
 Its body is included in the fresh audit. The only axioms are `propext`,
 `Classical.choice` and `Quot.sound`.
+
+The [guard and budget validation record](data/hexrcf-source-acceptance/validation/record.json)
+binds the complete selection at `6f0ae423ab` and focused additional regressions
+at `cdc9b747aa`. The full selection contains all 263 RCF conformance roots,
+16 base-test roots, both libraries, caller-supplied π/e proof probes and the
+complete manual. It passes 14,610 jobs in 25m29.596s at 10.7 GiB peak/no swap.
+The follow-up changes only conformance tests and the public guard scanner's
+docstring; production definitions remain unchanged. Its source-budget,
+distinct-alias and unchanged-record regressions, fresh body/axiom audit,
+ordinary-public consumer, libraries, caller probes and full manual pass 14,322
+jobs in 7m53.580s at 7.8 GiB/no swap. Both snapshots pass DAG/umbrella,
+copyright, line and admission checks. The record includes the live cgroup
+observation bound to the full selection's actual Lake process and arguments.
+These are build observations with dependency work, not matched performance
+comparisons or isolated replay/scaling measurements.
+The fresh render and joint audit/manual import pass 14,317 jobs in 11.803s
+at 2 GiB/no swap. All six new desktop/narrow captures were opened and their
+changed-content overflow checks pass; other book content is excluded. The
+browser capture run takes 10.733s at 8 GiB/no swap under the same aggregate cap.
 
 The expanded consumer selection at `b1f0c80539` has 11,036 jobs, takes
 3m14.332s and peaks at 4 GiB with no swap. Its manual/dependency selection
