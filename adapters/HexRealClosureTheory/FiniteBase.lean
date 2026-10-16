@@ -8,6 +8,7 @@ module
 public import HexRealClosureTheory.FiniteScalars
 public import HexRealClosureTheory.BaseFiniteReplay
 public meta import HexRealClosureTheory.FiniteScalars
+public meta import HexRealClosureTheory.FiniteLists
 
 public meta section
 namespace Hex.RealClosure.Algebraic.KernelReplay.FiniteData
@@ -315,20 +316,6 @@ private def agreementLookup (agreement : Expr) : Supplier := fun type => do
       if ← sameType proof type then return some proof
     earlier := earlier.push value
   return none
-
--- Unfold closed, unapplied support aliases, stopping before coefficient
--- enumeration or opaque packet inventories. Unsupported shapes use the
--- existing literal membership supplier.
-private def supportHead (value : Expr) : MetaM Expr := do
-  let mut value := value
-  for _ in [:64] do
-    if value.getAppFn.isConstOf ``List.append || value.getAppFn.isConstOf ``List.cons ||
-        value.getAppFn.isConstOf ``List.nil ||
-        value.getAppFn.isConstOf ``Transport.Inventory.coefficients then return value
-    let .const name levels := value | return value
-    let .defnInfo info ← getConstInfo name | return value
-    value := info.value.instantiateLevelParams info.levelParams levels
-  return value
 
 private def coefficientPath (inventory function : Expr) : MetaM (Option (Array Nat)) := do
   let mut pending := [(inventory, #[])]

@@ -31,7 +31,7 @@ def graph (value : ValueCodec E) (context : ValueCodec Ctx) (d : Dag E Ctx) : Js
   .arr #[Json.of (1 : Nat), Json.of d.root, array (entry value context) d.entries]
 
 /-- Read an optional ordered pair, requiring both child indices below the actual prefix size. -/
-def readChildren (earlier : Nat) (j : Json) : Except String (Option (Nat × Nat)) :=
+@[expose] def readChildren (earlier : Nat) (j : Json) : Except String (Option (Nat × Nat)) :=
   readOption (fun j => do
     let a ← tuple 2 j
     let left ← index earlier a[0]
@@ -39,7 +39,7 @@ def readChildren (earlier : Nat) (j : Json) : Except String (Option (Nat × Nat)
     return (left.val, right.val)) j
 
 /-- Decode one entry against its position and the caller's exact root domain. -/
-def readEntry [DecidableEq Ctx] (value : ValueCodec E) (ctx : ValueCodec Ctx)
+@[expose] def readEntry [DecidableEq Ctx] (value : ValueCodec E) (ctx : ValueCodec Ctx)
     (context : Ctx) (p : DensePoly E) (lo hi : Endpoint E) (earlier : Nat) (j : Json) :
     Except String (Dag.Entry E Ctx) := do
   let fields ← tuple 2 j
@@ -52,7 +52,7 @@ def readEntry [DecidableEq Ctx] (value : ValueCodec E) (ctx : ValueCodec Ctx)
 node and query certificate to the supplied full context and root domain.
 This constructs raw graph data; integer identities and support completeness
 are still checked by independent replay. -/
-def readGraph [DecidableEq Ctx] (value : ValueCodec E) (ctx : ValueCodec Ctx)
+@[expose] def readGraph [DecidableEq Ctx] (value : ValueCodec E) (ctx : ValueCodec Ctx)
     (context : Ctx) (p : DensePoly E) (lo hi : Endpoint E) (j : Json) :
     Except String (Dag E Ctx) := do
   let a ← tuple 3 j

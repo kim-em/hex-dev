@@ -773,7 +773,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureTheory.KernelReplay, `HexRealClosureTheory.NativePackets,
     `HexRealClosureTheory.NativeModels, `HexRealClosureTheory.SignReplay, `HexRealClosureTheory.NativeReplay, `HexRealClosureTheory.NativeValues, `HexRealClosureTheory.NativeRecords, `HexRealClosureTheory.NativeFactory, `HexRealClosureTheory.NativeCodecs, `HexRealClosureTheory.NativeReaders, `HexRealClosureTheory.NativeAssembly, `HexRealClosureTheory.NativeAssemblyModels,
     `HexRealClosureTheory.Packing, `HexRealClosureTheory.InversePacking, `HexRealClosureTheory.InverseEquation, `HexRealClosureTheory.SuppliedInverse, `HexRealClosureTheory.PackingArithmetic, `HexRealClosureTheory.ValueSigns, `HexRealClosureTheory.FinitePoint,
-    `HexRealClosureTheory.PackingQuery, `HexRealClosureTheory.PackingMoment, `HexRealClosureTheory.PackingReduction, `HexRealClosureTheory.PackingReplay, `HexRealClosureTheory.FiniteRead, `HexRealClosureTheory.BaseFinite, `HexRealClosureTheory.PackingInventory, `HexRealClosureTheory.BaseFiniteReplay, `HexRealClosureTheory.FiniteData, `HexRealClosureTheory.FiniteSupport, `HexRealClosureTheory.FiniteOperands, `HexRealClosureTheory.FiniteLift, `HexRealClosureTheory.FiniteScalars, `HexRealClosureTheory.FiniteBase, `HexRealClosureTheory.FiniteDependencies, `HexRealClosureTheory.FiniteConditions, `HexRealClosureTheory.FiniteReconstruction, `HexRealClosureTheory.FiniteChain, `HexRealClosureTheory.PackingNext,
+    `HexRealClosureTheory.PackingQuery, `HexRealClosureTheory.PackingMoment, `HexRealClosureTheory.PackingReduction, `HexRealClosureTheory.PackingReplay, `HexRealClosureTheory.FiniteRead, `HexRealClosureTheory.BaseFinite, `HexRealClosureTheory.PackingInventory, `HexRealClosureTheory.BaseFiniteReplay, `HexRealClosureTheory.FiniteData, `HexRealClosureTheory.FiniteSupport, `HexRealClosureTheory.FiniteOperands, `HexRealClosureTheory.FiniteLift, `HexRealClosureTheory.FiniteScalars, `HexRealClosureTheory.FiniteLists, `HexRealClosureTheory.FiniteBase, `HexRealClosureTheory.FiniteDependencies, `HexRealClosureTheory.FiniteConditions, `HexRealClosureTheory.FiniteReconstruction, `HexRealClosureTheory.FiniteChain, `HexRealClosureTheory.PackingNext,
     `HexRealClosureTheory.TransportPolynomial, `HexRealClosureTheory.TransportProduct,
     `HexRealClosureTheory.TransportArithmetic, `HexRealClosureTheory.TransportQuery, `HexRealClosureTheory.TransportTests,
     `HexRealClosureTheory.TransportPower, `HexRealClosureTheory.TransportTarski,
@@ -1359,6 +1359,9 @@ lean_lib HexConformance where
       `HexRealAlgebraic.ReprChecks, `HexRealClosure.ReprChecks, `HexRealAlgebraicTheory.FieldSignConformance].map Glob.one
 
     ++ #[`HexReflect.TestProviders, `HexReflect.Conformance, `HexReflect.ScopeConformance, `HexReflect.ResidueConformance].map Glob.one
+
+    -- Kernel reduction of structured readers through ordinary public imports.
+    ++ #[`HexSignDet.PublicCodec, `HexRCF.PublicGraphCodec].map Glob.one
 
     ++ #[`HexSignDet.CommonField, `HexSignDet.Conformance, `HexSignDet.CrossCheck, `HexSignDet.FastCheck, `HexSignDet.JsonBytes, `HexSignDet.DescriptorCodec, `HexSignDet.Infinitesimal].map Glob.one
 
@@ -2500,7 +2503,7 @@ lean_lib KernelReplayExperiment where
     .one `KernelReplay.LookupReplay,
     .one `KernelReplay.ProofAudit,
     .one `KernelReplay.AxiomClosure, .one `KernelReplay.AxiomClosureTest,
-    .one `KernelReplay.AxiomClosureImports,
+    .one `KernelReplay.AxiomClosureImports, .one `KernelReplay.SupportAudit,
     .one `KernelReplay.FiniteRange,
     .one `KernelReplay.CoefficientMembers, .one `KernelReplay.CoefficientEntry,
     .one `KernelReplay.NativeAssemblyUse,

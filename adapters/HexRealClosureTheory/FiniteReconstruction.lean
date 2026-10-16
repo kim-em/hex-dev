@@ -9,6 +9,7 @@ public import HexRealClosureTheory.FiniteConditions
 public import HexRealClosureTheory.FiniteDependencies
 public meta import HexRealClosureTheory.FiniteConditions
 public meta import HexRealClosureTheory.FiniteDependencies
+public meta import HexRealClosureTheory.FiniteLists
 
 public meta section
 namespace Hex.RealClosure.Algebraic.KernelReplay.FiniteData
@@ -163,13 +164,15 @@ def reconstruct (base following baseReader : Expr) (discovery : Discovery) (extr
   let temporaryReaders := #[baseReader] ++ levels.flatMap (fun level => #[level.read, level.reader])
   let .app _ coefficient := (← inferType extra) |
     throwError "expected a base coefficient list"
-  let mut additional := extra
+  nativeOnly extra temporaryReaders
+  let mut blocks := #[extra]
   for leaf in discovery.leaves do
     if let some coefficients ← leaf.coefficients? then
       nativeOnly coefficients temporaryReaders
       unless ← withTransparency .all (isDefEq (← inferType coefficients) (← inferType extra)) do
         throwError "dependency lowering did not reach the base coefficient carrier"
-      additional ← mkAppM ``List.append #[additional, coefficients]
+      blocks := blocks.push coefficients
+  let additional ← appendSupport coefficient blocks
   nativeOnly additional temporaryReaders
   let firstSupport ← if let some first := levels[0]? then
       mkAppM ``Packing.Inventory.level #[first.context, first.entries, first.records, first.facts]
