@@ -84,6 +84,78 @@ private def reject (message : String) (action : MetaM α) : MetaM Unit := do
   catch error =>
     unless (← error.toMessageData.toString).startsWith message do throw error
 
+private def inventoryProof (name : Name) (type proof : Expr) : MetaM Unit := do
+  let type ← instantiateMVars type
+  let proof ← instantiateMVars proof
+  if type.hasFVar || proof.hasFVar || type.hasMVar || proof.hasMVar then
+    throwError "inventory control retained an open term"
+  let _ ← auditProof proof type
+  kernelCheck name type proof
+  withOptions (fun options => options.setBool `debug.skipKernelTC false) do
+    addDecl (.thmDecl {
+      name := `Hex.RealClosure.Algebraic.KernelReplay.FiniteReconstructionProbe ++ name,
+      levelParams := [], type, value := proof })
+
+private def inventoryControls (first : FiniteData.Prefix) : MetaM Unit := do
+  let noPrior : FiniteData.Supplier := fun _ =>
+    throwError "retained inventory proof delegated to predecessor"
+  let literal ← withTransparency .all (whnf first.entries)
+  unless literal.getAppFn.isConstOf ``List.cons do
+    throwError "inventory control requires an actual retained packing"
+  let args := literal.getAppArgs
+  let member ← mkAppOptM ``List.mem_cons_self
+    #[some args[0]!, some args[1]!, some args[2]!]
+  let retained := mkApp2 first.packings args[1]! member
+  for (name, field) in #[(`inventoryReplay, ``Packing.Data.replay),
+      (`inventoryDifference, ``Packing.Data.difference)] do
+    let original ← mkAppM field #[retained]
+    let type ← inferType original
+    let some proof ← first.supplyAll noPrior type |
+      throwError "retained packing projection disappeared"
+    inventoryProof name type proof
+  let polynomial ← mkAppM ``DensePoly.C #[toExpr (1 : Rat)]
+  let product ← mkAppM ``Transport.Product #[first.read, polynomial, polynomial]
+  let calls ← IO.mkRef (0 : Nat)
+  let missing : FiniteData.Supplier := fun _ => do
+    calls.modify (· + 1)
+    return none
+  unless (← first.supplyAll missing product).isNone do
+    throwError "inventory control invented a missing predecessor proof"
+  unless (← calls.get) == 1 do throwError "missing predecessor was queried more than once"
+  calls.set 0
+  let previous : FiniteData.Supplier := fun type => do
+    calls.modify (· + 1)
+    FiniteDataProbe.supply type
+  let some proof ← first.supplyAll previous product |
+    throwError "inventory control lost the rational predecessor proof"
+  unless (← calls.get) == 1 do throwError "successful predecessor was queried more than once"
+  inventoryProof `delegatedProduct product proof
+  -- A nonempty inverse inventory must retain all five original projections,
+  -- even when its predecessor cannot supply any of those propositions.
+  let factType ← mkAppM ``InverseFact #[first.context]
+  withLocalDeclD `fact factType fun fact => do
+    let facts ← mkListLit factType [fact]
+    let dataType ← mkAppM ``Packing.Inventory.Data
+      #[first.context, first.entries, first.records, facts, first.read]
+    withLocalDeclD `data dataType fun data => do
+      let level ← FiniteData.Prefix.ofData data first.zero first.unit
+      let tail ← mkListLit factType []
+      let member ← mkAppOptM ``List.mem_cons_self #[some factType, some fact, some tail]
+      let inverses ← mkAppM ``Packing.Inventory.Data.inverses #[data]
+      let retained := mkApp2 inverses fact member
+      for (name, field) in #[(`inversePacking, ``Packing.Inverse.Data.packing),
+          (`inverseOriginal, ``Packing.Inverse.Data.original),
+          (`inverseReplay, ``Packing.Inverse.Data.inverse),
+          (`inverseProduct, ``Packing.Inverse.Data.product),
+          (`inverseDifference, ``Packing.Inverse.Data.difference)] do
+        let original ← mkAppM field #[retained]
+        let type ← instantiateMVars (← inferType original)
+        let some proof ← level.supplyAll noPrior type |
+          throwError "retained inverse projection disappeared"
+        let proof ← mkLambdaFVars #[fact, data] (← instantiateMVars proof)
+        let type ← mkForallFVars #[fact, data] type
+        inventoryProof name type proof
+
 private def supportShape (blocks : Array Expr) (combined : Expr) : MetaM Unit := do
   if blocks.isEmpty then return
   let mut pending := [(combined, 0)]
@@ -246,16 +318,7 @@ def elaborate : CommandElab := fun _ => liftTermElabM do
   let leading ← mkAppM ``Transport.Leading #[first.reader,
     ← mkAppM ``Hex.SignDet.RawDescriptor.head #[mkConst ``FiniteTower.nextRaw]]
   let _ ← FiniteData.buildClosed leading (first.supplyAll FiniteDataProbe.supply)
-  -- A search-order hint cannot suppress the current inventory when the
-  -- requested predecessor supplier has no proof of the reached obligation.
-  let tried ← IO.mkRef false
-  let missing : FiniteData.Supplier := fun requested => do
-    if requested.getAppFn.isConstOf ``Transport.Leading then
-      tried.set true
-      return none
-    FiniteDataProbe.supply requested
-  let _ ← FiniteData.buildClosed leading (first.supplyFrom #[first.reader] missing)
-  unless ← tried.get do throwError "ancestor routing did not exercise its missing-proof fallback"
+  inventoryControls first
   let next := mkConst ``FiniteJoint.next
   let decisions : FiniteData.Supplier := fun requested => do
     if requested.getAppFn.isConstOf ``Packing.Inventory.Data then

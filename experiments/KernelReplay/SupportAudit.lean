@@ -43,3 +43,15 @@ run_meta do
     unless axioms == (#[`propext, `Classical.choice, `Quot.sound].qsort Name.lt) do
       throwError "support reconstruction changed its complete axiom closure: {name}"
     logInfo m!"support reconstruction direct body audit {name}: {axioms}"
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 2000000 in
+run_meta do
+  for name in #[``FiniteReconstructionProbe.inventoryReplay,
+      ``FiniteReconstructionProbe.inventoryDifference, ``FiniteReconstructionProbe.delegatedProduct,
+      ``FiniteReconstructionProbe.inversePacking, ``FiniteReconstructionProbe.inverseOriginal,
+      ``FiniteReconstructionProbe.inverseReplay, ``FiniteReconstructionProbe.inverseProduct,
+      ``FiniteReconstructionProbe.inverseDifference] do
+    let .thmInfo info ← getConstInfo name | throwError "inventory control theorem missing: {name}"
+    let axioms ← AxiomClosure.audit info.value info.type
+    logInfo m!"inventory direct body audit {name}: {axioms}"
