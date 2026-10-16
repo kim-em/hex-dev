@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RealCoefficients
+public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
 public meta import HexRCF.RealCoefficients
 public meta import Lean.Elab.Command
 public meta import Lean.Elab.Term
@@ -65,8 +66,41 @@ run_meta do
     throwError "registered payload source preparation failed"
   unless data.divisors.size == 1 && data.divisors[0]! == q(((1 - 1 : ℚ) : ℝ)) do
     throwError "registered zero payload guard was discarded"
-  unless data.coefficients.size == 1 && data.coefficients[0]! == subject do
-    throwError "registered zero payload identity was changed"
+  let whole : Q(ℝ) := q(0 * $subject)
+  unless data.coefficients.size == 1 && data.coefficients[0]! == whole do
+    throwError "registered zero payload lost its whole closed coefficient"
+  unless data.sentence == source do
+    throwError "registered payload was lowered or changed inside the original source"
+  let expected ← mkAppM ``Iff
+    #[← mkAppM ``RealFormula.Prenex.toProp #[data.formula, data.valuation], source]
+  let proof ← Hex.RCF.checkProof `registeredZeroProduct expected data.proof
+  let axioms ← collectAxioms proof.getAppFn.constName!
+  unless axioms.all (#[``propext, ``Classical.choice, ``Quot.sound].contains ·) do
+    throwError "registered zero-product equivalence has an unexpected axiom"
+  logInfo "registered zero product retains whole coefficient, exact source and original divisor; original-goal equivalence kernel checked"
+
+/-- Synthetic caller bounds exercise guard admission, independently of the
+value of the registered subject. The original division remains an input error. -/
+@[expose] def zeroPayloadBounds (_ : Rat) : Hex.OrderedFn.Oracle.Bounds :=
+  ⟨-1, 1, by decide⟩
+
+@[rcf_constant] def zeroPayloadRegistration : RealCoefficients.Registration
+    (Real.sin (RealAlgebraicNumber.ofRat (0 / (1 - 1))).toReal) where
+  version := 1
+  approximation := zeroPayloadBounds
+  containment δ _ := by
+    simp only [zeroPayloadBounds, Hex.OrderedFn.Oracle.Contains, Rat.cast_neg, Rat.cast_one]
+    exact ⟨Real.neg_one_le_sin _, Real.sin_le_one _⟩
+
+/-- error: rcf: original closed divisor is zero -/
+#guard_msgs in
+example : ∀ x : ℝ,
+    0 * Real.sin (RealAlgebraicNumber.ofRat (0 / (1 - 1))).toReal + x ^ 2 ≥ 0 := by rcf
+
+/-- error: rcf: original closed divisor is zero -/
+#guard_msgs in
+example : ∀ x : ℝ,
+    (Real.sin (RealAlgebraicNumber.ofRat (0 / (1 - 1))).toReal) ^ 0 + x ^ 2 > 0 := by rcf
 
 -- Check a separate source goal, then return only the ordinary proof of True.
 local elab "refuse_source " source:term " expect " expected:str : tactic => do

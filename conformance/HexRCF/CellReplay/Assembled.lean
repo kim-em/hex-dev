@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 import HexRCF.CellReplay.Operations
+import HexRCF.SourceIdentityCases
 import HexRCF.RealCoefficients.AlgebraicCells
 import HexRCF.RealCoefficients.CellOperations
 import HexRCF.RealCoefficients.RealModel
@@ -43,6 +44,8 @@ def forbidden : Array Name := #[
   ``Hex.RCF.RealCoefficients.CellReplayTests.Operations.accepted,
   ``Hex.RCF.RealCoefficients.CellReplayTests.Operations.source,
   ``Hex.RCF.RealCoefficients.CellReplayTests.Operations.operations,
+  ``Hex.RCF.SelectedRootTests.Data.alpha_value,
+  ``Hex.RCF.SelectedRootTests.Data.selectedSqrt,
   ``Check.source, ``CellBuild.build, ``ScalarPacket.build, ``ScalarPacket.buildLiteral]
 
 syntax (name := assembledSource) "#assembled_source" : command
@@ -64,7 +67,7 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
     let value ← mkAppM ``Tower.Model.value #[realModel,mkApp values i]
     mkLambdaFVars #[i] value
   let identity ← elabTermEnsuringType
-    (← `(by funext i; fin_cases i; exact Hex.RCF.SelectedRootTests.Data.alpha_value))
+    (← `(by funext i; fin_cases i; exact Hex.RCF.SourceIdentityCases.coefficient))
     (← mkEq valuation source.valuation)
   synthesizeSyntheticMVarsNoPostponing
   let identity ← instantiateMVars identity
@@ -75,8 +78,14 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
   let .ok negativeSource ← Reify.prepare negative
     | throwError "negative-conjugate source control was unsupported"
   unless negativeSource.coefficients.size == 1 &&
-      (← isDefEq negativeSource.coefficients[0]! (← elabTerm (← `((Real.sqrt 2 : ℝ))) none)) do
-    throwError "negative source did not retain its positive generator"
+      (← isDefEq negativeSource.coefficients[0]! (← elabTerm (← `((-Real.sqrt 2 : ℝ))) none)) do
+    throwError "negative source did not retain its whole negative coefficient"
+  unless ← isDefEq negativeSource.formula source.formula do
+    throwError "negative source changed the formula in the valuation-only control"
+  let changedFormula ← elabType (← `(∃ x : ℝ, x ^ 2 + Real.sqrt 2 ≥ 0 ∧
+    x ^ 2 + Real.sqrt 2 ≤ 0 ∧ (0 : ℝ) = 0))
+  synthesizeSyntheticMVarsNoPostponing
+  let changedFormula ← instantiateMVars changedFormula
   let foreign ← elabType (← `(∃ x : ℝ, x ^ 2 - Real.sqrt 3 ≥ 0 ∧
     x ^ 2 - Real.sqrt 3 ≤ 0 ∧ (0 : ℝ) = 0))
   synthesizeSyntheticMVarsNoPostponing
@@ -127,14 +136,16 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
     throwError "fresh assembled source proof has unexpected axioms"
   let seen ← Hex.RCF.ProofEvidence.projectDependencies #[name]
   for required in #[``CellOperations.accept?_iff,``CompleteReplay.check_sound,
-      ``Tower.Model.root,``Hex.RCF.SelectedRootTests.Data.alpha_value,
+      ``Tower.Model.root,``Hex.RCF.SourceIdentityCases.coefficient,
+      ``SourceIdentity.select,``SourceIdentity.observe,
       ``Hex.RealClosure.Algebraic.Element.replayMul_eq,``Records.facts] do
     unless seen.contains required do throwError "fresh source proof omitted an actual bridge: {required}"
   for excluded in forbidden do
     if seen.contains excluded then
       throwError "fresh source proof reused complete-cell fixture acceptance, its dictionary or a producer: {excluded}"
   for (rejectedTarget,guardIdentities,expected) in [
-      (negative,#[],"rcf: checked formula has a different polynomial leaf"),
+      (negative,#[],"rcf: handler CellQuote.valuationIdentity proposed a proof of a different goal"),
+      (changedFormula,#[],"rcf: checked formula has a different polynomial leaf"),
       (foreign,#[],"rcf: handler CellQuote.valuationIdentity proposed a proof of a different goal"),
       (guarded,#[],"rcf: cell checker has a different original divisor identity count"),
       (guarded,#[Lean.mkConst ``True.intro],"rcf: cell checker has a different original divisor count")] do

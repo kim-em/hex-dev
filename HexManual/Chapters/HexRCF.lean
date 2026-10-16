@@ -11,6 +11,7 @@ import HexManual.Chapters.HexRCF.NativeSamples
 import HexManual.Chapters.HexRCF.NativeSources
 import HexManual.Chapters.HexRCF.CellReplay
 import HexManual.Chapters.HexRCF.AlgebraicCells
+import HexManual.Chapters.HexRCF.ClosedCoefficients
 
 import HexRCF
 import HexRCF.RealCoefficients
@@ -1216,6 +1217,8 @@ Its exclusive kernel type-checking category totals 30.1 seconds; the smaller
 literal-replay category excludes those child checks. The report retains source
 identities, memory, serialized sizes, unique syntax and expanded-reference
 counts. It does not claim a complexity law or complete Phase-4 attestation.
+
+{include 2 HexManual.Chapters.HexRCF.ClosedCoefficients}
 
 # Simultaneous signs and repeated roots over a cubic field
 %%%

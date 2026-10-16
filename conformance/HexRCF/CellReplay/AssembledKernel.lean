@@ -29,6 +29,8 @@ run_meta do
   for required in #[``Assembled.source,``CellOperations.accept?_iff,
       ``CompleteReplay.check_sound,``Hex.RealClosure.Tower.Model.root,
       ``Hex.RealClosure.Algebraic.Element.replayMul_eq,
+      ``Hex.RCF.SourceIdentityCases.coefficient,
+      ``Hex.RCF.RealCoefficients.SourceIdentity.select,
       ``Hex.RCF.RealCoefficients.CellReplayTests.Algebraic.Records.facts] do
     unless seen.contains required do throwError "fresh real witness omitted actual assembly: {required}"
   for forbidden in Assembled.forbidden do

@@ -47,7 +47,9 @@ structure Source where
   /-- Closed real coefficient expressions in first-occurrence order. -/
   coefficients : Array Expr
   /-- Original divisors after checked alias substitution; each must separately
-  be proved nonzero. Repeated source occurrences may share the same obligation. -/
+  be proved nonzero. Depth-first preorder visits the outer divisor before its
+  operands, with the left operand first. Repeated source occurrences may share
+  the same obligation. -/
   divisors : Array Expr
   /-- Shared `Prenex coefficients.size` syntax. -/
   formula : Expr
@@ -210,17 +212,17 @@ private partial def scalar (registered : Array Expr) (source : Expr) : ScanM Uni
       else if op == some ``HSub.hSub then q($a - $b)
       else if op == some ``HMul.hMul then q($a * $b) else q($a / $b)
     unless ← isDefEq e canonical do reject e "nonstandard real arithmetic instance"
+    if op == some ``HDiv.hDiv then modify (·.push args[5]!)
     scalar registered args[4]!
     scalar registered args[5]!
-    if op == some ``HDiv.hDiv then modify (·.push args[5]!)
     return ()
   if [``Neg.neg, ``Inv.inv].any (op == some ·) && args.size == 3 then
     unless ← isReal args[2]! do reject e "coefficient operand must have type Real"
     let a : Q(ℝ) := args[2]!
     let canonical := if op == some ``Neg.neg then q(-$a) else q($a⁻¹)
     unless ← isDefEq e canonical do reject e "nonstandard real unary operation"
-    scalar registered args[2]!
     if op == some ``Inv.inv then modify (·.push args[2]!)
+    scalar registered args[2]!
     return ()
   if e.isAppOfArity ``HPow.hPow 6 then
     if (← inferType args[5]!).isConstOf ``Real then
@@ -288,14 +290,58 @@ private def preflight (registered : Array Expr) (source : Expr) : FrontendM (Arr
     return .continue) (skipInstances := true)).run #[]
   return divisors
 
-private partial def hasNamedSource (registered : Array Expr) (e : Expr) : MetaM Bool := do
+private def isNamedSource (registered : Array Expr) (e : Expr) : MetaM Bool := do
+  let e := e.consumeMData
   if (← registered.anyM (Registration.sameSubject e)) ||
       e.isAppOfArity ``Hex.RealAlgebraicNumber.toReal 1 ||
       e.isAppOfArity ``Real.sqrt 1 || e.isAppOfArity ``Real.rpow 2 ||
       e.isConstOf ``Real.pi || e.isAppOfArity ``Real.exp 1 then return true
   if e.isAppOfArity ``HPow.hPow 6 then
-    if (← inferType e.getAppArgs[5]!).isConstOf ``Real then return true
-  e.getAppArgs.anyM (hasNamedSource registered)
+    return (← inferType e.getAppArgs[5]!).isConstOf ``Real
+  return false
+
+-- A collection pass shares this cache across all closed real subterms. In
+-- particular rational subtrees are inspected once, even when no named source
+-- is present. Types, proofs and instance arguments cannot supply coefficients.
+private partial def hasNamedSource (cache : IO.Ref (ExprMap Bool))
+    (registered : Array Expr) (source : Expr) : MetaM Bool := do
+  let e := source.consumeMData
+  if let some result := (← cache.get)[e]? then return result
+  let compute : MetaM Bool := do
+    if (← isType e) || (← isProof e) then return false
+    if ← isNamedSource registered e then return true
+    let fn := e.getAppFn
+    let args := e.getAppArgs
+    if args.isEmpty then return false
+    let infos := (← getFunInfoNArgs fn args.size).paramInfo
+    for i in [:args.size] do
+      if h : i < infos.size then
+        if infos[i].isInstance then continue
+      if ← hasNamedSource cache registered args[i]! then return true
+    return false
+  let result ← compute
+  cache.modify (·.insert e result)
+  return result
+
+/-- The first named or registered whole subject, in source order. Closed inverses
+and quotients retain their original whole-subject witness choice. -/
+def firstNamed? (registered : Array Expr) (sources : Array Expr) : MetaM (Option Expr) := do
+  let cache ← IO.mkRef ({} : ExprMap Bool)
+  let mut found := none
+  for source in sources do
+    let (_, next) ← (Meta.transformWithCache (m := StateRefT (Option Expr) MetaM)
+      source {} (pre := fun e => do
+        if (← get).isSome then return .done e
+        if (← isType e) || (← isProof e) then return .done e
+        let wholeQuotient := e.isAppOfArity ``HDiv.hDiv 6 || e.isAppOfArity ``Inv.inv 3
+        if (← isNamedSource registered e) ||
+            (wholeQuotient && (← hasNamedSource cache registered e)) then
+          set (some e.consumeMData)
+          return .done e
+        return .continue) (skipInstances := true)).run found
+    found := next
+    if found.isSome then break
+  return found
 
 private def addCasts (theorems : SimpTheorems := {}) : MetaM SimpTheorems := do
   let mut theorems := theorems
@@ -337,33 +383,25 @@ def lowerWithProof (registered : Array Expr) (source : Expr) : MetaM (Expr × Ex
 /-- Replace variable-dependent division by multiplication with a closed
 reciprocal. Original guards were collected before this conversion. -/
 private def normalize (registered : Array Expr) (source : Expr) : MetaM Expr := do
+  let cache ← IO.mkRef ({} : ExprMap Bool)
   Prod.fst <$> Meta.transformWithCache source {} (pre := fun e => do
     if isClosed e && (← isReal e) then return .done e
     if e.isAppOfArity ``HDiv.hDiv 6 && (← isReal e) then
       let args := e.getAppArgs
       let a : Q(ℝ) := args[4]!
       let b : Q(ℝ) := args[5]!
-      if ← hasNamedSource registered b then
+      if ← hasNamedSource cache registered b then
         return .continue (some q($a * $b⁻¹))
       return .continue (some q($a * ((1 : ℝ) / $b)))
     return .continue) (skipInstances := true)
 
-private def isNamedCoefficient (registered : Array Expr) (e : Expr) : MetaM Bool := do
-  if e.isAppOfArity ``Hex.RealAlgebraicNumber.toReal 1 ||
-      e.isAppOfArity ``Real.sqrt 1 || e.isAppOfArity ``Real.rpow 2 ||
-      e.isConstOf ``Real.pi || e.isAppOfArity ``Real.exp 1 then return true
-  if e.isAppOfArity ``Inv.inv 3 || e.isAppOfArity ``HDiv.hDiv 6 then
-    return ← e.getAppArgs.anyM (hasNamedSource registered)
-  if e.isAppOfArity ``HPow.hPow 6 then
-    return (← inferType e.getAppArgs[5]!).isConstOf ``Real
-  return false
-
-/-- Abstract named algebraic inputs, leaving rational arithmetic to the
-shared polynomial reifier. Thus `2 * sqrt 2` uses the same one-dimensional
-field as `sqrt 2`, rather than creating another unrelated coefficient. -/
+/-- Abstract maximal closed coefficients containing named or registered
+inputs. Purely rational arithmetic remains in the shared polynomial reifier;
+the coefficient interpreter retains arithmetic within each abstracted subject. -/
 private def collect (registered : Array Expr) (source : Expr) : MetaM (Array Expr) := do
+  let cache ← IO.mkRef ({} : ExprMap Bool)
   let (_, (values, _)) ← (Meta.transformWithCache (m := StateRefT (Array Expr × ExprSet) MetaM) source {} (pre := fun e => do
-    if isClosed e && (← isReal e) && ((← registered.anyM (fun value => liftM (Registration.sameSubject e value))) || (← isNamedCoefficient registered e)) then
+    if isClosed e && (← isReal e) && (← hasNamedSource cache registered e) then
       let (values, seen) ← get
       unless seen.contains e do set (values.push e, seen.insert e)
       return .done e
@@ -433,6 +471,12 @@ private def prepareCore (registered : Array Expr) (original : Expr) (config : He
       Hex.RealFormula.Reify.accountProof proof
       if value == 0 then throwError "rcf: original closed divisor is zero"
   let normalized ← normalize registered rationalized
+  -- Metadata is kernel-transparent. Erase it once before inventory and
+  -- substitution, so equivalent annotations share the same coordinate.
+  let normalized ← Core.transform normalized (pre := fun e =>
+    return match e with
+    | .mdata _ body => .visit body
+    | _ => .continue)
   let coefficients ← collect registered normalized
   let state ← get
   let outcome ← liftM <| withParameters coefficients 0 #[] fun parameters =>

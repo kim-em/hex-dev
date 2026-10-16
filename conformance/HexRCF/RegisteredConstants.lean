@@ -9,6 +9,7 @@ public import HexRCF.RealCoefficients
 public import Mathlib.Analysis.Real.Sqrt
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Basic
 public meta import Lean.Elab.Command
+public meta import HexRCF.ProofEvidence
 
 public section
 
@@ -47,7 +48,29 @@ def uncertainBounds (_ : Rat) : Bounds := ⟨-4, 4, by decide⟩
 
 theorem positiveSquare : ∀ x : ℝ, x ^ 2 + supplied > 0 := by rcf
 
+theorem notNegative : ∀ x : ℝ, ¬ (x^2 + supplied < 0) := by rcf
+
+theorem notNonpositive : ∀ x : ℝ, ¬ (x^2 + supplied ≤ 0) := by rcf
+
+theorem nonzeroSquare : ∀ x : ℝ, x^2 + supplied ≠ 0 := by rcf
+
+theorem positiveSquareWitness : ∃ x : ℝ, 0 < x ∧ x^2 = supplied^2 := by rcf
+
 theorem positiveInverse : ∀ x : ℝ, x ^ 2 + 1 / supplied > 0 := by rcf
+
+theorem squareWitness : ∃ x : ℝ, x ^ 2 = supplied ^ 2 := by rcf
+
+theorem intervalWitness : ∃ x : ℝ, 0 < x ∧ x < 2 * supplied := by rcf
+
+theorem quotientWitness : ∃ x : ℝ, x ≤ 1 / supplied ∧ 2/5 < x := by rcf
+
+theorem inverseWitness : ∃ x : ℝ, x ≤ supplied⁻¹ ∧ 2/5 < x := by rcf
+
+theorem halfWitness : ∃ x : ℝ, x ≤ supplied / 2 ∧ 0 < x := by rcf
+
+theorem compoundEquality : ∃ x : ℝ, x = supplied + 1 ∧ 0 < x := by rcf
+
+theorem nestedWitness : ∃ x : ℝ, 0 < x ∧ (x < 2 * supplied ∧ x^2 < 5) := by rcf
 
 theorem suppliedWitness : ∃ x : ℝ, x = supplied ∧ 0 < x ∧ x < 3 := by rcf
 
@@ -56,7 +79,55 @@ theorem suppliedWitness : ∃ x : ℝ, x = supplied ∧ 0 < x ∧ x < 3 := by rc
 example : ∀ x : ℝ, x ^ 2 + Real.pi > 0 := by rcf
 
 example : ∀ x : ℝ, x / supplied = x * supplied⁻¹ := by rcf
-example : ∀ x : ℝ, x ^ 2 + supplied ^ 2 > 0 := by rcf
+theorem positiveSquaredCoefficient : ∀ x : ℝ, x ^ 2 + supplied ^ 2 > 0 := by rcf
+theorem reorderedWitness : ∃ x : ℝ, x < supplied + 1 ∧ x = supplied := by rcf
+theorem reversedWitness : ∃ x : ℝ, x < supplied + 1 ∧ supplied = x := by rcf
+theorem aliasedWitness (a : ℝ) (identity : a = supplied) :
+    ∃ x : ℝ, x < supplied + 1 ∧ x = a ∧ x^2 < 5 := by rcf
+
+run_meta do
+  let original : Q(Prop) := q(∃ x : ℝ, x < supplied + 1 ∧ x = supplied)
+  let arguments := original.getAppArgs
+  let target := mkAppN original.getAppFn
+    (arguments.set! 1 (.mdata {} arguments[1]!))
+  let proof ← Hex.RCF.proveGoal target
+  let checked ← Hex.RCF.checkProof `registeredMetadataWitness target proof
+  addDecl (.thmDecl {
+    name := `Hex.RCF.RegisteredConstants.metadataWitness
+    levelParams := [], type := target, value := checked })
+  for name in #[``reorderedWitness, ``reversedWitness,
+      `Hex.RCF.RegisteredConstants.metadataWitness] do
+    let .thmInfo declaration ← getConstInfo name | throwError "missing registered witness"
+    let .ok source ← Reify.prepare declaration.type {} #[q(supplied)]
+      | throwError "registered witness source was not recognized: {name}"
+    unless source.coefficients.size == 2 &&
+        (← isDefEq source.coefficients[0]! q(supplied + 1)) &&
+        (← isDefEq source.coefficients[1]! q(supplied)) do
+      throwError "registered witness no longer distinguishes equality selection from the first coefficient"
+    let dependencies ← Hex.RCF.ProofEvidence.projectDependencies #[name]
+    unless dependencies.contains ``suppliedRegistration do
+      throwError "registered witness bypassed the caller's containment evidence"
+  for (suffix, target) in #[
+      (`metadataOuterWitness, Expr.mdata {} original),
+      (`metadataBodyWitness, mkAppN original.getAppFn (arguments.set! 1
+        (match arguments[1]!.consumeMData with
+        | .lam name type body info => .lam name type (.mdata {} body) info
+        | other => other)))] do
+    let prepared ← Finite.prepare target
+    unless prepared.witness.isNone do throwError "annotated equality retained unused default evidence"
+    let certificate ← Finite.build prepared
+    let checked ← Finite.check prepared.source certificate
+    let _ ← Hex.RCF.checkProof suffix target checked
+    addDecl (.thmDecl {
+      name := `Hex.RCF.RegisteredConstants ++ suffix,
+      levelParams := [], type := target, value := checked })
+  let chosen ← Hex.RCF.ProofEvidence.contains ``positiveSquareWitness fun e =>
+    e.isAppOfArity ``Exists.intro 4 && e.getAppArgs[2]! == q(supplied)
+  unless chosen do throwError "positive square witness did not select the registered leaf"
+  let aliasDependencies ← Hex.RCF.ProofEvidence.projectDependencies #[``aliasedWitness]
+  unless aliasDependencies.contains ``suppliedRegistration do
+    throwError "aliased witness bypassed the caller's containment evidence"
+  logInfo "registered equality witnesses retain first-coordinate distinction, provider evidence, metadata and aliases"
 example : ∀ x : ℝ, x ^ 2 + supplied⁻¹ > 0 := by rcf
 example (a : ℝ) (h : a = supplied) : ∀ x : ℝ, x ^ 2 + a > 0 := by rcf
 example (a : ℝ) (h : supplied = a) : ∀ x : ℝ, x ^ 2 + a > 0 := by rcf
@@ -91,10 +162,14 @@ example : ∀ x : ℝ, x ^ 2 + supplied + 0 / (supplied - supplied) > 0 := by
 
 attribute [rcf_constant] uncertainRegistration suppliedRegistration
 
-private meta def refuses (action : MetaM α) : MetaM Unit := do
+private meta def refuses (action : MetaM α) (expected : Option String := none) : MetaM Unit := do
   let before ← getMCtx
   let declarations := (← (← getEnv).getLocalConstantInfos).map (·.name)
-  let failed ← tryCatchRuntimeEx (action *> pure false) (fun _ => pure true)
+  let failed ← tryCatchRuntimeEx (action *> pure false) fun error => do
+    if let some expected := expected then
+      unless (← error.toMessageData.toString) == expected do
+        throwError "finite evidence failed at the wrong check: {error.toMessageData}"
+    pure true
   unless failed do throwError "expected finite evidence rejection"
   unless (← getMCtx).mvarCounter == before.mvarCounter do
     throwError "failed finite API leaked metavariables"
@@ -115,6 +190,7 @@ run_elab do
   let certificate ← Finite.build prepared
   let _ ← Finite.check prepared.source certificate
   let leaf ← Finite.prepare q(∀ x : ℝ, x ^ 2 + supplied > 0)
+  unless leaf.witness.isNone do throwError "universal preparation retained unused witness evidence"
   let leafCertificate ← Finite.build leaf
   let some evidence := leaf.coefficients[0]? | throwError "missing coefficient"
   unless evidence.observations.size == 1 do throwError "missing callback observation"
@@ -179,6 +255,35 @@ run_elab do
     { certificate with prepared := { prepared with coefficients := missingProof } })
   refuses (Finite.prepare q(∀ x : ℝ, x ^ 2 + supplied + 0 / (supplied - supplied) > 0))
   refuses (Finite.prepare q(∀ x : ℝ, x ^ 2 + supplied + 0 / uncertain > 0))
+  let equality ← Finite.prepare q(∃ x : ℝ, x = supplied + 1 ∧ 0 < x)
+  unless equality.witness.isNone do throwError "equality witness retained unused default evidence"
+  let equalityCertificate ← Finite.build equality
+  let _ ← Finite.check equality.source equalityCertificate
+  let interval ← Finite.prepare q(∃ x : ℝ, 0 < x ∧ x < 2 * supplied)
+  let some witness := interval.witness | throwError "missing frozen leaf witness"
+  unless witness.source == q(supplied) && witness.observations.size == 1 do
+    throwError "compound coefficient changed the finite witness or lost its bounds"
+  let intervalCertificate ← Finite.build interval
+  let _ ← Finite.check interval.source intervalCertificate
+  refuses (Finite.check interval.source { intervalCertificate with prepared :=
+    { interval with witness := none } })
+  refuses (Finite.check interval.source { intervalCertificate with prepared :=
+    { interval with witness := some { witness with source := q(uncertain) } } })
+    (some "rcf: finite certificate has a different witness subject")
+  refuses (Finite.check interval.source { intervalCertificate with prepared :=
+    { interval with witness := some { witness with observations := #[] } } })
+    (some "rcf: enclosure omits or transplants provider observations")
+  refuses (Finite.check interval.source { intervalCertificate with prepared :=
+    { interval with witness := some { witness with proof := q(True.intro) } } })
+  let quotient ← Finite.prepare q(∃ x : ℝ, x ≤ 1 / supplied ∧ 2/5 < x)
+  let some quotientWitness := quotient.witness | throwError "missing whole-quotient witness"
+  unless quotient.coefficients.contains quotientWitness do
+    throwError "whole-quotient witness did not reuse its coefficient evidence"
+  let quotientCertificate ← Finite.build quotient
+  let _ ← Finite.check quotient.source quotientCertificate
+  refuses (Finite.check quotient.source { quotientCertificate with prepared :=
+    { quotient with witness := some { quotientWitness with observations := #[] } } })
+    (some "rcf: enclosure omits or transplants provider observations")
   let unresolved ← Finite.prepare q(∀ x : ℝ, x ^ 2 + uncertain > 0)
   refuses (Finite.build unresolved)
   refuses (Finite.prepare target 0)

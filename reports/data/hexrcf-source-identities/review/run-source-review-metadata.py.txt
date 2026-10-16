@@ -1,0 +1,15 @@
+from pathlib import Path
+import subprocess,json,hashlib
+r=Path('/home/kim/worktrees/hex-dev/hex-dev-issue-10358');t=Path('/home/kim/.codex/tasks/hex-10358')
+record={'source_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=r,text=True).strip(),'source_tree':subprocess.check_output(['git','rev-parse','HEAD^{tree}'],cwd=r,text=True).strip(),'checks':{}}
+for name,script in [('dag','scripts/check_dag.py'),('copyright','scripts/check_copyright_headers.py'),('lines','scripts/check_file_line_counts.py'),('admissions','scripts/ci/check_named_admissions.py')]:
+ p=t/f'source-identity-review-{name}-2.log';argv=['python3',script]
+ command={'argv':argv,'cwd':str(r),'source_commit':record['source_commit'],'source_tree':record['source_tree'],'script_sha256':hashlib.sha256((r/script).read_bytes()).hexdigest()}
+ with p.open('wb') as h:
+  h.write((json.dumps(command)+'\n').encode());h.flush()
+  result=subprocess.run(argv,cwd=r,stdout=h,stderr=subprocess.STDOUT)
+  h.write(f'\nexit_status={result.returncode}\n'.encode())
+ record['checks'][name]={'command':command,'exit_status':result.returncode,'log':p.name,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()}
+ assert result.returncode==0,name
+(t/'source-identity-review-metadata-2.json').write_text(json.dumps(record,indent=2)+'\n')
+print(json.dumps({n:x['exit_status'] for n,x in record['checks'].items()}))
