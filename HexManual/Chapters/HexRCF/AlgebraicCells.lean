@@ -651,9 +651,11 @@ run_meta do
   let .ok (equivalence, usage) ←
       prepared.acceptanceIff target registry
     | throwError "source equivalence could not be prepared"
-  let _ ← Hex.RCF.checkProof
-    `sourceAcceptance
-    (← inferType equivalence) equivalence
+  let auxName := mkPrivateName (← getEnv)
+    (← mkFreshUserName `manualSourceAcceptance)
+  let _ ← withDeclNameForAuxNaming auxName do
+    Hex.RCF.checkProof `sourceAcceptance
+      (← inferType equivalence) equivalence
   unless usage.proofNodes > prepared.usage.proofNodes do
     throwError "missing accumulated proof usage"
 ```
