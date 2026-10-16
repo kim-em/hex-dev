@@ -73,3 +73,31 @@ intermediate records, or close #10358. General literal-source quotation,
 resource-scheduled acceptance, realization and remaining stress/performance
 work retain their own obligations. The manual explains the distinction and
 runs the meta helper on an original irrational-coefficient statement.
+
+At `25c5f7afac`, the complete selection of all 263 RCF conformance roots,
+all 16 base-test roots, both libraries, the actual caller-supplied π/e proof
+probes and the full manual passes 14,610 jobs in 51m21.530s, with a 12.8 GiB
+peak and no swap. This is a build observation with dependency work included,
+not an isolated algorithm measurement or a matched comparison.
+
+The complete-manual import check requires a module-private auxiliary name for
+the runnable example's extra kernel check. Without that scope it collides
+with a generated theorem in another chapter; the failed render is retained
+as a diagnostic, not a pass. The corrected full manual passes 14,311 jobs in
+2m36.421s at 2.1 GiB. The final single-page HTML render passes 14,313 jobs in
+11.503s at 1.4 GiB. All six desktop and narrow captures of the acceptance
+paragraph, runnable example and limitation paragraph were opened. Their local
+overflow checks pass after shortening the example's lines. This does not
+assert that the rest of the book has no horizontal overflow.
+
+A fresh ordinary-import probe also imports the source-acceptance audit and
+the complete manual together. It passes 14,317 jobs in 15.473s at 3.3 GiB,
+so the retained audit is composable with the corrected manual.
+
+The [source-bound record](data/hexrcf-source-acceptance/context.json) retains
+the exact selection, code and script hashes, scoped proof/build logs,
+metadata commands and captures. The
+[complete selection log](data/hexrcf-source-acceptance/source-acceptance-all-1.log.gz)
+and [final render log](data/hexrcf-source-acceptance/source-acceptance-render-3.log.gz)
+are separate from the
+[failed import diagnostic](data/hexrcf-source-acceptance/source-acceptance-render-1.log.gz).
