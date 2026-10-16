@@ -11,6 +11,9 @@ import HexRCF.RealCoefficients.NumberFieldCells
 import HexRCF.RealCoefficients.GatherCells
 import HexRCF.RealCoefficients.AlgebraicCells
 import HexRCF.RealCoefficients.AlgebraicPreparation
+import HexRCF.RealCoefficients.CellOperations
+import HexRCF.RealCoefficients.RealModel
+import HexRCF.RealCoefficients.CellQuote
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -514,6 +517,67 @@ equation, without assuming guard validity; `GatherCells.build_sound` also derive
 compatible owner origins from successful gathering. They do not assemble
 frozen provider/predecessor histories or prove general source-goal quotation
 and strict compiled missing-record admission.
+
+The complete literal checker can use checked cached arithmetic through
+`CellOperations.check`. It takes the owner's existing `Replay.Operations`
+dictionary, whose equalities bind every supplied operation to the ordinary
+implementation. Root and cut indices remain canonical while section and
+sector evidence is read. The result preserves every error and both verdicts:
+
+```lean
+open Hex Hex.RealClosure Hex.SignDet
+open Hex.RealFormula
+open Hex.RCF.RealCoefficients
+open Hex.RealClosure.Replay
+example {r : BaseContext.Registry}
+    {p : Tower.Context r}
+    (o : Operations p.sign)
+    (v : ValueCodec p.Value)
+    {n : Nat} (vs : Fin n → p.Value)
+    (f : QF (n+1))
+    (gs : List p.Value)
+    (c : RadicalCert p.Value
+      Tower.Signature)
+    (q : Quantifier)
+    (graph cells : Codec.Json) :
+    CellOperations.check o v vs f gs c q
+      graph cells =
+      CompleteReplay.check v vs f gs c q
+        graph cells :=
+  CellOperations.check_eq o v vs f gs c q
+    graph cells
+```
+
+Original guard preflight, radical identities, complete root/cell coverage and
+the strict fold retain their existing soundness and domain theorems.
+`CellOperations.accept?` supplies the optional success predicate consumed by
+record assembly; only an accepted true verdict yields success. The public
+checker retains its typed failures and diagnostic false result. These
+interfaces do not authenticate source coefficients, construct general frozen
+histories or establish strict compiled rejection of missing intermediate
+arithmetic records. The compiled controls and ordinary proofs are separate;
+one source regression reuses independently checked fixture acceptance and finite
+codec laws as a transport check. A separate assembled-source regression collects
+actual reached records, checks complete literal packet acceptance in the ordinary
+kernel, and quotes the original statement ∃ x, x² - √2 ≥ 0 ∧ x² - √2 ≤ 0 ∧ 0 = 0.
+Its fresh consuming module derives ∃ x, x² = √2 and audits the actual proof
+bodies with only the standard three axioms, excluding the older fixture
+acceptance and source theorems. This uses a fixed retained field and finite
+coefficient codec; it does not reconstruct arbitrary frozen histories.
+
+For a closed retained base/root context, `RealModel.build` constructs its
+ordinary-real interpretation from a caller-supplied real base model and each
+root's actual descriptor, frame and encoding proof. It checks every prefix's
+context, rejects a mismatched base model or exhausted depth bound, and restores
+elaborator state on failure. This interpretation still needs checked identities
+connecting its coefficient and divisor values to the original source statement.
+
+`CellQuote.finishOperations` takes the supplied-operation acceptance expression
+and an ordinary proof that its result is `some ()`. It kernel-checks that exact
+equation, transports it to the canonical checker, and performs the original
+source, valuation and divisor checks of `CellQuote.finishPacket`. A reduced
+conversion proof can retain its original expected equation through this API.
+Failure restores both metavariables and auxiliary proof declarations.
 
 Meta clients can prepare these native inputs from the original Lean statement
 with `AlgebraicPreparation.prepare`. It reuses the shared source translator and

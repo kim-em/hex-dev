@@ -118,6 +118,23 @@ run_meta do
     zero.buildWith (fun _ => none) fun result => do
       let .error .divisor := result
         | throwError "zero algebraic divisor entered native root production"
+  -- A nonzero coefficient must not be mistaken for the original zero guard.
+  unchanged do
+    let zero ← checked q(∀ x : ℝ,
+      x^2 + Real.sqrt (2 + 0 / (Real.sqrt 2 * Real.sqrt 2 - 2)) > 0)
+    unless zero.source.coefficients.size == 1 && zero.source.divisors.size == 1 do
+      throwError "mixed zero-divisor source lost a role"
+    if hc : 0 < zero.source.coefficients.size then
+      if hd : 0 < zero.source.divisors.size then
+        let ci : Fin zero.source.coefficients.size := ⟨0,hc⟩
+        let di : Fin zero.source.divisors.size := ⟨0,hd⟩
+        if zero.coefficients[ci].proposal == 0 || zero.divisors[di].proposal != 0 then
+          throwError "mixed zero-divisor control lost its opposite zero statuses"
+      else throwError "mixed source has no divisor"
+    else throwError "mixed source has no coefficient"
+    zero.buildWith (fun _ => none) fun result => do
+      let .error .divisor := result
+        | throwError "mixed zero divisor was replaced by its nonzero coefficient"
   unchanged do
     let .none ← FieldRuntime.nonnegative q((-1 : ℝ))
       | throwError "routine nonnegativity proved a negative constant"
