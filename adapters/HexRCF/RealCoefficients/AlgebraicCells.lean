@@ -110,7 +110,9 @@ theorem entry_real {generators : Fin n → RealAlgebraicNumber}
   exact value.trans ((stored_value (owner_eq sources i) (sources i).model
     (sources i).root.convertedValue).trans (sources i).generator_value)
 
-private noncomputable def following (registry : BaseContext.Registry) :
+/-- The reference-field realization of the rational base for checked native
+record assembly. Ordinary-real semantics still use the separate real model. -/
+noncomputable def following (registry : BaseContext.Registry) :
     (BaseContext.PackedContext.pack (BaseContext.rational registry)).Realization := by
   have same : (BaseContext.RealPrefix.Model.rational registry).context.finish =
       .pack (BaseContext.rational registry) :=
