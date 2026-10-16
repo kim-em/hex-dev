@@ -19,6 +19,31 @@
       "path": "named-constant-fresh-proof-1.log.gz",
       "sha256": "6f677522adf8ca6e221ca38784e773647293561b8c46274fffbaec3b9e6f61af",
       "uncompressed_sha256": "904f6ce9a28ed444e302be44d86d1333e6730ef797b2125517d22c5a51925be7"
+    },
+    {
+      "path": "named-proof-metadata-0.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "named-proof-metadata-1.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "named-proof-metadata-2.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "named-proof-metadata-3.log.gz",
+      "sha256": "10241bb8de97db250fd3a2adb18bcb978456218c13e89020f1789db74229d9e9",
+      "uncompressed_sha256": "dd56c41e4d8e656705ca1d2a23d2489ed216c948cef116d7763b6f3f5aa72ef8"
+    },
+    {
+      "path": "named-proof-metadata-4.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     }
   ],
   "verification": {
@@ -38,5 +63,53 @@
     ]
   },
   "limits": "Serial own32GiB/no-swap/two-Lean-thread systemd build; raw log retains result/peak.",
-  "scope": "Fresh importing theorem-body check of the existing four supplied-registration pi/e examples. Does not implement a new analytic provider or prove convergence/transcendence."
+  "scope": "Fresh importing theorem-body check of the existing four supplied-registration pi/e examples. Does not implement a new analytic provider or prove convergence/transcendence.",
+  "metadata": [
+    {
+      "argv": [
+        "python3",
+        "scripts/check_dag.py"
+      ],
+      "exit_code": 0,
+      "log": "named-proof-metadata-0.log.gz",
+      "source": "807e97dfa1 (same Lean sources as05732a9e1b)"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_copyright_headers.py"
+      ],
+      "exit_code": 0,
+      "log": "named-proof-metadata-1.log.gz",
+      "source": "807e97dfa1 (same Lean sources as05732a9e1b)"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_file_line_counts.py"
+      ],
+      "exit_code": 0,
+      "log": "named-proof-metadata-2.log.gz",
+      "source": "807e97dfa1 (same Lean sources as05732a9e1b)"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/ci/check_named_admissions.py"
+      ],
+      "exit_code": 0,
+      "log": "named-proof-metadata-3.log.gz",
+      "source": "807e97dfa1 (same Lean sources as05732a9e1b)"
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "named-proof-metadata-4.log.gz",
+      "source": "807e97dfa1 (same Lean sources as05732a9e1b)"
+    }
+  ]
 }

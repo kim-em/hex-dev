@@ -27,3 +27,7 @@ no new pi/e approximation procedure, requested-width, convergence or relative
 transcendence law, and no general named-constant root algorithm. Full #10358
 remains open for its remaining authentication, strict replay, completeness,
 realization and runtime/evidence obligations.
+
+Dependency/umbrella, copyright, source-line, admission and diff checks pass.
+The admission scan covers 674 cones and 1,584 local modules. The retained
+metadata has the same Lean sources as the completed fresh importing build.
