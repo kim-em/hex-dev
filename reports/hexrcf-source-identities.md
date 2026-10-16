@@ -21,9 +21,8 @@ half-width `w`. Its positive sign proves strict membership in the square's
 circumscribed disc on the real axis. `select` combines that margin with the
 source equation and the actual count-one square witness to identify the
 source's selected real value. Both observations concern the same value.
-`evaluate`, `equation` and `positive` provide the coefficient-map boundary for
-queries evaluated at an ordinary-real model's stored coordinate; they reuse
-the existing operation-only polynomial transport and model sign laws.
+Ordinary polynomial transport continues to use the existing operation-only
+map/evaluation and model sign laws.
 
 The two selection helpers exposed by
 [CommonPresentation](../adapters/HexRCF/RealCoefficients/CommonPresentation.lean)
@@ -36,8 +35,13 @@ independently checks scalar packets for the source equation and disc margin.
 It proves that the retained coefficient denotes `Real.sqrt 2`. The
 [fresh consumer](../conformance/HexRCF/SourceIdentityKernel.lean) checks actual
 theorem bodies, the exact three-axiom closure and required selection/scalar
-bridges. It explicitly excludes the fixture's older `Data.alpha_value` and
-`Data.selectedSqrt` theorems. Native production supplies data; ordinary-kernel
+bridges. The closure of `source_selected` excludes `Data.selectedFacts`,
+`Data.definingPoly`, `Data.lowerData` and both older alias theorems
+`Data.alpha_value` and `Data.selectedSqrt`. The final coordinate's representation
+still carries its original sign proof, whose closure contains earlier root
+facts. Its equality uses the new source-selection proof and excludes the two
+alias theorems; it does not claim that its entire type/data closure is free of
+those earlier root facts. Native production supplies data; ordinary-kernel
 replay supplies the proof.
 
 The [complete-cell source consumer](../conformance/HexRCF/CellReplay/Assembled.lean)
@@ -45,8 +49,9 @@ uses this coefficient identity when quoting the original real proposition.
 Its independent audit also excludes both older alias theorems. Changed
 polynomials, the negative embedding with an unchanged formula, a foreign
 coefficient and omitted original divisors retain their existing refusal and
-state-restoration controls. The scalar codec still contains legitimate checked
-fixture facts; this work does not remove that finite-input restriction.
+state-restoration controls. Its separate fresh consumer requires both the new
+coefficient identity and `SourceIdentity.select`. The scalar codec still contains
+legitimate checked fixture facts; this work does not remove that finite-input restriction.
 
 The [manual](../HexManual/Chapters/HexRCF/AlgebraicCells.lean) explains this
 source-selection boundary alongside complete-cell quotation and real-model
@@ -108,3 +113,38 @@ line-count checks pass at the same source commit. The registered guard
 regression also checks the exact original-goal equivalence and two actual
 terminal tactic refusals. Earlier unsuccessful assertions and unrelated
 public-decoder experiments remain excluded from completed validation claims.
+
+
+## Selection controls and validation scope
+
+The reflected source square has a checked count-one witness and the required
+precision. A third actual scalar packet evaluates its margin at the same
+positive native root: the observed sign is −1, so it cannot supply the positive
+margin needed by `select`. This tests the enclosure's role in distinguishing
+real conjugates, independently of a failed fixed-valuation proof.
+
+These scalar queries are requested explicitly by the frontend. Their checked
+polynomials are bound to those requested queries. This fixed-input regression
+does not authenticate a defining polynomial independently proposed by an
+arbitrary native producer, nor reconstruct its source/history.
+
+The [additional validation record](data/hexrcf-source-identities/review/context.json)
+binds each tested source to its complete Git tree, including the owner
+`FiniteScalars` implementation, and captures commands, script hashes and exit
+statuses for metadata checks. Earlier file-hash inventories are source
+inventories, not claims that every listed file was executed. In particular,
+the earlier selection manifests' “base library/tests” label overstates their
+commands: those selected the base umbrella only. The additional selection
+explicitly includes all 16 HexRCF base-test modules listed by `HexReleaseTests`,
+along with all 262 HexRCF conformance roots, both libraries and the full manual.
+The earlier raw records and failed selections remain unchanged.
+
+
+At `7188977171`, that expanded 14,592-job selection passes in 26m57.749s
+at 10.6 GiB aggregate peak with no swap. Fourteen base-test modules rebuild;
+`HandlerTests.Support` and `HandlerTests` reuse valid quiet Lake artifacts.
+Their selected target arguments, trace snapshots and source bindings are
+retained. The rebuilt assembled source takes 441s and its fresh consumer 9s;
+the latter requires both the new coefficient identity and selected-root bridge.
+These times include different incremental rebuild scopes and do not measure
+a change in isolated tactic cost.
