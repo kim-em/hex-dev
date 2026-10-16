@@ -16,20 +16,13 @@ namespace Hex.RealClosure.BaseJsonTests
 theorem encode_rational (registry : BaseContext.Registry) (q : Rat) :
     (NumberField.base registry).codec.encode ⟨q⟩ =
       .array (.cons (.number 0) (.cons (.number q.num) (.cons (.number q.den) .nil))) := by
-  unfold NumberField.base
-  rw [Tower.Context.base_codec (BaseContext.rational registry)]
-  simpa only [BaseContext.Syntax.literal, Tower.Literal.toJson] using
-    BaseContext.Element.codec_encode_rational registry q
+  exact NumberField.base_encode registry q
 
 theorem decode_rational (registry : BaseContext.Registry) (q : Rat) :
     (NumberField.base registry).codec.decode
       (.array (.cons (.number 0) (.cons (.number q.num) (.cons (.number q.den) .nil)))) =
       .ok (⟨q⟩ : (NumberField.base registry).Value) := by
-  unfold NumberField.base
-  rw [Tower.Context.base_codec (BaseContext.rational registry)]
-  dsimp only [Tower.Context.Value, Tower.Context.base]
-  simpa only [BaseContext.Syntax.literal, Tower.Literal.toJson] using
-    BaseContext.Element.codec_decode_rational registry q
+  exact NumberField.base_decode registry q
 
 theorem decode_three (registry : BaseContext.Registry) :
     (NumberField.base registry).codec.decode
@@ -42,16 +35,17 @@ theorem decode_negative (registry : BaseContext.Registry) :
       (.array (.cons (.number 0) (.cons (.number (-3)) (.cons (.number 2) .nil)))) =
       .ok (⟨(⟨-3, 2, by decide, by decide⟩ : Rat)⟩ :
         (NumberField.base registry).Value) := by
-  let q : Rat := ⟨-3, 2, by decide, by decide⟩
-  have decoded := decode_rational registry q
-  change (NumberField.base registry).codec.decode
-    (.array (.cons (.number 0) (.cons (.number (-3))
-      (.cons (.number ((2 : Nat) : Int)) .nil)))) = .ok ⟨q⟩ at decoded
-  have denominator : ((2 : Nat) : Int) = 2 := Nat.ToInt.natCast_ofNat 2
-  rw [denominator] at decoded
-  exact decoded
+  exact NumberField.decode_payload registry (⟨-3, 2, by decide, by decide⟩ : Rat)
+    (-3) 2 rfl (Nat.ToInt.natCast_ofNat 2)
 
-theorem decode_bind (registry : BaseContext.Registry) :
+theorem decode_bind (registry : BaseContext.Registry) (q : Rat) :
+    (do
+      let value ← (NumberField.base registry).codec.decode
+        (.array (.cons (.number 0) (.cons (.number q.num) (.cons (.number q.den) .nil))))
+      pure value.stored : Except String Rat) = .ok q := by
+  simp only [NumberField.base_decode registry q, bind, Except.bind, pure, Except.pure]
+
+theorem bind_three (registry : BaseContext.Registry) :
     (do
       let value ← (NumberField.base registry).codec.decode
         (.array (.cons (.number 0) (.cons (.number 3) (.cons (.number 1) .nil))))
@@ -81,6 +75,18 @@ end Hex.RealClosure.BaseJsonTests
 #guard_msgs in
 #print axioms Hex.RealClosure.Tower.Context.base_codec
 
+/-- info: 'Hex.RealClosure.NumberField.base_encode' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.NumberField.base_encode
+
+/-- info: 'Hex.RealClosure.NumberField.base_decode' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.NumberField.base_decode
+
+/-- info: 'Hex.RealClosure.NumberField.decode_payload' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.NumberField.decode_payload
+
 /-- info: 'Hex.RealClosure.BaseJsonTests.encode_rational' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.BaseJsonTests.encode_rational
@@ -100,3 +106,7 @@ end Hex.RealClosure.BaseJsonTests
 /-- info: 'Hex.RealClosure.BaseJsonTests.decode_bind' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.RealClosure.BaseJsonTests.decode_bind
+
+/-- info: 'Hex.RealClosure.BaseJsonTests.bind_three' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RealClosure.BaseJsonTests.bind_three

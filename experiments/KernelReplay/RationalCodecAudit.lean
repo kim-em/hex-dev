@@ -16,8 +16,10 @@ set_option maxHeartbeats 2000000 in
 run_meta do
   let roots := #[``BaseContext.rational_chain, ``BaseContext.Context.write_rational,
     ``BaseContext.Element.codec_encode_rational, ``BaseContext.Element.codec_decode_rational,
-    ``Tower.Context.base_codec, ``BaseJsonTests.encode_rational, ``BaseJsonTests.decode_rational,
-    ``BaseJsonTests.decode_three, ``BaseJsonTests.decode_negative, ``BaseJsonTests.decode_bind]
+    ``Tower.Context.base_codec, ``NumberField.base_encode, ``NumberField.base_decode,
+    ``NumberField.decode_payload, ``BaseJsonTests.encode_rational, ``BaseJsonTests.decode_rational,
+    ``BaseJsonTests.decode_three, ``BaseJsonTests.decode_negative, ``BaseJsonTests.decode_bind,
+    ``BaseJsonTests.bind_three]
   for name in roots do
     let info ← getConstInfo name
     let some body := info.value? (allowOpaque := true) |
