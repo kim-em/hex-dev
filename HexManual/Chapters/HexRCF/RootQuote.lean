@@ -183,8 +183,9 @@ meta def quoteSuppliedPolynomial
     (config : Reify.Config)
     (used : BudgetUsage) :=
   RootQuote.runWith
-    (ScalarQuote.quotePolyWith reader facts
-      predecessor) config used
+    (ScalarQuote.quotePolyWith
+      reader facts predecessor)
+    config used
 ```
 
 The regression polynomial contains two copies of −2√2. The checked original
@@ -195,7 +196,8 @@ interpretation in the selected context:
 open Hex.RCF.SelectedRootTests in
 open Hex.RCF.SharedQuoteTests in
 example :
-    Data.original.value (restored.coeff 0) =
+    Data.original.value
+      (restored.coeff 0) =
       -2 * Real.sqrt 2 :=
   value_zero
 ```
