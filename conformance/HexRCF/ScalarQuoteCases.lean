@@ -24,6 +24,7 @@ def trailingZero : Codec.Json := .array (.cons
   (.array (.cons Scalars.j0 (.cons Scalars.j1 (.cons Scalars.j0 .nil))))
   (.cons (.number (-1)) .nil))
 
+
 private meta def config (limit : Nat) : Hex.RealFormula.Reify.Config :=
   {ring := {budget := {Hex.Reflect.Budget.default with proofNodes := limit}}}
 
@@ -43,6 +44,7 @@ private meta def observeTerminal (action : MetaM α) (handler : Exception → Me
 
 private meta def rejected (action : MetaM α) : MetaM Unit := do
   let failed ← observeTerminal (action *> pure false) fun error => do
+    if error.isMaxHeartbeat || error.isMaxRecDepth then throw error
     match error with
     | .error _ _ => pure true
     | _ => throw error
@@ -59,6 +61,12 @@ run_meta do
     let strictReader := mkApp (.proj ``ValueCodec 1 strictCodec) (mkConst ``literal)
     let .ok strict ← RootQuote.quote strictReader decode
       | throwError "strict scalar control failed"
+    let hidden ← mkFreshExprMVar (← inferType strictReader)
+    hidden.mvarId!.assign strictReader
+    let .ok instantiated ← RootQuote.quote hidden decode
+      | throwError "assigned reader quotation failed"
+    unless instantiated.usage.proofNodes == strict.usage.proofNodes do
+      throwError "assigned reader hid its size from the reflection budget"
     let sentinel ← mkFreshExprMVar (mkConst ``Nat)
     let callerCount := (← getMCtx).decls.toList.length
     let .ok result ← ScalarQuote.quote codec facts (mkConst ``literal) decode
@@ -67,6 +75,16 @@ run_meta do
       throwError "successful scalar quotation changed caller metavariables"
     unless result.usage.proofNodes > strict.usage.proofNodes do
       throwError "canonical scalar transport was not charged after strict quotation"
+    let some expanded ← unfoldDefinition? (mkConst ``literal)
+      | throwError "literal source definition unavailable"
+    let .ok directLiteral ← ScalarQuote.quote codec facts expanded decode
+      | throwError "expanded scalar literal failed"
+    let hiddenLiteral ← mkFreshExprMVar (mkConst ``Codec.Json)
+    hiddenLiteral.mvarId!.assign expanded
+    let .ok assignedLiteral ← ScalarQuote.quote codec facts hiddenLiteral decode
+      | throwError "assigned scalar literal failed"
+    unless assignedLiteral.usage.proofNodes == directLiteral.usage.proofNodes do
+      throwError "assigned literal hid transport work from the reflection budget"
     let _ ← Hex.RCF.checkProof `canonicalScalar (← inferType result.proof) result.proof
     logInfo m!"canonical extension scalar quotation proofNodes={result.usage.proofNodes}"
     withExporting (isExporting := true) do
@@ -106,7 +124,9 @@ run_meta do
     let wrongType ← mkAppM ``Algebraic.SignFact #[mkConst ``Upper.context]
     let wrongFacts ← mkAppOptM ``List.nil #[some wrongType]
     let calls ← IO.mkRef (0 : Nat)
-    unchanged <| withOptions (fun options => maxHeartbeats.set options 2000) <| rejected do
+    let now ← IO.getNumHeartbeats
+    unchanged <| withTheReader Core.Context
+        (fun context => {context with maxHeartbeats := 2000000,initHeartbeats := now}) <| rejected do
       ScalarQuote.quote codec wrongFacts (mkConst ``literal) fun _ => do
         calls.modify (·+1)
         return none
@@ -141,6 +161,10 @@ theorem restored_sign : restored.sign = -1 := by rfl
 theorem canonical_source :
     ((Algebraic.Element.codec (context := Data.native) Data.base.codec).decode literal).toOption =
       some restored := canonical_read
+
+theorem zero_source :
+    ((Algebraic.Element.codec (context := Data.native) Data.base.codec).decode empty).toOption =
+      some (Zero.zero : Algebraic.Element Data.native) := zero_read
 
 private theorem polynomial_value :
     HexPolyTheory.Interpret.interpret Data.rational.value Data.rational.zero_iff

@@ -50,6 +50,15 @@ run_meta do
     let .ok result ← quotePoly decoder
       | throwError "shared scalar/poly quotation failed"
     logInfo m!"shared scalar/poly quotation proofNodes={result.usage.proofNodes}"
+    let some expanded ← unfoldDefinition? (mkConst ``reader)
+      | throwError "polynomial source definition unavailable"
+    let hidden ← mkFreshExprMVar (← inferType expanded)
+    hidden.mvarId!.assign expanded
+    let .ok assigned ← RootQuote.runWith
+        (ScalarQuote.quotePolyWith hidden (mkConst ``Records.facts) decoder)
+      | throwError "assigned polynomial reader failed"
+    unless assigned.usage.proofNodes == result.usage.proofNodes do
+      throwError "assigned polynomial reader hid its size from the request"
     withExporting (isExporting := true) do
       addDecl (.defnDecl {
         name := `Hex.RCF.SharedQuoteTests.restored,levelParams := [],

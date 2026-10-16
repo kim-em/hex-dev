@@ -35,12 +35,29 @@ public meta section
 namespace Hex.RCF.RealCoefficients.ScalarQuote
 open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RealFormula.Reify
 
+private def checkFacts (codec facts : Expr) (parameters : Nat) : ReifyM Unit := do
+  accountProof facts
+  let factsType ← withTransparency .reducible <| whnf (← inferType facts)
+  unless factsType.isAppOfArity ``List 1 do
+    throwError "rcf: scalar quotation expects a list of sign facts"
+  let factType ← withTransparency .reducible <| whnf factsType.appArg!
+  unless factType.getAppFn.isConstOf ``Algebraic.SignFact && factType.getAppNumArgs > 0 do
+    throwError "rcf: scalar quotation expects sign facts for its original context"
+  let originalContext := codec.getAppArgs[parameters-2]!
+  unless ← withNewMCtxDepth <| withTransparency .reducible <|
+      isDefEq factType.getAppArgs.back! originalContext do
+    throwError "rcf: scalar facts must use the codec's original context under reducible transparency"
+
 private def finish (codec facts literal : Expr) (result : RootQuote.Result) : ReifyM RootQuote.Result := do
   Core.checkSystem "checked scalar quotation"
   let proof := mkAppN (mkConst ``accepted codec.getAppFn.constLevels!)
     (codec.getAppArgs ++ #[facts,literal,result.value,result.proof])
   accountProof proof
-  let proof ← Hex.RCF.checkProof `ScalarQuote.accepted (← inferType proof) proof
+  let codecType ← inferType codec
+  let reader := mkApp3 (mkConst ``ValueCodec.decode) codecType.appArg! codec literal
+  let statement ← mkEq (← mkAppM ``Except.toOption #[reader])
+    (← mkAppM ``Option.some #[result.value])
+  let proof ← Hex.RCF.checkProof `ScalarQuote.accepted statement proof
   return {result with proof, usage := (← get).budget.consumed}
 
 private def strictCodec (codec facts : Expr) : ReifyM Expr := do
@@ -55,6 +72,7 @@ private def strictCodec (codec facts : Expr) : ReifyM Expr := do
       acceptedInfo.levelParams.isEmpty && strictInfo.type.getNumHeadForalls == parameters+1 &&
       acceptedInfo.type.getNumHeadForalls == parameters+4 do
     throwError "rcf: scalar quotation codec signatures do not match"
+  checkFacts codec facts parameters
   return mkAppN (mkConst ``Algebraic.Element.signCodec codec.getAppFn.constLevels!)
     (codec.getAppArgs.push facts)
 
@@ -64,6 +82,9 @@ The caller supplies the enclosing transaction; `quote` provides one for an
 ordinary `MetaM` predecessor callback. -/
 def quoteWith (codec facts literal : Expr)
     (decode : RootQuote.DecoderM := fun _ => pure none) : ReifyM RootQuote.Result := do
+  let codec ← instantiateMVars codec
+  let facts ← instantiateMVars facts
+  let literal ← instantiateMVars literal
   let strict ← strictCodec codec facts
   let reader := mkApp (.proj ``ValueCodec 1 strict) literal
   let result ← RootQuote.quoteWith reader decode
@@ -74,6 +95,8 @@ sign codec, then use `Codec.readPoly_refines`. Retain its exact coefficient
 type, zero/equality instances, codec arguments and literal. -/
 def quotePolyWith (reader facts : Expr)
     (decode : RootQuote.DecoderM := fun _ => pure none) : ReifyM RootQuote.Result := do
+  let reader ← instantiateMVars reader
+  let facts ← instantiateMVars facts
   unless reader.getAppFn.isConstOf ``Codec.readPoly && reader.getAppNumArgs == 5 do
     throwError "rcf: polynomial quotation expects a complete readPoly application"
   let args := reader.getAppArgs
@@ -102,6 +125,9 @@ an ordinary-kernel equation for its canonical decoder. The canonical
 can unfold a native decoder merely to compare definitionally equal aliases.
 The predecessor decoder and already checked sign facts are explicit inputs. Missing/mismatched facts
 reject; a failed quote never starts the canonical decoder or another solver.
+The facts' context index must match the original codec under reducible
+transparency; opaque or ordinary definition aliases need an explicit type
+transport. Assigned inputs are instantiated before their work is charged.
 Reader quotation and final transport continue one reflection request. Failure
 restores all state, including auxiliaries from an earlier successful stage.
 This does not reconstruct source coefficients, models or context histories. -/

@@ -284,6 +284,7 @@ private partial def discharge (decode : DecoderM) (node : Expr) : ReifyM Expr :=
   return proof
 
 private partial def quoteCore (reader : Expr) (decode : DecoderM) : ReifyM Result := do
+  let reader ← instantiateMVars reader
   accountProof reader
   let reader ← Hex.RCF.checkExpr `RootQuote.reader reader
   Meta.check reader
