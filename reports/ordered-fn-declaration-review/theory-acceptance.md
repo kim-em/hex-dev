@@ -1,8 +1,8 @@
 # OrderedFn Theory proof and manual acceptance
 
 `HexOrderedFnTheory` satisfies Phases 6–7 independently of `HexOrderedFn`.
-The computational library remains at Phase 5 with its retained regression
-findings. The polishing adds public characterizations and simplification rules without
+The [computational acceptance](../ordered-fn-proof-acceptance.md) separately
+addresses the computational library and its retained regression findings. The polishing adds public characterizations and simplification rules without
 changing executable operations, existing theorem statements, package requirements
 or publication eligibility.
 
@@ -208,8 +208,9 @@ The [companion SPEC](../../SPEC/Libraries/hex-ordered-fn-theory.md#conformance-a
 and [Phase-4 policy](../../PLAN/Phase4.md#theory-libraries) assign this library
 semantic proof tests, rather than a computational benchmark baseline.
 [Local phase coupling](../../PLAN/Conventions.md) permits its Phases 6–7 without
-promoting `HexOrderedFn` or any transitive input. The core's four retained
+promoting `HexOrderedFn` or any transitive input. The core's four historical
 regression findings remain in the existing
-[performance follow-up](../bench-results/ordered-fn-regression-followup/README.md).
+[performance follow-up](../bench-results/ordered-fn-regression-followup/README.md);
+the complete changed-source comparison is assessed in its computational acceptance.
 General tower realization, BKR/tactic algorithms, candidate package preparation
 and publication prerequisites retain their separate owners and requirements.
