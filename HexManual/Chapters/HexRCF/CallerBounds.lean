@@ -253,6 +253,10 @@ supplied frontend. Once an eligible backend starts, budget and replay failures
 stop dispatch. Only providers used by source coefficients and original guards
 are evaluated and bound into finite evidence.
 
+Reconstruction normalizes rational constants and division without the general
+simplifier's rewrites of containment inequalities, so square bounds stay
+polynomial. Negated comparisons and disequality use the same guarded source.
+
 This finite path uses nonlinear proof reconstruction from the supplied bounds,
 with conjunctions and a proposed ordinary real existential witness. The current
 witness comes from an equality conjunct `x = c` or `c = x` when present.

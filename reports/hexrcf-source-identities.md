@@ -211,3 +211,34 @@ The first attempt's negative dependency assertion was invalid because the
 direct handler itself uses the shared field soundness theorem; the corrected
 audit requires its distinct valuation and the shared checker. These focused
 results do not replace the required full current-source validation or hosted CI.
+
+The registration dependency audits identify the supplied-bound route; because
+coefficient and witness enclosures can share that dependency, they do not prove
+which bound hypotheses nonlinear reconstruction used. The API checks inspect
+the frozen witness subject and observation. A positive square-witness regression
+also checks the actual `Exists.intro` argument: a bound on the square alone does
+not determine the chosen leaf's sign. Negated comparisons, disequality and
+metadata around the entire existential and its conjunction have separate
+ordinary proof regressions. The common arithmetic proofs require
+`CommonPresentation.checkPolynomials_sound` and exclude the bare-generator
+valuation, while the direct metadata proof retains that distinct valuation.
+
+The [witness record](data/hexrcf-source-identities/witnesses/context.json) binds
+source `e944b04ca9`, its 14,606-job full selection and all four actual π/e proof
+probes. All 262 authoritative conformance roots, sixteen base-test modules,
+both libraries and the manual pass in 23m58.130s at 9.3 GiB peak with no swap.
+It retains the exact commands, corrected audit failure and independent review;
+the earlier all-root record is unchanged.
+
+The final scoped Boolean/metadata correction passes 11,756 jobs in 2m40.871s
+at 2.8 GiB with no swap, covering the finite registered, coarse, mixed,
+named, rational-source and budget regressions, proof probes and both revised
+manual subsections. Fresh bodies check negated comparisons, disequality,
+whole-existential/body annotations, and the positive square witness's exact
+registered-leaf argument. The narrowed simplifier succeeds on these leaves
+without extra negation rewrites. Duplicate witness evidence now follows the
+same structural rule in construction and checking. The registration dependency
+checks identify the route; the positive square-witness case and inspected
+`Exists.intro` argument provide the additional witness evidence. These targeted
+results supplement the completed earlier broad selection. Current-head hosted
+CI must still validate the full integration before merge.

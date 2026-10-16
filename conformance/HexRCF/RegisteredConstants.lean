@@ -48,6 +48,14 @@ def uncertainBounds (_ : Rat) : Bounds := ⟨-4, 4, by decide⟩
 
 theorem positiveSquare : ∀ x : ℝ, x ^ 2 + supplied > 0 := by rcf
 
+theorem notNegative : ∀ x : ℝ, ¬ (x^2 + supplied < 0) := by rcf
+
+theorem notNonpositive : ∀ x : ℝ, ¬ (x^2 + supplied ≤ 0) := by rcf
+
+theorem nonzeroSquare : ∀ x : ℝ, x^2 + supplied ≠ 0 := by rcf
+
+theorem positiveSquareWitness : ∃ x : ℝ, 0 < x ∧ x^2 = supplied^2 := by rcf
+
 theorem positiveInverse : ∀ x : ℝ, x ^ 2 + 1 / supplied > 0 := by rcf
 
 theorem squareWitness : ∃ x : ℝ, x ^ 2 = supplied ^ 2 := by rcf
@@ -99,6 +107,23 @@ run_meta do
     let dependencies ← Hex.RCF.ProofEvidence.projectDependencies #[name]
     unless dependencies.contains ``suppliedRegistration do
       throwError "registered witness bypassed the caller's containment evidence"
+  for (suffix, target) in #[
+      (`metadataOuterWitness, Expr.mdata {} original),
+      (`metadataBodyWitness, mkAppN original.getAppFn (arguments.set! 1
+        (match arguments[1]!.consumeMData with
+        | .lam name type body info => .lam name type (.mdata {} body) info
+        | other => other)))] do
+    let prepared ← Finite.prepare target
+    unless prepared.witness.isNone do throwError "annotated equality retained unused default evidence"
+    let certificate ← Finite.build prepared
+    let checked ← Finite.check prepared.source certificate
+    let _ ← Hex.RCF.checkProof suffix target checked
+    addDecl (.thmDecl {
+      name := `Hex.RCF.RegisteredConstants ++ suffix,
+      levelParams := [], type := target, value := checked })
+  let chosen ← Hex.RCF.ProofEvidence.contains ``positiveSquareWitness fun e =>
+    e.isAppOfArity ``Exists.intro 4 && e.getAppArgs[2]! == q(supplied)
+  unless chosen do throwError "positive square witness did not select the registered leaf"
   let aliasDependencies ← Hex.RCF.ProofEvidence.projectDependencies #[``aliasedWitness]
   unless aliasDependencies.contains ``suppliedRegistration do
     throwError "aliased witness bypassed the caller's containment evidence"
@@ -247,6 +272,7 @@ run_elab do
     (some "rcf: finite certificate has a different witness subject")
   refuses (Finite.check interval.source { intervalCertificate with prepared :=
     { interval with witness := some { witness with observations := #[] } } })
+    (some "rcf: enclosure omits or transplants provider observations")
   refuses (Finite.check interval.source { intervalCertificate with prepared :=
     { interval with witness := some { witness with proof := q(True.intro) } } })
   let quotient ← Finite.prepare q(∃ x : ℝ, x ≤ 1 / supplied ∧ 2/5 < x)
@@ -257,6 +283,7 @@ run_elab do
   let _ ← Finite.check quotient.source quotientCertificate
   refuses (Finite.check quotient.source { quotientCertificate with prepared :=
     { quotient with witness := some { quotientWitness with observations := #[] } } })
+    (some "rcf: enclosure omits or transplants provider observations")
   let unresolved ← Finite.prepare q(∀ x : ℝ, x ^ 2 + uncertain > 0)
   refuses (Finite.build unresolved)
   refuses (Finite.prepare target 0)

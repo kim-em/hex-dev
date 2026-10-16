@@ -43,5 +43,5 @@ These examples use the real-coefficient certificate checker. Fresh-module
 checks verify the corresponding named conformance proofs and their actual
 body dependencies.
 Extracting a whole coefficient never removes an original divisor condition:
-even `0 * (1 / (Real.sqrt 2 - Real.sqrt 2))` retains its zero divisor and is
-rejected during source and guard preparation.
+even `0 * (1 / (Real.sqrt 2 - Real.sqrt 2))` keeps its zero divisor through source
+preparation. The handler rejects it when preparing guards.
