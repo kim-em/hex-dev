@@ -358,7 +358,7 @@ lean_lib HexRealClosure where
 
 @[default_target]
 lean_lib HexRealClosureTests where
-  globs := #[.one `HexRealClosure.Tests, .one `HexRealClosure.BaseHistoryTests, .one `HexRealClosure.PackingTests, .one `HexRealClosure.InversePackingTests, .one `HexRealClosure.ValueSignsTests, .one `HexRealClosure.RootOrderTests,
+  globs := #[.one `HexRealClosure.Tests, .one `HexRealClosure.BaseJsonTests, .one `HexRealClosure.BaseHistoryTests, .one `HexRealClosure.PackingTests, .one `HexRealClosure.InversePackingTests, .one `HexRealClosure.ValueSignsTests, .one `HexRealClosure.RootOrderTests,
     .one `HexRealClosure.RootPolicyTests, .one `HexRealClosure.RootFactorsTests, .one `HexRealClosure.TowerRootsTests,
     .one `HexRealClosure.RootCollectionTests, .one `HexRealClosure.TowerPresentationTests,
     .one `HexRealClosure.LocalSampleTests, .one `HexRealClosure.LiveContextTests,
@@ -2510,6 +2510,7 @@ lean_lib KernelReplayExperiment where
     .one `KernelReplay.AxiomClosure, .one `KernelReplay.AxiomClosureTest,
     .one `KernelReplay.AxiomClosureImports, .one `KernelReplay.SupportAudit,
     .one `KernelReplay.ProviderHistoryAudit,
+    .one `KernelReplay.RationalCodecAudit,
     .one `KernelReplay.FiniteRange,
     .one `KernelReplay.CoefficientMembers, .one `KernelReplay.CoefficientEntry,
     .one `KernelReplay.NativeAssemblyUse,

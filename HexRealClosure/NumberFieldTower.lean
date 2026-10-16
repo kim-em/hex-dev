@@ -17,6 +17,36 @@ namespace Hex.RealClosure.NumberField
 abbrev base (registry : BaseContext.Registry) :=
   Tower.Context.base (BaseContext.rational registry)
 
+/-- The rational predecessor encodes its coefficients as canonical JSON arrays. -/
+@[simp] theorem base_encode (registry : BaseContext.Registry) (q : Rat) :
+    (base registry).codec.encode ⟨q⟩ =
+      .array (.cons (.number 0) (.cons (.number q.num) (.cons (.number q.den) .nil))) := by
+  unfold base
+  rw [Tower.Context.base_codec (BaseContext.rational registry)]
+  simpa only [BaseContext.Syntax.literal, Tower.Literal.toJson] using
+    BaseContext.Element.codec_encode_rational registry q
+
+/-- Canonical rational arrays restore their original stored coefficient. -/
+@[simp] theorem base_decode (registry : BaseContext.Registry) (q : Rat) :
+    (base registry).codec.decode
+      (.array (.cons (.number 0) (.cons (.number q.num) (.cons (.number q.den) .nil)))) =
+      .ok (⟨q⟩ : (base registry).Value) := by
+  unfold base
+  rw [Tower.Context.base_codec (BaseContext.rational registry)]
+  dsimp only [Tower.Context.Value, Tower.Context.base]
+  simpa only [BaseContext.Syntax.literal, Tower.Literal.toJson] using
+    BaseContext.Element.codec_decode_rational registry q
+
+/-- Read frozen integer literals using the intended rational's exact components. -/
+theorem decode_payload (registry : BaseContext.Registry) (q : Rat) (n d : Int)
+    (numerator : q.num = n) (denominator : (q.den : Int) = d) :
+    (base registry).codec.decode
+      (.array (.cons (.number 0) (.cons (.number n) (.cons (.number d) .nil)))) =
+      .ok (⟨q⟩ : (base registry).Value) := by
+  have decoded := base_decode registry q
+  rw [numerator, denominator] at decoded
+  exact decoded
+
 /-- The original minimal polynomial over the native rational predecessor. -/
 @[expose] def defining (generator : RealAlgebraicNumber) (registry : BaseContext.Registry) :
     (base registry).Poly := DensePoly.ofCoeffs

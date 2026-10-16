@@ -354,6 +354,8 @@ class AdmissionScannerTests(unittest.TestCase):
                 "experiments/KernelReplay/AxiomClosureImports.lean",
                 "experiments/KernelReplay/SupportAudit.lean",
                 "experiments/KernelReplay/ProviderHistoryAudit.lean",
+                "experiments/KernelReplay/RationalCodecAudit.lean",
+                "HexRealClosure/BaseJsonTests.lean",
                 "experiments/KernelReplay/FiniteRange.lean",
                 "experiments/KernelReplay/CoefficientMembers.lean",
                 "experiments/KernelReplay/CoefficientEntry.lean",
