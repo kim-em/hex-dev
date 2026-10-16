@@ -33,6 +33,7 @@ structure Observation where
   bounds : Bounds
   identity : Expr
   containment : Expr
+  deriving BEq
 
 structure Enclosure where
   source : Expr
@@ -40,6 +41,7 @@ structure Enclosure where
   literal : Expr
   proof : Expr
   observations : Array Observation := #[]
+  deriving BEq
 
 structure Prepared where
   source : Reify.Source
@@ -277,6 +279,31 @@ private partial def encloseCore (cache : Cache) (entries : Array (Name × Expr))
   observed cache entries request (← rational source)
 end
 
+/-- Prefer the witness fixed by an equality in an existential conjunction.
+Coefficient traversal order need not put that value first. -/
+private partial def equalityWitness? (expression : Expr) : Option Expr := do
+  let expression := expression.consumeMData
+  if expression.isAppOfArity ``And 2 then
+    let args := expression.getAppArgs
+    return ← equalityWitness? args[0]! <|> equalityWitness? args[1]!
+  unless expression.isAppOfArity ``Eq 3 do none
+  let args := expression.getAppArgs
+  for (candidate, value) in [(args[1]!.consumeMData,args[2]!),
+      (args[2]!.consumeMData,args[1]!)] do
+    if candidate == .bvar 0 && !value.hasLooseBVars && !value.hasMVar then
+      return value
+  none
+
+-- The supported source has exactly one quantifier. Universal goals never
+-- need a witness, and explicit equality witnesses need no default enclosure.
+private def witnessSource? (source : Reify.Source) (entries : Array (Name × Expr)) :
+    MetaM (Option Expr) := do
+  let original := source.original.consumeMData
+  unless original.isAppOfArity ``Exists 2 do return none
+  if let .lam _ _ statement _ := original.getAppArgs[1]!.consumeMData then
+    if (equalityWitness? statement).isSome then return none
+  Reify.firstNamed? (entries.map Prod.snd) source.coefficients
+
 /-- Freeze supplied bounds and discharge every source guard before proof search.
 An exact zero is invalid; a nonseparating bound is unresolved. -/
 private def prepareCore (target : Expr) (request : Rat := 1 / 16)
@@ -304,7 +331,7 @@ private def prepareCore (target : Expr) (request : Rat := 1 / 16)
     guardBounds := guardBounds.push evidence
     guards := guards.push (divisor, ← ordinary nonzero (← mkAppM ``Ne #[divisor, q((0 : ℝ))]))
   let coefficients ← source.coefficients.mapM (enclose cache entries request)
-  let witness ← match ← Reify.firstNamed? (entries.map Prod.snd) source.coefficients with
+  let witness ← match ← witnessSource? source entries with
     | some value => some <$> enclose cache entries request value
     | none => pure none
   let registry ← entries.mapM fun (name, _) => do
@@ -315,21 +342,6 @@ private def prepareCore (target : Expr) (request : Rat := 1 / 16)
 restoring the complete saved state on every failure or interruption. -/
 def prepare (target : Expr) (request : Rat := 1 / 16) : MetaM Prepared :=
   transaction (prepareCore target request)
-
-/-- Prefer the witness fixed by an equality in an existential conjunction.
-Coefficient traversal order need not put that value first. -/
-private partial def equalityWitness? (expression : Expr) : Option Expr := do
-  let expression := expression.consumeMData
-  if expression.isAppOfArity ``And 2 then
-    let args := expression.getAppArgs
-    return ← equalityWitness? args[0]! <|> equalityWitness? args[1]!
-  unless expression.isAppOfArity ``Eq 3 do none
-  let args := expression.getAppArgs
-  for (candidate, value) in [(args[1]!.consumeMData,args[2]!),
-      (args[2]!.consumeMData,args[1]!)] do
-    if candidate == .bvar 0 && !value.hasLooseBVars && !value.hasMVar then
-      return value
-  none
 
 private partial def prove (target : Expr) (witness : Expr) : MetaM Expr := do
   let goal ← mkFreshExprMVar target
@@ -369,7 +381,9 @@ private def buildCore (prepared : Prepared) : MetaM Certificate := do
   let vars := (← getLCtx).getFVarIds.map mkFVar
   let (lctx, instances, _) ← removeUnused vars used
   withLCtx lctx instances do
-    let facts ← (prepared.coefficients ++ prepared.witness.toArray).flatMapM fun e => do
+    let extra := prepared.witness.toArray.filter fun witness =>
+      !prepared.coefficients.any (fun coefficient => coefficient.source == witness.source)
+    let facts ← (prepared.coefficients ++ extra).flatMapM fun e => do
       return #[← mkAppM ``And.left #[e.proof], ← mkAppM ``And.right #[e.proof]]
     let rec withFacts (i : Nat) (parameters : Array Expr) : MetaM Expr := do
       if h : i < facts.size then
@@ -436,14 +450,17 @@ private def checkCore (source : Reify.Source) (certificate : Certificate)
       throwError "rcf: finite certificate has a stale provider version"
   unless prepared.coefficients.size == source.coefficients.size && prepared.guards.size == source.divisors.size && prepared.guardBounds.size == source.divisors.size do
     throwError "rcf: finite certificate omits source evidence"
-  let witness ← Reify.firstNamed? (entries.map Prod.snd) source.coefficients
+  let witness ← witnessSource? source entries
   unless witness == prepared.witness.map (·.source) do
     throwError "rcf: finite certificate has a different witness subject"
-  if let some evidence := prepared.witness then checkEnclosure entries request evidence
   for (coefficient, evidence) in source.coefficients.zip prepared.coefficients do
     unless evidence.source == coefficient do
       throwError "rcf: finite certificate swaps coefficient subjects"
     checkEnclosure entries request evidence
+  if let some evidence := prepared.witness then
+    -- Identical coefficient evidence has just been checked. A different frozen
+    -- claim for the same source must still be checked independently.
+    unless prepared.coefficients.contains evidence do checkEnclosure entries request evidence
   for (expected, (divisor, proof)) in source.divisors.zip prepared.guards do
     unless divisor == expected do throwError "rcf: finite certificate swaps divisor subjects"
     let _ ← ordinary proof (← mkAppM ``Ne #[divisor, q((0 : ℝ))])

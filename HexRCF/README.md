@@ -175,8 +175,10 @@ Bare named generators retain their single-coordinate handler. Closed arithmetic
 such as `2 * Real.sqrt 2` uses the common-field handler, which reuses a single
 selected field when there is only one generator. Its checked coefficient
 valuation still contains the entire expression. In the supplied-bound path,
-an equality in an existential conjunction selects its stated witness before
-the first coefficient is considered.
+an equality conjunct `x = c` or `c = x` selects `c`. Otherwise the single
+witness attempt uses the first named or registered subject in coefficient
+order, retaining a closed reciprocal or quotient as a whole witness, or zero
+when there is none. Universal goals do not prepare witness evidence.
 The optional adapter is validated through the default `HexRCFRealCoefficients` Lake target
 and is not yet published to the split repository. See the
 [SPEC](SPEC/hex-rcf.md#planned-real-coefficient-extension).

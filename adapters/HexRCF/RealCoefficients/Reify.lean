@@ -300,23 +300,6 @@ private def isNamedSource (registered : Array Expr) (e : Expr) : MetaM Bool := d
     return (← inferType e.getAppArgs[5]!).isConstOf ``Real
   return false
 
-/-- The first named or registered whole subject, in source order. Arithmetic
-around a subject does not change the finite frontend's single witness choice. -/
-def firstNamed? (registered : Array Expr) (sources : Array Expr) : MetaM (Option Expr) := do
-  let mut found := none
-  for source in sources do
-    let (_, next) ← (Meta.transformWithCache (m := StateRefT (Option Expr) MetaM)
-      source {} (pre := fun e => do
-        if (← get).isSome then return .done e
-        if (← isType e) || (← isProof e) then return .done e
-        if ← isNamedSource registered e then
-          set (some e.consumeMData)
-          return .done e
-        return .continue) (skipInstances := true)).run found
-    found := next
-    if found.isSome then break
-  return found
-
 -- A collection pass shares this cache across all closed real subterms. In
 -- particular rational subtrees are inspected once, even when no named source
 -- is present. Types, proofs and instance arguments cannot supply coefficients.
@@ -339,6 +322,26 @@ private partial def hasNamedSource (cache : IO.Ref (ExprMap Bool))
   let result ← compute
   cache.modify (·.insert e result)
   return result
+
+/-- The first named or registered whole subject, in source order. Closed inverses
+and quotients retain their original whole-subject witness choice. -/
+def firstNamed? (registered : Array Expr) (sources : Array Expr) : MetaM (Option Expr) := do
+  let cache ← IO.mkRef ({} : ExprMap Bool)
+  let mut found := none
+  for source in sources do
+    let (_, next) ← (Meta.transformWithCache (m := StateRefT (Option Expr) MetaM)
+      source {} (pre := fun e => do
+        if (← get).isSome then return .done e
+        if (← isType e) || (← isProof e) then return .done e
+        let wholeQuotient := e.isAppOfArity ``HDiv.hDiv 6 || e.isAppOfArity ``Inv.inv 3
+        if (← isNamedSource registered e) ||
+            (wholeQuotient && (← hasNamedSource cache registered e)) then
+          set (some e.consumeMData)
+          return .done e
+        return .continue) (skipInstances := true)).run found
+    found := next
+    if found.isSome then break
+  return found
 
 private def addCasts (theorems : SimpTheorems := {}) : MetaM SimpTheorems := do
   let mut theorems := theorems

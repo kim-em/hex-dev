@@ -54,6 +54,14 @@ theorem squareWitness : ∃ x : ℝ, x ^ 2 = supplied ^ 2 := by rcf
 
 theorem intervalWitness : ∃ x : ℝ, 0 < x ∧ x < 2 * supplied := by rcf
 
+theorem quotientWitness : ∃ x : ℝ, x ≤ 1 / supplied ∧ 2/5 < x := by rcf
+
+theorem inverseWitness : ∃ x : ℝ, x ≤ supplied⁻¹ ∧ 2/5 < x := by rcf
+
+theorem halfWitness : ∃ x : ℝ, x ≤ supplied / 2 ∧ 0 < x := by rcf
+
+theorem compoundEquality : ∃ x : ℝ, x = supplied + 1 ∧ 0 < x := by rcf
+
 theorem nestedWitness : ∃ x : ℝ, 0 < x ∧ (x < 2 * supplied ∧ x^2 < 5) := by rcf
 
 theorem suppliedWitness : ∃ x : ℝ, x = supplied ∧ 0 < x ∧ x < 3 := by rcf
@@ -129,10 +137,14 @@ example : ∀ x : ℝ, x ^ 2 + supplied + 0 / (supplied - supplied) > 0 := by
 
 attribute [rcf_constant] uncertainRegistration suppliedRegistration
 
-private meta def refuses (action : MetaM α) : MetaM Unit := do
+private meta def refuses (action : MetaM α) (expected : Option String := none) : MetaM Unit := do
   let before ← getMCtx
   let declarations := (← (← getEnv).getLocalConstantInfos).map (·.name)
-  let failed ← tryCatchRuntimeEx (action *> pure false) (fun _ => pure true)
+  let failed ← tryCatchRuntimeEx (action *> pure false) fun error => do
+    if let some expected := expected then
+      unless (← error.toMessageData.toString) == expected do
+        throwError "finite evidence failed at the wrong check: {error.toMessageData}"
+    pure true
   unless failed do throwError "expected finite evidence rejection"
   unless (← getMCtx).mvarCounter == before.mvarCounter do
     throwError "failed finite API leaked metavariables"
@@ -153,6 +165,7 @@ run_elab do
   let certificate ← Finite.build prepared
   let _ ← Finite.check prepared.source certificate
   let leaf ← Finite.prepare q(∀ x : ℝ, x ^ 2 + supplied > 0)
+  unless leaf.witness.isNone do throwError "universal preparation retained unused witness evidence"
   let leafCertificate ← Finite.build leaf
   let some evidence := leaf.coefficients[0]? | throwError "missing coefficient"
   unless evidence.observations.size == 1 do throwError "missing callback observation"
@@ -217,6 +230,10 @@ run_elab do
     { certificate with prepared := { prepared with coefficients := missingProof } })
   refuses (Finite.prepare q(∀ x : ℝ, x ^ 2 + supplied + 0 / (supplied - supplied) > 0))
   refuses (Finite.prepare q(∀ x : ℝ, x ^ 2 + supplied + 0 / uncertain > 0))
+  let equality ← Finite.prepare q(∃ x : ℝ, x = supplied + 1 ∧ 0 < x)
+  unless equality.witness.isNone do throwError "equality witness retained unused default evidence"
+  let equalityCertificate ← Finite.build equality
+  let _ ← Finite.check equality.source equalityCertificate
   let interval ← Finite.prepare q(∃ x : ℝ, 0 < x ∧ x < 2 * supplied)
   let some witness := interval.witness | throwError "missing frozen leaf witness"
   unless witness.source == q(supplied) && witness.observations.size == 1 do
@@ -227,10 +244,19 @@ run_elab do
     { interval with witness := none } })
   refuses (Finite.check interval.source { intervalCertificate with prepared :=
     { interval with witness := some { witness with source := q(uncertain) } } })
+    (some "rcf: finite certificate has a different witness subject")
   refuses (Finite.check interval.source { intervalCertificate with prepared :=
     { interval with witness := some { witness with observations := #[] } } })
   refuses (Finite.check interval.source { intervalCertificate with prepared :=
     { interval with witness := some { witness with proof := q(True.intro) } } })
+  let quotient ← Finite.prepare q(∃ x : ℝ, x ≤ 1 / supplied ∧ 2/5 < x)
+  let some quotientWitness := quotient.witness | throwError "missing whole-quotient witness"
+  unless quotient.coefficients.contains quotientWitness do
+    throwError "whole-quotient witness did not reuse its coefficient evidence"
+  let quotientCertificate ← Finite.build quotient
+  let _ ← Finite.check quotient.source quotientCertificate
+  refuses (Finite.check quotient.source { quotientCertificate with prepared :=
+    { quotient with witness := some { quotientWitness with observations := #[] } } })
   let unresolved ← Finite.prepare q(∀ x : ℝ, x ^ 2 + uncertain > 0)
   refuses (Finite.build unresolved)
   refuses (Finite.prepare target 0)

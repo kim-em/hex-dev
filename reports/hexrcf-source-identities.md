@@ -156,11 +156,15 @@ a change in isolated tactic cost.
 ## Witness and metadata compatibility
 
 Maximal abstraction retains the whole coefficient while finite supplied-bound
-search selects the first named or registered subject as its default witness.
-An explicit existential equality still takes priority. The selected leaf has
+search selects the first named or registered subject as its default witness,
+preserving a closed reciprocal or quotient as a whole witness. An explicit
+existential equality still takes priority. Universal goals retain no witness
+evidence. Identical coefficient/witness evidence is checked once, and a
+coefficient's bounds are not added again as witness facts. The selected leaf has
 its own frozen containment proof, obtained through the preparation cache;
 checking binds its source, observations, request and version without calling
-an approximation procedure. Missing, transplanted and malformed witness
+an approximation procedure. Different evidence for an already present subject
+still receives its own complete check. Missing, transplanted and malformed witness
 evidence is rejected transactionally. This remains a single witness attempt,
 not a complete existential search.
 
@@ -171,7 +175,8 @@ and excludes type, proof and instance arguments. A nested rational subtree
 regression checks the exact source equivalence and coefficient inventory;
 it does not establish an asymptotic timing bound.
 
-The focused selection for these changes passes 11,184 jobs in 42.299s at
+At source `0da75d3520`, the earlier witness/metadata selection passes
+11,184 jobs in 42.299s at
 3.1 GiB aggregate peak with no swap. It proves square, interval and nested
 existential goals over compound registered coefficients, checks witness
 corruption refusals and audits their actual bodies in a fresh module.
@@ -182,3 +187,27 @@ The earlier timing study describes its recorded source trees; it does not
 measure these subsequent memoization and witness changes. Full current-source
 conformance and hosted CI remain required before merge. The interrupted
 selection at `41f1aba4b2` is not a completed validation result.
+
+The direct metadata proof requires `SquareTwo.valuation`, which is emitted only
+by the direct frontend. Both frontends use the shared
+`FieldBuild.Result.checkForall_sound` theorem; excluding that theorem would
+reject the valid direct proof. The fresh audit therefore requires both the
+distinct direct valuation and the ordinary field checker.
+
+The [compatibility record](data/hexrcf-source-identities/compatibility/context.json)
+binds source `0da75d3520`, all 262 conformance roots, all sixteen base-test
+modules, both library targets and the full manual. That selection passes
+14,601 jobs in 26m04.380s at 10.9 GiB aggregate peak with no swap. Its raw logs
+and the earlier interrupted selection remain distinct.
+
+The subsequent focused witness correction builds 11,784 jobs, including
+`HexRCFProofProbe` and the revised caller-bounds manual chapter. It passes in
+47.496s at 4.1 GiB with no swap. Closed reciprocal/quotient and compound-equality
+witnesses have fresh checked bodies and require their caller registration.
+Universal and explicit-equality goals retain no unused default enclosure.
+A transplanted witness is checked against its exact subject diagnostic;
+altered evidence for a duplicate source is independently rejected.
+The first attempt's negative dependency assertion was invalid because the
+direct handler itself uses the shared field soundness theorem; the corrected
+audit requires its distinct valuation and the shared checker. These focused
+results do not replace the required full current-source validation or hosted CI.
