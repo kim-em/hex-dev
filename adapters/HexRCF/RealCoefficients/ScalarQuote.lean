@@ -67,6 +67,12 @@ def quote (codec facts literal : Expr) (decode : RootQuote.Decoder := fun _ => p
     let parameters := (← getConstInfo ``Algebraic.Element.codec).type.getNumHeadForalls
     unless codec.getAppNumArgs == parameters do
       throwError "rcf: scalar quotation expects a complete codec application"
+    let strictInfo ← getConstInfo ``Algebraic.Element.signCodec
+    let acceptedInfo ← getConstInfo ``accepted
+    unless codec.getAppFn.constLevels!.isEmpty && strictInfo.levelParams.isEmpty &&
+        acceptedInfo.levelParams.isEmpty && strictInfo.type.getNumHeadForalls == parameters+1 &&
+        acceptedInfo.type.getNumHeadForalls == parameters+4 do
+      throwError "rcf: scalar quotation codec signatures do not match"
     let strict := mkAppN (mkConst ``Algebraic.Element.signCodec codec.getAppFn.constLevels!)
       (codec.getAppArgs.push facts)
     let reader := mkApp (.proj ``ValueCodec 1 strict) literal

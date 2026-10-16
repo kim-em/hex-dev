@@ -30,6 +30,9 @@ run_meta do
   let some index := (← getEnv).getModuleIdxFor? ``restored
     | throwError "scalar quotation case module missing"
   let mut checked : Nat := 0
+  let mut definitions : Nat := 0
+  let mut theoremNames : Array Name := #[]
+  let mut definitionNames : Array Name := #[]
   for name in dependencies.toArray do
     if (← getEnv).getModuleIdxFor? name == some index then
       if let .thmInfo declaration ← getConstInfo name then
@@ -53,10 +56,28 @@ run_meta do
             (← mkFreshUserName `__scalarQuoteBody) declaration.type declaration.value
             #[``ScalarPacket.build,``ScalarPacket.buildLiteral]
         checked := checked + 1
+        theoremNames := theoremNames.push name
+      else if let .defnInfo declaration ← getConstInfo name then
+        let options := (← getOptions).setBool `debug.skipKernelTC false
+        let environment := Kernel.enableDiag (Kernel.resetDiag (← getEnv)) true
+        let env ← ofExceptKernelException <| environment.addDeclCore
+          (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
+          (.defnDecl {declaration with name := ← mkFreshUserName `__scalarValue}) none (doCheck := true)
+        let diagnostics := Kernel.getDiagnostics env
+        unless diagnostics.enabled do throwError "scalar value diagnostics disabled"
+        if let some (producer,count) := Hex.RCF.SelectedRootTests.KernelCheck.violation? diagnostics
+            #[``ScalarPacket.build,``ScalarPacket.buildLiteral] then
+          throwError "scalar value definition reduced native producer {producer}: {count}"
+        setEnv (Kernel.enableDiag env false)
+        definitions := definitions+1
+        definitionNames := definitionNames.push name
   unless checked == 12 do throwError "scalar quotation body coverage changed: {checked}"
+  unless definitions == 3 do throwError "scalar value definition coverage changed: {definitions}"
   let .thmInfo bridge ← getConstInfo ``ScalarQuote.accepted
     | throwError "canonical scalar transport theorem missing"
   let _ ← Hex.RCF.checkProof ``ScalarQuote.accepted bridge.type bridge.value
-  logInfo m!"canonical scalar quotation: {checked} actual theorem bodies checked without producer reduction; exact polynomial/sign and complete standard-three axiom closure"
+  logInfo m!"canonical scalar quotation: {checked} actual theorem bodies and {definitions} data definitions checked without producer reduction; exact polynomial/sign and complete standard-three axiom closure"
+  logInfo m!"scalar theorem inventory: {theoremNames.qsort Name.lt}"
+  logInfo m!"scalar definition inventory: {definitionNames.qsort Name.lt}"
 
 end Hex.RCF.ScalarQuoteTests

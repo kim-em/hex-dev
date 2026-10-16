@@ -6,6 +6,7 @@ Authors: Kim Morrison
 import HexRCF.CellReplay.Algebraic.Records
 import HexRCF.RealCoefficients.ScalarQuote
 import HexRCF.RealCoefficients.RationalQuote
+import HexRCF.SelectedRoot.Upper
 open Lean Meta Qq Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
 open Hex.RCF.SelectedRootTests
 namespace Hex.RCF.ScalarQuoteTests
@@ -16,6 +17,12 @@ set_option maxRecDepth 32768
 def literal : Codec.Json := .array (.cons Scalars.p0 (.cons (.number (-1)) .nil))
 def wrongSign : Codec.Json := .array (.cons Scalars.p0 (.cons (.number 1) .nil))
 def empty : Codec.Json := .array .nil
+def wrongCount : Codec.Json := .array
+  (.cons Scalars.p0 (.cons (.number (-1)) (.cons (.number 0) .nil)))
+def notArray : Codec.Json := .number 0
+def trailingZero : Codec.Json := .array (.cons
+  (.array (.cons Scalars.j0 (.cons Scalars.j1 (.cons Scalars.j0 .nil))))
+  (.cons (.number (-1)) .nil))
 
 private meta def config (limit : Nat) : Hex.RealFormula.Reify.Config :=
   {ring := {budget := {Hex.Reflect.Budget.default with proofNodes := limit}}}
@@ -52,8 +59,12 @@ run_meta do
     let strictReader := mkApp (.proj ``ValueCodec 1 strictCodec) (mkConst ``literal)
     let .ok strict ← RootQuote.quote strictReader decode
       | throwError "strict scalar control failed"
+    let sentinel ← mkFreshExprMVar (mkConst ``Nat)
+    let callerCount := (← getMCtx).decls.toList.length
     let .ok result ← ScalarQuote.quote codec facts (mkConst ``literal) decode
       | throwError "extension scalar quotation rejected checked supplied signs"
+    unless (← getMCtx).decls.toList.length == callerCount && !(← sentinel.mvarId!.isAssigned) do
+      throwError "successful scalar quotation changed caller metavariables"
     unless result.usage.proofNodes > strict.usage.proofNodes do
       throwError "canonical scalar transport was not charged after strict quotation"
     let _ ← Hex.RCF.checkProof `canonicalScalar (← inferType result.proof) result.proof
@@ -92,9 +103,18 @@ run_meta do
     let noFacts ← mkAppOptM ``List.nil #[some factType]
     for malformed in #[mkConst ``ValueCodec.rat,mkConst ``Algebraic.Element.codec] do
       unchanged <| rejected <| ScalarQuote.quote malformed facts (mkConst ``literal) decode
+    let wrongType ← mkAppM ``Algebraic.SignFact #[mkConst ``Upper.context]
+    let wrongFacts ← mkAppOptM ``List.nil #[some wrongType]
+    let calls ← IO.mkRef (0 : Nat)
+    unchanged <| withOptions (fun options => maxHeartbeats.set options 2000) <| rejected do
+      ScalarQuote.quote codec wrongFacts (mkConst ``literal) fun _ => do
+        calls.modify (·+1)
+        return none
+    unless (← calls.get) == 0 do throwError "ill-typed facts reached scalar decoding"
     let untrusted ← mkSorry (← inferType facts) false
     unchanged <| rejected <| ScalarQuote.quote codec untrusted (mkConst ``literal) decode
-    for (available,payload) in #[(noFacts,mkConst ``literal),(facts,mkConst ``wrongSign)] do
+    for (available,payload) in #[(noFacts,mkConst ``literal),(facts,mkConst ``wrongSign),
+        (facts,mkConst ``wrongCount),(facts,mkConst ``notArray),(facts,mkConst ``trailingZero)] do
       unchanged do
         let .error (.providerFailure (.invalidProviderEvidence ..) _) ←
             ScalarQuote.quote codec available payload decode

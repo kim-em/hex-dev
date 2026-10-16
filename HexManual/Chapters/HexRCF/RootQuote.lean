@@ -160,10 +160,18 @@ identity, with only the standard three axioms and no producer reduction.
 One source equation is the exact previously checked constant with an identical
 type; its diagnostic trace is required to contain zero reductions. The other
 bodies use the existing producer guard with nonempty diagnostic traces.
+The three reachable data definitions, `restored`, `literal` and `empty`,
+are also re-added to the ordinary kernel with that producer guard. Literal
+data definitions may have an empty reduction trace.
 
 Regressions cover continued/exact/exhausted proof budgets, rollback after the
 strict stage succeeds, missing or mismatched facts, zero without a fact,
 malformed codec applications and rejection of admitted fact proposals.
+Reader size is charged before type checking and reduction. Wrong-context
+facts reject before scalar callbacks run; malformed field counts, non-array
+literals and trailing polynomial zeros also reject. A successful call preserves
+the caller's metavariables. The ordinary bridge is tested in a `module` consumer
+that imports only the optional umbrella.
 
 This scalar API does not reconstruct provider or predecessor histories,
 produce missing signs, or install a general source-goal solver. The strict
