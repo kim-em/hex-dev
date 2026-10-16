@@ -1,0 +1,56 @@
+{
+  "source_commit": "bc04ae81425ee7b400ad5d23392a7c3c8f0b19a0",
+  "checks": {
+    "0": {
+      "argv": [
+        "python3",
+        "scripts/check_dag.py"
+      ],
+      "exit_code": 0,
+      "log": "/home/kim/.codex/tasks/hex-10358/root-quote-final-revision-metadata-0.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "script_sha256": "760236cb56f22dd916c677070713146ebd9bd652ba988b3f9427d6a671a4ea10"
+    },
+    "1": {
+      "argv": [
+        "python3",
+        "scripts/check_copyright_headers.py"
+      ],
+      "exit_code": 0,
+      "log": "/home/kim/.codex/tasks/hex-10358/root-quote-final-revision-metadata-1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "script_sha256": "d7ccfbb8e737c342ff24f7ec875c403a76a678a75f581a8e7dcaf0b654325c84"
+    },
+    "2": {
+      "argv": [
+        "python3",
+        "scripts/check_file_line_counts.py"
+      ],
+      "exit_code": 0,
+      "log": "/home/kim/.codex/tasks/hex-10358/root-quote-final-revision-metadata-2.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "script_sha256": "0c9109c17128a11651f7a5d3784b5b35c859b87e2f58d12c2fbcd5c7562f1229"
+    },
+    "3": {
+      "argv": [
+        "python3",
+        "scripts/ci/check_named_admissions.py"
+      ],
+      "exit_code": 0,
+      "log": "/home/kim/.codex/tasks/hex-10358/root-quote-final-revision-metadata-3.log",
+      "sha256": "e017452d2ee202384ea848419b1392dc2ac3f29fb1e48e0f2f03fa0f1502d8b3",
+      "script_sha256": "f280a4c96b2716a3ac28157cd5d03cde2fad0c45ca88f7f3e61c6e633582719a"
+    },
+    "4": {
+      "argv": [
+        "git",
+        "diff",
+        "--check",
+        "HEAD"
+      ],
+      "exit_code": 0,
+      "log": "/home/kim/.codex/tasks/hex-10358/root-quote-final-revision-metadata-4.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  }
+}
