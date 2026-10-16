@@ -580,7 +580,9 @@ def guardSources (original : Expr) : Hex.RealFormula.Reify.ReifyM (Array Expr) :
 
 /-- Recover all original divisor obligations after checked alias substitution.
 This reuses source preflight without coefficient lowering, schema construction
-or root/sign production. Successful results preserve caller metavariables. -/
+or root/sign production. Both source views and the checked alias proof consume
+`config.ring.budget`; exhaustion returns a structured budget error.
+Successful results preserve caller metavariables. -/
 def guards (original : Expr) (config : Hex.RealFormula.Reify.Config := {}) :
     MetaM (Except Hex.RealFormula.Reify.Error (Array Expr)) := do
   let saved ← saveState

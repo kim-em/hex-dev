@@ -296,6 +296,8 @@ run_meta do
       throwError "runtime proposals or runtime syntax entered source acceptance evidence"
     unless furtherUsage.proofNodes > usage.proofNodes && usage.proofNodes > prepared.usage.proofNodes do
       throwError "source acceptance did not return its continued aggregate proof usage"
+    unless furtherUsage.sourceNodes > usage.sourceNodes && usage.sourceNodes > prepared.usage.sourceNodes do
+      throwError "source acceptance did not charge its continued original-source scans"
     let name := `Hex.RCF.AlgebraicPreparationConformance ++ label
     addDecl (.thmDecl {name,levelParams := [],type,value := proof})
     let budget := {prepared.config.ring.budget with proofNodes := usage.proofNodes - 1}
@@ -317,6 +319,30 @@ run_meta do
       | throwError "source acceptance failed at its exact aggregate proof limit"
     unless exactUsage.proofNodes == usage.proofNodes do
       throwError "source acceptance changed its exact charged proof count"
+    if label == `divisorAcceptance then
+      -- This source has no aliases, so both charged source views are identical.
+      let count := Hex.Reflect.sourceNodeCount target (prepared.config.ring.budget.sourceNodes + 1)
+      unless usage.sourceNodes == prepared.usage.sourceNodes + 2 * count do
+        throwError "source acceptance did not charge both original source views"
+      let budget := {prepared.config.ring.budget with sourceNodes := usage.sourceNodes - 1}
+      let ring := {prepared.config.ring with budget}
+      let config := {prepared.config with ring}
+      let limited := {prepared with config}
+      let names := (← (← getEnv).getLocalConstantInfos).map (·.name)
+      unchanged do
+        let .error (.budget exhausted) ← limited.acceptanceIff target registry
+          | throwError "source acceptance reset the original-source scan budget"
+        unless exhausted.dimension == .sourceNodes do throwError "wrong source-scan exhaustion"
+      unless (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
+        throwError "exhausted source scan leaked auxiliary declarations"
+      let budget := {budget with sourceNodes := usage.sourceNodes}
+      let ring := {ring with budget}
+      let config := {config with ring}
+      let sourceLimit := {prepared with config}
+      let .ok (_, exactUsage) ← sourceLimit.acceptanceIff target registry
+        | throwError "source acceptance failed at its exact original-source limit"
+      unless exactUsage.sourceNodes == usage.sourceNodes do
+        throwError "source acceptance changed its exact charged source count"
     let beforeNames := (← (← getEnv).getLocalConstantInfos).map (·.name)
     unchanged do
       let failed ← tryCatchRuntimeEx
@@ -382,20 +408,34 @@ run_meta do
         unless failed do throwError "source acceptance trusted a different valid divisor inventory"
       unless (← (← getEnv).getLocalConstantInfos).map (·.name) == beforeNames do
         throwError "replaced divisor acceptance leaked auxiliary declarations"
+    -- The matching unchanged record must still succeed after the forgeries.
+    -- No diagnostic-string classification is needed for the invalid records.
+    unchanged do
+      let .ok (control, _) ← prepared.acceptanceIff target registry
+        | throwError "source acceptance rejected the unchanged divisor control"
+      unless (← inferType control) == type do
+        throwError "source acceptance changed the unchanged divisor control"
   withLocalDeclD `c q(ℝ) fun c => do
     let identity ← mkEq c q(Real.sqrt 2)
     withLocalDeclD `identity identity fun identity => do
       let c : Q(ℝ) := c
       let target : Q(Prop) := q(∀ x : ℝ, x^2 + $c > 0)
       let prepared ← checked target
-      let .ok (proof, _) ← prepared.acceptanceIff target registry
+      let .ok (proof, usage) ← prepared.acceptanceIff target registry
         | throwError "source acceptance lost the checked local alias"
+      let cap := prepared.config.ring.budget.sourceNodes + 1
+      let originalCount := Hex.Reflect.sourceNodeCount target cap
+      let closedCount := Hex.Reflect.sourceNodeCount (target.replaceFVar c q(Real.sqrt 2)) cap
+      unless originalCount != closedCount do
+        throwError "alias source-scan control has indistinguishable views"
+      unless usage.sourceNodes == prepared.usage.sourceNodes + originalCount + closedCount do
+        throwError "source acceptance did not charge the distinct alias-substituted view"
       let type ← mkForallFVars #[c,identity] (← inferType proof)
       let value ← mkLambdaFVars #[c,identity] proof
       addDecl (.thmDecl {
         name := `Hex.RCF.AlgebraicPreparationConformance.aliasAcceptance
         levelParams := [], type, value })
-  logInfo "exact original algebraic producer acceptance, false source, original zero guards, empty domains, aggregate proof budgets, inner recursion limits and forged guard inventories checked"
+  logInfo "exact original algebraic producer acceptance, false source, original zero guards, empty domains, aggregate proof/source budgets, inner recursion limits and forged guard inventories checked"
   addDecl (.thmDecl {
     name := `Hex.RCF.AlgebraicPreparationConformance.runFinished
     levelParams := [], type := mkConst ``True, value := mkConst ``True.intro })
