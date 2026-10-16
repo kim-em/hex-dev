@@ -28,6 +28,8 @@ def main():
         require(hashlib.sha256(data).hexdigest() == entry["raw_sha256"], path)
         require(len(data) == entry["raw_bytes"], path)
         raw[path] = data
+    require({str(path.relative_to(root)) for path in (root / "capture").rglob("*") if path.is_file()} ==
+            set(raw), "complete archive inventory")
 
     def read(path):
         return json.loads(raw["capture/" + path + ".gz"])
@@ -40,6 +42,9 @@ def main():
                           "minimum_improvement_percent": 10,
                           "maximum_neighbor_regression_percent": 10}, "recorded six-case rule")
     context = read("comparison/context.json")
+    require(context["lean_num_threads"] == decision["lean_num_threads"] == "4" and
+            type(context["cpu"]) is int and context["cpu"] in context["affinity_before"],
+            "recorded thread/CPU selection")
     require(context["status"] == "completed" and context["inputs_unchanged"], "incomplete attempt")
     require(hashlib.sha256(raw["capture/decision.json.gz"]).hexdigest() ==
             context["decision_sha256"], "decision binding")
@@ -61,7 +66,25 @@ def main():
             "baseline commit")
     require(sources["candidate"]["head"] == manifest["source_commit"], "candidate commit")
     require(context["binaries"] == manifest["binaries"], "reported executable hashes")
+    require(sources["baseline"]["binary_sha256"] ==
+            read("positive-quotient-manifest.json")["binaries"]["candidate"], "merged quotient executable")
     require(sources["baseline"]["packages"] == sources["candidate"]["packages"], "dependency pins")
+    for arm, original in sources.items():
+        rebuilt = read("code-reconstruction/" + arm + "-source.json")
+        require(rebuilt["binary_sha256"] == original["binary_sha256"], "code reconstruction executable")
+        for field in ("head", "sources", "packages", "native_import_closure"):
+            require(rebuilt[field] == original[field], "code reconstruction input: " + field)
+        require(read("code-reconstruction/" + arm + "-inputs-before.json") ==
+                read("code-reconstruction/" + arm + "-inputs-after.json"), "code reconstruction inputs")
+        require(set(rebuilt["generated_code"]) == {"Infinitesimal", "Bench"}, "both generated code modules")
+        for module, entry in rebuilt["generated_code"].items():
+            code = raw["capture/code-reconstruction/" + entry["capture"] + ".gz"]
+            require(entry["capture"] == arm + "-" + module + ".c" and
+                    hashlib.sha256(code).hexdigest() == entry["sha256"], "generated code binding")
+            if arm == "candidate":
+                require(code == raw["capture/candidate-" + module + ".c.gz"], "candidate code reproduction")
+    require(read("code-reconstruction/baseline-source.json")["sdk"] ==
+            read("code-reconstruction/candidate-source.json")["sdk"], "code reconstruction SDK identity")
     for field, expected_diff in (("sources", set(decision["source_scope"]["changed_inputs"])),
                                  ("native_import_closure", set(decision["source_scope"]["changed_native_inputs"]))):
         values = [sources[arm][field] for arm in ("baseline", "candidate")]
@@ -78,6 +101,20 @@ def main():
         for path, expected_hash in current_inputs.items():
             require(hashlib.sha256((repository / path).read_bytes()).hexdigest() ==
                     expected_hash, "reviewed source: " + path)
+        for name in ("infinitesimal", "real"):
+            require(raw["capture/" + name + "-fixtures.jsonl.gz"] ==
+                    (repository / "conformance-fixtures/HexOrderedFn" / (name + ".jsonl")).read_bytes(),
+                    "current native fixture bytes: " + name)
+    for name, expected in (("infinitesimal", 80), ("real", 122)):
+        require(len(raw["capture/" + name + "-fixtures.jsonl.gz"].splitlines()) == expected,
+                "native fixture count")
+        log = raw["capture/orderedfn-sign-scan-" + name + "-oracle.log.gz"].decode()
+        prefix = "HexOrderedFn real" if name == "real" else "HexOrderedFn"
+        require(f"{prefix}: {expected} cases, 0 failures" in log, "native oracle result")
+    log = raw["capture/orderedfn-sign-scan-core-build.log.gz"].decode()
+    require("Build completed successfully (3194 jobs)." in log and
+            "Checked axioms of 298 OrderedFn Theory constants in 10 modules." in log,
+            "recorded proof/lint build")
     for name in ("probe.py", "freeze_build.py"):
         expected_hashes = [value for path, value in decision["tools"].items() if Path(path).name == name]
         require(expected_hashes == [hashlib.sha256(raw["capture/" + name + ".gz"]).hexdigest()],

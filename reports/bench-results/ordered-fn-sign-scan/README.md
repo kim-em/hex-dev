@@ -30,10 +30,35 @@ non-monic definitions, denominator signs and the paper comparisons.
 
 The generated native scan contains a direct pointer comparison followed by the
 ordinary structural equality on the unequal-address branch. Its caller uses
-`DensePoly.isZero` before scanning. The benchmark's third-level monomial has a
-shared zero prefix, so this branch avoids repeated equality of nested rational
-functions in that fixture. It is not a guarantee that arbitrary caller zeros
-are shared, an allocation count or a universal speedup claim.
+`DensePoly.isZero` before scanning. The third-level benchmark specializes preparation and the scan in the same
+module. Its generated scan uses the same closed zero object as the monomial's
+padding, avoiding repeated equality of nested rational functions in this fixture.
+The generic library path obtains its comparison zero by calling the coefficient
+instance; the ordinary rational-function zero constructor allocates a fresh
+object there, so that path takes structural equality instead. Arithmetic zeros
+also need not share the comparison object. None of the six selected cases is a
+separate fallback-performance workload. The complete historical comparison
+still includes comparison/subtraction and the remaining families.
+
+The 98% third-level result therefore concerns this specialized, shared-padding
+fixture. It is not an allocation count or a universal caller speedup. Unboxed
+scalar coefficient representations may also incur boxing for core pointer
+inspection; that cost is not measured by these Rat/RationalFn cases.
+
+The implementation calls the pinned core `withPtrEq` API with its required proof
+that the shortcut agrees with equality. Core supplies that API's existing native
+pointer implementation; the ordinary kernel sees its mathematical definition.
+The Hex compiler registrations are both proved equalities. This change introduces
+no `@[implemented_by]` registration, unsafe declaration or axiom in Hex; an axiom
+report alone does not describe core's native implementation.
+
+Both arms' generated `Infinitesimal.c` and `Bench.c` are retained under
+`capture/code-reconstruction/`, with source inventories, pinned SDK executable
+hashes and generated-code hashes. These separately captured builds reproduce
+both measured executables byte-for-byte; the candidate's C also reproduces the
+originally captured C exactly. The parent uses its original structural scan and
+polynomial equality guard. This is code-provenance evidence, without new timing
+observations or a claim to recover unrecorded build inputs.
 
 ## Bounded comparison
 
@@ -69,18 +94,21 @@ Small result hashes are consistency controls; they are not mathematical oracles.
 
 Each arm binds 5,164 source/configuration inputs, 89 native import files and
 sixteen clean package pins. Only `Infinitesimal.lean` changes in the native import
-paths; the broader inventory also changes `Tests.lean`. Independently written
+paths; the broader inventory also changes `Tests.lean`. Separately captured
 before/after build snapshots agree. The parent executable SHA-256 is
 `e8634bce8b34b35651fc5f73d249d7f2385370df0a53fa5d9b9b087d0b5d1662`; the candidate is
 `19a7750209804b74ea3ea0d480b6aebedfe1b4bd4c6eb7d3b4dcdc90f1592c8f`.
 Child Git fields describe the invocation checkout; the source manifests identify
 each executable's producer separately.
 
-This is a distinct combined implementation addressing the interaction exposed by
+This implementation combines the bodies of the two retained storage-test and
+pointer-scan variants. Their composition addresses the interaction exposed by
 the [retained zero-storage result](https://github.com/kim-em/hex-dev/blob/audit/issue-10575-orderedfn-zero-investigation-v2/reports/bench-results/ordered-fn-zero-investigation/README.md).
-That variant's third-level criterion failed; its measurements and recording defect
-remain retained. This comparison does not retry the earlier pointer-only binary
-or replace any failed experiment. Neither this result nor the independent
+The storage-test variant improved height but slowed the third-level case by
+6.7%, failing its criterion; its measurements and recording defect remain retained.
+The new combined binary meets its own declared rule. These data do not isolate
+the pointer-only variant's effect. This comparison does not retry that earlier
+binary or replace any failed experiment. Neither this result nor the independent
 [positive-quotient diagnostic](../ordered-fn-positive-quotient/README.md) establishes
 the required complete historical-baseline comparison. That comparison and
 reconciliation of every remaining finding still precede core Phase-6 acceptance.
@@ -88,7 +116,7 @@ No Phase-4 scaling claim, phase counter or publication configuration changes.
 
 ## Offline evidence replay
 
-The manifest binds all 104 compressed and original files, including the complete
+The manifest binds the compressed and original files, including the complete
 terminal context, raw observations, proposal/decision, producer scripts, independent
 build inventories, generated native code, fixture bytes and validation logs.
 Native executables are not committed. Replay collects no timings:
@@ -99,10 +127,13 @@ python3 reports/bench-results/ordered-fn-sign-scan/replay.py
 
 It verifies archive hashes, original proposal agreement, the recorded criterion,
 complete adjacent-arm schedule, commands, compiler identity, raw observations,
-matching hashes, source/binary/script bindings, independent build inventories
-and all six median calculations. The hash-bound measurement script checks live
+matching hashes, source/binary/script bindings, separately captured build
+inventories, validation-log results, generated-code/source/SDK bindings, the
+recorded thread/CPU selection and all six median calculations. The hash-bound measurement script checks live
 source inputs again on exit; replay does not recover that host's final filesystem
-or rebuild the executables.
+or rebuild the executables. CPU affinity and the thread setting were applied by
+the hash-bound producer; the capture records the selected CPU and the original
+affinity, without a post-change or child-affinity observation.
 
 Also check all current native import files, the axiom tests and three build
 configuration files against the measured candidate:
