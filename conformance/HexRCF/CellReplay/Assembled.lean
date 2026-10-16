@@ -75,8 +75,12 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
   let .ok negativeSource ← Reify.prepare negative
     | throwError "negative-conjugate source control was unsupported"
   unless negativeSource.coefficients.size == 1 &&
-      (← isDefEq negativeSource.coefficients[0]! (← elabTerm (← `((Real.sqrt 2 : ℝ))) none)) do
-    throwError "negative source did not retain its positive generator"
+      (← isDefEq negativeSource.coefficients[0]! (← elabTerm (← `((-Real.sqrt 2 : ℝ))) none)) do
+    throwError "negative source did not retain its whole negative coefficient"
+  let changedFormula ← elabType (← `(∃ x : ℝ, x ^ 2 + Real.sqrt 2 ≥ 0 ∧
+    x ^ 2 + Real.sqrt 2 ≤ 0 ∧ (0 : ℝ) = 0))
+  synthesizeSyntheticMVarsNoPostponing
+  let changedFormula ← instantiateMVars changedFormula
   let foreign ← elabType (← `(∃ x : ℝ, x ^ 2 - Real.sqrt 3 ≥ 0 ∧
     x ^ 2 - Real.sqrt 3 ≤ 0 ∧ (0 : ℝ) = 0))
   synthesizeSyntheticMVarsNoPostponing
@@ -134,7 +138,8 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
     if seen.contains excluded then
       throwError "fresh source proof reused complete-cell fixture acceptance, its dictionary or a producer: {excluded}"
   for (rejectedTarget,guardIdentities,expected) in [
-      (negative,#[],"rcf: checked formula has a different polynomial leaf"),
+      (negative,#[],"rcf: handler CellQuote.valuationIdentity proposed a proof of a different goal"),
+      (changedFormula,#[],"rcf: checked formula has a different polynomial leaf"),
       (foreign,#[],"rcf: handler CellQuote.valuationIdentity proposed a proof of a different goal"),
       (guarded,#[],"rcf: cell checker has a different original divisor identity count"),
       (guarded,#[Lean.mkConst ``True.intro],"rcf: cell checker has a different original divisor count")] do
