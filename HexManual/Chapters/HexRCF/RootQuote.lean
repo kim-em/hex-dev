@@ -174,10 +174,11 @@ literals and trailing polynomial zeros also reject. A successful call preserves
 the caller's metavariables. The ordinary bridge is tested in a `module` consumer
 that imports only the optional umbrella.
 Assigned input metavariables are instantiated before size accounting; expanded
-readers and literals have the same charges when passed through assigned
-metavariables. The facts' context index must match the codec under reducible
-transparency. Ordinary definition or opaque aliases require explicit type
-transport. The wrong-context test uses a fresh heartbeat epoch and an actual
+readers, literals and facts have the same charges through assigned metavariables.
+The final transport charge is checked separately from the preflight charge.
+The facts list's declared element type must use the codec's context under
+reducible transparency; aliases in that index need explicit type transport.
+The wrong-context test uses a fresh heartbeat epoch and an actual
 2,000,000-raw-heartbeat limit; heartbeat/depth exhaustion is rethrown.
 
 For a polynomial over the same selected extension,
