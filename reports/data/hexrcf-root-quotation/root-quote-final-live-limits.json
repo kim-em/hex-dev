@@ -1,0 +1,26 @@
+{
+  "ActiveState": "active",
+  "MainPID": "864578",
+  "ControlGroup": "/user.slice/user-1003.slice/user@1003.service/app.slice/hex-10358-lean-build.service",
+  "MemoryCurrent": "2668900352",
+  "MemoryPeak": "3122954240",
+  "MemoryMax": "34359738368",
+  "MemorySwapMax": "0",
+  "argv": [
+    "/home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/lake",
+    "build",
+    "+RootQuoteJointAudit",
+    "+RootQuoteRender",
+    "HexRCF",
+    "HexRCFRealCoefficients",
+    "+HexRCF.HandlerTests",
+    "+HexRCF.DecisionTests",
+    "+HexRCF.ReifyTests",
+    "+HexRCF.RootReplayConformance",
+    "+HexRCF.RootReplayOrdinaryConformance",
+    "+HexRealClosure.BaseJsonTests",
+    "+KernelReplay.RationalCodecAudit"
+  ],
+  "LEAN_NUM_THREADS": "2",
+  "source_commit": "189d74dce166a3f68019135e56805f73a527e65c"
+}
