@@ -20,6 +20,9 @@ The checks select the computational and semantic modules by their module roots,
 and include theorem documentation.
 -/
 
+/-- Lean's partial-definition facade is opaque, so opacity must fail the parent check. -/
+private opaque opaqueParent : Nat := 0
+
 #lint- docBlame docBlameThm in HexOrderedFn
 
 #lint- docBlame docBlameThm in HexOrderedFnTheory
@@ -27,6 +30,11 @@ and include theorem documentation.
 -- Audit every owned constant, including generated declarations, rather than just examples.
 run_cmd do
   let env ← Lean.getEnv
+  let safeDefinition : Lean.ConstantInfo → Bool
+    | .defnInfo value => value.safety == .safe
+    | _ => false
+  let some opaqueInfo := env.find? ``opaqueParent | throwError "missing opaque control"
+  if safeDefinition opaqueInfo then throwError "opaque recursion parent was accepted"
   let groups := [
     (`HexOrderedFn, [`HexOrderedFn, `HexOrderedFn.Search, `HexOrderedFn.Oracle,
       `HexOrderedFn.Real, `HexOrderedFn.Extension, `HexOrderedFn.Infinitesimal]),
@@ -51,16 +59,17 @@ run_cmd do
       if info.isUnsafe || Lean.isExtern env name ||
           (Lean.Compiler.getImplementedBy? env name).isSome then
         throwError "unproved native implementation: {name}"
-      if info.isPartial then
-        -- Lean generates these two runtime auxiliaries from the checked recursive bodies.
-        unless [``Hex.OrderedFn.Real.sign?.go._unsafe_rec,
+      let recursiveParent := Lean.Compiler.isUnsafeRecName? name
+      if info.isPartial || recursiveParent.isSome then
+        -- Every new recursive definition needs review of its compiler-generated auxiliary.
+        unless info.isPartial && [``Hex.OrderedFn.Real.sign?.go._unsafe_rec,
             ``Hex.OrderedFn.firstSome._unsafe_rec].contains name do
           throwError "unreviewed partial implementation: {name}"
-        let some parent := Lean.Compiler.isUnsafeRecName? name |
+        let some parent := recursiveParent |
           throwError "invalid compiler recursion auxiliary: {name}"
         let some definition := env.find? parent |
           throwError "missing safe recursive definition: {parent}"
-        if definition.isUnsafe || definition.isPartial then
+        unless safeDefinition definition do
           throwError "unchecked recursive definition: {parent}"
       for axiomName in ← Lean.collectAxioms name do
         unless [``propext, ``Classical.choice, ``Quot.sound].contains axiomName do

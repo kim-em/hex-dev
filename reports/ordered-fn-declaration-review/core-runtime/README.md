@@ -40,7 +40,8 @@ executable identities established by that build remain separately scoped.
 It does not execute binaries or infer phase acceptance from a correctness-only verification verdict.
 Tamper controls check standalone archive verification without a source checkout,
 changed executable/source identities, an unauthenticated copied measurement
-record and corrupted verification output:
+record, an empty generated-code inventory, mismatched configuration bindings and
+corrupted verification output:
 
 ```sh
 python3 reports/ordered-fn-declaration-review/core-runtime/test_check.py

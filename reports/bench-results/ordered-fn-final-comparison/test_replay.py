@@ -49,7 +49,10 @@ with tempfile.TemporaryDirectory() as temporary:
     refuse('CPU/thread selection');reset()
     reset = change('consumed-reservation.json', lambda data: edit_json(data, lambda d: d.update(decision_sha256='wrong')))
     refuse('source-pair reservation');reset()
+    path = reference / 'analyze_guard.py'
+    saved = path.read_bytes(); path.write_bytes(saved + b'\n')
+    refuse('unchanged follow-up analyzer'); path.write_bytes(saved)
     result = subprocess.run([sys.executable, str(root / 'replay.py')], capture_output=True, text=True)
     if result.returncode:
         raise RuntimeError(result.stderr)
-print('PASS: six independent corruption/inventory/schedule/median/affinity/reservation refusal controls; clean archive still passes.')
+print('PASS: seven independent corruption/inventory/schedule/median/affinity/reservation/analyzer refusal controls; clean archive still passes.')

@@ -78,6 +78,11 @@ require(build['sdk'] == measured['sdk'] and build['packages'] == measured['packa
         build['native_import_closure'] == measured['native_import_closure'] and
         len(build['native_import_closure']['files']) == manifest['native_files'] == 89,
         'SDK, pin and native import identity')
+require(set(build['generated_code']) == set(measured['generated_code']) == {'Infinitesimal', 'Bench'},
+        'complete generated-code identity')
+require(build['sources']['lakefile.lean'] == manifest['lakefile']['current_sha256'] and
+        measured['sources']['lakefile.lean'] == manifest['lakefile']['measured_sha256'],
+        'archived configuration binding')
 for key, entry in build['generated_code'].items():
     require(sha(raw[entry['capture'] + '.gz']) == entry['sha256'] ==
             measured['generated_code'][key]['sha256'], 'native code identity')
@@ -93,6 +98,6 @@ if args.current:
         head = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=directory, text=True).strip()
         status = subprocess.check_output(['git', 'status', '--porcelain'], cwd=directory, text=True).strip()
         require(head == pin['head'] and status == '', 'current package: ' + name)
-    require(sha((REPOSITORY / 'lakefile.lean').read_bytes()) == manifest['lakefile']['current_sha256'] and
-            measured['sources']['lakefile.lean'] == manifest['lakefile']['measured_sha256'], 'configuration binding')
+    require(sha((REPOSITORY / 'lakefile.lean').read_bytes()) == manifest['lakefile']['current_sha256'],
+            'current configuration binding')
 print('PASS: 11 build records; 5172 bound inputs; 89 native files; 16 pins; identical measured executable/SDK/generated C; no measurements.' + (' Current inputs/pins also match.' if args.current else ''))

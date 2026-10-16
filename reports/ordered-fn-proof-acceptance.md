@@ -76,8 +76,9 @@ constants in ten modules pass. Lint and axiom counts do not replace individual
 API judgments. The same gate rejects owned unsafe, external and
 `implemented_by` implementations. The only allowed partial declarations are
 Lean's generated `_unsafe_rec` auxiliaries for the existing `firstSome` and
-`Real.sign?.go` recursive definitions; their reference parents must be safe and
-total. These are compiler-generated runtime helpers, not handwritten partial
+`Real.sign?.go` recursive definitions. Their reference parents must be kernel
+definitions with safe status; an opaque-parent control rejects the facade used
+by `partial def`. These are compiler-generated runtime helpers, not handwritten partial
 algorithms or additional Hex trust declarations.
 
 The core's field dictionary reuses canonical RationalFn arithmetic. The
@@ -95,9 +96,9 @@ arms, 136 parameter comparisons, matching answer hashes, zero failed arms and
 zero regressions under the unchanged independent-arm-median 10% rule. The
 1,690-file archive retains all raw output, source/build/SDK bindings, protocol,
 consumed reservation and setup/control records. Offline replay recomputes every
-derived result with the byte-identical committed follow-up analyzer. Six negative
-controls reject corrupted data, omissions, altered results, affinity and
-reservation records. Replaying evidence performs no measurements.
+derived result with the byte-identical committed follow-up analyzer. Seven negative
+controls reject corrupted data, omissions, altered results, affinity,
+reservation records and a changed reference analyzer. Replaying evidence performs no measurements.
 
 The historical arm is a fresh, isolated build of the original committed baseline
 `ee490f54889e2db8170c8b9fc6e8568f8a978bbe` with its sixteen pinned requirements and

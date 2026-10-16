@@ -45,6 +45,13 @@ with tempfile.TemporaryDirectory() as temporary:
     run('measured executable identity'); reset()
     reset = change('candidate-source.json', lambda d: d.update(head='wrong'))
     run('unchanged build inputs'); reset()
+    reset = change('candidate-source.json', lambda d: d.update(generated_code={}))
+    run('complete generated-code identity'); reset()
+    path = root / 'manifest.json'
+    saved = path.read_bytes(); record = json.loads(saved)
+    record['lakefile']['current_sha256'] = 'wrong'
+    path.write_text(json.dumps(record))
+    run('archived configuration binding'); path.write_bytes(saved)
     path = comparison / 'capture/candidate-source.json.gz'
     saved = path.read_bytes(); path.write_bytes(saved + b'changed')
     run('measured record compressed binding'); path.write_bytes(saved)
@@ -52,4 +59,4 @@ with tempfile.TemporaryDirectory() as temporary:
     saved = path.read_bytes(); path.write_bytes(saved + b'changed')
     run('compressed binding'); path.write_bytes(saved)
     run()
-print('PASS: standalone archive, altered executable/source, unauthenticated measured record and corrupted verification refusal controls.')
+print('PASS: standalone archive, altered executable/source, unauthenticated measured record, empty code inventory, configuration and corrupted verification refusal controls.')
