@@ -15,7 +15,7 @@ computed values are proposals. This does not quote a complete certificate or
 install a tactic handler. In particular the producer's native context is not
 a frozen source/history certificate. -/
 namespace Hex.RCF.RealCoefficients.AlgebraicPreparation
-open Hex Lean Meta
+open Hex Lean Meta Qq
 
 /-- A checked source interpretation and its executable proposal. The proof
 identifies `expression.toReal` with the source, not with a quoted proposal. -/
@@ -33,6 +33,8 @@ structure Inputs where
   formula : RealFormula.QF (source.coefficients.size+1)
   quantifier : RealFormula.Quantifier
   usage : Hex.Reflect.BudgetUsage
+  /-- Continue proof construction under the same reflection limits. -/
+  config : Hex.RealFormula.Reify.Config := {}
 
 /-- Keep coefficient coordinates first and every original divisor afterward.
 No equality of independently computed algebraic representations is assumed. -/
@@ -119,6 +121,7 @@ private def prepareCore (target : Expr) (nonnegative : Expr → MetaM (Option Ex
       formula := formula
       quantifier := quantifier
       usage := state.budget.consumed
+      config := config
       coefficients := coefficients
       divisors := divisors }
 
@@ -142,4 +145,86 @@ def prepare (target : Expr) (nonnegative : Expr → MetaM (Option Expr) := Field
         zetaDeltaFVarIds := saved.meta.zetaDeltaFVarIds}
     | _ => saved.restore
   return result
+
+private def sourceFunction (entries : Array Entry) (sources : Array Expr)
+    (expected : Expr) : MetaM (Expr × Expr) := do
+  unless entries.size == sources.size do throwError "source identity count differs from its source coordinates"
+  let zero : Q(RealAlgebraicNumber) := q(RealAlgebraicNumber.ofRat 0)
+  let mut values : Array Expr := #[]
+  let mut proofs : Array Expr := #[]
+  for (entry, source) in entries.zip sources do
+    let value ← instantiateMVars entry.expression
+    unless !value.hasFVar && !value.hasMVar && !value.hasLooseBVars do
+      throwError "source acceptance requires closed algebraic expressions"
+    let value ← Hex.RCF.checkExpr `sourceAcceptanceValue value
+    let type ← mkEq (← mkAppM ``RealAlgebraicNumber.toReal #[value]) source
+    let proof ← Hex.RCF.checkProof `sourceAcceptanceIdentity type entry.identity
+    values := values.push value
+    proofs := proofs.push proof
+  let function ← FieldLiteral.finiteExpr (mkConst ``RealAlgebraicNumber) values zero
+  let domain := mkApp (mkConst ``Fin) (mkNatLit entries.size)
+  let pointwise ← withLocalDeclD `i domain fun i => do
+    let actual ← mkAppM ``RealAlgebraicNumber.toReal #[mkApp function i]
+    mkForallFVars #[i] (← mkEq actual (mkApp expected i))
+  let identity ← mkAppM ``funext #[← FieldLiteral.proveFinCases pointwise proofs]
+  return (function, identity)
+
+private def acceptanceCore (prepared : Inputs) (registry : Expr) : MetaM (Expr × Expr) := do
+  let source := prepared.source
+  let original ← instantiateMVars source.original
+  let sourceType ← mkAppM ``Iff
+    #[← mkAppM ``RealFormula.Prenex.toProp #[source.formula, source.valuation], original]
+  let equivalence ← Hex.RCF.checkProof `sourceAcceptanceEquivalence sourceType source.proof
+  let schema ← whnf source.formula
+  unless schema.getAppFn.isConstOf ``RealFormula.Prenex.quant do
+    throwError "source acceptance requires exactly one real quantifier"
+  let args := schema.getAppArgs
+  let quantifier := args[args.size-2]!
+  let matrix ← whnf args.back!
+  unless matrix.getAppFn.isConstOf ``RealFormula.Prenex.matrix do
+    throwError "source acceptance requires a shared quantifier-free matrix"
+  let formula := matrix.getAppArgs.back!
+  let (values, coefficientEq) ← sourceFunction prepared.coefficients.toArray
+    source.coefficients source.valuation
+  let realZero : Q(ℝ) := q(0)
+  let realDivisors ← FieldLiteral.finiteExpr (mkConst ``Real) source.divisors realZero
+  let (divisors, divisorEq) ← sourceFunction prepared.divisors.toArray source.divisors realDivisors
+  let registry ← Hex.RCF.checkExpr `sourceAcceptanceRegistry registry
+  let proof ← mkAppM ``AlgebraicCells.accepts_source
+    #[registry, values, divisors, source.valuation, realDivisors,
+      formula, quantifier, coefficientEq, divisorEq, equivalence]
+  let type ← inferType proof
+  let checked ← Hex.RCF.checkProof `sourceAcceptance type proof
+  return (checked, proof)
+
+/-- Connect mathematical producer acceptance at the actual kernel source
+expressions to the exact original proposition and ordered original divisors.
+The runtime proposal tuple is not used as proof evidence. This does not quote
+frozen source histories or prove a compiled proposal equal to those expressions.
+Proof construction continues the preparation's aggregate reflection budget;
+structured exhaustion and exceptions restore the complete saved state. -/
+def Inputs.acceptance (prepared : Inputs) (registry : Expr) :
+    MetaM (Except Hex.RealFormula.Reify.Error Expr) := do
+  let saved ← saveState
+  let auxName := mkPrivateName (← getEnv) (← mkFreshUserName `SourceAcceptance)
+  let (result, _) ← tryFinally' (withDeclNameForAuxNaming auxName <| withNewMCtxDepth <|
+      withOptions (fun options => debug.skipKernelTC.set (Elab.async.set options false) false) do
+    let (proof, body) ← acceptanceCore prepared registry
+    let action : Hex.RealFormula.Reify.ReifyM Expr := do
+      Hex.RealFormula.Reify.accountProof body
+      pure proof
+    let state : Hex.RealFormula.Reify.State := {
+      config := prepared.config
+      budget := {initial := prepared.config.ring.budget, consumed := prepared.usage} }
+    let accounted ← (action.run state).run
+    match accounted with
+    | .error error => return .error error
+    | .ok (proof, _) => return .ok proof) fun result => do
+      match result with
+      | some (.ok _) => modify fun state => {state with
+          mctx := saved.meta.mctx, postponed := saved.meta.postponed,
+          zetaDeltaFVarIds := saved.meta.zetaDeltaFVarIds}
+      | _ => saved.restore
+  return result
+
 end Hex.RCF.RealCoefficients.AlgebraicPreparation

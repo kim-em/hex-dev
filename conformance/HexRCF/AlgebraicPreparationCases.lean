@@ -227,6 +227,56 @@ run_meta do
           mixed.formula ((GatherCells.guards shared (AlgebraicCells.guards sources mixed.guards)).map input.value)
           packet.radical mixed.quantifier packet.rootGraph packet.cells).toOption == some expected do
         throwError "mixed coefficient/divisor layout changed the quantified verdict"
+  let registry : Q(RealClosure.BaseContext.Registry) := q(fun _ => none)
+  for (label, target, guardCount) in #[
+      (`rationalAcceptance, q(∀ x : ℝ, x^2 ≥ 0), 0),
+      (`algebraicAcceptance, q(∀ x : ℝ, x^2 + Real.sqrt 2 > 0), 0),
+      (`falseAcceptance, q(∀ x : ℝ, x^2 + Real.sqrt 2 < 0), 0),
+      (`divisorAcceptance, q(∀ x : ℝ, x / (Real.sqrt 2 + 1) = x * (Real.sqrt 2 + 1)⁻¹), 2),
+      (`zeroGuardAcceptance, q(∀ _ : ℝ, 0 / (Real.sqrt 2 * Real.sqrt 2 - 2) = 0), 1),
+      (`emptyDomainAcceptance, q(∀ x ∈ Set.Ioc (2 : ℝ) 1,
+        x + 0 / (Real.sqrt 2 * Real.sqrt 2 - 2) = x), 1)] do
+    let prepared ← checked target
+    unless prepared.source.divisors.size == guardCount do
+      throwError "source acceptance guard count changed for {label}: {prepared.source.divisors.size}, expected {guardCount}"
+    let before := (← getMCtx).decls.toList.length
+    let .ok proof ← prepared.acceptance registry
+      | throwError "source acceptance equivalence failed: {label}"
+    unless (← getMCtx).decls.toList.length == before do
+      throwError "successful source acceptance changed caller metavariables"
+    let type ← inferType proof
+    unless type.isAppOfArity ``Iff 2 do throwError "source acceptance returned no equivalence"
+    let domain := mkApp (mkConst ``Fin) (mkNatLit prepared.source.divisors.size)
+    let divisors ← FieldLiteral.finiteExpr (mkConst ``Real) prepared.source.divisors q((0 : ℝ))
+    let guards ← withLocalDeclD `i domain fun i => do
+      mkForallFVars #[i] (← mkAppM ``Ne #[mkApp divisors i, q((0 : ℝ))])
+    let expected ← mkAppM ``And #[guards, target]
+    unless ← isDefEq type.getAppArgs[1]! expected do
+      throwError "source acceptance weakened the original goal or divisor conjunction"
+    let name := `Hex.RCF.AlgebraicPreparationConformance ++ label
+    addDecl (.thmDecl {name,levelParams := [],type,value := proof})
+    let budget := {prepared.config.ring.budget with proofNodes := prepared.usage.proofNodes}
+    let ring := {prepared.config.ring with budget}
+    let config := {prepared.config with ring}
+    let limited := {prepared with config}
+    let beforeNames := (← (← getEnv).getLocalConstantInfos).map (·.name)
+    unchanged do
+      let .error (.budget exhausted) ← limited.acceptance registry
+        | throwError "source acceptance reset its aggregate proof budget"
+      unless exhausted.dimension == .proofNodes do throwError "wrong source acceptance exhaustion"
+    unless (← (← getEnv).getLocalConstantInfos).map (·.name) == beforeNames do
+      throwError "exhausted source acceptance leaked auxiliary declarations"
+    if h : 0 < prepared.source.coefficients.size then
+      let i : Fin prepared.source.coefficients.size := ⟨0,h⟩
+      let entry := prepared.coefficients[i]
+      let edited := {entry with identity := q(True.intro)}
+      let corrupt := {prepared with coefficients := prepared.coefficients.set i edited}
+      unchanged do
+        let failed ← tryCatchRuntimeEx (corrupt.acceptance registry *> pure false) (fun _ => pure true)
+        unless failed do throwError "source acceptance trusted an edited coefficient identity"
+      unless (← (← getEnv).getLocalConstantInfos).map (·.name) == beforeNames do
+        throwError "rejected source acceptance leaked auxiliary declarations"
+  logInfo "exact original algebraic producer acceptance, false source, original zero guards, empty domains, aggregate proof budgets and rollback checked"
   addDecl (.thmDecl {
     name := `Hex.RCF.AlgebraicPreparationConformance.runFinished
     levelParams := [], type := mkConst ``True, value := mkConst ``True.intro })
