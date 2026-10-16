@@ -1,0 +1,379 @@
+{
+  "question": "Does maximal closed-coefficient routing change the build-only proof cost of the existing goal forall x, x^2 + 2*sqrt(2) > 0?",
+  "cpu": 28,
+  "schedule": [
+    [
+      "A",
+      "B"
+    ],
+    [
+      "B",
+      "A"
+    ],
+    [
+      "A",
+      "B"
+    ],
+    [
+      "B",
+      "A"
+    ]
+  ],
+  "goal_sha256": "0034b507316c1ee4dbb3fd6672b54ecf96b1df4d6e969f5ffdba80641e34305f",
+  "imports": [
+    "HexRCF.RealCoefficients.CommonTactic"
+  ],
+  "scope": "Fresh one-module actual rcf elaboration and ordinary-kernel proof construction, with cached imports. Whole bounded Lake invocation is timed, including dependency checks and startup. Not isolated tactic runtime, numerical solver scaling or a generic speedup claim.",
+  "limits": {
+    "memory_max_bytes": 34359738368,
+    "swap_max_bytes": 0,
+    "lean_threads": 2,
+    "own_build_concurrency": 1
+  },
+  "arms": {
+    "A": {
+      "source_commit": "435a617b7ce679c76b486acec9f524567ec019d8",
+      "source_tree": "6394c9ea6c30e507a5f48634600240e3b43c72cf",
+      "reifier_sha256": "baed5653cd76b6911e23d1260e79964ce6ecc47ba3bcffc484bfc330465ede54",
+      "manifest_sha256": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+      "project": "/home/kim/.codex/tasks/hex-10358/routing-A"
+    },
+    "B": {
+      "source_commit": "7188977171dbac1e7da2906e3245066274021a6d",
+      "source_tree": "82eec8254c7a8adf6156023db216070b2cd0037c",
+      "reifier_sha256": "3b0d08f14332d7f9d95ac569d9512c67370b01cb8ad74ae3578450c151aa0cee",
+      "manifest_sha256": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+      "project": "/home/kim/.codex/tasks/hex-10358/routing-B"
+    }
+  },
+  "warmups": [
+    {
+      "arm": "A",
+      "target": "RoutingInventory",
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+        "/run/current-system/sw/bin/env",
+        "LAKE_NO_CACHE=true",
+        "/run/current-system/sw/bin/taskset",
+        "-c",
+        "28",
+        "/run/current-system/sw/bin/lake",
+        "build",
+        "RoutingInventory"
+      ],
+      "cwd": "/home/kim/.codex/tasks/hex-10358/routing-A",
+      "load_before": [
+        5.15966796875,
+        6.05712890625,
+        7.05712890625
+      ],
+      "started_unix": 1792131897.9271464,
+      "log": "routing-warm-A.log",
+      "exit_code": 0,
+      "elapsed_seconds": 66.50477918700199,
+      "load_after": [
+        4.91943359375,
+        5.79296875,
+        6.8916015625
+      ],
+      "log_sha256": "95d662a3f7fe048b6b5eda78694ece358665dc9ccde7002faacc84b6d21efbea"
+    },
+    {
+      "arm": "B",
+      "target": "RoutingInventory",
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+        "/run/current-system/sw/bin/env",
+        "LAKE_NO_CACHE=true",
+        "/run/current-system/sw/bin/taskset",
+        "-c",
+        "28",
+        "/run/current-system/sw/bin/lake",
+        "build",
+        "RoutingInventory"
+      ],
+      "cwd": "/home/kim/.codex/tasks/hex-10358/routing-B",
+      "load_before": [
+        4.91943359375,
+        5.79296875,
+        6.8916015625
+      ],
+      "started_unix": 1792131964.4324064,
+      "log": "routing-warm-B.log",
+      "exit_code": 0,
+      "elapsed_seconds": 29.552551051980117,
+      "load_after": [
+        4.97607421875,
+        5.73095703125,
+        6.83642578125
+      ],
+      "log_sha256": "fe6066b436668aff7fa4991ce5e0f220a8b6612496892b1771fa7a9ff395d28b"
+    }
+  ],
+  "samples": [
+    {
+      "arm": "A",
+      "target": "RoutingProbe",
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+        "/run/current-system/sw/bin/env",
+        "LAKE_NO_CACHE=true",
+        "/run/current-system/sw/bin/taskset",
+        "-c",
+        "28",
+        "/run/current-system/sw/bin/lake",
+        "build",
+        "RoutingProbe"
+      ],
+      "cwd": "/home/kim/.codex/tasks/hex-10358/routing-A",
+      "load_before": [
+        4.97607421875,
+        5.73095703125,
+        6.83642578125
+      ],
+      "started_unix": 1792131993.9855309,
+      "log": "routing-pair-0-A.log",
+      "exit_code": 0,
+      "elapsed_seconds": 10.493007949000457,
+      "load_after": [
+        4.7392578125,
+        5.65673828125,
+        6.7998046875
+      ],
+      "log_sha256": "88a25e0b121991a5a344c21d54cda44f3ea53fd2c740911c827f930c51eee033",
+      "olean_bytes": 548640,
+      "trial": 0
+    },
+    {
+      "arm": "B",
+      "target": "RoutingProbe",
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+        "/run/current-system/sw/bin/env",
+        "LAKE_NO_CACHE=true",
+        "/run/current-system/sw/bin/taskset",
+        "-c",
+        "28",
+        "/run/current-system/sw/bin/lake",
+        "build",
+        "RoutingProbe"
+      ],
+      "cwd": "/home/kim/.codex/tasks/hex-10358/routing-B",
+      "load_before": [
+        4.7392578125,
+        5.65673828125,
+        6.7998046875
+      ],
+      "started_unix": 1792132004.4791899,
+      "log": "routing-pair-0-B.log",
+      "exit_code": 0,
+      "elapsed_seconds": 9.886580246995436,
+      "load_after": [
+        5.314453125,
+        5.75048828125,
+        6.81884765625
+      ],
+      "log_sha256": "3f95effc98c69d8dbef64e4a459bb09f818df484cb1eb4224e9d9ab89c2f5368",
+      "olean_bytes": 616456,
+      "trial": 0
+    },
+    {
+      "arm": "B",
+      "target": "RoutingProbe",
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+        "/run/current-system/sw/bin/env",
+        "LAKE_NO_CACHE=true",
+        "/run/current-system/sw/bin/taskset",
+        "-c",
+        "28",
+        "/run/current-system/sw/bin/lake",
+        "build",
+        "RoutingProbe"
+      ],
+      "cwd": "/home/kim/.codex/tasks/hex-10358/routing-B",
+      "load_before": [
+        5.314453125,
+        5.75048828125,
+        6.81884765625
+      ],
+      "started_unix": 1792132014.366368,
+      "log": "routing-pair-1-B.log",
+      "exit_code": 0,
+      "elapsed_seconds": 9.879756340000313,
+      "load_after": [
+        5.259765625,
+        5.7255859375,
+        6.798828125
+      ],
+      "log_sha256": "d85174a5127928153a8ced191d0a71cd64bcf333443b992ad55296c0d0cf6a36",
+      "olean_bytes": 616456,
+      "trial": 1
+    },
+    {
+      "arm": "A",
+      "target": "RoutingProbe",
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+        "/run/current-system/sw/bin/env",
+        "LAKE_NO_CACHE=true",
+        "/run/current-system/sw/bin/taskset",
+        "-c",
+        "28",
+        "/run/current-system/sw/bin/lake",
+        "build",
+        "RoutingProbe"
+      ],
+      "cwd": "/home/kim/.codex/tasks/hex-10358/routing-A",
+      "load_before": [
+        5.259765625,
+        5.7255859375,
+        6.798828125
+      ],
+      "started_unix": 1792132024.2467444,
+      "log": "routing-pair-1-A.log",
+      "exit_code": 0,
+      "elapsed_seconds": 10.394330230017658,
+      "load_after": [
+        5.44775390625,
+        5.75146484375,
+        6.7958984375
+      ],
+      "log_sha256": "1e5d57542a458f7da0551701c9829269756e99f73792130cd45851a53eff3352",
+      "olean_bytes": 548640,
+      "trial": 1
+    },
+    {
+      "arm": "A",
+      "target": "RoutingProbe",
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+        "/run/current-system/sw/bin/env",
+        "LAKE_NO_CACHE=true",
+        "/run/current-system/sw/bin/taskset",
+        "-c",
+        "28",
+        "/run/current-system/sw/bin/lake",
+        "build",
+        "RoutingProbe"
+      ],
+      "cwd": "/home/kim/.codex/tasks/hex-10358/routing-A",
+      "load_before": [
+        5.44775390625,
+        5.75146484375,
+        6.7958984375
+      ],
+      "started_unix": 1792132034.6416943,
+      "log": "routing-pair-2-A.log",
+      "exit_code": 0,
+      "elapsed_seconds": 10.531832761975238,
+      "load_after": [
+        5.4462890625,
+        5.74267578125,
+        6.7822265625
+      ],
+      "log_sha256": "522dd28c774394b445e30b76f7743f716ed88dd3bc7860a3515a7a120989b7c7",
+      "olean_bytes": 548640,
+      "trial": 2
+    },
+    {
+      "arm": "B",
+      "target": "RoutingProbe",
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+        "/run/current-system/sw/bin/env",
+        "LAKE_NO_CACHE=true",
+        "/run/current-system/sw/bin/taskset",
+        "-c",
+        "28",
+        "/run/current-system/sw/bin/lake",
+        "build",
+        "RoutingProbe"
+      ],
+      "cwd": "/home/kim/.codex/tasks/hex-10358/routing-B",
+      "load_before": [
+        5.4462890625,
+        5.74267578125,
+        6.7822265625
+      ],
+      "started_unix": 1792132045.1741927,
+      "log": "routing-pair-2-B.log",
+      "exit_code": 0,
+      "elapsed_seconds": 11.475650877982844,
+      "load_after": [
+        5.826171875,
+        5.81689453125,
+        6.79541015625
+      ],
+      "log_sha256": "eb2e9cf83ed6d76c88fabc948fc75eba8a96ad3b5376895fbcc2fe4c07baf4a0",
+      "olean_bytes": 616456,
+      "trial": 2
+    },
+    {
+      "arm": "B",
+      "target": "RoutingProbe",
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+        "/run/current-system/sw/bin/env",
+        "LAKE_NO_CACHE=true",
+        "/run/current-system/sw/bin/taskset",
+        "-c",
+        "28",
+        "/run/current-system/sw/bin/lake",
+        "build",
+        "RoutingProbe"
+      ],
+      "cwd": "/home/kim/.codex/tasks/hex-10358/routing-B",
+      "load_before": [
+        5.826171875,
+        5.81689453125,
+        6.79541015625
+      ],
+      "started_unix": 1792132056.6505475,
+      "log": "routing-pair-3-B.log",
+      "exit_code": 0,
+      "elapsed_seconds": 11.401202390989056,
+      "load_after": [
+        5.99365234375,
+        5.85546875,
+        6.7978515625
+      ],
+      "log_sha256": "1c31d1e04441f8f9c6fb0ac53603ed54c6028a11e34ac2194cfb979779fa12ba",
+      "olean_bytes": 616456,
+      "trial": 3
+    },
+    {
+      "arm": "A",
+      "target": "RoutingProbe",
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+        "/run/current-system/sw/bin/env",
+        "LAKE_NO_CACHE=true",
+        "/run/current-system/sw/bin/taskset",
+        "-c",
+        "28",
+        "/run/current-system/sw/bin/lake",
+        "build",
+        "RoutingProbe"
+      ],
+      "cwd": "/home/kim/.codex/tasks/hex-10358/routing-A",
+      "load_before": [
+        5.99365234375,
+        5.85546875,
+        6.7978515625
+      ],
+      "started_unix": 1792132068.0526001,
+      "log": "routing-pair-3-A.log",
+      "exit_code": 0,
+      "elapsed_seconds": 25.51371070498135,
+      "load_after": [
+        7.24267578125,
+        6.1708984375,
+        6.87841796875
+      ],
+      "log_sha256": "ba6f768d82e6a7d727e9fbc49ff403904df409a8f1c7763a29417413ce628688",
+      "olean_bytes": 548640,
+      "trial": 3
+    }
+  ]
+}

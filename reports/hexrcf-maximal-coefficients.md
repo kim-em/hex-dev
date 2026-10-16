@@ -235,3 +235,58 @@ All 262 HexRCF conformance roots, the base and optional libraries and the full
 manual pass; the warm 14,576-job selection takes 12.388s at 2 GiB peak with no
 swap. This checks the declared compatibility scope and makes no general backend
 completeness or performance claim.
+
+
+Nested division and inversion retain divisors in depth-first preorder: the
+outer divisor precedes nested operands, with the left operand visited first.
+Closed and variable-bearing division now have the same ordering. Exact source
+inventories and original-goal equivalences cover both forms. Metadata around
+a named coefficient does not stop maximal whole-expression recognition.
+The additional [validation record](data/hexrcf-source-identities/review/context.json)
+also selects all 16 base-test modules; the earlier all-conformance selections
+built the base umbrella without selecting those tests. A file's presence in a
+hash inventory alone does not establish executed test coverage.
+
+
+## Existing scalar-multiple routing cost
+
+The named question is whether whole-coefficient routing imposes a practical
+cost on the existing goal `∀ x : ℝ, x² + 2 * √2 > 0`. The build-only probe uses
+identical source and the same explicit `CommonTactic` import in both arms.
+Before this tranche (`435a617b7c`), its source coordinate is `√2` and the single
+coefficient handler has priority. At `7188977171` the coordinate is the whole
+`2 * √2`, handled by the common-field frontend. Separate warm consumers check
+both actual proofs, source inventories, handler priorities and axiom sets.
+This compares the two source versions; it does not isolate each code change.
+
+Each timed invocation freshly builds only that proof module with cached
+imports. One automatically chosen CPU is fixed for all runs. The four fixed
+adjacent pairs alternate AB/BA; every completed run is retained, including
+the final baseline sample at 25.514s and 7.8 GiB. Host load is recorded context,
+not a filter or reason to discard a sample. The full command includes bounded
+Lake startup and dependency checking as well as elaboration and kernel proof
+construction.
+
+| Pair order | Before A (s) | After B (s) | B/A |
+| --- | ---: | ---: | ---: |
+| AB | 10.493 | 9.887 | 0.942 |
+| BA | 10.394 | 9.880 | 0.950 |
+| AB | 10.532 | 11.476 | 1.090 |
+| BA | 25.514 | 11.401 | 0.447 |
+
+The medians are 10.512s before and 10.644s after. Module observations range
+from 4.7–15s before and 4–5.4s after; they remain whole-module observations,
+not timings of an isolated kernel phase. The pairs give no consistent timing
+direction and establish neither a general slowdown nor a speedup. No unchanged
+rerun was used. Before-arm aggregate peaks range from about 1 to 7.8 GiB;
+after-arm peaks are about 1 GiB. All runs use the aggregate 32 GiB cap and no
+swap.
+
+The serialized module is 548,640 bytes before and 616,456 bytes after, an
+increase of 67,816 bytes (about 12.4%). This includes auxiliary declarations
+and metadata; it is not a physical-sharing or expanded-work measurement.
+The [additional record](data/hexrcf-source-identities/review/context.json)
+retains both complete source-tree bindings, identical probe sources, pinned
+manifest hashes, all warmups, command logs, module sizes and load observations.
+This one-goal study does not establish scaling or extend the earlier
+#10633/#10634 performance claims.
