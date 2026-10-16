@@ -1,12 +1,15 @@
 # OrderedFn computational API decisions
 
-The five production computational modules match the assessed source bytes in
-the individual [source assessment](computational.md) and [manifest](manifest.json), at
-`79b991882a486a8c8d05fd26aaf1656358834b7e`. This adopts their proof/API judgments
-for the computational library, including the public interfaces and private
-termination instance discussed below. It does not complete Phase 6: the four
-flagged regressions in the [retained comparison](../bench-results/ordered-fn-regression-followup/README.md)
-remain unresolved, and no further unchanged comparison is permitted.
+The individual [source assessment](computational.md) and [manifest](manifest.json)
+cover the five computational modules at `79b991882a486a8c8d05fd26aaf1656358834b7e`.
+`Search`, `Real` and `Extension` still match those source bytes. The subsequent
+[quotient assessment](../bench-results/ordered-fn-positive-quotient/README.md#declaration-assessment)
+and [sign/scan assessment](../bench-results/ordered-fn-sign-scan/README.md#declaration-assessment)
+review each changed or added declaration in `Oracle` and `Infinitesimal`.
+Together these cover the current computational implementation. The decisions
+below adopt the public interfaces and private termination instance; the
+[final acceptance](../ordered-fn-proof-acceptance.md) separately checks the
+complete computational regression and remaining phase requirements.
 
 ## Retention decisions and the two reference environments
 
@@ -53,7 +56,7 @@ and `Extension`. Their direct imports are:
 | `Search` | `Init`, for accessible recursion and the actual trial search. No interval, polynomial or semantic theory input is required. |
 | `Oracle` | `Init.Data.Rat.Lemmas` and `Init.Data.Dyadic.Basic`, for rational bound arithmetic and exact dyadic conversion. The dyadic constructor is a public adapter; it does not import HexInterval. |
 | `Real` | `Search`, `Oracle` and `HexRationalFn`, for exact Horner bounds and search on canonical fractions. |
-| `Infinitesimal` | `HexRationalFn`, for canonical fraction storage and arithmetic. The first-nonzero-coefficient scan is defined in `Infinitesimal` itself. It does not import real-provider refinement. |
+| `Infinitesimal` | `HexRationalFn`, for canonical fraction storage and arithmetic; `Init.Util`, for the proved core pointer-equality shortcut. The first-nonzero-coefficient scan is defined here. It does not import real-provider refinement. |
 | `Extension` | `Real`, for fixed-provider registration and search. Native field operations come from `HexRationalFn.Field` through that import. |
 
 The two `HexRationalFn` imports re-export its whole public computational surface,
@@ -70,7 +73,8 @@ imports neither its Theory companion nor Mathlib/Tau Ceti. The independent
 import-DAG checks remain required for later source changes.
 
 The [automation assessment](quality.md), with the qualification below, applies
-to these unchanged source bytes.
+to the reviewed sources. The native replacements are assessed separately above;
+their whole-function equalities leave the public semantic statements unchanged.
 Exact endpoint/storage/request normalizations use simp or ext. `Real.attempt_zero`
 and `Real.sign_zero` are explicit public equations, not simp registrations. Search equations
 and semantic transfers stay explicit: rewriting recursive search globally would
@@ -86,18 +90,20 @@ LE/LT and decidability instances defined by sign; they supply no order laws.
 
 The original source manifest and both compiler captures retain their source
 checkpoints and historical reference counts. The range examples cited above
-are outside the original HexManual scan and included in v7. The five module
-hashes agree with the original manifest, and the retained v7 rows match every
-declaration and count in the table above. The v7 archive checker verifies its
+are outside the original HexManual scan and included in v7. The three unchanged module
+hashes agree with the original manifest; the two modified modules have the
+separate declaration assessments linked above. The retained v7 rows match every
+declaration and count in the table above at that capture. The v7 archive checker verifies its
 source/complete tags, graph data, declared client coverage and axiom inventory.
-No fresh capture or timing collection is needed to adopt judgments about these
-unchanged computational sources. Current-source mode can correctly refuse a
+No fresh reference capture is needed to reuse judgments about unchanged
+declarations. The changed native implementations have a complete new
+[comparison](../bench-results/ordered-fn-final-comparison/README.md). Current-source mode can correctly refuse a
 later dependency/import environment without invalidating the retained archive.
 
 This settles the computational API-retention and direct-import judgments stated
-here. It is not a new whole-environment lint or native performance pass. Existing
-lint, manual and kernel checks retain their recorded scopes. The computational
-library remains at Phase 5 until its applicable regression and remaining final
-phase checks are satisfied. In particular, the four median-rule regressions are
-not erased by proof erasure, source identity, comparison improvements elsewhere,
-or the companion's independent Phase 7.
+here. The complete changed-source comparison now passes for all 136 parameters;
+it does not alter the earlier observations or their verdicts. Current lint,
+ordinary-kernel, conformance and manual evidence, alongside the individual
+assessments and these retention decisions, are recorded in the
+[final acceptance](../ordered-fn-proof-acceptance.md). The companion's independent
+Phase 7 supplies no computational performance evidence.

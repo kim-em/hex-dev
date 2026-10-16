@@ -80,7 +80,7 @@ libraries:
   HexOrderedFn:
     deps: [HexRationalFn, HexPoly, HexPolyFast]
     mathlib: false
-    done_through: 5
+    done_through: 7
     status: active
   HexOrderedFnTheory:
     deps: [HexOrderedFn, HexRationalFnTheory, HexPolyTheory]
