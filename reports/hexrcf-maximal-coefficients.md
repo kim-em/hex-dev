@@ -30,8 +30,9 @@ universal or existential soundness theorem. A separate
 [fresh kernel consumer](../conformance/HexRCF/MaximalCoefficientsKernel.lean)
 rechecks the theorem bodies and their transitive axiom closure, requiring
 exactly `propext`, `Classical.choice` and `Quot.sound`.
-The existing [manual chapter](../HexManual/Chapters/HexRCF.lean) runs all three
-examples and explains the coefficient and divisor behavior.
+The existing [manual chapter](../HexManual/Chapters/HexRCF.lean) includes a
+focused [subsection](../HexManual/Chapters/HexRCF/ClosedCoefficients.lean) that
+runs all three examples and explains the coefficient and divisor behavior.
 
 The supplied-bound proof constructor normalizes only `mkRat` and division
 before nonlinear arithmetic. This preserves a supplied bound on a square:
@@ -84,3 +85,15 @@ Lean expressions. All eight final captures were opened and inspected. Their
 [inspection metadata](data/hexrcf-maximal-coefficients/maximal-coefficients-inspection.json)
 reports zero local overflow for the changed targets; the whole book and older
 code blocks are outside that layout claim.
+
+The [included-subsection record](data/hexrcf-maximal-coefficients/followup/context.json)
+binds nine source files and the subsequent layout validation at `573922ae85`.
+The parent chapter has 2,992 lines and its included subsection has 44;
+both satisfy the 3,000-line source cap. The full 14,298-job render passes
+in 2m52.565s at 2.2 GiB peak. The separate browser capture passes in 11.512s
+at 6.4 GiB peak, with all eight relocated captures opened and zero local
+overflow. Its dependency, admission, copyright and line-count checks pass.
+The retained earlier render failure identifies an invalid subsection placement;
+the final include follows the parent section's blocks as Verso requires.
+Production frontend code and the audited conformance proof bodies are unchanged
+by this documentation split. The earlier record and images remain intact.

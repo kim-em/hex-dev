@@ -1,0 +1,106 @@
+{
+  "source_commit": "573922ae8583760ee6323ddd8e136f10ae76b507",
+  "sources_sha256": {
+    "adapters/HexRCF/RealCoefficients/Reify.lean": "42eee2d20f60046a3bd4aba8d658b392c83e7d89e9f66b95f1ea17036e03c9e1",
+    "adapters/HexRCF/RealCoefficients/Finite.lean": "f9b93914a036e125f0d1ade9fe8908ecbc1efb89507cf6cf60662a69fde4ec02",
+    "conformance/HexRCF/MaximalCoefficients.lean": "c1accdf485291496e4f507b05c1ae506067e08cd55a37026fda4aee385e115db",
+    "conformance/HexRCF/MaximalCoefficientsConformance.lean": "9dbff8f99ae78be6ad44c4e2a67a70f9d863e5bacd94298a37dc25eea379645f",
+    "conformance/HexRCF/MaximalCoefficientsKernel.lean": "3ca065fc79d5100e03634ed41c7ce36593685eede8c5e2244ea37219bad53bbe",
+    "HexManual/Chapters/HexRCF.lean": "ee31a680d1e791e4c66b0a3ac3b5931ac86c79c55e0af471cc458b48271d1259",
+    "HexRCF/README.md": "a2b351bf07337a05ad8751651f08bbd94a3b1d44b8e11d8c88441bf439b2a37c",
+    "lakefile.lean": "24b29a02ebedbd71706172dcb2667902d33541947126e7fb9fd2a848e6209e11",
+    "HexManual/Chapters/HexRCF/ClosedCoefficients.lean": "e9e85ec3706aca45abf62c569818be2de3145b8a90d79c827d68c47d132cf685"
+  },
+  "baseline_record": "reports/data/hexrcf-maximal-coefficients/context.json",
+  "baseline_record_sha256": "0194127c5aa3d481c925416d95dc551c914df4c30bc517eb4a67ff8f0845d13a",
+  "logs": {
+    "reports/data/hexrcf-maximal-coefficients/followup/maximal-coefficients-render-3.log.gz": {
+      "sha256": "a234a654643fb3d76e023e6ae56aa54e118fd9c6aa9ac1e79378a6c6ab125b09",
+      "uncompressed_sha256": "da6cb23cc4d5008a28093a3d15a3451ccea25bcd16ebc70583fd9121b0327cfc"
+    },
+    "reports/data/hexrcf-maximal-coefficients/followup/maximal-coefficients-render-4.log.gz": {
+      "sha256": "1bf6e7e707275c77c549233672b9c412d146b2993e4a857cc909b26ae03c00a4",
+      "uncompressed_sha256": "1bccef52785a25877b347dc1c49edd7a5dd39c9228c9f8cb0d4a741b4d13b721"
+    },
+    "reports/data/hexrcf-maximal-coefficients/followup/maximal-coefficients-browser-3.log.gz": {
+      "sha256": "76958411a014d3bd945e9210d95d9db9a50c175702bf4454de3a8817bf19b030",
+      "uncompressed_sha256": "8cf2239b63222b82af802b3f5552663bfce2c21575aa3e72688d187e945ea72a"
+    },
+    "reports/data/hexrcf-maximal-coefficients/followup/maximal-coefficients-dag-3.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-maximal-coefficients/followup/maximal-coefficients-admissions-3.log.gz": {
+      "sha256": "393a7eaa36503431e86a311ec82eee40747b54ade5849165cea76009640b5864",
+      "uncompressed_sha256": "3a4b1fba00ba25aa67a50a123a3d2f35f7fc7406146f5580532eb399cb37c63c"
+    },
+    "reports/data/hexrcf-maximal-coefficients/followup/maximal-coefficients-copyright-3.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-maximal-coefficients/followup/maximal-coefficients-lines-3.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-maximal-coefficients/followup/maximal-coefficients-dag-4.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-maximal-coefficients/followup/maximal-coefficients-admissions-4.log.gz": {
+      "sha256": "393a7eaa36503431e86a311ec82eee40747b54ade5849165cea76009640b5864",
+      "uncompressed_sha256": "3a4b1fba00ba25aa67a50a123a3d2f35f7fc7406146f5580532eb399cb37c63c"
+    },
+    "reports/data/hexrcf-maximal-coefficients/followup/maximal-coefficients-copyright-4.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-maximal-coefficients/followup/maximal-coefficients-lines-4.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "artifacts_sha256": {
+    "reports/data/hexrcf-maximal-coefficients/followup/maximal-coefficients-inspection.json": "698c42cdbc1c5e1473cd3d049413cae1c6752e718fa5bc08d71cbe8dcac77585",
+    "reports/data/hexrcf-maximal-coefficients/followup/maximal-coefficients-desktop-api-end.png": "53b6c52b4bc2fbb5cbe05b764e72b21cd94cc12aec10a2af882a3d9af242a9d4",
+    "reports/data/hexrcf-maximal-coefficients/followup/maximal-coefficients-desktop-api-start.png": "0ab349e3033737416ad53eee40905e74e520cb31759af11792882e51f1c5dc7d",
+    "reports/data/hexrcf-maximal-coefficients/followup/maximal-coefficients-desktop-guards.png": "863359a7a7c82f975fa83f2560288568d314616e947f248f5c5783e5126ddbd2",
+    "reports/data/hexrcf-maximal-coefficients/followup/maximal-coefficients-desktop-schema.png": "9f8c3d969ba0a5c3b0734e56aa7bed9787333d8a122274ea6d11e7147287b9a3",
+    "reports/data/hexrcf-maximal-coefficients/followup/maximal-coefficients-narrow-api-end.png": "04a55350be4fa81b0bf9202b4bf3ae93b35f6186d4e8c2bdfeb1489e7c0ce1a8",
+    "reports/data/hexrcf-maximal-coefficients/followup/maximal-coefficients-narrow-api-start.png": "2f05e69daaab2a0cf658e176eaa5230651365fc75792e9934f490b2a280a5dd0",
+    "reports/data/hexrcf-maximal-coefficients/followup/maximal-coefficients-narrow-guards.png": "0a44df16b1dba22883dead646bad846dfc6891cca55b2ee036a54167fed7a403",
+    "reports/data/hexrcf-maximal-coefficients/followup/maximal-coefficients-narrow-schema.png": "4d3384ccfbdc0f613395b09992744e8baa690588cbdc9e3119cf2410af1112d6"
+  },
+  "selected_validation": [
+    "maximal-coefficients-render-4.log",
+    "maximal-coefficients-browser-3.log"
+  ],
+  "metadata_exit_status": {
+    "dag-4": 0,
+    "admissions-4": 0,
+    "copyright-4": 0,
+    "lines-4": 0
+  },
+  "earlier_failed_validation": {
+    "maximal-coefficients-render-3.log": {
+      "source_commit": "ae0931c11fa14d91d999acb8c0ca19ffecbfc941",
+      "reason": "Verso forbids parent prose after an included subsection; subsequent unknown identifiers are consequences of that document error. The child proof module itself passed."
+    }
+  },
+  "layout": {
+    "opened_captures": 8,
+    "changed_target_overflow": 0,
+    "whole_book_overflow_claim": false
+  },
+  "file_cap": {
+    "parent_lines": 2992,
+    "child_lines": 44,
+    "cap": 3000
+  },
+  "limits": {
+    "memory_max_bytes": 34359738368,
+    "swap_max_bytes": 0,
+    "lean_threads": 2,
+    "own_build_concurrency": 1
+  },
+  "scope": "Included manual subsection and final metadata; production frontend and actual conformance proof bodies unchanged from the baseline source."
+}
