@@ -165,8 +165,13 @@ the required inequalities, existential witness and guarded inverse. Separate
 when the supplied evidence leaves a divisor sign unresolved.
 
 `Hex.RCF.RealCoefficients.Reify.prepare` produces the shared source schema,
-fixed coefficient valuation and equivalence to the original goal. The optional
-adapter is validated through the default `HexRCFRealCoefficients` Lake target
+fixed coefficient valuation and equivalence to the original goal. Each maximal
+closed expression containing a named or registered input occupies one
+coefficient coordinate: `Real.sqrt 2 + Real.sqrt 3`, its negation
+or a natural power stays whole. Purely rational arithmetic remains in the shared
+polynomial syntax. All original divisor obligations are collected before this
+abstraction, including inside zero products and quotients.
+The optional adapter is validated through the default `HexRCFRealCoefficients` Lake target
 and is not yet published to the split repository. See the
 [SPEC](SPEC/hex-rcf.md#planned-real-coefficient-extension).
 
