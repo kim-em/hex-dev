@@ -500,8 +500,10 @@ with arbitrary actual suffixes and complete root requests. These use only the
 validated target history; no source realization or independent coefficient
 agreement is supplied. This is relative semantic realization. The general
 accepted finite-replay exporter and arbitrary interleaved ordinary-real point
-construction remain separate obligations. Constructing a missing joint provider
-history remains the caller’s semantic obligation.
+construction remain separate obligations. Native missing-history construction
+is available through `RealPrefix.extend?`; supplying progress and relative
+transcendence over each actual constructed predecessor remains the caller's
+obligation, for example transcendence of `b` over `ℚ(a)` rather than over `ℚ`.
 
 Reconciled shared and live enlargement retain canonical original owners and
 all cached dependencies. `Shared.Model.enlargeReconciled` and
@@ -1878,22 +1880,31 @@ exact metadata predicate, including rejection of duplicate keys and missing
 joint keys. They require no fabricated provider progress. A reversed-provider
 theorem uses a supplied joint provider model and its actual native insertion.
 No new relative-transcendence or convergence premise is inferred by either
-search. For missing histories, `RealPrefix.extend?` constructs successive
-provider stages from progress at each actual predecessor; `Catalog.construct?`
-retains the resulting prefix and updated catalog. The companion's
-`RealPrefix.Model.Valid` supplies containment and predecessor-relative
-transcendence along that path, and `extend?_model` constructs the returned
-prefix's interpretation. `Live.Request.gatherConstructed?` then gathers at that
-constructed history and maximum infinitesimal depth. Its companion success law
-requires path progress, path validity and distinct owner keys; no completed
-joint target model is supplied. The existing `BaseHistoryTests` cover two-stage
-construction, duplicate reuse and a missing second packet. These APIs do not
-infer missing provider proofs. The installed-prefix search commits to its first
-eligible prefix; without
-the catalog model invariant, a failed gather does not imply that every later
+search. The installed-prefix search commits to its first eligible prefix;
+without the catalog model invariant, a failed gather does not imply that every later
 installed prefix would fail. The ordered and reconciled selectors can choose
 different targets: an earlier compatible prefix may contain the same keys in
 a different order, making it eligible only for the reconciled selector.
+
+For missing histories, `RealPrefix.extend?` constructs successive provider
+stages from progress at each actual predecessor. `Catalog.construct?` retains
+the result and returned catalog, unchanged when that path is already installed.
+The caller must prove `RealPrefix.Model.Valid`: containment and relative
+transcendence of each new provider over the actual interpreted predecessor,
+for example `b` over `ℚ(a)`. Width bounds are not part of `Valid`; they are needed
+when deriving a progress packet through `RealPrefix.Model.progress`.
+`extend?_model` proves that the returned prefix has a provider model.
+
+`Live.Request.gatherConstructed?` then gathers at that history and maximum
+infinitesimal depth. The development-only `HexRealClosureTheory.ConstructedCatalog`
+success law requires a model of the seed prefix, path progress, path validity
+and distinct owner keys; it requires no completed joint target model. Successful
+results retain the catalog. To keep a constructed history even if gathering
+fails, call `Catalog.construct?` separately. `Catalog.Construction.models`
+preserves the returned catalog's model invariant from the original `Catalog.Models`
+and path validity, for subsequent installed-prefix selection. The existing
+`BaseHistoryTests` cover two-stage construction, duplicate reuse and a missing
+second packet. These APIs do not infer the caller's missing provider proofs.
 
 `Shared.register? source` returns a `Registration` packet containing the new
 shared collection, the actual checked inclusion of the previous shared target,
@@ -2286,9 +2297,9 @@ and polynomials. The original contexts remain usable.
 The native `gather?` compatibility check requires each owner's constants to
 form a subsequence of the shared base and its infinitesimal depth to fit.
 Paths such as `[a]` and `[b]` can both enter an already validated `[a,b]` base.
-For incomparable or permuted provider paths, `gatherConstructed?` constructs
-the needed provider history before checked reconciliation, under its explicit
-progress and semantic premises. Separately,
+For incomparable provider paths, `gatherConstructed?` constructs a joint
+history under its explicit progress and semantic premises. The checked
+reconciliation then transports owners whose provider orders are permuted. Separately,
 simultaneous finite sign realization at an ordinary real point through
 arbitrarily interleaved algebraic and infinitesimal stages remains an issue-wide
 requirement; the ambient `Model.next` interpretations here do not assert that
