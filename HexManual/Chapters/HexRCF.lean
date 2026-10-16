@@ -12,6 +12,7 @@ import HexManual.Chapters.HexRCF.NativeSources
 import HexManual.Chapters.HexRCF.CellReplay
 import HexManual.Chapters.HexRCF.AlgebraicCells
 import HexManual.Chapters.HexRCF.ClosedCoefficients
+import HexManual.Chapters.HexRCF.RootQuote
 
 import HexRCF
 import HexRCF.RealCoefficients
@@ -2974,6 +2975,8 @@ costs of 44.080 μs for lexical bounds, 153.576 μs for parsing and 407.027 μs 
 catalog reconstruction. Native coefficient/adjunction paths remain. Preparation and proof
 construction are excluded; no scaling, strict-replay or tactic-speedup claim follows.
 Child memory includes startup and the harness.
+
+{include 1 HexManual.Chapters.HexRCF.RootQuote}
 
 {include 1 HexManual.Chapters.HexRCF.CallerBounds}
 
