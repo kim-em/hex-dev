@@ -210,7 +210,7 @@ def check() -> None:
              "KernelReplay.LookupReplay",
              "KernelReplay.ProofAudit",
              "KernelReplay.AxiomClosure", "KernelReplay.AxiomClosureTest",
-             "KernelReplay.AxiomClosureImports",
+             "KernelReplay.AxiomClosureImports", "KernelReplay.SupportAudit",
              "KernelReplay.FiniteRange",
              "KernelReplay.CoefficientMembers", "KernelReplay.CoefficientEntry",
              "KernelReplay.FiniteBase", "KernelReplay.BaseLookup", "KernelReplay.FiniteLift", "KernelReplay.FiniteOperands",
