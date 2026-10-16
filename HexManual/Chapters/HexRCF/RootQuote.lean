@@ -32,12 +32,16 @@ For example, this helper continues a request's existing budget and returns the
 updated usage together with the checked equation:
 
 ```lean
+open Lean Hex.RealFormula in
+open Hex.Reflect in
 open Hex.RCF.RealCoefficients in
 meta def quoteSuppliedRoot
-    (reader : Lean.Expr) (scalar : RootQuote.Decoder)
-    (config : Hex.RealFormula.Reify.Config)
-    (used : Hex.Reflect.BudgetUsage) :=
-  RootQuote.quote reader scalar config used
+    (reader : Expr)
+    (scalar : RootQuote.Decoder)
+    (config : Reify.Config)
+    (used : BudgetUsage) :=
+  RootQuote.quote reader scalar
+    config used
 ```
 
 The [cubic regression](../../../conformance/HexRCF/RootQuoteSource.lean) reads a
