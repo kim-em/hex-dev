@@ -85,6 +85,9 @@ run_meta do
     let dependencies ← Hex.RCF.ProofEvidence.projectDependencies #[name]
     unless dependencies.contains ``suppliedRegistration do
       throwError "registered witness bypassed the caller's containment evidence"
+  let aliasDependencies ← Hex.RCF.ProofEvidence.projectDependencies #[``aliasedWitness]
+  unless aliasDependencies.contains ``suppliedRegistration do
+    throwError "aliased witness bypassed the caller's containment evidence"
   logInfo "registered equality witnesses retain first-coordinate distinction, provider evidence, metadata and aliases"
 example : ∀ x : ℝ, x ^ 2 + supplied⁻¹ > 0 := by rcf
 example (a : ℝ) (h : a = supplied) : ∀ x : ℝ, x ^ 2 + a > 0 := by rcf
