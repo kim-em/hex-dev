@@ -1,0 +1,42 @@
+{
+  "source_commit": "05732a9e1bb49a72bd521ff5d24606c4bd0bb114",
+  "sources": {
+    "conformance/HexRCF/NamedConstantProofs.lean": {
+      "sha256": "c3327ec8e2985fa4745749f6fb08081d1f1dc2e7f14086d2d5244ba7cff1b906",
+      "bytes": 1492
+    },
+    "conformance/HexRCF/NamedConstants.lean": {
+      "sha256": "3cc4f75fe7c1fc17863e5ca00cb4b5d154991ae1c155e1c2287efe35085d7c63",
+      "bytes": 3423
+    },
+    "lakefile.lean": {
+      "sha256": "a37227c137b3a089c257d877a1318c29a7224a59c4f462209cb90b14a3409bb6",
+      "bytes": 109882
+    }
+  },
+  "artifacts": [
+    {
+      "path": "named-constant-fresh-proof-1.log.gz",
+      "sha256": "6f677522adf8ca6e221ca38784e773647293561b8c46274fffbaec3b9e6f61af",
+      "uncompressed_sha256": "904f6ce9a28ed444e302be44d86d1333e6730ef797b2125517d22c5a51925be7"
+    }
+  ],
+  "verification": {
+    "jobs": 11150,
+    "runtime": "1min53.612s",
+    "peak_memory": "8.2GiB",
+    "swap_bytes": 0,
+    "fresh_theorem_bodies": 4,
+    "required_registration_dependencies": [
+      "Hex.RCF.NamedConstants.piRegistration",
+      "Hex.RCF.NamedConstants.expRegistration"
+    ],
+    "complete_axiom_closure": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ]
+  },
+  "limits": "Serial own32GiB/no-swap/two-Lean-thread systemd build; raw log retains result/peak.",
+  "scope": "Fresh importing theorem-body check of the existing four supplied-registration pi/e examples. Does not implement a new analytic provider or prove convergence/transcendence."
+}
