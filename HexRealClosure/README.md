@@ -1878,8 +1878,18 @@ exact metadata predicate, including rejection of duplicate keys and missing
 joint keys. They require no fabricated provider progress. A reversed-provider
 theorem uses a supplied joint provider model and its actual native insertion.
 No new relative-transcendence or convergence premise is inferred by either
-search. Constructing a missing joint provider history remains the caller's
-semantic obligation. Gathering commits to the first eligible prefix; without
+search. For missing histories, `RealPrefix.extend?` constructs successive
+provider stages from progress at each actual predecessor; `Catalog.construct?`
+retains the resulting prefix and updated catalog. The companion's
+`RealPrefix.Model.Valid` supplies containment and predecessor-relative
+transcendence along that path, and `extend?_model` constructs the returned
+prefix's interpretation. `Live.Request.gatherConstructed?` then gathers at that
+constructed history and maximum infinitesimal depth. Its companion success law
+requires path progress, path validity and distinct owner keys; no completed
+joint target model is supplied. The existing `BaseHistoryTests` cover two-stage
+construction, duplicate reuse and a missing second packet. These APIs do not
+infer missing provider proofs. The installed-prefix search commits to its first
+eligible prefix; without
 the catalog model invariant, a failed gather does not imply that every later
 installed prefix would fail. The ordered and reconciled selectors can choose
 different targets: an earlier compatible prefix may contain the same keys in
@@ -2276,8 +2286,9 @@ and polynomials. The original contexts remain usable.
 The native `gather?` compatibility check requires each owner's constants to
 form a subsequence of the shared base and its infinitesimal depth to fit.
 Paths such as `[a]` and `[b]` can both enter an already validated `[a,b]` base.
-Constructing a joint target from incomparable key sets, and transporting
-permutations such as `[a,b]` and `[b,a]`, remain required. Separately,
+For incomparable or permuted provider paths, `gatherConstructed?` constructs
+the needed provider history before checked reconciliation, under its explicit
+progress and semantic premises. Separately,
 simultaneous finite sign realization at an ordinary real point through
 arbitrarily interleaved algebraic and infinitesimal stages remains an issue-wide
 requirement; the ambient `Model.next` interpretations here do not assert that
