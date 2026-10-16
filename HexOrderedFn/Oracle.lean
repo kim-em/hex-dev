@@ -110,11 +110,63 @@ def separated (a : Bounds) : Bool := a.upper < 0 || 0 < a.lower
 
 /-- Quotient enclosures require a denominator separated from zero.
 This operation is independent of total rational-function division. -/
-def div? (a b : Bounds) : Option Bounds :=
+noncomputable def div? (a b : Bounds) : Option Bounds :=
   if b.separated then
     some (hull4 (a.lower / b.lower) (a.lower / b.upper)
       (a.upper / b.lower) (a.upper / b.upper))
   else none
+
+/-- Positive reciprocal reverses the denominator order. -/
+private theorem inv_le_of_pos {x y : Rat} (hx : 0 < x) (hxy : x ≤ y) :
+    y⁻¹ ≤ x⁻¹ := by
+  have hy : 0 < y := by grind
+  have hxinv : 0 ≤ x⁻¹ := Rat.le_of_lt (Rat.inv_pos.mpr hx)
+  apply Rat.le_of_mul_le_mul_right (c := y) ?_ hy
+  simpa only [Rat.inv_mul_cancel _ (Rat.ne_of_gt hx),
+    Rat.inv_mul_cancel _ (Rat.ne_of_gt hy)] using
+    Rat.mul_le_mul_of_nonneg_left hxy hxinv
+
+/-- The two opposite corners bound every quotient corner in the positive case. -/
+private theorem quotient_corners (a b : Bounds) (ha : 0 ≤ a.lower) (hb : 0 < b.lower) :
+    a.lower / b.upper ≤ a.lower / b.lower ∧
+    a.lower / b.lower ≤ a.upper / b.lower ∧
+    a.lower / b.upper ≤ a.upper / b.upper ∧
+    a.upper / b.upper ≤ a.upper / b.lower := by
+  have hbu : 0 < b.upper := by have := b.ordered; grind
+  have hau : 0 ≤ a.upper := by have := a.ordered; grind
+  have hinv := inv_le_of_pos hb b.ordered
+  have hbl := Rat.le_of_lt (Rat.inv_pos.mpr hb)
+  have hbr := Rat.le_of_lt (Rat.inv_pos.mpr hbu)
+  simpa only [Rat.div_def] using And.intro
+    (Rat.mul_le_mul_of_nonneg_left hinv ha) (And.intro
+    (Rat.mul_le_mul_of_nonneg_right a.ordered hbl) (And.intro
+    (Rat.mul_le_mul_of_nonneg_right a.ordered hbr)
+    (Rat.mul_le_mul_of_nonneg_left hinv hau)))
+
+/-- Positive quotient bounds use their exact two extrema. Other signs retain
+all four reference corners and the original denominator-separation guard. -/
+def divImpl (a b : Bounds) : Option Bounds :=
+  if h : 0 ≤ a.lower ∧ 0 < b.lower then
+    some ⟨a.lower / b.upper, a.upper / b.lower, by
+      have limits := quotient_corners a b h.1 h.2
+      exact Rat.le_trans limits.1 limits.2.1⟩
+  else if b.separated then
+    some (hull4 (a.lower / b.lower) (a.lower / b.upper)
+      (a.upper / b.lower) (a.upper / b.upper))
+  else none
+
+/-- The native positive quotient returns exactly the reference bounds or refusal. -/
+@[csimp] theorem div_eq_impl : @div? = @divImpl := by
+  funext a b
+  unfold divImpl
+  split
+  · rename_i h
+    have separated : b.separated = true := by simp [Bounds.separated, h.2]
+    simp only [div?, separated, ite_true]
+    have limits := quotient_corners a b h.1 h.2
+    apply congrArg some
+    apply ext <;> dsimp [hull4] <;> grind [min, max]
+  · rfl
 
 /-- Only strictly separated bounds yield a nonzero sign. -/
 def sign? (a : Bounds) : Option Int :=

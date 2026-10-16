@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 import HexRCF.CellReplay.Operations
+import HexRCF.SourceIdentityCases
 import HexRCF.RealCoefficients.AlgebraicCells
 import HexRCF.RealCoefficients.CellOperations
 import HexRCF.RealCoefficients.RealModel
@@ -43,6 +44,8 @@ def forbidden : Array Name := #[
   ``Hex.RCF.RealCoefficients.CellReplayTests.Operations.accepted,
   ``Hex.RCF.RealCoefficients.CellReplayTests.Operations.source,
   ``Hex.RCF.RealCoefficients.CellReplayTests.Operations.operations,
+  ``Hex.RCF.SelectedRootTests.Data.alpha_value,
+  ``Hex.RCF.SelectedRootTests.Data.selectedSqrt,
   ``Check.source, ``CellBuild.build, ``ScalarPacket.build, ``ScalarPacket.buildLiteral]
 
 syntax (name := assembledSource) "#assembled_source" : command
@@ -64,7 +67,7 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
     let value ← mkAppM ``Tower.Model.value #[realModel,mkApp values i]
     mkLambdaFVars #[i] value
   let identity ← elabTermEnsuringType
-    (← `(by funext i; fin_cases i; exact Hex.RCF.SelectedRootTests.Data.alpha_value))
+    (← `(by funext i; fin_cases i; exact Hex.RCF.SourceIdentityCases.coefficient))
     (← mkEq valuation source.valuation)
   synthesizeSyntheticMVarsNoPostponing
   let identity ← instantiateMVars identity
@@ -133,7 +136,8 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
     throwError "fresh assembled source proof has unexpected axioms"
   let seen ← Hex.RCF.ProofEvidence.projectDependencies #[name]
   for required in #[``CellOperations.accept?_iff,``CompleteReplay.check_sound,
-      ``Tower.Model.root,``Hex.RCF.SelectedRootTests.Data.alpha_value,
+      ``Tower.Model.root,``Hex.RCF.SourceIdentityCases.coefficient,
+      ``SourceIdentity.select,``SourceIdentity.observe,
       ``Hex.RealClosure.Algebraic.Element.replayMul_eq,``Records.facts] do
     unless seen.contains required do throwError "fresh source proof omitted an actual bridge: {required}"
   for excluded in forbidden do
