@@ -65,5 +65,5 @@
   "failure": "Preserve failures, regressions and inconclusive outcomes. An unchanged rerun may only use the existing completed-inconclusive rule; no further target adaptation or automatic repeat.",
   "collection_precondition": "A clean frozen tooling descendant of the original candidate containing only admitted collector/test/report changes, reviewed protocol, original manifests and guard-build attestation, successful controls and a bound decision.",
   "measurements_started": false,
-  "resolution_margin": "The observed candidate spawn floor113.739337ms gives a tenfold signal threshold1.13739337s. The pinned autotuner batch range about0.55T to1.1T gives about1.2375s to2.475s at T2.25s, only about8.8percent lower-end margin above that observed threshold. A larger future floor or short batch can remain inconclusive; no filtering, lower threshold or additional target adaptation is permitted."
+  "resolution_margin": "The observed candidate spawn floor of 113.739337 ms gives a tenfold signal threshold of 1.13739337 seconds. The pinned autotuner batch range of about 0.55T to 1.1T gives about 1.2375 to 2.475 seconds at T = 2.25 seconds, only about 8.8 percent lower-end margin above that observed threshold. A larger future floor or short batch can remain inconclusive; no filtering, lower threshold or additional target adaptation is permitted."
 }

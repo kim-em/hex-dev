@@ -31,9 +31,13 @@ sixty-second caps. The pinned default kill grace is 100 ms.
 Admission reads those frozen registrations and runner defaults. With a declared
 one-second planning spawn floor, the Height target budget is
 `(10s + 0.1s − 1s) / 4 = 2.275s`, and the Small budget is 14.775s. The proposed
-2.25-second target fits both. A four-second target would be clamped for Height
-and is refused before a lease or reservation. This calculation takes no host
-measurements. The planning floor is an operational envelope, **not** a host
+2.25-second target fits both. The protocol admits only that fixed target; a pure
+budget control also demonstrates that a four-second target would be clamped for
+Height. Admission checks the fixed target against the frozen defaults and caps
+before a lease or reservation. This calculation takes no host measurements.
+The one-second planning envelope follows the pinned spawn-floor probe's fixed
+1000 ms timeout, with no guarantee about scheduling or reaping overhead.
+The planning floor is an operational envelope, **not** a host
 admission threshold, a quiet-core rule or permission to discard samples.
 
 The pinned autotuner aims for batches of roughly `0.55T` to `1.1T`. At `T = 2.25s`
@@ -84,8 +88,10 @@ All exports, stdout/stderr, host context, failures and native guard reports must
 be retained. The checker still requires every declared parameter and all four
 eligible source trials. No partial comparison can pass.
 
-Admission controls exercise the actual archived failure without benchmarks, and
-pure controls cover the pinned runner's clamp arithmetic. Synthetic-executable
+Admission controls exercise the actual archived failure without benchmarks and
+require the parsed runner/default inputs to appear in the authenticated producer
+inventory. Pure controls check the planning arithmetic with fixture defaults.
+Synthetic-executable
 controls model the clamp with varying spawn floors, check override scope, preflight,
 rerun eligibility and slot consumption. Their stub verdict is not performance
 evidence. The native guard and its retained controls remain unchanged.

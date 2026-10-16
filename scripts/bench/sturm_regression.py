@@ -597,6 +597,9 @@ def validate_resolution_protocol(previous_dir, policy, sources, identity, reserv
     target = policy["target_inner_nanos"]
     if type(target) is not int or target != 2_250_000_000:
         raise RuntimeError("resolution protocol requires the declared 2.25-second target")
+    if not {"bench/HexSignDet/Bench.lean", ".lake/packages/lean-bench/LeanBench/Core.lean"}.issubset(
+            sources.get("candidate", {}).get("sources", {})):
+        raise RuntimeError("resolution budget inputs are absent from the authenticated inventory")
     budgets = resolution_budget(root, policy)
     if not isinstance(policy["reason"], str) or not policy["reason"].strip():
         raise RuntimeError("missing resolution protocol reason")

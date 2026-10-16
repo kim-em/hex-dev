@@ -167,6 +167,11 @@ class ResolutionProtocolTest(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, 'would be clamped'):
             self.validate()
 
+    def test_budget_inputs_must_be_in_the_authenticated_inventory(self):
+        del self.sources['candidate']['sources']['.lake/packages/lean-bench/LeanBench/Core.lean']
+        with self.assertRaisesRegex(RuntimeError, 'authenticated inventory'):
+            self.validate()
+
     def test_proposal_binds_actual_archived_context_and_both_exports(self):
         root = Path(collector.__file__).resolve().parents[2]
         report = root / 'reports/bench-results/sign-det-phase6-comparison'
