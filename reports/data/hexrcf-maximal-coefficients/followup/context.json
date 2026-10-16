@@ -102,5 +102,10 @@
     "lean_threads": 2,
     "own_build_concurrency": 1
   },
-  "scope": "Included manual subsection and final metadata; production frontend and actual conformance proof bodies unchanged from the baseline source."
+  "scope": "Included manual subsection and final metadata; production frontend and actual conformance proof bodies unchanged from the baseline source.",
+  "document_commit": "0c23abbfeef8118abe61f2dfc2fff5eb671cb033",
+  "artifact_commit": "0c23abbfeef8118abe61f2dfc2fff5eb671cb033",
+  "documents_sha256": {
+    "reports/hexrcf-maximal-coefficients.md": "ae1e237a12cb79794a93a55986dc8e8c888a0acf819e513abeb4f754b3613f8b"
+  }
 }
