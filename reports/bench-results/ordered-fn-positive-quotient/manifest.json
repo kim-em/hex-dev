@@ -355,5 +355,10 @@
       "gzip_sha256": "1ce8366f7ec289754cfa8b8ce382641d226639d6b994e21d67735b181405cb6e",
       "raw_bytes": 87
     }
-  ]
+  ],
+  "baseline_commit": "7244ae8f3c0c9f7eedc4112f2a2b79b45e2ff1fa",
+  "binaries": {
+    "baseline": "0b260f7a83bab62a936c7cbb9a1334f55524ebe94bf366d715fb1378614fdeb5",
+    "candidate": "e8634bce8b34b35651fc5f73d249d7f2385370df0a53fa5d9b9b087d0b5d1662"
+  }
 }

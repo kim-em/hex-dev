@@ -36,9 +36,11 @@ with the same compiler, without a greater-than-10% neighbor regression.
 The frozen source is `a7a4930bab6618c3416bb4cc930e2e02a081870e`, retained by
 `audit/issue-10575-positive-quotient-input-v1`. The parent is
 `7244ae8f3c0c9f7eedc4112f2a2b79b45e2ff1fa` on Lean 4.35.0-rc3.
-The earlier fresh parent build is reused unchanged, with all source, pin and
-binary bindings rechecked. The unsuccessful constant-enclosure prototype is
-not included in this candidate.
+The parent executable and its clean build inputs are bound by
+`baseline-source.json`; its source and executable bindings are checked before
+and after measurement. That executable is reused unchanged from the
+constant-enclosure comparison, built by a byte-identical `freeze_build.py`
+(SHA-256 `01c9a47a05c5817975eda8a65ba7a4a5b6e90cc2b86514c0e82d3d85d6a1aa81`).
 
 | Parameter | Parent median ns/call | Candidate median ns/call | Change |
 | --- | ---: | ---: | ---: |
@@ -52,6 +54,13 @@ CPU on the shared host, with the original one-second batching target. No sample
 is rejected and no quiet-core condition is imposed. All 36 raw streams and the
 complete terminal context are retained. Per-arm medians have three observations;
 these host-specific results meet the bounded expansion criterion.
+
+All three parameters run the same `x − 1` approximation search near `x = 2`,
+with width-dependent windows for the rational coefficients and the argument `x`.
+The denominator polynomial is `1`, enclosed by the coefficient window rather
+than an exact singleton. The expensive late refinements use the positive fast
+branch. These observations do not measure general rational-function workloads
+or separately establish fallback performance for other sign patterns.
 
 Both builds bind 5,152 source/configuration inputs, 89 native import files and
 sixteen identical clean dependency pins. Only `Oracle.lean` changes within the
@@ -73,11 +82,26 @@ baseline and reconciliation of every remaining finding; no phase or publication
 counter changes here.
 
 Verify the archive bindings, complete adjacent-arm schedule, raw observations,
-result hashes, source-manifest bindings, medians and bounded criterion offline:
+result hashes, source-manifest bindings, the pre-build snapshot and the producer's
+recorded post-build equality,
+preregistered script hashes, medians and bounded criterion offline:
 
 ```sh
 python3 reports/bench-results/ordered-fn-positive-quotient/replay.py
 ```
 
 This command collects no timings. It checks the retained evidence; it does not
-rebuild the executables or establish a current-source performance pass.
+rebuild the executables or recover the measurement host's final filesystem.
+The retained, hash-bound measurement script checks the live source inputs
+again on exit; the terminal context records that result.
+
+Also check the current 89 native import files (including dependency sources),
+`Tests.lean` and the three Lake/toolchain configuration files against the
+measured candidate. This requires the recorded dependency checkouts:
+
+```sh
+python3 reports/bench-results/ordered-fn-positive-quotient/replay.py --current
+```
+
+This optional check intentionally refuses changes to those inputs. Neither
+replay mode establishes a current-source performance pass.
