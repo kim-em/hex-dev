@@ -1,0 +1,14 @@
+{
+  "source_commit": "cdc9b747aafee5970f7e818a28ff89c1ca343ec6",
+  "argv": [
+    "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+    "env",
+    "LAKE_NO_CACHE=true",
+    "lake",
+    "build",
+    "+AuditImportProbe",
+    "+SourceAcceptanceRender4"
+  ],
+  "cwd": "/home/kim/.codex/tasks/hex-10358/atomic-public-current",
+  "scope": "Fresh manual render and joint fresh source-body-audit plus complete-manual import."
+}

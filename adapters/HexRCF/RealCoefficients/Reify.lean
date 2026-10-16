@@ -418,7 +418,7 @@ termination_by values.size - i
 
 /-- Substitute only explicit checked real aliases, retaining the exact syntax
 of their closed values and a proof back to the original proposition. -/
-private def closeSource (source : Expr) : FrontendM (Expr × Expr) := do
+private def closeSourceCore (source : Expr) : FrontendM (Expr × Expr) := do
   if source.hasMVar || source.hasLooseBVars then
     reject source "source sentence has unresolved metavariables"
   let mut closed := source
@@ -431,8 +431,12 @@ private def closeSource (source : Expr) : FrontendM (Expr × Expr) := do
     proof ← mkEqTrans proof (← mkAppM ``congrArg #[abstraction, binding.proof])
     closed := closed.replaceFVar symbol binding.value
   unless isClosed closed do reject source "source sentence has free parameters"
-  checkWithKernel proof
   return (closed, proof)
+
+private def closeSource (source : Expr) : FrontendM (Expr × Expr) := do
+  let result ← closeSourceCore source
+  checkWithKernel result.2
+  return result
 
 private def prepareCore (registered : Array Expr) (original : Expr) (config : Hex.RealFormula.Reify.Config) : FrontendM Source := do
   let cap := (← get).budget.remaining.sourceNodes
@@ -552,27 +556,42 @@ private def prepareCore (registered : Array Expr) (original : Expr) (config : He
       set state
       return result
 
+/-- Recover original divisor syntax in the caller's continued reflection budget.
+Charge both source views and the alias proof before checking it. This action
+does not discharge guards or construct a formula; callers provide transactional
+state restoration around the complete proof operation. -/
+def guardSources (original : Expr) : Hex.RealFormula.Reify.ReifyM (Array Expr) := do
+  Core.checkSystem "rcf original divisor inventory"
+  let cap := (← get).budget.remaining.sourceNodes
+  Hex.RealFormula.Reify.charge .sourceNodes (Hex.Reflect.sourceNodeCount original (cap + 1))
+  checkDomains original
+  let (source, proof) ← closeSourceCore original
+  Hex.RealFormula.Reify.accountProof proof
+  let _ ← liftM (withoutModifyingEnv <| Hex.RCF.checkProof `Hex.RCF.RealCoefficients.Reify.guards
+    (← mkEq original source) proof)
+  Core.checkInterrupted
+  let cap := (← get).budget.remaining.sourceNodes
+  Hex.RealFormula.Reify.charge .sourceNodes (Hex.Reflect.sourceNodeCount source (cap + 1))
+  let divisors ← preflight #[] source
+  let divisors ← divisors.mapM instantiateMVars
+  if divisors.any Expr.hasMVar then
+    throwThe Hex.RealFormula.Reify.Error (.internal "original divisors contain unresolved metavariables")
+  return divisors
+
 /-- Recover all original divisor obligations after checked alias substitution.
 This reuses source preflight without coefficient lowering, schema construction
-or root/sign production. Successful results preserve caller metavariables. -/
+or root/sign production. Both source views and the checked alias proof consume
+`config.ring.budget`; exhaustion returns a structured budget error.
+Successful results preserve caller metavariables. -/
 def guards (original : Expr) (config : Hex.RealFormula.Reify.Config := {}) :
     MetaM (Except Hex.RealFormula.Reify.Error (Array Expr)) := do
   let saved ← saveState
   let (result, _) ← tryFinally' (withNewMCtxDepth do
-      let action : FrontendM (Array Expr) := do
-        checkDomains original
-        let (source, proof) ← closeSource original
-        let _ ← liftM (withoutModifyingEnv <| Hex.RCF.checkProof `Hex.RCF.RealCoefficients.Reify.guards
-          (← mkEq original source) proof)
-        preflight #[] source
+      let action := guardSources original
       let outcome ← (action.run {config, budget := .ofBudget config.ring.budget}).run
       match outcome with
       | .error error => return .error error
-      | .ok (divisors, _) =>
-          let divisors ← divisors.mapM instantiateMVars
-          if divisors.any Expr.hasMVar then
-            return .error (.internal "original divisors contain unresolved metavariables")
-          return .ok divisors)
+      | .ok (divisors, _) => return .ok divisors)
     (fun result => do
       match result with
       | some (.ok _) => modify fun state => {state with

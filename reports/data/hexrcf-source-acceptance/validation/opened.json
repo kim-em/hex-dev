@@ -1,0 +1,20 @@
+{
+  "source_commit": "cdc9b747aafee5970f7e818a28ff89c1ca343ec6",
+  "images": [
+    "source-acceptance-desktop-equivalence.png",
+    "source-acceptance-narrow-equivalence.png",
+    "source-acceptance-desktop-example.png",
+    "source-acceptance-narrow-example.png",
+    "source-acceptance-desktop-boundary.png",
+    "source-acceptance-narrow-boundary.png"
+  ],
+  "sha256": {
+    "source-acceptance-desktop-equivalence.png": "5c0e6a00eb5918f0fccad1d3a4e2f96d179299887ce812413755edd45e480b52",
+    "source-acceptance-narrow-equivalence.png": "20ded47220d18e6cb1c96cf152a0855dc47e0d6c5b516023118923b5fa402fd0",
+    "source-acceptance-desktop-example.png": "5467f0cb1948fde97d276091aa2e645ae5e57665ecefce8c27457621f2a7cf2e",
+    "source-acceptance-narrow-example.png": "c217ebb80a47c3495064773185660db3e8493c1ad8bd38e27eda0837c1b00f84",
+    "source-acceptance-desktop-boundary.png": "93f9f6e3d5a70ed9c1b751701866b5a635e014f4f9138ceed3ad7e2b52d46e70",
+    "source-acceptance-narrow-boundary.png": "b4451859408878ac2e593929484cc4ccd8a1e24cc887d094372dbdb7862eeb78"
+  },
+  "inspection": "All six images opened with view_image. Acceptance paragraph, entire runnable example, and limitation/usage paragraph remain readable at1440 and390 pixels; their local overflow metrics are zero. Existing horizontal overflow elsewhere in the full book is excluded."
+}

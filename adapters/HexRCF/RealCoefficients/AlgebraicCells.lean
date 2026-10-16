@@ -296,4 +296,79 @@ theorem build_sound (registry : BaseContext.Registry) (generators : Fin m → Re
   cases same
   exact checked
 
+/-- Acceptance by the actual algebraic producer and its complete packet
+checker. This predicate retains the exact source tuple, indices and original
+nonzero-divisor obligations; it does not assert frozen-history quotation. -/
+@[expose] def accepts (registry : BaseContext.Registry) (generators : Fin m → RealAlgebraicNumber)
+    (indices : Fin n → Fin m) (original : List (Fin m))
+    (formula : Hex.RealFormula.QF (n+1)) (quantifier : Hex.RealFormula.Quantifier) : Prop :=
+  ∃ result, build registry generators indices original formula = .ok result ∧
+    let sources := result.1
+    let shared := result.2.1
+    let packet := result.2.2
+    CompleteReplay.check packet.family.collection.input.context.codec
+      (packet.family.collection.input.value ∘ GatherCells.values shared (coefficients sources indices)) formula
+      ((GatherCells.guards shared (guards sources original)).map packet.family.collection.input.value)
+      packet.radical quantifier packet.rootGraph packet.cells = .ok true
+
+/-- Accepted true packets are equivalent to the original domains and shared
+sentence together. Guard validity, complete roots and real samples follow
+from the producer's existing laws, without a child-success hypothesis. -/
+theorem accepts_iff (registry : BaseContext.Registry) (generators : Fin m → RealAlgebraicNumber)
+    (indices : Fin n → Fin m) (original : List (Fin m))
+    (formula : Hex.RealFormula.QF (n+1)) (quantifier : Hex.RealFormula.Quantifier) :
+    accepts registry generators indices original formula quantifier ↔
+      (∀ i ∈ original, (generators i).toReal ≠ 0) ∧
+        (Hex.RealFormula.Prenex.quant quantifier (.matrix formula)).toProp
+          (fun i => (generators (indices i)).toReal) := by
+  constructor
+  · rintro ⟨result, produced, accepted⟩
+    refine ⟨build_domains registry generators indices original formula result.1 result.2 produced, ?_⟩
+    obtain ⟨verdict, checked, meaning⟩ :=
+      build_sound registry generators indices original formula result produced quantifier
+    have same : verdict = true := Except.ok.inj (checked.symm.trans accepted)
+    exact meaning.mp same
+  · rintro ⟨domains, truth⟩
+    have nonzero : ∀ i ∈ original, generators i ≠ 0 := by
+      intro i member zero
+      apply domains i member
+      simp only [zero, RealAlgebraicNumber.zero_toReal]
+    obtain ⟨sources, shared, packet, produced, checked⟩ :=
+      build_complete registry generators indices original formula nonzero
+    obtain ⟨verdict, accepted, meaning⟩ := checked quantifier
+    have same : verdict = true := meaning.mpr truth
+    exact ⟨⟨sources, shared, packet⟩, produced, by simpa only [same] using accepted⟩
+
+/-- Coefficient and original-divisor coordinates have separate ordered
+positions in the native producer. Every divisor remains a checked domain. -/
+theorem accepts_tuple (registry : BaseContext.Registry)
+    (values : Fin n → RealAlgebraicNumber) (divisors : Fin d → RealAlgebraicNumber)
+    (formula : Hex.RealFormula.QF (n+1)) (quantifier : Hex.RealFormula.Quantifier) :
+    accepts registry (Fin.addCases values divisors) (Fin.castAdd d)
+      (List.ofFn (Fin.natAdd n)) formula quantifier ↔
+      (∀ i, (divisors i).toReal ≠ 0) ∧
+        (Hex.RealFormula.Prenex.quant quantifier (.matrix formula)).toProp
+          (fun i => (values i).toReal) := by
+  rw [accepts_iff]
+  simp
+
+/-- Checked valuation identities and the frontend's exact equivalence connect
+producer acceptance to the original proposition and every original divisor.
+The identities are ordinary proof inputs supplied by source preparation. -/
+theorem accepts_source (registry : BaseContext.Registry)
+    (values : Fin n → RealAlgebraicNumber) (divisors : Fin d → RealAlgebraicNumber)
+    (realValues : Fin n → ℝ) (realDivisors : Fin d → ℝ)
+    (formula : Hex.RealFormula.QF (n+1)) (quantifier : Hex.RealFormula.Quantifier)
+    {source : Prop}
+    (coefficientEq : (fun i => (values i).toReal) = realValues)
+    (divisorEq : (fun i => (divisors i).toReal) = realDivisors)
+    (equivalence : (Hex.RealFormula.Prenex.quant quantifier (.matrix formula)).toProp realValues ↔ source) :
+    accepts registry (Fin.addCases values divisors) (Fin.castAdd d)
+      (List.ofFn (Fin.natAdd n)) formula quantifier ↔
+      (∀ i, realDivisors i ≠ 0) ∧ source := by
+  rw [accepts_tuple, coefficientEq]
+  have domains : (∀ i, (divisors i).toReal ≠ 0) ↔ (∀ i, realDivisors i ≠ 0) := by
+    rw [← divisorEq]
+  exact and_congr domains equivalence
+
 end Hex.RCF.RealCoefficients.AlgebraicCells
