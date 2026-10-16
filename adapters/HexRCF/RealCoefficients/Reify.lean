@@ -47,7 +47,9 @@ structure Source where
   /-- Closed real coefficient expressions in first-occurrence order. -/
   coefficients : Array Expr
   /-- Original divisors after checked alias substitution; each must separately
-  be proved nonzero. Repeated source occurrences may share the same obligation. -/
+  be proved nonzero. Depth-first preorder visits the outer divisor before its
+  operands, with the left operand first. Repeated source occurrences may share
+  the same obligation. -/
   divisors : Array Expr
   /-- Shared `Prenex coefficients.size` syntax. -/
   formula : Expr
@@ -210,17 +212,17 @@ private partial def scalar (registered : Array Expr) (source : Expr) : ScanM Uni
       else if op == some ``HSub.hSub then q($a - $b)
       else if op == some ``HMul.hMul then q($a * $b) else q($a / $b)
     unless ← isDefEq e canonical do reject e "nonstandard real arithmetic instance"
+    if op == some ``HDiv.hDiv then modify (·.push args[5]!)
     scalar registered args[4]!
     scalar registered args[5]!
-    if op == some ``HDiv.hDiv then modify (·.push args[5]!)
     return ()
   if [``Neg.neg, ``Inv.inv].any (op == some ·) && args.size == 3 then
     unless ← isReal args[2]! do reject e "coefficient operand must have type Real"
     let a : Q(ℝ) := args[2]!
     let canonical := if op == some ``Neg.neg then q(-$a) else q($a⁻¹)
     unless ← isDefEq e canonical do reject e "nonstandard real unary operation"
-    scalar registered args[2]!
     if op == some ``Inv.inv then modify (·.push args[2]!)
+    scalar registered args[2]!
     return ()
   if e.isAppOfArity ``HPow.hPow 6 then
     if (← inferType args[5]!).isConstOf ``Real then
@@ -289,6 +291,7 @@ private def preflight (registered : Array Expr) (source : Expr) : FrontendM (Arr
   return divisors
 
 private partial def hasNamedSource (registered : Array Expr) (e : Expr) : MetaM Bool := do
+  let e := e.consumeMData
   if (← registered.anyM (Registration.sameSubject e)) ||
       e.isAppOfArity ``Hex.RealAlgebraicNumber.toReal 1 ||
       e.isAppOfArity ``Real.sqrt 1 || e.isAppOfArity ``Real.rpow 2 ||

@@ -40,6 +40,9 @@ elab "#maximal_coefficient_sources" : command => liftTermElabM do
     #[q(Real.sqrt 2 + Real.sqrt 3),q(Real.sqrt 2)] #[]
   check q(∀ x : ℝ, x^2 + 2 * Real.sqrt 2 > 0)
     #[q((2 : ℝ) * Real.sqrt 2)] #[]
+  let wrapped : Q(ℝ) := .mdata {} q(Real.sqrt 2)
+  let product : Q(ℝ) := q((2 : ℝ) * $wrapped)
+  check q(∀ x : ℝ, x^2 + $product > 0) #[product] #[]
   check q(∀ x : ℝ, x^2 + (-Real.sqrt 2) > 0)
     #[q(-Real.sqrt 2)] #[]
   check q(∀ x : ℝ, x^2 + (Real.sqrt 2 + Real.sqrt 3)^2 > 0)
@@ -48,6 +51,16 @@ elab "#maximal_coefficient_sources" : command => liftTermElabM do
     #[q((Real.sqrt 2 + Real.sqrt 3)⁻¹)] #[q(Real.sqrt 2 + Real.sqrt 3)]
   check q(∀ x : ℝ, x + (Real.sqrt 2 + 1) / (Real.sqrt 2 - 1) > 0)
     #[q((Real.sqrt 2 + 1) / (Real.sqrt 2 - 1))] #[q(Real.sqrt 2 - 1)]
+  -- Closed and variable-bearing divisions use the same depth-first preorder.
+  check q(∀ x : ℝ, x / (1 / (Real.sqrt 2 - 1)) > 0)
+    #[q((1 / (Real.sqrt 2 - 1))⁻¹)]
+    #[q(1 / (Real.sqrt 2 - 1)),q(Real.sqrt 2 - 1)]
+  check q(∀ x : ℝ, x + 2 / (1 / (Real.sqrt 2 - 1)) > 0)
+    #[q((2 : ℝ) / (1 / (Real.sqrt 2 - 1)))]
+    #[q(1 / (Real.sqrt 2 - 1)),q(Real.sqrt 2 - 1)]
+  check q(∀ x : ℝ, x + (1 / (Real.sqrt 2 - 1))⁻¹ > 0)
+    #[q((1 / (Real.sqrt 2 - 1))⁻¹)]
+    #[q(1 / (Real.sqrt 2 - 1)),q(Real.sqrt 2 - 1)]
   check q(∀ x : ℝ, x^2 + 0 * (1 / (Real.sqrt 2 - Real.sqrt 2)) = x^2)
     #[q((0 : ℝ) * (1 / (Real.sqrt 2 - Real.sqrt 2)))]
     #[q(Real.sqrt 2 - Real.sqrt 2)]

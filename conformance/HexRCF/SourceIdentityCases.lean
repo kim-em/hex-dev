@@ -64,10 +64,26 @@ def equationFact : Algebraic.SignFact Data.native :=
 def marginFact : Algebraic.SignFact Data.native :=
   source_fact% (embed (SourceIdentity.margin SquareTwo.square))
 
+/-- The other real conjugate has its own valid isolating square. Its margin
+must fail at this same positive selected native root. -/
+def negativeSquare : DyadicSquare := { SquareTwo.square with re := -SquareTwo.square.re }
+theorem negative_witness : atomWitness SquareTwo.polynomial negativeSquare := by decide +kernel
+theorem negative_precision : (mahlerPrec SquareTwo.polynomial : Int) ≤ negativeSquare.prec := by decide +kernel
+def negativeMarginFact : Algebraic.SignFact Data.native :=
+  source_fact% (embed (SourceIdentity.margin negativeSquare))
+
 theorem equation_binding : equationFact.polynomial = embed (ZPoly.toRatPoly SquareTwo.polynomial) := by decide +kernel
 theorem equation_sign : equationFact.sign = 0 := by rfl
 theorem margin_binding : marginFact.polynomial = embed (SourceIdentity.margin SquareTwo.square) := by decide +kernel
 theorem margin_sign : marginFact.sign = 1 := by rfl
+theorem negative_binding : negativeMarginFact.polynomial =
+    embed (SourceIdentity.margin negativeSquare) := by decide +kernel
+theorem negative_sign : negativeMarginFact.sign = -1 := by rfl
+theorem negative_observed :
+    (SignType.sign ((LiteralSign.realPoly (SourceIdentity.margin negativeSquare)).eval
+      Data.selectedReal) : Int) = -1 :=
+  (observed _ negativeMarginFact negative_binding).trans negative_sign
+theorem wrong_margin : negativeMarginFact.sign ≠ 1 := by rw [negative_sign]; decide
 
 theorem source_zero : (LiteralSign.realPoly (ZPoly.toRatPoly SquareTwo.polynomial)).IsRoot
     Data.selectedReal := by
@@ -90,8 +106,9 @@ theorem source_selected : Data.selectedReal = Real.sqrt 2 := by
   rw [← SourceIdentity.margin_eval]
   exact source_margin
 
-/-- The retained literal coordinate has the selected source value without the
-fixture's pre-existing square-root identity. -/
+/-- The retained literal coordinate uses the new selected-source proof. Its
+representation retains the original sign proof; neither older alias theorem
+is used to derive this equality. -/
 theorem coefficient : Data.original.value Data.alpha = Real.sqrt 2 := by
   rw [← Data.generator_eq]
   exact (Data.rational.root_generator (.base (BaseContext.rational Data.registry))

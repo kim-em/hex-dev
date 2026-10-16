@@ -10,9 +10,10 @@ open Hex.RCF.RealCoefficients Hex.RCF.SourceIdentityCases Lean Meta
 set_option maxHeartbeats 12000000
 set_option maxRecDepth 32768
 run_meta do
-  let names := #[``SourceIdentity.observe, ``SourceIdentity.evaluate, ``SourceIdentity.equation,
-    ``SourceIdentity.positive, ``SourceIdentity.margin_eval, ``SourceIdentity.select,
-    ``source_zero, ``source_margin, ``source_selected, ``coefficient]
+  let names := #[``SourceIdentity.observe, ``SourceIdentity.margin_eval, ``SourceIdentity.select,
+    ``source_zero, ``source_margin, ``source_selected, ``coefficient,
+    ``negative_witness, ``negative_precision, ``negative_binding,
+    ``negative_sign, ``negative_observed, ``wrong_margin]
   for name in names do
     let .thmInfo declaration ← getConstInfo name | throwError "missing source-identity theorem: {name}"
     let _ ← Hex.RCF.checkProof name declaration.type declaration.value
@@ -28,4 +29,12 @@ run_meta do
   for name in #[``Hex.RCF.SelectedRootTests.Data.alpha_value,
       ``Hex.RCF.SelectedRootTests.Data.selectedSqrt] do
     if dependencies.contains name then throwError "source identity reused fixture alias theorem: {name}"
+  let selectedDependencies ← Hex.RCF.ProofEvidence.projectDependencies #[``source_selected]
+  for name in #[``Hex.RCF.SelectedRootTests.Data.selectedFacts,
+      ``Hex.RCF.SelectedRootTests.Data.definingPoly,
+      ``Hex.RCF.SelectedRootTests.Data.lowerData,
+      ``Hex.RCF.SelectedRootTests.Data.selectedSqrt,
+      ``Hex.RCF.SelectedRootTests.Data.alpha_value] do
+    if selectedDependencies.contains name then
+      throwError "source selection reused earlier root-equation or interval facts: {name}"
   logInfo "fresh source identity bodies checked: literal equation and enclosure signs, exact selected root, no fixture alias identity; standard three axioms"

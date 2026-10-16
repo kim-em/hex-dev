@@ -53,44 +53,6 @@ theorem observe {registry : BaseContext.Registry} {parent : Tower.Context regist
     model.add model.sub model.mul model.nat model.sign model.neg model.inv _ p] at checked
   simpa only [Algebraic.Context.evalPoly, Algebraic.Context.rootValue, Algebraic.Context.root_adjoin, coefficients] using checked
 
-/-- The existing operation-only polynomial transport reads a literal source
-coordinate at the model's value. The map equality binds every coefficient. -/
-theorem evaluate {registry : BaseContext.Registry} {context : Tower.Context registry}
-    (model : Tower.Model context ℝ) (p : DensePoly context.Value) (q : DensePoly Rat)
-    (coefficients : HexPolyTheory.toPolynomial
-      (DensePoly.Interpret.map model.value model.zero_iff p) = LiteralSign.realPoly q)
-    (x : context.Value) :
-    model.value (p.eval x) = (LiteralSign.realPoly q).eval (model.value x) := by
-  rw [DensePoly.Interpret.map_eval model.value model.zero_iff model.add model.mul]
-  rw [← HexPolyTheory.eval_toPolynomial, coefficients]
-
-/-- A checked native zero sign proves the source equation at this same value. -/
-theorem equation {registry : BaseContext.Registry} {context : Tower.Context registry}
-    (model : Tower.Model context ℝ) (p : DensePoly context.Value) (q : DensePoly Rat)
-    (coefficients : HexPolyTheory.toPolynomial
-      (DensePoly.Interpret.map model.value model.zero_iff p) = LiteralSign.realPoly q)
-    (x : context.Value) (observed : context.sign (p.eval x) = 0) :
-    (LiteralSign.realPoly q).IsRoot (model.value x) := by
-  have code := (model.sign (p.eval x)).symm.trans observed
-  have zero : model.value (p.eval x) = 0 := by
-    apply sign_eq_zero_iff.mp
-    cases tagged : SignType.sign (model.value (p.eval x)) <;> simp_all
-  rw [evaluate model p q coefficients x] at zero
-  exact zero
-
-/-- A checked positive sign proves the source-selection margin at this value. -/
-theorem positive {registry : BaseContext.Registry} {context : Tower.Context registry}
-    (model : Tower.Model context ℝ) (p : DensePoly context.Value) (q : DensePoly Rat)
-    (coefficients : HexPolyTheory.toPolynomial
-      (DensePoly.Interpret.map model.value model.zero_iff p) = LiteralSign.realPoly q)
-    (x : context.Value) (observed : context.sign (p.eval x) = 1) :
-    0 < (LiteralSign.realPoly q).eval (model.value x) := by
-  have code := (model.sign (p.eval x)).symm.trans observed
-  have sign : SignType.sign (model.value (p.eval x)) = 1 := by
-    cases tagged : SignType.sign (model.value (p.eval x)) <;> simp_all
-  have greater := sign_eq_one_iff.mp sign
-  rwa [evaluate model p q coefficients x] at greater
-
 /-- A source equation and a positive enclosure margin identify the selected
 source value independently of the carrier used by the checker. -/
 theorem select (sourceP : ZPoly) (square : DyadicSquare)
