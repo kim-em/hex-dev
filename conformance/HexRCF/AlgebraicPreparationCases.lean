@@ -227,6 +227,215 @@ run_meta do
           mixed.formula ((GatherCells.guards shared (AlgebraicCells.guards sources mixed.guards)).map input.value)
           packet.radical mixed.quantifier packet.rootGraph packet.cells).toOption == some expected do
         throwError "mixed coefficient/divisor layout changed the quantified verdict"
+  let registry : Q(RealClosure.BaseContext.Registry) := q(fun _ => none)
+  let replacementGuard ← checked q(∀ _ : ℝ, 0 / (1 : ℝ) = 0)
+  unless replacementGuard.source.divisors.size == 1 do
+    throwError "replacement guard control has the wrong inventory"
+  for (label, target, guardCount) in #[
+      (`rationalAcceptance, q(∀ x : ℝ, x^2 ≥ 0), 0),
+      (`algebraicAcceptance, q(∀ x : ℝ, x^2 + Real.sqrt 2 > 0), 0),
+      (`falseAcceptance, q(∀ x : ℝ, x^2 + Real.sqrt 2 < 0), 0),
+      (`divisorAcceptance, q(∀ x : ℝ, x / (Real.sqrt 2 + 1) = x * (Real.sqrt 2 + 1)⁻¹), 2),
+      (`zeroGuardAcceptance, q(∀ _ : ℝ, 0 / (Real.sqrt 2 * Real.sqrt 2 - 2) = 0), 1),
+      (`emptyDomainAcceptance, q(∀ x ∈ Set.Ioc (2 : ℝ) 1,
+        x + 0 / (Real.sqrt 2 * Real.sqrt 2 - 2) = x), 1),
+      (`validEmptyDomainAcceptance, q(∀ x ∈ Set.Ioc (2 : ℝ) 1, x < 0), 0)] do
+    let prepared ← checked target
+    unless prepared.source.divisors.size == guardCount do
+      throwError "source acceptance guard count changed for {label}: {prepared.source.divisors.size}, expected {guardCount}"
+    let before := (← getMCtx).decls.toList.length
+    let .ok (proof, usage) ← prepared.acceptanceIff target registry
+      | throwError "source acceptance equivalence failed: {label}"
+    unless (← getMCtx).decls.toList.length == before do
+      throwError "successful source acceptance changed caller metavariables"
+    let type ← inferType proof
+    unless type.isAppOfArity ``Iff 2 do throwError "source acceptance returned no equivalence"
+    let domain := mkApp (mkConst ``Fin) (mkNatLit prepared.source.divisors.size)
+    let divisors ← FieldLiteral.finiteExpr (mkConst ``Real) prepared.source.divisors q((0 : ℝ))
+    let guards ← withLocalDeclD `i domain fun i => do
+      mkForallFVars #[i] (← mkAppM ``Ne #[mkApp divisors i, q((0 : ℝ))])
+    let expected ← mkAppM ``And #[guards, target]
+    let rhs ← instantiateMVars type.getAppArgs[1]!
+    unless rhs.isAppOfArity ``And 2 && rhs.getAppArgs[1]! == target do
+      throwError "source acceptance changed the exact original goal: {label}"
+    -- Numeral instances and binder names can differ in the guard function.
+    -- Only that function is compared reducibly; the original target is exact.
+    unless ← withTransparency .reducible (isDefEq rhs expected) do
+      throwError "source acceptance changed its original divisor conjunction: {label}"
+    let lhs := type.getAppArgs[0]!
+    unless lhs.isAppOfArity ``AlgebraicCells.accepts 8 do
+      throwError "source equivalence does not refer to the actual producer acceptance"
+    let info ← getFunInfoNArgs lhs.getAppFn lhs.getAppArgs.size
+    let explicit := lhs.getAppArgs.zipIdx |>.filterMap fun (arg, i) =>
+      if info.paramInfo[i]!.binderInfo.isExplicit then some arg else none
+    unless explicit.size == 6 do throwError "source acceptance has an unexpected arity"
+    let generators := explicit[1]!.eta
+    let parts := generators.getAppArgs
+    unless generators.getAppFn.isConstOf ``Fin.addCases && parts.size >= 2 do
+      throwError "source acceptance lost its coefficient/divisor tuple: {← ppExpr generators}"
+    let zero : Q(RealAlgebraicNumber) := q(RealAlgebraicNumber.ofRat 0)
+    let coefficients ← FieldLiteral.finiteExpr (mkConst ``RealAlgebraicNumber)
+      (prepared.coefficients.toArray.map (·.expression)) zero
+    let originalDivisors ← FieldLiteral.finiteExpr (mkConst ``RealAlgebraicNumber)
+      (prepared.divisors.toArray.map (·.expression)) zero
+    unless parts[parts.size-2]! == coefficients && parts.back! == originalDivisors do
+      throwError "source acceptance did not use the exact checked algebraic expressions"
+    let proposals := prepared.coefficients.map fun entry =>
+      {entry with proposal := RealAlgebraicNumber.ofRat 0}
+    let divisorProposals := prepared.divisors.map fun entry =>
+      {entry with proposal := RealAlgebraicNumber.ofRat 0}
+    let edited := {prepared with
+      coefficients := proposals
+      divisors := divisorProposals
+      formula := .not prepared.formula
+      quantifier := .existsReal
+      usage := usage }
+    let .ok (unchangedProof, furtherUsage) ← edited.acceptanceIff target registry
+      | throwError "runtime-only edits changed source equivalence"
+    unless (← inferType unchangedProof) == type do
+      throwError "runtime proposals or runtime syntax entered source acceptance evidence"
+    unless furtherUsage.proofNodes > usage.proofNodes && usage.proofNodes > prepared.usage.proofNodes do
+      throwError "source acceptance did not return its continued aggregate proof usage"
+    unless furtherUsage.sourceNodes > usage.sourceNodes && usage.sourceNodes > prepared.usage.sourceNodes do
+      throwError "source acceptance did not charge its continued original-source scans"
+    let name := `Hex.RCF.AlgebraicPreparationConformance ++ label
+    addDecl (.thmDecl {name,levelParams := [],type,value := proof})
+    let budget := {prepared.config.ring.budget with proofNodes := usage.proofNodes - 1}
+    let ring := {prepared.config.ring with budget}
+    let config := {prepared.config with ring}
+    let limited := {prepared with config}
+    let beforeNames := (← (← getEnv).getLocalConstantInfos).map (·.name)
+    unchanged do
+      let .error (.budget exhausted) ← limited.acceptanceIff target registry
+        | throwError "source acceptance reset its aggregate proof budget"
+      unless exhausted.dimension == .proofNodes do throwError "wrong source acceptance exhaustion"
+    unless (← (← getEnv).getLocalConstantInfos).map (·.name) == beforeNames do
+      throwError "exhausted source acceptance leaked auxiliary declarations"
+    let budget := {budget with proofNodes := usage.proofNodes}
+    let ring := {ring with budget}
+    let config := {config with ring}
+    let exactLimit := {prepared with config}
+    let .ok (_, exactUsage) ← exactLimit.acceptanceIff target registry
+      | throwError "source acceptance failed at its exact aggregate proof limit"
+    unless exactUsage.proofNodes == usage.proofNodes do
+      throwError "source acceptance changed its exact charged proof count"
+    if label == `divisorAcceptance then
+      -- This source has no aliases, so both charged source views are identical.
+      let count := Hex.Reflect.sourceNodeCount target (prepared.config.ring.budget.sourceNodes + 1)
+      unless usage.sourceNodes == prepared.usage.sourceNodes + 2 * count do
+        throwError "source acceptance did not charge both original source views"
+      let budget := {prepared.config.ring.budget with sourceNodes := usage.sourceNodes - 1}
+      let ring := {prepared.config.ring with budget}
+      let config := {prepared.config with ring}
+      let limited := {prepared with config}
+      let names := (← (← getEnv).getLocalConstantInfos).map (·.name)
+      unchanged do
+        let .error (.budget exhausted) ← limited.acceptanceIff target registry
+          | throwError "source acceptance reset the original-source scan budget"
+        unless exhausted.dimension == .sourceNodes do throwError "wrong source-scan exhaustion"
+      unless (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
+        throwError "exhausted source scan leaked auxiliary declarations"
+      let budget := {budget with sourceNodes := usage.sourceNodes}
+      let ring := {ring with budget}
+      let config := {config with ring}
+      let sourceLimit := {prepared with config}
+      let .ok (_, exactUsage) ← sourceLimit.acceptanceIff target registry
+        | throwError "source acceptance failed at its exact original-source limit"
+      unless exactUsage.sourceNodes == usage.sourceNodes do
+        throwError "source acceptance changed its exact charged source count"
+    let beforeNames := (← (← getEnv).getLocalConstantInfos).map (·.name)
+    unchanged do
+      let failed ← tryCatchRuntimeEx
+        (prepared.acceptanceIff q(True) registry *> pure false) (fun _ => pure true)
+      unless failed do throwError "source acceptance ignored its expected original target"
+    for (resource, limits, expectedException) in resources do
+      unchanged do
+        let terminal ← observeTerminal (withTheReader Core.Context limits do
+          let _ ← prepared.acceptanceIff target registry
+          pure false) (fun error => do
+            unless expectedException error do throw error
+            pure true)
+        unless terminal do throwError "source acceptance swallowed terminal {resource}"
+    if label == `algebraicAcceptance then
+      -- Entry passes at depth zero; these must fail inside the operation.
+      -- Resetting the caller's context limit from options would hide failure.
+      for (operation, action) in [
+          ("acceptance", prepared.acceptanceIff target registry *> pure ()),
+          ("preparation", AlgebraicPreparation.prepare target *> pure ())] do
+        unchanged do
+          let terminal ← observeTerminal (withTheReader Core.Context
+              (fun context => {context with maxRecDepth := 8, currRecDepth := 0}) do
+            action
+            pure false) (fun error => do
+              unless error.isMaxRecDepth do throw error
+              pure true)
+          unless terminal do throwError "source {operation} reset an inner recursion limit"
+    unless (← (← getEnv).getLocalConstantInfos).map (·.name) == beforeNames do
+      throwError "terminal source acceptance failure leaked auxiliary declarations"
+    if h : 0 < prepared.source.coefficients.size then
+      let i : Fin prepared.source.coefficients.size := ⟨0,h⟩
+      let entry := prepared.coefficients[i]
+      let edited := {entry with identity := q(True.intro)}
+      let corrupt := {prepared with coefficients := prepared.coefficients.set i edited}
+      unchanged do
+        let failed ← tryCatchRuntimeEx (corrupt.acceptanceIff target registry *> pure false) (fun _ => pure true)
+        unless failed do throwError "source acceptance trusted an edited coefficient identity"
+      unless (← (← getEnv).getLocalConstantInfos).map (·.name) == beforeNames do
+        throwError "rejected source acceptance leaked auxiliary declarations"
+    if h : 0 < prepared.source.divisors.size then
+      let i : Fin prepared.source.divisors.size := ⟨0,h⟩
+      let edited := {prepared.divisors[i] with identity := q(True.intro)}
+      let corrupt := {prepared with divisors := prepared.divisors.set i edited}
+      unchanged do
+        let failed ← tryCatchRuntimeEx (corrupt.acceptanceIff target registry *> pure false) (fun _ => pure true)
+        unless failed do throwError "source acceptance trusted an edited divisor identity"
+      let omitted := {prepared with
+        source := {prepared.source with divisors := #[]}
+        divisors := Vector.ofFn (fun i : Fin 0 => i.elim0)}
+      unchanged do
+        let failed ← tryCatchRuntimeEx (omitted.acceptanceIff target registry *> pure false) (fun _ => pure true)
+        unless failed do throwError "source acceptance trusted an omitted original divisor inventory"
+      unless (← (← getEnv).getLocalConstantInfos).map (·.name) == beforeNames do
+        throwError "rejected divisor acceptance leaked auxiliary declarations"
+    if label == `zeroGuardAcceptance then
+      unless prepared.source.divisors.size == replacementGuard.source.divisors.size do
+        throwError "guard replacement control changed its coordinate count"
+      let substituted := {prepared with
+        source := {prepared.source with divisors := replacementGuard.source.divisors}
+        divisors := replacementGuard.divisors}
+      unchanged do
+        let failed ← tryCatchRuntimeEx (substituted.acceptanceIff target registry *> pure false) (fun _ => pure true)
+        unless failed do throwError "source acceptance trusted a different valid divisor inventory"
+      unless (← (← getEnv).getLocalConstantInfos).map (·.name) == beforeNames do
+        throwError "replaced divisor acceptance leaked auxiliary declarations"
+    -- The matching unchanged record must still succeed after the forgeries.
+    -- No diagnostic-string classification is needed for the invalid records.
+    unchanged do
+      let .ok (control, _) ← prepared.acceptanceIff target registry
+        | throwError "source acceptance rejected the unchanged divisor control"
+      unless (← inferType control) == type do
+        throwError "source acceptance changed the unchanged divisor control"
+  withLocalDeclD `c q(ℝ) fun c => do
+    let identity ← mkEq c q(Real.sqrt 2)
+    withLocalDeclD `identity identity fun identity => do
+      let c : Q(ℝ) := c
+      let target : Q(Prop) := q(∀ x : ℝ, x^2 + $c > 0)
+      let prepared ← checked target
+      let .ok (proof, usage) ← prepared.acceptanceIff target registry
+        | throwError "source acceptance lost the checked local alias"
+      let cap := prepared.config.ring.budget.sourceNodes + 1
+      let originalCount := Hex.Reflect.sourceNodeCount target cap
+      let closedCount := Hex.Reflect.sourceNodeCount (target.replaceFVar c q(Real.sqrt 2)) cap
+      unless originalCount != closedCount do
+        throwError "alias source-scan control has indistinguishable views"
+      unless usage.sourceNodes == prepared.usage.sourceNodes + originalCount + closedCount do
+        throwError "source acceptance did not charge the distinct alias-substituted view"
+      let type ← mkForallFVars #[c,identity] (← inferType proof)
+      let value ← mkLambdaFVars #[c,identity] proof
+      addDecl (.thmDecl {
+        name := `Hex.RCF.AlgebraicPreparationConformance.aliasAcceptance
+        levelParams := [], type, value })
+  logInfo "exact original algebraic producer acceptance, false source, original zero guards, empty domains, aggregate proof/source budgets, inner recursion limits and forged guard inventories checked"
   addDecl (.thmDecl {
     name := `Hex.RCF.AlgebraicPreparationConformance.runFinished
     levelParams := [], type := mkConst ``True, value := mkConst ``True.intro })

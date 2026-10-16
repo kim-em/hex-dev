@@ -2,7 +2,8 @@
 
 This supplements the individual source assessments. It records the current
 import structure. [Theory acceptance](theory-acceptance.md) completes the
-companion’s Phases 6–7; computational acceptance remains separate.
+companion’s Phases 6–7; the [computational acceptance](../ordered-fn-proof-acceptance.md) separately
+checks the native implementation and complete regression evidence.
 
 | Module | Automation and API assessment |
 | --- | --- |
@@ -47,7 +48,7 @@ public statements, automation choices and semantic hypotheses are identical.
 The zero-reference table records why public characterizing laws remain exported;
 intentional API is distinct from a discovered production caller. Final acceptance
 for the computational library must consider those dispositions along with the
-unresolved regression evidence. The companion’s separate acceptance records its
+separately scoped computational regression evidence. The companion’s separate acceptance records its
 public API decisions.
 
 Existing public names (`strictOrderedRing`, `sign_neg`) and comparison-iff

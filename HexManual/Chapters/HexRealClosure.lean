@@ -6,9 +6,11 @@ Authors: Kim Morrison
 
 import VersoManual
 import HexRealClosure
+import HexRealClosure.BaseHistoryTests
 import HexRealClosureTheory.TowerRoots
 import HexRealClosureTheory.RootCollection
 import HexRealClosureTheory.ReconciledCatalog
+import HexRealClosureTheory.ConstructedCatalog
 import HexRealClosureTheory.SuppliedInverse
 
 open Verso.Genre Manual
@@ -32,7 +34,8 @@ Import `HexRealClosure` for the Mathlib-free computational API. The
 `HexRealClosureTheory` umbrella supplies the base-model proofs; the tower
 root and collection theorems below additionally require
 `HexRealClosureTheory.TowerRoots` and `HexRealClosureTheory.RootCollection`.
-The catalog gathering laws use `HexRealClosureTheory.ReconciledCatalog`.
+The installed-catalog laws use `HexRealClosureTheory.ReconciledCatalog`;
+constructed-history gathering uses `HexRealClosureTheory.ConstructedCatalog`.
 The finite inverse laws use `HexRealClosureTheory.SuppliedInverse`.
 Those semantic modules belong to the `HexQuerySemantics` Lake target under
 `adapters/` in the development tree. They build in `hex-dev`, but are not
@@ -323,6 +326,99 @@ and `ReconciledBaseTests`, and the semantic `ReconciledCatalogTests` and
 `ReconciledEnlargementTests`. Their executable selection, gathering and
 conditional provider-model theorems exercise different parts of this interface;
 the success theorem above supplies the general producer guarantee.
+
+# Constructing a provider history
+
+When no installed prefix contains the needed provider keys, use
+{name}`Hex.RealClosure.BaseContext.RealPrefix.extend?` with a starting prefix,
+a requested key list and a reader supplying progress at each new predecessor.
+The constructor skips keys already present. For a new key it calls the reader
+at the prefix constructed so far, appends that provider and continues there.
+A missing step returns `none`; it does not select an unrelated installed history.
+
+{name}`Hex.RealClosure.BaseContext.RealPrefix.Ready` states that the reader
+supplies progress along precisely this path, including skips of existing keys.
+{name}`Hex.RealClosure.BaseContext.RealPrefix.extend?_isSome` characterizes
+success by that condition. It does not require progress at every possible
+registry history.
+
+The two-stage fixture supplies the second packet at the newly constructed
+first predecessor. The example uses the existing
+{name}`Hex.RealClosure.BaseContext.HistoryTests.construct_two` proof:
+
+```lean
+namespace ConstructedHistory
+open Hex.RealClosure.BaseContext
+variable {registry : Registry}
+variable (parent : RealPrefix registry)
+variable (first second : ConstantKey)
+variable (one : parent.Step first)
+variable (two :
+  (parent.append first one).Step second)
+
+example
+    (freshFirst : first ∉ parent.keys)
+    (freshSecond :
+      second ∉
+        (parent.append first one).keys) :
+    RealPrefix.extend?
+      (HistoryTests.reader parent first
+        second one two)
+      parent [first, second] =
+      some
+        ((parent.append first one).append
+          second two) :=
+  HistoryTests.construct_two parent first
+    second one two freshFirst freshSecond
+end ConstructedHistory
+```
+
+These packets contain the registered provider's presence and erased sign and
+approximation progress proofs. They do not by themselves interpret the provider
+in the reals. The companion's
+{name}`Hex.RealClosure.BaseContext.RealPrefix.Model.Valid` requires the caller
+to prove containment and relative transcendence for each returned step over the
+interpretation constructed so far. It requires no width bounds: the packet
+already contains the search progress proofs.
+{name}`Hex.RealClosure.BaseContext.RealPrefix.Model.progress` derives a packet
+from containment, interval widths at most `δ` for every positive `δ`, and that
+relative transcendence. A proof about the new constant over the rationals alone
+cannot replace its premise over the whole predecessor field.
+
+Starting with a provider model of the seed prefix and those step premises,
+{name}`Hex.RealClosure.BaseContext.RealPrefix.Model.extend?_model` proves that
+the actual returned prefix has a provider model, and
+{name}`Hex.RealClosure.BaseContext.RealPrefix.Model.extend?_embedding` preserves
+its predecessor interpretation. No model of a completed joint target is an input.
+The existing `BaseHistoryTests` also cover duplicate-key reuse and rejection of
+a missing second step. The semantic `HexRealClosureTheory.BaseHistoryTests`
+contains `install_providers`, which derives readiness, validity and a staged
+realization for its two-stage reader from containment, width and transcendence
+at the two actual predecessors.
+
+{name}`Hex.RealClosure.BaseContext.Catalog.construct?` retains the constructed
+prefix and the returned catalog, which is unchanged if the path is already
+installed. For live values,
+{name}`Hex.RealClosure.Tower.Live.Request.gatherConstructed?` requests their
+owners' provider keys, constructs that history, extends to their maximum
+infinitesimal depth and runs the checked reconciliation. Use its returned
+catalog for subsequent requests. If gathering fails, no construction packet is
+returned; call `Catalog.construct?` separately to retain the history regardless
+of that outcome. The development-only `HexRealClosureTheory.ConstructedCatalog`
+provides {name}`Hex.RealClosure.Tower.Live.Request.gatherConstructed?_success`:
+starting with a provider model of the seed prefix, path progress, path validity
+and distinct keys in every owner's signature imply success. Coverage and the
+depth bound follow from construction; those other conditions are hypotheses.
+
+To reuse the installed-prefix selection laws, retain the catalog model invariant.
+{name}`Hex.RealClosure.BaseContext.Catalog.Construction.models` proves it for
+the returned catalog from the input catalog's `Catalog.Models` and the caller's
+path validity.
+
+This route constructs the real-provider prefix before the infinitesimal and
+algebraic suffixes. Its staged interpretation and all-live gathering do not
+establish general ordinary-real realization of arbitrary serialized tower
+evidence or an ordinary-real embedding of the infinitesimal field.
 
 # Exact stored data and exploration
 

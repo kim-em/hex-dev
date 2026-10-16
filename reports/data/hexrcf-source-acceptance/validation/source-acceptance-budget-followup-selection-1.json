@@ -1,0 +1,17 @@
+{
+  "source_commit": "cdc9b747aafee5970f7e818a28ff89c1ca343ec6",
+  "source_tree": "55844661fe0c6670fcee1a397cdb947fac228c98",
+  "argv": [
+    "/home/kim/.codex/tasks/hex-10358/bin/lake-bounded",
+    "build",
+    "HexRCF",
+    "HexRCFRealCoefficients",
+    "+HexRCF.AlgebraicPreparationCases",
+    "+HexRCF.AlgebraicPreparationConformance",
+    "+HexRCF.SourceAcceptancePublic",
+    "HexRCFProofProbe",
+    "HexManual"
+  ],
+  "cwd": "/home/kim/.codex/tasks/hex-10358/boolean-worktree",
+  "scope": "Focused additional source-budget/alias-scan/control regressions, fresh source acceptance bodies and axiom audit, ordinary public consumer, libraries, caller proof probes and full manual after the complete6f compatibility run. Production source differs only by the guards docstring."
+}
