@@ -24,7 +24,6 @@ def trailingZero : Codec.Json := .array (.cons
   (.array (.cons Scalars.j0 (.cons Scalars.j1 (.cons Scalars.j0 .nil))))
   (.cons (.number (-1)) .nil))
 
-
 private meta def config (limit : Nat) : Hex.RealFormula.Reify.Config :=
   {ring := {budget := {Hex.Reflect.Budget.default with proofNodes := limit}}}
 
@@ -73,7 +72,9 @@ run_meta do
       | throwError "extension scalar quotation rejected checked supplied signs"
     unless (← getMCtx).decls.toList.length == callerCount && !(← sentinel.mvarId!.isAssigned) do
       throwError "successful scalar quotation changed caller metavariables"
-    unless result.usage.proofNodes > strict.usage.proofNodes do
+    let beforeTransport := strict.usage.proofNodes + Hex.Reflect.proofNodeCount #[facts]
+      (Hex.Reflect.Budget.default.proofNodes+1)
+    unless result.usage.proofNodes > beforeTransport do
       throwError "canonical scalar transport was not charged after strict quotation"
     let some expanded ← unfoldDefinition? (mkConst ``literal)
       | throwError "literal source definition unavailable"
@@ -85,6 +86,18 @@ run_meta do
       | throwError "assigned scalar literal failed"
     unless assignedLiteral.usage.proofNodes == directLiteral.usage.proofNodes do
       throwError "assigned literal hid transport work from the reflection budget"
+    let some expandedFacts ← unfoldDefinition? facts
+      | throwError "sign facts definition unavailable"
+    unless Hex.Reflect.proofNodeCount #[expandedFacts] 2 > 1 do
+      throwError "assigned-facts control did not expand its source"
+    let .ok directFacts ← ScalarQuote.quote codec expandedFacts (mkConst ``literal) decode
+      | throwError "expanded scalar facts failed"
+    let hiddenFacts ← mkFreshExprMVar (← inferType expandedFacts)
+    hiddenFacts.mvarId!.assign expandedFacts
+    let .ok assignedFacts ← ScalarQuote.quote codec hiddenFacts (mkConst ``literal) decode
+      | throwError "assigned scalar facts failed"
+    unless assignedFacts.usage.proofNodes == directFacts.usage.proofNodes do
+      throwError "assigned facts hid preflight or transport work from the reflection budget"
     let _ ← Hex.RCF.checkProof `canonicalScalar (← inferType result.proof) result.proof
     logInfo m!"canonical extension scalar quotation proofNodes={result.usage.proofNodes}"
     withExporting (isExporting := true) do
@@ -115,8 +128,9 @@ run_meta do
           (config (result.usage.proofNodes-1))
         | throwError "one-below scalar proof budget was accepted"
       unless exhausted.dimension == .proofNodes do throwError "wrong scalar budget dimension"
-      unless exhausted.consumed ≥ strict.usage.proofNodes do
-        throwError "transport exhaustion happened before the strict quote completed"
+      unless exhausted.consumed == beforeTransport &&
+          exhausted.requested == result.usage.proofNodes-beforeTransport do
+        throwError "one-below exhaustion did not occur at the final transport charge"
     let factType ← mkAppM ``Algebraic.SignFact #[mkConst ``Data.native]
     let noFacts ← mkAppOptM ``List.nil #[some factType]
     for malformed in #[mkConst ``ValueCodec.rat,mkConst ``Algebraic.Element.codec] do

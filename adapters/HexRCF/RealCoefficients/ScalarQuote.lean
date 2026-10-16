@@ -36,6 +36,7 @@ namespace Hex.RCF.RealCoefficients.ScalarQuote
 open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RealFormula.Reify
 
 private def checkFacts (codec facts : Expr) (parameters : Nat) : ReifyM Unit := do
+  -- Charge preflight checking separately from the subsequent reader/proof syntax.
   accountProof facts
   let factsType ← withTransparency .reducible <| whnf (← inferType facts)
   unless factsType.isAppOfArity ``List 1 do
@@ -66,9 +67,9 @@ an ordinary-kernel equation for its canonical decoder. The canonical
 can unfold a native decoder merely to compare definitionally equal aliases.
 The predecessor decoder and already checked sign facts are explicit inputs. Missing/mismatched facts
 reject; a failed quote never starts the canonical decoder or another solver.
-The facts' context index must match the original codec under reducible
-transparency; opaque or ordinary definition aliases need an explicit type
-transport. Assigned inputs are instantiated before their work is charged.
+The facts list's declared element type must use the original context under
+reducible transparency; aliases in that index need explicit type transport.
+Assigned inputs are instantiated before their work is charged.
 Reader quotation and final transport continue one reflection request. Failure
 restores all state, including auxiliaries from an earlier successful stage.
 This does not reconstruct source coefficients, models or context histories. -/
