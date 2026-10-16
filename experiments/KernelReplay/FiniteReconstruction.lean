@@ -246,6 +246,16 @@ def elaborate : CommandElab := fun _ => liftTermElabM do
   let leading ← mkAppM ``Transport.Leading #[first.reader,
     ← mkAppM ``Hex.SignDet.RawDescriptor.head #[mkConst ``FiniteTower.nextRaw]]
   let _ ← FiniteData.buildClosed leading (first.supplyAll FiniteDataProbe.supply)
+  -- A search-order hint cannot suppress the current inventory when the
+  -- requested predecessor supplier has no proof of the reached obligation.
+  let tried ← IO.mkRef false
+  let missing : FiniteData.Supplier := fun requested => do
+    if requested.getAppFn.isConstOf ``Transport.Leading then
+      tried.set true
+      return none
+    FiniteDataProbe.supply requested
+  let _ ← FiniteData.buildClosed leading (first.supplyFrom #[first.reader] missing)
+  unless ← tried.get do throwError "ancestor routing did not exercise its missing-proof fallback"
   let next := mkConst ``FiniteJoint.next
   let decisions : FiniteData.Supplier := fun requested => do
     if requested.getAppFn.isConstOf ``Packing.Inventory.Data then

@@ -220,6 +220,7 @@ def reconstruct (base following baseReader : Expr) (discovery : Discovery) (extr
     checks type)
   let mut supplier := baseSupplier
   let mut verified : Array Prefix := #[]
+  let mut readers := #[origin.read]
   let mut conditions := #[agreement, fixed]
   for level in levels do
     for value in #[level.context, level.entries, level.records, level.facts] do nativeOnly value temporaryReaders
@@ -240,7 +241,8 @@ def reconstruct (base following baseReader : Expr) (discovery : Discovery) (extr
         Prefix.ofData data zero unit
     conditions := conditions.push (← mkAppM ``Packing.Inventory.Data.conditions
       #[current.data, current.zero, current.unit])
-    supplier := current.supplyAll supplier
+    supplier := current.supplyFrom readers supplier
+    readers := readers.push current.reader
     verified := verified.push current
     if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
       IO.FS.withFile path .append fun handle => do
