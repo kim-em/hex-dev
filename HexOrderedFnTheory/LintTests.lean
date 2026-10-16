@@ -48,6 +48,20 @@ run_cmd do
       unless modules.contains env.allImportedModuleNames[idx.toNat]! do continue
       if info matches .axiomInfo _ then
         throwError "owned axiom declaration: {name}"
+      if info.isUnsafe || Lean.isExtern env name ||
+          (Lean.Compiler.getImplementedBy? env name).isSome then
+        throwError "unproved native implementation: {name}"
+      if info.isPartial then
+        -- Lean generates these two runtime auxiliaries from the checked recursive bodies.
+        unless [``Hex.OrderedFn.Real.sign?.go._unsafe_rec,
+            ``Hex.OrderedFn.firstSome._unsafe_rec].contains name do
+          throwError "unreviewed partial implementation: {name}"
+        let some parent := Lean.Compiler.isUnsafeRecName? name |
+          throwError "invalid compiler recursion auxiliary: {name}"
+        let some definition := env.find? parent |
+          throwError "missing safe recursive definition: {parent}"
+        if definition.isUnsafe || definition.isPartial then
+          throwError "unchecked recursive definition: {parent}"
       for axiomName in ← Lean.collectAxioms name do
         unless [``propext, ``Classical.choice, ``Quot.sound].contains axiomName do
           throwError "unexpected axiom in {name}: {axiomName}"

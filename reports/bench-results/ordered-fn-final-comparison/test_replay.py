@@ -12,6 +12,10 @@ SOURCE = Path(__file__).resolve().parent
 with tempfile.TemporaryDirectory() as temporary:
     root = Path(temporary) / 'evidence'
     shutil.copytree(SOURCE, root)
+    reference = root.parent / 'ordered-fn-regression-followup'
+    reference.mkdir()
+    shutil.copy2(SOURCE.parent / 'ordered-fn-regression-followup/analyze_guard.py',
+                 reference / 'analyze_guard.py')
     def refuse(expected):
         result = subprocess.run([sys.executable, str(root / 'replay.py')], capture_output=True, text=True)
         if result.returncode == 0 or expected not in result.stderr:

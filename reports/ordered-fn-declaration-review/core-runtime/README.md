@@ -2,7 +2,8 @@
 
 The build at `9b1915c218366c781c43da00143a5d8ea41976ee` incorporates the merged
 #10960/#10962 owner milestones and the computational acceptance checks. Its
-5,172 source/configuration inputs and sixteen clean pins remain unchanged across
+source is retained by the non-release tag
+`audit/issue-10575-orderedfn-core-acceptance-input-v1`. Its 5,172 source/configuration inputs and sixteen clean pins remain unchanged across
 the native build. `list` and `verify` pass. No timing measurements are collected.
 
 The executable is byte-identical to the measured integrated candidate:
@@ -22,9 +23,28 @@ without weakening replay, changing old records or collecting another sample:
 python3 reports/ordered-fn-declaration-review/core-runtime/check.py
 ```
 
-The checker validates every retained binding, both independently captured input
-inventories, all current source/configuration bytes, new tracked source inputs,
-current clean pinned requirements and measured executable/SDK/code identity.
-It does not execute binaries or infer phase acceptance from a smoke verdict.
+The default mode validates every retained binding, both independently captured
+input inventories, measured source-record bindings, the seventeen `list`/`verify`
+results and measured executable/SDK/code identity. It remains usable after later
+source changes. An optional strict check also compares all current source inputs,
+new tracked sources and clean pinned requirements:
+
+```sh
+python3 reports/ordered-fn-declaration-review/core-runtime/check.py --current
+```
+
+This mode matches the build at `9b1915c` and its source-identical evidence commit
+`b407d48`. Later changes, including subsequent lint-only checks, intentionally
+refuse rather than refreshing the frozen records. The native source, SDK and
+executable identities established by that build remain separately scoped.
+It does not execute binaries or infer phase acceptance from a correctness-only verification verdict.
+Tamper controls check standalone archive verification without a source checkout,
+changed executable/source identities, an unauthenticated copied measurement
+record and corrupted verification output:
+
+```sh
+python3 reports/ordered-fn-declaration-review/core-runtime/test_check.py
+```
+
 The [complete comparison](../../bench-results/ordered-fn-final-comparison/README.md)
 remains the separately retained computational evidence.

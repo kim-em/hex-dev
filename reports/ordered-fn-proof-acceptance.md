@@ -66,14 +66,19 @@ a result. Generated C and separate native executable reconstructions are bound
 in the optimization reports.
 
 The current `HexOrderedFnTheory.LintTests` lints both public library roots,
-including theorem documentation, and audits every owned compiled constant in
-both complete production import closures. It rejects missing/unexpected modules,
+including theorem documentation, and audits every constant owned by
+the six core and ten companion production modules. It rejects missing/unexpected modules,
 owned axioms, empty selections and dependencies beyond `propext`,
 `Classical.choice`, `Quot.sound`. The existing core tests additionally pin the
 three compiler equalities' exact axiom sets. This covers generated declarations
 as well as handwritten proofs: 276 core constants in six modules and 298 companion
 constants in ten modules pass. Lint and axiom counts do not replace individual
-API judgments.
+API judgments. The same gate rejects owned unsafe, external and
+`implemented_by` implementations. The only allowed partial declarations are
+Lean's generated `_unsafe_rec` auxiliaries for the existing `firstSome` and
+`Real.sign?.go` recursive definitions; their reference parents must be safe and
+total. These are compiler-generated runtime helpers, not handwritten partial
+algorithms or additional Hex trust declarations.
 
 The core's field dictionary reuses canonical RationalFn arithmetic. The
 companion's localization injectivity, nonzero denominator, Hahn interpretation,
@@ -117,7 +122,7 @@ not enlarge the scoped fixed-depth/search upper-bound models. The large third-
 level gain is specific to the measured shared-padding specialization. No generic
 unshared-zero speedup or uniform precision/depth claim is inferred. The complete
 Phase-6 raw-loop comparison does not supply new runner signal-floor eligibility,
-replace scaling evidence or convert a smoke/proof timing into a performance pass.
+replace scaling evidence or convert a fast check or proof timing into a performance pass.
 Tower8/MetiTarski and clean-versus-eager integration remain with #10378.
 
 ## Conformance and documentation
@@ -152,8 +157,9 @@ check correctly refuses that difference. A separate
 binds all 5,172 current source/configuration inputs and reproduces the measured
 executable, SDK, sixteen pins, complete 89-file native closure and captured
 generated C byte-for-byte. Its build and correctness verification collect no
-measurements. The readonly checker verifies retained and current inputs without
-weakening the original replay. The production/manual sources remain unchanged
+measurements. The readonly checker verifies retained bindings by default, with a separate
+strict current-input mode. Subsequent lint-only changes intentionally refuse
+that frozen whole-repository mode without weakening the original replay. The OrderedFn production/manual sources remain unchanged
 through this rebase; their existing full build and visual inspection are reused.
 Unchanged benchmark inputs and fixtures are not measured again.
 

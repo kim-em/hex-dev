@@ -15,6 +15,10 @@ stable parameters. These are observations on the recorded shared host.
 | Historical | `ee490f54889e2db8170c8b9fc6e8568f8a978bbe` | Lean 4.34.1 | `24b1b5138cc6ef75b990ee5f7580709268fc35ad35fce2df360650eeb715be34` |
 | Integrated | `b4e1e1522a81b09205ff792f8b1d0dc650a63e37` | Lean 4.35.0-rc3 | `19a7750209804b74ea3ea0d480b6aebedfe1b4bd4c6eb7d3b4dcdc90f1592c8f` |
 
+The integrated source is retained by
+`audit/issue-10575-orderedfn-sign-scan-input-v1`; the original baseline is retained
+by `audit/issue-10575-orderedfn-baseline`. These are non-release audit tags.
+
 The historical arm is a fresh build of the original committed baseline source
 against exactly its sixteen pinned requirements, with isolated package and build
 directories. It binds 4,794 source/configuration inputs and 87 native import files.
@@ -81,7 +85,7 @@ and the pinned LeanBench default 10% arithmetic. Paired ratios are descriptive
 only. Raw child outputs lack runner signal-floor/verdict eligibility; this check
 does not reconstruct that machinery or supply a new Phase-4 scaling verdict.
 Existing model derivations and owner scaling/comparator evidence remain separately
-scoped. A theorem-application timing or successful smoke run is not used here.
+scoped. A theorem-application timing or successful fast check is not used here.
 
 ## Relation to retained findings
 
@@ -133,6 +137,11 @@ the measured candidate (requiring its dependency checkouts):
 python3 reports/bench-results/ordered-fn-final-comparison/replay.py --current
 ```
 
+That strict check intentionally refuses after #10962's Lake-file additions.
+The separate [current build reconstruction](../../ordered-fn-declaration-review/core-runtime/README.md)
+reproduces the measured executable and native inputs without changing this rule.
+It is scoped to its retained build source; no new timings are collected.
+
 The retained corruption, missing-row, altered-verdict, affinity and reservation
 controls run against temporary copies, without executing native benchmarks:
 
@@ -140,7 +149,6 @@ controls run against temporary copies, without executing native benchmarks:
 python3 reports/bench-results/ordered-fn-final-comparison/test_replay.py
 ```
 
-That optional check intentionally refuses later changes to those inputs. The
-complete comparison passes for its measured source. Final phase acceptance also
+The complete comparison passes for its measured source. Final phase acceptance also
 requires the library's proof/API, import, kernel, conformance and manual checks;
 this report alone changes no library or publication counter.

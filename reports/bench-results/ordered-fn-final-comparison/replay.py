@@ -68,6 +68,8 @@ def main():
         hashes = [value for path, value in decision['tools'].items() if Path(path).name == name]
         require(hashes == [sha(data(name))], 'declared script hash: ' + name)
     require((root / 'analyze_guard.py').read_bytes() == data('analyze_guard.py'), 'committed comparison arithmetic')
+    require((root.parent / 'ordered-fn-regression-followup/analyze_guard.py').read_bytes() == data('analyze_guard.py'),
+            'unchanged follow-up analyzer')
 
     sources = read('comparison/sources.json')
     expected_heads = {'baseline':manifest['baseline_source'], 'candidate':manifest['candidate_source']}
