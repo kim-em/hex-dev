@@ -3,6 +3,7 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
+import HexRCF.MaximalCoefficients
 import HexRCF.MaximalCoefficientsConformance
 import HexRCF.RegisteredConstants
 import KernelReplay.AxiomClosure
@@ -14,10 +15,15 @@ example : True := Hex.RCF.MaximalCoefficientsConformance.proofsComplete
 
 open Lean Meta in
 run_meta do
-  let names := #[``Hex.RCF.MaximalCoefficientsConformance.sum_positive,
+  let names := #[``Hex.RCF.RealCoefficients.MaximalCoefficientsTests.metadataBare,
+    ``Hex.RCF.RealCoefficients.MaximalCoefficientsTests.metadataDedup,
+    ``Hex.RCF.MaximalCoefficientsConformance.sum_positive,
     ``Hex.RCF.MaximalCoefficientsConformance.square_positive,
     ``Hex.RCF.MaximalCoefficientsConformance.negative_witness,
     ``Hex.RCF.RegisteredConstants.positiveSquaredCoefficient,
+    ``Hex.RCF.RegisteredConstants.squareWitness,
+    ``Hex.RCF.RegisteredConstants.intervalWitness,
+    ``Hex.RCF.RegisteredConstants.nestedWitness,
     ``Hex.RCF.RegisteredConstants.reorderedWitness,
     ``Hex.RCF.RegisteredConstants.reversedWitness,
     ``Hex.RCF.RegisteredConstants.aliasedWitness,
