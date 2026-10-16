@@ -119,6 +119,17 @@ def contextCodec (parent : Signature) : ValueCodec Signature where
         if context = parent then .error "noncanonical context reference" else .ok context
     | _ => .error "invalid relative context reference"
 
+/-- The enclosing signature has the canonical zero-token encoding. -/
+@[simp] theorem contextCodec_encode_self (parent : Signature) :
+    (contextCodec parent).encode parent = .arr #[.number 0] := by
+  simp [contextCodec]
+
+/-- The parent-reference token restores the supplied enclosing signature.
+Reading this token does not validate that signature or its selected roots. -/
+@[simp] theorem contextCodec_self (parent : Signature) :
+    (contextCodec parent).decode (.arr #[.number 0]) = .ok parent := by
+  rfl
+
 theorem contextCodec_lawful (parent : Signature) : (contextCodec parent).Lawful := by
   intro context
   by_cases h : context = parent

@@ -45,4 +45,21 @@ theorem graph_node : (Codec.readGraph ValueCodec.rat ValueCodec.nat (0 : Nat)
 #guard_msgs in
 #print axioms graph_node
 
+/-- Literal reconstruction can read the parent token through ordinary imports. -/
+theorem parent_decode (context : RealClosure.Tower.Signature) :
+    (RealClosure.Tower.contextCodec context).decode (.arr #[.number 0]) = .ok context :=
+  RealClosure.Tower.contextCodec_self context
+
+/-- Parent encoding is characterized without exposing the decoder implementation. -/
+theorem parent_encode (context : RealClosure.Tower.Signature) :
+    (RealClosure.Tower.contextCodec context).encode context = .arr #[.number 0] :=
+  RealClosure.Tower.contextCodec_encode_self context
+
+/-- info: 'Hex.RCF.PublicGraphCodec.parent_decode' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms parent_decode
+/-- info: 'Hex.RCF.PublicGraphCodec.parent_encode' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms parent_encode
+
 end Hex.RCF.PublicGraphCodec
