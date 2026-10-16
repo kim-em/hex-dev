@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 import HexRCF.AlgebraicPreparationCases
+import HexRCF.SourceAcceptancePublic
 import KernelReplay.AxiomClosure
 import HexRCF.ProofEvidence
 open Lean Meta
@@ -18,8 +19,9 @@ run_meta do
 
 run_meta do
   let names := #[`rationalAcceptance, `algebraicAcceptance, `falseAcceptance,
-    `divisorAcceptance, `zeroGuardAcceptance, `emptyDomainAcceptance].map
+    `divisorAcceptance, `zeroGuardAcceptance, `emptyDomainAcceptance, `validEmptyDomainAcceptance, `aliasAcceptance].map
       (`Hex.RCF.AlgebraicPreparationConformance ++ ·)
+  let names := names.push ``Hex.RCF.SourceAcceptanceTests.empty
   for name in names do
     let .thmInfo declaration ← getConstInfo name | throwError "source acceptance consumer is missing"
     let _ ← Hex.RCF.checkProof name declaration.type declaration.value

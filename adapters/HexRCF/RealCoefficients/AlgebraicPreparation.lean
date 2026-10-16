@@ -34,7 +34,7 @@ structure Inputs where
   quantifier : RealFormula.Quantifier
   usage : Hex.Reflect.BudgetUsage
   /-- Continue proof construction under the same reflection limits. -/
-  config : Hex.RealFormula.Reify.Config := {}
+  config : Hex.RealFormula.Reify.Config
 
 /-- Keep coefficient coordinates first and every original divisor afterward.
 No equality of independently computed algebraic representations is assumed. -/
@@ -49,7 +49,7 @@ def Inputs.indices (environment : Inputs) : Fin environment.source.coefficients.
 
 def Inputs.guards (environment : Inputs) :
     List (Fin (environment.source.coefficients.size + environment.source.divisors.size)) :=
-  (List.finRange environment.source.divisors.size).map (Fin.natAdd environment.source.coefficients.size)
+  List.ofFn (Fin.natAdd environment.source.coefficients.size)
 
 /-- The original selected presentations and their complete native packet. -/
 abbrev Inputs.Result (environment : Inputs) (registry : RealClosure.BaseContext.Registry) :=
@@ -101,6 +101,19 @@ private def prepareCore (target : Expr) (nonnegative : Expr → MetaM (Option Ex
     | .ok source => pure source
     | .error error => return .error error
   Core.checkInterrupted
+  -- Reification checked the raw equivalence. Charge its additional private
+  -- retention before the kernel check; later assembly checks only this constant.
+  let retain : Hex.RealFormula.Reify.ReifyM Unit :=
+    Hex.RealFormula.Reify.accountProof source.proof
+  let retained ← (retain.run
+    {config, budget := {initial := config.ring.budget, consumed := source.usage}}).run
+  let usage ← match retained with
+    | .error error => return .error error
+    | .ok (_, state) => pure state.budget.consumed
+  let sourceType ← mkAppM ``Iff
+    #[← mkAppM ``RealFormula.Prenex.toProp #[source.formula, source.valuation], target]
+  let equivalence ← Hex.RCF.checkProof `AlgebraicPreparation.equivalence sourceType source.proof
+  let source := {source with proof := equivalence}
   let .quant quantifier (.matrix formula) ← FieldRuntime.evalFormula source.coefficients.size source.formula
     | return .error (.unsupported target "expected exactly one real quantifier")
   Core.checkInterrupted
@@ -110,7 +123,7 @@ private def prepareCore (target : Expr) (nonnegative : Expr → MetaM (Option Ex
     let divisors ← Vector.ofFnM fun i : Fin source.divisors.size =>
       Coefficients.interpret source.divisors[i] nonnegative
     pure (coefficients,divisors)).run
-      {config,budget := {initial := config.ring.budget,consumed := source.usage}}).run
+      {config,budget := {initial := config.ring.budget,consumed := usage}}).run
   match interpreted with
   | .error error => return .error error
   | .ok ((coefficients,divisors),state) =>
@@ -147,7 +160,7 @@ def prepare (target : Expr) (nonnegative : Expr → MetaM (Option Expr) := Field
   return result
 
 private def sourceFunction (entries : Array Entry) (sources : Array Expr)
-    (expected : Expr) : MetaM (Expr × Expr) := do
+    (expected : Expr) : Hex.RealFormula.Reify.ReifyM (Expr × Expr) := do
   unless entries.size == sources.size do throwError "source identity count differs from its source coordinates"
   let zero : Q(RealAlgebraicNumber) := q(RealAlgebraicNumber.ofRat 0)
   let mut values : Array Expr := #[]
@@ -158,6 +171,7 @@ private def sourceFunction (entries : Array Entry) (sources : Array Expr)
       throwError "source acceptance requires closed algebraic expressions"
     let value ← Hex.RCF.checkExpr `sourceAcceptanceValue value
     let type ← mkEq (← mkAppM ``RealAlgebraicNumber.toReal #[value]) source
+    Hex.RealFormula.Reify.accountProof entry.identity
     let proof ← Hex.RCF.checkProof `sourceAcceptanceIdentity type entry.identity
     values := values.push value
     proofs := proofs.push proof
@@ -169,19 +183,24 @@ private def sourceFunction (entries : Array Entry) (sources : Array Expr)
   let identity ← mkAppM ``funext #[← FieldLiteral.proveFinCases pointwise proofs]
   return (function, identity)
 
-private def acceptanceCore (prepared : Inputs) (registry : Expr) : MetaM (Expr × Expr) := do
+private def acceptanceCore (prepared : Inputs) (target registry : Expr) :
+    Hex.RealFormula.Reify.ReifyM Expr := do
+  Core.checkSystem "rcf source acceptance"
   let source := prepared.source
   let original ← instantiateMVars source.original
+  let target ← instantiateMVars target
+  unless original == target do throwError "source acceptance has a different original target"
   let sourceType ← mkAppM ``Iff
     #[← mkAppM ``RealFormula.Prenex.toProp #[source.formula, source.valuation], original]
+  Hex.RealFormula.Reify.accountProof source.proof
   let equivalence ← Hex.RCF.checkProof `sourceAcceptanceEquivalence sourceType source.proof
-  let schema ← whnf source.formula
-  unless schema.getAppFn.isConstOf ``RealFormula.Prenex.quant do
+  let schema := (← whnf source.formula).consumeMData
+  unless schema.isAppOfArity ``RealFormula.Prenex.quant 3 do
     throwError "source acceptance requires exactly one real quantifier"
   let args := schema.getAppArgs
   let quantifier := args[args.size-2]!
-  let matrix ← whnf args.back!
-  unless matrix.getAppFn.isConstOf ``RealFormula.Prenex.matrix do
+  let matrix := (← whnf args.back!).consumeMData
+  unless matrix.isAppOfArity ``RealFormula.Prenex.matrix 2 do
     throwError "source acceptance requires a shared quantifier-free matrix"
   let formula := matrix.getAppArgs.back!
   let (values, coefficientEq) ← sourceFunction prepared.coefficients.toArray
@@ -193,33 +212,32 @@ private def acceptanceCore (prepared : Inputs) (registry : Expr) : MetaM (Expr �
   let proof ← mkAppM ``AlgebraicCells.accepts_source
     #[registry, values, divisors, source.valuation, realDivisors,
       formula, quantifier, coefficientEq, divisorEq, equivalence]
+  Hex.RealFormula.Reify.accountProof proof
   let type ← inferType proof
-  let checked ← Hex.RCF.checkProof `sourceAcceptance type proof
-  return (checked, proof)
+  Hex.RCF.checkProof `sourceAcceptance type proof
 
-/-- Connect mathematical producer acceptance at the actual kernel source
-expressions to the exact original proposition and ordered original divisors.
-The runtime proposal tuple is not used as proof evidence. This does not quote
-frozen source histories or prove a compiled proposal equal to those expressions.
-Proof construction continues the preparation's aggregate reflection budget;
-structured exhaustion and exceptions restore the complete saved state. -/
-def Inputs.acceptance (prepared : Inputs) (registry : Expr) :
-    MetaM (Except Hex.RealFormula.Reify.Error Expr) := do
+/-- Connect mathematical producer acceptance at the retained kernel algebraic
+expressions to the exact expected target and original divisors after checked
+alias substitution. This returns an equivalence, not evidence of acceptance.
+It does not authenticate runtime proposals or frozen source histories.
+
+Each proof is charged before checking it. The returned usage continues the
+preparation's aggregate budget and must be retained by later proof stages.
+Exhaustion, failure and interruption restore the complete saved state. -/
+def Inputs.acceptanceIff (prepared : Inputs) (target registry : Expr) :
+    MetaM (Except Hex.RealFormula.Reify.Error (Expr × Hex.Reflect.BudgetUsage)) := do
   let saved ← saveState
   let auxName := mkPrivateName (← getEnv) (← mkFreshUserName `SourceAcceptance)
-  let (result, _) ← tryFinally' (withDeclNameForAuxNaming auxName <| withNewMCtxDepth <|
+  let (result, _) ← tryFinally' (withDeclNameForAuxNaming auxName <| withNewMCtxDepth <| Core.withIncRecDepth <|
       withOptions (fun options => debug.skipKernelTC.set (Elab.async.set options false) false) do
-    let (proof, body) ← acceptanceCore prepared registry
-    let action : Hex.RealFormula.Reify.ReifyM Expr := do
-      Hex.RealFormula.Reify.accountProof body
-      pure proof
+    let action := acceptanceCore prepared target registry
     let state : Hex.RealFormula.Reify.State := {
       config := prepared.config
       budget := {initial := prepared.config.ring.budget, consumed := prepared.usage} }
     let accounted ← (action.run state).run
     match accounted with
     | .error error => return .error error
-    | .ok (proof, _) => return .ok proof) fun result => do
+    | .ok (proof, state) => return .ok (proof, state.budget.consumed)) fun result => do
       match result with
       | some (.ok _) => modify fun state => {state with
           mctx := saved.meta.mctx, postponed := saved.meta.postponed,

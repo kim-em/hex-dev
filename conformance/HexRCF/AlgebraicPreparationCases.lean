@@ -235,12 +235,13 @@ run_meta do
       (`divisorAcceptance, q(∀ x : ℝ, x / (Real.sqrt 2 + 1) = x * (Real.sqrt 2 + 1)⁻¹), 2),
       (`zeroGuardAcceptance, q(∀ _ : ℝ, 0 / (Real.sqrt 2 * Real.sqrt 2 - 2) = 0), 1),
       (`emptyDomainAcceptance, q(∀ x ∈ Set.Ioc (2 : ℝ) 1,
-        x + 0 / (Real.sqrt 2 * Real.sqrt 2 - 2) = x), 1)] do
+        x + 0 / (Real.sqrt 2 * Real.sqrt 2 - 2) = x), 1),
+      (`validEmptyDomainAcceptance, q(∀ x ∈ Set.Ioc (2 : ℝ) 1, x < 0), 0)] do
     let prepared ← checked target
     unless prepared.source.divisors.size == guardCount do
       throwError "source acceptance guard count changed for {label}: {prepared.source.divisors.size}, expected {guardCount}"
     let before := (← getMCtx).decls.toList.length
-    let .ok proof ← prepared.acceptance registry
+    let .ok (proof, usage) ← prepared.acceptanceIff target registry
       | throwError "source acceptance equivalence failed: {label}"
     unless (← getMCtx).decls.toList.length == before do
       throwError "successful source acceptance changed caller metavariables"
@@ -251,31 +252,106 @@ run_meta do
     let guards ← withLocalDeclD `i domain fun i => do
       mkForallFVars #[i] (← mkAppM ``Ne #[mkApp divisors i, q((0 : ℝ))])
     let expected ← mkAppM ``And #[guards, target]
-    unless ← isDefEq type.getAppArgs[1]! expected do
-      throwError "source acceptance weakened the original goal or divisor conjunction"
+    let rhs ← instantiateMVars type.getAppArgs[1]!
+    unless rhs.isAppOfArity ``And 2 && rhs.getAppArgs[1]! == target do
+      throwError "source acceptance changed the exact original goal: {label}"
+    -- Numeral instances and binder names can differ in the guard function.
+    -- Only that function is compared reducibly; the original target is exact.
+    unless ← withTransparency .reducible (isDefEq rhs expected) do
+      throwError "source acceptance changed its original divisor conjunction: {label}"
+    let lhs := type.getAppArgs[0]!
+    unless lhs.isAppOfArity ``AlgebraicCells.accepts 8 do
+      throwError "source equivalence does not refer to the actual producer acceptance"
+    let info ← getFunInfoNArgs lhs.getAppFn lhs.getAppArgs.size
+    let explicit := lhs.getAppArgs.zipIdx |>.filterMap fun (arg, i) =>
+      if info.paramInfo[i]!.binderInfo.isExplicit then some arg else none
+    unless explicit.size == 6 do throwError "source acceptance has an unexpected arity"
+    let generators := explicit[1]!.eta
+    let parts := generators.getAppArgs
+    unless generators.getAppFn.isConstOf ``Fin.addCases && parts.size >= 2 do
+      throwError "source acceptance lost its coefficient/divisor tuple: {← ppExpr generators}"
+    let zero : Q(RealAlgebraicNumber) := q(RealAlgebraicNumber.ofRat 0)
+    let coefficients ← FieldLiteral.finiteExpr (mkConst ``RealAlgebraicNumber)
+      (prepared.coefficients.toArray.map (·.expression)) zero
+    let originalDivisors ← FieldLiteral.finiteExpr (mkConst ``RealAlgebraicNumber)
+      (prepared.divisors.toArray.map (·.expression)) zero
+    unless parts[parts.size-2]! == coefficients && parts.back! == originalDivisors do
+      throwError "source acceptance did not use the exact checked algebraic expressions"
+    let proposals := prepared.coefficients.map fun entry =>
+      {entry with proposal := RealAlgebraicNumber.ofRat 0}
+    let divisorProposals := prepared.divisors.map fun entry =>
+      {entry with proposal := RealAlgebraicNumber.ofRat 0}
+    let edited := {prepared with
+      coefficients := proposals
+      divisors := divisorProposals
+      formula := .not prepared.formula
+      quantifier := .existsReal
+      usage := usage }
+    let .ok (unchangedProof, furtherUsage) ← edited.acceptanceIff target registry
+      | throwError "runtime-only edits changed source equivalence"
+    unless (← inferType unchangedProof) == type do
+      throwError "runtime proposals or runtime syntax entered source acceptance evidence"
+    unless furtherUsage.proofNodes > usage.proofNodes && usage.proofNodes > prepared.usage.proofNodes do
+      throwError "source acceptance did not return its continued aggregate proof usage"
     let name := `Hex.RCF.AlgebraicPreparationConformance ++ label
     addDecl (.thmDecl {name,levelParams := [],type,value := proof})
-    let budget := {prepared.config.ring.budget with proofNodes := prepared.usage.proofNodes}
+    let budget := {prepared.config.ring.budget with proofNodes := usage.proofNodes - 1}
     let ring := {prepared.config.ring with budget}
     let config := {prepared.config with ring}
     let limited := {prepared with config}
     let beforeNames := (← (← getEnv).getLocalConstantInfos).map (·.name)
     unchanged do
-      let .error (.budget exhausted) ← limited.acceptance registry
+      let .error (.budget exhausted) ← limited.acceptanceIff target registry
         | throwError "source acceptance reset its aggregate proof budget"
       unless exhausted.dimension == .proofNodes do throwError "wrong source acceptance exhaustion"
     unless (← (← getEnv).getLocalConstantInfos).map (·.name) == beforeNames do
       throwError "exhausted source acceptance leaked auxiliary declarations"
+    let budget := {budget with proofNodes := usage.proofNodes}
+    let ring := {ring with budget}
+    let config := {config with ring}
+    let exactLimit := {prepared with config}
+    let .ok (_, exactUsage) ← exactLimit.acceptanceIff target registry
+      | throwError "source acceptance failed at its exact aggregate proof limit"
+    unless exactUsage.proofNodes == usage.proofNodes do
+      throwError "source acceptance changed its exact charged proof count"
+    let beforeNames := (← (← getEnv).getLocalConstantInfos).map (·.name)
+    unchanged do
+      let failed ← tryCatchRuntimeEx
+        (prepared.acceptanceIff q(True) registry *> pure false) (fun _ => pure true)
+      unless failed do throwError "source acceptance ignored its expected original target"
+    for (resource, limits, expectedException) in resources do
+      unchanged do
+        let terminal ← observeTerminal (withTheReader Core.Context limits do
+          let _ ← prepared.acceptanceIff target registry
+          pure false) (fun error => do
+            unless expectedException error do throw error
+            pure true)
+        unless terminal do throwError "source acceptance swallowed terminal {resource}"
+    unless (← (← getEnv).getLocalConstantInfos).map (·.name) == beforeNames do
+      throwError "terminal source acceptance failure leaked auxiliary declarations"
     if h : 0 < prepared.source.coefficients.size then
       let i : Fin prepared.source.coefficients.size := ⟨0,h⟩
       let entry := prepared.coefficients[i]
       let edited := {entry with identity := q(True.intro)}
       let corrupt := {prepared with coefficients := prepared.coefficients.set i edited}
       unchanged do
-        let failed ← tryCatchRuntimeEx (corrupt.acceptance registry *> pure false) (fun _ => pure true)
+        let failed ← tryCatchRuntimeEx (corrupt.acceptanceIff target registry *> pure false) (fun _ => pure true)
         unless failed do throwError "source acceptance trusted an edited coefficient identity"
       unless (← (← getEnv).getLocalConstantInfos).map (·.name) == beforeNames do
         throwError "rejected source acceptance leaked auxiliary declarations"
+  withLocalDeclD `c q(ℝ) fun c => do
+    let identity ← mkEq c q(Real.sqrt 2)
+    withLocalDeclD `identity identity fun identity => do
+      let c : Q(ℝ) := c
+      let target : Q(Prop) := q(∀ x : ℝ, x^2 + $c > 0)
+      let prepared ← checked target
+      let .ok (proof, _) ← prepared.acceptanceIff target registry
+        | throwError "source acceptance lost the checked local alias"
+      let type ← mkForallFVars #[c,identity] (← inferType proof)
+      let value ← mkLambdaFVars #[c,identity] proof
+      addDecl (.thmDecl {
+        name := `Hex.RCF.AlgebraicPreparationConformance.aliasAcceptance
+        levelParams := [], type, value })
   logInfo "exact original algebraic producer acceptance, false source, original zero guards, empty domains, aggregate proof budgets and rollback checked"
   addDecl (.thmDecl {
     name := `Hex.RCF.AlgebraicPreparationConformance.runFinished

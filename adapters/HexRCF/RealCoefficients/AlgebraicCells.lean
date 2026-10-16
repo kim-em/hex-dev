@@ -299,7 +299,7 @@ theorem build_sound (registry : BaseContext.Registry) (generators : Fin m → Re
 /-- Acceptance by the actual algebraic producer and its complete packet
 checker. This predicate retains the exact source tuple, indices and original
 nonzero-divisor obligations; it does not assert frozen-history quotation. -/
-def accepts (registry : BaseContext.Registry) (generators : Fin m → RealAlgebraicNumber)
+@[expose] def accepts (registry : BaseContext.Registry) (generators : Fin m → RealAlgebraicNumber)
     (indices : Fin n → Fin m) (original : List (Fin m))
     (formula : Hex.RealFormula.QF (n+1)) (quantifier : Hex.RealFormula.Quantifier) : Prop :=
   ∃ result, build registry generators indices original formula = .ok result ∧
