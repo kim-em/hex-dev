@@ -15,6 +15,9 @@ normalization. Dependent Boolean decisions are discharged as complete
 conditionals: changing a Boolean major alone would leave a sibling proof tied
 to the old major. The implementation instead checks the Boolean equality,
 derives the condition or its negation and applies the core conditional law.
+For an applied dependent conditional, only the five-argument reflection prefix
+is discharged; checked congruence transports the remaining function arguments.
+Other extra arguments follow the recursor major.
 
 The helper continues the caller's shared reflection budget. Traversal and
 normalization boundaries consume proof nodes; constructed proofs are charged
@@ -59,7 +62,10 @@ reflexivity proof: Meta type inference agrees, but the kernel must reject it.
 An untrusted inadmissible candidate for the correct equation is rejected before
 any admitted declaration can be installed. Caller-disabled kernel checking is
 overridden. Both polarities of dependent conditionals and a non-Boolean
-recursor returning a function have positive controls. Accepted callback effects
+recursor returning a function have positive controls. Separate `cond` and
+dependent-conditional function controls pin both Boolean application forms at
+`some 7`; these function controls use the true branch, while false polarity is
+covered by the ordinary five-argument conditional control. Accepted callback effects
 follow the same success-state policy as the dispatcher.
 Independent EIO observers cannot restore state on behalf of the production API.
 Lowered heartbeat/recursion limits and cancellation remain terminal; an unchanged
@@ -113,3 +119,23 @@ sharing or scalability claim. Quotation regressions use 12,000,000 Lean
 heartbeats and recursion depth 8192; the fresh body audit uses depth 32768.
 Success under Lean's default options has not been established. These limits
 remain caller-controlled and are not reset by the helper.
+
+The [final-source record](data/hexrcf-root-quotation/revision/context.json) binds
+`bc04ae8142` to the tightened input-only closure, explicit ordinary rational
+model and selected `realRoot_spec`, and expanded conditional/function controls.
+It pins 47 literal input definitions and 220 actual generated quotation theorem
+bodies. All three Array traversal laws are now required directly in those
+bodies; the cached-checking rule remains explicitly unexercised. The selected
+real theorem concerns the descriptor's own `realRoot`, so the existential
+corollary is not used as standalone evidence for the quotation path.
+
+The final compatibility, library, consumed-codec audit, joint fresh audit/manual
+and full-render selection passes 14,335 jobs in 3m31.137s at 2.1 GiB peak/no
+swap. DAG/umbrella, copyright, line and admission checks pass at that same
+source; the admission scan covers 673 import cones. The live limit record
+identifies the actual Lake process with 32 GiB maximum, zero swap and two Lean
+threads. The final capture run takes 10.477s at 7.7 GiB/no swap. All six final
+captures were opened, and all eight quotation-section paragraphs/code targets
+have zero horizontal overflow at both widths. Earlier source scopes and their
+artifacts remain in the initial record. These remain incremental build
+observations, not performance comparisons or default-option success claims.
