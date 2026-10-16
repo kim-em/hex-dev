@@ -47,8 +47,10 @@ meta def quoteSuppliedRoot
 For a rational predecessor, `RationalQuote.decoder` supplies these proposals
 without a fixed list of permitted numerators. It recognizes canonical
 `[0,n,d]` payloads with a positive coprime denominator and requires the whole
-codec record to be definitionally equal to the supplied registry's rational
-base codec. Numerator and denominator identities are ordinary proofs; the
+codec record to match the supplied registry's rational base codec under
+reducible transparency. Other contexts decline without unfolding their producer.
+The registry expression is type checked; an ill-typed argument is an input
+error. Numerator and denominator identities are ordinary proofs; the
 enclosing quotation checks the proposed equation against the original decode.
 
 ```lean
@@ -70,7 +72,7 @@ it does not reconstruct registry or provider histories. Regression tests check
 positive and negative fractions, noncanonical or malformed payloads, and a
 different codec whose decoding function is unchanged. The generic callback
 also quotes the same frozen cubic independently of the original finite callback.
-Its fresh importing audit checks 183 actual generated theorem bodies under
+Its fresh importing audit checks 188 actual generated theorem bodies under
 kernel producer diagnostics, with only the standard three axioms.
 
 The [cubic regression](../../../conformance/HexRCF/RootQuoteSource.lean) reads a

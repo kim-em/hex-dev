@@ -675,8 +675,10 @@ controls, actual proof bodies and source-bound manual validation.
 `build_sound` also derives compatible origins, guard validity and both accepted
 verdicts from the successful return, within the ordinary base interpretation.
 
-`AlgebraicCells.build` automatically constructs the selected presentations
-from original `RealAlgebraicNumber` inputs. Independent finite indices retain
+`AlgebraicCells.build` automatically constructs checked presentations
+from original `RealAlgebraicNumber` inputs. Exactly recognized rationals remain
+parent points in the rational predecessor; other inputs use selected roots.
+Independent finite indices retain
 coefficient order, repeated coordinates and every original guard. Its complete
 progress theorem derives the rational interpretation, compatible owners and
 both original-value verdicts; `build_domains` concludes nonzero original real
@@ -684,6 +686,15 @@ divisors. `build_sound` concludes both verdicts from the successful build equati
 without assuming guard validity. Every declared input is presented and gathered;
 unused irrational inputs can enlarge the tower. [Original-input evidence](../reports/hexrcf-algebraic-input-cells.md)
 separates the routine controls from the interrupted stronger stress case.
+The [rational-point evidence](../reports/hexrcf-rational-points.md) retains the
+stronger case's remaining timeout after this preparation change.
+
+`RationalQuote.decoder` proposes public decoding equations for canonical
+rational-base payloads. Its codec check uses reducible transparency and declines
+selected-root child codecs without unfolding their producer. The enclosing
+`RootQuote.quote` checks the exact proposed equations. This does not handle
+extension-context scalars or authenticate source/provider histories; see the
+[quotation evidence](../reports/hexrcf-rational-quotation.md).
 
 `AlgebraicPreparation.prepare` returns ordered `AlgebraicPreparation.Inputs`
 from a source goal, with ordinary-kernel coefficient/divisor identities and one

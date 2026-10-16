@@ -44,19 +44,25 @@ private def payload? (expression : Expr) : MetaM (Option (Int × Int)) := do
 `[0,n,d]` payload. Native rational arithmetic selects a candidate only; ordinary
 proofs establish its exact numerator and denominator. Use this callback with
 `RootQuote.quote`, which checks its equation against the demanded input and
-accounts for the proof. A different codec or noncanonical payload declines.
+accounts for the proof. Codec eligibility uses reducible transparency, so a
+foreign selected-root context is not unfolded. A different codec or noncanonical
+payload declines. An ill-typed registry is a terminal input error.
 This does not authenticate a source coefficient, registry or context history. -/
 def decoder (registry : Expr) : RootQuote.Decoder := fun expression => do
   if expression.hasMVar || registry.hasMVar then return none
+  unless ← withNewMCtxDepth <| withTransparency .reducible <|
+      isDefEq (← inferType registry) (mkConst ``BaseContext.Registry) do
+    throwError "rcf: rational quotation expects a BaseContext.Registry expression"
   let .proj ``ValueCodec 1 codec := expression.getAppFn | return none
   unless expression.getAppNumArgs == 1 do return none
-  let context ← mkAppM ``Hex.RealClosure.NumberField.base #[registry]
-  let expected ← mkAppM ``Tower.Context.codec #[context]
-  unless ← withNewMCtxDepth <| withTransparency .all <| isDefEq codec expected do return none
   let some (numerator,denominator) ← payload? expression.appArg! | return none
   unless denominator > 0 do return none
   let rational := mkRat numerator denominator.toNat
   unless rational.num == numerator && (rational.den : Int) == denominator do return none
+  let context ← mkAppM ``Hex.RealClosure.NumberField.base #[registry]
+  let expected ← mkAppM ``Tower.Context.codec #[context]
+  -- Do not unfold a foreign context's producer while deciding eligibility.
+  unless ← withNewMCtxDepth <| withTransparency .reducible <| isDefEq codec expected do return none
   let value ← mkAppM ``mkRat #[mkIntLit numerator,mkNatLit denominator.toNat]
   let numeratorType ← mkEq (← mkAppM ``Rat.num #[value]) (mkIntLit numerator)
   let denominatorType ← mkEq (← mkAppM ``Int.ofNat #[← mkAppM ``Rat.den #[value]])

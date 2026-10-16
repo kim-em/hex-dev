@@ -4,13 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 module
-public import HexRCF.RootQuoteData
+public import HexRCF.RationalQuoteData
 public meta import HexRCF.RealCoefficients.RationalQuote
 public section
 open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
 namespace Hex.RCF.RationalQuoteTests
 set_option maxHeartbeats 12000000
 set_option maxRecDepth 8192
+
 private meta def scalar (n d : Int) (tag : Int := 0) : Expr :=
   let numbers := [tag,n,d].foldr (fun i rest =>
     mkApp2 (mkConst ``Codec.Json.Values.cons)
@@ -84,5 +85,51 @@ run_meta do
       addDecl (.thmDecl {
         name := `Hex.RCF.RationalQuoteTests.nativeRoot_read,
         levelParams := [], type := statement, value := mkExpectedPropHint result.proof statement})
+
+run_meta do
+  withExporting (isExporting := false) do
+    let registry := mkConst ``Hex.RCF.RootQuoteTests.registry
+    let base ← mkAppM ``Hex.RealClosure.NumberField.base #[registry]
+    let codec ← mkAppM ``Tower.Context.codec #[base]
+    let reader := mkApp (.proj ``ValueCodec 1 codec) (mkConst ``negativeFraction)
+    let some proposed ← RationalQuote.decoder registry reader
+      | throwError "frozen negative fraction declined"
+    let type ← inferType proposed
+    let statement ← mkEq reader type.getAppArgs[2]!
+    let _ ← Hex.RCF.checkProof `frozenNegative statement (mkExpectedPropHint proposed statement)
+    let .ok result ← RootQuote.quote (mkConst ``negativeReader) (RationalQuote.decoder registry)
+      | throwError "frozen negative fraction quotation failed"
+    withExporting (isExporting := true) do
+      addDecl (.thmDecl {
+        name := `Hex.RCF.RationalQuoteTests.negative_decode, levelParams := [],
+        type := statement, value := mkExpectedPropHint proposed statement})
+      let name := `Hex.RCF.RationalQuoteTests.negativeValue
+      addDecl (.defnDecl {
+        name, levelParams := [], type := ← inferType result.value,
+        value := result.value, hints := .regular 0, safety := .safe}) (forceExpose := true)
+      let accepted ← mkEq (← mkAppM ``Except.toOption #[mkConst ``negativeReader])
+        (← mkAppM ``Option.some #[mkConst name])
+      addDecl (.thmDecl {
+        name := `Hex.RCF.RationalQuoteTests.negative_read, levelParams := [],
+        type := accepted, value := mkExpectedPropHint result.proof accepted})
+    let extension ← mkAppM ``Tower.Context.adjoin #[base,mkConst ``nativeRoot]
+    let child ← mkAppM ``Tower.Extension.context #[extension]
+    let childCodec ← mkAppM ``Tower.Context.codec #[child]
+    let childReader := mkApp (.proj ``ValueCodec 1 childCodec) (scalar 7 3)
+    let _ ← Hex.RCF.checkExpr `wellTypedChildCodec childReader
+    let initial ← IO.getNumHeartbeats
+    withTheReader Core.Context (fun context =>
+        {context with initHeartbeats := initial, maxHeartbeats := 200000}) do
+      unless (← RationalQuote.decoder registry childReader).isNone do
+        throwError "rational decoder accepted a selected-root child codec"
+    let failed ← try
+      let _ ← RationalQuote.decoder (mkNatLit 0) reader
+      pure false
+    catch error =>
+      match error with
+      | .error _ _ => pure true
+      | _ => throw error
+    unless failed do throwError "rational decoder accepted an ill-typed registry"
+    logInfo "frozen negative fraction quoted; well-typed selected-child codec declines within 200000 heartbeats; ill-typed registry rejected"
 
 end Hex.RCF.RationalQuoteTests
