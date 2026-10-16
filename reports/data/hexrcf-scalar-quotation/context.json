@@ -1,0 +1,440 @@
+{
+  "source_commit": "def227e02ae1ba6fbebdd1c7d60c58c3a99d473d",
+  "sources": {
+    "adapters/HexRCF/RealCoefficients/ScalarQuote.lean": "f0f354564634969cd3f85c072176faa758a6920241e382385e216922031aaf8d",
+    "adapters/HexRCF/RealCoefficients.lean": "7f56face96038c4aae900e9eb46e2b458bc6942a2aa671e03e0b21f9d402b4ae",
+    "conformance/HexRCF/ScalarQuoteCases.lean": "cb9f5c063d9a1fc87ed30785de4c9c81b41a1ff6f0f89249588cb5d2ab1d53c9",
+    "conformance/HexRCF/ScalarQuoteConformance.lean": "94ed3faa744694ad68aa5bc60fccffb271945914f601ad6653ff0104289d1269",
+    "HexManual/Chapters/HexRCF/RootQuote.lean": "b3f0c42e8454217928ca3f972f63c93bedcdbf4ccf3b3b0d94b692ca0b68f053",
+    "lakefile.lean": "e17f956fc6d8a884b4dba8d0de1c6d82fb1a4c96e18f1c847fc187f114f86ec5"
+  },
+  "capturedAt": "2026-10-16T21:12:11.098893+00:00",
+  "render_properties": "ActiveState=active\nMainPID=3913753\nControlGroup=/user.slice/user-1003.slice/user@1003.service/app.slice/hex-10358-lean-build.service\nMemoryCurrent=677728256\nMemoryMax=34359738368\nMemorySwapMax=0\n",
+  "render_command": "/home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/lake build ScalarQuoteRender ",
+  "LEAN_NUM_THREADS": 2,
+  "artifacts": [
+    {
+      "path": "sign-codec-probe-1.log.gz",
+      "sha256": "1373bfce523572adb7a9430c12d476fb0ca14654b6391da228fd7ded0be389b0",
+      "bytes": 6947,
+      "uncompressed_sha256": "399d734e7218a12ccd8d2c6c222275b668bb6710dfd7e3fe32df53bf3fbad444",
+      "uncompressed_bytes": 75338,
+      "scope": "Development diagnostic; transient source snapshots are not all retained, so no final-source validation claim"
+    },
+    {
+      "path": "scalar-quote-build-1.log.gz",
+      "sha256": "606e6be77283dfbdccb13a2492559d696bf17b2b4e5fa932ad94ed0ce021cae4",
+      "bytes": 5884,
+      "uncompressed_sha256": "1aceb28652929c2cb258563f06de114a777cd8240db9141e8a6b781acbb62444",
+      "uncompressed_bytes": 54388,
+      "scope": "Development diagnostic; transient source snapshots are not all retained, so no final-source validation claim"
+    },
+    {
+      "path": "scalar-quote-build-2.log.gz",
+      "sha256": "de3ad54403b7030a40fec6c5d882bbb11e78340dcf11f439050620a237086520",
+      "bytes": 5137,
+      "uncompressed_sha256": "03b43ff34edfbde517ca9e22ede49ae08f80ce9b7e4ea7d3f3b0d1eb2d46cc28",
+      "uncompressed_bytes": 50944,
+      "scope": "Development diagnostic; transient source snapshots are not all retained, so no final-source validation claim"
+    },
+    {
+      "path": "scalar-quote-build-3.log.gz",
+      "sha256": "995dd8bb5bcfc32ebd828dd4c4a625bae414e585eda2e8aff4d5e886916572c9",
+      "bytes": 5140,
+      "uncompressed_sha256": "5dc21f61a5238fdae6eba258b233bb189997780253a1313f16e2b8b7abced5a4",
+      "uncompressed_bytes": 50937,
+      "scope": "Development diagnostic; transient source snapshots are not all retained, so no final-source validation claim"
+    },
+    {
+      "path": "scalar-quote-cases-1.log.gz",
+      "sha256": "9387f17b51eaa5ec7a9619408996b71aa9cd4de3acc939354dbca58818903060",
+      "bytes": 7314,
+      "uncompressed_sha256": "5dfa4290ee1fb6cb38472964c54dc27c014fe419abb87bab179b368078924975",
+      "uncompressed_bytes": 77660,
+      "scope": "Development diagnostic; transient source snapshots are not all retained, so no final-source validation claim"
+    },
+    {
+      "path": "scalar-quote-cases-2.log.gz",
+      "sha256": "82df2d8fcaaab9c16a5c6d6d7c6789ee14af243a3cfbcfdd436d39938326e295",
+      "bytes": 7069,
+      "uncompressed_sha256": "29a5cc12ae57f544281e3c04b54358177a1f62da4e5c3266769101ed228606ac",
+      "uncompressed_bytes": 75954,
+      "scope": "Development diagnostic; transient source snapshots are not all retained, so no final-source validation claim"
+    },
+    {
+      "path": "scalar-quote-cases-3.log.gz",
+      "sha256": "d38c2a4947aa9b128a40de74a74db5494d2ba4c0657ea0c3d4336703e19fbde5",
+      "bytes": 7009,
+      "uncompressed_sha256": "7b24b8211305746428d0a732e944834f8574911f6c89aef87418a83ce44dfd06",
+      "uncompressed_bytes": 75529,
+      "scope": "Development diagnostic; transient source snapshots are not all retained, so no final-source validation claim"
+    },
+    {
+      "path": "scalar-quote-cases-4.log.gz",
+      "sha256": "ce4e2bde71b925dc7ce54a131a97e1fe25a56f9dc2b2635972ec854522162eae",
+      "bytes": 8361,
+      "uncompressed_sha256": "11729ba39bcae088fbdc9cf9af2871861222807ac2b8e9b260a757d284533bf1",
+      "uncompressed_bytes": 83336,
+      "scope": "Development diagnostic; transient source snapshots are not all retained, so no final-source validation claim"
+    },
+    {
+      "path": "scalar-quote-cases-5.log.gz",
+      "sha256": "2c63c45b6f08e957a45a2e99ed7d46b62720265069e3c8677a5d71397f761cf3",
+      "bytes": 7546,
+      "uncompressed_sha256": "a1abb063f9c78a0e6a15249008faf3e72350cb8c6fc89e9773bf7aa82f429cf5",
+      "uncompressed_bytes": 78230,
+      "scope": "Development diagnostic; transient source snapshots are not all retained, so no final-source validation claim"
+    },
+    {
+      "path": "scalar-quote-cases-6.log.gz",
+      "sha256": "78b97dd1d3c6b1fd4be9a6b70488c06601fad9f7d60b4c3c367226ffa88ad2f1",
+      "bytes": 7811,
+      "uncompressed_sha256": "8a887ec53b07dee923d4017f7396706fdbd38ebed41e45e25bbf5bf201f54d8d",
+      "uncompressed_bytes": 78989,
+      "scope": "Development diagnostic; transient source snapshots are not all retained, so no final-source validation claim"
+    },
+    {
+      "path": "scalar-quote-cases-7.log.gz",
+      "sha256": "63d5cf97eea291690204ee80f61fff5ddadf00191430b392cf3898a9cee5238e",
+      "bytes": 7025,
+      "uncompressed_sha256": "e63d50997fa726215dad5b2bfccbfeb2e2717609a237055504638c566e217033",
+      "uncompressed_bytes": 75528,
+      "scope": "Development diagnostic; transient source snapshots are not all retained, so no final-source validation claim"
+    },
+    {
+      "path": "scalar-quote-conformance-1.log.gz",
+      "sha256": "c836617486415d83552f454190fca3d84e679f6cccb133136f7c4b7509b120a9",
+      "bytes": 7399,
+      "uncompressed_sha256": "522f67d24030f667353891e7c4f37cec70c99768b02abf19224fdaa63ae2778d",
+      "uncompressed_bytes": 77959,
+      "scope": "Development diagnostic; transient source snapshots are not all retained, so no final-source validation claim"
+    },
+    {
+      "path": "scalar-quote-conformance-2.log.gz",
+      "sha256": "36bf6f74d2a6eb6d1ba4f871dcba5ce2b0ad7c4cdd954b6ad0841fb2038153d8",
+      "bytes": 7492,
+      "uncompressed_sha256": "7f61db127a55584fc51495fd55e82aadc503cd3d98f7d802ab6308304f07ac95",
+      "uncompressed_bytes": 78484,
+      "scope": "Development diagnostic; transient source snapshots are not all retained, so no final-source validation claim"
+    },
+    {
+      "path": "scalar-quote-conformance-3.log.gz",
+      "sha256": "e99274585d025917c6fb59b1ea2cd7f0c10d89df37dbb2f188c8df8c668e2eed",
+      "bytes": 7536,
+      "uncompressed_sha256": "6777ad315f4b07386e9359a5d9ef349cd1f1d7a4486e2f5ad049e986d4b82a82",
+      "uncompressed_bytes": 78844,
+      "scope": "Development diagnostic; transient source snapshots are not all retained, so no final-source validation claim"
+    },
+    {
+      "path": "scalar-quote-conformance-4.log.gz",
+      "sha256": "19a56f89e67a014d0ceb6e65e43c326e38c606ca896b3514ce36b9828299778c",
+      "bytes": 7741,
+      "uncompressed_sha256": "93cd800930916dd5bdeed4136247137df7a55b31d8264805ebdf91d46a44d982",
+      "uncompressed_bytes": 79589,
+      "scope": "Development diagnostic; transient source snapshots are not all retained, so no final-source validation claim"
+    },
+    {
+      "path": "scalar-quote-conformance-5.log.gz",
+      "sha256": "c739aff80d46e339a1ab252366c2db7cd5f91d687ba41872d6a22e02ea39f349",
+      "bytes": 7214,
+      "uncompressed_sha256": "74ec5cb15367d36f160c355bb589c070ede13ffecc7f4dce7d63eedecd1b4c6d",
+      "uncompressed_bytes": 77113,
+      "scope": "Development diagnostic; transient source snapshots are not all retained, so no final-source validation claim"
+    },
+    {
+      "path": "scalar-quote-conformance-6.log.gz",
+      "sha256": "ee87deb4f930e6a3cbcc04354bf05cfdd57ecb2fb99607634ea4df1337454a39",
+      "bytes": 7406,
+      "uncompressed_sha256": "993383c4e82d3fdd9932095e2044d2462d84bd33ef98de638172f7ff852cfa49",
+      "uncompressed_bytes": 77962,
+      "scope": "Development diagnostic; transient source snapshots are not all retained, so no final-source validation claim"
+    },
+    {
+      "path": "scalar-quote-conformance-7.log.gz",
+      "sha256": "8cdf3f4e9c97b0df5aad3ebc4b3484f74d415accc93e8a12bd7c4e2071faad3d",
+      "bytes": 7558,
+      "uncompressed_sha256": "339d2b90c0c78ffce18be71b610e23fe4f2b7f15dcaddaffa40be4314a528f04",
+      "uncompressed_bytes": 79685,
+      "scope": "Development diagnostic; transient source snapshots are not all retained, so no final-source validation claim"
+    },
+    {
+      "path": "scalar-quote-conformance-8.log.gz",
+      "sha256": "534b1ac0570769f7f6761b97c5e3ad1518247c08869bc5149b3490bdf21ec395",
+      "bytes": 7465,
+      "uncompressed_sha256": "3b8e848219f09f27f6871aff36241ac302baf4651e09ffa5470c22478dfec0cf",
+      "uncompressed_bytes": 78209,
+      "scope": "Development diagnostic; transient source snapshots are not all retained, so no final-source validation claim"
+    },
+    {
+      "path": "scalar-quote-conformance-9.log.gz",
+      "sha256": "57f62a26ca0d076c5968039c58f5a8981e6b4631bc0d338bac5db3a6e882724e",
+      "bytes": 7620,
+      "uncompressed_sha256": "e12ea333f13143d27c74fbc7f0c3b878c5f17bfb35166149aaf19ab9356c45b3",
+      "uncompressed_bytes": 78332,
+      "scope": "Development diagnostic; transient source snapshots are not all retained, so no final-source validation claim"
+    },
+    {
+      "path": "scalar-quote-conformance-10.log.gz",
+      "sha256": "f6e9f899e5e163254cb8af600c3db2ae33fc4e21a2b1b6f5a90a851c1a05267e",
+      "bytes": 7114,
+      "uncompressed_sha256": "3b15295659264c6697126059c1e6642afbb7a8b850de54601e352b62e6b7e074",
+      "uncompressed_bytes": 75870,
+      "scope": "Development diagnostic; transient source snapshots are not all retained, so no final-source validation claim"
+    },
+    {
+      "path": "scalar-quote-conformance-11.log.gz",
+      "sha256": "b73c876575ceefe4658887f0dda6c51afabc0bfc61e59c3cb0348c797512cfa0",
+      "bytes": 7397,
+      "uncompressed_sha256": "44d452772f9d56ead3f70b3993cef03cc0e298730d2917194ebcde3d1e0b722b",
+      "uncompressed_bytes": 77925,
+      "scope": "Development diagnostic; transient source snapshots are not all retained, so no final-source validation claim"
+    },
+    {
+      "path": "scalar-quote-conformance-12.log.gz",
+      "sha256": "63f969ddddc108b99784dee31ae292be0f2c3011b6657a884bf2e4fe8177f42e",
+      "bytes": 7091,
+      "uncompressed_sha256": "3c7db986f4f3387c83a5633632f5d45c3598de7fb82caa6d5d104dba44d96e1b",
+      "uncompressed_bytes": 75804,
+      "scope": "Final source/definition-bound accepted verification"
+    },
+    {
+      "path": "scalar-quote-validation-1.log.gz",
+      "sha256": "b17f8aa23a660ea6c9abda64030778df6b397b9255352185c1692eaef1fbdf2b",
+      "bytes": 9459,
+      "uncompressed_sha256": "a0e1dafb5d0830be0e6076555b244529db07777b3b42b2f4faa1c53e2380c569",
+      "uncompressed_bytes": 117615,
+      "scope": "Final source/definition-bound accepted verification"
+    },
+    {
+      "path": "scalar-quote-render-1.log.gz",
+      "sha256": "a24a2d755e6041b83174c93760d4010cf19736050eeab6fc19d983d1b3e015e7",
+      "bytes": 14723,
+      "uncompressed_sha256": "a2d5a0e4e16e386fafae389bdbd0822899a53912e037f8ea10eb5dab356b83f8",
+      "uncompressed_bytes": 192120,
+      "scope": "Final source/definition-bound accepted verification"
+    },
+    {
+      "path": "scalar-quote-browser-1.log.gz",
+      "sha256": "a467931af7356660163ac1754f53fbae9147d24f812b226b54315b88614a4e24",
+      "bytes": 242,
+      "uncompressed_sha256": "4bcc4a7c880d9f3b033ffa516a81779c33b4eee9a22aa4b40873941249b1ceac",
+      "uncompressed_bytes": 327,
+      "scope": "Final source/definition-bound accepted verification"
+    },
+    {
+      "path": "scalar-quote-metadata-0.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "scalar-quote-metadata-1.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "scalar-quote-metadata-2.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "scalar-quote-metadata-3.log.gz",
+      "sha256": "b409d67a3a037936236130f7dc5c82bc279551dcaa501f4fdee7275c7bc3baef",
+      "bytes": 99,
+      "uncompressed_sha256": "d2dd145dfbb85665677c83dfa50f34878e648a170c291230b82ce0749ec0eb97",
+      "uncompressed_bytes": 95
+    },
+    {
+      "path": "scalar-quote-metadata-4.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "scalar-quote-desktop-equivalence.png",
+      "sha256": "310957cc04764df4191f58bd7bbb4240e9fd2ed45296aff943a142216e2db9b4",
+      "bytes": 284417
+    },
+    {
+      "path": "scalar-quote-desktop-example.png",
+      "sha256": "fac139b1c2d2117dcd8539cb4eef04ab4c06b2a23652113102418263e9072a5e",
+      "bytes": 269902
+    },
+    {
+      "path": "scalar-quote-desktop-value.png",
+      "sha256": "79eed0884c541770c7b596c551f180733d99819f19319af7f6e4f7713671ba5e",
+      "bytes": 258186
+    },
+    {
+      "path": "scalar-quote-desktop-boundary.png",
+      "sha256": "032229c49e403aed1e534cd811b2f3fbd57bbc6a976a3e37d715b809b257dc2d",
+      "bytes": 277323
+    },
+    {
+      "path": "scalar-quote-narrow-equivalence.png",
+      "sha256": "1702a913a1e1fac7e91b05f1e4af7042cdc9106746f69f6313d7f3be56cee958",
+      "bytes": 95466
+    },
+    {
+      "path": "scalar-quote-narrow-example.png",
+      "sha256": "f16b4d892fb725a8811a8889d100449dc583ef165b907919670fbc45b554185a",
+      "bytes": 97734
+    },
+    {
+      "path": "scalar-quote-narrow-value.png",
+      "sha256": "d4de9e17e6e69dc28b06edf2e7eddb7327cfbc26313e54301b6dcfc26952f97b",
+      "bytes": 98769
+    },
+    {
+      "path": "scalar-quote-narrow-boundary.png",
+      "sha256": "136e10c87fb10338d039ccb0cb4bf2e8bcdd4fd290511517109fe3660d62f415",
+      "bytes": 92020
+    },
+    {
+      "path": "scalar-quote-inspection.json",
+      "sha256": "1ae0b61e5a761444d5629f7fd1195096a5d25ff795b4c774186097b837020463",
+      "bytes": 5054
+    },
+    {
+      "path": "scalar-quote-section-overflow.json",
+      "sha256": "ff2b8a3e6cb5cbbf457303b770025979cfd9b4be7f1dd76faadaabacdbbfe152",
+      "bytes": 9350
+    },
+    {
+      "path": "ScalarQuoteRender.lean.txt",
+      "sha256": "63228cebcb6099ef99ae46b5daaa5dfef0523dc8d54bedb7561f397ca51f4be0",
+      "bytes": 205
+    },
+    {
+      "path": "renderer-lakefile.lean.txt",
+      "sha256": "e987dce206a09e4b7e0437655fe8046a275e69bbc8cb38deaaf1eacc29f2ab2e",
+      "bytes": 148
+    },
+    {
+      "path": "SignCodecProbe.lean.txt",
+      "sha256": "ae68c28e0825a0803cd3037392f0be28ebddb78c245c4d65ff5ed6957e7b33cb",
+      "bytes": 998
+    },
+    {
+      "path": "scalar-quote-browser.mjs",
+      "sha256": "8562234562a7d50b928f96e6d80260da18ffbbc95f67ab50be6740eb4155e16c",
+      "bytes": 5672
+    },
+    {
+      "path": "run-bounded.sh",
+      "sha256": "63bc5f97337e6b039bb3a9b1ba2a500be96fd1c2a2f73b43dae284aa9b18dda8",
+      "bytes": 302
+    }
+  ],
+  "verification": {
+    "jobs": 11775,
+    "runtime": "20.340s",
+    "peak_memory": "2.8GiB",
+    "swap_bytes": 0,
+    "scope": "Both RCF libraries, rational handler/reify/decision controls, new scalar and prior rational quotation audits, named pi/e fresh-body audit and checked manual chapter. Cached dependencies included. The final pre-commit manual changes add paragraph breaks only."
+  },
+  "proof_audit": {
+    "case_theorem_bodies": 12,
+    "nonempty_producer_guard": 11,
+    "source_theorem_with_exact_type_and_constant_body_and_zero_reductions": 1,
+    "complete_axiom_closure": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "restored_value": "selected positive-sqrt2 model evaluates restored scalar to -2 * Real.sqrt 2",
+    "exact_polynomial": "[0,-2] over the rational predecessor",
+    "stored_sign": -1,
+    "continued_proof_nodes": 817,
+    "negative_input_tests": [
+      "missing sign fact",
+      "wrong cached sign",
+      "malformed/partial codec",
+      "admitted fact proposal"
+    ],
+    "state_tests": [
+      "late proof transport exhaustion after strict success",
+      "missing/wrong sign facts",
+      "malformed codec",
+      "admitted fact"
+    ],
+    "budget_tests": [
+      "exact proof nodes",
+      "one below",
+      "carried proofNodes11/sourceNodes7"
+    ]
+  },
+  "render": {
+    "jobs": 14318,
+    "runtime": "7min52.410s",
+    "CPU_time": "7min15.772s",
+    "peak_memory": "9.8GiB",
+    "swap_bytes": 0,
+    "all_eight_captures_opened": true,
+    "local_targets_per_width": 19,
+    "viewports": [
+      1440,
+      390
+    ],
+    "local_overflow": 0,
+    "scope": "Quotation section only; no whole-book overflow assertion."
+  },
+  "metadata": [
+    {
+      "argv": [
+        "python3",
+        "scripts/check_dag.py"
+      ],
+      "exit_code": 0,
+      "log": "scalar-quote-metadata-0.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_copyright_headers.py"
+      ],
+      "exit_code": 0,
+      "log": "scalar-quote-metadata-1.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_file_line_counts.py"
+      ],
+      "exit_code": 0,
+      "log": "scalar-quote-metadata-2.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/ci/check_named_admissions.py"
+      ],
+      "exit_code": 0,
+      "log": "scalar-quote-metadata-3.log.gz"
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "scalar-quote-metadata-4.log.gz"
+    }
+  ],
+  "metadata_scope": "675 scanned adapter/conformance import cones: 1585 local modules, no admissions in these cones",
+  "limits": "All own Lean/browser jobs serial under aggregate MemoryMax34359738368, MemorySwapMax0 and LEAN_NUM_THREADS2. Live command/properties pinned above; wrapper and terminal peaks retained.",
+  "limitations": [
+    "Not a matched performance/scaling experiment; no speedup inferred from builder runtimes or proof-node counts.",
+    "No generic source/proposal/provider/predecessor-history authentication or general handler/completeness result.",
+    "Canonical means the exact supplied Element.codec application, including its supplied predecessor codec; no implicit refinement to a different lower codec.",
+    "Strict compiled missing-record behavior for whole replay readers and the native stress requirement remain separate.",
+    "Development failures retain raw logs but not every transient source snapshot."
+  ]
+}

@@ -1,0 +1,24 @@
+import HexRCF.CellReplay.Algebraic.Records
+import HexRCF.RealCoefficients.RationalQuote
+import HexRealClosure.SignCodec
+
+open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
+open Hex.RCF.SelectedRootTests
+namespace SignCodecProbe
+open CellReplayTests.Algebraic
+set_option maxHeartbeats 12000000
+set_option maxRecDepth 32768
+
+def literal : Codec.Json := .array (.cons Scalars.p0 (.cons (.number (-1)) .nil))
+def reader : Except String (Algebraic.Element Data.native) :=
+  (Algebraic.Element.signCodec Data.base.codec Records.facts).decode literal
+
+run_meta do
+  withExporting (isExporting := false) do
+    let .ok result ← RootQuote.quote (mkConst ``reader)
+        (RationalQuote.decoder (mkConst ``Data.registry))
+      | throwError "checked-sign coefficient reader declined"
+    let _ ← Hex.RCF.checkProof `strictScalar (← inferType result.proof) result.proof
+    logInfo m!"checked-sign extension scalar quoted, proofNodes={result.usage.proofNodes}"
+
+end SignCodecProbe
