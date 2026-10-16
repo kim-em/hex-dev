@@ -1,0 +1,191 @@
+{
+  "source": "e15bc23800785665db29128948de23dd645ad897",
+  "properties": "ActiveState=active\nMainPID=3480164\nControlGroup=/user.slice/user-1003.slice/user@1003.service/app.slice/hex-10358-lean-build.service\nMemoryCurrent=2315321344\nMemoryMax=34359738368\nMemorySwapMax=0\n",
+  "source_hashes": {
+    "adapters/HexRCF/RealCoefficients/RationalQuote.lean": "675e2ba065b696f257adefc07fe30ddb0190f321d86005444579ea5a0744bdf5",
+    "conformance/HexRCF/AlgebraicCellsConformance.lean": "7402cb41fa05f36b3d52ecf9682417f92ded4f82798ee3773ebed94265195b74",
+    "conformance/HexRCF/RationalQuoteConformance.lean": "00268ea94121a4f2a859ae46aadb14e7a22ae96d4ec735900a55e8dabfb51fb5",
+    "conformance/HexRCF/RationalQuoteCases.lean": "58841f626f490d595722a40d5c3e5a8697e940dedf3e070502ce7de2dd089d16",
+    "HexManual/Chapters/HexRCF/RootQuote.lean": "4a981d0398811054470514e5a6dfa6301599741054d0356cbd573b311bd4c049"
+  },
+  "note": "Source bytes were committed immediately after render start with no intervening source changes; attempted commit from scratch renderer cwd failed before the build. The actual build source is pinned here.",
+  "decoder_body_identical_to_reviewed_code": "0b3ed6a720d1716d11ffb648b84c4728bc5635e8",
+  "artifacts": [
+    {
+      "path": "rational-quote-final-nits-1.log.gz",
+      "sha256": "306fd97a96a04416076eade19e2ebb53d3b2b6b890988fe9f7873d278f86f7a0",
+      "bytes": 9572,
+      "uncompressed_sha256": "c64486f219fc4d68f641465e803ee1530a835c2fe39cd594923fa2bac8e757a3",
+      "uncompressed_bytes": 117838
+    },
+    {
+      "path": "rational-quote-final-render-1.log.gz",
+      "sha256": "2a938a1be0d5bdac545002198039b11f5797b76a7dbe05600214ebba56269a69",
+      "bytes": 14203,
+      "uncompressed_sha256": "3b02563e4836fabe63ddb6b231c2802dcc7a235373e9419b0f62900fd4b9388a",
+      "uncompressed_bytes": 191304
+    },
+    {
+      "path": "rational-quote-final-browser-1.log.gz",
+      "sha256": "a8ff00eed935672dc9d8a8bc6179d85949f6a674dc04d090311c255a865fc169",
+      "bytes": 243,
+      "uncompressed_sha256": "e4c814cd3eb80954dc648e2e763b1a7cdee254cea64ac44ecbbf327079400051",
+      "uncompressed_bytes": 327
+    },
+    {
+      "path": "rational-quote-final-metadata-0.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "rational-quote-final-metadata-1.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "rational-quote-final-metadata-2.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "rational-quote-final-metadata-3.log.gz",
+      "sha256": "10241bb8de97db250fd3a2adb18bcb978456218c13e89020f1789db74229d9e9",
+      "bytes": 100,
+      "uncompressed_sha256": "dd56c41e4d8e656705ca1d2a23d2489ed216c948cef116d7763b6f3f5aa72ef8",
+      "uncompressed_bytes": 95
+    },
+    {
+      "path": "rational-quote-final-metadata-4.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "rational-quote-desktop-equivalence.png",
+      "sha256": "955b33fbabf7708a2ec1132f8682c3848b5fd7c98609abb9f178afaed8605678",
+      "bytes": 268867
+    },
+    {
+      "path": "rational-quote-desktop-example.png",
+      "sha256": "e248e9e557bfd06a75d65cb248bde5d98f50c7ee5ce8950e711f486041af0356",
+      "bytes": 291087
+    },
+    {
+      "path": "rational-quote-desktop-registry.png",
+      "sha256": "7e1ebaa0dc5d629a5769cd378a0f2e8d98ce1a496d6f8d436ba998c603e9dae1",
+      "bytes": 297497
+    },
+    {
+      "path": "rational-quote-desktop-boundary.png",
+      "sha256": "de5f4c70738fbba937cb7b80a09d0266e355c4b4c5eab2bfd5b4c40bf50835dd",
+      "bytes": 296046
+    },
+    {
+      "path": "rational-quote-narrow-equivalence.png",
+      "sha256": "42e3cf52d0948a3bbfbc5d3832c915aa4c78b054d3ae97c876bcc57a5f6e7e37",
+      "bytes": 95683
+    },
+    {
+      "path": "rational-quote-narrow-example.png",
+      "sha256": "ec17694f834a3bfae1a0d794b6f28840cabd4ee0bd273331e50c47d52a6ec8b1",
+      "bytes": 97293
+    },
+    {
+      "path": "rational-quote-narrow-registry.png",
+      "sha256": "5cb0739d90a7ab0055887cc16e9382963adc0c329ccc9fb294c5c7c018f66de0",
+      "bytes": 102176
+    },
+    {
+      "path": "rational-quote-narrow-boundary.png",
+      "sha256": "85c82b998db8fbcf337ec07926cadfe233da36ac99cc47f008e78e741ca26b12",
+      "bytes": 91597
+    },
+    {
+      "path": "rational-quote-inspection.json",
+      "sha256": "5f7231b0d238788856e60c02ea1375ad2418ac2e0a152ee0c2800d02251897ed",
+      "bytes": 6804
+    },
+    {
+      "path": "rational-quote-section-overflow.json",
+      "sha256": "0a84e473d1b882e82601fade7eac4f0cdf32b5891e729b80c25322b2c2cbed23",
+      "bytes": 5464
+    }
+  ],
+  "verification": {
+    "jobs": 11749,
+    "runtime": "33.708s",
+    "peak_memory": "2.3GiB",
+    "swap_bytes": 0,
+    "body_count": 188,
+    "exact_original_rational_values_checked": true,
+    "constructor_allowlist": "constructors, inductive types, OfNat.ofNat, instOfNatNat",
+    "selected_child_budget_raw_heartbeats": 200000,
+    "selected_child_option_equivalent_maxHeartbeats": 200
+  },
+  "render": {
+    "jobs": 14316,
+    "runtime": "3min45.638s",
+    "peak_memory": "6.8GiB",
+    "swap_bytes": 0,
+    "eight_captures_opened": true,
+    "eleven_targets_per_width": true,
+    "viewports": [
+      1440,
+      390
+    ],
+    "local_overflow": 0
+  },
+  "metadata": [
+    {
+      "argv": [
+        "python3",
+        "scripts/check_dag.py"
+      ],
+      "exit_code": 0,
+      "log": "rational-quote-final-metadata-0.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_copyright_headers.py"
+      ],
+      "exit_code": 0,
+      "log": "rational-quote-final-metadata-1.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_file_line_counts.py"
+      ],
+      "exit_code": 0,
+      "log": "rational-quote-final-metadata-2.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/ci/check_named_admissions.py"
+      ],
+      "exit_code": 0,
+      "log": "rational-quote-final-metadata-3.log.gz"
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check",
+        "origin/main",
+        "HEAD"
+      ],
+      "exit_code": 0,
+      "log": "rational-quote-final-metadata-4.log.gz"
+    }
+  ],
+  "scope": "Final documentation, exact-value control and narrower frozen constructor allowlist. Decoder executable body unchanged from0b3ed6a720. Broad compatibility is retained at that earlier source; this record proves the affected final-source selection and manual render. No scientific timing comparison or broader extension claim."
+}

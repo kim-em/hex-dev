@@ -78,3 +78,16 @@ The revised full 14,316-job renderer passes in 4 min 14.158 s, peak 5.8 GiB/no
 swap. All eight revised captures were opened; the same 11 quotation-section
 targets fit both widths. These source-specific observations supersede the
 earlier source's coverage claims without discarding its completed evidence.
+
+The [final-source record](data/hexrcf-rational-quotation/final/context.json)
+pins `e15bc23800`. The decoder body is identical to the preceding source; its
+eligibility documentation now states that ordinary aliases and unfolded codecs
+may decline and distinguishes inferred-type eligibility from complete kernel
+checking. The all-base build additionally checks each stored rational value,
+and the frozen-data audit admits only constructors/types and the two required
+natural-number primitives. Its 11,749-job affected selection passes with the
+same 188-body audit. The selected-child limit is 200,000 **raw** heartbeats,
+equivalent to option `maxHeartbeats 200`. The final 14,316-job render passes
+in 3 min 45.638 s, peak 6.8 GiB/no swap. All eight final captures were opened,
+and all 11 section targets fit both widths. This supplements the broader
+compatibility check at `0b3ed6a720` with exact final-source verification.
