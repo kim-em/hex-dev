@@ -1,0 +1,119 @@
+import Lake
+open Lake DSL
+package scalarReviewRender
+require Hex from "/home/kim/worktrees/hex-dev/hex-dev-issue-10358"
+lean_lib ScalarReviewRender
+lean_lib SourceSelectionProbe
+
+lean_lib SourceSelectionEmitter
+
+lean_lib SignPacketEncodedProbe
+
+lean_lib PublicFrameProbe
+
+lean_lib RelativeScalarProbe
+
+lean_lib ScratchRootQuote
+
+lean_lib MajorSource
+lean_lib MajorProbe
+
+lean_lib SignPacketEncodedAudit
+
+lean_lib PacketBodyProbe
+
+lean_lib PacketBodyCheck
+
+lean_lib PacketConversions
+
+lean_lib MomentHeadProof
+
+lean_lib SignatureQuote
+lean_lib SignatureProbe
+
+lean_lib SignatureControls
+lean_lib SignatureAudit
+
+lean_lib SignatureRoundtrip
+
+lean_lib HeaderQuote
+lean_lib HeaderProbe
+
+lean_lib TransportCases
+lean_lib TransportProbe
+
+lean_lib TransportAudit
+
+lean_lib TransportQuote
+lean_lib TransportFixedProbe
+lean_lib TransportFixedAudit
+
+lean_lib OldRootQuote
+lean_lib MixedHeadData
+lean_lib MixedHeadProbe
+
+lean_lib CodecTransportCases
+lean_lib CodecTransportProbe
+lean_lib CodecTransportAudit
+
+lean_lib LiteralCallbackProbe
+lean_lib TransportPacket
+lean_lib TransportPacketValues
+lean_lib TransportPacketAudit
+
+lean_lib ContextQuote
+
+lean_lib MultiCodecQuote
+lean_lib MultiCodecAudit
+
+lean_lib HeaderPacket
+
+lean_lib HeaderPacketAudit
+
+lean_lib HeaderPacketValues
+
+lean_lib HeaderPacketControls
+
+lean_lib HeaderControls
+
+lean_lib HelperOrderData
+lean_lib HelperOrderProbe
+
+lean_lib PackedHeader
+
+lean_lib PackedHeaderAudit
+
+lean_lib RootDecode
+
+lean_lib RootDecodeProbe
+
+lean_lib RootDecodeAudit
+
+lean_lib FrameBindingProbe
+
+lean_lib GraphEncodingProbe
+
+lean_lib RootDecodeInlineProbe
+
+lean_lib PreparedRootDecode
+
+lean_lib PreparedInlineProbe
+
+lean_lib ReflexiveDecode
+
+lean_lib RetainedInlineProbe
+
+lean_lib RetainedInlineAudit
+
+lean_lib RootPrepareImport
+lean_lib RootPreparePrivateImport
+
+lean_lib RootPrepareInspect
+
+lean_lib FreshCompleteQuote
+
+lean_lib ProofFunctionData
+
+lean_lib ProofFunctionQuote
+
+lean_lib FreshCompleteFrozen

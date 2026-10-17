@@ -1,0 +1,96 @@
+import HexRCF.CellReplay.Operations
+import HexRCF.RealCoefficients.RootQuote
+import HexRCF.RealCoefficients.RationalQuote
+import HexRCF.RealCoefficients.ScalarQuote
+import HexRCF.RootTableQuote.Input
+open Lean Meta Qq Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
+open Hex.RCF.RealCoefficients.CellReplayTests
+open Hex.RCF.RealCoefficients.CellReplayTests.Algebraic
+namespace FreshCompleteFrozen
+set_option maxHeartbeats 12000000
+set_option maxRecDepth 32768
+set_option smartUnfolding false
+private meta def note (message : String) : MetaM Unit := do
+  if let some path ← IO.getEnv "HEX_RCF_FRESH_TRACE" then
+    IO.FS.withFile path .append fun handle => do
+      handle.putStrLn message
+      handle.flush
+def rational (value : Int) : Codec.Json := .arr #[.number 0,.number value,.number 1]
+def scalar (polynomial : Array Codec.Json) (sign : Int) : Codec.Json :=
+  .arr #[.arr polynomial,.number sign]
+def polynomial : Codec.Json := .arr #[
+  scalar #[rational 0,rational (-1)] (-1),.arr #[],scalar #[rational 1] 1]
+run_meta do
+  withoutExporting do
+    let codec : Q(ValueCodec (Algebraic.Element Hex.RCF.SelectedRootTests.Data.native)) :=
+      q(Algebraic.Element.codec (context := Hex.RCF.SelectedRootTests.Data.native)
+        Hex.RCF.SelectedRootTests.Data.base.codec)
+    let reader ← mkAppM ``Codec.readPoly #[codec,mkConst ``polynomial]
+    let basic : Hex.RealFormula.Reify.Config := {}
+    let config := {basic with ring := {basic.ring with budget :=
+      {basic.ring.budget with proofNodes := 100000}}}
+    let result ← match ← RootQuote.runWith (do
+        note "starting literal polynomial reconstruction"
+        let p ← ScalarQuote.quotePolyWith reader (mkConst ``Records.facts) fun expression =>
+          liftM (RationalQuote.decoder (mkConst ``Hex.RCF.SelectedRootTests.Data.registry) expression)
+        note s!"literal polynomial reconstructed; nodes={p.usage.proofNodes}"
+        logInfo m!"literal polynomial reconstructed; proofNodes={p.usage.proofNodes}"
+        let polynomialType ← inferType p.value
+        Hex.RealFormula.Reify.accountProof polynomialType
+        Hex.RealFormula.Reify.accountProof p.value
+        let polynomialName := mkPrivateName (← getEnv) (← mkFreshUserName `FrozenPolynomial)
+        let polynomial ← mkAuxDefinition polynomialName polynomialType p.value (compile := false)
+        let signature ← mkAppM ``Tower.Context.signature #[mkConst ``Schema.parent]
+        let cert ← mkAppM ``RadicalCert.mk #[signature,polynomial,polynomial,polynomial,mkNatLit 1]
+        let certificateType ← inferType cert
+        Hex.RealFormula.Reify.accountProof certificateType
+        Hex.RealFormula.Reify.accountProof cert
+        let certificateName := mkPrivateName (← getEnv) (← mkFreshUserName `FrozenRadical)
+        let cert ← mkAuxDefinition certificateName certificateType cert (compile := false)
+        let cells := mkApp (mkConst ``Codec.Json.Value.array)
+          (mkApp2 (mkConst ``Codec.Json.Values.cons) (mkConst ``Literals.sections)
+            (mkApp2 (mkConst ``Codec.Json.Values.cons) (mkConst ``Literals.sectors)
+              (mkConst ``Codec.Json.Values.nil)))
+        let empty ← mkListLit (← mkAppM ``Tower.Context.Value #[mkConst ``Schema.parent]) []
+        let some operations ← unfoldDefinition? (mkConst ``Operations.operations)
+          | throwError "supplied operations have no accessible definition"
+        let operations := operations.replace fun expression =>
+          if expression.isConstOf ``Hex.RCF.SelectedRootTests.Data.reduction then
+            some (mkConst ``Hex.RCF.RootTableQuoteTests.reduction)
+          else if expression.isConstOf ``Hex.RCF.SelectedRootTests.Data.reduction_eq then
+            some (mkConst ``Hex.RCF.RootTableQuoteTests.reduction_eq)
+          else none
+        Meta.check operations
+        let operationsType ← inferType operations
+        Hex.RealFormula.Reify.accountProof operationsType
+        Hex.RealFormula.Reify.accountProof operations
+        let name := mkPrivateName (← getEnv) (← mkFreshUserName `FrozenOperations)
+        let operations ← mkAuxDefinition name operationsType operations (compile := false)
+        let program ← mkAppM ``CellOperations.accept?
+          #[operations,mkConst ``Operations.codec,mkConst ``Schema.values,
+            mkConst ``Schema.formula,empty,cert,
+            mkConst ``Hex.RealFormula.Quantifier.existsReal,mkConst ``Literals.roots,cells]
+        note "complete packet reader constructed; literal quotation begins"
+        let calls ← IO.mkRef (0 : Nat)
+        let quoted ← RootQuote.quoteOptionWith program fun expression => do
+          let count ← calls.get
+          calls.set (count+1)
+          if count < 12 || count % 100 == 0 then
+            note s!"boundary {count}: head={expression.getAppFn.constName?}; usage={(← get).budget.consumed.proofNodes}; constants={expression.getUsedConstants.extract 0 8}"
+          return none
+        note s!"complete literal quotation returned; nodes={quoted.usage.proofNodes}"
+        return quoted) config with
+      | .ok result => pure result
+      | .error error => throwError "fresh complete literal quote refused: {Hex.RealFormula.Reify.Error.toMessageData error}"
+    let kind ← inferType result.proof
+    unless kind.isAppOfArity ``Eq 3 do throwError "complete quotation did not return an equation"
+    let program := kind.getAppArgs[1]!
+    unless program.getAppFn.isConstOf ``CellOperations.accept? do
+      throwError "complete quotation changed its original checker"
+    let target ← mkEq program (← mkAppM ``Option.some #[mkConst ``Unit.unit])
+    let proof ← Hex.RCF.checkProof `freshCompleteLiteral target result.proof
+    let axioms ← collectAxioms proof.getAppFn.constName!
+    unless axioms.all (fun name => [``propext,``Classical.choice,``Quot.sound].contains name) do
+      throwError "fresh complete literal quote has inadmissible dependencies"
+    logInfo m!"fresh complete literal quote proofNodes={result.usage.proofNodes}; axioms={axioms}"
+end FreshCompleteFrozen
