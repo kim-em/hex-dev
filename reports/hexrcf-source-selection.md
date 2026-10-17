@@ -51,7 +51,11 @@ coordinates and an incorrect chained coordinate. Concrete two-root controls use
 separately quoted positive and negative √2
 descriptors and reject their swap. The negative descriptor has its own frozen
 subject and graph for the strict interval `(-3/2,-7/5)`; its exact header and
-negative alias are proved in the ordinary kernel.
+negative alias are proved in the ordinary kernel. Unlike the positive case
+with two derivative requests, its empty request list selects by interval alone.
+The negative JSON fixture is emitted by the retained native proposal script;
+the existing `scripts/rcf/selected_literals.py --check` verifies its generated
+constructor module together with the other selected-root fixtures.
 
 The public `FieldSelectionConformance` module executes `NumberField.present?`
 and `FieldSelection.nativeValues` on those actual `QAdjoin` coordinates. It
@@ -69,7 +73,7 @@ retains its two supplied guards. Neither case claims to collect divisions
 from original source syntax. Public and public meta imports suffice for this
 module, without `import all` or a legacy fixture import. A separate public
 inherited-coordinate consumer applies `formula_iff` and the complete finite
-reader route with its original identity. The native finite-reader case uses
+reader route with a supplied `origin.RealValue` identity. The native finite-reader case uses
 `FieldSelection.matrix` and recovers the original matrix at the same reader.
 
 The rational source descriptor is reconstructed using `RootQuote` in an ordinary
@@ -79,12 +83,12 @@ compiled verdict. A separate quoted binding reader and the owner's
 square-root identity follows from that head and strict interval. This removes
 the duplicate descriptor acceptance check from the older ordered-selection
 fixture. The root and binding quotations charge 308,555 and 60 proof nodes,
-respectively. The negative root and header charge 48,253 and 62 nodes; these are
+respectively. The negative root and header charge 45,901 and 62 nodes; these are
 syntax counts, not unique DAG-node or sharing results.
 
 The fresh generic audit rechecks 14 exported theorem bodies. A separate audit
-rechecks 272 reachable theorem bodies and 59 definitions from the nine named
-source-selection modules, including generated proof leaves; 300 checks have
+rechecks 272 reachable theorem bodies and 97 definitions from the nine named
+source-selection modules, including generated proof leaves; 336 checks have
 nonempty reduction traces. It checks complete root axiom closures against
 the standard three axioms and rejects the existing native-producer denylist
 unchanged. Temporary checked copies are discarded. Legacy native fixture
@@ -106,7 +110,10 @@ for the entire manual. The stopped second render is retained with signal 15/TERM
 Lake build; it was stopped to address substantive review findings. The verifier
 checks this classification against the log. It also checks the archived overflow
 against the recorded five-pixel value. `verify.py --check-head` additionally
-requires changes after the recorded source commit to remain within `reports/`.
+requires the recorded source to be an ancestor and tracked changes after it
+to remain within `reports/`. This optional check is intended for the reviewed
+source/evidence branch before later merges; it can reject subsequent unrelated
+code changes even if the originally recorded source bytes are unchanged.
 The earlier five-pixel builder failure and its captures
 are retained with the unchanged greater-than-one-pixel rejection threshold.
 

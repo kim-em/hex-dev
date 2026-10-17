@@ -26,6 +26,14 @@ for entry in record['artifacts']:
 for path, expected in record['sources'].items():
     raw = subprocess.check_output(['git', 'show', record['source_commit'] + ':' + path], cwd=repo)
     assert sha(raw) == expected, path
+changed = subprocess.check_output(['git', 'diff', '--name-only',
+    'origin/main...' + record['source_commit']], cwd=repo, text=True).splitlines()
+assert all(path.startswith('reports/') or path in record['sources'] for path in changed), changed
+kernel = subprocess.check_output(['git', 'show', record['source_commit'] +
+    ':conformance/HexRCF/SourceSelectionKernel.lean'], cwd=repo, text=True)
+scope = re.search(r'unless #\[(.*?)\]\.contains modules\[index\]!', kernel, re.S)
+assert scope
+assert re.findall(r'`([A-Za-z0-9_.]+)', scope.group(1)) == record['body_scope']
 validation = record['validation']
 for name in ['integration', 'render', 'browser']:
     text = gzip.decompress((root / validation[name]).read_bytes()).decode()
@@ -39,6 +47,19 @@ match = re.search(r'source-selection inspection: (\d+) theorem bodies/(\d+) defi
 assert match
 assert list(map(int, match.groups())) == list(validation['audit'].values())
 assert f"source selection: {validation['generic_bodies']} exported theorem bodies" in text
+fresh = gzip.decompress((root / validation['fresh_audit']).read_bytes()).decode()
+assert 'status=0/SUCCESS' in fresh
+fresh_match = re.search(r'source-selection inspection: (\d+) theorem bodies/(\d+) definitions; (\d+) nonempty traces', fresh)
+assert fresh_match and fresh_match.groups() == match.groups()
+for label, nodes in validation['quotation_nodes'].items():
+    assert re.search(re.escape(label) + r' proofNodes=' + str(nodes) + r'\b', text), label
+report = (repo / 'reports/hexrcf-source-selection.md').read_text()
+counts = validation['audit']
+assert f"rechecks {counts['theorem_bodies']} reachable theorem bodies and {counts['definitions']} definitions" in report
+assert f"{counts['nonempty_traces']} checks have" in report
+assert f"rechecks {validation['generic_bodies']} exported theorem bodies" in report
+for nodes in validation['quotation_nodes'].values():
+    assert re.search(r'(?<![\d,])' + re.escape(f'{nodes:,}') + r'(?![\d,])', report), nodes
 cancelled = gzip.decompress((root / record['render_cancelled']['log']).read_bytes()).decode()
 assert 'status=15/TERM' in cancelled
 assert 'Build completed successfully' not in cancelled
@@ -47,6 +68,8 @@ failed = json.loads((root / record['failed_browser']['artifacts'] /
 measured = max(target['overflow'] for viewport in failed for target in viewport['targets'])
 assert measured == record['failed_browser']['overflow_pixels']
 if args.check_head:
+    subprocess.run(['git', 'merge-base', '--is-ancestor', record['source_commit'], 'HEAD'],
+        cwd=repo, check=True)
     for arguments in [
             ['diff', '--name-only', record['source_commit'], 'HEAD'],
             ['diff', '--name-only', 'HEAD']]:

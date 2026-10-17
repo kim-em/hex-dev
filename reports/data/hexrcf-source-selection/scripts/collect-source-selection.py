@@ -13,13 +13,13 @@ def sha(data):
 def git(*args):
     return subprocess.check_output(['git', *args], cwd=repo, text=True).strip()
 
-integration = (task/'source-selection-integration-7.log').read_text()
+integration = (task/'source-selection-integration-8.log').read_text()
 assert 'Build completed successfully' in integration
 assert 'status=0/SUCCESS' in integration
-rendered = (task/'source-selection-render-6.log').read_text()
+rendered = (task/'source-selection-render-7.log').read_text()
 assert 'Build completed successfully' in rendered
 assert 'status=0/SUCCESS' in rendered
-browser = (task/'source-selection-browser-4.log').read_text()
+browser = (task/'source-selection-browser-5.log').read_text()
 assert 'Saved source-selection desktop/narrow screenshots' in browser
 assert 'status=0/SUCCESS' in browser
 audit = re.search(r'source-selection inspection: (\d+) theorem bodies/(\d+) definitions; (\d+) nonempty traces', integration)
@@ -55,7 +55,7 @@ save('scripts/lakefile.lean.txt', (render/'lakefile.lean').read_bytes())
 save('scripts/SourceSelectionEmitter.lean.txt', (render/'SourceSelectionEmitter.lean').read_bytes())
 save('scripts/SourceSelectionProbe.lean.txt', (render/'SourceSelectionProbe.lean').read_bytes())
 save('scripts/collect-source-selection.py', Path(__file__).read_bytes())
-for directory, label in [(render/'archive-source-selection-1','initial-b22'), (render/'archive-source-selection-2','failed-f6d780'), (render/'archive-source-selection-3','prior-33ab'), (render,'final')]:
+for directory, label in [(render/'archive-source-selection-1','initial-b22'), (render/'archive-source-selection-2','failed-f6d780'), (render/'archive-source-selection-3','prior-33ab'), (render/'archive-source-selection-4','prior-af95'), (render,'final')]:
     for path in sorted(directory.glob('source-selection-*')):
         if path.is_file() and path.suffix in ('.json','.png'):
             save('manual/'+label+'/'+path.name, path.read_bytes())
@@ -74,19 +74,20 @@ extras = ['HexRCF.lean','lean-toolchain',
     'conformance/HexRCF/NativeSamplesConformance.lean',
     'conformance/HexRCF/SelectedRoot/KernelCheck.lean']
 sources = {name: sha((repo/name).read_bytes()) for name in sorted(set(changed+extras))
-    if name.endswith('.lean') or name == 'lean-toolchain'}
+    if not name.startswith('reports/')}
 record = {
     'rendered_html_sha256': sha((render/'scalar-review-html/html-single/index.html').read_bytes()),
     'source_commit': git('rev-parse','HEAD'),
     'source_tree': git('rev-parse','HEAD^{tree}'),
     'sources': sources,
     'validation': {
-        'integration': 'logs/source-selection-integration-7.log.gz',
-        'fresh_audit': 'logs/source-selection-audit-review-1.log.gz',
+        'quotation_nodes': {label: int(re.search(re.escape(label) + r' proofNodes=(\d+)', integration).group(1)) for label in ['source-selection root quotation', 'source-header binding', 'negative-source root quotation', 'negative-source header binding']},
+        'integration': 'logs/source-selection-integration-8.log.gz',
+        'fresh_audit': 'logs/source-selection-audit-review-2.log.gz',
         'audit': dict(zip(['theorem_bodies','definitions','nonempty_traces'],map(int,audit.groups()))),
         'generic_bodies': int(generic.group(1)),
-        'render': 'logs/source-selection-render-6.log.gz',
-        'browser': 'logs/source-selection-browser-4.log.gz',
+        'render': 'logs/source-selection-render-7.log.gz',
+        'browser': 'logs/source-selection-browser-5.log.gz',
         'live_cap': 'scripts/source-selection-cap-final.txt',
     },
     'render_cancelled': {
@@ -95,11 +96,9 @@ record = {
         'reason': 'substantive review findings required further source and manual changes',
     },
     'failed_browser': {'log': 'logs/source-selection-browser-2.log.gz', 'source_commit': 'f6d780d440', 'overflow_pixels': 5, 'artifacts': 'manual/failed-f6d780', 'resolution': 'wrap the Lean declaration; retain the same >1px failure threshold'},
-    'body_scope': [
-        'HexRCF.SourceSelectionCases','HexRCF.SourceSelectionConformance',
-        'HexRCF.SourceSelectionNative','HexRCF.FieldSelectionConformance',
-        'HexRCF.RealCoefficients.SourceSelection','HexRCF.RealCoefficients.FieldSelection',
-        'HexRCF.SourceSelectionPublic','HexRCF.SourceSelectionNegative','HexRCF.SourceSelectionNegativeLiterals'],
+    'body_scope': re.findall(r'`([A-Za-z0-9_.]+)', re.search(
+        r'unless #\[(.*?)\]\.contains modules\[index\]!',
+        (repo/'conformance/HexRCF/SourceSelectionKernel.lean').read_text(), re.S).group(1)),
     'legacy_scope': 'native fixture construction excluded from body diagnostics, included in complete axiom closure',
     'observations': 'Reused-dependency build validation only; no complexity, speedup or physical-sharing claim',
     'artifacts': sorted(artifacts,key=lambda x:x['path']),

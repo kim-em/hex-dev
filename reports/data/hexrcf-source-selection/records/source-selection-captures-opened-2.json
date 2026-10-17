@@ -1,5 +1,5 @@
 {
-  "source_commit": "af95bda597f7bc609d168705e38aed821ae2d8d8",
+  "source_commit": "a891bdd1714184b313653c8c3c64c62c98194e69",
   "images": [
     {
       "name": "source-selection-desktop-example.png",
@@ -7,15 +7,15 @@
     },
     {
       "name": "source-selection-desktop-details.png",
-      "sha256": "e25ee951e424cddd5fd49b85c4562bca28ed9a5fdb282f2b9fbc5ef06c72334b"
+      "sha256": "37e9c21c351f6e385fcde5c48ca569525a440f2d46af7223a044db34f015c6af"
     },
     {
       "name": "source-selection-desktop-builder.png",
-      "sha256": "b8744eaae59eacff7dbe092ee11a924335fda415285d9005a87a5623a0e64484"
+      "sha256": "39fca77f665f4baf61057438e265b0bb4edf1d9184cd3e7c38fb6b39ab1ef87c"
     },
     {
       "name": "source-selection-desktop-scope.png",
-      "sha256": "80e0e4d2d2d4bcb602793df2df4e09584ed9705f630e01eba82f48b7c44579d7"
+      "sha256": "79c644af16786e928361881be3f81a8a42be5bb6e708315a9edb094f4ccb6505"
     },
     {
       "name": "source-selection-narrow-example.png",
@@ -23,16 +23,16 @@
     },
     {
       "name": "source-selection-narrow-details.png",
-      "sha256": "1456484548edb410ef238a6b74e92c378dcfb4caa99b7fdf862392bf975b4c59"
+      "sha256": "f06f54063defe5a152ddbf2625c515717cd8cee32ec6088b320d671ff2915a80"
     },
     {
       "name": "source-selection-narrow-builder.png",
-      "sha256": "8e9b66aaf13bb0dcba4cb037e2426a09cab3cfb870933b80ddabe027d667254d"
+      "sha256": "1e7b95ba943104fa7798656578b8ecc53fc65632c8743199881f32c274cb4cd2"
     },
     {
       "name": "source-selection-narrow-scope.png",
-      "sha256": "10468585bef2fc77a93ba4a49749587edad2d1cde733862cc6a5ae8444db4da0"
+      "sha256": "cf1f247f33e9ee8887371634e392cd98a2405c1a45281267f3b01e328a6a080f"
     }
   ],
-  "inspection": "All8 finalpostreviewcaptures opened and visuallychecked. Nine local targets1440/390: desktopmax0/narrowmax1pxfirstcodeblock; builder0. This doesnotclaimglobalpagezerooverflow."
+  "inspection": "All8finala891captures opened and visuallychecked;9localtargets at1440/390 desktopmax0/narrowmax1pxfirstcodeblock;builder0. Globalpageoverflow notclaimed."
 }
