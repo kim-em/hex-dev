@@ -177,11 +177,15 @@ identify `√2`, `−√2`, an inherited `2`, and `√2² − 1`. The final coor
 references the first generator across the other coordinates. Wrong conjugates
 and swapped computed coordinates fail the same selector.
 The [native-point case](../../../conformance/HexRCF/SourceSelectionNative.lean)
-uses actual `QAdjoin` computations `−a`, `2`, and `a*a−1`, with the selected
-generator prepended. Its matrix uses both computed coordinates, through
+generates its selector from actual `QAdjoin` computations `−a`, `2`, and `a*a−1`,
+with the selected generator prepended. Its existing native fixture supplies the
+matching values, whose interpretation is proved. The matrix uses both computed coordinates, through
 `x*c₁+c₂=0` and `x²−c₃−1=0`. One reader retains all four coefficient identities,
 the matrix, and both original closed divisors `2−√2` and `1+√2`.
-Swapping the two computed native coordinates makes the joint row false.
+Swapping the two computed native coordinates fails the selector alone, in both
+an ordinary interpretation proof and a separate compiled row control.
+These two supplied closed divisors test the finite-reader API; this example
+does not extract them from division syntax.
 
 {name Hex.RCF.RealCoefficients.SourceSelection.exists_real}`exists_real` composes
 this generated uniqueness proof with the actual finite joint reader. It needs
@@ -191,7 +195,7 @@ and the signs of all supplied original divisor operands. Its conclusions retain
 the coefficient identities, sample, matrix and nonzero guards at one reader.
 The plan does not discover those inputs from arbitrary source syntax, construct
 a frozen context certificate, establish root coverage or provide general tactic
-acceptance. The rational descriptor is now quoted in a module with public imports.
+acceptance. The rational descriptor is quoted in a module with public imports.
 A separate checked binding reader and the owner's `Dag.descriptor_raw` law bind
 its exact original header; the positive square-root alias follows from that
 checked head and interval. The native-point fixture retains its existing
@@ -202,9 +206,13 @@ module imports.
 and {name Hex.RCF.RealCoefficients.SourceSelection.formula_iff}`formula_iff`
 reduces source authentication to coordinatewise real equalities. A chained
 regression uses an inherited value, a computed generator and the non-integral
-relation `c₂ = 1/3 + (2/5)*c₁`. Two-root controls retain both selected embeddings.
+relation `c₂ = 1/3 + (2/5)*c₁`, and rejects an incorrect final coordinate.
+Parametric two-root controls retain both supplied selected embeddings.
 {name Hex.RCF.RealCoefficients.SourceSelection.not_forall}`not_forall` supplies
-the corresponding universal counterexample route. `exists_real` also retains
+the universal counterexample route, tested on the separately evaluated false
+sentence `∀ x : ℝ, x < 0` with both supplied guards retained. A native inherited
+case consumes the actual origin identity for the coefficient `2`.
+`exists_real` also retains
 negation closure, specialized polynomial sizes and agreement with every inherited
 origin value, so later proof assembly can use them for other guards.
 
@@ -238,6 +246,20 @@ inputs already belong to one primitive field; common-field construction and
 conversion of independent fields remain with their existing owners and frontend
 preparation. This assembly is not general frozen source/context quotation or
 accepted algebraic completeness.
+
+The [public factory consumer](../../../conformance/HexRCF/FieldSelectionConformance.lean)
+executes `NumberField.present?` and packs the original `QAdjoin` coordinates
+through {name Hex.RCF.RealCoefficients.FieldSelection.nativeValues}`nativeValues`.
+Its sample is the packed value `1`, distinct from the selected generator.
+It checks the shifted matrix and isolates the selector-only swap control.
+Its ordinary point theorem uses
+{name Hex.RCF.RealCoefficients.FieldSelection.true_real}`true_real`, which
+composes the actual model, ordered coordinates and original matrix interpretation.
+The proof presentation is a successful result of that same factory, by the
+owner's existence law; compiled execution is separate evidence. This module
+uses ordinary public imports and public meta imports for its executable controls,
+without `import all`. The direct point law retains every supplied nonzero guard;
+source-division collection remains the frontend's responsibility.
 
 # Frozen selected-section replay
 

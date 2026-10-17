@@ -19,9 +19,13 @@ run_meta do
   let roots := #[``SourceSelectionCases.reader_eq,``SourceSelectionCases.binding_checked,
     ``SourceSelectionCases.parsed,``SourceSelectionCases.subject,``SourceSelectionCases.selected,
     ``SourceSelectionConformance.authenticated,``SourceSelectionConformance.inherited_free,
-    ``SourceSelectionConformance.chain_source,``SourceSelectionConformance.swapped_roots,
+    ``SourceSelectionConformance.chain_source,``SourceSelectionConformance.wrong_chain,
+    ``SourceSelectionConformance.swapped_roots,
+    ``FieldSelectionConformance.manufactured,``FieldSelectionConformance.authentication,
+    ``FieldSelectionConformance.matrix_identity,``FieldSelectionConformance.point_witness,
     ``SourceSelectionNative.source_eq,``SourceSelectionNative.reader,
-    ``SourceSelectionNative.witness,``SourceSelectionNative.counterexample]
+    ``SourceSelectionNative.witness,``SourceSelectionNative.counterexample,
+    ``SourceSelectionNative.swapped_selection,``SourceSelectionNative.inherited_witness]
   let dependencies ← Hex.RCF.ProofEvidence.projectDependencies roots
   let modules := (← getEnv).header.moduleNames
   let originalNames := (← (← getEnv).getLocalConstantInfos).map (·.name)
@@ -37,7 +41,7 @@ run_meta do
     let some index := (← getEnv).getModuleIdxFor? name | continue
     unless #[`HexRCF.SourceSelectionCases,`HexRCF.SourceSelectionConformance,
         `HexRCF.SourceSelectionNative,`HexRCF.RealCoefficients.SourceSelection,
-        `HexRCF.RealCoefficients.FieldSelection].contains modules[index]! do continue
+        `HexRCF.RealCoefficients.FieldSelection,`HexRCF.FieldSelectionConformance].contains modules[index]! do continue
     let declaration ← match ← getConstInfo name with
       | .thmInfo info =>
           bodies := bodies.push name

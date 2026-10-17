@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 import HexRCF.SourceSelectionConformance
+import HexRCF.FieldSelectionConformance
 import HexRCF.NativeSamplesConformance
 import HexRCF.RealCoefficients.FieldSelection
 
@@ -21,31 +22,14 @@ noncomputable abbrev model : Tower.Model context ℝ := NativeSamplesConformance
 noncomputable abbrev following : context.origin.base.Realization := NativeSamplesConformance.Point.following
 abbrev generator := SourceSelectionCases.root.toCanonical
 
-def coordinates : Fin 3 → QAdjoin generator.toAlgebraic :=
-  let a := generator.toAlgebraic.toQAdjoin
-  ![-a, 2, a*a-1]
+abbrev coordinates := FieldSelectionConformance.coordinates
 
 def inputs := FieldSelection.prepare SourceSelectionCases.root coordinates
 noncomputable abbrev source := SourceSelectionConformance.source
 
 theorem source_eq : FieldSelection.source SourceSelectionCases.root coordinates = source := by
-  funext i
-  fin_cases i
-  · exact (Root.toCanonical_real SourceSelectionCases.root).trans SourceSelectionCases.selected
-  · change (Coefficients.ofField generator (-generator.toAlgebraic.toQAdjoin)).toReal = -Real.sqrt 2
-    rw [← NumberField.value_eq_ofField, Hex.RealClosure.NumberField.value_neg,
-      NumberField.value_eq_ofField, Coefficients.ofField_gen,
-      Root.toCanonical_real, SourceSelectionCases.selected]
-  · change (Coefficients.ofField generator (2 : QAdjoin generator.toAlgebraic)).toReal = 2
-    rw [← NumberField.value_eq_ofField]
-    exact Hex.RealClosure.NumberField.value_nat generator 2
-  · change (Coefficients.ofField generator
-      (generator.toAlgebraic.toQAdjoin * generator.toAlgebraic.toQAdjoin - 1)).toReal = 1
-    rw [← NumberField.value_eq_ofField, Hex.RealClosure.NumberField.value_sub,
-      Hex.RealClosure.NumberField.value_mul, Hex.RealClosure.NumberField.value_one,
-      NumberField.value_eq_ofField, Coefficients.ofField_gen,
-      Root.toCanonical_real, SourceSelectionCases.selected]
-    nlinarith [Real.sq_sqrt (by norm_num : (0 : ℝ) ≤ 2)]
+  simpa only [source, SourceSelectionConformance.source, FieldSelectionConformance.source,
+    FieldSelectionConformance.root] using FieldSelectionConformance.source_eq
 
 theorem authenticated : inputs.formula.toProp source := by
   rw [← source_eq]
@@ -200,33 +184,84 @@ theorem witness : ∃ x : ℝ, x = Real.sqrt 2 ∧ x * (-Real.sqrt 2) + 2 = 0 �
   exact ⟨read sample.value, claims.1, claims.2.1, claims.2.2.1,
     claims.2.2.2.1, claims.2.2.2.2, guarded, computed⟩
 
-theorem negated_truth : Samples.Row.eval (.and inputs.formula.lift (.not (.not matrix)))
-    (NativeSpecialize.row context values sample.value (.and inputs.formula.lift (.not (.not matrix)))) =
+def negativeMatrix : RealFormula.QF 5 := .atom ⟨MvPoly.X 4,.lt⟩
+
+theorem negative_meaning (x : ℝ) :
+    negativeMatrix.toProp (RealFormula.append source x) ↔ x < 0 := by
+  dsimp only [negativeMatrix, RealFormula.QF.toProp, RealFormula.Atom.toProp, RealFormula.Cmp.toProp]
+  unfold RealFormula.Poly.eval
+  rw [← HexMvPolyTheory.eval₂_toMvPolynomial, HexMvPolyTheory.toMvPolynomial_X]
+  simp [RealFormula.append]
+
+theorem negated_truth : Samples.Row.eval (.and inputs.formula.lift (.not negativeMatrix))
+    (NativeSpecialize.row context values sample.value (.and inputs.formula.lift (.not negativeMatrix))) =
       some true := by
   apply (Samples.Row.eval_true _ _ _ (NativeSpecialize.row_model model values sample.value _)).mpr
-  have original := (Samples.Row.eval_true _ _ _
-    (NativeSpecialize.row_model model values sample.value _)).mp truth
-  exact ⟨original.1, not_not_intro original.2⟩
+  change inputs.formula.lift.toProp
+      (RealFormula.append (model.value ∘ values) (model.value sample.value)) ∧
+    ¬ negativeMatrix.toProp (RealFormula.append (model.value ∘ values) (model.value sample.value))
+  rw [values_real, point]
+  exact ⟨(inputs.formula.lift_correct _ _).mpr authenticated,
+    fun h => (not_lt_of_ge (Real.sqrt_nonneg (2 : ℝ))) ((negative_meaning _).mp h)⟩
 
-/-- A false universal is refuted through the same generated source identities,
-at one reader satisfying the two original nonzero guards. -/
-theorem counterexample : ¬ ∀ x : ℝ, ¬ matrix.toProp (RealFormula.append source x) := by
+/-- A separately evaluated false universal retains both supplied guards at
+its actual counterexample reader. -/
+theorem counterexample : (¬ ∀ x : ℝ, x < 0) ∧
+    ∃ read : context.Value → ℝ, read divisor ≠ 0 ∧ read computedDivisor ≠ 0 := by
   have result := inputs.not_forall context following values source authenticated
     (by
       intro i inherited
       have impossible : (false : Bool) = true := (inherited_empty i).symm.trans inherited
       cases impossible)
-    sample.value (.not matrix) [divisor,computedDivisor]
+    sample.value negativeMatrix [divisor,computedDivisor]
     (by
       intro a member
       simp only [List.mem_cons, List.not_mem_nil, or_false] at member
       rcases member with rfl | rfl
       · exact nonzero
       · exact computed_nonzero) negated_truth
-  exact result.1
+  refine ⟨fun h => result.1 (fun x => (negative_meaning x).mpr (h x)), ?_⟩
+  obtain ⟨read, domain, closed, fixed, present, negative, guarded⟩ := result.2
+  exact ⟨read, (guarded divisor (by simp)).2, (guarded computedDivisor (by simp)).2⟩
+
+theorem inherited_truth : Samples.Row.eval
+    (.and SourceSelectionConformance.inputs.formula.lift matrix)
+    (NativeSpecialize.row context values sample.value
+      (.and SourceSelectionConformance.inputs.formula.lift matrix)) = some true := by
+  apply (Samples.Row.eval_true _ _ _ (NativeSpecialize.row_model model values sample.value _)).mpr
+  have previous := (Samples.Row.eval_true _ _ _
+    (NativeSpecialize.row_model model values sample.value _)).mp truth
+  rw [values_real] at previous
+  change SourceSelectionConformance.inputs.formula.lift.toProp
+    (RealFormula.append (model.value ∘ values) (model.value sample.value)) ∧ _
+  rw [values_real]
+  exact ⟨(SourceSelectionConformance.inputs.formula.lift_correct _ _).mpr
+    SourceSelectionConformance.authenticated, previous.2⟩
+
+/-- The inherited route consumes the actual origin identity for native 2. -/
+theorem inherited_witness : ∃ x : ℝ, matrix.toProp (RealFormula.append source x) :=
+  SourceSelectionConformance.realize context following values
+    NativeSamplesConformance.Point.coordinate sample.value matrix [] (by simp) inherited_truth
 
 def swapped : Fin 4 → context.Value := fun i =>
   if i = 1 then values 3 else if i = 3 then values 1 else values i
+
+/-- Selector rejection is independent of every user-matrix atom. -/
+theorem swapped_selection : ¬ inputs.formula.toProp (model.value ∘ swapped) := by
+  intro meaning
+  have same := inputs.unique (model.value ∘ swapped) source
+    (by intro i h; have impossible := (inherited_empty i).symm.trans h; cases impossible)
+    meaning authenticated
+  have wrong := congrFun same 1
+  change model.value (swapped 1) = source 1 at wrong
+  rw [swapped, ite_eq_left rfl] at wrong
+  have actual := congrFun values_real 3
+  change model.value (values 3) = 1 at actual
+  change model.value (values 3) = -Real.sqrt 2 at wrong
+  nlinarith [Real.sqrt_nonneg (2 : ℝ)]
+
+#guard Samples.Row.eval inputs.formula.lift
+  (NativeSpecialize.row context swapped sample.value inputs.formula.lift) == some false
 
 #guard Samples.Row.eval (.and inputs.formula.lift matrix)
   (NativeSpecialize.row context values sample.value (.and inputs.formula.lift matrix)) == some true

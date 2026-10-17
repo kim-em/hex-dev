@@ -77,6 +77,13 @@ theorem chain_source : chain.formula.toProp ![2,3,23/15] := by
       realPoly, HexPolyTheory.Interpret.interpret_map, DensePoly.Interpret.map_ofCoeffs,
       HexPolyTheory.toPolynomial_ofCoeffs, Finset.sum_range_succ, ratCast]
 
+theorem wrong_chain : ¬ chain.formula.toProp ![2,3,22/15] := by
+  intro meaning
+  have last := congrFun ((chain.formula_iff _).mp meaning) 2
+  norm_num [chain, SourceSelection.real, RealFormula.append, realPoly,
+    HexPolyTheory.Interpret.interpret_map, DensePoly.Interpret.map_ofCoeffs,
+    HexPolyTheory.toPolynomial_ofCoeffs, Finset.sum_range_succ, ratCast] at last
+
 theorem two_roots {firstVersion secondVersion : Nat}
     (first : Root firstVersion) (second : Root secondVersion) :
     (SourceSelection.root (.root .nil first) second).formula.toProp ![first.real,second.real] := by

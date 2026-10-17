@@ -21,7 +21,8 @@ run_meta withExporting (isExporting := false) do
     ``SourceSelection.formula_iff,``SourceSelection.unique,``SourceSelection.identifies,
     ``SourceSelection.exists_real,``SourceSelection.not_forall,``FieldSelection.inherited_false,
     ``FieldSelection.formula_valuation,``FieldSelection.authenticated,
-    ``FieldSelection.nativeValues_real,``FieldSelection.native_authenticated,``FieldSelection.matrix_correct]
+    ``FieldSelection.nativeValues_real,``FieldSelection.native_authenticated,``FieldSelection.matrix_correct,
+    ``FieldSelection.true_real]
   let dependencies ← Hex.RCF.ProofEvidence.projectDependencies
     #[``SourceSelection.exists_real,``SourceSelection.not_forall,``FieldSelection.native_authenticated]
   for name in #[``NativeSelection.identity,``NativeSelection.relation_correct,

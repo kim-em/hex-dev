@@ -142,4 +142,36 @@ theorem matrix_correct (formula : RealFormula.QF (n+1)) (generator : ℝ)
       simp [RealFormula.append, Function.comp_def, present]
   rw [same]
 
+/-- A true joint row in the actual fixed-field presentation supplies an
+ordinary real point of the original matrix. Every supplied original closed
+divisor is interpreted by the same model; source-guard collection is separate. -/
+theorem true_real {version : Nat} (root : Root version)
+    {registry : BaseContext.Registry}
+    (presentation : Hex.RealClosure.NumberField.Presentation root.toCanonical registry)
+    (values : Fin n → QAdjoin root.toCanonical.toAlgebraic)
+    (sample : presentation.context.Value) (formula : RealFormula.QF (n+1))
+    (guards : List presentation.context.Value)
+    (nonzero : ∀ a ∈ guards, presentation.context.sign a ≠ 0)
+    (truth : Samples.Row.eval (.and (prepare root values).formula.lift (matrix formula))
+      (NativeSpecialize.row presentation.context (nativeValues root presentation values) sample
+        (.and (prepare root values).formula.lift (matrix formula))) = some true) :
+    ∃ x : ℝ, formula.toProp
+      (RealFormula.append (fun i => (Coefficients.ofField root.toCanonical (values i)).toReal) x) ∧
+      ∀ a ∈ guards, presentation.model.value a ≠ 0 := by
+  have meaning := (Samples.Row.eval_true _ _ _
+    (NativeSpecialize.row_model presentation.model (nativeValues root presentation values) sample _)).mp truth
+  change (prepare root values).formula.lift.toProp
+      (RealFormula.append (presentation.model.value ∘ nativeValues root presentation values)
+        (presentation.model.value sample)) ∧
+    (matrix formula).toProp
+      (RealFormula.append (presentation.model.value ∘ nativeValues root presentation values)
+        (presentation.model.value sample)) at meaning
+  rw [nativeValues_real] at meaning
+  refine ⟨presentation.model.value sample,
+    (matrix_correct formula root.toCanonical.toReal _ _).mp meaning.2, ?_⟩
+  intro a member zero
+  apply nonzero a member
+  rw [presentation.model.sign, zero]
+  simp
+
 end Hex.RCF.RealCoefficients.FieldSelection
