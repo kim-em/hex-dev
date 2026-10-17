@@ -109,8 +109,9 @@ private theorem polynomial_nonzero :
 theorem solutions :
     (roots.values Data.original).length = 2 ∧
     (roots.values Data.original).Nodup ∧
+    (roots.values Data.original).Pairwise (· < ·) ∧
     ∀ y : ℝ, y ^ 2 = Real.sqrt 2 ↔ y ∈ roots.values Data.original := by
-  refine ⟨?_, (roots.coverage Data.original).2, ?_⟩
+  refine ⟨?_, (roots.coverage Data.original).2, roots.ordered Data.original, ?_⟩
   · unfold RootReplay.Result.values
     rw [List.length_map]
     exact count
@@ -122,7 +123,7 @@ theorem solutions :
       sub_eq_zero, Endpoint.map, HexRealRootsTheory.Tarski.InInterval]
 
 theorem has_real_root : ∃ x : ℝ, x ^ 2 = Real.sqrt 2 := by
-  obtain ⟨length, _, complete⟩ := solutions
+  obtain ⟨length, _, _, complete⟩ := solutions
   cases values : roots.values Data.original with
   | nil => simp [values] at length
   | cons x xs =>

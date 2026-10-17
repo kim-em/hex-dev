@@ -18,6 +18,7 @@ run_meta do
     throwError "unexpected complete root-table quotation axiom closure: {axioms}"
   let dependencies ← Hex.RCF.ProofEvidence.projectDependencies roots
   for required in #[``RootTable.read,``RootTable.extract_eq,``Dag.replay_eq,
+      ``RootReplay.Result.coverage,``RootReplay.Result.ordered,
       ``Codec.readPoly_refines,``Algebraic.Element.signCodec_sound,
       ``CellReplayTests.Algebraic.Records.accepted0] do
     unless dependencies.contains required do throwError "root-table quote omitted evidence: {required}"

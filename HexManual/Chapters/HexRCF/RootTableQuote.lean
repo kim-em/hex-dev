@@ -49,7 +49,7 @@ The proof uses the same selected positive embedding throughout. It does not
 assume a root, treat an infinitesimal as a real witness, or use the rational
 solver for an irrational coefficient. The complete solution-set regression also
 uses the converse coverage direction and absence of duplicate roots: the list
-has length two, is duplicate-free, and contains exactly the real numbers whose
+has length two, is duplicate-free and strictly increasing, and contains exactly the real numbers whose
 square is `Real.sqrt 2`. The witness uses the certified reconstructed data;
 `checked_witness` additionally retains both original reader equations. Its
 bounds follow from the coefficient's checked bounds and the squared equation.
@@ -61,6 +61,7 @@ example :
     let values :=
       roots.values Data.original
     values.length = 2 ∧ values.Nodup ∧
+    values.Pairwise (· < ·) ∧
     ∀ y : ℝ, y ^ 2 = Real.sqrt 2 ↔
       y ∈ values :=
   solutions
