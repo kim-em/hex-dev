@@ -29,6 +29,6 @@ run_meta do
       throwError "original guard retains a temporary or incomplete type: {name}"
     proofs := proofs.push (mkConst name)
   let count ← audit began proofs
-  logInfo m!"all original guard module audit: start=0 stop=3773 closedGuardProofs=3773 originalInventoryRetained=true completeOrderedBaseAgreementAndFixedProviderClause=true sameFirstAndSecondPointsChecked=true exactStandardAxioms=true wholeFieldReferences=[] declarations={count} aggregateHeartbeat={((← IO.getNumHeartbeats)-began)/1000}"
+  logInfo m!"all original guard module audit: start=0 limit=3773 closedGuardProofs=3773 originalInventoryRetained=true completeOrderedBaseAgreementAndFixedProviderClause=true sameFirstAndSecondPointsChecked=true exactStandardAxioms=true wholeFieldReferences=[] declarations={count} aggregateHeartbeat={((← IO.getNumHeartbeats)-began)/1000}"
 
 end Hex.RealClosure.Algebraic.KernelReplay.GuardAllAudit

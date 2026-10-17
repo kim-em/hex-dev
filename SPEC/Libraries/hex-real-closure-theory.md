@@ -1444,12 +1444,15 @@ theorem constants with the propositions expected by their data constructors.
 an ordinary module, extracts all three witnesses, and proves both original raw
 defining-polynomial equations and the native product equation at the same real
 points, using the independent finite operand reconstruction.
-`GuardJointPublicAudit` independently compares every original clause at the
-shared readers and traverses actual checked private and opaque proof bodies,
+`GuardJointPublicAudit` directly compares guard clauses with the original
+discovery templates at the shared readers and traverses actual checked private
+and opaque proof bodies,
 allowing only `propext`, `Classical.choice` and `Quot.sound` and rejecting the
 whole-field reference constructions. The complete fixed-fixture proof is locally
-validated; the existing smaller staged/finite examples provide representative CI
-coverage. Reproduction commands and the exact evidence scope are recorded in
+validated. CI compiles shared finite/staged reconstruction helpers and scans all
+`Guard*` source modules and their imports for admissions. The shared dependency
+auditor and small rejection controls are CI-built; the full guard fixture is
+compiled locally. Reproduction commands and the exact evidence scope are recorded in
 [`reports/real-closure-joint-replay.md`](../../reports/real-closure-joint-replay.md).
 The recursive exporter for arbitrary live collections and interleaved stages
 remains required.

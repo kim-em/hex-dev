@@ -104,6 +104,17 @@ theorem Signature.codec_lawful : Signature.codec.Lawful := by
   intro signature
   simp [Signature.codec, Literal.ofJson_toJson, Signature.ofLiteral_literal, require]
 
+/-- The full signature codec writes the complete structured literal. -/
+theorem Signature.codec_encode (signature : Signature) :
+    Signature.codec.encode signature = signature.literal.toJson := by
+  rfl
+
+/-- A full structured literal restores its original signature. Reading the
+identity does not validate its context or retained selected roots. -/
+theorem Signature.codec_literal (signature : Signature) :
+    Signature.codec.decode signature.literal.toJson = .ok signature := by
+  exact Signature.codec_lawful signature
+
 /-- A node's reference to the exact enclosing predecessor is encoded once by
 that enclosing signature. Other literal contexts are retained in full. This
 avoids copying the entire predecessor into every node of its replay graph. -/

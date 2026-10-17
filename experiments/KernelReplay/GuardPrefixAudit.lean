@@ -23,6 +23,6 @@ run_meta do
       throwError "original guard was not retained as a closed checked theorem: {name}"
     proofs := proofs.push (mkConst name)
   let count ← audit began proofs
-  logInfo m!"original guard prefix module audit: start=0 stop=192 allOriginalGuardProofs=192 originalGuard131Included=true completeOriginalTargetsRetained=true sameFirstAndSecondPointsChecked=true exactStandardAxioms=true wholeFieldReferences=[] declarations={count} aggregateHeartbeat={((← IO.getNumHeartbeats)-began)/1000}"
+  logInfo m!"original guard prefix module audit: start=0 limit=192 allOriginalGuardProofs=192 originalGuard131Included=true completeOriginalTargetsRetained=true sameFirstAndSecondPointsChecked=true exactStandardAxioms=true wholeFieldReferences=[] declarations={count} aggregateHeartbeat={((← IO.getNumHeartbeats)-began)/1000}"
 
 end Hex.RealClosure.Algebraic.KernelReplay.GuardPrefixAudit

@@ -113,8 +113,8 @@ syntax (name := originalGuardBatch) "#original_guard_batch " num num : command
 @[command_elab originalGuardBatch]
 unsafe def elaborate : CommandElab := fun stx => liftTermElabM <| withExporting (isExporting := false) do
   let some start := stx[1].isNatLit? | throwError "guard start is not literal"
-  let some stop := stx[2].isNatLit? | throwError "guard stop is not literal"
-  unless start < stop && stop ≤ 3773 do throwError "original guard range is invalid"
+  let some limit := stx[2].isNatLit? | throwError "guard limit is not literal"
+  unless start < limit && limit ≤ 3773 do throwError "original guard range is invalid"
   let began ← IO.getNumHeartbeats
   let expressions := GuardFrontier.templates.getState (← getEnv)
   unless expressions.size == 3773 do throwError "original complete guard inventory changed"
@@ -154,7 +154,7 @@ unsafe def elaborate : CommandElab := fun stx => liftTermElabM <| withExporting 
   let checked ← IO.mkRef previous
   let mut reused : Nat := 0
   let mut proofs := #[]
-  for index in [start:stop] do
+  for index in [start:limit] do
     let _ ← bounded began
     let template := expressions[index]!.replace fun term => do
       let name ← term.constName?
@@ -179,7 +179,7 @@ unsafe def elaborate : CommandElab := fun stx => liftTermElabM <| withExporting 
     logInfo m!"original guard kernel checked: index={index}"
   if start == 0 then
     let _ ← retain began (root ++ `firstStatement) (← inferType proofs[0]!)
-  logInfo m!"original guard batch module export: start={start} stop={stop} proofs={proofs.size} exactCheckedProofsReused={reused} exactCheckedDomainProofsReused={← reusedDomains.get} originalInventory=3773 sameFirstAndSecondPoints=true dependencyAuditPending=true aggregateHeartbeat={((← IO.getNumHeartbeats)-began)/1000}"
+  logInfo m!"original guard batch module export: start={start} limit={limit} proofs={proofs.size} exactCheckedProofsReused={reused} exactCheckedDomainProofsReused={← reusedDomains.get} originalInventory=3773 sameFirstAndSecondPoints=true dependencyAuditPending=true aggregateHeartbeat={((← IO.getNumHeartbeats)-began)/1000}"
 
 set_option maxRecDepth 32768 in
 set_option maxHeartbeats 2000000 in

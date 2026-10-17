@@ -23,6 +23,6 @@ run_meta do
     throwError "first ordered segment changed its exact original agreement type"
   let count ← audit began #[mkConst ``GuardAgreementJoin.agreement0,
     mkConst ``GuardDescriptorInputs.firstPointBinding]
-  logInfo m!"first original ordered agreement module audit: start=0 stop=128 occurrences=128 originalOccurrences=3602 originalReaderDomainAndSignCallbacksRetained=true domainSignAndZeroReflectionRetained=true sameBaseInterpretation=true exactStandardAxioms=true wholeFieldReferences=[] declarations={count} aggregateHeartbeat={((← IO.getNumHeartbeats)-began)/1000}"
+  logInfo m!"first original ordered agreement module audit: start=0 limit=128 occurrences=128 originalOccurrences=3602 originalReaderDomainAndSignCallbacksRetained=true domainSignAndZeroReflectionRetained=true sameBaseInterpretation=true exactStandardAxioms=true wholeFieldReferences=[] declarations={count} aggregateHeartbeat={((← IO.getNumHeartbeats)-began)/1000}"
 
 end Hex.RealClosure.Algebraic.KernelReplay.GuardJoinPrefixAudit

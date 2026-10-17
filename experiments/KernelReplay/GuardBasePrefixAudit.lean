@@ -23,6 +23,6 @@ run_meta do
       throwError "original coefficient block has no complete checked agreement: {name}"
     proofs := proofs.push (mkConst name)
   let count ← audit began proofs
-  logInfo m!"original base agreement prefix module audit: start=0 stop=16 completeOriginalBlocks=16 originalUniqueBlocks=2203 domainSignAndZeroReflectionRetained=true sameBaseInterpretation=true exactStandardAxioms=true wholeFieldReferences=[] declarations={count} aggregateHeartbeat={((← IO.getNumHeartbeats)-began)/1000}"
+  logInfo m!"original base agreement prefix module audit: start=0 limit=16 completeOriginalBlocks=16 originalUniqueBlocks=2203 domainSignAndZeroReflectionRetained=true sameBaseInterpretation=true exactStandardAxioms=true wholeFieldReferences=[] declarations={count} aggregateHeartbeat={((← IO.getNumHeartbeats)-began)/1000}"
 
 end Hex.RealClosure.Algebraic.KernelReplay.GuardBasePrefixAudit

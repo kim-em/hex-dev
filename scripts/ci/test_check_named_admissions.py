@@ -12,6 +12,26 @@ from check_named_admissions import ADMISSION, IMPORT, code_only
 
 
 class AdmissionScannerTests(unittest.TestCase):
+    def test_guard_roots(self):
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            directory = root / "experiments/KernelReplay"
+            (directory / "GuardNested").mkdir(parents=True)
+            for name in ("GuardFresh.lean", "GuardNested/Leaf.lean", "FrameOther.lean"):
+                (directory / name).write_text("theorem valid : True := by trivial\n")
+            with patch.object(audit, "ROOT", root):
+                roots = audit.guard_roots()
+                self.assertEqual(roots, ["KernelReplay.GuardFresh", "KernelReplay.GuardNested.Leaf"])
+                paths = audit.import_cones(roots)
+                self.assertIn(Path("experiments/KernelReplay/GuardFresh.lean"), paths)
+                (directory / "GuardFresh.lean").write_text("theorem bad : False := by sorry\n")
+                self.assertTrue(audit.find_admissions(code_only((directory / "GuardFresh.lean").read_text())))
+                shadow = root / "KernelReplay/GuardFresh.lean"
+                shadow.parent.mkdir()
+                shadow.write_text("theorem hidden : True := by trivial\n")
+                with self.assertRaisesRegex(ValueError, "shadowed"):
+                    audit.guard_roots()
+
     def test_imports_behind_comments_and_on_one_line(self):
         source = 'public import Foo.Bar /- note -/ import Baz.Qux\n'
         self.assertEqual([m.group(1) for m in IMPORT.finditer(code_only(source))],
@@ -376,6 +396,9 @@ class AdmissionScannerTests(unittest.TestCase):
                 "experiments/KernelReplay/ProviderHistoryAudit.lean",
                 "experiments/KernelReplay/RationalCodecAudit.lean",
                 "HexRealClosure/BaseJsonTests.lean",
+                "HexRealClosure/SignatureCodecTests.lean",
+                "experiments/KernelReplay/GuardDependencyControls.lean",
+                "experiments/KernelReplay/GuardJointPublicAudit.lean",
                 "experiments/KernelReplay/FiniteRange.lean",
                 "experiments/KernelReplay/FiniteChecks.lean",
                 "experiments/KernelReplay/CoefficientMembers.lean",

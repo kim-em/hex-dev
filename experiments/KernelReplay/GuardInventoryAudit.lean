@@ -61,6 +61,6 @@ run_meta do
       unless queued.contains dependency do
         queued := queued.insert dependency
         queue := queue.push dependency
-  stage began s!"first prefix axiom and whole-field dependency audits passed; declarations={cursor}"
+  stage began s!"first prefix dependency audits passed; declarations={cursor}"
 
 end Hex.RealClosure.Algebraic.KernelReplay.GuardInventoryAudit

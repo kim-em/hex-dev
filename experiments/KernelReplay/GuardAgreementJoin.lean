@@ -132,7 +132,7 @@ private structure Part where
   support : Expr
   agreement : Expr
 
-private unsafe def join (start stop : Nat) : TermElabM Unit := withExporting (isExporting := false) do
+private unsafe def join (start limit : Nat) : TermElabM Unit := withExporting (isExporting := false) do
   let began ← IO.getNumHeartbeats
   let template := mkConst ``GuardInventoryReplay.agreement
   let dataType ← inferType template
@@ -144,7 +144,7 @@ private unsafe def join (start stop : Nat) : TermElabM Unit := withExporting (is
   trace began "source collection begins"
   let original ← occurrences began carrier
   trace began "all3602 source occurrences collected"
-  unless start < stop && stop ≤ original.size do throwError "invalid original join range"
+  unless start < limit && limit ≤ original.size do throwError "invalid original join range"
   let mut basis : PHashMap Expr Expr := {}
   let mut basisCount : Nat := 0
   for index in [:2203] do
@@ -172,7 +172,7 @@ private unsafe def join (start stop : Nat) : TermElabM Unit := withExporting (is
         found.insert info.value (mkConst name) else found
     | _ => found) ({} : PHashMap Expr Expr)
   let mut parts : Array Part := #[]
-  for index in [start:stop] do
+  for index in [start:limit] do
     let block := original[index]!
     let proof ← if index == 0 then
         pure (mkAppN (mkConst ``Transport.Inventory.Agreement.nil levels) common)
@@ -215,14 +215,14 @@ private unsafe def join (start stop : Nat) : TermElabM Unit := withExporting (is
   let required := mkAppN dataType.getAppFn (dataArgs.set! (dataArgs.size-1) support)
   let _ ← retainAt began (root ++ Name.mkSimple s!"agreement{start}") required result.agreement
   trace began "named join checked; dependency audit pending"
-  logInfo m!"original ordered agreement join module export: start={start} stop={stop} occurrences={stop-start} joins={joins} availableBasis={basisCount} originalOccurrences=3602 sameBaseInterpretation=true dependencyAuditPending=true aggregateHeartbeat={((← IO.getNumHeartbeats)-began)/1000}"
+  logInfo m!"original ordered agreement join module export: start={start} limit={limit} occurrences={limit-start} joins={joins} availableBasis={basisCount} originalOccurrences=3602 sameBaseInterpretation=true dependencyAuditPending=true aggregateHeartbeat={((← IO.getNumHeartbeats)-began)/1000}"
 
 syntax (name := originalAgreementJoin) "#original_agreement_join " num num : command
 @[command_elab originalAgreementJoin]
 unsafe def elaborate : CommandElab := fun stx => do
   let some start := stx[1].isNatLit? | throwError "join start is not literal"
-  let some stop := stx[2].isNatLit? | throwError "join stop is not literal"
-  liftTermElabM (join start stop)
+  let some limit := stx[2].isNatLit? | throwError "join limit is not literal"
+  liftTermElabM (join start limit)
 
 /-- Inspect only the newly retained native list aliases. This does not unfold
 coefficient operations or any archived model-bearing data. -/

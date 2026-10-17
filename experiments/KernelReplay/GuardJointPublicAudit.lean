@@ -6,6 +6,7 @@ Authors: Kim Morrison
 import KernelReplay.GuardJointPublic
 import KernelReplay.GuardJointUse
 import KernelReplay.GuardJointAudit
+import KernelReplay.GuardDependencyControls
 
 namespace Hex.RealClosure.Algebraic.KernelReplay.GuardJointPublicAudit
 open Lean Meta Elab FiniteData GuardDescriptorInputs
@@ -78,6 +79,8 @@ run_meta do
     (mkConst ``GuardDescriptorPoint.zero) (mkConst ``GuardDescriptorPoint.unit)
   let origin ← Base.ofClosed (mkConst ``GuardInventoryReplay.closed)
   let actualReaders := #[origin.read, first.reader, second.reader]
+  let originals := GuardFrontier.templates.getState (← getEnv)
+  unless originals.size == 3773 do throwError "original discovery template count changed"
   let baseExists := (← getConstInfo ``GuardInventoryReplay.baseExists).type
   let existence := baseExists.getAppArgs
   withWitnesses 3 exported.type fun witnesses predicate => do
@@ -115,16 +118,10 @@ run_meta do
       readers := readers.push previous
     for index in [:3773] do
       let _ ← bounded began
-      let name := `Hex.RealClosure.Algebraic.KernelReplay.GuardObligations ++
-        Name.mkSimple s!"guard{index}"
-      let info ← getConstInfo name
-      unless info.isTheorem && info.levelParams.isEmpty do
-        throwError "missing original guard in joint audit: {index}"
-      let expected := info.type.replace fun term =>
-        if term == actualReaders[0]! then some readers[0]!
-        else if term == actualReaders[1]! then some readers[1]!
-        else if term == actualReaders[2]! then some readers[2]!
-        else none
+      let mut expected := originals[index]!
+      for reader in readers do
+        let .lam _ _ body _ := expected | throwError "original discovery reader binder changed"
+        expected := body.instantiate1 reader
       same leaves[index+4]! expected s!"complete guard {index} at the shared readers"
     let product ← mkAppM ``Transport.Product
       #[previous, mkConst ``FrameOwners.requestPoly, mkConst ``FrameOwners.requestPoly]
@@ -135,11 +132,29 @@ set_option maxRecDepth 32768 in
 set_option maxHeartbeats 2000000 in
 run_meta do
   let began ← IO.getNumHeartbeats
-  let count ← audit began #[mkConst ``GuardJointPublic.exists_points,
-    mkConst ``GuardJointUse.exists_points, mkConst ``GuardJointUse.coordinates,
+  let result ← GuardDependencyAudit.walk began #[mkConst ``GuardJointPublic.exists_points,
+    mkConst ``GuardJointUse.coordinates,
     mkConst ``GuardJointExport.exists_points,
     mkConst ``GuardJointExport.Statement, mkConst ``GuardJoint.exists_points,
     mkConst ``GuardJoint.Statement]
+  unless result.axioms == GuardDependencyAudit.standard do
+    throwError "public joint axiom closure changed"
+  let count := result.declarations
   logInfo m!"public joint full body audit: ordinaryPublicImports=true witnesses=3 originalGuards=3773 completeClauses=3778 exactStandardAxioms=true wholeFieldReferences=[] declarations={count} aggregateHeartbeat={((← IO.getNumHeartbeats)-began)/1000}"
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 2000000 in
+run_meta do
+  let began ← IO.getNumHeartbeats
+  let env ← getEnv
+  let bindings := env.checked.get.constants.fold (fun found name info =>
+    if info.isTheorem && GuardDependencyAudit.fromModule env `KernelReplay.GuardNativeFrontier name &&
+        info.type.getUsedConstants.any (fun dependency =>
+          isPrivateName dependency && GuardDependencyAudit.fromModule env `KernelReplay.FrameOperand dependency) then
+      found.push name else found) (#[] : Array Name)
+  unless !bindings.isEmpty do throwError "missing original cached scalar binding control"
+  for name in bindings do GuardDependencyControls.expectRejected name
+  let _ ← bounded began
+  logInfo m!"public cached operand negative control: rejected=true originalBindings={bindings.size}"
 
 end Hex.RealClosure.Algebraic.KernelReplay.GuardJointPublicAudit
