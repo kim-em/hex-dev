@@ -53,7 +53,7 @@ The fresh importing conformance module checks all 71 reachable example theorem
 bodies and 14 definitions under the kernel producer guard, including private
 auxiliaries and the final witness. The complete axiom closure contains only
 `propext`, `Classical.choice` and `Quot.sound`. The stored polynomial request
-accounts for 1,825 proof nodes and the table request for 121,995; these are
+accounts for 1,827 proof nodes and the table request for 121,995; these are
 request accounting, not physical proof sharing or a speedup measurement.
 
 The retained prototype audit build took 40.499 seconds with a 3.1 GiB peak
