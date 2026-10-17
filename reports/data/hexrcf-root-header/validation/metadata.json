@@ -1,0 +1,37 @@
+[
+  {
+    "name": "copyright",
+    "exit_code": 0,
+    "log": "root-header-final-metadata-copyright-1.log"
+  },
+  {
+    "name": "lines",
+    "exit_code": 0,
+    "log": "root-header-final-metadata-lines-1.log"
+  },
+  {
+    "name": "dag",
+    "exit_code": 0,
+    "log": "root-header-final-metadata-dag-1.log"
+  },
+  {
+    "name": "admissions",
+    "exit_code": 0,
+    "log": "root-header-final-metadata-admissions-1.log"
+  },
+  {
+    "name": "selected-admissions",
+    "exit_code": 0,
+    "log": "root-header-final-metadata-selected-admissions-1.log"
+  },
+  {
+    "name": "relative",
+    "exit_code": 0,
+    "log": "root-header-final-metadata-relative-1.log"
+  },
+  {
+    "name": "diff",
+    "exit_code": 0,
+    "log": "root-header-final-metadata-diff-1.log"
+  }
+]
