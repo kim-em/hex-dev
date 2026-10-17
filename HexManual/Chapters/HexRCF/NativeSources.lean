@@ -60,7 +60,7 @@ example {registry : BaseContext.Registry}
   exact ⟨read sample, meaning⟩
 ```
 
-The [source-identity regressions](../../../conformance/HexRCF/NativeSourcesConformance.lean)
+The [source-identity regressions](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/NativeSourcesConformance.lean)
 use the actual selected positive root α of `X²−2` and a further selected root
 of `X²−α`. They identify α by `α² = 2` and `1 < α < 2`, then prove
 `∃ x : ℝ, x² = Real.sqrt 2 ∧ 1 < x ∧ x < 2` through this joint reader.
@@ -142,6 +142,140 @@ proof. Concrete fixtures retain their private-import boundary; a generic
 conformance module composes the public selector and finite-reader laws with
 ordinary public imports in the existing CI target. Kernel inventories and compiled controls remain
 separate evidence.
+
+# Ordered coefficient dependencies
+%%%
+tag := "hex-rcf-source-selection"
+%%%
+
+{name Hex.RCF.RealCoefficients.SourceSelection}`SourceSelection` assembles a
+selector for an ordered coefficient tuple. Each coordinate is either inherited
+from the actual origin, a checked selected rational root, or a rational polynomial
+in an earlier generator. The earlier index has type `Fin n` before appending the
+coordinate, so forward references and cycles cannot be represented. For example,
+this plan describes a selected root, an inherited value, and the coordinate
+`α² − 1` computed from that root:
+
+```lean
+open Hex Hex.RealClosure
+  Hex.RCF.RealCoefficients in
+example {version : Nat}
+    (root : Root version) :
+    SourceSelection 3 :=
+  .coordinate (.inherited (.root .nil root)) 0
+    (DensePoly.ofCoeffs #[-1, 0, 1])
+```
+
+{name Hex.RCF.RealCoefficients.SourceSelection.formula}`formula` uses the existing
+shared integer syntax, retaining the selected root's ordered constraints and
+clearing rational denominators by a positive multiplier.
+{name Hex.RCF.RealCoefficients.SourceSelection.unique}`unique` identifies the
+whole tuple from this formula and the inherited identities. It follows the
+coordinate dependencies; clients need no bespoke tuple-uniqueness proof.
+The [four-coordinate checks](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/SourceSelectionConformance.lean)
+identify `√2`, `−√2`, an inherited `2`, and `√2² − 1`. The final coordinate
+references the first generator across the other coordinates. Wrong conjugates
+and swapped computed coordinates fail the same selector.
+The [native-point case](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/SourceSelectionNative.lean)
+generates its selector from actual `QAdjoin` computations `−a`, `2`, and `a*a−1`,
+with the selected generator prepended. Its existing native fixture supplies the
+matching values, whose interpretation is proved. The matrix uses both computed coordinates, through
+`x*c₁+c₂=0` and `x²−c₃−1=0`. One reader retains all four coefficient identities,
+the matrix, and both original closed divisors `2−√2` and `1+√2`.
+Swapping the two computed native coordinates fails the selector alone, in both
+an ordinary interpretation proof and a separate compiled row control.
+These two supplied closed divisors test the finite-reader API; this example
+does not extract them from division syntax.
+
+{name Hex.RCF.RealCoefficients.SourceSelection.exists_real}`exists_real` composes
+this generated uniqueness proof with the actual finite joint reader. It needs
+authentication of the requested source tuple, real-value evidence for precisely
+the inherited coordinates, the actual origin/provider history, a true joint row,
+and the signs of all supplied original divisor operands. Its conclusions retain
+the coefficient identities, sample, matrix and nonzero guards at one reader.
+The plan does not discover those inputs from arbitrary source syntax, construct
+a frozen context certificate, establish root coverage or provide general tactic
+acceptance. The rational descriptor is quoted in a module with public imports.
+A separate checked binding reader and the owner's `Dag.descriptor_raw` law bind
+its exact original header; the positive square-root alias follows from that
+checked head and interval. The native-point fixture retains its existing
+non-module construction boundary. The generic library laws use ordinary public
+module imports.
+
+{name Hex.RCF.RealCoefficients.SourceSelection.real}`real` interprets the plan,
+and {name Hex.RCF.RealCoefficients.SourceSelection.formula_iff}`formula_iff`
+reduces source authentication to coordinatewise real equalities. A chained
+regression uses an inherited value, a computed generator and the non-integral
+relation `c₂ = 1/3 + (2/5)*c₁`, and rejects an incorrect final coordinate.
+Concrete two-root controls use separately quoted positive and negative √2
+descriptors and reject their swap. The negative descriptor retains the strict
+interval `(-3/2,-7/5)` and its exact supplied polynomial. Its empty derivative
+request list selects by interval alone; the positive descriptor also checks
+its two supplied derivative signs.
+{name Hex.RCF.RealCoefficients.SourceSelection.not_forall}`not_forall` supplies
+the universal counterexample route, tested on the separately evaluated false
+sentence `∀ x : ℝ, x * (-Real.sqrt 2) + 2 ≠ 0`. Its conclusion retains the
+reader, closure, all coefficient identities, the sample equation and both
+supplied guard domains and nonvanishing facts. A native inherited
+case consumes the actual origin identity for the coefficient `2`.
+`exists_real` also retains
+negation closure, specialized polynomial sizes and agreement with every inherited
+origin value, so later proof assembly can use them for other guards.
+
+{name Hex.RCF.RealCoefficients.FieldSelection.prepare}`FieldSelection.prepare`
+constructs the plan directly from a checked rational root and existing `QAdjoin`
+coordinates. Its source tuple uses the actual `Coefficients.ofField` conversions;
+{name Hex.RCF.RealCoefficients.FieldSelection.authenticated}`authenticated`
+proves the full tuple identity using the owner's chosen-generator and coefficient
+interpretation laws. Clients need no proof about nested selector conjunctions:
+
+```lean
+open Hex Hex.RealClosure
+  Hex.RCF.RealCoefficients in
+open FieldSelection in
+example {version : Nat}
+    (r : Root version)
+    (v : Fin n →
+      QAdjoin
+        r.toCanonical.toAlgebraic) :
+    (prepare r v).formula.toProp
+      (source r v) :=
+  authenticated r v
+```
+
+{name Hex.RCF.RealCoefficients.FieldSelection.nativeValues}`nativeValues`
+uses the owner's actual number-field presentation to pack these coordinates.
+{name Hex.RCF.RealCoefficients.FieldSelection.nativeValues_real}`nativeValues_real`
+proves that their selected real values are unchanged.
+{name Hex.RCF.RealCoefficients.FieldSelection.matrix_correct}`matrix_correct`
+adds the generator at coordinate zero and shifts the original matrix, retaining
+coefficient order, the quantified variable and every domain guard atom. These
+inputs already belong to one primitive field; common-field construction and
+conversion of independent fields remain with their existing owners and frontend
+preparation. This assembly is not general frozen source/context quotation or
+accepted algebraic completeness.
+
+The [public factory consumer](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/FieldSelectionConformance.lean)
+executes `NumberField.present?` and packs the original `QAdjoin` coordinates
+through {name Hex.RCF.RealCoefficients.FieldSelection.nativeValues}`nativeValues`.
+Its sample is the packed value `1`, distinct from the selected generator.
+It checks the shifted matrix and isolates the selector-only swap control.
+Its ordinary point theorem uses
+{name Hex.RCF.RealCoefficients.FieldSelection.true_real}`true_real`, which
+interprets the plain matrix row through the actual model and ordered coordinates.
+The conclusion names the interpreted sample itself, so its sample-dependent
+divisor `sample − generator` is attached to that exact point. This model route
+does not need a selector conjunct: the presentation laws authenticate all
+coordinates. The separate finite-reader test consumes the selector and recovers
+the shifted original matrix at its identified reader.
+The proof presentation is a successful result of that same factory, by the
+owner's existence law; compiled execution is separate evidence. This module
+uses ordinary public imports and public meta imports for its executable controls,
+without `import all`. The direct point law retains every supplied nonzero guard;
+source-division collection remains the frontend's responsibility.
+A [public inherited-coordinate consumer](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/SourceSelectionPublic.lean)
+also applies `formula_iff` and `exists_real` with a supplied `origin.RealValue` identity,
+retaining coefficient/sample/guard ties without private imports.
 
 # Frozen selected-section replay
 

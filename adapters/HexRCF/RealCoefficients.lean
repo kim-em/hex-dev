@@ -39,6 +39,8 @@ public import HexRCF.RealCoefficients.NativeSpecialize
 public import HexRCF.RealCoefficients.NativeSamples
 public import HexRCF.RealCoefficients.NativeSources
 public import HexRCF.RealCoefficients.NativeSelection
+public import HexRCF.RealCoefficients.SourceSelection
+public import HexRCF.RealCoefficients.FieldSelection
 public import HexRCF.RealCoefficients.SectionReplay
 public import HexRCF.RealCoefficients.ScalarPacket
 public import HexRCF.RealCoefficients.SectionBuild

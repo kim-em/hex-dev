@@ -1,0 +1,38 @@
+{
+  "source_commit": "a891bdd1714184b313653c8c3c64c62c98194e69",
+  "images": [
+    {
+      "name": "source-selection-desktop-example.png",
+      "sha256": "a5294037cc8aff679727bde6aafbaa1c6d1b00906980e2c7e231c84f0023380b"
+    },
+    {
+      "name": "source-selection-desktop-details.png",
+      "sha256": "37e9c21c351f6e385fcde5c48ca569525a440f2d46af7223a044db34f015c6af"
+    },
+    {
+      "name": "source-selection-desktop-builder.png",
+      "sha256": "39fca77f665f4baf61057438e265b0bb4edf1d9184cd3e7c38fb6b39ab1ef87c"
+    },
+    {
+      "name": "source-selection-desktop-scope.png",
+      "sha256": "79c644af16786e928361881be3f81a8a42be5bb6e708315a9edb094f4ccb6505"
+    },
+    {
+      "name": "source-selection-narrow-example.png",
+      "sha256": "42dc16c51bb71004865dac2e1472ae8b393b485cdae6da027849da3fcddf30cd"
+    },
+    {
+      "name": "source-selection-narrow-details.png",
+      "sha256": "f06f54063defe5a152ddbf2625c515717cd8cee32ec6088b320d671ff2915a80"
+    },
+    {
+      "name": "source-selection-narrow-builder.png",
+      "sha256": "1e7b95ba943104fa7798656578b8ecc53fc65632c8743199881f32c274cb4cd2"
+    },
+    {
+      "name": "source-selection-narrow-scope.png",
+      "sha256": "cf1f247f33e9ee8887371634e392cd98a2405c1a45281267f3b01e328a6a080f"
+    }
+  ],
+  "inspection": "All8finala891captures opened and visuallychecked;9localtargets at1440/390 desktopmax0/narrowmax1pxfirstcodeblock;builder0. Globalpageoverflow notclaimed."
+}

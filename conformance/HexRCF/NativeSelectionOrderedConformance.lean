@@ -6,6 +6,7 @@ Authors: Kim Morrison
 import HexRCF.RealCoefficients.NativeSelection
 import HexRCF.RealCoefficients.Samples
 import HexRCF.NativeSelectionLiterals
+import HexRCF.SourceSelectionCases
 import HexRealClosure.RootReplay
 import HexMvPoly.Basic
 import HexPolyZ.IntegerPolynomial
@@ -15,15 +16,13 @@ open Hex.RCF.RealCoefficients
 namespace Hex.RCF.RealCoefficients.NativeSelectionOrderedConformance
 open SignDet
 open scoped Hex
-private def root? := Algebraic.RootReplay.readDescriptor ValueCodec.rat ValueCodec.nat
-  Hex.Sturm.orderSign 7 NativeSelectionLiterals.subject NativeSelectionLiterals.graph
-set_option maxHeartbeats 2000000 in
-set_option maxRecDepth 32768 in
-private theorem accepted : root?.toOption.isSome = true := by decide +kernel
-private def root : Root 7 := root?.toOption.get accepted
-set_option maxRecDepth 32768 in
+private def root? := Hex.RCF.SourceSelectionCases.reader
+private theorem accepted : root?.toOption.isSome = true := Hex.RCF.SourceSelectionCases.accepted
+private def root : Root 7 := Hex.RCF.SourceSelectionCases.root
 private theorem subject : root.raw =
-    ⟨7, #p[-2,0,1], .finite (7/5), .finite (3/2), [1,2], [1,1]⟩ := by decide +kernel
+    ⟨7, #p[-2,0,1], .finite (7/5), .finite (3/2), [1,2], [1,1]⟩ := by
+  simpa only [root, Hex.RCF.SourceSelectionCases.rawSubject,
+    Hex.RCF.SourceSelectionCases.head_eq] using Hex.RCF.SourceSelectionCases.subject
 
 def selection : RealFormula.QF 1 := NativeSelection.selection 0 root.raw
 

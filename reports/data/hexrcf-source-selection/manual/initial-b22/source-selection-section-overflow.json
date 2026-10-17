@@ -1,0 +1,54 @@
+[
+  {
+    "label": "desktop",
+    "width": 1440,
+    "targets": [
+      {
+        "tag": "P",
+        "text": "\n                    SourceSelection assembles a\nselector for an ordered coefficient tuple. Each coordinate is either inherited\nfrom the actual origin, a checke",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex Hex.RealClosure\n  Hex.RCF.RealCoefficients in\nexample {version : Nat}\n    (root : Root version) :\n    SourceSelection 3 :=\n  .coordinate (.inherited (.",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                    formula uses the existing\nshared integer syntax, retaining the selected root's ordered constraints and\nclearing rational denominators by a ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                    exists_real composes\nthis generated uniqueness proof with the actual finite joint reader. It needs\nauthentication of the requested source t",
+        "overflow": 0
+      }
+    ]
+  },
+  {
+    "label": "narrow",
+    "width": 390,
+    "targets": [
+      {
+        "tag": "P",
+        "text": "\n                    SourceSelection assembles a\nselector for an ordered coefficient tuple. Each coordinate is either inherited\nfrom the actual origin, a checke",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex Hex.RealClosure\n  Hex.RCF.RealCoefficients in\nexample {version : Nat}\n    (root : Root version) :\n    SourceSelection 3 :=\n  .coordinate (.inherited (.",
+        "overflow": 1
+      },
+      {
+        "tag": "P",
+        "text": "\n                    formula uses the existing\nshared integer syntax, retaining the selected root's ordered constraints and\nclearing rational denominators by a ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                    exists_real composes\nthis generated uniqueness proof with the actual finite joint reader. It needs\nauthentication of the requested source t",
+        "overflow": 0
+      }
+    ]
+  }
+]
