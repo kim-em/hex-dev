@@ -16,21 +16,24 @@ def inputs : SourceSelection 4 :=
 
 noncomputable def source : Fin 4 → ℝ := ![Real.sqrt 2, -Real.sqrt 2, 2, 1]
 
-/-- A polynomial coordinate may use a non-adjacent earlier generator. -/
-theorem authenticated : inputs.formula.toProp source := by
-  simp only [inputs, SourceSelection.formula, RealFormula.QF.lift,
-    RealFormula.QF.rename_correct, RealFormula.QF.toProp]
-  refine ⟨⟨⟨trivial, ?_⟩, ?_⟩, ?_⟩
-  · apply (NativeSelection.identity SourceSelectionCases.root _ _).mpr
-    simpa [source, Function.comp_def] using SourceSelectionCases.selected.symm
-  · apply (NativeSelection.relation_correct _ _ _ _).mpr
-    norm_num [realPoly, HexPolyTheory.Interpret.interpret_map, DensePoly.Interpret.map_ofCoeffs,
-      HexPolyTheory.toPolynomial_ofCoeffs, Finset.sum_range_succ, ratCast,
-      source, Function.comp_def]
-  · apply (NativeSelection.relation_correct _ _ _ _).mpr
-    norm_num [realPoly, HexPolyTheory.Interpret.interpret_map, DensePoly.Interpret.map_ofCoeffs,
-      HexPolyTheory.toPolynomial_ofCoeffs, Finset.sum_range_succ, ratCast,
-      source, Real.sq_sqrt (by norm_num : (0 : ℝ) ≤ 2)]
+/-- Authentication compares each source term to the generated interpretation;
+no client proof unfolds the selector's conjunctions or formula renamings. -/
+theorem authenticated_inherited (inherited : ℝ) :
+    inputs.formula.toProp ![Real.sqrt 2, -Real.sqrt 2, inherited, 1] := by
+  apply (inputs.formula_iff _).mpr
+  funext i
+  fin_cases i <;>
+    norm_num [inputs, SourceSelection.real, RealFormula.append, Function.comp_def,
+      SourceSelectionCases.selected, realPoly, HexPolyTheory.Interpret.interpret_map,
+      DensePoly.Interpret.map_ofCoeffs, HexPolyTheory.toPolynomial_ofCoeffs,
+      Finset.sum_range_succ, ratCast, Real.sq_sqrt (by norm_num : (0 : ℝ) ≤ 2)]
+
+theorem authenticated : inputs.formula.toProp source := authenticated_inherited 2
+
+/-- The selector deliberately leaves inherited values to their actual origin.
+This different tuple also satisfies it, so inherited evidence is necessary. -/
+theorem inherited_free : inputs.formula.toProp ![Real.sqrt 2, -Real.sqrt 2, 3, 1] :=
+  authenticated_inherited 3
 
 theorem inherited_exact (i : Fin 4) : inputs.isInherited i = true ↔ i = 2 := by
   revert i
@@ -53,12 +56,41 @@ theorem wrong_conjugate : ¬ inputs.formula.toProp ![-Real.sqrt 2,Real.sqrt 2,2,
   change -Real.sqrt 2 = Real.sqrt 2 at same
   linarith
 
-/-- Swapping the computed coordinate and inherited value is also rejected. -/
-theorem swapped : ¬ inputs.formula.toProp ![Real.sqrt 2,2,2,-Real.sqrt 2] := by
+/-- Swapping the two computed coordinates is also rejected. -/
+theorem swapped : ¬ inputs.formula.toProp ![Real.sqrt 2,1,2,-Real.sqrt 2] := by
   intro meaning
   have same := congrFun (unique _ rfl meaning) 1
-  change (2 : ℝ) = -Real.sqrt 2 at same
+  change (1 : ℝ) = -Real.sqrt 2 at same
   nlinarith [Real.sqrt_nonneg (2 : ℝ)]
+
+/-- A computed coordinate may be the next generator. The final relation uses
+non-integral rationals and its positive denominator-clearing multiplier is 15. -/
+def chain : SourceSelection 3 :=
+  .coordinate (.coordinate (.inherited .nil) 0 (DensePoly.ofCoeffs #[1,1]))
+    1 (DensePoly.ofCoeffs #[1/3,2/5])
+
+theorem chain_source : chain.formula.toProp ![2,3,23/15] := by
+  apply (chain.formula_iff _).mpr
+  funext i
+  fin_cases i <;>
+    norm_num [chain, SourceSelection.real, RealFormula.append, Function.comp_def,
+      realPoly, HexPolyTheory.Interpret.interpret_map, DensePoly.Interpret.map_ofCoeffs,
+      HexPolyTheory.toPolynomial_ofCoeffs, Finset.sum_range_succ, ratCast]
+
+theorem two_roots {firstVersion secondVersion : Nat}
+    (first : Root firstVersion) (second : Root secondVersion) :
+    (SourceSelection.root (.root .nil first) second).formula.toProp ![first.real,second.real] := by
+  apply (SourceSelection.formula_iff _ _).mpr
+  funext i
+  fin_cases i <;> simp [SourceSelection.real, RealFormula.append]
+
+theorem swapped_roots {firstVersion secondVersion : Nat}
+    (first : Root firstVersion) (second : Root secondVersion) (different : first.real ≠ second.real) :
+    ¬ (SourceSelection.root (.root .nil first) second).formula.toProp ![second.real,first.real] := by
+  intro meaning
+  have same := congrFun ((SourceSelection.formula_iff _ _).mp meaning) 0
+  apply different
+  simpa [SourceSelection.real, RealFormula.append] using same.symm
 
 /-- The generated plan composes with the actual finite reader at arbitrary
 native depth. Row truth remains checked input, not a compiled Boolean oracle. -/
@@ -70,7 +102,7 @@ theorem realize {registry : BaseContext.Registry} (context : Tower.Context regis
     (truth : Samples.Row.eval (.and inputs.formula.lift matrix)
       (NativeSpecialize.row context values sample (.and inputs.formula.lift matrix)) = some true) :
     ∃ x : ℝ, matrix.toProp (RealFormula.append source x) := by
-  obtain ⟨read, domain, closed, identified, present, meaning, guarded⟩ :=
+  obtain ⟨read, domain, closed, negative, identified, present, sizes, meaning, guarded, base⟩ :=
     inputs.exists_real context following values source authenticated (by
       intro i inherited
       have same := (inherited_exact i).mp inherited
@@ -79,7 +111,8 @@ theorem realize {registry : BaseContext.Registry} (context : Tower.Context regis
   exact ⟨read sample, meaning⟩
 
 run_meta do
-  for name in #[``authenticated,``unique,``wrong_conjugate,``swapped,``realize,
+  for name in #[``authenticated,``authenticated_inherited,``inherited_free,``unique,
+      ``wrong_conjugate,``swapped,``chain_source,``two_roots,``swapped_roots,``realize,
       ``SourceSelection.unique,``SourceSelection.exists_real] do
     let axioms ← Lean.collectAxioms name
     unless axioms.all (fun a => [``propext,``Classical.choice,``Quot.sound].contains a) do

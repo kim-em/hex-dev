@@ -5,6 +5,8 @@ Authors: Kim Morrison
 -/
 module
 public import HexRCF.RealCoefficients.SourceSelection
+public import HexRCF.RealCoefficients.FieldSelection
+import all HexRCF.RealCoefficients.FieldSelection
 import all HexRCF.RealCoefficients.SourceSelection
 public meta import HexRCF.ProofEvidence
 
@@ -15,16 +17,22 @@ open Lean Meta Hex.RCF.RealCoefficients
 set_option maxHeartbeats 12000000
 set_option maxRecDepth 32768
 run_meta withExporting (isExporting := false) do
-  let roots := #[``SourceSelection.unique,``SourceSelection.exists_real]
-  let dependencies ← Hex.RCF.ProofEvidence.projectDependencies roots
+  let roots := #[``SourceSelection.formula_real,``SourceSelection.real_inherited,
+    ``SourceSelection.formula_iff,``SourceSelection.unique,``SourceSelection.identifies,
+    ``SourceSelection.exists_real,``SourceSelection.not_forall,``FieldSelection.inherited_false,
+    ``FieldSelection.formula_valuation,``FieldSelection.authenticated,
+    ``FieldSelection.nativeValues_real,``FieldSelection.native_authenticated,``FieldSelection.matrix_correct]
+  let dependencies ← Hex.RCF.ProofEvidence.projectDependencies
+    #[``SourceSelection.exists_real,``SourceSelection.not_forall,``FieldSelection.native_authenticated]
   for name in #[``NativeSelection.identity,``NativeSelection.relation_correct,
-      ``NativeSources.true_real,``SourceSelection.unique] do
+      ``NativeSources.true_real,``NativeSources.not_forall,``SourceSelection.unique,
+      ``Coefficients.ofField_toReal,``Hex.RealClosure.NumberField.Presentation.pack_value] do
     unless dependencies.contains name do
       throwError "source selection omitted its checked selection or joint-reader law: {name}"
   let originalNames := (← (← getEnv).getLocalConstantInfos).map (·.name)
   for name in roots do
     let axioms ← Lean.collectAxioms name
-    unless axioms.size == 3 && axioms.all
+    unless axioms.all
         (fun a => [``propext,``Classical.choice,``Quot.sound].contains a) do
       throwError "source selection has unexpected complete axioms: {name}: {axioms}"
     let .thmInfo info ← getConstInfo name | throwError "expected source-selection theorem: {name}"

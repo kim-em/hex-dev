@@ -44,6 +44,61 @@ real interpretation rather than from a source-selection constraint. -/
   | .root previous _, i => Fin.lastCases false previous.isInherited i
   | .coordinate previous _ _, i => Fin.lastCases false previous.isInherited i
 
+/-- The real tuple described by the plan. Only inherited coordinates read the
+supplied valuation. Computed coordinates use the existing rational polynomial
+interpretation at their earlier generator. -/
+@[expose] noncomputable def real : SourceSelection n → (Fin n → ℝ) → Fin n → ℝ
+  | .nil, _ => Fin.elim0
+  | .inherited previous, values =>
+      RealFormula.append (previous.real (values ∘ Fin.castSucc)) (values (Fin.last _))
+  | .root previous selected, values =>
+      RealFormula.append (previous.real (values ∘ Fin.castSucc)) selected.real
+  | .coordinate previous generator polynomial, values =>
+      let earlier := previous.real (values ∘ Fin.castSucc)
+      RealFormula.append earlier ((realPoly polynomial).eval (earlier generator))
+
+/-- The generated real tuple satisfies every selected-root and coordinate
+constraint, without unfolding the shared formula in client proofs. -/
+theorem formula_real (selection : SourceSelection n) (values : Fin n → ℝ) :
+    selection.formula.toProp (selection.real values) := by
+  induction selection with
+  | nil => trivial
+  | inherited previous ih =>
+      exact (previous.formula.lift_correct _ _).mpr (ih _)
+  | root previous selected ih =>
+      refine ⟨(previous.formula.lift_correct _ _).mpr (ih _), ?_⟩
+      apply (NativeSelection.identity selected _ _).mpr
+      simp [real, RealFormula.append]
+  | coordinate previous generator polynomial ih =>
+      refine ⟨(previous.formula.lift_correct _ _).mpr (ih _), ?_⟩
+      apply (NativeSelection.relation_correct _ _ _ _).mpr
+      simp [real, RealFormula.append]
+
+/-- The generated tuple preserves exactly the inherited entries. -/
+theorem real_inherited (selection : SourceSelection n) (values : Fin n → ℝ)
+    (i : Fin n) (inherited : selection.isInherited i = true) :
+    selection.real values i = values i := by
+  induction selection with
+  | nil => exact Fin.elim0 i
+  | @inherited n previous ih =>
+      revert inherited
+      refine Fin.lastCases (fun _ => ?_) (fun j member => ?_) i
+      · simp [real, RealFormula.append]
+      · simpa [real, RealFormula.append, Function.comp_def] using
+          ih (values ∘ Fin.castSucc) j (by simpa [isInherited] using member)
+  | @root n previous version selected ih =>
+      revert inherited
+      refine Fin.lastCases (fun member => ?_) (fun j member => ?_) i
+      · simp [isInherited] at member
+      · simpa [real, RealFormula.append, Function.comp_def] using
+          ih (values ∘ Fin.castSucc) j (by simpa [isInherited] using member)
+  | @coordinate n previous generator polynomial ih =>
+      revert inherited
+      refine Fin.lastCases (fun member => ?_) (fun j member => ?_) i
+      · simp [isInherited] at member
+      · simpa [real, RealFormula.append, Function.comp_def] using
+          ih (values ∘ Fin.castSucc) j (by simpa [isInherited] using member)
+
 /-- Checked root selection and earlier-generator relations identify the entire
 tuple. Merely satisfying a defining polynomial cannot substitute a conjugate. -/
 theorem unique (selection : SourceSelection n) (left right : Fin n → ℝ)
@@ -86,6 +141,32 @@ theorem unique (selection : SourceSelection n) (left right : Fin n → ℝ)
           (congrFun earlier generator)).trans second.symm)
       exact funext (fun i => Fin.lastCases last (fun j => congrFun earlier j) i)
 
+/-- Source authentication is coordinatewise agreement with the generated
+tuple. No client proof needs to unfold its nested conjunctions or renamings. -/
+theorem formula_iff (selection : SourceSelection n) (values : Fin n → ℝ) :
+    selection.formula.toProp values ↔ values = selection.real values := by
+  constructor
+  · intro meaning
+    exact selection.unique values (selection.real values)
+      (fun i h => (selection.real_inherited values i h).symm)
+      meaning (selection.formula_real values)
+  · intro same
+    exact same.symm ▸ selection.formula_real values
+
+/-- The uniqueness argument consumed by both finite true rows and universal
+counterexamples. Inherited identities come from the actual origin history. -/
+theorem identifies {registry : BaseContext.Registry} (context : Tower.Context registry)
+    (following : context.origin.base.Realization) (selection : SourceSelection n)
+    (values : Fin n → context.Value) (source : Fin n → ℝ)
+    (authenticated : selection.formula.toProp source)
+    (inherited : ∀ i, selection.isInherited i = true →
+      context.origin.RealValue following (values i) (source i))
+    (coefficients : Fin n → ℝ)
+    (fixed : ∀ i, context.origin.RealValue following (values i) (source i) →
+      coefficients i = source i)
+    (meaning : selection.formula.toProp coefficients) : coefficients = source :=
+  selection.unique coefficients source (fun i hi => fixed i (inherited i hi)) meaning authenticated
+
 /-- Realize the generated selection and source matrix at one ordinary point.
 The supplied origin history fixes inherited coordinates; the shared selection
 proves every remaining identity. All supplied original guards are checked in
@@ -103,15 +184,39 @@ theorem exists_real {registry : BaseContext.Registry} (context : Tower.Context r
       (NativeSpecialize.row context values sample (.and selection.formula.lift matrix)) = some true) :
     ∃ read : context.Value → ℝ, ∃ domain : context.Value → Prop,
       Transport.Closed read domain ∧
+      (∀ a, domain a → domain (-a) ∧ read (-a) = -read a) ∧
       (∀ i, domain (values i) ∧ read (values i) = source i) ∧ domain sample ∧
+      (∀ q ∈ matrix.polys,
+        (RepresentationSpecialize.polynomial source q).size =
+          (RepresentationSpecialize.polynomial values q).size) ∧
       matrix.toProp (RealFormula.append source (read sample)) ∧
-      (∀ a ∈ guards, domain a ∧ read a ≠ 0) := by
-  obtain ⟨read, domain, closed, negative, fixed, present, sizes, meaning, guarded, base⟩ :=
-    NativeSources.true_real context following values source selection.formula
-      (fun coefficients fixed meaning => selection.unique coefficients source
-        (fun i hi => fixed i (inherited i hi)) meaning authenticated)
+      (∀ a ∈ guards, domain a ∧ read a ≠ 0) ∧
+      (∀ a r, context.origin.RealValue following a r → domain a ∧ read a = r) :=
+  NativeSources.true_real context following values source selection.formula
+      (selection.identifies context following values source authenticated inherited)
       sample matrix guards nonzero truth
-  exact ⟨read, domain, closed, fixed, present, meaning, guarded⟩
+
+/-- A true row for the selection and negated matrix yields a real universal
+counterexample, with the same generated source authentication and guards. -/
+theorem not_forall {registry : BaseContext.Registry} (context : Tower.Context registry)
+    (following : context.origin.base.Realization) (selection : SourceSelection n)
+    (values : Fin n → context.Value) (source : Fin n → ℝ)
+    (authenticated : selection.formula.toProp source)
+    (inherited : ∀ i, selection.isInherited i = true →
+      context.origin.RealValue following (values i) (source i))
+    (sample : context.Value) (matrix : RealFormula.QF (n+1)) (guards : List context.Value)
+    (nonzero : ∀ a ∈ guards, context.sign a ≠ 0)
+    (truth : Samples.Row.eval (.and selection.formula.lift (.not matrix))
+      (NativeSpecialize.row context values sample (.and selection.formula.lift (.not matrix))) = some true) :
+    (¬ ∀ x : ℝ, matrix.toProp (RealFormula.append source x)) ∧
+      ∃ read : context.Value → ℝ, ∃ domain : context.Value → Prop,
+        Transport.Closed read domain ∧
+        (∀ i, domain (values i) ∧ read (values i) = source i) ∧ domain sample ∧
+        ¬ matrix.toProp (RealFormula.append source (read sample)) ∧
+        (∀ a ∈ guards, domain a ∧ read a ≠ 0) :=
+  NativeSources.not_forall context following values source selection.formula
+    (selection.identifies context following values source authenticated inherited)
+    sample matrix guards nonzero truth
 
 end SourceSelection
 end Hex.RCF.RealCoefficients

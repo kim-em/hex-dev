@@ -177,10 +177,11 @@ identify `√2`, `−√2`, an inherited `2`, and `√2² − 1`. The final coor
 references the first generator across the other coordinates. Wrong conjugates
 and swapped computed coordinates fail the same selector.
 The [native-point case](../../../conformance/HexRCF/SourceSelectionNative.lean)
-constructs those four values in the actual square-root section. A proved joint
-row and the origin identity for `2` yield one real witness with `x = √2`,
-`1 < x < 2`, and `2 − x ≠ 0`. The original closed divisor is `2 − √2`;
-its nonzero interpretation is retained at that same reader.
+uses actual `QAdjoin` computations `−a`, `2`, and `a*a−1`, with the selected
+generator prepended. Its matrix uses both computed coordinates, through
+`x*c₁+c₂=0` and `x²−c₃−1=0`. One reader retains all four coefficient identities,
+the matrix, and both original closed divisors `2−√2` and `1+√2`.
+Swapping the two computed native coordinates makes the joint row false.
 
 {name Hex.RCF.RealCoefficients.SourceSelection.exists_real}`exists_real` composes
 this generated uniqueness proof with the actual finite joint reader. It needs
@@ -190,8 +191,53 @@ and the signs of all supplied original divisor operands. Its conclusions retain
 the coefficient identities, sample, matrix and nonzero guards at one reader.
 The plan does not discover those inputs from arbitrary source syntax, construct
 a frozen context certificate, establish root coverage or provide general tactic
-acceptance. The concrete frozen descriptor fixture uses non-module imports;
-the library's generic selection and realization laws use ordinary module imports.
+acceptance. The rational descriptor is now quoted in a module with public imports.
+A separate checked binding reader and the owner's `Dag.descriptor_raw` law bind
+its exact original header; the positive square-root alias follows from that
+checked head and interval. The native-point fixture retains its existing
+non-module construction boundary. The generic library laws use ordinary public
+module imports.
+
+{name Hex.RCF.RealCoefficients.SourceSelection.real}`real` interprets the plan,
+and {name Hex.RCF.RealCoefficients.SourceSelection.formula_iff}`formula_iff`
+reduces source authentication to coordinatewise real equalities. A chained
+regression uses an inherited value, a computed generator and the non-integral
+relation `c₂ = 1/3 + (2/5)*c₁`. Two-root controls retain both selected embeddings.
+{name Hex.RCF.RealCoefficients.SourceSelection.not_forall}`not_forall` supplies
+the corresponding universal counterexample route. `exists_real` also retains
+negation closure, specialized polynomial sizes and agreement with every inherited
+origin value, so later proof assembly can use them for other guards.
+
+{name Hex.RCF.RealCoefficients.FieldSelection.prepare}`FieldSelection.prepare`
+constructs the plan directly from a checked rational root and existing `QAdjoin`
+coordinates. Its source tuple uses the actual `Coefficients.ofField` conversions;
+{name Hex.RCF.RealCoefficients.FieldSelection.authenticated}`authenticated`
+proves the full tuple identity using the owner's chosen-generator and coefficient
+interpretation laws. Clients need no proof about nested selector conjunctions:
+
+```lean
+open Hex Hex.RealClosure
+  Hex.RCF.RealCoefficients in
+open FieldSelection in
+example {version : Nat} (r : Root version)
+    (v : Fin n →
+      QAdjoin r.toCanonical.toAlgebraic) :
+    (prepare r v).formula.toProp
+      (source r v) :=
+  authenticated r v
+```
+
+{name Hex.RCF.RealCoefficients.FieldSelection.nativeValues}`nativeValues`
+uses the owner's actual number-field presentation to pack these coordinates.
+{name Hex.RCF.RealCoefficients.FieldSelection.nativeValues_real}`nativeValues_real`
+proves that their selected real values are unchanged.
+{name Hex.RCF.RealCoefficients.FieldSelection.matrix_correct}`matrix_correct`
+adds the generator at coordinate zero and shifts the original matrix, retaining
+coefficient order, the quantified variable and every domain guard atom. These
+inputs already belong to one primitive field; common-field construction and
+conversion of independent fields remain with their existing owners and frontend
+preparation. This assembly is not general frozen source/context quotation or
+accepted algebraic completeness.
 
 # Frozen selected-section replay
 
