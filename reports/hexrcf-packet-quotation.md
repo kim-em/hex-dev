@@ -16,6 +16,11 @@ default-conformance snapshot stays in the
 [pre-review integrated record](data/hexrcf-packet-quotation/integrated/context.json).
 These are direct API results, not a general tactic result.
 
+The current quotation code checks 94 reachable example theorem bodies and
+14 definitions under the unchanged producer guard, with the complete standard
+three axiom closure. The table request uses 290,299 proof nodes. The historical
+records below retain their original sources, inventories and request counts.
+
 ## Checked path
 
 `RootQuote` accepts an `Except ε α` reader with a structured error type.

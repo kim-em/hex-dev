@@ -14,6 +14,7 @@ import HexRCF.PublicSignPacketValues
 import HexRCF.RootHeaderValues
 import HexRCF.RootContextConformance
 import HexRCF.FrozenSignatureProofs
+import HexRCF.ProofFunctionPublic
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -414,8 +415,22 @@ For a dependent match, quotation moves trailing branch-equality proofs along
 the checked equation for the match's subject. This uses ordinary equality
 elimination with an abstract subject, then instantiates the checked equation.
 Moved proofs are checked separately before later replay steps. The result type
-must stay fixed. Independent trailing data is retained; data whose type depends
-on the subject or its branch proofs remains unsupported. During replay-law
+must stay fixed. Independent trailing data is retained. A function with one
+proof argument can also move when its result type reduces to a fixed type.
+The original function is retained and only its proof input is transported.
+Other data indexed by the changed subject or its branch proofs is still refused,
+including functions returning such data.
+The public consumer checks the preserved result:
+
+```lean
+open Hex.RCF in
+example :
+    DependentQuote.continuedFunction =
+      some 29 :=
+  ProofFunctionPublic.continued
+```
+
+During replay-law
 conversion, an explicit checked function boundary is first kept abstract, then instantiated
 with the actual function and its public equation. The fresh importing audit
 checks the resulting private bodies as well as their full axiom closure.

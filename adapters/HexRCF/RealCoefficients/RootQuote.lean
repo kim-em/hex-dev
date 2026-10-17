@@ -336,7 +336,24 @@ private def trailingDepends (app : Expr) (index : Nat) : ReifyM Bool := do
         if (← inferType binder).containsFVar pivot.fvarId! then return true
       return false
 
-/-- Introduce the new proof arguments, retaining only independent data. -/
+/-- Move a function of a proof by transporting only its proof input. Its
+result type must reduce to a type independent of the major and equality. -/
+private def proofFunction? (argument domain pivot same : Expr) : ReifyM (Option Expr) := do
+  charge .proofNodes 1
+  let .forallE _ proofType body _ ← whnf domain | return none
+  unless ← isProp proofType do return none
+  if proofType.containsFVar same.fvarId! || body.hasLooseBVars then return none
+  let resultType ← whnf body
+  if resultType.containsFVar pivot.fvarId! || resultType.containsFVar same.fvarId! then
+    return none
+  let family ← mkLambdaFVars #[pivot] proofType
+  let equality ← mkAppM ``congrArg #[family,same]
+  withLocalDeclD `proof proofType fun proof => do
+    let original ← mkAppM ``Eq.mpr #[equality,proof]
+    return some (← mkLambdaFVars #[proof] (mkApp argument original))
+
+/-- Introduce the new proof arguments, retaining independent data and moving
+functions of proofs without casting their returned data. -/
 private partial def withProofArgs (original : Array Expr) (index : Nat)
     (built pivot same : Expr) (proofs : Array Expr)
     (consume : Array Expr → Expr → ReifyM (Expr × Expr)) : ReifyM (Expr × Expr) := do
@@ -351,13 +368,17 @@ private partial def withProofArgs (original : Array Expr) (index : Nat)
   else
     if domain.containsFVar pivot.fvarId! || domain.containsFVar same.fvarId! ||
         proofs.any (fun proof => domain.containsFVar proof.fvarId!) then
-      throwError "rcf: dependent recursor requires transport of a non-proof argument"
+      if proofs.any (fun proof => domain.containsFVar proof.fvarId!) then
+        throwError "rcf: dependent recursor requires transport of a non-proof argument"
+      let some moved ← proofFunction? original[index]! domain pivot same
+        | throwError "rcf: dependent recursor requires transport of a non-proof argument"
+      return ← withProofArgs original (index+1) (mkApp built moved) pivot same proofs consume
     unless ← withNewMCtxDepth <| isDefEq (← inferType original[index]!) domain do
       throwError "rcf: dependent recursor has incompatible trailing data"
     withProofArgs original (index+1) (mkApp built original[index]!) pivot same proofs consume
 
 /-- Prove transport with an abstract major, then instantiate exact closed data.
-Only proof arguments move; independent trailing data is retained unchanged. -/
+Proof arguments and functions of proofs move; independent data is retained. -/
 private def transportMajor (app : Expr) (index : Nat) (next step : Expr) : ReifyM Expr := do
   let args := app.getAppArgs
   let major := args[index]!
@@ -401,8 +422,11 @@ private def transportMajor (app : Expr) (index : Nat) (next step : Expr) : Reify
           mkEqRec motive argument same
         else do
           if domain.containsFVar pivot.fvarId! || domain.containsFVar same.fvarId! then
-            throwError "rcf: dependent recursor requires transport of a non-proof argument"
-          pure argument
+            let some moved ← proofFunction? argument domain pivot same
+              | throwError "rcf: dependent recursor requires transport of a non-proof argument"
+            pure moved
+          else
+            pure argument
         families := families.push (← mkLambdaFVars #[pivot,same] moved)
         built := mkApp built moved
       return families
@@ -501,7 +525,12 @@ private def checkedBool (decode : DecoderM) (dependent : Expr → ReifyM Expr) (
       let proof ← Hex.RCF.checkProof `RootQuote.major statement candidate
       return (value,proof)
     let some (whole,subject,law) ← demanded decode dependent reduced
-      | throwError "rcf: literal Boolean replay remains at {reduced.getAppFn.constName?}"
+      | do
+        let shape := match reduced.getAppFn with
+          | .proj name index _ => s!"projection {name}/{index}"
+          | .const name _ => toString name
+          | _ => "an unsupported expression"
+        throwError "rcf: literal Boolean replay remains at {shape}"
     let (next,proof) ← checkedStep current whole subject law
     current := next
     transport ← mkEqTrans transport proof
@@ -587,9 +616,9 @@ A canonical `Algebraic.Element.codec` decode stays protected: supply its exact
 checked equation through the callback, or quotation fails closed. The original
 reader expression must expose that codec; expand a hiding definition first.
 This guarantee covers explicit `Element.codec` applications, not codec aliases.
-Dependent recursors transport trailing proofs when their result type stays
-fixed, retaining independent trailing data. Unsupported dependent data transports and other ill-typed abstractions remain
-terminal. -/
+Dependent recursors transport trailing proofs and functions of one proof into
+a fixed type, retaining independent trailing data. Other dependent data
+transports and ill-typed abstractions remain terminal. -/
 def quoteWith (reader : Expr) (decode : DecoderM := fun _ => pure none) : ReifyM Result :=
   quoteCore reader decode
 

@@ -55,8 +55,9 @@ No kernel or producer guard is removed. A separate fresh importing audit
 checks 61 theorem bodies and four definitions for the actual-codec readers,
 with 56 nonempty traces. Its declared scope includes the source helper proofs
 and their generated private proofs; the axiom closure is fully transitive.
-The synthetic dependent-match audit checks 114 theorem bodies and 14 definitions,
-with 64 nonempty traces. Both retain the unchanged native-producer guard.
+The current synthetic dependent-match audit checks 145 theorem bodies and 16 definitions,
+with 88 nonempty traces, including functions with proof inputs and fresh public consumers.
+Both retain the unchanged native-producer guard. Earlier records retain their source-specific inventories.
 
 The coefficient consumer uses only the newly quoted packet fact for canonical
 decoding. It proves that the decoded value is the original selected real root
