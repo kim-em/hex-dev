@@ -6,24 +6,9 @@ Authors: Kim Morrison
 module
 
 public import KernelReplay.GuardJointPublic
-public import KernelReplay.FramePublic
 
 public section
 namespace Hex.RealClosure.Algebraic.KernelReplay.GuardJointUse
-
-set_option maxRecDepth 32768 in
-set_option maxHeartbeats 1500000 in
-/-- Public clients can eliminate the joint existential through an ordinary
-module import, without loading private implementation bodies. -/
-theorem exists_points : ∃ first second : Real, first = first ∧ second = second := by
-  exact Exists.elim GuardJointPublic.exists_points fun _ firstExists =>
-    Exists.elim firstExists fun first secondExists =>
-      Exists.elim secondExists fun second _ => ⟨first, second, rfl, rfl⟩
-
-/-- info: 'Hex.RealClosure.Algebraic.KernelReplay.GuardJointUse.exists_points' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs (whitespace := lax) in
-#print axioms exists_points
-
 
 local instance (priority := 2000) : Lean.Grind.Field Rat := Lean.Grind.instFieldRat
 local instance : Field (Hex.RationalFn (Hex.RationalFn Rat)) := HexPolyTheory.fieldOfGrind

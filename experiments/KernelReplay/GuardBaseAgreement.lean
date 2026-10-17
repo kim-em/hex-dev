@@ -232,10 +232,10 @@ syntax (name := originalBaseAgreement) "#original_base_agreement " num num : com
 @[command_elab originalBaseAgreement]
 unsafe def elaborate : CommandElab := fun stx => liftTermElabM <| withExporting (isExporting := false) do
   let some start := stx[1].isNatLit? | throwError "agreement start is not literal"
-  let some stop := stx[2].isNatLit? | throwError "agreement stop is not literal"
+  let some limit := stx[2].isNatLit? | throwError "agreement limit is not literal"
   let began ← IO.getNumHeartbeats
   let all ← blocks began
-  unless start < stop && stop ≤ all.size do throwError "invalid original support range"
+  unless start < limit && limit ≤ all.size do throwError "invalid original support range"
   let agreement := mkConst ``GuardInventoryReplay.agreement
   let dataType ← inferType agreement
   let dataArgs := dataType.getAppArgs
@@ -253,7 +253,7 @@ unsafe def elaborate : CommandElab := fun stx => liftTermElabM <| withExporting 
   let mut reusedWirePoints : Nat := 0
   let mut positionProofs : Nat := 0
   let mut results : Array Expr := #[]
-  for index in [start:stop] do
+  for index in [start:limit] do
     let block := all[index]!
     let mut remaining := block
     let mut values : Array Expr := #[]
@@ -306,7 +306,7 @@ unsafe def elaborate : CommandElab := fun stx => liftTermElabM <| withExporting 
     let proof ← retainAt began name required combined
     results := results.push proof
     logInfo m!"original base agreement kernel checked: block={index} coefficients={values.size}"
-  logInfo m!"original base agreement module export: start={start} stop={stop} blocks={results.size} pointProofs={pointCount} exactNativeCandidatesRechecked={reusedWirePoints} positionProofs={positionProofs} originalUniqueBlocks=2203 sameBaseInterpretation=true dependencyAuditPending=true aggregateHeartbeat={((← IO.getNumHeartbeats)-began)/1000}"
+  logInfo m!"original base agreement module export: start={start} limit={limit} blocks={results.size} pointProofs={pointCount} exactNativeCandidatesRechecked={reusedWirePoints} positionProofs={positionProofs} originalUniqueBlocks=2203 sameBaseInterpretation=true dependencyAuditPending=true aggregateHeartbeat={((← IO.getNumHeartbeats)-began)/1000}"
 
 set_option maxRecDepth 32768 in
 set_option maxHeartbeats 2000000 in

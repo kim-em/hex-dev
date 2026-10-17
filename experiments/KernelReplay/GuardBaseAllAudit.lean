@@ -32,6 +32,6 @@ run_meta do
     checked := checked + 1
   unless checked == 2203 do throwError "complete original basis audit omitted a block"
   let count ← audit began proofs
-  logInfo m!"all original base agreement blocks module audit: start=0 stop=2203 completeOriginalBlocks=2203 originalReaderDomainAndSignCallbacksRetained=true domainSignAndZeroReflectionRetained=true sameBaseInterpretation=true exactStandardAxioms=true wholeFieldReferences=[] declarations={count} aggregateHeartbeat={((← IO.getNumHeartbeats)-began)/1000}"
+  logInfo m!"all original base agreement blocks module audit: start=0 limit=2203 completeOriginalBlocks=2203 originalReaderDomainAndSignCallbacksRetained=true domainSignAndZeroReflectionRetained=true sameBaseInterpretation=true exactStandardAxioms=true wholeFieldReferences=[] declarations={count} aggregateHeartbeat={((← IO.getNumHeartbeats)-began)/1000}"
 
 end Hex.RealClosure.Algebraic.KernelReplay.GuardBaseAllAudit
