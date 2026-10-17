@@ -227,9 +227,11 @@ interpretation laws. Clients need no proof about nested selector conjunctions:
 open Hex Hex.RealClosure
   Hex.RCF.RealCoefficients in
 open FieldSelection in
-example {version : Nat} (r : Root version)
+example {version : Nat}
+    (r : Root version)
     (v : Fin n →
-      QAdjoin r.toCanonical.toAlgebraic) :
+      QAdjoin
+        r.toCanonical.toAlgebraic) :
     (prepare r v).formula.toProp
       (source r v) :=
   authenticated r v
