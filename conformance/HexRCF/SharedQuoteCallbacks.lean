@@ -96,7 +96,7 @@ run_meta do
     let .ok quoted ← RootQuote.runWith
         (ScalarQuote.quotePolyWith original (mkConst ``facts) decode)
       | throwError "nested predecessor polynomial quotation failed"
-    unless quoted.usage.proofNodes == 9141 do
+    unless quoted.usage.proofNodes == 9143 do
       throwError "nested transport proof-node accounting changed: {quoted.usage.proofNodes}"
     let count ← calls.get
     unless count == 1 && (← completed.get) == 1 && quoted.usage.sourceNodes == 17 do
@@ -118,7 +118,7 @@ run_meta do
           (config (quoted.usage.proofNodes-1))
         | throwError "one-below nested projection budget did not exhaust"
       unless exhausted.dimension == .proofNodes do throwError "wrong nested budget dimension"
-      unless exhausted.consumed == 8135 && exhausted.requested == 1006 do
+      unless exhausted.consumed == 8137 && exhausted.requested == 1006 do
         throwError "nested final transport charge changed: consumed={exhausted.consumed}, requested={exhausted.requested}"
       logInfo m!"nested exhausted: consumed={exhausted.consumed}, requested={exhausted.requested}"
     let codec := match subject.getAppFn with
@@ -157,9 +157,11 @@ run_meta do
     for bad in #[mkConst ``wrongSecond,mkConst ``trailingZero] do
       let badReader := mkAppN flat.getAppFn (flat.getAppArgs.set! 4 bad)
       unchanged do
-        let .error (.providerFailure (.invalidProviderEvidence ..) _) ← RootQuote.runWith
+        let .error (.providerFailure (.invalidProviderEvidence ⟨key,version⟩ _) _) ← RootQuote.runWith
             (ScalarQuote.quotePolyWith badReader (mkConst ``Records.facts) decode)
           | throwError "noncanonical polynomial or wrong second sign was accepted"
+        unless key == `Hex.RCF.RealCoefficients.RootQuote && version == 0 do
+          throwError "noncanonical polynomial rejection used a different provider"
     for bad in #[mkAppN flat.getAppFn (flat.getAppArgs.extract 0 4),mkConst ``SharedQuoteTests.reader] do
       unchanged do
         rejected (RootQuote.runWith (ScalarQuote.quotePolyWith bad (mkConst ``Records.facts) decode))

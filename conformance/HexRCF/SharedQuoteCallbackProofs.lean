@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 import HexRCF.SharedQuoteCallbacks
 import HexRCF.PolynomialQuotePublic
+import HexRCF.ScalarQuotePublic
 import HexRCF.ProofEvidence
 import KernelReplay.AxiomClosure
 import HexRCF.SelectedRoot.KernelCheck
@@ -16,7 +17,8 @@ run_meta do
   let roots := #[``SharedQuoteCallbacks.read_checked,``SharedQuoteCallbacks.coordinate_sign,
     ``SharedQuoteCallbacks.predecessor_read,``SharedQuoteCallbacks.bare_read,
     ``SharedQuoteCallbacks.constant_read,``PolynomialQuotePublic.accepted,
-    ``PolynomialQuotePublic.nonzero_accepted,``PolynomialQuotePublic.coefficient_count]
+    ``PolynomialQuotePublic.nonzero_accepted,``PolynomialQuotePublic.coefficient_count,
+    ``ScalarQuotePublic.polynomial_accepted]
   let axioms ← Algebraic.KernelReplay.AxiomClosure.collect roots
   unless axioms == (#[``propext,``Classical.choice,``Quot.sound].qsort Name.lt) do
     throwError "unexpected complete callback/public quotation axiom closure: {axioms}"
@@ -33,7 +35,7 @@ run_meta do
   let mut reductions := 0
   for name in dependencies.toArray do
     if let some index := (← getEnv).getModuleIdxFor? name then
-      if #[`HexRCF.SharedQuoteCallbacks,`HexRCF.PolynomialQuotePublic].contains modules[index]! then
+      if #[`HexRCF.SharedQuoteCallbacks,`HexRCF.PolynomialQuotePublic,`HexRCF.ScalarQuotePublic].contains modules[index]! then
         let declaration ← match ← getConstInfo name with
           | .thmInfo info =>
             theorems := theorems.push name
@@ -54,7 +56,7 @@ run_meta do
           throwError "callback quotation reduced native producer {producer}: {count}; body={name}"
         if !diagnostics.unfoldCounter.isEmpty then reductions := reductions+1
         setEnv (Kernel.enableDiag env false)
-  unless theorems.size == 46 && definitions.size == 12 && reductions > 0 do
+  unless theorems.size == 47 && definitions.size == 14 && reductions > 0 do
     throwError "callback quotation audit omitted bodies or reduction diagnostics"
   logInfo m!"callback/public quotation: {theorems.size} theorem bodies, {definitions.size} definitions"
   logInfo m!"callback theorem inventory: {theorems.qsort Name.lt}"

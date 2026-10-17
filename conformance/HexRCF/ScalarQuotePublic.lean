@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 module
 public import HexRCF.RealCoefficients
+public import HexRCF.PolynomialQuotePublic
 public section
 
 namespace Hex.RCF.ScalarQuotePublic
@@ -24,5 +25,11 @@ theorem accepted {E Ctx : Type} [Zero E] [DecidableEq E]
 /-- Ordinary consumers can use the reader bridge emitted by polynomial quotation. -/
 example (x : Nat) : (Except.ok x : Except String Nat).toOption = some x :=
   Hex.RCF.RealCoefficients.RootQuote.read_some (.ok x) x rfl
+
+/-- A fresh module can consume the emitted nonzero polynomial equation,
+including its checked normalization proof in the returned value. -/
+theorem polynomial_accepted : PolynomialQuotePublic.nonzeroReader.toOption.isSome = true := by
+  rw [PolynomialQuotePublic.nonzero_read_checked]
+  rfl
 
 end Hex.RCF.ScalarQuotePublic

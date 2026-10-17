@@ -28,8 +28,15 @@ run_meta do
     let result ← match outcome with
       | .ok result => pure result
       | .error error => throwError "public polynomial quotation failed: {Hex.RealFormula.Reify.Error.toMessageData error}"
+    let name := `Hex.RCF.PolynomialQuotePublic.empty
+    withExporting (isExporting := true) do
+      let declaration := Declaration.defnDecl {
+        name,levelParams := [],type := ← inferType result.value,value := result.value,
+        hints := .regular 0,safety := .safe}
+      addDecl declaration (forceExpose := true)
+      compileDecl declaration (logErrors := true)
     let statement ← mkEq (← mkAppM ``Except.toOption #[mkConst ``reader])
-      (← mkAppM ``Option.some #[result.value])
+      (← mkAppM ``Option.some #[mkConst name])
     let proof ← Hex.RCF.checkProof `publicPolynomial statement result.proof
     withExporting (isExporting := true) do
       addDecl (.thmDecl {
@@ -63,15 +70,22 @@ run_meta do
     let result ← match outcome with
       | .ok result => pure result
       | .error error => throwError "public nonzero polynomial quotation failed: {Hex.RealFormula.Reify.Error.toMessageData error}"
+    let name := `Hex.RCF.PolynomialQuotePublic.restored
+    withExporting (isExporting := true) do
+      let declaration := Declaration.defnDecl {
+        name,levelParams := [],type := ← inferType result.value,value := result.value,
+        hints := .regular 0,safety := .safe}
+      addDecl declaration (forceExpose := true)
+      compileDecl declaration (logErrors := true)
     let statement ← mkEq (← mkAppM ``Except.toOption #[mkConst ``nonzeroReader])
-      (← mkAppM ``Option.some #[result.value])
+      (← mkAppM ``Option.some #[mkConst name])
     let proof ← Hex.RCF.checkProof `publicNonzeroPolynomial statement result.proof
     withExporting (isExporting := true) do
       addDecl (.thmDecl {
         name := `Hex.RCF.PolynomialQuotePublic.nonzero_read_checked,levelParams := [],
         type := statement,value := proof})
 
-/-- A stored nonzero coefficient exercises decoding and the ordinary emitted bridge. -/
+/-- A stored nonzero coefficient exercises decoding and the ordinary emitted reader equation. -/
 theorem nonzero_accepted : nonzeroReader.toOption.isSome = true := by
   rw [nonzero_read_checked]
   rfl
