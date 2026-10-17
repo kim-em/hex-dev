@@ -382,6 +382,14 @@ intermediate arithmetic requests through the owner's supplied equal operations.
 optional-reader equation through a supplied checked equality of contexts. Its
 legacy-fixture regression uses depth 32768; fully frozen public-module replay
 still needs the owner's signature-codec literal equation.
+The [public packet regression](../reports/hexrcf-public-packet-quotation.md)
+instead retains canonical encoder expressions in node and nested-moment context
+slots. It quotes a nonconstant scalar query, decodes a coefficient from that
+fact alone and proves its selected real value. Dependent branch proofs move
+by checked equality elimination; explicit replay functions remain abstract
+during conversion before instantiation. A fresh audit rechecks imported bodies
+with the unchanged producer guard. This does not supply the missing numerical
+signature equation or install the general tactic.
 `SectionQuote.finish` freshly reifies the original target and checks its matrix,
 valuation and ordered original-divisor identities before transporting a proof.
 The [fresh-source tests](../conformance/HexRCF/SectionProduceConformance.lean)

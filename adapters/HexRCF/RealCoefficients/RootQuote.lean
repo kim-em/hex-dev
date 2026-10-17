@@ -45,12 +45,12 @@ public meta section
 namespace Hex.RCF.RealCoefficients.RootQuote
 open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RealFormula.Reify
 
-/-- Propose an ordinary equality for one demanded scalar decode. A missing
-proposal leaves other literal rules available. Proposed equations are checked
-against that exact decode before being used. -/
+/-- Propose an ordinary equality for a demanded reader boundary, including
+scalar decoding and Boolean normalization. A missing proposal leaves other
+literal rules available. Every equation is checked against the exact input. -/
 abbrev Decoder := Expr → MetaM (Option Expr)
 
-/-- A scalar proposal in the enclosing reflection request. Work performed by
+/-- A boundary proposal in the enclosing reflection request. Work performed by
 the callback consumes the same budget even when the callback declines.
 Return `none` to decline; every structured error, including `providerDeclined`,
 is terminal. -/
@@ -104,11 +104,13 @@ private partial def irreducible? (protectedNames : Array Name) (expression : Exp
           return ← irreducible? protectedNames major
     return none
 
+private def protectedNames : Array Name :=
+  (replayRules.filterMap fun rule =>
+    if #[``Array.toList,``Array.all,``Array.foldlM].contains rule.1 then none else some rule.1).push
+      ``Algebraic.Element.codec
+
 private def replayWhnf (expression : Expr) : ReifyM Expr :=
   withoutModifyingEnv <| withFreshCache do
-    let protectedNames := (replayRules.filterMap fun rule =>
-      if #[``Array.toList,``Array.all,``Array.foldlM].contains rule.1 then none else some rule.1).push
-        ``Algebraic.Element.codec
     for name in protectedNames do setReducibilityStatus name .irreducible
     while true do
       charge .proofNodes 1
@@ -172,6 +174,110 @@ private def reflexiveProof? (expression : Expr) : ReifyM (Option Expr) := do
   unless ← withTransparency .all <| withNewMCtxDepth (isDefEq args[1]! args[2]!) do return none
   let accepted := mkApp2 (mkConst ``Decidable.isTrue) proposition (← mkEqRefl args[1]!)
   return some (← mkAppM ``Subsingleton.elim #[expression,accepted])
+private def checkedStep (current whole subject law : Expr) : ReifyM (Expr × Expr) := do
+  let type ← inferType subject
+  let lawType ← inferType law
+  let rhs := lawType.getAppArgs[2]!
+  let motive ← withLocalDeclD `boundary type fun boundary => do
+    let body := whole.replace fun expression => if expression == subject then some boundary else none
+    mkLambdaFVars #[boundary] body
+  unless motive.bindingBody!.hasLooseBVars do
+    throwError "demanded boundary does not occur in its reconstructed reader"
+  let next := motive.bindingBody!.instantiate1 rhs
+  if next == whole then throwError "demanded boundary made no change"
+  let statement ← mkEq current next
+  let inspected := subject.consumeMData
+  let codec? ← match inspected.getAppFn.consumeMData with
+    | .proj ``ValueCodec 1 codec => do
+      unless inspected.getAppNumArgs == 1 do
+        throwError "rcf: literal codec step expects a complete decode projection"
+      pure (some codec)
+    | .const ``ValueCodec.decode _ => do
+      unless inspected.getAppNumArgs == 3 do
+        throwError "rcf: literal codec step expects a complete decode application"
+      pure (some inspected.getAppArgs[1]!)
+    | _ => pure none
+  let boundary? := match codec? with
+    | some codec => if codec.getAppFn.isConstOf ``Algebraic.Element.codec then some codec else none
+    | none =>
+      let head := inspected.getAppFn.consumeMData
+      match head.constName? with
+      | some name => if protectedNames.contains name && (Expr.find? (fun part => part == head) current).isSome
+          then some head else none
+      | none => none
+  let candidate ← match boundary? with
+    | some boundary => do
+      -- Keep replay functions abstract during conversion; instantiate with
+      -- the actual function and its checked public equation afterwards.
+      let boundaryType ← inferType boundary
+      let prepared ← liftM <| withLocalDeclD `replayBoundary boundaryType fun placeholder => do
+        let replace := fun (e : Expr) =>
+          e.replace fun part => if part == boundary then some placeholder else none
+        let original := replace current
+        if original == current then return none
+        let premise ← mkEq (replace subject) (replace rhs)
+        withLocalDeclD `checked premise fun h => do
+          let target ← mkEq original (replace next)
+          let candidate := mkExpectedPropHint (← mkAppM ``congrArg #[replace motive,h]) target
+          return some (← mkForallFVars #[placeholder,h] target,
+            ← mkLambdaFVars #[placeholder,h] candidate)
+      let some (kind,value) := prepared
+        | abort (.providerFailure (.invalidProviderEvidence
+            ⟨`Hex.RCF.RealCoefficients.RootQuote.boundary,0⟩
+            "keep the protected replay boundary explicit before quotation") #[])
+      accountProof kind
+      accountProof value
+      let step ← Hex.RCF.checkProof `RootQuote.boundaryStep kind value
+      pure (mkApp2 step boundary law)
+    | none => pure (mkExpectedPropHint (← mkAppM ``congrArg #[motive,law]) statement)
+  accountProof candidate
+  let proof ← Hex.RCF.checkProof `RootQuote.step statement candidate
+  return (next,proof)
+
+
+/-- Inspect post-major argument domains with a fresh major. -/
+private def trailingDepends (app : Expr) (index : Nat) : ReifyM Bool := do
+  let args := app.getAppArgs
+  let major := args[index]!
+  let beforeMajor := mkAppN app.getAppFn (args.extract 0 index)
+  withLocalDeclD `major (← inferType major) fun pivot => do
+    let type ← inferType (mkApp beforeMajor pivot)
+    forallBoundedTelescope type (some (args.size-index-1)) fun binders _ => do
+      for binder in binders do
+        if (← inferType binder).containsFVar pivot.fvarId! then return true
+      return false
+
+/-- Move trailing proof arguments along the checked major equation.
+The result type must stay fixed; dependent data arguments are unsupported. -/
+private def transportMajor (app : Expr) (index : Nat) (next step : Expr) : ReifyM Expr := do
+  let args := app.getAppArgs
+  let major := args[index]!
+  let beforeMajor := mkAppN app.getAppFn (args.extract 0 index)
+  let (rebuilt,proof) ← withLocalDeclD `major (← inferType major) fun pivot => do
+    withLocalDeclD `same (← mkEq major pivot) fun same => do
+      let mut rebuilt := mkApp beforeMajor pivot
+      for original in args.extract (index+1) args.size do
+        charge .proofNodes 1
+        let type ← whnf (← inferType rebuilt)
+        let .forallE _ domain _ _ := type
+          | throwError "rcf: dependent recursor lost its trailing telescope"
+        unless ← isProp domain do
+          throwError "rcf: dependent recursor requires transport of a non-proof argument"
+        let motive ← mkLambdaFVars #[pivot,same] domain
+        let moved ← mkEqRec motive original same
+        rebuilt := mkApp rebuilt moved
+      let resultType := (← whnf (← inferType rebuilt)).headBeta
+      if resultType.containsFVar pivot.fvarId! || resultType.containsFVar same.fvarId! then
+        throwError "rcf: dependent recursor has a varying result type"
+      let family ← mkLambdaFVars #[pivot,same] rebuilt
+      let motive ← mkLambdaFVars #[pivot,same] (← mkEq app rebuilt)
+      let proof ← mkEqRec motive (← mkEqRefl app) step
+      return ((mkApp2 family next step).headBeta,proof)
+  let statement ← mkEq app rebuilt
+  accountProof rebuilt
+  accountProof proof
+  Hex.RCF.checkProof `RootQuote.dependentMajor statement (mkExpectedPropHint proof statement)
+
 private partial def demanded (decode : DecoderM) (dependent : Expr → ReifyM Expr) (expression : Expr) :
     ReifyM (Option (Expr × Expr × Expr)) := Core.withIncRecDepth do
   charge .proofNodes 1
@@ -216,72 +322,26 @@ private partial def demanded (decode : DecoderM) (dependent : Expr → ReifyM Ex
             return some (reduced,applied,proof)
         if let some major := args[recursor.getMajorIdx]? then
           let some (expanded,subject,proof) ← demanded decode dependent major | return none
+          let index := recursor.getMajorIdx
+          if index+1 < args.size && (← trailingDepends reduced index) then
+            let (next,step) ← checkedStep major expanded subject proof
+            let law ← transportMajor reduced index next step
+            return some (reduced,reduced,law)
           return some (mkAppN reduced.getAppFn
-            (args.set! recursor.getMajorIdx expanded),subject,proof)
+            (args.set! index expanded),subject,proof)
     return none
-
-private def checkedStep (current whole subject law : Expr) : ReifyM (Expr × Expr) := do
-  let type ← inferType subject
-  let lawType ← inferType law
-  let rhs := lawType.getAppArgs[2]!
-  let motive ← withLocalDeclD `boundary type fun boundary => do
-    let body := whole.replace fun expression => if expression == subject then some boundary else none
-    mkLambdaFVars #[boundary] body
-  unless motive.bindingBody!.hasLooseBVars do
-    throwError "demanded boundary does not occur in its reconstructed reader"
-  let next := motive.bindingBody!.instantiate1 rhs
-  if next == whole then throwError "demanded boundary made no change"
-  let statement ← mkEq current next
-  let inspected := subject.consumeMData
-  let codec? ← match inspected.getAppFn.consumeMData with
-    | .proj ``ValueCodec 1 codec => do
-      unless inspected.getAppNumArgs == 1 do
-        throwError "rcf: literal codec step expects a complete decode projection"
-      pure (some codec)
-    | .const ``ValueCodec.decode _ => do
-      unless inspected.getAppNumArgs == 3 do
-        throwError "rcf: literal codec step expects a complete decode application"
-      pure (some inspected.getAppArgs[1]!)
-    | _ => pure none
-  let candidate ← match codec? with
-    | some codec =>
-      if codec.getAppFn.isConstOf ``Algebraic.Element.codec then
-        -- Kernel conversion of a concrete reader can evaluate its native decode.
-        -- Check the step with an abstract codec and its equation first.
-        let codecType ← inferType codec
-        let prepared ← liftM <| withLocalDeclD `codec codecType fun placeholder => do
-          let replace := fun (e : Expr) =>
-            e.replace fun part => if part == codec then some placeholder else none
-          let original := replace current
-          if original == current then
-            return none
-          let premise ← mkEq (replace subject) (replace rhs)
-          withLocalDeclD `checked premise fun h => do
-            let target ← mkEq original (replace next)
-            let candidate := mkExpectedPropHint
-              (← mkAppM ``congrArg #[replace motive,h]) target
-            return some (← mkForallFVars #[placeholder,h] target,
-              ← mkLambdaFVars #[placeholder,h] candidate)
-        let some (kind,value) := prepared
-          | abort (.providerFailure (.invalidProviderEvidence
-              ⟨`Hex.RCF.RealCoefficients.RootQuote.boundary,0⟩
-              "expose the original reader's canonical predecessor codec before quotation") #[])
-        accountProof kind
-        accountProof value
-        let step ← Hex.RCF.checkProof `RootQuote.codecStep kind value
-        pure (mkApp2 step codec law)
-      else pure (mkExpectedPropHint (← mkAppM ``congrArg #[motive,law]) statement)
-    | none => pure (mkExpectedPropHint (← mkAppM ``congrArg #[motive,law]) statement)
-  accountProof candidate
-  let proof ← Hex.RCF.checkProof `RootQuote.step statement candidate
-  return (next,proof)
-
 
 private def checkedBool (decode : DecoderM) (dependent : Expr → ReifyM Expr) (original : Expr) : ReifyM (Bool × Expr) := do
   let mut current := original
   let mut transport ← mkEqRefl original
   while true do
     charge .proofNodes 1
+    if let some law ← codecProof? decode current then
+      let next := (← inferType law).getAppArgs[2]!
+      if next == current then throwError "Boolean normalization made no change"
+      transport ← mkEqTrans transport law
+      current := next
+      continue
     let reduced ← withOptions (fun options => smartUnfolding.set options false) do
       withTransparency .all (replayWhnf current)
     if reduced.isConstOf ``Bool.true || reduced.isConstOf ``Bool.false then
@@ -378,8 +438,9 @@ A canonical `Algebraic.Element.codec` decode stays protected: supply its exact
 checked equation through the callback, or quotation fails closed. The original
 reader expression must expose that codec; expand a hiding definition first.
 This guarantee covers explicit `Element.codec` applications, not codec aliases.
-Dependent proof terms can make the abstraction ill-typed; kernel/type failures
-remain terminal. -/
+Dependent recursors transport trailing proofs when their result type stays
+fixed. Unsupported data transports and other ill-typed abstractions remain
+terminal. -/
 def quoteWith (reader : Expr) (decode : DecoderM := fun _ => pure none) : ReifyM Result :=
   quoteCore reader decode
 
