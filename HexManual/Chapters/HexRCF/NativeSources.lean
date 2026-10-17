@@ -143,6 +143,56 @@ conformance module composes the public selector and finite-reader laws with
 ordinary public imports in the existing CI target. Kernel inventories and compiled controls remain
 separate evidence.
 
+# Ordered coefficient dependencies
+%%%
+tag := "hex-rcf-source-selection"
+%%%
+
+{name Hex.RCF.RealCoefficients.SourceSelection}`SourceSelection` assembles a
+selector for an ordered coefficient tuple. Each coordinate is either inherited
+from the actual origin, a checked selected rational root, or a rational polynomial
+in an earlier generator. The earlier index has type `Fin n` before appending the
+coordinate, so forward references and cycles cannot be represented. For example,
+this plan describes a selected root, an inherited value, and the coordinate
+`α² − 1` computed from that root:
+
+```lean
+open Hex Hex.RealClosure
+  Hex.RCF.RealCoefficients in
+example {version : Nat}
+    (root : Root version) :
+    SourceSelection 3 :=
+  .coordinate (.inherited (.root .nil root)) 0
+    (DensePoly.ofCoeffs #[-1, 0, 1])
+```
+
+{name Hex.RCF.RealCoefficients.SourceSelection.formula}`formula` uses the existing
+shared integer syntax, retaining the selected root's ordered constraints and
+clearing rational denominators by a positive multiplier.
+{name Hex.RCF.RealCoefficients.SourceSelection.unique}`unique` identifies the
+whole tuple from this formula and the inherited identities. It follows the
+coordinate dependencies; clients need no bespoke tuple-uniqueness proof.
+The [four-coordinate checks](../../../conformance/HexRCF/SourceSelectionConformance.lean)
+identify `√2`, `−√2`, an inherited `2`, and `√2² − 1`. The final coordinate
+references the first generator across the other coordinates. Wrong conjugates
+and swapped computed coordinates fail the same selector.
+The [native-point case](../../../conformance/HexRCF/SourceSelectionNative.lean)
+constructs those four values in the actual square-root section. A proved joint
+row and the origin identity for `2` yield one real witness with `x = √2`,
+`1 < x < 2`, and `2 − x ≠ 0`. The original closed divisor is `2 − √2`;
+its nonzero interpretation is retained at that same reader.
+
+{name Hex.RCF.RealCoefficients.SourceSelection.exists_real}`exists_real` composes
+this generated uniqueness proof with the actual finite joint reader. It needs
+authentication of the requested source tuple, real-value evidence for precisely
+the inherited coordinates, the actual origin/provider history, a true joint row,
+and the signs of all supplied original divisor operands. Its conclusions retain
+the coefficient identities, sample, matrix and nonzero guards at one reader.
+The plan does not discover those inputs from arbitrary source syntax, construct
+a frozen context certificate, establish root coverage or provide general tactic
+acceptance. The concrete frozen descriptor fixture uses non-module imports;
+the library's generic selection and realization laws use ordinary module imports.
+
 # Frozen selected-section replay
 
 {name Hex.RCF.RealCoefficients.SectionBuild.build}`SectionBuild.build` searches
