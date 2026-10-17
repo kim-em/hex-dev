@@ -22,9 +22,7 @@ set_option maxRecDepth 32768
     (Algebraic.Element.signCodec Data.base.codec facts) Signature.codec
     Schema.parent.sign Schema.parent.signature [] polynomial .negInf .posInf Literals.roots
 
--- The closed compiled call has a separate retained compiler-failure reproducer.
--- This proof wrapper does not assert successful compiled execution.
-noncomputable def table := readTable Records.facts input
+def table := readTable Records.facts input
 
 run_meta do
   withExporting (isExporting := false) do
@@ -34,9 +32,11 @@ run_meta do
     logInfo m!"algebraic root-table quotation proofNodes={result.usage.proofNodes}"
     withExporting (isExporting := true) do
       let name := `Hex.RCF.RootTableQuoteTests.restored
-      addDecl (.defnDecl {
+      let declaration := Declaration.defnDecl {
         name,levelParams := [],type := ← inferType result.value,
-        value := result.value,hints := .regular 0,safety := .safe}) (forceExpose := true)
+        value := result.value,hints := .regular 0,safety := .safe}
+      addDecl declaration (forceExpose := true)
+      compileDecl declaration (logErrors := true)
       let statement ← mkEq (← mkAppM ``Except.toOption #[mkConst ``table])
         (← mkAppM ``Option.some #[mkConst name])
       let proof ← Hex.RCF.checkProof `originalRootTable statement result.proof

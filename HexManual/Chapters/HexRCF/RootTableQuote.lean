@@ -62,12 +62,16 @@ not scaling or matched comparison results. The examples raise Lean limits to
 12,000,000 heartbeats and recursion depth 32,768. Larger inputs or default
 limits may exhaust.
 
+When retaining the quoted data as a definition for compiled consumers, emit
+both artifacts: `addDecl` checks the kernel declaration, and `compileDecl`
+compiles it. The conformance client explicitly does both for the polynomial
+and reconstructed table. Compiled controls check the original reader's success,
+the reconstructed table's two roots, and rejection when scalar-decoding facts
+are missing.
+
 This is a direct checked API example. It does not install the general
 source-to-certificate tactic, authenticate arbitrary provider histories or
-prove accepted completeness. The closed compiled consumer separately fails
-in pinned Lean `v4.35.0-rc3` with an `unknown join point` compiler error;
-the quoted table wrapper is currently noncomputable. The successful ordinary
-kernel proof does not establish successful compiled execution or strict
-compiled missing-record rejection. The exact reproducer, failed attempts and
-proof inventory are retained in
+prove accepted completeness. The missing-scalar control does not establish
+that every omitted arithmetic record prevents native work in a whole reader.
+The exact sources, completed diagnostics and proof inventory are retained in
 [the root-table quotation record](../../../reports/hexrcf-packet-quotation.md).
