@@ -20,8 +20,11 @@ class BasicTests(unittest.TestCase):
         with self.assertRaises((ValueError, OracleMismatch)):
             verify(rows)
 
+    def test_original_reciprocal_uses_original_integer(self):
+        self.reject(lambda rows: rows[1].__setitem__('original_bound', rows[1]['bound']))
+
     def test_actual_source_operations(self):
-        self.assertEqual(verify(self.rows), 9)
+        self.assertEqual(verify(self.rows), 22)
 
     def test_root_order_and_multiplicity(self):
         self.reject(lambda rows: rows[0]['roots'].reverse())
@@ -43,6 +46,22 @@ class BasicTests(unittest.TestCase):
         self.reject(lambda rows: rows[1]['signs'].__setitem__(2, -1))
         self.reject(lambda rows: rows[1]['values'].__setitem__(2, []))
         self.reject(lambda rows: rows[1]['bound'].__setitem__(1, -1))
+
+    def test_original_ex2_comparisons(self):
+        self.reject(lambda rows: rows[1].__setitem__('ratio', rows[1]['parameter']))
+        self.reject(lambda rows: rows[1]['signs'].__setitem__(5, -1))
+        self.reject(lambda rows: rows[1]['signs'].__setitem__(6, 1))
+        self.reject(lambda rows: rows[2]['context'].__setitem__(1, 1))
+        self.reject(lambda rows: rows[2]['signs'].__setitem__(3, 1))
+        self.reject(lambda rows: rows[2]['values'].reverse())
+
+    def test_successive_retains_live_cubic(self):
+        self.reject(lambda rows: rows[2]['context'][2].pop())
+        self.reject(lambda rows: rows[2]['transported_values'].reverse())
+        self.reject(lambda rows: rows[2]['transported_signs'].__setitem__(0, -1))
+        def changed_root(rows):
+            rows[2]['context'][2][1][4:6] = [[1], [-1]]
+        self.reject(changed_root)
 
     def test_parameter_and_full_transport(self):
         def parameter(rows):
@@ -89,9 +108,9 @@ class BasicTests(unittest.TestCase):
     def test_literals_and_source_noncoverage(self):
         for value in [True, None, '0', {}]:
             self.reject(lambda rows, value=value: rows[0]['context'].__setitem__(1, value))
-        self.reject(lambda rows: rows[2]['cases'].pop())
-        self.reject(lambda rows: rows[2]['cubic_coefficients'].__setitem__(0, '-3'))
-        self.reject(lambda rows: rows[2].__setitem__('comparison', 'epsilon < 1'))
+        self.reject(lambda rows: rows[3]['cases'].pop())
+        self.reject(lambda rows: rows[3]['cubic_coefficients'].__setitem__(0, '-3'))
+        self.reject(lambda rows: rows[3].__setitem__('comparison', 'epsilon < 1'))
         self.reject(lambda rows: rows[0]['signs'].__setitem__(0, True))
         for text in ['{"x":1,"x":2}', '[1.0]', '[NaN]']:
             with self.assertRaises(ValueError):

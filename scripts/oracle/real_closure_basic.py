@@ -14,7 +14,7 @@ from scripts.oracle.sign_det_z3 import RCF, check_version
 from scripts.oracle.real_closure_isolation import native_value, sign
 from scripts.oracle.real_closure_number_field_samples import require
 
-CASES = ['basic square root', 'basic infinitesimal', 'basic unsupported']
+CASES = ['basic square root', 'basic infinitesimal', 'original ex2 successive', 'basic unsupported']
 
 
 def parse_record(text):
@@ -39,7 +39,7 @@ def integers(value):
 
 class Reader:
     def __init__(self):
-        self.rcf = RCF({'id': 10377, 'levels': ['epsilon1'],
+        self.rcf = RCF({'id': 10377, 'levels': ['epsilon1', 'epsilon2'],
                         'order': 'each-new-level-smaller-than-positive-base-elements'})
 
     def value(self, data, roots, depth):
@@ -109,7 +109,7 @@ def verify(rows):
             all(type(s) is int for s in first['signs']), 'wrong square-root arithmetic')
 
     second = rows[1]
-    require(set(second) == {'case','parent','context','parameter','transported_values','transported_signs','bound','head','root',
+    require(set(second) == {'case','parent','context','parameter','transported_values','transported_signs','bound','original_bound','ratio','head','root',
                            'multiplicity','values','signs'}, 'wrong basic infinitesimal record')
     parents = r.context(second['parent'], 1, 1)
     child = r.context(second['context'], 1, 2)
@@ -132,6 +132,12 @@ def verify(rows):
                 'changed transported endpoint')
     bound = r.value(second['bound'], parents, 1)
     require(bound == q.one.__div__(epsilon)-10**27 and bound > 0, 'wrong reciprocal comparison')
+    original_bound = r.value(second['original_bound'], parents, 1)
+    require(original_bound == q.one.__div__(epsilon)-10**28 and original_bound > 0,
+            'wrong original ex2 reciprocal comparison')
+    ratio = r.value(second['ratio'], parents, 1)
+    require(ratio == (q.one+epsilon).__div__(q.one-epsilon) and ratio > 1,
+            'wrong original ex2 ratio comparison')
     head = [r.value(a, parents, 1) for a in second['head']]
     require(head == [-epsilon,q.zero,q.zero,q.one], 'wrong paper cubic')
     require(len(q.api.MkRoots(head,q.context)) == 1 and q.squarefree(head),
@@ -139,17 +145,44 @@ def verify(rows):
     beta = r.selected(second['root'], parents, 1)
     require(beta == child[-1] and beta > epsilon and beta < 1 and beta**3 == epsilon and
             type(second['multiplicity']) is int and second['multiplicity'] == 1, 'wrong infinitesimal root')
-    expected = [beta,epsilon,beta-epsilon,q.zero,beta-1]
+    expected = [beta,epsilon,beta-epsilon,q.zero,beta-1,beta*beta-epsilon,beta*beta*beta*beta-epsilon]
     values = [r.value(a, child, 1) for a in second['values']]
-    require(values == expected and second['signs'] == [1,1,1,0,-1] and
+    require(values == expected and second['signs'] == [1,1,1,0,-1,1,-1] and
             all(type(s) is int for s in second['signs']), 'wrong infinitesimal arithmetic')
-    require(rows[2] == {'case':'basic unsupported',
+    successive = rows[2]
+    require(set(successive) == {'case','context','transported_values','transported_signs',
+                                'values','signs'}, 'wrong successive record')
+    next_roots = r.context(successive['context'], 2, 2)
+    require(next_roots == child, 'successive enlargement changed live selected roots')
+    for index, (before, after) in enumerate(zip(second['context'][2], successive['context'][2])):
+        require(before[4:6] == after[4:6], 'changed successive Thom data')
+        require([r.value(c, child[:index], 1) for c in before[1]] ==
+                [r.value(c, next_roots[:index], 2) for c in after[1]],
+                'changed successive defining polynomial')
+        for old_endpoint, new_endpoint in zip(before[2:4], after[2:4]):
+            require(old_endpoint[0] == new_endpoint[0] and
+                    (len(old_endpoint) == len(new_endpoint) == 1 or
+                     len(old_endpoint) == len(new_endpoint) == 2 and
+                     r.value(old_endpoint[1], child[:index], 1) ==
+                     r.value(new_endpoint[1], next_roots[:index], 2)),
+                    'changed successive endpoint')
+    retained_values = [r.value(a, next_roots, 2) for a in successive['transported_values']]
+    require(retained_values == values and successive['transported_signs'] == second['signs'] and
+            all(type(s) is int for s in successive['transported_signs']),
+            'wrong successive live-value transport')
+    eps2 = q.levels[1]
+    successive_values = [r.value(a, next_roots, 2) for a in successive['values']]
+    expected_successive = [epsilon,eps2,eps2-epsilon,eps2-epsilon**10]
+    require(successive_values == expected_successive and
+            successive['signs'] == [1,1,-1,-1] and
+            all(type(s) is int for s in successive['signs']), 'wrong original ex2 successive comparisons')
+    require(rows[3] == {'case':'basic unsupported',
                        'cases':['pi-infinitesimal-cubic','pi-infinitesimal-comparison'],
                        'cubic_coefficients':['-pi','sqrt(2)+pi','epsilon','1'],
                        'comparison':'2+2*pi+pi^2-2*epsilon-2*pi*epsilon+epsilon^2 < 2+2*pi+pi^2',
                        'reason':'requires a caller-validated pi approximation provider and progress laws'},
             'missing source non-coverage')
-    return len(values) + 4
+    return len(values) + len(retained_values) + 8
 
 
 if __name__ == '__main__':
