@@ -1,0 +1,30 @@
+import SignPacketEncodedProbe
+import HexRCF.SelectedRoot.KernelCheck
+import KernelReplay.AxiomClosure
+open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
+set_option maxHeartbeats 12000000
+set_option maxRecDepth 32768
+run_meta do
+  let entries := (← getEnv).constants.toList.filter fun (name,_) =>
+    name.toString.contains "_private.SignPacketEncodedProbe." && name.toString.contains "_proof_345."
+  unless entries.length == 1 do throwError "expected one body345"
+  let (name,info) := entries.head!
+  let some value := info.value? (allowOpaque := true) | throwError "body345 has no body"
+  -- Keep the original target. Share references across the target and body.
+  let paired := ShareCommon.shareCommon' (mkApp info.type value)
+  let shared := paired.appArg!
+  let axioms ← Algebraic.KernelReplay.AxiomClosure.audit shared info.type
+  IO.FS.writeFile "/home/kim/.codex/tasks/hex-10358/body345-shared-phase.txt" s!"checking {name}; axioms={axioms}"
+  let .thmInfo declarationInfo := info | throwError "body345 is not a theorem"
+  let declaration := Declaration.thmDecl {declarationInfo with name := ← mkFreshUserName `__body345Shared,value := shared}
+  let options := maxHeartbeats.set ((← getOptions).setBool `debug.skipKernelTC false) 100000
+  let environment := Kernel.enableDiag (Kernel.resetDiag (← getEnv)) true
+  let checked ← ofExceptKernelException <| environment.addDeclCore
+    (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
+    declaration none (doCheck := true)
+  let diagnostics := Kernel.getDiagnostics checked
+  unless diagnostics.enabled do throwError "body345 diagnostics are disabled"
+  if let some (producer,count) := Hex.RCF.SelectedRootTests.KernelCheck.violation? diagnostics
+      #[``ScalarPacket.build,``ScalarPacket.buildLiteral,``Algebraic.Element.codec,``Descriptor.ofReplay?] then
+    throwError "body345 reduced producer {producer}: {count}"
+  logInfo m!"actual body345 checks against ORIGINAL target with joint sharing; axioms={axioms}; nonemptyTrace={!diagnostics.unfoldCounter.isEmpty}"

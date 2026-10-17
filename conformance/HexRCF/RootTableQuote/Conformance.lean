@@ -57,7 +57,7 @@ run_meta do
   unless (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
     throwError "root-table audit retained copied declarations"
   unless reductions > 0 do throwError "root-table quotation audit did not observe any reductions"
-  unless theorems.size == 74 && definitions.size == 14 do
+  unless theorems.size == 86 && definitions.size == 14 do
     throwError "root-table quotation body coverage changed: {theorems.size}/{definitions.size}"
   logInfo m!"root-table quotation: {theorems.size} theorem bodies, {definitions.size} data definitions"
   logInfo "complete standard-three axiom closure; no native producer reductions"

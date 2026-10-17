@@ -1,0 +1,31 @@
+import SignPacketEncodedProbe
+import HexRCF.SelectedRoot.KernelCheck
+open Lean Meta
+set_option maxHeartbeats 12000000
+set_option maxRecDepth 32768
+private partial def shape (e : Expr) (depth : Nat) : String :=
+  if depth = 0 then s!"{e.getAppFn.constName?}/{e.getAppNumArgs}"
+  else match e with
+  | .lam name type body _ => s!"lam({name}: {shape type (depth-1)}), {shape body (depth-1)}"
+  | .forallE name type body _ => s!"forall({name}: {shape type (depth-1)}), {shape body (depth-1)}"
+  | .letE name type val body _ => s!"let {name}: {shape type (depth-1)} := {shape val (depth-1)}; {shape body (depth-1)}"
+  | .mdata _ body => shape body (depth-1)
+  | .proj name index body => s!"proj({name},{index},{shape body (depth-1)})"
+  | .app .. => s!"app({e.getAppFn.constName?},[{String.intercalate ";" ((e.getAppArgs.extract 0 (min e.getAppNumArgs 8)).toList.map (fun a => shape a (depth-1)))}])"
+  | _ => s!"{e}"
+run_meta do
+  IO.FS.writeFile "/home/kim/.codex/tasks/hex-10358/public-audit-345-phase.txt" "entered"
+  let constants := (← getEnv).constants
+  IO.FS.writeFile "/home/kim/.codex/tasks/hex-10358/public-audit-345-phase.txt" "have environment"
+  let entries := constants.toList.filter fun (name,_) =>
+    name.toString.contains "_private.SignPacketEncodedProbe." && name.toString.contains "_proof_345."
+  unless entries.length == 1 do throwError "expected one body345, found {entries.length}"
+  let (name,info) := entries.head!
+  let some value := info.value? (allowOpaque := true) | throwError "body345 has no body"
+  IO.FS.writeFile "/home/kim/.codex/tasks/hex-10358/public-audit-345-summary.txt"
+    s!"name={name}\ntype={shape info.type 5}\nvalue={shape value 5}\n"
+  IO.FS.writeFile "/home/kim/.codex/tasks/hex-10358/public-audit-345-phase.txt" "shape written"
+  withOptions (fun o => pp.maxSteps.set (o.setBool `pp.explicit true) 1000) do
+    IO.FS.writeFile "/home/kim/.codex/tasks/hex-10358/public-audit-345-type.txt" (← ppExpr info.type).pretty
+    IO.FS.writeFile "/home/kim/.codex/tasks/hex-10358/public-audit-345-value.txt" (← ppExpr value).pretty
+  logInfo s!"body345 inspected: {name}"
