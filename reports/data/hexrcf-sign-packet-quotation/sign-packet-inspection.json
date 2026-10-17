@@ -1,0 +1,58 @@
+[
+  {
+    "label": "desktop",
+    "kind": "example",
+    "text": "\n                  ScalarPacket.quoteWith checks a supplied optional sign-packet reader. Its\nprepared context has a checked equality to the original context; a caller can\nfirst quote a parent descriptor, freeze that data, and prove the equality.\nThe helper replaces only that context while reading the supplied packet, then\ntransports acceptance back to the exact original reader and restores its fact.\nThe original model, codec, polynomial, sign and graph arguments remain attached.",
+    "viewport": 1440,
+    "scrollY": 283916,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "CODE",
+    "targetWidth": 740,
+    "targetScrollWidth": 740,
+    "descendantOverflow": 0,
+    "overflowElements": []
+  },
+  {
+    "label": "desktop",
+    "kind": "value",
+    "text": "\n                  The regression quotes the parent descriptor and one packet for the polynomial\n−2X at the selected positive square root of 2. The resulting fact alone supplies\nthe sign evidence for the canonical coefficient decoder:",
+    "viewport": 1440,
+    "scrollY": 284217,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "CODE",
+    "targetWidth": 740,
+    "targetScrollWidth": 740,
+    "descendantOverflow": 0,
+    "overflowElements": []
+  },
+  {
+    "label": "narrow",
+    "kind": "example",
+    "text": "\n                  ScalarPacket.quoteWith checks a supplied optional sign-packet reader. Its\nprepared context has a checked equality to the original context; a caller can\nfirst quote a parent descriptor, freeze that data, and prove the equality.\nThe helper replaces only that context while reading the supplied packet, then\ntransports acceptance back to the exact original reader and restores its fact.\nThe original model, codec, polynomial, sign and graph arguments remain attached.",
+    "viewport": 390,
+    "scrollY": 457268,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "CODE",
+    "targetWidth": 331,
+    "targetScrollWidth": 331,
+    "descendantOverflow": 0,
+    "overflowElements": []
+  },
+  {
+    "label": "narrow",
+    "kind": "value",
+    "text": "\n                  The regression quotes the parent descriptor and one packet for the polynomial\n−2X at the selected positive square root of 2. The resulting fact alone supplies\nthe sign evidence for the canonical coefficient decoder:",
+    "viewport": 390,
+    "scrollY": 457639,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "CODE",
+    "targetWidth": 331,
+    "targetScrollWidth": 331,
+    "descendantOverflow": 0,
+    "overflowElements": []
+  }
+]
