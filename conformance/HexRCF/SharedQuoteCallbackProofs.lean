@@ -16,7 +16,8 @@ set_option maxRecDepth 32768
 run_meta do
   let roots := #[``SharedQuoteCallbacks.read_checked,``SharedQuoteCallbacks.coordinate_sign,
     ``SharedQuoteCallbacks.predecessor_read,``SharedQuoteCallbacks.bare_read,
-    ``SharedQuoteCallbacks.constant_read,``PolynomialQuotePublic.accepted,
+    ``SharedQuoteCallbacks.constant_read,``SharedQuoteCallbacks.constant_bare_read,
+    ``PolynomialQuotePublic.accepted,
     ``PolynomialQuotePublic.nonzero_accepted,``PolynomialQuotePublic.coefficient_count,
     ``ScalarQuotePublic.polynomial_accepted]
   let axioms ← Algebraic.KernelReplay.AxiomClosure.collect roots
@@ -56,7 +57,7 @@ run_meta do
           throwError "callback quotation reduced native producer {producer}: {count}; body={name}"
         if !diagnostics.unfoldCounter.isEmpty then reductions := reductions+1
         setEnv (Kernel.enableDiag env false)
-  unless theorems.size == 47 && definitions.size == 14 && reductions > 0 do
+  unless theorems.size == 56 && definitions.size == 14 && reductions > 0 do
     throwError "callback quotation audit omitted bodies or reduction diagnostics"
   logInfo m!"callback/public quotation: {theorems.size} theorem bodies, {definitions.size} definitions"
   logInfo m!"callback theorem inventory: {theorems.qsort Name.lt}"
