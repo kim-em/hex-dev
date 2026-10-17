@@ -27,6 +27,17 @@ theorem read_some {ε α : Type} (reader : Except ε α) (value : α)
   rw [checked]
   rfl
 
+/-- Lift a supplied optional reader without changing its accepted value. -/
+@[expose] def fromOption {α : Type} (reader : Option α) : Except String α :=
+  match reader with
+  | none => .error "supplied optional reader rejected its input"
+  | some value => .ok value
+
+/-- Recover the original optional-reader equation from its checked lift. -/
+theorem option_eq {α : Type} (reader : Option α) (value : α)
+    (checked : (fromOption reader).toOption = some value) : reader = some value := by
+  cases reader <;> exact checked
+
 end Hex.RCF.RealCoefficients.RootQuote
 
 public meta section
@@ -371,6 +382,27 @@ Dependent proof terms can make the abstraction ill-typed; kernel/type failures
 remain terminal. -/
 def quoteWith (reader : Expr) (decode : DecoderM := fun _ => pure none) : ReifyM Result :=
   quoteCore reader decode
+
+/-- Quote a supplied `Option` reader and check its original equation. The
+lift, nested callbacks and final transport share the enclosing budget. A
+rejected reader remains a terminal rejection. The caller supplies the
+`runWith` transaction; no source identity or model is synthesized here. -/
+def quoteOptionWith (reader : Expr) (decode : DecoderM := fun _ => pure none) : ReifyM Result := do
+  let reader ← instantiateMVars reader
+  accountProof reader
+  let reader ← Hex.RCF.checkExpr `RootQuote.optionReader reader
+  Meta.check reader
+  let type ← whnf (← inferType reader)
+  unless type.isAppOfArity ``Option 1 do
+    throwError "rcf: expected a supplied Option reader"
+  let lifted := mkApp2 (mkConst ``fromOption) type.appArg! reader
+  let result ← quoteWith lifted decode
+  let statement ← mkEq reader (← mkAppM ``Option.some #[result.value])
+  let candidate := mkAppN (mkConst ``option_eq)
+    #[type.appArg!,reader,result.value,result.proof]
+  accountProof candidate
+  let proof ← Hex.RCF.checkProof `RootQuote.option statement candidate
+  return {result with proof,usage := (← get).budget.consumed}
 
 /-- Run checked quotation actions in one reflection request. Their callbacks
 and proof construction share its budget; the returned usage includes charges

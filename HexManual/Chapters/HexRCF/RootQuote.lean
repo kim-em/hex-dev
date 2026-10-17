@@ -9,6 +9,7 @@ import HexRCF.RealCoefficients
 import HexRCF.ScalarQuoteCases
 import HexRCF.SharedQuoteCases
 import HexRCF.RecursiveScalarPublic
+import HexRCF.SignPacketQuote
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -322,3 +323,60 @@ and annotated cases use 12,792 and 12,801 proof nodes. A successful inner declin
 and retry uses 15,069 proof nodes and retains all three 19-node source charges.
 This helper consumes explicit facts; it does not authenticate original source expressions, discover
 predecessor histories, produce missing sign evidence or install the general tactic.
+
+`ScalarPacket.quoteWith` checks a supplied optional sign-packet reader. Its
+prepared context has a checked equality to the original context; a caller can
+first quote a parent descriptor, freeze that data, and prove the equality.
+The helper replaces only that context while reading the supplied packet, then
+transports acceptance back to the exact original reader and restores its fact.
+The original model, codec, polynomial, sign and graph arguments remain attached.
+
+```lean
+open Lean in
+open Hex.RCF.RealCoefficients in
+meta def quoteSuppliedSignPacket
+    (reader prepared same : Expr)
+    (predecessor : RootQuote.DecoderM) :=
+  RootQuote.runWith
+    (ScalarPacket.quoteWith
+      reader prepared same predecessor)
+```
+
+The regression quotes the parent descriptor and one packet for the polynomial
+−2X at the selected positive square root of 2. The resulting fact alone supplies
+the sign evidence for the canonical coefficient decoder:
+
+```lean
+open Hex.RealClosure in
+open Hex.RCF.SelectedRootTests in
+open Hex.RCF.SignPacketQuote in
+example :
+    Option.map Data.original.value
+      (Except.toOption
+        ((Algebraic.Element.codec
+          (context := Data.native)
+          Data.base.codec).decode literal)) =
+      some (-2 * Real.sqrt 2) :=
+  decoded_value
+```
+
+Quoting the parent and packet in one request consumes 54,777 proof nodes.
+With the frozen parent and its equality already available, the packet consumes
+32,815; a limit one node lower exhausts at the final 23-node charge. Decoding the
+coefficient from that fact consumes 966 more nodes in its separate request.
+The controls check caller metavariable restoration after successful decoding
+and final exhaustion, reject an empty graph, and reject a forged context equality
+before decoding. A valid graph paired with the wrong claimed sign or polynomial
+is also rejected after decoding, restoring the mutated caller. The importing
+audit excludes the old fixture fact list. Accounting sums the syntax checked at
+each stage, including repeated occurrences; these are not unique DAG-node counts,
+timing or scaling comparisons.
+
+The caller still supplies and authenticates the parent history and packet.
+Predecessor arithmetic retains its supplied implementation; this helper does
+not establish strict compiled missing-record rejection for deeper parents or
+install the general source-goal tactic.
+The wholly frozen public-module packet example additionally requires a public
+signature-codec literal equation from the owner. The passing fixture and its
+fresh importing audit use the existing legacy fixture imports; they do not
+establish that public-module path.
