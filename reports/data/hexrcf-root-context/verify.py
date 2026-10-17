@@ -34,6 +34,8 @@ if args.check_head:
     untracked = git('ls-files', '--others', '--exclude-standard').decode().splitlines()
     assert all(path.startswith('reports/') for path in changed + untracked), changed + untracked
     assert sha((repo / 'reports/hexrcf-root-context.md').read_bytes()) == record['report_sha256']
+    for path, expected in record['reports'].items():
+        assert sha((repo / path).read_bytes()) == expected, path
 for path in record['unchanged_guards']:
     assert git('show', record['baseline_commit'] + ':' + path) == git(
         'show', record['source_commit'] + ':' + path), path
@@ -51,6 +53,24 @@ text = log('integration')
 match = re.search(r'root context actual bodies: (\d+) theorems/(\d+) definitions; '
                   r'nonempty traces=(\d+)', text)
 assert match and list(map(int, match.groups())) == record['audit_counts']
+for prefix, key in [('root/header packet', 'header_counts'), ('frozen signature', 'signature_counts')]:
+    match = re.search(re.escape(prefix) + r' actual bodies: (\d+) theorems/(\d+) definitions; '
+                      r'nonempty traces=(\d+)', text)
+    assert match and list(map(int, match.groups())) == record[key]
+assert 'public scalar graph retains frozen numerical node and nested-moment signatures' in text
+assert 'ordinary module sign packet proofNodes=904273' in text
+for name, nodes in [('readFirst', 254), ('readSecond', 254), ('readProjected', 427)]:
+    assert f'frozen signature exact subject and exact/one-below budgets: Hex.RCF.FrozenSignature.{name}; nodes={nodes}' in text
+for name, binding in [('first', 'second_literal'), ('second', 'first_literal')]:
+    assert f'wrong frozen signature binding/subject rejected and caller restored: Hex.RCF.FrozenSignature.{name}/Hex.RCF.FrozenSignature.{binding}' in text
+assert 'different frozen signature payload declines; a later exact quotation succeeds' in text
+packet = git('show', record['source_commit'] + ':conformance/HexRCF/RootHeaderPacket.lean').decode()
+assert 'evidence.getUsedConstants.all constructors.contains' in packet
+assert 'mkRawNatLit' in packet and 'graphExpr' not in packet
+signature = git('show', record['source_commit'] + ':conformance/HexRCF/FrozenSignatureProofs.lean').decode()
+assert 'theorems == 23 && definitions == 7 && traces == 16' in signature
+assert '#[``Tower.rootData,``Dag.encode]' in signature
+assert 'dependencies.contains ``Tower.Signature.codec_literal' in signature
 for label in ['sign', 'polynomial', 'empty graph', 'node context', 'moment context']:
     assert 'public packet compiled rejection/quotation refusal/caller restoration: ' + label in text
 for message in [
@@ -82,13 +102,14 @@ assert all(value in memory for value in ['ActiveState=active', 'MemoryMax=343597
                                        'MemorySwapMax=0', 'OOMPolicy=kill'])
 inspection = json.loads((root / 'captures/root-context-inspection.json').read_text())
 assert {(item['label'], item['kind']) for item in inspection} == {
-    ('desktop', 'value'), ('desktop', 'boundary'), ('narrow', 'value'), ('narrow', 'boundary')}
+    ('desktop', 'signature'), ('desktop', 'value'), ('desktop', 'boundary'),
+    ('narrow', 'signature'), ('narrow', 'value'), ('narrow', 'boundary')}
 assert all(item['descendantOverflow'] <= 1 for item in inspection)
 section = json.loads((root / 'captures/root-context-section-overflow.json').read_text())
 assert {row['width'] for row in section} == {1440, 390}
 assert all(target['overflow'] <= 1 for row in section for target in row['targets'])
 document = json.loads((root / 'captures/root-context-document.json').read_text())
-assert document['currentPacket'] and document['currentTransport']
+assert document['currentPacket'] and document['currentTransport'] and document['currentFrozen']
 assert document['cubicSource'] == 'https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/RootQuoteSource.lean'
 print(f"Verified {len(record['artifacts'])} artifacts/{len(record['sources'])} sources, "
-      f"673/67/730 fresh bodies, packing budgets/restoration, five packet controls and four captures")
+      f"682/68/735 fresh bodies, 674/66/725 header bodies and 23/7/16 signature bodies, packing budgets/restoration, five packet controls and six captures")

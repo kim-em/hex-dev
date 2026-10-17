@@ -23,16 +23,20 @@ new root and proves positivity. The new packet/value closure rejects any
 dependency on the old fixture's `root_raw`, `subject_read` or
 `nativeRoot_read` identities.
 
-Default quotation now recognizes the actual canonical signature roundtrip,
+Default quotation recognizes the actual canonical signature roundtrip,
 using `Signature.codec_lawful` at the encoded signature argument. Two distinct
 signature subjects are tested; a proof for one cannot prove the other.
 A fixture-specific signature decoder is unnecessary for these expressions.
-This does not provide the separately requested public equation between an
-independently frozen numerical signature and its canonical encoding. The
-existing owner request remains necessary for that boundary.
+`SignatureQuote.decoder` additionally consumes the owner's public
+`Signature.codec_literal` equation and a checked full-literal binding. The
+cubic packet retains frozen numerical node and nested-moment signatures for
+its rational predecessor. Its exported evidence is required to contain only
+JSON constructors, integer constructors and raw natural literals. These
+serialization identities do not validate arbitrary registries, selected roots
+or origin histories, or freeze deeper algebraic frames.
 
-The importing audit rechecks 665 theorem bodies and 65 definitions in its
-explicitly declared source scope, with 720 nonempty diagnostic traces. Its
+The importing audit rechecks 674 theorem bodies and 66 definitions in its
+explicitly declared source scope, with 725 nonempty diagnostic traces. Its
 axiom closure is transitive and restricted to `propext`, `Classical.choice`
 and `Quot.sound`. The native-producer exclusion guard is unchanged. The
 scope includes the generated root/header bindings, packet acceptance and
@@ -43,9 +47,11 @@ not an assertion that every theorem in the repository was audited.
 | --- | ---: |
 | Original root and independently parsed header | 215,671 |
 | Exported root/header with checked named binding | 215,734 |
-| Subsequent original scalar-packet reader | 860,309 |
+| Subsequent original scalar-packet reader | 904,273 |
 | Coefficient decode using its packet fact | 3,249 |
 | Canonical signature roundtrip, either subject | 160 |
+| Frozen signature, either direct subject | 254 |
+| Frozen signature selected through an array projection | 427 |
 
 The root/header and subsequent packet requests are checked separately in the
 fixture. These counts include repeated expression occurrences; they do not
@@ -59,8 +65,10 @@ restoration. Packet controls independently check compiled rejection, ordinary
 quotation refusal and caller restoration for a wrong sign, a changed polynomial,
 an empty graph, a swapped node context and a swapped nested-moment context.
 
-The [retained record](data/hexrcf-root-header/) binds the validation and four
-inspected desktop/narrow captures to the committed implementation source.
+The [context record](data/hexrcf-root-context/) binds current validation and
+inspected desktop/narrow captures to its committed source. The separate
+[root/header record](data/hexrcf-root-header/) retains the canonical-roundtrip
+variant and its own source revision. Each verifier checks that record's source.
 Failed and preliminary attempts are retained separately from final validation.
 
 These are conformance and proof-construction diagnostics using reused build

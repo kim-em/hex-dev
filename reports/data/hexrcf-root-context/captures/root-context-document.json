@@ -1,5 +1,6 @@
 {
   "currentPacket": true,
   "currentTransport": true,
+  "currentFrozen": true,
   "cubicSource": "https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/RootQuoteSource.lean"
 }
