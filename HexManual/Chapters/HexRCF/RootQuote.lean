@@ -289,7 +289,9 @@ open Lean Hex.RealFormula in
 open Hex.RCF.RealCoefficients in
 meta def quoteSelectedReader
     (reader registry : Expr)
-    (factsFor : Expr → Reify.ReifyM (Option Expr)) :=
+    (factsFor :
+      Expr → Reify.ReifyM
+        (Option Expr)) :=
   RootQuote.run reader
     (ScalarQuote.decoderWith factsFor
       (fun expression =>
