@@ -28,8 +28,12 @@ private meta def refused (expected : String) (action : MetaM α) : MetaM Unit :=
 run_meta do
   let decoder : RootQuote.DecoderM := fun expression => do
     if expression.isConstOf ``Hex.RCF.DependentQuote.gate then return some (mkConst ``Hex.RCF.DependentQuote.gate_eq)
+    if expression.isConstOf ``Hex.RCF.DependentQuote.query then return some (mkConst ``Hex.RCF.DependentQuote.query_eq)
     return none
-  for name in [``Hex.RCF.DependentQuote.reader,``Hex.RCF.DependentQuote.nested] do
+  for name in [``Hex.RCF.DependentQuote.reader,``Hex.RCF.DependentQuote.nested,
+      ``Hex.RCF.DependentQuote.continued,``Hex.RCF.DependentQuote.queried,
+      ``Hex.RCF.DependentQuote.boolReader,``Hex.RCF.DependentQuote.multiple,
+      ``Hex.RCF.DependentQuote.independent] do
     let sentinel ← mkFreshExprMVar (mkConst ``Nat)
     let levelSentinel ← mkFreshLevelMVar
     let before ← getMCtx
@@ -70,7 +74,21 @@ run_meta do
     let axioms ← collectAxioms proof.getAppFn.constName!
     unless axioms.all (fun name => [``propext,``Classical.choice,``Quot.sound].contains name) do
       throwError "unexpected dependent-major axioms: {axioms}"
+    withExporting (isExporting := true) do
+      addDecl (.thmDecl {name := name.appendAfter "_checked",levelParams := [],type := statement,value := proof})
     logInfo m!"dependent major checked {name}; nodes={result.usage.proofNodes}; axioms={axioms}"
+run_meta do
+  let decoder : RootQuote.DecoderM := fun expression => do
+    if expression.isConstOf ``Bool.true || expression.isConstOf ``Bool.false then
+      throwError "literal callback was consulted"
+    if expression.isConstOf ``Hex.RCF.DependentQuote.gate then
+      return some (mkConst ``Hex.RCF.DependentQuote.gate_eq)
+    return none
+  let .ok _ ← RootQuote.runWith
+      (RootQuote.quoteOptionWith (mkConst ``Hex.RCF.DependentQuote.reader) decoder)
+    | throwError "literal-aware dependent quotation declined"
+  logInfo "dependent major: literal Booleans bypass the callback"
+
 run_meta do
   let sentinel ← mkFreshExprMVar (mkConst ``Nat)
   let levelSentinel ← mkFreshLevelMVar
@@ -96,6 +114,7 @@ run_meta do
       throwError "dependent refusal retained caller state"
   let decoder : RootQuote.DecoderM := fun expression => do
     if expression.isConstOf ``Hex.RCF.DependentQuote.gate then return some (mkConst ``Hex.RCF.DependentQuote.gate_eq)
+    if expression.isConstOf ``Hex.RCF.DependentQuote.query then return some (mkConst ``Hex.RCF.DependentQuote.query_eq)
     return none
   let .ok plain ← RootQuote.runWith
       (RootQuote.quoteOptionWith (mkConst ``Hex.RCF.DependentQuote.reader) decoder)
@@ -139,7 +158,7 @@ run_meta do
         return none)
   unchanged
   refused "non-proof argument" do
-    RootQuote.runWith (RootQuote.quoteOptionWith (mkConst ``Hex.RCF.DependentQuote.unsupported) decoder)
+    RootQuote.runWith (RootQuote.quoteOptionWith (mkConst ``Hex.RCF.DependentQuote.dependentData) decoder)
   unchanged
   logInfo "dependent major: charged decline, wrong proof, terminal failure, decline-only and non-proof trailing controls checked"
 end Hex.RCF.DependentQuote

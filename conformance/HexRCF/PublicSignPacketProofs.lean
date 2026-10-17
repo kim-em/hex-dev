@@ -70,7 +70,7 @@ run_meta do
             ``Descriptor.ofReplay?] then
         throwError "public packet reduced producer {producer}: {count}; body={name}"
       if !diagnostics.unfoldCounter.isEmpty then traces := traces+1
-    unless theorems == 646 && definitions == 67 && traces == 703 do
+    unless theorems == 656 && definitions == 67 && traces == 713 do
       throwError "public packet body inventory changed: {theorems}/{definitions}/{traces}"
     unless (← (← getEnv).getLocalConstantInfos).map (·.name) == originalNames do
       throwError "public packet audit retained declarations"

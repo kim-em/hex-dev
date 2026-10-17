@@ -409,11 +409,17 @@ example : 0 < coefficientReal :=
 
 For a dependent match, quotation moves trailing branch-equality proofs along
 the checked equation for the match's subject. This uses ordinary equality
-elimination and requires a fixed result type; trailing data arguments and
-varying result types remain unsupported. During replay-law conversion, an
-explicit checked function boundary is first kept abstract, then instantiated
+elimination with an abstract subject, then instantiates the checked equation.
+Moved proofs are checked separately before later replay steps. The result type
+must stay fixed. Independent trailing data is retained; data whose type depends
+on the subject or its branch proofs remains unsupported. During replay-law
+conversion, an explicit checked function boundary is first kept abstract, then instantiated
 with the actual function and its public equation. The fresh importing audit
 checks the resulting private bodies as well as their full axiom closure.
+Codec-dependent branch proofs are generalized with the codec constructor during
+reader conversion, including successive canonical decodes. A custom callback
+should propose the exact demanded read expression. Literal Boolean values are
+handled without consulting that callback.
 Wrong signs, changed polynomials and context swaps in either nodes or nested
 moments are checked refusal cases. These helpers consume supplied histories
 and evidence; they do not install the general real-coefficient tactic.
