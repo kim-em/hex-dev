@@ -50,8 +50,11 @@ run_meta withLocalDeclD `x (mkConst ``Int) fun x => do
 - `reflectRingBatch` reifies every input with `Lean.Meta.Sym.Arith.reifyRing?`
   inside one `SymM.run`, seals the atom environment once at size `n`,
   converts every reflected expression to a term list over `Hex.Mono n`
-  through `Expr.toPoly` (or `Expr.toPolyC` when Lean supplies characteristic
-  evidence), and reconstructs an interpretation proof for each entry.
+  through guarded `Sym.Arith.toPoly?` expansion, using characteristic evidence
+  when available, and reconstructs an interpretation proof for each entry.
+  Intermediate polynomials must fit the remaining term budget; successful
+  conversions charge their final term count. Coefficient growth is checked
+  before expansion.
 - `reifyCommRing`, `reifyCommSemiring`, `sealAtoms`, `convert`, and
   `Conversion.mkProof` expose the same steps to a session over any monad that
   lifts `SymM`, with `MonadMkVar` and `MonadGetVar` supplied for the batch.
