@@ -68,8 +68,24 @@ observations = {
     'browser': observation('sign-packet-browser-2.log', 'Saved sign-packet desktop/narrow screenshots')}
 policy = (T / 'sign-packet-memory-policy.txt').read_text()
 assert all(s in policy for s in ['ActiveState=active', 'MemoryMax=34359738368', 'MemorySwapMax=0'])
+statuses = json.loads((T / 'sign-packet-metadata-results-4.json').read_text())
+assert len(statuses) == 6
+codes = {item['name']: item['exit_code'] for item in statuses}
+assert set(codes) == {'dag', 'copyright', 'lines', 'admissions', 'relative', 'diff'}
+assert all(code == 0 for code in codes.values()), codes
+link_count = int(re.match(r'(\d+) relative filesystem links',
+    (T / 'sign-packet-metadata-relative-4.log').read_text()).group(1))
+metadata = {key: codes[name] for key, name in [
+    ('dag', 'dag'), ('copyright', 'copyright'), ('line_counts', 'lines'),
+    ('named_admissions', 'admissions'), ('diff_against_main', 'diff')]}
+metadata.update(relative_filesystem_links=link_count, after_git_tracking=True,
+    logs='logs/sign-packet-metadata-*-4.log.gz', status_record='metadata/tracked-results-4.json')
 for source in sorted(T.glob('sign-packet-*.log')):
+    if '-ci-watch-' in source.name:
+        continue  # A running observer is not a completed evidence artifact.
     keep(source, 'logs/' + source.name + '.gz', True)
+keep(T / 'sign-packet-metadata-results-4.json', 'metadata/tracked-results-4.json')
+keep(T / 'sign-packet-ci-final-e6d708.json', 'ci/initial-e6d708-jobs.json')
 for name in ['root-table-pr-landed-ae509.json', 'root-table-ci-final-ae509.json',
              'root-table-landed-verification-ae509.json', 'root-table-landed-comment.md']:
     keep(T / name, 'prerequisite/' + name)
@@ -109,7 +125,14 @@ record = {
               'temporary_audit_copies_discarded': True,
               'body_modules': ['HexRCF.SignPacketQuote', 'HexRCF.RealCoefficients.RootQuote',
                                'HexRCF.RealCoefficients.ScalarPacket']},
-    'metadata': {'dag': 0, 'copyright': 0, 'line_counts': 0, 'named_admissions': 0, 'diff_against_main': 0, 'relative_filesystem_links': 59, 'logs': 'logs/sign-packet-metadata-*-3.log.gz'},
+    'metadata': metadata,
+    'initial_ci_failure': {'run': 39010310784, 'job': 117331273716,
+        'head': 'e6d70874489ca098fbc94552ef07bd5dd5fcf4dd',
+        'step': 'Run python3 scripts/check_copyright_headers.py',
+        'cause': 'A raw renderer snapshot had a .lean extension and no copyright header. Initial checks preceded git tracking of the evidence files.',
+        'fix': 'Keep identical bytes/hash under .lean.txt and capture all six metadata check exits after tracking.'},
+    'probe_aliases': {'probes/sign-packet-public-active-probe.lean.txt':
+        'probes/sign-packet-public-encoded-nested-blocked.lean.txt'},
     'public_module_acceptance': False,
     'base_umbrella_matches_main': subprocess.check_output(['git','show','6c8a9a35f83fe2e75a71247d79a7cef615126118:HexRCF.lean'],cwd=R) == (R/'HexRCF.lean').read_bytes(),
     'owner_request': 'https://github.com/kim-em/hex-dev/issues/10378#issuecomment-6230331731',
@@ -136,6 +159,8 @@ record = {
                    'Fully frozen public-module replay remains blocked on an owner codec equation; encoded variants reach a later Boolean boundary.',
                    'No generic source/provider/predecessor discovery, general tactic/completeness, strict deeper compiled replay or inverse/xgcd repair.']}
 (D / 'context.json').write_text(json.dumps(record, indent=2) + '\n')
+for alias, original in record['probe_aliases'].items():
+    assert (D / alias).read_bytes() == (D / original).read_bytes()
 for row in artifacts:
     data = (D / row['path']).read_bytes()
     assert sha(data) == row['sha256']

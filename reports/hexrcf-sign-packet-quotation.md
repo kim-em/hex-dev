@@ -11,8 +11,8 @@ restore the fact in the original context. Its model, coefficient codec,
 polynomial, claimed sign and graph arguments retain their original expressions.
 The context binder is identified by its name and checked type. No owner
 arithmetic, decoder representation or mathematical hypothesis changes.
-The optional-reader bridge operates on `Type` data, as do the family records;
-it does not claim support for higher-universe payloads.
+The `fromOption` and `option_eq` definitions operate on `Type` data, as do the
+family records; they do not claim support for higher-universe payloads.
 
 The selected positive square-root fixture quotes the parent and the packet for
 −2X. Its resulting fact alone supplies the sign evidence for coefficient
