@@ -94,7 +94,9 @@ calls from the supplied data. Scalar recognition beyond the rational base, sourc
 authentication and context reconstruction remain separate work.
 
 A reader that rejects its input or replay returns structured invalid-provider
-evidence. Non-readers and unsupported shapes raise terminal exceptions. An exhausted
+evidence. Non-readers and unsupported shapes raise terminal exceptions. A reader hiding
+its canonical predecessor codec returns invalid evidence with provider key
+`RootQuote.boundary`; it is a terminal caller-shape error. An exhausted
 reflection budget remains exhaustion; exceptions, heartbeat limits, recursion
 limits and cancellation remain terminal. No error selects another solver.
 The failure regressions include a changed count with its unchanged matrix,
@@ -121,13 +123,13 @@ and its checked equation. The original reader expression must expose that
 predecessor codec; expand a hiding definition first. Dependent proof terms may
 prevent abstraction; type and kernel failures remain terminal. A late rejection restores
 the completed callback's auxiliaries. The fresh importing audit rechecks all
-46 reachable callback/module theorem bodies and 12 definitions, forbidding
+47 reachable callback/module theorem bodies and 14 definitions, forbidding
 both native producers and canonical-codec unfolding. Exact and one-below nested
-budgets also cover the added transport work: 9,141 proof nodes, with exhaustion
-at the final 1,006-node charge after 8,135 nodes were consumed. The predecessor
+budgets also cover the added transport work: 9,143 proof nodes, with exhaustion
+at the final 1,006-node charge after 8,137 nodes were consumed. The predecessor
 callback is required to run exactly once and retain 17 source nodes.
 
-All quotation regressions use `maxHeartbeats := 12000000`. The original root
+All quotation regressions use `maxHeartbeats := 12000000`. The original root and rational
 cases use `maxRecDepth := 8192`; scalar, shared, callback/module examples and
 fresh body audits use depth 32768. Success under Lean's default limits has
 not been established. Each rewrite motive contains the current reader, so
@@ -197,7 +199,9 @@ literals and trailing polynomial zeros also reject. A successful call preserves
 the caller's metavariables. The ordinary bridge is tested in a `module` consumer
 that imports only the optional umbrella. A direct `ScalarQuote` module consumer
 also runs the actual polynomial quotation helper on zero and nonzero stored
-polynomials and uses its emitted proofs in ordinary theorems. The nested
+polynomials. A separate importing module consumes the nonzero equation.
+Public compiled data definitions keep generated proof names out of exported
+equation types. The nested
 predecessor callbacks are tested separately in the importing audit.
 Assigned input metavariables are instantiated before size accounting; expanded
 readers, literals and facts have the same charges through assigned metavariables.
@@ -252,8 +256,8 @@ The fresh importing audit pins seven reachable theorem bodies and three data
 definitions, their actual owner refinement and supplied sign evidence, and
 the complete standard-three axiom closure. All pass the producer-reduction guard, which also forbids canonical
 `Element.codec` unfolding. This
-polynomial quote consumes 1,577 proof nodes; composing scalar and polynomial
-quotation consumes 2,395 in the same request. Assigned polynomial reader
+polynomial quote consumes 1,579 proof nodes; composing scalar and polynomial
+quotation consumes 2,397 in the same request. Assigned polynomial reader
 metavariables have the same charges as their expanded inputs.
 
 `RootQuote.runWith` supplies the transaction for a sequence of `quoteWith`

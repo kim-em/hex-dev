@@ -30,7 +30,7 @@ The [case driver](../conformance/HexRCF/SharedQuoteCases.lean) restores both
 positions of a polynomial containing repeated coefficient −2√2. Its exact
 stored coefficients and the first coefficient's own selected-real value are
 proved. The [fresh importing audit](../conformance/HexRCF/SharedQuoteConformance.lean)
-re-adds six reachable theorem bodies and three data definitions to the ordinary
+re-adds seven reachable theorem bodies and three data definitions to the ordinary
 kernel with enabled producer diagnostics. All pass the existing producer guard;
 the complete transitive axiom closure is exactly `propext`, `Classical.choice`
 and `Quot.sound`. Definition checks validate typing and reductions during that
@@ -38,34 +38,84 @@ check; they do not evaluate or normalize stored data or establish the absence
 of unexecuted producer calls. Actual owner refinement/sign laws and the supplied checked
 scalar packet are required dependencies. An ordinary `module` consumer through
 the umbrella also checks the emitted reader bridge. The direct ScalarQuote
-module consumer runs the actual polynomial helper and uses its emitted proof
-in an ordinary theorem. Emitted scalar and polynomial data definitions are
+module consumer runs the actual polynomial helper on both empty and stored
+nonzero polynomials, and uses its emitted proofs in ordinary theorems. Emitted scalar and polynomial data definitions are
 also explicitly compiled for compiled clients.
 
-The finite scalar quote consumes 818 proof nodes, the polynomial quote 1,066,
-and the two composed in one request 1,884. These counts are asserted in the
+The finite scalar quote consumes 818 proof nodes, the polynomial quote 1,579,
+and the two composed in one request 2,397. These counts are asserted in the
 case driver. Continued/exact/one-below budgets,
 post-quotation source charges, charged callback decline, missing facts,
 terminal callback failure and late rejection after successful polynomial
 quotation are checked. These are request-accounting counts, not claims of
 physical sharing or expanded execution cost.
 
-Canonical `Element.codec` decoding stays protected throughout replay. A
+Canonical `Element.codec` decoding with an explicit codec head stays protected
+throughout replay. Expand codec aliases first; that protection excludes aliases. A
 callback must supply the exact checked decode equation, or quotation fails
 closed. `DecoderM` declines only by returning `none`; a structured error is
 terminal even when its constructor is named `providerDeclined`. The nested
 polynomial callback driver uses an existing selected-root extension and
-requires actual predecessor callback calls with their retained source charges.
+requires exactly one predecessor callback and its retained 17 source-node charge.
 It also checks a protected bare decoder, a wrong sign only in the second
 coefficient, trailing zero coefficients and malformed polynomial heads, with
 failure-state restoration. The importing kernel audit additionally forbids
-canonical `Element.codec` reduction. All 18 reachable callback/public-module
-theorem bodies and eight definitions pass that stronger guard. The exact
+canonical `Element.codec` reduction. All 47 reachable callback/public-module
+theorem bodies and 14 definitions pass that stronger guard. The exact
 demanded decode helper `quoteDecodeWith` and nested step transport check
 projection equalities with an abstract codec, then apply the concrete codec and
 its checked equation. Original readers must expose that codec in their syntax;
 a late hidden-codec refusal restores completed callback auxiliaries. Nested
-exact/one-below budgets charge the added transport work.
+exact/one-below budgets pin 9,143 proof nodes and the final 1,006-node charge
+after 8,137 consumed nodes. Structured `providerDeclined` is tested as terminal;
+ordinary negative tests rethrow heartbeat/depth/internal failures. Unsupported
+dependent proof abstraction remains a terminal type/kernel failure.
+
+Polynomial quotation reconstructs the exact decoded coefficient vector as a
+`DensePoly` with a checked normalized-vector invariant. An empty vector needs no
+scalar evidence; the final stored nonzero coefficient uses the owner's
+`restore_sign` and `sign_eq_zero` laws. A trailing zero rejects. The public
+`polynomialAccepted` bridge composes the existing `ofCoeffs_toArray` law and
+actual `readPoly` definition, so its kernel proof does not compute
+normalization or compare coefficients through dependent array-bound proofs.
+The full codec argument spine and original zero/equality instances survive.
+Exploratory direct field-projection, simplifier and definitional-abstraction
+attempts failed; no such branch or diagnostic printing remains in production.
+
+At source `ce6f235e67e3f181755e2a82996d06d179bfef03`, the hardened
+14,343-job library/compatibility/audit/manual selection passes in 3 min 15.317 s,
+CPU 3 min 56.863 s, peak 2.3 GiB/no swap. A separate ordinary importing module
+consumes the emitted nonzero polynomial equation. Public compiled data names
+keep generated private proof names out of its exported type; an initial inline
+export failed that consumer and remains retained. The 47/14 audit includes this
+consumer. New theorem applications pass the original instances positionally;
+owner signatures are checked. The empty-vector law avoids inspecting a reduced
+proposition by argument position, and two new Meta reductions are charged.
+
+The final 14,322-job render passes in 11.806 s, CPU 13.858 s, peak 1.5 GiB/no
+swap. All ten final desktop/narrow captures were opened; changed quotation
+content fits 1440/390 px. Primary and supplemental capture runs peak at 8.1 GiB
+and 6.2 GiB respectively without swap. Source/log/capture hashes and exact
+metadata commands are in the [hardening record](data/hexrcf-shared-quotation/hardening/context.json).
+All five source checks and report relative-link checks pass. These cached
+build observations are not scaling or matched performance comparisons.
+
+At source `23df34b81fe303b671c2820b889833f8e3fdc7d9`, the full14,343-job
+selection passes in4min8.465s, CPU5min29.964s, peak3.2GiB/no swap. It includes
+both libraries,46/12 callback/module and7/3 shared audits, inherited13/3 scalar
+and42 named-constant bodies, rational/root/handler/reifier/decision compatibility
+and the complete manual. The full14,322-job manual render passes in15.908s,
+CPU15.674s, peak2GiB/no swap. All10 final desktop/narrow captures were opened;
+the changed quotation targets fit1440px/390px. Primary and supplemental browser
+passes peak at8.1GiB and4.9GiB respectively, without swap. The first final-render
+invocation used the repository directory instead of the scratch renderer and
+failed with an unknown target; its log remains retained.
+
+The [23df source-bound record](data/hexrcf-shared-quotation/review-final/context.json)
+retains source/artifact hashes, actual audit inventories, all completed public
+module and rewrite experiments, final logs, cap wrapper and captures. Metadata
+checks pass. Earlier records retain their source-specific counts and results;
+the new request counts are not physical-sharing, AB/BA or scaling evidence.
 
 At source `cb5f98ae9ef1c1afc994d39eeb45f0f1e8929729`, the full 14,342-job
 validation passes in 3 min 58.464 s, CPU 5 min 8.279 s, peak 3.3 GiB/no swap.
@@ -79,7 +129,7 @@ overflow claim follows. The primary browser pass peaks at 8 GiB and the policy
 capture at 2.8 GiB, both without swap. These cached-dependency observations are
 not matched comparisons or scaling results.
 
-The [current source-bound record](data/hexrcf-shared-quotation/review/context.json)
+The [earlier source-bound record](data/hexrcf-shared-quotation/review/context.json)
 retains selected source hashes, complete logs, failed setup/audit attempts,
 commands, inventories and captures with verified artifact digests. Its source
 commit identifies the full checkout. The initial nested audit exposed a
