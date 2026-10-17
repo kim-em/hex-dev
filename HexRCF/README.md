@@ -399,6 +399,12 @@ proves its selected real value and positivity without the old fixture's root
 identity. Canonical signature roundtrips use the existing public law at the
 actual encoded subject; fully numerical signature authentication remains a
 separate owner boundary. This does not construct arbitrary origin histories.
+`RootContext.packWith` assembles the actual native child from a closed retained
+parent and a checked descriptor, retaining the owner's serialization expression
+and checking its signature. The [ordinary-model regression](../conformance/HexRCF/RootContextConformance.lean)
+retains the coefficient's selected value and positive sign; its fresh audit
+also excludes serialization and graph encoding in the new packing bodies.
+This is checked typed-context construction, not fully frozen history assembly.
 `SectionQuote.finish` freshly reifies the original target and checks its matrix,
 valuation and ordered original-divisor identities before transporting a proof.
 The [fresh-source tests](../conformance/HexRCF/SectionProduceConformance.lean)

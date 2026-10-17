@@ -12,6 +12,7 @@ import HexRCF.RecursiveScalarPublic
 import HexRCF.SignPacketQuote
 import HexRCF.PublicSignPacketValues
 import HexRCF.RootHeaderValues
+import HexRCF.RootContextConformance
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -462,3 +463,37 @@ callback. It does not connect a separately frozen numerical signature to that
 encoding. The latter still requires the owner's public literal bridge. These
 helpers consume supplied readers and histories; they do not discover an
 arbitrary real source's selected embedding or install the general tactic.
+
+
+{name Hex.RCF.RealCoefficients.RootContext.packWith}`RootContext.packWith`
+then assembles an actual native root context from a closed retained parent and
+its checked descriptor. It keeps the existing native operations, checks the
+child signature, and returns the frame's encoding equation. The frame remains
+the owner's `rootData` serialization expression. Constructing this typed
+context does not freeze that expression or authenticate an arbitrary history.
+
+The same decoded coefficient can be interpreted through the owner's ordinary
+real model of the packed context, retaining its selected value and sign:
+
+```lean
+open Hex.RCF.RootContextCases in
+example : model.value
+    Hex.RCF.RootHeaderPacket.coefficient =
+    Hex.RCF.RootHeaderPacket.realRoot :=
+  value_checked
+
+open Hex.RCF.RootContextCases in
+example : 0 < model.value
+    Hex.RCF.RootHeaderPacket.coefficient :=
+  positive_checked
+```
+
+The packing budget covers context and signature proof construction. Model
+construction is checked separately; its cost is not included in that packing
+count. Exact and one-node-below budgets are tested. A descriptor for the parent
+carrier cannot be packed into its child carrier, and the failing call restores
+caller assignments and declarations. Fresh importing checks audit the actual
+metadata, model and value proofs. The new packing bodies must not evaluate
+root-data serialization or graph encoding, in addition to the existing native
+producer exclusions. Fully numerical frame/history reconstruction and the
+general source-goal tactic remain separate obligations.
