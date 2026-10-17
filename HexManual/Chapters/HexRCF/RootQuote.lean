@@ -299,25 +299,27 @@ meta def quoteSelectedReader
 
 The two-level regression checks one visit to its selected context followed by
 one visit to its selected predecessor. Its lookup adds 19 source nodes per visit;
-all 38 callback charges are retained. It uses 14,374 proof nodes; one node less exhausts
+the two charges retain 38 source nodes. It uses 14,374 proof nodes; one node less
+exhausts
 at the final 925-node charge after 13,449 consumed nodes. Missing facts decline
-without invoking another scalar decoder after the refusal. Wrong-context facts, kernel errors
-and exhaustion remain terminal and restore the enclosing state.
+without proposing another decode to the base callback after refusal.
+Wrong-context facts and exhaustion remain terminal and restore the enclosing state.
+Generic kernel-error restoration is covered by the root-quotation regressions.
 
 An ordinary `module` consumer also runs the callback factory and exports the
 checked scalar reader equation. Its sign follows from the owner's restoration
 law, without unfolding the stored element's implementation:
 
 ```lean
-open Hex.RealClosure.Algebraic in
 open Hex.RCF.RecursiveScalarPublic in
-example : restored.sign = 1 := by
-  unfold restored
-  exact Element.restore_sign _ _ _ _
+example : restored.sign = 1 := sign
 ```
 
-A fresh importing audit checks the two-level fixture and this public consumer:
-51 actual theorem bodies and five definitions, complete standard-three axiom
-closure, and no native producer or canonical-codec reduction. This helper consumes
-explicit facts; it does not authenticate original source expressions, discover
+A fresh importing audit checks the two-level fixture and this public consumer,
+including accepted annotated decodes and a charged decline followed by acceptance:
+87 actual theorem bodies and five definitions, complete standard-three axiom
+closure, and no native producer or canonical-codec reduction. The direct constant
+and annotated cases use 12,792 and 12,801 proof nodes. A successful inner decline
+and retry uses 15,069 proof nodes and retains all three 19-node source charges.
+This helper consumes explicit facts; it does not authenticate original source expressions, discover
 predecessor histories, produce missing sign evidence or install the general tactic.
