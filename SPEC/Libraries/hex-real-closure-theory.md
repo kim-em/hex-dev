@@ -1448,9 +1448,12 @@ points, using the independent finite operand reconstruction.
 discovery templates at the shared readers and traverses actual checked private
 and opaque proof bodies,
 allowing only `propext`, `Classical.choice` and `Quot.sound` and rejecting the
-whole-field reference constructions. The complete fixed-fixture proof is locally
-validated. CI compiles shared finite/staged reconstruction helpers and scans all
-`Guard*` source modules and their imports for admissions. The shared dependency
+whole-field reference constructions. It also rejects declarations originating
+in `KernelReplay.FrameOperand`, except its parametric constant constructor and
+proof auxiliaries. The complete fixed-fixture proof is locally validated.
+CI compiles shared finite/staged reconstruction helpers. Its admission scan
+discovers Lean modules beneath `experiments/KernelReplay/Guard*` files or
+directories and checks their import cones. The shared dependency
 auditor and small rejection controls are CI-built; the full guard fixture is
 compiled locally. Reproduction commands and the exact evidence scope are recorded in
 [`reports/real-closure-joint-replay.md`](../../reports/real-closure-joint-replay.md).

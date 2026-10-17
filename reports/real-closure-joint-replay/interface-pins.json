@@ -3,7 +3,11 @@
   "experiments/KernelReplay/GuardJointAudit.lean": "dfe684996a699883c6077b85b8ba2e7df6ab1050d959ad1d63f472bfa490d2e1",
   "experiments/KernelReplay/GuardJointExport.lean": "97e90a4e42170625e7640744e130c412a99a742ade91b6d413c5e08fe846a98b",
   "experiments/KernelReplay/GuardJointPublic.lean": "50ad775f9e34967bb7228e05538bc2e18d4f4ace958de852e17542861890c79a",
-  "experiments/KernelReplay/GuardJointUse.lean": "d06467d5d989cf1c9e44bc5a3b72947e18b91e40eccc1dd1e87f273f88b8b993",
-  "experiments/KernelReplay/GuardJointPublicAudit.lean": "b4927a9ab9e97d4e6b822b6226871dca3ba7c5883ec939a74862abd8ee36268a",
-  "experiments/KernelReplay/FramePublic.lean": "ce1800d244eb884c2b5e07becc802349735706ee45c8b552cc8a1b91c936e9fd"
+  "experiments/KernelReplay/GuardJointUse.lean": "f92d29341c1cfd9f5caf92c45d1fa334517079db8f3f8f6bcb88d8c2be355fbc",
+  "experiments/KernelReplay/GuardJointPublicAudit.lean": "392cbd869152bdc37b2092ad1c59d1018f93afc46bca76c2611522883869dc0a",
+  "experiments/KernelReplay/FramePublic.lean": "ce1800d244eb884c2b5e07becc802349735706ee45c8b552cc8a1b91c936e9fd",
+  "experiments/KernelReplay/GuardDependencyAudit.lean": "3f4bd7726d97cf1f5d98fe4082f299b695681593aaf800ba3c8801af12a6f46a",
+  "experiments/KernelReplay/GuardDependencyControls.lean": "b7ec496f43cf5e7c1feacf021b5a4fb793cfc5d223813544b844ee885e6c6fe5",
+  "HexRealClosure/TowerContext.lean": "6ef8b87b2d81cb177505a4bbc88befa078b20578cedd49e836d850753c203ee3",
+  "HexRealClosure/SignatureCodecTests.lean": "ffc72777523ac0e92b563481804bdfb581fb0173fe7a021009737d57959b4462"
 }

@@ -1,0 +1,109 @@
+#!/usr/bin/env python3
+"""Run one #10378 experiment with an aggregate, kernel-enforced memory cap."""
+
+import fcntl
+import json
+import os
+from pathlib import Path
+import shutil
+import signal
+import subprocess
+import sys
+import uuid
+
+LIMIT = 8 * 1024**3
+SLICE = 'hex10378experiments.slice'
+TASK = Path('/home/kim/.codex/tasks/hex-10378')
+
+
+def main():
+    args = sys.argv[1:]
+    if args and args[0] == '--child':
+        args = args[1:]
+        group = Path('/proc/self/cgroup').read_text().strip().split(':', 2)[2]
+        root = Path('/sys/fs/cgroup') / group.lstrip('/')
+        observed = {
+            'cgroup': group,
+            'memoryMaxBytes': (root / 'memory.max').read_text().strip(),
+            'memorySwapMaxBytes': (root / 'memory.swap.max').read_text().strip(),
+            'oomGroup': (root / 'memory.oom.group').read_text().strip(),
+            'sharedMemoryMaxBytes': (root.parent / 'memory.max').read_text().strip(),
+            'sharedMemorySwapMaxBytes': (root.parent / 'memory.swap.max').read_text().strip(),
+        }
+        if (observed['memoryMaxBytes'] != str(LIMIT)
+                or observed['memorySwapMaxBytes'] != '0'
+                or observed['oomGroup'] != '1'
+                or root.parent.name != SLICE
+                or observed['sharedMemoryMaxBytes'] != str(LIMIT)
+                or observed['sharedMemorySwapMaxBytes'] != '0'):
+            raise SystemExit('Refusing experiment: cgroup limits did not apply.')
+        print(json.dumps({'enforcedExperimentLimits': observed}), file=sys.stderr, flush=True)
+        # systemd considers SIGTERM a clean service stop. Keep a parent that
+        # converts child signals to explicit failing exit codes instead.
+        child = None
+        interrupted_by = None
+        def stop_child(signum, frame):
+            nonlocal interrupted_by
+            interrupted_by = signum
+            if child is not None:
+                try:
+                    child.send_signal(signum)
+                except ProcessLookupError:
+                    pass
+        for signum in (signal.SIGTERM, signal.SIGHUP, signal.SIGINT):
+            signal.signal(signum, stop_child)
+        if interrupted_by is not None:
+            return 128 + interrupted_by
+        child = subprocess.Popen(args)
+        if interrupted_by is not None:
+            stop_child(interrupted_by, None)
+        code = child.wait()
+        if interrupted_by is not None:
+            return 128 + interrupted_by
+        return 128 - code if code < 0 else code
+    if not args:
+        raise SystemExit('Usage: run-limited-experiment COMMAND [ARG ...]')
+    executable = shutil.which(args[0])
+    if executable is None:
+        raise SystemExit(f'Command unavailable: {args[0]}')
+    args[0] = executable
+    with (TASK / 'limited-experiment.lock').open('a') as lock:
+        try:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise SystemExit('Another limited experiment is running; use its existing monitor.')
+        subprocess.run([
+            'systemctl', '--user', 'set-property', '--runtime', SLICE,
+            'MemoryAccounting=yes', 'MemoryMax=8G', 'MemorySwapMax=0',
+        ], check=True)
+        unit = 'hex10378-experiment-' + uuid.uuid4().hex
+        command = [
+            'systemd-run', '--user', '--wait', '--pipe', '--collect',
+            '--unit=' + unit, '--working-directory=' + os.getcwd(),
+            '--slice=' + SLICE,
+            '--property=MemoryAccounting=yes', '--property=MemoryMax=8G',
+            '--property=MemorySwapMax=0', '--property=OOMPolicy=kill',
+            '--property=KillMode=control-group', '--property=TasksMax=128',
+        ]
+        for name in ('PATH', 'LEAN_CC', 'LD_LIBRARY_PATH', 'LAKE_HOME',
+                     'HEX_NATIVE_ASSEMBLY_TRACE', 'HEX_NATIVE_RECORD_TRACE'):
+            if name in os.environ:
+                command.append('--setenv=' + name + '=' + os.environ[name])
+        command += [sys.executable, str(Path(__file__).resolve()), '--child', *args]
+        print(json.dumps({'experimentUnit': unit, 'aggregateMemoryLimitBytes': LIMIT}),
+              file=sys.stderr, flush=True)
+        process = subprocess.Popen(command)
+        def interrupted(signum, frame):
+            raise KeyboardInterrupt
+        for signum in (signal.SIGTERM, signal.SIGHUP):
+            signal.signal(signum, interrupted)
+        try:
+            return process.wait()
+        except BaseException:
+            subprocess.run(['systemctl', '--user', 'stop', unit], check=False)
+            process.wait()
+            raise
+
+
+if __name__ == '__main__':
+    sys.exit(main())

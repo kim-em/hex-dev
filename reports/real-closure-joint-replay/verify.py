@@ -48,8 +48,8 @@ def once(log, pattern, label):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--evidence', default='public-joint-main-v7-evidence')
-    parser.add_argument('--output', default='public-joint-main-v4-accepted')
+    parser.add_argument('--evidence', default='public-joint-main-v10-evidence')
+    parser.add_argument('--output', default='public-joint-main-v6-accepted')
     args = parser.parse_args()
     evidence, output = TASK / args.evidence, TASK / args.output
     require(evidence.parent == TASK and output.parent == TASK, 'Expected task-local directory names.')
@@ -60,6 +60,9 @@ def main():
     require(result['source_immutable_verified'] and result['accepted_original_inputs_verified'] == 1240,
             'Immutable source/frozen original verification failed.')
     require(result['compiled_target_olean_archived'], 'Actual target compiler artifact was not archived.')
+    require(result.get('lake_build_completed') is True and
+            result.get('process_killed_or_dumped') is False, 'No normal completed build.')
+    require(not (evidence / 'acceptance-rejection.json').exists(), 'This run was explicitly rejected.')
     require(not output.exists(), 'Refusing to overwrite an acceptance archive.')
     snapshot = json.loads((evidence / 'source.json').read_text())
     require(snapshot['worktree'] == str(WORK) and snapshot['target'] == TARGET, 'Wrong source provenance.')
@@ -80,7 +83,9 @@ def main():
         require(digest(ORIGINAL / name) == sha, f'Frozen original differs: {name}')
     prior = json.loads((TASK / 'public-joint-consumer-v1-accepted/accepted.json').read_text())
     log = (evidence / 'build.log').read_text()
-    pins = json.loads((TASK / 'public-joint-interface-v4-pins.json').read_text())
+    pins = json.loads((TASK / 'public-joint-interface-v6-pins.json').read_text())
+    for name, sha in pins.items():
+        require(snapshot['hashes'][name] == sha, f'Pinned checked source changed: {name}')
     for module in ['GuardJoint', 'GuardJointAudit']:
         name = f'experiments/KernelReplay/{module}.lean'
         require(snapshot['hashes'][name] == prior['source_sha256'][name],
@@ -94,31 +99,12 @@ def main():
     client = (WORK / 'experiments/KernelReplay/GuardJointUse.lean').read_text()
     require('public import KernelReplay.GuardJointPublic' in client and 'import all' not in client,
             'Witness extraction is not through the ordinary public interface.')
-    require('Exists.elim GuardJointPublic.exists_points' in client,
+    require('rcases GuardJointPublic.exists_points' in client,
             'Ordinary client does not extract the actual theorem witnesses.')
-    # Lake omits a quiet up-to-date consumer from a later audit's log.
-    # Bind the retained successful compilation to the exact current artifact
-    # and all its unchanged producer inputs, rather than inventing a log line.
-    client_evidence = TASK / 'public-joint-use-main-v15-evidence'
-    client_result = json.loads((client_evidence / 'result.json').read_text())
-    client_snapshot = json.loads((client_evidence / 'source.json').read_text())
-    require(client_result['exit_code'] == client_result['verification_exit_code'] == 0 and
-            client_result['source_immutable_verified'] and
-            client_result['accepted_original_inputs_verified'] == 1240 and
-            client_result['compiled_target_olean_archived'], 'Client compilation/archive failed.')
-    require(client_result['target'] == 'KernelReplay.GuardJointUse', 'Wrong compiled client.')
-    require(re.search(r'Built KernelReplay.GuardJointUse',
-                      (client_evidence / 'build.log').read_text()), 'No actual successful client compilation.')
-    allowed_changes = {'experiments/KernelReplay/GuardJointPublicAudit.lean',
-                       'SPEC/Libraries/hex-real-closure-theory.md'}
-    for name, sha in client_snapshot['hashes'].items():
-        require(digest(client_evidence / 'sources' / name) == sha, f'Archived client input changed: {name}')
-        if name not in allowed_changes:
-            require(snapshot['hashes'].get(name) == sha, f'Client producer input changed: {name}')
-    require(client_snapshot['tool_hashes'] == snapshot['tool_hashes'], 'Client compiler runner changed.')
-    for name, sha in client_result['artifacts'].items():
-        require(digest(WORK / name) == sha == digest(client_evidence / 'artifacts' / name),
-                f'Actual compiled client artifact changed: {name}')
+    require(re.search(r'(?:Built|Replayed) KernelReplay.GuardJointUse', log),
+            'Ordinary module consumer was not built/replayed successfully.')
+    require(re.findall(r'^public import (\S+)$', client, re.M) == ['KernelReplay.GuardJointPublic'],
+            'Client needs an additional explicit import beyond the public joint entrypoint.')
     require('theorem coordinates' in client and '#print axioms coordinates' in client,
             'Missing ordinary-client root/product theorem or its axiom guard.')
     export_source = (WORK / 'experiments/KernelReplay/GuardJointExport.lean').read_text()
@@ -130,8 +116,36 @@ def main():
     client_setup = json.loads((WORK / '.lake/build/ir/KernelReplay/GuardJointUse.setup.json').read_text())
     require(client_setup['name'] == 'KernelReplay.GuardJointUse' and client_setup['isModule'],
             'Witness extraction did not use an ordinary module compilation.')
-    require('KernelReplay.GuardJointPublicAudit' not in client_setup['importArts'],
-            'Changed audit source is a compiler input of the retained client.')
+    audit_source = (WORK / 'experiments/KernelReplay/GuardJointPublicAudit.lean').read_text()
+    require('let originals := GuardFrontier.templates.getState' in audit_source and
+            'let mut expected := originals[index]!' in audit_source,
+            'Guard statement check does not use raw original discovery templates.')
+    dependency_source = (WORK / 'experiments/KernelReplay/GuardDependencyAudit.lean').read_text()
+    require('env.getModuleIdxFor? name == some cachedModule' in dependency_source and
+            'checked.find? name' in dependency_source and '.opaqueInfo value' in dependency_source,
+            'Actual checked-body/module-origin audit changed.')
+    controls = once(log, r'cached operand controls: directType=true proofBody=true privateRecords=(\d+) genericConstant=true',
+                    'cached module controls')
+    bindings = once(log, r'public cached operand negative control: rejected=true originalBindings=(\d+)',
+                    'original native binding control')
+    require(int(controls) > 0 and int(bindings) > 0, 'No actual private cached records/bindings inspected.')
+    codec_evidence = TASK / 'signature-codec-public-v3-evidence'
+    codec_result = json.loads((codec_evidence / 'result.json').read_text())
+    codec_snapshot = json.loads((codec_evidence / 'source.json').read_text())
+    require(codec_result['exit_code'] == codec_result['verification_exit_code'] == 0 and
+            codec_result['source_immutable_verified'] and codec_result.get('lake_build_completed') is True and
+            codec_result.get('process_killed_or_dumped') is False and
+            codec_result['accepted_original_inputs_verified'] == 1240,
+            'Public full-signature consumer did not pass its checked build.')
+    for name in ['HexRealClosure/TowerContext.lean', 'HexRealClosure/SignatureCodecTests.lean']:
+        require(codec_snapshot['hashes'][name] == snapshot['hashes'][name] ==
+                digest(codec_evidence / 'sources' / name), f'Codec owner/client source changed: {name}')
+    require(codec_snapshot['tool_hashes'] == snapshot['tool_hashes'], 'Codec build runner changed.')
+    for name, sha in codec_result['artifacts'].items():
+        require(digest(WORK / name) == sha == digest(codec_evidence / 'artifacts' / name),
+                f'Codec consumer artifact changed: {name}')
+    codec_setup = json.loads((WORK / '.lake/build/ir/HexRealClosure/SignatureCodecTests.setup.json').read_text())
+    require(codec_setup['isModule'], 'Codec consumer was not compiled as an ordinary module.')
     for name, sha in result['artifacts'].items():
         require(digest(WORK / name) == sha == digest(evidence / 'artifacts' / name), f'Target artifact differs: {name}')
     log = (evidence / 'build.log').read_text()
@@ -145,7 +159,9 @@ def main():
     setup_path = WORK / '.lake/build/ir/KernelReplay/GuardJointPublicAudit.setup.json'
     setup = json.loads(setup_path.read_text())
     require(setup['name'] == TARGET and not setup['isModule'], 'Final audit compiler setup is not NONMODULE.')
-    paths = {setup_path}
+    paths = {setup_path, WORK / '.lake/build/ir/HexRealClosure/SignatureCodecTests.setup.json'}
+    for folder in ['lib/lean/HexRealClosure', 'ir/HexRealClosure']:
+        paths.update(path for path in (WORK / '.lake/build' / folder).glob('SignatureCodecTests.*') if path.is_file())
     modules = set(CORE)
     external = set()
     for name, artifacts in setup['importArts'].items():
@@ -186,16 +202,17 @@ def main():
     record = {
         'scope': 'Exact original fixed joint fixture on integrated main; expected-proposition proof sharing, ordinary-module witness extraction/original defining equations/native product and independent NONMODULE semantic/full-body audits',
         'evidence': str(evidence), 'worktree': str(WORK), 'verifier_sha256': digest(Path(__file__)),
-        'interface_pins_sha256': digest(TASK / 'public-joint-interface-v4-pins.json'),
-        'client_evidence': str(client_evidence),
-        'client_source_snapshot_sha256': digest(client_evidence / 'source.json'),
-        'client_result_sha256': digest(client_evidence / 'result.json'),
+        'interface_pins_sha256': digest(TASK / 'public-joint-interface-v6-pins.json'),
         'ordinary_module_witness_extraction': True,
         'ordinary_module_original_root_and_product_equations': True,
         'export_heartbeats': int(export_hb),
         'source_snapshot_sha256': digest(evidence / 'source.json'), 'result_sha256': digest(evidence / 'result.json'),
         'sources_verified': len(snapshot['hashes']), 'tools_verified': len(snapshot['tool_hashes']), 'frozen_original_inputs_verified': len(frozen),
-        'source_sha256': {f'experiments/KernelReplay/{name}.lean': snapshot['hashes'][f'experiments/KernelReplay/{name}.lean'] for name in CORE},
+        'source_sha256': {name: snapshot['hashes'][name] for name in pins},
+        'raw_discovery_templates_compared': True, 'module_origin_cached_operand_exclusion': True,
+        'private_record_controls': int(controls), 'original_binding_controls': int(bindings),
+        'proof_body_only_negative_control': True, 'generic_constructor_positive_control': True,
+        'public_signature_codec_consumer': True, 'codec_evidence': str(codec_evidence),
         'artifacts': artifacts, 'fixture_modules_archived': sorted(modules),
         'external_compiler_inputs_sha256': external_hashes,
         'witnesses': 3, 'original_guards': 3773, 'complete_clauses': 3778,

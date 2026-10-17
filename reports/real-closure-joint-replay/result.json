@@ -10,16 +10,18 @@
   "target": "KernelReplay.GuardJointPublicAudit",
   "source": "experiments/KernelReplay/GuardJointPublicAudit.lean",
   "artifacts": {
-    ".lake/build/ir/KernelReplay/GuardJointPublicAudit.c": "00a4619c37a917e0e7d74d66f52e40e8537f2007a6b718f1bc4d9743d60e8467",
-    ".lake/build/ir/KernelReplay/GuardJointPublicAudit.c.hash": "2ee66b0541d5778e85318d581d9920953bf38255b80e9518b3b6f81cbcb7a342",
-    ".lake/build/ir/KernelReplay/GuardJointPublicAudit.setup.json": "de21c85afbd1f23c815baffe66c440624c13e42b7d015c8b170199b205db53f4",
-    ".lake/build/lib/lean/KernelReplay/GuardJointPublicAudit.ilean": "d25477aafd2cfabb1ce646b488b513c224fcfa784b391c7754bfb51ec080c62c",
-    ".lake/build/lib/lean/KernelReplay/GuardJointPublicAudit.ilean.hash": "c50b4dbab4155323a4a2462ded364b7e8ef672258de098f3332941de437d7bf7",
-    ".lake/build/lib/lean/KernelReplay/GuardJointPublicAudit.olean": "783e106c9a0b97095452e1e2f0a80e841386656a4ae878fb55117ae2d071d61d",
-    ".lake/build/lib/lean/KernelReplay/GuardJointPublicAudit.olean.hash": "46af23c8a1d3817ef1916bb468aa4e809fbf3c9b36743e7cb300c8c5febc6cd8",
-    ".lake/build/lib/lean/KernelReplay/GuardJointPublicAudit.trace": "46d8e4434df17523c8b82bc76af2b611af3e03113848615d7b37722abfad5656"
+    ".lake/build/ir/KernelReplay/GuardJointPublicAudit.c": "ab62f5b7ba1726bf0ceabbf836834da21590b5506dcc71999aaabb3b61c7f9a2",
+    ".lake/build/ir/KernelReplay/GuardJointPublicAudit.c.hash": "b8ccd485e9f017a9c784a57c1e7566e8d97184e9778f9bebdb32062ace1f3702",
+    ".lake/build/ir/KernelReplay/GuardJointPublicAudit.setup.json": "f36472f659ef136c1567ed7b03951f8702ec385d4ff0eeb8bc97916e6c71675b",
+    ".lake/build/lib/lean/KernelReplay/GuardJointPublicAudit.ilean": "2afab62228550d11ff8e8e36251c71630468b565cc8b661587442ca8dd0a8170",
+    ".lake/build/lib/lean/KernelReplay/GuardJointPublicAudit.ilean.hash": "0a873021bc127c565dcd74661e947d1e3213b9bf4b8a3a721de8343cb69bbb0c",
+    ".lake/build/lib/lean/KernelReplay/GuardJointPublicAudit.olean": "cdf6902eabd0852e06fa81dd9e874e6333114a4db14a3f6cae7adce53fd0fec4",
+    ".lake/build/lib/lean/KernelReplay/GuardJointPublicAudit.olean.hash": "ae94c7d890b8de54104af27c87e584fe4f46aab9b39ba6da2867485e3254a296",
+    ".lake/build/lib/lean/KernelReplay/GuardJointPublicAudit.trace": "50133be33f45d2712ae0555f52e8347434bdf91752eac9d4336d0d835992d270"
   },
   "compiled_target_olean_archived": true,
+  "lake_build_completed": true,
+  "process_killed_or_dumped": false,
   "mathematical_acceptance_claim": false,
   "goal_complete_claim": false
 }
