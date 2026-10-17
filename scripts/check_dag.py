@@ -32,7 +32,7 @@ IMPORT_ALL_RE = re.compile(
     r"^\s*(?:(?:public|private|meta)\s+)*import\s+all\s+([A-Za-z0-9_.]+)\s*$"
 )
 
-# Private constructors in these modules are an ordinary/public-import API
+# Private constructors and definition bodies form an ordinary/public-import API
 # boundary. `import all` is a deliberate trusted-internals escape hatch, so
 # every owning exception must be an exact reviewed path rather than a suffix or
 # directory convention. The ECM diagnostic observes private preparation costs.
@@ -43,6 +43,8 @@ SEALED_IMPORT_ALL_ALLOWLIST: dict[str, frozenset[Path]] = {
     # opaque preparation body. This fixture does not construct unchecked domains.
     "HexSturm.Basic": frozenset({
         Path("experiments/KernelReplay/NativeAssemblyStaged.lean")}),
+    # The model equation supports consumers without exposing the implementation.
+    "HexRealClosureTheory.NumberFieldTower": frozenset(),
     "HexInterval.Executable": frozenset(),
     "HexInterval.Runtime": frozenset(),
     "HexInterval.RuntimeController": frozenset(),

@@ -165,6 +165,21 @@ class ImportAllClosureTest(unittest.TestCase):
 
 
 class SealedImportAllTest(unittest.TestCase):
+    def test_number_field_model_uses_public_imports(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            path = Path("adapters/HexRCF/RealCoefficients/NumberField.lean")
+            full_path = root / path
+            full_path.parent.mkdir(parents=True)
+            module = "HexRealClosureTheory.NumberFieldTower"
+            full_path.write_text(f"public import {module}\n", encoding="utf-8")
+            self.assertEqual(check_sealed_import_all(root, [path]), [])
+            full_path.write_text(f"import all {module}\n", encoding="utf-8")
+            self.assertEqual(check_sealed_import_all(root, [path]), [
+                f"{path}:1 uses `import all {module}` outside its exact "
+                "trusted-internals allowlist"
+            ])
+
     def test_sturm_replay_exception_is_exact(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
