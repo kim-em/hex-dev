@@ -42,7 +42,7 @@ try {
  const metadata=[]; const sectionMetadata=[];
  for(const [label,width] of [['desktop',1440],['narrow',390]]) {
   await call('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:false});
-  for(const [kind,phrase] of [['example','ScalarPacket.quoteWith checks a supplied optional public-packet reader'],['value','The regression quotes the parent descriptor and one packet']] ) {
+  for(const [kind,phrase] of [['value','A separate public-module example quotes a packet for X'],['boundary','For a dependent match, quotation moves trailing branch-equality proofs']] ) {
    const exact=await evaluate(`(() => {const p=Array.from(document.querySelectorAll('p')).find(e=>e.textContent.replace(/\\s+/g,' ').includes(${JSON.stringify(phrase)}));if(!p)throw new Error('missing paragraph');const target=['example','value','solutions'].includes(${JSON.stringify(kind)})?p.nextElementSibling:p;if(['example','value','solutions'].includes(${JSON.stringify(kind)})&&!target.matches('.hl.lean.block, pre, div:has(code)'))throw new Error('target is not a Lean code block');target.scrollIntoView({block:${JSON.stringify('center')}});return {text:p.textContent,viewport:innerWidth,scrollY,paragraphWidth:p.getBoundingClientRect().width,scrollWidth:p.scrollWidth,targetTag:target.tagName,targetWidth:target.getBoundingClientRect().width,targetScrollWidth:target.scrollWidth,descendantOverflow:Math.max(0,...[target,...target.querySelectorAll('*')].map(e=>e.scrollWidth-e.clientWidth)),overflowElements:[target,...target.querySelectorAll('*')].filter(e=>e.scrollWidth-e.clientWidth>1).map(e=>({tag:e.tagName,classes:e.className,width:e.clientWidth,scroll:e.scrollWidth,text:e.textContent.slice(0,100)})).slice(0,8)};})()`);
    if(!exact)throw new Error('missing visual target '+kind);
    await evaluate('new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)))');
@@ -52,7 +52,7 @@ try {
   }
   sectionMetadata.push(await evaluate(`(() => {
     const headings=Array.from(document.querySelectorAll('h1,h2,h3,h4,h5,h6'));
-    const start=Array.from(document.querySelectorAll('p')).find(e=>e.textContent.includes('checks a supplied optional public-packet reader'));
+    const start=Array.from(document.querySelectorAll('p')).find(e=>e.textContent.includes('A separate public-module example'));
     if(!start)throw new Error('missing public-packet paragraph');
     const following=headings.find(e=>start.compareDocumentPosition(e)&4);
     if(!following)throw new Error('missing following section');

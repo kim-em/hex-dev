@@ -29,6 +29,9 @@ for path, expected in record['sources'].items():
     assert sha(git('show', record['source_commit'] + ':' + path)) == expected, path
     if args.check_head:
         assert sha((repo / path).read_bytes()) == expected, path
+if args.check_head:
+    changes = git('diff', '--name-only', record['source_commit']).decode().splitlines()
+    assert all(path.startswith('reports/') for path in changes), changes
 for path in record['unchanged_guards']:
     assert git('show', record['baseline_commit'] + ':' + path) == git(
         'show', record['source_commit'] + ':' + path), path
@@ -52,6 +55,11 @@ text = log('integration')
 audit = re.search(r'public packet actual bodies: (\d+) theorems/(\d+) definitions; '
                   r'nonempty traces=(\d+)', text)
 assert audit and list(map(int, audit.groups())) == record['audit_counts']
+fresh = log('fresh_target_in_failed_build')
+assert 'Built HexRCF.PublicSignPacketProofs' in fresh
+fresh_audit = re.search(r'public packet actual bodies: (\d+) theorems/(\d+) definitions; '
+                        r'nonempty traces=(\d+)', fresh)
+assert fresh_audit and list(map(int, fresh_audit.groups())) == record['audit_counts']
 for label in ['sign', 'polynomial', 'empty graph', 'node context', 'moment context']:
     assert 'public packet compiled rejection/quotation refusal/caller restoration: ' + label in text
 for nodes in [903, 1845]:

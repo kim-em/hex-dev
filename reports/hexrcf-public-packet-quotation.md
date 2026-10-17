@@ -75,6 +75,11 @@ dependencies. They establish no general speedup, scaling law, physical proof
 sharing, compiled adapter timing or algebraic completeness. The failed and
 cancelled attempts must be distinguished from passing builds; a cancelled
 diagnostic is not an audit success.
+The [retained record and diagnostics](data/hexrcf-public-packet/) bind the
+validation to committed source bytes, preserve failed and cancelled attempts,
+and retain the two completed profile captures. The fresh public-audit target
+also passed in a build whose other targets failed; that partial target success
+is recorded separately from the final successful integration build.
 
 The [checked manual](../HexManual/Chapters/HexRCF/RootQuote.lean) explains the
 public consumer and its boundary. #10358 remains open for general original
