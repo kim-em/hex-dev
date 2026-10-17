@@ -1,0 +1,54 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+import HexRCF.RootTableQuote.Input
+open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
+open Hex.RCF.SelectedRootTests Hex.RealClosure.Tower
+namespace Hex.RCF.RootTableQuoteTests
+open CellReplayTests.Algebraic
+set_option maxHeartbeats 12000000
+set_option maxRecDepth 32768
+
+@[noinline] def readTable (facts : List (Algebraic.SignFact Data.native))
+    (polynomial : Schema.parent.Poly) :=
+  @RootTable.read Schema.parent.Value Signature _ _ _
+    (Algebraic.Element.cachedOne reduction reduction_eq facts)
+    (Algebraic.Element.cachedAdd reduction reduction_eq facts)
+    (Algebraic.Element.cachedSub reduction reduction_eq facts)
+    (Algebraic.Element.cachedMul reduction reduction_eq facts)
+    (Algebraic.Element.cachedNatCast reduction reduction_eq facts)
+    (Algebraic.Element.signCodec Data.base.codec facts) Signature.codec
+    Schema.parent.sign Schema.parent.signature [] polynomial .negInf .posInf Literals.roots
+
+-- The closed compiled call has a separate retained compiler-failure reproducer.
+-- This proof wrapper does not assert successful compiled execution.
+noncomputable def table := readTable Records.facts input
+
+run_meta do
+  withExporting (isExporting := false) do
+    let decode := RationalQuote.decoder (mkConst ``Hex.RCF.SelectedRootTests.Data.registry)
+    let .ok result ← RootQuote.quote (mkConst ``table) decode
+      | throwError "algebraic root-table quotation failed"
+    logInfo m!"algebraic root-table quotation proofNodes={result.usage.proofNodes}"
+    withExporting (isExporting := true) do
+      let name := `Hex.RCF.RootTableQuoteTests.restored
+      addDecl (.defnDecl {
+        name,levelParams := [],type := ← inferType result.value,
+        value := result.value,hints := .regular 0,safety := .safe}) (forceExpose := true)
+      let statement ← mkEq (← mkAppM ``Except.toOption #[mkConst ``table])
+        (← mkAppM ``Option.some #[mkConst name])
+      let proof ← Hex.RCF.checkProof `originalRootTable statement result.proof
+      addDecl (.thmDecl {
+        name := `Hex.RCF.RootTableQuoteTests.table_read,levelParams := [],
+        type := statement,value := proof})
+
+theorem roots_count :
+    letI : One Schema.parent.Value := Algebraic.Element.cachedOne reduction reduction_eq Records.facts
+    letI : Add Schema.parent.Value := Algebraic.Element.cachedAdd reduction reduction_eq Records.facts
+    letI : Sub Schema.parent.Value := Algebraic.Element.cachedSub reduction reduction_eq Records.facts
+    letI : Mul Schema.parent.Value := Algebraic.Element.cachedMul reduction reduction_eq Records.facts
+    letI : NatCast Schema.parent.Value := Algebraic.Element.cachedNatCast reduction reduction_eq Records.facts
+    restored.roots.length = 2 := by rfl
+end Hex.RCF.RootTableQuoteTests

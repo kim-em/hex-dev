@@ -13,6 +13,7 @@ import HexManual.Chapters.HexRCF.CellReplay
 import HexManual.Chapters.HexRCF.AlgebraicCells
 import HexManual.Chapters.HexRCF.ClosedCoefficients
 import HexManual.Chapters.HexRCF.RootQuote
+import HexManual.Chapters.HexRCF.RootTableQuote
 
 import HexRCF
 import HexRCF.RealCoefficients
@@ -2977,6 +2978,8 @@ construction are excluded; no scaling, strict-replay or tactic-speedup claim fol
 Child memory includes startup and the harness.
 
 {include 1 HexManual.Chapters.HexRCF.RootQuote}
+
+{include 1 HexManual.Chapters.HexRCF.RootTableQuote}
 
 {include 1 HexManual.Chapters.HexRCF.CallerBounds}
 

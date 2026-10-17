@@ -1,0 +1,73 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+import VersoManual
+import HexRCF.RealCoefficients
+import HexRCF.RootTableQuote.Semantics
+open Verso.Genre Manual
+open Verso.Genre.Manual.InlineLean
+
+#doc (Manual) "An ordinary real root over a selected field" =>
+%%%
+tag := "hex-rcf-root-table-quotation"
+%%%
+
+A polynomial over a selected real number field can require a new algebraic
+root. For example, if the coefficient is the selected positive square root
+of 2, the polynomial `X² − √2` has two real roots. Its positive root lies
+strictly between 1 and 2. The monorepo example imports
+`HexRCF.RootTableQuote.Semantics` and proves:
+
+```lean
+open Hex.RCF.RootTableQuoteTests in
+example : ∃ x : ℝ,
+    x ^ 2 = Real.sqrt 2 ∧
+      1 < x ∧ x < 2 :=
+  witness
+```
+
+This example reads the complete supplied root table with
+{name Hex.RCF.RealCoefficients.RootTable.read}`RootTable.read`.
+The polynomial's stored coefficients are first reconstructed with
+{name Hex.RCF.RealCoefficients.ScalarQuote.quotePolyWith}`ScalarQuote.quotePolyWith`
+and the selected parent's checked sign facts. A proved equality retains that
+parent's defining polynomial and reduction operation. The table reader checks
+the supplied root data for this exact polynomial and returns two roots.
+{name Hex.RCF.RealCoefficients.RootQuote.quote}`RootQuote.quote`
+accepts its structured `Replay.Error` result type and emits the checked
+original-reader equation. A rejected reader remains terminal.
+
+{name Hex.RCF.RealCoefficients.RootReplay.fromTable}`RootReplay.fromTable`
+transports the checked table to the existing real root-coverage theorem.
+The coefficient interpretation identifies the exact polynomial with
+`X² − C (Real.sqrt 2)`. Taking the absolute value of one interpreted root
+provides one ordinary real point satisfying the equation and both bounds.
+The proof uses the same selected positive embedding throughout. It does not
+assume a root, treat an infinitesimal as a real witness, or use the rational
+solver for an irrational coefficient.
+
+The fresh importing conformance module checks all 70 reachable example theorem
+bodies and 14 definitions under the kernel producer guard, including private
+auxiliaries and the final witness. The complete axiom closure contains only
+`propext`, `Classical.choice` and `Quot.sound`. The stored polynomial request
+accounts for 1,224 proof nodes and the table request for 121,995; these are
+request accounting, not physical proof sharing or a speedup measurement.
+
+The retained prototype audit build took 40.499 seconds with a 3.1 GiB peak
+on the shared host, including reused dependencies. These observations are
+not scaling or matched comparison results. The examples raise Lean limits to
+12,000,000 heartbeats and recursion depth 32,768. Larger inputs or default
+limits may exhaust.
+
+This is a direct checked API example. It does not install the general
+source-to-certificate tactic, authenticate arbitrary provider histories or
+prove accepted completeness. The closed compiled consumer separately fails
+in pinned Lean `v4.35.0-rc3` with an `unknown join point` compiler error;
+the quoted table wrapper is currently noncomputable. The successful ordinary
+kernel proof does not establish successful compiled execution or strict
+compiled missing-record rejection. The exact reproducer, failed attempts and
+proof inventory are retained in
+[the root-table quotation record](../../../reports/hexrcf-packet-quotation.md).

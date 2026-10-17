@@ -17,7 +17,7 @@ tag := "hex-rcf-root-quotation"
 %%%
 
 {name Hex.RCF.RealCoefficients.RootQuote.quote}`RootQuote.quote` accepts a Lean
-expression for an `Except String` replay reader. It returns the reconstructed
+expression for an `Except ε α` replay reader, including structured errors. It returns the reconstructed
 data and an ordinary-kernel equation from the original reader's `toOption` to
 `some` of that data. This is an acceptance proof for the supplied replay.
 The caller separately composes source binding and real interpretation before
