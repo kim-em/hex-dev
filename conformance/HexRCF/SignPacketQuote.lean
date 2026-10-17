@@ -110,9 +110,11 @@ run_meta do
     touched.set true
     liftM (RationalQuote.decoder (mkConst ``Data.registry) expression)
   let action := ScalarPacket.quoteWith reader prepared same decode
+  let callerCount := (← getMCtx).decls.toList.length
   let .ok result ← RootQuote.runWith action
     | throwError "standalone sign packet quotation failed"
-  unless (← touched.get) && !(← sentinel.mvarId!.isAssigned) do
+  unless (← touched.get) && !(← sentinel.mvarId!.isAssigned) &&
+      (← getMCtx).decls.toList.length == callerCount do
     throwError "successful packet quotation did not restore the mutated caller"
   unless result.usage.proofNodes == 32815 do
     throwError "standalone sign packet accounting changed: {result.usage.proofNodes}"
@@ -123,9 +125,14 @@ run_meta do
     type := statement,value := proof})
   let config : Nat → Hex.RealFormula.Reify.Config := fun limit =>
     {ring := {budget := {Hex.Reflect.Budget.default with proofNodes := limit}}}
+  touched.set false
+  let callerCount := (← getMCtx).decls.toList.length
   let .ok exact ← RootQuote.runWith action (config result.usage.proofNodes)
     | throwError "exact sign packet budget failed"
   unless exact.usage == result.usage do throwError "exact sign packet usage changed"
+  unless (← touched.get) && !(← sentinel.mvarId!.isAssigned) &&
+      (← getMCtx).decls.toList.length == callerCount do
+    throwError "exact-budget packet quotation did not restore the mutated caller"
   touched.set false
   unchanged do
     let .error (.budget exhausted) ←

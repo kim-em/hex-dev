@@ -21,6 +21,11 @@ run_meta do
   unless axioms == (#[``propext,``Classical.choice,``Quot.sound].qsort Name.lt) do
     throwError "unexpected sign packet complete axiom closure: {axioms}"
   let dependencies ← Hex.RCF.ProofEvidence.projectDependencies roots
+  let decoded ← Hex.RCF.ProofEvidence.projectDependencies #[``SignPacketQuote.decoded_value]
+  for required in #[``SignPacketQuote.fact,``SignPacketQuote.coefficient_read,
+      ``ScalarQuote.accepted] do
+    unless decoded.contains required do
+      throwError "decoded coefficient omitted its quoted fact or reader law: {required}"
   for required in #[``RootQuote.option_eq,``ScalarPacket.read_restore,
       ``ScalarPacket.fields,``Algebraic.Context.signPoly_checked,
       ``ScalarQuote.accepted,``Algebraic.Element.signCodec_sound] do
