@@ -1,0 +1,49 @@
+from pathlib import Path
+import gzip, hashlib, json, subprocess
+repo=Path.cwd(); task=Path('/home/kim/.codex/tasks/hex-10358')
+out=repo/'reports/data/hexrcf-quotient-branches'; out.mkdir(parents=True,exist_ok=True)
+git=lambda *args: subprocess.check_output(['git',*args],cwd=repo)
+sha=lambda raw: hashlib.sha256(raw).hexdigest()
+source=git('rev-parse','HEAD').decode().strip()
+baseline='e2a43c3597e7439916f54e0aa2ea41ff7d30675f'
+old=json.loads((repo/'reports/data/hexrcf-proof-functions/context.json').read_text())
+paths=set(old['sources'])|set(git('diff','--name-only',baseline,source).decode().splitlines())
+record=dict(source_commit=source,source_tree=git('rev-parse',source+'^{tree}').decode().strip(),baseline_commit=baseline,sources={},unchanged_guards=old['unchanged_guards'],artifacts=[],validation={},visually_inspected_captures=[],complete_packet_accepted=False)
+for path in sorted(paths):
+ raw=git('show',source+':'+path); assert (repo/path).read_bytes()==raw,path
+ record['sources'][path]=sha(raw)
+def retain(file,path,compress=False):
+ raw=file.read_bytes(); dest=out/path;dest.parent.mkdir(parents=True,exist_ok=True)
+ dest.write_bytes(gzip.compress(raw,mtime=0) if compress else raw); data=dest.read_bytes()
+ item=dict(path=path,bytes=len(data),sha256=sha(data))
+ if compress:item['uncompressed_sha256']=sha(raw)
+ record['artifacts'].append(item); return path
+for key,name in dict(integration='branch-seal-integration-4.log',render='quotient-quotation-render-1.log',browser='quotient-quotation-browser-1.log',quotient='branch-seal-small-1.log',root='branch-seal-compatibility-2.log').items():
+ assert 'code=exited, status=0/SUCCESS' in (task/name).read_text(),name
+ record['validation'][key]=retain(task/name,'validation/'+name+'.gz',True)
+metadata=json.loads((task/'quotient-quotation-metadata.json').read_text());assert all(row['exit_code']==0 for row in metadata)
+retain(task/'quotient-quotation-metadata.json','validation/metadata.json')
+for row in metadata:retain(task/row['log'],'validation/'+row['log']+'.gz',True)
+retain(task/'quotient-quotation-metadata.py','validation/metadata-driver.py.txt')
+retain(task/'bin/run-bounded','validation/run-bounded.sh')
+retain(task/'collect-quotient-branches.py','validation/collect.py.txt')
+retain(task/'quotient-memory-policy.txt','validation/memory-policy.txt.gz',True)
+retain(task/'quotient-quotation-browser.mjs','captures/browser.mjs')
+retain(task/'quotient-quotation-inspection.json','captures/inspection.json')
+retain(task/'quotient-quotation-section-overflow.json','captures/section-overflow.json')
+retain(task/'scalar-review-render/ScalarReviewRender.lean','validation/render.lean.txt')
+for label in ['desktop','narrow']:
+ for kind in ['introduction','example','budget']:
+  name=f'quotient-quotation-{label}-{kind}.png'
+  record['visually_inspected_captures'].append(retain(task/name,'captures/'+name))
+for name in ['fresh-complete-frozen-13.log','fresh-complete-frozen-14.log','fresh-complete-frozen-14-progress.log','fresh-complete-frozen-14.lean.txt','frozen-14-RootQuote.lean.txt','branch-seal-integration-1.log','branch-seal-integration-2.log','branch-seal-integration-3.log','branch-seal-compatibility-1.log']:
+ retain(task/name,'diagnostics/'+name+'.gz',True)
+assert (task/'frozen-14-RootQuote.lean.txt').read_bytes()==git('show',source+':adapters/HexRCF/RealCoefficients/RootQuote.lean')
+record['compiled_files']=[]
+for name in ['QuotientQuoteData','QuotientQuote','QuotientQuotePublic','QuotientQuoteProofs']:
+ path='.lake/build/lib/lean/HexRCF/'+name+'.olean';raw=(repo/path).read_bytes()
+ record['compiled_files'].append(dict(path=path,bytes=len(raw),sha256=sha(raw)))
+record['scope']='Closed quotient representative traversal and independently checked Boolean branch proofs; actual public-module polynomial reader, strict budgets, rollback, guarded fresh-body compatibility, complete manual and six inspected targets. No new generic complete-cell acceptance, source/provider/history authentication or algebraic completeness claim.'
+record['limits']='Frozen13 is a historical kernel failure. Frozen14 passes that failure point but exhausts 2M proof nodes; original-source finishing and its prepared audit were not reached. These completed diagnostic runs are not an AB/BA speed comparison. Compiled file sizes are module sizes, not serialized certificates or proof DAGs. Browser targets have no local overflow; pre-existing section/global overflow is retained separately. Future row-factoring experiments are not covered by this snapshot.'
+(out/'context.json').write_text(json.dumps(record,indent=2)+'\n')
+print('Retained',len(record['artifacts']),'artifacts/',len(record['sources']),'sources at',source)
