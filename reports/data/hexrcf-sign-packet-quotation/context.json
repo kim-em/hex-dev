@@ -445,8 +445,8 @@
     },
     {
       "path": "scripts/collect-sign-packet.py",
-      "bytes": 9478,
-      "sha256": "88f8d2c58b1e253710c3cf18a8a16c41c7049c9273947a5485180192c5f51078"
+      "bytes": 9541,
+      "sha256": "071a65ed3503bfde03484baf706e09d216fe3c3bfb2999ae2618736f2b6ab996"
     },
     {
       "path": "scripts/sign-packet-memory-policy.txt",
@@ -469,7 +469,7 @@
       "sha256": "46c112e4ab317b83ec7f6f8d32e06920e0046a38320da6a99fa017805c609f56"
     },
     {
-      "path": "scripts/ScalarReviewRender.lean",
+      "path": "scripts/ScalarReviewRender.lean.txt",
       "bytes": 206,
       "sha256": "664d37e07421cd5f5ee5df6e4fdb3f18fb67b1e58e3688267ff6ca6909180ef3"
     },
@@ -512,6 +512,58 @@
       "path": "sign-packet-section-overflow.json",
       "bytes": 3070,
       "sha256": "767cb07acc08017f0a29f3b68f790e7d8cf4ff4aa2ac7ff95bb9a4c3d0062f24"
+    },
+    {
+      "path": "logs/sign-packet-ci-failed-e6d708.log.gz",
+      "bytes": 571,
+      "sha256": "f6d77c532931f98f66828d2c8b4c7999946ededd32a98a5617041577c28d5636",
+      "uncompressed_sha256": "9259cefa3fcb1ddc65652a67b189e05f1618d8cf30fb1a426e8b29e81945bca1"
+    },
+    {
+      "path": "ci/initial-e6d708-jobs.json",
+      "bytes": 10087,
+      "sha256": "85df59029fcfb10f92da7c82229743384d18e2b27fa92c998937dc4822a9881b"
+    },
+    {
+      "path": "logs/sign-packet-metadata-admissions-4.log.gz",
+      "bytes": 99,
+      "sha256": "b39cdc61d27fb41278b8baccdc295423fccf34b21113084d44ed3c9a20019498",
+      "uncompressed_sha256": "c3a1d632affb0863f31000a7fef5fe9cb67e679069dcef0e0fef05b85533f754"
+    },
+    {
+      "path": "logs/sign-packet-metadata-copyright-4.log.gz",
+      "bytes": 20,
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/sign-packet-metadata-dag-4.log.gz",
+      "bytes": 20,
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/sign-packet-metadata-diff-4.log.gz",
+      "bytes": 20,
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/sign-packet-metadata-lines-4.log.gz",
+      "bytes": 20,
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/sign-packet-metadata-relative-4.log.gz",
+      "bytes": 118,
+      "sha256": "22bea81c8cd376ef4534fb0a6ea13588e4d3dd1d01e00a8c38815e64f8f13793",
+      "uncompressed_sha256": "70f25c07c4e8e5f51ccbef386c19962d8dcb1b109b8ff3ab03438d4931ab8a94"
+    },
+    {
+      "path": "metadata/tracked-results-4.json",
+      "bytes": 983,
+      "sha256": "17ca33fd01a2f0771d9bb6965ff28cca4dac38418d1fbb4f9a0d97080a9b1909"
     }
   ],
   "observations": {
@@ -596,7 +648,9 @@
     "named_admissions": 0,
     "diff_against_main": 0,
     "relative_filesystem_links": 59,
-    "logs": "logs/sign-packet-metadata-*-3.log.gz"
+    "logs": "logs/sign-packet-metadata-*-4.log.gz",
+    "after_git_tracking": true,
+    "status_record": "metadata/tracked-results-4.json"
   },
   "public_module_acceptance": false,
   "base_umbrella_matches_main": true,
@@ -660,5 +714,13 @@
     "Earlier exploratory failure logs are diagnostic and not all have a complete paired source snapshot.",
     "Fully frozen public-module replay remains blocked on an owner codec equation; encoded variants reach a later Boolean boundary.",
     "No generic source/provider/predecessor discovery, general tactic/completeness, strict deeper compiled replay or inverse/xgcd repair."
-  ]
+  ],
+  "initial_ci_failure": {
+    "run": 39010310784,
+    "job": 117331273716,
+    "head": "e6d70874489ca098fbc94552ef07bd5dd5fcf4dd",
+    "step": "Run python3 scripts/check_copyright_headers.py",
+    "cause": "A raw renderer snapshot had a .lean extension and no copyright header. Initial local metadata checks preceded git tracking of the new evidence files.",
+    "fix": "Preserve the raw bytes and hash under .lean.txt, update its manifest path, and validate all tracked files."
+  }
 }

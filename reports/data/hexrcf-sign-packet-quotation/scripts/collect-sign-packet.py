@@ -83,7 +83,7 @@ for source in [T / 'bin/run-bounded', T / 'sign-packet-browser.mjs', Path(__file
                T / 'sign-packet-memory-policy.txt', T / 'sign-packet-review-resolution.txt',
                T / 'sign-packet-relative-links.py',
                T / 'signature-codec-owner-request.md', V / 'ScalarReviewRender.lean', V / 'lakefile.lean']:
-    keep(source, 'scripts/' + source.name)
+    keep(source, 'scripts/' + source.name + ('.txt' if source.name == 'ScalarReviewRender.lean' else ''))
 opened = json.loads((T / 'sign-packet-captures-opened.json').read_text())
 assert len(opened) == 4
 for name, digest in opened.items():
