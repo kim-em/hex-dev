@@ -223,6 +223,8 @@ private def checkedStep (current whole subject law : Expr) : ReifyM (Expr × Exp
   let statement ← mkEq current next
   let codec? := match subject.getAppFn with
     | .proj ``ValueCodec 1 codec => some codec
+    | .const ``ValueCodec.decode _ =>
+      if subject.getAppNumArgs == 3 then some subject.getAppArgs[1]! else none
     | _ => none
   let candidate ← match codec? with
     | some codec =>
