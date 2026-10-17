@@ -40,7 +40,9 @@ against that exact decode before being used. -/
 abbrev Decoder := Expr → MetaM (Option Expr)
 
 /-- A scalar proposal in the enclosing reflection request. Work performed by
-the callback consumes the same budget even when the callback declines. -/
+the callback consumes the same budget even when the callback declines.
+Return `none` to decline; every structured error, including `providerDeclined`,
+is terminal. -/
 abbrev DecoderM := Expr → ReifyM (Option Expr)
 
 /-- Reconstructed data and the checked equation from the original reader to
@@ -219,7 +221,34 @@ private def checkedStep (current whole subject law : Expr) : ReifyM (Expr × Exp
   let next := motive.bindingBody!.instantiate1 rhs
   if next == whole then throwError "demanded boundary made no change"
   let statement ← mkEq current next
-  let candidate := mkExpectedPropHint (← mkAppM ``congrArg #[motive,law]) statement
+  let codec? := match subject.getAppFn with
+    | .proj ``ValueCodec 1 codec => some codec
+    | _ => none
+  let candidate ← match codec? with
+    | some codec =>
+      if codec.getAppFn.isConstOf ``Algebraic.Element.codec then
+        -- Kernel conversion of a concrete reader can evaluate its native decode.
+        -- Check the step with an abstract codec and its equation first.
+        let codecType ← inferType codec
+        let (kind,value) ← liftM <| withLocalDeclD `codec codecType fun placeholder => do
+          let replace := fun (e : Expr) =>
+            e.replace fun part => if part == codec then some placeholder else none
+          let original := replace current
+          if original == current then
+            throwError "rcf: expose the original reader's canonical predecessor codec before quotation"
+          let premise ← mkEq (replace subject) (replace rhs)
+          withLocalDeclD `checked premise fun h => do
+            let target ← mkEq original (replace next)
+            let candidate := mkExpectedPropHint
+              (← mkAppM ``congrArg #[replace motive,h]) target
+            return (← mkForallFVars #[placeholder,h] target,
+              ← mkLambdaFVars #[placeholder,h] candidate)
+        accountProof kind
+        accountProof value
+        let step ← Hex.RCF.checkProof `RootQuote.codecStep kind value
+        pure (mkApp2 step codec law)
+      else pure (mkExpectedPropHint (← mkAppM ``congrArg #[motive,law]) statement)
+    | none => pure (mkExpectedPropHint (← mkAppM ``congrArg #[motive,law]) statement)
   accountProof candidate
   let proof ← Hex.RCF.checkProof `RootQuote.step statement candidate
   return (next,proof)
@@ -321,7 +350,10 @@ private partial def quoteCore (reader : Expr) (decode : DecoderM) : ReifyM Resul
 /-- Quote inside an existing reflection request. Scalar callbacks, replay and
 the final checked proof share its budget. Structured callback failures propagate
 without trying another rule. The caller supplies the enclosing transaction;
-`quote` provides that boundary for an ordinary `MetaM` callback. -/
+`quote` provides that boundary for an ordinary `MetaM` callback.
+A canonical `Algebraic.Element.codec` decode stays protected: supply its exact
+checked equation through the callback, or quotation fails closed. The original
+reader expression must expose that codec; expand a hiding definition first. -/
 def quoteWith (reader : Expr) (decode : DecoderM := fun _ => pure none) : ReifyM Result :=
   quoteCore reader decode
 
@@ -354,7 +386,9 @@ def runWith (action : ReifyM Result)
   return result.map fun (value,state) => {value with usage := state.budget.consumed}
 
 /-- Run a literal reader with scalar callbacks in one transactional reflection
-request. Nested `quoteWith` calls retain this request's resource accounting. -/
+request. Nested `quoteWith` calls retain this request's resource accounting.
+Canonical `Element.codec` decodes remain protected and require a checked
+callback equation; absence of a proposal fails closed. -/
 def run (reader : Expr) (decode : DecoderM := fun _ => pure none)
     (config : Hex.RealFormula.Reify.Config := {})
     (usage : Hex.Reflect.BudgetUsage := Hex.Reflect.Budget.zero) :
