@@ -7,6 +7,8 @@ module
 public import HexRealClosure.RootReplay
 public meta import HexRCF.RealCoefficients.RootQuote
 public meta section
+
+/-! Reconstruct a checked root and its raw subject from the original complete reader. -/
 open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
 namespace Hex.RCF.RealCoefficients.RootHeader
 

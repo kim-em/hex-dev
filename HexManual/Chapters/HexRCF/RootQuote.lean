@@ -438,7 +438,8 @@ one budget and transaction. No pre-existing equation for the proposed root's
 header is required.
 
 The public regression constructs a new root and context from that result,
-quotes the sign packet for X with fully numerical graph fields, and decodes a coefficient using its fact. The
+quotes the sign packet for X with fully numerical graph fields, and decodes a
+coefficient using its fact. The
 coefficient denotes the newly reconstructed root and is positive:
 
 ```lean
@@ -470,11 +471,13 @@ budgets are checked in a fresh importing regression:
 
 ```lean
 open Hex.RCF.FrozenSignature in
-example : readFirst.toOption = some first :=
+example : readFirst.toOption =
+    some first :=
   readFirst_checked
 
 open Hex.RCF.FrozenSignature in
-example : readSecond.toOption = some second :=
+example : readSecond.toOption =
+    some second :=
   readSecond_checked
 ```
 

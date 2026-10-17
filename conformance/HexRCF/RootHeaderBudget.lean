@@ -8,6 +8,8 @@ public import HexRCF.RootQuoteData
 public meta import HexRCF.RealCoefficients.RootHeader
 public meta import HexRCF.RealCoefficients.RationalQuote
 public section
+
+/-! Budget and caller-state regressions for complete original root/header readers. -/
 open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
 namespace Hex.RCF.RootHeaderBudget
 set_option maxHeartbeats 12000000

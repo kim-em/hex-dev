@@ -7,6 +7,8 @@ module
 public import HexRealClosure.TowerContext
 public meta import HexRCF.RealCoefficients.SignatureQuote
 public section
+
+/-! Frozen signature subjects, graph projections, budgets and caller-state restoration. -/
 open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
 namespace Hex.RCF.FrozenSignature
 set_option maxHeartbeats 12000000

@@ -9,6 +9,8 @@ public meta import HexRCF.RealCoefficients.RootContext
 public meta import HexRCF.RealCoefficients.RealModel
 public section
 
+/-! Native child contexts and ordinary-real interpretation of reconstructed roots. -/
+
 open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
 namespace Hex.RCF.RootContextCases
 set_option maxHeartbeats 12000000

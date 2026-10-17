@@ -8,6 +8,8 @@ module
 public meta import HexRCF.RealCoefficients.RootQuote
 
 public meta section
+
+/-! Full-signature reader quotation using checked literal bindings and public codec laws. -/
 namespace Hex.RCF.RealCoefficients.SignatureQuote
 open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RealFormula.Reify
 

@@ -9,6 +9,8 @@ public import HexRealClosure.TowerContext
 public meta import HexRCF.RealCoefficients.RootQuote
 
 public meta section
+
+/-! Checked native context assembly retaining the actual predecessor and descriptor. -/
 namespace Hex.RCF.RealCoefficients.RootContext
 open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RealFormula.Reify
 

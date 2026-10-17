@@ -8,6 +8,8 @@ import HexRCF.ProofEvidence
 import KernelReplay.AxiomClosure
 import HexRCF.SelectedRoot.KernelCheck
 meta section
+
+/-! Fresh importing body and axiom audits for native context assembly. -/
 open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
 set_option maxHeartbeats 12000000
 set_option maxRecDepth 32768

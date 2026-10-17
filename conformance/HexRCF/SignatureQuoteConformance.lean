@@ -7,6 +7,8 @@ module
 public import HexRCF.RootQuoteData
 public meta import HexRCF.RealCoefficients.RootQuote
 public section
+
+/-! Canonical signature roundtrips at distinct exact subjects with bounded quotation. -/
 open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
 namespace Hex.RCF.SignatureRoundtrip
 set_option maxHeartbeats 12000000
