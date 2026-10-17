@@ -142,6 +142,8 @@ theorem point_witness : ∃ x : ℝ, original.toProp
   let joint := RealFormula.QF.and plan.formula.lift shifted
   unless presentation.context.sign (sample-values 0) != 0 do
     throw (IO.userError "sample was not distinct from the selected generator")
+  unless Samples.Row.eval shifted (NativeSpecialize.row presentation.context values sample shifted) == some true do
+    throw (IO.userError "plain matrix row changed the ordinary point theorem's route")
   unless Samples.Row.eval joint (NativeSpecialize.row presentation.context values sample joint) == some true do
     throw (IO.userError "factory packing or matrix coordinate order changed")
   unless Samples.Row.eval plan.formula.lift

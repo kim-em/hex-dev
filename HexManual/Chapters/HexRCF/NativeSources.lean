@@ -209,7 +209,9 @@ regression uses an inherited value, a computed generator and the non-integral
 relation `c₂ = 1/3 + (2/5)*c₁`, and rejects an incorrect final coordinate.
 Concrete two-root controls use separately quoted positive and negative √2
 descriptors and reject their swap. The negative descriptor retains the strict
-interval `(-3/2,-7/5)` and its exact supplied polynomial.
+interval `(-3/2,-7/5)` and its exact supplied polynomial. Its empty derivative
+request list selects by interval alone; the positive descriptor also checks
+its two supplied derivative signs.
 {name Hex.RCF.RealCoefficients.SourceSelection.not_forall}`not_forall` supplies
 the universal counterexample route, tested on the separately evaluated false
 sentence `∀ x : ℝ, x * (-Real.sqrt 2) + 2 ≠ 0`. Its conclusion retains the
@@ -272,7 +274,7 @@ uses ordinary public imports and public meta imports for its executable controls
 without `import all`. The direct point law retains every supplied nonzero guard;
 source-division collection remains the frontend's responsibility.
 A [public inherited-coordinate consumer](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/SourceSelectionPublic.lean)
-also applies `formula_iff` and `exists_real` with the actual origin identity,
+also applies `formula_iff` and `exists_real` with a supplied `origin.RealValue` identity,
 retaining coefficient/sample/guard ties without private imports.
 
 # Frozen selected-section replay
