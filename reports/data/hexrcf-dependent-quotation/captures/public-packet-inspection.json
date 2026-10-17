@@ -1,0 +1,58 @@
+[
+  {
+    "label": "desktop",
+    "kind": "value",
+    "text": "\n                  A separate public-module example quotes a packet for X at the selected real\nroot of X³−3. Its context slots retain closed applications of the canonical\nsignature encoder. Both graph nodes and nested moments use that same format;\nthis example does not assume an equation between the encoder and a frozen\nnumerical signature. The original optional reader supplies the sole sign fact\nused to decode the coefficient. The resulting coefficient has the selected\nroot's ordinary real value:",
+    "viewport": 1440,
+    "scrollY": 287148,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "CODE",
+    "targetWidth": 740,
+    "targetScrollWidth": 740,
+    "descendantOverflow": 0,
+    "overflowElements": []
+  },
+  {
+    "label": "desktop",
+    "kind": "boundary",
+    "text": "\n                  For a dependent match, quotation moves trailing branch-equality proofs along\nthe checked equation for the match's subject. This uses ordinary equality\nelimination with an abstract subject, then instantiates the checked equation.\nMoved proofs are checked separately before later replay steps. The result type\nmust stay fixed. Independent trailing data is retained; data whose type depends\non the subject or its branch proofs remains unsupported. During replay-law\nconversion, an explicit checked function boundary is first kept abstract, then instantiated\nwith the actual function and its public equation. The fresh importing audit\nchecks the resulting private bodies as well as their full axiom closure.\nCodec-dependent branch proofs are generalized with the codec constructor during\nreader conversion, including successive canonical decodes. A custom callback\nshould propose the exact demanded read expression. Literal Boolean values are\nhandled without consulting that callback.\nWrong signs, changed polynomials and context swaps in either nodes or nested\nmoments are checked refusal cases. These helpers consume supplied histories\nand evidence; they do not install the general real-coefficient tactic.\n",
+    "viewport": 1440,
+    "scrollY": 287412,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752,
+    "descendantOverflow": 0,
+    "overflowElements": []
+  },
+  {
+    "label": "narrow",
+    "kind": "value",
+    "text": "\n                  A separate public-module example quotes a packet for X at the selected real\nroot of X³−3. Its context slots retain closed applications of the canonical\nsignature encoder. Both graph nodes and nested moments use that same format;\nthis example does not assume an equation between the encoder and a frozen\nnumerical signature. The original optional reader supplies the sole sign fact\nused to decode the coefficient. The resulting coefficient has the selected\nroot's ordinary real value:",
+    "viewport": 390,
+    "scrollY": 463252,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "CODE",
+    "targetWidth": 331,
+    "targetScrollWidth": 331,
+    "descendantOverflow": 0,
+    "overflowElements": []
+  },
+  {
+    "label": "narrow",
+    "kind": "boundary",
+    "text": "\n                  For a dependent match, quotation moves trailing branch-equality proofs along\nthe checked equation for the match's subject. This uses ordinary equality\nelimination with an abstract subject, then instantiates the checked equation.\nMoved proofs are checked separately before later replay steps. The result type\nmust stay fixed. Independent trailing data is retained; data whose type depends\non the subject or its branch proofs remains unsupported. During replay-law\nconversion, an explicit checked function boundary is first kept abstract, then instantiated\nwith the actual function and its public equation. The fresh importing audit\nchecks the resulting private bodies as well as their full axiom closure.\nCodec-dependent branch proofs are generalized with the codec constructor during\nreader conversion, including successive canonical decodes. A custom callback\nshould propose the exact demanded read expression. Literal Boolean values are\nhandled without consulting that callback.\nWrong signs, changed polynomials and context swaps in either nodes or nested\nmoments are checked refusal cases. These helpers consume supplied histories\nand evidence; they do not install the general real-coefficient tactic.\n",
+    "viewport": 390,
+    "scrollY": 463713,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343,
+    "descendantOverflow": 0,
+    "overflowElements": []
+  }
+]

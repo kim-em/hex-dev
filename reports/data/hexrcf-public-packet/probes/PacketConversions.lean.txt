@@ -1,0 +1,55 @@
+import SignPacketEncodedProbe
+import HexRCF.SelectedRoot.KernelCheck
+open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
+set_option maxHeartbeats 12000000
+set_option maxRecDepth 32768
+run_meta do
+  let entries := (← getEnv).constants.toList.filter fun (name,_) =>
+    name.toString.contains "_private.SignPacketEncodedProbe." && name.toString.contains "_proof_345."
+  unless entries.length == 1 do throwError "expected one body345"
+  let (_,info) := entries.head!
+  let some sourceBody := info.value? (allowOpaque := true) | throwError "body345 has no body"
+  let mut body := sourceBody.consumeMData
+  while body.isAppOfArity ``id 2 do body := body.appArg!.consumeMData
+  unless body.isAppOfArity ``congrArg 6 do throwError "body345 is not congrArg"
+  let args := body.getAppArgs
+  let before := args[2]!
+  let after := args[3]!
+  let motive := args[4]!
+  let rule := args[5]!
+  let original := info.type.getAppArgs[1]!
+  let result := info.type.getAppArgs[2]!
+  let left := mkApp motive before
+  let right := mkApp motive after
+  let cases := #[
+    ("rule", ← mkEq before after,rule),
+    ("congruence", ← mkEq left right,body),
+    ("left-normalization", ← mkEq original left, ← mkEqRefl original),
+    ("right-normalization", ← mkEq result right, ← mkEqRefl result)]
+  for (label,target,proof) in cases do
+    IO.FS.withFile "/home/kim/.codex/tasks/hex-10358/body345-conversions.txt" .append fun file => do
+      file.putStrLn s!"BEGIN {label}"
+      file.flush
+    let declaration := Declaration.thmDecl {
+      name := ← mkFreshUserName `__body345Conversion,levelParams := info.levelParams,
+      type := target,value := proof}
+    let options := maxHeartbeats.set ((← getOptions).setBool `debug.skipKernelTC false) 100000
+    let environment := Kernel.enableDiag (Kernel.resetDiag (← getEnv)) true
+    let outcome := environment.addDeclCore
+      (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
+      declaration none (doCheck := true)
+    let status ← match outcome with
+      | .error error => do
+        let message ← (error.toMessageData options).toString
+        pure s!"ERROR {message}"
+      | .ok checked => do
+        let diagnostics := Kernel.getDiagnostics checked
+        unless diagnostics.enabled do throwError "conversion diagnostics disabled"
+        if let some (producer,count) := Hex.RCF.SelectedRootTests.KernelCheck.violation? diagnostics
+            #[``ScalarPacket.build,``ScalarPacket.buildLiteral,``Algebraic.Element.codec,``Descriptor.ofReplay?] then
+          throwError "{label}: reduced producer {producer}: {count}"
+        pure s!"PASS; nonemptyTrace={!diagnostics.unfoldCounter.isEmpty}"
+    IO.FS.withFile "/home/kim/.codex/tasks/hex-10358/body345-conversions.txt" .append fun file => do
+      file.putStrLn s!"END {label}: {status}"
+      file.flush
+    logInfo s!"body345 {label}: {status}"

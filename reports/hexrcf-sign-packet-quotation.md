@@ -61,8 +61,10 @@ a full signature. The existing lawful roundtrip has an encoded argument, but
 the client lacks the public literal decoding or encoding projection equation
 needed to connect that argument to its frozen input. A separate public example
 cannot prove the rational-parent encoding identity by reflexivity. Encoded
-context experiments also expose a later Boolean replay boundary; resolving the
-first equation is not evidence that all public replay is solved. The failed
+context experiments also expose a later Boolean replay boundary. The
+[public canonical-packet continuation](hexrcf-public-packet-quotation.md)
+addresses that quotation boundary while retaining encoded context expressions;
+it does not discharge the fully numerical signature equation. The failed
 public probes are retained outside the default build, with no admissions or
 relaxed checks. The precise request remains with the existing
 [#10378 owner](https://github.com/kim-em/hex-dev/issues/10378#issuecomment-6230331731).

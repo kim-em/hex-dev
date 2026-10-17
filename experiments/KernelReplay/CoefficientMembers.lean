@@ -90,7 +90,7 @@ def elaborate : CommandElab := fun _ => liftTermElabM do
   let sharedAgreement := mkAppN originalType.getAppFn
     (parameters.set! (parameters.size - 1) shared)
   withLocalDeclD `agreement sharedAgreement fun agreement => do
-    let some proof ← agreementSupplier agreement target |
+    let some proof ← agreementSupplier agreement none target |
       throwError "shared whole-block proof missing"
     let locals := (← getLCtx).getFVarIds.map mkFVar
     let type ← mkForallFVars locals target

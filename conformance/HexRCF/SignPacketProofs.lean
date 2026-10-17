@@ -63,7 +63,7 @@ run_meta do
     if !diagnostics.unfoldCounter.isEmpty then reductions := reductions+1
   unless (← (← getEnv).getLocalConstantInfos).map (·.name) == originalNames do
     throwError "sign packet audit retained temporary declarations"
-  unless theorems.size == 80 && definitions.size == 11 && reductions == 81 do
+  unless theorems.size == 89 && definitions.size == 11 && reductions == 90 do
     throwError "sign packet audit inventory changed: {theorems.size} theorem bodies/{definitions.size} definitions; traces={reductions}"
   logInfo m!"sign packet quotation: {theorems.size} theorem bodies, {definitions.size} definitions"
   logInfo m!"sign packet nonempty diagnostic traces: {reductions}"
