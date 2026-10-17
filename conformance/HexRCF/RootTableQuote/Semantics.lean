@@ -98,26 +98,35 @@ theorem count : roots.roots.length = 2 := by
   erw [List.length_map]
   exact roots_count
 
-theorem has_real_root : ∃ x : ℝ, x ^ 2 = Real.sqrt 2 := by
-  have length : (roots.values Data.original).length = 2 := by
-    unfold RootReplay.Result.values
+private theorem polynomial_nonzero :
+    HexPolyTheory.Interpret.interpret Data.original.value Data.original.zero_iff input ≠ 0 := by
+  rw [polynomial_value]
+  intro zero
+  have coefficient := congrArg (fun p : Polynomial ℝ => p.coeff 2) zero
+  norm_num at coefficient
+
+/-- The interpreted list is the entire real solution set, without repetitions. -/
+theorem solutions :
+    (roots.values Data.original).length = 2 ∧
+    (roots.values Data.original).Nodup ∧
+    ∀ y : ℝ, y ^ 2 = Real.sqrt 2 ↔ y ∈ roots.values Data.original := by
+  refine ⟨?_, (roots.coverage Data.original).2, ?_⟩
+  · unfold RootReplay.Result.values
     rw [List.length_map]
     exact count
-  have nonzero : HexPolyTheory.Interpret.interpret Data.original.value Data.original.zero_iff input ≠ 0 := by
-    rw [polynomial_value]
-    intro zero
-    have coefficient := congrArg (fun p : Polynomial ℝ => p.coeff 2) zero
-    norm_num at coefficient
+  · intro y
+    rw [← (roots.coverage Data.original).1 y]
+    erw [HexRealRootsTheory.Tarski.mem_rootsIn_iff _ polynomial_nonzero]
+    erw [polynomial_value]
+    simp [Polynomial.eval_sub, Polynomial.eval_pow, Polynomial.eval_X, Polynomial.eval_C,
+      sub_eq_zero, Endpoint.map, HexRealRootsTheory.Tarski.InInterval]
+
+theorem has_real_root : ∃ x : ℝ, x ^ 2 = Real.sqrt 2 := by
+  obtain ⟨length, _, complete⟩ := solutions
   cases values : roots.values Data.original with
   | nil => simp [values] at length
   | cons x xs =>
-    have member : x ∈ roots.values Data.original := by rw [values]; simp
-    have root := (roots.coverage Data.original).1 x |>.mpr member
-    have equation := (HexRealRootsTheory.Tarski.mem_rootsIn_iff _ nonzero _ _ _).mp root
-    refine ⟨x,?_⟩
-    rw [polynomial_value] at equation
-    simpa [Polynomial.eval_sub,Polynomial.eval_pow,Polynomial.eval_X,Polynomial.eval_C,
-      sub_eq_zero] using equation.1
+    exact ⟨x, (complete x).mpr (by rw [values]; simp)⟩
 
 theorem witness : ∃ x : ℝ, x ^ 2 = Real.sqrt 2 ∧ 1 < x ∧ x < 2 := by
   obtain ⟨x,equation⟩ := has_real_root
@@ -132,5 +141,13 @@ theorem witness : ∃ x : ℝ, x ^ 2 = Real.sqrt 2 ∧ 1 < x ∧ x < 2 := by
   · apply (sq_lt_sq₀ (abs_nonneg x) (by norm_num : (0:ℝ) ≤ 2)).mp
     rw [square]
     nlinarith
+
+/-- Both original reader equations and the real witness are checked artifacts. -/
+theorem checked_witness : polynomialReader.toOption = some input ∧
+    table.toOption.isSome = true ∧
+    ∃ x : ℝ, x ^ 2 = Real.sqrt 2 ∧ 1 < x ∧ x < 2 := by
+  refine ⟨input_read, ?_, witness⟩
+  rw [table_read]
+  rfl
 
 end Hex.RCF.RootTableQuoteTests

@@ -47,18 +47,32 @@ The coefficient interpretation identifies the exact polynomial with
 provides one ordinary real point satisfying the equation and both bounds.
 The proof uses the same selected positive embedding throughout. It does not
 assume a root, treat an infinitesimal as a real witness, or use the rational
-solver for an irrational coefficient.
+solver for an irrational coefficient. The complete solution-set regression also
+uses the converse coverage direction and absence of duplicate roots: the list
+has length two, is duplicate-free, and contains exactly the real numbers whose
+square is `Real.sqrt 2`. The witness uses the certified reconstructed data;
+`checked_witness` additionally retains both original reader equations. Its
+bounds follow from the coefficient's checked bounds and the squared equation.
 
-The fresh importing conformance module checks all 71 reachable example theorem
+```lean
+open Hex.RCF.RootTableQuoteTests in
+example : ∃ values : List ℝ,
+    values.length = 2 ∧ values.Nodup ∧
+    ∀ y : ℝ, y ^ 2 = Real.sqrt 2 ↔ y ∈ values :=
+  ⟨_, solutions⟩
+```
+
+
+The fresh importing conformance module checks all 74 reachable example theorem
 bodies and 14 definitions under the kernel producer guard, including private
 auxiliaries and the final witness. The complete axiom closure contains only
 `propext`, `Classical.choice` and `Quot.sound`. The stored polynomial request
 accounts for 1,827 proof nodes and the table request for 121,995; these are
 request accounting, not physical proof sharing or a speedup measurement.
 
-The retained prototype audit build took 40.499 seconds with a 3.1 GiB peak
-on the shared host, including reused dependencies. These observations are
-not scaling or matched comparison results. The examples raise Lean limits to
+The integrated audit/runtime selection took 2 min 3.370 s with a 3 GiB peak
+on the shared host, including reused dependencies. Earlier prototype results
+are recorded separately. These observations are not scaling or matched comparisons. The examples raise Lean limits to
 12,000,000 heartbeats and recursion depth 32,768. Larger inputs or default
 limits may exhaust.
 
@@ -74,4 +88,4 @@ source-to-certificate tactic, authenticate arbitrary provider histories or
 prove accepted completeness. The missing-scalar control does not establish
 that every omitted arithmetic record prevents native work in a whole reader.
 The exact sources, completed diagnostics and proof inventory are retained in
-[the root-table quotation record](../../../reports/hexrcf-packet-quotation.md).
+[the root-table quotation record](https://github.com/kim-em/hex-dev/blob/main/reports/hexrcf-packet-quotation.md).

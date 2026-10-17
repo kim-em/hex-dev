@@ -11,6 +11,7 @@ open CellReplayTests.Algebraic
 set_option maxHeartbeats 12000000
 set_option maxRecDepth 32768
 
+/-- Keep the compiled reader parameterized; emitted input data is compiled separately. -/
 @[noinline] def readTable (facts : List (Algebraic.SignFact Data.native))
     (polynomial : Schema.parent.Poly) :=
   @RootTable.read Schema.parent.Value Signature _ _ _
@@ -43,6 +44,22 @@ run_meta do
       addDecl (.thmDecl {
         name := `Hex.RCF.RootTableQuoteTests.table_read,levelParams := [],
         type := statement,value := proof})
+
+def missingFacts := readTable [] input
+
+run_meta do
+  let count := (← getMCtx).decls.toList.length
+  let names := (← (← getEnv).getLocalConstantInfos).map (·.name)
+  let .error (.providerFailure (.invalidProviderEvidence ⟨key,version⟩ _) _) ←
+      RootQuote.quote (mkConst ``missingFacts)
+        (RationalQuote.decoder (mkConst ``Hex.RCF.SelectedRootTests.Data.registry))
+    | throwError "missing scalar facts did not reject the actual root-table quotation"
+  unless key == `Hex.RCF.RealCoefficients.RootQuote && version == 0 do
+    throwError "root-table rejection changed its provider boundary"
+  unless (← getMCtx).decls.toList.length == count &&
+      (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
+    throwError "rejected root-table quotation retained auxiliary declarations or metavariables"
+  logInfo "actual root-table failure is structured and restores the whole quotation state"
 
 theorem roots_count :
     letI : One Schema.parent.Value := Algebraic.Element.cachedOne reduction reduction_eq Records.facts

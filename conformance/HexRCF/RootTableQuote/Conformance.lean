@@ -12,7 +12,7 @@ namespace Hex.RCF.RootTableQuoteTests
 set_option maxHeartbeats 12000000
 set_option maxRecDepth 32768
 run_meta do
-  let roots := #[``literal_read,``input_read,``input_size,``reduction_eq,``table_read,``roots_count,``witness]
+  let roots := #[``literal_read,``input_read,``input_size,``reduction_eq,``table_read,``roots_count,``solutions,``witness,``checked_witness]
   let axioms ← Algebraic.KernelReplay.AxiomClosure.collect roots
   unless axioms == (#[``propext,``Classical.choice,``Quot.sound].qsort Name.lt) do
     throwError "unexpected complete root-table quotation axiom closure: {axioms}"
@@ -24,6 +24,7 @@ run_meta do
   for forbidden in #[``CellReplayTests.Algebraic.Inputs.polynomialAt,
       ``ScalarPacket.build,``ScalarPacket.buildLiteral] do
     if dependencies.contains forbidden then throwError "root-table quote retained source computation: {forbidden}"
+  let names := (← (← getEnv).getLocalConstantInfos).map (·.name)
   let modules := (← getEnv).header.moduleNames
   let mut theorems : Array Name := #[]
   let mut definitions : Array Name := #[]
@@ -52,9 +53,10 @@ run_meta do
             #[``ScalarPacket.build,``ScalarPacket.buildLiteral] then
           throwError "root-table quotation executed native producer {producer}: {count}; body={name}"
         if !diagnostics.unfoldCounter.isEmpty then reductions := reductions + 1
-        setEnv (Kernel.enableDiag env false)
+  unless (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
+    throwError "root-table audit retained copied declarations"
   unless reductions > 0 do throwError "root-table quotation audit did not observe any reductions"
-  unless theorems.size == 71 && definitions.size == 14 do
+  unless theorems.size == 74 && definitions.size == 14 do
     throwError "root-table quotation body coverage changed: {theorems.size}/{definitions.size}"
   logInfo m!"root-table quotation: {theorems.size} theorem bodies, {definitions.size} data definitions"
   logInfo "complete standard-three axiom closure; no native producer reductions"
