@@ -1,0 +1,28 @@
+import PacketQuoteProbe
+open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
+namespace Hex.RCF.PacketQuoteTests
+set_option maxHeartbeats 12000000
+set_option maxRecDepth 32768
+
+def table := CellReplayTests.Algebraic.Inputs.tableAt CellReplayTests.Algebraic.Records.facts
+
+run_meta do
+  withExporting (isExporting := false) do
+    let decode := RationalQuote.decoder (mkConst ``Hex.RCF.SelectedRootTests.Data.registry)
+    let .ok result ← RootQuote.quote (mkConst ``table) decode
+      | throwError "algebraic root-table quotation failed"
+    logInfo m!"algebraic root-table quotation proofNodes={result.usage.proofNodes}"
+    withExporting (isExporting := true) do
+      let name := `Hex.RCF.PacketQuoteTests.restored
+      addDecl (.defnDecl {
+        name,levelParams := [],type := ← inferType result.value,
+        value := result.value,hints := .regular 0,safety := .safe}) (forceExpose := true)
+      let statement ← mkEq (← mkAppM ``Except.toOption #[mkConst ``table])
+        (← mkAppM ``Option.some #[mkConst name])
+      let proof ← Hex.RCF.checkProof `originalRootTable statement result.proof
+      addDecl (.thmDecl {
+        name := `Hex.RCF.PacketQuoteTests.table_read,levelParams := [],
+        type := statement,value := proof})
+
+theorem roots_count : restored.roots.length = 2 := by rfl
+end Hex.RCF.PacketQuoteTests

@@ -1,0 +1,11 @@
+import PacketQuoteTable
+namespace Hex.RCF.PacketQuoteTests
+open Hex.RCF.RealCoefficients
+-- This separately tests compiling the closed call, independently of quotation.
+set_option compiler.extract_closed false in
+def compiledTable := readTable CellReplayTests.Algebraic.Records.facts input
+/-- info: true -/
+#guard_msgs in
+set_option compiler.extract_closed false in
+#eval compiledTable.isOk
+end Hex.RCF.PacketQuoteTests

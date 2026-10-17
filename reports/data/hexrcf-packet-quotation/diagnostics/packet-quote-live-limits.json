@@ -1,0 +1,9 @@
+{
+  "ActiveState": "active",
+  "OOMPolicy": "kill",
+  "MemoryMax": "34359738368",
+  "MemorySwapMax": "0",
+  "observed_at": "2026-10-17T00:29:27.833003+00:00",
+  "scope": "Live wrapper policy verification after the completed audit; not a concurrent sample of the audit process",
+  "lean_num_threads": "2"
+}
