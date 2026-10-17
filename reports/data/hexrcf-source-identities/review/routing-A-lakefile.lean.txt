@@ -1,0 +1,6 @@
+import Lake
+open Lake DSL
+package routingProof
+require Hex from "/home/kim/.codex/tasks/hex-10358/routing-baseline"
+lean_lib RoutingProbe
+lean_lib RoutingInventory

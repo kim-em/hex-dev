@@ -1,0 +1,54 @@
+{
+  "source": "53cc610c67d9c1eb2aa6f320a7262ceb4786f716",
+  "checks": [
+    {
+      "argv": [
+        "python3",
+        "scripts/check_dag.py"
+      ],
+      "exit_code": 0,
+      "log": "rational-point-metadata-0.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_copyright_headers.py"
+      ],
+      "exit_code": 0,
+      "log": "rational-point-metadata-1.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_file_line_counts.py"
+      ],
+      "exit_code": 0,
+      "log": "rational-point-metadata-2.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/ci/check_named_admissions.py"
+      ],
+      "exit_code": 0,
+      "log": "rational-point-metadata-3.log",
+      "sha256": "f9057dbf10066250562b256e42c5fd64ff8e58fee39b24c9112442f46aa188fc"
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check",
+        "51420aab0e",
+        "HEAD"
+      ],
+      "exit_code": 0,
+      "log": "rational-point-metadata-4.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "admission_scope": "673 scanned adapter/conformance import cones: 1583 local modules, no admissions in these cones"
+}

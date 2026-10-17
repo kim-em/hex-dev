@@ -11,7 +11,7 @@ open HexPolyTheory.Interpret
 namespace Hex.RCF.RealCoefficients.FiniteMatrixTests.Guards.Binding
 open Hex.RCF.RealCoefficients Hex.RCF.RealCoefficients.FiniteMatrixTests
 open Semantics
-noncomputable def valuation : Fin 2 → ℝ := fun i => read (Hex.RCF.RealCoefficients.FiniteMatrixTests.Guards.Schema.values i)
+noncomputable def valuation : Fin 1 → ℝ := fun i => read (Hex.RCF.RealCoefficients.FiniteMatrixTests.Guards.Schema.values i)
 private theorem polynomial (p : DensePoly (Element FiniteTower.first)) :
     interpret (fun y : ℝ => y) (fun _ => Iff.rfl) (Transport.polynomial read p) =
       interpret read reflect p := by
@@ -29,13 +29,13 @@ theorem bind (entries : List (Packing FiniteTower.first)) (x : ℝ) :
     (fun a b => closed.read_mul a b trivial trivial) closed.read_natCast negative
     Hex.RCF.RealCoefficients.FiniteMatrixTests.Guards.Schema.values Hex.RCF.RealCoefficients.FiniteMatrixTests.Guards.Schema.formula x
 
-theorem valuation_eq : valuation = RealFormula.append
-    (RealFormula.append Fin.elim0 (Real.sqrt 2)) (0 / (Real.sqrt 2 - 1)) := by
+theorem valuation_eq : valuation = RealFormula.append Fin.elim0
+    (Real.sqrt 2 + 0 / (Real.sqrt 2 - 1) + 0 / (-1 : ℝ)) := by
   funext i
-  rcases i with ⟨_ | _ | i, hi⟩
-  · change read FiniteTower.generator = Real.sqrt 2
-    exact Hex.RCF.RealCoefficients.FiniteMatrixTests.Guards.Meaning.generator
-  · change read 0 = 0 / (Real.sqrt 2 - 1)
-    rw [zero, zero_div]
-  · omega
+  have index : i = 0 := Fin.eq_zero i
+  subst i
+  change read FiniteTower.generator =
+    Real.sqrt 2 + 0 / (Real.sqrt 2 - 1) + 0 / (-1 : ℝ)
+  rw [Hex.RCF.RealCoefficients.FiniteMatrixTests.Guards.Meaning.generator]
+  simp only [zero_div, add_zero]
 end Hex.RCF.RealCoefficients.FiniteMatrixTests.Guards.Binding

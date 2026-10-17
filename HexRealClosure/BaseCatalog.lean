@@ -187,6 +187,25 @@ theorem lookup_keys {registry : Registry} (catalog : Catalog registry)
     simpa [RealPrefix.keys, RealContext.keys, RealContext.keys_rational] using ‹keys = []›.symm
   · exact findPrefix_keys keys catalog.entries entry h
 
+/-- A successful lookup returns an actual retained prefix. -/
+theorem lookup_mem {registry : Registry} (catalog : Catalog registry)
+    (keys : List ConstantKey) (entry : RealPrefix registry)
+    (found : catalog.lookup keys = some entry) : entry ∈ catalog.prefixes := by
+  have find_mem : ∀ entries : List (RealPrefix registry),
+      findPrefix keys entries = some entry → entry ∈ entries := by
+    intro entries
+    induction entries with
+    | nil => simp [findPrefix]
+    | cons first rest ih =>
+      simp only [findPrefix]
+      split
+      · intro same; cases same; exact List.mem_cons_self
+      · intro same; exact List.mem_cons_of_mem _ (ih same)
+  unfold lookup at found
+  split at found
+  · cases found; exact catalog.rational_mem
+  · exact List.mem_cons_of_mem _ (find_mem _ found)
+
 theorem lookup_rational {registry : Registry} (catalog : Catalog registry) :
     catalog.lookup [] = some (.pack (.rational registry)) := by simp [lookup]
 

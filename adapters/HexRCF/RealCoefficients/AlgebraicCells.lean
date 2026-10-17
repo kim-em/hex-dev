@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 public import HexRCF.RealCoefficients.GatherCells
 public import HexRealClosure.SharedPresentation
+public import HexRealAlgebraicTheory.Rational
 public section
 /-! Complete native packets from original real algebraic values. Every input
 gets the owner's checked selected presentation. Separate index collections retain
@@ -17,24 +18,55 @@ open scoped List
 namespace Hex.RCF.RealCoefficients.AlgebraicCells
 variable {registry : BaseContext.Registry}
 
-/-- Construct every input through the actual selected-generator factory. -/
+/-- Recognized rationals retain the rational predecessor. Other generators
+use the owner's complete selected-root factory. Both paths check the original
+generator; rejection of a proposed point never starts another search. -/
+@[expose] def presentation (generator : RealAlgebraicNumber) (registry : BaseContext.Registry) :
+    Option (Hex.RealClosure.NumberField.Presentation generator registry) :=
+  match generator.toRat? with
+  | some q => Hex.RealClosure.NumberField.Presentation.ofRoot? generator registry (.point ⟨q⟩)
+  | none => Hex.RealClosure.NumberField.present? generator registry
+
+private theorem point_success (generator : RealAlgebraicNumber) (registry : BaseContext.Registry)
+    (q : Rat) (recognized : generator.toRat? = some q) :
+    ∃ source, Hex.RealClosure.NumberField.Presentation.ofRoot? generator registry (.point ⟨q⟩) =
+      some source := by
+  apply Option.isSome_iff_exists.mp
+  apply (Hex.RealClosure.NumberField.Presentation.ofRoot?_isSome generator registry (.point ⟨q⟩)).mpr
+  apply (RealAlgebraicNumber.beq_iff _ _).mpr
+  change (Trivial.Map.rational registry).value ⟨q⟩ = generator
+  exact (Trivial.Map.rational_value registry ⟨q⟩).trans
+    ((RealAlgebraicNumber.toRat?_eq_some generator q).mp recognized).symm
+
+/-- Rational recognition and the complete owner factory cover every original
+selected real algebraic input without changing its embedding. -/
+theorem presentation_success (generator : RealAlgebraicNumber) (registry : BaseContext.Registry) :
+    ∃ source, presentation generator registry = some source := by
+  cases recognized : generator.toRat? with
+  | none =>
+    simpa only [presentation, recognized] using
+      Hex.RealClosure.NumberField.present?_success generator registry
+  | some q =>
+    simpa only [presentation, recognized] using point_success generator registry q recognized
+
+/-- Construct every input through its checked rational point or selected root. -/
 @[expose] def presentations (registry : BaseContext.Registry) :
     {n : Nat} → (generators : Fin n → RealAlgebraicNumber) →
       Option ((i : Fin n) → Hex.RealClosure.NumberField.Presentation (generators i) registry)
   | 0, _ => some (fun i => i.elim0)
   | _+1, generators => do
-    let head ← Hex.RealClosure.NumberField.present? (generators 0) registry
+    let head ← presentation (generators 0) registry
     let tail ← presentations registry (fun i => generators i.succ)
     pure (Fin.cases head tail)
 
-/-- The total owner factory supplies every finite tuple of presentations. -/
+/-- Checked point preparation and the owner factory supply every finite tuple. -/
 theorem presentations_success (registry : BaseContext.Registry)
     (generators : Fin n → RealAlgebraicNumber) :
     ∃ sources, presentations registry generators = some sources := by
   induction n with
   | zero => exact ⟨fun i => i.elim0,rfl⟩
   | succ n ih =>
-    obtain ⟨head,first⟩ := Hex.RealClosure.NumberField.present?_success (generators 0) registry
+    obtain ⟨head,first⟩ := presentation_success (generators 0) registry
     obtain ⟨tail,rest⟩ := ih (fun i => generators i.succ)
     refine ⟨Fin.cases head tail,?_⟩
     simp only [presentations,first,rest]
@@ -110,7 +142,9 @@ theorem entry_real {generators : Fin n → RealAlgebraicNumber}
   exact value.trans ((stored_value (owner_eq sources i) (sources i).model
     (sources i).root.convertedValue).trans (sources i).generator_value)
 
-private noncomputable def following (registry : BaseContext.Registry) :
+/-- The reference-field realization of the rational base for checked native
+record assembly. Ordinary-real semantics still use the separate real model. -/
+noncomputable def following (registry : BaseContext.Registry) :
     (BaseContext.PackedContext.pack (BaseContext.rational registry)).Realization := by
   have same : (BaseContext.RealPrefix.Model.rational registry).context.finish =
       .pack (BaseContext.rational registry) :=
@@ -293,5 +327,80 @@ theorem build_sound (registry : BaseContext.Registry) (generators : Fin m → Re
   have same : result = ⟨sources,shared,packet⟩ := Except.ok.inj (accepted.symm.trans produced)
   cases same
   exact checked
+
+/-- Acceptance by the actual algebraic producer and its complete packet
+checker. This predicate retains the exact source tuple, indices and original
+nonzero-divisor obligations; it does not assert frozen-history quotation. -/
+@[expose] def accepts (registry : BaseContext.Registry) (generators : Fin m → RealAlgebraicNumber)
+    (indices : Fin n → Fin m) (original : List (Fin m))
+    (formula : Hex.RealFormula.QF (n+1)) (quantifier : Hex.RealFormula.Quantifier) : Prop :=
+  ∃ result, build registry generators indices original formula = .ok result ∧
+    let sources := result.1
+    let shared := result.2.1
+    let packet := result.2.2
+    CompleteReplay.check packet.family.collection.input.context.codec
+      (packet.family.collection.input.value ∘ GatherCells.values shared (coefficients sources indices)) formula
+      ((GatherCells.guards shared (guards sources original)).map packet.family.collection.input.value)
+      packet.radical quantifier packet.rootGraph packet.cells = .ok true
+
+/-- Accepted true packets are equivalent to the original domains and shared
+sentence together. Guard validity, complete roots and real samples follow
+from the producer's existing laws, without a child-success hypothesis. -/
+theorem accepts_iff (registry : BaseContext.Registry) (generators : Fin m → RealAlgebraicNumber)
+    (indices : Fin n → Fin m) (original : List (Fin m))
+    (formula : Hex.RealFormula.QF (n+1)) (quantifier : Hex.RealFormula.Quantifier) :
+    accepts registry generators indices original formula quantifier ↔
+      (∀ i ∈ original, (generators i).toReal ≠ 0) ∧
+        (Hex.RealFormula.Prenex.quant quantifier (.matrix formula)).toProp
+          (fun i => (generators (indices i)).toReal) := by
+  constructor
+  · rintro ⟨result, produced, accepted⟩
+    refine ⟨build_domains registry generators indices original formula result.1 result.2 produced, ?_⟩
+    obtain ⟨verdict, checked, meaning⟩ :=
+      build_sound registry generators indices original formula result produced quantifier
+    have same : verdict = true := Except.ok.inj (checked.symm.trans accepted)
+    exact meaning.mp same
+  · rintro ⟨domains, truth⟩
+    have nonzero : ∀ i ∈ original, generators i ≠ 0 := by
+      intro i member zero
+      apply domains i member
+      simp only [zero, RealAlgebraicNumber.zero_toReal]
+    obtain ⟨sources, shared, packet, produced, checked⟩ :=
+      build_complete registry generators indices original formula nonzero
+    obtain ⟨verdict, accepted, meaning⟩ := checked quantifier
+    have same : verdict = true := meaning.mpr truth
+    exact ⟨⟨sources, shared, packet⟩, produced, by simpa only [same] using accepted⟩
+
+/-- Coefficient and original-divisor coordinates have separate ordered
+positions in the native producer. Every divisor remains a checked domain. -/
+theorem accepts_tuple (registry : BaseContext.Registry)
+    (values : Fin n → RealAlgebraicNumber) (divisors : Fin d → RealAlgebraicNumber)
+    (formula : Hex.RealFormula.QF (n+1)) (quantifier : Hex.RealFormula.Quantifier) :
+    accepts registry (Fin.addCases values divisors) (Fin.castAdd d)
+      (List.ofFn (Fin.natAdd n)) formula quantifier ↔
+      (∀ i, (divisors i).toReal ≠ 0) ∧
+        (Hex.RealFormula.Prenex.quant quantifier (.matrix formula)).toProp
+          (fun i => (values i).toReal) := by
+  rw [accepts_iff]
+  simp
+
+/-- Checked valuation identities and the frontend's exact equivalence connect
+producer acceptance to the original proposition and every original divisor.
+The identities are ordinary proof inputs supplied by source preparation. -/
+theorem accepts_source (registry : BaseContext.Registry)
+    (values : Fin n → RealAlgebraicNumber) (divisors : Fin d → RealAlgebraicNumber)
+    (realValues : Fin n → ℝ) (realDivisors : Fin d → ℝ)
+    (formula : Hex.RealFormula.QF (n+1)) (quantifier : Hex.RealFormula.Quantifier)
+    {source : Prop}
+    (coefficientEq : (fun i => (values i).toReal) = realValues)
+    (divisorEq : (fun i => (divisors i).toReal) = realDivisors)
+    (equivalence : (Hex.RealFormula.Prenex.quant quantifier (.matrix formula)).toProp realValues ↔ source) :
+    accepts registry (Fin.addCases values divisors) (Fin.castAdd d)
+      (List.ofFn (Fin.natAdd n)) formula quantifier ↔
+      (∀ i, realDivisors i ≠ 0) ∧ source := by
+  rw [accepts_tuple, coefficientEq]
+  have domains : (∀ i, (divisors i).toReal ≠ 0) ↔ (∀ i, realDivisors i ≠ 0) := by
+    rw [← divisorEq]
+  exact and_congr domains equivalence
 
 end Hex.RCF.RealCoefficients.AlgebraicCells

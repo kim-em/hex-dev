@@ -36,7 +36,7 @@ theorem zero_rejected : FiniteSigns.check FiniteJoint.next (Hex.RCF.RealCoeffici
     .error .divisor := by decide +kernel
 
 theorem before_constant : FiniteSigns.check FiniteJoint.next (Hex.RCF.RealCoefficients.FiniteMatrixTests.Guards.Schema.guards true Packings.facts)
-    (Hex.RCF.RealCoefficients.FiniteMatrixTests.Guards.Schema.queries Packings.facts) Hex.RCF.RealCoefficients.FiniteMatrixTests.Guards.Records.zero (.tt : RealFormula.QF 3) =
+    (Hex.RCF.RealCoefficients.FiniteMatrixTests.Guards.Schema.queries Packings.facts) Hex.RCF.RealCoefficients.FiniteMatrixTests.Guards.Records.zero (.tt : RealFormula.QF 2) =
     .error .divisor := by decide +kernel
 
 open Lean Meta in

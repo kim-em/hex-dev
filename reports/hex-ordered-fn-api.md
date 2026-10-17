@@ -1,13 +1,21 @@
 # Ordered-function proof and API review
 
-The review covers the production modules of `HexOrderedFn` and
-`HexOrderedFnMathlib`, their public umbrellas, and their existing tests and
-conformance interfaces. It supports the pair's Phase-5 proof-completion checks
-and supplies API improvements for Phase 6. It does not attest Phase 6 or Phase 7
-completion. The retained computational baseline is in
-[the performance report](hex-ordered-fn-performance.md).
+Both OrderedFn libraries complete Phases 6–7. The
+[final acceptance](ordered-fn-proof-acceptance.md) is merged in
+[#10965](https://github.com/kim-em/hex-dev/pull/10965); the
+[Theory acceptance](ordered-fn-declaration-review/theory-acceptance.md) records
+the companion's independent proof and manual checks.
 
-## Computational declarations
+This report retains the earlier Phase-5 assessment, API changes and baseline
+reproduction. Its original companion name was `HexOrderedFnMathlib`; current
+source links below use `HexOrderedFnTheory`. The frozen comparison records retain
+their source commits, executables, compiler versions, failures and verdicts.
+The individual assessments and subsequent native changes are reconciled by the
+final acceptance; these earlier tables are not a complete inventory of the
+current source's additional declarations. The retained Phase-4 models and their limitations are
+in [the performance report](hex-ordered-fn-performance.md).
+
+## Computational declarations (Phase-5 checkpoint)
 
 | Module | Definitions and proof boundary reviewed | Result |
 | --- | --- | --- |
@@ -17,19 +25,19 @@ completion. The retained computational baseline is in
 | [Extension](../HexOrderedFn/Extension.lean) | Fixed `Registration`, canonical-fraction wrapper, native field dictionary, coefficient/indeterminate constructors, sign/comparison/approximation, provider transport and next-level approximation | Termination alone supplies no ordered-field laws. `val_C` and `val_X` expose storage independently of proofs. Transport preserves the canonical fraction literally; preserving order requires the companion's same-subject hypotheses. |
 | [Infinitesimal](../HexOrderedFn/Infinitesimal.lean) | Lowest nonzero coefficient scan, canonical fraction sign, comparison and scoped decidable relations | Both numerator and denominator affect sign. The four scoped instances have short explicit names. A native field dictionary and decidable relations are separate from Mathlib ordered-field laws. |
 
-## Semantic declarations
+## Semantic declarations (Phase-5 checkpoint)
 
 | Module | Definitions and proof boundary reviewed | Result |
 | --- | --- | --- |
-| [Sign](../HexOrderedFnMathlib/Sign.lean) | Generic integer-sign/order equivalences | Preserves the public `Oracle.cast_sign_neg` and `Oracle.cast_sign_nonpos` names without importing real interval containment. |
-| [Oracle](../HexOrderedFnMathlib/Oracle.lean) | `Contains`, provider correctness, endpoint arithmetic and quotient containment | Four-corner multiplication handles all endpoint signs. Shared containment proves intersection succeeds; its containment law uses the endpoint characterization rather than unfolding the operation. Inversion/division require strict zero separation; finite containment is distinct from a shrinking-width guarantee. |
-| [Evaluation](../HexOrderedFnMathlib/Evaluation.lean) | Polynomial evaluation, relative transcendence, denominator nonvanishing, rational-function evaluation, injective homomorphism and constructor equations | Transcendence is over the entire predecessor field, not merely over the rationals. The field interpretation uses that hypothesis to justify nonzero canonical denominators. |
-| [Real](../HexOrderedFnMathlib/Real.lean) | Horner/enclosure soundness, finite attempt and bounded sign soundness, total sign and approximation specifications | Successful-trial soundness uses containment; total-search specifications consume progress. Stored denominator guards do not recover source-expression guards erased by cancellation. |
-| [Convergence](../HexOrderedFnMathlib/Convergence.lean) | Endpoint convergence, sums/products, actual Horner convergence, simultaneous refinement and quotient convergence away from zero | Coefficients and argument narrow together; product estimates retain the cross term. The quotient result uses denominator separation rather than total real division at zero. |
-| [Progress](../HexOrderedFnMathlib/Progress.lean) | Eventual sign/approximation success and accessibility witnesses | Containment, positive-request widths and relative transcendence supply total progress. The search laws are reused rather than replaced with an opaque answer. |
-| [Extension](../HexOrderedFnMathlib/Extension.lean) | `Valid`, registration, `OrderValid`, field-model equality, evaluation homomorphisms, induced orders, constant embedding, same-subject transport and derived-provider correctness | `Valid.orderValid` carries registration's same witnesses into its order hypothesis. `registration_source` identifies the actual provider. Preserving a pre-existing predecessor order additionally requires a strictly monotone embedding; `Valid` alone does not supply it. |
-| [Hahn](../HexOrderedFnMathlib/Hahn.lean) | Coefficient maps, support/order/leading coefficient, order comparison and constant embedding | A strictly monotone coefficient homomorphism preserves and reflects Hahn order. Support statements include zero. |
-| [Infinitesimal](../HexOrderedFnMathlib/Infinitesimal.lean) | Trailing-degree scan correspondence, Laurent embedding/injectivity, arbitrary fraction presentation, normalization, sign/order laws, constants/indeterminate, successive embeddings | The interpretation is an ordered Laurent/Hahn field; it is not an ordinary-real embedding or a real-closedness claim. The original denominator's nonvanishing remains explicit for arbitrary presentations. |
+| [Sign](../HexOrderedFnTheory/Sign.lean) | Generic integer-sign/order equivalences | Preserves the public `Oracle.cast_sign_neg` and `Oracle.cast_sign_nonpos` names without importing real interval containment. |
+| [Oracle](../HexOrderedFnTheory/Oracle.lean) | `Contains`, provider correctness, endpoint arithmetic and quotient containment | Four-corner multiplication handles all endpoint signs. Shared containment proves intersection succeeds; its containment law uses the endpoint characterization rather than unfolding the operation. Inversion/division require strict zero separation; finite containment is distinct from a shrinking-width guarantee. |
+| [Evaluation](../HexOrderedFnTheory/Evaluation.lean) | Polynomial evaluation, relative transcendence, denominator nonvanishing, rational-function evaluation, injective homomorphism and constructor equations | Transcendence is over the entire predecessor field, not merely over the rationals. The field interpretation uses that hypothesis to justify nonzero canonical denominators. |
+| [Real](../HexOrderedFnTheory/Real.lean) | Horner/enclosure soundness, finite attempt and bounded sign soundness, total sign and approximation specifications | Successful-trial soundness uses containment; total-search specifications consume progress. Stored denominator guards do not recover source-expression guards erased by cancellation. |
+| [Convergence](../HexOrderedFnTheory/Convergence.lean) | Endpoint convergence, sums/products, actual Horner convergence, simultaneous refinement and quotient convergence away from zero | Coefficients and argument narrow together; product estimates retain the cross term. The quotient result uses denominator separation rather than total real division at zero. |
+| [Progress](../HexOrderedFnTheory/Progress.lean) | Eventual sign/approximation success and accessibility witnesses | Containment, positive-request widths and relative transcendence supply total progress. The search laws are reused rather than replaced with an opaque answer. |
+| [Extension](../HexOrderedFnTheory/Extension.lean) | `Valid`, registration, `OrderValid`, field-model equality, evaluation homomorphisms, induced orders, constant embedding, same-subject transport and derived-provider correctness | `Valid.orderValid` carries registration's same witnesses into its order hypothesis. `registration_source` identifies the actual provider. Preserving a pre-existing predecessor order additionally requires a strictly monotone embedding; `Valid` alone does not supply it. |
+| [Hahn](../HexOrderedFnTheory/Hahn.lean) | Coefficient maps, support/order/leading coefficient, order comparison and constant embedding | A strictly monotone coefficient homomorphism preserves and reflects Hahn order. Support statements include zero. |
+| [Infinitesimal](../HexOrderedFnTheory/Infinitesimal.lean) | Trailing-degree scan correspondence, Laurent embedding/injectivity, arbitrary fraction presentation, normalization, sign/order laws, constants/indeterminate, successive embeddings | The interpretation is an ordered Laurent/Hahn field; it is not an ordinary-real embedding or a real-closedness claim. The original denominator's nonvanishing remains explicit for arbitrary presentations. |
 
 Public fields and lemmas have source documentation, including non-obvious private
 helpers. The API lint target selects the actual module roots, rather than
@@ -38,6 +46,9 @@ environment linters. The extensionality laws have source docstrings, so
 the lint checks need no declaration exemptions. The production umbrellas do not
 import the lint target.
 
+The following private-helper summary describes the Phase-5 checkpoint. The
+current quotient helpers and subsequent additions are covered by the
+[final acceptance](ordered-fn-proof-acceptance.md).
 The private production helpers are used by their owning proofs: `accessibleWf`
 implements the accessible-subtype recursion; `mul_bounds` proves multiplication
 and division containment;
@@ -49,7 +60,7 @@ real and infinitesimal strict/nonstrict order equivalences. The bounded search's
 recursion. Public standalone normalization and transfer lemmas are exported API,
 not alternate implementations of the algorithms.
 
-## Verification and remaining phase checks
+## Verification and retained comparisons
 
 The default Lake test target includes the API lint module. Existing semantic
 tests retain ordinary-kernel axiom guards, and the compiled Liouville integration
@@ -65,8 +76,9 @@ and exact emitted-fixture oracles supply the Phase-5 checks. Computational
 operations and searches use the native Lean implementation.
 
 The [individual declaration assessments](ordered-fn-declaration-review/README.md)
-cover each handwritten nontrivial production declaration. Their compiled
-reference/axiom inventory includes 545 constants and only `propext`,
+cover each handwritten nontrivial production declaration at their source
+checkpoints, with later changes treated in the final acceptance. The original
+compiled reference/axiom inventory includes 545 constants and only `propext`,
 `Classical.choice`, `Quot.sound`. The source assessments examine semantic
 hypotheses, representation identity, generality and private-helper uses; reference
 counts alone do not decide whether an exported characterizing lemma is dead.
@@ -85,16 +97,26 @@ annotation change is integrated.
 
 The frozen candidate executable has SHA-256
 `6479b2306cb778b7f34ec681020322212607e518577ecae9912f06e0a1ab0fed`,
-which `lake build HexOrderedFn hexorderedfn_bench` at integrated source
+which `lake build HexOrderedFn hexorderedfn_bench` at API-candidate source
 commit `205cd87bc672cc29daedd246b0dd8c9015f09076`, preserved by
 `audit/issue-10575-orderedfn-reproduction`, reproduces (215 jobs). The compared pinned builds use different
 Lean versions. Invocation-checkout metadata is distinct from frozen executable
 provenance. None of these observations establishes causal attribution to the API
 patch or supplies a Phase-6 performance pass.
 
-Phase 6 still requires resolution of the performance findings and final acceptance
-of the declaration review, including the explicit zero-reference dispositions and
-the retained current import assessment. A linter pass or successful theorem application cannot
-substitute for that computational check. The chapter and READMEs supply
-documentation, but do not advance Phase 7 ahead of Phase 6. Neither pair is added
-to the released manifest by this work.
+The [complete changed-source comparison](bench-results/ordered-fn-final-comparison/README.md)
+passes all 17 families and 136 parameter comparisons: 816 completed arms, matching
+answers, zero failed arms and no regressions under the unchanged 10% rule.
+The native quotient and combined sign/scan implementations have whole-function
+kernel equalities and individual API assessments. The fresh historical build
+was selected before timing and differs from the older retained executable; the
+passing comparison is a whole pinned-source/toolchain result. It does not
+reclassify either older capture or attribute the differences solely to API
+polishing or either native optimization.
+
+The [final acceptance](ordered-fn-proof-acceptance.md) combines that comparison
+with the individual declarations and retention decisions, ordinary public
+imports, complete owned-module axiom checks, native conformance and the rendered
+manual. Both libraries now record Phase 7. Their local acceptance promotes no
+transitive input and changes no release manifest entry; downstream tower evidence
+and package publication retain their separate requirements.

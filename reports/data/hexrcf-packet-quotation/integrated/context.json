@@ -1,0 +1,491 @@
+{
+  "source_commit": "94665d0ea7224f4f56d663ddd0bd14104d69d8dd",
+  "sources": {
+    "adapters/HexRCF/RealCoefficients/RootQuote.lean": "5a567a8c29d2d51562d72b2c80c31a50988ad71928e0abe70c6c7f952ea67458",
+    "adapters/HexRCF/RealCoefficients/ScalarQuote.lean": "8795420f8ed8c540748eb4204c93df6e651d4550d104c4e8afcbff4cb8795664",
+    "HexManual/Chapters/HexRCF.lean": "89fef1118473aecde8dcbf972960b04255757428bccf3a12c8b16f491d3fc659",
+    "HexManual/Chapters/HexRCF/RootQuote.lean": "ab4996ae80887ceae9f6406a171f22bc8f6f414cb0e747df6210edbb50e50f97",
+    "HexManual/Chapters/HexRCF/RootTableQuote.lean": "2b149a640d0e1568f0e028ded9af06f60cb7e1edf01b86ec440b2afb7467dd17",
+    "lakefile.lean": "bdb7f853316e31733c7c52b301c5750b84a72d6fe1f1bc526386679bf24f050a",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "conformance/HexRCF/RootTableQuote/Cases.lean": "e20af97994fe52bb2cc5b7a70940935ae0080cd970f1923daffc7318d6cc2a0f",
+    "conformance/HexRCF/RootTableQuote/Conformance.lean": "5ea5c2b3c0e1f88779163ec24c0fa82650d98f28c1b3d2254a0b72a1bb8343d9",
+    "conformance/HexRCF/RootTableQuote/Input.lean": "2a634adb9a1652267f3d3570352043061f10a162b0aa488f086472506f49697e",
+    "conformance/HexRCF/RootTableQuote/Runtime.lean": "bc9579a39fba780b1237c7bd4bde121fe0bd0dc3293090c9ee2a954fcf5464e7",
+    "conformance/HexRCF/RootTableQuote/Semantics.lean": "fb8f27cba93fcafba3aa35361d576bd0141b3990ded96d9f391bde43dd03de5b",
+    "conformance/HexRCF/RootTableQuote/Table.lean": "f04c93700ab21b38da2c066a31fdec29549b210b3291ee12cf908b1b6e5e3ee2"
+  },
+  "artifacts": [
+    {
+      "path": "logs/root-table-quote-input-1.log.gz",
+      "sha256": "44fc8938525ed8e42267dbc76ec45885375c7c063421bbb7a28fd749a9dd9968",
+      "bytes": 7065,
+      "uncompressed_sha256": "b4b14ed1df171e254014a47742f1daf6b43ff1bb1fa6aa7940160dace6fedaf7",
+      "uncompressed_bytes": 75764
+    },
+    {
+      "path": "logs/root-table-quote-input-2.log.gz",
+      "sha256": "df48ff90cfe7e57901c6f91d561d0a69912251af57d83818df75a22ff9c7359a",
+      "bytes": 6913,
+      "uncompressed_sha256": "7963195fabd74cbf8560aaef39a3f7fd05d66e2bfba75ecd8d084de35770f122",
+      "uncompressed_bytes": 75755
+    },
+    {
+      "path": "logs/root-table-quote-table-1.log.gz",
+      "sha256": "75aa93bcfd58b9307887cf80eb77550e4363a9c18c1c8fe7c0a0035c0c72eb34",
+      "bytes": 7090,
+      "uncompressed_sha256": "d723fcab5ee16d0c69ec51abaa25b32eb4aef5cb4c664f57e5be579a792d1526",
+      "uncompressed_bytes": 75922
+    },
+    {
+      "path": "logs/root-table-quote-table-2.log.gz",
+      "sha256": "235af006a1750d698dccdede1d16eb2972834958d4881a9e6fd8e299c37959a0",
+      "bytes": 7090,
+      "uncompressed_sha256": "852210396141cd42f8fedbbf2ec601e87deced054119f168cbd4badb558899ac",
+      "uncompressed_bytes": 75919
+    },
+    {
+      "path": "logs/root-table-quote-semantics-1.log.gz",
+      "sha256": "b3a149361f8d51c2d46881be1e7d1cd0f1b447d3ddb7fdb757f3e6609dbc6d9e",
+      "bytes": 7117,
+      "uncompressed_sha256": "cef3fd046f5d35def5369d934a925c8ad24860767e5c4fbd2274508c273c953c",
+      "uncompressed_bytes": 75990
+    },
+    {
+      "path": "logs/root-table-quote-audit-1.log.gz",
+      "sha256": "ba83f0ac7a23ea079b7e85a12e135cf4b588b575bcb9abeb397985e19552f0db",
+      "bytes": 7673,
+      "uncompressed_sha256": "c0ae02e47bda14e1eff41e3dcfe3ba1e4259c437239a7c6a4770ffbe8c5ffeb3",
+      "uncompressed_bytes": 83357
+    },
+    {
+      "path": "logs/root-table-quote-manual-1.log.gz",
+      "sha256": "d0d6f3dc48969394aa5b4776150df8d167d8a41176b45e8824f0930e51c61373",
+      "bytes": 9079,
+      "uncompressed_sha256": "774b6ddfa113c72c97852d3fe5c5c6587bf0e0895d846b3eac149c182b9cb6ae",
+      "uncompressed_bytes": 116687
+    },
+    {
+      "path": "logs/root-table-quote-render-1.log.gz",
+      "sha256": "3ce97a622b6fda070cc2a5260625edede73d9c2cacefa4ba8b5e172e152ce42a",
+      "bytes": 14825,
+      "uncompressed_sha256": "1348904e66d4f7d7a8ad1957716b1c6bf4131176e061f0993cabaeb93d020caa",
+      "uncompressed_bytes": 193080
+    },
+    {
+      "path": "logs/root-table-quote-render-2.log.gz",
+      "sha256": "372dc17257418a1811b8931b6d0ecc5fb9199fd1054bc233016a49d4cfa3e9fd",
+      "bytes": 14596,
+      "uncompressed_sha256": "4d6bd7bb98979c468ce288165934031281039e43b3a55cd3e80d598abdf227aa",
+      "uncompressed_bytes": 192701
+    },
+    {
+      "path": "logs/root-table-quote-browser-1.log.gz",
+      "sha256": "6bf1f96736e4c17df42118c04ec12802be72de11ac755a467ffd4e828ac92c54",
+      "bytes": 240,
+      "uncompressed_sha256": "51db7b4e681403be68ac636b43072c994305361abd5767a01db184c03e09a52d",
+      "uncompressed_bytes": 327
+    },
+    {
+      "path": "logs/root-table-quote-browser-2.log.gz",
+      "sha256": "678e926c7235ab0c164c276b878f6a1284287a4e285578536ec7a9df4d2a79b9",
+      "bytes": 242,
+      "uncompressed_sha256": "71ccab1216faa91903482a6aa587d188fa2d06d90801a45170e39144cbd566af",
+      "uncompressed_bytes": 327
+    },
+    {
+      "path": "logs/root-table-quote-validation-1.log.gz",
+      "sha256": "8895b4724c1b2d28f02032891c4c29c765557120a9c72830a61a855ce4dff647",
+      "bytes": 16308,
+      "uncompressed_sha256": "bfb84abcd44d5dcd1f4105f7d83aa76347bb6a5e91bbeef8647e5f028d6982d2",
+      "uncompressed_bytes": 206932
+    },
+    {
+      "path": "logs/root-table-quote-validation-2.log.gz",
+      "sha256": "9085a463cc80ee6dbbb0535b0b05d09e94b61066971712df7ebb893338fcc0fa",
+      "bytes": 15870,
+      "uncompressed_sha256": "0d761043cbc4751160cc18a0c04434b2195a290f0f3fbf01ef22bf592f0736ec",
+      "uncompressed_bytes": 205977
+    },
+    {
+      "path": "logs/root-table-quote-integration-1.log.gz",
+      "sha256": "4056ad7f4f426a3ea1473a5daa281cea0f3ba2de18414595e09006ff0c632f57",
+      "bytes": 8368,
+      "uncompressed_sha256": "5557d90f13dacd1500a2b77ea7224a83fc556ea9806548e3fd92daccced8334f",
+      "uncompressed_bytes": 87363
+    },
+    {
+      "path": "logs/root-table-quote-integration-2.log.gz",
+      "sha256": "638c144dd7cd72cfc1dbc7760d43261113bafd716ff0d52e3fce9d4919e9232b",
+      "bytes": 8392,
+      "uncompressed_sha256": "96e1f9431ab4381b6a93838e3ab5a2ae72accab14981f1a5baade8e3f25fe25c",
+      "uncompressed_bytes": 85341
+    },
+    {
+      "path": "logs/root-table-quote-integration-3.log.gz",
+      "sha256": "6d93727e0c694ab39570398816ee1940780bca5c344b99966ad1785df4696325",
+      "bytes": 10498,
+      "uncompressed_sha256": "ddbb05f7f300f0eebec57f2f0a426e7f4873161103aef6d559f78e8c7362dc3b",
+      "uncompressed_bytes": 131340
+    },
+    {
+      "path": "logs/root-table-quote-integration-metadata-0.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "logs/root-table-quote-integration-metadata-1.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "logs/root-table-quote-integration-metadata-2.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "logs/root-table-quote-integration-metadata-3.log.gz",
+      "sha256": "b409d67a3a037936236130f7dc5c82bc279551dcaa501f4fdee7275c7bc3baef",
+      "bytes": 99,
+      "uncompressed_sha256": "d2dd145dfbb85665677c83dfa50f34878e648a170c291230b82ce0749ec0eb97",
+      "uncompressed_bytes": 95
+    },
+    {
+      "path": "logs/root-table-quote-integration-metadata-4.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "logs/root-table-quote-runtime-1.log.gz",
+      "sha256": "f79d358fe223dfc4251912cefdaa0849b9f477b3dbfea1d351c58b4b1b155cd1",
+      "bytes": 6959,
+      "uncompressed_sha256": "6d69e7c07f572b7d6562d9e4a3464e8eaa542824b60c922c2e6b3f75f67b425a",
+      "uncompressed_bytes": 75978
+    },
+    {
+      "path": "logs/root-table-quote-final-metadata-0.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "logs/root-table-quote-final-metadata-1.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "logs/root-table-quote-final-metadata-2.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "logs/root-table-quote-final-metadata-3.log.gz",
+      "sha256": "b409d67a3a037936236130f7dc5c82bc279551dcaa501f4fdee7275c7bc3baef",
+      "bytes": 99,
+      "uncompressed_sha256": "d2dd145dfbb85665677c83dfa50f34878e648a170c291230b82ce0749ec0eb97",
+      "uncompressed_bytes": 95
+    },
+    {
+      "path": "logs/root-table-quote-final-metadata-4.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "logs/root-table-quote-metadata-0.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "logs/root-table-quote-metadata-1.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "logs/root-table-quote-metadata-2.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "logs/root-table-quote-metadata-3.log.gz",
+      "sha256": "b409d67a3a037936236130f7dc5c82bc279551dcaa501f4fdee7275c7bc3baef",
+      "bytes": 99,
+      "uncompressed_sha256": "d2dd145dfbb85665677c83dfa50f34878e648a170c291230b82ce0749ec0eb97",
+      "uncompressed_bytes": 95
+    },
+    {
+      "path": "logs/root-table-quote-metadata-4.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "logs/packet-quote-runtime-bool-1.log.gz",
+      "sha256": "962a0473d950af3c44d2b812f6319001b8d21fe4fa792d5eab573a55850909d3",
+      "bytes": 11107,
+      "uncompressed_sha256": "8b7280fa7a4d105c339fb78f8c3ad1b5d03ad6cfba8c6dd160ad06c2f3e30aa9",
+      "uncompressed_bytes": 177406
+    },
+    {
+      "path": "logs/packet-quote-runtime-inputs-1.log.gz",
+      "sha256": "9745ffce12bba4e3b0cfc9b72b9a69c34e5e2dba77914e211df1be1123fcd177",
+      "bytes": 11110,
+      "uncompressed_sha256": "78c1cff8a4db22fd17e185fbdd3c265b4898068effdadfbde3d530df282f418e",
+      "uncompressed_bytes": 177424
+    },
+    {
+      "path": "logs/packet-quote-runtime-noinline-1.log.gz",
+      "sha256": "52966f2e1b5cb4986ce350952531a1e0776b315feeb9ff9fba0b610943633eaf",
+      "bytes": 11124,
+      "uncompressed_sha256": "6074c0d5f2746aafc42e07cc586a5008857391beb71d530bbfbd6772c1a5cd62",
+      "uncompressed_bytes": 177455
+    },
+    {
+      "path": "logs/packet-quote-runtime-compiled-1.log.gz",
+      "sha256": "3f675068dc15d4d73e5cb53dc8f52f40fbca29d4c04dd676a9b49fd923950803",
+      "bytes": 6937,
+      "uncompressed_sha256": "38cb22ac9049b5ede0fe7d0652eba8904f206e11125c442f81a37d193f2208f9",
+      "uncompressed_bytes": 75751
+    },
+    {
+      "path": "logs/packet-quote-runtime-table-1.log.gz",
+      "sha256": "df6646e50f7bdae553b16f3b921137a26863b1d1c521a23eebb955232bc0a6a2",
+      "bytes": 6965,
+      "uncompressed_sha256": "79b9b12eee3f1433b20de9408feeb511da9106032bc9f7d5ad98971998699df8",
+      "uncompressed_bytes": 75870
+    },
+    {
+      "path": "visual/root-table-quote-desktop-boundary.png",
+      "sha256": "f193539376ed16511985b0778406a86176c2e9a38f67021c81d184e3ceeb25a0",
+      "bytes": 297587
+    },
+    {
+      "path": "visual/root-table-quote-desktop-equivalence.png",
+      "sha256": "74ac1c7ddc3c8c8b8e06749bf6fd80a810ce5d08dabb1be4f44c3761c0d8f8b2",
+      "bytes": 287087
+    },
+    {
+      "path": "visual/root-table-quote-desktop-example.png",
+      "sha256": "b0f5a13e7c9bb1d0df68b05727c0d14b3040a247ef0515b5de3913f5f85381e2",
+      "bytes": 283452
+    },
+    {
+      "path": "visual/root-table-quote-narrow-boundary.png",
+      "sha256": "84d1f26a3b62e4f3861ef28392ccb40af0f4c73e3d06db0dfbe0f2ce073df612",
+      "bytes": 90274
+    },
+    {
+      "path": "visual/root-table-quote-narrow-equivalence.png",
+      "sha256": "284c3a0a9cf7ded40362bd3c4fe3e18ced79ab09538e38aec6c957f76e006ce6",
+      "bytes": 95886
+    },
+    {
+      "path": "visual/root-table-quote-narrow-example.png",
+      "sha256": "01cae9f7ae43720e3d40ce1fc817df480fa2db1cf27b773326585fc7c84de111",
+      "bytes": 91631
+    },
+    {
+      "path": "visual/root-table-quote-inspection.json",
+      "sha256": "103ec8037a2729d9a7be1db106ced68fac4d91387824e275e80060a88b036f06",
+      "bytes": 4330
+    },
+    {
+      "path": "visual/root-table-quote-section-overflow.json",
+      "sha256": "a427775472d129f43fe12487b425934cca5b725b36216f7d620ad7165f1ae165",
+      "bytes": 3946
+    },
+    {
+      "path": "diagnostics/PacketQuoteRuntimeBool.lean.txt",
+      "sha256": "ccf8381a1af8dd921b578480599d7b946e51c22f0f3232f7de4f66cb131d0a67",
+      "bytes": 491
+    },
+    {
+      "path": "diagnostics/PacketQuoteRuntimeInputs.lean.txt",
+      "sha256": "87bb4bd0579b827f4d4e1c0b55fd96b8dc2aa550ff134be9fd0d41aee29fe170",
+      "bytes": 295
+    },
+    {
+      "path": "diagnostics/PacketQuoteRuntimeNoInline.lean.txt",
+      "sha256": "0c445ce4d486e72dd4966139749854c2ccfa7e071c248bb0828087743e9b8f02",
+      "bytes": 128
+    },
+    {
+      "path": "diagnostics/PacketQuoteRuntimeCompiled.lean.txt",
+      "sha256": "83871aa1ab23ba67a090cf8d50dc1957301cade0c293e5df1f97248c0d228589",
+      "bytes": 481
+    },
+    {
+      "path": "diagnostics/PacketQuoteRuntimeTable.lean.txt",
+      "sha256": "ea7dd43a3b8b17a52daddd0e097e808f1e129990280a9183cdeb921ba1e442eb",
+      "bytes": 362
+    },
+    {
+      "path": "diagnostics/lakefile.lean.txt",
+      "sha256": "a7f2a7cd25173c9c3fa108e99e840c0168210cfb69b45382197d9f420fe09957",
+      "bytes": 452
+    },
+    {
+      "path": "browser.mjs",
+      "sha256": "b49f4d947560099ea16b37cbc3e2826d64ef6e7b2ae1f321ed4086111cac2567",
+      "bytes": 5635
+    },
+    {
+      "path": "renderer.lean.txt",
+      "sha256": "d3ff30c3ea2cbad690ee1d6bc8e87a426b39d4f48605a9f0629a3285a40eace0",
+      "bytes": 209
+    },
+    {
+      "path": "renderer-lakefile.lean.txt",
+      "sha256": "cd62ed073abddf567a9eddb327d8207757b5f9931d3f82caaa26e16dfa083b4d",
+      "bytes": 153
+    },
+    {
+      "path": "run-bounded.sh",
+      "sha256": "63bc5f97337e6b039bb3a9b1ba2a500be96fd1c2a2f73b43dae284aa9b18dda8",
+      "bytes": 302
+    }
+  ],
+  "scope": "Default HexConformance modules, direct ordinary-real witness, manual and fresh actual-body importing audit. Source hashes list selected files; the commit identifies the complete checkout.",
+  "proof_nodes": {
+    "structured_error_reader": 34,
+    "polynomial": 1827,
+    "table": 121995
+  },
+  "audit": {
+    "theorems": 71,
+    "definitions": 14,
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "native_producer_reductions": false,
+    "log": "logs/root-table-quote-integration-3.log.gz"
+  },
+  "validation": "integration3success11191jobs2m03.370s CPU3m28.160s peak3GiBnoSwap;compiledRuntime71/14Rootand47/14callbackaudits",
+  "metadata": [
+    {
+      "argv": [
+        "python3",
+        "scripts/check_dag.py"
+      ],
+      "exit_code": 0,
+      "log": "logs/root-table-quote-final-metadata-0.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_copyright_headers.py"
+      ],
+      "exit_code": 0,
+      "log": "logs/root-table-quote-final-metadata-1.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_file_line_counts.py"
+      ],
+      "exit_code": 0,
+      "log": "logs/root-table-quote-final-metadata-2.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/ci/check_named_admissions.py"
+      ],
+      "exit_code": 0,
+      "log": "logs/root-table-quote-final-metadata-3.log.gz"
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "logs/root-table-quote-final-metadata-4.log.gz"
+    }
+  ],
+  "render_log": "logs/root-table-quote-render-2.log.gz",
+  "browser_log": "logs/root-table-quote-browser-2.log.gz",
+  "resources": "Serial hard32GiB aggregate systemd service, MemorySwapMax0, LEAN_NUM_THREADS2",
+  "visual": {
+    "captures": 6,
+    "all_opened": true,
+    "widths": [
+      1440,
+      390
+    ],
+    "local_targets_per_width": [
+      8,
+      8
+    ],
+    "local_overflow_max": 0,
+    "scope": "Changed root-table section only; no whole-manual overflow claim."
+  },
+  "limitations": [
+    "Historical prototype record and completed failed attempts remain at../context.json.",
+    "Initial failed compiled consumers omitted compilation of emitted data definitions. Explicitly compiling those definitions repairs the minimal input and complete table call; current runtime checks use computable definitions and check original reader success/reconstructed roots/empty scalar facts. This narrow control is not a universal whole-reader missing-arithmetic strictness theorem.",
+    "These reused-dependency builds are not fixed-schedule scaling/AB-BA/speedup evidence.",
+    "This direct API witness does not install the general source-to-certificate tactic, authenticate arbitrary histories, prove accepted completeness, finish realization or repair the native inverse/xgcd stress boundary."
+  ],
+  "integration_source_commit": "da00b9ca19bef8967022649936e4bdf2f1febed8",
+  "integration_source_note": "Selected code matches final source; final manual commit corrects its polynomial-budget wording.",
+  "commands": {
+    "integration": {
+      "cwd": "/home/kim/.codex/tasks/hex-10358/packet-worktree",
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+        "env",
+        "LAKE_NO_CACHE=true",
+        "lake",
+        "build",
+        "+HexRCF.RootTableQuote.Conformance",
+        "+HexRCF.RootTableQuote.Runtime",
+        "+HexRCF.SharedQuoteCallbackProofs"
+      ]
+    },
+    "render": {
+      "cwd": "/home/kim/.codex/tasks/hex-10358/root-table-quote-render",
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+        "env",
+        "LAKE_NO_CACHE=true",
+        "lake",
+        "build",
+        "+RootTableQuoteRender"
+      ]
+    },
+    "browser": {
+      "cwd": "/home/kim/.codex/tasks/hex-10358",
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+        "node",
+        "/home/kim/.codex/tasks/hex-10358/root-table-quote-browser.mjs",
+        "/home/kim/.codex/tasks/hex-10358/root-table-quote-render"
+      ]
+    }
+  }
+}

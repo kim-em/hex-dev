@@ -1,0 +1,72 @@
+{
+  "source_commit": "f3048054b7d9c6a3667943be61fa1af8e496ccf5",
+  "sources_sha256": {
+    "adapters/HexRCF/RealCoefficients/AlgebraicPreparation.lean": "2e6490e09407d9a2d993563a546e6dc28e71d87c6813d5ddc584028debd38549",
+    "adapters/HexRCF/RealCoefficients/FieldRuntime.lean": "fbf37668ef16914db6ae1304c8f879706dacceb8cb831c5912f65e26dfd9926a",
+    "adapters/HexRCF/RealCoefficients/Interpret.lean": "869aedf6a09753be163e9c82ab8533f0668344d83fcf576460e24d4c2564ad72",
+    "adapters/HexRCF/RealCoefficients.lean": "fcffa756d74c99fabf10c6fbaaf206e093c52f578d257245c290a9c613b1b73b",
+    "HexRCF/Tactic.lean": "09d895ba1dd2c1af0bfffca197494f2614380ded268ff13e4e0b02fea22b9224",
+    "conformance/HexRCF/AlgebraicPreparationCases.lean": "d4b33d5b96c7e7053d24f7da87ca6c55a28a8d4156e12d08e8f9b1bbdb96aa6a",
+    "conformance/HexRCF/AlgebraicPreparationConformance.lean": "2567797e86f104712a4a856e99d777f3f0fd1734601f7bda7d44af83ac84f137",
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "5b80af8a93fd880aae31109fc5743c46c9d6804ceaa80a836a74a353b4cd5bc9",
+    "HexRCF/README.md": "2c6e845ac57424951195cc5a981e219d9e328a2568ad1c75c4657e1ed3e13b5f",
+    "lakefile.lean": "b578c11ac900104788affe12d916387915cd53c3351778306cf4f7204218fe1e",
+    "scripts/ci/check_named_admissions.py": "bfc10445d47fd5906c862903e3faf10b68180229a030fa4a1f97cbfda4367e38",
+    "scripts/ci/test_check_named_admissions.py": "484c1d1d61ce9ac5317d8deb41119026943bf2377774d921f477180f22f76b28",
+    "adapters/HexRealClosureTheory/FiniteBase.lean": "b8a27c59af80abfd04da193a5e917eed1a075739509785a01034b39c94f4bb8d",
+    "libraries.yml": "2d774a6de86747fbc73c4b708d74afe63cba75b98291f76b889c657d5fc7fa2f",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47"
+  },
+  "logs": {
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-followup-1.log.gz": {
+      "sha256": "53a325b676a5e2ba62093a5bf7cfc361e7c0def598ec03640eb6e240cd47ee39",
+      "uncompressed_sha256": "b1debbb04eec52f4bea0aa68054abfd377695630561b7267fe0c864d560560ba",
+      "exit_code": 0
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-followup-admissions.log.gz": {
+      "sha256": "db9dc3c00ccfb6f5354464e7502d7b98bc629ae8fddfa56c96c12eea558b3a74",
+      "uncompressed_sha256": "65ca982455b50dda06c690c826cc565f500464485028030cd73b79684424a96d",
+      "exit_code": 0
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-followup-dag.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exit_code": 0
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-followup-copyright.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exit_code": 0
+    }
+  },
+  "artifacts_sha256": {
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-pr-opus-2.log": "6c7c807d3e9c99b96cc3d8f774d8c1709d456a1d79ed3fa2ab026e257579bd50"
+  },
+  "command": [
+    "/home/kim/.codex/tasks/hex-10358/bin/lake-bounded",
+    "build",
+    "HexRCF.AlgebraicPreparationConformance"
+  ],
+  "validation": {
+    "selected_jobs": 11024,
+    "memory_bytes": 34359738368,
+    "swap_bytes": 0,
+    "lean_threads": 2,
+    "own_build_concurrency": 1,
+    "post_mutation_ordinary_exception_and_interrupt": true,
+    "opposite_signed_mixed_roles_both_verdicts": true,
+    "independent_completion_marker": true
+  },
+  "limits": [
+    "Production changes after source49aa1cde65 are documentation comments only; the conformance cases are expanded.",
+    "The strict-boundary compiler trace, broader integration and unchanged manual rendering retain their own exact source bindings in corrective-context.json.",
+    "These incremental observations establish no speedup or full-issue completion.",
+    "Noncompilable native proposals and callback exceptions are documented terminal exceptions; no arbitrary exception classification or solver fallback was introduced."
+  ],
+  "artifact_commit": "d4e32fb1ded140f85787ff1374a52e84ad68610c",
+  "document_commit": "d4e32fb1ded140f85787ff1374a52e84ad68610c",
+  "documents_sha256": {
+    "reports/hexrcf-algebraic-preparation.md": "a9070102994e2bfeee3d48ea55e1c6b085a4cb685b0cdc03ef8a716daa4060ad"
+  }
+}

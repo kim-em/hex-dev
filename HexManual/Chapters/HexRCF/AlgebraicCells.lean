@@ -10,6 +10,11 @@ import HexRCF.RealCoefficients.RootBuild
 import HexRCF.RealCoefficients.NumberFieldCells
 import HexRCF.RealCoefficients.GatherCells
 import HexRCF.RealCoefficients.AlgebraicCells
+import HexRCF.RealCoefficients.AlgebraicPreparation
+import HexRCF.RealCoefficients.CellOperations
+import HexRCF.RealCoefficients.RealModel
+import HexRCF.RealCoefficients.SourceIdentity
+import HexRCF.RealCoefficients.CellQuote
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -476,6 +481,10 @@ It constructs their checked selected presentations and gathers the resulting
 owners automatically. Separate finite indices specify the coefficient tuple
 and the original guards; repeated indices and guard-only inputs are retained.
 An original zero guard rejects before any presentation construction.
+Recognized rational inputs use checked points in the rational predecessor,
+including guard-only inputs. This avoids adjoining a root of a linear
+polynomial just to represent a rational. Other inputs retain the owner's
+selected-root factory and its check of the original embedding.
 Every declared input is presented and gathered, even when absent from both
 index collections. An unused irrational input can enlarge the tower, so a
 focused input tuple avoids that additional cost.
@@ -514,13 +523,182 @@ compatible owner origins from successful gathering. They do not assemble
 frozen provider/predecessor histories or prove general source-goal quotation
 and strict compiled missing-record admission.
 
+The complete literal checker can use checked cached arithmetic through
+`CellOperations.check`. It takes the owner's existing `Replay.Operations`
+dictionary, whose equalities bind every supplied operation to the ordinary
+implementation. Root and cut indices remain canonical while section and
+sector evidence is read. The result preserves every error and both verdicts:
+
+```lean
+open Hex Hex.RealClosure Hex.SignDet
+open Hex.RealFormula
+open Hex.RCF.RealCoefficients
+open Hex.RealClosure.Replay
+example {r : BaseContext.Registry}
+    {p : Tower.Context r}
+    (o : Operations p.sign)
+    (v : ValueCodec p.Value)
+    {n : Nat} (vs : Fin n → p.Value)
+    (f : QF (n+1))
+    (gs : List p.Value)
+    (c : RadicalCert p.Value
+      Tower.Signature)
+    (q : Quantifier)
+    (graph cells : Codec.Json) :
+    CellOperations.check o v vs f gs c q
+      graph cells =
+      CompleteReplay.check v vs f gs c q
+        graph cells :=
+  CellOperations.check_eq o v vs f gs c q
+    graph cells
+```
+
+Original guard preflight, radical identities, complete root/cell coverage and
+the strict fold retain their existing soundness and domain theorems.
+`CellOperations.accept?` supplies the optional success predicate consumed by
+record assembly; only an accepted true verdict yields success. The public
+checker retains its typed failures and diagnostic false result. These
+interfaces do not authenticate source coefficients, construct general frozen
+histories or establish strict compiled rejection of missing intermediate
+arithmetic records. The compiled controls and ordinary proofs are separate;
+one source regression reuses independently checked fixture acceptance and finite
+codec laws as a transport check. A separate assembled-source regression collects
+actual reached records, checks complete literal packet acceptance in the ordinary
+kernel, and quotes the original statement ∃ x, x² - √2 ≥ 0 ∧ x² - √2 ≤ 0 ∧ 0 = 0.
+Its fresh consuming module derives ∃ x, x² = √2 and audits the actual proof
+bodies with only the standard three axioms, excluding the older fixture
+acceptance and source theorems. This uses a fixed retained field and finite
+coefficient codec; it does not reconstruct arbitrary frozen histories.
+
+For a closed retained base/root context, `RealModel.build` constructs its
+ordinary-real interpretation from a caller-supplied real base model and each
+root's actual descriptor, frame and encoding proof. It checks every prefix's
+context, rejects a mismatched base model or exhausted depth bound, and restores
+elaborator state on failure. This interpretation still needs checked identities
+connecting its coefficient and divisor values to the original source statement.
+
+A source equation alone does not distinguish real conjugates.
+{name Hex.RCF.RealCoefficients.SourceIdentity.observe}`SourceIdentity.observe`
+reads a checked scalar sign at the native descriptor's selected root and binds
+every polynomial coefficient to its rational source query.
+{name Hex.RCF.RealCoefficients.SourceIdentity.margin}`SourceIdentity.margin`
+expresses membership in the source's isolating disc as a positive rational
+polynomial value. The equation and margin must hold at the same root;
+{name Hex.RCF.RealCoefficients.SourceIdentity.select}`SourceIdentity.select`
+then identifies that value with the source's selected embedding. The
+[checked source-identity example](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/SourceIdentityCases.lean)
+uses independently replayed equation and margin packets for the retained √2
+coordinate, with a separate ordinary-kernel body audit. These are source
+interpretation lemmas and a fixed-input example; general frozen source-history
+reconstruction still needs its own checked assembly.
+
+`CellQuote.finishOperations` takes the supplied-operation acceptance expression
+and an ordinary proof that its result is `some ()`. It kernel-checks that exact
+equation, transports it to the canonical checker, and performs the original
+source, valuation and divisor checks of `CellQuote.finishPacket`. A reduced
+conversion proof can retain its original expected equation through this API.
+Failure restores both metavariables and auxiliary proof declarations.
+
+Meta clients can prepare these native inputs from the original Lean statement
+with `AlgebraicPreparation.prepare`. It reuses the shared source translator and
+the checked algebraic interpretation of each coefficient and original divisor.
+Its default proof callback, `FieldRuntime.nonnegative`, attempts routine
+nonnegativity facts and restores its state on decline. A caller can supply
+another callback returning an ordinary proof or `none`; thrown exceptions
+remain terminal. Preparation checks each supplied proof and retains one
+aggregate reflection budget across the source, coefficients and divisors.
+The source equivalence is charged during reification and again when retained
+as a private theorem for later composition:
+
+```lean
+open Lean Meta Qq
+open Hex.RCF.RealCoefficients
+run_meta do
+  let .ok prepared ←
+      AlgebraicPreparation.prepare
+        q(∀ x : ℝ,
+          x^2 + 1 /
+            (Real.sqrt 2 + 1) > 0)
+    | throwError "unsupported source"
+  let guards := prepared.source.divisors
+  unless guards.size == 1 do
+    throwError "missing original guard"
+```
+
+The resulting environment stores coefficient proposals first and every original
+divisor afterward, with separate ordered indices for each role. Its `build`
+method runs `AlgebraicCells.build` on those proposals. It does not first require
+a primitive common-field irreducibility certificate. The source identities are
+ordinary-kernel proofs about the retained algebraic expressions; they do not
+authenticate quoted literals for the computed proposals. This preparation API
+does not install a new `rcf` handler or close the remaining frozen-context,
+literal-authentication and general source-quotation obligations.
+
+For the retained algebraic expressions, `prepared.acceptanceIff` proves an exact
+acceptance equivalence. The left side requires the actual algebraic producer
+to return a complete packet and that packet's checker to accept `true`. The
+right side contains both the original real statement and every original
+divisor's nonzero condition. Guard validity is a conclusion of acceptance,
+even when cancellation or an empty interval makes the statement trivial.
+The helper reconstructs the ordered original guard inventory from the target;
+editing both stored guard arrays cannot remove or replace an obligation.
+The existing producer completeness and domain laws prove this equivalence;
+no successful child calculation is assumed.
+
+```lean
+open Hex Lean Meta Qq
+open Hex.RCF.RealCoefficients
+open Hex.RealClosure.BaseContext
+run_meta do
+  let target : Q(Prop) :=
+    q(∀ x : ℝ, x^2 + Real.sqrt 2 > 0)
+  let .ok prepared ←
+      AlgebraicPreparation.prepare
+        target
+    | throwError "unsupported source"
+  let before := prepared.usage
+  let registry : Q(Registry) :=
+    q(fun _ => none)
+  let .ok (equivalence, usage) ←
+      prepared.acceptanceIff
+        target registry
+    | throwError
+        "source equivalence failed"
+  let auxName := mkPrivateName
+    (← getEnv)
+    (← mkFreshUserName `sourceDoc)
+  let _ ←
+    withDeclNameForAuxNaming
+      auxName do
+        Hex.RCF.checkProof
+          `sourceAcceptance
+          (← inferType equivalence)
+          equivalence
+  unless usage.proofNodes >
+      before.proofNodes do
+    throwError
+      "proof usage did not increase"
+```
+
+This proof uses the checked algebraic expressions and their source identities.
+It does not identify separately computed proposals with frozen literals,
+reconstruct provider histories, or add a tactic handler. Those authentication
+and quotation obligations remain separate. The helper continues the same
+aggregate reflection budget, returns its updated usage for later stages, and
+restores caller state on exhaustion or failure.
+Callers continue with `{prepared with usage}` when constructing further proofs.
+Both preparation and acceptance preserve a caller's lowered recursion limit.
+Fresh importing regressions check its actual theorem bodies, true and false
+sources, retained zero guards and reversed intervals, with exactly the standard
+three axioms.
+
 The automatic-input conformance uses both selected signs of √2 alongside an
 independent positive √3. It checks simultaneous conditions and a repeated zero
 root, both true and false quantified verdicts, an unused zero input, a late
 original zero guard, and empty true/false constant inputs. Separate linear
 constraints a < x < 1 distinguish the variable's selected coefficient: a = −√2
 gives an existential true and universal false verdict; a = √2 gives both false.
-Twelve actual automatic-input proof bodies are separately checked with only
+Thirteen actual automatic-input proof bodies are separately checked with only
 the standard three axioms.
 
 The explicit `HexRCFAlgebraicCellsStress` target retains the stronger condition

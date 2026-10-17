@@ -151,6 +151,8 @@ class AdmissionScannerTests(unittest.TestCase):
             union = root / "adapters/HexRealClosureTheory/Union.lean"
             union_tests = root / "adapters/HexRealClosureTheory/UnionTests.lean"
             root_probes = [root / name for name in (
+                "conformance/HexRCF/PublicGraphCodec.lean",
+                "conformance/HexSignDet/PublicCodec.lean",
                 "examples/RealClosureConsumer/Query.lean",
                 "examples/RealClosureConsumer/Sign.lean",
                 "examples/RealClosureConsumer/Ordered.lean",
@@ -370,7 +372,13 @@ class AdmissionScannerTests(unittest.TestCase):
                 "experiments/KernelReplay/AxiomClosureNative.lean",
                 "experiments/KernelReplay/AxiomClosureTest.lean",
                 "experiments/KernelReplay/AxiomClosureImports.lean",
+                "experiments/KernelReplay/SupportAudit.lean",
+                "experiments/KernelReplay/ProviderHistoryAudit.lean",
+                "experiments/KernelReplay/RationalCodecAudit.lean",
+                "HexRealClosure/BaseJsonTests.lean",
                 "experiments/KernelReplay/FiniteRange.lean",
+                "experiments/KernelReplay/FiniteChecks.lean",
+                "experiments/KernelReplay/CoefficientMembers.lean",
                 "experiments/KernelReplay/CoefficientEntry.lean",
                 "experiments/KernelReplay/FiniteLift.lean",
                 "experiments/KernelReplay/FiniteOperands.lean",
@@ -475,6 +483,8 @@ class AdmissionScannerTests(unittest.TestCase):
             gather_cells.with_name("AlgebraicCellsStress.lean").write_text(
                 "public import HexExtra.SelectedField\n", encoding="utf-8")
             gather_cells.with_name("AlgebraicCellsConformance.lean").write_text(
+                "public import HexExtra.SelectedField\n", encoding="utf-8")
+            gather_cells.with_name("AlgebraicPreparationConformance.lean").write_text(
                 "public import HexExtra.SelectedField\n", encoding="utf-8")
             live_probes = []
             for module in ("HexRealClosure.LiveRequest", "HexRealClosure.LiveRequestTests",

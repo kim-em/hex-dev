@@ -1,0 +1,19 @@
+193511331: negative=false: original selected inputs begin
+193511336: original guard preflight done; selected presentations begin
+193511347: selected presentations done; actual owner gathering begin
+193511349: actual owner gathering done; formula specialization begin
+193511349: specialization done: 3 atoms; native complete partition begin
+193511527: native complete partition done: 4 distinct roots
+193511527: carrier and full-root preparation begin
+193668376: negative=false: original selected inputs begin
+193668381: original guard preflight done; selected presentations begin
+193668394: selected presentations done; actual owner gathering begin
+193668396: actual owner gathering done; formula specialization begin
+193668397: specialization done: 3 atoms; native complete partition begin
+193668573: native complete partition done: 4 distinct roots
+193668573: converted original guard preflight begin
+193668573: converted original guards checked; enlarged-context specialization begin
+193668573: enlarged-context product done: degree 4; radical reduction begin
+193699480: radical reduction done: degree 4; complete root table begin
+193927147: carrier/full-root preparation done: 4 roots; sector requests begin
+193931474: sector requests done; cell rows begin

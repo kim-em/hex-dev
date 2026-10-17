@@ -47,6 +47,232 @@ class ArchivedCapProposalTest(unittest.TestCase):
         self.assertEqual(set(policy['previous_exports']), expected)
 
 
+class BelowResolutionTest(unittest.TestCase):
+    def setUp(self):
+        root = Path(collector.__file__).resolve().parents[2]
+        archive = root / 'reports/bench-results/sign-det-phase6-comparison/initial-capture'
+        self.raw = gzip.decompress((archive / '0-0-candidate.json.gz').read_bytes())
+        self.document = json.loads(self.raw)
+        self.name = self.document['results'][0]['function']
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.path = Path(self.temp.name) / 'export.json'
+
+    def accepted(self, code=2):
+        self.path.write_text(json.dumps(self.document))
+        return collector.below_resolution_export(code, self.path, self.name)
+
+    def test_actual_complete_below_floor_export_is_retained(self):
+        self.assertTrue(self.accepted())
+
+    def test_other_exit_codes_remain_fatal(self):
+        for code in (1, 7, -15):
+            self.assertFalse(self.accepted(code))
+
+    def test_failure_and_integrity_mutations_are_refused(self):
+        for key, value in [('kind', 'fixed'), ('function', 'different'),
+                           ('budget_truncated', True), ('verdict', 'consistent_with_declared_complexity'),
+                           ('trial_summaries', [{}]), ('points', [])]:
+            with self.subTest(key=key):
+                self.document = json.loads(self.raw)
+                self.document['results'][0][key] = value
+                self.assertFalse(self.accepted())
+        for key, value in [('status', 'timedOut'), ('error', 'failed'), ('result_hash', None),
+                           ('below_signal_floor', False), ('inner_repeats', 0),
+                           ('total_nanos', 0), ('per_call_nanos', float('nan')),
+                           ('trial_index', 1), ('param', 7)]:
+            with self.subTest(key=key):
+                self.document = json.loads(self.raw)
+                self.document['results'][0]['points'][0][key] = value
+                self.assertFalse(self.accepted())
+
+    def test_partial_schedule_is_not_complete(self):
+        self.document['results'][0]['points'].pop()
+        self.assertFalse(self.accepted())
+
+    def test_malformed_or_missing_export_remains_fatal(self):
+        self.assertFalse(collector.below_resolution_export(2, self.path, self.name))
+        for raw in ('not json', '{}', '{"results":[null]}'):
+            self.path.write_text(raw)
+            self.assertFalse(collector.below_resolution_export(2, self.path, self.name))
+
+
+class ResolutionProtocolTest(unittest.TestCase):
+    """Authenticate the archived real failure without executing any benchmark."""
+
+    def setUp(self):
+        root = Path(collector.__file__).resolve().parents[2]
+        archive = root / 'reports/bench-results/sign-det-phase6-comparison/initial-capture'
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.directory = Path(self.temp.name) / 'original'
+        self.directory.mkdir()
+        for name in ('context.json', 'decision.json', '0-0-baseline.json', '0-0-candidate.json'):
+            (self.directory / name).write_bytes(gzip.decompress((archive / (name + '.gz')).read_bytes()))
+        self.context = json.loads((self.directory / 'context.json').read_text())
+        self.sources = deepcopy(self.context['sources'])
+        self.identity = self.context['comparison_identity']
+        self.names = self.context['benchmarks'][:]
+        self.reservation = Path(self.temp.name) / 'reserved.json'
+        self.context.update(decision_reservation=str(self.reservation), host=collector.platform.node())
+        for record in self.context['commands']:
+            command = record['command']
+            if command[1:2] == ['run']:
+                command[-1] = str(self.directory / Path(command[-1]).name)
+        self.registry = Path(self.temp.name) / 'registry'
+        bench = self.registry / 'bench/HexSignDet/Bench.lean'
+        bench.parent.mkdir(parents=True)
+        bench.write_bytes((root / 'bench/HexSignDet/Bench.lean').read_bytes())
+        core = self.registry / '.lake/packages/lean-bench/LeanBench/Core.lean'
+        core.parent.mkdir(parents=True)
+        core.write_text('structure BenchmarkConfig where\n  killGraceMs : Nat := 100\n  signalFloorMultiplier : Float := 10.0\n')
+        self.policy = dict(target_inner_nanos=2_250_000_000,
+                           target_benchmarks=sorted(collector.SIGN_DET_RESOLUTION),
+                           planning_spawn_floor_nanos=1_000_000_000, reason='Retain the floor; increase timed work',
+                           benchmarks=self.names[:])
+        self.bind()
+
+    def bind(self):
+        path = self.directory / 'context.json'
+        path.write_text(json.dumps(self.context))
+        digest = collector.digest(path)
+        self.reservation.write_text(json.dumps(dict(first_output=str(self.directory), context_sha256=digest)))
+        self.policy.update(previous_context_sha256=digest, previous_exports={
+            name: collector.digest(self.directory / name)
+            for name in ('0-0-baseline.json', '0-0-candidate.json')})
+
+    def validate(self):
+        return collector.validate_resolution_protocol(self.directory, self.policy, self.sources,
+                                                      self.identity, self.reservation, self.names, self.registry)
+
+    def test_retained_complete_below_floor_pair_authenticates(self):
+        self.assertEqual(self.validate()['exports'], self.policy['previous_exports'])
+
+    def test_budget_is_checked_against_the_frozen_runner_and_registration_caps(self):
+        budgets = collector.resolution_budget(self.registry, self.policy)
+        self.assertEqual(budgets['Hex.SignDetBench.Height.runCheck']['maximum_target_nanos'], 2_275_000_000)
+        self.assertEqual(budgets['Hex.SignDetBench.runSmallFull']['maximum_target_nanos'], 14_775_000_000)
+        self.policy['target_inner_nanos'] = 4_000_000_000
+        with self.assertRaisesRegex(RuntimeError, 'would be clamped'):
+            collector.resolution_budget(self.registry, self.policy)
+
+    def test_unfiltered_or_partial_target_scope_is_refused(self):
+        self.policy['target_benchmarks'].append('Hex.SignDetBench.runProduce')
+        with self.assertRaisesRegex(RuntimeError, 'four filtered'):
+            self.validate()
+
+    def test_changed_cap_is_detected_before_reservation(self):
+        path = self.registry / 'bench/HexSignDet/Bench.lean'
+        path.write_text(path.read_text().replace('maxSecondsPerCall := 10', 'maxSecondsPerCall := 8'))
+        with self.assertRaisesRegex(RuntimeError, 'would be clamped'):
+            self.validate()
+
+    def test_budget_inputs_must_be_in_the_authenticated_inventory(self):
+        del self.sources['candidate']['sources']['.lake/packages/lean-bench/LeanBench/Core.lean']
+        with self.assertRaisesRegex(RuntimeError, 'authenticated inventory'):
+            self.validate()
+
+    def test_proposal_binds_actual_archived_context_and_both_exports(self):
+        root = Path(collector.__file__).resolve().parents[2]
+        report = root / 'reports/bench-results/sign-det-phase6-comparison'
+        proposal = json.loads((report / 'resolution-proposal.json').read_text())
+        raw = gzip.decompress((report / 'initial-capture/context.json.gz').read_bytes())
+        context = json.loads(raw)
+        self.assertEqual(proposal['comparison_identity'], context['comparison_identity'])
+        self.assertEqual(proposal['guard_sha256'], context['guard_sha256'])
+        self.assertEqual(proposal['source_heads'], {a: s['head'] for a, s in context['sources'].items()})
+        self.assertEqual(proposal['binaries'], {a: s['binary_sha256'] for a, s in context['sources'].items()})
+        policy = proposal['resolution_protocol']
+        self.assertEqual(policy['target_inner_nanos'], 2_250_000_000)
+        self.assertEqual(policy['target_benchmarks'], sorted(collector.SIGN_DET_RESOLUTION))
+        self.assertEqual(policy['planning_spawn_floor_nanos'], 1_000_000_000)
+        self.assertEqual(policy['previous_context_sha256'], hashlib.sha256(raw).hexdigest())
+        self.assertEqual(policy['benchmarks'], context['benchmarks'])
+        for name, digest in policy['previous_exports'].items():
+            self.assertEqual(digest, hashlib.sha256(gzip.decompress(
+                (report / 'initial-capture' / (name + '.gz')).read_bytes())).hexdigest())
+
+    def test_target_and_policy_shape_cannot_create_another_protocol(self):
+        for value in (True, 1_000_000_000, 8_000_000_000, '4000000000'):
+            with self.subTest(value=value), self.assertRaisesRegex(RuntimeError, '2.25-second'):
+                self.policy['target_inner_nanos'] = value
+                self.validate()
+        self.policy['target_inner_nanos'] = 2_250_000_000
+        self.policy['extra'] = 'another slot'
+        with self.assertRaisesRegex(RuntimeError, 'incomplete resolution'):
+            self.validate()
+
+    def test_changed_or_partial_frozen_scope_is_refused(self):
+        self.policy['benchmarks'].pop()
+        with self.assertRaisesRegex(RuntimeError, 'every original timing'):
+            self.validate()
+        self.policy['benchmarks'] = self.names[:]
+        self.sources['candidate']['binary_sha256'] = 'different'
+        with self.assertRaisesRegex(RuntimeError, 'frozen producer'):
+            self.validate()
+
+    def test_failed_status_and_integrity_are_required_even_after_rebinding(self):
+        original = deepcopy(self.context)
+        for key, value in (('status', 'completed'), ('profile', 'sturm'), ('integrity_failure', 'changed'),
+                           ('reruns', 1), ('attempt_reserved', False), ('measurements_collected', False),
+                           ('resolution_protocol', {}), ('cap_protocol', {})):
+            with self.subTest(key=key), self.assertRaisesRegex(RuntimeError, 'intact original'):
+                self.context = deepcopy(original)
+                self.context[key] = value
+                self.bind()
+                self.validate()
+
+    def test_foreign_reservation_host_and_modified_exports_are_refused(self):
+        self.context['host'] = 'foreign-host'
+        self.bind()
+        with self.assertRaisesRegex(RuntimeError, 'reservation or host'):
+            self.validate()
+        self.context['host'] = collector.platform.node()
+        self.bind()
+        path = self.directory / '0-0-baseline.json'
+        path.write_text(path.read_text() + '\n')
+        with self.assertRaisesRegex(RuntimeError, 'export hashes'):
+            self.validate()
+
+    def test_wrong_answers_and_incomplete_original_baseline_are_refused(self):
+        path = self.directory / '0-0-baseline.json'
+        original = path.read_bytes()
+        for key, value in (('result_hash', 'wrong'), ('result_hash', None), ('status', 'error'),
+                           ('error', 'failed'), ('trial_index', 1), ('total_nanos', float('inf'))):
+            with self.subTest(key=key), self.assertRaises((RuntimeError, ValueError)):
+                doc = json.loads(original)
+                doc['results'][0]['points'][0][key] = value
+                path.write_text(json.dumps(doc))
+                self.bind()
+                self.validate()
+
+    def test_original_failure_must_be_the_recorded_complete_export(self):
+        self.context['parent_failures'][0]['returncode'] = 7
+        self.bind()
+        with self.assertRaisesRegex(RuntimeError, 'below-floor exit'):
+            self.validate()
+
+    def test_below_floor_labels_must_match_actual_timings(self):
+        path = self.directory / '0-0-candidate.json'
+        doc = json.loads(path.read_text())
+        result = doc['results'][0]
+        result['points'][0]['total_nanos'] = result['spawn_floor_nanos'] * result['config']['signal_floor_multiplier']
+        path.write_text(json.dumps(doc))
+        self.context['parent_failures'][0]['results'] = doc['results']
+        self.bind()
+        with self.assertRaisesRegex(RuntimeError, 'declared signal floor'):
+            self.validate()
+
+    def test_decision_context_and_journal_bindings_are_checked(self):
+        self.reservation.write_text('{}')
+        with self.assertRaisesRegex(RuntimeError, 'first attempt'):
+            self.validate()
+        self.bind()
+        (self.directory / 'decision.json').write_text('{}')
+        with self.assertRaisesRegex(RuntimeError, 'original decision'):
+            self.validate()
+
+
 class RegistrationTest(unittest.TestCase):
     def setUp(self):
         self.lines = ["registered benchmarks:",
@@ -200,7 +426,15 @@ elif sys.argv[1]=='run':
     if mode in ('cap-null','cap-mismatch'):
         result['points'].insert(0,{'param':32,'status':'ok','error':None,'per_call_nanos':50,
                                   'result_hash':None if mode=='cap-null' else arm})
+    if mode=='below-resolution' and arm=='candidate':
+        result.update(verdict='inconclusive', trial_summaries=[])
+        result['config'].update(outer_trials=1, param_schedule={'kind':'custom','params':[64]})
+        result['points'][0].update(error=None, below_signal_floor=True,
+                                   total_nanos=100, inner_repeats=1, trial_index=0)
+    elif mode=='below-resolution':
+        result['config'].update(outer_trials=1, param_schedule={'kind':'custom','params':[64]})
     target.write_text(json.dumps({'results':[result]}))
+    if mode=='below-resolution' and arm=='candidate':sys.exit(2)
     if (mode=='interrupt' or (mode=='cap-interrupt' and adapted)) and arm=='candidate':
         worker=subprocess.Popen([sys.executable,'-c','import time; time.sleep(60)'])
         Path(__file__+'.worker-pid').write_text(str(worker.pid))
@@ -839,6 +1073,33 @@ elif sys.argv[1]=='run':
         self.assertEqual(failure['returncode'], 7)
         self.assertEqual(failure['results'][0]['points'][0]['status'], 'timedOut')
 
+    def test_below_resolution_continues_all_blocks_to_native_guard(self):
+        self.mode('below-resolution')
+        baseline = self.binaries['baseline']
+        baseline.write_text(baseline.read_text().replace("mode='ok'", "mode='below-resolution'"))
+        self.bind_decision()
+        self.guard_code(2)
+        code, _ = self.run_collector()
+        self.assertEqual(code, 1)
+        self.assertEqual(self.context['status'], 'completed')
+        self.assertEqual(self.context['outcome'], 'inconclusive')
+        self.assertFalse(self.context['pass'])
+        self.assertEqual(len(self.context['below_resolution_exports']), 4)
+        self.assertEqual(len(self.context['paired_ratios']), 4)
+        self.assertEqual(len(self.context['guards']), 1)
+
+    def test_below_resolution_cannot_pass_with_wrong_checker_result(self):
+        self.mode('below-resolution')
+        baseline = self.binaries['baseline']
+        baseline.write_text(baseline.read_text().replace("mode='ok'", "mode='below-resolution'"))
+        self.bind_decision()
+        self.assertEqual(self.run_collector()[0], 1)
+        self.assertEqual(self.context['outcome'], 'invalid')
+        self.assertFalse(self.context['pass'])
+        self.assertEqual(self.context['guards'][0]['returncode'], 0)
+        self.assertEqual(self.context['below_resolution_guard_passes'],
+                         ['Hex.SturmBench.runInteger'])
+
     def test_nonzero_parent_exit_also_stops_its_worker(self):
         self.mode('exit-worker')
         with self.assertRaisesRegex(RuntimeError, 'parent measurement failed'):
@@ -1087,6 +1348,91 @@ class SignDetCollectorTest(unittest.TestCase):
                 self.assertEqual(len(command[2:]), 34)
                 self.assertEqual(len(set(command[2:])), 34)
         self.assertEqual(set(self.context['excluded_registrations']), collector.SIGN_DET_REFERENCES)
+
+    def resolution_execution(self, honor=True):
+        """Stub only admission here; ResolutionProtocolTest checks the real archive."""
+        self.prepare('sign-det')
+        if honor:
+            for binary in self.binaries.values():
+                binary.write_text(binary.read_text().replace('    target.write_text(',
+                    "    if '--target-inner-nanos' in sys.argv:\n"
+                    "        requested=int(sys.argv[sys.argv.index('--target-inner-nanos')+1])\n"
+                    "        cap=60 if sys.argv[2].endswith(('runSmallFull','runSmallReduced')) else 10\n"
+                    "        floor=50_000_000+(int(target.name.split('-')[0])+(arm=='candidate'))*10_000_000\n"
+                    "        result['config']['target_inner_nanos']=min(requested,(cap*1_000_000_000+100_000_000-floor)//4)\n"
+                    '    target.write_text('))
+        self.bind_decision()
+        decision = json.loads(self.decision.read_text())
+        decision['profile'] = 'sign-det'
+        self.decision.write_text(json.dumps(decision))
+        previous = self.base / 'original'
+        previous.mkdir()
+        (previous / 'decision.json').write_bytes(self.decision.read_bytes())
+        (previous / 'context.json').write_text(json.dumps({'decision_sha256': collector.digest(self.decision)}))
+        decision.update(tooling_root_head=json.loads(self.sources['candidate'].read_text())['head'],
+                        resolution_protocol={'target_inner_nanos': 2_250_000_000})
+        self.decision.write_text(json.dumps(decision))
+        return previous
+
+    def test_resolution_target_applies_only_to_filtered_workloads(self):
+        previous = self.resolution_execution()
+        with patch.object(collector, 'validate_resolution_protocol', return_value={'synthetic': True}):
+            code, _ = self.run_collector(extra=['--profile', 'sign-det', '--resolution-from', previous])
+        self.assertEqual(code, 0)
+        runs = [record['command'] for record in self.context['commands'] if record['command'][1:2] == ['run']]
+        self.assertEqual(len(runs), 31 * 4 * 2)
+        for command in runs:
+            self.assertEqual('--target-inner-nanos' in command, command[2] in collector.SIGN_DET_RESOLUTION)
+            if '--target-inner-nanos' in command:
+                self.assertEqual(command[command.index('--target-inner-nanos') + 1], '2250000000')
+        self.assertTrue(self.context['decision_reservation'].endswith('-resolution.json'))
+        with patch.object(collector, 'validate_resolution_protocol', return_value={'synthetic': True}), \
+             self.assertRaisesRegex(RuntimeError, 'decision already used'):
+            self.run_collector('renamed', ['--profile', 'sign-det', '--resolution-from', previous])
+
+    def test_ignored_target_fails_and_consumes_the_resolution_slot(self):
+        previous = self.resolution_execution(honor=False)
+        with patch.object(collector, 'validate_resolution_protocol', return_value={'synthetic': True}), \
+             self.assertRaisesRegex(RuntimeError, 'exported inner-work target'):
+            self.run_collector(extra=['--profile', 'sign-det', '--resolution-from', previous])
+        self.assertTrue(self.context['attempt_reserved'])
+        with patch.object(collector, 'validate_resolution_protocol', return_value={'synthetic': True}), \
+             self.assertRaisesRegex(RuntimeError, 'decision already used'):
+            self.run_collector('again', ['--profile', 'sign-det', '--resolution-from', previous])
+
+    def test_pinned_runner_clamp_would_be_detected_even_if_admission_were_bypassed(self):
+        previous = self.resolution_execution()
+        decision = json.loads(self.decision.read_text())
+        decision['resolution_protocol']['target_inner_nanos'] = 4_000_000_000
+        self.decision.write_text(json.dumps(decision))
+        with patch.object(collector, 'validate_resolution_protocol', return_value={'synthetic': True}), \
+             self.assertRaisesRegex(RuntimeError, 'including runner clamp'):
+            self.run_collector(extra=['--profile', 'sign-det', '--resolution-from', previous])
+
+    def test_resolution_preflight_does_not_lease_or_reserve(self):
+        previous = self.resolution_execution()
+        with patch.object(collector, 'validate_resolution_protocol', return_value={'synthetic': True}):
+            self.assertEqual(self.run_collector(extra=[
+                '--profile', 'sign-det', '--resolution-from', previous, '--preflight'])[0], 0)
+        self.assertEqual(self.lease_calls, 0)
+        self.assertFalse(self.context['attempt_reserved'])
+        self.assertFalse(Path(self.context['decision_reservation']).exists())
+
+    def test_resolution_rerun_requires_completed_inconclusive_and_is_available_only_once(self):
+        self.guard.write_text(self.guard.read_text().replace('sys.exit(0)', 'sys.exit(2)'))
+        previous = self.resolution_execution()
+        with patch.object(collector, 'validate_resolution_protocol', return_value={'synthetic': True}):
+            _, adapted = self.run_collector(extra=['--profile', 'sign-det', '--resolution-from', previous])
+            with self.assertRaisesRegex(RuntimeError, 'completed inconclusive'):
+                self.run_collector('invalid-original-rerun', [
+                    '--profile', 'sign-det', '--resolution-from', previous, '--rerun-of', previous])
+            self.run_collector('rerun', [
+                '--profile', 'sign-det', '--resolution-from', previous, '--rerun-of', adapted])
+            self.assertEqual(self.context['reruns'], 1)
+            self.assertTrue(self.context['rerun_reservation'].endswith('-resolution-rerun.json'))
+            with self.assertRaisesRegex(RuntimeError, 'already reserved'):
+                self.run_collector('another', [
+                    '--profile', 'sign-det', '--resolution-from', previous, '--rerun-of', adapted])
 
     def test_complete_interacting_fixed_blocks(self):
         self.prepare('sign-det-interacting')

@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 import HexRealClosure.LiveFrame
-import KernelReplay.GuardJoinPrefixAudit
+import KernelReplay.AxiomClosure
 
 namespace Hex.RealClosure.Algebraic.KernelReplay.GuardLiveFrameAudit
 open Lean Meta Elab

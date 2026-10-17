@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRationalFn
+import all Init.Util
 
 @[expose] public section
 
@@ -33,8 +34,19 @@ namespace Infinitesimal
 variable {K : Type u}
 
 /-- Scan from degree zero, returning the array size when all coefficients vanish. -/
-def lowestIndex [Zero K] [DecidableEq K] (p : DensePoly K) : Nat :=
+noncomputable def lowestIndex [Zero K] [DecidableEq K] (p : DensePoly K) : Nat :=
   p.coeffs.findIdx (fun c => c != 0)
+
+/-- The native scan recognizes a shared zero immediately, falling back to
+coefficient equality when the two objects have different addresses. -/
+def lowestIndexImpl [Zero K] [DecidableEq K] (p : DensePoly K) : Nat :=
+  p.coeffs.findIdx (fun c =>
+    !withPtrEq c 0 (fun _ => c == 0) (by intro h; simp [h]))
+
+/-- Sharing changes only the scan's implementation, for arbitrary coefficients. -/
+@[csimp] theorem lowestIndex_eq_impl : @lowestIndex = @lowestIndexImpl := by
+  funext K _ _ p
+  simp only [lowestIndex, lowestIndexImpl, withPtrEq, bne_eq]
 
 /-- The first nonzero coefficient, or zero for the zero polynomial. -/
 def lowestCoeff [Zero K] [DecidableEq K] (p : DensePoly K) : K :=
@@ -42,10 +54,21 @@ def lowestCoeff [Zero K] [DecidableEq K] (p : DensePoly K) : K :=
 
 /-- Sign at a positive infinitesimal, using the predecessor field's total sign.
 Both coefficients matter: a monic denominator can have a negative lowest coefficient. -/
-def sign [Lean.Grind.Field K] [DecidableEq K] (baseSign : K → Int)
+noncomputable def sign [Lean.Grind.Field K] [DecidableEq K] (baseSign : K → Int)
     (f : RationalFn K) : Int :=
   if f.num = 0 then 0 else
     baseSign (lowestCoeff f.num) * baseSign (lowestCoeff f.den)
+
+/-- Native signs test normalized numerator storage before scanning coefficients. -/
+def signImpl [Lean.Grind.Field K] [DecidableEq K] (baseSign : K → Int)
+    (f : RationalFn K) : Int :=
+  if f.num.isZero then 0 else
+    baseSign (lowestCoeff f.num) * baseSign (lowestCoeff f.den)
+
+/-- The storage test preserves signs for every predecessor sign procedure. -/
+@[csimp] theorem sign_eq_impl : @sign = @signImpl := by
+  funext K _ _ baseSign f
+  simp only [sign, signImpl, DensePoly.isZero_eq_true_iff, DensePoly.size_eq_zero_iff]
 
 /-- Formal zero is detected without calling the predecessor sign. -/
 @[simp] theorem sign_zero [Lean.Grind.Field K] [DecidableEq K] (baseSign : K → Int) :

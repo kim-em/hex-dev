@@ -59,4 +59,19 @@ theorem retarget_values (sign : E → Int) (binding : Ctx)
     (source : SelectedSigns first before) :
     (retarget sign binding rootEq queryEq source).values.toList = source.values.toList := rfl
 
+/-- Equal root/query subjects transport the entire reader result, including
+all malformed-input and binding failures. -/
+theorem retarget_read (value : ValueCodec E) (context : ValueCodec Ctx)
+    (sign : E → Int) (binding : Ctx)
+    {first second : Descriptor E Ctx sign binding} (rootEq : first = second)
+    {before after : List (DensePoly E)} (queryEq : before = after) (packet : Codec.Json) :
+    (do
+      let source ← read value context sign binding first before packet
+      pure (retarget sign binding rootEq queryEq source)) =
+      read value context sign binding second after packet := by
+  cases rootEq
+  cases queryEq
+  cases read value context sign binding first before packet with
+  | error cause => rfl
+  | ok source => cases source; rfl
 end Hex.RCF.RealCoefficients.RowOperations

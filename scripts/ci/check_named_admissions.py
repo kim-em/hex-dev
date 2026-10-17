@@ -226,16 +226,20 @@ def check() -> None:
              "KernelReplay.PackingLookup",
              "KernelReplay.LookupReplay",
              "KernelReplay.ProofAudit",
-             "KernelReplay.AxiomClosure", "KernelReplay.AxiomClosureNative",
-             "KernelReplay.AxiomClosureTest", "KernelReplay.AxiomClosureImports",
+             "KernelReplay.AxiomClosure", "KernelReplay.AxiomClosureNative", "KernelReplay.AxiomClosureTest",
+             "KernelReplay.AxiomClosureImports", "KernelReplay.SupportAudit",
+             "KernelReplay.ProviderHistoryAudit", "KernelReplay.RationalCodecAudit",
              "KernelReplay.FiniteRange",
-             "KernelReplay.CoefficientEntry",
+             "KernelReplay.FiniteChecks",
+             "KernelReplay.CoefficientMembers", "KernelReplay.CoefficientEntry",
              "KernelReplay.FiniteBase", "KernelReplay.BaseLookup", "KernelReplay.FiniteLift", "KernelReplay.FiniteOperands",
              "KernelReplay.FiniteSupport", "KernelReplay.FiniteData", "KernelReplay.FiniteWitness", "KernelReplay.FiniteJoint",
              "RealClosureConsumer.Query", "RealClosureConsumer.Sign",
              "RealClosureConsumer.Ordered", "RealClosureConsumer.Tower",
              "HexRCF.RealCoefficients", "HexRCF.SignDetFieldProofs",
+             "HexRCF.PublicGraphCodec", "HexSignDet.PublicCodec",
              "HexSignDet.FieldChecks", "HexSignDetTheory", "HexRealClosure.BaseTests",
+             "HexRealClosure.BaseJsonTests",
              "HexRealClosure.QAdjoinTests", "HexRealClosure.NumberField",
              "HexRealClosureTheory.NumberField", "HexRealClosure.NumberFieldConformance",
              "HexRealClosure.NumberFieldTower", "HexRealClosureTheory.NumberFieldTower",
@@ -373,7 +377,8 @@ def check() -> None:
              "HexRealClosure.InverseEquation", "HexRealClosureTheory.InverseEquation",
              "HexRealClosureTheory.SuppliedInverse",
              "HexRealClosureTheory.QAdjoin", "HexRCF.GatherCellsConformance",
-             "HexRCF.AlgebraicCellsConformance", "HexRCF.AlgebraicCellsStress"] + [
+             "HexRCF.AlgebraicCellsConformance", "HexRCF.AlgebraicPreparationConformance",
+             "HexRCF.AlgebraicCellsStress"] + [
         ".".join(path.relative_to(ROOT / "adapters").with_suffix("").parts)
         for path in sorted((ROOT / "adapters").rglob("*.lean"))] + [
         ".".join(path.relative_to(ROOT / "conformance").with_suffix("").parts)

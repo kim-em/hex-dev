@@ -135,7 +135,8 @@ theorem ofField_eval (generator : RealAlgebraicNumber)
     simp [LiteralSign.realPoly]
   rw [hpoly, Polynomial.eval_map]
 
-private theorem realPoly_root_complex (q : ZPoly) (x : ℝ)
+/-- Transfer a real root of the integer source polynomial to its complex embedding. -/
+theorem root_complex (q : ZPoly) (x : ℝ)
     (hroot : (LiteralSign.realPoly (ZPoly.toRatPoly q)).IsRoot x) :
     (HexRootsTheory.toPolyℂ q).IsRoot (x : ℂ) := by
   have hpoly : (LiteralSign.realPoly (ZPoly.toRatPoly q)).map Complex.ofRealHom =
@@ -209,7 +210,8 @@ theorem discSlack_value {p : ZPoly} {s : DyadicSquare}
   push_cast
   ring
 
-private theorem in_disc_of_slack (sourceSquare : DyadicSquare) (x : ℝ)
+/-- A positive squared-radius margin places a real value inside the source disc. -/
+theorem mem_disc (sourceSquare : DyadicSquare) (x : ℝ)
     (hslack : 0 < 2 * (sourceSquare.halfWidth.toRat : ℝ) ^ 2 -
       (sourceSquare.im.toRat : ℝ) ^ 2 -
       (x - (sourceSquare.re.toRat : ℝ)) ^ 2) :
@@ -281,7 +283,7 @@ theorem checkDisc_sound {p : ZPoly} {s : DyadicSquare}
     simp only [Field.checkSignTable, Bool.and_eq_true] at h
     exact h.1.2
   rw [discSlack_value hw hp hreal sourceSquare v] at hpos
-  exact in_disc_of_slack sourceSquare _ hpos
+  exact mem_disc sourceSquare _ hpos
 
 /-- A real root of the source polynomial inside the source's certified disc
 is the exact selected real algebraic value. -/
@@ -351,7 +353,7 @@ theorem checkEntry_sound {p : ZPoly} {s : DyadicSquare}
     rw [hsource]
     exact checkDisc_sound hw hp table sourceSquare v hparts.2
   exact source_value source _
-    (realPoly_root_complex source.toAlgebraic.p _ (by
+    (root_complex source.toAlgebraic.p _ (by
       rw [hpolynomial]
       exact checkEquation_sound hw hp hreal sourcePolynomial v hparts.1)) hdisc
 
@@ -381,7 +383,7 @@ theorem checkEntry_sound_of_selected {p : ZPoly} {s : DyadicSquare}
     exact h.1.1.2
   have hroot : (HexRootsTheory.toPolyℂ sourceP).IsRoot
       ((Field.value (Field.literalRep p s hw hp) v : ℝ) : ℂ) := by
-    apply realPoly_root_complex sourceP
+    apply root_complex sourceP
     rw [hpolynomial]
     exact checkEquation_sound hw hp hreal sourcePolynomial v hparts.1
   have hdisc : ((Field.value (Field.literalRep p s hw hp) v : ℝ) : ℂ) ∈

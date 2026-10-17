@@ -1,0 +1,22 @@
+{
+  "pid": 1922476,
+  "argv": [
+    "/home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/lean",
+    "/home/kim/.codex/tasks/hex-10358/boolean-worktree/conformance/HexRCF/AlgebraicCellsStress.lean",
+    "-o",
+    "/home/kim/.codex/tasks/hex-10358/boolean-worktree/.lake/build/lib/lean/HexRCF/AlgebraicCellsStress.olean",
+    "-i",
+    "/home/kim/.codex/tasks/hex-10358/boolean-worktree/.lake/build/lib/lean/HexRCF/AlgebraicCellsStress.ilean",
+    "-c",
+    "/home/kim/.codex/tasks/hex-10358/boolean-worktree/.lake/build/ir/HexRCF/AlgebraicCellsStress.c",
+    "--setup",
+    "/home/kim/.codex/tasks/hex-10358/boolean-worktree/.lake/build/ir/HexRCF/AlgebraicCellsStress.setup.json",
+    "--json"
+  ],
+  "cgroup": "/sys/fs/cgroup/user.slice/user-1003.slice/user@1003.service/app.slice/hex-10358-lean-build.service",
+  "source": "53cc610c67d9c1eb2aa6f320a7262ceb4786f716",
+  "capturedAt": "2026-10-16T19:05:33.207499+00:00",
+  "gdb_exit": 0,
+  "stack": "/home/kim/.codex/tasks/hex-10358/rational-point-stress-1-stack.log",
+  "purpose": "One diagnostic of the remaining unexpected stress cost after checked rational-point preparation; no restart and no timing/bit-growth claim."
+}

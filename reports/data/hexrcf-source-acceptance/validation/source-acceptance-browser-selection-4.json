@@ -1,0 +1,12 @@
+{
+  "source_commit": "cdc9b747aafee5970f7e818a28ff89c1ca343ec6",
+  "argv": [
+    "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+    "node",
+    "/home/kim/.codex/tasks/hex-10358/source-acceptance-browser.mjs",
+    "/home/kim/.codex/tasks/hex-10358/atomic-public-current"
+  ],
+  "cwd": "/home/kim/.codex/tasks/hex-10358/atomic-public-current",
+  "script_sha256": "ba772a7b3a4609c57ba96f0a7c58764afef1a1fd19c13a0a9b807928e09b0eb2",
+  "scope": "Six actual desktop/narrow captures and local changed-content overflow checks after fresh full manual render."
+}

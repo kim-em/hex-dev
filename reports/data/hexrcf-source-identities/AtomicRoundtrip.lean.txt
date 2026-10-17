@@ -1,0 +1,94 @@
+module
+public import HexRealClosure.NumberFieldTower
+public import HexRealClosure.RootReplay
+public import HexRealClosure.FrameFormat
+public meta import HexRealClosureTheory.NativeRecords
+public meta import HexRCF.Tactic
+public section
+open Hex Hex.RealClosure Hex.SignDet
+namespace AtomicRoundtripProbe
+set_option maxHeartbeats 12000000
+set_option maxRecDepth 32768
+def registry : BaseContext.Registry := fun _ => none
+abbrev base := NumberField.base registry
+def contextToken := (Tower.contextCodec base.signature).encode base.signature
+def j0 : Codec.Json := .number (0)
+def j1 : Codec.Json := .array (.cons j0 .nil)
+def j2 : Codec.Json := .number (-3)
+def j3 : Codec.Json := .number (1)
+def j4 : Codec.Json := base.codec.encode (⟨(-3 : Rat)⟩ : base.Value)
+def j5 : Codec.Json := base.codec.encode (⟨(0 : Rat)⟩ : base.Value)
+def j6 : Codec.Json := base.codec.encode (⟨(1 : Rat)⟩ : base.Value)
+def j7 : Codec.Json := .array (.cons j4 (.cons j5 (.cons j5 (.cons j6 .nil))))
+def j8 : Codec.Json := .number (-8)
+def j9 : Codec.Json := base.codec.encode (⟨(-8 : Rat)⟩ : base.Value)
+def j10 : Codec.Json := .array (.cons j3 (.cons j9 .nil))
+def j11 : Codec.Json := .number (8)
+def j12 : Codec.Json := base.codec.encode (⟨(8 : Rat)⟩ : base.Value)
+def j13 : Codec.Json := .array (.cons j3 (.cons j12 .nil))
+def j14 : Codec.Json := .array .nil
+def j15 : Codec.Json := .array (.cons contextToken (.cons j7 (.cons j10 (.cons j13 (.cons j14 (.cons j14 .nil))))))
+def j16 : Codec.Json := .array (.cons j14 .nil)
+def j17 : Codec.Json := .array (.cons j3 .nil)
+def j18 : Codec.Json := .array (.cons j17 .nil)
+def j19 : Codec.Json := .array (.cons j16 (.cons j16 (.cons j17 (.cons j17 (.cons j18 (.cons j3 .nil))))))
+def j20 : Codec.Json := .array (.cons j6 .nil)
+def j21 : Codec.Json := .array (.cons j5 (.cons j5 (.cons j6 .nil)))
+def j22 : Codec.Json := .array (.cons j7 (.cons j21 (.cons j20 .nil)))
+def j23 : Codec.Json := .number (3)
+def j24 : Codec.Json := .number (2)
+def j25 : Codec.Json := .array (.cons j23 (.cons j24 (.cons j0 .nil)))
+def j26 : Codec.Json := base.codec.encode (⟨(3 : Rat)⟩ : base.Value)
+def j27 : Codec.Json := .array (.cons j6 (.cons j14 (.cons j26 .nil)))
+def j28 : Codec.Json := .array (.cons j5 (.cons j6 .nil))
+def j29 : Codec.Json := .array (.cons j6 (.cons j28 (.cons j26 .nil)))
+def j30 : Codec.Json := .array (.cons j29 .nil)
+def j31 : Codec.Json := .array (.cons j6 (.cons j21 .nil))
+def j32 : Codec.Json := .array (.cons j31 .nil)
+def j33 : Codec.Json := .array (.cons j22 (.cons j25 (.cons j27 (.cons j30 (.cons j32 .nil)))))
+def j34 : Codec.Json := .number (-1)
+def j35 : Codec.Json := .array (.cons j34 (.cons j3 (.cons j3 .nil)))
+def j36 : Codec.Json := .array (.cons j3 (.cons j3 (.cons j3 .nil)))
+def j37 : Codec.Json := .array (.cons contextToken (.cons j7 (.cons j20 (.cons j10 (.cons j13 (.cons j33 (.cons j33 (.cons j35 (.cons j36 (.cons j3 (.cons j0 (.cons j3 .nil))))))))))))
+def j38 : Codec.Json := .array (.cons j37 .nil)
+def j39 : Codec.Json := .array (.cons j14 (.cons j20 .nil))
+def j40 : Codec.Json := .array (.cons j39 .nil)
+def j41 : Codec.Json := .array (.cons j40 .nil)
+def j42 : Codec.Json := .array (.cons j3 (.cons j1 (.cons j1 (.cons j3 (.cons j18 .nil)))))
+def j43 : Codec.Json := .array (.cons contextToken (.cons j7 (.cons j10 (.cons j13 (.cons j14 (.cons j3 (.cons j19 (.cons j38 (.cons j41 (.cons j16 (.cons j42 .nil)))))))))))
+def j44 : Codec.Json := .array (.cons j43 (.cons j14 .nil))
+def j45 : Codec.Json := .array (.cons j44 .nil)
+def j46 : Codec.Json := .array (.cons j3 (.cons j0 (.cons j45 .nil)))
+def j47 : Codec.Json := .array (.cons j1 (.cons j7 (.cons j10 (.cons j13 (.cons j14 (.cons j14 (.cons j46 .nil)))))))
+def subject := j15
+def evidence := j46
+def frameJson := j47
+def read := Algebraic.RootReplay.readDescriptor base.codec
+  (Tower.contextCodec base.signature) base.sign base.signature subject evidence
+theorem context_roundtrip (parent context : Tower.Signature) :
+    (Tower.contextCodec parent).decode ((Tower.contextCodec parent).encode context) = .ok context :=
+  Tower.contextCodec_lawful parent context
+
+theorem value_roundtrip (value : base.Value) :
+    base.codec.decode (base.codec.encode value) = .ok value := base.codec_lawful value
+
+open Lean Meta in
+run_meta do
+  let program ← mkAppM ``Except.toOption #[mkConst ``read]
+  let original := program
+  let initial ← withTransparency .all (whnf original)
+  let mut rules : SimpTheorems := {}
+  rules ← rules.addConst ``value_roundtrip
+  rules ← rules.addConst ``context_roundtrip
+  let context ← Simp.mkContext (simpTheorems := #[← getSimpTheorems, rules])
+    (config := {decide := false, maxSteps := 100000})
+    (congrTheorems := ← getSimpCongrTheorems)
+  let (simplified,_) ← withTransparency .all (Meta.simp initial context)
+  let rewrite ← simplified.getProof' initial
+  let equality ← mkEq original simplified.expr
+  let _ ← Hex.RCF.checkProof `atomicRoundtripReduction equality (mkExpectedPropHint rewrite equality)
+  let (record,raw) ← Hex.RealClosure.Algebraic.KernelReplay.checkedRecordProof simplified.expr
+  let accepted ← mkEq simplified.expr (← mkAppM ``Option.some #[record])
+  let _ ← Hex.RCF.checkProof `atomicRoundtripAcceptance accepted (mkExpectedPropHint raw accepted)
+  logInfo "public-lawful codec roundtrips and the existing literal reader accepted an independent cubic descriptor"
+end AtomicRoundtripProbe

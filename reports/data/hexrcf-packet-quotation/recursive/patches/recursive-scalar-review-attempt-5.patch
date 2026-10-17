@@ -1,0 +1,249 @@
+diff --git a/HexManual/Chapters/HexRCF/RootQuote.lean b/HexManual/Chapters/HexRCF/RootQuote.lean
+index a32c610d5e..31136b2f49 100644
+--- a/HexManual/Chapters/HexRCF/RootQuote.lean
++++ b/HexManual/Chapters/HexRCF/RootQuote.lean
+@@ -296,25 +296,24 @@ meta def quoteSelectedReader
+ 
+ The two-level regression checks one visit to its selected context followed by
+ one visit to its selected predecessor. Its lookup adds 19 source nodes per visit;
+-all 38 callback charges are retained. It uses 14,374 proof nodes; one node less exhausts
++the two charges retain 38 source nodes. It uses 14,374 proof nodes; one node less exhausts
+ at the final 925-node charge after 13,449 consumed nodes. Missing facts decline
+-without invoking another scalar decoder after the refusal. Wrong-context facts, kernel errors
+-and exhaustion remain terminal and restore the enclosing state.
++without proposing another decode to the base callback after refusal.
++Wrong-context facts and exhaustion remain terminal and restore the enclosing state.
++Generic kernel-error restoration is covered by the root-quotation regressions.
+ 
+ An ordinary `module` consumer also runs the callback factory and exports the
+ checked scalar reader equation. Its sign follows from the owner's restoration
+ law, without unfolding the stored element's implementation:
+ 
+ ```lean
+-open Hex.RealClosure.Algebraic in
+ open Hex.RCF.RecursiveScalarPublic in
+-example : restored.sign = 1 := by
+-  unfold restored
+-  exact Element.restore_sign _ _ _ _
++example : restored.sign = 1 := sign
+ ```
+ 
+-A fresh importing audit checks the two-level fixture and this public consumer:
+-51 actual theorem bodies and five definitions, complete standard-three axiom
++A fresh importing audit checks the two-level fixture and this public consumer,
++including accepted annotated decodes and a charged decline followed by acceptance:
++the actual theorem bodies and definitions, complete standard-three axiom
+ closure, and no native producer or canonical-codec reduction. This helper consumes
+ explicit facts; it does not authenticate original source expressions, discover
+ predecessor histories, produce missing sign evidence or install the general tactic.
+diff --git a/adapters/HexRCF/RealCoefficients/RootQuote.lean b/adapters/HexRCF/RealCoefficients/RootQuote.lean
+index ef2428d320..40bf9dc0d9 100644
+--- a/adapters/HexRCF/RealCoefficients/RootQuote.lean
++++ b/adapters/HexRCF/RealCoefficients/RootQuote.lean
+@@ -221,11 +221,17 @@ private def checkedStep (current whole subject law : Expr) : ReifyM (Expr × Exp
+   let next := motive.bindingBody!.instantiate1 rhs
+   if next == whole then throwError "demanded boundary made no change"
+   let statement ← mkEq current next
+-  let codec? := match subject.getAppFn with
+-    | .proj ``ValueCodec 1 codec => some codec
+-    | .const ``ValueCodec.decode _ =>
+-      if subject.getAppNumArgs == 3 then some subject.getAppArgs[1]! else none
+-    | _ => none
++  let inspected := subject.consumeMData
++  let codec? ← match inspected.getAppFn.consumeMData with
++    | .proj ``ValueCodec 1 codec => do
++      unless inspected.getAppNumArgs == 1 do
++        throwError "rcf: literal codec step expects a complete decode projection"
++      pure (some codec)
++    | .const ``ValueCodec.decode _ => do
++      unless inspected.getAppNumArgs == 3 do
++        throwError "rcf: literal codec step expects a complete decode application"
++      pure (some inspected.getAppArgs[1]!)
++    | _ => pure none
+   let candidate ← match codec? with
+     | some codec =>
+       if codec.getAppFn.isConstOf ``Algebraic.Element.codec then
+diff --git a/adapters/HexRCF/RealCoefficients/ScalarQuote.lean b/adapters/HexRCF/RealCoefficients/ScalarQuote.lean
+index de580be198..f90bb00c43 100644
+--- a/adapters/HexRCF/RealCoefficients/ScalarQuote.lean
++++ b/adapters/HexRCF/RealCoefficients/ScalarQuote.lean
+@@ -226,15 +226,16 @@ def quoteDecodeWith (reader facts : Expr)
+   accountProof reader
+   let reader ← Hex.RCF.checkExpr `ScalarQuote.reader reader
+   Meta.check reader
+-  let (codec,literal,projected) ← match reader.getAppFn with
++  let inspected := reader.consumeMData
++  let (codec,literal,projected) ← match inspected.getAppFn.consumeMData with
+     | .proj ``ValueCodec 1 codec =>
+-      unless reader.getAppNumArgs == 1 do
++      unless inspected.getAppNumArgs == 1 do
+         throwError "rcf: scalar quotation expects a complete decode projection"
+-      pure (codec,reader.appArg!,true)
++      pure (codec,inspected.appArg!,true)
+     | .const ``ValueCodec.decode _ =>
+-      unless reader.getAppNumArgs == 3 do
++      unless inspected.getAppNumArgs == 3 do
+         throwError "rcf: scalar quotation expects a complete decode application"
+-      pure (reader.getAppArgs[1]!,reader.getAppArgs[2]!,false)
++      pure (inspected.getAppArgs[1]!,inspected.getAppArgs[2]!,false)
+     | _ => throwError "rcf: scalar quotation expects a ValueCodec decode"
+   let result ← quoteWith codec facts literal decode
+   let mut proof := result.proof
+@@ -292,14 +293,22 @@ partial def decoderWith (factsFor : Expr → ReifyM (Option Expr))
+     ReifyM (Option Expr) := Core.withIncRecDepth do
+   charge .proofNodes 1
+   Core.checkSystem "recursive scalar quotation"
+-  let codec? := match reader.getAppFn with
+-    | .proj ``ValueCodec 1 codec =>
+-      if reader.getAppNumArgs == 1 then some codec else none
+-    | .const ``ValueCodec.decode _ =>
+-      if reader.getAppNumArgs == 3 then some reader.getAppArgs[1]! else none
+-    | _ => none
++  let inspected := reader.consumeMData
++  let codec? ← match inspected.getAppFn.consumeMData with
++    | .proj ``ValueCodec 1 codec => do
++      unless inspected.getAppNumArgs == 1 do
++        throwError "rcf: recursive scalar quotation expects a complete decode projection"
++      pure (some codec)
++    | .const ``ValueCodec.decode _ => do
++      unless inspected.getAppNumArgs == 3 do
++        throwError "rcf: recursive scalar quotation expects a complete decode application"
++      pure (some inspected.getAppArgs[1]!)
++    | _ => pure none
+   let some codec := codec? | return ← base reader
+   unless codec.getAppFn.isConstOf ``Algebraic.Element.codec do return ← base reader
++  let parameters := (← getConstInfo ``Algebraic.Element.codec).type.getNumHeadForalls
++  unless codec.getAppNumArgs == parameters do
++    throwError "rcf: recursive scalar quotation expects a complete canonical codec"
+   let some facts ← factsFor codec | return none
+   let result ← quoteDecodeWith reader facts (decoderWith factsFor base)
+   let valueType ← inferType result.value
+diff --git a/conformance/HexRCF/RecursiveScalarProofs.lean b/conformance/HexRCF/RecursiveScalarProofs.lean
+index bb70694520..842a4d886e 100644
+--- a/conformance/HexRCF/RecursiveScalarProofs.lean
++++ b/conformance/HexRCF/RecursiveScalarProofs.lean
+@@ -14,6 +14,7 @@ set_option maxHeartbeats 12000000
+ set_option maxRecDepth 32768
+ run_meta do
+   let roots := #[``RecursiveScalarQuote.read_checked,``RecursiveScalarQuote.constant_read,
++    ``RecursiveScalarQuote.tagged_read,``RecursiveScalarQuote.retry_read,
+     ``RecursiveScalarQuote.sign,
+     ``RecursiveScalarPublic.read_checked,``RecursiveScalarPublic.accepted,
+     ``RecursiveScalarPublic.sign]
+diff --git a/conformance/HexRCF/RecursiveScalarQuote.lean b/conformance/HexRCF/RecursiveScalarQuote.lean
+index 687b78bca9..b2b11aa69d 100644
+--- a/conformance/HexRCF/RecursiveScalarQuote.lean
++++ b/conformance/HexRCF/RecursiveScalarQuote.lean
+@@ -38,6 +38,12 @@ private meta def rejected (action : MetaM α) : MetaM Unit := unchanged do
+       | _ => throw error : MetaM Bool)
+   unless failed do throwError "missing or mismatched recursive facts were accepted"
+ 
++private meta def emit (name : Name) (reader : Expr) (result : RootQuote.Result) : MetaM Unit := do
++  let statement ← mkEq (← mkAppM ``Except.toOption #[reader])
++    (← mkAppM ``Option.some #[mkConst `Hex.RCF.RecursiveScalarQuote.restored])
++  let proof ← Hex.RCF.checkProof `recursiveReader statement result.proof
++  addDecl (.thmDecl {name,levelParams := [],type := statement,value := proof})
++
+ run_meta do
+   let some template ← unfoldDefinition? (mkConst ``SharedQuoteCallbacks.reader)
+     | throwError "recursive scalar source unavailable"
+@@ -56,9 +62,17 @@ run_meta do
+     return none
+   let base : RootQuote.DecoderM := fun expression =>
+     liftM (RationalQuote.decoder (mkConst ``Data.registry) expression)
+-  let decode := ScalarQuote.decoderWith factsFor base
++  let sentinel ← mkFreshExprMVar (mkConst ``Nat)
++  let mutated ← IO.mkRef false
++  let mutateFacts : Expr → ReifyM (Option Expr) := fun codec => do
++    unless ← sentinel.mvarId!.isAssigned do sentinel.mvarId!.assign (mkNatLit 1)
++    mutated.set true
++    factsFor codec
++  let decode := ScalarQuote.decoderWith mutateFacts base
+   let .ok quoted ← RootQuote.run original decode
+     | throwError "recursive scalar quotation failed"
++  unless (← mutated.get) && !(← sentinel.mvarId!.isAssigned) do
++    throwError "successful recursive quotation did not restore the mutated caller"
+   unless quoted.usage.proofNodes == 14374 do
+     throwError "recursive scalar accounting changed: {quoted.usage.proofNodes}"
+   unless (← calls.get).size == 2 && quoted.usage.sourceNodes == 38 do
+@@ -81,6 +95,7 @@ run_meta do
+   let .ok exact ← RootQuote.run original decode (config quoted.usage.proofNodes)
+     | throwError "exact recursive scalar budget failed"
+   unless exact.usage == quoted.usage do throwError "exact recursive usage changed"
++  mutated.set false
+   unchanged do
+     let .error (.budget exhausted) ← RootQuote.run original decode (config (quoted.usage.proofNodes-1))
+       | throwError "one-below recursive scalar budget did not exhaust"
+@@ -88,6 +103,8 @@ run_meta do
+         exhausted.requested == 925 do
+       throwError "recursive scalar exhaustion moved from the final925-node charge"
+     logInfo m!"recursive exhausted: consumed={exhausted.consumed}, requested={exhausted.requested}"
++  unless (← mutated.get) && !(← sentinel.mvarId!.isAssigned) do
++    throwError "exhausted recursive quotation did not restore the mutated caller"
+   calls.set #[]
+   let constant := mkApp3 (mkConst ``ValueCodec.decode) (← inferType quoted.value)
+     original.appArg! (mkConst ``SharedQuoteCallbacks.elementLiteral)
+@@ -104,6 +121,33 @@ run_meta do
+   addDecl (.thmDecl {
+     name := `Hex.RCF.RecursiveScalarQuote.constant_read,levelParams := [],
+     type := constantStatement,value := constantProof})
++  calls.set #[]
++  let tagged := mkMData (KVMap.empty.setNat `rcfQuotation 2) constant
++  let taggedCalls ← IO.mkRef (0 : Nat)
++  let .ok taggedResult ← RootQuote.run tagged (fun expression => do
++      if expression == tagged then taggedCalls.modify (·+1)
++      decode expression)
++    | throwError "annotated recursive scalar decode failed"
++  unless (← taggedCalls.get) == 1 && (← calls.get).size == 2 do
++    throwError "annotated recursive scalar branch was not exercised"
++  emit `Hex.RCF.RecursiveScalarQuote.tagged_read tagged taggedResult
++  calls.set #[]
++  let retries ← IO.mkRef (0 : Nat)
++  let retryFacts : Expr → ReifyM (Option Expr) := fun codec => do
++    let facts ← factsFor codec
++    let context := codec.getAppArgs[codec.getAppNumArgs-2]!
++    if ← withNewMCtxDepth <| withTransparency .reducible
++        (isDefEq context (mkConst ``Data.native)) then
++      retries.modify (·+1)
++      if (← retries.get) == 1 then return none
++    return facts
++  let .ok retryResult ← RootQuote.run original (ScalarQuote.decoderWith retryFacts base)
++    | throwError "recursive scalar retry did not accept"
++  unless (← retries.get) == 2 && (← calls.get).size == 3 &&
++      retryResult.usage.sourceNodes == 57 do
++    throwError "recursive scalar retry omitted a lookup or discarded callback charges"
++  logInfo m!"recursive variants: constant={constantResult.usage.proofNodes}; tagged={taggedResult.usage.proofNodes}; retry={retryResult.usage.proofNodes}"
++  emit `Hex.RCF.RecursiveScalarQuote.retry_read original retryResult
+   let leafCalls ← IO.mkRef (0 : Nat)
+   let leaf : RootQuote.DecoderM := fun expression => do
+     let scalar := expression.getAppFn.isConstOf ``ValueCodec.decode ||
+@@ -118,11 +162,11 @@ run_meta do
+   rejected (RootQuote.run original
+     (ScalarQuote.decoderWith (fun _ => pure (some (mkConst ``Records.facts))) leaf))
+   unless (← leafCalls.get) == 0 do throwError "wrong-context facts reached the leaf decoder"
+-  let sentinel ← mkFreshExprMVar (mkConst ``Nat)
+   for wrong in [false,true] do
+     calls.set #[]
+     leafCalls.set 0
+     let refused ← IO.mkRef false
++    mutated.set false
+     let inner : Expr → ReifyM (Option Expr) := fun codec => do
+       calls.modify (·.push codec)
+       let context := codec.getAppArgs[codec.getAppNumArgs-2]!
+@@ -135,6 +179,7 @@ run_meta do
+       refused.set true
+       if wrong then
+         sentinel.mvarId!.assign (mkNatLit 1)
++        mutated.set true
+         let _ ← mkFreshExprMVar (mkConst ``Nat)
+         return some (mkConst ``SharedQuoteCallbacks.facts)
+       return none
+@@ -143,7 +188,7 @@ run_meta do
+     rejected (RootQuote.run original (ScalarQuote.decoderWith inner afterRefusal))
+     let visited ← calls.get
+     unless visited.size == (if wrong then 2 else 3) && (← leafCalls.get) == 0 &&
+-        !(← sentinel.mvarId!.isAssigned) do
++        (← refused.get) && (← mutated.get) == wrong && !(← sentinel.mvarId!.isAssigned) do
+       throwError "inner refusal: wrong={wrong}; visits={visited.size}; leaf={(← leafCalls.get)}; assigned={(← sentinel.mvarId!.isAssigned)}"
+     logInfo m!"recursive inner refusal: wrong={wrong}; lookups={visited.size}; rollback checked"
+ 

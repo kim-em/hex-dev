@@ -1,0 +1,29 @@
+{
+  "opened_images": [
+    {
+      "file": "source-acceptance-desktop-equivalence.png",
+      "sha256": "ab908b0f7750cd0dd7b2c19b7524b4e25d55195392a02faa8ec7a4f0d6421d96"
+    },
+    {
+      "file": "source-acceptance-desktop-example.png",
+      "sha256": "7b92d6b08398fc1a6cafac43d5e2685ba4fcf2c1b6ac645439f7ff54f8f20358"
+    },
+    {
+      "file": "source-acceptance-desktop-boundary.png",
+      "sha256": "8bea2d8b09f2eafccad229a7a521694697fd434601c80a2d8b857ed569a6095e"
+    },
+    {
+      "file": "source-acceptance-narrow-equivalence.png",
+      "sha256": "23ea2c920fd93f200e5212e1507f76c0f07025e8d1c4cde7790748b2c4ef8bc9"
+    },
+    {
+      "file": "source-acceptance-narrow-example.png",
+      "sha256": "a96343e32d592909b6033808d3fbc0a83fff97948cd634d8040a58de6100f0f6"
+    },
+    {
+      "file": "source-acceptance-narrow-boundary.png",
+      "sha256": "cc21ac16dbc75a1522bdeade9a1b7f0ac33df8e9d42b6d35c72a9231b190a25e"
+    }
+  ],
+  "scope": "All six actual captures opened after the final 25c5f7afac render; changed content only. Historical whole-book horizontal overflow is outside this check."
+}

@@ -1,0 +1,15 @@
+{
+  "stoppedAt": "2026-10-16T18:45:33.332031+00:00",
+  "reason": "Manual interruption to test a concrete checked rational-point preparation change after the native nested gcd/inverse bottleneck diagnostic. This is not a completed stress result or performance sample.",
+  "source": "51420aab0e5efe9601626aaa0da03ef58f74000a",
+  "pid": 1683902,
+  "command": "/home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/lake build HexRCFAlgebraicCellsStress ",
+  "properties": "ActiveEnterTimestamp=Fri 2026-10-16 18:30:40 UTC\nMemoryCurrent=1186590720\nMemoryPeak=1499688960\nCPUUsageNSec=893018984000\nMemoryMax=34359738368\nMemorySwapMax=0\n",
+  "processes": "    PID ELAPSED     TIME   RSS COMMAND\n1683902     893 00:00:05 1025592 /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/lake build HexRCFAlgebraicCellsStress\n1684735     889 00:14:46 6905052 /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/lean /home/kim/worktrees/hex-dev/hex-dev-issue-10358/conformance/HexRCF/AlgebraicCellsStress.lean -o /home/kim/worktrees/hex-dev/hex-dev-issue-10358/.lake/build/lib/lean/HexRCF/AlgebraicCellsStress.olean -i /home/kim/worktrees/hex-dev/hex-dev-issue-10358/.lake/build/lib/lean/HexRCF/AlgebraicCellsStress.ilean -c /home/kim/worktrees/hex-dev/hex-dev-issue-10358/.lake/build/ir/HexRCF/AlgebraicCellsStress.c --setup /home/kim/worktrees/hex-dev/hex-dev-issue-10358/.lake/build/ir/HexRCF/AlgebraicCellsStress.setup.json --json\n",
+  "stack": "algebraic-stress-continued-1-stack.log",
+  "status": "manually-interrupted",
+  "terminalSignal": "15/TERM",
+  "runtime": "14min 53.256s",
+  "cpuTime": "14min 53.079s",
+  "systemdResultNote": "systemd classified the explicit SIGTERM stop as success; the stress module never returned either required trial result. This is not a passing build."
+}

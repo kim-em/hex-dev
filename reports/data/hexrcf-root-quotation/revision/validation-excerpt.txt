@@ -1,0 +1,12 @@
+info: conformance/HexRCF/RootQuoteCases.lean:65:0: cubic literal quotation proof budget: 191702
+info: conformance/HexRCF/RootQuoteConformance.lean:37:0: cubic frozen JSON closure: 47 definitions
+info: conformance/HexRCF/RootQuoteConformance.lean:37:0: actual cubic and conditional quotation bodies under kernel producer diagnostics: 220
+info: conformance/HexRCF/RootQuoteConformance.lean:37:0: generated bodies directly use Hex.TarskiCertificate.checkCached_eq: false
+info: conformance/HexRCF/RootQuoteConformance.lean:37:0: generated bodies directly use Array.toList_range: true
+info: conformance/HexRCF/RootQuoteConformance.lean:37:0: generated bodies directly use Array.all_toList: true
+info: conformance/HexRCF/RootQuoteConformance.lean:37:0: generated bodies directly use Array.foldlM_toList: true
+info: conformance/HexRCF/RootQuoteConformance.lean:37:0: fresh reader bindings, conditional controls and selected realRoot_spec checked; actual public replay/core laws present; complete standard-three axiom closure; reducibility restored
+Build completed successfully (14335 jobs).
+Main processes terminated with: code=exited, status=0/SUCCESS
+               Service runtime: 3min 31.137s
+                   Memory peak: 2.1G (swap: 0B)

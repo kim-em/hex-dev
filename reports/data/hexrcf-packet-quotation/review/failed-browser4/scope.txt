@@ -1,0 +1,1 @@
+Failed browser4 at rendered source6f648bbd46. Eight fresh PNGs and actual section metrics retained. Overflow14px in table-specific solution-list code. Old inspection.json is stale after the early failure and excluded.

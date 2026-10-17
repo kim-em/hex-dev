@@ -1,0 +1,25 @@
+{
+  "source_commit": "4a857a1587eb0298fd4dfec2a09c893dcb25f335",
+  "checks": {
+    "dag": {
+      "exit_status": 0,
+      "log": "source-identity-final-dag.log",
+      "sha256": "a4bca921b577964339a0bb1003d40b0e13e9006fc28274733a8188e126ddad15"
+    },
+    "copyright": {
+      "exit_status": 0,
+      "log": "source-identity-final-copyright.log",
+      "sha256": "a4bca921b577964339a0bb1003d40b0e13e9006fc28274733a8188e126ddad15"
+    },
+    "lines": {
+      "exit_status": 0,
+      "log": "source-identity-final-lines.log",
+      "sha256": "a4bca921b577964339a0bb1003d40b0e13e9006fc28274733a8188e126ddad15"
+    },
+    "admissions": {
+      "exit_status": 0,
+      "log": "source-identity-final-admissions.log",
+      "sha256": "3fe7d18bc2fec1fa4763469209fc52e0d41eb6821e5db1bc5081c27d8f9c9eff"
+    }
+  }
+}

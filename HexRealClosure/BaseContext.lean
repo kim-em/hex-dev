@@ -182,6 +182,13 @@ theorem Context.ofChain_eq {registry : Registry} {K : Type}
 /-- The rational base, before either kind of transcendental extension. -/
 @[expose] def rational (registry : Registry) : Context registry Rat orderSign := .real (.rational registry)
 
+private theorem rational_chain_proof (registry : Registry) :
+    (rational registry).chain = .real .base := rfl
+
+/-- The rational base stores the empty real chain, before any extension. -/
+theorem rational_chain (registry : Registry) :
+    (rational registry).chain = .real .base := rational_chain_proof registry
+
 /-- Registry keys of the real prefix, in predecessor order. -/
 @[expose] def RealChain.keys {registry : Registry} {K : Type}
     [Lean.Grind.Field K] [DecidableEq K] {approx : K → Rat → Bounds} {sign : K → Int}

@@ -18,7 +18,7 @@ def system (s : System n) : Json :=
     Json.of s.values.toArray, encodeMatrix s.inverse, Json.of s.denominator]
 
 /-- Read every literal system field against the same dimensions and word arity. -/
-def readSystem (n arity : Nat) (j : Json) : Except String (System n) := do
+@[expose] def readSystem (n arity : Nat) (j : Json) : Except String (System n) := do
   let a ← tuple 6 j
   let rows ← vector n (fun j => Vector.toList <$> vector arity (Json.decode (α := Nat)) j) a[0]
   let columns ← vector n (fun j => Vector.toList <$> vector arity (Json.decode (α := Int)) j) a[1]
@@ -32,7 +32,7 @@ def basis (b : Matrix.RankCert Int n m) : Json :=
 
 /-- Selected indices are checked against the decoded matrix dimensions before
 constructing `Fin` values. No rank or nonsingularity claim is assumed. -/
-def readBasis (n m : Nat) (j : Json) : Except String (Matrix.RankCert Int n m) := do
+@[expose] def readBasis (n m : Nat) (j : Json) : Except String (Matrix.RankCert Int n m) := do
   let a ← tuple 5 j
   let rank ← Json.decode (α := Nat) a[0]
   if rank > n || rank > m then throw "rank exceeds matrix dimensions"
@@ -52,7 +52,7 @@ def node (value : ValueCodec E) (context : ValueCodec Ctx) (n : Node E Ctx) : Js
 /-- Decode all size-indexed fields against the same declared size. The rank
 column dimension is computed from the literal integer counts, not supplied
 as a separate unbound claim. -/
-def readNode (value : ValueCodec E) (context : ValueCodec Ctx) (j : Json) :
+@[expose] def readNode (value : ValueCodec E) (context : ValueCodec Ctx) (j : Json) :
     Except String (Node E Ctx) := do
   let a ← tuple 11 j
   let ctx ← context.decode a[0]

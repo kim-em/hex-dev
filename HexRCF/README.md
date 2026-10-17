@@ -165,8 +165,21 @@ the required inequalities, existential witness and guarded inverse. Separate
 when the supplied evidence leaves a divisor sign unresolved.
 
 `Hex.RCF.RealCoefficients.Reify.prepare` produces the shared source schema,
-fixed coefficient valuation and equivalence to the original goal. The optional
-adapter is validated through the default `HexRCFRealCoefficients` Lake target
+fixed coefficient valuation and equivalence to the original goal. Each maximal
+closed expression containing a named or registered input occupies one
+coefficient coordinate: `Real.sqrt 2 + Real.sqrt 3`, its negation
+or a natural power stays whole. Purely rational arithmetic remains in the shared
+polynomial syntax. All original divisor obligations are collected before this
+abstraction, including inside zero products and quotients.
+Bare named generators retain their single-coordinate handler. Closed arithmetic
+such as `2 * Real.sqrt 2` uses the common-field handler, which reuses a single
+selected field when there is only one generator. Its checked coefficient
+valuation still contains the entire expression. In the supplied-bound path,
+an equality conjunct `x = c` or `c = x` selects `c`. Otherwise the single
+witness attempt uses the first named or registered subject in coefficient
+order, retaining a closed reciprocal or quotient as a whole witness, or zero
+when there is none. Universal goals do not prepare witness evidence.
+The optional adapter is validated through the default `HexRCFRealCoefficients` Lake target
 and is not yet published to the split repository. See the
 [SPEC](SPEC/hex-rcf.md#planned-real-coefficient-extension).
 
@@ -662,8 +675,10 @@ controls, actual proof bodies and source-bound manual validation.
 `build_sound` also derives compatible origins, guard validity and both accepted
 verdicts from the successful return, within the ordinary base interpretation.
 
-`AlgebraicCells.build` automatically constructs the selected presentations
-from original `RealAlgebraicNumber` inputs. Independent finite indices retain
+`AlgebraicCells.build` automatically constructs checked presentations
+from original `RealAlgebraicNumber` inputs. Exactly recognized rationals remain
+parent points in the rational predecessor; other inputs use selected roots.
+Independent finite indices retain
 coefficient order, repeated coordinates and every original guard. Its complete
 progress theorem derives the rational interpretation, compatible owners and
 both original-value verdicts; `build_domains` concludes nonzero original real
@@ -671,6 +686,37 @@ divisors. `build_sound` concludes both verdicts from the successful build equati
 without assuming guard validity. Every declared input is presented and gathered;
 unused irrational inputs can enlarge the tower. [Original-input evidence](../reports/hexrcf-algebraic-input-cells.md)
 separates the routine controls from the interrupted stronger stress case.
+The [rational-point evidence](../reports/hexrcf-rational-points.md) retains the
+stronger case's remaining timeout after this preparation change.
+
+`RationalQuote.decoder` proposes public decoding equations for canonical
+rational-base payloads. Its codec check uses reducible transparency and declines
+selected-root child codecs without unfolding their producer. The enclosing
+`RootQuote.quote` checks the exact proposed equations. This does not handle
+extension-context scalars or authenticate source/provider histories; see the
+[quotation evidence](../reports/hexrcf-rational-quotation.md).
+
+`AlgebraicPreparation.prepare` returns ordered `AlgebraicPreparation.Inputs`
+from a source goal, with ordinary-kernel coefficient/divisor identities and one
+shared reflection budget. Its prepared record retains separate ordered indices
+and can invoke the native packet producer without a primitive common-field
+certificate. Computed proposals still require literal authentication before
+quotation; this API installs no additional tactic handler.
+
+`CellOperations.check` replays a complete packet with the owner's existing
+checked `Replay.Operations` dictionary. `check_eq` preserves every canonical
+result and error, including original guard preflight, both verdicts and the
+root/cut indices. `accept?` exposes only true acceptance to record assembly;
+the public checker retains its typed failures and diagnostic false result.
+`RealModel.build` constructs the ordinary-real interpretation of a closed
+retained base/root context from its actual descriptors, encoding proofs and
+supplied real base model. Original source-value identities remain required.
+`CellQuote.finishOperations` checks an ordinary proof of the exact supplied
+predicate, transports acceptance to the canonical checker and authenticates
+the original goal, fixed valuation and every source divisor. Failed calls
+restore metavariables and auxiliary declarations.
+[Supplied-operation evidence](../reports/hexrcf-cell-operations.md) records
+the proof, packet and model validation scopes.
 
 These results do not reconstruct general frozen source/provider/predecessor
 histories, collect every intermediate reached arithmetic record, establish

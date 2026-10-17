@@ -23,6 +23,9 @@ public import HexRealClosure.TrivialTower
 public import HexRealClosure.BaseCodec
 public import HexRealClosure.BasePolynomial
 public import HexRealClosure.BaseCatalog
+public import HexRealClosure.BaseHistory
+public import HexRealClosure.ConstructedCatalog
+public import HexRealClosure.ConstructedGather
 public import HexRealClosure.BaseInclusion
 public import HexRealClosure.BaseReconciliation
 public import HexRealClosure.BaseEmbedding
@@ -73,6 +76,7 @@ public import HexRealClosure.ReconciledGather
 public import HexRealClosure.ReconciledLive
 public import HexRealClosure.ReconciledBase
 public import HexRealClosure.LiveRequest
+public import HexRealClosure.LiveFrame
 public import HexRealClosure.SharedPresentation
 public import HexRealClosure.TowerRoots
 public import HexRealClosure.RootTransport

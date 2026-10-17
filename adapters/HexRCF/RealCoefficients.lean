@@ -23,6 +23,7 @@ public import HexRCF.RealCoefficients.Specialize
 public import HexRCF.RealCoefficients.Formula
 public import HexRCF.RealCoefficients.Field
 public import HexRCF.RealCoefficients.CommonPresentation
+public import HexRCF.RealCoefficients.SourceIdentity
 public import HexRCF.RealCoefficients.LiteralSign
 public import HexRCF.RealCoefficients.SignIndex
 public import HexRCF.RealCoefficients.FieldIndex
@@ -48,6 +49,11 @@ public meta import HexRCF.RealCoefficients.PointQuote
 public meta import HexRCF.RealCoefficients.Quote
 public import HexRCF.RealCoefficients.RootReplay
 public import HexRCF.RealCoefficients.RootBuild
+public import HexRCF.RealCoefficients.RootQuote
+public meta import HexRCF.RealCoefficients.RootQuote
+public meta import HexRCF.RealCoefficients.RationalQuote
+public import HexRCF.RealCoefficients.ScalarQuote
+public meta import HexRCF.RealCoefficients.ScalarQuote
 public import HexRCF.RealCoefficients.RepresentationCarrier
 public import HexRCF.RealCoefficients.RootCells
 public import HexRCF.RealCoefficients.RepresentationCells
@@ -72,6 +78,7 @@ public import HexRCF.RealCoefficients.CellCodec
 public import HexRCF.RealCoefficients.CellFootprint
 public import HexRCF.RealCoefficients.RootCodec
 public import HexRCF.RealCoefficients.RootTableCodec
+public import HexRCF.RealCoefficients.CellOperations
 public import HexRCF.RealCoefficients.CompleteReplay
 public import HexRCF.RealCoefficients.NumberFieldCells
 public import HexRCF.RealCoefficients.RowEncode
@@ -82,6 +89,8 @@ public import HexRCF.RealCoefficients.RootTransport
 public import HexRCF.RealCoefficients.Gather
 public import HexRCF.RealCoefficients.GatherCells
 public import HexRCF.RealCoefficients.AlgebraicCells
+public meta import HexRCF.RealCoefficients.AlgebraicPreparation
+public meta import HexRCF.RealCoefficients.RealModel
 public import HexRCF.RealCoefficients.RegisteredGather
 public import HexRCF.RealCoefficients.ReconciledGather
 public import HexRCF.RealCoefficients.InverseReplay

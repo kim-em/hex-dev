@@ -1,0 +1,12 @@
+import PacketQuoteInput
+open Lean Meta Hex.RCF.PacketQuoteTests
+namespace Hex.RCF.PacketQuoteTests
+run_meta do
+  let .defnInfo original ← getConstInfo ``input | throwError "missing input definition"
+  let declaration := Declaration.defnDecl {original with name := `Hex.RCF.PacketQuoteTests.compiledInput}
+  addDecl declaration (forceExpose := true)
+  compileDecl declaration (logErrors := true)
+/-- info: 3 -/
+#guard_msgs in
+#eval compiledInput.size
+end Hex.RCF.PacketQuoteTests

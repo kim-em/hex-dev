@@ -1,0 +1,15 @@
+{
+  "label": "narrow",
+  "kind": "api-start",
+  "anchorText": "\n                  The complete literal checker can use checked cached arithmetic through\nCellOperations.check. It takes the owner's existing Replay.Operations\ndictionary, whose equalities bind every supplied operation to the ordinary\nimplementation. Root and cut indices remain canonical while section and\nsector evidence is read. The result preserves every error and both verdicts:",
+  "targetTop": 80.0625,
+  "targetBottom": 475.0625,
+  "viewport": 390,
+  "scrollY": 432927,
+  "paragraphWidth": 343,
+  "scrollWidth": 343,
+  "targetTag": "CODE",
+  "targetWidth": 331,
+  "targetScrollWidth": 371,
+  "descendantOverflow": 40
+}

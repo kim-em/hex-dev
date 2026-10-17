@@ -1,0 +1,37 @@
+from pathlib import Path
+import hashlib,json,os,random,subprocess,time
+r=Path('/home/kim/worktrees/hex-dev/hex-dev-issue-10358');t=Path('/home/kim/.codex/tasks/hex-10358')
+sha=lambda b:hashlib.sha256(b).hexdigest()
+def git(root,*args):return subprocess.check_output(['git',*args],cwd=root,text=True).strip()
+cpu=random.SystemRandom().choice(sorted(os.sched_getaffinity(0)))
+probe=(t/'routing-A/RoutingProbe.lean').read_bytes()
+assert probe==(t/'routing-B/RoutingProbe.lean').read_bytes()
+record={'question':'Does maximal closed-coefficient routing change the build-only proof cost of the existing goal forall x, x^2 + 2*sqrt(2) > 0?', 'cpu':cpu,'schedule':[['A','B'],['B','A'],['A','B'],['B','A']], 'goal_sha256':sha(probe),'imports':['HexRCF.RealCoefficients.CommonTactic'],'scope':'Fresh one-module actual rcf elaboration and ordinary-kernel proof construction, with cached imports. Whole bounded Lake invocation is timed, including dependency checks and startup. Not isolated tactic runtime, numerical solver scaling or a generic speedup claim.', 'limits':{'memory_max_bytes':34359738368,'swap_max_bytes':0,'lean_threads':2,'own_build_concurrency':1},'arms':{},'warmups':[],'samples':[]}
+for arm,root in [('A',t/'routing-baseline'),('B',r)]:
+ record['arms'][arm]={'source_commit':git(root,'rev-parse','HEAD'),'source_tree':git(root,'rev-parse','HEAD^{tree}'),'reifier_sha256':sha((root/'adapters/HexRCF/RealCoefficients/Reify.lean').read_bytes()),'manifest_sha256':sha((root/'lake-manifest.json').read_bytes()),'project':str(t/f'routing-{arm}')}
+assert record['arms']['A']['manifest_sha256']==record['arms']['B']['manifest_sha256']
+def save(): (t/'routing-proof-pairs.json').write_text(json.dumps(record,indent=2)+'\n')
+def run(arm,target,name):
+ project=t/f'routing-{arm}';log=t/(name+'.log')
+ argv=[str(t/'bin/run-bounded'),'/run/current-system/sw/bin/env','LAKE_NO_CACHE=true','/run/current-system/sw/bin/taskset','-c',str(cpu),'/run/current-system/sw/bin/lake','build',target]
+ entry={'arm':arm,'target':target,'argv':argv,'cwd':str(project),'load_before':os.getloadavg(),'started_unix':time.time(),'log':log.name}
+ started=time.perf_counter()
+ with log.open('wb') as h:
+  h.write((json.dumps(entry)+'\n').encode());h.flush()
+  result=subprocess.run(argv,cwd=project,stdout=h,stderr=subprocess.STDOUT)
+ entry.update(exit_code=result.returncode,elapsed_seconds=time.perf_counter()-started,load_after=os.getloadavg(),log_sha256=sha(log.read_bytes()))
+ if target=='RoutingProbe':entry['olean_bytes']=(project/'.lake/build/lib/lean/RoutingProbe.olean').stat().st_size if result.returncode==0 else None
+ return entry
+save()
+for arm in ['A','B']:
+ entry=run(arm,'RoutingInventory','routing-warm-'+arm);record['warmups'].append(entry);save();print(json.dumps(entry),flush=True)
+ if entry['exit_code']:raise RuntimeError('warm import/proof/source-inventory validation failed: '+entry['log'])
+for trial,order in enumerate(record['schedule']):
+ for arm in order:
+  project=t/f'routing-{arm}'
+  for extension in ['trace','olean','ilean']:
+   (project/f'.lake/build/lib/lean/RoutingProbe.{extension}').unlink(missing_ok=True)
+  entry=run(arm,'RoutingProbe',f'routing-pair-{trial}-{arm}');entry['trial']=trial
+  record['samples'].append(entry);save();print(json.dumps(entry),flush=True)
+  if entry['exit_code']:raise RuntimeError('completed failed sample retained: '+entry['log'])
+print('Fixed adjacent AB/BA schedule complete; every sample retained.',flush=True)

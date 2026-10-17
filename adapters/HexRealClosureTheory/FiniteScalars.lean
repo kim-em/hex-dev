@@ -17,6 +17,7 @@ private def proofMatches (proof type : Expr) : MetaM Bool := do
 
 private def inventory (entries data : Expr) (fields : Array Name) (type : Expr) :
     MetaM (Option Expr) := do
+  if fields.isEmpty then return none
   let mut rest := entries
   let mut earlier : Array Expr := #[]
   while true do
@@ -101,15 +102,26 @@ def Prefix.supplyAll (level : Prefix) (previous : Supplier) : Supplier := fun ty
         type.getAppFn.isConstOf ``Transport.Product then 3
     else 0
   if count > 0 && args.size ≥ count && args[args.size - count]! == level.read then
-    if let some proof ← inventory level.entries level.packings
-        #[``Packing.Data.replay, ``Packing.Data.difference] type then return some proof
-    if let some proof ← inventory level.records level.signs
-        #[``ValueSign.Data.replay] type then return some proof
-    let inverses ← mkAppM ``Packing.Inventory.Data.inverses #[level.data]
-    if let some proof ← inventory level.facts inverses
-        #[``Packing.Inverse.Data.packing, ``Packing.Inverse.Data.original,
-          ``Packing.Inverse.Data.inverse, ``Packing.Inverse.Data.product,
-          ``Packing.Inverse.Data.difference] type then return some proof
+    -- These fields have distinct fixed proposition heads. Preserve inventory
+    -- priority while omitting projections that cannot match this obligation.
+    let replay := type.getAppFn.isConstOf ``Transport.Finite.ReplayData
+    let difference := type.getAppFn.isConstOf ``Transport.Difference
+    let packingFields := if replay then #[``Packing.Data.replay]
+      else if difference then #[``Packing.Data.difference] else #[]
+    let signFields := if replay then #[``ValueSign.Data.replay] else #[]
+    let inverseFields := if replay then
+        #[``Packing.Inverse.Data.packing, ``Packing.Inverse.Data.inverse]
+      else if difference then
+        #[``Packing.Inverse.Data.original, ``Packing.Inverse.Data.difference]
+      else #[``Packing.Inverse.Data.product]
+    if let some proof ← inventory level.entries level.packings packingFields type then
+      return some proof
+    if let some proof ← inventory level.records level.signs signFields type then
+      return some proof
+    let facts ← withTransparency .all (whnf level.facts)
+    unless facts.getAppFn.isConstOf ``List.nil do
+      let inverses ← mkAppM ``Packing.Inventory.Data.inverses #[level.data]
+      if let some proof ← inventory facts inverses inverseFields type then return some proof
   if let some proof ← level.scalar previous type then return some proof
   level.supply previous type
 

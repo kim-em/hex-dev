@@ -1,0 +1,185 @@
+{
+  "source_commit": "8940124edf7f1f5a573b4cf670ec8d6641ec18de",
+  "source_tree": "5ebf9d036767f026b2bcec3e093b72e18fc56cc3",
+  "sources_sha256": {
+    "adapters/HexRCF/RealCoefficients/Finite.lean": "182eece642c9b4051c4a2e31c863b5dce7abc01f2822a37eb08cbc438686391a",
+    "adapters/HexRCF/RealCoefficients/Reify.lean": "e4b48913176d79f403860612546f38b22bfaf79d30e43d654f1547e848f0f5dd",
+    "conformance/HexRCF/RegisteredConstants.lean": "4354057a056438ca9dc7cad4ac998cda169e2c56e048c4292d585ba0e93a6e93",
+    "conformance/HexRCF/MaximalCoefficientsKernel.lean": "1011b9c74197d58ebc64289a41e2d40ceb1efee92450ba17aee874a5da2b930e",
+    "conformance/HexRCF/MaximalCoefficientsConformance.lean": "ff1e388294909f1925f9c9b31b9d49c8445dcae944d8a705ea16fecab490e637",
+    "HexManual/Chapters/HexRCF/CallerBounds.lean": "0cebdb86844bbc9064ba156dd1b77594e5f263863786abc65014a660e74d78c4",
+    "HexManual/Chapters/HexRCF/ClosedCoefficients.lean": "38808c35cf9af63aa58d860751967e2d0cff6740d508ba3b615a7ec13705754a",
+    "HexRCF/README.md": "5fb9c249f5a0fa9990ea3ba94643228684d2899034890f1ccbc72195eda18833",
+    "lakefile.lean": "e7db314f483a36c144d219fb526e30cddc3409791f5626b2d3180b903a7c2929",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4"
+  },
+  "documents": {
+    "reports/hexrcf-source-identities.md": {
+      "snapshot": "reports/data/hexrcf-source-identities/final/hexrcf-source-identities.md.txt",
+      "sha256": "191daea14eb15ad4e08962e95bf105857624bad480da7c170640e51713070257"
+    },
+    "reports/hexrcf-maximal-coefficients.md": {
+      "snapshot": "reports/data/hexrcf-source-identities/final/hexrcf-maximal-coefficients.md.txt",
+      "sha256": "8598186bbf27f5e70bef7ec62a067ad82700199f8f69a8c38fac12d09d3879cb"
+    }
+  },
+  "artifacts_sha256": {
+    "reports/data/hexrcf-source-identities/final/caller-witness-browser.mjs": "6597fb5332481f5ed978900322780cc486fcb569de4a2f1cc129163ed456463e",
+    "reports/data/hexrcf-source-identities/final/CallerWitnessRender.lean.txt": "756ad1c7c37e688d9bae25a4867f93199b50086caf10d14d6251d9d5f8129325",
+    "reports/data/hexrcf-source-identities/final/caller-witness-inspection.json": "9b02adaf0853162cc3d8ec52672d6cc4dd8801e6e53de91900a6d98ce8b8f0e7",
+    "reports/data/hexrcf-source-identities/final/caller-witness-desktop-normalization.png": "52ba54bc9a8b64350505d98b70ae19b74cf79521de1f8f36d6e1d42807729e8f",
+    "reports/data/hexrcf-source-identities/final/caller-witness-desktop-witness.png": "da1a30be342ccd19d92f80ab19cda57c6f25bf860559ab8865f15bf807d878ed",
+    "reports/data/hexrcf-source-identities/final/caller-witness-desktop-guards.png": "55db8df9a3ffb8474029ead9ce0a79d1040e2720da8f6a2228030df833318569",
+    "reports/data/hexrcf-source-identities/final/caller-witness-narrow-normalization.png": "c8825414374af6d6dd3330a0d618c427aeac58c139d504c7b61b757e2e4e8ab7",
+    "reports/data/hexrcf-source-identities/final/caller-witness-narrow-witness.png": "606b3f84c83287dea744241a914abf23ede3871c7eb8b2192a6e9567099c1384",
+    "reports/data/hexrcf-source-identities/final/caller-witness-narrow-guards.png": "cd520f9903d7b56cb1c343ed19b05c27cdf9dbadb272cb1854f16beed2d1d231"
+  },
+  "logs": {
+    "reports/data/hexrcf-source-identities/final/source-review-9-focused-1.log.gz": {
+      "sha256": "7c0c74fae90f7187bde64eeaec7deb64eac07dff861857ba118a1893e8880c45",
+      "uncompressed_sha256": "b8b4376a05ef58190bf63c9b912c1338d8e11a4398820ff1341ba57d34e894c8"
+    },
+    "reports/data/hexrcf-source-identities/final/source-review-9-libraries-1.log.gz": {
+      "sha256": "0e6e806974875e7799aa865c93eeaa54a7cdae8720d77ab1fbf397e1a45cec75",
+      "uncompressed_sha256": "4982731b47a80493a8961cc03eeb9a60da18d28134434edf848624756e598e25"
+    },
+    "reports/data/hexrcf-source-identities/final/caller-witness-render-1.log.gz": {
+      "sha256": "1282b60b64466b09d9b85cda27a0715fe7a73839df7ab2f3b9140f360a7e0ac9",
+      "uncompressed_sha256": "7ad8a010aae3d3de1e10959f5d1da34c60bf6201fbe68cd1658c07b871bef40f"
+    },
+    "reports/data/hexrcf-source-identities/final/caller-witness-browser-1.log.gz": {
+      "sha256": "48c4d5b50c2091013411d29160c07d4841a9a16308c5b5356d1374d5e379bdea",
+      "uncompressed_sha256": "32dd1af7915fb17664ce9c3ca8b399b58299a1501cbdfc78422091280eaaa1a9"
+    },
+    "reports/data/hexrcf-source-identities/final/source-identity-review-dag-5.log.gz": {
+      "sha256": "824a3ecac997e0847884eaa5813e39e5a90abbf6def1754f56bafc2a3ad3b3ea",
+      "uncompressed_sha256": "aaff8609d6c182adbd0dcf947089d2ad3520d49bb48cfe7e40ee30c429486293"
+    },
+    "reports/data/hexrcf-source-identities/final/source-identity-review-copyright-5.log.gz": {
+      "sha256": "96991fc5b9335583de53776018e6f24fdbb254a13cb61ad6949f1918eff878c0",
+      "uncompressed_sha256": "561b963e212ce74f379f4e2371a2cea81af9e3c8b80d3abdb8f74a7ba00c1c4e"
+    },
+    "reports/data/hexrcf-source-identities/final/source-identity-review-lines-5.log.gz": {
+      "sha256": "7b3442c64fbfc59da30c07c531f5c8524fdf472fa5b66fbaa6ece0fc38875182",
+      "uncompressed_sha256": "72ea72d11e8ff7e692adb1e42acaa40e580e0ff727d099846d4eca0c6360dc83"
+    },
+    "reports/data/hexrcf-source-identities/final/source-identity-review-admissions-5.log.gz": {
+      "sha256": "57e233e792596d3d0505b89e2d5df59f2949b885e016835d9dfc23c03645ff07",
+      "uncompressed_sha256": "a10f8c30f1549eea5b66907b909d478bd22daa6cc6d7c331f2eb9a1048aab37b"
+    }
+  },
+  "metadata": {
+    "source_commit": "8940124edf7f1f5a573b4cf670ec8d6641ec18de",
+    "source_tree": "5ebf9d036767f026b2bcec3e093b72e18fc56cc3",
+    "checks": {
+      "dag": {
+        "command": {
+          "argv": [
+            "python3",
+            "scripts/check_dag.py"
+          ],
+          "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10358",
+          "source_commit": "8940124edf7f1f5a573b4cf670ec8d6641ec18de",
+          "source_tree": "5ebf9d036767f026b2bcec3e093b72e18fc56cc3",
+          "script_sha256": "760236cb56f22dd916c677070713146ebd9bd652ba988b3f9427d6a671a4ea10"
+        },
+        "exit_status": 0,
+        "log": "source-identity-review-dag-5.log",
+        "sha256": "aaff8609d6c182adbd0dcf947089d2ad3520d49bb48cfe7e40ee30c429486293"
+      },
+      "copyright": {
+        "command": {
+          "argv": [
+            "python3",
+            "scripts/check_copyright_headers.py"
+          ],
+          "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10358",
+          "source_commit": "8940124edf7f1f5a573b4cf670ec8d6641ec18de",
+          "source_tree": "5ebf9d036767f026b2bcec3e093b72e18fc56cc3",
+          "script_sha256": "d7ccfbb8e737c342ff24f7ec875c403a76a678a75f581a8e7dcaf0b654325c84"
+        },
+        "exit_status": 0,
+        "log": "source-identity-review-copyright-5.log",
+        "sha256": "561b963e212ce74f379f4e2371a2cea81af9e3c8b80d3abdb8f74a7ba00c1c4e"
+      },
+      "lines": {
+        "command": {
+          "argv": [
+            "python3",
+            "scripts/check_file_line_counts.py"
+          ],
+          "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10358",
+          "source_commit": "8940124edf7f1f5a573b4cf670ec8d6641ec18de",
+          "source_tree": "5ebf9d036767f026b2bcec3e093b72e18fc56cc3",
+          "script_sha256": "0c9109c17128a11651f7a5d3784b5b35c859b87e2f58d12c2fbcd5c7562f1229"
+        },
+        "exit_status": 0,
+        "log": "source-identity-review-lines-5.log",
+        "sha256": "72ea72d11e8ff7e692adb1e42acaa40e580e0ff727d099846d4eca0c6360dc83"
+      },
+      "admissions": {
+        "command": {
+          "argv": [
+            "python3",
+            "scripts/ci/check_named_admissions.py"
+          ],
+          "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10358",
+          "source_commit": "8940124edf7f1f5a573b4cf670ec8d6641ec18de",
+          "source_tree": "5ebf9d036767f026b2bcec3e093b72e18fc56cc3",
+          "script_sha256": "b2a2ceb6ba6422b4a54c8c797907c61574c1f60e6659441e8c1b357ee3c471ce"
+        },
+        "exit_status": 0,
+        "log": "source-identity-review-admissions-5.log",
+        "sha256": "a10f8c30f1549eea5b66907b909d478bd22daa6cc6d7c331f2eb9a1048aab37b"
+      }
+    }
+  },
+  "selection": {
+    "source_commit": "8940124edf7f1f5a573b4cf670ec8d6641ec18de",
+    "source_tree": "5ebf9d036767f026b2bcec3e093b72e18fc56cc3",
+    "argv": [
+      "/home/kim/.codex/tasks/hex-10358/bin/lake-bounded",
+      "build",
+      "HexRCF",
+      "HexRCFRealCoefficients",
+      "HexRCFProofProbe",
+      "+HexRCF.LanguageTests",
+      "+HexRCF.SturmBuilderTests",
+      "+HexRCF.CarrierTests",
+      "+HexRCF.IsolationsTests",
+      "+HexRCF.SeparationTests",
+      "+HexRCF.CellsTests",
+      "+HexRCF.CommonRootTests",
+      "+HexRCF.SignMatrixTests",
+      "+HexRCF.BuilderTests",
+      "+HexRCF.CertificateTests",
+      "+HexRCF.DecisionTests",
+      "+HexRCF.ReifyTests",
+      "+HexRCF.HandlerTests.Support",
+      "+HexRCF.HandlerTests.Async",
+      "+HexRCF.HandlerTests",
+      "+HexRCF.LintTests"
+    ],
+    "scope": "Both library targets, actual registered pi/e proof probes and all sixteen explicit rational/base test modules after the scoped finite correction. All 262-root selections at0da/e944 remain historical; final hosted CI covers the final integration."
+  },
+  "scope": "Scoped final finite-proof correction, all base tests and both libraries, registered pi/e proof probes, full manual render and six opened desktop/narrow captures. Completed full conformance remains bound to prior0da/e944 source trees; hosted final-head CI remains required. No general source/history/completeness/realization claim.",
+  "limits": {
+    "memory_max_bytes": 34359738368,
+    "swap_max_bytes": 0,
+    "lean_threads": 2,
+    "own_build_concurrency": 1
+  },
+  "inspection": {
+    "opened_images": [
+      "reports/data/hexrcf-source-identities/final/caller-witness-desktop-normalization.png",
+      "reports/data/hexrcf-source-identities/final/caller-witness-desktop-witness.png",
+      "reports/data/hexrcf-source-identities/final/caller-witness-desktop-guards.png",
+      "reports/data/hexrcf-source-identities/final/caller-witness-narrow-normalization.png",
+      "reports/data/hexrcf-source-identities/final/caller-witness-narrow-witness.png",
+      "reports/data/hexrcf-source-identities/final/caller-witness-narrow-guards.png"
+    ],
+    "local_overflow_pixels_max": 0,
+    "excluded_scope": "Whole book and earlier blocks; historical horizontal overflow is outside the changed paragraphs."
+  },
+  "document_commit": "8940124edf7f1f5a573b4cf670ec8d6641ec18de"
+}

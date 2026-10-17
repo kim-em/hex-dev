@@ -1,0 +1,13 @@
+{
+  "source": "53cc610c67d9c1eb2aa6f320a7262ceb4786f716",
+  "capturedAt": "2026-10-16T18:54:35.867340+00:00",
+  "properties": "ActiveState=active\nSubState=running\nRuntimeMaxUSec=15min\nMainPID=1921772\nControlGroup=/user.slice/user-1003.slice/user@1003.service/app.slice/hex-10358-lean-build.service\nMemoryMax=34359738368\nMemorySwapMax=0\n",
+  "command": "/home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/lake build HexRCFAlgebraicCellsStress ",
+  "LEAN_NUM_THREADS": 2,
+  "sources": {
+    "adapters/HexRCF/RealCoefficients/AlgebraicCells.lean": "8724486f600df488db9ced120f4107ff597d5b8a91e56055a8515d054e43cfa2",
+    "conformance/HexRCF/AlgebraicCellsStress.lean": "12aab0afe004260b0717ec7c114a4369a3dbdf2fbce987ef3ea47eaa17946fa1"
+  },
+  "wrapper": "/home/kim/.codex/tasks/hex-10358/bin/run-stress-bounded",
+  "scope": "Operational diagnostic of changed rational-point preparation on the retained original stress inputs. A deadline is not a scientific budget or completed sample. No matched comparison."
+}

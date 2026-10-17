@@ -1,0 +1,6 @@
+ActiveState=active
+OOMPolicy=kill
+MemoryCurrent=5930483712
+MemoryPeak=9807691776
+MemoryMax=34359738368
+MemorySwapMax=0

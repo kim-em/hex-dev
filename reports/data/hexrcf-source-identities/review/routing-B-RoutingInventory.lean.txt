@@ -1,0 +1,14 @@
+import RoutingProbe
+open Lean Meta Qq Hex.RCF.RealCoefficients
+run_meta do
+  let .thmInfo info ← getConstInfo ``RoutingCost.routing | throwError "missing actual routing proof"
+  let _ ← Hex.RCF.checkProof ``RoutingCost.routing info.type info.value
+  let axioms ← collectAxioms ``RoutingCost.routing
+  unless axioms.all (#[``propext,``Classical.choice,``Quot.sound].contains ·) do
+    throwError "routing proof contains a forbidden axiom"
+  let .ok source ← Reify.prepare info.type | throwError "routing source preparation failed"
+  unless source.coefficients.size == 1 && (← isDefEq source.coefficients[0]! q((2 : ℝ) * Real.sqrt 2)) do
+    throwError "routing source inventory does not match its actual arm"
+  unless (← Tactic.handlesCoefficient source.coefficients[0]!) == false do
+    throwError "single-coefficient route no longer matches its arm"
+  logInfo "actual routing proof, exact coefficient inventory and handler priority checked"

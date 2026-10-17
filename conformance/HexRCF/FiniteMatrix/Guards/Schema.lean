@@ -14,30 +14,16 @@ def positive (entries : List (Packing FiniteTower.first)) : List (Element Finite
 def guards (zero : Bool) (entries : List (Packing FiniteTower.first)) :=
   if zero then (0 : Element FiniteTower.first) :: (positive entries).tail else positive entries
 
-/-- The source retains the closed zero quotient as a second coefficient. -/
-def values (i : Fin 2) : Element FiniteTower.first :=
-  if i.val = 0 then FiniteTower.generator else 0
-
-def formula : RealFormula.QF 3 :=
-  .and (.atom ⟨MvPoly.X 2 ^ 2 - (MvPoly.X 0 + MvPoly.X 1), .eq⟩)
-    (.and (.atom ⟨1 - MvPoly.X 2, .lt⟩) (.atom ⟨MvPoly.X 2 - 2, .lt⟩))
-
-def queries (entries : List (Packing FiniteTower.first)) :=
-  @RepresentationSpecialize.prepare (Element FiniteTower.first) _ _
-    (Element.replayOne inferInstance rfl entries) (Element.replayAdd inferInstance rfl entries)
-    (Element.replayMul inferInstance inferInstance rfl rfl entries)
-    (Element.replayNeg (inferInstance : Sub Rat) rfl entries)
-    (Element.replayNatCast inferInstance rfl entries) _ values formula
+/-- The entire closed right-hand side occupies one source coordinate.
+Both original divisor obligations remain in the separate guard list. -/
+abbrev values := Hex.RCF.RealCoefficients.FiniteMatrixTests.Schema.values
+abbrev formula := Hex.RCF.RealCoefficients.FiniteMatrixTests.Schema.formula
+abbrev queries := Hex.RCF.RealCoefficients.FiniteMatrixTests.Schema.queries
 
 def native := RepresentationSpecialize.prepare values formula
 
-theorem queries_eq (entries : List (Packing FiniteTower.first)) : queries entries = native := by
-  unfold queries native
-  erw [Element.replayOne_eq inferInstance rfl entries,
-    Element.replayAdd_eq inferInstance rfl entries,
-    Element.replayMul_eq inferInstance inferInstance rfl rfl entries,
-    Element.replayNeg_eq (inferInstance : Sub Rat) rfl entries,
-    Element.replayNatCast_eq inferInstance rfl entries]
+theorem queries_eq (entries : List (Packing FiniteTower.first)) : queries entries = native :=
+  Hex.RCF.RealCoefficients.FiniteMatrixTests.Schema.queries_eq entries
 def allQueries (zero : Bool) (entries : List (Packing FiniteTower.first)) :=
   (guards zero entries).map DensePoly.C ++ queries entries
 end Hex.RCF.RealCoefficients.FiniteMatrixTests.Guards.Schema

@@ -1,0 +1,749 @@
+{
+  "source_commit": "73d0818c4125caf101f45b37e702ee262b14364a",
+  "sources_sha256": {
+    "adapters/HexRCF/RealCoefficients/CellOperations.lean": "7e2daf9265c6b627512b2040a2b01cde9c7d18ae8d373c11fc0419ada6d025d0",
+    "adapters/HexRCF/RealCoefficients/CellQuote.lean": "7e936e28b82954681347a73c4939bf30acb026c2a1594d482034cc231ffcc4a2",
+    "adapters/HexRCF/RealCoefficients/RealModel.lean": "712b4fd3edff8eaa6f93e501da5debf04529d1ea8c11a18389820f866d179c43",
+    "adapters/HexRCF/RealCoefficients/CellPacketRead.lean": "0d48398c57c9be2e822c6e5383cddb735755b266dff73f752d01b9d37e9d6ac0",
+    "adapters/HexRCF/RealCoefficients/RowOperations.lean": "137f7f8abaf9f4904058b3532b7d89ebaa472026564aefff8d7a7f17a7f34be6",
+    "adapters/HexRCF/RealCoefficients/SectorEncode.lean": "68727a10fdcdf8a5c469ce9913be6e02b9a469edac29ec47ddefa9ac67b7e1a0",
+    "adapters/HexRCF/RealCoefficients/AlgebraicCells.lean": "c159dbeff3e6eeb248d9dfe1743a0691d919e8097682e149373f2e8fcedb2c98",
+    "adapters/HexRCF/RealCoefficients/Reify.lean": "baed5653cd76b6911e23d1260e79964ce6ecc47ba3bcffc484bfc330465ede54",
+    "adapters/HexRCF/RealCoefficients.lean": "39b68f6b6307f9377e93101390ed58a269cf1c81d748bb043dfc88d9691b23de",
+    "HexRCF/Tactic.lean": "09d895ba1dd2c1af0bfffca197494f2614380ded268ff13e4e0b02fea22b9224",
+    "conformance/HexRCF/CellReplay/Operations.lean": "039b763a74a6ad9a2c625aecd74f64f174beb8197fb0f987a4fd811cb6e2228a",
+    "conformance/HexRCF/CellReplay/OperationsKernel.lean": "140ace7cbc2ba4afa7c3b62effc9c45d15fea6a54e665a18043e3029280c94e3",
+    "conformance/HexRCF/CellReplay/OperationsPublic.lean": "7bac43d7e8e13b88772a3fb246767a79321e8f7c17a9991c5b3d058d22cf9c02",
+    "conformance/HexRCF/CellReplay/Assembled.lean": "b1e7388a59c5a4a070fa4dbba6b4c1107cc18db5b9e8ab3d62f6a49059562a1d",
+    "conformance/HexRCF/CellReplay/AssembledKernel.lean": "5d8adb67cf09b654ea01c6f4c15e835e0e2383e0d480244ca9ac6b7d5b916f52",
+    "conformance/HexRCF/RealModelConformance.lean": "0bdd4cc34150897c5fdef24788f64bd137a028759f020303f6c533b00ce8f303",
+    "conformance/HexRCF/AlgebraicPreparationCases.lean": "888738b1b2e0374d64a5fe149b81d30e018e682c7118180c4be9d16531978fef",
+    "conformance/HexRCF/SelectedRoot/Data.lean": "8a5c6bd992a418552513844f31d82ffb894487a0f8bb7b15d6f731d063c96a9e",
+    "conformance/HexRCF/CellReplay/Algebraic/Records.lean": "9c670e9600f5af561810d92902a6c47a7a6a5e3cfa55faf78b9b76459eff0795",
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "33d20bfd999f351cd77444d89af5197d88ecd223f75cba2bc80a7b3a549a1dcb",
+    "adapters/HexRealClosureTheory/NativeRecords.lean": "88197c2a335b1ad09a8c96ef91ee890cc1c0c884214f11127b4311d876b8163b",
+    "adapters/HexRealClosureTheory/NativeAssembly.lean": "55ed9848f66acf746e5403371bc0cd2c759c4861c5677b34bb8002d14a7fab69",
+    "adapters/HexRealClosureTheory/NativeAssemblyModels.lean": "cb6c5c68415029523e439a2eb634bdff1f1ec7bf7a3adc089e7f51eb47001c9e",
+    "adapters/HexRealClosureTheory/KernelReplay.lean": "ab246676ee7f1acd3b0ab6a2c7ab3b1bda72c5ef659eec1ad5d5cde977805424",
+    "experiments/KernelReplay/AxiomClosure.lean": "f49377265f05f52b633b10a59255a03731e08d022cc54763de9851c5b5325034",
+    "lakefile.lean": "5285e5a44caf449d87b41f2aeec7ade7a8228cd588b3235b7a9bc5a45bed07b6",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "libraries.yml": "2d774a6de86747fbc73c4b708d74afe63cba75b98291f76b889c657d5fc7fa2f"
+  },
+  "packet_source_commit": "cf60237d1c9053d8f45bd8dcee5f59f27b3c0b59",
+  "packet_sources_sha256": {
+    "adapters/HexRCF/RealCoefficients/CellOperations.lean": "7e2daf9265c6b627512b2040a2b01cde9c7d18ae8d373c11fc0419ada6d025d0",
+    "adapters/HexRCF/RealCoefficients/CellQuote.lean": "321d5dfec5bd10feae99a8fdb6d0df6ba16f1bd6cd8a43a5e9bb85eb9eacb315",
+    "adapters/HexRCF/RealCoefficients/CellPacketRead.lean": "0d48398c57c9be2e822c6e5383cddb735755b266dff73f752d01b9d37e9d6ac0",
+    "adapters/HexRCF/RealCoefficients/RowOperations.lean": "137f7f8abaf9f4904058b3532b7d89ebaa472026564aefff8d7a7f17a7f34be6",
+    "adapters/HexRCF/RealCoefficients/SectorEncode.lean": "68727a10fdcdf8a5c469ce9913be6e02b9a469edac29ec47ddefa9ac67b7e1a0",
+    "adapters/HexRCF/RealCoefficients/AlgebraicCells.lean": "c159dbeff3e6eeb248d9dfe1743a0691d919e8097682e149373f2e8fcedb2c98",
+    "adapters/HexRCF/RealCoefficients/Reify.lean": "baed5653cd76b6911e23d1260e79964ce6ecc47ba3bcffc484bfc330465ede54",
+    "adapters/HexRCF/RealCoefficients.lean": "ee7098a1ad11842fe615c2bda460a80b6647652b9e0949fd04752a60d6376b51",
+    "HexRCF/Tactic.lean": "09d895ba1dd2c1af0bfffca197494f2614380ded268ff13e4e0b02fea22b9224",
+    "conformance/HexRCF/CellReplay/Operations.lean": "19050f8f0eedebca7d02f9c91b449858fe11add6f2d2184470f4eadf3442c60e",
+    "conformance/HexRCF/CellReplay/OperationsKernel.lean": "a03ef02d41cd136c47e4edf3fa302420e318b861f7529195b066fb2ca5a81273",
+    "conformance/HexRCF/CellReplay/OperationsPublic.lean": "7bac43d7e8e13b88772a3fb246767a79321e8f7c17a9991c5b3d058d22cf9c02",
+    "conformance/HexRCF/AlgebraicPreparationCases.lean": "b052b12bbb3025cbd80d7c12268b8575b699e685a74b5e23015e63829e455c2d",
+    "conformance/HexRCF/SelectedRoot/Data.lean": "8a5c6bd992a418552513844f31d82ffb894487a0f8bb7b15d6f731d063c96a9e",
+    "conformance/HexRCF/CellReplay/Algebraic/Records.lean": "9c670e9600f5af561810d92902a6c47a7a6a5e3cfa55faf78b9b76459eff0795",
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "ef33bd0e89d4531f5cf3ea686d5297ce259c238e3e08e4995fe72fcb3202020b",
+    "adapters/HexRealClosureTheory/NativeRecords.lean": "88197c2a335b1ad09a8c96ef91ee890cc1c0c884214f11127b4311d876b8163b",
+    "adapters/HexRealClosureTheory/NativeAssembly.lean": "55ed9848f66acf746e5403371bc0cd2c759c4861c5677b34bb8002d14a7fab69",
+    "adapters/HexRealClosureTheory/NativeAssemblyModels.lean": "cb6c5c68415029523e439a2eb634bdff1f1ec7bf7a3adc089e7f51eb47001c9e",
+    "adapters/HexRealClosureTheory/KernelReplay.lean": "341f8663df44b50da1557cd4291916c0d11fa58b46590ca0c073ac324a482761",
+    "lakefile.lean": "98709a1d1025722a7f655979f73138db9036136448c0fc0c57057566782cb9ff",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "libraries.yml": "2d774a6de86747fbc73c4b708d74afe63cba75b98291f76b889c657d5fc7fa2f"
+  },
+  "quotation_source_commit": "f4f25d7f521d87640e6c41a1cdb74ccb7367c3c6",
+  "quotation_sources_sha256": {
+    "adapters/HexRCF/RealCoefficients/CellOperations.lean": "7e2daf9265c6b627512b2040a2b01cde9c7d18ae8d373c11fc0419ada6d025d0",
+    "adapters/HexRCF/RealCoefficients/CellQuote.lean": "321d5dfec5bd10feae99a8fdb6d0df6ba16f1bd6cd8a43a5e9bb85eb9eacb315",
+    "adapters/HexRCF/RealCoefficients/RealModel.lean": "712b4fd3edff8eaa6f93e501da5debf04529d1ea8c11a18389820f866d179c43",
+    "adapters/HexRCF/RealCoefficients/CellPacketRead.lean": "0d48398c57c9be2e822c6e5383cddb735755b266dff73f752d01b9d37e9d6ac0",
+    "adapters/HexRCF/RealCoefficients/RowOperations.lean": "137f7f8abaf9f4904058b3532b7d89ebaa472026564aefff8d7a7f17a7f34be6",
+    "adapters/HexRCF/RealCoefficients/SectorEncode.lean": "68727a10fdcdf8a5c469ce9913be6e02b9a469edac29ec47ddefa9ac67b7e1a0",
+    "adapters/HexRCF/RealCoefficients/AlgebraicCells.lean": "c159dbeff3e6eeb248d9dfe1743a0691d919e8097682e149373f2e8fcedb2c98",
+    "adapters/HexRCF/RealCoefficients/Reify.lean": "baed5653cd76b6911e23d1260e79964ce6ecc47ba3bcffc484bfc330465ede54",
+    "adapters/HexRCF/RealCoefficients.lean": "39b68f6b6307f9377e93101390ed58a269cf1c81d748bb043dfc88d9691b23de",
+    "HexRCF/Tactic.lean": "09d895ba1dd2c1af0bfffca197494f2614380ded268ff13e4e0b02fea22b9224",
+    "conformance/HexRCF/CellReplay/Operations.lean": "19050f8f0eedebca7d02f9c91b449858fe11add6f2d2184470f4eadf3442c60e",
+    "conformance/HexRCF/CellReplay/OperationsKernel.lean": "a03ef02d41cd136c47e4edf3fa302420e318b861f7529195b066fb2ca5a81273",
+    "conformance/HexRCF/CellReplay/OperationsPublic.lean": "7bac43d7e8e13b88772a3fb246767a79321e8f7c17a9991c5b3d058d22cf9c02",
+    "conformance/HexRCF/RealModelConformance.lean": "3f1fe5fe89aae048446b6d53acc0e4924309cec85e94f074ee0a84bf6319dd92",
+    "conformance/HexRCF/AlgebraicPreparationCases.lean": "888738b1b2e0374d64a5fe149b81d30e018e682c7118180c4be9d16531978fef",
+    "conformance/HexRCF/SelectedRoot/Data.lean": "8a5c6bd992a418552513844f31d82ffb894487a0f8bb7b15d6f731d063c96a9e",
+    "conformance/HexRCF/CellReplay/Algebraic/Records.lean": "9c670e9600f5af561810d92902a6c47a7a6a5e3cfa55faf78b9b76459eff0795",
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "497406db8f08c527d0cdb11594382d53915b8b5a8cdb62a56bb3f72a8f8362ef",
+    "adapters/HexRealClosureTheory/NativeRecords.lean": "88197c2a335b1ad09a8c96ef91ee890cc1c0c884214f11127b4311d876b8163b",
+    "adapters/HexRealClosureTheory/NativeAssembly.lean": "55ed9848f66acf746e5403371bc0cd2c759c4861c5677b34bb8002d14a7fab69",
+    "adapters/HexRealClosureTheory/NativeAssemblyModels.lean": "cb6c5c68415029523e439a2eb634bdff1f1ec7bf7a3adc089e7f51eb47001c9e",
+    "adapters/HexRealClosureTheory/KernelReplay.lean": "ab246676ee7f1acd3b0ab6a2c7ab3b1bda72c5ef659eec1ad5d5cde977805424",
+    "experiments/KernelReplay/AxiomClosure.lean": "f49377265f05f52b633b10a59255a03731e08d022cc54763de9851c5b5325034",
+    "lakefile.lean": "b177b228dbeaab47e8fa44ada29ec029ee73055a3a43a33f60856628645574f6",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "libraries.yml": "2d774a6de86747fbc73c4b708d74afe63cba75b98291f76b889c657d5fc7fa2f"
+  },
+  "public_source_commit": "30fdfd8bf6cba84bf2164d2a221f42159a9a3655",
+  "public_sources_sha256": {
+    "adapters/HexRCF/RealCoefficients/CellOperations.lean": "7e2daf9265c6b627512b2040a2b01cde9c7d18ae8d373c11fc0419ada6d025d0",
+    "adapters/HexRCF/RealCoefficients/CellQuote.lean": "7e936e28b82954681347a73c4939bf30acb026c2a1594d482034cc231ffcc4a2",
+    "adapters/HexRCF/RealCoefficients/RealModel.lean": "712b4fd3edff8eaa6f93e501da5debf04529d1ea8c11a18389820f866d179c43",
+    "adapters/HexRCF/RealCoefficients/CellPacketRead.lean": "0d48398c57c9be2e822c6e5383cddb735755b266dff73f752d01b9d37e9d6ac0",
+    "adapters/HexRCF/RealCoefficients/RowOperations.lean": "137f7f8abaf9f4904058b3532b7d89ebaa472026564aefff8d7a7f17a7f34be6",
+    "adapters/HexRCF/RealCoefficients/SectorEncode.lean": "68727a10fdcdf8a5c469ce9913be6e02b9a469edac29ec47ddefa9ac67b7e1a0",
+    "adapters/HexRCF/RealCoefficients/AlgebraicCells.lean": "c159dbeff3e6eeb248d9dfe1743a0691d919e8097682e149373f2e8fcedb2c98",
+    "adapters/HexRCF/RealCoefficients/Reify.lean": "baed5653cd76b6911e23d1260e79964ce6ecc47ba3bcffc484bfc330465ede54",
+    "adapters/HexRCF/RealCoefficients.lean": "39b68f6b6307f9377e93101390ed58a269cf1c81d748bb043dfc88d9691b23de",
+    "HexRCF/Tactic.lean": "09d895ba1dd2c1af0bfffca197494f2614380ded268ff13e4e0b02fea22b9224",
+    "conformance/HexRCF/CellReplay/Operations.lean": "039b763a74a6ad9a2c625aecd74f64f174beb8197fb0f987a4fd811cb6e2228a",
+    "conformance/HexRCF/CellReplay/OperationsKernel.lean": "140ace7cbc2ba4afa7c3b62effc9c45d15fea6a54e665a18043e3029280c94e3",
+    "conformance/HexRCF/CellReplay/OperationsPublic.lean": "7bac43d7e8e13b88772a3fb246767a79321e8f7c17a9991c5b3d058d22cf9c02",
+    "conformance/HexRCF/RealModelConformance.lean": "3f1fe5fe89aae048446b6d53acc0e4924309cec85e94f074ee0a84bf6319dd92",
+    "conformance/HexRCF/AlgebraicPreparationCases.lean": "888738b1b2e0374d64a5fe149b81d30e018e682c7118180c4be9d16531978fef",
+    "conformance/HexRCF/SelectedRoot/Data.lean": "8a5c6bd992a418552513844f31d82ffb894487a0f8bb7b15d6f731d063c96a9e",
+    "conformance/HexRCF/CellReplay/Algebraic/Records.lean": "9c670e9600f5af561810d92902a6c47a7a6a5e3cfa55faf78b9b76459eff0795",
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "ffbae1926f97a7eb607344bb82e0a1aa339ef1e88b6a3907fd54985da5499199",
+    "adapters/HexRealClosureTheory/NativeRecords.lean": "88197c2a335b1ad09a8c96ef91ee890cc1c0c884214f11127b4311d876b8163b",
+    "adapters/HexRealClosureTheory/NativeAssembly.lean": "55ed9848f66acf746e5403371bc0cd2c759c4861c5677b34bb8002d14a7fab69",
+    "adapters/HexRealClosureTheory/NativeAssemblyModels.lean": "cb6c5c68415029523e439a2eb634bdff1f1ec7bf7a3adc089e7f51eb47001c9e",
+    "adapters/HexRealClosureTheory/KernelReplay.lean": "ab246676ee7f1acd3b0ab6a2c7ab3b1bda72c5ef659eec1ad5d5cde977805424",
+    "experiments/KernelReplay/AxiomClosure.lean": "f49377265f05f52b633b10a59255a03731e08d022cc54763de9851c5b5325034",
+    "lakefile.lean": "b177b228dbeaab47e8fa44ada29ec029ee73055a3a43a33f60856628645574f6",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "libraries.yml": "2d774a6de86747fbc73c4b708d74afe63cba75b98291f76b889c657d5fc7fa2f"
+  },
+  "repository_source_commit": "d00786311dc609adc8b842102f09b4b27ecb726d",
+  "repository_sources_sha256": {
+    "adapters/HexRCF/RealCoefficients/CellOperations.lean": "7e2daf9265c6b627512b2040a2b01cde9c7d18ae8d373c11fc0419ada6d025d0",
+    "adapters/HexRCF/RealCoefficients/CellQuote.lean": "7e936e28b82954681347a73c4939bf30acb026c2a1594d482034cc231ffcc4a2",
+    "adapters/HexRCF/RealCoefficients/RealModel.lean": "712b4fd3edff8eaa6f93e501da5debf04529d1ea8c11a18389820f866d179c43",
+    "adapters/HexRCF/RealCoefficients/CellPacketRead.lean": "0d48398c57c9be2e822c6e5383cddb735755b266dff73f752d01b9d37e9d6ac0",
+    "adapters/HexRCF/RealCoefficients/RowOperations.lean": "137f7f8abaf9f4904058b3532b7d89ebaa472026564aefff8d7a7f17a7f34be6",
+    "adapters/HexRCF/RealCoefficients/SectorEncode.lean": "68727a10fdcdf8a5c469ce9913be6e02b9a469edac29ec47ddefa9ac67b7e1a0",
+    "adapters/HexRCF/RealCoefficients/AlgebraicCells.lean": "c159dbeff3e6eeb248d9dfe1743a0691d919e8097682e149373f2e8fcedb2c98",
+    "adapters/HexRCF/RealCoefficients/Reify.lean": "baed5653cd76b6911e23d1260e79964ce6ecc47ba3bcffc484bfc330465ede54",
+    "adapters/HexRCF/RealCoefficients.lean": "39b68f6b6307f9377e93101390ed58a269cf1c81d748bb043dfc88d9691b23de",
+    "HexRCF/Tactic.lean": "09d895ba1dd2c1af0bfffca197494f2614380ded268ff13e4e0b02fea22b9224",
+    "conformance/HexRCF/CellReplay/Operations.lean": "039b763a74a6ad9a2c625aecd74f64f174beb8197fb0f987a4fd811cb6e2228a",
+    "conformance/HexRCF/CellReplay/OperationsKernel.lean": "140ace7cbc2ba4afa7c3b62effc9c45d15fea6a54e665a18043e3029280c94e3",
+    "conformance/HexRCF/CellReplay/OperationsPublic.lean": "7bac43d7e8e13b88772a3fb246767a79321e8f7c17a9991c5b3d058d22cf9c02",
+    "conformance/HexRCF/CellReplay/Assembled.lean": "b1e7388a59c5a4a070fa4dbba6b4c1107cc18db5b9e8ab3d62f6a49059562a1d",
+    "conformance/HexRCF/CellReplay/AssembledKernel.lean": "5d8adb67cf09b654ea01c6f4c15e835e0e2383e0d480244ca9ac6b7d5b916f52",
+    "conformance/HexRCF/RealModelConformance.lean": "0bdd4cc34150897c5fdef24788f64bd137a028759f020303f6c533b00ce8f303",
+    "conformance/HexRCF/AlgebraicPreparationCases.lean": "888738b1b2e0374d64a5fe149b81d30e018e682c7118180c4be9d16531978fef",
+    "conformance/HexRCF/SelectedRoot/Data.lean": "8a5c6bd992a418552513844f31d82ffb894487a0f8bb7b15d6f731d063c96a9e",
+    "conformance/HexRCF/CellReplay/Algebraic/Records.lean": "9c670e9600f5af561810d92902a6c47a7a6a5e3cfa55faf78b9b76459eff0795",
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "5bf4298ecf9f56cc65917a74bd7e9b3224d520a1dab048e658c8de20b239eb0d",
+    "adapters/HexRealClosureTheory/NativeRecords.lean": "88197c2a335b1ad09a8c96ef91ee890cc1c0c884214f11127b4311d876b8163b",
+    "adapters/HexRealClosureTheory/NativeAssembly.lean": "55ed9848f66acf746e5403371bc0cd2c759c4861c5677b34bb8002d14a7fab69",
+    "adapters/HexRealClosureTheory/NativeAssemblyModels.lean": "cb6c5c68415029523e439a2eb634bdff1f1ec7bf7a3adc089e7f51eb47001c9e",
+    "adapters/HexRealClosureTheory/KernelReplay.lean": "ab246676ee7f1acd3b0ab6a2c7ab3b1bda72c5ef659eec1ad5d5cde977805424",
+    "experiments/KernelReplay/AxiomClosure.lean": "f49377265f05f52b633b10a59255a03731e08d022cc54763de9851c5b5325034",
+    "lakefile.lean": "5285e5a44caf449d87b41f2aeec7ade7a8228cd588b3235b7a9bc5a45bed07b6",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "libraries.yml": "2d774a6de86747fbc73c4b708d74afe63cba75b98291f76b889c657d5fc7fa2f"
+  },
+  "logs": {
+    "reports/data/hexrcf-cell-operations/cell-assembled-1.log.gz": {
+      "sha256": "1928a8069ccc53069599a9b3368d0efaa68d00fa0ab8d27f358a75ee58cc4dc8",
+      "uncompressed_sha256": "715dbb23368f70f795faf652508616ffe06b9a3775f10823a165c9c82631de35",
+      "status": "success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-assembled-2.log.gz": {
+      "sha256": "7184944bab127e58a9c627d5fa64d4ddd1c397022a7622601c94f102a6694304",
+      "uncompressed_sha256": "2fe4bd4ba6628053331a7d15b74a3204632d7b6742d64892e0aec1429cfe61b6",
+      "status": "success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-assembled-3.log.gz": {
+      "sha256": "55a62c4f1df8b19835ecc58f9b2b1564b28f41a3c1683a0af7d82c6bf4d5a2d0",
+      "uncompressed_sha256": "48c364e6f829c45b7192b300aa2dc2b14cc6ff0cf36e87aa97fcd5f902b9b042",
+      "status": "success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-assembled-dag-1.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-assembled-final.log.gz": {
+      "sha256": "7d66d120cf6f7da34af5f621eac2abbe437a55e5221669c86f11fee00d2dc095",
+      "uncompressed_sha256": "e21b80a30bb5f64db3cecf41e9ea5b193ffa658e2a040a94be1d0a81e4595b77",
+      "status": "success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operation-quote-1.log.gz": {
+      "sha256": "28cba3530fdf4dfad35dae555fa19326de44efa8f9afcfea425b3600cf0ceba8",
+      "uncompressed_sha256": "18c3cc694de3526addef6cdfae6068baa448b4ac8e2697dcf35dec79f04a2a64",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operation-quote-2.log.gz": {
+      "sha256": "fb79062be49fd37696bdbfbe8e7bf9bd54f3cc1de32dc4f6bca99fa385f8a407",
+      "uncompressed_sha256": "6451d32b8422f8130798c9724dd9d274f8de0cd97e79e9294c0e659c4ff37595",
+      "status": "success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operation-quote-conformance-1.log.gz": {
+      "sha256": "30d2e590e2a6991c7d1fc75b62cf450d452e1ebecd26fb096814809083f53790",
+      "uncompressed_sha256": "c54636667f02a4dcb4937a343ec9dc5500f8bbf0feeddd518e4da018e35d43c0",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operation-quote-conformance-2.log.gz": {
+      "sha256": "9fdfa48674a0f03f04505979bf678856c095ee890922460ba5fe332b26df7630",
+      "uncompressed_sha256": "4e50a6d30df4a64436a4f93a5d73103e1bb7531172e922d0030a1600365ebe47",
+      "status": "success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operation-quote-dag-1.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operation-quote-dag-2.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operation-quote-integration-1.log.gz": {
+      "sha256": "0c1fa53df1ead9717400605b10e8e7d9f376e10d459c923b4da36ef959249401",
+      "uncompressed_sha256": "f9d5b9bc841f2067b330e459f03f9aaf0a5b25fa60b99b7793915a964f399c99",
+      "status": "success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-admissions-1.log.gz": {
+      "sha256": "96b7b2da730b669235d4b44e0f983936450fb119895a1535170c2eb48f06f656",
+      "uncompressed_sha256": "46c75ea11e01176ac6558d5d69ada5e24a2fd0f485cffe39dd70cbfd13687432",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-complete-1.log.gz": {
+      "sha256": "3575d6cf54b46b8da8a2ab32d8a56caa5a971407fa819efd86203cb2d52fa7a4",
+      "uncompressed_sha256": "fc9b37fde22cf2e2b4ffeef0b4dad075e01e055477e287684c277ea0c2c956a3",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-complete-2.log.gz": {
+      "sha256": "955a0b9215e20efb5a8d2b4a9ea64406c04c51edbbb7d27755e126007129b672",
+      "uncompressed_sha256": "b1f804538382345eb2141857c64ee770c32063ff043907a9948f28b04619b486",
+      "status": "success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-conformance-1.log.gz": {
+      "sha256": "114fb752748a268adda8dc6b6488d4355bced8a63545586d1784444a7b5e6d33",
+      "uncompressed_sha256": "2a9f7de9fee5b9539acce39d44d99fcb69da5d9ab63fd103976e69d1c38d9758",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-conformance-2.log.gz": {
+      "sha256": "190d0ef15b6fe2f82d394945f70f58fefcc3d77d377610dd1782ceb1dd863cb6",
+      "uncompressed_sha256": "4774e0072dadb5f5a5b8554e3163a48aa3dcec143a77fabb9758cf4ba8b94789",
+      "status": "success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-copyright-1.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-core-1.log.gz": {
+      "sha256": "d4d3019fbfeaee71558a75513cc96cae94587505d4cbb222dcda3a8e7863a8bb",
+      "uncompressed_sha256": "0b88ed20f59e2eafaa584177fa9c72185b51e817ab46420ce0c7a8d9016d0026",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-core-2.log.gz": {
+      "sha256": "c99574b57a1a55833441a45e80e2357aea3736ffd8378495821532a165f0db09",
+      "uncompressed_sha256": "2c52921c3216ee9b38b739881a8b8465878d3ab3831202b8b70ae4a21d5eddd3",
+      "status": "success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-core-3.log.gz": {
+      "sha256": "79fc8efd9be1e734c1c9200c8056b79a7111d54d8a255adff4851a619f8bf6ea",
+      "uncompressed_sha256": "691de2440830598ce31d89751eae87e6a78c5182fabfda6585b40037a90212c0",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-core-4.log.gz": {
+      "sha256": "bca5d21f4cd6353439a1103c8924cf71daf010cb95edb2a825b0034265e81db2",
+      "uncompressed_sha256": "230e60634a9421db6082d7fe70976be750d697bd972cdcff683d2301e4c0a2fe",
+      "status": "success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-current-1.log.gz": {
+      "sha256": "4650ca21faf607eaecda33760a1c21455277144556e750462500f63233618164",
+      "uncompressed_sha256": "505323658c5300a7b219a534115fa0416dc25c85903cc1b5477c20acfd45a1e5",
+      "status": "success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-current-admissions-1.log.gz": {
+      "sha256": "4f5b5b41ef7ef791b2962cb94340df41f265054d793fad34d7382f9a6af7e917",
+      "uncompressed_sha256": "6183c96dcad826ffc02d8aa05372a030a0368a64e8ecfa3f9d9dca7e0c77db75",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-current-copyright-1.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-current-dag-1.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-dag-1.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-kernel-1.log.gz": {
+      "sha256": "f148e1cf9a69d00debb8c75c631217f185a5340b3a2fbab39cc2eb55372a9f7a",
+      "uncompressed_sha256": "1909532da129d8d357945d1c24a58b57732759316646e03e13aebd2e424f8335",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-kernel-2.log.gz": {
+      "sha256": "bd8d0ebcd6edd38cb6cf200a21b4e2003c3c0bc89ebe49a2e33683ed90b7fe31",
+      "uncompressed_sha256": "1c83682b6ac66ad9d310c033b4aaf459145a28dec1722c5473cbb61b0e691b63",
+      "status": "success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-literals-1.log.gz": {
+      "sha256": "d363c41d04cc71aaa8b2bb97d1faf6ff4b311e5874c10d339f87aba4d4b97158",
+      "uncompressed_sha256": "5b2703a612f8c434ac4e53bb05bfeef0dbca1d91cc9125441d5bd447be3dfbc3",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-mixed-zero-2.log.gz": {
+      "sha256": "bf20b0ba184de76b0d048286aed605d9d1f80eca7d8386ac68870ced6c5eefb4",
+      "uncompressed_sha256": "76eb0994fbd4419ff20aa51e47203747e502d2c3b9c33dee6f35519e1cafd7c3",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-mixed-zero-3.log.gz": {
+      "sha256": "4dea6983be180e699270693ee8731ee1406fbf2b42a5a95523324549b853f72d",
+      "uncompressed_sha256": "843d1f0d80fed15ae7f3ba6440e9d4cea34fc5cf709e53407100b3dfb88c1378",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-mixed-zero-4.log.gz": {
+      "sha256": "4147cd5468f234e3bec237e0d78ce35ee2d53f660079987f3a4861092ff116aa",
+      "uncompressed_sha256": "ad71538db8fa852854c0224a53e49a89b3b58bdb0491ffb2de22aa7a91879f97",
+      "status": "success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-model-admissions-1.log.gz": {
+      "sha256": "7091c5baa37181cc6c685f20b16cbe5cb091121fae7c3fb1a8f57b55161eae48",
+      "uncompressed_sha256": "0b1d637e0d01196cfea7040fdd3c94e7de67fdba93690cc833c09d31021bda05",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-model-admissions-2.log.gz": {
+      "sha256": "aae7a43d2f147e4de880a1317a0166c89d2dca68350bc1f9691ef64e088246b7",
+      "uncompressed_sha256": "cc89231b85d94b92b8ff5b420aa7fc9df21882ce4463fe6d109ecd2e1f48a428",
+      "status": "check-success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-model-admissions-3.log.gz": {
+      "sha256": "aae7a43d2f147e4de880a1317a0166c89d2dca68350bc1f9691ef64e088246b7",
+      "uncompressed_sha256": "cc89231b85d94b92b8ff5b420aa7fc9df21882ce4463fe6d109ecd2e1f48a428",
+      "status": "check-success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-model-admissions-tests-3.log.gz": {
+      "sha256": "32577937651b3bcb84bed408248c2dbb8f9d176e82e254cb84f0b54e860ed2ed",
+      "uncompressed_sha256": "f1aea5c990e0f27afe5c8c0e5f2566f31b99eab9da68e8a56c95b9aeaaa9252a",
+      "status": "check-success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-model-browser-1.log.gz": {
+      "sha256": "fa7952478d12adfd9f39db10333567f23ee071b5301bc9e977e53847993011ad",
+      "uncompressed_sha256": "959e898cc4ae0722462a77b7349bc86e1b5c917dae85bb99fa93743e8fe0c746",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-model-browser-2.log.gz": {
+      "sha256": "7255ffd8fb1f0f9a67128cb6a27ef00c000666fe78cd14e460184496c8a437cd",
+      "uncompressed_sha256": "66bb31ff468fd9e441c764eebbcc3e68331c54c25ac0cb23126bf72389432f5d",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-model-copyright-1.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-model-copyright-2.log.gz": {
+      "sha256": "09163e7321751ce41df4374df66e08c7f3eb8d177b9c905a54e1baa01f0d3879",
+      "uncompressed_sha256": "ed163d69a09ddc0ffcbdf126a42d5745a93449fa7a39354788e948b7ac795c04",
+      "status": "check-success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-model-copyright-3.log.gz": {
+      "sha256": "09163e7321751ce41df4374df66e08c7f3eb8d177b9c905a54e1baa01f0d3879",
+      "uncompressed_sha256": "ed163d69a09ddc0ffcbdf126a42d5745a93449fa7a39354788e948b7ac795c04",
+      "status": "check-success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-model-dag-1.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-model-dag-2.log.gz": {
+      "sha256": "09163e7321751ce41df4374df66e08c7f3eb8d177b9c905a54e1baa01f0d3879",
+      "uncompressed_sha256": "ed163d69a09ddc0ffcbdf126a42d5745a93449fa7a39354788e948b7ac795c04",
+      "status": "check-success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-model-dag-3.log.gz": {
+      "sha256": "09163e7321751ce41df4374df66e08c7f3eb8d177b9c905a54e1baa01f0d3879",
+      "uncompressed_sha256": "ed163d69a09ddc0ffcbdf126a42d5745a93449fa7a39354788e948b7ac795c04",
+      "status": "check-success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-model-dag-tests-3.log.gz": {
+      "sha256": "2c85db0981d1c5c7e58b3ab5ddbd95bfc6b4bc62f7438db0011753002e03a033",
+      "uncompressed_sha256": "5244cbf2d39ef8a26f747ce1c8428519a2103340fc7fe1f25d47e262d9b76056",
+      "status": "check-success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-model-integration-1.log.gz": {
+      "sha256": "4a3f86839a5c30a8e1a8d530f45eb744899ef2326b57904ff4f40155e669d0fb",
+      "uncompressed_sha256": "8bcd3ed68610eaaf237b998bdae8249a11b54bd33623d565d76517c9c71ab331",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-model-integration-2.log.gz": {
+      "sha256": "fa56ae07fbeb17b41f7bd09be075123d8c3902674c017158315dd8fa7bef79bd",
+      "uncompressed_sha256": "a3d4ca0dc399d4e33c01edfa50466c11419e3280de5f24d7a0600e4c28e1cb49",
+      "status": "success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-model-lines-2.log.gz": {
+      "sha256": "09163e7321751ce41df4374df66e08c7f3eb8d177b9c905a54e1baa01f0d3879",
+      "uncompressed_sha256": "ed163d69a09ddc0ffcbdf126a42d5745a93449fa7a39354788e948b7ac795c04",
+      "status": "check-success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-model-lines-3.log.gz": {
+      "sha256": "09163e7321751ce41df4374df66e08c7f3eb8d177b9c905a54e1baa01f0d3879",
+      "uncompressed_sha256": "ed163d69a09ddc0ffcbdf126a42d5745a93449fa7a39354788e948b7ac795c04",
+      "status": "check-success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-model-lines-4.log.gz": {
+      "sha256": "09163e7321751ce41df4374df66e08c7f3eb8d177b9c905a54e1baa01f0d3879",
+      "uncompressed_sha256": "ed163d69a09ddc0ffcbdf126a42d5745a93449fa7a39354788e948b7ac795c04",
+      "status": "check-success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-model-links-2.log.gz": {
+      "sha256": "d11bc9f36c20579ba2ee8bb18759b0c14a999aaea8b99f3157401bb0fa521b12",
+      "uncompressed_sha256": "f22e21f913a8d317b6496a142945e37f8df5f6db046c74099c2da3102572c428",
+      "status": "check-success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-model-links-3.log.gz": {
+      "sha256": "ef4a4db671e58fe2723ea196d5e356363a097eeea265ed36910c4f18aee43976",
+      "uncompressed_sha256": "80b24e438993cccf7eeed16fd0eca004f860a8583e3d9afbe38692d31cdbee73",
+      "status": "check-success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-model-literals-2.log.gz": {
+      "sha256": "57f1c7aefc1db08143e383f40e866f7abec2d64cf4308141fee557e1e6f8f0af",
+      "uncompressed_sha256": "f175cf12a6b46078b398a2de1150adba9dc5c055ac177aab40483e7a14d26d84",
+      "status": "check-success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-model-manual-3.log.gz": {
+      "sha256": "0d671383d544645e2187f425e3a03300df2036feb79280fa11b010a8b4ed879f",
+      "uncompressed_sha256": "4c5b46a691b97b8ab3caa907a368533754d4505c6eec9cb0c6e92af68c7c5ebe",
+      "status": "success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-model-metadata-2.log.gz": {
+      "sha256": "2958c00ef797dd156b47b57a68c8d6df7b17d9ea30d59a52582460d5fbdca6dc",
+      "uncompressed_sha256": "59a7b9c73410d3097000f7fce254734a8c7914d53af8e423ef6d51369122b8b0",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-model-render-1.log.gz": {
+      "sha256": "0affb067871f832ff02e6d02d64029c23ec6a3b915156ce161d5c575187682d6",
+      "uncompressed_sha256": "a33ca6b6306f85e353d5ec936472f29fee34f85b35508a31e2dbf6eb100e2e9f",
+      "status": "success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-model-render-2.log.gz": {
+      "sha256": "81e0ddcc47c0517c305babc1fe1aafbd409e93d72481c7d37e1b6bbf783b9f8b",
+      "uncompressed_sha256": "58522eda593bdb54ed2e2892c2b7acdcf4cf92b4de7f85929bc53847ed5a3c48",
+      "status": "success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-model-render-3.log.gz": {
+      "sha256": "eff1878271464dfc376a4cd9ba5d6c8b55a73de179830190f2763d5e101908ab",
+      "uncompressed_sha256": "3be1c08805ec0dc48452da2a94568fb1a035445f010a977d3e98a01ff5199ac2",
+      "status": "success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-probe-1.log.gz": {
+      "sha256": "e52e7a61236d58c09bbf7fbdf1015f06a652101a7bce3da9aa716ee5301485b8",
+      "uncompressed_sha256": "9aa104f967f60666e6edfb6b5ccc276545c84348031057851897bcfab72ecc39",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-probe-2.log.gz": {
+      "sha256": "888f7b1b4f7811cb3425a4b3e05dd1ef97b62dba16b7f478c882b9010324c8ef",
+      "uncompressed_sha256": "34dc0bf289f3516bb49cac3b9848e2c03725bf5b7d082ba6a8103d4c639dbde5",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-production-1.log.gz": {
+      "sha256": "7bf8b95ed7e3284985ca5f4bc8af0d7b5ae35c72c9a05c3e4aeea754c38c0e01",
+      "uncompressed_sha256": "deba5f261c7762811d7074dbc537ddb836535c61d7f189cd24a84e107ca15c56",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-production-2.log.gz": {
+      "sha256": "cdf717f53bec9866d608f9d7196850dc0bbf19178356617d9bbde4fc0955f7be",
+      "uncompressed_sha256": "ac37a964499a63ef772b356fc32ef11f1dd9540da210290ba6e7c442d45bbfa5",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-production-3.log.gz": {
+      "sha256": "db3d5e390ba2a0a3bf873bf30f2327127d4013052503bbc49c14a595b3210ef7",
+      "uncompressed_sha256": "59e0c8c748b8b814f21df67f3ace865e794a91cc6b7cc6153475111935780858",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-production-4.log.gz": {
+      "sha256": "44fcfabbefed162c622f24443e3a10500caf2c37811a99b212c023af02ea72c4",
+      "uncompressed_sha256": "4356ed7e1fd5f828a6046d3d80fab64f4898f2a5837ef15420c5fd51b09b8abf",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-production-5.log.gz": {
+      "sha256": "1374f4537bbe8966aee907f5959ae4a444cf1cbafa94aa887cf1843c576c9885",
+      "uncompressed_sha256": "3b66798fe2d2c90390d66b136dc6cd79c42f2fd3357fbe5d1f2f51c2eef99df3",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-production-6.log.gz": {
+      "sha256": "0e78365c7c894126ed8c243826afaad4b4d1cd56206f6d1550846702404c45b1",
+      "uncompressed_sha256": "0b833177b0ad7d4a827731decb34a7f3455c50aea27ad5917dfbe90de835fca6",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-production-7.log.gz": {
+      "sha256": "e6f74f4683cb2937cad61a978f21d4ffb71e9179d57ee2390576a5aba813b22e",
+      "uncompressed_sha256": "ebe99712970865170dcdff3caf14c87ed9c614cbbd3175894ad2cc2da4493528",
+      "status": "success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-production-8.log.gz": {
+      "sha256": "251e4380faed42e2411d45bf04b91618f5f5ef2167cfa52c1a83ea69061a0284",
+      "uncompressed_sha256": "bf42d23144b8edcf6f18d818cfb162a6281b241f8da0765feec78aecbdd3d289",
+      "status": "success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-public-1.log.gz": {
+      "sha256": "afa287abf59386bd029fba2841c5a23c591fe4bd7959caa1969e7fd64901c8a3",
+      "uncompressed_sha256": "3d65cff72d26b047fe348a31c546e3796f32063e4ae9da65a4ec974801c258c7",
+      "status": "success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-row-1.log.gz": {
+      "sha256": "62ed67907e09561f38b491097b9a2ecd6e2a2f4749e1ec98b4a4a80009376b42",
+      "uncompressed_sha256": "45f1ca23074de1ded9d211df7018651096d03d6a8e82e7a03835f3157ca9bffb",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-row-2.log.gz": {
+      "sha256": "95d50f4c2cebefa2310c21da96bbb192e74a856e1baf630711c150462e406709",
+      "uncompressed_sha256": "6f8e7903f4083ee77f0a9eff804454b3c9ae50dff60ab2553512d189c9d53ffb",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-row-3.log.gz": {
+      "sha256": "86d281807c208af0df2af63defcf8b77fe5cdda32416adac413bd1e7462b2608",
+      "uncompressed_sha256": "53a23ae6b4caea19dbaf55f0b33d0e4493d173d64ed623d35533912a8a01fbd9",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-row-4.log.gz": {
+      "sha256": "e3634e6560906ca0e7b7a17bcd3324d32bc2c851e653320b660f2afa72316e9a",
+      "uncompressed_sha256": "da3353a520d88b63c21045165024233ba7ee8c4ce94f3c201d4bd66de4ce022d",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-row-5.log.gz": {
+      "sha256": "bd28c02f50c7276281749c62fb2c4caf5d713fe3fd5119b3484df0b326282bb9",
+      "uncompressed_sha256": "faaa0b4728da3ccae65b808ddc20cd4547a57a85bf7597081a9c2ca4e57dd1e7",
+      "status": "success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-sector-1.log.gz": {
+      "sha256": "e23a321d2da7eb1298ed015d98de22b9f27543674b819fc0759950dc11d61c37",
+      "uncompressed_sha256": "eddf01e20777468759f9bfd3769d7e6638de340c6e26011405e1da01ba4c36e9",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-sector-10.log.gz": {
+      "sha256": "b366e019cb035b0e888f221d5f03b1f4ec38778360e1e4cad86cb7cfad89403f",
+      "uncompressed_sha256": "54a2f6fa3dea3461428e1bc2f00938d77176f8090d549220293228e1cb76472a",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-sector-11.log.gz": {
+      "sha256": "f2bf720e6921c5c201c2a7b9ba2226d24dcebd501e76b9babf6d44e5c6425535",
+      "uncompressed_sha256": "cfa55a6f7ef8be1efcd65a5f25beb9644db26acf32252c3e9104971c49fb8354",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-sector-12.log.gz": {
+      "sha256": "b4a75cb18b46b80d6ef9c9c7660c2d638b26825b0bcd857f4a1de36ecf174641",
+      "uncompressed_sha256": "76e249318b399fecb95e20a09ce896df44b1e092cad16f1d8a02f97994e6c8a3",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-sector-2.log.gz": {
+      "sha256": "11571069c50dd24866af40e7b7fdf9685a8a7286275ec6460493cda39b509a82",
+      "uncompressed_sha256": "c349b10460c697b8ed74ab9f2bb4f7b6259828f96f4bd1f921b86951dc3457d0",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-sector-3.log.gz": {
+      "sha256": "5e094d02143750618ce02214c9ec79ec08ab27e045b0b3dbf855125b8f3ddc10",
+      "uncompressed_sha256": "9cf5793dc032f03a1e8d4ce042ff3107c7e871edbb9c7735b76d0f98c194dfcf",
+      "status": "success"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-sector-4.log.gz": {
+      "sha256": "7ae7ac36bf68aa7e3680a4f8deab93256d4b68dfcf53300fe1cbd6f39b28672c",
+      "uncompressed_sha256": "8d67f3e4e6859400a7512e334775a290f1f3595c6b169e2af157b1fda4f4fdcb",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-sector-5.log.gz": {
+      "sha256": "9aeaa5826d50e75a0b900a3ea4c5d54129d1ce33433faf8d51daccd6f1ce72e8",
+      "uncompressed_sha256": "6ce460c418b0e9d67c04c149d515ca6e826bf28da73024d9cbd511374e658edb",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-sector-6.log.gz": {
+      "sha256": "5c5739cd95a1a9ecc44ccfa7752e97356f3dd94e9cee0e7c855a98e355a50279",
+      "uncompressed_sha256": "0898aa5df39e5035fcc1cff871b4348661ee0b2cc0a31341d092f50ff3d035d5",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-sector-7.log.gz": {
+      "sha256": "de1bfb40ad2863a16292a2c90575b2c470a5930fde75d0792a2360c0cd75439c",
+      "uncompressed_sha256": "72b4621ab6ff0c8abbffa7feab73b1638c2dbeb0807e3845edd06982810f8fa2",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-sector-8.log.gz": {
+      "sha256": "cfabc19f31f3660dc37cfd72b80e3b3a3cbc24ccae633033fc53f113742909b4",
+      "uncompressed_sha256": "5da37988ab36589ee9502221e21306fffd27f51ae2a843c11e486eec7c7d17a2",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/cell-operations-sector-9.log.gz": {
+      "sha256": "6c0726e61945c818ae6bf054d230c4ab995c8aa03a33d551f9e1bff062748aaf",
+      "uncompressed_sha256": "4c585cef7efc5372504910bf9364db41281f32080e2f1863b6c24cc312417b8e",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/native-cell-assembly-1.log.gz": {
+      "sha256": "8cbefa6649603afdf577d255269e9cff57907109f4aa9e441f5824db8f5d40e2",
+      "uncompressed_sha256": "628aecbf9cae7902bd1b549e00e02020da97bda209754086504e76c5e6cb66df",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/native-cell-assembly-2.log.gz": {
+      "sha256": "01af9186e7e794eadc16b9fe732941d0fcdd01e3c12632e08ec3996f130f3306",
+      "uncompressed_sha256": "5271269e608ca307484c97ec57bebb2a84be4d557404656954f80d0b9fce7698",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/native-cell-assembly-3-stack-1.log.gz": {
+      "sha256": "f075ad9bb5f5afd9d7daa9d57d44d92f65d9c3e6880f0a6ed2061fe90eda07e6",
+      "uncompressed_sha256": "3be30d87351ae534223188b8774fdee2a7e2a26cbf216875e31ca29fe98b65f4",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/native-cell-assembly-3.log.gz": {
+      "sha256": "7fe74d2d55aeb3b199eb22df9506a6453e39f252df73faf5c3c108ab5f77d1b2",
+      "uncompressed_sha256": "34ab8b5e2b480370a0cbf2b6dbd0ac2b295d533de4c677e96ba069bbabdf219d",
+      "status": "success"
+    },
+    "reports/data/hexrcf-cell-operations/native-source-assembly-1.log.gz": {
+      "sha256": "3e8b476d47a1765fca9c7354aa89a7e6bcead4d55ac713ffc74253ad196d4907",
+      "uncompressed_sha256": "1a25631de3226683e4996f2f96e80d167bce1cfa4a36f8965b0b22e823ebe554",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/native-source-assembly-2.log.gz": {
+      "sha256": "b6f2531065c730e5c7708ca493346cdc75e0778a242a2fbd51ec26c4150c6728",
+      "uncompressed_sha256": "8f14c20e7aeee80b7dc940e976a8a15278f10bfddb1a39849a09c7ede48fe4a1",
+      "status": "interrupted"
+    },
+    "reports/data/hexrcf-cell-operations/native-source-assembly-3.log.gz": {
+      "sha256": "77a3f414dedf3d86cff1ffd02578c301be171865fcbfaca91abc75947f5b5337",
+      "uncompressed_sha256": "a34392ea0e534dd65c3dde51cb6e6f931e987a8ebf8644922d4e39c6887f4012",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/native-source-assembly-4.log.gz": {
+      "sha256": "8eb1a6c4e82d494845e7d21b3b31905cd12b377a5756ba617c0c93a2e8ee341f",
+      "uncompressed_sha256": "028b1563e796c9a8b7293ca711253ebb4a0454e7291704c1887c8f8ec970eaf5",
+      "status": "success"
+    },
+    "reports/data/hexrcf-cell-operations/native-source-assembly-5.log.gz": {
+      "sha256": "31fed4e93f6b0edf5de017b945fba569c5b18c1c37358a1e1416f0b4828ff406",
+      "uncompressed_sha256": "8655a0fa5561b154b62f9b9d2770d1d368b464d3acd3c43e003fbec9869f43e8",
+      "status": "success"
+    },
+    "reports/data/hexrcf-cell-operations/native-source-ordinary-1.log.gz": {
+      "sha256": "05f4f9f032204bfe3d76cdeb740503d204cecc4da4d847f3a6244f3e5bb59b97",
+      "uncompressed_sha256": "ccb53b45273f806bb3b79bf0ebfb0a78981b10a4b15e478ce763150a44f4773c",
+      "status": "success"
+    },
+    "reports/data/hexrcf-cell-operations/real-model-current-1.log.gz": {
+      "sha256": "751a5b6fbb64c0bcd43732fd8feaae6c4e94ec1d33cb6c3141485080835b7f48",
+      "uncompressed_sha256": "ebf66780253ffffa54825f0f07f989492dc396df7ca3841a517666a91493222e",
+      "status": "diagnostic"
+    },
+    "reports/data/hexrcf-cell-operations/real-model-current-2.log.gz": {
+      "sha256": "5e0709c58de17446f9cf400dc2a0ca5d86ec563c4da8018eaa4317530387169d",
+      "uncompressed_sha256": "f35613dfa88a72ec1e7988842cdd6448a120393f9e012921a28c7525e65e43d2",
+      "status": "success"
+    }
+  },
+  "artifacts_sha256": {
+    "reports/data/hexrcf-cell-operations/native-cell-assembly-source-3.lean.txt": "5ece34225649b6752f7c35763550c4b7ed3dd0f05acb17cc043bb7b2c4c2d45c",
+    "reports/data/hexrcf-cell-operations/native-real-model-source-3.lean.txt": "7edee64f075d672f6a9ac92fa193f987953d520587d38bc4b99e388cc077d1c4",
+    "reports/data/hexrcf-cell-operations/native-cell-assembly-events-3.txt": "61f9003ab7030bd51c387401e8246934f8fa777d0d326a428bae56795b8946ab",
+    "reports/data/hexrcf-cell-operations/native-cell-assembly-3-stack-1.log": "3be30d87351ae534223188b8774fdee2a7e2a26cbf216875e31ca29fe98b65f4",
+    "reports/data/hexrcf-cell-operations/cell-operations-model-browser.mjs": "5ddde3bdee002455078e95924a4e57c455d0e288bd7d6b705db560e8df72fb3c",
+    "reports/data/hexrcf-cell-operations/CellOperationsRender.lean.txt": "f03c404e8455642851c2756c70426ca60dcec0013d64aa6215621aa6cdaa07ce",
+    "reports/data/hexrcf-cell-operations/cell-operations-model-inspection.json": "89ce4054546d2f92a6e9e74c825f816dab0dbf515464ba1512c7d79059b7d7dd",
+    "reports/data/hexrcf-cell-operations/run-bounded": "63bc5f97337e6b039bb3a9b1ba2a500be96fd1c2a2f73b43dae284aa9b18dda8",
+    "reports/data/hexrcf-cell-operations/lake-bounded": "03a8bbc1379af330832475148342b00de642c7342e8e8842f24aead7d1500e41",
+    "reports/data/hexrcf-cell-operations/cell-assembled-live-limits.properties": "75f3325b3752d4c3c11411ef03fe3b5fb4a21e5563cb892ff41c79d6d04032c5",
+    "reports/data/hexrcf-cell-operations/native-source-assembly-source-1.lean.txt": "92f68e49351015d1b4d6739bdee2fd580dc819263d5ea1ebd08c1b29453f4171",
+    "reports/data/hexrcf-cell-operations/native-source-assembly-source-2.lean.txt": "bd1e7b18cdd611d4449237e565300fa6cbf89ac44c2d003f4a48276c73b858a3",
+    "reports/data/hexrcf-cell-operations/native-source-assembly-source-3.lean.txt": "badddd8c479839a1aeaff19bdab2418c8e44d6e74f666e5fc3957bb728d91eba",
+    "reports/data/hexrcf-cell-operations/native-source-assembly-source-4.lean.txt": "e7cb669c4ef86a83b860e8b45cb1ca6ae66ed07468a1aede7460e88c407fb9f3",
+    "reports/data/hexrcf-cell-operations/native-source-assembly-source-5.lean.txt": "09af88838e8cb71861f5697ea466edef0d88092f5a9fa90f8903a50ac2c347af",
+    "reports/data/hexrcf-cell-operations/native-source-ordinary-source-1.lean.txt": "2e1ee6b1e081c7898bc40fb8a9099a82761ff0fb3bc54bad82b65b9cb5535d5d",
+    "reports/data/hexrcf-cell-operations/native-source-assembly-3.events": "372b4ed0d7c697712c1b43eeaf32f31828d3dcae397016ecf861d70198a6d645",
+    "reports/data/hexrcf-cell-operations/native-source-assembly-4.events": "b24d920e8eb85005c8c6cbcc0c4e292413e0c69b2abd01b9a24b3b5a9432b6f8",
+    "reports/data/hexrcf-cell-operations/native-source-assembly-5.events": "1bc22f5de330f1cd7640247f36337ff9f4314ab628a2191aedd53e10336683a0",
+    "reports/data/hexrcf-cell-operations/native-source-assembly-owner-3.events": "0d1e4a3767cafbdfd9b04152319fd3d626d8f6b428348752f51dd903c8c088e9",
+    "reports/data/hexrcf-cell-operations/native-source-assembly-owner-4.events": "644535df1545b9c401d41f374c9994c40cae139441888d0e34b0bab5cafb7205",
+    "reports/data/hexrcf-cell-operations/native-source-assembly-owner-5.events": "644535df1545b9c401d41f374c9994c40cae139441888d0e34b0bab5cafb7205",
+    "reports/data/hexrcf-cell-operations/native-source-assembly-owner.events": "826ad8347220339ec126f0a57498baeb2fd03631ea2828459bde7f4abb157182",
+    "reports/data/hexrcf-cell-operations/native-source-assembly.events": "94146d031bad1a3877d30884bd3a989a49cbd84db42e7e56e6834dfc451b56f6",
+    "reports/data/hexrcf-cell-operations/cell-assembled-owner-1.events": "6ded742979d48105032146cd15e1059529f02e3a35fb35dd6d3a0ffa7cc5ac73",
+    "reports/data/hexrcf-cell-operations/cell-assembled-owner-2.events": "0e026723550479edf76a5650881d5f014c627027625404c71016046005563623",
+    "reports/data/hexrcf-cell-operations/cell-operations-model-desktop-api-end.png": "2007caf7ac65a0417436050fc68a120666333645f07c089e0ab511ed1ae46dec",
+    "reports/data/hexrcf-cell-operations/cell-operations-model-desktop-api-start.png": "8ece6976261976d1d00ed0caca44fb6574d56e31238b16177d5eefe50e0515e6",
+    "reports/data/hexrcf-cell-operations/cell-operations-model-desktop-model.png": "5bb298e58d8158e061551fc90595c90fe4594b5a4da16c22c4f055fb954706af",
+    "reports/data/hexrcf-cell-operations/cell-operations-model-desktop-scope.png": "74acd35480fb56763e2ecb3aed81aad20842ec9cb759916da46df5beaa1daac9",
+    "reports/data/hexrcf-cell-operations/cell-operations-model-narrow-api-end.png": "9d6c8cae2de24b12cb898e2e2ea751a49ca9410fc84c81b50e5f2c2d1b38cac4",
+    "reports/data/hexrcf-cell-operations/cell-operations-model-narrow-api-start.png": "dee185e599ccc30906a43afddaa5d5be7e9001fdab2f1c51d65130bad30a2875",
+    "reports/data/hexrcf-cell-operations/cell-operations-model-narrow-model.png": "ebe3a89610588987aa747b0d8167d6c65f8f135d2c2e79adfc09d0f3f871947c",
+    "reports/data/hexrcf-cell-operations/cell-operations-model-narrow-scope.png": "305ce33f946383d91a96c4496d281492ae25bea6deed25c88c054fe31a5fdb67",
+    "reports/data/hexrcf-cell-operations/overflow-1-cell-operations-model-desktop-api-end.png": "09e649749234f7a210fb075e3d433df69bfa689324423832017b331f27804e58",
+    "reports/data/hexrcf-cell-operations/overflow-1-cell-operations-model-desktop-api-start.png": "75d140446fee7bcaa3d0f70928ad2350f8f69c845873bbf95b8f9143c208535e",
+    "reports/data/hexrcf-cell-operations/overflow-1-cell-operations-model-desktop-model.png": "5bb298e58d8158e061551fc90595c90fe4594b5a4da16c22c4f055fb954706af",
+    "reports/data/hexrcf-cell-operations/overflow-1-cell-operations-model-desktop-scope.png": "9400fd7285ec13809579e3a6c8f3d3b8d6413814ef4e1fd27e6825086bffda70",
+    "reports/data/hexrcf-cell-operations/overflow-1-cell-operations-model-narrow-api-start.png": "fee0d9406466cc66abf6a7c2f4ac615e1a88b54714ecafb7011722938ef8e1a7",
+    "reports/data/hexrcf-cell-operations/overflow-1-cell-operations-model-overflow.json": "6254931edcecf1d847f916817e8464f7dc3599650d760d93f792768fb8f03a02",
+    "reports/data/hexrcf-cell-operations/overflow-1-manual-source.lean.txt": "5bf4298ecf9f56cc65917a74bd7e9b3224d520a1dab048e658c8de20b239eb0d"
+  },
+  "rendered_html_sha256": "b4dd4f9fc3f0078452019e40e2e004b44a9e2c2d22fad5e0d6096a4f7d01dee1",
+  "validation": {
+    "complete_source_and_fresh_consumer_markers": true,
+    "direct_checked_body_axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "visual_inspected": [
+      "cell-operations-model-desktop-api-end.png",
+      "cell-operations-model-desktop-api-start.png",
+      "cell-operations-model-desktop-model.png",
+      "cell-operations-model-desktop-scope.png",
+      "cell-operations-model-narrow-api-end.png",
+      "cell-operations-model-narrow-api-start.png",
+      "cell-operations-model-narrow-model.png",
+      "cell-operations-model-narrow-scope.png"
+    ],
+    "memory_bytes": 34359738368,
+    "swap_bytes": 0,
+    "lean_threads": 2,
+    "own_build_concurrency": 1,
+    "check_dag_exit_status": 0,
+    "named_admissions_exit_status": 0,
+    "copyright_exit_status": 0,
+    "dag_unit_tests_exit_status": 0,
+    "admission_unit_tests_exit_status": 0,
+    "literals_exit_status": 0,
+    "relative_links_exit_status": 0,
+    "line_counts_exit_status": 0
+  },
+  "log_scopes": {
+    "native-cell-assembly-3": "Successful packet acceptance at the packet source commit; first four appended events belong to failed attempt 2.",
+    "native-source-assembly-2": "Explicitly stopped to correct the negative-source control before expensive discovery; killed status is not completion.",
+    "native-source-assembly-3": "Packet acceptance completed, then the unannotated conversion proof failed elaborator type agreement; no source proof completed.",
+    "native-source-assembly-4": "Inline exact-target annotation and source quotation at the quotation source commit; direct body audit and refusal controls complete.",
+    "native-source-assembly-5": "Actual public quotation API and fresh consuming equality theorem at the public source commit.",
+    "cell-assembled-1": "Successful first portable repository version before refusal-test resource propagation and consumer completion-reference corrections; not final-source validation.",
+    "cell-assembled-2": "Corrected portable assembly, raw failure observation and consumer completion reference; later real-model test/manual corrections are validated by the final selection.",
+    "cell-assembled-3": "Repository source selection: cached assembled source/consumer proofs, rebuilt real-model controls and manual, before the narrow-page code layout correction.",
+    "cell-assembled-final": "Final source selection including the narrow-page correction; source and fresh-consumer proofs are cached and both completion markers are present.",
+    "other_diagnostic_logs": "Intermediate source versions, failures or narrower selections; not final-source validations."
+  },
+  "limits": [
+    "Selected source inventory; the commit pins the tree and Lake manifest pins external dependencies.",
+    "One fixed retained depth-one fixture, not general source/provider/predecessor history reconstruction.",
+    "No public Codec.readGraph exposure or strict compiled arbitrary-missing-record rejection is established.",
+    "Incremental builds and targeted assembly observations are not speedup comparisons or algorithm scaling."
+  ],
+  "document_commit": "5ba3b80ba29d4a799fe850fca6e1f2930d42af74",
+  "documents_sha256": {
+    "reports/hexrcf-cell-operations.md": "08db95490971ae0b3d87755adc556449392f2805d531339f09b05c1dcb32adba",
+    "HexRCF/README.md": "c9d33b5ce21b5fd1e3b4ac364ee3cec6fe1c6b7f94bfda78cff8501985d19329",
+    "reports/data/hexrcf-cell-operations/collect.py": "e572fa09016628539b702d8b91aaf86684d347a13e41985d763c9441c7751cee"
+  },
+  "artifact_commit": "5ba3b80ba29d4a799fe850fca6e1f2930d42af74"
+}

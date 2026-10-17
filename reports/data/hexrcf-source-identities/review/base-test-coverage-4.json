@@ -1,0 +1,110 @@
+{
+  "source_commit": "7188977171dbac1e7da2906e3245066274021a6d",
+  "source_tree": "82eec8254c7a8adf6156023db216070b2cd0037c",
+  "selected_roots": [
+    "HexRCF.LanguageTests",
+    "HexRCF.SturmBuilderTests",
+    "HexRCF.CarrierTests",
+    "HexRCF.IsolationsTests",
+    "HexRCF.SeparationTests",
+    "HexRCF.CellsTests",
+    "HexRCF.CommonRootTests",
+    "HexRCF.SignMatrixTests",
+    "HexRCF.BuilderTests",
+    "HexRCF.CertificateTests",
+    "HexRCF.DecisionTests",
+    "HexRCF.ReifyTests",
+    "HexRCF.HandlerTests.Support",
+    "HexRCF.HandlerTests.Async",
+    "HexRCF.HandlerTests",
+    "HexRCF.LintTests"
+  ],
+  "modules": {
+    "HexRCF.LanguageTests": {
+      "selection_arg": "+HexRCF.LanguageTests",
+      "build_output": "\u2714 [11458/11464] Built HexRCF.LanguageTests (2.2s)",
+      "status": "Reported in completed broad selection."
+    },
+    "HexRCF.SturmBuilderTests": {
+      "selection_arg": "+HexRCF.SturmBuilderTests",
+      "build_output": "\u2714 [11460/11465] Built HexRCF.SturmBuilderTests (2.3s)",
+      "status": "Reported in completed broad selection."
+    },
+    "HexRCF.CarrierTests": {
+      "selection_arg": "+HexRCF.CarrierTests",
+      "build_output": "\u2714 [11462/11466] Built HexRCF.CarrierTests (2.0s)",
+      "status": "Reported in completed broad selection."
+    },
+    "HexRCF.IsolationsTests": {
+      "selection_arg": "+HexRCF.IsolationsTests",
+      "build_output": "\u2714 [11463/11467] Built HexRCF.IsolationsTests (2.0s)",
+      "status": "Reported in completed broad selection."
+    },
+    "HexRCF.SeparationTests": {
+      "selection_arg": "+HexRCF.SeparationTests",
+      "build_output": "\u2714 [11464/11468] Built HexRCF.SeparationTests (2.8s)",
+      "status": "Reported in completed broad selection."
+    },
+    "HexRCF.CellsTests": {
+      "selection_arg": "+HexRCF.CellsTests",
+      "build_output": "\u2714 [11465/11469] Built HexRCF.CellsTests (2.2s)",
+      "status": "Reported in completed broad selection."
+    },
+    "HexRCF.CommonRootTests": {
+      "selection_arg": "+HexRCF.CommonRootTests",
+      "build_output": "\u2714 [11466/11470] Built HexRCF.CommonRootTests (2.7s)",
+      "status": "Reported in completed broad selection."
+    },
+    "HexRCF.SignMatrixTests": {
+      "selection_arg": "+HexRCF.SignMatrixTests",
+      "build_output": "\u2714 [11467/11471] Built HexRCF.SignMatrixTests (2.6s)",
+      "status": "Reported in completed broad selection."
+    },
+    "HexRCF.BuilderTests": {
+      "selection_arg": "+HexRCF.BuilderTests",
+      "build_output": "\u2714 [11468/11472] Built HexRCF.BuilderTests (2.1s)",
+      "status": "Reported in completed broad selection."
+    },
+    "HexRCF.CertificateTests": {
+      "selection_arg": "+HexRCF.CertificateTests",
+      "build_output": "\u2714 [11470/11474] Built HexRCF.CertificateTests (2.9s)",
+      "status": "Reported in completed broad selection."
+    },
+    "HexRCF.DecisionTests": {
+      "selection_arg": "+HexRCF.DecisionTests",
+      "build_output": "\u2714 [11471/11476] Built HexRCF.DecisionTests (2.1s)",
+      "status": "Reported in completed broad selection."
+    },
+    "HexRCF.ReifyTests": {
+      "selection_arg": "+HexRCF.ReifyTests",
+      "build_output": "\u2714 [11475/11480] Built HexRCF.ReifyTests (3.7s)",
+      "status": "Reported in completed broad selection."
+    },
+    "HexRCF.HandlerTests.Support": {
+      "selection_arg": "+HexRCF.HandlerTests.Support",
+      "build_output": null,
+      "trace_sha256": "46789650ffad5d0a405e996a532a73e204f1f903497f559b93f31e73bee3599d",
+      "olean_sha256": "97df7de64c95b6d7ca606092d66e342137f6c20e49d978a5234b16940d2c5417",
+      "ilean_sha256": "210acfcbe01ee6efe3101218548e6764196d3e56a68bccebb86c01facae2f6a7",
+      "status": "Reused valid quiet Lake artifact; no fresh compilation claim."
+    },
+    "HexRCF.HandlerTests.Async": {
+      "selection_arg": "+HexRCF.HandlerTests.Async",
+      "build_output": "\u2714 [11473/11477] Built HexRCF.HandlerTests.Async (1.9s)",
+      "status": "Reported in completed broad selection."
+    },
+    "HexRCF.HandlerTests": {
+      "selection_arg": "+HexRCF.HandlerTests",
+      "build_output": null,
+      "trace_sha256": "cc14216a6aa71bc05718433a803f4fa08e68e53579c8584f78e302bf1b216b5e",
+      "olean_sha256": "c0aa6f53a59d8a3798ff0c7470aca8eaed28802cb53a44fe13981562f9d6a9e5",
+      "ilean_sha256": "1b19f09024589779a1a18900aa606bab3619fd78b9aeb5097506d59e965cc6ce",
+      "status": "Reused valid quiet Lake artifact; no fresh compilation claim."
+    },
+    "HexRCF.LintTests": {
+      "selection_arg": "+HexRCF.LintTests",
+      "build_output": "\u2714 [12879/12902] Built HexRCF.LintTests (4.6s)",
+      "status": "Reported in completed broad selection."
+    }
+  }
+}

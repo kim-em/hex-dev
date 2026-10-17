@@ -56,7 +56,7 @@ elab "#algebraic_sectors_check" : command => liftTermElabM do
       ``Inputs.tableAt, ``Inputs.queriesAt, ``Inputs.polynomialAt,
       ``RootTable.read, ``RootTable.extract, ``Schema.values,
       ``Schema.atom, ``Schema.formula,
-      ``RowOperations.read, ``CellPacketRead.read, ``CellRead.collect,
+      ``RowOperations.read, ``CellPacketRead.read, ``CellPacketRead.readUsing, ``CellRead.collect,
       ``Algebraic.RootReplay.readDescriptor, ``Descriptor.ofChecked] do
     rules ← rules.addDeclToUnfold name
   let context ← Simp.mkContext (simpTheorems := #[rules]) (congrTheorems := ← getSimpCongrTheorems)

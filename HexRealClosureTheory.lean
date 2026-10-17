@@ -9,6 +9,7 @@ public import HexPolyTheory.Interpret
 public import HexRealClosureTheory.BaseContext
 public import HexRealClosureTheory.BaseStagedRealization
 public import HexRealClosureTheory.BaseProvider
+public import HexRealClosureTheory.BaseHistory
 public import HexRealClosureTheory.BaseSubsequence
 public import HexRealClosureTheory.BasePermutation
 public import HexRealClosureTheory.BaseMap
