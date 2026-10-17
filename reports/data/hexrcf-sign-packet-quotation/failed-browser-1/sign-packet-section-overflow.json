@@ -1,0 +1,74 @@
+[
+  {
+    "label": "desktop",
+    "width": 1440,
+    "targets": [
+      {
+        "tag": "P",
+        "text": "\n                  ScalarPacket.quoteWith checks a supplied optional sign-packet reader. Its\nprepared context has a checked equality to the original context; a ",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean in\nopen Hex.RCF.RealCoefficients in\nmeta def quoteSuppliedSignPacket\n    (reader prepared same : Expr)\n    (predecessor : RootQuote.DecoderM) :=\n  Roo",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The regression quotes the parent descriptor and one packet for the polynomial\n−2X at the selected positive square root of 2. The resulting fa",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RealClosure in\nopen Hex.RCF.SelectedRootTests in\nopen Hex.RCF.SignPacketQuote in\nexample :\n    Option.map Data.original.value\n      (Except.toOption\n  ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Quoting the parent and packet in one request consumes 54,777 proof nodes.\nWith the frozen parent and its equality already available, the pack",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The caller still supplies and authenticates the parent history and packet.\nPredecessor arithmetic retains its supplied implementation; this h",
+        "overflow": 0
+      }
+    ]
+  },
+  {
+    "label": "narrow",
+    "width": 390,
+    "targets": [
+      {
+        "tag": "P",
+        "text": "\n                  ScalarPacket.quoteWith checks a supplied optional sign-packet reader. Its\nprepared context has a checked equality to the original context; a ",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean in\nopen Hex.RCF.RealCoefficients in\nmeta def quoteSuppliedSignPacket\n    (reader prepared same : Expr)\n    (predecessor : RootQuote.DecoderM) :=\n  Roo",
+        "overflow": 10
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The regression quotes the parent descriptor and one packet for the polynomial\n−2X at the selected positive square root of 2. The resulting fa",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RealClosure in\nopen Hex.RCF.SelectedRootTests in\nopen Hex.RCF.SignPacketQuote in\nexample :\n    Option.map Data.original.value\n      (Except.toOption\n  ",
+        "overflow": 6
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Quoting the parent and packet in one request consumes 54,777 proof nodes.\nWith the frozen parent and its equality already available, the pack",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The caller still supplies and authenticates the parent history and packet.\nPredecessor arithmetic retains its supplied implementation; this h",
+        "overflow": 0
+      }
+    ]
+  }
+]

@@ -1,0 +1,113 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+module
+public import HexRCF.RealCoefficients
+public import HexRCF.RootQuoteCases
+public meta import HexRCF.RootQuoteData
+public meta import HexRCF.RootQuoteCases
+public meta import HexRCF.RealCoefficients.ScalarPacketQuote
+public meta import HexRCF.RealCoefficients.RationalQuote
+public section
+open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
+namespace Hex.RCF.SignPacketPublic
+set_option maxHeartbeats 12000000
+set_option maxRecDepth 32768
+
+@[expose] def context := Algebraic.Context.adjoin RootQuoteTests.nativeRoot RootQuoteTests.base.isClean
+@[expose] def polynomial : Codec.Json := .array (.cons RootQuoteTests.j6 .nil)
+noncomputable def model := NumberField.rationalModel RootQuoteTests.registry
+
+/-- Construct numerical proposal data; its computation supplies no proof. -/
+private meta partial def jsonExpr : Codec.Json → MetaM Expr
+  | .number n => pure (mkApp (mkConst ``Codec.Json.Value.number) (mkIntLit n))
+  | .array values => do
+    let items ← values.toList.mapM jsonExpr
+    let data := items.foldr
+      (fun item rest => mkApp2 (mkConst ``Codec.Json.Values.cons) item rest)
+      (mkConst ``Codec.Json.Values.nil)
+    return mkApp (mkConst ``Codec.Json.Value.array) data
+  | _ => throwError "public sign fixture expected numerical array data"
+
+
+/-- This public fixture uses the existing lawful signature encoder at node
+contexts. The separate fully frozen public fixture still needs the owner's
+encoding equation; no literal/encoding identity is assumed here. -/
+private meta def graphExpr (literal : Codec.Json) : MetaM Expr := do
+  let array := fun (items : List Expr) => mkApp (mkConst ``Codec.Json.Value.array)
+    (items.foldr (fun item rest => mkApp2 (mkConst ``Codec.Json.Values.cons) item rest)
+      (mkConst ``Codec.Json.Values.nil))
+  let .ok graph := literal.getArr? | throwError "public graph is not an array"
+  unless graph.size == 3 do throwError "public graph has the wrong width"
+  let .ok entries := graph[2]!.getArr? | throwError "public graph entries are not an array"
+  let signature ← mkAppM ``Tower.Context.signature #[mkConst ``RootQuoteTests.base]
+  let encoded ← mkAppM ``ValueCodec.encode #[mkConst ``Tower.Signature.codec,signature]
+  let entries ← entries.toList.mapM fun entry => do
+    let .ok fields := entry.getArr? | throwError "public graph entry is not an array"
+    unless fields.size == 2 do throwError "public graph entry has the wrong width"
+    let .ok node := fields[0]!.getArr? | throwError "public graph node is not an array"
+    unless node.size == 11 do throwError "public graph node has the wrong width"
+    let node ← (node.toList.drop 1).mapM jsonExpr
+    return array [array (encoded :: node),← jsonExpr fields[1]!]
+  return array [← jsonExpr graph[0]!,← jsonExpr graph[1]!,array entries]
+
+run_meta do
+  withExporting (isExporting := false) do
+    let codec ← mkAppM ``Tower.Context.codec #[mkConst ``RootQuoteTests.base]
+    let proposal ← mkAppM ``ScalarPacket.buildLiteral
+      #[mkConst ``context,codec,mkConst ``polynomial]
+    let some packet ← evalExpr (Option Codec.Json) (← inferType proposal) proposal
+      | throwError "public sign packet producer declined"
+    let .ok fields := packet.getArr? | throwError "public packet is not an array"
+    unless fields.size == 3 do throwError "public packet has the wrong width"
+    let .ok sign := fields[1]!.getInt? | throwError "public packet has no sign"
+    unless sign == 1 do throwError "public packet has the wrong proposed sign"
+    let evidence ← graphExpr fields[2]!
+    withExporting (isExporting := true) do
+      let declaration := Declaration.defnDecl {
+        name := `Hex.RCF.SignPacketPublic.evidence,levelParams := [],
+        type := mkConst ``Codec.Json.Value,value := evidence,hints := .regular 0,safety := .safe}
+      addDecl declaration (forceExpose := true)
+      compileDecl declaration (logErrors := true)
+    let reader ← mkAppM ``ScalarPacket.read
+      #[mkConst ``model,codec,mkConst ``context,mkConst ``polynomial,mkIntLit 1,
+        mkConst `Hex.RCF.SignPacketPublic.evidence]
+    let same ← mkEqRefl (mkConst ``context)
+    let decode : RootQuote.DecoderM := fun expression => do
+      let codec? := match expression.getAppFn with
+        | .proj ``ValueCodec 1 codec =>
+          if expression.getAppNumArgs == 1 then some codec else none
+        | .const ``ValueCodec.decode _ =>
+          if expression.getAppNumArgs == 3 then some expression.getAppArgs[1]! else none
+        | _ => none
+      if let some codec := codec? then
+        if codec.isConstOf ``Tower.Signature.codec then
+          let signature ← mkAppM ``Tower.Context.signature #[mkConst ``RootQuoteTests.base]
+          return some (mkApp (mkConst ``Tower.Signature.codec_lawful) signature)
+      liftM (RationalQuote.decoder (mkConst ``RootQuoteTests.registry) expression)
+    let outcome ← RootQuote.runWith (ScalarPacket.quoteWith reader (mkConst ``context) same decode)
+    let quoted ← match outcome with
+      | .ok result => pure result
+      | .error error => throwError "public sign packet quotation: {Hex.RealFormula.Reify.Error.toMessageData error}"
+    withExporting (isExporting := true) do
+      let declaration := Declaration.defnDecl {
+        name := `Hex.RCF.SignPacketPublic.fact,levelParams := [],
+        type := ← inferType quoted.value,value := quoted.value,hints := .regular 0,safety := .safe}
+      addDecl declaration (forceExpose := true)
+      compileDecl declaration (logErrors := true)
+      let statement ← mkEq reader (← mkAppM ``Option.some #[mkConst `Hex.RCF.SignPacketPublic.fact])
+      let proof ← Hex.RCF.checkProof `publicSignPacket statement quoted.proof
+      addDecl (.thmDecl {
+        name := `Hex.RCF.SignPacketPublic.read_checked,levelParams := [],type := statement,value := proof})
+    logInfo m!"ordinary module sign packet proofNodes={quoted.usage.proofNodes}"
+
+theorem accepted :
+    (ScalarPacket.read model RootQuoteTests.base.codec context polynomial 1 evidence).isSome = true := by
+  rw [read_checked]
+  rfl
+
+theorem sign : fact.sign = 1 := by rfl
+
+end Hex.RCF.SignPacketPublic
