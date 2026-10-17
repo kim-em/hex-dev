@@ -277,4 +277,36 @@ def quote (codec facts literal : Expr) (decode : RootQuote.Decoder := fun _ => p
   RootQuote.runWith
     (quoteWith codec facts literal (fun expression => liftM (decode expression))) config usage
 
+/-- Build a recursive predecessor callback from checked sign-fact inputs.
+The lookup receives the exact canonical codec expression; return `none` when
+no facts are supplied. Noncanonical decodes are proposed only by `base`.
+Every selected-field stage uses `quoteDecodeWith`, preserving the original
+codec and charging the same reflection request. Missing facts decline without
+running a canonical decoder. Errors, exhaustion and recursion limits remain
+terminal. The enclosing `RootQuote.runWith` transaction restores state.
+This consumes explicit facts; it does not discover or authenticate histories. -/
+partial def decoderWith (factsFor : Expr → ReifyM (Option Expr))
+    (base : RootQuote.DecoderM := fun _ => pure none) (reader : Expr) :
+    ReifyM (Option Expr) := Core.withIncRecDepth do
+  charge .proofNodes 1
+  Core.checkSystem "recursive scalar quotation"
+  let codec? := match reader.getAppFn with
+    | .proj ``ValueCodec 1 codec =>
+      if reader.getAppNumArgs == 1 then some codec else none
+    | .const ``ValueCodec.decode _ =>
+      if reader.getAppNumArgs == 3 then some reader.getAppArgs[1]! else none
+    | _ => none
+  let some codec := codec? | return ← base reader
+  unless codec.getAppFn.isConstOf ``Algebraic.Element.codec do return ← base reader
+  let some facts ← factsFor codec | return none
+  let result ← quoteDecodeWith reader facts (decoderWith factsFor base)
+  let valueType ← inferType result.value
+  let proof := mkAppN (mkConst ``RootQuote.read_eq)
+    #[mkConst ``String,valueType,reader,result.value,result.proof]
+  let output := mkAppN (mkConst ``Except.ok [0,0])
+    #[mkConst ``String,valueType,result.value]
+  let statement ← mkEq reader output
+  accountProof proof
+  return some (← Hex.RCF.checkProof `ScalarQuote.recursive statement proof)
+
 end Hex.RCF.RealCoefficients.ScalarQuote

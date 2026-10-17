@@ -8,6 +8,7 @@ import VersoManual
 import HexRCF.RealCoefficients
 import HexRCF.ScalarQuoteCases
 import HexRCF.SharedQuoteCases
+import HexRCF.RecursiveScalarPublic
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -272,3 +273,41 @@ restores all auxiliaries created earlier in the request.
 This scalar API does not reconstruct provider or predecessor histories,
 produce missing signs, or install a general source-goal solver. The strict
 compiled missing-record obligation for whole readers remains separate.
+
+`ScalarQuote.decoderWith` composes checked scalar decoding through several
+selected-field predecessors. Its lookup receives each exact canonical codec
+expression and supplies the sign facts already checked for that context. The
+rational callback handles the base field; every nested quote shares the enclosing
+request's budget and transaction.
+
+```lean
+open Lean Hex.RealFormula in
+open Hex.RCF.RealCoefficients in
+meta def quoteSelectedReader
+    (reader registry : Expr)
+    (factsFor : Expr → Reify.ReifyM (Option Expr)) :=
+  RootQuote.run reader
+    (ScalarQuote.decoderWith factsFor
+      (fun expression => liftM (RationalQuote.decoder registry expression)))
+```
+
+The two-level regression visits both selected predecessors exactly once and
+retains their 38 source nodes. It uses 14,374 proof nodes; one node less exhausts
+at the final 925-node charge after 13,449 consumed nodes. Missing facts decline
+without invoking another scalar decoder. Wrong-context facts, kernel errors
+and exhaustion remain terminal and restore the enclosing state.
+
+An ordinary `module` consumer also runs the callback factory and exports the
+checked scalar reader equation. Its sign follows from the owner's restoration
+law, without unfolding the stored element's implementation:
+
+```lean
+open Hex.RCF.RecursiveScalarPublic in
+example : restored.sign = 1 := sign
+```
+
+A fresh importing audit checks the two-level fixture and this public consumer:
+34 actual theorem bodies and five definitions, complete standard-three axiom
+closure, and no native producer or canonical-codec reduction. This helper consumes
+explicit facts; it does not authenticate original source expressions, discover
+predecessor histories, produce missing sign evidence or install the general tactic.
