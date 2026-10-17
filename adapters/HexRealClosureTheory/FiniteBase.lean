@@ -8,6 +8,7 @@ module
 public import HexRealClosureTheory.FiniteScalars
 public import HexRealClosureTheory.BaseFiniteReplay
 public meta import HexRealClosureTheory.FiniteScalars
+public meta import HexRealClosureTheory.FiniteIndex
 public meta import HexRealClosureTheory.FiniteLists
 
 public meta section
@@ -221,11 +222,45 @@ private def agreementMember (elementType value rest : Expr) (earlier : Array Exp
     member ← mkAppM ``List.mem_cons_of_mem #[head, member]
   return member
 
+private def agreementHead (agreement : Expr) : Supplier := fun type => withNewMCtxDepth do
+  let agreement ← instantiateMVars agreement
+  let type ← instantiateMVars type
+  if agreement.hasMVar || type.hasMVar || agreement.hasSorry || type.hasSorry then return none
+  let data ← inferType agreement
+  unless data.getAppFn.isConstOf ``Transport.Inventory.Agreement do return none
+  let parameters := data.getAppArgs
+  let inventory := parameters.back!
+  if inventory.hasFVar || inventory.hasMVar then return none
+  let domain := parameters[parameters.size - 4]!
+  let .app predicate wanted := type | return none
+  unless predicate == domain && wanted.getAppFn.isConstOf ``DensePoly.coeff do return none
+  let literal ← withTransparency .all (whnf inventory)
+  unless literal.getAppFn.isConstOf ``List.cons do return none
+  let arguments := literal.getAppArgs
+  let value := arguments[1]!
+  let reduced ← withTransparency .all (whnf wanted)
+  unless ← withTransparency .all (isDefEq value reduced) do return none
+  let member ← mkAppOptM ``List.mem_cons_self
+    #[some arguments[0]!, some value, some arguments[2]!]
+  let proof ← mkAppM ``And.left #[mkApp2 agreement value member]
+  let proof ← withTransparency .all do mkAppOptM ``id #[some type, some proof]
+  let proof ← instantiateMVars proof
+  unless (← instantiateMVars (← inferType proof)) == type do return none
+  if proof.hasMVar || proof.hasSorry then return none
+  diagnostic "base domain: first retained coefficient supplied"
+  return some proof
+
 /-- Supply a retained coefficient's domain, sign and zero-reflection premises
 from one finite agreement proof. Membership proofs follow the actual literal
 list; missing coefficients return no proof. The agreement itself must come
 from the base bootstrap, rather than an independent real-sign assumption. -/
-private def agreementLookup (agreement : Expr) : Supplier := fun type => do
+private def agreementLookup (agreement : Expr) (cache : Option CoefficientCache) : Supplier :=
+    fun type => do
+  if let some proof ← agreementHead agreement type then return some proof
+  let indexed := match cache with
+    | some cache => lookupCoefficientCached agreement cache
+    | none => lookupCoefficient agreement
+  if let some proof ← indexed type then return some proof
   let domainRequest := type.getAppFn.isConstOf ``BaseContext.Context.partialDomain
   if domainRequest then diagnostic "base domain: begin agreement type inference"
   let dataType ← inferType agreement
@@ -442,7 +477,8 @@ whole coefficient block, matching its domain, bound and dictionaries. Closed
 indices in retained blocks use that same projection and a checked natural
 bound. Other shapes use individual membership search. No nonzero interpretation is assumed
 for an unretained coefficient. -/
-def agreementSupplier (agreement : Expr) : Supplier := fun type => do
+def agreementSupplier (agreement : Expr) (cache : Option CoefficientCache := none) : Supplier :=
+    fun type => do
   if let some proof ← agreementMembers agreement type then return some proof
   if let some proof ← agreementCoefficient agreement type then return some proof
   if type.getAppFn.isConstOf ``Transport.Leading then
@@ -455,7 +491,7 @@ def agreementSupplier (agreement : Expr) : Supplier := fun type => do
       return none
     let coefficients ← mkAppM ``Transport.Inventory.coefficients #[args.back!]
     let required := mkAppN dataType.getAppFn (dataArgs.set! (dataArgs.size - 1) coefficients)
-    let data ← build required (agreementLookup agreement)
+    let data ← build required (agreementLookup agreement cache)
     let theoremName := ``Transport.Inventory.Agreement.leading
     let mut signature := (← getConstInfo theoremName).type
     let mut parameters : Array (Option Expr) := #[]
@@ -470,6 +506,6 @@ def agreementSupplier (agreement : Expr) : Supplier := fun type => do
       parameters := parameters.push value
       signature := body
     return some (← withTransparency .all (mkAppOptM theoremName parameters))
-  agreementLookup agreement type
+  agreementLookup agreement cache type
 
 end Hex.RealClosure.Algebraic.KernelReplay.FiniteData

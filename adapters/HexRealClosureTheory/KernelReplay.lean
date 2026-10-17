@@ -49,7 +49,7 @@ def request (application : Expr) : MetaM Request := do
     let value := application.getAppArgs.back!
     let element ← withTransparency .all (whnf (← inferType value))
     unless element.getAppFn.isConstOf ``Element do
-      throwError "unexpected cached-sign value type"
+      throwError "unexpected cached-sign value type {element} for {value}"
     let inverse := application.getAppFn.isConstOf ``Element.missingInverse
     let polynomial ← mkAppM (if inverse then ``Element.inverseCandidate else ``Element.polynomial)
       #[value]
@@ -108,7 +108,10 @@ def auditProof (proof type : Expr) : MetaM (Array Name) := do
   if proof.hasSorry || proof.hasMVar || type.hasSorry || type.hasMVar then
     throwError "incomplete proof"
   let mut axioms : Array Name := #[]
-  let constants := proof.getUsedConstants ++ type.getUsedConstants
+  -- This application only joins the trees for constant traversal; the
+  -- original proof and type still go to the kernel. One fold preserves their
+  -- first occurrence order while visiting shared nodes and names once.
+  let constants := (mkApp proof type).getUsedConstants
   for decl in constants do
     for axiomName in (← auditedAxioms decl) do
       if !axioms.contains axiomName then axioms := axioms.push axiomName

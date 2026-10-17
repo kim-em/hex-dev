@@ -115,7 +115,7 @@ abbrev Supplier := Expr → MetaM (Option Expr)
 private def diagnostic (message : String) : MetaM Unit := do
   if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
     IO.FS.withFile path .append fun handle => do
-      handle.putStrLn message
+      handle.putStrLn s!"{message} [heartbeats={(← IO.getNumHeartbeats) / 1000}]"
       handle.flush
 
 private def diagnoseTypes (obtained required : Expr) : MetaM Unit := do
@@ -209,6 +209,11 @@ private def finiteRange? (type : Expr) : MetaM (Option Nat) := do
   withTransparency .all do
     getNatValue? (← reduce arguments.back!)
 
+private def dataContainer (type : Expr) : Bool :=
+  type.getAppFn.constName?.any fun name => #[``Packing.DerivativeData, ``Packing.ReplayData,
+    ``Packing.PowerData, ``Packing.FoldData, ``Packing.ReductionData,
+    ``Packing.PreparationData, ``Transport.PowerData].contains name
+
 /-- Construct finite replay data by following structures, actual list members
 and literal bounded indices. Primitive arithmetic, lookup and sign obligations
 are delegated to the supplier. This never interprets a whole algebraic field
@@ -236,6 +241,18 @@ private partial def traverse (goal : MVarId) (supply : Supplier)
     let some record := missing | throwError "finite discovery cannot construct a stopped premise"
     record ⟨original, ← getLCtx, ← getLocalInstances⟩
     return
+  -- Logical recursion must unfold at its public boundary. With global smart
+  -- unfolding disabled, reducing first can leave a Nat.brecOn helper whose
+  -- container name is no longer visible. Keep this local to finite data;
+  -- owner/model reduction and stopped arithmetic retain the caller's options.
+  if dataContainer original then
+    let changed? ← withOptions (fun options => smartUnfolding.set options true) do
+      let reduced ← withTransparency .all (whnf original)
+      if reduced == original then return none
+      return some (← withTransparency .all (goal.change reduced))
+    if let some changed := changed? then
+      traverse changed supply missing terminal
+      return
   let type ← goal.getType'
   let supplied ← if original == type then pure none else supply type
   if let some proof := supplied then
@@ -387,11 +404,7 @@ private partial def traverse (goal : MVarId) (supply : Supplier)
         let proof := mkAppN proof #[first, second, predicate, left[1]!, right[1]!]
         for child in ← withTransparency .all (goal.apply proof) do traverse child supply missing terminal
         return
-  let name := type.getAppFn.constName?
-  let expand := name.any fun name => #[``Packing.DerivativeData, ``Packing.ReplayData,
-    ``Packing.PowerData, ``Packing.FoldData, ``Packing.ReductionData,
-    ``Packing.PreparationData, ``Transport.PowerData].contains name
-  let reduced ← if expand then withTransparency .all (whnf type) else whnf type
+  let reduced ← if dataContainer type then withTransparency .all (whnf type) else whnf type
   unless ← withTransparency .all (isDefEq reduced type) do
     throwError "finite replay reduction changed its obligation"
   if reduced != type then

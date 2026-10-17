@@ -76,6 +76,7 @@ public import HexRealClosure.ReconciledGather
 public import HexRealClosure.ReconciledLive
 public import HexRealClosure.ReconciledBase
 public import HexRealClosure.LiveRequest
+public import HexRealClosure.LiveFrame
 public import HexRealClosure.SharedPresentation
 public import HexRealClosure.TowerRoots
 public import HexRealClosure.RootTransport

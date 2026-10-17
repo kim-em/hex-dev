@@ -182,10 +182,24 @@ def find_admissions(source: str) -> list[re.Match[str]]:
     )]
 
 
+def guard_roots() -> list[str]:
+    directory = ROOT / "experiments" / "KernelReplay"
+    roots = []
+    for path in sorted(directory.rglob("*.lean")):
+        relative = path.relative_to(directory)
+        if not relative.parts[0].startswith("Guard"):
+            continue
+        module = "KernelReplay." + ".".join(relative.with_suffix("").parts)
+        if module_file(module) != path:
+            raise ValueError(f"guard replay module {module} is shadowed by another source file")
+        roots.append(module)
+    return roots
+
+
 def check() -> None:
     if module_file("HexRCF.RealCoefficients") is None:
         raise ValueError("the optional rcf adapter module is missing")
-    roots = ["HexRealClosureTheory.FiniteData", "HexRealClosureTheory.FiniteSupport",
+    roots = ["HexRealClosureTheory.FiniteData", "HexRealClosureTheory.FiniteSupport", "HexRealClosureTheory.FiniteBatch", "HexRealClosureTheory.NativeBatch",
              "HexRealClosureTheory.FiniteOperands", "HexRealClosureTheory.FiniteLift",
              "HexRealClosureTheory.FiniteScalars", "HexRealClosureTheory.FiniteBase",
              "HexRealClosureTheory.FiniteDependencies", "HexRealClosureTheory.FiniteConditions",
@@ -206,13 +220,33 @@ def check() -> None:
              "HexRealClosureTheory.NativeAssembly", "HexRealClosureTheory.NativeAssemblyModels",
              "KernelReplay.NativeAssembly", "KernelReplay.NativeAssemblyModels",
              "KernelReplay.NativeAssemblyStaged", "KernelReplay.NativeAssemblyUse",
+             "KernelReplay.FrameEncode",
+             "KernelReplay.FrameData",
+             "KernelReplay.FrameDataProbe",
+             "KernelReplay.FrameSource",
+             "KernelReplay.NativeAssemblyNestedData",
+             "KernelReplay.FrameNested",
+             "KernelReplay.FrameJoint",
+             "KernelReplay.FrameFrontier",
+             "KernelReplay.FrameOwners",
+             "KernelReplay.FrameOperand",
+             "KernelReplay.FrameStorage",
+             "KernelReplay.FramePublic",
+             "KernelReplay.GuardDependencyControls",
+             "KernelReplay.GuardJointPublicAudit",
+             "KernelReplay.DecisionTrace",
+             "KernelReplay.CoefficientSuffix",
+             "KernelReplay.CoefficientMembers",
              "KernelReplay.FiniteDependencies",
+             "KernelReplay.CoefficientLookup",
+             "KernelReplay.PackingLookup",
              "KernelReplay.LookupReplay",
              "KernelReplay.ProofAudit",
-             "KernelReplay.AxiomClosure", "KernelReplay.AxiomClosureTest",
+             "KernelReplay.AxiomClosure", "KernelReplay.AxiomClosureNative", "KernelReplay.AxiomClosureTest",
              "KernelReplay.AxiomClosureImports", "KernelReplay.SupportAudit",
              "KernelReplay.ProviderHistoryAudit", "KernelReplay.RationalCodecAudit",
              "KernelReplay.FiniteRange",
+             "KernelReplay.FiniteChecks",
              "KernelReplay.CoefficientMembers", "KernelReplay.CoefficientEntry",
              "KernelReplay.FiniteBase", "KernelReplay.BaseLookup", "KernelReplay.FiniteLift", "KernelReplay.FiniteOperands",
              "KernelReplay.FiniteSupport", "KernelReplay.FiniteData", "KernelReplay.FiniteWitness", "KernelReplay.FiniteJoint",
@@ -222,6 +256,7 @@ def check() -> None:
              "HexRCF.PublicGraphCodec", "HexSignDet.PublicCodec",
              "HexSignDet.FieldChecks", "HexSignDetTheory", "HexRealClosure.BaseTests",
              "HexRealClosure.BaseJsonTests",
+             "HexRealClosure.SignatureCodecTests",
              "HexRealClosure.QAdjoinTests", "HexRealClosure.NumberField",
              "HexRealClosureTheory.NumberField", "HexRealClosure.NumberFieldConformance",
              "HexRealClosure.NumberFieldTower", "HexRealClosureTheory.NumberFieldTower",
@@ -368,6 +403,7 @@ def check() -> None:
         for path in sorted((ROOT / "conformance" / library).rglob("*.lean"))] + [
         ".".join(path.relative_to(ROOT / "bench").with_suffix("").parts)
         for path in sorted((ROOT / "bench" / "HexSignDetTheory" / "ProofProbe").rglob("*.lean"))]
+    roots += guard_roots()
     # Named roots remain mandatory; the glob also audits unnamed conformance
     # modules, including their own declarations and imported dependencies.
     roots = list(dict.fromkeys(roots))
