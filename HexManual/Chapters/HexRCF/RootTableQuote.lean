@@ -49,11 +49,11 @@ The proof uses the same selected positive embedding throughout. It does not
 assume a root, treat an infinitesimal as a real witness, or use the rational
 solver for an irrational coefficient.
 
-The fresh importing conformance module checks all 70 reachable example theorem
+The fresh importing conformance module checks all 71 reachable example theorem
 bodies and 14 definitions under the kernel producer guard, including private
 auxiliaries and the final witness. The complete axiom closure contains only
 `propext`, `Classical.choice` and `Quot.sound`. The stored polynomial request
-accounts for 1,224 proof nodes and the table request for 121,995; these are
+accounts for 1,825 proof nodes and the table request for 121,995; these are
 request accounting, not physical proof sharing or a speedup measurement.
 
 The retained prototype audit build took 40.499 seconds with a 3.1 GiB peak
