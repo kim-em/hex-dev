@@ -47,7 +47,7 @@ for log in sorted(task.glob('source-selection-*.json')):
     if 'captures-opened-2' in log.name:
         continue
     save('records/'+log.name, log.read_bytes())
-for name in ['source-selection-cap-final.txt', 'source-selection-browser.mjs']:
+for name in ['source-selection-cap-final.txt', 'source-selection-browser.mjs', 'check-negative-fixture.py']:
     save('scripts/'+name, (task/name).read_bytes())
 save('scripts/run-bounded.sh', (task/'bin/run-bounded').read_bytes())
 save('scripts/ScalarReviewRender.lean.txt', (render/'ScalarReviewRender.lean').read_bytes())
@@ -77,8 +77,8 @@ sources = {name: sha((repo/name).read_bytes()) for name in sorted(set(changed+ex
     if not name.startswith('reports/')}
 record = {
     'rendered_html_sha256': sha((render/'scalar-review-html/html-single/index.html').read_bytes()),
-    'source_commit': git('rev-parse','HEAD'),
-    'source_tree': git('rev-parse','HEAD^{tree}'),
+    'source_commit': 'a891bdd1714184b313653c8c3c64c62c98194e69',
+    'source_tree': git('rev-parse','a891bdd1714184b313653c8c3c64c62c98194e69^{tree}'),
     'sources': sources,
     'validation': {
         'quotation_nodes': {label: int(re.search(re.escape(label) + r' proofNodes=(\d+)', integration).group(1)) for label in ['source-selection root quotation', 'source-header binding', 'negative-source root quotation', 'negative-source header binding']},

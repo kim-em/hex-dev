@@ -53,7 +53,9 @@ descriptors and reject their swap. The negative descriptor has its own frozen
 subject and graph for the strict interval `(-3/2,-7/5)`; its exact header and
 negative alias are proved in the ordinary kernel. Unlike the positive case
 with two derivative requests, its empty request list selects by interval alone.
-The negative JSON fixture is emitted by the retained native proposal script;
+The negative JSON fixture is derived from the native proposal script’s `repr`
+output. The retained `scripts/check-negative-fixture.py` conversion parses that
+output and checks the fixture byte for byte;
 the existing `scripts/rcf/selected_literals.py --check` verifies its generated
 constructor module together with the other selected-root fixtures.
 

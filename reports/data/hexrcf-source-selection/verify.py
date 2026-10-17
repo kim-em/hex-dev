@@ -16,6 +16,8 @@ args = parser.parse_args()
 root = Path(__file__).resolve().parent
 repo = root.parents[2]
 record = json.loads((root / 'context.json').read_text())
+assert subprocess.check_output(['git', 'rev-parse', record['source_commit'] + '^{tree}'],
+    cwd=repo, text=True).strip() == record['source_tree']
 sha = lambda data: hashlib.sha256(data).hexdigest()
 for entry in record['artifacts']:
     raw = (root / entry['path']).read_bytes()
@@ -67,6 +69,9 @@ failed = json.loads((root / record['failed_browser']['artifacts'] /
     'source-selection-section-overflow.json').read_text())
 measured = max(target['overflow'] for viewport in failed for target in viewport['targets'])
 assert measured == record['failed_browser']['overflow_pixels']
+subprocess.run(['python3', str(root / 'scripts/check-negative-fixture.py'),
+    str(root / 'logs/source-selection-negative-emitter-1.log.gz'),
+    str(repo / 'conformance-fixtures/HexRCF/source-selection-negative.json')], check=True)
 if args.check_head:
     subprocess.run(['git', 'merge-base', '--is-ancestor', record['source_commit'], 'HEAD'],
         cwd=repo, check=True)
