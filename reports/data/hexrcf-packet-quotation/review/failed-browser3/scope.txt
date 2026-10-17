@@ -1,0 +1,1 @@
+Failed browser3 at rendered source3e5d19e113. Eight fresh PNGs and actual section metrics retained. Overflow39px in new narrow solution-list code. The old inspection.json was stale after the early failure and is intentionally excluded.

@@ -8,6 +8,7 @@ import VersoManual
 import HexRCF.RealCoefficients
 import HexRCF.ScalarQuoteCases
 import HexRCF.SharedQuoteCases
+import HexRCF.RecursiveScalarPublic
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -17,7 +18,7 @@ tag := "hex-rcf-root-quotation"
 %%%
 
 {name Hex.RCF.RealCoefficients.RootQuote.quote}`RootQuote.quote` accepts a Lean
-expression for an `Except String` replay reader. It returns the reconstructed
+expression for an `Except ε α` replay reader, including structured errors. It returns the reconstructed
 data and an ordinary-kernel equation from the original reader's `toOption` to
 `some` of that data. This is an acceptance proof for the supplied replay.
 The caller separately composes source binding and real interpretation before
@@ -79,7 +80,7 @@ also quotes the same frozen cubic independently of the original finite callback.
 Its fresh importing audit checks 188 actual generated theorem bodies under
 kernel producer diagnostics, with only the standard three axioms.
 
-The [cubic regression](../../../conformance/HexRCF/RootQuoteSource.lean) reads a
+The [cubic regression](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/RootQuoteSource.lean) reads a
 supplied replay for `X³−3` on the open interval `(−8,8)`. A fresh public consumer
 proves that the accepted descriptor retains the exact context, polynomial,
 endpoints and root-selection metadata. The same descriptor, interpreted through
@@ -275,3 +276,52 @@ restores all auxiliaries created earlier in the request.
 This scalar API does not reconstruct provider or predecessor histories,
 produce missing signs, or install a general source-goal solver. The strict
 compiled missing-record obligation for whole readers remains separate.
+
+`ScalarQuote.decoderWith` composes checked scalar decoding through several
+selected-field predecessors. Its lookup receives each exact canonical codec
+expression and supplies the sign facts already checked for that context. The
+rational callback handles the base field; every nested quote shares the enclosing
+request's budget and transaction. A declining lookup can be probed again after
+reduction; its charges are retained on every call.
+
+```lean
+open Lean Hex.RealFormula in
+open Hex.RCF.RealCoefficients in
+meta def quoteSelectedReader
+    (reader registry : Expr)
+    (factsFor :
+      Expr → Reify.ReifyM
+        (Option Expr)) :=
+  RootQuote.run reader
+    (ScalarQuote.decoderWith factsFor
+      (fun expression =>
+        liftM <| RationalQuote.decoder
+          registry expression))
+```
+
+The two-level regression checks one visit to its selected context followed by
+one visit to its selected predecessor. Its lookup adds 19 source nodes per visit;
+the two charges retain 38 source nodes. It uses 14,374 proof nodes; one node less
+exhausts
+at the final 925-node charge after 13,449 consumed nodes. Missing facts decline
+without proposing another decode to the base callback after refusal.
+Wrong-context facts and exhaustion remain terminal and restore the enclosing state.
+Generic kernel-error restoration is covered by the root-quotation regressions.
+
+An ordinary `module` consumer also runs the callback factory and exports the
+checked scalar reader equation. Its sign follows from the owner's restoration
+law, without unfolding the stored element's implementation:
+
+```lean
+open Hex.RCF.RecursiveScalarPublic in
+example : restored.sign = 1 := sign
+```
+
+A fresh importing audit checks the two-level fixture and this public consumer,
+including accepted annotated decodes and a charged decline followed by acceptance:
+87 actual theorem bodies and five definitions, complete standard-three axiom
+closure, and no native producer or canonical-codec reduction. The direct constant
+and annotated cases use 12,792 and 12,801 proof nodes. A successful inner decline
+and retry uses 15,069 proof nodes and retains all three 19-node source charges.
+This helper consumes explicit facts; it does not authenticate original source expressions, discover
+predecessor histories, produce missing sign evidence or install the general tactic.

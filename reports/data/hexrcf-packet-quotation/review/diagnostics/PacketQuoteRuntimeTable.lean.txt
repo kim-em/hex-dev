@@ -1,0 +1,10 @@
+import PacketQuoteTable
+import PacketQuoteRuntimeCompiled
+namespace Hex.RCF.PacketQuoteTests
+open Hex.RCF.RealCoefficients
+-- The emitted polynomial definition has been explicitly compiled.
+def compiledTable := readTable CellReplayTests.Algebraic.Records.facts compiledInput
+/-- info: true -/
+#guard_msgs in
+#eval compiledTable.isOk
+end Hex.RCF.PacketQuoteTests

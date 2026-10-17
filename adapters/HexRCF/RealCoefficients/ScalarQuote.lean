@@ -226,15 +226,16 @@ def quoteDecodeWith (reader facts : Expr)
   accountProof reader
   let reader ← Hex.RCF.checkExpr `ScalarQuote.reader reader
   Meta.check reader
-  let (codec,literal,projected) ← match reader.getAppFn with
+  let inspected := reader.consumeMData
+  let (codec,literal,projected) ← match inspected.getAppFn.consumeMData with
     | .proj ``ValueCodec 1 codec =>
-      unless reader.getAppNumArgs == 1 do
+      unless inspected.getAppNumArgs == 1 do
         throwError "rcf: scalar quotation expects a complete decode projection"
-      pure (codec,reader.appArg!,true)
+      pure (codec,inspected.appArg!,true)
     | .const ``ValueCodec.decode _ =>
-      unless reader.getAppNumArgs == 3 do
+      unless inspected.getAppNumArgs == 3 do
         throwError "rcf: scalar quotation expects a complete decode application"
-      pure (reader.getAppArgs[1]!,reader.getAppArgs[2]!,false)
+      pure (inspected.getAppArgs[1]!,inspected.getAppArgs[2]!,false)
     | _ => throwError "rcf: scalar quotation expects a ValueCodec decode"
   let result ← quoteWith codec facts literal decode
   let mut proof := result.proof
@@ -276,5 +277,47 @@ def quote (codec facts literal : Expr) (decode : RootQuote.Decoder := fun _ => p
     MetaM (Except Hex.RealFormula.Reify.Error RootQuote.Result) :=
   RootQuote.runWith
     (quoteWith codec facts literal (fun expression => liftM (decode expression))) config usage
+
+/-- Build a recursive predecessor callback from checked sign-fact inputs.
+The lookup receives the exact canonical codec expression; return `none` when
+no facts are supplied. Noncanonical decodes are proposed only by `base`.
+Every selected-field stage uses `quoteDecodeWith`, preserving the original
+codec and charging the same reflection request. Missing facts decline without
+running a canonical decoder. Errors, exhaustion and recursion limits remain
+terminal. The enclosing `RootQuote.runWith` transaction restores state.
+Each callback probe is charged, including probes delegated to `base`. A declining
+lookup can be probed again after reduction; lookups must tolerate repeated calls.
+This consumes explicit facts; it does not discover or authenticate histories. -/
+partial def decoderWith (factsFor : Expr → ReifyM (Option Expr))
+    (base : RootQuote.DecoderM := fun _ => pure none) (reader : Expr) :
+    ReifyM (Option Expr) := Core.withIncRecDepth do
+  charge .proofNodes 1
+  Core.checkSystem "recursive scalar quotation"
+  let inspected := reader.consumeMData
+  let codec? ← match inspected.getAppFn.consumeMData with
+    | .proj ``ValueCodec 1 codec => do
+      unless inspected.getAppNumArgs == 1 do
+        throwError "rcf: recursive scalar quotation expects a complete decode projection"
+      pure (some codec)
+    | .const ``ValueCodec.decode _ => do
+      unless inspected.getAppNumArgs == 3 do
+        throwError "rcf: recursive scalar quotation expects a complete decode application"
+      pure (some inspected.getAppArgs[1]!)
+    | _ => pure none
+  let some codec := codec? | return ← base reader
+  unless codec.getAppFn.isConstOf ``Algebraic.Element.codec do return ← base reader
+  let parameters := (← getConstInfo ``Algebraic.Element.codec).type.getNumHeadForalls
+  unless codec.getAppNumArgs == parameters do
+    throwError "rcf: recursive scalar quotation expects a complete canonical codec"
+  let some facts ← factsFor codec | return none
+  let result ← quoteDecodeWith reader facts (decoderWith factsFor base)
+  let valueType ← inferType result.value
+  let proof := mkAppN (mkConst ``RootQuote.read_eq)
+    #[mkConst ``String,valueType,reader,result.value,result.proof]
+  let output := mkAppN (mkConst ``Except.ok [0,0])
+    #[mkConst ``String,valueType,result.value]
+  let statement ← mkEq reader output
+  accountProof proof
+  return some (← Hex.RCF.checkProof `ScalarQuote.recursive statement proof)
 
 end Hex.RCF.RealCoefficients.ScalarQuote
