@@ -1,0 +1,49 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+module
+public import HexRCF.RealCoefficients.ScalarQuote
+public import HexRCF.RootQuoteData
+public meta import HexRCF.RealCoefficients.ScalarQuote
+public section
+open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
+namespace Hex.RCF.PolynomialQuotePublic
+set_option maxHeartbeats 12000000
+set_option maxRecDepth 32768
+
+abbrev Context := Algebraic.Context RootQuoteTests.base.Value Tower.Signature
+  RootQuoteTests.base.sign RootQuoteTests.base.signature
+
+@[expose] def reader (context : Context) : Except String (DensePoly (Algebraic.Element context)) :=
+  Codec.readPoly (Algebraic.Element.codec (context := context) RootQuoteTests.base.codec) (.array .nil)
+@[expose] def facts (context : Context) : List (Algebraic.SignFact context) := []
+
+run_meta do
+  withExporting (isExporting := false) do
+    forallTelescope (← inferType (mkConst ``reader)) fun arguments _ => do
+      let supplied := mkAppN (mkConst ``reader) arguments
+      let some original ← unfoldDefinition? supplied
+        | throwError "public polynomial reader unavailable"
+      let .ok result ← RootQuote.runWith
+          (ScalarQuote.quotePolyWith original (mkAppN (mkConst ``facts) arguments) (fun e => do
+            let text ← withOptions (fun o => pp.deepTerms.threshold.set (pp.proofs.set o false) 6) (ppExpr e)
+            IO.eprintln s!"public reader demand: {text}"
+            pure none))
+        | throwError "public polynomial quotation failed"
+      let statement ← mkEq (← mkAppM ``Except.toOption #[supplied])
+        (← mkAppM ``Option.some #[result.value])
+      let proof ← Hex.RCF.checkProof `publicPolynomial statement result.proof
+      let statement ← mkForallFVars arguments statement
+      let proof ← mkLambdaFVars arguments proof
+      withExporting (isExporting := true) do
+        addDecl (.thmDecl {
+          name := `Hex.RCF.PolynomialQuotePublic.reader_checked,levelParams := [],
+          type := statement,value := proof})
+
+/-- The actual emitted polynomial proof is usable by an ordinary module consumer. -/
+theorem accepted (context : Context) : (reader context).toOption.isSome = true := by
+  rw [reader_checked context]
+  rfl
+end Hex.RCF.PolynomialQuotePublic
