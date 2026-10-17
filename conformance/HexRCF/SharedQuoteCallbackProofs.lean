@@ -14,13 +14,18 @@ set_option maxHeartbeats 12000000
 set_option maxRecDepth 32768
 run_meta do
   let roots := #[``SharedQuoteCallbacks.read_checked,``SharedQuoteCallbacks.coordinate_sign,
-    ``SharedQuoteCallbacks.predecessor_read,``PolynomialQuotePublic.accepted]
+    ``SharedQuoteCallbacks.predecessor_read,``SharedQuoteCallbacks.bare_read,
+    ``SharedQuoteCallbacks.constant_read,``PolynomialQuotePublic.accepted,
+    ``PolynomialQuotePublic.nonzero_accepted,``PolynomialQuotePublic.coefficient_count]
   let axioms ← Algebraic.KernelReplay.AxiomClosure.collect roots
   unless axioms == (#[``propext,``Classical.choice,``Quot.sound].qsort Name.lt) do
     throwError "unexpected complete callback/public quotation axiom closure: {axioms}"
   let dependencies ← Hex.RCF.ProofEvidence.projectDependencies roots
   for required in #[``ScalarQuote.accepted,``Codec.readPoly_refines,
-      ``Algebraic.Element.signCodec_sound,``Algebraic.Context.signPoly_const] do
+      ``Algebraic.Element.signCodec_sound,``Algebraic.Context.signPoly_const,
+      ``ScalarQuote.polynomialAccepted,``ScalarQuote.normalizedBack,
+      ``Algebraic.Element.restore_sign,``Algebraic.Element.sign_eq_zero,
+      ``DensePoly.ofCoeffs_toArray] do
     unless dependencies.contains required do throwError "callback quotation omitted law: {required}"
   let modules := (← getEnv).header.moduleNames
   let mut theorems : Array Name := #[]
@@ -49,7 +54,7 @@ run_meta do
           throwError "callback quotation reduced native producer {producer}: {count}; body={name}"
         if !diagnostics.unfoldCounter.isEmpty then reductions := reductions+1
         setEnv (Kernel.enableDiag env false)
-  unless theorems.size == 18 && definitions.size == 8 && reductions > 0 do
+  unless theorems.size == 46 && definitions.size == 12 && reductions > 0 do
     throwError "callback quotation audit omitted bodies or reduction diagnostics"
   logInfo m!"callback/public quotation: {theorems.size} theorem bodies, {definitions.size} definitions"
   logInfo m!"callback theorem inventory: {theorems.qsort Name.lt}"

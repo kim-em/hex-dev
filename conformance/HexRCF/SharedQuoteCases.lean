@@ -49,7 +49,7 @@ run_meta do
   withExporting (isExporting := false) do
     let .ok result ← quotePoly decoder
       | throwError "shared scalar/poly quotation failed"
-    unless result.usage.proofNodes == 1066 do
+    unless result.usage.proofNodes == 1577 do
       throwError "documented polynomial proof-node count changed: {result.usage.proofNodes}"
     logInfo m!"shared scalar/poly quotation proofNodes={result.usage.proofNodes}"
     let some expanded ← unfoldDefinition? (mkConst ``reader)
@@ -141,7 +141,7 @@ run_meta do
       return final
     let .ok combined ← RootQuote.runWith stages
       | throwError "composed scalar and polynomial quotation failed"
-    unless combined.usage.proofNodes == 1884 do
+    unless combined.usage.proofNodes == 2395 do
       throwError "documented composed proof-node count changed: {combined.usage.proofNodes}"
     unless combined.usage.sourceNodes == 7 do
       throwError "transaction runner returned stale usage after its final quote"

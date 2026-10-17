@@ -47,7 +47,7 @@ run_meta do
           throwError "shared value definition reduced native producer {producer}: {count}"
         setEnv (Kernel.enableDiag env false)
         definitions := definitions+1
-  unless checked == 6 do throwError "shared quotation body coverage changed: {checked}"
+  unless checked == 7 do throwError "shared quotation body coverage changed: {checked}"
   unless definitions == 3 do throwError "shared value definition coverage changed: {definitions}"
   logInfo m!"shared polynomial quotation: {checked} actual theorem bodies and {definitions} data definitions under kernel producer diagnostics; selected coefficient values and complete standard-three axiom closure"
 

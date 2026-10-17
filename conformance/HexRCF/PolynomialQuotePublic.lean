@@ -7,6 +7,7 @@ module
 public import HexRCF.RealCoefficients.ScalarQuote
 public import HexRCF.RootQuoteCases
 public meta import HexRCF.RealCoefficients.ScalarQuote
+public meta import HexRCF.RealCoefficients.RationalQuote
 public section
 open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
 namespace Hex.RCF.PolynomialQuotePublic
@@ -22,9 +23,11 @@ run_meta do
   withExporting (isExporting := false) do
     let some original ← unfoldDefinition? (mkConst ``reader)
       | throwError "public polynomial reader unavailable"
-    let .ok result ← RootQuote.runWith
+    let outcome ← RootQuote.runWith
         (ScalarQuote.quotePolyWith original (mkConst ``facts))
-      | throwError "public polynomial quotation failed"
+    let result ← match outcome with
+      | .ok result => pure result
+      | .error error => throwError "public polynomial quotation failed: {Hex.RealFormula.Reify.Error.toMessageData error}"
     let statement ← mkEq (← mkAppM ``Except.toOption #[mkConst ``reader])
       (← mkAppM ``Option.some #[result.value])
     let proof ← Hex.RCF.checkProof `publicPolynomial statement result.proof
@@ -37,4 +40,44 @@ run_meta do
 theorem accepted : reader.toOption.isSome = true := by
   rw [reader_checked]
   rfl
+@[expose] def coordinate : DensePoly RootQuoteTests.base.Value := DensePoly.C 1
+
+theorem coordinate_sign : context.signPoly coordinate = 1 :=
+  (Algebraic.Context.signPoly_const context coordinate (DensePoly.size_C_le_one _)).trans
+    ((congrArg RootQuoteTests.base.sign (DensePoly.coeff_C (1 : RootQuoteTests.base.Value) 0)).trans
+      (by decide +kernel))
+
+@[expose] def nonzeroFacts : List (Algebraic.SignFact context) := [⟨coordinate,1,coordinate_sign⟩]
+@[expose] def literal : Codec.Json := .array (.cons
+  (.array (.cons (.array (.cons RootQuoteTests.j6 .nil)) (.cons (.number 1) .nil))) .nil)
+@[expose] def nonzeroReader := Codec.readPoly
+  (Algebraic.Element.codec (context := context) RootQuoteTests.base.codec) literal
+
+run_meta do
+  withExporting (isExporting := false) do
+    let some original ← unfoldDefinition? (mkConst ``nonzeroReader)
+      | throwError "public nonzero polynomial reader unavailable"
+    let outcome ← RootQuote.runWith
+        (ScalarQuote.quotePolyWith original (mkConst ``nonzeroFacts)
+          (fun e => liftM (RationalQuote.decoder (mkConst ``RootQuoteTests.registry) e)))
+    let result ← match outcome with
+      | .ok result => pure result
+      | .error error => throwError "public nonzero polynomial quotation failed: {Hex.RealFormula.Reify.Error.toMessageData error}"
+    let statement ← mkEq (← mkAppM ``Except.toOption #[mkConst ``nonzeroReader])
+      (← mkAppM ``Option.some #[result.value])
+    let proof ← Hex.RCF.checkProof `publicNonzeroPolynomial statement result.proof
+    withExporting (isExporting := true) do
+      addDecl (.thmDecl {
+        name := `Hex.RCF.PolynomialQuotePublic.nonzero_read_checked,levelParams := [],
+        type := statement,value := proof})
+
+/-- A stored nonzero coefficient exercises decoding and the ordinary emitted bridge. -/
+theorem nonzero_accepted : nonzeroReader.toOption.isSome = true := by
+  rw [nonzero_read_checked]
+  rfl
+
+theorem coefficient_count : nonzeroReader.toOption.map DensePoly.size = some 1 := by
+  rw [nonzero_read_checked]
+  rfl
+
 end Hex.RCF.PolynomialQuotePublic

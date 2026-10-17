@@ -106,7 +106,8 @@ with the environment effects of accepted callbacks. Rejection and failure restor
 the complete saved state.
 
 Canonical `Element.codec` decodes remain protected throughout quotation,
-including predecessor decodes. Supply a checked equation for that exact decode
+including predecessor decodes with an explicit `Element.codec` head. Expand codec
+aliases first; that protection does not cover aliases. Supply a checked equation for that exact decode
 through the callback; without one the call fails closed. A `DecoderM` returns
 `none` to decline a proposal. A structured error is terminal, including one
 named `providerDeclined`. The nested polynomial conformance fixture uses an
@@ -117,14 +118,18 @@ second coefficient sign, trailing zeros and malformed reader heads.
 including its primitive projection form. Projection transport and nested reader
 steps are checked with an abstract codec before applying the concrete codec
 and its checked equation. The original reader expression must expose that
-predecessor codec; expand a hiding definition first. A late rejection restores
+predecessor codec; expand a hiding definition first. Dependent proof terms may
+prevent abstraction; type and kernel failures remain terminal. A late rejection restores
 the completed callback's auxiliaries. The fresh importing audit rechecks all
-18 reachable callback/module theorem bodies and eight definitions, forbidding
+46 reachable callback/module theorem bodies and 12 definitions, forbidding
 both native producers and canonical-codec unfolding. Exact and one-below nested
-budgets also cover the added transport work.
+budgets also cover the added transport work: 9,141 proof nodes, with exhaustion
+at the final 1,006-node charge after 8,135 nodes were consumed. The predecessor
+callback is required to run exactly once and retain 17 source nodes.
 
-The quote regressions use `maxHeartbeats := 12000000` and `maxRecDepth := 8192`;
-the fresh body audit uses depth 32768. Success under Lean's default limits has
+All quotation regressions use `maxHeartbeats := 12000000`. The original root
+cases use `maxRecDepth := 8192`; scalar, shared, callback/module examples and
+fresh body audits use depth 32768. Success under Lean's default limits has
 not been established. Each rewrite motive contains the current reader, so
 proof storage and charged work can grow with the number of steps times the
 reader size. Larger packets can exhaust the default reflection budget.
@@ -191,8 +196,9 @@ facts reject before scalar callbacks run; malformed field counts, non-array
 literals and trailing polynomial zeros also reject. A successful call preserves
 the caller's metavariables. The ordinary bridge is tested in a `module` consumer
 that imports only the optional umbrella. A direct `ScalarQuote` module consumer
-also runs the actual polynomial quotation helper and uses its emitted proof
-in an ordinary theorem.
+also runs the actual polynomial quotation helper on zero and nonzero stored
+polynomials and uses its emitted proofs in ordinary theorems. The nested
+predecessor callbacks are tested separately in the importing audit.
 Assigned input metavariables are instantiated before size accounting; expanded
 readers, literals and facts have the same charges through assigned metavariables.
 The final transport charge is checked separately from the preflight charge.
@@ -203,7 +209,12 @@ The wrong-context test uses a fresh heartbeat epoch and an actual
 
 For a polynomial over the same selected extension,
 {name Hex.RCF.RealCoefficients.ScalarQuote.quotePolyWith}`ScalarQuote.quotePolyWith`
-quotes its finite sign reader and composes the owner's `Codec.readPoly_refines`.
+quotes the coefficient array through its finite sign reader and composes the
+owner's `Codec.readPoly_refines`. The stored final coefficient's public sign/zero
+laws certify the normalized-vector invariant. An empty vector is handled
+separately; a trailing zero rejects. The public polynomial roundtrip law then
+assembles the original reader equation without computing normalization or
+structural coefficient equality during proof checking.
 Pass the complete `Codec.readPoly` expression: the helper keeps its exact
 coefficient type, zero and equality instances, codec arguments and literal.
 The resulting equation concerns that original canonical polynomial reader.
@@ -237,12 +248,12 @@ example :
   value_zero
 ```
 
-The fresh importing audit pins six reachable theorem bodies and three data
+The fresh importing audit pins seven reachable theorem bodies and three data
 definitions, their actual owner refinement and supplied sign evidence, and
-the complete standard-three axiom closure. All pass the existing
-producer-reduction guard. This
-polynomial quote consumes 1,066 proof nodes; composing scalar and polynomial
-quotation consumes 1,884 in the same request. Assigned polynomial reader
+the complete standard-three axiom closure. All pass the producer-reduction guard, which also forbids canonical
+`Element.codec` unfolding. This
+polynomial quote consumes 1,577 proof nodes; composing scalar and polynomial
+quotation consumes 2,395 in the same request. Assigned polynomial reader
 metavariables have the same charges as their expanded inputs.
 
 `RootQuote.runWith` supplies the transaction for a sequence of `quoteWith`
