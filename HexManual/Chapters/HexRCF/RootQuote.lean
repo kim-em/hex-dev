@@ -19,7 +19,7 @@ tag := "hex-rcf-root-quotation"
 %%%
 
 {name Hex.RCF.RealCoefficients.RootQuote.quote}`RootQuote.quote` accepts a Lean
-expression for an `Except String` replay reader. It returns the reconstructed
+expression for an `Except ε α` replay reader, including structured errors. It returns the reconstructed
 data and an ordinary-kernel equation from the original reader's `toOption` to
 `some` of that data. This is an acceptance proof for the supplied replay.
 The caller separately composes source binding and real interpretation before
@@ -119,13 +119,16 @@ existing selected-root extension to require actual predecessor callbacks and
 retain their source charges. It also checks a bare protected decoder, a wrong
 second coefficient sign, trailing zeros and malformed reader heads.
 `ScalarQuote.quoteDecodeWith` retains the exact demanded decode expression,
-including its primitive projection form. Projection transport and nested reader
-steps are checked with an abstract codec before applying the concrete codec
+including its primitive projection form. `RootQuote` also transports accepted
+canonical callbacks for the constant `ValueCodec.decode` form through the
+same abstract codec; both forms have emitted proof-body regressions. Metadata
+annotations are ignored for classification while the original term is retained.
+Decode transport and nested reader steps are checked with an abstract codec before applying the concrete codec
 and its checked equation. The original reader expression must expose that
 predecessor codec; expand a hiding definition first. Dependent proof terms may
 prevent abstraction; type and kernel failures remain terminal. A late rejection restores
 the completed callback's auxiliaries. The fresh importing audit rechecks all
-47 reachable callback/module theorem bodies and 14 definitions, forbidding
+65 reachable callback/module theorem bodies and 14 definitions, forbidding
 both native producers and canonical-codec unfolding. Exact and one-below nested
 budgets also cover the added transport work: 9,143 proof nodes, with exhaustion
 at the final 1,006-node charge after 8,137 nodes were consumed. The predecessor

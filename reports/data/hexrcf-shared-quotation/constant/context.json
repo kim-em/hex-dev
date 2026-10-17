@@ -1,0 +1,160 @@
+{
+  "source_commit": "ab132e9bb12719fca68a2e7bed01ffa41bbd4fdc",
+  "sources": {
+    "adapters/HexRCF/RealCoefficients/RootQuote.lean": "4ec77993a5de3b79bf5fddd7e65a7af622997ea236178ac766b63b475595ace6",
+    "adapters/HexRCF/RealCoefficients/ScalarQuote.lean": "8795420f8ed8c540748eb4204c93df6e651d4550d104c4e8afcbff4cb8795664",
+    "conformance/HexRCF/SharedQuoteCallbacks.lean": "5c27874eba89ed1384b24dc8c600845e74d16e7b98d287444077b6881a4c3877",
+    "conformance/HexRCF/SharedQuoteCallbackProofs.lean": "a1d4f241c033f050c1245cac94eb08ac98a8a8f4e13ca455e87cde0466c30940",
+    "conformance/HexRCF/SharedQuoteCases.lean": "058adc839862a0534e6a2648983efbc8c258477521627b6314ec97a41ea1befa",
+    "conformance/HexRCF/SharedQuoteConformance.lean": "d487bf5793e3e61631c72527acb59f9b877cc9a9743ba94e9a5e10e7ccba292c",
+    "HexManual/Chapters/HexRCF/RootQuote.lean": "16c524edcafb9962f3ba5d24e85139ae26c640eba6f0dde5e812d710916d2e0e",
+    "lakefile.lean": "22a04fb17bab83a80cb176c520a8d8710aba6da367629b37ee4d64496a7f2823",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47"
+  },
+  "artifacts": [
+    {
+      "path": "logs/shared-quote-constant-callback-1.log.gz",
+      "sha256": "9a7be4bc558af0f58cfe883af9e92fbfa4bf788b6797b9ef17b9a1f4a21a4dd8",
+      "uncompressed_sha256": "770ebe11564b9129d246073b75fba60b689ee736dac71bfbf31562a08e137904",
+      "bytes": 9783
+    },
+    {
+      "path": "logs/shared-quote-constant-callback-2.log.gz",
+      "sha256": "7d2f21933edb4f18376858b0940146756fb647a937f46211972a5d9dd632e313",
+      "uncompressed_sha256": "4ede2584bf610a62b1369a62f50ad37466d137b39c924340269d0e9a7a73b679",
+      "bytes": 9786
+    },
+    {
+      "path": "logs/shared-quote-constant-validation-1.log.gz",
+      "sha256": "c29b45929c68503d2a982ba105305ed7acbd1000101cc2bc9567ea34a3bcf4d6",
+      "uncompressed_sha256": "76a25acdebb871d748a3431184e490f580ac720d1b2b78a1165338b30780b415",
+      "bytes": 10854
+    },
+    {
+      "path": "logs/shared-quote-constant-metadata-0.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 20
+    },
+    {
+      "path": "logs/shared-quote-constant-metadata-1.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 20
+    },
+    {
+      "path": "logs/shared-quote-constant-metadata-2.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 20
+    },
+    {
+      "path": "logs/shared-quote-constant-metadata-3.log.gz",
+      "sha256": "b409d67a3a037936236130f7dc5c82bc279551dcaa501f4fdee7275c7bc3baef",
+      "uncompressed_sha256": "d2dd145dfbb85665677c83dfa50f34878e648a170c291230b82ce0749ec0eb97",
+      "bytes": 99
+    },
+    {
+      "path": "logs/shared-quote-constant-metadata-4.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 20
+    }
+  ],
+  "metadata": [
+    {
+      "argv": [
+        "python3",
+        "scripts/check_dag.py"
+      ],
+      "exit_code": 0,
+      "log": "logs/shared-quote-constant-metadata-0.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_copyright_headers.py"
+      ],
+      "exit_code": 0,
+      "log": "logs/shared-quote-constant-metadata-1.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_file_line_counts.py"
+      ],
+      "exit_code": 0,
+      "log": "logs/shared-quote-constant-metadata-2.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/ci/check_named_admissions.py"
+      ],
+      "exit_code": 0,
+      "log": "logs/shared-quote-constant-metadata-3.log.gz"
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "logs/shared-quote-constant-metadata-4.log.gz"
+    }
+  ],
+  "validation": {
+    "log": "logs/shared-quote-constant-validation-1.log.gz",
+    "jobs": 11788,
+    "elapsed": "41.166s",
+    "cpu": "1min16.733s",
+    "memory_peak": "1.8GiB",
+    "swap": 0,
+    "command": [
+      "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+      "env",
+      "LAKE_NO_CACHE=true",
+      "lake",
+      "build",
+      "HexRCF",
+      "HexRCFRealCoefficients",
+      "+HexRCF.SharedQuoteCallbackProofs",
+      "+HexRCF.SharedQuoteConformance",
+      "+HexRCF.ScalarQuoteConformance",
+      "+HexRCF.RationalQuoteConformance",
+      "+HexRCF.RootQuoteConformance",
+      "+HexRCF.NamedConstantProofs",
+      "+HexRCF.HandlerTests",
+      "+HexRCF.ReifyTests",
+      "+HexRCF.DecisionTests",
+      "+HexManual.Chapters.HexRCF.RootQuote"
+    ]
+  },
+  "regression": {
+    "before": "callback1 fails unchanged guard: Context.signPoly1 in accepted constant callback step",
+    "after": "callback2 succeeds; existing generic codec abstraction now also handles complete constant ValueCodec.decode subjects",
+    "callback_count": 1,
+    "emitted_proof": "Hex.RCF.SharedQuoteCallbacks.constant_bare_read"
+  },
+  "audit": {
+    "theorems": 56,
+    "definitions": 14,
+    "standard_three_axioms": true,
+    "native_producers_forbidden": true,
+    "canonical_Element_codec_forbidden": true
+  },
+  "proof_nodes": {
+    "scalar": 818,
+    "polynomial": 1579,
+    "composed": 2397,
+    "nested": 9143,
+    "unchanged": true
+  },
+  "limits": "One shared hard32GiB service, MemorySwapMax0, LEAN_NUM_THREADS2",
+  "limitations": [
+    "Selected validation includes reused dependencies and is not ABBA/scaling/speedup evidence.",
+    "Affected manual chapter builds; earlier complete manual renders/captures remain separately source-bound. Exact-head CI validates the whole book.",
+    "Generic source/provider/predecessor authentication, whole extension completeness, remaining realization, strict compiled whole-reader arithmetic rejection and native stress remain separate."
+  ]
+}

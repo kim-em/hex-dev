@@ -1,0 +1,10 @@
+import Lake
+open Lake DSL
+package packetQuoteProbe
+require Hex from "/home/kim/.codex/tasks/hex-10358/packet-worktree"
+lean_lib PacketQuoteProbe
+lean_lib PacketQuoteTable
+lean_lib PacketQuoteInput
+lean_lib PacketQuoteRuntime
+lean_lib PacketQuoteAudit
+lean_lib PacketQuoteSemantics

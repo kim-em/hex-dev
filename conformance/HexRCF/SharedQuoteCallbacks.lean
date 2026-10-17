@@ -131,6 +131,31 @@ run_meta do
         (fun e => liftM (RationalQuote.decoder (mkConst ``Data.registry) e)))
       | throwError "constant projection decode helper failed"
     emit `Hex.RCF.SharedQuoteCallbacks.constant_read constant direct
+    let constantCalls ← IO.mkRef (0 : Nat)
+    let constantDecode : RootQuote.DecoderM := fun expression => do
+      if expression == constant then
+        constantCalls.modify (·+1)
+        let result ← ScalarQuote.quoteDecodeWith expression (mkConst ``Records.facts)
+          (fun e => liftM (RationalQuote.decoder (mkConst ``Data.registry) e))
+        return some (← mkAppM ``RootQuote.read_eq #[expression,result.value,result.proof])
+      decode expression
+    let .ok constantBare ← RootQuote.run constant constantDecode
+      | throwError "constant canonical codec did not reach its checked callback"
+    unless (← constantCalls.get) == 1 do
+      throwError "constant canonical codec callback count changed"
+    emit `Hex.RCF.SharedQuoteCallbacks.constant_bare_read constant constantBare
+    let tagged := mkMData (KVMap.empty.setNat `rcfQuotation 1) constant
+    let taggedCalls ← IO.mkRef (0 : Nat)
+    let taggedDecode : RootQuote.DecoderM := fun expression => do
+      if expression == tagged then
+        taggedCalls.modify (·+1)
+        return ← constantDecode constant
+      constantDecode expression
+    let .ok taggedBare ← RootQuote.run tagged taggedDecode
+      | throwError "annotated canonical codec did not reach its checked callback"
+    unless (← taggedCalls.get) == 1 do
+      throwError "annotated canonical codec callback count changed"
+    emit `Hex.RCF.SharedQuoteCallbacks.tagged_bare_read tagged taggedBare
     for bad in #[mkNatLit 7,mkAppN constant.getAppFn (constant.getAppArgs.extract 0 2)] do
       unchanged do
         rejected (RootQuote.runWith (ScalarQuote.quoteDecodeWith bad (mkConst ``Records.facts)))

@@ -1,0 +1,6 @@
+import PacketQuoteInput
+open Hex.RCF.PacketQuoteTests
+attribute [noinline] input
+/-- info: 3 -/
+#guard_msgs in
+#eval input.size
