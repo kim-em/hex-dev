@@ -291,7 +291,8 @@ meta def quoteSelectedReader
     (factsFor : Expr → Reify.ReifyM (Option Expr)) :=
   RootQuote.run reader
     (ScalarQuote.decoderWith factsFor
-      (fun expression => liftM (RationalQuote.decoder registry expression)))
+      (fun expression =>
+        liftM (RationalQuote.decoder registry expression)))
 ```
 
 The two-level regression visits both selected predecessors exactly once and
