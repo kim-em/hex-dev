@@ -70,10 +70,31 @@ theorem query_value {n : Nat} (h : query = some n) : n = 7 :=
     (fun n h k => some ⟨n,(query_value h).trans ((query_value k).symm.trans (query_value k))⟩)
     query rfl rfl
 
+@[expose] noncomputable def proofFunction : Option Nat :=
+  @Option.rec Nat
+    (fun result => ((input = result) → Nat) → (input = result) → Option Nat)
+    (fun f h => some (f h))
+    (fun _ f h => some (f h))
+    input (fun _ => 7) rfl
+
+@[expose] noncomputable def continuedFunction : Option Nat :=
+  @Option.rec Nat
+    (fun result => (input = result) → ((input = result) → Nat) → Option Nat)
+    (fun h f => some (f h))
+    (fun _ h f => some (f h))
+    input rfl (fun _ => 29)
+
 @[expose] noncomputable def dependentData : Option {n : Nat // n = 7} :=
   @Option.rec Nat (fun result => (input = result) → Fin (result.getD 0) → Option {n : Nat // n = 7})
     (fun _ _ => none)
     (fun n h _ => some ⟨n,input_value h⟩)
     input rfl ⟨0,by simp [input,gate_eq]⟩
+
+@[expose] noncomputable def dependentFunction : Option Nat :=
+  @Option.rec Nat
+    (fun result => ((input = result) → Fin (result.getD 0)) → (input = result) → Option Nat)
+    (fun _ _ => none)
+    (fun _ f h => some (f h).val)
+    input (fun _ => ⟨0,by simp [input,gate_eq]⟩) rfl
 
 end Hex.RCF.DependentQuote
