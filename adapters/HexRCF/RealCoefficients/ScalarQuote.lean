@@ -30,6 +30,25 @@ theorem accepted {E Ctx : Type} [Zero E] [DecidableEq E]
   rw [Algebraic.Element.signCodec_sound value facts literal a strict]
   rfl
 
+/-- A decoded vector already stored by a normalized polynomial is accepted
+without computing normalization or coefficient equality in the quoted proof. -/
+theorem polynomialAccepted {E : Type} [Zero E] [DecidableEq E]
+    (value : ValueCodec E) (literal : Codec.Json) (p : DensePoly E)
+    (checked : Codec.readArray value.decode literal = .ok p.toArray) :
+    Codec.readPoly value literal = .ok p := by
+  unfold Codec.readPoly
+  rw [checked]
+  simp only [bind, Except.bind, DensePoly.ofCoeffs_toArray]
+  simp [pure, Except.pure]
+
+/-- Certify the normalized-vector invariant from its final nonzero entry. -/
+theorem normalizedBack {E : Type} [Zero E] [DecidableEq E]
+    (values : Array E) (last : E) (checked : values.back? = some last)
+    (nonzero : last ≠ 0) : DensePolyNormalized values := by
+  right
+  intro zero
+  exact nonzero (Option.some.inj (checked.symm.trans zero))
+
 end Hex.RCF.RealCoefficients.ScalarQuote
 
 public meta section
@@ -102,7 +121,7 @@ def quotePolyWith (reader facts : Expr)
   unless reader.getAppFn.isConstOf ``Codec.readPoly && reader.getAppNumArgs == 5 do
     throwError "rcf: polynomial quotation expects a complete readPoly application"
   for (name, arity) in #[( ``RootQuote.read_eq,5),( ``RootQuote.read_some,5),
-      ( ``Codec.readPoly_refines,9)] do
+      ( ``Codec.readPoly_refines,9),( ``polynomialAccepted,7),( ``normalizedBack,7)] do
     let info ← getConstInfo name
     unless info.levelParams.isEmpty && info.type.getNumHeadForalls == arity do
       throwError "rcf: polynomial quotation bridge signature does not match: {name}"
@@ -114,7 +133,52 @@ def quotePolyWith (reader facts : Expr)
       soundness.type.getNumHeadForalls == codec.getAppNumArgs+4 do
     throwError "rcf: polynomial quotation sign-codec soundness signature does not match"
   let strictReader := mkAppN reader.getAppFn (args.set! 3 strict)
-  let result ← RootQuote.quoteWith strictReader decode
+  let arrayReader ← mkAppM ``Codec.readArray #[.proj ``ValueCodec 1 strict,args[4]!]
+  let arrayResult ← RootQuote.quoteWith arrayReader decode
+  -- Construct the normalized polynomial from this exact vector. Public sign
+  -- laws certify its last entry, so no private field or normalization proof
+  -- is recomputed while comparing dependent array-bound arguments.
+  let last ← whnf (← mkAppM ``Array.back? #[arrayResult.value])
+  let normalizedType ← mkAppM ``DensePolyNormalized #[arrayResult.value]
+  let normalized ← if last.isAppOfArity ``Option.none 1 then do
+    let sizeZero ← mkEq (← mkAppM ``Array.size #[arrayResult.value]) (mkNatLit 0)
+    let empty := mkExpectedPropHint (← mkEqRefl (mkNatLit 0)) sizeZero
+    let alternatives ← whnf normalizedType
+    pure (mkApp3 (mkConst ``Or.inl) alternatives.getAppArgs[0]! alternatives.getAppArgs[1]! empty)
+  else do
+    unless last.isAppOfArity ``Option.some 2 do
+      throwError "rcf: quoted coefficient vector has no literal final entry"
+    let value ← withoutModifyingEnv <| withFreshCache do
+      setReducibilityStatus ``Algebraic.Element.restore .irreducible
+      withTransparency .default (whnf last.appArg!)
+    unless value.getAppFn.isConstOf ``Algebraic.Element.restore do
+      abort (.providerFailure (.invalidProviderEvidence ⟨`Hex.RCF.RealCoefficients.RootQuote,0⟩
+        "literal reader rejected its supplied input") #[])
+    let parameters := value.getAppArgs
+    let signLaw := mkAppN
+      (mkConst ``Algebraic.Element.restore_sign value.getAppFn.constLevels!) parameters
+    let zeroLaw ← mkAppM ``Algebraic.Element.sign_eq_zero #[value]
+    let zero ← mkAppOptM ``Zero.zero #[some args[0]!,some args[1]!]
+    let proposition ← mkEq value zero
+    let nonzero ← liftM <| withLocalDeclD `zero proposition fun h => do
+      let signZero ← mkAppM ``Iff.mpr #[zeroLaw,h]
+      let contradiction := mkApp parameters.back! (← mkEqTrans (← mkEqSymm signLaw) signZero)
+      mkLambdaFVars #[h] contradiction
+    let back ← mkAppM ``Array.back? #[arrayResult.value]
+    let backType ← mkEq back last
+    let backProof := mkExpectedPropHint (← mkEqRefl last) backType
+    mkAppM ``normalizedBack #[arrayResult.value,value,backProof,nonzero]
+  let normalized := mkExpectedPropHint normalized normalizedType
+  accountProof normalized
+  let normalized ← Hex.RCF.checkProof `ScalarQuote.normalized normalizedType normalized
+  let polynomial := mkAppN (mkConst ``DensePoly.mk [0])
+    #[args[0]!,args[1]!,args[2]!,arrayResult.value,normalized]
+  let arrayType ← inferType arrayResult.value
+  let arrayChecked := mkAppN (mkConst ``RootQuote.read_eq)
+    #[mkConst ``String,arrayType,arrayReader,arrayResult.value,arrayResult.proof]
+  let strictChecked ← mkAppM ``polynomialAccepted #[strict,args[4]!,polynomial,arrayChecked]
+  let strictProof ← mkAppM ``RootQuote.read_some #[strictReader,polynomial,strictChecked]
+  let result : RootQuote.Result := {arrayResult with value := polynomial,proof := strictProof}
   let valueType ← inferType result.value
   let checked := mkAppN (mkConst ``RootQuote.read_eq)
     #[mkConst ``String,valueType,strictReader,result.value,result.proof]

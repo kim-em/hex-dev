@@ -230,19 +230,23 @@ private def checkedStep (current whole subject law : Expr) : ReifyM (Expr × Exp
         -- Kernel conversion of a concrete reader can evaluate its native decode.
         -- Check the step with an abstract codec and its equation first.
         let codecType ← inferType codec
-        let (kind,value) ← liftM <| withLocalDeclD `codec codecType fun placeholder => do
+        let prepared ← liftM <| withLocalDeclD `codec codecType fun placeholder => do
           let replace := fun (e : Expr) =>
             e.replace fun part => if part == codec then some placeholder else none
           let original := replace current
           if original == current then
-            throwError "rcf: expose the original reader's canonical predecessor codec before quotation"
+            return none
           let premise ← mkEq (replace subject) (replace rhs)
           withLocalDeclD `checked premise fun h => do
             let target ← mkEq original (replace next)
             let candidate := mkExpectedPropHint
               (← mkAppM ``congrArg #[replace motive,h]) target
-            return (← mkForallFVars #[placeholder,h] target,
+            return some (← mkForallFVars #[placeholder,h] target,
               ← mkLambdaFVars #[placeholder,h] candidate)
+        let some (kind,value) := prepared
+          | abort (.providerFailure (.invalidProviderEvidence
+              ⟨`Hex.RCF.RealCoefficients.RootQuote.boundary,0⟩
+              "expose the original reader's canonical predecessor codec before quotation") #[])
         accountProof kind
         accountProof value
         let step ← Hex.RCF.checkProof `RootQuote.codecStep kind value
@@ -353,7 +357,10 @@ without trying another rule. The caller supplies the enclosing transaction;
 `quote` provides that boundary for an ordinary `MetaM` callback.
 A canonical `Algebraic.Element.codec` decode stays protected: supply its exact
 checked equation through the callback, or quotation fails closed. The original
-reader expression must expose that codec; expand a hiding definition first. -/
+reader expression must expose that codec; expand a hiding definition first.
+This guarantee covers explicit `Element.codec` applications, not codec aliases.
+Dependent proof terms can make the abstraction ill-typed; kernel/type failures
+remain terminal. -/
 def quoteWith (reader : Expr) (decode : DecoderM := fun _ => pure none) : ReifyM Result :=
   quoteCore reader decode
 
