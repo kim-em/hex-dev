@@ -1,0 +1,58 @@
+[
+  {
+    "label": "desktop",
+    "kind": "example",
+    "text": "\n                    SourceSelection assembles a\nselector for an ordered coefficient tuple. Each coordinate is either inherited\nfrom the actual origin, a checked selected rational root, or a rational polynomial\nin an earlier generator. The earlier index has type Fin n before appending the\ncoordinate, so forward references and cycles cannot be represented. For example,\nthis plan describes a selected root, an inherited value, and the coordinate\nα² − 1 computed from that root:",
+    "viewport": 1440,
+    "scrollY": 251716,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "CODE",
+    "targetWidth": 740,
+    "targetScrollWidth": 740,
+    "descendantOverflow": 0,
+    "overflowElements": []
+  },
+  {
+    "label": "desktop",
+    "kind": "details",
+    "text": "\n                    exists_real composes\nthis generated uniqueness proof with the actual finite joint reader. It needs\nauthentication of the requested source tuple, real-value evidence for precisely\nthe inherited coordinates, the actual origin/provider history, a true joint row,\nand the signs of all supplied original divisor operands. Its conclusions retain\nthe coefficient identities, sample, matrix and nonzero guards at one reader.\nThe plan does not discover those inputs from arbitrary source syntax, construct\na frozen context certificate, establish root coverage or provide general tactic\nacceptance. The concrete frozen descriptor fixture uses non-module imports;\nthe library's generic selection and realization laws use ordinary module imports.",
+    "viewport": 1440,
+    "scrollY": 252139,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752,
+    "descendantOverflow": 0,
+    "overflowElements": []
+  },
+  {
+    "label": "narrow",
+    "kind": "example",
+    "text": "\n                    SourceSelection assembles a\nselector for an ordered coefficient tuple. Each coordinate is either inherited\nfrom the actual origin, a checked selected rational root, or a rational polynomial\nin an earlier generator. The earlier index has type Fin n before appending the\ncoordinate, so forward references and cycles cannot be represented. For example,\nthis plan describes a selected root, an inherited value, and the coordinate\nα² − 1 computed from that root:",
+    "viewport": 390,
+    "scrollY": 402098,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "CODE",
+    "targetWidth": 331,
+    "targetScrollWidth": 332,
+    "descendantOverflow": 1,
+    "overflowElements": []
+  },
+  {
+    "label": "narrow",
+    "kind": "details",
+    "text": "\n                    exists_real composes\nthis generated uniqueness proof with the actual finite joint reader. It needs\nauthentication of the requested source tuple, real-value evidence for precisely\nthe inherited coordinates, the actual origin/provider history, a true joint row,\nand the signs of all supplied original divisor operands. Its conclusions retain\nthe coefficient identities, sample, matrix and nonzero guards at one reader.\nThe plan does not discover those inputs from arbitrary source syntax, construct\na frozen context certificate, establish root coverage or provide general tactic\nacceptance. The concrete frozen descriptor fixture uses non-module imports;\nthe library's generic selection and realization laws use ordinary module imports.",
+    "viewport": 390,
+    "scrollY": 402935,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343,
+    "descendantOverflow": 0,
+    "overflowElements": []
+  }
+]

@@ -1,0 +1,38 @@
+{
+  "source_commit": "33ab55f45c019b4928f017fe5207df97b59421e6",
+  "images": [
+    {
+      "name": "source-selection-desktop-example.png",
+      "sha256": "a5294037cc8aff679727bde6aafbaa1c6d1b00906980e2c7e231c84f0023380b"
+    },
+    {
+      "name": "source-selection-desktop-details.png",
+      "sha256": "a10e770180a1177c12b16d2cea06754465300411c3d178078caf2d3b2693e183"
+    },
+    {
+      "name": "source-selection-desktop-builder.png",
+      "sha256": "2a1e9699a614d2b969136754744ca1685b45fc4c8c072abde1a5377ce2bbde86"
+    },
+    {
+      "name": "source-selection-desktop-scope.png",
+      "sha256": "ece3cf72e940e64b6451aac78e2d76640443e5f6060a40019606562d2a5d94f9"
+    },
+    {
+      "name": "source-selection-narrow-example.png",
+      "sha256": "42dc16c51bb71004865dac2e1472ae8b393b485cdae6da027849da3fcddf30cd"
+    },
+    {
+      "name": "source-selection-narrow-details.png",
+      "sha256": "07ec98442683a50150e3e14658e4cde77fef775a555f1214ebb709b3d4b5f2ff"
+    },
+    {
+      "name": "source-selection-narrow-builder.png",
+      "sha256": "71c806bdd85032d98de840932a3ab3a78921410aa3a59c757652a969ad97e66a"
+    },
+    {
+      "name": "source-selection-narrow-scope.png",
+      "sha256": "8c32ed9d7acf6dcf92601e810365245cb073dff871008c154bee181d86037255"
+    }
+  ],
+  "inspection": "All eight images opened and visually checked. Local changed-section metrics: nine targets at each width; desktop max0px, narrow max1px in first code block; builder max0px. This does not assert global page overflow is zero."
+}
