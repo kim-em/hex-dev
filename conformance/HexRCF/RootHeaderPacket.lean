@@ -15,11 +15,11 @@ public meta import HexRCF.RealCoefficients.ScalarPacketQuote
 public meta import HexRCF.RealCoefficients.RationalQuote
 public meta import HexRCF.RealCoefficients.RootQuote
 public meta import HexRCF.RealCoefficients.RootHeader
+public meta import HexRCF.RealCoefficients.SignatureQuote
 public section
 
-/-! Quote the original scalar-packet reader from a public module. Context slots
-retain the canonical encoder expression; a fully numerical frozen-context
-fixture requires the separate public encoding equation from the owner. -/
+/-! Quote the original scalar-packet reader from a public module. Every graph
+field, including complete context signatures, retains frozen JSON data. -/
 
 open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
 namespace Hex.RCF.RootHeaderPacket
@@ -61,9 +61,22 @@ run_meta do
   .array (.cons RootQuoteTests.j5 (.cons RootQuoteTests.j6 .nil))
 @[expose] noncomputable def model := RootQuoteTests.realModel
 
+/-- The complete rational predecessor identity, stored as literal data. -/
+abbrev signatureData : Codec.Json :=
+  .array (.cons (.array .nil) (.cons (.number 0) (.cons (.array .nil) .nil)))
+
+theorem signature_literal : signatureData = RootQuoteTests.base.signature.literal.toJson := by
+  rw [Tower.Context.base_signature]
+  unfold BaseContext.rational
+  rw [BaseContext.Context.signature_real,BaseContext.RealContext.keys_rational]
+  rfl
+
 /-- Construct numerical proposal data; its computation supplies no proof. -/
 private meta partial def jsonExpr : Codec.Json → MetaM Expr
-  | .number n => pure (mkApp (mkConst ``Codec.Json.Value.number) (mkIntLit n))
+  | .number n =>
+    let integer := if n < 0 then mkApp (mkConst ``Int.negSucc) (mkRawNatLit (n.natAbs-1))
+      else mkApp (mkConst ``Int.ofNat) (mkRawNatLit n.natAbs)
+    pure (mkApp (mkConst ``Codec.Json.Value.number) integer)
   | .array values => do
     let items ← values.toList.mapM jsonExpr
     let data := items.foldr
@@ -73,38 +86,14 @@ private meta partial def jsonExpr : Codec.Json → MetaM Expr
   | _ => throwError "public sign fixture expected numerical array data"
 
 
-/-- This public fixture uses the existing lawful signature encoder at node
-contexts. The separate fully frozen public fixture still needs the owner's
-encoding equation; no literal/encoding identity is assumed here. -/
-private meta def graphExpr (literal expected : Codec.Json) : MetaM Expr := do
-  let array := fun (items : List Expr) => mkApp (mkConst ``Codec.Json.Value.array)
-    (items.foldr (fun item rest => mkApp2 (mkConst ``Codec.Json.Values.cons) item rest)
-      (mkConst ``Codec.Json.Values.nil))
-  let .ok graph := literal.getArr? | throwError "public graph is not an array"
-  unless graph.size == 3 do throwError "public graph has the wrong width"
-  let .ok entries := graph[2]!.getArr? | throwError "public graph entries are not an array"
-  let signature ← mkAppM ``Tower.Context.signature #[mkConst ``RootQuoteTests.base]
-  let encoded ← mkAppM ``ValueCodec.encode #[mkConst ``Tower.Signature.codec,signature]
-  let entries ← entries.toList.mapM fun entry => do
-    let .ok fields := entry.getArr? | throwError "public graph entry is not an array"
-    unless fields.size == 2 do throwError "public graph entry has the wrong width"
-    let .ok node := fields[0]!.getArr? | throwError "public graph node is not an array"
-    unless node.size == 11 do throwError "public graph node has the wrong width"
-    unless node[0]! == expected do throwError "public graph node changed its context"
-    let .ok moments := node[7]!.getArr? | throwError "public moments are not an array"
-    let moments ← moments.toList.mapM fun moment => do
-      let .ok fields := moment.getArr? | throwError "public moment is not an array"
-      unless fields.size == 12 do throwError "public moment has the wrong width"
-      unless fields[0]! == expected do throwError "public moment changed its context"
-      return array (encoded :: (← (fields.toList.drop 1).mapM jsonExpr))
-    let tail ← (node.toList.drop 1).mapM jsonExpr
-    let tail := tail.toArray.set! 6 (array moments)
-    return array [array (encoded :: tail.toList),← jsonExpr fields[1]!]
-  return array [← jsonExpr graph[0]!,← jsonExpr graph[1]!,array entries]
-
 /-- Normalize demanded root bindings with the generated header equation.
-Canonical signature roundtrips use the default quotation rule. -/
+Frozen signature reads use the public full-literal equation at their exact
+checked subject. -/
 meta def decoder : RootQuote.DecoderM := fun expression => do
+  let signature ← mkAppM ``Tower.Context.signature #[mkConst ``RootQuoteTests.base]
+  if let some proof ← SignatureQuote.decoder signature (mkConst ``signatureData)
+      (mkConst ``signature_literal) expression then
+    return some proof
   if (expression.getUsedConstants.contains ``context ||
       expression.getUsedConstants.contains ``Hex.RCF.RootHeaderPacket.root) &&
       (← withTransparency .reducible <| whnf (← inferType expression)).isConstOf ``Bool then
@@ -131,10 +120,11 @@ run_meta do
     unless fields.size == 3 do throwError "public packet has the wrong width"
     let .ok sign := fields[1]!.getInt? | throwError "public packet has no sign"
     unless sign == 1 do throwError "public packet has the wrong proposed sign"
-    let signature ← mkAppM ``Tower.Context.signature #[mkConst ``RootQuoteTests.base]
-    let encoded ← mkAppM ``ValueCodec.encode #[mkConst ``Tower.Signature.codec,signature]
-    let expected ← evalExpr Codec.Json (mkConst ``Codec.Json.Value) encoded
-    let evidence ← graphExpr fields[2]! expected
+    let evidence ← jsonExpr fields[2]!
+    let constructors := #[``Codec.Json.Value.number,``Codec.Json.Value.array,
+      ``Codec.Json.Values.cons,``Codec.Json.Values.nil,``Int.ofNat,``Int.negSucc]
+    unless evidence.getUsedConstants.all constructors.contains do
+      throwError "public packet graph contains unexpected constants: {evidence.getUsedConstants.filter (fun name => !constructors.contains name)}"
     withExporting (isExporting := true) do
       let declaration := Declaration.defnDecl {
         name := `Hex.RCF.RootHeaderPacket.evidence,levelParams := [],
@@ -162,6 +152,7 @@ run_meta do
       addDecl (.thmDecl {
         name := `Hex.RCF.RootHeaderPacket.read_checked,levelParams := [],type := statement,value := proof})
     logInfo m!"ordinary module sign packet proofNodes={quoted.usage.proofNodes}"
+    logInfo "public scalar graph retains frozen numerical node and nested-moment signatures"
 
 theorem accepted :
     (ScalarPacket.read model RootQuoteTests.base.codec context polynomial 1 evidence).isSome = true := by

@@ -13,6 +13,7 @@ import HexRCF.SignPacketQuote
 import HexRCF.PublicSignPacketValues
 import HexRCF.RootHeaderValues
 import HexRCF.RootContextConformance
+import HexRCF.FrozenSignatureProofs
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -437,7 +438,7 @@ one budget and transaction. No pre-existing equation for the proposed root's
 header is required.
 
 The public regression constructs a new root and context from that result,
-quotes the sign packet for X, and decodes a coefficient using its fact. The
+quotes the sign packet for X with fully numerical graph fields, and decodes a coefficient using its fact. The
 coefficient denotes the newly reconstructed root and is positive:
 
 ```lean
@@ -460,8 +461,28 @@ The default quotation rules recognize `Signature.codec.decode` applied to the
 canonical encoding of its actual signature argument, using the existing public
 roundtrip law. This handles distinct signature subjects without a fixture
 callback. It does not connect a separately frozen numerical signature to that
-encoding. The latter still requires the owner's public literal bridge. These
-helpers consume supplied readers and histories; they do not discover an
+encoding. {name Hex.RCF.RealCoefficients.SignatureQuote.decoder}`SignatureQuote.decoder`
+uses the owner's public literal equation and a checked binding of the supplied
+JSON to its exact signature. It handles signature payloads selected from frozen
+graph fields without running the signature parser during proof construction.
+Distinct signature subjects, wrong bindings, exact budgets and one-node-below
+budgets are checked in a fresh importing regression:
+
+```lean
+open Hex.RCF.FrozenSignature in
+example : readFirst.toOption = some first :=
+  readFirst_checked
+
+open Hex.RCF.FrozenSignature in
+example : readSecond.toOption = some second :=
+  readSecond_checked
+```
+
+The cubic packet retains frozen numerical node and nested-moment signatures
+for its rational predecessor. A signature's serialization identity does not
+validate a registry or selected root, and does not construct literal bindings
+for arbitrary root frames in a deeper tower. These helpers consume supplied
+readers and histories; they do not discover an
 arbitrary real source's selected embedding or install the general tactic.
 
 

@@ -22,7 +22,8 @@ run_meta do
       throwError "root/header packet axiom closure changed: {axioms}"
     let dependencies ← Hex.RCF.ProofEvidence.projectDependencies roots
     for required in #[``Algebraic.Context.signPoly_checked,``ScalarPacket.fields,
-        ``Tower.Signature.codec_lawful,``Hex.RealClosure.Algebraic.RootReplay.readDescriptor_subject,
+        ``Tower.Signature.codec_lawful,``Tower.Signature.codec_literal,
+        ``Hex.RealClosure.Algebraic.RootReplay.readDescriptor_subject,
         ``Hex.RCF.RootHeaderPacket.raw_binding] do
       unless dependencies.contains required do throwError "root/header packet omitted {required}"
     for legacy in #[``Hex.RCF.RootQuoteTests.root_raw,``Hex.RCF.RootQuoteTests.subject_read,
@@ -59,7 +60,7 @@ run_meta do
             ``Descriptor.ofReplay?] then
         throwError "root/header packet reduced producer {producer}: {count}; body={name}"
       if !diagnostics.unfoldCounter.isEmpty then traces := traces+1
-    unless theorems == 665 && definitions == 65 && traces == 720 do
+    unless theorems == 674 && definitions == 66 && traces == 725 do
       throwError "root/header packet body inventory changed: {theorems}/{definitions}/{traces}"
     unless (← (← getEnv).getLocalConstantInfos).map (·.name) == originalNames do
       throwError "root/header packet audit retained declarations"

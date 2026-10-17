@@ -23,7 +23,8 @@ run_meta do
       throwError "root context axiom closure changed: {axioms}"
     let dependencies ← Hex.RCF.ProofEvidence.projectDependencies roots
     for required in #[``Algebraic.Context.signPoly_checked,``ScalarPacket.fields,
-        ``Tower.Signature.codec_lawful,``Hex.RealClosure.Algebraic.RootReplay.readDescriptor_subject,
+        ``Tower.Signature.codec_lawful,``Tower.Signature.codec_literal,
+        ``Hex.RealClosure.Algebraic.RootReplay.readDescriptor_subject,
         ``Hex.RCF.RootHeaderPacket.raw_binding] do
       unless dependencies.contains required do throwError "root context omitted {required}"
     for legacy in #[``Hex.RCF.RootQuoteTests.root_raw,``Hex.RCF.RootQuoteTests.subject_read,
@@ -62,7 +63,7 @@ run_meta do
       if let some (producer,count) := Hex.RCF.SelectedRootTests.KernelCheck.violation? diagnostics extra then
         throwError "root context reduced producer/encoder {producer}: {count}; body={name}"
       if !diagnostics.unfoldCounter.isEmpty then traces := traces+1
-    unless theorems == 673 && definitions == 67 && traces == 730 do
+    unless theorems == 682 && definitions == 68 && traces == 735 do
       throwError "root context body inventory changed: {theorems}/{definitions}/{traces}"
     unless (← (← getEnv).getLocalConstantInfos).map (·.name) == originalNames do
       throwError "root context audit retained declarations"

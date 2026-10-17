@@ -388,8 +388,7 @@ slots. It quotes a nonconstant scalar query, decodes a coefficient from that
 fact alone and proves its selected real value. Dependent branch proofs move
 by checked equality elimination; explicit replay functions remain abstract
 during conversion before instantiation. A fresh audit rechecks imported bodies
-with the unchanged producer guard. This does not supply the missing numerical
-signature equation or install the general tactic.
+with the unchanged producer guard. This does not install the general tactic.
 `RootHeader.quoteWith` reconstructs a root and independently parses its original
 raw subject through `RootReplay.readDescriptor_subject`. Their checked binding,
 quoted under one reflection budget, supplies the raw-root identity needed by a
@@ -397,8 +396,12 @@ subsequent scalar packet. The [public consumer](../conformance/HexRCF/RootHeader
 constructs a new root/context, and the [coefficient consumer](../conformance/HexRCF/RootHeaderValues.lean)
 proves its selected real value and positivity without the old fixture's root
 identity. Canonical signature roundtrips use the existing public law at the
-actual encoded subject; fully numerical signature authentication remains a
-separate owner boundary. This does not construct arbitrary origin histories.
+actual encoded subject. `SignatureQuote.decoder` consumes the owner's public
+literal equation and a checked binding to the exact supplied signature. The
+new cubic packet retains frozen numerical node and nested-moment signatures;
+the [fresh signature tests](../conformance/HexRCF/FrozenSignatureProofs.lean)
+check distinct subjects and wrong bindings. This does not authenticate arbitrary
+registries or construct origin histories or deeper frozen root frames.
 `RootContext.packWith` assembles the actual native child from a closed retained
 parent and a checked descriptor, retaining the owner's serialization expression
 and checking its signature. The [ordinary-model regression](../conformance/HexRCF/RootContextConformance.lean)
