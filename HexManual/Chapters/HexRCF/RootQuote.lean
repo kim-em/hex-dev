@@ -80,7 +80,7 @@ also quotes the same frozen cubic independently of the original finite callback.
 Its fresh importing audit checks 188 actual generated theorem bodies under
 kernel producer diagnostics, with only the standard three axioms.
 
-The [cubic regression](../../../conformance/HexRCF/RootQuoteSource.lean) reads a
+The [cubic regression](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/RootQuoteSource.lean) reads a
 supplied replay for `X³−3` on the open interval `(−8,8)`. A fresh public consumer
 proves that the accepted descriptor retains the exact context, polynomial,
 endpoints and root-selection metadata. The same descriptor, interpreted through
