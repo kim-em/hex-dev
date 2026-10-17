@@ -11,6 +11,7 @@ import HexRCF.SharedQuoteCases
 import HexRCF.RecursiveScalarPublic
 import HexRCF.SignPacketQuote
 import HexRCF.PublicSignPacketValues
+import HexRCF.RootHeaderValues
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -423,3 +424,41 @@ handled without consulting that callback.
 Wrong signs, changed polynomials and context swaps in either nodes or nested
 moments are checked refusal cases. These helpers consume supplied histories
 and evidence; they do not install the general real-coefficient tactic.
+
+
+{name Hex.RCF.RealCoefficients.RootHeader.quoteWith}`RootHeader.quoteWith`
+accepts the complete original `RootReplay.readDescriptor` application. It quotes
+that reader, obtains the independently parsed raw subject through the public
+`readDescriptor_subject` law, and checks that the reconstructed root has exactly
+that raw subject. All original instance arguments are retained. The caller runs
+the action inside `RootQuote.runWith`, so both reads and the final binding share
+one budget and transaction. No pre-existing equation for the proposed root's
+header is required.
+
+The public regression constructs a new root and context from that result,
+quotes the sign packet for X, and decodes a coefficient using its fact. The
+coefficient denotes the newly reconstructed root and is positive:
+
+```lean
+open Hex.RCF.RootHeaderPacket in
+example : coefficientReal = realRoot :=
+  coefficient_value
+
+open Hex.RCF.RootHeaderPacket in
+example : 0 < coefficientReal :=
+  coefficient_positive
+```
+
+The fresh importing audit includes the generated binding, packet reader,
+coefficient decoding and real-value proofs. It rejects dependencies on the
+older fixture's handwritten header and reader equations. Invalid root-reader
+versions and counts restore caller state; packet controls also change the
+polynomial, sign and node or nested-moment context.
+
+The default quotation rules recognize `Signature.codec.decode` applied to the
+canonical encoding of its actual signature argument, using the existing public
+roundtrip law. This handles distinct signature subjects without a fixture
+callback. It does not connect a separately frozen numerical signature to that
+encoding. The latter still requires the owner's public literal bridge. These
+helpers consume supplied readers and histories; they do not discover an
+arbitrary real source's selected embedding or install the general tactic.

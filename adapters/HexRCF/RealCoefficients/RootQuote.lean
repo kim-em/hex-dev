@@ -149,6 +149,30 @@ private def codecProof? (decode : DecoderM) (expression : Expr) : ReifyM (Option
       let type ← inferType proof
       if ← withTransparency .all <| withNewMCtxDepth (isDefEq expression type.getAppArgs[1]!) then
         return some proof
+  let signatureCodec? := match expression.getAppFn with
+    | .proj ``ValueCodec 1 codec =>
+      if expression.getAppNumArgs == 1 then some codec else none
+    | .const ``ValueCodec.decode _ =>
+      if expression.getAppNumArgs == 3 then some expression.getAppArgs[1]! else none
+    | _ => none
+  if let some codec := signatureCodec? then
+    if codec.isConstOf ``Tower.Signature.codec then
+      let payload ← withTransparency .all <| whnf expression.getAppArgs.back!
+      let signature? := match payload.getAppFn with
+        | .proj ``ValueCodec 0 encoder =>
+          if encoder.isConstOf ``Tower.Signature.codec && payload.getAppNumArgs == 1 then
+            some payload.appArg! else none
+        | .const ``ValueCodec.encode _ =>
+          if payload.getAppNumArgs == 3 && payload.getAppArgs[1]!.isConstOf ``Tower.Signature.codec then
+            some payload.getAppArgs[2]! else none
+        | _ => none
+      if let some signature := signature? then
+        let proof := mkApp (mkConst ``Tower.Signature.codec_lawful) signature
+        let kind ← inferType proof
+        let statement ← mkEq expression kind.getAppArgs[2]!
+        accountProof proof
+        return some (← Hex.RCF.checkProof `RootQuote.signature statement
+          (mkExpectedPropHint proof statement))
   let saved ← (saveState : MetaM SavedState)
   let candidate ← try decode expression catch error =>
     saved.restore

@@ -390,6 +390,15 @@ by checked equality elimination; explicit replay functions remain abstract
 during conversion before instantiation. A fresh audit rechecks imported bodies
 with the unchanged producer guard. This does not supply the missing numerical
 signature equation or install the general tactic.
+`RootHeader.quoteWith` reconstructs a root and independently parses its original
+raw subject through `RootReplay.readDescriptor_subject`. Their checked binding,
+quoted under one reflection budget, supplies the raw-root identity needed by a
+subsequent scalar packet. The [public consumer](../conformance/HexRCF/RootHeaderPacket.lean)
+constructs a new root/context, and the [coefficient consumer](../conformance/HexRCF/RootHeaderValues.lean)
+proves its selected real value and positivity without the old fixture's root
+identity. Canonical signature roundtrips use the existing public law at the
+actual encoded subject; fully numerical signature authentication remains a
+separate owner boundary. This does not construct arbitrary origin histories.
 `SectionQuote.finish` freshly reifies the original target and checks its matrix,
 valuation and ordered original-divisor identities before transporting a proof.
 The [fresh-source tests](../conformance/HexRCF/SectionProduceConformance.lean)
