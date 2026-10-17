@@ -24,12 +24,20 @@ run_meta do
     let some template ← unfoldDefinition? (mkConst ``PolynomialQuotePublic.nonzeroReader)
       | throwError "public canonical codec unavailable"
     let original := mkApp (mkConst ``reader) template.getAppArgs[3]!
-    let lookup : Expr → Hex.RealFormula.Reify.ReifyM (Option Expr) := fun _ =>
-      pure (some (mkConst ``PolynomialQuotePublic.nonzeroFacts))
+    let calls ← IO.mkRef (0 : Nat)
+    let lookup : Expr → Hex.RealFormula.Reify.ReifyM (Option Expr) := fun codec => do
+      calls.modify (·+1)
+      let context := codec.getAppArgs[codec.getAppNumArgs-2]!
+      unless ← withNewMCtxDepth <| withTransparency .reducible
+          (isDefEq context (mkConst ``PolynomialQuotePublic.context)) do
+        throwError "public callback received a different selected context"
+      return some (mkConst ``PolynomialQuotePublic.nonzeroFacts)
     let base : RootQuote.DecoderM := fun expression =>
       liftM (RationalQuote.decoder (mkConst ``RootQuoteTests.registry) expression)
     let .ok quoted ← RootQuote.run original (ScalarQuote.decoderWith lookup base)
       | throwError "ordinary module recursive callback failed"
+    unless (← calls.get) == 1 do
+      throwError "public single-level callback count changed"
     withExporting (isExporting := true) do
       let declaration := Declaration.defnDecl {
         name := `Hex.RCF.RecursiveScalarPublic.restored,levelParams := [],

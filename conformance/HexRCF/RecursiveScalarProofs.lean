@@ -13,7 +13,8 @@ namespace Hex.RCF.RecursiveScalarProofs
 set_option maxHeartbeats 12000000
 set_option maxRecDepth 32768
 run_meta do
-  let roots := #[``RecursiveScalarQuote.read_checked,``RecursiveScalarQuote.sign,
+  let roots := #[``RecursiveScalarQuote.read_checked,``RecursiveScalarQuote.constant_read,
+    ``RecursiveScalarQuote.sign,
     ``RecursiveScalarPublic.read_checked,``RecursiveScalarPublic.accepted,
     ``RecursiveScalarPublic.sign]
   let axioms ← Algebraic.KernelReplay.AxiomClosure.collect roots
@@ -27,7 +28,7 @@ run_meta do
   let originalNames := (← (← getEnv).getLocalConstantInfos).map (·.name)
   let mut theorems : Array Name := #[]
   let mut definitions : Array Name := #[]
-  let mut reductions := 0
+  let mut reductions : Nat := 0
   for name in dependencies.toArray do
     let some index := (← getEnv).getModuleIdxFor? name | continue
     unless #[`HexRCF.RecursiveScalarQuote,`HexRCF.RecursiveScalarPublic].contains modules[index]! do
@@ -53,9 +54,10 @@ run_meta do
     if !diagnostics.unfoldCounter.isEmpty then reductions := reductions+1
   unless (← (← getEnv).getLocalConstantInfos).map (·.name) == originalNames do
     throwError "recursive scalar audit retained temporary declarations"
-  unless theorems.size == 34 && definitions.size == 5 && reductions > 0 do
-    throwError "recursive scalar audit omitted actual bodies or diagnostics"
+  unless theorems.size == 51 && definitions.size == 5 && reductions > 0 do
+    throwError "recursive scalar audit inventory changed: {theorems.size} theorem bodies/{definitions.size} definitions; traces={reductions}"
   logInfo m!"recursive scalar quotation: {theorems.size} theorem bodies, {definitions.size} definitions"
+  logInfo m!"recursive scalar nonempty diagnostic traces: {reductions}"
   logInfo m!"recursive scalar theorem inventory: {theorems.qsort Name.lt}"
   logInfo m!"recursive scalar definition inventory: {definitions.qsort Name.lt}"
 end Hex.RCF.RecursiveScalarProofs

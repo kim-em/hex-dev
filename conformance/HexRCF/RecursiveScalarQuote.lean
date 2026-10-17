@@ -18,9 +18,15 @@ def reader (codec : ValueCodec (Algebraic.Element Upper.context)) :=
 private meta def config (limit : Nat) : Hex.RealFormula.Reify.Config :=
   {ring := {budget := {Hex.Reflect.Budget.default with proofNodes := limit}}}
 
-private meta def rejected (action : MetaM α) : MetaM Unit := do
+private meta def unchanged (action : MetaM Unit) : MetaM Unit := do
   let count := (← getMCtx).decls.toList.length
   let names := (← (← getEnv).getLocalConstantInfos).map (·.name)
+  action
+  unless (← getMCtx).decls.toList.length == count &&
+      (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
+    throwError "recursive rejection retained caller state"
+
+private meta def rejected (action : MetaM α) : MetaM Unit := unchanged do
   let failed ← (fun context state coreContext coreState => do
     try
       let _ ← action context state coreContext coreState
@@ -31,9 +37,6 @@ private meta def rejected (action : MetaM α) : MetaM Unit := do
       | .error _ _ => pure true
       | _ => throw error : MetaM Bool)
   unless failed do throwError "missing or mismatched recursive facts were accepted"
-  unless (← getMCtx).decls.toList.length == count &&
-      (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
-    throwError "recursive rejection retained caller state"
 
 run_meta do
   let some template ← unfoldDefinition? (mkConst ``SharedQuoteCallbacks.reader)
@@ -60,6 +63,10 @@ run_meta do
     throwError "recursive scalar accounting changed: {quoted.usage.proofNodes}"
   unless (← calls.get).size == 2 && quoted.usage.sourceNodes == 38 do
     throwError "recursive quotation did not visit both selected predecessors exactly once"
+  for (codec,expected) in (← calls.get).zip #[mkConst ``Upper.context,mkConst ``Data.native] do
+    let context := codec.getAppArgs[codec.getAppNumArgs-2]!
+    unless ← withNewMCtxDepth <| withTransparency .reducible (isDefEq context expected) do
+      throwError "recursive quotation visited a different context or order"
   logInfo m!"recursive scalar proofNodes={quoted.usage.proofNodes}; lookups=2; sourceNodes=38"
   let declaration := Declaration.defnDecl {
     name := `Hex.RCF.RecursiveScalarQuote.restored,levelParams := [],
@@ -74,12 +81,29 @@ run_meta do
   let .ok exact ← RootQuote.run original decode (config quoted.usage.proofNodes)
     | throwError "exact recursive scalar budget failed"
   unless exact.usage == quoted.usage do throwError "exact recursive usage changed"
-  let .error (.budget exhausted) ← RootQuote.run original decode (config (quoted.usage.proofNodes-1))
-    | throwError "one-below recursive scalar budget did not exhaust"
-  unless exhausted.dimension == .proofNodes && exhausted.consumed == 13449 &&
-      exhausted.requested == 925 do
-    throwError "recursive scalar exhaustion moved from the final925-node charge"
-  logInfo m!"recursive exhausted: consumed={exhausted.consumed}, requested={exhausted.requested}"
+  unchanged do
+    let .error (.budget exhausted) ← RootQuote.run original decode (config (quoted.usage.proofNodes-1))
+      | throwError "one-below recursive scalar budget did not exhaust"
+    unless exhausted.dimension == .proofNodes && exhausted.consumed == 13449 &&
+        exhausted.requested == 925 do
+      throwError "recursive scalar exhaustion moved from the final925-node charge"
+    logInfo m!"recursive exhausted: consumed={exhausted.consumed}, requested={exhausted.requested}"
+  calls.set #[]
+  let constant := mkApp3 (mkConst ``ValueCodec.decode) (← inferType quoted.value)
+    original.appArg! (mkConst ``SharedQuoteCallbacks.elementLiteral)
+  let constantCalls ← IO.mkRef (0 : Nat)
+  let .ok constantResult ← RootQuote.run constant (fun expression => do
+      if expression == constant then constantCalls.modify (·+1)
+      decode expression)
+    | throwError "recursive constant-form decode failed"
+  unless (← constantCalls.get) == 1 && (← calls.get).size == 2 do
+    throwError "recursive constant-form branch was not exercised"
+  let constantStatement ← mkEq (← mkAppM ``Except.toOption #[constant])
+    (← mkAppM ``Option.some #[mkConst `Hex.RCF.RecursiveScalarQuote.restored])
+  let constantProof ← Hex.RCF.checkProof `recursiveConstant constantStatement constantResult.proof
+  addDecl (.thmDecl {
+    name := `Hex.RCF.RecursiveScalarQuote.constant_read,levelParams := [],
+    type := constantStatement,value := constantProof})
   let leafCalls ← IO.mkRef (0 : Nat)
   let leaf : RootQuote.DecoderM := fun expression => do
     let scalar := expression.getAppFn.isConstOf ``ValueCodec.decode ||
@@ -90,11 +114,42 @@ run_meta do
     pure none
   rejected (RootQuote.run original (ScalarQuote.decoderWith (fun _ => pure none) leaf))
   unless (← leafCalls.get) == 0 do throwError "missing selected facts tried another decoder"
+  leafCalls.set 0
   rejected (RootQuote.run original
     (ScalarQuote.decoderWith (fun _ => pure (some (mkConst ``Records.facts))) leaf))
   unless (← leafCalls.get) == 0 do throwError "wrong-context facts reached the leaf decoder"
+  let sentinel ← mkFreshExprMVar (mkConst ``Nat)
+  for wrong in [false,true] do
+    calls.set #[]
+    leafCalls.set 0
+    let refused ← IO.mkRef false
+    let inner : Expr → ReifyM (Option Expr) := fun codec => do
+      calls.modify (·.push codec)
+      let context := codec.getAppArgs[codec.getAppNumArgs-2]!
+      if ← withNewMCtxDepth <| withTransparency .reducible
+          (isDefEq context (mkConst ``Upper.context)) then
+        return some (mkConst ``SharedQuoteCallbacks.facts)
+      unless ← withNewMCtxDepth <| withTransparency .reducible
+          (isDefEq context (mkConst ``Data.native)) do
+        throwError "unexpected recursive refusal context"
+      refused.set true
+      if wrong then
+        sentinel.mvarId!.assign (mkNatLit 1)
+        let _ ← mkFreshExprMVar (mkConst ``Nat)
+        return some (mkConst ``SharedQuoteCallbacks.facts)
+      return none
+    let afterRefusal : RootQuote.DecoderM := fun expression => do
+      if ← refused.get then leaf expression else pure none
+    rejected (RootQuote.run original (ScalarQuote.decoderWith inner afterRefusal))
+    let visited ← calls.get
+    unless visited.size == (if wrong then 2 else 3) && (← leafCalls.get) == 0 &&
+        !(← sentinel.mvarId!.isAssigned) do
+      throwError "inner refusal: wrong={wrong}; visits={visited.size}; leaf={(← leafCalls.get)}; assigned={(← sentinel.mvarId!.isAssigned)}"
+    logInfo m!"recursive inner refusal: wrong={wrong}; lookups={visited.size}; rollback checked"
 
-theorem sign : restored.sign = -1 := by rfl
+theorem sign : restored.sign = -1 := by
+  unfold restored
+  exact Algebraic.Element.restore_sign _ _ _ _
 
 /-- info: -1 -/
 #guard_msgs in
