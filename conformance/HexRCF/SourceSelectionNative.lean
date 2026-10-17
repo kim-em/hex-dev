@@ -149,9 +149,13 @@ theorem reader : ∃ read : context.Value → ℝ, ∃ domain : context.Value �
     (guarded divisor (by simp)).2, (guarded computedDivisor (by simp)).2⟩
 
 private theorem tuple_first {α : Type} (a b c d : α) : (![a,b,c,d]) 0 = a := rfl
+private theorem tuple_third {α : Type} (a b c d : α) : (![a,b,c,d]) 2 = c := rfl
 
 theorem values_first : values 0 = sample.value :=
   tuple_first _ _ _ _
+
+theorem values_third : values 2 = sample.input.value (2 : Data.base.Value) :=
+  tuple_third _ _ _ _
 
 /-- Both computed coordinates contribute to the actual matrix and its real
 conclusion, and the two nonzero guards hold at that same point. -/
@@ -239,9 +243,12 @@ theorem inherited_truth : Samples.Row.eval
     SourceSelectionConformance.authenticated, previous.2⟩
 
 /-- The inherited route consumes the actual origin identity for native 2. -/
-theorem inherited_witness : ∃ x : ℝ, matrix.toProp (RealFormula.append source x) :=
-  SourceSelectionConformance.realize context following values
-    NativeSamplesConformance.Point.coordinate sample.value matrix [] (by simp) inherited_truth
+theorem inherited_witness : ∃ x : ℝ, matrix.toProp (RealFormula.append source x) := by
+  have inherited : context.origin.RealValue following (values 2) 2 := by
+    rw [values_third]
+    exact NativeSamplesConformance.Point.coordinate
+  exact SourceSelectionConformance.realize context following values
+    inherited sample.value matrix [] (by simp) inherited_truth
 
 def swapped : Fin 4 → context.Value := fun i =>
   if i = 1 then values 3 else if i = 3 then values 1 else values i
