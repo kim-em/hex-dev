@@ -281,7 +281,8 @@ compiled missing-record obligation for whole readers remains separate.
 selected-field predecessors. Its lookup receives each exact canonical codec
 expression and supplies the sign facts already checked for that context. The
 rational callback handles the base field; every nested quote shares the enclosing
-request's budget and transaction.
+request's budget and transaction. A declining lookup can be probed again after
+reduction; its charges are retained on every call.
 
 ```lean
 open Lean Hex.RealFormula in
@@ -292,13 +293,15 @@ meta def quoteSelectedReader
   RootQuote.run reader
     (ScalarQuote.decoderWith factsFor
       (fun expression =>
-        liftM (RationalQuote.decoder registry expression)))
+        liftM <| RationalQuote.decoder
+          registry expression))
 ```
 
-The two-level regression visits both selected predecessors exactly once and
-retains their 38 source nodes. It uses 14,374 proof nodes; one node less exhausts
+The two-level regression checks one visit to its selected context followed by
+one visit to its selected predecessor. Its lookup adds 19 source nodes per visit;
+all 38 callback charges are retained. It uses 14,374 proof nodes; one node less exhausts
 at the final 925-node charge after 13,449 consumed nodes. Missing facts decline
-without invoking another scalar decoder. Wrong-context facts, kernel errors
+without invoking another scalar decoder after the refusal. Wrong-context facts, kernel errors
 and exhaustion remain terminal and restore the enclosing state.
 
 An ordinary `module` consumer also runs the callback factory and exports the
@@ -306,12 +309,15 @@ checked scalar reader equation. Its sign follows from the owner's restoration
 law, without unfolding the stored element's implementation:
 
 ```lean
+open Hex.RealClosure.Algebraic in
 open Hex.RCF.RecursiveScalarPublic in
-example : restored.sign = 1 := sign
+example : restored.sign = 1 := by
+  unfold restored
+  exact Element.restore_sign _ _ _ _
 ```
 
 A fresh importing audit checks the two-level fixture and this public consumer:
-34 actual theorem bodies and five definitions, complete standard-three axiom
+51 actual theorem bodies and five definitions, complete standard-three axiom
 closure, and no native producer or canonical-codec reduction. This helper consumes
 explicit facts; it does not authenticate original source expressions, discover
 predecessor histories, produce missing sign evidence or install the general tactic.

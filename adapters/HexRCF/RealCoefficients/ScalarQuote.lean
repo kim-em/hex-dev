@@ -284,6 +284,8 @@ Every selected-field stage uses `quoteDecodeWith`, preserving the original
 codec and charging the same reflection request. Missing facts decline without
 running a canonical decoder. Errors, exhaustion and recursion limits remain
 terminal. The enclosing `RootQuote.runWith` transaction restores state.
+Each callback probe is charged, including probes delegated to `base`. A declining
+lookup can be probed again after reduction; lookups must tolerate repeated calls.
 This consumes explicit facts; it does not discover or authenticate histories. -/
 partial def decoderWith (factsFor : Expr → ReifyM (Option Expr))
     (base : RootQuote.DecoderM := fun _ => pure none) (reader : Expr) :
