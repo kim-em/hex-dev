@@ -60,7 +60,7 @@ requires exactly one predecessor callback and its retained 17 source-node charge
 It also checks a protected bare decoder, a wrong sign only in the second
 coefficient, trailing zero coefficients and malformed polynomial heads, with
 failure-state restoration. The importing kernel audit additionally forbids
-canonical `Element.codec` reduction. All 47 reachable callback/public-module
+canonical `Element.codec` reduction. All 56 reachable callback/public-module
 theorem bodies and 14 definitions pass that stronger guard. The exact
 demanded decode helper `quoteDecodeWith` and nested step transport check
 projection equalities with an abstract codec, then apply the concrete codec and
@@ -81,6 +81,26 @@ normalization or compare coefficients through dependent array-bound proofs.
 The full codec argument spine and original zero/equality instances survive.
 Exploratory direct field-projection, simplifier and definitional-abstraction
 attempts failed; no such branch or diagnostic printing remains in production.
+
+The canonical-callback regression additionally covers an accepted constant
+`ValueCodec.decode` proposal, not only the primitive projection or a standalone
+`quoteDecodeWith` call. At source `ab132e9bb12719fca68a2e7bed01ffa41bbd4fdc`,
+that actual callback runs exactly once, emits `constant_bare_read`, and joins
+the fresh 56-theorem/14-definition audit. The same generic checked abstraction
+now classifies complete constant decode subjects. Before the repair, the new
+regression exposed one native `Context.signPoly` reduction; the unchanged
+producer guard rejected it. Both ordinary constant and primitive forms now pass
+without native producers or canonical-codec reductions.
+
+The 11,788-job selected validation passes in 41.166 s, CPU 1 min 16.733 s,
+peak 1.8 GiB/no swap, including both libraries, all quotation/named audits,
+rational/handler/reifier/decision compatibility and the affected manual chapter.
+Existing scalar/poly/composed/nested budget counts are unchanged. Exact source
+hashes, commands, failed/passing diagnostics and five passing metadata checks
+are in the [constant-callback record](data/hexrcf-shared-quotation/constant/context.json).
+These reused-dependency observations establish no relative speedup. Earlier
+complete book renders and captures remain tied to their recorded sources;
+the exact-head CI gate validates the whole manual.
 
 At source `ce6f235e67e3f181755e2a82996d06d179bfef03`, the hardened
 14,343-job library/compatibility/audit/manual selection passes in 3 min 15.317 s,
