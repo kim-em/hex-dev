@@ -476,15 +476,17 @@ The same decoded coefficient can be interpreted through the owner's ordinary
 real model of the packed context, retaining its selected value and sign:
 
 ```lean
-open Hex.RCF.RootContextCases in
-example : model.value
-    Hex.RCF.RootHeaderPacket.coefficient =
-    Hex.RCF.RootHeaderPacket.realRoot :=
+open Hex.RCF in
+open RootContextCases in
+open RootHeaderPacket in
+example : model.value coefficient =
+    realRoot :=
   value_checked
 
-open Hex.RCF.RootContextCases in
-example : 0 < model.value
-    Hex.RCF.RootHeaderPacket.coefficient :=
+open Hex.RCF in
+open RootContextCases in
+open RootHeaderPacket in
+example : 0 < model.value coefficient :=
   positive_checked
 ```
 
