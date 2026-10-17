@@ -1,0 +1,229 @@
+diff --git a/HexManual/Chapters/HexRCF/RootQuote.lean b/HexManual/Chapters/HexRCF/RootQuote.lean
+index fe1e095d38..7498c8b006 100644
+--- a/HexManual/Chapters/HexRCF/RootQuote.lean
++++ b/HexManual/Chapters/HexRCF/RootQuote.lean
+@@ -278,7 +278,8 @@ compiled missing-record obligation for whole readers remains separate.
+ selected-field predecessors. Its lookup receives each exact canonical codec
+ expression and supplies the sign facts already checked for that context. The
+ rational callback handles the base field; every nested quote shares the enclosing
+-request's budget and transaction.
++request's budget and transaction. A declining lookup can be probed again after
++reduction; its charges are retained on every call.
+ 
+ ```lean
+ open Lean Hex.RealFormula in
+@@ -288,11 +289,13 @@ meta def quoteSelectedReader
+     (factsFor : Expr → Reify.ReifyM (Option Expr)) :=
+   RootQuote.run reader
+     (ScalarQuote.decoderWith factsFor
+-      (fun expression => liftM (RationalQuote.decoder registry expression)))
++      (fun expression =>
++        liftM (RationalQuote.decoder registry expression)))
+ ```
+ 
+-The two-level regression visits both selected predecessors exactly once and
+-retains their 38 source nodes. It uses 14,374 proof nodes; one node less exhausts
++The two-level regression checks one visit to its selected context followed by
++one visit to its selected predecessor. Its lookup adds 19 source nodes per visit;
++all 38 callback charges are retained. It uses 14,374 proof nodes; one node less exhausts
+ at the final 925-node charge after 13,449 consumed nodes. Missing facts decline
+ without invoking another scalar decoder. Wrong-context facts, kernel errors
+ and exhaustion remain terminal and restore the enclosing state.
+@@ -303,11 +306,14 @@ law, without unfolding the stored element's implementation:
+ 
+ ```lean
+ open Hex.RCF.RecursiveScalarPublic in
+-example : restored.sign = 1 := sign
++example : restored.sign = 1 := by
++  unfold restored
++  exact Hex.RealClosure.Algebraic.Element.restore_sign
++    _ _ _ _
+ ```
+ 
+ A fresh importing audit checks the two-level fixture and this public consumer:
+-34 actual theorem bodies and five definitions, complete standard-three axiom
++the actual theorem bodies and definitions, complete standard-three axiom
+ closure, and no native producer or canonical-codec reduction. This helper consumes
+ explicit facts; it does not authenticate original source expressions, discover
+ predecessor histories, produce missing sign evidence or install the general tactic.
+diff --git a/adapters/HexRCF/RealCoefficients/ScalarQuote.lean b/adapters/HexRCF/RealCoefficients/ScalarQuote.lean
+index c73b3b73fe..de580be198 100644
+--- a/adapters/HexRCF/RealCoefficients/ScalarQuote.lean
++++ b/adapters/HexRCF/RealCoefficients/ScalarQuote.lean
+@@ -284,6 +284,8 @@ Every selected-field stage uses `quoteDecodeWith`, preserving the original
+ codec and charging the same reflection request. Missing facts decline without
+ running a canonical decoder. Errors, exhaustion and recursion limits remain
+ terminal. The enclosing `RootQuote.runWith` transaction restores state.
++Each callback probe is charged, including probes delegated to `base`. A declining
++lookup can be probed again after reduction; lookups must tolerate repeated calls.
+ This consumes explicit facts; it does not discover or authenticate histories. -/
+ partial def decoderWith (factsFor : Expr → ReifyM (Option Expr))
+     (base : RootQuote.DecoderM := fun _ => pure none) (reader : Expr) :
+diff --git a/conformance/HexRCF/RecursiveScalarProofs.lean b/conformance/HexRCF/RecursiveScalarProofs.lean
+index fe0243563b..5e24b9dcf9 100644
+--- a/conformance/HexRCF/RecursiveScalarProofs.lean
++++ b/conformance/HexRCF/RecursiveScalarProofs.lean
+@@ -13,7 +13,8 @@ namespace Hex.RCF.RecursiveScalarProofs
+ set_option maxHeartbeats 12000000
+ set_option maxRecDepth 32768
+ run_meta do
+-  let roots := #[``RecursiveScalarQuote.read_checked,``RecursiveScalarQuote.sign,
++  let roots := #[``RecursiveScalarQuote.read_checked,``RecursiveScalarQuote.constant_read,
++    ``RecursiveScalarQuote.sign,
+     ``RecursiveScalarPublic.read_checked,``RecursiveScalarPublic.accepted,
+     ``RecursiveScalarPublic.sign]
+   let axioms ← Algebraic.KernelReplay.AxiomClosure.collect roots
+@@ -54,7 +55,7 @@ run_meta do
+   unless (← (← getEnv).getLocalConstantInfos).map (·.name) == originalNames do
+     throwError "recursive scalar audit retained temporary declarations"
+   unless theorems.size == 34 && definitions.size == 5 && reductions > 0 do
+-    throwError "recursive scalar audit omitted actual bodies or diagnostics"
++    throwError "recursive scalar audit inventory changed: {theorems.size} theorem bodies/{definitions.size} definitions; traces={reductions}"
+   logInfo m!"recursive scalar quotation: {theorems.size} theorem bodies, {definitions.size} definitions"
+   logInfo m!"recursive scalar theorem inventory: {theorems.qsort Name.lt}"
+   logInfo m!"recursive scalar definition inventory: {definitions.qsort Name.lt}"
+diff --git a/conformance/HexRCF/RecursiveScalarPublic.lean b/conformance/HexRCF/RecursiveScalarPublic.lean
+index 5c203086b1..11c0e5da2a 100644
+--- a/conformance/HexRCF/RecursiveScalarPublic.lean
++++ b/conformance/HexRCF/RecursiveScalarPublic.lean
+@@ -24,12 +24,20 @@ run_meta do
+     let some template ← unfoldDefinition? (mkConst ``PolynomialQuotePublic.nonzeroReader)
+       | throwError "public canonical codec unavailable"
+     let original := mkApp (mkConst ``reader) template.getAppArgs[3]!
+-    let lookup : Expr → Hex.RealFormula.Reify.ReifyM (Option Expr) := fun _ =>
+-      pure (some (mkConst ``PolynomialQuotePublic.nonzeroFacts))
++    let calls ← IO.mkRef (0 : Nat)
++    let lookup : Expr → Hex.RealFormula.Reify.ReifyM (Option Expr) := fun codec => do
++      calls.modify (·+1)
++      let context := codec.getAppArgs[codec.getAppNumArgs-2]!
++      unless ← withNewMCtxDepth <| withTransparency .reducible
++          (isDefEq context (mkConst ``PolynomialQuotePublic.context)) do
++        throwError "public callback received a different selected context"
++      return some (mkConst ``PolynomialQuotePublic.nonzeroFacts)
+     let base : RootQuote.DecoderM := fun expression =>
+       liftM (RationalQuote.decoder (mkConst ``RootQuoteTests.registry) expression)
+     let .ok quoted ← RootQuote.run original (ScalarQuote.decoderWith lookup base)
+       | throwError "ordinary module recursive callback failed"
++    unless (← calls.get) == 1 do
++      throwError "public single-level callback count changed"
+     withExporting (isExporting := true) do
+       let declaration := Declaration.defnDecl {
+         name := `Hex.RCF.RecursiveScalarPublic.restored,levelParams := [],
+diff --git a/conformance/HexRCF/RecursiveScalarQuote.lean b/conformance/HexRCF/RecursiveScalarQuote.lean
+index 825f9d3390..acb809b7bf 100644
+--- a/conformance/HexRCF/RecursiveScalarQuote.lean
++++ b/conformance/HexRCF/RecursiveScalarQuote.lean
+@@ -18,9 +18,15 @@ def reader (codec : ValueCodec (Algebraic.Element Upper.context)) :=
+ private meta def config (limit : Nat) : Hex.RealFormula.Reify.Config :=
+   {ring := {budget := {Hex.Reflect.Budget.default with proofNodes := limit}}}
+ 
+-private meta def rejected (action : MetaM α) : MetaM Unit := do
++private meta def unchanged (action : MetaM Unit) : MetaM Unit := do
+   let count := (← getMCtx).decls.toList.length
+   let names := (← (← getEnv).getLocalConstantInfos).map (·.name)
++  action
++  unless (← getMCtx).decls.toList.length == count &&
++      (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
++    throwError "recursive rejection retained caller state"
++
++private meta def rejected (action : MetaM α) : MetaM Unit := unchanged do
+   let failed ← (fun context state coreContext coreState => do
+     try
+       let _ ← action context state coreContext coreState
+@@ -31,9 +37,6 @@ private meta def rejected (action : MetaM α) : MetaM Unit := do
+       | .error _ _ => pure true
+       | _ => throw error : MetaM Bool)
+   unless failed do throwError "missing or mismatched recursive facts were accepted"
+-  unless (← getMCtx).decls.toList.length == count &&
+-      (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
+-    throwError "recursive rejection retained caller state"
+ 
+ run_meta do
+   let some template ← unfoldDefinition? (mkConst ``SharedQuoteCallbacks.reader)
+@@ -60,6 +63,10 @@ run_meta do
+     throwError "recursive scalar accounting changed: {quoted.usage.proofNodes}"
+   unless (← calls.get).size == 2 && quoted.usage.sourceNodes == 38 do
+     throwError "recursive quotation did not visit both selected predecessors exactly once"
++  for (codec,expected) in (← calls.get).zip #[mkConst ``Upper.context,mkConst ``Data.native] do
++    let context := codec.getAppArgs[codec.getAppNumArgs-2]!
++    unless ← withNewMCtxDepth <| withTransparency .reducible (isDefEq context expected) do
++      throwError "recursive quotation visited a different context or order"
+   logInfo m!"recursive scalar proofNodes={quoted.usage.proofNodes}; lookups=2; sourceNodes=38"
+   let declaration := Declaration.defnDecl {
+     name := `Hex.RCF.RecursiveScalarQuote.restored,levelParams := [],
+@@ -74,12 +81,29 @@ run_meta do
+   let .ok exact ← RootQuote.run original decode (config quoted.usage.proofNodes)
+     | throwError "exact recursive scalar budget failed"
+   unless exact.usage == quoted.usage do throwError "exact recursive usage changed"
+-  let .error (.budget exhausted) ← RootQuote.run original decode (config (quoted.usage.proofNodes-1))
+-    | throwError "one-below recursive scalar budget did not exhaust"
+-  unless exhausted.dimension == .proofNodes && exhausted.consumed == 13449 &&
+-      exhausted.requested == 925 do
+-    throwError "recursive scalar exhaustion moved from the final925-node charge"
+-  logInfo m!"recursive exhausted: consumed={exhausted.consumed}, requested={exhausted.requested}"
++  unchanged do
++    let .error (.budget exhausted) ← RootQuote.run original decode (config (quoted.usage.proofNodes-1))
++      | throwError "one-below recursive scalar budget did not exhaust"
++    unless exhausted.dimension == .proofNodes && exhausted.consumed == 13449 &&
++        exhausted.requested == 925 do
++      throwError "recursive scalar exhaustion moved from the final925-node charge"
++    logInfo m!"recursive exhausted: consumed={exhausted.consumed}, requested={exhausted.requested}"
++  calls.set #[]
++  let constant := mkApp3 (mkConst ``ValueCodec.decode) (← inferType quoted.value)
++    original.appArg! (mkConst ``SharedQuoteCallbacks.elementLiteral)
++  let constantCalls ← IO.mkRef (0 : Nat)
++  let .ok constantResult ← RootQuote.run constant (fun expression => do
++      if expression == constant then constantCalls.modify (·+1)
++      decode expression)
++    | throwError "recursive constant-form decode failed"
++  unless (← constantCalls.get) == 1 && (← calls.get).size == 2 do
++    throwError "recursive constant-form branch was not exercised"
++  let constantStatement ← mkEq (← mkAppM ``Except.toOption #[constant])
++    (← mkAppM ``Option.some #[mkConst `Hex.RCF.RecursiveScalarQuote.restored])
++  let constantProof ← Hex.RCF.checkProof `recursiveConstant constantStatement constantResult.proof
++  addDecl (.thmDecl {
++    name := `Hex.RCF.RecursiveScalarQuote.constant_read,levelParams := [],
++    type := constantStatement,value := constantProof})
+   let leafCalls ← IO.mkRef (0 : Nat)
+   let leaf : RootQuote.DecoderM := fun expression => do
+     let scalar := expression.getAppFn.isConstOf ``ValueCodec.decode ||
+@@ -90,11 +114,38 @@ run_meta do
+     pure none
+   rejected (RootQuote.run original (ScalarQuote.decoderWith (fun _ => pure none) leaf))
+   unless (← leafCalls.get) == 0 do throwError "missing selected facts tried another decoder"
++  leafCalls.set 0
+   rejected (RootQuote.run original
+     (ScalarQuote.decoderWith (fun _ => pure (some (mkConst ``Records.facts))) leaf))
+   unless (← leafCalls.get) == 0 do throwError "wrong-context facts reached the leaf decoder"
++  let sentinel ← mkFreshExprMVar (mkConst ``Nat)
++  for wrong in [false,true] do
++    calls.set #[]
++    leafCalls.set 0
++    let inner : Expr → ReifyM (Option Expr) := fun codec => do
++      calls.modify (·.push codec)
++      let context := codec.getAppArgs[codec.getAppNumArgs-2]!
++      if ← withNewMCtxDepth <| withTransparency .reducible
++          (isDefEq context (mkConst ``Upper.context)) then
++        return some (mkConst ``SharedQuoteCallbacks.facts)
++      unless ← withNewMCtxDepth <| withTransparency .reducible
++          (isDefEq context (mkConst ``Data.native)) do
++        throwError "unexpected recursive refusal context"
++      if wrong then
++        sentinel.mvarId!.assign (mkNatLit 1)
++        let _ ← mkFreshExprMVar (mkConst ``Nat)
++        return some (mkConst ``SharedQuoteCallbacks.facts)
++      return none
++    rejected (RootQuote.run original (ScalarQuote.decoderWith inner leaf))
++    let visited ← calls.get
++    unless visited.size ≥ 2 && (← leafCalls.get) == 0 &&
++        !(← sentinel.mvarId!.isAssigned) do
++      throwError "inner refusal skipped recursion, tried another decoder or retained state"
++    logInfo m!"recursive inner refusal: wrong={wrong}; lookups={visited.size}; rollback checked"
+ 
+-theorem sign : restored.sign = -1 := by rfl
++theorem sign : restored.sign = -1 := by
++  unfold restored
++  exact Algebraic.Element.restore_sign _ _ _ _
+ 
+ /-- info: -1 -/
+ #guard_msgs in

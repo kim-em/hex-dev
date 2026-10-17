@@ -1,0 +1,667 @@
+{
+  "source_commit": "2920d47c93c4aeca23adfb146fed88a3977b18ac",
+  "sources": {
+    "adapters/HexRCF/RealCoefficients/RootQuote.lean": "a59a9cf0f4eef8cd2431891872e3268085c876ed3b8a7148d05098f68ecf2645",
+    "adapters/HexRCF/RealCoefficients/ScalarQuote.lean": "fee2617a998f29d05c8959b484060ac1d719359c6d851a8ff6699fa9cb370acc",
+    "conformance/HexRCF/RecursiveScalarQuote.lean": "37e0ec45d212d53647ed3fa790e70ac1e88cfd92f16a995698a7a248e6561450",
+    "conformance/HexRCF/RecursiveScalarPublic.lean": "9fa123c586060aa332e06949a791300ef3a8a3d47c9004e649aafd6f514bbecd",
+    "conformance/HexRCF/RecursiveScalarProofs.lean": "614d4eb7efa9cc1cfec23fd69bac46c7c15a0c95cf47a1df79e1795c790b65a1",
+    "HexManual/Chapters/HexRCF/RootQuote.lean": "cccc873033c75027d2e7142fd3ec0624a79e8805a074bf2bc1ae76be6e9f40ad",
+    "HexManual/Chapters/HexRCF/RootTableQuote.lean": "584d5e7cdc732f9592d574ed6cab5c5af538040d4d2ecb62013513d1d3325bdf",
+    "lakefile.lean": "ceda8e020af96360ad690fedff992ad0add557e415b2526af9e580edcfb450fa",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47"
+  },
+  "artifacts": [
+    {
+      "path": "logs/recursive-scalar-inner-diagnostic-1.log.gz",
+      "sha256": "8e936f198cbb65304d7872218d3c7e453878ccf0e48da61aa9e69df69ac011c5",
+      "bytes": 7675,
+      "uncompressed_sha256": "b0e2ee19211f88f75cbc5d574e45312efe306209d8f77d6b385f58f33e34306a"
+    },
+    {
+      "path": "logs/recursive-scalar-metadata-admissions-1.log.gz",
+      "sha256": "b409d67a3a037936236130f7dc5c82bc279551dcaa501f4fdee7275c7bc3baef",
+      "bytes": 99,
+      "uncompressed_sha256": "d2dd145dfbb85665677c83dfa50f34878e648a170c291230b82ce0749ec0eb97"
+    },
+    {
+      "path": "logs/recursive-scalar-metadata-copyright-1.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/recursive-scalar-metadata-dag-1.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/recursive-scalar-metadata-diff-1.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/recursive-scalar-metadata-lines-1.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/recursive-scalar-quote-audit-1.log.gz",
+      "sha256": "5df423022f5d079b351ad9a3488c678507dcfd8389e7aa1e466f36f73a51a73b",
+      "bytes": 7729,
+      "uncompressed_sha256": "5d9d0988bcb553786f0dd914779b097b9fcef2caf0e294c1f5e6da8943dae3b6"
+    },
+    {
+      "path": "logs/recursive-scalar-quote-audit-2.log.gz",
+      "sha256": "eb7088e60e63f4ea5a770b60c6c42d46630b2c0d7a044b09f07669ccb6088370",
+      "bytes": 7747,
+      "uncompressed_sha256": "d2dffc5dbf0f1f00c766137204c105381edce712ff2e03603790f4844bdffb98"
+    },
+    {
+      "path": "logs/recursive-scalar-quote-audit-3.log.gz",
+      "sha256": "af20084fb3d610d219a045fb6e102908369a2894490333c01dd7c0ba7fc07cf9",
+      "bytes": 7808,
+      "uncompressed_sha256": "1162070a915c9225aa5838d168c772ec13a74b50658257cddd0cef76951fdfae"
+    },
+    {
+      "path": "logs/recursive-scalar-quote-audit-4.log.gz",
+      "sha256": "b72101c3e04e1f7c849babfc4a6d3bf2b002ac4db7401fe0ff3e98a133006005",
+      "bytes": 7779,
+      "uncompressed_sha256": "429b9f22044777347183b6eb4b8c1bcc2a8b8d9b58a33e63b134716f69555887"
+    },
+    {
+      "path": "logs/recursive-scalar-quote-audit-5.log.gz",
+      "sha256": "6bd00fcc4a5d564113bb4e7d852251b601d6838119293e8b85e5a3de7fb3b148",
+      "bytes": 7824,
+      "uncompressed_sha256": "5e052f42f54f410b0d725dfc5483fdade39e980e54daebcc5ef02227351bf8bb"
+    },
+    {
+      "path": "logs/recursive-scalar-quote-audit-6.log.gz",
+      "sha256": "599470961bbacef817731f732e067ba28e7fd91d60b4eb77fcd202b624782cbe",
+      "bytes": 8744,
+      "uncompressed_sha256": "a1dbde57b296996a9509103d2f4d9e8499ab1339d36cce78fcab9f1f701c5795"
+    },
+    {
+      "path": "logs/recursive-scalar-quote-audit-7.log.gz",
+      "sha256": "649503498729872bf485609e3054a3a974e122e38eae28c2aa65647bae9a14b8",
+      "bytes": 7676,
+      "uncompressed_sha256": "2b42d0d2442a8f123b4355c55d5933fa3c6b1b6933406274f80e3db8f52e880b"
+    },
+    {
+      "path": "logs/recursive-scalar-quote-audit-8.log.gz",
+      "sha256": "bd1839ae8e83f6c908e1a87ea6627d4f98172b4bdf8f45c8e7de01c8ab6a4923",
+      "bytes": 7501,
+      "uncompressed_sha256": "533b1e94548d0aeecb2af5760891391122d9790ad7d64f374e715f18a711e6aa"
+    },
+    {
+      "path": "logs/recursive-scalar-quote-audit-9.log.gz",
+      "sha256": "6b4983574edf120698ed88a3475b6ceb2ca1b036b2206e69b988add12ccb5025",
+      "bytes": 7631,
+      "uncompressed_sha256": "8a78e3e8c03f6d6d10738ed48f1a678e33066c925cf28b0b2c99f382239c1490"
+    },
+    {
+      "path": "logs/recursive-scalar-quote-build-1.log.gz",
+      "sha256": "3a22134363d46eac0a3c03fbd90dfc44a3aef6c91b3c410528e1c7c49ea268da",
+      "bytes": 5156,
+      "uncompressed_sha256": "bad8d77fab9eef0f7ac27fe3563b30aec126d65de44b1a743864078ad63a8d4c"
+    },
+    {
+      "path": "logs/recursive-scalar-quote-build-2.log.gz",
+      "sha256": "74d2dae0fbcb39a9ee409708bcbbc1bf91ea7d5b46e9d1f66baae9da30951d1f",
+      "bytes": 7701,
+      "uncompressed_sha256": "e5bfdbbb1c5d5a4bb170cf55cba06996e6bb4a74308703bd7643dbcc0bdac82d"
+    },
+    {
+      "path": "logs/recursive-scalar-quote-build-3.log.gz",
+      "sha256": "40b5b502a981a329060ed8d6908df9b026dbc65d0de3528620cd25064f971762",
+      "bytes": 7324,
+      "uncompressed_sha256": "0e56dc6dd6d5ec595d8d4f4cfe7ab5092319e5c58c687be240451fec5354e14d"
+    },
+    {
+      "path": "logs/recursive-scalar-quote-public-1.log.gz",
+      "sha256": "e84e4f52897955f48d09e6974f75dd6e6e09149a036fe54f32440da6ed0abe3d",
+      "bytes": 7698,
+      "uncompressed_sha256": "d12598de8f5a22ae7dab4b029385d887a773d097f414e4e1e64f0df9e22247cf"
+    },
+    {
+      "path": "logs/recursive-scalar-quote-public-2.log.gz",
+      "sha256": "a05491caa977638ba33aa2062e65bf6452e0d9d5d86334e9662a2fec491ba8ed",
+      "bytes": 5786,
+      "uncompressed_sha256": "96a5f16fca4a2fe6b5daa4cf85a6ed36fa502e92d6cf71469c6ac1c2ef6e3b81"
+    },
+    {
+      "path": "logs/recursive-scalar-quote-public-3.log.gz",
+      "sha256": "fd650c9261c9ed2a19ca935dcf6a07e2a18a715d7e22f8a5de9736aaee672639",
+      "bytes": 5576,
+      "uncompressed_sha256": "725e366eef17f8ef8a40cd2365c1eda798a103bd322bace1764ee01b02faf1e6"
+    },
+    {
+      "path": "logs/recursive-scalar-quote-public-4.log.gz",
+      "sha256": "50f90e1aeaa092842af965662ebd934f799de59bc6e112bb9c449debf5636c38",
+      "bytes": 5763,
+      "uncompressed_sha256": "13d5f8884ebb4043ebd9480d5d68af4efb704f303d8e2bbd76d85e72c05483c6"
+    },
+    {
+      "path": "logs/recursive-scalar-quote-public-5.log.gz",
+      "sha256": "33ea36ec0f84d62110eec4dc8ce5b1504834472c7ff26f5c8d8655e9f9ff4892",
+      "bytes": 5197,
+      "uncompressed_sha256": "85e33e5ae39291e2ffecd97a4176ffc44e73369af08f14b4ca98b3f5d5ffbcf0"
+    },
+    {
+      "path": "logs/recursive-scalar-quote-validation-1.log.gz",
+      "sha256": "c725662c6bb23f10d08d00e929d52c35e4d41343a9bcf3b3e39abb79fa85e071",
+      "bytes": 9874,
+      "uncompressed_sha256": "2876fcc979ad01e21910627d00478e27836382f766e4caae20a44e3b8b0f4c24"
+    },
+    {
+      "path": "logs/recursive-scalar-review-audit-1.log.gz",
+      "sha256": "f718f432133c791a7d860412e57dfc68f7d58bcca784c9a1bd6e39005720dfbe",
+      "bytes": 7771,
+      "uncompressed_sha256": "237d7d6211be9de08df21bc0029c226fa5659cc34183630fab99d592a07662ca"
+    },
+    {
+      "path": "logs/recursive-scalar-review-line-check-1.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/recursive-scalar-review-manual-1.log.gz",
+      "sha256": "4306954e625f28f90cd1fc21eb6c158331f62a5d078995d1bc8ff00a2f17046a",
+      "bytes": 9151,
+      "uncompressed_sha256": "6ecdaed7314b4a225e008946221ca2415878f92fc3c30ccb50832e80162bf21a"
+    },
+    {
+      "path": "logs/recursive-scalar-review-validation-1.log.gz",
+      "sha256": "d7108c6ffe66c00d2cfdffb0b062d3cda7ed612450bcc6d19a1c68da0d4a8311",
+      "bytes": 9802,
+      "uncompressed_sha256": "cbe7098fb76fc9cd11743089511f17359a61a519e7f29a112b4b1b33a953b673"
+    },
+    {
+      "path": "logs/recursive-scalar-review-validation-2.log.gz",
+      "sha256": "d2fdce784f2c10616c030d63d170fd22a9a098c980b07d1d131f3a972b01da6f",
+      "bytes": 10047,
+      "uncompressed_sha256": "0ad87481ae0e5e174b01fee988847cc327ff46948187bb93a53a731b1cfee31c"
+    },
+    {
+      "path": "logs/recursive-scalar-review-validation-3.log.gz",
+      "sha256": "605035964a07a56b5bd2e6f8c0ae4e07fa82a45461c98c4a57b4b4fb6e2dbff9",
+      "bytes": 9776,
+      "uncompressed_sha256": "505c0bbf68d8ae681e914c056d615ed9af64193f80f86b7261b19a8f3ca68b7e"
+    },
+    {
+      "path": "logs/recursive-scalar-review-validation-4.log.gz",
+      "sha256": "4eea3649330ac2b52e4d254fda22f735456569ec6f01306ebf5716973af0dbc6",
+      "bytes": 9876,
+      "uncompressed_sha256": "951e246512547c109452f2fd2232966388ca50ea8a361d9565562bd1d96e36f7"
+    },
+    {
+      "path": "logs/recursive-scalar-review-validation-5.log.gz",
+      "sha256": "beafa241ff73920aa28061a562b819d6b70bc2025666e8789247e1c03dc6201e",
+      "bytes": 9941,
+      "uncompressed_sha256": "ddfa0e39e9337c57b10f5d8060d121b048e8614dacf3912685db84c58a9dd325"
+    },
+    {
+      "path": "logs/root-table-quote-integration-ce332-1.log.gz",
+      "sha256": "f2b35c387c6cab3145d3f0bf757ce8d337fa7ff25042509d33bac354ae531eb3",
+      "bytes": 10646,
+      "uncompressed_sha256": "cbc98305607d27642a50f352da58dfa09949a41c559377af8998dec5c923bfc7"
+    },
+    {
+      "path": "logs/root-table-recursive-browser-1.log.gz",
+      "sha256": "6267638e5dde319e677e5e95e8bd128b53a269af26229f3919fa463d9f519537",
+      "bytes": 362,
+      "uncompressed_sha256": "354a32c37bbc01a8572c7c703dfd8cbe08bb449c9b3c8f41cb2c78b19f715d54"
+    },
+    {
+      "path": "logs/root-table-recursive-browser-2.log.gz",
+      "sha256": "ceda4595bcdfeaebe447f391cb82f9e0bf528698dbfc882c70f1a894e2ad8baa",
+      "bytes": 242,
+      "uncompressed_sha256": "fdb4b7c489776fb09ba2425ce1186e55b67039fa43eb42dec6c3eccc44940c39"
+    },
+    {
+      "path": "logs/root-table-recursive-integration-1.log.gz",
+      "sha256": "7fdd96b0373b8dda7e30b37ae9b2d0a1726c5fe7206b087a9393494ccbb90e71",
+      "bytes": 11260,
+      "uncompressed_sha256": "390e6d9a2cbaae64abf08b586ef7d18114fd387fe4e5d5ace80eb3e3eb790cfb"
+    },
+    {
+      "path": "logs/root-table-recursive-integration-2.log.gz",
+      "sha256": "399e3e00199b8fbe8d299441f08ce424d02b81cc12013005ea588d7154c70b42",
+      "bytes": 11162,
+      "uncompressed_sha256": "b1b5bdba5e0516a16f502086b81d11b9b94c8788e21be5f30170b3d75217797c"
+    },
+    {
+      "path": "logs/root-table-recursive-integration-3.log.gz",
+      "sha256": "cd267826fc5b3804320af5ad31c246b5d7873307d1d25164ecdb77e031a69194",
+      "bytes": 12083,
+      "uncompressed_sha256": "dd266bf6baa23f82e3955746b3591bb04dbde94c5ce19d5c7008ddfe259e0bc3"
+    },
+    {
+      "path": "logs/root-table-recursive-metadata-admissions-1.log.gz",
+      "sha256": "b409d67a3a037936236130f7dc5c82bc279551dcaa501f4fdee7275c7bc3baef",
+      "bytes": 99,
+      "uncompressed_sha256": "d2dd145dfbb85665677c83dfa50f34878e648a170c291230b82ce0749ec0eb97"
+    },
+    {
+      "path": "logs/root-table-recursive-metadata-admissions-2.log.gz",
+      "sha256": "b409d67a3a037936236130f7dc5c82bc279551dcaa501f4fdee7275c7bc3baef",
+      "bytes": 99,
+      "uncompressed_sha256": "d2dd145dfbb85665677c83dfa50f34878e648a170c291230b82ce0749ec0eb97"
+    },
+    {
+      "path": "logs/root-table-recursive-metadata-admissions-3.log.gz",
+      "sha256": "b409d67a3a037936236130f7dc5c82bc279551dcaa501f4fdee7275c7bc3baef",
+      "bytes": 99,
+      "uncompressed_sha256": "d2dd145dfbb85665677c83dfa50f34878e648a170c291230b82ce0749ec0eb97"
+    },
+    {
+      "path": "logs/root-table-recursive-metadata-copyright-1.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/root-table-recursive-metadata-copyright-2.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/root-table-recursive-metadata-copyright-3.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/root-table-recursive-metadata-dag-1.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/root-table-recursive-metadata-dag-2.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/root-table-recursive-metadata-dag-3.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/root-table-recursive-metadata-diff-1.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/root-table-recursive-metadata-diff-2.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/root-table-recursive-metadata-diff-3.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/root-table-recursive-metadata-lines-1.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/root-table-recursive-metadata-lines-2.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/root-table-recursive-metadata-lines-3.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "logs/root-table-recursive-metadata-relative-1.log.gz",
+      "sha256": "43b248c337852a87984b09e4f56fe2b9d85d73047c11ebe44a435daac10db1fb",
+      "bytes": 197,
+      "uncompressed_sha256": "879ba1c665e4edfc75695f4e1e7991211487262e812c9241f5d850ec3c6bbd69"
+    },
+    {
+      "path": "logs/root-table-recursive-metadata-relative-2.log.gz",
+      "sha256": "d3420d2f95fef1e8caca9e53b05c7ad1db38e1a06a74331be9d3107e452a536a",
+      "bytes": 140,
+      "uncompressed_sha256": "c8f906247ee7d5fef40c770d2245d05f718f845d6485e6927d93963ccca9647b"
+    },
+    {
+      "path": "logs/root-table-recursive-metadata-relative-3.log.gz",
+      "sha256": "97301ae8a4b7934cc77da18a9c88c688e90d136a0cb40c79f36fafcd921643be",
+      "bytes": 140,
+      "uncompressed_sha256": "0752a5efeb4e56140fbd1a38adc1d9fd7711f051891de1f52c60bb69d02cdd2a"
+    },
+    {
+      "path": "logs/root-table-recursive-render-1.log.gz",
+      "sha256": "b2e7a094d6af022c2eccf5c0816f0e7e927933158333b61dc393aeb6f4731c32",
+      "bytes": 14642,
+      "uncompressed_sha256": "805ecbf82c4cec1149093607a56a2d8684b98f2c2a5a15c488203dd70207957a"
+    },
+    {
+      "path": "logs/root-table-recursive-render-2.log.gz",
+      "sha256": "0af09919bacacc2a404cd9e0edf261a85d4eb4ebab8def1b2878bab9543527e4",
+      "bytes": 14593,
+      "uncompressed_sha256": "eb31badcd2a90b8379c6608bbb591992d4977cfc4c5d9ccf3e3a977427a9f42c"
+    },
+    {
+      "path": "logs/root-table-recursive-render-3-wrong-dir.log.gz",
+      "sha256": "234292aba7d61d10e70583a20a07703c1d7fdd490df7d4f7f8eff672efb75ecb",
+      "bytes": 238,
+      "uncompressed_sha256": "9cd79cb3ff30fd7cbe3e18372b299c33560f92b92c5f4dc1c2b19aeaa2a07b59"
+    },
+    {
+      "path": "logs/root-table-recursive-render-3.log.gz",
+      "sha256": "6c5e47e95fa75a3270991e5974028c59eb60c050c93025014679b800bdde10d3",
+      "bytes": 14522,
+      "uncompressed_sha256": "5785f79311a20a56ea10e94863e8581eace6fc3fa3e2ced013521486f169ab5d"
+    },
+    {
+      "path": "logs/root-table-recursive-render-4.log.gz",
+      "sha256": "699cf27ceff37510d09291da8026dd0b982655d23ee5963455a561875bf43378",
+      "bytes": 14592,
+      "uncompressed_sha256": "df874a1794f486c16e203e0daa7e577dcdb8d131f323d088426dcbc9a7f2aa70"
+    },
+    {
+      "path": "logs/root-table-recursive-render-5.log.gz",
+      "sha256": "6fbb490dc57ebb1ca3107d2cd710b384ccef24396e012853d3bf25043b400d0d",
+      "bytes": 14536,
+      "uncompressed_sha256": "f90beeffb1ed01972dfbba5d12930f3cbbf8b575f98c740e37ba740f56adf27d"
+    },
+    {
+      "path": "patches/recursive-scalar-review-attempt-1.patch",
+      "sha256": "7be0a7cff382c7a950ba7b965d8b645580c3f788809850d20e72f2399ce45f27",
+      "bytes": 13532
+    },
+    {
+      "path": "patches/recursive-scalar-review-attempt-2.patch",
+      "sha256": "65dba85a03a75cbee6fee5708a02d1504b5586aef754067a581c5c8515c55fdb",
+      "bytes": 13804
+    },
+    {
+      "path": "patches/recursive-scalar-review-attempt-3.patch",
+      "sha256": "c5cb74b5cae37f110ebdb108d6bc8d4b2eb6d1c58709658ec45c2aa885b78fc9",
+      "bytes": 14705
+    },
+    {
+      "path": "patches/recursive-scalar-review-attempt-4.patch",
+      "sha256": "aa08d0d511d0ea00c7877e3dd9224d825e9cf3a997423a5d11e3bf1e32ed7af1",
+      "bytes": 11829
+    },
+    {
+      "path": "patches/recursive-scalar-review-attempt-5.patch",
+      "sha256": "9d213925816976684ca344bd7a03d00dcddf6bc4e4dc05721f52606be991c16a",
+      "bytes": 13761
+    },
+    {
+      "path": "patches/recursive-scalar-review-attempt-6.patch",
+      "sha256": "4b0175edaf9da7518d577e8ee206963382f0c40baaf5f92535cef4c889d9894c",
+      "bytes": 15913
+    },
+    {
+      "path": "scripts/collector.py",
+      "sha256": "c97de1ab34b0994ea3b5fbc61003fc264576ff5af7032bcb9d840321fea6a490",
+      "bytes": 8876
+    },
+    {
+      "path": "scripts/relative-links.py",
+      "sha256": "0a50eb8dbd8bd6aef3c7bed1eea3af282a115c1917592c528088a2cd749a95b2",
+      "bytes": 759
+    },
+    {
+      "path": "cubic-link-diagnostic.json",
+      "sha256": "b80dc0c7696eb97fb6c25b8e15b2bb5a5592fb532e4754a41a9b1a75ea6a9ba3",
+      "bytes": 411
+    },
+    {
+      "path": "published-source.json",
+      "sha256": "2e43137733e57b82dd39055a67a1139cdfddc5d3bb8706acbcc1e0006e10c37f",
+      "bytes": 197
+    },
+    {
+      "path": "failed-browser-1/recursive-scalar-desktop-example.png",
+      "sha256": "3226a5e171e97a1ac030fc41a3e4877da5fae9115d7e45906df285976e3794c7",
+      "bytes": 279912
+    },
+    {
+      "path": "failed-browser-1/recursive-scalar-desktop-value.png",
+      "sha256": "fc40ae714418886c9fd6448e95ddaf7e30c7299313970a369f24468c234b39bd",
+      "bytes": 272343
+    },
+    {
+      "path": "failed-browser-1/recursive-scalar-document.json",
+      "sha256": "98840bfb694a41ee24d2392a88c0100e5b479940983a022d7acf2972c595394b",
+      "bytes": 130
+    },
+    {
+      "path": "failed-browser-1/recursive-scalar-narrow-example.png",
+      "sha256": "5e9f98175955e1f0f6a63894eea1673fed5af9b35c81b2c1faa7f95c42f03e99",
+      "bytes": 99526
+    },
+    {
+      "path": "failed-browser-1/recursive-scalar-narrow-value.png",
+      "sha256": "b7696fb31bdf99d7b27c2647df8890d3181f60a867c54a70fb8aa1ceb2a9fb32",
+      "bytes": 96078
+    },
+    {
+      "path": "failed-browser-1/recursive-scalar-section-overflow.json",
+      "sha256": "aa19cf606ddf9fb981c0d8130976bb227b968e4dd44d61ef7a8367504277f07f",
+      "bytes": 2889
+    },
+    {
+      "path": "scripts/run-bounded",
+      "sha256": "63bc5f97337e6b039bb3a9b1ba2a500be96fd1c2a2f73b43dae284aa9b18dda8",
+      "bytes": 302
+    },
+    {
+      "path": "scripts/browser.mjs",
+      "sha256": "7ac6b37b8374741daaeddeb5d71c8ee34845048cbff3c03ec1bbca365a466c10",
+      "bytes": 6253
+    },
+    {
+      "path": "memory-policy.txt",
+      "sha256": "77ed7f46f89cb677b543ac84e409332b092d8a6eb6031e3541b030a5b8cb2b5f",
+      "bytes": 185
+    },
+    {
+      "path": "captures/recursive-scalar-desktop-example.png",
+      "sha256": "bbc388ea44718c9c6c8fef788f83934768cd102946c967bee16e3de8d739c8c7",
+      "bytes": 272198
+    },
+    {
+      "path": "captures/recursive-scalar-narrow-example.png",
+      "sha256": "c2db00d5e9eb1a0e9ebe1094469990715d7fa735e723056d0869c242d500df5d",
+      "bytes": 99490
+    },
+    {
+      "path": "captures/recursive-scalar-desktop-value.png",
+      "sha256": "c11f28cf77ccf915088081d3d5277350c8ac85ab544a8c16400ed5ec41856050",
+      "bytes": 267143
+    },
+    {
+      "path": "captures/recursive-scalar-narrow-value.png",
+      "sha256": "2bde101c3d045857923fc6094d58474b37193e1cc2fd014b9212c10b1009b41c",
+      "bytes": 96084
+    },
+    {
+      "path": "recursive-scalar-inspection.json",
+      "sha256": "d8029cc9619f63ab195b3e40b0c2c333509f8e80d9bd1e7d64381ba543ed957a",
+      "bytes": 2598
+    },
+    {
+      "path": "recursive-scalar-section-overflow.json",
+      "sha256": "469dc8edb4c956bbdbf304f942dc93c76fc5604a2e4ffd02e343c404ba468ef9",
+      "bytes": 2890
+    },
+    {
+      "path": "recursive-scalar-document.json",
+      "sha256": "98840bfb694a41ee24d2392a88c0100e5b479940983a022d7acf2972c595394b",
+      "bytes": 130
+    }
+  ],
+  "scope": "Supplied checked facts compose through two selected levels in one request. Accepted constant/annotated callbacks, successful charged decline/retry, caller assignment/restoration and separate one-level ordinary public module consumer. Exact original reader equations remain the checked targets.",
+  "proof_nodes": {
+    "two_level": 14374,
+    "exact_budget": 14374,
+    "one_below_consumed": 13449,
+    "one_below_requested": 925,
+    "synthetic_callback_source_nodes": 38,
+    "constant": 12792,
+    "annotated": 12801,
+    "retry": 15069,
+    "retry_callback_source_nodes": 57
+  },
+  "audit": {
+    "recursive_theorems": 87,
+    "recursive_definitions": 5,
+    "recursive_nonempty_diagnostic_traces": 90,
+    "root_table_theorems": 74,
+    "root_table_definitions": 14,
+    "callback_theorems": 65,
+    "callback_definitions": 14,
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "native_producers_forbidden": true,
+    "canonical_codec_forbidden": true,
+    "temporary_audit_declarations_discarded": true
+  },
+  "observations": {
+    "integration": {
+      "elapsed": "2min 37.972s",
+      "cpu": "4min 31.793s",
+      "memory": "2.4G (swap: 0B)",
+      "log": "logs/root-table-recursive-integration-3.log.gz",
+      "jobs": "11797"
+    },
+    "render": {
+      "elapsed": "2min 34.949s",
+      "cpu": "2min 43.013s",
+      "memory": "2.3G (swap: 0B)",
+      "log": "logs/root-table-recursive-render-5.log.gz",
+      "jobs": "14331"
+    },
+    "browser": {
+      "elapsed": "10.867s",
+      "cpu": "29.891s",
+      "memory": "4.9G (swap: 0B)",
+      "log": "logs/root-table-recursive-browser-2.log.gz",
+      "jobs": null
+    }
+  },
+  "validation_sources": {
+    "root-table-recursive-integration-1": "2ec649145b3b6c011d3e798e7560bddd5ea3561f",
+    "root-table-recursive-render-1": "ce2acfe801a36c855f724c9e3dcb8d24cbf260f0",
+    "root-table-recursive-integration-2": "5b1dbdb88094b4f68c5b1234ced4b18d50f549a2",
+    "root-table-recursive-render-2": "5b1dbdb88094b4f68c5b1234ced4b18d50f549a2",
+    "root-table-recursive-render-3": "df26200c8976578e8a51b1b96206ba1731467dd8",
+    "root-table-recursive-integration-3": "01ced8d2be4a0644b2c10f87e0ac9acf1a5066ca",
+    "root-table-recursive-render-4": "01ced8d2be4a0644b2c10f87e0ac9acf1a5066ca",
+    "root-table-recursive-render-5": "2920d47c93c4aeca23adfb146fed88a3977b18ac",
+    "root-table-recursive-browser-1": "01ced8d2be4a0644b2c10f87e0ac9acf1a5066ca",
+    "root-table-recursive-browser-2": "2920d47c93c4aeca23adfb146fed88a3977b18ac",
+    "original_final_validation": "7884e6194fe865b868d0fcf6ef00b735bf0f4449"
+  },
+  "commands": {
+    "integration": {
+      "cwd": "/home/kim/.codex/tasks/hex-10358/packet-worktree",
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+        "env",
+        "LAKE_NO_CACHE=true",
+        "lake",
+        "build",
+        "HexRCF",
+        "HexRCFRealCoefficients",
+        "+HexRCF.RecursiveScalarProofs",
+        "+HexRCF.RootTableQuote.Conformance",
+        "+HexRCF.RootTableQuote.Runtime",
+        "+HexRCF.SharedQuoteCallbackProofs",
+        "+HexRCF.ScalarQuoteConformance",
+        "+HexRCF.SharedQuoteConformance",
+        "+HexRCF.RationalQuoteConformance",
+        "+HexRCF.NamedConstantProofs",
+        "+HexManual.Chapters.HexRCF.RootQuote",
+        "+HexManual.Chapters.HexRCF.RootTableQuote"
+      ]
+    },
+    "render": {
+      "cwd": "/home/kim/.codex/tasks/hex-10358/root-table-quote-render",
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+        "env",
+        "LAKE_NO_CACHE=true",
+        "lake",
+        "build",
+        "+RootTableQuoteRender"
+      ]
+    },
+    "browser": {
+      "cwd": "/home/kim/.codex/tasks/hex-10358",
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+        "node",
+        "/home/kim/.codex/tasks/hex-10358/recursive-scalar-browser.mjs",
+        "/home/kim/.codex/tasks/hex-10358/root-table-quote-render"
+      ]
+    }
+  },
+  "patch_bases": {
+    "recursive-scalar-review-attempt-1.patch": "3aabe2d3fb89ab67ff840f7632eff86bb916bf47",
+    "recursive-scalar-review-attempt-2.patch": "3aabe2d3fb89ab67ff840f7632eff86bb916bf47",
+    "recursive-scalar-review-attempt-3.patch": "3aabe2d3fb89ab67ff840f7632eff86bb916bf47",
+    "recursive-scalar-review-attempt-4.patch": "d5c05ce11b966580752538ea299060f8e692b023",
+    "recursive-scalar-review-attempt-5.patch": "d5c05ce11b966580752538ea299060f8e692b023",
+    "recursive-scalar-review-attempt-6.patch": "d5c05ce11b966580752538ea299060f8e692b023"
+  },
+  "resources": "One own build/browser at a time; aggregate hard32GiB, no swap, two Lean threads. Retained live policy check.",
+  "visual": {
+    "captures": 4,
+    "all_opened": true,
+    "widths": [
+      1440,
+      390
+    ],
+    "targets_per_width": [
+      6,
+      6
+    ],
+    "maximum_local_overflow": 0,
+    "scope": "New recursive callback subsection only."
+  },
+  "metadata": {
+    "dag": 0,
+    "copyright": 0,
+    "line_counts": 0,
+    "named_admissions": 0,
+    "relative_links": 0,
+    "diff_check": 0,
+    "logs": "logs/root-table-recursive-metadata-*-3.log.gz checks the final record link"
+  },
+  "limitations": [
+    "These are reused-dependency build/render observations, not fixed-schedule scaling, AB/BA or speedup evidence.",
+    "Earlier exploratory logs are retained for diagnosis; only explicitly paired source records support current-source validation. Review attempt patch bases are listed individually; the first diagnostic failure counted earlier strict-reader probes rather than only probes after refusal.",
+    "The original public module failed on a private generated proof export; checking the wrapper before exporting the theorem repaired that. Its sign uses the public restore_sign law. A module cannot import legacy test fixtures, so the public consumer has one selected level; the separate two-level fixture remains legacy.",
+    "The source record keeps the 51-body snapshot and later manual-link correction separate from the final 87-body integration. The wrong-directory render3 invocation is retained separately from the corrected render3.",
+    "Browser1 retained four failed captures and metrics: the callback type signature overflows by73pixels at390px. It was wrapped before render5/browser2; the failed inspection file was not produced and no stale copy is included.",
+    "Closed aliases hiding the canonical codec still need expansion. No source/history discovery, general tactic acceptance/completeness, finite realization, universal strict compiled whole-reader guarantee or native inverse/xgcd repair is established here."
+  ]
+}

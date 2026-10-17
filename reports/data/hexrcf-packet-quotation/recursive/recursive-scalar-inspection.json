@@ -1,0 +1,58 @@
+[
+  {
+    "label": "desktop",
+    "kind": "example",
+    "text": "\n                  ScalarQuote.decoderWith composes checked scalar decoding through several\nselected-field predecessors. Its lookup receives each exact canonical codec\nexpression and supplies the sign facts already checked for that context. The\nrational callback handles the base field; every nested quote shares the enclosing\nrequest's budget and transaction. A declining lookup can be probed again after\nreduction; its charges are retained on every call.",
+    "viewport": 1440,
+    "scrollY": 283026,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "CODE",
+    "targetWidth": 740,
+    "targetScrollWidth": 740,
+    "descendantOverflow": 0,
+    "overflowElements": []
+  },
+  {
+    "label": "desktop",
+    "kind": "value",
+    "text": "\n                  An ordinary module consumer also runs the callback factory and exports the\nchecked scalar reader equation. Its sign follows from the owner's restoration\nlaw, without unfolding the stored element's implementation:",
+    "viewport": 1440,
+    "scrollY": 283439,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "CODE",
+    "targetWidth": 740,
+    "targetScrollWidth": 740,
+    "descendantOverflow": 0,
+    "overflowElements": []
+  },
+  {
+    "label": "narrow",
+    "kind": "example",
+    "text": "\n                  ScalarQuote.decoderWith composes checked scalar decoding through several\nselected-field predecessors. Its lookup receives each exact canonical codec\nexpression and supplies the sign facts already checked for that context. The\nrational callback handles the base field; every nested quote shares the enclosing\nrequest's budget and transaction. A declining lookup can be probed again after\nreduction; its charges are retained on every call.",
+    "viewport": 390,
+    "scrollY": 455752,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "CODE",
+    "targetWidth": 331,
+    "targetScrollWidth": 331,
+    "descendantOverflow": 0,
+    "overflowElements": []
+  },
+  {
+    "label": "narrow",
+    "kind": "value",
+    "text": "\n                  An ordinary module consumer also runs the callback factory and exports the\nchecked scalar reader equation. Its sign follows from the owner's restoration\nlaw, without unfolding the stored element's implementation:",
+    "viewport": 390,
+    "scrollY": 456397,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "CODE",
+    "targetWidth": 331,
+    "targetScrollWidth": 331,
+    "descendantOverflow": 0,
+    "overflowElements": []
+  }
+]

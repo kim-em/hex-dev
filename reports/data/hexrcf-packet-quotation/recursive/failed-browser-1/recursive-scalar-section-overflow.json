@@ -1,0 +1,74 @@
+[
+  {
+    "label": "desktop",
+    "width": 1440,
+    "targets": [
+      {
+        "tag": "P",
+        "text": "\n                  ScalarQuote.decoderWith composes checked scalar decoding through several\nselected-field predecessors. Its lookup receives each exact canonica",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean Hex.RealFormula in\nopen Hex.RCF.RealCoefficients in\nmeta def quoteSelectedReader\n    (reader registry : Expr)\n    (factsFor : Expr → Reify.ReifyM (Opt",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The two-level regression checks one visit to its selected context followed by\none visit to its selected predecessor. Its lookup adds 19 sourc",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  An ordinary module consumer also runs the callback factory and exports the\nchecked scalar reader equation. Its sign follows from the owner's ",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.RecursiveScalarPublic in\nexample : restored.sign = 1 := sign\n",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  A fresh importing audit checks the two-level fixture and this public consumer,\nincluding accepted annotated decodes and a charged decline fol",
+        "overflow": 0
+      }
+    ]
+  },
+  {
+    "label": "narrow",
+    "width": 390,
+    "targets": [
+      {
+        "tag": "P",
+        "text": "\n                  ScalarQuote.decoderWith composes checked scalar decoding through several\nselected-field predecessors. Its lookup receives each exact canonica",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean Hex.RealFormula in\nopen Hex.RCF.RealCoefficients in\nmeta def quoteSelectedReader\n    (reader registry : Expr)\n    (factsFor : Expr → Reify.ReifyM (Opt",
+        "overflow": 73
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The two-level regression checks one visit to its selected context followed by\none visit to its selected predecessor. Its lookup adds 19 sourc",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  An ordinary module consumer also runs the callback factory and exports the\nchecked scalar reader equation. Its sign follows from the owner's ",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.RecursiveScalarPublic in\nexample : restored.sign = 1 := sign\n",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  A fresh importing audit checks the two-level fixture and this public consumer,\nincluding accepted annotated decodes and a charged decline fol",
+        "overflow": 0
+      }
+    ]
+  }
+]

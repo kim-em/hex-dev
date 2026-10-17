@@ -1,0 +1,6 @@
+ActiveState=active
+MainPID=470332
+OOMPolicy=kill
+ControlGroup=/user.slice/user-1003.slice/user@1003.service/app.slice/hex-10358-lean-build.service
+MemoryMax=34359738368
+MemorySwapMax=0
