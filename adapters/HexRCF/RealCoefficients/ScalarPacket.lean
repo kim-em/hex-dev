@@ -93,4 +93,28 @@ avoids reducing the graph again when looking up a fact's polynomial or sign. -/
     rw [← binding.1, ← binding.2]
     exact fact.checked}
 
+private theorem fact_eq {context : Algebraic.Context parent.Value Signature parent.sign parent.signature}
+    (left right : Algebraic.SignFact context)
+    (polynomial : left.polynomial = right.polynomial) (sign : left.sign = right.sign) :
+    left = right := by
+  cases left
+  cases right
+  cases polynomial
+  cases sign
+  rfl
+
+/-- Restoration retains the exact accepted optional-reader result. -/
+theorem read_restore (original : Model parent ℝ) (value : ValueCodec parent.Value)
+    (context : Algebraic.Context parent.Value Signature parent.sign parent.signature)
+    (polynomial : Codec.Json) (claimed : Int) (evidence : Codec.Json)
+    (accepted : (read original value context polynomial claimed evidence).isSome = true) :
+    read original value context polynomial claimed evidence =
+      some (restore original value context polynomial claimed evidence accepted) := by
+  have parsed := (Option.some_get accepted).symm
+  apply parsed.trans
+  apply congrArg some
+  apply fact_eq
+  · exact (fields original value context polynomial claimed evidence _ parsed).1
+  · exact (fields original value context polynomial claimed evidence _ parsed).2
+
 end Hex.RCF.RealCoefficients.ScalarPacket

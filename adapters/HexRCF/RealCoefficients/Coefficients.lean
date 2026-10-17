@@ -42,6 +42,14 @@ theorem ofField_value (generator : RealAlgebraicNumber)
   rw [RealAlgebraicNumber.ofReal_toReal]
   exact PolyQuot.toAlgebraicNumber_toComplex value _ _
 
+/-- Converting the existing field generator retains the original selected
+real value. This consumes the owner's fixed-field generator correspondence. -/
+theorem ofField_gen (generator : RealAlgebraicNumber) :
+    (ofField generator generator.toAlgebraic.toQAdjoin).toReal = generator.toReal := by
+  apply Complex.ofReal_injective
+  rw [ofField_value, AlgebraicNumber.toQAdjoin_toComplex,
+    RealAlgebraicNumber.ofReal_toReal]
+
 /-- Fixed-field coordinates evaluate at the generator's selected real value. -/
 theorem ofField_toReal (generator : RealAlgebraicNumber)
     (value : QAdjoin generator.toAlgebraic) :

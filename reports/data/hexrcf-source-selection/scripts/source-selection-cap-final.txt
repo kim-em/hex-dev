@@ -1,0 +1,5 @@
+ActiveState=active
+MemoryCurrent=137711616
+MemoryPeak=137940992
+MemoryMax=34359738368
+MemorySwapMax=0

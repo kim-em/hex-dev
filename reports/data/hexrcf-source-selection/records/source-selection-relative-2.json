@@ -1,0 +1,20 @@
+{
+  "head": "b22ca86d55070de543a32cf03949a51aab0427a6",
+  "links": [
+    {
+      "source": "HexManual/Chapters/HexRCF/NativeSources.lean",
+      "target": "../../../conformance/HexRCF/NativeSourcesConformance.lean",
+      "exists": true
+    },
+    {
+      "source": "HexManual/Chapters/HexRCF/NativeSources.lean",
+      "target": "../../../conformance/HexRCF/SourceSelectionConformance.lean",
+      "exists": true
+    },
+    {
+      "source": "HexManual/Chapters/HexRCF/NativeSources.lean",
+      "target": "../../../conformance/HexRCF/SourceSelectionNative.lean",
+      "exists": true
+    }
+  ]
+}

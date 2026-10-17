@@ -378,6 +378,10 @@ original divisors before parsing; `check_sound` returns one real witness and
 `check_false` returns only a point counterexample. `checkWith` rejects missing stored literals and retains missing
 intermediate arithmetic requests through the owner's supplied equal operations.
 `ScalarPacket.read`/`restore` check and retain demanded scalar evidence.
+`ScalarPacket.quoteWith`, inside `RootQuote.runWith`, restores the exact original
+optional-reader equation through a supplied checked equality of contexts. Its
+legacy-fixture regression uses depth 32768; fully frozen public-module replay
+still needs the owner's signature-codec literal equation.
 `SectionQuote.finish` freshly reifies the original target and checks its matrix,
 valuation and ordered original-divisor identities before transporting a proof.
 The [fresh-source tests](../conformance/HexRCF/SectionProduceConformance.lean)

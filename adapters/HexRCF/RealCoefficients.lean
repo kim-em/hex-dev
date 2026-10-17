@@ -39,6 +39,8 @@ public import HexRCF.RealCoefficients.NativeSpecialize
 public import HexRCF.RealCoefficients.NativeSamples
 public import HexRCF.RealCoefficients.NativeSources
 public import HexRCF.RealCoefficients.NativeSelection
+public import HexRCF.RealCoefficients.SourceSelection
+public import HexRCF.RealCoefficients.FieldSelection
 public import HexRCF.RealCoefficients.SectionReplay
 public import HexRCF.RealCoefficients.ScalarPacket
 public import HexRCF.RealCoefficients.SectionBuild
@@ -53,7 +55,9 @@ public import HexRCF.RealCoefficients.RootQuote
 public meta import HexRCF.RealCoefficients.RootQuote
 public meta import HexRCF.RealCoefficients.RationalQuote
 public import HexRCF.RealCoefficients.ScalarQuote
+public import HexRCF.RealCoefficients.ScalarPacketQuote
 public meta import HexRCF.RealCoefficients.ScalarQuote
+public meta import HexRCF.RealCoefficients.ScalarPacketQuote
 public import HexRCF.RealCoefficients.RepresentationCarrier
 public import HexRCF.RealCoefficients.RootCells
 public import HexRCF.RealCoefficients.RepresentationCells

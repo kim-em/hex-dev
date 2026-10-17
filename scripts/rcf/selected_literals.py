@@ -470,18 +470,21 @@ def main():
             raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
     else:
         destination.write_text(output)
-    fixture = "native-selection-root.json"
-    value = json.loads((ROOT / "conformance-fixtures/HexRCF" / fixture).read_text())
-    if len(value) != 2 or len(value[0]) != 6:
-        raise ValueError("expected a complete selected-root subject and graph")
-    destination = ROOT / "conformance/HexRCF/NativeSelectionLiterals.lean"
-    output = render("NativeSelectionLiterals", value[0] + [value[1]],
-                    sample_root=True, root_fixture=fixture)
-    if args.check:
-        if destination.read_text() != output:
-            raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
-    else:
-        destination.write_text(output)
+    for fixture, module in [
+        ("native-selection-root.json", "NativeSelectionLiterals"),
+        ("source-selection-negative.json", "SourceSelectionNegativeLiterals"),
+    ]:
+        value = json.loads((ROOT / "conformance-fixtures/HexRCF" / fixture).read_text())
+        if len(value) != 2 or len(value[0]) != 6:
+            raise ValueError("expected a complete selected-root subject and graph")
+        destination = ROOT / f"conformance/HexRCF/{module}.lean"
+        output = render(module, value[0] + [value[1]],
+                        sample_root=True, root_fixture=fixture)
+        if args.check:
+            if destination.read_text() != output:
+                raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
+        else:
+            destination.write_text(output)
     fixture = "root-replay.json"
     value = json.loads((ROOT / "conformance-fixtures/HexRCF" / fixture).read_text())
     destination = ROOT / "conformance/HexRCF/RootReplayLiterals.lean"
