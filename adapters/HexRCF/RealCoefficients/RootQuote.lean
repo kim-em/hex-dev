@@ -221,11 +221,17 @@ private def checkedStep (current whole subject law : Expr) : ReifyM (Expr × Exp
   let next := motive.bindingBody!.instantiate1 rhs
   if next == whole then throwError "demanded boundary made no change"
   let statement ← mkEq current next
-  let codec? := match subject.getAppFn with
-    | .proj ``ValueCodec 1 codec => some codec
-    | .const ``ValueCodec.decode _ =>
-      if subject.getAppNumArgs == 3 then some subject.getAppArgs[1]! else none
-    | _ => none
+  let inspected := subject.consumeMData
+  let codec? ← match inspected.getAppFn.consumeMData with
+    | .proj ``ValueCodec 1 codec => do
+      unless inspected.getAppNumArgs == 1 do
+        throwError "rcf: literal codec step expects a complete decode projection"
+      pure (some codec)
+    | .const ``ValueCodec.decode _ => do
+      unless inspected.getAppNumArgs == 3 do
+        throwError "rcf: literal codec step expects a complete decode application"
+      pure (some inspected.getAppArgs[1]!)
+    | _ => pure none
   let candidate ← match codec? with
     | some codec =>
       if codec.getAppFn.isConstOf ``Algebraic.Element.codec then
