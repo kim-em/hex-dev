@@ -17,8 +17,8 @@ namespace Hex.RCF.SourceSelectionCases
 @[expose] def reader := Algebraic.RootReplay.readDescriptor ValueCodec.rat ValueCodec.nat
   Hex.Sturm.orderSign 7 Hex.RCF.RealCoefficients.NativeSelectionLiterals.subject
     Hex.RCF.RealCoefficients.NativeSelectionLiterals.graph
-set_option maxHeartbeats 12000000
-set_option maxRecDepth 32768
+set_option maxHeartbeats 12000000 in
+set_option maxRecDepth 32768 in
 run_meta do
   withOptions (fun options => debug.skipKernelTC.set (Elab.async.set options false) false) do
    withExporting (isExporting := false) do
@@ -52,6 +52,8 @@ theorem head_eq : head = DensePoly.ofCoeffs #[-2,0,1] :=
 @[expose] def bindingReader := Algebraic.SignRequests.readBinding ValueCodec.rat ValueCodec.nat
   rawSubject Hex.RCF.RealCoefficients.NativeSelectionLiterals.subject
 
+set_option maxHeartbeats 12000000 in
+set_option maxRecDepth 32768 in
 run_meta do
   withoutExporting do
     let quoted ← match ← RootQuote.quote (mkConst ``bindingReader) with

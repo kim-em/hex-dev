@@ -80,22 +80,16 @@ theorem sample_real : presentation.model.value sample = 1 :=
   (presentation.pack_value (1 : QAdjoin root.toCanonical.toAlgebraic)).trans
     (Hex.RealClosure.NumberField.value_one root.toCanonical)
 
-theorem point_truth : Samples.Row.eval
-    (.and (FieldSelection.prepare root coordinates).formula.lift (FieldSelection.matrix original))
-    (NativeSpecialize.row presentation.context values sample
-      (.and (FieldSelection.prepare root coordinates).formula.lift (FieldSelection.matrix original))) =
+theorem point_truth : Samples.Row.eval (FieldSelection.matrix original)
+    (NativeSpecialize.row presentation.context values sample (FieldSelection.matrix original)) =
       some true := by
   apply (Samples.Row.eval_true _ _ _
     (NativeSpecialize.row_model presentation.model values sample _)).mpr
-  change (FieldSelection.prepare root coordinates).formula.lift.toProp
-      (RealFormula.append (presentation.model.value ∘ values) (presentation.model.value sample)) ∧
-    (FieldSelection.matrix original).toProp
+  change (FieldSelection.matrix original).toProp
       (RealFormula.append (presentation.model.value ∘ values) (presentation.model.value sample))
   have interpreted := FieldSelection.nativeValues_real root presentation coordinates
   change presentation.model.value ∘ values = _ at interpreted
   rw [interpreted, sample_real]
-  refine ⟨((FieldSelection.prepare root coordinates).formula.lift_correct _ _).mpr
-    (FieldSelection.authenticated root coordinates), ?_⟩
   apply (FieldSelection.matrix_correct original root.toCanonical.toReal _ _).mpr
   have same : (fun i => (Coefficients.ofField root.toCanonical (coordinates i)).toReal) =
       fun i : Fin 3 => source i.succ := by
@@ -110,11 +104,33 @@ theorem point_truth : Samples.Row.eval
     HexMvPolyTheory.toMvPolynomial_add, HexMvPolyTheory.toMvPolynomial_one,
     RealFormula.append, source]
 
+theorem values_real : presentation.model.value ∘ values = source :=
+  (FieldSelection.nativeValues_real root presentation coordinates).trans source_eq
+
+theorem point_nonzero : presentation.context.sign (sample - values 0) ≠ 0 := by
+  have generator : presentation.model.value (values 0) = Real.sqrt 2 := congrFun values_real 0
+  rw [presentation.model.sign, presentation.model.sub, sample_real, generator]
+  have above : 1 < Real.sqrt (2 : ℝ) := by
+    nlinarith [Real.sq_sqrt (by norm_num : (0 : ℝ) ≤ 2), Real.sqrt_nonneg (2 : ℝ)]
+  simp [_root_.sign_neg (sub_neg.mpr above)]
+
+/-- The guarded point is the interpreted sample itself, so a sample-dependent
+divisor remains attached to that exact point. -/
+theorem point_guarded : original.toProp
+    (RealFormula.append (fun i => (Coefficients.ofField root.toCanonical (coordinates i)).toReal)
+      (presentation.model.value sample)) ∧
+    presentation.model.value (sample-values 0) ≠ 0 := by
+  have result := FieldSelection.true_real root presentation coordinates
+    sample original [sample-values 0] (by
+      intro a member
+      have same : a = sample-values 0 := by simpa only [List.mem_singleton] using member
+      subst a
+      exact point_nonzero) point_truth
+  exact ⟨result.1, result.2 _ (by simp)⟩
+
 theorem point_witness : ∃ x : ℝ, original.toProp
     (RealFormula.append (fun i => (Coefficients.ofField root.toCanonical (coordinates i)).toReal) x) := by
-  obtain ⟨x, meaning, _⟩ := FieldSelection.true_real root presentation coordinates
-    sample original [] (by simp) point_truth
-  exact ⟨x, meaning⟩
+  exact ⟨presentation.model.value sample, point_guarded.1⟩
 
 #eval (show IO Unit from do
   let some presentation := Hex.RealClosure.NumberField.present? root.toCanonical registry

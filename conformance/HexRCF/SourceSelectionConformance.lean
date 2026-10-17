@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 import HexRCF.RealCoefficients.SourceSelection
 import HexRCF.SourceSelectionCases
+import HexRCF.SourceSelectionNegative
 import HexRCF.ProofEvidence
 namespace Hex.RCF.SourceSelectionConformance
 open Hex Hex.RealClosure Hex.RealFormula Hex.RCF.RealCoefficients
@@ -98,6 +99,22 @@ theorem swapped_roots {firstVersion secondVersion : Nat}
   have same := congrFun ((SourceSelection.formula_iff _ _).mp meaning) 0
   apply different
   simpa [SourceSelection.real, RealFormula.append] using same.symm
+
+theorem concrete_roots :
+    (SourceSelection.root (.root .nil SourceSelectionCases.root) SourceSelectionNegative.root).formula.toProp
+      ![Real.sqrt 2,-Real.sqrt 2] := by
+  simpa only [SourceSelectionCases.selected, SourceSelectionNegative.selected] using
+    two_roots SourceSelectionCases.root SourceSelectionNegative.root
+
+theorem concrete_swap :
+    ¬ (SourceSelection.root (.root .nil SourceSelectionCases.root) SourceSelectionNegative.root).formula.toProp
+      ![-Real.sqrt 2,Real.sqrt 2] := by
+  have different : SourceSelectionCases.root.real ≠ SourceSelectionNegative.root.real := by
+    rw [SourceSelectionCases.selected, SourceSelectionNegative.selected]
+    have positive := Real.sqrt_pos.mpr (by norm_num : (0 : ℝ) < 2)
+    linarith
+  simpa only [SourceSelectionCases.selected, SourceSelectionNegative.selected] using
+    swapped_roots SourceSelectionCases.root SourceSelectionNegative.root different
 
 /-- The generated plan composes with the actual finite reader at arbitrary
 native depth. Row truth remains checked input, not a compiled Boolean oracle. -/

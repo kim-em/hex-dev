@@ -69,12 +69,22 @@ theorem values_real : model.value ∘ values = source := by
   · change Real.sqrt 2 * Real.sqrt 2 - 1 = 1
     nlinarith [Real.sq_sqrt (by norm_num : (0 : ℝ) ≤ 2)]
 
-def matrix : RealFormula.QF 5 :=
-  let x : RealFormula.Poly 5 := MvPoly.X 4
-  .and (.atom ⟨x - MvPoly.X 0, .eq⟩)
-    (.and (.atom ⟨x * MvPoly.X 1 + MvPoly.X 2, .eq⟩)
-      (.and (.atom ⟨x^2 - MvPoly.X 3 - 1, .eq⟩)
-        (.and (.atom ⟨x - 1, .gt⟩) (.atom ⟨x - MvPoly.X 2, .lt⟩))))
+def original : RealFormula.QF 4 :=
+  let x : RealFormula.Poly 4 := MvPoly.X 3
+  .and (.atom ⟨x + MvPoly.X 0, .eq⟩)
+    (.and (.atom ⟨x * MvPoly.X 0 + MvPoly.X 1, .eq⟩)
+      (.and (.atom ⟨x^2 - MvPoly.X 2 - 1, .eq⟩)
+        (.and (.atom ⟨x - 1, .gt⟩) (.atom ⟨x - MvPoly.X 1, .lt⟩))))
+
+def matrix : RealFormula.QF 5 := FieldSelection.matrix original
+
+theorem original_matrix (x : ℝ) : matrix.toProp (RealFormula.append source x) ↔
+    original.toProp (RealFormula.append (fun i : Fin 3 => source i.succ) x) := by
+  have split : source = Fin.cases (source 0) (fun i : Fin 3 => source i.succ) := by
+    funext i
+    exact Fin.cases rfl (fun _ => rfl) i
+  rw [split]
+  exact FieldSelection.matrix_correct original (source 0) _ x
 
 theorem truth : Samples.Row.eval (.and inputs.formula.lift matrix)
     (NativeSpecialize.row context values sample.value (.and inputs.formula.lift matrix)) =
@@ -85,20 +95,21 @@ theorem truth : Samples.Row.eval (.and inputs.formula.lift matrix)
     matrix.toProp (RealFormula.append (model.value ∘ values) (model.value sample.value))
   rw [values_real, point]
   refine ⟨(inputs.formula.lift_correct _ _).mpr authenticated, ?_⟩
+  apply (original_matrix _).mpr
   have above : 1 < Real.sqrt (2 : ℝ) := by
     rw [← Data.selectedSqrt]
     exact Data.selectedFacts.2.1
   have below : Real.sqrt (2 : ℝ) < 2 := by
     rw [← Data.selectedSqrt]
     exact Data.selectedFacts.2.2
-  dsimp only [matrix, RealFormula.QF.toProp, RealFormula.Atom.toProp, RealFormula.Cmp.toProp]
+  dsimp only [original, RealFormula.QF.toProp, RealFormula.Atom.toProp, RealFormula.Cmp.toProp]
   unfold RealFormula.Poly.eval
   simp_rw [← HexMvPolyTheory.eval₂_toMvPolynomial]
   norm_num [HexMvPolyTheory.toMvPolynomial_X, HexMvPolyTheory.toMvPolynomial_sub,
     HexMvPolyTheory.toMvPolynomial_add, HexMvPolyTheory.toMvPolynomial_mul,
     HexMvPolyTheory.toMvPolynomial_pow, HexMvPolyTheory.toMvPolynomial_one,
     RealFormula.append, source, SourceSelectionConformance.source,
-    show (2 : RealFormula.Poly 5) = MvPoly.C 2 from rfl]
+    show (2 : RealFormula.Poly 4) = MvPoly.C 2 from rfl]
   all_goals nlinarith [Real.sq_sqrt (by norm_num : (0 : ℝ) ≤ 2)]
 
 def divisor : context.Value := values 2 - values 0
@@ -148,6 +159,15 @@ theorem reader : ∃ read : context.Value → ℝ, ∃ domain : context.Value �
   exact ⟨read, domain, closed, fixed, present, meaning,
     (guarded divisor (by simp)).2, (guarded computedDivisor (by simp)).2⟩
 
+/-- Recover the original matrix at the very same finite reader. -/
+theorem original_reader : ∃ read : context.Value → ℝ, ∃ domain : context.Value → Prop,
+    Transport.Closed read domain ∧
+    (∀ i, domain (values i) ∧ read (values i) = source i) ∧ domain sample.value ∧
+    original.toProp (RealFormula.append (fun i : Fin 3 => source i.succ) (read sample.value)) ∧
+    read divisor ≠ 0 ∧ read computedDivisor ≠ 0 := by
+  obtain ⟨read,domain,closed,fixed,present,meaning,guarded,computed⟩ := reader
+  exact ⟨read,domain,closed,fixed,present,(original_matrix _).mp meaning,guarded,computed⟩
+
 private theorem tuple_first {α : Type} (a b c d : α) : (![a,b,c,d]) 0 = a := rfl
 private theorem tuple_third {α : Type} (a b c d : α) : (![a,b,c,d]) 2 = c := rfl
 
@@ -157,11 +177,11 @@ theorem values_first : values 0 = sample.value :=
 theorem values_third : values 2 = sample.input.value (2 : Data.base.Value) :=
   tuple_third _ _ _ _
 
-/-- Both computed coordinates contribute to the actual matrix and its real
-conclusion, and the two nonzero guards hold at that same point. -/
+/-- Readable closed projection of `original_reader`; the reader theorem
+retains the coefficient and guard ties used by this proof. -/
 theorem witness : ∃ x : ℝ, x = Real.sqrt 2 ∧ x * (-Real.sqrt 2) + 2 = 0 ∧
     x^2 - 1 - 1 = 0 ∧ 1 < x ∧ x < 2 ∧ 2-x ≠ 0 ∧ 1+Real.sqrt 2 ≠ 0 := by
-  obtain ⟨read, domain, closed, fixed, present, meaning, guarded, computed⟩ := reader
+  obtain ⟨read, domain, closed, fixed, present, meaning, guarded, computed⟩ := original_reader
   have mapped : read divisor = 2 - read sample.value := by
     rw [divisor, closed.read_sub _ _ (fixed 2).1 (fixed 0).1,
       (fixed 2).2, (fixed 0).2]
@@ -176,7 +196,7 @@ theorem witness : ∃ x : ℝ, x = Real.sqrt 2 ∧ x * (-Real.sqrt 2) + 2 = 0 �
   have claims : read sample.value = Real.sqrt 2 ∧
       read sample.value * (-Real.sqrt 2) + 2 = 0 ∧
       (read sample.value)^2 - 1 - 1 = 0 ∧ 1 < read sample.value ∧ read sample.value < 2 := by
-    dsimp only [matrix, RealFormula.QF.toProp, RealFormula.Atom.toProp,
+    dsimp only [original, RealFormula.QF.toProp, RealFormula.Atom.toProp,
       RealFormula.Cmp.toProp] at meaning
     unfold RealFormula.Poly.eval at meaning
     simp_rw [← HexMvPolyTheory.eval₂_toMvPolynomial] at meaning
@@ -184,18 +204,20 @@ theorem witness : ∃ x : ℝ, x = Real.sqrt 2 ∧ x * (-Real.sqrt 2) + 2 = 0 �
       HexMvPolyTheory.toMvPolynomial_add, HexMvPolyTheory.toMvPolynomial_mul,
       HexMvPolyTheory.toMvPolynomial_pow, HexMvPolyTheory.toMvPolynomial_one,
       RealFormula.append, source, SourceSelectionConformance.source,
-      sub_eq_zero, sub_pos, sub_lt_zero] using meaning
+      ← sub_eq_add_neg, sub_eq_zero, sub_pos, sub_lt_zero] using meaning
   exact ⟨read sample.value, claims.1, claims.2.1, claims.2.2.1,
     claims.2.2.2.1, claims.2.2.2.2, guarded, computed⟩
 
-def negativeMatrix : RealFormula.QF 5 := .atom ⟨MvPoly.X 4,.lt⟩
+def negativeMatrix : RealFormula.QF 5 :=
+  .atom ⟨MvPoly.X 4 * MvPoly.X 1 + MvPoly.X 2,.ne⟩
 
 theorem negative_meaning (x : ℝ) :
-    negativeMatrix.toProp (RealFormula.append source x) ↔ x < 0 := by
+    negativeMatrix.toProp (RealFormula.append source x) ↔ x * (-Real.sqrt 2) + 2 ≠ 0 := by
   dsimp only [negativeMatrix, RealFormula.QF.toProp, RealFormula.Atom.toProp, RealFormula.Cmp.toProp]
   unfold RealFormula.Poly.eval
-  rw [← HexMvPolyTheory.eval₂_toMvPolynomial, HexMvPolyTheory.toMvPolynomial_X]
-  simp [RealFormula.append]
+  simp_rw [← HexMvPolyTheory.eval₂_toMvPolynomial]
+  simp [HexMvPolyTheory.toMvPolynomial_X, HexMvPolyTheory.toMvPolynomial_mul,
+    HexMvPolyTheory.toMvPolynomial_add, RealFormula.append, source, SourceSelectionConformance.source]
 
 theorem negated_truth : Samples.Row.eval (.and inputs.formula.lift (.not negativeMatrix))
     (NativeSpecialize.row context values sample.value (.and inputs.formula.lift (.not negativeMatrix))) =
@@ -205,13 +227,20 @@ theorem negated_truth : Samples.Row.eval (.and inputs.formula.lift (.not negativ
       (RealFormula.append (model.value ∘ values) (model.value sample.value)) ∧
     ¬ negativeMatrix.toProp (RealFormula.append (model.value ∘ values) (model.value sample.value))
   rw [values_real, point]
-  exact ⟨(inputs.formula.lift_correct _ _).mpr authenticated,
-    fun h => (not_lt_of_ge (Real.sqrt_nonneg (2 : ℝ))) ((negative_meaning _).mp h)⟩
+  refine ⟨(inputs.formula.lift_correct _ _).mpr authenticated, ?_⟩
+  rw [negative_meaning]
+  intro nonzero
+  apply nonzero
+  nlinarith [Real.sq_sqrt (by norm_num : (0 : ℝ) ≤ 2)]
 
 /-- A separately evaluated false universal retains both supplied guards at
 its actual counterexample reader. -/
-theorem counterexample : (¬ ∀ x : ℝ, x < 0) ∧
-    ∃ read : context.Value → ℝ, read divisor ≠ 0 ∧ read computedDivisor ≠ 0 := by
+theorem counterexample : (¬ ∀ x : ℝ, x * (-Real.sqrt 2) + 2 ≠ 0) ∧
+    ∃ read : context.Value → ℝ, ∃ domain : context.Value → Prop,
+      Transport.Closed read domain ∧
+      (∀ i, domain (values i) ∧ read (values i) = source i) ∧ domain sample.value ∧
+      read sample.value * (-Real.sqrt 2) + 2 = 0 ∧
+      (∀ a ∈ [divisor,computedDivisor], domain a ∧ read a ≠ 0) := by
   have result := inputs.not_forall context following values source authenticated
     (by
       intro i inherited
@@ -226,7 +255,9 @@ theorem counterexample : (¬ ∀ x : ℝ, x < 0) ∧
       · exact computed_nonzero) negated_truth
   refine ⟨fun h => result.1 (fun x => (negative_meaning x).mpr (h x)), ?_⟩
   obtain ⟨read, domain, closed, fixed, present, negative, guarded⟩ := result.2
-  exact ⟨read, (guarded divisor (by simp)).2, (guarded computedDivisor (by simp)).2⟩
+  refine ⟨read,domain,closed,fixed,present,?_,guarded⟩
+  by_contra different
+  exact negative ((negative_meaning _).mpr different)
 
 theorem inherited_truth : Samples.Row.eval
     (.and SourceSelectionConformance.inputs.formula.lift matrix)

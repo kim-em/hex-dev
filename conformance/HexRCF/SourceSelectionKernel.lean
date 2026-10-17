@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 import HexRCF.SourceSelectionNative
+import HexRCF.SourceSelectionPublic
 import HexRCF.ProofEvidence
 import HexRCF.SelectedRoot.KernelCheck
 open Lean Meta Hex Hex.RealClosure Hex.RCF.RealCoefficients
@@ -18,9 +19,13 @@ construction is outside the body scope and inside the complete axiom closure. -/
 run_meta do
   let roots := #[``SourceSelectionCases.reader_eq,``SourceSelectionCases.binding_checked,
     ``SourceSelectionCases.parsed,``SourceSelectionCases.subject,``SourceSelectionCases.selected,
+    ``SourceSelectionNegative.reader_eq,``SourceSelectionNegative.binding_checked,
+    ``SourceSelectionNegative.subject,``SourceSelectionNegative.selected,
+    ``SourceSelectionPublic.realize,
     ``SourceSelectionConformance.authenticated,``SourceSelectionConformance.inherited_free,
     ``SourceSelectionConformance.chain_source,``SourceSelectionConformance.wrong_chain,
     ``SourceSelectionConformance.swapped_roots,
+    ``SourceSelectionConformance.concrete_roots,``SourceSelectionConformance.concrete_swap,
     ``FieldSelectionConformance.manufactured,``FieldSelectionConformance.authentication,
     ``FieldSelectionConformance.matrix_identity,``FieldSelectionConformance.point_witness,
     ``SourceSelectionNative.source_eq,``SourceSelectionNative.reader,
@@ -41,7 +46,9 @@ run_meta do
     let some index := (← getEnv).getModuleIdxFor? name | continue
     unless #[`HexRCF.SourceSelectionCases,`HexRCF.SourceSelectionConformance,
         `HexRCF.SourceSelectionNative,`HexRCF.RealCoefficients.SourceSelection,
-        `HexRCF.RealCoefficients.FieldSelection,`HexRCF.FieldSelectionConformance].contains modules[index]! do continue
+        `HexRCF.RealCoefficients.FieldSelection,`HexRCF.FieldSelectionConformance,
+        `HexRCF.SourceSelectionPublic,`HexRCF.SourceSelectionNegative,
+        `HexRCF.SourceSelectionNegativeLiterals].contains modules[index]! do continue
     let declaration ← match ← getConstInfo name with
       | .thmInfo info =>
           bodies := bodies.push name
@@ -65,6 +72,8 @@ run_meta do
     throwError "source-selection inspection retained temporary declarations"
   unless bodies.contains ``SourceSelectionCases.reader_eq &&
       bodies.contains ``SourceSelectionCases.binding_checked &&
+      bodies.contains ``SourceSelectionNegative.reader_eq &&
+      bodies.contains ``SourceSelectionPublic.realize &&
       bodies.contains ``SourceSelectionNative.witness &&
       bodies.contains ``SourceSelectionNative.counterexample do
     throwError "source-selection inspection omitted an actual generated or source proof"

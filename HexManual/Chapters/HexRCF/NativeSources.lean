@@ -207,10 +207,14 @@ and {name Hex.RCF.RealCoefficients.SourceSelection.formula_iff}`formula_iff`
 reduces source authentication to coordinatewise real equalities. A chained
 regression uses an inherited value, a computed generator and the non-integral
 relation `c₂ = 1/3 + (2/5)*c₁`, and rejects an incorrect final coordinate.
-Parametric two-root controls retain both supplied selected embeddings.
+Concrete two-root controls use separately quoted positive and negative √2
+descriptors and reject their swap. The negative descriptor retains the strict
+interval `(-3/2,-7/5)` and its exact supplied polynomial.
 {name Hex.RCF.RealCoefficients.SourceSelection.not_forall}`not_forall` supplies
 the universal counterexample route, tested on the separately evaluated false
-sentence `∀ x : ℝ, x < 0` with both supplied guards retained. A native inherited
+sentence `∀ x : ℝ, x * (-Real.sqrt 2) + 2 ≠ 0`. Its conclusion retains the
+reader, closure, all coefficient identities, the sample equation and both
+supplied guard domains and nonvanishing facts. A native inherited
 case consumes the actual origin identity for the coefficient `2`.
 `exists_real` also retains
 negation closure, specialized polynomial sizes and agreement with every inherited
@@ -256,12 +260,20 @@ Its sample is the packed value `1`, distinct from the selected generator.
 It checks the shifted matrix and isolates the selector-only swap control.
 Its ordinary point theorem uses
 {name Hex.RCF.RealCoefficients.FieldSelection.true_real}`true_real`, which
-composes the actual model, ordered coordinates and original matrix interpretation.
+interprets the plain matrix row through the actual model and ordered coordinates.
+The conclusion names the interpreted sample itself, so its sample-dependent
+divisor `sample − generator` is attached to that exact point. This model route
+does not need a selector conjunct: the presentation laws authenticate all
+coordinates. The separate finite-reader test consumes the selector and recovers
+the shifted original matrix at its identified reader.
 The proof presentation is a successful result of that same factory, by the
 owner's existence law; compiled execution is separate evidence. This module
 uses ordinary public imports and public meta imports for its executable controls,
 without `import all`. The direct point law retains every supplied nonzero guard;
 source-division collection remains the frontend's responsibility.
+A [public inherited-coordinate consumer](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/SourceSelectionPublic.lean)
+also applies `formula_iff` and `exists_real` with the actual origin identity,
+retaining coefficient/sample/guard ties without private imports.
 
 # Frozen selected-section replay
 
