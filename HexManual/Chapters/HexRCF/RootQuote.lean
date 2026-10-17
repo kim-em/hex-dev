@@ -105,6 +105,24 @@ call restores caller metavariables and retains checked auxiliaries together
 with the environment effects of accepted callbacks. Rejection and failure restore
 the complete saved state.
 
+Canonical `Element.codec` decodes remain protected throughout quotation,
+including predecessor decodes. Supply a checked equation for that exact decode
+through the callback; without one the call fails closed. A `DecoderM` returns
+`none` to decline a proposal. A structured error is terminal, including one
+named `providerDeclined`. The nested polynomial conformance fixture uses an
+existing selected-root extension to require actual predecessor callbacks and
+retain their source charges. It also checks a bare protected decoder, a wrong
+second coefficient sign, trailing zeros and malformed reader heads.
+`ScalarQuote.quoteDecodeWith` retains the exact demanded decode expression,
+including its primitive projection form. Projection transport and nested reader
+steps are checked with an abstract codec before applying the concrete codec
+and its checked equation. The original reader expression must expose that
+predecessor codec; expand a hiding definition first. A late rejection restores
+the completed callback's auxiliaries. The fresh importing audit rechecks all
+18 reachable callback/module theorem bodies and eight definitions, forbidding
+both native producers and canonical-codec unfolding. Exact and one-below nested
+budgets also cover the added transport work.
+
 The quote regressions use `maxHeartbeats := 12000000` and `maxRecDepth := 8192`;
 the fresh body audit uses depth 32768. Success under Lean's default limits has
 not been established. Each rewrite motive contains the current reader, so
@@ -172,7 +190,9 @@ Reader size is charged before type checking and reduction. Wrong-context
 facts reject before scalar callbacks run; malformed field counts, non-array
 literals and trailing polynomial zeros also reject. A successful call preserves
 the caller's metavariables. The ordinary bridge is tested in a `module` consumer
-that imports only the optional umbrella.
+that imports only the optional umbrella. A direct `ScalarQuote` module consumer
+also runs the actual polynomial quotation helper and uses its emitted proof
+in an ordinary theorem.
 Assigned input metavariables are instantiated before size accounting; expanded
 readers, literals and facts have the same charges through assigned metavariables.
 The final transport charge is checked separately from the preflight charge.

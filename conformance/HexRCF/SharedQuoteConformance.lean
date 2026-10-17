@@ -32,7 +32,7 @@ run_meta do
       if let .thmInfo declaration ← getConstInfo name then
         Hex.RCF.SelectedRootTests.KernelCheck.addChecked
           (← mkFreshUserName `__sharedQuoteBody) declaration.type declaration.value
-          #[``ScalarPacket.build,``ScalarPacket.buildLiteral]
+          #[``ScalarPacket.build,``ScalarPacket.buildLiteral,``Algebraic.Element.codec]
         checked := checked+1
       else if let .defnInfo declaration ← getConstInfo name then
         let options := (← getOptions).setBool `debug.skipKernelTC false
@@ -43,7 +43,7 @@ run_meta do
         let diagnostics := Kernel.getDiagnostics env
         unless diagnostics.enabled do throwError "shared value diagnostics disabled"
         if let some (producer,count) := Hex.RCF.SelectedRootTests.KernelCheck.violation? diagnostics
-            #[``ScalarPacket.build,``ScalarPacket.buildLiteral] then
+            #[``ScalarPacket.build,``ScalarPacket.buildLiteral,``Algebraic.Element.codec] then
           throwError "shared value definition reduced native producer {producer}: {count}"
         setEnv (Kernel.enableDiag env false)
         definitions := definitions+1

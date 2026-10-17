@@ -49,6 +49,8 @@ run_meta do
   withExporting (isExporting := false) do
     let .ok result ← quotePoly decoder
       | throwError "shared scalar/poly quotation failed"
+    unless result.usage.proofNodes == 1066 do
+      throwError "documented polynomial proof-node count changed: {result.usage.proofNodes}"
     logInfo m!"shared scalar/poly quotation proofNodes={result.usage.proofNodes}"
     let some expanded ← unfoldDefinition? (mkConst ``reader)
       | throwError "polynomial source definition unavailable"
@@ -60,9 +62,11 @@ run_meta do
     unless assigned.usage.proofNodes == result.usage.proofNodes do
       throwError "assigned polynomial reader hid its size from the request"
     withExporting (isExporting := true) do
-      addDecl (.defnDecl {
+      let declaration := Declaration.defnDecl {
         name := `Hex.RCF.SharedQuoteTests.restored,levelParams := [],
-        type := ← inferType result.value,value := result.value,hints := .regular 0,safety := .safe})
+        type := ← inferType result.value,value := result.value,hints := .regular 0,safety := .safe}
+      addDecl declaration
+      compileDecl declaration (logErrors := true)
       let statement ← mkEq (← mkAppM ``Except.toOption #[mkConst ``reader])
         (← mkAppM ``Option.some #[mkConst `Hex.RCF.SharedQuoteTests.restored])
       addDecl (.thmDecl {
@@ -128,6 +132,8 @@ run_meta do
     let facts := mkConst ``Records.facts
     let stages : ReifyM RootQuote.Result := do
       let first ← ScalarQuote.quoteWith codec facts (mkConst ``Hex.RCF.ScalarQuoteTests.literal) decoder
+      unless first.usage.proofNodes == 818 do
+        throwError "documented scalar proof-node count changed: {first.usage.proofNodes}"
       let final ← ScalarQuote.quotePolyWith original facts decoder
       unless final.usage.proofNodes == first.usage.proofNodes+result.usage.proofNodes do
         throwError "polynomial quotation reset the preceding scalar request"
@@ -135,6 +141,8 @@ run_meta do
       return final
     let .ok combined ← RootQuote.runWith stages
       | throwError "composed scalar and polynomial quotation failed"
+    unless combined.usage.proofNodes == 1884 do
+      throwError "documented composed proof-node count changed: {combined.usage.proofNodes}"
     unless combined.usage.sourceNodes == 7 do
       throwError "transaction runner returned stale usage after its final quote"
     unchanged do

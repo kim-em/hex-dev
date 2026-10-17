@@ -102,9 +102,11 @@ run_meta do
     logInfo m!"canonical extension scalar quotation proofNodes={result.usage.proofNodes}"
     withExporting (isExporting := true) do
       let name := `Hex.RCF.ScalarQuoteTests.restored
-      addDecl (.defnDecl {
+      let declaration := Declaration.defnDecl {
         name,levelParams := [],type := ← inferType result.value,value := result.value,
-        hints := .regular 0,safety := .safe}) (forceExpose := true)
+        hints := .regular 0,safety := .safe}
+      addDecl declaration (forceExpose := true)
+      compileDecl declaration (logErrors := true)
       let reader := (← inferType result.proof).getAppArgs[1]!
       let statement ← mkEq reader
         (← mkAppM ``Option.some #[mkConst name])
