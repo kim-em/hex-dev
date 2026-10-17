@@ -1,0 +1,76 @@
+{
+  "source_commit": "036f565152b50403dd9d91b21b102837371702e9",
+  "sources": {
+    "adapters/HexRCF/RealCoefficients/RootQuote.lean": "68926dff226905412056eebe082ac0a9f0dbaccffa1ec3a9da0897b8fb0b874f",
+    "HexManual/Chapters/HexRCF/RootTableQuote.lean": "1e72046507d1f3130cad91cf9b7ccae14d0b2161439116b085b7e1e78c869a4b",
+    "conformance/HexRCF/RootTableQuote/Cases.lean": "e20af97994fe52bb2cc5b7a70940935ae0080cd970f1923daffc7318d6cc2a0f",
+    "conformance/HexRCF/RootTableQuote/Input.lean": "e6ac9803e8c4aab59acd55ee0c086040f5eb072645a71ade47aeb5f8a7c6a6b9",
+    "conformance/HexRCF/RootTableQuote/Table.lean": "220f2efed3ff3249b15a6b4e86e735e3857d00a38ad96db5b200b4d21284351e",
+    "conformance/HexRCF/RootTableQuote/Semantics.lean": "fb8f27cba93fcafba3aa35361d576bd0141b3990ded96d9f391bde43dd03de5b",
+    "conformance/HexRCF/RootTableQuote/Conformance.lean": "10cc3ed1b59ee716b3fc5e8c5df889c6e733771328d87bb7e363aaa88fc0e18a"
+  },
+  "artifacts": [
+    {
+      "path": "root-table-quote-desktop-boundary.png",
+      "sha256": "32b86a22fdb13323bc97d282716f9c8f0e5d55ab5b63c5b8bbbb6d0754e781f6"
+    },
+    {
+      "path": "root-table-quote-desktop-equivalence.png",
+      "sha256": "9786aa7f038c33346d3e9ae83274e94952bee97bad4ce0c3536536bb37939db5"
+    },
+    {
+      "path": "root-table-quote-desktop-example.png",
+      "sha256": "9492c37661f094928ea5113353730daa46c9f3eb3e35e063b6e2be002bcb81fa"
+    },
+    {
+      "path": "root-table-quote-narrow-boundary.png",
+      "sha256": "4f35047eda7da3c1ed4e61889aeab3b06743a3bbdd868244cd734e58e66e62aa"
+    },
+    {
+      "path": "root-table-quote-narrow-equivalence.png",
+      "sha256": "020f226fd230698e01df8f40a27e3de05d5f8183521a839e0dcb5736efb1ff7a"
+    },
+    {
+      "path": "root-table-quote-narrow-example.png",
+      "sha256": "96063f9432f4248d9f525a59ff6160bedc52c83a910baf25b1b1d2998d94b7ce"
+    },
+    {
+      "path": "root-table-quote-inspection.json",
+      "sha256": "5b3be72d4ae484ce0e7c20b6948121b61f0e17b6e73de543230df2cc9c04fdde"
+    },
+    {
+      "path": "root-table-quote-section-overflow.json",
+      "sha256": "3adf458383e1256b50ed941e563b8a44beadf68495f9d6e6ff29ffd1bbfcdcbf"
+    },
+    {
+      "path": "root-table-quote-input-1.log.gz",
+      "sha256": "44fc8938525ed8e42267dbc76ec45885375c7c063421bbb7a28fd749a9dd9968"
+    },
+    {
+      "path": "root-table-quote-table-1.log.gz",
+      "sha256": "75aa93bcfd58b9307887cf80eb77550e4363a9c18c1c8fe7c0a0035c0c72eb34"
+    },
+    {
+      "path": "root-table-quote-semantics-1.log.gz",
+      "sha256": "b3a149361f8d51c2d46881be1e7d1cd0f1b447d3ddb7fdb757f3e6609dbc6d9e"
+    },
+    {
+      "path": "root-table-quote-audit-1.log.gz",
+      "sha256": "ba83f0ac7a23ea079b7e85a12e135cf4b588b575bcb9abeb397985e19552f0db"
+    },
+    {
+      "path": "root-table-quote-manual-1.log.gz",
+      "sha256": "d0d6f3dc48969394aa5b4776150df8d167d8a41176b45e8824f0930e51c61373"
+    },
+    {
+      "path": "root-table-quote-render-1.log.gz",
+      "sha256": "3ce97a622b6fda070cc2a5260625edede73d9c2cacefa4ba8b5e172e152ce42a"
+    },
+    {
+      "path": "root-table-quote-browser-1.log.gz",
+      "sha256": "6bf1f96736e4c17df42118c04ec12802be72de11ac755a467ffd4e828ac92c54"
+    }
+  ],
+  "visual": "Six actual captures opened, seven local targets per1440/390 width each overflow0.",
+  "scope": "Initial repository proof/manual render before explicit emitted-definition compilation; original table wrapper noncomputable. No compiled execution claim. Audit70theorems/14definitions std3axioms/producer diagnostics passed."
+}
