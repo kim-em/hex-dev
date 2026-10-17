@@ -14,6 +14,7 @@ set_option maxHeartbeats 12000000
 set_option maxRecDepth 32768
 run_meta do
   let roots := #[``RecursiveScalarQuote.read_checked,``RecursiveScalarQuote.constant_read,
+    ``RecursiveScalarQuote.tagged_read,``RecursiveScalarQuote.retry_read,
     ``RecursiveScalarQuote.sign,
     ``RecursiveScalarPublic.read_checked,``RecursiveScalarPublic.accepted,
     ``RecursiveScalarPublic.sign]
@@ -54,7 +55,7 @@ run_meta do
     if !diagnostics.unfoldCounter.isEmpty then reductions := reductions+1
   unless (← (← getEnv).getLocalConstantInfos).map (·.name) == originalNames do
     throwError "recursive scalar audit retained temporary declarations"
-  unless theorems.size == 51 && definitions.size == 5 && reductions > 0 do
+  unless theorems.size == 87 && definitions.size == 5 && reductions == 90 do
     throwError "recursive scalar audit inventory changed: {theorems.size} theorem bodies/{definitions.size} definitions; traces={reductions}"
   logInfo m!"recursive scalar quotation: {theorems.size} theorem bodies, {definitions.size} definitions"
   logInfo m!"recursive scalar nonempty diagnostic traces: {reductions}"
