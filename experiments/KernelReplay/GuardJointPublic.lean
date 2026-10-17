@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import KernelReplay.GuardJoint
+public import KernelReplay.GuardJointExport
 
 public section
 namespace Hex.RealClosure.Algebraic.KernelReplay.GuardJointPublic
@@ -13,6 +13,6 @@ namespace Hex.RealClosure.Algebraic.KernelReplay.GuardJointPublic
 /-- One ordinary base interpretation and two real points satisfy the complete
 original ordered agreement, inherited provider values, both inventories,
 all 3773 original guards, and the native product together. -/
-theorem exists_points : GuardJoint.Statement := GuardJoint.exists_points
+theorem exists_points : GuardJointExport.Statement := GuardJointExport.exists_points
 
 end Hex.RealClosure.Algebraic.KernelReplay.GuardJointPublic

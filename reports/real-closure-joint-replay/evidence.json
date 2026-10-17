@@ -1,0 +1,94 @@
+{
+  "scope": "Original fixed nested tower fixture; full joint proposition, ordinary-module root/product consumer, independent semantic and actual checked-body audits",
+  "upstream_main": "e0faead2f34b3b4379dd1c0ca0cfa1f2b1a2a43f",
+  "command": [
+    "lake",
+    "build",
+    "KernelReplay.GuardJointPublicAudit"
+  ],
+  "aggregate_memory_bytes": 8589934592,
+  "swap_bytes": 0,
+  "lean_threads": 2,
+  "construction_heartbeats": 1122260,
+  "export_heartbeats": 422379,
+  "statement_audit_heartbeats": 245887,
+  "full_body_audit_heartbeats": 451349,
+  "checked_declarations": 74594,
+  "witnesses": 3,
+  "ordinary_real_points": 2,
+  "original_guards": 3773,
+  "complete_clauses": 3778,
+  "standard_axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "whole_field_references": [],
+  "local_lean_and_configuration_inputs_verified": 5817,
+  "frozen_original_inputs_verified": 1240,
+  "compiler_artifacts_archived": 13940,
+  "external_compiler_inputs_hashed": 16527,
+  "ordinary_module_original_root_and_product_equations": true,
+  "source_sha256": {
+    "experiments/KernelReplay/GuardJoint.lean": "4f1115b45031b01f96fcdda9fbd126888ba3ad45c3e2d2da7cc1c5f2f8bd17ec",
+    "experiments/KernelReplay/GuardJointAudit.lean": "dfe684996a699883c6077b85b8ba2e7df6ab1050d959ad1d63f472bfa490d2e1",
+    "experiments/KernelReplay/GuardJointExport.lean": "97e90a4e42170625e7640744e130c412a99a742ade91b6d413c5e08fe846a98b",
+    "experiments/KernelReplay/GuardJointPublic.lean": "50ad775f9e34967bb7228e05538bc2e18d4f4ace958de852e17542861890c79a",
+    "experiments/KernelReplay/GuardJointUse.lean": "d06467d5d989cf1c9e44bc5a3b72947e18b91e40eccc1dd1e87f273f88b8b993",
+    "experiments/KernelReplay/GuardJointPublicAudit.lean": "b4927a9ab9e97d4e6b822b6226871dca3ba7c5883ec939a74862abd8ee36268a",
+    "experiments/KernelReplay/FramePublic.lean": "ce1800d244eb884c2b5e07becc802349735706ee45c8b552cc8a1b91c936e9fd"
+  },
+  "files": {
+    "acceptance.json.gz": {
+      "sha256": "bf2f6e6e2535204b829f991012fdd210df1add927b4476f8187e8418080d87b7",
+      "bytes": 1356181,
+      "uncompressed_sha256": "a5bcda9bd90ca4d40539f092929779cbb646ae87acf13863bf9caa3b9bdfc807"
+    },
+    "build.log.gz": {
+      "sha256": "3df7ba608c6ff3f8a5cbb2675857d1c6dbe04612a9591acb8c64a89405ed1114",
+      "bytes": 52588,
+      "uncompressed_sha256": "541375c688642ad9b9679663ab93047fa35bd32d9051ee0b3358bcd44c7de4d9"
+    },
+    "source.json.gz": {
+      "sha256": "20f7f6f77d179a5ef3f5bfbace0219ee3ec55d50c2fa6a2558ed4bf4c0e5c683",
+      "bytes": 264166,
+      "uncompressed_sha256": "c12b633d61a983fa45a41c18f133be4c43b12e1fda1e43ebaa2873e13165d52a"
+    },
+    "result.json": {
+      "sha256": "c44b0a4877fc5f504f5d23596a4a5f1522b9510200843f0983f3809e327c9117",
+      "bytes": 1581,
+      "uncompressed_sha256": "c44b0a4877fc5f504f5d23596a4a5f1522b9510200843f0983f3809e327c9117"
+    },
+    "client-build.log.gz": {
+      "sha256": "b9b083a23433cdebceda0ba7d7e8ab1c72f356b141a2c57631f34dde641a2ca7",
+      "bytes": 52362,
+      "uncompressed_sha256": "191ba8bc4411958bbdd66674e3580981460f69d7f0423d0647298daaad4b8b06"
+    },
+    "client-source.json.gz": {
+      "sha256": "acd7e6e8d83320f210d001d29bf3028497b5169c15ef335b240b7a4e53f65c48",
+      "bytes": 264161,
+      "uncompressed_sha256": "2e82e293ee972c32e24c00eb7d28a894f2c5e58cfd4189c0521d0f4e4472a766"
+    },
+    "client-result.json": {
+      "sha256": "291132f6d9d6973623834ff43e6078a0cb74cb58b83066596c5a889930198e9a",
+      "bytes": 2579,
+      "uncompressed_sha256": "291132f6d9d6973623834ff43e6078a0cb74cb58b83066596c5a889930198e9a"
+    },
+    "interface-pins.json": {
+      "sha256": "05c44a2fb6c0e4feb49c4ea1797f8e08ebf6829245e1c32de9db610e91c1e05b",
+      "bytes": 833,
+      "uncompressed_sha256": "05c44a2fb6c0e4feb49c4ea1797f8e08ebf6829245e1c32de9db610e91c1e05b"
+    },
+    "verify.py": {
+      "sha256": "4550fb0fffe31edf0bc07a66886591d0428d064c2b007e9b1bc64088d46111ba",
+      "bytes": 14294,
+      "uncompressed_sha256": "4550fb0fffe31edf0bc07a66886591d0428d064c2b007e9b1bc64088d46111ba"
+    }
+  },
+  "evidence_notes": "The full acceptance ledger contains host-local paths and hashes of retained compiler artifacts; it does not bundle those large payloads. verify.py is the exact host-local archival verifier. Rebuild the Lean target to reproduce the mathematics.",
+  "validation_coverage": "Full fixed fixture locally; smaller representative finite/staged examples in CI",
+  "general_exporter_complete": false,
+  "strict_compiled_rejection_complete": false,
+  "phase4_complete": false,
+  "issue_10378_complete": false
+}

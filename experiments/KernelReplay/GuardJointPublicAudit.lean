@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 import KernelReplay.GuardJointPublic
+import KernelReplay.GuardJointUse
 import KernelReplay.GuardJointAudit
 
 namespace Hex.RealClosure.Algebraic.KernelReplay.GuardJointPublicAudit
@@ -63,10 +64,14 @@ run_meta do
   let joint ← getConstInfo ``GuardJoint.exists_points
   unless joint.isTheorem && joint.levelParams.isEmpty do
     throwError "complete original joint theorem is unavailable"
-  let .defnInfo statement ← getConstInfo ``GuardJoint.Statement |
+  let exported ← getConstInfo ``GuardJointExport.exists_points
+  unless exported.isTheorem && exported.levelParams.isEmpty do
+    throwError "public joint theorem is unavailable"
+  let .defnInfo statement ← getConstInfo ``GuardJointExport.Statement |
     throwError "public joint statement is not a transparent checked proposition"
-  unless statement.levelParams.isEmpty && statement.value == joint.type do
+  unless statement.levelParams.isEmpty && statement.value == exported.type do
     throwError "public joint alias changed the exact original existential"
+  same exported.type joint.type "original joint proposition"
   let setup ← GuardDescriptorInputs.prepare
   let first := setup.first
   let second ← Prefix.ofData (mkConst ``GuardSecondData.data)
@@ -75,7 +80,7 @@ run_meta do
   let actualReaders := #[origin.read, first.reader, second.reader]
   let baseExists := (← getConstInfo ``GuardInventoryReplay.baseExists).type
   let existence := baseExists.getAppArgs
-  withWitnesses 3 joint.type fun witnesses predicate => do
+  withWitnesses 3 exported.type fun witnesses predicate => do
     unless witnesses.size == 3 do throwError "joint witness count changed"
     same (← inferType witnesses[0]!) existence[0]! "base interpretation type"
     for index in [1:3] do
@@ -131,7 +136,10 @@ set_option maxHeartbeats 2000000 in
 run_meta do
   let began ← IO.getNumHeartbeats
   let count ← audit began #[mkConst ``GuardJointPublic.exists_points,
-    mkConst ``GuardJoint.exists_points, mkConst ``GuardJoint.Statement]
+    mkConst ``GuardJointUse.exists_points, mkConst ``GuardJointUse.coordinates,
+    mkConst ``GuardJointExport.exists_points,
+    mkConst ``GuardJointExport.Statement, mkConst ``GuardJoint.exists_points,
+    mkConst ``GuardJoint.Statement]
   logInfo m!"public joint full body audit: ordinaryPublicImports=true witnesses=3 originalGuards=3773 completeClauses=3778 exactStandardAxioms=true wholeFieldReferences=[] declarations={count} aggregateHeartbeat={((← IO.getNumHeartbeats)-began)/1000}"
 
 end Hex.RealClosure.Algebraic.KernelReplay.GuardJointPublicAudit

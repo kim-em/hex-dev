@@ -1409,8 +1409,9 @@ premises. `Reconstruction.requested` retains their exact translated types. The j
 fixture exercises a polynomial sum-law request on `1 + X` with coefficients
 from a checked native unit packing. All eight discovered/requested guards are
 exported. Computed coefficient operands and product-law requests enter the same
-export path. The nested product fixture and its joint selected-root consumer
-remain unproved. Closed support and
+export path. The original nested product fixture has a checked joint existence
+proof and an ordinary-module consumer for both defining-polynomial equations
+and the native product at the same coordinates. Closed support and
 witness terms are shared through kernel-checked definitions or theorems; the
 existential predicate binds its interpretation directly from the bootstrap
 predicate. This fixture consumes a retained algebraic suffix over a staged base;
@@ -1426,8 +1427,32 @@ nonzero generator. `request_bound` and `request_coeff` prove that index zero
 exists and contains that original generator. `FramePublic.product` consumes a
 finite product at one fixed reader, interpretation and pair of coordinates,
 and derives the original native generator's square equation. It does not
-choose witnesses: their simultaneous existence and both selected-root
-equations still require the joint reconstruction.
+choose witnesses. `GuardJoint.exists_points` reconstructs the complete original
+nested fixture: one base interpretation and two ordinary real coordinates satisfy
+the ordered coefficient agreement, inherited provider values, both original
+packing/sign/inverse inventories, all 3773 original guards and the native product
+together. Its 3778 clauses retain the selected extension `X − (ε + δ)` and the
+original positive selected root of `Y² − α`.
+
+`GuardJointExport` names the original native contexts and finite readers and
+shares nested proofs at their expected propositions. Its exported theorem is
+kernel checked against the original joint theorem. Expected propositions matter
+here: a cached proof can have an inferred `Bool.Reflects` type whose reduction
+requires private computational bodies. Public clients instead receive checked
+theorem constants with the propositions expected by their data constructors.
+`GuardJointPublic` exports this full proposition. `GuardJointUse` imports it as
+an ordinary module, extracts all three witnesses, and proves both original raw
+defining-polynomial equations and the native product equation at the same real
+points, using the independent finite operand reconstruction.
+`GuardJointPublicAudit` independently compares every original clause at the
+shared readers and traverses actual checked private and opaque proof bodies,
+allowing only `propext`, `Classical.choice` and `Quot.sound` and rejecting the
+whole-field reference constructions. The complete fixed-fixture proof is locally
+validated; the existing smaller staged/finite examples provide representative CI
+coverage. Reproduction commands and the exact evidence scope are recorded in
+[`reports/real-closure-joint-replay.md`](../../reports/real-closure-joint-replay.md).
+The recursive exporter for arbitrary live collections and interleaved stages
+remains required.
 
 This kernel experiment accesses opaque Sturm preparation internals through
 its exact DAG allowlist entry to inspect the validated native producer result.

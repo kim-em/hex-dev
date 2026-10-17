@@ -3109,6 +3109,8 @@ lean_lib KernelReplayExperiment where
     .one `KernelReplay.GuardJointAudit,
     .one `KernelReplay.GuardJointPublic,
     .one `KernelReplay.GuardJointPublicAudit,
+    .one `KernelReplay.GuardJointExport,
+    .one `KernelReplay.GuardJointUse,
     .one `KernelReplay.GuardSupportInventory,
     .one `KernelReplay.GuardSupportCandidate01,
     .one `KernelReplay.GuardSupportCandidate02,

@@ -14,17 +14,17 @@ namespace Hex.RealClosure.Algebraic.KernelReplay.FramePublic
 local instance (priority := 2000) : Lean.Grind.Field Rat := Lean.Grind.instFieldRat
 local instance : Field (Hex.RationalFn (Hex.RationalFn Rat)) := HexPolyTheory.fieldOfGrind
 
-noncomputable def firstReader
+@[expose] noncomputable def firstReader
     (interpretation : Hex.RealClosure.CoefficientMap (Hex.RationalFn (Hex.RationalFn Rat)) Real)
     (alpha : Real) (value : Element FrameOwners.first) : Real :=
   Packing.eval (FiniteBaseProbe.base.partialRead interpretation) alpha value.polynomial
 
-noncomputable def secondReader
+@[expose] noncomputable def secondReader
     (interpretation : Hex.RealClosure.CoefficientMap (Hex.RationalFn (Hex.RationalFn Rat)) Real)
     (alpha beta : Real) (value : Element FrameOwners.second) : Real :=
   Packing.eval (firstReader interpretation alpha) beta value.polynomial
 
-noncomputable def nativeSquare
+@[expose] noncomputable def nativeSquare
     (interpretation : Hex.RealClosure.CoefficientMap (Hex.RationalFn (Hex.RationalFn Rat)) Real)
     (alpha beta : Real) : Real :=
   secondReader interpretation alpha beta (FrameOwners.beta * FrameOwners.beta)
