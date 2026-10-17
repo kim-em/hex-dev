@@ -76,9 +76,11 @@ run_meta do
     logInfo m!"cubic literal quotation proof budget: {result.usage.proofNodes}"
     withExporting (isExporting := true) do
       let name := `Hex.RCF.RootQuoteTests.nativeRoot
-      addDecl (.defnDecl {
+      let declaration := Declaration.defnDecl {
         name,levelParams := [],type := ← inferType result.value,value := result.value,
-        hints := .regular 0,safety := .safe }) (forceExpose := true)
+        hints := .regular 0,safety := .safe}
+      addDecl declaration (forceExpose := true)
+      compileDecl declaration (logErrors := true)
       let statement ← mkEq (← mkAppM ``Except.toOption #[mkConst ``read])
         (← mkAppM ``Option.some #[mkConst name])
       addDecl (.thmDecl {

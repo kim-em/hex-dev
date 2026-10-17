@@ -9,6 +9,26 @@ public import HexRealClosure.RootReplay
 public import HexRealClosure.TowerContext
 public meta import HexRCF.RealCoefficients.Reify
 public meta import HexRCF.Tactic
+
+public section
+namespace Hex.RCF.RealCoefficients.RootQuote
+
+/-- Restore the exact successful reader equation from its optional result. -/
+theorem read_eq {ε α : Type} (reader : Except ε α) (value : α)
+    (checked : reader.toOption = some value) : reader = .ok value := by
+  cases reader with
+  | error message => contradiction
+  | ok result =>
+    exact congrArg Except.ok (by simpa only [Except.toOption, Option.some.injEq] using checked)
+
+/-- Retain a successful reader equation at the optional-result boundary. -/
+theorem read_some {ε α : Type} (reader : Except ε α) (value : α)
+    (checked : reader = .ok value) : reader.toOption = some value := by
+  rw [checked]
+  rfl
+
+end Hex.RCF.RealCoefficients.RootQuote
+
 public meta section
 
 namespace Hex.RCF.RealCoefficients.RootQuote
@@ -18,6 +38,12 @@ open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RealFormula.Reify
 proposal leaves other literal rules available. Proposed equations are checked
 against that exact decode before being used. -/
 abbrev Decoder := Expr → MetaM (Option Expr)
+
+/-- A scalar proposal in the enclosing reflection request. Work performed by
+the callback consumes the same budget even when the callback declines.
+Return `none` to decline; every structured error, including `providerDeclined`,
+is terminal. -/
+abbrev DecoderM := Expr → ReifyM (Option Expr)
 
 /-- Reconstructed data and the checked equation from the original reader to
 that data. Usage continues the caller's reflection request. -/
@@ -69,8 +95,9 @@ private partial def irreducible? (protectedNames : Array Name) (expression : Exp
 
 private def replayWhnf (expression : Expr) : ReifyM Expr :=
   withoutModifyingEnv <| withFreshCache do
-    let protectedNames := replayRules.filterMap fun rule =>
-      if #[``Array.toList,``Array.all,``Array.foldlM].contains rule.1 then none else some rule.1
+    let protectedNames := (replayRules.filterMap fun rule =>
+      if #[``Array.toList,``Array.all,``Array.foldlM].contains rule.1 then none else some rule.1).push
+        ``Algebraic.Element.codec
     for name in protectedNames do setReducibilityStatus name .irreducible
     while true do
       charge .proofNodes 1
@@ -100,7 +127,7 @@ private def replayProof? (expression : Expr) : ReifyM (Option Expr) := do
         return some proof
   return none
 
-private def codecProof? (decode : Decoder) (expression : Expr) : ReifyM (Option Expr) := do
+private def codecProof? (decode : DecoderM) (expression : Expr) : ReifyM (Option Expr) := do
   charge .proofNodes 1
   if expression.hasLooseBVars || expression.hasMVar then return none
   if let .proj ``ValueCodec 1 codec := expression.getAppFn then
@@ -134,7 +161,7 @@ private def reflexiveProof? (expression : Expr) : ReifyM (Option Expr) := do
   unless ← withTransparency .all <| withNewMCtxDepth (isDefEq args[1]! args[2]!) do return none
   let accepted := mkApp2 (mkConst ``Decidable.isTrue) proposition (← mkEqRefl args[1]!)
   return some (← mkAppM ``Subsingleton.elim #[expression,accepted])
-private partial def demanded (decode : Decoder) (dependent : Expr → ReifyM Expr) (expression : Expr) :
+private partial def demanded (decode : DecoderM) (dependent : Expr → ReifyM Expr) (expression : Expr) :
     ReifyM (Option (Expr × Expr × Expr)) := Core.withIncRecDepth do
   charge .proofNodes 1
   Core.checkSystem "demanded literal-reader boundary"
@@ -194,13 +221,52 @@ private def checkedStep (current whole subject law : Expr) : ReifyM (Expr × Exp
   let next := motive.bindingBody!.instantiate1 rhs
   if next == whole then throwError "demanded boundary made no change"
   let statement ← mkEq current next
-  let candidate := mkExpectedPropHint (← mkAppM ``congrArg #[motive,law]) statement
+  let inspected := subject.consumeMData
+  let codec? ← match inspected.getAppFn.consumeMData with
+    | .proj ``ValueCodec 1 codec => do
+      unless inspected.getAppNumArgs == 1 do
+        throwError "rcf: literal codec step expects a complete decode projection"
+      pure (some codec)
+    | .const ``ValueCodec.decode _ => do
+      unless inspected.getAppNumArgs == 3 do
+        throwError "rcf: literal codec step expects a complete decode application"
+      pure (some inspected.getAppArgs[1]!)
+    | _ => pure none
+  let candidate ← match codec? with
+    | some codec =>
+      if codec.getAppFn.isConstOf ``Algebraic.Element.codec then
+        -- Kernel conversion of a concrete reader can evaluate its native decode.
+        -- Check the step with an abstract codec and its equation first.
+        let codecType ← inferType codec
+        let prepared ← liftM <| withLocalDeclD `codec codecType fun placeholder => do
+          let replace := fun (e : Expr) =>
+            e.replace fun part => if part == codec then some placeholder else none
+          let original := replace current
+          if original == current then
+            return none
+          let premise ← mkEq (replace subject) (replace rhs)
+          withLocalDeclD `checked premise fun h => do
+            let target ← mkEq original (replace next)
+            let candidate := mkExpectedPropHint
+              (← mkAppM ``congrArg #[replace motive,h]) target
+            return some (← mkForallFVars #[placeholder,h] target,
+              ← mkLambdaFVars #[placeholder,h] candidate)
+        let some (kind,value) := prepared
+          | abort (.providerFailure (.invalidProviderEvidence
+              ⟨`Hex.RCF.RealCoefficients.RootQuote.boundary,0⟩
+              "expose the original reader's canonical predecessor codec before quotation") #[])
+        accountProof kind
+        accountProof value
+        let step ← Hex.RCF.checkProof `RootQuote.codecStep kind value
+        pure (mkApp2 step codec law)
+      else pure (mkExpectedPropHint (← mkAppM ``congrArg #[motive,law]) statement)
+    | none => pure (mkExpectedPropHint (← mkAppM ``congrArg #[motive,law]) statement)
   accountProof candidate
   let proof ← Hex.RCF.checkProof `RootQuote.step statement candidate
   return (next,proof)
 
 
-private def checkedBool (decode : Decoder) (dependent : Expr → ReifyM Expr) (original : Expr) : ReifyM (Bool × Expr) := do
+private def checkedBool (decode : DecoderM) (dependent : Expr → ReifyM Expr) (original : Expr) : ReifyM (Bool × Expr) := do
   let mut current := original
   let mut transport ← mkEqRefl original
   while true do
@@ -221,7 +287,7 @@ private def checkedBool (decode : Decoder) (dependent : Expr → ReifyM Expr) (o
     transport ← mkEqTrans transport proof
   throwError "rcf: literal Boolean loop terminated unexpectedly"
 
-private partial def discharge (decode : Decoder) (node : Expr) : ReifyM Expr := Core.withIncRecDepth do
+private partial def discharge (decode : DecoderM) (node : Expr) : ReifyM Expr := Core.withIncRecDepth do
   Core.checkSystem "dependent decision discharge"
   unless node.isAppOfArity ``Bool.rec 5 do
     throwError "dependent sibling is not a single Boolean reflects_decide argument: {node.getAppFn.constName?}, arguments={node.getAppNumArgs}"
@@ -258,7 +324,7 @@ private partial def discharge (decode : Decoder) (node : Expr) : ReifyM Expr := 
   let proof ← Hex.RCF.checkProof `RootQuote.discharge statement candidate
   return proof
 
-private partial def quoteCore (reader : Expr) (decode : Decoder) : ReifyM Result := do
+private partial def quoteCore (reader : Expr) (decode : DecoderM) : ReifyM Result := do
   let reader ← instantiateMVars reader
   accountProof reader
   let reader ← Hex.RCF.checkExpr `RootQuote.reader reader
@@ -293,22 +359,35 @@ private partial def quoteCore (reader : Expr) (decode : Decoder) : ReifyM Result
     transport ← mkEqTrans transport proof
   throwError "rcf: literal quotation loop terminated unexpectedly"
 
-/-- Quote a supplied literal replay reader with an ordinary-kernel equation
-`Except.toOption reader = some value`. Public replay laws eliminate checked
-caches, and core conditional laws retain dependent proof arguments. Every
-step consumes the existing reflection budget. Success restores caller
+/-- Quote inside an existing reflection request. Scalar callbacks, replay and
+the final checked proof share its budget. Structured callback failures propagate
+without trying another rule. The caller supplies the enclosing transaction;
+`quote` provides that boundary for an ordinary `MetaM` callback.
+A canonical `Algebraic.Element.codec` decode stays protected: supply its exact
+checked equation through the callback, or quotation fails closed. The original
+reader expression must expose that codec; expand a hiding definition first.
+This guarantee covers explicit `Element.codec` applications, not codec aliases.
+Dependent proof terms can make the abstraction ill-typed; kernel/type failures
+remain terminal. -/
+def quoteWith (reader : Expr) (decode : DecoderM := fun _ => pure none) : ReifyM Result :=
+  quoteCore reader decode
+
+/-- Run checked quotation actions in one reflection request. Their callbacks
+and proof construction share its budget; the returned usage includes charges
+after the final quoted proof. Success restores caller
 metavariables and retains checked auxiliaries and accepted decoder callbacks'
 environment effects; rejection or failure restores
 the complete saved state. Source identities and real semantics compose with
-this reader equation separately. No handler is registered here. -/
-def quote (reader : Expr) (decode : Decoder := fun _ => pure none)
+this reader equation separately. Scalar callbacks share the same reflection
+state and budget. The actions perform their own proof checks. No handler is registered here. -/
+def runWith (action : ReifyM Result)
     (config : Hex.RealFormula.Reify.Config := {})
     (usage : Hex.Reflect.BudgetUsage := Hex.Reflect.Budget.zero) :
     MetaM (Except Hex.RealFormula.Reify.Error Result) := do
   let saved ← saveState
   let depthLimit := (← readThe Core.Context).maxRecDepth
   let auxName := mkPrivateName (← getEnv) (← mkFreshUserName `RootQuote)
-  let action := ((quoteCore reader decode).run
+  let action := (action.run
     {config,budget := {initial := config.ring.budget,consumed := usage}}).run
   let (result,_) ← tryFinally' (withDeclNameForAuxNaming auxName <| withNewMCtxDepth <|
       Core.withIncRecDepth <| withOptions (fun options => maxRecDepth.set
@@ -319,6 +398,25 @@ def quote (reader : Expr) (decode : Decoder := fun _ => pure none)
           mctx := saved.meta.mctx, postponed := saved.meta.postponed,
           zetaDeltaFVarIds := saved.meta.zetaDeltaFVarIds}
       | _ => saved.restore
-  return result.map (·.1)
+  return result.map fun (value,state) => {value with usage := state.budget.consumed}
+
+/-- Run a literal reader with scalar callbacks in one transactional reflection
+request. Nested `quoteWith` calls retain this request's resource accounting.
+Canonical `Element.codec` decodes remain protected and require a checked
+callback equation; absence of a proposal fails closed. -/
+def run (reader : Expr) (decode : DecoderM := fun _ => pure none)
+    (config : Hex.RealFormula.Reify.Config := {})
+    (usage : Hex.Reflect.BudgetUsage := Hex.Reflect.Budget.zero) :
+    MetaM (Except Hex.RealFormula.Reify.Error Result) :=
+  runWith (quoteWith reader decode) config usage
+
+/-- Quote with an ordinary `MetaM` scalar callback. This preserves the original
+API; callbacks which perform nested quotation use `run` and `quoteWith` to
+keep that work in the enclosing reflection request. -/
+def quote (reader : Expr) (decode : Decoder := fun _ => pure none)
+    (config : Hex.RealFormula.Reify.Config := {})
+    (usage : Hex.Reflect.BudgetUsage := Hex.Reflect.Budget.zero) :
+    MetaM (Except Hex.RealFormula.Reify.Error Result) :=
+  run reader (fun expression => liftM (decode expression)) config usage
 
 end Hex.RCF.RealCoefficients.RootQuote

@@ -1,0 +1,19 @@
+[
+  "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+  "env",
+  "LAKE_NO_CACHE=true",
+  "lake",
+  "build",
+  "HexRCF",
+  "HexRCFRealCoefficients",
+  "+HexRCF.RootQuoteConformance",
+  "+HexRCF.RationalQuoteConformance",
+  "+HexRCF.ScalarQuoteConformance",
+  "+HexRCF.SharedQuoteConformance",
+  "+HexRCF.ScalarQuotePublic",
+  "+HexRCF.NamedConstantProofs",
+  "+HexRCF.HandlerTests",
+  "+HexRCF.ReifyTests",
+  "+HexRCF.DecisionTests",
+  "+HexManual.Chapters.HexRCF.RootQuote"
+]

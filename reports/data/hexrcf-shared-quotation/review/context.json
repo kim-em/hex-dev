@@ -1,0 +1,447 @@
+{
+  "source_commit": "cb5f98ae9ef1c1afc994d39eeb45f0f1e8929729",
+  "sources": {
+    "adapters/HexRCF/RealCoefficients/RootQuote.lean": "75d19dc245e74e640c71b32554658bdf9384a85c41e5a8de18c25f03dea513c7",
+    "adapters/HexRCF/RealCoefficients/ScalarQuote.lean": "36acb75b1cea2a5525bb11f114c37bd2efe061e7fb4ce42b6f8a79cb3a56a51f",
+    "conformance/HexRCF/RootQuoteCases.lean": "602d15ef501e969183bffbda7fb3c0f00a174ba5c2dbc35370ee7fce896944dd",
+    "conformance/HexRCF/ScalarQuoteCases.lean": "195dbb059a31817c1394602a4da575c4080810113b2949cb00ccbad47a56aae5",
+    "conformance/HexRCF/SharedQuoteCases.lean": "afda81862db4eda83cb17ee32f25844535f6fb9caab7b3a7e201792e50dfcdc9",
+    "conformance/HexRCF/SharedQuoteConformance.lean": "40838c2cc7762aebdd5d38bc83d9d2f0c59ccd175747044aa4554c7d7727a1ef",
+    "conformance/HexRCF/SharedQuoteCallbacks.lean": "8ba50d59800dc773b7294067943ba4a478a5cff32fb9ed1b0f4b5d09cc31bc7b",
+    "conformance/HexRCF/SharedQuoteCallbackProofs.lean": "65076c4a94d609da0dc9f86d67e73901b920aa96875a0b1fe6204789b2be4bf5",
+    "conformance/HexRCF/PolynomialQuotePublic.lean": "31b9818aa22921703c195bf8ed27a3e63d5a2abfad7ad2e3d4620de5c1d0481b",
+    "HexManual/Chapters/HexRCF/RootQuote.lean": "c2340cdebca895ff9e25854ee6bfabe6472efb1de4f85295eb99cb19cc465da1",
+    "lakefile.lean": "22a04fb17bab83a80cb176c520a8d8710aba6da367629b37ee4d64496a7f2823",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47"
+  },
+  "artifacts": [
+    {
+      "path": "logs/shared-quote-review-validation-1.log.gz",
+      "sha256": "904269b9459ec5551af245f420fe787138f198fd3f5bbb01f0f7f0947b0d2351",
+      "bytes": 7291,
+      "uncompressed_sha256": "3811549a5f78d1865ad80ef47621d26e796cea4722d69f46b10769f4ae2d27ed",
+      "uncompressed_bytes": 76500
+    },
+    {
+      "path": "logs/shared-quote-review-validation-2.log.gz",
+      "sha256": "c96b92a485d6c38e00d93ef1cc8a5da7bc2c233e88e597b96707a41389a0a77a",
+      "bytes": 15858,
+      "uncompressed_sha256": "daa562ba30704f718402204673d68b87883335a3155e69f0f615cbc0109f4720",
+      "uncompressed_bytes": 201947
+    },
+    {
+      "path": "logs/shared-quote-review-metadata-0.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "logs/shared-quote-review-metadata-1.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "logs/shared-quote-review-metadata-2.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "logs/shared-quote-review-metadata-3.log.gz",
+      "sha256": "b409d67a3a037936236130f7dc5c82bc279551dcaa501f4fdee7275c7bc3baef",
+      "bytes": 99,
+      "uncompressed_sha256": "d2dd145dfbb85665677c83dfa50f34878e648a170c291230b82ce0749ec0eb97",
+      "uncompressed_bytes": 95
+    },
+    {
+      "path": "logs/shared-quote-review-metadata-4.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "logs/shared-quote-callbacks-1.log.gz",
+      "sha256": "51c38dd5a861a80e71546ff0df58f58b94e73d41dd6b6ced936c6c18ff934976",
+      "bytes": 10325,
+      "uncompressed_sha256": "51291f4bf45559ee4260f0ac34e8e8d38f45c1086989ac46c64673298d19e79c",
+      "uncompressed_bytes": 129567
+    },
+    {
+      "path": "logs/shared-quote-callbacks-2.log.gz",
+      "sha256": "dac4414b763fc727ffb4681ed44d519e009bae255a148daaa7283d5c835453b6",
+      "bytes": 8032,
+      "uncompressed_sha256": "7329cdd365a07cad031905cb8d520f1351e2930e9a40c5852f4986575d6eb39a",
+      "uncompressed_bytes": 79841
+    },
+    {
+      "path": "logs/shared-quote-callbacks-3.log.gz",
+      "sha256": "6e05a0757cb5da26511c84d441cfe86a9facf991b2fe51469c369574d809b52b",
+      "bytes": 7517,
+      "uncompressed_sha256": "afdb4595d21682815f2f7ec379dd2e7da5c16141340859ff0729fc2b2e2d33d9",
+      "uncompressed_bytes": 78389
+    },
+    {
+      "path": "logs/shared-quote-callbacks-4.log.gz",
+      "sha256": "55d7cd9018b9d59a6d4aa59f3355d1f491c00948a2abe461c51a2e87f3e4aeb9",
+      "bytes": 7243,
+      "uncompressed_sha256": "1bc5c482b54a91987bca2d1d7b481c9db98f60b990c1d1ea95830de573728b0c",
+      "uncompressed_bytes": 76381
+    },
+    {
+      "path": "logs/shared-quote-callbacks-5.log.gz",
+      "sha256": "85b3fc611c1a5d900fe645ae2f66ed84a35ec9de7ff9d51b5a1eee572bae9c51",
+      "bytes": 7380,
+      "uncompressed_sha256": "03aafb1287e67c62243ea7a04b2a9411df2800cbe291ffd3a7915de83c76226a",
+      "uncompressed_bytes": 78272
+    },
+    {
+      "path": "logs/shared-quote-callbacks-6.log.gz",
+      "sha256": "5917aa77724a9d7475433e05fce0f180792cb0f86bf61b446d6c3ed8353979a7",
+      "bytes": 7291,
+      "uncompressed_sha256": "94ef0e22c890dafcba3428a9b2685a4a1e65ec5cc3cb7a10eee1baa089d0e530",
+      "uncompressed_bytes": 77657
+    },
+    {
+      "path": "logs/shared-quote-callbacks-7.log.gz",
+      "sha256": "9474f9e84bc314b4d42947a13c43104b7b9291fa0b44f92c30a0bb887015658d",
+      "bytes": 7239,
+      "uncompressed_sha256": "f838cb05ab8d23f2a6250394ff9a5237ac862889d141925cfb57541fbe8ab8b4",
+      "uncompressed_bytes": 76388
+    },
+    {
+      "path": "logs/shared-quote-callbacks-8.log.gz",
+      "sha256": "22a9a3665161c47a834f97242e27e54c2cde3da8a025c114eae71472f22eaef8",
+      "bytes": 7270,
+      "uncompressed_sha256": "1963576680df22169168394557b7a2583594d590fc14116ac4efdb8c78a1f0b9",
+      "uncompressed_bytes": 76519
+    },
+    {
+      "path": "logs/shared-quote-callbacks-9.log.gz",
+      "sha256": "e7d5c1290e59651eb25570caead8877ee2eb6e45a5ea48c05691763ac51e2f7a",
+      "bytes": 7248,
+      "uncompressed_sha256": "511d8a6ba00e0c1076626115851e45e6080efc18d6ded756452f29a55d2b6d5f",
+      "uncompressed_bytes": 76386
+    },
+    {
+      "path": "logs/shared-quote-callback-audit-1.log.gz",
+      "sha256": "28cbd7e588cf96a11460fe2f011dbf66ab7cf4eeb1dd3e8286f384e8556bd844",
+      "bytes": 7696,
+      "uncompressed_sha256": "6b1763ed06f7bfcf582c56dc8ceb33099f4e256086ae37d47704c2bd007e0aaa",
+      "uncompressed_bytes": 79048
+    },
+    {
+      "path": "logs/shared-quote-callback-audit-2.log.gz",
+      "sha256": "48ee7d292a1cebb7044bcd78e6faa66257bbad15ca6655bd5e27de86cc6642a2",
+      "bytes": 7721,
+      "uncompressed_sha256": "f699c9aa04115927dc1729542ce2dcd013ab60a74aad9402896fe804adf595c3",
+      "uncompressed_bytes": 79109
+    },
+    {
+      "path": "logs/shared-quote-callback-audit-3.log.gz",
+      "sha256": "b3b8dcdc78498bd21565237b697f4bc0ce6eafa885b6c9eeba314f105a819fa8",
+      "bytes": 10144,
+      "uncompressed_sha256": "606e2809c9c836e9b6b865ad94f5185bcdbf028f94e4bf4869149238ea512629",
+      "uncompressed_bytes": 103759
+    },
+    {
+      "path": "logs/shared-quote-callback-audit-4.log.gz",
+      "sha256": "b311c6bdd8bd1f8c06e59765f2dbca0442b8a6721b9d808af5d32d15aef294ff",
+      "bytes": 7550,
+      "uncompressed_sha256": "eed342b9c515040bafed02537838ce60838dc837318c2c972b9bb3d46c8a23b7",
+      "uncompressed_bytes": 78848
+    },
+    {
+      "path": "logs/shared-quote-public-1.log.gz",
+      "sha256": "3135faf5482c9c10250f18b429373bb6b5170ce8ea1c5ccbe0c360e65a8498e5",
+      "bytes": 7259,
+      "uncompressed_sha256": "aa15f486e38224321147e2a370af1a189d34ed19a25e6d8211d12ce350683e83",
+      "uncompressed_bytes": 77434
+    },
+    {
+      "path": "logs/shared-quote-public-10.log.gz",
+      "sha256": "d1d74288c5541ac70c99eb52f714514a0bff0ab55c06ce2f8c565453dd7aba6c",
+      "bytes": 5187,
+      "uncompressed_sha256": "4043585dc32458dd2a42391b79ec92f00d036e833ae1021f48fcdbacfd397eb0",
+      "uncompressed_bytes": 51083
+    },
+    {
+      "path": "logs/shared-quote-public-2.log.gz",
+      "sha256": "1f9f4f288f446615b4357df1e42e414f5a7da1aa3458a24f12e8b1afcc585c7a",
+      "bytes": 5575,
+      "uncompressed_sha256": "347952fcba1d6f8e28c2665c6ca8830d5d28acb32e62a7b242e83f9efc66ba67",
+      "uncompressed_bytes": 53514
+    },
+    {
+      "path": "logs/shared-quote-public-3.log.gz",
+      "sha256": "87948147ec09240407698cf6b642b18fbd35184e3ce953bdd9c37ed044a75d59",
+      "bytes": 5570,
+      "uncompressed_sha256": "c326ea572b9e51299308af6c8a1b8a6f4776c04b2c21a3868a380dc5e8262a45",
+      "uncompressed_bytes": 53518
+    },
+    {
+      "path": "logs/shared-quote-public-4.log.gz",
+      "sha256": "3216cd6cff14399dceae548d02be020600a2f4538fbd57085c97fdd4699b9d05",
+      "bytes": 5650,
+      "uncompressed_sha256": "4c4c647609d257a62f8db6eb9346b7996d9179c7e4530e6bd6a19cec789e7d12",
+      "uncompressed_bytes": 53654
+    },
+    {
+      "path": "logs/shared-quote-public-5.log.gz",
+      "sha256": "6545be075cf6ced6608c79d7c167814155bc03c260508f08ae80bdc9234e4f0e",
+      "bytes": 5563,
+      "uncompressed_sha256": "41116efaae5755671d78481cd863fb7e7202577c89909950f2a4a2c6f2f47897",
+      "uncompressed_bytes": 53518
+    },
+    {
+      "path": "logs/shared-quote-public-6.log.gz",
+      "sha256": "b7335057401f4f80eacd5b7d69c50a74aca4ad639d2f9aab8d78dfd46defaa95",
+      "bytes": 5733,
+      "uncompressed_sha256": "86ddcf6301c99202d326fa4e35da1392d8f9a0d69d89eb6eeef7963f7dd7582a",
+      "uncompressed_bytes": 53941
+    },
+    {
+      "path": "logs/shared-quote-public-7.log.gz",
+      "sha256": "bac90962b044c8bff6170dcfefa9cc267aded949c48f87da01494ad054be687b",
+      "bytes": 7974,
+      "uncompressed_sha256": "8447445ddfe0edd9449e3654bb3f6e32a3aa56967a0050f06e47ee1ee6b02b44",
+      "uncompressed_bytes": 106480
+    },
+    {
+      "path": "logs/shared-quote-public-8.log.gz",
+      "sha256": "1a0d2e651e827f9a044c9f20e6c7a9f29eca2bc93b8115b6be69bc6aa7c32dcb",
+      "bytes": 7973,
+      "uncompressed_sha256": "ce9e167d24ddfd8c5f8fb6d187b90ac4176e3b33541da7178324dc802febd282",
+      "uncompressed_bytes": 106471
+    },
+    {
+      "path": "logs/shared-quote-public-9.log.gz",
+      "sha256": "87e74eb362f7ef2e030ae771246bd648648363e549993a98450c86e19b89e887",
+      "bytes": 5686,
+      "uncompressed_sha256": "e0d43b84910644a6fd60da7d181d3e2c0ae3d5cde77877a1e353295cb4b348c6",
+      "uncompressed_bytes": 53802
+    },
+    {
+      "path": "logs/shared-quote-render-5.log.gz",
+      "sha256": "dbc17dd442c7b918688600fea88c5d6d16e9b7bb420804a364147f8b167265a1",
+      "bytes": 14331,
+      "uncompressed_sha256": "2fb0a9f0a3bc1ad603855f16e9c5ec9212614b14129aeb8c6a689b3c9e247e05",
+      "uncompressed_bytes": 191738
+    },
+    {
+      "path": "logs/shared-quote-browser-5.log.gz",
+      "sha256": "947e63986e5ef472677473f914dc4f1b44673bd06e209dffd937d07f435a80ca",
+      "bytes": 240,
+      "uncompressed_sha256": "b11f649f22d59b836031ca363b350b61f563418bdaaf4e513ecf411e7212143e",
+      "uncompressed_bytes": 325
+    },
+    {
+      "path": "logs/shared-quote-policy-browser-1.log.gz",
+      "sha256": "aca86c2b6a17649ae18f0cd1167990c7890fe2b97b3a3e5f3674327d61a46146",
+      "bytes": 241,
+      "uncompressed_sha256": "bcae3836b7ed2d7c01ef084ab2ca47ff1c37145e372f6747f9010ab58e0719f6",
+      "uncompressed_bytes": 327
+    },
+    {
+      "path": "diagnostics/shared-quote-public-free-context-attempt.lean.txt",
+      "sha256": "300012d0f89921c88dc8c278f41fedbfe192a256c1fbda2e2e54a80d6a9b8a6d",
+      "bytes": 2359
+    },
+    {
+      "path": "diagnostics/shared-quote-callback-audit-before-diagnostics.lean.txt",
+      "sha256": "ee7057300ecc3513e35aa593c9dea266c1f2c4cdf82cacc5db98d0fac9307edd",
+      "bytes": 3378
+    },
+    {
+      "path": "renderer.lean.txt",
+      "sha256": "4d33c8324da890bc696d11dce729aad59fbb2024c9dd03ae56437fe771c68963",
+      "bytes": 205
+    },
+    {
+      "path": "renderer-lakefile.lean.txt",
+      "sha256": "b517509d2e0ab87edca6b417f6e266443613b516c37b365a43020935fae8815e",
+      "bytes": 148
+    },
+    {
+      "path": "browser.mjs",
+      "sha256": "14162b2d9ca47933323ef5b3dc8f6f50a5e103844c31d53adbab55918569c16e",
+      "bytes": 5693
+    },
+    {
+      "path": "policy-browser.mjs",
+      "sha256": "fd77537ab45e6a25c6366343933ffeaeb8ae4c40bd89ea72a6d6f9fb3f0d6803",
+      "bytes": 5546
+    },
+    {
+      "path": "run-bounded.sh",
+      "sha256": "63bc5f97337e6b039bb3a9b1ba2a500be96fd1c2a2f73b43dae284aa9b18dda8",
+      "bytes": 302
+    },
+    {
+      "path": "visual/shared-quote-desktop-boundary.png",
+      "sha256": "90947061573f8a33200be7a73af74d76d450ca315727410b94bf60cf3ce97f05",
+      "bytes": 277638
+    },
+    {
+      "path": "visual/shared-quote-desktop-equivalence.png",
+      "sha256": "582b686e567bc27208caf1a4bae691ac2316284a939cff9513be3e8a46965a66",
+      "bytes": 263634
+    },
+    {
+      "path": "visual/shared-quote-desktop-example.png",
+      "sha256": "006b94432f850d736108431ad54416aede8d290c335c61c4808c9a5f29e8e29f",
+      "bytes": 268289
+    },
+    {
+      "path": "visual/shared-quote-desktop-value.png",
+      "sha256": "08242e7fd3e179b220d672fca0d168bcaee9a101df3f988a34a5cfb2e9a0fa16",
+      "bytes": 257353
+    },
+    {
+      "path": "visual/shared-quote-narrow-boundary.png",
+      "sha256": "dd82fc2d1aa37e4859a9b5e6cbd74cee1f1b341d8c75cae24b8cf82a1634aa44",
+      "bytes": 90527
+    },
+    {
+      "path": "visual/shared-quote-narrow-equivalence.png",
+      "sha256": "8b83183b38c07814af919cb1751439676d5786b58743d235225f699e41f7751f",
+      "bytes": 91876
+    },
+    {
+      "path": "visual/shared-quote-narrow-example.png",
+      "sha256": "c9fe20452919ea2857f07d1c38d507297f2143c0b7daa0a19309c19abf188929",
+      "bytes": 97045
+    },
+    {
+      "path": "visual/shared-quote-narrow-value.png",
+      "sha256": "448229c4b799ce0c363e173fdc613d2dee86892e6a7f8c3cacbfa14ac4781e45",
+      "bytes": 97502
+    },
+    {
+      "path": "visual/shared-quote-policy-desktop-policy.png",
+      "sha256": "0b1685f0e344a82d256bd6b4b597652252ddf39b032a8949b8dfb8dc2d7d9b5e",
+      "bytes": 303892
+    },
+    {
+      "path": "visual/shared-quote-policy-narrow-policy.png",
+      "sha256": "9dc0111fdf1d13b8ee3768775d8f2a0cd90bfd5782d5bbb70dac452b03fdc520",
+      "bytes": 97887
+    },
+    {
+      "path": "visual/shared-quote-inspection.json",
+      "sha256": "8629f5c9ac4537aa39d8c6ba402506e3aab5fc95a2d68c3fcf652e408cd30dea",
+      "bytes": 5846
+    },
+    {
+      "path": "visual/shared-quote-section-overflow.json",
+      "sha256": "e160dee1127c1851c516bf55b6863c670798997f7204f4bfdd2938254cac63de",
+      "bytes": 12760
+    },
+    {
+      "path": "visual/shared-quote-policy-inspection.json",
+      "sha256": "517eb9c7f2b9a472c53e058bf912510ae3bf91c017af978fdd1134711d451bd8",
+      "bytes": 3188
+    },
+    {
+      "path": "visual/shared-quote-policy-section-overflow.json",
+      "sha256": "e160dee1127c1851c516bf55b6863c670798997f7204f4bfdd2938254cac63de",
+      "bytes": 12760
+    }
+  ],
+  "metadata": [
+    {
+      "argv": [
+        "python3",
+        "scripts/check_dag.py"
+      ],
+      "exit_code": 0,
+      "log": "logs/shared-quote-review-metadata-0.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_copyright_headers.py"
+      ],
+      "exit_code": 0,
+      "log": "logs/shared-quote-review-metadata-1.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_file_line_counts.py"
+      ],
+      "exit_code": 0,
+      "log": "logs/shared-quote-review-metadata-2.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/ci/check_named_admissions.py"
+      ],
+      "exit_code": 0,
+      "log": "logs/shared-quote-review-metadata-3.log.gz"
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--cached",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "logs/shared-quote-review-metadata-4.log.gz"
+    }
+  ],
+  "validation_log": "logs/shared-quote-review-validation-2.log.gz",
+  "validation": "success14342jobs3min58.464s CPU5min8.279s peak3.3GiB noSwap",
+  "render": "success14323jobs23.495s CPU23.688s peak2.2GiB noSwap",
+  "browser": "primary10.855s peak8GiB/noSwap; supplemental policy10.122s peak2.8GiB/noSwap; all10 captures opened",
+  "proof_nodes": {
+    "scalar": 818,
+    "polynomial": 1066,
+    "composed": 1884,
+    "counts_asserted": true
+  },
+  "audit": {
+    "original_shared_theorems": 6,
+    "original_shared_definitions": 3,
+    "callback_public_theorems": 18,
+    "callback_public_definitions": 8,
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "native_producers_forbidden": true,
+    "canonical_element_codec_forbidden": true,
+    "data_scope": "Definition typing and reductions during checking, not evaluation or normalization of the data."
+  },
+  "callback": "The actual nested predecessor is invoked once and retains17sourceNodes; nested exact/one-below, constant/primitive decode forms, missing callback, malformed/wrong-second/trailing-zero inputs and late hidden-codec rejection/state restoration pass.",
+  "resources": "Serial shared hard32GiB service, MemorySwapMax0, LEAN_NUM_THREADS2",
+  "visual": {
+    "captures": 10,
+    "all_opened": true,
+    "widths": [
+      1440,
+      390
+    ],
+    "local_targets_per_width": [
+      26,
+      26
+    ],
+    "local_overflow_max": 0,
+    "scope": "Changed quotation section only, not whole-manual overflow."
+  },
+  "limitations": [
+    "Earlier measurements remain separately source-bound; current build observations reuse dependencies and are not scaling, AB/BA or speedup evidence.",
+    "Failed callback/audit/public-module attempts retain actual logs. The free-context module probe failed; no generic free-context quotation claim follows from the successful closed-context module consumer. The unchanged public8 attempt followed a failed edit assertion and failed before an attempted stop found no live unit; it is not a passing or operator-stopped sample.",
+    "Initial nested audits caught canonical-codec and native-sign reductions; the current generic codec/decode-equation transport retains the stronger guard.",
+    "Metadata scope is recorded in its logs; source hashes list selected files and the commit identifies the full checkout.",
+    "No generic source/provider/predecessor history assembly, full tactic/accepted completeness, arbitrary realization, strict compiled whole-reader missing-record or native inverse/xgcd stress repair claim."
+  ]
+}

@@ -7,6 +7,7 @@ Authors: Kim Morrison
 import VersoManual
 import HexRCF.RealCoefficients
 import HexRCF.ScalarQuoteCases
+import HexRCF.SharedQuoteCases
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -93,7 +94,9 @@ calls from the supplied data. Scalar recognition beyond the rational base, sourc
 authentication and context reconstruction remain separate work.
 
 A reader that rejects its input or replay returns structured invalid-provider
-evidence. Non-readers and unsupported shapes raise terminal exceptions. An exhausted
+evidence. Non-readers and unsupported shapes raise terminal exceptions. A reader hiding
+its canonical predecessor codec returns invalid evidence with provider key
+`RootQuote.boundary`; it is a terminal caller-shape error. An exhausted
 reflection budget remains exhaustion; exceptions, heartbeat limits, recursion
 limits and cancellation remain terminal. No error selects another solver.
 The failure regressions include a changed count with its unchanged matrix,
@@ -104,8 +107,34 @@ call restores caller metavariables and retains checked auxiliaries together
 with the environment effects of accepted callbacks. Rejection and failure restore
 the complete saved state.
 
-The quote regressions use `maxHeartbeats := 12000000` and `maxRecDepth := 8192`;
-the fresh body audit uses depth 32768. Success under Lean's default limits has
+Canonical `Element.codec` decodes remain protected throughout quotation,
+including predecessor decodes with an explicit `Element.codec` head. Expand codec
+aliases first; that protection does not cover aliases. Supply a checked equation for that exact decode
+through the callback; without one the call fails closed. A `DecoderM` returns
+`none` to decline a proposal. A structured error is terminal, including one
+named `providerDeclined`. The nested polynomial conformance fixture uses an
+existing selected-root extension to require actual predecessor callbacks and
+retain their source charges. It also checks a bare protected decoder, a wrong
+second coefficient sign, trailing zeros and malformed reader heads.
+`ScalarQuote.quoteDecodeWith` retains the exact demanded decode expression,
+including its primitive projection form. `RootQuote` also transports accepted
+canonical callbacks for the constant `ValueCodec.decode` form through the
+same abstract codec; both forms have emitted proof-body regressions. Metadata
+annotations are ignored for classification while the original term is retained.
+Decode transport and nested reader steps are checked with an abstract codec before applying the concrete codec
+and its checked equation. The original reader expression must expose that
+predecessor codec; expand a hiding definition first. Dependent proof terms may
+prevent abstraction; type and kernel failures remain terminal. A late rejection restores
+the completed callback's auxiliaries. The fresh importing audit rechecks all
+65 reachable callback/module theorem bodies and 14 definitions, forbidding
+both native producers and canonical-codec unfolding. Exact and one-below nested
+budgets also cover the added transport work: 9,143 proof nodes, with exhaustion
+at the final 1,006-node charge after 8,137 nodes were consumed. The predecessor
+callback is required to run exactly once and retain 17 source nodes.
+
+All quotation regressions use `maxHeartbeats := 12000000`. The original root and rational
+cases use `maxRecDepth := 8192`; scalar, shared, callback/module examples and
+fresh body audits use depth 32768. Success under Lean's default limits has
 not been established. Each rewrite motive contains the current reader, so
 proof storage and charged work can grow with the number of steps times the
 reader size. Larger packets can exhaust the default reflection budget.
@@ -171,7 +200,12 @@ Reader size is charged before type checking and reduction. Wrong-context
 facts reject before scalar callbacks run; malformed field counts, non-array
 literals and trailing polynomial zeros also reject. A successful call preserves
 the caller's metavariables. The ordinary bridge is tested in a `module` consumer
-that imports only the optional umbrella.
+that imports only the optional umbrella. A direct `ScalarQuote` module consumer
+also runs the actual polynomial quotation helper on zero and nonzero stored
+polynomials. A separate importing module consumes the nonzero equation.
+Public compiled data definitions keep generated proof names out of exported
+equation types. The nested
+predecessor callbacks are tested separately in the importing audit.
 Assigned input metavariables are instantiated before size accounting; expanded
 readers, literals and facts have the same charges through assigned metavariables.
 The final transport charge is checked separately from the preflight charge.
@@ -179,6 +213,64 @@ The facts list's declared element type must use the codec's context under
 reducible transparency; aliases in that index need explicit type transport.
 The wrong-context test uses a fresh heartbeat epoch and an actual
 2,000,000-raw-heartbeat limit; heartbeat/depth exhaustion is rethrown.
+
+For a polynomial over the same selected extension,
+{name Hex.RCF.RealCoefficients.ScalarQuote.quotePolyWith}`ScalarQuote.quotePolyWith`
+quotes the coefficient array through its finite sign reader and composes the
+owner's `Codec.readPoly_refines`. The stored final coefficient's public sign/zero
+laws certify the normalized-vector invariant. An empty vector is handled
+separately; a trailing zero rejects. The public polynomial roundtrip law then
+assembles the original reader equation without computing normalization or
+structural coefficient equality during proof checking.
+Pass the complete `Codec.readPoly` expression: the helper keeps its exact
+coefficient type, zero and equality instances, codec arguments and literal.
+The resulting equation concerns that original canonical polynomial reader.
+
+```lean
+open Lean Hex.RealFormula in
+open Hex.Reflect in
+open Hex.RCF.RealCoefficients in
+meta def quoteSuppliedPolynomial
+    (reader facts : Expr)
+    (predecessor : RootQuote.DecoderM)
+    (config : Reify.Config)
+    (used : BudgetUsage) :=
+  RootQuote.runWith
+    (ScalarQuote.quotePolyWith
+      reader facts predecessor)
+    config used
+```
+
+The regression polynomial contains two copies of −2√2. The checked original
+reader restores both positions. Its first coefficient has this ordinary-real
+interpretation in the selected context:
+
+```lean
+open Hex.RCF.SelectedRootTests in
+open Hex.RCF.SharedQuoteTests in
+example :
+    Data.original.value
+      (restored.coeff 0) =
+      -2 * Real.sqrt 2 :=
+  value_zero
+```
+
+The fresh importing audit pins seven reachable theorem bodies and three data
+definitions, their actual owner refinement and supplied sign evidence, and
+the complete standard-three axiom closure. All pass the producer-reduction guard, which also forbids canonical
+`Element.codec` unfolding. This
+polynomial quote consumes 1,579 proof nodes; composing scalar and polynomial
+quotation consumes 2,397 in the same request. Assigned polynomial reader
+metavariables have the same charges as their expanded inputs.
+
+`RootQuote.runWith` supplies the transaction for a sequence of `quoteWith`
+actions. `RootQuote.run` supplies it for a reader with `DecoderM` callbacks.
+Callbacks in this monad consume the same reflection budget. A decline restores
+the callback's environment changes while retaining its charges; a structured
+failure is terminal. The returned usage also includes charges made after the
+last quoted proof. Exact and one-below composed limits, missing scalar facts,
+and rejection after successful polynomial quotation are checked. Rejection
+restores all auxiliaries created earlier in the request.
 
 This scalar API does not reconstruct provider or predecessor histories,
 produce missing signs, or install a general source-goal solver. The strict
