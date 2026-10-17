@@ -1,0 +1,11 @@
+import PacketQuoteTable
+open Hex.RCF.SelectedRootTests Hex.RCF.PacketQuoteTests
+/-- info: 3 -/
+#guard_msgs in
+#eval input.size
+/-- info: true -/
+#guard_msgs in
+#eval Data.lowerRead.isOk
+/-- info: 21 -/
+#guard_msgs in
+#eval Hex.RCF.RealCoefficients.CellReplayTests.Algebraic.Records.facts.length

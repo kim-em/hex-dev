@@ -1,0 +1,11 @@
+import PacketQuoteTable
+namespace Hex.RCF.PacketQuoteTests
+open Hex Hex.RealClosure Hex.RCF.RealCoefficients
+open Hex.RCF.SelectedRootTests Hex.RealClosure.Tower CellReplayTests.Algebraic
+-- Keep the result observation in a parameterized, non-inlined function.
+@[noinline] def readOk (facts : List (Algebraic.SignFact Data.native))
+    (p : Schema.parent.Poly) : Bool := (readTable facts p).isOk
+/-- info: true -/
+#guard_msgs in
+#eval readOk Records.facts input
+end Hex.RCF.PacketQuoteTests
