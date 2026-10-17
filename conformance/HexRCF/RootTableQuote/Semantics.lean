@@ -144,10 +144,8 @@ theorem witness : ∃ x : ℝ, x ^ 2 = Real.sqrt 2 ∧ 1 < x ∧ x < 2 := by
 
 /-- Both original reader equations and the real witness are checked artifacts. -/
 theorem checked_witness : polynomialReader.toOption = some input ∧
-    table.toOption.isSome = true ∧
-    ∃ x : ℝ, x ^ 2 = Real.sqrt 2 ∧ 1 < x ∧ x < 2 := by
-  refine ⟨input_read, ?_, witness⟩
-  rw [table_read]
-  rfl
+    table.toOption = some restored ∧
+    ∃ x : ℝ, x ^ 2 = Real.sqrt 2 ∧ 1 < x ∧ x < 2 :=
+  ⟨input_read, table_read, witness⟩
 
 end Hex.RCF.RootTableQuoteTests

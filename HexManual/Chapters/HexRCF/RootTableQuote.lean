@@ -29,7 +29,7 @@ example : ∃ x : ℝ,
   witness
 ```
 
-This example reads the complete supplied root table with
+The conformance module reads the complete supplied root table with
 {name Hex.RCF.RealCoefficients.RootTable.read}`RootTable.read`.
 The polynomial's stored coefficients are first reconstructed with
 {name Hex.RCF.RealCoefficients.ScalarQuote.quotePolyWith}`ScalarQuote.quotePolyWith`
@@ -56,10 +56,13 @@ bounds follow from the coefficient's checked bounds and the squared equation.
 
 ```lean
 open Hex.RCF.RootTableQuoteTests in
-example : ∃ values : List ℝ,
-    values.length = 2 ∧ values.Nodup ∧
-    ∀ y : ℝ, y ^ 2 = Real.sqrt 2 ↔ y ∈ values :=
-  ⟨_, solutions⟩
+open Hex.RCF.SelectedRootTests in
+example :
+    (roots.values Data.original).length = 2 ∧
+    (roots.values Data.original).Nodup ∧
+    ∀ y : ℝ, y ^ 2 = Real.sqrt 2 ↔
+      y ∈ roots.values Data.original :=
+  solutions
 ```
 
 
@@ -70,11 +73,11 @@ auxiliaries and the final witness. The complete axiom closure contains only
 accounts for 1,827 proof nodes and the table request for 121,995; these are
 request accounting, not physical proof sharing or a speedup measurement.
 
-The integrated audit/runtime selection took 2 min 3.370 s with a 3 GiB peak
-on the shared host, including reused dependencies. Earlier prototype results
-are recorded separately. These observations are not scaling or matched comparisons. The examples raise Lean limits to
-12,000,000 heartbeats and recursion depth 32,768. Larger inputs or default
-limits may exhaust.
+Source-bound build observations are recorded separately in the linked report.
+They include reused dependencies and establish no scaling or matched
+performance comparison. The examples raise Lean limits to 12,000,000
+heartbeats and recursion depth 32,768. Larger inputs or default limits may
+exhaust.
 
 When retaining the quoted data as a definition for compiled consumers, emit
 both artifacts: `addDecl` checks the kernel declaration, and `compileDecl`
