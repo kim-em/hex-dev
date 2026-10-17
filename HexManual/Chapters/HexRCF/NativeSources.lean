@@ -60,7 +60,7 @@ example {registry : BaseContext.Registry}
   exact ⟨read sample, meaning⟩
 ```
 
-The [source-identity regressions](../../../conformance/HexRCF/NativeSourcesConformance.lean)
+The [source-identity regressions](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/NativeSourcesConformance.lean)
 use the actual selected positive root α of `X²−2` and a further selected root
 of `X²−α`. They identify α by `α² = 2` and `1 < α < 2`, then prove
 `∃ x : ℝ, x² = Real.sqrt 2 ∧ 1 < x ∧ x < 2` through this joint reader.
@@ -172,11 +172,11 @@ clearing rational denominators by a positive multiplier.
 {name Hex.RCF.RealCoefficients.SourceSelection.unique}`unique` identifies the
 whole tuple from this formula and the inherited identities. It follows the
 coordinate dependencies; clients need no bespoke tuple-uniqueness proof.
-The [four-coordinate checks](../../../conformance/HexRCF/SourceSelectionConformance.lean)
+The [four-coordinate checks](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/SourceSelectionConformance.lean)
 identify `√2`, `−√2`, an inherited `2`, and `√2² − 1`. The final coordinate
 references the first generator across the other coordinates. Wrong conjugates
 and swapped computed coordinates fail the same selector.
-The [native-point case](../../../conformance/HexRCF/SourceSelectionNative.lean)
+The [native-point case](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/SourceSelectionNative.lean)
 generates its selector from actual `QAdjoin` computations `−a`, `2`, and `a*a−1`,
 with the selected generator prepended. Its existing native fixture supplies the
 matching values, whose interpretation is proved. The matrix uses both computed coordinates, through
@@ -247,7 +247,7 @@ conversion of independent fields remain with their existing owners and frontend
 preparation. This assembly is not general frozen source/context quotation or
 accepted algebraic completeness.
 
-The [public factory consumer](../../../conformance/HexRCF/FieldSelectionConformance.lean)
+The [public factory consumer](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/FieldSelectionConformance.lean)
 executes `NumberField.present?` and packs the original `QAdjoin` coordinates
 through {name Hex.RCF.RealCoefficients.FieldSelection.nativeValues}`nativeValues`.
 Its sample is the packed value `1`, distinct from the selected generator.
