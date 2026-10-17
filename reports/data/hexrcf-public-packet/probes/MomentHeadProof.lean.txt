@@ -1,0 +1,56 @@
+import SignPacketEncodedProbe
+import HexRCF.SelectedRoot.KernelCheck
+open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
+set_option maxHeartbeats 12000000
+set_option maxRecDepth 32768
+run_meta do
+  let entries := (← getEnv).constants.toList.filter fun (name,_) =>
+    name.toString.contains "_private.SignPacketEncodedProbe." && name.toString.contains "_proof_345."
+  unless entries.length == 1 do throwError "expected one body345"
+  let (_,info) := entries.head!
+  let some sourceBody := info.value? (allowOpaque := true) | throwError "body345 has no body"
+  let mut body := sourceBody.consumeMData
+  while body.isAppOfArity ``id 2 do body := body.appArg!.consumeMData
+  unless body.isAppOfArity ``congrArg 6 do throwError "body345 is not congrArg"
+  let args := body.getAppArgs
+  let before := args[2]!
+  let after := args[3]!
+  let motive := args[4]!
+  let rule := args[5]!
+  let head := before.getAppFn
+  unless head.isConstOf ``checkMoment do throwError "expected checkMoment boundary"
+  let (kind,proof) ← withLocalDeclD `checker (← inferType head) fun checker => do
+    let replace := fun e => e.replace fun part => if part == head then some checker else none
+    let premise ← mkEq (replace before) (replace after)
+    withLocalDeclD `given premise fun given => do
+      let target := replace info.type
+      let value := mkExpectedPropHint (← mkAppM ``congrArg #[replace motive,given]) target
+      return (← mkForallFVars #[checker,given] target, ← mkLambdaFVars #[checker,given] value)
+  let genericName ← mkFreshUserName `__momentHeadGeneric
+  let options := maxHeartbeats.set ((← getOptions).setBool `debug.skipKernelTC false) 100000
+  let check := fun (label : String) (declaration : Declaration) => do
+    IO.FS.withFile "/home/kim/.codex/tasks/hex-10358/moment-head-results.txt" .append fun file => do
+      file.putStrLn s!"BEGIN {label}"
+      file.flush
+    let environment := Kernel.enableDiag (Kernel.resetDiag (← getEnv)) true
+    let checked ← ofExceptKernelException <| environment.addDeclCore
+      (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
+      declaration none (doCheck := true)
+    let diagnostics := Kernel.getDiagnostics checked
+    unless diagnostics.enabled do throwError "moment-head diagnostics disabled"
+    if let some (producer,count) := Hex.RCF.SelectedRootTests.KernelCheck.violation? diagnostics
+        #[``ScalarPacket.build,``ScalarPacket.buildLiteral,``Algebraic.Element.codec,``Descriptor.ofReplay?] then
+      throwError "{label}: reduced producer {producer}: {count}"
+    let finiteCounts := #[``checkMoment,``Sturm.check,``Sturm.checkCached].map
+      (fun constant => (constant,diagnostics.unfoldCounter.find? constant |>.getD 0))
+    setEnv (Kernel.enableDiag checked false)
+    IO.FS.withFile "/home/kim/.codex/tasks/hex-10358/moment-head-results.txt" .append fun file => do
+      file.putStrLn s!"PASS {label}; nonemptyTrace={!diagnostics.unfoldCounter.isEmpty}; finiteCheckerCounts={finiteCounts}"
+      file.flush
+  check "universal" (.thmDecl {name := genericName,levelParams := info.levelParams,type := kind,value := proof})
+  let instantiated := mkApp2 (mkConst genericName (info.levelParams.map mkLevelParam)) head rule
+  let originalName ← mkFreshUserName `__momentHeadOriginal
+  check "ORIGINAL-target" (.thmDecl {
+    name := originalName,levelParams := info.levelParams,
+    type := info.type,value := instantiated})
+  logInfo "body345 universal head lemma AND original target pass full-private kernel/producer guards at100000heartbeats"

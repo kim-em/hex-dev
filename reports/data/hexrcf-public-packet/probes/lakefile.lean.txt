@@ -1,0 +1,29 @@
+import Lake
+open Lake DSL
+package scalarReviewRender
+require Hex from "/home/kim/worktrees/hex-dev/hex-dev-issue-10358"
+lean_lib ScalarReviewRender
+lean_lib SourceSelectionProbe
+
+lean_lib SourceSelectionEmitter
+
+lean_lib SignPacketEncodedProbe
+
+lean_lib PublicFrameProbe
+
+lean_lib RelativeScalarProbe
+
+lean_lib ScratchRootQuote
+
+lean_lib MajorSource
+lean_lib MajorProbe
+
+lean_lib SignPacketEncodedAudit
+
+lean_lib PacketBodyProbe
+
+lean_lib PacketBodyCheck
+
+lean_lib PacketConversions
+
+lean_lib MomentHeadProof

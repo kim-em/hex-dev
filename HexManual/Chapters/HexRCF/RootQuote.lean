@@ -10,6 +10,7 @@ import HexRCF.ScalarQuoteCases
 import HexRCF.SharedQuoteCases
 import HexRCF.RecursiveScalarPublic
 import HexRCF.SignPacketQuote
+import HexRCF.PublicSignPacketValues
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -78,7 +79,7 @@ it does not reconstruct registry or provider histories. Regression tests check
 positive and negative fractions, noncanonical or malformed payloads, and a
 different codec whose decoding function is unchanged. The generic callback
 also quotes the same frozen cubic independently of the original finite callback.
-Its fresh importing audit checks 188 actual generated theorem bodies under
+Its fresh importing audit checks 192 actual generated theorem bodies under
 kernel producer diagnostics, with only the standard three axioms.
 
 The [cubic regression](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/RootQuoteSource.lean) reads a
@@ -365,9 +366,9 @@ example :
   decoded_value
 ```
 
-Quoting the parent and packet in one request consumes 54,777 proof nodes.
+Quoting the parent and packet in one request consumes 73,992 proof nodes.
 With the frozen parent and its equality already available, the packet consumes
-32,815; a limit one node lower exhausts at the final 23-node charge. Decoding the
+44,385; a limit one node lower exhausts at the final 23-node charge. Decoding the
 coefficient from that fact consumes 966 more nodes in its separate request.
 The controls check caller metavariable restoration after successful decoding
 and final exhaustion, reject an empty graph, and reject a forged context equality
@@ -384,4 +385,41 @@ install the general source-goal tactic.
 The wholly frozen public-module packet example additionally requires a public
 signature-codec literal equation from the owner. The passing fixture and its
 fresh importing audit use the existing legacy fixture imports; they do not
-establish that public-module path.
+establish that fully numerical public-module path.
+
+A separate public-module example quotes a packet for X at the selected real
+root of X³−3. Its context slots retain closed applications of the canonical
+signature encoder. Both graph nodes and nested moments use that same format;
+this example does not assume an equation between the encoder and a frozen
+numerical signature. The original optional reader supplies the sole sign fact
+used to decode the coefficient. The resulting coefficient has the selected
+root's ordinary real value:
+
+```lean
+open Hex.RCF.PublicSignPacket in
+example :
+    coefficientReal =
+      Hex.RCF.RootQuoteTests.realRoot :=
+  coefficient_value
+
+open Hex.RCF.PublicSignPacket in
+example : 0 < coefficientReal :=
+  coefficient_positive
+```
+
+For a dependent match, quotation moves trailing branch-equality proofs along
+the checked equation for the match's subject. This uses ordinary equality
+elimination with an abstract subject, then instantiates the checked equation.
+Moved proofs are checked separately before later replay steps. The result type
+must stay fixed. Independent trailing data is retained; data whose type depends
+on the subject or its branch proofs remains unsupported. During replay-law
+conversion, an explicit checked function boundary is first kept abstract, then instantiated
+with the actual function and its public equation. The fresh importing audit
+checks the resulting private bodies as well as their full axiom closure.
+Codec-dependent branch proofs are generalized with the codec constructor during
+reader conversion, including successive canonical decodes. A custom callback
+should propose the exact demanded read expression. Literal Boolean values are
+handled without consulting that callback.
+Wrong signs, changed polynomials and context swaps in either nodes or nested
+moments are checked refusal cases. These helpers consume supplied histories
+and evidence; they do not install the general real-coefficient tactic.

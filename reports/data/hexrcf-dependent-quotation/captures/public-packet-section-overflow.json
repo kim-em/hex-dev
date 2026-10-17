@@ -1,0 +1,44 @@
+[
+  {
+    "label": "desktop",
+    "width": 1440,
+    "targets": [
+      {
+        "tag": "P",
+        "text": "\n                  A separate public-module example quotes a packet for X at the selected real\nroot of X³−3. Its context slots retain closed applications of the",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.PublicSignPacket in\nexample :\n    coefficientReal =\n      Hex.RCF.RootQuoteTests.realRoot :=\n  coefficient_value\n\nopen Hex.RCF.PublicSignPacket in\n",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  For a dependent match, quotation moves trailing branch-equality proofs along\nthe checked equation for the match's subject. This uses ordinary",
+        "overflow": 0
+      }
+    ]
+  },
+  {
+    "label": "narrow",
+    "width": 390,
+    "targets": [
+      {
+        "tag": "P",
+        "text": "\n                  A separate public-module example quotes a packet for X at the selected real\nroot of X³−3. Its context slots retain closed applications of the",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.PublicSignPacket in\nexample :\n    coefficientReal =\n      Hex.RCF.RootQuoteTests.realRoot :=\n  coefficient_value\n\nopen Hex.RCF.PublicSignPacket in\n",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  For a dependent match, quotation moves trailing branch-equality proofs along\nthe checked equation for the match's subject. This uses ordinary",
+        "overflow": 0
+      }
+    ]
+  }
+]
