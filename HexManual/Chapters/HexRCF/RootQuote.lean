@@ -132,7 +132,7 @@ at the final 1,006-node charge after 8,137 nodes were consumed. The predecessor
 callback is required to run exactly once and retain 17 source nodes.
 
 All quotation regressions use `maxHeartbeats := 12000000`. The original root and rational
-cases use `maxRecDepth := 8192`; scalar, shared, callback/module examples and
+cases use `maxRecDepth := 8192`; scalar, sign-packet, shared, callback/module examples and
 fresh body audits use depth 32768. Success under Lean's default limits has
 not been established. Each rewrite motive contains the current reader, so
 proof storage and charged work can grow with the number of steps times the
@@ -336,7 +336,8 @@ open Lean in
 open Hex.RCF.RealCoefficients in
 meta def quoteSuppliedSignPacket
     (reader prepared same : Expr)
-    (predecessor : RootQuote.DecoderM) :=
+    (predecessor :
+      RootQuote.DecoderM) :=
   RootQuote.runWith
     (ScalarPacket.quoteWith
       reader prepared same predecessor)
@@ -355,7 +356,8 @@ example :
       (Except.toOption
         ((Algebraic.Element.codec
           (context := Data.native)
-          Data.base.codec).decode literal)) =
+          Data.base.codec).decode
+            literal)) =
       some (-2 * Real.sqrt 2) :=
   decoded_value
 ```
