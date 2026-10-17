@@ -58,10 +58,11 @@ bounds follow from the coefficient's checked bounds and the squared equation.
 open Hex.RCF.RootTableQuoteTests in
 open Hex.RCF.SelectedRootTests in
 example :
-    (roots.values Data.original).length = 2 ∧
-    (roots.values Data.original).Nodup ∧
+    let values :=
+      roots.values Data.original
+    values.length = 2 ∧ values.Nodup ∧
     ∀ y : ℝ, y ^ 2 = Real.sqrt 2 ↔
-      y ∈ roots.values Data.original :=
+      y ∈ values :=
   solutions
 ```
 
