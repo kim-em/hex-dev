@@ -20,8 +20,8 @@ decoding. `decoded_value` composes the exact coefficient reader equation with
 its ordinary real interpretation as −2√2. The fresh importing audit rejects a
 dependency on the legacy `CellReplay.Algebraic.Records` fact list.
 It separately requires `decoded_value`'s own dependency closure to include the
-new fact and the canonical reader law. The audit rechecks 80 actual theorem
-bodies and 11 definitions, with 81 nonempty diagnostic traces and exactly the
+new fact and the canonical reader law. The audit rechecks 96 actual theorem
+bodies and 11 definitions, with 97 nonempty diagnostic traces and exactly the
 standard three axioms in the complete closure. The producer guard is unchanged,
 and temporary audit copies are discarded.
 The original `Data.lower` still obtains its parent from the legacy
@@ -32,10 +32,10 @@ modules named in the record and do not claim to audit that older parent body.
 
 | Request | Proof-node accounting |
 | --- | ---: |
-| Parent reconstruction and original packet quotation | 54,777 |
-| Packet with the checked prepared context already available | 32,815 |
+| Parent reconstruction and original packet quotation | 105,037 |
+| Packet with the checked prepared context already available | 69,973 |
 | Coefficient decoding from the new fact, separate request | 966 |
-| One-below packet budget | exhausted after 32,792, requesting 23 |
+| One-below packet budget | exhausted after 69,950, requesting 23 |
 
 These counts sum syntax checked at each stage, including repeated occurrences.
 They are not unique DAG-node counts, sharing measurements, scaling trials or
@@ -55,22 +55,18 @@ The [checked manual](../HexManual/Chapters/HexRCF/RootQuote.lean) shows the
 reader/value composition. The [source-bound record](data/hexrcf-sign-packet-quotation/context.json)
 retains validation, failed experiments, audit inventories and review evidence.
 
-The wholly frozen ordinary-module packet experiment remains incomplete. Its
-actual failure reaches the unexposed `Tower.Signature.codec.decode` while reading
-a full signature. The existing lawful roundtrip has an encoded argument, but
-the client lacks the public literal decoding or encoding projection equation
-needed to connect that argument to its frozen input. A separate public example
-cannot prove the rational-parent encoding identity by reflexivity. Encoded
-context experiments also expose a later Boolean replay boundary. The
-[public canonical-packet continuation](hexrcf-public-packet-quotation.md)
-addresses that quotation boundary while retaining encoded context expressions;
-it does not discharge the fully numerical signature equation. The failed
-public probes are retained outside the default build, with no admissions or
-relaxed checks. The precise request remains with the existing
-[#10378 owner](https://github.com/kim-em/hex-dev/issues/10378#issuecomment-6230331731).
+The ordinary public-module packet path uses checked header reconstruction and
+`SignatureQuote.decoder` with the owner's public full-literal equation. Its
+fully numerical counterpart and current proof scope are described in the
+[root/header report](hexrcf-root-header-quotation.md). The
+[retained-context report](hexrcf-root-preparation.md) covers anonymous original
+readers, checked data retention and ordinary public consumers. The original
+signature-codec request is satisfied; independently frozen deeper frames still
+need the public graph-encoding interface requested from the existing owner.
+The historical [source-bound record](data/hexrcf-sign-packet-quotation/context.json)
+keeps its original counts and failed probes at its recorded source revision.
 
-The passing fixture uses the existing legacy imports; its fresh importing
-audit does not establish the missing public-module path. No general original
+No general original
 source/provider/predecessor discovery, strict compiled missing-record guarantee,
 native inverse/xgcd repair, accepted algebraic completeness or general tactic
 installation is claimed. Those and the remaining conversion, realization,

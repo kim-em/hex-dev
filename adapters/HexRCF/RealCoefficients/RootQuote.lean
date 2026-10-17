@@ -211,12 +211,18 @@ private partial def withDependents (constants : Array (Expr × Expr)) (index : N
       (replace expression).replace fun part => if part == original then some parameter else none
     withDependents constants (index+1) replaceNext (parameters.push parameter) consume
 
-/-- Keep the codec constructor abstract across all closed reads in a context.
-Abstract its dependent proof helpers before supplying the original constructor. -/
+/-- Keep a replay function abstract throughout an enclosing Boolean conversion,
+even when its demanded boundary is a fold. Retain codec-constructor
+priority and abstract dependent proof helpers before supplying the function. -/
 private def contextStep? (current subject rhs motive : Expr) : ReifyM (Option Expr) := do
-  let some boundary := current.find? fun part =>
-      part.isConstOf ``Algebraic.Element.codec
-    | return none
+  let boundary? ← match current.find? (fun part => part.isConstOf ``Algebraic.Element.codec) with
+    | some boundary => pure (some boundary)
+    | none => do
+      unless (← withTransparency .reducible <| whnf (← inferType current)).isConstOf ``Bool &&
+          (← withTransparency .reducible <| whnf (← inferType subject)).isConstOf ``Bool do
+        return none
+      pure (current.find? fun part => protectedNames.any (fun name => part.isConstOf name))
+  let some boundary := boundary? | return none
   let boundaryType ← inferType boundary
   let gathered ← IO.mkRef (#[] : Array Expr)
   for expression in #[current,subject,motive] do
@@ -237,7 +243,7 @@ private def contextStep? (current subject rhs motive : Expr) : ReifyM (Option Ex
             dependents.any (fun found => part == found.1)).isSome then
           dependents := dependents.push entry
           changed := true
-  let (kind,value) ← withLocalDeclD `codec boundaryType fun placeholder => do
+  let (kind,value) ← withLocalDeclD `replay boundaryType fun placeholder => do
     let replace := fun (expression : Expr) =>
       expression.replace fun part => if part == boundary then some placeholder else none
     withDependents dependents 0 replace #[] fun replace parameters => do

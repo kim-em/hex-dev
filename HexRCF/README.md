@@ -408,6 +408,12 @@ and checking its signature. The [ordinary-model regression](../conformance/HexRC
 retains the coefficient's selected value and positive sign; its fresh audit
 also excludes serialization and graph encoding in the new packing bodies.
 This is checked typed-context construction, not fully frozen history assembly.
+`RootPrepare.prepareWith` retains a reconstructed descriptor and native context
+behind checked private definitions, with exact header and context equations.
+The [anonymous-reader regression](../conformance/HexRCF/RootPreparePacket.lean)
+composes its decoder with `ScalarPacket.quoteWith` to recover the original
+reader's equation. Header reconstruction, retention and replay share one
+request; its proof budget includes simplifier visits and generated expressions.
 `SectionQuote.finish` freshly reifies the original target and checks its matrix,
 valuation and ordered original-divisor identities before transporting a proof.
 The [fresh-source tests](../conformance/HexRCF/SectionProduceConformance.lean)

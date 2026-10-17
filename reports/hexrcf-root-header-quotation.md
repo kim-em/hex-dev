@@ -35,8 +35,8 @@ JSON constructors, integer constructors and raw natural literals. These
 serialization identities do not validate arbitrary registries, selected roots
 or origin histories, or freeze deeper algebraic frames.
 
-The importing audit rechecks 674 theorem bodies and 66 definitions in its
-explicitly declared source scope, with 725 nonempty diagnostic traces. Its
+The importing audit rechecks 710 theorem bodies and 66 definitions in its
+explicitly declared source scope, with 761 nonempty diagnostic traces. Its
 axiom closure is transitive and restricted to `propext`, `Classical.choice`
 and `Quot.sound`. The native-producer exclusion guard is unchanged. The
 scope includes the generated root/header bindings, packet acceptance and
@@ -45,9 +45,9 @@ not an assertion that every theorem in the repository was audited.
 
 | Request | Charged proof nodes |
 | --- | ---: |
-| Original root and independently parsed header | 215,671 |
-| Exported root/header with checked named binding | 215,734 |
-| Subsequent original scalar-packet reader | 904,273 |
+| Original root and independently parsed header | 271,600 |
+| Exported root/header with checked named binding | 271,663 |
+| Subsequent original scalar-packet reader | 1,284,494 |
 | Coefficient decode using its packet fact | 3,249 |
 | Canonical signature roundtrip, either subject | 160 |
 | Frozen signature, either direct subject | 254 |
@@ -65,8 +65,8 @@ restoration. Packet controls independently check compiled rejection, ordinary
 quotation refusal and caller restoration for a wrong sign, a changed polynomial,
 an empty graph, a swapped node context and a swapped nested-moment context.
 
-The [context record](data/hexrcf-root-context/) binds current validation and
-inspected desktop/narrow captures to its committed source. The separate
+The [context record](data/hexrcf-root-context/) retains validation and
+inspected desktop/narrow captures at its recorded source revision. The separate
 [root/header record](data/hexrcf-root-header/) retains the canonical-roundtrip
 variant and its own source revision. Each verifier checks that record's source.
 Failed and preliminary attempts are retained separately from final validation.

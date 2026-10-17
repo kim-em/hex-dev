@@ -40,8 +40,8 @@ then checks full metavariable and declaration restoration. An unresolved root
 input rejects without assigning caller metavariables. These are terminal
 refusals; no alternative solver is selected.
 
-The fresh importing audit checks 682 theorem bodies and 68 definitions across
-its explicitly listed source scope, with 735 nonempty diagnostic traces and
+The fresh importing audit checks 718 theorem bodies and 68 definitions across
+its explicitly listed source scope, with 771 nonempty diagnostic traces and
 complete transitive axiom closure restricted to `propext`, `Classical.choice`
 and `Quot.sound`. It includes the metadata, signature, model, value and positive
 conclusions and the original packet/coefficient reader conclusions. The shared
@@ -56,14 +56,14 @@ for the two frozen signature subjects and the projected-constructor regression,
 with 16 nonempty diagnostic traces. Its complete axiom closure is `propext` and
 `Quot.sound`; its producer guard also excludes serialization and DAG encoding.
 Direct signature requests charge 254 proof nodes each; the projected request
-charges 427. The subsequent constructor-only cubic packet charges 904,273 nodes.
+charges 427. The subsequent constructor-only cubic packet charges 1,284,494 nodes.
 These counts cover distinct requests, without a claim about unique DAG nodes
 or total runtime work.
 
 These are local build-only conformance and proof-construction observations,
 without compiled runtime, scaling or speedup claims. Source-bound records
 retain failed and preliminary attempts separately from final validation in
-the [retained record](data/hexrcf-root-context/).
+the [retained record](data/hexrcf-root-context/) at its recorded source revision.
 The optional adapter still requires general original-source/provider/predecessor
 and fully frozen-context assembly, complete-cell tactic quotation, accepted
 algebraic completeness, remaining conversions/joint realization and the rest

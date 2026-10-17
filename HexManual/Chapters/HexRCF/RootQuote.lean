@@ -82,7 +82,7 @@ it does not reconstruct registry or provider histories. Regression tests check
 positive and negative fractions, noncanonical or malformed payloads, and a
 different codec whose decoding function is unchanged. The generic callback
 also quotes the same frozen cubic independently of the original finite callback.
-Its fresh importing audit checks 192 actual generated theorem bodies under
+Its fresh importing audit checks 201 actual generated theorem bodies under
 kernel producer diagnostics, with only the standard three axioms.
 
 The [cubic regression](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/RootQuoteSource.lean) reads a
@@ -369,9 +369,9 @@ example :
   decoded_value
 ```
 
-Quoting the parent and packet in one request consumes 73,992 proof nodes.
+Quoting the parent and packet in one request consumes 105,037 proof nodes.
 With the frozen parent and its equality already available, the packet consumes
-44,385; a limit one node lower exhausts at the final 23-node charge. Decoding the
+69,973; a limit one node lower exhausts at the final 23-node charge. Decoding the
 coefficient from that fact consumes 966 more nodes in its separate request.
 The controls check caller metavariable restoration after successful decoding
 and final exhaustion, reject an empty graph, and reject a forged context equality
@@ -523,3 +523,33 @@ metadata, model and value proofs. The new packing bodies must not evaluate
 root-data serialization or graph encoding, in addition to the existing native
 producer exclusions. Fully numerical frame/history reconstruction and the
 general source-goal tactic remain separate obligations.
+
+{name Hex.RCF.RealCoefficients.RootPrepare.prepareWith}`RootPrepare.prepareWith`
+prepares the native context of a reconstructed descriptor for subsequent
+quotation. It checks closed inputs and the exact raw-header binding, then
+retains the descriptor and context behind checked private definitions. Its
+`source` is the original constructed context; `context` is the retained one,
+and `same` proves their equality. `rootEq` also retains the descriptor identity.
+The supplied cleanliness function is preserved.
+
+```lean
+open Lean Hex.RealFormula in
+open Hex.RCF.RealCoefficients in
+meta def prepareRootContext
+    (reader clean : Expr)
+    (scalar : RootQuote.DecoderM) :
+    Reify.ReifyM RootPrepare.Result := do
+  let header ← RootHeader.quoteWith
+    reader scalar
+  RootPrepare.prepareWith header clean
+```
+
+Run this action and subsequent quotation in one `RootQuote.runWith` request.
+Combine its decoder with the exact predecessor's scalar and signature
+decoders, and use `ScalarPacket.quoteWith` with `context` and `same` to restore
+the original reader's equation. The shared proof budget includes retained
+data, equations, simplifier visits and generated proof expressions. The
+simplifier's step limit is separately configurable; its exceptions remain
+terminal. Retention does not freeze root frames, authenticate a real source,
+or construct an ordinary-real model. Those conclusions require their existing
+separate bridges.

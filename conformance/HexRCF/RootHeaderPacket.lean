@@ -109,6 +109,11 @@ meta def decoder : RootQuote.DecoderM := fun expression => do
       return some (← liftM (result.getProof' expression))
   liftM (RationalQuote.decoder (mkConst ``RootQuoteTests.registry) expression)
 
+meta def quoteConfig : Hex.RealFormula.Reify.Config :=
+  let basic : Hex.RealFormula.Reify.Config := {}
+  {basic with ring := {basic.ring with budget :=
+    {basic.ring.budget with proofNodes := 2000000}}}
+
 run_meta do
   withExporting (isExporting := false) do
     let codec ← mkAppM ``Tower.Context.codec #[mkConst ``RootQuoteTests.base]
@@ -134,7 +139,7 @@ run_meta do
     let reader ← mkAppM ``ScalarPacket.read
       #[mkConst ``model,codec,mkConst ``context,mkConst ``polynomial,mkIntLit 1,
         mkConst `Hex.RCF.RootHeaderPacket.evidence]
-    let outcome ← RootQuote.runWith (RootQuote.quoteOptionWith reader decoder)
+    let outcome ← RootQuote.runWith (RootQuote.quoteOptionWith reader decoder) quoteConfig
     let quoted ← match outcome with
       | .ok result => pure result
       | .error error => throwError "public sign packet quotation: {Hex.RealFormula.Reify.Error.toMessageData error}"
