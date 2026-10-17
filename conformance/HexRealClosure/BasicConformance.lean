@@ -64,9 +64,14 @@ def main : IO Unit := do
   let transportedSigns := transported.map parent.sign
   let huge : parent.Value := NatCast.natCast (10 ^ 27)
   let bound := epsilon⁻¹-huge
+  let originalHuge : parent.Value := NatCast.natCast (10 ^ 28)
+  let originalBound := epsilon⁻¹-originalHuge
+  let ratio := (1+epsilon)/(1-epsilon)
+  unless parent.sign (ratio-1) == 1 do
+    throw (IO.userError "original ex2 ratio comparison failed")
   unless parent.sign epsilon == 1 && parent.sign (epsilon-1) == -1 &&
       moved*moved == (1+1 : parent.Value) && parent.sign moved == 1 &&
-      parent.sign bound == 1 && transported == #[moved,moved⁻¹,moved*moved,moved*moved*moved+1] &&
+      parent.sign bound == 1 && parent.sign originalBound == 1 && transported == #[moved,moved⁻¹,moved*moved,moved*moved*moved+1] &&
       transportedSigns.toList == squareSigns do
     throw (IO.userError "infinitesimal or transported square root changed")
   let y : parent.Poly := DensePoly.ofList [0,1]
@@ -78,18 +83,43 @@ def main : IO Unit := do
   let embeddedEpsilon := entry.root.embed epsilon
   let difference := beta-embeddedEpsilon
   let equation := beta*beta*beta-embeddedEpsilon
-  let values := #[beta,embeddedEpsilon,difference,equation,beta-1]
+  let betaSquare := beta*beta
+  let betaFourth := betaSquare*betaSquare
+  let values := #[beta,embeddedEpsilon,difference,equation,beta-1,
+    betaSquare-embeddedEpsilon,betaFourth-embeddedEpsilon]
   let signs := values.map child.sign
-  unless entry.multiplicity == 1 && signs == #[1,1,1,0,-1] do
+  unless entry.multiplicity == 1 && signs == #[1,1,1,0,-1,1,-1] do
     throw (IO.userError "infinitesimal cube-root arithmetic failed")
   emit (object [("case", .string "basic infinitesimal"),
     ("parent", parent.signature.literal.toJson), ("context", child.signature.literal.toJson),
     ("parameter", parent.codec.encode epsilon), ("transported_values", .arr (transported.map parent.codec.encode)),
     ("transported_signs", Json.of transportedSigns.toList),
-    ("bound", parent.codec.encode bound),
+    ("bound", parent.codec.encode bound), ("original_bound", parent.codec.encode originalBound), ("ratio", parent.codec.encode ratio),
     ("head", .arr (head.toArray.map parent.codec.encode)), ("root", ← descriptor entry.root),
     ("multiplicity", Json.of entry.multiplicity),
     ("values", .arr (values.map child.codec.encode)), ("signs", Json.of signs.toList)])
+
+  let some successive := child.enlargeWithParameter?
+    | throw (IO.userError "original ex2 successive enlargement failed")
+  let next := successive.conversion.context
+  let epsilon2 := successive.parameter
+  let oldEpsilon := successive.conversion.value embeddedEpsilon
+  let retained := values.map successive.conversion.value
+  let retainedBeta := successive.conversion.value beta
+  unless retained.map next.sign == signs &&
+      retainedBeta*retainedBeta*retainedBeta == oldEpsilon do
+    throw (IO.userError "successive enlargement changed live cubic values")
+  let successiveValues := #[oldEpsilon,epsilon2,
+    epsilon2-oldEpsilon,epsilon2-(DensePoly.natPow (DensePoly.C oldEpsilon) 10).coeff 0]
+  let successiveSigns := successiveValues.map next.sign
+  unless successiveSigns == #[1,1,-1,-1] do
+    throw (IO.userError "original ex2 successive comparisons failed")
+  emit (object [("case", .string "original ex2 successive"),
+    ("context", next.signature.literal.toJson),
+    ("transported_values", .arr (retained.map next.codec.encode)),
+    ("transported_signs", Json.of (retained.map next.sign).toList),
+    ("values", .arr (successiveValues.map next.codec.encode)),
+    ("signs", Json.of successiveSigns.toList)])
 
   emit (object [("case", .string "basic unsupported"),
     ("cases", Json.of (["pi-infinitesimal-cubic", "pi-infinitesimal-comparison"] : List String)),
