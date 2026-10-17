@@ -37,7 +37,7 @@ try {
    const files=['NativeSourcesConformance.lean','SourceSelectionConformance.lean','SourceSelectionNative.lean','FieldSelectionConformance.lean'];
    const sourceLinks=Array.from(document.querySelectorAll('a[href]')).map(e=>e.getAttribute('href')).filter(h=>files.some(f=>h.endsWith('/'+f)));
    return {sourceLinks,currentSelection:text.includes('Ordered coefficient dependencies') &&
-     text.includes('earlier index has type') && text.includes('native-point case') && text.includes('QAdjoin') && text.includes('FieldSelection.prepare') && text.includes('universal counterexample route') && text.includes('public factory consumer') && text.includes('sample is the packed value')};
+     text.includes('earlier index has type') && text.includes('native-point case') && text.includes('QAdjoin') && text.includes('FieldSelection.prepare') && text.includes('universal counterexample route') && text.includes('public factory consumer') && text.includes('sample is the packed value') && text.includes('Concrete two-root controls') && text.includes('public inherited-coordinate consumer') && text.includes('interpreted sample itself')};
  })()`);
  if(documentCheck.sourceLinks.length<4 || documentCheck.sourceLinks.some(h=>!h.startsWith('https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/')))throw new Error('Source links do not resolve to published GitHub paths');
  if(!documentCheck.currentSelection)throw new Error('Rendered source-selection section is stale');

@@ -40,14 +40,18 @@ square-root section and proves agreement with those source coordinates.
 Both computed coordinates occur in the matrix. One real reader satisfies
 the full matrix and the two original divisors `2-sqrt(2)` and `1+sqrt(2)`.
 The exported witness uses that reader's matrix conclusion. A separately
-evaluated row refutes `forall x : Real, x < 0`, retaining both guards at its
-counterexample reader. Swapping the computed native coordinates fails the
+evaluated row refutes `forall x : Real, x * (-sqrt(2)) + 2 != 0`, retaining
+reader closure, every coefficient identity, its sample equation and both
+guard domains and nonvanishing facts. Swapping the computed native coordinates fails the
 selector alone, in an ordinary interpretation proof and a compiled row control.
 An inherited native case consumes the actual origin identity for `2`.
 Separate controls cover a wrong conjugate, an actual source-coordinate swap,
 freely varying inherited values, a computed generator, non-integral rational
-coordinates and an incorrect chained coordinate. Two-root position controls
-are parametric in supplied checked roots and their distinctness proof.
+coordinates and an incorrect chained coordinate. Concrete two-root controls use
+separately quoted positive and negative √2
+descriptors and reject their swap. The negative descriptor has its own frozen
+subject and graph for the strict interval `(-3/2,-7/5)`; its exact header and
+negative alias are proved in the ordinary kernel.
 
 The public `FieldSelectionConformance` module executes `NumberField.present?`
 and `FieldSelection.nativeValues` on those actual `QAdjoin` coordinates. It
@@ -56,11 +60,17 @@ checks the shifted original matrix, and isolates selector-only swap rejection.
 Its ordinary proof presentation is a successful result of the same factory by
 the owner's existence law. `FieldSelection.true_real` composes its true row
 with the original matrix interpretation to prove a real point theorem.
-This law retains every supplied nonzero guard; the concrete factory point
-theorem uses an empty guard list. The earlier finite-reader case separately
+The law states the matrix at the interpreted sample itself and retains every
+supplied nonzero guard. The concrete factory point checks `sample - generator`,
+so its guard remains attached to that exact sample. This model route consumes
+a plain matrix row; the actual presentation laws authenticate its coordinates.
+The earlier finite-reader case separately
 retains its two supplied guards. Neither case claims to collect divisions
 from original source syntax. Public and public meta imports suffice for this
-module, without `import all` or a legacy fixture import.
+module, without `import all` or a legacy fixture import. A separate public
+inherited-coordinate consumer applies `formula_iff` and the complete finite
+reader route with its original identity. The native finite-reader case uses
+`FieldSelection.matrix` and recovers the original matrix at the same reader.
 
 The rational source descriptor is reconstructed using `RootQuote` in an ordinary
 public module. Its original reader equation is checked, not taken from a
@@ -69,15 +79,16 @@ compiled verdict. A separate quoted binding reader and the owner's
 square-root identity follows from that head and strict interval. This removes
 the duplicate descriptor acceptance check from the older ordered-selection
 fixture. The root and binding quotations charge 308,555 and 60 proof nodes,
-respectively; these are syntax counts, not unique DAG-node or sharing results.
+respectively. The negative root and header charge 48,253 and 62 nodes; these are
+syntax counts, not unique DAG-node or sharing results.
 
 The fresh generic audit rechecks 14 exported theorem bodies. A separate audit
-rechecks 218 reachable theorem bodies and 50 definitions from the six named
-source-selection modules, including generated proof leaves; 244 checks have
+rechecks 272 reachable theorem bodies and 59 definitions from the nine named
+source-selection modules, including generated proof leaves; 300 checks have
 nonempty reduction traces. It checks complete root axiom closures against
 the standard three axioms and rejects the existing native-producer denylist
 unchanged. Temporary checked copies are discarded. Legacy native fixture
-construction is outside this six-module body scope and inside the complete
+construction is outside this nine-module body scope and inside the complete
 axiom closure. These checks do not claim a public frozen full-signature reader.
 
 The [manual](../HexManual/Chapters/HexRCF/NativeSources.lean) includes checked
@@ -91,7 +102,12 @@ The final inspection opens eight captures and checks nine changed-section
 targets at each of 1440 and 390 pixels. Their maximum measured overflow is
 zero on desktop and one pixel in the first narrow code block; the wrapped
 builder has none. This is local section evidence, not a zero-overflow claim
-for the entire manual. The earlier five-pixel builder failure and its captures
+for the entire manual. The stopped second render is retained with signal 15/TERM and no completed
+Lake build; it was stopped to address substantive review findings. The verifier
+checks this classification against the log. It also checks the archived overflow
+against the recorded five-pixel value. `verify.py --check-head` additionally
+requires changes after the recorded source commit to remain within `reports/`.
+The earlier five-pixel builder failure and its captures
 are retained with the unchanged greater-than-one-pixel rejection threshold.
 
 This is a partial integration under #10358. It does not discover arbitrary

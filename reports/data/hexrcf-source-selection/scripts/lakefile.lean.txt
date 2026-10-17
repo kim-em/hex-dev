@@ -4,3 +4,5 @@ package scalarReviewRender
 require Hex from "/home/kim/worktrees/hex-dev/hex-dev-issue-10358"
 lean_lib ScalarReviewRender
 lean_lib SourceSelectionProbe
+
+lean_lib SourceSelectionEmitter

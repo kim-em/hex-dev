@@ -1,0 +1,14 @@
+import HexRealClosure.Basic
+import HexRealClosure.SignRequests
+import HexSignDet.DagEncode
+import HexSignDet.Codec
+open Hex Hex.RealClosure Hex.SignDet
+#eval (show IO Unit from do
+  let raw : RawDescriptor Rat Nat :=
+    ⟨8,DensePoly.ofCoeffs #[-2,0,1],.finite (-3/2),.finite (-7/5),[],[]⟩
+  let some root := Root.validate 8 raw
+    | throw (IO.userError "negative selected-root producer rejected")
+  let subject := Codec.descriptor ValueCodec.rat ValueCodec.nat root.raw
+  let graph := Codec.graph ValueCodec.rat ValueCodec.nat (Dag.encode root.evidence)
+  IO.println (reprStr subject)
+  IO.println (reprStr graph))

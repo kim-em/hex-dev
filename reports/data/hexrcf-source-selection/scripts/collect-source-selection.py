@@ -13,13 +13,13 @@ def sha(data):
 def git(*args):
     return subprocess.check_output(['git', *args], cwd=repo, text=True).strip()
 
-integration = (task/'source-selection-integration-6.log').read_text()
+integration = (task/'source-selection-integration-7.log').read_text()
 assert 'Build completed successfully' in integration
 assert 'status=0/SUCCESS' in integration
-rendered = (task/'source-selection-render-5.log').read_text()
+rendered = (task/'source-selection-render-6.log').read_text()
 assert 'Build completed successfully' in rendered
 assert 'status=0/SUCCESS' in rendered
-browser = (task/'source-selection-browser-3.log').read_text()
+browser = (task/'source-selection-browser-4.log').read_text()
 assert 'Saved source-selection desktop/narrow screenshots' in browser
 assert 'status=0/SUCCESS' in browser
 audit = re.search(r'source-selection inspection: (\d+) theorem bodies/(\d+) definitions; (\d+) nonempty traces', integration)
@@ -52,9 +52,10 @@ for name in ['source-selection-cap-final.txt', 'source-selection-browser.mjs']:
 save('scripts/run-bounded.sh', (task/'bin/run-bounded').read_bytes())
 save('scripts/ScalarReviewRender.lean.txt', (render/'ScalarReviewRender.lean').read_bytes())
 save('scripts/lakefile.lean.txt', (render/'lakefile.lean').read_bytes())
+save('scripts/SourceSelectionEmitter.lean.txt', (render/'SourceSelectionEmitter.lean').read_bytes())
 save('scripts/SourceSelectionProbe.lean.txt', (render/'SourceSelectionProbe.lean').read_bytes())
 save('scripts/collect-source-selection.py', Path(__file__).read_bytes())
-for directory, label in [(render/'archive-source-selection-1','initial-b22'), (render/'archive-source-selection-2','failed-f6d780'), (render,'final')]:
+for directory, label in [(render/'archive-source-selection-1','initial-b22'), (render/'archive-source-selection-2','failed-f6d780'), (render/'archive-source-selection-3','prior-33ab'), (render,'final')]:
     for path in sorted(directory.glob('source-selection-*')):
         if path.is_file() and path.suffix in ('.json','.png'):
             save('manual/'+label+'/'+path.name, path.read_bytes())
@@ -80,12 +81,12 @@ record = {
     'source_tree': git('rev-parse','HEAD^{tree}'),
     'sources': sources,
     'validation': {
-        'integration': 'logs/source-selection-integration-6.log.gz',
-        'fresh_audit': 'logs/source-selection-build-46.log.gz',
+        'integration': 'logs/source-selection-integration-7.log.gz',
+        'fresh_audit': 'logs/source-selection-audit-review-1.log.gz',
         'audit': dict(zip(['theorem_bodies','definitions','nonempty_traces'],map(int,audit.groups()))),
         'generic_bodies': int(generic.group(1)),
-        'render': 'logs/source-selection-render-5.log.gz',
-        'browser': 'logs/source-selection-browser-3.log.gz',
+        'render': 'logs/source-selection-render-6.log.gz',
+        'browser': 'logs/source-selection-browser-4.log.gz',
         'live_cap': 'scripts/source-selection-cap-final.txt',
     },
     'render_cancelled': {
@@ -97,7 +98,8 @@ record = {
     'body_scope': [
         'HexRCF.SourceSelectionCases','HexRCF.SourceSelectionConformance',
         'HexRCF.SourceSelectionNative','HexRCF.FieldSelectionConformance',
-        'HexRCF.RealCoefficients.SourceSelection','HexRCF.RealCoefficients.FieldSelection'],
+        'HexRCF.RealCoefficients.SourceSelection','HexRCF.RealCoefficients.FieldSelection',
+        'HexRCF.SourceSelectionPublic','HexRCF.SourceSelectionNegative','HexRCF.SourceSelectionNegativeLiterals'],
     'legacy_scope': 'native fixture construction excluded from body diagnostics, included in complete axiom closure',
     'observations': 'Reused-dependency build validation only; no complexity, speedup or physical-sharing claim',
     'artifacts': sorted(artifacts,key=lambda x:x['path']),
