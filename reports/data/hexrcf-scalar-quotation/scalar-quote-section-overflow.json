@@ -1,0 +1,204 @@
+[
+  {
+    "label": "desktop",
+    "width": 1440,
+    "targets": [
+      {
+        "tag": "P",
+        "text": "\n                  RootQuote.quote accepts a Lean\nexpression for an Except String replay reader. It returns the reconstructed\ndata and an ordinary-kernel equati",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  A scalar decoder may propose an equality for the exact demanded decode. The\nhelper checks its type, dependencies and kernel proof before usin",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  For example, this helper continues a request's existing budget and returns the\nupdated usage together with the checked equation:",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean Hex.RealFormula in\nopen Hex.Reflect in\nopen Hex.RCF.RealCoefficients in\nmeta def quoteSuppliedRoot\n    (reader : Expr)\n    (scalar : RootQuote.Decoder",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  For a rational predecessor, RationalQuote.decoder supplies these proposals\nwithout a fixed list of permitted numerators. It recognizes canoni",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean Hex.RealFormula in\nopen Hex.Reflect in\nopen Hex.RCF.RealCoefficients in\nmeta def quoteRationalRoot\n    (reader registry : Expr)\n    (config : Reify.Co",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The registry argument is a Lean expression of type\nHex.RealClosure.BaseContext.Registry. This helper supplies scalar equations;\nit does not r",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The cubic regression reads a\nsupplied replay for X³−3 on the open interval (−8,8). A fresh public consumer\nproves that the accepted descripto",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  A reader that rejects its input or replay returns structured invalid-provider\nevidence. Non-readers and unsupported shapes raise terminal exc",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The quote regressions use maxHeartbeats := 12000000 and maxRecDepth := 8192;\nthe fresh body audit uses depth 32768. Success under Lean's defa",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  This API does not register a tactic handler or establish complete root coverage.\nThe acceptance equation alone does not authenticate original",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  For a coefficient in a selected algebraic extension,\nScalarQuote.quote uses the owner's Element.signCodec with supplied checked\nsign facts, t",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Pass the original, fully applied Element.codec expression, retaining its\nimplicit arguments. Reinferring definitionally equal context aliases",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean Hex.RealFormula in\nopen Hex.Reflect in\nopen Hex.RCF.RealCoefficients in\nmeta def quoteSuppliedScalar\n    (codec facts literal : Expr)\n    (predecessor",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The monorepo regression imports HexRCF.ScalarQuoteCases. It decodes the\nnonrational coefficient −2√2 in the existing selected positive √2 con",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.SelectedRootTests in\nopen Hex.RCF.ScalarQuoteTests in\nexample :\n    Data.original.value restored =\n      -2 * Real.sqrt 2 :=\n  restored_value\n",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The fresh audit rechecks 12 reachable quotation-case theorem bodies, including this value\nidentity, with only the standard three axioms and n",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Regressions cover continued/exact/exhausted proof budgets, rollback after the\nstrict stage succeeds, missing or mismatched facts, zero withou",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  This scalar API does not reconstruct provider or predecessor histories,\nproduce missing signs, or install a general source-goal solver. The s",
+        "overflow": 0
+      }
+    ]
+  },
+  {
+    "label": "narrow",
+    "width": 390,
+    "targets": [
+      {
+        "tag": "P",
+        "text": "\n                  RootQuote.quote accepts a Lean\nexpression for an Except String replay reader. It returns the reconstructed\ndata and an ordinary-kernel equati",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  A scalar decoder may propose an equality for the exact demanded decode. The\nhelper checks its type, dependencies and kernel proof before usin",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  For example, this helper continues a request's existing budget and returns the\nupdated usage together with the checked equation:",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean Hex.RealFormula in\nopen Hex.Reflect in\nopen Hex.RCF.RealCoefficients in\nmeta def quoteSuppliedRoot\n    (reader : Expr)\n    (scalar : RootQuote.Decoder",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  For a rational predecessor, RationalQuote.decoder supplies these proposals\nwithout a fixed list of permitted numerators. It recognizes canoni",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean Hex.RealFormula in\nopen Hex.Reflect in\nopen Hex.RCF.RealCoefficients in\nmeta def quoteRationalRoot\n    (reader registry : Expr)\n    (config : Reify.Co",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The registry argument is a Lean expression of type\nHex.RealClosure.BaseContext.Registry. This helper supplies scalar equations;\nit does not r",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The cubic regression reads a\nsupplied replay for X³−3 on the open interval (−8,8). A fresh public consumer\nproves that the accepted descripto",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  A reader that rejects its input or replay returns structured invalid-provider\nevidence. Non-readers and unsupported shapes raise terminal exc",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The quote regressions use maxHeartbeats := 12000000 and maxRecDepth := 8192;\nthe fresh body audit uses depth 32768. Success under Lean's defa",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  This API does not register a tactic handler or establish complete root coverage.\nThe acceptance equation alone does not authenticate original",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  For a coefficient in a selected algebraic extension,\nScalarQuote.quote uses the owner's Element.signCodec with supplied checked\nsign facts, t",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Pass the original, fully applied Element.codec expression, retaining its\nimplicit arguments. Reinferring definitionally equal context aliases",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean Hex.RealFormula in\nopen Hex.Reflect in\nopen Hex.RCF.RealCoefficients in\nmeta def quoteSuppliedScalar\n    (codec facts literal : Expr)\n    (predecessor",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The monorepo regression imports HexRCF.ScalarQuoteCases. It decodes the\nnonrational coefficient −2√2 in the existing selected positive √2 con",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.SelectedRootTests in\nopen Hex.RCF.ScalarQuoteTests in\nexample :\n    Data.original.value restored =\n      -2 * Real.sqrt 2 :=\n  restored_value\n",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The fresh audit rechecks 12 reachable quotation-case theorem bodies, including this value\nidentity, with only the standard three axioms and n",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Regressions cover continued/exact/exhausted proof budgets, rollback after the\nstrict stage succeeds, missing or mismatched facts, zero withou",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  This scalar API does not reconstruct provider or predecessor histories,\nproduce missing signs, or install a general source-goal solver. The s",
+        "overflow": 0
+      }
+    ]
+  }
+]

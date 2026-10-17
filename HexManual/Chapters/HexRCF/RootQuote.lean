@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 import VersoManual
 import HexRCF.RealCoefficients
+import HexRCF.ScalarQuoteCases
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -114,3 +115,71 @@ The acceptance equation alone does not authenticate original source coefficients
 provider histories or a real model. Its conformance build is proof work rather
 than a compiled replay benchmark; the separate strict missing-record obligation
 for compiled readers remains.
+
+For a coefficient in a selected algebraic extension,
+`ScalarQuote.quote` uses the owner's `Element.signCodec` with supplied checked
+sign facts, then composes `Element.signCodec_sound`. Its returned equation is
+for the canonical `Element.codec` decoder at the original literal. Missing or
+mismatched facts reject without starting that context's sign producer. The
+predecessor codec must itself have the required checked decoding support.
+
+Pass the original, fully applied `Element.codec` expression, retaining its
+implicit arguments. Reinferring definitionally equal context aliases can make
+the kernel unfold a native decoder during type comparison. The helper preserves
+those arguments when constructing both the strict reader and its transport:
+
+```lean
+open Lean Hex.RealFormula in
+open Hex.Reflect in
+open Hex.RCF.RealCoefficients in
+meta def quoteSuppliedScalar
+    (codec facts literal : Expr)
+    (predecessor : RootQuote.Decoder)
+    (config : Reify.Config)
+    (used : BudgetUsage) :=
+  ScalarQuote.quote codec facts literal
+    predecessor config used
+```
+
+The monorepo regression imports `HexRCF.ScalarQuoteCases`. It decodes the
+nonrational coefficient −2√2 in the existing selected positive √2 context,
+proves its exact stored polynomial and sign, and interprets the returned value
+through that context's ordinary real model:
+
+```lean
+open Hex.RCF.SelectedRootTests in
+open Hex.RCF.ScalarQuoteTests in
+example :
+    Data.original.value restored =
+      -2 * Real.sqrt 2 :=
+  restored_value
+```
+
+The fresh audit rechecks 13 reachable quotation-case theorem bodies, including this value
+identity, with only the standard three axioms and no producer reduction.
+The nonzero and zero source equations use their exact previously checked
+constants with identical types; their diagnostic traces must contain zero reductions. The other
+bodies use the existing producer guard with nonempty diagnostic traces.
+The three reachable data definitions, `restored`, `literal` and `empty`,
+are also re-added to the ordinary kernel with that producer guard. Literal
+data definitions may have an empty reduction trace.
+
+Regressions cover continued/exact/exhausted proof budgets, rollback after the
+strict stage succeeds, missing or mismatched facts, zero without a fact,
+malformed codec applications and rejection of admitted fact proposals.
+Reader size is charged before type checking and reduction. Wrong-context
+facts reject before scalar callbacks run; malformed field counts, non-array
+literals and trailing polynomial zeros also reject. A successful call preserves
+the caller's metavariables. The ordinary bridge is tested in a `module` consumer
+that imports only the optional umbrella.
+Assigned input metavariables are instantiated before size accounting; expanded
+readers, literals and facts have the same charges through assigned metavariables.
+The final transport charge is checked separately from the preflight charge.
+The facts list's declared element type must use the codec's context under
+reducible transparency; aliases in that index need explicit type transport.
+The wrong-context test uses a fresh heartbeat epoch and an actual
+2,000,000-raw-heartbeat limit; heartbeat/depth exhaustion is rethrown.
+
+This scalar API does not reconstruct provider or predecessor histories,
+produce missing signs, or install a general source-goal solver. The strict
+compiled missing-record obligation for whole readers remains separate.

@@ -259,8 +259,10 @@ private partial def discharge (decode : Decoder) (node : Expr) : ReifyM Expr := 
   return proof
 
 private partial def quoteCore (reader : Expr) (decode : Decoder) : ReifyM Result := do
+  let reader ← instantiateMVars reader
   accountProof reader
   let reader ← Hex.RCF.checkExpr `RootQuote.reader reader
+  Meta.check reader
   let type ← whnf (← inferType reader)
   unless type.isAppOfArity ``Except 2 && type.getAppArgs[0]!.isConstOf ``String do
     throwError "rcf: expected a literal Except String reader"
