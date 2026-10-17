@@ -68,7 +68,7 @@ example :
 ```
 
 
-The fresh importing conformance module checks all 94 reachable example theorem
+The fresh importing conformance module checks all 97 reachable example theorem
 bodies and 14 definitions under the kernel producer guard, including private
 auxiliaries and the final witness. The complete axiom closure contains only
 `propext`, `Classical.choice` and `Quot.sound`. The stored polynomial request

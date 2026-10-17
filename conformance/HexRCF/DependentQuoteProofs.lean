@@ -61,7 +61,7 @@ run_meta do
             ``Descriptor.ofReplay?] then
         throwError "dependent quotation reduced producer {producer}: {count}; body={name}"
       if !diagnostics.unfoldCounter.isEmpty then traces := traces+1
-    unless theorems == 145 && definitions == 16 && traces == 88 do
+    unless theorems == 153 && definitions == 16 && traces == 78 do
       throwError "dependent quotation body inventory changed: {theorems}/{definitions}/{traces}"
     unless (← (← getEnv).getLocalConstantInfos).map (·.name) == originalNames do
       throwError "dependent quotation audit retained declarations"

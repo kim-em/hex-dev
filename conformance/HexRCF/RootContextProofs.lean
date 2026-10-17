@@ -65,7 +65,7 @@ run_meta do
       if let some (producer,count) := Hex.RCF.SelectedRootTests.KernelCheck.violation? diagnostics extra then
         throwError "root context reduced producer/encoder {producer}: {count}; body={name}"
       if !diagnostics.unfoldCounter.isEmpty then traces := traces+1
-    unless theorems == 718 && definitions == 68 && traces == 771 do
+    unless theorems == 732 && definitions == 68 && traces == 785 do
       throwError "root context body inventory changed: {theorems}/{definitions}/{traces}"
     unless (← (← getEnv).getLocalConstantInfos).map (·.name) == originalNames do
       throwError "root context audit retained declarations"

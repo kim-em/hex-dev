@@ -99,6 +99,9 @@ private partial def irreducible? (protectedNames : Array Name) (expression : Exp
         for argument in reduced.getAppArgs do
           if let some stuck ← irreducible? protectedNames argument then return some stuck
     if let .const name _ := reduced.getAppFn then
+      -- Quotient elimination has no ordinary recursor metadata.
+      if name == ``Quot.lift && reduced.getAppNumArgs == 6 then
+        return ← irreducible? protectedNames reduced.getAppArgs[5]!
       if let .recInfo recursor ← getConstInfo name then
         if let some major := reduced.getAppArgs[recursor.getMajorIdx]? then
           return ← irreducible? protectedNames major
@@ -561,6 +564,9 @@ private partial def discharge (decode : DecoderM) (node : Expr) : ReifyM Expr :=
   let branchProof := mkApp3
     (mkConst (if value then ``of_decide_eq_true else ``of_decide_eq_false))
     condition decision decisionProof
+  let branchTarget ← if value then pure condition else mkAppM ``Not #[condition]
+  accountProof branchProof
+  let branchProof ← Hex.RCF.checkProof `RootQuote.branch branchTarget branchProof
   let alpha ← inferType node
   let level ← getLevel alpha
   let branch := if value then args[2]! else args[1]!

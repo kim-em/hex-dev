@@ -15,6 +15,7 @@ import HexRCF.RootHeaderValues
 import HexRCF.RootContextConformance
 import HexRCF.FrozenSignatureProofs
 import HexRCF.ProofFunctionPublic
+import HexRCF.QuotientQuotePublic
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -53,6 +54,24 @@ meta def quoteSuppliedRoot
     config used
 ```
 
+Quotation follows the representative of a closed quotient when selecting
+reducibility boundaries. This lets a formula polynomial stored in a tree map
+expose its term list. Protected replay functions and canonical coefficient
+decoders retain their existing boundaries. The public regression checks the
+original reader for a two-term polynomial:
+
+```lean
+open Hex.RCF in
+example :
+    QuotientQuote.reader = some 7 :=
+  QuotientQuotePublic.accepted
+```
+
+Its exact 92-node budget succeeds, one node less exhausts, and a wrong term
+count rejects. The controls check caller-state restoration; a fresh importing
+audit checks nine theorem bodies and four definitions with the unchanged
+producer guard and complete standard-three axiom closure.
+
 For a rational predecessor, `RationalQuote.decoder` supplies these proposals
 without a fixed list of permitted numerators. It recognizes canonical
 `[0,n,d]` payloads with a positive coprime denominator and requires the whole
@@ -83,7 +102,7 @@ it does not reconstruct registry or provider histories. Regression tests check
 positive and negative fractions, noncanonical or malformed payloads, and a
 different codec whose decoding function is unchanged. The generic callback
 also quotes the same frozen cubic independently of the original finite callback.
-Its fresh importing audit checks 201 actual generated theorem bodies under
+Its fresh importing audit checks 205 actual generated theorem bodies under
 kernel producer diagnostics, with only the standard three axioms.
 
 The [cubic regression](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/RootQuoteSource.lean) reads a
@@ -108,7 +127,9 @@ reflection budget remains exhaustion; exceptions, heartbeat limits, recursion
 limits and cancellation remain terminal. No error selects another solver.
 The failure regressions include a changed count with its unchanged matrix,
 well-typed forged equations, inadmissible proposals and callback mutations before
-decline or failure. Both dependent conditional branches are checked. The helper
+decline or failure. Both dependent conditional branches are checked. Each
+selected branch proof is kernel checked separately before it is used in the
+conditional equation. The helper
 forces ordinary kernel checking even when the caller disables it. A successful
 call restores caller metavariables and retains checked auxiliaries together
 with the environment effects of accepted callbacks. Rejection and failure restore
@@ -370,9 +391,9 @@ example :
   decoded_value
 ```
 
-Quoting the parent and packet in one request consumes 105,037 proof nodes.
+Quoting the parent and packet in one request consumes 108,096 proof nodes.
 With the frozen parent and its equality already available, the packet consumes
-69,973; a limit one node lower exhausts at the final 23-node charge. Decoding the
+71,332; a limit one node lower exhausts at the final 23-node charge. Decoding the
 coefficient from that fact consumes 966 more nodes in its separate request.
 The controls check caller metavariable restoration after successful decoding
 and final exhaustion, reject an empty graph, and reject a forged context equality

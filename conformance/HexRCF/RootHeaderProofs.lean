@@ -62,7 +62,7 @@ run_meta do
             ``Descriptor.ofReplay?] then
         throwError "root/header packet reduced producer {producer}: {count}; body={name}"
       if !diagnostics.unfoldCounter.isEmpty then traces := traces+1
-    unless theorems == 710 && definitions == 66 && traces == 761 do
+    unless theorems == 724 && definitions == 66 && traces == 775 do
       throwError "root/header packet body inventory changed: {theorems}/{definitions}/{traces}"
     unless (← (← getEnv).getLocalConstantInfos).map (·.name) == originalNames do
       throwError "root/header packet audit retained declarations"
