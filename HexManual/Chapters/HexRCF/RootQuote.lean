@@ -119,13 +119,14 @@ second coefficient sign, trailing zeros and malformed reader heads.
 `ScalarQuote.quoteDecodeWith` retains the exact demanded decode expression,
 including its primitive projection form. `RootQuote` also transports accepted
 canonical callbacks for the constant `ValueCodec.decode` form through the
-same abstract codec; both forms have emitted proof-body regressions. Projection transport and nested reader
-steps are checked with an abstract codec before applying the concrete codec
+same abstract codec; both forms have emitted proof-body regressions. Metadata
+annotations are ignored for classification while the original term is retained.
+Decode transport and nested reader steps are checked with an abstract codec before applying the concrete codec
 and its checked equation. The original reader expression must expose that
 predecessor codec; expand a hiding definition first. Dependent proof terms may
 prevent abstraction; type and kernel failures remain terminal. A late rejection restores
 the completed callback's auxiliaries. The fresh importing audit rechecks all
-56 reachable callback/module theorem bodies and 14 definitions, forbidding
+65 reachable callback/module theorem bodies and 14 definitions, forbidding
 both native producers and canonical-codec unfolding. Exact and one-below nested
 budgets also cover the added transport work: 9,143 proof nodes, with exhaustion
 at the final 1,006-node charge after 8,137 nodes were consumed. The predecessor

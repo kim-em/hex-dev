@@ -1,0 +1,156 @@
+{
+  "source_commit": "fa80322f1a810d4d8496ddfe2cc28c46d024fa1b",
+  "sources": {
+    "adapters/HexRCF/RealCoefficients/RootQuote.lean": "9a0998e98c1ee3e8f26593bbb0a606bce8b98ca9afd09fc276edda8c9c81cbee",
+    "adapters/HexRCF/RealCoefficients/ScalarQuote.lean": "8795420f8ed8c540748eb4204c93df6e651d4550d104c4e8afcbff4cb8795664",
+    "conformance/HexRCF/SharedQuoteCallbacks.lean": "cb2005da9020dae4a7c0f7a05407b56f049210a4cb33c0d9b6e5619a5672d843",
+    "conformance/HexRCF/SharedQuoteCallbackProofs.lean": "21715cc86d331cd8c7f452bc034826f4f9873cbe2a264c2c34e02008063112d8",
+    "conformance/HexRCF/SharedQuoteCases.lean": "058adc839862a0534e6a2648983efbc8c258477521627b6314ec97a41ea1befa",
+    "conformance/HexRCF/SharedQuoteConformance.lean": "d487bf5793e3e61631c72527acb59f9b877cc9a9743ba94e9a5e10e7ccba292c",
+    "HexManual/Chapters/HexRCF/RootQuote.lean": "873d7e96bf3b45ef0a88a118564e4a478bd411c663ef93e4730c9745a21311b4",
+    "lakefile.lean": "22a04fb17bab83a80cb176c520a8d8710aba6da367629b37ee4d64496a7f2823",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47"
+  },
+  "artifacts": [
+    {
+      "path": "logs/shared-quote-metadata-callback-1.log.gz",
+      "sha256": "6930f14293e375ff391f1bebf2816790ff72d93b0a73627315c79531748cafa2",
+      "uncompressed_sha256": "99d395726f886206becdc1f0d872f9c2004fdd8b2782b3c3e185385da2942ffb",
+      "bytes": 9864
+    },
+    {
+      "path": "logs/shared-quote-metadata-validation-1.log.gz",
+      "sha256": "f93bf5693bcb1db1a9f4ebfe34fa9d9753b8e537dcde8615db7df8b87d72a8bc",
+      "uncompressed_sha256": "3247ac5ebdee497135688cedecd193a01906386ed454a4afa1c00ce06f3739b9",
+      "bytes": 10885
+    },
+    {
+      "path": "logs/shared-quote-metadata-metadata-0.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 20
+    },
+    {
+      "path": "logs/shared-quote-metadata-metadata-1.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 20
+    },
+    {
+      "path": "logs/shared-quote-metadata-metadata-2.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 20
+    },
+    {
+      "path": "logs/shared-quote-metadata-metadata-3.log.gz",
+      "sha256": "b409d67a3a037936236130f7dc5c82bc279551dcaa501f4fdee7275c7bc3baef",
+      "uncompressed_sha256": "d2dd145dfbb85665677c83dfa50f34878e648a170c291230b82ce0749ec0eb97",
+      "bytes": 99
+    },
+    {
+      "path": "logs/shared-quote-metadata-metadata-4.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 20
+    }
+  ],
+  "metadata": [
+    {
+      "argv": [
+        "python3",
+        "scripts/check_dag.py"
+      ],
+      "exit_code": 0,
+      "log": "logs/shared-quote-metadata-metadata-0.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_copyright_headers.py"
+      ],
+      "exit_code": 0,
+      "log": "logs/shared-quote-metadata-metadata-1.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_file_line_counts.py"
+      ],
+      "exit_code": 0,
+      "log": "logs/shared-quote-metadata-metadata-2.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/ci/check_named_admissions.py"
+      ],
+      "exit_code": 0,
+      "log": "logs/shared-quote-metadata-metadata-3.log.gz"
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "logs/shared-quote-metadata-metadata-4.log.gz"
+    }
+  ],
+  "validation": {
+    "log": "logs/shared-quote-metadata-validation-1.log.gz",
+    "jobs": 11788,
+    "elapsed": "41.996s",
+    "cpu": "1min18.910s",
+    "memory_peak": "1.8GiB",
+    "swap": 0,
+    "command": [
+      "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+      "env",
+      "LAKE_NO_CACHE=true",
+      "lake",
+      "build",
+      "HexRCF",
+      "HexRCFRealCoefficients",
+      "+HexRCF.SharedQuoteCallbackProofs",
+      "+HexRCF.SharedQuoteConformance",
+      "+HexRCF.ScalarQuoteConformance",
+      "+HexRCF.RationalQuoteConformance",
+      "+HexRCF.RootQuoteConformance",
+      "+HexRCF.NamedConstantProofs",
+      "+HexRCF.HandlerTests",
+      "+HexRCF.ReifyTests",
+      "+HexRCF.DecisionTests",
+      "+HexManual.Chapters.HexRCF.RootQuote"
+    ]
+  },
+  "regression": {
+    "scope": "Accepted unannotated and metadata-annotated constant callbacks are audited. Whole original reader terms are retained; metadata is ignored only for classification. Complete const/projection shapes are required.",
+    "callback_count": 1,
+    "emitted_proofs": [
+      "Hex.RCF.SharedQuoteCallbacks.constant_bare_read",
+      "Hex.RCF.SharedQuoteCallbacks.tagged_bare_read"
+    ]
+  },
+  "audit": {
+    "theorems": 65,
+    "definitions": 14,
+    "standard_three_axioms": true,
+    "native_producers_forbidden": true,
+    "canonical_Element_codec_forbidden": true
+  },
+  "proof_nodes": {
+    "scalar": 818,
+    "polynomial": 1579,
+    "composed": 2397,
+    "nested": 9143,
+    "unchanged": true
+  },
+  "limits": "One shared hard32GiB service, MemorySwapMax0, LEAN_NUM_THREADS2",
+  "limitations": [
+    "Selected validation includes reused dependencies and is not ABBA/scaling/speedup evidence.",
+    "Affected manual chapter builds; earlier complete manual renders/captures remain separately source-bound. Exact-head CI validates the whole book.",
+    "Generic source/provider/predecessor authentication, whole extension completeness, remaining realization, strict compiled whole-reader arithmetic rejection and native stress remain separate."
+  ]
+}

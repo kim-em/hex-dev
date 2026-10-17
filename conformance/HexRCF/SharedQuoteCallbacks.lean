@@ -144,6 +144,18 @@ run_meta do
     unless (← constantCalls.get) == 1 do
       throwError "constant canonical codec callback count changed"
     emit `Hex.RCF.SharedQuoteCallbacks.constant_bare_read constant constantBare
+    let tagged := mkMData (KVMap.empty.setNat `rcfQuotation 1) constant
+    let taggedCalls ← IO.mkRef (0 : Nat)
+    let taggedDecode : RootQuote.DecoderM := fun expression => do
+      if expression == tagged then
+        taggedCalls.modify (·+1)
+        return ← constantDecode constant
+      constantDecode expression
+    let .ok taggedBare ← RootQuote.run tagged taggedDecode
+      | throwError "annotated canonical codec did not reach its checked callback"
+    unless (← taggedCalls.get) == 1 do
+      throwError "annotated canonical codec callback count changed"
+    emit `Hex.RCF.SharedQuoteCallbacks.tagged_bare_read tagged taggedBare
     for bad in #[mkNatLit 7,mkAppN constant.getAppFn (constant.getAppArgs.extract 0 2)] do
       unchanged do
         rejected (RootQuote.runWith (ScalarQuote.quoteDecodeWith bad (mkConst ``Records.facts)))
