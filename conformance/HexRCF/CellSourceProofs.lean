@@ -18,14 +18,20 @@ run_meta do
   unless axioms.all (fun name => [``propext,``Classical.choice,``Quot.sound].contains name) do
     throwError "fresh complete source has inadmissible dependencies"
   let dependencies ← Hex.RCF.ProofEvidence.projectDependencies roots
-  for required in #[``RowQuote.read_eq,``Hex.SignDet.Dag.selectedSigns_memo,
+  for required in #[``Hex.RCF.SourceIdentityPacket.coefficient,
+      ``SourceIdentity.identify,``SourceIdentity.observe,``SourceIdentity.select,
+      ``RowQuote.read_eq,``Hex.SignDet.Dag.selectedSigns_memo,
       ``CompleteReplay.check_sound,``CellOperations.check_of_parts,
       ``CellOperations.readCells_of_parts,``CellRead.collectWith_eq,``CellOperations.check_eq,
       ``RootQuote.read_eq,``Hex.SignDet.Replay.check.eq_1,``Hex.MvPoly.termsList,
       ``RowQuote.values_cast,``RowQuote.values_restore,
       ``RowQuote.values_retarget,``RowQuote.value_eq] do
     unless dependencies.contains required do throwError "fresh complete source omitted {required}"
-  for forbidden in #[``CellReplayTests.Operations.accepted,``CellReplayTests.Operations.checked,
+  for forbidden in #[``CellReplayTests.Algebraic.Schema.coefficient,
+      ``Hex.RCF.SelectedRootTests.Data.alpha_value,``Hex.RCF.SelectedRootTests.Data.selectedSqrt,
+      ``Hex.RCF.SourceIdentityCases.source_selected,``Hex.RCF.SourceIdentityCases.coefficient,
+      ``Hex.RCF.SourceIdentityCases.equationFact,``Hex.RCF.SourceIdentityCases.marginFact,
+      ``CellReplayTests.Operations.accepted,``CellReplayTests.Operations.checked,
       ``CellReplayTests.Operations.source,``CellReplayTests.Algebraic.CompleteQuote.checked,
       ``CellReplayTests.Algebraic.CompleteQuote.source,``CellReplayTests.Algebraic.Read.accepted,
       ``CellReplayTests.Algebraic.Canonical.evidence,``CellReplayTests.Algebraic.Canonical.cert,
@@ -33,7 +39,9 @@ run_meta do
     if dependencies.contains forbidden then throwError "fresh complete source reused {forbidden}"
   let names := (← (← getEnv).getLocalConstantInfos).map (·.name)
   let modules := (← getEnv).header.moduleNames
-  let allowed := #[`HexRCF.RealCoefficients.RowPacketQuote,`HexRCF.CellSourceQuote,`HexRCF.RealCoefficients.RootQuote,
+  let allowed := #[`HexRCF.SourceIdentityPacket,`HexRCF.SourceIdentityLiterals,
+    `HexRCF.RealCoefficients.SourceIdentity,`HexRCF.RealCoefficients.ScalarPacket,
+    `HexRCF.RealCoefficients.RowPacketQuote,`HexRCF.CellSourceQuote,`HexRCF.RealCoefficients.RootQuote,
     `HexRCF.RealCoefficients.ScalarQuote,`HexRCF.RealCoefficients.CellQuote,
     `HexRCF.RealCoefficients.RowQuote,`HexRCF.RealCoefficients.CellRead,
     `HexRCF.RealCoefficients.CellOperations]
@@ -63,7 +71,7 @@ run_meta do
           ``Hex.SignDet.Descriptor.ofReplay?] then
       throwError "complete source reduced producer {producer}: {count}; body={name}"
     if !diagnostics.unfoldCounter.isEmpty then traces := traces+1
-  unless theorems == 1056 && definitions == 72 && traces == 1094 do
+  unless theorems == 1192 && definitions == 202 && traces == 1352 do
     throwError "complete source inventory changed: {theorems}/{definitions}/{traces}"
   unless (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
     throwError "complete source audit retained copied declarations"

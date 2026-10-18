@@ -10,6 +10,7 @@ import HexRCF.RealCoefficients.RationalQuote
 import HexRCF.RealCoefficients.ScalarQuote
 import HexRCF.RootTableQuote.Input
 import HexRCF.RealCoefficients.CellQuote
+import HexRCF.SourceIdentityPacket
 open Lean Meta Qq Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
 open Hex.RCF.RealCoefficients.CellReplayTests
 open Hex.RCF.RealCoefficients.CellReplayTests.Algebraic
@@ -137,7 +138,7 @@ run_meta do
     let identityType ← mkEq valuation source.valuation
     let identity ← mkFreshExprMVar identityType
     let remaining ← Lean.Elab.runTactic' identity.mvarId!
-      (← `(tactic| funext i; fin_cases i; exact Schema.coefficient))
+      (← `(tactic| funext i; fin_cases i; exact Hex.RCF.SourceIdentityPacket.coefficient))
     unless remaining.isEmpty do throwError "original coefficient identity left goals"
     let identity ← Hex.RCF.checkProof `completeSourceIdentity identityType (← instantiateMVars identity)
     let realTarget := source.original

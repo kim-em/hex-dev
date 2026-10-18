@@ -17,6 +17,7 @@ import HexRCF.RealCoefficients.SourceIdentity
 import HexRCF.RealCoefficients.CellQuote
 import HexRCF.CellQuoteStages
 import HexRCF.CellSourceQuote
+import HexRCF.SourceIdentityPacket
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -658,13 +659,14 @@ example : ∃ x : ℝ,
 The shared reification and quotation budget records 8,644,422 proof nodes
 before the separate source-finishing call. The test supplies 24M proof nodes
 and 60M heartbeats. Its trace records two memo reuses and seven validations.
-Lake reports 894 seconds for this source module on the recorded shared host;
+Lake reports 889 seconds for this source module on the recorded shared host;
 this remains an expensive fixed-input proof build. These observations do not
 measure compiled replay or establish a general tactic running time.
 
-Its importing proof audit checks 1,056 theorem bodies, 72 definitions and
-1,094 nonempty kernel traces. It excludes the older complete-packet acceptance
-and source proofs, checks transitive axiom dependencies, and rejects native
+Its importing proof audit checks 1,192 theorem bodies, 202 definitions and
+1,352 nonempty kernel traces. It excludes the older complete-packet acceptance
+and source proofs and the handwritten coefficient identity, checks transitive
+axiom dependencies, and rejects native
 producer and canonical-codec reduction. The fixed
 selected parent and checked coefficient seed facts are supplied inputs. This
 example does not construct arbitrary predecessor histories or install a
@@ -691,6 +693,52 @@ uses independently replayed equation and margin packets for the retained √2
 coordinate, with a separate ordinary-kernel body audit. These are source
 interpretation lemmas and a fixed-input example; general frozen source-history
 reconstruction still needs its own checked assembly.
+
+{name Hex.RCF.RealCoefficients.SourceIdentity.quoteWith}`SourceIdentity.quoteWith`
+constructs this identity from two supplied scalar readers. Its `Anchor` retains
+the original polynomial, isolating square, witness, precision and selected-value
+proof. Its `Packets` supplies the equation and enclosure readers and proofs
+binding their polynomial keys to the intended real polynomials. The readers
+carry the ordinary-real model. Both facts must belong to the same selected
+context: one sign is zero and the square margin is strictly positive.
+
+```lean
+open Lean Hex.RealFormula
+open Hex.Reflect
+open Hex.RCF.RealCoefficients
+meta def quoteSourceIdentity
+    (anchor : SourceIdentity.Anchor)
+    (packets : SourceIdentity.Packets)
+    (context same : Expr)
+    (decode : RootQuote.DecoderM)
+    (config : Reify.Config)
+    (used : BudgetUsage) :=
+  RootQuote.runWith (do
+    let selected ←
+      SourceIdentity.quoteWith
+        anchor packets context same
+        decode
+    pure ⟨anchor.value, selected.proof,
+      selected.usage⟩)
+    config used
+```
+
+The result proves that the reader's selected real root equals the original
+anchor value. Quotation checks both packets, their keys, signs, supplied value
+laws and the final original-source equality. The caller supplies the prepared
+context and its checked equality. All work shares the enclosing reflection
+budget and transaction. This authenticates a supplied selected source; it does
+not construct an arbitrary predecessor history or run missing root/sign searches.
+
+The frozen square-root regression quotes its parent descriptor and both
+packets in 673,461 proof nodes. Its coefficient identity supplies the complete
+algebraic source example above. A separate negative-window packet has an
+accepted literal reader and sign −1; it cannot identify the positive native
+root with the negative selected conjugate. Wrong coefficient proofs and
+one-node-below exhaustion also restore the complete caller state. The dedicated
+fresh audit checks 218 theorem bodies, 179 definitions and 385 nonempty kernel
+traces, excludes the handwritten source identities and native fact fixtures,
+and retains the producer guard and complete standard-three axiom closure.
 
 `CellQuote.finishOperations` takes the supplied-operation acceptance expression
 and an ordinary proof that its result is `some ()`. It kernel-checks that exact
