@@ -120,12 +120,28 @@ run_meta do
           (mkConst ``signatureData) (mkConst ``signature_literal) expression then
         return some proof
       liftM (RationalQuote.decoder (mkConst ``registry) expression)
-    let .ok complete ← RootQuote.runWith (do
-        let quoted ← CellQuote.replayWith program decode
-        let strict ← mkAppM ``RootQuote.read_eq #[program,mkConst ``Bool.true,quoted.proof]
-        let accepted ← mkEqTrans (← mkEqSymm same) strict
-        CellQuote.finishPacketWith source target checker accepted model identity) basic source.usage
+    let declarations ← IO.mkRef 0
+    let joint : Hex.RealFormula.Reify.ReifyM RootQuote.Result := do
+      sentinel.mvarId!.assign (mkNatLit 99)
+      let quoted ← CellQuote.replayWith program decode
+      declarations.set (← (← getEnv).getLocalConstantInfos).size
+      let strict ← mkAppM ``RootQuote.read_eq #[program,mkConst ``Bool.true,quoted.proof]
+      let accepted ← mkEqTrans (← mkEqSymm same) strict
+      CellQuote.finishPacketWith source target checker accepted model identity
+    let before ← getMCtx
+    let .ok complete ← RootQuote.runWith joint basic source.usage
       | throwError "joint cell quotation/source finishing refused"
+    restored before sentinel
+    let names := (← (← getEnv).getLocalConstantInfos).map (·.name)
+    declarations.set 0
+    let late := {basic with ring := {basic.ring with budget :=
+      {basic.ring.budget with proofNodes := complete.usage.proofNodes-1}}}
+    let .error (.budget exhausted) ← RootQuote.runWith joint late source.usage
+      | throwError "joint source attempt accepted below its complete budget"
+    unless exhausted.dimension == .proofNodes && (← declarations.get) > names.size do
+      throwError "joint exhaustion did not follow successful quotation with new declarations"
+    restored before sentinel (some names)
+    logInfo m!"joint late finishing exhaustion restored quotation declarations: limit={exhausted.limit}; consumed={exhausted.consumed}; requested={exhausted.requested}"
     let proof ← Hex.RCF.checkProof `jointCellSource target complete.proof
     withExporting (isExporting := true) do
       addDecl (.thmDecl {
