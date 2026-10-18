@@ -1,0 +1,55 @@
+from pathlib import Path
+import gzip,hashlib,json,subprocess
+repo=Path.cwd(); task=Path('/home/kim/.codex/tasks/hex-10358'); out=repo/'reports/data/hexrcf-row-quotation'
+out.mkdir(parents=True,exist_ok=True)
+git=lambda *a:subprocess.check_output(['git',*a],cwd=repo)
+sha=lambda raw:hashlib.sha256(raw).hexdigest()
+source='0e931b9a8c';source=git('rev-parse',source).decode().strip()
+old=json.loads((repo/'reports/data/hexrcf-tree-quotation/context.json').read_text())
+paths=set(old['sources'])|{path for path in git('diff','--name-only',old['source_commit'],source).decode().splitlines() if not path.startswith('reports/data/')}
+record=dict(source_commit=source,source_tree=git('rev-parse',source+'^{tree}').decode().strip(),baseline_commit=old['source_commit'],sources={},unchanged_guards=old['unchanged_guards'],artifacts=[],validation={},complete_packet_accepted=False)
+for path in sorted(paths):
+ raw=git('show',source+':'+path);assert (repo/path).read_bytes()==raw,path;record['sources'][path]=sha(raw)
+def retain(file,path,compress=False):
+ raw=file.read_bytes(); dest=out/path;dest.parent.mkdir(parents=True,exist_ok=True);dest.write_bytes(gzip.compress(raw,mtime=0) if compress else raw);data=dest.read_bytes();item=dict(path=path,bytes=len(data),sha256=sha(data))
+ if compress:item['uncompressed_sha256']=sha(raw)
+ record['artifacts'].append(item);return path
+for key,name in dict(integration='row-quote-integration-5.log',core='row-quote-production-core-1.log',controls='row-quote-production-controls-1.log',hidden='row-quote-hidden-boundary-1.log',recursive='row-quote-recursive-5.log',render='row-quotation-render-2.log',browser='row-quotation-browser-2.log').items():
+ assert 'code=exited, status=0/SUCCESS' in (task/name).read_text(),name
+ record['validation'][key]=retain(task/name,'validation/'+name+'.gz',True)
+metadata=json.loads((task/'row-quote-final-metadata.json').read_text());assert all(x['exit_code']==0 for x in metadata)
+retain(task/'row-quote-final-metadata.json','validation/metadata.json')
+for row in metadata:retain(task/row['log'],'validation/'+row['log']+'.gz',True)
+for name in ['row-quote-final-metadata.py','row-quote-integration-targets.txt','row-memory-policy.txt']:
+ retain(task/name,'validation/'+name+'.gz',True)
+retain(task/'bin/run-bounded','validation/run-bounded.sh')
+retain(task/'collect-row-quotation.py','validation/collect.py.txt')
+retain(task/'scalar-review-render/RowReviewRender.lean','validation/render.lean.txt')
+retain(task/'row-quotation-browser.mjs','captures/browser.mjs')
+for sourceName,dest in [('row-quotation-inspection.json','inspection.json'),('row-quotation-section-overflow.json','section-overflow.json')]:
+ retain(task/'scalar-review-render'/sourceName,'captures/'+dest)
+review=json.loads((task/'row-quotation-visual-review-2.json').read_text());assert review['viewed_all_eight'] is True
+for item in review['captures']:
+ file=Path(item['path']);assert sha(file.read_bytes())==item['sha256']
+ item['path']=retain(file,'captures/'+file.name);item['viewed']=True
+(out/'captures/visual-review.json').write_text(json.dumps(review,indent=2)+'\n')
+retain(out/'captures/visual-review.json','captures/visual-review.json')
+for file in sorted((task/'row-quotation-overflow-attempt-1').iterdir()):
+ retain(file,'diagnostics/narrow-overflow/'+file.name+'.gz',True)
+patterns=['row-quote-integration-[1234].log','row-quote-recursive-[1234].log',
+ 'row-quotation-render-1.log','row-quotation-browser-1.log','projection-depth-[12].log',
+ 'fresh-complete-projected-1*.log','fresh-complete-projected-1*.lean.txt',
+ 'selected-projection-repair-*.log','selected-projection-repair-*.lean.txt',
+ 'selected-projection-callback-*.log','selected-projection-cases-*.log']
+for pattern in patterns:
+ for file in sorted(task.glob(pattern)):
+  dest='diagnostics/'+file.name+'.gz'
+  if not any(x['path']==dest for x in record['artifacts']):retain(file,dest,True)
+record['scope']='Checked stored-row projection through root/query/operation transports; dependent replay helpers inside Boolean conditions; exact/below budgets, wrong-goal rejection and caller restoration; all32 selected targets and complete manual; eight actually viewed final captures.'
+record['limits']='Reader/data-access evidence, not a complete original-source decision procedure. The prior full-source experiment failed with a dependent replay-helper kernel mismatch. Its full log and exact inputs are retained. The subsequent production run is outside this immutable focused record until it actually terminates. No full-source proof or speedup claim follows from these controls.'
+record['diagnostic_source_note']='Earlier failed tool attempts retain their original logs and selected exact source copies. Final production code is pinned by source_commit; intermediate logs do not purport to run those final bytes. Snapshot-debug inputs never become production proof dependencies.'
+record['compiled_files']=[]
+for name in ['RowQuoteCases','RowQuoteDepth','RowQuoteProofs','ReplayBoundary','ReplayBoundaryProofs']:
+ path='.lake/build/lib/lean/HexRCF/'+name+'.olean';raw=(repo/path).read_bytes();record['compiled_files'].append(dict(path=path,bytes=len(raw),sha256=sha(raw)))
+(out/'context.json').write_text(json.dumps(record,indent=2)+'\n')
+print(f'Retained {len(record["artifacts"])} artifacts/{len(record["sources"])} sources at {source}')

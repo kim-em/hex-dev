@@ -1,0 +1,48 @@
+{
+  "reviewed_at": "2026-10-18T08:17:26.885315+00:00",
+  "viewed_all_eight": true,
+  "scope": "New row quotation paragraphs and checked callback example at 1440px and 390px; global pre-existing section overflow recorded separately.",
+  "finding": "All new target text and complete code example legible with no target overflow after line wrapping. Prior failed capture retained.",
+  "captures": [
+    {
+      "path": "captures/row-quotation-desktop-introduction.png",
+      "sha256": "0546e0726e55efbd8ff9d85f998379dd1cf18073c27432452c48e3e4e7e7932b",
+      "viewed": true
+    },
+    {
+      "path": "captures/row-quotation-desktop-api.png",
+      "sha256": "ae8aa3be4b4db9a2737019fe64b03bbf3af9f857c20e9c491304837725a18d8e",
+      "viewed": true
+    },
+    {
+      "path": "captures/row-quotation-desktop-example.png",
+      "sha256": "28a19205870fa2a50fa3f32e2dd50d260127b4cd910d319a17a94a0adec109d0",
+      "viewed": true
+    },
+    {
+      "path": "captures/row-quotation-desktop-budget.png",
+      "sha256": "0447da4524b158d64448f6afb0c253a658491f2834c2a191dd0cd193f5260c1b",
+      "viewed": true
+    },
+    {
+      "path": "captures/row-quotation-narrow-introduction.png",
+      "sha256": "83ea36690c9334fab3cbcb6d0fb717f9ab3bd9713846d0f994d9b73dd89ac3af",
+      "viewed": true
+    },
+    {
+      "path": "captures/row-quotation-narrow-api.png",
+      "sha256": "9de7eddf70db0c13c5520295e9f09827d941d9a665c02225dfdc59f21b4a409a",
+      "viewed": true
+    },
+    {
+      "path": "captures/row-quotation-narrow-example.png",
+      "sha256": "a222fe8be179718516593df6f84ab73e23c6b299e068a2588276eaca3f58407d",
+      "viewed": true
+    },
+    {
+      "path": "captures/row-quotation-narrow-budget.png",
+      "sha256": "5ac2b830f40046fa61da56591ad58b781a512c64a7b9e02e9ffbe29afe2b246b",
+      "viewed": true
+    }
+  ]
+}
