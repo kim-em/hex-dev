@@ -57,6 +57,12 @@ cap, no swap and two Lean threads. These are fixed-input proof observations,
 not matched speedup, scaling, compiled replay or physical-sharing measurements.
 The [198-artifact/106-source record](data/hexrcf-source-identity/README.md)
 pins the implementation. Earlier evidence records retain their original pins.
+Hosted CI then caught missing copyright prefixes in two newly tracked files:
+the local checker had skipped them while untracked. A comment-only repair
+passes the tracked-file checker. Its separate verifier checks all 106 sources
+against the original pin, allowing only the two exact required prefixes;
+the failed CI logs are retained. No expensive proof build was repeated for
+these comment-only changes; exact-head hosted validation is still required.
 
 General source/provider/predecessor and frozen-history assembly, complete
 tactic integration and accepted algebraic completeness, joint realization,
