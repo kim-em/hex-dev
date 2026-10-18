@@ -1,0 +1,55 @@
+{
+  "scope": "All ten final captures actually viewed at native resolution; changed prose and source code readable with no local clipping. Pre-existing page overflow is outside this change.",
+  "captures": [
+    {
+      "path": "captures/cell-memo-final-desktop-memo.png",
+      "sha256": "86cacee24f4a37178c2cd0aca13154935072b0c0bd3e37030bb22fd0e87bc419",
+      "viewed": true
+    },
+    {
+      "path": "captures/cell-memo-final-desktop-measurements.png",
+      "sha256": "baf79ecaf31220d35f28a63ba851439ec4adb5d7579f9efb8a476d35ae3b98db",
+      "viewed": true
+    },
+    {
+      "path": "captures/cell-memo-final-desktop-audit.png",
+      "sha256": "822e492e21be6e070101d0d97fb9e660c9335122d00ed6e3a71cdc3a1d7f4055",
+      "viewed": true
+    },
+    {
+      "path": "captures/cell-memo-final-desktop-source.png",
+      "sha256": "105d6a2b955189ea6a94322ef7886693183d09d0d8a46295e962d6ada943b964",
+      "viewed": true
+    },
+    {
+      "path": "captures/cell-memo-final-desktop-sourcecode.png",
+      "sha256": "df0ee93e0fd0f89c746e9b6ae1176fe88fb8183b560b30bc02e2ddc0d22e15be",
+      "viewed": true
+    },
+    {
+      "path": "captures/cell-memo-final-narrow-memo.png",
+      "sha256": "79d3e35eb080c7e99113722227509b3b9678329ff4899d4cd7e7ea5363d1fe34",
+      "viewed": true
+    },
+    {
+      "path": "captures/cell-memo-final-narrow-measurements.png",
+      "sha256": "8634e9a948bd80650fe863dcb49e5600b49666f04a6c527dc4a15062b7ed3771",
+      "viewed": true
+    },
+    {
+      "path": "captures/cell-memo-final-narrow-audit.png",
+      "sha256": "e936759b851d46fcb48ae5e356051544413002e82d64be3625b662c01952d2a5",
+      "viewed": true
+    },
+    {
+      "path": "captures/cell-memo-final-narrow-source.png",
+      "sha256": "52b3fe187c48d9add65fd848db62f1f267d128bc7fd6fabfbb2f1cef87a4bec6",
+      "viewed": true
+    },
+    {
+      "path": "captures/cell-memo-final-narrow-sourcecode.png",
+      "sha256": "b56fb63228651c89bc86aa3d14615da3f7da856da5893b1a127e4e5128217ddd",
+      "viewed": true
+    }
+  ]
+}
