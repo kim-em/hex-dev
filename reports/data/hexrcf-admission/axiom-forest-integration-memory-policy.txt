@@ -1,0 +1,5 @@
+ActiveState=active
+MainPID=1107216
+MemoryCurrent=4828237824
+MemoryMax=34359738368
+MemorySwapMax=0

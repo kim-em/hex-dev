@@ -1,0 +1,1 @@
+Removing only the three profileitM wrappers reproduces the committed main-worktree Tactic.lean byte-for-byte. No admission, unsafe, target, kernel, cache or state-restoration check changed.

@@ -1,0 +1,8 @@
+{
+  "pid": 277101,
+  "argv": [
+    "/home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/lake",
+    "build",
+    "CellSourceCost"
+  ]
+}

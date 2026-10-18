@@ -1,0 +1,19 @@
+{
+  "cpu": 2,
+  "affinity": [
+    2
+  ],
+  "host_load": [
+    3.10791015625,
+    2.78515625,
+    3.1240234375
+  ],
+  "schedule": [
+    "AB",
+    "BA"
+  ],
+  "repetitions": 10,
+  "depth": 128,
+  "roots": 8,
+  "scope": "build-only admission traversal, not a source proof or whole tactic comparison"
+}

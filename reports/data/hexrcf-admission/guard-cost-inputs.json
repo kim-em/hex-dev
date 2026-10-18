@@ -1,0 +1,7 @@
+{
+  "source_head": "1a666ea7c85d63cd9bc9372f78c8fdbbe1bf191d",
+  "probe_sha256": "f3e9f93c0f1f1529a84a5c6befc8a2a087909f63271a86c327d3791de4491957",
+  "instrumented_tactic_sha256": "d79561a41df94ffa3be63b5259665af29f1b14628217d07dfcd055ec40444417",
+  "scope": "Only profileitM wrappers around unchanged admission and unsafe checks in detached diagnostic worktree; current issue-10358 worktree and its artifacts remain separate. COW snapshot, no hard links to build files.",
+  "question": "Attribute the first profile residual to actual admission/unsafe walks or remaining quotation work; no cache/guard behavior change."
+}

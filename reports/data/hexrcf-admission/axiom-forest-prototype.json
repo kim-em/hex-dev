@@ -1,0 +1,22 @@
+{
+  "base": "1a666ea7c85d63cd9bc9372f78c8fdbbe1bf191d",
+  "checker_sha256": "26021113d121cfc9ab0d6e7ea7ce8d02eb6c4637c42bbdd2647ecd2d9291f3fb",
+  "scope": "Prototype only, isolated checkout. Per-call NameSet spans all local dependency roots; imported hidden-body inventories delegated to official collectAxioms. No persistent cache; both proof admission calls, unsafe guards, fresh uncached target kernel check and rollback unchanged.",
+  "validation": "19 reference-policy cases and full existing HandlerTests PASS. Guard-only automaticallyleasedCPU2 scheduleAB/BA tenchecks depth128 roots8 favorsprototypebothpairs; not whole-tactic speedup.",
+  "full_validation": {
+    "result": "PASS",
+    "log": "axiom-forest-full-1.log",
+    "jobs": 11171,
+    "proofNodes": 8651669,
+    "runtime": "16min29.907s",
+    "memoryPeak": "5.7G",
+    "swap": 0,
+    "exclusive_profile": {
+      "axiom_dependency_seconds": 189,
+      "unsafe_dependency_ms": 329,
+      "type_checking_seconds": 270,
+      "other_complete_action_seconds": 388
+    },
+    "limitation": "Unpaired full-source profiles diagnose costs only; no whole-tactic speedup claim."
+  }
+}
