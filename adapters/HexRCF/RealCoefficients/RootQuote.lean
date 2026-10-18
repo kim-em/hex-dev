@@ -64,6 +64,8 @@ structure Result where
   usage : Hex.Reflect.BudgetUsage
 
 private def replayRules : Array (Name × Name × Bool) := #[
+  (``Hex.SignDet.Replay.check, ``Hex.SignDet.Replay.check.eq_1, false),
+  (``Hex.SignDet.Replay.check, ``Hex.SignDet.Replay.check.eq_2, false),
   (``SignTable.count, ``Replay.table_lookup, false),
   (``Dag.replay?, ``Dag.replay_eq, false),
   (``Dag.step, ``Dag.step_eq, false),

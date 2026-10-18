@@ -16,6 +16,7 @@ import HexRCF.RootContextConformance
 import HexRCF.FrozenSignatureProofs
 import HexRCF.ProofFunctionPublic
 import HexRCF.QuotientQuotePublic
+import HexRCF.TreeQuotePublic
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -72,6 +73,31 @@ count rejects. The controls check caller-state restoration; a fresh importing
 audit checks nine theorem bodies and four definitions with the unchanged
 producer guard and complete standard-three axiom closure.
 
+Tree replay uses its public leaf and split equations before opening the local
+node checks. Keeping that boundary explicit avoids kernel conversion through
+an entire replay merely to compare two Boolean expressions. The checked
+readers retain different values for a valid split and its swapped children:
+
+```lean
+open Hex.RCF in
+example :
+    TreeQuote.splitTrue.toOption =
+      some 31 :=
+  TreeQuotePublic.split_true
+
+open Hex.RCF in
+example :
+    TreeQuote.splitFalse.toOption =
+      some 37 :=
+  TreeQuotePublic.split_false
+```
+
+The second reader selects its diagnostic branch; it does not accept the
+changed certificate. Readers returning an error abort quotation and restore
+caller state. The controls also check exact and one-node-below budgets.
+These reader equations still need source binding and real interpretation
+before they can prove a real goal.
+
 For a rational predecessor, `RationalQuote.decoder` supplies these proposals
 without a fixed list of permitted numerators. It recognizes canonical
 `[0,n,d]` payloads with a positive coprime denominator and requires the whole
@@ -102,7 +128,7 @@ it does not reconstruct registry or provider histories. Regression tests check
 positive and negative fractions, noncanonical or malformed payloads, and a
 different codec whose decoding function is unchanged. The generic callback
 also quotes the same frozen cubic independently of the original finite callback.
-Its fresh importing audit checks 205 actual generated theorem bodies under
+Its fresh importing audit checks 208 actual generated theorem bodies under
 kernel producer diagnostics, with only the standard three axioms.
 
 The [cubic regression](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/RootQuoteSource.lean) reads a
@@ -391,9 +417,9 @@ example :
   decoded_value
 ```
 
-Quoting the parent and packet in one request consumes 108,096 proof nodes.
+Quoting the parent and packet in one request consumes 121,490 proof nodes.
 With the frozen parent and its equality already available, the packet consumes
-71,332; a limit one node lower exhausts at the final 23-node charge. Decoding the
+79,531; a limit one node lower exhausts at the final 23-node charge. Decoding the
 coefficient from that fact consumes 966 more nodes in its separate request.
 The controls check caller metavariable restoration after successful decoding
 and final exhaustion, reject an empty graph, and reject a forged context equality

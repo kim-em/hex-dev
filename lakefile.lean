@@ -1347,6 +1347,7 @@ lean_lib HexConformance where
       `HexRCF.ProofFunctionPublic,
       `HexRCF.QuotientQuoteData, `HexRCF.QuotientQuote, `HexRCF.QuotientQuotePublic,
       `HexRCF.QuotientQuoteProofs,
+      `HexRCF.TreeQuoteData, `HexRCF.TreeQuote, `HexRCF.TreeQuotePublic, `HexRCF.TreeQuoteProofs,
       `HexRCF.DependentScalarQuote, `HexRCF.DependentScalarProofs,
       `HexRCF.PublicSignPacket, `HexRCF.PublicSignPacketValues, `HexRCF.PublicSignPacketControls, `HexRCF.PublicSignPacketProofs,
       `HexRCF.RootQuoteData, `HexRCF.RootQuoteCases,

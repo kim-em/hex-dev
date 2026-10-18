@@ -80,7 +80,7 @@ run_meta do
         Hex.RCF.SelectedRootTests.KernelCheck.addChecked
           (← mkFreshUserName `__rootQuoteData) statement (← mkEqRefl declaration.value)
       | _ => pure ()
-  unless checked == 262 do throwError "quotation body count changed: {checked}"
+  unless checked == 265 do throwError "quotation body count changed: {checked}"
   logInfo m!"actual cubic and conditional quotation bodies under kernel producer diagnostics: {checked}"
   for name in #[``Tower.contextCodec_self,``NumberField.decode_payload,
       ``Dag.replay_eq,``Dag.step_eq,``Node.check_eq,``checkMoment_eq,
