@@ -1,10 +1,11 @@
 # SignDet computational comparison
 
-The required Phase-6 comparison is **incomplete**. The primary campaign stopped
-at its first source pair because the candidate runner returned exit 2: all seven
-successful measurements were below its signal floor. The independent interacting
-campaign completed all four balanced blocks and passed both native comparisons.
-Neither result establishes acceptance of the complete computational library.
+The complete primary Phase-6 comparison reports **two regressions**. Its matched
+resolution campaign completed all 31 workloads and four balanced blocks; the
+native checker passes 29 workloads and flags direct joint checking at size 127
+and reduced joint production at size 255. The earlier stopped below-floor
+attempt remains retained. The independent interacting campaign passed both
+comparisons. These results do not establish core Phase-6 acceptance.
 
 ## Inputs and scope
 
@@ -71,7 +72,7 @@ The collector treated every nonzero runner exit as fatal. Consequently the
 campaign's terminal status is `failed`; it is not a completed inconclusive
 campaign and is **not eligible for the existing unchanged-rerun allowance**.
 Its consumed reservation, original decision and captures remain untouched.
-No primary retry or change to timing thresholds has been made.
+That attempt was not restarted and its reservation was not reset.
 
 The collector now recognizes this specific complete below-floor export and
 retains it for the existing native checker. Failed/unhashed/truncated exports
@@ -84,8 +85,51 @@ collector sources, not to the immutable candidate used in this capture.
 The [matched resolution protocol](resolution-protocol.md) specifies one separately
 authenticated increase of the inner-work target for both unchanged source arms.
 Its [proposal](resolution-proposal.json) binds this original failure and both
-exports. The protocol and controls are preparation; they are not a collected
-primary comparison or a performance pass.
+exports. The completed campaign below uses that separate resolution reservation;
+it is not an unchanged retry of the stopped attempt.
+
+## Complete primary resolution result
+
+[`resolution-complete-v1`](resolution-complete-v1/manifest.json) retains all
+849 capture files and the consumed resolution reservation, with compressed and
+original-byte bindings. The collector source is
+`199ee1a9179aeee0506551b5a365dbe138278f0b`, retained by
+`audit/issue-10575-sign-det-resolution-input-v1`. The source arms and checker
+are unchanged from the original primary campaign. Only the four named
+floor-filtered workloads use the matched 2.25-second targets specified by the
+protocol; all other workload settings remain unchanged.
+
+The run completes 248 source exports: 31 workloads × four blocks × two arms,
+in adjacent AB/BA/AB/BA order on automatically leased CPU 23. Both native
+preflights cover the 31 timed workloads and three correctness-only references.
+All timed rows succeed with matching answer hashes. Final source, helper,
+collector, checker and executable integrity checks pass. The terminal outcome
+is `regression`, not failed collection or insufficient timing resolution.
+
+| Workload | Parameter | Baseline median ns/call | Candidate median ns/call | Change | Native result |
+| --- | ---: | ---: | ---: | ---: | --- |
+| `Joint.runCheckDirect` | 127 | 53,490,330,879.5 | 66,908,931,470 | +25.086030% | Regression |
+| `Joint.runReduced` | 255 | 794,628,001,023.5 | 1,101,601,341,997 | +38.631075% | Regression |
+
+These are the pinned checker's pooled medians and unchanged ten-percent rule.
+Every other workload passes its full ladder or fixed comparison. Replaying all
+31 comparisons with the hash-bound native checker reproduces the saved JSON
+reports and exit codes without collecting new timings.
+
+The raw per-call seconds at the two flagged parameters vary across blocks:
+
+| Block | Direct baseline | Direct candidate | Reduced baseline | Reduced candidate |
+| ---: | ---: | ---: | ---: | ---: |
+| 0 | 53.872245329 | 79.006739898 | 791.031277123 | 786.108784330 |
+| 1 | 53.273237019 | 110.636285053 | 798.224724924 | 1,828.739953414 |
+| 2 | 53.161157650 | 54.811123042 | 776.104551960 | 1,324.823202195 |
+| 3 | 53.707424740 | 54.237685017 | 1,132.217426261 | 878.379481799 |
+
+All observations remain in the verdict. Recorded host load and memory provide
+context; they do not justify removing samples or attributing the findings to
+host activity. A source cause has not been established. Both findings remain
+open for investigation. No unchanged retry or phase promotion follows from
+this result.
 
 ## Interacting result
 
@@ -114,7 +158,8 @@ python3 - <<'PY'
 from pathlib import Path
 import gzip, hashlib, json
 root = Path('reports/bench-results/sign-det-phase6-comparison')
-for directory in ('initial-capture', 'interacting-complete-v1'):
+for directory in ('initial-capture', 'interacting-complete-v1',
+                  'resolution-complete-v1'):
     archive = root / directory
     manifest = json.loads((archive / 'manifest.json').read_text())
     for item in manifest['files']:
@@ -136,6 +181,6 @@ exports and exercise completion of all simulated blocks with a stub checker retu
 compiled checker returns 2 on below-floor rows. An inconsistent checker pass is
 also refused by the collector. These controls collect no benchmark measurements.
 
-The unresolved requirement is a complete primary computational comparison with
-adequate timing resolution under an explicitly agreed protocol. No library
-phase or publication eligibility is advanced by these results.
+The unresolved requirements are investigation and resolution of the two primary
+regression findings, followed by the applicable final computational acceptance.
+No library phase or publication eligibility is advanced by these results.
