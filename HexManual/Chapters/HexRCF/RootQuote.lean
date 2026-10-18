@@ -98,6 +98,45 @@ caller state. The controls also check exact and one-node-below budgets.
 These reader equations still need source binding and real interpretation
 before they can prove a real goal.
 
+Checked replay data may occur inside a Boolean condition. Quotation keeps
+closed helpers whose types mention a protected replay function attached to
+that function during conversion. The conformance examples cover inline proof
+terms and separately retained checked arrays, including false results and
+caller-state restoration. The original reader must expose the protected
+boundary; an opaque hiding definition still returns a structured rejection.
+
+{name Hex.RCF.RealCoefficients.RowQuote.decoder}`RowQuote.decoder` reads the
+literal value of a checked selected-sign row through query, root and operation
+transports. It uses the row's recorded values and checked public equations.
+A backend can combine it with its existing scalar decoder in the same request:
+
+```lean
+open Lean Hex.RealFormula in
+open Hex.Reflect in
+open Hex.RCF.RealCoefficients in
+meta def quoteRootRows
+    (reader : Expr)
+    (scalar : RootQuote.DecoderM)
+    (config : Reify.Config)
+    (used : BudgetUsage) :=
+  RootQuote.run reader
+    (fun expression => do
+      let result ←
+        RowQuote.decoder expression
+      if let some proof := result then
+        return some proof
+      scalar expression)
+    config used
+```
+
+The row controls check positive, zero, negative and false comparisons, exact
+and one-node-below budgets, wrong-goal proposals and caller restoration.
+Opaque query transports at depths 1, 16 and 24 consume the same reflection
+budget; the recursion limit remains the caller's Lean limit. A fresh importing
+audit checks 70 theorem bodies and eight definitions, including the stored-value
+law for restoring supplied operations. These are reader and data-access proofs;
+source binding and real interpretation remain separate obligations.
+
 For a rational predecessor, `RationalQuote.decoder` supplies these proposals
 without a fixed list of permitted numerators. It recognizes canonical
 `[0,n,d]` payloads with a positive coprime denominator and requires the whole
@@ -182,8 +221,8 @@ prevent abstraction; type and kernel failures remain terminal. A late rejection 
 the completed callback's auxiliaries. The fresh importing audit rechecks all
 65 reachable callback/module theorem bodies and 14 definitions, forbidding
 both native producers and canonical-codec unfolding. Exact and one-below nested
-budgets also cover the added transport work: 9,143 proof nodes, with exhaustion
-at the final 1,006-node charge after 8,137 nodes were consumed. The predecessor
+budgets also cover the added transport work: 10,763 proof nodes, with exhaustion
+at the final 1,006-node charge after 9,757 nodes were consumed. The predecessor
 callback is required to run exactly once and retain 17 source nodes.
 
 All quotation regressions use `maxHeartbeats := 12000000`. The original root and rational
@@ -417,9 +456,9 @@ example :
   decoded_value
 ```
 
-Quoting the parent and packet in one request consumes 121,490 proof nodes.
+Quoting the parent and packet in one request consumes 154,369 proof nodes.
 With the frozen parent and its equality already available, the packet consumes
-79,531; a limit one node lower exhausts at the final 23-node charge. Decoding the
+100,610; a limit one node lower exhausts at the final 23-node charge. Decoding the
 coefficient from that fact consumes 966 more nodes in its separate request.
 The controls check caller metavariable restoration after successful decoding
 and final exhaustion, reject an empty graph, and reject a forged context equality

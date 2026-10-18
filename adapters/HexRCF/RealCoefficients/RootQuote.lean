@@ -219,8 +219,10 @@ private partial def withDependents (constants : Array (Expr × Expr)) (index : N
 /-- Keep a replay function abstract throughout an enclosing Boolean conversion,
 even when its demanded boundary is a fold. Retain codec-constructor
 priority and abstract dependent proof helpers before supplying the function. -/
-private def contextStep? (current subject rhs motive : Expr) : ReifyM (Option Expr) := do
-  let boundary? ← match current.find? (fun part => part.isConstOf ``Algebraic.Element.codec) with
+private def contextStep? (current subject rhs motive : Expr) (chosen : Option Expr := none) :
+    ReifyM (Option Expr) := do
+  let boundary? ← if let some boundary := chosen then pure (some boundary) else do
+    match current.find? (fun part => part.isConstOf ``Algebraic.Element.codec) with
     | some boundary => pure (some boundary)
     | none => do
       unless (← withTransparency .reducible <| whnf (← inferType current)).isConstOf ``Bool &&
@@ -228,6 +230,7 @@ private def contextStep? (current subject rhs motive : Expr) : ReifyM (Option Ex
         return none
       pure (current.find? fun part => protectedNames.any (fun name => part.isConstOf name))
   let some boundary := boundary? | return none
+  unless (current.find? fun part => part == boundary).isSome do return none
   let boundaryType ← inferType boundary
   let gathered ← IO.mkRef (#[] : Array Expr)
   for expression in #[current,subject,motive] do
@@ -297,28 +300,11 @@ private def checkedStep (current whole subject law : Expr) : ReifyM (Expr × Exp
       | none => none
   let candidate ← match boundary? with
     | some boundary => do
-      -- Keep replay functions abstract during conversion; instantiate with
-      -- the actual function and its checked public equation afterwards.
-      let boundaryType ← inferType boundary
-      let prepared ← liftM <| withLocalDeclD `replayBoundary boundaryType fun placeholder => do
-        let replace := fun (e : Expr) =>
-          e.replace fun part => if part == boundary then some placeholder else none
-        let original := replace current
-        if original == current then return none
-        let premise ← mkEq (replace subject) (replace rhs)
-        withLocalDeclD `checked premise fun h => do
-          let target ← mkEq original (replace next)
-          let candidate := mkExpectedPropHint (← mkAppM ``congrArg #[replace motive,h]) target
-          return some (← mkForallFVars #[placeholder,h] target,
-            ← mkLambdaFVars #[placeholder,h] candidate)
-      let some (kind,value) := prepared
+      let some prepared ← contextStep? current subject rhs motive (some boundary)
         | abort (.providerFailure (.invalidProviderEvidence
             ⟨`Hex.RCF.RealCoefficients.RootQuote.boundary,0⟩
             "keep the protected replay boundary explicit before quotation") #[])
-      accountProof kind
-      accountProof value
-      let step ← Hex.RCF.checkProof `RootQuote.boundaryStep kind value
-      pure (mkApp2 step boundary law)
+      pure (mkApp prepared law)
     | none => do
       if let some prepared ← contextStep? current subject rhs motive then
         pure (mkApp prepared law)

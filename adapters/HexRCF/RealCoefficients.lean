@@ -52,6 +52,8 @@ public meta import HexRCF.RealCoefficients.Quote
 public import HexRCF.RealCoefficients.RootReplay
 public import HexRCF.RealCoefficients.RootBuild
 public import HexRCF.RealCoefficients.RootQuote
+public import HexRCF.RealCoefficients.RowQuote
+public meta import HexRCF.RealCoefficients.RowQuote
 public meta import HexRCF.RealCoefficients.RootHeader
 public meta import HexRCF.RealCoefficients.RootPrepare
 public meta import HexRCF.RealCoefficients.RootContext

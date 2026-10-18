@@ -697,7 +697,7 @@ lean_lib HexRCFRealFormula where
 @[default_target]
 lean_lib HexRCFRealCoefficients where
   srcDir := "adapters"
-  globs := #[`HexRCF.RealCoefficients.FieldSelection, `HexRCF.RealCoefficients.SourceSelection, `HexRCF.RealCoefficients.RootQuote, `HexRCF.RealCoefficients.RootHeader, `HexRCF.RealCoefficients.RootPrepare, `HexRCF.RealCoefficients.RootContext, `HexRCF.RealCoefficients.SignatureQuote, `HexRCF.RealCoefficients.RationalQuote, `HexRCF.RealCoefficients.ScalarQuote, `HexRCF.RealCoefficients.ScalarPacketQuote,
+  globs := #[`HexRCF.RealCoefficients.FieldSelection, `HexRCF.RealCoefficients.SourceSelection, `HexRCF.RealCoefficients.RootQuote, `HexRCF.RealCoefficients.RowQuote, `HexRCF.RealCoefficients.RootHeader, `HexRCF.RealCoefficients.RootPrepare, `HexRCF.RealCoefficients.RootContext, `HexRCF.RealCoefficients.SignatureQuote, `HexRCF.RealCoefficients.RationalQuote, `HexRCF.RealCoefficients.ScalarQuote, `HexRCF.RealCoefficients.ScalarPacketQuote,
     `HexRCF.RealCoefficients.RowOperations, `HexRCF.RealCoefficients.CellReuse, `HexRCF.RealCoefficients.CellPackets,
     `HexRCF.RealCoefficients.CellOperations, `HexRCF.RealCoefficients.CompleteReplay, `HexRCF.RealCoefficients.RootTableCodec, `HexRCF.RealCoefficients.RootCodec, `HexRCF.RealCoefficients.CellFootprint, `HexRCF.RealCoefficients.CellEncode, `HexRCF.RealCoefficients.CellCodec, `HexRCF.RealCoefficients.SectorEncode, `HexRCF.RealCoefficients.CellPacketRead, `HexRCF.RealCoefficients.CellPacketConvert,
     `HexRCF.RealCoefficients.CellPacketTransport, `HexRCF.RealCoefficients.RepresentationCarrier, `HexRCF.RealCoefficients.RootCells, `HexRCF.RealCoefficients.RepresentationCells, `HexRCF.RealCoefficients.BoundarySigns, `HexRCF.RealCoefficients.SectorSamples, `HexRCF.RealCoefficients.PointRows, `HexRCF.RealCoefficients.CellReplay, `HexRCF.RealCoefficients.RowReplay, `HexRCF.RealCoefficients.SectorReplay, `HexRCF.RealCoefficients.CellRead, `HexRCF.RealCoefficients.CellBuild, `HexRCF.RealCoefficients.CellDiscover, `HexRCF.RealCoefficients.CellAlignment, `HexRCF.RealCoefficients.SectorRequest, `HexRCF.RealCoefficients.CellProgress, `HexRCF.RealCoefficients.CellDecision, `HexRCF.RealCoefficients.CellExecution, `HexRCF.RealCoefficients.NumberFieldCells, `HexRCF.RealCoefficients.RowEncode, `HexRCF.RealCoefficients.CellQuote, `HexRCF.RealCoefficients, `HexRCF.RealCoefficients.Reify,
@@ -1347,6 +1347,8 @@ lean_lib HexConformance where
       `HexRCF.ProofFunctionPublic,
       `HexRCF.QuotientQuoteData, `HexRCF.QuotientQuote, `HexRCF.QuotientQuotePublic,
       `HexRCF.QuotientQuoteProofs,
+      `HexRCF.RowQuoteData, `HexRCF.RowQuoteCases, `HexRCF.RowQuoteDepth, `HexRCF.RowQuoteProofs,
+      `HexRCF.ReplayBoundary, `HexRCF.ReplayBoundaryProofs,
       `HexRCF.TreeQuoteData, `HexRCF.TreeQuote, `HexRCF.TreeQuotePublic, `HexRCF.TreeQuoteProofs,
       `HexRCF.DependentScalarQuote, `HexRCF.DependentScalarProofs,
       `HexRCF.PublicSignPacket, `HexRCF.PublicSignPacketValues, `HexRCF.PublicSignPacketControls, `HexRCF.PublicSignPacketProofs,
