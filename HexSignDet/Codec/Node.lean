@@ -49,6 +49,16 @@ def node (value : ValueCodec E) (context : ValueCodec Ctx) (n : Node E Ctx) : Js
     array (option (reduction value)) n.reductions.toArray,
     option (preparation value) n.preparation, basis n.basis]
 
+/-- All eleven fields in their literal encoding order. This equation is
+available through ordinary imports and assumes no arithmetic or binding check. -/
+theorem node_eq (value : ValueCodec E) (context : ValueCodec Ctx) (n : Node E Ctx) :
+    node value context n =
+      .arr #[context.encode n.context, poly value n.head, endpoint value n.lower,
+        endpoint value n.upper, list (poly value) n.queries, Json.of n.size, system n.system,
+        array (tarski value context) n.moments.toArray,
+        array (option (reduction value)) n.reductions.toArray,
+        option (preparation value) n.preparation, basis n.basis] := (rfl)
+
 /-- Decode all size-indexed fields against the same declared size. The rank
 column dimension is computed from the literal integer counts, not supplied
 as a separate unbound claim. -/
