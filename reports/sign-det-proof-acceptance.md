@@ -135,13 +135,19 @@ final API/use decisions; source review alone does not discharge those criteria.
 Publication eligibility also remains separate.
 
 The [computational comparison](bench-results/sign-det-phase6-comparison/README.md)
-retains the stopped primary attempt and the complete two-workload interacting
-pass. The primary runner exported complete successful rows below its timing
+retains the stopped primary attempt, the complete two-workload interacting
+pass and the complete primary resolution campaign. The original primary runner exported complete successful rows below its timing
 threshold, then returned 2; the collector stopped before the remaining blocks
 and families. This consumed attempt is not eligible for the completed-inconclusive
 rerun allowance. The collector correction preserves such exports for an
-inconclusive native verdict, without changing the thresholds. A complete primary
-comparison with adequate timing resolution remains required; no phase advances.
+inconclusive native verdict, without changing the thresholds. The separately
+reserved matched-resolution campaign completes all 31 workloads and four blocks,
+with matching answers and intact sources, but reports two regressions:
+`Joint.runCheckDirect` at size 127 (+25.086030%) and `Joint.runReduced` at
+size 255 (+38.631075%). All observations and the consumed reservation remain
+retained; all 31 native checker reports reproduce unchanged without new timings.
+The source cause and resolution remain open. No unchanged retry or phase
+advance is justified by this completed result.
 
 Upstream nested numeral construction is repaired in
 [#10871](https://github.com/kim-em/hex-dev/pull/10871), closing
