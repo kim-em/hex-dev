@@ -603,6 +603,41 @@ meta def quoteCellPacket
 boundaries with cumulative proof-node usage. Lean heartbeats remain a separate
 elaboration limit.
 
+{name Hex.RCF.RealCoefficients.CellQuote.finishPacketWith}`CellQuote.finishPacketWith`
+continues this request through the original source proof. It consumes the
+prepared source and the accepted canonical checker, model, coefficient identity
+and ordered divisor identities. The source record is checked again: its original
+target, divisor inventory and ordinary-kernel equivalence must match. This avoids
+starting another reification budget. Invoke quotation and finishing inside the
+same `RootQuote.runWith` transaction, seeded with source preparation's usage;
+the final usage then includes both stages. A finishing failure restores the
+whole attempt, including declarations produced while quoting the packet.
+
+The separate finishing action can also continue already recorded usage:
+
+```lean
+open Lean Hex.RealFormula
+open Hex.Reflect
+open Hex.RCF.RealCoefficients
+meta def finishCellPacket
+    (source : Reify.Source)
+    (target checker accepted : Expr)
+    (model identity : Expr)
+    (guards : Array Expr)
+    (config : Reify.Config)
+    (used : BudgetUsage) :=
+  RootQuote.runWith
+    (CellQuote.finishPacketWith source
+      target checker accepted model
+      identity guards)
+    config used
+```
+
+That separate transaction rolls back its own work. Clients needing rollback
+of quotation as well must combine both actions in one transaction. Conformance
+checks exact and one-node-below cumulative limits, exhaustion of the continued
+source budget, tampered source records and wrong goal proofs.
+
 Within this request, row quotation parses each literal sign packet and checks
 its exact ordered queries. It validates a graph once for each distinct set of
 arithmetic operations, sign function, context, polynomial, endpoints and graph
@@ -636,8 +671,8 @@ than a timing comparison or a measurement of physical sharing. The test supplies
 16M proof nodes and a separate 24M heartbeat allowance. Compiled replay and
 general algebraic quotation costs need separate evidence.
 
-A fresh importing audit checks 1,246 theorem bodies and 101 definitions, with
-1,297 nonempty kernel traces, the unchanged producer guard and only the
+A fresh importing audit checks 1,247 theorem bodies and 101 definitions, with
+1,298 nonempty kernel traces, the unchanged producer guard and only the
 standard three axioms. It excludes older fixture acceptance proofs. The
 constant example establishes source quotation; the quadratic packet adds
 replay coverage with multiple roots. General coefficient and history assembly
@@ -657,14 +692,15 @@ example : ∃ x : ℝ,
 ```
 
 The shared reification and quotation budget records 8,644,422 proof nodes
-before the separate source-finishing call. The test supplies 24M proof nodes
-and 60M heartbeats. Its trace records two memo reuses and seven validations.
-Lake reports 889 seconds for this source module on the recorded shared host;
+before source finishing and 8,651,669 for the complete original-source attempt.
+Both stages run in one transaction. The test supplies 24M proof nodes and
+60M heartbeats. Its trace records two memo reuses and seven validations.
+Lake reports 916 seconds for this source module on the recorded shared host;
 this remains an expensive fixed-input proof build. These observations do not
 measure compiled replay or establish a general tactic running time.
 
-Its importing proof audit checks 1,192 theorem bodies, 202 definitions and
-1,352 nonempty kernel traces. It excludes the older complete-packet acceptance
+Its importing proof audit checks 1,193 theorem bodies, 202 definitions and
+1,353 nonempty kernel traces. It excludes the older complete-packet acceptance
 and source proofs and the handwritten coefficient identity, checks transitive
 axiom dependencies, and rejects native
 producer and canonical-codec reduction. The fixed

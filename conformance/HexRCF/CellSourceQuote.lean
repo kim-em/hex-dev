@@ -109,53 +109,65 @@ run_meta do
             Hex.RealFormula.Reify.accountProof strict
             return some (← Hex.RCF.checkProof `frozenTable target (mkExpectedPropHint strict target))
           return none
-        return quoted) config source.usage with
+        let result := quoted
+        let kind ← inferType result.proof
+        unless kind.isAppOfArity ``Eq 3 do throwError "complete quotation did not return an equation"
+        let optional := kind.getAppArgs[1]!
+        unless optional.getAppFn.isConstOf ``Except.toOption do
+          throwError "staged quotation omitted the optional reader boundary"
+        let program := optional.getAppArgs.back!
+        unless program.getAppFn.isConstOf ``CellOperations.check do
+          throwError "complete quotation changed its original checker"
+        let readerType ← whnf (← inferType program)
+        let accepted ← mkAppOptM ``Except.ok
+          #[some readerType.getAppArgs[0]!,some readerType.getAppArgs[1]!,some (mkConst ``Bool.true)]
+        let target ← mkEq program accepted
+        let checked ← mkAppM ``RootQuote.read_eq #[program,result.value,result.proof]
+        Hex.RealFormula.Reify.accountProof target
+        Hex.RealFormula.Reify.accountProof checked
+        let proof ← Hex.RCF.checkProof `freshCompleteLiteral target (mkExpectedPropHint checked target)
+        let axioms ← collectAxioms proof.getAppFn.constName!
+        unless axioms.all (fun name => [``propext,``Classical.choice,``Quot.sound].contains name) do
+          throwError "fresh complete literal quote has inadmissible dependencies"
+        addDecl (.thmDecl {
+          name := `Hex.RCF.CellSourceQuote.checked,levelParams := [],type := target,value := proof})
+        let valuation ← withLocalDeclD `i (← mkAppM ``Fin #[mkNatLit 1]) fun i => do
+          let value ← mkAppM ``Tower.Model.value
+            #[mkConst ``Schema.original,mkApp (mkConst ``Schema.values) i]
+          mkLambdaFVars #[i] value
+        let identityType ← mkEq valuation source.valuation
+        let identity ← mkFreshExprMVar identityType
+        let remaining ← Lean.Elab.runTactic' identity.mvarId!
+          (← `(tactic| funext i; fin_cases i; exact Hex.RCF.SourceIdentityPacket.coefficient))
+        unless remaining.isEmpty do throwError "original coefficient identity left goals"
+        let identity ← instantiateMVars identity
+        Hex.RealFormula.Reify.accountProof identityType
+        Hex.RealFormula.Reify.accountProof identity
+        let identity ← Hex.RCF.checkProof `completeSourceIdentity identityType identity
+        let realTarget := source.original
+        let arguments := program.getAppArgs
+        let info ← getFunInfoNArgs program.getAppFn arguments.size
+        let inputs := arguments.zipIdx |>.filterMap fun (argument,index) =>
+          if info.paramInfo[index]!.binderInfo.isExplicit then some argument else none
+        let checker ← mkAppM ``CompleteReplay.check (inputs.extract 1 inputs.size)
+        let law ← mkAppM ``CellOperations.check_eq inputs
+        let accepted ← mkAppM ``Eq.trans #[← mkEqSymm law,mkConst `Hex.RCF.CellSourceQuote.checked]
+        let completed ← CellQuote.finishPacketWith source realTarget checker accepted
+          (mkConst ``Schema.original) identity
+        let sourceProof := completed.proof
+        Hex.RealFormula.Reify.accountProof realTarget
+        Hex.RealFormula.Reify.accountProof sourceProof
+        let sourceProof ← Hex.RCF.checkProof `freshCompleteSource realTarget sourceProof
+        addDecl (.thmDecl {
+          name := `Hex.RCF.CellSourceQuote.source,levelParams := [],type := realTarget,value := sourceProof})
+        let sourceAxioms ← collectAxioms `Hex.RCF.CellSourceQuote.source
+        unless sourceAxioms.all (fun name => [``propext,``Classical.choice,``Quot.sound].contains name) do
+          throwError "complete original source quotation has inadmissible dependencies"
+        logInfo m!"original algebraic source quotation proofNodes={result.usage.proofNodes}; axioms={axioms}"
+        logInfo m!"original algebraic source complete proofNodes={completed.usage.proofNodes}"
+        return {completed with usage := (← get).budget.consumed}
+      ) config source.usage with
       | .ok result => pure result
       | .error error => throwError "fresh complete literal quote refused: {Hex.RealFormula.Reify.Error.toMessageData error}"
-    let kind ← inferType result.proof
-    unless kind.isAppOfArity ``Eq 3 do throwError "complete quotation did not return an equation"
-    let optional := kind.getAppArgs[1]!
-    unless optional.getAppFn.isConstOf ``Except.toOption do
-      throwError "staged quotation omitted the optional reader boundary"
-    let program := optional.getAppArgs.back!
-    unless program.getAppFn.isConstOf ``CellOperations.check do
-      throwError "complete quotation changed its original checker"
-    let readerType ← whnf (← inferType program)
-    let accepted ← mkAppOptM ``Except.ok
-      #[some readerType.getAppArgs[0]!,some readerType.getAppArgs[1]!,some (mkConst ``Bool.true)]
-    let target ← mkEq program accepted
-    let checked ← mkAppM ``RootQuote.read_eq #[program,result.value,result.proof]
-    let proof ← Hex.RCF.checkProof `freshCompleteLiteral target (mkExpectedPropHint checked target)
-    let axioms ← collectAxioms proof.getAppFn.constName!
-    unless axioms.all (fun name => [``propext,``Classical.choice,``Quot.sound].contains name) do
-      throwError "fresh complete literal quote has inadmissible dependencies"
-    addDecl (.thmDecl {
-      name := `Hex.RCF.CellSourceQuote.checked,levelParams := [],type := target,value := proof})
-    let valuation ← withLocalDeclD `i (← mkAppM ``Fin #[mkNatLit 1]) fun i => do
-      let value ← mkAppM ``Tower.Model.value
-        #[mkConst ``Schema.original,mkApp (mkConst ``Schema.values) i]
-      mkLambdaFVars #[i] value
-    let identityType ← mkEq valuation source.valuation
-    let identity ← mkFreshExprMVar identityType
-    let remaining ← Lean.Elab.runTactic' identity.mvarId!
-      (← `(tactic| funext i; fin_cases i; exact Hex.RCF.SourceIdentityPacket.coefficient))
-    unless remaining.isEmpty do throwError "original coefficient identity left goals"
-    let identity ← Hex.RCF.checkProof `completeSourceIdentity identityType (← instantiateMVars identity)
-    let realTarget := source.original
-    let arguments := program.getAppArgs
-    let info ← getFunInfoNArgs program.getAppFn arguments.size
-    let inputs := arguments.zipIdx |>.filterMap fun (argument,index) =>
-      if info.paramInfo[index]!.binderInfo.isExplicit then some argument else none
-    let checker ← mkAppM ``CompleteReplay.check (inputs.extract 1 inputs.size)
-    let law ← mkAppM ``CellOperations.check_eq inputs
-    let accepted ← mkAppM ``Eq.trans #[← mkEqSymm law,mkConst `Hex.RCF.CellSourceQuote.checked]
-    let sourceProof ← CellQuote.finishPacket realTarget checker accepted
-      (mkConst ``Schema.original) identity
-    let sourceProof ← Hex.RCF.checkProof `freshCompleteSource realTarget sourceProof
-    addDecl (.thmDecl {
-      name := `Hex.RCF.CellSourceQuote.source,levelParams := [],type := realTarget,value := sourceProof})
-    let sourceAxioms ← collectAxioms `Hex.RCF.CellSourceQuote.source
-    unless sourceAxioms.all (fun name => [``propext,``Classical.choice,``Quot.sound].contains name) do
-      throwError "complete original source quotation has inadmissible dependencies"
-    logInfo m!"original algebraic source quotation proofNodes={result.usage.proofNodes}; axioms={axioms}"
+    logInfo m!"complete original-source attempt consumed proofNodes={result.usage.proofNodes}"
 end Hex.RCF.CellSourceQuote

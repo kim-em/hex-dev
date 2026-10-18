@@ -242,93 +242,133 @@ def replayWith (program : Expr) (decode : RootQuote.DecoderM := fun _ => pure no
     Hex.RealFormula.Reify.ReifyM RootQuote.Result :=
   RowQuote.withDecoder decode (fun decoder => replayCore program decoder)
 
-/-- Shared original-source authentication for typed cells and independently
-read complete packets. Both entrypoints retain ordered guards and rollback. -/
+/-- Account before retaining or kernel-checking source finishing data. -/
+private def input (name : Name) (expression : Expr) : Hex.RealFormula.Reify.ReifyM Expr := do
+  Hex.RealFormula.Reify.accountProof expression
+  Hex.RCF.checkExpr name expression
+
+private def checked (name : Name) (target candidate : Expr) : Hex.RealFormula.Reify.ReifyM Expr := do
+  Hex.RealFormula.Reify.accountProof target
+  Hex.RealFormula.Reify.accountProof candidate
+  Hex.RCF.checkProof name target candidate
+
+/-- Source finishing in the caller's continued reflection request. The prepared
+source is untrusted: check its exact target, original divisor inventory and
+ordinary-kernel equivalence before composing it with the accepted checker. -/
+private def finishCore (packet : Bool) (source : Reify.Source)
+    (target checker accepted model valuationIdentity : Expr)
+    (guardIdentities : Array Expr) : Hex.RealFormula.Reify.ReifyM Expr := do
+  let target ← input `CellQuote.target target
+  let checker ← input `CellQuote.checker checker
+  let checkerName := if packet then ``CompleteReplay.check else ``CellReplay.check
+  unless checker.getAppFn.isConstOf checkerName do
+    throwError "rcf: expected the canonical cell checker"
+  let arguments := checker.getAppArgs
+  let information ← getFunInfoNArgs checker.getAppFn arguments.size
+  let mut inputs : Array Expr := #[]
+  for i in [:min arguments.size information.paramInfo.size] do
+    if information.paramInfo[i]!.binderInfo.isExplicit then inputs := inputs.push arguments[i]!
+  unless inputs.size == (if packet then 8 else 7) do
+    throwError "rcf: incorrect cell checker arity"
+  let offset := if packet then 1 else 0
+  let values := inputs[offset]!
+  let matrix := inputs[offset+1]!
+  let guards := inputs[offset+2]!
+  let quantifier := inputs[if packet then 5 else 6]!
+  let model ← input `CellQuote.model model
+  let resultType ← whnf (← inferType checker)
+  let trueResult := mkAppN (mkConst ``Except.ok [.zero, .zero])
+    (resultType.getAppArgs.push (mkConst ``Bool.true))
+  let accepted ← checked `CellQuote.accepted (← mkEq checker trueResult) accepted
+  let original ← instantiateMVars source.original
+  unless original == target do throwError "rcf: prepared cell source has a different original target"
+  let guardsOriginal ← Reify.guardSources target
+  let retained ← source.divisors.mapM instantiateMVars
+  unless guardsOriginal == retained do
+    throwError "rcf: prepared cell source has a different original divisor inventory"
+  let sourceType ← mkAppM ``Iff
+    #[← mkAppM ``Hex.RealFormula.Prenex.toProp #[source.formula,source.valuation],original]
+  let equivalence ← checked `CellQuote.equivalence sourceType source.proof
+  unless guardIdentities.size == source.divisors.size do
+    throwError "rcf: cell checker has a different original divisor identity count"
+  let length ← mkAppM ``List.length #[guards]
+  let count ← mkEq length (mkNatLit source.divisors.size)
+  let decision ← mkDecide count
+  let result ← ofExceptKernelException (Kernel.whnf (← getEnv) (← getLCtx) decision)
+  unless result.isConstOf ``Bool.true do
+    throwError "rcf: cell checker has a different original divisor count"
+  let _ ← checked `CellQuote.guardCount count (← mkDecideProof count)
+  let proofInputs := #[model] ++ inputs
+  let domains ← mkAppM (if packet then ``CompleteReplay.check_domains else ``CellReplay.check_domains)
+    ((proofInputs.push (mkConst ``Bool.true)).push accepted)
+  let domains ← checked `CellQuote.domains (← inferType domains) domains
+  for i in [:source.divisors.size] do
+    let bound ← mkDecideProof (← mkLt (mkNatLit i) length)
+    let index ← mkAppM ``Fin.mk #[mkNatLit i, bound]
+    let guard ← mkAppM ``List.get #[guards, index]
+    let interpreted ← mkAppM ``Hex.RealClosure.Tower.Model.value #[model, guard]
+    let identity ← checked `CellQuote.guardIdentity
+      (← mkEq interpreted source.divisors[i]!) guardIdentities[i]!
+    let member ← mkAppM ``List.get_mem #[guards, index]
+    let nonzero ← mkAppM' domains #[guard, member]
+    let realZero := (← inferType nonzero).getAppArgs.back!
+    let comparison ← withLocalDeclD `value (← inferType interpreted) fun value => do
+      let body ← mkAppM ``Ne #[value, realZero]
+      mkAppM ``congrArg #[← mkLambdaFVars #[value] body, identity]
+    let conclusion ← mkAppM ``Eq.mp #[comparison, nonzero]
+    let _ ← checked `CellQuote.divisor
+      (← mkAppM ``Ne #[source.divisors[i]!, realZero]) conclusion
+  let .forallE _ domain _ _ ← whnf (← inferType values)
+    | throwError "rcf: cell coefficients are not a finite valuation"
+  let valuation ← withLocalDeclD `i domain fun i => do
+    let value ← mkAppM ``Hex.RealClosure.Tower.Model.value #[model, mkApp values i]
+    mkLambdaFVars #[i] value
+  let valuationIdentity ← checked `CellQuote.valuationIdentity
+    (← mkEq valuation source.valuation) valuationIdentity
+  let formula ← mkAppM ``Hex.RealFormula.Prenex.quant
+    #[quantifier, ← mkAppM ``Hex.RealFormula.Prenex.matrix #[matrix]]
+  let formulaIdentity ← Quote.formulaEquality formula source.formula
+  let formulaIdentity ← checked `CellQuote.formulaIdentity
+    (← mkEq formula source.formula) formulaIdentity
+  let sentence ← mkAppM (if packet then ``CompleteReplay.check_sound else ``CellReplay.check_sound)
+    (proofInputs.push accepted)
+  let sentence ← checked `CellQuote.sentence
+    (← mkAppM ``Hex.RealFormula.Prenex.toProp #[formula, valuation]) sentence
+  let formulaCongr ← withLocalDeclD `sentence (← inferType formula) fun sentence => do
+    let body ← mkAppM ``Hex.RealFormula.Prenex.toProp #[sentence, valuation]
+    mkAppM ``congrArg #[← mkLambdaFVars #[sentence] body, formulaIdentity]
+  let fixed ← mkAppM ``Eq.mp #[formulaCongr, sentence]
+  let valuationCongr ← withLocalDeclD `valuation (← inferType source.valuation) fun valuation => do
+    let body ← mkAppM ``Hex.RealFormula.Prenex.toProp #[source.formula, valuation]
+    mkAppM ``congrArg #[← mkLambdaFVars #[valuation] body, valuationIdentity]
+  let specialized ← mkAppM ``Eq.mp #[valuationCongr, fixed]
+  let proof ← mkAppM ``Iff.mp #[equivalence, specialized]
+  checked `CellQuote.source source.original proof
+
+/-- Finish an independently quoted complete packet in the same budget as
+source preparation and replay. No source reification or fresh budget starts
+here. Original guards and all checked proof construction are charged. Run this
+inside `RootQuote.runWith` for complete failure rollback and continue with its
+returned usage. The supplied source equivalence, model and identities must
+prove the exact original goal; a false verdict cannot be quoted as success. -/
+def finishPacketWith (source : Reify.Source) (target checker accepted model valuationIdentity : Expr)
+    (guardIdentities : Array Expr := #[]) : Hex.RealFormula.Reify.ReifyM RootQuote.Result := do
+  let proof ← finishCore true source target checker accepted model valuationIdentity guardIdentities
+  return ⟨target,proof,(← get).budget.consumed⟩
+
 private def finishWith (packet : Bool) (target checker accepted model valuationIdentity : Expr)
     (guardIdentities : Array Expr := #[]) : MetaM Expr := do
   let saved ← saveState
-  let (result, _) ← tryFinally' (withNewMCtxDepth <| withOptions (fun options =>
-      debug.skipKernelTC.set (Elab.async.set options false) false) do
-    let target ← Hex.RCF.checkExpr `CellQuote.target target
-    let checker ← Hex.RCF.checkExpr `CellQuote.checker checker
-    let checkerName := if packet then ``CompleteReplay.check else ``CellReplay.check
-    unless checker.getAppFn.isConstOf checkerName do
-      throwError "rcf: expected the canonical cell checker"
-    let arguments := checker.getAppArgs
-    let information ← getFunInfoNArgs checker.getAppFn arguments.size
-    let mut inputs : Array Expr := #[]
-    for i in [:min arguments.size information.paramInfo.size] do
-      if information.paramInfo[i]!.binderInfo.isExplicit then inputs := inputs.push arguments[i]!
-    unless inputs.size == (if packet then 8 else 7) do
-      throwError "rcf: incorrect cell checker arity"
-    let offset := if packet then 1 else 0
-    let values := inputs[offset]!
-    let matrix := inputs[offset+1]!
-    let guards := inputs[offset+2]!
-    let quantifier := inputs[if packet then 5 else 6]!
-    let model ← Hex.RCF.checkExpr `CellQuote.model model
-    let resultType ← whnf (← inferType checker)
-    let trueResult := mkAppN (mkConst ``Except.ok [.zero, .zero])
-      (resultType.getAppArgs.push (mkConst ``Bool.true))
-    let accepted ← Hex.RCF.checkProof `CellQuote.accepted (← mkEq checker trueResult) accepted
+  let (result,_) ← tryFinally' (do
     let source ← match ← Reify.prepare target with
       | .error error => throwError "rcf: {Hex.RealFormula.Reify.Error.toMessageData error}"
       | .ok source => pure source
-    unless guardIdentities.size == source.divisors.size do
-      throwError "rcf: cell checker has a different original divisor identity count"
-    let length ← mkAppM ``List.length #[guards]
-    let count ← mkEq length (mkNatLit source.divisors.size)
-    let decision ← mkDecide count
-    let result ← ofExceptKernelException (Kernel.whnf (← getEnv) (← getLCtx) decision)
-    unless result.isConstOf ``Bool.true do
-      throwError "rcf: cell checker has a different original divisor count"
-    let _ ← Hex.RCF.checkProof `CellQuote.guardCount count (← mkDecideProof count)
-    let proofInputs := #[model] ++ inputs
-    let domains ← mkAppM (if packet then ``CompleteReplay.check_domains else ``CellReplay.check_domains)
-      ((proofInputs.push (mkConst ``Bool.true)).push accepted)
-    let domains ← Hex.RCF.checkProof `CellQuote.domains (← inferType domains) domains
-    for i in [:source.divisors.size] do
-      let bound ← mkDecideProof (← mkLt (mkNatLit i) length)
-      let index ← mkAppM ``Fin.mk #[mkNatLit i, bound]
-      let guard ← mkAppM ``List.get #[guards, index]
-      let interpreted ← mkAppM ``Hex.RealClosure.Tower.Model.value #[model, guard]
-      let identity ← Hex.RCF.checkProof `CellQuote.guardIdentity
-        (← mkEq interpreted source.divisors[i]!) guardIdentities[i]!
-      let member ← mkAppM ``List.get_mem #[guards, index]
-      let nonzero ← mkAppM' domains #[guard, member]
-      let realZero := (← inferType nonzero).getAppArgs.back!
-      let comparison ← withLocalDeclD `value (← inferType interpreted) fun value => do
-        let body ← mkAppM ``Ne #[value, realZero]
-        mkAppM ``congrArg #[← mkLambdaFVars #[value] body, identity]
-      let conclusion ← mkAppM ``Eq.mp #[comparison, nonzero]
-      let _ ← Hex.RCF.checkProof `CellQuote.divisor
-        (← mkAppM ``Ne #[source.divisors[i]!, realZero]) conclusion
-    let .forallE _ domain _ _ ← whnf (← inferType values)
-      | throwError "rcf: cell coefficients are not a finite valuation"
-    let valuation ← withLocalDeclD `i domain fun i => do
-      let value ← mkAppM ``Hex.RealClosure.Tower.Model.value #[model, mkApp values i]
-      mkLambdaFVars #[i] value
-    let valuationIdentity ← Hex.RCF.checkProof `CellQuote.valuationIdentity
-      (← mkEq valuation source.valuation) valuationIdentity
-    let formula ← mkAppM ``Hex.RealFormula.Prenex.quant
-      #[quantifier, ← mkAppM ``Hex.RealFormula.Prenex.matrix #[matrix]]
-    let formulaIdentity ← Quote.formulaEquality formula source.formula
-    let formulaIdentity ← Hex.RCF.checkProof `CellQuote.formulaIdentity
-      (← mkEq formula source.formula) formulaIdentity
-    let sentence ← mkAppM (if packet then ``CompleteReplay.check_sound else ``CellReplay.check_sound)
-      (proofInputs.push accepted)
-    let sentence ← Hex.RCF.checkProof `CellQuote.sentence
-      (← mkAppM ``Hex.RealFormula.Prenex.toProp #[formula, valuation]) sentence
-    let formulaCongr ← withLocalDeclD `sentence (← inferType formula) fun sentence => do
-      let body ← mkAppM ``Hex.RealFormula.Prenex.toProp #[sentence, valuation]
-      mkAppM ``congrArg #[← mkLambdaFVars #[sentence] body, formulaIdentity]
-    let fixed ← mkAppM ``Eq.mp #[formulaCongr, sentence]
-    let valuationCongr ← withLocalDeclD `valuation (← inferType source.valuation) fun valuation => do
-      let body ← mkAppM ``Hex.RealFormula.Prenex.toProp #[source.formula, valuation]
-      mkAppM ``congrArg #[← mkLambdaFVars #[valuation] body, valuationIdentity]
-    let specialized ← mkAppM ``Eq.mp #[valuationCongr, fixed]
-    let proof ← mkAppM ``Iff.mp #[source.proof, specialized]
-    Hex.RCF.checkProof `CellQuote.source source.original proof)
+    let result ← RootQuote.runWith (do
+      let proof ← finishCore packet source target checker accepted model valuationIdentity guardIdentities
+      pure ⟨target,proof,(← get).budget.consumed⟩) {} source.usage
+    match result with
+    | .ok result => pure result.proof
+    | .error error => throwError "rcf: {Hex.RealFormula.Reify.Error.toMessageData error}")
     (fun result => unless result.isSome do saved.restore)
   return result
 /-- Quote a checked typed cell fold at the freshly reified original goal. -/

@@ -1352,6 +1352,7 @@ lean_lib HexConformance where
       `HexRCF.ReplayBoundary, `HexRCF.ReplayBoundaryProofs,
       `HexRCF.ReplayHelpers, `HexRCF.ReplayHelperProofs,
       `HexRCF.CellQuoteStages, `HexRCF.CellQuoteStageProofs,
+      `HexRCF.CellFinishCases, `HexRCF.CellFinishProofs,
       `HexRCF.CellSourceQuote, `HexRCF.CellSourceProofs,
       `HexRCF.RowPacketControls,
       `HexRCF.SourceIdentityLiterals, `HexRCF.SourceIdentityPacket,

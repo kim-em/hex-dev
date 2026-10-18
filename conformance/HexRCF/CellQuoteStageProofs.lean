@@ -67,7 +67,7 @@ run_meta do
           ``Hex.SignDet.Descriptor.ofReplay?] then
       throwError "staged cell quotation reduced producer {producer}: {count}; body={name}"
     if !diagnostics.unfoldCounter.isEmpty then traces := traces+1
-  unless theorems == 1246 && definitions == 101 && traces == 1297 do
+  unless theorems == 1247 && definitions == 101 && traces == 1298 do
     throwError "staged cell quotation inventory changed: {theorems}/{definitions}/{traces}"
   unless (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
     throwError "staged cell quotation audit retained copied declarations"
