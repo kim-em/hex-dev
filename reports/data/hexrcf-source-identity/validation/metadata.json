@@ -1,0 +1,61 @@
+[
+  {
+    "name": "copyright",
+    "command": [
+      "python3",
+      "scripts/check_copyright_headers.py"
+    ],
+    "log": "source-identity-final-metadata-copyright.log",
+    "exit_code": 0
+  },
+  {
+    "name": "lines",
+    "command": [
+      "python3",
+      "scripts/check_file_line_counts.py",
+      "--base",
+      "origin/main"
+    ],
+    "log": "source-identity-final-metadata-lines.log",
+    "exit_code": 0
+  },
+  {
+    "name": "dag",
+    "command": [
+      "python3",
+      "scripts/check_dag.py"
+    ],
+    "log": "source-identity-final-metadata-dag.log",
+    "exit_code": 0
+  },
+  {
+    "name": "admissions",
+    "command": [
+      "python3",
+      "scripts/ci/check_named_admissions.py"
+    ],
+    "log": "source-identity-final-metadata-admissions.log",
+    "exit_code": 0
+  },
+  {
+    "name": "diff",
+    "command": [
+      "git",
+      "diff",
+      "HEAD",
+      "--check"
+    ],
+    "log": "source-identity-final-metadata-diff.log",
+    "exit_code": 0
+  },
+  {
+    "name": "selected-admissions",
+    "log": "source-identity-final-metadata-selected-admissions.log",
+    "exit_code": 0
+  },
+  {
+    "name": "relative",
+    "log": "source-identity-final-metadata-relative.log",
+    "exit_code": 0
+  }
+]
