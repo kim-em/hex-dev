@@ -82,7 +82,7 @@ run_meta do
         let .ok baseline ← RootQuote.runWith action
           | throwError "dependent-boundary baseline declined"
         restored before sentinel
-        unless baseline.usage.proofNodes == 86763 do
+        unless baseline.usage.proofNodes == 110245 do
           throwError "dependent-boundary accounting changed: {baseline.usage.proofNodes}"
         let basic : Hex.RealFormula.Reify.Config := {}
         let exactConfig := {basic with ring := {basic.ring with budget :=

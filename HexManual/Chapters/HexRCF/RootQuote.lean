@@ -110,6 +110,11 @@ computations. A helper's type can itself mention another checked replay helper;
 quotation retains those dependencies in order. Exposed function definitions
 remain available for the reductions used by the reader. Opaque proof helpers
 remain parameters. Function-valued conditionals retain their applied arguments.
+Dependencies appearing in retained function bodies are collected as well.
+Closed data constructors with proof fields depending on replay retain their
+ordinary projection reductions. The same data is retained in helper types and
+bodies, so changing the computational context does not change those proof
+indices.
 
 The helper controls cover stored arrays with table-dependent element types and
 functions with fixed replay-dependent proof types. Matching and changed contexts,
@@ -233,8 +238,8 @@ prevent abstraction; type and kernel failures remain terminal. A late rejection 
 the completed callback's auxiliaries. The fresh importing audit rechecks all
 65 reachable callback/module theorem bodies and 14 definitions, forbidding
 both native producers and canonical-codec unfolding. Exact and one-below nested
-budgets also cover the added transport work: 16,316 proof nodes, with exhaustion
-at the final 1,006-node charge after 15,310 nodes were consumed. The predecessor
+budgets also cover the added transport work: 19,448 proof nodes, with exhaustion
+at the final 1,006-node charge after 18,442 nodes were consumed. The predecessor
 callback is required to run exactly once and retain 17 source nodes.
 
 The original root and rational cases use `maxHeartbeats := 12000000` and
@@ -408,9 +413,9 @@ meta def quoteSelectedReader
 
 The two-level regression checks one visit to its selected context followed by
 one visit to its selected predecessor. Its lookup adds 19 source nodes per visit;
-the two charges retain 38 source nodes. It uses 25,469 proof nodes; one node less
+the two charges retain 38 source nodes. It uses 30,316 proof nodes; one node less
 exhausts
-at the final 925-node charge after 24,544 consumed nodes. Missing facts decline
+at the final 925-node charge after 29,391 consumed nodes. Missing facts decline
 without proposing another decode to the base callback after refusal.
 Wrong-context facts and exhaustion remain terminal and restore the enclosing state.
 Generic kernel-error restoration is covered by the root-quotation regressions.
@@ -428,8 +433,8 @@ A fresh importing audit checks the two-level fixture and this public consumer,
 including accepted annotated decodes and a charged decline followed by acceptance:
 87 actual theorem bodies and five definitions, complete standard-three axiom
 closure, and no native producer or canonical-codec reduction. The direct constant
-and annotated cases use 23,526 and 23,537 proof nodes. A successful inner decline
-and retry uses 26,175 proof nodes and retains all three 19-node source charges.
+and annotated cases use 28,294 and 28,307 proof nodes. A successful inner decline
+and retry uses 31,022 proof nodes and retains all three 19-node source charges.
 This helper consumes explicit facts; it does not authenticate original source expressions, discover
 predecessor histories, produce missing sign evidence or install the general tactic.
 
@@ -471,9 +476,9 @@ example :
   decoded_value
 ```
 
-Quoting the parent and packet in one request consumes 207,558 proof nodes.
+Quoting the parent and packet in one request consumes 268,798 proof nodes.
 With the frozen parent and its equality already available, the packet consumes
-133,703; a limit one node lower exhausts at the final 23-node charge. Decoding the
+174,189; a limit one node lower exhausts at the final 23-node charge. Decoding the
 coefficient from that fact consumes 966 more nodes in its separate request.
 The controls check caller metavariable restoration after successful decoding
 and final exhaustion, reject an empty graph, and reject a forged context equality

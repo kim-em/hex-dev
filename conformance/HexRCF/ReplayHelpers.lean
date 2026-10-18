@@ -74,8 +74,8 @@ run_meta do
         levelParams := []
         type := target
         value := proof})
-      let expected := if mode == `array then (if context == 7 then 95378 else 8388)
-        else (if context == 7 then 81812 else 7272)
+      let expected := if mode == `array then (if context == 7 then 121420 else 10301)
+        else (if context == 7 then 103986 else 9136)
       unless quoted.usage.proofNodes == expected do
         throwError "typed replay helper accounting changed: {mode}/{context}/{quoted.usage.proofNodes}"
       logInfo m!"typed replay helper {mode}/{context}: proofNodes={quoted.usage.proofNodes}"

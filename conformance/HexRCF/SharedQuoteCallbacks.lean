@@ -96,7 +96,7 @@ run_meta do
     let .ok quoted ← RootQuote.runWith
         (ScalarQuote.quotePolyWith original (mkConst ``facts) decode)
       | throwError "nested predecessor polynomial quotation failed"
-    unless quoted.usage.proofNodes == 16316 do
+    unless quoted.usage.proofNodes == 19448 do
       throwError "nested transport proof-node accounting changed: {quoted.usage.proofNodes}"
     let count ← calls.get
     unless count == 1 && (← completed.get) == 1 && quoted.usage.sourceNodes == 17 do
@@ -118,7 +118,7 @@ run_meta do
           (config (quoted.usage.proofNodes-1))
         | throwError "one-below nested projection budget did not exhaust"
       unless exhausted.dimension == .proofNodes do throwError "wrong nested budget dimension"
-      unless exhausted.consumed == 15310 && exhausted.requested == 1006 do
+      unless exhausted.consumed == 18442 && exhausted.requested == 1006 do
         throwError "nested final transport charge changed: consumed={exhausted.consumed}, requested={exhausted.requested}"
       logInfo m!"nested exhausted: consumed={exhausted.consumed}, requested={exhausted.requested}"
     let codec := match subject.getAppFn with

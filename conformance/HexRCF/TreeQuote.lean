@@ -43,7 +43,7 @@ run_meta do
     RootQuote.quoteWith (mkConst ``leafTrue)
   let .ok result ← RootQuote.runWith action
     | throwError "leaf quotation baseline refused"
-  unless result.usage.proofNodes == 79712 do
+  unless result.usage.proofNodes == 101056 do
     throwError "leaf quotation budget changed: {result.usage.proofNodes}"
   restored before sentinel
   let basic : Hex.RealFormula.Reify.Config := {}

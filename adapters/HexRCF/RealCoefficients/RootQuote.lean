@@ -205,7 +205,8 @@ private def reflexiveProof? (expression : Expr) : ReifyM (Option Expr) := do
   return some (← mkAppM ``Subsingleton.elim #[expression,accepted])
 /-- Keep exposed function definitions in the telescope; opaque helpers remain
 parameters. This retains reductions used by the surrounding reader. -/
-private partial def withDependents (constants : Array (Expr × Expr)) (index : Nat)
+private partial def withDependents (retain : Expr → ReifyM Expr)
+    (constants : Array (Expr × Expr)) (index : Nat)
     (replace : Expr → Expr) (parameters arguments : Array Expr)
     (consume : (Expr → Expr) → Array Expr → Array Expr → ReifyM (Expr × Expr × Array Expr)) :
     ReifyM (Expr × Expr × Array Expr) := do
@@ -214,21 +215,24 @@ private partial def withDependents (constants : Array (Expr × Expr)) (index : N
   if index == constants.size then return ← consume replace parameters arguments
   let (original,type) := constants[index]!
   let body? ← if (← whnf type).isForall then unfoldDefinition? original else pure none
+  let body? ← body?.mapM retain
   let continueWith := fun (parameter : Expr) (arguments : Array Expr) => do
     let replaceNext := fun (expression : Expr) =>
       (replace expression).replace fun part => if part == original then some parameter else none
-    withDependents constants (index+1) replaceNext (parameters.push parameter) arguments consume
+    withDependents retain constants (index+1) replaceNext (parameters.push parameter) arguments consume
   if let some body := body? then
     accountProof body
-    withLetDecl `dependent (replace type) (replace body) fun parameter =>
+    withLetDecl original.constName! (replace type) (replace body) fun parameter =>
       continueWith parameter arguments
   else
-    withLocalDeclD `dependent (replace type) fun parameter =>
+    withLocalDeclD original.constName! (replace type) fun parameter =>
       continueWith parameter (arguments.push original)
 
 /-- Collect type dependencies before their users, including constants absent
-from the reader term itself. Only the protected function is supplied separately. -/
+from the reader term itself. Exposed function bodies retained as lets need
+their proof helpers collected too. Only accessible definitions are inspected. -/
 private partial def collectTypes (boundary : Expr)
+    (retain : Expr → ReifyM Expr)
     (visited : IO.Ref (Array (Expr × Bool)))
     (ordered : IO.Ref (Array (Expr × Expr))) (active : Array Expr) (expression : Expr) :
     ReifyM Bool := Core.withIncRecDepth do
@@ -238,7 +242,7 @@ private partial def collectTypes (boundary : Expr)
   if let some cached := (← visited.get).find? (fun item => item.1 == expression) then
     return cached.2
   if active.contains expression then throwError "cyclic replay helper type dependency"
-  let kind ← inferType expression
+  let kind ← retain (← inferType expression)
   let constants ← IO.mkRef (#[] : Array Expr)
   kind.forEach fun part => do
     charge .proofNodes 1
@@ -246,11 +250,59 @@ private partial def collectTypes (boundary : Expr)
       constants.modify fun found => if found.contains part then found else found.push part
   let mut dependent := (kind.find? fun part => part == boundary).isSome
   for constant in ← constants.get do
-    let needed ← collectTypes boundary visited ordered (active.push expression) constant
+    let needed ← collectTypes boundary retain visited ordered (active.push expression) constant
     dependent := dependent || needed
+  if dependent && (← whnf kind).isForall then
+    if let some body ← unfoldDefinition? expression then
+      let body ← retain body
+      let helpers ← IO.mkRef (#[] : Array Expr)
+      body.forEach fun part => do
+        charge .proofNodes 1
+        if part.isConst && part != expression && part != boundary then
+          helpers.modify fun found => if found.contains part then found else found.push part
+      for helper in ← helpers.get do
+        let _ ← collectTypes boundary retain visited ordered (active.push expression) helper
   visited.modify (·.push (expression,dependent))
   if dependent then ordered.modify (·.push (expression,kind))
   return dependent
+
+/-- A closed structure with replay-dependent proof fields can retain its
+original constructor reductions. Abstracting its constructor would lose those
+reductions, even though the structure's own type has no replay dependency. -/
+private structure DataCache where
+  values : Array (Expr × Expr) := #[]
+  constructors : Std.HashMap Expr Bool := {}
+
+private def retainData (boundary : Expr) (retained : IO.Ref DataCache)
+    (expression : Expr) : ReifyM Expr := do
+  Meta.transform expression (pre := fun part => do
+    charge .proofNodes 1
+    if part.hasLooseBVars || part.hasFVar || part.hasMVar then return .continue
+    let some name := part.getAppFn.constName? | return .continue
+    let .ctorInfo info ← getConstInfo name | return .continue
+    unless part.getAppNumArgs == info.numParams + info.numFields do return .continue
+    -- The protected boundary is fixed throughout this local cache's lifetime.
+    charge .proofNodes 1
+    let dependent ← match (← retained.get).constructors[part.getAppFn]? with
+      | some dependent => pure dependent
+      | none => do
+        let constructorType ← inferType part.getAppFn
+        accountProof constructorType
+        let dependent := (constructorType.find? (· == boundary)).isSome
+        retained.modify fun cache => {cache with
+          constructors := cache.constructors.insert part.getAppFn dependent}
+        pure dependent
+    unless dependent do return .continue
+    let kind ← inferType part
+    accountProof kind
+    if (kind.find? (· == boundary)).isSome then return .continue
+    if let some previous := (← retained.get).values.find? (·.1 == part) then
+      return .done previous.2
+    accountProof part
+    let name := mkPrivateName (← getEnv) (← mkFreshUserName `ReplayData)
+    let value ← mkAuxDefinition name kind part (compile := false)
+    retained.modify fun cache => {cache with values := cache.values.push (part,value)}
+    return .done value)
 
 /-- Keep a replay function abstract throughout an enclosing Boolean conversion,
 even when its demanded boundary is a fold. Retain codec-constructor
@@ -268,6 +320,12 @@ private def contextStep? (current subject rhs motive : Expr) (chosen : Option Ex
   let some boundary := boundary? | return none
   unless (current.find? fun part => part == boundary).isSome do return none
   let boundaryType ← inferType boundary
+  let data ← IO.mkRef ({} : DataCache)
+  let retain := retainData boundary data
+  let retained ← (#[current,subject,motive]).mapM retain
+  let current := retained[0]!
+  let subject := retained[1]!
+  let motive := retained[2]!
   let gathered ← IO.mkRef (#[] : Array Expr)
   for expression in #[current,subject,motive] do
     expression.forEach fun part => do
@@ -277,12 +335,12 @@ private def contextStep? (current subject rhs motive : Expr) (chosen : Option Ex
   let visited ← IO.mkRef (#[] : Array (Expr × Bool))
   let ordered ← IO.mkRef (#[] : Array (Expr × Expr))
   for expression in ← gathered.get do
-    let _ ← collectTypes boundary visited ordered #[] expression
+    let _ ← collectTypes boundary retain visited ordered #[] expression
   let dependents ← ordered.get
   let (kind,value,arguments) ← withLocalDeclD `replay boundaryType fun placeholder => do
     let replace := fun (expression : Expr) =>
       expression.replace fun part => if part == boundary then some placeholder else none
-    withDependents dependents 0 replace #[] #[] fun replace parameters arguments => do
+    withDependents retain dependents 0 replace #[] #[] fun replace parameters arguments => do
       withLocalDeclD `next (replace (← inferType rhs)) fun next => do
         withLocalDeclD `checked (← mkEq (replace subject) next) fun checked => do
           let context := replace motive

@@ -15,6 +15,7 @@ import HexRCF.RealCoefficients.CellOperations
 import HexRCF.RealCoefficients.RealModel
 import HexRCF.RealCoefficients.SourceIdentity
 import HexRCF.RealCoefficients.CellQuote
+import HexRCF.CellQuoteStages
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -569,6 +570,65 @@ Its fresh consuming module derives ∃ x, x² = √2 and audits the actual proof
 bodies with only the standard three axioms, excluding the older fixture
 acceptance and source theorems. This uses a fixed retained field and finite
 coefficient codec; it does not reconstruct arbitrary frozen histories.
+
+{name Hex.RCF.RealCoefficients.CellQuote.replayWith}`CellQuote.replayWith`
+quotes a supplied `CellOperations.check` expression in three stages. It first
+checks the complete root table, then each dependent section and sector record,
+then the strict Boolean and quantifier fold. Checked data definitions retain
+the exact root and cell indices between stages. Pointwise reader equations
+compose through `CellRead.collectWith_eq` and `CellOperations.readCells_of_parts`;
+quotation does not normalize the complete finite collector as one expression.
+{name Hex.RCF.RealCoefficients.CellOperations.check_of_parts}`CellOperations.check_of_parts`
+composes their equations at the original packet. All three stages and their
+decoder callbacks consume one reflection budget:
+
+```lean
+open Lean Hex.RealFormula
+open Hex.Reflect
+open Hex.RCF.RealCoefficients
+meta def quoteCellPacket
+    (program : Expr)
+    (decode : RootQuote.DecoderM)
+    (config : Reify.Config)
+    (used : BudgetUsage) :=
+  RootQuote.runWith
+    (CellQuote.replayWith
+      program decode)
+    config used
+```
+
+`set_option trace.Hex.RCF.CellQuote true` reports reader and finite-family
+boundaries with cumulative proof-node usage. Lean heartbeats remain a separate
+elaboration limit.
+
+The returned equation retains both Boolean verdicts. `CellQuote.finishPacket`
+performs source authentication separately and requires an accepted true result.
+The constant example uses independently read literal root and cell packets:
+
+```lean
+example : ∀ _x : ℝ, (0 : ℝ) = 0 :=
+  Hex.RCF.CellQuoteStages.source
+```
+
+Its replay quotation uses 502,481 nodes for true and 502,483 for false. These
+counts cover the three replay stages, separately from source reification and
+interpretation. Exact and one-node-below limits, wrong-goal proposals,
+malformed cells, original zero-divisor preflight, terminal callback failures
+and full caller-state restoration are checked.
+
+A separate rational quadratic packet checks two root sections and three
+sectors in 14,294,138 proof nodes. The conformance build, including the constant
+controls, took 12m04s with a 1.9 GiB memory peak on the recorded host. This is
+build-only quotation evidence; it does not measure compiled replay or establish
+practical running times for general algebraic coefficients. The test supplies
+16M proof nodes and a separate 24M heartbeat allowance.
+
+A fresh importing audit checks 1,409 theorem bodies and 78 definitions, with
+1,439 nonempty kernel traces, the unchanged producer guard and only the
+standard three axioms. It excludes older fixture acceptance proofs. The
+constant example establishes source quotation; the quadratic packet adds
+replay coverage with multiple roots. General coefficient and history assembly
+remain separate obligations.
 
 For a closed retained base/root context, `RealModel.build` constructs its
 ordinary-real interpretation from a caller-supplied real base model and each

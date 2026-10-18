@@ -112,7 +112,7 @@ meta def decoder : RootQuote.DecoderM := fun expression => do
 meta def quoteConfig : Hex.RealFormula.Reify.Config :=
   let basic : Hex.RealFormula.Reify.Config := {}
   {basic with ring := {basic.ring with budget :=
-    {basic.ring.budget with proofNodes := 2000000}}}
+    {basic.ring.budget with proofNodes := 3000000}}}
 
 run_meta do
   withExporting (isExporting := false) do

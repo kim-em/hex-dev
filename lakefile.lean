@@ -1350,6 +1350,7 @@ lean_lib HexConformance where
       `HexRCF.RowQuoteData, `HexRCF.RowQuoteCases, `HexRCF.RowQuoteDepth, `HexRCF.RowQuoteProofs,
       `HexRCF.ReplayBoundary, `HexRCF.ReplayBoundaryProofs,
       `HexRCF.ReplayHelpers, `HexRCF.ReplayHelperProofs,
+      `HexRCF.CellQuoteStages, `HexRCF.CellQuoteStageProofs,
       `HexRCF.TreeQuoteData, `HexRCF.TreeQuote, `HexRCF.TreeQuotePublic, `HexRCF.TreeQuoteProofs,
       `HexRCF.DependentScalarQuote, `HexRCF.DependentScalarProofs,
       `HexRCF.PublicSignPacket, `HexRCF.PublicSignPacketValues, `HexRCF.PublicSignPacketControls, `HexRCF.PublicSignPacketProofs,

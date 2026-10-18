@@ -65,7 +65,7 @@ run_meta do
   let reader ← mkAppM ``ScalarPacket.read
     #[mkConst ``Data.rational,codec,mkConst ``Data.native,
       mkConst ``Scalars.p0,mkConst ``Scalars.s0,mkConst ``Scalars.g0]
-  unless quoted.usage.proofNodes == 207558 do
+  unless quoted.usage.proofNodes == 268798 do
     throwError "sign packet accounting changed: {quoted.usage.proofNodes}"
   logInfo m!"sign packet quotation proofNodes={quoted.usage.proofNodes}"
   let declaration := Declaration.defnDecl {
@@ -116,7 +116,7 @@ run_meta do
   unless (← touched.get) && !(← sentinel.mvarId!.isAssigned) &&
       (← getMCtx).decls.toList.length == callerCount do
     throwError "successful packet quotation did not restore the mutated caller"
-  unless result.usage.proofNodes == 133703 do
+  unless result.usage.proofNodes == 174189 do
     throwError "standalone sign packet accounting changed: {result.usage.proofNodes}"
   let statement ← mkEq reader (← mkAppM ``Option.some #[mkConst ``fact])
   let proof ← Hex.RCF.checkProof `standalonePacket statement result.proof
