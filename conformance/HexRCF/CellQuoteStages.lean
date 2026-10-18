@@ -210,6 +210,7 @@ def cells : Codec.Json := .array (.cons CellReplayTests.Literals.sections
   (.cons CellReplayTests.Literals.sectors .nil))
 set_option maxHeartbeats 24000000 in
 set_option trace.Hex.RCF.CellQuote true in
+set_option trace.Hex.RCF.RowQuote true in
 run_meta do
   withoutExporting do
     let basic : Hex.RealFormula.Reify.Config := {}

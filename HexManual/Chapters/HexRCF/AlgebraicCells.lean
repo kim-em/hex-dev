@@ -16,6 +16,7 @@ import HexRCF.RealCoefficients.RealModel
 import HexRCF.RealCoefficients.SourceIdentity
 import HexRCF.RealCoefficients.CellQuote
 import HexRCF.CellQuoteStages
+import HexRCF.CellSourceQuote
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -601,6 +602,17 @@ meta def quoteCellPacket
 boundaries with cumulative proof-node usage. Lean heartbeats remain a separate
 elaboration limit.
 
+Within this request, row quotation parses each literal sign packet and checks
+its exact ordered queries. It validates a graph once for each distinct set of
+arithmetic operations, sign function, context, polynomial, endpoints and graph
+data. The owner's `SelectedSigns.ofMemo?` extracts each root's row from that
+checked graph; `Dag.selectedSigns_memo` identifies it with the original reader.
+Every reused equation is kernel checked against the new reader. The cache is
+local to one quotation attempt, and every visit consumes the shared budget.
+`set_option trace.Hex.RCF.RowQuote true` reports validations and reuse. Supplied
+arithmetic operations remain attached to the descriptor, including operations
+that are proved equal to canonical arithmetic rather than definitionally equal.
+
 The returned equation retains both Boolean verdicts. `CellQuote.finishPacket`
 performs source authentication separately and requires an accepted true result.
 The constant example uses independently read literal root and cell packets:
@@ -610,25 +622,53 @@ example : ∀ _x : ℝ, (0 : ℝ) = 0 :=
   Hex.RCF.CellQuoteStages.source
 ```
 
-Its replay quotation uses 502,481 nodes for true and 502,483 for false. These
+Its replay quotation uses 441,039 nodes for true and 441,041 for false. These
 counts cover the three replay stages, separately from source reification and
 interpretation. Exact and one-node-below limits, wrong-goal proposals,
 malformed cells, original zero-divisor preflight, terminal callback failures
 and full caller-state restoration are checked.
 
 A separate rational quadratic packet checks two root sections and three
-sectors in 14,294,138 proof nodes. The conformance build, including the constant
-controls, took 12m04s with a 1.9 GiB memory peak on the recorded host. This is
-build-only quotation evidence; it does not measure compiled replay or establish
-practical running times for general algebraic coefficients. The test supplies
-16M proof nodes and a separate 24M heartbeat allowance.
+sectors in 5,911,125 proof nodes. Its trace records two graph-memo reuses and
+seven independent validations. These are charged quotation counts, rather
+than a timing comparison or a measurement of physical sharing. The test supplies
+16M proof nodes and a separate 24M heartbeat allowance. Compiled replay and
+general algebraic quotation costs need separate evidence.
 
-A fresh importing audit checks 1,409 theorem bodies and 78 definitions, with
-1,439 nonempty kernel traces, the unchanged producer guard and only the
+A fresh importing audit checks 1,246 theorem bodies and 101 definitions, with
+1,297 nonempty kernel traces, the unchanged producer guard and only the
 standard three axioms. It excludes older fixture acceptance proofs. The
 constant example establishes source quotation; the quadratic packet adds
 replay coverage with multiple roots. General coefficient and history assembly
 remain separate obligations.
+
+The algebraic source regression independently reads the complete frozen packet
+over the retained positive square root of 2. It reifies the following original
+sentence, reconstructs the coefficient polynomial, authenticates its fixed
+coefficient and composes the checked cell verdict with the original source:
+
+```lean
+example : ∃ x : ℝ,
+    x ^ 2 - Real.sqrt 2 ≥ 0 ∧
+    x ^ 2 - Real.sqrt 2 ≤ 0 ∧
+    (0 : ℝ) = 0 :=
+  Hex.RCF.CellSourceQuote.source
+```
+
+The shared reification and quotation budget records 8,644,422 proof nodes
+before the separate source-finishing call. The test supplies 24M proof nodes
+and 60M heartbeats. Its trace records two memo reuses and seven validations.
+Lake reports 894 seconds for this source module on the recorded shared host;
+this remains an expensive fixed-input proof build. These observations do not
+measure compiled replay or establish a general tactic running time.
+
+Its importing proof audit checks 1,056 theorem bodies, 72 definitions and
+1,094 nonempty kernel traces. It excludes the older complete-packet acceptance
+and source proofs, checks transitive axiom dependencies, and rejects native
+producer and canonical-codec reduction. The fixed
+selected parent and checked coefficient seed facts are supplied inputs. This
+example does not construct arbitrary predecessor histories or install a
+general source-to-certificate tactic backend.
 
 For a closed retained base/root context, `RealModel.build` constructs its
 ordinary-real interpretation from a caller-supplied real base model and each

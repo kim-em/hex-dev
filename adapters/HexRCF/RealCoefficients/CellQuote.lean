@@ -9,6 +9,7 @@ public import HexRCF.RealCoefficients.CompleteReplay
 public import HexRCF.RealCoefficients.CellOperations
 public meta import HexRCF.RealCoefficients.Quote
 public meta import HexRCF.RealCoefficients.RootQuote
+public meta import HexRCF.RealCoefficients.RowPacketQuote
 public meta section
 namespace Hex.RCF.RealCoefficients.CellQuote
 open Lean Meta
@@ -173,7 +174,7 @@ table, its dependent cells, and the strict fold. Each stage consumes the same
 reflection budget. Their checked equations compose at the original checker;
 false remains a diagnostic result and a rejected stage is terminal. The caller
 provides the transaction, for example through `RootQuote.runWith`. -/
-def replayWith (program : Expr) (decode : RootQuote.DecoderM := fun _ => pure none) :
+private def replayCore (program : Expr) (decode : RootQuote.DecoderM := fun _ => pure none) :
     Hex.RealFormula.Reify.ReifyM RootQuote.Result := do
   let program ← instantiateMVars program
   Hex.RealFormula.Reify.accountProof program
@@ -234,6 +235,12 @@ def replayWith (program : Expr) (decode : RootQuote.DecoderM := fun _ => pure no
   Hex.RealFormula.Reify.accountProof candidate
   let proof ← Hex.RCF.checkProof `CellQuote.replay statement candidate
   return ⟨verdict.value,proof,(← get).budget.consumed⟩
+
+/-- Quote the exact complete checker with one attempt-local cache of checked
+row graphs. All child work consumes the caller's reflection budget. -/
+def replayWith (program : Expr) (decode : RootQuote.DecoderM := fun _ => pure none) :
+    Hex.RealFormula.Reify.ReifyM RootQuote.Result :=
+  RowQuote.withDecoder decode (fun decoder => replayCore program decoder)
 
 /-- Shared original-source authentication for typed cells and independently
 read complete packets. Both entrypoints retain ordered guards and rollback. -/

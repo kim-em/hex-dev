@@ -20,7 +20,8 @@ run_meta do
   unless axioms.all (fun name => [``propext,``Classical.choice,``Quot.sound].contains name) do
     throwError "staged cell quotation has inadmissible dependencies"
   let dependencies ← Hex.RCF.ProofEvidence.projectDependencies roots
-  for required in #[``CellOperations.check_of_parts,``CellOperations.readCells_of_parts,
+  for required in #[``RowQuote.read_eq,``Hex.SignDet.Dag.selectedSigns_memo,
+      ``CellOperations.check_of_parts,``CellOperations.readCells_of_parts,
       ``CellRead.collectWith_eq,``CellOperations.check_eq,
       ``CompleteReplay.check_sound,``RootQuote.read_eq,``RootQuote.read_some,
       ``Hex.SignDet.Replay.check.eq_1,``Hex.SignDet.Dag.replay_eq] do
@@ -37,7 +38,7 @@ run_meta do
     if dependencies.contains forbidden then throwError "staged quotation reused fixture proof {forbidden}"
   let names := (← (← getEnv).getLocalConstantInfos).map (·.name)
   let modules := (← getEnv).header.moduleNames
-  let allowed := #[`HexRCF.CellQuoteStages,`HexRCF.RealCoefficients.RootQuote,
+  let allowed := #[`HexRCF.RealCoefficients.RowPacketQuote,`HexRCF.CellQuoteStages,`HexRCF.RealCoefficients.RootQuote,
     `HexRCF.RealCoefficients.CellOperations,`HexRCF.RealCoefficients.CellQuote,
     `HexRCF.RealCoefficients.CellRead,`HexRCF.RealCoefficients.RowQuote]
   let mut theorems : Nat := 0
@@ -66,7 +67,7 @@ run_meta do
           ``Hex.SignDet.Descriptor.ofReplay?] then
       throwError "staged cell quotation reduced producer {producer}: {count}; body={name}"
     if !diagnostics.unfoldCounter.isEmpty then traces := traces+1
-  unless theorems == 1409 && definitions == 78 && traces == 1439 do
+  unless theorems == 1246 && definitions == 101 && traces == 1297 do
     throwError "staged cell quotation inventory changed: {theorems}/{definitions}/{traces}"
   unless (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
     throwError "staged cell quotation audit retained copied declarations"
