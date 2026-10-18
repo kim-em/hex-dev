@@ -203,18 +203,54 @@ private def reflexiveProof? (expression : Expr) : ReifyM (Option Expr) := do
   unless ← withTransparency .all <| withNewMCtxDepth (isDefEq args[1]! args[2]!) do return none
   let accepted := mkApp2 (mkConst ``Decidable.isTrue) proposition (← mkEqRefl args[1]!)
   return some (← mkAppM ``Subsingleton.elim #[expression,accepted])
-/-- Abstract closed proof helpers together with the protected codec they use. -/
+/-- Keep exposed function definitions in the telescope; opaque helpers remain
+parameters. This retains reductions used by the surrounding reader. -/
 private partial def withDependents (constants : Array (Expr × Expr)) (index : Nat)
-    (replace : Expr → Expr) (parameters : Array Expr)
-    (consume : (Expr → Expr) → Array Expr → ReifyM (Expr × Expr)) : ReifyM (Expr × Expr) := do
+    (replace : Expr → Expr) (parameters arguments : Array Expr)
+    (consume : (Expr → Expr) → Array Expr → Array Expr → ReifyM (Expr × Expr × Array Expr)) :
+    ReifyM (Expr × Expr × Array Expr) := do
   charge .proofNodes 1
   Core.checkSystem "dependent context telescope"
-  if index == constants.size then return ← consume replace parameters
+  if index == constants.size then return ← consume replace parameters arguments
   let (original,type) := constants[index]!
-  withLocalDeclD `dependent (replace type) fun parameter => do
+  let body? ← if (← whnf type).isForall then unfoldDefinition? original else pure none
+  let continueWith := fun (parameter : Expr) (arguments : Array Expr) => do
     let replaceNext := fun (expression : Expr) =>
       (replace expression).replace fun part => if part == original then some parameter else none
-    withDependents constants (index+1) replaceNext (parameters.push parameter) consume
+    withDependents constants (index+1) replaceNext (parameters.push parameter) arguments consume
+  if let some body := body? then
+    accountProof body
+    withLetDecl `dependent (replace type) (replace body) fun parameter =>
+      continueWith parameter arguments
+  else
+    withLocalDeclD `dependent (replace type) fun parameter =>
+      continueWith parameter (arguments.push original)
+
+/-- Collect type dependencies before their users, including constants absent
+from the reader term itself. Only the protected function is supplied separately. -/
+private partial def collectTypes (boundary : Expr)
+    (visited : IO.Ref (Array (Expr × Bool)))
+    (ordered : IO.Ref (Array (Expr × Expr))) (active : Array Expr) (expression : Expr) :
+    ReifyM Bool := Core.withIncRecDepth do
+  charge .proofNodes 1
+  Core.checkSystem "replay helper type dependencies"
+  if expression == boundary then return true
+  if let some cached := (← visited.get).find? (fun item => item.1 == expression) then
+    return cached.2
+  if active.contains expression then throwError "cyclic replay helper type dependency"
+  let kind ← inferType expression
+  let constants ← IO.mkRef (#[] : Array Expr)
+  kind.forEach fun part => do
+    charge .proofNodes 1
+    if part.isConst && part != expression then
+      constants.modify fun found => if found.contains part then found else found.push part
+  let mut dependent := (kind.find? fun part => part == boundary).isSome
+  for constant in ← constants.get do
+    let needed ← collectTypes boundary visited ordered (active.push expression) constant
+    dependent := dependent || needed
+  visited.modify (·.push (expression,dependent))
+  if dependent then ordered.modify (·.push (expression,kind))
+  return dependent
 
 /-- Keep a replay function abstract throughout an enclosing Boolean conversion,
 even when its demanded boundary is a fold. Retain codec-constructor
@@ -238,41 +274,45 @@ private def contextStep? (current subject rhs motive : Expr) (chosen : Option Ex
       charge .proofNodes 1
       if part.isConst then
         gathered.modify fun found => if found.contains part then found else found.push part
-  let entries ← (← gathered.get).mapM fun expression => do
-    pure (expression,← inferType expression)
-  let mut dependents : Array (Expr × Expr) := #[]
-  let mut changed := true
-  while changed do
-    changed := false
-    for entry in entries do
-      charge .proofNodes 1
-      unless dependents.any (fun found => found.1 == entry.1) do
-        if (entry.2.find? fun part => part == boundary ||
-            dependents.any (fun found => part == found.1)).isSome then
-          dependents := dependents.push entry
-          changed := true
-  let (kind,value) ← withLocalDeclD `replay boundaryType fun placeholder => do
+  let visited ← IO.mkRef (#[] : Array (Expr × Bool))
+  let ordered ← IO.mkRef (#[] : Array (Expr × Expr))
+  for expression in ← gathered.get do
+    let _ ← collectTypes boundary visited ordered #[] expression
+  let dependents ← ordered.get
+  let (kind,value,arguments) ← withLocalDeclD `replay boundaryType fun placeholder => do
     let replace := fun (expression : Expr) =>
       expression.replace fun part => if part == boundary then some placeholder else none
-    withDependents dependents 0 replace #[] fun replace parameters => do
+    withDependents dependents 0 replace #[] #[] fun replace parameters arguments => do
       withLocalDeclD `next (replace (← inferType rhs)) fun next => do
         withLocalDeclD `checked (← mkEq (replace subject) next) fun checked => do
           let context := replace motive
           let target ← mkEq (replace current) (context.bindingBody!.instantiate1 next)
           let proof := mkExpectedPropHint (← mkAppM ``congrArg #[context,checked]) target
           let binders := #[placeholder] ++ parameters ++ #[next,checked]
-          return (← mkForallFVars binders target,← mkLambdaFVars binders proof)
+          return (← mkForallFVars binders target (generalizeNondepLet := false),
+            ← mkLambdaFVars binders proof (generalizeNondepLet := false),arguments)
   accountProof kind
   accountProof value
   let generic ← Hex.RCF.checkProof `RootQuote.contextStep kind value
-  return some (mkAppN generic (#[boundary] ++ dependents.map (·.1) ++ #[rhs]))
+  return some (mkAppN generic (#[boundary] ++ arguments ++ #[rhs]))
 
 private def checkedStep (current whole subject law : Expr) : ReifyM (Expr × Expr) := do
   let type ← inferType subject
   let lawType ← inferType law
   let rhs := lawType.getAppArgs[2]!
   let motive ← withLocalDeclD `boundary type fun boundary => do
-    let body := whole.replace fun expression => if expression == subject then some boundary else none
+    -- A Boolean rewrite must retain data type arguments and their proof binders.
+    let body ← Meta.transform whole (pre := fun expression => do
+      charge .proofNodes 1
+      if expression == subject then return .done boundary
+      -- Meta.transform visits flattened applications, so check their prefixes too.
+      let arguments := expression.getAppArgs
+      let arity := subject.getAppNumArgs
+      if arguments.size > arity &&
+          mkAppN expression.getAppFn (arguments.extract 0 arity) == subject then
+        return .done (mkAppN boundary (arguments.extract arity arguments.size))
+      if (← isType expression) && !(← isProp expression) then return .done expression
+      return .continue)
     mkLambdaFVars #[boundary] body
   unless motive.bindingBody!.hasLooseBVars do
     throwError "demanded boundary does not occur in its reconstructed reader"

@@ -54,6 +54,12 @@ run_meta do
     unless exhausted.dimension == .proofNodes do throwError "retained packet exhausted another dimension"
     restored before sentinel (some declarations)
     logInfo m!"retained packet exact/one-below request budget={result.usage.proofNodes}; caller state restored"
+
+run_meta do
+  withoutExporting do
+    let sentinel ← mkFreshExprMVar (mkConst ``Nat)
+    let before ← getMCtx
+    let declarations := (← (← getEnv).getLocalConstantInfos).map (·.name)
     let .error (.providerFailure (.invalidProviderEvidence _ _) _) ← RootQuote.runWith (do
         sentinel.mvarId!.assign (mkNatLit 41)
         RootPreparePacket.quoteWith (-1)) RootPreparePacket.config

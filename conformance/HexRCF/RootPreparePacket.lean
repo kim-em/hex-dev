@@ -18,10 +18,11 @@ namespace Hex.RCF.RootPreparePacket
 set_option maxHeartbeats 12000000
 set_option maxRecDepth 32768
 
+/-- Fixture allowance; the controls derive exact and one-below limits from the checked request. -/
 meta def config : Hex.RealFormula.Reify.Config :=
   let basic : Hex.RealFormula.Reify.Config := {}
   {basic with ring := {basic.ring with budget :=
-    {basic.ring.budget with proofNodes := 3000000}}}
+    {basic.ring.budget with proofNodes := 4000000}}}
 
 /-- The sign is a proposal, checked against the original frozen packet. -/
 meta def quoteWith (sign : Int := 1) : Hex.RealFormula.Reify.ReifyM RootQuote.Result := do

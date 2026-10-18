@@ -59,7 +59,7 @@ run_meta do
     let .ok result ← RootQuote.runWith action
       | throwError "projection quotation baseline refused"
     restored before sentinel
-    unless result.usage.proofNodes == 2479 do
+    unless result.usage.proofNodes == 2622 do
       throwError "projection quotation budget changed: {result.usage.proofNodes}"
     let basic : Hex.RealFormula.Reify.Config := {}
     let exactConfig := {basic with ring := {basic.ring with budget :=

@@ -36,7 +36,7 @@ run_meta do
       let subject ← reader input depth
       let .ok result ← RootQuote.run subject RowQuote.decoder
         | throwError "projection quotation refused a valid {depth}-transport chain"
-      let expected := if depth == 1 then 2001 else if depth == 16 then 4962 else 6758
+      let expected := if depth == 1 then 2144 else if depth == 16 then 5105 else 6901
       unless result.usage.proofNodes == expected do
         throwError "projection depth accounting changed: {depth}/{result.usage.proofNodes}"
       let target ← mkEq (← mkAppM ``Except.toOption #[subject])
