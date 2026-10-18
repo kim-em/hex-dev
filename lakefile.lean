@@ -1583,6 +1583,7 @@ lean_lib HexReleaseTests where
     `HexRCF.DecisionTests,
     `HexRCF.ReifyTests,
     `HexRCF.HandlerTests.Support, `HexRCF.HandlerTests.Async,
+    `HexRCF.HandlerTests.Admission,
     `HexRCF.HandlerTests,
     `HexRCF.LintTests]
     -- a name array mapped through Glob.one: an array literal this long is
