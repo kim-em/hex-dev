@@ -35,14 +35,14 @@ private def checkProof (type proof : Expr) : MetaM Unit := do
       type, value := proof })).map (fun _ => ())
 
 private def check (agreement type : Expr) : MetaM Unit := do
-  let some proof ← agreementSupplier agreement type |
+  let some proof ← agreementSupplier agreement none type |
     throwError "whole retained coefficient list was not supplied"
   unless proof.getAppFn.isConstOf ``Transport.Inventory.Agreement.members do
     throwError "test did not exercise the whole-list theorem"
   checkProof type proof
 
 private def refused (label : String) (agreement type : Expr) : MetaM Unit := do
-  if (← agreementSupplier agreement type).isSome then
+  if (← agreementSupplier agreement none type).isSome then
     throwError "whole-list supplier accepted {label}"
 
 syntax (name := coefficientMembers) "#coefficient_members" : command
@@ -90,7 +90,7 @@ def elaborate : CommandElab := fun _ => liftTermElabM do
   let sharedAgreement := mkAppN originalType.getAppFn
     (parameters.set! (parameters.size - 1) shared)
   withLocalDeclD `agreement sharedAgreement fun agreement => do
-    let some proof ← agreementSupplier agreement target |
+    let some proof ← agreementSupplier agreement none target |
       throwError "shared whole-block proof missing"
     let locals := (← getLCtx).getFVarIds.map mkFVar
     let type ← mkForallFVars locals target
@@ -147,7 +147,7 @@ def elaborate : CommandElab := fun _ => liftTermElabM do
   let composedType := mkAppN originalType.getAppFn
     (parameters.set! (parameters.size - 1) appended)
   withLocalDeclD `agreement composedType fun agreement => do
-    let domains := agreementSupplier agreement
+    let domains := agreementSupplier agreement none
     let required ← mkAppM ``Transport.Sum #[base.read, left, right]
     let proof ← build required (base.supply domains domains)
     unless (proof.find? (·.isConstOf ``Transport.Inventory.Agreement.members)).isSome do
@@ -156,7 +156,7 @@ def elaborate : CommandElab := fun _ => liftTermElabM do
   let original := mkConst ``FiniteBaseProbe.agreement
   -- This notation shape currently uses the existing enumeration fallback.
   refused "notation inventory shape" original target
-  let fallback ← build target (agreementSupplier original)
+  let fallback ← build target (agreementSupplier original none)
   let _ ← auditProof fallback target
   kernelCheck `__coefficientMemberFallback target fallback
   let element ← inferType (mkApp coefficient (toExpr (0 : Nat)))

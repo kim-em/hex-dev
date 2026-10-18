@@ -1,0 +1,24 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+import KernelReplay.GuardDescriptorInputs
+import KernelReplay.GuardInventoryPublicAudit
+
+namespace Hex.RealClosure.Algebraic.KernelReplay.GuardDescriptorInputsAudit
+open Lean Meta Elab FiniteData GuardDescriptorInputs
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 2000000 in
+set_option smartUnfolding false in
+run_meta do
+  let began ← IO.getNumHeartbeats
+  let proofs := #[mkConst ``GuardDescriptorInputs.firstPointBinding,
+    mkConst ``GuardDescriptorInputs.derivatives, mkConst ``GuardDescriptorInputs.head,
+    mkConst ``GuardDescriptorInputs.nodeHead, mkConst ``GuardDescriptorInputs.preparation,
+    mkConst ``GuardDescriptorInputs.products]
+  let count ← audit began proofs
+  logInfo m!"actual descriptor input module audit: fields=5 sameFirstPointChecked=true exactStandardAxioms=true wholeFieldReferences=[] declarations={count} aggregateHeartbeat={((← IO.getNumHeartbeats)-began)/1000}"
+
+end Hex.RealClosure.Algebraic.KernelReplay.GuardDescriptorInputsAudit

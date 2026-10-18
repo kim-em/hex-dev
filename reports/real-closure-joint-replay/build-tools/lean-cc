@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+exec /run/current-system/sw/bin/clang \
+  --ld-path=/run/current-system/sw/bin/ld.lld \
+  -L/home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/lib "$@"

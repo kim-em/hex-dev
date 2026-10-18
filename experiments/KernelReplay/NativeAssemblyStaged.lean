@@ -122,9 +122,13 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
     throwError "staged source binding lost the caller's original context"
   let ownerName := `Hex.RealClosure.Algebraic.KernelReplay.NativeAssemblyStaged.owner
   withOptions (fun options => options.setBool `debug.skipKernelTC false) do
-    addDecl (.defnDecl {
+    let ownerDecl := Declaration.defnDecl {
       name := ownerName, levelParams := [], type := ← inferType native.owners[0]!,
-      value := native.owners[0]!, hints := .regular 0, safety := .safe }) (forceExpose := true)
+      value := native.owners[0]!, hints := .regular 0, safety := .safe }
+    addDecl ownerDecl (forceExpose := true)
+    withOptions (Elab.async.set · false) do
+      withOptions (fun options => options.setBool `compiler.postponeCompile false) do
+        compileDecl ownerDecl
     let rootRaw ← mkAppM ``Hex.SignDet.Descriptor.raw
       #[← mkAppM ``Context.root #[mkConst ownerName]]
     let rawType ← mkEq rootRaw (mkConst ``raw)

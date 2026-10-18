@@ -115,12 +115,15 @@ def KnownLookup.find? (known : KnownLookup) (lookup : Lookup) : MetaM (Option Ex
   return some proof
 
 /-- Consult retained exact lookup proofs before the caller's decision procedure.
-Successful closed decisions are retained for later occurrences in this pass. -/
+Successful closed decisions are retained across passes and into reconstruction. -/
 def lookupSupplier (known : IO.Ref (Array KnownLookup)) (decisions : Supplier) : Supplier :=
     fun type => do
   let leaf : Leaf := ⟨type, ← getLCtx, ← getLocalInstances⟩
   let some lookup ← leaf.lookup? | return none
-  for entry in (← known.get).reverse do
+  let entries ← known.get
+  for offset in [:entries.size] do
+    let some entry := entries[entries.size - 1 - offset]? |
+      throwError "retained lookup index changed"
     if let some proof ← entry.find? lookup then
       if entry.lookup.inventory != lookup.inventory then
         if let some lifted ← lookup.remember proof then known.modify (·.push lifted)
@@ -132,12 +135,12 @@ def lookupSupplier (known : IO.Ref (Array KnownLookup)) (decisions : Supplier) :
 
 private def retainBinding (type proof : Expr) : MetaM Expr := do
   let name := mkPrivateName (← getEnv) (← mkFreshUserName `__finiteSupportBinding)
+  let levels := collectLevelParams (collectLevelParams {} type) proof |>.params.toList
   let options := (← getOptions).setBool `debug.skipKernelTC false
-  let env ← ofExceptKernelException <| (← getEnv).addDeclCore
+  setEnv (← ofExceptKernelException <| (← getEnv).addDeclCore
     (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
-    (.thmDecl { name, levelParams := [], type, value := proof }) none (doCheck := true)
-  setEnv env
-  return mkConst name
+    (.thmDecl { name, levelParams := levels, type, value := proof }) none (doCheck := true))
+  return mkConst name (levels.map Lean.Level.param)
 
 /-- Prefer an exact inventory slot across the entire table before attempting
 any definitional comparison. Alias compatibility is checked only on a miss. -/

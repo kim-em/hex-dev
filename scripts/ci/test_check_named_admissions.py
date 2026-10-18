@@ -12,6 +12,26 @@ from check_named_admissions import ADMISSION, IMPORT, code_only
 
 
 class AdmissionScannerTests(unittest.TestCase):
+    def test_guard_roots(self):
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            directory = root / "experiments/KernelReplay"
+            (directory / "GuardNested").mkdir(parents=True)
+            for name in ("GuardFresh.lean", "GuardNested/Leaf.lean", "FrameOther.lean"):
+                (directory / name).write_text("theorem valid : True := by trivial\n")
+            with patch.object(audit, "ROOT", root):
+                roots = audit.guard_roots()
+                self.assertEqual(roots, ["KernelReplay.GuardFresh", "KernelReplay.GuardNested.Leaf"])
+                paths = audit.import_cones(roots)
+                self.assertIn(Path("experiments/KernelReplay/GuardFresh.lean"), paths)
+                (directory / "GuardFresh.lean").write_text("theorem bad : False := by sorry\n")
+                self.assertTrue(audit.find_admissions(code_only((directory / "GuardFresh.lean").read_text())))
+                shadow = root / "KernelReplay/GuardFresh.lean"
+                shadow.parent.mkdir()
+                shadow.write_text("theorem hidden : True := by trivial\n")
+                with self.assertRaisesRegex(ValueError, "shadowed"):
+                    audit.guard_roots()
+
     def test_imports_behind_comments_and_on_one_line(self):
         source = 'public import Foo.Bar /- note -/ import Baz.Qux\n'
         self.assertEqual([m.group(1) for m in IMPORT.finditer(code_only(source))],
@@ -304,6 +324,8 @@ class AdmissionScannerTests(unittest.TestCase):
                 "adapters/HexRealClosureTheory/PackingNext.lean",
                 "adapters/HexRealClosureTheory/FiniteData.lean",
                 "adapters/HexRealClosureTheory/FiniteSupport.lean",
+                "adapters/HexRealClosureTheory/FiniteBatch.lean",
+                "adapters/HexRealClosureTheory/NativeBatch.lean",
                 "adapters/HexRealClosureTheory/FiniteOperands.lean",
                 "adapters/HexRealClosureTheory/FiniteLift.lean",
                 "adapters/HexRealClosureTheory/FiniteScalars.lean",
@@ -342,21 +364,43 @@ class AdmissionScannerTests(unittest.TestCase):
                 "experiments/KernelReplay/NativeAssembly.lean",
                 "experiments/KernelReplay/NativeAssemblyModels.lean",
                 "experiments/KernelReplay/NativeAssemblyStaged.lean",
+                "experiments/KernelReplay/FrameEncode.lean",
+                "experiments/KernelReplay/FrameData.lean",
+                "experiments/KernelReplay/FrameDataProbe.lean",
+                "experiments/KernelReplay/FrameSource.lean",
+                "experiments/KernelReplay/NativeAssemblyNestedData.lean",
+                "experiments/KernelReplay/FrameNested.lean",
+                "experiments/KernelReplay/FrameJoint.lean",
+                "experiments/KernelReplay/FrameFrontier.lean",
+                "experiments/KernelReplay/FrameOwners.lean",
+                "experiments/KernelReplay/FrameOperand.lean",
+                "experiments/KernelReplay/FrameStorage.lean",
+                "experiments/KernelReplay/FramePublic.lean",
+                "experiments/KernelReplay/DecisionTrace.lean",
+                "experiments/KernelReplay/CoefficientSuffix.lean",
+                "experiments/KernelReplay/CoefficientMembers.lean",
                 "experiments/KernelReplay/NativeAssemblyUse.lean",
                 "experiments/KernelReplay/NativeModels.lean",
                 "experiments/KernelReplay/FiniteDependencies.lean",
                 "experiments/KernelReplay/FiniteBase.lean",
                 "experiments/KernelReplay/BaseLookup.lean",
+                "experiments/KernelReplay/CoefficientLookup.lean",
+                "experiments/KernelReplay/PackingLookup.lean",
                 "experiments/KernelReplay/LookupReplay.lean",
                 "experiments/KernelReplay/ProofAudit.lean",
                 "experiments/KernelReplay/AxiomClosure.lean",
+                "experiments/KernelReplay/AxiomClosureNative.lean",
                 "experiments/KernelReplay/AxiomClosureTest.lean",
                 "experiments/KernelReplay/AxiomClosureImports.lean",
                 "experiments/KernelReplay/SupportAudit.lean",
                 "experiments/KernelReplay/ProviderHistoryAudit.lean",
                 "experiments/KernelReplay/RationalCodecAudit.lean",
                 "HexRealClosure/BaseJsonTests.lean",
+                "HexRealClosure/SignatureCodecTests.lean",
+                "experiments/KernelReplay/GuardDependencyControls.lean",
+                "experiments/KernelReplay/GuardJointPublicAudit.lean",
                 "experiments/KernelReplay/FiniteRange.lean",
+                "experiments/KernelReplay/FiniteChecks.lean",
                 "experiments/KernelReplay/CoefficientMembers.lean",
                 "experiments/KernelReplay/CoefficientEntry.lean",
                 "experiments/KernelReplay/FiniteLift.lean",

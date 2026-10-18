@@ -7,6 +7,7 @@ module
 
 public import HexRealClosureTheory.FiniteDependencies
 public meta import HexRealClosureTheory.FiniteDependencies
+public meta import HexRealClosureTheory.NativeBatch
 public import KernelReplay.FiniteJoint
 public meta import KernelReplay.FiniteData
 import all HexRealClosure.Algebraic
@@ -66,6 +67,31 @@ private def retain (name : Name) (type proof : Expr) : MetaM Unit := do
   addDecl (.thmDecl {
     name := `Hex.RealClosure.Algebraic.KernelReplay.FiniteDependenciesProbe ++ name,
     levelParams := [], type, value := proof })
+
+private unsafe def checkRefreshed (initial : FiniteData.Level) : MetaM Unit := do
+  let wrappedRequests (levels : Array FiniteData.Level) : MetaM (Array Expr) := do
+    let some current := levels[0]? | throwError "refreshed preparation lost its level"
+    let mut key ← mkAppM ``DensePoly.C #[toExpr (1 : Rat)]
+    let keyType ← inferType key
+    let mut required := #[]
+    for _ in [:9] do
+      key ← mkAppOptM ``id #[some keyType, some key]
+      let found ← mkAppM ``Packing.find #[current.entries, key]
+      required := required.push (← mkEq (← mkAppM ``Option.isSome #[found]) (mkConst ``Bool.true))
+    return required
+  let onlyEmpty : FiniteData.Supplier := fun type => do
+    let leaf : FiniteData.Leaf := ⟨type, ← getLCtx, ← getLocalInstances⟩
+    if let some lookup ← leaf.lookup? then
+      unless lookup.inventory.getAppFn.isConstOf ``List.nil do
+        throwError "refreshed lookup bypassed preparation and reached the per-request decider"
+    return none
+  let refreshed ← FiniteData.collectDependencies 1 #[initial] wrappedRequests onlyEmpty
+    (fun lookup _ => do return some (← FiniteTowerPackets.packing lookup.request.polynomial))
+    (some FiniteData.NativeBatch.prepare)
+  unless refreshed.saturated && refreshed.requests.size == 1 && refreshed.known.size == 9 do
+    throwError "post-insertion preparation lost a normalized key or consumed additional record fuel"
+  for entry in refreshed.known do
+    kernelCheck `__refreshedPreparedLookup entry.lookup.leaf.type entry.proof
 
 syntax (name := finiteDependenciesProbe) "#finite_dependencies_probe" : command
 @[command_elab finiteDependenciesProbe]
@@ -215,6 +241,36 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
         (fun _ _ => throwError "cached dependency discovery invoked a producer")
       unless cached.saturated && cached.requests.isEmpty do
         throwError "cached dependency discovery did not replay"
+      let some retained := collected.known[0]? | throwError "preparation control lost its checked lookup"
+      let exact := retained.lookup.leaf.type
+      let fallbackCalls ← IO.mkRef (0 : Nat)
+      let fallback : FiniteData.Supplier := fun type => do
+        fallbackCalls.modify (· + 1)
+        FiniteDataProbe.supply type
+      let prepared ← FiniteData.collectDependencies 1 collected.levels (fun _ => pure #[exact]) fallback
+        (fun _ _ => throwError "prepared lookup invoked a record producer")
+        (some FiniteData.NativeBatch.prepare)
+      unless prepared.saturated && prepared.requests.isEmpty && (← fallbackCalls.get) == 0 do
+        throwError "prepared lookup was not reused before the original decision supplier"
+      let missed ← FiniteData.collectDependencies 1 collected.levels (fun _ => pure #[exact]) fallback
+        (fun _ _ => throwError "missed batch hint invoked a record producer")
+        (some (fun _ => pure #[]))
+      unless missed.saturated && (← fallbackCalls.get) > 0 do
+        throwError "missed batch hint suppressed the original decision supplier"
+      let zero ← FiniteData.collectDependencies 0 collected.levels (fun _ => pure #[exact]) fallback
+        (fun _ _ => throwError "zero-fuel prepared lookup invoked a producer")
+        (some (fun _ => throwError "zero-fuel discovery invoked batch preparation"))
+      unless zero.saturated do throwError "zero-fuel preparation changed ordinary lookup replay"
+      try
+        let other := { retained with lookup := { retained.lookup with
+          leaf := { retained.lookup.leaf with type := mkConst ``True } } }
+        let _ ← FiniteData.collectDependencies 1 collected.levels (fun _ => pure #[exact]) fallback
+          (fun _ _ => throwError "unrequested batch evidence invoked a producer")
+          (some (fun _ => pure #[other]))
+        throwError "preparation accepted an unrequested predicate"
+      catch error =>
+        unless (← error.toMessageData.toString).startsWith "lookup preparation returned an unrequested predicate" do
+          throw error
       let passes ← IO.mkRef (0 : Nat)
       let batch (levels : Array FiniteData.Level) : MetaM (Array Expr) := do
         passes.modify (· + 1)
@@ -228,6 +284,7 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
         return requested
       let produce (lookup : FiniteData.Lookup) (_ : Array FiniteData.Level) := do
         return some (← FiniteTowerPackets.packing lookup.request.polynomial)
+      checkRefreshed empty
       let decisionCount ← IO.mkRef (0 : Nat)
       let counted : FiniteData.Supplier := fun type => do
         decisionCount.modify (· + 1)

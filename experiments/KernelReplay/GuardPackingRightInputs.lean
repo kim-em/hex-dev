@@ -1,0 +1,51 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+module
+
+public import KernelReplay.GuardPackingBranch
+public meta import KernelReplay.GuardPackingBranch
+import all KernelReplay.GuardPackingBranch
+import all KernelReplay.GuardPackingNodeInputs
+import all KernelReplay.GuardPackingShape
+import all KernelReplay.GuardDescriptorInputs
+import all KernelReplay.GuardDescriptorSupplier
+
+public meta section
+
+namespace Hex.RealClosure.Algebraic.KernelReplay.GuardPackingRightInputs
+open Lean Meta Elab Command FiniteData GuardDescriptorInputs
+
+syntax (name := packingRightInputControl) "#packing_right_inputs " num : command
+@[command_elab packingRightInputControl]
+unsafe def elaborate : CommandElab := fun stx => liftTermElabM <| withExporting (isExporting := false) do
+  let some nodeIndex := stx[1].isNatLit? | throwError "packing node index is not literal"
+  unless nodeIndex == 3 || nodeIndex == 4 do throwError "expected an original right packing node"
+  let began ← IO.getNumHeartbeats
+  let supply ← GuardDescriptorSupplier.prepare began
+  let (_, parts) ← GuardPackingNodeInputs.node nodeIndex
+  let root := `Hex.RealClosure.Algebraic.KernelReplay.GuardPackingRightInputs ++
+    Name.mkSimple s!"node{nodeIndex}"
+  let mut proofs := supply.facts
+  for (tag, part) in #[`head, `preparation, `products, `reductions].zip (parts.extract 0 4) do
+    let remaining ← bounded began
+    logInfo m!"actual first packing right input begins: node={nodeIndex} field={tag} heartbeat={1500000 - remaining}"
+    let proof ← withOptions (maxHeartbeats.set · remaining) do build part supply.supplier
+    let proof ← withTransparency .all do mkAppOptM ``id #[some part, some proof]
+    let proof ← retain began (root ++ tag) proof
+    proofs := proofs.push proof
+  logInfo m!"actual first packing right inputs module export: originalNodeIndex={nodeIndex} fields=4 allOriginalGuardsRetained=true sameFirstReader=true dependencyAuditPending=true aggregateHeartbeat={((← IO.getNumHeartbeats) - began) / 1000}"
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 2000000 in
+set_option smartUnfolding false in
+#packing_right_inputs 3
+
+set_option maxRecDepth 32768 in
+set_option maxHeartbeats 2000000 in
+set_option smartUnfolding false in
+#packing_right_inputs 4
+
+end Hex.RealClosure.Algebraic.KernelReplay.GuardPackingRightInputs

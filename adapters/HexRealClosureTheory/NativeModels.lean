@@ -15,6 +15,12 @@ public meta section
 namespace Hex.RealClosure.Algebraic.KernelReplay.FiniteData
 open Lean Meta
 
+private def diagnostic (message : String) : MetaM Unit := do
+  if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
+    IO.FS.withFile path .append fun handle => do
+      handle.putStrLn message
+      handle.flush
+
 /-- Models of the actual retained prefixes in one ordered real-closed reference
 field. The base history supplies the reference; no ordinary-real specialization
 point or interpretation of raw expressions as a field is asserted here. -/
@@ -68,16 +74,21 @@ model through each actual descriptor, frame and encoding proof. All prefixes
 retain their native owners and share the same reference field. -/
 def NativeChain.models (native : NativeChain) (following : Expr)
     (fuel : Nat := 256) : MetaM NativeModels := do
+  diagnostic "models: build reference"
   let packedBase ← mkAppM ``BaseContext.PackedContext.pack #[native.base]
   let reference ← mkAppOptM ``BaseContext.PackedContext.Realization.reference
     #[none, some packedBase, some following]
   let carrier ← mkAppM ``BaseContext.PackedContext.Reference.Carrier #[reference]
+  diagnostic "models: reduce original context"
   let packed ← withTransparency .all (whnf native.context)
+  diagnostic "models: original context reduced"
   unless packed.getAppFn.isConstOf ``Tower.Context.pack do
     throwError "native models require the retained packed context"
   let chain := packed.getAppArgs.back!
   withReferenceInstances reference carrier fun instances => do
+    diagnostic "models: begin actual prefixes"
     let (prefixes, models) ← go reference carrier fuel chain
+    diagnostic "models: actual prefixes returned"
     unless models.size == native.owners.size + 1 do
       throwError "native models lost a retained prefix"
     for i in [:native.owners.size] do
@@ -93,12 +104,16 @@ where
       MetaM (Array Expr × Array Expr) := do
     let remaining + 1 := remaining |
       throwError "native model construction exhausted its depth bound"
+    diagnostic s!"models: inspect prefix, fuel {remaining}"
     let constructor ← withTransparency .all (whnf chain)
     let context ← mkAppM ``Tower.Context.pack #[chain]
+    diagnostic "models: build expected type"
     let expected ← mkAppOptM ``Tower.Model #[none, some context, some carrier, none, none]
     if constructor.getAppFn.isConstOf ``Tower.Chain.base then
       let model ← mkAppM ``BaseContext.PackedContext.Reference.model #[reference]
+      diagnostic "models: check base model"
       check model expected
+      diagnostic "models: base model checked"
       return (#[context], #[model])
     unless constructor.getAppFn.isConstOf ``Tower.Chain.root do
       throwError "native model prefix is not a retained base/root constructor"
@@ -108,8 +123,11 @@ where
     let frame := args[args.size - 2]!
     let encoded := args.back!
     let (prefixes, models) ← go reference carrier remaining parent
+    diagnostic "models: build actual root model"
     let model ← mkAppM ``Tower.Model.root #[parent, models.back!, descriptor, frame, encoded]
+    diagnostic "models: check actual root model"
     check model expected
+    diagnostic "models: actual root model checked"
     return (prefixes.push context, models.push model)
 
 /-- Instantiate the checked scalar packet reader with the actual predecessor

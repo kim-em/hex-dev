@@ -1,0 +1,27 @@
+{
+  "exit_code": 0,
+  "verification_exit_code": 0,
+  "source_immutable_verified": true,
+  "changed_sources": [],
+  "added_sources": [],
+  "changed_tools": [],
+  "accepted_original_inputs_verified": 1240,
+  "original_input_error": null,
+  "target": "KernelReplay.GuardJointPublicAudit",
+  "source": "experiments/KernelReplay/GuardJointPublicAudit.lean",
+  "artifacts": {
+    ".lake/build/ir/KernelReplay/GuardJointPublicAudit.c": "ab62f5b7ba1726bf0ceabbf836834da21590b5506dcc71999aaabb3b61c7f9a2",
+    ".lake/build/ir/KernelReplay/GuardJointPublicAudit.c.hash": "b8ccd485e9f017a9c784a57c1e7566e8d97184e9778f9bebdb32062ace1f3702",
+    ".lake/build/ir/KernelReplay/GuardJointPublicAudit.setup.json": "f36472f659ef136c1567ed7b03951f8702ec385d4ff0eeb8bc97916e6c71675b",
+    ".lake/build/lib/lean/KernelReplay/GuardJointPublicAudit.ilean": "2afab62228550d11ff8e8e36251c71630468b565cc8b661587442ca8dd0a8170",
+    ".lake/build/lib/lean/KernelReplay/GuardJointPublicAudit.ilean.hash": "0a873021bc127c565dcd74661e947d1e3213b9bf4b8a3a721de8343cb69bbb0c",
+    ".lake/build/lib/lean/KernelReplay/GuardJointPublicAudit.olean": "cdf6902eabd0852e06fa81dd9e874e6333114a4db14a3f6cae7adce53fd0fec4",
+    ".lake/build/lib/lean/KernelReplay/GuardJointPublicAudit.olean.hash": "ae94c7d890b8de54104af27c87e584fe4f46aab9b39ba6da2867485e3254a296",
+    ".lake/build/lib/lean/KernelReplay/GuardJointPublicAudit.trace": "50133be33f45d2712ae0555f52e8347434bdf91752eac9d4336d0d835992d270"
+  },
+  "compiled_target_olean_archived": true,
+  "lake_build_completed": true,
+  "process_killed_or_dumped": false,
+  "mathematical_acceptance_claim": false,
+  "goal_complete_claim": false
+}

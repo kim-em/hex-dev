@@ -1081,6 +1081,21 @@ production base supplier for all seven operation shapes, including powers under
 a natural-number binder. Repeated heartbeat comparisons run only when
 `HEX_NATIVE_ASSEMBLY_TRACE` is set; CI runs the correctness checks without them.
 
+When the retained support contains an entire `Inventory.coefficients p` block,
+`agreementSupplier` derives all its guarded coefficient memberships with
+`Agreement.members`. It projects through syntactic list append and cons nodes
+and closed, unapplied definition aliases, without enumerating the coefficients.
+The retained block must match the original coefficient function, including its
+dictionaries. The range retains the polynomial's structural size bound and standard natural
+order; the complete guarded predicate must match, and caller metavariables
+remain unassigned. Unsupported support shapes use the
+existing membership supplier. These ordinary theorem applications retain the
+same enclosing kernel and axiom checks. `KernelReplay.CoefficientMembers` checks
+whole lists, empty polynomials, append/cons projections, repeated blocks,
+irreducible and universe-polymorphic aliases, and fallback for `++` notation.
+Foreign predicates, bounds, dictionaries, missing blocks and incomplete
+requests are refused.
+
 `FiniteData.frontier` retains original operation and replay boundaries with
 their local hypotheses before scalar expansion. Traversal enumerates
 bounded natural indices only when their relation is the standard Nat order and
@@ -1393,13 +1408,58 @@ and included in the same predicate, in addition to their lowered discovery
 premises. `Reconstruction.requested` retains their exact translated types. The joint
 fixture exercises a polynomial sum-law request on `1 + X` with coefficients
 from a checked native unit packing. All eight discovered/requested guards are
-exported. Direct computed coefficient operands and product-law requests reach the same
-export path but are not covered by a successful end-to-end fixture; their
-dependency traversal currently exceeds the local 8 GiB experiment limit. Closed support and
+exported. Computed coefficient operands and product-law requests enter the same
+export path. The original nested product fixture has a checked joint existence
+proof and an ordinary-module consumer for both defining-polynomial equations
+and the native product at the same coordinates. Closed support and
 witness terms are shared through kernel-checked definitions or theorems; the
 existential predicate binds its interpretation directly from the bootstrap
 predicate. This fixture consumes a retained algebraic suffix over a staged base;
 normalization of arbitrary interleaved live contexts remains required.
+
+`FrameOperand` checks the scalar sign of the original second generator's
+computed remainder. `Element.ofPoly_restore` identifies its cached constructor
+with the original native generator, including the actual storage reduction.
+`beta_native` and `request_native` retain exact native-value and polynomial
+identities. A normalized one-element coefficient array has literal size one;
+its equality to the original constant polynomial follows from the checked
+nonzero generator. `request_bound` and `request_coeff` prove that index zero
+exists and contains that original generator. `FramePublic.product` consumes a
+finite product at one fixed reader, interpretation and pair of coordinates,
+and derives the original native generator's square equation. It does not
+choose witnesses. `GuardJoint.exists_points` reconstructs the complete original
+nested fixture: one base interpretation and two ordinary real coordinates satisfy
+the ordered coefficient agreement, inherited provider values, both original
+packing/sign/inverse inventories, all 3773 original guards and the native product
+together. Its 3778 clauses retain the selected extension `X − (ε + δ)` and the
+original positive selected root of `Y² − α`.
+
+`GuardJointExport` names the original native contexts and finite readers and
+shares nested proofs at their expected propositions. Its exported theorem is
+kernel checked against the original joint theorem. Expected propositions matter
+here: a cached proof can have an inferred `Bool.Reflects` type whose reduction
+requires private computational bodies. Public clients instead receive checked
+theorem constants with the propositions expected by their data constructors.
+`GuardJointPublic` exports this full proposition. `GuardJointUse` imports it as
+an ordinary module, extracts all three witnesses, and proves both original raw
+defining-polynomial equations and the native product equation at the same real
+points, using the independent finite operand reconstruction.
+`GuardJointPublicAudit` directly compares guard clauses with the original
+discovery templates at the shared readers and traverses actual checked private
+and opaque proof bodies,
+allowing only `propext`, `Classical.choice` and `Quot.sound` and rejecting the
+whole-field reference constructions. It also rejects declarations originating
+in `KernelReplay.FrameOperand`, except its parametric constant constructor and
+proof auxiliaries. The complete fixed-fixture proof is locally validated.
+CI compiles shared finite/staged reconstruction helpers. Its admission scan
+discovers Lean modules beneath `experiments/KernelReplay/Guard*` files or
+directories and checks their import cones. The shared dependency
+auditor and small rejection controls are CI-built; the full guard fixture is
+compiled locally. Reproduction commands and the exact evidence scope are recorded in
+[`reports/real-closure-joint-replay.md`](../../reports/real-closure-joint-replay.md).
+The recursive exporter for arbitrary live collections and interleaved stages
+remains required.
+
 This kernel experiment accesses opaque Sturm preparation internals through
 its exact DAG allowlist entry to inspect the validated native producer result.
 It does not construct unchecked prepared domains; public consumers retain the

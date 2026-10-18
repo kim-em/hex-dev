@@ -205,7 +205,10 @@ def reconstruct (base following baseReader : Expr) (discovery : Discovery) (extr
   if let some first := levels[0]? then
     unless ← withTransparency .all (isDefEq first.read baseReader) do
       throwError "first finite level does not follow the base reader"
-  let domains := origin.domains (agreementSupplier agreement)
+  -- Share only the deterministic walk of this closed inventory. Every
+  -- coefficient proof still checks its original list position and predicate.
+  let coefficientCache ← IO.mkRef (none : Option CoefficientWalk)
+  let domains := origin.domains (agreementSupplier agreement (some coefficientCache))
   let known ← IO.mkRef discovery.known
   let retained := lookupSupplier known (fun _ => pure none)
   let checks : Supplier := fun type => do
@@ -220,6 +223,7 @@ def reconstruct (base following baseReader : Expr) (discovery : Discovery) (extr
     checks type)
   let mut supplier := baseSupplier
   let mut verified : Array Prefix := #[]
+  let mut readers := #[origin.read]
   let mut conditions := #[agreement, fixed]
   for level in levels do
     for value in #[level.context, level.entries, level.records, level.facts] do nativeOnly value temporaryReaders
@@ -240,7 +244,8 @@ def reconstruct (base following baseReader : Expr) (discovery : Discovery) (extr
         Prefix.ofData data zero unit
     conditions := conditions.push (← mkAppM ``Packing.Inventory.Data.conditions
       #[current.data, current.zero, current.unit])
-    supplier := current.supplyAll supplier
+    supplier := current.supplyFrom readers supplier
+    readers := readers.push current.reader
     verified := verified.push current
     if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
       IO.FS.withFile path .append fun handle => do
