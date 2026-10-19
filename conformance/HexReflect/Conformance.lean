@@ -424,8 +424,8 @@ run_meta do
 
 -- Budget exhaustion is a decline carrying the dimension and the usage of the
 -- whole batch so far. Bounds saturate one above the remaining budget, so a
--- report shows the smallest increment that already exceeds the limit. Each
--- expansion dimension is checked before the expanding operation runs.
+-- report shows the smallest increment that already exceeds the limit. Term
+-- limits also apply to intermediate polynomials during expansion.
 /--
 info: budget exhausted in dimension literal exponent: limit 8, consumed 0, requested 40
 ---
@@ -480,6 +480,44 @@ run_meta do
     let cfg : Hex.Reflect.Config := { budget := { Budget.default with proofNodes := 32 } }
     match ← reflectRingBatch #[← add x y] .lex cfg with
     | .declined d _ => logInfo d.toMessageData
+    | o => throwError (o.toMessageData fun _ => m!"?")
+
+-- Term budgets count collected polynomials rather than uncollected products.
+set_option maxRecDepth 2048 in
+run_meta do
+  withLocalDeclD `x intExpr fun x => withLocalDeclD `y intExpr fun y => do
+    let binomial ← pow (← add x y) (natLit 20)
+    match ← reflectRingBatch #[binomial] .lex checkProofs with
+    | .success batch usage =>
+      let some entry := batch.entries[0]? | throwError "missing binomial entry"
+      expect (entry.conversion.terms.length == 21 && usage.terms == 21)
+        "a binomial power has one term per degree"
+      kernelCheck #[x, y] entry
+    | o => throwError (o.toMessageData fun _ => m!"?")
+    let numerical ← pow (← intLit 2) (natLit 10)
+    match ← reflectRingBatch #[numerical] .lex checkProofs with
+    | .success batch usage =>
+      let some entry := batch.entries[0]? | throwError "missing numerical entry"
+      expect (terms entry == [([], 1024)] && usage.terms == 1)
+        "expansion uses the exponent budget rather than the reification threshold"
+      kernelCheck #[] entry
+    | o => throwError (o.toMessageData fun _ => m!"?")
+    let cfg : Hex.Reflect.Config := { budget := { Budget.default with terms := 6 } }
+    match ← reflectRingBatch #[← pow (← add x y) (natLit 2),
+        ← pow (← add x y) (natLit 3)] .lex cfg with
+    | .declined (.budgetExhausted b) usage =>
+      expect (b.dimension == .terms && b.consumed == 3 && usage.terms == 3)
+        "conversions share the remaining term budget"
+    | o => throwError (o.toMessageData fun _ => m!"?")
+    let cfg : Hex.Reflect.Config := { budget := { Budget.default with terms := 3 } }
+    let square ← pow (← add x y) (natLit 2)
+    match ← reflectRingBatch #[square, square] .lex cfg with
+    | .success _ usage => expect (usage.terms == 3) "cached terms are charged once"
+    | o => throwError (o.toMessageData fun _ => m!"?")
+    let excessive ← pow (← pow (← intLit 2) (natLit 64)) (natLit 64)
+    match ← reflectRingBatch #[excessive] .lex with
+    | .declined (.budgetExhausted b) _ =>
+      expect (b.dimension == .coefficientBits) "coefficient growth is checked before expansion"
     | o => throwError (o.toMessageData fun _ => m!"?")
 
 -- A batch mixing two carriers declines before sealing, and reports the

@@ -284,8 +284,9 @@ another `IsCharP` instance.
 
 Only literal natural exponents recognized by `reifyRing?` are polynomial
 powers. A symbolic exponent makes the whole power application an atom. The
-reflection-node, exponent, output-term, and proof-reconstruction budgets are
-checked before an accepted literal power can cause excessive expansion.
+reflection-node, exponent, coefficient-size, and proof-reconstruction budgets
+bound the request. Guarded expansion limits the number of terms in intermediate
+polynomials; the resulting terms are charged to the session's remaining budget.
 
 ### Division and other operations
 
@@ -545,9 +546,14 @@ the dimension, limit, consumed amount, and requested increment.
 Lean's `Sym.Arith.State.exp` and `getExpThreshold`, `setExpThreshold`, and
 `withExpThreshold` govern numeral evaluation during classification and
 reification. Hex configures that threshold explicitly, but does not mistake it
-for a polynomial-expansion limit. Its own exponent, output-term, coefficient,
-and proof budgets guard `toPoly`, `toPolyC`, `MvPoly.ofTerms`, and
-proof construction before each potentially expanding step.
+for a polynomial-expansion limit. Conversion sets the expansion threshold to
+the session's literal exponent limit and uses `Sym.Arith.toPoly?` with the
+remaining term budget as the limit for intermediate polynomials. The final
+term count is charged cumulatively across conversions, and a cached conversion
+does not consume it again. Coefficient growth is checked before expansion:
+the shared computation does not bound coefficient size. Proof construction
+has its own budget. The pure `toPoly` and `toPolyC` computations remain in the
+conversion certificates checked by the kernel.
 
 Shared decline reasons distinguish at least unsupported view, unsupported
 carrier, unresolved metavariable, missing capability, ambiguous provider,
