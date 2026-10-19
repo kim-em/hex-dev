@@ -1,0 +1,1 @@
+Captured from the unchanged staged index after failed integration2. The two guard files are the versions that introduced the producer import. This is a focused failure reconstruction, not a claim of a full exact source snapshot for that run. Worktree repair removes the import and uses literal declaration names; native driver separately resolves/checks those names.

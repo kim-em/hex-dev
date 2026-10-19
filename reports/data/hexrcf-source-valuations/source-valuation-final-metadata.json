@@ -1,0 +1,97 @@
+[
+  {
+    "name": "dag_tests",
+    "argv": [
+      "python3",
+      "scripts/test_check_dag.py"
+    ],
+    "exit_code": 0,
+    "log": "source-valuation-final-dag_tests.log"
+  },
+  {
+    "name": "copyright",
+    "argv": [
+      "python3",
+      "scripts/check_copyright_headers.py"
+    ],
+    "exit_code": 0,
+    "log": "source-valuation-final-copyright.log"
+  },
+  {
+    "name": "lines",
+    "argv": [
+      "python3",
+      "scripts/check_file_line_counts.py",
+      "--base",
+      "origin/main"
+    ],
+    "exit_code": 0,
+    "log": "source-valuation-final-lines.log"
+  },
+  {
+    "name": "dag",
+    "argv": [
+      "python3",
+      "scripts/check_dag.py"
+    ],
+    "exit_code": 0,
+    "log": "source-valuation-final-dag.log"
+  },
+  {
+    "name": "admissions",
+    "argv": [
+      "python3",
+      "scripts/ci/check_named_admissions.py"
+    ],
+    "exit_code": 0,
+    "log": "source-valuation-final-admissions.log"
+  },
+  {
+    "name": "manifest",
+    "argv": [
+      "python3",
+      "scripts/release/check_released_manifest.py"
+    ],
+    "exit_code": 0,
+    "log": "source-valuation-final-manifest.log"
+  },
+  {
+    "name": "freshness",
+    "argv": [
+      "python3",
+      "scripts/bench/check_factor_sweep_freshness.py"
+    ],
+    "exit_code": 0,
+    "log": "source-valuation-final-freshness.log"
+  },
+  {
+    "name": "literals",
+    "argv": [
+      "python3",
+      "scripts/rcf/selected_literals.py",
+      "--check"
+    ],
+    "exit_code": 0,
+    "log": "source-valuation-final-literals.log"
+  },
+  {
+    "name": "source_literals",
+    "argv": [
+      "python3",
+      "scripts/rcf/source_identity_literals.py",
+      "--check"
+    ],
+    "exit_code": 0,
+    "log": "source-valuation-final-source_literals.log"
+  },
+  {
+    "name": "diff",
+    "argv": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "exit_code": 0,
+    "log": "source-valuation-final-diff.log"
+  }
+]

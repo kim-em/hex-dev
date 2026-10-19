@@ -1,0 +1,9 @@
+{
+  "adapters/HexRCF/RealCoefficients/TowerCompile.lean": "269bc9604ac32013ba8ef00561b7d8d81d6565bbd2b2548db5acd05a485cff95",
+  "adapters/HexRCF/RealCoefficients.lean": "ac2ae7a66abff67d69f432d89006574a6085f794ca7086637becc0e3e6bf377c",
+  "lakefile.lean": "b9dfc83fc70c297a912de86828ed9175468a22042f57a7bf671c0528f5421361",
+  "conformance/HexRCF/TowerCompileConformance.lean": "eae49a702cfd6c6699b116b91dacd0e13ff21a5ec7b53c81c2f3f608c2fd76b1",
+  "conformance/HexRCF/TowerCompileProofs.lean": "2afb132cb73b86bb0657d5b532ffa76da254d9e84fc75aab2f8643db7ccfc24e",
+  "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "12d6fa3ea94fbf8f57fd381c9ac13cc1d38961fd635785fd6e09a686b5adaefd",
+  "reports/hexrcf-adapter-evidence.md": "415599bbc9af6b3b0c1e5177a8287171b462468c19b5e4d446d4564ee0a1e69f"
+}

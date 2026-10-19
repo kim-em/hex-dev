@@ -1,0 +1,32 @@
+import SourceReplayDriver
+open Hex Hex.RealClosure Hex.SignDet
+#eval (show IO Unit from do
+  let directory := "/home/kim/.codex/tasks/hex-10358/source-replay-matrix/"
+  let manifest ← IO.FS.readBinFile (directory ++ "manifest.json")
+  let .ok records := Codec.readList (Codec.tuple 11) (← IO.ofExcept (Codec.parse {} manifest))
+    | throw (IO.userError "invalid dataset metadata")
+  for record in records do
+    let name ← IO.ofExcept (record[0].getStr?)
+    let input ← IO.FS.readBinFile (directory ++ name ++ ".json")
+    unless SourceReplayDriver.lexical input && SourceReplayDriver.parsed input &&
+        SourceReplayDriver.restored input && SourceReplayDriver.replayed input do
+      throw (IO.userError s!"valid dataset refused:{name}")
+    unless !(Codec.checkBytes {bytes := 1} input).isOk &&
+        !(Codec.checkBytes {depth := 1} input).isOk &&
+        !(Codec.checkBytes {digits := 0} input).isOk do
+      throw (IO.userError "resource limits did not reject")
+  let controls := "/home/kim/.codex/tasks/hex-10358/source-replay-controls/"
+  let manifest ← IO.FS.readBinFile (controls ++ "manifest.json")
+  let .ok records := Codec.readList (Codec.tuple 2) (← IO.ofExcept (Codec.parse {} manifest))
+    | throw (IO.userError "invalid refusal metadata")
+  for record in records do
+    let name ← IO.ofExcept (record[0].getStr?)
+    let expected ← IO.ofExcept (record[1].getStr?)
+    let input ← IO.FS.readBinFile (controls ++ name ++ ".json")
+    match SourceReplayDriver.replay input with
+    | .ok true => throw (IO.userError s!"invalid evidence accepted:{name}")
+    | .ok false => unless expected == "false" do throw (IO.userError s!"wrong diagnostic:{name}")
+    | .error message =>
+      unless expected == "error" do throw (IO.userError s!"wrong diagnostic:{name}:{message}")
+    IO.println s!"refusal {name}:{expected}"
+  IO.println "22 owner packets (positive-count mutation checked); byte/depth/digit limits;9 malformed/false evidence controls passed")

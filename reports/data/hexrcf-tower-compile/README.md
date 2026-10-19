@@ -1,0 +1,7 @@
+# Stored arithmetic for authenticated source coefficients
+
+See [the report](../../hexrcf-tower-compile.md). Run `python3 reports/data/hexrcf-tower-compile/verify.py --check-head` for current source binding, or omit the flag for the immutable implementation commit.
+
+The current source inventory, selected final successful logs, fresh private-proof audit, repository checks and final six visually inspected manual views form the validation. Earlier failed elaborations, preliminary successes and the first narrow-code overflow capture are retained separately as attempt provenance; they do not validate the final implementation. The first browser failure is a formatting refusal, not resource exhaustion. The final source model validation also covers empty inventories and uses the actual ordinary-real field/order instances.
+
+Supplied selected-leaf identities and the real parent model remain inputs. Original divisor compilation does not discharge nonvanishing or accept a sentence. No arbitrary source/provider/predecessor/history discovery, general finite joint exporter, strict all-depth record replay, full algebraic certificate acceptance, numerical performance comparison or extension completion is claimed. The parent public-model and earlier proof/numerical records keep their own source pins. Every own Lean/Lake/render/browser call is serial under the hard aggregate 32 GiB cap, no swap and two Lean threads.

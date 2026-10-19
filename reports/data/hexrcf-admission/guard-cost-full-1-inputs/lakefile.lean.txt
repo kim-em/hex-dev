@@ -1,0 +1,5 @@
+import Lake
+open Lake DSL
+package guardCost
+require Hex from "/home/kim/.codex/tasks/hex-10358/guard-cost-worktree"
+lean_lib CellSourceCost

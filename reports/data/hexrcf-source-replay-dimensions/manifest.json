@@ -1,0 +1,30 @@
+{
+  "source_commit": "46c6114a4fc18ace27ff8167b51866f89d1f0d23",
+  "artifacts": {
+    "README.md": "7dbdf97d82a068bba709301ebdabffff21722b78ddbb1e2b2518121024216066",
+    "analyze.py.txt": "197b2db4c00c76857d1f6b73ea48aef2495020bea882d91d159b055831646581",
+    "benchmark.lean.txt": "1558a052066168bf8fd73dbe4e151077cfa8bee94e10c1197da7625961455db8",
+    "collection.log.gz": "6c678101327afe0ccb99c47332e250244db0a2012c88dd0eb5b90f1bbbe40587",
+    "collector.py.txt": "7e7408fb5baf4c3add22b332926f8b361762b08d9a5ff5ca9acfa397cd7cf4f3",
+    "context.json": "0677ace7e802a053b833886a83992e03531a1671f59b407f424debfd9df6dca4",
+    "controls.lean.txt": "93aa73ad1cb654c20c88e6f372974c870cb0d597b0d9b3e383984c4865e4f402",
+    "dimensions-original.svg.gz": "a29c736f7ac25e816447abd148751c4656e4f840a2ea534130d06cefdb00da24",
+    "dimensions.png": "7634b574d1221bdc00ce21995902c3688823bad5581590eeeab440972712e351",
+    "dimensions.svg": "69bb9c2f5bd8007b406a84cb95466f19ea95b4ef1171c76f523405581b167471",
+    "driver.lean.txt": "3cfde59d7c6ef64ae3e896885cfcf7b113df91bfc212907b92721c74f72d4381",
+    "generator.lean.txt": "678c26e7ef76ea7f89c8750eec34a2a256cb844771cd5ccf59212d4d671a8e18",
+    "input-validation.json": "5e4d80dd8f9d66a9e3a54a314284a45c9a0b1d81aea773fd3f19bb9f22238ce4",
+    "inputs.tar.gz": "b263db5aa884fea96923c4846de8cbfb70edf750d739ad8aa6d6d8340f23877a",
+    "lake-manifest.json": "ce5bd28ade708926a54ba1fa88cecc6bd4672cd99982c042d026dd439dfa8fe2",
+    "lakefile.lean.txt": "d06e78ea84182efd13e3db006429a7ad03de1895c94e3bbcefe287d10edcf49d",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "normalize-figure.py.txt": "5e4e790d48d3a6a1c79d85277c20bf975e16ca2dc1ab9fac0f6b53963aa9225a",
+    "preparation.tar.gz": "8da8fc5e6db158afc068ed1434161bd444eda416f348a41986398b875f9233a2",
+    "resource-audit.json": "e8ae4e68c29213dfaa99e805a5b74d57fad72ab059b3e91ef5d3b26da28e0180",
+    "run-bounded.sh.txt": "63bc5f97337e6b039bb3a9b1ba2a500be96fd1c2a2f73b43dae284aa9b18dda8",
+    "samples.tar.gz": "b4d09454728681625f32502bb415833bf587000388009a82061209f6bfadad8d",
+    "summary.json": "fdd80792e91b06291b791591c613e1edd25570d825bd3a315cc0d2a586a8e9bf",
+    "verify.py": "2adc89c638c795c62579cb19faa19d257c801af083935371b7eb122fbcc15b31"
+  },
+  "scope": "Historical compiled owner stages on supplied adapter packets; no proof admission, strict all-depth replay, full tactic timing or completion of #10358 is inferred."
+}

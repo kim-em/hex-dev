@@ -1,0 +1,21 @@
+# Bounded selected-source construction
+
+`SourceBuild.buildOn` uses the existing `Descriptor.build` on supplied open endpoints with no derivative queries. The owner checks endpoint guards, squarefreeness and exactly one root. The adapter then produces the same independent equation and original enclosure packets as `SourceBuild.select`. Internal production failures and invalid/absent/ambiguous descriptors have distinct errors. It never retries all-real enumeration.
+
+Native controls construct both quadratic conjugates and a cubic root, compare all 25,477 canonical bytes with frozen constructor data, and separately validate six scalar graphs. They reject a root at an endpoint, equal/reversed endpoints, repeated/zero/constant input, an absent or ambiguous root, and zero/wrong-conjugate source windows. Generator freshness includes both this fixture and the earlier all-real fixture, whose generated modules are unchanged.
+
+The separate proof module restores the literal descriptors and packets without native producers and identifies the original positive square-root alias, selected negative quadratic embedding and positive cubic-power alias. It still consumes the supplied rational model, source alias selection and coefficient-map laws. Its three requests charge 687,781/690,200/731,070 proof nodes under the unchanged one-million-node default. Final driver proof checks and exports are outside those counts. A request with limit 687,780 refuses and restores caller metavariables and the entire declaration list.
+
+The fresh importing audit rechecks 392 theorem bodies/449 definitions/811 nonempty traces, with standard-three axiom closure and the existing source-fixture and producer exclusions. The shared producer guard additionally rejects `SourceBuild.buildOn` by a literal name; it adds no producer import. A native test resolves the actual declaration and checks that the guard contains it.
+
+The initial default-budget quotation module built in 49 seconds. Its combined native/proof/fresh-audit build passed in 82.936 seconds, peak 1.9 GiB/no swap; the later below-budget control and pinned-audit build passed in 84.397 seconds, peak 1.1 GiB/no swap. The earlier scratch probe used an explicit 24M test ceiling but consumed the same three inner node counts; its completed inputs/logs are retained separately. These are fixed-input observations answering the descriptor-shape quotation question. They are not matched timing comparisons, executable benchmarks or scaling claims.
+
+The final 57-target integration passed: 14,498 jobs with cached dependencies reused, 27min17.001s, peak 11 GiB/no swap. Rational/handler compatibility, both proof-only import guards, the earlier enumerated-source proofs and the full original-source quotation/audit remain green. The latter retains 8,651,669 nodes and 1,193 theorems/202 definitions/1,353 nonempty traces. Eight metadata checks pass.
+
+Only the manual timing wording changed after that integration. The record binds its original source and exact patch. The final full manual rebuild/render passed in 2min42.229s, peak 2.7 GiB/no swap. Browser validation passed in 10.447s, peak 3 GiB/no swap. All six desktop 1440px/narrow 390px captures were actually viewed; changed-target local overflow is zero. Existing global page scrolling is outside this claim.
+
+A scratch-directory setup command failed before editing the manual. Its incidental first render was explicitly stopped after 10.625 seconds (SIGTERM), not counted as passing. The repaired command uses an absolute source path and stops on setup errors. The stopped log is retained separately from the final successful render.
+
+All own Lean/Lake/browser invocations remain serial under aggregate 32 GiB, zero swap and two Lean threads. The exact Lake exemption adds only seven conformance-module registrations. Existing factorization measurements and earlier evidence pins are unchanged.
+
+This is a bounded source proposal API, not generic source-history reconstruction, complete frozen cell coverage or a complete algebraic tactic. Full #10358, its existing owner gates, required fresh Opus review and final CI/merge remain separate obligations. The issue stays open and partial delivery uses Refs.

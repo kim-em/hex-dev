@@ -61,7 +61,7 @@ run_meta do
         Hex.RCF.SelectedRootTests.KernelCheck.addChecked
           (← mkFreshUserName `__rationalQuoteValue) statement (← mkEqRefl declaration.value)
       | _ => pure ()
-  unless checked == 192 do
+  unless checked == 208 do
     throwError "rational quotation body coverage changed: {checked}"
   logInfo m!"generic rational quotation: {checked} actual theorem bodies under kernel producer diagnostics; complete axiom closure {axioms}"
 

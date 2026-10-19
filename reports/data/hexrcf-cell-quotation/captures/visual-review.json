@@ -1,0 +1,132 @@
+{
+  "captures": [
+    {
+      "path": "captures/cell-quotation-final-desktop-types.png",
+      "sha256": "128c1b65e9f8d1b61083d169a4e9a73fc0b95616c0c9337f3beb94f01e422725",
+      "viewed": true,
+      "label": "desktop",
+      "kind": "types"
+    },
+    {
+      "path": "captures/cell-quotation-final-desktop-callbacks.png",
+      "sha256": "eabd9bf9dea1b6c880770a66f07dbd2a3fb55335be04782aae7b49a2ff93cf86",
+      "viewed": true,
+      "label": "desktop",
+      "kind": "callbacks"
+    },
+    {
+      "path": "captures/cell-quotation-final-desktop-packet.png",
+      "sha256": "6b93e33f1a17a0c4d38b279054b78674142746a593158f15d6edb1321f215661",
+      "viewed": true,
+      "label": "desktop",
+      "kind": "packet"
+    },
+    {
+      "path": "captures/cell-quotation-final-desktop-stages.png",
+      "sha256": "4d937753e7ebdf57e51daa4115e6112c71382621bbc825fcb281aaa5c300b193",
+      "viewed": true,
+      "label": "desktop",
+      "kind": "stages"
+    },
+    {
+      "path": "captures/cell-quotation-final-desktop-packetcode.png",
+      "sha256": "414725e76c6db02124bf4f2ec3743e475b359a63c70ae8246662955c45af917e",
+      "viewed": true,
+      "label": "desktop",
+      "kind": "packetcode"
+    },
+    {
+      "path": "captures/cell-quotation-final-desktop-trace.png",
+      "sha256": "3516831b9b064b3c834e6a49b8e169b20d5b12cbdeb5bb26e01ddd4cb6379d2f",
+      "viewed": true,
+      "label": "desktop",
+      "kind": "trace"
+    },
+    {
+      "path": "captures/cell-quotation-final-desktop-example.png",
+      "sha256": "552b37904949cefe08409edc2b63913b695a6f8e5b9a74a7e8eaf9f31c772dcd",
+      "viewed": true,
+      "label": "desktop",
+      "kind": "example"
+    },
+    {
+      "path": "captures/cell-quotation-final-desktop-measurements.png",
+      "sha256": "34101717a3a696b27ae06d27f889e6982ae706982715c5391cfbf3e122f73e35",
+      "viewed": true,
+      "label": "desktop",
+      "kind": "measurements"
+    },
+    {
+      "path": "captures/cell-quotation-final-desktop-audit.png",
+      "sha256": "dfe4f6029222721cbbb25b5f261eb2de49419dff1f4922af0dc9aa4919865af8",
+      "viewed": true,
+      "label": "desktop",
+      "kind": "audit"
+    },
+    {
+      "path": "captures/cell-quotation-final-narrow-types.png",
+      "sha256": "ff79fd66fc837a20ee19cf66a13c07790f919692044d321bf6ede81d07e4e672",
+      "viewed": true,
+      "label": "narrow",
+      "kind": "types"
+    },
+    {
+      "path": "captures/cell-quotation-final-narrow-callbacks.png",
+      "sha256": "f2f69f992ab6bb3a74b9ff9b99049dbfbf090cc29d9aa6ed20df7ba0d2c6d651",
+      "viewed": true,
+      "label": "narrow",
+      "kind": "callbacks"
+    },
+    {
+      "path": "captures/cell-quotation-final-narrow-packet.png",
+      "sha256": "f8e18b277e1444b36abf3e1ff757f915b041b1f1f929d674047b795fafd810ff",
+      "viewed": true,
+      "label": "narrow",
+      "kind": "packet"
+    },
+    {
+      "path": "captures/cell-quotation-final-narrow-stages.png",
+      "sha256": "e0cee942f046d8b423dfa8cb19c96a9506960eb93aedad2fae5b982cfcdbb9dd",
+      "viewed": true,
+      "label": "narrow",
+      "kind": "stages"
+    },
+    {
+      "path": "captures/cell-quotation-final-narrow-packetcode.png",
+      "sha256": "aba6306665908882af24c3cddc316b022178c393e623896f4d29e249ebbf4f91",
+      "viewed": true,
+      "label": "narrow",
+      "kind": "packetcode"
+    },
+    {
+      "path": "captures/cell-quotation-final-narrow-trace.png",
+      "sha256": "b10f12bd275a6d13897e5ea0ea79e90db23c2d578b61480b2a4e8aee1fe79784",
+      "viewed": true,
+      "label": "narrow",
+      "kind": "trace"
+    },
+    {
+      "path": "captures/cell-quotation-final-narrow-example.png",
+      "sha256": "2c34aafe9e2a9998966f03acbb5284b890035a047452135ea1b4261815c6f705",
+      "viewed": true,
+      "label": "narrow",
+      "kind": "example"
+    },
+    {
+      "path": "captures/cell-quotation-final-narrow-measurements.png",
+      "sha256": "f3c0bf9bacc023a27242960fe11f917c50b9fa38ae2ee956d03a8f50d9bdfad0",
+      "viewed": true,
+      "label": "narrow",
+      "kind": "measurements"
+    },
+    {
+      "path": "captures/cell-quotation-final-narrow-audit.png",
+      "sha256": "a0c074882fb69ba4bd9d726fbd68906dea04a9992a247bd3d703300f85c63c62",
+      "viewed": true,
+      "label": "narrow",
+      "kind": "audit"
+    }
+  ],
+  "changed_targets_overflow": false,
+  "notes": "All18finalimagesactuallyviewed. Correctednewhelperlinewrapfits390px; narrowheight1800allowsfullcallbackparagraphandcounts. Pre-existingpage/sectionoverflowrecordedseparately; no claimglobalpageoverflowfixed."
+}

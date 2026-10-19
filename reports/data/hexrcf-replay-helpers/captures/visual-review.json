@@ -1,0 +1,67 @@
+{
+  "reviewed_at": "2026-10-18T10:35:47.056061+00:00",
+  "scope": "Five changed paragraphs at1440/390px; whole section overflow recorded separately",
+  "finding": "All ten actually viewed; changed text legible and no target overflow. Existing page overflow is separate.",
+  "captures": [
+    {
+      "path": "captures/replay-helper-quotation-desktop-types.png",
+      "sha256": "ffa6a7a78f3919af21ed36f3f655aa4d47b4e6fbe06fce47ee405b7c261ff78b",
+      "viewed": true,
+      "local_overflow": 0
+    },
+    {
+      "path": "captures/replay-helper-quotation-desktop-controls.png",
+      "sha256": "aa72d6b48ff84c92466d48062f75e2fefe46c387164ec516660f82097743ca40",
+      "viewed": true,
+      "local_overflow": 0
+    },
+    {
+      "path": "captures/replay-helper-quotation-desktop-budgets.png",
+      "sha256": "32207b88167c41c6461854e15a80ede4a22e40c48d210a75385a67c3a4ba9131",
+      "viewed": true,
+      "local_overflow": 0
+    },
+    {
+      "path": "captures/replay-helper-quotation-desktop-recursive.png",
+      "sha256": "ecf9aba19d99c2c693a4508f1121a2b6f4a8a91908ea2d719da013587df4fc5a",
+      "viewed": true,
+      "local_overflow": 0
+    },
+    {
+      "path": "captures/replay-helper-quotation-desktop-packet.png",
+      "sha256": "610cecfcb8e84bfe0648544819fd626497040ce0573543cf8f8f9e2a03dad8be",
+      "viewed": true,
+      "local_overflow": 0
+    },
+    {
+      "path": "captures/replay-helper-quotation-narrow-types.png",
+      "sha256": "e3682b54109d925ee53d86838128d0251c997fc2ee02b777ae3673e4837888d7",
+      "viewed": true,
+      "local_overflow": 0
+    },
+    {
+      "path": "captures/replay-helper-quotation-narrow-controls.png",
+      "sha256": "6caa0b1919e7a438a55b34bc46c9cbea6756bb8d38a78586f524fb958615e06b",
+      "viewed": true,
+      "local_overflow": 0
+    },
+    {
+      "path": "captures/replay-helper-quotation-narrow-budgets.png",
+      "sha256": "75ea4b8d1c1c9dd74dc695b205d81993302927e3ac84a3f71ebc8c600daf6645",
+      "viewed": true,
+      "local_overflow": 0
+    },
+    {
+      "path": "captures/replay-helper-quotation-narrow-recursive.png",
+      "sha256": "34b21a67f07dddcbfbd1490f86b1fa504519f4098700e8f8256a72c9afaf3539",
+      "viewed": true,
+      "local_overflow": 0
+    },
+    {
+      "path": "captures/replay-helper-quotation-narrow-packet.png",
+      "sha256": "321a805ffab264558648bef62e434641bf4219f4040eeb6a0bc8ca44be932dde",
+      "viewed": true,
+      "local_overflow": 0
+    }
+  ]
+}

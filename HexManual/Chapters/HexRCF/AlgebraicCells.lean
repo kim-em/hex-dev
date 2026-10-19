@@ -14,7 +14,12 @@ import HexRCF.RealCoefficients.AlgebraicPreparation
 import HexRCF.RealCoefficients.CellOperations
 import HexRCF.RealCoefficients.RealModel
 import HexRCF.RealCoefficients.SourceIdentity
+import HexRCF.RealCoefficients.SourceBuild
+import HexRCF.RealCoefficients.TowerCompile
 import HexRCF.RealCoefficients.CellQuote
+import HexRCF.CellQuoteStages
+import HexRCF.CellSourceQuote
+import HexRCF.SourceIdentityPacket
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -570,6 +575,146 @@ bodies with only the standard three axioms, excluding the older fixture
 acceptance and source theorems. This uses a fixed retained field and finite
 coefficient codec; it does not reconstruct arbitrary frozen histories.
 
+{name Hex.RCF.RealCoefficients.CellQuote.replayWith}`CellQuote.replayWith`
+quotes a supplied `CellOperations.check` expression in three stages. It first
+checks the complete root table, then each dependent section and sector record,
+then the strict Boolean and quantifier fold. Checked data definitions retain
+the exact root and cell indices between stages. Pointwise reader equations
+compose through `CellRead.collectWith_eq` and `CellOperations.readCells_of_parts`;
+quotation does not normalize the complete finite collector as one expression.
+{name Hex.RCF.RealCoefficients.CellOperations.check_of_parts}`CellOperations.check_of_parts`
+composes their equations at the original packet. All three stages and their
+decoder callbacks consume one reflection budget:
+
+```lean
+open Lean Hex.RealFormula
+open Hex.Reflect
+open Hex.RCF.RealCoefficients
+meta def quoteCellPacket
+    (program : Expr)
+    (decode : RootQuote.DecoderM)
+    (config : Reify.Config)
+    (used : BudgetUsage) :=
+  RootQuote.runWith
+    (CellQuote.replayWith
+      program decode)
+    config used
+```
+
+`set_option trace.Hex.RCF.CellQuote true` reports reader and finite-family
+boundaries with cumulative proof-node usage. Lean heartbeats remain a separate
+elaboration limit.
+
+{name Hex.RCF.RealCoefficients.CellQuote.finishPacketWith}`CellQuote.finishPacketWith`
+continues this request through the original source proof. It consumes the
+prepared source and the accepted canonical checker, model, coefficient identity
+and ordered divisor identities. The source record is checked again: its original
+target, divisor inventory and ordinary-kernel equivalence must match. This avoids
+starting another reification budget. Invoke quotation and finishing inside the
+same `RootQuote.runWith` transaction, seeded with source preparation's usage;
+the final usage then includes both stages. A finishing failure restores the
+whole attempt, including declarations produced while quoting the packet.
+
+The separate finishing action can also continue already recorded usage:
+
+```lean
+open Lean Hex.RealFormula
+open Hex.Reflect
+open Hex.RCF.RealCoefficients
+meta def finishCellPacket
+    (source : Reify.Source)
+    (target checker accepted : Expr)
+    (model identity : Expr)
+    (guards : Array Expr)
+    (config : Reify.Config)
+    (used : BudgetUsage) :=
+  RootQuote.runWith
+    (CellQuote.finishPacketWith source
+      target checker accepted model
+      identity guards)
+    config used
+```
+
+That separate transaction rolls back its own work. Clients needing rollback
+of quotation as well must combine both actions in one transaction. Conformance
+checks exact and one-node-below cumulative limits, exhaustion of the continued
+source budget, tampered source records and wrong goal proofs.
+
+Within this request, row quotation parses each literal sign packet and checks
+its exact ordered queries. It validates a graph once for each distinct set of
+arithmetic operations, sign function, context, polynomial, endpoints and graph
+data. The owner's `SelectedSigns.ofMemo?` extracts each root's row from that
+checked graph; `Dag.selectedSigns_memo` identifies it with the original reader.
+Every reused equation is kernel checked against the new reader. The cache is
+local to one quotation attempt, and every visit consumes the shared budget.
+`set_option trace.Hex.RCF.RowQuote true` reports validations and reuse. Supplied
+arithmetic operations remain attached to the descriptor, including operations
+that are proved equal to canonical arithmetic rather than definitionally equal.
+
+The returned equation retains both Boolean verdicts. `CellQuote.finishPacket`
+performs source authentication separately and requires an accepted true result.
+The constant example uses independently read literal root and cell packets:
+
+```lean
+example : ∀ _x : ℝ, (0 : ℝ) = 0 :=
+  Hex.RCF.CellQuoteStages.source
+```
+
+Its replay quotation uses 441,039 nodes for true and 441,041 for false. These
+counts cover the three replay stages, separately from source reification and
+interpretation. Exact and one-node-below limits, wrong-goal proposals,
+malformed cells, original zero-divisor preflight, terminal callback failures
+and full caller-state restoration are checked.
+
+A separate rational quadratic packet checks two root sections and three
+sectors in 5,911,125 proof nodes. Its trace records two graph-memo reuses and
+seven independent validations. These are charged quotation counts, rather
+than a timing comparison or a measurement of physical sharing. The test supplies
+16M proof nodes and a separate 24M heartbeat allowance. Compiled replay and
+general algebraic quotation costs need separate evidence.
+
+A fresh importing audit checks 1,247 theorem bodies and 101 definitions, with
+1,298 nonempty kernel traces, the unchanged producer guard and only the
+standard three axioms. It excludes older fixture acceptance proofs. The
+constant example establishes source quotation; the quadratic packet adds
+replay coverage with multiple roots. General coefficient and history assembly
+remain separate obligations.
+
+The algebraic source regression independently reads the complete frozen packet
+over the retained positive square root of 2. It reifies the following original
+sentence, authenticates its fixed coefficient from the descriptor and two
+scalar packets inside the same request, reconstructs the coefficient polynomial
+and composes the checked cell verdict with the original source. The prepared
+coefficient inventory passes through `TowerCompile.prepareWith`, and
+`CellQuote.valuationWith` assembles its checked scalar identities for finishing:
+
+```lean
+example : ∃ x : ℝ,
+    x ^ 2 - Real.sqrt 2 ≥ 0 ∧
+    x ^ 2 - Real.sqrt 2 ≤ 0 ∧
+    (0 : ℝ) = 0 :=
+  Hex.RCF.CellSourceQuote.source
+```
+
+The shared reification and quotation budget records 9,330,130 proof nodes
+before source finishing and 9,337,057 for the complete original-source attempt.
+Source authentication, cell replay and finishing run in one transaction. The test supplies 24M proof nodes and
+60M heartbeats. Its trace records two memo reuses and seven validations.
+Lake reports 793 seconds for this source module on the recorded shared host;
+this remains an expensive fixed-input proof build. These observations do not
+measure compiled replay or establish a general tactic running time.
+
+Its importing proof audit checks 1,192 theorem bodies, 202 definitions and
+1,352 nonempty kernel traces. It excludes the older complete-packet acceptance
+and source proofs, the handwritten coefficient identity and the separately
+proved source-selection/coefficient identities. It checks transitive
+axiom dependencies, and rejects native
+producer and canonical-codec reduction. The fixed
+selected parent, original alias/coefficient-map laws and checked arithmetic
+seed facts are supplied inputs. This example does not construct arbitrary
+predecessor histories or install a
+general source-to-certificate tactic backend.
+
 For a closed retained base/root context, `RealModel.build` constructs its
 ordinary-real interpretation from a caller-supplied real base model and each
 root's actual descriptor, frame and encoding proof. It checks every prefix's
@@ -591,6 +736,295 @@ uses independently replayed equation and margin packets for the retained √2
 coordinate, with a separate ordinary-kernel body audit. These are source
 interpretation lemmas and a fixed-input example; general frozen source-history
 reconstruction still needs its own checked assembly.
+
+{name Hex.RCF.RealCoefficients.SourceIdentity.quoteWith}`SourceIdentity.quoteWith`
+constructs this identity from two supplied scalar readers. Its `Anchor` retains
+the original polynomial, isolating square, witness, precision and selected-value
+proof. Its `Packets` supplies the equation and enclosure readers and proofs
+binding their polynomial keys to the intended real polynomials. The readers
+carry the ordinary-real model. Both facts must belong to the same selected
+context: one sign is zero and the square margin is strictly positive.
+
+```lean
+open Lean Hex.RealFormula
+open Hex.Reflect
+open Hex.RCF.RealCoefficients
+meta def quoteSourceIdentity
+    (anchor : SourceIdentity.Anchor)
+    (packets : SourceIdentity.Packets)
+    (context same : Expr)
+    (decode : RootQuote.DecoderM)
+    (config : Reify.Config)
+    (used : BudgetUsage) :=
+  RootQuote.runWith (do
+    let selected ←
+      SourceIdentity.quoteWith
+        anchor packets context same
+        decode
+    pure ⟨anchor.value, selected.proof,
+      selected.usage⟩)
+    config used
+```
+
+The result proves that the reader's selected real root equals the original
+anchor value. Quotation checks both packets, their keys, signs, supplied value
+laws and the final original-source equality. The caller supplies the prepared
+context and its checked equality. All work shares the enclosing reflection
+budget and transaction. This authenticates a supplied selected source; it does
+not construct an arbitrary predecessor history or run missing root/sign searches.
+
+{name Hex.RCF.RealCoefficients.SourceIdentity.restorePacketWith}`restorePacketWith`
+also performs descriptor/header quotation and context preparation from the
+literal `Packet` and exact parent/model. It returns the checked header, prepared
+context and source identity together. The header's reader equation can bind an
+existing stored coefficient to this same root. The compact
+{name Hex.RCF.RealCoefficients.SourceIdentity.quotePacketWith}`quotePacketWith`
+returns only the source identity. Both share the enclosing request's budget;
+neither discovers a predecessor history or supplies an original alias proof.
+
+```lean
+open Lean Hex.RealFormula
+open Hex.Reflect
+open Hex.RCF.RealCoefficients
+meta def quoteSourcePacket
+    (anchor : SourceIdentity.Anchor)
+    (packet : SourceIdentity.Packet)
+    (parent model : Expr)
+    (decode : RootQuote.DecoderM)
+    (config : Reify.Config)
+    (used : BudgetUsage) :=
+  RootQuote.runWith (do
+    let restored ←
+      SourceIdentity.restorePacketWith
+        anchor packet parent model decode
+    pure ⟨anchor.value,
+      restored.identity.proof,
+      restored.identity.usage⟩)
+    config used
+```
+
+The frozen square-root regression quotes its parent descriptor and both
+packets in 673,461 proof nodes. This is a separate identity check; the complete
+algebraic source example above authenticates its coefficient within its own
+request. A separate negative-window packet has an
+accepted literal reader and sign −1; it cannot identify the positive native
+root with the negative selected conjugate. Wrong coefficient proofs and
+one-node-below exhaustion also restore the complete caller state. The dedicated
+fresh audit checks 218 theorem bodies, 179 definitions and 385 nonempty kernel
+traces, excludes the handwritten source identities and native fact fixtures,
+and retains the producer guard and complete standard-three axiom closure.
+
+After source authentication,
+{name Hex.RCF.RealCoefficients.TowerCompile.compile}`TowerCompile.compile`
+composes arithmetic from checked leaves in a retained ordinary-real tower
+model. It uses that context's total stored operations and their interpretation
+laws, including a repeated product for natural powers. A leaf supplies a stored
+expression and a proof of its exact original real value; a proof for another
+source or context is rejected. Rational literals and casts use bounded rational
+normalization. This does not install a field instance on stored expressions.
+
+```lean
+open Lean Hex.RealFormula Hex.Reflect
+open Hex.RealFormula.Reify
+open Hex.RCF.RealCoefficients
+meta def quoteTowerArithmetic
+    (model source : Expr)
+    (leaf : Expr → ReifyM
+      (Option TowerCompile.Term))
+    (config : Reify.Config)
+    (used : BudgetUsage) :=
+  RootQuote.runWith (do
+    let term ←
+      TowerCompile.compile
+        model leaf source
+    pure ⟨term.expression, term.proof,
+      (← get).budget.consumed⟩)
+    config used
+```
+
+The returned proof identifies the model's value of the stored expression with
+the source. For an existing prepared sentence,
+{name Hex.RCF.RealCoefficients.TowerCompile.prepareWith}`prepareWith` compiles
+both ordered inventories: coefficients first and original divisors separately.
+The enclosing request must continue the source preparation's recorded usage;
+resetting that accounting or lowering a limit below prior usage is rejected.
+Every original divisor is retained,
+including one under zero multiplication. Compiling its arithmetic does not
+prove it nonzero or accept the sentence. A declining leaf restores its
+metavariables and declarations before arithmetic continues; terminal failure
+and exhaustion use the enclosing transaction's rollback.
+
+Nine source checks include a rational cast, the selected √2, compound division,
+inversion and natural powers. They use 247–2,284 charged proof nodes. A fresh
+module rechecks 36 actual theorem bodies, including private generated proofs,
+with 35 nonempty kernel traces and the standard three axioms. The selected leaf
+identity and real parent model remain supplied. This arithmetic interface does
+not discover arbitrary source roots, assemble frozen histories or establish
+complete certificate acceptance.
+
+{name Hex.RCF.RealCoefficients.CellQuote.valuationWith}`CellQuote.valuationWith`
+assembles ordered scalar identities into equality of the entire source
+valuation for a supplied native coordinate function. Coordinate and proof
+counts must match the source; every finite branch is checked in the ordinary
+kernel. Closed inputs and empty coefficient families are supported. Swapped
+coordinates or proofs, missing entries, a wrong coordinate count and unresolved
+coordinate metavariables are rejected. Rejection restores the enclosing
+transaction's declarations and metavariables.
+
+```lean
+open Lean Hex.RealFormula Hex.Reflect
+open Hex.RealFormula.Reify
+open Hex.RCF.RealCoefficients
+meta def quoteSourceValuation
+    (source : Reify.Source)
+    (model values : Expr)
+    (identities : Array Expr)
+    (config : Reify.Config)
+    (used : BudgetUsage) :=
+  RootQuote.runWith (do
+    let proof ← CellQuote.valuationWith
+      source model values identities
+    pure ⟨values, proof,
+      (← get).budget.consumed⟩)
+    config used
+```
+
+The supplied usage continues the enclosing preparation and quotation work;
+the complete source example assembles this identity in its existing request.
+
+The zero-, one- and two-coordinate conformance requests consume 7,590, 11,174
+and 16,484 charged nodes, including source preparation, arithmetic and finite
+coordinate-function construction. Their fresh importing audit rechecks 14
+actual theorem bodies with 13 nonempty traces and exactly the standard three
+axioms. Original divisor identities remain separate obligations for source
+finishing; a valuation equality alone does not establish them.
+
+The native producer {name Hex.RCF.RealCoefficients.SourceBuild.build}`SourceBuild.build`
+can discover a selected source from its defining polynomial and a window
+polynomial whose sign is positive at exactly one of its real roots. For an
+isolating square, use `SourceIdentity.margin` as that window. The producer
+enumerates roots with the existing family algorithm, visits every candidate,
+and proposes the equation and window packets for the unique positive match.
+Two matches produce `ambiguous`; no match produces `unselected`. A failed
+equation or enclosure calculation remains an error.
+
+This direct API example proposes the positive root of X²−2, using its checked
+source square:
+
+```lean
+open Hex Hex.RealClosure
+open Hex.RCF.RealCoefficients
+
+def proposeSquareRoot
+    (registry :
+      BaseContext.Registry) :=
+  Id.run do
+    let parent :=
+      RealClosure.NumberField.base
+        registry
+    let polynomial : parent.Poly :=
+      DensePoly.ofCoeffs
+        #[⟨-2⟩, ⟨0⟩, ⟨1⟩]
+    let margin :=
+      SourceIdentity.margin
+        SquareTwo.square
+    let window : parent.Poly :=
+      DensePoly.ofCoeffs
+        (margin.coeffs.map
+          fun coefficient => ⟨coefficient⟩)
+    return SourceBuild.build
+      polynomial window
+
+#eval
+  let proposal :=
+    proposeSquareRoot
+      (fun _ => none)
+  proposal.toOption.isSome
+```
+
+The output reports proposal production. Independent frozen replay establishes
+the selected real identity. `ScalarPacket.buildParts` retains the proposed
+polynomial, sign and graph separately; its `packet` method preserves the
+existing three-field scalar format. `SourceIdentity.quoteWith` checks those
+fields at the exact restored descriptor and original source alias.
+
+`ScalarPacket.buildParts_success` and `build_success` prove actual packet
+production for every query at a validated descriptor with a lawful ordinary-real
+parent model. They consume the owner's selected-sign production theorem,
+without assuming a successful table or producer result. Acceptance of the
+frozen serialized packet remains a separate obligation.
+
+The [enumerated-source controls](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/SourceBuild.lean)
+produce both quadratic conjugates and a positive cubic root from X³−2, compare
+their complete bytes with frozen constructor literals, and independently
+validate all six scalar graphs. They also reject an ambiguous window, empty
+and zero windows, a wrong source equation and duplicate roots. The separate
+[ordinary quotation](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/EnumeratedSource/Quote.lean)
+identifies these roots from the frozen descriptors and packets, with the
+rational model, alias selection and coefficient-map laws supplied. Its three
+quotation requests charge 6,371,355, 6,442,217 and 8,127,841 proof nodes
+respectively; the separate final driver checks and exports are outside those
+counts. The combined build
+took 624 seconds and peaked at 2.2 GiB on the shared host. These costs describe
+three fixed proof constructions. General predecessor-history assembly and
+automatic source discovery from a tactic goal remain separate work.
+
+When a source already supplies an isolating square, a bounded proposal avoids
+constructing all real roots and their derivative words. The existing
+{name Hex.RCF.RealCoefficients.SourceBuild.buildOn}`SourceBuild.buildOn`
+checks an open interval with root-free endpoints and exactly one root, then
+still produces the equation and original square-margin packets. It rejects
+invalid endpoints, absent or ambiguous roots; it does not retry enumeration.
+For this rational source, twice the square's half-width supplies candidate
+endpoints. The checked count and subsequent source identity establish their
+meaning; the producer assumes no unchecked interval-isolation claim.
+
+```lean
+def proposeBoundedRoot
+    (registry :
+      BaseContext.Registry) :=
+  Id.run do
+    let parent :=
+      RealClosure.NumberField.base
+        registry
+    let square := SquareTwo.square
+    let embed (x : Rat) :
+        parent.Value := ⟨x⟩
+    let polynomial :=
+      DensePoly.ofCoeffs
+        #[embed (-2), embed 0, embed 1]
+    let margin :=
+      SourceIdentity.margin square
+    let window :=
+      DensePoly.ofCoeffs
+        (margin.coeffs.map embed)
+    let center := square.re.toRat
+    let radius :=
+      2 * square.halfWidth.toRat
+    return SourceBuild.buildOn
+      polynomial window
+      (.finite (embed (center-radius)))
+      (.finite (embed (center+radius)))
+
+#eval
+  let proposal :=
+    proposeBoundedRoot
+      (fun _ => none)
+  proposal.toOption.isSome
+```
+
+The [bounded-source controls](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/BoundedSource.lean)
+produce both quadratic conjugates and the cubic source, retaining 25,477
+canonical bytes. Separate ordinary-kernel quotation authenticates their
+original identities at 687,781, 690,200 and 731,070 charged proof nodes,
+respectively, with the unchanged one-million-node default. Final driver checks
+and exports are outside these counts. The first default-budget quotation
+module built in 49 seconds. The combined native/proof/fresh-audit build took
+83 seconds and peaked at 1.9 GiB. These fixed observations are not a matched
+timing comparison. The source alias, rational model and coefficient-map laws are
+still supplied. Bounded proposals do not discover a general predecessor
+history, prove complete cell coverage or complete the tactic's algebraic
+decision procedure.
 
 `CellQuote.finishOperations` takes the supplied-operation acceptance expression
 and an ordinary proof that its result is `some ()`. It kernel-checks that exact

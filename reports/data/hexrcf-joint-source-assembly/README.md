@@ -1,0 +1,7 @@
+# Source and complete-goal quotation in one request
+
+See [the report](../../hexrcf-joint-source-assembly.md). Run `python3 reports/data/hexrcf-joint-source-assembly/verify.py --check-head` for the current source binding, or omit the flag for the immutable implementation.
+
+The unchanged original existential now obtains its coefficient identity from descriptor/equation/window replay inside its own cumulative quotation transaction. The fresh importing audit rejects both older imported source identities and all previously forbidden fixtures/producers. No owner proof or native search implementation is copied. The compact source quotation API remains compatible.
+
+Failed elaboration snapshots and logs are retained. The first body audit completed the semantic/producer/body checks but rejected the old final inventory; its actual 1191/202/1351 inventory was then pinned without removing any guard. Final integration and the complete manual build/render, six visually inspected viewport captures and all repository checks are separate retained artifacts. Quote-three input hashes bind the original successful full-goal build; final hashes include the subsequently updated audit inventory and manual. No later source is claimed as that initial quote build. All builds are serial under the hard aggregate 32 GiB/no-swap cap and two Lean threads. These are build observations, not a new compiled timing study or full conformance sweep. Earlier records retain their original pins.

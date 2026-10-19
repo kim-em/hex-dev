@@ -1,0 +1,47 @@
+{
+  "captures": [
+    {
+      "path": "tree-quotation-desktop-introduction.png",
+      "sha256": "e14eddd5d867fad89d02e5446a2449d5b6dc590ed6cce18714edffb723b71e72",
+      "width": 1440,
+      "viewed": true,
+      "local_overflow": 0
+    },
+    {
+      "path": "tree-quotation-desktop-example.png",
+      "sha256": "77055808af48f0468545170d88727da1fc800e433bea0f1243a1ee620d4eb5c4",
+      "width": 1440,
+      "viewed": true,
+      "local_overflow": 0
+    },
+    {
+      "path": "tree-quotation-desktop-budget.png",
+      "sha256": "31e6733d875a80930267e620e737a79a76c07a52a6ed87409958078155ac74f1",
+      "width": 1440,
+      "viewed": true,
+      "local_overflow": 0
+    },
+    {
+      "path": "tree-quotation-narrow-introduction.png",
+      "sha256": "f1b87fd02a29468730ab8349c7e19cb9bf8dbb037e01f30b8701dea4e0319cd7",
+      "width": 390,
+      "viewed": true,
+      "local_overflow": 0
+    },
+    {
+      "path": "tree-quotation-narrow-example.png",
+      "sha256": "91ab3919fdacfd294b15862ed2ee189799a339604cdaef7f01f08bec0eaceec3",
+      "width": 390,
+      "viewed": true,
+      "local_overflow": 0
+    },
+    {
+      "path": "tree-quotation-narrow-budget.png",
+      "sha256": "47f26e3a6539e5a72d53eddf242352895c9a7519a9e4d17fa62b675a6e654893",
+      "width": 390,
+      "viewed": true,
+      "local_overflow": 0
+    }
+  ],
+  "scope": "All six actual final desktop1440/narrow390 images visually inspected. New paragraphs/code fit; existing page/section overflow recorded separately. Initial105px narrow-code overflow and its exact source/captures retained in tree-quotation-overflow-attempt-1."
+}

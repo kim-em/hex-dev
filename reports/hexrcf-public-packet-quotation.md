@@ -55,22 +55,23 @@ No kernel or producer guard is removed. A separate fresh importing audit
 checks 61 theorem bodies and four definitions for the actual-codec readers,
 with 56 nonempty traces. Its declared scope includes the source helper proofs
 and their generated private proofs; the axiom closure is fully transitive.
-The synthetic dependent-match audit checks 114 theorem bodies and 14 definitions,
-with 64 nonempty traces. Both retain the unchanged native-producer guard.
+The current synthetic dependent-match audit checks 145 theorem bodies and 16 definitions,
+with 88 nonempty traces, including functions with proof inputs and fresh public consumers.
+Both retain the unchanged native-producer guard. Earlier records retain their source-specific inventories.
 
 The coefficient consumer uses only the newly quoted packet fact for canonical
 decoding. It proves that the decoded value is the original selected real root
 and that it is positive, using the owner's sign interpretation. The exact
 reader equation, original context, polynomial and claimed sign remain bound.
-Its fresh importing audit rechecks 656 theorem bodies and 67 definitions in
-seven named modules, with 713 nonempty diagnostic traces and the complete
+Its fresh importing audit rechecks 692 theorem bodies and 67 definitions in
+seven named modules, with 749 nonempty diagnostic traces and the complete
 standard-three axiom closure. The source explicitly lists that body scope;
 the axiom closure is transitive without that restriction. It rejects any
 dependency on the legacy fixed list of fixture facts.
 
 | Request | Charged proof nodes |
 | --- | ---: |
-| Public original scalar-packet reader | 861,536 |
+| Public original scalar-packet reader | 1,168,494 |
 | Canonical coefficient decode from its fact | 3,249 |
 | One dependent match | 1,036 |
 | Nested dependent matches | 2,196 |
@@ -80,10 +81,10 @@ dependency on the legacy fixed list of fixture facts.
 These counts charge checked syntax, including repeated occurrences. They are
 not unique DAG nodes or evidence of physical sharing.
 The additional universal equations also count toward existing requests. The
-legacy parent-plus-packet regression now charges 73,992 nodes, its standalone
-packet 44,385, and its separate coefficient decode 966. One node below the
-standalone budget exhausts at 44,362 plus a requested 23 nodes. Its fresh audit
-checks 89 theorem bodies and 11 definitions with 90 nonempty traces. Earlier
+legacy parent-plus-packet regression now charges 105,037 nodes, its standalone
+packet 69,973, and its separate coefficient decode 966. One node below the
+standalone budget exhausts at 69,950 plus a requested 23 nodes. Its fresh audit
+checks 96 theorem bodies and 11 definitions with 97 nonempty traces. Earlier
 source-bound reports retain their original counts and source revisions.
 
 The permanent controls cover one and nested dependent matches, full caller

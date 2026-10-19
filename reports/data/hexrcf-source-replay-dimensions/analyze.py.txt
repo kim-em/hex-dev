@@ -1,0 +1,57 @@
+from pathlib import Path
+import json,statistics,hashlib
+T=Path('/home/kim/.codex/tasks/hex-10358');D=T/'source-replay-matrix';R=T/'source-replay-samples-1';c=json.loads((R/'context.json').read_text())
+assert c['status']=='complete' and len(c['samples'])==440
+expected=[(b,r[0],a) for b in range(5) for r in c['cases'] for a in (c['arms'] if b%2==0 else list(reversed(c['arms'])))]
+assert [(s['block'],s['case'],s['arm']) for s in c['samples']]==expected
+values={}
+for s in c['samples']:
+ assert s['exit_code']==0
+ raw=json.loads((R/(s['stem']+'.json')).read_text());r=raw['results'][0]
+ assert r['expected_hash_check']['status']=='match' and r['hashes_agree']
+ assert len(r['points'])==1
+ p=r['points'][0];assert p['status']=='ok' and p['inner_repeats']>0
+ point={'block':s['block'],'nanoseconds':p['total_nanos']/p['inner_repeats'],'worker_rss_kib':p['peak_rss_kb'],'cli_rss_kib':s['max_rss_kib'],'stem':s['stem']}
+ values.setdefault((s['case'],s['arm']),[]).append(point)
+def integers(x):
+ if type(x)==int:yield x
+ elif isinstance(x,list):
+  for y in x:yield from integers(y)
+summary=[]
+for case in c['cases']:
+ name,axis,parameter,degree,atoms,bits,precision,depth,nbytes,unique,expanded=case
+ packet=(D/(name+'.json')).read_bytes();assert hashlib.sha256(packet).hexdigest()==c['input_sha256'][name]
+ wire=json.loads(packet);max_wire_bits=max(abs(x).bit_length() for x in integers(wire))
+ nodes=[entry[0] for entry in wire[3][2]]
+ inventory={'wire_integer_tokens':sum(1 for _ in integers(wire)),
+  'row_system_sizes':[node[5] for node in nodes],
+  'row_ranks':[node[10][0] for node in nodes],
+  'row_moment_counts':[len(node[7]) for node in nodes],
+  'row_moment_json_bytes':sum(len(json.dumps(node[7],separators=(',',':')).encode()) for node in nodes)}
+ for arm in c['arms']:
+  points=values[(name,arm)];assert len(points)==5 and {p['block'] for p in points}==set(range(5))
+  times=[p['nanoseconds']/1000 for p in points]
+  summary.append({'case':name,'axis':axis,'parameter':parameter,'degree':degree,'atoms':atoms,'query_bits_parameter':bits,'precision':precision,'depth':depth,'bytes':nbytes,'row_unique_nodes':unique,'row_expanded_nodes':expanded,'max_wire_integer_bits':max_wire_bits,'arm':arm,'median_microseconds':statistics.median(times),'min_microseconds':min(times),'max_microseconds':max(times),'worker_rss_kib':[min(p['worker_rss_kib'] for p in points),max(p['worker_rss_kib'] for p in points)],'cli_rss_kib':[min(p['cli_rss_kib'] for p in points),max(p['cli_rss_kib'] for p in points)],'samples':points,**inventory})
+(T/'source-replay-summary.json').write_text(json.dumps(summary,indent=2)+'\n')
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+fig,axes=plt.subplots(2,3,figsize=(14,8),layout='constrained')
+labels={'degree':'Defining degree','atoms':'Ordered distinct query count','bits':'Query denominator exponent','precision':'Dyadic interval precision','depth':'Predecessor tower depth'}
+for ax,(axis,label) in zip(axes.flat,labels.items()):
+ for arm in c['arms']:
+  rows=[r for r in summary if r['axis']==axis and r['arm']==arm]
+  x=[r['parameter'] for r in rows];y=[r['median_microseconds'] for r in rows]
+  ax.errorbar(x,y,yerr=[[r['median_microseconds']-r['min_microseconds'] for r in rows],[r['max_microseconds']-r['median_microseconds'] for r in rows]],marker='o',label=arm,capsize=3)
+ ax.set_xlabel(label);ax.set_ylabel('Microseconds per call');ax.set_yscale('log');ax.grid(alpha=.25)
+ax=axes.flat[5]
+for arm in c['arms']:
+ rows=[r for r in summary if r['case'] in ['atoms-4','repeated-4','common-2','repeated-roots-2'] and r['arm']==arm]
+ ax.errorbar([r['case'] for r in rows],[r['median_microseconds'] for r in rows],yerr=[[r['median_microseconds']-r['min_microseconds'] for r in rows],[r['max_microseconds']-r['median_microseconds'] for r in rows]],marker='o',label=arm,capsize=3)
+ax.tick_params(axis='x',rotation=20);ax.set_ylabel('Microseconds per call');ax.set_yscale('log');ax.grid(alpha=.25)
+handles,legend=axes.flat[0].get_legend_handles_labels();fig.legend(handles,legend,loc='outside lower center',ncols=4)
+fig.suptitle('Compiled cumulative owner stages on adapter-produced packets\nFive retained trials; median and range; preparation and proof work excluded')
+fig.savefig(T/'source-replay-scaling.png',dpi=170);fig.savefig(T/'source-replay-scaling.svg')
+print('Verified440samples/22cases/4arms; wrote summary and plots')
+for r in summary:
+ if r['axis'] in ['depth','atoms'] and r['arm']=='replayed':print(r['case'],round(r['median_microseconds'],3),'us','bytes',r['bytes'],'rowNodes',r['row_unique_nodes'],r['row_expanded_nodes'])

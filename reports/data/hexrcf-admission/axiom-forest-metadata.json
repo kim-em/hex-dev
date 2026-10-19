@@ -1,0 +1,61 @@
+[
+  {
+    "name": "copyright",
+    "command": [
+      "python3",
+      "scripts/check_copyright_headers.py"
+    ],
+    "log": "axiom-forest-metadata-copyright.log",
+    "exit_code": 0
+  },
+  {
+    "name": "lines",
+    "command": [
+      "python3",
+      "scripts/check_file_line_counts.py",
+      "--base",
+      "origin/main"
+    ],
+    "log": "axiom-forest-metadata-lines.log",
+    "exit_code": 0
+  },
+  {
+    "name": "dag",
+    "command": [
+      "python3",
+      "scripts/check_dag.py"
+    ],
+    "log": "axiom-forest-metadata-dag.log",
+    "exit_code": 0
+  },
+  {
+    "name": "admissions",
+    "command": [
+      "python3",
+      "scripts/ci/check_named_admissions.py"
+    ],
+    "log": "axiom-forest-metadata-admissions.log",
+    "exit_code": 0
+  },
+  {
+    "name": "diff",
+    "command": [
+      "git",
+      "diff",
+      "HEAD",
+      "--check"
+    ],
+    "log": "axiom-forest-metadata-diff.log",
+    "exit_code": 0
+  },
+  {
+    "name": "selected-admissions",
+    "log": "axiom-forest-metadata-selected-admissions.log",
+    "exit_code": 0
+  },
+  {
+    "name": "relative",
+    "log": "axiom-forest-metadata-relative.log",
+    "exit_code": 0
+  }
+]

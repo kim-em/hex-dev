@@ -1,0 +1,22 @@
+{
+  "base": "75713cb885d3c3705b06dcce8b19f6a7e8abac9d",
+  "scope": "Current source-build quote attempt3 and native controls. Snapshot after earlier failures; not claimed as exact inputs of those failed attempts.",
+  "sources": {
+    "adapters/HexRCF/RealCoefficients.lean": "6b9f9a7eaa6e98e30a1faae38252d8616a15595f86347abee0aa54c8fb2f2161",
+    "adapters/HexRCF/RealCoefficients/ScalarPacket.lean": "626fd139dafcb4c6f6a62dc5657e6ea0c46fff0f125a743cf67ed66ac5e2a241",
+    "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "37320035a142ffc494f52e6659f0e99cc7be3b284b506295ca4fb024e711fa8b",
+    "lakefile.lean": "1bd072fee1095ad6f5ce2f1d200a9670bc841910d2138d64d7abfe115ea43a9d",
+    "scripts/rcf/selected_literals.py": "31ff385f0949fb1ea709b5ba15d60e83b170117cd81346ffbd797f528c701f0f",
+    "adapters/HexRCF/RealCoefficients/SourceBuild.lean": "c347e21a41fddb3a4d5a00c97ae33e259206650b155b8c314b68992e948504d4",
+    "conformance-fixtures/HexRCF/enumerated-source.json": "82abcd6de9a7e51cc64c0e67c59ed2c6c099c90570cba17eea3459b149b2bb72",
+    "conformance/HexRCF/EnumeratedSource/Cubic.lean": "011464c56dc3ffc5a6bd1e62dc9ff8b35ac6d0e621beceb0336b69d8f626b78f",
+    "conformance/HexRCF/EnumeratedSource/CubicData0.lean": "79b971cb2816d7ee980c595199eedbfddfd7cdb62ea12bc71dfcb24d304f69da",
+    "conformance/HexRCF/EnumeratedSource/Inputs.lean": "23ae13a33e132ee7221c5fa353e71073fc05bd660dfc3ecf6620584b62b40306",
+    "conformance/HexRCF/EnumeratedSource/Negative.lean": "261fcd979ff77c772a28ecc89776b5771cec920fc4e58a0dfe2886aee43a58d7",
+    "conformance/HexRCF/EnumeratedSource/NegativeData0.lean": "c0700606f805664f89dd0106dfb5aebb5ab18949adbb30e5b71ffeb20bb4fdaf",
+    "conformance/HexRCF/EnumeratedSource/Positive.lean": "1382c958e53cdb8a04afd1e6d6f173fe697ba15a3321bf29c3e03059923c7181",
+    "conformance/HexRCF/EnumeratedSource/PositiveData0.lean": "41674140d15cf0136ca29b627f667b952355916b269ff7d2c14247ba2d21b3b1",
+    "conformance/HexRCF/EnumeratedSource/Quote.lean": "8987d21be058f777f0ba875e917fcda77892bced1029616804fabd57f4eb41d8",
+    "conformance/HexRCF/SourceBuild.lean": "2ec7f60f87ae56f4bd5a2c3275be87936ff0c884b3e945906d1a94225d036ebf"
+  }
+}

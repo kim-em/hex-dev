@@ -1,0 +1,79 @@
+[
+  {
+    "name": "copyright",
+    "argv": [
+      "python3",
+      "scripts/check_copyright_headers.py"
+    ],
+    "exit_code": 0,
+    "log": "scalar-acceptance-complete-metadata-copyright.log"
+  },
+  {
+    "name": "lines",
+    "argv": [
+      "python3",
+      "scripts/check_file_line_counts.py",
+      "--base",
+      "origin/main"
+    ],
+    "exit_code": 0,
+    "log": "scalar-acceptance-complete-metadata-lines.log"
+  },
+  {
+    "name": "dag",
+    "argv": [
+      "python3",
+      "scripts/check_dag.py"
+    ],
+    "exit_code": 0,
+    "log": "scalar-acceptance-complete-metadata-dag.log"
+  },
+  {
+    "name": "admissions",
+    "argv": [
+      "python3",
+      "scripts/ci/check_named_admissions.py"
+    ],
+    "exit_code": 0,
+    "log": "scalar-acceptance-complete-metadata-admissions.log"
+  },
+  {
+    "name": "manifest",
+    "argv": [
+      "python3",
+      "scripts/release/check_released_manifest.py"
+    ],
+    "exit_code": 0,
+    "log": "scalar-acceptance-complete-metadata-manifest.log"
+  },
+  {
+    "name": "freshness",
+    "argv": [
+      "python3",
+      "scripts/bench/check_factor_sweep_freshness.py"
+    ],
+    "exit_code": 0,
+    "log": "scalar-acceptance-complete-metadata-freshness.log"
+  },
+  {
+    "name": "literals",
+    "argv": [
+      "python3",
+      "scripts/rcf/selected_literals.py",
+      "--check"
+    ],
+    "exit_code": 0,
+    "log": "scalar-acceptance-complete-metadata-literals.log"
+  },
+  {
+    "name": "diff",
+    "argv": [
+      "git",
+      "diff",
+      "--cached",
+      "--check"
+    ],
+    "exit_code": 0,
+    "log": "scalar-acceptance-complete-metadata-diff.log"
+  }
+]

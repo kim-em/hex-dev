@@ -1,0 +1,12 @@
+{
+  "source_head": "1a666ea7c85d63cd9bc9372f78c8fdbbe1bf191d",
+  "original_sha256": "bea057fe5c9470d701e02974fbd6a83e945bbaba1225ca294830f54ef762f504",
+  "probe_sha256": "f3e9f93c0f1f1529a84a5c6befc8a2a087909f63271a86c327d3791de4491957",
+  "changes": [
+    "namespace only",
+    "profiler=true,threshold=100ms",
+    "profile existing complete RootQuote.runWith action"
+  ],
+  "question": "Does ordinary kernel candidate checking/goal agreement account for the observed 916s source quotation cost? Admission traversal is a hypothesis, not an established bottleneck.",
+  "limits": "One diagnostic only, bounded32GiB/swap0/two threads; unchanged proof guards and24Mnodes/60Mheartbeats. No matched speedup or scaling claim."
+}

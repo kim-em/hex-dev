@@ -1,0 +1,35 @@
+{
+  "captures": [
+    {
+      "path": "captures/cell-finish-final-desktop-api.png",
+      "sha256": "53f1da632393704ab511703bdeedc4257e0ba6d9dae7c05cf5c7c84afc2bb7d7",
+      "viewed": true
+    },
+    {
+      "path": "captures/cell-finish-final-desktop-apicode.png",
+      "sha256": "4afdb89cd688ea9799c4786c262383c041b87abf16361c4f4c22dd2186639f56",
+      "viewed": true
+    },
+    {
+      "path": "captures/cell-finish-final-desktop-source.png",
+      "sha256": "49a90a26418a4a20300dcfeb6b6c17acadbb03cd5baf3629e9c9990a2946045f",
+      "viewed": true
+    },
+    {
+      "path": "captures/cell-finish-final-narrow-api.png",
+      "sha256": "6f1b8513ed1ea0db2a3eeaf5152380ab8d07b049c7eb8fbe72d03199b04c8f94",
+      "viewed": true
+    },
+    {
+      "path": "captures/cell-finish-final-narrow-apicode.png",
+      "sha256": "ef021ded10d4b569cb33b4e8bce5c01f3eeee50fcda2293e7e9774c255db529d",
+      "viewed": true
+    },
+    {
+      "path": "captures/cell-finish-final-narrow-source.png",
+      "sha256": "4ba65599c8918f58db6df0c196eb5bd5cf8d79671927323da376133ae780de2a",
+      "viewed": true
+    }
+  ],
+  "finding": "All six final desktop/narrow captures actually inspected. Changed prose and source-finishing code are readable and locally contained. Existing unrelated page overflow is outside scope."
+}

@@ -1,0 +1,27 @@
+import AxiomForestChecks
+open Lean Meta
+namespace Hex.RCF.ForestCost
+run_meta do
+  withoutModifyingEnv do
+    let mut previous := mkNatLit 0
+    for _ in [:128] do
+      let value ← mkAppM ``Nat.add #[previous,mkNatLit 1]
+      previous ← mkAuxDefinition (mkPrivateName (← getEnv) (← mkFreshUserName `chain))
+        (mkConst ``Nat) value (compile := false)
+    let mut expression := mkNatLit 0
+    for i in [:8] do
+      let value ← mkAppM ``Nat.add #[previous,mkNatLit i]
+      let root ← mkAuxDefinition (mkPrivateName (← getEnv) (← mkFreshUserName `root))
+        (mkConst ``Nat) value (compile := false)
+      expression ← mkAppM ``Nat.add #[expression,root]
+    for trial in [:2] do
+      let order := if trial % 2 == 0 then #[false,true] else #[true,false]
+      for improved in order do
+        let start ← IO.monoNanosNow
+        for _ in [:10] do
+          if improved then Hex.RCF.checkAxioms `forestCost expression
+          else unless ← Hex.RCF.ForestProbe.reference expression do
+            throwError "reference guard unexpectedly refused"
+        let elapsed := (← IO.monoNanosNow)-start
+        logInfo m!"guard-forest trial={trial}; arm={if improved then "B" else "A"}; ns={elapsed}; repetitions=10; depth=128; roots=8"
+end Hex.RCF.ForestCost

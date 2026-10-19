@@ -1,0 +1,58 @@
+[
+  {
+    "label": "desktop",
+    "kind": "value",
+    "text": "\n                  The public regression constructs a new root and context from that result,\nquotes the sign packet for X, and decodes a coefficient using its fact. The\ncoefficient denotes the newly reconstructed root and is positive:",
+    "viewport": 1440,
+    "scrollY": 287897,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "CODE",
+    "targetWidth": 740,
+    "targetScrollWidth": 740,
+    "descendantOverflow": 0,
+    "overflowElements": []
+  },
+  {
+    "label": "desktop",
+    "kind": "boundary",
+    "text": "\n                  The default quotation rules recognize Signature.codec.decode applied to the\ncanonical encoding of its actual signature argument, using the existing public\nroundtrip law. This handles distinct signature subjects without a fixture\ncallback. It does not connect a separately frozen numerical signature to that\nencoding. The latter still requires the owner's public literal bridge. These\nhelpers consume supplied readers and histories; they do not discover an\narbitrary real source's selected embedding or install the general tactic.\n",
+    "viewport": 1440,
+    "scrollY": 288158,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752,
+    "descendantOverflow": 0,
+    "overflowElements": []
+  },
+  {
+    "label": "narrow",
+    "kind": "value",
+    "text": "\n                  The public regression constructs a new root and context from that result,\nquotes the sign packet for X, and decodes a coefficient using its fact. The\ncoefficient denotes the newly reconstructed root and is positive:",
+    "viewport": 390,
+    "scrollY": 464651,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "CODE",
+    "targetWidth": 331,
+    "targetScrollWidth": 331,
+    "descendantOverflow": 0,
+    "overflowElements": []
+  },
+  {
+    "label": "narrow",
+    "kind": "boundary",
+    "text": "\n                  The default quotation rules recognize Signature.codec.decode applied to the\ncanonical encoding of its actual signature argument, using the existing public\nroundtrip law. This handles distinct signature subjects without a fixture\ncallback. It does not connect a separately frozen numerical signature to that\nencoding. The latter still requires the owner's public literal bridge. These\nhelpers consume supplied readers and histories; they do not discover an\narbitrary real source's selected embedding or install the general tactic.\n",
+    "viewport": 390,
+    "scrollY": 465120,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343,
+    "descendantOverflow": 0,
+    "overflowElements": []
+  }
+]

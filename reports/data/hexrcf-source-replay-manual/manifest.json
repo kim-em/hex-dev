@@ -1,0 +1,21 @@
+{
+  "README.md": "5ef00f941e726268bc1ab3bf1e1c98cfc4b5458f40f1889ab024eb08b916879f",
+  "browser.mjs.txt": "234f3ffe42366fcf9997060f62e607a3787a8cc9f3b8af84fc8cba0ad1d34329",
+  "change.patch.gz": "052473809e5242b0c7c6542dcc7d989714f88224df3e2a833c19303878a9024d",
+  "context.json": "0c2bd2389c6137a864efb8e111a70b8ae3eef8cd7f8ce6a03c6470f10a6399dc",
+  "desktop.png": "74a20f03b10ce2a894d237585cb42033d6f72a121e41ccaa1664a6fb51188c80",
+  "inputs.json": "3f753821cea18228319e5261f11e73c996e4febece9fb372833129e4894a3eb3",
+  "inspection.json": "e990b02501b7c3f13bbbc11b1da4ddf68a2d7b073bb9168a20fad114e32a77b3",
+  "manual.lean.gz": "b26b062457f1615e14f3db803dc33757ccd777b1cfb9f6be5d7432b2e7653d1e",
+  "narrow.png": "61424397caea39e6d2c98f8d7fbd9fc4c0cabb03e15d7092dbba961c2fe129b0",
+  "over-cap-source.lean.gz": "cd8377eff4e361f60c7b4cb2d7db9633c140a41f70f7f02b6f9b4022ad15d9d7",
+  "paragraph.md.txt": "d85f9e0eb542af3d1cb6c02f78398a45177d42397d1d9dc4e5e3d5c64e1f3da8",
+  "render.lean.txt": "cc970381459bc4ac2c7df721b4376d69000a28ed21ba53d2a58d4fdb13639e42",
+  "source-replay-manual-browser-1.log.gz": "bffa3947c1c32ddbbed60f486c5ed4036ba8e9d2ede744483045c5ca9b74df2a",
+  "source-replay-manual-build-1.log.gz": "bb57c84184d18b63461b4991e989e17b085179d23e593fc331282857d99e5386",
+  "source-replay-manual-build-2.log.gz": "ff4f735caeca4718a3b968e1f4c618e529c03200f6e2150dd45c37d5ca52cb8a",
+  "source-replay-manual-line-counts.log.gz": "a111b9fb8b6538fe487f88685220fd3d5ce7c22c5a62bb4494a8f4d107edfa8d",
+  "source-replay-manual-render-1.log.gz": "452ad3686c7972002bd33a557a1fc303d9c9d94fcc979aa365d324f76d565f6a",
+  "source-replay-manual-render-2.log.gz": "8ee4441779c0e622ba537520c1592201f9163741f31ad936fe61f7bc200952bb",
+  "verify.py": "4b6f5f9a1619331e5b298a1fc55b3c3ae7e9e2361b246cf020bd3824cc951369"
+}

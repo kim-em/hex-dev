@@ -1,0 +1,20 @@
+{
+  "source_commit": "2475e17ee6ef365a7a317bb12e84ef78ec56125f",
+  "original_source_commit": "a4b44be2efdba00c6b40f7b932db40d1c44beb27",
+  "changed": [
+    "conformance/HexRCF/SourceIdentityControls.lean",
+    "conformance/HexRCF/SourceIdentityPacket.lean"
+  ],
+  "header": "/-\nCopyright (c) 2026 Lean FRO, LLC. All rights reserved.\nReleased under Apache 2.0 license as described in the file LICENSE.\nAuthors: Kim Morrison\n-/\n",
+  "artifacts": [
+    {
+      "path": "header-repair/source-identity-ci39162992133-final.json.gz",
+      "sha256": "87f68d49917e3e3405d47c457a95ba71499292fc90e71aaa3a88ec7529703c6a"
+    },
+    {
+      "path": "header-repair/source-identity-ci39162992133-failed.log.gz",
+      "sha256": "64662e209a36c591c9f970b50e8f2a7dbb90b37a974fc5aedaa640108af13903"
+    }
+  ],
+  "validation": "Copyright and line checks pass after tracking. All 106 pinned sources match exactly except the required copyright prefix in the two named files; Lean code unchanged. No repeat of expensive Lean builds for comment-only edits. Hosted exact-head CI remains required."
+}

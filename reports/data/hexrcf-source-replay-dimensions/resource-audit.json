@@ -1,0 +1,17 @@
+{
+  "scope": "Live observation during unchanged collection. Final aggregate peak and successful exit are recorded separately in collection.log.",
+  "systemd": {
+    "ActiveState": "active",
+    "MemoryCurrent": "2336837632",
+    "MemoryPeak": "2351329280",
+    "MemoryMax": "34359738368",
+    "MemorySwapMax": "0"
+  },
+  "workers": [
+    {
+      "pid": 3664831,
+      "cpu_affinity": "38",
+      "LEAN_NUM_THREADS": "2"
+    }
+  ]
+}

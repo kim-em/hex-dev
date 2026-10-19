@@ -1,0 +1,12 @@
+{
+  "argv": [
+    "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+    "lake",
+    "build",
+    "HexRCFRealCoefficients",
+    "+HexRCF.BoundedSource.Proofs",
+    "+HexRCF.SourceIdentityProofs"
+  ],
+  "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10358",
+  "scope": "New combined source-packet quotation and malformed/exact-budget controls; actual frozen proof audit, optional umbrella and prior source identity compatibility, not full conformance/manual or performance study"
+}

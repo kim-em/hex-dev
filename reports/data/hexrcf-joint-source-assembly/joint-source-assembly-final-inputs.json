@@ -1,0 +1,6 @@
+{
+  "adapters/HexRCF/RealCoefficients/SourceIdentityQuote.lean": "cdaf7b830ad50d9849a7f102641eb03313f84959c56c3ea4cd66a663894ca385",
+  "conformance/HexRCF/CellSourceQuote.lean": "bf26980ea3286785872338cba5f97413c31590053dc4445ad00d78c3e6fe1104",
+  "conformance/HexRCF/CellSourceProofs.lean": "aa946fc87cf8ed336427ef644d6d0889750710d5331535d71f27a3270f539953",
+  "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "44bca34cb72a18124a48d33658007d0802f1400235fd5da4555ec7d488c7151d"
+}

@@ -1,0 +1,860 @@
+import Lake
+open Lake DSL
+package rcfManualRender
+require Hex from "/home/kim/worktrees/hex-dev/hex-dev-issue-10358"
+lean_lib Render
+
+lean_lib FullRender
+
+lean_lib NativeFormula
+
+lean_lib NativeSamples
+
+lean_lib NativeSampleTests
+
+lean_lib NativeSampleExample
+
+lean_lib NativeFixture
+
+lean_lib RootAliasProbe
+
+lean_lib RationalRootSource
+
+lean_lib LiteralRationalRoots
+
+lean_lib CubeDivisionDebug
+
+lean_lib SharedSources
+
+lean_lib SharedSourceTests
+
+lean_lib CheckedAlgebraicRoots
+
+lean_lib CheckedAlgebraicRootsProbe
+
+lean_lib RootBudgetProbe
+
+lean_lib GatherPublic
+
+lean_lib RootMetadata
+
+lean_lib RootExponentBudget
+
+lean_lib BoundedRootExponent
+
+lean_lib FrozenRootAliases
+
+lean_lib FrozenRootAliasesProbe
+
+lean_lib CompiledAlgebraicBase
+
+lean_lib GeneralRootSource
+
+lean_lib GeneralRootTactic
+
+lean_lib GeneralRootGoals
+
+lean_lib GeneralRootFailures
+
+lean_lib GeneralEnclosure
+
+lean_lib SharedBaseFast
+
+lean_lib GeneralAlgebraicBounds
+
+lean_lib GeneralFinite
+
+lean_lib GeneralMixed
+
+lean_lib NestedRegistration
+
+lean_lib NumberFieldSchema
+
+lean_lib MixedRpow
+
+lean_lib InfinitesimalFormula
+
+lean_lib InfinitesimalFormulaTests
+
+lean_lib RealizationProbe
+
+lean_lib NumberFieldFormula
+
+lean_lib NumberFieldFormulaTests
+
+lean_lib SelectedFormula
+
+lean_lib SelectedEmit
+
+lean_lib SelectedLiterals
+
+lean_lib SelectedData
+
+lean_lib SelectedRootRead
+
+lean_lib SelectedPackets
+
+lean_lib SelectedCollect
+
+lean_lib SelectedDiscover
+
+lean_lib SelectedIntermediates
+
+lean_lib SelectedUpper
+
+lean_lib SelectedRow
+
+lean_lib SelectedRowCollect
+
+lean_lib SelectedRowDiscover
+
+lean_lib SelectedSource
+
+lean_lib SelectedRowIntermediates
+
+lean_lib SelectedQuoted
+
+lean_lib SelectedControls
+
+lean_lib SelectedRefusals
+
+lean_lib SelectedAudit
+
+lean_lib SelectedChecks
+
+lean_lib SelectedBound
+
+lean_lib SelectedFrozen
+
+lean_lib SelectedFrozenCollect
+
+lean_lib SelectedPacketFields
+
+lean_lib SelectedByteRow
+
+lean_lib SelectedByteProofs
+
+lean_lib SelectedByteDump
+
+lean_lib SelectedByteData
+
+lean_lib SelectedByteControls
+
+lean_lib SelectedByteAudit
+
+lean_lib SelectedByteBounds
+
+
+lean_lib PackingRow
+
+lean_lib PackingProgram
+
+lean_lib PackingLiterals
+
+lean_lib PackingFrozen
+
+lean_lib PackingMissing
+
+lean_lib PackingAudit
+
+lean_lib PreparedPacking where
+  srcDir := "../packing-tranche/probe"
+  globs := #[.submodules `PreparedPacking]
+
+lean_lib PackingVanishingProposal
+
+lean_lib RootCatalogProbe
+
+lean_lib RootCatalogProposal
+
+lean_lib RootCatalogLiterals
+
+lean_lib RootCatalogFrozen
+
+lean_lib RootCatalogEncoding
+
+lean_lib RootCatalogAudit
+
+lean_lib RootCatalogBytes
+
+lean_lib RootCatalogControls
+
+lean_lib CommonFactoryProbe
+
+lean_exe selected_catalog_bench where
+  root := `SelectedCatalogBench
+
+lean_lib OcticKernelProof
+
+lean_lib KernelClosure
+lean_lib OcticPublicImport
+
+lean_lib RegisteredGatherModel
+lean_lib RegisteredGatherSemantics
+lean_lib OcticNormalized
+
+lean_lib RegisteredGatherDomain
+
+lean_lib RegisteredVector
+
+lean_lib RegisteredVectorTests
+
+lean_lib RegisteredVectorNative
+
+lean_lib RegisteredGatherNext
+
+lean_lib RegisteredGatherPrepared
+
+lean_lib GatherCatalogPrepared
+
+lean_lib ReorderedGather
+
+lean_lib SuppliedInverseSource
+
+lean_exe supplied_inverse_fixture where
+  root := `SuppliedInverseFixture
+
+lean_lib SuppliedInverseLiteral
+lean_lib SuppliedInverseProof
+
+lean_lib SuppliedInverseControls
+
+lean_lib SourceInversePoint
+
+lean_lib SuppliedOcticProof
+lean_lib SuppliedOcticUse
+
+lean_lib SuppliedOcticTactic
+
+lean_lib SuppliedOcticDebug
+
+lean_lib SuppliedOcticControls
+
+lean_lib IrreducibilityCostReconstruct
+
+lean_lib IrreducibilityCostReuse
+
+lean_lib NativeJointSigns
+
+lean_lib SuppliedInstanceBudget
+
+lean_lib NativeRow
+
+lean_lib NativeRowTest
+
+lean_lib NativeFormulaOrdinaryUse
+
+lean_lib NativeFormulaSuccessive
+
+lean_lib NativeFormulaSelected
+
+lean_lib NativeSpecialize
+
+lean_lib NativeSpecializeTest
+
+lean_lib NativeSpecializeOrdinaryUse
+
+lean_lib SpecializeConversion
+
+lean_lib SampleConversionFixture
+
+lean_lib NativeSamplesOrdinaryUse
+
+lean_lib NativeConversionDegree
+
+lean_lib NativeNestedSample
+
+lean_lib NativeSelectedReal where
+  globs := #[`NativeSelectedReal]
+
+lean_lib NestedSampleRows where
+  globs := #[`NestedSampleRows]
+
+lean_lib SamplePointConsumers where
+  globs := #[`SamplePointConsumers]
+
+lean_lib SampleSizeWords where
+  globs := #[`SampleSizeWords]
+
+lean_lib SampleInfinitesimal
+
+lean_lib NativeSampleModelOrdinaryUse
+
+lean_lib NativeSources
+
+lean_lib SampleSelectedInfinitesimal
+
+lean_lib NativeSourcesTest
+
+lean_lib SampleInfinitesimalEmit
+
+lean_lib SampleInfinitesimalFrozenEmit
+
+lean_lib SampleInfinitesimalLiterals
+lean_lib SampleFrozenInfinitesimal
+
+lean_lib SampleFrozenLegacy
+
+lean_lib NativeSampleModelEmit
+
+lean_lib NativeSampleSquare
+
+lean_lib NativeSourcesOrdinaryUse
+
+lean_lib NativeSelection
+
+lean_lib NativeSelectionUse
+
+lean_lib NativeSelectionOrdinaryUse
+
+lean_lib NativeSelectionMap
+
+lean_lib NativeSelectionEmit
+
+lean_lib NativeCoordinates
+
+lean_lib NativeNested
+
+lean_lib SectionReplay
+
+lean_lib SectionReplayTests
+
+lean_lib SectionQuote
+
+lean_lib SectionQuoteTests
+
+lean_lib SectionBuild
+
+lean_lib ScalarPacket
+
+lean_lib SectionProduceTests
+
+lean_lib PointReplay
+
+lean_lib PointReplayTests
+
+lean_lib PointQuote
+
+lean_lib PointQuoteTests
+lean_lib PointBuild
+lean_lib PointProduceTests
+lean_lib PointOrdinaryTests
+lean_lib NativeParentRead
+lean_lib NativeParentLiterals
+
+lean_lib RootPackets
+
+lean_lib RootOperations
+
+lean_lib NestedRootPackets
+
+lean_lib NestedRootLiterals
+lean_lib NestedRootReplay
+
+lean_lib RootResultOperations
+
+lean_lib NestedRootOrdinary
+
+lean_lib FrozenRootTransport
+
+lean_lib FrozenRootTransportTests
+
+lean_lib FrozenRootTransportProposal
+
+lean_lib FrozenRootTransportLiterals
+
+lean_lib FrozenRootTransportMoved
+
+lean_lib FrozenRootTransportDebug
+
+lean_lib FrozenRootTransportMap
+
+lean_lib FrozenRootTransportCached
+
+lean_lib FrozenRootTransportConjugateProposal
+
+lean_lib FrozenRootTransportOrdinary
+
+lean_lib RootTransportDraft where
+  globs := #[`RootTransportDraft, `RootTransportDataDraft, `RootTransportConformanceDraft,
+    `RootTransportOrdinaryDraft, `RootTransportLiteralsDraft].map Glob.one
+
+lean_lib FrozenSuffixProposal
+
+lean_lib FrozenSuffixLiterals
+
+lean_lib FrozenSuffixContext
+
+lean_lib FrozenSuffixMap
+
+lean_lib FrozenSuffixMappedConversion
+
+lean_lib FrozenSuffixRead
+
+lean_lib FrozenSuffixLiteralFacts
+
+lean_lib FrozenSuffixJointProposal
+
+lean_lib FrozenSuffixSignLiterals
+
+lean_lib FrozenSuffixSignRead
+
+lean_lib FrozenSuffixAcceptance
+
+lean_lib RootTransportManualDraft
+
+lean_lib FrozenRootTransportWordProposal
+
+lean_lib RootTransportRenderDraft
+
+lean_lib FrozenSuffixCompiledOutcome
+
+lean_lib FrozenSuffixRootCheck
+
+lean_lib FrozenSuffixFactFields
+
+lean_lib FrozenSuffixFactRestore
+
+lean_lib FrozenSuffixRestoredFacts
+
+lean_lib FrozenSuffixRootLiteralCheck
+
+lean_lib FrozenSuffixDecode
+
+lean_lib FrozenSuffixGraphDecode
+
+lean_lib FrozenSuffixFrame
+
+lean_lib RootTransportEmit
+
+lean_lib FrozenSuffixOperations
+
+lean_lib FrozenSuffixMoreSignProposal
+
+lean_lib FrozenSuffixMoreSignLiterals
+
+lean_lib FrozenSuffixMoreSignRead
+
+lean_lib FrozenSuffixMoreSignInspect
+
+lean_lib FrozenSuffixMorePrior
+
+lean_lib FrozenSuffixMoreRestoredFacts
+
+lean_lib FrozenSuffixMoreRootCheck
+
+lean_lib FrozenSuffixFullRead
+
+lean_lib FrozenSuffixMeaning
+
+lean_lib FrozenSuffixSource
+
+lean_lib FrozenSuffixOrdinary
+
+lean_lib FrozenSuffixControls
+
+lean_lib FrozenSuffixConstants
+
+lean_lib NestedTransportEmit
+
+lean_lib FiniteRow
+
+lean_lib FiniteRoot
+
+lean_lib FiniteRootFixture
+
+lean_lib FiniteRootOrdinary
+
+lean_lib FiniteRootControls
+
+lean_lib FiniteCheck
+
+lean_lib FiniteGuarded
+
+lean_lib SignedCheck
+
+lean_lib FiniteKeys
+
+lean_lib FiniteExtra
+
+lean_lib FinitePrepared
+
+lean_lib FiniteSignRead
+
+lean_lib FiniteSigns
+
+lean_lib FinitePrimitives
+
+lean_lib FiniteSignsData
+
+lean_lib FiniteSignsShared
+
+lean_lib FiniteSignsLiteral
+
+lean_lib FiniteInspect
+
+lean_lib FiniteSignsOrdinary
+
+lean_lib FiniteCachedPrimitives
+lean_lib FiniteSignsCached
+
+lean_lib FiniteSignsCachedOrdinary
+
+lean_lib FiniteSignsControls
+
+lean_lib FiniteSignsKernel
+
+lean_lib FiniteStrictPrimitives
+lean_lib FiniteFrozenInputs
+
+lean_lib FiniteFrozenAcceptance
+
+lean_lib FiniteSignsPublicOrdinary
+
+lean_lib FiniteInspectFacts
+
+lean_lib FiniteDataAudit
+
+lean_lib FiniteStrictControls
+
+lean_lib FiniteReplayQueries
+
+lean_lib FiniteSignReplay
+
+lean_lib FiniteReplayProbe
+
+lean_lib FiniteReplayLiteral
+lean_lib FiniteReplayPrepared
+
+lean_lib FiniteReplayData
+
+lean_lib FiniteReplayBinding
+
+lean_lib FiniteReplayOrdinary
+
+lean_lib FiniteReplayControls
+
+lean_lib FiniteReplayKernel
+
+lean_lib FiniteSourceQuote
+
+lean_lib FiniteReplaySolve
+
+lean_lib FiniteReplayQueryLiteral
+
+lean_lib FiniteStrictTrace
+
+lean_lib FiniteReplayTrace
+
+lean_lib FiniteDirectPrimitives
+
+lean_lib FiniteReplayDirect
+
+lean_lib FiniteDirectControls
+
+lean_lib FiniteSourceInputs
+
+lean_lib FiniteReplayCoordinates
+
+lean_lib FiniteCanonicalFormula
+
+lean_lib FiniteSourceQuoted
+
+lean_lib FiniteSourceCompare
+
+lean_lib FiniteKernelPrimitives
+
+lean_lib FiniteKernelControls
+
+lean_lib FiniteReplayKernelData
+
+lean_lib FiniteBudgetPrimitives
+
+lean_lib FiniteBudgetControls
+
+lean_lib FiniteReplayBudget
+
+lean_lib FiniteSourceAudit
+
+lean_lib FiniteRecordedUnits
+
+lean_lib FiniteRecordedOps
+
+lean_lib FiniteExtraSigns
+
+lean_lib FiniteExtraSignControls
+
+lean_lib FiniteSourceFrozenQuoted
+
+lean_lib FiniteInventoryControls
+
+lean_lib FiniteOwnerPrimitives
+
+lean_lib FiniteOwnerControls
+
+lean_lib FiniteReplayAccepted
+
+lean_lib FiniteSourceFrozenAudit
+
+lean_lib FiniteReplayShared
+
+lean_lib FiniteAlgebraicRead
+
+lean_lib FiniteAlgebraicData
+
+lean_lib FiniteCanonicalQueries
+
+lean_lib FiniteCanonicalRead
+
+lean_lib FiniteCanonicalShared
+
+lean_lib FiniteCanonicalBinding
+
+lean_lib FiniteCanonicalLiteral
+
+lean_lib FiniteCanonicalData
+
+lean_lib FiniteCanonicalQuote
+
+lean_lib FiniteCanonicalAudit
+
+lean_lib FiniteGuardProbe
+
+lean_lib FiniteGuardedRead
+
+lean_lib FiniteGuardedShared
+
+lean_lib FiniteGuardedLiteral
+
+lean_lib FiniteQuoteControls
+
+lean_lib FiniteGuardedData
+
+lean_lib FiniteGuardedQuote
+
+lean_lib FiniteAlgebraicClean
+
+lean_lib FinitePacketEmit
+
+lean_lib FiniteMultiGuard
+
+lean_lib FiniteMultiGuardShared
+
+lean_lib FiniteMultiGuardMeaning
+
+lean_lib FiniteMultiGuardProbe
+
+lean_lib FiniteMultiGuardFrozen
+
+lean_lib FiniteMultiGuardFrozenShared
+
+lean_lib FiniteMultiGuardFrozenMeaning
+
+lean_lib FiniteMultiSource
+
+lean_lib FiniteMultiSourceBinding
+
+lean_lib FiniteMultiSourceRead
+
+lean_lib FiniteMultiSourceShared
+
+lean_lib FiniteMultiSourceLiteral
+
+lean_lib FiniteMultiSourceData
+
+lean_lib FiniteMultiSourceQuote
+
+lean_lib FiniteMultiSourceDomains
+
+lean_lib FiniteMultiSourceControls
+
+lean_lib FiniteMultiSourceAudit
+
+lean_lib FiniteZeroSourceRead
+
+lean_lib FiniteZeroSourceShared
+
+lean_lib FiniteZeroSourceLiteral
+
+lean_lib FiniteZeroSourceData
+
+lean_lib FiniteGuardPacketEmit
+
+lean_lib FrozenGuardData0
+
+lean_lib FrozenGuardLiterals
+
+lean_lib FrozenGuardMeaning
+
+lean_lib FrozenGuardBinding
+
+lean_lib FrozenGuardRecords
+
+lean_lib FrozenGuardData
+
+lean_lib FrozenGuardQuote
+
+lean_lib FrozenGuardControls
+
+lean_lib FrozenGuardDomains
+
+lean_lib FrozenGuardAudit
+
+lean_lib FrozenGuardMutationData0
+
+lean_lib FrozenGuardMutations
+
+lean_lib FrozenGuardRefusals
+
+lean_lib FrozenGuardRoundtrip
+
+lean_lib GuardDraft where
+  globs := #[.submodules `GuardDraft]
+
+lean_lib FiniteQuotientProbe
+
+lean_lib FiniteQuotientInverse
+
+lean_lib FiniteQuotientSource
+
+lean_lib FiniteQuotientSupport
+
+lean_lib FiniteQuotientQuote
+
+lean_lib FiniteQuotientEmit
+
+lean_lib QuotientDraft where
+  globs := #[.submodules `QuotientDraft]
+
+lean_lib RepresentationCarrier
+
+lean_lib RootCells
+
+lean_lib RepresentationCells
+
+lean_lib RepresentationCellTests
+
+lean_lib BoundarySigns
+
+lean_lib SectorSamples
+
+lean_lib PointRows
+
+lean_lib CellReplay
+
+lean_lib CellPacketProduce
+
+lean_lib RowReplay
+
+lean_lib CellPacketLiteralData0
+
+lean_lib CellPacketLiterals
+
+lean_lib SectorReplay
+
+lean_lib CellRead
+
+lean_lib CellPacketCheck
+
+lean_lib CellPacketOrdinary
+
+lean_lib CellQuote
+
+lean_lib CellPacketQuote
+
+lean_lib CellQuoteControls
+
+lean_lib CellQuoteOrdinary
+
+lean_lib CellMutationLiteralData0
+
+lean_lib CellPacketMutations
+
+lean_lib CellPacketRefusals
+
+lean_lib AlgebraicCellSchema
+
+lean_lib AlgebraicCellProduce
+
+lean_lib AlgebraicCellLiteralData0
+
+lean_lib AlgebraicCellLiteralData1
+
+lean_lib AlgebraicCellLiterals
+
+lean_lib AlgebraicCellRestore
+
+lean_lib CellPacketEmit
+
+lean_lib AlgebraicCellRootMeaning
+
+lean_lib RowOperations
+
+lean_lib AlgebraicCellRows
+
+lean_lib AlgebraicCellSecondRows
+
+lean_lib CellOutside
+
+lean_lib AlgebraicCellTransport
+
+lean_lib AlgebraicSectionBundle
+
+lean_lib AlgebraicSectionMeaning
+
+lean_lib CellPackets
+
+lean_lib CellPacketRead
+
+lean_lib AlgebraicSectorBundle
+
+lean_lib AlgebraicCellSeeds
+
+lean_lib AlgebraicBooleanReplay
+
+lean_lib AlgebraicBooleanSources
+
+lean_lib AlgebraicBooleanAudit
+
+lean_lib AlgebraicBooleanTransport
+
+lean_lib AlgebraicBooleanBinding
+
+lean_lib CellReuseProbe
+
+lean_lib BooleanPort where
+  srcDir := "boolean-port"
+  globs := #[`BooleanPort.CellReuse,`BooleanPort.Boolean,`BooleanPort.BooleanSources,`BooleanPort.BooleanBinding,`BooleanPort.BooleanQuoted].map Glob.one
+
+lean_lib CompleteCellBuild
+
+lean_lib CompleteCellBuildTest
+
+lean_lib CompleteCellLiterals
+
+lean_lib CompleteCellFrozen
+
+lean_lib RowReadRoundtrip
+
+lean_lib CompleteRootBuild
+
+lean_lib CompiledCellConstruction
+
+lean_lib ConstructedCellLiterals
+
+lean_lib ConstructedCellFrozen
+
+lean_lib AlgebraicCellConstruction
+
+lean_lib CompleteRootProgress
+
+lean_lib SourceReplayDataset
+
+lean_lib SourceReplayDriver
+
+lean_lib SourceReplayMatrix
+
+lean_exe source_replay_bench where
+  root := `SourceReplayBench
+
+lean_lib SourceReplayControls

@@ -1,0 +1,64 @@
+[
+  {
+    "label": "desktop",
+    "width": 1440,
+    "targets": [
+      {
+        "tag": "P",
+        "text": "\n                  RootHeader.quoteWith\naccepts the complete original RootReplay.readDescriptor application. It quotes\nthat reader, obtains the independently pa",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The public regression constructs a new root and context from that result,\nquotes the sign packet for X, and decodes a coefficient using its f",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.RootHeaderPacket in\nexample : coefficientReal = realRoot :=\n  coefficient_value\n\nopen Hex.RCF.RootHeaderPacket in\nexample : 0 < coefficientReal :=\n",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The fresh importing audit includes the generated binding, packet reader,\ncoefficient decoding and real-value proofs. It rejects dependencies ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The default quotation rules recognize Signature.codec.decode applied to the\ncanonical encoding of its actual signature argument, using the ex",
+        "overflow": 0
+      }
+    ]
+  },
+  {
+    "label": "narrow",
+    "width": 390,
+    "targets": [
+      {
+        "tag": "P",
+        "text": "\n                  RootHeader.quoteWith\naccepts the complete original RootReplay.readDescriptor application. It quotes\nthat reader, obtains the independently pa",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The public regression constructs a new root and context from that result,\nquotes the sign packet for X, and decodes a coefficient using its f",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.RootHeaderPacket in\nexample : coefficientReal = realRoot :=\n  coefficient_value\n\nopen Hex.RCF.RootHeaderPacket in\nexample : 0 < coefficientReal :=\n",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The fresh importing audit includes the generated binding, packet reader,\ncoefficient decoding and real-value proofs. It rejects dependencies ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The default quotation rules recognize Signature.codec.decode applied to the\ncanonical encoding of its actual signature argument, using the ex",
+        "overflow": 0
+      }
+    ]
+  }
+]

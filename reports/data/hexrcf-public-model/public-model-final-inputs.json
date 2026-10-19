@@ -1,0 +1,10 @@
+{
+  "adapters/HexRealClosureTheory/NumberFieldTower.lean": "6e08723eff34d7a18059ff54f4f65df58296f4161638878027a7f07d95fd64d5",
+  "adapters/HexRCF/RealCoefficients/NumberField.lean": "0d6564d664f1a782f9be52dee2ec0d8982e01344768c43d6783df20eb5aec0d6",
+  "conformance/HexRCF/NumberField.lean": "13358e31529302b48cde358029f3a2d443e44286462801b12cf19a6b25ac4dae",
+  "scripts/check_dag.py": "fa5cf7929ccc381be7b6bb0c114561c05729e054dfe86dd754bf16d3636348db",
+  "scripts/test_check_dag.py": "a0cd5aaaf1f3e1a6e27c93782bb6aade3b121349588f3846a059a1af04ec21d8",
+  "HexRealClosureTheory/README.md": "12d876eae9d0b6dd8c82839e31d98e2aec9bcd454914382f2d65d0f4bc4bb914",
+  "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "43136964c0642c57131f8a60ccf1a45157181abf8942e300c6d2d360a00675d3",
+  "reports/hexrcf-adapter-evidence.md": "d7f7df7ccffe76c7f370ece81c9e7688f15babe6a1777ed7a1cf865c54aecf0e"
+}

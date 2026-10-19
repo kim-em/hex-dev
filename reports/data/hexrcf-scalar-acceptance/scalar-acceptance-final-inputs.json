@@ -1,0 +1,5 @@
+{
+  "adapters/HexRCF/RealCoefficients/ScalarPacket.lean": "6b8353895cff48df759bb4fc8cb5cda767313974e0a57f1e59973249b6eefdca",
+  "adapters/HexRCF/RealCoefficients/SourceBuild.lean": "e4e6d8fd707f32e78091e42f5996a0dfd703b82973ed993b0a7795efc15388ca",
+  "conformance/HexRCF/BoundedSource.lean": "5c2166dd0977d3e27d3fefa89f9c0382e9dd7226bff629112cfd0e0faad1127b"
+}

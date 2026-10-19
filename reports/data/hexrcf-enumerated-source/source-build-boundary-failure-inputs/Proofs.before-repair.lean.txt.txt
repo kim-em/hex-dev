@@ -1,0 +1,72 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+import HexRCF.EnumeratedSource.Quote
+import HexRCF.ProofEvidence
+import HexRCF.SelectedRoot.KernelCheck
+import KernelReplay.AxiomClosure
+meta section
+open Lean Meta Hex.RealClosure Hex.RCF.RealCoefficients
+set_option maxRecDepth 32768
+set_option maxHeartbeats 24000000
+run_meta do
+  let roots := #[``Hex.RCF.EnumeratedSourceQuote.positive,
+    ``Hex.RCF.EnumeratedSourceQuote.negative,``Hex.RCF.EnumeratedSourceQuote.cubic]
+  let axioms ← Algebraic.KernelReplay.AxiomClosure.collect roots
+  unless axioms.all (fun name => [``propext,``Classical.choice,``Quot.sound].contains name) do
+    throwError "enumerated source has inadmissible dependencies"
+  let dependencies ← Hex.RCF.ProofEvidence.projectDependencies roots
+  -- The equality consumes the restored facts and their checked field laws.
+  -- The separate equality of the optional reader with `some fact` is not
+  -- retained in that proof; `restore` carries acceptance through `fields`.
+  for required in #[``SourceIdentity.identify,``SourceIdentity.observe,``SourceIdentity.select,
+      ``ScalarPacket.restore,``ScalarPacket.fields,``RootQuote.read_eq] do
+    unless dependencies.contains required do throwError "enumerated source omitted {required}"
+  for forbidden in #[``SourceBuild.build,``SourceBuild.select,``ScalarPacket.buildParts,
+      ``ScalarPacket.build,``ScalarPacket.buildLiteral,
+      ``Hex.RCF.SourceIdentityCases.source_selected,``Hex.RCF.SourceIdentityCases.equationFact,
+      ``Hex.RCF.SourceIdentityCases.marginFact,``Hex.RCF.SourceIdentityCases.negativeMarginFact,
+      ``Hex.RCF.SourceIdentityCases.coefficient,``Hex.RCF.SelectedRootTests.Data.lower,
+      ``Hex.RCF.SelectedRootTests.Data.lowerAccepted,``Hex.RCF.SelectedRootTests.Data.selectedSqrt] do
+    if dependencies.contains forbidden then throwError "enumerated source reused {forbidden}"
+  let names := (← (← getEnv).getLocalConstantInfos).map (·.name)
+  let modules := (← getEnv).header.moduleNames
+  let allowed := #[`HexRCF.EnumeratedSource.Quote,`HexRCF.EnumeratedSource.Inputs,
+    `HexRCF.EnumeratedSource.Positive,`HexRCF.EnumeratedSource.PositiveData0,
+    `HexRCF.EnumeratedSource.Negative,`HexRCF.EnumeratedSource.NegativeData0,
+    `HexRCF.EnumeratedSource.Cubic,`HexRCF.EnumeratedSource.CubicData0,
+    `HexRCF.RealCoefficients.SourceIdentity,`HexRCF.RealCoefficients.ScalarPacket,
+    `HexRCF.RealCoefficients.RootQuote]
+  let mut theorems : Nat := 0
+  let mut definitions : Nat := 0
+  let mut traces : Nat := 0
+  for name in dependencies.toArray do
+    let some index := (← getEnv).getModuleIdxFor? name | continue
+    unless allowed.contains modules[index]! do continue
+    let declaration ← match ← getConstInfo name with
+      | .thmInfo info =>
+        theorems := theorems+1
+        pure (Declaration.thmDecl {info with name := ← mkFreshUserName `__enumeratedBody})
+      | .defnInfo info =>
+        definitions := definitions+1
+        pure (Declaration.defnDecl {info with name := ← mkFreshUserName `__enumeratedData})
+      | _ => continue
+    let options := (← getOptions).setBool `debug.skipKernelTC false
+    let environment := Kernel.enableDiag (Kernel.resetDiag (← getEnv)) true
+    let checked ← ofExceptKernelException <| environment.addDeclCore
+      (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
+      declaration none (doCheck := true)
+    let diagnostics := Kernel.getDiagnostics checked
+    unless diagnostics.enabled do throwError "enumerated source diagnostics disabled"
+    if let some (producer,count) := Hex.RCF.SelectedRootTests.KernelCheck.violation? diagnostics
+        #[``ScalarPacket.build,``ScalarPacket.buildLiteral,``Algebraic.Element.codec,
+          ``Hex.SignDet.Descriptor.ofReplay?] then
+      throwError "enumerated source reduced producer {producer}: {count}; body={name}"
+    if !diagnostics.unfoldCounter.isEmpty then traces := traces+1
+  unless theorems == 1488 && definitions == 865 && traces == 2323 do
+    throwError "enumerated source inventory changed: {theorems}/{definitions}/{traces}"
+  unless (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
+    throwError "enumerated source audit retained copied declarations"
+  logInfo m!"enumerated source actual bodies: {theorems} theorems/{definitions} definitions; nonempty traces={traces}; full axioms={axioms}"
