@@ -1,0 +1,97 @@
+import HexRCF.RealCoefficients.SourceBuild
+import HexRealClosure.NumberFieldTower
+import HexRealClosure.RootBytes
+import HexSignDet.Codec.Bytes
+import SourceReplayDriver
+
+namespace SourceReplayMatrix
+open Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
+
+def registry : BaseContext.Registry := fun _ => none
+abbrev base := Hex.RealClosure.NumberField.base registry
+
+def parents : Nat → Option (Σ parent : Tower.Context registry, parent.Value)
+  | 0 => some ⟨base,0⟩
+  | depth+1 =>
+    match parents depth with
+    | none => none
+    | some ⟨parent,last⟩ =>
+      let constant : parent.Value := if depth == 0 then 2 else 2+last
+      let polynomial := DensePoly.monomial 2 (1 : parent.Value) - DensePoly.C constant
+      match SourceBuild.buildOn polynomial (DensePoly.C 1) (.finite 1) (.finite 2) with
+      | .error _ => none
+      | .ok source =>
+        let root := Tower.Root.ofSelection parent (.selected source.root)
+        some ⟨root.context,root.value⟩
+
+def treeNodes {E Ctx : Type} [Zero E] [DecidableEq E] : Replay E Ctx → Nat
+  | .leaf _ => 1
+  | .split _ left right => 1 + treeNodes left + treeNodes right
+
+structure Case where
+  axis : String
+  parameter : Nat
+  degree : Nat := 2
+  atoms : Nat := 2
+  bits : Nat := 16
+  precision : Nat := 0
+  depth : Nat := 0
+  repeated : Bool := false
+
+private def emit (test : Case) : IO Codec.Json := do
+  let some ⟨parent,last⟩ := parents test.depth
+    | throw (IO.userError s!"predecessor construction refused depth{test.depth}")
+  let constant : parent.Value := if test.depth == 0 then 2 else 2+last
+  let polynomial := DensePoly.monomial test.degree (1 : parent.Value) - DensePoly.C constant
+  let denominator := 2^test.precision
+  let floor := Nat.sqrt (2*denominator^2)
+  let lower : parent.Value := (floor : parent.Value) / (denominator : parent.Value)
+  let upper : parent.Value := ((floor+1 : Nat) : parent.Value) / (denominator : parent.Value)
+  let .ok source := SourceBuild.buildOn polynomial (DensePoly.C 1) (.finite lower) (.finite upper)
+    | throw (IO.userError s!"source construction refused {test.axis}/{test.parameter}")
+  let scale : parent.Value := 1 / ((2^test.bits+1 : Nat) : parent.Value)
+  let x : DensePoly parent.Value := DensePoly.monomial 1 1
+  let queries := if test.axis == "common" then [polynomial,polynomial*(x+DensePoly.C 1)]
+    else if test.axis == "repeated-roots" then
+      let factor := (x+DensePoly.C 1)*(x+DensePoly.C 1)
+      [factor,factor*(x-DensePoly.C 1)*(x-DensePoly.C 1)]
+    else (List.range test.atoms).map fun i =>
+      DensePoly.monomial 1 scale + DensePoly.C (((if test.repeated then 1 else i+1) : Nat) : parent.Value)
+  let context := Algebraic.Context.adjoin source.root parent.isClean
+  let .ok row := context.buildSigns queries
+    | throw (IO.userError "selected-sign row construction refused")
+  let root := Tower.Root.ofSelection parent (.selected source.root)
+  let _ : Hashable parent.Value := ⟨fun value => hash (parent.codec.encode value)⟩
+  let _ : Hashable Tower.Signature := ⟨fun value => hash (Tower.Signature.codec.encode value)⟩
+  let graph := Dag.encode row.evidence
+  let packet := Codec.Json.arr #[Tower.Serialized.codec.encode root.write,
+    Codec.list (Codec.poly parent.codec) queries,
+    Codec.array (fun x : Int => Codec.Json.of x) row.values.toArray,
+    Codec.graph parent.codec Tower.Signature.codec graph]
+  let bytes := packet.writeBytes
+  unless SourceReplayDriver.lexical bytes && SourceReplayDriver.parsed bytes &&
+      SourceReplayDriver.restored bytes && SourceReplayDriver.replayed bytes do
+    throw (IO.userError s!"owner reconstruction/replay refused {test.axis}/{test.parameter}")
+  let name := test.axis ++ "-" ++ toString test.parameter
+  IO.FS.writeBinFile ("/home/kim/.codex/tasks/hex-10358/source-replay-matrix/" ++ name ++ ".json") bytes
+  IO.println s!"generated{ name}: bytes{bytes.size}, unique{graph.entries.size}, expanded{treeNodes row.evidence}"
+  return Codec.Json.arr #[Codec.Json.of name, Codec.Json.of test.axis, Codec.Json.of test.parameter,
+    Codec.Json.of test.degree,Codec.Json.of test.atoms,Codec.Json.of test.bits,
+    Codec.Json.of test.precision,Codec.Json.of test.depth,Codec.Json.of bytes.size,
+    Codec.Json.of graph.entries.size,Codec.Json.of (treeNodes row.evidence)]
+
+#eval (show IO Unit from do
+  IO.FS.createDirAll "/home/kim/.codex/tasks/hex-10358/source-replay-matrix"
+  let mut cases : List Case := []
+  for n in [2,3,4,5] do cases := cases ++ [{axis := "degree",parameter := n,degree := n}]
+  for n in [1,2,3,4] do cases := cases ++ [{axis := "atoms",parameter := n,atoms := n}]
+  for n in [4,16,64,128] do cases := cases ++ [{axis := "bits",parameter := n,bits := n}]
+  for n in [0,4,8,12] do cases := cases ++ [{axis := "precision",parameter := n,precision := n}]
+  for n in [0,1,2] do cases := cases ++ [{axis := "depth",parameter := n,depth := n}]
+  cases := cases ++ [{axis := "repeated",parameter := 4,atoms := 4,repeated := true},
+    {axis := "common",parameter := 2},{axis := "repeated-roots",parameter := 2}]
+  let mut metadata := #[]
+  for test in cases do metadata := metadata.push (← emit test)
+  IO.FS.writeBinFile "/home/kim/.codex/tasks/hex-10358/source-replay-matrix/manifest.json"
+    (Codec.Json.arr metadata).writeBytes)
+end SourceReplayMatrix

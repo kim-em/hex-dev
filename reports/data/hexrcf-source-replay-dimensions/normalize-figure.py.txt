@@ -1,0 +1,3 @@
+from pathlib import Path
+p = Path('dimensions.svg')
+p.write_text('\n'.join(line.rstrip() for line in p.read_text().splitlines()) + '\n')

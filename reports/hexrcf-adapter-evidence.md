@@ -93,6 +93,7 @@ Targeted retained experiments answer concrete implementation questions:
 | One replay goal versus split conjuncts | [Replay comparison](hexrcf-replay-proofs.md) | The retained comparison did not establish a gain; combined replay stays off. |
 | Degree, source atoms and coefficient width | [Input costs and attribution](hexrcf-scaling-proofs.md) | Independent two-point observations in a no-real-root regime, with serialized/expanded syntax and a representative phase profile. These are not asymptotic verdicts or precision/depth evidence. |
 | Compiled supplied-root packet costs | [Catalog stages](hexrcf-selected-catalog-compiled.md) | Eighteen retained samples record the cumulative lexical, parser and default reconstruction operations on one source-bound packet. Imports are Mathlib-free; native reconstruction remains. This is neither strict replay nor scaling, exclusive-stage cost or full tactic/proof cost. |
+| Compiled source-packet dimensions | [Selected-source observations](hexrcf-source-replay-dimensions.md) | All 440 samples cover five independent degree/query/bit/precision/depth axes and repeated/common-root cases. Four cumulative Mathlib-free stages retain operand, row-DAG, byte and memory inventories. This measures supplied numerical packets with default native predecessor decoding, excluding adapter preparation and proofs; it does not establish strict all-depth replay or an asymptotic timing law. |
 
 The consumed signed-remainder producer already uses
 [`Sturm.normalize`](../HexSturm/Basic.lean), which divides by the positive

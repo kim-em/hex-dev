@@ -1,0 +1,28 @@
+import SourceReplayDriver
+import LeanBench
+namespace SourceReplayBench
+initialize input : IO.Ref ByteArray ← do
+  let bytes ← match ← IO.getEnv "HEX_RCF_SOURCE_REPLAY_INPUT" with
+    | none => pure ByteArray.empty
+    | some path => IO.FS.readBinFile path
+  IO.mkRef bytes
+
+def lexical : Unit → IO Bool := fun () => do
+  return SourceReplayDriver.lexical (← input.get)
+def parsed : Unit → IO Bool := fun () => do
+  return SourceReplayDriver.parsed (← input.get)
+def restored : Unit → IO Bool := fun () => do
+  return SourceReplayDriver.restored (← input.get)
+def replayed : Unit → IO Bool := fun () => do
+  return SourceReplayDriver.replayed (← input.get)
+
+def config : LeanBench.FixedBenchmarkConfig :=
+  { repeats := 1, warmupFirstIter := true, minTotalSeconds := 0.2,
+    maxSecondsPerCall := 30.0, expectedHash := some (Hashable.hash true) }
+setup_fixed_benchmark lexical where config
+setup_fixed_benchmark parsed where config
+setup_fixed_benchmark restored where config
+setup_fixed_benchmark replayed where config
+end SourceReplayBench
+
+def main (args : List String) : IO UInt32 := LeanBench.Cli.dispatch args

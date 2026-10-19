@@ -1,0 +1,7090 @@
+[
+  {
+    "case": "degree-2",
+    "axis": "degree",
+    "parameter": 2,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 9916,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "lexical",
+    "median_microseconds": 154.1228369140625,
+    "min_microseconds": 153.6930625,
+    "max_microseconds": 157.90386181640625,
+    "worker_rss_kib": [
+      66200,
+      68476
+    ],
+    "cli_rss_kib": [
+      438408,
+      448744
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 153748.40771484375,
+        "worker_rss_kib": 67508,
+        "cli_rss_kib": 438408,
+        "stem": "00-degree-2-lexical"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 153693.0625,
+        "worker_rss_kib": 68476,
+        "cli_rss_kib": 448592,
+        "stem": "01-degree-2-lexical"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 154696.58154296875,
+        "worker_rss_kib": 68448,
+        "cli_rss_kib": 448648,
+        "stem": "02-degree-2-lexical"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 157903.86181640625,
+        "worker_rss_kib": 67428,
+        "cli_rss_kib": 448628,
+        "stem": "03-degree-2-lexical"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 154122.8369140625,
+        "worker_rss_kib": 66200,
+        "cli_rss_kib": 448744,
+        "stem": "04-degree-2-lexical"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3217
+  },
+  {
+    "case": "degree-2",
+    "axis": "degree",
+    "parameter": 2,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 9916,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "parsed",
+    "median_microseconds": 574.221466796875,
+    "min_microseconds": 569.534787109375,
+    "max_microseconds": 579.7953515625,
+    "worker_rss_kib": [
+      66088,
+      67296
+    ],
+    "cli_rss_kib": [
+      448496,
+      448976
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 579795.3515625,
+        "worker_rss_kib": 67296,
+        "cli_rss_kib": 448976,
+        "stem": "00-degree-2-parsed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 574221.466796875,
+        "worker_rss_kib": 66088,
+        "cli_rss_kib": 448612,
+        "stem": "01-degree-2-parsed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 577242.49609375,
+        "worker_rss_kib": 66200,
+        "cli_rss_kib": 448496,
+        "stem": "02-degree-2-parsed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 571407.724609375,
+        "worker_rss_kib": 66204,
+        "cli_rss_kib": 448592,
+        "stem": "03-degree-2-parsed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 569534.787109375,
+        "worker_rss_kib": 66260,
+        "cli_rss_kib": 448716,
+        "stem": "04-degree-2-parsed"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3217
+  },
+  {
+    "case": "degree-2",
+    "axis": "degree",
+    "parameter": 2,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 9916,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "restored",
+    "median_microseconds": 634.8971328125,
+    "min_microseconds": 630.362873046875,
+    "max_microseconds": 650.819931640625,
+    "worker_rss_kib": [
+      66988,
+      67968
+    ],
+    "cli_rss_kib": [
+      448492,
+      448776
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 630362.873046875,
+        "worker_rss_kib": 67840,
+        "cli_rss_kib": 448608,
+        "stem": "00-degree-2-restored"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 634897.1328125,
+        "worker_rss_kib": 66988,
+        "cli_rss_kib": 448492,
+        "stem": "01-degree-2-restored"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 650819.931640625,
+        "worker_rss_kib": 67948,
+        "cli_rss_kib": 448772,
+        "stem": "02-degree-2-restored"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 638065.318359375,
+        "worker_rss_kib": 67968,
+        "cli_rss_kib": 448536,
+        "stem": "03-degree-2-restored"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 631574.345703125,
+        "worker_rss_kib": 67376,
+        "cli_rss_kib": 448776,
+        "stem": "04-degree-2-restored"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3217
+  },
+  {
+    "case": "degree-2",
+    "axis": "degree",
+    "parameter": 2,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 9916,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "replayed",
+    "median_microseconds": 836.56287890625,
+    "min_microseconds": 832.35349609375,
+    "max_microseconds": 838.19835546875,
+    "worker_rss_kib": [
+      66476,
+      68608
+    ],
+    "cli_rss_kib": [
+      448488,
+      448712
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 832353.49609375,
+        "worker_rss_kib": 68608,
+        "cli_rss_kib": 448488,
+        "stem": "00-degree-2-replayed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 837526.01171875,
+        "worker_rss_kib": 66476,
+        "cli_rss_kib": 448704,
+        "stem": "01-degree-2-replayed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 836562.87890625,
+        "worker_rss_kib": 66476,
+        "cli_rss_kib": 448552,
+        "stem": "02-degree-2-replayed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 838198.35546875,
+        "worker_rss_kib": 67548,
+        "cli_rss_kib": 448488,
+        "stem": "03-degree-2-replayed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 835885.5703125,
+        "worker_rss_kib": 67988,
+        "cli_rss_kib": 448712,
+        "stem": "04-degree-2-replayed"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3217
+  },
+  {
+    "case": "degree-3",
+    "axis": "degree",
+    "parameter": 3,
+    "degree": 3,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 11770,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 131,
+    "arm": "lexical",
+    "median_microseconds": 182.78284765625,
+    "min_microseconds": 181.68287939453126,
+    "max_microseconds": 186.11248779296875,
+    "worker_rss_kib": [
+      66320,
+      68172
+    ],
+    "cli_rss_kib": [
+      448492,
+      448844
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 185147.828125,
+        "worker_rss_kib": 66320,
+        "cli_rss_kib": 448492,
+        "stem": "00-degree-3-lexical"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 181682.87939453125,
+        "worker_rss_kib": 66892,
+        "cli_rss_kib": 448844,
+        "stem": "01-degree-3-lexical"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 182782.84765625,
+        "worker_rss_kib": 67924,
+        "cli_rss_kib": 448756,
+        "stem": "02-degree-3-lexical"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 186112.48779296875,
+        "worker_rss_kib": 68172,
+        "cli_rss_kib": 448628,
+        "stem": "03-degree-3-lexical"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 181898.1064453125,
+        "worker_rss_kib": 66440,
+        "cli_rss_kib": 448596,
+        "stem": "04-degree-3-lexical"
+      }
+    ],
+    "wire_integer_tokens": 1693,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 4219
+  },
+  {
+    "case": "degree-3",
+    "axis": "degree",
+    "parameter": 3,
+    "degree": 3,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 11770,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 131,
+    "arm": "parsed",
+    "median_microseconds": 730.30972265625,
+    "min_microseconds": 726.223556640625,
+    "max_microseconds": 736.2240078125,
+    "worker_rss_kib": [
+      65908,
+      68368
+    ],
+    "cli_rss_kib": [
+      448616,
+      448844
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 726223.556640625,
+        "worker_rss_kib": 68196,
+        "cli_rss_kib": 448616,
+        "stem": "00-degree-3-parsed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 733650.248046875,
+        "worker_rss_kib": 66888,
+        "cli_rss_kib": 448844,
+        "stem": "01-degree-3-parsed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 730309.72265625,
+        "worker_rss_kib": 66820,
+        "cli_rss_kib": 448824,
+        "stem": "02-degree-3-parsed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 727066.123046875,
+        "worker_rss_kib": 68368,
+        "cli_rss_kib": 448788,
+        "stem": "03-degree-3-parsed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 736224.0078125,
+        "worker_rss_kib": 65908,
+        "cli_rss_kib": 448748,
+        "stem": "04-degree-3-parsed"
+      }
+    ],
+    "wire_integer_tokens": 1693,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 4219
+  },
+  {
+    "case": "degree-3",
+    "axis": "degree",
+    "parameter": 3,
+    "degree": 3,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 11770,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 131,
+    "arm": "restored",
+    "median_microseconds": 813.18579296875,
+    "min_microseconds": 810.13619921875,
+    "max_microseconds": 814.348890625,
+    "worker_rss_kib": [
+      66588,
+      66760
+    ],
+    "cli_rss_kib": [
+      448480,
+      448688
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 810136.19921875,
+        "worker_rss_kib": 66760,
+        "cli_rss_kib": 448480,
+        "stem": "00-degree-3-restored"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 814348.890625,
+        "worker_rss_kib": 66588,
+        "cli_rss_kib": 448664,
+        "stem": "01-degree-3-restored"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 811818.08984375,
+        "worker_rss_kib": 66656,
+        "cli_rss_kib": 448660,
+        "stem": "02-degree-3-restored"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 813267.19140625,
+        "worker_rss_kib": 66624,
+        "cli_rss_kib": 448500,
+        "stem": "03-degree-3-restored"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 813185.79296875,
+        "worker_rss_kib": 66728,
+        "cli_rss_kib": 448688,
+        "stem": "04-degree-3-restored"
+      }
+    ],
+    "wire_integer_tokens": 1693,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 4219
+  },
+  {
+    "case": "degree-3",
+    "axis": "degree",
+    "parameter": 3,
+    "degree": 3,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 11770,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 131,
+    "arm": "replayed",
+    "median_microseconds": 1078.368015625,
+    "min_microseconds": 1074.464265625,
+    "max_microseconds": 1088.8495,
+    "worker_rss_kib": [
+      66712,
+      68552
+    ],
+    "cli_rss_kib": [
+      448576,
+      448760
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 1080912.26171875,
+        "worker_rss_kib": 66796,
+        "cli_rss_kib": 448576,
+        "stem": "00-degree-3-replayed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 1078151.88671875,
+        "worker_rss_kib": 68552,
+        "cli_rss_kib": 448728,
+        "stem": "01-degree-3-replayed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 1074464.265625,
+        "worker_rss_kib": 67560,
+        "cli_rss_kib": 448592,
+        "stem": "02-degree-3-replayed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 1088849.5,
+        "worker_rss_kib": 68476,
+        "cli_rss_kib": 448688,
+        "stem": "03-degree-3-replayed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 1078368.015625,
+        "worker_rss_kib": 66712,
+        "cli_rss_kib": 448760,
+        "stem": "04-degree-3-replayed"
+      }
+    ],
+    "wire_integer_tokens": 1693,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 4219
+  },
+  {
+    "case": "degree-4",
+    "axis": "degree",
+    "parameter": 4,
+    "degree": 4,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 13110,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 169,
+    "arm": "lexical",
+    "median_microseconds": 202.7236865234375,
+    "min_microseconds": 201.6257216796875,
+    "max_microseconds": 204.84858984375,
+    "worker_rss_kib": [
+      61936,
+      67964
+    ],
+    "cli_rss_kib": [
+      448460,
+      448788
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 202723.6865234375,
+        "worker_rss_kib": 66744,
+        "cli_rss_kib": 448616,
+        "stem": "00-degree-4-lexical"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 203581.9560546875,
+        "worker_rss_kib": 67292,
+        "cli_rss_kib": 448560,
+        "stem": "01-degree-4-lexical"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 204848.58984375,
+        "worker_rss_kib": 67952,
+        "cli_rss_kib": 448788,
+        "stem": "02-degree-4-lexical"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 201917.4482421875,
+        "worker_rss_kib": 61936,
+        "cli_rss_kib": 448460,
+        "stem": "03-degree-4-lexical"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 201625.7216796875,
+        "worker_rss_kib": 67964,
+        "cli_rss_kib": 448728,
+        "stem": "04-degree-4-lexical"
+      }
+    ],
+    "wire_integer_tokens": 1918,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 4855
+  },
+  {
+    "case": "degree-4",
+    "axis": "degree",
+    "parameter": 4,
+    "degree": 4,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 13110,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 169,
+    "arm": "parsed",
+    "median_microseconds": 850.450890625,
+    "min_microseconds": 840.94267578125,
+    "max_microseconds": 855.25911328125,
+    "worker_rss_kib": [
+      66500,
+      68116
+    ],
+    "cli_rss_kib": [
+      448520,
+      448764
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 844287.31640625,
+        "worker_rss_kib": 67056,
+        "cli_rss_kib": 448520,
+        "stem": "00-degree-4-parsed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 852973.25390625,
+        "worker_rss_kib": 67408,
+        "cli_rss_kib": 448616,
+        "stem": "01-degree-4-parsed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 855259.11328125,
+        "worker_rss_kib": 66500,
+        "cli_rss_kib": 448764,
+        "stem": "02-degree-4-parsed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 850450.890625,
+        "worker_rss_kib": 67376,
+        "cli_rss_kib": 448628,
+        "stem": "03-degree-4-parsed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 840942.67578125,
+        "worker_rss_kib": 68116,
+        "cli_rss_kib": 448664,
+        "stem": "04-degree-4-parsed"
+      }
+    ],
+    "wire_integer_tokens": 1918,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 4855
+  },
+  {
+    "case": "degree-4",
+    "axis": "degree",
+    "parameter": 4,
+    "degree": 4,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 13110,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 169,
+    "arm": "restored",
+    "median_microseconds": 938.31679296875,
+    "min_microseconds": 934.8112421875,
+    "max_microseconds": 947.01176171875,
+    "worker_rss_kib": [
+      66592,
+      68952
+    ],
+    "cli_rss_kib": [
+      448596,
+      448788
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 938316.79296875,
+        "worker_rss_kib": 68952,
+        "cli_rss_kib": 448596,
+        "stem": "00-degree-4-restored"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 940310.40625,
+        "worker_rss_kib": 66592,
+        "cli_rss_kib": 448652,
+        "stem": "01-degree-4-restored"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 947011.76171875,
+        "worker_rss_kib": 66860,
+        "cli_rss_kib": 448788,
+        "stem": "02-degree-4-restored"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 937591.9453125,
+        "worker_rss_kib": 68688,
+        "cli_rss_kib": 448664,
+        "stem": "03-degree-4-restored"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 934811.2421875,
+        "worker_rss_kib": 66740,
+        "cli_rss_kib": 448648,
+        "stem": "04-degree-4-restored"
+      }
+    ],
+    "wire_integer_tokens": 1918,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 4855
+  },
+  {
+    "case": "degree-4",
+    "axis": "degree",
+    "parameter": 4,
+    "degree": 4,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 13110,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 169,
+    "arm": "replayed",
+    "median_microseconds": 1254.2557890625,
+    "min_microseconds": 1249.89203125,
+    "max_microseconds": 1260.44241015625,
+    "worker_rss_kib": [
+      67064,
+      69012
+    ],
+    "cli_rss_kib": [
+      448704,
+      448784
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 1249892.03125,
+        "worker_rss_kib": 68260,
+        "cli_rss_kib": 448772,
+        "stem": "00-degree-4-replayed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 1256439.51171875,
+        "worker_rss_kib": 67860,
+        "cli_rss_kib": 448784,
+        "stem": "01-degree-4-replayed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 1260442.41015625,
+        "worker_rss_kib": 69012,
+        "cli_rss_kib": 448728,
+        "stem": "02-degree-4-replayed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 1252847.23046875,
+        "worker_rss_kib": 67732,
+        "cli_rss_kib": 448760,
+        "stem": "03-degree-4-replayed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 1254255.7890625,
+        "worker_rss_kib": 67064,
+        "cli_rss_kib": 448704,
+        "stem": "04-degree-4-replayed"
+      }
+    ],
+    "wire_integer_tokens": 1918,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 4855
+  },
+  {
+    "case": "degree-5",
+    "axis": "degree",
+    "parameter": 5,
+    "degree": 5,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 14259,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 203,
+    "arm": "lexical",
+    "median_microseconds": 219.9871650390625,
+    "min_microseconds": 218.323376953125,
+    "max_microseconds": 236.695697265625,
+    "worker_rss_kib": [
+      66100,
+      67984
+    ],
+    "cli_rss_kib": [
+      448556,
+      448788
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 220504.01171875,
+        "worker_rss_kib": 67984,
+        "cli_rss_kib": 448628,
+        "stem": "00-degree-5-lexical"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 219987.1650390625,
+        "worker_rss_kib": 66132,
+        "cli_rss_kib": 448780,
+        "stem": "01-degree-5-lexical"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 236695.697265625,
+        "worker_rss_kib": 66100,
+        "cli_rss_kib": 448556,
+        "stem": "02-degree-5-lexical"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 219542.34765625,
+        "worker_rss_kib": 66432,
+        "cli_rss_kib": 448788,
+        "stem": "03-degree-5-lexical"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 218323.376953125,
+        "worker_rss_kib": 66528,
+        "cli_rss_kib": 448700,
+        "stem": "04-degree-5-lexical"
+      }
+    ],
+    "wire_integer_tokens": 2101,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 5420
+  },
+  {
+    "case": "degree-5",
+    "axis": "degree",
+    "parameter": 5,
+    "degree": 5,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 14259,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 203,
+    "arm": "parsed",
+    "median_microseconds": 952.64295703125,
+    "min_microseconds": 949.3398046875,
+    "max_microseconds": 955.34466015625,
+    "worker_rss_kib": [
+      66240,
+      68188
+    ],
+    "cli_rss_kib": [
+      448576,
+      448772
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 955101.39453125,
+        "worker_rss_kib": 68188,
+        "cli_rss_kib": 448680,
+        "stem": "00-degree-5-parsed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 949339.8046875,
+        "worker_rss_kib": 67664,
+        "cli_rss_kib": 448576,
+        "stem": "01-degree-5-parsed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 952642.95703125,
+        "worker_rss_kib": 66240,
+        "cli_rss_kib": 448772,
+        "stem": "02-degree-5-parsed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 955344.66015625,
+        "worker_rss_kib": 67072,
+        "cli_rss_kib": 448668,
+        "stem": "03-degree-5-parsed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 951421.71484375,
+        "worker_rss_kib": 68112,
+        "cli_rss_kib": 448672,
+        "stem": "04-degree-5-parsed"
+      }
+    ],
+    "wire_integer_tokens": 2101,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 5420
+  },
+  {
+    "case": "degree-5",
+    "axis": "degree",
+    "parameter": 5,
+    "degree": 5,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 14259,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 203,
+    "arm": "restored",
+    "median_microseconds": 1062.61834375,
+    "min_microseconds": 1061.36933203125,
+    "max_microseconds": 1068.4951171875,
+    "worker_rss_kib": [
+      66724,
+      68736
+    ],
+    "cli_rss_kib": [
+      448452,
+      448716
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 1062661.81640625,
+        "worker_rss_kib": 67448,
+        "cli_rss_kib": 448452,
+        "stem": "00-degree-5-restored"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 1061369.33203125,
+        "worker_rss_kib": 66724,
+        "cli_rss_kib": 448600,
+        "stem": "01-degree-5-restored"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 1061603.88671875,
+        "worker_rss_kib": 67476,
+        "cli_rss_kib": 448704,
+        "stem": "02-degree-5-restored"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 1068495.1171875,
+        "worker_rss_kib": 68736,
+        "cli_rss_kib": 448716,
+        "stem": "03-degree-5-restored"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 1062618.34375,
+        "worker_rss_kib": 67000,
+        "cli_rss_kib": 448516,
+        "stem": "04-degree-5-restored"
+      }
+    ],
+    "wire_integer_tokens": 2101,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 5420
+  },
+  {
+    "case": "degree-5",
+    "axis": "degree",
+    "parameter": 5,
+    "degree": 5,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 14259,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 203,
+    "arm": "replayed",
+    "median_microseconds": 1424.6275859375,
+    "min_microseconds": 1421.14147265625,
+    "max_microseconds": 1436.63782421875,
+    "worker_rss_kib": [
+      67572,
+      68516
+    ],
+    "cli_rss_kib": [
+      448584,
+      448800
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 1424432.8984375,
+        "worker_rss_kib": 67812,
+        "cli_rss_kib": 448688,
+        "stem": "00-degree-5-replayed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 1426980.7890625,
+        "worker_rss_kib": 68516,
+        "cli_rss_kib": 448800,
+        "stem": "01-degree-5-replayed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 1436637.82421875,
+        "worker_rss_kib": 68484,
+        "cli_rss_kib": 448584,
+        "stem": "02-degree-5-replayed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 1424627.5859375,
+        "worker_rss_kib": 67572,
+        "cli_rss_kib": 448672,
+        "stem": "03-degree-5-replayed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 1421141.47265625,
+        "worker_rss_kib": 67592,
+        "cli_rss_kib": 448656,
+        "stem": "04-degree-5-replayed"
+      }
+    ],
+    "wire_integer_tokens": 2101,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 5420
+  },
+  {
+    "case": "atoms-1",
+    "axis": "atoms",
+    "parameter": 1,
+    "degree": 2,
+    "atoms": 1,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 4899,
+    "row_unique_nodes": 1,
+    "row_expanded_nodes": 1,
+    "max_wire_integer_bits": 66,
+    "arm": "lexical",
+    "median_microseconds": 76.37379663085937,
+    "min_microseconds": 75.924818359375,
+    "max_microseconds": 76.58604125976562,
+    "worker_rss_kib": [
+      59972,
+      68516
+    ],
+    "cli_rss_kib": [
+      448464,
+      448776
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 76373.79663085938,
+        "worker_rss_kib": 66744,
+        "cli_rss_kib": 448608,
+        "stem": "00-atoms-1-lexical"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 76294.232421875,
+        "worker_rss_kib": 68516,
+        "cli_rss_kib": 448776,
+        "stem": "01-atoms-1-lexical"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 76586.04125976562,
+        "worker_rss_kib": 66836,
+        "cli_rss_kib": 448772,
+        "stem": "02-atoms-1-lexical"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 75924.818359375,
+        "worker_rss_kib": 59972,
+        "cli_rss_kib": 448464,
+        "stem": "03-atoms-1-lexical"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 76411.40014648438,
+        "worker_rss_kib": 65788,
+        "cli_rss_kib": 448664,
+        "stem": "04-atoms-1-lexical"
+      }
+    ],
+    "wire_integer_tokens": 700,
+    "row_system_sizes": [
+      3
+    ],
+    "row_ranks": [
+      1
+    ],
+    "row_moment_counts": [
+      3
+    ],
+    "row_moment_json_bytes": 1403
+  },
+  {
+    "case": "atoms-1",
+    "axis": "atoms",
+    "parameter": 1,
+    "degree": 2,
+    "atoms": 1,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 4899,
+    "row_unique_nodes": 1,
+    "row_expanded_nodes": 1,
+    "max_wire_integer_bits": 66,
+    "arm": "parsed",
+    "median_microseconds": 285.3785478515625,
+    "min_microseconds": 284.6093505859375,
+    "max_microseconds": 287.759224609375,
+    "worker_rss_kib": [
+      60512,
+      67036
+    ],
+    "cli_rss_kib": [
+      448640,
+      448724
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 284609.3505859375,
+        "worker_rss_kib": 66352,
+        "cli_rss_kib": 448700,
+        "stem": "00-atoms-1-parsed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 287759.224609375,
+        "worker_rss_kib": 67036,
+        "cli_rss_kib": 448648,
+        "stem": "01-atoms-1-parsed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 286215.17578125,
+        "worker_rss_kib": 66900,
+        "cli_rss_kib": 448724,
+        "stem": "02-atoms-1-parsed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 285378.5478515625,
+        "worker_rss_kib": 60512,
+        "cli_rss_kib": 448720,
+        "stem": "03-atoms-1-parsed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 284865.6748046875,
+        "worker_rss_kib": 65872,
+        "cli_rss_kib": 448640,
+        "stem": "04-atoms-1-parsed"
+      }
+    ],
+    "wire_integer_tokens": 700,
+    "row_system_sizes": [
+      3
+    ],
+    "row_ranks": [
+      1
+    ],
+    "row_moment_counts": [
+      3
+    ],
+    "row_moment_json_bytes": 1403
+  },
+  {
+    "case": "atoms-1",
+    "axis": "atoms",
+    "parameter": 1,
+    "degree": 2,
+    "atoms": 1,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 4899,
+    "row_unique_nodes": 1,
+    "row_expanded_nodes": 1,
+    "max_wire_integer_bits": 66,
+    "arm": "restored",
+    "median_microseconds": 345.0767412109375,
+    "min_microseconds": 343.83598046875,
+    "max_microseconds": 347.2502919921875,
+    "worker_rss_kib": [
+      66420,
+      68336
+    ],
+    "cli_rss_kib": [
+      448548,
+      448632
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 347250.2919921875,
+        "worker_rss_kib": 67084,
+        "cli_rss_kib": 448596,
+        "stem": "00-atoms-1-restored"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 343968.3564453125,
+        "worker_rss_kib": 66840,
+        "cli_rss_kib": 448628,
+        "stem": "01-atoms-1-restored"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 345076.7412109375,
+        "worker_rss_kib": 66420,
+        "cli_rss_kib": 448596,
+        "stem": "02-atoms-1-restored"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 343835.98046875,
+        "worker_rss_kib": 68336,
+        "cli_rss_kib": 448548,
+        "stem": "03-atoms-1-restored"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 345577.71875,
+        "worker_rss_kib": 67864,
+        "cli_rss_kib": 448632,
+        "stem": "04-atoms-1-restored"
+      }
+    ],
+    "wire_integer_tokens": 700,
+    "row_system_sizes": [
+      3
+    ],
+    "row_ranks": [
+      1
+    ],
+    "row_moment_counts": [
+      3
+    ],
+    "row_moment_json_bytes": 1403
+  },
+  {
+    "case": "atoms-1",
+    "axis": "atoms",
+    "parameter": 1,
+    "degree": 2,
+    "atoms": 1,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 4899,
+    "row_unique_nodes": 1,
+    "row_expanded_nodes": 1,
+    "max_wire_integer_bits": 66,
+    "arm": "replayed",
+    "median_microseconds": 435.51202734375,
+    "min_microseconds": 429.274181640625,
+    "max_microseconds": 491.176484375,
+    "worker_rss_kib": [
+      66504,
+      69136
+    ],
+    "cli_rss_kib": [
+      448604,
+      448672
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 435512.02734375,
+        "worker_rss_kib": 69136,
+        "cli_rss_kib": 448636,
+        "stem": "00-atoms-1-replayed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 432717.5234375,
+        "worker_rss_kib": 68072,
+        "cli_rss_kib": 448672,
+        "stem": "01-atoms-1-replayed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 491176.484375,
+        "worker_rss_kib": 66504,
+        "cli_rss_kib": 448604,
+        "stem": "02-atoms-1-replayed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 429274.181640625,
+        "worker_rss_kib": 68424,
+        "cli_rss_kib": 448640,
+        "stem": "03-atoms-1-replayed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 442498.611328125,
+        "worker_rss_kib": 67384,
+        "cli_rss_kib": 448632,
+        "stem": "04-atoms-1-replayed"
+      }
+    ],
+    "wire_integer_tokens": 700,
+    "row_system_sizes": [
+      3
+    ],
+    "row_ranks": [
+      1
+    ],
+    "row_moment_counts": [
+      3
+    ],
+    "row_moment_json_bytes": 1403
+  },
+  {
+    "case": "atoms-2",
+    "axis": "atoms",
+    "parameter": 2,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 9916,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "lexical",
+    "median_microseconds": 154.21555517578125,
+    "min_microseconds": 153.95242041015624,
+    "max_microseconds": 156.79178857421874,
+    "worker_rss_kib": [
+      59648,
+      68348
+    ],
+    "cli_rss_kib": [
+      448472,
+      448832
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 154215.55517578125,
+        "worker_rss_kib": 66292,
+        "cli_rss_kib": 448752,
+        "stem": "00-atoms-2-lexical"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 153952.42041015625,
+        "worker_rss_kib": 68348,
+        "cli_rss_kib": 448704,
+        "stem": "01-atoms-2-lexical"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 156791.78857421875,
+        "worker_rss_kib": 66916,
+        "cli_rss_kib": 448472,
+        "stem": "02-atoms-2-lexical"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 156239.7509765625,
+        "worker_rss_kib": 59648,
+        "cli_rss_kib": 448708,
+        "stem": "03-atoms-2-lexical"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 154201.04931640625,
+        "worker_rss_kib": 67748,
+        "cli_rss_kib": 448832,
+        "stem": "04-atoms-2-lexical"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3217
+  },
+  {
+    "case": "atoms-2",
+    "axis": "atoms",
+    "parameter": 2,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 9916,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "parsed",
+    "median_microseconds": 573.013419921875,
+    "min_microseconds": 571.790345703125,
+    "max_microseconds": 577.538783203125,
+    "worker_rss_kib": [
+      61144,
+      68084
+    ],
+    "cli_rss_kib": [
+      448424,
+      448768
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 572926.1875,
+        "worker_rss_kib": 67188,
+        "cli_rss_kib": 448424,
+        "stem": "00-atoms-2-parsed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 575049.162109375,
+        "worker_rss_kib": 68048,
+        "cli_rss_kib": 448652,
+        "stem": "01-atoms-2-parsed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 577538.783203125,
+        "worker_rss_kib": 67548,
+        "cli_rss_kib": 448556,
+        "stem": "02-atoms-2-parsed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 571790.345703125,
+        "worker_rss_kib": 61144,
+        "cli_rss_kib": 448768,
+        "stem": "03-atoms-2-parsed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 573013.419921875,
+        "worker_rss_kib": 68084,
+        "cli_rss_kib": 448648,
+        "stem": "04-atoms-2-parsed"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3217
+  },
+  {
+    "case": "atoms-2",
+    "axis": "atoms",
+    "parameter": 2,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 9916,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "restored",
+    "median_microseconds": 636.784498046875,
+    "min_microseconds": 632.43637109375,
+    "max_microseconds": 640.141525390625,
+    "worker_rss_kib": [
+      60848,
+      67468
+    ],
+    "cli_rss_kib": [
+      448544,
+      448816
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 640141.525390625,
+        "worker_rss_kib": 67144,
+        "cli_rss_kib": 448684,
+        "stem": "00-atoms-2-restored"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 632436.37109375,
+        "worker_rss_kib": 67372,
+        "cli_rss_kib": 448712,
+        "stem": "01-atoms-2-restored"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 639746.7734375,
+        "worker_rss_kib": 67468,
+        "cli_rss_kib": 448716,
+        "stem": "02-atoms-2-restored"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 636784.498046875,
+        "worker_rss_kib": 60848,
+        "cli_rss_kib": 448544,
+        "stem": "03-atoms-2-restored"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 635239.837890625,
+        "worker_rss_kib": 66216,
+        "cli_rss_kib": 448816,
+        "stem": "04-atoms-2-restored"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3217
+  },
+  {
+    "case": "atoms-2",
+    "axis": "atoms",
+    "parameter": 2,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 9916,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "replayed",
+    "median_microseconds": 838.4017890625,
+    "min_microseconds": 833.0879765625,
+    "max_microseconds": 840.07819140625,
+    "worker_rss_kib": [
+      62784,
+      68496
+    ],
+    "cli_rss_kib": [
+      448500,
+      448832
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 838723.99609375,
+        "worker_rss_kib": 67792,
+        "cli_rss_kib": 448684,
+        "stem": "00-atoms-2-replayed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 833087.9765625,
+        "worker_rss_kib": 66556,
+        "cli_rss_kib": 448500,
+        "stem": "01-atoms-2-replayed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 838330.3984375,
+        "worker_rss_kib": 68496,
+        "cli_rss_kib": 448832,
+        "stem": "02-atoms-2-replayed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 838401.7890625,
+        "worker_rss_kib": 62784,
+        "cli_rss_kib": 448788,
+        "stem": "03-atoms-2-replayed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 840078.19140625,
+        "worker_rss_kib": 68260,
+        "cli_rss_kib": 448696,
+        "stem": "04-atoms-2-replayed"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3217
+  },
+  {
+    "case": "atoms-3",
+    "axis": "atoms",
+    "parameter": 3,
+    "degree": 2,
+    "atoms": 3,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 15093,
+    "row_unique_nodes": 5,
+    "row_expanded_nodes": 5,
+    "max_wire_integer_bits": 72,
+    "arm": "lexical",
+    "median_microseconds": 236.0223515625,
+    "min_microseconds": 233.3285654296875,
+    "max_microseconds": 236.3486611328125,
+    "worker_rss_kib": [
+      66584,
+      68512
+    ],
+    "cli_rss_kib": [
+      448540,
+      448640
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 233328.5654296875,
+        "worker_rss_kib": 67400,
+        "cli_rss_kib": 448624,
+        "stem": "00-atoms-3-lexical"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 233626.599609375,
+        "worker_rss_kib": 68512,
+        "cli_rss_kib": 448540,
+        "stem": "01-atoms-3-lexical"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 236027.521484375,
+        "worker_rss_kib": 67240,
+        "cli_rss_kib": 448544,
+        "stem": "02-atoms-3-lexical"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 236348.6611328125,
+        "worker_rss_kib": 67560,
+        "cli_rss_kib": 448620,
+        "stem": "03-atoms-3-lexical"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 236022.3515625,
+        "worker_rss_kib": 66584,
+        "cli_rss_kib": 448640,
+        "stem": "04-atoms-3-lexical"
+      }
+    ],
+    "wire_integer_tokens": 2161,
+    "row_system_sizes": [
+      3,
+      3,
+      3,
+      1,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      3,
+      1,
+      1
+    ],
+    "row_moment_json_bytes": 5045
+  },
+  {
+    "case": "atoms-3",
+    "axis": "atoms",
+    "parameter": 3,
+    "degree": 2,
+    "atoms": 3,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 15093,
+    "row_unique_nodes": 5,
+    "row_expanded_nodes": 5,
+    "max_wire_integer_bits": 72,
+    "arm": "parsed",
+    "median_microseconds": 862.26558984375,
+    "min_microseconds": 858.41587109375,
+    "max_microseconds": 889.06898828125,
+    "worker_rss_kib": [
+      62184,
+      67672
+    ],
+    "cli_rss_kib": [
+      448604,
+      448732
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 859891.34375,
+        "worker_rss_kib": 66432,
+        "cli_rss_kib": 448632,
+        "stem": "00-atoms-3-parsed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 858415.87109375,
+        "worker_rss_kib": 67672,
+        "cli_rss_kib": 448664,
+        "stem": "01-atoms-3-parsed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 889068.98828125,
+        "worker_rss_kib": 66236,
+        "cli_rss_kib": 448604,
+        "stem": "02-atoms-3-parsed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 862265.58984375,
+        "worker_rss_kib": 62184,
+        "cli_rss_kib": 448648,
+        "stem": "03-atoms-3-parsed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 876372.95703125,
+        "worker_rss_kib": 65784,
+        "cli_rss_kib": 448732,
+        "stem": "04-atoms-3-parsed"
+      }
+    ],
+    "wire_integer_tokens": 2161,
+    "row_system_sizes": [
+      3,
+      3,
+      3,
+      1,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      3,
+      1,
+      1
+    ],
+    "row_moment_json_bytes": 5045
+  },
+  {
+    "case": "atoms-3",
+    "axis": "atoms",
+    "parameter": 3,
+    "degree": 2,
+    "atoms": 3,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 15093,
+    "row_unique_nodes": 5,
+    "row_expanded_nodes": 5,
+    "max_wire_integer_bits": 72,
+    "arm": "restored",
+    "median_microseconds": 933.5219921875,
+    "min_microseconds": 932.7653828125,
+    "max_microseconds": 951.8177578125,
+    "worker_rss_kib": [
+      61656,
+      67848
+    ],
+    "cli_rss_kib": [
+      448576,
+      448760
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 933521.9921875,
+        "worker_rss_kib": 67848,
+        "cli_rss_kib": 448760,
+        "stem": "00-atoms-3-restored"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 933004.01171875,
+        "worker_rss_kib": 66480,
+        "cli_rss_kib": 448684,
+        "stem": "01-atoms-3-restored"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 951817.7578125,
+        "worker_rss_kib": 66664,
+        "cli_rss_kib": 448584,
+        "stem": "02-atoms-3-restored"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 932765.3828125,
+        "worker_rss_kib": 61656,
+        "cli_rss_kib": 448736,
+        "stem": "03-atoms-3-restored"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 934021.48046875,
+        "worker_rss_kib": 66316,
+        "cli_rss_kib": 448576,
+        "stem": "04-atoms-3-restored"
+      }
+    ],
+    "wire_integer_tokens": 2161,
+    "row_system_sizes": [
+      3,
+      3,
+      3,
+      1,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      3,
+      1,
+      1
+    ],
+    "row_moment_json_bytes": 5045
+  },
+  {
+    "case": "atoms-3",
+    "axis": "atoms",
+    "parameter": 3,
+    "degree": 2,
+    "atoms": 3,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 15093,
+    "row_unique_nodes": 5,
+    "row_expanded_nodes": 5,
+    "max_wire_integer_bits": 72,
+    "arm": "replayed",
+    "median_microseconds": 1244.94824609375,
+    "min_microseconds": 1237.617671875,
+    "max_microseconds": 1256.38744140625,
+    "worker_rss_kib": [
+      66688,
+      69032
+    ],
+    "cli_rss_kib": [
+      448596,
+      448788
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 1237617.671875,
+        "worker_rss_kib": 66688,
+        "cli_rss_kib": 448612,
+        "stem": "00-atoms-3-replayed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 1247193.3828125,
+        "worker_rss_kib": 67068,
+        "cli_rss_kib": 448788,
+        "stem": "01-atoms-3-replayed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 1242102.28125,
+        "worker_rss_kib": 69032,
+        "cli_rss_kib": 448732,
+        "stem": "02-atoms-3-replayed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 1256387.44140625,
+        "worker_rss_kib": 66756,
+        "cli_rss_kib": 448596,
+        "stem": "03-atoms-3-replayed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 1244948.24609375,
+        "worker_rss_kib": 66728,
+        "cli_rss_kib": 448720,
+        "stem": "04-atoms-3-replayed"
+      }
+    ],
+    "wire_integer_tokens": 2161,
+    "row_system_sizes": [
+      3,
+      3,
+      3,
+      1,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      3,
+      1,
+      1
+    ],
+    "row_moment_json_bytes": 5045
+  },
+  {
+    "case": "atoms-4",
+    "axis": "atoms",
+    "parameter": 4,
+    "degree": 2,
+    "atoms": 4,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 20269,
+    "row_unique_nodes": 7,
+    "row_expanded_nodes": 7,
+    "max_wire_integer_bits": 72,
+    "arm": "lexical",
+    "median_microseconds": 317.888818359375,
+    "min_microseconds": 313.1492763671875,
+    "max_microseconds": 320.494943359375,
+    "worker_rss_kib": [
+      66216,
+      67992
+    ],
+    "cli_rss_kib": [
+      448516,
+      448704
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 314991.7021484375,
+        "worker_rss_kib": 66360,
+        "cli_rss_kib": 448516,
+        "stem": "00-atoms-4-lexical"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 313149.2763671875,
+        "worker_rss_kib": 67992,
+        "cli_rss_kib": 448640,
+        "stem": "01-atoms-4-lexical"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 320494.943359375,
+        "worker_rss_kib": 66336,
+        "cli_rss_kib": 448580,
+        "stem": "02-atoms-4-lexical"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 317888.818359375,
+        "worker_rss_kib": 66216,
+        "cli_rss_kib": 448704,
+        "stem": "03-atoms-4-lexical"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 319906.9228515625,
+        "worker_rss_kib": 66604,
+        "cli_rss_kib": 448528,
+        "stem": "04-atoms-4-lexical"
+      }
+    ],
+    "wire_integer_tokens": 2902,
+    "row_system_sizes": [
+      3,
+      3,
+      1,
+      3,
+      3,
+      1,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1,
+      3,
+      3,
+      1,
+      1
+    ],
+    "row_moment_json_bytes": 6873
+  },
+  {
+    "case": "atoms-4",
+    "axis": "atoms",
+    "parameter": 4,
+    "degree": 2,
+    "atoms": 4,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 20269,
+    "row_unique_nodes": 7,
+    "row_expanded_nodes": 7,
+    "max_wire_integer_bits": 72,
+    "arm": "parsed",
+    "median_microseconds": 1166.21869921875,
+    "min_microseconds": 1156.0005,
+    "max_microseconds": 1173.5166171875,
+    "worker_rss_kib": [
+      66240,
+      68236
+    ],
+    "cli_rss_kib": [
+      448424,
+      448848
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 1156000.5,
+        "worker_rss_kib": 66960,
+        "cli_rss_kib": 448424,
+        "stem": "00-atoms-4-parsed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 1163492.6015625,
+        "worker_rss_kib": 68236,
+        "cli_rss_kib": 448596,
+        "stem": "01-atoms-4-parsed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 1173516.6171875,
+        "worker_rss_kib": 66240,
+        "cli_rss_kib": 448704,
+        "stem": "02-atoms-4-parsed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 1166218.69921875,
+        "worker_rss_kib": 68064,
+        "cli_rss_kib": 448632,
+        "stem": "03-atoms-4-parsed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 1168343.546875,
+        "worker_rss_kib": 66784,
+        "cli_rss_kib": 448848,
+        "stem": "04-atoms-4-parsed"
+      }
+    ],
+    "wire_integer_tokens": 2902,
+    "row_system_sizes": [
+      3,
+      3,
+      1,
+      3,
+      3,
+      1,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1,
+      3,
+      3,
+      1,
+      1
+    ],
+    "row_moment_json_bytes": 6873
+  },
+  {
+    "case": "atoms-4",
+    "axis": "atoms",
+    "parameter": 4,
+    "degree": 2,
+    "atoms": 4,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 20269,
+    "row_unique_nodes": 7,
+    "row_expanded_nodes": 7,
+    "max_wire_integer_bits": 72,
+    "arm": "restored",
+    "median_microseconds": 1237.01243359375,
+    "min_microseconds": 1231.43882421875,
+    "max_microseconds": 1255.2806875,
+    "worker_rss_kib": [
+      63068,
+      68336
+    ],
+    "cli_rss_kib": [
+      448652,
+      448732
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 1231438.82421875,
+        "worker_rss_kib": 67844,
+        "cli_rss_kib": 448652,
+        "stem": "00-atoms-4-restored"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 1234870.12890625,
+        "worker_rss_kib": 66588,
+        "cli_rss_kib": 448680,
+        "stem": "01-atoms-4-restored"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 1237012.43359375,
+        "worker_rss_kib": 67604,
+        "cli_rss_kib": 448672,
+        "stem": "02-atoms-4-restored"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 1255280.6875,
+        "worker_rss_kib": 63068,
+        "cli_rss_kib": 448696,
+        "stem": "03-atoms-4-restored"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 1245732.45703125,
+        "worker_rss_kib": 68336,
+        "cli_rss_kib": 448732,
+        "stem": "04-atoms-4-restored"
+      }
+    ],
+    "wire_integer_tokens": 2902,
+    "row_system_sizes": [
+      3,
+      3,
+      1,
+      3,
+      3,
+      1,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1,
+      3,
+      3,
+      1,
+      1
+    ],
+    "row_moment_json_bytes": 6873
+  },
+  {
+    "case": "atoms-4",
+    "axis": "atoms",
+    "parameter": 4,
+    "degree": 2,
+    "atoms": 4,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 20269,
+    "row_unique_nodes": 7,
+    "row_expanded_nodes": 7,
+    "max_wire_integer_bits": 72,
+    "arm": "replayed",
+    "median_microseconds": 1662.6268125,
+    "min_microseconds": 1652.102609375,
+    "max_microseconds": 1671.145734375,
+    "worker_rss_kib": [
+      66380,
+      68192
+    ],
+    "cli_rss_kib": [
+      448436,
+      448744
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 1662626.8125,
+        "worker_rss_kib": 68044,
+        "cli_rss_kib": 448716,
+        "stem": "00-atoms-4-replayed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 1656678.0,
+        "worker_rss_kib": 66820,
+        "cli_rss_kib": 448744,
+        "stem": "01-atoms-4-replayed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 1652102.609375,
+        "worker_rss_kib": 67356,
+        "cli_rss_kib": 448664,
+        "stem": "02-atoms-4-replayed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 1671145.734375,
+        "worker_rss_kib": 68192,
+        "cli_rss_kib": 448436,
+        "stem": "03-atoms-4-replayed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 1664972.8671875,
+        "worker_rss_kib": 66380,
+        "cli_rss_kib": 448592,
+        "stem": "04-atoms-4-replayed"
+      }
+    ],
+    "wire_integer_tokens": 2902,
+    "row_system_sizes": [
+      3,
+      3,
+      1,
+      3,
+      3,
+      1,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1,
+      3,
+      3,
+      1,
+      1
+    ],
+    "row_moment_json_bytes": 6873
+  },
+  {
+    "case": "bits-4",
+    "axis": "bits",
+    "parameter": 4,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 4,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 9572,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 20,
+    "arm": "lexical",
+    "median_microseconds": 148.47807763671875,
+    "min_microseconds": 148.4644833984375,
+    "max_microseconds": 150.43453466796876,
+    "worker_rss_kib": [
+      63804,
+      68060
+    ],
+    "cli_rss_kib": [
+      448604,
+      448760
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 148464.4833984375,
+        "worker_rss_kib": 68060,
+        "cli_rss_kib": 448692,
+        "stem": "00-bits-4-lexical"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 148677.47265625,
+        "worker_rss_kib": 67916,
+        "cli_rss_kib": 448760,
+        "stem": "01-bits-4-lexical"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 148478.07763671875,
+        "worker_rss_kib": 66820,
+        "cli_rss_kib": 448660,
+        "stem": "02-bits-4-lexical"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 148469.67724609375,
+        "worker_rss_kib": 63804,
+        "cli_rss_kib": 448640,
+        "stem": "03-bits-4-lexical"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 150434.53466796875,
+        "worker_rss_kib": 66948,
+        "cli_rss_kib": 448604,
+        "stem": "04-bits-4-lexical"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 2990
+  },
+  {
+    "case": "bits-4",
+    "axis": "bits",
+    "parameter": 4,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 4,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 9572,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 20,
+    "arm": "parsed",
+    "median_microseconds": 531.386107421875,
+    "min_microseconds": 528.773923828125,
+    "max_microseconds": 532.916328125,
+    "worker_rss_kib": [
+      60632,
+      68024
+    ],
+    "cli_rss_kib": [
+      448536,
+      448780
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 531386.107421875,
+        "worker_rss_kib": 67472,
+        "cli_rss_kib": 448652,
+        "stem": "00-bits-4-parsed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 532916.328125,
+        "worker_rss_kib": 66208,
+        "cli_rss_kib": 448780,
+        "stem": "01-bits-4-parsed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 528773.923828125,
+        "worker_rss_kib": 68024,
+        "cli_rss_kib": 448536,
+        "stem": "02-bits-4-parsed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 532622.87109375,
+        "worker_rss_kib": 60632,
+        "cli_rss_kib": 448732,
+        "stem": "03-bits-4-parsed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 530542.90234375,
+        "worker_rss_kib": 66280,
+        "cli_rss_kib": 448664,
+        "stem": "04-bits-4-parsed"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 2990
+  },
+  {
+    "case": "bits-4",
+    "axis": "bits",
+    "parameter": 4,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 4,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 9572,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 20,
+    "arm": "restored",
+    "median_microseconds": 592.6601796875,
+    "min_microseconds": 588.284673828125,
+    "max_microseconds": 600.7577109375,
+    "worker_rss_kib": [
+      65072,
+      68424
+    ],
+    "cli_rss_kib": [
+      448448,
+      448736
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 592660.1796875,
+        "worker_rss_kib": 66732,
+        "cli_rss_kib": 448448,
+        "stem": "00-bits-4-restored"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 589941.123046875,
+        "worker_rss_kib": 68424,
+        "cli_rss_kib": 448576,
+        "stem": "01-bits-4-restored"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 588284.673828125,
+        "worker_rss_kib": 67236,
+        "cli_rss_kib": 448588,
+        "stem": "02-bits-4-restored"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 600757.7109375,
+        "worker_rss_kib": 65072,
+        "cli_rss_kib": 448528,
+        "stem": "03-bits-4-restored"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 595065.26171875,
+        "worker_rss_kib": 66940,
+        "cli_rss_kib": 448736,
+        "stem": "04-bits-4-restored"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 2990
+  },
+  {
+    "case": "bits-4",
+    "axis": "bits",
+    "parameter": 4,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 4,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 9572,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 20,
+    "arm": "replayed",
+    "median_microseconds": 780.552451171875,
+    "min_microseconds": 771.818900390625,
+    "max_microseconds": 800.25123828125,
+    "worker_rss_kib": [
+      66336,
+      69196
+    ],
+    "cli_rss_kib": [
+      448556,
+      448708
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 780552.451171875,
+        "worker_rss_kib": 69196,
+        "cli_rss_kib": 448620,
+        "stem": "00-bits-4-replayed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 771818.900390625,
+        "worker_rss_kib": 67784,
+        "cli_rss_kib": 448608,
+        "stem": "01-bits-4-replayed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 777405.759765625,
+        "worker_rss_kib": 68776,
+        "cli_rss_kib": 448556,
+        "stem": "02-bits-4-replayed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 783583.8125,
+        "worker_rss_kib": 66336,
+        "cli_rss_kib": 448652,
+        "stem": "03-bits-4-replayed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 800251.23828125,
+        "worker_rss_kib": 66664,
+        "cli_rss_kib": 448708,
+        "stem": "04-bits-4-replayed"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 2990
+  },
+  {
+    "case": "bits-16",
+    "axis": "bits",
+    "parameter": 16,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 9916,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "lexical",
+    "median_microseconds": 156.3496904296875,
+    "min_microseconds": 153.758533203125,
+    "max_microseconds": 157.6270810546875,
+    "worker_rss_kib": [
+      61780,
+      68652
+    ],
+    "cli_rss_kib": [
+      448608,
+      448744
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 157627.0810546875,
+        "worker_rss_kib": 68652,
+        "cli_rss_kib": 448676,
+        "stem": "00-bits-16-lexical"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 157548.90087890625,
+        "worker_rss_kib": 67308,
+        "cli_rss_kib": 448680,
+        "stem": "01-bits-16-lexical"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 156324.3447265625,
+        "worker_rss_kib": 68196,
+        "cli_rss_kib": 448608,
+        "stem": "02-bits-16-lexical"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 156349.6904296875,
+        "worker_rss_kib": 61780,
+        "cli_rss_kib": 448704,
+        "stem": "03-bits-16-lexical"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 153758.533203125,
+        "worker_rss_kib": 66240,
+        "cli_rss_kib": 448744,
+        "stem": "04-bits-16-lexical"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3217
+  },
+  {
+    "case": "bits-16",
+    "axis": "bits",
+    "parameter": 16,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 9916,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "parsed",
+    "median_microseconds": 576.59327734375,
+    "min_microseconds": 571.13578515625,
+    "max_microseconds": 590.487,
+    "worker_rss_kib": [
+      60900,
+      68344
+    ],
+    "cli_rss_kib": [
+      448520,
+      448716
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 590487.0,
+        "worker_rss_kib": 66492,
+        "cli_rss_kib": 448520,
+        "stem": "00-bits-16-parsed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 576743.875,
+        "worker_rss_kib": 66272,
+        "cli_rss_kib": 448712,
+        "stem": "01-bits-16-parsed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 571135.78515625,
+        "worker_rss_kib": 68344,
+        "cli_rss_kib": 448716,
+        "stem": "02-bits-16-parsed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 572281.5078125,
+        "worker_rss_kib": 60900,
+        "cli_rss_kib": 448600,
+        "stem": "03-bits-16-parsed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 576593.27734375,
+        "worker_rss_kib": 67608,
+        "cli_rss_kib": 448680,
+        "stem": "04-bits-16-parsed"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3217
+  },
+  {
+    "case": "bits-16",
+    "axis": "bits",
+    "parameter": 16,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 9916,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "restored",
+    "median_microseconds": 633.660755859375,
+    "min_microseconds": 633.096625,
+    "max_microseconds": 642.4310703125,
+    "worker_rss_kib": [
+      63328,
+      68068
+    ],
+    "cli_rss_kib": [
+      448596,
+      448792
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 634035.71875,
+        "worker_rss_kib": 67420,
+        "cli_rss_kib": 448676,
+        "stem": "00-bits-16-restored"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 633660.755859375,
+        "worker_rss_kib": 68068,
+        "cli_rss_kib": 448792,
+        "stem": "01-bits-16-restored"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 642431.0703125,
+        "worker_rss_kib": 66564,
+        "cli_rss_kib": 448708,
+        "stem": "02-bits-16-restored"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 633213.525390625,
+        "worker_rss_kib": 63328,
+        "cli_rss_kib": 448596,
+        "stem": "03-bits-16-restored"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 633096.625,
+        "worker_rss_kib": 67920,
+        "cli_rss_kib": 448616,
+        "stem": "04-bits-16-restored"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3217
+  },
+  {
+    "case": "bits-16",
+    "axis": "bits",
+    "parameter": 16,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 9916,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "replayed",
+    "median_microseconds": 835.19355859375,
+    "min_microseconds": 830.07242578125,
+    "max_microseconds": 841.30462109375,
+    "worker_rss_kib": [
+      62820,
+      68016
+    ],
+    "cli_rss_kib": [
+      448428,
+      448764
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 841304.62109375,
+        "worker_rss_kib": 67936,
+        "cli_rss_kib": 448464,
+        "stem": "00-bits-16-replayed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 840325.87109375,
+        "worker_rss_kib": 67044,
+        "cli_rss_kib": 448672,
+        "stem": "01-bits-16-replayed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 830072.42578125,
+        "worker_rss_kib": 68016,
+        "cli_rss_kib": 448764,
+        "stem": "02-bits-16-replayed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 835193.55859375,
+        "worker_rss_kib": 62820,
+        "cli_rss_kib": 448428,
+        "stem": "03-bits-16-replayed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 834240.87109375,
+        "worker_rss_kib": 67944,
+        "cli_rss_kib": 448616,
+        "stem": "04-bits-16-replayed"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3217
+  },
+  {
+    "case": "bits-64",
+    "axis": "bits",
+    "parameter": 64,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 64,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 11337,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 260,
+    "arm": "lexical",
+    "median_microseconds": 174.4533173828125,
+    "min_microseconds": 173.16138623046874,
+    "max_microseconds": 176.6869833984375,
+    "worker_rss_kib": [
+      59744,
+      67872
+    ],
+    "cli_rss_kib": [
+      448632,
+      448784
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 174137.58544921875,
+        "worker_rss_kib": 66916,
+        "cli_rss_kib": 448668,
+        "stem": "00-bits-64-lexical"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 174453.3173828125,
+        "worker_rss_kib": 66500,
+        "cli_rss_kib": 448712,
+        "stem": "01-bits-64-lexical"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 173161.38623046875,
+        "worker_rss_kib": 67872,
+        "cli_rss_kib": 448724,
+        "stem": "02-bits-64-lexical"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 176686.9833984375,
+        "worker_rss_kib": 59744,
+        "cli_rss_kib": 448632,
+        "stem": "03-bits-64-lexical"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 175480.88671875,
+        "worker_rss_kib": 66156,
+        "cli_rss_kib": 448784,
+        "stem": "04-bits-64-lexical"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 4143
+  },
+  {
+    "case": "bits-64",
+    "axis": "bits",
+    "parameter": 64,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 64,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 11337,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 260,
+    "arm": "parsed",
+    "median_microseconds": 1008.78048046875,
+    "min_microseconds": 1005.1273515625,
+    "max_microseconds": 1017.545328125,
+    "worker_rss_kib": [
+      61548,
+      68744
+    ],
+    "cli_rss_kib": [
+      448472,
+      448720
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 1008780.48046875,
+        "worker_rss_kib": 68744,
+        "cli_rss_kib": 448472,
+        "stem": "00-bits-64-parsed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 1007829.0546875,
+        "worker_rss_kib": 68628,
+        "cli_rss_kib": 448556,
+        "stem": "01-bits-64-parsed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 1017545.328125,
+        "worker_rss_kib": 68364,
+        "cli_rss_kib": 448720,
+        "stem": "02-bits-64-parsed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 1005127.3515625,
+        "worker_rss_kib": 61548,
+        "cli_rss_kib": 448580,
+        "stem": "03-bits-64-parsed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 1010995.51953125,
+        "worker_rss_kib": 65940,
+        "cli_rss_kib": 448660,
+        "stem": "04-bits-64-parsed"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 4143
+  },
+  {
+    "case": "bits-64",
+    "axis": "bits",
+    "parameter": 64,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 64,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 11337,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 260,
+    "arm": "restored",
+    "median_microseconds": 1074.61108984375,
+    "min_microseconds": 1073.47187890625,
+    "max_microseconds": 1077.8138984375,
+    "worker_rss_kib": [
+      60656,
+      70540
+    ],
+    "cli_rss_kib": [
+      448436,
+      448672
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 1074611.08984375,
+        "worker_rss_kib": 68760,
+        "cli_rss_kib": 448592,
+        "stem": "00-bits-64-restored"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 1077813.8984375,
+        "worker_rss_kib": 70540,
+        "cli_rss_kib": 448660,
+        "stem": "01-bits-64-restored"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 1074693.7734375,
+        "worker_rss_kib": 69688,
+        "cli_rss_kib": 448596,
+        "stem": "02-bits-64-restored"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 1073471.87890625,
+        "worker_rss_kib": 60656,
+        "cli_rss_kib": 448436,
+        "stem": "03-bits-64-restored"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 1073763.33984375,
+        "worker_rss_kib": 69224,
+        "cli_rss_kib": 448672,
+        "stem": "04-bits-64-restored"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 4143
+  },
+  {
+    "case": "bits-64",
+    "axis": "bits",
+    "parameter": 64,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 64,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 11337,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 260,
+    "arm": "replayed",
+    "median_microseconds": 1303.1161328125,
+    "min_microseconds": 1298.19127734375,
+    "max_microseconds": 1317.5868125,
+    "worker_rss_kib": [
+      68740,
+      70956
+    ],
+    "cli_rss_kib": [
+      448480,
+      448732
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 1301153.3203125,
+        "worker_rss_kib": 68912,
+        "cli_rss_kib": 448524,
+        "stem": "00-bits-64-replayed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 1316942.16015625,
+        "worker_rss_kib": 70956,
+        "cli_rss_kib": 448704,
+        "stem": "01-bits-64-replayed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 1317586.8125,
+        "worker_rss_kib": 70844,
+        "cli_rss_kib": 448732,
+        "stem": "02-bits-64-replayed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 1298191.27734375,
+        "worker_rss_kib": 70168,
+        "cli_rss_kib": 448480,
+        "stem": "03-bits-64-replayed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 1303116.1328125,
+        "worker_rss_kib": 68740,
+        "cli_rss_kib": 448732,
+        "stem": "04-bits-64-replayed"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 4143
+  },
+  {
+    "case": "bits-128",
+    "axis": "bits",
+    "parameter": 128,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 128,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 13230,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 516,
+    "arm": "lexical",
+    "median_microseconds": 198.14569140625,
+    "min_microseconds": 197.878509765625,
+    "max_microseconds": 202.71645703125,
+    "worker_rss_kib": [
+      59652,
+      66768
+    ],
+    "cli_rss_kib": [
+      448520,
+      448832
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 200767.603515625,
+        "worker_rss_kib": 66768,
+        "cli_rss_kib": 448692,
+        "stem": "00-bits-128-lexical"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 197946.6533203125,
+        "worker_rss_kib": 66000,
+        "cli_rss_kib": 448832,
+        "stem": "01-bits-128-lexical"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 197878.509765625,
+        "worker_rss_kib": 65984,
+        "cli_rss_kib": 448520,
+        "stem": "02-bits-128-lexical"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 202716.45703125,
+        "worker_rss_kib": 59652,
+        "cli_rss_kib": 448604,
+        "stem": "03-bits-128-lexical"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 198145.69140625,
+        "worker_rss_kib": 65816,
+        "cli_rss_kib": 448784,
+        "stem": "04-bits-128-lexical"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 5385
+  },
+  {
+    "case": "bits-128",
+    "axis": "bits",
+    "parameter": 128,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 128,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 13230,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 516,
+    "arm": "parsed",
+    "median_microseconds": 1797.7053671875,
+    "min_microseconds": 1796.1309765625,
+    "max_microseconds": 1832.98428125,
+    "worker_rss_kib": [
+      62648,
+      68596
+    ],
+    "cli_rss_kib": [
+      448604,
+      448692
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 1797705.3671875,
+        "worker_rss_kib": 68188,
+        "cli_rss_kib": 448608,
+        "stem": "00-bits-128-parsed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 1796926.1796875,
+        "worker_rss_kib": 66904,
+        "cli_rss_kib": 448668,
+        "stem": "01-bits-128-parsed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 1832984.28125,
+        "worker_rss_kib": 68596,
+        "cli_rss_kib": 448692,
+        "stem": "02-bits-128-parsed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 1796130.9765625,
+        "worker_rss_kib": 62648,
+        "cli_rss_kib": 448604,
+        "stem": "03-bits-128-parsed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 1808736.1640625,
+        "worker_rss_kib": 67892,
+        "cli_rss_kib": 448624,
+        "stem": "04-bits-128-parsed"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 5385
+  },
+  {
+    "case": "bits-128",
+    "axis": "bits",
+    "parameter": 128,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 128,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 13230,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 516,
+    "arm": "restored",
+    "median_microseconds": 1884.4788515625,
+    "min_microseconds": 1873.355125,
+    "max_microseconds": 1899.6028671875,
+    "worker_rss_kib": [
+      63008,
+      68952
+    ],
+    "cli_rss_kib": [
+      448448,
+      448668
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 1885547.265625,
+        "worker_rss_kib": 68952,
+        "cli_rss_kib": 448568,
+        "stem": "00-bits-128-restored"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 1899602.8671875,
+        "worker_rss_kib": 66660,
+        "cli_rss_kib": 448644,
+        "stem": "01-bits-128-restored"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 1873355.125,
+        "worker_rss_kib": 66504,
+        "cli_rss_kib": 448592,
+        "stem": "02-bits-128-restored"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 1884478.8515625,
+        "worker_rss_kib": 63008,
+        "cli_rss_kib": 448448,
+        "stem": "03-bits-128-restored"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 1874821.8359375,
+        "worker_rss_kib": 67020,
+        "cli_rss_kib": 448668,
+        "stem": "04-bits-128-restored"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 5385
+  },
+  {
+    "case": "bits-128",
+    "axis": "bits",
+    "parameter": 128,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 128,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 13230,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 516,
+    "arm": "replayed",
+    "median_microseconds": 2134.5597109375,
+    "min_microseconds": 2121.0364921875,
+    "max_microseconds": 2669.466640625,
+    "worker_rss_kib": [
+      64848,
+      68160
+    ],
+    "cli_rss_kib": [
+      448480,
+      448704
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 2669466.640625,
+        "worker_rss_kib": 66896,
+        "cli_rss_kib": 448480,
+        "stem": "00-bits-128-replayed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 2134559.7109375,
+        "worker_rss_kib": 68160,
+        "cli_rss_kib": 448704,
+        "stem": "01-bits-128-replayed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 2149541.21875,
+        "worker_rss_kib": 67552,
+        "cli_rss_kib": 448600,
+        "stem": "02-bits-128-replayed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 2127241.28125,
+        "worker_rss_kib": 64848,
+        "cli_rss_kib": 448480,
+        "stem": "03-bits-128-replayed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 2121036.4921875,
+        "worker_rss_kib": 67072,
+        "cli_rss_kib": 448640,
+        "stem": "04-bits-128-replayed"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 5385
+  },
+  {
+    "case": "precision-0",
+    "axis": "precision",
+    "parameter": 0,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 9916,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "lexical",
+    "median_microseconds": 156.67656884765626,
+    "min_microseconds": 155.01330078125,
+    "max_microseconds": 161.3151591796875,
+    "worker_rss_kib": [
+      63308,
+      67516
+    ],
+    "cli_rss_kib": [
+      448468,
+      448744
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 161315.1591796875,
+        "worker_rss_kib": 67348,
+        "cli_rss_kib": 448468,
+        "stem": "00-precision-0-lexical"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 155930.2158203125,
+        "worker_rss_kib": 67516,
+        "cli_rss_kib": 448684,
+        "stem": "01-precision-0-lexical"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 158602.04736328125,
+        "worker_rss_kib": 66056,
+        "cli_rss_kib": 448712,
+        "stem": "02-precision-0-lexical"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 155013.30078125,
+        "worker_rss_kib": 63308,
+        "cli_rss_kib": 448648,
+        "stem": "03-precision-0-lexical"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 156676.56884765625,
+        "worker_rss_kib": 66152,
+        "cli_rss_kib": 448744,
+        "stem": "04-precision-0-lexical"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3217
+  },
+  {
+    "case": "precision-0",
+    "axis": "precision",
+    "parameter": 0,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 9916,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "parsed",
+    "median_microseconds": 576.45497265625,
+    "min_microseconds": 573.1874296875,
+    "max_microseconds": 580.897814453125,
+    "worker_rss_kib": [
+      63856,
+      68036
+    ],
+    "cli_rss_kib": [
+      448668,
+      448736
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 576454.97265625,
+        "worker_rss_kib": 66368,
+        "cli_rss_kib": 448668,
+        "stem": "00-precision-0-parsed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 578129.982421875,
+        "worker_rss_kib": 66572,
+        "cli_rss_kib": 448712,
+        "stem": "01-precision-0-parsed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 580897.814453125,
+        "worker_rss_kib": 68036,
+        "cli_rss_kib": 448736,
+        "stem": "02-precision-0-parsed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 574042.890625,
+        "worker_rss_kib": 63856,
+        "cli_rss_kib": 448728,
+        "stem": "03-precision-0-parsed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 573187.4296875,
+        "worker_rss_kib": 66012,
+        "cli_rss_kib": 448696,
+        "stem": "04-precision-0-parsed"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3217
+  },
+  {
+    "case": "precision-0",
+    "axis": "precision",
+    "parameter": 0,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 9916,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "restored",
+    "median_microseconds": 637.848541015625,
+    "min_microseconds": 634.277640625,
+    "max_microseconds": 649.0763828125,
+    "worker_rss_kib": [
+      61476,
+      67568
+    ],
+    "cli_rss_kib": [
+      448592,
+      448744
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 634277.640625,
+        "worker_rss_kib": 67568,
+        "cli_rss_kib": 448732,
+        "stem": "00-precision-0-restored"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 649076.3828125,
+        "worker_rss_kib": 67364,
+        "cli_rss_kib": 448672,
+        "stem": "01-precision-0-restored"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 638586.919921875,
+        "worker_rss_kib": 66864,
+        "cli_rss_kib": 448592,
+        "stem": "02-precision-0-restored"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 637848.541015625,
+        "worker_rss_kib": 61476,
+        "cli_rss_kib": 448744,
+        "stem": "03-precision-0-restored"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 636119.1328125,
+        "worker_rss_kib": 66292,
+        "cli_rss_kib": 448700,
+        "stem": "04-precision-0-restored"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3217
+  },
+  {
+    "case": "precision-0",
+    "axis": "precision",
+    "parameter": 0,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 9916,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "replayed",
+    "median_microseconds": 836.52754296875,
+    "min_microseconds": 830.06441015625,
+    "max_microseconds": 836.76069921875,
+    "worker_rss_kib": [
+      61844,
+      68040
+    ],
+    "cli_rss_kib": [
+      448408,
+      448824
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 836760.69921875,
+        "worker_rss_kib": 67196,
+        "cli_rss_kib": 448408,
+        "stem": "00-precision-0-replayed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 836650.0859375,
+        "worker_rss_kib": 66900,
+        "cli_rss_kib": 448704,
+        "stem": "01-precision-0-replayed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 830064.41015625,
+        "worker_rss_kib": 66512,
+        "cli_rss_kib": 448824,
+        "stem": "02-precision-0-replayed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 836446.98046875,
+        "worker_rss_kib": 61844,
+        "cli_rss_kib": 448640,
+        "stem": "03-precision-0-replayed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 836527.54296875,
+        "worker_rss_kib": 68040,
+        "cli_rss_kib": 448592,
+        "stem": "04-precision-0-replayed"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3217
+  },
+  {
+    "case": "precision-4",
+    "axis": "precision",
+    "parameter": 4,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 4,
+    "depth": 0,
+    "bytes": 9955,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "lexical",
+    "median_microseconds": 155.85631689453126,
+    "min_microseconds": 154.69617578125,
+    "max_microseconds": 157.25847900390625,
+    "worker_rss_kib": [
+      59848,
+      66952
+    ],
+    "cli_rss_kib": [
+      448556,
+      448656
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 155856.31689453125,
+        "worker_rss_kib": 66724,
+        "cli_rss_kib": 448652,
+        "stem": "00-precision-4-lexical"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 154696.17578125,
+        "worker_rss_kib": 66184,
+        "cli_rss_kib": 448592,
+        "stem": "01-precision-4-lexical"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 157258.47900390625,
+        "worker_rss_kib": 66952,
+        "cli_rss_kib": 448644,
+        "stem": "02-precision-4-lexical"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 156695.58447265625,
+        "worker_rss_kib": 59848,
+        "cli_rss_kib": 448556,
+        "stem": "03-precision-4-lexical"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 155330.39404296875,
+        "worker_rss_kib": 66232,
+        "cli_rss_kib": 448656,
+        "stem": "04-precision-4-lexical"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3238
+  },
+  {
+    "case": "precision-4",
+    "axis": "precision",
+    "parameter": 4,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 4,
+    "depth": 0,
+    "bytes": 9955,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "parsed",
+    "median_microseconds": 576.613458984375,
+    "min_microseconds": 575.453732421875,
+    "max_microseconds": 581.80406640625,
+    "worker_rss_kib": [
+      62004,
+      67028
+    ],
+    "cli_rss_kib": [
+      448440,
+      448736
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 581184.853515625,
+        "worker_rss_kib": 67028,
+        "cli_rss_kib": 448440,
+        "stem": "00-precision-4-parsed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 576613.458984375,
+        "worker_rss_kib": 66244,
+        "cli_rss_kib": 448664,
+        "stem": "01-precision-4-parsed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 575453.732421875,
+        "worker_rss_kib": 66448,
+        "cli_rss_kib": 448724,
+        "stem": "02-precision-4-parsed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 576003.314453125,
+        "worker_rss_kib": 62004,
+        "cli_rss_kib": 448712,
+        "stem": "03-precision-4-parsed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 581804.06640625,
+        "worker_rss_kib": 66968,
+        "cli_rss_kib": 448736,
+        "stem": "04-precision-4-parsed"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3238
+  },
+  {
+    "case": "precision-4",
+    "axis": "precision",
+    "parameter": 4,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 4,
+    "depth": 0,
+    "bytes": 9955,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "restored",
+    "median_microseconds": 639.807841796875,
+    "min_microseconds": 638.05301953125,
+    "max_microseconds": 645.31681640625,
+    "worker_rss_kib": [
+      61060,
+      68976
+    ],
+    "cli_rss_kib": [
+      448472,
+      448856
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 638053.01953125,
+        "worker_rss_kib": 68540,
+        "cli_rss_kib": 448472,
+        "stem": "00-precision-4-restored"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 638332.49609375,
+        "worker_rss_kib": 68976,
+        "cli_rss_kib": 448856,
+        "stem": "01-precision-4-restored"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 645316.81640625,
+        "worker_rss_kib": 66628,
+        "cli_rss_kib": 448780,
+        "stem": "02-precision-4-restored"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 640377.2109375,
+        "worker_rss_kib": 61060,
+        "cli_rss_kib": 448684,
+        "stem": "03-precision-4-restored"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 639807.841796875,
+        "worker_rss_kib": 66708,
+        "cli_rss_kib": 448676,
+        "stem": "04-precision-4-restored"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3238
+  },
+  {
+    "case": "precision-4",
+    "axis": "precision",
+    "parameter": 4,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 4,
+    "depth": 0,
+    "bytes": 9955,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "replayed",
+    "median_microseconds": 842.18115234375,
+    "min_microseconds": 840.82082421875,
+    "max_microseconds": 852.1513203125,
+    "worker_rss_kib": [
+      63676,
+      68868
+    ],
+    "cli_rss_kib": [
+      448444,
+      448780
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 842181.15234375,
+        "worker_rss_kib": 66864,
+        "cli_rss_kib": 448444,
+        "stem": "00-precision-4-replayed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 841039.328125,
+        "worker_rss_kib": 68868,
+        "cli_rss_kib": 448760,
+        "stem": "01-precision-4-replayed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 840820.82421875,
+        "worker_rss_kib": 68472,
+        "cli_rss_kib": 448780,
+        "stem": "02-precision-4-replayed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 842293.33984375,
+        "worker_rss_kib": 63676,
+        "cli_rss_kib": 448664,
+        "stem": "03-precision-4-replayed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 852151.3203125,
+        "worker_rss_kib": 66636,
+        "cli_rss_kib": 448728,
+        "stem": "04-precision-4-replayed"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3238
+  },
+  {
+    "case": "precision-8",
+    "axis": "precision",
+    "parameter": 8,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 8,
+    "depth": 0,
+    "bytes": 10020,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "lexical",
+    "median_microseconds": 158.52147119140625,
+    "min_microseconds": 155.7364921875,
+    "max_microseconds": 159.90142919921874,
+    "worker_rss_kib": [
+      61640,
+      67436
+    ],
+    "cli_rss_kib": [
+      448508,
+      448848
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 156110.07666015625,
+        "worker_rss_kib": 66768,
+        "cli_rss_kib": 448520,
+        "stem": "00-precision-8-lexical"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 155736.4921875,
+        "worker_rss_kib": 67172,
+        "cli_rss_kib": 448704,
+        "stem": "01-precision-8-lexical"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 158665.18359375,
+        "worker_rss_kib": 66076,
+        "cli_rss_kib": 448848,
+        "stem": "02-precision-8-lexical"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 159901.42919921875,
+        "worker_rss_kib": 61640,
+        "cli_rss_kib": 448692,
+        "stem": "03-precision-8-lexical"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 158521.47119140625,
+        "worker_rss_kib": 67436,
+        "cli_rss_kib": 448508,
+        "stem": "04-precision-8-lexical"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3273
+  },
+  {
+    "case": "precision-8",
+    "axis": "precision",
+    "parameter": 8,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 8,
+    "depth": 0,
+    "bytes": 10020,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "parsed",
+    "median_microseconds": 583.75383203125,
+    "min_microseconds": 580.84203125,
+    "max_microseconds": 592.566037109375,
+    "worker_rss_kib": [
+      60824,
+      68304
+    ],
+    "cli_rss_kib": [
+      448464,
+      448752
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 592566.037109375,
+        "worker_rss_kib": 67200,
+        "cli_rss_kib": 448536,
+        "stem": "00-precision-8-parsed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 580842.03125,
+        "worker_rss_kib": 66120,
+        "cli_rss_kib": 448680,
+        "stem": "01-precision-8-parsed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 588975.431640625,
+        "worker_rss_kib": 68304,
+        "cli_rss_kib": 448752,
+        "stem": "02-precision-8-parsed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 583529.3515625,
+        "worker_rss_kib": 60824,
+        "cli_rss_kib": 448700,
+        "stem": "03-precision-8-parsed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 583753.83203125,
+        "worker_rss_kib": 66720,
+        "cli_rss_kib": 448464,
+        "stem": "04-precision-8-parsed"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3273
+  },
+  {
+    "case": "precision-8",
+    "axis": "precision",
+    "parameter": 8,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 8,
+    "depth": 0,
+    "bytes": 10020,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "restored",
+    "median_microseconds": 649.781400390625,
+    "min_microseconds": 647.021021484375,
+    "max_microseconds": 687.16897265625,
+    "worker_rss_kib": [
+      61012,
+      68380
+    ],
+    "cli_rss_kib": [
+      448564,
+      448760
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 649781.400390625,
+        "worker_rss_kib": 67688,
+        "cli_rss_kib": 448616,
+        "stem": "00-precision-8-restored"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 687168.97265625,
+        "worker_rss_kib": 67276,
+        "cli_rss_kib": 448564,
+        "stem": "01-precision-8-restored"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 647021.021484375,
+        "worker_rss_kib": 68380,
+        "cli_rss_kib": 448600,
+        "stem": "02-precision-8-restored"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 655981.29296875,
+        "worker_rss_kib": 61012,
+        "cli_rss_kib": 448588,
+        "stem": "03-precision-8-restored"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 648306.490234375,
+        "worker_rss_kib": 67356,
+        "cli_rss_kib": 448760,
+        "stem": "04-precision-8-restored"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3273
+  },
+  {
+    "case": "precision-8",
+    "axis": "precision",
+    "parameter": 8,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 8,
+    "depth": 0,
+    "bytes": 10020,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "replayed",
+    "median_microseconds": 853.30282421875,
+    "min_microseconds": 848.60653515625,
+    "max_microseconds": 854.34730859375,
+    "worker_rss_kib": [
+      61644,
+      68968
+    ],
+    "cli_rss_kib": [
+      448624,
+      448848
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 854347.30859375,
+        "worker_rss_kib": 68968,
+        "cli_rss_kib": 448696,
+        "stem": "00-precision-8-replayed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 851141.53125,
+        "worker_rss_kib": 66584,
+        "cli_rss_kib": 448676,
+        "stem": "01-precision-8-replayed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 854160.4375,
+        "worker_rss_kib": 66556,
+        "cli_rss_kib": 448848,
+        "stem": "02-precision-8-replayed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 853302.82421875,
+        "worker_rss_kib": 61644,
+        "cli_rss_kib": 448624,
+        "stem": "03-precision-8-replayed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 848606.53515625,
+        "worker_rss_kib": 66756,
+        "cli_rss_kib": 448720,
+        "stem": "04-precision-8-replayed"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3273
+  },
+  {
+    "case": "precision-12",
+    "axis": "precision",
+    "parameter": 12,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 12,
+    "depth": 0,
+    "bytes": 10046,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "lexical",
+    "median_microseconds": 157.366130859375,
+    "min_microseconds": 156.15365869140626,
+    "max_microseconds": 159.682873046875,
+    "worker_rss_kib": [
+      59748,
+      67980
+    ],
+    "cli_rss_kib": [
+      448580,
+      448736
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 156780.85595703125,
+        "worker_rss_kib": 67060,
+        "cli_rss_kib": 448644,
+        "stem": "00-precision-12-lexical"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 158731.97705078125,
+        "worker_rss_kib": 66048,
+        "cli_rss_kib": 448668,
+        "stem": "01-precision-12-lexical"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 156153.65869140625,
+        "worker_rss_kib": 67084,
+        "cli_rss_kib": 448680,
+        "stem": "02-precision-12-lexical"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 159682.873046875,
+        "worker_rss_kib": 59748,
+        "cli_rss_kib": 448736,
+        "stem": "03-precision-12-lexical"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 157366.130859375,
+        "worker_rss_kib": 67980,
+        "cli_rss_kib": 448580,
+        "stem": "04-precision-12-lexical"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3287
+  },
+  {
+    "case": "precision-12",
+    "axis": "precision",
+    "parameter": 12,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 12,
+    "depth": 0,
+    "bytes": 10046,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "parsed",
+    "median_microseconds": 585.979513671875,
+    "min_microseconds": 580.707095703125,
+    "max_microseconds": 589.19137890625,
+    "worker_rss_kib": [
+      65920,
+      67536
+    ],
+    "cli_rss_kib": [
+      448596,
+      448736
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 580707.095703125,
+        "worker_rss_kib": 67536,
+        "cli_rss_kib": 448596,
+        "stem": "00-precision-12-parsed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 586859.642578125,
+        "worker_rss_kib": 66132,
+        "cli_rss_kib": 448716,
+        "stem": "01-precision-12-parsed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 589191.37890625,
+        "worker_rss_kib": 67508,
+        "cli_rss_kib": 448648,
+        "stem": "02-precision-12-parsed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 584115.806640625,
+        "worker_rss_kib": 65932,
+        "cli_rss_kib": 448736,
+        "stem": "03-precision-12-parsed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 585979.513671875,
+        "worker_rss_kib": 65920,
+        "cli_rss_kib": 448716,
+        "stem": "04-precision-12-parsed"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3287
+  },
+  {
+    "case": "precision-12",
+    "axis": "precision",
+    "parameter": 12,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 12,
+    "depth": 0,
+    "bytes": 10046,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "restored",
+    "median_microseconds": 651.8666796875,
+    "min_microseconds": 645.328640625,
+    "max_microseconds": 652.143439453125,
+    "worker_rss_kib": [
+      66720,
+      69136
+    ],
+    "cli_rss_kib": [
+      448572,
+      448736
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 651973.61328125,
+        "worker_rss_kib": 69136,
+        "cli_rss_kib": 448728,
+        "stem": "00-precision-12-restored"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 651866.6796875,
+        "worker_rss_kib": 66892,
+        "cli_rss_kib": 448572,
+        "stem": "01-precision-12-restored"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 652143.439453125,
+        "worker_rss_kib": 67304,
+        "cli_rss_kib": 448648,
+        "stem": "02-precision-12-restored"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 648053.099609375,
+        "worker_rss_kib": 66984,
+        "cli_rss_kib": 448736,
+        "stem": "03-precision-12-restored"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 645328.640625,
+        "worker_rss_kib": 66720,
+        "cli_rss_kib": 448720,
+        "stem": "04-precision-12-restored"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3287
+  },
+  {
+    "case": "precision-12",
+    "axis": "precision",
+    "parameter": 12,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 12,
+    "depth": 0,
+    "bytes": 10046,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "replayed",
+    "median_microseconds": 852.88227734375,
+    "min_microseconds": 849.219546875,
+    "max_microseconds": 868.590375,
+    "worker_rss_kib": [
+      62164,
+      67588
+    ],
+    "cli_rss_kib": [
+      448504,
+      448728
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 855266.2109375,
+        "worker_rss_kib": 66724,
+        "cli_rss_kib": 448504,
+        "stem": "00-precision-12-replayed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 852882.27734375,
+        "worker_rss_kib": 67588,
+        "cli_rss_kib": 448612,
+        "stem": "01-precision-12-replayed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 868590.375,
+        "worker_rss_kib": 66960,
+        "cli_rss_kib": 448592,
+        "stem": "02-precision-12-replayed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 849219.546875,
+        "worker_rss_kib": 62164,
+        "cli_rss_kib": 448676,
+        "stem": "03-precision-12-replayed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 849338.25,
+        "worker_rss_kib": 67444,
+        "cli_rss_kib": 448728,
+        "stem": "04-precision-12-replayed"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3287
+  },
+  {
+    "case": "depth-0",
+    "axis": "depth",
+    "parameter": 0,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 9916,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "lexical",
+    "median_microseconds": 153.59442626953125,
+    "min_microseconds": 153.4490751953125,
+    "max_microseconds": 156.76274169921874,
+    "worker_rss_kib": [
+      66104,
+      68480
+    ],
+    "cli_rss_kib": [
+      448476,
+      448788
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 153567.798828125,
+        "worker_rss_kib": 68480,
+        "cli_rss_kib": 448476,
+        "stem": "00-depth-0-lexical"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 156268.013671875,
+        "worker_rss_kib": 67916,
+        "cli_rss_kib": 448608,
+        "stem": "01-depth-0-lexical"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 153449.0751953125,
+        "worker_rss_kib": 66104,
+        "cli_rss_kib": 448732,
+        "stem": "02-depth-0-lexical"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 153594.42626953125,
+        "worker_rss_kib": 66104,
+        "cli_rss_kib": 448788,
+        "stem": "03-depth-0-lexical"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 156762.74169921875,
+        "worker_rss_kib": 66152,
+        "cli_rss_kib": 448568,
+        "stem": "04-depth-0-lexical"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3217
+  },
+  {
+    "case": "depth-0",
+    "axis": "depth",
+    "parameter": 0,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 9916,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "parsed",
+    "median_microseconds": 573.691640625,
+    "min_microseconds": 571.64068359375,
+    "max_microseconds": 583.027064453125,
+    "worker_rss_kib": [
+      65900,
+      67572
+    ],
+    "cli_rss_kib": [
+      448532,
+      448792
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 573691.640625,
+        "worker_rss_kib": 67192,
+        "cli_rss_kib": 448708,
+        "stem": "00-depth-0-parsed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 572203.767578125,
+        "worker_rss_kib": 66188,
+        "cli_rss_kib": 448716,
+        "stem": "01-depth-0-parsed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 574860.82421875,
+        "worker_rss_kib": 66508,
+        "cli_rss_kib": 448772,
+        "stem": "02-depth-0-parsed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 583027.064453125,
+        "worker_rss_kib": 67572,
+        "cli_rss_kib": 448532,
+        "stem": "03-depth-0-parsed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 571640.68359375,
+        "worker_rss_kib": 65900,
+        "cli_rss_kib": 448792,
+        "stem": "04-depth-0-parsed"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3217
+  },
+  {
+    "case": "depth-0",
+    "axis": "depth",
+    "parameter": 0,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 9916,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "restored",
+    "median_microseconds": 639.44284765625,
+    "min_microseconds": 634.0821171875,
+    "max_microseconds": 647.021708984375,
+    "worker_rss_kib": [
+      66556,
+      68932
+    ],
+    "cli_rss_kib": [
+      448560,
+      448788
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 634082.1171875,
+        "worker_rss_kib": 66832,
+        "cli_rss_kib": 448644,
+        "stem": "00-depth-0-restored"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 636026.236328125,
+        "worker_rss_kib": 66556,
+        "cli_rss_kib": 448704,
+        "stem": "01-depth-0-restored"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 643081.849609375,
+        "worker_rss_kib": 68932,
+        "cli_rss_kib": 448788,
+        "stem": "02-depth-0-restored"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 647021.708984375,
+        "worker_rss_kib": 68224,
+        "cli_rss_kib": 448612,
+        "stem": "03-depth-0-restored"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 639442.84765625,
+        "worker_rss_kib": 66628,
+        "cli_rss_kib": 448560,
+        "stem": "04-depth-0-restored"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3217
+  },
+  {
+    "case": "depth-0",
+    "axis": "depth",
+    "parameter": 0,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 9916,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 68,
+    "arm": "replayed",
+    "median_microseconds": 836.08254296875,
+    "min_microseconds": 827.17105078125,
+    "max_microseconds": 839.128984375,
+    "worker_rss_kib": [
+      66728,
+      68996
+    ],
+    "cli_rss_kib": [
+      448540,
+      448844
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 836082.54296875,
+        "worker_rss_kib": 66728,
+        "cli_rss_kib": 448560,
+        "stem": "00-depth-0-replayed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 837673.609375,
+        "worker_rss_kib": 68996,
+        "cli_rss_kib": 448540,
+        "stem": "01-depth-0-replayed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 839128.984375,
+        "worker_rss_kib": 67232,
+        "cli_rss_kib": 448668,
+        "stem": "02-depth-0-replayed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 827171.05078125,
+        "worker_rss_kib": 67432,
+        "cli_rss_kib": 448844,
+        "stem": "03-depth-0-replayed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 831342.7109375,
+        "worker_rss_kib": 66788,
+        "cli_rss_kib": 448720,
+        "stem": "04-depth-0-replayed"
+      }
+    ],
+    "wire_integer_tokens": 1420,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 3217
+  },
+  {
+    "case": "depth-1",
+    "axis": "depth",
+    "parameter": 1,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 1,
+    "bytes": 28321,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 136,
+    "arm": "lexical",
+    "median_microseconds": 440.737353515625,
+    "min_microseconds": 436.48585546875,
+    "max_microseconds": 443.470287109375,
+    "worker_rss_kib": [
+      65684,
+      68444
+    ],
+    "cli_rss_kib": [
+      448472,
+      448780
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 443470.287109375,
+        "worker_rss_kib": 66692,
+        "cli_rss_kib": 448472,
+        "stem": "00-depth-1-lexical"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 436677.9140625,
+        "worker_rss_kib": 66840,
+        "cli_rss_kib": 448680,
+        "stem": "01-depth-1-lexical"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 440737.353515625,
+        "worker_rss_kib": 68444,
+        "cli_rss_kib": 448780,
+        "stem": "02-depth-1-lexical"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 440904.685546875,
+        "worker_rss_kib": 65808,
+        "cli_rss_kib": 448656,
+        "stem": "03-depth-1-lexical"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 436485.85546875,
+        "worker_rss_kib": 65684,
+        "cli_rss_kib": 448556,
+        "stem": "04-depth-1-lexical"
+      }
+    ],
+    "wire_integer_tokens": 3689,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 9610
+  },
+  {
+    "case": "depth-1",
+    "axis": "depth",
+    "parameter": 1,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 1,
+    "bytes": 28321,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 136,
+    "arm": "parsed",
+    "median_microseconds": 1671.1807265625,
+    "min_microseconds": 1662.4758046875,
+    "max_microseconds": 1676.803390625,
+    "worker_rss_kib": [
+      68096,
+      69104
+    ],
+    "cli_rss_kib": [
+      448512,
+      448732
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 1662475.8046875,
+        "worker_rss_kib": 68524,
+        "cli_rss_kib": 448616,
+        "stem": "00-depth-1-parsed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 1662609.609375,
+        "worker_rss_kib": 68264,
+        "cli_rss_kib": 448528,
+        "stem": "01-depth-1-parsed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 1676803.390625,
+        "worker_rss_kib": 68260,
+        "cli_rss_kib": 448732,
+        "stem": "02-depth-1-parsed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 1671180.7265625,
+        "worker_rss_kib": 68096,
+        "cli_rss_kib": 448672,
+        "stem": "03-depth-1-parsed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 1675001.640625,
+        "worker_rss_kib": 69104,
+        "cli_rss_kib": 448512,
+        "stem": "04-depth-1-parsed"
+      }
+    ],
+    "wire_integer_tokens": 3689,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 9610
+  },
+  {
+    "case": "depth-1",
+    "axis": "depth",
+    "parameter": 1,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 1,
+    "bytes": 28321,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 136,
+    "arm": "restored",
+    "median_microseconds": 1982.5442734375,
+    "min_microseconds": 1972.8462578125,
+    "max_microseconds": 1992.5256171875,
+    "worker_rss_kib": [
+      68276,
+      70800
+    ],
+    "cli_rss_kib": [
+      448360,
+      448728
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 1975062.203125,
+        "worker_rss_kib": 69964,
+        "cli_rss_kib": 448360,
+        "stem": "00-depth-1-restored"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 1992525.6171875,
+        "worker_rss_kib": 70020,
+        "cli_rss_kib": 448716,
+        "stem": "01-depth-1-restored"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 1972846.2578125,
+        "worker_rss_kib": 70800,
+        "cli_rss_kib": 448712,
+        "stem": "02-depth-1-restored"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 1982544.2734375,
+        "worker_rss_kib": 68276,
+        "cli_rss_kib": 448672,
+        "stem": "03-depth-1-restored"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 1986514.0078125,
+        "worker_rss_kib": 69068,
+        "cli_rss_kib": 448728,
+        "stem": "04-depth-1-restored"
+      }
+    ],
+    "wire_integer_tokens": 3689,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 9610
+  },
+  {
+    "case": "depth-1",
+    "axis": "depth",
+    "parameter": 1,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 1,
+    "bytes": 28321,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 136,
+    "arm": "replayed",
+    "median_microseconds": 2836.0805625,
+    "min_microseconds": 2822.5748203125,
+    "max_microseconds": 2886.58215625,
+    "worker_rss_kib": [
+      68492,
+      70696
+    ],
+    "cli_rss_kib": [
+      448416,
+      448776
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 2856270.9921875,
+        "worker_rss_kib": 70696,
+        "cli_rss_kib": 448416,
+        "stem": "00-depth-1-replayed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 2886582.15625,
+        "worker_rss_kib": 68924,
+        "cli_rss_kib": 448776,
+        "stem": "01-depth-1-replayed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 2822574.8203125,
+        "worker_rss_kib": 68528,
+        "cli_rss_kib": 448716,
+        "stem": "02-depth-1-replayed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 2824526.921875,
+        "worker_rss_kib": 69616,
+        "cli_rss_kib": 448524,
+        "stem": "03-depth-1-replayed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 2836080.5625,
+        "worker_rss_kib": 68492,
+        "cli_rss_kib": 448660,
+        "stem": "04-depth-1-replayed"
+      }
+    ],
+    "wire_integer_tokens": 3689,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 9610
+  },
+  {
+    "case": "depth-2",
+    "axis": "depth",
+    "parameter": 2,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 2,
+    "bytes": 53744,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 272,
+    "arm": "lexical",
+    "median_microseconds": 821.5792890625,
+    "min_microseconds": 819.0192890625,
+    "max_microseconds": 839.67936328125,
+    "worker_rss_kib": [
+      65896,
+      67424
+    ],
+    "cli_rss_kib": [
+      448568,
+      448716
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 819019.2890625,
+        "worker_rss_kib": 67100,
+        "cli_rss_kib": 448716,
+        "stem": "00-depth-2-lexical"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 833679.26171875,
+        "worker_rss_kib": 66688,
+        "cli_rss_kib": 448688,
+        "stem": "01-depth-2-lexical"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 820233.28515625,
+        "worker_rss_kib": 67424,
+        "cli_rss_kib": 448604,
+        "stem": "02-depth-2-lexical"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 821579.2890625,
+        "worker_rss_kib": 66616,
+        "cli_rss_kib": 448608,
+        "stem": "03-depth-2-lexical"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 839679.36328125,
+        "worker_rss_kib": 65896,
+        "cli_rss_kib": 448568,
+        "stem": "04-depth-2-lexical"
+      }
+    ],
+    "wire_integer_tokens": 6341,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 19350
+  },
+  {
+    "case": "depth-2",
+    "axis": "depth",
+    "parameter": 2,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 2,
+    "bytes": 53744,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 272,
+    "arm": "parsed",
+    "median_microseconds": 3650.928125,
+    "min_microseconds": 3625.80484375,
+    "max_microseconds": 3689.86240625,
+    "worker_rss_kib": [
+      68040,
+      70464
+    ],
+    "cli_rss_kib": [
+      448584,
+      448808
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 3670752.859375,
+        "worker_rss_kib": 68528,
+        "cli_rss_kib": 448716,
+        "stem": "00-depth-2-parsed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 3689862.40625,
+        "worker_rss_kib": 70464,
+        "cli_rss_kib": 448716,
+        "stem": "01-depth-2-parsed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 3645348.515625,
+        "worker_rss_kib": 69364,
+        "cli_rss_kib": 448760,
+        "stem": "02-depth-2-parsed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 3650928.125,
+        "worker_rss_kib": 69700,
+        "cli_rss_kib": 448808,
+        "stem": "03-depth-2-parsed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 3625804.84375,
+        "worker_rss_kib": 68040,
+        "cli_rss_kib": 448584,
+        "stem": "04-depth-2-parsed"
+      }
+    ],
+    "wire_integer_tokens": 6341,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 19350
+  },
+  {
+    "case": "depth-2",
+    "axis": "depth",
+    "parameter": 2,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 2,
+    "bytes": 53744,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 272,
+    "arm": "restored",
+    "median_microseconds": 4796.862984375,
+    "min_microseconds": 4788.74928125,
+    "max_microseconds": 5048.320078125,
+    "worker_rss_kib": [
+      69020,
+      70636
+    ],
+    "cli_rss_kib": [
+      448588,
+      448712
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 5048320.078125,
+        "worker_rss_kib": 70636,
+        "cli_rss_kib": 448684,
+        "stem": "00-depth-2-restored"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 4788749.28125,
+        "worker_rss_kib": 69740,
+        "cli_rss_kib": 448600,
+        "stem": "01-depth-2-restored"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 4796862.984375,
+        "worker_rss_kib": 69020,
+        "cli_rss_kib": 448676,
+        "stem": "02-depth-2-restored"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 4788800.53125,
+        "worker_rss_kib": 69056,
+        "cli_rss_kib": 448712,
+        "stem": "03-depth-2-restored"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 4821712.484375,
+        "worker_rss_kib": 70080,
+        "cli_rss_kib": 448588,
+        "stem": "04-depth-2-restored"
+      }
+    ],
+    "wire_integer_tokens": 6341,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 19350
+  },
+  {
+    "case": "depth-2",
+    "axis": "depth",
+    "parameter": 2,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 2,
+    "bytes": 53744,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 272,
+    "arm": "replayed",
+    "median_microseconds": 7931.8080625,
+    "min_microseconds": 7914.537,
+    "max_microseconds": 7992.37503125,
+    "worker_rss_kib": [
+      68540,
+      71308
+    ],
+    "cli_rss_kib": [
+      442984,
+      448720
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 7931808.0625,
+        "worker_rss_kib": 71308,
+        "cli_rss_kib": 442984,
+        "stem": "00-depth-2-replayed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 7914537.0,
+        "worker_rss_kib": 68960,
+        "cli_rss_kib": 448532,
+        "stem": "01-depth-2-replayed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 7992375.03125,
+        "worker_rss_kib": 68540,
+        "cli_rss_kib": 448664,
+        "stem": "02-depth-2-replayed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 7918689.15625,
+        "worker_rss_kib": 68552,
+        "cli_rss_kib": 448720,
+        "stem": "03-depth-2-replayed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 7962864.09375,
+        "worker_rss_kib": 68800,
+        "cli_rss_kib": 448600,
+        "stem": "04-depth-2-replayed"
+      }
+    ],
+    "wire_integer_tokens": 6341,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 19350
+  },
+  {
+    "case": "repeated-4",
+    "axis": "repeated",
+    "parameter": 4,
+    "degree": 2,
+    "atoms": 4,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 8097,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 7,
+    "max_wire_integer_bits": 66,
+    "arm": "lexical",
+    "median_microseconds": 126.52948486328125,
+    "min_microseconds": 124.7860947265625,
+    "max_microseconds": 128.11944677734374,
+    "worker_rss_kib": [
+      60052,
+      66616
+    ],
+    "cli_rss_kib": [
+      448528,
+      448824
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 126771.32763671875,
+        "worker_rss_kib": 66616,
+        "cli_rss_kib": 448684,
+        "stem": "00-repeated-4-lexical"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 128119.44677734375,
+        "worker_rss_kib": 66072,
+        "cli_rss_kib": 448824,
+        "stem": "01-repeated-4-lexical"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 126529.48486328125,
+        "worker_rss_kib": 60052,
+        "cli_rss_kib": 448548,
+        "stem": "02-repeated-4-lexical"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 124979.60302734375,
+        "worker_rss_kib": 65856,
+        "cli_rss_kib": 448528,
+        "stem": "03-repeated-4-lexical"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 124786.0947265625,
+        "worker_rss_kib": 66144,
+        "cli_rss_kib": 448720,
+        "stem": "04-repeated-4-lexical"
+      }
+    ],
+    "wire_integer_tokens": 1165,
+    "row_system_sizes": [
+      3,
+      1,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      1,
+      1
+    ],
+    "row_moment_json_bytes": 2221
+  },
+  {
+    "case": "repeated-4",
+    "axis": "repeated",
+    "parameter": 4,
+    "degree": 2,
+    "atoms": 4,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 8097,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 7,
+    "max_wire_integer_bits": 66,
+    "arm": "parsed",
+    "median_microseconds": 460.389150390625,
+    "min_microseconds": 459.258314453125,
+    "max_microseconds": 463.334134765625,
+    "worker_rss_kib": [
+      61268,
+      67308
+    ],
+    "cli_rss_kib": [
+      448492,
+      448700
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 459258.314453125,
+        "worker_rss_kib": 67092,
+        "cli_rss_kib": 448492,
+        "stem": "00-repeated-4-parsed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 459948.927734375,
+        "worker_rss_kib": 67308,
+        "cli_rss_kib": 448680,
+        "stem": "01-repeated-4-parsed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 461727.759765625,
+        "worker_rss_kib": 61268,
+        "cli_rss_kib": 448580,
+        "stem": "02-repeated-4-parsed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 463334.134765625,
+        "worker_rss_kib": 66316,
+        "cli_rss_kib": 448612,
+        "stem": "03-repeated-4-parsed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 460389.150390625,
+        "worker_rss_kib": 67028,
+        "cli_rss_kib": 448700,
+        "stem": "04-repeated-4-parsed"
+      }
+    ],
+    "wire_integer_tokens": 1165,
+    "row_system_sizes": [
+      3,
+      1,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      1,
+      1
+    ],
+    "row_moment_json_bytes": 2221
+  },
+  {
+    "case": "repeated-4",
+    "axis": "repeated",
+    "parameter": 4,
+    "degree": 2,
+    "atoms": 4,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 8097,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 7,
+    "max_wire_integer_bits": 66,
+    "arm": "restored",
+    "median_microseconds": 524.409361328125,
+    "min_microseconds": 518.256876953125,
+    "max_microseconds": 525.025509765625,
+    "worker_rss_kib": [
+      60964,
+      68388
+    ],
+    "cli_rss_kib": [
+      448548,
+      448696
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 525025.509765625,
+        "worker_rss_kib": 67304,
+        "cli_rss_kib": 448616,
+        "stem": "00-repeated-4-restored"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 523882.98828125,
+        "worker_rss_kib": 68388,
+        "cli_rss_kib": 448656,
+        "stem": "01-repeated-4-restored"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 524726.98046875,
+        "worker_rss_kib": 60964,
+        "cli_rss_kib": 448548,
+        "stem": "02-repeated-4-restored"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 518256.876953125,
+        "worker_rss_kib": 66192,
+        "cli_rss_kib": 448696,
+        "stem": "03-repeated-4-restored"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 524409.361328125,
+        "worker_rss_kib": 68180,
+        "cli_rss_kib": 448580,
+        "stem": "04-repeated-4-restored"
+      }
+    ],
+    "wire_integer_tokens": 1165,
+    "row_system_sizes": [
+      3,
+      1,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      1,
+      1
+    ],
+    "row_moment_json_bytes": 2221
+  },
+  {
+    "case": "repeated-4",
+    "axis": "repeated",
+    "parameter": 4,
+    "degree": 2,
+    "atoms": 4,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 8097,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 7,
+    "max_wire_integer_bits": 66,
+    "arm": "replayed",
+    "median_microseconds": 678.33369921875,
+    "min_microseconds": 668.71763671875,
+    "max_microseconds": 680.441173828125,
+    "worker_rss_kib": [
+      60592,
+      67504
+    ],
+    "cli_rss_kib": [
+      448656,
+      448696
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 680441.173828125,
+        "worker_rss_kib": 66596,
+        "cli_rss_kib": 448696,
+        "stem": "00-repeated-4-replayed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 668717.63671875,
+        "worker_rss_kib": 67504,
+        "cli_rss_kib": 448660,
+        "stem": "01-repeated-4-replayed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 673063.607421875,
+        "worker_rss_kib": 63736,
+        "cli_rss_kib": 448680,
+        "stem": "02-repeated-4-replayed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 678333.69921875,
+        "worker_rss_kib": 67168,
+        "cli_rss_kib": 448656,
+        "stem": "03-repeated-4-replayed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 680203.333984375,
+        "worker_rss_kib": 60592,
+        "cli_rss_kib": 448676,
+        "stem": "04-repeated-4-replayed"
+      }
+    ],
+    "wire_integer_tokens": 1165,
+    "row_system_sizes": [
+      3,
+      1,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      1,
+      1
+    ],
+    "row_moment_json_bytes": 2221
+  },
+  {
+    "case": "common-2",
+    "axis": "common",
+    "parameter": 2,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 8268,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 2,
+    "arm": "lexical",
+    "median_microseconds": 127.68111669921875,
+    "min_microseconds": 127.24697314453125,
+    "max_microseconds": 128.38611279296876,
+    "worker_rss_kib": [
+      66068,
+      68236
+    ],
+    "cli_rss_kib": [
+      448536,
+      448840
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 128386.11279296875,
+        "worker_rss_kib": 66068,
+        "cli_rss_kib": 448620,
+        "stem": "00-common-2-lexical"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 127681.11669921875,
+        "worker_rss_kib": 68236,
+        "cli_rss_kib": 448640,
+        "stem": "01-common-2-lexical"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 128246.14990234375,
+        "worker_rss_kib": 66432,
+        "cli_rss_kib": 448840,
+        "stem": "02-common-2-lexical"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 127360.8466796875,
+        "worker_rss_kib": 66160,
+        "cli_rss_kib": 448536,
+        "stem": "03-common-2-lexical"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 127246.97314453125,
+        "worker_rss_kib": 67476,
+        "cli_rss_kib": 448648,
+        "stem": "04-common-2-lexical"
+      }
+    ],
+    "wire_integer_tokens": 1195,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 2423
+  },
+  {
+    "case": "common-2",
+    "axis": "common",
+    "parameter": 2,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 8268,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 2,
+    "arm": "parsed",
+    "median_microseconds": 441.043841796875,
+    "min_microseconds": 437.052376953125,
+    "max_microseconds": 452.0838125,
+    "worker_rss_kib": [
+      64516,
+      67540
+    ],
+    "cli_rss_kib": [
+      448544,
+      448800
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 437052.376953125,
+        "worker_rss_kib": 66300,
+        "cli_rss_kib": 448704,
+        "stem": "00-common-2-parsed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 441043.841796875,
+        "worker_rss_kib": 64516,
+        "cli_rss_kib": 448800,
+        "stem": "01-common-2-parsed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 438921.697265625,
+        "worker_rss_kib": 66756,
+        "cli_rss_kib": 448748,
+        "stem": "02-common-2-parsed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 452083.8125,
+        "worker_rss_kib": 66540,
+        "cli_rss_kib": 448544,
+        "stem": "03-common-2-parsed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 441144.673828125,
+        "worker_rss_kib": 67540,
+        "cli_rss_kib": 448584,
+        "stem": "04-common-2-parsed"
+      }
+    ],
+    "wire_integer_tokens": 1195,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 2423
+  },
+  {
+    "case": "common-2",
+    "axis": "common",
+    "parameter": 2,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 8268,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 2,
+    "arm": "restored",
+    "median_microseconds": 509.435865234375,
+    "min_microseconds": 505.28583984375,
+    "max_microseconds": 515.974166015625,
+    "worker_rss_kib": [
+      64788,
+      67360
+    ],
+    "cli_rss_kib": [
+      448628,
+      448776
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 509501.29296875,
+        "worker_rss_kib": 66748,
+        "cli_rss_kib": 448716,
+        "stem": "00-common-2-restored"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 505285.83984375,
+        "worker_rss_kib": 64788,
+        "cli_rss_kib": 448776,
+        "stem": "01-common-2-restored"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 509435.865234375,
+        "worker_rss_kib": 66508,
+        "cli_rss_kib": 448628,
+        "stem": "02-common-2-restored"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 509114.150390625,
+        "worker_rss_kib": 67360,
+        "cli_rss_kib": 448656,
+        "stem": "03-common-2-restored"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 515974.166015625,
+        "worker_rss_kib": 66420,
+        "cli_rss_kib": 448692,
+        "stem": "04-common-2-restored"
+      }
+    ],
+    "wire_integer_tokens": 1195,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 2423
+  },
+  {
+    "case": "common-2",
+    "axis": "common",
+    "parameter": 2,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 8268,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 2,
+    "arm": "replayed",
+    "median_microseconds": 640.565240234375,
+    "min_microseconds": 639.37313671875,
+    "max_microseconds": 642.677087890625,
+    "worker_rss_kib": [
+      63820,
+      68272
+    ],
+    "cli_rss_kib": [
+      448592,
+      448792
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 640565.240234375,
+        "worker_rss_kib": 66648,
+        "cli_rss_kib": 448592,
+        "stem": "00-common-2-replayed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 640402.240234375,
+        "worker_rss_kib": 63820,
+        "cli_rss_kib": 448704,
+        "stem": "01-common-2-replayed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 641005.396484375,
+        "worker_rss_kib": 66968,
+        "cli_rss_kib": 448764,
+        "stem": "02-common-2-replayed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 642677.087890625,
+        "worker_rss_kib": 68272,
+        "cli_rss_kib": 448792,
+        "stem": "03-common-2-replayed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 639373.13671875,
+        "worker_rss_kib": 66688,
+        "cli_rss_kib": 448708,
+        "stem": "04-common-2-replayed"
+      }
+    ],
+    "wire_integer_tokens": 1195,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 2423
+  },
+  {
+    "case": "repeated-roots-2",
+    "axis": "repeated-roots",
+    "parameter": 2,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 9613,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 9,
+    "arm": "lexical",
+    "median_microseconds": 148.84873828125,
+    "min_microseconds": 147.59353662109376,
+    "max_microseconds": 152.5999736328125,
+    "worker_rss_kib": [
+      65992,
+      66864
+    ],
+    "cli_rss_kib": [
+      448528,
+      448772
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 150447.05517578125,
+        "worker_rss_kib": 66756,
+        "cli_rss_kib": 448680,
+        "stem": "00-repeated-roots-2-lexical"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 152599.9736328125,
+        "worker_rss_kib": 65992,
+        "cli_rss_kib": 448652,
+        "stem": "01-repeated-roots-2-lexical"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 148848.73828125,
+        "worker_rss_kib": 66332,
+        "cli_rss_kib": 448772,
+        "stem": "02-repeated-roots-2-lexical"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 147593.53662109375,
+        "worker_rss_kib": 66124,
+        "cli_rss_kib": 448732,
+        "stem": "03-repeated-roots-2-lexical"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 147761.97607421875,
+        "worker_rss_kib": 66864,
+        "cli_rss_kib": 448528,
+        "stem": "04-repeated-roots-2-lexical"
+      }
+    ],
+    "wire_integer_tokens": 1444,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 2902
+  },
+  {
+    "case": "repeated-roots-2",
+    "axis": "repeated-roots",
+    "parameter": 2,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 9613,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 9,
+    "arm": "parsed",
+    "median_microseconds": 528.115669921875,
+    "min_microseconds": 523.620123046875,
+    "max_microseconds": 528.69426953125,
+    "worker_rss_kib": [
+      66188,
+      68324
+    ],
+    "cli_rss_kib": [
+      448520,
+      448716
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 528561.2578125,
+        "worker_rss_kib": 66596,
+        "cli_rss_kib": 448520,
+        "stem": "00-repeated-roots-2-parsed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 523620.123046875,
+        "worker_rss_kib": 68324,
+        "cli_rss_kib": 448548,
+        "stem": "01-repeated-roots-2-parsed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 528694.26953125,
+        "worker_rss_kib": 66188,
+        "cli_rss_kib": 448716,
+        "stem": "02-repeated-roots-2-parsed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 528115.669921875,
+        "worker_rss_kib": 67548,
+        "cli_rss_kib": 448704,
+        "stem": "03-repeated-roots-2-parsed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 527744.751953125,
+        "worker_rss_kib": 66264,
+        "cli_rss_kib": 448576,
+        "stem": "04-repeated-roots-2-parsed"
+      }
+    ],
+    "wire_integer_tokens": 1444,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 2902
+  },
+  {
+    "case": "repeated-roots-2",
+    "axis": "repeated-roots",
+    "parameter": 2,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 9613,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 9,
+    "arm": "restored",
+    "median_microseconds": 591.88133203125,
+    "min_microseconds": 587.609802734375,
+    "max_microseconds": 594.6766953125,
+    "worker_rss_kib": [
+      66560,
+      68456
+    ],
+    "cli_rss_kib": [
+      448544,
+      448788
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 591881.33203125,
+        "worker_rss_kib": 68072,
+        "cli_rss_kib": 448676,
+        "stem": "00-repeated-roots-2-restored"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 590758.265625,
+        "worker_rss_kib": 66644,
+        "cli_rss_kib": 448788,
+        "stem": "01-repeated-roots-2-restored"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 593192.939453125,
+        "worker_rss_kib": 66560,
+        "cli_rss_kib": 448544,
+        "stem": "02-repeated-roots-2-restored"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 594676.6953125,
+        "worker_rss_kib": 67968,
+        "cli_rss_kib": 448712,
+        "stem": "03-repeated-roots-2-restored"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 587609.802734375,
+        "worker_rss_kib": 68456,
+        "cli_rss_kib": 448744,
+        "stem": "04-repeated-roots-2-restored"
+      }
+    ],
+    "wire_integer_tokens": 1444,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 2902
+  },
+  {
+    "case": "repeated-roots-2",
+    "axis": "repeated-roots",
+    "parameter": 2,
+    "degree": 2,
+    "atoms": 2,
+    "query_bits_parameter": 16,
+    "precision": 0,
+    "depth": 0,
+    "bytes": 9613,
+    "row_unique_nodes": 3,
+    "row_expanded_nodes": 3,
+    "max_wire_integer_bits": 9,
+    "arm": "replayed",
+    "median_microseconds": 776.00814453125,
+    "min_microseconds": 772.411755859375,
+    "max_microseconds": 809.62302734375,
+    "worker_rss_kib": [
+      66584,
+      67976
+    ],
+    "cli_rss_kib": [
+      448528,
+      448784
+    ],
+    "samples": [
+      {
+        "block": 0,
+        "nanoseconds": 784841.0546875,
+        "worker_rss_kib": 67300,
+        "cli_rss_kib": 448528,
+        "stem": "00-repeated-roots-2-replayed"
+      },
+      {
+        "block": 1,
+        "nanoseconds": 773090.22265625,
+        "worker_rss_kib": 66584,
+        "cli_rss_kib": 448672,
+        "stem": "01-repeated-roots-2-replayed"
+      },
+      {
+        "block": 2,
+        "nanoseconds": 776008.14453125,
+        "worker_rss_kib": 66976,
+        "cli_rss_kib": 448784,
+        "stem": "02-repeated-roots-2-replayed"
+      },
+      {
+        "block": 3,
+        "nanoseconds": 772411.755859375,
+        "worker_rss_kib": 67976,
+        "cli_rss_kib": 448588,
+        "stem": "03-repeated-roots-2-replayed"
+      },
+      {
+        "block": 4,
+        "nanoseconds": 809623.02734375,
+        "worker_rss_kib": 66700,
+        "cli_rss_kib": 448712,
+        "stem": "04-repeated-roots-2-replayed"
+      }
+    ],
+    "wire_integer_tokens": 1444,
+    "row_system_sizes": [
+      3,
+      3,
+      1
+    ],
+    "row_ranks": [
+      1,
+      1,
+      1
+    ],
+    "row_moment_counts": [
+      3,
+      3,
+      1
+    ],
+    "row_moment_json_bytes": 2902
+  }
+]

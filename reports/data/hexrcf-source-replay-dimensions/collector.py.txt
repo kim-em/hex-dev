@@ -1,0 +1,44 @@
+from pathlib import Path
+import hashlib,importlib.util,json,os,platform,subprocess,time
+repo=Path('/home/kim/worktrees/hex-dev/hex-dev-issue-10358')
+task=Path('/home/kim/.codex/tasks/hex-10358');project=task/'manual-render';data=task/'source-replay-matrix'
+exe=project/'.lake/build/bin/source_replay_bench';out=task/'source-replay-samples-1'
+assert 'code=exited, status=0/SUCCESS' in (task/'source-replay-controls-4.log').read_text()
+setup=json.loads((project/'.lake/build/ir/SourceReplayBench.setup.json').read_text());modules=sorted(setup['importArts']);assert not any(m=='Mathlib' or m.startswith('Mathlib.') for m in modules)
+manifest=json.loads((data/'manifest.json').read_text());assert len(manifest)==22
+spec=importlib.util.spec_from_file_location('cpu_lease',repo/'scripts/bench/cpu_lease.py');placement=importlib.util.module_from_spec(spec);spec.loader.exec_module(placement)
+cpu,lease=placement.cpu_lease();affinity=sorted(os.sched_getaffinity(0));os.sched_setaffinity(0,{cpu})
+out.mkdir(exist_ok=False)
+sha=lambda b:hashlib.sha256(b).hexdigest()
+source_files={}
+for m in modules:
+ p=repo/Path(*m.split('.')).with_suffix('.lean')
+ if p.is_file():source_files[str(p.relative_to(repo))]=sha(p.read_bytes())
+inputs={r[0]:sha((data/(r[0]+'.json')).read_bytes()) for r in manifest}
+metadata={'scope':'cumulative owner lexical/parse/catalog/selected-sign replay on adapter-produced packets; default native predecessor policy, not strict replay or tactic timings','protocol':'five fixed trial-major blocks; all22 cases in manifest order each block; adjacent four cumulative arms forward in even blocks and reverse in odd blocks; one warmed outer sample per arm; preparation/proof/literal generation excluded','blocks':5,'arms':['lexical','parsed','restored','replayed'],'cases':manifest,'host':platform.node(),'platform':platform.platform(),'cpu':cpu,'original_affinity':affinity,'load_before':os.getloadavg(),'revision':subprocess.check_output(['git','rev-parse','HEAD'],cwd=repo,text=True).strip(),'dirty':subprocess.check_output(['git','status','--porcelain'],cwd=repo,text=True),'toolchain':(repo/'lean-toolchain').read_text().strip(),'driver_sha256':sha((project/'SourceReplayDriver.lean').read_bytes()),'benchmark_sha256':sha((project/'SourceReplayBench.lean').read_bytes()),'generator_sha256':sha((project/'SourceReplayMatrix.lean').read_bytes()),'collector_sha256':sha(Path(__file__).read_bytes()),'exe_sha256':sha(exe.read_bytes()),'compiler_imports':modules,'source_sha256':source_files,'input_sha256':inputs,'samples':[],'resource_scope':'wait4 ru_maxrss LinuxKiB covers whole CLI and descendants; exporter peak_rss_kb covers benchmark worker; neither exclusive operation memory','status':'running'}
+def save():
+ (out/'context.json').write_text(json.dumps(metadata,indent=2)+'\n')
+save();print('CPU',cpu,'cases',len(manifest),'planned samples',5*22*4,'imports',len(modules),'Mathlib0',flush=True)
+try:
+ for block in range(5):
+  arms=metadata['arms'] if block%2==0 else list(reversed(metadata['arms']))
+  for case in manifest:
+   name=case[0];input_path=data/(name+'.json');assert sha(input_path.read_bytes())==inputs[name]
+   for arm in arms:
+    stem=f'{block:02d}-{name}-{arm}';command=[str(exe),'run','SourceReplayBench.'+arm,'--export-file',str(out/(stem+'.json'))];env=os.environ.copy();env['HEX_RCF_SOURCE_REPLAY_INPUT']=str(input_path)
+    before=os.getloadavg();start=time.monotonic()
+    with (out/(stem+'.stdout.txt')).open('w') as stdout,(out/(stem+'.stderr.txt')).open('w') as stderr:
+     child=subprocess.Popen(command,cwd=project,env=env,stdout=stdout,stderr=stderr)
+     _,status,usage=os.wait4(child.pid,0);child.returncode=os.waitstatus_to_exitcode(status)
+    entry={'block':block,'case':name,'arm':arm,'stem':stem,'exit_code':child.returncode,'elapsed_seconds':time.monotonic()-start,'max_rss_kib':usage.ru_maxrss,'user_seconds':usage.ru_utime,'system_seconds':usage.ru_stime,'load_before':before,'load_after':os.getloadavg()};metadata['samples'].append(entry);save()
+    if child.returncode!=0:raise RuntimeError(f'benchmark child failed:{stem}:exit{child.returncode}')
+    exported=json.loads((out/(stem+'.json')).read_text());result=exported['results'][0]
+    assert result['expected_hash_check']['status']=='match',stem
+    assert len(result['points'])==1 and result['points'][0]['status']=='ok',stem
+   print('completed',block,name,'samples',len(metadata['samples']),flush=True)
+ metadata['status']='complete'
+except BaseException as error:
+ metadata['status']='interrupted_or_failed';metadata['exception']=repr(error);raise
+finally:
+ metadata['load_after']=os.getloadavg();save();lease.close()
+print('retained',len(metadata['samples']),'completed samples',flush=True)
