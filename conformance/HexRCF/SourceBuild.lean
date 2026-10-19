@@ -11,6 +11,7 @@ import HexRCF.EnumeratedSource.Positive
 import HexRCF.EnumeratedSource.Negative
 import HexRCF.EnumeratedSource.Cubic
 import HexRCF.SelectedRoot.KernelCheck
+import KernelReplay.AxiomClosure
 
 /-! Native source proposals from enumerated roots, without a retained selected
 root fixture. These are producer/serialization controls, not quoted real proofs. -/
@@ -32,12 +33,23 @@ run_meta do
   for name in #[``SourceBuild.build, ``SourceBuild.select, ``ScalarPacket.buildParts] do
     unless Hex.RCF.SelectedRootTests.KernelCheck.producers.contains name do
       throwError "source producer is missing from the kernel guard: {name}"
-  for name in #[``ScalarPacket.buildParts_success, ``ScalarPacket.build_success] do
-    let axioms ← collectAxioms name
-    unless axioms.all (fun axiomName =>
-        [``propext, ``Classical.choice, ``Quot.sound].contains axiomName) do
-      throwError "scalar production progress has inadmissible dependencies: {name}"
-    logInfo m!"actual scalar production progress {name}: axioms={axioms}"
+  let roots := #[``ScalarPacket.buildParts_success, ``ScalarPacket.build_success,
+    ``SourceBuild.select_success, ``SourceBuild.select_checks,
+    ``SourceBuild.build_success, ``SourceBuild.build_checked, ``SourceBuild.build_checks]
+  let axioms ← Algebraic.KernelReplay.AxiomClosure.collect roots
+  unless axioms.all (fun name => [``propext, ``Classical.choice, ``Quot.sound].contains name) do
+    throwError "enumerated source progress has inadmissible dependencies: {axioms}"
+  let names := (← (← getEnv).getLocalConstantInfos).map (·.name)
+  for name in roots do
+    let .thmInfo info ← getConstInfo name | throwError "progress declaration is not a theorem: {name}"
+    let declaration := Declaration.thmDecl {info with name := ← mkFreshUserName `__sourceProgress}
+    let options := (← getOptions).setBool `debug.skipKernelTC false
+    let _ ← ofExceptKernelException <| (← getEnv).addDeclCore
+      (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
+      declaration none (doCheck := true)
+  unless (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
+    throwError "source progress audit retained copied declarations"
+  logInfo m!"enumerated source progress: {roots.size} actual theorem bodies rechecked; full axioms={axioms}"
 
 private def require (polynomial window : base.Poly) : IO (SourceBuild.Result base) := do
   match SourceBuild.build polynomial window with
