@@ -964,6 +964,21 @@ Classification tables need versioned provenance, checked embeddings and a
 separate completeness policy. The initial computational library is useful
 independently and supplies infrastructure for certified Galois-group work.
 
+Short words for group elements are a later extension. The words that
+constructive membership returns are built from Schreier generators nested
+level by level, so their length grows rapidly with the depth of the chain: for
+the Rubik's cube group on its 54 facelets, a random element's word has
+hundreds of millions of letters before free reduction, while every element is
+a product of at most 20 face turns (counting half turns as one). Minkwitz's
+method (T. Minkwitz, "An algorithm for solving the factorization problem in
+permutation groups", J. Symbolic Comput. 26 (1998)) rebuilds the transversals
+of a stabilizer chain as short words, by sifting products of short words found
+so far and keeping the shorter of each pair of words for the same coset
+representative. It yields words of a few hundred letters for the cube. The
+result would be a word for every element, checked against the element by
+evaluation; shortness is a heuristic, not a guarantee, and no claim of
+minimality is made.
+
 ### Matrix groups and finite-dimensional modules
 
 `hex-algebra-module` should represent a finite-dimensional module over a
