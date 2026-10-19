@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 public import HexRCF.RealCoefficients.SourceIdentity
 public meta import HexRCF.RealCoefficients.ScalarPacketQuote
+public meta import HexRCF.RealCoefficients.RootPrepare
 public meta section
 
 namespace Hex.RCF.RealCoefficients.SourceIdentity
@@ -114,4 +115,48 @@ def quoteWith (anchor : Anchor) (packets : Packets) (prepared same : Expr)
   accountProof candidate
   let proof ← Hex.RCF.checkProof `SourceIdentity.selected target candidate
   return ⟨root,equation.value,enclosure.value,proof,(← get).budget.consumed⟩
+
+/-- Literal inputs for one source-selection request. The equation is required
+to have sign zero and the enclosure sign positive; these are checked demands,
+not trusted verdicts. Their original polynomial-value laws remain explicit. -/
+structure Packet where
+  subject : Expr
+  graph : Expr
+  equation : Expr
+  equationGraph : Expr
+  enclosure : Expr
+  enclosureGraph : Expr
+  equationValue : Expr
+  enclosureValue : Expr
+
+/-- Restore a literal descriptor and both scalar packets, then authenticate
+the original source in one shared quotation request. Codec, sign, signature
+and cleanliness come from the exact supplied parent. Descriptor/header
+quotation and context retention are performed here rather than supplied as
+previously checked results. No producer runs. The real parent model, source
+alias selection and coefficient-map laws remain caller inputs; this does not
+discover an arbitrary predecessor history. Use `RootQuote.runWith` for the
+enclosing transaction and cumulative reflection budget. -/
+def quotePacketWith (anchor : Anchor) (packet : Packet) (parent model : Expr)
+    (decode : RootQuote.DecoderM := fun _ => pure none) : ReifyM Result := do
+  let parent ← input parent
+  let model ← input model
+  let codec ← mkAppM ``Tower.Context.codec #[parent]
+  let sign ← mkAppM ``Tower.Context.sign #[parent]
+  let signature ← mkAppM ``Tower.Context.signature #[parent]
+  let reader ← mkAppM ``Algebraic.RootReplay.readDescriptor
+    #[codec,mkConst ``Tower.Signature.codec,sign,signature,packet.subject,packet.graph]
+  let header ← RootHeader.quoteWith reader decode
+  let clean ← mkAppM ``Tower.Context.isClean #[parent]
+  let prepared ← RootPrepare.prepareWith header clean
+  let scalar (polynomial claimed graph : Expr) : MetaM Expr :=
+    mkAppM ``ScalarPacket.read #[model,codec,prepared.source,polynomial,claimed,graph]
+  let packets : Packets := {
+    equation := ← scalar packet.equation (toExpr (0 : Int)) packet.equationGraph
+    enclosure := ← scalar packet.enclosure (toExpr (1 : Int)) packet.enclosureGraph
+    equationValue := packet.equationValue
+    enclosureValue := packet.enclosureValue }
+  quoteWith anchor packets prepared.context prepared.same fun expression => do
+    if let some proof ← prepared.decoder expression then return some proof
+    decode expression
 end Hex.RCF.RealCoefficients.SourceIdentity

@@ -19,28 +19,21 @@ set_option maxRecDepth 32768
 set_option maxHeartbeats 60000000
 
 private meta def quote (literal : Name) (anchor : SourceIdentity.Anchor)
-    (equationValue enclosureValue : Expr) : Hex.RealFormula.Reify.ReifyM RootQuote.Result := do
+    (equationValue enclosureValue : Expr)
+    (change : SourceIdentity.Packet → SourceIdentity.Packet := id)
+    (model : Expr := mkConst ``Data.rational) : Hex.RealFormula.Reify.ReifyM RootQuote.Result := do
   let decode : RootQuote.DecoderM := fun expression =>
     liftM (RationalQuote.decoder (mkConst ``Data.registry) expression)
-  let reader ← mkAppM ``Algebraic.RootReplay.readDescriptor
-    #[q(Data.base.codec),q(Tower.Signature.codec),q(Data.base.sign),q(Data.base.signature),
-      mkConst (literal ++ `subject),mkConst (literal ++ `graph)]
-  let header ← RootHeader.quoteWith reader decode
-  let clean ← mkAppM ``Tower.Context.isClean #[mkConst ``Data.base]
-  let prepared ← RootPrepare.prepareWith header clean
-  let scalar (polynomial sign graph : Expr) : MetaM Expr := do
-    mkAppM ``ScalarPacket.read #[mkConst ``Data.rational,q(Data.base.codec),prepared.source,
-      polynomial,sign,graph]
-  let packets : SourceIdentity.Packets := {
-    equation := ← scalar (mkConst (literal ++ `equation)) (toExpr (0 : Int))
-      (mkConst (literal ++ `equationGraph))
-    enclosure := ← scalar (mkConst (literal ++ `margin)) (toExpr (1 : Int))
-      (mkConst (literal ++ `marginGraph))
+  let packet : SourceIdentity.Packet := {
+    subject := mkConst (literal ++ `subject)
+    graph := mkConst (literal ++ `graph)
+    equation := mkConst (literal ++ `equation)
+    equationGraph := mkConst (literal ++ `equationGraph)
+    enclosure := mkConst (literal ++ `margin)
+    enclosureGraph := mkConst (literal ++ `marginGraph)
     equationValue, enclosureValue }
-  let result ← SourceIdentity.quoteWith anchor packets prepared.context prepared.same
-    fun expression => do
-      if let some result ← prepared.decoder expression then return some result
-      decode expression
+  let result ← SourceIdentity.quotePacketWith anchor (change packet)
+    (mkConst ``Data.base) model decode
   return ⟨result.root,result.proof,(← get).budget.consumed⟩
 
 private meta def retain (name : Name) (literal : Name) (anchor : SourceIdentity.Anchor)
@@ -59,13 +52,19 @@ private meta def retain (name : Name) (literal : Name) (anchor : SourceIdentity.
   if name == `Hex.RCF.BoundedSourceQuote.positive then
     let sentinel ← mkFreshExprMVar (mkConst ``Nat)
     let before ← getMCtx
-    let names := (← (← getEnv).getLocalConstantInfos).map (·.name)
     let config : Hex.RealFormula.Reify.Config := {}
-    let small := {config with ring := {config.ring with budget :=
-      {config.ring.budget with proofNodes := result.usage.proofNodes-1}}}
+    let exact := {config with ring := {config.ring with budget :=
+      {config.ring.budget with proofNodes := result.usage.proofNodes}}}
     let action : Hex.RealFormula.Reify.ReifyM RootQuote.Result := do
       sentinel.mvarId!.assign (mkNatLit 96)
       quote literal anchor equationValue enclosureValue
+    let .ok repeated ← RootQuote.runWith action exact
+      | throwError "assembled source rejected its exact charged budget"
+    unless repeated.usage == result.usage && !(← sentinel.mvarId!.isAssigned) do
+      throwError "assembled source exact-budget usage or success restoration changed"
+    let names := (← (← getEnv).getLocalConstantInfos).map (·.name)
+    let small := {config with ring := {config.ring with budget :=
+      {config.ring.budget with proofNodes := result.usage.proofNodes-1}}}
     let .error (.budget exhausted) ← RootQuote.runWith action small
       | throwError "bounded source accepted below its charged budget"
     unless exhausted.dimension == .proofNodes do throwError "wrong bounded source budget dimension"
@@ -77,6 +76,32 @@ private meta def retain (name : Name) (literal : Name) (anchor : SourceIdentity.
         (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
       throwError "bounded source exhaustion retained metavariables or declarations"
     logInfo m!"bounded source below-budget refusal and state restoration: limit={result.usage.proofNodes-1}"
+    let wrongValue ← mkEqRefl (mkConst ``Bool.false)
+    let bad : Array (String × (SourceIdentity.Packet → SourceIdentity.Packet) × Expr) := #[
+      ("descriptor binding", fun p => {p with
+        subject := mkConst `Hex.RCF.RealCoefficients.BoundedSource.Negative.subject}, mkConst ``Data.rational),
+      ("equation sign", fun p => {p with equationGraph := p.enclosureGraph}, mkConst ``Data.rational),
+      ("coefficient law", fun p => {p with equationValue := wrongValue}, mkConst ``Data.rational),
+      ("parent model", id, mkConst ``Data.original)]
+    for (label,change,model) in bad do
+      let before ← getMCtx
+      let names := (← (← getEnv).getLocalConstantInfos).map (·.name)
+      let refused ← try
+          match ← RootQuote.runWith (do
+            sentinel.mvarId!.assign (mkNatLit 97)
+            quote literal anchor equationValue enclosureValue change model) config with
+          | .ok _ => pure false
+          | .error _ => pure true
+        catch _ => pure true
+      unless refused do throwError "assembled source accepted {label}"
+      let after ← getMCtx
+      unless !(← sentinel.mvarId!.isAssigned) && before.mvarCounter == after.mvarCounter &&
+          before.lmvarCounter == after.lmvarCounter && before.eAssignment.toList == after.eAssignment.toList &&
+          before.lAssignment.toList == after.lAssignment.toList &&
+          before.decls.toList.map Prod.fst == after.decls.toList.map Prod.fst &&
+          (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
+        throwError "assembled source failure retained state: {label}"
+      logInfo m!"assembled source refused {label}; metavariables and declarations restored"
 
 run_meta do
   withoutExporting do
