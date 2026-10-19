@@ -27,6 +27,51 @@ def scalar (polynomial : Array Codec.Json) (sign : Int) : Codec.Json :=
   .arr #[.arr polynomial,.number sign]
 def polynomial : Codec.Json := .arr #[
   scalar #[rational 0,rational (-1)] (-1),.arr #[],scalar #[rational 1] 1]
+
+/-- Replay the original coefficient source in this same request instead of
+importing an already proved coefficient identity. The retained parent and its
+generator equation remain explicit; no native source producer is evaluated. -/
+private meta def sourceCoefficient : Hex.RealFormula.Reify.ReifyM Expr := do
+  let (anchor,_) ← liftM Hex.RCF.SourceIdentityPacket.inputs
+  let key (name : Name) := mkAppM ``Prod.fst #[mkConst name]
+  let graph (name : Name) := do mkAppM ``Prod.snd #[← mkAppM ``Prod.snd #[mkConst name]]
+  let packet : SourceIdentity.Packet := {
+    subject := mkConst ``Hex.RCF.SelectedRootTests.Literals.lowerSubject
+    graph := mkConst ``Hex.RCF.SelectedRootTests.Literals.lowerGraph
+    equation := ← key ``Hex.RCF.SelectedRootTests.SourceIdentityPackets.packet0
+    equationGraph := ← graph ``Hex.RCF.SelectedRootTests.SourceIdentityPackets.packet0
+    enclosure := ← key ``Hex.RCF.SelectedRootTests.SourceIdentityPackets.packet1
+    enclosureGraph := ← graph ``Hex.RCF.SelectedRootTests.SourceIdentityPackets.packet1
+    equationValue := mkConst ``Hex.RCF.SourceIdentityPacket.equation_value
+    enclosureValue := mkConst ``Hex.RCF.SourceIdentityPacket.enclosure_value }
+  let restored ← SourceIdentity.restorePacketWith anchor packet
+    (mkConst ``Hex.RCF.SelectedRootTests.Data.base) (mkConst ``Hex.RCF.SelectedRootTests.Data.rational)
+    fun expression => liftM (RationalQuote.decoder (mkConst ``Hex.RCF.SelectedRootTests.Data.registry) expression)
+  let same ← mkAppM ``Option.get_of_eq_some
+    #[mkConst ``Hex.RCF.SelectedRootTests.Data.lowerAccepted,restored.header.root.proof]
+  let model := mkConst ``Hex.RCF.SelectedRootTests.Data.rational
+  let fields ← #[``Tower.Model.value,``Tower.Model.zero_iff,``Tower.Model.one,
+    ``Tower.Model.add,``Tower.Model.sub,``Tower.Model.mul,``Tower.Model.nat,
+    ``Tower.Model.sign].mapM fun name => mkAppM name #[model]
+  let rootValue ← withLocalDeclD `root (← inferType restored.header.root.value) fun root => do
+    mkLambdaFVars #[root] (← mkAppM ``Descriptor.root (fields.push root))
+  let selected ← mkEqTrans (← mkAppM ``congrArg #[rootValue,same]) restored.identity.proof
+  let parentValue ← mkAppM ``Tower.Model.value #[mkConst ``Schema.original]
+  let generator ← mkAppM ``congrArg
+    #[parentValue,← mkEqSymm (mkConst ``Hex.RCF.SelectedRootTests.Data.generator_eq)]
+  let chain ← mkAppM ``Tower.Chain.base
+    #[← mkAppM ``BaseContext.rational #[mkConst ``Hex.RCF.SelectedRootTests.Data.registry]]
+  let interpreted ← mkAppM ``Tower.Model.root_generator
+    #[chain,model,mkConst ``Hex.RCF.SelectedRootTests.Data.lower,
+      mkConst ``Hex.RCF.SelectedRootTests.Data.frozenFrame,mkConst ``Hex.RCF.SelectedRootTests.Data.frameEncoded]
+  let proof ← mkEqTrans generator (← mkEqTrans interpreted selected)
+  let target : Q(Prop) := q(Schema.original.value Hex.RCF.SelectedRootTests.Data.alpha = Real.sqrt 2)
+  Hex.RealFormula.Reify.accountProof target
+  Hex.RealFormula.Reify.accountProof proof
+  let proof ← Hex.RCF.checkProof `jointSourceCoefficient target (mkExpectedPropHint proof target)
+  logInfo m!"original coefficient authenticated in request; proofNodes={(← get).budget.consumed.proofNodes}"
+  return proof
+
 run_meta do
   withoutExporting do
     let target : Q(Prop) := q(∃ x : ℝ, x ^ 2 - Real.sqrt 2 ≥ 0 ∧
@@ -50,6 +95,7 @@ run_meta do
         Hex.RCF.SelectedRootTests.Data.base.codec)
     let reader ← mkAppM ``Codec.readPoly #[codec,mkConst ``polynomial]
     let result ← match ← RootQuote.runWith (do
+        let coefficient ← sourceCoefficient
         let p ← ScalarQuote.quotePolyWith reader (mkConst ``Records.facts) fun expression =>
           liftM (RationalQuote.decoder (mkConst ``Hex.RCF.SelectedRootTests.Data.registry) expression)
         logInfo m!"literal polynomial reconstructed; proofNodes={p.usage.proofNodes}"
@@ -137,8 +183,9 @@ run_meta do
           mkLambdaFVars #[i] value
         let identityType ← mkEq valuation source.valuation
         let identity ← mkFreshExprMVar identityType
+        let coefficientTerm := mkIdent coefficient.getAppFn.constName!
         let remaining ← Lean.Elab.runTactic' identity.mvarId!
-          (← `(tactic| funext i; fin_cases i; exact Hex.RCF.SourceIdentityPacket.coefficient))
+          (← `(tactic| funext i; fin_cases i; exact $coefficientTerm))
         unless remaining.isEmpty do throwError "original coefficient identity left goals"
         let identity ← instantiateMVars identity
         Hex.RealFormula.Reify.accountProof identityType

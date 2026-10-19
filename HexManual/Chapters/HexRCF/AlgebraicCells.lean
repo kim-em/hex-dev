@@ -681,8 +681,9 @@ remain separate obligations.
 
 The algebraic source regression independently reads the complete frozen packet
 over the retained positive square root of 2. It reifies the following original
-sentence, reconstructs the coefficient polynomial, authenticates its fixed
-coefficient and composes the checked cell verdict with the original source:
+sentence, authenticates its fixed coefficient from the descriptor and two
+scalar packets inside the same request, reconstructs the coefficient polynomial
+and composes the checked cell verdict with the original source:
 
 ```lean
 example : ∃ x : ℝ,
@@ -692,21 +693,23 @@ example : ∃ x : ℝ,
   Hex.RCF.CellSourceQuote.source
 ```
 
-The shared reification and quotation budget records 8,644,422 proof nodes
-before source finishing and 8,651,669 for the complete original-source attempt.
-Both stages run in one transaction. The test supplies 24M proof nodes and
+The shared reification and quotation budget records 9,330,067 proof nodes
+before source finishing and 9,337,314 for the complete original-source attempt.
+Source authentication, cell replay and finishing run in one transaction. The test supplies 24M proof nodes and
 60M heartbeats. Its trace records two memo reuses and seven validations.
-Lake reports 916 seconds for this source module on the recorded shared host;
+Lake reports 821 seconds for this source module on the recorded shared host;
 this remains an expensive fixed-input proof build. These observations do not
 measure compiled replay or establish a general tactic running time.
 
-Its importing proof audit checks 1,193 theorem bodies, 202 definitions and
-1,353 nonempty kernel traces. It excludes the older complete-packet acceptance
-and source proofs and the handwritten coefficient identity, checks transitive
+Its importing proof audit checks 1,191 theorem bodies, 202 definitions and
+1,351 nonempty kernel traces. It excludes the older complete-packet acceptance
+and source proofs, the handwritten coefficient identity and the separately
+proved source-selection/coefficient identities. It checks transitive
 axiom dependencies, and rejects native
 producer and canonical-codec reduction. The fixed
-selected parent and checked coefficient seed facts are supplied inputs. This
-example does not construct arbitrary predecessor histories or install a
+selected parent, original alias/coefficient-map laws and checked arithmetic
+seed facts are supplied inputs. This example does not construct arbitrary
+predecessor histories or install a
 general source-to-certificate tactic backend.
 
 For a closed retained base/root context, `RealModel.build` constructs its

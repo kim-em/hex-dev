@@ -18,8 +18,8 @@ run_meta do
   unless axioms.all (fun name => [``propext,``Classical.choice,``Quot.sound].contains name) do
     throwError "fresh complete source has inadmissible dependencies"
   let dependencies ← Hex.RCF.ProofEvidence.projectDependencies roots
-  for required in #[``Hex.RCF.SourceIdentityPacket.coefficient,
-      ``SourceIdentity.identify,``SourceIdentity.observe,``SourceIdentity.select,
+  for required in #[``SourceIdentity.identify,``SourceIdentity.observe,``SourceIdentity.select,
+      ``ScalarPacket.restore,``Tower.Model.root_generator,
       ``RowQuote.read_eq,``Hex.SignDet.Dag.selectedSigns_memo,
       ``CompleteReplay.check_sound,``CellOperations.check_of_parts,
       ``CellOperations.readCells_of_parts,``CellRead.collectWith_eq,``CellOperations.check_eq,
@@ -28,6 +28,7 @@ run_meta do
       ``RowQuote.values_retarget,``RowQuote.value_eq] do
     unless dependencies.contains required do throwError "fresh complete source omitted {required}"
   for forbidden in #[``CellReplayTests.Algebraic.Schema.coefficient,
+      ``Hex.RCF.SourceIdentityPacket.coefficient,``Hex.RCF.SourceIdentityPacket.selected,
       ``Hex.RCF.SelectedRootTests.Data.alpha_value,``Hex.RCF.SelectedRootTests.Data.selectedSqrt,
       ``Hex.RCF.SourceIdentityCases.source_selected,``Hex.RCF.SourceIdentityCases.coefficient,
       ``Hex.RCF.SourceIdentityCases.equationFact,``Hex.RCF.SourceIdentityCases.marginFact,
@@ -71,7 +72,7 @@ run_meta do
           ``Hex.SignDet.Descriptor.ofReplay?] then
       throwError "complete source reduced producer {producer}: {count}; body={name}"
     if !diagnostics.unfoldCounter.isEmpty then traces := traces+1
-  unless theorems == 1193 && definitions == 202 && traces == 1353 do
+  unless theorems == 1191 && definitions == 202 && traces == 1351 do
     throwError "complete source inventory changed: {theorems}/{definitions}/{traces}"
   unless (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
     throwError "complete source audit retained copied declarations"

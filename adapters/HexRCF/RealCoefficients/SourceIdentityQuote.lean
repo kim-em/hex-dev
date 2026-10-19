@@ -129,6 +129,14 @@ structure Packet where
   equationValue : Expr
   enclosureValue : Expr
 
+/-- The exact restored descriptor/header and prepared context accompany the
+source identity, so a consumer can bind an existing stored coefficient to
+this same checked root without replaying the descriptor. -/
+structure Restored where
+  header : RootHeader.Result
+  prepared : RootPrepare.Result
+  identity : Result
+
 /-- Restore a literal descriptor and both scalar packets, then authenticate
 the original source in one shared quotation request. Codec, sign, signature
 and cleanliness come from the exact supplied parent. Descriptor/header
@@ -137,8 +145,8 @@ previously checked results. No producer runs. The real parent model, source
 alias selection and coefficient-map laws remain caller inputs; this does not
 discover an arbitrary predecessor history. Use `RootQuote.runWith` for the
 enclosing transaction and cumulative reflection budget. -/
-def quotePacketWith (anchor : Anchor) (packet : Packet) (parent model : Expr)
-    (decode : RootQuote.DecoderM := fun _ => pure none) : ReifyM Result := do
+def restorePacketWith (anchor : Anchor) (packet : Packet) (parent model : Expr)
+    (decode : RootQuote.DecoderM := fun _ => pure none) : ReifyM Restored := do
   let parent ← input parent
   let model ← input model
   let codec ← mkAppM ``Tower.Context.codec #[parent]
@@ -156,7 +164,15 @@ def quotePacketWith (anchor : Anchor) (packet : Packet) (parent model : Expr)
     enclosure := ← scalar packet.enclosure (toExpr (1 : Int)) packet.enclosureGraph
     equationValue := packet.equationValue
     enclosureValue := packet.enclosureValue }
-  quoteWith anchor packets prepared.context prepared.same fun expression => do
+  let identity ← quoteWith anchor packets prepared.context prepared.same fun expression => do
     if let some proof ← prepared.decoder expression then return some proof
     decode expression
+  return ⟨header,prepared,identity⟩
+
+/-- Authenticate one literal source packet, retaining the existing compact
+result interface. Use `restorePacketWith` when subsequent source/cell assembly
+also needs the exact descriptor-reader equation or prepared context. -/
+def quotePacketWith (anchor : Anchor) (packet : Packet) (parent model : Expr)
+    (decode : RootQuote.DecoderM := fun _ => pure none) : ReifyM Result := do
+  return (← restorePacketWith anchor packet parent model decode).identity
 end Hex.RCF.RealCoefficients.SourceIdentity
