@@ -17,7 +17,7 @@ namespace Hex.RealClosure.SampleMeasurements
 open Hex.SignDet Tower
 
 def registry : BaseContext.Registry := fun _ => none
-def base : Context registry := Context.base (BaseContext.rational registry)
+@[expose] def base : Context registry := Context.base (BaseContext.rational registry)
 
 /-- Identical original boundaries and polynomials for all three methods. -/
 structure Input where

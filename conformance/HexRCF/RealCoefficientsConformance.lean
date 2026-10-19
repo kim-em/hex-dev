@@ -439,7 +439,7 @@ run_meta do
 #print axioms Coefficients.ofField_toReal
 
 private def xPoly : Hex.DensePoly Rat := Hex.DensePoly.ofCoeffs #[0, 1]
-private def xSquare : Hex.DensePoly Rat := xPoly * xPoly
+def xSquare : Hex.DensePoly Rat := xPoly * xPoly
 
 def radical : RadicalCert Rat Nat :=
   { context := 7, core := xPoly, quotient := xPoly,

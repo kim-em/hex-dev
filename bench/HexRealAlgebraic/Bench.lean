@@ -420,7 +420,7 @@ initialize integerPolyRef : IO.Ref (Array Int) ← IO.mkRef #[1, 0, -10, 0, 1]
 private def algebraicChecksum (a : AlgebraicNumber) : UInt64 :=
   hash (a.p.toArray, a.rep.1.square.re.toRat, a.rep.1.square.im.toRat, a.rep.1.square.prec)
 
-private def checksum (a : RealAlgebraicNumber) : UInt64 := algebraicChecksum a.toAlgebraic
+def checksum (a : RealAlgebraicNumber) : UInt64 := algebraicChecksum a.toAlgebraic
 
 private def optionChecksum (a : Option RealAlgebraicNumber) : UInt64 :=
   (a.map checksum).getD 0

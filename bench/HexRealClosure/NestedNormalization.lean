@@ -69,7 +69,7 @@ private def ratJson (q : Rat) : Codec.Json := .arr #[.number q.num, .number q.de
 
 /-- Rat retains its exact ordinary primitives. Trace wrappers add no arithmetic
 and never reject a completed operation or timing sample. -/
-def rational (trace : Bool) : Level where
+@[expose] def rational (trace : Bool) : Level where
   Carrier := Rat
   zero := inferInstance
   equality := fun a b =>

@@ -121,7 +121,7 @@ structure PhaseInput where
 
 /-- Integer hashes truncate to 64 bits. Bit lengths keep the phase
 fingerprint sensitive to these large coefficients; they are not equality proofs. -/
-private def reductionHash (r : QueryReduction Rat) : UInt64 :=
+def reductionHash (r : QueryReduction Rat) : UInt64 :=
   hash (r.steps.map fun s => (s.index, polyHash s.next,
     s.witness.leftScale, polyHash s.witness.quotient, s.witness.rightScale,
     s.witness.rightScale.num.natAbs.log2, s.witness.rightScale.den.log2))

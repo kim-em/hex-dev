@@ -14,6 +14,7 @@ public meta import HexRealRoots.IsolateSturm
 public meta import HexRealRoots.Mobius
 public meta import HexRealRoots.Prec
 public meta import HexRealRoots.Refine
+public meta import HexRealRoots.SimpleRealRoot
 
 public section
 

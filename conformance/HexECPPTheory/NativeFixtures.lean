@@ -8,7 +8,7 @@ module
 
 public import HexECPPTheory.Compact
 
-public section
+@[expose] public section
 
 /-! Complete frozen native outputs from the committed corpus. -/
 

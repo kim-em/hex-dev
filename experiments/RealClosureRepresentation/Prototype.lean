@@ -16,7 +16,7 @@ public section
 namespace Prototype
 
 /-- Only zero is canonical; other representations can have equal denotations. -/
-def ZeroRep (A : Type) (isZero : A → Bool) := Option {a : A // isZero a = false}
+@[expose] def ZeroRep (A : Type) (isZero : A → Bool) := Option {a : A // isZero a = false}
 
 namespace ZeroRep
 variable {A : Type} {isZero : A → Bool}

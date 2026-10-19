@@ -12,6 +12,7 @@ public import HexRCF.RealCoefficients.FieldCarrier
 public meta import HexRCF.RealCoefficients.FieldSpecialize
 public meta import HexSturm.Basic
 public meta import HexRCF.RealCoefficients.SignInputs
+public meta import HexRCF.RealCoefficients.FieldCarrier
 
 public section
 
@@ -30,10 +31,10 @@ private theorem cubeIrred :
     ZPoly.checkIrredWitness cubePoly (.eisenstein 2 0) = true := by decide +kernel
 private theorem cubeDegree : 0 < cubePoly.natDegree := by decide +kernel
 
-private abbrev CubeField := PolyQuot cubePoly
+abbrev CubeField := PolyQuot cubePoly
   (SimpleRoot.ofSquare cubePoly cubeSquare cubeWitness cubePrecision)
 
-private def root : CubeField :=
+def root : CubeField :=
   PolyQuot.ofSquare cubePoly cubeSquare (DensePoly.ofList [0, 1])
     cubeWitness cubePrecision
 

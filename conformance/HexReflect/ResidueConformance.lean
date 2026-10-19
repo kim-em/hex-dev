@@ -111,7 +111,7 @@ run_meta do
     kernelCheck #[x] entry.result.proof
     logInfo "ZMod 5: auxiliary instances supply lawful gcd and Mathlib ring"
 
-private def declineProbe (p : Nat) (reason : String) : MetaM Unit := do
+private meta def declineProbe (p : Nat) (reason : String) : MetaM Unit := do
   let ty := mkApp (mkConst ``ZMod) (mkNatLit p)
   withLocalDeclD `x ty fun x => do
     let .declined (.providerCondition id message) _ ← reflectRing x
@@ -195,7 +195,7 @@ example : Function.Injective (residueHom 3 (MvPolynomial (Fin 1) (ZMod 3))) :=
 
 /-- Check the quoted polynomials, source equations, and injectivity of the
 provider's actual interpretation function in the kernel. -/
-private def checkMatrix (p : Nat) (factor : Expr)
+private meta def checkMatrix (p : Nat) (factor : Expr)
     (matrixEntries sources expectedValues : Array Expr) : MetaM Unit := do
   let outcome ← reflectRingBatch sources (cfg := { checkProofs := true })
   let .success batch _ := outcome

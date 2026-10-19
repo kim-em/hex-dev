@@ -256,7 +256,7 @@ private structure RetryPair where
 private def retryPair? (_ : Unit) : Option RetryPair := do
   some ⟨← retryTheta? (), ← retryAlpha? ()⟩
 
-private structure RecoveryInput where
+structure RecoveryInput where
   theta : AlgebraicNumber
   alpha : AlgebraicNumber
   gamma : AlgebraicNumber
@@ -267,7 +267,7 @@ private def recoveryInput? (_ : Unit) : Option RecoveryInput := do
   let (shift, gamma) ← Flatten.candidateAt? pair.theta pair.alpha 6 1
   some ⟨pair.theta, pair.alpha, gamma, shift⟩
 
-private structure TwoLevel where
+structure TwoLevel where
   base : Extension rat
   extension : Extension base.tower
 
@@ -277,21 +277,21 @@ private def twoLevel? (_ : Unit) : Option TwoLevel := do
   let extension ← adjoin? base.tower root
   some ⟨base, extension⟩
 
-private structure CandidateInput where
+structure CandidateInput where
   tower : TwoLevel
   generators : Array (Flatten.Generator tower.extension.tower)
   candidate : Flatten.Candidate tower.extension.tower
 
-private structure CertifyInput where
+structure CertifyInput where
   tower : TwoLevel
   candidate : Flatten.Candidate tower.extension.tower
   images : Array (PolyQuot candidate.root.p candidate.root.x)
 
-private structure MapInput where
+structure MapInput where
   tower : TwoLevel
   result : Flattening tower.extension.tower
 
-private structure PolyQuotInput where
+structure PolyQuotInput where
   rep : RefinedIsolation sqrtTwoPoly
   irreducible : ZPoly.isIrreducible sqrtTwoPoly = true
   simple : HasOnlySimpleRoots sqrtTwoPoly
@@ -518,7 +518,7 @@ def runShiftSearch : Unit → IO UInt64 := fun _ => do
     (Norm.findSquarefreeShift level [] input)
   return mixHash (hash shift) (rawPolyChecksum norm)
 
-private def repeatedInput : Poly rat :=
+def repeatedInput : Poly rat :=
   rationalPoly [4, 0, -4, 0, 1]
 
 initialize repeatedRef : IO.Ref (Option (Poly rat)) ←
@@ -855,7 +855,7 @@ private def mkLadderRoot? (p : ZPoly) (n : Nat) : Option AlgebraicRoot :=
   else none
 
 /-- A checked rational presentation whose selected root remains runtime data. -/
-private structure PresentationInput where
+structure PresentationInput where
   root : AlgebraicRoot
   checked : Option (PLift (ZPoly.CheckedIrreducible root.p))
 
@@ -915,7 +915,7 @@ private def ladderTower? (m : Nat) : Option NumberTower := do
 
 /-- Prepared dimension-`2m` coordinate-arithmetic fixture with two
 all-nonzero-coordinate elements. -/
-private structure ElemInput where
+structure ElemInput where
   tower : NumberTower
   a : Elem tower
   b : Elem tower

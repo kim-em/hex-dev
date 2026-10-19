@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGFq.Basic
+public meta import HexGFq.Basic
 
 public section
 

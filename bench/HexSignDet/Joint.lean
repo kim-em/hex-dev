@@ -35,7 +35,7 @@ private def reportJson (value : Codec.Json) : IO Lean.Json := do
   | .ok result => return result
   | .error message => throw (IO.userError message)
 
-private def rootHash (d : Root) : UInt64 :=
+def rootHash (d : Root) : UInt64 :=
   let input : Input := ⟨d.raw.head, d.raw.queries, none, some d.evidence, none⟩
   hash (hash input, d.raw.indices, d.raw.signs)
 

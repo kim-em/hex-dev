@@ -25,7 +25,7 @@ open Hex
 open Hex.MvPoly
 
 abbrev P0 := MvPoly 0 Int Mono.lex
-private abbrev P1 := MvPoly 1 Int Mono.lex
+abbrev P1 := MvPoly 1 Int Mono.lex
 abbrev Q0 := MvPoly 0 Rat Mono.lex
 
 def x : P1 := X 0

@@ -302,7 +302,7 @@ setup_fixed_benchmark runRoots where {
 }
 
 def nativeRegistry : BaseContext.Registry := fun _ => none
-def nativeBase := Tower.Context.base (BaseContext.rational nativeRegistry)
+@[expose] def nativeBase := Tower.Context.base (BaseContext.rational nativeRegistry)
 
 private def nativeRepeated : DensePoly nativeBase.Value :=
   let two : nativeBase.Value := 1 + 1

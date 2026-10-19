@@ -10,6 +10,10 @@ public import HexRCF.BenchHash
 public import Hex.BenchOracle.Flint
 public import LeanBench
 public meta import HexRCF.Syntax
+public meta import Hex.BenchOracle.Flint
+public meta import HexRCF.DecisionCheck
+public meta import HexRCF.Builder
+public meta import HexRCF.SturmBuilder
 
 public section
 

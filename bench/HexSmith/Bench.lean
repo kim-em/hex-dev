@@ -91,10 +91,10 @@ def presentationWide (n : Nat) : Input := presentationShape n (n + 2)
 private def matrix (input : Input) : Matrix Int input.rows input.cols :=
   Matrix.ofFn fun i j => input.entries.getD (i.val * input.cols + j.val) 0
 
-private def checksum (M : Matrix Int n m) : UInt64 :=
+def checksum (M : Matrix Int n m) : UInt64 :=
   M.data.foldl (fun acc x => mixHash acc (hash x)) 0
 
-private def dataChecksum (D : Matrix.SmithData n m) : UInt64 :=
+def dataChecksum (D : Matrix.SmithData n m) : UInt64 :=
   let diagonal := D.diag.toList.foldl (fun acc x => mixHash acc (hash x)) 0
   mixHash (checksum D.left) <| mixHash (checksum D.leftInv) <|
     mixHash (checksum D.right) (mixHash (checksum D.rightInv) diagonal)

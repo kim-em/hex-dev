@@ -151,7 +151,7 @@ structure ShiftInput where
   shift : Nat
   deriving Hashable
 
-private theorem aesIrreducible :
+theorem aesIrreducible :
     GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x1B 8) :=
   GF2Poly.aes_modulus_irreducible
 
@@ -179,7 +179,7 @@ structure GF2nPowInput where
 def gf2nPolyModulus : GF2Poly :=
   GF2Poly.ofWords #[0x87, 0, 1]
 
-private theorem gf2nPolyIrreducible :
+theorem gf2nPolyIrreducible :
     GF2Poly.Irreducible gf2nPolyModulus :=
   GF2Poly.gf2nPoly_modulus_irreducible
 

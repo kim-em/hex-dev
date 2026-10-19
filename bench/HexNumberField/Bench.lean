@@ -243,7 +243,7 @@ private def fixedChecksum {p : ZPoly} {x : SimpleRoot p}
 
 /-! # Degree-10 fixed presentation -/
 
-private def degreeTenPoly : ZPoly :=
+def degreeTenPoly : ZPoly :=
   DensePoly.ofList [-2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
 
 private def degreeTenSquare : DyadicSquare :=
@@ -259,7 +259,7 @@ private def degreeTenRep : RefinedIsolation degreeTenPoly :=
       set_option exponentiation.threshold 2000 in
         decide⟩
 
-private def degreeTenRoot : SimpleRoot degreeTenPoly :=
+def degreeTenRoot : SimpleRoot degreeTenPoly :=
   SimpleRoot.mk degreeTenRep
 
 private def degreeTenInput : PolyQuot degreeTenPoly degreeTenRoot :=
@@ -321,7 +321,7 @@ setup_fixed_benchmark runFixedMinpoly where {
 
 /-! # Lazy arithmetic fixtures -/
 
-private def sqrtTwoPoly : ZPoly := DensePoly.ofList [-2, 0, 1]
+def sqrtTwoPoly : ZPoly := DensePoly.ofList [-2, 0, 1]
 
 private def sqrtTwoSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
@@ -365,7 +365,7 @@ private def addRaw : ZPoly :=
 private def addCore : ZPoly :=
   ZPoly.squareFreeCore addRaw
 
-private structure IsolateInput where
+structure IsolateInput where
   polynomial : ZPoly
   simple : HasOnlySimpleRoots polynomial
   depth : Nat
@@ -479,7 +479,7 @@ setup_fixed_benchmark runExact where {
   expectedHash := some 0xafd3fbfd3a66fc82
 }
 
-private def sqrtTwoRoot : SimpleRoot sqrtTwoPoly :=
+def sqrtTwoRoot : SimpleRoot sqrtTwoPoly :=
   SimpleRoot.mk sqrtTwoRep
 
 private def fixedSqrtTwo : PolyQuot sqrtTwoPoly sqrtTwoRoot :=
@@ -781,7 +781,7 @@ setup_fixed_benchmark runZeroDecisions where {
   apiAnchorConfig with expectedHash := some 0x071179c329e9a368
 }
 
-private structure AlgebraicPolyInput where
+structure AlgebraicPolyInput where
   coefficients : Array AlgebraicNumber
   left : AlgebraicPoly
   right : AlgebraicPoly
@@ -866,7 +866,7 @@ setup_fixed_benchmark runAlgebraicPolyAccessors where {
   apiAnchorConfig with expectedHash := some 0x256c50de964804d1
 }
 
-private structure MajorantInput where
+structure MajorantInput where
   f : DensePoly Rat
 
 private instance : Hashable MajorantInput where
@@ -1034,7 +1034,7 @@ private def mkFactorRoot? (p q : ZPoly) : Option AlgebraicRoot :=
 
 /-- Prepared degree-`m` fixed-field arithmetic fixture: the field
 `ℚ(2^{1/m})` with two dense all-nonzero-coordinate elements. -/
-private structure FieldInput where
+structure FieldInput where
   p : ZPoly
   x : SimpleRoot p
   rep : RefinedIsolation p
@@ -1065,7 +1065,7 @@ def prepFieldInput (n : Nat) : FieldInput :=
 /-- Prepared inversion fixture: `FieldInput` data plus the runtime-checked
 irreducibility instance, decided in prep so no factorization work leaks
 into the timed extended-gcd region. -/
-private structure InvInput where
+structure InvInput where
   p : ZPoly
   x : SimpleRoot p
   rep : RefinedIsolation p
@@ -1424,7 +1424,7 @@ setup_benchmark runQAdjoinDivLadder n => n * n * (n + 7)
 
 /-- Prepared eliminant-construction pair: `X^m - 2` against the fixed
 quadratic `X^2 - 3` (no isolation is needed for construction alone). -/
-private structure EliminantInput where
+structure EliminantInput where
   p : ZPoly
   q : ZPoly
 
@@ -1441,7 +1441,7 @@ def runAddEliminantLadder (input : EliminantInput) : UInt64 :=
 
 /-- Prepared lazy-addition pair: the first isolated root of `X^m - 2`
 against `√3`, degree product `2m` (merge-facing ceiling `20`). -/
-private structure LazyAddInput where
+structure LazyAddInput where
   a : Option AlgebraicRoot
   b : Option AlgebraicRoot
 
@@ -1523,7 +1523,7 @@ setup_fixed_benchmark runLazyAddLadder where {
 /-- Prepared certification fixture: a root of `(X^m - 2)(X + 3)` pinned to
 the nonlinear candidate, so factor selection always succeeds independently
 of the enclosing isolator's emission order. -/
-private structure SelectionInput where
+structure SelectionInput where
   root : Option AlgebraicRoot
   candidate : ZPoly
 
@@ -1575,7 +1575,7 @@ private def exactFactorChecksum (input : SelectionInput) : UInt64 :=
     | none => 1
   | none => 0
 
-private structure CanonicalInput where
+structure CanonicalInput where
   p : ZPoly
   squarefree : HasOnlySimpleRoots p
   rep : RefinedIsolation p
@@ -1612,7 +1612,7 @@ private def exactFactorFamily (count : Nat) : ZPoly :=
     (fun acc prime => acc * DensePoly.ofList [-prime, 0, 1])
     (1 : ZPoly)
 
-private structure ExactInput where
+structure ExactInput where
   root : Option AlgebraicRoot
 
 private instance : Hashable ExactInput where

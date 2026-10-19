@@ -42,7 +42,7 @@ private def factorsText : List (Nat × Nat × PrimeCert) → String
       s!"({a}, {e}, {primeText c})" ++ (if rest.isEmpty then "" else ", " ++ factorsText rest)
 end
 
-private def powersText (fs : List PrimePower) : String :=
+private meta def powersText (fs : List PrimePower) : String :=
   "[" ++ String.intercalate ", " (fs.map fun e =>
     s!"⟨{e.exponent}, {primeText e.cert}⟩") ++ "]"
 

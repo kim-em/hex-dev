@@ -14,6 +14,7 @@ public meta import HexBerlekamp.DegreePattern
 public meta import HexBerlekamp.DistinctDegree
 public meta import HexBerlekamp.Factor
 public meta import HexBerlekamp.Irreducibility
+public meta import HexBerlekamp.DelayedKernel
 
 public section
 

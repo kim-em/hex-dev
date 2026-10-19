@@ -8,6 +8,7 @@ module
 
 public import HexGFqField.Operations
 public import HexBerlekamp.RabinSoundness
+public meta import HexGFqRing.PolynomialQuotient
 
 public section
 
