@@ -1,0 +1,113 @@
+{
+  "before-clean": {
+    "path": "/home/kim/.local/state/hex/issue-10577-root-cache/before-clean",
+    "artifacts": {
+      "HexRealAlgebraic-Roots.lean.txt": "0fb67cb79123c00b6cbda25a171e25801fe3543d3fd5e7148f153e84d3ff692d",
+      "HexRealAlgebraicMathlib-Tests.lean.txt": "5fee29259634288086bf23ab3db329bda5e6c6eb357cf697dac4864e9a129a4d",
+      "conformance-HexRealAlgebraic-Conformance.lean.txt": "60bdfe9b39d3850427ec46545a094774433a2249c50c1e1dbd1be209582856ab",
+      "bench-HexRealAlgebraic-Bench.lean.txt": "c2cc000b28a11ab7f88cd2cd8492bafe03e365e9ca6fd6ed33ad0514cf02540d",
+      "lean-toolchain.txt": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+      "lake-manifest.json.txt": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+      "hexrealalgebraic_bench": "6d0cfa7dd90c78fb869808b725304bb6006e44d7503680b3ea97045577e57ae0",
+      "metadata.json": "cef109c87fbe63cee562fc3c8a50e204e1a04921b6e1b77012cf16f8688ffe6e",
+      "freeze.py.txt": "97c7746ee38e876bc7aec2423061b0e74b0c6e087418fb8ba4cdc4d18feb8b75"
+    }
+  },
+  "after-clean": {
+    "path": "/home/kim/.local/state/hex/issue-10577-root-cache/after-clean",
+    "artifacts": {
+      "HexRealAlgebraic-Roots.lean.txt": "c6a1385d0070b40fe10a8449d636da30fd9e04d8a071a0058a6fae9a5422a307",
+      "HexRealAlgebraicMathlib-Tests.lean.txt": "9c149d4b60c1974fa0f47f43c702773080279e952d21e72630d4723712144a3c",
+      "conformance-HexRealAlgebraic-Conformance.lean.txt": "5b1de7d9d199709c54d3ccfb46e97436b0882bf481f3cb3fcf8ceb7905f3ad63",
+      "bench-HexRealAlgebraic-Bench.lean.txt": "c2cc000b28a11ab7f88cd2cd8492bafe03e365e9ca6fd6ed33ad0514cf02540d",
+      "lean-toolchain.txt": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+      "lake-manifest.json.txt": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+      "hexrealalgebraic_bench": "79bbfde0bee9c017a1b98dfcb814011bb5c84a72143339a1e27b81a53b166c8b",
+      "metadata.json": "b9d4b637595e8773c19e6ef43bcf8e74e03bc7a8533fcb3d582d16195405824a",
+      "freeze.py.txt": "97c7746ee38e876bc7aec2423061b0e74b0c6e087418fb8ba4cdc4d18feb8b75"
+    }
+  },
+  "after-fixed": {
+    "path": "/home/kim/.local/state/hex/issue-10577-root-cache/after-fixed",
+    "artifacts": {
+      "HexRealAlgebraic-Roots.lean.txt": "e48bbbfdba0cc2cccd895a041dbf689850a9bbd336390c72eeeba78639c68af3",
+      "HexRealAlgebraicMathlib-Tests.lean.txt": "9c149d4b60c1974fa0f47f43c702773080279e952d21e72630d4723712144a3c",
+      "conformance-HexRealAlgebraic-Conformance.lean.txt": "4e753819ccd02522ac86335e4feb4244137c4466a6de35af363f5a35a850ffcf",
+      "bench-HexRealAlgebraic-Bench.lean.txt": "c2cc000b28a11ab7f88cd2cd8492bafe03e365e9ca6fd6ed33ad0514cf02540d",
+      "lean-toolchain.txt": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+      "lake-manifest.json.txt": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+      "hexrealalgebraic_bench": "2b6e864e794c8c1cd87718b75d7e024dccadb03e6fb44c1f48370a20dbf7aeab",
+      "metadata.json": "ea8af40a2593415d4d3b7dc71d4dd7d40851edb17af0e97f21cece2993546cec",
+      "freeze.py.txt": "97c7746ee38e876bc7aec2423061b0e74b0c6e087418fb8ba4cdc4d18feb8b75"
+    }
+  },
+  "profile-raw": {
+    "path": "/home/kim/.local/state/hex/issue-10577-root-cache/profile-raw",
+    "artifacts": {
+      "0.stdout": "6bf25bbc88341381df6621e7941ed9134895715f908823d50f9215e8da90483c",
+      "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "1.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "2.stdout": "ea4051d25617d0e024f030bda5851a0455d525691cc814683f878e4ccdb2ed5d",
+      "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "3.stdout": "e35d3608d07cf59f7870878491e6b275a359bb34ea901c9e8086aed6bec6e07a",
+      "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bench-HexRealAlgebraic-Bench.lean.txt": "c2cc000b28a11ab7f88cd2cd8492bafe03e365e9ca6fd6ed33ad0514cf02540d",
+      "bench-HexSturm-Bench.lean.txt": "936f3fb89d603ebb3b384f93bf867b44e07ef8a71780f4fb7aeba7f3feb82498",
+      "HexSturm-Reduced.lean.txt": "8b3ee4261f0c1d9ccbda74f687abfcaa80bc475888f29de58c12101ad2300632",
+      "HexPoly-Euclid-DivGcd.lean.txt": "d56dbe5cf69e9abe58436486e4b3870afe1a07650d62aa2a36af0e528b73f149",
+      "HexRealAlgebraic-Basic.lean.txt": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd",
+      "HexRealAlgebraic-Roots.lean.txt": "c6a1385d0070b40fe10a8449d636da30fd9e04d8a071a0058a6fae9a5422a307",
+      "HexNumberField-Roots.lean.txt": "97a28eaefb7c85221b4f1af7fb2c5d3aa603734118839d5d5651adf97027bfea",
+      "HexNumberField-Convert.lean.txt": "4f311aa22571ee8fc670bfa4710a48d3299a0fd623f1a287ca98b8814d062585",
+      "HexNumberField-Lazy.lean.txt": "363f11c728ccdd25ea10d34bf38e1786507abd15f26e7cef0e838df8f0da4ef2",
+      "HexArith-Nat-Sqrt.lean.txt": "02684a5167ec604cdf432554058be0c4674e926fdb356934e45bf1964c81746e",
+      "4.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+      "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "5.stdout": "773fb1f2e2e076dd506d133fd9f11106c30eb440541d879fe11125a6e75495ce",
+      "5.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "6.stdout": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+      "6.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "7.stdout": "1a89ef5bfd8650933a16c3a00d57ae7efdf4c1b72b0081ba5545f5745282a906",
+      "7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "spawn-anchor.json": "09168afe150c41a8a7cf887ebf2daf819ed52985630c85b1cd5c886a91f8af03",
+      "perf.data": "fe453cd4a5c95683c67d7b1382f469c79e4f3ce694f172d400444a4ea6303c94",
+      "timed-442653.jsonl": "90902525c7217bd0cfd0c22b808af6899782c07019b1af598c274d25658d9ec0",
+      "8.stdout": "1d41148ca5131d76b3bc570d7fd9c868601f272286433c5f7f2b8a1c037cf29a",
+      "8.stderr": "455bbeb91e38da2ad53c3c59a1f875d865da2bd492f118be45aaebac817af0e0",
+      "samply.json.gz": "3f695c9f8b6ec04bb21e187a467e82f9de2bdfdc539f60c32643746b73128013",
+      "9.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "9.stderr": "5eecc03f5f55d77995f7cfb8c323ac8ca3c4743e4ce54d037b5098911eabdae4",
+      "10.stdout": "c1b7fd422acacb73cdc8c9dde6eba5030278a52601ed58d753ef304e7c7df55a",
+      "10.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "perf-samples.txt": "c1b7fd422acacb73cdc8c9dde6eba5030278a52601ed58d753ef304e7c7df55a",
+      "normalized.json.gz": "e7544df6f82898ab49cb5c59042ef5c2e2660242fec90db815e9d9fafe9b3e9d",
+      "11.stdout": "1f8ada9562da4b33011d984913465f13bb1230d8df7cb9f9a78e3910bb7c6130",
+      "11.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "filtered.json.gz": "8a66406140498d8e7c3f515dfd81179b7797dc742b33ed2f592d7427ceb52be2",
+      "diagnostics.json": "87256f41a6662b2be0297cc03a0a44973eed5f4171edf48dba8ca5259fb602c9",
+      "12.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "12.stderr": "2dae40885c85484f74a22bb7ed68ec3e7586c1f1bce68a5fca0bdab1c9164021",
+      "symbols.json": "94b8e022a2ba52466222d16c666d9c9f51a9b98537d30bf204e2560ed9ff20f4",
+      "13.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "13.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "14.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "14.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "HexRealAlgebraic-Roots.c.gz": "be5fd73d2cefafa0bedf29fede6d47dc661cc88ed80ea821f92a9ce95d6cdef5"
+    }
+  },
+  "after-factor": {
+    "path": "/home/kim/.local/state/hex/issue-10577-root-cache/after-factor",
+    "artifacts": {
+      "HexRealAlgebraic-Roots.lean.txt": "55ed820bda27f0f186601a296028f3601048d6fdd19f1dd85e9ac6488d5fb7be",
+      "HexRealAlgebraicMathlib-Tests.lean.txt": "03bc8e4c26ca28b6efc0179e7e171ecb7c74c1087b38aeffe9427bd23d7d06e7",
+      "conformance-HexRealAlgebraic-Conformance.lean.txt": "ccb8af155f873afec13be249b4eb3710c58168a1dab3a2d379ad5f24a7b9bc08",
+      "bench-HexRealAlgebraic-Bench.lean.txt": "c2cc000b28a11ab7f88cd2cd8492bafe03e365e9ca6fd6ed33ad0514cf02540d",
+      "lean-toolchain.txt": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+      "lake-manifest.json.txt": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+      "hexrealalgebraic_bench": "81705ce38356f8a8b237241cf786871b273b9082f86cb172312bd0611481c759",
+      "metadata.json": "919508b11721865f2c0bc1b673176add770caadea4d1b05a65fec1770905bf00",
+      "freeze.py.txt": "97c7746ee38e876bc7aec2423061b0e74b0c6e087418fb8ba4cdc4d18feb8b75"
+    }
+  }
+}

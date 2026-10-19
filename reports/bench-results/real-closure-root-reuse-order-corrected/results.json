@@ -1,0 +1,24 @@
+[
+  {
+    "trial": 0,
+    "degree": 2,
+    "owners": 1,
+    "scenario": "below",
+    "arm": "head",
+    "command": [
+      "taskset",
+      "-c",
+      "26",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "reuse-order",
+      "2",
+      "1",
+      "below",
+      "head",
+      "3"
+    ],
+    "wall_seconds": 0.03997821600023599,
+    "returncode": 1,
+    "output": "uncaught exception: root reuse order: query descriptor rejected\n"
+  }
+]

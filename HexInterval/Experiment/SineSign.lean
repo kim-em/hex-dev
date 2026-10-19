@@ -21,7 +21,7 @@ sine and negation propagators then refine the two new nodes.
 
 `Range` is deliberately tiny: it contains only the regions needed by the
 example.  Neither the scheduler nor this module assigns those regions a real
-meaning.  The Mathlib companion owns that interpretation and all theorem
+meaning.  The theory companion owns that interpretation and all theorem
 schemas.
 -/
 
@@ -32,7 +32,7 @@ open Propagator PayloadArena
 /-! ## Mathlib-free fact domain -/
 
 /-- A finite range lattice used to test arbitrary-function propagation.
-`unit` will be interpreted as `[0, 1]` by the Mathlib companion. -/
+`unit` will be interpreted as `[0, 1]` by the theory companion. -/
 inductive Range where
   | all
   | unit

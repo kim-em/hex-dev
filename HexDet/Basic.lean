@@ -20,7 +20,7 @@ operations that algorithm needs, and reports which arms were attempted.
 
 A recipe is executable configuration. The determinant equations for each arm,
 and the law class an installed recipe must satisfy, live in the Mathlib
-companion `HexDetMathlib`; a recipe by itself proves nothing.
+companion `HexDetTheory`; a recipe by itself proves nothing.
 
 Every recipe runs the mandatory small arm at `n ≤ 2` first. Above that, this
 version ships two algorithms: fraction-free Bareiss from `HexBareiss` on the
@@ -206,7 +206,7 @@ recipe selects, recording the route in the branch that returns the value. -/
   | none => { value := policy.eval A, route := .single policy.arm }
 
 /-- The recipe a carrier installs as its default. This is executable
-configuration; `HexDetMathlib.LawfulDetOps` carries its correctness. -/
+configuration; `HexDetTheory.LawfulDetOps` carries its correctness. -/
 class DetOps (R : Type u) [Lean.Grind.CommRing R] where
   /-- The installed recipe. -/
   policy : Policy R

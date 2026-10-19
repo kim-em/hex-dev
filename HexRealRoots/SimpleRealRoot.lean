@@ -37,7 +37,7 @@ quotient. With both widths below `sep(p)/4`, an overlap places a point within
 isolations of the *same* root both contain it, so they overlap. That argument
 is semantic, so the quotient is taken with `Quot` (which needs no equivalence
 proof) and this Mathlib-free layer provides no `DecidableEq (SimpleRealRoot p)`.
-The companion `HexRealRootsMathlib` proves that `Overlaps` restricted to
+The companion `HexRealRootsTheory` proves that `Overlaps` restricted to
 `RefinedRealIsolation` is an equivalence whose classes are exactly the real
 roots, and hence that `sameRoot` decides equality in the quotient. Code here
 compares roots with `sameRoot` directly.

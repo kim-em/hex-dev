@@ -9,7 +9,7 @@ module
 public import HexRCF.CarrierCheck
 public import HexRCF.Language
 public import HexRCF.SturmReplay
-public import HexRealRootsMathlib.SquareFreeCore
+public import HexRealRootsTheory.SquareFreeCore
 
 public section
 
@@ -23,7 +23,7 @@ exactly the roots of the sentence's nonconstant atom polynomials.
 
 namespace Hex.RCF
 
-open HexRealRootsMathlib Polynomial
+open HexRealRootsTheory Polynomial
 
 namespace CarrierCert
 
@@ -67,7 +67,7 @@ theorem isRoot_factor_iff {q p r t : ZPoly} {k d : Int}
           (Polynomial.C (d : ℝ) * derivative (toPolyℝ q)) := by ring
       _ = Polynomial.C ((d : ℝ)⁻¹) * (toPolyℝ r * toPolyℝ t) := by rw [hderiv]
       _ = toPolyℝ r * (Polynomial.C ((d : ℝ)⁻¹) * toPolyℝ t) := by ring
-  have hgen := HexRealRootsMathlib.isRoot_left_iff_of_mul_of_dvd_derivative
+  have hgen := HexRealRootsTheory.isRoot_left_iff_of_mul_of_dvd_derivative
     hq0ℝ hqcr hrd x
   have hscale :
       (Polynomial.C (k : ℝ) * toPolyℝ p).IsRoot x ↔ (toPolyℝ p).IsRoot x := by

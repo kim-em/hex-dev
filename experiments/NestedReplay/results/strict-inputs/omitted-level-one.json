@@ -1,0 +1,1 @@
+{"command": ["taskset", "-c", "19", "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-replay-experiment/experiments/NestedReplay/.lake/build/bin/nestedReplay", "--omit-level-one"], "exit": 17}

@@ -104,7 +104,7 @@ reimplementing the geometry.
 
 ```lean
 /-- Strong Pellet witness accepted by the exact or outward-rounded Graeffe
-    route. Implies (Mathlib companion): exactly `k` roots, with multiplicity,
+    route. Implies (theory companion): exactly `k` roots, with multiplicity,
     in the base, doubled, and quadrupled discs, and none on their boundaries. -/
 def witness (p : ZPoly) (s : DyadicSquare) (k : Nat) : Prop := …
 instance : Decidable (witness p s k) := …
@@ -136,13 +136,20 @@ exact cached comparison first below precision 32 and soft-first above it. A
 soft success implies the ordinary `witness` proposition. Failure at every tier
 invokes the exact cached-shift test and has no semantic meaning.
 
+The subdivision discard `rootFree` keeps an exact fallback. Before constructing
+the rounded Taylor array, its soft filter checks the constant-coefficient ball.
+If that ball contains zero, it skips Graeffe iteration: the coefficient
+uncertainty permits a root at the centre, so this route cannot certify exclusion.
+Other precision tiers and the exact fallback remain available. Smaller
+polynomials continue to use the exact check directly.
+
 ## Newton-Kantorovich atom witnesses
 
 Atoms admit a second certificate form, carried alongside the Pellet
 form as a deliberate experiment: the two routes are implemented,
 conformance-checked, and benchmarked side by side, and the choice of
 a single route (if any) is deferred until the measurements and the
-Mathlib companion's soundness development are in. The two forms have
+Theory companion's soundness development are in. The two forms have
 complementary strengths. The Pellet form counts roots with
 multiplicity (it is the only cluster certificate) and its soundness
 rests on Rouché's theorem on circles, the heaviest analytic
@@ -213,7 +220,7 @@ data is:
 
       `0 < normSq c₁  ∧  y + z₁·r + z₂·r²/2 < r  ∧  z₁ + z₂·r < 1`.
 
-    Implies (Mathlib companion): `p` has exactly one root in the
+    Implies (theory companion): `p` has exactly one root in the
     closed square, it is simple, and it lies in the open square. -/
 def nkWitness (p : ZPoly) (s : DyadicSquare) : Prop := …
 instance : Decidable (nkWitness p s) := …
@@ -346,7 +353,7 @@ def DyadicComplexBall.ofRat (q : Rat) (prec : Int) : DyadicComplexBall
 
 /-- `p` has only simple complex roots. Decided by casting `p` and `p'`
     to `DensePoly Rat` and testing whether HexPoly's Euclidean gcd is
-    constant. The Mathlib companion proves equivalence with
+    constant. The theory companion proves equivalence with
     `Squarefree (toPolynomial p)`. -/
 def HasOnlySimpleRoots (p : ZPoly) : Prop := …
 instance : Decidable (HasOnlySimpleRoots p) := …
@@ -543,7 +550,7 @@ the final disjointness check returns to the unchanged global path. The NK-only
 strategy retains its direct early emission when every current attempt is
 already a target-ready atom with pairwise-disjoint discs. At the
 normalized depth, every component is
-root-bearing; the Mathlib companion proves that all three strategies
+root-bearing; the theory companion proves that all three strategies
 certify it as an atom and that the atom discs are pairwise disjoint.
 Thus `ZPoly.isolateComplexRoots?` returns `some` for every nonzero squarefree input.
 `stopSlack` leaves three further rounds for the general driver and
@@ -572,7 +579,7 @@ when it is exactly one target-ready atom. If the pass exhausts its budget or
 splits into an unsuitable worklist, refinement restarts from the original atom
 under the globally reglued loop. Even a one-square start can subdivide into
 sibling survivor lineages, including rootless halos, so this global fallback
-is the completeness boundary. The Mathlib companion proves that the default
+is the completeness boundary. The theory companion proves that the default
 mixed strategy reaches the emission condition for every already refined
 isolation, using local simplicity of the represented root; repeated roots
 elsewhere in the ambient polynomial are permitted.
@@ -658,9 +665,9 @@ bound (logarithms by repeated squaring). No discriminant is computed
 at runtime; only the constant lower bound for the radical's discriminant is
 used. Thus `mahlerPrec` is meaningful for every nonzero polynomial, including
 a polynomial with repeated roots: multiplicities disappear in the integral
-radical while its distinct roots are unchanged. The Mathlib companion proves
+radical while its distinct roots are unchanged. The theory companion proves
 correctness; see
-[hex-roots-mathlib.md](../../HexRootsMathlib/SPEC/hex-roots-mathlib.md).
+[hex-roots-theory.md](../../HexRootsTheory/SPEC/hex-roots-theory.md).
 
 ```lean
 def separationDepth (p : ZPoly) : Nat :=
@@ -746,7 +753,7 @@ strictly smaller than `sep(p)/4`, two intersecting discs contain
 points within `sep(p)` of both roots, forcing the roots to coincide.
 That argument is semantic, so this library takes the quotient with
 `Quot` (which needs no equivalence proof) and provides no
-`DecidableEq (SimpleRoot p)`. The Mathlib companion proves that
+`DecidableEq (SimpleRoot p)`. The theory companion proves that
 `Intersects` restricted to `RefinedIsolation` is an equivalence
 relation whose classes are exactly the simple roots, and hence that
 `sameRoot` decides equality in the quotient. Code in the Mathlib-free
@@ -922,21 +929,18 @@ oracle for the adversarial corpus; it is not a Phase-4 performance comparator
 and is not wired into merge-facing CI. SageMath is not used (per
 SPEC/testing.md's Sage policy).
 
-For Phase 4 python-flint is classified `informational` (per
-[SPEC/benchmarking.md §Comparator classification](../../SPEC/benchmarking.md#comparator-classification-gating-vs-informational)):
+For Phase 4 python-flint is an orientation comparator (per
+[SPEC/benchmarking.md §External comparators](../../SPEC/benchmarking.md#external-comparators)):
 python-flint `fmpz_poly.complex_roots` is a multiprecision ball engine
 computing approximate root inclusions, structurally different from this
 library's decidable exact-integer Pellet / Newton-Kantorovich certificates,
-so its ratios orient but do not gate, and the yardstick is the "Time budgets"
-targets above rather than a constant-factor goal. It is scoped to the
+so its ratios are for orientation only, and the yardstick is the "Time budgets"
+targets below rather than a constant-factor goal. It is scoped to the
 whole-polynomial `runIsolate` and `runIsolateAll` surfaces. Separation-bound
 calculation (`runMahlerPrec`), Taylor shift, witness checks, Newton steps,
 component refinement/certification, refined-atom operations, and the individual
-strategy routes are declared
-**no-comparable-surface-in-named-comparator**: FLINT uses analogous kernels
-internally but does not expose them as callable performance surfaces. The
-classification and rationale are mirrored in
-`libraries.yml: HexRoots.phase4.comparators`.
+strategy routes have no external comparator: FLINT uses analogous kernels
+internally but does not expose them as callable performance surfaces.
 
 ## Complexity contract
 
@@ -992,8 +996,8 @@ https://github.com/kim-em/hex-dev/issues/8751
 records the Graeffe, soft-Pellet, Taylor-reuse, and local-finisher ratchet. Any
 later improvement re-measures the table and tightens the ceilings again rather
 than accumulating slack.
-MPSolve remains a local correctness oracle. The declared informational
-performance comparator is python-flint, whose measured ratios are recorded in
+MPSolve remains a local correctness oracle. The performance comparator is
+python-flint, whose measured ratios are recorded in
 [`reports/hex-roots-performance.md`](../../reports/hex-roots-performance.md).
 
 ## References
@@ -1019,7 +1023,7 @@ performance comparator is python-flint, whose measured ratios are recorded in
 - Mehta, Macbeth. Newton-Kantorovich over Mathlib, in
   https://github.com/xgenereux/certifying-lmfdb-data
   (`CertifyingLmfdbData/Polynomial/NewtonKantorovich.lean`,
-  Apache 2.0). The formalisation the Mathlib companion ports for
+  Apache 2.0). The formalisation the theory companion ports for
   the `nkWitness` soundness theorem.
 
 ### Conjugated certificates

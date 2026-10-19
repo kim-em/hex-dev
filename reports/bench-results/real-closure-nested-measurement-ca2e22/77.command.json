@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "/home/kim/.codex/tasks/hex-10378/nested-measurement-capture-ca2e22/hexrealclosure_nested_normalization",
+    "_child",
+    "--bench",
+    "Hex.RealClosure.NestedNormalization.Measure.Depth2.clean8",
+    "--fixed",
+    "--min-total-nanos",
+    "500000000"
+  ],
+  "stdout": "77.stdout",
+  "stderr": "77.stderr",
+  "exit_code": 0,
+  "incomplete": false,
+  "elapsed_ns": 1466964688
+}

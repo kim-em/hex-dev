@@ -229,7 +229,7 @@ setup_fixed_benchmark runPackedModulusChecksum where {
 }
 
 /-
-Mode 1 cost model. `prepPacked n` is `1 + x + ... + x^n`. Division by `x + 1`
+Two-sided cost model. `prepPacked n` is `1 + x + ... + x^n`. Division by `x + 1`
 therefore has the alternating quotient with exactly `(n + 1) / 2` nonzero
 terms. Each term causes one single-word leading-term elimination. The model adds
 field packaging and representative projection as two fixed abstract units.
@@ -247,7 +247,7 @@ setup_benchmark runPacked1 n => 2 + packed1Steps n
   }
 
 /-
-Mode 1. For the committed `GFq 2 1` entry the selected modulus is linear, so
+Two-sided cost model. For the committed `GFq 2 1` entry the selected modulus is linear, so
 reduction of an input representative scans its `n` coefficients and folds them
 modulo `x + 1`; `repr` is a projection of the stored canonical representative.
 -/
@@ -264,7 +264,7 @@ setup_benchmark runGeneric21 n => n
   }
 
 /-
-Mode 1. The shared checksum runs the public packed and generic
+Two-sided cost model. The shared checksum runs the public packed and generic
 constructor/projection surfaces on the same size-indexed binary family. The
 packed input saturates at degree 63, while on the registered `n ≥ 2048` ladder
 the generic degree-`n` representative scan dominates that fixed packed work.
@@ -282,7 +282,7 @@ setup_benchmark runShared21 n => n
   }
 
 /-
-Mode 1. The compiled dense long-division loop makes at most `n` eliminations.
+Two-sided cost model. The compiled dense long-division loop makes at most `n` eliminations.
 Its degree scan only moves downward, for `O(n)` total scanning, and each
 elimination touches the fixed nine coefficients of the degree-8 modulus.
 Projection and its checksum touch at most eight coefficients, so the model is
@@ -301,7 +301,7 @@ setup_benchmark runGeneric28 n => n
   }
 
 /-
-Mode 1 cost model. `prepPacked8 n` is the degree-eight modulus times a dense
+Two-sided cost model. `prepPacked8 n` is the degree-eight modulus times a dense
 quotient, plus a varying polynomial of degree less than 8. Uniqueness of
 division gives exactly `n - 7` single-word leading-term eliminations; the low
 remainder does not change the quotient. The model adds packaging and projection
@@ -320,7 +320,7 @@ setup_benchmark runPacked8 n => 2 + packed8Steps n
   }
 
 /-
-Mode 1. With the degree-6 modulus and base prime 13 fixed, the compiled dense
+Two-sided cost model. With the degree-6 modulus and base prime 13 fixed, the compiled dense
 long-division loop makes `O(n)` eliminations, each touching seven fixed-width
 residue coefficients. Projection and checksum are bounded by the fixed field
 degree, so the model is `n` in the input representative length.
@@ -338,7 +338,7 @@ setup_benchmark runGeneric136 n => n
   }
 
 /-
-Mode 1. `GFqC` resolves the same fixed `(13, 6)` entry at elaboration time and
+Two-sided cost model. `GFqC` resolves the same fixed `(13, 6)` entry at elaboration time and
 then executes the same constructor/projection path as `runGeneric136`, so the
 same independently derived linear model applies.
 -/

@@ -1,0 +1,32 @@
+[
+  {
+    "label": "dag",
+    "command": "python3 scripts/check_dag.py > /home/kim/.codex/tasks/hex-10358/native-specialize-source-dag-oct11.log 2>&1",
+    "log": "/home/kim/.codex/tasks/hex-10358/native-specialize-source-dag-oct11.log",
+    "observed_exit_code": 0
+  },
+  {
+    "label": "admissions",
+    "command": "python3 scripts/ci/check_named_admissions.py > /home/kim/.codex/tasks/hex-10358/native-specialize-source-admissions-oct11.log 2>&1",
+    "log": "/home/kim/.codex/tasks/hex-10358/native-specialize-source-admissions-oct11.log",
+    "observed_exit_code": 0
+  },
+  {
+    "label": "copyright",
+    "command": "python3 scripts/check_copyright_headers.py > /home/kim/.codex/tasks/hex-10358/native-specialize-source-copyright-oct11.log 2>&1",
+    "log": "/home/kim/.codex/tasks/hex-10358/native-specialize-source-copyright-oct11.log",
+    "observed_exit_code": 0
+  },
+  {
+    "label": "lines",
+    "command": "python3 scripts/check_file_line_counts.py > /home/kim/.codex/tasks/hex-10358/native-specialize-source-lines-oct11.log 2>&1",
+    "log": "/home/kim/.codex/tasks/hex-10358/native-specialize-source-lines-oct11.log",
+    "observed_exit_code": 0
+  },
+  {
+    "label": "manual-split",
+    "command": "python3 scripts/release/check_manual_split.py > /home/kim/.codex/tasks/hex-10358/native-specialize-source-manual-split-oct11.log 2>&1",
+    "log": "/home/kim/.codex/tasks/hex-10358/native-specialize-source-manual-split-oct11.log",
+    "observed_exit_code": 0
+  }
+]

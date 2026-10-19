@@ -5,13 +5,13 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexRealClosureMathlib.TowerRoots
+public import HexRealClosureTheory.TowerRoots
 
 public section
 
 namespace RealClosureConsumer
 
-open Hex Hex.RealClosure Hex.RealClosure.Tower HexPolyMathlib.Interpret
+open Hex Hex.RealClosure Hex.RealClosure.Tower HexPolyTheory.Interpret
 
 variable {registry : BaseContext.Registry} {parent : Context registry} {K : Type u}
 variable [Field K] [LinearOrder K] [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K]

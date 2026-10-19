@@ -1,0 +1,24 @@
+{
+  "trial": 0,
+  "degree": 2,
+  "owners": 2,
+  "arm": "baseline",
+  "command": [
+    "taskset",
+    "-c",
+    "9",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-gather-baseline/.lake/build/bin/hexrealclosure_bench",
+    "gather-reuse-timing",
+    "2",
+    "2",
+    "3"
+  ],
+  "wall_seconds": 0.042508459999226034,
+  "load_after": [
+    9.20458984375,
+    21.94384765625,
+    15.15185546875
+  ],
+  "returncode": 1,
+  "output": "uncaught exception: gather timing: unexpected target root count\n"
+}

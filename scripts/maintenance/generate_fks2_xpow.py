@@ -118,7 +118,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexIntervalMathlib.Experiment.PntFks2Xpow
+public import HexIntervalTheory.Experiment.PntFks2Xpow
 {imports}
 
 @[expose] public section
@@ -196,7 +196,7 @@ end
 
 
 def main() -> None:
-    output = ROOT / "HexIntervalMathlib" / "Experiment"
+    output = ROOT / "HexIntervalTheory" / "Experiment"
     for index, (start, count) in enumerate(BANDS):
         path = output / f"PntFks2XpowProof{index:02d}.lean"
         path.write_text(render(index, start, count))

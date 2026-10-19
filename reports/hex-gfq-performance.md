@@ -5,9 +5,7 @@ claim policy. All seven operation registrations use mode 1. Two additional
 fixed registrations are expected-hash anchors for the selected Conway moduli,
 not performance claims.
 
-The requested constructor/projection evidence is complete, but `libraries.yml`
-remains at `done_through: 3`: the Phase-4 dependency gate cannot advance HexGFq
-while its direct dependency HexGF2 remains at Phase 3.
+The constructor/projection evidence is complete.
 
 ## Bench Targets
 
@@ -242,6 +240,4 @@ sensitivity +/-5 ms: passed; confidence: passed
 
 ## Concerns
 
-No HexGFq performance-evidence concern remains. Promotion is intentionally
-withheld solely by the dependency-coupled Phase-4 gate: HexGF2 remains at
-Phase 3.
+No HexGFq performance-evidence concern remains.

@@ -6,7 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RealCoefficients.Specialize
-public import HexPolyMathlib.Interpret
+public import HexPolyTheory.Interpret
 
 public section
 
@@ -14,9 +14,9 @@ public section
 
 namespace Hex.RCF.RealCoefficients.Specialize
 
-open Hex.RealFormula HexPolyMathlib.Interpret
+open Hex.RealFormula HexPolyTheory.Interpret
 
-local instance : CommRing (DensePoly RealAlgebraicNumber) := HexPolyMathlib.denseCommRing
+local instance : CommRing (DensePoly RealAlgebraicNumber) := HexPolyTheory.denseCommRing
 
 theorem toReal_eq_zero (a : RealAlgebraicNumber) :
     a.toReal = 0 ↔ a = 0 := by
@@ -29,7 +29,7 @@ theorem evaluate_interpret (x : ℝ) (p : DensePoly RealAlgebraicNumber) :
     evaluate x p =
       (interpret RealAlgebraicNumber.toReal toReal_eq_zero p).eval x := by
   have hmap : interpret RealAlgebraicNumber.toReal toReal_eq_zero p =
-      (HexPolyMathlib.toPolynomial p).map RealAlgebraicNumber.toRealHom := by
+      (HexPolyTheory.toPolynomial p).map RealAlgebraicNumber.toRealHom := by
     ext i
     simp [RealAlgebraicNumber.toRealHom]
   rw [hmap, Polynomial.eval_map]
@@ -40,7 +40,7 @@ The empty product is one. Repeated factors remain: this is input to a later
 checked squarefree preparation, not itself an isolation head. -/
 @[expose] def product (values : Fin n → RealAlgebraicNumber)
     (formula : QF (n + 1)) : DensePoly RealAlgebraicNumber :=
-  ((formula.polys.map (polynomial values)).filter (fun p => !p.isZero)).prod
+  ((prepare values formula).filter (fun p => !p.isZero)).prod
 
 private theorem evaluate_prod_zero (x : ℝ)
     (ps : List (DensePoly RealAlgebraicNumber)) (p : DensePoly RealAlgebraicNumber)

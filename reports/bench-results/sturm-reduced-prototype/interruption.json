@@ -1,0 +1,7 @@
+{
+  "reason": "All 32 paired arms completed. Stop the superseded declared-ladder diagnostic: this source still used quotient-producing %, so it does not exercise the intended remainder-only worker. A corrected implementation requires new source-scoped measurements. All completed pair exports and partial scientific log retained.",
+  "terminated_native_pids": [
+    1484317,
+    1485178
+  ]
+}

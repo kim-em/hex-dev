@@ -35,7 +35,7 @@ typed classical decline, and classical-search measurements.
 `checkIrreducibleCertLinear` replays the existing multi-prime certificate
 using incremental Rabin pow chains. Its metadata helpers, degree-obstruction
 checks, and `isGoodPrime` have exposed public bodies for downstream
-reduction. The Mathlib bridge combines this checker with the primality,
+reduction. The theory companion combines this checker with the primality,
 primitive-content and positive-degree checks, and supplies theorem-backed
 literal quotation under ordinary public imports. Certificate replay checks
 recorded data without running certificate search or integer factorization.
@@ -243,7 +243,7 @@ chosen by `precisionForCoeffBound`. `DirectLiftFacts` states:
 
 The ordinary recovery precision satisfies `2 B < p^k`, where `B` is
 the coefficient bound. The public value is proved from Mignotte's
-bound in the Mathlib companion.
+bound in the theory companion.
 
 ## Classical recombination
 
@@ -429,7 +429,7 @@ inside the check is the whole normalization. There is no scaling and no
 content division.
 
 The field theory that turns a successful check into irreducibility is
-the multiquadratic tower theorem, in `hex-berlekamp-zassenhaus-mathlib`.
+the multiquadratic tower theorem, in `hex-berlekamp-zassenhaus-theory`.
 
 ## Correctness
 
@@ -440,7 +440,7 @@ obstruction never rejects a genuine divisor, and that a leaf which
 skips an obstructed candidate's exact division returns what the
 unfiltered leaf returned.
 
-`hex-berlekamp-zassenhaus-mathlib` proves:
+`hex-berlekamp-zassenhaus-theory` proves:
 
 - semantic validity of the selected modular factorization;
 - direct-coordinate Hensel correspondence and recovery;
@@ -460,7 +460,7 @@ unfiltered leaf returned.
 
 The ordinary umbrella exposes the supported factorization and tactic
 surface. `HexBerlekampZassenhaus.All` and
-`HexBerlekampZassenhausMathlib.All` expose the complete development
+`HexBerlekampZassenhausTheory.All` expose the complete development
 module collections.
 
 ## Verification and performance
@@ -481,3 +481,16 @@ toolchain, corpus hash, host, CPU placement, repetitions, warmup,
 timeout, and comparator revisions. Timeout rows and the long tail
 remain visible. Unchanged external observations are retained when
 their host, inputs, and protocol are unchanged.
+
+**Performance target.** Against the verified Isabelle Berlekamp–Zassenhaus
+factorizer (AFP `Berlekamp_Zassenhaus`; Haskell extraction of
+`factor_int_poly` via `Factorization_External_Interface`), Lean stays within a
+small constant factor on small and medium-`r` inputs handled by the classical
+tier, and strictly beats it on the large-`r` tail handled by lattice
+recombination. Isabelle's exhaustive recombination is asymptotically weaker
+than the BHKS lattice recombination used here, so the large-`r`
+target is to show that advantage in wall-clock time, not merely to match the
+reference. The evidence spans the dispatch boundary, including the last
+classical Swinnerton-Dyer rung and the first lattice-backed one. Where the
+Isabelle reference times out at the declared cap, record solved-under-cap
+versus timeout rather than a finite ratio.

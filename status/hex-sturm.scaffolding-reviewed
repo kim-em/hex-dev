@@ -1,0 +1,22 @@
+Phase-2 scaffolding attestation for HexSturm.
+
+Independent reviewer: Claude Opus through the second-opinion skill, source
+basis 4f44b806075ae95ad1b3f05c55e6c1ad5bd3f423, against the current owning SPEC
+and PLAN/Phase2.md. The review checked declaration coverage, data-level
+placeholders, algorithm shape, dependency boundaries, instances, CI reachability
+and banned proof mechanisms. Its complete findings are retained in
+status/reviews/issue-10577-opus.md.
+
+Prepared bindings, sign normalization, domain guards, query-one reuse, cached replay and literal transport have genuine bodies with the specified operation order.
+
+No unresolved Phase-2 blocker. This token attests scaffolding only; it does not
+attest benchmark budgets, Phase 4, package publication or distribution readiness.
+
+Independent follow-up at 6d78bf3e1fb1aa23129df83f7888979dd5afeb6d checks
+declaration coverage and implementation shape. Performance findings remain
+tracked by #10577, with their evidence and required actions in
+status/reviews/issue-10577-opus-followup.md. No separate decomposition issues
+are created under this assignment.
+
+The ceiling and count rewrite is independently checked in
+status/reviews/issue-10577-opus-final.md and issue-10577-opus-confirmation.md.

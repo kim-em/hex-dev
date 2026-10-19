@@ -1,0 +1,48 @@
+from pathlib import Path
+import hashlib,json,os,platform,subprocess,sys,time,shutil
+sys.path.insert(0, 'scripts/bench')
+from cpu_lease import cpu_lease
+root=Path.cwd()
+out=root/'reports/bench-results/sturm-short-chain-degree'
+exe=root/'.lake/build/bin/hexsturm_bench'
+cpu,lease=cpu_lease()
+os.sched_setaffinity(0,{cpu})
+suffixes=['Domain','Query','Integer','Prepared','Count','PreparedCount','Certificate','PreparedCertificate','CountCertificate','Replay','CachedReplay','Clear','Embed']
+names=['Hex.SturmFrontendBench.runSparse'+name for name in suffixes]
+paths=['bench/HexSturm/Frontend.lean','bench/HexSturm/Bench.lean','HexSturm/Basic.lean','HexRealRoots/SignedRemainderChain.lean','HexPoly/PseudoDiv.lean','reports/bench-results/sturm-short-chain-degree/derivation.md']
+def digest(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+command=[str(exe),'run',*names,'--export-file',str(out/'results.json')]
+record={'source_commit':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),'dirty_before_outputs':bool(subprocess.check_output(['git','status','--porcelain'],text=True)),'host':platform.node(),'platform':platform.platform(),'cpu':cpu,'load_before':os.getloadavg(),'command':command,'schedule':'Compiled four-rung ladder and four fixed trial-major outer trials. No scientific setting override. Paired comparisons have one trial per adjacent arm, four alternating AB/BA blocks.','source_sha256':{p:digest(root/p) for p in paths},'executable_sha256':digest(exe),'lean_bench_commit':subprocess.check_output(['git','-C','.lake/packages/lean-bench','rev-parse','HEAD'],text=True).strip(),'lake_version':subprocess.check_output(['lake','--version'],text=True).strip()}
+for p in paths:
+    if p.endswith('.lean'):(out/(p.replace('/','-')+'.txt')).write_bytes((root/p).read_bytes())
+persistent=Path('/home/kim/.local/state/hex/issue-10577-profiles/binaries')
+persistent.mkdir(parents=True,exist_ok=True)
+binary=persistent/('hexsturm_bench-'+record['executable_sha256'])
+if not binary.exists():shutil.copyfile(exe,binary)
+record['retained_executable']=str(binary)
+start=time.monotonic()
+(out/'metadata.json').write_text(json.dumps(record,indent=2)+'\n')
+with (out/'run.log').open('w') as log:
+    result=subprocess.run(command,stdout=log,stderr=subprocess.STDOUT)
+record['exit_code']=result.returncode
+record['pairs']=[]
+if result.returncode==0:
+    for block in range(4):
+        order=['Query','Integer'] if block%2==0 else ['Integer','Query']
+        for arm in order:
+            export=out/f'pair-{block}-{arm}.json'
+            cmd=[str(exe),'run','Hex.SturmFrontendBench.runSparse'+arm,'--outer-trials','1','--export-file',str(export)]
+            before=time.monotonic()
+            with (out/f'pair-{block}-{arm}.log').open('w') as log:
+                paired=subprocess.run(cmd,stdout=log,stderr=subprocess.STDOUT)
+            record['pairs'].append({'block':block,'order':order,'arm':arm,'command':cmd,'exit_code':paired.returncode,'elapsed_seconds':time.monotonic()-before})
+            (out/'metadata.json').write_text(json.dumps(record,indent=2)+'\n')
+            if paired.returncode!=0:raise RuntimeError('paired comparator failed; evidence retained')
+record['elapsed_seconds']=time.monotonic()-start
+record['load_after']=os.getloadavg()
+record['source_sha256_after']={p:digest(root/p) for p in paths}
+record['executable_sha256_after']=digest(exe)
+record['tracked_sources_unchanged']=record['source_sha256']==record['source_sha256_after'] and record['executable_sha256']==record['executable_sha256_after']
+record['generated_output_scope']='Generated evidence makes the harness git_dirty flag true; recorded tracked sources and executable are independently checked.'
+(out/'metadata.json').write_text(json.dumps(record,indent=2)+'\n')
+print(json.dumps({'exit_code':record['exit_code'],'cpu':cpu,'elapsed_seconds':record['elapsed_seconds'],'tracked_sources_unchanged':record['tracked_sources_unchanged']}))

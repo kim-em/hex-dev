@@ -1,0 +1,74 @@
+import HexRCF.RealCoefficients.CellAlignment
+namespace Hex.RCF.RealCoefficients.RequestedSector
+open Hex Hex.RealClosure Hex.RealClosure.Tower
+variable {registry : BaseContext.Registry} {parent : Context registry}
+
+def valueOf (sample : Tower.Sample parent) (input : Conversion parent)
+    (same : sample.input = input) : input.context.Value :=
+  cast (congrArg (fun c : Conversion parent => c.context.Value) same) sample.value
+
+theorem value_eq (sample : Tower.Sample parent) (input : Conversion parent)
+    (same : sample.input = input) (original : Model parent ℝ)
+    (target : Conversion.Model input original)
+    (realization : Conversion.Model sample.input original) (aligned : HEq realization target) :
+    target.target.value (valueOf sample input same) = realization.target.value sample.value := by
+  subst input
+  have equal : realization = target := eq_of_heq aligned
+  subst realization
+  rfl
+
+def point? {polynomials : List parent.Poly} (family : Tower.Sample.Partition parent polynomials)
+    (lower upper : Hex.Endpoint family.collection.input.context.Value) :
+    Option family.collection.input.context.Value :=
+  match returned : family.sectorBetween? lower upper with
+  | none => none
+  | some sample => some (valueOf sample family.collection.input
+      (family.sectors_input (family.sectorBetween?_mem lower upper sample returned)))
+
+theorem point_inside {polynomials : List parent.Poly}
+    (family : Tower.Sample.Partition parent polynomials) (original : Model parent ℝ)
+    (model : Collection.Model family.collection original)
+    (lower upper : Hex.Endpoint family.collection.input.context.Value)
+    (point : family.collection.input.context.Value) (returned : point? family lower upper = some point) :
+    (Tower.Cell.sector lower upper).Mem model.input.target (model.input.target.value point) := by
+  unfold point? at returned
+  split at returned
+  · contradiction
+  · rename_i sample found
+    simp only [Option.some.injEq] at returned
+    subst point
+    obtain ⟨realization, aligned, checked, interval⟩ :=
+      family.sectorBetween?_correct original model lower upper sample found
+    rw [value_eq sample family.collection.input _ original model.input realization aligned]
+    exact (interval _).mp ((Tower.Cell.contains_correct realization.target _ _).mp checked)
+
+theorem point_exists {polynomials : List parent.Poly}
+    (family : Tower.Sample.Partition parent polynomials) (original : Model parent ℝ)
+    (model : Collection.Model family.collection original)
+    (lower upper : Hex.Endpoint family.collection.input.context.Value)
+    (adjacent : Tower.Cell.sector lower upper ∈ family.cells) :
+    ∃ point, point? family lower upper = some point := by
+  obtain ⟨sample, returned⟩ := family.sectorBetween?_success original model
+    lower upper lower upper adjacent rfl rfl
+  unfold point?
+  split
+  · rename_i missing
+    rw [returned] at missing
+    contradiction
+  · exact ⟨_, rfl⟩
+
+theorem point_witness {polynomials : List parent.Poly}
+    (family : Tower.Sample.Partition parent polynomials) (original : Model parent ℝ)
+    (model : Collection.Model family.collection original)
+    (lower upper : Hex.Endpoint family.collection.input.context.Value)
+    (adjacent : Tower.Cell.sector lower upper ∈ family.cells) :
+    ∃ point, point? family lower upper = some point ∧
+      (Tower.Cell.sector lower upper).Mem model.input.target (model.input.target.value point) := by
+  obtain ⟨point, returned⟩ := point_exists family original model lower upper adjacent
+  exact ⟨point, returned, point_inside family original model lower upper point returned⟩
+
+#print axioms value_eq
+#print axioms point_inside
+#print axioms point_exists
+#print axioms point_witness
+end Hex.RCF.RealCoefficients.RequestedSector

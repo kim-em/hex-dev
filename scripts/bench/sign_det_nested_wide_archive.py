@@ -1,0 +1,175 @@
+"""Validate the frozen larger-range nested-table collection."""
+from pathlib import Path
+import ast
+import gzip
+import hashlib
+import json
+import math
+import os
+import statistics
+import subprocess
+import tempfile
+import types
+
+
+ROOT = Path(__file__).resolve().parents[2]
+
+
+def validate(directory, *, reconstruct=False):
+    directory = Path(directory).resolve()
+    manifest = json.loads((directory / "archive.json").read_text())
+    digest = lambda data: hashlib.sha256(data).hexdigest()
+    if manifest["unchanged_reruns"] != 0:
+        raise ValueError("wrong wide collection rerun count")
+    present = {str(p.relative_to(directory)) for p in directory.rglob("*") if p.is_file()}
+    listed = {r["file"] for r in manifest["files"].values()}
+    if present != listed | {"archive.json", "whole-source.patch", "collector.py",
+                             "sign_det_nested_signs.py", "source-commit"}:
+        raise ValueError("missing or unlisted archive file")
+    raw = {}
+    for name, record in manifest["files"].items():
+        path = Path(record["file"])
+        if path.is_absolute() or ".." in path.parts:
+            raise ValueError("archive path escapes directory")
+        stored = (directory / path).read_bytes()
+        value = gzip.decompress(stored) if path.suffix == ".gz" else stored
+        if digest(stored) != record["stored_sha256"] or digest(value) != record["sha256"]:
+            raise ValueError("archive bytes changed: " + name)
+        raw[name] = value
+    meta = json.loads(raw["metadata.json"])
+    if (meta["kind"] != "nested-table-timing" or meta["affinity"] != [meta["cpu"]] or
+            meta["state"] != "complete" or meta["scientific_samples"] != 120 or
+            meta["source_unchanged"] is not True or meta["git_status_after"] != "" or
+            meta["revision"] != manifest["source_revision"] or
+            meta["revision_after"] != meta["revision"] or
+            meta["source_sha256_after"] != meta["source_sha256"] or
+            meta["binary_sha256_after"] != meta["binary_sha256"] or
+            meta["harness_binding_after"] != meta["harness_binding"] or
+            meta["source_archive"]["base_revision"] != manifest["source_base"]):
+        raise ValueError("incomplete or changed source, binary or harness")
+    names = ["inputs", "runProduce1", "runTree1", "runProduce2", "runTree2"]
+    if ([r["label"] for r in meta["runs"]] != names or
+            any(r["state"] != "complete" or r["exit_code"] not in (0, 1)
+                for r in meta["runs"]) or meta["runs"][0]["exit_code"] != 0):
+        raise ValueError("incomplete collection commands")
+    if set(raw) - {"metadata.json"} != set(meta["file_sha256"]):
+        raise ValueError("missing original collection file")
+    for name, expected in meta["file_sha256"].items():
+        if digest(raw[name]) != expected:
+            raise ValueError("original collection hash disagreement")
+    patch = (directory / "whole-source.patch").read_bytes()
+    if digest(patch) != manifest["whole_source_patch_sha256"]:
+        raise ValueError("changed reconstruction patch")
+    commit = (directory / "source-commit").read_bytes()
+    commit_id = hashlib.sha1(b"commit " + str(len(commit)).encode() + b"\0" + commit).hexdigest()
+    if (commit_id != manifest["source_revision"] or
+            commit.splitlines()[0] != ("tree " + manifest["source_tree"]).encode()):
+        raise ValueError("source commit or measured tree disagreement")
+    protocol = (directory / "collector.py").read_bytes()
+    if (digest(protocol) != manifest["collector_sha256"] or
+            digest(protocol) != meta["source_sha256"]["scripts/bench/sign_det_nested_tables.py"]):
+        raise ValueError("historical collector hash disagreement")
+    constant_source = (directory / "sign_det_nested_signs.py").read_bytes()
+    if (digest(constant_source) != manifest["constant_source_sha256"] or
+            digest(constant_source) != meta["source_sha256"]["scripts/bench/sign_det_nested_signs.py"]):
+        raise ValueError("historical literal helper hash disagreement")
+    if reconstruct:
+        with tempfile.TemporaryDirectory() as temporary:
+            objects = Path(temporary) / "objects"
+            objects.mkdir()
+            original = subprocess.check_output(
+                ["git", "rev-parse", "--git-path", "objects"], cwd=ROOT, text=True).strip()
+            env = dict(os.environ, GIT_INDEX_FILE=str(Path(temporary) / "index"),
+                       GIT_OBJECT_DIRECTORY=str(objects),
+                       GIT_ALTERNATE_OBJECT_DIRECTORIES=str((ROOT / original).resolve()))
+            def git(*args):
+                return subprocess.check_output(["git", *args], cwd=ROOT, env=env)
+            git("read-tree", manifest["source_base"])
+            git("apply", "--cached", str(directory / "whole-source.patch"))
+            tree = git("write-tree").decode().strip()
+            if tree != manifest["source_tree"]:
+                raise ValueError("reconstructed source tree mismatch")
+            for name, expected in meta["source_sha256"].items():
+                if digest(git("show", tree + ":" + name)) != expected:
+                    raise ValueError("reconstructed source hash mismatch: " + name)
+            pins = [p["rev"] for p in json.loads(git("show", tree + ":lake-manifest.json"))["packages"]
+                    if p["name"] in ("lean-bench", "«lean-bench»")]
+            if pins != [meta["harness_binding"]["revision"]]:
+                raise ValueError("reconstructed harness pin disagreement")
+            # Also replay the collector's original, hash-bound partial patch.
+            original_patch = Path(temporary) / "committed-source.patch"
+            original_patch.write_bytes(raw["committed-source.patch"])
+            git("read-tree", manifest["source_base"])
+            git("apply", "--cached", "--unidiff-zero", str(original_patch))
+            partial = git("write-tree").decode().strip()
+            for name, expected in meta["source_sha256"].items():
+                if digest(git("show", partial + ":" + name)) != expected:
+                    raise ValueError("original collector source hash mismatch: " + name)
+
+    # Execute only the archived validation declarations and literal helper.
+    # Collection imports and ROOT do not belong to historical validation.
+    historical = types.ModuleType("nested_wide_capture_protocol")
+    historical.__dict__.update(Path=Path, json=json, math=math)
+    constants = {"DEPTHS", "SHORT_SIZES", "SIZES", "TRIALS", "PREFIX", "CONFIG"}
+    functions = {"configuration", "validate_inputs", "validate_result"}
+    declarations = [node for node in ast.parse(constant_source).body
+                    if isinstance(node, ast.FunctionDef) and node.name == "constant"]
+    declarations += [node for node in ast.parse(protocol).body
+                     if (isinstance(node, ast.Assign) and any(
+                         isinstance(t, ast.Name) and t.id in constants for t in node.targets)) or
+                     (isinstance(node, ast.FunctionDef) and node.name in functions)]
+    exec(compile(ast.Module(body=declarations, type_ignores=[]), "historical validation", "exec"),
+         historical.__dict__)
+    observations = {}
+    with tempfile.TemporaryDirectory() as temporary:
+        temporary = Path(temporary)
+        inputs = temporary / "inputs.stdout"
+        inputs.write_bytes(raw["inputs.stdout"])
+        expected = historical.validate_inputs(inputs)
+        for depth in historical.DEPTHS:
+            for operation in ("runProduce", "runTree"):
+                name = operation + str(depth)
+                path = temporary / (name + ".json")
+                path.write_bytes(raw[name + ".json"])
+                result = historical.validate_result(path, name, expected, meta["revision"])
+                export = json.loads(raw[name + ".json"])["results"][0]
+                config = historical.CONFIG
+                drop = min(int(len(historical.SIZES) * config["verdict_warmup_fraction"]),
+                           len(historical.SIZES) - 3)
+                xy = [(math.log(size), math.log(statistics.median(
+                    p["per_call_nanos"] for p in export["points"] if p["param"] == size)
+                    / (size * size.bit_length()))) for size in historical.SIZES[drop:]]
+                # Stats.lean deriveVerdict uses its slope branch on this
+                # frozen ladder. Reject reuse outside that branch's domain.
+                if len(xy) < 3 or xy[-1][0] - xy[0][0] < 1:
+                    raise ValueError("historical ladder does not admit slope fitting")
+                xbar, ybar = (statistics.mean(v[i] for v in xy) for i in (0, 1))
+                slope = sum((x-xbar)*(y-ybar) for x, y in xy) / sum((x-xbar)**2 for x, y in xy)
+                verdict = ("consistent_with_declared_complexity" if
+                           abs(slope) <= config["slope_tolerance"] else "inconclusive")
+                if (not math.isfinite(result["slope"]) or
+                        abs(slope - result["slope"]) > 1e-5 or result["verdict"] != verdict):
+                    raise ValueError("slope or verdict disagrees with original points")
+                observations[name] = dict(result)
+                for key, field, scale in (("medians_ms", "per_call_nanos", 1e6),
+                                          ("median_peak_rss_kb", "peak_rss_kb", 1)):
+                    observations[name][key] = {str(size): statistics.median(
+                        p[field] / scale for p in export["points"] if p["param"] == size)
+                        for size in historical.SIZES}
+    stated = json.loads(raw["summary.json"])
+    if (stated["validation_errors"] != [] or
+            stated["observations"] != {name: {k: row[k] for k in
+                ("verdict", "slope", "complexity_formula", "advisories")}
+                for name, row in observations.items()} or
+            manifest["observations"] != observations):
+        raise ValueError("summary disagrees with original points")
+    return observations
+
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("directory", type=Path)
+    parser.add_argument("--reconstruct-source", action="store_true")
+    args = parser.parse_args()
+    print(json.dumps(validate(args.directory, reconstruct=args.reconstruct_source), indent=2))

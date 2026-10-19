@@ -45,6 +45,16 @@ private def carrier : DensePoly CubeField :=
   FieldCarrier.product (fun _ : Fin 1 => root) formula
 #guard carrier = specialized
 
+private def guarded : RealFormula.QF 3 :=
+  .and (.atom ⟨(MvPoly.X 0 - MvPoly.X 1) * MvPoly.X 2 ^ 4 + MvPoly.X 2 ^ 2, .le⟩)
+    (.and (.atom ⟨0, .eq⟩)
+      (.and (.atom ⟨1 - MvPoly.X 2, .lt⟩) (.atom ⟨MvPoly.X 2 - 2, .le⟩)))
+
+-- Preparation keeps the zero atom and the two half-open domain guards.
+-- The degree-four term cancels only after substituting the two equal roots.
+#guard (FieldSpecialize.prepare (fun _ : Fin 2 => root) guarded).map
+  DensePoly.natDegree == [2, 0, 1, 1]
+
 private instance : ZPoly.CheckedIrreducible cubePoly :=
   Field.checkedIrreducible cubePoly (.eisenstein 2 0) cubeIrred cubeDegree
 private noncomputable instance : Field CubeField :=
@@ -123,5 +133,13 @@ private def quadraticDomain? : Option (Sturm.PreparedDomain Rat) :=
         zeroCert.value zeroCert &&
       Sturm.check (recorded powerKeys) () quadratic (powered * powered) .negInf .posInf
         powerCert.value powerCert
+
+/-- info: 'Hex.RCF.RealCoefficients.FieldSpecialize.prepare_eval' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms FieldSpecialize.prepare_eval
+
+/-- info: 'Hex.RCF.RealCoefficients.FieldSpecialize.prepare_degrees' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms FieldSpecialize.prepare_degrees
 
 end Hex.RCF.FieldSpecializeConformance

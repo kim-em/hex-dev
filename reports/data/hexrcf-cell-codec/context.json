@@ -1,0 +1,156 @@
+{
+  "implementation_commit": "d6c9b6df2b73167d7376328f067626abe3b4d113",
+  "sources_sha256": {
+    "adapters/HexRCF/RealCoefficients.lean": "54b786c3b02c1f896a3c60f5f6e622201ee33116cb0a45201d1c13ef7184df87",
+    "adapters/HexRCF/RealCoefficients/CellBuild.lean": "c485fadc6005af189dcc6700c0d38f2038c1446bd8b4d268aa553e9d0e8e3349",
+    "adapters/HexRCF/RealCoefficients/CellCodec.lean": "123dde4976c70a0537bb087b7ed5abfa53583b52dd6cb138518be9001b810bb4",
+    "adapters/HexRCF/RealCoefficients/CellEncode.lean": "e56572fa8b91b70e0abd1271adcc1ce6a73a6944873576cabac191ac44f1261b",
+    "adapters/HexRCF/RealCoefficients/SectorEncode.lean": "2e292a0f9e72c3b4a9570ff2d7f80a7780f465284c6622445831dcf29a71970f",
+    "conformance/HexRCF/CellCodecProofs.lean": "36a8607d7a799ce5132eeb664d27318180a3dba42b1684e030c7632c721af4d8",
+    "lakefile.lean": "86d9f5774e628258ef43d32480ef23ceb30173c94306cbe3245b2b5a83cf8772",
+    "conformance/HexRCF/CellBuildConformance.lean": "f8919edab4c5140324e2ecc528da091607e53de2f22c587b3e9b5eac749b1324",
+    "conformance/HexRCF/CellDecisionProofs.lean": "2da2b6142a9539aa3bb2e32160978a8f0c1f61ede66d80dd9c2985c081fc84d6",
+    "conformance/HexRCF/CellDiscoverProofs.lean": "45de0339d878ae8c59f694fe28e9c1d9acac5f8fd0dffab3c488e8a2441b5551",
+    "conformance/HexRCF/CellExecutionProofs.lean": "6f50063b4c6d31fada292008255c82ead348d1b2b43f141451eec04d86dd7946",
+    "conformance/HexRCF/NumberFieldCellsConformance.lean": "4402abc6f5a7251dd5314c8885e657597938369a42464df8123e8bf3f9f0a10d",
+    "conformance/HexRCF/CellReplay/Algebraic/Quoted.lean": "d80f6252f0d494ae55b346304e903c851fc5b00a7c46e4ce0f92ddd79095ae8b",
+    "conformance/HexRCF/CellReplay/Algebraic/BooleanQuoted.lean": "ab7bb991359ac71f4e2a1bc5d14b91b2a1a27126b4fd41c4d0d67c9f650c758a",
+    "conformance/HexRCF/CellDiscoverLinear.lean": "bc4b619fcb13d9a91a945bf1cef470428b2a4206a863512a3e07c42ae867f51a",
+    "conformance/HexRCF/CellDiscoverAlgebraic.lean": "3870c43ae77918e51e1eb5be47a955d556606bfa781d78785fd422a98d2e0308",
+    "conformance/HexRCF/CellDiscoverCases.lean": "c43f428f7cbfb02f15417604d36199630081c7f469f4ca28e56d59479c5ea6fe",
+    "conformance/HexRCF/CellRequestedConformance.lean": "4443e4fddf9724850e4959bb9bb64cd6a026c870ee32879542a00a8105bcdfbf",
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "87c6f122fb5c47f38d3f9532c5552ae231c0aab91f4328bb15b3dad9292db023"
+  },
+  "logs": {
+    "reports/data/hexrcf-cell-codec/sector-codec-proof-1.log.gz": {
+      "sha256": "c0e453591d61d071bc3dacec0bdd62a5d2dded83d843df752e0e7d1a9435b33f",
+      "uncompressed_sha256": "3a9aea3bdf4dbfdf6abde5f5ecf217dd4b56a381663d3ce3dfdecb13b2894197"
+    },
+    "reports/data/hexrcf-cell-codec/sector-codec-proof-2.log.gz": {
+      "sha256": "ee5ad83ff06a0934bbab47dab6c144da155d22ee4028673bc5c08ce17ce3d784",
+      "uncompressed_sha256": "5249676ce10fd66270ab40ba93eac9d5034c1bf411b347a2fe2f7ec6f592cfc3"
+    },
+    "reports/data/hexrcf-cell-codec/sector-codec-proof-3.log.gz": {
+      "sha256": "a858780025e23cb3912a40b9cdaba76242dfe7488dd6418cfb6c6e0a6495f436",
+      "uncompressed_sha256": "3577b48ed5dd43c37e2c37a9b3b992b685d9c8db5ef8bf1086ec33b7301e12b4"
+    },
+    "reports/data/hexrcf-cell-codec/sector-codec-proof-4.log.gz": {
+      "sha256": "152987f0eefc2d739c8e57edabc42b1e618c4f629065f847d170ba6773c2f929",
+      "uncompressed_sha256": "a3231a2602316c1d6301fa44fda29bfa5300364b82b4157377d8a10c96a6bf8c"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-proof-1.log.gz": {
+      "sha256": "68a231e8b92d337a5bfeb41464142d4f8f3de2d80a5369edf311cc1b7bbde6df",
+      "uncompressed_sha256": "0103970c9bb0db9597f6b2471f02cab8e8c7b15072ea40ef05bb770b16591dd9"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-proof-2.log.gz": {
+      "sha256": "fed6a610832c48db6a17829766037ede418ed80b3ebbfbeefda96a5d13e35e28",
+      "uncompressed_sha256": "62880824437b95633568937e491f6eae3e6a130b05f329edf42e2d558ec18e3f"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-proof-3.log.gz": {
+      "sha256": "23731de75434ab1da3b78d2b8f5fa2b54849edb2689cb4dae0cf23dfd5a47c2c",
+      "uncompressed_sha256": "8cebd7e2516fbb8a4223576de0723db21e2284e2277d6f679752be4bfd66b1fe"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-proof-4.log.gz": {
+      "sha256": "1078ea471d84fc2a265ba4626a839128bd3c92656b046d73bb7b721bb4f6c5a8",
+      "uncompressed_sha256": "4bfff349fa1b44a5e70f306a99dbd44a6ae0936a5b22c20eda9dc50c4430a459"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-proof-5.log.gz": {
+      "sha256": "2d117934f5c338adb7a6e0c95c8ddb7d9994ca190e14f920a5297605cdaf5e7f",
+      "uncompressed_sha256": "79e45273bdf3ea6ceaf12a6777f1d4d98b439a48ad41da8a8d81b1718db5fa00"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-proof-6.log.gz": {
+      "sha256": "1e1f6678f366b81f5b9cc4b662766d2b3f3efad345fe8468409639b20b4189a3",
+      "uncompressed_sha256": "c464df89d074f87563d4b7e3ea27a53ed07554f6349b27af3883a61112db5600"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-proof-7.log.gz": {
+      "sha256": "94b9b430c434f3e645c662c93ddb2c721cefbf3405daa840425224d74edb9df6",
+      "uncompressed_sha256": "1a8d68911898da4ccb56c1431858356bad989cdf020ba35fd9b4deb68fab9d81"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-audits-regressions-1.log.gz": {
+      "sha256": "a5386b96102dda187b3498e763f9bcb480012498646eaa93a2123bcd3427a257",
+      "uncompressed_sha256": "290027561456c190dbb882a1d8c7d2cf56643a3f3acf3158655c0e6bca09a90c"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-audits-regressions-2.log.gz": {
+      "sha256": "209ae1c6db868763e65045971436f543a4bfdb81e6e94293eb8527e9d5986678",
+      "uncompressed_sha256": "d6969c07f61d71753813a745e58f21f2733b485bc10f285d32b9002b3588d919"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-audits-regressions-3.log.gz": {
+      "sha256": "9177fb027f6658af336568fb30c1f0e5966ee1fb264ac3b427379a6d461503c6",
+      "uncompressed_sha256": "a0744bc2d497ef7049024a145d496e5e47aa48f6894dfddeb96f2ff9edbad4c2"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-audits-regressions-4.log.gz": {
+      "sha256": "f5197c3962fcbce2d1e93600a49b87fd42d1111784e561f6c6ac497cc3b9cfdd",
+      "uncompressed_sha256": "f55b154afc71a2cb1333df608865473dc3422816b1e839e0711a62ecc89dc9dd"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-library-quotes-1.log.gz": {
+      "sha256": "ba112895a191857caf412f9e2cc5063a4fad3ea995042cb39d8c6b2afdbcbd5c",
+      "uncompressed_sha256": "b8c60aa81f98ccf9b46c37ade9a073ea89a763e2416b71b42137a66b37e3818c"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-dag-1.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-dag-2.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-dag-tests-2.log.gz": {
+      "sha256": "23d078523879b6d8536f09d72a027901e02d7e2829a1234edaf5fc6890706b07",
+      "uncompressed_sha256": "1716b47a03188bc918a0e69af2d063dbf3f51ded577934827cd953a60bd6070d"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-admissions-1.log.gz": {
+      "sha256": "305cc07a9aa2c01af79ac5fd23bde965dc3e24256058494d1033bbf59eb76a4b",
+      "uncompressed_sha256": "80e93d08c872da23ea59086aac519513a16f1fc490214475cdc8df703f244a71"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-admissions-2.log.gz": {
+      "sha256": "305cc07a9aa2c01af79ac5fd23bde965dc3e24256058494d1033bbf59eb76a4b",
+      "uncompressed_sha256": "80e93d08c872da23ea59086aac519513a16f1fc490214475cdc8df703f244a71"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-copyright-1.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-copyright-2.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-checker-tests-1.log.gz": {
+      "sha256": "a561bb2bece76e18816ad5bba6ace9a952ea17f5101a28feef8c3dcf4f1e5a16",
+      "uncompressed_sha256": "103f81fff091358c4a700f3598f6968111da0f71e9c6c767697e0e2485779bd9"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-admission-tests-2.log.gz": {
+      "sha256": "48d2e984469c30f404985e9054aade36210463aa44f8a586e0ae1a967761b6b4",
+      "uncompressed_sha256": "8473581b07b24946bc79f380eba3f6917aed05bc0d21861ff1d32712bd57787d"
+    },
+    "reports/data/hexrcf-cell-codec/cell-codec-literals-1.log.gz": {
+      "sha256": "d363c41d04cc71aaa8b2bb97d1faf6ff4b311e5874c10d339f87aba4d4b97158",
+      "uncompressed_sha256": "5b2703a612f8c434ac4e53bb05bfeef0dbca1d91cc9125441d5bd447be3dfbc3"
+    }
+  },
+  "validation": {
+    "audits_regressions": "cell-codec-audits-regressions-4.log",
+    "optional_library_fresh_quotes_regressions_manual": "cell-codec-library-quotes-1.log",
+    "audited_theorems": 6,
+    "retained_prior_audit_bodies": 50,
+    "scan_cones": 635,
+    "scan_local_modules": 1535,
+    "checker_tests": 22,
+    "memory_limit_bytes": 34359738368,
+    "swap_limit_bytes": 0,
+    "lean_threads": 2,
+    "own_build_concurrency": 1
+  },
+  "limitations": [
+    "Descriptor restoration is an explicit remaining owner premise.",
+    "Finite coverage and identical encoding are required for partial readers.",
+    "No general predecessor inventory, strict compiled admission or frontend completeness is claimed.",
+    "Build times are incremental operational observations, not a performance comparison.",
+    "Manual text/styles are unchanged; no new rendering claim is made.",
+    "Earlier failed proof attempts and the incorrect combined unittest invocation are retained."
+  ],
+  "artifact_commit": "7ca496b83f4ce3b98bd169f9730e66d042f3f448",
+  "artifacts_sha256": {
+    "reports/hexrcf-cell-codec.md": "bdbb86d8db11c92de25a7950d744376e8029dcd03e1e1d557ae35b84a1c8b127",
+    "reports/data/hexrcf-cell-codec/collect.py": "685028a871a9027ecfe771ffde843b22a02778ee8ea054f38cd5e033d7796c29"
+  }
+}

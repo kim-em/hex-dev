@@ -3,14 +3,14 @@
 
 Draws the historical Lean `runIsolateParam` diagnostic wall-time curve
 alongside the python-flint `fmpz_poly.complex_roots` curve (from the flint
-comparator export) for one `phase4.input_families` entry, log-y wall time per
+comparator export) for one input family, log-y wall time per
 call across the shared fixed-separation degree ladder (degrees 4–10; the
 distinct fixed `runIsolateAll` point is report-only). Reads the same JSON the
 Comparator-ratios numbers in
 reports/hex-roots-performance.md cite.
 
-python-flint is scoped to the whole-polynomial isolation surface; the internal
-kernel families are declared `no-comparable-surface-in-named-comparator`.
+python-flint is scoped to the whole-polynomial isolation surface; it exposes no
+callable counterpart for the internal kernel families.
 
 Usage:
     python3 scripts/plots/hex-roots-comparator.py --family fixed-separation-product

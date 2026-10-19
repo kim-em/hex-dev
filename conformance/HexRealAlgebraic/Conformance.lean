@@ -5,31 +5,89 @@ Authors: Kim Morrison
 -/
 
 import HexRealAlgebraic
+import Lean.Compiler.CSimpAttr
+import Lean.Compiler.IR.CompilerM
+import Lean.Elab.Command
 
 /-!
-Core profile: oracle none, mode always; this module and `ReprChecks` elaborate in CI.
-The emitter also runs `Checks.run`, including the larger Mignotte and degree-eight fixtures.
-CI profile: exact python-flint qqbar arithmetic and certified FLINT root balls,
-mode `if_available` (required under `HEX_REQUIRE_ORACLES=1`). Local profile requires
-those oracles and adds degree-twelve roots and deterministic randomized construction paths.
-
-Operations: checked and proof-taking construction, casts, arithmetic, powers and scalar
-multiplication, comparison and extrema, sign, abs, conjugation, square roots, polynomial
-roots, rounding, rational recognition, and dyadic approximation.
-Properties: exact order, arithmetic identities, equal construction paths, positive-root
-selection, root multiplicities, and approximation enclosures.
-Edges: zero, division by zero, negative rationals, empty and constant polynomials,
-nonreal roots and coefficients, close roots, irrational coefficients, and repeated roots.
+Oracle: none (core); exact python-flint qqbar arithmetic and certified FLINT root balls
+(CI/local).
+Mode: always (core); `if_available` (CI), required under `HEX_REQUIRE_ORACLES=1`;
+required (local).
+Covered operations:
+- Checked/proof-taking construction, casts, field arithmetic, powers and scalars.
+- Comparison, extrema, sign, abs, conjugation and square roots.
+- Fixed-field coordinate signs (`signField`), checked in `FieldSignConformance`.
+- Polynomial construction/conversion, roots and root-set membership/projection; integer roots.
+- Rounding, rational recognition, dyadic approximation and Repr round trips.
+- Complex normSq/abs and real/imaginary projections.
+Covered properties:
+- Exact order and arithmetic identities, equal construction paths and positive-root selection.
+- Root multiplicities and approximation enclosures.
+- Fixed-field signs agree with canonical signs across positive and negative embeddings.
+Covered edge cases:
+- Zero, division by zero, negative rationals, empty/constant polynomials and trailing zeros.
+- Nonreal roots/coefficients, close roots, irrational coefficients and repeated roots.
+This module, `ReprChecks` and `FieldSignConformance` elaborate in CI. The emitter runs `Checks.run`,
+including Mignotte and degree-eight fixtures; local fixtures add degree twelve
+and deterministic randomized construction paths.
 -/
 
 open Hex
 open Hex.RealAlgebraicNumber (ofRat ofAlgebraic? sqrt?)
+
+-- Check the production rewrite, rather than merely comparing public results
+-- that could both have compiled through the same path.
+run_cmd do
+  let some entry := (Lean.Compiler.CSimp.ext.getState (← Lean.getEnv)).map.find?
+      ``Hex.RealAlgebraicPoly.realRoots
+    | throwError "missing realRoots compiler replacement"
+  unless entry.toDeclName == ``Hex.RealAlgebraicPoly.realRootsImpl do
+    throwError "realRoots must compile through certified isolation reuse"
+  -- The rejected function-valued cache had two compiled parameters and rebuilt
+  -- isolation for every entry. Guard its compiled arity independently of the
+  -- logical equality; retained generated C also checks the call before filtering.
+  let some decl := Lean.IR.findEnvDecl (← Lean.getEnv)
+      ``Hex.RealAlgebraicPoly.Internal.rootSelectors
+    | throwError "missing compiled root selector cache"
+  unless decl.params.size == 1 do
+    throwError "root selector cache must materialize before applying it to an entry"
+
+-- Two real roots sharing a parent exercise reuse; a different parent exercises
+-- the fallback and a nonreal root exercises early rejection.
+#guard
+  let positive := ZPoly.rootNear #p[-2, 0, 1] (3 / 2)
+  let negative := ZPoly.rootNear #p[-2, 0, 1] (-3 / 2)
+  let entries : Array RootCount := #[
+    ⟨positive.toRoot, 2, by decide +kernel⟩,
+    ⟨negative.toRoot, 3, by decide +kernel⟩,
+    ⟨(AlgebraicNumber.ofRat (1 / 3)).toRoot, 1, by decide +kernel⟩,
+    ⟨AlgebraicNumber.I.toRoot, 1, by decide +kernel⟩]
+  let original := entries.filterMap RealAlgebraicPoly.realRoot?
+  let cached := entries.filterMap (RealAlgebraicPoly.Internal.rootSelectors entries).2
+  original.size == 3 && original.size == cached.size &&
+    (original.zip cached).all fun (a, b) => a.root == b.root && a.multiplicity == b.multiplicity
 
 #guard
   let z : RealAlgebraicNumber := 0
   compare z z == .eq && !(decide (z < z)) && decide (z ≤ z) &&
     min z z == z && max z z == z && z.sign == 0 && z.abs == z &&
     z.toRat? == some 0 && z.floor == 0 && z.ceil == 0 && z⁻¹ == z && z / z == z
+
+-- Eight real roots share one irreducible parent. This exercises group reuse
+-- beyond the two-real-root binomial fixtures, against independent selectors.
+#guard
+  let p : ZPoly := #p[2, 0, -16, 0, 20, 0, -8, 0, 1]
+  let f := RealAlgebraicPoly.ofArray (p.toArray.map fun (c : Int) => ofRat (c : Rat))
+  match f.toAlgebraic.roots with
+  | .all => false
+  | .finite entries =>
+    let original := entries.filterMap RealAlgebraicPoly.realRoot?
+    let cached := entries.filterMap (RealAlgebraicPoly.Internal.rootSelectors entries).2
+    entries.size == 8 && entries.all (fun r => r.root.isReal && r.root.p == p) &&
+      original.size == 8 && original.size == cached.size &&
+      (original.zip cached).all fun (a, b) =>
+        a.root == b.root && a.multiplicity == b.multiplicity
 
 #guard
   let q := ofRat (-3 / 2)
@@ -80,6 +138,27 @@ open Hex.RealAlgebraicNumber (ofRat ofAlgebraic? sqrt?)
     RealAlgebraicNumber.ofRoot? z.toAlgebraic.toRoot == some z &&
     (RealAlgebraicNumber.ofRoot? AlgebraicNumber.I.toRoot).isNone
 
+-- Exercise proof-taking and lazy-root construction on zero, a negative
+-- rational, and an irrational real; conjugation and real projections preserve
+-- each value, and imaginary projection vanishes.
+#guard
+  let s := (ofAlgebraic? (ZPoly.rootNear #p[-2, 0, 1] (3 / 2))).getD 0
+  (#[0, ofRat (-3 / 2), s]).all fun a =>
+    RealAlgebraicNumber.ofAlgebraic a.toAlgebraic a.property == a &&
+    RealAlgebraicNumber.ofRoot? a.toAlgebraic.toRoot == some a &&
+    a.conj == a && a.toAlgebraic.re == a && a.toAlgebraic.im == 0
+
+-- A factorization-lazy mixed root set exercises both the retained real roots
+-- and rejection of its nonreal conjugate pair before canonicalization.
+#guard
+  let roots := (AlgebraicPoly.ofArray #[(-4 : AlgebraicNumber), 0, 0, 0, 1]).roots.toArray
+  let original := roots.filterMap RealAlgebraicPoly.realRoot?
+  let cached := roots.filterMap (RealAlgebraicPoly.Internal.rootSelectors roots).2
+  roots.size == 4 && roots.all (fun r =>
+    RealAlgebraicNumber.ofRoot? r.root == RealAlgebraicNumber.ofAlgebraic? r.root.exact) &&
+    original.size == 2 && cached.size == 2 &&
+    (original.zip cached).all fun (a, b) => a.root == b.root && a.multiplicity == b.multiplicity
+
 #guard
   let a := ofRat (9 / 4)
   let checked := if h : 0 ≤ a then some (a.sqrt h) else none
@@ -94,3 +173,85 @@ open Hex.RealAlgebraicNumber (ofRat ofAlgebraic? sqrt?)
     (ZPoly.realAlgebraicRoots #p[-1, 1]) == #[1] &&
     (ZPoly.realAlgebraicRoots #p[]).isEmpty &&
     (RealAlgebraicPoly.ofArray #[1, 0, 0]).roots.toArray.isEmpty
+
+-- Rational inputs retain the linear canonical representation even after field
+-- arithmetic; the real wrapper must not require a real-closure extension.
+#guard
+  (#[(-7 : Rat) / 3, 0, 1 / (2 ^ (100 : Nat) : Rat)]).all fun q =>
+    let a := ofRat q
+    a.toAlgebraic.p.natDegree == 1 && a.toRat? == some q &&
+      (a + 1).toRat? == some (q + 1) &&
+      (a * a).toRat? == some (q * q) &&
+      (a - a).toRat? == some 0
+
+#guard
+  let roots := (RealAlgebraicPoly.ofArray #[1, -2, 1]).roots
+  roots.finite?.isSome && roots.toArray.size == 1 &&
+    roots.toArray.all (fun r => r.multiplicity == 2) &&
+    roots.contains 1 && !(roots.contains 0) && !(roots.contains (-1))
+
+#guard
+  (RealAlgebraicPoly.ofArray #[]).roots.finite?.isNone &&
+    ((RealAlgebraicPoly.ofArray #[7]).roots.finite?.map Array.isEmpty) == some true &&
+    (RealAlgebraicPoly.ofAlgebraic?
+      (AlgebraicPoly.ofArray #[])).isSome
+
+#guard
+  let a := AlgebraicNumber.ofRat (-3 / 2)
+  let z := AlgebraicNumber.ofRat 0
+  a.normSq == ofRat (9 / 4) && a.abs == ofRat (3 / 2) &&
+    z.normSq == 0 && z.abs == 0 &&
+    AlgebraicNumber.I.normSq == 1 && AlgebraicNumber.I.abs == 1
+
+-- Irrational values on both sides of positive and negative integers.
+#guard
+  let s := (Hex.RealAlgebraicNumber.ofAlgebraic?
+    (Hex.ZPoly.rootNear #p[-2, 0, 1] (3 / 2))).getD 0
+  let e := s * Hex.RealAlgebraicNumber.ofRat (1 / (2 ^ (12 : Nat) : Rat))
+  (#[1 + e, 1 - e, -1 + e, -1 - e]).map (fun a => (a.floor, a.ceil)) ==
+    #[(1, 2), (0, 1), (-1, 0), (-2, -1)]
+
+-- Three field/scalar dictionary cases and nonnegative square-root branches.
+#guard
+  let s := (sqrt? 2).getD 0
+  (#[0, ofRat (-3 / 2), s]).all fun a =>
+    a + 0 == a && a - a == 0 && a * 1 == a && -(-a) == a &&
+    a ^ (2 : Nat) == a * a && a ^ (-1 : Int) == a⁻¹ &&
+    (2 : Nat) • a == a + a && (-2 : Int) • a == -(a + a) &&
+    (2 : Rat) • a == a + a &&
+    (if a == 0 then a / a == 0 else a / a == 1)
+
+#guard
+  (#[0, ofRat (9 / 4), 2]).all fun a =>
+    if h : 0 ≤ a then
+      let r := a.sqrt h
+      r * r == a && decide (0 ≤ r) && a.sqrt? == some r
+    else false
+
+#guard
+  (#[#[], #[ofRat (-3 / 2)], #[0, -1, 1]] : Array (Array RealAlgebraicNumber)).all
+    fun coeffs => match RealAlgebraicPoly.ofAlgebraic?
+        (AlgebraicPoly.ofArray (coeffs.map RealAlgebraicNumber.toAlgebraic)) with
+      | none => false
+      | some p => p.toAlgebraic.coeffs == (RealAlgebraicPoly.ofArray coeffs).toAlgebraic.coeffs
+
+-- Explicit cast operations, including zero and a nontrivial magnitude.
+#guard (#[0, 1, 17] : Array Nat).all fun n =>
+  (n : RealAlgebraicNumber).toRat? == some (n : Rat)
+#guard (#[(-17), 0, 23] : Array Int).all fun n =>
+  (n : RealAlgebraicNumber).toRat? == some (n : Rat)
+
+-- Checked conversion must preserve independently known coefficients and trim
+-- trailing zero entries, including an irrational coefficient.
+#guard
+  let r := (sqrt? 2).getD 0
+  r * r == 2 &&
+    (#[ (#[], #[]), (#[ofRat (-3 / 2), 0, 0], #[ofRat (-3 / 2)]),
+        (#[-r, 0, 1, 0, 0], #[-r, 0, 1])] :
+      Array (Array RealAlgebraicNumber × Array RealAlgebraicNumber)).all fun (coeffs, expected) =>
+    match RealAlgebraicPoly.ofAlgebraic?
+        (AlgebraicPoly.ofArray (coeffs.map RealAlgebraicNumber.toAlgebraic)) with
+    | none => false
+    | some poly =>
+      poly.toAlgebraic.coeffs.size == expected.size &&
+        poly.toAlgebraic.coeffs == expected.map RealAlgebraicNumber.toAlgebraic

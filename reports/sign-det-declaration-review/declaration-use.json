@@ -1,0 +1,6046 @@
+[
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Basis",
+    "name": "Hex.SignDet.System.basis_checks",
+    "users": [
+      "Hex.SignDet.Node.check_of_basis",
+      "Hex.SignDet.Node.product_system",
+      "Hex.SignDet.System.basis_inverse",
+      "Hex.SignDet.System.basis_rank"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Basis",
+    "name": "Hex.SignDet.System.basis_columns",
+    "users": [
+      "Hex.SignDet.Node.check_of_basis",
+      "Hex.SignDet.Node.product_inverse"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Basis",
+    "name": "Hex.SignDet.System.basis_inverse",
+    "users": [
+      "Hex.SignDet.Node.basis_inverse",
+      "Hex.SignDet.Node.check_of_basis"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Basis",
+    "name": "Hex.SignDet.System.basis_rank",
+    "users": [
+      "Hex.SignDet.Node.check_of_basis",
+      "Hex.SignDet.System.basis_columns"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Basis",
+    "name": "Hex.SignDet.System.retained_rank",
+    "users": [
+      "Hex.SignDet.System.basis_rank"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Basis",
+    "name": "Hex.SignDet.rank_selectCols",
+    "users": [
+      "Hex.SignDet.System.retained_rank"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Basis",
+    "name": "_private.HexSignDetMathlib.Basis.0.Hex.SignDet.ordered_cols",
+    "users": [
+      "Hex.SignDet.System.basis_columns"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Basis",
+    "name": "_private.HexSignDetMathlib.Basis.0.Hex.SignDet.reverse_inverse",
+    "users": [
+      "Hex.SignDet.System.basis_inverse"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.CommonProduct",
+    "name": "Hex.SignDet.CommonProduct.build_squarefree",
+    "users": [
+      "Hex.SignDet.Descriptor.buildComparison_success"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.CommonProduct",
+    "name": "Hex.SignDet.CommonProduct.build_success",
+    "users": [
+      "Hex.SignDet.CommonProduct.build_squarefree"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.CommonProduct",
+    "name": "Hex.SignDet.CommonProduct.check_roots",
+    "users": [
+      "Hex.SignDet.Descriptor.buildComparison_success"
+    ]
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.CommonProduct",
+    "name": "_private.HexSignDetMathlib.CommonProduct.0.Hex.SignDet.CommonProduct.build_success._simp_1_1",
+    "users": [
+      "Hex.SignDet.CommonProduct.build_success"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.CommonProduct",
+    "name": "_private.HexSignDetMathlib.CommonProduct.0.Hex.SignDet.quotient_lcm",
+    "users": [
+      "Hex.SignDet.CommonProduct.build_success"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ComparisonProducer",
+    "name": "Hex.SignDet.Descriptor.buildComparison_success",
+    "users": [
+      "Hex.RealClosure.Isolation.Root.compare_correct",
+      "Hex.SignDet.Descriptor.buildOrder_roots"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ComparisonProducer",
+    "name": "Hex.SignDet.Descriptor.buildOrder_roots",
+    "users": [
+      "Hex.SignDet.Descriptor.compare_correct",
+      "Hex.SignDet.Descriptor.compare_success"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ComparisonProducer",
+    "name": "Hex.SignDet.Descriptor.compare_correct",
+    "users": [
+      "Hex.RCF.SignDetFieldProofs.cubic_compare",
+      "Hex.SignDet.Descriptor.compare_eq_iff",
+      "Hex.SignDet.Descriptor.compare_gt_iff",
+      "Hex.SignDet.Descriptor.compare_lt_iff",
+      "Hex.SignDet.Descriptor.convert_compare"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ComparisonProducer",
+    "name": "Hex.SignDet.Descriptor.compare_eq_iff",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ComparisonProducer",
+    "name": "Hex.SignDet.Descriptor.compare_gt_iff",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ComparisonProducer",
+    "name": "Hex.SignDet.Descriptor.compare_lt_iff",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ComparisonProducer",
+    "name": "Hex.SignDet.Descriptor.compare_success",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.CompletionProducer",
+    "name": "Hex.SignDet.Descriptor.buildCompletion_roots",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.CompletionProducer",
+    "name": "Hex.SignDet.Descriptor.buildCompletion_success",
+    "users": [
+      "Hex.SignDet.Descriptor.buildCompletion_roots",
+      "Hex.SignDet.Descriptor.buildOrder_roots",
+      "Hex.SignDet.Descriptor.complete_success"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.CompletionProducer",
+    "name": "Hex.SignDet.Descriptor.complete_correct",
+    "users": [
+      "Hex.RCF.SignDetFieldProofs.cubic_complete"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.CompletionProducer",
+    "name": "Hex.SignDet.Descriptor.complete_success",
+    "users": [
+      "Hex.SignDet.Descriptor.complete_correct"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.CompletionProducer",
+    "name": "Hex.SignDet.Descriptor.completion_rows",
+    "users": [
+      "Hex.SignDet.Descriptor.buildCompletion_success"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.CompletionProducer",
+    "name": "Hex.SignDet.Descriptor.select_full_at",
+    "users": [
+      "Hex.SignDet.Descriptor.completion_rows",
+      "Hex.SignDet.Descriptor.reencoding_fiber"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.CompletionProducer",
+    "name": "Hex.SignDet.RawDescriptor.full_at",
+    "users": [
+      "Hex.SignDet.Descriptor.select_full_at",
+      "Hex.SignDet.RawDescriptor.full_congr",
+      "Hex.SignDet.RawDescriptor.full_lt",
+      "Hex.SignDet.RawDescriptor.full_unique"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.CompletionProducer",
+    "name": "Hex.SignDet.RawDescriptor.full_congr",
+    "users": [
+      "Hex.SignDet.Descriptor.reencoding_fiber"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.CompletionProducer",
+    "name": "_private.HexSignDetMathlib.CompletionProducer.0.Hex.SignDet.Descriptor.completion_rows._proof_1_1",
+    "users": [
+      "Hex.SignDet.Descriptor.completion_rows"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.CompletionProducer",
+    "name": "_private.HexSignDetMathlib.CompletionProducer.0.Hex.SignDet.Descriptor.completion_rows._proof_1_2",
+    "users": [
+      "Hex.SignDet.Descriptor.completion_rows"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Convert",
+    "name": "Hex.SignDet.Descriptor.convert_root",
+    "users": [
+      "Hex.RCF.SignDetFieldProofs.cubic_convert",
+      "Hex.SignDet.Descriptor.convert_compare",
+      "Hex.SignDet.Descriptor.convert_signAt"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Convert",
+    "name": "Hex.SignDet.Descriptor.convert_success",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Convert",
+    "name": "Hex.SignDet.RawDescriptor.map.congr_simp",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Convert",
+    "name": "Hex.SignDet.RawDescriptor.map_domain",
+    "users": [
+      "Hex.SignDet.Descriptor.convert_success"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Convert",
+    "name": "Hex.SignDet.RawDescriptor.map_signs",
+    "users": [
+      "Hex.SignDet.Descriptor.convert_root",
+      "Hex.SignDet.Descriptor.convert_success"
+    ]
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Convert",
+    "name": "Hex.SignDet.convert_endpoint",
+    "users": [
+      "Hex.SignDet.Descriptor.buildRoots_convert_roots",
+      "Hex.SignDet.Descriptor.convert_root",
+      "Hex.SignDet.Descriptor.convert_success",
+      "Hex.SignDet.determine_convert_counts"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Convert",
+    "name": "Hex.SignDet.convert_interpret",
+    "users": [
+      "Hex.SignDet.Descriptor.buildRoots_convert_roots",
+      "Hex.SignDet.Descriptor.convert_root",
+      "Hex.SignDet.Descriptor.convert_signAt",
+      "Hex.SignDet.Descriptor.convert_success",
+      "Hex.SignDet.RawDescriptor.map_signs",
+      "Hex.SignDet.determine_convert_counts",
+      "Hex.SignDet.domain_convert",
+      "Hex.SignDet.signsAt_convert"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Convert",
+    "name": "Hex.SignDet.domain_convert",
+    "users": [
+      "Hex.SignDet.Descriptor.buildRoots_convert_isSome",
+      "Hex.SignDet.RawDescriptor.map_domain",
+      "Hex.SignDet.determine_convert_isSome"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.DagSelectedSigns",
+    "name": "Hex.SignDet.Dag.memo_values",
+    "users": [
+      "Hex.SignDet.Dag.readMemo_values"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.DagSelectedSigns",
+    "name": "Hex.SignDet.Dag.readMemo_values",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.DagSelectedSigns",
+    "name": "Hex.SignDet.Dag.selectedSigns_values",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Derivatives",
+    "name": "Hex.SignDet.RawDescriptor.querySigns",
+    "users": [
+      "Hex.RealClosure.Tower.Conversion.Model.descriptor_exists",
+      "Hex.RealClosure.Tower.Model.refine_descriptor",
+      "Hex.SignDet.Descriptor.build_success_formal",
+      "Hex.SignDet.RawDescriptor.map_signs"
+    ]
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Derivatives",
+    "name": "Hex.SignDet.derivatives.eq_1",
+    "users": [
+      "Hex.RealClosure.CoefficientMap.derivatives_map",
+      "Hex.RealClosure.Specialize.derivatives_specialize",
+      "Hex.RealClosure.Transport.Finite.derivatives_polynomial"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Derivatives",
+    "name": "Hex.SignDet.derivativesFrom_get",
+    "users": [
+      "Hex.SignDet.Descriptor.derivatives_at",
+      "Hex.SignDet.RawDescriptor.full_at",
+      "Hex.SignDet.RawDescriptor.querySigns"
+    ]
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Derivatives",
+    "name": "Hex.SignDet.derivativesFrom_get._proof_1",
+    "users": [
+      "Hex.SignDet.Descriptor.derivatives_at",
+      "Hex.SignDet.RawDescriptor.full_at",
+      "Hex.SignDet.RawDescriptor.querySigns",
+      "Hex.SignDet.derivativesFrom_get"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Derivatives",
+    "name": "_private.HexSignDetMathlib.Derivatives.0.Hex.SignDet.RawDescriptor.querySigns._proof_1_1",
+    "users": [
+      "Hex.SignDet.RawDescriptor.querySigns"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Derivatives",
+    "name": "_private.HexSignDetMathlib.Derivatives.0.Hex.SignDet.derivativesFrom_get._proof_1_1",
+    "users": [
+      "Hex.SignDet.derivativesFrom_get"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Derivatives",
+    "name": "_private.HexSignDetMathlib.Derivatives.0.Hex.SignDet.derivativesFrom_get._proof_1_2",
+    "users": [
+      "Hex.SignDet.derivativesFrom_get"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Embedding",
+    "name": "Hex.SignDet.Descriptor.root_comp",
+    "users": [
+      "Hex.RCF.SignDetFieldProofs.Noncanonical.extension_root"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Embedding",
+    "name": "Hex.SignDet.Descriptor.root_comp._proof_1",
+    "users": [
+      "Hex.SignDet.Descriptor.root_comp"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Embedding",
+    "name": "Hex.SignDet.Descriptor.root_comp._proof_2",
+    "users": [
+      "Hex.SignDet.Descriptor.root_comp"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Embedding",
+    "name": "Hex.SignDet.Descriptor.root_comp._proof_3",
+    "users": [
+      "Hex.SignDet.Descriptor.root_comp"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Embedding",
+    "name": "Hex.SignDet.Descriptor.root_comp._proof_4",
+    "users": [
+      "Hex.SignDet.Descriptor.root_comp"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Embedding",
+    "name": "Hex.SignDet.Descriptor.root_comp._proof_5",
+    "users": [
+      "Hex.SignDet.Descriptor.root_comp"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Embedding",
+    "name": "Hex.SignDet.Descriptor.root_comp._proof_6",
+    "users": [
+      "Hex.SignDet.Descriptor.root_comp"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Embedding",
+    "name": "Hex.SignDet.Descriptor.root_map",
+    "users": [
+      "Hex.RCF.SignDetFieldProofs.algebraic_root",
+      "Hex.RealClosure.Tower.Live.selectedValue_map",
+      "Hex.SignDet.Descriptor.root_comp"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Embedding",
+    "name": "Hex.SignDet.interpret_embedding",
+    "users": [
+      "Hex.SignDet.root_mem_embedding",
+      "Hex.SignDet.signsAt_embedding"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Embedding",
+    "name": "Hex.SignDet.interval_embedding",
+    "users": [
+      "Hex.SignDet.root_mem_embedding"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Embedding",
+    "name": "Hex.SignDet.root_mem_embedding",
+    "users": [
+      "Hex.SignDet.Descriptor.root_map"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Embedding",
+    "name": "Hex.SignDet.signsAt_embedding",
+    "users": [
+      "Hex.SignDet.Descriptor.root_map"
+    ]
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Embedding",
+    "name": "_private.HexSignDetMathlib.Embedding.0.Hex.SignDet.interval_embedding._simp_1_1",
+    "users": [
+      "Hex.SignDet.interval_embedding"
+    ]
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Embedding",
+    "name": "_private.HexSignDetMathlib.Embedding.0.Hex.SignDet.root_mem_embedding._simp_1_1",
+    "users": [
+      "Hex.SignDet.root_mem_embedding"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.FiniteSolve",
+    "name": "Hex.SignDet.System.check_counts",
+    "users": [
+      "Hex.SignDet.empty_system",
+      "Hex.SignDet.singleton_system"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.FiniteSolve",
+    "name": "Hex.SignDet.columns_distinct",
+    "users": [
+      "Hex.SignDet.system_counts"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.FiniteSolve",
+    "name": "Hex.SignDet.counts_nonneg",
+    "users": [
+      "Hex.SignDet.System.check_counts",
+      "Hex.SignDet.system_counts"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.FiniteSolve",
+    "name": "Hex.SignDet.empty_system",
+    "users": [
+      "_private.HexSignDetMathlib.TreeSolve.0.Hex.SignDet.leaf_system"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.FiniteSolve",
+    "name": "Hex.SignDet.singleton_system",
+    "users": [
+      "_private.HexSignDetMathlib.TreeSolve.0.Hex.SignDet.leaf_system"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.FiniteSolve",
+    "name": "Hex.SignDet.system_counts",
+    "users": [
+      "Hex.SignDet.Node.product_system"
+    ]
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.FiniteSolve",
+    "name": "_private.HexSignDetMathlib.FiniteSolve.0.Hex.SignDet.columns_distinct._simp_1_1",
+    "users": [
+      "Hex.SignDet.columns_distinct"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.FiniteSolve",
+    "name": "_private.HexSignDetMathlib.FiniteSolve.0.Hex.SignDet.empty_system._proof_1_1",
+    "users": [
+      "Hex.SignDet.empty_system"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.FiniteSolve",
+    "name": "_private.HexSignDetMathlib.FiniteSolve.0.Hex.SignDet.singleton_system._proof_1_1",
+    "users": [
+      "Hex.SignDet.singleton_system"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Foundation",
+    "name": "Hex.SignDet.Replay.foundation_complete",
+    "users": [
+      "Hex.SignDet.Replay.check_counts",
+      "Hex.SignDet.Replay.check_support",
+      "Hex.SignDet.Replay.count_roots",
+      "Hex.SignDet.SelectedSigns.values_at_root"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Foundation",
+    "name": "Hex.SignDet.System.foundation_counts",
+    "users": [
+      "Hex.SignDet.Replay.foundation_complete",
+      "Hex.SignDet.buildNode_counted",
+      "Hex.SignDetMathlib.Conformance.foundation_empty_support",
+      "Hex.SignDetMathlib.Conformance.foundation_empty_word",
+      "Hex.SignDetMathlib.Conformance.foundation_repeated",
+      "Hex.SignDetMathlib.Conformance.foundation_root_free"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Foundation",
+    "name": "Hex.SignDet.foundation_moments",
+    "users": [
+      "Hex.SignDet.System.check_counts",
+      "Hex.SignDet.system_counts"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Foundation",
+    "name": "Hex.SignDet.momentMatrix.eq_1",
+    "users": [
+      "Hex.SignDet.System.foundation_counts",
+      "Hex.SignDet.foundation_moments"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Foundation",
+    "name": "Hex.SignDet.occCount_getElem",
+    "users": [
+      "Hex.SignDet.System.foundation_counts",
+      "Hex.SignDet.foundation_moments"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Foundation",
+    "name": "Hex.SignDet.occCount_getElem._proof_2",
+    "users": [
+      "Hex.SignDet.System.foundation_counts",
+      "Hex.SignDet.occCount_getElem",
+      "Hex.SignDet.sum_getElem"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Foundation",
+    "name": "Hex.SignDet.sum_getElem",
+    "users": [
+      "Hex.SignDet.System.foundation_counts"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Foundation",
+    "name": "_private.HexSignDetMathlib.Foundation.0.Hex.SignDet.System.foundation_counts._proof_1_1",
+    "users": [
+      "Hex.SignDet.System.foundation_counts"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Foundation",
+    "name": "_private.HexSignDetMathlib.Foundation.0.Hex.SignDet.System.foundation_counts._proof_1_2",
+    "users": [
+      "Hex.SignDet.System.foundation_counts"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Foundation",
+    "name": "_private.HexSignDetMathlib.Foundation.0.Hex.SignDet.foundation_moments._proof_1_1",
+    "users": [
+      "Hex.SignDet.foundation_moments"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Foundation",
+    "name": "_private.HexSignDetMathlib.Foundation.0.Hex.SignDet.foundation_moments._proof_1_2",
+    "users": [
+      "Hex.SignDet.foundation_moments"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Foundation",
+    "name": "_private.HexSignDetMathlib.Foundation.0.Hex.SignDet.occCount_getElem._proof_1",
+    "users": [
+      "Hex.SignDet.occCount_getElem._proof_2"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Naturality",
+    "name": "Hex.SignDet.Descriptor.buildRoots_convert_isSome",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Naturality",
+    "name": "Hex.SignDet.Descriptor.buildRoots_convert_roots",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Naturality",
+    "name": "Hex.SignDet.Descriptor.convert_compare",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Naturality",
+    "name": "Hex.SignDet.Descriptor.convert_signAt",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Naturality",
+    "name": "Hex.SignDet.determine_convert_counts",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Naturality",
+    "name": "Hex.SignDet.determine_convert_isSome",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Naturality",
+    "name": "Hex.SignDet.signsAt_convert",
+    "users": [
+      "Hex.SignDet.determine_convert_counts"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.NodeBasis",
+    "name": "Hex.SignDet.Node.basisCols",
+    "users": [
+      "Hex.SignDet.Node.basis_inverse",
+      "Hex.SignDet.Node.basis_matrix",
+      "Hex.SignDet.Node.basis_support",
+      "Hex.SignDet.Node.basis_width",
+      "Hex.SignDet.Node.parent_system",
+      "Hex.SignDet.Node.product_inverse",
+      "Hex.SignDet.Node.product_system",
+      "Hex.SignDet.buildTreeFrom_complete._unary",
+      "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisCols.eq_1"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.NodeBasis",
+    "name": "Hex.SignDet.Node.basisRows",
+    "users": [
+      "Hex.SignDet.Node.basisRows_list",
+      "Hex.SignDet.Node.basis_inverse",
+      "Hex.SignDet.Node.basis_matrix",
+      "Hex.SignDet.Node.basis_width",
+      "Hex.SignDet.Node.parent_system",
+      "Hex.SignDet.Node.product_inverse",
+      "Hex.SignDet.Node.product_system",
+      "Hex.SignDet.buildTreeFrom_complete._unary",
+      "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisRows.eq_1"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeBasis",
+    "name": "Hex.SignDet.Node.basisRows_list",
+    "users": [
+      "Hex.SignDet.Node.product_inverse"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeBasis",
+    "name": "Hex.SignDet.Node.basis_inverse",
+    "users": [
+      "Hex.SignDet.Node.product_inverse"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeBasis",
+    "name": "Hex.SignDet.Node.basis_matrix",
+    "users": [
+      "Hex.SignDet.Node.basis_inverse"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeBasis",
+    "name": "Hex.SignDet.Node.basis_support",
+    "users": [
+      "Hex.SignDet.Node.product_inverse"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeBasis",
+    "name": "Hex.SignDet.Node.basis_width",
+    "users": [
+      "Hex.SignDet.Node.product_inverse"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeBasis",
+    "name": "Hex.SignDet.Node.basis_width._proof_2",
+    "users": [
+      "Hex.SignDet.Node.basis_width"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeBasis",
+    "name": "Hex.SignDet.Node.product_inverse",
+    "users": [
+      "Hex.SignDet.Node.parent_system",
+      "Hex.SignDet.Node.product_system",
+      "Hex.SignDet.buildTreeFrom_complete._unary"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeBasis",
+    "name": "Hex.SignDet.System.retainedMatrix.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeBasis",
+    "name": "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisCols._proof_1",
+    "users": [
+      "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisCols._proof_2",
+      "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisCols._proof_3",
+      "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisCols._proof_4"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeBasis",
+    "name": "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisCols._proof_2",
+    "users": [
+      "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisCols._proof_4"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeBasis",
+    "name": "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisCols._proof_3",
+    "users": [
+      "Hex.SignDet.Node.basisCols",
+      "Hex.SignDet.Node.basis_matrix",
+      "Hex.SignDet.Node.basis_support",
+      "Hex.SignDet.Node.basis_width",
+      "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisCols._proof_4",
+      "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisCols.eq_1"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeBasis",
+    "name": "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisCols._proof_4",
+    "users": [
+      "Hex.SignDet.Node.basisCols",
+      "Hex.SignDet.Node.basis_matrix",
+      "Hex.SignDet.Node.basis_support",
+      "Hex.SignDet.Node.basis_width",
+      "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisCols.eq_1"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeBasis",
+    "name": "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisCols.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeBasis",
+    "name": "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisRows._proof_1",
+    "users": [
+      "Hex.SignDet.Node.basis_support",
+      "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisRows._proof_2"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeBasis",
+    "name": "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisRows._proof_2",
+    "users": [
+      "Hex.SignDet.Node.basisRows",
+      "Hex.SignDet.Node.basisRows_list",
+      "Hex.SignDet.Node.basis_matrix",
+      "Hex.SignDet.Node.basis_width",
+      "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisRows.eq_1"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeBasis",
+    "name": "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basisRows.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeBasis",
+    "name": "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basis_width._proof_1",
+    "users": [
+      "Hex.SignDet.Node.basis_width",
+      "Hex.SignDet.Node.basis_width._proof_2",
+      "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basis_width._proof_1_1",
+      "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basis_width._proof_1_2",
+      "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basis_width._proof_1_3"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeBasis",
+    "name": "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basis_width._proof_1_1",
+    "users": [
+      "Hex.SignDet.Node.basis_width"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeBasis",
+    "name": "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basis_width._proof_1_2",
+    "users": [
+      "Hex.SignDet.Node.basis_width",
+      "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basis_width._proof_1_3"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeBasis",
+    "name": "_private.HexSignDetMathlib.NodeBasis.0.Hex.SignDet.Node.basis_width._proof_1_3",
+    "users": [
+      "Hex.SignDet.Node.basis_width"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeChecks",
+    "name": "Hex.SignDet.buildNode_checks",
+    "users": [
+      "Hex.SignDet.buildTreeFrom_checks._unary"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeChecks",
+    "name": "Hex.SignDet.buildNode_preparation",
+    "users": [
+      "Hex.SignDet.buildNode_checks"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeChecks",
+    "name": "Hex.SignDet.nodePreparation_checks",
+    "users": [
+      "Hex.SignDet.buildNode_preparation",
+      "Hex.SignDet.buildPrepared_roots",
+      "Hex.SignDet.query_values"
+    ]
+  },
+  {
+    "axioms": [],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.NodeChecks",
+    "name": "Hex.SignDet.nodePreparation_checks.match_1",
+    "users": [
+      "Hex.SignDet.buildNode_checks",
+      "Hex.SignDet.buildNode_preparation",
+      "Hex.SignDet.buildPrepared_roots",
+      "Hex.SignDet.nodePreparation_checks",
+      "Hex.SignDet.query_values",
+      "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.nodePreparation_checks.match_1.eq_1",
+      "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.nodePreparation_checks.match_1.eq_2",
+      "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.nodePreparation_checks.match_1.splitter"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeChecks",
+    "name": "Hex.SignDet.useReduction.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeChecks",
+    "name": "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.buildNode_checks._proof_1_1",
+    "users": [
+      "Hex.SignDet.buildNode_checks"
+    ]
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeChecks",
+    "name": "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.nodePreparation.match_1.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeChecks",
+    "name": "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.nodePreparation.match_1.eq_2",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.NodeChecks",
+    "name": "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.nodePreparation.match_1.splitter",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeChecks",
+    "name": "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.nodePreparation_checks.match_1.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeChecks",
+    "name": "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.nodePreparation_checks.match_1.eq_2",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.NodeChecks",
+    "name": "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.nodePreparation_checks.match_1.splitter",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeChecks",
+    "name": "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.queryPoly.match_1.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeChecks",
+    "name": "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.queryPoly.match_1.eq_2",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.NodeChecks",
+    "name": "_private.HexSignDetMathlib.NodeChecks.0.Hex.SignDet.queryPoly.match_1.splitter",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeProducer",
+    "name": "Hex.SignDet.Node.check_of_basis",
+    "users": [
+      "Hex.SignDet.buildNode_checks"
+    ]
+  },
+  {
+    "axioms": [],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.NodeProducer",
+    "name": "Hex.SignDet.Node.check_of_basis.match_1",
+    "users": [
+      "Hex.SignDet.Node.check_of_basis"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeProducer",
+    "name": "Hex.SignDet.buildNode_evidence",
+    "users": [
+      "Hex.SignDet.buildNode_checks",
+      "Hex.SignDet.buildNode_counted",
+      "Hex.SignDet.buildNode_preparation"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeProducer",
+    "name": "Hex.SignDet.buildNode_evidence._proof_2",
+    "users": [
+      "Hex.SignDet.Node.check_of_basis",
+      "Hex.SignDet.buildNode_checks",
+      "Hex.SignDet.buildNode_counted",
+      "Hex.SignDet.buildNode_evidence",
+      "Hex.SignDet.buildNode_preparation"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeProducer",
+    "name": "Hex.SignDet.buildNode_spec",
+    "users": [
+      "Hex.SignDet.buildNode_checks",
+      "Hex.SignDet.buildNode_counted",
+      "Hex.SignDet.buildTreeFrom_checks._unary"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeProducer",
+    "name": "Hex.SignDet.solveScaled_spec",
+    "users": [
+      "Hex.SignDet.buildNode_evidence",
+      "Hex.SignDet.buildNode_spec"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeProducer",
+    "name": "Hex.SignDet.solveSystem_spec",
+    "users": [
+      "Hex.SignDet.buildNode_evidence",
+      "Hex.SignDet.buildNode_spec"
+    ]
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeProducer",
+    "name": "Vector.toList_transport",
+    "users": [
+      "Hex.SignDet.buildNode_complete",
+      "Hex.SignDet.buildNode_spec"
+    ]
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeProducer",
+    "name": "_private.HexSignDetMathlib.NodeProducer.0.Except.map.match_1.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeProducer",
+    "name": "_private.HexSignDetMathlib.NodeProducer.0.Except.map.match_1.eq_2",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.NodeProducer",
+    "name": "_private.HexSignDetMathlib.NodeProducer.0.Except.map.match_1.splitter",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeProducer",
+    "name": "_private.HexSignDetMathlib.NodeProducer.0.Hex.SignDet.Node.check.match_1.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeProducer",
+    "name": "_private.HexSignDetMathlib.NodeProducer.0.Hex.SignDet.Node.check.match_1.eq_2",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.NodeProducer",
+    "name": "_private.HexSignDetMathlib.NodeProducer.0.Hex.SignDet.Node.check.match_1.splitter",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeProducer",
+    "name": "_private.HexSignDetMathlib.NodeProducer.0.Hex.SignDet.buildNode.match_3.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeProducer",
+    "name": "_private.HexSignDetMathlib.NodeProducer.0.Hex.SignDet.buildNode.match_3.eq_2",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.NodeProducer",
+    "name": "_private.HexSignDetMathlib.NodeProducer.0.Hex.SignDet.buildNode.match_3.splitter",
+    "users": [
+      "Hex.SignDet.buildNode_evidence",
+      "Hex.SignDet.buildNode_spec"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeProducer",
+    "name": "_private.HexSignDetMathlib.NodeProducer.0.Hex.SignDet.buildNode_evidence._proof_1",
+    "users": [
+      "Hex.SignDet.buildNode_evidence._proof_2"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeProducer",
+    "name": "_private.HexSignDetMathlib.NodeProducer.0.Hex.SignDet.solveSystem_spec._proof_1_1",
+    "users": [
+      "Hex.SignDet.solveSystem_spec"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeSolve",
+    "name": "Hex.SignDet.Node.parent_system",
+    "users": [
+      "Hex.SignDet.buildTreeFrom_complete._unary"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeSolve",
+    "name": "Hex.SignDet.buildNode.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeSolve",
+    "name": "Hex.SignDet.buildNode_complete",
+    "users": [
+      "Hex.SignDet.buildNode_counted"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeSolve",
+    "name": "Hex.SignDet.buildNode_complete._proof_2",
+    "users": [
+      "Hex.SignDet.buildNode_complete",
+      "Hex.SignDet.buildNode_counted"
+    ]
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeSolve",
+    "name": "_private.HexSignDetMathlib.NodeSolve.0.Hex.SignDet.buildNode.match_1.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeSolve",
+    "name": "_private.HexSignDetMathlib.NodeSolve.0.Hex.SignDet.buildNode.match_1.eq_2",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.NodeSolve",
+    "name": "_private.HexSignDetMathlib.NodeSolve.0.Hex.SignDet.buildNode.match_1.splitter",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeSolve",
+    "name": "_private.HexSignDetMathlib.NodeSolve.0.Hex.SignDet.buildNode.match_3.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeSolve",
+    "name": "_private.HexSignDetMathlib.NodeSolve.0.Hex.SignDet.buildNode.match_3.eq_2",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.NodeSolve",
+    "name": "_private.HexSignDetMathlib.NodeSolve.0.Hex.SignDet.buildNode.match_3.splitter",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeSolve",
+    "name": "_private.HexSignDetMathlib.NodeSolve.0.Hex.SignDet.buildNode_complete._proof_1",
+    "users": [
+      "Hex.SignDet.buildNode_complete._proof_2"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.NodeSolve",
+    "name": "_private.HexSignDetMathlib.NodeSolve.0.Hex.SignDet.buildNode_complete._proof_1_1",
+    "users": [
+      "Hex.SignDet.buildNode_complete"
+    ]
+  },
+  {
+    "axioms": [],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.NodeSolve",
+    "name": "_private.HexSignDetMathlib.NodeSolve.0.Hex.SignDet.buildNode_complete.match_1_2",
+    "users": [
+      "Hex.SignDet.buildNode_complete"
+    ]
+  },
+  {
+    "axioms": [],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.NodeSolve",
+    "name": "_private.HexSignDetMathlib.NodeSolve.0.Hex.SignDet.buildNode_complete.match_1_7",
+    "users": [
+      "Hex.SignDet.buildNode_complete"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ParentSystem",
+    "name": "Hex.SignDet.Node.product_system",
+    "users": [
+      "Hex.SignDet.Node.parent_system"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ParentSystem",
+    "name": "_private.HexSignDetMathlib.ParentSystem.0.Hex.SignDet.product_all",
+    "users": [
+      "Hex.SignDet.Node.product_system"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ParentSystem",
+    "name": "_private.HexSignDetMathlib.ParentSystem.0.Hex.SignDet.rows_valid",
+    "users": [
+      "Hex.SignDet.Node.product_system"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ParentSystem",
+    "name": "_private.HexSignDetMathlib.ParentSystem.0.Hex.SignDet.support_valid",
+    "users": [
+      "Hex.SignDet.Node.product_system"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.QueryHandle",
+    "name": "Hex.SignDet.Descriptor.prepareQueries_success",
+    "users": [
+      "Hex.RealClosure.Algebraic.Context.handle_success"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.QueryHandle",
+    "name": "Hex.SignDet.QueryHandle.buildSigns_roots",
+    "users": [
+      "Hex.RCF.SignDetFieldProofs.cubic_queries"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.QueryHandle",
+    "name": "Hex.SignDet.QueryHandle.buildSigns_success",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.QueryHandle",
+    "name": "Hex.SignDet.QueryHandle.signAt_correct",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.QueryHandle",
+    "name": "Hex.SignDet.QueryHandle.signAt_success",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.QueryReduction",
+    "name": "Hex.SignDet.Node.check_sign",
+    "users": [
+      "Hex.SignDet.Node.check_values"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.QueryReduction",
+    "name": "Hex.SignDet.Node.check_sign._proof_2",
+    "users": [
+      "Hex.SignDet.Node.check_sign",
+      "Hex.SignDet.Node.check_values"
+    ]
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.QueryReduction",
+    "name": "Hex.SignDet.QueryReduction.build.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.QueryReduction",
+    "name": "Hex.SignDet.QueryReduction.buildFrom.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.QueryReduction",
+    "name": "Hex.SignDet.QueryReduction.buildFrom.eq_2",
+    "users": []
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.QueryReduction",
+    "name": "Hex.SignDet.QueryReduction.buildFrom.eq_def",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.QueryReduction",
+    "name": "Hex.SignDet.QueryReduction.buildFrom_checks",
+    "users": [
+      "Hex.SignDet.QueryReduction.build_checks"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.QueryReduction",
+    "name": "Hex.SignDet.QueryReduction.build_checks",
+    "users": [
+      "Hex.SignDet.buildTree_checks",
+      "Hex.SignDet.nodePreparation_checks",
+      "Hex.SignDetMathlib.Conformance.noncanonical_queries"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.QueryReduction",
+    "name": "Hex.SignDet.QueryReduction.checkFrom_signs",
+    "users": [
+      "Hex.SignDet.QueryReduction.check_signs"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.QueryReduction",
+    "name": "Hex.SignDet.QueryReduction.check_signs",
+    "users": [
+      "Hex.SignDet.Node.check_sign",
+      "Hex.SignDet.query_values",
+      "Hex.SignDetMathlib.Conformance.queries_sign"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.QueryReduction",
+    "name": "_private.HexSignDetMathlib.QueryReduction.0.Hex.SignDet.Node.check_sign._proof_1",
+    "users": [
+      "Hex.SignDet.Node.check_sign._proof_2"
+    ]
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.QueryReduction",
+    "name": "_private.HexSignDetMathlib.QueryReduction.0.Hex.SignDet.QueryReduction.buildFrom.match_1.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.QueryReduction",
+    "name": "_private.HexSignDetMathlib.QueryReduction.0.Hex.SignDet.QueryReduction.buildFrom.match_1.eq_2",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.QueryReduction",
+    "name": "_private.HexSignDetMathlib.QueryReduction.0.Hex.SignDet.QueryReduction.buildFrom.match_1.splitter",
+    "users": [
+      "Hex.SignDet.QueryReduction.buildFrom.eq_def"
+    ]
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RationalSolve",
+    "name": "Hex.Matrix.Lists.Scaled.encode.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RationalSolve",
+    "name": "Hex.SignDet.System.rationalCounts",
+    "users": [
+      "Hex.SignDet.solveSystem_complete"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RationalSolve",
+    "name": "Hex.SignDet.System.rationalInverse",
+    "users": [
+      "Hex.SignDet.solveSystem_complete"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RationalSolve",
+    "name": "Hex.SignDet.System.rationalInverse._proof_2",
+    "users": [
+      "Hex.SignDet.System.rationalCounts",
+      "Hex.SignDet.System.rationalInverse",
+      "Hex.SignDet.solveSystem_complete"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RationalSolve",
+    "name": "Hex.SignDet.clear_inverse",
+    "users": [
+      "Hex.SignDet.solveSystem_complete"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RationalSolve",
+    "name": "Hex.SignDet.inverse_den",
+    "users": [
+      "Hex.SignDet.clear_inverse",
+      "Hex.SignDet.solveSystem_complete"
+    ]
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RationalSolve",
+    "name": "Hex.SignDet.inverse_den._proof_1",
+    "users": [
+      "Hex.SignDet.clear_inverse",
+      "Hex.SignDet.inverse_den",
+      "Hex.SignDet.solveSystem_complete"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RationalSolve",
+    "name": "Hex.SignDet.solveSystem.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RationalSolve",
+    "name": "Hex.SignDet.solveSystem_complete",
+    "users": [
+      "Hex.SignDet.buildNode_complete"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RationalSolve",
+    "name": "_private.HexSignDetMathlib.RationalSolve.0.Hex.SignDet.System.rationalInverse._proof_1",
+    "users": [
+      "Hex.SignDet.System.rationalCounts",
+      "Hex.SignDet.System.rationalInverse",
+      "Hex.SignDet.System.rationalInverse._proof_2",
+      "Hex.SignDet.solveSystem_complete"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RationalSolve",
+    "name": "_private.HexSignDetMathlib.RationalSolve.0.Hex.SignDet.clear_scalar",
+    "users": [
+      "Hex.SignDet.inverse_den"
+    ]
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Reduction",
+    "name": "Hex.SignDet.Reduction.check.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Reduction",
+    "name": "Hex.SignDet.Reduction.checkFrom._sparseCasesOn_1.else_eq",
+    "users": [
+      "_private.HexRealClosureMathlib.CoefficientReduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_3",
+      "_private.HexRealClosureMathlib.SpecializeReduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_3",
+      "_private.HexRealClosureMathlib.TransportReduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_3",
+      "_private.HexSignDet.SignOperands.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_3",
+      "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_3"
+    ]
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Reduction",
+    "name": "Hex.SignDet.Reduction.checkFrom._sparseCasesOn_2.else_eq",
+    "users": [
+      "_private.HexRealClosureMathlib.CoefficientReduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_3",
+      "_private.HexRealClosureMathlib.SpecializeReduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_3",
+      "_private.HexRealClosureMathlib.TransportReduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_3",
+      "_private.HexSignDet.SignOperands.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_3",
+      "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_3"
+    ]
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Reduction",
+    "name": "Hex.SignDet.Reduction.checkFrom.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Reduction",
+    "name": "Hex.SignDet.Reduction.checkFrom.eq_2",
+    "users": [
+      "Hex.RealClosure.Transport.reduction_from_check",
+      "Hex.SignDet.Reduction.buildFrom_checks",
+      "Hex.SignDet.Reduction.checkFrom_map",
+      "Hex.SignDet.Reduction.checkFrom_specialize"
+    ]
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Reduction",
+    "name": "Hex.SignDet.Reduction.checkFrom.eq_3",
+    "users": []
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Reduction",
+    "name": "Hex.SignDet.Reduction.checkFrom.eq_def",
+    "users": [
+      "Hex.SignDet.Reduction.checkFrom.eq_3"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Reduction",
+    "name": "Hex.SignDet.Reduction.checkFrom_sign",
+    "users": [
+      "Hex.SignDet.Reduction.check_sign"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Reduction",
+    "name": "Hex.SignDet.Reduction.check_sign",
+    "users": [
+      "Hex.SignDet.checkMoment_sign",
+      "Hex.SignDet.query_values",
+      "Hex.SignDetMathlib.Conformance.literal_sign",
+      "Hex.SignDetMathlib.Conformance.noncanonical_sign"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Reduction",
+    "name": "Hex.SignDet.ReductionStep.check_sign",
+    "users": [
+      "Hex.SignDet.QueryReduction.checkFrom_signs",
+      "Hex.SignDet.Reduction.checkFrom_sign"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Reduction",
+    "name": "Hex.SignDet.checkMoment_sign",
+    "users": [
+      "Hex.SignDet.Node.check_sign"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Reduction",
+    "name": "Hex.SignDet.moment.eq_1",
+    "users": [
+      "Hex.RealClosure.CoefficientMap.moment_map",
+      "Hex.RealClosure.Specialize.moment_specialize",
+      "Hex.RealClosure.Transport.Finite.moment_polynomial",
+      "Hex.SignDet.moment_entry",
+      "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.moment_sign"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Reduction",
+    "name": "Hex.SignDet.moment_congr",
+    "users": [
+      "Hex.SignDet.Node.check_sign",
+      "Hex.SignDet.query_values"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Reduction",
+    "name": "Hex.SignDet.moment_entry",
+    "users": [
+      "Hex.SignDet.Node.check_values",
+      "Hex.SignDet.query_values"
+    ]
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Reduction",
+    "name": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Reduction",
+    "name": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_2",
+    "users": []
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Reduction",
+    "name": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_3",
+    "users": []
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.Reduction",
+    "name": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.splitter",
+    "users": []
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.Reduction",
+    "name": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.splitter._sparseCasesOn_3",
+    "users": [
+      "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_3",
+      "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.splitter"
+    ]
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.Reduction",
+    "name": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.splitter._sparseCasesOn_5",
+    "users": [
+      "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.eq_3",
+      "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.Reduction.checkFrom.match_1.splitter"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Reduction",
+    "name": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.fold_sign",
+    "users": [
+      "Hex.SignDet.moment_congr",
+      "Hex.SignDet.moment_entry",
+      "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.moment_sign"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Reduction",
+    "name": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.interpret_power",
+    "users": [
+      "Hex.SignDet.moment_congr",
+      "Hex.SignDet.moment_entry",
+      "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.moment_sign"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Reduction",
+    "name": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.interpret_power._proof_1_1",
+    "users": [
+      "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.interpret_power"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Reduction",
+    "name": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.interpret_power._proof_1_2",
+    "users": [
+      "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.interpret_power"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Reduction",
+    "name": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.interpret_power._proof_1_3",
+    "users": [
+      "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.interpret_power"
+    ]
+  },
+  {
+    "axioms": [],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.Reduction",
+    "name": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.moment_congr.match_1_1",
+    "users": [
+      "Hex.SignDet.moment_congr"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Reduction",
+    "name": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.moment_sign",
+    "users": [
+      "Hex.SignDet.Reduction.check_sign"
+    ]
+  },
+  {
+    "axioms": [],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.Reduction",
+    "name": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.moment_sign.match_1_1",
+    "users": [
+      "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.moment_sign"
+    ]
+  },
+  {
+    "axioms": [],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.Reduction",
+    "name": "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.moment_sign.match_1_3",
+    "users": [
+      "_private.HexSignDetMathlib.Reduction.0.Hex.SignDet.moment_sign"
+    ]
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ReductionProducer",
+    "name": "Hex.SignDet.Reduction.build.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ReductionProducer",
+    "name": "Hex.SignDet.Reduction.buildFrom.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ReductionProducer",
+    "name": "Hex.SignDet.Reduction.buildFrom.eq_2",
+    "users": []
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ReductionProducer",
+    "name": "Hex.SignDet.Reduction.buildFrom.eq_def",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ReductionProducer",
+    "name": "Hex.SignDet.Reduction.buildFrom_checks",
+    "users": [
+      "Hex.SignDet.Reduction.build_checks"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ReductionProducer",
+    "name": "Hex.SignDet.Reduction.build_checks",
+    "users": [
+      "Hex.SignDet.buildNode_checks",
+      "Hex.SignDet.query_values",
+      "Hex.SignDetMathlib.Conformance.noncanonical_checks"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ReductionProducer",
+    "name": "Hex.SignDet.ReductionStep.build_checks",
+    "users": [
+      "Hex.SignDet.QueryReduction.buildFrom_checks",
+      "Hex.SignDet.Reduction.buildFrom_checks"
+    ]
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ReductionProducer",
+    "name": "_private.HexSignDetMathlib.ReductionProducer.0.Hex.SignDet.Reduction.buildFrom.match_1.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ReductionProducer",
+    "name": "_private.HexSignDetMathlib.ReductionProducer.0.Hex.SignDet.Reduction.buildFrom.match_1.eq_2",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.ReductionProducer",
+    "name": "_private.HexSignDetMathlib.ReductionProducer.0.Hex.SignDet.Reduction.buildFrom.match_1.splitter",
+    "users": [
+      "Hex.SignDet.Reduction.buildFrom.eq_def"
+    ]
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ReductionProducer",
+    "name": "_private.HexSignDetMathlib.ReductionProducer.0.Hex.SignDet.ReductionStep.build_checks._simp_1_1",
+    "users": [
+      "Hex.SignDet.ReductionStep.build_checks"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Reencode",
+    "name": "Hex.SignDet.endpoint_eval",
+    "users": [
+      "Hex.SignDet.Descriptor.constraints_at_root",
+      "Hex.SignDet.Descriptor.constraints_interval",
+      "Hex.SignDet.endpoint_lower",
+      "Hex.SignDet.endpoint_upper"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Reencode",
+    "name": "Hex.SignDet.endpoint_lower",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Reencode",
+    "name": "Hex.SignDet.endpoint_upper",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Reencode",
+    "name": "_private.HexSignDetMathlib.Reencode.0.Hex.SignDet.endpoint_upper._proof_1_1",
+    "users": [
+      "Hex.SignDet.endpoint_upper"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Reencode",
+    "name": "_private.HexSignDetMathlib.Reencode.0.Hex.SignDet.endpoint_upper._proof_1_2",
+    "users": [
+      "Hex.SignDet.endpoint_upper"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ReencodingProducer",
+    "name": "Hex.SignDet.Descriptor.buildReencoding_absent",
+    "users": [
+      "Hex.RCF.SignDetFieldProofs.cubic_absent",
+      "Hex.SignDet.Descriptor.buildReencoding_isSome"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ReencodingProducer",
+    "name": "Hex.SignDet.Descriptor.buildReencoding_invalid",
+    "users": [
+      "Hex.SignDet.Descriptor.buildReencoding_isSome"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ReencodingRefinement",
+    "name": "Hex.SignDet.Descriptor.buildReencoding_congr",
+    "users": [
+      "Hex.SignDet.Descriptor.buildReencoding_refinement"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ReencodingRefinement",
+    "name": "Hex.SignDet.Descriptor.buildReencoding_refinement",
+    "users": [
+      "Hex.RCF.SignDetFieldProofs.cubic_refinement"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ReencodingRefinement",
+    "name": "Hex.SignDet.Descriptor.reencoding_fiber",
+    "users": [
+      "Hex.SignDet.Descriptor.buildReencoding_congr",
+      "Hex.SignDet.Descriptor.refinement_fiber"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ReencodingRefinement",
+    "name": "Hex.SignDet.Descriptor.reencoding_rows",
+    "users": [
+      "Hex.SignDet.Descriptor.buildReencoding_congr",
+      "Hex.SignDet.Descriptor.buildReencoding_success"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ReencodingRefinement",
+    "name": "Hex.SignDet.Descriptor.refinement_fiber",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ReencodingRefinement",
+    "name": "_private.HexSignDetMathlib.ReencodingRefinement.0.Hex.SignDet.Descriptor.reencoding_rows._proof_1_1",
+    "users": [
+      "Hex.SignDet.Descriptor.reencoding_rows"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ReencodingRefinement",
+    "name": "_private.HexSignDetMathlib.ReencodingRefinement.0.Hex.SignDet.Descriptor.reencoding_rows._proof_1_2",
+    "users": [
+      "Hex.SignDet.Descriptor.reencoding_rows"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootList",
+    "name": "Hex.SignDet.Descriptor.buildRoots_constant_success",
+    "users": [
+      "Hex.SignDet.Descriptor.buildRoots_success"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootList",
+    "name": "Hex.SignDet.Descriptor.buildRoots_coverage",
+    "users": [
+      "Hex.RCF.SignDetFieldProofs.cubic_coverage",
+      "Hex.RealClosure.Isolation.Completion.nodup",
+      "Hex.RealClosure.Isolation.completeCell_spec",
+      "Hex.SignDet.Descriptor.buildRoots_convert_roots",
+      "Hex.SignDet.Descriptor.buildRoots_roots",
+      "_private.HexRealClosureMathlib.IsolationRoots.0.Hex.RealClosure.Isolation.enumeration_coverage"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootList",
+    "name": "Hex.SignDet.Descriptor.buildRoots_domain",
+    "users": [
+      "Hex.SignDet.Descriptor.buildRoots_isSome",
+      "_private.HexRealClosureMathlib.IsolationRoots.0.Hex.RealClosure.Isolation.enumeration_coverage"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootList",
+    "name": "Hex.SignDet.Descriptor.buildRoots_empty",
+    "users": [
+      "Hex.SignDet.Descriptor.buildRoots_constant_success"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootList",
+    "name": "Hex.SignDet.Descriptor.buildRoots_linear",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootList",
+    "name": "Hex.SignDet.Descriptor.buildRoots_none_iff",
+    "users": [
+      "Hex.RealClosure.Isolation.Whole.enumeration_present",
+      "Hex.RealClosure.Isolation.cell_enumeration_present"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootList",
+    "name": "Hex.SignDet.Descriptor.buildRoots_subsingleton",
+    "users": [
+      "Hex.SignDet.Descriptor.buildRoots_linear"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootList",
+    "name": "_private.HexSignDetMathlib.RootList.0.Hex.SignDet.Descriptor.buildRoots_constant_success._proof_1_1",
+    "users": [
+      "Hex.SignDet.Descriptor.buildRoots_constant_success"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootList",
+    "name": "_private.HexSignDetMathlib.RootList.0.Hex.SignDet.Descriptor.buildRoots_empty._proof_1_1",
+    "users": [
+      "Hex.SignDet.Descriptor.buildRoots_empty"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootList",
+    "name": "_private.HexSignDetMathlib.RootList.0.Hex.SignDet.Descriptor.buildRoots_subsingleton._proof_1_1",
+    "users": [
+      "Hex.SignDet.Descriptor.buildRoots_subsingleton"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootList",
+    "name": "_private.HexSignDetMathlib.RootList.0.Hex.SignDet.Descriptor.buildRoots_subsingleton._proof_1_3",
+    "users": [
+      "Hex.SignDet.Descriptor.buildRoots_subsingleton"
+    ]
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootList",
+    "name": "_private.HexSignDetMathlib.RootList.0.Hex.SignDet.Descriptor.buildRoots_subsingleton._simp_1_2",
+    "users": [
+      "Hex.SignDet.Descriptor.buildRoots_subsingleton"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootModel",
+    "name": "Hex.SignDet.Node.check_values",
+    "users": [
+      "Hex.SignDet.Replay.check_interprets"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootModel",
+    "name": "Hex.SignDet.Replay.check_counts",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootModel",
+    "name": "Hex.SignDet.Replay.check_domain",
+    "users": [
+      "Hex.RealClosure.Algebraic.Context.head_squarefree",
+      "Hex.RealClosure.Root.real_squarefree",
+      "Hex.RealClosure.Tower.Conversion.Model.descriptor_exists",
+      "Hex.RealClosure.Tower.Model.refine_descriptor",
+      "Hex.SignDet.Descriptor.buildComparison_success",
+      "Hex.SignDet.Descriptor.buildCompletion_success",
+      "Hex.SignDet.Descriptor.buildSigns_success",
+      "Hex.SignDet.Descriptor.build_success_iff",
+      "Hex.SignDet.Descriptor.convert_success"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootModel",
+    "name": "Hex.SignDet.Replay.check_interprets",
+    "users": [
+      "Hex.SignDet.Replay.check_counts",
+      "Hex.SignDet.Replay.check_support",
+      "Hex.SignDet.Replay.count_roots",
+      "Hex.SignDet.SelectedSigns.values_at_root"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootModel",
+    "name": "Hex.SignDet.Replay.check_support",
+    "users": [
+      "Hex.SignDetMathlib.RootSemantics.literal_support"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootModel",
+    "name": "Hex.SignDet.Replay.count_roots",
+    "users": [
+      "Hex.RealClosure.Isolation.completeCell_success",
+      "Hex.RealClosure.Specialize.counts_near",
+      "Hex.RealClosure.Tower.Conversion.Model.descriptor_exists",
+      "Hex.RealClosure.Tower.Model.refine_descriptor",
+      "Hex.RealClosure.Transport.Finite.count_roots",
+      "Hex.SignDet.Descriptor.buildReencoding_absent",
+      "Hex.SignDet.Descriptor.buildRoots_coverage",
+      "Hex.SignDet.Descriptor.buildRoots_empty",
+      "Hex.SignDet.Descriptor.buildRoots_subsingleton",
+      "Hex.SignDet.Descriptor.buildRoots_success",
+      "Hex.SignDet.Descriptor.build_of_unique_root",
+      "Hex.SignDet.Descriptor.build_success_iff",
+      "Hex.SignDet.Descriptor.build_valid_cases",
+      "Hex.SignDet.Descriptor.completion_rows",
+      "Hex.SignDet.Descriptor.convert_success",
+      "Hex.SignDet.Descriptor.existsUnique_root",
+      "Hex.SignDet.Descriptor.reencoding_rows",
+      "Hex.SignDet.Descriptor.signs_rows",
+      "Hex.SignDet.Reencoding.exists_root",
+      "Hex.SignDet.determinePrepared_correct",
+      "Hex.SignDetMathlib.Diagnostics.D3.Semantic.counts_roots"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.RootModel",
+    "name": "Hex.SignDet.rootObservations",
+    "users": [
+      "Hex.RealClosure.Isolation.completeCell_success",
+      "Hex.SignDet.Descriptor.buildCompletion_success",
+      "Hex.SignDet.Descriptor.buildReencoding_absent",
+      "Hex.SignDet.Descriptor.buildReencoding_congr",
+      "Hex.SignDet.Descriptor.buildReencoding_success",
+      "Hex.SignDet.Descriptor.buildRoots_empty",
+      "Hex.SignDet.Descriptor.buildRoots_subsingleton",
+      "Hex.SignDet.Descriptor.buildRoots_success",
+      "Hex.SignDet.Descriptor.buildSigns_success",
+      "Hex.SignDet.Descriptor.build_noError",
+      "Hex.SignDet.Descriptor.build_of_unique_root",
+      "Hex.SignDet.Descriptor.build_valid_cases",
+      "Hex.SignDet.Node.check_values",
+      "Hex.SignDet.Replay.check_counts",
+      "Hex.SignDet.Replay.check_interprets",
+      "Hex.SignDet.Replay.check_support",
+      "Hex.SignDet.Replay.count_roots",
+      "Hex.SignDet.SelectedSigns.values_at_root",
+      "Hex.SignDet.buildPrepared_roots",
+      "Hex.SignDet.buildTablePrepared_success",
+      "Hex.SignDet.determinePrepared_correct",
+      "Hex.SignDet.query_model",
+      "Hex.SignDet.query_model._unary",
+      "Hex.SignDet.query_values",
+      "Hex.SignDet.rootObservations.congr_simp",
+      "Hex.SignDet.rootObservations.eq_1",
+      "Hex.SignDet.rootObservations_drop",
+      "Hex.SignDet.rootObservations_take",
+      "Hex.SignDet.rootObservations_valid"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootModel",
+    "name": "Hex.SignDet.rootObservations.congr_simp",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootModel",
+    "name": "Hex.SignDet.rootObservations.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootModel",
+    "name": "Hex.SignDet.rootObservations_drop",
+    "users": [
+      "Hex.SignDet.Replay.check_interprets",
+      "Hex.SignDet.query_model._unary"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootModel",
+    "name": "Hex.SignDet.rootObservations_take",
+    "users": [
+      "Hex.SignDet.Replay.check_interprets",
+      "Hex.SignDet.query_model._unary"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootModel",
+    "name": "Hex.SignDet.rootObservations_valid",
+    "users": [
+      "Hex.SignDet.Replay.check_counts",
+      "Hex.SignDet.Replay.check_support",
+      "Hex.SignDet.Replay.count_roots",
+      "Hex.SignDet.SelectedSigns.values_at_root",
+      "Hex.SignDet.buildPrepared_roots"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.RootModel",
+    "name": "Hex.SignDet.signsAt",
+    "users": [
+      "Hex.RCF.RealCoefficients.Realization.exists_real",
+      "Hex.RCF.RealCoefficients.Realization.signs",
+      "Hex.RCF.RealCoefficients.SelectedFormula.source_signs",
+      "Hex.RCF.SignDetFieldProofs.Noncanonical.extension_root",
+      "Hex.RCF.SignDetFieldProofs.cubic_queries",
+      "Hex.RCF.SignDetFieldProofs.cubic_success",
+      "Hex.RCF.SignDetFieldProofs.cubic_table",
+      "Hex.RealClosure.Algebraic.Context.evalPoly_head",
+      "Hex.RealClosure.Algebraic.Context.finitePoint_signs",
+      "Hex.RealClosure.Algebraic.Context.finitePoint_spec",
+      "Hex.RealClosure.Algebraic.Context.intervalSign?_spec",
+      "Hex.RealClosure.Algebraic.Context.signFacts._proof_4",
+      "Hex.RealClosure.Algebraic.Context.singleSign?_spec",
+      "Hex.RealClosure.Algebraic.Packing.Inverse.Equation.atPoint",
+      "Hex.RealClosure.Algebraic.Packing.Inverse.Equation.denote_inv",
+      "Hex.RealClosure.Algebraic.Packing.Inverse.Equation.eval_inv",
+      "Hex.RealClosure.Algebraic.Packing.Inverse.atPoint",
+      "Hex.RealClosure.Algebraic.Packing.Inverse.build?_success",
+      "Hex.RealClosure.Algebraic.Packing.Inverse.eval_inv",
+      "Hex.RealClosure.Algebraic.Packing.Inverse.realize_many",
+      "Hex.RealClosure.Algebraic.Packing.atPoint",
+      "Hex.RealClosure.Algebraic.Packing.build?_success",
+      "Hex.RealClosure.Algebraic.Packing.eval_original",
+      "Hex.RealClosure.Algebraic.Packing.eval_sign",
+      "Hex.RealClosure.Algebraic.Packing.realize",
+      "Hex.RealClosure.Algebraic.Packing.realize_many",
+      "Hex.RealClosure.Algebraic.ValueSign.atPoint",
+      "Hex.RealClosure.Algebraic.ValueSign.eval_sign",
+      "Hex.RealClosure.Expression.cofactor_root",
+      "Hex.RealClosure.Expression.denote_head",
+      "Hex.RealClosure.Isolation.completeCell_spec",
+      "Hex.RealClosure.Isolation.completeCell_success",
+      "Hex.RealClosure.Rebinding.real_eq_source",
+      "Hex.RealClosure.Root.canonical?_isSome",
+      "Hex.RealClosure.Root.canonical?_sound",
+      "Hex.RealClosure.Root.matches_iff",
+      "Hex.RealClosure.Root.real_spec",
+      "Hex.RealClosure.Root.real_unique",
+      "Hex.RealClosure.Specialize.Native.nested_selected",
+      "Hex.RealClosure.Specialize.Native.selected_root_near",
+      "Hex.RealClosure.Specialize.counts_near",
+      "Hex.RealClosure.Specialize.exists_near",
+      "Hex.RealClosure.Specialize.exists_nested_selected",
+      "Hex.RealClosure.Specialize.realizeBelow",
+      "Hex.RealClosure.Specialize.realizeReplay",
+      "Hex.RealClosure.Specialize.selected_near",
+      "Hex.RealClosure.Specialize.selected_root_near",
+      "Hex.RealClosure.Tower.Conversion.Model.descriptor_exists",
+      "Hex.RealClosure.Tower.Conversion.Model.reuseRoot_value",
+      "Hex.RealClosure.Tower.Conversion.Model.root",
+      "Hex.RealClosure.Tower.Model.adjoin_checked",
+      "Hex.RealClosure.Tower.Model.adjoin_realization",
+      "Hex.RealClosure.Tower.Model.adjoin_signs",
+      "Hex.RealClosure.Tower.Model.child_generator",
+      "Hex.RealClosure.Tower.Model.minimal_query",
+      "Hex.RealClosure.Tower.Model.refine_descriptor",
+      "Hex.RealClosure.Tower.Model.refine_root",
+      "Hex.RealClosure.Transport.Finite.count_roots",
+      "Hex.RealClosure.Transport.Finite.selected_signs",
+      "Hex.RealClosure.Transport.mem_roots",
+      "Hex.RealClosure.Transport.mem_roots._simp_1",
+      "Hex.RealClosure.Transport.roots",
+      "Hex.RealClosure.Transport.selected_signs",
+      "Hex.RealClosure.Trivial.Map.Model.canonical?_isSome",
+      "Hex.RealClosure.Trivial.Map.Model.canonical?_sound",
+      "Hex.RealClosure.Trivial.Map.Model.matches_iff",
+      "Hex.SignDet.Completion.root_eq_source",
+      "Hex.SignDet.Dag.memo_values",
+      "Hex.SignDet.Dag.readMemo_values",
+      "Hex.SignDet.Dag.selectedSigns_values",
+      "Hex.SignDet.Descriptor.buildComparison_success",
+      "Hex.SignDet.Descriptor.buildCompletion_success",
+      "Hex.SignDet.Descriptor.buildReencoding_absent",
+      "Hex.SignDet.Descriptor.buildReencoding_congr",
+      "Hex.SignDet.Descriptor.buildReencoding_success",
+      "Hex.SignDet.Descriptor.buildRoots_coverage",
+      "Hex.SignDet.Descriptor.buildRoots_empty",
+      "Hex.SignDet.Descriptor.buildRoots_subsingleton",
+      "Hex.SignDet.Descriptor.buildRoots_success",
+      "Hex.SignDet.Descriptor.buildSigns_roots",
+      "Hex.SignDet.Descriptor.buildSigns_success",
+      "Hex.SignDet.Descriptor.build_of_unique_root",
+      "Hex.SignDet.Descriptor.build_success_formal",
+      "Hex.SignDet.Descriptor.build_success_iff",
+      "Hex.SignDet.Descriptor.build_valid_cases",
+      "Hex.SignDet.Descriptor.completion_rows",
+      "Hex.SignDet.Descriptor.constraints_at_root",
+      "Hex.SignDet.Descriptor.constraints_bounds",
+      "Hex.SignDet.Descriptor.constraints_head",
+      "Hex.SignDet.Descriptor.constraints_iff",
+      "Hex.SignDet.Descriptor.constraints_interval",
+      "Hex.SignDet.Descriptor.constraints_queries",
+      "Hex.SignDet.Descriptor.convert_root",
+      "Hex.SignDet.Descriptor.convert_success",
+      "Hex.SignDet.Descriptor.derivatives_at",
+      "Hex.SignDet.Descriptor.existsUnique_root",
+      "Hex.SignDet.Descriptor.fullOrder_root",
+      "Hex.SignDet.Descriptor.fullOrder_strict",
+      "Hex.SignDet.Descriptor.full_signs",
+      "Hex.SignDet.Descriptor.reencoding_fiber",
+      "Hex.SignDet.Descriptor.reencoding_rows",
+      "Hex.SignDet.Descriptor.refinement_fiber",
+      "Hex.SignDet.Descriptor.root",
+      "Hex.SignDet.Descriptor.root_derivatives",
+      "Hex.SignDet.Descriptor.root_map",
+      "Hex.SignDet.Descriptor.root_spec",
+      "Hex.SignDet.Descriptor.root_unique",
+      "Hex.SignDet.Descriptor.select_full_at",
+      "Hex.SignDet.Descriptor.signs_rows",
+      "Hex.SignDet.Descriptor.validate_success_iff",
+      "Hex.SignDet.Node.check_values",
+      "Hex.SignDet.QueryHandle.buildSigns_roots",
+      "Hex.SignDet.RawDescriptor.full_at",
+      "Hex.SignDet.RawDescriptor.full_congr",
+      "Hex.SignDet.RawDescriptor.full_fiber",
+      "Hex.SignDet.RawDescriptor.full_lt",
+      "Hex.SignDet.RawDescriptor.full_lt_iff",
+      "Hex.SignDet.RawDescriptor.full_order",
+      "Hex.SignDet.RawDescriptor.full_unique",
+      "Hex.SignDet.RawDescriptor.map_signs",
+      "Hex.SignDet.Reencoding.exists_root",
+      "Hex.SignDet.Reencoding.root_eq_source",
+      "Hex.SignDet.Reencoding.target_constraints",
+      "Hex.SignDet.Replay.check_support",
+      "Hex.SignDet.Replay.count_roots",
+      "Hex.SignDet.SelectedSigns.value_at_root",
+      "Hex.SignDet.SelectedSigns.values_at_root",
+      "Hex.SignDet.determinePrepared_correct",
+      "Hex.SignDet.determine_convert_counts",
+      "Hex.SignDet.determine_correct",
+      "Hex.SignDet.query_values",
+      "Hex.SignDet.rootObservations",
+      "Hex.SignDet.rootObservations.eq_1",
+      "Hex.SignDet.rootObservations_drop",
+      "Hex.SignDet.rootObservations_take",
+      "Hex.SignDet.rootObservations_valid",
+      "Hex.SignDet.signsAt.congr_simp",
+      "Hex.SignDet.signsAt.eq_1",
+      "Hex.SignDet.signsAt_convert",
+      "Hex.SignDet.signsAt_embedding",
+      "Hex.SignDetMathlib.Diagnostics.Semantics.signCondition",
+      "Hex.SignDetMathlib.RootSemantics.literal_support",
+      "_private.HexRealClosureMathlib.RootOrder.0.Hex.RealClosure.Isolation.linear_root",
+      "_private.HexSignDetMathlib.CompletionProducer.0.Hex.SignDet.Descriptor.completion_rows._proof_1_1",
+      "_private.HexSignDetMathlib.CompletionProducer.0.Hex.SignDet.Descriptor.completion_rows._proof_1_2",
+      "_private.HexSignDetMathlib.ReencodingRefinement.0.Hex.SignDet.Descriptor.reencoding_rows._proof_1_1",
+      "_private.HexSignDetMathlib.ReencodingRefinement.0.Hex.SignDet.Descriptor.reencoding_rows._proof_1_2",
+      "_private.HexSignDetMathlib.RootProducer.0.Hex.SignDet.Descriptor.build_valid_cases._proof_1_1",
+      "_private.HexSignDetMathlib.SelectedProducer.0.Hex.SignDet.Descriptor.signs_rows._proof_1_1",
+      "_private.HexSignDetMathlib.SelectedProducer.0.Hex.SignDet.Descriptor.signs_rows._proof_1_2",
+      "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.eq_root",
+      "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Reencoding.exists_root._proof_1_1"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootModel",
+    "name": "Hex.SignDet.signsAt.congr_simp",
+    "users": [
+      "Hex.RealClosure.Rebinding.real_eq_source",
+      "Hex.RealClosure.Specialize.exists_nested_selected",
+      "Hex.RealClosure.Specialize.selected_root_near",
+      "Hex.SignDet.Descriptor.completion_rows",
+      "Hex.SignDet.Descriptor.signs_rows",
+      "Hex.SignDet.Reencoding.target_constraints",
+      "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.eq_root"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootModel",
+    "name": "Hex.SignDet.signsAt.eq_1",
+    "users": [
+      "Hex.RealClosure.Specialize.selected_near",
+      "Hex.SignDet.Descriptor.buildReencoding_congr",
+      "Hex.SignDet.Descriptor.buildReencoding_success"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootModel",
+    "name": "_private.HexSignDetMathlib.RootModel.0.Hex.SignDet.Replay.check_support._simp_1_2",
+    "users": [
+      "Hex.SignDet.Replay.check_support"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootModel",
+    "name": "_private.HexSignDetMathlib.RootModel.0.Hex.SignDet.Replay.check_support._simp_1_3",
+    "users": [
+      "Hex.SignDet.Replay.check_support"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootProducer",
+    "name": "Hex.SignDet.Descriptor.build_noError",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootProducer",
+    "name": "Hex.SignDet.Descriptor.build_of_unique_root",
+    "users": [
+      "Hex.SignDet.Descriptor.buildReencoding_congr",
+      "Hex.SignDet.Descriptor.buildReencoding_success",
+      "Hex.SignDet.Descriptor.build_success_iff"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootProducer",
+    "name": "Hex.SignDet.Descriptor.build_success_formal",
+    "users": [
+      "Hex.SignDet.Descriptor.validate_success_formal"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootProducer",
+    "name": "Hex.SignDet.Descriptor.build_success_iff",
+    "users": [
+      "Hex.SignDet.Descriptor.build_success_formal",
+      "Hex.SignDet.Descriptor.convert_success",
+      "Hex.SignDet.Descriptor.validate_success_iff"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootProducer",
+    "name": "Hex.SignDet.Descriptor.build_valid_cases",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootProducer",
+    "name": "Hex.SignDet.Descriptor.validate_success_formal",
+    "users": [
+      "Hex.RealClosure.Tower.Conversion.Model.descriptor_exists",
+      "Hex.RealClosure.Tower.Model.refine_descriptor"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootProducer",
+    "name": "Hex.SignDet.Descriptor.validate_success_iff",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootProducer",
+    "name": "Hex.SignDet.QueryReduction.operands.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootProducer",
+    "name": "Hex.SignDet.QueryReduction.operands.eq_2",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootProducer",
+    "name": "Hex.SignDet.buildPrepared_roots",
+    "users": [
+      "Hex.RealClosure.Isolation.completeCell_success",
+      "Hex.SignDet.Descriptor.buildCompletion_success",
+      "Hex.SignDet.Descriptor.buildReencoding_absent",
+      "Hex.SignDet.Descriptor.buildReencoding_congr",
+      "Hex.SignDet.Descriptor.buildReencoding_success",
+      "Hex.SignDet.Descriptor.buildRoots_empty",
+      "Hex.SignDet.Descriptor.buildRoots_subsingleton",
+      "Hex.SignDet.Descriptor.buildRoots_success",
+      "Hex.SignDet.Descriptor.buildSigns_success",
+      "Hex.SignDet.Descriptor.build_noError",
+      "Hex.SignDet.Descriptor.build_of_unique_root",
+      "Hex.SignDet.Descriptor.build_valid_cases",
+      "Hex.SignDet.buildTablePrepared_success",
+      "Hex.SignDet.determinePrepared_correct"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootProducer",
+    "name": "Hex.SignDet.query_model",
+    "users": [
+      "Hex.SignDet.buildPrepared_roots"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootProducer",
+    "name": "Hex.SignDet.query_model._unary",
+    "users": [
+      "Hex.SignDet.query_model"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootProducer",
+    "name": "Hex.SignDet.query_values",
+    "users": [
+      "Hex.SignDet.query_model._unary"
+    ]
+  },
+  {
+    "axioms": [],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.RootProducer",
+    "name": "Hex.SignDet.query_values.match_1",
+    "users": [
+      "Hex.SignDet.query_model",
+      "Hex.SignDet.query_model._unary",
+      "Hex.SignDet.query_values"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootProducer",
+    "name": "_private.HexSignDetMathlib.RootProducer.0.Hex.SignDet.Descriptor.build_valid_cases._proof_1_1",
+    "users": [
+      "Hex.SignDet.Descriptor.build_valid_cases"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootProducer",
+    "name": "_private.HexSignDetMathlib.RootProducer.0.Hex.SignDet.Descriptor.validate_success_formal._simp_1_1",
+    "users": [
+      "Hex.SignDet.Descriptor.validate_success_formal"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootProducer",
+    "name": "_private.HexSignDetMathlib.RootProducer.0.Hex.SignDet.Descriptor.validate_success_iff._simp_1_1",
+    "users": [
+      "Hex.SignDet.Descriptor.validate_success_iff"
+    ]
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootProducer",
+    "name": "_private.HexSignDetMathlib.RootProducer.0.Hex.SignDet.QueryReduction.operands.match_1.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootProducer",
+    "name": "_private.HexSignDetMathlib.RootProducer.0.Hex.SignDet.QueryReduction.operands.match_1.eq_2",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.RootProducer",
+    "name": "_private.HexSignDetMathlib.RootProducer.0.Hex.SignDet.QueryReduction.operands.match_1.splitter",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.RootProducer",
+    "name": "_private.HexSignDetMathlib.RootProducer.0.Hex.SignDet.query_model._simp_1_1",
+    "users": [
+      "Hex.SignDet.query_model._unary"
+    ]
+  },
+  {
+    "axioms": [],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.RootProducer",
+    "name": "_private.HexSignDetMathlib.RootProducer.0.Hex.SignDet.query_values.match_1_4",
+    "users": [
+      "Hex.SignDet.query_values"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedProducer",
+    "name": "Hex.SignDet.Descriptor.buildSigns_roots",
+    "users": [
+      "Hex.RCF.SignDetFieldProofs.cubic_success",
+      "Hex.RealClosure.Tower.Model.minimal_query",
+      "Hex.SignDet.QueryHandle.buildSigns_roots"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedProducer",
+    "name": "Hex.SignDet.Descriptor.buildSigns_success",
+    "users": [
+      "Hex.RealClosure.Algebraic.Context.buildEvidence_success",
+      "Hex.RealClosure.Algebraic.Context.buildSigns_ne_error",
+      "Hex.RealClosure.Algebraic.Context.signQuery_spec",
+      "Hex.RealClosure.Algebraic.Packing.Inverse.build?_success",
+      "Hex.RealClosure.Algebraic.Packing.build?_success",
+      "Hex.RealClosure.Isolation.Root.compare_point",
+      "Hex.RealClosure.Isolation.Root.compare_selected",
+      "Hex.SignDet.Descriptor.buildSigns_roots",
+      "Hex.SignDet.Descriptor.prepareQueries_success",
+      "Hex.SignDet.Descriptor.signAt_success",
+      "Hex.SignDet.QueryHandle.buildSigns_success"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedProducer",
+    "name": "Hex.SignDet.Descriptor.signAt_correct",
+    "users": [
+      "Hex.SignDet.Descriptor.convert_signAt",
+      "Hex.SignDet.QueryHandle.signAt_correct"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedProducer",
+    "name": "Hex.SignDet.Descriptor.signAt_success",
+    "users": [
+      "Hex.SignDet.Descriptor.signAt_correct",
+      "Hex.SignDet.QueryHandle.signAt_success"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedProducer",
+    "name": "Hex.SignDet.Descriptor.signs_rows",
+    "users": [
+      "Hex.SignDet.Descriptor.buildSigns_success"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedProducer",
+    "name": "_private.HexSignDetMathlib.SelectedProducer.0.Hex.SignDet.Descriptor.signs_rows._proof_1_1",
+    "users": [
+      "Hex.SignDet.Descriptor.signs_rows"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedProducer",
+    "name": "_private.HexSignDetMathlib.SelectedProducer.0.Hex.SignDet.Descriptor.signs_rows._proof_1_2",
+    "users": [
+      "Hex.SignDet.Descriptor.signs_rows"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "Hex.SignDet.Comparison.eq_iff_root_eq",
+    "users": [
+      "Hex.RealClosure.Isolation.Root.compare_eq"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "Hex.SignDet.Completion.root_eq_source",
+    "users": [
+      "Hex.SignDet.Completion.signs_at_source",
+      "Hex.SignDet.Descriptor.buildCompletion_roots",
+      "Hex.SignDet.Descriptor.buildOrder_roots",
+      "Hex.SignDet.Descriptor.complete_correct"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "Hex.SignDet.Completion.signs_at_source",
+    "users": [
+      "Hex.SignDet.Descriptor.buildCompletion_roots",
+      "Hex.SignDet.Descriptor.complete_correct"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "Hex.SignDet.Descriptor.constraints_at_root",
+    "users": [
+      "Hex.RealClosure.Tower.Model.child_generator",
+      "Hex.SignDet.Descriptor.constraints_iff",
+      "Hex.SignDet.Descriptor.reencoding_rows"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "Hex.SignDet.Descriptor.constraints_bounds",
+    "users": [
+      "Hex.SignDet.Descriptor.constraints_interval"
+    ]
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "Hex.SignDet.Descriptor.constraints_bounds._sparseCasesOn_1",
+    "users": [
+      "Hex.SignDet.Descriptor.constraints_bounds._sparseCasesOn_1.else_eq",
+      "Hex.SignDet.Descriptor.constraints_bounds.match_1",
+      "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.eq_2"
+    ]
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "Hex.SignDet.Descriptor.constraints_bounds._sparseCasesOn_1.else_eq",
+    "users": [
+      "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.eq_2"
+    ]
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "Hex.SignDet.Descriptor.constraints_bounds.match_1",
+    "users": [
+      "Hex.SignDet.Descriptor.constraints_bounds",
+      "Hex.SignDet.Descriptor.constraints_interval",
+      "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.eq_1",
+      "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.eq_2"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "Hex.SignDet.Descriptor.constraints_head",
+    "users": [
+      "Hex.SignDet.Descriptor.constraints_iff"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "Hex.SignDet.Descriptor.constraints_iff",
+    "users": [
+      "Hex.RealClosure.Tower.Conversion.Model.reuseRoot_value",
+      "Hex.RealClosure.Tower.Model.child_generator",
+      "Hex.SignDet.Descriptor.buildReencoding_absent",
+      "Hex.SignDet.Descriptor.reencoding_rows",
+      "Hex.SignDet.Reencoding.root_eq_source"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "Hex.SignDet.Descriptor.constraints_interval",
+    "users": [
+      "Hex.SignDet.Descriptor.constraints_iff"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "Hex.SignDet.Descriptor.constraints_queries",
+    "users": [
+      "Hex.SignDet.Descriptor.constraints_iff"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "Hex.SignDet.Descriptor.derivatives_at",
+    "users": [
+      "Hex.RealClosure.Tower.Conversion.Model.root",
+      "Hex.RealClosure.Tower.Model.refine_root",
+      "Hex.SignDet.Completion.root_eq_source",
+      "Hex.SignDet.Descriptor.root_derivatives",
+      "Hex.SignDet.Descriptor.select_full_at"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "Hex.SignDet.Descriptor.existsUnique_root",
+    "users": [
+      "Hex.SignDet.Descriptor.root",
+      "Hex.SignDet.Descriptor.root_spec",
+      "Hex.SignDet.Descriptor.root_unique"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "Hex.SignDet.Descriptor.head_ne_zero",
+    "users": [
+      "Hex.RealClosure.Algebraic.Context.evalPoly_head",
+      "Hex.RealClosure.Algebraic.Context.queryPoly_sign",
+      "Hex.RealClosure.Expression.cofactor_root",
+      "Hex.RealClosure.Expression.denote_head",
+      "Hex.RealClosure.Root.canonical?_isSome",
+      "Hex.RealClosure.Root.canonical?_sound",
+      "Hex.RealClosure.Root.exists_canonical",
+      "Hex.RealClosure.Root.mem_canonical_roots_iff",
+      "Hex.RealClosure.Tower.Model.generator_algebraic",
+      "Hex.RealClosure.Trivial.Map.Model.canonical?_isSome",
+      "Hex.RealClosure.Trivial.Map.Model.canonical?_sound",
+      "Hex.RealClosure.Trivial.Map.Model.mem_roots_iff",
+      "Hex.SignDet.Descriptor.constraints_iff",
+      "Hex.SignDet.Descriptor.fullOrder_root"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "Hex.SignDet.Descriptor.root",
+    "users": [
+      "Hex.RCF.RealCoefficients.SelectedFormula.source_signs",
+      "Hex.RCF.SignDetFieldProofs.Noncanonical.extension_root",
+      "Hex.RCF.SignDetFieldProofs.Noncanonical.reencoding",
+      "Hex.RCF.SignDetFieldProofs.algebraic_root",
+      "Hex.RCF.SignDetFieldProofs.cubic_convert",
+      "Hex.RCF.SignDetFieldProofs.root",
+      "Hex.RealClosure.Algebraic.Context.evalPoly_head",
+      "Hex.RealClosure.Algebraic.Context.finitePoint",
+      "Hex.RealClosure.Algebraic.Context.finitePoint_spec",
+      "Hex.RealClosure.Algebraic.Context.intervalSign?_spec",
+      "Hex.RealClosure.Algebraic.Context.rootValue",
+      "Hex.RealClosure.Algebraic.Context.rootValue.eq_1",
+      "Hex.RealClosure.Algebraic.Context.signFacts._proof_4",
+      "Hex.RealClosure.Algebraic.Context.signPoly_checked",
+      "Hex.RealClosure.Algebraic.Context.singleSign?_spec",
+      "Hex.RealClosure.Algebraic.Packing.Inverse.Equation.denote_inv",
+      "Hex.RealClosure.Algebraic.Packing.Inverse.build?_success",
+      "Hex.RealClosure.Algebraic.Packing.Inverse.realize_many",
+      "Hex.RealClosure.Algebraic.Packing.build?_success",
+      "Hex.RealClosure.Algebraic.Packing.realize",
+      "Hex.RealClosure.Algebraic.Packing.realize_many",
+      "Hex.RealClosure.Expression.denote_transport",
+      "Hex.RealClosure.Expression.sign?_sound",
+      "Hex.RealClosure.Isolation.Completion.nodup",
+      "Hex.RealClosure.Isolation.Output.entries_values",
+      "Hex.RealClosure.Isolation.Output.values",
+      "Hex.RealClosure.Isolation.Output.values.eq_1",
+      "Hex.RealClosure.Isolation.Root.compare_correct",
+      "Hex.RealClosure.Isolation.Root.compare_eq",
+      "Hex.RealClosure.Isolation.Root.compare_linear",
+      "Hex.RealClosure.Isolation.Root.compare_point",
+      "Hex.RealClosure.Isolation.Root.compare_point_selected",
+      "Hex.RealClosure.Isolation.Root.compare_selected",
+      "Hex.RealClosure.Isolation.Root.compare_selected_point",
+      "Hex.RealClosure.Isolation.Root.value",
+      "Hex.RealClosure.Isolation.Root.value.eq_2",
+      "Hex.RealClosure.Isolation.Route.complete_coverage",
+      "Hex.RealClosure.Isolation.completeCell_spec",
+      "Hex.RealClosure.Isolation.completeCells_coverage",
+      "Hex.RealClosure.Isolation.completeCells_nodup",
+      "Hex.RealClosure.Rebinding.real_eq_source",
+      "Hex.RealClosure.Root.real",
+      "Hex.RealClosure.Root.real.eq_1",
+      "Hex.RealClosure.Specialize.Native.nested_selected",
+      "Hex.RealClosure.Specialize.Native.selected_root_near",
+      "Hex.RealClosure.Specialize.exists_nested_selected",
+      "Hex.RealClosure.Specialize.selected_root_near",
+      "Hex.RealClosure.Tower.Conversion.Model.reuseRoot._proof_1",
+      "Hex.RealClosure.Tower.Conversion.Model.reuseRoot_value",
+      "Hex.RealClosure.Tower.Conversion.Model.root",
+      "Hex.RealClosure.Tower.Live.Collection.root_agreement",
+      "Hex.RealClosure.Tower.Live.Collection.roots_twice",
+      "Hex.RealClosure.Tower.Live.Enlargement.preserve",
+      "Hex.RealClosure.Tower.Live.Enlargement.preserveReconciled",
+      "Hex.RealClosure.Tower.Live.Enlargement.preserve_pair",
+      "Hex.RealClosure.Tower.Live.Enlargement.reconciled_root",
+      "Hex.RealClosure.Tower.Live.Enlargement.root_agreement",
+      "Hex.RealClosure.Tower.Live.Enlargement.semantics",
+      "Hex.RealClosure.Tower.Live.Frame.selected_agreement",
+      "Hex.RealClosure.Tower.Live.Frame.transport?_root",
+      "Hex.RealClosure.Tower.Live.Frame.transportList_semantics",
+      "Hex.RealClosure.Tower.Live.Request.transport?_semantics",
+      "Hex.RealClosure.Tower.Live.rootRequest_semantics",
+      "Hex.RealClosure.Tower.Live.selectedValue",
+      "Hex.RealClosure.Tower.Model.adjoin_checked",
+      "Hex.RealClosure.Tower.Model.adjoin_generator",
+      "Hex.RealClosure.Tower.Model.adjoin_inventory",
+      "Hex.RealClosure.Tower.Model.adjoin_ofPoly",
+      "Hex.RealClosure.Tower.Model.adjoin_realization",
+      "Hex.RealClosure.Tower.Model.adjoin_signs",
+      "Hex.RealClosure.Tower.Model.adjoin_value",
+      "Hex.RealClosure.Tower.Model.child_generator",
+      "Hex.RealClosure.Tower.Model.extend_inventory",
+      "Hex.RealClosure.Tower.Model.generator_algebraic",
+      "Hex.RealClosure.Tower.Model.minimal_query",
+      "Hex.RealClosure.Tower.Model.refine_later",
+      "Hex.RealClosure.Tower.Model.refine_polynomial",
+      "Hex.RealClosure.Tower.Model.refine_root",
+      "Hex.RealClosure.Tower.Model.refine_value",
+      "Hex.RealClosure.Tower.Model.root_generator",
+      "Hex.RealClosure.Tower.Sample.section_correct",
+      "Hex.RealClosure.Transport.Finite.selected_signs",
+      "Hex.RealClosure.Transport.selected_signs",
+      "Hex.RealClosure.Trivial.Map.Model.adjoin",
+      "Hex.RealClosure.Trivial.Map.Model.canonical?_isSome",
+      "Hex.RealClosure.Trivial.Map.Model.canonical?_sound",
+      "Hex.RealClosure.Trivial.Map.Model.canonical_real",
+      "Hex.RealClosure.Trivial.Map.Model.root",
+      "Hex.SignDet.Comparison.eq_iff_root_eq",
+      "Hex.SignDet.Comparison.order_root",
+      "Hex.SignDet.Completion.root_eq_source",
+      "Hex.SignDet.Completion.signs_at_source",
+      "Hex.SignDet.Dag.memo_values",
+      "Hex.SignDet.Dag.readMemo_values",
+      "Hex.SignDet.Dag.selectedSigns_values",
+      "Hex.SignDet.Descriptor.buildComparison_success",
+      "Hex.SignDet.Descriptor.buildCompletion_roots",
+      "Hex.SignDet.Descriptor.buildCompletion_success",
+      "Hex.SignDet.Descriptor.buildOrder_roots",
+      "Hex.SignDet.Descriptor.buildReencoding_absent",
+      "Hex.SignDet.Descriptor.buildReencoding_congr",
+      "Hex.SignDet.Descriptor.buildReencoding_isSome",
+      "Hex.SignDet.Descriptor.buildReencoding_refinement",
+      "Hex.SignDet.Descriptor.buildReencoding_success",
+      "Hex.SignDet.Descriptor.buildRoots_convert_roots",
+      "Hex.SignDet.Descriptor.buildRoots_coverage",
+      "Hex.SignDet.Descriptor.buildRoots_ordered",
+      "Hex.SignDet.Descriptor.buildRoots_roots",
+      "Hex.SignDet.Descriptor.buildSigns_roots",
+      "Hex.SignDet.Descriptor.buildSigns_success",
+      "Hex.SignDet.Descriptor.compare_correct",
+      "Hex.SignDet.Descriptor.compare_eq_iff",
+      "Hex.SignDet.Descriptor.compare_gt_iff",
+      "Hex.SignDet.Descriptor.compare_lt_iff",
+      "Hex.SignDet.Descriptor.compare_success",
+      "Hex.SignDet.Descriptor.complete_correct",
+      "Hex.SignDet.Descriptor.completion_rows",
+      "Hex.SignDet.Descriptor.constraints_at_root",
+      "Hex.SignDet.Descriptor.constraints_iff",
+      "Hex.SignDet.Descriptor.constraints_interval",
+      "Hex.SignDet.Descriptor.convert_compare",
+      "Hex.SignDet.Descriptor.convert_root",
+      "Hex.SignDet.Descriptor.convert_signAt",
+      "Hex.SignDet.Descriptor.fullOrder_root",
+      "Hex.SignDet.Descriptor.fullOrder_strict",
+      "Hex.SignDet.Descriptor.full_signs",
+      "Hex.SignDet.Descriptor.reencoding_fiber",
+      "Hex.SignDet.Descriptor.reencoding_rows",
+      "Hex.SignDet.Descriptor.refinement_fiber",
+      "Hex.SignDet.Descriptor.root.congr_simp",
+      "Hex.SignDet.Descriptor.root_comp",
+      "Hex.SignDet.Descriptor.root_derivatives",
+      "Hex.SignDet.Descriptor.root_map",
+      "Hex.SignDet.Descriptor.root_spec",
+      "Hex.SignDet.Descriptor.root_unique",
+      "Hex.SignDet.Descriptor.signAt_correct",
+      "Hex.SignDet.Descriptor.signs_rows",
+      "Hex.SignDet.QueryHandle.buildSigns_roots",
+      "Hex.SignDet.QueryHandle.signAt_correct",
+      "Hex.SignDet.Reencoding.root_eq_source",
+      "Hex.SignDet.Reencoding.target_constraints",
+      "Hex.SignDet.SelectedSigns.value_at_root",
+      "Hex.SignDet.SelectedSigns.values_at_root",
+      "RealClosureConsumer.rootValue",
+      "RealClosureConsumer.selected_root",
+      "RootCoverage.value",
+      "_private.HexRealClosureMathlib.IsolationRoots.0.Hex.RealClosure.Isolation.enumeration_coverage",
+      "_private.HexRealClosureMathlib.LiveRequest.0.Hex.RealClosure.Tower.Live.root_frames",
+      "_private.HexRealClosureMathlib.NativeRealizationTests.0.Hex.RealClosure.Tower.RegisteredRealizationTests.producer",
+      "_private.HexRealClosureMathlib.RootOrder.0.Hex.RealClosure.Isolation.linear_root",
+      "_private.HexRealClosureMathlib.RootTransport.0.Hex.RealClosure.Tower.Moved.Model.selected._proof_7",
+      "_private.HexRealClosureMathlib.TowerTransport.0.Hex.RealClosure.Tower.Conversion.Model.adjoinWith._proof_2",
+      "_private.HexSignDetMathlib.CompletionProducer.0.Hex.SignDet.Descriptor.completion_rows._proof_1_1",
+      "_private.HexSignDetMathlib.CompletionProducer.0.Hex.SignDet.Descriptor.completion_rows._proof_1_2",
+      "_private.HexSignDetMathlib.ReencodingRefinement.0.Hex.SignDet.Descriptor.reencoding_rows._proof_1_1",
+      "_private.HexSignDetMathlib.ReencodingRefinement.0.Hex.SignDet.Descriptor.reencoding_rows._proof_1_2",
+      "_private.HexSignDetMathlib.SelectedProducer.0.Hex.SignDet.Descriptor.signs_rows._proof_1_1",
+      "_private.HexSignDetMathlib.SelectedProducer.0.Hex.SignDet.Descriptor.signs_rows._proof_1_2",
+      "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.eq_root",
+      "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.root_eq"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "Hex.SignDet.Descriptor.root.congr_simp",
+    "users": [
+      "Hex.RealClosure.Tower.Model.adjoin_ofPoly",
+      "Hex.RealClosure.Tower.Model.adjoin_value",
+      "Hex.RealClosure.Tower.Model.generator_algebraic",
+      "Hex.RealClosure.Tower.Model.root_generator"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "Hex.SignDet.Descriptor.root_derivatives",
+    "users": [
+      "Hex.SignDet.Completion.root_eq_source",
+      "Hex.SignDet.Completion.signs_at_source",
+      "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.root_eq"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "Hex.SignDet.Descriptor.root_spec",
+    "users": [
+      "Hex.RCF.SignDetFieldProofs.Noncanonical.extension_root",
+      "Hex.RealClosure.Algebraic.Context.evalPoly_head",
+      "Hex.RealClosure.Algebraic.Context.finitePoint_spec",
+      "Hex.RealClosure.Algebraic.Context.intervalSign?_spec",
+      "Hex.RealClosure.Algebraic.Context.singleSign?_spec",
+      "Hex.RealClosure.Algebraic.Packing.Inverse.realize_many",
+      "Hex.RealClosure.Algebraic.Packing.realize",
+      "Hex.RealClosure.Algebraic.Packing.realize_many",
+      "Hex.RealClosure.Isolation.completeCell_spec",
+      "Hex.RealClosure.Rebinding.real_eq_source",
+      "Hex.RealClosure.Root.real_spec",
+      "Hex.RealClosure.Specialize.selected_root_near",
+      "Hex.RealClosure.Tower.Conversion.Model.root",
+      "Hex.RealClosure.Tower.Model.refine_root",
+      "Hex.RealClosure.Trivial.Map.Model.canonical?_isSome",
+      "Hex.SignDet.Completion.root_eq_source",
+      "Hex.SignDet.Descriptor.buildComparison_success",
+      "Hex.SignDet.Descriptor.buildRoots_coverage",
+      "Hex.SignDet.Descriptor.completion_rows",
+      "Hex.SignDet.Descriptor.constraints_at_root",
+      "Hex.SignDet.Descriptor.constraints_interval",
+      "Hex.SignDet.Descriptor.convert_root",
+      "Hex.SignDet.Descriptor.fullOrder_root",
+      "Hex.SignDet.Descriptor.full_signs",
+      "Hex.SignDet.Descriptor.reencoding_fiber",
+      "Hex.SignDet.Descriptor.root_derivatives",
+      "Hex.SignDet.Descriptor.root_map",
+      "Hex.SignDet.Descriptor.signs_rows",
+      "Hex.SignDet.Reencoding.target_constraints",
+      "Hex.SignDet.SelectedSigns.values_at_root",
+      "_private.HexRealClosureMathlib.RootOrder.0.Hex.RealClosure.Isolation.linear_root",
+      "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.eq_root"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "Hex.SignDet.Descriptor.root_unique",
+    "users": [
+      "Hex.RealClosure.Isolation.completeCell_spec",
+      "Hex.RealClosure.Rebinding.real_eq_source",
+      "Hex.RealClosure.Root.real_unique",
+      "Hex.RealClosure.Tower.Conversion.Model.root",
+      "Hex.RealClosure.Tower.Model.refine_root",
+      "Hex.RealClosure.Trivial.Map.Model.canonical?_sound",
+      "Hex.SignDet.Completion.root_eq_source",
+      "Hex.SignDet.Descriptor.buildRoots_coverage",
+      "Hex.SignDet.Descriptor.completion_rows",
+      "Hex.SignDet.Descriptor.constraints_iff",
+      "Hex.SignDet.Descriptor.convert_root",
+      "Hex.SignDet.Descriptor.reencoding_fiber",
+      "Hex.SignDet.Descriptor.root_map",
+      "Hex.SignDet.Descriptor.signs_rows",
+      "Hex.SignDet.Reencoding.target_constraints",
+      "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.eq_root"
+    ]
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "Hex.SignDet.RawDescriptor.constraintSigns.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "Hex.SignDet.RawDescriptor.constraints._sparseCasesOn_1.else_eq",
+    "users": [
+      "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.RawDescriptor.constraints.match_1.eq_2"
+    ]
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "Hex.SignDet.RawDescriptor.constraints.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "Hex.SignDet.Reencoding.exists_root",
+    "users": [
+      "Hex.SignDet.Reencoding.target_constraints"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "Hex.SignDet.Reencoding.root_eq_source",
+    "users": [
+      "Hex.RealClosure.Expression.cofactor_root",
+      "Hex.RealClosure.Expression.denote_transport",
+      "Hex.RealClosure.Tower.Model.refine_polynomial",
+      "Hex.RealClosure.Tower.Model.refine_value",
+      "Hex.SignDet.Comparison.order_root",
+      "Hex.SignDet.Descriptor.buildReencoding_congr",
+      "Hex.SignDet.Descriptor.buildReencoding_success",
+      "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.eq_root",
+      "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.root_eq"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "Hex.SignDet.Reencoding.target_constraints",
+    "users": [
+      "Hex.SignDet.Reencoding.root_eq_source"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "Hex.SignDet.SelectedSigns.value_at_root",
+    "users": [
+      "Hex.RealClosure.Algebraic.Context.signPoly_checked",
+      "Hex.RealClosure.Algebraic.Context.signQuery_spec",
+      "Hex.RealClosure.Expression.sign?_sound",
+      "Hex.RealClosure.Isolation.Root.compare_point",
+      "Hex.RealClosure.Isolation.Root.compare_point_selected",
+      "Hex.RealClosure.Isolation.Root.compare_selected",
+      "Hex.RealClosure.Isolation.Root.compare_selected_point",
+      "Hex.SignDet.Descriptor.signAt_correct"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "Hex.SignDet.SelectedSigns.values_at_root",
+    "users": [
+      "Hex.RCF.RealCoefficients.SelectedFormula.source_signs",
+      "Hex.RealClosure.Algebraic.Context.signFacts._proof_4",
+      "Hex.RealClosure.Algebraic.Packing.Inverse.Equation.denote_inv",
+      "Hex.RealClosure.Algebraic.Packing.Inverse.build?_success",
+      "Hex.RealClosure.Algebraic.Packing.build?_success",
+      "Hex.RealClosure.Tower.Model.adjoin_checked",
+      "Hex.RealClosure.Transport.Finite.selected_signs",
+      "Hex.SignDet.Dag.memo_values",
+      "Hex.SignDet.Dag.selectedSigns_values",
+      "Hex.SignDet.Descriptor.buildSigns_roots",
+      "Hex.SignDet.SelectedSigns.value_at_root"
+    ]
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "Hex.SignDet.Thom.compareSigns.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.eq_root",
+    "users": [
+      "Hex.SignDet.Comparison.eq_iff_root_eq"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.root_eq",
+    "users": [
+      "Hex.SignDet.Comparison.eq_iff_root_eq"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.root_eq._proof_1_1",
+    "users": [
+      "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Comparison.root_eq"
+    ]
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_at_root._simp_1_1",
+    "users": [
+      "Hex.SignDet.Descriptor.constraints_at_root"
+    ]
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.eq_2",
+    "users": []
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.splitter",
+    "users": []
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.splitter._sparseCasesOn_2",
+    "users": [
+      "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.eq_2",
+      "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_bounds.match_1.splitter"
+    ]
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_interval._simp_1_1",
+    "users": [
+      "Hex.SignDet.Descriptor.constraints_interval"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_interval._simp_1_2",
+    "users": [
+      "Hex.SignDet.Descriptor.constraints_interval"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_interval._simp_1_3",
+    "users": [
+      "Hex.SignDet.Descriptor.constraints_interval"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.derivatives_at._proof_1_1",
+    "users": [
+      "Hex.SignDet.Descriptor.derivatives_at"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.head_ne_zero._proof_1_1",
+    "users": [
+      "Hex.SignDet.Descriptor.head_ne_zero"
+    ]
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.RawDescriptor.constraints.match_1.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.RawDescriptor.constraints.match_1.eq_2",
+    "users": []
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.RawDescriptor.constraints.match_1.splitter",
+    "users": []
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.RawDescriptor.constraints.match_1.splitter._sparseCasesOn_2",
+    "users": [
+      "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.RawDescriptor.constraints.match_1.eq_2",
+      "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.RawDescriptor.constraints.match_1.splitter"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Reencoding.exists_root._proof_1_1",
+    "users": [
+      "Hex.SignDet.Reencoding.exists_root"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.SelectedSigns.values_at_root._simp_1_1",
+    "users": [
+      "Hex.SignDet.SelectedSigns.values_at_root"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.SelectedSigns.values_at_root._simp_1_2",
+    "users": [
+      "Hex.SignDet.SelectedSigns.values_at_root"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.castSignNeg",
+    "users": [
+      "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_interval._simp_1_3"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.SelectedRoot",
+    "name": "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.castSignPos",
+    "users": [
+      "_private.HexSignDetMathlib.SelectedRoot.0.Hex.SignDet.Descriptor.constraints_interval._simp_1_2"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Solve",
+    "name": "Hex.SignDet.solveScaled.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Solve",
+    "name": "Hex.SignDet.solveScaled_eq",
+    "users": [
+      "Hex.SignDet.buildNode_complete",
+      "Hex.SignDetMathlib.Conformance.twoSigns_solved"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TableProducer",
+    "name": "Hex.SignDet.buildTablePrepared_success",
+    "users": [
+      "Hex.SignDet.determinePrepared_success"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TableProducer",
+    "name": "Hex.SignDet.determine.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TableProducer",
+    "name": "Hex.SignDet.determinePrepared.congr_simp",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TableProducer",
+    "name": "Hex.SignDet.determinePrepared_correct",
+    "users": [
+      "Hex.SignDet.determine_correct"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TableProducer",
+    "name": "Hex.SignDet.determinePrepared_success",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TableProducer",
+    "name": "Hex.SignDet.determine_correct",
+    "users": [
+      "Hex.RCF.SignDetFieldProofs.cubic_table",
+      "Hex.SignDet.determine_convert_counts"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TableProducer",
+    "name": "Hex.SignDet.determine_isSome",
+    "users": [
+      "Hex.SignDet.determine_convert_isSome",
+      "Hex.SignDet.determine_correct"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Tensor",
+    "name": "Hex.SignDet.matrixEquiv_tensor",
+    "users": [
+      "Hex.SignDet.tensor_identity",
+      "Hex.SignDet.tensor_mul"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Tensor",
+    "name": "Hex.SignDet.momentMatrix_product",
+    "users": [
+      "Hex.SignDet.Node.product_inverse"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Tensor",
+    "name": "Hex.SignDet.momentMatrix_product._proof_2",
+    "users": [
+      "Hex.SignDet.momentMatrix_product"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Tensor",
+    "name": "Hex.SignDet.productVector.eq_1",
+    "users": [
+      "Hex.SignDet.productVector_toList"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Tensor",
+    "name": "Hex.SignDet.productVector_toList",
+    "users": [
+      "Hex.SignDet.Node.product_inverse"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Tensor",
+    "name": "Hex.SignDet.tensor.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Tensor",
+    "name": "Hex.SignDet.tensor_identity",
+    "users": [
+      "Hex.SignDet.tensor_inverse"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Tensor",
+    "name": "Hex.SignDet.tensor_inverse",
+    "users": [
+      "Hex.SignDet.Node.product_inverse"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Tensor",
+    "name": "Hex.SignDet.tensor_mul",
+    "users": [
+      "Hex.SignDet.tensor_inverse"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Tensor",
+    "name": "_private.HexSignDetMathlib.Tensor.0.Hex.SignDet.momentMatrix_product._proof_1",
+    "users": [
+      "Hex.SignDet.momentMatrix_product._proof_2"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Tensor",
+    "name": "_private.HexSignDetMathlib.Tensor.0.Hex.SignDet.productVector_toList._proof_1_1",
+    "users": [
+      "Hex.SignDet.productVector_toList"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Thom",
+    "name": "Hex.SignDet.Comparison.order_root",
+    "users": [
+      "Hex.RealClosure.Isolation.Root.compare_correct",
+      "Hex.SignDet.Descriptor.buildOrder_roots"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Thom",
+    "name": "Hex.SignDet.Descriptor.fullOrder_root",
+    "users": [
+      "Hex.SignDet.Comparison.order_root",
+      "Hex.SignDet.Descriptor.buildComparison_success",
+      "Hex.SignDet.Descriptor.buildOrder_roots",
+      "Hex.SignDet.Descriptor.buildRoots_ordered",
+      "Hex.SignDet.Descriptor.fullOrder_strict"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Thom",
+    "name": "Hex.SignDet.Descriptor.full_signs",
+    "users": [
+      "Hex.SignDet.Descriptor.fullOrder_root",
+      "Hex.SignDet.Descriptor.fullOrder_strict"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Thom",
+    "name": "Hex.SignDet.RawDescriptor.full_fiber",
+    "users": [
+      "Hex.SignDet.Descriptor.buildReencoding_success",
+      "Hex.SignDet.Descriptor.buildRoots_success"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Thom",
+    "name": "Hex.SignDet.RawDescriptor.full_lt",
+    "users": [
+      "Hex.SignDet.RawDescriptor.full_order"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Thom",
+    "name": "Hex.SignDet.RawDescriptor.full_lt_iff",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Thom",
+    "name": "Hex.SignDet.RawDescriptor.full_order",
+    "users": [
+      "Hex.SignDet.Descriptor.fullOrder_root",
+      "Hex.SignDet.RawDescriptor.full_lt_iff"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Thom",
+    "name": "Hex.SignDet.RawDescriptor.full_unique",
+    "users": [
+      "Hex.SignDet.RawDescriptor.full_fiber"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Thom",
+    "name": "_private.HexSignDetMathlib.Thom.0.Hex.SignDet.RawDescriptor.full_lt._proof_1_1",
+    "users": [
+      "Hex.SignDet.RawDescriptor.full_lt"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Thom",
+    "name": "_private.HexSignDetMathlib.Thom.0.Hex.SignDet.RawDescriptor.full_lt._proof_1_2",
+    "users": [
+      "Hex.SignDet.RawDescriptor.full_lt"
+    ]
+  },
+  {
+    "axioms": [
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Thom",
+    "name": "_private.HexSignDetMathlib.Thom.0.Hex.SignDet.RawDescriptor.full_order._simp_1_1",
+    "users": [
+      "Hex.SignDet.RawDescriptor.full_order"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Thom",
+    "name": "_private.HexSignDetMathlib.Thom.0.Hex.SignDet.sign_int_inj",
+    "users": [
+      "Hex.SignDet.RawDescriptor.full_unique"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.Thom",
+    "name": "_private.HexSignDetMathlib.Thom.0.Hex.SignDet.sign_int_lt",
+    "users": [
+      "Hex.SignDet.RawDescriptor.full_lt"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ThomReencoding",
+    "name": "Hex.SignDet.Descriptor.buildReencoding_isSome",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ThomReencoding",
+    "name": "Hex.SignDet.Descriptor.buildReencoding_success",
+    "users": [
+      "Hex.RCF.SignDetFieldProofs.Noncanonical.reencoding",
+      "Hex.SignDet.Descriptor.buildComparison_success",
+      "Hex.SignDet.Descriptor.buildReencoding_isSome"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ThomReencoding",
+    "name": "_private.HexSignDetMathlib.ThomReencoding.0.Hex.SignDet.Descriptor.buildReencoding_success._proof_1_1",
+    "users": [
+      "Hex.SignDet.Descriptor.buildReencoding_success"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ThomRoots",
+    "name": "Hex.SignDet.Descriptor.buildRoots_isSome",
+    "users": [
+      "Hex.SignDet.Descriptor.buildRoots_convert_isSome"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ThomRoots",
+    "name": "Hex.SignDet.Descriptor.buildRoots_ordered",
+    "users": [
+      "Hex.SignDet.Descriptor.buildRoots_convert_roots",
+      "Hex.SignDet.Descriptor.buildRoots_roots"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ThomRoots",
+    "name": "Hex.SignDet.Descriptor.buildRoots_roots",
+    "users": [
+      "RealClosureConsumer.selected_root",
+      "_private.HexRealClosureMathlib.NativeRealizationTests.0.Hex.RealClosure.Tower.RegisteredRealizationTests.producer"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ThomRoots",
+    "name": "Hex.SignDet.Descriptor.buildRoots_success",
+    "users": [
+      "Hex.RealClosure.Isolation.Route.complete_success",
+      "Hex.RealClosure.Isolation.completeCell_success",
+      "Hex.SignDet.Descriptor.buildRoots_isSome",
+      "Hex.SignDet.Descriptor.buildRoots_roots"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ThomRoots",
+    "name": "Hex.SignDet.Descriptor.fullOrder_strict",
+    "users": [
+      "Hex.SignDet.Descriptor.rootsFromTable_success"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.ThomRoots",
+    "name": "Hex.SignDet.Descriptor.rootsFromTable_success",
+    "users": [
+      "Hex.SignDet.Descriptor.buildRoots_success"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeChecks",
+    "name": "Hex.SignDet.buildPrepared.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeChecks",
+    "name": "Hex.SignDet.buildPrepared_eq",
+    "users": [
+      "Hex.SignDet.buildPrepared_complete"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeChecks",
+    "name": "Hex.SignDet.buildTreeFrom.eq_1",
+    "users": [
+      "Hex.SignDet.buildTreeFrom_checks._unary",
+      "Hex.SignDet.buildTreeFrom_complete._unary"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeChecks",
+    "name": "Hex.SignDet.buildTreeFrom_checks",
+    "users": [
+      "Hex.SignDet.buildTree_checks"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeChecks",
+    "name": "Hex.SignDet.buildTreeFrom_checks._unary",
+    "users": [
+      "Hex.SignDet.buildTreeFrom_checks"
+    ]
+  },
+  {
+    "axioms": [],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.TreeChecks",
+    "name": "Hex.SignDet.buildTreeFrom_checks.match_1",
+    "users": [
+      "Hex.SignDet.buildTreeFrom_checks",
+      "Hex.SignDet.buildTreeFrom_checks._unary",
+      "Hex.SignDet.buildTree_checks"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeChecks",
+    "name": "Hex.SignDet.buildTree_checks",
+    "users": [
+      "Hex.SignDet.buildPrepared_eq",
+      "Hex.SignDetMathlib.Conformance.noncanonical_tree"
+    ]
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeChecks",
+    "name": "_private.HexSignDetMathlib.TreeChecks.0.Except.map.match_1.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeChecks",
+    "name": "_private.HexSignDetMathlib.TreeChecks.0.Except.map.match_1.eq_2",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.TreeChecks",
+    "name": "_private.HexSignDetMathlib.TreeChecks.0.Except.map.match_1.splitter",
+    "users": [
+      "Hex.SignDet.buildTreeFrom_checks._unary"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeChecks",
+    "name": "_private.HexSignDetMathlib.TreeChecks.0.Hex.SignDet.buildTreeFrom_checks._proof_1_4",
+    "users": [
+      "Hex.SignDet.buildTreeFrom_checks._unary"
+    ]
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeChecks",
+    "name": "_private.HexSignDetMathlib.TreeChecks.0.Hex.SignDet.buildTreeFrom_checks._simp_1_3",
+    "users": [
+      "Hex.SignDet.buildTreeFrom_checks._unary"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "inductive",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.Node.Counted",
+    "users": [
+      "Hex.SignDet.Node.Counted.basis",
+      "Hex.SignDet.Node.Counted.casesOn",
+      "Hex.SignDet.Node.Counted.checked",
+      "Hex.SignDet.Node.Counted.counts",
+      "Hex.SignDet.Node.Counted.cover",
+      "Hex.SignDet.Node.Counted.mk",
+      "Hex.SignDet.Node.Counted.mk._flat_ctor",
+      "Hex.SignDet.Node.Counted.rec",
+      "Hex.SignDet.Node.Counted.recOn",
+      "Hex.SignDet.Node.Counted.values",
+      "Hex.SignDet.Replay.Counted._f",
+      "Hex.SignDet.Replay.Counted._sunfold",
+      "Hex.SignDet.Replay.Counted._unsafe_rec",
+      "Hex.SignDet.Replay.Counted.node",
+      "Hex.SignDet.buildNode_counted",
+      "Hex.SignDet.buildTreeFrom_complete._unary"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.Node.Counted.basis",
+    "users": [
+      "Hex.SignDet.buildTreeFrom_complete._unary"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.Node.Counted.casesOn",
+    "users": [
+      "Hex.SignDet.Node.Counted.recOn"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.Node.Counted.checked",
+    "users": [
+      "Hex.SignDet.buildTreeFrom_complete._unary"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.Node.Counted.counts",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.Node.Counted.cover",
+    "users": [
+      "Hex.SignDet.buildTreeFrom_complete._unary"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "constructor",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.Node.Counted.mk",
+    "users": [
+      "Hex.SignDet.Node.Counted",
+      "Hex.SignDet.Node.Counted.casesOn",
+      "Hex.SignDet.Node.Counted.mk._flat_ctor",
+      "Hex.SignDet.Node.Counted.rec",
+      "Hex.SignDet.Node.Counted.recOn",
+      "Hex.SignDet.buildNode_counted"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.Node.Counted.mk._flat_ctor",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "recursor",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.Node.Counted.rec",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.Node.Counted.recOn",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.Node.Counted.values",
+    "users": [
+      "Hex.SignDet.buildTreeFrom_complete._unary"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.QueryModel",
+    "users": [
+      "Hex.SignDet.QueryModel.eq_1",
+      "Hex.SignDet.QueryModel.eq_def",
+      "Hex.SignDet.buildPrepared_complete",
+      "Hex.SignDet.buildPrepared_roots",
+      "Hex.SignDet.buildTreeFrom_complete",
+      "Hex.SignDet.buildTreeFrom_complete._unary",
+      "Hex.SignDet.buildTree_complete",
+      "Hex.SignDet.query_model",
+      "Hex.SignDet.query_model._unary",
+      "Hex.SignDetMathlib.Conformance.empty_model",
+      "Hex.SignDetMathlib.Conformance.false_model",
+      "Hex.SignDetMathlib.Conformance.noncanonical_complete"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.QueryModel._unary",
+    "users": [
+      "Hex.SignDet.QueryModel",
+      "Hex.SignDet.QueryModel._unary.eq_def"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.QueryModel._unary._proof_1",
+    "users": [
+      "Hex.SignDet.QueryModel._unary",
+      "Hex.SignDet.QueryModel._unary.eq_def"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.QueryModel._unary._proof_2",
+    "users": [
+      "Hex.SignDet.QueryModel._unary",
+      "Hex.SignDet.QueryModel._unary.eq_def"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.QueryModel._unary.eq_def",
+    "users": [
+      "Hex.SignDet.QueryModel.eq_def"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.QueryModel._unsafe_rec",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.QueryModel.eq_1",
+    "users": [
+      "Hex.SignDet.buildTreeFrom_complete._unary",
+      "Hex.SignDet.query_model._unary",
+      "Hex.SignDetMathlib.Conformance.empty_model",
+      "Hex.SignDetMathlib.Conformance.false_model"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.QueryModel.eq_def",
+    "users": [
+      "Hex.SignDet.QueryModel.eq_1"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.QueryValues",
+    "users": [
+      "Hex.SignDet.QueryModel._unary",
+      "Hex.SignDet.QueryModel._unary.eq_def",
+      "Hex.SignDet.QueryModel._unsafe_rec",
+      "Hex.SignDet.QueryModel.eq_1",
+      "Hex.SignDet.QueryModel.eq_def",
+      "Hex.SignDet.buildNode_counted",
+      "Hex.SignDet.buildTreeFrom_complete._unary",
+      "Hex.SignDet.query_model._unary",
+      "Hex.SignDet.query_values",
+      "Hex.SignDetMathlib.Conformance.empty_model",
+      "Hex.SignDetMathlib.Conformance.false_model"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.Replay.Counted",
+    "users": [
+      "Hex.RealClosure.Isolation.completeCell_success",
+      "Hex.SignDet.Descriptor.buildCompletion_success",
+      "Hex.SignDet.Descriptor.buildReencoding_absent",
+      "Hex.SignDet.Descriptor.buildReencoding_congr",
+      "Hex.SignDet.Descriptor.buildReencoding_success",
+      "Hex.SignDet.Descriptor.buildRoots_empty",
+      "Hex.SignDet.Descriptor.buildRoots_subsingleton",
+      "Hex.SignDet.Descriptor.buildRoots_success",
+      "Hex.SignDet.Descriptor.buildSigns_success",
+      "Hex.SignDet.Descriptor.build_noError",
+      "Hex.SignDet.Descriptor.build_of_unique_root",
+      "Hex.SignDet.Descriptor.build_valid_cases",
+      "Hex.SignDet.Replay.Counted._sunfold",
+      "Hex.SignDet.Replay.Counted.node",
+      "Hex.SignDet.buildPrepared_complete",
+      "Hex.SignDet.buildPrepared_roots",
+      "Hex.SignDet.buildTablePrepared_success",
+      "Hex.SignDet.buildTreeFrom_complete",
+      "Hex.SignDet.buildTreeFrom_complete._unary",
+      "Hex.SignDet.buildTree_complete",
+      "Hex.SignDet.determinePrepared_correct",
+      "Hex.SignDetMathlib.Conformance.noncanonical_complete"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.Replay.Counted._f",
+    "users": [
+      "Hex.SignDet.Replay.Counted"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.Replay.Counted._sunfold",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.Replay.Counted._unsafe_rec",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.Replay.Counted.match_1",
+    "users": [
+      "Hex.SignDet.Replay.Counted._f",
+      "Hex.SignDet.Replay.Counted._sunfold",
+      "Hex.SignDet.Replay.Counted._unsafe_rec"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.Replay.Counted.node",
+    "users": [
+      "Hex.SignDet.buildTreeFrom_complete._unary"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.buildNode_counted",
+    "users": [
+      "Hex.SignDet.buildTreeFrom_complete._unary"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.buildPrepared_complete",
+    "users": [
+      "Hex.SignDet.buildPrepared_roots",
+      "Hex.SignDetMathlib.Conformance.noncanonical_complete"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.buildTreeFrom_complete",
+    "users": [
+      "Hex.SignDet.buildTree_complete"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.buildTreeFrom_complete._unary",
+    "users": [
+      "Hex.SignDet.buildTreeFrom_complete"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.buildTree_complete",
+    "users": [
+      "Hex.SignDet.buildPrepared_complete"
+    ]
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.leafRows.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "Hex.SignDet.moments_toList",
+    "users": [
+      "Hex.SignDet.buildTreeFrom_complete._unary"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "_private.HexSignDetMathlib.TreeSolve.0.Hex.SignDet.buildNode_counted._proof_1_1",
+    "users": [
+      "Hex.SignDet.buildNode_counted"
+    ]
+  },
+  {
+    "axioms": [
+      "Classical.choice",
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "_private.HexSignDetMathlib.TreeSolve.0.Hex.SignDet.leaf_system",
+    "users": [
+      "Hex.SignDet.buildTreeFrom_complete._unary"
+    ]
+  },
+  {
+    "axioms": [
+      "Quot.sound",
+      "propext"
+    ],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "_private.HexSignDetMathlib.TreeSolve.0.Hex.SignDet.leaf_system._proof_1_2",
+    "users": [
+      "_private.HexSignDetMathlib.TreeSolve.0.Hex.SignDet.leaf_system"
+    ]
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "_private.HexSignDetMathlib.TreeSolve.0.List.map_unattach.match_1.eq_1",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "definition",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "_private.HexSignDetMathlib.TreeSolve.0.List.map_unattach.match_1.splitter",
+    "users": []
+  },
+  {
+    "axioms": [],
+    "kind": "theorem",
+    "module": "HexSignDetMathlib.TreeSolve",
+    "name": "_private.HexSignDetMathlib.TreeSolve.0.PSigma.casesOn._arg_pusher",
+    "users": [
+      "Hex.SignDet.QueryModel._unary.eq_def"
+    ]
+  }
+]

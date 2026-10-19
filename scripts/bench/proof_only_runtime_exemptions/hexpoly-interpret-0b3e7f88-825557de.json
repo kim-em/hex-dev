@@ -1,0 +1,6 @@
+{
+  "path": "HexPoly/Interpret.lean",
+  "baseline_blob": "0b3e7f8870b83da82faa8debc4318713cadf4e1d",
+  "current_blob": "825557dec6482d23c467a87ad0207acdac08cb99",
+  "reason": "HexPoly.Interpret.map_natPow proof gains the exponent-one branch. No executable definition, instance, import or csimp rule changes; compiled coefficient mapping and arithmetic are unchanged."
+}

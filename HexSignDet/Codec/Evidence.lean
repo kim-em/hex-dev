@@ -14,25 +14,31 @@ open Codec (Json)
 
 variable {E Ctx : Type} [Zero E] [DecidableEq E]
 
+/-- Encode both literal scales and the complete quotient polynomial. -/
 def remainder (value : ValueCodec E) (s : RemainderStep E) : Json :=
   .arr #[value.encode s.leftScale, poly value s.quotient, value.encode s.rightScale]
 
-def readRemainder (value : ValueCodec E) (j : Json) : Except String (RemainderStep E) := do
+/-- Read all three remainder fields without checking the arithmetic identity. -/
+@[expose] def readRemainder (value : ValueCodec E) (j : Json) : Except String (RemainderStep E) := do
   let a ← tuple 3 j
   return ⟨← value.decode a[0], ← readPoly value a[1], ← value.decode a[2]⟩
 
+/-- Encode the literal terminal scale and polynomial. -/
 def terminal (value : ValueCodec E) (t : E × DensePoly E) : Json :=
   .arr #[value.encode t.1, poly value t.2]
 
-def readTerminal (value : ValueCodec E) (j : Json) : Except String (E × DensePoly E) := do
+/-- Read both terminal fields without asserting terminal correctness. -/
+@[expose] def readTerminal (value : ValueCodec E) (j : Json) : Except String (E × DensePoly E) := do
   let a ← tuple 2 j
   return (← value.decode a[0], ← readPoly value a[1])
 
+/-- Encode the complete chain, degree list, initial witness, steps and optional terminal. -/
 def chain (value : ValueCodec E) (c : SignedRemainderChain E) : Json :=
   .arr #[array (poly value) c.chain, Json.of c.degrees, remainder value c.initial,
     array (remainder value) c.steps, option (terminal value) c.terminal]
 
-def readChain (value : ValueCodec E) (j : Json) : Except String (SignedRemainderChain E) := do
+/-- Read all five chain fields without computing a replacement chain. -/
+@[expose] def readChain (value : ValueCodec E) (j : Json) : Except String (SignedRemainderChain E) := do
   let a ← tuple 5 j
   return ⟨← readArray (readPoly value) a[0], ← Json.decode a[1],
     ← readRemainder value a[2], ← readArray (readRemainder value) a[3],
@@ -47,7 +53,8 @@ def tarski (value : ValueCodec E) (context : ValueCodec Ctx)
     chain value c.remainders, Json.of c.lowerSigns, Json.of c.upperSigns,
     Json.of c.lowerVariations, Json.of c.upperVariations, Json.of c.value]
 
-def readTarski (value : ValueCodec E) (context : ValueCodec Ctx) (j : Json) :
+/-- Read every certificate field literally; root counts and signs remain replay obligations. -/
+@[expose] def readTarski (value : ValueCodec E) (context : ValueCodec Ctx) (j : Json) :
     Except String (TarskiCertificate E E Ctx) := do
   let a ← tuple 12 j
   return ⟨← context.decode a[0], ← readPoly value a[1], ← readPoly value a[2],
@@ -55,27 +62,33 @@ def readTarski (value : ValueCodec E) (context : ValueCodec Ctx) (j : Json) :
     ← readChain value a[6], ← Json.decode a[7], ← Json.decode a[8],
     ← Json.decode a[9], ← Json.decode a[10], ← Json.decode a[11]⟩
 
+/-- Encode the original factor index, next polynomial and remainder witness. -/
 def reductionStep (value : ValueCodec E) (s : ReductionStep E) : Json :=
   .arr #[Json.of s.index, poly value s.next, remainder value s.witness]
 
-def readReductionStep (value : ValueCodec E) (arity : Nat) (j : Json) :
+/-- Require a bounded factor index before constructing the reduction step. -/
+@[expose] def readReductionStep (value : ValueCodec E) (arity : Nat) (j : Json) :
     Except String (ReductionStep E) := do
   let a ← tuple 3 j
   let i ← index arity a[0]
   return ⟨i.val, ← readPoly value a[1], ← readRemainder value a[2]⟩
 
+/-- Encode the ordered reduction steps and literal result polynomial. -/
 def reduction (value : ValueCodec E) (r : Reduction E) : Json :=
   .arr #[list (reductionStep value) r.steps, poly value r.result]
 
-def readReduction (value : ValueCodec E) (arity : Nat) (j : Json) :
+/-- Read the ordered bounded-index steps and result without checking their identities. -/
+@[expose] def readReduction (value : ValueCodec E) (arity : Nat) (j : Json) :
     Except String (Reduction E) := do
   let a ← tuple 2 j
   return ⟨← readList (readReductionStep value arity) a[0], ← readPoly value a[1]⟩
 
+/-- Encode the ordered original-query preprocessing steps. -/
 def preparation (value : ValueCodec E) (r : QueryReduction E) : Json :=
   list (reductionStep value) r.steps
 
-def readPreparation (value : ValueCodec E) (arity : Nat) (j : Json) :
+/-- Read every preprocessing step against the supplied query arity. -/
+@[expose] def readPreparation (value : ValueCodec E) (arity : Nat) (j : Json) :
     Except String (QueryReduction E) := do
   return ⟨← readList (readReductionStep value arity) j⟩
 

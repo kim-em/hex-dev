@@ -192,7 +192,7 @@ The scope must preserve existing support and contain every positive divisor
 of each supported degree. Selection is measured against a 300-second clean
 rebuild ceiling for all Conway code and proofs with dependencies already
 built. The selected scope must pass three controlled runs. Additional
-Mathlib bridge compilation is measured separately. See
+Theory companion compilation is measured separately. See
 `reports/hex-conway-performance.md` for the machine, exact scopes, costs,
 and unavailable or expensive candidates.
 
@@ -213,7 +213,7 @@ tag := "hex-conway-cross-references"
   transitively through it.
 * Tier 2 primitivity and divisor compatibility are implemented in this
   library. Generator-order and subfield-embedding bridges live in
-  `HexGFqMathlib`. Tier 3 search is unimplemented.
+  `HexGFqTheory`. Tier 3 search is unimplemented.
   Every supported entry has an irreducibility proof and a primitivity
   certificate, including `C(2, 1)` with its trivial multiplicative group.
   Every supported proper-divisor pair has a compatibility theorem. The
@@ -231,4 +231,4 @@ tag := "hex-conway-cross-references"
   one place are comparable with elements computed in another.
 * `HexConway` is Mathlib-free and never depends on Mathlib. The Mathlib
   correspondence proofs for the finite-field theory it draws on live in
-  the higher layers' `*Mathlib` counterparts, not in this library.
+  the higher layers' `*Theory` counterparts, not in this library.

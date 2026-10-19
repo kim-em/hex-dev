@@ -88,6 +88,21 @@ order. -/
   | .nil => origin
   | .root descriptor rest => (origin.snoc descriptor).extend rest
 
+/-- Appending a selected root retains the actual staged base. -/
+theorem Origin.snoc_base {source : Context registry} (origin : Origin source)
+    (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature) :
+    (origin.snoc descriptor).base = origin.base := by
+  cases origin
+  rfl
+
+/-- A complete algebraic suffix retains its predecessor's staged base. -/
+theorem Origin.extend_base {source : Context registry} (origin : Origin source)
+    (suffix : Suffix source) : (origin.extend suffix).base = origin.base := by
+  induction suffix with
+  | nil => rfl
+  | root descriptor rest ih =>
+    exact (ih (origin.snoc descriptor)).trans (origin.snoc_base descriptor)
+
 /-- Appending roots to a packed origin concatenates its validated suffix. -/
 private theorem Origin.extend_pack
     {B : Type} [Lean.Grind.Field B] [DecidableEq B] {sign : B → Int}
@@ -119,6 +134,11 @@ theorem Suffix.origin {source : Context registry} (suffix : Suffix source) :
     rw [Origin.extend]
     rw [← Context.origin_adjoin]
     exact ih
+
+/-- Adding algebraic dependencies preserves the original staged base. -/
+theorem Suffix.base_eq {source : Context registry} (suffix : Suffix source) :
+    suffix.context.origin.base = source.origin.base := by
+  rw [Suffix.origin, Origin.extend_base]
 
 /-- Extracting the origin of a suffix over a staged base recovers its exact
 validated descriptors in the original predecessor order. -/

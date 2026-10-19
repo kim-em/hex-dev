@@ -8,7 +8,7 @@ with spec-driven development.
 witnesses, and fast square-free decomposition for dense polynomials in
 `ℤ[x]`. It depends on `hex-poly-z`, `hex-poly-fp`, `hex-modular`, and
 `hex-resultant`. Its Mathlib correspondence is
-[`hex-poly-z-gcd-mathlib`](https://github.com/leanprover/hex-poly-z-gcd-mathlib).
+[`hex-poly-z-gcd-theory`](https://github.com/leanprover/hex-poly-z-gcd-theory).
 
 # Quickstart
 

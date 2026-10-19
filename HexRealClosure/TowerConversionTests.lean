@@ -87,8 +87,8 @@ private def sample : Option (Array Bool) :=
 #guard_msgs in
 #eval sample
 
-#check_failure Conversion.mk
+-- A conversion's finite transport proof must certify its actual value map.
 #check_failure (show Conversion (Context.base (BaseContext.rational registry)) from
-  ⟨Context.base (BaseContext.rational registry), id, .identity _⟩)
+  ⟨Context.base (BaseContext.rational registry), fun _ => 0, .identity _⟩)
 
 end Hex.RealClosure.Tower.ConversionTests

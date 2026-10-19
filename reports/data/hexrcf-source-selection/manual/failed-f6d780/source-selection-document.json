@@ -1,0 +1,9 @@
+{
+  "sourceLinks": [
+    "https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/NativeSourcesConformance.lean",
+    "https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/SourceSelectionConformance.lean",
+    "https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/SourceSelectionNative.lean",
+    "https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/FieldSelectionConformance.lean"
+  ],
+  "currentSelection": true
+}

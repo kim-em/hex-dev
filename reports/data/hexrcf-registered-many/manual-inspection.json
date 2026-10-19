@@ -1,0 +1,38 @@
+[
+  {
+    "label": "desktop",
+    "kind": "registered-contract",
+    "text": "\n                  For an ordered nonempty list of coefficients from one authenticated real prefix,\nGather.run_registered_many\nderives the selected target and the identity-factory equations and preserves each source index.\nEvery coordinate belongs to that prefix's base-field context.\nGather.run_registered\nis the singleton case. Empty owners retain the existing rational-first selection. The prefix must\nbe the only inserted nonrational entry; successful insertion already excludes\nthe empty rational key path. The\nreturned decision retains each coefficient's value in the caller's own\nRealPrefix.Model. That model already carries\nthe actual provider interpretations and relative-transcendence/progress laws;\na bounded rcf_constant registration alone does not supply it.",
+    "viewport": 1440,
+    "scrollY": 242915,
+    "paragraphWidth": 752,
+    "scrollWidth": 752
+  },
+  {
+    "label": "desktop",
+    "kind": "native-contract",
+    "text": "\n                  The same module proves production laws for\nthe ordered pair (L, L⁻¹), where L = liouvilleNumber 2: the shared equations\nx² = L and x² L⁻¹ = 1 have a root above 1, whereas exchanging the coordinates\nmakes the sentence false. A standalone repeated-root polynomial retains the same\nguarded roots; its square cannot be negative. Catalog controls also execute these\npaired and repeated-root searches. These are native producer laws and compiled\ncontrols, not quoted frozen evidence.",
+    "viewport": 1440,
+    "scrollY": 243260,
+    "paragraphWidth": 752,
+    "scrollWidth": 752
+  },
+  {
+    "label": "narrow",
+    "kind": "registered-contract",
+    "text": "\n                  For an ordered nonempty list of coefficients from one authenticated real prefix,\nGather.run_registered_many\nderives the selected target and the identity-factory equations and preserves each source index.\nEvery coordinate belongs to that prefix's base-field context.\nGather.run_registered\nis the singleton case. Empty owners retain the existing rational-first selection. The prefix must\nbe the only inserted nonrational entry; successful insertion already excludes\nthe empty rational key path. The\nreturned decision retains each coefficient's value in the caller's own\nRealPrefix.Model. That model already carries\nthe actual provider interpretations and relative-transcendence/progress laws;\na bounded rcf_constant registration alone does not supply it.",
+    "viewport": 390,
+    "scrollY": 386173,
+    "paragraphWidth": 343,
+    "scrollWidth": 343
+  },
+  {
+    "label": "narrow",
+    "kind": "native-contract",
+    "text": "\n                  The same module proves production laws for\nthe ordered pair (L, L⁻¹), where L = liouvilleNumber 2: the shared equations\nx² = L and x² L⁻¹ = 1 have a root above 1, whereas exchanging the coordinates\nmakes the sentence false. A standalone repeated-root polynomial retains the same\nguarded roots; its square cannot be negative. Catalog controls also execute these\npaired and repeated-root searches. These are native producer laws and compiled\ncontrols, not quoted frozen evidence.",
+    "viewport": 390,
+    "scrollY": 386912,
+    "paragraphWidth": 343,
+    "scrollWidth": 343
+  }
+]

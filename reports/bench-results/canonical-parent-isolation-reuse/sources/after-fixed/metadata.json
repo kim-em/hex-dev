@@ -1,0 +1,28 @@
+{
+  "head": "630a40345b62d9ed6ce6503d0770ba6d62d47809",
+  "status": "",
+  "sources": {
+    "HexNumberField/Basic.lean": "9b6c980a046b46467353b71ce39c4f7eb3480939e8c538c5907d1f48d2cb9e06",
+    "HexNumberField/Convert.lean": "4f311aa22571ee8fc670bfa4710a48d3299a0fd623f1a287ca98b8814d062585",
+    "HexNumberField/Lazy.lean": "5d9ea561b4940cb8d2826d1649d50327c14f519a2805fb1d9b49e3c500c9c9c6",
+    "HexNumberField/Roots.lean": "97a28eaefb7c85221b4f1af7fb2c5d3aa603734118839d5d5651adf97027bfea",
+    "HexNumberFieldMathlib/Exact.lean": "2643164a438395789ab1e8d07a47eb25e81ceeaaa179e5cfd33c549447197430",
+    "HexRealAlgebraic/Basic.lean": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd",
+    "HexRealAlgebraic/Roots.lean": "0fb67cb79123c00b6cbda25a171e25801fe3543d3fd5e7148f153e84d3ff692d",
+    "HexRealAlgebraic/Order.lean": "4b3ef510f4358d75de4d90f267f067572585be83421aa06958a4246a8245a66a",
+    "bench/HexRealAlgebraic/Bench.lean": "c2cc000b28a11ab7f88cd2cd8492bafe03e365e9ca6fd6ed33ad0514cf02540d",
+    "bench/HexNumberField/Bench.lean": "1b809b0d85e8f3ba69adb04fed8ff4a056b86f7af23c4d5e5d81e93c8d93cef5",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "lake-manifest.json": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e"
+  },
+  "binaries": {
+    "hexrealalgebraic_bench": {
+      "path": "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+      "sha256": "6f97a53819cf2d15418453a0d0c0c2e973ead424a7f8cca91880388d0cc7b152"
+    },
+    "hexnumberfield_bench": {
+      "path": "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexnumberfield_bench",
+      "sha256": "e4c9093663079556e37bdefc4cfdefcc2d5e90d1e14f8b72061a9b72cac3520a"
+    }
+  }
+}

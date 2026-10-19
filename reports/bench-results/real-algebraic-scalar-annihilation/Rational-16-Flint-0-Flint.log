@@ -1,0 +1,9 @@
+Hex.RealAlgebraicScaling.runFlintRational16    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a3ddc94-dirty, 2026-10-04T20:02:06Z, host=chungus2
+  repeat 0  11.738 µs  (×2^13, total 96.159 ms)
+  median: 11.738 µs    min: 11.738 µs    max: 11.738 µs
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 62_892 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Rational-16-Flint-0-Flint.json

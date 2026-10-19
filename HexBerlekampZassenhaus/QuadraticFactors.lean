@@ -665,7 +665,7 @@ returns `some coreFactors`, the executable `Array.polyProduct` of the recorded
 factors reconstructs `core` exactly. Public wrapper of the private
 `quadraticIntegerRootFactors?_product`, used by the Mathlib-side
 discharger `reassemblyExpansionComplete_quadraticIntegerRootFactors_of_ne_zero`
-(`HexBerlekampZassenhausMathlib/IntReductionMod.lean`) when feeding the
+(`HexBerlekampZassenhausTheory/IntReductionMod.lean`) when feeding the
 factorPower repeated-part decomposition and the no-tail divisibility
 lemma into `Hex.reassemblyExpansionComplete`. The corresponding constant and
 small-mod singleton branch theorems are

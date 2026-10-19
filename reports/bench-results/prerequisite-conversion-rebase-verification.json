@@ -1,0 +1,93 @@
+{
+  "scope": "Phase 3 only; Phase 4 remains incomplete. Required CI on the final pushed revision must pass before merge.",
+  "rebased_runtime_source_commit": "5b9da3a0b4e58ef8696c888a532ad8657300c278",
+  "base_commit": "c74bc64a0e2fc3620bdc457d72d96023c5dbec48",
+  "default_lake_build": {
+    "result": "success",
+    "jobs": 15574,
+    "includes": "Both ordinary-kernel companion test targets, HexQuerySemantics, inherited conversion and field-sign proofs, HexManual."
+  },
+  "conformance_and_emit_build": {
+    "command": "lake build HexConformance hexrealalgebraic_emit_fixtures",
+    "result": "success",
+    "jobs": 14720
+  },
+  "companion_axiom_guards": {
+    "command": "lake build HexSturmMathlibTests HexRealAlgebraicMathlibTests",
+    "result": "success",
+    "jobs": 9871,
+    "allowed_axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "additional_guards": [
+      "HexSturmMathlib.rootCount_sturm",
+      "Hex.RealAlgebraicNumber.sqrt?_isSome"
+    ]
+  },
+  "bench_build": {
+    "command": "lake build hexsturm_bench hexrealalgebraic_bench",
+    "result": "success",
+    "jobs": 862
+  },
+  "named_admission_scan": {
+    "result": "success",
+    "cones": 275,
+    "local_modules": 1050
+  },
+  "dag_check": "success",
+  "phase4_structural_check": {
+    "result": "success",
+    "headline_reports": 43,
+    "changed_registrations": 44
+  },
+  "bench_budget_unit_tests": {
+    "result": "success",
+    "cases": 4,
+    "regression": "A failed Sturm coefficient-fixture validation exits nonzero through the existing CI wrapper."
+  },
+  "sturm_oracle_regression_tests": {
+    "result": "success",
+    "cases": 5,
+    "skips": 0
+  },
+  "fresh_exact_oracle": {
+    "result": "success",
+    "cases": 83,
+    "unavailable_component_skips": 0,
+    "fixtures_match_committed_bytes": true
+  },
+  "owned_bench_verify": {
+    "result": "success",
+    "counts": {
+      "HexSturm": 44,
+      "HexRealAlgebraic": 67
+    },
+    "total_seconds": 31,
+    "hard_cap_seconds": 360,
+    "real_algebraic_seconds": 31,
+    "sturm_coefficient_fixture_degrees": 129,
+    "interpreter": "/tmp/hex-10577-oracles/bin/python",
+    "scope": "Two owned executables only; does not establish repo-wide current CI headroom."
+  },
+  "retained_local_failures": [
+    {
+      "command": "lake build HexConformance hexsturm_emit_fixtures hexrealalgebraic_emit_fixtures",
+      "result": "failed",
+      "reason": "hexsturm_emit_fixtures is not a declared target; corrected command above passes."
+    },
+    {
+      "result": "failed",
+      "reason": "Default system python3 lacks python-flint; three informational qqbar registrations fail closed. The same complete smoke suite passes with the installed pinned interpreter selected through existing HEX_FLINT_BENCH_PYTHON."
+    }
+  ],
+  "tested_followup_source_sha256": {
+    "HexSturmMathlib/Tests.lean": "f0509a9feadf9c51068905de784a928b795516c3b1ec47f88dede0a81919ffee",
+    "HexRealAlgebraicMathlib/Tests.lean": "32ad7ddc786eac9545c4907259a6889684e07dbff83aad707d28d8ab84774e7a",
+    "scripts/ci/check_bench_verify_budget.sh": "3aea1b45ca92a6df01a257809c0a1d6d71886d4ff7f93fa3b8747940f8d59b19",
+    "scripts/ci/test_check_bench_verify_budget.py": "35d3f6d1acfa36fff562e0fd3f53b20a82391da1b8b9b2a6044a6cde21d560ba"
+  },
+  "historical_required_ci": "prerequisite-required-ci-62399ddd0.json",
+  "required_ci_on_final_revision": "Pending; the pre-rebase green run does not attest this source."
+}

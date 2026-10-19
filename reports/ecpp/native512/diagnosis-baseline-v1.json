@@ -1,0 +1,2372 @@
+{
+  "source": "ef08b6bf3646788e309c52938d1d1eb5c1fd19a5",
+  "producer_blob": "ca2a34647dcce35c06fd0b09152bbe8ff5339975",
+  "executable_sha256": "a6af8b4eaff48ac333109803353026be8f93cd3a8c2e5204a009d388310141f7",
+  "corpus_sha256": "f637736faaa474ef32ab61b9a146f52c3d6c83e96b730dbef0dc14f87669bce2",
+  "allocation_sha256": "e2aed6f865d3a8cc86fb01c0b7bb44a310879ae668cc46c7273d758990edf040",
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "cpu": 59,
+  "loadavg": [
+    2.2578125,
+    13.52490234375,
+    29.52099609375
+  ],
+  "protocol": "two trial-major tuning trials; adjacent core/public arms alternate AB/BA; controls once per arm",
+  "cases": [
+    {
+      "id": "tuning-512-ordinary-0",
+      "subject": 9664568748683754057340486409156960983838415747044874078915580188917496883056334835867848227161838451288974801522632629215640559424489948631338261877879297,
+      "seed": 0,
+      "trial": 0,
+      "order": [
+        "diagnose512",
+        "diagnose512-public"
+      ],
+      "arms": {
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 76365453,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":6053433728553997232,\"resource\":\"Hex.ECPP.Resource.portfolio\",\"search_ns\":52797444,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":27,\"factorWork\":136,\"lastRetry\":null,\"nonresidues\":2,\"points\":0,\"roots\":9,\"scalarWork\":0,\"unresolved\":[9664568748683754057340486409156960983838415747044874078915580188917496883056334835867848227161838451288974801522632629215640559424489948631338261877879297,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":9664568748683754057340486409156960983838415747044874078915580188917496883056334835867848227161838451288974801522632629215640559424489948631338261877879297,\"unresolved\":9664568748683754057340486409156960983838415747044874078915580188917496883056334835867848227161838451288974801522632629215640559424489948631338261877879297,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 6053433728553997232,
+            "resource": "Hex.ECPP.Resource.portfolio",
+            "search_ns": 52797444,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 27,
+              "factorWork": 136,
+              "lastRetry": null,
+              "nonresidues": 2,
+              "points": 0,
+              "roots": 9,
+              "scalarWork": 0,
+              "unresolved": [
+                9664568748683754057340486409156960983838415747044874078915580188917496883056334835867848227161838451288974801522632629215640559424489948631338261877879297,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 9664568748683754057340486409156960983838415747044874078915580188917496883056334835867848227161838451288974801522632629215640559424489948631338261877879297,
+            "unresolved": 9664568748683754057340486409156960983838415747044874078915580188917496883056334835867848227161838451288974801522632629215640559424489948631338261877879297,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 76462787,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":6053433728553997232,\"resource\":\"Hex.ECPP.Resource.portfolio\",\"search_ns\":52640791,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":27,\"factorWork\":136,\"lastRetry\":null,\"nonresidues\":2,\"points\":0,\"roots\":9,\"scalarWork\":0,\"unresolved\":[9664568748683754057340486409156960983838415747044874078915580188917496883056334835867848227161838451288974801522632629215640559424489948631338261877879297,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":9664568748683754057340486409156960983838415747044874078915580188917496883056334835867848227161838451288974801522632629215640559424489948631338261877879297,\"unresolved\":9664568748683754057340486409156960983838415747044874078915580188917496883056334835867848227161838451288974801522632629215640559424489948631338261877879297,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 6053433728553997232,
+            "resource": "Hex.ECPP.Resource.portfolio",
+            "search_ns": 52640791,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 27,
+              "factorWork": 136,
+              "lastRetry": null,
+              "nonresidues": 2,
+              "points": 0,
+              "roots": 9,
+              "scalarWork": 0,
+              "unresolved": [
+                9664568748683754057340486409156960983838415747044874078915580188917496883056334835867848227161838451288974801522632629215640559424489948631338261877879297,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 9664568748683754057340486409156960983838415747044874078915580188917496883056334835867848227161838451288974801522632629215640559424489948631338261877879297,
+            "unresolved": 9664568748683754057340486409156960983838415747044874078915580188917496883056334835867848227161838451288974801522632629215640559424489948631338261877879297,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    },
+    {
+      "id": "tuning-512-ordinary-1",
+      "subject": 11165001371079872695435542857523515987066518793685906502581927958424146997747267925292286671536393714755739942444228690041920157205843265378065471640629661,
+      "seed": 1,
+      "trial": 0,
+      "order": [
+        "diagnose512-public",
+        "diagnose512"
+      ],
+      "arms": {
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 248164669,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":12120391455758111083,\"resource\":\"Hex.ECPP.Resource.portfolio\",\"search_ns\":224881642,\"seed\":1,\"stats\":{\"backtracks\":3,\"candidates\":94,\"factorWork\":488,\"lastRetry\":[11165001371079872695435542857523515987066518793685906502581927958424146997747267925292286671536393714755739942444228690041920157205843265378065471640629661,\"Hex.ECPP.Resource.pointRetries\"],\"nonresidues\":12,\"points\":17,\"roots\":53,\"scalarWork\":7968,\"unresolved\":[2165485125452244531444846188223656161398216003882687491147390824151951713339002416996158090851285367979428394291322974476515402352761830958407029,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":11165001371079872695435542857523515987066518793685906502581927958424146997747267925292286671536393714755739942444228690041920157205843265378065471640629661,\"unresolved\":2165485125452244531444846188223656161398216003882687491147390824151951713339002416996158090851285367979428394291322974476515402352761830958407029,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 12120391455758111083,
+            "resource": "Hex.ECPP.Resource.portfolio",
+            "search_ns": 224881642,
+            "seed": 1,
+            "stats": {
+              "backtracks": 3,
+              "candidates": 94,
+              "factorWork": 488,
+              "lastRetry": [
+                11165001371079872695435542857523515987066518793685906502581927958424146997747267925292286671536393714755739942444228690041920157205843265378065471640629661,
+                "Hex.ECPP.Resource.pointRetries"
+              ],
+              "nonresidues": 12,
+              "points": 17,
+              "roots": 53,
+              "scalarWork": 7968,
+              "unresolved": [
+                2165485125452244531444846188223656161398216003882687491147390824151951713339002416996158090851285367979428394291322974476515402352761830958407029,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 11165001371079872695435542857523515987066518793685906502581927958424146997747267925292286671536393714755739942444228690041920157205843265378065471640629661,
+            "unresolved": 2165485125452244531444846188223656161398216003882687491147390824151951713339002416996158090851285367979428394291322974476515402352761830958407029,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 248111539,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":12120391455758111083,\"resource\":\"Hex.ECPP.Resource.portfolio\",\"search_ns\":225029010,\"seed\":1,\"stats\":{\"backtracks\":3,\"candidates\":94,\"factorWork\":488,\"lastRetry\":[11165001371079872695435542857523515987066518793685906502581927958424146997747267925292286671536393714755739942444228690041920157205843265378065471640629661,\"Hex.ECPP.Resource.pointRetries\"],\"nonresidues\":12,\"points\":17,\"roots\":53,\"scalarWork\":7968,\"unresolved\":[2165485125452244531444846188223656161398216003882687491147390824151951713339002416996158090851285367979428394291322974476515402352761830958407029,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":11165001371079872695435542857523515987066518793685906502581927958424146997747267925292286671536393714755739942444228690041920157205843265378065471640629661,\"unresolved\":2165485125452244531444846188223656161398216003882687491147390824151951713339002416996158090851285367979428394291322974476515402352761830958407029,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 12120391455758111083,
+            "resource": "Hex.ECPP.Resource.portfolio",
+            "search_ns": 225029010,
+            "seed": 1,
+            "stats": {
+              "backtracks": 3,
+              "candidates": 94,
+              "factorWork": 488,
+              "lastRetry": [
+                11165001371079872695435542857523515987066518793685906502581927958424146997747267925292286671536393714755739942444228690041920157205843265378065471640629661,
+                "Hex.ECPP.Resource.pointRetries"
+              ],
+              "nonresidues": 12,
+              "points": 17,
+              "roots": 53,
+              "scalarWork": 7968,
+              "unresolved": [
+                2165485125452244531444846188223656161398216003882687491147390824151951713339002416996158090851285367979428394291322974476515402352761830958407029,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 11165001371079872695435542857523515987066518793685906502581927958424146997747267925292286671536393714755739942444228690041920157205843265378065471640629661,
+            "unresolved": 2165485125452244531444846188223656161398216003882687491147390824151951713339002416996158090851285367979428394291322974476515402352761830958407029,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    },
+    {
+      "id": "tuning-512-ordinary-2",
+      "subject": 11642465630451168684623313170579704738923462634384953736228925467473084401292241310769620819170316355339473585394766443345351819311738478900437913271822637,
+      "seed": 2,
+      "trial": 0,
+      "order": [
+        "diagnose512",
+        "diagnose512-public"
+      ],
+      "arms": {
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 52071347,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":16090773559087534680,\"resource\":\"Hex.ECPP.Resource.portfolio\",\"search_ns\":28812225,\"seed\":2,\"stats\":{\"backtracks\":0,\"candidates\":19,\"factorWork\":104,\"lastRetry\":null,\"nonresidues\":2,\"points\":0,\"roots\":9,\"scalarWork\":0,\"unresolved\":[11642465630451168684623313170579704738923462634384953736228925467473084401292241310769620819170316355339473585394766443345351819311738478900437913271822637,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":11642465630451168684623313170579704738923462634384953736228925467473084401292241310769620819170316355339473585394766443345351819311738478900437913271822637,\"unresolved\":11642465630451168684623313170579704738923462634384953736228925467473084401292241310769620819170316355339473585394766443345351819311738478900437913271822637,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 16090773559087534680,
+            "resource": "Hex.ECPP.Resource.portfolio",
+            "search_ns": 28812225,
+            "seed": 2,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 19,
+              "factorWork": 104,
+              "lastRetry": null,
+              "nonresidues": 2,
+              "points": 0,
+              "roots": 9,
+              "scalarWork": 0,
+              "unresolved": [
+                11642465630451168684623313170579704738923462634384953736228925467473084401292241310769620819170316355339473585394766443345351819311738478900437913271822637,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 11642465630451168684623313170579704738923462634384953736228925467473084401292241310769620819170316355339473585394766443345351819311738478900437913271822637,
+            "unresolved": 11642465630451168684623313170579704738923462634384953736228925467473084401292241310769620819170316355339473585394766443345351819311738478900437913271822637,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 51028440,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":16090773559087534680,\"resource\":\"Hex.ECPP.Resource.portfolio\",\"search_ns\":28773848,\"seed\":2,\"stats\":{\"backtracks\":0,\"candidates\":19,\"factorWork\":104,\"lastRetry\":null,\"nonresidues\":2,\"points\":0,\"roots\":9,\"scalarWork\":0,\"unresolved\":[11642465630451168684623313170579704738923462634384953736228925467473084401292241310769620819170316355339473585394766443345351819311738478900437913271822637,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":11642465630451168684623313170579704738923462634384953736228925467473084401292241310769620819170316355339473585394766443345351819311738478900437913271822637,\"unresolved\":11642465630451168684623313170579704738923462634384953736228925467473084401292241310769620819170316355339473585394766443345351819311738478900437913271822637,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 16090773559087534680,
+            "resource": "Hex.ECPP.Resource.portfolio",
+            "search_ns": 28773848,
+            "seed": 2,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 19,
+              "factorWork": 104,
+              "lastRetry": null,
+              "nonresidues": 2,
+              "points": 0,
+              "roots": 9,
+              "scalarWork": 0,
+              "unresolved": [
+                11642465630451168684623313170579704738923462634384953736228925467473084401292241310769620819170316355339473585394766443345351819311738478900437913271822637,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 11642465630451168684623313170579704738923462634384953736228925467473084401292241310769620819170316355339473585394766443345351819311738478900437913271822637,
+            "unresolved": 11642465630451168684623313170579704738923462634384953736228925467473084401292241310769620819170316355339473585394766443345351819311738478900437913271822637,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    },
+    {
+      "id": "tuning-512-ordinary-3",
+      "subject": 10784042510726406441664435698522181932511426637581048499600746405457386849031855925538550062550095172557562644020598419846612840441264246198552185442790951,
+      "seed": 3,
+      "trial": 0,
+      "order": [
+        "diagnose512-public",
+        "diagnose512"
+      ],
+      "arms": {
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 957785735,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":6884494937198888288,\"resource\":\"Hex.ECPP.Resource.outputBits\",\"search_ns\":934876011,\"seed\":3,\"stats\":{\"backtracks\":2,\"candidates\":216,\"factorWork\":1800,\"lastRetry\":[561494278943721561800636314021829165128928310768230483,\"Hex.ECPP.Resource.pointRetries\"],\"nonresidues\":88,\"points\":255,\"roots\":325,\"scalarWork\":107278,\"unresolved\":[592666573961253617256766999997067496430746119064803319460952772259344564971866018549029262061476090700310333,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":10784042510726406441664435698522181932511426637581048499600746405457386849031855925538550062550095172557562644020598419846612840441264246198552185442790951,\"unresolved\":21016049229999204462953799861447157799752398346871313521109347452734278455886920921894720895580619656332484773036163944057496496781307229,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 6884494937198888288,
+            "resource": "Hex.ECPP.Resource.outputBits",
+            "search_ns": 934876011,
+            "seed": 3,
+            "stats": {
+              "backtracks": 2,
+              "candidates": 216,
+              "factorWork": 1800,
+              "lastRetry": [
+                561494278943721561800636314021829165128928310768230483,
+                "Hex.ECPP.Resource.pointRetries"
+              ],
+              "nonresidues": 88,
+              "points": 255,
+              "roots": 325,
+              "scalarWork": 107278,
+              "unresolved": [
+                592666573961253617256766999997067496430746119064803319460952772259344564971866018549029262061476090700310333,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 10784042510726406441664435698522181932511426637581048499600746405457386849031855925538550062550095172557562644020598419846612840441264246198552185442790951,
+            "unresolved": 21016049229999204462953799861447157799752398346871313521109347452734278455886920921894720895580619656332484773036163944057496496781307229,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 959873340,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":6884494937198888288,\"resource\":\"Hex.ECPP.Resource.outputBits\",\"search_ns\":935382431,\"seed\":3,\"stats\":{\"backtracks\":2,\"candidates\":216,\"factorWork\":1800,\"lastRetry\":[561494278943721561800636314021829165128928310768230483,\"Hex.ECPP.Resource.pointRetries\"],\"nonresidues\":88,\"points\":255,\"roots\":325,\"scalarWork\":107278,\"unresolved\":[592666573961253617256766999997067496430746119064803319460952772259344564971866018549029262061476090700310333,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":10784042510726406441664435698522181932511426637581048499600746405457386849031855925538550062550095172557562644020598419846612840441264246198552185442790951,\"unresolved\":21016049229999204462953799861447157799752398346871313521109347452734278455886920921894720895580619656332484773036163944057496496781307229,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 6884494937198888288,
+            "resource": "Hex.ECPP.Resource.outputBits",
+            "search_ns": 935382431,
+            "seed": 3,
+            "stats": {
+              "backtracks": 2,
+              "candidates": 216,
+              "factorWork": 1800,
+              "lastRetry": [
+                561494278943721561800636314021829165128928310768230483,
+                "Hex.ECPP.Resource.pointRetries"
+              ],
+              "nonresidues": 88,
+              "points": 255,
+              "roots": 325,
+              "scalarWork": 107278,
+              "unresolved": [
+                592666573961253617256766999997067496430746119064803319460952772259344564971866018549029262061476090700310333,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 10784042510726406441664435698522181932511426637581048499600746405457386849031855925538550062550095172557562644020598419846612840441264246198552185442790951,
+            "unresolved": 21016049229999204462953799861447157799752398346871313521109347452734278455886920921894720895580619656332484773036163944057496496781307229,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    },
+    {
+      "id": "tuning-512-ordinary-4",
+      "subject": 6994470154918143100442429589732905053077464907903230353065512239542652200848274552035911247843905576666525957125468938536878870665200994414201517696540271,
+      "seed": 4,
+      "trial": 0,
+      "order": [
+        "diagnose512",
+        "diagnose512-public"
+      ],
+      "arms": {
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 741101006,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":15209562605465157239,\"resource\":\"Hex.ECPP.Resource.outputBits\",\"search_ns\":717451184,\"seed\":4,\"stats\":{\"backtracks\":1,\"candidates\":111,\"factorWork\":1176,\"lastRetry\":[114661115031403244995784104913419529152509164840324862008760257716198205243,\"Hex.ECPP.Resource.pointRetries\"],\"nonresidues\":59,\"points\":238,\"roots\":279,\"scalarWork\":105748,\"unresolved\":[13138943924240571923665207240037380657224694731457066403267,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":6994470154918143100442429589732905053077464907903230353065512239542652200848274552035911247843905576666525957125468938536878870665200994414201517696540271,\"unresolved\":3674143237261598906783381208358300517296290177871015644297876735654733700748377341844817668831772580127170813527432271498669982820481168965882680983,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 15209562605465157239,
+            "resource": "Hex.ECPP.Resource.outputBits",
+            "search_ns": 717451184,
+            "seed": 4,
+            "stats": {
+              "backtracks": 1,
+              "candidates": 111,
+              "factorWork": 1176,
+              "lastRetry": [
+                114661115031403244995784104913419529152509164840324862008760257716198205243,
+                "Hex.ECPP.Resource.pointRetries"
+              ],
+              "nonresidues": 59,
+              "points": 238,
+              "roots": 279,
+              "scalarWork": 105748,
+              "unresolved": [
+                13138943924240571923665207240037380657224694731457066403267,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 6994470154918143100442429589732905053077464907903230353065512239542652200848274552035911247843905576666525957125468938536878870665200994414201517696540271,
+            "unresolved": 3674143237261598906783381208358300517296290177871015644297876735654733700748377341844817668831772580127170813527432271498669982820481168965882680983,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 741949524,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":15209562605465157239,\"resource\":\"Hex.ECPP.Resource.outputBits\",\"search_ns\":717641597,\"seed\":4,\"stats\":{\"backtracks\":1,\"candidates\":111,\"factorWork\":1176,\"lastRetry\":[114661115031403244995784104913419529152509164840324862008760257716198205243,\"Hex.ECPP.Resource.pointRetries\"],\"nonresidues\":59,\"points\":238,\"roots\":279,\"scalarWork\":105748,\"unresolved\":[13138943924240571923665207240037380657224694731457066403267,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":6994470154918143100442429589732905053077464907903230353065512239542652200848274552035911247843905576666525957125468938536878870665200994414201517696540271,\"unresolved\":3674143237261598906783381208358300517296290177871015644297876735654733700748377341844817668831772580127170813527432271498669982820481168965882680983,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 15209562605465157239,
+            "resource": "Hex.ECPP.Resource.outputBits",
+            "search_ns": 717641597,
+            "seed": 4,
+            "stats": {
+              "backtracks": 1,
+              "candidates": 111,
+              "factorWork": 1176,
+              "lastRetry": [
+                114661115031403244995784104913419529152509164840324862008760257716198205243,
+                "Hex.ECPP.Resource.pointRetries"
+              ],
+              "nonresidues": 59,
+              "points": 238,
+              "roots": 279,
+              "scalarWork": 105748,
+              "unresolved": [
+                13138943924240571923665207240037380657224694731457066403267,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 6994470154918143100442429589732905053077464907903230353065512239542652200848274552035911247843905576666525957125468938536878870665200994414201517696540271,
+            "unresolved": 3674143237261598906783381208358300517296290177871015644297876735654733700748377341844817668831772580127170813527432271498669982820481168965882680983,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    },
+    {
+      "id": "tuning-512-ordinary-5",
+      "subject": 9161657168156363388985075826959353897438521164681051793791927340859144237519013613140853170218256865385899582352512982869628577717052660351806316161857307,
+      "seed": 5,
+      "trial": 0,
+      "order": [
+        "diagnose512-public",
+        "diagnose512"
+      ],
+      "arms": {
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 877682140,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":8327040793077758996,\"resource\":\"Hex.ECPP.Resource.outputBits\",\"search_ns\":853753255,\"seed\":5,\"stats\":{\"backtracks\":4,\"candidates\":222,\"factorWork\":1776,\"lastRetry\":[11327122303022926785557655064263696052143585294409408617409964974144897,\"Hex.ECPP.Resource.pointRetries\"],\"nonresidues\":71,\"points\":274,\"roots\":356,\"scalarWork\":103784,\"unresolved\":[692829927940265501686795968092213269426923477812417941328662698959552202949142213918796446360511059638279,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":9161657168156363388985075826959353897438521164681051793791927340859144237519013613140853170218256865385899582352512982869628577717052660351806316161857307,\"unresolved\":334011607944960008943222968308372932827122187443050632242955738592454942930404086664419318589969470199749242631448469658865841949268264174317730329,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 8327040793077758996,
+            "resource": "Hex.ECPP.Resource.outputBits",
+            "search_ns": 853753255,
+            "seed": 5,
+            "stats": {
+              "backtracks": 4,
+              "candidates": 222,
+              "factorWork": 1776,
+              "lastRetry": [
+                11327122303022926785557655064263696052143585294409408617409964974144897,
+                "Hex.ECPP.Resource.pointRetries"
+              ],
+              "nonresidues": 71,
+              "points": 274,
+              "roots": 356,
+              "scalarWork": 103784,
+              "unresolved": [
+                692829927940265501686795968092213269426923477812417941328662698959552202949142213918796446360511059638279,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 9161657168156363388985075826959353897438521164681051793791927340859144237519013613140853170218256865385899582352512982869628577717052660351806316161857307,
+            "unresolved": 334011607944960008943222968308372932827122187443050632242955738592454942930404086664419318589969470199749242631448469658865841949268264174317730329,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 875585562,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":8327040793077758996,\"resource\":\"Hex.ECPP.Resource.outputBits\",\"search_ns\":851393798,\"seed\":5,\"stats\":{\"backtracks\":4,\"candidates\":222,\"factorWork\":1776,\"lastRetry\":[11327122303022926785557655064263696052143585294409408617409964974144897,\"Hex.ECPP.Resource.pointRetries\"],\"nonresidues\":71,\"points\":274,\"roots\":356,\"scalarWork\":103784,\"unresolved\":[692829927940265501686795968092213269426923477812417941328662698959552202949142213918796446360511059638279,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":9161657168156363388985075826959353897438521164681051793791927340859144237519013613140853170218256865385899582352512982869628577717052660351806316161857307,\"unresolved\":334011607944960008943222968308372932827122187443050632242955738592454942930404086664419318589969470199749242631448469658865841949268264174317730329,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 8327040793077758996,
+            "resource": "Hex.ECPP.Resource.outputBits",
+            "search_ns": 851393798,
+            "seed": 5,
+            "stats": {
+              "backtracks": 4,
+              "candidates": 222,
+              "factorWork": 1776,
+              "lastRetry": [
+                11327122303022926785557655064263696052143585294409408617409964974144897,
+                "Hex.ECPP.Resource.pointRetries"
+              ],
+              "nonresidues": 71,
+              "points": 274,
+              "roots": 356,
+              "scalarWork": 103784,
+              "unresolved": [
+                692829927940265501686795968092213269426923477812417941328662698959552202949142213918796446360511059638279,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 9161657168156363388985075826959353897438521164681051793791927340859144237519013613140853170218256865385899582352512982869628577717052660351806316161857307,
+            "unresolved": 334011607944960008943222968308372932827122187443050632242955738592454942930404086664419318589969470199749242631448469658865841949268264174317730329,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    },
+    {
+      "id": "tuning-512-difficult-0",
+      "subject": 9230611139886955711981647862861098859163071757202630837456113954108820225409496085112539805236764953503792883010236716946841782276931812452241185642379643,
+      "seed": 6,
+      "trial": 0,
+      "order": [
+        "diagnose512",
+        "diagnose512-public"
+      ],
+      "arms": {
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 56502176,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":13792091622075029730,\"resource\":\"Hex.ECPP.Resource.portfolio\",\"search_ns\":32574553,\"seed\":6,\"stats\":{\"backtracks\":1,\"candidates\":24,\"factorWork\":152,\"lastRetry\":null,\"nonresidues\":3,\"points\":1,\"roots\":19,\"scalarWork\":1958,\"unresolved\":[308593619751368005322951780150986002903428533151016652855504159166753354073179956514385326783205464504827261498264396618523131762652594667671,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":9230611139886955711981647862861098859163071757202630837456113954108820225409496085112539805236764953503792883010236716946841782276931812452241185642379643,\"unresolved\":308593619751368005322951780150986002903428533151016652855504159166753354073179956514385326783205464504827261498264396618523131762652594667671,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 13792091622075029730,
+            "resource": "Hex.ECPP.Resource.portfolio",
+            "search_ns": 32574553,
+            "seed": 6,
+            "stats": {
+              "backtracks": 1,
+              "candidates": 24,
+              "factorWork": 152,
+              "lastRetry": null,
+              "nonresidues": 3,
+              "points": 1,
+              "roots": 19,
+              "scalarWork": 1958,
+              "unresolved": [
+                308593619751368005322951780150986002903428533151016652855504159166753354073179956514385326783205464504827261498264396618523131762652594667671,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 9230611139886955711981647862861098859163071757202630837456113954108820225409496085112539805236764953503792883010236716946841782276931812452241185642379643,
+            "unresolved": 308593619751368005322951780150986002903428533151016652855504159166753354073179956514385326783205464504827261498264396618523131762652594667671,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 56007713,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":13792091622075029730,\"resource\":\"Hex.ECPP.Resource.portfolio\",\"search_ns\":32280487,\"seed\":6,\"stats\":{\"backtracks\":1,\"candidates\":24,\"factorWork\":152,\"lastRetry\":null,\"nonresidues\":3,\"points\":1,\"roots\":19,\"scalarWork\":1958,\"unresolved\":[308593619751368005322951780150986002903428533151016652855504159166753354073179956514385326783205464504827261498264396618523131762652594667671,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":9230611139886955711981647862861098859163071757202630837456113954108820225409496085112539805236764953503792883010236716946841782276931812452241185642379643,\"unresolved\":308593619751368005322951780150986002903428533151016652855504159166753354073179956514385326783205464504827261498264396618523131762652594667671,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 13792091622075029730,
+            "resource": "Hex.ECPP.Resource.portfolio",
+            "search_ns": 32280487,
+            "seed": 6,
+            "stats": {
+              "backtracks": 1,
+              "candidates": 24,
+              "factorWork": 152,
+              "lastRetry": null,
+              "nonresidues": 3,
+              "points": 1,
+              "roots": 19,
+              "scalarWork": 1958,
+              "unresolved": [
+                308593619751368005322951780150986002903428533151016652855504159166753354073179956514385326783205464504827261498264396618523131762652594667671,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 9230611139886955711981647862861098859163071757202630837456113954108820225409496085112539805236764953503792883010236716946841782276931812452241185642379643,
+            "unresolved": 308593619751368005322951780150986002903428533151016652855504159166753354073179956514385326783205464504827261498264396618523131762652594667671,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    },
+    {
+      "id": "tuning-512-difficult-1",
+      "subject": 11975530748807478626237346866802764864790240613433865312132433311880933021657820524164107302959719030431298395526538457665236328068628324224679678523365509,
+      "seed": 7,
+      "trial": 0,
+      "order": [
+        "diagnose512-public",
+        "diagnose512"
+      ],
+      "arms": {
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 882799757,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":14980408295027109306,\"resource\":\"Hex.ECPP.Resource.outputBits\",\"search_ns\":859630448,\"seed\":7,\"stats\":{\"backtracks\":3,\"candidates\":178,\"factorWork\":1708,\"lastRetry\":[17526926491733080099954659246762995191327,\"Hex.ECPP.Resource.pointRetries\"],\"nonresidues\":68,\"points\":313,\"roots\":384,\"scalarWork\":113874,\"unresolved\":[34878755195808542388357475682714791140504495567247550726148547751681786376665729221562307076253739014952054497662752338693788831795355870638704553,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":11975530748807478626237346866802764864790240613433865312132433311880933021657820524164107302959719030431298395526538457665236328068628324224679678523365509,\"unresolved\":244151286370659796718502329779003537983531468970732855083039834261772504667470006446369975490016071238502722196898577527152745441843798559861633569,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 14980408295027109306,
+            "resource": "Hex.ECPP.Resource.outputBits",
+            "search_ns": 859630448,
+            "seed": 7,
+            "stats": {
+              "backtracks": 3,
+              "candidates": 178,
+              "factorWork": 1708,
+              "lastRetry": [
+                17526926491733080099954659246762995191327,
+                "Hex.ECPP.Resource.pointRetries"
+              ],
+              "nonresidues": 68,
+              "points": 313,
+              "roots": 384,
+              "scalarWork": 113874,
+              "unresolved": [
+                34878755195808542388357475682714791140504495567247550726148547751681786376665729221562307076253739014952054497662752338693788831795355870638704553,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 11975530748807478626237346866802764864790240613433865312132433311880933021657820524164107302959719030431298395526538457665236328068628324224679678523365509,
+            "unresolved": 244151286370659796718502329779003537983531468970732855083039834261772504667470006446369975490016071238502722196898577527152745441843798559861633569,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 883966817,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":14980408295027109306,\"resource\":\"Hex.ECPP.Resource.outputBits\",\"search_ns\":860017713,\"seed\":7,\"stats\":{\"backtracks\":3,\"candidates\":178,\"factorWork\":1708,\"lastRetry\":[17526926491733080099954659246762995191327,\"Hex.ECPP.Resource.pointRetries\"],\"nonresidues\":68,\"points\":313,\"roots\":384,\"scalarWork\":113874,\"unresolved\":[34878755195808542388357475682714791140504495567247550726148547751681786376665729221562307076253739014952054497662752338693788831795355870638704553,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":11975530748807478626237346866802764864790240613433865312132433311880933021657820524164107302959719030431298395526538457665236328068628324224679678523365509,\"unresolved\":244151286370659796718502329779003537983531468970732855083039834261772504667470006446369975490016071238502722196898577527152745441843798559861633569,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 14980408295027109306,
+            "resource": "Hex.ECPP.Resource.outputBits",
+            "search_ns": 860017713,
+            "seed": 7,
+            "stats": {
+              "backtracks": 3,
+              "candidates": 178,
+              "factorWork": 1708,
+              "lastRetry": [
+                17526926491733080099954659246762995191327,
+                "Hex.ECPP.Resource.pointRetries"
+              ],
+              "nonresidues": 68,
+              "points": 313,
+              "roots": 384,
+              "scalarWork": 113874,
+              "unresolved": [
+                34878755195808542388357475682714791140504495567247550726148547751681786376665729221562307076253739014952054497662752338693788831795355870638704553,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 11975530748807478626237346866802764864790240613433865312132433311880933021657820524164107302959719030431298395526538457665236328068628324224679678523365509,
+            "unresolved": 244151286370659796718502329779003537983531468970732855083039834261772504667470006446369975490016071238502722196898577527152745441843798559861633569,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    },
+    {
+      "id": "tuning-512-ordinary-0",
+      "subject": 9664568748683754057340486409156960983838415747044874078915580188917496883056334835867848227161838451288974801522632629215640559424489948631338261877879297,
+      "seed": 0,
+      "trial": 1,
+      "order": [
+        "diagnose512-public",
+        "diagnose512"
+      ],
+      "arms": {
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 75671875,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":6053433728553997232,\"resource\":\"Hex.ECPP.Resource.portfolio\",\"search_ns\":52496277,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":27,\"factorWork\":136,\"lastRetry\":null,\"nonresidues\":2,\"points\":0,\"roots\":9,\"scalarWork\":0,\"unresolved\":[9664568748683754057340486409156960983838415747044874078915580188917496883056334835867848227161838451288974801522632629215640559424489948631338261877879297,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":9664568748683754057340486409156960983838415747044874078915580188917496883056334835867848227161838451288974801522632629215640559424489948631338261877879297,\"unresolved\":9664568748683754057340486409156960983838415747044874078915580188917496883056334835867848227161838451288974801522632629215640559424489948631338261877879297,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 6053433728553997232,
+            "resource": "Hex.ECPP.Resource.portfolio",
+            "search_ns": 52496277,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 27,
+              "factorWork": 136,
+              "lastRetry": null,
+              "nonresidues": 2,
+              "points": 0,
+              "roots": 9,
+              "scalarWork": 0,
+              "unresolved": [
+                9664568748683754057340486409156960983838415747044874078915580188917496883056334835867848227161838451288974801522632629215640559424489948631338261877879297,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 9664568748683754057340486409156960983838415747044874078915580188917496883056334835867848227161838451288974801522632629215640559424489948631338261877879297,
+            "unresolved": 9664568748683754057340486409156960983838415747044874078915580188917496883056334835867848227161838451288974801522632629215640559424489948631338261877879297,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 75757041,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":6053433728553997232,\"resource\":\"Hex.ECPP.Resource.portfolio\",\"search_ns\":52191905,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":27,\"factorWork\":136,\"lastRetry\":null,\"nonresidues\":2,\"points\":0,\"roots\":9,\"scalarWork\":0,\"unresolved\":[9664568748683754057340486409156960983838415747044874078915580188917496883056334835867848227161838451288974801522632629215640559424489948631338261877879297,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":9664568748683754057340486409156960983838415747044874078915580188917496883056334835867848227161838451288974801522632629215640559424489948631338261877879297,\"unresolved\":9664568748683754057340486409156960983838415747044874078915580188917496883056334835867848227161838451288974801522632629215640559424489948631338261877879297,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 6053433728553997232,
+            "resource": "Hex.ECPP.Resource.portfolio",
+            "search_ns": 52191905,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 27,
+              "factorWork": 136,
+              "lastRetry": null,
+              "nonresidues": 2,
+              "points": 0,
+              "roots": 9,
+              "scalarWork": 0,
+              "unresolved": [
+                9664568748683754057340486409156960983838415747044874078915580188917496883056334835867848227161838451288974801522632629215640559424489948631338261877879297,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 9664568748683754057340486409156960983838415747044874078915580188917496883056334835867848227161838451288974801522632629215640559424489948631338261877879297,
+            "unresolved": 9664568748683754057340486409156960983838415747044874078915580188917496883056334835867848227161838451288974801522632629215640559424489948631338261877879297,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    },
+    {
+      "id": "tuning-512-ordinary-1",
+      "subject": 11165001371079872695435542857523515987066518793685906502581927958424146997747267925292286671536393714755739942444228690041920157205843265378065471640629661,
+      "seed": 1,
+      "trial": 1,
+      "order": [
+        "diagnose512",
+        "diagnose512-public"
+      ],
+      "arms": {
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 247227840,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":12120391455758111083,\"resource\":\"Hex.ECPP.Resource.portfolio\",\"search_ns\":224124629,\"seed\":1,\"stats\":{\"backtracks\":3,\"candidates\":94,\"factorWork\":488,\"lastRetry\":[11165001371079872695435542857523515987066518793685906502581927958424146997747267925292286671536393714755739942444228690041920157205843265378065471640629661,\"Hex.ECPP.Resource.pointRetries\"],\"nonresidues\":12,\"points\":17,\"roots\":53,\"scalarWork\":7968,\"unresolved\":[2165485125452244531444846188223656161398216003882687491147390824151951713339002416996158090851285367979428394291322974476515402352761830958407029,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":11165001371079872695435542857523515987066518793685906502581927958424146997747267925292286671536393714755739942444228690041920157205843265378065471640629661,\"unresolved\":2165485125452244531444846188223656161398216003882687491147390824151951713339002416996158090851285367979428394291322974476515402352761830958407029,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 12120391455758111083,
+            "resource": "Hex.ECPP.Resource.portfolio",
+            "search_ns": 224124629,
+            "seed": 1,
+            "stats": {
+              "backtracks": 3,
+              "candidates": 94,
+              "factorWork": 488,
+              "lastRetry": [
+                11165001371079872695435542857523515987066518793685906502581927958424146997747267925292286671536393714755739942444228690041920157205843265378065471640629661,
+                "Hex.ECPP.Resource.pointRetries"
+              ],
+              "nonresidues": 12,
+              "points": 17,
+              "roots": 53,
+              "scalarWork": 7968,
+              "unresolved": [
+                2165485125452244531444846188223656161398216003882687491147390824151951713339002416996158090851285367979428394291322974476515402352761830958407029,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 11165001371079872695435542857523515987066518793685906502581927958424146997747267925292286671536393714755739942444228690041920157205843265378065471640629661,
+            "unresolved": 2165485125452244531444846188223656161398216003882687491147390824151951713339002416996158090851285367979428394291322974476515402352761830958407029,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 247598329,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":12120391455758111083,\"resource\":\"Hex.ECPP.Resource.portfolio\",\"search_ns\":224136687,\"seed\":1,\"stats\":{\"backtracks\":3,\"candidates\":94,\"factorWork\":488,\"lastRetry\":[11165001371079872695435542857523515987066518793685906502581927958424146997747267925292286671536393714755739942444228690041920157205843265378065471640629661,\"Hex.ECPP.Resource.pointRetries\"],\"nonresidues\":12,\"points\":17,\"roots\":53,\"scalarWork\":7968,\"unresolved\":[2165485125452244531444846188223656161398216003882687491147390824151951713339002416996158090851285367979428394291322974476515402352761830958407029,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":11165001371079872695435542857523515987066518793685906502581927958424146997747267925292286671536393714755739942444228690041920157205843265378065471640629661,\"unresolved\":2165485125452244531444846188223656161398216003882687491147390824151951713339002416996158090851285367979428394291322974476515402352761830958407029,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 12120391455758111083,
+            "resource": "Hex.ECPP.Resource.portfolio",
+            "search_ns": 224136687,
+            "seed": 1,
+            "stats": {
+              "backtracks": 3,
+              "candidates": 94,
+              "factorWork": 488,
+              "lastRetry": [
+                11165001371079872695435542857523515987066518793685906502581927958424146997747267925292286671536393714755739942444228690041920157205843265378065471640629661,
+                "Hex.ECPP.Resource.pointRetries"
+              ],
+              "nonresidues": 12,
+              "points": 17,
+              "roots": 53,
+              "scalarWork": 7968,
+              "unresolved": [
+                2165485125452244531444846188223656161398216003882687491147390824151951713339002416996158090851285367979428394291322974476515402352761830958407029,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 11165001371079872695435542857523515987066518793685906502581927958424146997747267925292286671536393714755739942444228690041920157205843265378065471640629661,
+            "unresolved": 2165485125452244531444846188223656161398216003882687491147390824151951713339002416996158090851285367979428394291322974476515402352761830958407029,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    },
+    {
+      "id": "tuning-512-ordinary-2",
+      "subject": 11642465630451168684623313170579704738923462634384953736228925467473084401292241310769620819170316355339473585394766443345351819311738478900437913271822637,
+      "seed": 2,
+      "trial": 1,
+      "order": [
+        "diagnose512-public",
+        "diagnose512"
+      ],
+      "arms": {
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 51798983,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":16090773559087534680,\"resource\":\"Hex.ECPP.Resource.portfolio\",\"search_ns\":28862208,\"seed\":2,\"stats\":{\"backtracks\":0,\"candidates\":19,\"factorWork\":104,\"lastRetry\":null,\"nonresidues\":2,\"points\":0,\"roots\":9,\"scalarWork\":0,\"unresolved\":[11642465630451168684623313170579704738923462634384953736228925467473084401292241310769620819170316355339473585394766443345351819311738478900437913271822637,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":11642465630451168684623313170579704738923462634384953736228925467473084401292241310769620819170316355339473585394766443345351819311738478900437913271822637,\"unresolved\":11642465630451168684623313170579704738923462634384953736228925467473084401292241310769620819170316355339473585394766443345351819311738478900437913271822637,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 16090773559087534680,
+            "resource": "Hex.ECPP.Resource.portfolio",
+            "search_ns": 28862208,
+            "seed": 2,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 19,
+              "factorWork": 104,
+              "lastRetry": null,
+              "nonresidues": 2,
+              "points": 0,
+              "roots": 9,
+              "scalarWork": 0,
+              "unresolved": [
+                11642465630451168684623313170579704738923462634384953736228925467473084401292241310769620819170316355339473585394766443345351819311738478900437913271822637,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 11642465630451168684623313170579704738923462634384953736228925467473084401292241310769620819170316355339473585394766443345351819311738478900437913271822637,
+            "unresolved": 11642465630451168684623313170579704738923462634384953736228925467473084401292241310769620819170316355339473585394766443345351819311738478900437913271822637,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 51518037,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":16090773559087534680,\"resource\":\"Hex.ECPP.Resource.portfolio\",\"search_ns\":28873816,\"seed\":2,\"stats\":{\"backtracks\":0,\"candidates\":19,\"factorWork\":104,\"lastRetry\":null,\"nonresidues\":2,\"points\":0,\"roots\":9,\"scalarWork\":0,\"unresolved\":[11642465630451168684623313170579704738923462634384953736228925467473084401292241310769620819170316355339473585394766443345351819311738478900437913271822637,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":11642465630451168684623313170579704738923462634384953736228925467473084401292241310769620819170316355339473585394766443345351819311738478900437913271822637,\"unresolved\":11642465630451168684623313170579704738923462634384953736228925467473084401292241310769620819170316355339473585394766443345351819311738478900437913271822637,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 16090773559087534680,
+            "resource": "Hex.ECPP.Resource.portfolio",
+            "search_ns": 28873816,
+            "seed": 2,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 19,
+              "factorWork": 104,
+              "lastRetry": null,
+              "nonresidues": 2,
+              "points": 0,
+              "roots": 9,
+              "scalarWork": 0,
+              "unresolved": [
+                11642465630451168684623313170579704738923462634384953736228925467473084401292241310769620819170316355339473585394766443345351819311738478900437913271822637,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 11642465630451168684623313170579704738923462634384953736228925467473084401292241310769620819170316355339473585394766443345351819311738478900437913271822637,
+            "unresolved": 11642465630451168684623313170579704738923462634384953736228925467473084401292241310769620819170316355339473585394766443345351819311738478900437913271822637,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    },
+    {
+      "id": "tuning-512-ordinary-3",
+      "subject": 10784042510726406441664435698522181932511426637581048499600746405457386849031855925538550062550095172557562644020598419846612840441264246198552185442790951,
+      "seed": 3,
+      "trial": 1,
+      "order": [
+        "diagnose512",
+        "diagnose512-public"
+      ],
+      "arms": {
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 959501399,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":6884494937198888288,\"resource\":\"Hex.ECPP.Resource.outputBits\",\"search_ns\":936041158,\"seed\":3,\"stats\":{\"backtracks\":2,\"candidates\":216,\"factorWork\":1800,\"lastRetry\":[561494278943721561800636314021829165128928310768230483,\"Hex.ECPP.Resource.pointRetries\"],\"nonresidues\":88,\"points\":255,\"roots\":325,\"scalarWork\":107278,\"unresolved\":[592666573961253617256766999997067496430746119064803319460952772259344564971866018549029262061476090700310333,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":10784042510726406441664435698522181932511426637581048499600746405457386849031855925538550062550095172557562644020598419846612840441264246198552185442790951,\"unresolved\":21016049229999204462953799861447157799752398346871313521109347452734278455886920921894720895580619656332484773036163944057496496781307229,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 6884494937198888288,
+            "resource": "Hex.ECPP.Resource.outputBits",
+            "search_ns": 936041158,
+            "seed": 3,
+            "stats": {
+              "backtracks": 2,
+              "candidates": 216,
+              "factorWork": 1800,
+              "lastRetry": [
+                561494278943721561800636314021829165128928310768230483,
+                "Hex.ECPP.Resource.pointRetries"
+              ],
+              "nonresidues": 88,
+              "points": 255,
+              "roots": 325,
+              "scalarWork": 107278,
+              "unresolved": [
+                592666573961253617256766999997067496430746119064803319460952772259344564971866018549029262061476090700310333,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 10784042510726406441664435698522181932511426637581048499600746405457386849031855925538550062550095172557562644020598419846612840441264246198552185442790951,
+            "unresolved": 21016049229999204462953799861447157799752398346871313521109347452734278455886920921894720895580619656332484773036163944057496496781307229,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 958100832,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":6884494937198888288,\"resource\":\"Hex.ECPP.Resource.outputBits\",\"search_ns\":934352264,\"seed\":3,\"stats\":{\"backtracks\":2,\"candidates\":216,\"factorWork\":1800,\"lastRetry\":[561494278943721561800636314021829165128928310768230483,\"Hex.ECPP.Resource.pointRetries\"],\"nonresidues\":88,\"points\":255,\"roots\":325,\"scalarWork\":107278,\"unresolved\":[592666573961253617256766999997067496430746119064803319460952772259344564971866018549029262061476090700310333,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":10784042510726406441664435698522181932511426637581048499600746405457386849031855925538550062550095172557562644020598419846612840441264246198552185442790951,\"unresolved\":21016049229999204462953799861447157799752398346871313521109347452734278455886920921894720895580619656332484773036163944057496496781307229,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 6884494937198888288,
+            "resource": "Hex.ECPP.Resource.outputBits",
+            "search_ns": 934352264,
+            "seed": 3,
+            "stats": {
+              "backtracks": 2,
+              "candidates": 216,
+              "factorWork": 1800,
+              "lastRetry": [
+                561494278943721561800636314021829165128928310768230483,
+                "Hex.ECPP.Resource.pointRetries"
+              ],
+              "nonresidues": 88,
+              "points": 255,
+              "roots": 325,
+              "scalarWork": 107278,
+              "unresolved": [
+                592666573961253617256766999997067496430746119064803319460952772259344564971866018549029262061476090700310333,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 10784042510726406441664435698522181932511426637581048499600746405457386849031855925538550062550095172557562644020598419846612840441264246198552185442790951,
+            "unresolved": 21016049229999204462953799861447157799752398346871313521109347452734278455886920921894720895580619656332484773036163944057496496781307229,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    },
+    {
+      "id": "tuning-512-ordinary-4",
+      "subject": 6994470154918143100442429589732905053077464907903230353065512239542652200848274552035911247843905576666525957125468938536878870665200994414201517696540271,
+      "seed": 4,
+      "trial": 1,
+      "order": [
+        "diagnose512-public",
+        "diagnose512"
+      ],
+      "arms": {
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 738859723,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":15209562605465157239,\"resource\":\"Hex.ECPP.Resource.outputBits\",\"search_ns\":715238514,\"seed\":4,\"stats\":{\"backtracks\":1,\"candidates\":111,\"factorWork\":1176,\"lastRetry\":[114661115031403244995784104913419529152509164840324862008760257716198205243,\"Hex.ECPP.Resource.pointRetries\"],\"nonresidues\":59,\"points\":238,\"roots\":279,\"scalarWork\":105748,\"unresolved\":[13138943924240571923665207240037380657224694731457066403267,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":6994470154918143100442429589732905053077464907903230353065512239542652200848274552035911247843905576666525957125468938536878870665200994414201517696540271,\"unresolved\":3674143237261598906783381208358300517296290177871015644297876735654733700748377341844817668831772580127170813527432271498669982820481168965882680983,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 15209562605465157239,
+            "resource": "Hex.ECPP.Resource.outputBits",
+            "search_ns": 715238514,
+            "seed": 4,
+            "stats": {
+              "backtracks": 1,
+              "candidates": 111,
+              "factorWork": 1176,
+              "lastRetry": [
+                114661115031403244995784104913419529152509164840324862008760257716198205243,
+                "Hex.ECPP.Resource.pointRetries"
+              ],
+              "nonresidues": 59,
+              "points": 238,
+              "roots": 279,
+              "scalarWork": 105748,
+              "unresolved": [
+                13138943924240571923665207240037380657224694731457066403267,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 6994470154918143100442429589732905053077464907903230353065512239542652200848274552035911247843905576666525957125468938536878870665200994414201517696540271,
+            "unresolved": 3674143237261598906783381208358300517296290177871015644297876735654733700748377341844817668831772580127170813527432271498669982820481168965882680983,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 741189547,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":15209562605465157239,\"resource\":\"Hex.ECPP.Resource.outputBits\",\"search_ns\":716929030,\"seed\":4,\"stats\":{\"backtracks\":1,\"candidates\":111,\"factorWork\":1176,\"lastRetry\":[114661115031403244995784104913419529152509164840324862008760257716198205243,\"Hex.ECPP.Resource.pointRetries\"],\"nonresidues\":59,\"points\":238,\"roots\":279,\"scalarWork\":105748,\"unresolved\":[13138943924240571923665207240037380657224694731457066403267,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":6994470154918143100442429589732905053077464907903230353065512239542652200848274552035911247843905576666525957125468938536878870665200994414201517696540271,\"unresolved\":3674143237261598906783381208358300517296290177871015644297876735654733700748377341844817668831772580127170813527432271498669982820481168965882680983,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 15209562605465157239,
+            "resource": "Hex.ECPP.Resource.outputBits",
+            "search_ns": 716929030,
+            "seed": 4,
+            "stats": {
+              "backtracks": 1,
+              "candidates": 111,
+              "factorWork": 1176,
+              "lastRetry": [
+                114661115031403244995784104913419529152509164840324862008760257716198205243,
+                "Hex.ECPP.Resource.pointRetries"
+              ],
+              "nonresidues": 59,
+              "points": 238,
+              "roots": 279,
+              "scalarWork": 105748,
+              "unresolved": [
+                13138943924240571923665207240037380657224694731457066403267,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 6994470154918143100442429589732905053077464907903230353065512239542652200848274552035911247843905576666525957125468938536878870665200994414201517696540271,
+            "unresolved": 3674143237261598906783381208358300517296290177871015644297876735654733700748377341844817668831772580127170813527432271498669982820481168965882680983,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    },
+    {
+      "id": "tuning-512-ordinary-5",
+      "subject": 9161657168156363388985075826959353897438521164681051793791927340859144237519013613140853170218256865385899582352512982869628577717052660351806316161857307,
+      "seed": 5,
+      "trial": 1,
+      "order": [
+        "diagnose512",
+        "diagnose512-public"
+      ],
+      "arms": {
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 878234649,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":8327040793077758996,\"resource\":\"Hex.ECPP.Resource.outputBits\",\"search_ns\":854355508,\"seed\":5,\"stats\":{\"backtracks\":4,\"candidates\":222,\"factorWork\":1776,\"lastRetry\":[11327122303022926785557655064263696052143585294409408617409964974144897,\"Hex.ECPP.Resource.pointRetries\"],\"nonresidues\":71,\"points\":274,\"roots\":356,\"scalarWork\":103784,\"unresolved\":[692829927940265501686795968092213269426923477812417941328662698959552202949142213918796446360511059638279,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":9161657168156363388985075826959353897438521164681051793791927340859144237519013613140853170218256865385899582352512982869628577717052660351806316161857307,\"unresolved\":334011607944960008943222968308372932827122187443050632242955738592454942930404086664419318589969470199749242631448469658865841949268264174317730329,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 8327040793077758996,
+            "resource": "Hex.ECPP.Resource.outputBits",
+            "search_ns": 854355508,
+            "seed": 5,
+            "stats": {
+              "backtracks": 4,
+              "candidates": 222,
+              "factorWork": 1776,
+              "lastRetry": [
+                11327122303022926785557655064263696052143585294409408617409964974144897,
+                "Hex.ECPP.Resource.pointRetries"
+              ],
+              "nonresidues": 71,
+              "points": 274,
+              "roots": 356,
+              "scalarWork": 103784,
+              "unresolved": [
+                692829927940265501686795968092213269426923477812417941328662698959552202949142213918796446360511059638279,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 9161657168156363388985075826959353897438521164681051793791927340859144237519013613140853170218256865385899582352512982869628577717052660351806316161857307,
+            "unresolved": 334011607944960008943222968308372932827122187443050632242955738592454942930404086664419318589969470199749242631448469658865841949268264174317730329,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 878924261,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":8327040793077758996,\"resource\":\"Hex.ECPP.Resource.outputBits\",\"search_ns\":855003929,\"seed\":5,\"stats\":{\"backtracks\":4,\"candidates\":222,\"factorWork\":1776,\"lastRetry\":[11327122303022926785557655064263696052143585294409408617409964974144897,\"Hex.ECPP.Resource.pointRetries\"],\"nonresidues\":71,\"points\":274,\"roots\":356,\"scalarWork\":103784,\"unresolved\":[692829927940265501686795968092213269426923477812417941328662698959552202949142213918796446360511059638279,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":9161657168156363388985075826959353897438521164681051793791927340859144237519013613140853170218256865385899582352512982869628577717052660351806316161857307,\"unresolved\":334011607944960008943222968308372932827122187443050632242955738592454942930404086664419318589969470199749242631448469658865841949268264174317730329,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 8327040793077758996,
+            "resource": "Hex.ECPP.Resource.outputBits",
+            "search_ns": 855003929,
+            "seed": 5,
+            "stats": {
+              "backtracks": 4,
+              "candidates": 222,
+              "factorWork": 1776,
+              "lastRetry": [
+                11327122303022926785557655064263696052143585294409408617409964974144897,
+                "Hex.ECPP.Resource.pointRetries"
+              ],
+              "nonresidues": 71,
+              "points": 274,
+              "roots": 356,
+              "scalarWork": 103784,
+              "unresolved": [
+                692829927940265501686795968092213269426923477812417941328662698959552202949142213918796446360511059638279,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 9161657168156363388985075826959353897438521164681051793791927340859144237519013613140853170218256865385899582352512982869628577717052660351806316161857307,
+            "unresolved": 334011607944960008943222968308372932827122187443050632242955738592454942930404086664419318589969470199749242631448469658865841949268264174317730329,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    },
+    {
+      "id": "tuning-512-difficult-0",
+      "subject": 9230611139886955711981647862861098859163071757202630837456113954108820225409496085112539805236764953503792883010236716946841782276931812452241185642379643,
+      "seed": 6,
+      "trial": 1,
+      "order": [
+        "diagnose512-public",
+        "diagnose512"
+      ],
+      "arms": {
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 57987978,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":13792091622075029730,\"resource\":\"Hex.ECPP.Resource.portfolio\",\"search_ns\":32895328,\"seed\":6,\"stats\":{\"backtracks\":1,\"candidates\":24,\"factorWork\":152,\"lastRetry\":null,\"nonresidues\":3,\"points\":1,\"roots\":19,\"scalarWork\":1958,\"unresolved\":[308593619751368005322951780150986002903428533151016652855504159166753354073179956514385326783205464504827261498264396618523131762652594667671,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":9230611139886955711981647862861098859163071757202630837456113954108820225409496085112539805236764953503792883010236716946841782276931812452241185642379643,\"unresolved\":308593619751368005322951780150986002903428533151016652855504159166753354073179956514385326783205464504827261498264396618523131762652594667671,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 13792091622075029730,
+            "resource": "Hex.ECPP.Resource.portfolio",
+            "search_ns": 32895328,
+            "seed": 6,
+            "stats": {
+              "backtracks": 1,
+              "candidates": 24,
+              "factorWork": 152,
+              "lastRetry": null,
+              "nonresidues": 3,
+              "points": 1,
+              "roots": 19,
+              "scalarWork": 1958,
+              "unresolved": [
+                308593619751368005322951780150986002903428533151016652855504159166753354073179956514385326783205464504827261498264396618523131762652594667671,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 9230611139886955711981647862861098859163071757202630837456113954108820225409496085112539805236764953503792883010236716946841782276931812452241185642379643,
+            "unresolved": 308593619751368005322951780150986002903428533151016652855504159166753354073179956514385326783205464504827261498264396618523131762652594667671,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 57228222,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":13792091622075029730,\"resource\":\"Hex.ECPP.Resource.portfolio\",\"search_ns\":33005081,\"seed\":6,\"stats\":{\"backtracks\":1,\"candidates\":24,\"factorWork\":152,\"lastRetry\":null,\"nonresidues\":3,\"points\":1,\"roots\":19,\"scalarWork\":1958,\"unresolved\":[308593619751368005322951780150986002903428533151016652855504159166753354073179956514385326783205464504827261498264396618523131762652594667671,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":9230611139886955711981647862861098859163071757202630837456113954108820225409496085112539805236764953503792883010236716946841782276931812452241185642379643,\"unresolved\":308593619751368005322951780150986002903428533151016652855504159166753354073179956514385326783205464504827261498264396618523131762652594667671,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 13792091622075029730,
+            "resource": "Hex.ECPP.Resource.portfolio",
+            "search_ns": 33005081,
+            "seed": 6,
+            "stats": {
+              "backtracks": 1,
+              "candidates": 24,
+              "factorWork": 152,
+              "lastRetry": null,
+              "nonresidues": 3,
+              "points": 1,
+              "roots": 19,
+              "scalarWork": 1958,
+              "unresolved": [
+                308593619751368005322951780150986002903428533151016652855504159166753354073179956514385326783205464504827261498264396618523131762652594667671,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 9230611139886955711981647862861098859163071757202630837456113954108820225409496085112539805236764953503792883010236716946841782276931812452241185642379643,
+            "unresolved": 308593619751368005322951780150986002903428533151016652855504159166753354073179956514385326783205464504827261498264396618523131762652594667671,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    },
+    {
+      "id": "tuning-512-difficult-1",
+      "subject": 11975530748807478626237346866802764864790240613433865312132433311880933021657820524164107302959719030431298395526538457665236328068628324224679678523365509,
+      "seed": 7,
+      "trial": 1,
+      "order": [
+        "diagnose512",
+        "diagnose512-public"
+      ],
+      "arms": {
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 894405372,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":14980408295027109306,\"resource\":\"Hex.ECPP.Resource.outputBits\",\"search_ns\":869664383,\"seed\":7,\"stats\":{\"backtracks\":3,\"candidates\":178,\"factorWork\":1708,\"lastRetry\":[17526926491733080099954659246762995191327,\"Hex.ECPP.Resource.pointRetries\"],\"nonresidues\":68,\"points\":313,\"roots\":384,\"scalarWork\":113874,\"unresolved\":[34878755195808542388357475682714791140504495567247550726148547751681786376665729221562307076253739014952054497662752338693788831795355870638704553,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":11975530748807478626237346866802764864790240613433865312132433311880933021657820524164107302959719030431298395526538457665236328068628324224679678523365509,\"unresolved\":244151286370659796718502329779003537983531468970732855083039834261772504667470006446369975490016071238502722196898577527152745441843798559861633569,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 14980408295027109306,
+            "resource": "Hex.ECPP.Resource.outputBits",
+            "search_ns": 869664383,
+            "seed": 7,
+            "stats": {
+              "backtracks": 3,
+              "candidates": 178,
+              "factorWork": 1708,
+              "lastRetry": [
+                17526926491733080099954659246762995191327,
+                "Hex.ECPP.Resource.pointRetries"
+              ],
+              "nonresidues": 68,
+              "points": 313,
+              "roots": 384,
+              "scalarWork": 113874,
+              "unresolved": [
+                34878755195808542388357475682714791140504495567247550726148547751681786376665729221562307076253739014952054497662752338693788831795355870638704553,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 11975530748807478626237346866802764864790240613433865312132433311880933021657820524164107302959719030431298395526538457665236328068628324224679678523365509,
+            "unresolved": 244151286370659796718502329779003537983531468970732855083039834261772504667470006446369975490016071238502722196898577527152745441843798559861633569,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 878099188,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":14980408295027109306,\"resource\":\"Hex.ECPP.Resource.outputBits\",\"search_ns\":853976496,\"seed\":7,\"stats\":{\"backtracks\":3,\"candidates\":178,\"factorWork\":1708,\"lastRetry\":[17526926491733080099954659246762995191327,\"Hex.ECPP.Resource.pointRetries\"],\"nonresidues\":68,\"points\":313,\"roots\":384,\"scalarWork\":113874,\"unresolved\":[34878755195808542388357475682714791140504495567247550726148547751681786376665729221562307076253739014952054497662752338693788831795355870638704553,\"Hex.ECPP.Resource.portfolio\"]},\"subject\":11975530748807478626237346866802764864790240613433865312132433311880933021657820524164107302959719030431298395526538457665236328068628324224679678523365509,\"unresolved\":244151286370659796718502329779003537983531468970732855083039834261772504667470006446369975490016071238502722196898577527152745441843798559861633569,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 14980408295027109306,
+            "resource": "Hex.ECPP.Resource.outputBits",
+            "search_ns": 853976496,
+            "seed": 7,
+            "stats": {
+              "backtracks": 3,
+              "candidates": 178,
+              "factorWork": 1708,
+              "lastRetry": [
+                17526926491733080099954659246762995191327,
+                "Hex.ECPP.Resource.pointRetries"
+              ],
+              "nonresidues": 68,
+              "points": 313,
+              "roots": 384,
+              "scalarWork": 113874,
+              "unresolved": [
+                34878755195808542388357475682714791140504495567247550726148547751681786376665729221562307076253739014952054497662752338693788831795355870638704553,
+                "Hex.ECPP.Resource.portfolio"
+              ]
+            },
+            "subject": 11975530748807478626237346866802764864790240613433865312132433311880933021657820524164107302959719030431298395526538457665236328068628324224679678523365509,
+            "unresolved": 244151286370659796718502329779003537983531468970732855083039834261772504667470006446369975490016071238502722196898577527152745441843798559861633569,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    }
+  ],
+  "controls": [
+    {
+      "id": "zero",
+      "subject": 0,
+      "seed": 0,
+      "trial": 0,
+      "order": [
+        "diagnose512",
+        "diagnose512-public"
+      ],
+      "arms": {
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 23251280,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.screening\",\"search_ns\":4666,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":64,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":[0,\"Hex.ECPP.Resource.screening\"]},\"subject\":0,\"unresolved\":0,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.screening",
+            "search_ns": 4666,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 64,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": [
+                0,
+                "Hex.ECPP.Resource.screening"
+              ]
+            },
+            "subject": 0,
+            "unresolved": 0,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 22787072,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.screening\",\"search_ns\":5999,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":64,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":[0,\"Hex.ECPP.Resource.screening\"]},\"subject\":0,\"unresolved\":0,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.screening",
+            "search_ns": 5999,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 64,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": [
+                0,
+                "Hex.ECPP.Resource.screening"
+              ]
+            },
+            "subject": 0,
+            "unresolved": 0,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    },
+    {
+      "id": "one",
+      "subject": 1,
+      "seed": 0,
+      "trial": 0,
+      "order": [
+        "diagnose512-public",
+        "diagnose512"
+      ],
+      "arms": {
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 23882126,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.screening\",\"search_ns\":6710,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":64,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":[1,\"Hex.ECPP.Resource.screening\"]},\"subject\":1,\"unresolved\":1,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.screening",
+            "search_ns": 6710,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 64,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": [
+                1,
+                "Hex.ECPP.Resource.screening"
+              ]
+            },
+            "subject": 1,
+            "unresolved": 1,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 22440048,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.screening\",\"search_ns\":6950,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":64,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":[1,\"Hex.ECPP.Resource.screening\"]},\"subject\":1,\"unresolved\":1,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.screening",
+            "search_ns": 6950,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 64,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": [
+                1,
+                "Hex.ECPP.Resource.screening"
+              ]
+            },
+            "subject": 1,
+            "unresolved": 1,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    },
+    {
+      "id": "square",
+      "subject": 4788562133380404720714953470676484141708141433377469198047806975497627262948405646239454084283822992424494760718678112487579815620973097135696889620592689,
+      "seed": 0,
+      "trial": 0,
+      "order": [
+        "diagnose512",
+        "diagnose512-public"
+      ],
+      "arms": {
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 22592304,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.screening\",\"search_ns\":209340,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":64,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":[4788562133380404720714953470676484141708141433377469198047806975497627262948405646239454084283822992424494760718678112487579815620973097135696889620592689,\"Hex.ECPP.Resource.screening\"]},\"subject\":4788562133380404720714953470676484141708141433377469198047806975497627262948405646239454084283822992424494760718678112487579815620973097135696889620592689,\"unresolved\":4788562133380404720714953470676484141708141433377469198047806975497627262948405646239454084283822992424494760718678112487579815620973097135696889620592689,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.screening",
+            "search_ns": 209340,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 64,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": [
+                4788562133380404720714953470676484141708141433377469198047806975497627262948405646239454084283822992424494760718678112487579815620973097135696889620592689,
+                "Hex.ECPP.Resource.screening"
+              ]
+            },
+            "subject": 4788562133380404720714953470676484141708141433377469198047806975497627262948405646239454084283822992424494760718678112487579815620973097135696889620592689,
+            "unresolved": 4788562133380404720714953470676484141708141433377469198047806975497627262948405646239454084283822992424494760718678112487579815620973097135696889620592689,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 22213943,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.screening\",\"search_ns\":207267,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":64,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":[4788562133380404720714953470676484141708141433377469198047806975497627262948405646239454084283822992424494760718678112487579815620973097135696889620592689,\"Hex.ECPP.Resource.screening\"]},\"subject\":4788562133380404720714953470676484141708141433377469198047806975497627262948405646239454084283822992424494760718678112487579815620973097135696889620592689,\"unresolved\":4788562133380404720714953470676484141708141433377469198047806975497627262948405646239454084283822992424494760718678112487579815620973097135696889620592689,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.screening",
+            "search_ns": 207267,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 64,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": [
+                4788562133380404720714953470676484141708141433377469198047806975497627262948405646239454084283822992424494760718678112487579815620973097135696889620592689,
+                "Hex.ECPP.Resource.screening"
+              ]
+            },
+            "subject": 4788562133380404720714953470676484141708141433377469198047806975497627262948405646239454084283822992424494760718678112487579815620973097135696889620592689,
+            "unresolved": 4788562133380404720714953470676484141708141433377469198047806975497627262948405646239454084283822992424494760718678112487579815620973097135696889620592689,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    },
+    {
+      "id": "product",
+      "subject": 4045540500688969645825702600489682281473146701373160934452247103466839623820313088260962000223973239050898280524643628582534479059194392131867324237838381,
+      "seed": 0,
+      "trial": 0,
+      "order": [
+        "diagnose512-public",
+        "diagnose512"
+      ],
+      "arms": {
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 24140269,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.screening\",\"search_ns\":204934,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":64,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":[4045540500688969645825702600489682281473146701373160934452247103466839623820313088260962000223973239050898280524643628582534479059194392131867324237838381,\"Hex.ECPP.Resource.screening\"]},\"subject\":4045540500688969645825702600489682281473146701373160934452247103466839623820313088260962000223973239050898280524643628582534479059194392131867324237838381,\"unresolved\":4045540500688969645825702600489682281473146701373160934452247103466839623820313088260962000223973239050898280524643628582534479059194392131867324237838381,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.screening",
+            "search_ns": 204934,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 64,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": [
+                4045540500688969645825702600489682281473146701373160934452247103466839623820313088260962000223973239050898280524643628582534479059194392131867324237838381,
+                "Hex.ECPP.Resource.screening"
+              ]
+            },
+            "subject": 4045540500688969645825702600489682281473146701373160934452247103466839623820313088260962000223973239050898280524643628582534479059194392131867324237838381,
+            "unresolved": 4045540500688969645825702600489682281473146701373160934452247103466839623820313088260962000223973239050898280524643628582534479059194392131867324237838381,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 22859830,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.screening\",\"search_ns\":200437,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":64,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":[4045540500688969645825702600489682281473146701373160934452247103466839623820313088260962000223973239050898280524643628582534479059194392131867324237838381,\"Hex.ECPP.Resource.screening\"]},\"subject\":4045540500688969645825702600489682281473146701373160934452247103466839623820313088260962000223973239050898280524643628582534479059194392131867324237838381,\"unresolved\":4045540500688969645825702600489682281473146701373160934452247103466839623820313088260962000223973239050898280524643628582534479059194392131867324237838381,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.screening",
+            "search_ns": 200437,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 64,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": [
+                4045540500688969645825702600489682281473146701373160934452247103466839623820313088260962000223973239050898280524643628582534479059194392131867324237838381,
+                "Hex.ECPP.Resource.screening"
+              ]
+            },
+            "subject": 4045540500688969645825702600489682281473146701373160934452247103466839623820313088260962000223973239050898280524643628582534479059194392131867324237838381,
+            "unresolved": 4045540500688969645825702600489682281473146701373160934452247103466839623820313088260962000223973239050898280524643628582534479059194392131867324237838381,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    },
+    {
+      "id": "boundary-255-lower",
+      "subject": 28948022309329048855892746252171976963317496166410141009864396001978282409984,
+      "seed": 0,
+      "trial": 0,
+      "order": [
+        "diagnose512",
+        "diagnose512-public"
+      ],
+      "arms": {
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 21940657,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.screening\",\"search_ns\":4887,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":64,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":[28948022309329048855892746252171976963317496166410141009864396001978282409984,\"Hex.ECPP.Resource.screening\"]},\"subject\":28948022309329048855892746252171976963317496166410141009864396001978282409984,\"unresolved\":28948022309329048855892746252171976963317496166410141009864396001978282409984,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.screening",
+            "search_ns": 4887,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 64,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": [
+                28948022309329048855892746252171976963317496166410141009864396001978282409984,
+                "Hex.ECPP.Resource.screening"
+              ]
+            },
+            "subject": 28948022309329048855892746252171976963317496166410141009864396001978282409984,
+            "unresolved": 28948022309329048855892746252171976963317496166410141009864396001978282409984,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 21952404,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.screening\",\"search_ns\":5688,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":64,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":[28948022309329048855892746252171976963317496166410141009864396001978282409984,\"Hex.ECPP.Resource.screening\"]},\"subject\":28948022309329048855892746252171976963317496166410141009864396001978282409984,\"unresolved\":28948022309329048855892746252171976963317496166410141009864396001978282409984,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.screening",
+            "search_ns": 5688,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 64,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": [
+                28948022309329048855892746252171976963317496166410141009864396001978282409984,
+                "Hex.ECPP.Resource.screening"
+              ]
+            },
+            "subject": 28948022309329048855892746252171976963317496166410141009864396001978282409984,
+            "unresolved": 28948022309329048855892746252171976963317496166410141009864396001978282409984,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    },
+    {
+      "id": "boundary-255-upper",
+      "subject": 57896044618658097711785492504343953926634992332820282019728792003956564819967,
+      "seed": 0,
+      "trial": 0,
+      "order": [
+        "diagnose512-public",
+        "diagnose512"
+      ],
+      "arms": {
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 21645279,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.screening\",\"search_ns\":93899,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":64,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":[57896044618658097711785492504343953926634992332820282019728792003956564819967,\"Hex.ECPP.Resource.screening\"]},\"subject\":57896044618658097711785492504343953926634992332820282019728792003956564819967,\"unresolved\":57896044618658097711785492504343953926634992332820282019728792003956564819967,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.screening",
+            "search_ns": 93899,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 64,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": [
+                57896044618658097711785492504343953926634992332820282019728792003956564819967,
+                "Hex.ECPP.Resource.screening"
+              ]
+            },
+            "subject": 57896044618658097711785492504343953926634992332820282019728792003956564819967,
+            "unresolved": 57896044618658097711785492504343953926634992332820282019728792003956564819967,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 21440936,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.screening\",\"search_ns\":86098,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":64,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":[57896044618658097711785492504343953926634992332820282019728792003956564819967,\"Hex.ECPP.Resource.screening\"]},\"subject\":57896044618658097711785492504343953926634992332820282019728792003956564819967,\"unresolved\":57896044618658097711785492504343953926634992332820282019728792003956564819967,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.screening",
+            "search_ns": 86098,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 64,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": [
+                57896044618658097711785492504343953926634992332820282019728792003956564819967,
+                "Hex.ECPP.Resource.screening"
+              ]
+            },
+            "subject": 57896044618658097711785492504343953926634992332820282019728792003956564819967,
+            "unresolved": 57896044618658097711785492504343953926634992332820282019728792003956564819967,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    },
+    {
+      "id": "boundary-256-lower",
+      "subject": 57896044618658097711785492504343953926634992332820282019728792003956564819968,
+      "seed": 0,
+      "trial": 0,
+      "order": [
+        "diagnose512",
+        "diagnose512-public"
+      ],
+      "arms": {
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 23762528,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.screening\",\"search_ns\":7982,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":64,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":[57896044618658097711785492504343953926634992332820282019728792003956564819968,\"Hex.ECPP.Resource.screening\"]},\"subject\":57896044618658097711785492504343953926634992332820282019728792003956564819968,\"unresolved\":57896044618658097711785492504343953926634992332820282019728792003956564819968,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.screening",
+            "search_ns": 7982,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 64,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": [
+                57896044618658097711785492504343953926634992332820282019728792003956564819968,
+                "Hex.ECPP.Resource.screening"
+              ]
+            },
+            "subject": 57896044618658097711785492504343953926634992332820282019728792003956564819968,
+            "unresolved": 57896044618658097711785492504343953926634992332820282019728792003956564819968,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 22645603,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.screening\",\"search_ns\":6359,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":64,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":[57896044618658097711785492504343953926634992332820282019728792003956564819968,\"Hex.ECPP.Resource.screening\"]},\"subject\":57896044618658097711785492504343953926634992332820282019728792003956564819968,\"unresolved\":57896044618658097711785492504343953926634992332820282019728792003956564819968,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.screening",
+            "search_ns": 6359,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 64,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": [
+                57896044618658097711785492504343953926634992332820282019728792003956564819968,
+                "Hex.ECPP.Resource.screening"
+              ]
+            },
+            "subject": 57896044618658097711785492504343953926634992332820282019728792003956564819968,
+            "unresolved": 57896044618658097711785492504343953926634992332820282019728792003956564819968,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    },
+    {
+      "id": "boundary-256-upper",
+      "subject": 115792089237316195423570985008687907853269984665640564039457584007913129639935,
+      "seed": 0,
+      "trial": 0,
+      "order": [
+        "diagnose512-public",
+        "diagnose512"
+      ],
+      "arms": {
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 21884013,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.screening\",\"search_ns\":54310,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":64,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":[115792089237316195423570985008687907853269984665640564039457584007913129639935,\"Hex.ECPP.Resource.screening\"]},\"subject\":115792089237316195423570985008687907853269984665640564039457584007913129639935,\"unresolved\":115792089237316195423570985008687907853269984665640564039457584007913129639935,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.screening",
+            "search_ns": 54310,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 64,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": [
+                115792089237316195423570985008687907853269984665640564039457584007913129639935,
+                "Hex.ECPP.Resource.screening"
+              ]
+            },
+            "subject": 115792089237316195423570985008687907853269984665640564039457584007913129639935,
+            "unresolved": 115792089237316195423570985008687907853269984665640564039457584007913129639935,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 21491481,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.screening\",\"search_ns\":104655,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":64,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":[115792089237316195423570985008687907853269984665640564039457584007913129639935,\"Hex.ECPP.Resource.screening\"]},\"subject\":115792089237316195423570985008687907853269984665640564039457584007913129639935,\"unresolved\":115792089237316195423570985008687907853269984665640564039457584007913129639935,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.screening",
+            "search_ns": 104655,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 64,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": [
+                115792089237316195423570985008687907853269984665640564039457584007913129639935,
+                "Hex.ECPP.Resource.screening"
+              ]
+            },
+            "subject": 115792089237316195423570985008687907853269984665640564039457584007913129639935,
+            "unresolved": 115792089237316195423570985008687907853269984665640564039457584007913129639935,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    },
+    {
+      "id": "boundary-257-lower",
+      "subject": 115792089237316195423570985008687907853269984665640564039457584007913129639936,
+      "seed": 0,
+      "trial": 0,
+      "order": [
+        "diagnose512",
+        "diagnose512-public"
+      ],
+      "arms": {
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 21798487,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.screening\",\"search_ns\":5558,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":64,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":[115792089237316195423570985008687907853269984665640564039457584007913129639936,\"Hex.ECPP.Resource.screening\"]},\"subject\":115792089237316195423570985008687907853269984665640564039457584007913129639936,\"unresolved\":115792089237316195423570985008687907853269984665640564039457584007913129639936,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.screening",
+            "search_ns": 5558,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 64,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": [
+                115792089237316195423570985008687907853269984665640564039457584007913129639936,
+                "Hex.ECPP.Resource.screening"
+              ]
+            },
+            "subject": 115792089237316195423570985008687907853269984665640564039457584007913129639936,
+            "unresolved": 115792089237316195423570985008687907853269984665640564039457584007913129639936,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 23970797,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.screening\",\"search_ns\":7831,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":64,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":[115792089237316195423570985008687907853269984665640564039457584007913129639936,\"Hex.ECPP.Resource.screening\"]},\"subject\":115792089237316195423570985008687907853269984665640564039457584007913129639936,\"unresolved\":115792089237316195423570985008687907853269984665640564039457584007913129639936,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.screening",
+            "search_ns": 7831,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 64,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": [
+                115792089237316195423570985008687907853269984665640564039457584007913129639936,
+                "Hex.ECPP.Resource.screening"
+              ]
+            },
+            "subject": 115792089237316195423570985008687907853269984665640564039457584007913129639936,
+            "unresolved": 115792089237316195423570985008687907853269984665640564039457584007913129639936,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    },
+    {
+      "id": "boundary-257-upper",
+      "subject": 231584178474632390847141970017375815706539969331281128078915168015826259279871,
+      "seed": 0,
+      "trial": 0,
+      "order": [
+        "diagnose512-public",
+        "diagnose512"
+      ],
+      "arms": {
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 22732381,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.screening\",\"search_ns\":179606,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":64,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":[231584178474632390847141970017375815706539969331281128078915168015826259279871,\"Hex.ECPP.Resource.screening\"]},\"subject\":231584178474632390847141970017375815706539969331281128078915168015826259279871,\"unresolved\":231584178474632390847141970017375815706539969331281128078915168015826259279871,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.screening",
+            "search_ns": 179606,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 64,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": [
+                231584178474632390847141970017375815706539969331281128078915168015826259279871,
+                "Hex.ECPP.Resource.screening"
+              ]
+            },
+            "subject": 231584178474632390847141970017375815706539969331281128078915168015826259279871,
+            "unresolved": 231584178474632390847141970017375815706539969331281128078915168015826259279871,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 22132752,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.screening\",\"search_ns\":180578,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":64,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":[231584178474632390847141970017375815706539969331281128078915168015826259279871,\"Hex.ECPP.Resource.screening\"]},\"subject\":231584178474632390847141970017375815706539969331281128078915168015826259279871,\"unresolved\":231584178474632390847141970017375815706539969331281128078915168015826259279871,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.screening",
+            "search_ns": 180578,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 64,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": [
+                231584178474632390847141970017375815706539969331281128078915168015826259279871,
+                "Hex.ECPP.Resource.screening"
+              ]
+            },
+            "subject": 231584178474632390847141970017375815706539969331281128078915168015826259279871,
+            "unresolved": 231584178474632390847141970017375815706539969331281128078915168015826259279871,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    },
+    {
+      "id": "boundary-511-lower",
+      "subject": 3351951982485649274893506249551461531869841455148098344430890360930441007518386744200468574541725856922507964546621512713438470702986642486608412251521024,
+      "seed": 0,
+      "trial": 0,
+      "order": [
+        "diagnose512",
+        "diagnose512-public"
+      ],
+      "arms": {
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 21617859,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.screening\",\"search_ns\":4217,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":64,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":[3351951982485649274893506249551461531869841455148098344430890360930441007518386744200468574541725856922507964546621512713438470702986642486608412251521024,\"Hex.ECPP.Resource.screening\"]},\"subject\":3351951982485649274893506249551461531869841455148098344430890360930441007518386744200468574541725856922507964546621512713438470702986642486608412251521024,\"unresolved\":3351951982485649274893506249551461531869841455148098344430890360930441007518386744200468574541725856922507964546621512713438470702986642486608412251521024,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.screening",
+            "search_ns": 4217,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 64,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": [
+                3351951982485649274893506249551461531869841455148098344430890360930441007518386744200468574541725856922507964546621512713438470702986642486608412251521024,
+                "Hex.ECPP.Resource.screening"
+              ]
+            },
+            "subject": 3351951982485649274893506249551461531869841455148098344430890360930441007518386744200468574541725856922507964546621512713438470702986642486608412251521024,
+            "unresolved": 3351951982485649274893506249551461531869841455148098344430890360930441007518386744200468574541725856922507964546621512713438470702986642486608412251521024,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 21403150,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.screening\",\"search_ns\":4947,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":64,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":[3351951982485649274893506249551461531869841455148098344430890360930441007518386744200468574541725856922507964546621512713438470702986642486608412251521024,\"Hex.ECPP.Resource.screening\"]},\"subject\":3351951982485649274893506249551461531869841455148098344430890360930441007518386744200468574541725856922507964546621512713438470702986642486608412251521024,\"unresolved\":3351951982485649274893506249551461531869841455148098344430890360930441007518386744200468574541725856922507964546621512713438470702986642486608412251521024,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.screening",
+            "search_ns": 4947,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 64,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": [
+                3351951982485649274893506249551461531869841455148098344430890360930441007518386744200468574541725856922507964546621512713438470702986642486608412251521024,
+                "Hex.ECPP.Resource.screening"
+              ]
+            },
+            "subject": 3351951982485649274893506249551461531869841455148098344430890360930441007518386744200468574541725856922507964546621512713438470702986642486608412251521024,
+            "unresolved": 3351951982485649274893506249551461531869841455148098344430890360930441007518386744200468574541725856922507964546621512713438470702986642486608412251521024,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    },
+    {
+      "id": "boundary-511-upper",
+      "subject": 6703903964971298549787012499102923063739682910296196688861780721860882015036773488400937149083451713845015929093243025426876941405973284973216824503042047,
+      "seed": 0,
+      "trial": 0,
+      "order": [
+        "diagnose512-public",
+        "diagnose512"
+      ],
+      "arms": {
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 21504921,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.screening\",\"search_ns\":97194,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":64,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":[6703903964971298549787012499102923063739682910296196688861780721860882015036773488400937149083451713845015929093243025426876941405973284973216824503042047,\"Hex.ECPP.Resource.screening\"]},\"subject\":6703903964971298549787012499102923063739682910296196688861780721860882015036773488400937149083451713845015929093243025426876941405973284973216824503042047,\"unresolved\":6703903964971298549787012499102923063739682910296196688861780721860882015036773488400937149083451713845015929093243025426876941405973284973216824503042047,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.screening",
+            "search_ns": 97194,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 64,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": [
+                6703903964971298549787012499102923063739682910296196688861780721860882015036773488400937149083451713845015929093243025426876941405973284973216824503042047,
+                "Hex.ECPP.Resource.screening"
+              ]
+            },
+            "subject": 6703903964971298549787012499102923063739682910296196688861780721860882015036773488400937149083451713845015929093243025426876941405973284973216824503042047,
+            "unresolved": 6703903964971298549787012499102923063739682910296196688861780721860882015036773488400937149083451713845015929093243025426876941405973284973216824503042047,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 21462939,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.screening\",\"search_ns\":96743,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":64,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":[6703903964971298549787012499102923063739682910296196688861780721860882015036773488400937149083451713845015929093243025426876941405973284973216824503042047,\"Hex.ECPP.Resource.screening\"]},\"subject\":6703903964971298549787012499102923063739682910296196688861780721860882015036773488400937149083451713845015929093243025426876941405973284973216824503042047,\"unresolved\":6703903964971298549787012499102923063739682910296196688861780721860882015036773488400937149083451713845015929093243025426876941405973284973216824503042047,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.screening",
+            "search_ns": 96743,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 64,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": [
+                6703903964971298549787012499102923063739682910296196688861780721860882015036773488400937149083451713845015929093243025426876941405973284973216824503042047,
+                "Hex.ECPP.Resource.screening"
+              ]
+            },
+            "subject": 6703903964971298549787012499102923063739682910296196688861780721860882015036773488400937149083451713845015929093243025426876941405973284973216824503042047,
+            "unresolved": 6703903964971298549787012499102923063739682910296196688861780721860882015036773488400937149083451713845015929093243025426876941405973284973216824503042047,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    },
+    {
+      "id": "boundary-512-lower",
+      "subject": 6703903964971298549787012499102923063739682910296196688861780721860882015036773488400937149083451713845015929093243025426876941405973284973216824503042048,
+      "seed": 0,
+      "trial": 0,
+      "order": [
+        "diagnose512",
+        "diagnose512-public"
+      ],
+      "arms": {
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 22137709,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.screening\",\"search_ns\":5418,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":64,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":[6703903964971298549787012499102923063739682910296196688861780721860882015036773488400937149083451713845015929093243025426876941405973284973216824503042048,\"Hex.ECPP.Resource.screening\"]},\"subject\":6703903964971298549787012499102923063739682910296196688861780721860882015036773488400937149083451713845015929093243025426876941405973284973216824503042048,\"unresolved\":6703903964971298549787012499102923063739682910296196688861780721860882015036773488400937149083451713845015929093243025426876941405973284973216824503042048,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.screening",
+            "search_ns": 5418,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 64,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": [
+                6703903964971298549787012499102923063739682910296196688861780721860882015036773488400937149083451713845015929093243025426876941405973284973216824503042048,
+                "Hex.ECPP.Resource.screening"
+              ]
+            },
+            "subject": 6703903964971298549787012499102923063739682910296196688861780721860882015036773488400937149083451713845015929093243025426876941405973284973216824503042048,
+            "unresolved": 6703903964971298549787012499102923063739682910296196688861780721860882015036773488400937149083451713845015929093243025426876941405973284973216824503042048,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 23878651,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.screening\",\"search_ns\":8162,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":64,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":[6703903964971298549787012499102923063739682910296196688861780721860882015036773488400937149083451713845015929093243025426876941405973284973216824503042048,\"Hex.ECPP.Resource.screening\"]},\"subject\":6703903964971298549787012499102923063739682910296196688861780721860882015036773488400937149083451713845015929093243025426876941405973284973216824503042048,\"unresolved\":6703903964971298549787012499102923063739682910296196688861780721860882015036773488400937149083451713845015929093243025426876941405973284973216824503042048,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.screening",
+            "search_ns": 8162,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 64,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": [
+                6703903964971298549787012499102923063739682910296196688861780721860882015036773488400937149083451713845015929093243025426876941405973284973216824503042048,
+                "Hex.ECPP.Resource.screening"
+              ]
+            },
+            "subject": 6703903964971298549787012499102923063739682910296196688861780721860882015036773488400937149083451713845015929093243025426876941405973284973216824503042048,
+            "unresolved": 6703903964971298549787012499102923063739682910296196688861780721860882015036773488400937149083451713845015929093243025426876941405973284973216824503042048,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    },
+    {
+      "id": "boundary-512-upper",
+      "subject": 13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084095,
+      "seed": 0,
+      "trial": 0,
+      "order": [
+        "diagnose512-public",
+        "diagnose512"
+      ],
+      "arms": {
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 22697690,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.screening\",\"search_ns\":6470,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":64,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":[13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084095,\"Hex.ECPP.Resource.screening\"]},\"subject\":13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084095,\"unresolved\":13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084095,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.screening",
+            "search_ns": 6470,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 64,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": [
+                13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084095,
+                "Hex.ECPP.Resource.screening"
+              ]
+            },
+            "subject": 13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084095,
+            "unresolved": 13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084095,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 21735023,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.screening\",\"search_ns\":4857,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":64,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":[13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084095,\"Hex.ECPP.Resource.screening\"]},\"subject\":13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084095,\"unresolved\":13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084095,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.screening",
+            "search_ns": 4857,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 64,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": [
+                13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084095,
+                "Hex.ECPP.Resource.screening"
+              ]
+            },
+            "subject": 13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084095,
+            "unresolved": 13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084095,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    },
+    {
+      "id": "boundary-513-lower",
+      "subject": 13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084096,
+      "seed": 0,
+      "trial": 0,
+      "order": [
+        "diagnose512",
+        "diagnose512-public"
+      ],
+      "arms": {
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 21720250,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.inputBits\",\"search_ns\":1011,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":0,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":null},\"subject\":13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084096,\"unresolved\":13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084096,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.inputBits",
+            "search_ns": 1011,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 0,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": null
+            },
+            "subject": 13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084096,
+            "unresolved": 13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084096,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 21727662,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.inputBits\",\"search_ns\":711,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":0,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":null},\"subject\":13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084096,\"unresolved\":13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084096,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.inputBits",
+            "search_ns": 711,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 0,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": null
+            },
+            "subject": 13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084096,
+            "unresolved": 13407807929942597099574024998205846127479365820592393377723561443721764030073546976801874298166903427690031858186486050853753882811946569946433649006084096,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    },
+    {
+      "id": "boundary-513-upper",
+      "subject": 26815615859885194199148049996411692254958731641184786755447122887443528060147093953603748596333806855380063716372972101707507765623893139892867298012168191,
+      "seed": 0,
+      "trial": 0,
+      "order": [
+        "diagnose512-public",
+        "diagnose512"
+      ],
+      "arms": {
+        "diagnose512-public": {
+          "returncode": 0,
+          "elapsed_ns": 22840872,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 20,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.inputBits\",\"search_ns\":3025,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":0,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":null},\"subject\":26815615859885194199148049996411692254958731641184786755447122887443528060147093953603748596333806855380063716372972101707507765623893139892867298012168191,\"unresolved\":26815615859885194199148049996411692254958731641184786755447122887443528060147093953603748596333806855380063716372972101707507765623893139892867298012168191,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 20,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.inputBits",
+            "search_ns": 3025,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 0,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": null
+            },
+            "subject": 26815615859885194199148049996411692254958731641184786755447122887443528060147093953603748596333806855380063716372972101707507765623893139892867298012168191,
+            "unresolved": 26815615859885194199148049996411692254958731641184786755447122887443528060147093953603748596333806855380063716372972101707507765623893139892867298012168191,
+            "verdict": "exhausted"
+          }
+        },
+        "diagnose512": {
+          "returncode": 0,
+          "elapsed_ns": 23741687,
+          "stdout": "{\"budget\":\"{ maxBits := 512,\\n  maxDepth := 32,\\n  maxCandidates := 2048,\\n  maxRoots := 8192,\\n  maxNonresidues := 4096,\\n  maxPoints := 4096,\\n  maxFactorWork := 32768,\\n  maxScalarWork := 1000000,\\n  maxOutputBits := 2000000,\\n  maxMemo := 128,\\n  pointRetries := 8,\\n  nonresidueRetries := 64 }\",\"rand\":0,\"resource\":\"Hex.ECPP.Resource.inputBits\",\"search_ns\":1322,\"seed\":0,\"stats\":{\"backtracks\":0,\"candidates\":0,\"factorWork\":0,\"lastRetry\":null,\"nonresidues\":0,\"points\":0,\"roots\":0,\"scalarWork\":0,\"unresolved\":null},\"subject\":26815615859885194199148049996411692254958731641184786755447122887443528060147093953603748596333806855380063716372972101707507765623893139892867298012168191,\"unresolved\":26815615859885194199148049996411692254958731641184786755447122887443528060147093953603748596333806855380063716372972101707507765623893139892867298012168191,\"verdict\":\"exhausted\"}\n",
+          "stderr": "",
+          "result": {
+            "budget": "{ maxBits := 512,\n  maxDepth := 32,\n  maxCandidates := 2048,\n  maxRoots := 8192,\n  maxNonresidues := 4096,\n  maxPoints := 4096,\n  maxFactorWork := 32768,\n  maxScalarWork := 1000000,\n  maxOutputBits := 2000000,\n  maxMemo := 128,\n  pointRetries := 8,\n  nonresidueRetries := 64 }",
+            "rand": 0,
+            "resource": "Hex.ECPP.Resource.inputBits",
+            "search_ns": 1322,
+            "seed": 0,
+            "stats": {
+              "backtracks": 0,
+              "candidates": 0,
+              "factorWork": 0,
+              "lastRetry": null,
+              "nonresidues": 0,
+              "points": 0,
+              "roots": 0,
+              "scalarWork": 0,
+              "unresolved": null
+            },
+            "subject": 26815615859885194199148049996411692254958731641184786755447122887443528060147093953603748596333806855380063716372972101707507765623893139892867298012168191,
+            "unresolved": 26815615859885194199148049996411692254958731641184786755447122887443528060147093953603748596333806855380063716372972101707507765623893139892867298012168191,
+            "verdict": "exhausted"
+          }
+        }
+      }
+    }
+  ]
+}

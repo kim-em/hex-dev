@@ -57,7 +57,7 @@ The existing `DensePoly.divMod`, `gcd` and `xgcd` require operations
 rather than a `Field` instance. `natPow` and `monicize` also accept ordinary
 operations; their existing ring/field laws retain their hypotheses. The global
 power-notation instance retains its ring assumption to preserve instance
-selection in existing Mathlib bridges; representations call `natPow` directly.
+selection in existing theory companions; representations call `natPow` directly.
 On representatives, `monicize` need only be monic under
 interpretation: its leading coefficient need not be structurally `1`. New pseudo-division uses the same separation:
 operation-only computation, with domain hypotheses on correctness theorems.
@@ -195,7 +195,7 @@ the independent real-algebraic fast path; no reverse import is added.
 For `valid d = true` and its selected real root `α`, prove the executable zero
 test is true exactly when the representative evaluates to zero, packing and
 arithmetic preserve evaluation, and general rational-algebraic sign is correct.
-Use `HexRealRootsMathlib.sturmCount_eq_card_roots` with its positive-degree and
+Use `HexRealRootsTheory.sturmCount_eq_card_roots` with its positive-degree and
 rational-squarefreeness hypotheses, plus primitive-part and squarefree-divisor
 bridges. A rational isolating interval can be refined for sign in this slice;
 that argument does not extend to infinitesimal coefficients. The general

@@ -1,0 +1,9 @@
+Hex.RealAlgebraicBench.runHardSub    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=121fc1e, 2026-10-04T07:40:40Z, host=chungus2
+  repeat 0  4.414 s
+  median: 4.414 s    min: 4.414 s    max: 4.414 s
+  hash: all repeats agree
+  observed hash: 0xcfcded9e67ef422a
+  expected hash: matches
+  peak RSS: 69_128 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/pairs/HardSub-3-After.json

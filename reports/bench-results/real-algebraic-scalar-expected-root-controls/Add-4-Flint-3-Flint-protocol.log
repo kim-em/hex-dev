@@ -1,0 +1,9 @@
+Hex.RealAlgebraicScaling.runFlintAdd4Protocol    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=66fdbee-dirty, 2026-10-04T19:48:13Z, host=chungus2
+  repeat 0  7.230 µs  (×2^13, total 59.232 ms)
+  median: 7.230 µs    min: 7.230 µs    max: 7.230 µs
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 66_132 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-scaling/Add-4-Flint-3-Flint-protocol.json

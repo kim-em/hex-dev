@@ -43,7 +43,7 @@ Scientific registrations:
   bit-length approximately `3.3 * n` at
   `n in {15, 20, 25, 30, 35, 40, 45, 50, 55}`.
 
-Informational external comparator:
+Orientation comparator:
 
 * `fpLLL via fplll-ffi`: in-process FFI registrations call `libfplll`
   through the `fplll-ffi` shim — one C++ call per request, no
@@ -55,12 +55,10 @@ Informational external comparator:
   Isabelle binary-path override. The shim is built by
   `scripts/oracle/setup_fplll_ffi.sh` (clone+lake build of
   `leanprover/fplll`), keeping hex free of any Lake dependency on
-  it. The comparator is classified informational in
-  `SPEC/Libraries/hex-lll.md` because fpLLL's floating-point
-  Gram-Schmidt implementation (Nguyen-Stehle) bypasses the
-  exact-integer operand-size drift this verified implementation
-  pays. Ratios are recorded for orientation but do not block
-  Phase 4. The conformance oracle keeps its independent fpylll
+  it. fpLLL's floating-point Gram-Schmidt implementation
+  (Nguyen-Stehle) bypasses the exact-integer operand-size drift this
+  verified implementation pays, so its ratios are recorded for
+  orientation only (`HexLLL/SPEC/hex-lll.md`). The conformance oracle keeps its independent fpylll
   cross-check at `scripts/oracle/lll_fpylll.py --check`; only the
   speed comparator switched to the FFI shim.
 * `fpLLL certified path`: the same in-process `fplll-ffi` call returns
@@ -79,8 +77,8 @@ External comparator:
 * `verified Isabelle LLL (AFP LLL_Basis_Reduction; Haskell extraction from
   Zenodo record 2636367, https://zenodo.org/records/2636367, archive SHA-256
   `5c975aeb2033540b8f9a05d2ffac87dca0f258e887a5807edefbe60178a547e0`)` is
-  registered as the Phase-4 gating comparator for the bottom/shared
-  `phase4.input_families` rungs. `scripts/oracle/setup_lll_isabelle.sh`
+  registered as the comparator for the performance target in
+  `HexLLL/SPEC/hex-lll.md`, on the bottom/shared input-family rungs. `scripts/oracle/setup_lll_isabelle.sh`
   downloads, verifies, caches, and patches the archive, then builds
   `svp_verified`. The patch
   `scripts/oracle/patches/lll-isabelle/01-persistent-stdin.patch`

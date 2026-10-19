@@ -38,14 +38,14 @@ replay by total certificate nodes, including across sibling branches.
 
 ## Verification
 
-The [companion](../HexLatticeEnumMathlib/README.md) proves unconditional
+The [companion](../HexLatticeEnumTheory/README.md) proves unconditional
 correctness, arbitrary-certificate soundness, native-certificate acceptance,
 LLL transport and real packing geometry. See the [SPEC](SPEC/hex-lattice-enum.md),
 [live manual](../HexManual/Chapters/HexLatticeEnum.lean) and
 [performance report](../reports/hex-lattice-enum-performance.md).
 
 ```sh
-lake build HexLatticeEnum HexLatticeEnumMathlib HexLatticeEnumMathlib.Tests \
+lake build HexLatticeEnum HexLatticeEnumTheory HexLatticeEnumTheory.Tests \
   HexLatticeEnum.Conformance hexlatticeenum_emit_fixtures hexlatticeenum_bench
 python3 scripts/oracle/lattice_enum.py < conformance-fixtures/HexLatticeEnum/latticeenum.jsonl
 .lake/build/bin/hexlatticeenum_bench verify

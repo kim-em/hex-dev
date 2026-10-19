@@ -34,9 +34,9 @@ open Hex
 #check @certCheck
 ```
 
-These commands work in the Lean interpreter. Running the native reducer on a
-concrete basis requires a compiled executable because its exact division
-operation is supplied by native code.
+These commands work in the Lean interpreter. `HexLLL` and its native
+dependencies are built with `precompileModules`, so `#eval` can also run the
+reducer on a concrete basis.
 
 # Functionality
 
@@ -62,7 +62,7 @@ Detailed timings against fpLLL and the verified Isabelle extraction are in
 
 The Mathlib-free package proves the rational short-vector estimate from
 reducedness and proves the lattice-preservation part of the external
-certificate. [`hex-lll-mathlib`](https://github.com/leanprover/hex-lll-mathlib)
+certificate. [`hex-lll-theory`](https://github.com/leanprover/hex-lll-theory)
 proves that both reducers satisfy their reducedness and lattice-preservation
 contracts and states the short-vector theorem using Mathlib's Euclidean norm.
 

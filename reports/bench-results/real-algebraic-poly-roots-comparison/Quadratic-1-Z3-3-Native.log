@@ -1,0 +1,9 @@
+Hex.RealAlgebraicBench.runQuadraticRoots1    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=c6b821d-dirty, 2026-10-04T04:14:55Z, host=chungus2
+  repeat 0  9.260 ms  (×2^3, total 74.078 ms)
+  median: 9.260 ms    min: 9.260 ms    max: 9.260 ms
+  hash: all repeats agree
+  observed hash: 0x66f7d3b46f1ee8e
+  expected hash: matches
+  peak RSS: 68_504 kB (across 1 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison/Quadratic-1-Z3-3-Native.json

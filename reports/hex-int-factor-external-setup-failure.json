@@ -1,0 +1,27 @@
+{
+  "plan_sha256": "3ddf01bdb78d92cda292ae1e6bd228ca9d826deebaeb80188219acdf918c00e1",
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "cpu": 21,
+  "load_start": [
+    7.27001953125,
+    8.28466796875,
+    11.1064453125
+  ],
+  "revision": "c618e605dabc983fd7a5d4b4259582de48054501",
+  "gp": "/nix/store/8jmg390qca8sv8k077r4h77yqrzmsfy9-pari-2.17.3/bin/gp-2.17",
+  "outcomes": [
+    {
+      "stage": "preparation",
+      "module": "HexIntFactor.MeasureExternal4lhv7_8d.Prepare",
+      "returncode": 1,
+      "ns": 2948770452,
+      "log": "\u2139 [115/186] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2714 [180/186] Built HexIntFactor.Export (834ms)\n\u2714 [181/186] Built HexIntFactor.Export:c.o (260ms)\n\u2714 [182/186] Built HexIntFactor.Export:dynlib (39ms)\n\u2716 [183/186] Building HexIntFactor.MeasureExternal4lhv7_8d.Support (779ms)\ntrace: .> LEAN_PATH=/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/packages/subverso/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/packages/MD4Lean/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/packages/illuminate/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/packages/Cli/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/packages/batteries/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/packages/Qq/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/packages/aesop/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/packages/proofwidgets/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/packages/importGraph/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/packages/LeanSearchClient/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/packages/plausible/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/packages/verso/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/packages/NautyFFI/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/packages/lean-bench/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/packages/AINTLIB/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/packages/TauCeti/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/packages/mathlib/.lake/build/lib/lean:/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/lib/lean /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/lean /home/kim/worktrees/hex-dev/hex-dev-issue-10637/HexIntFactor/MeasureExternal4lhv7_8d/Support.lean -o /home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/lib/lean/HexIntFactor/MeasureExternal4lhv7_8d/Support.olean -i /home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/lib/lean/HexIntFactor/MeasureExternal4lhv7_8d/Support.ilean -c /home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexIntFactor/MeasureExternal4lhv7_8d/Support.c --setup /home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexIntFactor/MeasureExternal4lhv7_8d/Support.setup.json --json\nerror: HexIntFactor/MeasureExternal4lhv7_8d/Support.lean:18:74: Invalid field notation: Type of\n  x\u271d\nis not known; cannot resolve field `raw`\n\nHint: Consider replacing the field projection with a call to one of the following:\n  \u2022 `TSyntax.raw`\n  \u2022 `TSyntaxArray.raw`\n  \u2022 `pp.raw`\n  \u2022 `CheckedFactorization.raw`\n  \u2022 `CheckedFactors.raw`\n  \u2022 `CheckedPartialFactorization.raw`\n  \u2022 `CheckedPrimeCert.raw`\n  \u2022 `FactorSearchResult.raw`\n  \u2022 `PartialSnapshot.raw`\n  \u2022 `Language.TransformedSnap.raw`\n  \u2022 `FactorImport.Candidate.raw`\nSome required targets logged failures:\n- HexIntFactor.MeasureExternal4lhv7_8d.Support\nerror: build failed\n"
+    }
+  ],
+  "load_finish": [
+    7.248046875,
+    8.26318359375,
+    11.083984375
+  ]
+}

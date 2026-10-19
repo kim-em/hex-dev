@@ -1,0 +1,9 @@
+Hex.RealAlgebraicBench.runRationalRoots8    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=121fc1e, 2026-10-04T07:48:20Z, host=chungus2
+  repeat 0  180.914 ms
+  median: 180.914 ms    min: 180.914 ms    max: 180.914 ms
+  hash: all repeats agree
+  observed hash: 0x1e7c893af40a771c
+  expected hash: matches
+  peak RSS: 68_860 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/RationalRoots8-0-After.json

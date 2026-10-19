@@ -1,0 +1,74 @@
+[
+  {
+    "label": "desktop",
+    "kind": "replay",
+    "text": "\n                    FiniteSigns.check checks a\nwhole matrix at one selected point. Its query list starts with every source\ndivisor as a constant polynomial, followed by the shared specialization's\natom polynomials. The owner's finite descriptor and replay laws interpret\nthat entire list at the same ordinary real point. The checker validates the\nguard prefix before evaluating the matrix, and rejects missing or extra signs.",
+    "viewport": 1440,
+    "scrollY": 257277,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752
+  },
+  {
+    "label": "desktop",
+    "kind": "source",
+    "text": "\n                    The frozen matrix regression\nuses this public quotation API to prove\n∃ x : ℝ, x² = Real.sqrt 2 ∧ 1 < x ∧ x < 2.\nA second source retains x / (2 - 1) before normalization and checks its\noriginal divisor through the same joint replay. The proofs use canonical\nshared specialization and the owner's actual algebraic interpretation laws;\nno earlier existential source theorem is supplied. The fixed packet contains\n31 scalar facts, 43 packing records and 21 stored-sign records.",
+    "viewport": 1440,
+    "scrollY": 257753,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752
+  },
+  {
+    "label": "desktop",
+    "kind": "audit",
+    "text": "\n                    The fresh proof audit\nfollows project theorem types and bodies, including private auxiliaries, and\nchecks the exact standard three axioms. Separate kernel diagnostics check\nactual reader conversions and rebuilt acceptance decisions, require that the\nreader was unfolded, and reject native production during those checks.\nThis is a fixed authenticated parent and supplied finite matrix. Automatic\nprovider/context history, complete root/cell assembly and accepted algebraic\ndecision progress remain separate requirements.\n",
+    "viewport": 1440,
+    "scrollY": 257908,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752
+  },
+  {
+    "label": "narrow",
+    "kind": "replay",
+    "text": "\n                    FiniteSigns.check checks a\nwhole matrix at one selected point. Its query list starts with every source\ndivisor as a constant polynomial, followed by the shared specialization's\natom polynomials. The owner's finite descriptor and replay laws interpret\nthat entire list at the same ordinary real point. The checker validates the\nguard prefix before evaluating the matrix, and rejects missing or extra signs.",
+    "viewport": 390,
+    "scrollY": 411846,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343
+  },
+  {
+    "label": "narrow",
+    "kind": "source",
+    "text": "\n                    The frozen matrix regression\nuses this public quotation API to prove\n∃ x : ℝ, x² = Real.sqrt 2 ∧ 1 < x ∧ x < 2.\nA second source retains x / (2 - 1) before normalization and checks its\noriginal divisor through the same joint replay. The proofs use canonical\nshared specialization and the owner's actual algebraic interpretation laws;\nno earlier existential source theorem is supplied. The fixed packet contains\n31 scalar facts, 43 packing records and 21 stored-sign records.",
+    "viewport": 390,
+    "scrollY": 412754,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343
+  },
+  {
+    "label": "narrow",
+    "kind": "audit",
+    "text": "\n                    The fresh proof audit\nfollows project theorem types and bodies, including private auxiliaries, and\nchecks the exact standard three axioms. Separate kernel diagnostics check\nactual reader conversions and rebuilt acceptance decisions, require that the\nreader was unfolded, and reject native production during those checks.\nThis is a fixed authenticated parent and supplied finite matrix. Automatic\nprovider/context history, complete root/cell assembly and accepted algebraic\ndecision progress remain separate requirements.\n",
+    "viewport": 390,
+    "scrollY": 413083,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343
+  }
+]

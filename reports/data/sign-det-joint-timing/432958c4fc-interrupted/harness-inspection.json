@@ -1,0 +1,12 @@
+{
+  "observed_at": "2026-10-05T23:42:53.063096+00:00",
+  "scope": "Later read-only inspection after interruption; not an original collector after-check.",
+  "revision": "8a37daf1074c3bdbd0da479b55538bad4a0022db",
+  "manifest_revision": "8a37daf1074c3bdbd0da479b55538bad4a0022db",
+  "status": "",
+  "commands": [
+    "git -C .lake/packages/lean-bench rev-parse HEAD",
+    "git -C .lake/packages/lean-bench status --porcelain",
+    "read lake-manifest.json packages lean-bench rev"
+  ]
+}

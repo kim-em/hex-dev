@@ -1,0 +1,161 @@
+
+.lake/build/bin/hexsturm_bench:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+000000000485e160 <l_Int_sign>:
+ 485e160:	55                   	push   %rbp
+ 485e161:	41 56                	push   %r14
+ 485e163:	53                   	push   %rbx
+ 485e164:	8b 05 1e 82 50 00    	mov    0x50821e(%rip),%eax        # 4d66388 <l_Int_instInhabited___closed__0_once>
+ 485e16a:	83 f8 01             	cmp    $0x1,%eax
+ 485e16d:	75 44                	jne    485e1b3 <l_Int_sign+0x53>
+ 485e16f:	48 8b 05 0a 82 50 00 	mov    0x50820a(%rip),%rax        # 4d66380 <l_Int_instInhabited___closed__0>
+ 485e176:	40 f6 c7 01          	test   $0x1,%dil
+ 485e17a:	74 60                	je     485e1dc <l_Int_sign+0x7c>
+ 485e17c:	a8 01                	test   $0x1,%al
+ 485e17e:	0f 84 95 00 00 00    	je     485e219 <l_Int_sign+0xb9>
+ 485e184:	48 89 f9             	mov    %rdi,%rcx
+ 485e187:	48 d1 e9             	shr    $1,%rcx
+ 485e18a:	48 89 c2             	mov    %rax,%rdx
+ 485e18d:	48 d1 ea             	shr    $1,%rdx
+ 485e190:	39 d1                	cmp    %edx,%ecx
+ 485e192:	0f 8d 9f 00 00 00    	jge    485e237 <l_Int_sign+0xd7>
+ 485e198:	8b 05 0a 82 50 00    	mov    0x50820a(%rip),%eax        # 4d663a8 <l_Int_sign___closed__1_once>
+ 485e19e:	83 f8 01             	cmp    $0x1,%eax
+ 485e1a1:	0f 85 ee 00 00 00    	jne    485e295 <l_Int_sign+0x135>
+ 485e1a7:	48 8b 05 f2 81 50 00 	mov    0x5081f2(%rip),%rax        # 4d663a0 <l_Int_sign___closed__1>
+ 485e1ae:	5b                   	pop    %rbx
+ 485e1af:	41 5e                	pop    %r14
+ 485e1b1:	5d                   	pop    %rbp
+ 485e1b2:	c3                   	ret
+ 485e1b3:	48 8d 05 c6 81 50 00 	lea    0x5081c6(%rip),%rax        # 4d66380 <l_Int_instInhabited___closed__0>
+ 485e1ba:	48 8d 35 c7 81 50 00 	lea    0x5081c7(%rip),%rsi        # 4d66388 <l_Int_instInhabited___closed__0_once>
+ 485e1c1:	48 8d 15 e8 f9 ff ff 	lea    -0x618(%rip),%rdx        # 485dbb0 <_init_l_Int_instInhabited___closed__0>
+ 485e1c8:	48 89 fb             	mov    %rdi,%rbx
+ 485e1cb:	48 89 c7             	mov    %rax,%rdi
+ 485e1ce:	e8 2d 76 1a 00       	call   4a05800 <lean_obj_once_cold>
+ 485e1d3:	48 89 df             	mov    %rbx,%rdi
+ 485e1d6:	40 f6 c7 01          	test   $0x1,%dil
+ 485e1da:	75 a0                	jne    485e17c <l_Int_sign+0x1c>
+ 485e1dc:	48 89 fb             	mov    %rdi,%rbx
+ 485e1df:	48 89 c6             	mov    %rax,%rsi
+ 485e1e2:	49 89 c6             	mov    %rax,%r14
+ 485e1e5:	e8 66 40 1a 00       	call   4a02250 <lean_int_big_lt>
+ 485e1ea:	84 c0                	test   %al,%al
+ 485e1ec:	75 aa                	jne    485e198 <l_Int_sign+0x38>
+ 485e1ee:	48 89 df             	mov    %rbx,%rdi
+ 485e1f1:	be 01 00 00 00       	mov    $0x1,%esi
+ 485e1f6:	e8 55 40 1a 00       	call   4a02250 <lean_int_big_lt>
+ 485e1fb:	84 c0                	test   %al,%al
+ 485e1fd:	0f 84 f6 00 00 00    	je     485e2f9 <l_Int_sign+0x199>
+ 485e203:	48 89 df             	mov    %rbx,%rdi
+ 485e206:	e8 15 2a 1a 00       	call   4a00c20 <lean_int_big_neg>
+ 485e20b:	48 89 c7             	mov    %rax,%rdi
+ 485e20e:	4c 89 f0             	mov    %r14,%rax
+ 485e211:	40 f6 c7 01          	test   $0x1,%dil
+ 485e215:	74 49                	je     485e260 <l_Int_sign+0x100>
+ 485e217:	eb 55                	jmp    485e26e <l_Int_sign+0x10e>
+ 485e219:	48 89 fb             	mov    %rdi,%rbx
+ 485e21c:	48 89 c6             	mov    %rax,%rsi
+ 485e21f:	49 89 c6             	mov    %rax,%r14
+ 485e222:	e8 29 40 1a 00       	call   4a02250 <lean_int_big_lt>
+ 485e227:	48 89 df             	mov    %rbx,%rdi
+ 485e22a:	89 c1                	mov    %eax,%ecx
+ 485e22c:	4c 89 f0             	mov    %r14,%rax
+ 485e22f:	84 c9                	test   %cl,%cl
+ 485e231:	0f 85 61 ff ff ff    	jne    485e198 <l_Int_sign+0x38>
+ 485e237:	48 0f ba e7 20       	bt     $0x20,%rdi
+ 485e23c:	73 30                	jae    485e26e <l_Int_sign+0x10e>
+ 485e23e:	48 d1 ef             	shr    $1,%rdi
+ 485e241:	48 63 cf             	movslq %edi,%rcx
+ 485e244:	48 89 cf             	mov    %rcx,%rdi
+ 485e247:	48 f7 df             	neg    %rdi
+ 485e24a:	f7 d9                	neg    %ecx
+ 485e24c:	0f 80 bc 00 00 00    	jo     485e30e <l_Int_sign+0x1ae>
+ 485e252:	48 8d 3c 7d 01 00 00 	lea    0x1(,%rdi,2),%rdi
+ 485e259:	00 
+ 485e25a:	40 f6 c7 01          	test   $0x1,%dil
+ 485e25e:	75 0e                	jne    485e26e <l_Int_sign+0x10e>
+ 485e260:	48 89 c3             	mov    %rax,%rbx
+ 485e263:	e8 f8 26 1a 00       	call   4a00960 <lean_big_int_to_nat>
+ 485e268:	48 89 c7             	mov    %rax,%rdi
+ 485e26b:	48 89 d8             	mov    %rbx,%rax
+ 485e26e:	40 f6 c7 01          	test   $0x1,%dil
+ 485e272:	74 3f                	je     485e2b3 <l_Int_sign+0x153>
+ 485e274:	48 83 ff 01          	cmp    $0x1,%rdi
+ 485e278:	0f 84 30 ff ff ff    	je     485e1ae <l_Int_sign+0x4e>
+ 485e27e:	8b 05 14 81 50 00    	mov    0x508114(%rip),%eax        # 4d66398 <l_Int_sign___closed__0_once>
+ 485e284:	83 f8 01             	cmp    $0x1,%eax
+ 485e287:	75 52                	jne    485e2db <l_Int_sign+0x17b>
+ 485e289:	48 8b 05 00 81 50 00 	mov    0x508100(%rip),%rax        # 4d66390 <l_Int_sign___closed__0>
+ 485e290:	5b                   	pop    %rbx
+ 485e291:	41 5e                	pop    %r14
+ 485e293:	5d                   	pop    %rbp
+ 485e294:	c3                   	ret
+ 485e295:	48 8d 3d 04 81 50 00 	lea    0x508104(%rip),%rdi        # 4d663a0 <l_Int_sign___closed__1>
+ 485e29c:	48 8d 35 05 81 50 00 	lea    0x508105(%rip),%rsi        # 4d663a8 <l_Int_sign___closed__1_once>
+ 485e2a3:	48 8d 15 c6 00 00 00 	lea    0xc6(%rip),%rdx        # 485e370 <_init_l_Int_sign___closed__1>
+ 485e2aa:	5b                   	pop    %rbx
+ 485e2ab:	41 5e                	pop    %r14
+ 485e2ad:	5d                   	pop    %rbp
+ 485e2ae:	e9 4d 75 1a 00       	jmp    4a05800 <lean_obj_once_cold>
+ 485e2b3:	49 89 c6             	mov    %rax,%r14
+ 485e2b6:	be 01 00 00 00       	mov    $0x1,%esi
+ 485e2bb:	48 89 fb             	mov    %rdi,%rbx
+ 485e2be:	e8 7d 14 1a 00       	call   49ff740 <lean_nat_big_eq>
+ 485e2c3:	8b 13                	mov    (%rbx),%edx
+ 485e2c5:	83 fa 02             	cmp    $0x2,%edx
+ 485e2c8:	7c 61                	jl     485e32b <l_Int_sign+0x1cb>
+ 485e2ca:	ff ca                	dec    %edx
+ 485e2cc:	89 13                	mov    %edx,(%rbx)
+ 485e2ce:	84 c0                	test   %al,%al
+ 485e2d0:	4c 89 f0             	mov    %r14,%rax
+ 485e2d3:	0f 85 d5 fe ff ff    	jne    485e1ae <l_Int_sign+0x4e>
+ 485e2d9:	eb a3                	jmp    485e27e <l_Int_sign+0x11e>
+ 485e2db:	48 8d 3d ae 80 50 00 	lea    0x5080ae(%rip),%rdi        # 4d66390 <l_Int_sign___closed__0>
+ 485e2e2:	48 8d 35 af 80 50 00 	lea    0x5080af(%rip),%rsi        # 4d66398 <l_Int_sign___closed__0_once>
+ 485e2e9:	48 8d 15 78 00 00 00 	lea    0x78(%rip),%rdx        # 485e368 <_init_l_Int_sign___closed__0>
+ 485e2f0:	5b                   	pop    %rbx
+ 485e2f1:	41 5e                	pop    %r14
+ 485e2f3:	5d                   	pop    %rbp
+ 485e2f4:	e9 07 75 1a 00       	jmp    4a05800 <lean_obj_once_cold>
+ 485e2f9:	8b 03                	mov    (%rbx),%eax
+ 485e2fb:	85 c0                	test   %eax,%eax
+ 485e2fd:	7e 4b                	jle    485e34a <l_Int_sign+0x1ea>
+ 485e2ff:	48 89 df             	mov    %rbx,%rdi
+ 485e302:	ff c0                	inc    %eax
+ 485e304:	89 03                	mov    %eax,(%rbx)
+ 485e306:	4c 89 f0             	mov    %r14,%rax
+ 485e309:	e9 52 ff ff ff       	jmp    485e260 <l_Int_sign+0x100>
+ 485e30e:	48 89 c3             	mov    %rax,%rbx
+ 485e311:	e8 aa 28 1a 00       	call   4a00bc0 <lean_big_int64_to_int>
+ 485e316:	48 89 c7             	mov    %rax,%rdi
+ 485e319:	48 89 d8             	mov    %rbx,%rax
+ 485e31c:	40 f6 c7 01          	test   $0x1,%dil
+ 485e320:	0f 84 3a ff ff ff    	je     485e260 <l_Int_sign+0x100>
+ 485e326:	e9 43 ff ff ff       	jmp    485e26e <l_Int_sign+0x10e>
+ 485e32b:	89 c5                	mov    %eax,%ebp
+ 485e32d:	85 d2                	test   %edx,%edx
+ 485e32f:	74 08                	je     485e339 <l_Int_sign+0x1d9>
+ 485e331:	48 89 df             	mov    %rbx,%rdi
+ 485e334:	e8 b7 df 19 00       	call   49fc2f0 <lean_dec_ref_cold>
+ 485e339:	40 84 ed             	test   %bpl,%bpl
+ 485e33c:	4c 89 f0             	mov    %r14,%rax
+ 485e33f:	0f 85 69 fe ff ff    	jne    485e1ae <l_Int_sign+0x4e>
+ 485e345:	e9 34 ff ff ff       	jmp    485e27e <l_Int_sign+0x11e>
+ 485e34a:	3d 01 00 00 90       	cmp    $0x90000001,%eax
+ 485e34f:	72 08                	jb     485e359 <l_Int_sign+0x1f9>
+ 485e351:	48 89 df             	mov    %rbx,%rdi
+ 485e354:	f0 ff 0b             	lock decl (%rbx)
+ 485e357:	eb ad                	jmp    485e306 <l_Int_sign+0x1a6>
+ 485e359:	4c 89 f0             	mov    %r14,%rax
+ 485e35c:	48 89 df             	mov    %rbx,%rdi
+ 485e35f:	e9 fc fe ff ff       	jmp    485e260 <l_Int_sign+0x100>
+
+Disassembly of section .init:
+
+Disassembly of section .fini:
+
+Disassembly of section .plt:

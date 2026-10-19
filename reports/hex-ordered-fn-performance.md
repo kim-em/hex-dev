@@ -414,22 +414,37 @@ alignment diagnostics, but cannot substitute for raw data when re-filtering.
 
 ## Evidence scope
 
-No unresolved library-local performance defect is identified by the current
-evidence. Its limits remain explicit: no uniform bound in precision and tower
-depth, no tight large-precision nested-search characterization, no resolved tiny
-comparison overhead, and no algebraic tower integration claim. The latter
+The retained Phase-4 evidence establishes the scoped models and comparisons
+reported here. Its limits remain explicit: no uniform bound in precision and
+tower depth, no tight large-precision nested-search characterization, no resolved
+tiny comparison overhead, and no algebraic tower integration claim. The latter
 measurements remain required under #10378. Historical inconclusive samples are
 retained below without changing their verdicts.
 
-The original infinitesimal measurements predate the explicit formal-zero
-branch in `Infinitesimal.sign`. The only runtime change in that function is
-`if f.num = 0 then 0 else …`. The zero polynomial has an empty coefficient
-array; `DensePoly.decEqRuntime` compares array sizes before contents. Thus the
-new branch is constant-time, including for each fixed-depth predecessor call
-in these workloads, and preserves the declared scaling models. The reported
-absolute times remain observations of their recorded source commits, not
-measurements of the new branch. The later paired arithmetic run includes that
-branch. Real-search definitions used by the retained measurements are unchanged.
+The current native implementation has three proved compiler replacements,
+assessed individually in the [positive quotient](bench-results/ordered-fn-positive-quotient/README.md)
+and [sign/scan](bench-results/ordered-fn-sign-scan/README.md) reports. Their kernel
+reference bodies and public semantic statements are unchanged. Positive quotient
+bounds use two exact rational divisions instead of four; other signs and
+zero-containing denominator refusals retain the reference computation. This
+changes a constant operation count, without enlarging the conservative search
+upper-bound models. The sign zero test inspects normalized numerator storage.
+The coefficient scan adds a shared-zero pointer shortcut and otherwise uses the
+original equality. At each fixed depth it still visits coefficients in order;
+unshared zeros retain the structural fallback. The large three-level gain is
+specific to shared padding in the measured specialization, not a new generic
+constant-time coefficient equality or uniform depth claim.
+
+The earlier absolute times and scientific verdicts remain observations of their
+recorded source commits. The complete changed-source
+[Phase-6 comparison](bench-results/ordered-fn-final-comparison/README.md) covers
+all 17 retained families and 136 parameters, with 816 completed arms, matching
+answers and no regressions under its declared 10% rule. This is a whole pinned
+source/toolchain comparison against a fresh build of the original committed
+baseline. Its raw-loop outputs do not supply new runner signal-floor eligibility
+or replace the existing Phase-4 scaling evidence. The
+[proof/API acceptance](ordered-fn-proof-acceptance.md) reconciles these boundaries
+with the current kernel, import, conformance and documentation checks.
 
 The four single-level search families have passing conservative upper-bound
 evidence. Successive approximation has one inconclusive operation-count run and one

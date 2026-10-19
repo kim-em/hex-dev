@@ -1,0 +1,20 @@
+{
+  "trial": 0,
+  "degree": 2,
+  "owners": 2,
+  "arm": "bounds",
+  "command": [
+    "taskset",
+    "-c",
+    "36",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+    "reuse-order",
+    "2",
+    "2",
+    "bounds",
+    "3"
+  ],
+  "wall_seconds": 0.0595777429998634,
+  "returncode": 0,
+  "output": "degree=2 owners=2 candidates=2 arm=bounds repeats=3 nanoseconds=383337 hash=0\n"
+}

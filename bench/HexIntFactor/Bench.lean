@@ -802,7 +802,7 @@ input. The odd/even encoding retains success/failure and charged attempts. -/
 setup_fixed_benchmark runDefaultFuelSchedule where
   fixedConfig 2.0 0xdeec635db1873394
 
-/- Mode 3 for balanced dispatch. Its attempted five-seed 32--80-bit
+/- Fixed budget for balanced dispatch. Its attempted five-seed 32--80-bit
 `2^(bits/4)` registration was inconclusive because certificate construction
 and primality checks dominate different lower rungs; the raw-rho registration
 above retains the stable asymptotic check. One fixed public-factor target per
@@ -837,22 +837,22 @@ setup_fixed_benchmark runBalancedCompletion72 where
   fixedConfig 0.01 0x2c5ab36c63d8144e
 setup_fixed_benchmark runBalancedCompletion80 where
   fixedConfig 0.01 0x62b9a8e4f8df37af
-/- Mode 3 for table dispatch: parameterising by integer value mixes unrelated
+/- Fixed budget for table dispatch: parameterising by integer value mixes unrelated
 factor shapes, so the deterministic uniform batch is the canonical workload.
-The headline report records the attempted mixed ladder and the batch's absolute
+The performance report records the attempted mixed ladder and the batch's absolute
 budget. `runTableTrial` is the output-agreeing direct-route timing anchor. -/
 setup_fixed_benchmark runTableDispatch where
   fixedConfig 0.01 0x2e89d71edc0211cb
 setup_fixed_benchmark runTableTrial where
   fixedConfig 0.01 0x2e89d71edc0211cb
 
-/- Mode 3 for fixed-bound p-1: its word/direct-`Nat` transition and limb
+/- Fixed budget for fixed-bound p-1: its word/direct-`Nat` transition and limb
 plateaus defeated a stable one-parameter wall-time model. The canonical batch
 covers every committed 32--80-bit success case under one reported budget. -/
 setup_fixed_benchmark runPMinusOneBatch where
   fixedConfig 0.1 0xf15e2d694e366d3a
 
-/- Mode 3 for fixed-bound ECM: a three-point word ladder and a three-point
+/- Fixed budget for fixed-bound ECM: a three-point word ladder and a three-point
 direct-`Nat` ladder cannot distinguish constant, linear, and multiplication
 costs. The canonical batch carries the absolute budget; the matched rho batch
 is an output-agreeing route-policy timing anchor, not separate coverage. -/
@@ -873,7 +873,7 @@ setup_fixed_benchmark runEcm76 where
 setup_fixed_benchmark runEcm80 where
   fixedConfig 0.02 0x00000002003bafc5
 
-/- Mode 3 for cyclotomic construction and power-form search: divisor shape and
+/- Fixed budget for cyclotomic construction and power-form search: divisor shape and
 the deterministic factor-search route make exponent-only slopes unstable. The
 fixed 12--80-bit exponent batch is the canonical workload, and the generic/
 split pair uses identical seeds and returns matching canonical complete
@@ -885,7 +885,7 @@ setup_fixed_benchmark runPowerGenericBatch where
 setup_fixed_benchmark runPowerSplitBatch where
   powerConfig 0x681a285cd74ea124
 
-/- Mode 3 downstream cases. The exact 50- and 61-bit primes have short base-3
+/- Fixed-budget downstream cases. The exact 50- and 61-bit primes have short base-3
 orders, so they test realistic operand sizes without pretending that the
 reference linear scan is feasible for arbitrary 64-bit order. Opaque inputs
 and noinline bodies prevent closed-term lifting; the report records separate
@@ -935,7 +935,7 @@ end Stage2
 
 end Hex.IntFactorBench
 
-/- Attribution-only runners for representative mode-3 families whose
+/- Profiling-only runners for representative fixed-budget families whose
 scientific targets are fixed batches.  The parameter is an honest repetition
 count of one committed representative, so these registrations make the timed
 region available to the compiled profiler without inventing an asymptotic

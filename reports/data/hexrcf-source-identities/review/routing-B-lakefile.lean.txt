@@ -1,0 +1,6 @@
+import Lake
+open Lake DSL
+package routingProof
+require Hex from "/home/kim/worktrees/hex-dev/hex-dev-issue-10358"
+lean_lib RoutingProbe
+lean_lib RoutingInventory

@@ -1,0 +1,318 @@
+{
+  "sources": {
+    "Before": {
+      "head": "8121fc6635a4f558605116b41ad962c2e004c128",
+      "status": "",
+      "sources": {
+        "HexNumberField/Basic.lean": "9b6c980a046b46467353b71ce39c4f7eb3480939e8c538c5907d1f48d2cb9e06",
+        "HexNumberField/Convert.lean": "059b2d9716d199c4b60fdbe9a51fcdb527728cbd554a75bf626ca7363c0a0b86",
+        "HexNumberField/Lazy.lean": "b6e288456584c616c1015eaf9a2993be1f77f5f08c7969855946fd9f1ede89be",
+        "HexNumberField/Roots.lean": "28d43bf52f318e9e943a91f7f66e37793fe6c0a808c813b650fac6fc899e839c",
+        "HexNumberFieldMathlib/Exact.lean": "16508d5bfe73271ea166affb7599007fe989dfa083f099e3bce35ee681036f6d",
+        "HexRealAlgebraic/Basic.lean": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd",
+        "HexRealAlgebraic/Roots.lean": "0fb67cb79123c00b6cbda25a171e25801fe3543d3fd5e7148f153e84d3ff692d",
+        "HexRealAlgebraic/Order.lean": "4b3ef510f4358d75de4d90f267f067572585be83421aa06958a4246a8245a66a",
+        "bench/HexRealAlgebraic/Bench.lean": "ce266771fc5752e1ea17f9f326877177dc8a635b09ef0d449aef227ff0454d71",
+        "bench/HexNumberField/Bench.lean": "24f97cee0a3b52190fe46c6e8b95a17b463b4f9f3eeebb005eaf82d94cf7562a",
+        "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+        "lake-manifest.json": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e"
+      },
+      "binaries": {
+        "hexrealalgebraic_bench": {
+          "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/before/hexrealalgebraic_bench",
+          "sha256": "9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc"
+        },
+        "hexnumberfield_bench": {
+          "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/before/hexnumberfield_bench",
+          "sha256": "b524fc9a3e8678c61ab47253c63fb8be7f4edc41b984a9652ae278978839f4d7"
+        }
+      }
+    },
+    "After": {
+      "head": "e69775794cde5727ad76d515a2f4ad2d04471e2e",
+      "status": "",
+      "sources": {
+        "HexNumberField/Basic.lean": "9b6c980a046b46467353b71ce39c4f7eb3480939e8c538c5907d1f48d2cb9e06",
+        "HexNumberField/Convert.lean": "7ddcb009a40146461d30c1e23d7b2dcfcafb62c03e5867b020ace11ce78f74dd",
+        "HexNumberField/Lazy.lean": "b6e288456584c616c1015eaf9a2993be1f77f5f08c7969855946fd9f1ede89be",
+        "HexNumberField/Roots.lean": "28d43bf52f318e9e943a91f7f66e37793fe6c0a808c813b650fac6fc899e839c",
+        "HexNumberFieldMathlib/Exact.lean": "2643164a438395789ab1e8d07a47eb25e81ceeaaa179e5cfd33c549447197430",
+        "HexRealAlgebraic/Basic.lean": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd",
+        "HexRealAlgebraic/Roots.lean": "0fb67cb79123c00b6cbda25a171e25801fe3543d3fd5e7148f153e84d3ff692d",
+        "HexRealAlgebraic/Order.lean": "4b3ef510f4358d75de4d90f267f067572585be83421aa06958a4246a8245a66a",
+        "bench/HexRealAlgebraic/Bench.lean": "ce266771fc5752e1ea17f9f326877177dc8a635b09ef0d449aef227ff0454d71",
+        "bench/HexNumberField/Bench.lean": "24f97cee0a3b52190fe46c6e8b95a17b463b4f9f3eeebb005eaf82d94cf7562a",
+        "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+        "lake-manifest.json": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e"
+      },
+      "binaries": {
+        "hexrealalgebraic_bench": {
+          "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/after/hexrealalgebraic_bench",
+          "sha256": "9beaa01bfe01cbc075557e325826a6e820777f1439dddfa2798056d6ca483f5c"
+        },
+        "hexnumberfield_bench": {
+          "path": "/home/kim/.local/state/hex/issue-10577-fixed-conversion/after/hexnumberfield_bench",
+          "sha256": "c991f1f8741fa253333fe36c729a84abe1cf1b6bbcc458bb24fb67b1873f145a"
+        }
+      }
+    }
+  },
+  "families": {
+    "FixedConversion": [
+      2
+    ]
+  },
+  "cpu": 90,
+  "host": "chungus2",
+  "load_start": [
+    4.39599609375,
+    23.2958984375,
+    56.12451171875
+  ],
+  "start": "2026-10-05T01:47:11.104339+00:00",
+  "schedule": "Four trial-major blocks, adjacent Before/After arms, alternating AB/BA",
+  "boundary": "Existing unchanged benchmark input and expected result fingerprint. Preparation and separate warmup excluded; registered caps unchanged. Each arm uses one fixed batch with a 50 ms floor. Descriptive comparison, no scientific mode admission or portable timing budget.",
+  "arms": [
+    {
+      "operation": "FixedConversion",
+      "size": 2,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-fixed-conversion/before/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runQAdjoinCanonical",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-fixed-conversion/direct/FixedConversion-2-0-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.41608655999880284,
+      "output": "FixedConversion-2-0-Before.json"
+    },
+    {
+      "operation": "FixedConversion",
+      "size": 2,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-fixed-conversion/after/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runQAdjoinCanonical",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-fixed-conversion/direct/FixedConversion-2-0-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.43956757499836385,
+      "output": "FixedConversion-2-0-After.json"
+    },
+    {
+      "operation": "FixedConversion",
+      "size": 2,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-fixed-conversion/after/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runQAdjoinCanonical",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-fixed-conversion/direct/FixedConversion-2-1-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.43971180899825413,
+      "output": "FixedConversion-2-1-After.json"
+    },
+    {
+      "operation": "FixedConversion",
+      "size": 2,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-fixed-conversion/before/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runQAdjoinCanonical",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-fixed-conversion/direct/FixedConversion-2-1-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4165007940027863,
+      "output": "FixedConversion-2-1-Before.json"
+    },
+    {
+      "operation": "FixedConversion",
+      "size": 2,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-fixed-conversion/before/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runQAdjoinCanonical",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-fixed-conversion/direct/FixedConversion-2-2-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4156483510014368,
+      "output": "FixedConversion-2-2-Before.json"
+    },
+    {
+      "operation": "FixedConversion",
+      "size": 2,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-fixed-conversion/after/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runQAdjoinCanonical",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-fixed-conversion/direct/FixedConversion-2-2-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.44074925800669007,
+      "output": "FixedConversion-2-2-After.json"
+    },
+    {
+      "operation": "FixedConversion",
+      "size": 2,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-fixed-conversion/after/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runQAdjoinCanonical",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-fixed-conversion/direct/FixedConversion-2-3-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4396406229934655,
+      "output": "FixedConversion-2-3-After.json"
+    },
+    {
+      "operation": "FixedConversion",
+      "size": 2,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-fixed-conversion/before/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runQAdjoinCanonical",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-fixed-conversion/direct/FixedConversion-2-3-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.41650376899633557,
+      "output": "FixedConversion-2-3-Before.json"
+    }
+  ],
+  "load_end": [
+    4.1240234375,
+    22.92529296875,
+    55.828125
+  ],
+  "binaries_unchanged": true,
+  "artifacts": {
+    "Before-HexNumberField-Basic.lean.txt": "9b6c980a046b46467353b71ce39c4f7eb3480939e8c538c5907d1f48d2cb9e06",
+    "Before-HexNumberField-Convert.lean.txt": "059b2d9716d199c4b60fdbe9a51fcdb527728cbd554a75bf626ca7363c0a0b86",
+    "Before-HexNumberField-Lazy.lean.txt": "b6e288456584c616c1015eaf9a2993be1f77f5f08c7969855946fd9f1ede89be",
+    "Before-HexNumberField-Roots.lean.txt": "28d43bf52f318e9e943a91f7f66e37793fe6c0a808c813b650fac6fc899e839c",
+    "Before-HexNumberFieldMathlib-Exact.lean.txt": "16508d5bfe73271ea166affb7599007fe989dfa083f099e3bce35ee681036f6d",
+    "Before-HexRealAlgebraic-Basic.lean.txt": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd",
+    "Before-HexRealAlgebraic-Roots.lean.txt": "0fb67cb79123c00b6cbda25a171e25801fe3543d3fd5e7148f153e84d3ff692d",
+    "Before-HexRealAlgebraic-Order.lean.txt": "4b3ef510f4358d75de4d90f267f067572585be83421aa06958a4246a8245a66a",
+    "Before-bench-HexRealAlgebraic-Bench.lean.txt": "ce266771fc5752e1ea17f9f326877177dc8a635b09ef0d449aef227ff0454d71",
+    "Before-bench-HexNumberField-Bench.lean.txt": "24f97cee0a3b52190fe46c6e8b95a17b463b4f9f3eeebb005eaf82d94cf7562a",
+    "Before-lean-toolchain.txt": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "Before-lake-manifest.json.txt": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e",
+    "After-HexNumberField-Basic.lean.txt": "9b6c980a046b46467353b71ce39c4f7eb3480939e8c538c5907d1f48d2cb9e06",
+    "After-HexNumberField-Convert.lean.txt": "7ddcb009a40146461d30c1e23d7b2dcfcafb62c03e5867b020ace11ce78f74dd",
+    "After-HexNumberField-Lazy.lean.txt": "b6e288456584c616c1015eaf9a2993be1f77f5f08c7969855946fd9f1ede89be",
+    "After-HexNumberField-Roots.lean.txt": "28d43bf52f318e9e943a91f7f66e37793fe6c0a808c813b650fac6fc899e839c",
+    "After-HexNumberFieldMathlib-Exact.lean.txt": "2643164a438395789ab1e8d07a47eb25e81ceeaaa179e5cfd33c549447197430",
+    "After-HexRealAlgebraic-Basic.lean.txt": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd",
+    "After-HexRealAlgebraic-Roots.lean.txt": "0fb67cb79123c00b6cbda25a171e25801fe3543d3fd5e7148f153e84d3ff692d",
+    "After-HexRealAlgebraic-Order.lean.txt": "4b3ef510f4358d75de4d90f267f067572585be83421aa06958a4246a8245a66a",
+    "After-bench-HexRealAlgebraic-Bench.lean.txt": "ce266771fc5752e1ea17f9f326877177dc8a635b09ef0d449aef227ff0454d71",
+    "After-bench-HexNumberField-Bench.lean.txt": "24f97cee0a3b52190fe46c6e8b95a17b463b4f9f3eeebb005eaf82d94cf7562a",
+    "After-lean-toolchain.txt": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "After-lake-manifest.json.txt": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e",
+    "collector.py": "c6825d5f06f9c66b4c0c9c1e9d30af67a962ec575556540173f779b323d111a4",
+    "FixedConversion-2-0-Before.log": "e942ceacc50d330c5469f5d68b7b520e6d68679cd570eef989d8ce6fdf7c9e19",
+    "FixedConversion-2-0-Before.json": "cf581c3cc66c385c6ea1948026f0f305573827ddbcfa1a148788d2ae34592ca4",
+    "FixedConversion-2-0-After.log": "693a0f3d7abbd8b6e2be2116dfad9bbae30d01c175d18a40cc82565b908e4551",
+    "FixedConversion-2-0-After.json": "1f5d0592e7e3232914a33b022d85343b82eb0c25c038e00b41474ea959a200ac",
+    "FixedConversion-2-1-After.log": "b85f31894aa28810e212efa5af99103b6adb4d9c9e4ed02bd2929a7dfb5226a8",
+    "FixedConversion-2-1-After.json": "6fb019b84ab06e6e933ca7ad935ee5db736bd4fd9306bd0eaccfa30d35b0c3ea",
+    "FixedConversion-2-1-Before.log": "98b28bdb0385a90f3fe246bfab13fa46e764c252f7728696995c2c9cf12d33a9",
+    "FixedConversion-2-1-Before.json": "02c8ac58fcd7493e6f2429e178073297d416eda536bc5fc969235fe471cbc5e3",
+    "FixedConversion-2-2-Before.log": "13028f29e9eb0989660e71fc9cf22001f5431557d834b478c34b231753827a79",
+    "FixedConversion-2-2-Before.json": "f2e02bf0301920fbf8fb899e0da270839038f6b61c22b33773892d0036771114",
+    "FixedConversion-2-2-After.log": "b420af76feb99e47537c327ab7e3d40afdd20f12c94761a7b8fcd35a74fa47da",
+    "FixedConversion-2-2-After.json": "adb1d5de5aa89dfbe0c826feb09803116e6abe3cf3b82beb17a0a69d8297be49",
+    "FixedConversion-2-3-After.log": "f051c096f07c076a35a4ea3f38f0bed4da6b5815c8c1bafe82944c496af46fa4",
+    "FixedConversion-2-3-After.json": "fac182bf92c3cd2d0e8c199a4ea1b13b1ca88f33a607aedf3dc014616801ae3f",
+    "FixedConversion-2-3-Before.log": "7589d03e3e337ab840da8d8d7d797a25007bb5b0c21d29b2d7b64a48eb1d7f60",
+    "FixedConversion-2-3-Before.json": "c435fa2a0d6095e016b3aa71b4279b7809ce384b58295f1fa9cec6b317109502"
+  }
+}

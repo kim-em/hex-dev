@@ -1,0 +1,49 @@
+{
+  "ci": {
+    "url": "https://github.com/kim-em/hex-dev/actions/runs/36972953823",
+    "source_commit": "54fd06b4058697b1b4fd15710da470315068cd13",
+    "jobs": [
+      {
+        "name": "build",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "local": {
+    "source_commit": "8545f2012",
+    "commands": [
+      {
+        "command": "lake build HexConformance HexQuerySemantics hexrealalgebraic_bench hexrealalgebraic_emit_fixtures",
+        "jobs": 15051,
+        "result": "success"
+      },
+      {
+        "command": "lake build HexRealAlgebraicMathlibTests",
+        "jobs": 9824,
+        "result": "success"
+      },
+      {
+        "command": "hexrealalgebraic_bench verify --filter Sqrt",
+        "cases": 2,
+        "result": "success"
+      },
+      {
+        "command": "real_algebraic_flint.py --require-oracles (fresh emitted fixtures)",
+        "cases": 83,
+        "skips": 0,
+        "result": "success"
+      }
+    ],
+    "fixture_sha256": "f2a9d355ef5cfda62e113a234697f534a6bb7aae163f5f309d16ed4c07325cf3",
+    "matches_committed_fixtures": true
+  },
+  "benchmark_verification": {
+    "ci_total_seconds": 336,
+    "ci_hard_cap_seconds": 360,
+    "real_algebraic_seconds": 60,
+    "soft_threshold_seconds": 30,
+    "warning_owner": "#10577"
+  },
+  "scope": "Phases 1\u20133 only; final PR revision must pass required CI; Phase 4 remains incomplete."
+}

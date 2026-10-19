@@ -1,0 +1,659 @@
+{
+  "stageSourceCommit": "3c2e7fa09dcc5aac4e34ffcff50c0bb3d18b4dad",
+  "sourceBaseRevision": "767b3e15ee1c38d3abcd4a98e52b500f80733df6",
+  "previewVersion": "v0.7.0",
+  "publicationVersionSelected": false,
+  "packageCount": 60,
+  "computationalLockfilesChecked": 32,
+  "packages": [
+    {
+      "repository": "leanprover/hex-basic",
+      "LeanSourceTreeSHA256": "069d7bf54044ce10e6e96c5493a7ed3951183f8fbbb3e986df3dbbf2e0899e83",
+      "LeanFileCount": 13,
+      "renderedGitConfigurationSHA256": "c31dce50d7bce769d020d8c3da0274fa75ed076fc5cd0704926141bdcc5c94e6",
+      "stagedPathConfigurationSHA256": "c31dce50d7bce769d020d8c3da0274fa75ed076fc5cd0704926141bdcc5c94e6",
+      "stagedPathLockSHA256": "26d28f9a9ee83eb6ee34383f420847c30fb20cb33e910ea06c847ff245fb0571"
+    },
+    {
+      "repository": "leanprover/hex-test-kit",
+      "LeanSourceTreeSHA256": "069aed49c57f66d8a38df20d3d04d4e1bd8257b0f42327d0dff36bab8c3f5918",
+      "LeanFileCount": 7,
+      "renderedGitConfigurationSHA256": "a171663530d4147c771aae934438d481110c5e095dc9bb70417617471050dddd",
+      "stagedPathConfigurationSHA256": "a171663530d4147c771aae934438d481110c5e095dc9bb70417617471050dddd",
+      "stagedPathLockSHA256": "6aa8a40af5b8b40c53e2869fa2457a9c5a85a80aa10edcd247b4224d65719d0f"
+    },
+    {
+      "repository": "leanprover/hex-arith",
+      "LeanSourceTreeSHA256": "27a04c95579f83be057c41fed107922d600dfc3613b1f8a7035ad4753eb21272",
+      "LeanFileCount": 20,
+      "renderedGitConfigurationSHA256": "d1e9ef7e24a44e0c205582d189ec035e81baadd24994adb4704658dcec541517",
+      "stagedPathConfigurationSHA256": "d1e9ef7e24a44e0c205582d189ec035e81baadd24994adb4704658dcec541517",
+      "stagedPathLockSHA256": "b4bbe61fe8d18dd26f27e1dd07b5d4fb09b30998326df3a6cfc7dcd8af3bdfc4"
+    },
+    {
+      "repository": "leanprover/hex-primality",
+      "LeanSourceTreeSHA256": "875fb921fe9bf81559870c3ec9cc82ebc2f7d54e29c9be0e64cf0492d5ae66f0",
+      "LeanFileCount": 14,
+      "renderedGitConfigurationSHA256": "e97a1eaddac307adfe6e42315419a1c26182f8cecbba7ecc55b96b58ee492254",
+      "stagedPathConfigurationSHA256": "abfa72a8f804eed3e0b2b022763a70a12fe09c2518cce34fff6a39efb7db94ca",
+      "stagedPathLockSHA256": "ecab753667f29a35b5811a83cf8113699bacd5352eb26dc4e0c44848465e3cf1"
+    },
+    {
+      "repository": "leanprover/hex-ecpp",
+      "LeanSourceTreeSHA256": "f0bfb7857d2ea75e22653a878c4182042c286813a57426331aaa4e9ecee5c4ca",
+      "LeanFileCount": 12,
+      "renderedGitConfigurationSHA256": "07f4216bdda76719b5274b67a87875ea1c09a44d2ebb9cc2b984188b5aa924b5",
+      "stagedPathConfigurationSHA256": "d9b0175101065a7558789fbcd05eabc863db6ba78356a335e26b833b1d4fe03a",
+      "stagedPathLockSHA256": "f2459184b6bc2f18f202ccf11752cbb0c5e6de54d9585c7d706bc1d9b9f640c0"
+    },
+    {
+      "repository": "leanprover/hex-primality-mathlib",
+      "LeanSourceTreeSHA256": "87dd3d9f6d83eeb5226dce174090aec9760f7c40c820f2a0b39c33d81363c1eb",
+      "LeanFileCount": 5,
+      "renderedGitConfigurationSHA256": "60930162972e5ed3df8fb66281fd0cacf4bcd53804879f81360d3aef7dd99613",
+      "stagedPathConfigurationSHA256": "05612e097ff94d53c4b875ff16c76a0b7bd7ed4e7cd3b8103f9619a42a4faa57",
+      "stagedPathLockSHA256": "1ffecf6d1ac50727bcb54e36712df9da90580235c28e61a1202bf1a5438c0a4d"
+    },
+    {
+      "repository": "leanprover/hex-ecpp-mathlib",
+      "LeanSourceTreeSHA256": "6dd16d5883be564004d0bc9de8a5bb75fdafa33d7730444abf6ed0164cd8cea8",
+      "LeanFileCount": 21,
+      "renderedGitConfigurationSHA256": "4152a818c0b511fece5a93284ad676b8fc4a828699a6ddd17ed68780b47f2d24",
+      "stagedPathConfigurationSHA256": "06213382c78b7c398c91d39f0f7f54a5c7795e93a9b8eb6a54dec5759f7f8271",
+      "stagedPathLockSHA256": "0b7e1eb710592463b750a91a357b5d1f68b36ddc73038ff7208e51e1ee950f1e"
+    },
+    {
+      "repository": "leanprover/hex-poly",
+      "LeanSourceTreeSHA256": "88eb0bde6975a03e48e94c30954c763034356bed38b3c38fccbc52bd663ecf0f",
+      "LeanFileCount": 21,
+      "renderedGitConfigurationSHA256": "ac1cef6ae2ca732132ac525fd6872b45a86f739c131bbd5e14ff41021d60e1de",
+      "stagedPathConfigurationSHA256": "ac1cef6ae2ca732132ac525fd6872b45a86f739c131bbd5e14ff41021d60e1de",
+      "stagedPathLockSHA256": "8c2e0cd15b8b9110a1cb5b76c989c5c8c2caef754e30f7db5416e1fbfefeb4f0"
+    },
+    {
+      "repository": "leanprover/hex-mod-arith",
+      "LeanSourceTreeSHA256": "f2de3993c62e8508d5bfe977c4c977ae8d193d198a24b02f6e1c8917fa70839f",
+      "LeanFileCount": 17,
+      "renderedGitConfigurationSHA256": "ae624ed9c044ccd3a71ae65e701b44c11e9d1dd73001260034572e61264c7137",
+      "stagedPathConfigurationSHA256": "7c555944112806d016dd965e7ada33ba5807a25b82ce6b37b932eb658173d242",
+      "stagedPathLockSHA256": "4d1097dd45cedee906951b3522844b3fbf1f0602133359b1f118eafe9d81ce7e"
+    },
+    {
+      "repository": "leanprover/hex-mv-poly",
+      "LeanSourceTreeSHA256": "5e38b29c6423757a737e6007b4bc5d4b5093fa202d435879a5a45044b8c36508",
+      "LeanFileCount": 15,
+      "renderedGitConfigurationSHA256": "82ac3557d733b68fddb057542b33dfed16a7e4416716cad1c61adb90563efb7b",
+      "stagedPathConfigurationSHA256": "959100f891d5afecd737d126b00c872cb70dd4168e09404adf3593820e5ae083",
+      "stagedPathLockSHA256": "a5d2ef71fdf6eceb510e2eb26610beba3f2826121dc0ea71a3f0796eff245e0b"
+    },
+    {
+      "repository": "leanprover/hex-matrix",
+      "LeanSourceTreeSHA256": "c5aef89b3e2058afebae34b555a6b7d8d09fb2cc69209dbcc91a6b397d595611",
+      "LeanFileCount": 21,
+      "renderedGitConfigurationSHA256": "da5f038bc2bf18e0bc0036aa280ee8a9355f83954e615c26798d8bd1205b32f9",
+      "stagedPathConfigurationSHA256": "63effda6a2caf82ddc69a7f61e58f1db50cb08ece7ed75ef0751023bd657b95f",
+      "stagedPathLockSHA256": "0876c33d3bf961edbbe42730d394e6a2a6e61bc6ad1bf770570d82345cd096fc"
+    },
+    {
+      "repository": "leanprover/hex-matrix-mathlib",
+      "LeanSourceTreeSHA256": "32057a94cf0ea4885edeb00a707e2aa5a595705e87cc544cbaf521bda7383c8f",
+      "LeanFileCount": 13,
+      "renderedGitConfigurationSHA256": "bf3c3cb4becb0db434ed3d2b1bbef85a26bf3cf0ed1f3cf985583082d35c9929",
+      "stagedPathConfigurationSHA256": "96a587bc0749d63f9af6bebb10e80fb908b3f6f90f08203cb733d2b28a47c078",
+      "stagedPathLockSHA256": "53dd1f04c6595156cd4c90f7a16e3b16116c78405c39343386989b5bfa8d0cb3"
+    },
+    {
+      "repository": "leanprover/hex-poly-mathlib",
+      "LeanSourceTreeSHA256": "2ae7e1411da3f04ba6141f84e5963a5cdf706765bab7a683e4b78dc2a1ee4f0e",
+      "LeanFileCount": 12,
+      "renderedGitConfigurationSHA256": "d6306d7b9a3c9af532ad990be4552c02e272dd41425a68e8d8c42ff0373f016f",
+      "stagedPathConfigurationSHA256": "a9aca3c68a9a741677d36a0020fc2d9bf3872533d14ebc914cc8bdd5594dcccf",
+      "stagedPathLockSHA256": "911ebc02a09da535b011660ce235975d5de7336028e871ddc9643f268ef4651b"
+    },
+    {
+      "repository": "leanprover/hex-poly-fp",
+      "LeanSourceTreeSHA256": "4410e1cd4e642f57367dab135a8ce847e15412f9b3246827f236cd7cba014d83",
+      "LeanFileCount": 22,
+      "renderedGitConfigurationSHA256": "4ea331c340590f9832dc38bd9f0ccd44bb0b5484129b13eb4accdf0223e61aca",
+      "stagedPathConfigurationSHA256": "5734da24a48f5ed595c9fcad22be84b80e068422ec7329d30ee126435692bc23",
+      "stagedPathLockSHA256": "067b3c06a086bd350f352d1a02f694395d51e736684b58824fdb718dc2e6b161"
+    },
+    {
+      "repository": "leanprover/hex-sparse-poly",
+      "LeanSourceTreeSHA256": "42fcce90b9434ec7d845522f28604d59ecbd6ed02cded93d13531d90aab05601",
+      "LeanFileCount": 7,
+      "renderedGitConfigurationSHA256": "d3260ee6687fbaa6685a761279196dae853fe594b636fdc0d029ef0535fc8507",
+      "stagedPathConfigurationSHA256": "724b8a87f880eb0146fe2b1da6a3d6b7f93d6c9a7937b075d59e541f372aa639",
+      "stagedPathLockSHA256": "310a8e7c4a4f2b05ea1b932b547f7d767c90da50d03f50897ad74867ae82aabf"
+    },
+    {
+      "repository": "leanprover/hex-sparse-poly-mathlib",
+      "LeanSourceTreeSHA256": "3befef5bb4ba8c3d147cf39ce9f4b042bf1d766c9cd1a8aad517e4bb81c99c33",
+      "LeanFileCount": 3,
+      "renderedGitConfigurationSHA256": "94f8840e3d07adfda81df97ab195579cf8af60f97d36f22a705b25665aba6b3d",
+      "stagedPathConfigurationSHA256": "6cd42a12ad9a97a294b1c7c6165af1876524c2a27ad8376360bb65de09987e28",
+      "stagedPathLockSHA256": "6196b09c50b35ec645283175b10971827323f246f84a82fe7299a81462f8fb33"
+    },
+    {
+      "repository": "leanprover/hex-poly-z",
+      "LeanSourceTreeSHA256": "26e78f4a4fe00eebe69db6995080a8cb70563b4059fe62647c787b609af3ef58",
+      "LeanFileCount": 9,
+      "renderedGitConfigurationSHA256": "ad0e5a9e9902df9b7899460b29fb6bd29ab44dc88b0533d7ffb5d50f3e984083",
+      "stagedPathConfigurationSHA256": "6569ea4ab99012862c4a6cc5a887a4d5fe9179da958108eeaab8c0d6baf28611",
+      "stagedPathLockSHA256": "c4cec84dfe1d444c01a5c0ef2f21d3e945e5b3ecbacb31985d6db9122de092d4"
+    },
+    {
+      "repository": "leanprover/hex-mod-arith-mathlib",
+      "LeanSourceTreeSHA256": "e5987d975799ef129ad502622b8311fbb039168691fcfe57b08bbf7f7dab3e8f",
+      "LeanFileCount": 4,
+      "renderedGitConfigurationSHA256": "b338810aabe7d58a1a6e42696124e6df6ba70a19dfafa5a42066f26527861570",
+      "stagedPathConfigurationSHA256": "ccf8181a8be43d208ebdc7be1ef7dc3aa2484866556a296606cbd73d3d3ada9a",
+      "stagedPathLockSHA256": "c2959b0b03c8de322fd4301bdec31c64970a06a926e803e3a587ccb848fa2af1"
+    },
+    {
+      "repository": "leanprover/hex-mv-poly-mathlib",
+      "LeanSourceTreeSHA256": "807927ab66f0266a95dfdefb8941697e56ba001a42b017f0dc0d8760a3486a80",
+      "LeanFileCount": 8,
+      "renderedGitConfigurationSHA256": "21e58850b4949ceca72d46a73fb56cf9f13f0b9a691aaf8175446fbdc2e324bb",
+      "stagedPathConfigurationSHA256": "370bc341200efcd02dfc2ad95066dcd30f6069ed27b0c9d892badba8ad1b2d6b",
+      "stagedPathLockSHA256": "b0d6e0e611d6d45d525d820d6cd5b39f24c638bdfc06f828ec76f2e285fcec09"
+    },
+    {
+      "repository": "leanprover/hex-poly-fp-mathlib",
+      "LeanSourceTreeSHA256": "3cbeb8e050cd29b2b23efa44f3e28bb8ccc1df472bfd4a91e6563619b29d0793",
+      "LeanFileCount": 3,
+      "renderedGitConfigurationSHA256": "87408dfe73b69271f7ae0ee5912aecbaab196c9fda1c7dfe4593defb6f0ebfbf",
+      "stagedPathConfigurationSHA256": "eb054a7978f8263fb1fac8c7671d13a7c1cf00427e5ab3a837513bbe99cbbca2",
+      "stagedPathLockSHA256": "c1e2c4c57e3243adf41b66eac71b515f2e256a070902e91e88a0c61382e0199e"
+    },
+    {
+      "repository": "leanprover/hex-gfq-ring",
+      "LeanSourceTreeSHA256": "a6fe4c41c0777b9a856767ab39686fb9204f39b7fa82a11fd6ded84c38f1994a",
+      "LeanFileCount": 3,
+      "renderedGitConfigurationSHA256": "43e6b8c82f9fc7a8c7845b84cd8f1ec42b6d753f4815b0bf4266502ea5487893",
+      "stagedPathConfigurationSHA256": "2f628e5cc67dfe370f4cf4d4bf1b21e44eb8afb6701b982a536cb5b44884e2fd",
+      "stagedPathLockSHA256": "b85dcfd745b4ed4e2862f6194985ab61b779dd58b46a4689a7e15bb752c60d5b"
+    },
+    {
+      "repository": "leanprover/hex-hensel",
+      "LeanSourceTreeSHA256": "9049e2eb2afcd1dfb2cce9d8847846b8664d04ed78e1675322146084931fb1cb",
+      "LeanFileCount": 10,
+      "renderedGitConfigurationSHA256": "cf61b3b7569689baf165e301e4eaa1f4335fbae57a9bea8bb5685266eff78a3c",
+      "stagedPathConfigurationSHA256": "fee4bcd7e613b47349a21bfcb3bfeb98835b91aff64970ce883e047b7e1eab98",
+      "stagedPathLockSHA256": "7f60fad5671d87baa8052711c9df429a1896c4277e96e54e07ba69eadffb72f3"
+    },
+    {
+      "repository": "leanprover/hex-poly-z-mathlib",
+      "LeanSourceTreeSHA256": "4d8a98777ff0f3c17ccbbcbc924d5722f37ac7728ff831e8b4e84ec767449cea",
+      "LeanFileCount": 9,
+      "renderedGitConfigurationSHA256": "a59a15c2cb758bf0e0dd4fc3087f2c55b97ebf2af7ffd54c453aee1fa52a1c0f",
+      "stagedPathConfigurationSHA256": "0aa8e5d30d4258ae5c6323416a59f34f56ab433b852afb35719b8f2705b7e61f",
+      "stagedPathLockSHA256": "a2d8faea3ca1bd1b82e5e0d033d5cdc32e92e3ed8a2f619846e02e1a0182ad2a"
+    },
+    {
+      "repository": "leanprover/hex-hensel-mathlib",
+      "LeanSourceTreeSHA256": "2942115d1030f238f4c25e8f645e3ecb0caeeb20746c216814dd6421d3872ae3",
+      "LeanFileCount": 3,
+      "renderedGitConfigurationSHA256": "23922bac6111f5f1b495042a6e0985ae49ab1e24155dd6333f2cf7bf0f29019c",
+      "stagedPathConfigurationSHA256": "7b34183a9cd58c8828a10615ed27f61244af06d3c6ff03db1fbee8d43b5a1b1a",
+      "stagedPathLockSHA256": "b52e55591cf6deef2227a4903bc274d8bef09d000f5b32fc671443c2b79d3eb4"
+    },
+    {
+      "repository": "leanprover/hex-roots",
+      "LeanSourceTreeSHA256": "71ae3d14a30afa607951b8a86c0de2570550690eeb8b5aa3adb0da19f6538fb1",
+      "LeanFileCount": 13,
+      "renderedGitConfigurationSHA256": "daf90768c3f2a771e64b94441fa5c7b787220ae9f3b0a64dc8fbc743ec2242c9",
+      "stagedPathConfigurationSHA256": "484726b42676d5cc564d7dac5b3c52225437cf0388c30fcb406fb436228bdb06",
+      "stagedPathLockSHA256": "dbb0bcdadb57b4f7ea182f1c51dc92556151bb82e2cd561ab78ed194a530ce6d"
+    },
+    {
+      "repository": "leanprover/hex-real-roots",
+      "LeanSourceTreeSHA256": "c669d8903f341b7bf267d957930c0dbc6ccb80e83d5c75b61ae7a1e9811d49f9",
+      "LeanFileCount": 20,
+      "renderedGitConfigurationSHA256": "6094aa83332f36aefc3671dfcc595f31ea67a2163a186cc0c74b059b5b497340",
+      "stagedPathConfigurationSHA256": "69427f7e59d85ee2479e824fb7a536c921f916f3578e56118b1e29e11727dc07",
+      "stagedPathLockSHA256": "5b153e67c0c47ba253cd6128fcc76ef65a7ab27f2b526c2b47513f5674183ebd"
+    },
+    {
+      "repository": "leanprover/hex-roots-mathlib",
+      "LeanSourceTreeSHA256": "b5d035228fa1162792a99ca0d4c03e4d8b5a78343c6ffbb2d7e8997bad039971",
+      "LeanFileCount": 43,
+      "renderedGitConfigurationSHA256": "4f75a0d8697cbe6ef284ea71be2e49fae77c348cab729f07699b35d9880f6a0c",
+      "stagedPathConfigurationSHA256": "9a8b49fb62be96abf5d4481dda2b322f27cc55b79db988092034f56c1f616d46",
+      "stagedPathLockSHA256": "84a6b6667bc4b9944481d6271bbb33dadf8548651fb0901fcbef82463ceb94fb"
+    },
+    {
+      "repository": "leanprover/hex-real-roots-mathlib",
+      "LeanSourceTreeSHA256": "552e4d316b6d125b028785acb0b7882d2f71f30e59312c7bd13e6c1342d147d2",
+      "LeanFileCount": 42,
+      "renderedGitConfigurationSHA256": "f5ccac2d5f14da23f95dd6d0822e7f8da80d50f41bd900259dc7b9b48b249624",
+      "stagedPathConfigurationSHA256": "d6232c20ce97ee4f5a059358ef221feafe3ffe13800308c606be2a3ce0c0f5b7",
+      "stagedPathLockSHA256": "54fb4ad4197e3a5f66e99248c1b987deb518dde432e75772d1e5b73c8d108330"
+    },
+    {
+      "repository": "leanprover/hex-row-reduce",
+      "LeanSourceTreeSHA256": "d9a54436f71ba33f1de4abf9b74abd6eda17e3e65fa5d8f76ccd0b36063abdb4",
+      "LeanFileCount": 13,
+      "renderedGitConfigurationSHA256": "fa1216416e43be0e3cf360d9d9a28d9a7b375f5db586b93da9ae257304bb5278",
+      "stagedPathConfigurationSHA256": "d3e4d79aa6ddfe4cf33de4de29e10a2e75c712e6aabba1fed527e65c0d5d68b5",
+      "stagedPathLockSHA256": "d58e5c5e64319d10cfa7acfa334e35145ebae7f5849a2fad3f834b4f304a8f36"
+    },
+    {
+      "repository": "leanprover/hex-berlekamp",
+      "LeanSourceTreeSHA256": "6b8f25afdfb33ac32fccbd34ec0358c685779e4c7c477d62bb018e15aa5404b5",
+      "LeanFileCount": 20,
+      "renderedGitConfigurationSHA256": "c76691a44fb1546e4c7ddddf1f17b9c7164782e9e05aac8c9520e27cc38a2542",
+      "stagedPathConfigurationSHA256": "04b6442ef835b0a871acc3fc801d7b605e46afb44be8491bac5f7fa4b0ab9142",
+      "stagedPathLockSHA256": "68e95c6d6e535c5dc9e6833f590a5de7a13e11a2607f17adae64b6fb5bfafc61"
+    },
+    {
+      "repository": "leanprover/hex-conway",
+      "LeanSourceTreeSHA256": "e5fc3988bb115d9808aafbc95fab5bceb65f9d9fc0e36b2ad63c33beab4275aa",
+      "LeanFileCount": 216,
+      "renderedGitConfigurationSHA256": "d011d28c5762371b1afab75c03197431ee2fb2932c8ba0beb8df0e4cc45176f4",
+      "stagedPathConfigurationSHA256": "7de534b405e2ca6409d18a7f9d46d18e390bd6e18cf49da009fa3559a52f112f",
+      "stagedPathLockSHA256": "8552c1c4909aaec6ce68a1255c86654ee263fd06f99dbfe3e850258a3b6916ac"
+    },
+    {
+      "repository": "leanprover/hex-gfq-field",
+      "LeanSourceTreeSHA256": "a01905db35cea6e8048a67f87e2608898ab7b168f54ada262523be49aa3c0527",
+      "LeanFileCount": 4,
+      "renderedGitConfigurationSHA256": "8508f572cc6ec3560fa1ed2467d48e8be71bc8b6bc6d7cb302e8f6dac9160a0e",
+      "stagedPathConfigurationSHA256": "1d70310c0ec502947c24bc626a9ec6d25fe0b23b43369d1dec2f3823985e9894",
+      "stagedPathLockSHA256": "eae545cd5e1dd2d06b14719f142dee51439709747dfdd1d2bf10e46a1a046ccd"
+    },
+    {
+      "repository": "leanprover/hex-gf2",
+      "LeanSourceTreeSHA256": "2e1742f35f80368638364be2d91fb1510a8a1bb696e9451bd907e7332c883624",
+      "LeanFileCount": 21,
+      "renderedGitConfigurationSHA256": "33e2d9af2bab59f05459b89024602b63c9d1314c0b1dd3cbaf8cd3e65dfa73c8",
+      "stagedPathConfigurationSHA256": "6ceeb5d42908d91b6013ad853a4c91dd35942449737420713a4b56042855f4db",
+      "stagedPathLockSHA256": "3d900cabd9204efdf08630a072263eb221cfe3a8c5aacfe026cc0b77c97aa3ec"
+    },
+    {
+      "repository": "leanprover/hex-gf2-mathlib",
+      "LeanSourceTreeSHA256": "46cb1cb34a14a2d2bf1de6cb42ea658f9ba63be36e71da62b3e9c2c10bb89395",
+      "LeanFileCount": 4,
+      "renderedGitConfigurationSHA256": "91f5aff1ec38e2e3375a6393eb0912afab4f5da774aa67c3d92e505810730a5d",
+      "stagedPathConfigurationSHA256": "6c09bcb577196bf8244fed287cc7b15bc65a0d604bc2c60fd3dcb964d53761b8",
+      "stagedPathLockSHA256": "7c3596b8d67da0942bd9629903172986f3ee8e8ff8f82fb04413b10e88cf879c"
+    },
+    {
+      "repository": "leanprover/hex-gfq",
+      "LeanSourceTreeSHA256": "2e4fe77730d0e84131c94f3a870efc936cb512c331e33e15faa29ffc9d97628c",
+      "LeanFileCount": 9,
+      "renderedGitConfigurationSHA256": "c1219bca5859a3364abaad771821bd067393933d2217607c11fdfe877490f764",
+      "stagedPathConfigurationSHA256": "921d648fc9a18222482b5988d6924d946ebd104c9765edfec4f9f07939df1f4c",
+      "stagedPathLockSHA256": "e5df03363baeb729872316937920c9a18490000514a9768c043e0a10e67d104f"
+    },
+    {
+      "repository": "leanprover/hex-gfq-mathlib",
+      "LeanSourceTreeSHA256": "9d50ac8159a391134893e3c1a85782b0156f862b419a8292d3482ba840a878d4",
+      "LeanFileCount": 17,
+      "renderedGitConfigurationSHA256": "0b652252464733f2397c8669716094ccad5089afb18daa15f33f05d6d3e1a493",
+      "stagedPathConfigurationSHA256": "1ad01f09d4c48b7cac3a4377b1fd3c6e00814715ebc4226822679cd9c49014bd",
+      "stagedPathLockSHA256": "e9162978f65dd1fb1d9cc09de9a39708f96b3c2873a212cc00944b9830f415c5"
+    },
+    {
+      "repository": "leanprover/hex-determinant",
+      "LeanSourceTreeSHA256": "b54c45248745dc1d788f6ae5ffa6fc59a015054458115e958a302fd11b6bfb05",
+      "LeanFileCount": 14,
+      "renderedGitConfigurationSHA256": "093b73137867399e16414f1cb2577b3b192288a79cd517d8db449a857ed5b080",
+      "stagedPathConfigurationSHA256": "4338782df143d377ecec9d660824583147e6d7e78aa34cc724622edede51fc03",
+      "stagedPathLockSHA256": "ae5ff0d04ef1b7878147d388ee5491144f87ccd022689c7253c0d15fe65224c0"
+    },
+    {
+      "repository": "leanprover/hex-bareiss",
+      "LeanSourceTreeSHA256": "f66c950997bac772d937bcdb5a4a721517d8bd778d1a7a7af2ceca698e5cfaff",
+      "LeanFileCount": 5,
+      "renderedGitConfigurationSHA256": "02eee104d12881be0e0a2e50eb6a5603c18b21d33141a027e1b4f33910e97806",
+      "stagedPathConfigurationSHA256": "417525d57185fe28b140f7fabfdbd92ed93d2ec56e961a6aed79930df65473ed",
+      "stagedPathLockSHA256": "91d0e1f57711272b47fe8d1403344c30221b7c0cf5460fcbbfcdd6568e6b92a1"
+    },
+    {
+      "repository": "leanprover/hex-row-reduce-mathlib",
+      "LeanSourceTreeSHA256": "894c3274aae539468eb3cc0e07d58cded1c3b2b808e264370aa90eaeb97f1446",
+      "LeanFileCount": 6,
+      "renderedGitConfigurationSHA256": "ba68864d16a1d5439df5abca6c2d31cb02c936eba5a9f26d8ede6771a9aad294",
+      "stagedPathConfigurationSHA256": "a045d8b30ec11ea06058ce3c572a16f8084969a111bd3f0cb54ba20d98d38c15",
+      "stagedPathLockSHA256": "96bb0e1b21fc5aa0ee7488b8d43d0d04dc215bc6a42c0c5d6d2d76d588131ac3"
+    },
+    {
+      "repository": "leanprover/hex-determinant-mathlib",
+      "LeanSourceTreeSHA256": "8ee32b3af2fed62d5160f03b962d0a51d793d624f52179f922aa810dd36a4121",
+      "LeanFileCount": 5,
+      "renderedGitConfigurationSHA256": "a3a05f2023c665c527e76ad45c6c6e4877278d0c5b55b26534c651e4ea7f6cbe",
+      "stagedPathConfigurationSHA256": "e1ad52af695ea7ba58db10c1c5c3346d6272b29e3818aa0150640bb87efa6e4d",
+      "stagedPathLockSHA256": "d75f889bae7e179bd2d3f23b1fd9b5c33588577bc36b9b34a074c3b65fb39049"
+    },
+    {
+      "repository": "leanprover/hex-bareiss-mathlib",
+      "LeanSourceTreeSHA256": "11e31657466e1953b198b755397140b9c48dfbe4d818391ba1e303099f4f169c",
+      "LeanFileCount": 5,
+      "renderedGitConfigurationSHA256": "2153d7141f8e2810ecc2b4838b708d49f9ca97817f3b1f49f1d9ce9c8dc42442",
+      "stagedPathConfigurationSHA256": "43e1f1e3e8b327102efd07e922971bcb20c01561539281d468bc13acc694bbbc",
+      "stagedPathLockSHA256": "24ca6049242a18177193df6f13665cd0f030baf8c4c8bd2bc392a538a59edd83"
+    },
+    {
+      "repository": "leanprover/hex-berlekamp-mathlib",
+      "LeanSourceTreeSHA256": "5f77914e9d5b3625fe6d529152b0ec3a370244c376a643e4834efbe4e8ffd7d1",
+      "LeanFileCount": 5,
+      "renderedGitConfigurationSHA256": "ec034f8d1186b5f039e1af4cffc89a313a773e2a3cf3d7b2c709a81c8892bc58",
+      "stagedPathConfigurationSHA256": "2d576932aad864392388c90c29a16574e197685375855723d1c27b07c2adcdb0",
+      "stagedPathLockSHA256": "d4d1bc8b59d1e3470a108cbf85d18915f6d97413bdf9a4b47e43196c0c2df0db"
+    },
+    {
+      "repository": "leanprover/hex-gram-schmidt",
+      "LeanSourceTreeSHA256": "eac54d4ee568d4fc85ac38b9be73f8320599d8cc7cf0a88ed46ab4fa8d222554",
+      "LeanFileCount": 14,
+      "renderedGitConfigurationSHA256": "9f423f3150f7c6e69f294f172943079d5bc6a6548fe24e4bd3b6ef8c2e5ebdf1",
+      "stagedPathConfigurationSHA256": "ac674d448624a7bd944d899bd643db6bf3e38e4f6f71db2d39149870f28b4474",
+      "stagedPathLockSHA256": "5bb826a4d7812565482f13dd805b3ff5d2a20f0c2d8ec6a99dfdca458517937b"
+    },
+    {
+      "repository": "leanprover/hex-gram-schmidt-mathlib",
+      "LeanSourceTreeSHA256": "28c5c3eae35ec04601055d75467aa1aff7be7abff9c05e610108174b01d0ccd3",
+      "LeanFileCount": 8,
+      "renderedGitConfigurationSHA256": "e5f8df51accc93416dae5220cf2776aaa1690ae47599c03ae7420b634f988a6f",
+      "stagedPathConfigurationSHA256": "8ffa3c0798f983121dea602a363bc95ed919f40879c7a72fd68f59e2a5c38c15",
+      "stagedPathLockSHA256": "0ce8c801c1b8f1e161326305af6dc69bc68726978451c9078d23dcab3bd8f702"
+    },
+    {
+      "repository": "leanprover/hex-lll",
+      "LeanSourceTreeSHA256": "b597ee136fdd27f0f30ad37929bf646c0316d9ac3e267dba5fe5fffaf6729262",
+      "LeanFileCount": 11,
+      "renderedGitConfigurationSHA256": "b87a3b36c0b4bcb0a91128cd825c6d428d0891d2ef1c8bbbad8a85ee92026eb5",
+      "stagedPathConfigurationSHA256": "0f94e8891529e49e4711bdf3f163ba1bb0894f968987fba685d6ebb2991d44e2",
+      "stagedPathLockSHA256": "4a80831a7e31b12520460af9764e2d2441466dd6e26f9a7933b1bc275d8dcbf0"
+    },
+    {
+      "repository": "leanprover/hex-berlekamp-zassenhaus",
+      "LeanSourceTreeSHA256": "c02ada7bc2d2a6f33d38af50d3b854d85b519a0250e5356775de4762eb7bc5a3",
+      "LeanFileCount": 39,
+      "renderedGitConfigurationSHA256": "f576448243d39f74dbfa0f4d971c7567ca893d7550b2e6d0667056582f2086e6",
+      "stagedPathConfigurationSHA256": "460e771e4a53383aec2a0878031afb0add346674aa95896204255809063ccfbe",
+      "stagedPathLockSHA256": "51b2097d2484d58e9578f283a5b390edd407db1fd5dc4244353853c72cf2e8d3"
+    },
+    {
+      "repository": "leanprover/hex-lll-mathlib",
+      "LeanSourceTreeSHA256": "9dd93e0b28373cf39a0ccfa4c7c5915eeb6c56741d168e55968281cdb82e90b3",
+      "LeanFileCount": 8,
+      "renderedGitConfigurationSHA256": "555fcc09f39de7c50d7b5751cba9378fc1f5b0f61639a66e05169418153d7850",
+      "stagedPathConfigurationSHA256": "36663e101b7beca47955c80c163f11561994faf20420a3d64b4bec2c3ec8c787",
+      "stagedPathLockSHA256": "63c39a924cd4bf5ddc2e22050fe2e3ae3b040c099585e88cfa03ca780e906e18"
+    },
+    {
+      "repository": "leanprover/hex-berlekamp-zassenhaus-mathlib",
+      "LeanSourceTreeSHA256": "57b47b2810bc4b3dd22ca0ec88f8eac53a57ce7243730c6c08c2702be05f9b5b",
+      "LeanFileCount": 63,
+      "renderedGitConfigurationSHA256": "b8e88b432dab5e8ca3727c91fb3422f3d8d2048e325e9b9dde68273c2981282d",
+      "stagedPathConfigurationSHA256": "b3b653722509b4d1c4f1e3179d578f0d53f16b3de07804842eb3d68e8d8e0b82",
+      "stagedPathLockSHA256": "7fa00f9c2f47544b608ddfaaf093f0c6f963c3320c37fa133d89c2b199492e7c"
+    },
+    {
+      "repository": "leanprover/hex-perm-group",
+      "LeanSourceTreeSHA256": "1d4cb31fb9cb39633336ef19b8f1a2570447a5600e347ec014f90c56ea8db5d2",
+      "LeanFileCount": 121,
+      "renderedGitConfigurationSHA256": "773a696ddea6ef394bfe7ad58846c3da704a019d14aee591163506263e89a5d3",
+      "stagedPathConfigurationSHA256": "296d6aec951a9fc0225049396bc98ec33f222c9edaac9d8021ce70285e1b6679",
+      "stagedPathLockSHA256": "612adf8290e2f8d0363cfcffade6c88852ff0a86baa31089810961bc18dc0dcc"
+    },
+    {
+      "repository": "leanprover/hex-perm-group-mathlib",
+      "LeanSourceTreeSHA256": "fbabf81d1074a45f86e282480092fcc1a916151737e3eea07e7fdc9c2a2c965b",
+      "LeanFileCount": 26,
+      "renderedGitConfigurationSHA256": "e888cbc06c1268cb7b41502d8886f128710e775e8055839c617d8d0153865295",
+      "stagedPathConfigurationSHA256": "56e57190160a232e29ca8e1f5c6e11442e5586041ad036c18b58d621f474e27e",
+      "stagedPathLockSHA256": "3aa06aaace4d08685dd6e77e38c87df112f957ddf6d40caba1fe0470d76c30bf"
+    },
+    {
+      "repository": "leanprover/hex-graph-iso",
+      "LeanSourceTreeSHA256": "3b42d956dc324cffad29832a2e010de165a3de61bb6b92bebe5e54dc15a431dc",
+      "LeanFileCount": 869,
+      "renderedGitConfigurationSHA256": "4dbc949d33ebc14b05209ef153966924af49ddda5929799f5bcb0685c8848095",
+      "stagedPathConfigurationSHA256": "be83273538d730ad83baedf338e92ab7d1cd996eeacc410501c2a9fefcde822b",
+      "stagedPathLockSHA256": "c273fcdd4d6d10ea157f9bf57675303ad81b9ff2e3774f13bdaa489256635cad"
+    },
+    {
+      "repository": "leanprover/hex-graph-iso-mathlib",
+      "LeanSourceTreeSHA256": "1daeb1c203f00aa7f2a1206172b3943f574d9f45e12cb781bcb8419f300c6c10",
+      "LeanFileCount": 17,
+      "renderedGitConfigurationSHA256": "0ebe1bead9242540b4a83f757c04b07529886b937ceace1dc84fb3b92ce7ff8a",
+      "stagedPathConfigurationSHA256": "e75bcc616e514296af417b347a7814634b5b0e11e6971ba48908a19a019d3f7b",
+      "stagedPathLockSHA256": "43a7a88d81597c0634591af3de035e853fa62dd0741042603b3f3b12bf39cba2"
+    },
+    {
+      "repository": "leanprover/hex-resultant",
+      "LeanSourceTreeSHA256": "9e6318089939ad1e3ed300c121a8b49406908603d4907b5c15707d500af8f567",
+      "LeanFileCount": 14,
+      "renderedGitConfigurationSHA256": "6aed71ea7e5318dba5f0dd1e89065f23e1cb51bae3caf80b01da00c02f311456",
+      "stagedPathConfigurationSHA256": "dfb1af48ecd35bb607bca2b48257860e3d59632dde3544ad0a3e8bd9a1694cb4",
+      "stagedPathLockSHA256": "00225479878f7f922e7ef45d8b9b38b7f2cc508916e997d6cf77cb667b6c2a64"
+    },
+    {
+      "repository": "leanprover/hex-resultant-mathlib",
+      "LeanSourceTreeSHA256": "c491325599372a968c3b0b550db7137d384d6fb865077e86a96cf84b8aab4b85",
+      "LeanFileCount": 8,
+      "renderedGitConfigurationSHA256": "7dc73ebd02e2577efe48247cebbfb614aa2779ef0295abda834f679a2782993f",
+      "stagedPathConfigurationSHA256": "8b230a1ede8e17549753aef7946fcecf32933bb8310a97c2928e9ffb3533ed3f",
+      "stagedPathLockSHA256": "b4f32e7c6d2b217c3cf5bc5d7b738e6463011a7679a578cc589fe7067743ac4a"
+    },
+    {
+      "repository": "leanprover/hex-number-field",
+      "LeanSourceTreeSHA256": "efd8b3eba4a09aa034278043df0755ed8cd1e17f032e7e4b9bd014d357601720",
+      "LeanFileCount": 18,
+      "renderedGitConfigurationSHA256": "0ab1cdeeffea9bc0ad1ba5fb6927b7f7247347b863c5d7cba7c23761d8e7a804",
+      "stagedPathConfigurationSHA256": "2862b7e27f5888a471c03bd722767a7a97a4fca7c3371c5ebed0747663ee9729",
+      "stagedPathLockSHA256": "1df8e86713ee390a39420180a532494e7cdcd6482e0bf0122350627df0e2f133"
+    },
+    {
+      "repository": "leanprover/hex-number-field-mathlib",
+      "LeanSourceTreeSHA256": "bda8c8717fd1492d5d81e396908170b068be00c8416e256b13c7b98e3d68c238",
+      "LeanFileCount": 38,
+      "renderedGitConfigurationSHA256": "514a961630a9c9c2817408861ab2b34f79a19b7447215245151c2b1683ec6391",
+      "stagedPathConfigurationSHA256": "39bf77da357b30fdd00960a0252a7dcba986aea5ca9f2979c5cef8e388e4b0a5",
+      "stagedPathLockSHA256": "93098ab50a3d5c2d8e4d3b9a45bf6f595683781ec2cce34db7bab2f089dc7032"
+    },
+    {
+      "repository": "leanprover/hex-number-field-tower",
+      "LeanSourceTreeSHA256": "de2ce66469b2c47b3421fbfcd3b64fe94adecadb8e2fa113d3314e156158865f",
+      "LeanFileCount": 12,
+      "renderedGitConfigurationSHA256": "cd4f76254ed00be3577560d113afc6f36d2f3a3a08f63658ed7bc5c426b60c4c",
+      "stagedPathConfigurationSHA256": "bb8c871021130ec276e6df46e9ff65a37a9a7b67ada40dd3d6816ce9f0ceb3a0",
+      "stagedPathLockSHA256": "339234e9ff60f3a1f24b4bf6e8ae8896406efd6810094a4d9c17c7c57878bb51"
+    },
+    {
+      "repository": "leanprover/hex-number-field-tower-mathlib",
+      "LeanSourceTreeSHA256": "3ff4e10967bc277f17b0046da71c438fbf046836bb23f4b34c0760e415b58be1",
+      "LeanFileCount": 22,
+      "renderedGitConfigurationSHA256": "06e6756f9f37c5f1fc3ecfa4f8d653b02cfabf68ac92f8e73e3eb681130b05c7",
+      "stagedPathConfigurationSHA256": "c1d7f0a2f657d53ada780a13aeba37700ad383d4f98bd6e1d4d490861449ad56",
+      "stagedPathLockSHA256": "19a064c5ddad95f2de55a98fca2578e4e1cbc3b172b47c3794b6525156a793d8"
+    },
+    {
+      "repository": "leanprover/hex-rcf",
+      "LeanSourceTreeSHA256": "8d53e381a3b7333f2f75ef7bcd2429b830872fb5476a4b9a6ea87259245a5866",
+      "LeanFileCount": 42,
+      "renderedGitConfigurationSHA256": "257cdb7a76dfdacb9eb74b3f7f56b6f53cc3050edd87e70c58f1a4e03a190fa3",
+      "stagedPathConfigurationSHA256": "92b69470d9d44c928b646a5819dd0ab10c5652ec816d8e13acbbbed3b9f3544b",
+      "stagedPathLockSHA256": "ce6d20f1f68e4c10b9d4a13f79579df8ed016155cfc04524456de31a4584c16f"
+    },
+    {
+      "repository": "leanprover/hex",
+      "LeanSourceTreeSHA256": "3dd2f469a69bfd943663316e1c24b71f91838210ee441129e00ee0f62ea04c42",
+      "LeanFileCount": 1,
+      "renderedGitConfigurationSHA256": "086952605137412a19e3216ed139cba58b71c034a2702098035348e96a4a1296",
+      "stagedPathConfigurationSHA256": "259fd0b6fef00029efe8e851959376513b798d5bb9863d4209c1a0312d6f5414",
+      "stagedPathLockSHA256": "7817e8d379d84be4213711ab763b4cf35d373087173195f6bcd68efb46cef70a"
+    }
+  ],
+  "configurationScope": "Rendered original Git requirements plus actual stage files after existing consumer path rewrites; these are separate digests.",
+  "baselineSHA256": "44231869929d76cf1ac3fd7b3e43b3ab42875dbaa414635745953551852279ac",
+  "kind": "Existing published-manifest candidate generated after #10682; Linux downstream validation, not family release eligibility",
+  "stageCommand": "python3 scripts/release/sync_released.py --dry-run --baseline /home/kim/.codex/tasks/hex-10575/live-baseline-10682.json --stage /home/kim/.codex/tasks/hex-10575/release-stage-generated",
+  "consumerCommand": "python3 scripts/release/consumer_check.py /home/kim/.codex/tasks/hex-10575/release-stage-generated",
+  "stageExitCode": 0,
+  "consumerExitCode": 0,
+  "helperBuildJobs": 8,
+  "aggregateBuildJobs": 22529,
+  "nativeLinkCheck": "consumer link check passed",
+  "stagedTarski": {
+    "command": "lake build Consumer.Tarski",
+    "exitCode": 0,
+    "jobs": 9343,
+    "sourceSHA256": "de489722bd9a7566c903b9840723b649cf0ff714f8c0fdf580b1f25844d3604d",
+    "reuses": "Existing Query.integer_query public-import example and ordinary-kernel axiom guard"
+  },
+  "monorepoChecks": {
+    "sourceCommit": "3c2e7fa09dcc5aac4e34ffcff50c0bb3d18b4dad",
+    "targets": [
+      "HexQuerySemantics",
+      "HexRCFRealCoefficients",
+      "HexRCFProofProbe",
+      "RealClosureConsumer",
+      "HexManual",
+      "HexConformance"
+    ],
+    "jobs": 13767,
+    "exitCode": 0,
+    "scannedAdmissionCones": 295,
+    "scannedLocalModules": 1100,
+    "publishedTrustFiles": 2048
+  },
+  "externalPins": [
+    {
+      "name": "mathlib",
+      "url": "https://github.com/leanprover-community/mathlib4.git",
+      "rev": "d870b9068518a0870842d15a0cd42637ec30b587"
+    },
+    {
+      "name": "batteries",
+      "url": "https://github.com/leanprover-community/batteries",
+      "rev": "33131f4fb10067cb3009bf4db615d9680c1ccd6b"
+    },
+    {
+      "name": "TauCeti",
+      "url": "https://github.com/TauCetiProject/TauCeti.git",
+      "rev": "0dbbe255a4f418084b30a3ffe6763d824a6b4250"
+    },
+    {
+      "name": "AINTLIB",
+      "url": "https://github.com/CBirkbeck/AINTLIB.git",
+      "rev": "ab1451487da02cd4483d0e2cdb2cc9e44bbbac17"
+    },
+    {
+      "name": "plausible",
+      "url": "https://github.com/leanprover-community/plausible",
+      "rev": "fb13df72ecefd8ddbf9291021d7f33a8673eb57b"
+    },
+    {
+      "name": "LeanSearchClient",
+      "url": "https://github.com/leanprover-community/LeanSearchClient",
+      "rev": "29ff470276c725ae01505d55b17148c18fc7dfd3"
+    },
+    {
+      "name": "importGraph",
+      "url": "https://github.com/leanprover-community/import-graph",
+      "rev": "a6d31147557d4b044a3ce226768572919acc1def"
+    },
+    {
+      "name": "proofwidgets",
+      "url": "https://github.com/leanprover-community/ProofWidgets4",
+      "rev": "c643bbb3c24f8a25f9c14e3a6b1ceb13d01f3de1"
+    },
+    {
+      "name": "aesop",
+      "url": "https://github.com/leanprover-community/aesop",
+      "rev": "a90fbf7b02ff06a0deebf74088dff9e5fe02c9ea"
+    },
+    {
+      "name": "Qq",
+      "url": "https://github.com/leanprover-community/quote4",
+      "rev": "37b0ba0b26109cf9f9c541f0f9557e50cfa1a3b9"
+    },
+    {
+      "name": "Cli",
+      "url": "https://github.com/leanprover/lean4-cli",
+      "rev": "843844fa601dd56767b1eb22b7ada5b64d5e567a"
+    }
+  ],
+  "reuse": {
+    "consumerProjectsCreatedFresh": true,
+    "HexBuildOutputsInitiallyAbsent": true,
+    "externalMathlibArtifactCacheUsed": true,
+    "all60RenderedConfigurationsByteIdenticalAfterBoundaryAndParserChanges": true,
+    "checkedLeanSourceBodiesUnchangedAfterStage": true
+  },
+  "sourceArchives": {
+    "generated": "issue-10575-evidence-generated",
+    "earlierStaged": "issue-10575-evidence-staged",
+    "earlierCandidates": "issue-10575-evidence-candidates"
+  },
+  "retainedCIFailures": [
+    {
+      "run": "https://github.com/kim-em/hex-dev/actions/runs/37178450711",
+      "seconds": 385,
+      "capSeconds": 360,
+      "allOraclesPassed": true
+    },
+    {
+      "run": "https://github.com/kim-em/hex-dev/actions/runs/37189870141",
+      "seconds": 388,
+      "capSeconds": 360,
+      "allOraclesPassed": true
+    }
+  ],
+  "limits": [
+    "Only existing 60-repository manifest; unpublished Sturm/sign/tower/optional packages are covered by separate local candidates and monorepo builds, not this released graph.",
+    "Stage generated at the recorded source commit. Later parser/boundary review changes leave all 60 generated configurations byte-identical; the release workflow must still restage final current output and pass platform consumers.",
+    "Existing consumer tool rewrites Hex tag requirements to sibling paths; external Git packages retain exact revisions.",
+    "No mirror writes, release dispatch, phase promotion or publication version selection occurred.",
+    "The optional package boundary and remaining owner algorithms/evidence are not discharged."
+  ],
+  "logs": {
+    "release-stage-generated.log": {
+      "SHA256": "dc0e720785e026270949ea6fa81954d1ff373e709a0f9fb38b8079faadd8fdac"
+    },
+    "release-stage-generated-consumer.log": {
+      "SHA256": "00021dfe45fd812a3c86b60c8e1fa0108d8f2b4e7986c7541a516c86080c31a1"
+    },
+    "staged-generated-tarski.log": {
+      "SHA256": "5d250ce3bed5c7ac4b42bc62e32887a29a99ea01d4e9ef645b606da77a455705"
+    },
+    "rebased-10682-build.log": {
+      "SHA256": "55b6871da906daad91e79f73a027093fd0efa31eed08aadc25742b1bd91d529c"
+    },
+    "rebased-review-tests.log": {
+      "SHA256": "1d136fd09e8d9f50ff2cc95bd608e7a190a23bce91a4165d334e9407ca2601cd"
+    },
+    "rebased-trust.log": {
+      "SHA256": "186184b58bdcbc326b692dcab84d14332b5843f46f33a0293ef943b2623e6152"
+    },
+    "rebased-named-admissions.log": {
+      "SHA256": "e98fb78358164339d3bb24ec8dad9b556a6da0a6fa1f07bf820c2cc35bb9bb9a"
+    },
+    "ci-37189870141-failed.log": {
+      "SHA256": "f52f61e49256fb99b139eceb6b22962e4a697b71504bf4dcbede07bd6107b135"
+    }
+  },
+  "releaseAndDependencyTests": {
+    "sourceCommit": "2a9a6283f96be0d23281238745b6b4c455f30968",
+    "count": 119,
+    "exitCode": 0,
+    "scope": "Review-corrected package and dependency tests, separately from the staged-source Lean build"
+  },
+  "sharedParserFollowup": {
+    "sourceSHA256": {
+      "scripts/release/sync_released.py": "7d908568fcb27c3c8185558e703d830f4c60bf3ecc30dc2c3bfc6d537df250e1",
+      "scripts/release/consumer_check.py": "918bcfa16086880e33120abb2ce39a6d45bc57acab7465da697ee486fe3a4aec",
+      "scripts/audit_real_closure_packages.py": "ece96092cce9f303d9ae33a637e228d596a996d1445f868bf087e9db017ad5ec",
+      "scripts/release/test_sync_released.py": "bbd3a823012a8aff0b9a14a4331b16e5c3f3c23fb2476dfeedc8f87266c5794b"
+    },
+    "releaseAndDependencyTests": 119,
+    "testLogSHA256": "ae8aff262eec5b99af111caaaa1b787393e5a229b82ac94f664b8b64a79da2d9",
+    "all60RenderedConfigurationsUnchanged": true,
+    "downstreamExampleSelectionUnchanged": true,
+    "inventoryClaimsUnchanged": true,
+    "historicalArchiveAncestryVerified": true
+  }
+}

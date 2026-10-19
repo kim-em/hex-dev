@@ -21,6 +21,8 @@ inputs take the nonnegative square root of the squared norm. -/
   if h : a.isReal = true then (RealAlgebraicNumber.ofAlgebraic a h).abs
   else match a.normSq.sqrt? with
     | some value => value
+    -- Unreachable by the pipeline invariant: normSq_nonneg and sqrt?_isSome
+    -- in the companion establish success for every squared norm.
     | none => Hex.panicWith 0 "AlgebraicNumber.abs: nonnegative square root failed"
 
 end Hex.AlgebraicNumber

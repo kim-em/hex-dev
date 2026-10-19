@@ -4,9 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRowReduceMathlib
-import HexRationalFnMathlib
-import HexModArithMathlib
+import HexRowReduceTheory
+import HexRationalFnTheory
+import HexModArithTheory
 import HexPolyFp.PrimeField
 
 /-!
@@ -17,7 +17,7 @@ transport their answers entrywise to `ZMod`.
 -/
 
 namespace Examples.RowReduce
-open HexMatrixMathlib
+open HexMatrixTheory
 attribute [local instance 2000] Field.toGrindField
 
 example (A B : Hex.Matrix Rat n n) (h : Hex.Matrix.inverse? A = some B) :
@@ -48,7 +48,7 @@ example (A : Hex.Matrix RF n m) (b : Vector RF n) (s : Hex.Matrix.SolveData A)
   solve?_parameters A b s h x
 
 -- Interpret the executable rational-function answers in Mathlib's RatFunc field.
-private noncomputable abbrev rfEquiv := HexRationalFnMathlib.equiv (K := Rat)
+private noncomputable abbrev rfEquiv := HexRationalFnTheory.equiv (K := Rat)
 
 example (A B : Hex.Matrix RF n n) (h : Hex.Matrix.inverse? A = some B) :
     (matrixEquiv A).map rfEquiv * (matrixEquiv B).map rfEquiv = 1 ∧
@@ -178,7 +178,7 @@ noncomputable section
 variable {p : Nat} [Hex.ZMod64.Bounds p] [Hex.ZMod64.PrimeModulus p]
   [Fact (Nat.Prime p)]
 
-private abbrev e := HexModArithMathlib.ZMod64.equiv (p := p)
+private abbrev e := HexModArithTheory.ZMod64.equiv (p := p)
 private def vm (v : Vector (Hex.ZMod64 p) n) : Fin n → ZMod p := fun i => e v[i]
 private def mm (A : Hex.Matrix (Hex.ZMod64 p) n m) : Matrix (Fin n) (Fin m) (ZMod p) :=
   fun i j => e A[i][j]
@@ -193,7 +193,7 @@ private theorem dot_map (v w : Vector (Hex.ZMod64 p) n) :
     | nil => rfl
     | cons i xs ih => simpa only [List.foldl_cons, map_add, map_mul] using ih (z + v[i] * w[i])
   unfold Vector.dotProduct
-  have hz : e (0 : Hex.ZMod64 p) = 0 := HexModArithMathlib.ZMod64.toZMod_zero
+  have hz : e (0 : Hex.ZMod64 p) = 0 := HexModArithTheory.ZMod64.toZMod_zero
   rw [hf, hz, foldl_finRange_eq_sum]
   rfl
 
@@ -224,7 +224,7 @@ private theorem vm_zero : vm (0 : Vector (Hex.ZMod64 p) n) = 0 := by
   funext i
   change e ((0 : Vector (Hex.ZMod64 p) n)[i.val]) = 0
   rw [Vector.getElem_zero]
-  exact HexModArithMathlib.ZMod64.toZMod_zero
+  exact HexModArithTheory.ZMod64.toZMod_zero
 
 omit [Hex.ZMod64.PrimeModulus p] in
 private theorem vm_add (x y : Vector (Hex.ZMod64 p) n) : vm (x + y) = vm x + vm y := by
@@ -288,8 +288,8 @@ private theorem mm_identity : mm (Hex.Matrix.identity (R := Hex.ZMod64 p) n) = 1
   ext i j
   change e ((Hex.Matrix.identity n)[i][j]) = _
   rw [Hex.Matrix.getElem_identity, Matrix.one_apply]
-  split <;> simp_all only [e, HexModArithMathlib.ZMod64.equiv_apply,
-    HexModArithMathlib.ZMod64.toZMod_zero, HexModArithMathlib.ZMod64.toZMod_one]
+  split <;> simp_all only [e, HexModArithTheory.ZMod64.equiv_apply,
+    HexModArithTheory.ZMod64.toZMod_zero, HexModArithTheory.ZMod64.toZMod_one]
 
 example (A B : Hex.Matrix (Hex.ZMod64 p) n n) (h : Hex.Matrix.inverse? A = some B) :
     mm A * mm B = 1 ∧ mm B * mm A = 1 := by
@@ -322,7 +322,7 @@ example (A : Hex.Matrix (Hex.ZMod64 p) n m) (b y : Vector (Hex.ZMod64 p) n)
     apply hb
     apply e.injective
     rw [dot_map, hz]
-    exact HexModArithMathlib.ZMod64.toZMod_zero.symm
+    exact HexModArithTheory.ZMod64.toZMod_zero.symm
 
 example (A : Hex.Matrix (Hex.ZMod64 p) n m) (b : Vector (Hex.ZMod64 p) n) :
     Hex.Matrix.solve? A b = none ↔
@@ -337,7 +337,7 @@ example (A : Hex.Matrix (Hex.ZMod64 p) n m) (b : Vector (Hex.ZMod64 p) n) :
       apply hb
       apply e.injective
       rw [dot_map, hz]
-      exact HexModArithMathlib.ZMod64.toZMod_zero.symm
+      exact HexModArithTheory.ZMod64.toZMod_zero.symm
   · rintro ⟨y, ha, hb⟩
     obtain ⟨v, rfl⟩ := vm_surjective y
     refine ⟨v, vm_injective ?_, ?_⟩
@@ -346,7 +346,7 @@ example (A : Hex.Matrix (Hex.ZMod64 p) n m) (b : Vector (Hex.ZMod64 p) n) :
     · intro hz
       apply hb
       rw [← dot_map, hz]
-      exact HexModArithMathlib.ZMod64.toZMod_zero
+      exact HexModArithTheory.ZMod64.toZMod_zero
 
 end
 end Modular

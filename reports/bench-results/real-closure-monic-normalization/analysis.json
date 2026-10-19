@@ -1,0 +1,369 @@
+{
+  "source": "4a80db8067598654aa26234867ddd93191a4aa1c",
+  "binary_sha256": "5a0cd7469e5836b1e65ef1b7a2bbaa06a9c779ed2b4420e7d50a049bc8419f8e",
+  "cpu": 64,
+  "measurements": 48,
+  "endpoints": {
+    "Depth1.monic2": {
+      "median_ms": 0.06789559326171875,
+      "minimum_ms": 0.06760645202636718,
+      "maximum_ms": 0.06837409497070313,
+      "per_call_nanos": [
+        67892.98498535156,
+        67879.70239257812,
+        68374.09497070312,
+        68161.99584960938,
+        67898.20153808594,
+        67606.45202636719
+      ],
+      "batches": [
+        {
+          "trial": 0,
+          "inner_repeats": 8192,
+          "total_nanos": 556179333
+        },
+        {
+          "trial": 1,
+          "inner_repeats": 8192,
+          "total_nanos": 556070522
+        },
+        {
+          "trial": 2,
+          "inner_repeats": 8192,
+          "total_nanos": 560120586
+        },
+        {
+          "trial": 3,
+          "inner_repeats": 8192,
+          "total_nanos": 558383070
+        },
+        {
+          "trial": 4,
+          "inner_repeats": 8192,
+          "total_nanos": 556222067
+        },
+        {
+          "trial": 5,
+          "inner_repeats": 8192,
+          "total_nanos": 553832055
+        }
+      ]
+    },
+    "Depth1.monic4": {
+      "median_ms": 0.12123252056884766,
+      "minimum_ms": 0.12037129321289063,
+      "maximum_ms": 0.1219927763671875,
+      "per_call_nanos": [
+        120371.29321289062,
+        121066.28942871094,
+        121992.7763671875,
+        121608.89074707031,
+        121360.01123046875,
+        121105.02990722656
+      ],
+      "batches": [
+        {
+          "trial": 0,
+          "inner_repeats": 8192,
+          "total_nanos": 986081634
+        },
+        {
+          "trial": 1,
+          "inner_repeats": 8192,
+          "total_nanos": 991775043
+        },
+        {
+          "trial": 2,
+          "inner_repeats": 8192,
+          "total_nanos": 999364824
+        },
+        {
+          "trial": 3,
+          "inner_repeats": 8192,
+          "total_nanos": 996220033
+        },
+        {
+          "trial": 4,
+          "inner_repeats": 8192,
+          "total_nanos": 994181212
+        },
+        {
+          "trial": 5,
+          "inner_repeats": 8192,
+          "total_nanos": 992092405
+        }
+      ]
+    },
+    "Depth1.monic8": {
+      "median_ms": 0.22956744836425783,
+      "minimum_ms": 0.22797817749023438,
+      "maximum_ms": 0.23137120458984375,
+      "per_call_nanos": [
+        231371.20458984375,
+        229456.9951171875,
+        230326.55834960938,
+        227978.17749023438,
+        229331.70971679688,
+        229677.90161132812
+      ],
+      "batches": [
+        {
+          "trial": 0,
+          "inner_repeats": 4096,
+          "total_nanos": 947696454
+        },
+        {
+          "trial": 1,
+          "inner_repeats": 4096,
+          "total_nanos": 939855852
+        },
+        {
+          "trial": 2,
+          "inner_repeats": 4096,
+          "total_nanos": 943417583
+        },
+        {
+          "trial": 3,
+          "inner_repeats": 4096,
+          "total_nanos": 933798615
+        },
+        {
+          "trial": 4,
+          "inner_repeats": 4096,
+          "total_nanos": 939342683
+        },
+        {
+          "trial": 5,
+          "inner_repeats": 4096,
+          "total_nanos": 940760685
+        }
+      ]
+    },
+    "Depth1.monic16": {
+      "median_ms": 0.4853307001953125,
+      "minimum_ms": 0.47723851220703123,
+      "maximum_ms": 0.4907584638671875,
+      "per_call_nanos": [
+        485675.87646484375,
+        490758.4638671875,
+        485203.69287109375,
+        477238.51220703125,
+        479039.791015625,
+        485457.70751953125
+      ],
+      "batches": [
+        {
+          "trial": 0,
+          "inner_repeats": 2048,
+          "total_nanos": 994664195
+        },
+        {
+          "trial": 1,
+          "inner_repeats": 1024,
+          "total_nanos": 502536667
+        },
+        {
+          "trial": 2,
+          "inner_repeats": 2048,
+          "total_nanos": 993697163
+        },
+        {
+          "trial": 3,
+          "inner_repeats": 2048,
+          "total_nanos": 977384473
+        },
+        {
+          "trial": 4,
+          "inner_repeats": 2048,
+          "total_nanos": 981073492
+        },
+        {
+          "trial": 5,
+          "inner_repeats": 2048,
+          "total_nanos": 994217385
+        }
+      ]
+    },
+    "Depth2.monic2": {
+      "median_ms": 4.89296506640625,
+      "minimum_ms": 4.8640278359375,
+      "maximum_ms": 4.932323375,
+      "per_call_nanos": [
+        4916673.921875,
+        4864027.8359375,
+        4887548.796875,
+        4867018.2890625,
+        4898381.3359375,
+        4932323.375
+      ],
+      "batches": [
+        {
+          "trial": 0,
+          "inner_repeats": 128,
+          "total_nanos": 629334262
+        },
+        {
+          "trial": 1,
+          "inner_repeats": 128,
+          "total_nanos": 622595563
+        },
+        {
+          "trial": 2,
+          "inner_repeats": 128,
+          "total_nanos": 625606246
+        },
+        {
+          "trial": 3,
+          "inner_repeats": 128,
+          "total_nanos": 622978341
+        },
+        {
+          "trial": 4,
+          "inner_repeats": 128,
+          "total_nanos": 626992811
+        },
+        {
+          "trial": 5,
+          "inner_repeats": 128,
+          "total_nanos": 631337392
+        }
+      ]
+    },
+    "Depth2.monic4": {
+      "median_ms": 9.728855296875,
+      "minimum_ms": 9.66513459375,
+      "maximum_ms": 9.879861625,
+      "per_call_nanos": [
+        9665134.59375,
+        9709282.6875,
+        9879861.625,
+        9755294.65625,
+        9666471.125,
+        9748427.90625
+      ],
+      "batches": [
+        {
+          "trial": 0,
+          "inner_repeats": 64,
+          "total_nanos": 618568614
+        },
+        {
+          "trial": 1,
+          "inner_repeats": 64,
+          "total_nanos": 621394092
+        },
+        {
+          "trial": 2,
+          "inner_repeats": 64,
+          "total_nanos": 632311144
+        },
+        {
+          "trial": 3,
+          "inner_repeats": 64,
+          "total_nanos": 624338858
+        },
+        {
+          "trial": 4,
+          "inner_repeats": 64,
+          "total_nanos": 618654152
+        },
+        {
+          "trial": 5,
+          "inner_repeats": 64,
+          "total_nanos": 623899386
+        }
+      ]
+    },
+    "Depth2.monic8": {
+      "median_ms": 24.10613571875,
+      "minimum_ms": 23.92761234375,
+      "maximum_ms": 24.2893926875,
+      "per_call_nanos": [
+        24163512.3125,
+        24161158.5,
+        24025108.75,
+        23927612.34375,
+        24289392.6875,
+        24051112.9375
+      ],
+      "batches": [
+        {
+          "trial": 0,
+          "inner_repeats": 32,
+          "total_nanos": 773232394
+        },
+        {
+          "trial": 1,
+          "inner_repeats": 32,
+          "total_nanos": 773157072
+        },
+        {
+          "trial": 2,
+          "inner_repeats": 32,
+          "total_nanos": 768803480
+        },
+        {
+          "trial": 3,
+          "inner_repeats": 32,
+          "total_nanos": 765683595
+        },
+        {
+          "trial": 4,
+          "inner_repeats": 32,
+          "total_nanos": 777260566
+        },
+        {
+          "trial": 5,
+          "inner_repeats": 32,
+          "total_nanos": 769635614
+        }
+      ]
+    },
+    "Depth2.monic16": {
+      "median_ms": 60.77822440625,
+      "minimum_ms": 59.78599175,
+      "maximum_ms": 61.1053218125,
+      "per_call_nanos": [
+        61082564.25,
+        60225433.125,
+        60817943.25,
+        59785991.75,
+        60738505.5625,
+        61105321.8125
+      ],
+      "batches": [
+        {
+          "trial": 0,
+          "inner_repeats": 16,
+          "total_nanos": 977321028
+        },
+        {
+          "trial": 1,
+          "inner_repeats": 16,
+          "total_nanos": 963606930
+        },
+        {
+          "trial": 2,
+          "inner_repeats": 16,
+          "total_nanos": 973087092
+        },
+        {
+          "trial": 3,
+          "inner_repeats": 16,
+          "total_nanos": 956575868
+        },
+        {
+          "trial": 4,
+          "inner_repeats": 16,
+          "total_nanos": 971816089
+        },
+        {
+          "trial": 5,
+          "inner_repeats": 16,
+          "total_nanos": 977685149
+        }
+      ]
+    }
+  },
+  "claim": "Fixed monic-clean production observations; no scaling or cross-family policy claim."
+}

@@ -13,6 +13,7 @@ public import HexRealRoots.TarskiTests
 
 public meta import HexSignDet.Replay
 public meta import HexSignDet.Dag
+public meta import HexSignDet.DagMap
 public meta import HexSignDet.SignOperands
 public meta import HexSturm.Fixtures
 public meta import HexSignDet.Matrix
@@ -39,10 +40,38 @@ public section
 open Hex Hex.SignDet
 open scoped Hex
 
-/-! Recursive replay regressions. Fixture generation uses independently supplied
-rational roots to populate counts; it is test code, not a sign-table producer.
-The final literal probe runs solely through the ordinary kernel. -/
+/-! Public API and literal replay conformance.
+Oracle: independently supplied rational roots and literal sign words here;
+Python FLINT, Z3, field-sign/common-field and JSON-byte oracles in CI.
+Mode: always for these elaboration checks; required for the external CI oracles.
+Covered operations:
+- Complete sign tables, prepared production, recursive and shared replay.
+- Selected-root signs, Thom completion, root enumeration and order.
+- Common-product comparison and re-encoding.
+Covered properties:
+- Exact integer counts and matrix identities, complete support.
+- Fixed query/row/column order, context identity and rejection of omitted evidence.
+Covered edge cases:
+- Zero and repeated queries, empty root domains and invalid endpoints.
+- Partial/full encodings, different defining polynomials and shared graph entries.
+- Incomplete support and copied or stale contexts.
+
+Checked conversion is exercised by the compiled FieldChecks driver; literal
+codecs by DescriptorCodec, a separate HexConformance module.
+
+Compiled checks evaluate the public computational APIs. Explicit ordinary-kernel
+proofs audit acceptance and rejection separately. Expected root/sign data are
+independent of production. Elaboration checks also resolve the advertised public
+names. Fixture generation supplies no premise to correctness proofs. -/
 namespace Hex.SignDet.Conformance
+
+-- Elaboration checks use public imports, without importing implementation bodies.
+example := @Hex.SignDet.determine
+example := @Hex.SignDet.determinePrepared
+example := @Hex.SignDet.Descriptor.signAt
+example := @Hex.SignDet.Descriptor.buildRoots
+example := @Hex.SignDet.SelectedSigns.ofMemo?
+example := @Hex.SignDet.Dependencies.Graph.validate?
 
 def sign : Rat → Int := Sturm.orderSign
 
@@ -1175,6 +1204,24 @@ theorem forged_rejected : (Replay.leaf forgedNode).check Sturm.orderSign 7
 
 example : emptySystem.check 0 = true := by decide +kernel
 
+/-- The public acceptance characterization includes zero-dimensional systems. -/
+example : emptySystem.columns.toList.Nodup ∧ emptySystem.denominator ≠ 0 := by
+  obtain ⟨_, _, hn, _, hd, _, _⟩ := (emptySystem.check_eq 0).mp (by decide +kernel)
+  exact ⟨hn, hd⟩
+
+/-- Zero-dimensional matrix identities do not waive the denominator guard. -/
+example : ({emptySystem with denominator := 0} : System 0).check 0 = false := by
+  decide +kernel
+
+/-- Acceptance can be constructed from the complete public guard contract. -/
+example : emptySystem.check 0 = true := by
+  apply (emptySystem.check_eq 0).mpr
+  decide +kernel
+
+/-- info: 'Hex.SignDet.System.check_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms System.check_eq
+
 @[expose] def emptyNode : Node Rat Nat where
   context := 7
   head := Sturm.Fixtures.p
@@ -1286,6 +1333,15 @@ theorem empty_rejected : (Replay.leaf emptyNode).check Sturm.orderSign 7
 /-- info: 'Hex.SignDet.Descriptor.rootsFromTable_sorted' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Descriptor.rootsFromTable_sorted
+
+/-- info: 'Hex.SignDet.RawDescriptor.checkSigns_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms RawDescriptor.checkSigns_eq
+
+/-- info: 'Hex.SignDet.Descriptor.checkSigns_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Descriptor.checkSigns_eq
+
 /-- info: 'Hex.SignDet.SelectedSigns.count' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms SelectedSigns.count
@@ -1374,5 +1430,122 @@ theorem empty_rejected : (Replay.leaf emptyNode).check Sturm.orderSign 7
 /-- info: 'Hex.SignDet.Descriptor.buildReencoding_ofEmpty' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Descriptor.buildReencoding_ofEmpty
+
+
+/-- Retarget full literal context bindings, including every moment certificate.
+The coefficient field remains rational and all integer identities are retained. -/
+def retag (n : Node Rat Nat) : Node Rat Int :=
+  { n with context := (n.context : Int)
+           moments := n.moments.map (fun certificate =>
+             { certificate with context := (certificate.context : Int) }) }
+
+/-- Both edges of the repeated-query parent share one converted leaf.
+Acceptance checks the new typed context; the old numeric tag is insufficient
+when the requested target binding changes. -/
+def mappedGraph : Bool :=
+  match Sturm.prepare sign (DensePoly.ofCoeffs #[0, 1]) .negInf .posInf with
+  | none => false
+  | some domain => match buildPrepared (7 : Nat) domain [1, 1] with
+    | .error _ => false
+    | .ok tree =>
+      let original := Dag.encode tree.val
+      let mapped := original.mapNodes retag
+      decide (mapped.entries.size = 2) &&
+        decide (mapped.entries.map (·.children) = original.entries.map (·.children)) &&
+        mapped.check sign (7 : Int) (DensePoly.ofCoeffs #[0, 1]) .negInf .posInf [1, 1] &&
+        !(mapped.check sign (8 : Int) (DensePoly.ofCoeffs #[0, 1]) .negInf .posInf [1, 1])
+
+#guard mappedGraph
+
+/-- info: 'Hex.SignDet.Replay.check_leaf' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Replay.check_leaf
+
+/-- info: 'Hex.SignDet.Replay.check_split' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Replay.check_split
+
+/-- info: 'Hex.SignDet.SignTable.count_pos' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.SignTable.count_pos
+
+
+/-- Empty sparse lookup uses the public simp normalization. -/
+example (arity : Nat) (condition : List Int) :
+    (SignTable.empty arity).count condition = 0 := by simp
+
+/-- The membership-to-positivity direction applies to the existing checked table. -/
+example : 0 < ((Replay.leaf literalNode).table literal_accepts).count [] := by
+  apply (SignTable.count_pos _ []).mpr
+  refine ⟨2, ?_⟩
+  rw [Replay.table_rows]
+  change ([], 2) ∈ literalSystem.tableRows.toList
+  decide +kernel
+
+/-- info: 'Hex.SignDet.RawDescriptor.wellFormed_iff' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.RawDescriptor.wellFormed_iff
+
+/-- info: 'Hex.SignDet.RawDescriptor.check_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.RawDescriptor.check_iff
+
+/-- info: 'Hex.SignDet.RawDescriptor.completes_iff' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Hex.SignDet.RawDescriptor.completes_iff
+/-- info: 'Hex.SignDet.Descriptor.fullOrder_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Descriptor.fullOrder_iff
+/-- info: 'Hex.SignDet.Descriptor.fullOrder_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Descriptor.fullOrder_eq
+/-- info: 'Hex.SignDet.Completion.bindings' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Completion.bindings
+
+/-- info: 'Hex.SignDet.CommonProduct.check_iff' depends on axioms: [propext] -/
+#guard_msgs in
+#print axioms Hex.SignDet.CommonProduct.check_iff
+/-- info: 'Hex.SignDet.Descriptor.checkReencoding_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Descriptor.checkReencoding_iff
+
+/-- info: 'Hex.SignDet.Dag.select_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Dag.select_isSome
+/-- info: 'Hex.SignDet.Dag.bindDomain_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Dag.bindDomain_isSome
+
+/-- info: 'Hex.SignDet.Dag.select_values' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Dag.select_values
+
+/-- info: 'Hex.SignDet.Descriptor.rootsFrom_length' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Descriptor.rootsFrom_length
+/-- info: 'Hex.SignDet.Descriptor.rootsFrom_counts' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Descriptor.rootsFrom_counts
+
+/-- info: 'Hex.SignDet.Thom.insert_nil' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Thom.insert_nil
+
+/-- info: 'Hex.SignDet.Descriptor.prepareQueries_isSome' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Descriptor.prepareQueries_isSome
+
+/-- info: 'Hex.SignDet.QueryHandle.checkSigns_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.QueryHandle.checkSigns_eq
+
+/-- info: 'Hex.SignDet.Dag.Expansion.step_isSome' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Dag.Expansion.step_isSome
+
+/-- info: 'Hex.SignDet.Codec.bindings_iff' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Codec.bindings_iff
 
 end Hex.SignDet.Conformance

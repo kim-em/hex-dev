@@ -13,12 +13,12 @@ import LeanBench
 /-!
 The symbolic family uses the full Cartesian product of dimensions 2/4/8,
 variables 1/2/4/8, degree 1/2/4 and support caps 1/4/16, at full and low rank.
-Mode 3: each fixed workload has its own absolute ceiling; these ladders do
+Each fixed workload has its own absolute ceiling; these ladders do
 not assert a common cubic cost model. The upper-triangular full-rank inputs
 and factorised low-rank inputs have bounded realised minor support. They
 measure these structured inputs, not worst-case expression swell.
 
-Comparator: no-comparable-surface-in-named-comparator. python-flint has no
+No external comparator: python-flint has no
 multivariate polynomial matrix surface; SymPy is a conformance oracle only.
 
 Fixed registrations use lean-bench's registration API so preparation happens

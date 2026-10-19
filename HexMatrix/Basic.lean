@@ -791,7 +791,7 @@ instance [Mul R] [Add R] [OfNat R 0] : HMul (Matrix R n m) (Matrix R m k) (Matri
 
 /-- Homogeneous multiplication on square matrices, agreeing with the
 heterogeneous `HMul`. This is the `Mul` instance Mathlib's `Semiring`/`Ring`
-structures build on; see `HexMatrixMathlib`. -/
+structures build on; see `HexMatrixTheory`. -/
 instance [Mul R] [Add R] [OfNat R 0] : Mul (Matrix R n n) where
   mul := mul
 
@@ -1220,7 +1220,7 @@ theorem getElem_modifyCol_of_ne (M : Matrix R n m) (dst : Fin m) (g : Fin n → 
   rw [getElem_modifyCol, ite_eq_right h]
 
 /-- Scalar action on a matrix, delegated to the flat backing buffer. The single
-sanctioned `SMul` instance for matrices: the Mathlib bridge layer reuses it rather
+sanctioned `SMul` instance for matrices: the theory layer reuses it rather
 than declaring its own, so there is no overlapping instance. -/
 instance {S : Type v} [SMul S R] : SMul S (Matrix R n m) where
   smul c M := ⟨c • M.data⟩

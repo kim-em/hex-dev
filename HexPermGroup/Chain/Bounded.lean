@@ -18,7 +18,7 @@ open Execution
 /-- Sift with a reservation before each visited level and each permutation
 allocation. A missing orbit entry stops immediately, retaining the same result
 as the ordinary sift. This works on raw chains without assuming their depth. -/
-@[expose] def siftWith {budget : Budget} (c : Chain n) (base : Nat) (p : Perm n) :
+@[expose] def siftBudgeted {budget : Budget} (c : Chain n) (base : Nat) (p : Perm n) :
     Run budget {result : SiftResult n // result = c.sift base p} := do
   reserve .sifts 1
   match hc : c with
@@ -32,7 +32,7 @@ as the ordinary sift. This works on raw chains without assuming their depth. -/
       | none => return ⟨.missing base image, by simp [hc, sift, hb, image, hx]⟩
       | some x =>
         reserve .images (2 * n)
-        let result ← tail.siftWith (base + 1) (level.orbit.reps[x.val].inv.comp p)
+        let result ← tail.siftBudgeted (base + 1) (level.orbit.reps[x.val].inv.comp p)
         return ⟨result.val.prepend x.val, by simp [hc, sift, hb, image, hx, result.property]⟩
     else return ⟨.shape base, by simp [hc, sift, hb]⟩
 

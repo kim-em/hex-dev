@@ -1,0 +1,17 @@
+productionNanos=17331704
+thirdRootAndProductionNanos=18362623
+graphNodes=2 selectedSigns=[1, 1]
+factsAfterProduction
+level=1 facts=176 used=0 { calls := 13149, signs := 13149, nonconstantSigns := 2838, hits := 0 }
+level=2 facts=36 used=0 { calls := 2705, signs := 2705, nonconstantSigns := 556, hits := 0 }
+level=1 facts=176 used=0 { calls := 13149, signs := 13149, nonconstantSigns := 2838, hits := 0 }
+level=2 facts=36 used=0 { calls := 2705, signs := 2705, nonconstantSigns := 556, hits := 0 }
+cachedReplayNanos=1498782
+level=1 facts=176 used=40 { calls := 1032, signs := 0, nonconstantSigns := 0, hits := 1032 }
+level=2 facts=36 used=31 { calls := 450, signs := 0, nonconstantSigns := 0, hits := 450 }
+arm=cached repetitions=200 nanos=402839683
+level=1 facts=176 used=40 { calls := 206400, signs := 0, nonconstantSigns := 0, hits := 206400 }
+level=2 facts=36 used=31 { calls := 90000, signs := 0, nonconstantSigns := 0, hits := 90000 }
+arm=ordinary repetitions=200 nanos=537026116
+level=1 facts=176 used=92 { calls := 380600, signs := 380600, nonconstantSigns := 60400, hits := 0 }
+level=2 facts=36 used=31 { calls := 90000, signs := 90000, nonconstantSigns := 19600, hits := 0 }

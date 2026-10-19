@@ -1,0 +1,67 @@
+"""Protect full-support checker subjects, fixed schedules and raw declarations."""
+import copy
+import json
+from pathlib import Path
+import tempfile
+import unittest
+from scripts.bench import sign_det_matrix_wide as bench
+
+
+class WideMatrix(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.path = Path(self.temporary.name) / "records.json"
+        self.rows = [{"queries": s, "matrixSize": 3**s, "supportSize": 3**s,
+                      "countSum": 3**s, "inverseIdentityScalarPairs": 27**s,
+                      "inverseBits": s+1, "denominatorBits": s+1,
+                      "valuesBits": (3**s).bit_length(), "literalOrders": True,
+                      "finiteMoments": True, "inputHash": 1, "checkResultHash": 2}
+                     for s in bench.ARITIES]
+
+    def inputs(self, rows):
+        self.path.write_text("\n".join(map(json.dumps, rows)))
+        return bench.validate_inputs(self.path)
+
+    def test_subject_and_complete_schedule(self):
+        self.inputs(self.rows)
+        for key, value in (("queries", 5.0), ("countSum", 1), ("inverseBits", True),
+                           ("finiteMoments", False), ("literalOrders", False),
+                           ("checkResultHash", -1)):
+            changed = copy.deepcopy(self.rows)
+            changed[0][key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                self.inputs(changed)
+        with self.assertRaises(ValueError):
+            self.inputs(self.rows[:-1])
+        with self.assertRaises(ValueError):
+            self.inputs(list(reversed(self.rows)))
+
+    def test_unchanged_declaration_and_exact_observations(self):
+        expected = self.inputs(self.rows)
+        result = {"function": bench.FUNCTION, "kind": "parametric", "hashable": True,
+                  "budget_truncated": False, "complexity_formula": "r^3", "config": bench.CONFIG,
+                  "env": {"git_commit": "source", "git_dirty": False}, "verdict": "inconclusive",
+                  "slope": 1, "advisories": [], "points": [
+                      {"trial_index": trial, "param": r, "status": "ok", "result_hash": "0x2",
+                       "part_of_verdict": True, "below_signal_floor": False,
+                       "per_call_nanos": r**3, "inner_repeats": 1, "peak_rss_kb": 100, "alloc_bytes": None}
+                      for trial in range(6) for r in bench.PARAMS]}
+        def check(value):
+            self.path.write_text(json.dumps({"export_schema_version": 1, "results": [value]}))
+            return bench.validate_result(self.path, expected, "source")
+        self.assertEqual(check(result)["verdict"], "inconclusive")
+        for key, value in (("complexity_formula", "r^2"), ("budget_truncated", True),
+                           ("function", "oldChecker")):
+            changed = copy.deepcopy(result); changed[key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                check(changed)
+        for key, value in (("status", "killed_at_cap"), ("per_call_nanos", float("nan")),
+                           ("result_hash", "0x0"), ("part_of_verdict", False),
+                           ("alloc_bytes", 12)):
+            changed = copy.deepcopy(result); changed["points"][0][key] = value
+            with self.subTest(key=key), self.assertRaises(ValueError):
+                check(changed)
+        changed = copy.deepcopy(result); changed["points"].pop()
+        with self.assertRaises(ValueError):
+            check(changed)

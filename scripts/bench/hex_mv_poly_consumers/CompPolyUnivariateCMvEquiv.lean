@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 
 import CompPoly.Univariate.ToPoly.Impl
-import HexMvPolyMathlib
+import HexMvPolyTheory
 
 /-!
 # Equivalence between `CPolynomial` and `Hex.MvPoly 1`
@@ -17,7 +17,7 @@ uses only the public dense-polynomial and recursive-view equivalences.
 
 namespace CompPoly.CPolynomial
 
-open scoped HexMvPolyMathlib
+open scoped HexMvPolyTheory
 
 open Hex
 
@@ -30,11 +30,11 @@ noncomputable def cmvEquiv
     CPolynomial R ≃+* MvPoly 1 R Mono.lex :=
   (ringEquiv (R := R)).trans <|
     (Polynomial.mapEquiv
-      (HexMvPolyMathlib.isEmptyRingEquiv
+      (HexMvPolyTheory.isEmptyRingEquiv
         (R := R) (cmp0 := (Mono.lex : Mono 0 → Mono 0 → Ordering))).symm).trans <|
-      (HexPolyMathlib.equiv
+      (HexPolyTheory.equiv
         (R := MvPoly 0 R (Mono.lex : Mono 0 → Mono 0 → Ordering))).symm.trans <|
-        (HexMvPolyMathlib.finSuccEquiv
+        (HexMvPolyTheory.finSuccEquiv
           (R := R) (cmp := (Mono.lex : Mono 1 → Mono 1 → Ordering))
           (Mono.lex : Mono 0 → Mono 0 → Ordering)).symm
 

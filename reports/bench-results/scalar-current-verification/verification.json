@@ -1,0 +1,34 @@
+{
+  "parent_source": "bb8ac41529201602c59d5892171ffacef52e0055",
+  "dirty": true,
+  "source_sha256": {
+    "HexArith/Nat/Sqrt.lean": "02684a5167ec604cdf432554058be0c4674e926fdb356934e45bf1964c81746e",
+    "HexSturm/Reduced.lean": "bc45c2958590e0d5f2793d574b5b6f77664730082512c2dc209ca2f9b3e2229a",
+    "HexSturmMathlib/Reduced.lean": "60cbd8fb35fb4da3f57d72af210258247ab8577459b5294d95240f707a65547d",
+    "HexRealRootsMathlib/TarskiMod.lean": "9a57a749fc57c0509f4e958ce61ce231cf60c8a705931fb4831b59892e94e977",
+    "bench/HexSturm/Bench.lean": "9655257c41bb922388fb90980687a6d7e7e325e470f28f9d1e5a4bbc4b94e499",
+    "bench/HexRealAlgebraic/Bench.lean": "ce266771fc5752e1ea17f9f326877177dc8a635b09ef0d449aef227ff0454d71",
+    "scripts/oracle/real_algebraic_scaling_bench.py": "ff30d270df12ce53597879e3da1638b38769201fef2021af8e67b7ba28ae1d9b",
+    "conformance/HexArith/Conformance.lean": "66803dde9e603499b1ebbb7890ce4cdbb0181b116f52a268a66ab8aecfd28dc4",
+    "HexRealRootsMathlib/TarskiTests.lean": "1a88e3ff5a8b34124d2013dcfc41b98a71637458b84edfca0b722bc571f6c352",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "lake-manifest.json": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e"
+  },
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "bench_binaries": {
+    "hexsturm_bench": "467607582c2cced8c61eed2472e269a5ef99c9682def6744491dfec4a67fe8b5",
+    "hexrealalgebraic_bench": "9082389aaaa17b633cc96f300f694994453c5d8d45ed7ac2af3910817dbdaffc"
+  },
+  "result": {
+    "sturm_cases": 93,
+    "scalar_cases": 196,
+    "sturm_fixture_cases": 129,
+    "sturm_verify_seconds": 1,
+    "scalar_verify_seconds": 72,
+    "total_verify_seconds": 73,
+    "hard_cap_seconds": 600
+  },
+  "boundary": "Local prebuilt list/verify/check-head-fixtures through the existing CI wrapper. Its GITHUB_ACTIONS switch selects prebuilt executables; this is not a hosted CI result or scientific timing admission. All output, including warnings, is retained.",
+  "lean_jobs": 9339
+}

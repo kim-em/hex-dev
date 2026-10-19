@@ -14,7 +14,7 @@ quotient-field construction,
 [`hex-gf2`](https://github.com/leanprover/hex-gf2) for a packed binary backend.
 The ring equivalence between the two binary models, and the correspondence with
 Mathlib's finite fields, live in
-[`hex-gfq-mathlib`](https://github.com/leanprover/hex-gfq-mathlib).
+[`hex-gfq-theory`](https://github.com/leanprover/hex-gfq-theory).
 
 # Quickstart
 
@@ -65,7 +65,7 @@ def d := GF2q.toGFq c
 - `GF2q.toGFq` maps the packed model into the generic `GFq 2 n` model for the
   same entry. It is one-way here, since the ring equivalence is Mathlib's
   `≃+*`; the two-sided `GF2q.equivGFq` is in
-  [`hex-gfq-mathlib`](https://github.com/leanprover/hex-gfq-mathlib).
+  [`hex-gfq-theory`](https://github.com/leanprover/hex-gfq-theory).
 
 # Verification
 

@@ -1,0 +1,90 @@
+{
+  "source_commit": "6db3d5f7cd4f9cf9c52b6f11c0838d17b58fbb1c",
+  "sources_sha256": {
+    "adapters/HexRCF/RealCoefficients/AlgebraicPreparation.lean": "28aed4a2694985ea1e26fc4b1914f8c312d259be7bfda054bfdb23cc6d6b2e8a",
+    "adapters/HexRCF/RealCoefficients.lean": "fcffa756d74c99fabf10c6fbaaf206e093c52f578d257245c290a9c613b1b73b",
+    "conformance/HexRCF/AlgebraicPreparationConformance.lean": "3f9fd0404e50451057a4a81e00b74a8870094e9f06d98bafc1c9cabe083c9734",
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "5b3746e0f4401482c0acbab12e56ef096d5b32a7f9fd8097c38ef87732917204",
+    "HexRCF/README.md": "3531856b6f9ff429092d5ff980f4f7ea7530b71bff7a958f67017f4095eee962",
+    "lakefile.lean": "079a0c927b32714fe95d01864588ca54019e9d33183f038fbce5827da479753e",
+    "scripts/ci/check_named_admissions.py": "6400348d2e009fb0bce8ed7b89921ded8f40242dea8a878ab98dbab64711db0e",
+    "scripts/ci/test_check_named_admissions.py": "201270e54e27ec09fea1bc69cb8d645ee089e715f590d08e2078ff0567409c63"
+  },
+  "render_source_commit": "694e85356ca2d19eaadb15ae87130dbc1791ca4b",
+  "render_sources_sha256": {
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "5b3746e0f4401482c0acbab12e56ef096d5b32a7f9fd8097c38ef87732917204"
+  },
+  "owner_source_commit": "82d5a6e0359b8502bf53b6bed62628ffae02a387",
+  "owner_sources_sha256": {
+    "HexSignDet/Codec.lean": "ee141a0f9665cba2a74fa2012f437936e0696f4ba9e52b5f8eac7484a464e7a0",
+    "HexSignDet/Codec/Basic.lean": "2fa342ffebc930f00a29c8140c565b7e9ee36bab4ac706f7353f66c6d85452c9"
+  },
+  "factory_source_commit": "694e85356ca2d19eaadb15ae87130dbc1791ca4b",
+  "factory_sources_sha256": {
+    "adapters/HexRCF/RealCoefficients/AlgebraicPreparation.lean": "6df97ae439083c5547efe5185a47158a7821cd381527d8d735d4f6c89a8e1d5b",
+    "adapters/HexRealClosureTheory/FiniteChain.lean": "f87127d1828d1a0919b42500eb19966c33b2ff47e2e715e7708e126767706f6b",
+    "HexRealClosure/NumberFieldTower.lean": "57d282e21ec388dad4ef40a8e477c491817843cc178c51ddddba9186e6c11092"
+  },
+  "logs": {
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-affected-6.log.gz": {
+      "sha256": "37e3b1569ffe5d7e0c5824904ffde23d96426e8ab5eeed3a436734a2f1d59d5d",
+      "uncompressed_sha256": "16ccb1157b9274ffeb9032bd74a5a3b84a2d28fc58c2ee575d7f1388cd120ab8"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-affected-7.log.gz": {
+      "sha256": "add95f3cc0460ffa27acc0273ee9cdc095aceb484c8bdd68e944c3b556e0209f",
+      "uncompressed_sha256": "6efe108687712e1b2d923479bbd3484e795ecc48ad308e57615264184bd3b958"
+    },
+    "reports/data/hexrcf-algebraic-preparation/native-source-chain-1.log.gz": {
+      "sha256": "bebb03feeef38cf57937b0a50ba86fb1acd731d064e94973898e7da7de8eef1c",
+      "uncompressed_sha256": "33806d6030712789adea13c0290e6eb3587e2806604ceca59752f148f11f8b53"
+    },
+    "reports/data/hexrcf-algebraic-preparation/native-source-chain-2.log.gz": {
+      "sha256": "8a8b2164fb5688559e074980db7f848a8a3774d5a8d155266b1c8f0c078c5231",
+      "uncompressed_sha256": "d65f0710281c9fe07c1989d514df7f8ee2443ad7944f87e6a15f4d9c19d09dd6"
+    },
+    "reports/data/hexrcf-algebraic-preparation/cell-operations-probe-1.log.gz": {
+      "sha256": "e52e7a61236d58c09bbf7fbdf1015f06a652101a7bce3da9aa716ee5301485b8",
+      "uncompressed_sha256": "9aa104f967f60666e6edfb6b5ccc276545c84348031057851897bcfab72ecc39"
+    },
+    "reports/data/hexrcf-algebraic-preparation/cell-operations-probe-2.log.gz": {
+      "sha256": "888f7b1b4f7811cb3425a4b3e05dd1ef97b62dba16b7f478c882b9010324c8ef",
+      "uncompressed_sha256": "34dc0bf289f3516bb49cac3b9848e2c03725bf5b7d082ba6a8103d4c639dbde5"
+    },
+    "reports/data/hexrcf-algebraic-preparation/codec-exposure-control-1.log.gz": {
+      "sha256": "5c8a7f192c378818f10966d66cffd9ef3f890e3506a1d7af65954a28097aaa7c",
+      "uncompressed_sha256": "6ab82ece1126f5626f91f0537d082de6e80806661afc047acc9eeb5619ad0e5f"
+    }
+  },
+  "artifacts_sha256": {
+    "reports/data/hexrcf-algebraic-preparation/native-source-chain-2.lean.txt": "d5a2fec76780c13fe907ec12e8e2eb5086b6a1c6f50707692cb6ebeb6acb05d4",
+    "reports/data/hexrcf-algebraic-preparation/native-source-chain.events": "5284fb02ee145f6a63d39a5eb4a0e00d77c57d51d535a1eebbd86a6ff2796f49",
+    "reports/data/hexrcf-algebraic-preparation/CodecExposure.lean.txt": "9169e619399f0e3d6856a5737160e7f7616517ab01440e0104baf70fecfb0abe",
+    "reports/data/hexrcf-algebraic-preparation/CodecExposedControl.lean.txt": "1dd07c720bdcb427cd4263cde2ba7445afe4cfdf28f8f28978c660cf1836b192",
+    "reports/data/hexrcf-algebraic-preparation/CellWith.lean.txt": "06c5ba0f980a6e5da43dabeedfd160efcc8955a455c0ceea69eb87a2aa9a81d6"
+  },
+  "validation": {
+    "complete_manual_jobs": 14296,
+    "public_codec_reduction": "failed: readGraph body unavailable",
+    "private_body_control_jobs": 11133,
+    "native_factory_extraction": "isDefEq heartbeat exhaustion at 2400000",
+    "memory_bytes": 34359738368,
+    "swap_bytes": 0,
+    "own_build_concurrency": 1,
+    "lean_threads": 2
+  },
+  "limits": [
+    "The earlier context remains the separate record for its source and rendered manual.",
+    "The displayed chapter is byte-identical across render and checkpoint implementation sources.",
+    "Interruptions are observed before and after native calls, not inside their execution.",
+    "The public-module probe is malformed rational graph rejection, not full complete-packet acceptance.",
+    "The private import is a diagnostic control only, not an adapter import or production workaround.",
+    "Factory-context extraction exhaustion is an operational limitation, not evidence of a missing mathematical theorem.",
+    "The CellWith prototype proves only specialization/radical operation equalities, not full operation-parametric replay."
+  ],
+  "document_commit": "0e3f092306e694a64a2ce8f0410e5cfe925da872",
+  "documents_sha256": {
+    "reports/hexrcf-algebraic-preparation.md": "d2efbadccab63b2ded72ad0113576aa840abd7d6cde2e35bca260e57c4749ba3",
+    "reports/data/hexrcf-algebraic-preparation/collect-current.py": "75e6489383edcff899740312cb60d15df20ae136510a0a0e23efd95823b05ea4"
+  },
+  "artifact_commit": "0e3f092306e694a64a2ce8f0410e5cfe925da872"
+}

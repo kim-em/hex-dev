@@ -1,0 +1,8 @@
+Hex.SignDetBench.InteractingBench.depthOne    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=bfa40a8-dirty, 2026-10-06T06:01:09Z, host=chungus2
+  repeat 0  22.283 ms  (×2^3, total 178.268 ms)
+  median: 22.283 ms    min: 22.283 ms    max: 22.283 ms
+  hash: all repeats agree
+  observed hash: 0x21b49148f02f975a
+  peak RSS: 67_152 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10377-session-progress/interacting-one-paired/5-depthOne-A.json

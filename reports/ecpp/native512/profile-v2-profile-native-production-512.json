@@ -1,0 +1,682 @@
+{
+  "allocation_share_percent": 32.23,
+  "classified_percent": 96.92,
+  "diagnostics": {
+    "bench_pid": 3616635,
+    "bench_thread_name": "hexecpp_bench",
+    "bench_thread_tid": "3616660",
+    "calibration": {
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "boundary_residual_raw_max_ms": null,
+          "boundary_residual_trimmed_max_ms": null,
+          "hit_count": 0,
+          "regions_without_samples": 5,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "boundary_residual_raw_max_ms": 0.9543880000710487,
+          "boundary_residual_trimmed_max_ms": 0.8831960000097752,
+          "hit_count": 7820,
+          "regions_without_samples": 0,
+          "within_residual_limit": true
+        }
+      },
+      "configured_max_residual_ms": 5.0,
+      "effective_max_residual_ms": 5.0,
+      "raw_max_residual_ms": 0.9543880000710487,
+      "residual_ms": 0.8831960000097752,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "sample_interval_ms": 1.001001,
+      "selected_mode": "relative-to-meta-start-ms",
+      "within_residual_limit": true
+    },
+    "calibration_max_residual_ms": 5.0,
+    "calibration_residual_ms": 0.8831960000097752,
+    "confidence": "passed",
+    "expected_samples_bench_thread": 7819.1,
+    "low_confidence_reasons": [],
+    "minimum_retained_samples": 100,
+    "off_bench_thread_samples_in_window": 0,
+    "regions_total": 5,
+    "rejected_samples_bench_thread": 3,
+    "retained_samples_bench_thread": 7820,
+    "samply_interval_ms": 1.001001,
+    "samply_meta_start_time_ms": 1791036475634.1592,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "schema": 2,
+    "sensitivity": {
+      "cases": {
+        "minus": {
+          "retained_samples": 7815,
+          "shift_ms": -5.0,
+          "top_leaf_functions": [
+            {
+              "function": 348,
+              "name": "0xabdfd",
+              "samples": 362
+            },
+            {
+              "function": 211,
+              "name": "0xae923",
+              "samples": 184
+            },
+            {
+              "function": 641,
+              "name": "0xaf431",
+              "samples": 176
+            }
+          ]
+        },
+        "nominal": {
+          "retained_samples": 7820,
+          "shift_ms": 0.0,
+          "top_leaf_functions": [
+            {
+              "function": 348,
+              "name": "0xabdfd",
+              "samples": 363
+            },
+            {
+              "function": 211,
+              "name": "0xae923",
+              "samples": 184
+            },
+            {
+              "function": 641,
+              "name": "0xaf431",
+              "samples": 176
+            }
+          ]
+        },
+        "plus": {
+          "retained_samples": 7815,
+          "shift_ms": 5.0,
+          "top_leaf_functions": [
+            {
+              "function": 348,
+              "name": "0xabdfd",
+              "samples": 363
+            },
+            {
+              "function": 211,
+              "name": "0xae923",
+              "samples": 184
+            },
+            {
+              "function": 641,
+              "name": "0xaf431",
+              "samples": 176
+            }
+          ]
+        }
+      },
+      "comparisons": {
+        "minus": {
+          "comparison_samples": 7815,
+          "effective_max_total_variation_distance": 0.1,
+          "exchanged_fraction": 0.0006397952655150352,
+          "exchanged_samples": 5,
+          "failure_reasons": [],
+          "leaf_function_support_size": 1368,
+          "maximum_sampling_noise_allowance": 0.5,
+          "noise_allowance_discriminating": true,
+          "sample_count_adequate": true,
+          "sampling_noise_allowance": 0.008979772141090792,
+          "total_variation_distance": 0.0006074782412339104,
+          "verdict": "passed"
+        },
+        "plus": {
+          "comparison_samples": 7815,
+          "effective_max_total_variation_distance": 0.1,
+          "exchanged_fraction": 0.0006397952655150352,
+          "exchanged_samples": 5,
+          "failure_reasons": [],
+          "leaf_function_support_size": 1368,
+          "maximum_sampling_noise_allowance": 0.5,
+          "noise_allowance_discriminating": true,
+          "sample_count_adequate": true,
+          "sampling_noise_allowance": 0.008979772141090792,
+          "total_variation_distance": 0.0006205686814490507,
+          "verdict": "passed"
+        }
+      },
+      "configured_max_total_variation_distance": 0.1,
+      "leaf_function_distributions_stable": true,
+      "maximum_sampling_noise_allowance": 0.5,
+      "minimum_comparison_samples": 100,
+      "reported_top_function_count": 3,
+      "sampling_noise_coefficient": 0.6,
+      "shift_ms": 5.0,
+      "verdict": "passed"
+    },
+    "sidecar_mono_anchor_ns": 24226528862984,
+    "spawn_anchor_mono_ns": 24226430425265,
+    "spawn_anchor_wall_ns": 1791036475603086970,
+    "stage": "complete",
+    "total_timed_ms": 7826.957841
+  },
+  "inclusive_hex": [
+    {
+      "function": "Hex.ECPP.search",
+      "percent": 84.64
+    },
+    {
+      "function": "Hex.Nat.Construction.factorSearch",
+      "percent": 35.49
+    },
+    {
+      "function": "_private.HexECPP.Search.0_Hex.ECPP.point",
+      "percent": 33.55
+    },
+    {
+      "function": "_private.HexECPP.Search.0_Hex.ECPP.factors",
+      "percent": 30.7
+    },
+    {
+      "function": "Hex.ECPP.produce",
+      "percent": 29.81
+    },
+    {
+      "function": "_private.HexPrimality.Construction.0_Hex.Nat.Construction.factorGo",
+      "percent": 27.33
+    },
+    {
+      "function": "Hex.ECPP.proposeScalar",
+      "percent": 27.31
+    },
+    {
+      "function": "Hex.ECPP.proposeBits",
+      "percent": 27.31
+    },
+    {
+      "function": "_private.HexECPP.Search.0_Hex.ECPP.scalar",
+      "percent": 27.31
+    },
+    {
+      "function": "Hex.ECPP.proposeWithInverse",
+      "percent": 25.33
+    },
+    {
+      "function": "HexArith.powModNatGo",
+      "percent": 23.09
+    },
+    {
+      "function": "Hex.Nat.Internal.splitSearch",
+      "percent": 18.4
+    },
+    {
+      "function": "_private.HexPrimality.Search.0_Hex.Nat.rhoTry",
+      "percent": 18.38
+    },
+    {
+      "function": "_private.HexPrimality.Search.0_Hex.Nat.brentGo",
+      "percent": 18.31
+    },
+    {
+      "function": "Hex.ECPP.add?",
+      "percent": 17.7
+    },
+    {
+      "function": "_private.HexECPP.Search.0_Hex.ECPP.leaf",
+      "percent": 15.55
+    },
+    {
+      "function": "Hex.Nat.Construction.runTraced",
+      "percent": 15.52
+    },
+    {
+      "function": "_private.HexPrimality.Construction.0_Hex.Nat.Construction.generate",
+      "percent": 15.47
+    },
+    {
+      "function": "Hex.Nat.isProbablePrime",
+      "percent": 13.31
+    },
+    {
+      "function": "Hex.Nat.millerRabin",
+      "percent": 13.31
+    },
+    {
+      "function": "Hex.ECPP.addWithInverse",
+      "percent": 13.16
+    },
+    {
+      "function": "Hex.ECPP.inverse?",
+      "percent": 12.19
+    },
+    {
+      "function": "HexArith.Int.extGcdImpl",
+      "percent": 10.46
+    },
+    {
+      "function": "_private.HexPrimality.Construction.0_Hex.Nat.Construction.choose",
+      "percent": 10.23
+    },
+    {
+      "function": "_private.HexPrimality.Construction.0_Hex.Nat.Construction.assemble",
+      "percent": 10.2
+    },
+    {
+      "function": "_private.HexPrimality.Construction.0_Hex.Nat.Construction.trial",
+      "percent": 10.0
+    },
+    {
+      "function": "Hex.ECPP.modSub",
+      "percent": 9.94
+    },
+    {
+      "function": "_private.HexPrimality.Search.0_Hex.Nat.rhoNext",
+      "percent": 6.18
+    },
+    {
+      "function": "Hex.ECPP.replayBits",
+      "percent": 5.92
+    },
+    {
+      "function": "Hex.ECPP.replayDone",
+      "percent": 5.92
+    },
+    {
+      "function": "Hex.ECPP.checkedAdd?",
+      "percent": 5.79
+    },
+    {
+      "function": "Hex.ECPP.CM.sqrt?",
+      "percent": 5.66
+    },
+    {
+      "function": "_private.HexECPP.Search.0_Hex.ECPP.sqrt",
+      "percent": 5.28
+    },
+    {
+      "function": "_private.HexPrimality.PMinusOne.0_Hex.Nat.PMinusOne.startCore",
+      "percent": 4.83
+    },
+    {
+      "function": "Hex.Nat.PMinusOne.start",
+      "percent": 4.83
+    },
+    {
+      "function": "_private.HexPrimality.Construction.0_Hex.Nat.Construction.splitSmooth",
+      "percent": 4.83
+    },
+    {
+      "function": "_private.HexPrimality.PMinusOne.0_Hex.Nat.raiseSmooth",
+      "percent": 3.91
+    },
+    {
+      "function": "Hex.ECPP.check",
+      "percent": 3.4
+    },
+    {
+      "function": "_private.HexECPP.Search.0_Hex.ECPP.finish",
+      "percent": 1.69
+    },
+    {
+      "function": "Hex.ECPP.onCurve",
+      "percent": 1.23
+    },
+    {
+      "function": "Hex.ECPP.proposeAdd",
+      "percent": 1.19
+    },
+    {
+      "function": "Hex.Nat.checkWitness.native",
+      "percent": 1.14
+    },
+    {
+      "function": "Hex.ECPP.CM.jacobi",
+      "percent": 0.98
+    },
+    {
+      "function": "_private.HexPrimality.Construction.0_Hex.Nat.Construction.witness",
+      "percent": 0.96
+    },
+    {
+      "function": "Hex.Nat.primesBelow",
+      "percent": 0.87
+    },
+    {
+      "function": "Hex.Nat.sieve",
+      "percent": 0.81
+    },
+    {
+      "function": "Hex.Nat.sieveGoRange",
+      "percent": 0.79
+    },
+    {
+      "function": "Hex.Nat.markCandidate",
+      "percent": 0.79
+    },
+    {
+      "function": "_private.HexECPP.Search.0_Hex.ECPP.nonresidue",
+      "percent": 0.69
+    },
+    {
+      "function": "Hex.Nat.doubleRounds",
+      "percent": 0.65
+    },
+    {
+      "function": "_private.HexECPP.Import.0_Hex.ECPP.needsInverse",
+      "percent": 0.54
+    }
+  ],
+  "leaf_categories": {
+    "allocation": 32.23,
+    "gmp": 56.74,
+    "lean-own-code": 1.16,
+    "lean-runtime": 6.79,
+    "other": 3.08
+  },
+  "profile": "/tmp/profile-v2-native-production-512/filtered.json.gz",
+  "samples": 7820,
+  "symbols": "/tmp/profile-v2-native-production-512/symbols.json",
+  "top_inclusive": [
+    {
+      "function": "Hex.ECPP.search",
+      "percent": 84.64
+    },
+    {
+      "function": "List.forIn'.loop",
+      "percent": 84.3
+    },
+    {
+      "function": "lean_nat_big_mod",
+      "percent": 38.81
+    },
+    {
+      "function": "Hex.Nat.Construction.factorSearch",
+      "percent": 35.49
+    },
+    {
+      "function": "_private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
+      "percent": 34.35
+    },
+    {
+      "function": "_private.HexECPP.Search.0_Hex.ECPP.point",
+      "percent": 33.55
+    },
+    {
+      "function": "runNative512",
+      "percent": 31.28
+    },
+    {
+      "function": "_private.HexECPP.Search.0_Hex.ECPP.factors",
+      "percent": 30.7
+    },
+    {
+      "function": "lean_apply_2",
+      "percent": 30.66
+    },
+    {
+      "function": "lean-bench_.private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
+      "percent": 30.36
+    },
+    {
+      "function": "Hex.ECPP.produce",
+      "percent": 29.81
+    },
+    {
+      "function": "lean-bench.LeanBench.kernelLoop",
+      "percent": 29.72
+    },
+    {
+      "function": "lean-bench.LeanBench.runChildMode",
+      "percent": 29.13
+    },
+    {
+      "function": "lean-bench.LeanBench.autoTune",
+      "percent": 28.96
+    },
+    {
+      "function": "lean-bench.LeanBench.Cli.runChildCmd",
+      "percent": 28.07
+    },
+    {
+      "function": "_private.HexPrimality.Construction.0_Hex.Nat.Construction.factorGo",
+      "percent": 27.33
+    },
+    {
+      "function": "Hex.ECPP.proposeScalar",
+      "percent": 27.31
+    },
+    {
+      "function": "Hex.ECPP.proposeBits",
+      "percent": 27.31
+    },
+    {
+      "function": "_private.HexECPP.Search.0_Hex.ECPP.scalar",
+      "percent": 27.31
+    },
+    {
+      "function": "_ZNSt3__110__function6__funcIZ13lean_run_mainE3$_0FvvEEclB9nqe230100Ev",
+      "percent": 25.65
+    },
+    {
+      "function": "_ZN4lean7lthread3imp5_mainEPv",
+      "percent": 25.65
+    },
+    {
+      "function": "start_thread",
+      "percent": 25.59
+    },
+    {
+      "function": "Hex.ECPP.proposeWithInverse",
+      "percent": 25.33
+    },
+    {
+      "function": "__clone3",
+      "percent": 25.32
+    },
+    {
+      "function": "HexArith.powModNatGo",
+      "percent": 23.09
+    }
+  ],
+  "top_self": [
+    {
+      "function": "malloc@@GLIBC_2.2.5",
+      "percent": 11.16
+    },
+    {
+      "function": "free@@GLIBC_2.2.5",
+      "percent": 7.43
+    },
+    {
+      "function": "__gmpn_sbpi1_div_qr",
+      "percent": 6.78
+    },
+    {
+      "function": "__gmpn_hgcd2",
+      "percent": 5.7
+    },
+    {
+      "function": "__gmpz_init_set",
+      "percent": 5.29
+    },
+    {
+      "function": "_int_free_chunk",
+      "percent": 4.95
+    },
+    {
+      "function": "__gmpn_copyi_x86_64",
+      "percent": 4.12
+    },
+    {
+      "function": "__gmpn_invert_limb",
+      "percent": 3.89
+    },
+    {
+      "function": "__gmpn_tdiv_qr",
+      "percent": 3.82
+    },
+    {
+      "function": "realloc@@GLIBC_2.2.5",
+      "percent": 3.64
+    },
+    {
+      "function": "__gmpn_divrem_1_x86_64",
+      "percent": 3.29
+    },
+    {
+      "function": "div2",
+      "percent": 3.15
+    },
+    {
+      "function": "__gmpn_submul_1_x86_64",
+      "percent": 2.93
+    },
+    {
+      "function": "__gmpn_addmul_1_x86_64",
+      "percent": 2.84
+    },
+    {
+      "function": "__gmpz_tdiv_r",
+      "percent": 2.47
+    },
+    {
+      "function": "_int_malloc",
+      "percent": 2.24
+    },
+    {
+      "function": "__gmp_default_allocate",
+      "percent": 1.88
+    },
+    {
+      "function": "__gmpz_add",
+      "percent": 1.39
+    },
+    {
+      "function": "__gmpn_lshift_x86_64",
+      "percent": 1.32
+    },
+    {
+      "function": "lean_nat_big_mod",
+      "percent": 1.29
+    },
+    {
+      "function": "__gmpn_mul_2",
+      "percent": 1.21
+    },
+    {
+      "function": "__gmpn_mul_basecase_fat",
+      "percent": 1.1
+    },
+    {
+      "function": "_ZN4leanL19lean_del_core_otherEP11lean_objecthS1_",
+      "percent": 1.05
+    },
+    {
+      "function": "lean_alloc_small_object_core",
+      "percent": 0.98
+    },
+    {
+      "function": "__gmpz_clear",
+      "percent": 0.95
+    }
+  ],
+  "top_self_undecorated": [
+    {
+      "percent": 11.16,
+      "symbol": "malloc@@GLIBC_2.2.5"
+    },
+    {
+      "percent": 7.43,
+      "symbol": "free@@GLIBC_2.2.5"
+    },
+    {
+      "percent": 6.78,
+      "symbol": "__gmpn_sbpi1_div_qr"
+    },
+    {
+      "percent": 5.7,
+      "symbol": "__gmpn_hgcd2"
+    },
+    {
+      "percent": 5.29,
+      "symbol": "__gmpz_init_set"
+    },
+    {
+      "percent": 4.95,
+      "symbol": "_int_free_chunk"
+    },
+    {
+      "percent": 4.12,
+      "symbol": "__gmpn_copyi_x86_64"
+    },
+    {
+      "percent": 3.89,
+      "symbol": "__gmpn_invert_limb"
+    },
+    {
+      "percent": 3.82,
+      "symbol": "__gmpn_tdiv_qr"
+    },
+    {
+      "percent": 3.64,
+      "symbol": "realloc@@GLIBC_2.2.5"
+    },
+    {
+      "percent": 3.29,
+      "symbol": "__gmpn_divrem_1_x86_64"
+    },
+    {
+      "percent": 3.15,
+      "symbol": "div2"
+    },
+    {
+      "percent": 2.93,
+      "symbol": "__gmpn_submul_1_x86_64"
+    },
+    {
+      "percent": 2.84,
+      "symbol": "__gmpn_addmul_1_x86_64"
+    },
+    {
+      "percent": 2.47,
+      "symbol": "__gmpz_tdiv_r"
+    },
+    {
+      "percent": 2.24,
+      "symbol": "_int_malloc"
+    },
+    {
+      "percent": 1.88,
+      "symbol": "__gmp_default_allocate"
+    },
+    {
+      "percent": 1.39,
+      "symbol": "__gmpz_add"
+    },
+    {
+      "percent": 1.32,
+      "symbol": "__gmpn_lshift_x86_64"
+    },
+    {
+      "percent": 1.29,
+      "symbol": "lean_nat_big_mod"
+    },
+    {
+      "percent": 1.21,
+      "symbol": "__gmpn_mul_2"
+    },
+    {
+      "percent": 1.1,
+      "symbol": "__gmpn_mul_basecase_fat"
+    },
+    {
+      "percent": 1.05,
+      "symbol": "_ZN4leanL19lean_del_core_otherEP11lean_objecthS1_"
+    },
+    {
+      "percent": 0.98,
+      "symbol": "lean_alloc_small_object_core"
+    },
+    {
+      "percent": 0.95,
+      "symbol": "__gmpz_clear"
+    }
+  ],
+  "unresolved_leaf_percent": 0.49
+}

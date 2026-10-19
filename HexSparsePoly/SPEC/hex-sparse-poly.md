@@ -3,7 +3,7 @@
 Univariate polynomials stored as a sorted array of exponent/coefficient
 terms, for inputs whose exponents are large and whose number of nonzero
 coefficients is small. Mathlib-free. The companion
-`hex-sparse-poly-mathlib` supplies the ring equivalence with
+`hex-sparse-poly-theory` supplies the ring equivalence with
 `Polynomial R` and the correspondence lemmas.
 
 This SPEC expands the "Sparse univariate polynomials" bullet of
@@ -1061,16 +1061,13 @@ Families:
   sparse pairs, where it would not. The measurement that decides whether
   a sparse division algorithm is worth specifying.
 
-**Comparators.** SymPy's sparse ring elements, `informational`: SymPy is
-the oracle and is Python, so the ratio is reported for context and does
-not determine acceptance.
-FLINT's `fmpz_poly` via python-flint, `informational` and restricted to
-the crossover family: it is a dense representation, so above the
+**Comparators.** SymPy's sparse ring elements: SymPy is the oracle and is
+Python, so the ratio is reported for context and does not determine
+acceptance.
+FLINT's `fmpz_poly` via python-flint, restricted to the crossover family: it is a dense representation, so above the
 crossover the comparison measures the choice of representation rather
 than the quality of either implementation, and a threshold there would
-be meaningless. No external comparator is registered with
-`class: gating`, so none of them has a required threshold, and that is
-the justification.
+be meaningless. Neither external comparator has a target threshold.
 
 Two required internal checks, which matter more than the external ones:
 
@@ -1083,17 +1080,17 @@ Two required internal checks, which matter more than the external ones:
   A regression here means an implementation started materialising the
   intermediate degrees.
 
-## The Mathlib layer
+## The theory layer
 
-`hex-sparse-poly-mathlib` identifies the type with `Polynomial R`:
+`hex-sparse-poly-theory` identifies the type with `Polynomial R`:
 
 ```lean
 def denseEquiv [CommRing R] [DecidableEq R] : SparsePoly R ≃+* DensePoly R
 def equiv [CommRing R] [DecidableEq R] : SparsePoly R ≃+* Polynomial R :=
-  denseEquiv.trans HexPolyMathlib.equiv
+  denseEquiv.trans HexPolyTheory.equiv
 
 theorem coeff_equiv (s : SparsePoly R) (e : Nat) : (equiv s).coeff e = s.coeff e
-theorem equiv_toDense (s : SparsePoly R) : HexPolyMathlib.equiv s.toDense = equiv s
+theorem equiv_toDense (s : SparsePoly R) : HexPolyTheory.equiv s.toDense = equiv s
 theorem equiv_support (s : SparsePoly R) : (equiv s).support = s.support.toList.toFinset
 theorem equiv_eval (s : SparsePoly R) (x : R) : (equiv s).eval x = s.eval x
 theorem equiv_derivative (s : SparsePoly R) :
@@ -1123,11 +1120,11 @@ the first place, and `denseEquiv` is where they are used.
 `Lean.Grind.CommRing` per the law-placement note above; if the dense
 multiplication laws are ever weakened to semirings, both statements
 drop to `[Semiring R]` at no cost, matching
-[hex-poly-mathlib](../../HexPolyMathlib/SPEC/hex-poly-mathlib.md)'s
-`equiv` (`HexPolyMathlib/PolynomialEquivalence.lean:510`). The
+[hex-poly-theory](../../HexPolyTheory/SPEC/hex-poly-theory.md)'s
+`equiv` (`HexPolyTheory/PolynomialEquivalence.lean:510`). The
 individual correspondence lemmas mention `equiv` and therefore share
 its class; only helpers that never mention it (the dense
-`eval_toPolynomial`, in hex-poly-mathlib) sit at `[Semiring R]`.
+`eval_toPolynomial`, in hex-poly-theory) sit at `[Semiring R]`.
 
 `equiv_support` is the one statement that is genuinely about this
 representation rather than transported through the dense one: it says
@@ -1214,9 +1211,9 @@ HexSparsePoly/
   Euclid.lean     -- divModMonic, divMod, gcd, divExactMonic?,
                   --   divMonomial?, the transported law packages
 HexSparsePoly.lean
-HexSparsePolyMathlib/
+HexSparsePolyTheory/
   Equiv.lean      -- denseEquiv, equiv, and the correspondence lemmas
-HexSparsePolyMathlib.lean
+HexSparsePolyTheory.lean
 ```
 
 `Dense.lean` comes before `Eval.lean` because the evaluation and
@@ -1230,29 +1227,8 @@ derivative theorems are stated against the dense operations.
     mathlib: false
     done_through: 0
     status: planned
-    phase4:
-      comparators:
-        - tool: SymPy sparse ring elements (sympy.polys.rings)
-          class: informational
-          rationale: "SymPy is the conformance oracle and is Python, so the ratio is reported for context and does not determine acceptance."
-        - tool: FLINT fmpz_poly via python-flint
-          class: informational
-          rationale: "fmpz_poly is dense, so above the crossover the comparison measures the choice of representation rather than the quality of either implementation. Recorded on the crossover family only."
-      input_families:
-        - name: sparse-arithmetic
-          description: addition and multiplication of 2 to 64 term inputs at degrees 10^3 to 10^6
-        - name: sparse-multiplication
-          description: low-collision and high-collision products across the three candidate implementations
-        - name: crossover
-          description: the same operations against DensePoly with the term count swept from 2 to the degree, locating one crossover per operation
-        - name: evaluation
-          description: gap Horner against dense Horner across the same sweep
-        - name: substitution-power
-          description: substPow on the cyclotomic shapes against the dense route
-        - name: convert-gcd
-          description: gcd and divMod through the conversions on the sparse-remainder x^n-1 pair and on generic sparse pairs, recording the conversion share separately
-  HexSparsePolyMathlib:
-    deps: [HexSparsePoly, HexPolyMathlib, HexPoly]
+  HexSparsePolyTheory:
+    deps: [HexSparsePoly, HexPolyTheory, HexPoly]
     mathlib: true
     done_through: 0
     status: planned

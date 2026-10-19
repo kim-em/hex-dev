@@ -1,0 +1,20 @@
+{
+  "pid": 1684735,
+  "argv": [
+    "/home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/lean",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10358/conformance/HexRCF/AlgebraicCellsStress.lean",
+    "-o",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10358/.lake/build/lib/lean/HexRCF/AlgebraicCellsStress.olean",
+    "-i",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10358/.lake/build/lib/lean/HexRCF/AlgebraicCellsStress.ilean",
+    "-c",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10358/.lake/build/ir/HexRCF/AlgebraicCellsStress.c",
+    "--setup",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10358/.lake/build/ir/HexRCF/AlgebraicCellsStress.setup.json",
+    "--json"
+  ],
+  "cgroup": "/sys/fs/cgroup/user.slice/user-1003.slice/user@1003.service/app.slice/hex-10358-lean-build.service",
+  "gdb_exit": 0,
+  "stack": "/home/kim/.codex/tasks/hex-10358/algebraic-stress-continued-1-stack.log",
+  "purpose": "One diagnostic stack for the unexpectedly slow existing stress case; process continued, not a measurement restart."
+}

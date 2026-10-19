@@ -806,7 +806,7 @@ all-ones class; the signature of an *irreducible* input (all lifted mod-`p`
 factors form the one integer factor). At column-adequate precision
 (`bhksRecoveryFloor core ≤ k`) this certifies irreducibility; the proven count
 lower bound forces a reducible square-free part to exhibit ≥ 2 classes there
-(`squareFreeCore_irreducible_of_bhksSingleAllOnes` in the Mathlib layer); while
+(`squareFreeCore_irreducible_of_bhksSingleAllOnes` in the theory layer); while
 below the floor it may instead mean the lattice has not separated the factors
 yet, so callers must only trust it at `k ≥ bhksRecoveryFloor core`. (A cap-free
 CLD path would treat this partition as `degenerate` and decline, which is why
@@ -847,7 +847,7 @@ advancing the schedule.  Soundness is not heuristic: at column-adequate precisio
 (`bhksRecoveryFloor core ≤ k`) the proven count lower bound forces a reducible square-free part
 to exhibit ≥ 2 equivalence classes, so all-ones can only be reported for a
 genuinely irreducible square-free part (`squareFreeCore_irreducible_of_bhksSingleAllOnes` in the
-Mathlib layer consumes exactly the `⟨k, floor ≤ k, all-ones⟩` witness this loop
+Theory layer consumes exactly the `⟨k, floor ≤ k, all-ones⟩` witness this loop
 produces).  Without the early stop the loop grinds the doubling schedule to the
 conservative BHKS cap on every irreducible input.
 
@@ -1075,7 +1075,7 @@ private theorem latticeCoreLoop_some_spec
 `bhksRecoveryCoreWithBound` success or the early irreducibility certificate; the
 singleton `#[core]` with a witness precision `k'` clearing `bhksRecoveryFloor core`
 whose partition is the single all-ones class.  The witness pair is exactly the
-`hB_floor`/`hbhks` input of the Mathlib layer's
+`hB_floor`/`hbhks` input of the theory layer's
 `squareFreeCore_irreducible_of_bhksSingleAllOnes`. -/
 theorem latticeCoreWithBound_some_spec
     {core : ZPoly} {B : Nat} {primeData : PrimeChoiceData} {k fuel : Nat}

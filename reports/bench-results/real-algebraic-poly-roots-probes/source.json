@@ -1,0 +1,7 @@
+{
+  "source_parent": "b905eefef881997e4b526d93f68024a12630b81d",
+  "dirty": true,
+  "benchmark_sha256": "ceab7b3187c7635907f03cd3ef9515c874a7dac16c97ebd475ce4dc3fca3be70",
+  "executable_sha256": "81a958db3d1348134f5b6b8d29433069b4ae7e9ac02ea5dcd66a9191ede4a154",
+  "purpose": "Operational correctness/cap probes, not CPU-leased scientific comparisons. All completed failures retained."
+}

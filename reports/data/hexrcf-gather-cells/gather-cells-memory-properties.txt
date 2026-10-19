@@ -1,0 +1,6 @@
+ActiveState=active
+MemoryCurrent=12722012160
+MemoryPeak=16140062720
+MemoryMax=34359738368
+MemorySwapMax=0
+Environment=PATH=/home/kim/.claude-patched:/home/kim/.local/bin:/home/kim/bin:/home/kim/.npm-global/bin:/run/wrappers/bin:/home/kim/.nix-profile/bin:/nix/profile/bin:/home/kim/.local/state/nix/profile/bin:/etc/profiles/per-user/kim/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin LEAN_NUM_THREADS=2

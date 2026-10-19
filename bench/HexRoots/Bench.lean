@@ -53,7 +53,7 @@ states which case it is and why. The `verify` smoke gate only exercises each
 registration at parameters `0` and `1`.
 
 `runTaylor`, `runMahlerPrec`, and `runRefineTo` are parametric consistency
-gates. The other operations use canonical mode-3 registrations: their repaired schedules either
+checks. The other operations use canonical fixed registrations: their repaired schedules either
 remain in a GMP transition band or exhibit input-sensitive driver growth where
 no honestly derived scalar wall model has a flat constant. Each fixed case
 enforces its operation-specific absolute budget; the attempted ladders and
@@ -84,8 +84,7 @@ canonical or parametric case):
 * `runIsolateNk`, `runIsolatePellet`, `runIsolateNkThenPellet` — fixed on the
   shared `linProdPoly 10`; all three must agree on the invariant hash.
 
-External comparator (`informational`, per
-`libraries.yml: HexRoots.phase4.comparators`):
+External comparator, recorded for orientation:
 
 * **python-flint** `fmpz_poly.complex_roots()` (the SPEC's ci-tier oracle,
   which returns certified Arb balls with multiplicities) is timed as a
@@ -93,7 +92,7 @@ External comparator (`informational`, per
   diagnostic ladder at degrees `4..10`, which includes canonical `runIsolate`
   degree 8, plus canonical `runIsolateAll` degree 12; the ratios are recorded in
   `reports/hex-roots-performance.md`. It is
-  `informational`, not gating: FLINT's `complex_roots` is a multiprecision
+  orientation only: FLINT's `complex_roots` is a multiprecision
   ball-arithmetic engine, structurally different from this library's
   decidable exact-integer Pellet / Newton-Kantorovich certificates, so the
   SPEC's time budgets — not a constant-factor `1×` goal — are the yardstick.
@@ -392,7 +391,7 @@ def pinnedCertify? : Option (ZPoly × Component) :=
 
 initialize certifyRef : IO.Ref (Option (ZPoly × Component)) ← IO.mkRef pinnedCertify?
 
-/-! Mode-3 operation budgets
+/-! Fixed operation budgets
 
 `maxSecondsPerCall` bounds the whole child process, including startup. The
 wrapper below is the operation-scoped gate: it surrounds only the registered
@@ -445,7 +444,7 @@ multiply/adds. The seeded family uses the integer centre `z = 1`, so there is
 no denominator growth and multiplication by the centre is exact unit scaling.
 The current `64..2048` ladder is consistent with the quadratic wall model
 (`β=+0.118`); the conservative cubic bit-cost attempt is inconclusive because
-the same measurements are faster than it by `~n^0.882`. Mode 1 therefore uses
+the same measurements are faster than it by `~n^0.882`. The two-sided registration therefore uses
 the stronger measured `n²` model.
 -/
 setup_benchmark runTaylor n => n * n
@@ -490,8 +489,8 @@ three test radii, a single `O(n)` fold over the coefficients, so the op count
 is `n²`. The canonical input is `boundedRootPoly 128`, centred on its exact
 integer root `1`; its bounded-height coefficients avoid Wilkinson expansion,
 while the Taylor output still crosses GMP limbs. The repaired `64..384`
-schedule remained sub-cubic and no scalar model had a flat constant. Mode 3
-therefore gives up asymptotic detection at the degree-128 midpoint and enforces
+schedule remained sub-cubic and no scalar model had a flat constant. The fixed
+registration therefore gives up asymptotic detection at the degree-128 midpoint and enforces
 a 20 ms body-scoped budget, 8.47× its clean 2.362 ms baseline.
 -/
 setup_fixed_benchmark runWitnessCheck where {
@@ -503,7 +502,7 @@ as `witnessCheck`, plus one `invFloor` reciprocal and a single `O(n)`
 radial-Lipschitz fold, so the op count is `n²`. It uses the same canonical
 bounded-height degree-128 input and fixed-regression rationale as
 `runWitnessCheck`. Its repaired `64..512` schedule was likewise sub-cubic, so
-mode 3 gives up asymptotic detection and enforces a 19 ms absolute budget,
+the fixed registration gives up asymptotic detection and enforces a 19 ms absolute budget,
 8.32× its clean 2.283 ms baseline.
 -/
 setup_fixed_benchmark runNkWitnessCheck where {
@@ -515,7 +514,7 @@ Cost model. `newtonSquare` computes the Taylor coefficients at the centre (the
 a constant amount of Gaussian-dyadic arithmetic. The Taylor shift dominates, so
 the op count is `n²`. It uses the same bounded-height degree-128 input; the
 fixed-precision reciprocal is lower order. The repaired `64..512` schedule
-remained sub-cubic, so mode 3 gives up asymptotic detection and enforces a
+remained sub-cubic, so the fixed registration gives up asymptotic detection and enforces a
 18 ms absolute budget, 8.14× the clean 2.211 ms baseline.
 -/
 setup_fixed_benchmark runNewtonSquare where {
@@ -530,7 +529,7 @@ then glues the survivors. For a component of a bounded number of squares this
 is a bounded number of `O(n²)` shifts, so the op count is `n²` in the degree
 `n`. The canonical fixture is the degree-8 fixed-separation product, refined
 two rounds below its Cauchy component. On the repaired smooth-family schedule
-`4,6,8,10,12,14`, `time/n²` rose by more than 2×. Mode 3 therefore gives up
+`4,6,8,10,12,14`, `time/n²` rose by more than 2×. The fixed registration therefore gives up
 asymptotic detection and enforces an 18 ms budget, 8.43× the clean 2.134 ms
 baseline, on the degree-8 midpoint.
 -/
@@ -549,7 +548,7 @@ because the certification path is Taylor-shift dominated and the shift's
 GMP transition band (issue #8750, rounds one to three: pure powers and the
 limb model all showed drifting constants). The repaired `64..512` schedule
 also lost the pinned branch at 512; the verified degree-128 NK case is the
-canonical hard input. Mode 3 gives up asymptotic detection and enforces a
+canonical hard input. The fixed registration gives up asymptotic detection and enforces a
 36 ms budget, 8.16× the clean 4.413 ms baseline; the fixed expected hash makes
 a fixture-path or semantic regression visible.
 -/
@@ -571,7 +570,7 @@ coefficient height is
 `B = 32 + n·log ‖p‖∞` is `Θ(n²·log n)`. The independently derived wall model
 is therefore `~n⁷` (polylogarithms suppressed), not the earlier `n⁵` repair.
 The current `4,6,8,10,12,14` schedule is still inconclusive (`C` falls from
-392.544 to 208.586 across verdict rungs). Mode 3 gives up asymptotic detection
+392.544 to 208.586 across verdict rungs). The fixed registration gives up asymptotic detection
 at degree 12 and uses a 70 s body-scoped budget, 8.25× its clean 8.480 s
 baseline, sized to remain stable on shared merge-gating runners.
 -/
@@ -592,7 +591,7 @@ bit-length is `B = Θ(n²·log n)`, and the honestly derived wall from the SPEC
 asymptote is far beyond any usable per-call band (an earlier `n⁵` registration fit
 the 4..10 rungs, but only as a transition-band artifact; the adjacent
 derivation could not support it, so per the no-fitting rule it was withdrawn:
-issue #8750). Mode 3 therefore gives up asymptotic detection at the canonical
+issue #8750). The fixed registration therefore gives up asymptotic detection at the canonical
 mid-schedule degree 8 and enforces a 4 s body-scoped budget, 8.09× the clean
 494.712 ms median after the local-finisher repair.
 -/
@@ -607,7 +606,7 @@ accepted jump, so the final witness dominates: a fixed number
 each a schoolbook `t × t` product costing `O(t²)`, so the wall model is `t²`
 in the achieved precision. Parameterising by the actual Newton precisions
 `32773, 65541, 131077, 262149, 524293` reaches the quadratic limb regime and
-provides a stable mode-1 `t²` model.
+provides a stable two-sided `t²` model.
 -/
 setup_benchmark runRefineTo t => (t * t)
   with prep := prepRefineTo
@@ -637,7 +636,7 @@ driver factor. Since `log ‖p‖∞ = Θ(n·log n)`, its working length
 `O(n³·B²)` gives the `~n⁷` wall model (polylogarithms suppressed); the NK-only
 strategy certifies each atom on its doubled square.
 The current `2,3,4,5,6,8,10` schedule remains inconclusive
-(`β=-0.460`, faster than declared). Mode 3 gives up asymptotic detection at
+(`β=-0.460`, faster than declared). The fixed registration gives up asymptotic detection at
 shared degree 10 and uses a 75 s body-scoped budget, 8.11× the clean 9.251 s
 median, sized for shared merge-gating runners.
 -/
@@ -647,7 +646,7 @@ setup_fixed_benchmark runIsolateNk where {
 /-
 Cost model: the same `~n⁷` driver/working-length derivation as `runIsolateNk`;
 the Pellet-only strategy runs the three-radius test per candidate count. The
-current shared schedule is inconclusive (`β=-1.168`); mode 3 gives up
+current shared schedule is inconclusive (`β=-1.168`); the fixed registration gives up
 asymptotic detection at degree 10 and uses a 20 s body-scoped budget, 8.11×
 the clean 2.466 s median.
 -/
@@ -657,7 +656,7 @@ setup_fixed_benchmark runIsolatePellet where {
 /-
 Cost model: the same `~n⁷` driver/working-length derivation as `runIsolateNk`;
 the default strategy tries NK first and Pellet as fallback. The current shared
-schedule is inconclusive (`β=-1.149`); mode 3 gives up asymptotic detection
+schedule is inconclusive (`β=-1.149`); the fixed registration gives up asymptotic detection
 at degree 10 and uses a 20 s body-scoped budget, 8.12× the clean 2.462 s
 median.
 -/
@@ -681,7 +680,7 @@ initialize sameRootRef :
 /-
 `RefinedIsolation.sameRoot` is a single `DyadicSquare.discsMeet` comparison — a
 handful of exact-dyadic multiplies and one `≤`. There is no meaningful scalar
-parameter, so mode 3 uses two distinct representatives at the separation floor
+parameter, so the fixed registration uses two distinct representatives at the separation floor
 and precision 131077 as its canonical hard input. The 1 ms body-scoped budget
 is a measured-baseline ceiling above the clean 15.748 µs median; preparation
 is performed at process initialization. The `IO.Ref` prevents the comparison

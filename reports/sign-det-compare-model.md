@@ -14,9 +14,10 @@ reduced arm declares Θ(s log s) on this two-root family: every balanced
 node has a bounded matrix, and its query and sign slots are scanned in Θ(k)
 work for a node containing k input polynomials. The full arm declares Θ(27^s)
 scalar work from cubic worst-case rational Gauss-Jordan and dense
-inverse-identity replay on the 3^s square moment matrix. This is a finite-input
-wall-time model, not a bit-complexity claim for
-arbitrary s. Rational row reduction may instead dominate; `inspect-full`
+inverse-identity replay on the 3^s square moment matrix. The full arm is an auxiliary reference comparison. Its formula records a
+scalar-operation count, not a useful finite-range wall-time model or a
+bit-complexity claim for arbitrary s. Its retained fitted verdict is descriptive
+under [Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim). Rational row reduction may instead dominate; `inspect-full`
 records the actual elimination updates and matrix dimensions to assess that
 possibility. The inventory below shows fewer row additions than dense
 Gauss-Jordan, while the two dense inverse checks still execute cubic loops.
@@ -68,7 +69,8 @@ arms. This short schedule cannot
 distinguish Θ(s log s) from linear growth; the larger sparse-family report
 supplies scaling evidence. The full arm's measured growth does not support the
 declared `27^s` model here. A consistent finite-range verdict is not an
-asymptotic proof, and the full model remains an open performance gate.
+asymptotic proof. The full arm’s mixed-cost model is assessed below; its
+original inconclusive verdict is retained.
 
 | Queries | Reduced median ms | Full median ms | Median paired full/reduced ratio | Pair ratio range |
 | ---: | ---: | ---: | ---: | ---: |
@@ -173,17 +175,32 @@ come from the same clean revision and executable hash as the paired run; their
 [metadata](data/sign-det-compare/50af81103/inventory-full.metadata.json)
 records the output hash and verified finite count identities.
 
-The profile and operation inventory explain why the full arm's normalized
-`27^s` timing constant declines on this schedule: rational elimination is
-costly despite its lower source-level operation count. The two dense checks
-still contribute `27^s` arithmetic, so the inventory alone does not refute
-that eventual asymptotic term. Neither these five inputs nor the profile
-establish a replacement wall-time model; a justified wider schedule or an
-independently derived family-specific model needs fresh measurement before the
-mode-1 gate can pass. The inconclusive result remains. The
-[full-reference model concern](https://github.com/kim-em/hex-dev/issues/10377#issuecomment-5778449031)
-is still unresolved. The required degree, coefficient-bit, maximal-support,
-nested-field, allocation-byte and proof-checking tracks also remain open.
+The auxiliary full-reference arm's retained verdict is descriptive under
+[Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim).
+Rational elimination dominates its measured cost (87.97% of the representative
+profile) although its source-level operation count is lower than that of the
+integer checks. Counting both as equal units does not predict feasible wall
+times. This path is not used by production on these matrix sizes, so no
+reference-only scaling acceptance is required. The required paired comparison
+still measures both algorithms on identical inputs with exact-answer agreement
+and adjacent alternating execution.
+
+The actual rational pair count predicts about a 2.6× decline in time/27^s over
+s=2..5 if per-pair cost stays constant; the observed decline is about 6.9×.
+The actual count ratios at s=3→4 and s=4→5 are 19.3× and 18.6×, versus observed
+time ratios of 15.0× and 17.1×. The leading 18^s term alone would predict 18×
+and a 3.4× normalized decline. These source counts predict the direction,
+but do not account for the entire finite-range difference.
+
+For description, subtracting the reduced arm's median and dividing by the
+rational pair count gives about 308, 283, 235 and 217 ns at s=2..5. The
+subtracted allowance is about 46.5% of full time at s=2 and 0.052% at s=5.
+This is a breakdown of measured times, not an independent prediction or exact
+phase isolation: the two arms do different work, and the residual includes
+integer checks and other reference work. Neither it nor the profile supplies
+a replacement timing law. Every original sample and the inconclusive verdict
+remain unchanged; no passing scaling result is claimed. Other required
+performance families retain their own obligations.
 
 ## Earlier calibration record
 
@@ -204,3 +221,16 @@ the #10434 proof and diagnostic additions in `HexSignDet/Descriptor.lean`;
 neither benchmark arm uses them. The revised, calibrated registration was
 measured separately above, rather than treating the old timing as if it were
 from the new executable.
+
+
+## Scope of the full-reference comparison
+
+`runSmallFull` is retained as the required comparison arm. Its `27^s` formula
+records the cubic total scalar-operation count used by the existing paired
+sampler; it is not a reliable wall-time prediction on these structured inputs.
+The finite observations, profile and elimination inventory above resolve that
+mismatch without demanding larger reference inputs. The actual comparison
+ratios remain useful, and all original output, settings and verdicts remain
+unchanged. Production BKR uses rational inversion only on its at-most-three-row
+leaves and combines child inverse witnesses at parents. Its large integer
+checks and retained-matrix rank calculations have separate performance evidence.

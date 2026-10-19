@@ -35,7 +35,7 @@ compare runDenseSnfDegree runDenseSnfDataDegree
 compare runDirectProductCert runEvaluationCert
 ```
 
-SymPy `smith_normal_form` and PARI `matsnf` are fixed-rung informational
+SymPy `smith_normal_form` and PARI `matsnf` are fixed-rung orientation
 comparators over the same square `QQ[x]` and `F₂[x]` inputs. Five rungs cover
 each declared input family. Both run through the persistent JSON-line service
 in `scripts/oracle/pari_bench_driver.py`: one LeanBench child starts one driver

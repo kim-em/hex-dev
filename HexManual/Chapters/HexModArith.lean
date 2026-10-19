@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import VersoManual
 
-import HexModArithMathlib
+import HexModArithTheory
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -275,36 +275,36 @@ invertible, and Fermat's little theorem holds.
 
 # The Mathlib correspondence
 %%%
-tag := "hex-mod-arith-mathlib"
+tag := "hex-mod-arith-theory"
 %%%
 
-Everything above is executable and Mathlib-free. `HexModArithMathlib`
+Everything above is executable and Mathlib-free. `HexModArithTheory`
 connects it to Mathlib: every {name}`Hex.ZMod64` value corresponds to an
 element of Mathlib's `ZMod p`. The two transfer maps convert a residue to a
 `ZMod p` element and back.
 
-{docstring HexModArithMathlib.ZMod64.toZMod}
+{docstring HexModArithTheory.ZMod64.toZMod}
 
-{docstring HexModArithMathlib.ZMod64.ofZMod}
+{docstring HexModArithTheory.ZMod64.ofZMod}
 
 They are mutually inverse:
 
-{docstring HexModArithMathlib.ZMod64.ofZMod_toZMod}
+{docstring HexModArithTheory.ZMod64.ofZMod_toZMod}
 
-{docstring HexModArithMathlib.ZMod64.toZMod_ofZMod}
+{docstring HexModArithTheory.ZMod64.toZMod_ofZMod}
 
-{name}`HexModArithMathlib.ZMod64.toZMod` preserves the ring operations: addition and multiplication
+{name}`HexModArithTheory.ZMod64.toZMod` preserves the ring operations: addition and multiplication
 transfer, as do negation, subtraction, the casts, and powers (each a
 `@[simp]` lemma):
 
-{docstring HexModArithMathlib.ZMod64.toZMod_add}
+{docstring HexModArithTheory.ZMod64.toZMod_add}
 
-{docstring HexModArithMathlib.ZMod64.toZMod_mul}
+{docstring HexModArithTheory.ZMod64.toZMod_mul}
 
 The maps and laws bundle into a ring equivalence, so the `CommRing`
 theory of `ZMod p` transports to the executable type:
 
-{docstring HexModArithMathlib.ZMod64.equiv}
+{docstring HexModArithTheory.ZMod64.equiv}
 
 # Cross-references
 %%%

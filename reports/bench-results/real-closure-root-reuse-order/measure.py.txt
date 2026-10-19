@@ -1,0 +1,27 @@
+import json, os, subprocess, sys, time
+from pathlib import Path
+root=Path('/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse')
+sys.path.insert(0,str(root/'scripts/bench'))
+from cpu_lease import cpu_lease
+cpu,lease=cpu_lease()
+output=Path('/home/kim/.codex/tasks/hex-10378/root-reuse-order-measurements')
+output.mkdir(exist_ok=True)
+metadata={'cpu':cpu,'affinity':sorted(os.sched_getaffinity(0)),'load':os.getloadavg(),'head':subprocess.check_output(['git','rev-parse','HEAD'],cwd=root,text=True).strip(),'dirty':subprocess.check_output(['git','status','--short'],cwd=root,text=True),'schedule':'trial-major adjacent AB/BA; head/bounds; no completed sample discarded','repeats':3}
+(output/'metadata.json').write_text(json.dumps(metadata,indent=2)+'\n')
+results=[]
+for trial in range(2):
+    for degree,count in [(2,1),(2,2),(4,1),(4,2)]:
+        for arm in (['head','bounds'] if trial%2==0 else ['bounds','head']):
+            label=f'trial-{trial}-degree-{degree}-owners-{count}-{arm}'
+            cmd=['taskset','-c',str(cpu),str(root/'.lake/build/bin/hexrealclosure_bench'),'reuse-order',str(degree),str(count),arm,'3']
+            started=time.monotonic()
+            run=subprocess.run(cmd,cwd=root,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+            record={'trial':trial,'degree':degree,'owners':count,'arm':arm,'command':cmd,'wall_seconds':time.monotonic()-started,'returncode':run.returncode,'output':run.stdout}
+            (output/(label+'.log')).write_text(run.stdout)
+            (output/(label+'.json')).write_text(json.dumps(record,indent=2)+'\n')
+            results.append(record)
+            (output/'results.json').write_text(json.dumps(results,indent=2)+'\n')
+            print(label,run.returncode,run.stdout.strip(),flush=True)
+            if run.returncode:
+                raise SystemExit(run.returncode)
+lease.close()

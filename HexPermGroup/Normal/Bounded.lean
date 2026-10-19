@@ -29,7 +29,7 @@ may use less than the reservation; it never performs an uncharged sift. -/
 
 /-- Every completed iteration retains its ordinary normal-closure certificate.
 An exhausted pass or chain construction exposes no terminal normality claim. -/
-@[expose] def iterateWith {budget : Budget} (G : Group n) (remaining : Nat)
+@[expose] def iterateBudgeted {budget : Budget} (G : Group n) (remaining : Nat)
     (H : Group n) (hH : H.IsSubgroup G) (bound : G.order - H.order ≤ remaining) :
     Run budget (Closure G H) := do
   let tested ← probe G H
@@ -54,7 +54,7 @@ An exhausted pass or chain construction exposes no terminal normality claim. -/
         rw [he]
         rw [hr] at bound
         omega
-      let child ← iterateWith G remaining K hK hb
+      let child ← iterateBudgeted G remaining K hK hb
       reserve .certificates 1
       return {
           group := child.group
@@ -75,8 +75,8 @@ namespace Hex.PermGroup.Group
 /-- Bounded normal closure returns either a fully checked closure certificate or
 an explicit exhausted resource. All conjugations and nested suffix rebuilds
 consume one producer meter. -/
-@[expose] def normalClosureWith (budget : Execution.Budget) (G H : Group n) (hH : H.IsSubgroup G) :
+@[expose] def normalClosureBudgeted (budget : Execution.Budget) (G H : Group n) (hH : H.IsSubgroup G) :
     Execution.Measured budget (Normal.Closure G H) :=
-  Execution.run budget (Normal.iterateWith G (G.order - H.order) H hH (Nat.le_refl _))
+  Execution.run budget (Normal.iterateBudgeted G (G.order - H.order) H hH (Nat.le_refl _))
 
 end Hex.PermGroup.Group

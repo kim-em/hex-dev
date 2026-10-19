@@ -10,7 +10,7 @@ addition is a word-wise XOR and multiplication runs on carry-less word products
 rather than on per-coefficient modular arithmetic. The only dependency is
 [`hex-basic`](https://github.com/leanprover/hex-basic). The ring equivalence
 with Mathlib's `Polynomial (ZMod 2)`, along with finiteness and cardinality,
-lives in [`hex-gf2-mathlib`](https://github.com/leanprover/hex-gf2-mathlib).
+lives in [`hex-gf2-theory`](https://github.com/leanprover/hex-gf2-theory).
 
 # Quickstart
 

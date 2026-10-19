@@ -86,7 +86,7 @@ private def cases : IO (List Json) := do
   let G := s3Group
   let H := c2InS3
   let hHG := (← requireSubgroup H G).down
-  let .ok transversal := G.leftCosetsWith G.order H hHG
+  let .ok transversal := G.leftCosetsCapped G.order H hHG
     | throw (IO.userError "S3 transversal unexpectedly exceeded its cap")
   let pointStabilizer := G.stabilizer 0
 
@@ -130,14 +130,14 @@ private def cases : IO (List Json) := do
   let core := G.core H hHG
   let series := G.derivedSeries
   let direct := c2Group.directProduct c2Group
-  let wreath := c2Group.wreathProduct c2Group (by decide)
+  let wreath := c2Group.wreathProduct c2Group
 
   let ranks := G.enumerate.toList.map fun p => (G.rank p).val
   let samples : List (Element G) :=
-    Group.sampleWith (fun bound _ => List.finRange bound) G
+    Group.sampleFrom (fun bound _ => List.finRange bound) G
   let sampledRanks := samples.map fun p => (G.rank p).val
 
-  let producerStatus := match Group.buildWith {} #[swap3, cycle3] with
+  let producerStatus := match Group.buildBudgeted {} #[swap3, cycle3] with
     | .exhausted _ => "limited"
     | .ok _ _ => "complete"
   let malformed : Program := ⟨#[.comp 0 0], 0⟩

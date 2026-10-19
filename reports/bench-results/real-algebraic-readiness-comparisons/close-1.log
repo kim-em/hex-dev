@@ -1,0 +1,40 @@
+env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=4f44b80-dirty, 2026-10-02T02:34:55Z, host=chungus2
+Hex.RealAlgebraicBench.runQqbarProtocol    [fixed] repeats=1
+  repeat 0  6.347 µs  (×2^8, total 1.625 ms)
+  median: 6.347 µs    min: 6.347 µs    max: 6.347 µs
+  hash: all repeats agree
+  observed hash: 0x0
+  expected hash: matches
+  peak RSS: 68_236 kB (across 1 ok repeat(s))
+
+Hex.RealAlgebraicBench.runQqbarCloseCompare    [fixed] repeats=1
+  repeat 0  7.514 µs  (×2^8, total 1.924 ms)
+  median: 7.514 µs    min: 7.514 µs    max: 7.514 µs
+  hash: all repeats agree
+  observed hash: 0x0
+  expected hash: matches
+  peak RSS: 68_688 kB (across 1 ok repeat(s))
+
+Hex.RealAlgebraicBench.runCloseExact    [fixed] repeats=1
+  repeat 0  251.222 µs  (×2^2, total 1.005 ms)
+  median: 251.222 µs    min: 251.222 µs    max: 251.222 µs
+  hash: all repeats agree
+  observed hash: 0x0
+  expected hash: matches
+  peak RSS: 68_516 kB (across 1 ok repeat(s))
+
+Hex.RealAlgebraicBench.runCloseCompare    [fixed] repeats=1
+  repeat 0  20.890 µs  (×2^6, total 1.337 ms)
+  median: 20.890 µs    min: 20.890 µs    max: 20.890 µs
+  hash: all repeats agree
+  observed hash: 0x0
+  expected hash: matches
+  peak RSS: 68_688 kB (across 1 ok repeat(s))
+
+relative median (baseline = Hex.RealAlgebraicBench.runQqbarProtocol, the first CLI argument):
+  Hex.RealAlgebraicBench.runQqbarProtocol: 1.000× (6.347 µs)
+  Hex.RealAlgebraicBench.runQqbarCloseCompare: 1.184× (7.514 µs)
+  Hex.RealAlgebraicBench.runCloseExact: 39.581× (251.222 µs)
+  Hex.RealAlgebraicBench.runCloseCompare: 3.291× (20.890 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-readiness-comparisons/close-1.json

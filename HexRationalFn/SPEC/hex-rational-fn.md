@@ -3,7 +3,7 @@
 Canonical univariate rational functions over an effective field, implemented
 as coprime dense polynomials with a monic denominator. The computational
 library is Mathlib-free. Its
-[Mathlib companion](../../HexRationalFnMathlib/SPEC/hex-rational-fn-mathlib.md) identifies this representation
+[theory companion](../../HexRationalFnTheory/SPEC/hex-rational-fn-theory.md) identifies this representation
 with `RatFunc K`.
 
 ## Scope and dependencies
@@ -25,7 +25,7 @@ The immediate dependencies are `HexPoly` and `HexPolyFast`:
   The plan is an argument to an operation, not part of a rational function's
   identity. There is no second polynomial-operations typeclass.
 
-`HexRationalFnMathlib` additionally depends on `HexPolyMathlib`. Neither
+`HexRationalFnTheory` additionally depends on `HexPolyTheory`. Neither
 library depends on multivariate gcd, polynomial factorization, number fields,
 or the planned generic finite-field interface. Instances for a concrete field
 are supplied by the library that defines that field. A downstream function
@@ -94,7 +94,8 @@ decision for this type.
 | `ofPoly p` | Numerator `p`, denominator `1`. |
 | `C a`, `X` | Constants and the polynomial indeterminate through `ofPoly`. |
 
-For `p = 0`, normalization returns zero. Otherwise compute
+For `q = 1`, normalization returns `ofPoly p` directly. For `p = 0`, it
+returns zero. Otherwise compute
 `d = monicize (gcdWith plan p q)`, divide both inputs exactly by `d`,
 and call the quotients `a` and `b`. Set `c = b.leadingCoeff` and return
 `(scale c⁻¹ a, scale c⁻¹ b)`. Prove that `d` and `c` are nonzero, both
@@ -102,6 +103,10 @@ divisions have zero remainder, and the resulting pair satisfies the invariant.
 Use `divModWith` for division and its proved agreement with polynomial division.
 Internal exact divisions carry divisibility proofs. A failed arithmetic check
 must not silently substitute zero or the original input.
+
+Cancellation against denominator `1` returns common factor `1` and cofactors
+`p` and `1` directly. `normalizeWith_one` and `cancelWith_one` expose these
+reductions; neither shortcut computes a polynomial gcd or quotient.
 
 `normalize_spec` proves the invariant and the fraction equation
 `result.num * q = p * result.den`. `normalize_unique` says that any canonical
@@ -195,7 +200,7 @@ field operations. It maps the stored numerator and denominator coefficientwise
 and retains their monicity and coprimality; it does not run normalization or
 gcd. `mapCoeffs_num` and `mapCoeffs_den` expose these literal stored components.
 `liftConstants` instantiates the map for `K(X) → K(X)(Y)` using `RationalFn.C`.
-The Mathlib companion packages this executable function as a ring homomorphism
+The theory companion packages this executable function as a ring homomorphism
 and proves its fraction-field interpretation.
 
 ## Evaluation and its domain
@@ -315,6 +320,15 @@ algorithm bounds, not unconditional runtime claims for arbitrary `MulPlan`
 values. Benchmark both balanced and unbalanced degrees. Over `Rat`, report
 coefficient bit lengths and growth independently from degree. Unit-cost field
 operation counts do not establish a wallclock model for growing rationals.
+In iterated rational-function fields, coefficient zero and one construction
+also contributes to runtime. Construct the known unit denominator without a
+coefficient zero test, share the unit polynomial in the canonical pair for one,
+and construct zero with an empty numerator. Reuse these instances for natural
+casts and numerals zero and one. At depth d over a fixed base field, these
+compiled zero/one constructors require O(d) work, including natural casts of
+zero and one. Larger casts use ordinary coefficient arithmetic and polynomial
+normalization at their actual costs. The ordinary field operations and canonical
+representations remain unchanged.
 
 Required input families in `bench/HexRationalFn/Bench.lean` are:
 
@@ -338,14 +352,14 @@ normalization route in multiplication must include the same canonical output
 requirement. Publish its crossover and intermediate-degree savings, not a
 promise that cancellation is faster on every small coprime input.
 
-The required external throughput comparator is
+The external throughput comparator is
 [FLINT `fmpz_poly_q`](https://flintlib.org/doc/fmpz_poly_q.html), specifically
 `fmpz_poly_q_canonicalise`, `add`, `sub`, `mul`, `div`, `inv`, `pow`,
 `derivative`, `equal`, and `evaluate_fmpq` (see the
 [public header](https://github.com/flintlib/flint/blob/main/src/fmpz_poly_q.h)).
 Use a persistent driver linked to
-FLINT, with the `fmpz_poly_q_` prefix on each function name. It is
-**informational**: FLINT stores integer numerator/denominator pairs with its
+FLINT, with the `fmpz_poly_q_` prefix on each function name. It is for
+orientation only: FLINT stores integer numerator/denominator pairs with its
 own scalar normalization, whereas this library stores monic-denominator
 polynomials over `Rat`. Convert inputs and outputs outside the timed operation
 and compare the resulting canonical `Rat` coefficient arrays. Record both
@@ -353,10 +367,10 @@ representation sizes. FLINT's zero-input rejection conventions must be
 adapted explicitly rather than equated with total field division.
 
 The comparator covers the rational-coefficient arithmetic, equality and
-evaluation surfaces. Polynomial-part splitting is a **structural-layer**
-comparison delegated to `HexPolyFast` division evidence. Certificate production
-and replay have **no-comparable-surface-in-named-comparator**: FLINT does not
-expose this Bézout normalization certificate protocol. Measure those native
+evaluation surfaces. Polynomial-part splitting is covered by `HexPolyFast`
+division evidence. Certificate production and replay have no external
+comparator: FLINT does not expose this Bézout normalization certificate
+protocol. Measure those native
 operations and kernel replay independently. Prime-field plan comparisons use
 the same generic implementation and internal plan-agreement checks.
 
@@ -375,6 +389,7 @@ advertised proof-search operations.
 | --- | --- |
 | `normalizeWith`, `normalize`, `ofFraction?` | Compiled: `RationalFnFamilies.normalizeDegree`, `normalizeCancel`, `checkedFraction`; `RationalFnWorkloads.normalizeChain`, `heightNormalize`. |
 | `ofPoly`, `C`, `X`, natural/integer casts, `toPoly?`, stored-pair projections | Compiled: `RationalFnWorkloads.constructors`, a bounded-degree, bounded-word constant-work family. |
+| Zero and one in iterated rational-function fields | Compiled: `RationalFnBench.Nested.runUnits`, varying extension depth; `runArithmetic` supplies representative arithmetic consumer observations with complete outputs checked independently. |
 | `mapCoeffs`, `liftConstants` | Compiled: `RationalFnWorkloads.transportCoeffs`, a degree ladder with a nonconstant denominator and bounded rational coefficients. |
 | `addWith`, `subWith`, addition/subtraction instances | Compiled: `RationalFnFamilies.addCoprime`, `addShared`, `addCancel`, `addTotal`, `addEqual`, `subtract`; `RationalFnWorkloads.heightAdd`. |
 | `mulWith`, `divWith`, multiplication/division instances, `div?` | Compiled: `RationalFnFamilies.multiply`, `cancelMultiply`, `divide`, `checkedDivide`; `RationalFnWorkloads.multiply`, `unbalanced`, `unbalancedSchoolbook`, `heightMultiply`. |
@@ -439,7 +454,7 @@ pair, reject a non-coprime pair satisfying the fraction equation, and accept
 different valid Bézout witnesses for the same pair. A mutation of an irrelevant
 zero multiplier need not invalidate a certificate.
 
-## Manual and implementation milestones
+## Manual and publication
 
 The manual chapter in `HexManual/Chapters/HexRationalFn.lean` should derive
 the transfer function of a new two-stage linear recurrence model using formal
@@ -450,20 +465,8 @@ does not survive normalization. Neither example claims dynamical stability
 from cancellation alone. A finite-field example distinguishes rational-function
 equality from equality on sampled field values.
 
-Implement in this order:
-
-1. Representation, normalization, uniqueness and polynomial embedding in
-   `HexRationalFn/{Basic,Normalize}.lean`.
-2. Cancellation algorithms and field laws in `Arithmetic.lean`, then exercise
-   polynomial division and extended gcd over `DensePoly (RationalFn Rat)`.
-3. Evaluation, differentiation and polynomial part in `Eval.lean` and
-   `Derivative.lean`, with splitting beside the arithmetic operations.
-4. `Cert.lean`, kernel replay tests, conformance and the performance families.
-5. The companion's equivalence and headline theorem, followed by manual
-   examples. No correctness contract may retain `sorry` at completion.
-
-The computational library and its companion are active through Phase 3.
-The performance report distinguishes measured latency anchors from the remaining
-Phase-4 scaling evidence. Publication is through the monorepo release manifest
+The companion proves the computational algorithms correspond to abstract rational
+functions and supplies the headline theorem. Completed correctness contracts have
+no `sorry`. Publication is through the monorepo release manifest
 once both libraries meet release readiness. No released-repository dependency
 is introduced here.

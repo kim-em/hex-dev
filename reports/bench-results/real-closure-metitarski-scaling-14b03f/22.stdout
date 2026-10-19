@@ -1,0 +1,37 @@
+Hex.RealClosure.Bench.measureMetiSecond    expected complexity: n ^ 3    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=14b03f8, 2026-10-05T09:33:02Z, host=chungus2
+  param  per-call    repeats  C
+      3  259.516 ms  ×2^0     C=7919496.833 [trial 1/6]
+      5  499.304 ms  ×2^0     C=3755799.508 [trial 1/6]
+      7  984.343 ms  ×2^0     C=2133826.437 [trial 1/6]
+      9    1.599 s   ×2^0     C=1782495.671 [trial 1/6]
+      3  221.068 ms  ×2^1     C=7919496.833 [trial 2/6]
+      5  533.768 ms  ×2^0     C=3755799.508 [trial 2/6]
+      7  822.204 ms  ×2^0     C=2133826.437 [trial 2/6]
+      9    1.534 s   ×2^0     C=1782495.671 [trial 2/6]
+      3  212.538 ms  ×2^1     C=7919496.833 [trial 3/6]
+      5  439.645 ms  ×2^0     C=3755799.508 [trial 3/6]
+      7  884.791 ms  ×2^0     C=2133826.437 [trial 3/6]
+      9    1.600 s   ×2^0     C=1782495.671 [trial 3/6]
+      3  215.115 ms  ×2^1     C=7919496.833 [trial 4/6]
+      5  500.755 ms  ×2^0     C=3755799.508 [trial 4/6]
+      7  617.230 ms  ×2^0     C=2133826.437 [trial 4/6]
+      9    1.054 s   ×2^0     C=1782495.671 [trial 4/6]
+      3  147.106 ms  ×2^1     C=7919496.833 [trial 5/6]
+      5  314.137 ms  ×2^0     C=3755799.508 [trial 5/6]
+      7  611.720 ms  ×2^0     C=2133826.437 [trial 5/6]
+      9    1.065 s   ×2^0     C=1782495.671 [trial 5/6]
+      3  147.362 ms  ×2^1     C=7919496.833 [trial 6/6]
+      5  318.093 ms  ×2^0     C=3755799.508 [trial 6/6]
+      7  641.601 ms  ×2^0     C=2133826.437 [trial 6/6]
+      9    1.052 s   ×2^0     C=1782495.671 [trial 6/6]
+  verdict: inconclusive (cMin=1782495.671, cMax=7919496.833, β=-1.405, looks faster than declared by ~n^1.405)
+  per-spawn floor (harness self-measurement): 156.199 ms
+  peak RSS: 78_596 kB..84_928 kB (across 24 ok row(s))
+  trial summaries (6 trials per param; spread = (max-min)/median):
+    param  trials  median      min         max         spread 
+        3  6/6     213.826 ms  147.106 ms  259.516 ms  52.570%
+        5  6/6     469.475 ms  314.137 ms  533.768 ms  46.782%
+        7  6/6     731.902 ms  611.720 ms  984.343 ms  50.912%
+        9  6/6       1.299 s     1.052 s     1.600 s   42.206%
+exported to /home/kim/.codex/tasks/hex-10378/metitarski-scaling-capture-14b03f/measurements.json

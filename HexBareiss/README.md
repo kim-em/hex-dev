@@ -10,7 +10,7 @@ quotient. Its retained `Int` entry points use a directly specialized,
 GMP-backed exact-division path.
 This library depends on [`hex-determinant`](https://github.com/leanprover/hex-determinant)
 and [`hex-matrix`](https://github.com/leanprover/hex-matrix). See
-[`hex-bareiss-mathlib`](https://github.com/leanprover/hex-bareiss-mathlib) for the
+[`hex-bareiss-theory`](https://github.com/leanprover/hex-bareiss-theory) for the
 correspondence with the Leibniz determinant and Mathlib's theory.
 
 # Quickstart
@@ -64,7 +64,7 @@ def Q : Matrix Rat 2 2 := Matrix.ofFn fun i j =>
   swaps and lower triangular transform, or a left kernel vector for a
   singular matrix), its list-structured checkers for the kernel, and the
   producer from the elimination on `[A | I]`; the `det` tactic of
-  [`hex-bareiss-mathlib`](https://github.com/leanprover/hex-bareiss-mathlib)
+  [`hex-bareiss-theory`](https://github.com/leanprover/hex-bareiss-theory)
   is built on it;
 
 The generic functions make their quotient operation explicit. The `Int`
@@ -86,7 +86,7 @@ field determinant algorithm.
 The Mathlib-free layer proves the structural properties of the algorithm: the
 sign contributed by row swaps, the bordered-minor entry formulas, and the
 agreement between the public result and its packaged determinant data. The
-Mathlib bridge proves quotient exactness implies agreement with the determinant.
+Theory companion proves quotient exactness implies agreement with the determinant.
 
 The public determinant agrees with the encoded data, `bareiss_eq_bareissData_det`:
 
@@ -110,7 +110,7 @@ theorem bareiss_eq_noPivotLoop_last_of_no_singular {k : Nat}
 The correspondence of the Bareiss determinant with the Leibniz
 [`det`](https://github.com/leanprover/hex-determinant), via the Desnanot-Jacobi
 invariant, is proven in
-[`hex-bareiss-mathlib`](https://github.com/leanprover/hex-bareiss-mathlib), not here.
+[`hex-bareiss-theory`](https://github.com/leanprover/hex-bareiss-theory), not here.
 
 # Reference manual
 

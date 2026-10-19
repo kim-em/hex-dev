@@ -1,0 +1,103 @@
+Hex.RealAlgebraicBench.runPolyConstructors    expected complexity: n    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=4f44b80-dirty, 2026-10-02T02:01:40Z, host=chungus2
+  param  per-call    repeats  C
+     16  123.000 ns  ×2^19    C=7.810 [trial 1/4] †
+     32  262.000 ns  ×2^18    C=6.683 [trial 1/4]
+     64  383.000 ns  ×2^18    C=6.139 [trial 1/4]
+    128  698.000 ns  ×2^17    C=5.493 [trial 1/4]
+    256    1.327 µs  ×2^16    C=5.312 [trial 1/4]
+     16  126.000 ns  ×2^19    C=7.810 [trial 2/4] †
+     32  210.000 ns  ×2^18    C=6.683 [trial 2/4]
+     64  405.000 ns  ×2^18    C=6.139 [trial 2/4]
+    128  700.000 ns  ×2^17    C=5.493 [trial 2/4]
+    256    1.284 µs  ×2^16    C=5.312 [trial 2/4]
+     16  126.000 ns  ×2^19    C=7.810 [trial 3/4] †
+     32  214.000 ns  ×2^18    C=6.683 [trial 3/4]
+     64  394.000 ns  ×2^18    C=6.139 [trial 3/4]
+    128  705.000 ns  ×2^17    C=5.493 [trial 3/4]
+    256    1.403 µs  ×2^16    C=5.312 [trial 3/4]
+     16  123.000 ns  ×2^19    C=7.810 [trial 4/4] †
+     32  213.000 ns  ×2^18    C=6.683 [trial 4/4]
+     64  390.000 ns  ×2^18    C=6.139 [trial 4/4]
+    128  728.000 ns  ×2^17    C=5.493 [trial 4/4]
+    256    1.392 µs  ×2^16    C=5.312 [trial 4/4]
+  verdict: consistent with declared complexity (cMin=5.312, cMax=6.683, β=-0.115)
+  per-spawn floor (harness self-measurement): 44.775 ms
+  peak RSS: 68_176 kB..68_804 kB (across 20 ok row(s))
+  trial summaries (4 trials per param; spread = (max-min)/median):
+    param  trials  median      min         max         spread 
+       16  4/4     124.000 ns  123.000 ns  126.000 ns  2.520% 
+       32  4/4     213.000 ns  210.000 ns  262.000 ns  24.090%
+       64  4/4     392.000 ns  383.000 ns  405.000 ns  5.422% 
+      128  4/4     703.000 ns  698.000 ns  728.000 ns  4.228% 
+      256  4/4       1.359 µs    1.284 µs    1.403 µs  8.751% 
+
+Hex.RealAlgebraicBench.runMembership    expected complexity: n    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=4f44b80-dirty, 2026-10-02T02:01:43Z, host=chungus2
+  param  per-call    repeats  C
+     16   74.000 ns  ×2^20    C=4.625 [trial 1/4] †
+     32  135.000 ns  ×2^19    C=4.237 [trial 1/4]
+     64  240.000 ns  ×2^18    C=3.735 [trial 1/4]
+    128  444.000 ns  ×2^17    C=3.504 [trial 1/4]
+    256  879.000 ns  ×2^16    C=3.379 [trial 1/4]
+     16   73.000 ns  ×2^20    C=4.625 [trial 2/4] †
+     32  133.000 ns  ×2^19    C=4.237 [trial 2/4]
+     64  237.000 ns  ×2^18    C=3.735 [trial 2/4]
+    128  448.000 ns  ×2^17    C=3.504 [trial 2/4]
+    256  862.000 ns  ×2^16    C=3.379 [trial 2/4]
+     16   74.000 ns  ×2^20    C=4.625 [trial 3/4] †
+     32  136.000 ns  ×2^19    C=4.237 [trial 3/4]
+     64  230.000 ns  ×2^18    C=3.735 [trial 3/4]
+    128  448.000 ns  ×2^17    C=3.504 [trial 3/4]
+    256  862.000 ns  ×2^16    C=3.379 [trial 3/4]
+     16   73.000 ns  ×2^20    C=4.625 [trial 4/4] †
+     32  137.000 ns  ×2^19    C=4.237 [trial 4/4]
+     64  240.000 ns  ×2^18    C=3.735 [trial 4/4]
+    128  451.000 ns  ×2^17    C=3.504 [trial 4/4]
+    256  867.000 ns  ×2^16    C=3.379 [trial 4/4]
+  verdict: consistent with declared complexity (cMin=3.379, cMax=4.237, β=-0.107)
+  per-spawn floor (harness self-measurement): 44.620 ms
+  peak RSS: 68_088 kB..68_884 kB (across 20 ok row(s))
+  trial summaries (4 trials per param; spread = (max-min)/median):
+    param  trials  median      min         max         spread
+       16  4/4      73.000 ns   73.000 ns   74.000 ns  1.238%
+       32  4/4     135.000 ns  133.000 ns  137.000 ns  2.785%
+       64  4/4     239.000 ns  230.000 ns  240.000 ns  4.410%
+      128  4/4     448.000 ns  444.000 ns  451.000 ns  1.560%
+      256  4/4     864.000 ns  862.000 ns  879.000 ns  1.983%
+
+Hex.RealAlgebraicBench.runRootSet    expected complexity: 1    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=4f44b80-dirty, 2026-10-02T02:01:46Z, host=chungus2
+  param  per-call   repeats  C
+     16  46.000 ns  ×2^21    C=46.843 [trial 1/4] †
+     32  46.000 ns  ×2^21    C=46.932 [trial 1/4]
+     64  47.000 ns  ×2^21    C=47.095 [trial 1/4]
+    128  46.000 ns  ×2^21    C=46.862 [trial 1/4]
+    256  47.000 ns  ×2^21    C=47.022 [trial 1/4]
+     16  46.000 ns  ×2^21    C=46.843 [trial 2/4] †
+     32  46.000 ns  ×2^21    C=46.932 [trial 2/4]
+     64  47.000 ns  ×2^21    C=47.095 [trial 2/4]
+    128  46.000 ns  ×2^21    C=46.862 [trial 2/4]
+    256  47.000 ns  ×2^21    C=47.022 [trial 2/4]
+     16  46.000 ns  ×2^21    C=46.843 [trial 3/4] †
+     32  46.000 ns  ×2^21    C=46.932 [trial 3/4]
+     64  47.000 ns  ×2^21    C=47.095 [trial 3/4]
+    128  47.000 ns  ×2^21    C=46.862 [trial 3/4]
+    256  46.000 ns  ×2^21    C=47.022 [trial 3/4]
+     16  46.000 ns  ×2^21    C=46.843 [trial 4/4] †
+     32  47.000 ns  ×2^21    C=46.932 [trial 4/4]
+     64  47.000 ns  ×2^21    C=47.095 [trial 4/4]
+    128  46.000 ns  ×2^21    C=46.862 [trial 4/4]
+    256  46.000 ns  ×2^21    C=47.022 [trial 4/4]
+  verdict: consistent with declared complexity (cMin=46.862, cMax=47.095, β=+0.000)
+  per-spawn floor (harness self-measurement): 44.565 ms
+  peak RSS: 68_092 kB..68_752 kB (across 20 ok row(s))
+  trial summaries (4 trials per param; spread = (max-min)/median):
+    param  trials  median     min        max        spread
+       16  4/4     46.000 ns  46.000 ns  46.000 ns  1.521%
+       32  4/4     46.000 ns  46.000 ns  47.000 ns  0.818%
+       64  4/4     47.000 ns  47.000 ns  47.000 ns  0.223%
+      128  4/4     46.000 ns  46.000 ns  47.000 ns  0.760%
+      256  4/4     47.000 ns  46.000 ns  47.000 ns  0.735%
+
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/prerequisite-readiness-models/arrays.json

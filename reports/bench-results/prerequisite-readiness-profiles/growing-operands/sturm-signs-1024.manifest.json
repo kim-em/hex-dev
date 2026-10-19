@@ -1,0 +1,372 @@
+{
+  "family": "sturm-signs-1024",
+  "function": "Hex.SturmBench.runSigns",
+  "parameter": 1024,
+  "cpu": 69,
+  "load": [
+    19.48291015625,
+    13.19482421875,
+    10.73974609375
+  ],
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "raw": "/tmp/issue-10577-perf/sturm-signs-1024",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/tmp/hex10577-samply",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "record",
+        "--clockid",
+        "mono",
+        "-e",
+        "cycles:u",
+        "-F",
+        "999",
+        "--call-graph",
+        "dwarf",
+        "-o",
+        "/tmp/issue-10577-perf/sturm-signs-1024/perf.data",
+        "--",
+        "env",
+        "LEAN_BENCH_PROFILE_KERNEL=1",
+        "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/tmp/issue-10577-perf/sturm-signs-1024/timed-%p.jsonl",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "profile",
+        "Hex.SturmBench.runSigns",
+        "--param",
+        "1024",
+        "--target-inner-nanos",
+        "2000000000",
+        "--max-seconds-per-call",
+        "60",
+        "--profiler",
+        "env"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "import",
+        "--save-only",
+        "--no-open",
+        "--unstable-presymbolicate",
+        "-o",
+        "/tmp/issue-10577-perf/sturm-signs-1024/samply.json.gz",
+        "/tmp/issue-10577-perf/sturm-signs-1024/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "script",
+        "--ns",
+        "-F",
+        "pid,tid,time,event",
+        "-i",
+        "/tmp/issue-10577-perf/sturm-signs-1024/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/normalize_perf.py",
+        "--profile",
+        "/tmp/issue-10577-perf/sturm-signs-1024/samply.json.gz",
+        "--perf-script",
+        "/tmp/issue-10577-perf/sturm-signs-1024/perf-samples.txt",
+        "--spawn-anchor",
+        "/tmp/issue-10577-perf/sturm-signs-1024/spawn-anchor.json",
+        "--output",
+        "/tmp/issue-10577-perf/sturm-signs-1024/normalized.json.gz"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "/tmp/hex10577-samply/scripts/filter_samply.py",
+        "--samply-json",
+        "/tmp/issue-10577-perf/sturm-signs-1024/normalized.json.gz",
+        "--sidecar",
+        "/tmp/issue-10577-perf/sturm-signs-1024/timed-1342336.jsonl",
+        "--spawn-anchor",
+        "/tmp/issue-10577-perf/sturm-signs-1024/spawn-anchor.json",
+        "--out",
+        "/tmp/issue-10577-perf/sturm-signs-1024/filtered.json.gz",
+        "--diagnostics",
+        "/tmp/issue-10577-perf/sturm-signs-1024/diagnostics.json",
+        "--label-filter",
+        "kernel"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/elf_symbols.py",
+        "/tmp/issue-10577-perf/sturm-signs-1024/filtered.json.gz",
+        "--output",
+        "/tmp/issue-10577-perf/sturm-signs-1024/symbols.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/summarize_profile.py",
+        "/tmp/issue-10577-perf/sturm-signs-1024/filtered.json.gz",
+        "--symbols",
+        "/tmp/issue-10577-perf/sturm-signs-1024/symbols.json",
+        "--diagnostics",
+        "/tmp/issue-10577-perf/sturm-signs-1024/diagnostics.json",
+        "--thread",
+        "hexsturm_bench",
+        "--top",
+        "20",
+        "--output",
+        "reports/bench-results/prerequisite-readiness-profiles/growing-operands/sturm-signs-1024.summary.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "executable_sha256": "2582ee10a5f694f04001b0aff3919a35ce90c970d8f2219e98a96c003b233f6a",
+  "commit": "6d78bf3e1fb1aa23129df83f7888979dd5afeb6d",
+  "dirty": true,
+  "profiler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.2.8",
+  "status": "profiled",
+  "diagnostics": {
+    "schema": 2,
+    "stage": "complete",
+    "confidence": "passed",
+    "low_confidence_reasons": [],
+    "bench_pid": 1342336,
+    "bench_thread_name": "hexsturm_bench",
+    "bench_thread_tid": "1342344",
+    "regions_total": 129,
+    "total_timed_ms": 1624.730183,
+    "expected_samples_bench_thread": 1623.1,
+    "retained_samples_bench_thread": 1621,
+    "rejected_samples_bench_thread": 1275,
+    "off_bench_thread_samples_in_window": 0,
+    "samply_interval_ms": 1.001001,
+    "spawn_anchor_wall_ns": 1790918293083284828,
+    "spawn_anchor_mono_ns": 328284843894069,
+    "sidecar_mono_anchor_ns": 328286044947839,
+    "samply_meta_start_time_ms": 1790918293113.9602,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "calibration_residual_ms": 0.9872390031814575,
+    "calibration_max_residual_ms": 5.0,
+    "calibration": {
+      "selected_mode": "relative-to-meta-start-ms",
+      "residual_ms": 0.9872390031814575,
+      "raw_max_residual_ms": 0.9991459846496582,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "configured_max_residual_ms": 5.0,
+      "sample_interval_ms": 1.001001,
+      "effective_max_residual_ms": 5.0,
+      "within_residual_limit": true,
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "hit_count": 0,
+          "regions_without_samples": 129,
+          "boundary_residual_trimmed_max_ms": null,
+          "boundary_residual_raw_max_ms": null,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "hit_count": 1621,
+          "regions_without_samples": 0,
+          "boundary_residual_trimmed_max_ms": 0.9872390031814575,
+          "boundary_residual_raw_max_ms": 0.9991459846496582,
+          "within_residual_limit": true
+        }
+      }
+    },
+    "minimum_retained_samples": 100,
+    "sensitivity": {
+      "shift_ms": 5.0,
+      "reported_top_function_count": 3,
+      "configured_max_total_variation_distance": 0.1,
+      "sampling_noise_coefficient": 0.6,
+      "minimum_comparison_samples": 100,
+      "maximum_sampling_noise_allowance": 0.5,
+      "verdict": "passed",
+      "leaf_function_distributions_stable": true,
+      "comparisons": {
+        "minus": {
+          "total_variation_distance": 0.09500308451573103,
+          "leaf_function_support_size": 237,
+          "comparison_samples": 1621,
+          "exchanged_samples": 314,
+          "exchanged_fraction": 0.19370758790869833,
+          "sampling_noise_allowance": 0.14279803471090957,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.14279803471090957,
+          "verdict": "passed",
+          "failure_reasons": []
+        },
+        "plus": {
+          "total_variation_distance": 0.09544334975369458,
+          "leaf_function_support_size": 235,
+          "comparison_samples": 1621,
+          "exchanged_samples": 311,
+          "exchanged_fraction": 0.1918568784700802,
+          "sampling_noise_allowance": 0.1415133327352911,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1415133327352911,
+          "verdict": "passed",
+          "failure_reasons": []
+        }
+      },
+      "cases": {
+        "minus": {
+          "shift_ms": -5.0,
+          "retained_samples": 1621,
+          "top_leaf_functions": [
+            {
+              "function": 438,
+              "name": "0x4969093",
+              "samples": 123
+            },
+            {
+              "function": 860,
+              "name": "0x49baccd",
+              "samples": 100
+            },
+            {
+              "function": 855,
+              "name": "0xb7d22f",
+              "samples": 83
+            }
+          ]
+        },
+        "nominal": {
+          "shift_ms": 0.0,
+          "retained_samples": 1621,
+          "top_leaf_functions": [
+            {
+              "function": 438,
+              "name": "0x4969093",
+              "samples": 132
+            },
+            {
+              "function": 860,
+              "name": "0x49baccd",
+              "samples": 111
+            },
+            {
+              "function": 855,
+              "name": "0xb7d22f",
+              "samples": 92
+            }
+          ]
+        },
+        "plus": {
+          "shift_ms": 5.0,
+          "retained_samples": 1624,
+          "top_leaf_functions": [
+            {
+              "function": 438,
+              "name": "0x4969093",
+              "samples": 125
+            },
+            {
+              "function": 860,
+              "name": "0x49baccd",
+              "samples": 103
+            },
+            {
+              "function": 855,
+              "name": "0xb7d22f",
+              "samples": 86
+            }
+          ]
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "0.stdout": "d40df5947dd338826ff79a6a053ccdc7edeaecd28d6667f6a092758534fc7d11",
+    "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stdout": "0df97c48d73fcb60d59b7b814093f47711de30dc438c86fd5377838306818975",
+    "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "2.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stdout": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "4.stdout": "1a89ef5bfd8650933a16c3a00d57ae7efdf4c1b72b0081ba5545f5745282a906",
+    "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "spawn-anchor.json": "377e1f6f21bdf413594a13883aea5f589be047ec2870d765a61e0eab22e622f1",
+    "perf.data": "c4e9e158ca2676fa709ffca265779a352d32010e0f5ad331838a6805e2f7ddf2",
+    "timed-1342336.jsonl": "a893405d139dc25bc935f3ac31c94d72177ba2ced6ebe0f9b4211a5fb490f331",
+    "5.stdout": "bddf2eb890931753b3543165bba66ff572b8bb1bddc814acdf6a15466500f13b",
+    "5.stderr": "0bb32329501439c91afa556db8042e13708986cd6a1bab082cb54b2d83b09953",
+    "samply.json.gz": "445a66b67f690e46995887ba60b65a2ff4e8e625cdbcd1235311bf7daa0426d8",
+    "6.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "6.stderr": "5eecc03f5f55d77995f7cfb8c323ac8ca3c4743e4ce54d037b5098911eabdae4",
+    "7.stdout": "35382efc2293334df4aef71b8f60972bd7eb56aa9b164da8946294cf743c8d93",
+    "7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "perf-samples.txt": "35382efc2293334df4aef71b8f60972bd7eb56aa9b164da8946294cf743c8d93",
+    "normalized.json.gz": "3a0f85be76762883a207f6e7ca54d5725dc2abb7ab4a406cc1855ac093e9229c",
+    "8.stdout": "b804568d33cb2699e980f2053b09435367cd32bbe793df927142e6321904acf6",
+    "8.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "filtered.json.gz": "aa6ca8e49b421c0937600fbff8f04a8099df804229622827fd34e280e5701899",
+    "diagnostics.json": "b0338b822a54f96022b355141607ac8f6021459e0d0cd1836b425e50b811b61d",
+    "9.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "9.stderr": "ed1554c84cc5067f7030575ef453e66d5a27eb8987efa4795b97e5009144f47f",
+    "symbols.json": "bac668555f61b67b9ec96bbde4957d1ad24a3066aeee0df749790b1ca87410fd",
+    "10.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "10.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

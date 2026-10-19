@@ -1,0 +1,28 @@
+{
+  "source_commit": "3ef41951ce493d279fddd0e1dff867ac466d549c",
+  "correction": "The first local wrapper merged stderr diagnostics into the JSONL stream; it is retained. This rerun keeps stdout and stderr separate as required by the existing CI script. No library source, checks, fixtures or oracle rules change.",
+  "emitter_exit_code": 0,
+  "emitter_seconds": 216.27476674699938,
+  "checks": [
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/rebased-real-fixtures-stdout.jsonl",
+      "sha256": "f2a9d355ef5cfda62e113a234697f534a6bb7aae163f5f309d16ed4c07325cf3"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/rebased-real-emit-stderr.log",
+      "sha256": "b1f8ad06e92ddd3f6481c812800c6c9f3ff6a646a1b0a0dc626173110ff7c819"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/rebased-real-oracle-corrected.log",
+      "sha256": "534ab1fbb8538ad6001ce1232ea9ac12f2bc6bae57d05e6d7e659aa01d1730ef"
+    }
+  ],
+  "byte_exact_committed_fixture": true,
+  "oracle_exit_code": 0,
+  "oracle_argv": [
+    "/home/kim/.local/state/hex/issue-10577-oracles/bin/python",
+    "scripts/oracle/real_algebraic_flint.py",
+    "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/rebased-real-fixtures-stdout.jsonl",
+    "--require-oracles"
+  ]
+}

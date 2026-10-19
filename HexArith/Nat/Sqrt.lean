@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexArith.Nat.Prime
+public import Init.Data.Nat.Sqrt
 
 public section
 
@@ -28,12 +29,41 @@ private def sqrtAux (n : Nat) : Nat → Nat → Nat
       else
         sqrtAux n fuel next
 
+/-- A bit-length upper estimate for the square root, clamped to `n`. -/
+private def sqrtInit (n : Nat) : Nat :=
+  min n (2 ^ ((n.log2 + 2) / 2))
+
+private theorem sqrtInit_pos (n : Nat) (hn : 0 < n) : 0 < sqrtInit n := by
+  exact Nat.lt_min.mpr ⟨hn, Nat.pow_pos (by decide)⟩
+
+private theorem sqrtInit_le (n : Nat) : sqrtInit n ≤ n := by
+  exact Nat.min_le_left _ _
+
+private theorem sqrtInit_upper (n : Nat) : n < (sqrtInit n + 1) ^ 2 := by
+  unfold sqrtInit
+  by_cases h : n ≤ 2 ^ ((n.log2 + 2) / 2)
+  · rw [Nat.min_eq_left h]
+    simp [Nat.pow_two]
+    grind
+  · rw [Nat.min_eq_right (by omega)]
+    have he : n.log2 + 1 ≤ 2 * ((n.log2 + 2) / 2) := by omega
+    have hp : 2 ^ (n.log2 + 1) ≤ 2 ^ (2 * ((n.log2 + 2) / 2)) :=
+      Nat.pow_le_pow_right (by decide) he
+    have hn : n < (2 ^ ((n.log2 + 2) / 2)) ^ 2 := by
+      have hlog : n < 2 ^ (n.log2 + 1) := Nat.lt_log2_self
+      calc
+        n < 2 ^ (n.log2 + 1) := hlog
+        _ ≤ 2 ^ (2 * ((n.log2 + 2) / 2)) := hp
+        _ = (2 ^ ((n.log2 + 2) / 2)) ^ 2 := by
+          rw [Nat.mul_comm 2, Nat.pow_mul]
+    exact Nat.lt_of_lt_of_le hn (Nat.pow_le_pow_left (by omega) 2)
+
 /-- The floor of the square root of `n`. -/
 def floorSqrt (n : Nat) : Nat :=
   if n = 0 then
     0
   else
-    sqrtAux n (2 * n.log2 + 1) n
+    sqrtAux n (2 * n.log2 + 1) (sqrtInit n)
 
 /-- The least natural number whose square is at least `n`. -/
 def ceilSqrt (n : Nat) : Nat :=
@@ -121,6 +151,31 @@ private theorem sqrtAux_upper_succ
     (n fuel x : Nat) (_hx : 0 < x) (h : n ≤ (x + 1) ^ 2) :
     n ≤ (sqrtAux n fuel x + 1) ^ 2 :=
   sqrtAux_upper n fuel x h
+
+/-- Newton iteration preserves the strict upper square bound. -/
+private theorem sqrtAux_lt (n fuel x : Nat) (h : n < (x + 1) ^ 2) :
+    n < (sqrtAux n fuel x + 1) ^ 2 := by
+  induction fuel generalizing x with
+  | zero => simpa [sqrtAux] using h
+  | succ fuel ih =>
+    by_cases hx : 0 < x
+    · unfold sqrtAux
+      let next := sqrtStep n x
+      by_cases hnext : next ≥ x
+      · simp [next, hnext]
+        exact h
+      · simp [next, hnext]
+        apply ih
+        have hn : n < x * (n / x + 1) := by
+          calc
+            n = x * (n / x) + n % x := (Nat.div_add_mod n x).symm
+            _ < x * (n / x) + x := Nat.add_lt_add_left (Nat.mod_lt n hx) _
+            _ = x * (n / x + 1) := by simp [Nat.mul_add]
+        exact Nat.lt_of_lt_of_le hn
+          (by simpa [next, sqrtStep] using midpoint_bound x (n / x))
+    · have hxzero : x = 0 := by omega
+      subst x
+      simpa [sqrtAux, sqrtStep] using h
 
 /--
 Stop-condition lemma for the Newton iteration: when `sqrtStep n x ≥ x`
@@ -286,40 +341,38 @@ private theorem sqrtAux_gap
           _ ≤ 2 * sqrtGap n next := Nat.mul_le_mul_left 2 htail
           _ ≤ sqrtGap n x := hstep
 
-/-- After `n.log2 + 1` Newton steps from `x = n`, the iterate undershoots
-(`(sqrtAux n (n.log2 + 1) n) ^ 2 ≤ n`), since the gap cannot survive that many
+/-- After `n.log2 + 1` Newton steps from `0 < x ≤ n`, the iterate undershoots
+(`(sqrtAux n (n.log2 + 1) x) ^ 2 ≤ n`), since the gap cannot survive that many
 halvings while staying below `2 ^ (n.log2 + 1)`. -/
 private theorem sqrtAux_log
-    (n : Nat) (hn : 0 < n) :
-    (sqrtAux n (n.log2 + 1) n) * (sqrtAux n (n.log2 + 1) n) ≤ n := by
+    (n x : Nat) (hx : 0 < x) (hxn : x ≤ n) :
+    (sqrtAux n (n.log2 + 1) x) * (sqrtAux n (n.log2 + 1) x) ≤ n := by
   by_cases hsq :
-      (sqrtAux n (n.log2 + 1) n) * (sqrtAux n (n.log2 + 1) n) ≤ n
+      (sqrtAux n (n.log2 + 1) x) * (sqrtAux n (n.log2 + 1) x) ≤ n
   · exact hsq
   · have hgap_le :
-        2 ^ (n.log2 + 1) * sqrtGap n (sqrtAux n (n.log2 + 1) n) ≤ sqrtGap n n :=
-      sqrtAux_gap n (n.log2 + 1) n hn hsq
+        2 ^ (n.log2 + 1) * sqrtGap n (sqrtAux n (n.log2 + 1) x) ≤ sqrtGap n x :=
+      sqrtAux_gap n (n.log2 + 1) x hx hsq
     have hgap_pos :
-        0 < sqrtGap n (sqrtAux n (n.log2 + 1) n) := by
-      have hpos : 0 < sqrtAux n (n.log2 + 1) n := by
-        by_cases hpos : 0 < sqrtAux n (n.log2 + 1) n
+        0 < sqrtGap n (sqrtAux n (n.log2 + 1) x) := by
+      have hpos : 0 < sqrtAux n (n.log2 + 1) x := by
+        by_cases hpos : 0 < sqrtAux n (n.log2 + 1) x
         · exact hpos
-        · have hzero : sqrtAux n (n.log2 + 1) n = 0 := by omega
+        · have hzero : sqrtAux n (n.log2 + 1) x = 0 := by omega
           exact False.elim (hsq (by simp [hzero]))
       exact sqrtGap_pos hpos hsq
     have hpow_le :
-        2 ^ (n.log2 + 1) ≤ sqrtGap n n := by
+        2 ^ (n.log2 + 1) ≤ sqrtGap n x := by
       calc
         2 ^ (n.log2 + 1) ≤
-            2 ^ (n.log2 + 1) * sqrtGap n (sqrtAux n (n.log2 + 1) n) := by
+            2 ^ (n.log2 + 1) * sqrtGap n (sqrtAux n (n.log2 + 1) x) := by
               exact Nat.le_mul_of_pos_right _ hgap_pos
-        _ ≤ sqrtGap n n := hgap_le
-    have hgap_lt : sqrtGap n n < 2 ^ (n.log2 + 1) := by
-      unfold sqrtGap
-      have hdiv : n / n = 1 := Nat.div_self hn
-      rw [hdiv]
-      have hlt : n < 2 ^ (n.log2 + 1) := by
-        simpa using (Nat.lt_log2_self : n < 2 ^ (n.log2 + 1))
-      omega
+        _ ≤ sqrtGap n x := hgap_le
+    have hgap_lt : sqrtGap n x < 2 ^ (n.log2 + 1) := by
+      calc
+        sqrtGap n x ≤ x := Nat.sub_le _ _
+        _ ≤ n := hxn
+        _ < 2 ^ (n.log2 + 1) := Nat.lt_log2_self
     exact False.elim (Nat.not_lt_of_ge hpow_le hgap_lt)
 
 /-- The iteration composes over fuel:
@@ -361,22 +414,22 @@ private theorem sqrtAux_append
         rw [hleft, hfirst]
         exact ih next
 
-/-- With full fuel `2 * n.log2 + 1` and `0 < n`, the iterate undershoots
-(`(sqrtAux n (2 * n.log2 + 1) n) ^ 2 ≤ n`); the floor-square-root soundness fact
+/-- With full fuel `2 * n.log2 + 1` and `0 < x ≤ n`, the iterate undershoots
+(`(sqrtAux n (2 * n.log2 + 1) x) ^ 2 ≤ n`); the floor-square-root soundness fact
 `floorSqrt_sq_le` rests on this. -/
 private theorem sqrtAux_sq_le
-    (n : Nat) (hn : 0 < n) :
-    (sqrtAux n (2 * n.log2 + 1) n) *
-      (sqrtAux n (2 * n.log2 + 1) n) ≤ n := by
+    (n x : Nat) (hx : 0 < x) (hxn : x ≤ n) :
+    (sqrtAux n (2 * n.log2 + 1) x) *
+      (sqrtAux n (2 * n.log2 + 1) x) ≤ n := by
   have hfuel : 2 * n.log2 + 1 = (n.log2 + 1) + n.log2 := by omega
   rw [hfuel, sqrtAux_append]
-  have hsq : (sqrtAux n (n.log2 + 1) n) *
-      (sqrtAux n (n.log2 + 1) n) ≤ n :=
-    sqrtAux_log n hn
+  have hsq : (sqrtAux n (n.log2 + 1) x) *
+      (sqrtAux n (n.log2 + 1) x) ≤ n :=
+    sqrtAux_log n x hx hxn
   have hself :
-      sqrtAux n n.log2 (sqrtAux n (n.log2 + 1) n) =
-        sqrtAux n (n.log2 + 1) n :=
-    sqrtAux_fixed n n.log2 (sqrtAux n (n.log2 + 1) n) hsq
+      sqrtAux n n.log2 (sqrtAux n (n.log2 + 1) x) =
+        sqrtAux n (n.log2 + 1) x :=
+    sqrtAux_fixed n n.log2 (sqrtAux n (n.log2 + 1) x) hsq
   simpa [hself] using hsq
 
 /-- Base case of `floorSqrt`: the `n = 0` guard fires before the Newton
@@ -392,7 +445,35 @@ theorem floorSqrt_sq_le (n : Nat) : floorSqrt n * floorSqrt n ≤ n := by
   · have hn_pos : 0 < n := Nat.pos_of_ne_zero hn
     unfold floorSqrt
     rw [ite_eq_right hn]
-    exact sqrtAux_sq_le n hn_pos
+    exact sqrtAux_sq_le n (sqrtInit n) (sqrtInit_pos n hn_pos) (sqrtInit_le n)
+
+/-- The successor of the floor square root has square strictly above `n`. -/
+theorem lt_floorSqrt_succ (n : Nat) : n < (floorSqrt n + 1) ^ 2 := by
+  by_cases hn : n = 0
+  · subst n
+    simp [floorSqrt]
+  · unfold floorSqrt
+    rw [ite_eq_right hn]
+    exact sqrtAux_lt n _ _ (sqrtInit_upper n)
+
+/-- The Newton implementation agrees with Lean's natural square root. -/
+theorem floorSqrt_eq (n : Nat) : floorSqrt n = _root_.Nat.sqrt n := by
+  have hlo := floorSqrt_sq_le n
+  have hhi := lt_floorSqrt_succ n
+  have hslo := _root_.Nat.sqrt_le n
+  have hshi := _root_.Nat.lt_succ_sqrt n
+  simp only [_root_.Nat.pow_two, _root_.Nat.succ_eq_add_one] at hhi hshi
+  apply _root_.Nat.le_antisymm
+  · by_cases h : floorSqrt n ≤ _root_.Nat.sqrt n
+    · exact h
+    have hle : _root_.Nat.sqrt n + 1 ≤ floorSqrt n := by omega
+    have hsq := _root_.Nat.mul_self_le_mul_self hle
+    omega
+  · by_cases h : _root_.Nat.sqrt n ≤ floorSqrt n
+    · exact h
+    have hle : floorSqrt n + 1 ≤ _root_.Nat.sqrt n := by omega
+    have hsq := _root_.Nat.mul_self_le_mul_self hle
+    omega
 
 /-- Base case of `ceilSqrt`: since `floorSqrt 0 = 0` is a perfect square,
 `ceilSqrt` returns its floor branch, normalizing `ceilSqrt 0` to `0`. -/
@@ -410,15 +491,14 @@ theorem le_ceilSqrt_sq (n : Nat) : n ≤ (ceilSqrt n) ^ 2 := by
   · subst hn
     simp
   · have hn_pos : 0 < n := Nat.pos_of_ne_zero hn
-    have hfloor : floorSqrt n = sqrtAux n (2 * n.log2 + 1) n := by
+    have hfloor : floorSqrt n = sqrtAux n (2 * n.log2 + 1) (sqrtInit n) := by
       unfold floorSqrt
       rw [ite_eq_right hn]
-    have hinit : n ≤ (n + 1) ^ 2 := by
-      simp [Nat.pow_two]
-      grind
+    have hinit : n ≤ (sqrtInit n + 1) ^ 2 := Nat.le_of_lt (sqrtInit_upper n)
     have hub : n ≤ (floorSqrt n + 1) ^ 2 := by
       rw [hfloor]
-      exact sqrtAux_upper_succ n (2 * n.log2 + 1) n hn_pos hinit
+      exact sqrtAux_upper_succ n (2 * n.log2 + 1) (sqrtInit n)
+        (sqrtInit_pos n hn_pos) hinit
     unfold ceilSqrt
     by_cases hsq : floorSqrt n * floorSqrt n = n
     · rw [ite_eq_left hsq, Nat.pow_two]

@@ -1,0 +1,348 @@
+Hex.RealAlgebraicBench.runCompare    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a29afca-dirty, 2026-10-02T01:51:08Z, host=chungus2
+  repeat 0  415.000 ns  (×2^12, total 1.703 ms)
+  repeat 1  416.000 ns  (×2^12, total 1.708 ms)
+  repeat 2  431.000 ns  (×2^12, total 1.767 ms)
+  repeat 3  425.000 ns  (×2^12, total 1.744 ms)
+  median: 425.000 ns    min: 415.000 ns    max: 431.000 ns
+  hash: all repeats agree
+  observed hash: 0x0
+  peak RSS: 68_240 kB..68_644 kB (across 4 ok repeat(s))
+  ‼ median wall time below 1µs — possibly a compile-time-folded constant rather than work. If the workload is genuinely tiny this is fine; otherwise thread inputs through runtime state (e.g. `IO.Ref`, disk) so the body isn't closed at compile time. See issue #54.
+
+Hex.RealAlgebraicBench.runRepr    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a29afca-dirty, 2026-10-02T01:51:08Z, host=chungus2
+  repeat 0  1.018 µs  (×2^10, total 1.043 ms)
+  repeat 1  1.026 µs  (×2^10, total 1.051 ms)
+  repeat 2  1.010 µs  (×2^10, total 1.034 ms)
+  repeat 3  1.030 µs  (×2^10, total 1.055 ms)
+  median: 1.026 µs    min: 1.010 µs    max: 1.030 µs
+  hash: all repeats agree
+  observed hash: 0xf9bc164fd13f3a95
+  peak RSS: 67_908 kB..68_544 kB (across 4 ok repeat(s))
+
+Hex.RealAlgebraicBench.runApprox    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a29afca-dirty, 2026-10-02T01:51:08Z, host=chungus2
+  repeat 0  84.554 µs  (×2^4, total 1.353 ms)
+  repeat 1  84.911 µs  (×2^4, total 1.359 ms)
+  repeat 2  84.333 µs  (×2^4, total 1.349 ms)
+  repeat 3  84.931 µs  (×2^4, total 1.359 ms)
+  median: 84.911 µs    min: 84.333 µs    max: 84.931 µs
+  hash: all repeats agree
+  observed hash: 0x49e27486baec8d51
+  peak RSS: 67_976 kB..68_640 kB (across 4 ok repeat(s))
+
+Hex.RealAlgebraicBench.runConstructors    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a29afca-dirty, 2026-10-02T01:51:08Z, host=chungus2
+  repeat 0  911.873 µs  (×2^1, total 1.824 ms)
+  repeat 1  912.188 µs  (×2^1, total 1.824 ms)
+  repeat 2  914.267 µs  (×2^1, total 1.829 ms)
+  repeat 3  915.309 µs  (×2^1, total 1.831 ms)
+  median: 914.267 µs    min: 911.873 µs    max: 915.309 µs
+  hash: all repeats agree
+  observed hash: 0x52cf77b7fe7c100a
+  peak RSS: 68_212 kB..68_452 kB (across 4 ok repeat(s))
+
+Hex.RealAlgebraicBench.runEquality    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a29afca-dirty, 2026-10-02T01:51:09Z, host=chungus2
+  repeat 0  151.000 ns  (×2^13, total 1.240 ms)
+  repeat 1  154.000 ns  (×2^13, total 1.265 ms)
+  repeat 2  153.000 ns  (×2^13, total 1.255 ms)
+  repeat 3  153.000 ns  (×2^13, total 1.254 ms)
+  median: 153.000 ns    min: 151.000 ns    max: 154.000 ns
+  hash: all repeats agree
+  observed hash: 0xb43593c908789cee
+  peak RSS: 67_976 kB..68_684 kB (across 4 ok repeat(s))
+  ‼ median wall time below 1µs — possibly a compile-time-folded constant rather than work. If the workload is genuinely tiny this is fine; otherwise thread inputs through runtime state (e.g. `IO.Ref`, disk) so the body isn't closed at compile time. See issue #54.
+
+Hex.RealAlgebraicBench.runRoots    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a29afca-dirty, 2026-10-02T01:51:09Z, host=chungus2
+  repeat 0  27.029 ms
+  repeat 1  36.884 ms
+  repeat 2  27.115 ms
+  repeat 3  27.477 ms
+  median: 27.477 ms    min: 27.029 ms    max: 36.884 ms
+  hash: all repeats agree
+  observed hash: 0xf5fdd88f0d766e38
+  peak RSS: 68_168 kB..68_480 kB (across 4 ok repeat(s))
+
+Hex.RealAlgebraicBench.runSign    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a29afca-dirty, 2026-10-02T01:51:10Z, host=chungus2
+  repeat 0  424.000 ns  (×2^12, total 1.739 ms)
+  repeat 1  414.000 ns  (×2^12, total 1.698 ms)
+  repeat 2  413.000 ns  (×2^12, total 1.694 ms)
+  repeat 3  416.000 ns  (×2^12, total 1.704 ms)
+  median: 416.000 ns    min: 413.000 ns    max: 424.000 ns
+  hash: all repeats agree
+  observed hash: 0x2
+  peak RSS: 67_972 kB..68_824 kB (across 4 ok repeat(s))
+  ‼ median wall time below 1µs — possibly a compile-time-folded constant rather than work. If the workload is genuinely tiny this is fine; otherwise thread inputs through runtime state (e.g. `IO.Ref`, disk) so the body isn't closed at compile time. See issue #54.
+
+Hex.RealAlgebraicBench.runAbs    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a29afca-dirty, 2026-10-02T01:51:10Z, host=chungus2
+  repeat 0  516.000 ns  (×2^11, total 1.059 ms)
+  repeat 1  526.000 ns  (×2^11, total 1.078 ms)
+  repeat 2  530.000 ns  (×2^11, total 1.087 ms)
+  repeat 3  537.000 ns  (×2^11, total 1.102 ms)
+  median: 530.000 ns    min: 516.000 ns    max: 537.000 ns
+  hash: all repeats agree
+  observed hash: 0xc8b6082e03b0adb2
+  peak RSS: 68_236 kB..68_648 kB (across 4 ok repeat(s))
+  ‼ median wall time below 1µs — possibly a compile-time-folded constant rather than work. If the workload is genuinely tiny this is fine; otherwise thread inputs through runtime state (e.g. `IO.Ref`, disk) so the body isn't closed at compile time. See issue #54.
+
+Hex.RealAlgebraicBench.runPolyConstructors    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a29afca-dirty, 2026-10-02T01:51:10Z, host=chungus2
+  repeat 0  91.000 ns  (×2^14, total 1.504 ms)
+  repeat 1  90.000 ns  (×2^14, total 1.476 ms)
+  repeat 2  88.000 ns  (×2^14, total 1.452 ms)
+  repeat 3  91.000 ns  (×2^14, total 1.500 ms)
+  median: 91.000 ns    min: 88.000 ns    max: 91.000 ns
+  hash: all repeats agree
+  observed hash: 0xdfa4b93c42130623
+  peak RSS: 68_192 kB..68_768 kB (across 4 ok repeat(s))
+  ‼ median wall time below 1µs — possibly a compile-time-folded constant rather than work. If the workload is genuinely tiny this is fine; otherwise thread inputs through runtime state (e.g. `IO.Ref`, disk) so the body isn't closed at compile time. See issue #54.
+
+Hex.RealAlgebraicBench.runScalars    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a29afca-dirty, 2026-10-02T01:51:10Z, host=chungus2
+  repeat 0  6.577 ms
+  repeat 1  6.772 ms
+  repeat 2  6.596 ms
+  repeat 3  6.636 ms
+  median: 6.636 ms    min: 6.577 ms    max: 6.772 ms
+  hash: all repeats agree
+  observed hash: 0x9d826d563a813081
+  peak RSS: 68_204 kB..68_584 kB (across 4 ok repeat(s))
+
+Hex.RealAlgebraicBench.runInv    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a29afca-dirty, 2026-10-02T01:51:11Z, host=chungus2
+  repeat 0  1.379 ms
+  repeat 1  1.380 ms
+  repeat 2  1.398 ms
+  repeat 3  1.393 ms
+  median: 1.393 ms    min: 1.379 ms    max: 1.398 ms
+  hash: all repeats agree
+  observed hash: 0x7488dddbf5fdfd8b
+  peak RSS: 68_212 kB..68_644 kB (across 4 ok repeat(s))
+
+Hex.RealAlgebraicBench.runDiv    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a29afca-dirty, 2026-10-02T01:51:11Z, host=chungus2
+  repeat 0  1.872 ms
+  repeat 1  1.858 ms
+  repeat 2  1.853 ms
+  repeat 3  1.854 ms
+  median: 1.858 ms    min: 1.853 ms    max: 1.872 ms
+  hash: all repeats agree
+  observed hash: 0xe0e92462cb0dca0a
+  peak RSS: 68_360 kB..68_828 kB (across 4 ok repeat(s))
+
+Hex.RealAlgebraicBench.runRounding    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a29afca-dirty, 2026-10-02T01:51:11Z, host=chungus2
+  repeat 0  926.184 µs  (×2^1, total 1.852 ms)
+  repeat 1  943.795 µs  (×2^1, total 1.888 ms)
+  repeat 2  927.741 µs  (×2^1, total 1.855 ms)
+  repeat 3  925.854 µs  (×2^1, total 1.852 ms)
+  median: 927.741 µs    min: 925.854 µs    max: 943.795 µs
+  hash: all repeats agree
+  observed hash: 0xa17413adbb293d56
+  peak RSS: 67_940 kB..68_716 kB (across 4 ok repeat(s))
+
+Hex.RealAlgebraicBench.runRepeatedRoots    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a29afca-dirty, 2026-10-02T01:51:12Z, host=chungus2
+  repeat 0  3.923 ms
+  repeat 1  3.927 ms
+  repeat 2  3.939 ms
+  repeat 3  3.882 ms
+  median: 3.927 ms    min: 3.882 ms    max: 3.939 ms
+  hash: all repeats agree
+  observed hash: 0xbc01feefcdcb42cf
+  peak RSS: 68_240 kB..68_572 kB (across 4 ok repeat(s))
+
+Hex.RealAlgebraicBench.runCasts    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a29afca-dirty, 2026-10-02T01:51:12Z, host=chungus2
+  repeat 0  1.177 ms
+  repeat 1  1.138 ms
+  repeat 2  1.147 ms
+  repeat 3  1.150 ms
+  median: 1.150 ms    min: 1.138 ms    max: 1.177 ms
+  hash: all repeats agree
+  observed hash: 0xe393d7902a648d6c
+  peak RSS: 68_476 kB..68_636 kB (across 4 ok repeat(s))
+
+Hex.RealAlgebraicBench.runCompareExact    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a29afca-dirty, 2026-10-02T01:51:12Z, host=chungus2
+  repeat 0  39.400 µs  (×2^5, total 1.261 ms)
+  repeat 1  38.577 µs  (×2^5, total 1.234 ms)
+  repeat 2  38.905 µs  (×2^5, total 1.245 ms)
+  repeat 3  38.737 µs  (×2^5, total 1.240 ms)
+  median: 38.905 µs    min: 38.577 µs    max: 39.400 µs
+  hash: all repeats agree
+  observed hash: 0x0
+  peak RSS: 68_236 kB..68_464 kB (across 4 ok repeat(s))
+
+Hex.RealAlgebraicBench.runAdd    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a29afca-dirty, 2026-10-02T01:51:12Z, host=chungus2
+  repeat 0  14.813 ms
+  repeat 1  14.703 ms
+  repeat 2  14.592 ms
+  repeat 3  14.807 ms
+  median: 14.807 ms    min: 14.592 ms    max: 14.813 ms
+  hash: all repeats agree
+  observed hash: 0xa09b6572a55d9701
+  peak RSS: 68_516 kB..68_816 kB (across 4 ok repeat(s))
+
+Hex.RealAlgebraicBench.runIntegerRoots    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a29afca-dirty, 2026-10-02T01:51:13Z, host=chungus2
+  repeat 0  44.237 ms
+  repeat 1  44.285 ms
+  repeat 2  44.313 ms
+  repeat 3  44.127 ms
+  median: 44.285 ms    min: 44.127 ms    max: 44.313 ms
+  hash: all repeats agree
+  observed hash: 0x295807e750670b69
+  peak RSS: 68_244 kB..68_620 kB (across 4 ok repeat(s))
+
+Hex.RealAlgebraicBench.runSqrt    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a29afca-dirty, 2026-10-02T01:51:14Z, host=chungus2
+  repeat 0  20.654 ms
+  repeat 1  20.499 ms
+  repeat 2  20.978 ms
+  repeat 3  20.734 ms
+  median: 20.734 ms    min: 20.499 ms    max: 20.978 ms
+  hash: all repeats agree
+  observed hash: 0x4b9ec3a0ac14a9a9
+  peak RSS: 68_212 kB..68_476 kB (across 4 ok repeat(s))
+
+Hex.RealAlgebraicBench.runSqrtTotal    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a29afca-dirty, 2026-10-02T01:51:14Z, host=chungus2
+  repeat 0  20.810 ms
+  repeat 1  20.982 ms
+  repeat 2  20.769 ms
+  repeat 3  21.121 ms
+  median: 20.982 ms    min: 20.769 ms    max: 21.121 ms
+  hash: all repeats agree
+  observed hash: 0x4b9ec3a0ac14a9a9
+  peak RSS: 68_196 kB..68_824 kB (across 4 ok repeat(s))
+
+Hex.RealAlgebraicBench.runRational    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a29afca-dirty, 2026-10-02T01:51:15Z, host=chungus2
+  repeat 0  1.433 ms
+  repeat 1  1.453 ms
+  repeat 2  1.432 ms
+  repeat 3  1.450 ms
+  median: 1.450 ms    min: 1.432 ms    max: 1.453 ms
+  hash: all repeats agree
+  observed hash: 0xcb96de1cb126ae61
+  peak RSS: 67_980 kB..68_572 kB (across 4 ok repeat(s))
+
+Hex.RealAlgebraicBench.runMul    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a29afca-dirty, 2026-10-02T01:51:15Z, host=chungus2
+  repeat 0  1.629 ms
+  repeat 1  1.619 ms
+  repeat 2  1.627 ms
+  repeat 3  1.613 ms
+  median: 1.627 ms    min: 1.613 ms    max: 1.629 ms
+  hash: all repeats agree
+  observed hash: 0xb4169802e77fdb66
+  peak RSS: 67_976 kB..68_572 kB (across 4 ok repeat(s))
+
+Hex.RealAlgebraicBench.runComplexAbs    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a29afca-dirty, 2026-10-02T01:51:15Z, host=chungus2
+  repeat 0  11.134 ms
+  repeat 1  11.094 ms
+  repeat 2  11.100 ms
+  repeat 3  11.459 ms
+  median: 11.134 ms    min: 11.094 ms    max: 11.459 ms
+  hash: all repeats agree
+  observed hash: 0x4af05bf4e4e75b02
+  peak RSS: 68_236 kB..68_648 kB (across 4 ok repeat(s))
+
+Hex.RealAlgebraicBench.runIntPow    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a29afca-dirty, 2026-10-02T01:51:15Z, host=chungus2
+  repeat 0  10.010 ms
+  repeat 1   9.927 ms
+  repeat 2   9.918 ms
+  repeat 3   9.948 ms
+  median: 9.948 ms    min: 9.918 ms    max: 10.010 ms
+  hash: all repeats agree
+  observed hash: 0x5cf4fba23b3431e4
+  peak RSS: 68_208 kB..68_540 kB (across 4 ok repeat(s))
+
+Hex.RealAlgebraicBench.runSub    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a29afca-dirty, 2026-10-02T01:51:16Z, host=chungus2
+  repeat 0  15.248 ms
+  repeat 1  15.073 ms
+  repeat 2  14.942 ms
+  repeat 3  14.962 ms
+  median: 15.073 ms    min: 14.942 ms    max: 15.248 ms
+  hash: all repeats agree
+  observed hash: 0xaa10daeeb835fbed
+  peak RSS: 68_216 kB..68_540 kB (across 4 ok repeat(s))
+
+Hex.RealAlgebraicBench.runNorm    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a29afca-dirty, 2026-10-02T01:51:16Z, host=chungus2
+  repeat 0  959.829 µs  (×2^1, total 1.920 ms)
+  repeat 1  932.208 µs  (×2^1, total 1.864 ms)
+  repeat 2  937.411 µs  (×2^1, total 1.875 ms)
+  repeat 3  943.374 µs  (×2^1, total 1.887 ms)
+  median: 943.374 µs    min: 932.208 µs    max: 959.829 µs
+  hash: all repeats agree
+  observed hash: 0xebc29d6de010a352
+  peak RSS: 68_196 kB..68_368 kB (across 4 ok repeat(s))
+
+Hex.RealAlgebraicBench.runConj    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a29afca-dirty, 2026-10-02T01:51:17Z, host=chungus2
+  repeat 0  120.000 ns  (×2^14, total 1.971 ms)
+  repeat 1  129.000 ns  (×2^13, total 1.062 ms)
+  repeat 2  128.000 ns  (×2^13, total 1.056 ms)
+  repeat 3  118.000 ns  (×2^14, total 1.947 ms)
+  median: 128.000 ns    min: 118.000 ns    max: 129.000 ns
+  hash: all repeats agree
+  observed hash: 0xc8b6082e03b0adb2
+  peak RSS: 68_460 kB..68_616 kB (across 4 ok repeat(s))
+  ‼ median wall time below 1µs — possibly a compile-time-folded constant rather than work. If the workload is genuinely tiny this is fine; otherwise thread inputs through runtime state (e.g. `IO.Ref`, disk) so the body isn't closed at compile time. See issue #54.
+
+Hex.RealAlgebraicBench.runRootSet    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a29afca-dirty, 2026-10-02T01:51:17Z, host=chungus2
+  repeat 0  46.000 ns  (×2^15, total 1.530 ms)
+  repeat 1  46.000 ns  (×2^15, total 1.538 ms)
+  repeat 2  46.000 ns  (×2^15, total 1.536 ms)
+  repeat 3  47.000 ns  (×2^15, total 1.549 ms)
+  median: 46.000 ns    min: 46.000 ns    max: 47.000 ns
+  hash: all repeats agree
+  observed hash: 0x8578cad878ec511c
+  peak RSS: 68_216 kB..68_792 kB (across 4 ok repeat(s))
+  ‼ median wall time below 1µs — possibly a compile-time-folded constant rather than work. If the workload is genuinely tiny this is fine; otherwise thread inputs through runtime state (e.g. `IO.Ref`, disk) so the body isn't closed at compile time. See issue #54.
+
+Hex.RealAlgebraicBench.runNatPow    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a29afca-dirty, 2026-10-02T01:51:17Z, host=chungus2
+  repeat 0  8.256 ms
+  repeat 1  8.239 ms
+  repeat 2  8.270 ms
+  repeat 3  8.277 ms
+  median: 8.270 ms    min: 8.239 ms    max: 8.277 ms
+  hash: all repeats agree
+  observed hash: 0x96ecf253be60ee0c
+  peak RSS: 67_976 kB..68_716 kB (across 4 ok repeat(s))
+
+Hex.RealAlgebraicBench.runNeg    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a29afca-dirty, 2026-10-02T01:51:17Z, host=chungus2
+  repeat 0  915.739 µs  (×2^1, total 1.831 ms)
+  repeat 1  936.705 µs  (×2^1, total 1.873 ms)
+  repeat 2  921.838 µs  (×2^1, total 1.844 ms)
+  repeat 3  929.039 µs  (×2^1, total 1.858 ms)
+  median: 929.039 µs    min: 915.739 µs    max: 936.705 µs
+  hash: all repeats agree
+  observed hash: 0x68ba6bd38879cdda
+  peak RSS: 68_300 kB..68_820 kB (across 4 ok repeat(s))
+
+Hex.RealAlgebraicBench.runOrder    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a29afca-dirty, 2026-10-02T01:51:18Z, host=chungus2
+  repeat 0  2.127 µs  (×2^9, total 1.089 ms)
+  repeat 1  2.212 µs  (×2^9, total 1.133 ms)
+  repeat 2  2.168 µs  (×2^9, total 1.110 ms)
+  repeat 3  2.168 µs  (×2^9, total 1.110 ms)
+  median: 2.168 µs    min: 2.127 µs    max: 2.212 µs
+  hash: all repeats agree
+  observed hash: 0xe9e0a5c2bb53441c
+  peak RSS: 67_976 kB..68_452 kB (across 4 ok repeat(s))
+exported to reports/bench-results/real-algebraic-readiness-baseline/results.json

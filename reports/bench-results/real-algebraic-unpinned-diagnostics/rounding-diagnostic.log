@@ -1,0 +1,11 @@
+Hex.RealAlgebraicBench.runRounding    [fixed] repeats=4
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=6d78bf3-dirty, 2026-10-02T02:45:22Z, host=chungus2
+  repeat 0  401.282 ms
+  repeat 1  378.142 ms
+  repeat 2  389.366 ms
+  repeat 3  389.703 ms
+  median: 389.703 ms    min: 378.142 ms    max: 401.282 ms
+  hash: all repeats agree
+  observed hash: 0x89104a575971b244
+  peak RSS: 67_860 kB..68_672 kB (across 4 ok repeat(s))
+exported to /tmp/issue-10577-rounding-diagnostic.json

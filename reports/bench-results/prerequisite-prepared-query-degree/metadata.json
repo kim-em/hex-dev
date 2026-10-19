@@ -1,0 +1,50 @@
+{
+  "cpu": 71,
+  "head": "4f44b806075ae95ad1b3f05c55e6c1ad5bd3f423",
+  "host": "chungus2",
+  "cpu_model": "\t: AMD EPYC 9455 48-Core Processor",
+  "load_start": [
+    14.533203125,
+    12.791015625,
+    12.58642578125
+  ],
+  "commands": [
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+      "run",
+      "Hex.SturmFrontendBench.runPreparedHigh",
+      "Hex.SturmFrontendBench.runPreparedCertificateHigh",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/prerequisite-prepared-query-degree/prepared-query.json"
+    ]
+  ],
+  "hashes": {
+    "bench/HexSturm/Bench.lean": "a9236a8c5c4b4332712aa59a9438862297599a1220c579dce5c35beb2c4f2e77",
+    "bench/HexSturm/Frontend.lean": "2510cd087d3f8545eabc61ccb09e96ef7a7dd1b95114c28b2c2f5ef7d96ae9ca",
+    "bench/HexRealAlgebraic/Bench.lean": "b0169a36183b84cda0cf2ec5af83a54fcb96d1c7cac7b43dcaadb71f70d8d02a",
+    "lakefile.lean": "2163fa4c2ae8641ef29cda9b5d046f37b2451c1d35f2e6a43e77e07ce7d735ab",
+    "lake-manifest.json": "a2440490b8954368bd3de4d4e7142d0a75ef6b4e1cbe664c152a87e0715a0e56",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    ".lake/build/bin/hexsturm_bench": "bdf258956a26dd05af56af2afb1342ea09e8f7c2a6f72bbf72284c5246b12bdd",
+    ".lake/build/bin/hexrealalgebraic_bench": "c0d6f210a80e61e5ab761dc4cd9f318f38fa6ed64d5cda7a7e853c09a194f5ef"
+  },
+  "load_end": [
+    11.46337890625,
+    10.77880859375,
+    12.169921875
+  ],
+  "sources_unchanged": false,
+  "retention_scope": {
+    "measured_sources": [
+      "bench/HexSturm/Bench.lean",
+      "bench/HexSturm/Frontend.lean",
+      ".lake/build/bin/hexsturm_bench"
+    ],
+    "unchanged_measured_sources": true,
+    "changed_unmeasured_sources": [
+      "bench/HexRealAlgebraic/Bench.lean",
+      ".lake/build/bin/hexrealalgebraic_bench"
+    ],
+    "note": "The runner also fingerprinted the real-algebraic executable and source, which changed during this Sturm-only collection. The measured Sturm executable and registration source remained fixed."
+  }
+}

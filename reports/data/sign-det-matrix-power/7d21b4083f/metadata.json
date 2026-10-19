@@ -1,0 +1,1055 @@
+{
+  "schema": "hex-matrix-power-paired-v1",
+  "scope": "short before/after comparison; no scaling verdict",
+  "sizes": [
+    243,
+    729
+  ],
+  "trials": 6,
+  "arms": {
+    "before": {
+      "revision": "6b977999bc5b4008cea31ce4f9edfbe1bc3c6658",
+      "binary_sha256": "7edc287f10317550ca5c4d8f42e8d119ff5d4cff2271655f0ebabfed6809399b",
+      "matrix_sha256": "79f45d03cf43c469e67287eeab512b62cfce87ec7733ceb7408c7a3777ce90f4",
+      "executable": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-matrix-wide/.lake/build/bin/hexsigndet_bench"
+    },
+    "after": {
+      "revision": "7d21b4083f79eebccde7f24fb460979d92b772fa",
+      "binary_sha256": "6563ae734d28d8411dbf8367304c7b76e9ac114104ccf576711e8758a2812109",
+      "matrix_sha256": "84f1b15a672295d37d2db1b89dc880cb5ff7867effddcbdbdd69ddd82e0e0bfd",
+      "executable": "/home/kim/worktrees/hex-dev/hex-dev-issue-10377-checker-attribution/.lake/build/bin/hexsigndet_bench"
+    }
+  },
+  "samples": [
+    {
+      "trial": 0,
+      "size": 243,
+      "arm": "before",
+      "capture": "0-243-before",
+      "row": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SignDetBench.MaximalMatrix.runTensorCheck",
+        "param": 243,
+        "inner_repeats": 1,
+        "total_nanos": 51220272,
+        "per_call_nanos": 51220272.0,
+        "cache_mode": "warm",
+        "result_hash": "0xb",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 73148,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexsigndet_bench",
+          "git_commit": "6b977999bc5b4008cea31ce4f9edfbe1bc3c6658",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:03:59Z",
+          "timestamp_unix_ms": 1791241439315
+        }
+      },
+      "load_after": [
+        1.93505859375,
+        3.6904296875,
+        9.22509765625
+      ]
+    },
+    {
+      "trial": 0,
+      "size": 243,
+      "arm": "after",
+      "capture": "0-243-after",
+      "row": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SignDetBench.MaximalMatrix.runTensorCheck",
+        "param": 243,
+        "inner_repeats": 2,
+        "total_nanos": 79559337,
+        "per_call_nanos": 39779668.5,
+        "cache_mode": "warm",
+        "result_hash": "0xb",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 74196,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexsigndet_bench",
+          "git_commit": "7d21b4083f79eebccde7f24fb460979d92b772fa",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:03:59Z",
+          "timestamp_unix_ms": 1791241439465
+        }
+      },
+      "load_after": [
+        1.93505859375,
+        3.6904296875,
+        9.22509765625
+      ]
+    },
+    {
+      "trial": 0,
+      "size": 729,
+      "arm": "before",
+      "capture": "0-729-before",
+      "row": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SignDetBench.MaximalMatrix.runTensorCheck",
+        "param": 729,
+        "inner_repeats": 1,
+        "total_nanos": 986491002,
+        "per_call_nanos": 986491002.0,
+        "cache_mode": "warm",
+        "result_hash": "0xb",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 95320,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexsigndet_bench",
+          "git_commit": "6b977999bc5b4008cea31ce4f9edfbe1bc3c6658",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:03:59Z",
+          "timestamp_unix_ms": 1791241439666
+        }
+      },
+      "load_after": [
+        1.93505859375,
+        3.6904296875,
+        9.22509765625
+      ]
+    },
+    {
+      "trial": 0,
+      "size": 729,
+      "arm": "after",
+      "capture": "0-729-after",
+      "row": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SignDetBench.MaximalMatrix.runTensorCheck",
+        "param": 729,
+        "inner_repeats": 1,
+        "total_nanos": 864679885,
+        "per_call_nanos": 864679885.0,
+        "cache_mode": "warm",
+        "result_hash": "0xb",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 91988,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexsigndet_bench",
+          "git_commit": "7d21b4083f79eebccde7f24fb460979d92b772fa",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:04:00Z",
+          "timestamp_unix_ms": 1791241440947
+        }
+      },
+      "load_after": [
+        1.93505859375,
+        3.6904296875,
+        9.22509765625
+      ]
+    },
+    {
+      "trial": 1,
+      "size": 243,
+      "arm": "after",
+      "capture": "1-243-after",
+      "row": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SignDetBench.MaximalMatrix.runTensorCheck",
+        "param": 243,
+        "inner_repeats": 2,
+        "total_nanos": 79681749,
+        "per_call_nanos": 39840874.5,
+        "cache_mode": "warm",
+        "result_hash": "0xb",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 74720,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexsigndet_bench",
+          "git_commit": "7d21b4083f79eebccde7f24fb460979d92b772fa",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:04:01Z",
+          "timestamp_unix_ms": 1791241441969
+        }
+      },
+      "load_after": [
+        1.93505859375,
+        3.6904296875,
+        9.22509765625
+      ]
+    },
+    {
+      "trial": 1,
+      "size": 243,
+      "arm": "before",
+      "capture": "1-243-before",
+      "row": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SignDetBench.MaximalMatrix.runTensorCheck",
+        "param": 243,
+        "inner_repeats": 1,
+        "total_nanos": 51365707,
+        "per_call_nanos": 51365707.0,
+        "cache_mode": "warm",
+        "result_hash": "0xb",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 74404,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexsigndet_bench",
+          "git_commit": "6b977999bc5b4008cea31ce4f9edfbe1bc3c6658",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:04:02Z",
+          "timestamp_unix_ms": 1791241442171
+        }
+      },
+      "load_after": [
+        1.93505859375,
+        3.6904296875,
+        9.22509765625
+      ]
+    },
+    {
+      "trial": 1,
+      "size": 729,
+      "arm": "after",
+      "capture": "1-729-after",
+      "row": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SignDetBench.MaximalMatrix.runTensorCheck",
+        "param": 729,
+        "inner_repeats": 1,
+        "total_nanos": 868140484,
+        "per_call_nanos": 868140484.0,
+        "cache_mode": "warm",
+        "result_hash": "0xb",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 91620,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexsigndet_bench",
+          "git_commit": "7d21b4083f79eebccde7f24fb460979d92b772fa",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:04:02Z",
+          "timestamp_unix_ms": 1791241442320
+        }
+      },
+      "load_after": [
+        1.9404296875,
+        3.662109375,
+        9.18603515625
+      ]
+    },
+    {
+      "trial": 1,
+      "size": 729,
+      "arm": "before",
+      "capture": "1-729-before",
+      "row": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SignDetBench.MaximalMatrix.runTensorCheck",
+        "param": 729,
+        "inner_repeats": 1,
+        "total_nanos": 990440967,
+        "per_call_nanos": 990440967.0,
+        "cache_mode": "warm",
+        "result_hash": "0xb",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 94680,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexsigndet_bench",
+          "git_commit": "6b977999bc5b4008cea31ce4f9edfbe1bc3c6658",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:04:03Z",
+          "timestamp_unix_ms": 1791241443343
+        }
+      },
+      "load_after": [
+        1.9404296875,
+        3.662109375,
+        9.18603515625
+      ]
+    },
+    {
+      "trial": 2,
+      "size": 243,
+      "arm": "before",
+      "capture": "2-243-before",
+      "row": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SignDetBench.MaximalMatrix.runTensorCheck",
+        "param": 243,
+        "inner_repeats": 1,
+        "total_nanos": 50903983,
+        "per_call_nanos": 50903983.0,
+        "cache_mode": "warm",
+        "result_hash": "0xb",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 74544,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexsigndet_bench",
+          "git_commit": "6b977999bc5b4008cea31ce4f9edfbe1bc3c6658",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:04:04Z",
+          "timestamp_unix_ms": 1791241444622
+        }
+      },
+      "load_after": [
+        1.9404296875,
+        3.662109375,
+        9.18603515625
+      ]
+    },
+    {
+      "trial": 2,
+      "size": 243,
+      "arm": "after",
+      "capture": "2-243-after",
+      "row": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SignDetBench.MaximalMatrix.runTensorCheck",
+        "param": 243,
+        "inner_repeats": 2,
+        "total_nanos": 79484257,
+        "per_call_nanos": 39742128.5,
+        "cache_mode": "warm",
+        "result_hash": "0xb",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 74652,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexsigndet_bench",
+          "git_commit": "7d21b4083f79eebccde7f24fb460979d92b772fa",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:04:04Z",
+          "timestamp_unix_ms": 1791241444771
+        }
+      },
+      "load_after": [
+        1.9404296875,
+        3.662109375,
+        9.18603515625
+      ]
+    },
+    {
+      "trial": 2,
+      "size": 729,
+      "arm": "before",
+      "capture": "2-729-before",
+      "row": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SignDetBench.MaximalMatrix.runTensorCheck",
+        "param": 729,
+        "inner_repeats": 1,
+        "total_nanos": 988604184,
+        "per_call_nanos": 988604184.0,
+        "cache_mode": "warm",
+        "result_hash": "0xb",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 93304,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexsigndet_bench",
+          "git_commit": "6b977999bc5b4008cea31ce4f9edfbe1bc3c6658",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:04:04Z",
+          "timestamp_unix_ms": 1791241444971
+        }
+      },
+      "load_after": [
+        1.9404296875,
+        3.662109375,
+        9.18603515625
+      ]
+    },
+    {
+      "trial": 2,
+      "size": 729,
+      "arm": "after",
+      "capture": "2-729-after",
+      "row": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SignDetBench.MaximalMatrix.runTensorCheck",
+        "param": 729,
+        "inner_repeats": 1,
+        "total_nanos": 867465163,
+        "per_call_nanos": 867465163.0,
+        "cache_mode": "warm",
+        "result_hash": "0xb",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 91992,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexsigndet_bench",
+          "git_commit": "7d21b4083f79eebccde7f24fb460979d92b772fa",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:04:06Z",
+          "timestamp_unix_ms": 1791241446251
+        }
+      },
+      "load_after": [
+        1.9404296875,
+        3.662109375,
+        9.18603515625
+      ]
+    },
+    {
+      "trial": 3,
+      "size": 243,
+      "arm": "after",
+      "capture": "3-243-after",
+      "row": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SignDetBench.MaximalMatrix.runTensorCheck",
+        "param": 243,
+        "inner_repeats": 2,
+        "total_nanos": 80548314,
+        "per_call_nanos": 40274157.0,
+        "cache_mode": "warm",
+        "result_hash": "0xb",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 74696,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexsigndet_bench",
+          "git_commit": "7d21b4083f79eebccde7f24fb460979d92b772fa",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:04:07Z",
+          "timestamp_unix_ms": 1791241447276
+        }
+      },
+      "load_after": [
+        1.9404296875,
+        3.662109375,
+        9.18603515625
+      ]
+    },
+    {
+      "trial": 3,
+      "size": 243,
+      "arm": "before",
+      "capture": "3-243-before",
+      "row": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SignDetBench.MaximalMatrix.runTensorCheck",
+        "param": 243,
+        "inner_repeats": 1,
+        "total_nanos": 51194794,
+        "per_call_nanos": 51194794.0,
+        "cache_mode": "warm",
+        "result_hash": "0xb",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 74488,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexsigndet_bench",
+          "git_commit": "6b977999bc5b4008cea31ce4f9edfbe1bc3c6658",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:04:07Z",
+          "timestamp_unix_ms": 1791241447480
+        }
+      },
+      "load_after": [
+        1.9404296875,
+        3.662109375,
+        9.18603515625
+      ]
+    },
+    {
+      "trial": 3,
+      "size": 729,
+      "arm": "after",
+      "capture": "3-729-after",
+      "row": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SignDetBench.MaximalMatrix.runTensorCheck",
+        "param": 729,
+        "inner_repeats": 1,
+        "total_nanos": 868343916,
+        "per_call_nanos": 868343916.0,
+        "cache_mode": "warm",
+        "result_hash": "0xb",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 92580,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexsigndet_bench",
+          "git_commit": "7d21b4083f79eebccde7f24fb460979d92b772fa",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:04:07Z",
+          "timestamp_unix_ms": 1791241447629
+        }
+      },
+      "load_after": [
+        2.025390625,
+        3.65087890625,
+        9.15234375
+      ]
+    },
+    {
+      "trial": 3,
+      "size": 729,
+      "arm": "before",
+      "capture": "3-729-before",
+      "row": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SignDetBench.MaximalMatrix.runTensorCheck",
+        "param": 729,
+        "inner_repeats": 1,
+        "total_nanos": 985734720,
+        "per_call_nanos": 985734720.0,
+        "cache_mode": "warm",
+        "result_hash": "0xb",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 95152,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexsigndet_bench",
+          "git_commit": "6b977999bc5b4008cea31ce4f9edfbe1bc3c6658",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:04:08Z",
+          "timestamp_unix_ms": 1791241448654
+        }
+      },
+      "load_after": [
+        2.025390625,
+        3.65087890625,
+        9.15234375
+      ]
+    },
+    {
+      "trial": 4,
+      "size": 243,
+      "arm": "before",
+      "capture": "4-243-before",
+      "row": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SignDetBench.MaximalMatrix.runTensorCheck",
+        "param": 243,
+        "inner_repeats": 1,
+        "total_nanos": 51307571,
+        "per_call_nanos": 51307571.0,
+        "cache_mode": "warm",
+        "result_hash": "0xb",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 74356,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexsigndet_bench",
+          "git_commit": "6b977999bc5b4008cea31ce4f9edfbe1bc3c6658",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:04:09Z",
+          "timestamp_unix_ms": 1791241449928
+        }
+      },
+      "load_after": [
+        2.025390625,
+        3.65087890625,
+        9.15234375
+      ]
+    },
+    {
+      "trial": 4,
+      "size": 243,
+      "arm": "after",
+      "capture": "4-243-after",
+      "row": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SignDetBench.MaximalMatrix.runTensorCheck",
+        "param": 243,
+        "inner_repeats": 2,
+        "total_nanos": 79765624,
+        "per_call_nanos": 39882812.0,
+        "cache_mode": "warm",
+        "result_hash": "0xb",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 74452,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexsigndet_bench",
+          "git_commit": "7d21b4083f79eebccde7f24fb460979d92b772fa",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:04:10Z",
+          "timestamp_unix_ms": 1791241450077
+        }
+      },
+      "load_after": [
+        2.025390625,
+        3.65087890625,
+        9.15234375
+      ]
+    },
+    {
+      "trial": 4,
+      "size": 729,
+      "arm": "before",
+      "capture": "4-729-before",
+      "row": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SignDetBench.MaximalMatrix.runTensorCheck",
+        "param": 729,
+        "inner_repeats": 1,
+        "total_nanos": 988730071,
+        "per_call_nanos": 988730071.0,
+        "cache_mode": "warm",
+        "result_hash": "0xb",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 94544,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexsigndet_bench",
+          "git_commit": "6b977999bc5b4008cea31ce4f9edfbe1bc3c6658",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:04:10Z",
+          "timestamp_unix_ms": 1791241450279
+        }
+      },
+      "load_after": [
+        2.025390625,
+        3.65087890625,
+        9.15234375
+      ]
+    },
+    {
+      "trial": 4,
+      "size": 729,
+      "arm": "after",
+      "capture": "4-729-after",
+      "row": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SignDetBench.MaximalMatrix.runTensorCheck",
+        "param": 729,
+        "inner_repeats": 1,
+        "total_nanos": 864547168,
+        "per_call_nanos": 864547168.0,
+        "cache_mode": "warm",
+        "result_hash": "0xb",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 91920,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexsigndet_bench",
+          "git_commit": "7d21b4083f79eebccde7f24fb460979d92b772fa",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:04:11Z",
+          "timestamp_unix_ms": 1791241451559
+        }
+      },
+      "load_after": [
+        2.025390625,
+        3.65087890625,
+        9.15234375
+      ]
+    },
+    {
+      "trial": 5,
+      "size": 243,
+      "arm": "after",
+      "capture": "5-243-after",
+      "row": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SignDetBench.MaximalMatrix.runTensorCheck",
+        "param": 243,
+        "inner_repeats": 2,
+        "total_nanos": 79773125,
+        "per_call_nanos": 39886562.5,
+        "cache_mode": "warm",
+        "result_hash": "0xb",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 74796,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexsigndet_bench",
+          "git_commit": "7d21b4083f79eebccde7f24fb460979d92b772fa",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:04:12Z",
+          "timestamp_unix_ms": 1791241452581
+        }
+      },
+      "load_after": [
+        2.025390625,
+        3.65087890625,
+        9.15234375
+      ]
+    },
+    {
+      "trial": 5,
+      "size": 243,
+      "arm": "before",
+      "capture": "5-243-before",
+      "row": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SignDetBench.MaximalMatrix.runTensorCheck",
+        "param": 243,
+        "inner_repeats": 1,
+        "total_nanos": 51098562,
+        "per_call_nanos": 51098562.0,
+        "cache_mode": "warm",
+        "result_hash": "0xb",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 74084,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexsigndet_bench",
+          "git_commit": "6b977999bc5b4008cea31ce4f9edfbe1bc3c6658",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:04:12Z",
+          "timestamp_unix_ms": 1791241452783
+        }
+      },
+      "load_after": [
+        2.103515625,
+        3.6396484375,
+        9.119140625
+      ]
+    },
+    {
+      "trial": 5,
+      "size": 729,
+      "arm": "after",
+      "capture": "5-729-after",
+      "row": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SignDetBench.MaximalMatrix.runTensorCheck",
+        "param": 729,
+        "inner_repeats": 1,
+        "total_nanos": 867110878,
+        "per_call_nanos": 867110878.0,
+        "cache_mode": "warm",
+        "result_hash": "0xb",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 92768,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexsigndet_bench",
+          "git_commit": "7d21b4083f79eebccde7f24fb460979d92b772fa",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:04:12Z",
+          "timestamp_unix_ms": 1791241452932
+        }
+      },
+      "load_after": [
+        2.103515625,
+        3.6396484375,
+        9.119140625
+      ]
+    },
+    {
+      "trial": 5,
+      "size": 729,
+      "arm": "before",
+      "capture": "5-729-before",
+      "row": {
+        "schema_version": 1,
+        "kind": "parametric",
+        "function": "Hex.SignDetBench.MaximalMatrix.runTensorCheck",
+        "param": 729,
+        "inner_repeats": 1,
+        "total_nanos": 987336234,
+        "per_call_nanos": 987336234.0,
+        "cache_mode": "warm",
+        "result_hash": "0xb",
+        "status": "ok",
+        "error": null,
+        "alloc_bytes": null,
+        "peak_rss_kb": 96956,
+        "env": {
+          "arch": "x86_64",
+          "cpu_cores": 96,
+          "cpu_model": "AMD EPYC 9455 48-Core Processor",
+          "exe_name": "hexsigndet_bench",
+          "git_commit": "6b977999bc5b4008cea31ce4f9edfbe1bc3c6658",
+          "git_dirty": false,
+          "hostname": "chungus2",
+          "lean_bench_version": "0.1.0",
+          "lean_toolchain": "leanprover/lean4:4.35.0-rc3",
+          "lean_version": "4.35.0-rc3",
+          "os": "linux",
+          "platform_target": "x86_64-unknown-linux-gnu",
+          "timestamp_iso": "2026-10-05T23:04:13Z",
+          "timestamp_unix_ms": 1791241453954
+        }
+      },
+      "load_after": [
+        2.103515625,
+        3.6396484375,
+        9.119140625
+      ]
+    }
+  ],
+  "state": "complete",
+  "host": "chungus2",
+  "cpu": 40,
+  "load_before": [
+    1.93505859375,
+    3.6904296875,
+    9.22509765625
+  ],
+  "summary": {
+    "243": {
+      "median_before_after_ratio": 1.2837776865519896
+    },
+    "729": {
+      "median_before_after_ratio": 1.1402606826681776
+    }
+  },
+  "provenance_unchanged": true,
+  "load_after": [
+    2.103515625,
+    3.6396484375,
+    9.119140625
+  ]
+}

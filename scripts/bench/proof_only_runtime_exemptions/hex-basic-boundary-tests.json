@@ -1,0 +1,6 @@
+{
+  "path": "HexBasic/ModuleBoundaryTests.lean",
+  "baseline_blob": "baf5160104823c81e6c7d16ebecdc9e5ec929727",
+  "current_blob": null,
+  "reason": "The freshness family now excludes this file because HexBasic no longer publicly imports it. It contains only example proofs, no executable definitions, instances or persistent attributes. Every computational module it imports remains a direct import of HexBasic. The examples are built explicitly by HexBasicTests and HexReleaseTests. Real import-closure tests reject reintroducing this excluded file into any measured artifact."
+}

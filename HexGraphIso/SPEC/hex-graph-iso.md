@@ -3,7 +3,7 @@
 `hex-graph-iso` computes canonical forms and isomorphisms of finite simple
 undirected graphs with ordered vertex colours. It depends only on
 `hex-graph`. It does not depend on Mathlib or on an external graph program.
-The separate [hex-graph-iso-mathlib](../../HexGraphIsoMathlib/SPEC/hex-graph-iso-mathlib.md) library relates
+The separate [hex-graph-iso-theory](../../HexGraphIsoTheory/SPEC/hex-graph-iso-theory.md) library relates
 these operations to `SimpleGraph` and provides the Mathlib-facing
 `graph_iso` tactic.
 
@@ -317,7 +317,7 @@ search trace and pruning ledger. This handles recorded code-2 automorphisms
 even when their orbit join adds no new orbit relation.
 
 Consequently the reported representatives classify the full automorphism
-orbits, as the biconditional `autos_sameOrbit` states. The Mathlib bridge
+orbits, as the biconditional `autos_sameOrbit` states. The theory companion
 provides `Aut.closure_eq_group`, `Aut.numOrbits_card`, and `Aut.order_card`:
 the generated subgroup is `Aut.group G`, the orbit count is the cardinality
 of its vertex-orbit quotient, and the order is its cardinality. The order
@@ -691,7 +691,8 @@ The four routes are `relabel`, `witness`, `root` and `certs`, and
 A positive goal takes the `relabel` route when the right-hand graph is
 syntactically a relabelling of the left-hand one, closing through
 `isomorphic_relabel` with no kernel evaluation and no search. Otherwise
-it takes the `witness` route: the compiled `findIso` search returns a
+it takes the `witness` route: the `findIso` search, run in Lean's interpreter at
+elaboration time, returns a
 literal forward permutation under `maxSearchNodes`, and the tactic ties
 each side's adjacency, colouring and the permutation to list literals
 and closes the goal through `Kernel.checkIso` and
@@ -731,11 +732,10 @@ kernel; the regression ladder in
 missing exposure on two refinement helpers and on core's `Array.map`,
 worked around per `HexBasic.OfFn` pending the upstream exposure fixes).
 
-The library builds with `precompileModules`, so the compiled search
-the tactic runs at elaboration time runs compiled rather than
-interpreted whenever the library's shared objects are loaded (a
-downstream `lake build`, or `lake lean` on a file; `lake env lean`
-interprets). The kernel cost of the negative routes is measured by
+The library does not set `precompileModules`: the tactic's search runs
+interpreted at elaboration time, and a measurement from a downstream package on
+Paley graphs with 29, 37 and 41 vertices found no consistent gain from
+compiling it, because kernel checking dominates. The kernel cost of the negative routes is measured by
 `scripts/bench/graphiso_kernel_cost.py`, which reports type-checking
 time per certificate record and its exponent in the vertex count over
 the cactus corpus; its records live under `reports/bench-results/`
@@ -796,9 +796,9 @@ and conformance also compares them against nauty.
 All constructors used by the chapter are ordinary Lean definitions in the
 chapter or public graph operations. The example is compiled with the manual,
 records explicit logical limits, and does not depend on an external nauty
-installation. The Mathlib companion presents the same positive and negative
+installation. The theory companion presents the same positive and negative
 claims through `SimpleGraph`. Its requirements are stated in
-[hex-graph-iso-mathlib.md](../../HexGraphIsoMathlib/SPEC/hex-graph-iso-mathlib.md#manual-example-with-mathlib).
+[hex-graph-iso-theory.md](../../HexGraphIsoTheory/SPEC/hex-graph-iso-theory.md#manual-example-with-mathlib).
 
 ## Manual chapter: the nauty canonical labelling algorithm
 
@@ -1094,10 +1094,17 @@ inflated nauty's reported time by a median factor of three.
 
 Every canonicalization result is hashed from its ordered cell sizes,
 upper-triangle adjacency bits, and label. `compare` therefore checks exact
-result agreement as well as timing. The nauty comparator is `gating` in the
-terminology of [benchmarking.md](../../SPEC/benchmarking.md#external-comparators), but
-the first release sets no speed-ratio requirement. Its required result is
-exact output agreement.
+result agreement as well as timing.
+
+**Performance target.** Against nauty 2.9.3 (vendored source, called
+in-process through `Hex.BenchOracle.Nauty`; see
+[benchmarking.md](../../SPEC/benchmarking.md#external-comparators)), the
+first release sets no speed-ratio requirement: the target is exact agreement
+of the canonical upper-triangle bits on every joined instance, with the
+measured ratio reported without a threshold. Conformance pins the
+visited-node counters, so both programs traverse the same search tree and
+every timing difference is a per-node constant factor rather than an
+algorithmic one.
 
 The registrations report wallclock, allocation, result hash, visited nodes,
 refinement calls, canonical updates, automorphisms checked, branches pruned,
@@ -1203,9 +1210,8 @@ Representative example files under `bench/HexGraphIso/ProofProbe` exercise
 positive/negative dense and ordered-colour replay. CI builds them through
 `HexGraphIsoProofProbe` on every PR. These examples and the ordinary
 library/conformance tests establish correctness; this proof surface has no
-paired timing decision, timing ladder, absolute build-time gate, profile or
-headline-report requirement. The computational owner's LeanBench obligations
-remain separate.
+paired timing decision, timing ladder or build-time budget. The
+computational owner's LeanBench registrations remain separate.
 
 Sparse examples in `bench/HexGraphIso/SparseProofProbe` cover the same four
 positive/negative and ordered-colour forms and build through
@@ -2269,7 +2275,7 @@ existing candidate theorems identify its declarative key and literal label.
 including the empty graph. Both routes reject open terms and use the native
 search and sparse literal checkers.
 
-`HexGraphIsoMathlib.SparseTacticTests` checks correspondence-based sparse
+`HexGraphIsoTheory.SparseTacticTests` checks correspondence-based sparse
 replay across an import boundary, including ordered colours, an empty graph
 and a changed enumeration. Sparse proof examples live under
 `bench/HexGraphIso/SparseProofProbe` and build in CI.

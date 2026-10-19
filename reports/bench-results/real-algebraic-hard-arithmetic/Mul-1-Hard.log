@@ -1,0 +1,8 @@
+Hex.RealAlgebraicBench.runHardMul    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=6d78bf3-dirty, 2026-10-02T03:58:05Z, host=chungus2
+  repeat 0  82.230 ms
+  median: 82.230 ms    min: 82.230 ms    max: 82.230 ms
+  hash: all repeats agree
+  observed hash: 0x7b833c10aa349c1
+  peak RSS: 68_176 kB (across 1 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Mul-1-Hard.json

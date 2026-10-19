@@ -1,0 +1,15 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+import HexMinPolyTheory.Tactic
+
+set_option maxRecDepth 100000
+
+theorem result : minpoly ℚ (!![58, 0; 0, 58] : Matrix (Fin 2) (Fin 2) ℚ) =
+    Polynomial.C (-58) + Polynomial.X := by min_poly
+
+/-- info: 'result' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms result

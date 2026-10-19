@@ -1,0 +1,740 @@
+{
+  "sources": {
+    "Before": {
+      "head": "98cab2feb583cfcf5019f21ccef62fb309547855",
+      "status": "",
+      "sources": {
+        "HexNumberField/Basic.lean": "9b6c980a046b46467353b71ce39c4f7eb3480939e8c538c5907d1f48d2cb9e06",
+        "HexNumberField/Convert.lean": "7ddcb009a40146461d30c1e23d7b2dcfcafb62c03e5867b020ace11ce78f74dd",
+        "HexNumberField/Lazy.lean": "b6e288456584c616c1015eaf9a2993be1f77f5f08c7969855946fd9f1ede89be",
+        "HexNumberField/Roots.lean": "28d43bf52f318e9e943a91f7f66e37793fe6c0a808c813b650fac6fc899e839c",
+        "HexNumberFieldMathlib/Exact.lean": "2643164a438395789ab1e8d07a47eb25e81ceeaaa179e5cfd33c549447197430",
+        "HexRealAlgebraic/Basic.lean": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd",
+        "HexRealAlgebraic/Roots.lean": "0fb67cb79123c00b6cbda25a171e25801fe3543d3fd5e7148f153e84d3ff692d",
+        "HexRealAlgebraic/Order.lean": "4b3ef510f4358d75de4d90f267f067572585be83421aa06958a4246a8245a66a",
+        "bench/HexRealAlgebraic/Bench.lean": "c2cc000b28a11ab7f88cd2cd8492bafe03e365e9ca6fd6ed33ad0514cf02540d",
+        "bench/HexNumberField/Bench.lean": "1b809b0d85e8f3ba69adb04fed8ff4a056b86f7af23c4d5e5d81e93c8d93cef5",
+        "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+        "lake-manifest.json": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e"
+      },
+      "binaries": {
+        "hexrealalgebraic_bench": {
+          "path": "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexrealalgebraic_bench",
+          "sha256": "9beaa01bfe01cbc075557e325826a6e820777f1439dddfa2798056d6ca483f5c"
+        },
+        "hexnumberfield_bench": {
+          "path": "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexnumberfield_bench",
+          "sha256": "b0045791b5bbd73eb4ffbbccf4c330e9beaff5d14212cc36efe7fb0ac072a7bd"
+        }
+      }
+    },
+    "After": {
+      "head": "630a40345b62d9ed6ce6503d0770ba6d62d47809",
+      "status": "",
+      "sources": {
+        "HexNumberField/Basic.lean": "9b6c980a046b46467353b71ce39c4f7eb3480939e8c538c5907d1f48d2cb9e06",
+        "HexNumberField/Convert.lean": "4f311aa22571ee8fc670bfa4710a48d3299a0fd623f1a287ca98b8814d062585",
+        "HexNumberField/Lazy.lean": "5d9ea561b4940cb8d2826d1649d50327c14f519a2805fb1d9b49e3c500c9c9c6",
+        "HexNumberField/Roots.lean": "97a28eaefb7c85221b4f1af7fb2c5d3aa603734118839d5d5651adf97027bfea",
+        "HexNumberFieldMathlib/Exact.lean": "2643164a438395789ab1e8d07a47eb25e81ceeaaa179e5cfd33c549447197430",
+        "HexRealAlgebraic/Basic.lean": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd",
+        "HexRealAlgebraic/Roots.lean": "0fb67cb79123c00b6cbda25a171e25801fe3543d3fd5e7148f153e84d3ff692d",
+        "HexRealAlgebraic/Order.lean": "4b3ef510f4358d75de4d90f267f067572585be83421aa06958a4246a8245a66a",
+        "bench/HexRealAlgebraic/Bench.lean": "c2cc000b28a11ab7f88cd2cd8492bafe03e365e9ca6fd6ed33ad0514cf02540d",
+        "bench/HexNumberField/Bench.lean": "1b809b0d85e8f3ba69adb04fed8ff4a056b86f7af23c4d5e5d81e93c8d93cef5",
+        "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+        "lake-manifest.json": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e"
+      },
+      "binaries": {
+        "hexrealalgebraic_bench": {
+          "path": "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexrealalgebraic_bench",
+          "sha256": "6f97a53819cf2d15418453a0d0c0c2e973ead424a7f8cca91880388d0cc7b152"
+        },
+        "hexnumberfield_bench": {
+          "path": "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexnumberfield_bench",
+          "sha256": "e4c9093663079556e37bdefc4cfdefcc2d5e90d1e14f8b72061a9b72cac3520a"
+        }
+      }
+    }
+  },
+  "families": {
+    "CanonicalAdd": [
+      4
+    ],
+    "CanonicalMul": [
+      2
+    ],
+    "CommonPowers": [
+      16
+    ]
+  },
+  "cpu": 71,
+  "host": "chungus2",
+  "load_start": [
+    9.3896484375,
+    13.515625,
+    29.03515625
+  ],
+  "start": "2026-10-05T12:46:04.043137+00:00",
+  "schedule": "Four trial-major blocks, adjacent Before/After arms, alternating AB/BA",
+  "boundary": "Existing unchanged benchmark input and expected result fingerprint. Preparation and separate warmup excluded; registered caps unchanged. Each arm uses one fixed batch with a 50 ms floor. Descriptive comparison, no scientific mode admission or portable timing budget.",
+  "arms": [
+    {
+      "operation": "CanonicalAdd",
+      "size": 4,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicAdd",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalAdd-4-0-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4918272650002109,
+      "output": "CanonicalAdd-4-0-Before.json"
+    },
+    {
+      "operation": "CanonicalAdd",
+      "size": 4,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicAdd",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalAdd-4-0-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4901378170006865,
+      "output": "CanonicalAdd-4-0-After.json"
+    },
+    {
+      "operation": "CanonicalMul",
+      "size": 2,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicMul",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalMul-2-0-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.46653394599979947,
+      "output": "CanonicalMul-2-0-Before.json"
+    },
+    {
+      "operation": "CanonicalMul",
+      "size": 2,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicMul",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalMul-2-0-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.46375285899921437,
+      "output": "CanonicalMul-2-0-After.json"
+    },
+    {
+      "operation": "CommonPowers",
+      "size": 16,
+      "trial": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runCommonPowers",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CommonPowers-16-0-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.39137707999998383,
+      "output": "CommonPowers-16-0-Before.json"
+    },
+    {
+      "operation": "CommonPowers",
+      "size": 16,
+      "trial": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runCommonPowers",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CommonPowers-16-0-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.46393802300008247,
+      "output": "CommonPowers-16-0-After.json"
+    },
+    {
+      "operation": "CanonicalAdd",
+      "size": 4,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicAdd",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalAdd-4-1-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.48775819999991654,
+      "output": "CanonicalAdd-4-1-After.json"
+    },
+    {
+      "operation": "CanonicalAdd",
+      "size": 4,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicAdd",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalAdd-4-1-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.49052783400020417,
+      "output": "CanonicalAdd-4-1-Before.json"
+    },
+    {
+      "operation": "CanonicalMul",
+      "size": 2,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicMul",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalMul-2-1-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4648016809996989,
+      "output": "CanonicalMul-2-1-After.json"
+    },
+    {
+      "operation": "CanonicalMul",
+      "size": 2,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicMul",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalMul-2-1-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.46613205499943433,
+      "output": "CanonicalMul-2-1-Before.json"
+    },
+    {
+      "operation": "CommonPowers",
+      "size": 16,
+      "trial": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runCommonPowers",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CommonPowers-16-1-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4626736250002068,
+      "output": "CommonPowers-16-1-After.json"
+    },
+    {
+      "operation": "CommonPowers",
+      "size": 16,
+      "trial": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runCommonPowers",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CommonPowers-16-1-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.3926598569996713,
+      "output": "CommonPowers-16-1-Before.json"
+    },
+    {
+      "operation": "CanonicalAdd",
+      "size": 4,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicAdd",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalAdd-4-2-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.491448104000483,
+      "output": "CanonicalAdd-4-2-Before.json"
+    },
+    {
+      "operation": "CanonicalAdd",
+      "size": 4,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicAdd",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalAdd-4-2-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.49034042099992803,
+      "output": "CanonicalAdd-4-2-After.json"
+    },
+    {
+      "operation": "CanonicalMul",
+      "size": 2,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicMul",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalMul-2-2-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4657926170002611,
+      "output": "CanonicalMul-2-2-Before.json"
+    },
+    {
+      "operation": "CanonicalMul",
+      "size": 2,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicMul",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalMul-2-2-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4635952800008454,
+      "output": "CanonicalMul-2-2-After.json"
+    },
+    {
+      "operation": "CommonPowers",
+      "size": 16,
+      "trial": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runCommonPowers",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CommonPowers-16-2-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4916759899997487,
+      "output": "CommonPowers-16-2-Before.json"
+    },
+    {
+      "operation": "CommonPowers",
+      "size": 16,
+      "trial": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runCommonPowers",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CommonPowers-16-2-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.46452338699964457,
+      "output": "CommonPowers-16-2-After.json"
+    },
+    {
+      "operation": "CanonicalAdd",
+      "size": 4,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicAdd",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalAdd-4-3-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4875946579995798,
+      "output": "CanonicalAdd-4-3-After.json"
+    },
+    {
+      "operation": "CanonicalAdd",
+      "size": 4,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicAdd",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalAdd-4-3-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.49415330000010727,
+      "output": "CanonicalAdd-4-3-Before.json"
+    },
+    {
+      "operation": "CanonicalMul",
+      "size": 2,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicMul",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalMul-2-3-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.46400346199970954,
+      "output": "CanonicalMul-2-3-After.json"
+    },
+    {
+      "operation": "CanonicalMul",
+      "size": 2,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runAlgebraicMul",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CanonicalMul-2-3-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4657634129998769,
+      "output": "CanonicalMul-2-3-Before.json"
+    },
+    {
+      "operation": "CommonPowers",
+      "size": 16,
+      "trial": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/after-fixed/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runCommonPowers",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CommonPowers-16-3-After.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.4645076950000657,
+      "output": "CommonPowers-16-3-After.json"
+    },
+    {
+      "operation": "CommonPowers",
+      "size": 16,
+      "trial": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/before/hexnumberfield_bench",
+        "run",
+        "Hex.NumberFieldBench.runCommonPowers",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/canonical-pairs-fixed/CommonPowers-16-3-Before.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.3912879850004174,
+      "output": "CommonPowers-16-3-Before.json"
+    }
+  ],
+  "load_end": [
+    9.10205078125,
+    13.3173828125,
+    28.8037109375
+  ],
+  "binaries_unchanged": true,
+  "artifacts": {
+    "Before-HexNumberField-Basic.lean.txt": "9b6c980a046b46467353b71ce39c4f7eb3480939e8c538c5907d1f48d2cb9e06",
+    "Before-HexNumberField-Convert.lean.txt": "7ddcb009a40146461d30c1e23d7b2dcfcafb62c03e5867b020ace11ce78f74dd",
+    "Before-HexNumberField-Lazy.lean.txt": "b6e288456584c616c1015eaf9a2993be1f77f5f08c7969855946fd9f1ede89be",
+    "Before-HexNumberField-Roots.lean.txt": "28d43bf52f318e9e943a91f7f66e37793fe6c0a808c813b650fac6fc899e839c",
+    "Before-HexNumberFieldMathlib-Exact.lean.txt": "2643164a438395789ab1e8d07a47eb25e81ceeaaa179e5cfd33c549447197430",
+    "Before-HexRealAlgebraic-Basic.lean.txt": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd",
+    "Before-HexRealAlgebraic-Roots.lean.txt": "0fb67cb79123c00b6cbda25a171e25801fe3543d3fd5e7148f153e84d3ff692d",
+    "Before-HexRealAlgebraic-Order.lean.txt": "4b3ef510f4358d75de4d90f267f067572585be83421aa06958a4246a8245a66a",
+    "Before-bench-HexRealAlgebraic-Bench.lean.txt": "c2cc000b28a11ab7f88cd2cd8492bafe03e365e9ca6fd6ed33ad0514cf02540d",
+    "Before-bench-HexNumberField-Bench.lean.txt": "1b809b0d85e8f3ba69adb04fed8ff4a056b86f7af23c4d5e5d81e93c8d93cef5",
+    "Before-lean-toolchain.txt": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "Before-lake-manifest.json.txt": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e",
+    "After-HexNumberField-Basic.lean.txt": "9b6c980a046b46467353b71ce39c4f7eb3480939e8c538c5907d1f48d2cb9e06",
+    "After-HexNumberField-Convert.lean.txt": "4f311aa22571ee8fc670bfa4710a48d3299a0fd623f1a287ca98b8814d062585",
+    "After-HexNumberField-Lazy.lean.txt": "5d9ea561b4940cb8d2826d1649d50327c14f519a2805fb1d9b49e3c500c9c9c6",
+    "After-HexNumberField-Roots.lean.txt": "97a28eaefb7c85221b4f1af7fb2c5d3aa603734118839d5d5651adf97027bfea",
+    "After-HexNumberFieldMathlib-Exact.lean.txt": "2643164a438395789ab1e8d07a47eb25e81ceeaaa179e5cfd33c549447197430",
+    "After-HexRealAlgebraic-Basic.lean.txt": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd",
+    "After-HexRealAlgebraic-Roots.lean.txt": "0fb67cb79123c00b6cbda25a171e25801fe3543d3fd5e7148f153e84d3ff692d",
+    "After-HexRealAlgebraic-Order.lean.txt": "4b3ef510f4358d75de4d90f267f067572585be83421aa06958a4246a8245a66a",
+    "After-bench-HexRealAlgebraic-Bench.lean.txt": "c2cc000b28a11ab7f88cd2cd8492bafe03e365e9ca6fd6ed33ad0514cf02540d",
+    "After-bench-HexNumberField-Bench.lean.txt": "1b809b0d85e8f3ba69adb04fed8ff4a056b86f7af23c4d5e5d81e93c8d93cef5",
+    "After-lean-toolchain.txt": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "After-lake-manifest.json.txt": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e",
+    "collector.py": "050d9da43ae900c4939c41f66358f6570c1064ffeaadedb89b0bf9fcf35881d6",
+    "CanonicalAdd-4-0-Before.log": "d55690d6803fe51af372c4c6eac76214b77e6a5070fbf9a9f39e56e706be67ba",
+    "CanonicalAdd-4-0-Before.json": "3d76bf044820598f0f2fce917e1b7b96317a343438d68c442a4558bb42aaa237",
+    "CanonicalAdd-4-0-After.log": "9b4426e7ea717a751f9f40dcb477e958e44adbea2eb42ad3bcaba0f26607dc4c",
+    "CanonicalAdd-4-0-After.json": "6ab20543e8375f0a1d219d9f53b71852a9991dd7eba2490b86f01a7188882ea3",
+    "CanonicalMul-2-0-Before.log": "c8eb68bc1e544e4d5c012377ac1a0c592805c6b95e15746778c844daa39d4cca",
+    "CanonicalMul-2-0-Before.json": "fcc7a482a5deecc29ad22ace1da5627d0482d7a34686b2a423a0e8904c3a8078",
+    "CanonicalMul-2-0-After.log": "22b26a88939aab10d47b2f59d48ceb89032873bd1aea12247924f0bf66451e35",
+    "CanonicalMul-2-0-After.json": "09d0963f086d3ac8ea5a13ab8a0b833f0163a14c1f9afa0f74f86876149c62ad",
+    "CommonPowers-16-0-Before.log": "07c62b95c058fce9322e758734d4d29cdcb6ca89177ac190d6cb4f945d384c9b",
+    "CommonPowers-16-0-Before.json": "2ddc20528929856810470fe072b52aef1e5de7f77935fd3d73e2deb6933382eb",
+    "CommonPowers-16-0-After.log": "d4e25bcc9274a21f8dd8acd90db00b339a654b80d281f7f3049335c3ef4d1a95",
+    "CommonPowers-16-0-After.json": "a6e27595b8a705c35b54a070a9b3a13eba64dd7f50cbc058d559fbfcca44984a",
+    "CanonicalAdd-4-1-After.log": "09f63da9eacf52ff344d160f59bca301dbc5acd1b4e17b4b95e77b4fd06f070b",
+    "CanonicalAdd-4-1-After.json": "53385db4e489d4759268b1eccb58dca9337373d005b13b0ba2d83802a3e7b1a8",
+    "CanonicalAdd-4-1-Before.log": "8939079622baa5c64e8ac07064557c6c28677ba48da23eb2b04ad2c5e9268e5c",
+    "CanonicalAdd-4-1-Before.json": "7f0d0560c4ccd963b60bcde32d3ab36f835ffc694cda4c72a52446c3677f9c6f",
+    "CanonicalMul-2-1-After.log": "92eec3e26252cbfd6bb92e07e69a4875fea8f032d195dcb62ed19510d0ec7337",
+    "CanonicalMul-2-1-After.json": "0172f8ac7625847f0a13477abe3bdad2d80cdb76e19ec39366c2bf2ddbc89f1e",
+    "CanonicalMul-2-1-Before.log": "5e5e2f87c164f8bd91f294ce1ea8ddab5d89e434f21437785a32b4a87b8db359",
+    "CanonicalMul-2-1-Before.json": "46649a2c9c332c3d0ea791fd117b0e18301ccadd4b9c5e6e2b1a8c460d33bdac",
+    "CommonPowers-16-1-After.log": "217e9b846236628a0f8f8c54ca695ff085d2aad9416f45626f2c5673a5ef9d1b",
+    "CommonPowers-16-1-After.json": "851c1a1f6fd3723abf2b94dc1b6eeeb28a2f3fb39d6c7c5f1ba7ea354b88ebbb",
+    "CommonPowers-16-1-Before.log": "8ff05019ccf3be2dbc1596b8d097c92248c0456db5d33a32380ac8df6c9265fc",
+    "CommonPowers-16-1-Before.json": "6c863659182c6b448961bc642e6b7d92546e42b05c330735efe76fadcb7d7a8b",
+    "CanonicalAdd-4-2-Before.log": "5717fd9f8097e4fe5941ac2e3b21be49a63559815649e4dbece1149153769aa6",
+    "CanonicalAdd-4-2-Before.json": "7b0be0cf412046e408bec5a0003b3e388fededaa561bdf5384684ffce4e63dd7",
+    "CanonicalAdd-4-2-After.log": "b07fbf76f03da7dbf23f3f52f0c1dfd7c5f9ec064bc30d65340f17237cb4e398",
+    "CanonicalAdd-4-2-After.json": "0b0ecafe2a711e570b8d43197f6f3e1d09de700ea888e92ec9e5f149ed5d554a",
+    "CanonicalMul-2-2-Before.log": "6f609118e8bb16fb097444f77125749a7c31b22324e006df30b243093685148e",
+    "CanonicalMul-2-2-Before.json": "5fcab1be34911bed28417210feb810b03c363c308258a858435996599cc825d8",
+    "CanonicalMul-2-2-After.log": "1826bb3c83a7b88808673e9b3f9aeae52c4baf94f1ad395579ae3e2c9552ec04",
+    "CanonicalMul-2-2-After.json": "97cdb4cbbb7aa34c681d2df762ee3929c24662f867e9280869d478203afdae52",
+    "CommonPowers-16-2-Before.log": "0d1cdb61b8f9a37afdb1c55fb200078d81f64ec6bbf796bcfbb0663e553cd9c7",
+    "CommonPowers-16-2-Before.json": "1e6061abcae46a310a796f4a7f1cd865f9d0da73d15712aa47a7b49136854b9d",
+    "CommonPowers-16-2-After.log": "12c492e2e86e7c811d49ff2c610e6bfdb950940c02c9d3c83e99cc10bc03ff84",
+    "CommonPowers-16-2-After.json": "c19f84d06dbd6e9e829dbcee30e69495bced1528d05e82fbcfa37cac8de475e3",
+    "CanonicalAdd-4-3-After.log": "04b202cecbd6c5b240c89a55660ae7273d2e459d6649c169cc4885ef1a543b71",
+    "CanonicalAdd-4-3-After.json": "cde820255a9d5b45b6aa572b589942be9ad9db927e300418eff4b6c7efb726e0",
+    "CanonicalAdd-4-3-Before.log": "f5aadafa9efdd1ead1ca727b92c7557c5fbabf68ce2a04d7cca442ed78c82a69",
+    "CanonicalAdd-4-3-Before.json": "d6e44d6e9487c54fb60bbe33fad09230002a811215fa9c314a76f8d10b15ec94",
+    "CanonicalMul-2-3-After.log": "0f776071745b89b0f64d8784c0ff2a9ba76fb2afb334a2c13cfc15667c261fcc",
+    "CanonicalMul-2-3-After.json": "7d2fc79852d39d5f01b99d4072809fb4a412750b010945294373cd7393a3b4ba",
+    "CanonicalMul-2-3-Before.log": "a041b343a1793181a5d85419a975ebe7f3aa2089bb580a55e7c74cdf1fc6c2b7",
+    "CanonicalMul-2-3-Before.json": "dceb09c6e1a6f2846b519e4e5f07d7fa4a78f4035a94b1ee24a724504e7625b2",
+    "CommonPowers-16-3-After.log": "51cb1128d2ded11d0a412110e59ee8e2d624fa046de3be0cb765532fec0486e1",
+    "CommonPowers-16-3-After.json": "8e6fe1de4ebb2fa5cd42643a7207498dd7572d6a1f0d99e8ecee0d7b5edd3eab",
+    "CommonPowers-16-3-Before.log": "b9e4bf7f9555c68549459c39deb5ce80268288c68f749b88913d1ed44bea1101",
+    "CommonPowers-16-3-Before.json": "9b575dbab47e161e99697c96b0c73c77e0abcdbec2323aaeb37bfaa509995371"
+  }
+}

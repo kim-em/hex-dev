@@ -7,7 +7,7 @@ spec-driven development.
 Certified complex-root isolation for dense integer polynomials, built on
 [`hex-poly-z`](https://github.com/leanprover/hex-poly-z) without Mathlib. Each
 dyadic square carries an exact Newton--Kantorovich or Pellet certificate; the
-[`hex-roots-mathlib`](https://github.com/leanprover/hex-roots-mathlib)
+[`hex-roots-theory`](https://github.com/leanprover/hex-roots-theory)
 companion proves its semantic root-count guarantees.
 
 # Quickstart
@@ -55,7 +55,7 @@ squarefree input succeeds and offers a none-free wrapper.
 - connected components are glued by exact square adjacency; and
 - the kernel checks the final witness, not the subdivision search.
 
-The Mathlib bridge supplies the semantic statements over `Polynomial ℂ`:
+The theory companion supplies the semantic statements over `Polynomial ℂ`:
 existence and uniqueness inside each region, exact root count, pairwise
 separation, full coverage, and preservation under refinement.
 

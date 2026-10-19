@@ -1,0 +1,9 @@
+Hex.RealAlgebraicBench.runFlintRationalRoots8    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=c6b821d-dirty, 2026-10-04T04:13:27Z, host=chungus2
+  repeat 0  238.088 µs  (×2^8, total 60.951 ms)
+  median: 238.088 µs    min: 238.088 µs    max: 238.088 µs
+  hash: all repeats agree
+  observed hash: 0x1e7c893af40a771c
+  expected hash: matches
+  peak RSS: 69_048 kB (across 1 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison/Rational-8-Flint-1-Flint.json

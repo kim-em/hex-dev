@@ -1,0 +1,432 @@
+{
+  "family": "scalar-sqrt",
+  "function": "Hex.RealAlgebraicScaling.runSqrt4",
+  "parameter": 0,
+  "cpu": 68,
+  "load": [
+    11.10888671875,
+    13.39501953125,
+    25.21533203125
+  ],
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "raw": "/home/kim/.local/state/hex/issue-10577-parent-isolation/profile-raw-fixed",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/packages/lean-bench",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "lake",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/home/kim/.local/state/hex/issue-10377-profiles/lean-bench-samply",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/home/kim/.local/state/hex/issue-10377-profiles/lean-bench-samply",
+        "config",
+        "--get",
+        "remote.origin.url"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "record",
+        "--clockid",
+        "mono",
+        "-e",
+        "cycles:u",
+        "-F",
+        "999",
+        "--call-graph",
+        "dwarf",
+        "-o",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/profile-raw-fixed/perf.data",
+        "--",
+        "env",
+        "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/home/kim/.local/state/hex/issue-10577-parent-isolation/profile-raw-fixed/timed-%p.jsonl",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "profile",
+        "Hex.RealAlgebraicScaling.runSqrt4",
+        "--param",
+        "0",
+        "--target-inner-nanos",
+        "1000000000",
+        "--profiler",
+        "env"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "import",
+        "--save-only",
+        "--no-open",
+        "--unstable-presymbolicate",
+        "-o",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/profile-raw-fixed/samply.json.gz",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/profile-raw-fixed/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "script",
+        "--ns",
+        "-F",
+        "pid,tid,time,event",
+        "-i",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/profile-raw-fixed/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-oracles/bin/python",
+        "scripts/profile/normalize_perf.py",
+        "--profile",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/profile-raw-fixed/samply.json.gz",
+        "--perf-script",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/profile-raw-fixed/perf-samples.txt",
+        "--spawn-anchor",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/profile-raw-fixed/spawn-anchor.json",
+        "--output",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/profile-raw-fixed/normalized.json.gz"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-oracles/bin/python",
+        "/home/kim/.local/state/hex/issue-10377-profiles/lean-bench-samply/scripts/filter_samply.py",
+        "--samply-json",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/profile-raw-fixed/normalized.json.gz",
+        "--sidecar",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/profile-raw-fixed/timed-2597765.jsonl",
+        "--spawn-anchor",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/profile-raw-fixed/spawn-anchor.json",
+        "--out",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/profile-raw-fixed/filtered.json.gz",
+        "--diagnostics",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/profile-raw-fixed/diagnostics.json",
+        "--label-filter",
+        "kernel"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-oracles/bin/python",
+        "scripts/profile/elf_symbols.py",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/profile-raw-fixed/filtered.json.gz",
+        "--output",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/profile-raw-fixed/symbols.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-oracles/bin/python",
+        "scripts/profile/summarize_profile.py",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/profile-raw-fixed/filtered.json.gz",
+        "--symbols",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/profile-raw-fixed/symbols.json",
+        "--diagnostics",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/profile-raw-fixed/diagnostics.json",
+        "--thread",
+        "hexrealalgebrai",
+        "--top",
+        "20",
+        "--output",
+        "/home/kim/.local/state/hex/issue-10577-parent-isolation/profile-fixed/scalar-sqrt.summary.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "executable_sha256": "6f97a53819cf2d15418453a0d0c0c2e973ead424a7f8cca91880388d0cc7b152",
+  "driver_sha256": "377aa476f0de74299f795bfe3ac1d1013535712d2ceb40c3484b5023c4465095",
+  "cpu_model": "AMD EPYC 9455 48-Core Processor",
+  "purpose": "Attribution of observed reduced-query or canonical square-root cost. Not a timing sweep or phase attestation.",
+  "commit": "630a40345b62d9ed6ce6503d0770ba6d62d47809",
+  "dirty": false,
+  "lean_bench_commit": "8a37daf1074c3bdbd0da479b55538bad4a0022db",
+  "lake_version": "Lake version 5.0.0-src+470d5ce (Lean version 4.35.0-rc3)",
+  "computational_source_sha256": {
+    "bench/HexRealAlgebraic/Bench.lean": "c2cc000b28a11ab7f88cd2cd8492bafe03e365e9ca6fd6ed33ad0514cf02540d",
+    "bench/HexSturm/Bench.lean": "936f3fb89d603ebb3b384f93bf867b44e07ef8a71780f4fb7aeba7f3feb82498",
+    "HexSturm/Reduced.lean": "bc45c2958590e0d5f2793d574b5b6f77664730082512c2dc209ca2f9b3e2229a",
+    "HexPoly/Euclid/DivGcd.lean": "d56dbe5cf69e9abe58436486e4b3870afe1a07650d62aa2a36af0e528b73f149",
+    "HexRealAlgebraic/Basic.lean": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd",
+    "HexRealAlgebraic/Roots.lean": "0fb67cb79123c00b6cbda25a171e25801fe3543d3fd5e7148f153e84d3ff692d",
+    "HexNumberField/Roots.lean": "97a28eaefb7c85221b4f1af7fb2c5d3aa603734118839d5d5651adf97027bfea",
+    "HexNumberField/Convert.lean": "4f311aa22571ee8fc670bfa4710a48d3299a0fd623f1a287ca98b8814d062585",
+    "HexNumberField/Lazy.lean": "5d9ea561b4940cb8d2826d1649d50327c14f519a2805fb1d9b49e3c500c9c9c6",
+    "HexArith/Nat/Sqrt.lean": "02684a5167ec604cdf432554058be0c4674e926fdb356934e45bf1964c81746e"
+  },
+  "profiler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "profiler_remote": "https://github.com/kim-em/lean-bench-samply.git",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.2.8",
+  "timed_duration_ns": 813388193,
+  "status": "profiled",
+  "diagnostics": {
+    "schema": 2,
+    "stage": "complete",
+    "confidence": "passed",
+    "low_confidence_reasons": [],
+    "bench_pid": 2597765,
+    "bench_thread_name": "hexrealalgebrai",
+    "bench_thread_tid": "2597795",
+    "regions_total": 5,
+    "total_timed_ms": 813.388193,
+    "expected_samples_bench_thread": 812.6,
+    "retained_samples_bench_thread": 812,
+    "rejected_samples_bench_thread": 182,
+    "off_bench_thread_samples_in_window": 0,
+    "samply_interval_ms": 1.001001,
+    "spawn_anchor_wall_ns": 1791204636882683688,
+    "spawn_anchor_mono_ns": 4529395453620,
+    "sidecar_mono_anchor_ns": 4529741741270,
+    "samply_meta_start_time_ms": 1791204636919.0303,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "calibration_residual_ms": 0.8523230003193021,
+    "calibration_max_residual_ms": 5.0,
+    "calibration": {
+      "selected_mode": "relative-to-meta-start-ms",
+      "residual_ms": 0.8523230003193021,
+      "raw_max_residual_ms": 0.9147389996796846,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "configured_max_residual_ms": 5.0,
+      "sample_interval_ms": 1.001001,
+      "effective_max_residual_ms": 5.0,
+      "within_residual_limit": true,
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "hit_count": 0,
+          "regions_without_samples": 5,
+          "boundary_residual_trimmed_max_ms": null,
+          "boundary_residual_raw_max_ms": null,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "hit_count": 812,
+          "regions_without_samples": 0,
+          "boundary_residual_trimmed_max_ms": 0.8523230003193021,
+          "boundary_residual_raw_max_ms": 0.9147389996796846,
+          "within_residual_limit": true
+        }
+      }
+    },
+    "minimum_retained_samples": 100,
+    "sensitivity": {
+      "shift_ms": 5.0,
+      "reported_top_function_count": 3,
+      "configured_max_total_variation_distance": 0.1,
+      "sampling_noise_coefficient": 0.6,
+      "minimum_comparison_samples": 100,
+      "maximum_sampling_noise_allowance": 0.5,
+      "verdict": "passed",
+      "leaf_function_distributions_stable": true,
+      "comparisons": {
+        "minus": {
+          "total_variation_distance": 0.004926108374384236,
+          "leaf_function_support_size": 407,
+          "comparison_samples": 812,
+          "exchanged_samples": 10,
+          "exchanged_fraction": 0.012315270935960592,
+          "sampling_noise_allowance": 0.06666646444516233,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        },
+        "plus": {
+          "total_variation_distance": 0.005814272895416337,
+          "leaf_function_support_size": 406,
+          "comparison_samples": 807,
+          "exchanged_samples": 5,
+          "exchanged_fraction": 0.006195786864931847,
+          "sampling_noise_allowance": 0.0473740738202944,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        }
+      },
+      "cases": {
+        "minus": {
+          "shift_ms": -5.0,
+          "retained_samples": 812,
+          "top_leaf_functions": [
+            {
+              "function": 93,
+              "name": "0x4b97d93",
+              "samples": 47
+            },
+            {
+              "function": 160,
+              "name": "0x4c01511",
+              "samples": 44
+            },
+            {
+              "function": 230,
+              "name": "0xae90c",
+              "samples": 27
+            }
+          ]
+        },
+        "nominal": {
+          "shift_ms": 0.0,
+          "retained_samples": 812,
+          "top_leaf_functions": [
+            {
+              "function": 93,
+              "name": "0x4b97d93",
+              "samples": 48
+            },
+            {
+              "function": 160,
+              "name": "0x4c01511",
+              "samples": 44
+            },
+            {
+              "function": 230,
+              "name": "0xae90c",
+              "samples": 27
+            }
+          ]
+        },
+        "plus": {
+          "shift_ms": 5.0,
+          "retained_samples": 807,
+          "top_leaf_functions": [
+            {
+              "function": 93,
+              "name": "0x4b97d93",
+              "samples": 48
+            },
+            {
+              "function": 160,
+              "name": "0x4c01511",
+              "samples": 43
+            },
+            {
+              "function": 230,
+              "name": "0xae90c",
+              "samples": 27
+            }
+          ]
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "0.stdout": "e7d30ddfb9007bba81247927cecbc696d647db7b7575f741eba3c632be2d221f",
+    "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "2.stdout": "ea4051d25617d0e024f030bda5851a0455d525691cc814683f878e4ccdb2ed5d",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stdout": "e35d3608d07cf59f7870878491e6b275a359bb34ea901c9e8086aed6bec6e07a",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bench-HexRealAlgebraic-Bench.lean.txt": "c2cc000b28a11ab7f88cd2cd8492bafe03e365e9ca6fd6ed33ad0514cf02540d",
+    "bench-HexSturm-Bench.lean.txt": "936f3fb89d603ebb3b384f93bf867b44e07ef8a71780f4fb7aeba7f3feb82498",
+    "HexSturm-Reduced.lean.txt": "bc45c2958590e0d5f2793d574b5b6f77664730082512c2dc209ca2f9b3e2229a",
+    "HexPoly-Euclid-DivGcd.lean.txt": "d56dbe5cf69e9abe58436486e4b3870afe1a07650d62aa2a36af0e528b73f149",
+    "HexRealAlgebraic-Basic.lean.txt": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd",
+    "HexRealAlgebraic-Roots.lean.txt": "0fb67cb79123c00b6cbda25a171e25801fe3543d3fd5e7148f153e84d3ff692d",
+    "HexNumberField-Roots.lean.txt": "97a28eaefb7c85221b4f1af7fb2c5d3aa603734118839d5d5651adf97027bfea",
+    "HexNumberField-Convert.lean.txt": "4f311aa22571ee8fc670bfa4710a48d3299a0fd623f1a287ca98b8814d062585",
+    "HexNumberField-Lazy.lean.txt": "5d9ea561b4940cb8d2826d1649d50327c14f519a2805fb1d9b49e3c500c9c9c6",
+    "HexArith-Nat-Sqrt.lean.txt": "02684a5167ec604cdf432554058be0c4674e926fdb356934e45bf1964c81746e",
+    "4.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+    "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "5.stdout": "773fb1f2e2e076dd506d133fd9f11106c30eb440541d879fe11125a6e75495ce",
+    "5.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "6.stdout": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+    "6.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "7.stdout": "1a89ef5bfd8650933a16c3a00d57ae7efdf4c1b72b0081ba5545f5745282a906",
+    "7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "spawn-anchor.json": "6938e9e06213a8368ee223b772a8be77d48b1d121ddf775fa69faaec9ffcbfd3",
+    "perf.data": "b65e23133e9ec3062ef8d4d5d185ecf34bcb0a108368b978553827c0b9270c79",
+    "timed-2597765.jsonl": "e9002d54de629339f283b29490a94fca5d3719ba96bfc5cfd5659b5c4930fe51",
+    "8.stdout": "245a8c0f0651fcb1602805263cabc2efc5b05cfcc90512af92c4a685b39c2038",
+    "8.stderr": "2ee102240d27f2347266389f4edeec1a486c3991b9d42d361ec08684a94ef6de",
+    "samply.json.gz": "263272a4ae97d2dbe6b86bc2b7577b96cae05d3308ac1a5ad3d8c952b4549759",
+    "9.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "9.stderr": "5eecc03f5f55d77995f7cfb8c323ac8ca3c4743e4ce54d037b5098911eabdae4",
+    "10.stdout": "fe3004d2b581f2730e37c085031ac23662d3cdb750758c67a02bd44e12c843ed",
+    "10.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "perf-samples.txt": "fe3004d2b581f2730e37c085031ac23662d3cdb750758c67a02bd44e12c843ed",
+    "normalized.json.gz": "a4a2810a3471c917a279e5f244d60048b6d6fea2de0543d405f2de5ae0c06c12",
+    "11.stdout": "94370f391d58fbc174e21a1549ddf713cdbe07cee57a987e3291a46439510e87",
+    "11.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "filtered.json.gz": "1e06da0453d9758a57778c74fdd6ad280f831e53a98d8b82794778ecf35c1733",
+    "diagnostics.json": "330f6a3ff878937a98f671decee560038ce45fd4be3646cc0a78e95da3775a8d",
+    "12.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "12.stderr": "d47ba0b2b89fd25f780b42feb469cee16b5602f321220ab6c1b435987efae025",
+    "symbols.json": "be89862f20c78c9d044460dd61b1168ec6b19e0b0952c106a158f7ccbd415b46",
+    "13.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "13.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "14.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "14.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

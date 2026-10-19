@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import VersoManual
 
-import HexNumberFieldTowerMathlib
+import HexNumberFieldTowerTheory
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -45,7 +45,7 @@ between the tower and the one-generator form {name}`Hex.PolyQuot` of
 `HexNumberField`.
 
 Each operation checks its own result before returning it, and returns `none`
-otherwise. The correspondence library `HexNumberFieldTowerMathlib` proves that
+otherwise. The correspondence library `HexNumberFieldTowerTheory` proves that
 `none` never occurs, that arithmetic in a tower computes the corresponding
 complex arithmetic, and it states what each result means: the factors are
 irreducible and multiply back to the input, the adjoined generator has the
@@ -76,7 +76,7 @@ def sqrt2 : AlgebraicNumber :=
 def sqrt3 : AlgebraicNumber :=
   (ZPoly.algebraicRoots #p[-3, 0, 1])[1]!
 
--- `adjoin` is the Mathlib companion library's total
+-- `adjoin` is the theory companion library's total
 -- form of `adjoin?`, which never returns `none`
 -- (`adjoin?_isSome`).
 def Q2 : Extension NumberTower.rat :=
@@ -197,7 +197,7 @@ end HexNumberFieldTowerChapter
 The `Option`-valued operations are the computational library's; the total
 forms {name}`Hex.NumberTower.adjoin`, {name}`Hex.NumberTower.factor`,
 {name}`Hex.NumberTower.split` and {name}`Hex.NumberTower.flatten` come from
-the Mathlib companion, which unwraps each option with its completeness
+the theory companion, which unwraps each option with its completeness
 theorem.
 
 # Performance
@@ -251,7 +251,7 @@ respectively); the report records the comparison and its provenance.
 tag := "hex-number-field-tower-correspondence"
 %%%
 
-`HexNumberFieldTowerMathlib` interprets every element of a validated tower in
+`HexNumberFieldTowerTheory` interprets every element of a validated tower in
 `ℂ` through the stored embedding. That interpretation is injective and
 respects the executable arithmetic, and each of the four operations has a
 soundness theorem describing its result and a completeness theorem stating

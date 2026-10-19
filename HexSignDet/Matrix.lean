@@ -16,9 +16,29 @@ namespace Hex.SignDet
 
 open scoped Hex
 
+/-- Avoid generic exponentiation for the three BKR exponents. -/
+@[expose] def power (k : Nat) (v : Int) : Int :=
+  match k with
+  | 0 => 1
+  | 1 => v
+  | 2 => v * v
+  | k + 3 => v ^ (k + 3)
+
+/-- The specialized BKR powers agree with integer exponentiation at every exponent. -/
+@[simp] theorem power_eq (k : Nat) (v : Int) : power k v = v ^ k := by
+  cases k with
+  | zero => simp [power]
+  | succ k =>
+    cases k with
+    | zero => simp [power, Int.pow_succ]
+    | succ k =>
+      cases k with
+      | zero => simp [power, Int.pow_succ]
+      | succ k => rfl
+
 /-- A moment entry. Shape and exponent guards belong to the system checker. -/
 @[expose] def entry (e : List Nat) (s : List Int) : Int :=
-  ((e.zip s).map fun (k, v) => v ^ k).foldr (· * ·) 1
+  ((e.zip s).map fun (k, v) => power k v).foldr (· * ·) 1
 
 /-- Concatenation gives the tensor-product entry when the left coordinates
 have matching lengths. No polynomial or coefficient-ring laws are involved. -/
@@ -33,7 +53,8 @@ theorem entry_append (e₁ e₂ : List Nat) (s₁ s₂ : List Int) (h : e₁.len
     | nil => simp at h
     | cons s ss =>
       have hl : es.length = ss.length := by simpa using h
-      change s ^ e * entry (es ++ e₂) (ss ++ s₂) = (s ^ e * entry es ss) * entry e₂ s₂
+      change power e s * entry (es ++ e₂) (ss ++ s₂) =
+        (power e s * entry es ss) * entry e₂ s₂
       rw [ih ss hl, Int.mul_assoc]
 
 /-- Build the integer moment matrix in the literal orders supplied. -/
@@ -43,11 +64,17 @@ theorem entry_append (e₁ e₂ : List Nat) (s₁ s₂ : List Int) (h : e₁.len
 
 /-- A square moment system with integer counts and a scaled left inverse. -/
 structure System (r : Nat) where
+  /-- Exponent words in the literal moment-row order. -/
   rows : Vector (List Nat) r
+  /-- Sign words in the literal count-column order. -/
   columns : Vector (List Int) r
+  /-- Claimed integer counts; the checker tests nonnegativity and the moment equation. -/
   counts : Vector Int r
+  /-- Supplied signed moment sums in row order. -/
   values : Vector Int r
+  /-- Claimed denominator-scaled left inverse of the moment matrix. -/
   inverse : Matrix Int r r
+  /-- Common scale for the inverse identity; its nonzero condition is checked. -/
   denominator : Int
 
 /-- Literal field comparisons also reduce in ordinary kernel evaluation. -/
@@ -69,6 +96,44 @@ Counts are kept as integers; no rounding, truncation or clamping occurs. -/
    decide (s.inverse * m = Matrix.scale s.denominator (Matrix.identity r)) &&
    decide (m * s.counts = s.values))
 
+/-- Characterize acceptance by every shape, sign, nonnegativity and integer
+identity guard in the supplied system. Completeness of its candidate support
+is a separate semantic hypothesis. -/
+theorem System.check_eq {r : Nat} (arity : Nat) (s : System r) :
+    s.check arity = true ↔
+      (∀ e ∈ s.rows.toList, e.length = arity ∧ ∀ k ∈ e, k ≤ 2) ∧
+      (∀ c ∈ s.columns.toList, c.length = arity ∧ ∀ x ∈ c, x = -1 ∨ x = 0 ∨ x = 1) ∧
+      s.columns.toList.Nodup ∧
+      (∀ n ∈ s.counts.toList, 0 ≤ n) ∧
+      s.denominator ≠ 0 ∧
+      s.inverse * momentMatrix s.rows s.columns =
+        Matrix.scale s.denominator (Matrix.identity r) ∧
+      momentMatrix s.rows s.columns * s.counts = s.values := by
+  simp only [System.check, Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true,
+    and_assoc]
+
+/-- Accepted exponent rows have the requested width and exponents at most two. -/
+theorem System.rows_valid {r arity : Nat} {s : System r} (h : s.check arity = true) :
+    s.rows.toList.all (fun e => decide (e.length = arity) && e.all (· ≤ 2)) = true := by
+  simpa only [List.all_eq_true, Bool.and_eq_true, decide_eq_true_eq] using
+    ((s.check_eq arity).mp h).1
+
+/-- Accepted columns have the requested width and ternary sign coordinates. -/
+theorem System.columns_valid {r arity : Nat} {s : System r} (h : s.check arity = true) :
+    s.columns.toList.all (fun c => decide (c.length = arity) &&
+      c.all (fun x => decide (x = -1 ∨ x = 0 ∨ x = 1))) = true := by
+  simpa only [List.all_eq_true, Bool.and_eq_true, decide_eq_true_eq] using
+    ((s.check_eq arity).mp h).2.1
+
+/-- Accepted candidate columns are literally distinct. -/
+theorem System.columns_nodup {r arity : Nat} {s : System r} (h : s.check arity = true) :
+    s.columns.toList.Nodup := ((s.check_eq arity).mp h).2.2.1
+
+/-- Accepted systems never recover negative observation counts. -/
+theorem System.counts_nonneg {r arity : Nat} {s : System r} (h : s.check arity = true) :
+    s.counts.toList.all (· ≥ 0) = true := by
+  simpa only [List.all_eq_true, decide_eq_true_eq] using ((s.check_eq arity).mp h).2.2.2.1
+
 /-- Accepted systems retain both literal integer identities. -/
 theorem System.identities {r : Nat} {arity : Nat} {s : System r}
     (h : s.check arity = true) :
@@ -76,8 +141,7 @@ theorem System.identities {r : Nat} {arity : Nat} {s : System r}
     s.inverse * momentMatrix s.rows s.columns =
       Matrix.scale s.denominator (Matrix.identity r) ∧
     momentMatrix s.rows s.columns * s.counts = s.values := by
-  simp only [System.check, Bool.and_eq_true, decide_eq_true_eq] at h
-  exact ⟨h.1.2, h.2.1, h.2.2⟩
+  exact ((s.check_eq arity).mp h).2.2.2.2
 
 /-- Apply a scaled identity without changing vector order. -/
 theorem scale_identity_vec {r : Nat} (d : Int) (v : Vector Int r) :

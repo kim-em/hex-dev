@@ -9,13 +9,13 @@ import Lean.Data.Json
 import LeanBench
 
 /-!
-Mode 3: each feasible (dimension, atoms, degree, support) workload has a
+Each feasible (dimension, atoms, degree, support) workload has a
 fixed ceiling, not one cubic model across support and degree changes.
 The dense integer matrix (3 on the diagonal, 1 elsewhere) is row-scaled by
 sparse polynomials. The exceptional 2x2/four-variable/linear monomial case
 uses four independent entries. This is structured support-growth evidence,
 not independent random polynomial entries or worst-case complexity.
-Comparator: no-comparable-surface-in-named-comparator; SymPy is the oracle.
+No external comparator; SymPy is the oracle.
 -/
 
 namespace Hex.PolyDetBench

@@ -1,0 +1,42 @@
+{
+  "sources": {
+    "Before": "80f268c4b350f590f1a9ee3db7f584104c8a99d0",
+    "After": "0d47a22506d4a70d760a9edb081d4288433a6173"
+  },
+  "analysis_sha256": "c5ba3a6f5227bcdc506142804719394383f101c0445e7f555523e051891e1766",
+  "script_sha256": "f945dbb84df8d2e1070f0ef49a6f6b30a0f8fcbf45eb720c186ecb9a3da6aea7",
+  "command": [
+    "scripts/bench/plot_real_closure_order.py",
+    "reports/bench-results/real-closure-thom-order/analysis.json",
+    "reports/bench-results/real-closure-thom-order"
+  ],
+  "python": "3.14.7 (main, Aug  5 2026, 10:29:49) [GCC 15.3.0]",
+  "matplotlib": "3.10.8",
+  "runtime_library_path": "/nix/store/j7qx4s4mr17j1wqgvqdzj33lmrnzb387-gcc-16.2.0-lib/lib",
+  "figures": [
+    {
+      "path": "paired-times.png",
+      "sha256": "634888e763fd612b4ae273aca35ecf2d727aa7716e5580f0f2c18747dfa1cab8"
+    },
+    {
+      "path": "paired-times.svg",
+      "sha256": "eaf2b281835e14b31974464566a52e2e125424ff8fa3a45dcc6424e15cc52e3f"
+    },
+    {
+      "path": "paired-times.pdf",
+      "sha256": "57b8259e82449152565c650f07623875a28ea9f50f9ce908a74f8bcd864245f5"
+    },
+    {
+      "path": "paired-ratios.png",
+      "sha256": "8ea6d8175fa398dabb00fb7e6869852147611a009a9e4b366477dd947d1b3f57"
+    },
+    {
+      "path": "paired-ratios.svg",
+      "sha256": "5d270b0e8ac3abb4debd65cf6d4d986c6e33d1f49504c82fb30b7b0387ccad8a"
+    },
+    {
+      "path": "paired-ratios.pdf",
+      "sha256": "74f4b2625032e5390f507da0ee1607bf6896c108fc41efe8b1a1efa315c7099e"
+    }
+  ]
+}

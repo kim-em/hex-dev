@@ -6,7 +6,7 @@ constants and by positive infinitesimals. Both extensions use ordinary total
 correct convergent approximations until separated from zero; an infinitesimal
 sign is the sign of the lowest nonzero coefficient. This is the computational
 part of the [ordered-field family](../future-work.md#real-closures-of-ordered-fields),
-with semantic proofs in [hex-ordered-fn-mathlib](hex-ordered-fn-mathlib.md).
+with semantic proofs in [hex-ordered-fn-theory](hex-ordered-fn-theory.md).
 
 The API and theorem shapes below are required contracts. They are not claims
 that the new declarations are already implemented or checked Lean prototypes.
@@ -17,8 +17,8 @@ that the new declarations are already implemented or checked Lean prototypes.
 It uses their exact arithmetic directly. It does not import `HexSturm`,
 `HexSignDet` or `HexRealClosure`; those libraries can consume its ordered
 fields. No existing input library gains a dependency on this family.
-`HexOrderedFnMathlib` imports this library, `HexRationalFnMathlib`,
-`HexPolyMathlib` and Mathlib. Computational code imports neither Mathlib nor
+`HexOrderedFnTheory` imports this library, `HexRationalFnTheory`,
+`HexPolyTheory` and Mathlib. Computational code imports neither Mathlib nor
 Batteries and introduces no trusted extern.
 
 The namespace is `Hex.OrderedFn`. Modules are:
@@ -35,7 +35,7 @@ The real-constant constructor needs a real-embedded predecessor field; it
 cannot follow a positive infinitesimal over `ℚ`. The simple infinitesimal
 extension remains generic over an ordered field.
 
-`HexInterval` and `HexIntervalMathlib` are not dependencies. This library
+`HexInterval` and `HexIntervalTheory` are not dependencies. This library
 owns only the exact finite-bound arithmetic needed by Horner evaluation.
 A future adapter may connect another enclosure library downstream. No
 approximation generator or analytic proof for `π`, `e` or another named
@@ -377,7 +377,7 @@ Required checks include:
 Prove total-search correctness/progress generically under its real hypotheses;
 concrete algebraic test subjects cannot discharge relative transcendence.
 Use a terminating synthetic trial to test the executable `firstSome` helper.
-The [companion](hex-ordered-fn-mathlib.md#conformance-and-phase-4-evidence)
+The [companion](hex-ordered-fn-theory.md#conformance-and-phase-4-evidence)
 must also supply a test-only Liouville-number fixture exercising the actual
 approximation, Horner bounds, attempt, total sign, order and derived
 approximation together. This is a required integration test, not a bundled
@@ -418,8 +418,8 @@ and infinitesimal levels.
 
 Use the shared-host fixed trial-major schedule, automatic CPU selection when
 supported, adjacent alternating `AB`/`BA` comparisons, retained completed
-samples and at most one unchanged inconclusive rerun. Provide one attribution
-profile. The companion supplies ordinary-kernel correctness proofs. Tactic and
+samples and at most one unchanged inconclusive rerun. Profile only to explain
+an unexpected result. The companion supplies ordinary-kernel correctness proofs. Tactic and
 proof-generator performance belongs to the consuming libraries; ordinary runtime
 arithmetic needs no per-operation certificate benchmark. Historical paper
 timings are not acceptance thresholds.
@@ -427,14 +427,13 @@ timings are not acceptance thresholds.
 ### Comparator coverage
 
 Inherited fraction arithmetic (`subtraction`, and the arithmetic component of
-`comparison`, `denominators` and `compareHeight`) is a **structural-layer** over
-HexRationalFn. Its informational FLINT `fmpz_poly_q` comparison and ratios are
-owned by [HexRationalFn](../../HexRationalFn/SPEC/hex-rational-fn.md), rather
+`comparison`, `denominators` and `compareHeight`) is a layer over
+HexRationalFn. Its FLINT `fmpz_poly_q` comparison and ratios are owned by [HexRationalFn](../../HexRationalFn/SPEC/hex-rational-fn.md), rather
 than duplicated here. The local paired subtraction/comparison run measures
 the additional order work on the same operands.
 
 [Z3 RCF](https://github.com/Z3Prover/z3/blob/z3-4.15.4/src/api/python/z3/z3rcf.py)
-is an **informational** comparator for `comparison`, `denominators` and
+is an orientation comparator for `comparison`, `denominators` and
 `compareHeight`. Use the pinned Z3 Python/FFI API on the same mathematical
 operands, with preparation outside timing. Its representation and cached signs
 differ from Hex's dense coefficient scans; report ratios without requiring a
@@ -442,16 +441,15 @@ constant-factor match or external superiority. The scheduled driver is
 `scripts/bench/ordered_fn_z3.py`; it invokes the existing lean-bench child for
 Hex, with adjacent alternating trials, and checks the returned signs.
 
-For `scan`, `degree`, `height`, `second` and `third`, declare
-**no-comparable-surface-in-named-comparator**: Z3 determines and caches the
+`scan`, `degree`, `height`, `second` and `third` have no Z3 comparator: Z3
+determines and caches the
 sign while constructing a value, and its public comparison with zero only
 reads that cached information. Timing construction instead would include work
 excluded from the Hex sign timer. Retain any sign-lookup observations as
 diagnostics, not as ratios of sign-computation costs.
 
-For `refinement`, `jointRefinement`, `horner`, `realHeight`, `approximation`,
-`successiveApproximation`, `thirdApproximation` and `provider`, the absence
-classification is **no-comparable-surface-in-named-comparator** relative to
-Z3 RCF. Z3 refines its built-in real constants internally but does not expose
+`refinement`, `jointRefinement`, `horner`, `realHeight`, `approximation`,
+`successiveApproximation`, `thirdApproximation` and `provider` likewise have
+no Z3 RCF comparator. Z3 refines its built-in real constants internally but does not expose
 the caller-supplied coefficient/constant approximation protocol measured here.
 Named-constant generation remains outside this library's benchmark contract.

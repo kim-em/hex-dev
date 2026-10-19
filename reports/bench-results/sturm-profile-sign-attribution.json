@@ -1,0 +1,52 @@
+{
+  "source_commit": "62399ddd0cc7416287cafcfb19c51bc6184aef6d",
+  "method": "Disjoint visible-stack buckets: sign helper takes precedence over Rat arithmetic; remaining samples unassigned.",
+  "limits": [
+    "Visible frames give lower bounds, not an exhaustive time partition of semantic operations.",
+    "Inline sign work and truncated stacks can be unassigned or enclosed by arithmetic frames.",
+    "No sign sample does not prove zero sign cost.",
+    "Attribution describes retained pre-sign-replacement binaries, not current absolute timing."
+  ],
+  "profiles": {
+    "sturm-head": {
+      "function": "Hex.SturmFrontendBench.runFieldReplay",
+      "parameter": 20,
+      "input_sha256": {
+        "filtered.json.gz": "411beadc26a7708caa175884f6d155cf19751d9f6295984631c8d145a3dc60a2",
+        "symbols.json": "91ab78c98297827f32e152c5c72816f7466be598fc9b115f38b6a0ddf5df7a91",
+        "diagnostics.json": "fb0cbe9df070b5795ba9bbc4c51c103692fe8f79f23b5576994b0e06c7a81674"
+      },
+      "samples": 548,
+      "counts": {
+        "visible_Rat_arithmetic": 491,
+        "other_or_unassigned": 56,
+        "visible_sign_helper": 1
+      },
+      "percent": {
+        "visible_Rat_arithmetic": 89.6,
+        "other_or_unassigned": 10.22,
+        "visible_sign_helper": 0.18
+      },
+      "diagnostics_pass": true
+    },
+    "sturm-query": {
+      "function": "Hex.SturmFrontendBench.runPreparedHigh",
+      "parameter": 65536,
+      "input_sha256": {
+        "filtered.json.gz": "ee230044b0d6fbc6c4f048bbc5159b2364bc65a18e52dd4450370bff0c2217f0",
+        "symbols.json": "8dd488e9f076d4cf0dba589c35e7800914fc0045b70e3db752f8b2d1e2becc83",
+        "diagnostics.json": "72ccb87d8e8fd9f62df0396c52586a75370a787c0a041b4b5819953b4057374b"
+      },
+      "samples": 526,
+      "counts": {
+        "visible_Rat_arithmetic": 486,
+        "other_or_unassigned": 40
+      },
+      "percent": {
+        "visible_Rat_arithmetic": 92.4,
+        "other_or_unassigned": 7.6
+      },
+      "diagnostics_pass": true
+    }
+  }
+}

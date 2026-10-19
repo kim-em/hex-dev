@@ -367,14 +367,14 @@ class BenchLintTests(unittest.TestCase):
         with tmp:
             roots = self.manifest(
                 root,
-                "  HexFooMathlib:\n"
+                "  HexFooTheory:\n"
                 "    deps: []\n"
                 "    mathlib: true\n"
                 "    done_through: 3\n"
                 "    status: active\n",
             )
             self.write(
-                root, "bench/HexFooMathlib/Hidden.lean", "import Mathlib\n"
+                root, "bench/HexFooTheory/Hidden.lean", "import Mathlib\n"
             )
             failures = lint._undeclared_mathlib_bench_failures(root, roots)
             self.assertEqual(len(failures), 1)

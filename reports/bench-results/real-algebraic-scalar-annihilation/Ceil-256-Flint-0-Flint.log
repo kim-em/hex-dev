@@ -1,0 +1,9 @@
+Hex.RealAlgebraicScaling.runFlintCeil256    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a3ddc94-dirty, 2026-10-04T20:02:04Z, host=chungus2
+  repeat 0  16.999 µs  (×2^12, total 69.629 ms)
+  median: 16.999 µs    min: 16.999 µs    max: 16.999 µs
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 69_380 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Ceil-256-Flint-0-Flint.json

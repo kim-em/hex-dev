@@ -94,7 +94,7 @@ JSONL fixture record shape (one record per line):
                          "sentence": <recursive sentence AST>}``
                      (one univariate real sentence; atoms contain integer
                       polynomial coefficients in ascending degree order.)
-* ``factor`` / ``divisorfn`` / ``order`` / ``cyclotomic`` — natural-number
+* ``factor`` / ``frozen`` / ``divisorfn`` / ``order`` / ``cyclotomic`` — natural-number
   inputs for the certified integer-factorization oracle.
 
 Result records (emitted by Lean alongside the fixture, on the same
@@ -166,6 +166,7 @@ VALID_FIXTURE_KINDS = frozenset(
         "gfqfield",
         "rcf_sentence",
         "factor",
+        "frozen",
         "divisorfn",
         "graphiso",
         "graphisoautos",
@@ -917,7 +918,7 @@ def _validate_fixture(record: dict[str, Any]) -> None:
         if not _is_int(record.get("n")) or record["n"] < 0:
             raise FixtureError(f"certcheck.n must be a nonnegative int: {record!r}")
         _validate_prime_cert(record.get("cert"), "certcheck.cert")
-    elif kind in {"factor", "divisorfn"}:
+    elif kind in {"factor", "divisorfn", "frozen"}:
         _exact_keys(record, {"kind", "lib", "case", "n"}, kind)
         if not _is_nat(record.get("n")):
             raise FixtureError(f"{kind}.n must be a nonnegative int: {record!r}")

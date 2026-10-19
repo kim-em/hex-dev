@@ -1,0 +1,224 @@
+{
+  "source_commit": "8469a5a7005686e34935b643be62e22a7be9fd1d",
+  "sources_sha256": {
+    "adapters/HexRCF/RealCoefficients/Reify.lean": "42eee2d20f60046a3bd4aba8d658b392c83e7d89e9f66b95f1ea17036e03c9e1",
+    "adapters/HexRCF/RealCoefficients/Finite.lean": "f9b93914a036e125f0d1ade9fe8908ecbc1efb89507cf6cf60662a69fde4ec02",
+    "conformance/HexRCF/MaximalCoefficients.lean": "c1accdf485291496e4f507b05c1ae506067e08cd55a37026fda4aee385e115db",
+    "conformance/HexRCF/MaximalCoefficientsConformance.lean": "9dbff8f99ae78be6ad44c4e2a67a70f9d863e5bacd94298a37dc25eea379645f",
+    "conformance/HexRCF/MaximalCoefficientsKernel.lean": "3ca065fc79d5100e03634ed41c7ce36593685eede8c5e2244ea37219bad53bbe",
+    "HexManual/Chapters/HexRCF.lean": "dedfda9a4a6f5bf920ff3e7bf81129e4cda543d81ae05a0cdb2491aae69127be",
+    "HexRCF/README.md": "a2b351bf07337a05ad8751651f08bbd94a3b1d44b8e11d8c88441bf439b2a37c",
+    "lakefile.lean": "24b29a02ebedbd71706172dcb2667902d33541947126e7fb9fd2a848e6209e11"
+  },
+  "validation_groups": [
+    {
+      "source_commit": "45abf28d48548714f9cb076d74fdff1ff9e0ea1d",
+      "sources_sha256": {
+        "adapters/HexRCF/RealCoefficients/Reify.lean": "42eee2d20f60046a3bd4aba8d658b392c83e7d89e9f66b95f1ea17036e03c9e1",
+        "adapters/HexRCF/RealCoefficients/Finite.lean": "f9b93914a036e125f0d1ade9fe8908ecbc1efb89507cf6cf60662a69fde4ec02",
+        "conformance/HexRCF/MaximalCoefficients.lean": "c1accdf485291496e4f507b05c1ae506067e08cd55a37026fda4aee385e115db",
+        "conformance/HexRCF/MaximalCoefficientsConformance.lean": "5cde10f11aeeb5fa01308ad2d3f8ac4d28d369195452d7248c2bb4eba8884171",
+        "HexManual/Chapters/HexRCF.lean": "9af76398a303a3eff13c5cb33200fdcbdbc4b3f44832ae2fd62cd1d60b3884bb",
+        "HexRCF/README.md": "2c6e845ac57424951195cc5a981e219d9e328a2568ad1c75c4657e1ed3e13b5f",
+        "lakefile.lean": "4ab1934f2a2d4414823ca92be97da9f46be07dcc9b0a7d3a7ade82466d63f63d"
+      },
+      "logs": [
+        "maximal-coefficients-registered-2.log",
+        "maximal-coefficients-compatibility-2.log",
+        "maximal-coefficients-manual-1.log"
+      ]
+    },
+    {
+      "source_commit": "ba113787c4bf7d0061f784e95f1c8de3d8de7550",
+      "sources_sha256": {
+        "adapters/HexRCF/RealCoefficients/Reify.lean": "42eee2d20f60046a3bd4aba8d658b392c83e7d89e9f66b95f1ea17036e03c9e1",
+        "adapters/HexRCF/RealCoefficients/Finite.lean": "f9b93914a036e125f0d1ade9fe8908ecbc1efb89507cf6cf60662a69fde4ec02",
+        "conformance/HexRCF/MaximalCoefficients.lean": "c1accdf485291496e4f507b05c1ae506067e08cd55a37026fda4aee385e115db",
+        "conformance/HexRCF/MaximalCoefficientsConformance.lean": "9dbff8f99ae78be6ad44c4e2a67a70f9d863e5bacd94298a37dc25eea379645f",
+        "conformance/HexRCF/MaximalCoefficientsKernel.lean": "3ca065fc79d5100e03634ed41c7ce36593685eede8c5e2244ea37219bad53bbe",
+        "HexManual/Chapters/HexRCF.lean": "9af76398a303a3eff13c5cb33200fdcbdbc4b3f44832ae2fd62cd1d60b3884bb",
+        "HexRCF/README.md": "a2b351bf07337a05ad8751651f08bbd94a3b1d44b8e11d8c88441bf439b2a37c",
+        "lakefile.lean": "24b29a02ebedbd71706172dcb2667902d33541947126e7fb9fd2a848e6209e11"
+      },
+      "logs": [
+        "maximal-coefficients-proofs-1.log"
+      ]
+    },
+    {
+      "source_commit": "febb5f0410dffefda1906ab3c0a8d208f9339649",
+      "sources_sha256": {
+        "adapters/HexRCF/RealCoefficients/Reify.lean": "42eee2d20f60046a3bd4aba8d658b392c83e7d89e9f66b95f1ea17036e03c9e1",
+        "adapters/HexRCF/RealCoefficients/Finite.lean": "f9b93914a036e125f0d1ade9fe8908ecbc1efb89507cf6cf60662a69fde4ec02",
+        "conformance/HexRCF/MaximalCoefficients.lean": "c1accdf485291496e4f507b05c1ae506067e08cd55a37026fda4aee385e115db",
+        "conformance/HexRCF/MaximalCoefficientsConformance.lean": "9dbff8f99ae78be6ad44c4e2a67a70f9d863e5bacd94298a37dc25eea379645f",
+        "conformance/HexRCF/MaximalCoefficientsKernel.lean": "3ca065fc79d5100e03634ed41c7ce36593685eede8c5e2244ea37219bad53bbe",
+        "HexManual/Chapters/HexRCF.lean": "37e588fabf865c0823bde8fb81047842081ad81514d249663a0a1fc740d3a573",
+        "HexRCF/README.md": "a2b351bf07337a05ad8751651f08bbd94a3b1d44b8e11d8c88441bf439b2a37c",
+        "lakefile.lean": "24b29a02ebedbd71706172dcb2667902d33541947126e7fb9fd2a848e6209e11"
+      },
+      "logs": [
+        "maximal-coefficients-manual-2.log"
+      ]
+    },
+    {
+      "source_commit": "e0a2cb63da87322947689ea2996ae45d53150fa3",
+      "sources_sha256": {
+        "adapters/HexRCF/RealCoefficients/Reify.lean": "42eee2d20f60046a3bd4aba8d658b392c83e7d89e9f66b95f1ea17036e03c9e1",
+        "adapters/HexRCF/RealCoefficients/Finite.lean": "f9b93914a036e125f0d1ade9fe8908ecbc1efb89507cf6cf60662a69fde4ec02",
+        "conformance/HexRCF/MaximalCoefficients.lean": "c1accdf485291496e4f507b05c1ae506067e08cd55a37026fda4aee385e115db",
+        "conformance/HexRCF/MaximalCoefficientsConformance.lean": "9dbff8f99ae78be6ad44c4e2a67a70f9d863e5bacd94298a37dc25eea379645f",
+        "conformance/HexRCF/MaximalCoefficientsKernel.lean": "3ca065fc79d5100e03634ed41c7ce36593685eede8c5e2244ea37219bad53bbe",
+        "HexManual/Chapters/HexRCF.lean": "5f3d429ea73eae1875fd8b0bc2f513ab8aebc2d486865733ce7baab48175fc88",
+        "HexRCF/README.md": "a2b351bf07337a05ad8751651f08bbd94a3b1d44b8e11d8c88441bf439b2a37c",
+        "lakefile.lean": "24b29a02ebedbd71706172dcb2667902d33541947126e7fb9fd2a848e6209e11"
+      },
+      "logs": [
+        "maximal-coefficients-render-1.log"
+      ]
+    },
+    {
+      "source_commit": "8469a5a7005686e34935b643be62e22a7be9fd1d",
+      "sources_sha256": {
+        "adapters/HexRCF/RealCoefficients/Reify.lean": "42eee2d20f60046a3bd4aba8d658b392c83e7d89e9f66b95f1ea17036e03c9e1",
+        "adapters/HexRCF/RealCoefficients/Finite.lean": "f9b93914a036e125f0d1ade9fe8908ecbc1efb89507cf6cf60662a69fde4ec02",
+        "conformance/HexRCF/MaximalCoefficients.lean": "c1accdf485291496e4f507b05c1ae506067e08cd55a37026fda4aee385e115db",
+        "conformance/HexRCF/MaximalCoefficientsConformance.lean": "9dbff8f99ae78be6ad44c4e2a67a70f9d863e5bacd94298a37dc25eea379645f",
+        "conformance/HexRCF/MaximalCoefficientsKernel.lean": "3ca065fc79d5100e03634ed41c7ce36593685eede8c5e2244ea37219bad53bbe",
+        "HexManual/Chapters/HexRCF.lean": "dedfda9a4a6f5bf920ff3e7bf81129e4cda543d81ae05a0cdb2491aae69127be",
+        "HexRCF/README.md": "a2b351bf07337a05ad8751651f08bbd94a3b1d44b8e11d8c88441bf439b2a37c",
+        "lakefile.lean": "24b29a02ebedbd71706172dcb2667902d33541947126e7fb9fd2a848e6209e11"
+      },
+      "logs": [
+        "maximal-coefficients-render-2.log",
+        "maximal-coefficients-browser-2.log"
+      ]
+    }
+  ],
+  "logs": {
+    "reports/data/hexrcf-maximal-coefficients/maximal-coefficients-admissions-1.log.gz": {
+      "sha256": "c92f5c6ac29c10f19d5600b320e8477853ce1c02d232f2870f87a67460f8c1cb",
+      "uncompressed_sha256": "4a5d3fe321b96c96b4ef8c300b267dc1e9d88141ce4fe3eda5eed2765850adec"
+    },
+    "reports/data/hexrcf-maximal-coefficients/maximal-coefficients-admissions-2.log.gz": {
+      "sha256": "c92f5c6ac29c10f19d5600b320e8477853ce1c02d232f2870f87a67460f8c1cb",
+      "uncompressed_sha256": "4a5d3fe321b96c96b4ef8c300b267dc1e9d88141ce4fe3eda5eed2765850adec"
+    },
+    "reports/data/hexrcf-maximal-coefficients/maximal-coefficients-browser-1.log.gz": {
+      "sha256": "1f150b416a22385cc988083f5b4249a5b69ce9f29252bc4459c26bfedcf48407",
+      "uncompressed_sha256": "57c22592f3bf7b9315eaaf8f058afec5646aa74960ee0a401f441acab16085bc"
+    },
+    "reports/data/hexrcf-maximal-coefficients/maximal-coefficients-browser-2.log.gz": {
+      "sha256": "6a8761c16c0451afdad4372413d6792ca6fe58cd6ab20c71280a12180bc7a33e",
+      "uncompressed_sha256": "9376a96101c0ae93bc5971abb04ed0d8d34d37ddeafdd3e239087906a9501472"
+    },
+    "reports/data/hexrcf-maximal-coefficients/maximal-coefficients-compatibility-1.log.gz": {
+      "sha256": "fb3b79497a0b3ebe4d8fe7d75b1f2b8116f51fc1f1aa29d5ddfbf40bb374834e",
+      "uncompressed_sha256": "638cbd2d0d55cfbfdc9523ba4dc53d885892e22c46e5a4d6908652a0c49a264c"
+    },
+    "reports/data/hexrcf-maximal-coefficients/maximal-coefficients-compatibility-2.log.gz": {
+      "sha256": "bad102f427d276422345bcb085c2884c0db0e5063579e0fd36260a843bccc37f",
+      "uncompressed_sha256": "0bbe4e0735a14d28ec7c5e8f084cf86b7c471cd66fd8770755fe55883006c8bd"
+    },
+    "reports/data/hexrcf-maximal-coefficients/maximal-coefficients-copyright-1.log.gz": {
+      "sha256": "09163e7321751ce41df4374df66e08c7f3eb8d177b9c905a54e1baa01f0d3879",
+      "uncompressed_sha256": "ed163d69a09ddc0ffcbdf126a42d5745a93449fa7a39354788e948b7ac795c04"
+    },
+    "reports/data/hexrcf-maximal-coefficients/maximal-coefficients-copyright-2.log.gz": {
+      "sha256": "09163e7321751ce41df4374df66e08c7f3eb8d177b9c905a54e1baa01f0d3879",
+      "uncompressed_sha256": "ed163d69a09ddc0ffcbdf126a42d5745a93449fa7a39354788e948b7ac795c04"
+    },
+    "reports/data/hexrcf-maximal-coefficients/maximal-coefficients-dag-1.log.gz": {
+      "sha256": "09163e7321751ce41df4374df66e08c7f3eb8d177b9c905a54e1baa01f0d3879",
+      "uncompressed_sha256": "ed163d69a09ddc0ffcbdf126a42d5745a93449fa7a39354788e948b7ac795c04"
+    },
+    "reports/data/hexrcf-maximal-coefficients/maximal-coefficients-dag-2.log.gz": {
+      "sha256": "09163e7321751ce41df4374df66e08c7f3eb8d177b9c905a54e1baa01f0d3879",
+      "uncompressed_sha256": "ed163d69a09ddc0ffcbdf126a42d5745a93449fa7a39354788e948b7ac795c04"
+    },
+    "reports/data/hexrcf-maximal-coefficients/maximal-coefficients-manual-1.log.gz": {
+      "sha256": "c7d17f1a858fd8aab82af783f703e4a7d073a85551ff5aa6217d0a9f682c94e7",
+      "uncompressed_sha256": "be098743e0eccb05cfe1d6a87cdc6105201822a64de0d168b3a49f5830aff392"
+    },
+    "reports/data/hexrcf-maximal-coefficients/maximal-coefficients-manual-2.log.gz": {
+      "sha256": "bd67d54df84645b170fa4860ec9506c6c5535ca54c211e2bf36b5d67da46ac1b",
+      "uncompressed_sha256": "d529ae98577b3d8c5c62bdd9580144f06cf772a5d269e3fee0ac634153a5138b"
+    },
+    "reports/data/hexrcf-maximal-coefficients/maximal-coefficients-proofs-1.log.gz": {
+      "sha256": "a26e1d272e04eec01eae0f828a9ed2c53655487a14226f8c12ae25d57c088642",
+      "uncompressed_sha256": "3a74f260b9cd78a92ab3f3708951b94dfda07ec706d426f438e9d0ebb19e8a64"
+    },
+    "reports/data/hexrcf-maximal-coefficients/maximal-coefficients-registered-2.log.gz": {
+      "sha256": "4f6e42d7b2c2653c27ebf1c869f8962421af35fd462d5aab64272a834e217b08",
+      "uncompressed_sha256": "87a821c78397fa9b67f36966234c2b2c2433d78a9fc9bdc3c87384c1a2e31d21"
+    },
+    "reports/data/hexrcf-maximal-coefficients/maximal-coefficients-reify-1.log.gz": {
+      "sha256": "47c88a64c7834642f5ac7bcf2a14d02f22a76925b7d5f731205fb5ef60251c7a",
+      "uncompressed_sha256": "1e426c485cc16b9b73aaa7c33822d1d37a51b64ea818f05610a8d31a692deb81"
+    },
+    "reports/data/hexrcf-maximal-coefficients/maximal-coefficients-render-1.log.gz": {
+      "sha256": "fe7dcaee459d41a8649f7c1de7db90b271541b2fe898d5a9464640b34a87a828",
+      "uncompressed_sha256": "f860a48339f99ef406e87306d0d4d004718e8a7a0f542b0882e38b0bb5c95e14"
+    },
+    "reports/data/hexrcf-maximal-coefficients/maximal-coefficients-render-2.log.gz": {
+      "sha256": "39d35cc5a8cfe09984d9e69f6a9f796d16eab5994063e8294ee84fa5616d6feb",
+      "uncompressed_sha256": "ac4bd61bacc016787663334a8f10126e932413467c50d3f0607659b1b14a12fd"
+    },
+    "reports/data/hexrcf-maximal-coefficients/maximal-coefficients-sources-1.log.gz": {
+      "sha256": "0a4430630c847d52ecbc361ac50a9061992dbf9b685eb57ce027386b0a04c6a8",
+      "uncompressed_sha256": "8ab56243fc8134ffeed00ef1e1543ff294260b532821f1f5082532c76efe8ad9"
+    },
+    "reports/data/hexrcf-maximal-coefficients/maximal-coefficients-sources-2.log.gz": {
+      "sha256": "5888c9677f13fe1e9333d8c92eb95827de01007aabb1d721c8eb55bfa092a3e7",
+      "uncompressed_sha256": "2a87ef78e6efb8b137e0602da2f14ca00b3bb935f2e1d2f97943f26ab056f547"
+    }
+  },
+  "artifacts_sha256": {
+    "reports/data/hexrcf-maximal-coefficients/maximal-coefficients-browser.mjs": "8e4660e4b1e5591b818e20633b941f438f55dfc6b233eb3f34be5d190367309f",
+    "reports/data/hexrcf-maximal-coefficients/maximal-coefficients-manual-2.limits": "7dc0221e4f3e55a69aadee9929866628630561572ed4271fa303651590415c96",
+    "reports/data/hexrcf-maximal-coefficients/lake-bounded": "03a8bbc1379af330832475148342b00de642c7342e8e8842f24aead7d1500e41",
+    "reports/data/hexrcf-maximal-coefficients/run-bounded": "63bc5f97337e6b039bb3a9b1ba2a500be96fd1c2a2f73b43dae284aa9b18dda8",
+    "reports/data/hexrcf-maximal-coefficients/maximal-coefficients-inspection.json": "26e9816b32c44cfc5d07c54aa34ae12ceb4843d34d34ea396a812272a3fd0711",
+    "reports/data/hexrcf-maximal-coefficients/maximal-coefficients-desktop-api-end.png": "f3fa79cbad7311bdf7b6a8e38239c82e11138739a09042933f52a4c0444df83e",
+    "reports/data/hexrcf-maximal-coefficients/maximal-coefficients-desktop-api-start.png": "ba1cac8ff67de2e0d8f641f9f592f7fc5742335c78c1a3e39d8bb51b43e06eb9",
+    "reports/data/hexrcf-maximal-coefficients/maximal-coefficients-desktop-guards.png": "2a0c4720b30000f51ac66a0fa644c34b4d9329d1ce276c6812e9a814ed2a80e9",
+    "reports/data/hexrcf-maximal-coefficients/maximal-coefficients-desktop-schema.png": "812c87fb733a78d2da8d6931edcc946a41d0d0d6e1ac62009821e7ca426ae375",
+    "reports/data/hexrcf-maximal-coefficients/maximal-coefficients-narrow-api-end.png": "96cc3b978770e9e98733198b9caf0e0bb2a0a415ce95bd69e24ba99292da98c1",
+    "reports/data/hexrcf-maximal-coefficients/maximal-coefficients-narrow-api-start.png": "583e0ab27f9b8bc7b7076a940af2c6aeb22e9c9e63370ab43106e9a5366a3328",
+    "reports/data/hexrcf-maximal-coefficients/maximal-coefficients-narrow-guards.png": "a82dff0f1728f37b26680c02f09242f8b99307c3aded735f2ec39ec61f7ba42a",
+    "reports/data/hexrcf-maximal-coefficients/maximal-coefficients-narrow-schema.png": "4c3531fa04bac994c3b48564b666a7228a034fff6635455bd4323aa2282db8f4",
+    "reports/data/hexrcf-maximal-coefficients/overflow-1/HexRCF.lean.txt": "5f3d429ea73eae1875fd8b0bc2f513ab8aebc2d486865733ce7baab48175fc88",
+    "reports/data/hexrcf-maximal-coefficients/overflow-1/maximal-coefficients-desktop-api-end.png": "653bfb573f76ae172c1134ffb371cb998780d5be813ef83cd0b318a0d4f13587",
+    "reports/data/hexrcf-maximal-coefficients/overflow-1/maximal-coefficients-desktop-api-start.png": "731a323871cf220754e86c96daefd3e38af93d05c74d4a77fea0970f745fb095",
+    "reports/data/hexrcf-maximal-coefficients/overflow-1/maximal-coefficients-desktop-guards.png": "10c9495c44e8b0c233398c8b1f0bf20f02f128c6501f3778681f16f5dd765364",
+    "reports/data/hexrcf-maximal-coefficients/overflow-1/maximal-coefficients-desktop-schema.png": "7fbe821c41661e566c56b162896b2e4ebbc88c2f4335e89f0f64b8521646048b",
+    "reports/data/hexrcf-maximal-coefficients/overflow-1/maximal-coefficients-narrow-api-start.png": "dba2cc13a6c21d77830e982040716458130a46509607cc25c07ebfc3753b18af",
+    "reports/data/hexrcf-maximal-coefficients/overflow-1/maximal-coefficients-narrow-schema.png": "8940080251ae1e4c3f7fe119f1d98d9a039a9ea2186cafb94943956ce808a6a5",
+    "reports/data/hexrcf-maximal-coefficients/overflow-1/overflow.json": "8238a663d2646b960fdc11e5ced4aef7d4370b5f38646b0e653002a9c6f8f924",
+    "reports/data/hexrcf-maximal-coefficients/MaximalCoefficientsRender.lean.txt": "ea315134fb935de58d6e3f302d7fca1c019583166ba9d686e04e03f6beaee0db"
+  },
+  "earlier_failed_logs": {
+    "maximal-coefficients-sources-1.log": "Uncommitted intermediate test used a proof expression where collectAxioms requires a declaration name.",
+    "maximal-coefficients-browser-1.log": "Narrow capture found 96 pixels of local code overflow at source e0a2cb63da; retained screenshots and source are under overflow-1.",
+    "maximal-coefficients-compatibility-1.log": "Uncommitted intermediate collector exposed the existing supplied-square-bound proof failure; this is a terminal failed build, not an interrupted sample."
+  },
+  "other_logs_scope": "Narrower or earlier source and metadata validations; not substituted for the selected completed validations.",
+  "checks": {
+    "actual_tactic_checker_dependencies": true,
+    "fresh_actual_body_axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "memory_max_bytes": 34359738368,
+    "swap_max_bytes": 0,
+    "lean_threads": 2,
+    "own_build_concurrency": 1
+  },
+  "memory_snapshot_scope": "The .limits file records sampled current/peak values during the active run; completed human-readable aggregate peaks are retained in systemd logs.",
+  "measurement_scope": "Incremental build and rendering observations only; no controlled timing comparison, algorithm scaling or general backend completion claim.",
+  "document_commit": "4dc14eab4b9ca0a47d2d1b7e1ecd2212f946bcb0",
+  "artifact_commit": "4dc14eab4b9ca0a47d2d1b7e1ecd2212f946bcb0",
+  "documents_sha256": {
+    "reports/hexrcf-maximal-coefficients.md": "dd65cdc0e9f9c836636cf2ace85cd5b3d868acdc44c844819ffb5bc7ed6d055a"
+  }
+}

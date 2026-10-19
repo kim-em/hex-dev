@@ -1,0 +1,10 @@
+nested-table inspection depth=1 queries=128 elapsed_ns=428382020
+nested-table inspection depth=1 queries=256 elapsed_ns=919631217
+nested-table inspection depth=1 queries=512 elapsed_ns=1874317346
+nested-table inspection depth=1 queries=1024 elapsed_ns=3844906535
+nested-table inspection depth=1 queries=2048 elapsed_ns=8012290099
+nested-table inspection depth=2 queries=128 elapsed_ns=8710210297
+nested-table inspection depth=2 queries=256 elapsed_ns=17697394188
+nested-table inspection depth=2 queries=512 elapsed_ns=36324365330
+nested-table inspection depth=2 queries=1024 elapsed_ns=74819068792
+nested-table inspection depth=2 queries=2048 elapsed_ns=154461255159

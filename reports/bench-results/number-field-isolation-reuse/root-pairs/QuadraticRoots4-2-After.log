@@ -1,0 +1,9 @@
+Hex.RealAlgebraicBench.runQuadraticRoots4    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=121fc1e, 2026-10-04T07:48:42Z, host=chungus2
+  repeat 0  164.300 ms
+  median: 164.300 ms    min: 164.300 ms    max: 164.300 ms
+  hash: all repeats agree
+  observed hash: 0x1e7c893af40a771c
+  expected hash: matches
+  peak RSS: 68_948 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/QuadraticRoots4-2-After.json

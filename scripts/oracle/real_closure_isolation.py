@@ -2,8 +2,8 @@
 """Exact Z3 oracle for capped isolation, root assembly and native collection.
 
 Checks the actual inputs, scalar-preserving deflation, retained cell counts,
-selected roots, completeness and absence of duplicates. Proof graphs and
-producer totality are not replayed by this oracle.
+selected roots, exact deflated Yun heads, completeness and absence of duplicates.
+Proof graphs and producer totality are not replayed by this oracle.
 """
 from __future__ import annotations
 import json
@@ -42,6 +42,83 @@ def multiply(rcf, p, q):
     return rcf.trim(out)
 
 
+def monic(p):
+    return [c.__div__(p[-1]) for c in p] if p else []
+
+
+def exact_quotient(rcf, p, q):
+    require(bool(q), "oracle polynomial division by zero")
+    remainder = p.copy()
+    quotient = [rcf.zero] * max(0, len(p) - len(q) + 1)
+    while len(remainder) >= len(q):
+        offset = len(remainder) - len(q)
+        scale = remainder[-1].__div__(q[-1])
+        quotient[offset] = scale
+        for i, c in enumerate(q):
+            remainder[offset + i] = remainder[offset + i] - scale * c
+        rcf.trim(remainder)
+    require(not remainder, "oracle polynomial division was not exact")
+    return rcf.trim(quotient)
+
+
+def gcd(rcf, p, q):
+    while q:
+        p, q = q, rcf.remainder(p, q)
+    return monic(p)
+
+
+def squarefree_factors(rcf, p):
+    """Independent exact squarefree decomposition over the Z3 RCF field.
+
+    Return one monic factor for each multiplicity, including its nonreal
+    factors. Zero extraction is performed by the caller before this recurrence.
+    """
+    if len(p) <= 1:
+        return {}
+    common = gcd(rcf, p, rcf.derivative(p))
+    remaining = exact_quotient(rcf, monic(p), common)
+    factors = {}
+    for label in range(1, len(p)):
+        if len(remaining) <= 1:
+            break
+        overlap = gcd(rcf, remaining, common)
+        factor = exact_quotient(rcf, remaining, overlap)
+        if len(factor) > 1:
+            factors[label] = factor
+        remaining = overlap
+        common = exact_quotient(rcf, common, overlap)
+    require(len(remaining) <= 1 and len(common) <= 1,
+            "oracle squarefree decomposition did not terminate")
+    product = [rcf.one]
+    for label, factor in factors.items():
+        for _ in range(label):
+            product = multiply(rcf, product, factor)
+    require(product == monic(p), "oracle squarefree decomposition lost a factor")
+    require(all(rcf.squarefree(factor) for factor in factors.values()),
+            "oracle decomposition factor is not squarefree")
+    ordered = list(factors.values())
+    require(all(len(gcd(rcf, a, b)) == 1 for i, a in enumerate(ordered) for b in ordered[i+1:]),
+            "oracle decomposition factors are not coprime")
+    return factors
+
+
+def verify_factor_heads(rcf, p, points, heads):
+    # Assembly extracts zero before Yun, then deflates coefficient cut points
+    # from each factor before producing its selected descriptors.
+    nonzero = p.copy()
+    while nonzero and nonzero[0] == 0:
+        nonzero.pop(0)
+    factors = squarefree_factors(rcf, nonzero)
+    for value, label in points:
+        if value != 0:
+            require(label in factors and rcf.eval(factors[label], value) == 0,
+                    "cut point is not in its labelled Yun factor")
+            factors[label] = exact_quotient(rcf, factors[label], [-value, rcf.one])
+    for head, label in heads:
+        require(label in factors and head == factors[label],
+                "selected head differs from its deflated Yun factor")
+
+
 def expected_assembly(rcf, index):
     x = [rcf.zero, rcf.one]
     if index == 10:
@@ -65,18 +142,19 @@ def expected_assembly(rcf, index):
     return product
 
 
-def verify_assembly(row, index):
+def verify_assembly(row, index, *, depth=0, expected=None, require_cut_point=True):
     require(set(row) == {"case", "mode", "head", "output"} and row["mode"] == "assembly",
             "malformed assembly row")
     rcf = RCF({"id": 10377, "levels": ["epsilon1"],
                "order": "each-new-level-smaller-than-positive-base-elements"})
     def polynomial(raw):
         require(isinstance(raw, list), "malformed assembly polynomial")
-        p = [rcf.coeff(c, 0) for c in raw]
+        p = [rcf.coeff(c, depth) for c in raw]
         require(not p or p[-1] != 0, "trailing assembly zero coefficient")
         return p
     p = polynomial(row["head"])
-    require(p == expected_assembly(rcf, index), "wrong assembly input")
+    require(p == (expected_assembly(rcf, index) if expected is None else expected(rcf)),
+            "wrong assembly input")
     output = row["output"]
     require(isinstance(output, dict), "assembly producer failed")
     if not p:
@@ -87,6 +165,7 @@ def verify_assembly(row, index):
     roots = list(rcf.api.MkRoots(p, rcf.context)) if len(p) > 1 else []
     selected = []
     points = []
+    heads = []
     for entry in output["entries"]:
         require(set(entry) == {"root", "multiplicity"} and
                 type(entry["multiplicity"]) is int and entry["multiplicity"] > 0,
@@ -95,7 +174,7 @@ def verify_assembly(row, index):
         require(isinstance(raw, dict), "malformed assembled root")
         if raw.get("kind") == "point":
             require(set(raw) == {"kind", "value"}, "malformed coefficient point")
-            value = rcf.coeff(raw["value"], 0)
+            value = rcf.coeff(raw["value"], depth)
             points.append((value, entry["multiplicity"]))
         else:
             require(set(raw) == {"kind", "context", "head", "lower", "upper",
@@ -104,6 +183,7 @@ def verify_assembly(row, index):
                     "malformed selected root")
             head = polynomial(raw["head"])
             require(bool(head), "zero selected head")
+            heads.append((head, entry["multiplicity"]))
             lower, upper = raw["lower"], raw["upper"]
             def endpoint(endpoint):
                 require(isinstance(endpoint, list) and endpoint and type(endpoint[0]) is int,
@@ -114,7 +194,7 @@ def verify_assembly(row, index):
                     return None, 1
                 require(len(endpoint) == 2 and endpoint[0] == 1,
                         "malformed finite selected endpoint")
-                return rcf.coeff(endpoint[1], 0), 0
+                return rcf.coeff(endpoint[1], depth), 0
             lo, lt = endpoint(lower)
             hi, ht = endpoint(upper)
             derivatives = rcf.derivatives(head)
@@ -143,9 +223,10 @@ def verify_assembly(row, index):
     require(sorted(selected) == sorted(roots), "assembled root coverage differs from exact RCF")
     require(all(a < b for a, b in zip(selected, selected[1:])),
             "assembled roots are not strictly increasing")
-    if index == 18:
+    if index == 18 and require_cut_point:
         require((rcf.one, 2) in points,
                 "nonzero cut-point fixture did not exercise a bisection point")
+    verify_factor_heads(rcf, p, points, heads)
 
 
 def verify_nested(row, assembly_row):
@@ -270,6 +351,8 @@ def verify_nested(row, assembly_row):
             "nested assembly failed")
     expected_roots = list(rcf.api.MkRoots(assembled, rcf.context))
     emitted = []
+    points = []
+    heads = []
     for entry in result["entries"]:
         require(isinstance(entry, dict) and set(entry) == {"root", "multiplicity"} and
                 type(entry["multiplicity"]) is int and entry["multiplicity"] > 0,
@@ -279,6 +362,7 @@ def verify_nested(row, assembly_row):
         if raw.get("kind") == "point":
             require(set(raw) == {"kind", "value"}, "malformed nested point")
             value = coefficient(raw["value"])
+            points.append((value, entry["multiplicity"]))
         else:
             require(set(raw) == {"kind", "context", "head", "lower", "upper",
                                  "indices", "signs"} and raw["kind"] == "selected" and
@@ -286,6 +370,7 @@ def verify_nested(row, assembly_row):
                     "malformed nested selected root")
             factor = polynomial(raw["head"])
             require(bool(factor), "empty nested selected head")
+            heads.append((factor, entry["multiplicity"]))
             lower, lower_kind = endpoint(raw["lower"])
             upper, upper_kind = endpoint(raw["upper"])
             derivatives = rcf.derivatives(factor)
@@ -314,6 +399,7 @@ def verify_nested(row, assembly_row):
             "nested assembly roots missing or duplicated")
     require(all(a < b for a, b in zip(emitted, emitted[1:])),
             "nested assembled roots are not strictly increasing")
+    verify_factor_heads(rcf, assembled, points, heads)
 
 
 def native_value(rcf, raw, roots, depth=0):

@@ -16,19 +16,18 @@ This module is the Phase 4 benchmark root for the BZ factorization API. It
 covers the public total cascade, the option-valued lattice tier, the exact
 trial backstop, canonical degree/height and precision/local-factor inputs, a
 shared-domain `compare` pair, product-adoption inputs, and the HO-2 adversarial
-recombination shapes. Comparator ratios and the headline performance report
-still depend on the scheduled-hardware runs and report reconciliation
-described in `SPEC/benchmarking.md`.
+recombination shapes. Comparator ratios come from manual runs on the
+shared host, as described in `SPEC/benchmarking.md`.
 
 The registration names are intentionally stable: CI and scheduled timing runs
 refer to these case names when checking that the benchmark harness still covers
 the public BZ API surface. Each fixed registration has an adjacent input and
 absolute-budget justification.
 
-The factor and product targets below use mode 3. Their former parametric
-families could not justify a tight dominant-phase scaling model; the report
-retains those clean sweeps and explicitly records the loss of asymptotic
-regression detection.
+The factor and product targets below are fixed registrations with absolute
+budgets. Their former parametric families could not justify a tight
+dominant-phase scaling model; the report retains those clean sweeps, and these
+targets give up asymptotic regression detection.
 
 Canonical split inputs:
 
@@ -81,7 +80,7 @@ HO-2 adversarial fixed targets:
   complete lattice factorization of these extreme-`r` irreducibles affordable
   in `verify`.
 
-Gating external comparator:
+External comparator:
 
 * `runIsabelleFactorChecksum`: verified Isabelle/AFP
   `Berlekamp_Zassenhaus.factor_int_poly`, exported to Haskell and compiled by
@@ -730,8 +729,7 @@ Per-rung verified-Isabelle BZ comparator targets on the deterministic split
 family `smokeInput n` for `n = 2, 3, 4, 5`. Each pairs with the corresponding
 rung from the clean historical `runFactorChecksum` parametric audit to yield
 a `hex/isabelle` ratio at that rung; together they form the retained ladder
-required by `SPEC/Libraries/hex-berlekamp-zassenhaus.md §"External
-comparators"` headline-trend reporting.
+behind the trend in `reports/hex-berlekamp-zassenhaus-performance.md`.
 -/
 def runIsabelleSplitN2Checksum : Unit → IO UInt64 := fun _ => do
   let (scalar, factors) ← requestIsabelleBZFactorization (smokeInput 2)
@@ -876,7 +874,7 @@ the ratio `Lean_setup / Isabelle_full` is asymmetric: the operations
 differ on the same input. The recorded number is therefore a strict
 lower bound on the equivalent `factorLattice`/`factor`-vs-Isabelle full-factor
 ratio on that input — useful as a "setup alone exceeds Isabelle full
-factor" tripwire rather than a full gating verdict. See
+factor" tripwire rather than a full-factorization comparison. See
 `reports/hex-berlekamp-zassenhaus-performance.md` §"Precision-local
 asymmetric ratio ladder" for the methodology and interpretation.
 
@@ -920,35 +918,35 @@ def runIsabellePrecisionLocalRung6Checksum : Unit → IO UInt64 := fun _ => do
 def scheduledHardwareTag : String :=
   "scheduled-hardware"
 
-/-- Fixed mode-3 target: public cascade on the top audited split input. -/
+/-- Fixed target: public cascade on the top audited split input. -/
 def runFactorChecksum : Unit → IO UInt64 := fun _ =>
   factorChecksumIO (smokeInput 24)
 
-/-- Fixed mode-3 target: public cascade on the top fallback-prime probe. -/
+/-- Fixed target: public cascade on the top fallback-prime probe. -/
 def runFactorFallbackProbeChecksum : Unit → IO UInt64 := fun _ =>
   factorChecksumIO (prepFallbackProbeInput 24)
 
-/-- Fixed mode-3 target: trial division on nine consecutive integer roots. -/
+/-- Fixed target: trial division on nine consecutive integer roots. -/
 def runFactorSlowChecksum : Unit → IO UInt64 := fun _ =>
   trialChecksumIO (smokeInput 8)
 
-/-- Fixed mode-3 public side of the shared `smokeInput 8` compare input. -/
+/-- Fixed public side of the shared `smokeInput 8` compare input. -/
 def runFactorCompareChecksum : Unit → IO UInt64 := fun _ =>
   factorChecksumIO (smokeInput 8)
 
-/-- Fixed mode-3 trial side of the shared `smokeInput 8` compare input. -/
+/-- Fixed trial side of the shared `smokeInput 8` compare input. -/
 def runFactorSlowCompareChecksum : Unit → IO UInt64 := fun _ =>
   trialChecksumIO (smokeInput 8)
 
-/-- Fixed mode-3 public factorization at degree six and root-height 32. -/
+/-- Fixed public factorization at degree six and root-height 32. -/
 def runFactorDegreeHeightChecksum : Unit → IO UInt64 := fun _ =>
   factorChecksumIO (prepDegreeHeightInput (encodeDegreeHeightParam 6 32)).poly
 
-/-- Fixed mode-3 trial factorization at degree four and root-height eight. -/
+/-- Fixed trial factorization at degree four and root-height eight. -/
 def runFactorSlowDegreeHeightChecksum : Unit → IO UInt64 := fun _ =>
   trialChecksumIO (prepDegreeHeightInput (encodeDegreeHeightParam 4 8)).poly
 
-/-- Fixed mode-3 setup at `(degree, height, precision, factors) = (8, 32, 128, 8)`. -/
+/-- Fixed setup at `(degree, height, precision, factors) = (8, 32, 128, 8)`. -/
 def runFastPathPrecisionLocalChecksum : Unit → IO UInt64 := fun _ =>
   precisionLocalChecksumIO
     (prepPrecisionLocalInput (encodePrecisionLocalParam 8 32 128 8))
@@ -977,13 +975,13 @@ def runSkewProductSchoolbookChecksum : Unit → IO UInt64 := fun _ =>
 def runSkewProductChecksum : Unit → IO UInt64 := fun _ =>
   productChecksumIO skewProductChecksum (prepSkewProductInput 256)
 
-/- The mode-3 ceilings below are operation-specific budgets derived from the
+/- The fixed ceilings below are operation-specific budgets derived from the
 clean `e51066e1` calibration export. Each is rounded upward to at least ten
 times that operation's largest observed call. The two byte-identical trial
 targets share the larger observed maximum because their allocator-heavy body
 showed process-state sensitivity. -/
 
-/- Mode 3: 64 lifted factors is the first sustained large-integer product
+/- Fixed budget: 64 lifted factors is the first sustained large-integer product
 regime (clean baseline 9.7 ms). -/
 setup_fixed_benchmark runTrialProductSchoolbookChecksum where {
     repeats := 5
@@ -993,7 +991,7 @@ setup_fixed_benchmark runTrialProductSchoolbookChecksum where {
     tags := #["adoption", "trial-product", "schoolbook", "reference"]
   }
 
-/- Mode 3 on the same 64-factor input (clean calibration maximum 9.8 ms). -/
+/- Fixed budget on the same 64-factor input (clean calibration maximum 9.8 ms). -/
 setup_fixed_benchmark runTrialProductChecksum where {
     repeats := 5
     minTotalSeconds := 0.01
@@ -1002,7 +1000,7 @@ setup_fixed_benchmark runTrialProductChecksum where {
     tags := #["adoption", "trial-product", "dispatch"]
   }
 
-/- Mode 3: 32 dense factors exercise large-coefficient reassembly without the
+/- Fixed budget: 32 dense factors exercise large-coefficient reassembly without the
 next rung's one-second call (clean calibration maximum 112 ms). -/
 setup_fixed_benchmark runReassemblyProductSchoolbookChecksum where {
     repeats := 5
@@ -1012,7 +1010,7 @@ setup_fixed_benchmark runReassemblyProductSchoolbookChecksum where {
     tags := #["adoption", "reassembly", "schoolbook", "reference"]
   }
 
-/- Mode 3 on the same 32-factor reassembly input (clean calibration maximum 113 ms). -/
+/- Fixed budget on the same 32-factor reassembly input (clean calibration maximum 113 ms). -/
 setup_fixed_benchmark runReassemblyProductChecksum where {
     repeats := 5
     minTotalSeconds := 0.05
@@ -1021,7 +1019,7 @@ setup_fixed_benchmark runReassemblyProductChecksum where {
     tags := #["adoption", "reassembly", "dispatch"]
   }
 
-/- Mode 3: 256 factors retain the skewed-degree stress shape (clean calibration
+/- Fixed budget: 256 factors retain the skewed-degree stress shape (clean calibration
 maximum 80 ms). -/
 setup_fixed_benchmark runSkewProductSchoolbookChecksum where {
     repeats := 5
@@ -1031,7 +1029,7 @@ setup_fixed_benchmark runSkewProductSchoolbookChecksum where {
     tags := #["adoption", "trial-product", "skewed", "schoolbook", "reference"]
   }
 
-/- Mode 3 on the same 256-factor skew input (clean calibration maximum 81 ms). -/
+/- Fixed budget on the same 256-factor skew input (clean calibration maximum 81 ms). -/
 setup_fixed_benchmark runSkewProductChecksum where {
     repeats := 5
     minTotalSeconds := 0.05
@@ -1040,7 +1038,7 @@ setup_fixed_benchmark runSkewProductChecksum where {
     tags := #["adoption", "trial-product", "skewed", "dispatch"]
   }
 
-/- Mode 3: `smokeInput 24` is the largest clean audited split input (clean
+/- Fixed budget: `smokeInput 24` is the largest clean audited split input (clean
 calibration maximum 3.75 ms). -/
 setup_fixed_benchmark runFactorChecksum where {
     repeats := 5
@@ -1049,7 +1047,7 @@ setup_fixed_benchmark runFactorChecksum where {
     expectedHash := some 0xaa37abf9a367da53
   }
 
-/- Mode 3: the degree-24 historical fallback probe is the largest audited
+/- Fixed budget: the degree-24 historical fallback probe is the largest audited
 proposal-replay input (clean calibration maximum 3.53 ms). -/
 setup_fixed_benchmark runFactorFallbackProbeChecksum where {
     repeats := 5
@@ -1058,7 +1056,7 @@ setup_fixed_benchmark runFactorFallbackProbeChecksum where {
     expectedHash := some 0xa5c23a7af3e800c4
   }
 
-/- Mode 3: `smokeInput 8` forces the integer-root scan through `9!` candidates;
+/- Fixed budget: `smokeInput 8` forces the integer-root scan through `9!` candidates;
 the allocator-sensitive calibration calls ranged from 5.1 to 75.7 ms. -/
 setup_fixed_benchmark runFactorSlowChecksum where {
     repeats := 5
@@ -1067,7 +1065,7 @@ setup_fixed_benchmark runFactorSlowChecksum where {
     expectedHash := some 0x352456cfdef1ea82
   }
 
-/- Mode 3 public side of the shared `smokeInput 8` compare input. -/
+/- Fixed public side of the shared `smokeInput 8` compare input. -/
 setup_fixed_benchmark runFactorCompareChecksum where {
     repeats := 5
     minTotalSeconds := 0.001
@@ -1075,7 +1073,7 @@ setup_fixed_benchmark runFactorCompareChecksum where {
     expectedHash := some 0x352456cfdef1ea82
   }
 
-/- Mode 3 trial side of the shared `smokeInput 8` compare input. -/
+/- Fixed trial side of the shared `smokeInput 8` compare input. -/
 setup_fixed_benchmark runFactorSlowCompareChecksum where {
     repeats := 5
     minTotalSeconds := 0.001
@@ -1083,7 +1081,7 @@ setup_fixed_benchmark runFactorSlowCompareChecksum where {
     expectedHash := some 0x352456cfdef1ea82
   }
 
-/- Mode 3 absolute bound: `X^4 + 1` records one canonical
+/- Absolute budget: `X^4 + 1` records one canonical
 recombination shape where the integer polynomial is irreducible but splits
 modulo `5`. The clean `0b95505b` calibration maximum was 0.030 ms. -/
 setup_fixed_benchmark runFactorAdvX4Plus1Checksum where {
@@ -1093,7 +1091,7 @@ setup_fixed_benchmark runFactorAdvX4Plus1Checksum where {
     expectedHash := some 0xdbadaf53f188eac1
   }
 
-/- Mode 3: `(degree, root-height) = (6, 32)` is the top audited matrix input. -/
+/- Fixed budget: `(degree, root-height) = (6, 32)` is the top audited matrix input. -/
 setup_fixed_benchmark runFactorDegreeHeightChecksum where {
     repeats := 5
     minTotalSeconds := 0.001
@@ -1101,7 +1099,7 @@ setup_fixed_benchmark runFactorDegreeHeightChecksum where {
     expectedHash := some 0xf31efeaecbf8fa27
   }
 
-/- Mode 3 absolute bound for lattice precision-cap setup on `X^4 + 1`, measuring the public
+/- Absolute budget for lattice precision-cap setup on `X^4 + 1`, measuring the public
 precision cap plus the pinned `p = 5` modular split profile. The clean
 `0b95505b` calibration maximum was 0.021 ms. -/
 setup_fixed_benchmark runFactorFastSetupAdvX4Plus1Checksum where {
@@ -1111,7 +1109,7 @@ setup_fixed_benchmark runFactorFastSetupAdvX4Plus1Checksum where {
     expectedHash := some 0x6125716b68ef63ab
   }
 
-/- Mode 3: `(degree, root-height) = (4, 8)` is the first nontrivial matrix case
+/- Fixed budget: `(degree, root-height) = (4, 8)` is the first nontrivial matrix case
 beyond the former short ladder. -/
 setup_fixed_benchmark runFactorSlowDegreeHeightChecksum where {
     repeats := 5
@@ -1120,7 +1118,7 @@ setup_fixed_benchmark runFactorSlowDegreeHeightChecksum where {
     expectedHash := some 0x0ed3a73af254827d
   }
 
-/- Mode 3: `(8, 32, 128, 8)` is the top precision/local-factor setup input. -/
+/- Fixed budget: `(8, 32, 128, 8)` is the top precision/local-factor setup input. -/
 setup_fixed_benchmark runFastPathPrecisionLocalChecksum where {
     repeats := 5
     minTotalSeconds := 0.001
@@ -1128,7 +1126,7 @@ setup_fixed_benchmark runFastPathPrecisionLocalChecksum where {
     expectedHash := some 0x21b9063dace28489
   }
 
-/- Mode 3 absolute bound: `(X^2 - 2)(X^2 - 3)` splits into four local linear factors at the
+/- Absolute budget: `(X^2 - 2)(X^2 - 3)` splits into four local linear factors at the
 pinned fixture prime and recombines into two true quadratics. The clean
 `0b95505b` calibration maximum was 0.028 ms. -/
 setup_fixed_benchmark runFactorAdvQuadSqrt2Sqrt3Checksum where {
@@ -1138,7 +1136,7 @@ setup_fixed_benchmark runFactorAdvQuadSqrt2Sqrt3Checksum where {
     expectedHash := some 0x2939937eff41b345
   }
 
-/- Mode 3 absolute bound: `Phi_15` exercises the recombination hot path on a canonical
+/- Absolute budget: `Phi_15` exercises the recombination hot path on a canonical
 degree-eight cyclotomic fixture. The clean `0b95505b` calibration maximum was
 0.089 ms. -/
 setup_fixed_benchmark runFactorAdvPhi15Checksum where {
@@ -1148,7 +1146,7 @@ setup_fixed_benchmark runFactorAdvPhi15Checksum where {
     expectedHash := some 0x0f794f386e54863f
   }
 
-/- Mode 3 absolute bound for fast-path setup on `Phi_15`, keeping the precision cap and pinned
+/- Absolute budget for fast-path setup on `Phi_15`, keeping the precision cap and pinned
 `p = 31` eight-linear split visible without the public fallback combinator.
 The clean `0b95505b` calibration maximum was 0.026 ms. -/
 setup_fixed_benchmark runFactorFastSetupAdvPhi15Checksum where {
@@ -1159,7 +1157,7 @@ setup_fixed_benchmark runFactorFastSetupAdvPhi15Checksum where {
   }
 
 /-
-Mode 3 absolute bound: the Swinnerton-Dyer `SD_3` modular-split profile pins this canonical
+Absolute budget: the Swinnerton-Dyer `SD_3` modular-split profile pins this canonical
 degree-eight polynomial at its conformance prime and records its eight linear
 local factors. The clean `0b95505b` calibration maximum was 0.009 ms.
 -/
@@ -1170,7 +1168,7 @@ setup_fixed_benchmark runAdvSwinnertonDyerSD3ModularSplitChecksum where {
     expectedHash := some 0xe2da56484730f726
   }
 
-/- Mode 3 absolute bound: full `factorLattice` on Swinnerton-Dyer `SD_3`, certifying
+/- Absolute budget: full `factorLattice` on Swinnerton-Dyer `SD_3`, certifying
 irreducibility via the early-stop separation certificate (#8395). The clean
 `0b95505b` calibration maximum was 1.604 ms. -/
 setup_fixed_benchmark runFactorLatticeAdvSwinnertonDyerSD3Checksum where {
@@ -1180,7 +1178,7 @@ setup_fixed_benchmark runFactorLatticeAdvSwinnertonDyerSD3Checksum where {
     expectedHash := some 0xd91e58bd22915e00
   }
 
-/- Mode 3 absolute bound: full `factorLattice` on Swinnerton-Dyer `SD_4` (degree 16), the
+/- Absolute budget: full `factorLattice` on Swinnerton-Dyer `SD_4` (degree 16), the
 extreme-`r` tail case for the #8395 early stop. The clean `0b95505b`
 calibration maximum was 30.227 ms. -/
 setup_fixed_benchmark runFactorLatticeAdvSwinnertonDyerSD4Checksum where {

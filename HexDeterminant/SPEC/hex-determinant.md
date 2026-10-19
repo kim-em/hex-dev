@@ -45,7 +45,7 @@ column-tuple determinant API.
 
 Four classical names circulate for the quadratic relations among minors, and
 they are *not* interchangeable. This SPEC and the sibling SPEC for
-[hex-determinant-mathlib](https://github.com/leanprover/hex-determinant-mathlib/blob/main/SPEC/hex-determinant-mathlib.md)
+[hex-determinant-theory](https://github.com/leanprover/hex-determinant-theory/blob/main/SPEC/hex-determinant-theory.md)
 use each in exactly one sense.
 
 **Desnanot-Jacobi** (also Dodgson condensation, Lewis Carroll identity). For an
@@ -60,7 +60,7 @@ det M * det M^{1,n+2}_{1,n+2} = det M^1_1 * det M^{n+2}_{n+2}
 Both distinguished rows and both distinguished columns are *deleted*.
 `hex-determinant` states no theorem in this deletion form. Deletion-form
 Desnanot-Jacobi exists only over Mathlib matrices, in
-`hex-determinant-mathlib`.
+`hex-determinant-theory`.
 
 **Jacobi's minor identity for the adjugate**, restricted to `2 × 2` minors. In
 row-replacement rather than row-deletion form: for distinct rows `a`, `b` and
@@ -89,7 +89,7 @@ identity; via that equivalence it is Sylvester's `2 x 2` case.
 `m x m` matrix of bordered minors has determinant `det A0 ^ (m - 1) * det A`,
 and it is absent from both determinant libraries. Its exact
 statement and proposed home are recorded in
-[hex-determinant-mathlib](https://github.com/leanprover/hex-determinant-mathlib/blob/main/SPEC/hex-determinant-mathlib.md).
+[hex-determinant-theory](https://github.com/leanprover/hex-determinant-theory/blob/main/SPEC/hex-determinant-theory.md).
 Nothing already in the tree proves it, so nothing already in the tree may be
 renamed to claim it. The Bareiss recurrence uses only the case where the
 bordered-minor matrix is `2 × 2`, and that case *is* Desnanot-Jacobi.
@@ -165,7 +165,7 @@ This is the *consecutive-top* specialisation: the three distinguished rows are
 `B` and the case `q > p3` cannot arise. Removing that case is what makes the
 Mathlib-free proof tractable; it is a proof-effort restriction, not a
 mathematical one. The unrestricted three-term relation, for arbitrary
-`p1 < p2 < p3`, is `det_plucker_three_term` in `hex-determinant-mathlib`; it is
+`p1 < p2 < p3`, is `det_plucker_three_term` in `hex-determinant-theory`; it is
 not restated here.
 
 Supporting public lemmas, all in `Plucker.lean`, that a consumer of the
@@ -181,12 +181,12 @@ with the corresponding `nMatrix`, on the two sides of the `q < p` split).
 
 **Mathlib-free vs. Mathlib proof surface.** Theorems connecting `Hex.det`
 to Mathlib's `Matrix.det` (e.g. `det_eq : Hex.det M = Matrix.det (matrixEquiv M)`)
-live exclusively in the sibling `*-mathlib` layer and **must not** be
+live exclusively in the sibling `*-theory` layer and **must not** be
 restated, reproven, or specialized inside `hex-determinant`. The translation
 that connects the executable Bareiss determinant to this Leibniz `det`
 (`bareiss_eq_det` and the Desnanot-Jacobi bordered-minor invariant) is specified
-in `hex-bareiss`; the proof itself lives in `hex-determinant-mathlib` and
-`hex-bareiss-mathlib`.
+in `hex-bareiss`; the proof itself lives in `hex-determinant-theory` and
+`hex-bareiss-theory`.
 
 ## Supported coefficient carriers
 
@@ -262,33 +262,28 @@ family sweeps dimension and numerator/denominator degree. Dimensions remain in
 the small Leibniz range so the factorial enumeration is measured rather than
 timing out.
 
-| target family | external comparator | class |
-|---|---|---|
-| `runDetDenseInt`, `runDetDenseRat`, `runDetDenseMod` | SymPy `DomainMatrix.det()` (Bareiss) on the identical exact-domain matrix | informational |
-| `runDetMvInt`, `runDetMvRat` | SymPy `DomainMatrix.det()` (Bareiss) on the identical exact-domain matrix | informational |
-| `runDetRatFn` | SymPy `DomainMatrix.det()` (Bareiss) on the identical fraction-field matrix | informational |
+| target family | external comparator |
+|---|---|
+| `runDetDenseInt`, `runDetDenseRat`, `runDetDenseMod` | SymPy `DomainMatrix.det()` (Bareiss) on the identical exact-domain matrix |
+| `runDetMvInt`, `runDetMvRat` | SymPy `DomainMatrix.det()` (Bareiss) on the identical exact-domain matrix |
+| `runDetRatFn` | SymPy `DomainMatrix.det()` (Bareiss) on the identical fraction-field matrix |
 
 The registrations and external calls extend the existing single bench script.
-The comparisons are informational because Python process cost and SymPy's
-algorithm selection are structurally unlike the executable Leibniz sum; none
-is a Phase-4 gate. Result hashes cover the full canonical output.
+The comparisons are orientation only, because Python process cost and SymPy's
+algorithm selection are structurally unlike the executable Leibniz sum. Result
+hashes cover the full canonical output.
 
 The SymPy registrations use the carrier driver's persistent-subprocess mode.
 Each point of a dimension/degree or dimension/term-count sweep is a separate
-`setup_fixed_benchmark`, as required for an `IO` process-call body. The
-implementation PR records trivial-request overhead and overhead-adjusted ratios
-in `reports/hex-determinant-performance.md §Comparator ratios`; these external
-rungs are informational and scheduled-only. That same PR updates the
-carrier-scoped `libraries.yml phase4.comparators` and `input_families` entries.
+`setup_fixed_benchmark`, as required for an `IO` process-call body. These
+external rungs run only in manual scientific runs.
 
 ## External comparators
 
 The existing `Int` Leibniz surface remains cross-checked against row-pivoted
-Bareiss and python-flint's `fmpz_mat.det`; its `runLeibnizDet` benchmark keeps
-the existing **structural-layer** comparator-absence declaration. The symbolic
-carrier targets above add SymPy as an informational comparator, scoped only to
-those targets. `libraries.yml` records that scoped comparator and the carrier
-input families when the implementation lands.
+Bareiss and python-flint's `fmpz_mat.det`; its `runLeibnizDet` benchmark has
+no external timing comparator. The symbolic carrier targets above add SymPy as
+an orientation comparator, scoped only to those targets.
 
 ## Determinant transport
 

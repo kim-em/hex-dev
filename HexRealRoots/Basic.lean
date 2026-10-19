@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexPolyZ.IntegerPolynomial
+public import HexRealRoots.Sign
 
 public section
 

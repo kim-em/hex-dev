@@ -27,21 +27,22 @@ with six trial-major outer trials. Preparation validates rank and certificates;
 shifted fixtures validate the first pivot after their zero-column prefix.
 
 * `dense-full-rank`: splitmix64 entries in `[-5,5]`, checked full rank.
-  Mode 2, `hadamardBound n`: arbitrary growing minors and GMP's changing
+  Cited upper bound, `hadamardBound n`: arbitrary growing minors and GMP's changing
   arithmetic regimes prevent a tight family-specific time power law.
 * `low-rank-large-coefficients`: products of dense factors with fixed
-  `r ∈ {2,8}` and factor bit sizes 64 or 1024. Mode 1, `n * n`: both
+  `r ∈ {2,8}` and factor bit sizes 64 or 1024. Two-sided model, `n * n`: both
   operand sizes and r are independent of n.
 * `rank-deficient-by-construction`: dense products with r=n-1 or n/2,
-  including a zero-column prefix variant. Mode 2, `productBound n`,
+  including a zero-column prefix variant. cited upper bound, `productBound n`,
   accounting for both growing minors and the product entry bound B≤25n.
 * `polynomial`: `DensePoly Rat` and `MvPoly 2 Int` at fixed small support,
   full rank and deficient. Fixed registrations use the recorded comparator-derived absolute budgets.
 
 The external comparators (FLINT `fmpz_mat.rank` and `fmpq_mat.rank`, SymPy
-`DomainMatrix.rank` over the exact polynomial domain) are `informational`
-per the SPEC. Their fixed shared-input anchors are tagged `comparison`;
-external anchors are scheduled-only and excluded from default verification.
+`DomainMatrix.rank` over the exact polynomial domain) are recorded for
+orientation. Their fixed shared-input anchors are tagged `comparison`;
+external anchors run only in manual scientific runs and are excluded from
+default verification.
 -/
 
 namespace Hex.RankBench
@@ -295,11 +296,10 @@ def runCheckRankDeficientMinusOne := runCheckRank
 def runCheckRankDeficientHalfShifted := runCheckRank
 
 /-! `dense-full-rank`: `Θ(n^3)` operations on operands of `O(n (log n + log B))`
-bits, so the declared one-sided upper bound is `n^5 (log n + log B)^2`
-(mode 2). -/
+bits, so the declared one-sided upper bound is `n^5 (log n + log B)^2`. -/
 -- Cost model: `Θ(n^3)` ring operations, each on operands of `O(n (log n + log B))`
 -- bits by Hadamard's bound, at schoolbook cost quadratic in the bit size, so the
--- declared one-sided upper bound is `O(n^5 (log n + 3)^2)` (mode 2):
+-- declared one-sided upper bound is `O(n^5 (log n + 3)^2)`:
 -- dense entries satisfy `B ≤ 5`, independently of n.
 setup_benchmark runRowReduceDense n => hadamardBound n
   with prep := prepDense
@@ -312,7 +312,7 @@ setup_benchmark runRowReduceDense n => hadamardBound n
   }
 -- Cost model: `Θ(n^3)` ring operations, each on operands of `O(n (log n + log B))`
 -- bits by Hadamard's bound, at schoolbook cost quadratic in the bit size, so the
--- declared one-sided upper bound is `O(n^5 (log n + 3)^2)` (mode 2):
+-- declared one-sided upper bound is `O(n^5 (log n + 3)^2)`:
 -- dense entries satisfy `B ≤ 5`, independently of n.
 setup_benchmark runRankCertDense n => hadamardBound n
   with prep := prepDense
@@ -325,7 +325,7 @@ setup_benchmark runRankCertDense n => hadamardBound n
   }
 -- Cost model: `Θ(n^3)` ring operations, each on operands of `O(n (log n + log B))`
 -- bits by Hadamard's bound, at schoolbook cost quadratic in the bit size, so the
--- declared one-sided upper bound is `O(n^5 (log n + 3)^2)` (mode 2):
+-- declared one-sided upper bound is `O(n^5 (log n + 3)^2)`:
 -- dense entries satisfy `B ≤ 5`, independently of n.
 setup_benchmark runCheckRankDense n => hadamardBound n
   with prep := prepDenseCert
@@ -338,9 +338,9 @@ setup_benchmark runCheckRankDense n => hadamardBound n
   }
 
 /-! `low-rank-large-coefficients`: `Θ(r · n · n)` operations at fixed `r` on
-operands of fixed bit size, so the declared model is `n^2` (mode 1). -/
+operands of fixed bit size, so the declared model is `n^2` (two-sided). -/
 -- Cost model: `Θ(r · n · n)` ring operations at fixed `r` on operands whose
--- size is bounded independently of `n`, so the declared model is `n^2` (mode 1).
+-- size is bounded independently of `n`, so the declared model is `n^2` (two-sided).
 setup_benchmark runRowReduceLowRank2At64 n => n * n
   with prep := prepLowRank2At64
   where {
@@ -351,7 +351,7 @@ setup_benchmark runRowReduceLowRank2At64 n => n * n
     outerTrials := 6
   }
 -- Cost model: `Θ(r · n · n)` ring operations at fixed `r` on operands whose
--- size is bounded independently of `n`, so the declared model is `n^2` (mode 1).
+-- size is bounded independently of `n`, so the declared model is `n^2` (two-sided).
 setup_benchmark runRowReduceLowRank8At64 n => n * n
   with prep := prepLowRank8At64
   where {
@@ -362,7 +362,7 @@ setup_benchmark runRowReduceLowRank8At64 n => n * n
     outerTrials := 6
   }
 -- Cost model: `Θ(r · n · n)` ring operations at fixed `r` on operands whose
--- size is bounded independently of `n`, so the declared model is `n^2` (mode 1).
+-- size is bounded independently of `n`, so the declared model is `n^2` (two-sided).
 setup_benchmark runRowReduceLowRank2At1024 n => n * n
   with prep := prepLowRank2At1024
   where {
@@ -373,7 +373,7 @@ setup_benchmark runRowReduceLowRank2At1024 n => n * n
     outerTrials := 6
   }
 -- Cost model: `Θ(r · n · n)` ring operations at fixed `r` on operands whose
--- size is bounded independently of `n`, so the declared model is `n^2` (mode 1).
+-- size is bounded independently of `n`, so the declared model is `n^2` (two-sided).
 setup_benchmark runRowReduceLowRank8At1024 n => n * n
   with prep := prepLowRank8At1024
   where {
@@ -384,7 +384,7 @@ setup_benchmark runRowReduceLowRank8At1024 n => n * n
     outerTrials := 6
   }
 -- Cost model: `Θ(r · n · n)` ring operations at fixed `r` on operands whose
--- size is bounded independently of `n`, so the declared model is `n^2` (mode 1).
+-- size is bounded independently of `n`, so the declared model is `n^2` (two-sided).
 setup_benchmark runRankCertLowRank2At64 n => n * n
   with prep := prepLowRank2At64
   where {
@@ -395,7 +395,7 @@ setup_benchmark runRankCertLowRank2At64 n => n * n
     outerTrials := 6
   }
 -- Cost model: `Θ(r · n · n)` ring operations at fixed `r` on operands whose
--- size is bounded independently of `n`, so the declared model is `n^2` (mode 1).
+-- size is bounded independently of `n`, so the declared model is `n^2` (two-sided).
 setup_benchmark runRankCertLowRank8At1024 n => n * n
   with prep := prepLowRank8At1024
   where {
@@ -406,7 +406,7 @@ setup_benchmark runRankCertLowRank8At1024 n => n * n
     outerTrials := 6
   }
 -- Cost model: `Θ(r · n · n)` ring operations at fixed `r` on operands whose
--- size is bounded independently of `n`, so the declared model is `n^2` (mode 1).
+-- size is bounded independently of `n`, so the declared model is `n^2` (two-sided).
 setup_benchmark runCheckRankLowRank2At64 n => n * n
   with prep := prepLowRank2At64Cert
   where {
@@ -417,7 +417,7 @@ setup_benchmark runCheckRankLowRank2At64 n => n * n
     outerTrials := 6
   }
 -- Cost model: `Θ(r · n · n)` ring operations at fixed `r` on operands whose
--- size is bounded independently of `n`, so the declared model is `n^2` (mode 1).
+-- size is bounded independently of `n`, so the declared model is `n^2` (two-sided).
 setup_benchmark runCheckRankLowRank8At1024 n => n * n
   with prep := prepLowRank8At1024Cert
   where {
@@ -430,11 +430,11 @@ setup_benchmark runCheckRankLowRank8At1024 n => n * n
 
 /-! `rank-deficient-by-construction`: `Θ(r · n · n)` operations with `r`
 proportional to `n`, on minors whose bit size grows linearly in `n`, so the
-declared one-sided upper bound is `n^5 (log n + log B)^2` (mode 2). -/
+declared one-sided upper bound is `n^5 (log n + log B)^2`. -/
 -- Cost model: `Θ(r · n · n)` ring operations with `r` proportional to `n`; the
 -- operands are minors of size up to `r`, of `O(n (log n + log B))` bits by
 -- Hadamard's bound, so the declared one-sided upper bound is
--- `n^5 (log n + log B)^2` (mode 2), as for the dense family; input entries are
+-- `n^5 (log n + log B)^2`, as for the dense family; input entries are
 -- small but the intermediate minors are not.
 setup_benchmark runRowReduceDeficientMinusOne n => productBound n
   with prep := prepDeficientMinusOne
@@ -448,7 +448,7 @@ setup_benchmark runRowReduceDeficientMinusOne n => productBound n
 -- Cost model: `Θ(r · n · n)` ring operations with `r` proportional to `n`; the
 -- operands are minors of size up to `r`, of `O(n (log n + log B))` bits by
 -- Hadamard's bound, so the declared one-sided upper bound is
--- `n^5 (log n + log B)^2` (mode 2), as for the dense family; input entries are
+-- `n^5 (log n + log B)^2`, as for the dense family; input entries are
 -- small but the intermediate minors are not.
 setup_benchmark runRowReduceDeficientHalf n => productBound n
   with prep := prepDeficientHalf
@@ -462,7 +462,7 @@ setup_benchmark runRowReduceDeficientHalf n => productBound n
 -- Cost model: `Θ(r · n · n)` ring operations with `r` proportional to `n`; the
 -- operands are minors of size up to `r`, of `O(n (log n + log B))` bits by
 -- Hadamard's bound, so the declared one-sided upper bound is
--- `n^5 (log n + log B)^2` (mode 2), as for the dense family; input entries are
+-- `n^5 (log n + log B)^2`, as for the dense family; input entries are
 -- small but the intermediate minors are not.
 setup_benchmark runRowReduceDeficientHalfShifted n => productBound n
   with prep := prepDeficientHalfShifted
@@ -476,7 +476,7 @@ setup_benchmark runRowReduceDeficientHalfShifted n => productBound n
 -- Cost model: `Θ(r · n · n)` ring operations with `r` proportional to `n`; the
 -- operands are minors of size up to `r`, of `O(n (log n + log B))` bits by
 -- Hadamard's bound, so the declared one-sided upper bound is
--- `n^5 (log n + log B)^2` (mode 2), as for the dense family; input entries are
+-- `n^5 (log n + log B)^2`, as for the dense family; input entries are
 -- small but the intermediate minors are not.
 setup_benchmark runRankCertDeficientMinusOne n => productBound n
   with prep := prepDeficientMinusOne
@@ -490,7 +490,7 @@ setup_benchmark runRankCertDeficientMinusOne n => productBound n
 -- Cost model: `Θ(r · n · n)` ring operations with `r` proportional to `n`; the
 -- operands are minors of size up to `r`, of `O(n (log n + log B))` bits by
 -- Hadamard's bound, so the declared one-sided upper bound is
--- `n^5 (log n + log B)^2` (mode 2), as for the dense family; input entries are
+-- `n^5 (log n + log B)^2`, as for the dense family; input entries are
 -- small but the intermediate minors are not.
 setup_benchmark runRankCertDeficientHalfShifted n => productBound n
   with prep := prepDeficientHalfShifted
@@ -505,7 +505,7 @@ setup_benchmark runRankCertDeficientHalfShifted n => productBound n
 -- Cost model: `Θ(r · n · n)` ring operations with `r` proportional to `n`; the
 -- operands are minors of size up to `r`, of `O(n (log n + log B))` bits by
 -- Hadamard's bound, so the declared one-sided upper bound is
--- `n^5 (log n + log B)^2` (mode 2), as for the dense family; input entries are
+-- `n^5 (log n + log B)^2`, as for the dense family; input entries are
 -- small but the intermediate minors are not.
 setup_benchmark runCheckRankDeficientMinusOne n => productBound n
   with prep := prepDeficientMinusOneCert
@@ -519,7 +519,7 @@ setup_benchmark runCheckRankDeficientMinusOne n => productBound n
 -- Cost model: `Θ(r · n · n)` ring operations with `r` proportional to `n`; the
 -- operands are minors of size up to `r`, of `O(n (log n + log B))` bits by
 -- Hadamard's bound, so the declared one-sided upper bound is
--- `n^5 (log n + log B)^2` (mode 2), as for the dense family; input entries are
+-- `n^5 (log n + log B)^2`, as for the dense family; input entries are
 -- small but the intermediate minors are not.
 setup_benchmark runCheckRankDeficientHalfShifted n => productBound n
   with prep := prepDeficientHalfShiftedCert
@@ -593,7 +593,7 @@ def prepDeficientHalfCert := prepDeficientCert (fun n => n / 2) false
 
 def runRankCertDeficientHalf := runRankCert
 
--- Cost model: Variable r=Θ(n), B≤25n: n³ operations at the Hadamard schoolbook bit bound (mode 2).
+-- Cost model: Variable r=Θ(n), B≤25n: n³ operations at the Hadamard schoolbook bit bound (cited upper bound).
 setup_benchmark runRankCertDeficientHalf n => productBound n
   with prep := prepDeficientHalf
   where {
@@ -606,7 +606,7 @@ setup_benchmark runRankCertDeficientHalf n => productBound n
 
 def runCheckRankDeficientHalf := runCheckRank
 
--- Cost model: Variable r=Θ(n), B≤25n: n³ operations at the Hadamard schoolbook bit bound (mode 2).
+-- Cost model: Variable r=Θ(n), B≤25n: n³ operations at the Hadamard schoolbook bit bound (cited upper bound).
 setup_benchmark runCheckRankDeficientHalf n => productBound n
   with prep := prepDeficientHalfCert
   where {
@@ -617,7 +617,7 @@ setup_benchmark runCheckRankDeficientHalf n => productBound n
     outerTrials := 6
   }
 
-/-! `polynomial`: fixed registrations (mode 3), as specified by HexRank.
+/-! `polynomial`: fixed registrations, as specified by HexRank.
 Full-rank entries have degree one and support at most two. The deficient
 products have degree two, with support at most three (Rat) or five (Mv).
 Dimension alone does not control minor support or coefficient bit length;

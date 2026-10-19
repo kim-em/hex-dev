@@ -1,0 +1,19 @@
+SUBJECT 7983226596738841058766325436315975273752711604126516516644200892341180092058466758226580125510711294302178552878759289723290167401444678034498033356114163
+Factoring 79832..(144 other digits)..14162
+Trial division with ints [2 ... 32768] and fail_max=600
+	2 ** 1
+	97 ** 1
+Check for termination
+Trial division with primes [1901 ... 3802]
+Pollard's p-1 with smoothness bound 1901 and seed 3802
+Pollard's rho with retries 1, max_steps 1901 and seed 3802
+Trial division with primes [3802 ... 7604]
+Pollard's p-1 with smoothness bound 3802 and seed 7604
+Pollard's rho with retries 1, max_steps 3802 and seed 7604
+Trial division with primes [7604 ... 15208]
+Pollard's p-1 with smoothness bound 7604 and seed 15208
+Pollard's rho with retries 1, max_steps 7604 and seed 15208
+Elliptic Curve with B1 bound 10000, B2 bound 1000000, num_curves 50
+Check for termination
+Factorization is complete.
+FACTORIZATION {2: 1, 97: 1, 6480390557477446109: 1, 6350026621933690113386201325499420177229374151571760086097788127770776076328881406780335094248779495090930898571905058477877334847597: 1}

@@ -104,6 +104,17 @@ namespace Catalog
 
 def empty (registry : Registry) : Catalog registry := ⟨[]⟩
 
+/-- Enumerate the immutable validated prefixes, including the always available
+rational prefix. Entries retain their original predecessor progress proofs. -/
+def prefixes {registry : Registry} (catalog : Catalog registry) :
+    List (RealPrefix registry) := .pack (.rational registry) :: catalog.entries
+
+theorem rational_mem {registry : Registry} (catalog : Catalog registry) :
+    RealPrefix.pack (.rational registry) ∈ catalog.prefixes := List.mem_cons_self
+
+theorem prefixes_empty (registry : Registry) :
+    (empty registry).prefixes = [.pack (.rational registry)] := by simp [empty, prefixes]
+
 private def findPrefix {registry : Registry} (keys : List ConstantKey) :
     List (RealPrefix registry) → Option (RealPrefix registry)
   | [] => none
@@ -121,6 +132,17 @@ def insert {registry : Registry} (catalog : Catalog registry)
   match catalog.lookup entry.keys with
   | none => some ⟨entry :: catalog.entries⟩
   | some _ => none
+
+/-- Insertion adds exactly the new prefix and preserves every earlier one. -/
+theorem mem_prefixes_of_insert {registry : Registry} (catalog next : Catalog registry)
+    (entry candidate : RealPrefix registry) (inserted : catalog.insert entry = some next) :
+    candidate ∈ next.prefixes ↔ candidate = entry ∨ candidate ∈ catalog.prefixes := by
+  unfold insert at inserted
+  split at inserted
+  · cases Option.some.inj inserted
+    simp only [prefixes, List.mem_cons]
+    rw [or_left_comm]
+  · cases inserted
 
 /-- Resolve the real prefix, then reconstruct the declared infinitesimal order.
 No convergence or relative-transcendence proposition is decided by this reader. -/
@@ -164,6 +186,25 @@ theorem lookup_keys {registry : Registry} (catalog : Catalog registry)
   · cases h
     simpa [RealPrefix.keys, RealContext.keys, RealContext.keys_rational] using ‹keys = []›.symm
   · exact findPrefix_keys keys catalog.entries entry h
+
+/-- A successful lookup returns an actual retained prefix. -/
+theorem lookup_mem {registry : Registry} (catalog : Catalog registry)
+    (keys : List ConstantKey) (entry : RealPrefix registry)
+    (found : catalog.lookup keys = some entry) : entry ∈ catalog.prefixes := by
+  have find_mem : ∀ entries : List (RealPrefix registry),
+      findPrefix keys entries = some entry → entry ∈ entries := by
+    intro entries
+    induction entries with
+    | nil => simp [findPrefix]
+    | cons first rest ih =>
+      simp only [findPrefix]
+      split
+      · intro same; cases same; exact List.mem_cons_self
+      · intro same; exact List.mem_cons_of_mem _ (ih same)
+  unfold lookup at found
+  split at found
+  · cases found; exact catalog.rational_mem
+  · exact List.mem_cons_of_mem _ (find_mem _ found)
 
 theorem lookup_rational {registry : Registry} (catalog : Catalog registry) :
     catalog.lookup [] = some (.pack (.rational registry)) := by simp [lookup]

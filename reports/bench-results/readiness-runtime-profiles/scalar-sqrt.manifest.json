@@ -1,0 +1,430 @@
+{
+  "family": "scalar-sqrt",
+  "function": "Hex.RealAlgebraicScaling.runSqrt4",
+  "parameter": 0,
+  "cpu": 20,
+  "load": [
+    5.41064453125,
+    12.8583984375,
+    16.9208984375
+  ],
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "raw": "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/packages/lean-bench",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "lake",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/home/kim/.local/state/hex/issue-10377-profiles/lean-bench-samply",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/home/kim/.local/state/hex/issue-10377-profiles/lean-bench-samply",
+        "config",
+        "--get",
+        "remote.origin.url"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "record",
+        "--clockid",
+        "mono",
+        "-e",
+        "cycles:u",
+        "-F",
+        "999",
+        "--call-graph",
+        "dwarf",
+        "-o",
+        "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/perf.data",
+        "--",
+        "env",
+        "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/timed-%p.jsonl",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "profile",
+        "Hex.RealAlgebraicScaling.runSqrt4",
+        "--param",
+        "0",
+        "--target-inner-nanos",
+        "1000000000",
+        "--profiler",
+        "env"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "import",
+        "--save-only",
+        "--no-open",
+        "--unstable-presymbolicate",
+        "-o",
+        "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/samply.json.gz",
+        "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "script",
+        "--ns",
+        "-F",
+        "pid,tid,time,event",
+        "-i",
+        "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-oracles/bin/python",
+        "scripts/profile/normalize_perf.py",
+        "--profile",
+        "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/samply.json.gz",
+        "--perf-script",
+        "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/perf-samples.txt",
+        "--spawn-anchor",
+        "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/spawn-anchor.json",
+        "--output",
+        "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/normalized.json.gz"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-oracles/bin/python",
+        "/home/kim/.local/state/hex/issue-10377-profiles/lean-bench-samply/scripts/filter_samply.py",
+        "--samply-json",
+        "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/normalized.json.gz",
+        "--sidecar",
+        "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/timed-1652128.jsonl",
+        "--spawn-anchor",
+        "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/spawn-anchor.json",
+        "--out",
+        "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/filtered.json.gz",
+        "--diagnostics",
+        "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/diagnostics.json",
+        "--label-filter",
+        "kernel"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-oracles/bin/python",
+        "scripts/profile/elf_symbols.py",
+        "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/filtered.json.gz",
+        "--output",
+        "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/symbols.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-oracles/bin/python",
+        "scripts/profile/summarize_profile.py",
+        "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/filtered.json.gz",
+        "--symbols",
+        "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/symbols.json",
+        "--diagnostics",
+        "/home/kim/.local/state/hex/issue-10577-profiles/scalar-sqrt-current/diagnostics.json",
+        "--thread",
+        "hexrealalgebrai",
+        "--top",
+        "20",
+        "--output",
+        "/home/kim/.local/state/hex/issue-10577-proposals/readiness-profiles/scalar-sqrt.summary.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "executable_sha256": "976aa3359dfc39acb530c33677adebe897be8954570b45ef416763dffb90e8bf",
+  "driver_sha256": "a7db8dbed1af3cf845ddc70e9fd6dacadb82146323233e4c29e5f2ae671d7257",
+  "cpu_model": "AMD EPYC 9455 48-Core Processor",
+  "purpose": "Required representative attribution for the remainder-only query path and unexpected canonical scalar square-root cost. Not a timing sweep or phase admission.",
+  "commit": "20e29ae7626d2a4a171d28e71c50e2ab3f8c7252",
+  "dirty": false,
+  "lean_bench_commit": "8a37daf1074c3bdbd0da479b55538bad4a0022db",
+  "lake_version": "Lake version 5.0.0-src+470d5ce (Lean version 4.35.0-rc3)",
+  "computational_source_sha256": {
+    "bench/HexRealAlgebraic/Bench.lean": "8ec200aabde0070e6dc34383de1abcbcc018efd170fa892ba8f2ba7a334dd6ce",
+    "bench/HexSturm/Bench.lean": "f8c803b090c2ba78d6c888b40f0744bc0af914b2d8b38319bbd0b26c9aac3e95",
+    "HexSturm/Reduced.lean": "1fb74c85ccc88f238a4ad0ea74ab8389b804bedf95b202994a086600c69fc669",
+    "HexPoly/Euclid/DivGcd.lean": "d56dbe5cf69e9abe58436486e4b3870afe1a07650d62aa2a36af0e528b73f149",
+    "HexRealAlgebraic/Basic.lean": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd",
+    "HexRealAlgebraic/Roots.lean": "0fb67cb79123c00b6cbda25a171e25801fe3543d3fd5e7148f153e84d3ff692d",
+    "HexNumberField/Roots.lean": "28d43bf52f318e9e943a91f7f66e37793fe6c0a808c813b650fac6fc899e839c",
+    "HexNumberField/Convert.lean": "059b2d9716d199c4b60fdbe9a51fcdb527728cbd554a75bf626ca7363c0a0b86",
+    "HexArith/Nat/Sqrt.lean": "02684a5167ec604cdf432554058be0c4674e926fdb356934e45bf1964c81746e"
+  },
+  "profiler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "profiler_remote": "https://github.com/kim-em/lean-bench-samply.git",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.2.8",
+  "timed_duration_ns": 971697698,
+  "status": "profiled",
+  "diagnostics": {
+    "schema": 2,
+    "stage": "complete",
+    "confidence": "passed",
+    "low_confidence_reasons": [],
+    "bench_pid": 1652128,
+    "bench_thread_name": "hexrealalgebrai",
+    "bench_thread_tid": "1652158",
+    "regions_total": 5,
+    "total_timed_ms": 971.697698,
+    "expected_samples_bench_thread": 970.7,
+    "retained_samples_bench_thread": 970,
+    "rejected_samples_bench_thread": 624,
+    "off_bench_thread_samples_in_window": 0,
+    "samply_interval_ms": 1.001001,
+    "spawn_anchor_wall_ns": 1791142608207460416,
+    "spawn_anchor_mono_ns": 57040055150265,
+    "sidecar_mono_anchor_ns": 57040837443110,
+    "samply_meta_start_time_ms": 1791142608235.0813,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "calibration_residual_ms": 0.6517999991774559,
+    "calibration_max_residual_ms": 5.0,
+    "calibration": {
+      "selected_mode": "relative-to-meta-start-ms",
+      "residual_ms": 0.6517999991774559,
+      "raw_max_residual_ms": 0.8088969960808754,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "configured_max_residual_ms": 5.0,
+      "sample_interval_ms": 1.001001,
+      "effective_max_residual_ms": 5.0,
+      "within_residual_limit": true,
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "hit_count": 0,
+          "regions_without_samples": 5,
+          "boundary_residual_trimmed_max_ms": null,
+          "boundary_residual_raw_max_ms": null,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "hit_count": 970,
+          "regions_without_samples": 0,
+          "boundary_residual_trimmed_max_ms": 0.6517999991774559,
+          "boundary_residual_raw_max_ms": 0.8088969960808754,
+          "within_residual_limit": true
+        }
+      }
+    },
+    "minimum_retained_samples": 100,
+    "sensitivity": {
+      "shift_ms": 5.0,
+      "reported_top_function_count": 3,
+      "configured_max_total_variation_distance": 0.1,
+      "sampling_noise_coefficient": 0.6,
+      "minimum_comparison_samples": 100,
+      "maximum_sampling_noise_allowance": 0.5,
+      "verdict": "passed",
+      "leaf_function_distributions_stable": true,
+      "comparisons": {
+        "minus": {
+          "total_variation_distance": 0.004123711340206187,
+          "leaf_function_support_size": 457,
+          "comparison_samples": 970,
+          "exchanged_samples": 10,
+          "exchanged_fraction": 0.010309278350515464,
+          "sampling_noise_allowance": 0.05913609106499193,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        },
+        "plus": {
+          "total_variation_distance": 0.004855509855242757,
+          "leaf_function_support_size": 456,
+          "comparison_samples": 965,
+          "exchanged_samples": 5,
+          "exchanged_fraction": 0.0051813471502590676,
+          "sampling_noise_allowance": 0.04198617952199162,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        }
+      },
+      "cases": {
+        "minus": {
+          "shift_ms": -5.0,
+          "retained_samples": 970,
+          "top_leaf_functions": [
+            {
+              "function": 155,
+              "name": "0x4b91413",
+              "samples": 62
+            },
+            {
+              "function": 94,
+              "name": "0x4bfab91",
+              "samples": 42
+            },
+            {
+              "function": 106,
+              "name": "0xae90c",
+              "samples": 21
+            }
+          ]
+        },
+        "nominal": {
+          "shift_ms": 0.0,
+          "retained_samples": 970,
+          "top_leaf_functions": [
+            {
+              "function": 155,
+              "name": "0x4b91413",
+              "samples": 62
+            },
+            {
+              "function": 94,
+              "name": "0x4bfab91",
+              "samples": 42
+            },
+            {
+              "function": 106,
+              "name": "0xae90c",
+              "samples": 21
+            }
+          ]
+        },
+        "plus": {
+          "shift_ms": 5.0,
+          "retained_samples": 965,
+          "top_leaf_functions": [
+            {
+              "function": 155,
+              "name": "0x4b91413",
+              "samples": 62
+            },
+            {
+              "function": 94,
+              "name": "0x4bfab91",
+              "samples": 41
+            },
+            {
+              "function": 106,
+              "name": "0xae90c",
+              "samples": 21
+            }
+          ]
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "0.stdout": "c09bceaa62f30b438f8622033b653b1ff9e6d3dc201cfe925e93e3398d713afa",
+    "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "2.stdout": "ea4051d25617d0e024f030bda5851a0455d525691cc814683f878e4ccdb2ed5d",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stdout": "e35d3608d07cf59f7870878491e6b275a359bb34ea901c9e8086aed6bec6e07a",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bench-HexRealAlgebraic-Bench.lean.txt": "8ec200aabde0070e6dc34383de1abcbcc018efd170fa892ba8f2ba7a334dd6ce",
+    "bench-HexSturm-Bench.lean.txt": "f8c803b090c2ba78d6c888b40f0744bc0af914b2d8b38319bbd0b26c9aac3e95",
+    "HexSturm-Reduced.lean.txt": "1fb74c85ccc88f238a4ad0ea74ab8389b804bedf95b202994a086600c69fc669",
+    "HexPoly-Euclid-DivGcd.lean.txt": "d56dbe5cf69e9abe58436486e4b3870afe1a07650d62aa2a36af0e528b73f149",
+    "HexRealAlgebraic-Basic.lean.txt": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd",
+    "HexRealAlgebraic-Roots.lean.txt": "0fb67cb79123c00b6cbda25a171e25801fe3543d3fd5e7148f153e84d3ff692d",
+    "HexNumberField-Roots.lean.txt": "28d43bf52f318e9e943a91f7f66e37793fe6c0a808c813b650fac6fc899e839c",
+    "HexNumberField-Convert.lean.txt": "059b2d9716d199c4b60fdbe9a51fcdb527728cbd554a75bf626ca7363c0a0b86",
+    "HexArith-Nat-Sqrt.lean.txt": "02684a5167ec604cdf432554058be0c4674e926fdb356934e45bf1964c81746e",
+    "4.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+    "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "5.stdout": "773fb1f2e2e076dd506d133fd9f11106c30eb440541d879fe11125a6e75495ce",
+    "5.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "6.stdout": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+    "6.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "7.stdout": "1a89ef5bfd8650933a16c3a00d57ae7efdf4c1b72b0081ba5545f5745282a906",
+    "7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "spawn-anchor.json": "f5d9f77ebc3224cf7a6188d34b6fa772b9fbf2e4d7973ab608692d017e3a6e63",
+    "perf.data": "f251cd9cde9f9ec4155b63958f543503712f24486b2d71df38feffa50c5a8718",
+    "timed-1652128.jsonl": "ef3543ddc67e2f34a13a27e868645ef21064ba629789f93c1186af2823f83591",
+    "8.stdout": "7ff8c230550eeeb3ace6043ca21c476d575110665d610d330dabcef8150d94d0",
+    "8.stderr": "0f03d705e346e807157aec9fe2bbf82ce0a6da48da312d2126485ca2359dabbc",
+    "samply.json.gz": "eac4b7e1e8a7fe60437be3ef23ca919d7c803c588845ae885cf339976693b6a2",
+    "9.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "9.stderr": "5eecc03f5f55d77995f7cfb8c323ac8ca3c4743e4ce54d037b5098911eabdae4",
+    "10.stdout": "af5121680ce6dc57eefb6ab51bf9bae33e79a280d4b76a30229b5d77574266e2",
+    "10.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "perf-samples.txt": "af5121680ce6dc57eefb6ab51bf9bae33e79a280d4b76a30229b5d77574266e2",
+    "normalized.json.gz": "418469ba19f0491b8416ef2ccd04498d1fa4c6030587b2a86f33d69561f072bd",
+    "11.stdout": "50d19ddcb8f11ef33b1d26f7b9f1552c53b433bec4c2ead525bf0554caa0b80c",
+    "11.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "filtered.json.gz": "fa289384bd00485297c96101b70511d23d6ced7db5c7e967c0ef0e97d7fc78a0",
+    "diagnostics.json": "5a45d04c05c0b7156b077e98c79f03e922f463d9b43db62adfebc7e8f7e59d77",
+    "12.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "12.stderr": "ac6b49089f7a114ad865681830f983d2ac66d5aab67be3d8d30842e27ac0d9a4",
+    "symbols.json": "818b64be6c28c3fe27cd009216fb4bc578b20418696167f258cd9c7b64ed4efb",
+    "13.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "13.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "14.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "14.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

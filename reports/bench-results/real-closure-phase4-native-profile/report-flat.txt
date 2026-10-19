@@ -1,0 +1,62 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 539  of event 'cycles:u'
+# Event count (approx.): 24360883846
+#
+# Overhead  Command          Shared Object          Symbol                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+# ........  ...............  .....................  ...........................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................
+#
+    14.68%  hexrealclosure_  hexrealclosure_phase4  [.] __gmpn_hgcd2
+     9.90%  hexrealclosure_  hexrealclosure_phase4  [.] div2
+     8.82%  hexrealclosure_  libc.so.6              [.] malloc
+     5.81%  hexrealclosure_  hexrealclosure_phase4  [.] __gmpn_gcd_11_x86_64
+     5.14%  hexrealclosure_  libc.so.6              [.] _int_free_chunk
+     4.59%  hexrealclosure_  libc.so.6              [.] cfree@GLIBC_2.2.5
+     3.86%  hexrealclosure_  libc.so.6              [.] realloc
+     2.39%  hexrealclosure_  hexrealclosure_phase4  [.] __gmpz_init_set
+     2.39%  hexrealclosure_  libc.so.6              [.] _int_malloc
+     1.84%  hexrealclosure_  hexrealclosure_phase4  [.] __gmpn_gcd
+     1.65%  hexrealclosure_  hexrealclosure_phase4  [.] __gmpz_gcd
+     1.65%  hexrealclosure_  hexrealclosure_phase4  [.] __gmpn_copyi_x86_64
+     1.47%  hexrealclosure_  hexrealclosure_phase4  [.] __gmp_default_allocate
+     1.29%  hexrealclosure_  hexrealclosure_phase4  [.] __gmpn_gcd_22
+     1.28%  hexrealclosure_  hexrealclosure_phase4  [.] __gmpn_submul_1_x86_64
+     1.10%  hexrealclosure_  hexrealclosure_phase4  [.] lean_apply_2
+     1.10%  hexrealclosure_  hexrealclosure_phase4  [.] l_Rat_mul
+     1.10%  hexrealclosure_  hexrealclosure_phase4  [.] mi_free
+     1.10%  hexrealclosure_  hexrealclosure_phase4  [.] __gmpn_rshift_x86_64
+     1.10%  hexrealclosure_  hexrealclosure_phase4  [.] lean_dec_ref_cold
+     1.10%  hexrealclosure_  hexrealclosure_phase4  [.] __gmpz_add
+     0.93%  hexrealclosure_  hexrealclosure_phase4  [.] __gmpn_gcd_1
+     0.92%  hexrealclosure_  hexrealclosure_phase4  [.] lean_alloc_small_object_core
+     0.92%  hexrealclosure_  libc.so.6              [.] __libc_malloc2
+     0.92%  hexrealclosure_  hexrealclosure_phase4  [.] lean_free_object
+     0.92%  hexrealclosure_  hexrealclosure_phase4  [.] __gmpn_modexact_1c_odd_x86_64
+     0.92%  hexrealclosure_  hexrealclosure_phase4  [.] __gmpn_divexact_1_x86_64
+     0.74%  hexrealclosure_  hexrealclosure_phase4  [.] __gmpn_mul_2
+     0.74%  hexrealclosure_  hexrealclosure_phase4  [.] __gmpn_lshift_x86_64
+     0.74%  hexrealclosure_  hexrealclosure_phase4  [.] __gmpz_divexact
+     0.74%  hexrealclosure_  hexrealclosure_phase4  [.] __gmpn_sbpi1_div_qr
+     0.73%  hexrealclosure_  hexrealclosure_phase4  [.] __gmpn_mod_1_fat
+     0.73%  hexrealclosure_  hexrealclosure_phase4  [.] __gmpn_mul_1_x86_64
+     0.73%  hexrealclosure_  hexrealclosure_phase4  [.] __gmpz_init_set_ui
+     0.73%  hexrealclosure_  hexrealclosure_phase4  [.] lean_nat_gcd
+     0.73%  hexrealclosure_  hexrealclosure_phase4  [.] __gmpn_addmul_1_x86_64
+     0.73%  hexrealclosure_  hexrealclosure_phase4  [.] __gmp_default_reallocate
+     0.73%  hexrealclosure_  hexrealclosure_phase4  [.] __gmpz_mul
+     0.56%  hexrealclosure_  hexrealclosure_phase4  [.] free@plt
+     0.55%  hexrealclosure_  hexrealclosure_phase4  [.] __gmpn_sbpi1_div_q
+     0.55%  hexrealclosure_  hexrealclosure_phase4  [.] __gmpn_tdiv_qr
+     0.55%  hexrealclosure_  hexrealclosure_phase4  [.] lean_apply_1
+     0.55%  hexrealclosure_  hexrealclosure_phase4  [.] l_Rat_add
+     0.55%  hexrealclosure_  hexrealclosure_phase4  [.] __gmpn_divexact
+     0.55%  hexrealclosure_  hexrealclosure_phase4  [.] lean::mpz::mpz(unsigned long)
+     0.55%  hexrealclosure_  hexrealclosure_phase4  [.] lean_big_int_to_nat
+
+
+#
+# (Tip: To measure approximate function latency with Processor Trace use perf record -e intel_pt// ... ; perf script --call-ret-trace)
+#

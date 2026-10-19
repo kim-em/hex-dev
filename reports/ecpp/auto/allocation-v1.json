@@ -1,0 +1,1 @@
+{"maxBits":512,"maxCandidates":1024,"maxFactorWork":4096,"maxScalarWork":1000000,"maxRoots":8192,"maxPoints":4096,"maxNonresidues":4096,"maxPolynomialWork":1048576,"maxRootWork":1048576,"seed":0,"schedule":"one seed, no retries, all completed samples retained","purpose":"bounded ordinary primality? fallback feasibility"}

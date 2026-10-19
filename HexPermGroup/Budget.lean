@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexBasic
+public import Std
 
 public section
 

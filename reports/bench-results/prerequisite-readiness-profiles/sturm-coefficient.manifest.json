@@ -1,0 +1,372 @@
+{
+  "family": "sturm-coefficient",
+  "function": "Hex.SturmFrontendBench.runCoefficientBits",
+  "parameter": 32768,
+  "cpu": 17,
+  "load": [
+    1.85205078125,
+    2.37451171875,
+    3.880859375
+  ],
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "raw": "/tmp/issue-10577-perf/sturm-coefficient",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/tmp/hex10577-samply",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "record",
+        "--clockid",
+        "mono",
+        "-e",
+        "cycles:u",
+        "-F",
+        "999",
+        "--call-graph",
+        "dwarf",
+        "-o",
+        "/tmp/issue-10577-perf/sturm-coefficient/perf.data",
+        "--",
+        "env",
+        "LEAN_BENCH_PROFILE_KERNEL=1",
+        "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/tmp/issue-10577-perf/sturm-coefficient/timed-%p.jsonl",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "profile",
+        "Hex.SturmFrontendBench.runCoefficientBits",
+        "--param",
+        "32768",
+        "--target-inner-nanos",
+        "2000000000",
+        "--max-seconds-per-call",
+        "60",
+        "--profiler",
+        "env"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "import",
+        "--save-only",
+        "--no-open",
+        "--unstable-presymbolicate",
+        "-o",
+        "/tmp/issue-10577-perf/sturm-coefficient/samply.json.gz",
+        "/tmp/issue-10577-perf/sturm-coefficient/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "script",
+        "--ns",
+        "-F",
+        "pid,tid,time,event",
+        "-i",
+        "/tmp/issue-10577-perf/sturm-coefficient/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "scripts/profile/normalize_perf.py",
+        "--profile",
+        "/tmp/issue-10577-perf/sturm-coefficient/samply.json.gz",
+        "--perf-script",
+        "/tmp/issue-10577-perf/sturm-coefficient/perf-samples.txt",
+        "--spawn-anchor",
+        "/tmp/issue-10577-perf/sturm-coefficient/spawn-anchor.json",
+        "--output",
+        "/tmp/issue-10577-perf/sturm-coefficient/normalized.json.gz"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "/tmp/hex10577-samply/scripts/filter_samply.py",
+        "--samply-json",
+        "/tmp/issue-10577-perf/sturm-coefficient/normalized.json.gz",
+        "--sidecar",
+        "/tmp/issue-10577-perf/sturm-coefficient/timed-3949009.jsonl",
+        "--spawn-anchor",
+        "/tmp/issue-10577-perf/sturm-coefficient/spawn-anchor.json",
+        "--out",
+        "/tmp/issue-10577-perf/sturm-coefficient/filtered.json.gz",
+        "--diagnostics",
+        "/tmp/issue-10577-perf/sturm-coefficient/diagnostics.json",
+        "--label-filter",
+        "kernel"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "scripts/profile/elf_symbols.py",
+        "/tmp/issue-10577-perf/sturm-coefficient/filtered.json.gz",
+        "--output",
+        "/tmp/issue-10577-perf/sturm-coefficient/symbols.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python3",
+        "scripts/profile/summarize_profile.py",
+        "/tmp/issue-10577-perf/sturm-coefficient/filtered.json.gz",
+        "--symbols",
+        "/tmp/issue-10577-perf/sturm-coefficient/symbols.json",
+        "--diagnostics",
+        "/tmp/issue-10577-perf/sturm-coefficient/diagnostics.json",
+        "--thread",
+        "hexsturm_bench",
+        "--top",
+        "20",
+        "--output",
+        "reports/bench-results/prerequisite-readiness-profiles/sturm-coefficient.summary.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "executable_sha256": "d81094975c9e126f7bc3c3935ca06cf3c8d5c1bb65b72f59d9c82d09891f125e",
+  "commit": "6d78bf3e1fb1aa23129df83f7888979dd5afeb6d",
+  "dirty": true,
+  "profiler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.2.8",
+  "status": "profiled",
+  "diagnostics": {
+    "schema": 2,
+    "stage": "complete",
+    "confidence": "passed",
+    "low_confidence_reasons": [],
+    "bench_pid": 3949009,
+    "bench_thread_name": "hexsturm_bench",
+    "bench_thread_tid": "3949012",
+    "regions_total": 33023,
+    "total_timed_ms": 1418.559009,
+    "expected_samples_bench_thread": 1417.1,
+    "retained_samples_bench_thread": 1415,
+    "rejected_samples_bench_thread": 13,
+    "off_bench_thread_samples_in_window": 0,
+    "samply_interval_ms": 1.001001,
+    "spawn_anchor_wall_ns": 1790913055341247076,
+    "spawn_anchor_mono_ns": 323047101856467,
+    "sidecar_mono_anchor_ns": 323047225435298,
+    "samply_meta_start_time_ms": 1790913055374.5261,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "calibration_residual_ms": 0.09026402235031128,
+    "calibration_max_residual_ms": 5.0,
+    "calibration": {
+      "selected_mode": "relative-to-meta-start-ms",
+      "residual_ms": 0.09026402235031128,
+      "raw_max_residual_ms": 1.145277976989746,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "configured_max_residual_ms": 5.0,
+      "sample_interval_ms": 1.001001,
+      "effective_max_residual_ms": 5.0,
+      "within_residual_limit": true,
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "hit_count": 0,
+          "regions_without_samples": 33023,
+          "boundary_residual_trimmed_max_ms": null,
+          "boundary_residual_raw_max_ms": null,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "hit_count": 1415,
+          "regions_without_samples": 31608,
+          "boundary_residual_trimmed_max_ms": 0.09026402235031128,
+          "boundary_residual_raw_max_ms": 1.145277976989746,
+          "within_residual_limit": true
+        }
+      }
+    },
+    "minimum_retained_samples": 100,
+    "sensitivity": {
+      "shift_ms": 5.0,
+      "reported_top_function_count": 3,
+      "configured_max_total_variation_distance": 0.1,
+      "sampling_noise_coefficient": 0.6,
+      "minimum_comparison_samples": 100,
+      "maximum_sampling_noise_allowance": 0.5,
+      "verdict": "passed",
+      "leaf_function_distributions_stable": true,
+      "comparisons": {
+        "minus": {
+          "total_variation_distance": 0.00948800842041953,
+          "leaf_function_support_size": 162,
+          "comparison_samples": 1410,
+          "exchanged_samples": 29,
+          "exchanged_fraction": 0.02056737588652482,
+          "sampling_noise_allowance": 0.0412480708631579,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        },
+        "plus": {
+          "total_variation_distance": 0.010578136011054633,
+          "leaf_function_support_size": 162,
+          "comparison_samples": 1409,
+          "exchanged_samples": 30,
+          "exchanged_fraction": 0.021291696238467,
+          "sampling_noise_allowance": 0.041982992342482574,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        }
+      },
+      "cases": {
+        "minus": {
+          "shift_ms": -5.0,
+          "retained_samples": 1410,
+          "top_leaf_functions": [
+            {
+              "function": 65,
+              "name": "0x4958337",
+              "samples": 220
+            },
+            {
+              "function": 45,
+              "name": "0xad8e8",
+              "samples": 148
+            },
+            {
+              "function": 77,
+              "name": "0x4958324",
+              "samples": 93
+            }
+          ]
+        },
+        "nominal": {
+          "shift_ms": 0.0,
+          "retained_samples": 1415,
+          "top_leaf_functions": [
+            {
+              "function": 65,
+              "name": "0x4958337",
+              "samples": 221
+            },
+            {
+              "function": 45,
+              "name": "0xad8e8",
+              "samples": 150
+            },
+            {
+              "function": 77,
+              "name": "0x4958324",
+              "samples": 93
+            }
+          ]
+        },
+        "plus": {
+          "shift_ms": 5.0,
+          "retained_samples": 1409,
+          "top_leaf_functions": [
+            {
+              "function": 65,
+              "name": "0x4958337",
+              "samples": 219
+            },
+            {
+              "function": 45,
+              "name": "0xad8e8",
+              "samples": 148
+            },
+            {
+              "function": 77,
+              "name": "0x4958324",
+              "samples": 93
+            }
+          ]
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "0.stdout": "d40df5947dd338826ff79a6a053ccdc7edeaecd28d6667f6a092758534fc7d11",
+    "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stdout": "d613302880f0a7f4523fff23b7997e4e1baee10d5e74df608013027f1444cd25",
+    "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "2.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stdout": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "4.stdout": "1a89ef5bfd8650933a16c3a00d57ae7efdf4c1b72b0081ba5545f5745282a906",
+    "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "spawn-anchor.json": "b8744b3b09e68727a34b396545011495f5966b75519b178e9ccf903d7e95676c",
+    "perf.data": "aecb87af54e387d905bf2a4461ecb9e4e94c21e249dfcb7af7016aeacd52774c",
+    "timed-3949009.jsonl": "384bee242860c83ec18eda52ed9cfa54d3361b09f3889960ed2d74b990ba8982",
+    "5.stdout": "f7219901cf1da836e281c57df647954e5b0c39f66e962ba84abe4e1230ab6313",
+    "5.stderr": "c0708d741470d61ad1da4ecedaea7583f680702b0a1270b3f3d2b93190911d5a",
+    "samply.json.gz": "7b8414b44d705314180375353e1332f213fc3ce31e6e9336459fc726b3a56f97",
+    "6.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "6.stderr": "5eecc03f5f55d77995f7cfb8c323ac8ca3c4743e4ce54d037b5098911eabdae4",
+    "7.stdout": "1a0584d1919a9ecc4ed6b42c5d7b6b4310f4d8d52642fbe5a9ba2748413aa61f",
+    "7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "perf-samples.txt": "1a0584d1919a9ecc4ed6b42c5d7b6b4310f4d8d52642fbe5a9ba2748413aa61f",
+    "normalized.json.gz": "fc1c83c947f5087b27ccf27617a360e054338f8a0d6331b8eaab8a9f979354b8",
+    "8.stdout": "578898a2d591c765b1d8c0204778161d48bd944fabd5f50179eb6d7cdd58d563",
+    "8.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "filtered.json.gz": "bf0ada2ffc69167cb9c6c157bd8d75de406074a4228778a077c8099bc0a263a4",
+    "diagnostics.json": "726463ac4de4103904c8802edbc5c56a01345484d6fcc163aeb41652a4663621",
+    "9.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "9.stderr": "2104eab6f2b52815eca8ae4dbf718b81a4b0374e6bd69ddaf26132c1f19525bc",
+    "symbols.json": "cb875149ce290bd25bb15f4db18b691b6c547482ee3584e0fcba41909bc38576",
+    "10.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "10.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

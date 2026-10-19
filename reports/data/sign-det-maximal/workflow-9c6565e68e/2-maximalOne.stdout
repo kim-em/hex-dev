@@ -1,0 +1,8 @@
+Hex.SignDetBench.maximalOne    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=9c6565e, 2026-10-06T06:58:00Z, host=chungus2
+  repeat 0  393.008 µs  (×2^8, total 100.610 ms)
+  median: 393.008 µs    min: 393.008 µs    max: 393.008 µs
+  hash: all repeats agree
+  observed hash: 0x903b20106906143a
+  peak RSS: 67_812 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10377-session-progress/maximal-workflow-9c6565e68e/2-maximalOne.json

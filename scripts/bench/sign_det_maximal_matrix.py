@@ -1,27 +1,19 @@
 #!/usr/bin/env python3
-"""Measure the actual full-support matrix solver and literal integer checker.
+"""Historical full-support reference-solve and integer-check collection support.
 
-The shared harness supplies fixed trial-major samples. Retain every completed
-arm, including failures and inconclusive results, without an automatic rerun.
+Validators retain the original fixed schedules and declarations. The collector
+entry point is retired; historical reproduction uses the recorded revision.
 """
 from __future__ import annotations
 
-import argparse
-import hashlib
 import json
 import math
-import os
 from pathlib import Path
-import platform
 import subprocess
 import sys
-import time
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
-from scripts.bench.sign_det_compare import archive_sources
-from scripts.bench.sign_det_sparse import source_hashes
-from scripts.bench.cpu_lease import cpu_lease as acquire_cpu
 
 PARAMS = [1, 2, 3, 4, 5]
 DIMENSION_ARITIES = [1, 2, 3, 4, 5, 6]
@@ -133,90 +125,11 @@ def harness_binding():
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--parameter", choices=("queries", "matrix-size"), default="queries")
-    args = parser.parse_args()
-    by_dimension = args.parameter == "matrix-size"
-    revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
-    if subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True):
-        raise ValueError("commit sources before measurement")
-    exe = ROOT/".lake/build/bin/hexsigndet_bench"
-    if not exe.resolve().is_relative_to(ROOT):
-        raise ValueError("use an isolated executable in this worktree")
-    subprocess.run(["lake", "build", "--no-build", "hexsigndet_bench"], cwd=ROOT, check=True)
-    harness = harness_binding()
-    out = args.output.resolve()
-    if out.is_relative_to(ROOT.resolve()):
-        raise ValueError("write measurements outside the source checkout")
-    out.mkdir(parents=True, exist_ok=False)
-    cpu, lease = acquire_cpu()
-    os.sched_setaffinity(0, {cpu})
-    sources = source_hashes()
-    for name in ("scripts/bench/sign_det_maximal_matrix.py", "scripts/bench/test_sign_det_maximal_matrix.py",
-                 "scripts/bench/sign_det_compare.py", "reports/sign-det-maximal-matrices.md"):
-        sources[name] = hashlib.sha256((ROOT/name).read_bytes()).hexdigest()
-    metadata = {"schema": ("hex-sign-det-maximal-matrix-timing-v2" if by_dimension else
-                           "hex-sign-det-maximal-matrix-timing-v1"),
-                "parameter": args.parameter, "revision": revision,
-                "source_sha256": sources, "binary_sha256": hashlib.sha256(exe.read_bytes()).hexdigest(),
-                "executable": str(exe.resolve()), "host": platform.node(), "platform": platform.platform(),
-                "cpu": cpu, "affinity": sorted(os.sched_getaffinity(0)), "load_before": os.getloadavg(),
-                "harness_binding": harness, "runs": [], "state": "running"}
-
-    def save():
-        (out/"metadata.json").write_text(json.dumps(metadata, indent=2)+"\n")
-
-    def run(label, args):
-        record = {"label": label, "command": [str(exe), *args], "state": "running"}
-        metadata["runs"].append(record)
-        save()
-        start = time.monotonic()
-        with (out/(label+".log")).open("w") as stdout, (out/(label+".stderr.log")).open("w") as stderr:
-            result = subprocess.run(record["command"], cwd=ROOT, stdout=stdout, stderr=stderr)
-        record.update(state="complete", exit_code=result.returncode,
-                      wall_seconds=time.monotonic()-start, load_after=os.getloadavg())
-        save()
-        return result.returncode
-
-    try:
-        save()
-        archive_sources(out, metadata)
-        save()
-        if run("inventory", ["inspect-maximal-matrix-dimensions" if by_dimension else
-                             "inspect-maximal-matrices"]):
-            raise ValueError("input verification failed")
-        expected = validate_inventory(out/"inventory.log", by_dimension=by_dimension)
-        summary = collect(run, out, expected, revision, by_dimension=by_dimension)
-        metadata["source_sha256_after"] = {p: hashlib.sha256((ROOT/p).read_bytes()).hexdigest() for p in sources}
-        metadata["binary_sha256_after"] = hashlib.sha256(exe.read_bytes()).hexdigest()
-        metadata["revision_after"] = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
-        metadata["status_after"] = subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True)
-        metadata["harness_binding_after"] = harness_binding()
-        if (metadata["source_sha256_after"] != sources or metadata["binary_sha256_after"] != metadata["binary_sha256"] or
-                metadata["revision_after"] != revision or metadata["status_after"] or metadata["harness_binding_after"] != harness):
-            raise ValueError("measurement sources, harness or binary changed")
-        if summary["validation_errors"]:
-            raise ValueError("scientific validation failed; all scheduled arms retained")
-        metadata.update(state="complete", scientific_samples=2*TRIALS*len(sweep_settings(by_dimension)[0]))
-        code = int(any(o["verdict"] == "inconclusive" for o in summary["observations"].values()))
-        metadata["collector_exit_code"] = code
-        return code
-    except BaseException as error:
-        metadata.update(state="failed", error=str(error), exception=type(error).__name__,
-                        collector_exit_code=(130 if isinstance(error, KeyboardInterrupt) else 2))
-        raise
-    finally:
-        metadata["load_after"] = os.getloadavg()
-        save()
-        lease.close()
+    print("Reference-solve scaling registrations are retired. "
+          "Use sign_det_matrix_wide.py for production checker measurements; "
+          "reproduce historical solve runs at their recorded source revision.", file=sys.stderr)
+    raise SystemExit(2)
 
 
 if __name__ == "__main__":
-    try:
-        exit_code = main()
-    except Exception:
-        import traceback
-        traceback.print_exc()
-        exit_code = 2
-    raise SystemExit(exit_code)
+    main()

@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import HexReflect
 import HexReflect.TestProviders
-import HexReflectMathlib
+import HexReflectTheory
 
 /-!
 # HexReflect scope conformance
@@ -17,10 +17,10 @@ import HexReflectMathlib
 
 **Covered operations:** `reifyCommRing`, `convert`, and `Conversion.mkProof`
 over the carrier `Hex.MvPoly 2 Int Mono.lex` in the closed scope and with
-`HexMvPolyMathlib` opened; the `HexReflectMathlib` correspondence theorems at
+`HexMvPolyTheory` opened; the `HexReflectTheory` correspondence theorems at
 the rational coefficient provider.
 
-**Covered properties:** opening the `HexMvPolyMathlib` scope selects a
+**Covered properties:** opening the `HexMvPolyTheory` scope selects a
 different exact `Lean.Grind.CommRing` instance for the same carrier type, so
 the two requests carry distinct exact-instance keys; each scope reifies,
 converts, and produces a kernel-checked interpretation proof against its own
@@ -68,7 +68,7 @@ private def probe (label : String) : MetaM Unit := do
 #guard_msgs in
 run_meta probe "closed scope"
 
-open scoped HexMvPolyMathlib in
+open scoped HexMvPolyTheory in
 /-- info: open scope: instance CommRing.toGrindCommRing, terms 2, kernel accepted -/
 #guard_msgs in
 run_meta probe "open scope"
@@ -114,7 +114,7 @@ run_meta do
 
 /-! # Companion correspondence at a non-integer provider -/
 
-open HexReflectMathlib in
+open HexReflectTheory in
 /-- The rational provider's coefficient homomorphism is the identity on `ℚ`,
 which agrees with the integer cast on reflected coefficients; the general
 `MvPolynomial` correspondence therefore applies to its quoted values. The
@@ -123,7 +123,7 @@ the exact instance the companion theorems fix. -/
 example {n : Nat} (ctx : Lean.RArray ℚ) {e : RingExpr} {ts : List (Mono n × Int)}
     (h : convertTerms? n none e = some ts) :
     MvPolynomial.eval₂ (RingHom.id ℚ) (ctxValuation ctx n)
-        (HexMvPolyMathlib.equiv (ofIntTerms (cmp := Mono.lex) Int.cast ts)) =
+        (HexMvPolyTheory.equiv (ofIntTerms (cmp := Mono.lex) Int.cast ts)) =
       @Lean.Grind.CommRing.Expr.denote ℚ
         (@Lean.Grind.CommRing.toRing ℚ (CommRing.toGrindCommRing ℚ)) ctx e :=
   eval₂_equiv_ringHom_ofIntTerms (RingHom.id ℚ) Int.cast (fun _ => rfl) ctx h

@@ -1,0 +1,74 @@
+[
+  {
+    "label": "desktop",
+    "kind": "replay",
+    "text": "\n                    RootTransport.read checks a\nsupplied descriptor after coefficient conversion. It preflights supplied source\ndivisors and matches the context, polynomial, endpoints and derivative word\nagainst the actual map. A valid descriptor for a different root yields binding;\ninvalid or incomplete evidence yields evidence. A zero source divisor yields\ndivisor before parsing. The frontend authenticates this guard list against the\noriginal source; this reader does not infer it from a goal.",
+    "viewport": 1440,
+    "scrollY": 255510,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752
+  },
+  {
+    "label": "desktop",
+    "kind": "example",
+    "text": "\n                    An accepted descriptor gives the next actual context conversion through step.\nmodel consumes the owner's\nConversion.Model.adjoinWith law and preserves every old-context value:",
+    "viewport": 1440,
+    "scrollY": 255985,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "CODE",
+    "targetWidth": 740,
+    "targetScrollWidth": 740
+  },
+  {
+    "label": "desktop",
+    "kind": "boundary",
+    "text": "\n                    The target context retains the supplied descriptor’s evidence. Equivalent roots\nwith different evidence need not have equal context signatures. step_native\nagrees with adjoinChecked only if native production returns this exact\ndescriptor; frozen acceptance does not use that premise. Retain the accepted\nreader equation when applying read_domains, because the returned descriptor\nalone does not remember or authenticate a frontend guard list.\n",
+    "viewport": 1440,
+    "scrollY": 256472,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752
+  },
+  {
+    "label": "narrow",
+    "kind": "replay",
+    "text": "\n                    RootTransport.read checks a\nsupplied descriptor after coefficient conversion. It preflights supplied source\ndivisors and matches the context, polynomial, endpoints and derivative word\nagainst the actual map. A valid descriptor for a different root yields binding;\ninvalid or incomplete evidence yields evidence. A zero source divisor yields\ndivisor before parsing. The frontend authenticates this guard list against the\noriginal source; this reader does not infer it from a goal.",
+    "viewport": 390,
+    "scrollY": 408860,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343
+  },
+  {
+    "label": "narrow",
+    "kind": "example",
+    "text": "\n                    An accepted descriptor gives the next actual context conversion through step.\nmodel consumes the owner's\nConversion.Model.adjoinWith law and preserves every old-context value:",
+    "viewport": 390,
+    "scrollY": 409521,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "CODE",
+    "targetWidth": 331,
+    "targetScrollWidth": 331
+  },
+  {
+    "label": "narrow",
+    "kind": "boundary",
+    "text": "\n                    The target context retains the supplied descriptor’s evidence. Equivalent roots\nwith different evidence need not have equal context signatures. step_native\nagrees with adjoinChecked only if native production returns this exact\ndescriptor; frozen acceptance does not use that premise. Retain the accepted\nreader equation when applying read_domains, because the returned descriptor\nalone does not remember or authenticate a frontend guard list.\n",
+    "viewport": 390,
+    "scrollY": 410274,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343
+  }
+]

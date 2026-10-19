@@ -1,0 +1,9 @@
+Hex.RealAlgebraicScaling.runSqrt2    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=630a403, 2026-10-05T12:44:55Z, host=chungus2
+  repeat 0  12.475 ms  (×2^3, total 99.798 ms)
+  median: 12.475 ms    min: 12.475 ms    max: 12.475 ms
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 69_448 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Sqrt-2-3-Before.json

@@ -1,0 +1,53 @@
+import HexRCF.RealCoefficients.CellDecision
+namespace Hex.RCF.RealCoefficients.RowStages
+open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet
+variable {registry : BaseContext.Registry} {parent : Tower.Context registry}
+variable [Hashable parent.Value] [Hashable Signature]
+
+@[noinline] def obtainResult {α ε : Type} [Repr ε] (answer : Except ε α) : IO α :=
+  match answer with
+  | .ok value => pure value
+  | .error error => throw (IO.userError s!"actual child failed: {repr error}")
+
+@[noinline] def timed {α ε : Type} [Repr ε] (name : String) (work : Unit → Except ε α) : IO α := do
+  let before ← IO.monoMsNow
+  let value ← obtainResult (work ())
+  let after ← IO.monoMsNow
+  IO.println s!"child={name} elapsed_ms={after-before}"
+  pure value
+
+/-- Diagnostic orchestration of actual existing child functions. It preserves
+all original guard and strict boundary checks and validates its output through
+the actual complete-cell reader in the caller. -/
+def build {p : DensePoly parent.Value}
+    (roots : RootReplay.Result p .negInf .posInf) (values : Fin n → parent.Value)
+    (guards : List parent.Value) (formula : RealFormula.QF (n+1))
+    (points : Fin (roots.roots.length+1) → parent.Value) : IO Codec.Json := do
+  unless guards.all (fun d => Decidable.decide (d ≠ 0)) do throw (IO.userError "original divisor")
+  let queries := RepresentationSpecialize.prepare values formula
+  let sections ← (List.finRange roots.roots.length).mapM fun i =>
+    timed s!"section-{i.val}" (fun _ => CellBuild.row (roots.roots.get i) queries)
+  let sectors ← (List.finRange (roots.roots.length+1)).mapM fun cut => do
+    let point := points cut
+    let left ← if h : 0 < cut.val then do
+      let root := roots.roots.get ⟨cut.val-1, by have := cut.isLt; omega⟩
+      let signs ← timed s!"left-{cut.val}" (fun _ => root.buildSigns [Isolation.pointQuery point])
+      unless signs.value == -1 do throw (IO.userError "left strict boundary")
+      pure (RowEncode.packet parent.codec Signature.codec signs)
+      else pure Codec.Json.Value.null
+    let right ← if h : cut.val < roots.roots.length then do
+      let root := roots.roots.get ⟨cut.val,h⟩
+      let signs ← timed s!"right-{cut.val}" (fun _ => root.buildSigns [Isolation.pointQuery point])
+      unless signs.value == 1 do throw (IO.userError "right strict boundary")
+      pure (RowEncode.packet parent.codec Signature.codec signs)
+      else pure Codec.Json.Value.null
+    let raw : RawDescriptor parent.Value Signature :=
+      ⟨parent.signature, Isolation.pointQuery point, .negInf, .posInf, [], []⟩
+    let result ← timed s!"point-descriptor-{cut.val}" (fun _ => Descriptor.build parent.sign parent.signature raw)
+    let root ← obtainResult result
+    let signs ← timed s!"point-row-{cut.val}" (fun _ => CellBuild.row root queries)
+    return Codec.Json.arr #[parent.codec.encode point, left, right,
+      Codec.descriptor parent.codec Signature.codec root.raw,
+      Codec.graph parent.codec Signature.codec (Dag.encode root.evidence), signs]
+  return .arr #[.arr sections.toArray,.arr sectors.toArray]
+end Hex.RCF.RealCoefficients.RowStages

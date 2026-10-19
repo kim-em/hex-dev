@@ -1,0 +1,770 @@
+[
+  {
+    "trial": 0,
+    "degree": 2,
+    "owners": 2,
+    "arm": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-gather-baseline/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "2",
+      "2",
+      "1"
+    ],
+    "wall_seconds": 0.04115345199898002,
+    "load_after": [
+      11.0576171875,
+      17.49609375,
+      14.28564453125
+    ],
+    "returncode": 0,
+    "output": "degree=2 owners=2 reuse=true repeats=1 nanoseconds=481814 semantic_hash=2\n"
+  },
+  {
+    "trial": 0,
+    "degree": 2,
+    "owners": 2,
+    "arm": "cached",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "2",
+      "2",
+      "1"
+    ],
+    "wall_seconds": 0.03998208499979228,
+    "load_after": [
+      11.0576171875,
+      17.49609375,
+      14.28564453125
+    ],
+    "returncode": 0,
+    "output": "degree=2 owners=2 reuse=true repeats=1 nanoseconds=493030 semantic_hash=2\n"
+  },
+  {
+    "trial": 0,
+    "degree": 2,
+    "owners": 4,
+    "arm": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-gather-baseline/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "2",
+      "4",
+      "1"
+    ],
+    "wall_seconds": 0.05008683399864822,
+    "load_after": [
+      11.0576171875,
+      17.49609375,
+      14.28564453125
+    ],
+    "returncode": 0,
+    "output": "degree=2 owners=4 reuse=true repeats=1 nanoseconds=5353966 semantic_hash=4\n"
+  },
+  {
+    "trial": 0,
+    "degree": 2,
+    "owners": 4,
+    "arm": "cached",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "2",
+      "4",
+      "1"
+    ],
+    "wall_seconds": 0.04149883300124202,
+    "load_after": [
+      11.0576171875,
+      17.49609375,
+      14.28564453125
+    ],
+    "returncode": 0,
+    "output": "degree=2 owners=4 reuse=true repeats=1 nanoseconds=908246 semantic_hash=4\n"
+  },
+  {
+    "trial": 0,
+    "degree": 2,
+    "owners": 6,
+    "arm": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-gather-baseline/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "2",
+      "6",
+      "1"
+    ],
+    "wall_seconds": 0.5816393710010743,
+    "load_after": [
+      11.0576171875,
+      17.49609375,
+      14.28564453125
+    ],
+    "returncode": 0,
+    "output": "degree=2 owners=6 reuse=true repeats=1 nanoseconds=271146510 semantic_hash=6\n"
+  },
+  {
+    "trial": 0,
+    "degree": 2,
+    "owners": 6,
+    "arm": "cached",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "2",
+      "6",
+      "1"
+    ],
+    "wall_seconds": 0.042531033999694046,
+    "load_after": [
+      11.0576171875,
+      17.49609375,
+      14.28564453125
+    ],
+    "returncode": 0,
+    "output": "degree=2 owners=6 reuse=true repeats=1 nanoseconds=1318664 semantic_hash=6\n"
+  },
+  {
+    "trial": 0,
+    "degree": 2,
+    "owners": 8,
+    "arm": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-gather-baseline/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "2",
+      "8",
+      "1"
+    ],
+    "wall_seconds": 35.08905442299874,
+    "load_after": [
+      9.16552734375,
+      16.330078125,
+      14.01416015625
+    ],
+    "returncode": 0,
+    "output": "degree=2 owners=8 reuse=true repeats=1 nanoseconds=17520070169 semantic_hash=8\n"
+  },
+  {
+    "trial": 0,
+    "degree": 2,
+    "owners": 8,
+    "arm": "cached",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "2",
+      "8",
+      "1"
+    ],
+    "wall_seconds": 0.04496523200214142,
+    "load_after": [
+      9.16552734375,
+      16.330078125,
+      14.01416015625
+    ],
+    "returncode": 0,
+    "output": "degree=2 owners=8 reuse=true repeats=1 nanoseconds=1761110 semantic_hash=8\n"
+  },
+  {
+    "trial": 0,
+    "degree": 4,
+    "owners": 1,
+    "arm": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-gather-baseline/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "4",
+      "1",
+      "1"
+    ],
+    "wall_seconds": 0.04257328699895879,
+    "load_after": [
+      9.16552734375,
+      16.330078125,
+      14.01416015625
+    ],
+    "returncode": 0,
+    "output": "degree=4 owners=1 reuse=true repeats=1 nanoseconds=259795 semantic_hash=1\n"
+  },
+  {
+    "trial": 0,
+    "degree": 4,
+    "owners": 1,
+    "arm": "cached",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "4",
+      "1",
+      "1"
+    ],
+    "wall_seconds": 0.04086145900146221,
+    "load_after": [
+      9.16552734375,
+      16.330078125,
+      14.01416015625
+    ],
+    "returncode": 0,
+    "output": "degree=4 owners=1 reuse=true repeats=1 nanoseconds=343829 semantic_hash=1\n"
+  },
+  {
+    "trial": 0,
+    "degree": 4,
+    "owners": 2,
+    "arm": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-gather-baseline/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "4",
+      "2",
+      "1"
+    ],
+    "wall_seconds": 0.04209522699966328,
+    "load_after": [
+      9.16552734375,
+      16.330078125,
+      14.01416015625
+    ],
+    "returncode": 0,
+    "output": "degree=4 owners=2 reuse=true repeats=1 nanoseconds=658837 semantic_hash=2\n"
+  },
+  {
+    "trial": 0,
+    "degree": 4,
+    "owners": 2,
+    "arm": "cached",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "4",
+      "2",
+      "1"
+    ],
+    "wall_seconds": 0.042102729003090644,
+    "load_after": [
+      9.16552734375,
+      16.330078125,
+      14.01416015625
+    ],
+    "returncode": 0,
+    "output": "degree=4 owners=2 reuse=true repeats=1 nanoseconds=757543 semantic_hash=2\n"
+  },
+  {
+    "trial": 0,
+    "degree": 4,
+    "owners": 3,
+    "arm": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-gather-baseline/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "4",
+      "3",
+      "1"
+    ],
+    "wall_seconds": 0.04556319800030906,
+    "load_after": [
+      9.16552734375,
+      16.330078125,
+      14.01416015625
+    ],
+    "returncode": 0,
+    "output": "degree=4 owners=3 reuse=true repeats=1 nanoseconds=1605730 semantic_hash=3\n"
+  },
+  {
+    "trial": 0,
+    "degree": 4,
+    "owners": 3,
+    "arm": "cached",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "4",
+      "3",
+      "1"
+    ],
+    "wall_seconds": 0.04323924300115323,
+    "load_after": [
+      9.16552734375,
+      16.330078125,
+      14.01416015625
+    ],
+    "returncode": 0,
+    "output": "degree=4 owners=3 reuse=true repeats=1 nanoseconds=1159659 semantic_hash=3\n"
+  },
+  {
+    "trial": 0,
+    "degree": 4,
+    "owners": 4,
+    "arm": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-gather-baseline/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "4",
+      "4",
+      "1"
+    ],
+    "wall_seconds": 0.0601593840001442,
+    "load_after": [
+      9.16552734375,
+      16.330078125,
+      14.01416015625
+    ],
+    "returncode": 0,
+    "output": "degree=4 owners=4 reuse=true repeats=1 nanoseconds=6324755 semantic_hash=4\n"
+  },
+  {
+    "trial": 0,
+    "degree": 4,
+    "owners": 4,
+    "arm": "cached",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "4",
+      "4",
+      "1"
+    ],
+    "wall_seconds": 0.04357431000244105,
+    "load_after": [
+      9.16552734375,
+      16.330078125,
+      14.01416015625
+    ],
+    "returncode": 0,
+    "output": "degree=4 owners=4 reuse=true repeats=1 nanoseconds=1532001 semantic_hash=4\n"
+  },
+  {
+    "trial": 1,
+    "degree": 2,
+    "owners": 2,
+    "arm": "cached",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "2",
+      "2",
+      "1"
+    ],
+    "wall_seconds": 0.03960743000061484,
+    "load_after": [
+      9.16552734375,
+      16.330078125,
+      14.01416015625
+    ],
+    "returncode": 0,
+    "output": "degree=2 owners=2 reuse=true repeats=1 nanoseconds=475154 semantic_hash=2\n"
+  },
+  {
+    "trial": 1,
+    "degree": 2,
+    "owners": 2,
+    "arm": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-gather-baseline/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "2",
+      "2",
+      "1"
+    ],
+    "wall_seconds": 0.042041127002448775,
+    "load_after": [
+      9.16552734375,
+      16.330078125,
+      14.01416015625
+    ],
+    "returncode": 0,
+    "output": "degree=2 owners=2 reuse=true repeats=1 nanoseconds=486791 semantic_hash=2\n"
+  },
+  {
+    "trial": 1,
+    "degree": 2,
+    "owners": 4,
+    "arm": "cached",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "2",
+      "4",
+      "1"
+    ],
+    "wall_seconds": 0.042112052000447875,
+    "load_after": [
+      9.16552734375,
+      16.330078125,
+      14.01416015625
+    ],
+    "returncode": 0,
+    "output": "degree=2 owners=4 reuse=true repeats=1 nanoseconds=929668 semantic_hash=4\n"
+  },
+  {
+    "trial": 1,
+    "degree": 2,
+    "owners": 4,
+    "arm": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-gather-baseline/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "2",
+      "4",
+      "1"
+    ],
+    "wall_seconds": 0.05288718399970094,
+    "load_after": [
+      9.16552734375,
+      16.330078125,
+      14.01416015625
+    ],
+    "returncode": 0,
+    "output": "degree=2 owners=4 reuse=true repeats=1 nanoseconds=5341548 semantic_hash=4\n"
+  },
+  {
+    "trial": 1,
+    "degree": 2,
+    "owners": 6,
+    "arm": "cached",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "2",
+      "6",
+      "1"
+    ],
+    "wall_seconds": 0.04361846599931596,
+    "load_after": [
+      9.16552734375,
+      16.330078125,
+      14.01416015625
+    ],
+    "returncode": 0,
+    "output": "degree=2 owners=6 reuse=true repeats=1 nanoseconds=1331233 semantic_hash=6\n"
+  },
+  {
+    "trial": 1,
+    "degree": 2,
+    "owners": 6,
+    "arm": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-gather-baseline/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "2",
+      "6",
+      "1"
+    ],
+    "wall_seconds": 0.602381508997496,
+    "load_after": [
+      9.16552734375,
+      16.330078125,
+      14.01416015625
+    ],
+    "returncode": 0,
+    "output": "degree=2 owners=6 reuse=true repeats=1 nanoseconds=276954019 semantic_hash=6\n"
+  },
+  {
+    "trial": 1,
+    "degree": 2,
+    "owners": 8,
+    "arm": "cached",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "2",
+      "8",
+      "1"
+    ],
+    "wall_seconds": 0.04474670800118474,
+    "load_after": [
+      9.16552734375,
+      16.330078125,
+      14.01416015625
+    ],
+    "returncode": 0,
+    "output": "degree=2 owners=8 reuse=true repeats=1 nanoseconds=1754531 semantic_hash=8\n"
+  },
+  {
+    "trial": 1,
+    "degree": 2,
+    "owners": 8,
+    "arm": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-gather-baseline/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "2",
+      "8",
+      "1"
+    ],
+    "wall_seconds": 34.832285586999205,
+    "load_after": [
+      7.26708984375,
+      15.0478515625,
+      13.6689453125
+    ],
+    "returncode": 0,
+    "output": "degree=2 owners=8 reuse=true repeats=1 nanoseconds=17427230239 semantic_hash=8\n"
+  },
+  {
+    "trial": 1,
+    "degree": 4,
+    "owners": 1,
+    "arm": "cached",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "4",
+      "1",
+      "1"
+    ],
+    "wall_seconds": 0.040590766999230254,
+    "load_after": [
+      7.26708984375,
+      15.0478515625,
+      13.6689453125
+    ],
+    "returncode": 0,
+    "output": "degree=4 owners=1 reuse=true repeats=1 nanoseconds=328727 semantic_hash=1\n"
+  },
+  {
+    "trial": 1,
+    "degree": 4,
+    "owners": 1,
+    "arm": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-gather-baseline/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "4",
+      "1",
+      "1"
+    ],
+    "wall_seconds": 0.04101567699763109,
+    "load_after": [
+      7.26708984375,
+      15.0478515625,
+      13.6689453125
+    ],
+    "returncode": 0,
+    "output": "degree=4 owners=1 reuse=true repeats=1 nanoseconds=260887 semantic_hash=1\n"
+  },
+  {
+    "trial": 1,
+    "degree": 4,
+    "owners": 2,
+    "arm": "cached",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "4",
+      "2",
+      "1"
+    ],
+    "wall_seconds": 0.041052151998883346,
+    "load_after": [
+      7.26708984375,
+      15.0478515625,
+      13.6689453125
+    ],
+    "returncode": 0,
+    "output": "degree=4 owners=2 reuse=true repeats=1 nanoseconds=744183 semantic_hash=2\n"
+  },
+  {
+    "trial": 1,
+    "degree": 4,
+    "owners": 2,
+    "arm": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-gather-baseline/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "4",
+      "2",
+      "1"
+    ],
+    "wall_seconds": 0.04227711699786596,
+    "load_after": [
+      7.26708984375,
+      15.0478515625,
+      13.6689453125
+    ],
+    "returncode": 0,
+    "output": "degree=4 owners=2 reuse=true repeats=1 nanoseconds=649773 semantic_hash=2\n"
+  },
+  {
+    "trial": 1,
+    "degree": 4,
+    "owners": 3,
+    "arm": "cached",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "4",
+      "3",
+      "1"
+    ],
+    "wall_seconds": 0.04250051900089602,
+    "load_after": [
+      7.26708984375,
+      15.0478515625,
+      13.6689453125
+    ],
+    "returncode": 0,
+    "output": "degree=4 owners=3 reuse=true repeats=1 nanoseconds=1155122 semantic_hash=3\n"
+  },
+  {
+    "trial": 1,
+    "degree": 4,
+    "owners": 3,
+    "arm": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-gather-baseline/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "4",
+      "3",
+      "1"
+    ],
+    "wall_seconds": 0.04476267200152506,
+    "load_after": [
+      7.26708984375,
+      15.0478515625,
+      13.6689453125
+    ],
+    "returncode": 0,
+    "output": "degree=4 owners=3 reuse=true repeats=1 nanoseconds=1609386 semantic_hash=3\n"
+  },
+  {
+    "trial": 1,
+    "degree": 4,
+    "owners": 4,
+    "arm": "cached",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "4",
+      "4",
+      "1"
+    ],
+    "wall_seconds": 0.04322368100110907,
+    "load_after": [
+      7.26708984375,
+      15.0478515625,
+      13.6689453125
+    ],
+    "returncode": 0,
+    "output": "degree=4 owners=4 reuse=true repeats=1 nanoseconds=1525741 semantic_hash=4\n"
+  },
+  {
+    "trial": 1,
+    "degree": 4,
+    "owners": 4,
+    "arm": "baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "7",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-gather-baseline/.lake/build/bin/hexrealclosure_bench",
+      "gather-reuse-timing",
+      "4",
+      "4",
+      "1"
+    ],
+    "wall_seconds": 0.05998845100111794,
+    "load_after": [
+      7.26708984375,
+      15.0478515625,
+      13.6689453125
+    ],
+    "returncode": 0,
+    "output": "degree=4 owners=4 reuse=true repeats=1 nanoseconds=6402480 semantic_hash=4\n"
+  }
+]

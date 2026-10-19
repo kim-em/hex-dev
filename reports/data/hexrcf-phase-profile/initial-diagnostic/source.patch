@@ -1,0 +1,158 @@
+diff --git a/adapters/HexRCF/RealCoefficients/CommonTactic.lean b/adapters/HexRCF/RealCoefficients/CommonTactic.lean
+index 68022af01..7732c1c24 100644
+--- a/adapters/HexRCF/RealCoefficients/CommonTactic.lean
++++ b/adapters/HexRCF/RealCoefficients/CommonTactic.lean
+@@ -306,17 +306,18 @@ private def oneQuantifier {n : Nat} (formula : RealFormula.Prenex n) :
+   | .quant q (.matrix qf) => some (q, qf)
+   | _ => none
+ 
+-private meta def prove (source : Reify.Source) (leafSources : Array Expr) (plans : Array SourcePlan) : MetaM Expr := do
++private meta def assemble (source : Reify.Source) (leafSources : Array Expr) (plans : Array SourcePlan) : MetaM Expr := do
+   let anchors := plans.map (·.anchorValue)
+   -- Several source coordinates may use the same selected generator. Search
+   -- once for each generator, then restore the original source order. Every
+   -- resulting coordinate still passes the polynomial and enclosure checks.
+   let distinct := anchors.foldl (fun seen anchor =>
+     if seen.contains anchor then seen else seen.push anchor) #[]
+-  let common : QAdjoin.Presentation := if distinct.size = 1 then
++  let common ← profileitM Exception "rcf common field" (← getOptions) do
++    pure (if distinct.size = 1 then
+       let generator := distinct[0]!.toAlgebraic
+       ⟨generator, #[generator.toQAdjoin]⟩
+-    else QAdjoin.common (distinct.map RealAlgebraicNumber.toAlgebraic)
++    else QAdjoin.common (distinct.map RealAlgebraicNumber.toAlgebraic) : QAdjoin.Presentation)
+   unless common.entries.size == distinct.size do
+     throwError "rcf: common-field presentation failed"
+   unless common.generator.isReal do
+@@ -573,6 +574,11 @@ private meta def prove (source : Reify.Source) (leafSources : Array Expr) (plans
+     else throwError "rcf: common square has insufficient precision"
+   else throwError "rcf: common square failed its root witness"
+ 
++private meta def prove (source : Reify.Source) (leafSources : Array Expr)
++    (plans : Array SourcePlan) : MetaM Expr := do
++  profileitM Exception "rcf algebraic frontend" (← getOptions)
++    (assemble source leafSources plans)
++
+ private meta partial def gather (source : Expr) (leaves : Array Expr) :
+     MetaM (Option (Array Expr)) := do
+   if ← eligible source then
+@@ -611,11 +617,13 @@ private meta partial def gather (source : Expr) (leaves : Array Expr) :
+     let some next ← gather scalar leaves | return .declined
+     leaves := next
+   if leaves.isEmpty then return .declined
+-  let mut plans : Array SourcePlan := #[]
+-  for scalar in leaves do
+-    let some plan ← sourcePlan? scalar |
+-      throwError "rcf: internal: eligible leaf has no plan"
+-    plans := plans.push plan
++  let plans ← profileitM Exception "rcf source authentication" (← getOptions) do
++    let mut plans : Array SourcePlan := #[]
++    for scalar in leaves do
++      let some plan ← sourcePlan? scalar |
++        throwError "rcf: internal: eligible leaf has no plan"
++      plans := plans.push plan
++    pure plans
+   return .proved (← prove source leaves plans)
+ 
+ end Hex.RCF.RealCoefficients.CommonTactic
+diff --git a/adapters/HexRCF/RealCoefficients/FieldLiteral.lean b/adapters/HexRCF/RealCoefficients/FieldLiteral.lean
+index 473a8dbb7..82b9121c3 100644
+--- a/adapters/HexRCF/RealCoefficients/FieldLiteral.lean
++++ b/adapters/HexRCF/RealCoefficients/FieldLiteral.lean
+@@ -286,7 +286,8 @@ private meta def quoteCertificate {p : ZPoly} {s : DyadicSquare}
+       throwError "rcf: the existential sentence is false on the prepared cells"
+   | _, none => throwError "rcf: finite sign table did not decide the sentence"
+   | _, some true => pure ()
+-  let certificate ← resultExpr pExpr rootExpr formulaExpr formula data
++  let certificate ← profileitM Exception "rcf literal quotation" (← getOptions) do
++    resultExpr pExpr rootExpr formulaExpr formula data
+   let verdictName := match quantifier with
+     | .forallReal => ``FieldBuild.Result.checkForall
+     | .existsReal => ``FieldBuild.Result.checkExists
+@@ -314,7 +315,8 @@ private meta def quoteCertificate {p : ZPoly} {s : DyadicSquare}
+           TarskiCertificate.check_eq, SignedRemainderChain.check,
+           ← Array.all_toList, Array.toList_range, Bool.and_eq_true];
+           repeat' (any_goals (apply And.intro)); all_goals try (decide +kernel)))
+-  let remaining ← Lean.Elab.runTactic' candidate.mvarId! script
++  let remaining ← profileitM Exception "rcf literal replay" (← getOptions) do
++    Lean.Elab.runTactic' candidate.mvarId! script
+   unless remaining.isEmpty do
+     throwError "rcf: fixed-field certificate replay did not prove a true verdict"
+   let checked ← instantiateMVars candidate
+@@ -338,7 +340,9 @@ meta def proveWithCertificate {p : ZPoly} {s : DyadicSquare}
+     (extraSignKeys : List (PolyQuot p (SimpleRoot.ofSquare p s hw hp)) := [])
+     (validate : FieldBuild.Result p s hw hp Unit (n + 1) → MetaM Unit := fun _ => pure ()) :
+     MetaM (Expr × Expr × FieldBuild.Result p s hw hp Unit (n + 1) × Expr) := do
+-  let some data := FieldBuild.build p s hw hp values formula () precision extraSignKeys |
++  let proposed ← profileitM Exception "rcf certificate production" (← getOptions) do
++    pure (FieldBuild.build p s hw hp values formula () precision extraSignKeys)
++  let some data := proposed |
+     throwError "rcf: fixed-field certificate construction failed"
+   return ← quoteCertificate pExpr rootExpr valuesExpr formulaExpr values formula
+     quantifier extraSignKeys validate data
+@@ -360,8 +364,9 @@ meta def proveRefiningWithCertificate {p : ZPoly} {s : DyadicSquare}
+   if real : s.meetsRealAxis = true then
+     let options ← getOptions
+     Core.checkInterrupted
+-    let result := FieldBuild.produceWithin p s hw hp real values formula ()
+-      (rcf.algebraic.directDepth.get options) (rcf.algebraic.maxDoublings.get options) extraSignKeys
++    let result ← profileitM Exception "rcf certificate production" options do
++      pure (FieldBuild.produceWithin p s hw hp real values formula ()
++        (rcf.algebraic.directDepth.get options) (rcf.algebraic.maxDoublings.get options) extraSignKeys)
+     Core.checkInterrupted
+     match result with
+     | .error .exhausted => throwError "rcf: algebraic interval refinement budget exhausted; increase rcf.algebraic.maxDoublings or rcf.algebraic.directDepth"
+diff --git a/adapters/HexRCF/RealCoefficients/Reify.lean b/adapters/HexRCF/RealCoefficients/Reify.lean
+index 2ce4e70ef..31da73346 100644
+--- a/adapters/HexRCF/RealCoefficients/Reify.lean
++++ b/adapters/HexRCF/RealCoefficients/Reify.lean
+@@ -364,20 +364,20 @@ Lean runtime failures remain terminal exceptions, with state restored; callers
+ must not reclassify them as solver declines. -/
+ def prepare (source : Expr) (config : Hex.RealFormula.Reify.Config := {})
+     (registered : Array Expr := #[]) : MetaM (Except Hex.RealFormula.Reify.Error Source) := do
+-  let saved ← saveState
+-  let (result, _) ← tryFinally'
+-    (do
+-      let outcome ← ((prepareCore registered source config).run
+-        { config, budget := .ofBudget config.ring.budget }).run
+-      return outcome.map Prod.fst)
+-    (fun result => do
+-      match result with
+-      | some (.ok _) =>
+-          modify fun state => { state with
+-            mctx := saved.meta.mctx
+-            postponed := saved.meta.postponed
+-            zetaDeltaFVarIds := saved.meta.zetaDeltaFVarIds }
+-      | _ => saved.restore)
+-  return result
+-
++  profileitM Exception "rcf source preparation" (← getOptions) do
++    let saved ← saveState
++    let (result, _) ← tryFinally'
++      (do
++        let outcome ← ((prepareCore registered source config).run
++          { config, budget := .ofBudget config.ring.budget }).run
++        return outcome.map Prod.fst)
++      (fun result => do
++        match result with
++        | some (.ok _) =>
++            modify fun state => { state with
++              mctx := saved.meta.mctx
++              postponed := saved.meta.postponed
++              zetaDeltaFVarIds := saved.meta.zetaDeltaFVarIds }
++        | _ => saved.restore)
++    return result
+ end Hex.RCF.RealCoefficients.Reify
+diff --git a/lakefile.lean b/lakefile.lean
+index 1d3cb4bab..3320eea5d 100644
+--- a/lakefile.lean
++++ b/lakefile.lean
+@@ -1058,7 +1058,7 @@ lean_lib HexRCFBenchSupport where
+ lean_lib HexRCFProofProbe where
+   srcDir := "bench"
+   globs := #[`HexRCF.ProofProbe.SyntaxFixture, `HexRCF.ProofProbe.Syntax,
+-    `HexRCF.ProofProbe.Examples,
++    `HexRCF.ProofProbe.Examples, `HexRCF.ProofProbe.Profiling,
+     `HexRCF.ProofProbe.Registered.Unused,
+     `HexRCF.ProofProbe.Registered.Support,
+     `HexRCF.ProofProbe.Registered.Tactic,

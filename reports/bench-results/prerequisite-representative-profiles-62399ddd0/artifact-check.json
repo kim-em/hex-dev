@@ -1,0 +1,20 @@
+[
+  {
+    "family": "sturm-head",
+    "artifact_count": 42,
+    "missing_or_mismatched": [],
+    "raw_directory": "/home/kim/.local/state/hex/issue-10577-profiles/sturm-head-62399ddd0"
+  },
+  {
+    "family": "sturm-query",
+    "artifact_count": 42,
+    "missing_or_mismatched": [],
+    "raw_directory": "/home/kim/.local/state/hex/issue-10577-profiles/sturm-query-62399ddd0"
+  },
+  {
+    "family": "real-hard-add",
+    "artifact_count": 42,
+    "missing_or_mismatched": [],
+    "raw_directory": "/home/kim/.local/state/hex/issue-10577-profiles/real-hard-add-62399ddd0"
+  }
+]

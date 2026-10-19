@@ -1,0 +1,9 @@
+Hex.RealAlgebraicScaling.runSqrt2    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a3ddc94-dirty, 2026-10-04T20:07:22Z, host=chungus2
+  repeat 0  12.942 ms  (×2^2, total 51.767 ms)
+  median: 12.942 ms    min: 12.942 ms    max: 12.942 ms
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 68_664 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Sqrt-2-Flint-2-Native.json

@@ -1,0 +1,22 @@
+{
+  "source": "7ceaf9d47d8fe1b98d3daa86c699651c859c3aab",
+  "scope": "Operational result/hash verification with installed exact oracle dependencies; previous missing-dependency failures retained. Not a scientific rerun.",
+  "environment": {
+    "HEX_FLINT_BENCH_PYTHON": "/home/kim/.local/state/hex/issue-10577-oracles/bin/python",
+    "HEX_PARI_BENCH_PYTHON": "/home/kim/.local/state/hex/issue-10577-oracles/bin/python",
+    "PYTHONPATH": "/nix/store/dmhf4vk1p6qpbpb8fkgh9jadir4i3fm9-python3.14-cypari2-2.2.4/lib/python3.14/site-packages:/nix/store/pp6zajyqb7c4sxfaql7r5klb00sshis1-python3.14-cysignals-1.12.6/lib/python3.14/site-packages",
+    "LD_LIBRARY_PATH": "/nix/store/chqq8mpmpyfi9kgsngya71akv5xicn03-gcc-15.2.0-lib/lib"
+  },
+  "checks": [
+    {
+      "name": "real",
+      "exit_code": 0,
+      "wall_seconds": 20.72801331899973
+    },
+    {
+      "name": "numberfield",
+      "exit_code": 0,
+      "wall_seconds": 10.148701905000053
+    }
+  ]
+}

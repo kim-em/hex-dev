@@ -1,0 +1,47 @@
+diff --git a/adapters/HexRCF/RealCoefficients/RootQuote.lean b/adapters/HexRCF/RealCoefficients/RootQuote.lean
+index f20ff14790..dcffbcb331 100644
+--- a/adapters/HexRCF/RealCoefficients/RootQuote.lean
++++ b/adapters/HexRCF/RealCoefficients/RootQuote.lean
+@@ -150,7 +150,9 @@ private def codecProof? (decode : DecoderM) (expression : Expr) : ReifyM (Option
+   return some (← Hex.RCF.checkProof `RootQuote.codec statement proof)
+ 
+ private def reflexiveProof? (expression : Expr) : ReifyM (Option Expr) := do
+-  unless expression.getAppFn.isConstOf ``withPtrEqDecEq do return none
++  if expression.hasLooseBVars || expression.hasMVar then return none
++  unless #[``withPtrEqDecEq,``List.hasDecEq,``List.rec].any expression.getAppFn.isConstOf do
++    return none
+   let type ← whnf (← inferType expression)
+   unless type.isAppOfArity ``Decidable 1 do return none
+   let proposition := type.appArg!
+@@ -240,7 +242,19 @@ private def checkedBool (decode : DecoderM) (dependent : Expr → ReifyM Expr) (
+       let proof ← Hex.RCF.checkProof `RootQuote.major statement candidate
+       return (value,proof)
+     let some (whole,subject,law) ← demanded decode dependent reduced
+-      | throwError "rcf: literal Boolean replay remains at {reduced.getAppFn.constName?}"
++      | withOptions (fun options => pp.proofs.set (pp.deepTerms.set (pp.deepTerms.threshold.set options 12) false) false) do
++          let dictionary ← match reduced with
++            | .proj _ _ body => inferType body
++            | _ => inferType reduced
++          let mut majorShape : MessageData := "unavailable"
++          if let .proj _ _ body := reduced then
++            if let some name := body.getAppFn.constName? then
++              if let .recInfo recursor ← getConstInfo name then
++                if let some major := body.getAppArgs[recursor.getMajorIdx]? then
++                  majorShape := match major.getAppFn with
++                    | .proj structureName index _ => m!"projection {structureName}.{index}"
++                    | head => m!"head={head.constName?}; arguments={major.getAppNumArgs}"
++          throwError "rcf: literal Boolean replay remains at {reduced.getAppFn.constName?}, arguments={reduced.getAppNumArgs}; major={majorShape}; dictionary={dictionary}; value={reduced}"
+     let (next,proof) ← checkedStep current whole subject law
+     current := next
+     transport ← mkEqTrans transport proof
+@@ -289,8 +303,8 @@ private partial def quoteCore (reader : Expr) (decode : DecoderM) : ReifyM Resul
+   let reader ← Hex.RCF.checkExpr `RootQuote.reader reader
+   Meta.check reader
+   let type ← whnf (← inferType reader)
+-  unless type.isAppOfArity ``Except 2 && type.getAppArgs[0]!.isConstOf ``String do
+-    throwError "rcf: expected a literal Except String reader"
++  unless type.isAppOfArity ``Except 2 do
++    throwError "rcf: expected a literal Except reader"
+   let original ← mkAppM ``Except.toOption #[reader]
+   let mut current := original
+   let mut transport ← mkEqRefl original

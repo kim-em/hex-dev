@@ -1,0 +1,11 @@
+ActiveState=active
+ControlGroup=/user.slice/user-1003.slice/user@1003.service/app.slice/hex-10358-lean-build.service
+MemoryMax=34359738368
+MemorySwapMax=0
+
+Running as unit: hex-10358-lean-build.service
+          Finished with result: success
+Main processes terminated with: code=exited, status=0/SUCCESS
+               Service runtime: 2.022s
+             CPU time consumed: 6ms
+                   Memory peak: 2.2M (swap: 0B)

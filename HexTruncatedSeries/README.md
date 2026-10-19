@@ -7,7 +7,7 @@ with spec-driven development.
 `hex-truncated-series` provides fixed-precision power series, arithmetic,
 precision changes, Newton operations, composition, and reversion. It depends
 on [`hex-basic`](https://github.com/leanprover/hex-basic). See
-[`hex-truncated-series-mathlib`](https://github.com/leanprover/hex-truncated-series-mathlib)
+[`hex-truncated-series-theory`](https://github.com/leanprover/hex-truncated-series-theory)
 for the correspondence with Mathlib's `PowerSeries`.
 
 # Quickstart
@@ -68,7 +68,7 @@ theorem revLagrange_eq [Lean.Grind.CommRing R]
 
 The quotient interpretation and correspondence with Mathlib power series
 live in
-[`hex-truncated-series-mathlib`](https://github.com/leanprover/hex-truncated-series-mathlib).
+[`hex-truncated-series-theory`](https://github.com/leanprover/hex-truncated-series-theory).
 
 # Contributing
 

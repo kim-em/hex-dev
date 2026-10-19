@@ -18,8 +18,8 @@ from check_dag import (
     import_closure_in_library,
     parse_imports,
     main,
+    lean_build_roots,
 )
-from check_phase4 import check_headline_reports
 from libgraph import (load_libraries, library_owner_for_path, may_import,
                       reachable_dependencies)
 
@@ -35,11 +35,11 @@ class AdapterOwnershipTest(unittest.TestCase):
     def test_adapter_imports_do_not_expand_base_or_published_closure(self) -> None:
         libraries = load_libraries()
         closure = reachable_dependencies(libraries)
-        for dependency in ["HexRealAlgebraicMathlib", "HexNumberFieldMathlib"]:
+        for dependency in ["HexRealAlgebraicTheory", "HexNumberFieldTheory"]:
             self.assertTrue(may_import("HexRCF", dependency, libraries, closure, adapter=True))
             self.assertFalse(may_import("HexRCF", dependency, libraries, closure))
             self.assertNotIn(dependency, closure["HexRCF"])
-        self.assertFalse(may_import("HexPoly", "HexNumberFieldMathlib", libraries, closure,
+        self.assertFalse(may_import("HexPoly", "HexNumberFieldTheory", libraries, closure,
                                     adapter=True))
         self.assertFalse(may_import("HexRCF", "HexGraphIso", libraries, closure, adapter=True))
 
@@ -89,14 +89,14 @@ class ExternalProofDependencyTest(unittest.TestCase):
                 "libraries:\n"
                 "  HexCore:\n    deps: []\n    mathlib: false\n"
                 "    done_through: 0\n    status: active\n"
-                "  HexCoreMathlib:\n    deps: [HexCore]\n    mathlib: true\n"
+                "  HexCoreTheory:\n    deps: [HexCore]\n    mathlib: true\n"
                 "    done_through: 0\n    status: active\n")
-            names = {"HexCore", "HexCoreMathlib"} | KNOWN_EXCEPTIONS
+            names = {"HexCore", "HexCoreTheory"} | KNOWN_EXCEPTIONS
             for name in names:
                 (root / f"{name}.lean").write_text("")
             (root / "lakefile.lean").write_text(
                 "\n".join(f"lean_lib {name} where" for name in sorted(names)))
-            (root / "HexCoreMathlib.lean").write_text(
+            (root / "HexCoreTheory.lean").write_text(
                 "public import TauCeti.Algebra.Polynomial.Sturm.Infinity\n")
             with patch("check_dag.__file__", str(root / "scripts/check_dag.py")):
                 self.assertEqual(main(), 0)
@@ -138,6 +138,17 @@ class MetaImportTest(unittest.TestCase):
 
 
 class ImportAllClosureTest(unittest.TestCase):
+    def test_optional_library_entries_are_explicit_roots(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            lakefile = Path(directory) / "lakefile.lean"
+            lakefile.write_text(
+                "lean_lib HexCore where\n"
+                "  roots := #[`HexCore,\n    `HexCore.Optional]\n"
+                "  globs := #[.submodules `HexCore]\n"
+                "lean_exe smoke where\n  root := `Smoke\n")
+            self.assertEqual(lean_build_roots(lakefile),
+                             {"HexCore", "HexCore.Optional", "Smoke"})
+
     def test_private_facets_are_build_dependencies(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -154,6 +165,23 @@ class ImportAllClosureTest(unittest.TestCase):
 
 
 class SealedImportAllTest(unittest.TestCase):
+    def test_sturm_replay_exception_is_exact(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            paths = [
+                Path("experiments/KernelReplay/NativeAssemblyStaged.lean"),
+                Path("experiments/KernelReplay/Other.lean"),
+                Path("conformance/KernelReplay/NativeAssemblyStaged.lean"),
+            ]
+            for path in paths:
+                full_path = root / path
+                full_path.parent.mkdir(parents=True, exist_ok=True)
+                full_path.write_text("import all HexSturm.Basic\n", encoding="utf-8")
+            self.assertEqual(check_sealed_import_all(root, paths), [
+                f"{path}:1 uses `import all HexSturm.Basic` outside its exact "
+                "trusted-internals allowlist" for path in paths[1:]
+            ])
+
     def test_ownerless_roots_are_checked(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -172,18 +200,18 @@ class SealedImportAllTest(unittest.TestCase):
                     "HexInterval.RuntimeController"),
                 (Path("conformance/HexInterval/Bypass.lean"), "HexInterval.Search"),
                 (Path("bench/HexInterval/Bypass.lean"), "HexInterval.Search"),
-                (Path("conformance/HexIntervalMathlib/Bypass.lean"),
-                    "HexIntervalMathlib.Proof"),
-                (Path("bench/HexIntervalMathlib/Bypass.lean"),
-                    "HexIntervalMathlib.Proof"),
-                (Path("conformance/HexIntervalMathlib/BypassRuntimeProof.lean"),
-                    "HexIntervalMathlib.RuntimeProof"),
-                (Path("bench/HexIntervalMathlib/BypassRuntimeProof.lean"),
-                    "HexIntervalMathlib.RuntimeProof"),
-                (Path("conformance/HexIntervalMathlib/BypassRuntimeTerminal.lean"),
-                    "HexIntervalMathlib.RuntimeTerminal"),
-                (Path("bench/HexIntervalMathlib/BypassRuntimeTerminal.lean"),
-                    "HexIntervalMathlib.RuntimeTerminal"),
+                (Path("conformance/HexIntervalTheory/Bypass.lean"),
+                    "HexIntervalTheory.Proof"),
+                (Path("bench/HexIntervalTheory/Bypass.lean"),
+                    "HexIntervalTheory.Proof"),
+                (Path("conformance/HexIntervalTheory/BypassRuntimeProof.lean"),
+                    "HexIntervalTheory.RuntimeProof"),
+                (Path("bench/HexIntervalTheory/BypassRuntimeProof.lean"),
+                    "HexIntervalTheory.RuntimeProof"),
+                (Path("conformance/HexIntervalTheory/BypassRuntimeTerminal.lean"),
+                    "HexIntervalTheory.RuntimeTerminal"),
+                (Path("bench/HexIntervalTheory/BypassRuntimeTerminal.lean"),
+                    "HexIntervalTheory.RuntimeTerminal"),
             ]
             files = [path for path, _ in cases]
             for path, module in cases:
@@ -212,51 +240,44 @@ class SealedImportAllTest(unittest.TestCase):
                     "HexInterval.Search` outside its exact trusted-internals allowlist",
                     "bench/HexInterval/Bypass.lean:1 uses `import all "
                     "HexInterval.Search` outside its exact trusted-internals allowlist",
-                    "conformance/HexIntervalMathlib/Bypass.lean:1 uses `import all "
-                    "HexIntervalMathlib.Proof` outside its exact trusted-internals allowlist",
-                    "bench/HexIntervalMathlib/Bypass.lean:1 uses `import all "
-                    "HexIntervalMathlib.Proof` outside its exact trusted-internals allowlist",
-                    "conformance/HexIntervalMathlib/BypassRuntimeProof.lean:1 uses "
-                    "`import all HexIntervalMathlib.RuntimeProof` outside its exact "
+                    "conformance/HexIntervalTheory/Bypass.lean:1 uses `import all "
+                    "HexIntervalTheory.Proof` outside its exact trusted-internals allowlist",
+                    "bench/HexIntervalTheory/Bypass.lean:1 uses `import all "
+                    "HexIntervalTheory.Proof` outside its exact trusted-internals allowlist",
+                    "conformance/HexIntervalTheory/BypassRuntimeProof.lean:1 uses "
+                    "`import all HexIntervalTheory.RuntimeProof` outside its exact "
                     "trusted-internals allowlist",
-                    "bench/HexIntervalMathlib/BypassRuntimeProof.lean:1 uses "
-                    "`import all HexIntervalMathlib.RuntimeProof` outside its exact "
+                    "bench/HexIntervalTheory/BypassRuntimeProof.lean:1 uses "
+                    "`import all HexIntervalTheory.RuntimeProof` outside its exact "
                     "trusted-internals allowlist",
-                    "conformance/HexIntervalMathlib/BypassRuntimeTerminal.lean:1 uses "
-                    "`import all HexIntervalMathlib.RuntimeTerminal` outside its exact "
+                    "conformance/HexIntervalTheory/BypassRuntimeTerminal.lean:1 uses "
+                    "`import all HexIntervalTheory.RuntimeTerminal` outside its exact "
                     "trusted-internals allowlist",
-                    "bench/HexIntervalMathlib/BypassRuntimeTerminal.lean:1 uses "
-                    "`import all HexIntervalMathlib.RuntimeTerminal` outside its exact "
+                    "bench/HexIntervalTheory/BypassRuntimeTerminal.lean:1 uses "
+                    "`import all HexIntervalTheory.RuntimeTerminal` outside its exact "
                     "trusted-internals allowlist",
                 ],
             )
 
 
-class HeadlineReportTest(unittest.TestCase):
-    def write_manifest(self, root: Path, mathlib: bool) -> None:
-        (root / "libraries.yml").write_text(
-            "libraries:\n"
-            "  HexFoo:\n"
-            "    deps: []\n"
-            f"    mathlib: {'true' if mathlib else 'false'}\n"
-            "    done_through: 4\n"
-            "    status: active\n",
-            encoding="utf-8",
-        )
-
-    def test_compiled_library_needs_report(self) -> None:
+class RemovedLibraryFieldTest(unittest.TestCase):
+    def test_phase4_block_is_rejected(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            self.write_manifest(root, mathlib=False)
-            _, error = check_headline_reports(root)
-            self.assertIn("HexFoo: missing Phase-4 headline report", error)
-
-    def test_mathlib_library_needs_no_report(self) -> None:
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            self.write_manifest(root, mathlib=True)
-            _, error = check_headline_reports(root)
-            self.assertIsNone(error)
+            path = Path(directory) / "libraries.yml"
+            path.write_text(
+                "libraries:\n"
+                "  HexFoo:\n"
+                "    deps: []\n"
+                "    mathlib: false\n"
+                "    done_through: 4\n"
+                "    status: active\n"
+                "    phase4:\n"
+                "      comparators:\n"
+                "        - tool: FLINT\n",
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "HexFoo has removed field 'phase4'"):
+                load_libraries(path)
 
 
 if __name__ == "__main__":

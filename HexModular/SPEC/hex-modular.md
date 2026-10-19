@@ -3,7 +3,7 @@
 Chinese remaindering over `Int`, rational reconstruction from a residue,
 symmetric representatives, and the supply of moduli that the modular
 algorithms elsewhere in the tree draw on. Mathlib-free. The companion
-`hex-modular-mathlib` relates the executable operations to `ZMod`,
+`hex-modular-theory` relates the executable operations to `ZMod`,
 `Int.ModEq`, and `Rat`, and supplies the decidability instances that make
 them usable from a Mathlib goal.
 
@@ -276,7 +276,7 @@ q * a ≡ p (mod m),   |p| ≤ P,   0 < q ≤ Q,   gcd(p, q) = 1.
 
 ### The stopping rule needs a truncated Euclidean run
 
-`Hex.Int.extGcd` returns the gcd and one Bézout pair. Rational
+`HexArith.Int.extGcd` returns the gcd and one Bézout pair. Rational
 reconstruction needs the *intermediate* rows of the same computation: run
 the extended Euclidean algorithm on `(m, a)` producing
 `rⱼ = sⱼ·m + tⱼ·a`, and stop at the first `j` with `rⱼ ≤ P`. So the
@@ -295,12 +295,12 @@ def euclidUntil (m a P : Int) : Row
 ```
 
 `euclidUntil` is the only new arithmetic in this library, and it is more
-than a wrapper. `HexArith.Int.extGcd` is an `@[extern]` binding that
-returns the final triple, so no intermediate row is reachable through it:
-`euclidUntil` needs either its own extern primitive or a refactoring of
-the existing one to take a stopping predicate. Which of those is right is
-an implementation question, and it is the one open question in this
-library that costs real work rather than a decision.
+than a wrapper. `HexArith.Int.extGcd` returns only the final triple, so its
+public result does not expose intermediate rows. On nonnegative inputs its
+proved `@[csimp]` rewrite uses `Nat.extendedGcd`, whose GMP implementation has
+no stopping predicate. `euclidUntil` therefore needs a truncated Euclidean
+loop in Lean or a new native primitive with a stopping predicate. Choosing
+and proving that implementation is the remaining arithmetic design question.
 
 ### The signature is checked, so soundness is free
 
@@ -841,17 +841,18 @@ the `euclidUntil` target and therefore supplies the external curve for the
 comparator is scoped to scalar `Crt.push` and fixed-depth `CrtVec.push`, using
 `fmpz_mod_ctx` inversion and `fmpz` multiply-adds for the same incremental
 Garner recurrence; it supplies the `incremental-crt` and `vector-crt` curves.
-Both are `informational`: they are C-backed implementations of the same
-arithmetic primitives, and the ratios chiefly measure binding and orchestration
-cost rather than an alternative Hex algorithm. SymPy is the oracle and is not
-a performance comparator. No comparator is `gating`, because this library has
-no algorithmic choice for one to discriminate: the algorithms here are the
+Both are recorded for orientation: they are C-backed implementations of the
+same arithmetic primitives, and the ratios chiefly measure binding and
+orchestration cost rather than an alternative Hex algorithm. SymPy is the
+oracle and is not a performance comparator. No performance target is set
+against either, because this library has no algorithmic choice for one to
+discriminate: the algorithms here are the
 standard ones and the performance question is entirely about the arithmetic
 underneath, which hex-arith already measures.
 
-## The Mathlib layer
+## The theory layer
 
-`hex-modular-mathlib` relates the executable operations to Mathlib's:
+`hex-modular-theory` relates the executable operations to Mathlib's:
 
 ```lean
 theorem symMod_cast (h : 0 < m) : ((symMod a m : Int) : ZMod m) = (a : ZMod m)
@@ -872,7 +873,7 @@ Mathlib has `ZMod.chineseRemainder` for coprime moduli, so the
 correspondence for a two-modulus push is a transport. The `k`-modulus
 statement is an induction over the fold, and the reason to state it at all
 is that a Mathlib-facing consumer (the determinant correspondence in
-[hex-modular-matrix-mathlib](../../HexModularMatrix/SPEC/hex-modular-matrix.md)) wants to argue in
+[hex-modular-matrix-theory](../../HexModularMatrix/SPEC/hex-modular-matrix.md)) wants to argue in
 `ZMod` and land in `ℤ`.
 
 Rational reconstruction has no Mathlib counterpart to correspond with, so
@@ -945,10 +946,10 @@ HexModular/
   Recon.lean        -- ratRecon?, ratReconWide?, ratReconVec?, ratReconMaxQuot?
   Loop.lean         -- crtLoop
 HexModular.lean
-HexModularMathlib/
+HexModularTheory/
   Crt.lean          -- ZMod correspondence
   Recon.lean        -- the ℚ restatements and the decidability instances
-HexModularMathlib.lean
+HexModularTheory.lean
 ```
 
 No file here mentions `ZMod64`. `Modulus` and `primesBelow` live in
@@ -962,8 +963,8 @@ hex-mod-arith, per "The supply", and `crtLoop` takes bare `Nat` moduli.
     mathlib: false
     done_through: 1
     status: active
-  HexModularMathlib:
-    deps: [HexModular, HexModArithMathlib]   # ZMod correspondence only
+  HexModularTheory:
+    deps: [HexModular, HexModArithTheory]   # ZMod correspondence only
     mathlib: true
     done_through: 0
     status: planned

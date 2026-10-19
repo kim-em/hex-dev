@@ -1,0 +1,394 @@
+[
+  {
+    "name": "Hex.OrderedFn.Real.Extension.ext_iff",
+    "source": "HexOrderedFn/Extension.lean",
+    "line": 51,
+    "disposition": "retain: public characterizing API",
+    "evidence": "HexOrderedFn/Extension.lean",
+    "evidence_line": 51
+  },
+  {
+    "name": "Hex.OrderedFn.Real.Extension.val_C",
+    "source": "HexOrderedFn/Extension.lean",
+    "line": 127,
+    "disposition": "retain: rfl characterization/normalization API",
+    "evidence": "HexOrderedFn/Extension.lean",
+    "evidence_line": 127
+  },
+  {
+    "name": "Hex.OrderedFn.Real.Extension.val_X",
+    "source": "HexOrderedFn/Extension.lean",
+    "line": 130,
+    "disposition": "retain: rfl characterization/normalization API",
+    "evidence": "HexOrderedFn/Extension.lean",
+    "evidence_line": 130
+  },
+  {
+    "name": "Hex.OrderedFn.Real.Extension.transport_val",
+    "source": "HexOrderedFn/Extension.lean",
+    "line": 158,
+    "disposition": "retain: rfl characterization/normalization API",
+    "evidence": "HexOrderedFn/Extension.lean",
+    "evidence_line": 158
+  },
+  {
+    "name": "Hex.OrderedFn.orderSign_range",
+    "source": "HexOrderedFn/Infinitesimal.lean",
+    "line": 24,
+    "disposition": "retain: public characterizing API",
+    "evidence": "HexOrderedFn/Infinitesimal.lean",
+    "evidence_line": 24
+  },
+  {
+    "name": "Hex.OrderedFn.Infinitesimal.sign_range",
+    "source": "HexOrderedFn/Infinitesimal.lean",
+    "line": 56,
+    "disposition": "retain: public characterizing API",
+    "evidence": "HexOrderedFn/Infinitesimal.lean",
+    "evidence_line": 56
+  },
+  {
+    "name": "Hex.OrderedFn.Oracle.Bounds.width_neg",
+    "source": "HexOrderedFn/Oracle.lean",
+    "line": 137,
+    "disposition": "retain: public characterizing API",
+    "evidence": "HexOrderedFn/Oracle.lean",
+    "evidence_line": 137
+  },
+  {
+    "name": "Hex.OrderedFn.Oracle.Bounds.width_add",
+    "source": "HexOrderedFn/Oracle.lean",
+    "line": 141,
+    "disposition": "retain: public characterizing API",
+    "evidence": "HexOrderedFn/Oracle.lean",
+    "evidence_line": 141
+  },
+  {
+    "name": "Hex.OrderedFn.Real.requestWidth_of_nonpos",
+    "source": "HexOrderedFn/Real.lean",
+    "line": 63,
+    "disposition": "retain: public characterizing API",
+    "evidence": "HexOrderedFn/Real.lean",
+    "evidence_line": 63
+  },
+  {
+    "name": "_private.HexOrderedFn.Search.0.Hex.OrderedFn.accessibleWf",
+    "source": "HexOrderedFn/Search.lean",
+    "line": 57,
+    "disposition": "retain: termination elaboration instance",
+    "evidence": "HexOrderedFn/Search.lean",
+    "evidence_line": 71
+  },
+  {
+    "name": "Hex.OrderedFn.Real.RelativeTranscendence.ne_image",
+    "source": "HexOrderedFnMathlib/Evaluation.lean",
+    "line": 36,
+    "disposition": "retain: existing anonymous compiled example",
+    "evidence": "HexOrderedFnMathlib/LiouvilleTests.lean",
+    "evidence_line": 263
+  },
+  {
+    "name": "Hex.OrderedFn.Real.evalHom_injective",
+    "source": "HexOrderedFnMathlib/Evaluation.lean",
+    "line": 66,
+    "disposition": "retain: public characterizing API",
+    "evidence": "HexOrderedFnMathlib/Evaluation.lean",
+    "evidence_line": 66
+  },
+  {
+    "name": "Hex.OrderedFn.Real.evalHom_eq_ratFunc",
+    "source": "HexOrderedFnMathlib/Evaluation.lean",
+    "line": 79,
+    "disposition": "retain: public characterizing API",
+    "evidence": "HexOrderedFnMathlib/Evaluation.lean",
+    "evidence_line": 79
+  },
+  {
+    "name": "Hex.OrderedFn.Real.registration_source",
+    "source": "HexOrderedFnMathlib/Extension.lean",
+    "line": 43,
+    "disposition": "retain: rfl characterization/normalization API",
+    "evidence": "HexOrderedFnMathlib/Extension.lean",
+    "evidence_line": 43
+  },
+  {
+    "name": "Hex.OrderedFn.Real.Extension.coreField_eq",
+    "source": "HexOrderedFnMathlib/Extension.lean",
+    "line": 128,
+    "disposition": "retain: rfl characterization/normalization API",
+    "evidence": "HexOrderedFnMathlib/Extension.lean",
+    "evidence_line": 128
+  },
+  {
+    "name": "Hex.OrderedFn.Real.Extension.sign_neg",
+    "source": "HexOrderedFnMathlib/Extension.lean",
+    "line": 161,
+    "disposition": "retain: public characterizing API",
+    "evidence": "HexOrderedFnMathlib/Extension.lean",
+    "evidence_line": 161
+  },
+  {
+    "name": "Hex.OrderedFn.Real.Extension.sign_mul",
+    "source": "HexOrderedFnMathlib/Extension.lean",
+    "line": 167,
+    "disposition": "retain: public characterizing API",
+    "evidence": "HexOrderedFnMathlib/Extension.lean",
+    "evidence_line": 167
+  },
+  {
+    "name": "Hex.OrderedFn.Real.Extension.sign_eq_zero_iff",
+    "source": "HexOrderedFnMathlib/Extension.lean",
+    "line": 174,
+    "disposition": "retain: existing anonymous compiled example",
+    "evidence": "HexOrderedFnMathlib/LiouvilleTests.lean",
+    "evidence_line": 179
+  },
+  {
+    "name": "Hex.OrderedFn.Real.Extension.compare_eq",
+    "source": "HexOrderedFnMathlib/Extension.lean",
+    "line": 185,
+    "disposition": "retain: public characterizing API",
+    "evidence": "HexOrderedFnMathlib/Extension.lean",
+    "evidence_line": 185
+  },
+  {
+    "name": "Hex.OrderedFn.Real.Extension.sign_pos_iff",
+    "source": "HexOrderedFnMathlib/Extension.lean",
+    "line": 211,
+    "disposition": "retain: existing anonymous compiled example",
+    "evidence": "HexOrderedFnMathlib/LiouvilleTests.lean",
+    "evidence_line": 198
+  },
+  {
+    "name": "Hex.OrderedFn.Real.Extension.sign_neg_iff",
+    "source": "HexOrderedFnMathlib/Extension.lean",
+    "line": 220,
+    "disposition": "retain: existing anonymous compiled example",
+    "evidence": "HexOrderedFnMathlib/LiouvilleTests.lean",
+    "evidence_line": 199
+  },
+  {
+    "name": "Hex.OrderedFn.Real.Extension.C_lt",
+    "source": "HexOrderedFnMathlib/Extension.lean",
+    "line": 229,
+    "disposition": "retain: public characterizing API",
+    "evidence": "HexOrderedFnMathlib/Extension.lean",
+    "evidence_line": 229
+  },
+  {
+    "name": "Hex.OrderedFn.Real.Extension.eval_strictMono",
+    "source": "HexOrderedFnMathlib/Extension.lean",
+    "line": 264,
+    "disposition": "retain: public characterizing API",
+    "evidence": "HexOrderedFnMathlib/Extension.lean",
+    "evidence_line": 264
+  },
+  {
+    "name": "Hex.OrderedFn.Real.Extension.OrderValid.strictOrderedRing",
+    "source": "HexOrderedFnMathlib/Extension.lean",
+    "line": 307,
+    "disposition": "retain: existing anonymous compiled example",
+    "evidence": "HexManual/Chapters/HexOrderedFn.lean",
+    "evidence_line": 253
+  },
+  {
+    "name": "Hex.OrderedFn.Real.Extension.OrderValid.orderedRing",
+    "source": "HexOrderedFnMathlib/Extension.lean",
+    "line": 314,
+    "disposition": "retain: existing anonymous compiled example",
+    "evidence": "HexManual/Chapters/HexOrderedFn.lean",
+    "evidence_line": 254
+  },
+  {
+    "name": "Hex.OrderedFn.Real.Extension.transport_lt",
+    "source": "HexOrderedFnMathlib/Extension.lean",
+    "line": 333,
+    "disposition": "retain: public characterizing API",
+    "evidence": "HexOrderedFnMathlib/Extension.lean",
+    "evidence_line": 333
+  },
+  {
+    "name": "Hex.OrderedFn.Real.Extension.sign_transport",
+    "source": "HexOrderedFnMathlib/Extension.lean",
+    "line": 340,
+    "disposition": "retain: existing anonymous compiled example",
+    "evidence": "HexOrderedFnMathlib/LiouvilleTests.lean",
+    "evidence_line": 288
+  },
+  {
+    "name": "Hex.OrderedFn.Real.Valid.orderValid",
+    "source": "HexOrderedFnMathlib/Extension.lean",
+    "line": 359,
+    "disposition": "retain: existing anonymous compiled example",
+    "evidence": "HexManual/Chapters/HexOrderedFn.lean",
+    "evidence_line": 243
+  },
+  {
+    "name": "Hex.OrderedFn.Hahn.map_support",
+    "source": "HexOrderedFnMathlib/Hahn.lean",
+    "line": 33,
+    "disposition": "retain: public characterizing API",
+    "evidence": "HexOrderedFnMathlib/Hahn.lean",
+    "evidence_line": 33
+  },
+  {
+    "name": "Hex.OrderedFn.Hahn.map_leadingCoeff",
+    "source": "HexOrderedFnMathlib/Hahn.lean",
+    "line": 51,
+    "disposition": "retain: public characterizing API",
+    "evidence": "HexOrderedFnMathlib/Hahn.lean",
+    "evidence_line": 51
+  },
+  {
+    "name": "Hex.OrderedFn.Hahn.map_le",
+    "source": "HexOrderedFnMathlib/Hahn.lean",
+    "line": 80,
+    "disposition": "retain: public characterizing API",
+    "evidence": "HexOrderedFnMathlib/Hahn.lean",
+    "evidence_line": 80
+  },
+  {
+    "name": "Hex.OrderedFn.Infinitesimal.embed_leadingCoeff",
+    "source": "HexOrderedFnMathlib/Infinitesimal.lean",
+    "line": 146,
+    "disposition": "retain: public characterizing API",
+    "evidence": "HexOrderedFnMathlib/Infinitesimal.lean",
+    "evidence_line": 146
+  },
+  {
+    "name": "Hex.OrderedFn.Infinitesimal.embed_order",
+    "source": "HexOrderedFnMathlib/Infinitesimal.lean",
+    "line": 162,
+    "disposition": "retain: public characterizing API",
+    "evidence": "HexOrderedFnMathlib/Infinitesimal.lean",
+    "evidence_line": 162
+  },
+  {
+    "name": "Hex.OrderedFn.Infinitesimal.sign_normalize",
+    "source": "HexOrderedFnMathlib/Infinitesimal.lean",
+    "line": 293,
+    "disposition": "retain: public characterizing API",
+    "evidence": "HexOrderedFnMathlib/Infinitesimal.lean",
+    "evidence_line": 293
+  },
+  {
+    "name": "Hex.OrderedFn.Infinitesimal.sign_neg",
+    "source": "HexOrderedFnMathlib/Infinitesimal.lean",
+    "line": 299,
+    "disposition": "retain: public characterizing API",
+    "evidence": "HexOrderedFnMathlib/Infinitesimal.lean",
+    "evidence_line": 299
+  },
+  {
+    "name": "Hex.OrderedFn.Infinitesimal.sign_mul",
+    "source": "HexOrderedFnMathlib/Infinitesimal.lean",
+    "line": 303,
+    "disposition": "retain: public characterizing API",
+    "evidence": "HexOrderedFnMathlib/Infinitesimal.lean",
+    "evidence_line": 303
+  },
+  {
+    "name": "Hex.OrderedFn.Infinitesimal.sign_eq_zero_iff",
+    "source": "HexOrderedFnMathlib/Infinitesimal.lean",
+    "line": 309,
+    "disposition": "retain: public characterizing API",
+    "evidence": "HexOrderedFnMathlib/Infinitesimal.lean",
+    "evidence_line": 309
+  },
+  {
+    "name": "Hex.OrderedFn.Infinitesimal.compare_eq",
+    "source": "HexOrderedFnMathlib/Infinitesimal.lean",
+    "line": 319,
+    "disposition": "retain: public characterizing API",
+    "evidence": "HexOrderedFnMathlib/Infinitesimal.lean",
+    "evidence_line": 319
+  },
+  {
+    "name": "Hex.OrderedFn.Infinitesimal.orderedRing",
+    "source": "HexOrderedFnMathlib/Infinitesimal.lean",
+    "line": 361,
+    "disposition": "retain: public characterizing API",
+    "evidence": "HexOrderedFnMathlib/Infinitesimal.lean",
+    "evidence_line": 361
+  },
+  {
+    "name": "Hex.OrderedFn.Infinitesimal.sign_of_neg",
+    "source": "HexOrderedFnMathlib/Infinitesimal.lean",
+    "line": 368,
+    "disposition": "retain: public characterizing API",
+    "evidence": "HexOrderedFnMathlib/Infinitesimal.lean",
+    "evidence_line": 368
+  },
+  {
+    "name": "Hex.OrderedFn.Infinitesimal.sign_of_pos",
+    "source": "HexOrderedFnMathlib/Infinitesimal.lean",
+    "line": 374,
+    "disposition": "retain: public characterizing API",
+    "evidence": "HexOrderedFnMathlib/Infinitesimal.lean",
+    "evidence_line": 374
+  },
+  {
+    "name": "Hex.OrderedFn.Infinitesimal.X_lt_pow",
+    "source": "HexOrderedFnMathlib/Infinitesimal.lean",
+    "line": 418,
+    "disposition": "retain: existing anonymous compiled example",
+    "evidence": "HexManual/Chapters/HexOrderedFn.lean",
+    "evidence_line": 116
+  },
+  {
+    "name": "Hex.OrderedFn.Infinitesimal.towerEmbed_lt",
+    "source": "HexOrderedFnMathlib/Infinitesimal.lean",
+    "line": 443,
+    "disposition": "retain: public characterizing API",
+    "evidence": "HexOrderedFnMathlib/Infinitesimal.lean",
+    "evidence_line": 443
+  },
+  {
+    "name": "Hex.OrderedFn.Infinitesimal.towerEmbed_C",
+    "source": "HexOrderedFnMathlib/Infinitesimal.lean",
+    "line": 449,
+    "disposition": "retain: public characterizing API",
+    "evidence": "HexOrderedFnMathlib/Infinitesimal.lean",
+    "evidence_line": 449
+  },
+  {
+    "name": "Hex.OrderedFn.Oracle.Contains.ofDyadic",
+    "source": "HexOrderedFnMathlib/Oracle.lean",
+    "line": 71,
+    "disposition": "retain: public characterizing API",
+    "evidence": "HexOrderedFnMathlib/Oracle.lean",
+    "evidence_line": 71
+  },
+  {
+    "name": "Hex.OrderedFn.Oracle.Contains.neg",
+    "source": "HexOrderedFnMathlib/Oracle.lean",
+    "line": 74,
+    "disposition": "retain: public characterizing API",
+    "evidence": "HexOrderedFnMathlib/Oracle.lean",
+    "evidence_line": 74
+  },
+  {
+    "name": "Hex.OrderedFn.Oracle.Contains.inter_isSome",
+    "source": "HexOrderedFnMathlib/Oracle.lean",
+    "line": 109,
+    "disposition": "retain: existing anonymous compiled example",
+    "evidence": "HexOrderedFnMathlib/Tests.lean",
+    "evidence_line": 35
+  },
+  {
+    "name": "Hex.OrderedFn.Oracle.Contains.inter",
+    "source": "HexOrderedFnMathlib/Oracle.lean",
+    "line": 117,
+    "disposition": "retain: existing anonymous compiled example",
+    "evidence": "HexOrderedFnMathlib/Tests.lean",
+    "evidence_line": 38
+  },
+  {
+    "name": "Hex.OrderedFn.Real.sign?_sound",
+    "source": "HexOrderedFnMathlib/Real.lean",
+    "line": 136,
+    "disposition": "retain: existing anonymous compiled example",
+    "evidence": "HexOrderedFnMathlib/Tests.lean",
+    "evidence_line": 92
+  }
+]

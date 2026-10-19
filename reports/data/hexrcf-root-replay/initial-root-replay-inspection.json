@@ -1,0 +1,74 @@
+[
+  {
+    "label": "desktop",
+    "kind": "replay",
+    "text": "\n                    RootReplay.read binds a supplied\ngraph to one parent context, polynomial and open query interval. It derives the\nfull derivative queries from that polynomial and checks supplied original divisors\nbefore parsing. Graph validation checks every entry, including unreachable\nones; versions, context/domain bindings and earlier-only references remain\nmandatory. A rejected graph is evidence failure, not a root-nonexistence verdict.",
+    "viewport": 1440,
+    "scrollY": 253242,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752
+  },
+  {
+    "label": "desktop",
+    "kind": "example",
+    "text": "\n                    For positive degree, extract\nuses the owner's accepted shared table instead of replaying BKR for each root\ndescriptor. Every table word is retained, each descriptor has the original\nhead/endpoints/full derivative slots, and the finite comparator sorts the list.\nThe resulting domain proof establishes a nonzero squarefree head and valid\nroot-free open endpoints. Repeated input polynomials need the owner's squarefree\ndecomposition and transport; they cannot be passed unchecked to this reader.\nHalf-open source domains continue to be shared matrix guard atoms.",
+    "viewport": 1440,
+    "scrollY": 253590,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "CODE",
+    "targetWidth": 740,
+    "targetScrollWidth": 740
+  },
+  {
+    "label": "desktop",
+    "kind": "boundary",
+    "text": "\n                    This is finite extraction and emitted-root soundness. Complete root coverage,\ninterpreted-value deduplication and strict mathematical ordering require the\nowner's supplied-replay semantic exports. The native producer's coverage\nequation is not a frozen certificate premise. This reader does not provide\ncomplete cell replay or another tactic handler.\n",
+    "viewport": 1440,
+    "scrollY": 254064,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752
+  },
+  {
+    "label": "narrow",
+    "kind": "replay",
+    "text": "\n                    RootReplay.read binds a supplied\ngraph to one parent context, polynomial and open query interval. It derives the\nfull derivative queries from that polynomial and checks supplied original divisors\nbefore parsing. Graph validation checks every entry, including unreachable\nones; versions, context/domain bindings and earlier-only references remain\nmandatory. A rejected graph is evidence failure, not a root-nonexistence verdict.",
+    "viewport": 390,
+    "scrollY": 405157,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343
+  },
+  {
+    "label": "narrow",
+    "kind": "example",
+    "text": "\n                    For positive degree, extract\nuses the owner's accepted shared table instead of replaying BKR for each root\ndescriptor. Every table word is retained, each descriptor has the original\nhead/endpoints/full derivative slots, and the finite comparator sorts the list.\nThe resulting domain proof establishes a nonzero squarefree head and valid\nroot-free open endpoints. Repeated input polynomials need the owner's squarefree\ndecomposition and transport; they cannot be passed unchecked to this reader.\nHalf-open source domains continue to be shared matrix guard atoms.",
+    "viewport": 390,
+    "scrollY": 405767,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "CODE",
+    "targetWidth": 331,
+    "targetScrollWidth": 468
+  },
+  {
+    "label": "narrow",
+    "kind": "boundary",
+    "text": "\n                    This is finite extraction and emitted-root soundness. Complete root coverage,\ninterpreted-value deduplication and strict mathematical ordering require the\nowner's supplied-replay semantic exports. The native producer's coverage\nequation is not a frozen certificate premise. This reader does not provide\ncomplete cell replay or another tactic handler.\n",
+    "viewport": 390,
+    "scrollY": 406678,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343
+  }
+]

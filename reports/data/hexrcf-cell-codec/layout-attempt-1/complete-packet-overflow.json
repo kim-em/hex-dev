@@ -1,0 +1,13 @@
+{
+  "label": "narrow",
+  "kind": "checker-start",
+  "text": "\n                  The complete-packet interface reads the full root table before its cell rows.\nCompleteReplay.check then checks the radical identities and strict quantifier\nfold. Its soundness theorem accepts untrusted root and cell packets and proves\nthe shared sentence at the supplied fixed real interpretation:",
+  "viewport": 390,
+  "scrollY": 419440,
+  "paragraphWidth": 343,
+  "scrollWidth": 343,
+  "targetTag": "CODE",
+  "targetWidth": 331,
+  "targetScrollWidth": 355,
+  "descendantOverflow": 24
+}

@@ -1,5 +1,20 @@
 # Literal graph byte format
 
+`Codec.readGraph` and its supporting structured readers expose their definitions
+through ordinary public imports for kernel reduction on concrete inputs.
+These bodies are kernel-facing APIs: runtime optimizations should use a proved
+`@[csimp]` implementation twin while preserving the reference definitions.
+Reading constructs raw graph data; successful decoding still needs independent
+replay before it supplies mathematical evidence. The
+[public-reader audit](../../reports/sign-det-public-codec.md) records the scope
+and ordinary-kernel conformance cases.
+
+`Codec.decodePair` parses two supplied byte records before invoking an existing
+structured reader. Parsing errors short-circuit that reader. `decodePair_ok`
+substitutes the two proved parser results; `decodePair_write` preserves the
+reader's full result or error for printed records under lexical limits.
+The lexical precheck iterates directly over the byte buffer without boxing it.
+
 `Dag.encodeBytes` writes a UTF-8 JSON encoding of the supplied graph.
 `Dag.decodeBytes` parses and independently replays it for the caller's exact
 context, head, endpoints and ordered query list. It returns `Except String` with
@@ -53,6 +68,16 @@ unreachable entries. Arbitrary user codecs need not be lawful.
 decoder preserve the entire graph under these structural conditions and the
 caller's lexical byte/depth/digit limits. Arithmetic evidence may be false;
 independent replay remains separate.
+
+Finite predecessor readers use `ValueCodec.Covers` instead of a global
+`Lawful` assumption. `Codec.Coefficients.graph` collects every stored
+coefficient in wire order, including scales, quotients, endpoints and
+unreachable entries. `Codec.graphContexts` collects the corresponding literal
+contexts. `read_graph_covered` and `decode_graph_covered` prove exact structured
+and byte roundtrips from coverage of these finite lists, with the same shape,
+binding, reference and lexical checks as the complete-reader laws. These
+collectors perform no arithmetic. Signs needed by intermediate arithmetic
+remain a separate requirement from decoding stored literals.
 
 The coefficient/context `ValueCodec` targets `Codec.Json.Value`, the shared
 integer-only JSON tree. `ValueCodec.decode_encode` lifts its literal codec law
@@ -132,10 +157,19 @@ without a ring or field instance and rejects substitution of an equal-denotation
 head with different literal coefficients. Byte parsing uses compiled execution;
 the separate ordinary-kernel graph probes and axiom audits remain in place.
 
-This format encodes same-level BKR graphs and coefficient values. It does not
-yet encode lower-level coefficient-sign proof dependencies or establish
-arbitrary-field root/sign semantics. Nested evidence transport, serialization
-cost measurements and the other Phase-4 obligations remain open.
+The BKR graph payload encodes same-level recursion and literal coefficient
+values. The dependency envelope below retains lower-level proof dependencies;
+local packet readers supply coefficient and root semantics. The companion's
+soundness theorems apply to arbitrary accepted evidence, with the required
+coefficient interpretation laws. Serialization and nested computation cost measurements are separate
+Phase-4 obligations tracked in [#10377](https://github.com/kim-em/hex-dev/issues/10377).
+
+`Dag.mapNodes` transforms raw nodes across coefficient and context types while
+retaining all entries, child indices and the root index. It preserves sharing
+without expanding a graph to a tree. Conversion must update all literal node
+and query-certificate bindings; acceptance must be checked again under the
+target operations and context. Structural conversion alone proves no
+mathematical postcondition.
 
 `Dag.decodeBytes_sign_congr`, `Dag.decodeDescriptor_sign_congr` and
 `Dag.decodeSigns_sign_congr` preserve exact errors and successful literal data
@@ -145,3 +179,34 @@ arbitrary accepted bytes. Callers holding a decoded graph can use its `replay?`,
 `descriptor?` or `selectedSigns?` interface with the corresponding finite
 sign-congruence theorem, reusing that graph without parsing the same input
 again.
+
+The coefficient-level dependency envelope is `Dependencies.Graph.codec`.
+Its version-one JSON layout is `[1, entries, roots]`. An entry is
+`[level, subject, payload, children]`, and a reference is
+`[index, level, subject]`. Subjects and payloads are complete integer-only JSON
+values, preserved without normalization. Entries retain checking order;
+references point to earlier entries at strictly lower levels. Same-level BKR
+recursion stays inside each packet's existing `Dag` payload.
+
+`Graph.decode` requires the caller's ordered `(level, subject)` results before
+it invokes the local mathematical packet readers. The codec's literal and
+byte roundtrip proofs assume no validity or parse-success premise. Graph
+acceptance additionally checks every reference and every payload through its
+local reader, including unused entries. Complete intermediate arithmetic
+facts and context reconstruction remain responsibilities of those readers.
+
+Resource limits apply to the complete envelope. An entry's payload gains three
+JSON array levels; references add their own arrays around the full subject. A
+payload within a standalone depth limit need not fit the same limit inside the
+envelope. `Graph.codec_bytes` requires the complete printed bytes to pass the
+shared precheck.
+
+The public `Codec.Descriptor` module supplies `descriptor`, `readDescriptor`
+and `readDescriptorBinding` for composed packets. The six fields are the full
+context, polynomial, both interval endpoints, derivative indices and derivative
+signs. Successful binding requires literal equality with the caller’s full
+subject. Parsing does not validate the root: the consumer must still replay its
+mathematical evidence. `read_descriptor_of` proves roundtrip under codec
+coverage of just the stored values. `readDescriptorBinding_checked` proves
+that accepted data parses to the exact requested subject. Consumers can compose
+these readers and proofs through ordinary public imports.

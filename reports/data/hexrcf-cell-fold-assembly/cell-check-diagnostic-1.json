@@ -1,0 +1,31 @@
+{
+  "commit": "c28de2d4db125e1e42b23084ecaee75b9531300a",
+  "target": "HexRCF.CellReplay.Algebraic.Check",
+  "cpu": 93,
+  "load_before": [
+    3.7060546875,
+    3.796875,
+    4.49365234375
+  ],
+  "machine": {
+    "system": "Linux",
+    "node": "chungus2",
+    "release": "7.3.0-rc7",
+    "version": "#1-NixOS SMP PREEMPT_DYNAMIC Tue Jan  1 00:00:00 UTC 1980",
+    "machine": "x86_64",
+    "processor": ""
+  },
+  "time_start": 1792062462.9623673,
+  "memory_limit_bytes": 34359738368,
+  "swap_limit_bytes": 0,
+  "lean_threads": 2,
+  "cache_restore": null,
+  "exit_code": 0,
+  "elapsed_seconds": 81.09045481681824,
+  "load_after": [
+    3.66259765625,
+    3.84912109375,
+    4.45849609375
+  ],
+  "cache_control_note": "LAKE_NO_CACHE was requested on the wrapper parent but is not in its environment whitelist. The log proves the target was actually Built, not restored; no general cache-control claim is made for this diagnostic."
+}

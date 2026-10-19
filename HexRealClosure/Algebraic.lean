@@ -34,6 +34,127 @@ variable {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
 variable [One E] [Add E] [Neg E] [Sub E] [Mul E] [Inv E] [Div E] [NatCast E]
 variable [DecidableEq Ctx] {coeffSign : E → Int} {parent : Ctx}
 
+/-- Restore context data from the original cache and reduction-policy proofs.
+Every invariant of native construction is retained; no preparation is rerun. -/
+def Context.ofChecked (root : SignDet.Descriptor E Ctx coeffSign parent)
+    (handle : Option (SignDet.QueryHandle root)) (prepared : handle = root.prepareQueries)
+    (rootCount : Option Int)
+    (count : rootCount = handle.map (fun h => Sturm.countPrepared h.domain))
+    (cleanCoeff : E → Bool) (canReduce : Bool)
+    (reduction : canReduce =
+      (decide (root.raw.head.leadingCoeff = 1) && root.raw.head.toArray.all cleanCoeff)) :
+    Context E Ctx coeffSign parent :=
+  ⟨root, handle, prepared, rootCount, count, cleanCoeff, canReduce, reduction⟩
+
+/-- Restoration retains the exact `root` field. -/
+@[simp] theorem Context.ofChecked_root (root : SignDet.Descriptor E Ctx coeffSign parent)
+    (handle : Option (SignDet.QueryHandle root)) (prepared : handle = root.prepareQueries)
+    (rootCount : Option Int)
+    (count : rootCount = handle.map (fun h => Sturm.countPrepared h.domain))
+    (cleanCoeff : E → Bool) (canReduce : Bool)
+    (reduction : canReduce =
+      (decide (root.raw.head.leadingCoeff = 1) && root.raw.head.toArray.all cleanCoeff)) :
+    (ofChecked root handle prepared rootCount count cleanCoeff canReduce reduction).root =
+      root := by
+  unfold ofChecked
+  rfl
+
+/-- Restoration retains the exact `rootCount` field. -/
+@[simp] theorem Context.ofChecked_rootCount (root : SignDet.Descriptor E Ctx coeffSign parent)
+    (handle : Option (SignDet.QueryHandle root)) (prepared : handle = root.prepareQueries)
+    (rootCount : Option Int)
+    (count : rootCount = handle.map (fun h => Sturm.countPrepared h.domain))
+    (cleanCoeff : E → Bool) (canReduce : Bool)
+    (reduction : canReduce =
+      (decide (root.raw.head.leadingCoeff = 1) && root.raw.head.toArray.all cleanCoeff)) :
+    (ofChecked root handle prepared rootCount count cleanCoeff canReduce reduction).rootCount =
+      rootCount := by
+  unfold ofChecked
+  rfl
+
+/-- Restoration retains the exact `cleanCoeff` field. -/
+@[simp] theorem Context.ofChecked_cleanCoeff (root : SignDet.Descriptor E Ctx coeffSign parent)
+    (handle : Option (SignDet.QueryHandle root)) (prepared : handle = root.prepareQueries)
+    (rootCount : Option Int)
+    (count : rootCount = handle.map (fun h => Sturm.countPrepared h.domain))
+    (cleanCoeff : E → Bool) (canReduce : Bool)
+    (reduction : canReduce =
+      (decide (root.raw.head.leadingCoeff = 1) && root.raw.head.toArray.all cleanCoeff)) :
+    (ofChecked root handle prepared rootCount count cleanCoeff canReduce reduction).cleanCoeff =
+      cleanCoeff := by
+  unfold ofChecked
+  rfl
+
+/-- Restoration retains the exact `canReduce` field. -/
+@[simp] theorem Context.ofChecked_canReduce (root : SignDet.Descriptor E Ctx coeffSign parent)
+    (handle : Option (SignDet.QueryHandle root)) (prepared : handle = root.prepareQueries)
+    (rootCount : Option Int)
+    (count : rootCount = handle.map (fun h => Sturm.countPrepared h.domain))
+    (cleanCoeff : E → Bool) (canReduce : Bool)
+    (reduction : canReduce =
+      (decide (root.raw.head.leadingCoeff = 1) && root.raw.head.toArray.all cleanCoeff)) :
+    (ofChecked root handle prepared rootCount count cleanCoeff canReduce reduction).canReduce =
+      canReduce := by
+  unfold ofChecked
+  rfl
+
+/-- The optional domain observation is independent of the descriptor proof
+index and retains the exact original cache. -/
+theorem Context.ofChecked_domains (root : SignDet.Descriptor E Ctx coeffSign parent)
+    (handle : Option (SignDet.QueryHandle root)) (prepared : handle = root.prepareQueries)
+    (rootCount : Option Int)
+    (count : rootCount = handle.map (fun h => Sturm.countPrepared h.domain))
+    (cleanCoeff : E → Bool) (canReduce : Bool)
+    (reduction : canReduce =
+      (decide (root.raw.head.leadingCoeff = 1) && root.raw.head.toArray.all cleanCoeff)) :
+    (ofChecked root handle prepared rootCount count cleanCoeff canReduce reduction).handle.map
+      (fun h => h.domain) = handle.map (fun h => h.domain) := by
+  unfold ofChecked
+  rfl
+
+/-- Reassembling checked context fields retains the complete context. -/
+theorem Context.ofChecked_eq (context : Context E Ctx coeffSign parent) :
+    ofChecked context.root context.handle context.handle_checked context.rootCount
+      context.count_checked context.cleanCoeff context.canReduce context.reduce_checked = context := by
+  unfold ofChecked
+  cases context
+  rfl
+
+/-- Context equality retains the exact descriptor, optional prepared domain,
+root count and reduction policy. Proof fields do not affect that equality. -/
+private theorem Context.ext (left right : Context E Ctx coeffSign parent)
+    (root : left.root = right.root) (handle : HEq left.handle right.handle)
+    (count : left.rootCount = right.rootCount)
+    (clean : left.cleanCoeff = right.cleanCoeff) (reduce : left.canReduce = right.canReduce) :
+    left = right := by
+  cases left
+  cases right
+  cases root
+  have same := eq_of_heq handle
+  cases same
+  cases count
+  cases clean
+  cases reduce
+  rfl
+
+/-- Restoring the same context data at an equal descriptor index preserves
+its full value, including the canonical cache invariant. -/
+theorem Context.ofChecked_context (context : Context E Ctx coeffSign parent)
+    (root : SignDet.Descriptor E Ctx coeffSign parent)
+    (handle : Option (SignDet.QueryHandle root)) (prepared : handle = root.prepareQueries)
+    (count : context.rootCount = handle.map (fun h => Sturm.countPrepared h.domain))
+    (reduction : context.canReduce =
+      (decide (root.raw.head.leadingCoeff = 1) && root.raw.head.toArray.all context.cleanCoeff))
+    (sameRoot : root = context.root) (sameHandle : HEq handle context.handle) :
+    ofChecked root handle prepared context.rootCount count context.cleanCoeff context.canReduce
+      reduction = context := by
+  apply Context.ext
+  · exact sameRoot
+  · exact sameHandle
+  · rfl
+  · rfl
+  · rfl
+
 /-- Construct from the shared checked descriptor and predecessor cleanliness.
 Interpretation and field/order laws are companion conclusions. -/
 def Context.adjoin (root : SignDet.Descriptor E Ctx coeffSign parent)
@@ -425,16 +546,25 @@ theorem sign_eq_zero (a : Element context) : a.sign = 0 ↔ a = 0 := by
 @[expose] def sub (a b : Element context) : Element context := ofPoly (a.polynomial - b.polynomial)
 @[expose] def mul (a b : Element context) : Element context := ofPoly (a.polynomial * b.polynomial)
 
+/-- The local gcd and complementary factor for a defining polynomial and
+an operand. Coefficient operations are parameters of this computation. -/
+@[expose] def inverseFactors (head p : DensePoly E) : DensePoly E × DensePoly E :=
+  let g := DensePoly.monicize (DensePoly.gcd head p)
+  (g, (DensePoly.divMod head g).1)
+
 /-- The actual local gcd and its complementary factor in the definition. -/
 @[expose] def inverseFactor (a : Element context) : DensePoly E × DensePoly E :=
-  let g := DensePoly.monicize (DensePoly.gcd context.root.raw.head a.polynomial)
-  (g, (DensePoly.divMod context.root.raw.head g).1)
+  inverseFactors context.root.raw.head a.polynomial
 
 /-- Split locally by the actual gcd, divide the defining polynomial by it,
 and scale the one-sided Bézout coefficient by its computed constant gcd. -/
-@[expose] def inverseCandidate (a : Element context) : DensePoly E :=
-  let eg := DensePoly.xgcdLeft a.polynomial a.inverseFactor.2
+@[expose] def inversePolynomial (head p : DensePoly E) : DensePoly E :=
+  let eg := DensePoly.xgcdLeft p (inverseFactors head p).2
   DensePoly.scale eg.gcd.leadingCoeff⁻¹ eg.left
+
+/-- The inverse polynomial for this operand and its exact defining head. -/
+@[expose] def inverseCandidate (a : Element context) : DensePoly E :=
+  inversePolynomial context.root.raw.head a.polynomial
 
 @[expose] def inv (a : Element context) : Element context :=
   match a.stored with

@@ -16,7 +16,7 @@ public section
 
 namespace Hex.RCF.CommonRootTests
 
-open HexRealRootsMathlib
+open HexRealRootsTheory
 
 private def quad : ZPoly := DensePoly.ofCoeffs #[(-1 : Int), 0, 1]
 private def x : ZPoly := DensePoly.ofCoeffs #[(0 : Int), 1]

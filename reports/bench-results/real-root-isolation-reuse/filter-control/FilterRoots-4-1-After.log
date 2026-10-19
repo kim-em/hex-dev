@@ -1,0 +1,8 @@
+Hex.RealAlgebraicBench.runFilterRoots    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=4ea36ac, 2026-10-08T11:29:51Z, host=chungus2
+  repeat 0  1.233 ms  (×2^6, total 78.898 ms)
+  median: 1.233 ms    min: 1.233 ms    max: 1.233 ms
+  hash: all repeats agree
+  observed hash: 0x3f0adfb8107401d5
+  peak RSS: 69_172 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-root-cache/filter-factor/FilterRoots-4-1-After.json

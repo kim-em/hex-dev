@@ -1,4 +1,10 @@
-# Automatic bounded primality construction
+# Historical core-first primality construction
+
+This report retains measurements of the former core-first construction and
+fixed-curve ECM retry. The current `HexIntFactor` registration selects the
+interleaved provider in one pass; see [the independent comparison](primality/factor-policy/corpus-v3.md)
+and [the adoption checks](primality/adoption/README.md). The allocations, attempt
+counts and timings below describe the recorded historical policy.
 
 With `import HexIntFactor`, plain `primality?` constructs and recursively checks
 secp256k1, P-384 and Curve448. Add `HexPrimalityMathlib` for `Nat.Prime`.
@@ -16,7 +22,7 @@ example : Hex.Nat.Prime (2 ^ 256 - 2 ^ 32 - 977) := by
   primality?
 ```
 
-The core route runs first. Only exhaustion with an allowance left permits one
+In that policy, the core route ran first. Only exhaustion with an allowance left permits one
 complete ECM retry. Attempts spent on failed subsets, repeated factoring,
 recursive children and witnesses all count against the original 1024 attempts.
 The retry starts from the first failure's advanced random state. P-521 and
@@ -233,9 +239,9 @@ lake build hexprimality_field_probe
 
 The drivers reject existing output files. To reproduce the exact historical
 measurements, use the recorded baseline and embedded source snapshots. The
-production implementation retains the original `Construction.run` failure API,
+recorded implementation retained the original `Construction.run` failure API,
 adds construction-only subject diagnostics, and exposes `Construction.retry`
-for the bounded complete retry. Registration uses `ConstructionExtension`
+for the bounded complete retry. That registration used `ConstructionExtension`
 version 1 and `Hex.Nat.ecmConstructionFactor`; ordinary `SearchExtension`
 version 3 and `intFactorSearch` remain separate.
 

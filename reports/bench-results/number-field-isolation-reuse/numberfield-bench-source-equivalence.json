@@ -1,0 +1,16 @@
+{
+  "scope": "Git-reconstructed benchmark source supplement: the original NumberField collectors snapshot the RealAlgebraic benchmark but omit this file. These copies are reconstructed from the recorded immutable compiled-source heads, not represented as capture-time files.",
+  "sources": {
+    "Before": {
+      "head": "121fc1e027cee801d64277adb2d4470e6101b990",
+      "path": "Before-bench-HexNumberField-Bench.lean.txt",
+      "sha256": "24f97cee0a3b52190fe46c6e8b95a17b463b4f9f3eeebb005eaf82d94cf7562a"
+    },
+    "After": {
+      "head": "7ceaf9d47d",
+      "path": "After-bench-HexNumberField-Bench.lean.txt",
+      "sha256": "24f97cee0a3b52190fe46c6e8b95a17b463b4f9f3eeebb005eaf82d94cf7562a"
+    }
+  },
+  "benchmark_bodies_unchanged": true
+}

@@ -1,0 +1,40 @@
+{
+  "producerOnlyAccepted": true,
+  "omissionExits": {
+    "arithmeticLevel2": 17,
+    "arithmeticLevel1": 17,
+    "literalLevel2": 17,
+    "literalLevel1": 17
+  },
+  "pairRatiosOrdinaryOverCached": [
+    1.3244961044902965,
+    1.2939492659325538,
+    1.3115247492559365,
+    1.3839546791503428,
+    1.326626712062485,
+    1.3201139137441193
+  ],
+  "plainOverCached": [
+    1.2170011377327978,
+    1.188026706388028,
+    1.203915210623384,
+    1.2798463205827035,
+    1.2172759175937358,
+    1.2215128468745546
+  ],
+  "ordinaryOverPlain": [
+    1.0883277454922973,
+    1.089158399365081,
+    1.0893829878408403,
+    1.0813444215085446,
+    1.0898323813757114,
+    1.0807204501547831
+  ],
+  "pairedMedianPlainOverCached": 1.2171385276632667,
+  "unsupportedInverseExit": 18,
+  "medianNanosPerReplay": {
+    "cached": 1999418.1675,
+    "ordinary": 2650712.66,
+    "plain": 2435979.5425
+  }
+}

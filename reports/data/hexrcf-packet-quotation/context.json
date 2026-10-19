@@ -1,0 +1,335 @@
+{
+  "source_commit": "250c4bbb5b2c6bfab8cac140bd64a782c7496be8",
+  "sources": {
+    "adapters/HexRCF/RealCoefficients/RootQuote.lean": "68926dff226905412056eebe082ac0a9f0dbaccffa1ec3a9da0897b8fb0b874f",
+    "adapters/HexRCF/RealCoefficients/ScalarQuote.lean": "e50791fa845ca9621e134d0bdaf6f33e04b0f6377bb5b3173abea59d090820ee",
+    "lakefile.lean": "179ce59200f976ce5ed7590f9428d7071e07903adb428f0b78a0fd82ddf78ca5",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4"
+  },
+  "artifacts": [
+    {
+      "path": "sources/PacketQuoteAudit.lean.txt",
+      "sha256": "e5310ada80d7e05d693b46f76c2f3e14284a953a07b9fb2644ed1c98bcd8a986",
+      "bytes": 3583
+    },
+    {
+      "path": "sources/PacketQuoteInput.lean.txt",
+      "sha256": "b3f450167733ec3a205d1926589ebc4960786dd6b9a9cb488594ebfa3daa89ca",
+      "bytes": 2427
+    },
+    {
+      "path": "sources/PacketQuoteProbe.lean.txt",
+      "sha256": "8788479dcbbf8151a228cf2e0e140236fce330e6fa976cca91b691c8fd860842",
+      "bytes": 1401
+    },
+    {
+      "path": "sources/PacketQuoteRuntime.lean.txt",
+      "sha256": "47db19a9121b0f06be8bcdc820505eebe9cc9cffc91641c618d91d7bd86377d2",
+      "bytes": 495
+    },
+    {
+      "path": "sources/PacketQuoteSemantics.lean.txt",
+      "sha256": "0ad314791e3ce066ca4beab4a3442aa00e19fcd529d9b3fdcec79f02d32b4d66",
+      "bytes": 6064
+    },
+    {
+      "path": "sources/PacketQuoteTable.lean.txt",
+      "sha256": "b33bfcc200c565b02821c3d4fa60a1962b5ab54e35bc18e09beeb716c767a05c",
+      "bytes": 2590
+    },
+    {
+      "path": "sources/lakefile.lean.txt",
+      "sha256": "8782bc03cf650d4b9296be666c39ad115e3e3abce57daca7c130f33b41f4e01d",
+      "bytes": 281
+    },
+    {
+      "path": "sources/lean-toolchain.txt",
+      "sha256": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+      "bytes": 29
+    },
+    {
+      "path": "sources/lake-manifest.json.txt",
+      "sha256": "02f24c76ca4082b5abf4b5da2bcce1466a34bcca296f396ee13dbe44a707f71c",
+      "bytes": 5620
+    },
+    {
+      "path": "logs/packet-quote-baseline-1.log.gz",
+      "sha256": "9cabcaea99a9d59d9cf2c54d2a08660cddf35f2c84af85f9d6bfb021f6184447",
+      "bytes": 1716,
+      "uncompressed_sha256": "1348c01688b58c2f7c72c13cb70b4f6b74638cfe59581c241e2d2b702cc4f427",
+      "uncompressed_bytes": 6124
+    },
+    {
+      "path": "logs/packet-quote-baseline-2.log.gz",
+      "sha256": "23f2b3de1eb1a3e262d5ab53041afe11cb14337351c0aeecf1d5226ec65875e7",
+      "bytes": 7361,
+      "uncompressed_sha256": "c7203b578d16c9061dc5628680ad5381cc61dfa6c77463d0e99dd62ce5de3e8a",
+      "uncompressed_bytes": 77797
+    },
+    {
+      "path": "logs/packet-quote-baseline-3.log.gz",
+      "sha256": "e06869ebc0b7eb7073e77dd00275c64a5131a2490ab58d77a6e2b59bbc0b666b",
+      "bytes": 7243,
+      "uncompressed_sha256": "f18b3575063f6a9599806fc178ca46a88d495465279a6c58630363499e021975",
+      "uncompressed_bytes": 77797
+    },
+    {
+      "path": "logs/packet-quote-structured-1.log.gz",
+      "sha256": "16077ec496a39cd2bbf1120ca58584df169d217ba71493de440d04189e7205d6",
+      "bytes": 6911,
+      "uncompressed_sha256": "49ce7a0bdd63213f155526bdc661072bc7a43371dbccc455a9dcf3903d56fd71",
+      "uncompressed_bytes": 75706
+    },
+    {
+      "path": "logs/packet-quote-input-1.log.gz",
+      "sha256": "f7932204333ef7a8e00470b0f175fbb1b60fcf2904ee80ca772c127f286e8692",
+      "bytes": 6968,
+      "uncompressed_sha256": "46435f82f12b11a61acadb5347753282dce9dafa6f82945cfdcd3b09e35c5a60",
+      "uncompressed_bytes": 75900
+    },
+    {
+      "path": "logs/packet-quote-table-1.log.gz",
+      "sha256": "f5fdb7736ea9ad59ac3de145699f61f3e4c86fc66c970be869d602c351c37ce2",
+      "bytes": 7319,
+      "uncompressed_sha256": "34731ad3754f0f09ea32ecc19ba408ec05c5152087f2066c70781c89d7a8a009",
+      "uncompressed_bytes": 78006
+    },
+    {
+      "path": "logs/packet-quote-table-10.log.gz",
+      "sha256": "6500bdf8728c9f90bc5675d25ebfeadffe20fbe77081352f56bc172a35edaf6b",
+      "bytes": 11070,
+      "uncompressed_sha256": "717afc6f15f06bae09a98588db4bf7b1bad872348f4bf8a107e996469aafdce3",
+      "uncompressed_bytes": 169767
+    },
+    {
+      "path": "logs/packet-quote-table-11.log.gz",
+      "sha256": "294cd30aa46fa5e5d222f099afda497f1e360dde4a4557a1b95d316e7e3e862c",
+      "bytes": 10959,
+      "uncompressed_sha256": "f4a508ba9e668d4f10e855c5704902ea771b45db52b4b64966b56639d41d6dd0",
+      "uncompressed_bytes": 149127
+    },
+    {
+      "path": "logs/packet-quote-table-12.log.gz",
+      "sha256": "c013d9ffc4de9ebeb06bdc7f5f4a0fdf151d85b0678a7f51205af4d63cf474fe",
+      "bytes": 7540,
+      "uncompressed_sha256": "a792cb9665032bac0deddbc1d6e4613be562f4ab586bfcbd2feac86fb4ea959b",
+      "uncompressed_bytes": 78309
+    },
+    {
+      "path": "logs/packet-quote-table-13.log.gz",
+      "sha256": "84fa64d31ebc9b1dafef2a4c55bd9dc94ed27d96af65f249d7dfea050afd8c7e",
+      "bytes": 6954,
+      "uncompressed_sha256": "1a5e1932733b9ee5bdf6a46f88129cb2ba61ee6e383bbfdfea80e281bb5d4089",
+      "uncompressed_bytes": 75813
+    },
+    {
+      "path": "logs/packet-quote-table-2.log.gz",
+      "sha256": "b9e9060dbd12cea010878daecf69b85ee622893f8e94d99ab7cae09a4a612bf7",
+      "bytes": 7450,
+      "uncompressed_sha256": "6eadec0399ba6c0a3791b11b58eebdd88667ee8fbac12c1a518ee98835b44951",
+      "uncompressed_bytes": 78076
+    },
+    {
+      "path": "logs/packet-quote-table-3.log.gz",
+      "sha256": "b3e23b5f5ec18a5ff6c6c55781a8fb65d39b27a63bec8e910c3cf36f836da1c5",
+      "bytes": 7548,
+      "uncompressed_sha256": "b44021c88fbf5a23f7e297ea992180f86677179c9d75d47c5decffeefbb21a42",
+      "uncompressed_bytes": 78685
+    },
+    {
+      "path": "logs/packet-quote-table-4.log.gz",
+      "sha256": "77642f5c790bb59d31a56fa7dd1d37db307312abde48f68dabf60abd8b59e653",
+      "bytes": 7901,
+      "uncompressed_sha256": "6afb16bb4073abc3392b00977099b4fad83d39a73ae7cb8b2f2f0668b81afc0b",
+      "uncompressed_bytes": 80223
+    },
+    {
+      "path": "logs/packet-quote-table-5.log.gz",
+      "sha256": "d956ff41d336b0fae131dfd0c62a777ad0359377c5510756bc15f1e09ff02097",
+      "bytes": 7291,
+      "uncompressed_sha256": "cf88cfb917bf3caab367a598f382a8cd1774557e34e921ce3e7ba022273c2b2e",
+      "uncompressed_bytes": 78134
+    },
+    {
+      "path": "logs/packet-quote-table-6.log.gz",
+      "sha256": "a20f2eb3b5beeddb700eabb5cb486ac746047c3200cacc5ad8665fba80a59fc4",
+      "bytes": 8060,
+      "uncompressed_sha256": "10a49800b6f2d6e76aba89e0fbf7e558c8373e10c7b7994673aa6fd5821d61f2",
+      "uncompressed_bytes": 80277
+    },
+    {
+      "path": "logs/packet-quote-table-7.log.gz",
+      "sha256": "9c40a4ca2aae8fda959a2dc4a228eed2737bb39f8ee8e8f241946018f41c520a",
+      "bytes": 7940,
+      "uncompressed_sha256": "49433ca7509de4d1a84e00dca6b43b0558b70dd887baae707f6840eb7cd6e064",
+      "uncompressed_bytes": 80277
+    },
+    {
+      "path": "logs/packet-quote-table-8.log.gz",
+      "sha256": "30143277325ab4e3c21c040c987f655a1eaf909d58ff5c9734e6f1b98350c2c7",
+      "bytes": 7477,
+      "uncompressed_sha256": "30ffdd72759f77688beff99a1ab58d5450883d48dda8a2ed1ff24c8be059f885",
+      "uncompressed_bytes": 78394
+    },
+    {
+      "path": "logs/packet-quote-table-9.log.gz",
+      "sha256": "0865c2fefe281ef79d33c16b9545f215fb111bf1e13a68ea84da5161973999b3",
+      "bytes": 7486,
+      "uncompressed_sha256": "947b5d58040c5c9c6f4611c5bff7ce5d16dfd7b3effc30f517298e7e070cfac0",
+      "uncompressed_bytes": 78299
+    },
+    {
+      "path": "logs/packet-quote-runtime-1.log.gz",
+      "sha256": "78bad19c0ee1c13025b13873e7da0354abfe8ab1a50805046f1d191a26c47aa4",
+      "bytes": 9426,
+      "uncompressed_sha256": "b1526d33c1c5d33519a3320c53d5d12df61f583636852029f4270bb78e03de83",
+      "uncompressed_bytes": 127373
+    },
+    {
+      "path": "logs/packet-quote-runtime-2.log.gz",
+      "sha256": "6d0fbc3035496757d50bcbe8fdd1b64b52f2e83977adf1c75f06ceff61e5c12d",
+      "bytes": 9593,
+      "uncompressed_sha256": "c27df8d0b667542dc12de5f6c3c33091a8783266717cc949d1f021e56d15febf",
+      "uncompressed_bytes": 128443
+    },
+    {
+      "path": "logs/packet-quote-runtime-3.log.gz",
+      "sha256": "ae836d111d6cc0ab70a1268f3e2831a25a0930bf75a566453005b31ed2b3386a",
+      "bytes": 9717,
+      "uncompressed_sha256": "98d6d593440cba3348726db5d47ba8ce626b750fa83d6788d05f7fbb0342b84e",
+      "uncompressed_bytes": 128441
+    },
+    {
+      "path": "logs/packet-quote-semantics-1.log.gz",
+      "sha256": "4bee0c1f7baa46b1c255f3136065ebe97f0451b1492c7862f53646c27af9334e",
+      "bytes": 8003,
+      "uncompressed_sha256": "d5e882193d0b12535f7e58aaf3b8b33e9ec57859c5566160d96b6f5850483634",
+      "uncompressed_bytes": 79623
+    },
+    {
+      "path": "logs/packet-quote-semantics-2.log.gz",
+      "sha256": "80c5d735eca71cb047bd02f7106067798341122424fbbd7ff66dde781cefb768",
+      "bytes": 8048,
+      "uncompressed_sha256": "214451ecd863b84443a45fdff0274c9bbdfaa431cd67c8a34ddf654afa1a2720",
+      "uncompressed_bytes": 82572
+    },
+    {
+      "path": "logs/packet-quote-semantics-3.log.gz",
+      "sha256": "160d948ff44183fe4554efc8f0a964c4527ac37b58ae3e941c2a8eea98ee5279",
+      "bytes": 7617,
+      "uncompressed_sha256": "98bb6f44eaeb16e9442bf0bc4c4ee185de55334c50455c587055dbba779d78f7",
+      "uncompressed_bytes": 78634
+    },
+    {
+      "path": "logs/packet-quote-semantics-4.log.gz",
+      "sha256": "bffa60d0de45efab1743d01b740b6e2c33953606aecccf5a9117489915296307",
+      "bytes": 7145,
+      "uncompressed_sha256": "5427ca17bc391ee5a7e690e7398d68c5c9a8fe28ee88829e233f016a5c35a24b",
+      "uncompressed_bytes": 76132
+    },
+    {
+      "path": "logs/packet-quote-semantics-5.log.gz",
+      "sha256": "e9ba2aebaed0d43edea09be14c22f2afceefeb5a1b862b7bd8272b41fca86874",
+      "bytes": 7106,
+      "uncompressed_sha256": "2dbd525be93f494e319e839b5975a41a1957ac33b5b88511613c98ca7adf28b8",
+      "uncompressed_bytes": 75867
+    },
+    {
+      "path": "logs/packet-quote-audit-1.log.gz",
+      "sha256": "3de98850259c24216d0050baacc7685c98c7ba9eae10d05ebe3259049256b7ab",
+      "bytes": 7609,
+      "uncompressed_sha256": "6ea1d2243667ca39cbf8ea07705278eae884dd82545757a056b3c931200b1982",
+      "uncompressed_bytes": 78345
+    },
+    {
+      "path": "logs/packet-quote-audit-2.log.gz",
+      "sha256": "07b209eb6c768ab1bae145f4d8d5e25475bb223d5aea1c2197bb8867c95e4386",
+      "bytes": 7539,
+      "uncompressed_sha256": "69c5fdb4ad3d61e2a9ef4bcc359648e77b32235893963544b08c5423bf305b61",
+      "uncompressed_bytes": 80979
+    },
+    {
+      "path": "logs/packet-quote-audit-3.log.gz",
+      "sha256": "8905874dc0611da07c8193a3265ef0d5880165df6bb07914c78f00ffd8f2807c",
+      "bytes": 7675,
+      "uncompressed_sha256": "723dd14a1809400be4229e3fb068e6ecae8fd1deab815e8de636bf7095b48c6f",
+      "uncompressed_bytes": 81996
+    },
+    {
+      "path": "logs/packet-quote-audit-4.log.gz",
+      "sha256": "b94ab5ffeebab9cef03c870404b7572e8518d4a41f082590b616c73fe94fdde9",
+      "bytes": 7681,
+      "uncompressed_sha256": "7f7fdffa401b6a3e8796eb9006e982cd2adb9252725cc44740d3165dcf908530",
+      "uncompressed_bytes": 81995
+    },
+    {
+      "path": "diagnostics/packet-quote-baseline-1-state.txt",
+      "sha256": "c683ae48c43ffe9312712dbae9c9d120f7c2462283e5c86b7a1d0bbb544105f5",
+      "bytes": 213
+    },
+    {
+      "path": "diagnostics/packet-list-reflexivity-attempt.patch",
+      "sha256": "0045d553ab13c8a630bc729a9d6bb32c70dcbbe099a304dd4330ad93cd1c118d",
+      "bytes": 3019
+    },
+    {
+      "path": "diagnostics/packet-source-table-attempt.lean.txt",
+      "sha256": "6932de03f3dad11a8c83df90a6987580be4a28d7996d20fe44b187b07c25ebac",
+      "bytes": 1363
+    },
+    {
+      "path": "diagnostics/packet-runtime-closed-extraction-attempt.lean.txt",
+      "sha256": "79a3336b45254d8450a3badf99b044df0202cae83fffe98569c5d8fd7e40e2bc",
+      "bytes": 421
+    },
+    {
+      "path": "diagnostics/packet-quote-live-limits.json",
+      "sha256": "a173149e7c0e325aca6e988e375e80a38e41b21270ee96b060507061dc81fd6b",
+      "bytes": 306
+    },
+    {
+      "path": "run-bounded.sh",
+      "sha256": "63bc5f97337e6b039bb3a9b1ba2a500be96fd1c2a2f73b43dae284aa9b18dda8",
+      "bytes": 302
+    }
+  ],
+  "prototype": true,
+  "proof_nodes": {
+    "structured_error_reader": 34,
+    "polynomial": 1224,
+    "table": 121995
+  },
+  "fresh_kernel_audit": {
+    "theorems": 70,
+    "definitions": 14,
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ],
+    "native_producer_reductions": false,
+    "log": "logs/packet-quote-audit-4.log.gz"
+  },
+  "proved_witness": "exists x : Real, x^2 = Real.sqrt 2 and 1 < x and x < 2",
+  "input": "Stored polynomial x^2-alpha in the existing selected positive sqrt2 context; actual sign facts and checked parent header equality retained.",
+  "live_limit_verification": {
+    "ActiveState": "active",
+    "OOMPolicy": "kill",
+    "MemoryMax": "34359738368",
+    "MemorySwapMax": "0",
+    "observed_at": "2026-10-17T00:29:27.833003+00:00",
+    "scope": "Live wrapper policy verification after the completed audit; not a concurrent sample of the audit process",
+    "lean_num_threads": "2"
+  },
+  "resource_policy": "serial aggregate32GiB, MemorySwapMax0, LEAN_NUM_THREADS2",
+  "reproduction": "Copy sources/*.lean.txt to a scratch Lake package as *.lean, set its local Hex requirement to this checkout at source_commit, share the existing .lake/packages cache, and run the retained bounded wrapper with LAKE_NO_CACHE=true lake build PacketQuoteAudit. PacketQuoteRuntime separately reproduces a known compiler failure; it is not a passing test.",
+  "limitations": [
+    "Prototype client modules are not yet wired to the repository default target or manual; no PR is opened for this continuation.",
+    "The closed compiled consumer fails in pinned Lean v4.35.0-rc3 with unknown join point block_0 / ExplicitBoxing panic, also with the retained scoped optimizer controls. The root-table quotation wrapper is noncomputable and proof-only; no compiled execution or speedup is established.",
+    "The first baseline attempt was operator-stopped during unnecessary unseeded scratch dependency fetches; that stop is not a passing build. Other parse/type/quoting failures retain their actual logs.",
+    "Direct source specialization inside replay failed; the successful path quotes stored coefficients first and freezes the authentic parent defining polynomial for reduction.",
+    "No generic source/provider/predecessor history reconstruction, complete tactic/accepted completeness, arbitrary realization, strict compiled missing-record or native inverse/xgcd stress repair claim.",
+    "Build observations include reused dependencies; these are not fixed-schedule AB/BA or scaling measurements. Earlier transient sources are not all preserved."
+  ]
+}

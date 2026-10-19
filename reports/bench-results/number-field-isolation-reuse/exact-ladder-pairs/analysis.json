@@ -1,0 +1,130 @@
+{
+  "cases": {
+    "ExactLadder": {
+      "arms": [
+        {
+          "block": 0,
+          "arm": "Before",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xd0642a7d4df3da02",
+          "eligible": true,
+          "median_ms": 1.535206,
+          "inner_repeats": [
+            1
+          ]
+        },
+        {
+          "block": 0,
+          "arm": "After",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xd0642a7d4df3da02",
+          "eligible": true,
+          "median_ms": 1.016327,
+          "inner_repeats": [
+            1
+          ]
+        },
+        {
+          "block": 1,
+          "arm": "Before",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xd0642a7d4df3da02",
+          "eligible": true,
+          "median_ms": 1.535286,
+          "inner_repeats": [
+            1
+          ]
+        },
+        {
+          "block": 1,
+          "arm": "After",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xd0642a7d4df3da02",
+          "eligible": true,
+          "median_ms": 1.012461,
+          "inner_repeats": [
+            1
+          ]
+        },
+        {
+          "block": 2,
+          "arm": "Before",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xd0642a7d4df3da02",
+          "eligible": true,
+          "median_ms": 1.536017,
+          "inner_repeats": [
+            1
+          ]
+        },
+        {
+          "block": 2,
+          "arm": "After",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xd0642a7d4df3da02",
+          "eligible": true,
+          "median_ms": 1.01164,
+          "inner_repeats": [
+            1
+          ]
+        },
+        {
+          "block": 3,
+          "arm": "Before",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xd0642a7d4df3da02",
+          "eligible": true,
+          "median_ms": 1.539512,
+          "inner_repeats": [
+            1
+          ]
+        },
+        {
+          "block": 3,
+          "arm": "After",
+          "exit_code": 0,
+          "status": [
+            "ok"
+          ],
+          "hash": "0xd0642a7d4df3da02",
+          "eligible": true,
+          "median_ms": 1.007544,
+          "inner_repeats": [
+            1
+          ]
+        }
+      ],
+      "successful_adjacent_pairs": 4,
+      "median_adjacent_before_after_ratio": 1.5173668714146102,
+      "ratio_range": [
+        1.5105433585843928,
+        1.527984882049816
+      ],
+      "before_median_ms": 1.5356515,
+      "after_median_ms": 1.0120505
+    }
+  },
+  "failed_arms": [],
+  "all_completed_arms": 8
+}

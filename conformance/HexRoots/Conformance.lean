@@ -398,6 +398,40 @@ certify a disc centred on a root. -/
 -- the public small-degree route above intentionally keeps the exact fast path.
 #guard softRootFree cheb10 ⟨10, 10, 4⟩
 
+-- `(2^512 X - 2)^2` has its double root outside this disc. Graeffe
+-- resolves the exclusion even though the level-zero exact test cannot.
+private def deepPair : ZPoly := DensePoly.ofCoeffs #[4, -(2 ^ 514), 2 ^ 1024]
+
+#guard !exactRootFree deepPair ⟨0, 0, 512⟩
+#guard softRootFree deepPair ⟨0, 0, 512⟩
+
+-- Cancellation beyond the rounded precision ladder must fall back to the
+-- exact check: this disc is much narrower than its distance from the root 1.
+private def nearRootSquare : DyadicSquare :=
+  ⟨Dyadic.ofIntWithPrec (2 ^ 512 + 1) 512, 0, 1078⟩
+
+-- The rounded constant ball contains zero although the polynomial does not
+-- vanish anywhere in this disc. The soft filter is inconclusive, not unsound.
+-- These failure guards deliberately pin the exact-fallback route; a stronger
+-- soft filter may require different fallback fixtures.
+#guard
+  let c := softTaylorCoeff rat1 nearRootSquare.center 1 64 0
+  0 < c.radius && decide (CoeffBall.normOne c.center ≤ c.radius)
+#guard !softRootFree rat1 nearRootSquare
+#guard exactRootFree rat1 nearRootSquare
+#guard rootFree rat1 nearRootSquare
+
+-- Exercise the public large-degree route and its exact fallback at depth.
+private def deepUnity : ZPoly :=
+  DensePoly.ofCoeffs (#[-1] ++ Array.replicate 31 0 ++ #[1])
+
+private def deepUnitySquare : DyadicSquare :=
+  ⟨Dyadic.ofIntWithPrec (2 ^ 7376 + 3) 7376, 0, 7376⟩
+
+#guard !softRootFree deepUnity deepUnitySquare
+#guard exactRootFree deepUnity deepUnitySquare
+#guard rootFree deepUnity deepUnitySquare
+
 /-! # `taylor`: exact Gaussian-dyadic expansion.
 
 `taylor p 0` casts the coefficients (`p(X + 0) = p(X)`); a shift by the root `1`

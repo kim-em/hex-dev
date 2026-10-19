@@ -21,9 +21,8 @@ Two structural things the manifest encodes:
   is generated from `scripts/release/hex-README.md` plus the manifest's
   `component:` labels (see [SPEC/readme.md](SPEC/readme.md)).
 
-Computational libraries are Mathlib-free; `*-mathlib` repos are the
-Mathlib bridge layers and should contain correspondence proofs and
-Mathlib-facing APIs.
+Computational libraries are Mathlib-free; the `*-theory` repos depend on
+Mathlib and contain the correspondence proofs and Mathlib-facing APIs.
 
 ## Source-of-truth model: develop here, publish outward
 
@@ -199,8 +198,8 @@ trial-major schedule. Before/after comparisons run adjacent arms and alternate
 `AB`/`BA` order. Retain every completed run and allow at most one unchanged
 rerun after an inconclusive result. Do not add quiet-core preflights,
 contamination thresholds, retry-until-clean loops, mandatory null controls, or
-per-change profiles. Profile only to explain an unexpected result or to supply
-one required representative Phase-4 attribution. Absolute wall-clock values
+per-change profiles. Profile only to explain an unexpected result or a
+surprising constant factor. Absolute wall-clock values
 are host-specific observations; CI timeouts are operational safeguards, not
 scientific budgets.
 

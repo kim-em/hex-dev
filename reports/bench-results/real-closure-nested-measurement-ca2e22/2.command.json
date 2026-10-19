@@ -1,0 +1,13 @@
+{
+  "argv": [
+    "lake",
+    "env",
+    "lean",
+    "--version"
+  ],
+  "stdout": "2.stdout",
+  "stderr": "2.stderr",
+  "exit_code": 0,
+  "incomplete": false,
+  "elapsed_ns": 2066525820
+}

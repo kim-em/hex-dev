@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexOrderedFnMathlib
+public import HexOrderedFnTheory
 
 public section
 

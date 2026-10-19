@@ -1,0 +1,24 @@
+{
+  "ActiveState": "active",
+  "MainPID": "1576495",
+  "MemoryCurrent": "2033971200",
+  "MemoryMax": "34359738368",
+  "MemorySwapMax": "0",
+  "argv": [
+    "/home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/lake",
+    "build",
+    "+RootQuoteJointAudit",
+    "+RootQuoteRender",
+    "HexRCF",
+    "HexRCFRealCoefficients",
+    "+HexRCF.HandlerTests",
+    "+HexRCF.DecisionTests",
+    "+HexRCF.ReifyTests",
+    "+HexRCF.RootReplayConformance",
+    "+HexRCF.RootReplayOrdinaryConformance",
+    "+HexRealClosure.BaseJsonTests",
+    "+KernelReplay.RationalCodecAudit"
+  ],
+  "source_commit": "bc04ae81425ee7b400ad5d23392a7c3c8f0b19a0",
+  "LEAN_NUM_THREADS": "2"
+}

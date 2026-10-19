@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import VersoManual
 
-import HexDeterminantMathlib
+import HexDeterminantTheory
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -25,7 +25,7 @@ tag := "hex-determinant-intro"
 
 Released as [hex-determinant](https://github.com/leanprover/hex-determinant),
 with the Mathlib correspondence in
-[hex-determinant-mathlib](https://github.com/leanprover/hex-determinant-mathlib).
+[hex-determinant-theory](https://github.com/leanprover/hex-determinant-theory).
 
 `HexDeterminant` is the determinant of a dense square matrix via the
 Leibniz formula, with the cofactor and adjugate theory built on it. It
@@ -40,9 +40,9 @@ a caller runs on a large matrix.
 
 `HexDeterminant` is Mathlib-free. Its identification with Mathlib's
 {name _root_.Matrix.det}`Matrix.det` is the
-{ref "hex-determinant-mathlib"}[last section]; the
+{ref "hex-determinant-theory"}[last section]; the
 identification with the executable Bareiss determinant lives in
-`HexBareissMathlib` and is covered in the
+`HexBareissTheory` and is covered in the
 {ref "hex-bareiss"}[HexBareiss chapter].
 
 # The Leibniz determinant
@@ -189,17 +189,17 @@ end HexDeterminantChapterExample
 
 # The Mathlib correspondence
 %%%
-tag := "hex-determinant-mathlib"
+tag := "hex-determinant-theory"
 %%%
 
-Everything above is executable and Mathlib-free. `HexDeterminantMathlib`
+Everything above is executable and Mathlib-free. `HexDeterminantTheory`
 connects it to Mathlib: the Leibniz determinant {name}`Hex.Matrix.det` equals
 Mathlib's {name _root_.Matrix.det}`Matrix.det` of the corresponding
 Mathlib matrix, transported
-through {name}`HexMatrixMathlib.matrixEquiv` (the same equivalence the
-{ref "hex-matrix-mathlib"}[HexMatrix chapter] introduces).
+through {name}`HexMatrixTheory.matrixEquiv` (the same equivalence the
+{ref "hex-matrix-theory"}[HexMatrix chapter] introduces).
 
-{docstring HexMatrixMathlib.det_eq}
+{docstring HexMatrixTheory.det_eq}
 
 So a fact about Mathlib's {name _root_.Matrix.det}`Matrix.det` can be discharged by running the
 executable determinant, and a fact about the executable determinant can
@@ -209,7 +209,7 @@ The same public umbrella re-exports the bordered-minor form of
 Desnanot--Jacobi used by fraction-free elimination. It is stated over an
 arbitrary commutative ring and remains separate from the executable layer.
 
-{docstring HexMatrixMathlib.desnanot_jacobi_borderedMinor}
+{docstring HexMatrixTheory.desnanot_jacobi_borderedMinor}
 
 # How to prove a fact about the Mathlib determinant by running Hex
 %%%
@@ -217,18 +217,18 @@ tag := "hex-determinant-recipe-kernel-proof"
 %%%
 
 {name}`Matrix.det` is noncomputable, so `decide` cannot see it.
-{name}`HexMatrixMathlib.det_eq` identifies it with the executable Leibniz
+{name}`HexMatrixTheory.det_eq` identifies it with the executable Leibniz
 determinant {name}`Hex.Matrix.det`, which the kernel evaluates directly.
 Rewriting a Mathlib determinant goal backwards through `det_eq` turns it into
 a closed computation.
 
 The rewrite needs the goal's matrix to be in the image of
-{name}`HexMatrixMathlib.matrixEquiv`. For a matrix literal that is
+{name}`HexMatrixTheory.matrixEquiv`. For a matrix literal that is
 {name}`Equiv.apply_symm_apply`: replace `A` by `matrixEquiv (matrixEquiv.symm A)`,
 after which `det_eq` applies.
 
 ```lean
-open Hex Hex.Matrix HexMatrixMathlib
+open Hex Hex.Matrix HexMatrixTheory
 
 namespace HexDeterminantKernelProof
 
@@ -268,7 +268,7 @@ laws are proved here).
 * {ref "hex-bareiss"}[HexBareiss] computes the same integer determinant
   fraction-free in cubic time, using {name}`Hex.Matrix.det` as its Leibniz
   specification.
-* `HexDeterminantMathlib` identifies this executable determinant with
+* `HexDeterminantTheory` identifies this executable determinant with
   Mathlib's {name _root_.Matrix.det}`Matrix.det`.
   `HexDeterminant` itself is Mathlib-free.
 

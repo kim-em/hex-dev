@@ -1,0 +1,59 @@
+{
+  "fingerprint": "f61ef8aa452e",
+  "host": "chungus2",
+  "describe": "2ca9e2f87c11",
+  "label": "perm-group-import-boundary",
+  "compiled_measurement": {
+    "cpu": 22,
+    "load_before": [
+      21.4140625,
+      20.52734375,
+      15.048828125
+    ],
+    "command": [
+      "taskset",
+      "-c",
+      "22",
+      "bash",
+      "scripts/bench/graphiso_cactus_sweep.sh",
+      "perm-group-import-boundary"
+    ],
+    "exit_code": 1,
+    "wall_seconds": 769.069798259,
+    "load_after": [
+      35.29150390625,
+      77.35400390625,
+      55.24072265625
+    ],
+    "build_preparation_affinity": "Expanded all build-process thread affinities to the available 96 CPUs; compiled measurements inherited the parent's CPU 22 lease."
+  },
+  "tactic_measurement": {
+    "cpu": 18,
+    "load_before": [
+      21.615234375,
+      51.111328125,
+      48.63720703125
+    ],
+    "command": [
+      "taskset",
+      "-c",
+      "18",
+      "/tmp/perm-group-plot-venv/bin/python",
+      "scripts/plots/hexgraphiso-cactus.py",
+      "--sweep",
+      "reports/bench-results/hexgraphiso-cactus-f61ef8aa452e-chungus2.jsonl",
+      "--pairs",
+      "reports/bench-results/hexgraphiso-pairs-f61ef8aa452e-chungus2.jsonl",
+      "--retime"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 266.46292751500005,
+    "load_after": [
+      13.70849609375,
+      30.71044921875,
+      40.8056640625
+    ]
+  },
+  "resume_note": "Compiled sweep and pairs were retained after a missing plotting dependency stopped the script. Only the unstarted plotting/tactic phase was resumed in an isolated matplotlib environment.",
+  "date": "2026-10-05T16:41:27.129249Z"
+}

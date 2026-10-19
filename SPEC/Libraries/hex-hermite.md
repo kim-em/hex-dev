@@ -3,7 +3,7 @@
 The Hermite normal form of an integer matrix: a canonical row-echelon
 representative of the integer row lattice, together with an optional
 unimodular transform and explicitly accumulated inverse. Mathlib-free;
-the companion `hex-hermite-mathlib` relates the executable output to
+the companion `hex-hermite-theory` relates the executable output to
 `Submodule.span ℤ`, `Matrix.rank`, and the general linear group over `ℤ`.
 
 This SPEC and [hex-smith](hex-smith.md) are a pair. Hermite normal form
@@ -692,9 +692,9 @@ derived. See "Benchmarking".
 | `kernelBasis` | `hnfData` plus a row slice of `U` | as `hnfData`, plus `O((n-r) · n)` | `U`'s |
 | `latticeIndex` | `hnf` plus pivot scan and product | as `hnf`, plus `O(m)` | bounded by the form and index |
 
-## The Mathlib layer
+## The theory layer
 
-`hex-hermite-mathlib` proves:
+`hex-hermite-theory` proves:
 
 ```lean
 /-- The row lattice is unchanged. -/
@@ -849,10 +849,10 @@ a single family would hide:
   without a large determinant.
 
 **Comparators.** FLINT `fmpz_mat_hnf` through python-flint, and PARI
-`mathnf` through `cypari2`, both `informational`. FLINT dispatches
+`mathnf` through `cypari2`, both for orientation. FLINT dispatches
 across several algorithms including `hnf_pernet_stein`, which is
 asymptotically faster than anything specified here, so the ratio
-measures a different algorithm and does not hold a required threshold.
+measures a different algorithm and has no target threshold.
 PARI is column-style and its timing includes the convention conversion.
 Both are recorded for orientation in
 `reports/hex-hermite-performance.md`.
@@ -878,11 +878,11 @@ HexHermite/
   Lattice.lean       -- latticeCoeffs, latticeContains, kernelBasis, latticeIndex
   Cert.lean          -- hnfCert and its soundness
 HexHermite.lean      -- umbrella
-HexHermiteMathlib/
+HexHermiteTheory/
   Span.lean          -- span and lattice correspondence
   Rank.lean          -- hnfRank = Matrix.rank
   Kernel.lean        -- the executable kernel basis as a Module.Basis
-HexHermiteMathlib.lean
+HexHermiteTheory.lean
 ```
 
 `libraries.yml` gains:
@@ -893,25 +893,8 @@ HexHermiteMathlib.lean
     mathlib: false
     done_through: 0
     status: draft
-    phase4:
-      comparators:
-        - tool: FLINT fmpz_mat_hnf via python-flint
-          class: informational
-          rationale: FLINT dispatches to asymptotically faster algorithms outside this SPEC
-        - tool: PARI mathnf via cypari2
-          class: informational
-          rationale: PARI is column-style and the timing includes convention conversion
-      input_families:
-        - name: random-dense-hermite
-          description: dense square nonsingular integer matrices with uniformly bounded entries
-        - name: rank-deficient-hermite
-          description: rows drawn as integer combinations of a smaller independent set
-        - name: tall-hermite
-          description: tall matrices with many redundant row generators
-        - name: unimodular-conjugate
-          description: random unimodular left factors times a known diagonal form
-  HexHermiteMathlib:
-    deps: [HexHermite, HexRowReduceMathlib, HexDeterminantMathlib]
+  HexHermiteTheory:
+    deps: [HexHermite, HexRowReduceTheory, HexDeterminantTheory]
     mathlib: true
     done_through: 0
     status: draft

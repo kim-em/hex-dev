@@ -19,6 +19,8 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 SHARED_PREFIXES = ("Hex/", "scripts/ci/", ".github/")
 SHARED_PATHS = {
     "scripts/oracle/common.py",
+    "scripts/oracle/exact_roots.py",
+    "scripts/oracle/real_algebraic_qqbar.py",
     "lakefile.lean",
     "lake-manifest.json",
     "lean-toolchain",
@@ -38,6 +40,10 @@ class Classification:
     libraries: tuple[str, ...]
     all_libraries: bool
     reason: str
+
+    @property
+    def manual_only(self) -> bool:
+        return not self.all_libraries and not self.libraries
 
     @property
     def library_filter(self) -> str:
@@ -93,11 +99,17 @@ def classify_paths(
     library_names = set(libraries)
     selected: set[str] = set()
     reasons: list[str] = []
+    manual_changed = False
 
     for raw_path in paths:
         path = raw_path.removeprefix("./")
+        if path == "HexManual.lean" or path.startswith("HexManual/"):
+            manual_changed = True
+            continue
         if path in SHARED_PATHS or path.startswith(SHARED_PREFIXES):
             return Classification((), True, f"shared infrastructure changed: {path}")
+        if _is_documentation(path) and not path.startswith("HexConway/SPEC/"):
+            continue
 
         owner = library_owner_for_path(Path(path), libraries)
         if owner == "Hex":
@@ -142,9 +154,6 @@ def classify_paths(
             reasons.append(f"{path} -> {','.join(sorted(owners))}")
             continue
 
-        if _is_documentation(path):
-            continue
-
         return Classification((), True, f"unclassified path changed: {path}")
 
     # Infinitesimal conformance imports the provider outside library sources.
@@ -153,6 +162,8 @@ def classify_paths(
         reasons.append("HexOrderedFn -> HexSignDet/HexRealClosure infinitesimal conformance")
 
     if not selected:
+        if manual_changed:
+            return Classification((), False, "only manual and documentation paths changed")
         return Classification((), True, "no changed path mapped to a library")
 
     ordered = tuple(name for name in topological_order(libraries) if name in selected)
@@ -180,6 +191,7 @@ def changed_paths(base_sha: str, head: str = "HEAD") -> list[str]:
 def write_github_output(path: Path, classification: Classification) -> None:
     with path.open("a", encoding="utf-8") as output:
         output.write(f"library_filter={classification.library_filter}\n")
+        output.write(f"manual_only={str(classification.manual_only).lower()}\n")
 
 
 def main() -> int:
@@ -202,6 +214,8 @@ def main() -> int:
 
     write_github_output(args.github_output, classification)
     scope = "all libraries" if classification.all_libraries else " ".join(classification.libraries)
+    if classification.manual_only:
+        scope = "none (manual build only)"
     print(f"CI verification library scope: {scope}")
     print(f"Reason: {classification.reason}")
     return 0

@@ -1,0 +1,244 @@
+{
+  "initial_source_commit": "441169931169dd04428c8a0834e3ce753b6b464e",
+  "source_commit": "0f6d6f9ddcfec2e6f387c2f1b5c1ee6aa16c3430",
+  "intermediate_source_commit": "338609b7c640d056ee745f332ae672d0f80a2018",
+  "intermediate_sources_sha256": {
+    "adapters/HexRCF/RealCoefficients/GatherCells.lean": "1eb6f9a1fdd1491501c93e9e9252ca238074b33ffca192653f86b5a2fec451fc",
+    "adapters/HexRCF/RealCoefficients/NumberField.lean": "12a3db2c07f3d7e19c7a967e474751cd012f2948d8196017db725b41b1b62260",
+    "conformance/HexRCF/GatherCellsConformance.lean": "9f51cf77e5fa02feac538f269d50044c776c84ef87f64def6a8624892a3c2c3a",
+    "adapters/HexRCF/RealCoefficients.lean": "8e84a0354963d26dab6b19a82599ff0d6e4543b85d2cc4852e7dc2b897d67c7c",
+    "lakefile.lean": "a913af83bdfc6472cf9e54d74918f2193465127857c9644405ece1292fc725f4",
+    "scripts/ci/check_named_admissions.py": "1cdefdc02185df447e920e5d79c1a2105d15e7d0756ca3e53fd6114b722a97d9",
+    "scripts/ci/test_check_named_admissions.py": "2224026556ee0fb33696495ae88a970acc812216de9e30c5842e2cdad6e260be",
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "babd0c0810db55d8a0b4e582c1b704781ea741f4aaa22c3acd86b084db4ee83c",
+    "HexRCF/README.md": "97822c041a40786bfce21c3a75de1398ce2d9100c85e557d62d9e9f1551d4804"
+  },
+  "initial_sources_sha256": {
+    "adapters/HexRCF/RealCoefficients/GatherCells.lean": "6a2e407236d097c1f7ae8fa38c5af536f1f55daf9e8dd618c4d4177b726a76b2",
+    "adapters/HexRCF/RealCoefficients/NumberField.lean": "6227a4158bc87a476fa73ce59e3114f1f8ab6f7f6b4c75f239add3dc69836ee0",
+    "conformance/HexRCF/GatherCellsConformance.lean": "9d8f55040ce74b427da5042b4c48a6a303a4a0486e56fad276ba8a9639e987a1",
+    "adapters/HexRCF/RealCoefficients.lean": "8e84a0354963d26dab6b19a82599ff0d6e4543b85d2cc4852e7dc2b897d67c7c",
+    "lakefile.lean": "a913af83bdfc6472cf9e54d74918f2193465127857c9644405ece1292fc725f4",
+    "scripts/ci/check_named_admissions.py": "1cdefdc02185df447e920e5d79c1a2105d15e7d0756ca3e53fd6114b722a97d9",
+    "scripts/ci/test_check_named_admissions.py": "2224026556ee0fb33696495ae88a970acc812216de9e30c5842e2cdad6e260be",
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "babd0c0810db55d8a0b4e582c1b704781ea741f4aaa22c3acd86b084db4ee83c",
+    "HexRCF/README.md": "3c69ef411832e59b088e3f8713a115f64962e40688dd1e9633605b7f24a0798c"
+  },
+  "sources_sha256": {
+    "adapters/HexRCF/RealCoefficients/GatherCells.lean": "85690d8f14a98fedf5618aedd776f1725385e2c967bf710eadf52ccbb6f18f94",
+    "adapters/HexRCF/RealCoefficients/NumberField.lean": "12a3db2c07f3d7e19c7a967e474751cd012f2948d8196017db725b41b1b62260",
+    "conformance/HexRCF/GatherCellsConformance.lean": "822589d7a0add5c51d4996c8761713f95adcf76c0fdab44baa9253a129ba79f7",
+    "adapters/HexRCF/RealCoefficients.lean": "8e84a0354963d26dab6b19a82599ff0d6e4543b85d2cc4852e7dc2b897d67c7c",
+    "lakefile.lean": "a913af83bdfc6472cf9e54d74918f2193465127857c9644405ece1292fc725f4",
+    "scripts/ci/check_named_admissions.py": "1cdefdc02185df447e920e5d79c1a2105d15e7d0756ca3e53fd6114b722a97d9",
+    "scripts/ci/test_check_named_admissions.py": "2224026556ee0fb33696495ae88a970acc812216de9e30c5842e2cdad6e260be",
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "babd0c0810db55d8a0b4e582c1b704781ea741f4aaa22c3acd86b084db4ee83c",
+    "HexRCF/README.md": "97822c041a40786bfce21c3a75de1398ce2d9100c85e557d62d9e9f1551d4804"
+  },
+  "logs": {
+    "reports/data/hexrcf-gather-cells/gather-cells-admission-tests-1.log.gz": {
+      "sha256": "04d16816d993ba89795666f72ebc56cc8be3393c5d4a5d097fdadecd6692e4d0",
+      "uncompressed_sha256": "e4f1aa2aefee994795d8fb2146f103db3dd6a6e3b2cec155cf63c3403434de13"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-admission-tests-2.log.gz": {
+      "sha256": "cf796517e845986933d6ce82e3df987aee25679d5e8ffb269489d4b05bdb378e",
+      "uncompressed_sha256": "bb23653d1e6669772852992becd3e3033ceb2f01160cf1e2c9b9a0816a94531f"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-admission-tests-3.log.gz": {
+      "sha256": "c0a1b8eba583bf1a57e63e2ef7fb3f50cdd6dff7a44813022d51e91add901936",
+      "uncompressed_sha256": "fd5f59d4dae39afe3ee564ae00815c7762b2b0bea9479960d09bf278a17333c9"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-admissions-1.log.gz": {
+      "sha256": "83db4788e454bfa7ee5d7ee71b38cc768ae22ca43ba05f2ff67507895f2f32e6",
+      "uncompressed_sha256": "d556e15d4c4b8ea386d4b50641f701832a11c68a83ac9fb9e0502d8f17285ce6"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-admissions-2.log.gz": {
+      "sha256": "de3038d8e7cca78e579eb67a92f08a14ef8722a6d35b4d9aa922a0114aa646be",
+      "uncompressed_sha256": "fe60be8fb8320a7ad1772270ee81176cebf9399142a53856096ca572acdda5b3"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-admissions-3.log.gz": {
+      "sha256": "9cb3e96c81de95b809169715a38a912a4fbc79cada8c4b327933b23b86d9fd69",
+      "uncompressed_sha256": "c31c52a75e41b569686290a0aac9b363f691aaed28b5a634b82d69d037e5a563"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-affected-build-1.log.gz": {
+      "sha256": "3dd0b7aaefcdf2931d3dd5478a5dea218279625c6efe22a110c6ec87ce7b8723",
+      "uncompressed_sha256": "676fc9ea14b8a2c3cba12d03ea88712c89aa1dbdcb633d9b76906d049a83d5b8"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-api-1.log.gz": {
+      "sha256": "015103b0c2ca3a6aa2eddf5377dbc25f334eb5b73a45771c3638d9b3069b20f6",
+      "uncompressed_sha256": "48efa4c3bef9e7b6fab1c28f6c9507036addb50c2d1030fef520bfa6d074dc83"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-api-2.log.gz": {
+      "sha256": "a38c10414241acac75cc255f90243452e55616066832c388b455f4c047eb337a",
+      "uncompressed_sha256": "d359314c0d957ef3616aa28824d0cb3e3b4265817f41e38f4087a77ea79093b7"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-api-3.log.gz": {
+      "sha256": "35d51c175b6a6629fd9dc21db96f1d5bcbf867b68c4527cf66e980f78988b315",
+      "uncompressed_sha256": "b88e9dfd9928b08f0872a224048b0366ccea65cdc547c4ceb8f7ec36965b762b"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-conformance-1.log.gz": {
+      "sha256": "0a1e6457c935acf0e66f58f0fb5b0a445a430ebc5a9c5763c2f8609dd68d9d86",
+      "uncompressed_sha256": "e34e20763de9d3d19772a0aab598ac8a5d5f5b2f2525cded915b5c9204a7772e"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-conformance-2.log.gz": {
+      "sha256": "06e1c72f08ce41d3972ea2e9c746b97cac5bb7f31010d5aca17635762486a4b5",
+      "uncompressed_sha256": "117615d4eb124c62f14ee2da621e6ac0785d9254e7744d540b7e123de50eac9b"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-conformance-3.log.gz": {
+      "sha256": "416034cf8d05fa63ce4256f9a90b3b28fb60be93d38086bd2c4fadb7d895bf16",
+      "uncompressed_sha256": "412fe094c308e9e2e9fbba715ffdb954fde3aa4a2005700269112e1f9b00a983"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-conformance-4.log.gz": {
+      "sha256": "af057095d4d3fb81be4ab7b6f56c71364de8c8955b39ec262759e24f9bad1b7e",
+      "uncompressed_sha256": "2d9725521d8edb13a73d23ad854a69014ae822c3dc40bfce49b9428d0dab8377"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-copyright-1.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-dag-1.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-field-binding-1.log.gz": {
+      "sha256": "683606c82b046a0ecd4242e476375fadd08652d48fc214f68c12c02e5a1697a5",
+      "uncompressed_sha256": "38b0eb0e84d6967acd6815eb7718e080b566fb3ddfa1591a7669c9b05feee73a"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-field-binding-2.log.gz": {
+      "sha256": "bfd5c37af554c08471023a47f94cfc0a171a8d94e2541c9683ced1c35244f156",
+      "uncompressed_sha256": "2ba6960c3c1faa0fed12d1d70db501a16fcff3229c4f959d0e48aab58d1f8f63"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-final-admissions-1.log.gz": {
+      "sha256": "9cb3e96c81de95b809169715a38a912a4fbc79cada8c4b327933b23b86d9fd69",
+      "uncompressed_sha256": "c31c52a75e41b569686290a0aac9b363f691aaed28b5a634b82d69d037e5a563"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-final-build-1.log.gz": {
+      "sha256": "aeb5632cb3b83a65b5c554bcf3770c7dd0e4a482006a526f939ec22ac72fc411",
+      "uncompressed_sha256": "3736e942439c85313314fd0b02794e141f4bd21550f72848621706ff0990be20"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-final-copyright-1.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-final-dag-1.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-final-literals-1.log.gz": {
+      "sha256": "d363c41d04cc71aaa8b2bb97d1faf6ff4b311e5874c10d339f87aba4d4b97158",
+      "uncompressed_sha256": "5b2703a612f8c434ac4e53bb05bfeef0dbca1d91cc9125441d5bd447be3dfbc3"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-literals-1.log.gz": {
+      "sha256": "d363c41d04cc71aaa8b2bb97d1faf6ff4b311e5874c10d339f87aba4d4b97158",
+      "uncompressed_sha256": "5b2703a612f8c434ac4e53bb05bfeef0dbca1d91cc9125441d5bd447be3dfbc3"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-manual-browser-1.log.gz": {
+      "sha256": "7b798642cb17cb69ff68a118fb6d88cf5329af6e003756f12c4cfc07b60c8e2a",
+      "uncompressed_sha256": "227bc6d8bae27340f5d3546012289b0f4bd83f87296a16fffa34c751f4957a1e"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-manual-render-1.log.gz": {
+      "sha256": "e6ac562716398c1d26d6fcca96e819430ab624fb8a03e37865c30140bb619dd2",
+      "uncompressed_sha256": "4aada2a4738705676f6313f5ffb14a834d12272199cefd0e1582a058a702afb4"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-source-admissions-1.log.gz": {
+      "sha256": "9cb3e96c81de95b809169715a38a912a4fbc79cada8c4b327933b23b86d9fd69",
+      "uncompressed_sha256": "c31c52a75e41b569686290a0aac9b363f691aaed28b5a634b82d69d037e5a563"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-source-copyright-1.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-source-dag-1.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-source-final-1.log.gz": {
+      "sha256": "022283392bae71c14e5ba92dee12791d4821f29778ddf690040e6238daf757c8",
+      "uncompressed_sha256": "f7af38476988e218d933247662d0f65219d84d705aae093ed121ff52489a4c3d"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-source-final-2.log.gz": {
+      "sha256": "7534b9f279d44196409dc9988664d2f43a171681f27478efca68b9e498359671",
+      "uncompressed_sha256": "5f81388c82a5676c86ad93b47a3ec6a6229b7c1c4fc0158f1377ba50d83e5e70"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-source-literals-1.log.gz": {
+      "sha256": "d363c41d04cc71aaa8b2bb97d1faf6ff4b311e5874c10d339f87aba4d4b97158",
+      "uncompressed_sha256": "5b2703a612f8c434ac4e53bb05bfeef0dbca1d91cc9125441d5bd447be3dfbc3"
+    },
+    "reports/data/hexrcf-gather-cells/gather-cells-start-branch.log.gz": {
+      "sha256": "a012226fdc9eabcbdc1b2980a321df7a71295873623f84cc2f95307b8ffb053d",
+      "uncompressed_sha256": "a7e63b80159279ff4352c7e58b31d7ac2274a21279636714950db48674f3375f"
+    },
+    "reports/data/hexrcf-gather-cells/field-source-model-1.log.gz": {
+      "sha256": "96dc9b6aafaabb5f17dc5778f9317744f56743035e1ec5eef73a4eb0a93a53a4",
+      "uncompressed_sha256": "62616497941015032be33b0098535aa6daf6ff8f179083912b1d5129598894b5"
+    },
+    "reports/data/hexrcf-gather-cells/field-source-model-2.log.gz": {
+      "sha256": "d4e86bbdb4da90959f2deac1ca899ae51d6b8a723c8c3cd9ffd7664a01caa9ef",
+      "uncompressed_sha256": "a378250470137f227bbc817fb36a4bf47e9a2c238d46cf0544cc42685effc7e9"
+    },
+    "reports/data/hexrcf-gather-cells/field-source-model-3.log.gz": {
+      "sha256": "675ecac3fb69b516138a02ee64921c4e256b702381df4093412a5fdc238439fb",
+      "uncompressed_sha256": "79041c1a2fbf7d213e079fa70dfae72d91e59e7b7f9ae7e557e9c372c5073a17"
+    },
+    "reports/data/hexrcf-gather-cells/field-source-model-4.log.gz": {
+      "sha256": "f3cd396236621fad3212c0e9b5e6e5a4c31599e3d0dacfd8ad34c7fc0cd3ff06",
+      "uncompressed_sha256": "79b0b91c656f01821640507d6f15b1a68a5251884df847dd4fe6800bc73a3a72"
+    },
+    "reports/data/hexrcf-gather-cells/field-source-adapter-1.log.gz": {
+      "sha256": "64b4fcb9ebea8067683183d4ad46f9d1e8573d572129727fda38fc092f2e93d5",
+      "uncompressed_sha256": "17ea9fa14fa76eb11ef06d372b00467ea687deef4fbd615cd390380e474a86a6"
+    },
+    "reports/data/hexrcf-gather-cells/field-source-adapter-2.log.gz": {
+      "sha256": "ba627f4b23e8bd99a4d7c3442b70249ef22890771a7e73461befad5fb4a0a92e",
+      "uncompressed_sha256": "751b4164f38193a3d74e45a40e5b575fc2280facd0d5bdec61f2ec35d32ddaf3"
+    },
+    "reports/data/hexrcf-gather-cells/field-source-adapter-3.log.gz": {
+      "sha256": "3b95b90bb5a401df4764a162c7126bb7947dbdefd16d2db3061134516e30c262",
+      "uncompressed_sha256": "685be8f00aecfc07e7a6d41ed12b45b521ebaeab8ad4278ce173423303aec94b"
+    }
+  },
+  "artifacts_sha256": {
+    "reports/data/hexrcf-gather-cells/gather-cells-desktop-api-end.png": "bc9b2528543428918007161058c39bbfe0904cb225b51031f884edf5cbc2e9c7",
+    "reports/data/hexrcf-gather-cells/gather-cells-desktop-api-start.png": "51ea82105bcdfe793d55310c8dad187e5cfc814a7ff96b81fd710a04542733b9",
+    "reports/data/hexrcf-gather-cells/gather-cells-desktop-native.png": "a21672ea817e94e8c9fc425d65426f762ba9e1951d22cfd405b8073f4b5d3946",
+    "reports/data/hexrcf-gather-cells/gather-cells-desktop-scope.png": "814cb94aac12d3b5199d1747691624a452d912c3f3e18949a52c73ec43bdcb86",
+    "reports/data/hexrcf-gather-cells/gather-cells-narrow-api-end.png": "39a8f9ff9d0dda30487ed68202513360af09880e9a175dfed21b3e5b84f20dba",
+    "reports/data/hexrcf-gather-cells/gather-cells-narrow-api-start.png": "ead07350540a4abe131e0d22c87b761aa87593c989f3ac79717e02d1947e9126",
+    "reports/data/hexrcf-gather-cells/gather-cells-narrow-native.png": "b7e145ae45698604adb5e5a3fdecdd472a27764a32d38efa1a26f40b4a526df3",
+    "reports/data/hexrcf-gather-cells/gather-cells-narrow-scope.png": "d6fa3f40ca1a66665e864686547bea63cb53e18ce88c60bc6d139e78c14a61e6",
+    "reports/data/hexrcf-gather-cells/gather-cells-inspection.json": "0b3958571cc96637e0598842a55ebe07e1df21f7094d79e7977c70b869c7ae88",
+    "reports/data/hexrcf-gather-cells/gather-cells-browser.mjs": "3cb6ea6cebd74e9e52c3ccb325e520bfa138f378d5bc102c06b822500d60b420",
+    "reports/data/hexrcf-gather-cells/gather-cells-memory-properties.txt": "e8ae1cbed3d55470e35c5372d57ac7111b238dc79e17cc246893fcafa5b0124b",
+    "reports/data/hexrcf-gather-cells/run-bounded": "63bc5f97337e6b039bb3a9b1ba2a500be96fd1c2a2f73b43dae284aa9b18dda8",
+    "reports/data/hexrcf-gather-cells/lake-bounded": "aa8d54eac4cf88e9bcff9f0caedf5f73013b9b30919b25a1513bd3a2b01bb43d"
+  },
+  "rendered_html_sha256": "78847def2e1a49f13fa4ce3d9a1bf65b4142bafed415ac9acd8a7a0c1fb1992e",
+  "validation": {
+    "initial_actual_bodies": 6,
+    "intermediate_actual_bodies": 8,
+    "final_actual_bodies": 9,
+    "selected_build_jobs": 11766,
+    "renderer_build_jobs": 14295,
+    "browser_captures": 8,
+    "admission_scan_cones": 643,
+    "admission_scan_modules": 1543,
+    "checker_unit_tests": 11,
+    "memory_bytes": 34359738368,
+    "swap_bytes": 0,
+    "lean_threads": 2,
+    "own_build_concurrency": 1
+  },
+  "limits": [
+    "Compiled native controls and actual theorem-body audits are distinct evidence.",
+    "The initial six-proof source owns the displayed manual rendering; its text is unchanged in the later proof extension.",
+    "The ordinary base model and original nonzero guards remain mathematical progress hypotheses.",
+    "No frozen provider/predecessor history, arbitrary missing-record strictness, primitive common-field certification or frontend accepted completeness is inferred.",
+    "Build/render observations are operational evidence, not a speedup comparison."
+  ],
+  "document_commit": "f4da95ffa255163430fe2cede10ded992b85c13c",
+  "documents_sha256": {
+    "reports/hexrcf-gather-cells.md": "42f7742260e416719d7b3b68a259ef04aac9cfc92035e4512ac17486740c5560",
+    "reports/data/hexrcf-gather-cells/collect.py": "58e72a9d2250e82258c156670dc3c0e00bcd5537e9357d911aa516ce05e558fe"
+  },
+  "artifact_commit": "f4da95ffa255163430fe2cede10ded992b85c13c"
+}

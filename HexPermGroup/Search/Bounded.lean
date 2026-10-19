@@ -25,14 +25,14 @@ lower bound; only a complete traversal returns a completeness certificate. -/
   match m.spend .nodes 1 with
   | .error failure => Result.stop C t a failure
   | .ok meter =>
-    match t.coveredWith a.group meter with
+    match t.coveredBudgeted a.group meter with
     | .exhausted failure => Result.stop C t a failure
     | .ok covered meter =>
       if hc : covered.val = true then
         Result.finish C t a a (fun _ hp => hp) (fun _ => .covered) (by
           simpa only [checkTree] using covered.property.symm.trans hc) meter
       else
-        match C.refineWith t meter with
+        match C.refineBudgeted t meter with
         | .exhausted failure => Result.stop C t a failure
         | .ok (some reason) meter =>
           Result.finish C t a a (fun _ hp => hp) (fun _ => .rejected reason.val) (by
@@ -67,7 +67,7 @@ inductive Outcome {G : Group n} {P : Predicate n} (C : Constraint G P) (budget :
 
 /-- Budgeted exact subgroup search. The leaf evaluator shares the same sift
 counter with prefix coverage and redundant-generator checks. -/
-@[expose] def solveWith (budget : Budget) {G : Group n} {P : Predicate n} (C : Constraint G P)
+@[expose] def solveBudgeted (budget : Budget) {G : Group n} {P : Predicate n} (C : Constraint G P)
     (Q : Tester P budget) : Outcome C budget :=
   let r := Bounded.visit C Q (Node.root G) (Accumulator.empty G P) (_root_.Hex.PermGroup.Execution.Meter.empty budget)
   match r.status with

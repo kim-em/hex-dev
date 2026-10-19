@@ -1,0 +1,76 @@
+{
+  "base_commit": "62399ddd0cc7416287cafcfb19c51bc6184aef6d",
+  "scope": "Local verification of the subsequent query/root headline composition and retained representative-profile evidence; no Phase-4 advancement.",
+  "tested_lean_source_sha256": {
+    "adapters/HexSturmMathlib/Soundness.lean": "d48888d286d47b784ea4c42b3c11df191dd9e9da8f7ac67a1cd78bb91d5f3a36",
+    "adapters/HexSturmMathlib/Tests/Replay/Semantics.lean": "c512261a78e8162b7e68fc49460340ce6d7e8a789ce8a4bd1deb4f3ec097b155",
+    "HexRealAlgebraicMathlib/Roots.lean": "37161c65df791fd265297013de6fa9d4c571bed8154bcbf1493918c3219c5717",
+    "HexRealAlgebraicMathlib/Tests.lean": "62f06db8c7c99d94367f92e3e5f5377c1e4c966cc1e7505c9c527c86747a30b3"
+  },
+  "checks": [
+    {
+      "command": "lake build HexQuerySemantics",
+      "result": "passed",
+      "jobs": 10735,
+      "coverage": [
+        "query_iff",
+        "noncanonical_query_iff",
+        "ordinary-kernel axiom guards"
+      ]
+    },
+    {
+      "command": "lake build HexRealAlgebraicMathlibTests",
+      "result": "passed",
+      "jobs": 9829,
+      "coverage": [
+        "roots_spec",
+        "ordinary-kernel axiom guards"
+      ]
+    },
+    {
+      "command": "lake build",
+      "result": "passed",
+      "jobs": 15537
+    },
+    {
+      "command": "lake build HexConformance",
+      "result": "passed",
+      "jobs": 14678
+    },
+    {
+      "command": "python3 scripts/check_dag.py",
+      "result": "passed"
+    },
+    {
+      "command": "python3 scripts/check_phase4.py",
+      "result": "passed",
+      "headline_reports": 43,
+      "changed_registrations": 44
+    },
+    {
+      "command": "python3 scripts/ci/check_named_admissions.py",
+      "result": "passed",
+      "import_cones": 262,
+      "local_modules": 1033
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    },
+    {
+      "check": "Retained representative profiles",
+      "result": "passed",
+      "captures": 3,
+      "raw_artifacts_checked": 126,
+      "driver_and_benchmark_sources": "matching manifest hashes",
+      "persistent_executables": "matching manifest hashes"
+    }
+  ],
+  "axiom_allowlist": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "required_ci": "Must pass on the follow-up PR before merge; the existing PR #10580 CI covers the preceding Phase-3 source, not these new proofs.",
+  "remaining": "Core operation-specific performance modes/budgets and comparators, genuine parameter families, remaining Sturm characterization/admission concerns, and Sturm headline bridge-target policy reconciliation."
+}

@@ -1,0 +1,418 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+module
+
+public import Lean.Elab.Command
+public import Lean.Meta.Reduce
+public meta import Lean.Meta.Reduce
+public meta import Lean.Meta.Check
+public import Lean.Meta.Tactic.Simp
+public meta import Lean.Meta.Tactic.Simp.Main
+public import Lean.Util.CollectAxioms
+public import HexRealClosure.Packing
+public import HexRealClosure.ValueSigns
+public import HexRealClosure.InverseReplay
+
+public meta section
+
+namespace Hex.RealClosure.Algebraic.KernelReplay
+open Lean Meta
+
+/-- An actual checked Boolean equation, or the demanded missing-fact
+application that prevented checking either Boolean value. -/
+inductive Outcome where
+  | checked (value : Bool) (proof : Expr) (axioms : Array Name)
+  | missing (application : Expr)
+
+/-- The demanded boundary distinguishes arithmetic packing from an input's
+cached sign and inverse equations. Suppliers retain the actual operand. -/
+inductive EvidenceKind where
+  | coefficient
+  | valueSign
+  | inverse
+  deriving BEq
+
+/-- The literal polynomial and immutable owner of a demanded record. Input
+sign and inverse requests retain the exact value, without repacking it. -/
+structure Request where
+  context : Expr
+  polynomial : Expr
+  kind : EvidenceKind := .coefficient
+  value : Option Expr := none
+
+def request (application : Expr) : MetaM Request := do
+  if application.getAppFn.isConstOf ``Element.missingSign ||
+      application.getAppFn.isConstOf ``Element.missingInverse then
+    let value := application.getAppArgs.back!
+    let element ← withTransparency .all (whnf (← inferType value))
+    unless element.getAppFn.isConstOf ``Element do
+      throwError "unexpected cached-sign value type {element} for {value}"
+    let inverse := application.getAppFn.isConstOf ``Element.missingInverse
+    let polynomial ← mkAppM (if inverse then ``Element.inverseCandidate else ``Element.polynomial)
+      #[value]
+    let kind : EvidenceKind := if inverse then .inverse else .valueSign
+    return { context := element.getAppArgs.back!, polynomial, kind, value := some value }
+  unless application.getAppFn.isConstOf ``Element.missing do
+    throwError "expected a missing coefficient fact"
+  let type ← inferType application
+  unless type.getAppFn.isConstOf ``Subtype && type.getAppArgs.size == 2 do
+    throwError "unexpected missing coefficient type"
+  let element := type.getAppArgs[0]!
+  unless element.getAppFn.isConstOf ``Element do
+    throwError "unexpected algebraic element type"
+  return { context := element.getAppArgs.back!, polynomial := application.getAppArgs.back! }
+
+private initialize auditedConstants : EnvExtension (PHashMap Name (Array Name)) ←
+  registerEnvExtension (pure {}) (asyncMode := .local)
+
+-- Environment scoping is essential: a declaration and all its dependencies
+-- are immutable in descendants of the environment that checked them. Rollback
+-- discards entries even when an unchanged declaration later refers to a reused
+-- dependency name. Lean already precomputes imported declarations' axiom sets.
+private partial def auditedAxioms (name : Name) (active : NameSet := {}) : MetaM (Array Name) := do
+  let environment ← getEnv
+  if let some axioms := auditedConstants.getState environment |>.find? name then return axioms
+  -- Imported declarations use Lean's precomputed data. A recursive local
+  -- dependency also uses the complete collector, never a provisional empty
+  -- cache entry: every retained entry must contain its full axiom closure.
+  let axioms ← if environment.isImportedConst name || active.contains name then
+      collectAxioms name
+    else do
+      let dependencies ← match environment.checked.get.find? name with
+        | some (.defnInfo info) => pure (some (info.type.getUsedConstants ++ info.value.getUsedConstants))
+        | some (.thmInfo info) => pure (some (info.type.getUsedConstants ++ info.value.getUsedConstants))
+        | some (.opaqueInfo info) => pure (some (info.type.getUsedConstants ++ info.value.getUsedConstants))
+        | some (.ctorInfo info) => pure (some info.type.getUsedConstants)
+        | some (.recInfo info) => pure (some info.type.getUsedConstants)
+        | some (.inductInfo info) => pure (some (info.type.getUsedConstants ++ info.ctors.toArray))
+        | _ => pure none
+      let some dependencies := dependencies | collectAxioms name
+      let mut result := #[]
+      let active := active.insert name
+      for dependency in dependencies do
+        for axiomName in ← auditedAxioms dependency active do
+          unless result.contains axiomName do result := result.push axiomName
+      pure (result.qsort Name.lt)
+  for axiomName in axioms do
+    unless #[`propext, `Classical.choice, `Quot.sound].contains axiomName do
+      throwError "unexpected axiom {axiomName} through {name}"
+  if !environment.isImportedConst name && (environment.checked.get.find? name).isSome then
+    modifyEnv fun environment => auditedConstants.modifyState environment (·.insert name axioms)
+  return axioms
+
+def auditProof (proof type : Expr) : MetaM (Array Name) := do
+  let began ← IO.getNumHeartbeats
+  if proof.hasSorry || proof.hasMVar || type.hasSorry || type.hasMVar then
+    throwError "incomplete proof"
+  let mut axioms : Array Name := #[]
+  -- This application only joins the trees for constant traversal; the
+  -- original proof and type still go to the kernel. One fold preserves their
+  -- first occurrence order while visiting shared nodes and names once.
+  let constants := (mkApp proof type).getUsedConstants
+  for decl in constants do
+    for axiomName in (← auditedAxioms decl) do
+      if !axioms.contains axiomName then axioms := axioms.push axiomName
+  if let some path ← IO.getEnv "HEX_NATIVE_ASSEMBLY_TRACE" then
+    IO.FS.withFile path .append fun handle => do
+      handle.putStrLn s!"proof audit: constants={constants.size} heartbeats={((← IO.getNumHeartbeats) - began) / 1000}"
+      handle.flush
+  return axioms
+
+def kernelCheck (name : Name) (type proof : Expr) : MetaM Unit := do
+  let options := (← getOptions).setBool `debug.skipKernelTC false
+  ofExceptKernelException <| ((← getEnv).toKernelEnv.addDecl options
+    (.thmDecl { name, levelParams := [], type, value := proof })).map (fun _ => ())
+
+/-- Store exact data bindings and a scalar-sign proof in one checked theorem.
+The restored fact uses its semantic conjunct. Kernel failures are returned with
+their actual exception constructor; callers must propagate resource errors.
+The environment is committed only after the restored fact is also checked. -/
+def registerFact (fact : Expr) : MetaM (Except Kernel.Exception Expr) := do
+  if fact.hasSorry || fact.hasMVar || fact.hasFVar then
+    throwError "incomplete fact"
+  let factType ← inferType fact
+  unless factType.getAppFn.isConstOf ``SignFact do
+    throwError "expected a scalar sign fact"
+  let context := factType.getAppArgs.back!
+  let originalPolynomial ← mkAppM ``SignFact.polynomial #[fact]
+  let polynomial ← withTransparency .all (reduce originalPolynomial)
+  let originalSign ← mkAppM ``SignFact.sign #[fact]
+  let claimed ← withTransparency .all (reduce originalSign)
+  let semantic ← mkEq (← mkAppM ``Context.signPoly #[context, polynomial]) claimed
+  let type ← mkAppM ``And #[← mkEq polynomial originalPolynomial,
+    ← mkAppM ``And #[← mkEq claimed originalSign, semantic]]
+  let proof ← mkAppM ``And.intro #[← mkEqRefl polynomial,
+    ← mkAppM ``And.intro #[← mkEqRefl claimed, ← mkAppM ``SignFact.checked #[fact]]]
+  let _ ← auditProof proof type
+  let name ← mkFreshUserName `__kernelReplaySign
+  let options := (← getOptions).setBool `debug.skipKernelTC false
+  let env ← match (← getEnv).addDeclCore
+      (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
+      (.thmDecl { name, levelParams := [], type, value := proof }) none (doCheck := true) with
+    | .error exception => return .error exception
+    | .ok env => pure env
+  let restored : Except Kernel.Exception Expr ← withEnv env do
+    -- Projections reuse the checked semantic conjunct without supplying
+    -- proposition arguments that require the original data to reduce again.
+    let semanticProof := Expr.proj ``And 1 (Expr.proj ``And 1 (mkConst name))
+    let restored ← mkAppM ``SignFact.mk #[polynomial, claimed, semanticProof]
+    let equationType ← mkEq restored restored
+    let equation ← mkEqRefl restored
+    let _ ← auditProof equation equationType
+    match (← getEnv).toKernelEnv.addDecl options
+        (.thmDecl {
+          name := `__kernelReplayRegisteredFact
+          levelParams := []
+          type := equationType
+          value := equation }) with
+    | .error exception => return .error exception
+    | .ok _ => return .ok restored
+  match restored with
+  | .error exception => return .error exception
+  | .ok restored =>
+    setEnv env
+    return .ok restored
+
+/-- Only a declaration type mismatch permits trying the other Boolean value.
+Timeouts and other kernel failures remain errors. -/
+def acceptKernel {α : Type} (checked : Except Kernel.Exception α) : MetaM Bool :=
+  match checked with
+  | .ok _ => pure true
+  | .error (.declTypeMismatch _ _ _) => pure false
+  | .error exception => throwKernelException exception
+
+/-- Follow demanded projections and recursor scrutinees, never lambda bodies.
+The returned application retains its exact context and polynomial arguments. -/
+partial def missingRedex (expression : Expr) : MetaM (Option Expr) :=
+  withIncRecDepth do
+    let expression ← withOptions (fun options => smartUnfolding.set options false) do
+      withTransparency .all (whnf expression)
+    if expression.getAppFn.isConstOf ``Element.missing ||
+        expression.getAppFn.isConstOf ``Element.missingSign ||
+        expression.getAppFn.isConstOf ``Element.missingInverse then
+      -- Authenticate the actual polynomial key or stored operand only after
+      -- its coefficient packings are known. An outer missing operation can
+      -- otherwise conceal an unrecorded inverse in that key or operand.
+      -- Equality forces the finite literal input
+      -- without following unused branches or lambda bodies.
+      let polynomial := expression.getAppArgs.back!
+      let equality ← mkEq polynomial polynomial
+      -- A carrier without an available decision dictionary retains the old
+      -- outer missing request; dependency reduction failures still propagate.
+      let decisionInstance ← try
+        synthInstance (mkApp (mkConst ``Decidable) equality)
+      catch _ => return some expression
+      let decision := mkAppN (mkConst ``decide) #[equality, decisionInstance]
+      if let some prerequisite ← missingRedex decision then return some prerequisite
+      return some expression
+    match expression with
+    | .proj _ _ value => missingRedex value
+    | .mdata _ value => missingRedex value
+    | .app .. =>
+      if let .proj .. := expression.getAppFn then return ← missingRedex expression.getAppFn
+      if let .const name levels := expression.getAppFn then
+        let args := expression.getAppArgs
+        if let .recInfo recursor ← getConstInfo name then
+          if let some major := args[recursor.getMajorIdx]? then return ← missingRedex major
+        if let .defnInfo definition ← getConstInfo name then
+          let body := definition.value.instantiateLevelParams definition.levelParams levels
+          return ← missingRedex (body.beta args)
+      return none
+    | _ => return none
+
+/-- Discover a demanded missing record before checking a Boolean result.
+Missing outcomes assert no equation. Complete expressions are checked with
+the ordinary kernel. Supplied
+simplification equations are themselves audited and kernel checked. This
+function uses no native coefficient evaluation. The caller must retain the
+supplied-fact packing boundary to prevent sign production during reduction. -/
+def assemble (expression : Expr) (context : Simp.Context) :
+    MetaM (Outcome × Simp.Stats) := do
+  if expression.hasSorry || expression.hasMVar || expression.hasFVar then
+    throwError "incomplete input"
+  let (simplified, stats) ← Meta.simp expression context
+  let equation ← simplified.getProof' expression
+  let equationType ← mkEq expression simplified.expr
+  let _ ← auditProof equation equationType
+  kernelCheck `__kernelReplaySimplification equationType equation
+  if let some redex ← missingRedex simplified.expr then
+    return (.missing redex, stats)
+  let options := (← getOptions).setBool `debug.skipKernelTC false
+  let env := (← getEnv).toKernelEnv
+  for candidate in [true, false] do
+    let result := mkConst (if candidate then ``Bool.true else ``Bool.false)
+    let proposition ← mkEq simplified.expr result
+    let decisionInstance ← synthInstance (mkApp (mkConst ``Decidable) proposition)
+    let decision := mkAppN (mkConst ``decide) #[proposition, decisionInstance]
+    let comparisonType ← mkEq decision (mkConst ``Bool.true)
+    let reflexivity ← mkEqRefl (mkConst ``Bool.true)
+    let checked := env.addDecl options
+      (.thmDecl {
+        name := `__kernelReplayReduction
+        levelParams := []
+        type := comparisonType
+        value := reflexivity })
+    if ← acceptKernel checked then
+      let resultProof := mkAppN (mkConst ``of_decide_eq_true)
+        #[proposition, decisionInstance, reflexivity]
+      let proof := mkAppN (mkConst ``Eq.trans [.succ .zero])
+        #[mkConst ``Bool, expression, simplified.expr, result, equation, resultProof]
+      let type ← mkEq expression result
+      let axioms ← auditProof proof type
+      kernelCheck `__kernelReplayProof type proof
+      return (.checked candidate proof axioms, stats)
+  let some redex ← missingRedex simplified.expr
+    | throwError "unproved result without a demanded missing-fact boundary: {simplified.expr}"
+  return (.missing redex, stats)
+
+/-- Collection retains the actual finite fact list used in the final check.
+Missing outcomes include the unresolved request; they establish no Boolean
+result and make no completeness claim. -/
+structure Collection where
+  facts : Expr
+  outcome : Outcome
+  requests : Array Request
+
+/-- Producer-side collection follows the demanded computations of the actual
+checker. The supplier may produce evidence; `assemble` itself never does.
+Each supplied fact is closed, audited and kernel checked before use. Fuel
+bounds a faulty supplier that repeatedly supplies irrelevant facts. -/
+def collect (fuel : Nat) (program initial : Expr) (context : Simp.Context)
+    (supply : Request → MetaM (Option Expr)) : MetaM Collection := do
+  if program.hasSorry || program.hasMVar || program.hasFVar ||
+      initial.hasSorry || initial.hasMVar || initial.hasFVar then
+    throwError "incomplete collection input"
+  go fuel initial #[]
+where
+  go (remaining : Nat) (facts : Expr) (requests : Array Request) : MetaM Collection := do
+    let (outcome, _) ← assemble (mkApp program facts) context
+    match outcome with
+    | .checked .. => return ⟨facts, outcome, requests⟩
+    | .missing application =>
+      let needed ← request application
+      let requests := requests.push needed
+      match remaining with
+      | 0 => return ⟨facts, outcome, requests⟩
+      | n + 1 =>
+        let some fact ← supply needed | return ⟨facts, outcome, requests⟩
+        if fact.hasSorry || fact.hasMVar || fact.hasFVar then
+          throwError "incomplete supplied fact"
+        let type ← mkEq fact fact
+        let proof ← mkEqRefl fact
+        let _ ← auditProof proof type
+        kernelCheck `__kernelReplayCollectedFact type proof
+        let facts ← mkAppM ``List.cons #[fact, facts]
+        go n facts requests
+
+/-- One typed finite evidence list. Scalar signs, original packings, stored-value
+signs and inverse equations have distinct types. Entries may have different coefficient
+carriers; their expressions are never cast to a common mathematical carrier. -/
+structure Inventory where
+  facts : Expr
+
+/-- Check closed fact data, including its semantic proof, with the ordinary
+kernel before adding it to the appropriate typed inventory. -/
+private def checkFact (fact : Expr) : MetaM Expr := do
+  if fact.hasSorry || fact.hasMVar || fact.hasFVar then
+    throwError "incomplete supplied fact"
+  let type ← inferType fact
+  unless type.getAppFn.isConstOf ``SignFact || type.getAppFn.isConstOf ``Packing ||
+      type.getAppFn.isConstOf ``ValueSign || type.getAppFn.isConstOf ``InverseFact do
+    throwError "expected a scalar sign fact, packing, stored-value sign or inverse record"
+  let equation ← mkEq fact fact
+  let proof ← mkEqRefl fact
+  let _ ← auditProof proof equation
+  kernelCheck `__kernelReplayInventoryFact equation proof
+  return type
+
+private def inventoryType (inventory : Inventory) : MetaM Expr := do
+  let facts := inventory.facts
+  if facts.hasSorry || facts.hasMVar || facts.hasFVar then
+    throwError "incomplete fact inventory"
+  let type ← withTransparency .all (whnf (← inferType facts))
+  unless type.getAppFn.isConstOf ``List && type.getAppArgs.size == 1 do
+    throwError "expected a typed fact list"
+  let element := type.getAppArgs[0]!
+  unless element.getAppFn.isConstOf ``SignFact || element.getAppFn.isConstOf ``Packing ||
+      element.getAppFn.isConstOf ``ValueSign || element.getAppFn.isConstOf ``InverseFact do
+    throwError "expected a scalar sign, packing, stored-value sign or inverse list"
+  let equation ← mkEq facts facts
+  let proof ← mkEqRefl facts
+  let _ ← auditProof proof equation
+  kernelCheck `__kernelReplayInventory equation proof
+  return element
+
+/-- Preserve the inventories actually used by a multi-field check. Each request
+retains its exact context, even when another field has the same label. -/
+structure Collections where
+  inventories : Array Inventory
+  outcome : Outcome
+  requests : Array Request
+
+/-- Collect demanded intermediate facts in several coefficient fields. The
+program takes one typed list argument per inventory. The supplier may produce
+certificates; replay instead supplies only recorded certificates. Every returned
+fact is kernel checked and can enter only a list with its exact evidence type. Original-packing programs use `Element.replayPack` throughout
+the recorded operations; the returned inventories retain initial records as
+well as every collected raw request, including constant and zero packing.
+Stored-value and inverse requests retain their boundary kind and operand.
+Legacy coefficient requests cover scalar or packing programs according to the
+consumer's typed inventory and retain their original polynomial key.
+Fuel bounds irrelevant evidence. This function does not reconstruct contexts. -/
+def collectMany (fuel : Nat) (program : Expr) (initial : Array Inventory)
+    (context : Simp.Context) (supply : Request → Array Inventory → MetaM (Option Expr)) :
+    MetaM Collections := do
+  if program.hasSorry || program.hasMVar || program.hasFVar then
+    throwError "incomplete collection program"
+  let mut types := #[]
+  for inventory in initial do
+    let type ← inventoryType inventory
+    for previous in types do
+      if ← isDefEq previous type then throwError "duplicate coefficient inventory"
+    types := types.push type
+  let expression := mkAppN program (initial.map Inventory.facts)
+  check expression
+  unless ← isDefEq (← inferType expression) (mkConst ``Bool) do
+    throwError "collection program must return Bool with these inventories"
+  go fuel initial types #[]
+where
+  go (remaining : Nat) (inventories : Array Inventory) (types : Array Expr)
+      (requests : Array Request) : MetaM Collections := do
+    let expression := mkAppN program (inventories.map Inventory.facts)
+    let (outcome, _) ← assemble expression context
+    match outcome with
+    | .checked .. => return ⟨inventories, outcome, requests⟩
+    | .missing application =>
+      let needed ← request application
+      let requests := requests.push needed
+      let mut candidates : Array Nat := #[]
+      for i in [:types.size] do
+        let declared := types[i]!.getAppArgs.back!
+        if declared == needed.context || (← isDefEq declared needed.context) then
+          candidates := candidates.push i
+      if candidates.isEmpty then return ⟨inventories, outcome, requests⟩
+      match remaining with
+      | 0 => return ⟨inventories, outcome, requests⟩
+      | n + 1 =>
+        let some fact ← supply needed inventories
+          | return ⟨inventories, outcome, requests⟩
+        let type ← checkFact fact
+        let mut selected := none
+        for i in candidates do
+          if ← isDefEq type types[i]! then
+            selected := some i
+            break
+        let some slot := selected
+          | if ← isDefEq type.getAppArgs.back! needed.context then
+              throwError "supplied fact belongs to a different inventory kind"
+            else
+              throwError "supplied fact belongs to a different coefficient context"
+        let some inventory := inventories[slot]?
+          | throwError "coefficient inventory index mismatch"
+        let facts ← mkAppM ``List.cons #[fact, inventory.facts]
+        go n (inventories.set! slot ⟨facts⟩) types requests
+
+end Hex.RealClosure.Algebraic.KernelReplay

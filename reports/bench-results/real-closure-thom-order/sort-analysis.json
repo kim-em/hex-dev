@@ -1,0 +1,90 @@
+[
+  {
+    "case": "Rational2",
+    "comparisons": 1,
+    "routes": {
+      "points": 0,
+      "mixed": 1,
+      "linear": 0,
+      "full": 0,
+      "common-product": 0
+    }
+  },
+  {
+    "case": "Rational4",
+    "comparisons": 6,
+    "routes": {
+      "points": 1,
+      "mixed": 4,
+      "linear": 0,
+      "full": 0,
+      "common-product": 1
+    }
+  },
+  {
+    "case": "Rational6",
+    "comparisons": 12,
+    "routes": {
+      "points": 1,
+      "mixed": 8,
+      "linear": 0,
+      "full": 0,
+      "common-product": 3
+    }
+  },
+  {
+    "case": "Rational8",
+    "comparisons": 23,
+    "routes": {
+      "points": 4,
+      "mixed": 13,
+      "linear": 0,
+      "full": 0,
+      "common-product": 6
+    }
+  },
+  {
+    "case": "Quadratic2",
+    "comparisons": 1,
+    "routes": {
+      "points": 0,
+      "mixed": 0,
+      "linear": 0,
+      "full": 0,
+      "common-product": 1
+    }
+  },
+  {
+    "case": "Quadratic4",
+    "comparisons": 6,
+    "routes": {
+      "points": 0,
+      "mixed": 0,
+      "linear": 0,
+      "full": 0,
+      "common-product": 6
+    }
+  },
+  {
+    "case": "Quadratic6",
+    "comparisons": 14,
+    "routes": {
+      "points": 0,
+      "mixed": 0,
+      "linear": 0,
+      "full": 1,
+      "common-product": 13
+    }
+  },
+  {
+    "case": "Quadratic8",
+    "comparisons": 25,
+    "routes": {
+      "points": 0,
+      "mixed": 0,
+      "linear": 0,
+      "full": 3,
+      "common-product": 22
+    }
+  }
+]

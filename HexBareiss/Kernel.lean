@@ -12,6 +12,7 @@ public import HexMatrix.Notation
 public import HexMatrix.Packed
 public import HexMatrix.Lists
 public meta import HexMatrix.Lists
+meta import HexMatrix.Packed
 
 public section
 
@@ -58,7 +59,7 @@ is a left kernel vector.  The producer re-checks its own output before
 returning it.
 
 The soundness theorem `det_eq_of_checkList` (`Matrix.det` of the Mathlib
-matrix equals the value) is in `HexBareissMathlib`.
+matrix equals the value) is in `HexBareissTheory`.
 -/
 
 namespace Hex.Matrix

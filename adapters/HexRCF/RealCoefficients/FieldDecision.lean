@@ -17,7 +17,7 @@ public section
 
 namespace Hex.RCF.RealCoefficients.FieldDecision
 
-open Hex.RealFormula HexPolyMathlib.Interpret HexRealRootsMathlib
+open Hex.RealFormula HexPolyTheory.Interpret HexRealRootsTheory
 
 variable {p : ZPoly} {root : SimpleRoot p} [ZPoly.CheckedIrreducible p]
 variable {Ctx : Type u} [DecidableEq Ctx]
@@ -75,9 +75,9 @@ theorem cellSign_spec (rep : RefinedIsolation p)
               (append (fun j => Field.value rep (values j)) x))) := by
   let f : PolyQuot p root → ℝ := Field.value rep
   have hpoint : ∀ d : Dyadic, f (point d : PolyQuot p root) =
-      HexRealRootsMathlib.Dyadic.toReal d := by
+      HexRealRootsTheory.Dyadic.toReal d := by
     intro d
-    simpa [f, point, HexRealRootsMathlib.toReal_eq_cast_toRat] using
+    simpa [f, point, HexRealRootsTheory.toReal_eq_cast_toRat] using
       FieldSpecialize.value_ofRat rep hrep hr d.toRat
   obtain ⟨roots, hroots, hmono, hcomplete, hsample⟩ :=
     cert.check_roots f (Field.value_eq_zero rep hrep hr)

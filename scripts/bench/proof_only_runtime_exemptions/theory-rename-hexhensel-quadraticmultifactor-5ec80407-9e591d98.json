@@ -1,0 +1,6 @@
+{
+  "path": "HexHensel/QuadraticMultifactor.lean",
+  "baseline_blob": "5ec80407d198d9283d30f7541f37ff884aaec5ee",
+  "current_blob": "9e591d985b9088392a8d7934376ff5e61cd5ea1a",
+  "reason": "Renames the `*Mathlib` theory companions to `*Theory` inside documentation comments only; once comments are removed the two blobs are identical, so every definition, proof and compiler input of this file is unchanged and the measured factorization executable is unaffected."
+}

@@ -19,11 +19,17 @@ variable [One E] [Add E] [Sub E] [Mul E] [NatCast E] [DecidableEq Ctx]
 and the common-product identities, not just the two final derivative words. -/
 structure Comparison {sign : E → Int} {context : Ctx}
     (left right : Descriptor E Ctx sign context) where
+  /-- Common polynomial and its retained division identities. -/
   common : CommonProduct E Ctx
+  /-- Independent check against both original heads and the literal context. -/
   commonChecked : common.check context left.raw.head right.raw.head = true
+  /-- Joint count-one re-encoding of the left root on the whole line. -/
   leftEncoding : Reencoding left common.head .negInf .posInf
+  /-- Joint count-one re-encoding of the right root on the whole line. -/
   rightEncoding : Reencoding right common.head .negInf .posInf
+  /-- Stored result of the guarded full-word comparator. -/
   order : Ordering
+  /-- The actual target comparison returns the stored order. -/
   ordered : leftEncoding.target.fullOrder rightEncoding.target = some order
 
 variable [Neg E] [Inv E] [Div E]

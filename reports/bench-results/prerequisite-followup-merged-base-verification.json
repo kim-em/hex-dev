@@ -1,0 +1,132 @@
+{
+  "source_commit": "ab92ba297bbf0e2b5673c5895137cab6193239d3",
+  "merged_base_commit": "6d24538b6d55cc00a8b6c805580a438f439b8ff6",
+  "scope": "Merged-base verification of direct rational recognition, query/root headlines, short-chain degree registrations and exact external query endpoints. No Phase-4 advancement or transitive runtime edit. Historical scientific observations retain their original source snapshots and exact binaries.",
+  "tested_source_sha256": {
+    "HexRealAlgebraic/Order.lean": "4b3ef510f4358d75de4d90f267f067572585be83421aa06958a4246a8245a66a",
+    "HexRealAlgebraicMathlib/Rational.lean": "88e0c6ef4cbc10f826d6a16b36893596fa2e8a4609a17d9fda0e64ec085655d4",
+    "HexRealAlgebraicMathlib/Roots.lean": "37161c65df791fd265297013de6fa9d4c571bed8154bcbf1493918c3219c5717",
+    "HexRealAlgebraicMathlib/Tests.lean": "386dee77f9e1dc658aaf67263bf8f77ae7341f53f6c1d6aba2bdcfec1201d7fe",
+    "adapters/HexSturmMathlib/Soundness.lean": "d48888d286d47b784ea4c42b3c11df191dd9e9da8f7ac67a1cd78bb91d5f3a36",
+    "adapters/HexSturmMathlib/Tests/Replay/Semantics.lean": "c512261a78e8162b7e68fc49460340ce6d7e8a789ce8a4bd1deb4f3ec097b155",
+    "bench/HexRealAlgebraic/Bench.lean": "a6637f702ae6b285176b0f43d07333e83be2879c2270068d1cef4892719ab95e",
+    "bench/HexSturm/Bench.lean": "5411b2524c1bf4f74a8ffcbde6bc2cada0e3b33e57a65dc199f909daa934d7ed",
+    "bench/HexSturm/Frontend.lean": "26cd53004f0a6cf3142b87825e5d78b1f08afacb28256ba712786b12ad295d9f",
+    "bench/HexSturm/External.lean": "8141b593e16c83d7e6ef4c9a13c0362826e7849375b37e8a98c29041ea5d4e08",
+    "scripts/oracle/sturm_bench.py": "c7b8aa2e5a9415f2fb877319f60fab77900d89bddc35d9ee82f69f6fd9734eb9",
+    "scripts/oracle/test_sturm_bench.py": "4a57d93d88ef4acbe8c8e620672bd0970ae0e93a525f3f60beadd336f16de3ad",
+    "scripts/ci/run_oracles.sh": "ec76c02371a137e46446b83f4a45a11b2596a309b0ebd6eb253a3d799dfeff16",
+    "lakefile.lean": "314fbc9d7e0216ea7fbde6ea0c5049b9bc5be6bcb00d229f7cd095d5d173a8b6",
+    "libraries.yml": "f80260c02bd82deee7087ac1ff7b285b3c762eacf0192782cfcace4bf1aa5be1"
+  },
+  "checks": [
+    {
+      "command": "lake build",
+      "result": "passed",
+      "jobs": 15574
+    },
+    {
+      "command": "lake build HexConformance HexQuerySemantics HexSturmMathlibTests HexRealAlgebraicMathlibTests hexsturm_bench hexrealalgebraic_bench",
+      "result": "passed",
+      "jobs": 14924
+    },
+    {
+      "command": "python3 scripts/check_dag.py",
+      "result": "passed"
+    },
+    {
+      "command": "python3 scripts/check_phase4.py",
+      "result": "passed",
+      "headline_reports": 43,
+      "changed_registrations": 17
+    },
+    {
+      "command": "python3 scripts/ci/check_benches_mathlib_free.py",
+      "result": "passed",
+      "bench_executables": 62,
+      "build_only_proof_probes": 411
+    },
+    {
+      "command": "HEX_FLINT_BENCH_PYTHON=/tmp/hex-10577-oracles/bin/python LD_LIBRARY_PATH=<host GCC runtime> BENCH_VERIFY_HARD_CAP_SECONDS=360 bash scripts/ci/check_bench_verify_budget.sh HexSturm=hexsturm_bench HexRealAlgebraic=hexrealalgebraic_bench",
+      "result": "passed",
+      "bench_counts": {
+        "HexSturm": 71,
+        "HexRealAlgebraic": 71
+      },
+      "sturm_fixture_degrees": 129,
+      "seconds": {
+        "HexSturm": 4,
+        "HexRealAlgebraic": 33,
+        "total": 37
+      },
+      "scope": "Two owned executables only; not repo-wide CI headroom"
+    },
+    {
+      "command": "python3 scripts/ci/check_named_admissions.py",
+      "result": "passed",
+      "cones": 275,
+      "local_modules": 1050
+    }
+  ],
+  "axiom_allowlist": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "earlier_oracle_checks": "prerequisite-direct-recognition-verification.json retains 83 fresh exact oracle cases, zero skips and byte-identical fixtures for the same computational/correspondence source hashes.",
+  "comparator_checks": "Four external comparator unit tests and the HexSturm oracle wrapper pass on the unchanged comparator source; missing interpreter verification fails closed. Retained logs identify those checks separately.",
+  "scientific_evidence": "13 short-chain families: 208 retained passing points and 16 matching paired field/integer hashes. External queries: 32 matching paired hashes and 8 retained protocol observations. Direct rational-height candidates remain unadmitted after the retained preparation failure.",
+  "required_ci": "Follow-up PR must pass on its final revision. The merged Phase-3 PR passed at exactly 360/360 seconds; no follow-up headroom is inferred.",
+  "retained_logs": [
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/followup-merged-base-ab92ba297/issue-10577-followup-merged-base-build.log",
+      "bytes": 559936,
+      "sha256": "9cd52ddfe1b89d22fcacc8528c36ddbbeff8865ac61448567c66ebab3ad7ad65"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/followup-merged-base-ab92ba297/issue-10577-followup-merged-base-full-build.log",
+      "bytes": 162910,
+      "sha256": "c5c2b1ff41f789301bb405db707485ccbd05b8577e599a18a36f9144559dc0c3"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/followup-merged-base-ab92ba297/issue-10577-followup-merged-base-dag.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/followup-merged-base-ab92ba297/issue-10577-followup-merged-base-phase4.log",
+      "bytes": 72,
+      "sha256": "69830ea3cbad0449c6624c2923010828b5db32597fadc13cbaa9d65b8e37e625"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/followup-merged-base-ab92ba297/issue-10577-followup-mathlib-free.log",
+      "bytes": 97,
+      "sha256": "cb7b7aa95f302efae38a3f477fc1eccdfb03d0207096003489e1b8b0973fe55a"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/followup-merged-base-ab92ba297/issue-10577-followup-owned-bench-verify.log",
+      "bytes": 57167,
+      "sha256": "97acad6c8159457fcda01ac6e2ad840cc411235b711abf115cba484eb1a6d402"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/followup-merged-base-ab92ba297/issue-10577-sturm-external-unit.log",
+      "bytes": 102,
+      "sha256": "8377f03baca6cb8fe5c5b80744d6d6697c279e205d3552004cd95518cd080939"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/followup-merged-base-ab92ba297/issue-10577-sturm-external-oracle-wrapper.log",
+      "bytes": 168,
+      "sha256": "c1db7e21ac05e7e6a0bfdea1a9adb3d8258ac14dc91177b4dae0a78e10e272d8"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/followup-merged-base-ab92ba297/issue-10577-sturm-external-unavailable-verify.log",
+      "bytes": 200,
+      "sha256": "4e7da95b81269751a9426ff344f6f0dc0b7ca31d83a0982dd5a64608a5196a6b"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/followup-merged-base-ab92ba297/issue-10577-followup-merged-base-admissions.log",
+      "bytes": 95,
+      "sha256": "cf3475a510cf3f6117c6cfb76f935c2685b4fb44ea582d3fbe86e5e61bf8053e"
+    }
+  ]
+}

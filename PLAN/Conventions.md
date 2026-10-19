@@ -64,7 +64,7 @@ rollback path that applies to a benchmark-discovered scaffolding
 ### Headline correctness theorem (per-library, `done_through ≥ 4`)
 
 Every library that bumps `done_through` past Phase 4 must carry, in
-its Mathlib bridge, a single headline correctness theorem stating
+its theory companion, a single headline correctness theorem stating
 the end-to-end post-condition of its public API. The per-library
 SPEC names the theorem (typically in a `## Headline correctness
 theorem` section) and the semantic clauses it must establish.
@@ -124,14 +124,14 @@ the link chain; per-library smoke warn at 30 s; repo-wide hard cap).
 
 | Context | Convention | Example |
 |---------|-----------|---------|
-| SPEC library files | kebab-case | `hex-poly-z-mathlib.md` |
-| Lean modules/dirs | PascalCase | `HexPolyZMathlib` |
-| `libraries.yml` keys | PascalCase | `HexPolyZMathlib:` |
-| `lakefile.lean` names | PascalCase | `lean_lib HexPolyZMathlib where` |
+| SPEC library files | kebab-case | `hex-poly-z-theory.md` |
+| Lean modules/dirs | PascalCase | `HexPolyZTheory` |
+| `libraries.yml` keys | PascalCase | `HexPolyZTheory:` |
+| `lakefile.lean` names | PascalCase | `lean_lib HexPolyZTheory where` |
 
 The PascalCase form is a direct transliteration of the kebab-case
 name: each hyphen-separated segment becomes capitalised and joined
-(`hex-poly-z-mathlib` → `HexPolyZMathlib`).
+(`hex-poly-z-theory` → `HexPolyZTheory`).
 
 **Acronym exception.** Segments that are recognised acronyms keep
 all their letters upper-case rather than capitalising only the first.
@@ -145,8 +145,8 @@ The current acronym list is:
 | `fp`          | `Fp`            |
 | `crt`         | `CRT`           |
 
-So `hex-gf2` → `HexGF2`, `hex-lll` → `HexLLL`, `hex-lll-mathlib`
-→ `HexLLLMathlib`, `hex-gfq-field` → `HexGFqField`. (`gfq` is
+So `hex-gf2` → `HexGF2`, `hex-lll` → `HexLLL`, `hex-lll-theory`
+→ `HexLLLTheory`, `hex-gfq-field` → `HexGFqField`. (`gfq` is
 "Galois field GF(q)" where `q = p^n` — the `q` is a variable, so
 lower-case; `fp` is "F_p" with `p` variable, lower-case.)
 
@@ -191,9 +191,18 @@ not `monicisedCoreTransportPackage`. See
 Libraries that use `@[extern]` (e.g. `hex-arith` for GMP wrappers,
 `hex-gf2` for CLMUL) keep their C shims in a `ffi/` subdirectory
 within the library (e.g. `HexArith/ffi/wide_arith.c`). Compile those
-sources in `lakefile.lean` with a custom `target` attached to the
-corresponding `lean_lib` through `moreLinkObjs`. A package-level
-`extern_lib` leaks into every downstream executable even when its module
+sources in `lakefile.lean` as custom object-file `target`s, attached through
+`moreLinkObjs` to a separate carrier `lean_lib` (for example `HexArithNative`)
+that owns the modules declaring those `@[extern]`s and is declared after the
+main library, since Lake gives a module to the last library claiming it.
+
+The carrier exists for Windows. Lake links a module's native library against
+the whole shared library of every *other* library it imports, objects
+included, but never adds its own library's `moreLinkObjs`, and Windows must
+resolve every symbol at link time. Carrier modules therefore import nothing
+from the main library, and C code that calls back into Lean lives in the same
+carrier as the Lean code it calls. A package-level `extern_lib` would also
+work there, but it leaks into every downstream executable even when its module
 graph never imports that library. Use `moreLinkArgs` only for system linker
 flags such as `-lgmp`, never for listing `.c` sources.
 
@@ -308,7 +317,7 @@ Answer all four. One line each is enough.
    placement, find the right § and update the issue body to cite
    it, or close the issue as malformed.
 2. **Does the natural strategy use Mathlib?** If yes, the file lives
-   in a `*-mathlib` bridge library. Mathlib-free libraries cannot
+   in a `*-theory` library. Mathlib-free libraries cannot
    host a proof whose shortest path goes through `Matrix.adjugate`,
    the universal polynomial ring, `MvPolynomial`,
    `IsIntegralClosure`, or similar. "We will reprove the Mathlib
@@ -349,7 +358,7 @@ A `depends-on:` edge must point *down* the import DAG: an issue scoped
 to library `L_A` (its `library:` line) may depend on one scoped to
 `L_B` only when `L_A` can import `L_B` (`L_B == L_A`, or `L_B` is in
 `L_A`'s `libraries.yml` dependency closure). An edge whose `L_B`
-*strictly imports* `L_A` (a downstream library, such as a `*-mathlib`
+*strictly imports* `L_A` (a downstream library, such as a `*-theory`
 bridge depended on by a Mathlib-free issue) is **inverted**: an
 upstream proof cannot consume a downstream artefact, so it is never a
 real blocker, only a mis-scoped issue or a "needed downstream too"
@@ -379,57 +388,50 @@ shape](#canonical-issue-body-shape) plus a **Symptom** section:
   a conformance finding: the failing input, the Lean output, and the
   oracle output. For an audit finding: the specific evidence (a
   bench input the algorithm short-circuits past, a profile entry
-  showing a dominant cost not attributed to a registered target,
-  a comparator named in the per-library SPEC but not wired, etc.).
+  showing a dominant cost no registered target measures, a
+  performance target in the per-library SPEC that nothing checks,
+  etc.).
 - **Root-cause hypothesis.** One paragraph: what algorithmic shape
   produces this observation? "Quadratic on `p` because we search
   `List.range p`," "factor of `n` slower because we rebuild
   Gram–Schmidt instead of incremental update," etc. Best guess is
   enough; the next agent verifies.
 
-The **Deliverables** section lists two PRs:
+For a confirmed implementation defect, the **Deliverables** section lists two PRs:
 
 1. The rollback PR setting `libraries.yml[L].done_through` backward
    (per [Rollback is a normal action](#rollback-is-a-normal-action)).
 2. The implementation PR fixing the bug at the rolled-back phase.
 
-Cross-link both PRs to this issue.
+Cross-link both PRs to this issue. An unresolved performance finding instead
+records its investigation and disposition under
+[SPEC/benchmarking.md §Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim).
+An explained finite-range verdict does not require a rollback or a bug-fix PR.
 
 #### What "audit finding" means
 
 A bench verdict mismatch and a conformance failure both fire from
-an automated check. An audit finding fires from an author writing
-a headline report, reviewing a Phase-4 claim, or otherwise
-auditing existing work, and noticing something that warrants an
-issue **even though no automated verdict fired**.
+an automated check. An audit finding fires from someone reviewing a
+Phase-4 claim, profiling an unexpected result, or otherwise auditing
+existing work, and noticing something that warrants an issue **even
+though no automated verdict fired**.
 
 Examples (illustrative, not exhaustive):
 
 - A bench input is degenerate so the algorithm short-circuits
   past it (e.g. an LLL bench whose only end-to-end target uses
   the identity basis, where no Lovász swap fires).
-- A comparator the per-library SPEC requires is not wired.
+- A performance target the per-library SPEC states against an
+  external comparator is not measured, or is measured and missed.
 - A profile shows a dominant inclusive cost the bench targets
-  do not measure (per
-  [SPEC/benchmarking.md §Attribution rule](../SPEC/benchmarking.md#the-attribution-rule)).
+  do not measure, in a phase whose cost could go wrong.
 - An end-to-end target's empirical slope visibly disagrees with
   its declared complexity over the parameter ladder.
-- A per-library SPEC names no comparator for an algorithm where
-  external references obviously exist (LLL, factoring, GCD, ...)
-  and Phase 4's comparator clause is being claimed satisfied
-  vacuously.
 
-When an audit finding occurs while writing a headline report:
-
-1. Record the finding in the affected SPEC's issue using the body shape above.
-2. Link the issue from the report's §Concerns subsection.
-3. Complete the rest of the report.
-
-The library cannot **remain** at `done_through: 4` while the
-Concern is unresolved (per
-[PLAN/Phase4.md §Exit criteria](Phase4.md#exit-criteria)).
-Resolve the issue tied to the Concern and remove the Concern entry
-from the report once the underlying problem is fixed.
+File the finding in the affected SPEC's issue using the body shape
+above. Whether it rolls the library back follows
+[Rollback is a normal action](#rollback-is-a-normal-action): a defect
+in the library itself does; a missing measurement alone does not.
 
 ### Visual artefacts require visual verification
 
@@ -509,7 +511,10 @@ records "we discovered phase ≤K wasn't actually complete and we are
 redoing it." Both directions are first-class.
 
 Rollback records a defect found in the library itself: a wrong result, a
-failing verdict, a broken build. A later change to a phase's criteria is not a
+confirmed performance defect, a broken build. An inconclusive verdict alone
+is not a confirmed defect; resolve it under
+[SPEC/benchmarking.md §Choosing the complexity claim](../SPEC/benchmarking.md#choosing-the-complexity-claim).
+A later change to a phase's criteria is not a
 defect in libraries that already completed that phase; it applies to libraries
 advancing after it merges, and does not roll anything back.
 

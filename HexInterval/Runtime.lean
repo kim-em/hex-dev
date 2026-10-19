@@ -29,7 +29,7 @@ opposite endpoint. Semantic equality authority remains with later
 package-schema replay.
 
 The sealed `Applied` value is runtime provenance, not theorem evidence. It
-contains enough exact data for a later Mathlib companion to quote fact,
+contains enough exact data for a later theory companion to quote fact,
 equality, transport, and instance proof steps, whose package-owned schemas
 must still be checked independently. Callback execution, arbitrary facts,
 causes, and package measures remain non-preemptible.

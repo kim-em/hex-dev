@@ -1,0 +1,71 @@
+{
+  "lexical": {
+    "count": 6,
+    "nanos": [
+      43891,
+      44006,
+      44118,
+      44280,
+      44041,
+      44261
+    ],
+    "median_nanos": 44079.5,
+    "min_nanos": 43891,
+    "max_nanos": 44280,
+    "peak_rss_kib": [
+      68804,
+      69300,
+      68988,
+      69132,
+      69464,
+      69520
+    ],
+    "rss_scope": "whole fresh child, including startup, loaded literals, tuning and harness"
+  },
+  "parsed": {
+    "count": 6,
+    "nanos": [
+      152413,
+      153811,
+      152524,
+      153340,
+      154054,
+      155740
+    ],
+    "median_nanos": 153575.5,
+    "min_nanos": 152413,
+    "max_nanos": 155740,
+    "peak_rss_kib": [
+      69088,
+      69536,
+      69008,
+      69436,
+      69288,
+      69528
+    ],
+    "rss_scope": "whole fresh child, including startup, loaded literals, tuning and harness"
+  },
+  "restored": {
+    "count": 6,
+    "nanos": [
+      407132,
+      408128,
+      406689,
+      406921,
+      404238,
+      407346
+    ],
+    "median_nanos": 407026.5,
+    "min_nanos": 404238,
+    "max_nanos": 408128,
+    "peak_rss_kib": [
+      69660,
+      69936,
+      69500,
+      69852,
+      69660,
+      69880
+    ],
+    "rss_scope": "whole fresh child, including startup, loaded literals, tuning and harness"
+  }
+}

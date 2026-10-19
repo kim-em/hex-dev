@@ -1,0 +1,27 @@
+{
+  "source_commit": "7a070459f24d6cd7a3205f6fea8ec759b0127eb2",
+  "dirty_documentation_only": true,
+  "emitter_exit_code": 0,
+  "emitter_seconds": 0.0577256069991563,
+  "byte_exact_committed_fixture": true,
+  "oracle_exit_code": 0,
+  "oracle_argv": [
+    "/home/kim/.local/state/hex/issue-10577-oracles/bin/python",
+    "scripts/oracle/number_field_flint_pari.py",
+    "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/numberfield-fresh.jsonl"
+  ],
+  "retained_logs": [
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/numberfield-fresh.jsonl",
+      "sha256": "c462494eb0ab6c75d737d9a8482642def0fb6e8e097852deeb93542ad09f8861"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/numberfield-emit-stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/numberfield-oracle.log",
+      "sha256": "4ce314ad81474ef8f7d2051bae0dd1f4e1396ff86b2857a1dc5469b43efc1da9"
+    }
+  ]
+}

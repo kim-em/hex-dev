@@ -28,18 +28,18 @@ from scripts.bench.fresh_module_sweep import (  # noqa: E402
 )
 
 
-BASELINE = ProbeModule("HexPrimalityMathlib.ProofProbe.MathlibBaseline")
-NEGATIVE_25 = ProbeModule("HexPrimalityMathlib.ProofProbe.Negative25")
-NEGATIVE_32 = ProbeModule("HexPrimalityMathlib.ProofProbe.Negative32")
-NEGATIVE_64 = ProbeModule("HexPrimalityMathlib.ProofProbe.Negative64")
-NEGATIVE_64_NULL = ProbeModule("HexPrimalityMathlib.ProofProbe.Negative64Null")
-NEGATIVE_65 = ProbeModule("HexPrimalityMathlib.ProofProbe.Negative65")
-NEGATIVE_512 = ProbeModule("HexPrimalityMathlib.ProofProbe.Negative512")
+BASELINE = ProbeModule("HexPrimalityTheory.ProofProbe.MathlibBaseline")
+NEGATIVE_25 = ProbeModule("HexPrimalityTheory.ProofProbe.Negative25")
+NEGATIVE_32 = ProbeModule("HexPrimalityTheory.ProofProbe.Negative32")
+NEGATIVE_64 = ProbeModule("HexPrimalityTheory.ProofProbe.Negative64")
+NEGATIVE_64_NULL = ProbeModule("HexPrimalityTheory.ProofProbe.Negative64Null")
+NEGATIVE_65 = ProbeModule("HexPrimalityTheory.ProofProbe.Negative65")
+NEGATIVE_512 = ProbeModule("HexPrimalityTheory.ProofProbe.Negative512")
 NEGATIVE_512_ODD = ProbeModule(
-    "HexPrimalityMathlib.ProofProbe.Negative512Odd"
+    "HexPrimalityTheory.ProofProbe.Negative512Odd"
 )
 EXHAUSTED_512 = ProbeModule(
-    "HexPrimalityMathlib.ProofProbe.NegativeExhausted512"
+    "HexPrimalityTheory.ProofProbe.NegativeExhausted512"
 )
 
 
@@ -127,8 +127,8 @@ SPEC = SweepSpec(
     measurement="paired-fresh-module-olean-wall-robust-null-v2",
     output_stem="hex-primality-negative-policy",
     extra_sources=(
-        Path("HexPrimalityMathlib/NormNum.lean"),
-        Path("conformance/HexPrimalityMathlibConformance/OptIn.lean"),
+        Path("HexPrimalityTheory/NormNum.lean"),
+        Path("conformance/HexPrimalityTheoryConformance/OptIn.lean"),
     ),
     required_samples=6,
     absolute_only=True,

@@ -420,7 +420,7 @@ share of `det` measured `2.6 s` plain and `0.8 s` packed, on the
 The soundness theorems `det_eq_of_checkList` and `det_eq_of_checkRat`
 (`Matrix.det` of the Mathlib matrix of the row list equals the value) are
 on the forbidden list above and live in
-[hex-bareiss-mathlib §Kernel certificate](../../HexBareissMathlib/SPEC/hex-bareiss-mathlib.md#kernel-certificate);
+[hex-bareiss-theory §Kernel certificate](../../HexBareissTheory/SPEC/hex-bareiss-theory.md#kernel-certificate);
 this layer states no equation between the certificate and a determinant.
 
 ## Polynomial determinant certificate
@@ -537,8 +537,8 @@ required symbolic tactic route.
 
 The theorem `checkDetPolyList_sound`, concluding `Hex.Matrix.det P = d`
 through denotation, triangular determinant lemmas and cancellation over the
-polynomial domain, lives exclusively in hex-poly-det-mathlib
-([SPEC](../../SPEC/Libraries/hex-poly-det-mathlib.md)). The reference
+polynomial domain, lives exclusively in hex-poly-det-theory
+([SPEC](../../SPEC/Libraries/hex-poly-det-theory.md)). The reference
 Leibniz determinant is a specification in that theorem, never kernel
 computation. This executable library adds no determinant correspondence
 theorem and never uses `bareissWith` or `det` on `Hex.Matrix (MvPoly …)` as
@@ -548,7 +548,7 @@ do not promise bounded support or a timing win over Bird's algorithm.
 
 ## Mathlib-free vs. Mathlib-bridge proof surface
 
-The following theorems live exclusively in the `*-mathlib` bridge layer and
+The following theorems live exclusively in the `*-theory` layer and
 **must not** be restated, reproven, or specialized inside `hex-bareiss`,
 regardless of how convenient that would be for a downstream Mathlib-free
 consumer. Generalizing the coefficient ring does not move the boundary: it moves
@@ -565,7 +565,7 @@ A Mathlib-free consumer that *appears to require* a theorem on this list is the
 failure mode caught by
 [PLAN/Conventions.md §Library placement is a hard precondition question 2](https://github.com/kim-em/hex-dev/blob/main/PLAN/Conventions.md#library-placement-is-a-hard-precondition).
 The repair is to relocate the consumer's bridging theorem to the sibling
-`*-mathlib` layer (or to redesign the consumer's proof surface), **not** to
+`*-theory` layer (or to redesign the consumer's proof surface), **not** to
 manufacture a Mathlib-free proof of the listed theorem.
 
 Row-operation lemmas (`det_rowSwap`, `det_rowScale`, `det_rowAdd`, in
@@ -601,25 +601,25 @@ Exactness follows: the numerator is `μ(k-1; k-1, k-1) · μ(k+1; i, j)`, and
 nonzero.
 
 The only determinant identity consumed is
-`HexMatrixMathlib.desnanot_jacobi_borderedMinor`, which is already stated over
+`HexMatrixTheory.desnanot_jacobi_borderedMinor`, which is already stated over
 an arbitrary Mathlib `CommRing` and needs no nondegeneracy hypothesis. **No new
 determinant identity is required by this generalization**, and the audited
 Desnanot-Jacobi statement itself needs no change. One declaration beside it does:
-`HexMatrixMathlib.bareissExactDiv_borderedMinor_of_mul_eq` in `CorePlucker.lean`
+`HexMatrixTheory.bareissExactDiv_borderedMinor_of_mul_eq` in `CorePlucker.lean`
 is fixed to `Int` and must be generalized in place, with an `Int` corollary
 retained. In particular the general Sylvester identity remains
 absent and remains unnecessary: fraction-free elimination uses only the `2 × 2`
 bordered-minor case, which is Desnanot-Jacobi. Do not introduce a second
 determinant identity development, and do not rename anything to claim Sylvester;
 see
-[hex-determinant-mathlib §Sylvester's determinant identity: absent](https://github.com/leanprover/hex-determinant-mathlib/blob/main/SPEC/hex-determinant-mathlib.md).
+[hex-determinant-theory §Sylvester's determinant identity: absent](https://github.com/leanprover/hex-determinant-theory/blob/main/SPEC/hex-determinant-theory.md).
 
 Do not reprove Desnanot-Jacobi locally. Track
 https://github.com/leanprover-community/mathlib4/pull/37716
 (`Mathlib.LinearAlgebra.Matrix.Determinant.DesnanotJacobi`). If merged, import
 it; otherwise prove using Mathlib's `Matrix.adjugate`.
 
-Implementation split (the proofs live in the Mathlib bridge layer):
+Implementation split (the proofs live in the theory layer):
 1. `bareissNoPivotWith_eq_det`: under nonzero pivots, prove via the invariant +
    Desnanot–Jacobi.
 2. `bareissWith_eq_det`: public API with row pivoting. If pivot search fails at
@@ -686,7 +686,7 @@ dependencies, never into `hex-bareiss`. `ZPoly` fixtures use the underlying
 ## Changes required of a later implementation
 
 These are obligations on the implementation issue, not on this SPEC. Until it
-lands, `HexBareiss/README.md` and `HexBareissMathlib/README.md` continue to
+lands, `HexBareiss/README.md` and `HexBareissTheory/README.md` continue to
 describe the shipped `Int`-only surface, which is accurate; they are updated by
 the implementation, not ahead of it.
 
@@ -723,7 +723,7 @@ workflow, job, or matrix.
 `BareissData.sign`, `BareissData.det`, `bareissData`, `bareiss`,
 `bareissNoPivotData`, `bareissNoPivot`, `borderedMinor`,
 `bareissData_eq_finish_pivotLoop`, `bareiss_eq_bareissData_det`,
-`HexMatrixMathlib.bareiss_eq_det` and `HexMatrixMathlib.bareissDet_eq_det`
+`HexMatrixTheory.bareiss_eq_det` and `HexMatrixTheory.bareissDet_eq_det`
 through `{docstring}` and `{name}` roles. Every one of those names survives the
 generalization, so no chapter rewrite is forced; the docstrings they render do
 change, and the chapter must still build.
@@ -737,15 +737,14 @@ not be rewritten in the same change that could cause one.
 Add an internal A/B rung, `bareissWith Hex.exactDiv` at two sizes in the upper
 half of the existing ladder (the entries are multi-limb there, which is where
 `lean_int_div_exact` can differ), and record the ratio against the matching
-`runBareissDet` rung in `reports/hex-bareiss-performance.md`. This is an
-internal comparison, not an external comparator, so
-the existing `Int` entry in `HexBareiss.phase4.comparators` is unchanged.
+`runBareissDet` rung with the run's raw JSONL. This is an internal
+comparison, not an external comparator.
 
 Both rungs stay Mathlib-free and extend the script of the existing single
 bench job; no new workflow, job, or `strategy.matrix` (see
 [SPEC/CI.md](https://github.com/kim-em/hex-dev/blob/main/SPEC/CI.md)). If the
 two extra rungs push the `Bench verify` step past its wallclock cap, they belong
-on the scheduled timing workflow instead, per
+in manual scientific runs instead, per
 [SPEC/benchmarking.md](https://github.com/kim-em/hex-dev/blob/main/SPEC/benchmarking.md).
 
 Every added carrier also has a required lean-bench family. Scalar carriers
@@ -755,15 +754,16 @@ term count at fixed arity and total degree. Each family includes matrices whose
 second and later steps divide by a nonconstant previous pivot, so the benchmark
 measures exact division rather than only ring arithmetic.
 
-| target family | external comparator | class |
-|---|---|---|
-| `runBareissRat` | python-flint `fmpq_mat.det()` | informational |
-| `runBareissMod` | python-flint `nmod_mat.det()` at the identical prime | informational |
-| `runBareissDenseRat`, `runBareissDenseMod` | SymPy Berkowitz determinant over the identical exact polynomial domain | informational |
-| `runBareissZPoly` | SymPy Berkowitz determinant over `ZZ[x]` | informational |
-| `runBareissMvInt`, `runBareissMvRat` | SymPy Berkowitz determinant over the identical multivariate polynomial domain | informational |
+| target family | external comparator |
+|---|---|
+| `runBareissRat` | python-flint `fmpq_mat.det()` |
+| `runBareissMod` | python-flint `nmod_mat.det()` at the identical prime |
+| `runBareissDenseRat`, `runBareissDenseMod` | SymPy Berkowitz determinant over the identical exact polynomial domain |
+| `runBareissZPoly` | SymPy Berkowitz determinant over `ZZ[x]` |
+| `runBareissMvInt`, `runBareissMvRat` | SymPy Berkowitz determinant over the identical multivariate polynomial domain |
 
-All external comparisons are informational, never Phase-4 gates. FLINT's
+These external comparisons are orientation only; no performance target is set
+against them. FLINT's
 determinant selection is structurally different from the prescribed Bareiss
 recurrence, while the SymPy calls additionally include Python process overhead
 and independent algorithm selection. Result hashes cover the full canonical
@@ -773,11 +773,9 @@ The SymPy and python-flint registrations use a persistent-subprocess carrier
 driver, following `Hex.BenchOracle.Flint`. Because process-call benchmarks have
 an `IO` body, every point in a dimension/degree or dimension/term-count sweep
 is a separate `setup_fixed_benchmark`; there is no two-dimensional parametric
-`Nat → IO α` registration. The implementation PR records trivial-request
-overhead and overhead-adjusted ratios in
-`reports/hex-bareiss-performance.md §Comparator ratios`. These informational
-external rungs are scheduled-only; the matching Hex registrations still build
-and verify in the ordinary bench target.
+`Nat → IO α` registration. These external rungs run only in manual
+scientific runs; the matching Hex registrations still build and verify in the
+ordinary bench target.
 
 Over a field, Bareiss is primarily a conformance surface: fraction-free
 elimination buys no denominator control there and should not be inferred to be
@@ -801,23 +799,20 @@ silently substitutes one of them for Bareiss.
 
 ## External comparators
 
-| Comparator | Class | Scope |
-|---|---|---|
-| FLINT `fmpz_mat_det` via python-flint | informational | the `Int` Bareiss determinant targets (`runBareissDet` and the paired FLINT rungs) |
-| FLINT `fmpq_mat.det` via python-flint | informational | `runBareissRat` |
-| FLINT `nmod_mat.det` via python-flint | informational | `runBareissMod` |
-| SymPy Berkowitz exact-domain determinant | informational | the dense- and multivariate-polynomial Bareiss targets |
+| Comparator | Scope |
+|---|---|
+| FLINT `fmpz_mat_det` via python-flint | the `Int` Bareiss determinant targets (`runBareissDet` and the paired FLINT rungs) |
+| FLINT `fmpq_mat.det` via python-flint | `runBareissRat` |
+| FLINT `nmod_mat.det` via python-flint | `runBareissMod` |
+| SymPy Berkowitz exact-domain determinant | the dense- and multivariate-polynomial Bareiss targets |
 
 FLINT's `fmpz_mat_det` is a structurally distinct reference for integer matrix
 determinant: FLINT uses multimodular reduction (determinant modulo many small
 primes, then CRT), with a different asymptotic and constant-factor profile from
-Bareiss fraction-free elimination. The comparator is `informational`: the ratio
-is recorded for orientation but is not a Phase-4 gate. Wired via a
+Bareiss fraction-free elimination, so the ratio is orientation, not a
+performance target. Wired via a
 persistent-subprocess Python driver per
 [the benchmarking spec's "External comparators" section](https://github.com/kim-em/hex-dev/blob/main/SPEC/benchmarking.md#external-comparators).
 
-Structured metadata in the project
-[`libraries.yml`](https://github.com/kim-em/hex-dev/blob/main/libraries.yml)
-under `HexBareiss.phase4.comparators` records the carrier-scoped additions when
-their implementation lands. See
-`reports/hex-bareiss-performance.md` for the comparator ratio ladder.
+See `reports/hex-bareiss-performance.md` for a recorded comparator ratio
+ladder.

@@ -1,0 +1,29 @@
+Hex.RealAlgebraicBench.runRationalQuotient    expected complexity: b    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=16cff19, 2026-10-04T20:43:49Z, host=chungus2
+      param  per-call    repeats  C
+    262_144   51.136 µs  ×2^11    C=0.195 [trial 1/4]
+    524_288  101.224 µs  ×2^10    C=0.193 [trial 1/4]
+  1_048_576  205.692 µs  ×2^9     C=0.196 [trial 1/4]
+  2_097_152  403.346 µs  ×2^8     C=0.192 [trial 1/4]
+    262_144   50.927 µs  ×2^11    C=0.195 [trial 2/4]
+    524_288  100.977 µs  ×2^10    C=0.193 [trial 2/4]
+  1_048_576  204.697 µs  ×2^9     C=0.196 [trial 2/4]
+  2_097_152  402.755 µs  ×2^8     C=0.192 [trial 2/4]
+    262_144   51.106 µs  ×2^11    C=0.195 [trial 3/4]
+    524_288  101.259 µs  ×2^10    C=0.193 [trial 3/4]
+  1_048_576  206.136 µs  ×2^8     C=0.196 [trial 3/4]
+  2_097_152  402.559 µs  ×2^8     C=0.192 [trial 3/4]
+    262_144   51.101 µs  ×2^11    C=0.195 [trial 4/4]
+    524_288  101.061 µs  ×2^10    C=0.193 [trial 4/4]
+  1_048_576  206.036 µs  ×2^9     C=0.196 [trial 4/4]
+  2_097_152  402.063 µs  ×2^8     C=0.192 [trial 4/4]
+  verdict: consistent with declared complexity (cMin=0.192, cMax=0.196, β=-0.004)
+  per-spawn floor (harness self-measurement): 39.469 ms
+  peak RSS: 66_320 kB..75_120 kB (across 16 ok row(s))
+  trial summaries (4 trials per param; spread = (max-min)/median):
+        param  trials  median      min         max         spread
+      262_144  4/4      51.104 µs   50.927 µs   51.136 µs  0.410%
+      524_288  4/4     101.143 µs  100.977 µs  101.259 µs  0.278%
+    1_048_576  4/4     205.864 µs  204.697 µs  206.136 µs  0.699%
+    2_097_152  4/4     402.657 µs  402.063 µs  403.346 µs  0.319%
+exported to /home/kim/.local/state/hex/issue-10577-proposals/sqrt-initializer/current-main/height-science/RationalQuotient.json

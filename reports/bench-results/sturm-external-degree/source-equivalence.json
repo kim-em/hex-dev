@@ -1,0 +1,56 @@
+{
+  "retained_source": "612b3e5912c5a30fcb6325f7f957d7e383cb9eb5",
+  "retaining_branch": "issue-10577-sturm-measurement-source",
+  "checked_source": "dafbe6e87afdcc48abf45252c5dc95068ae38efa",
+  "all_fingerprinted_sources_match": true,
+  "checks": [
+    {
+      "path": "bench/HexSturm/Bench.lean",
+      "retained_sha256": "701ce213ca65eb5cfefe565533ff0c49fffb4bb87a33ea1ab6c1c7ffdbf174f6",
+      "current_sha256": "701ce213ca65eb5cfefe565533ff0c49fffb4bb87a33ea1ab6c1c7ffdbf174f6",
+      "matches": true
+    },
+    {
+      "path": "scripts/oracle/sturm_bench.py",
+      "retained_sha256": "373d90e884cc0394740d0e281a310ea87ba175126eecf0fd706bc1821fbea49a",
+      "current_sha256": "373d90e884cc0394740d0e281a310ea87ba175126eecf0fd706bc1821fbea49a",
+      "matches": true
+    },
+    {
+      "path": "scripts/oracle/test_sturm_bench.py",
+      "retained_sha256": "478144b13c6d913d73a77b2f49e5966f0ce10ee08e8da8b0db862f1b1f82b450",
+      "current_sha256": "478144b13c6d913d73a77b2f49e5966f0ce10ee08e8da8b0db862f1b1f82b450",
+      "matches": true
+    },
+    {
+      "path": "scripts/oracle/real_algebraic_qqbar.py",
+      "retained_sha256": "50ace8c9b7807e263932ca1ae49e98c14e53a465e68e502b35999119d37770a6",
+      "current_sha256": "50ace8c9b7807e263932ca1ae49e98c14e53a465e68e502b35999119d37770a6",
+      "matches": true
+    },
+    {
+      "path": "Hex/BenchOracle/Flint.lean",
+      "retained_sha256": "aacd1a67738c94d983ab930ddb3727ded8c421f5e529652fe2f8082e52e5646b",
+      "current_sha256": "aacd1a67738c94d983ab930ddb3727ded8c421f5e529652fe2f8082e52e5646b",
+      "matches": true
+    },
+    {
+      "path": "HexSturm/Basic.lean",
+      "retained_sha256": "e94705d172a585b5d9c718941e1e8251a145ee6bb152cbaaf695d0d0e3a20beb",
+      "current_sha256": "e94705d172a585b5d9c718941e1e8251a145ee6bb152cbaaf695d0d0e3a20beb",
+      "matches": true
+    },
+    {
+      "path": "HexRealRoots/Tarski.lean",
+      "retained_sha256": "959f1882c67b7068e6274cdfeef9296b9ce3683e84ca8d1c38e5e75da57857a7",
+      "current_sha256": "959f1882c67b7068e6274cdfeef9296b9ce3683e84ca8d1c38e5e75da57857a7",
+      "matches": true
+    },
+    {
+      "path": "HexRealRoots/SignedRemainderChain.lean",
+      "retained_sha256": "be56bd454a976838e2a3d87b7126100d26de92af686b556c4f31e9e36cd7e874",
+      "current_sha256": "be56bd454a976838e2a3d87b7126100d26de92af686b556c4f31e9e36cd7e874",
+      "matches": true
+    }
+  ]
+}

@@ -10,16 +10,23 @@ This development computational library belongs to the
 The [README](../README.md) records the implemented replay surface. API names
 and theorem statements below remain required shapes unless implemented there;
 registration does not claim phase completion. The combined computational and
-companion assignment is [#10377](https://github.com/kim-em/hex-dev/issues/10377).
+companion assignment is [#10377](https://github.com/kim-em/hex-dev/issues/10377). Its
+implementation and Phase-4 attestation are merged in
+[#10861](https://github.com/kim-em/hex-dev/pull/10861). The
+[proof acceptance](../../reports/sign-det-proof-acceptance.md) records complete
+proofs and passing conformance. This computational library remains at Phase 5;
+the companion’s independent
+[proof/API and manual acceptance](../../reports/sign-det-declaration-review/theory-acceptance.md)
+completes the companion’s Phases 6–7. Publication eligibility remains separate.
 
 `HexSignDet`, in namespace `Hex.SignDet`, depends on `HexSturm`, `HexPoly`,
 `HexMatrix`, `HexRowReduce` and `HexRank`. Matrix construction and exact
 rational solving reuse HexMatrix and HexRowReduce; row selection and rank
 certificates reuse HexRank. BKR-specific support and descriptor certificates
 live here.
-`HexSignDetMathlib` imports this library, `HexSturmMathlib`,
-`HexPolyMathlib`, `HexMatrixMathlib`, `HexRowReduceMathlib` and
-`HexRankMathlib`, with Tau Ceti foundations imported only in companions. These dependencies are acyclic.
+`HexSignDetTheory` imports this library, `HexSturmTheory`,
+`HexPolyTheory`, `HexMatrixTheory` and
+`HexRankTheory`, with Tau Ceti foundations imported only in companions. These dependencies are acyclic.
 
 [hex-sturm](../../SPEC/Libraries/hex-sturm.md) owns ordered-field Tarski queries, domain guards and
 exact coefficient arithmetic over the one shared kernel in hex-real-roots.
@@ -276,14 +283,21 @@ the companion proves their semantic meanings.
 
 | Operation | Result |
 | --- | --- |
-| `determine p I Q` | `Option SignTable`, with `none` exactly for an invalid root domain. `determinePrepared` is total on a prepared domain. Its specified internal-error branch emits a `panic!` diagnostic and returns `SignTable.empty`; the companion proves that branch unreachable under lawful coefficient interpretations. |
-| `validate raw` | `Option (Descriptor K)`, with success exactly for a uniquely realized well-formed descriptor. |
-| `complete d` | Full descriptor of the same root, total on `Descriptor K`. |
-| `roots p I` | Complete strictly increasing descriptor list, or `none` for an invalid domain. Constants give an empty list; multiplicities belong downstream. |
-| `signAt d q` | Total integer sign of `q` at the selected root. Joint sign determination filters to count one; the singleton-interval shortcut additionally needs one root in the interval. |
-| `compare d₁ d₂` | Total `Ordering` of roots over the same coefficient field, using completion and joint re-encoding where necessary. Its internal-error branch emits a `panic!` diagnostic and returns `eq`; the companion proves this branch unreachable under lawful coefficient interpretations. |
-| `reencode d h I'` | `Option (Descriptor K)`; succeeds exactly when the target domain is valid and the selected root belongs to it. |
-| `certify` / `Replay.check` | Produce and check Tarski/BKR result certificates for tables or descriptor conclusions. Checking returns `Bool`; malformed or false certificates return `false`. |
+| `determine sign context p a b Q reduced` | `Option (SignTable Q.length)`, with `none` exactly for an invalid root domain. `determinePrepared context domain Q reduced` is total on a prepared domain. Its internal-error branch emits a `panic!` diagnostic and returns `SignTable.empty`; `determinePrepared_success` proves this branch unreachable under lawful coefficient interpretations. The `reduced` flag defaults to `true`. |
+| `Descriptor.validate sign context raw` | `Option (Descriptor E Ctx sign context)`, with success exactly for a uniquely realized well-formed descriptor bound to the supplied context. `Descriptor.build` produces its evidence with an explicit diagnostic `Except` layer. |
+| `Descriptor.complete d` | Full descriptor of the same root, total on a validated descriptor. Its internal-error branch emits a diagnostic and returns `d`, whose encoding may be partial; `buildCompletion_success` and `complete_correct` prove the fallback unreachable and the result full under lawful interpretations. |
+| `Descriptor.buildRoots sign context p a b` | `Except BuildError (Option (List (Descriptor E Ctx sign context)))`. On a valid domain the actual builder succeeds with the complete strictly increasing root list. An invalid domain gives `.ok none`; a nonzero constant on a valid interval gives `.ok (some [])`. Multiplicities belong downstream. The companion excludes internal errors under lawful interpretations. |
+| `Descriptor.signAt d q` | Total integer sign of `q` at the selected root. The actual `buildSigns` computation filters a joint table to count one. Its internal-error branch emits a diagnostic and returns `0`; `signAt_success` proves it unreachable under lawful interpretations. A singleton-interval shortcut additionally needs one root in the interval. |
+| `Descriptor.compare d₁ d₂` | Total `Ordering` of roots over the same coefficient field, using completion and joint re-encoding where necessary. Its internal-error branch emits a diagnostic and returns `eq`; `compare_success` proves it unreachable under lawful interpretations. |
+| `Descriptor.buildReencoding d h a b` | `Except BuildError (Option (Reencoding d h a b))`. It succeeds exactly when the target domain is valid and contains the selected root. The result includes a validated full target descriptor and its checked relation to the source. Invalid domain or absent root gives `.ok none`; the companion excludes internal errors under lawful interpretations. |
+| `buildTree` / `buildPrepared` / `Replay.check` | Produce and independently check Tarski/BKR evidence. Builders expose internal diagnostics; checking returns `Bool`. Malformed or false evidence returns `false`. |
+| `Dag.mapNodes transform graph` | Raw graph with each literal node transformed once, preserving all entries, child indices and the root index across coefficient/context types. It preserves sharing; target `validate?` or `replay?` must establish acceptance under the new complete bindings. |
+
+Diagnostic `Except` results expose producer errors on arbitrary coefficient
+operations; they do not add mathematical invalidity cases. The companion proves
+these errors absent under the stated interpretation laws. The total operations
+execute with ordinary coefficient operations and require no companion package
+at runtime.
 
 The total computations do not require certificate production at every
 arithmetic operation. Result certificates retain query replays, matrix
@@ -300,6 +314,19 @@ not an evidence-returning field interface.
 Different tower contexts must first be mapped into one compatible coefficient
 field by the tower owner. Re-encoding after a dynamic split is supported here;
 transporting all live tower values remains a hex-real-closure obligation.
+
+### Selected-root subjects in composed certificate packets
+
+`Codec.descriptor` encodes the literal full context, defining polynomial,
+interval endpoints, derivative indices and derivative signs.
+`Codec.readDescriptor` parses these fields without asserting root validity;
+`Codec.readDescriptorBinding` accepts only the caller’s exact subject.
+`Codec.read_descriptor_of` establishes roundtrip from coverage of the stored
+coefficient and context values. `Codec.readDescriptorBinding_checked`
+establishes literal agreement for arbitrary accepted input. Mathematical
+validation remains the responsibility of checked root replay. These readers
+and their proofs are available through public imports for downstream packet
+composition.
 
 ## Validity and termination
 
@@ -347,6 +374,24 @@ shapes; the companion records the implemented correspondence:
 | `determine_isSome`, `roots_isSome` | Success iff `Domain p I`; descriptor validation/re-encoding have their exact stated validity predicates. |
 | `result_congr` | Order-preserving coefficient embeddings and root-preserving descriptor transports preserve results and their validity. |
 
+The headline correctness theorem is `Hex.SignDet.determine_correct`, which
+establishes the domain and exact counts for every sign word of the actual
+returned table. The other required statement shapes are implemented under
+these public names in the companion:
+
+| Required shape | Implemented public theorem(s) |
+| --- | --- |
+| `Replay.check_sound` | `Replay.check_domain`, `Replay.check_support`, `Replay.check_counts` |
+| `validate_correct` | `Descriptor.validate_success_iff`, `Descriptor.build_success_iff` |
+| `roots_correct` | `Descriptor.buildRoots_roots`, `Descriptor.buildRoots_ordered`, `Descriptor.buildRoots_coverage` |
+| `reencode_correct` | `Descriptor.buildReencoding_isSome`, `Descriptor.buildReencoding_invalid`, `Descriptor.buildReencoding_absent`, `Descriptor.buildReencoding_success`, `Reencoding.root_eq_source`, `Reencoding.target_constraints` |
+| `determine_isSome`, `roots_isSome` and descriptor validity | `determine_isSome`, `Descriptor.buildRoots_isSome`, `Descriptor.validate_success_iff`, `Descriptor.buildReencoding_isSome` |
+| `result_congr` | `Descriptor.root_map`, `Descriptor.root_comp`, `Descriptor.convert_success`, `Descriptor.convert_root`, `determine_convert_isSome`, `Descriptor.buildRoots_convert_isSome`, `determine_convert_counts`, `Descriptor.convert_signAt`, `Descriptor.convert_compare`, `Descriptor.buildRoots_convert_roots` |
+
+These names refine the shapes above without changing their hypotheses or
+conclusions; the [companion table](../../HexSignDetTheory/SPEC/hex-sign-det-theory.md#headline-correspondence-and-completeness)
+records each operation's semantic contract.
+
 HexSignDet proves finite matrix identities/uniqueness, literal replay checks,
 structural termination, and support induction conditional on abstract moment,
 query and Thom contracts. The companion discharges these contracts and proves
@@ -358,15 +403,15 @@ at Mathlib `1cf325a0cf67aca2b04d76b5380ff6a9e410aefa`:
 
 | Foundation / missing infrastructure | Owner and statement shape |
 | --- | --- |
-| Exact polynomial arithmetic | Existing `DensePoly K` operations, field division/gcd/xgcd and correspondence in hex-poly/hex-poly-mathlib; positive signed pseudo-remainders belong to the shared ordered-domain query kernel. |
-| Shared query algorithm and literal replay | hex-real-roots implements `ZPoly.tarskiQuery` and `IntTarskiCertificate`, including algebraic correspondence and produced-certificate acceptance. hex-sturm implements the ordered-field frontend and prepared-query reuse. Abstract root-sum/replay soundness remains a completion gate. |
-| Abstract polynomial IVT, Rolle and signed-remainder/Cauchy-index identity | Tau Ceti import through hex-real-roots-mathlib, consumed via hex-sturm-mathlib's query/replay soundness. Include infinities, common gcd and zero remainder. Do not duplicate the primitive here. |
-| Moment identity | Tau Ceti to hex-sign-det-mathlib: actual finite root counts satisfy `t=M*c`, including `0^0=1`, empty lists and zero roots. |
-| Recursive BKR support reduction | Tau Ceti to hex-sign-det-mathlib: finite moment identities and count recovery from a left inverse and independently complete candidate support. Hex applies these at each solve in the existing split-tree induction, proving child restriction, Cartesian coverage and zero-count pruning against literal evidence. |
-| Row selection and invertibility | Existing HexRank/HexRankMathlib certificates and row/column rank results. HexSignDet proves the permutation and inverse-format adapters. Square row-basis existence is linear algebra, not an additional Tau Ceti real-algebra import. |
-| Reduced moments | HexSignDet extracts the checked literal identities through `ReductionStep.check_eq`. HexSignDetMathlib proves sign preservation at roots through `ReductionStep.check_sign` and `Reduction.check_sign`, then applies hex-sturm's query semantics to obtain the specified unreduced moments. |
-| Thom injectivity and order | Tau Ceti to hex-sign-det-mathlib: full derivative encodings at roots are injective and satisfy the largest-differing-index rule above. Hex proves completion, count-one validity, joint re-encoding and comparison correspondence. |
-| Ambient real closed field | Ordered real-closure existence requested from Tau Ceti by the family, consumed by hex-real-closure-mathlib. The pin has neither that theorem nor `IsRealClosed ℝ`; the latter is owned by hex-real-roots-mathlib. Rational-base semantics can use Hex's existing `IsRealClosed RealAlgebraicNumber`. |
+| Exact polynomial arithmetic | Existing `DensePoly K` operations, field division/gcd/xgcd and correspondence in hex-poly/hex-poly-theory; positive signed pseudo-remainders belong to the shared ordered-domain query kernel. |
+| Shared query algorithm and literal replay | hex-real-roots implements `ZPoly.tarskiQuery` and `IntTarskiCertificate`, including algebraic correspondence and produced-certificate acceptance. hex-sturm implements the ordered-field frontend and prepared-query reuse. The proved `IntTarskiCertificate.check_sound` and public `HexSturmTheory.query_iff`/`check_sound` supply the shared root-sum and arbitrary-replay correspondence. |
+| Abstract polynomial IVT, Rolle and signed-remainder/Cauchy-index identity | Tau Ceti import through hex-real-roots-theory, consumed via hex-sturm-theory's query/replay soundness. Include infinities, common gcd and zero remainder. Do not duplicate the primitive here. |
+| Moment identity | Tau Ceti to hex-sign-det-theory: actual finite root counts satisfy `t=M*c`, including `0^0=1`, empty lists and zero roots. |
+| Recursive BKR support reduction | Tau Ceti to hex-sign-det-theory: finite moment identities and count recovery from a left inverse and independently complete candidate support. Hex applies these at each solve in the existing split-tree induction, proving child restriction, Cartesian coverage and zero-count pruning against literal evidence. |
+| Row selection and invertibility | Existing HexRank/HexRankTheory certificates and row/column rank results. HexSignDet proves the permutation and inverse-format adapters. Square row-basis existence is linear algebra, not an additional Tau Ceti real-algebra import. |
+| Reduced moments | HexSignDet extracts the checked literal identities through `ReductionStep.check_eq`. HexSignDetTheory proves sign preservation at roots through `ReductionStep.check_sign` and `Reduction.check_sign`, then applies hex-sturm's query semantics to obtain the specified unreduced moments. |
+| Thom injectivity and order | Tau Ceti to hex-sign-det-theory: full derivative encodings at roots are injective and satisfy the largest-differing-index rule above. Hex proves completion, count-one validity, joint re-encoding and comparison correspondence. |
+| Ambient real closed field | Ordered real-closure existence requested from Tau Ceti by the family, consumed by hex-real-closure-theory. The pin has neither that theorem nor `IsRealClosed ℝ`; the latter is owned by hex-real-roots-theory. Rational-base semantics can use Hex's existing `IsRealClosed RealAlgebraicNumber`. |
 
 These are explicit import contracts, including those requested by
 [#10300](https://github.com/kim-em/hex-dev/issues/10300), not assumed existing
@@ -532,6 +577,17 @@ without seeking a rational separator. Multiple infinitesimal levels and
 tower-generated coefficient certificates are supplied downstream, without
 introducing an upward import here.
 
+Every public operation is also exercised over a genuine number field: the
+compiled, Mathlib-free `hexsigndet_field_checks` executable
+(`conformance/HexSignDet/FieldChecks.lean`) runs descriptors, selected signs,
+completion, query handles, root lists, tables, comparison, re-encoding,
+refinement, Thom re-encoding, conversion and supplied graph signs over ℚ(∛2)
+in its real embedding, and over the quartic common field of √2 and √3. It
+covers shared roots, partial and empty sign words, zero derivative signs,
+negative leading coefficients, noninjective coefficient storage, stale
+evidence rejection and absence results. CI builds and runs it; it exits
+nonzero on any failing check.
+
 Phase 4 separates table production, Tarski queries, coefficient-sign work,
 product construction, matrix solving/reduction, descriptor completion,
 comparison/re-encoding and replay. Sweep `n,s,D`, realized support size,
@@ -546,11 +602,11 @@ Reduced-versus-full solver correctness is a required check. Runtime comparison
 uses identical small inputs and separately shows reduced-matrix scaling on larger
 lists. Compare unreduced and modulo-`p` moment construction on derivative and
 joint-encoding lists, including coefficient sizes and reduction replay costs.
-Z3 and python-flint end-to-end comparisons are informational where an exact
+Z3 and python-flint end-to-end comparisons are for orientation where an exact
 matching operation is available; root isolation time must not be labelled
 matrix-solving time. No external oracle supplies a comparable Lean proof
 checker. Kernel replay has representative CI-built examples in the
-companion's declared proof-example roots, with ordinary kernel checking and
+companion’s declared proof-example roots, with ordinary kernel checking and
 axiom inspection, including valid and rejected nested evidence. This is
 separate from Mathlib-free executable benches and imposes no generic theorem
 timing sweep. Computational profiles attribute arithmetic, matrix and

@@ -1,0 +1,156 @@
+{
+  "schema": "hex-rcf-interval-sign-counts-v3",
+  "measured_source_commit": "3728fa0828ec8b8fa5612269ef3b364d4144a1fe",
+  "audit_source_commit": "c6103576890f899018cfeda621c86dd4e19a4b61",
+  "audit_source_tree": "79d2e0ce7af1c8a016e50cd7704b1e0e4e9ade6b",
+  "audit_tree_binding": "Tree of the recorded audit reference commit; retained-log mode does not establish the historical build tree.",
+  "audit_source_sha256": {
+    "bench/HexRCF/ProofProbe/Intervals/Audit.lean": "68e7d0e64c40f37fd057aacb48f4c3b14aedb3690c7751fb3f141641cad733ec",
+    "lakefile.lean": "f04630a759b87042b47896c5562d11048c142c910b849717ca5b68482a4d4d61",
+    "bench/HexRCF/ProofProbe/Intervals/FurtherQuery.lean": "3d6a5734b831ad5d3d561cc87cd8f3c40bcc9847ec35d3c975f6f1d113f3ca99",
+    "bench/HexRCF/ProofProbe/Intervals/FurtherHorner.lean": "a6e18b38fa4f65eae5c9c1f3ffbe3e87de225a611c0fa5472232eb21783aec49",
+    "bench/HexRCF/ProofProbe/Intervals/ReciprocalQuery.lean": "959358bbbd4be81557eed1f21e2605fe98042a1ec69c29455c23319ddfc5f22f",
+    "bench/HexRCF/ProofProbe/Intervals/ReciprocalHorner.lean": "2ae0d1a314c5ad05b3c526fabd4134700daf2eb556c9927b15807f2e6da3b567",
+    "bench/HexRCF/ProofProbe/Intervals/CubicQuery.lean": "daebb6c9cb1e910a850398321b64ac5b4ec2c967f10ff4aba1e86b70b30470d9",
+    "bench/HexRCF/ProofProbe/Intervals/CubicHorner.lean": "68e6f7e4fe4483d4708b1c8eaf04b5fd22414a2da3e04832113ecc6fa338c483"
+  },
+  "source_binding": "asserted-retrospectively; historical build tree was not captured",
+  "build_checkout_capture": null,
+  "audit_build_command": [
+    "lake",
+    "build",
+    "HexRCF.ProofProbe.Intervals.Audit"
+  ],
+  "compiler_log_sha256": "3529fb43a15353e026532f5dd38d68d4d93d03f9da175433283469eb076f5113",
+  "compiler_reports_replayed_probes": {
+    "FurtherQuery": true,
+    "FurtherHorner": true,
+    "ReciprocalQuery": true,
+    "ReciprocalHorner": true,
+    "CubicQuery": true,
+    "CubicHorner": true
+  },
+  "collector_sha256": "59424b3e1f70793c0d008058d6c2e19f051fa0c74c4d6d0c62dffd4d512f9468",
+  "collector_arguments": [
+    "--measured-commit",
+    "3728fa082",
+    "--audit-commit",
+    "c61035768",
+    "--compiler-log",
+    "reports/data/hexrcf-interval-signs/3728fa082/compiler.log",
+    "--expected-hashes",
+    "reports/data/hexrcf-interval-signs/3728fa082/artifact-hashes.json",
+    "--output",
+    "reports/data/hexrcf-interval-signs/3728fa082"
+  ],
+  "expected_artifact_capture": {
+    "sha256": "222dd12e6bb5b35240066d461cb62e832690ec9bdb33af6a79cafd4beb24b52b",
+    "origin": "Extracted from reports/data/hexrcf-interval-signs/3728fa082/audit.json at commit 9a9067441f22735b21cc2b40178fde72d6a68930; not an independent timing-arm capture."
+  },
+  "proof_artifact_sha256": {
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Intervals/FurtherQuery.olean": "9d1cb3192d9cace377c6a4a77d701d1042791ed07ac15b0567e965c361d1b857",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Intervals/FurtherQuery.olean.private": "b588dbf4ddbf8b27008da587c4c567359f6526b4b94da845e877be0ea3a31914",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Intervals/FurtherQuery.olean.server": "880b913924b013359977e1c2a9433414143c14b6446222ec2026d03265558415",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Intervals/FurtherQuery.ilean": "2d45e0dbe6c977fa00f494d9004ac0aee815a3f26b83b2261f8b01c678777d67",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Intervals/FurtherHorner.olean": "6a64a230d2dd37275bb4d6cec9ba9a0a7cf6213b1545d2c489ed6318855b0d1c",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Intervals/FurtherHorner.olean.private": "0e2f73ffc7495289ea3a44e27f5c425693e133b6e5e3f6de049e6ea7aaae439c",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Intervals/FurtherHorner.olean.server": "060fd017c375f42249bb44e35094c3daa2364abf86be9753d8cdfdc9ed4d90d9",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Intervals/FurtherHorner.ilean": "fce0b69fdf23f8bea2784bdaed0452bfb0b942ccbebc9b17d82b4f559de8d727",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Intervals/ReciprocalQuery.olean": "fc635aa8e7d3e9a4266eb3bbb19667b959d4aa9b940c7bfa12ff39d552cf9442",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Intervals/ReciprocalQuery.olean.private": "a43615500a1a5f611bf52223084148aa40d38b7a5d5df001c3159f7b228f38f4",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Intervals/ReciprocalQuery.olean.server": "97d2bd15192534bad208418af67e13042efcf05f5473703feec631b7d2a340ac",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Intervals/ReciprocalQuery.ilean": "f104fc1f0011260b30a2f63488ee0c2d33b58ab0880c7fdf292f6e6bf9d3190a",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Intervals/ReciprocalHorner.olean": "5ef8c6c12a1766f4de8a689efe5fe695361fbd60c5ba5340ab8a28419c4ef185",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Intervals/ReciprocalHorner.olean.private": "a0668be0ada108af88a803b9475a4b1a9afce442f95be3c15e537c036a307b6f",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Intervals/ReciprocalHorner.olean.server": "06c07c84a7f9112e0a1ab7a3f725a0e8d36e1ec0e6feb41bd2b0f378c7188f6b",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Intervals/ReciprocalHorner.ilean": "deab089d59db1b9e8fe7755b84216274ced77ea5d47244d35e36676f119b4756",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Intervals/CubicQuery.olean": "5ac0cb19a7afdce82522be9a54a4d68cfe8b25bfb3f8182c0409fe9d65427df3",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Intervals/CubicQuery.olean.private": "e2f8f902fcfd4a64b889f119688c4d97f5ab1c7688b9a5c7043d1dd5318d07cc",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Intervals/CubicQuery.olean.server": "2499521f8e9cb1b4b925e8af9bd740e1c8eb842109d540ad5b4a0767746aebea",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Intervals/CubicQuery.ilean": "041794df9fc7160e861ee269471ce0b5a6fb9bd0c6fd611777c8b4fbef73400e",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Intervals/CubicHorner.olean": "75df64ef164e78cc0897e4288b60aad85797319177f47675f31ef19c43c75c1a",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Intervals/CubicHorner.olean.private": "6b00b8bf9e8f52675518ec5aef3ac83a26318335eafc8339b3c65573e0fe8f99",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Intervals/CubicHorner.olean.server": "be683a6dc2d88db758323ef3e7ed3728e6c33f00d29a5a09e03ef3d8677d5842",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Intervals/CubicHorner.ilean": "af3940930781e410691cd32687d6af75d222941729017c3886a6834534e55213"
+  },
+  "proof_artifacts_unchanged_during_collection": true,
+  "artifact_log_binding": "asserted for retained log; current hashes verified against supplied capture",
+  "artifact_scope": "Six artifacts retained after the final timing arms; no per-arm hash claim.",
+  "convention": "Distinct table syntax in each proof and reachable declarations from the same source module; imported library bodies are leaves. No physical-sharing or runtime-work claim.",
+  "proofs": [
+    {
+      "distinct_table_syntax": 1,
+      "local_declarations": 7,
+      "proof": "Hex.RCF.ProofProbe.Intervals.FurtherQuery.witness",
+      "tables": [
+        {
+          "interval_entries": 0,
+          "query_entries": 128
+        }
+      ]
+    },
+    {
+      "distinct_table_syntax": 1,
+      "local_declarations": 7,
+      "proof": "Hex.RCF.ProofProbe.Intervals.FurtherHorner.witness",
+      "tables": [
+        {
+          "interval_entries": 127,
+          "query_entries": 1
+        }
+      ]
+    },
+    {
+      "distinct_table_syntax": 2,
+      "local_declarations": 9,
+      "proof": "Hex.RCF.ProofProbe.Intervals.ReciprocalQuery.witness",
+      "tables": [
+        {
+          "interval_entries": 0,
+          "query_entries": 1
+        },
+        {
+          "interval_entries": 0,
+          "query_entries": 125
+        }
+      ]
+    },
+    {
+      "distinct_table_syntax": 2,
+      "local_declarations": 9,
+      "proof": "Hex.RCF.ProofProbe.Intervals.ReciprocalHorner.witness",
+      "tables": [
+        {
+          "interval_entries": 0,
+          "query_entries": 1
+        },
+        {
+          "interval_entries": 125,
+          "query_entries": 0
+        }
+      ]
+    },
+    {
+      "distinct_table_syntax": 1,
+      "local_declarations": 7,
+      "proof": "Hex.RCF.ProofProbe.Intervals.CubicQuery.witness",
+      "tables": [
+        {
+          "interval_entries": 0,
+          "query_entries": 125
+        }
+      ]
+    },
+    {
+      "distinct_table_syntax": 1,
+      "local_declarations": 7,
+      "proof": "Hex.RCF.ProofProbe.Intervals.CubicHorner.witness",
+      "tables": [
+        {
+          "interval_entries": 125,
+          "query_entries": 0
+        }
+      ]
+    }
+  ]
+}

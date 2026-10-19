@@ -1,0 +1,6 @@
+{
+  "path": "HexBasic.lean",
+  "baseline_blob": "41995f713db56ff3f323e423b174ed77e02b3722",
+  "current_blob": "72e7cda38d4854f0b7f9c7a137db9ba1014b34c6",
+  "reason": "The only change removes the public import of HexBasic.ModuleBoundaryTests. That module contains only examples, no executable definitions, instances or persistent attributes. All computational imports remain direct imports of HexBasic. Its examples are built explicitly by test targets; the measured factorization algorithms and build options are unchanged."
+}

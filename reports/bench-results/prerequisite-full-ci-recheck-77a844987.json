@@ -1,0 +1,685 @@
+{
+  "source_commit": "77a844987b4eb8f86883a0f96d0807edbfeb2c37",
+  "run_id": 37183791720,
+  "run_url": "https://github.com/kim-em/hex-dev/actions/runs/37183791720",
+  "overall_conclusion": "cancelled",
+  "completed_benchmark_gate": "failure",
+  "total_seconds": 382,
+  "hard_cap_seconds": 360,
+  "excess_seconds": 22,
+  "case_counts": {
+    "HexSturm": 91,
+    "HexRealAlgebraic": 102
+  },
+  "all_individual_benchmark_checks_passed": true,
+  "breakdown": [
+    {
+      "executable": "hexrealalgebraic_bench",
+      "seconds": 62
+    },
+    {
+      "executable": "hexroots_bench",
+      "seconds": 49
+    },
+    {
+      "executable": "hexpolyzgcd_bench",
+      "seconds": 48
+    },
+    {
+      "executable": "hexgf2_bench",
+      "seconds": 47
+    },
+    {
+      "executable": "hexnumberfieldtower_bench",
+      "seconds": 33
+    },
+    {
+      "executable": "hexmodular_bench",
+      "seconds": 31
+    },
+    {
+      "executable": "hexnumberfield_bench",
+      "seconds": 21
+    },
+    {
+      "executable": "hexgenericrank_bench",
+      "seconds": 15
+    },
+    {
+      "executable": "hexkronecker_bench",
+      "seconds": 14
+    },
+    {
+      "executable": "hexintfactor_bench",
+      "seconds": 10
+    },
+    {
+      "executable": "hexecpp_bench",
+      "seconds": 9
+    },
+    {
+      "executable": "hexpoly_bench",
+      "seconds": 7
+    },
+    {
+      "executable": "hexprimality_bench",
+      "seconds": 4
+    },
+    {
+      "executable": "hexsturm_bench",
+      "seconds": 3
+    },
+    {
+      "executable": "hexrealclosure_bench",
+      "seconds": 3
+    },
+    {
+      "executable": "hexrationalfn_bench",
+      "seconds": 3
+    },
+    {
+      "executable": "hextruncatedseries_bench",
+      "seconds": 2
+    },
+    {
+      "executable": "hexrowreduce_bench",
+      "seconds": 2
+    },
+    {
+      "executable": "hexrcf_bench",
+      "seconds": 2
+    },
+    {
+      "executable": "hexrank_bench",
+      "seconds": 2
+    },
+    {
+      "executable": "hexsmith_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexsigndet_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexrealformula_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexpolysmith_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexpolyfp_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexmvgcd_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexmodularmatrix_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexminpoly_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexlll_gram_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexhermite_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexhensel_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexgfqfield_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexdeterminantalideal_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexbz_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexberlekamp_bench",
+      "seconds": 1
+    },
+    {
+      "executable": "hexsparsepoly_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexresultant_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexreflect_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexrealroots_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexpolyz_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexpolyfast_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexpolydet_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexpermgroup_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexorderedfn_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexmvpoly_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexmodarith_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexmatrix_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexlatticeenum_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexgraphiso_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexgramschmidt_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexgfqring_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexgfq_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexdeterminant_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexdet_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexconway_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexcharpoly_bench",
+      "seconds": 0
+    },
+    {
+      "executable": "hexarith_bench",
+      "seconds": 0
+    }
+  ],
+  "jobs": [
+    {
+      "id": 111381446595,
+      "run_id": 37183791720,
+      "workflow_name": "CI",
+      "head_branch": "issue-10577",
+      "run_url": "https://api.github.com/repos/kim-em/hex-dev/actions/runs/37183791720",
+      "run_attempt": 1,
+      "node_id": "CR_kwDOSKC1W88AAAAZ7tn_ww",
+      "head_sha": "77a844987b4eb8f86883a0f96d0807edbfeb2c37",
+      "url": "https://api.github.com/repos/kim-em/hex-dev/actions/jobs/111381446595",
+      "html_url": "https://github.com/kim-em/hex-dev/actions/runs/37183791720/job/111381446595",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "created_at": "2026-10-04T06:46:39Z",
+      "started_at": "2026-10-04T06:46:40Z",
+      "completed_at": "2026-10-04T07:58:00Z",
+      "name": "build",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-04T06:46:41Z",
+          "completed_at": "2026-10-04T06:46:43Z"
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-04T06:46:43Z",
+          "completed_at": "2026-10-04T06:46:58Z"
+        },
+        {
+          "name": "Classify the change (docs-only fast path)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-04T06:46:58Z",
+          "completed_at": "2026-10-04T06:46:58Z"
+        },
+        {
+          "name": "Run python3 scripts/check_copyright_headers.py",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-04T06:46:58Z",
+          "completed_at": "2026-10-04T06:46:59Z"
+        },
+        {
+          "name": "Lint Lean file line counts (SPEC/CI.md \u00a7Source-file lints)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-04T06:46:59Z",
+          "completed_at": "2026-10-04T06:46:59Z"
+        },
+        {
+          "name": "Check dependency DAG and trusted-internals imports",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-04T06:46:59Z",
+          "completed_at": "2026-10-04T06:54:10Z"
+        },
+        {
+          "name": "Check the released manifest and Phase-7 admission state",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-10-04T06:54:10Z",
+          "completed_at": "2026-10-04T06:54:14Z"
+        },
+        {
+          "name": "Check the manual's released/unreleased split matches released.yml",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-10-04T06:54:14Z",
+          "completed_at": "2026-10-04T06:54:14Z"
+        },
+        {
+          "name": "Run python3 -m unittest scripts/release/test_sync_released.py",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-10-04T06:54:14Z",
+          "completed_at": "2026-10-04T06:54:19Z"
+        },
+        {
+          "name": "Run python3 scripts/release/check_trust_surface.py",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-10-04T06:54:19Z",
+          "completed_at": "2026-10-04T06:54:25Z"
+        },
+        {
+          "name": "Cross-check every compiled clmul path (HexGF2/SPEC/hex-gf2.md)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2026-10-04T06:54:25Z",
+          "completed_at": "2026-10-04T06:54:26Z"
+        },
+        {
+          "name": "Run python3 scripts/check_phase4.py",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12,
+          "started_at": "2026-10-04T06:54:26Z",
+          "completed_at": "2026-10-04T06:54:26Z"
+        },
+        {
+          "name": "Check Phase 7 chapters and anchored tutorials (PLAN/Phase7.md)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13,
+          "started_at": "2026-10-04T06:54:26Z",
+          "completed_at": "2026-10-04T06:54:26Z"
+        },
+        {
+          "name": "Run bench source lints (SPEC/benchmarking.md)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14,
+          "started_at": "2026-10-04T06:54:26Z",
+          "completed_at": "2026-10-04T06:55:03Z"
+        },
+        {
+          "name": "Check benches are Mathlib-free (SPEC/benchmarking.md)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15,
+          "started_at": "2026-10-04T06:55:03Z",
+          "completed_at": "2026-10-04T06:55:38Z"
+        },
+        {
+          "name": "Verify conformance matrix invariant",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-10-04T06:55:38Z",
+          "completed_at": "2026-10-04T06:55:38Z"
+        },
+        {
+          "name": "Validate committed PNT+ inventory (offline)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-10-04T06:55:38Z",
+          "completed_at": "2026-10-04T06:55:39Z"
+        },
+        {
+          "name": "Install system dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18,
+          "started_at": "2026-10-04T06:55:39Z",
+          "completed_at": "2026-10-04T06:55:51Z"
+        },
+        {
+          "name": "Install Python dependencies (bench comparator + oracles)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19,
+          "started_at": "2026-10-04T06:55:51Z",
+          "completed_at": "2026-10-04T06:56:16Z"
+        },
+        {
+          "name": "Verify performance measurements and figures are current",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20,
+          "started_at": "2026-10-04T06:56:16Z",
+          "completed_at": "2026-10-04T06:56:53Z"
+        },
+        {
+          "name": "Set up pinned Lean toolchain (no build)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21,
+          "started_at": "2026-10-04T06:56:53Z",
+          "completed_at": "2026-10-04T06:57:00Z"
+        },
+        {
+          "name": "Fetch Mathlib cache",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22,
+          "started_at": "2026-10-04T06:57:00Z",
+          "completed_at": "2026-10-04T06:58:58Z"
+        },
+        {
+          "name": "Verify Mathlib cache populated (hard fail on miss)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23,
+          "started_at": "2026-10-04T06:58:58Z",
+          "completed_at": "2026-10-04T06:58:58Z"
+        },
+        {
+          "name": "Configure Lean shared library path",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 24,
+          "started_at": "2026-10-04T06:58:58Z",
+          "completed_at": "2026-10-04T06:58:58Z"
+        },
+        {
+          "name": "Restore .lake/build (project and AINTLIB modules)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 25,
+          "started_at": "2026-10-04T06:58:58Z",
+          "completed_at": "2026-10-04T06:59:18Z"
+        },
+        {
+          "name": "Configure Lake artifact cache (no-op unless endpoints set)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 26,
+          "started_at": "2026-10-04T06:59:18Z",
+          "completed_at": "2026-10-04T06:59:19Z"
+        },
+        {
+          "name": "Restore hex-dev oleans from the Lake cache (anonymous; non-fatal)",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 27,
+          "started_at": "2026-10-04T06:59:19Z",
+          "completed_at": "2026-10-04T06:59:19Z"
+        },
+        {
+          "name": "Disable implicit Lake cache restores during build",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 28,
+          "started_at": "2026-10-04T06:59:19Z",
+          "completed_at": "2026-10-04T06:59:19Z"
+        },
+        {
+          "name": "Assert Mathlib will not rebuild (lake build --no-build)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 29,
+          "started_at": "2026-10-04T06:59:19Z",
+          "completed_at": "2026-10-04T06:59:43Z"
+        },
+        {
+          "name": "Define the hex-dev cache + build target sets",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 30,
+          "started_at": "2026-10-04T06:59:43Z",
+          "completed_at": "2026-10-04T06:59:43Z"
+        },
+        {
+          "name": "Decide whether to collect Conway rebuild evidence",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 31,
+          "started_at": "2026-10-04T06:59:43Z",
+          "completed_at": "2026-10-04T06:59:43Z"
+        },
+        {
+          "name": "Collect Conway rebuild evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 32,
+          "started_at": "2026-10-04T06:59:43Z",
+          "completed_at": "2026-10-04T06:59:43Z"
+        },
+        {
+          "name": "Build hex libraries + bench exes",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 33,
+          "started_at": "2026-10-04T06:59:43Z",
+          "completed_at": "2026-10-04T07:20:30Z"
+        },
+        {
+          "name": "Verify Conway generation and compiled certificates",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 34,
+          "started_at": "2026-10-04T07:20:30Z",
+          "completed_at": "2026-10-04T07:20:32Z"
+        },
+        {
+          "name": "Verify Conway rebuild provenance",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 35,
+          "started_at": "2026-10-04T07:20:32Z",
+          "completed_at": "2026-10-04T07:20:32Z"
+        },
+        {
+          "name": "Upload Conway rebuild evidence",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 36,
+          "started_at": "2026-10-04T07:20:32Z",
+          "completed_at": "2026-10-04T07:20:32Z"
+        },
+        {
+          "name": "Verify deterministic HexPrimality table regeneration",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 37,
+          "started_at": "2026-10-04T07:20:32Z",
+          "completed_at": "2026-10-04T07:20:38Z"
+        },
+        {
+          "name": "Build conformance + emit-fixture targets",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 38,
+          "started_at": "2026-10-04T07:20:38Z",
+          "completed_at": "2026-10-04T07:36:23Z"
+        },
+        {
+          "name": "Check real-closure architecture experiments",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 39,
+          "started_at": "2026-10-04T07:36:23Z",
+          "completed_at": "2026-10-04T07:38:38Z"
+        },
+        {
+          "name": "Build HexManual",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 40,
+          "started_at": "2026-10-04T07:38:38Z",
+          "completed_at": "2026-10-04T07:47:02Z"
+        },
+        {
+          "name": "Save .lake/build (project and AINTLIB modules; main only)",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 41,
+          "started_at": "2026-10-04T07:47:02Z",
+          "completed_at": "2026-10-04T07:47:02Z"
+        },
+        {
+          "name": "Bench verify (smoke gate per SPEC/benchmarking.md \u00a7CI integration)",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 42,
+          "started_at": "2026-10-04T07:47:02Z",
+          "completed_at": "2026-10-04T07:53:24Z"
+        },
+        {
+          "name": "Conformance oracles + BZ gates",
+          "status": "completed",
+          "conclusion": "cancelled",
+          "number": 43,
+          "started_at": "2026-10-04T07:47:02Z",
+          "completed_at": "2026-10-04T07:57:58Z"
+        },
+        {
+          "name": "Wait for all",
+          "status": "completed",
+          "conclusion": "cancelled",
+          "number": 44,
+          "started_at": "2026-10-04T07:47:02Z",
+          "completed_at": "2026-10-04T07:57:58Z"
+        },
+        {
+          "name": "Gate on parallel verification results (fail-closed)",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 45,
+          "started_at": "2026-10-04T07:57:58Z",
+          "completed_at": "2026-10-04T07:57:58Z"
+        },
+        {
+          "name": "Publish hex-dev oleans to the Lake cache (main only)",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 46,
+          "started_at": "2026-10-04T07:57:58Z",
+          "completed_at": "2026-10-04T07:57:58Z"
+        },
+        {
+          "name": "Upload failure records",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 47,
+          "started_at": "2026-10-04T07:57:58Z",
+          "completed_at": "2026-10-04T07:57:58Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 94,
+          "started_at": "2026-10-04T07:57:58Z",
+          "completed_at": "2026-10-04T07:57:58Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 95,
+          "started_at": "2026-10-04T07:57:58Z",
+          "completed_at": "2026-10-04T07:57:58Z"
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/kim-em/hex-dev/check-runs/111381446595",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "runner_id": 1000075461,
+      "runner_name": "GitHub Actions 1000075461",
+      "runner_group_id": 0,
+      "runner_group_name": "GitHub Actions"
+    }
+  ],
+  "scope": "The single unchanged all-library operational CI recheck of source77a. All57 executables complete every result check, but the unchanged total cap fails. The remaining all-library oracle step was cancelled after that completed failure to retrieve logs promptly; no full-oracle success is claimed. Owned oracles pass separately in required filtered run37179867279. No further unchanged recheck or scientific rerun is performed. No completed same-base main breakdown establishes causal attribution.",
+  "retained_logs": [
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/root-rejection-full-ci-recheck-jobs.json",
+      "bytes": 9941,
+      "sha256": "e04a2063876c2251c7da661f7c640b0bce86cb32b5c3c685a5dcc6318650b878"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/root-rejection-full-ci-recheck.log",
+      "bytes": 6828995,
+      "sha256": "148a42ad87179a4fdf0c4f4a98dee385110698576c154884648c5ec1ab4d8a62"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/root-rejection-full-ci-recheck-watch.log",
+      "bytes": 97265,
+      "sha256": "1c6a19446aeb3bfa53af4339270c77316187a7635dd3951f55f179e091235fa4"
+    }
+  ]
+}

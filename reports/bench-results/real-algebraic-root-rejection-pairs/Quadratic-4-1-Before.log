@@ -1,0 +1,9 @@
+Hex.RealAlgebraicBench.runQuadraticRoots4    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=edb3ef9-dirty, 2026-10-04T04:24:28Z, host=chungus2
+  repeat 0  665.319 ms
+  median: 665.319 ms    min: 665.319 ms    max: 665.319 ms
+  hash: all repeats agree
+  observed hash: 0x1e7c893af40a771c
+  expected hash: matches
+  peak RSS: 68_308 kB (across 1 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-root-rejection-pairs/Quadratic-4-1-Before.json

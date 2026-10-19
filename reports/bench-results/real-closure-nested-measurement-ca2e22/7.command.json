@@ -1,0 +1,12 @@
+{
+  "argv": [
+    "/home/kim/.codex/tasks/hex-10378/phase4-oracles-env/bin/python",
+    "-c",
+    "from importlib.metadata import version; print(version(\"python-flint\"))"
+  ],
+  "stdout": "7.stdout",
+  "stderr": "7.stderr",
+  "exit_code": 0,
+  "incomplete": false,
+  "elapsed_ns": 63784758
+}

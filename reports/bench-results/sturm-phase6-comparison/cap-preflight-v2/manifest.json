@@ -1,0 +1,77 @@
+{
+  "scope": "Full non-reserving preflight with canonical OS-account attempt state and explicit allocation-failure policy; no timing measurements.",
+  "tooling_revision": "d2625a5b026ad993366931e249f2d1f75c02df06",
+  "tooling_ref": "audit/issue-10575-sturm-cap-tooling-v2",
+  "producer_revision": "8e5b3e40a69117c84bb6f0c19aaad93a26049ab8",
+  "baseline_revision": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+  "families": 58,
+  "native_fixed_controls_per_arm": 8,
+  "collector_sha256": "cb64af47c8c6efeb0a87358ea76c37b14c0da0dac2c9a0244caa81e5ee6bfccc",
+  "test_sha256": "6822a46c3817976fc2976d3ec934ac5c5042e327456b44a5fffac724ca6b8bf2",
+  "original_reservation_sha256": "a60a9eaf01b5e5d37ded3a6c73a932264691e84799dbfb93bb637c31121a8319",
+  "original_reservation_unchanged": true,
+  "adaptation_reserved": false,
+  "measurements_collected": false,
+  "files": {
+    "baseline-list.stderr": {
+      "archive": "baseline-list.stderr.gz",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "baseline-list.stdout": {
+      "archive": "baseline-list.stdout.gz",
+      "sha256": "fce657244a636b617f79b80ac0338c10aef5da33ad4b48ccc4df81cb7bd6e7df",
+      "bytes": 6107
+    },
+    "baseline-source.json": {
+      "archive": "baseline-source.json.gz",
+      "sha256": "982de6d3aea8fed7ded04aa98d307423cc6593faf4ab31afc513aaec7b97dcf0",
+      "bytes": 626367
+    },
+    "baseline-verify.stderr": {
+      "archive": "baseline-verify.stderr.gz",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "baseline-verify.stdout": {
+      "archive": "baseline-verify.stdout.gz",
+      "sha256": "8ce4458b462841b684b667789c46dc05a3fceb1d270e02c875dac7c8b10ebb29",
+      "bytes": 3136
+    },
+    "candidate-list.stderr": {
+      "archive": "candidate-list.stderr.gz",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "candidate-list.stdout": {
+      "archive": "candidate-list.stdout.gz",
+      "sha256": "fce657244a636b617f79b80ac0338c10aef5da33ad4b48ccc4df81cb7bd6e7df",
+      "bytes": 6107
+    },
+    "candidate-source.json": {
+      "archive": "candidate-source.json.gz",
+      "sha256": "fea28f0d281bb8897cec7377becf5b7f55127756526c9dfd85f0fbf1a94eed6e",
+      "bytes": 662928
+    },
+    "candidate-verify.stderr": {
+      "archive": "candidate-verify.stderr.gz",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "candidate-verify.stdout": {
+      "archive": "candidate-verify.stdout.gz",
+      "sha256": "8ce4458b462841b684b667789c46dc05a3fceb1d270e02c875dac7c8b10ebb29",
+      "bytes": 3136
+    },
+    "context.json": {
+      "archive": "context.json.gz",
+      "sha256": "7e1497f172dd6326fd3706ea862acdb591ad55ef659c31c7857a3ab0e29b3c13",
+      "bytes": 1353164
+    },
+    "decision.json": {
+      "archive": "decision.json.gz",
+      "sha256": "1757c9b0c41f83e2a007e511582c86098158df05234c54ad56470cf156f165a9",
+      "bytes": 5362
+    }
+  }
+}

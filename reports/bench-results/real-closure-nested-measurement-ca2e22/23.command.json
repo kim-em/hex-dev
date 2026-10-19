@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "/home/kim/.codex/tasks/hex-10378/nested-measurement-capture-ca2e22/hexrealclosure_nested_normalization",
+    "2",
+    "4",
+    "clean",
+    "plain"
+  ],
+  "stdout": "23.stdout",
+  "stderr": "23.stderr",
+  "exit_code": 0,
+  "incomplete": false,
+  "elapsed_ns": 8276938833
+}

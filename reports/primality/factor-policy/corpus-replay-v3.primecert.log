@@ -1,0 +1,3971 @@
+⚠ [1961/2188] Replayed PrimeCert.FactorCorpus.Hbcb44e9fd4a8dcca21db
+warning: PrimeCert/FactorCorpus/Hbcb44e9fd4a8dcca21db.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1962/2188] Replayed PrimeCert.FactorCorpus.He232fe91c37d694740af
+warning: PrimeCert/FactorCorpus/He232fe91c37d694740af.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1963/2188] Replayed PrimeCert.FactorCorpus.Haacbd0f4d0a6936024ed
+warning: PrimeCert/FactorCorpus/Haacbd0f4d0a6936024ed.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1964/2188] Replayed PrimeCert.FactorCorpus.H529b57cf60e9a2f72638
+warning: PrimeCert/FactorCorpus/H529b57cf60e9a2f72638.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1965/2188] Replayed PrimeCert.FactorCorpus.H26e456629caaaf171100
+warning: PrimeCert/FactorCorpus/H26e456629caaaf171100.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1966/2188] Replayed PrimeCert.FactorCorpus.H2f1608ce1a12c1cd1a16
+warning: PrimeCert/FactorCorpus/H2f1608ce1a12c1cd1a16.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1967/2188] Replayed PrimeCert.FactorCorpus.Hf9c3684369a41f906919
+warning: PrimeCert/FactorCorpus/Hf9c3684369a41f906919.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1968/2188] Replayed PrimeCert.FactorCorpus.H2a271274179b2ae85189
+warning: PrimeCert/FactorCorpus/H2a271274179b2ae85189.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1969/2188] Replayed PrimeCert.FactorCorpus.H4ceff3c5d20646a9e029
+warning: PrimeCert/FactorCorpus/H4ceff3c5d20646a9e029.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1970/2188] Replayed PrimeCert.FactorCorpus.Hbeaaf462f161415ae14e
+warning: PrimeCert/FactorCorpus/Hbeaaf462f161415ae14e.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1971/2188] Replayed PrimeCert.FactorCorpus.Hd15785510b190a1384f1
+warning: PrimeCert/FactorCorpus/Hd15785510b190a1384f1.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1972/2188] Replayed PrimeCert.FactorCorpus.H2d557013a5b8c3b36884
+warning: PrimeCert/FactorCorpus/H2d557013a5b8c3b36884.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1973/2188] Replayed PrimeCert.FactorCorpus.H2ac0a15b3de069f3dbb9
+warning: PrimeCert/FactorCorpus/H2ac0a15b3de069f3dbb9.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1974/2188] Replayed PrimeCert.FactorCorpus.H418a8b71f56667c1245c
+warning: PrimeCert/FactorCorpus/H418a8b71f56667c1245c.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1975/2188] Replayed PrimeCert.FactorCorpus.H2884adfecd816093c4a7
+warning: PrimeCert/FactorCorpus/H2884adfecd816093c4a7.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1976/2188] Replayed PrimeCert.FactorCorpus.H2122d45d81c5bc932e9d
+warning: PrimeCert/FactorCorpus/H2122d45d81c5bc932e9d.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1977/2188] Replayed PrimeCert.FactorCorpus.Hba42d8b6a8d49a9eb2a7
+warning: PrimeCert/FactorCorpus/Hba42d8b6a8d49a9eb2a7.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1978/2188] Replayed PrimeCert.FactorCorpus.H77aa920abb182e723d56
+warning: PrimeCert/FactorCorpus/H77aa920abb182e723d56.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1979/2188] Replayed PrimeCert.FactorCorpus.H9801b5489a90b6d4bbd4
+warning: PrimeCert/FactorCorpus/H9801b5489a90b6d4bbd4.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1980/2188] Replayed PrimeCert.FactorCorpus.H25050000bef6ad2da1a3
+warning: PrimeCert/FactorCorpus/H25050000bef6ad2da1a3.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1981/2188] Replayed PrimeCert.FactorCorpus.H505e6afe54d66d31fe50
+warning: PrimeCert/FactorCorpus/H505e6afe54d66d31fe50.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1982/2188] Replayed PrimeCert.FactorCorpus.H9bdce6d57d24a84f5b81
+warning: PrimeCert/FactorCorpus/H9bdce6d57d24a84f5b81.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1983/2188] Replayed PrimeCert.FactorCorpus.Hbb517a9c0757e48e24f9
+warning: PrimeCert/FactorCorpus/Hbb517a9c0757e48e24f9.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1984/2188] Replayed PrimeCert.FactorCorpus.H91ced9e88951004c4a0c
+warning: PrimeCert/FactorCorpus/H91ced9e88951004c4a0c.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1985/2188] Replayed PrimeCert.FactorCorpus.Hc4c9585196f77e5b1346
+warning: PrimeCert/FactorCorpus/Hc4c9585196f77e5b1346.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1986/2188] Replayed PrimeCert.FactorCorpus.Hb2268ce6a0899c915fe4
+warning: PrimeCert/FactorCorpus/Hb2268ce6a0899c915fe4.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1987/2188] Replayed PrimeCert.FactorCorpus.H2199c1253ef32014f73b
+warning: PrimeCert/FactorCorpus/H2199c1253ef32014f73b.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1988/2188] Replayed PrimeCert.FactorCorpus.He46b020b92fe1790d63d
+warning: PrimeCert/FactorCorpus/He46b020b92fe1790d63d.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1989/2188] Replayed PrimeCert.FactorCorpus.H5e9bb87490fde650e542
+warning: PrimeCert/FactorCorpus/H5e9bb87490fde650e542.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1990/2188] Replayed PrimeCert.FactorCorpus.H8563143258629ce68c01
+warning: PrimeCert/FactorCorpus/H8563143258629ce68c01.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1991/2188] Replayed PrimeCert.FactorCorpus.Heeb2a0183e81397740e0
+warning: PrimeCert/FactorCorpus/Heeb2a0183e81397740e0.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1992/2188] Replayed PrimeCert.FactorCorpus.H658034b34bebc8f02373
+warning: PrimeCert/FactorCorpus/H658034b34bebc8f02373.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1993/2188] Replayed PrimeCert.FactorCorpus.Hf554732d67533909ee2b
+warning: PrimeCert/FactorCorpus/Hf554732d67533909ee2b.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1994/2188] Replayed PrimeCert.FactorCorpus.He044e1e5e672a704ef0b
+warning: PrimeCert/FactorCorpus/He044e1e5e672a704ef0b.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1995/2188] Replayed PrimeCert.FactorCorpus.Hed5c06b58d5fc487f14c
+warning: PrimeCert/FactorCorpus/Hed5c06b58d5fc487f14c.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1996/2188] Replayed PrimeCert.FactorCorpus.H673d587434f3fa62aca7
+warning: PrimeCert/FactorCorpus/H673d587434f3fa62aca7.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1997/2188] Replayed PrimeCert.FactorCorpus.H51f728dbde67e6f1f3aa
+warning: PrimeCert/FactorCorpus/H51f728dbde67e6f1f3aa.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1998/2188] Replayed PrimeCert.FactorCorpus.H6c104d52f1039c7456f8
+warning: PrimeCert/FactorCorpus/H6c104d52f1039c7456f8.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [1999/2188] Replayed PrimeCert.FactorCorpus.H7f6662b20b095573548e
+warning: PrimeCert/FactorCorpus/H7f6662b20b095573548e.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2000/2188] Replayed PrimeCert.FactorCorpus.He4bd1a367e5632d41ffe
+warning: PrimeCert/FactorCorpus/He4bd1a367e5632d41ffe.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2001/2188] Replayed PrimeCert.FactorCorpus.H0915df344f8a70d4329c
+warning: PrimeCert/FactorCorpus/H0915df344f8a70d4329c.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2002/2188] Replayed PrimeCert.FactorCorpus.H05724521cfe412705d12
+warning: PrimeCert/FactorCorpus/H05724521cfe412705d12.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2003/2188] Replayed PrimeCert.FactorCorpus.Hcae5d70c37a574faf4a9
+warning: PrimeCert/FactorCorpus/Hcae5d70c37a574faf4a9.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2004/2188] Replayed PrimeCert.FactorCorpus.H09df967bcaa1ced13ee4
+warning: PrimeCert/FactorCorpus/H09df967bcaa1ced13ee4.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2005/2188] Replayed PrimeCert.FactorCorpus.H9b5c0f149627db575179
+warning: PrimeCert/FactorCorpus/H9b5c0f149627db575179.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2006/2188] Replayed PrimeCert.FactorCorpus.H7c87061064ea9d25672a
+warning: PrimeCert/FactorCorpus/H7c87061064ea9d25672a.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2007/2188] Replayed PrimeCert.FactorCorpus.Hf57e68a4fd7cb6d72239
+warning: PrimeCert/FactorCorpus/Hf57e68a4fd7cb6d72239.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2008/2188] Replayed PrimeCert.FactorCorpus.H85b5bbd284b2c294eeb1
+warning: PrimeCert/FactorCorpus/H85b5bbd284b2c294eeb1.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2009/2188] Replayed PrimeCert.FactorCorpus.Hfa5fc8caee99faf94a4d
+warning: PrimeCert/FactorCorpus/Hfa5fc8caee99faf94a4d.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2010/2188] Replayed PrimeCert.FactorCorpus.H378d10bc4cfa8a0efbc0
+warning: PrimeCert/FactorCorpus/H378d10bc4cfa8a0efbc0.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2011/2188] Replayed PrimeCert.FactorCorpus.H7bb21771a6d04cc9dc32
+warning: PrimeCert/FactorCorpus/H7bb21771a6d04cc9dc32.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2012/2188] Replayed PrimeCert.FactorCorpus.Hb4cdeae349cbc7abc90b
+warning: PrimeCert/FactorCorpus/Hb4cdeae349cbc7abc90b.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2013/2188] Replayed PrimeCert.FactorCorpus.H9ef5f4fb0f1ee9e5d3ff
+warning: PrimeCert/FactorCorpus/H9ef5f4fb0f1ee9e5d3ff.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2014/2188] Replayed PrimeCert.FactorCorpus.H6a1ef306b0c81bb24fde
+warning: PrimeCert/FactorCorpus/H6a1ef306b0c81bb24fde.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2015/2188] Replayed PrimeCert.FactorCorpus.H7bec55901f95076c43f6
+warning: PrimeCert/FactorCorpus/H7bec55901f95076c43f6.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2016/2188] Replayed PrimeCert.FactorCorpus.Hebf22aeca2fc54edbe85
+warning: PrimeCert/FactorCorpus/Hebf22aeca2fc54edbe85.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2017/2188] Replayed PrimeCert.FactorCorpus.Hc042542a715f64dde061
+warning: PrimeCert/FactorCorpus/Hc042542a715f64dde061.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2018/2188] Replayed PrimeCert.FactorCorpus.H816f9b1d3722a0d0b945
+warning: PrimeCert/FactorCorpus/H816f9b1d3722a0d0b945.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2019/2188] Replayed PrimeCert.FactorCorpus.Hafabba616c88c4d6baa2
+warning: PrimeCert/FactorCorpus/Hafabba616c88c4d6baa2.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2020/2188] Replayed PrimeCert.FactorCorpus.Hf0d28d733669e6b89d2f
+warning: PrimeCert/FactorCorpus/Hf0d28d733669e6b89d2f.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2021/2188] Replayed PrimeCert.FactorCorpus.He24d6bc6514240fcea6d
+warning: PrimeCert/FactorCorpus/He24d6bc6514240fcea6d.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2022/2188] Replayed PrimeCert.FactorCorpus.H20d6365db6d87ca44c95
+warning: PrimeCert/FactorCorpus/H20d6365db6d87ca44c95.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2023/2188] Replayed PrimeCert.FactorCorpus.H97e597371a8fd73ca954
+warning: PrimeCert/FactorCorpus/H97e597371a8fd73ca954.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2024/2188] Replayed PrimeCert.FactorCorpus.Hd70611ec493b5a74d65c
+warning: PrimeCert/FactorCorpus/Hd70611ec493b5a74d65c.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2025/2188] Replayed PrimeCert.FactorCorpus.H5d93830485249dbff135
+warning: PrimeCert/FactorCorpus/H5d93830485249dbff135.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2026/2188] Replayed PrimeCert.FactorCorpus.H7508f1661822f081d0ce
+warning: PrimeCert/FactorCorpus/H7508f1661822f081d0ce.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2027/2188] Replayed PrimeCert.FactorCorpus.H571ff19798113e427584
+warning: PrimeCert/FactorCorpus/H571ff19798113e427584.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2028/2188] Replayed PrimeCert.FactorCorpus.Hecc041dbbb1e0195a179
+warning: PrimeCert/FactorCorpus/Hecc041dbbb1e0195a179.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2029/2188] Replayed PrimeCert.FactorCorpus.Hd1f6effed3c32d527ff2
+warning: PrimeCert/FactorCorpus/Hd1f6effed3c32d527ff2.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2030/2188] Replayed PrimeCert.FactorCorpus.He0499ac6f0a1b7bebeae
+warning: PrimeCert/FactorCorpus/He0499ac6f0a1b7bebeae.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2031/2188] Replayed PrimeCert.FactorCorpus.Hb9477f06b869ef29e3a1
+warning: PrimeCert/FactorCorpus/Hb9477f06b869ef29e3a1.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2032/2188] Replayed PrimeCert.FactorCorpus.He4475893f4611915e5c7
+warning: PrimeCert/FactorCorpus/He4475893f4611915e5c7.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2033/2188] Replayed PrimeCert.FactorCorpus.H15c616467d396f216eac
+warning: PrimeCert/FactorCorpus/H15c616467d396f216eac.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2034/2188] Replayed PrimeCert.FactorCorpus.H16a4e0a6af5ad8215948
+warning: PrimeCert/FactorCorpus/H16a4e0a6af5ad8215948.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2035/2188] Replayed PrimeCert.FactorCorpus.He32454b156a5406327f6
+warning: PrimeCert/FactorCorpus/He32454b156a5406327f6.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2036/2188] Replayed PrimeCert.FactorCorpus.H9d76dfc2abb902a5beda
+warning: PrimeCert/FactorCorpus/H9d76dfc2abb902a5beda.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2037/2188] Replayed PrimeCert.FactorCorpus.H9f490fc4537518709dc8
+warning: PrimeCert/FactorCorpus/H9f490fc4537518709dc8.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2038/2188] Replayed PrimeCert.FactorCorpus.Hcf17e572e9c7ca80f8b4
+warning: PrimeCert/FactorCorpus/Hcf17e572e9c7ca80f8b4.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2039/2188] Replayed PrimeCert.FactorCorpus.H3271d75998add77af6d7
+warning: PrimeCert/FactorCorpus/H3271d75998add77af6d7.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2040/2188] Replayed PrimeCert.FactorCorpus.H8ad718bd39f577afdaa8
+warning: PrimeCert/FactorCorpus/H8ad718bd39f577afdaa8.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2041/2188] Replayed PrimeCert.FactorCorpus.H6982624269258f779763
+warning: PrimeCert/FactorCorpus/H6982624269258f779763.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2042/2188] Replayed PrimeCert.FactorCorpus.Hd2eecb067454a823858c
+warning: PrimeCert/FactorCorpus/Hd2eecb067454a823858c.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2043/2188] Replayed PrimeCert.FactorCorpus.H4836ce05304af08c3eb6
+warning: PrimeCert/FactorCorpus/H4836ce05304af08c3eb6.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2044/2188] Replayed PrimeCert.FactorCorpus.Hf6b3b36fa1c44085b9e9
+warning: PrimeCert/FactorCorpus/Hf6b3b36fa1c44085b9e9.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2045/2188] Replayed PrimeCert.FactorCorpus.Hfda8c0bcd941db1492db
+warning: PrimeCert/FactorCorpus/Hfda8c0bcd941db1492db.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2046/2188] Replayed PrimeCert.FactorCorpus.H063ec5d1ef7432943d84
+warning: PrimeCert/FactorCorpus/H063ec5d1ef7432943d84.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2047/2188] Replayed PrimeCert.FactorCorpus.Hd95a407e64a76de9202a
+warning: PrimeCert/FactorCorpus/Hd95a407e64a76de9202a.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2048/2188] Replayed PrimeCert.FactorCorpus.H7a4cd8ff640b1138688b
+warning: PrimeCert/FactorCorpus/H7a4cd8ff640b1138688b.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2049/2188] Replayed PrimeCert.FactorCorpus.H013acb593932b356c92d
+warning: PrimeCert/FactorCorpus/H013acb593932b356c92d.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2050/2188] Replayed PrimeCert.FactorCorpus.H5e6aee160d5c27dba415
+warning: PrimeCert/FactorCorpus/H5e6aee160d5c27dba415.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2051/2188] Replayed PrimeCert.FactorCorpus.Hdb86dceeffc0a09c11b3
+warning: PrimeCert/FactorCorpus/Hdb86dceeffc0a09c11b3.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2052/2188] Replayed PrimeCert.FactorCorpus.H2120a2245665c2532b2a
+warning: PrimeCert/FactorCorpus/H2120a2245665c2532b2a.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2053/2188] Replayed PrimeCert.FactorCorpus.H4bf7c910ec2d31504ab7
+warning: PrimeCert/FactorCorpus/H4bf7c910ec2d31504ab7.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2054/2188] Replayed PrimeCert.FactorCorpus.Hf41296a19ff871d7f508
+warning: PrimeCert/FactorCorpus/Hf41296a19ff871d7f508.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2055/2188] Replayed PrimeCert.FactorCorpus.Hd01a1a34a20e226c2818
+warning: PrimeCert/FactorCorpus/Hd01a1a34a20e226c2818.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2056/2188] Replayed PrimeCert.FactorCorpus.Hb13966395b15f40580ed
+warning: PrimeCert/FactorCorpus/Hb13966395b15f40580ed.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2057/2188] Replayed PrimeCert.FactorCorpus.H25665340c48f5469babd
+warning: PrimeCert/FactorCorpus/H25665340c48f5469babd.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2058/2188] Replayed PrimeCert.FactorCorpus.H024433cf0a97bd920c59
+warning: PrimeCert/FactorCorpus/H024433cf0a97bd920c59.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2059/2188] Replayed PrimeCert.FactorCorpus.H0150e1158658b8e7869c
+warning: PrimeCert/FactorCorpus/H0150e1158658b8e7869c.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2060/2188] Replayed PrimeCert.FactorCorpus.Hf2a38b5a376984b0166b
+warning: PrimeCert/FactorCorpus/Hf2a38b5a376984b0166b.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2061/2188] Replayed PrimeCert.FactorCorpus.H3657f984c4cab04c4349
+warning: PrimeCert/FactorCorpus/H3657f984c4cab04c4349.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2062/2188] Replayed PrimeCert.FactorCorpus.Hf0788747d1bac532601e
+warning: PrimeCert/FactorCorpus/Hf0788747d1bac532601e.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2063/2188] Replayed PrimeCert.FactorCorpus.H0a0012d061e0a7e0ea74
+warning: PrimeCert/FactorCorpus/H0a0012d061e0a7e0ea74.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2064/2188] Replayed PrimeCert.FactorCorpus.H5d8fd533309ce8d002e3
+warning: PrimeCert/FactorCorpus/H5d8fd533309ce8d002e3.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2065/2188] Replayed PrimeCert.FactorCorpus.H1377fb08af2211470e74
+warning: PrimeCert/FactorCorpus/H1377fb08af2211470e74.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2066/2188] Replayed PrimeCert.FactorCorpus.He8de5c741cb365e1d2c1
+warning: PrimeCert/FactorCorpus/He8de5c741cb365e1d2c1.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2067/2188] Replayed PrimeCert.FactorCorpus.H00364c52524bb241644b
+warning: PrimeCert/FactorCorpus/H00364c52524bb241644b.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2068/2188] Replayed PrimeCert.FactorCorpus.H99a12165a0935e15ba93
+warning: PrimeCert/FactorCorpus/H99a12165a0935e15ba93.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2069/2188] Replayed PrimeCert.FactorCorpus.Hbbfeaa0ef113aac9d6d4
+warning: PrimeCert/FactorCorpus/Hbbfeaa0ef113aac9d6d4.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2070/2188] Replayed PrimeCert.FactorCorpus.Hf6bdb7c3747f630c7655
+warning: PrimeCert/FactorCorpus/Hf6bdb7c3747f630c7655.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2071/2188] Replayed PrimeCert.FactorCorpus.Hbe55a4fa42f0109077d1
+warning: PrimeCert/FactorCorpus/Hbe55a4fa42f0109077d1.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2072/2188] Replayed PrimeCert.FactorCorpus.H82251cf4be9301812c3e
+warning: PrimeCert/FactorCorpus/H82251cf4be9301812c3e.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2073/2188] Replayed PrimeCert.FactorCorpus.H0e98aa5f16d3717e47d7
+warning: PrimeCert/FactorCorpus/H0e98aa5f16d3717e47d7.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2074/2188] Replayed PrimeCert.FactorCorpus.H33277184b8146009a2a0
+warning: PrimeCert/FactorCorpus/H33277184b8146009a2a0.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2075/2188] Replayed PrimeCert.FactorCorpus.Hef4b9b74b6b5c1ce0f51
+warning: PrimeCert/FactorCorpus/Hef4b9b74b6b5c1ce0f51.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2076/2188] Replayed PrimeCert.FactorCorpus.H0148add110e6196871c9
+warning: PrimeCert/FactorCorpus/H0148add110e6196871c9.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2077/2188] Replayed PrimeCert.FactorCorpus.H616656d1b1fce904cd76
+warning: PrimeCert/FactorCorpus/H616656d1b1fce904cd76.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2078/2188] Replayed PrimeCert.FactorCorpus.He72ea0b2085a17eea365
+warning: PrimeCert/FactorCorpus/He72ea0b2085a17eea365.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2079/2188] Replayed PrimeCert.FactorCorpus.H652b0106091fad2be281
+warning: PrimeCert/FactorCorpus/H652b0106091fad2be281.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2080/2188] Replayed PrimeCert.FactorCorpus.Hf22d5f738caa59c5dc41
+warning: PrimeCert/FactorCorpus/Hf22d5f738caa59c5dc41.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2081/2188] Replayed PrimeCert.FactorCorpus.Hb86db2f4b636d03dc362
+warning: PrimeCert/FactorCorpus/Hb86db2f4b636d03dc362.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2082/2188] Replayed PrimeCert.FactorCorpus.Heec4ae0eb7745b8f1358
+warning: PrimeCert/FactorCorpus/Heec4ae0eb7745b8f1358.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2083/2188] Replayed PrimeCert.FactorCorpus.Ha257ef1d081954232f01
+warning: PrimeCert/FactorCorpus/Ha257ef1d081954232f01.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2084/2188] Replayed PrimeCert.FactorCorpus.Hdb12c5fe8c15ffffff8e
+warning: PrimeCert/FactorCorpus/Hdb12c5fe8c15ffffff8e.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2085/2188] Replayed PrimeCert.FactorCorpus.H110735d5979c01630206
+warning: PrimeCert/FactorCorpus/H110735d5979c01630206.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2086/2188] Replayed PrimeCert.FactorCorpus.Hf9f28644c086cbf705ba
+warning: PrimeCert/FactorCorpus/Hf9f28644c086cbf705ba.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2087/2188] Replayed PrimeCert.FactorCorpus.H391d473014952c4d31ce
+warning: PrimeCert/FactorCorpus/H391d473014952c4d31ce.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2088/2188] Replayed PrimeCert.FactorCorpus.H9656ac8566dad5bd8c91
+warning: PrimeCert/FactorCorpus/H9656ac8566dad5bd8c91.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2089/2188] Replayed PrimeCert.FactorCorpus.Hcdb93ed70c3161a6ae9a
+warning: PrimeCert/FactorCorpus/Hcdb93ed70c3161a6ae9a.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2090/2188] Replayed PrimeCert.FactorCorpus.H34d12472cb200e3543c7
+warning: PrimeCert/FactorCorpus/H34d12472cb200e3543c7.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2091/2214] Replayed PrimeCert.FactorCorpus.H69bdffc150e89ae7da22
+warning: PrimeCert/FactorCorpus/H69bdffc150e89ae7da22.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2092/2214] Replayed PrimeCert.FactorCorpus.H0aeb7c201a08fd4ded2f
+warning: PrimeCert/FactorCorpus/H0aeb7c201a08fd4ded2f.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2093/2214] Replayed PrimeCert.FactorCorpus.H5b1c1c6a529d06adabb4
+warning: PrimeCert/FactorCorpus/H5b1c1c6a529d06adabb4.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2094/2214] Replayed PrimeCert.FactorCorpus.H43f4b2b3bc95292a24b5
+warning: PrimeCert/FactorCorpus/H43f4b2b3bc95292a24b5.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2095/2214] Replayed PrimeCert.FactorCorpus.H1db67a85df2bfb428914
+warning: PrimeCert/FactorCorpus/H1db67a85df2bfb428914.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2096/2214] Replayed PrimeCert.FactorCorpus.Hd9f2f7128962c516e85f
+warning: PrimeCert/FactorCorpus/Hd9f2f7128962c516e85f.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2097/2214] Replayed PrimeCert.FactorCorpus.H961903292ebb73a67a44
+warning: PrimeCert/FactorCorpus/H961903292ebb73a67a44.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2098/2214] Replayed PrimeCert.FactorCorpus.H7e147dbe421d6f7832db
+warning: PrimeCert/FactorCorpus/H7e147dbe421d6f7832db.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2099/2214] Replayed PrimeCert.FactorCorpus.H70fefe1fd539c30d4626
+warning: PrimeCert/FactorCorpus/H70fefe1fd539c30d4626.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2100/2214] Replayed PrimeCert.FactorCorpus.H0fe8e6c239717515547d
+warning: PrimeCert/FactorCorpus/H0fe8e6c239717515547d.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2101/2214] Replayed PrimeCert.FactorCorpus.Hcf0784644da269f85de1
+warning: PrimeCert/FactorCorpus/Hcf0784644da269f85de1.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2102/2214] Replayed PrimeCert.FactorCorpus.H43eda9bbb9e4da21b09d
+warning: PrimeCert/FactorCorpus/H43eda9bbb9e4da21b09d.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2103/2214] Replayed PrimeCert.FactorCorpus.H45b81be3ed4372569536
+warning: PrimeCert/FactorCorpus/H45b81be3ed4372569536.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2104/2214] Replayed PrimeCert.FactorCorpus.H3b5ebd804e260c50ad0f
+warning: PrimeCert/FactorCorpus/H3b5ebd804e260c50ad0f.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2105/2214] Replayed PrimeCert.FactorCorpus.Hbdd39ccbef4bea3afb65
+warning: PrimeCert/FactorCorpus/Hbdd39ccbef4bea3afb65.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2106/2214] Replayed PrimeCert.FactorCorpus.H23aeb9b61395bb6bdd86
+warning: PrimeCert/FactorCorpus/H23aeb9b61395bb6bdd86.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2107/2214] Replayed PrimeCert.FactorCorpus.Hc3bd0eaafd548eafdd60
+warning: PrimeCert/FactorCorpus/Hc3bd0eaafd548eafdd60.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2108/2214] Replayed PrimeCert.FactorCorpus.Hbf6b123bc145c81bbad1
+warning: PrimeCert/FactorCorpus/Hbf6b123bc145c81bbad1.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2109/2214] Replayed PrimeCert.FactorCorpus.H333091e0dbe9610d175a
+warning: PrimeCert/FactorCorpus/H333091e0dbe9610d175a.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2110/2214] Replayed PrimeCert.FactorCorpus.H4030f30ff128e70e581b
+warning: PrimeCert/FactorCorpus/H4030f30ff128e70e581b.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2111/2214] Replayed PrimeCert.FactorCorpus.H24df236d5300517fdf4d
+warning: PrimeCert/FactorCorpus/H24df236d5300517fdf4d.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2112/2214] Replayed PrimeCert.FactorCorpus.Hce0e23609003e37f2730
+warning: PrimeCert/FactorCorpus/Hce0e23609003e37f2730.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2113/2214] Replayed PrimeCert.FactorCorpus.Ha89528236e5ffd6e4aba
+warning: PrimeCert/FactorCorpus/Ha89528236e5ffd6e4aba.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2114/2214] Replayed PrimeCert.FactorCorpus.H161dd1663e82808f4227
+warning: PrimeCert/FactorCorpus/H161dd1663e82808f4227.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2115/2214] Replayed PrimeCert.FactorCorpus.H37d436d37185ebcba665
+warning: PrimeCert/FactorCorpus/H37d436d37185ebcba665.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2116/2214] Replayed PrimeCert.FactorCorpus.Hdb3026dadea1f94ea939
+warning: PrimeCert/FactorCorpus/Hdb3026dadea1f94ea939.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2117/2214] Replayed PrimeCert.FactorCorpus.H88a529e744c72cbe91ce
+warning: PrimeCert/FactorCorpus/H88a529e744c72cbe91ce.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2118/2214] Replayed PrimeCert.FactorCorpus.H35fe9281c03b4a08b148
+warning: PrimeCert/FactorCorpus/H35fe9281c03b4a08b148.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2119/2214] Replayed PrimeCert.FactorCorpus.H7dccb6ffe59ac71ae3b7
+warning: PrimeCert/FactorCorpus/H7dccb6ffe59ac71ae3b7.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2120/2214] Replayed PrimeCert.FactorCorpus.Hd897c0c7d223fbaaa706
+warning: PrimeCert/FactorCorpus/Hd897c0c7d223fbaaa706.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2121/2214] Replayed PrimeCert.FactorCorpus.H59c4c15201640491a4d1
+warning: PrimeCert/FactorCorpus/H59c4c15201640491a4d1.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2122/2214] Replayed PrimeCert.FactorCorpus.H2b8d27bcc39efe973cf9
+warning: PrimeCert/FactorCorpus/H2b8d27bcc39efe973cf9.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2123/2214] Replayed PrimeCert.FactorCorpus.H5c1f3b667d618f848512
+warning: PrimeCert/FactorCorpus/H5c1f3b667d618f848512.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2124/2214] Replayed PrimeCert.FactorCorpus.H8752751fa46a3c520542
+warning: PrimeCert/FactorCorpus/H8752751fa46a3c520542.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2125/2214] Replayed PrimeCert.FactorCorpus.Hfe1998d12b4f713f94ee
+warning: PrimeCert/FactorCorpus/Hfe1998d12b4f713f94ee.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2126/2214] Replayed PrimeCert.FactorCorpus.Hec512064663700a32f58
+warning: PrimeCert/FactorCorpus/Hec512064663700a32f58.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2127/2214] Replayed PrimeCert.FactorCorpus.Hb0d997c53e81d0a1506d
+warning: PrimeCert/FactorCorpus/Hb0d997c53e81d0a1506d.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2128/2214] Replayed PrimeCert.FactorCorpus.H5cd42c0330848e7c64db
+warning: PrimeCert/FactorCorpus/H5cd42c0330848e7c64db.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2129/2214] Replayed PrimeCert.FactorCorpus.H5e58ad31387abe02a319
+warning: PrimeCert/FactorCorpus/H5e58ad31387abe02a319.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2130/2214] Replayed PrimeCert.FactorCorpus.H7d0609d1264318bc6d48
+warning: PrimeCert/FactorCorpus/H7d0609d1264318bc6d48.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2131/2214] Replayed PrimeCert.FactorCorpus.H8ce35452f3f09ac58c4c
+warning: PrimeCert/FactorCorpus/H8ce35452f3f09ac58c4c.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2132/2214] Replayed PrimeCert.FactorCorpus.H5d6dde8c5d63e4d9f95e
+warning: PrimeCert/FactorCorpus/H5d6dde8c5d63e4d9f95e.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2133/2214] Replayed PrimeCert.FactorCorpus.H2ba76a0086421616cf37
+warning: PrimeCert/FactorCorpus/H2ba76a0086421616cf37.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2134/2214] Replayed PrimeCert.FactorCorpus.Heeb773e993b08fb6bce2
+warning: PrimeCert/FactorCorpus/Heeb773e993b08fb6bce2.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2135/2214] Replayed PrimeCert.FactorCorpus.H8ac5483a6e9f073e5d4d
+warning: PrimeCert/FactorCorpus/H8ac5483a6e9f073e5d4d.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2136/2214] Replayed PrimeCert.FactorCorpus.Hac96f5effbb5b89e6d0c
+warning: PrimeCert/FactorCorpus/Hac96f5effbb5b89e6d0c.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2137/2214] Replayed PrimeCert.FactorCorpus.H9810d71ad37a1f6d86f8
+warning: PrimeCert/FactorCorpus/H9810d71ad37a1f6d86f8.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2138/2214] Replayed PrimeCert.FactorCorpus.H173b554d5171b0f03828
+warning: PrimeCert/FactorCorpus/H173b554d5171b0f03828.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2139/2214] Replayed PrimeCert.FactorCorpus.Hbd02b12bd94603b09f2e
+warning: PrimeCert/FactorCorpus/Hbd02b12bd94603b09f2e.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2140/2214] Replayed PrimeCert.FactorCorpus.H9632c24eb1da32367856
+warning: PrimeCert/FactorCorpus/H9632c24eb1da32367856.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2141/2214] Replayed PrimeCert.FactorCorpus.Haed63499daa6a6d63fe4
+warning: PrimeCert/FactorCorpus/Haed63499daa6a6d63fe4.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2142/2243] Replayed PrimeCert.FactorCorpus.H9e07b29571352f7980fd
+warning: PrimeCert/FactorCorpus/H9e07b29571352f7980fd.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2143/2243] Replayed PrimeCert.FactorCorpus.H5d492a00917cd3a41f2d
+warning: PrimeCert/FactorCorpus/H5d492a00917cd3a41f2d.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2144/2243] Replayed PrimeCert.FactorCorpus.Hfc7cf88a41ffcccfbfef
+warning: PrimeCert/FactorCorpus/Hfc7cf88a41ffcccfbfef.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2145/2243] Replayed PrimeCert.FactorCorpus.H1fc6ab14be80f8d65e7d
+warning: PrimeCert/FactorCorpus/H1fc6ab14be80f8d65e7d.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2146/2243] Replayed PrimeCert.FactorCorpus.H73d2e7499b7c9dd86893
+warning: PrimeCert/FactorCorpus/H73d2e7499b7c9dd86893.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2147/2243] Replayed PrimeCert.FactorCorpus.Ha60063c02c0bbb0c90ef
+warning: PrimeCert/FactorCorpus/Ha60063c02c0bbb0c90ef.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2148/2246] Built PrimeCert.FactorCorpus.H8cdf38b43a60d91c719a (15s)
+warning: PrimeCert/FactorCorpus/H8cdf38b43a60d91c719a.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2149/2250] Built PrimeCert.FactorCorpus.H70558e302a454493cf93 (15s)
+warning: PrimeCert/FactorCorpus/H70558e302a454493cf93.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2150/2250] Built PrimeCert.FactorCorpus.Hfeb0871538e9e6f279d3 (15s)
+warning: PrimeCert/FactorCorpus/Hfeb0871538e9e6f279d3.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2151/2250] Built PrimeCert.FactorCorpus.H52492f427cf8d0d80b80 (15s)
+warning: PrimeCert/FactorCorpus/H52492f427cf8d0d80b80.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2152/2250] Built PrimeCert.FactorCorpus.Hd0e129d038fd21e8f2f1 (15s)
+warning: PrimeCert/FactorCorpus/Hd0e129d038fd21e8f2f1.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2153/2252] Built PrimeCert.FactorCorpus.H897f35f2a11c2c270ae9 (15s)
+warning: PrimeCert/FactorCorpus/H897f35f2a11c2c270ae9.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2154/2252] Built PrimeCert.FactorCorpus.H2a78bb84bd7cc031d03e (15s)
+warning: PrimeCert/FactorCorpus/H2a78bb84bd7cc031d03e.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2155/2257] Built PrimeCert.FactorCorpus.Hc3bcc4c7a8e277cded99 (15s)
+warning: PrimeCert/FactorCorpus/Hc3bcc4c7a8e277cded99.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2156/2257] Built PrimeCert.FactorCorpus.H932d4938826c64e66ba9 (15s)
+warning: PrimeCert/FactorCorpus/H932d4938826c64e66ba9.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2157/2257] Built PrimeCert.FactorCorpus.H821b3018dd2226ea7232 (15s)
+warning: PrimeCert/FactorCorpus/H821b3018dd2226ea7232.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2158/2257] Built PrimeCert.FactorCorpus.H420a415129b7c1aedb9a (15s)
+warning: PrimeCert/FactorCorpus/H420a415129b7c1aedb9a.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2159/2257] Built PrimeCert.FactorCorpus.H93fb6ace75e6a46e0287 (15s)
+warning: PrimeCert/FactorCorpus/H93fb6ace75e6a46e0287.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2160/2257] Built PrimeCert.FactorCorpus.H4d1517aa3b076397c182 (15s)
+warning: PrimeCert/FactorCorpus/H4d1517aa3b076397c182.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2161/2257] Built PrimeCert.FactorCorpus.H7ac22584092bacb63578 (15s)
+warning: PrimeCert/FactorCorpus/H7ac22584092bacb63578.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2162/2260] Built PrimeCert.FactorCorpus.Haca2fd8b0aae0f76d8c8 (15s)
+warning: PrimeCert/FactorCorpus/Haca2fd8b0aae0f76d8c8.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2163/2270] Built PrimeCert.FactorCorpus.Hfa0352d289767163891e (15s)
+warning: PrimeCert/FactorCorpus/Hfa0352d289767163891e.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2164/2270] Built PrimeCert.FactorCorpus.H2485b66d350f99125f8e (15s)
+warning: PrimeCert/FactorCorpus/H2485b66d350f99125f8e.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2165/2270] Built PrimeCert.FactorCorpus.He378f15b796e9608c125 (15s)
+warning: PrimeCert/FactorCorpus/He378f15b796e9608c125.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2166/2270] Built PrimeCert.FactorCorpus.H70a1c90ce5b878771ed6 (15s)
+warning: PrimeCert/FactorCorpus/H70a1c90ce5b878771ed6.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2167/2270] Built PrimeCert.FactorCorpus.Hdb441e48d1c933be57bf (15s)
+warning: PrimeCert/FactorCorpus/Hdb441e48d1c933be57bf.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2168/2270] Built PrimeCert.FactorCorpus.H9aaa1365d073832adc39 (15s)
+warning: PrimeCert/FactorCorpus/H9aaa1365d073832adc39.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2169/2270] Built PrimeCert.FactorCorpus.H0f4bba1720a4041176a4 (15s)
+warning: PrimeCert/FactorCorpus/H0f4bba1720a4041176a4.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2170/2270] Built PrimeCert.FactorCorpus.H0f28be45f0d0b994ac94 (15s)
+warning: PrimeCert/FactorCorpus/H0f28be45f0d0b994ac94.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2171/2270] Built PrimeCert.FactorCorpus.Hc154d5f704c66381a908 (15s)
+warning: PrimeCert/FactorCorpus/Hc154d5f704c66381a908.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2172/2270] Built PrimeCert.FactorCorpus.H76c424652bbaf6fbc16d (15s)
+warning: PrimeCert/FactorCorpus/H76c424652bbaf6fbc16d.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2173/2279] Built PrimeCert.FactorCorpus.H66c431ab32de49ab77c9 (15s)
+warning: PrimeCert/FactorCorpus/H66c431ab32de49ab77c9.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2174/2279] Built PrimeCert.FactorCorpus.Hab8e64db9fd981cb4727 (15s)
+warning: PrimeCert/FactorCorpus/Hab8e64db9fd981cb4727.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2175/2279] Built PrimeCert.FactorCorpus.H07d8bcca7e5fdb38e89d (16s)
+warning: PrimeCert/FactorCorpus/H07d8bcca7e5fdb38e89d.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2176/2279] Built PrimeCert.FactorCorpus.H03f174b96e15402a43b4 (15s)
+warning: PrimeCert/FactorCorpus/H03f174b96e15402a43b4.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2177/2279] Built PrimeCert.FactorCorpus.H4b0e17252ad1bff3a58e (15s)
+warning: PrimeCert/FactorCorpus/H4b0e17252ad1bff3a58e.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2178/2279] Built PrimeCert.FactorCorpus.H56f525249b8797416ed6 (15s)
+warning: PrimeCert/FactorCorpus/H56f525249b8797416ed6.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2179/2279] Built PrimeCert.FactorCorpus.Hf854571dc5e1a03b3214 (15s)
+warning: PrimeCert/FactorCorpus/Hf854571dc5e1a03b3214.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2180/2279] Built PrimeCert.FactorCorpus.H6501b15c4c52c3c9b755 (15s)
+warning: PrimeCert/FactorCorpus/H6501b15c4c52c3c9b755.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2181/2279] Built PrimeCert.FactorCorpus.Hd87d9eba9fca12477d09 (15s)
+warning: PrimeCert/FactorCorpus/Hd87d9eba9fca12477d09.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2182/2280] Built PrimeCert.FactorCorpus.Hfe8bdd6f0991d97e948a (16s)
+warning: PrimeCert/FactorCorpus/Hfe8bdd6f0991d97e948a.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2183/2280] Built PrimeCert.FactorCorpus.H60f45b8522bd1d9f1890 (15s)
+warning: PrimeCert/FactorCorpus/H60f45b8522bd1d9f1890.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2184/2280] Built PrimeCert.FactorCorpus.H79470f76d866a782b92d (15s)
+warning: PrimeCert/FactorCorpus/H79470f76d866a782b92d.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2185/2280] Built PrimeCert.FactorCorpus.H9dc0649618fd229602ca (15s)
+warning: PrimeCert/FactorCorpus/H9dc0649618fd229602ca.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2186/2286] Built PrimeCert.FactorCorpus.Hf56907a801c5d6b6b126 (16s)
+warning: PrimeCert/FactorCorpus/Hf56907a801c5d6b6b126.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2187/2286] Built PrimeCert.FactorCorpus.H1b81695b528c81fbe1c9 (16s)
+warning: PrimeCert/FactorCorpus/H1b81695b528c81fbe1c9.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2188/2286] Built PrimeCert.FactorCorpus.Hc540335e77e5ede39ec0 (16s)
+warning: PrimeCert/FactorCorpus/Hc540335e77e5ede39ec0.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2189/2286] Built PrimeCert.FactorCorpus.Hd7b48e6ca3c4ba76c65c (16s)
+warning: PrimeCert/FactorCorpus/Hd7b48e6ca3c4ba76c65c.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2190/2286] Built PrimeCert.FactorCorpus.H947feb072abef39924b4 (16s)
+warning: PrimeCert/FactorCorpus/H947feb072abef39924b4.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2191/2286] Built PrimeCert.FactorCorpus.H4a48f77fb869f1c37621 (16s)
+warning: PrimeCert/FactorCorpus/H4a48f77fb869f1c37621.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2192/2286] Built PrimeCert.FactorCorpus.H32d9503976659ba571e9 (16s)
+warning: PrimeCert/FactorCorpus/H32d9503976659ba571e9.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2193/2286] Built PrimeCert.FactorCorpus.H61d786e2fed27c54e975 (16s)
+warning: PrimeCert/FactorCorpus/H61d786e2fed27c54e975.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2194/2286] Built PrimeCert.FactorCorpus.Hcdd21d1f47d6521d18f1 (16s)
+warning: PrimeCert/FactorCorpus/Hcdd21d1f47d6521d18f1.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2195/2286] Built PrimeCert.FactorCorpus.Ha90023470dc13d17e8e2 (16s)
+warning: PrimeCert/FactorCorpus/Ha90023470dc13d17e8e2.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2196/2286] Built PrimeCert.FactorCorpus.Hff4305d20ae68248f155 (16s)
+warning: PrimeCert/FactorCorpus/Hff4305d20ae68248f155.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2197/2286] Built PrimeCert.FactorCorpus.Hd05c09a665dc9aa758d9 (16s)
+warning: PrimeCert/FactorCorpus/Hd05c09a665dc9aa758d9.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2198/2286] Built PrimeCert.FactorCorpus.Hc0a164b1c767dff2111c (16s)
+warning: PrimeCert/FactorCorpus/Hc0a164b1c767dff2111c.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2199/2286] Built PrimeCert.FactorCorpus.Hf92c0a155a7982170695 (16s)
+warning: PrimeCert/FactorCorpus/Hf92c0a155a7982170695.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2200/2286] Built PrimeCert.FactorCorpus.H7b9bfc3a963e69b7797f (16s)
+warning: PrimeCert/FactorCorpus/H7b9bfc3a963e69b7797f.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2201/2286] Built PrimeCert.FactorCorpus.Had8c966ef6f0bcf5b1aa (16s)
+warning: PrimeCert/FactorCorpus/Had8c966ef6f0bcf5b1aa.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2202/2286] Built PrimeCert.FactorCorpus.Hebde3cf8c37a8da8c4b9 (16s)
+warning: PrimeCert/FactorCorpus/Hebde3cf8c37a8da8c4b9.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2203/2286] Built PrimeCert.FactorCorpus.H4da04765248987238237 (16s)
+warning: PrimeCert/FactorCorpus/H4da04765248987238237.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2204/2286] Built PrimeCert.FactorCorpus.Hc4ad77b6483c5ddb8fef (16s)
+warning: PrimeCert/FactorCorpus/Hc4ad77b6483c5ddb8fef.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2205/2287] Built PrimeCert.FactorCorpus.Hd2e30b7c2cc64806ed21 (16s)
+warning: PrimeCert/FactorCorpus/Hd2e30b7c2cc64806ed21.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2206/2287] Built PrimeCert.FactorCorpus.H30013a2f99cd9becbafe (17s)
+warning: PrimeCert/FactorCorpus/H30013a2f99cd9becbafe.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2207/2287] Built PrimeCert.FactorCorpus.Hedb6d48b9a1bb5fca079 (17s)
+warning: PrimeCert/FactorCorpus/Hedb6d48b9a1bb5fca079.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2208/2287] Built PrimeCert.FactorCorpus.H036a7ae357e9a17c2a96 (16s)
+warning: PrimeCert/FactorCorpus/H036a7ae357e9a17c2a96.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2209/2287] Built PrimeCert.FactorCorpus.H0c325315ecc4162a0ef6 (16s)
+warning: PrimeCert/FactorCorpus/H0c325315ecc4162a0ef6.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2210/2287] Built PrimeCert.FactorCorpus.Hdaa6e84c73f577f96d24 (16s)
+warning: PrimeCert/FactorCorpus/Hdaa6e84c73f577f96d24.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2211/2310] Built PrimeCert.FactorCorpus.H373db528e64b5588b7cd (17s)
+warning: PrimeCert/FactorCorpus/H373db528e64b5588b7cd.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2212/2310] Built PrimeCert.FactorCorpus.Hb490422277b85ddaf5a5 (17s)
+warning: PrimeCert/FactorCorpus/Hb490422277b85ddaf5a5.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2213/2310] Built PrimeCert.FactorCorpus.Hce40cf3331b4bac28f6b (17s)
+warning: PrimeCert/FactorCorpus/Hce40cf3331b4bac28f6b.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2214/2310] Built PrimeCert.FactorCorpus.H04875054807b074f1eca (17s)
+warning: PrimeCert/FactorCorpus/H04875054807b074f1eca.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2215/2310] Built PrimeCert.FactorCorpus.Hfcc82192e3122a9e36f9 (17s)
+warning: PrimeCert/FactorCorpus/Hfcc82192e3122a9e36f9.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2216/2310] Built PrimeCert.FactorCorpus.H8af899c5995c4d6c8a87 (17s)
+warning: PrimeCert/FactorCorpus/H8af899c5995c4d6c8a87.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2217/2310] Built PrimeCert.FactorCorpus.H74173fcc8de06ef90850 (17s)
+warning: PrimeCert/FactorCorpus/H74173fcc8de06ef90850.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2218/2310] Built PrimeCert.FactorCorpus.H99ceed220398408a2c4c (17s)
+warning: PrimeCert/FactorCorpus/H99ceed220398408a2c4c.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2219/2310] Built PrimeCert.FactorCorpus.Hc8e330f994048c081d23 (17s)
+warning: PrimeCert/FactorCorpus/Hc8e330f994048c081d23.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2220/2310] Built PrimeCert.FactorCorpus.He3d151c218beffc7a208 (17s)
+warning: PrimeCert/FactorCorpus/He3d151c218beffc7a208.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2221/2310] Built PrimeCert.FactorCorpus.H5ac9c6868258414a42c9 (17s)
+warning: PrimeCert/FactorCorpus/H5ac9c6868258414a42c9.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2222/2310] Built PrimeCert.FactorCorpus.H62a573826d2595cf2e10 (17s)
+warning: PrimeCert/FactorCorpus/H62a573826d2595cf2e10.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2223/2310] Built PrimeCert.FactorCorpus.H1c52e1ce171ecb5cb76c (17s)
+warning: PrimeCert/FactorCorpus/H1c52e1ce171ecb5cb76c.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2224/2310] Built PrimeCert.FactorCorpus.H2f06cc4b2b7f02b2b290 (17s)
+warning: PrimeCert/FactorCorpus/H2f06cc4b2b7f02b2b290.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2225/2310] Built PrimeCert.FactorCorpus.H34ebd177eb7254d1b83b (17s)
+warning: PrimeCert/FactorCorpus/H34ebd177eb7254d1b83b.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2226/2310] Built PrimeCert.FactorCorpus.H82013afb4381b346ec22 (16s)
+warning: PrimeCert/FactorCorpus/H82013afb4381b346ec22.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2227/2310] Built PrimeCert.FactorCorpus.Ha9dae31aa901989f0357 (16s)
+warning: PrimeCert/FactorCorpus/Ha9dae31aa901989f0357.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2228/2310] Built PrimeCert.FactorCorpus.Hb45c7f67d2cca400144c (16s)
+warning: PrimeCert/FactorCorpus/Hb45c7f67d2cca400144c.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2229/2310] Built PrimeCert.FactorCorpus.H040a476c3a1ebeeb53eb (16s)
+warning: PrimeCert/FactorCorpus/H040a476c3a1ebeeb53eb.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2230/2310] Built PrimeCert.FactorCorpus.H44b4f4bbbfbdfda1055e (16s)
+warning: PrimeCert/FactorCorpus/H44b4f4bbbfbdfda1055e.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2231/2310] Built PrimeCert.FactorCorpus.Hca2d20e68781e2bb9802 (16s)
+warning: PrimeCert/FactorCorpus/Hca2d20e68781e2bb9802.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2232/2310] Built PrimeCert.FactorCorpus.H9d4b0164261e45e26e34 (16s)
+warning: PrimeCert/FactorCorpus/H9d4b0164261e45e26e34.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2233/2310] Built PrimeCert.FactorCorpus.H45774d89c2065b5e6072 (16s)
+warning: PrimeCert/FactorCorpus/H45774d89c2065b5e6072.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2234/2310] Built PrimeCert.FactorCorpus.H47eff6ec9fa96acdc3b7 (16s)
+warning: PrimeCert/FactorCorpus/H47eff6ec9fa96acdc3b7.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2235/2310] Built PrimeCert.FactorCorpus.H079a711135732dbcc90f (16s)
+warning: PrimeCert/FactorCorpus/H079a711135732dbcc90f.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2236/2310] Built PrimeCert.FactorCorpus.H2d514c8836d170352553 (16s)
+warning: PrimeCert/FactorCorpus/H2d514c8836d170352553.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2237/2310] Built PrimeCert.FactorCorpus.H9193f721992e2aa2106e (16s)
+warning: PrimeCert/FactorCorpus/H9193f721992e2aa2106e.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2238/2310] Built PrimeCert.FactorCorpus.H577db98e293e4b1e4242 (16s)
+warning: PrimeCert/FactorCorpus/H577db98e293e4b1e4242.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2239/2310] Built PrimeCert.FactorCorpus.H4266f4cec9dc33ee01c3 (16s)
+warning: PrimeCert/FactorCorpus/H4266f4cec9dc33ee01c3.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2240/2310] Built PrimeCert.FactorCorpus.H7a596acc7295f0f4ecab (16s)
+warning: PrimeCert/FactorCorpus/H7a596acc7295f0f4ecab.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2241/2310] Built PrimeCert.FactorCorpus.H6c857f3d7da8ddd8443f (16s)
+warning: PrimeCert/FactorCorpus/H6c857f3d7da8ddd8443f.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2242/2310] Built PrimeCert.FactorCorpus.H6ccbc011635d0d963308 (16s)
+warning: PrimeCert/FactorCorpus/H6ccbc011635d0d963308.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2243/2310] Built PrimeCert.FactorCorpus.H5f00a0d4aaebb5700b38 (16s)
+warning: PrimeCert/FactorCorpus/H5f00a0d4aaebb5700b38.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2244/2335] Built PrimeCert.FactorCorpus.H82e2fab39b80805f319a (3.6s)
+warning: PrimeCert/FactorCorpus/H82e2fab39b80805f319a.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2245/2335] Built PrimeCert.FactorCorpus.Hf49ee66163501bc6d8a6 (3.6s)
+warning: PrimeCert/FactorCorpus/Hf49ee66163501bc6d8a6.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2246/2335] Built PrimeCert.FactorCorpus.Hd59e63d20b7c4103ca01 (3.3s)
+warning: PrimeCert/FactorCorpus/Hd59e63d20b7c4103ca01.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2247/2335] Built PrimeCert.FactorCorpus.H635a5709f070a3bc7b4f (3.3s)
+warning: PrimeCert/FactorCorpus/H635a5709f070a3bc7b4f.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2248/2337] Built PrimeCert.FactorCorpus.H4c608df11a6986c9b77a (3.9s)
+warning: PrimeCert/FactorCorpus/H4c608df11a6986c9b77a.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2249/2337] Built PrimeCert.FactorCorpus.H7c348325d415b58467f5 (3.7s)
+warning: PrimeCert/FactorCorpus/H7c348325d415b58467f5.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2250/2337] Built PrimeCert.FactorCorpus.Hd9ac8187cfb9d05c69c7 (3.7s)
+warning: PrimeCert/FactorCorpus/Hd9ac8187cfb9d05c69c7.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2251/2337] Built PrimeCert.FactorCorpus.H2caacc660b24f4cc7586 (3.6s)
+warning: PrimeCert/FactorCorpus/H2caacc660b24f4cc7586.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2252/2337] Built PrimeCert.FactorCorpus.H239bcfc3bcc741756d90 (3.6s)
+warning: PrimeCert/FactorCorpus/H239bcfc3bcc741756d90.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2253/2337] Built PrimeCert.FactorCorpus.H5c5eeea956466f802f71 (3.5s)
+warning: PrimeCert/FactorCorpus/H5c5eeea956466f802f71.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2254/2337] Built PrimeCert.FactorCorpus.Hd3fac216e4a3eb215d66 (3.5s)
+warning: PrimeCert/FactorCorpus/Hd3fac216e4a3eb215d66.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2255/2337] Built PrimeCert.FactorCorpus.Hcfb3963ef87801d39781 (3.5s)
+warning: PrimeCert/FactorCorpus/Hcfb3963ef87801d39781.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2256/2337] Built PrimeCert.FactorCorpus.H05fc0a75977e05a2862c (3.5s)
+warning: PrimeCert/FactorCorpus/H05fc0a75977e05a2862c.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2257/2337] Built PrimeCert.FactorCorpus.Hb58c864cd7afc67b36d1 (3.5s)
+warning: PrimeCert/FactorCorpus/Hb58c864cd7afc67b36d1.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2258/2355] Built PrimeCert.FactorCorpus.H6a7249b431eeb069cfda (3.6s)
+warning: PrimeCert/FactorCorpus/H6a7249b431eeb069cfda.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2259/2355] Built PrimeCert.FactorCorpus.He4e6dc1ef7e8c23e79b7 (3.6s)
+warning: PrimeCert/FactorCorpus/He4e6dc1ef7e8c23e79b7.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2260/2355] Built PrimeCert.FactorCorpus.H61817707a0a65d96d4ae (3.5s)
+warning: PrimeCert/FactorCorpus/H61817707a0a65d96d4ae.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2262/2358] Built PrimeCert.FactorCorpus.H5ff86ab458d21ca17624 (3.5s)
+warning: PrimeCert/FactorCorpus/H5ff86ab458d21ca17624.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2263/2358] Built PrimeCert.FactorCorpus.H24fe150192f16697cf53 (3.5s)
+warning: PrimeCert/FactorCorpus/H24fe150192f16697cf53.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2264/2358] Built PrimeCert.FactorCorpus.Ha479094aec9acc0a3df5 (3.5s)
+warning: PrimeCert/FactorCorpus/Ha479094aec9acc0a3df5.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2265/2358] Built PrimeCert.FactorCorpus.H254657966a3771377272 (3.5s)
+warning: PrimeCert/FactorCorpus/H254657966a3771377272.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2266/2358] Built PrimeCert.FactorCorpus.H39e971d2b2726a227b0c (3.5s)
+warning: PrimeCert/FactorCorpus/H39e971d2b2726a227b0c.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2267/2358] Built PrimeCert.FactorCorpus.Ha35fde8a33694a7be818 (3.5s)
+warning: PrimeCert/FactorCorpus/Ha35fde8a33694a7be818.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2268/2358] Built PrimeCert.FactorCorpus.H1f27b58dd63ca8202084 (3.5s)
+warning: PrimeCert/FactorCorpus/H1f27b58dd63ca8202084.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2269/2358] Built PrimeCert.FactorCorpus.Hee8ba57144891a3c5513 (3.9s)
+warning: PrimeCert/FactorCorpus/Hee8ba57144891a3c5513.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2270/2358] Built PrimeCert.FactorCorpus.H22b790741ab5168f45d4 (3.9s)
+warning: PrimeCert/FactorCorpus/H22b790741ab5168f45d4.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2271/2358] Built PrimeCert.FactorCorpus.Hca4977db0e2508901c72 (3.9s)
+warning: PrimeCert/FactorCorpus/Hca4977db0e2508901c72.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2272/2358] Built PrimeCert.FactorCorpus.He4da670545f621940122 (3.7s)
+warning: PrimeCert/FactorCorpus/He4da670545f621940122.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2273/2358] Built PrimeCert.FactorCorpus.H3e14204e103e0a01a834 (3.7s)
+warning: PrimeCert/FactorCorpus/H3e14204e103e0a01a834.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2274/2358] Built PrimeCert.FactorCorpus.Hd4e057817a09bdeb51b7 (4.4s)
+warning: PrimeCert/FactorCorpus/Hd4e057817a09bdeb51b7.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2275/2358] Built PrimeCert.FactorCorpus.Hced64175cb3d86608c19 (4.4s)
+warning: PrimeCert/FactorCorpus/Hced64175cb3d86608c19.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2276/2358] Built PrimeCert.FactorCorpus.Haf51a88d4a3bc71c8637 (4.1s)
+warning: PrimeCert/FactorCorpus/Haf51a88d4a3bc71c8637.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2277/2358] Built PrimeCert.FactorCorpus.H8b620acab9a39ca58c5b (4.1s)
+warning: PrimeCert/FactorCorpus/H8b620acab9a39ca58c5b.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2278/2358] Built PrimeCert.FactorCorpus.H0de659f973f35630cda4 (4.2s)
+warning: PrimeCert/FactorCorpus/H0de659f973f35630cda4.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2279/2358] Built PrimeCert.FactorCorpus.H489a24faa77de3e0d059 (4.5s)
+warning: PrimeCert/FactorCorpus/H489a24faa77de3e0d059.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2280/2358] Built PrimeCert.FactorCorpus.H0019e15631851129c692 (4.5s)
+warning: PrimeCert/FactorCorpus/H0019e15631851129c692.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2281/2358] Built PrimeCert.FactorCorpus.H7af702e60dd6420bf339 (3.4s)
+warning: PrimeCert/FactorCorpus/H7af702e60dd6420bf339.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2282/2358] Built PrimeCert.FactorCorpus.Hdb5810d7db7cdf0dc504 (4.6s)
+warning: PrimeCert/FactorCorpus/Hdb5810d7db7cdf0dc504.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2283/2358] Built PrimeCert.FactorCorpus.H54bd3bf94dd398a3bcc2 (4.4s)
+warning: PrimeCert/FactorCorpus/H54bd3bf94dd398a3bcc2.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2284/2358] Built PrimeCert.FactorCorpus.Had07e8014450ff9290a7 (4.8s)
+warning: PrimeCert/FactorCorpus/Had07e8014450ff9290a7.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2285/2358] Built PrimeCert.FactorCorpus.Hdf6420ea63f644ce1b05 (4.7s)
+warning: PrimeCert/FactorCorpus/Hdf6420ea63f644ce1b05.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2286/2358] Built PrimeCert.FactorCorpus.Hf39a6ca7fe78b4dede84 (4.4s)
+warning: PrimeCert/FactorCorpus/Hf39a6ca7fe78b4dede84.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2287/2358] Built PrimeCert.FactorCorpus.H3eba11995c797ac9a40d (4.4s)
+warning: PrimeCert/FactorCorpus/H3eba11995c797ac9a40d.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2288/2358] Built PrimeCert.FactorCorpus.H1bc182d561cd175d9cb3 (3.7s)
+warning: PrimeCert/FactorCorpus/H1bc182d561cd175d9cb3.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2289/2358] Built PrimeCert.FactorCorpus.H35cb1d3d3304e66f3ee6 (3.6s)
+warning: PrimeCert/FactorCorpus/H35cb1d3d3304e66f3ee6.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2290/2358] Built PrimeCert.FactorCorpus.H251ffe75c5068e7522fa (3.7s)
+warning: PrimeCert/FactorCorpus/H251ffe75c5068e7522fa.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2291/2358] Built PrimeCert.FactorCorpus.H067139470ba9c48fdca2 (3.8s)
+warning: PrimeCert/FactorCorpus/H067139470ba9c48fdca2.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2292/2358] Built PrimeCert.FactorCorpus.Ha2e5dad7441470855262 (4.1s)
+warning: PrimeCert/FactorCorpus/Ha2e5dad7441470855262.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2293/2358] Built PrimeCert.FactorCorpus.H4781bffa629f906064d1 (4.1s)
+warning: PrimeCert/FactorCorpus/H4781bffa629f906064d1.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2294/2358] Built PrimeCert.FactorCorpus.H10e42f89064e26a605ee (4.1s)
+warning: PrimeCert/FactorCorpus/H10e42f89064e26a605ee.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2295/2358] Built PrimeCert.FactorCorpus.H29c4c69d8b9a419e11a0 (4.1s)
+warning: PrimeCert/FactorCorpus/H29c4c69d8b9a419e11a0.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2296/2358] Built PrimeCert.FactorCorpus.H89f513284a99b195aa9c (4.1s)
+warning: PrimeCert/FactorCorpus/H89f513284a99b195aa9c.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2297/2358] Built PrimeCert.FactorCorpus.H978a2e158b5f6073e363 (4.2s)
+warning: PrimeCert/FactorCorpus/H978a2e158b5f6073e363.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2298/2358] Built PrimeCert.FactorCorpus.Hadeba5989a4f1b69b07a (4.3s)
+warning: PrimeCert/FactorCorpus/Hadeba5989a4f1b69b07a.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2299/2358] Built PrimeCert.FactorCorpus.Hc0e6dc6861f8060de636 (4.3s)
+warning: PrimeCert/FactorCorpus/Hc0e6dc6861f8060de636.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2300/2358] Built PrimeCert.FactorCorpus.Ha50c1420701e4ef2f100 (4.3s)
+warning: PrimeCert/FactorCorpus/Ha50c1420701e4ef2f100.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2301/2358] Built PrimeCert.FactorCorpus.H617ee18eb63dee094dca (4.2s)
+warning: PrimeCert/FactorCorpus/H617ee18eb63dee094dca.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2302/2358] Built PrimeCert.FactorCorpus.Hfb7bc93b27c86e5e3048 (4.2s)
+warning: PrimeCert/FactorCorpus/Hfb7bc93b27c86e5e3048.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2303/2358] Built PrimeCert.FactorCorpus.Hebc732760cc76550bcc8 (4.1s)
+warning: PrimeCert/FactorCorpus/Hebc732760cc76550bcc8.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2304/2358] Built PrimeCert.FactorCorpus.H84ef624d0433f0e15e3f (4.1s)
+warning: PrimeCert/FactorCorpus/H84ef624d0433f0e15e3f.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2305/2358] Built PrimeCert.FactorCorpus.H3691b35c4705405febbf (4.3s)
+warning: PrimeCert/FactorCorpus/H3691b35c4705405febbf.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2306/2358] Built PrimeCert.FactorCorpus.Hd06576e56697c0a76851 (4.5s)
+warning: PrimeCert/FactorCorpus/Hd06576e56697c0a76851.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2307/2358] Built PrimeCert.FactorCorpus.H8a015a60d9407144a400 (3.0s)
+warning: PrimeCert/FactorCorpus/H8a015a60d9407144a400.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2308/2358] Built PrimeCert.FactorCorpus.H55ab4a28173a7f338d6a (4.5s)
+warning: PrimeCert/FactorCorpus/H55ab4a28173a7f338d6a.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2309/2358] Built PrimeCert.FactorCorpus.Ha4e4a5f8ca9848a0d261 (4.6s)
+warning: PrimeCert/FactorCorpus/Ha4e4a5f8ca9848a0d261.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2310/2358] Built PrimeCert.FactorCorpus.H65601bf4cc65f038343c (4.4s)
+warning: PrimeCert/FactorCorpus/H65601bf4cc65f038343c.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2311/2358] Built PrimeCert.FactorCorpus.Hed6e9ec7ccd07e2aa320 (4.7s)
+warning: PrimeCert/FactorCorpus/Hed6e9ec7ccd07e2aa320.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2312/2358] Built PrimeCert.FactorCorpus.H3fd42bb39da989d504e7 (4.6s)
+warning: PrimeCert/FactorCorpus/H3fd42bb39da989d504e7.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2313/2358] Built PrimeCert.FactorCorpus.Hb68a0fd59cc94538fbfa (4.6s)
+warning: PrimeCert/FactorCorpus/Hb68a0fd59cc94538fbfa.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2314/2358] Built PrimeCert.FactorCorpus.Hf848b0c8fa742991333f (4.5s)
+warning: PrimeCert/FactorCorpus/Hf848b0c8fa742991333f.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2315/2358] Built PrimeCert.FactorCorpus.Habc87ffcc57c2d1331f0 (4.5s)
+warning: PrimeCert/FactorCorpus/Habc87ffcc57c2d1331f0.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2316/2358] Built PrimeCert.FactorCorpus.Hc769f1a0b6c8f724bac9 (4.2s)
+warning: PrimeCert/FactorCorpus/Hc769f1a0b6c8f724bac9.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2317/2358] Built PrimeCert.FactorCorpus.Hb4b1aca9c585a9a0da86 (4.7s)
+warning: PrimeCert/FactorCorpus/Hb4b1aca9c585a9a0da86.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2318/2358] Built PrimeCert.FactorCorpus.Hbe9c1b929c9f1dfc14e6 (4.6s)
+warning: PrimeCert/FactorCorpus/Hbe9c1b929c9f1dfc14e6.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2319/2358] Built PrimeCert.FactorCorpus.He0fe642ac6f04b6ab0f7 (4.5s)
+warning: PrimeCert/FactorCorpus/He0fe642ac6f04b6ab0f7.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2320/2358] Built PrimeCert.FactorCorpus.H51e5575916a72751fdcd (4.2s)
+warning: PrimeCert/FactorCorpus/H51e5575916a72751fdcd.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2321/2358] Built PrimeCert.FactorCorpus.H26a3e2c887815e56d630 (5.0s)
+warning: PrimeCert/FactorCorpus/H26a3e2c887815e56d630.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2322/2358] Built PrimeCert.FactorCorpus.Heabf4d3394dd75eb2d5c (4.9s)
+warning: PrimeCert/FactorCorpus/Heabf4d3394dd75eb2d5c.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2323/2358] Built PrimeCert.FactorCorpus.H3a0d1c60bb2bb3c74c93 (4.9s)
+warning: PrimeCert/FactorCorpus/H3a0d1c60bb2bb3c74c93.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2324/2358] Built PrimeCert.FactorCorpus.Hc202250a281f9b3ea481 (4.9s)
+warning: PrimeCert/FactorCorpus/Hc202250a281f9b3ea481.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2325/2358] Built PrimeCert.FactorCorpus.Hd0be148fceea5bb7b402 (4.8s)
+warning: PrimeCert/FactorCorpus/Hd0be148fceea5bb7b402.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2326/2358] Built PrimeCert.FactorCorpus.H60d960904e257d790241 (4.6s)
+warning: PrimeCert/FactorCorpus/H60d960904e257d790241.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2327/2358] Built PrimeCert.FactorCorpus.Hff0aeea39ffe2799a57f (4.0s)
+warning: PrimeCert/FactorCorpus/Hff0aeea39ffe2799a57f.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2328/2358] Built PrimeCert.FactorCorpus.H5ff5589d94747b902d07 (4.7s)
+warning: PrimeCert/FactorCorpus/H5ff5589d94747b902d07.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2329/2358] Built PrimeCert.FactorCorpus.H4c64357888186d7d7562 (4.7s)
+warning: PrimeCert/FactorCorpus/H4c64357888186d7d7562.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2330/2358] Built PrimeCert.FactorCorpus.H241118558ae9ea46c7b0 (3.1s)
+warning: PrimeCert/FactorCorpus/H241118558ae9ea46c7b0.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2331/2358] Built PrimeCert.FactorCorpus.Hf9bf9c327eca21b9906b (4.8s)
+warning: PrimeCert/FactorCorpus/Hf9bf9c327eca21b9906b.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2332/2358] Built PrimeCert.FactorCorpus.Hd9a90d34a3a693e140ab (4.7s)
+warning: PrimeCert/FactorCorpus/Hd9a90d34a3a693e140ab.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2333/2358] Built PrimeCert.FactorCorpus.H29fdd011e67eb47d9e9b (4.6s)
+warning: PrimeCert/FactorCorpus/H29fdd011e67eb47d9e9b.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2334/2358] Built PrimeCert.FactorCorpus.H871d769412af3ea344a8 (3.7s)
+warning: PrimeCert/FactorCorpus/H871d769412af3ea344a8.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2335/2358] Built PrimeCert.FactorCorpus.H5f7531336ae6861d71fa (4.8s)
+warning: PrimeCert/FactorCorpus/H5f7531336ae6861d71fa.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2336/2358] Built PrimeCert.FactorCorpus.Hfeb7cc8aff3641089df8 (3.2s)
+warning: PrimeCert/FactorCorpus/Hfeb7cc8aff3641089df8.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2337/2358] Built PrimeCert.FactorCorpus.H9f673a36dc885305de86 (3.5s)
+warning: PrimeCert/FactorCorpus/H9f673a36dc885305de86.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2338/2358] Built PrimeCert.FactorCorpus.Hca376db5b85dcce500d1 (3.4s)
+warning: PrimeCert/FactorCorpus/Hca376db5b85dcce500d1.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2339/2358] Built PrimeCert.FactorCorpus.H4a62e1657a7b9bf8dcf8 (3.4s)
+warning: PrimeCert/FactorCorpus/H4a62e1657a7b9bf8dcf8.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2340/2358] Built PrimeCert.FactorCorpus.Haf2bfdcf6d62871d99f1 (3.3s)
+warning: PrimeCert/FactorCorpus/Haf2bfdcf6d62871d99f1.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2341/2358] Built PrimeCert.FactorCorpus.H74044dce302b0672d74e (3.5s)
+warning: PrimeCert/FactorCorpus/H74044dce302b0672d74e.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2342/2358] Built PrimeCert.FactorCorpus.H7e8443fa2cf8c0b76e19 (3.5s)
+warning: PrimeCert/FactorCorpus/H7e8443fa2cf8c0b76e19.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2343/2358] Built PrimeCert.FactorCorpus.H728c5787e2009ff615b0 (3.5s)
+warning: PrimeCert/FactorCorpus/H728c5787e2009ff615b0.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2344/2358] Built PrimeCert.FactorCorpus.H9c8092b170f66a9b6504 (3.5s)
+warning: PrimeCert/FactorCorpus/H9c8092b170f66a9b6504.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2345/2358] Built PrimeCert.FactorCorpus.Hb74648259c95c7159c96 (3.5s)
+warning: PrimeCert/FactorCorpus/Hb74648259c95c7159c96.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2346/2358] Built PrimeCert.FactorCorpus.H4cdc0f319882e49e6a00 (3.4s)
+warning: PrimeCert/FactorCorpus/H4cdc0f319882e49e6a00.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2347/2358] Built PrimeCert.FactorCorpus.H57256c6347617c237c9a (3.6s)
+warning: PrimeCert/FactorCorpus/H57256c6347617c237c9a.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2348/2358] Built PrimeCert.FactorCorpus.H00170dac45b3b6a90911 (3.6s)
+warning: PrimeCert/FactorCorpus/H00170dac45b3b6a90911.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2349/2358] Built PrimeCert.FactorCorpus.H6b8b29bee40f9462e74a (3.6s)
+warning: PrimeCert/FactorCorpus/H6b8b29bee40f9462e74a.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2350/2358] Built PrimeCert.FactorCorpus.H72f8c7d623fe09a19f8a (3.6s)
+warning: PrimeCert/FactorCorpus/H72f8c7d623fe09a19f8a.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2351/2358] Built PrimeCert.FactorCorpus.H24c82be99cca8aea0f80 (3.4s)
+warning: PrimeCert/FactorCorpus/H24c82be99cca8aea0f80.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2352/2358] Built PrimeCert.FactorCorpus.He9cd21df88b9ff53c0ef (3.5s)
+warning: PrimeCert/FactorCorpus/He9cd21df88b9ff53c0ef.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2353/2358] Built PrimeCert.FactorCorpus.H914f2afe885d6e960297 (3.4s)
+warning: PrimeCert/FactorCorpus/H914f2afe885d6e960297.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2354/2358] Built PrimeCert.FactorCorpus.Hd414a987426d8da6a4c8 (3.7s)
+warning: PrimeCert/FactorCorpus/Hd414a987426d8da6a4c8.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2355/2358] Built PrimeCert.FactorCorpus.Hecfee9dcb2ac144d6d20 (3.7s)
+warning: PrimeCert/FactorCorpus/Hecfee9dcb2ac144d6d20.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2356/2358] Built PrimeCert.FactorCorpus.Hc27f727753e32175b3b3 (3.7s)
+warning: PrimeCert/FactorCorpus/Hc27f727753e32175b3b3.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2357/2358] Built PrimeCert.FactorCorpus.Hf6549d47ccd1f71c45e1 (3.8s)
+warning: PrimeCert/FactorCorpus/Hf6549d47ccd1f71c45e1.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+⚠ [2358/2358] Built PrimeCert.FactorCorpus.Hece8edde54fed8d96120 (3.6s)
+warning: PrimeCert/FactorCorpus/Hece8edde54fed8d96120.lean:5:0: Unscoped option maxHeartbeats is not allowed:
+Please scope this to individual declarations, as in
+```
+set_option maxHeartbeats in
+-- comment explaining why this is necessary
+example : ... := ...
+```
+
+Note: This linter can be disabled with `set_option linter.style.setOption false`
+Build completed successfully (2358 jobs).

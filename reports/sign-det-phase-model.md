@@ -106,4 +106,5 @@ tracks node count while matrix construction reflects sign-word lengths as
 well. The solver includes the matrix checks described above; the separate
 figures therefore overlap. These host-specific observations are not an AB/BA
 comparison and do not establish a speedup. Allocation bytes remain unavailable
-in these exports, and all additional coverage gates listed above remain open.
+in these exports. The [consolidated report](sign-det-performance.md) links
+the additional coverage and states the remaining limits.

@@ -77,25 +77,25 @@ theorem enumerate_sorted (G : Group n) :
 
 /-- Test the exact group order before allocating any enumeration. A size-limit
 result reports the required output size and is distinct from an empty result. -/
-@[expose] def elementsWith (cap : Nat) (G : Group n) : Except SizeLimit (Array (Element G)) :=
+@[expose] def elementsCapped (cap : Nat) (G : Group n) : Except SizeLimit (Array (Element G)) :=
   if G.order ≤ cap then .ok G.enumerate else .error ⟨G.order, cap⟩
 
-theorem elementsWith_ok (cap : Nat) (G : Group n) :
-    G.elementsWith cap = .ok G.enumerate ↔ G.order ≤ cap := by
-  unfold elementsWith
+theorem elementsCapped_ok (cap : Nat) (G : Group n) :
+    G.elementsCapped cap = .ok G.enumerate ↔ G.order ≤ cap := by
+  unfold elementsCapped
   split <;> simp_all
 
-theorem elementsWith_error (cap : Nat) (G : Group n) :
-    G.elementsWith cap = .error ⟨G.order, cap⟩ ↔ cap < G.order := by
-  unfold elementsWith
+theorem elementsCapped_error (cap : Nat) (G : Group n) :
+    G.elementsCapped cap = .error ⟨G.order, cap⟩ ↔ cap < G.order := by
+  unfold elementsCapped
   split <;> simp_all
 
-theorem elementsWith_spec (cap : Nat) (G : Group n) (values : Array (Element G))
-    (h : G.elementsWith cap = .ok values) :
+theorem elementsCapped_spec (cap : Nat) (G : Group n) (values : Array (Element G))
+    (h : G.elementsCapped cap = .ok values) :
     values.size = G.order ∧ values.size ≤ cap ∧
       (∀ p : Element G, p ∈ values) ∧ values.toList.Nodup ∧
       values.toList.Pairwise (fun p q => Chain.before p.val q.val) := by
-  unfold elementsWith at h
+  unfold elementsCapped at h
   split at h
   · rename_i hc
     have he := Except.ok.inj h

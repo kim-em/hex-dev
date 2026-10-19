@@ -1,0 +1,29 @@
+Hex.RealAlgebraicBench.runRationalFloor    expected complexity: b    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=16cff19, 2026-10-04T19:30:33Z, host=chungus2
+      param  per-call   repeats  C
+    262_144   3.233 µs  ×2^15    C=0.012 [trial 1/4]
+    524_288   6.119 µs  ×2^14    C=0.012 [trial 1/4]
+  1_048_576  12.395 µs  ×2^13    C=0.012 [trial 1/4]
+  2_097_152  24.444 µs  ×2^12    C=0.012 [trial 1/4]
+    262_144   3.154 µs  ×2^15    C=0.012 [trial 2/4]
+    524_288   6.187 µs  ×2^14    C=0.012 [trial 2/4]
+  1_048_576  12.484 µs  ×2^13    C=0.012 [trial 2/4]
+  2_097_152  24.853 µs  ×2^12    C=0.012 [trial 2/4]
+    262_144   3.138 µs  ×2^15    C=0.012 [trial 3/4]
+    524_288   6.074 µs  ×2^14    C=0.012 [trial 3/4]
+  1_048_576  12.476 µs  ×2^13    C=0.012 [trial 3/4]
+  2_097_152  24.843 µs  ×2^12    C=0.012 [trial 3/4]
+    262_144   3.291 µs  ×2^15    C=0.012 [trial 4/4]
+    524_288   6.118 µs  ×2^14    C=0.012 [trial 4/4]
+  1_048_576  12.427 µs  ×2^13    C=0.012 [trial 4/4]
+  2_097_152  23.820 µs  ×2^12    C=0.012 [trial 4/4]
+  verdict: consistent with declared complexity (cMin=0.012, cMax=0.012, β=-0.013)
+  per-spawn floor (harness self-measurement): 40.401 ms
+  peak RSS: 68_412 kB..76_280 kB (across 16 ok row(s))
+  trial summaries (4 trials per param; spread = (max-min)/median):
+        param  trials  median     min        max        spread
+      262_144  4/4      3.194 µs   3.138 µs   3.291 µs  4.813%
+      524_288  4/4      6.118 µs   6.074 µs   6.187 µs  1.846%
+    1_048_576  4/4     12.451 µs  12.395 µs  12.484 µs  0.713%
+    2_097_152  4/4     24.643 µs  23.820 µs  24.853 µs  4.192%
+exported to /home/kim/.local/state/hex/issue-10577-proposals/sqrt-initializer/current-main/height-science/RationalFloor.json

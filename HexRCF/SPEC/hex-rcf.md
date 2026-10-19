@@ -1,4 +1,4 @@
-# hex-rcf (decision procedure for univariate real-closed-field sentences, depends on hex-real-roots + hex-real-roots-mathlib + hex-poly-z + hex-poly-z-mathlib + Mathlib)
+# hex-rcf (decision procedure for univariate real-closed-field sentences, depends on hex-real-roots + hex-real-roots-theory + hex-poly-z + hex-poly-z-theory + Mathlib)
 
 A Lean tactic, `rcf`, deciding the univariate fragment of
 real-closed-field arithmetic: Boolean combinations of polynomial
@@ -19,7 +19,7 @@ relevant cell was checked and found false. Operational totality of the
 compiled builder follows from the squarefree carrier and
 `isolateRealRoots?_isSome`, together with the structurally fuel-bounded
 separation pass, from
-[hex-real-roots-mathlib](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md).
+[hex-real-roots-theory](../../HexRealRootsTheory/SPEC/hex-real-roots-theory.md).
 It is not exposed
 as a kernel-side completeness theorem for false verdicts.
 
@@ -32,7 +32,7 @@ of a single polynomial replaces cylindrical algebraic decomposition.
 
 `hex-rcf` is `mathlib: true` (the tactic targets `ℝ`), and its
 soundness theorem lives in the same library. There is no separate
-`hex-rcf-mathlib`.
+`hex-rcf-theory`.
 
 The sections through the existing time budgets describe the integer/rational
 path. The [planned real coefficient extension](#planned-real-coefficient-extension)
@@ -447,7 +447,7 @@ constant terminal entry are rejected, and the public builder retains a raw
 candidate only after `SturmReplay.check` accepts it.
 
 Three existing private lemmas in
-`HexRealRootsMathlib/ChainCorrespond.lean` transfer directly and should
+`HexRealRootsTheory/ChainCorrespond.lean` transfer directly and should
 be exported: `coprime_step_rev`, `flank_of_key`, and
 `eval_ne_zero_of_isCoprime`. The current
 `isSturmChain_of_seeds` does **not** transfer directly: its conclusion
@@ -690,7 +690,7 @@ separate non-public test target (`HexRCFTests` in the published repository,
 HexRCF is a mixed library. `HexRCF.DecisionCheck` contains the complete
 compiled search, certificate construction, replay, and `decide` path in a
 mechanically checked import closure containing neither `Mathlib.*` nor
-`HexRealRootsMathlib.*`. That track uses the ordinary Mathlib-free
+`HexRealRootsTheory.*`. That track uses the ordinary Mathlib-free
 `bench/HexRCF/Bench.lean` LeanBench executable. `by rcf` reification, proof
 emission, and kernel checking remain Mathlib-facing and use build-only modules
 below the explicit `libraries.yml` root `bench/HexRCF/ProofProbe/`.
@@ -724,13 +724,16 @@ do not participate in those complexity verdicts.
 
 Representative example files under `bench/HexRCF/ProofProbe` exercise quadratic
 positivity, an existential witness, supplied literal replay and registered real
-constants. CI builds them through `HexRCFProofProbe` on every PR. These examples and the ordinary
-library/conformance tests establish correctness; this proof surface has no
-paired timing decision, timing ladder, absolute build-time gate, profile or
-headline-report requirement. The computational owner's LeanBench obligations
-remain separate.
+constants. CI builds these four modules through `HexRCFProofProbe` on every PR.
+These examples and the ordinary library/conformance tests establish correctness;
+the representative CI target has no paired timing decision, timing ladder,
+absolute build-time limit or profile requirement. The two supplied-proof
+construction/reuse arms are manual builds through
+`HexRCFProofProbeMeasurements`, outside that CI target. Their focused matched
+experiment answers the named construction-cost question below. The
+computational owner's LeanBench obligations remain separate.
 
-python-flint is an **informational**, scheduled-only comparator for the
+python-flint is an orientation comparator for the
 compiled carrier-degree decision family. The paired fixed registrations are
 `runLeanDecision{16,20,24,28,32}` and
 `runFlintDecision{16,20,24,28,32}`. The additional fixed registration
@@ -742,7 +745,7 @@ version-1 fixture encoding. The comparator is deliberately not assigned the
 Lean target's `n^4` class: it factors the atom product over `ZZ` and asks
 FLINT/Arb for certified real-root balls, a different algorithmic class from
 the Lean carrier/certificate pipeline. Ratio divergence is therefore expected
-and informational; the headline report must quantify the observed trend. The
+and is not a finding. The
 persistent-driver request and response are
 
 ```text
@@ -762,29 +765,23 @@ between outer children. The complete FLINT request line, including the exact
 version-1 sentence encoding, is precomputed; pipe transport and Python JSON
 decoding remain measured comparator overhead. The floor includes the complete
 request/reply path and minimal formula evaluation, but excludes process startup
-and understates the parsing cost of the longer degree-rung requests. The
-headline report retains raw times and ratios at every rung, then subtracts the
-floor median from the FLINT median only on rungs where the floor is at most 50%
-of the FLINT median. A rung above that threshold is floor-dominated, ineligible,
-and reported raw-only. On an eligible rung where the floor exceeds 5%, both raw
-and adjusted ratios are mandatory; below 5%, the raw ratio suffices. Routine
+and understates the parsing cost of the longer degree-rung requests. A rung
+where the floor exceeds half the FLINT median is floor-dominated and says
+nothing about the algorithms. Routine
 `hexrcf_bench verify` performs one semantic call through every fixed
-registration. Scientific runs and ratio reporting require `python3` with
-`python-flint` on the named release benchmark host.
+registration. Scientific runs require `python3` with `python-flint` on the measuring host.
 
 This comparison covers carrier degree and real-root count only. It does not
 measure atom multiplicity, common-root preparation, separation, certificate
 replay, reification, literal elaboration, or end-to-end tactic cost.
 python-flint is not proof-producing, and no comparable proof-producing
-univariate RCF tactic is currently named; the tactic/elaboration track is
-therefore `no-comparable-surface-in-named-comparator` rather than assigned a
-fake ratio. The Phase-3 `local` emitter exercises related compiled workloads
+univariate RCF tactic is currently named, so the tactic/elaboration track has
+no external comparator rather than a fake ratio. The Phase-3 `local` emitter exercises related compiled workloads
 but is neither an elaboration benchmark nor Phase-4 asymptotic evidence.
 
 `HexRCF.done_through` is `7`. Its Phase-4 record required every dependency,
-including HexRealRootsMathlib, to complete Phase 4 and both evidence tracks
-to have their structural wiring and scientific artifacts; the committed
-HexRCF Phase-4 headline report records that.
+including HexRealRootsTheory, to complete Phase 4 and both evidence tracks
+to have their structural wiring and scientific artifacts.
 
 ## Conformance fixtures
 
@@ -881,7 +878,7 @@ declarations. The base handler registration and rational recognition boundary
 described below are implemented independently of that adapter. The family SPECs describe prerequisites, not delivered APIs.
 Transcendental coefficients use a caller-supplied approximation procedure and
 its authenticated containment evidence; this extension neither supplies π/e
-providers nor depends on HexInterval or HexIntervalMathlib. Constant-specific
+providers nor depends on HexInterval or HexIntervalTheory. Constant-specific
 analytic implementation, interval-library admission and their measurement
 work are outside the family. Implementation is coordinated by [#10331](https://github.com/kim-em/hex-dev/issues/10331).
 
@@ -1348,10 +1345,44 @@ kernel acceptance proof and the actual law/equivalence proofs; it does not
 accept compiled `Bool` evaluation as a theorem. No `native_decide`, new axiom,
 `sorryAx`, foreign oracle or compiler trust is admissible.
 
+The implemented `NativeSpecialize` direct API transports the existing shared
+specialization and actual Horner evaluation through a partial ordinary reader.
+Its `row_real` requests all coefficient coordinates, the sample, every
+specialized atom result, leading coefficients and supplied original divisor
+operands together. Normalized sizes (hence degrees) at the reader coefficient
+coordinates are proved conclusions
+from the leading-coefficient signs, not an assumed global injective map.
+`true_real` consumes a true specialized row and strict nonzero native divisor
+signs, deriving real matrix truth and divisor nonvanishing at that same reader
+while retaining source sizes at the original coordinates, the domain-relative
+negation law and explicitly authenticated inherited-base coefficient identities.
+`not_forall` derives a universal counterexample from a false point row. These
+native laws consume the actual stored origin/provider realization package;
+they do not construct it from bounded registrations. They add no global
+zero-reflecting map or field instance on raw syntax.
+`NativeSamples.row_converted` proves agreement with a `Tower.Sample`'s actual
+coefficient conversion under the owner's `Conversion.Model`, using the shared
+specialization proof in its ordered model field. `NativeSamples.true_real` and
+`not_forall` transport its true and false point rows to finite ordinary-real
+conclusions for inherited-base/provider coefficient identities, retaining explicit
+target provider history. Only the true-row API retains supplied original divisors;
+the false-row API takes no guards. `Origin.RealValue` does not identify arbitrary
+selected-root suffix coordinates such as √2 with their original real values.
+Their finite-reader source authentication remains a separate obligation; a model
+conversion identity alone does not supply it. In an infinite model field,
+`polynomial_converted`, `degree_converted` and `size_converted` prove agreement
+between the original and converted specializations, including zero polynomials.
+`sign_converted` retains original divisor signs. The true-row size conclusion
+therefore compares source polynomials with the original parent specialization,
+using nonzero signs checked in that parent. These point laws
+do not establish a complete checked cell certificate. Complete coverage,
+frozen literal history/arithmetic assembly and exact source-goal quotation
+remain required for the full checker above.
+
 ### Selected roots, sectors and half-open domains
 
 Consume the family's sample/Thom interface and the
-[finite-sign realization contract](../../SPEC/Libraries/hex-real-closure-mathlib.md#finite-sign-realization).
+[finite-sign realization contract](../../SPEC/Libraries/hex-real-closure-theory.md#finite-sign-realization).
 A section is one selected **real** root with identity and sign-at-root proofs.
 For sectors, order and adjacency/completeness must exclude every nonzero atom's
 roots, so signs are constant throughout the open interval. Ordinary real
@@ -1394,6 +1425,69 @@ ordered algebraic real-closure existence foundation.
 
 ### Termination, completeness and refusal
 
+The selected-section integration boundary is `SectionBuild.build`,
+`SectionReplay.check`/`checkWith` and `SectionQuote.finish`. It uses an actual
+ordinary-real predecessor model and already authenticated fixed coordinates.
+The producer freezes a true selected section and its complete ordered row,
+retaining hints for all predecessor coefficients stored in the root graph and
+row graph. Strict coefficient codecs need checked seed facts before restoring
+these literals. `ScalarPacket.read`/`restore` validate the proposed scalar
+graphs and retain exact literal fields; later reached operations remain
+explicit kernel-replay requests. Hints and compiled producer verdicts are not
+proof evidence.
+
+`SectionReplay.check_fields` retains the decoded descriptor subject and row;
+`check_domains` proves all supplied original divisors nonzero. `check_sound`
+provides one real witness and `check_false` only a point counterexample.
+`SectionQuote.finish` freshly reifies the original target and checks the exact
+existential matrix, fixed valuation equality and ordered original divisor
+identities before transport. This boundary does not discover arbitrary source
+coordinates, reconstruct recursive provider histories, assemble all reached
+packing/inverse records or prove frozen complete cell coverage. Its producer
+does not visit point roots or sectors; `none` does not certify a false
+existential sentence. The general acceptance/completeness contract remains.
+
+The ordinary-point boundary is `PointBuild.build`, `PointReplay.check`/`checkWith`
+and `PointQuote.finish`, using the same authenticated fixed-parent model and
+coordinates. Point and linear-head boundaries supply candidate sections/rays
+and midpoints. The producer's quotient calculations and region labels are
+untrusted; acceptance checks a decoded ordinary point and its actual full
+source matrix, not membership in that region. Original divisor preflight,
+exact existential matrix/valuation binding and ordered divisor identities
+remain mandatory. Accepted false only gives a universal counterexample;
+`none` does not certify a false existential. Nonlinear selected-boundary
+conversion, recursive history restoration and complete frozen coverage remain
+part of the general contract. Point and selected-section quotation share
+`Quote.finish` and require the canonical checker's exact arity. The shared
+source equivalence is unconditional: ordered divisor identities are mandatory
+protocol checks, while `check_domains` separately establishes their nonzero
+interpretation from accepted replay. This retains rejection of original zero
+divisors even when the source proposition would still be true.
+
+`RootReplay.read` supplies the finite extraction boundary for one polynomial:
+literal context/head/open-endpoint binding, original supplied guard preflight,
+full derivative queries, independent graph replay and count-one extraction
+through the owner's shared table. Its result retains the actual accepted
+replay and exact `Descriptor.rootsFrom` equation. Table words are preserved
+without duplicates; finite comparator order and emitted-root/domain soundness
+are proved. This does not yet export complete interpreted-root coverage,
+Nodup or strict mathematical ordering for arbitrary supplied replay. Those
+statements belong to SignDet; the native producer equation cannot serve as a
+frozen certificate hypothesis. General family/cell replay
+and original-source authentication remain required. A repeated polynomial
+needs the owner's squarefree decomposition/transport before query replay.
+
+The operation-parametric `RootTable` core shares execution between canonical
+`RootReplay.read` and `readWith`. The latter accepts five equal supplied
+operations, transports descriptors through the owner's `Descriptor.changeOps`
+and retains the same accepted tree/extraction equation. `readWith_eq` preserves
+the canonical result and every error. Closed input constructors also use the
+checked supplied operations; constructing inputs with canonical arithmetic
+must not reintroduce native coefficient production into quotation. The nested
+X²−√2 fixture independently restores scalar seeds/reached records and consumes
+actual ordinary-real domain/root laws. It is one authenticated fixed parent,
+not arbitrary recursive provider-history or complete frozen cell assembly.
+
 Exact-field construction terminates by finite formula traversal, polynomial
 degree descent, the family's total root isolation and total coefficient
 operations. Supply the corresponding correctness and termination proofs.
@@ -1413,6 +1507,28 @@ and root isolation give a complete mathematical decision procedure for this
 sentence fragment. Prove construction correctness and certificate acceptance;
 the tactic closes only true sentences. Its execution limits do not weaken
 the completeness theorem for the underlying mathematical procedure.
+
+The current frontend does not yet implement that full completeness contract.
+Its available common-polynomial irreducibility certificates can reject an
+irreducible algebraic presentation: the pinned degree-eight example and its
+prime-factor patterns are recorded in
+[`CertificationProofs.lean`](../../conformance/HexRCF/CertificationProofs.lean).
+For a new common polynomial, the frontend first reuses a matching
+`ZPoly.CheckedIrreducible` instance for the exact quoted `DensePoly.ofCoeffs`
+literal, checking its runtime binding, type,
+axiom dependencies and ordinary-kernel validity. Rejected instances and
+instance-search resource failures are terminal; only absence of an instance
+enters the existing certificate producers. A supplied instance can cover a
+particular common polynomial without completing automatic certification.
+A focused build-only experiment measures the cost of reconstructing that
+irreducibility theorem versus reusing it across modules, for the same
+degree-eight tactic goal and matched private executable imports. It informs
+where to place proof construction; it does not measure automatic certification
+or the smaller ordinary-import consumer cone.
+This is a certificate-language gap, not an elaborator resource limit. The
+[owning implementation issue](https://github.com/kim-em/hex-dev/issues/10358#issuecomment-5968366163)
+records the concrete owner prerequisite. Finite accepted proofs remain sound;
+no total algebraic acceptance claim is warranted until the gap is closed.
 
 A total transcendental tower requires correct convergent user-supplied
 approximations and transcendence of each constant over its **embedded
@@ -1563,16 +1679,16 @@ missing algorithm or theorem obligations.
 | --- | --- |
 | Existing HexRCF integer path | Preserve `check_sound`, real reification equivalences, half-open semantics and ordinary-kernel quotation. Add the base-owned fallback registry and structured rational recognition declines; generic coefficient/cell bridges remain new. |
 | Shared frontend, PR #10338 and consumer #10329 | Merged `QF`/`Prenex`, scope/normalization/valuation proofs and optional integer RCF adapter. Add guarded division preprocessing, maximal closed-coefficient abstraction and `Specialize.eval` here; virtual substitution itself is not a prerequisite and its symbolic parameters are not silently accepted. |
-| HexPoly / HexPolyMathlib | Existing total `DensePoly` arithmetic, division/gcd/xgcd and correspondence; ordinary ordered-domain pseudo-division for shared signed remainder chains. |
-| HexRationalFn / HexRationalFnMathlib | Existing exact rational-function arithmetic and correspondence over lawful coefficient fields. The tactic separately retains every original source divisor guard. |
-| Caller-supplied approximation procedures | Exact finite bounds bound to the registered real subject, kernel containment evidence and terminating approximation calls. Convergence and relative transcendence are extra hypotheses for total sign search. Generic composition belongs to ordered-fn; no HexInterval/HexIntervalMathlib or bundled π/e provider implementation is required. |
-| [Ordered-fn](../../SPEC/Libraries/hex-ordered-fn.md) and [companion](../../SPEC/Libraries/hex-ordered-fn-mathlib.md) | Caller-registered real constants, minimal exact finite-bound arithmetic, guarded evaluation, Horner enclosure composition, nested sign/zero evidence, replay soundness and conditional progress. Successful finite interpretation must not assume faithful specialization. |
-| HexRealRoots / HexRealRootsMathlib | Shared signed-remainder kernel and its positive-scaling/representation bridges, general Cauchy-index/Tarski replay correspondence, and shared `IsRealClosed ℝ`; the existing derivative-seeded integer theorem is insufficient. |
-| [Sturm](../../SPEC/Libraries/hex-sturm.md) and [companion](../../SPEC/Libraries/hex-sturm-mathlib.md) | Domain-checked ordered-field Tarski queries, endpoint adapters, complete root counts and nested coefficient replay/transport soundness. |
-| [Sign-det](../../SPEC/Libraries/hex-sign-det.md) and [companion](../../SPEC/Libraries/hex-sign-det-mathlib.md) | Complete BKR support/counts, Thom existence/uniqueness/order, sign-at-root, common-root re-encoding and their literal correspondence, using the existing matrix/rank companions. |
-| HexNumberField / HexNumberFieldMathlib | Existing `QAdjoin` arithmetic, coordinate interpretation, `toAlgebraicNumber` value preservation, `value_real`, `common_get` for the computed presentation, and `AlgebraicNumber.nthRoot` correspondence. The adapter must prove selected real interpretations, check any literal common-field presentation against its source values, and prove root-alias equalities. |
-| HexRealAlgebraic / HexRealAlgebraicMathlib | Existing `toReal`, exact comparison, `RealAlgebraicPoly.roots` with multiplicities/`all`, and Repr correspondence; new tower conversions and trivial-base agreement must be proved. |
-| [Real-closure](../../SPEC/Libraries/hex-real-closure.md) and [companion](../../SPEC/Libraries/hex-real-closure-mathlib.md) | Implemented contexts and total coefficient representations, selected-root interpretation, splitting/all-live transport, Yun and complete ordered roots, shared samples and real `Sample.realizeReplay` including joint nested constraints. Arithmetic, suffix transport and intermediate isolation proofs are implemented; complete ordered roots, all-live enlargement and nested real-sample realization remain integration obligations. Quotient and interpretation laws are proof prerequisites; core algebraic execution is independent of them. Transcendental search retains its caller progress premise. |
+| HexPoly / HexPolyTheory | Existing total `DensePoly` arithmetic, division/gcd/xgcd and correspondence; ordinary ordered-domain pseudo-division for shared signed remainder chains. |
+| HexRationalFn / HexRationalFnTheory | Existing exact rational-function arithmetic and correspondence over lawful coefficient fields. The tactic separately retains every original source divisor guard. |
+| Caller-supplied approximation procedures | Exact finite bounds bound to the registered real subject, kernel containment evidence and terminating approximation calls. Convergence and relative transcendence are extra hypotheses for total sign search. Generic composition belongs to ordered-fn; no HexInterval/HexIntervalTheory or bundled π/e provider implementation is required. |
+| [Ordered-fn](../../SPEC/Libraries/hex-ordered-fn.md) and [companion](../../SPEC/Libraries/hex-ordered-fn-theory.md) | Caller-registered real constants, minimal exact finite-bound arithmetic, guarded evaluation, Horner enclosure composition, nested sign/zero evidence, replay soundness and conditional progress. Successful finite interpretation must not assume faithful specialization. |
+| HexRealRoots / HexRealRootsTheory | Shared signed-remainder kernel and its positive-scaling/representation bridges, general Cauchy-index/Tarski replay correspondence, and shared `IsRealClosed ℝ`; the existing derivative-seeded integer theorem is insufficient. |
+| [Sturm](../../SPEC/Libraries/hex-sturm.md) and [companion](../../SPEC/Libraries/hex-sturm-theory.md) | Domain-checked ordered-field Tarski queries, endpoint adapters, complete root counts and nested coefficient replay/transport soundness. |
+| [Sign-det](../../SPEC/Libraries/hex-sign-det.md) and [companion](../../SPEC/Libraries/hex-sign-det-theory.md) | Complete BKR support/counts, Thom existence/uniqueness/order, sign-at-root, common-root re-encoding and their literal correspondence, using the existing matrix/rank companions. |
+| HexNumberField / HexNumberFieldTheory | Existing `QAdjoin` arithmetic, coordinate interpretation, `toAlgebraicNumber` value preservation, `value_real`, `common_get` for the computed presentation, and `AlgebraicNumber.nthRoot` correspondence. The adapter must prove selected real interpretations, check any literal common-field presentation against its source values, and prove root-alias equalities. |
+| HexRealAlgebraic / HexRealAlgebraicTheory | Existing `toReal`, exact comparison, `RealAlgebraicPoly.roots` with multiplicities/`all`, and Repr correspondence; new tower conversions and trivial-base agreement must be proved. |
+| [Real-closure](../../SPEC/Libraries/hex-real-closure.md) and [companion](../../SPEC/Libraries/hex-real-closure-theory.md) | Implemented contexts and total coefficient representations, selected-root interpretation, splitting/all-live transport, Yun and complete ordered roots, shared samples and real `Sample.realizeReplay` including joint nested constraints. Arithmetic, suffix transport and intermediate isolation proofs are implemented; complete ordered roots, all-live enlargement and nested real-sample realization remain integration obligations. Quotient and interpretation laws are proof prerequisites; core algebraic execution is independent of them. Transcendental search retains its caller progress premise. |
 | Tau Ceti through the owning companions | Univariate IVT/Rolle, signed-remainder/Cauchy-index, Thom and BKR foundations from the existing #10300 roadmap work. Ordered algebraic real-closure existence is additionally needed for symbolic infinitesimal ambient models; direct finite replay into ℝ does not need that existence theorem. The required foundations are available in the Tau Ceti pin; use their actual statements rather than waiting for completion of the broader roadmap. |
 | This optional HexRCF adapter | Coefficient/source authentication, shared-schema abstraction/specialization, generic carrier/cell and half-open correspondence, finite real witness export, quotation, `check_domains`, `check_sound`, construction termination and certificate acceptance, manual examples and both evidence tracks. |
 

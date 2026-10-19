@@ -1,0 +1,29 @@
+{
+  "scope": "Exploratory source-distinct audit profile and operational Lake observations, not a controlled timing comparison. Logs ending in build failure are retained with that status; their failure was the refusal-control construction, not successful source-proof audit evidence.",
+  "profile": {
+    "samples": 496,
+    "lost_samples": 0,
+    "dominant_symbol": "Lean.EnvironmentHeader.moduleNames array conversion",
+    "raw_profile_retained_locally": "finite-matrix-audit-1761281.perf"
+  },
+  "completed_old_source_audit_seconds": 136,
+  "completed_cache_source_audit_seconds": 6.6,
+  "logs": [
+    {
+      "file": "finite-matrix-quotation-controls-3.log.gz",
+      "sha256": "b6e2352dcfb70026511591df9616a05c95aedb84a5906f228c1236e8aca0f400"
+    },
+    {
+      "file": "finite-matrix-quotation-controls-4.log.gz",
+      "sha256": "021d01bb22491a130f9be9ac85f8bc749f4df692c75b5bd3663e7c1d40021b26"
+    },
+    {
+      "file": "finite-matrix-audit-1761281-symbols.log.gz",
+      "sha256": "3d26b87563819e1952206a75409c8caa19c2507823aaa3d15657361a0e2c2b70"
+    },
+    {
+      "file": "finite-matrix-audit-1761281-perf.log.gz",
+      "sha256": "664fcf945c16ff1163b91ec688ebed68b62ee3de84eac391b2f34a948947132d"
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+[New LWP 326195]
+[New LWP 326191]
+[New LWP 326190]
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/nix/store/lm3pknxi0ipypy3lxh1wmm8wvvavdwrn-glibc-2.42-84/lib/libthread_db.so.1".
+0x000073252c0a5a02 in __syscall_cancel_arch () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+
+Thread 4 (Thread 0x73252c2a6840 (LWP 326190) "iou-sqp-326189"):
+#0  0x0000000000000000 in ?? ()
+Backtrace stopped: Cannot access memory at address 0x0
+
+Thread 3 (Thread 0x73252bcc76c0 (LWP 326191) "hexrealalgebrai"):
+#0  0x000073252c0a5a02 in __syscall_cancel_arch () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#1  0x000073252c09910c in __internal_syscall_cancel () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#2  0x000073252c099184 in __syscall_cancel () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#3  0x000073252c1242f5 in epoll_pwait () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#4  0x000058648054448d in uv.io_poll ()
+#5  0x000058648053fa9b in uv_run ()
+#6  0x0000586480558c8d in lean::event_loop_run_loop(lean::event_loop_t*) ()
+#7  0x0000586480505afa in lean::lthread::imp::_main(void*) ()
+#8  0x000073252c09ce53 in start_thread () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#9  0x000073252c12407c in __clone3 () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+
+Thread 2 (Thread 0x7324e3fff6c0 (LWP 326195) "hexrealalgebrai"):
+#0  0x000058647c7f23a3 in __gmpn_add_n_x86_64 ()
+#1  0x000058647c825410 in mpn_fft_fft ()
+#2  0x000058647c82530e in mpn_fft_fft ()
+#3  0x000058647c8252e0 in mpn_fft_fft ()
+#4  0x000058647c82530e in mpn_fft_fft ()
+#5  0x000058647c8263d0 in mpn_mul_fft_internal.isra ()
+#6  0x000058647c827078 in __gmpn_mul_fft ()
+#7  0x000058647c8247b2 in __gmpn_mulmod_bnm1 ()
+#8  0x000058647c824441 in __gmpn_mulmod_bnm1 ()
+#9  0x000058648050b4d1 in __gmpn_mu_divappr_q ()
+#10 0x0000586480509c22 in __gmpn_div_q ()
+#11 0x00005864805092ad in __gmpz_tdiv_q ()
+#12 0x000058648050626f in lean::mpz::operator/=(lean::mpz const&) ()
+#13 0x0000586480518ff5 in lean_nat_big_div ()
+#14 0x000058647c64291e in lp_Hex___private_HexArith_Nat_Sqrt_0__HexArith_Nat_sqrtStep ()
+#15 0x000058647c6429fd in lp_Hex___private_HexArith_Nat_Sqrt_0__HexArith_Nat_sqrtAux ()
+#16 0x000058647c642bb8 in lp_Hex_HexArith_Nat_floorSqrt ()
+#17 0x000058647c642d08 in lp_Hex_HexArith_Nat_ceilSqrt ()
+#18 0x000058647c643547 in lp_Hex_Hex_ZPoly_defaultFactorCoeffBoundImpl ()
+#19 0x000058647c6a3caf in lp_Hex_Hex_directDegreeScore ()
+#20 0x000058647c6a4dab in lp_Hex_Hex_scoutBetterPattern ()
+#21 0x000058647c6a5ae8 in lp_Hex_Hex_firstDirectPlan_x3f ()
+#22 0x000058647c6be66b in lp_Hex_Hex_classicalInput ()
+#23 0x000058647c6c5120 in lp_Hex_Hex_runFactor ()
+#24 0x000058647c6c5bd1 in lp_Hex_Hex_factorTraced ()
+#25 0x000058647c6c5ce6 in lp_Hex_Hex_ZPoly_factorize ()
+#26 0x000058647c6fb9b2 in lp_Hex_Hex_AlgebraicRoot_exact_x3f ()
+#27 0x000058647c72e589 in lp_Hex_Hex_AlgebraicNumber_ofRat ()
+#28 0x000058647c739e66 in lp_Hex_Hex_RealAlgebraicNumber_ofRat ()
+#29 0x000058647c60098e in lp_Hex_Hex_RealAlgebraicBench_rationalLeaf ()
+#30 0x000058647c60177d in lp_Hex___private_HexRealAlgebraic_Bench_0__Hex_RealAlgebraicBench_initFn___lam__1_00___x40_HexRealAlgebraic_Bench_3302504028____hygCtx___hyg_33_ ()
+#31 0x000058647c6018e9 in lp_Hex___private_HexRealAlgebraic_Bench_0__Hex_RealAlgebraicBench_initFn___lam__1_00___x40_HexRealAlgebraic_Bench_3302504028____hygCtx___hyg_33____boxed ()
+#32 0x0000586480524100 in lean_apply_2 ()
+#33 0x000058647c75d08d in lp_lean_x2dbench_LeanBench_runChildMode ()
+#34 0x000058647c7e5d7b in lp_lean_x2dbench_LeanBench_Cli_runChildCmd ()
+
+Thread 1 (Thread 0x73252c2a6840 (LWP 326189) "hexrealalgebrai"):
+#0  0x000073252c0a5a02 in __syscall_cancel_arch () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#1  0x000073252c09910c in __internal_syscall_cancel () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#2  0x000073252c09988c in __futex_abstimed_wait_common () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#3  0x000073252c09ec6c in __pthread_clockjoin_ex () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#4  0x0000586480504d41 in lean::run_with_thread_stack(std::__1::function<void ()> const&) ()
+#5  0x0000586480504e84 in lean_run_main ()
+#6  0x000058647c608c3a in main ()
+[Inferior 1 (process 326189) detached]

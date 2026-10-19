@@ -1,0 +1,8 @@
+HexGFqTheory Phase 2 review complete.
+
+Reviewed:
+- HexGFqTheory/Basic.lean
+- HexGFqTheory.lean
+
+Follow-up:
+- #1608 tracks the missing GFq-to-GaloisField equivalence surface promised by the SPEC.

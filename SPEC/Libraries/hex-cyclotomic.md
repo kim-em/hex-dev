@@ -2,7 +2,7 @@
 
 `Φₙ` for positive `n` as a dense `ZPoly`, together with the divisor
 family `{Φ_d : d ∣ n}` and the factorization `xⁿ − 1 = ∏_{d ∣ n} Φ_d`.
-Mathlib-free. The companion `hex-cyclotomic-mathlib` identifies the
+Mathlib-free. The companion `hex-cyclotomic-theory` identifies the
 computed value with `Polynomial.cyclotomic n ℤ` and transports
 irreducibility, the degree formula, and the factorization from Mathlib.
 
@@ -808,12 +808,11 @@ Families:
   checked construction is a small constant factor, since the fixture
   emitter uses it.
 
-**Comparators.** PARI's `polcyclo` through cypari2, `informational`: it
+**Comparators.** PARI's `polcyclo` through cypari2, for orientation: it
 is the conformance oracle, and the measurement includes cypari2's
 marshalling of a degree-`φ(n)` coefficient vector into Python, so the
-ratio does not isolate the algorithm. SymPy's `cyclotomic_poly`,
-`informational`, for the same reason and more so. No external comparator
-is registered with `class: gating`, and that is the justification.
+ratio does not isolate the algorithm. SymPy's `cyclotomic_poly`, for
+orientation, for the same reason and more so. Neither has a target ratio.
 
 Two required internal checks, which matter more than the external ones:
 
@@ -824,26 +823,26 @@ Two required internal checks, which matter more than the external ones:
   calls on the highly-composite family. A regression means the shared
   prefixes stopped being shared.
 
-## The Mathlib layer
+## The theory layer
 
-`hex-cyclotomic-mathlib` identifies the computed polynomial with
+`hex-cyclotomic-theory` identifies the computed polynomial with
 Mathlib's:
 
 ```lean
-namespace HexCyclotomicMathlib
+namespace HexCyclotomicTheory
 open Polynomial
 
 theorem toPolynomial_cyclotomic {n : Nat} (F : CheckedFactorization n) :
-    HexPolyMathlib.toPolynomial (Hex.ZPoly.cyclotomic F) = cyclotomic n ℤ
+    HexPolyTheory.toPolynomial (Hex.ZPoly.cyclotomic F) = cyclotomic n ℤ
 
 theorem natDegree_eq {n : Nat} (F : CheckedFactorization n) :
-    (HexPolyMathlib.toPolynomial (Hex.ZPoly.cyclotomic F)).natDegree = Nat.totient n
+    (HexPolyTheory.toPolynomial (Hex.ZPoly.cyclotomic F)).natDegree = Nat.totient n
 
 theorem irreducible {n : Nat} (F : CheckedFactorization n) :
-    Irreducible (HexPolyMathlib.toPolynomial (Hex.ZPoly.cyclotomic F))
+    Irreducible (HexPolyTheory.toPolynomial (Hex.ZPoly.cyclotomic F))
 
 theorem irreducible_rat {n : Nat} (F : CheckedFactorization n) :
-    Irreducible ((HexPolyMathlib.toPolynomial (Hex.ZPoly.cyclotomic F)).map
+    Irreducible ((HexPolyTheory.toPolynomial (Hex.ZPoly.cyclotomic F)).map
       (Int.castRingHom ℚ))
 
 theorem divisors_index_nodup {n : Nat} (F : CheckedFactorization n) :
@@ -854,7 +853,7 @@ theorem divisors_index_eq {n : Nat} (F : CheckedFactorization n) :
 
 theorem prod_divisors_eq {n : Nat} (F : CheckedFactorization n) :
     ((Hex.ZPoly.cyclotomicDivisors F).map
-        (fun dp => HexPolyMathlib.toPolynomial dp.2)).foldl (· * ·) 1 = X ^ n - 1
+        (fun dp => HexPolyTheory.toPolynomial dp.2)).foldl (· * ·) 1 = X ^ n - 1
 ```
 
 `toPolynomial_cyclotomic` is the central correspondence for this layer. The
@@ -890,16 +889,16 @@ recursion.** Mathlib has both halves of it already:
 transported facts and no new cyclotomic theory:
 
 1. `toPolynomial_substPow`, which says `substPow` is `expand`. This is a
-   hex-poly-mathlib prerequisite, since it is a fact about a hex-poly
+   hex-poly-theory prerequisite, since it is a fact about a hex-poly
    operation.
 2. A statement that the executable division by a monic divisor computes
    the true quotient when the divisor divides the dividend. Mathlib's
-   `divByMonic` and `modByMonic` are the target, and hex-poly-mathlib is
-   where that transport belongs. `HexPolyMathlib/Euclid.lean` already
+   `divByMonic` and `modByMonic` are the target, and hex-poly-theory is
+   where that transport belongs. `HexPolyTheory/Euclid.lean` already
    relates the field-style operations, so the monic case is an addition
    to an existing file rather than a new development.
 3. `Nat.totient` agreement with hex-int-factor's `totient`, which
-   `hex-int-factor-mathlib` already supplies as `totient_eq`, and
+   `hex-int-factor-theory` already supplies as `totient_eq`, and
    `Nat.divisors` agreement with `divisorsChecked`, which is the
    companion's own small addition beside `divisors_eq`.
 
@@ -1018,8 +1017,8 @@ holds by construction of the divisor. That lemma is the whole content of
 the prerequisite, and it belongs in hex-int-factor beside
 `checkFactorization`'s other soundness theorems, not here.
 
-**hex-poly-mathlib** gains `toPolynomial_substPow` and the monic
-division transport described in the Mathlib layer section.
+**hex-poly-theory** gains `toPolynomial_substPow` and the monic
+division transport described in the theory layer section.
 
 **Ordering.** This library cannot start before hex-int-factor
 milestone 2, since it needs the certificate and the divisor-function
@@ -1078,9 +1077,9 @@ HexCyclotomic/
   Spec.lean       -- cyclotomicRec, cyclotomic_eq_rec, the divisor-product
                   --   identity and the lemmas it is decomposed into
 HexCyclotomic.lean
-HexCyclotomicMathlib/
+HexCyclotomicTheory/
   Correspondence.lean -- toPolynomial_cyclotomic and its consequences
-HexCyclotomicMathlib.lean
+HexCyclotomicTheory.lean
 ```
 
 `Checked.lean` comes before `Spec.lean` because the reflected identity
@@ -1095,29 +1094,8 @@ still open.
     mathlib: false
     done_through: 0
     status: planned
-    phase4:
-      comparators:
-        - tool: PARI polcyclo via cypari2
-          class: informational
-          rationale: "PARI is the conformance oracle and the measurement includes cypari2's marshalling of a degree-phi(n) coefficient vector into Python, so the ratio does not isolate the algorithm."
-        - tool: SymPy cyclotomic_poly
-          class: informational
-          rationale: "SymPy is the second-opinion oracle and is Python, so the ratio is reported for context and does not determine acceptance."
-      input_families:
-        - name: powerful-index
-          description: n = 2^k and 2^a 3^b with phi(n) up to 10^6, where the radical is tiny and the cost should be the output size
-        - name: squarefree-index
-          description: products of the first j odd primes for j up to 6, where the ladder does all the work and the coefficients grow
-        - name: highly-composite-index
-          description: n in 5040, 27720, 720720, measuring cyclotomicDivisors against tau(n) separate constructions
-        - name: route-crossover
-          description: the ladder against the divisor recursion on every family, up to the index where the recursion is unaffordable
-        - name: evaluate
-          description: Phi_d(b) on the b^n +- 1 grid against hex-int-factor's Nat recursion for the same values
-        - name: checked-overhead
-          description: the checked construction and the product-identity check against the plain construction
-  HexCyclotomicMathlib:
-    deps: [HexCyclotomic, HexPolyZMathlib, HexPolyMathlib, HexIntFactorMathlib]
+  HexCyclotomicTheory:
+    deps: [HexCyclotomic, HexPolyZTheory, HexPolyTheory, HexIntFactorTheory]
     mathlib: true
     done_through: 0
     status: planned
@@ -1167,7 +1145,7 @@ until those entries land.
 
 The [direct radical design](../../HexNumberField/SPEC/hex-number-field.md#cyclotomic-construction-and-coprime-powers)
 specifies the consumer of this polynomial API. `HexNumberField` will depend on
-`HexCyclotomic`, and its companion on `HexCyclotomicMathlib`; neither edge is
+`HexCyclotomic`, and its companion on `HexCyclotomicTheory`; neither edge is
 reversed. The closed irreducibility-evidence constructor deliberately puts
 this dependency in `HexNumberField.Basic`; downstream number-field libraries
 inherit the cyclotomic and integer-factor package dependencies.

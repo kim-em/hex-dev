@@ -15,7 +15,7 @@ public section
 
 `#m[a, b; c, d]` builds the matrix with rows `[a, b]` and `[c, d]`: rows are
 separated by `;` and entries by `,`, mirroring Mathlib's `!![...]` but with a
-distinct opening token, so the two notations coexist in the Mathlib bridge
+distinct opening token, so the two notations coexist in the theory companion
 libraries (Mathlib owns `![` and `!![`).
 
 ```

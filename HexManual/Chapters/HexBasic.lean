@@ -267,7 +267,7 @@ each consumer takes the one or two modules it needs.
 * The fold algebra travels with the multivariate stack, where sums are indexed
   by a map's keys: {ref "hex-mv-poly"}[`HexMvPoly`], `HexMvGcd`,
   `HexMvHensel`, and {ref "hex-resultant"}[`HexResultant`].
-* `HexBasic` has no Mathlib companion, and needs none. Nothing here states a
+* `HexBasic` has no theory companion, and needs none. Nothing here states a
   correspondence: these are Lean and Std facts that happen not to be upstream
-  yet. The Mathlib bridges live in the consuming libraries' `*Mathlib`
+  yet. The theory companions live in the consuming libraries' `*Theory`
   counterparts, which import both this library and Mathlib.

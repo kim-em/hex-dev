@@ -1,0 +1,51 @@
+{
+  "completed_arms": 18,
+  "failed_arms": 0,
+  "all_pair_hashes_agree": true,
+  "points": [
+    {
+      "name": "height",
+      "baseline": [
+        68.425644,
+        69.878549,
+        68.464844
+      ],
+      "inline": [
+        96.109444,
+        94.198489,
+        94.380938
+      ],
+      "change_percent": 37.85314109530433
+    },
+    {
+      "name": "third",
+      "baseline": [
+        59356.727051,
+        62229.382385,
+        62895.510132
+      ],
+      "inline": [
+        300595.490234,
+        303456.118652,
+        306852.937012
+      ],
+      "change_percent": 387.64121870048666
+    },
+    {
+      "name": "approximation",
+      "baseline": [
+        4306415691.0,
+        4319296139.0,
+        4336847100.0
+      ],
+      "inline": [
+        4300295544.0,
+        4316372324.0,
+        4322287316.0
+      ],
+      "change_percent": -0.06769193187751464
+    }
+  ],
+  "expand_full_comparison": false,
+  "scope": "Predeclared same-toolchain source-change attribution probe, not Phase6 acceptance."
+}

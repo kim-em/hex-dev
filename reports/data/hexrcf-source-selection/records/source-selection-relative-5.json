@@ -1,0 +1,120 @@
+{
+  "head": "af95bda597f7bc609d168705e38aed821ae2d8d8",
+  "checked": [
+    {
+      "source": "HexManual/Chapters/HexRCF/NativeSources.lean",
+      "href": "https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/NativeSourcesConformance.lean",
+      "target_exists": true
+    },
+    {
+      "source": "HexManual/Chapters/HexRCF/NativeSources.lean",
+      "href": "https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/NativeSelectionConformance.lean",
+      "target_exists": true
+    },
+    {
+      "source": "HexManual/Chapters/HexRCF/NativeSources.lean",
+      "href": "https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/SourceSelectionConformance.lean",
+      "target_exists": true
+    },
+    {
+      "source": "HexManual/Chapters/HexRCF/NativeSources.lean",
+      "href": "https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/SourceSelectionNative.lean",
+      "target_exists": true
+    },
+    {
+      "source": "HexManual/Chapters/HexRCF/NativeSources.lean",
+      "href": "https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/FieldSelectionConformance.lean",
+      "target_exists": true
+    },
+    {
+      "source": "HexManual/Chapters/HexRCF/NativeSources.lean",
+      "href": "https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/SourceSelectionPublic.lean",
+      "target_exists": true
+    },
+    {
+      "source": "HexManual/Chapters/HexRCF/NativeSources.lean",
+      "href": "https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/SectionProduceConformance.lean",
+      "target_exists": true
+    },
+    {
+      "source": "HexManual/Chapters/HexRCF/NativeSources.lean",
+      "href": "https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/SectionOrdinaryConformance.lean",
+      "target_exists": true
+    },
+    {
+      "source": "HexManual/Chapters/HexRCF/NativeSources.lean",
+      "href": "https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/PointProduceConformance.lean",
+      "target_exists": true
+    },
+    {
+      "source": "HexManual/Chapters/HexRCF/NativeSources.lean",
+      "href": "https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/RootReplayConformance.lean",
+      "target_exists": true
+    },
+    {
+      "source": "HexManual/Chapters/HexRCF/NativeSources.lean",
+      "href": "https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/RootReplayOrdinaryConformance.lean",
+      "target_exists": true
+    },
+    {
+      "source": "HexManual/Chapters/HexRCF/NativeSources.lean",
+      "href": "https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/NestedRootProduceConformance.lean",
+      "target_exists": true
+    },
+    {
+      "source": "HexManual/Chapters/HexRCF/NativeSources.lean",
+      "href": "https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/NestedRootOrdinaryConformance.lean",
+      "target_exists": true
+    },
+    {
+      "source": "HexManual/Chapters/HexRCF/NativeSources.lean",
+      "href": "https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/NestedTransport/Read.lean",
+      "target_exists": true
+    },
+    {
+      "source": "HexManual/Chapters/HexRCF/NativeSources.lean",
+      "href": "https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/NestedTransport/Ordinary.lean",
+      "target_exists": true
+    },
+    {
+      "source": "HexManual/Chapters/HexRCF/NativeSources.lean",
+      "href": "https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/NestedTransport/Controls.lean",
+      "target_exists": true
+    },
+    {
+      "source": "HexManual/Chapters/HexRCF/NativeSources.lean",
+      "href": "https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/FiniteMatrix/Quote.lean",
+      "target_exists": true
+    },
+    {
+      "source": "HexManual/Chapters/HexRCF/NativeSources.lean",
+      "href": "https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/FiniteMatrix/Guards/Quote.lean",
+      "target_exists": true
+    },
+    {
+      "source": "HexManual/Chapters/HexRCF/NativeSources.lean",
+      "href": "https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/FiniteMatrix/Guards/Quotient/Quote.lean",
+      "target_exists": true
+    },
+    {
+      "source": "HexManual/Chapters/HexRCF/NativeSources.lean",
+      "href": "https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/FiniteMatrix/Guards/Quotient/Ordinary.lean",
+      "target_exists": true
+    },
+    {
+      "source": "HexManual/Chapters/HexRCF/NativeSources.lean",
+      "href": "https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/FiniteMatrix/Ordinary.lean",
+      "target_exists": true
+    },
+    {
+      "source": "reports/hexrcf-source-selection.md",
+      "href": "../HexManual/Chapters/HexRCF/NativeSources.lean",
+      "target_exists": true
+    },
+    {
+      "source": "reports/hexrcf-source-selection.md",
+      "href": "data/hexrcf-source-selection/context.json",
+      "target_exists": true
+    }
+  ]
+}

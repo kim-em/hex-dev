@@ -1,0 +1,67 @@
+{
+  "cpu": 51,
+  "head": "6d78bf3e1fb1aa23129df83f7888979dd5afeb6d",
+  "host": "chungus2",
+  "load_start": [
+    16.544921875,
+    6.1943359375,
+    9.20361328125
+  ],
+  "commands": [
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+      "run",
+      "Hex.SturmBench.runInitialWide",
+      "Hex.SturmBench.runClearingWide",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/prerequisite-sturm-growing-operands/head-and-sparse.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+      "run",
+      "Hex.SturmFrontendBench.runRetargetWide",
+      "Hex.SturmFrontendBench.runEmbedSparse",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/prerequisite-sturm-growing-operands/retarget-and-embedding.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+      "run",
+      "Hex.SturmFrontendBench.runCoefficientBits",
+      "Hex.SturmFrontendBench.runEndpointBits",
+      "Hex.SturmFrontendBench.runFractionalBits",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/prerequisite-sturm-growing-operands/odd-operands.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+      "run",
+      "Hex.SturmFrontendBench.runPreparedBits",
+      "Hex.SturmFrontendBench.runCountBits",
+      "Hex.SturmFrontendBench.runPreparedCountBits",
+      "Hex.SturmFrontendBench.runCertificateBits",
+      "Hex.SturmFrontendBench.runPreparedCertificateBits",
+      "Hex.SturmFrontendBench.runCountCertificateBits",
+      "Hex.SturmFrontendBench.runFieldReplayBits",
+      "Hex.SturmFrontendBench.runCachedReplayBits",
+      "Hex.SturmFrontendBench.runClearBits",
+      "Hex.SturmFrontendBench.runInfiniteBits",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/prerequisite-sturm-growing-operands/translated.json"
+    ]
+  ],
+  "hashes": {
+    "bench/HexSturm/Bench.lean": "82bcb70b1ccf71c3eeb0a525cded8fabcc2d513a4a240cccf047fd461e675202",
+    "bench/HexSturm/Frontend.lean": "f926233755825ca0ee1b6a0f752ff0752e7d5960d92e6e7d9e27d731dbfa3e5e",
+    "reports/sturm-bit-cost-models.md": "190d4616bb2e01bb35784c3b76abd397d5cf01fa3dcd0c07864f19306ef189a8",
+    "lake-manifest.json": "a2440490b8954368bd3de4d4e7142d0a75ef6b4e1cbe664c152a87e0715a0e56",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench": "2582ee10a5f694f04001b0aff3919a35ce90c970d8f2219e98a96c003b233f6a"
+  },
+  "load_end": [
+    9.68212890625,
+    8.4970703125,
+    9.10986328125
+  ],
+  "sources_unchanged": true
+}

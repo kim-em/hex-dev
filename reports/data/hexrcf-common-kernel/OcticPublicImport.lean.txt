@@ -1,0 +1,15 @@
+module
+import KernelClosure
+import HexNumberField.Basic
+import HexBerlekampZassenhausMathlib.KernelFactorTactic
+open Hex
+namespace OcticPublicImport
+set_option maxRecDepth 32768
+set_option maxHeartbeats 8000000
+abbrev polynomial : ZPoly := DensePoly.ofList [-2,-24,169,70,-127,-70,6,8,1]
+theorem irreducible : polynomial.Irreducible := irreducibility! polynomial
+theorem checked : polynomial.CheckedIrreducible :=
+  ⟨(ZPoly.isIrreducible_iff polynomial).mpr irreducible, by decide +kernel⟩
+#print axioms irreducible
+#print axioms checked
+end OcticPublicImport

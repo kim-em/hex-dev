@@ -1,0 +1,8 @@
+Hex.RealAlgebraicBench.runHardIntPow    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=6d78bf3-dirty, 2026-10-02T03:58:36Z, host=chungus2
+  repeat 0  245.346 ms
+  median: 245.346 ms    min: 245.346 ms    max: 245.346 ms
+  hash: all repeats agree
+  observed hash: 0xee54fcb23d356212
+  peak RSS: 68_532 kB (across 1 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/IntPow-0-Hard.json

@@ -14,6 +14,8 @@ public meta import HexRealRoots.SignedRemainderChain
 public meta import HexRealRoots.Basic
 public meta import HexPoly.Dense
 public meta import HexPoly.Operations
+public meta import Lean.Compiler.CSimpAttr
+public meta import Lean.Elab.Command
 
 public section
 
@@ -21,6 +23,28 @@ namespace Hex.TarskiTests
 
 open DensePoly
 open scoped Hex
+
+-- Exercise the imported compiler rewrite on immediate and multiprecision
+-- integers, including both sides of Lean's 32-bit small-integer bounds on
+-- 64-bit hosts. Both signs remain covered on 32-bit hosts as well.
+#guard (#[0, 1, -1, 2 ^ 31 - 1, 2 ^ 31, -(2 ^ 31), -(2 ^ 31) - 1,
+    2 ^ 62 - 1, 2 ^ 62, -(2 ^ 62), 2 ^ 4096, -(2 ^ 4096)] : Array Int).map
+  Int.sign == #[0, 1, -1, 1, 1, -1, -1, 1, 1, -1, 1, -1]
+
+example : Hex.Int.signImpl (2 ^ 128) = 1 ∧ Hex.Int.signImpl (-(2 ^ 128)) = -1 :=
+  by decide +kernel
+
+/-- info: 'Hex.Int.sign_eq_signImpl' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.Int.sign_eq_signImpl
+
+-- Value equality alone cannot detect a missing compiler registration. Check
+-- the imported production compiler mapping independently of the value guards.
+run_cmd do
+  let some entry := (Lean.Compiler.CSimp.ext.getState (← Lean.getEnv)).map.find? ``Int.sign
+    | throwError "missing Int.sign compiler replacement"
+  unless entry.toDeclName == ``Hex.Int.signImpl do
+    throwError "Int.sign must compile through Hex.Int.signImpl"
 
 @[expose] def p : ZPoly := ofCoeffs #[-1, 0, 1]
 @[expose] def x : ZPoly := ofCoeffs #[0, 1]

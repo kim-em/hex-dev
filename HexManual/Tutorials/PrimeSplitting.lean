@@ -482,7 +482,7 @@ of the reduced minimal polynomial, conductor hypothesis and all.
 Connecting hex's executable factor lists to that statement, through
 the correspondence layers described in
 {ref "hex-berlekamp-zassenhaus"}[the `HexBerlekampZassenhaus` chapter],
-is exactly the kind of bridge the `*Mathlib` companion libraries
+is exactly the kind of bridge the `*Theory` companion libraries
 exist for; this page stops at the polynomial boundary and says so.
 
 # Cross-references

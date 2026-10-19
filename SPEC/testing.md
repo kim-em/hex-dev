@@ -145,7 +145,7 @@ Each library has up to three conformance-tree modules:
   `done_through ≥ 2` has one. A Mathlib-importing library has one when it owns
   an executable runtime contract; one whose API is theorems about operations
   owned elsewhere must not (see §Banned anti-patterns and
-  [PLAN/Phase3.md §Mathlib libraries](../PLAN/Phase3.md)).
+  [PLAN/Phase3.md §theory libraries](../PLAN/Phase3.md)).
 - `conformance/HexFoo/CrossCheck.lean` (module `HexFoo.CrossCheck`) —
   the heavier cross-check sweeps: representation-correspondence
   campaigns, fast-vs-fast agreement over deterministic input streams,
@@ -338,14 +338,14 @@ MUST NOT appear in any `Conformance.lean`:
   theorem is `sorry`, delete the example. The example becomes
   meaningful only when the theorem it relies on has a real proof.
 
-- **Conformance files in proof-only `Hex*Mathlib` libraries.** A Mathlib
+- **Conformance files in proof-only `Hex*Theory` libraries.** A Mathlib
   library whose API is theorems about operations owned elsewhere has no
   executable runtime to conform to, so no conformance source or target owned
   by it should exist. Any `#guard` or
   `#eval` exercising the Mathlib-free executable belongs in the computational
   sibling (for example, checks on `Hex.Berlekamp.rabinTest` live in
   `HexBerlekamp/Conformance.lean`, never in
-  `HexBerlekampMathlib/Conformance.lean`). A Mathlib-importing library that
+  `HexBerlekampTheory/Conformance.lean`). A Mathlib-importing library that
   itself owns an executable reifier, certificate checker, or tactic may have a
   dedicated conformance target when
   its library SPEC defines that runtime contract and CI reachability.
@@ -401,7 +401,7 @@ subsection. Default oracle assignments:
 - `hex-interval` — an independent Python `fractions.Fraction` implementation,
   mode `always`, computing finite arithmetic, normalization, and endpoint
   attainment from the original serialized inputs rather than Lean's output.
-- `hex-interval-mathlib` — `python-flint` Arb, mode `if_available`, recomputing
+- `hex-interval-theory` — `python-flint` Arb, mode `if_available`, recomputing
   closed-box elementary-function enclosures from original exact inputs at
   higher precision. Open and unbounded cut laws remain Lean property tests.
 - `hex-mod-arith` — Lean big-integer modular arithmetic as property
@@ -445,12 +445,12 @@ subsection. Default oracle assignments:
   Lübeck flat-file cache for triple-source independence
   (Lean ≡ PARI ≡ Lübeck). No random generation.
 
-The `-mathlib` libraries are not the primary target of external
+The `-theory` libraries are not the primary target of external
 conformance testing. One whose API is theorems about operations owned
 elsewhere has no `core` profile at all: its coverage is the coverage of the
 Mathlib-free libraries implementing those operations, and a conformance module
 of its own is banned (see §Banned anti-patterns and
-[PLAN/Phase3.md §Mathlib libraries](../PLAN/Phase3.md)).
+[PLAN/Phase3.md §theory libraries](../PLAN/Phase3.md)).
 A Mathlib-importing library that owns a runtime of its own, an
 executable reifier, certificate checker, or tactic, does have a `core`
 profile, exercising that runtime against the contract its library SPEC

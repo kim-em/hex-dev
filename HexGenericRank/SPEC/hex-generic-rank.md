@@ -7,7 +7,7 @@ carrier `MvPoly k C cmp`. This is the one-line instantiation that
 [hex-rank §Placement](../../HexRank/SPEC/hex-rank.md#placement) assigns to
 its first consumer, placed in a library above `HexMvGcd`, and it is the
 executable half of the symbolic arm of the `rank` tactic. The companion
-[hex-generic-rank-mathlib](../../HexGenericRankMathlib/SPEC/hex-generic-rank-mathlib.md) owns the three
+[hex-generic-rank-theory](../../HexGenericRankTheory/SPEC/hex-generic-rank-theory.md) owns the three
 outputs a symbolic rank may take on a Mathlib goal (generic, conditional,
 locus), the tactic handler that produces them, and their soundness.
 
@@ -91,7 +91,7 @@ conditional on the check: from `checkRank P c = true`, hex-rank's
 `RankCert.det_ne_zero` and `RankCert.det_succ_eq_zero` at `P` say that
 `c.rank` is the largest size of a nonzero minor of `P`. That the producer's
 certificate passes the check is producer correctness,
-`rankCertWith_check`, which lives in `HexRankMathlib/Cert.lean` and not in
+`rankCertWith_check`, which lives in `HexRankTheory/Cert.lean` and not in
 the Mathlib-free layer, so the unconditional statement "`genericRank P` is
 the largest size of a nonzero minor" is the companion's theorem. The
 Mathlib-free library exposes `genericCert?`, returning the certificate only
@@ -143,10 +143,10 @@ The `symbolic` family: dimensions `2, 4, 8`, variables `1, 2, 4, 8`, degree
 known low rank as above. Registrations in `bench/HexGenericRank/Bench.lean`
 (Mathlib-free) register the producer and the compiled checker separately,
 checker preparation holding a precomputed certificate. Support and degree
-ladders are not one cubic model, so each registration states its mode under
+ladders are not one cubic model, so each registration states its claim under
 [benchmarking §Choosing the complexity claim](../../SPEC/benchmarking.md#choosing-the-complexity-claim);
-the fixed-workload registrations use mode 3 with preregistered absolute
-ceilings from the first measurement. The report
+the fixed-workload registrations are correctness checks and make no
+performance claim. The report
 `reports/hex-generic-rank-performance.md` records producer time, compiled
 checker time, the certificate size (term count and maximum degree of
 `denom`, total term count of `adj`, serialised bytes), and the realised
@@ -154,9 +154,7 @@ intermediate support of the producer.
 
 There is no external comparator: python-flint has no multivariate
 polynomial matrices, and SymPy's fraction-field rank is a Python-process
-oracle used for conformance, not a timed comparator. The absence is declared
-as **no-comparable-surface-in-named-comparator** for these targets, per
-[benchmarking](../../SPEC/benchmarking.md).
+oracle used for conformance, not a timed comparator.
 
 ## File organisation
 
@@ -179,7 +177,7 @@ HexGenericRank.lean
 
 ## Consumers
 
-- [hex-generic-rank-mathlib](../../HexGenericRankMathlib/SPEC/hex-generic-rank-mathlib.md): the three
+- [hex-generic-rank-theory](../../HexGenericRankTheory/SPEC/hex-generic-rank-theory.md): the three
   outputs and the `rank` tactic's symbolic handler.
 - `rank_locus` (later SPEC, see
   [hex-determinantal-ideal §Consumers](../../HexDeterminantalIdeal/SPEC/hex-determinantal-ideal.md#consumers)):

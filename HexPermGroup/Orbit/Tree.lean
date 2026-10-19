@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexPermGroup.Orbit
+public import HexBasic.List.Nodup
 
 public section
 
@@ -74,7 +75,7 @@ theorem missing (t : Tree S a) (x : Fin n) : t.lookup[x.val] = none ↔ x ∉ t.
       exact False.elim (hx (he ▸ Array.getElem_mem hj))
 
 theorem size_le (t : Tree S a) : t.points.size ≤ n := by
-  have h := List.nodup_subset_length_le t.nodup
+  have h := Hex.List.nodup_subset_length_le t.nodup
     (l₂ := List.finRange n) (by intro x _; exact List.mem_finRange x)
   simpa using h
 

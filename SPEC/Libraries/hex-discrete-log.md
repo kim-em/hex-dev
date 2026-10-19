@@ -10,8 +10,8 @@ separate contracts for complete decisions and incomplete searches.
 
 `HexDiscreteLog` is Mathlib-free and depends on `HexBasic`, `HexGFq`,
 `HexIntFactor` and `HexModular`. Its namespace is `Hex.DiscreteLog`.
-`HexDiscreteLogMathlib` depends on this library, `HexGFqMathlib` and
-`HexIntFactorMathlib`, plus Mathlib. No permutation-group, elliptic-curve,
+`HexDiscreteLogTheory` depends on this library, `HexGFqTheory` and
+`HexIntFactorTheory`, plus Mathlib. No permutation-group, elliptic-curve,
 sparse-matrix or external CAS dependency is introduced.
 
 The first public adapters are the nonzero elements of canonical `GFq` and
@@ -297,8 +297,8 @@ Use one coherent set of executable and Mathlib group operations; do not
 introduce a second incompatible power instance. The computational interface
 also admits a small noncyclic test group for detecting false subgroup tests.
 
-`HexDiscreteLogMathlib` has no runtime of its own; put its build-only
-examples in `HexDiscreteLogMathlib/Tests.lean`.
+`HexDiscreteLogTheory` has no runtime of its own; put its build-only
+examples in `HexDiscreteLogTheory/Tests.lean`.
 
 A specialized discrete-log tactic is outside the first scope. Kernel replay
 examples exercise literal certificate checks and the correspondence theorem.
@@ -342,7 +342,7 @@ Create `bench/HexDiscreteLog/Bench.lean` with these families:
 | `order-certification` | Exact-order checks and reduction from multiples, with stored factorization. |
 | `certificate-replay` | Positive powers, complete negative BSGS/PH, encoding and kernel replay sizes. |
 
-Follow the ordered evidence modes of [benchmarking](../benchmarking.md).
+Declare models per [benchmarking](../benchmarking.md#choosing-the-complexity-claim).
 A subgroup-order ladder in finite fields often changes the cost of group
 arithmetic too; report and account for both effects rather than fitting a
 square-root wall-time curve. Rho's deterministic step kernel can have a
@@ -371,15 +371,14 @@ For targets outside the base subgroup, use the exhaustive small reference
 or an independently justified subgroup criterion before invoking an oracle
 whose input domain presupposes membership.
 
-PARI's native `fflog`/`znlog` portfolio is an **informational** throughput
+PARI's native `fflog`/`znlog` portfolio is an orientation-only throughput
 comparator: it may use generic methods or index calculus and does not emit
 Lean certificates. Use a persistent process, record versions/options and
 chosen methods where observable, and separate setup from repeated queries.
 Do not label a native PARI portfolio timing as an isolated BSGS or rho timing
 without an API that actually selects that algorithm. Cross-check BSGS and
-complete PH internally on every shared fixture. Certificate replay has
-**no-comparable-surface-in-named-comparator** and needs native and kernel
-evidence owned by the core. Failure and zero-field-input checks remain
+complete PH internally on every shared fixture. Certificate replay has no
+external comparator and needs native and kernel evidence owned by the core. Failure and zero-field-input checks remain
 functional cases even where the external API has no matching result type.
 
 Fixtures include canonical field modulus/degree, base, target, exact order

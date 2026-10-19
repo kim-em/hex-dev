@@ -1,0 +1,113 @@
+{
+  "capture_head": "6d78bf3e1fb1aa23129df83f7888979dd5afeb6d",
+  "after": "84618250b2812a477f8948427e5c2023cc3ff597",
+  "snapshot_hashes_checked": true,
+  "definitions": {
+    "bench/HexSturm/Bench.lean": {
+      "runInteger": {
+        "code_and_strings_identical": true,
+        "identical_after_fixed_endpoint_substitution": true,
+        "change": null
+      },
+      "runRational": {
+        "code_and_strings_identical": true,
+        "identical_after_fixed_endpoint_substitution": true,
+        "change": null
+      },
+      "runDomain": {
+        "code_and_strings_identical": true,
+        "identical_after_fixed_endpoint_substitution": true,
+        "change": null
+      },
+      "runInitial": {
+        "code_and_strings_identical": true,
+        "identical_after_fixed_endpoint_substitution": true,
+        "change": null
+      },
+      "runChain": {
+        "code_and_strings_identical": true,
+        "identical_after_fixed_endpoint_substitution": true,
+        "change": null
+      },
+      "runEndpoints": {
+        "code_and_strings_identical": true,
+        "identical_after_fixed_endpoint_substitution": true,
+        "change": null
+      },
+      "runSigns": {
+        "code_and_strings_identical": true,
+        "identical_after_fixed_endpoint_substitution": true,
+        "change": null
+      },
+      "runClearing": {
+        "code_and_strings_identical": true,
+        "identical_after_fixed_endpoint_substitution": true,
+        "change": null
+      }
+    },
+    "bench/HexSturm/Frontend.lean": {
+      "runPrepared": {
+        "code_and_strings_identical": true,
+        "identical_after_fixed_endpoint_substitution": true,
+        "change": null
+      },
+      "runRetarget": {
+        "code_and_strings_identical": true,
+        "identical_after_fixed_endpoint_substitution": true,
+        "change": null
+      },
+      "runCount": {
+        "code_and_strings_identical": false,
+        "identical_after_fixed_endpoint_substitution": true,
+        "change": "Current body reads endpoints from Input.bounds; prepare uses fromHead(head n) with default interval (-2,2). Added endpoint conversions have constant size on this family."
+      },
+      "runPreparedCount": {
+        "code_and_strings_identical": true,
+        "identical_after_fixed_endpoint_substitution": true,
+        "change": null
+      },
+      "runCertificate": {
+        "code_and_strings_identical": false,
+        "identical_after_fixed_endpoint_substitution": true,
+        "change": "Current body reads endpoints from Input.bounds; prepare uses fromHead(head n) with default interval (-2,2). Added endpoint conversions have constant size on this family."
+      },
+      "runPreparedCertificate": {
+        "code_and_strings_identical": true,
+        "identical_after_fixed_endpoint_substitution": true,
+        "change": null
+      },
+      "runCountCertificate": {
+        "code_and_strings_identical": true,
+        "identical_after_fixed_endpoint_substitution": true,
+        "change": null
+      },
+      "runFieldReplay": {
+        "code_and_strings_identical": false,
+        "identical_after_fixed_endpoint_substitution": true,
+        "change": "Current body reads endpoints from Input.bounds; prepare uses fromHead(head n) with default interval (-2,2). Added endpoint conversions have constant size on this family."
+      },
+      "runCachedReplay": {
+        "code_and_strings_identical": false,
+        "identical_after_fixed_endpoint_substitution": true,
+        "change": "Current body reads endpoints from Input.bounds; prepare uses fromHead(head n) with default interval (-2,2). Added endpoint conversions have constant size on this family."
+      },
+      "runClear": {
+        "code_and_strings_identical": false,
+        "identical_after_fixed_endpoint_substitution": true,
+        "change": "Current body reads endpoints from Input.bounds; prepare uses fromHead(head n) with default interval (-2,2). Added endpoint conversions have constant size on this family."
+      },
+      "runEmbed": {
+        "code_and_strings_identical": true,
+        "identical_after_fixed_endpoint_substitution": true,
+        "change": null
+      },
+      "runInfinite": {
+        "code_and_strings_identical": true,
+        "identical_after_fixed_endpoint_substitution": true,
+        "change": null
+      }
+    }
+  },
+  "fixed_family_binding": "Frontend.prepare = fromHead(head n); fromHead defaults bounds to interval = (Dyadic.ofInt (-2),Dyadic.ofInt 2). Verified against the current source; substitutions are limited to these bindings.",
+  "limits": "Checks all twenty timed bodies against retained dirty-tree snapshots, not unrecorded edits in other modules or current executable byte identity."
+}

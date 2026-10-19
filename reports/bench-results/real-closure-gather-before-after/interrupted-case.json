@@ -1,0 +1,6 @@
+{
+  "pid": 631573,
+  "case": "trial0 quadratic12owners baseline",
+  "reason": "Running for over two hours of CPU; earlier owner4=.0056s and owner8=16.95s. Independent-root compositum has dimension2^owners; planned owner16 and degree4owner16 are intractable. Stop this unfinished sample, retain every completed result and the interrupted record, and use bounded dimensions for a revised scaling experiment.",
+  "stopped_at_unix": 1791104102.6542988
+}

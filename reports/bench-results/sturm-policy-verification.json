@@ -1,0 +1,34 @@
+{
+  "base_commit": "604148b31df595fee164b89dd98ee44eaf248eea",
+  "source_change": "benchmark comments and reports/evidence only; executable Lean tokens unchanged",
+  "checks": {
+    "affected_library_and_companion_kernel_targets": "Lake build passed, 9987 jobs",
+    "final_benchmark_rebuild": "Lake build passed, 156 jobs",
+    "Sturm_panic_rejecting_verify": "93 cases passed",
+    "named_admission_scan": "365 roots / 1190 local modules, no admissions",
+    "mathlib_free_scan": "63 benchmark executables / 398 build-only probes passed",
+    "phase4_changed_registration_check": "passed, no registrations changed",
+    "retained_sample_audit": "13 runs / 260 successful samples; eleven upper-bound registrations and selected code definitions unchanged"
+  },
+  "non_gating_diagnostic": "check_phase4.py --all also reports pre-existing missing comments in unrelated libraries; changed-registration check passes. No unrelated source is edited.",
+  "logs": {
+    "lake-build.log": {
+      "persistent_path": "/home/kim/.local/state/hex/issue-10577-sturm-policy/lake-build.log",
+      "sha256": "c392abcfa4286a744c22ab6cde97f7b2faa405f0769ef9ef8cbff7c5eb4d7436"
+    },
+    "lake-final.log": {
+      "persistent_path": "/home/kim/.local/state/hex/issue-10577-sturm-policy/lake-final.log",
+      "sha256": "cd1c3a009b5e7870554928170d49c2191768e34cdc1fc03e167e0f3df1ed811d"
+    },
+    "sturm-verify.log": {
+      "persistent_path": "/home/kim/.local/state/hex/issue-10577-sturm-policy/sturm-verify.log",
+      "sha256": "8c296c13b3c0dd4985b8e3818a3191cb1d9e9361547bdc5ab767372590186841"
+    },
+    "phase4-diff.log": {
+      "persistent_path": "/home/kim/.local/state/hex/issue-10577-sturm-policy/phase4-diff.log",
+      "sha256": "21c610465189139f8d1ee1d17de5487870fa0c861d809f93b4d9467e8bcce6b2"
+    }
+  },
+  "measured_source_archive": "refs/heads/evidence/issue-10577-sturm-growing-6d78bf3",
+  "limits": "No new timing samples, current binary identity, blanket profile requirement or phase advancement is claimed."
+}

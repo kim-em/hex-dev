@@ -35,7 +35,7 @@ Fixed regression registration:
 * `runBerlekampFullySplitChecksum`: complete Berlekamp factorization of
   `X^5 - X`, exercising recursive splitting and its linear-leaf fast path.
 
-Gating external comparators:
+External comparators:
 
 * `runFlintRabinTestChecksum*`: FLINT `nmod_poly.is_irreducible` through
   the shared persistent-subprocess python-flint driver.
@@ -493,7 +493,7 @@ setup_benchmark runDistinctDegreeChecksum n => n * n * n
     slopeTolerance := 0.35
   }
 
-/-- Timing shape for the gating FLINT comparators. `warmupFirstIter` runs one
+/-- Timing shape for the FLINT comparators. `warmupFirstIter` runs one
 discarded call so the persistent python-flint driver is spawned out of the timed
 region, and the raised `minTotalSeconds` floor forces the child auto-tuner to
 amortise steady-state FLINT work across enough inner repeats that the per-call

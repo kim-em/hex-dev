@@ -1,0 +1,20 @@
+[
+  {
+    "capture": "real-hard-add",
+    "retained_executable": "/home/kim/.local/state/hex/issue-10577-profiles/binaries/hexrealalgebraic_bench-dfa5b9f0bdbfa763237cf07d8f0c4af5100a7ffb23a982e5f77d48da98e0d339",
+    "sha256": "dfa5b9f0bdbfa763237cf07d8f0c4af5100a7ffb23a982e5f77d48da98e0d339",
+    "bytes": 122703872
+  },
+  {
+    "capture": "sturm-head",
+    "retained_executable": "/home/kim/.local/state/hex/issue-10577-profiles/binaries/hexsturm_bench-2582ee10a5f694f04001b0aff3919a35ce90c970d8f2219e98a96c003b233f6a",
+    "sha256": "2582ee10a5f694f04001b0aff3919a35ce90c970d8f2219e98a96c003b233f6a",
+    "bytes": 120685016
+  },
+  {
+    "capture": "sturm-query",
+    "retained_executable": "/home/kim/.local/state/hex/issue-10577-profiles/binaries/hexsturm_bench-2582ee10a5f694f04001b0aff3919a35ce90c970d8f2219e98a96c003b233f6a",
+    "sha256": "2582ee10a5f694f04001b0aff3919a35ce90c970d8f2219e98a96c003b233f6a",
+    "bytes": 120685016
+  }
+]

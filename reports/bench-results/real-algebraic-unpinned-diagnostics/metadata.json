@@ -1,0 +1,4 @@
+{
+  "role": "Retained exploratory native LeanBench observations; CPU was not leased or pinned, so these are not Phase-4 scientific evidence. The later adjacent paired collections and canonical baseline have proper affinity and provenance.",
+  "source": "bench/HexRealAlgebraic/Bench.lean at 6d78bf3e1 before the ceiling optimization"
+}

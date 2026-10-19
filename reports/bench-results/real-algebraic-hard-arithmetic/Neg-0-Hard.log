@@ -1,0 +1,8 @@
+Hex.RealAlgebraicBench.runHardNeg    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=6d78bf3-dirty, 2026-10-02T03:58:15Z, host=chungus2
+  repeat 0  26.063 ms
+  median: 26.063 ms    min: 26.063 ms    max: 26.063 ms
+  hash: all repeats agree
+  observed hash: 0x90151aeb609428ad
+  peak RSS: 68_612 kB (across 1 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Neg-0-Hard.json

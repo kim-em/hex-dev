@@ -1,0 +1,6 @@
+{
+  "path": "HexBasic/ListShim.lean",
+  "baseline_blob": "43f10afab3b325a23687c3e634e21d3fd9f7bc25",
+  "current_blob": "13684daef6deb627f8b1a11c1bee4b15c65038d3",
+  "reason": "Replaces the proof of List.nodup_subset_length_le with an export alias of the same theorem in Hex.List, preserving the public compatibility name and type. No executable definitions, instances or persistent attributes change."
+}

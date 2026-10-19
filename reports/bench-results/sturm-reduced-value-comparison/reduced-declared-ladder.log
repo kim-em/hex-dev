@@ -1,0 +1,29 @@
+Hex.SturmBench.runReducedRational    expected complexity: m ^ 2    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=cd33400, 2026-10-04T19:27:26Z, host=chungus2
+      param  per-call  repeats  C
+    131_072   1.149 s  ×2^0     C=0.081 [trial 1/4]
+    262_144   4.343 s  ×2^0     C=0.074 [trial 1/4]
+    524_288  18.259 s  ×2^0     C=0.071 [trial 1/4]
+  1_048_576  78.959 s  ×2^0     C=0.071 [trial 1/4]
+    131_072   1.653 s  ×2^0     C=0.081 [trial 2/4]
+    262_144   5.971 s  ×2^0     C=0.074 [trial 2/4]
+    524_288  23.012 s  ×2^0     C=0.071 [trial 2/4]
+  1_048_576  82.713 s  ×2^0     C=0.071 [trial 2/4]
+    131_072   1.397 s  ×2^0     C=0.081 [trial 3/4]
+    262_144   5.104 s  ×2^0     C=0.074 [trial 3/4]
+    524_288  19.391 s  ×2^0     C=0.071 [trial 3/4]
+  1_048_576  76.835 s  ×2^0     C=0.071 [trial 3/4]
+    131_072   1.381 s  ×2^0     C=0.081 [trial 4/4]
+    262_144   5.066 s  ×2^0     C=0.074 [trial 4/4]
+    524_288  19.377 s  ×2^0     C=0.071 [trial 4/4]
+  1_048_576  77.036 s  ×2^0     C=0.071 [trial 4/4]
+  verdict: consistent with declared complexity (cMin=0.071, cMax=0.081, β=-0.064)
+  per-spawn floor (harness self-measurement): 24.082 ms
+  peak RSS: 71_348 kB..110_976 kB (across 16 ok row(s))
+  trial summaries (4 trials per param; spread = (max-min)/median):
+        param  trials  median    min       max       spread 
+      131_072  4/4      1.389 s   1.149 s   1.653 s  36.288%
+      262_144  4/4      5.085 s   4.343 s   5.971 s  32.019%
+      524_288  4/4     19.384 s  18.259 s  23.012 s  24.520%
+    1_048_576  4/4     77.998 s  76.835 s  82.713 s  7.536% 
+exported to /home/kim/.local/state/hex/issue-10577-proposals/sturm-value-remainder-only/reduced-declared-ladder.json

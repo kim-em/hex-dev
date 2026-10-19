@@ -17,7 +17,7 @@ public import HexInterval.Experiment.SinTen
 This Mathlib-free experiment records the fixed reduction of `10^10` by
 `3183098861 * pi`.  The quotient and residual endpoints are untrusted replay
 data.  The scheduler knows only a finite endpoint table; real-number and
-trigonometric semantics live in the Mathlib companion.
+trigonometric semantics live in the theory companion.
 -/
 
 namespace Hex.Interval.Experiment.CosBillion

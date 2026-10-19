@@ -1,0 +1,104 @@
+{
+  "measured_source": "7ceaf9d47d",
+  "documented_source": "08c8a9f13e",
+  "full_build_targets": 15818,
+  "documented_manual_build_targets": 10403,
+  "companion_conformance_bench_build_targets": 10035,
+  "benchmark_counts": {
+    "HexRealAlgebraic": 102,
+    "HexNumberField": 92
+  },
+  "ordinary_kernel_axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "scope": "Local checks on the measured implementation, followed by documentation/measurement changes only. Missing-dependency operational failures remain retained; corrected verification installs oracle environment and preserves all checks. Required CI must attest a final PR head.",
+  "retained_logs": [
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/basic-build.log",
+      "bytes": 18459,
+      "sha256": "e182f6f4ea610052ccec8e6d9d32e05eb118412fa019258297abbca70216402a"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/convert-build.log",
+      "bytes": 20301,
+      "sha256": "d4082069dad7c9a18fdf08988a5d05d632ab1f2516bfe27c5a18ec0180be87fc"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/exact-build.log",
+      "bytes": 23437,
+      "sha256": "6935e2751e82cbeff6bc9ad4d8401fb6c9f712262a306301c0424196856547af"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/axioms-discovery.log",
+      "bytes": 20854,
+      "sha256": "38a3ae58700ccaab2425c7694d2935a5ec90bdf51c1a231e01b569aeff201ed5"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/downstream-build.log",
+      "bytes": 28597,
+      "sha256": "b3ef0a93f34d693df03322fda02e8b074ec0183d260cc6eed93da51c1efe0c42"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/full-build.log",
+      "bytes": 705657,
+      "sha256": "2d4d9e46716f0579ecbcdb159bb7ea6a04bff9b49c8274b815ce4de41ef3c19e"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/documented-build.log",
+      "bytes": 29135,
+      "sha256": "549625d61f76b563d95b74355e021282430752b255ee222b672333d41aa7a5f7"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/documented-bench-build.log",
+      "bytes": 20347,
+      "sha256": "e23b46e3fbe67191a17ec407434094b31c0f6f709b9ba9bb9d1bd3b4d77103d4"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/real-verify.log",
+      "bytes": 12548,
+      "sha256": "e1316ac23bc9052536d676425dc94fe18fbe56b5fe52609e380ec123ce5fef6a"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/numberfield-verify.log",
+      "bytes": 6905,
+      "sha256": "7135da30b7209c11aee729e5751da2a0d6d28f0f30f08f1b035a6586ae847f35"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/real-verify-with-oracles.log",
+      "bytes": 5699,
+      "sha256": "ab3969c54072b105e7114a251b5c83161f65d27be1f005787648da7d12f47683"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/numberfield-verify-with-oracles.log",
+      "bytes": 5078,
+      "sha256": "2e9dbf84c8e83f58bfab5c2a7292edf41560fbdc70269a7b03ed92d71c1f4812"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/factor-freshness.log",
+      "bytes": 68,
+      "sha256": "d8be866434d1c2c417673eeb46ec42ce978f9c52258e9b9faae508d17afa7cd4"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/dag.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/phase4.log",
+      "bytes": 71,
+      "sha256": "6cb935d325978f335e5a655ec20dfa11ed44793c51b8139bf74c25cf98d95df0"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/opus.log",
+      "bytes": 7440,
+      "sha256": "485df09e781fcc5ae352d05454e487e3519cb7778fafd5a4dc06cd3e5de0bc38"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/profile.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

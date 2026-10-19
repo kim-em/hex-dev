@@ -1,0 +1,11 @@
+{
+  "question": "Does the existing pinned lean-bench baseline guard flag a repeatable regression, rather than the discrepancy between independent-arm medians and adjacent-pair ratios in the original capture?",
+  "finding": "Original full capture: approximation@10240 has independent-arm median change +16.8547300734%, while median adjacent-pair ratio is 1.0059734766. Other 135 parameters do not trigger the existing guard.",
+  "policy_source": "lean-bench 8a37daf1074c3bdbd0da479b55538bad4a0022db, LeanBench/Export.lean compareParametric/perCallAtParam/classifyChange and Cli/Handlers.lean existing default 10.0 percent.",
+  "rule": "Use each arms median of the three native per_call_nanos observations, for every shared parameter of every family. Strictly greater than 10 percent is a flagged regression. Also retain original adjacent-pair ratios as diagnostics; do not substitute those for the guard.",
+  "scope": "All 17 families and all eight existing parameters, exactly the original three-trial AB/BA schedule and batch targets. No subset selection or timing threshold adjustment.",
+  "rerun": "The one permitted unchanged full rerun after the inconclusive original cross-summary finding. Preserve both captures, including failures and all samples. No further unchanged reruns.",
+  "afterward": "If a guard finding persists or moves, preserve it and investigate the actual benchmark/runtime bottleneck. Do not claim Phase6 accepted just because a pooled family median is near parity. A passing guard alone also does not discharge the separate declaration review or constitute fresh Phase4 scaling evidence.",
+  "sources": "The exact original frozen binaries and source/toolchain identities in sources.json; byte-identical measurement script. Invocation directory metadata does not replace executable provenance.",
+  "host": "Automatically leased CPU; shared-host load retained; no idle preflight, rejection, contamination threshold or quiet-core wait."
+}

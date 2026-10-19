@@ -1,0 +1,29 @@
+Hex.RealAlgebraicBench.runRationalRecognition    expected complexity: b    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=16cff19, 2026-10-04T18:52:49Z, host=chungus2
+      param  per-call   repeats  C
+    262_144   7.197 µs  ×2^13    C=0.027 [trial 1/4]
+    524_288  13.686 µs  ×2^12    C=0.026 [trial 1/4]
+  1_048_576  29.834 µs  ×2^11    C=0.029 [trial 1/4]
+  2_097_152  58.031 µs  ×2^10    C=0.028 [trial 1/4]
+    262_144   7.215 µs  ×2^13    C=0.027 [trial 2/4]
+    524_288  13.696 µs  ×2^12    C=0.026 [trial 2/4]
+  1_048_576  30.167 µs  ×2^11    C=0.029 [trial 2/4]
+  2_097_152  65.492 µs  ×2^10    C=0.028 [trial 2/4]
+    262_144   7.726 µs  ×2^13    C=0.027 [trial 3/4]
+    524_288  13.787 µs  ×2^12    C=0.026 [trial 3/4]
+  1_048_576  29.772 µs  ×2^11    C=0.029 [trial 3/4]
+  2_097_152  57.948 µs  ×2^10    C=0.028 [trial 3/4]
+    262_144   7.201 µs  ×2^13    C=0.027 [trial 4/4]
+    524_288  13.623 µs  ×2^12    C=0.026 [trial 4/4]
+  1_048_576  30.027 µs  ×2^11    C=0.029 [trial 4/4]
+  2_097_152  57.570 µs  ×2^10    C=0.028 [trial 4/4]
+  verdict: consistent with declared complexity (cMin=0.026, cMax=0.029, β=+0.015)
+  per-spawn floor (harness self-measurement): 37.819 ms
+  peak RSS: 66_688 kB..76_172 kB (across 16 ok row(s))
+  trial summaries (4 trials per param; spread = (max-min)/median):
+        param  trials  median     min        max        spread 
+      262_144  4/4      7.208 µs   7.197 µs   7.726 µs  7.339% 
+      524_288  4/4     13.691 µs  13.623 µs  13.787 µs  1.203% 
+    1_048_576  4/4     29.930 µs  29.772 µs  30.167 µs  1.319% 
+    2_097_152  4/4     57.990 µs  57.570 µs  65.492 µs  13.660%
+exported to /home/kim/.local/state/hex/issue-10577-proposals/sqrt-initializer/current-main/height-science/RationalRecognition.json

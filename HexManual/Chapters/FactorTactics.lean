@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 import VersoManual
 
-import HexBerlekampMathlib
-import HexBerlekampZassenhausMathlib
+import HexBerlekampTheory
+import HexBerlekampZassenhausTheory
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -33,9 +33,9 @@ checks.
 The supported input types depend on the imported library:
 
 * `HexBerlekamp` supports {name}`Hex.FpPoly`;
-* `HexBerlekampMathlib` adds `Polynomial (ZMod p)`;
+* `HexBerlekampTheory` adds `Polynomial (ZMod p)`;
 * `HexBerlekampZassenhaus` adds {name}`Hex.ZPoly`;
-* `HexBerlekampZassenhausMathlib` adds `Polynomial ℤ`.
+* `HexBerlekampZassenhausTheory` adds `Polynomial ℤ`.
 
 # Proving irreducibility
 %%%
@@ -229,7 +229,7 @@ evaluation is much slower than compiled search.
 The fallback also requires the complete executable definitions to be
 visible in the calling module. A caller using Lean's `module` system
 must `import all` of that executable closure, as demonstrated by
-`HexBerlekampZassenhausMathlib.FactorPolyTests`. The fallback cannot
+`HexBerlekampZassenhausTheory.FactorPolyTests`. The fallback cannot
 evaluate the native LLL function used by lattice recombination. For
 routine proofs, the plain forms are preferable: they provide smaller
 proof terms, clearer failure messages, and predictable checking cost.

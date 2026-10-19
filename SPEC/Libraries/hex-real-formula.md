@@ -4,18 +4,18 @@ Shared polynomial formulas for real arithmetic. Virtual substitution,
 cylindrical algebraic decomposition, and cylindrical coverings consume the
 same syntax, variable conventions, and interpretation. This is a separate
 library, with namespace `Hex.RealFormula`, rather than an algorithm's private
-AST. Its Mathlib companion is specified here too.
+AST. Its theory companion is specified here too.
 
 ## Scope and dependencies
 
 `HexRealFormula` is Mathlib-free, depends on `HexMvPoly`, and owns comparison
 syntax, Boolean formulas, prenex formulas, variable maps, kernel serialization,
-and rational evaluation of quantifier-free formulas. `HexRealFormulaMathlib`
-depends on it, `HexMvPolyMathlib`, `HexReflectMathlib`, and Mathlib; it owns real
+and rational evaluation of quantifier-free formulas. `HexRealFormulaTheory`
+depends on it, `HexMvPolyTheory`, `HexReflectTheory`, and Mathlib; it owns real
 semantics, normalization proofs, and the shared reifier. Neither library
 depends on an elimination algorithm or on `HexRCF`. Algorithm tactics consume
 the reifier. The optional adapter is a new `HexRCF.RealFormula` module owned
-by `HexRCF`, with a dependency on `HexRealFormulaMathlib` when implemented.
+by `HexRCF`, with a dependency on `HexRealFormulaTheory` when implemented.
 Future CAD and covering tactics can import it without depending on virtual
 substitution; the shared formula libraries remain independent of RCF.
 
@@ -128,7 +128,7 @@ expressions. Local assumptions selected by a tactic are explicit antecedents.
 Unselected hypotheses do not become hidden assumptions of the formula.
 
 Use [hex-reflect](../../HexReflect/SPEC/hex-reflect.md) for the ring layer,
-with its [Mathlib adapter](../../HexReflectMathlib/SPEC/hex-reflect-mathlib.md).
+with its [Mathlib adapter](../../HexReflectTheory/SPEC/hex-reflect-theory.md).
 Reify all atom differences in one batch after binders have been opened to
 distinct local constants. Seal the variable environment once, then use a
 proved coordinate map from its atom order to the formula order. A session
@@ -213,7 +213,7 @@ merge terms and requires normalization; rational arithmetic costs are not
 unit cost. NNF is linear in the tree input, while frontend biconditional
 expansion and prenex conversion are output-sensitive and may duplicate
 subformulas. Report expanded tree size separately from shared DAG size.
-Representative example files under `bench/HexRealFormulaMathlib/ProofProbe`
+Representative example files under `bench/HexRealFormulaTheory/ProofProbe`
 exercise parameterized reification and quantifier alternation. CI builds them
 through `HexRealFormulaProofProbe` on every PR. These examples and the ordinary
 library/conformance tests establish correctness; this proof surface has no

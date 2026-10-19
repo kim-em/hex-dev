@@ -6,21 +6,21 @@ Authors: Kim Morrison
 
 module
 
-public import HexDeterminantMathlib
+public import HexDeterminantTheory
 
 public section
 
 /-!
 # Closing a `Matrix.det` goal by running the executable determinant
 
-`Matrix.det` is noncomputable, so `decide` cannot see it. `HexMatrixMathlib.det_eq`
+`Matrix.det` is noncomputable, so `decide` cannot see it. `HexMatrixTheory.det_eq`
 identifies it with the executable Leibniz determinant `Hex.Matrix.det`, which the
 kernel evaluates directly. Rewriting a Mathlib determinant goal backwards through
 `det_eq` therefore turns it into a closed computation that `decide +kernel`
 finishes.
 
 The rewrite needs the goal's matrix to be in the image of
-`HexMatrixMathlib.matrixEquiv`. For a matrix literal that is
+`HexMatrixTheory.matrixEquiv`. For a matrix literal that is
 `matrixEquiv.apply_symm_apply`: replace `A` by `matrixEquiv (matrixEquiv.symm A)`,
 then `det_eq` applies.
 
@@ -32,7 +32,7 @@ in Lean's kernel and depend on nothing beyond `propext`, `Classical.choice`, and
 
 namespace Examples.DeterminantKernelProof
 
-open Hex Hex.Matrix HexMatrixMathlib
+open Hex Hex.Matrix HexMatrixTheory
 
 /-- A Mathlib matrix literal whose determinant is `3`. -/
 def A : _root_.Matrix (Fin 3) (Fin 3) ℤ :=

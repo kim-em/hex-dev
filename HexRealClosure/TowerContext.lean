@@ -104,6 +104,17 @@ theorem Signature.codec_lawful : Signature.codec.Lawful := by
   intro signature
   simp [Signature.codec, Literal.ofJson_toJson, Signature.ofLiteral_literal, require]
 
+/-- The full signature codec writes the complete structured literal. -/
+theorem Signature.codec_encode (signature : Signature) :
+    Signature.codec.encode signature = signature.literal.toJson := by
+  rfl
+
+/-- A full structured literal restores its original signature. Reading the
+identity does not validate its context or retained selected roots. -/
+theorem Signature.codec_literal (signature : Signature) :
+    Signature.codec.decode signature.literal.toJson = .ok signature := by
+  exact Signature.codec_lawful signature
+
 /-- A node's reference to the exact enclosing predecessor is encoded once by
 that enclosing signature. Other literal contexts are retained in full. This
 avoids copying the entire predecessor into every node of its replay graph. -/
@@ -118,6 +129,28 @@ def contextCodec (parent : Signature) : ValueCodec Signature where
       | some context =>
         if context = parent then .error "noncanonical context reference" else .ok context
     | _ => .error "invalid relative context reference"
+
+/-- The enclosing signature is encoded as the JSON array `[0]`. -/
+@[simp] theorem contextCodec_encode_self (parent : Signature) :
+    (contextCodec parent).encode parent = .array (.cons (.number 0) .nil) := by
+  simp [contextCodec, Codec.Json.arr, Codec.Json.Values.ofList]
+
+/-- The parent-reference token restores the supplied enclosing signature.
+Reading this token does not validate that signature or its selected roots. -/
+@[simp] theorem contextCodec_self (parent : Signature) :
+    (contextCodec parent).decode (.array (.cons (.number 0) .nil)) = .ok parent := by
+  rfl
+
+/-- Exactly the JSON array `[0]` decodes to the enclosing signature. -/
+@[simp] theorem contextCodec_self_iff (parent : Signature) (j : Codec.Json) :
+    (contextCodec parent).decode j = .ok parent ↔ j = .array (.cons (.number 0) .nil) := by
+  simp only [contextCodec, Literal.ofJson]
+  split
+  · simp_all
+  · split
+    · simp_all
+    · split <;> simp_all
+  · simp_all
 
 theorem contextCodec_lawful (parent : Signature) : (contextCodec parent).Lawful := by
   intro context
@@ -256,6 +289,16 @@ theorem Context.codec_lawful (context : Context registry) : context.codec.Lawful
 Those stages are assembled through the native base-context constructors. -/
 @[expose] def Context.base {K : Type} [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
     (context : BaseContext.Context registry K sign) : Context registry := .pack (.base context)
+
+private theorem Context.base_codec_proof {K : Type} [Lean.Grind.Field K] [DecidableEq K]
+    {sign : K → Int} (context : BaseContext.Context registry K sign) :
+    (Context.base context).codec = BaseContext.Element.codec context := rfl
+
+/-- Packing a base context retains its original coefficient codec. -/
+theorem Context.base_codec {K : Type} [Lean.Grind.Field K] [DecidableEq K]
+    {sign : K → Int} (context : BaseContext.Context registry K sign) :
+    (Context.base context).codec = BaseContext.Element.codec context :=
+  Context.base_codec_proof context
 
 private theorem Context.base_signature_proof {K : Type} [Lean.Grind.Field K] [DecidableEq K]
     {sign : K → Int} (context : BaseContext.Context registry K sign) :

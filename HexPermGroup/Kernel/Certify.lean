@@ -8,6 +8,7 @@ module
 
 public import HexPermGroup.Kernel.Check
 public import HexPermGroup.Build
+public import HexPermGroup.Cycles
 
 public section
 
@@ -15,10 +16,13 @@ public section
 The compiled producer of kernel certificates, and the partition of their
 Schreier pairs into bounded ranges.
 
-`certify` reads the complete chain of `Group.ofGenerators`, keeps the levels
-whose orbit has more than one point, and records packed generators, orbits,
-transversals, inverse transversals, Schreier-tree edges and next-level
-indices. The certificate is untrusted: only `check` gives it meaning.
+`certify` builds its own stabilizer chain: the first level's generators are the
+inputs, and each later level's are a few products of Schreier generators of the
+level above that generate its stabilizer, found by comparing orders of chains
+built by extension. It records packed generators, orbits, transversals,
+inverse transversals, Schreier-tree edges and, for each next-level generator,
+the Schreier pairs whose product it is. The
+certificate is untrusted: only `check` gives it meaning.
 -/
 
 namespace Hex.PermGroup.Kernel
@@ -38,80 +42,277 @@ where
         let mid := (lo + hi) / 2
         .branch mid (go fuel lo mid) (go fuel mid hi)
 
-/-- The raw data of one chain level: base point, generators, orbit points and
-transversal. -/
-structure RawLevel (n : Nat) where
-  base : Nat
-  gens : Array (Perm n)
-  points : Array (Fin n)
-  reps : Array (Perm n)
+local instance {n : Nat} : Inhabited (Perm n) := ⟨Perm.id n⟩
 
-/-- The levels of a chain with more than one orbit point. -/
-def rawLevels : Chain n → Nat → List (RawLevel n)
-  | .leaf _ _, _ => []
-  | .cons level tail, base =>
-    let rest := rawLevels tail (base + 1)
-    if level.orbit.points.size ≤ 1 then rest
-    else ⟨base, level.generators, level.orbit.points, level.orbit.reps.toArray⟩ :: rest
+/-- One step of a linear congruential generator, for deterministic sampling. -/
+def lcg (seed : Nat) : Nat := (seed * 6364136223846793005 + 1442695040888963407) % 2 ^ 64
 
-/-- Encode one level, given the packed generators of the next retained level. -/
-def encodeLevel (n : Nat) (L : RawLevel n) (nextGens : List Nat) : Except String Level := do
-  let W := width n
-  let gens := L.gens.toList.map pack
-  let o := L.points.size
-  let orbit := L.points.map (·.val)
-  let index : Array Nat := Id.run do
-    let mut a := Array.replicate n 0
-    for h : j in [0:o] do
-      a := a.set! (L.points[j]'h.2.1).val (j + 1)
-    return a
-  let lookup := packFn W (fun x => index[x]!) n
-  let reps := L.reps.map pack
-  let invs := L.reps.map fun t => pack t.inv
+/-- The orbit of `b` under `gens` in breadth-first order. Each later point
+records its Schreier-tree edge `(i, k)`, meaning point `j` is `gens[i]` applied
+to point `k < j`, and its transversal element. -/
+def orbitTree (gens : Array (Perm n)) (b : Fin n) :
+    Array (Fin n) × Array (Nat × Nat) × Array (Perm n) := Id.run do
+  let mut index : Array Nat := (Array.replicate n 0).set! b.val 1
+  let mut points : Array (Fin n) := #[b]
   let mut parents : Array (Nat × Nat) := #[(0, 0)]
-  for j in [1:o] do
-    let x := orbit[j]!
-    let mut found : Option (Nat × Nat) := none
-    for h : i in [0:L.gens.size] do
-      if found.isNone then
-        let s := L.gens[i]'h.2.1
-        let y := if hx : x < n then (s.inv.get ⟨x, hx⟩).val else 0
-        let k := index[y]! - 1
-        if index[y]! != 0 && k < j && comp n W (pack s) reps[k]! == reps[j]! then
-          found := some (i, k)
-    match found with
-    | some e => parents := parents.push e
-    | none => throw s!"no Schreier-tree edge reaches orbit point {x} at base {L.base}"
-  let level : Level :=
-    { base := L.base, size := o, gens := gens, orbit := rarrayOf orbit,
-      reps := rarrayOf reps, invs := rarrayOf invs, parents := rarrayOf parents,
-      lookup := lookup, next := [] }
-  let mut next : Array (Nat × Nat) := #[]
-  for t in nextGens do
-    let mut found : Option (Nat × Nat) := none
-    for i in [0:gens.length] do
-      for j in [0:o] do
-        if found.isNone && schreier n W level i j == t then
-          found := some (i, j)
-    match found with
-    | some e => next := next.push e
-    | none => throw s!"a next-level generator is not a Schreier generator at base {L.base}"
-  return { level with next := next.toList }
+  let mut reps : Array (Perm n) := #[Perm.id n]
+  let mut k := 0
+  for _ in [0:n] do
+    if h : k < points.size then
+      let x := points[k]
+      for h' : i in [0:gens.size] do
+        let s := gens[i]'h'.2.1
+        let y := s.get x
+        if index[y.val]! == 0 then
+          index := index.set! y.val (points.size + 1)
+          points := points.push y
+          parents := parents.push (i, k)
+          reps := reps.push (s.comp reps[k]!)
+      k := k + 1
+  return (points, parents, reps)
 
-/-- Encode the retained levels, each against the generators of the next. -/
-def encodeLevels (n : Nat) : List (RawLevel n) → Except String Certificate
-  | [] => pure []
-  | L :: rest => do
-    let nextGens := match rest with
-      | [] => []
-      | L' :: _ => L'.gens.toList.map pack
-    let level ← encodeLevel n L nextGens
-    let tail ← encodeLevels n rest
+/-- Add generators to a complete chain by extension, skipping those it already
+contains. -/
+def extendAll (c : (T : Array (Perm n)) × Construction T 0) (gens : Array (Perm n)) :
+    (T : Array (Perm n)) × Construction T 0 :=
+  gens.foldl (init := c) fun ⟨T, c⟩ g =>
+    if c.chain.accepts 0 g then ⟨T, c⟩
+    else ⟨T.push g, Build.extend 0 (Nat.zero_le n) T c g fun _ _ hx => absurd hx (Nat.not_lt_zero _)⟩
+
+/-- The order of the group generated by `gens`, from a complete chain built by
+extension only. Such chains are not stored in groups, but their orbit sizes
+give the order. -/
+def orderOf (gens : Array (Perm n)) : Nat :=
+  (extendAll ⟨#[], Build.empty 0 (Nat.zero_le n)⟩ gens).2.chain.orbitProduct
+
+/-- The orbit partition of `gens`, as the least point of each point's orbit. -/
+def orbitRoots (gens : Array (Perm n)) : Array Nat := Id.run do
+  let mut root : Array Nat := (List.range n).toArray
+  -- Repeated relaxation reaches a fixed point within `n` rounds.
+  for _ in [0:n] do
+    let mut changed := false
+    for g in gens do
+      for h : x in [0:n] do
+        let y := (g.get ⟨x, h.2.1⟩).val
+        let m := min root[x]! root[y]!
+        if root[x]! != m || root[y]! != m then
+          root := (root.set! x m).set! y m
+          changed := true
+    if !changed then break
+  return root
+
+/-- A partial stabilizer chain built from elements of a group `H`: base points,
+the generators added at each level (level `i` uses those of levels `≥ i`, all of
+which fix the earlier base points), and each level's transversal, indexed by
+point. Each level's orbit lies in the orbit of its base point under the
+corresponding point stabilizer of `H`, so the product of the orbit sizes is at
+most `|H|`, whether or not the chain is complete. -/
+structure PartialChain (n : Nat) where
+  bases : Array (Fin n) := #[]
+  strong : Array (Array (Perm n)) := #[]
+  trans : Array (Array (Option (Perm n))) := #[]
+
+namespace PartialChain
+
+/-- The orbit sizes' product, a lower bound on the order of the group. -/
+def bound (c : PartialChain n) : Nat :=
+  c.trans.foldl (fun acc t => acc * t.foldl (fun k x => if x.isSome then k + 1 else k) 0) 1
+
+/-- The transversal of `b` under `gens`, by breadth-first search. -/
+def transversal (gens : Array (Perm n)) (b : Fin n) : Array (Option (Perm n)) := Id.run do
+  let mut t : Array (Option (Perm n)) := (Array.replicate n none).set! b.val (some (Perm.id n))
+  let mut queue : Array (Fin n) := #[b]
+  let mut k := 0
+  for _ in [0:n] do
+    if h : k < queue.size then
+      let x := queue[k]
+      let r := t[x.val]!.getD (Perm.id n)
+      for g in gens do
+        let y := g.get x
+        if t[y.val]!.isNone then
+          t := t.set! y.val (some (g.comp r))
+          queue := queue.push y
+      k := k + 1
+  return t
+
+/-- Recompute the transversals of levels `0` to `i`. -/
+def refresh (c : PartialChain n) (i : Nat) : PartialChain n := Id.run do
+  let mut trans := c.trans
+  for j in [0:i + 1] do
+    if h : j < c.bases.size then
+      let gens := (c.strong.extract j c.strong.size).flatten
+      trans := trans.set! j (transversal gens c.bases[j])
+  return { c with trans }
+
+/-- Sift `g`, adding its residue as a new generator when it is not the identity. -/
+def add (c : PartialChain n) (g : Perm n) : PartialChain n := Id.run do
+  let mut g := g
+  for h : i in [0:c.bases.size] do
+    let b := c.bases[i]'h.2.1
+    match c.trans[i]![(g.get b).val]! with
+    | none =>
+      let c := { c with strong := c.strong.modify i (·.push g) }
+      return c.refresh i
+    | some r => g := r.inv.comp g
+  match (List.finRange n).find? fun x => g.get x != x with
+  | none => return c
+  | some b =>
+    let c := { c with bases := c.bases.push b, strong := c.strong.push #[g],
+                      trans := c.trans.push #[] }
+    return c.refresh (c.bases.size - 1)
+
+end PartialChain
+
+/-- Whether the group generated by `gens`, known to lie in a group of order
+`target`, is all of it: sift pseudo-random elements of the group, made by
+product replacement, into a partial chain until its lower bound reaches
+`target`. Stops with `false` after `patience` consecutive elements that do not
+raise the bound, or after 100000 elements. A `true` answer is certain; `false`
+does not show that `gens` fails to generate. -/
+def reachesOrder (gens : Array (Perm n)) (target : Nat) (seed : Nat)
+    (patience : Nat := 40) : Bool := Id.run do
+  if target ≤ 1 then return true
+  if gens.isEmpty then return false
+  let mut state : Array (Perm n) := #[]
+  for i in [0:max 10 gens.size] do
+    state := state.push gens[i % gens.size]!
+  let mut acc := Perm.id n
+  let mut s := seed
+  let mut c : PartialChain n := {}
+  for g in gens do
+    c := c.add g
+  let mut stale := 0
+  for _ in [0:20] do
+    s := lcg s
+    let i := (s / 65536) % state.size
+    s := lcg s
+    let j := (i + 1 + (s / 65536) % (state.size - 1)) % state.size
+    state := state.set! i (state[i]!.comp state[j]!)
+  let mut bound := c.bound
+  for _ in [0:100000] do
+    if bound ≥ target || stale ≥ patience then break
+    s := lcg s
+    let i := (s / 65536) % state.size
+    s := lcg s
+    let j := (i + 1 + (s / 65536) % (state.size - 1)) % state.size
+    state := state.set! i (state[i]!.comp state[j]!)
+    acc := acc.comp state[i]!
+    c := c.add acc
+    let next := c.bound
+    stale := if next > bound then 0 else stale + 1
+    bound := next
+  return bound ≥ target
+
+/-- The product of the candidates at the given indices, leftmost outermost. -/
+def product (cands : Array (Perm n)) (w : List Nat) : Perm n :=
+  w.foldr (fun i p => cands[i]!.comp p) (Perm.id n)
+
+/-- A few products of elements of `cands`, as index lists, generating a group of
+order `target`. A single candidate of order `target` is taken if there is one.
+Otherwise pseudo-random sets of `start` (clamped to two or three) up to three
+products of three candidates are tried, each first compared on orbits and then
+accepted when `reachesOrder` shows that it generates a group of order `target`. Failing those, candidates are added singly, in order, whenever
+they enlarge the group. -/
+def smallGenerating (cands : Array (Perm n)) (target : Nat) (seed : Nat) (start : Nat)
+    (wordLength : Nat := 3) (greedy : Bool := true) :
+    List (List Nat) := Id.run do
+  if target ≤ 1 || cands.isEmpty then return []
+  if let some i := (List.range cands.size).find? (fun i => cands[i]!.order == target) then
+    return [[i]]
+  -- A generating set has the stabilizer's orbits, which rejects most failing
+  -- draws without building a chain.
+  let orbits := orbitRoots cands
+  let mut s := seed
+  -- Start at the previous level's count, clamped to two or three, so a large
+  -- greedy fallback above does not disable sampling here.
+  for size in [min (max start 2) 3:4] do
+    for _ in [0:12] do
+      let mut ws : List (List Nat) := []
+      for _ in [0:size] do
+        let mut w : List Nat := []
+        for _ in [0:wordLength] do
+          s := lcg s
+          w := w ++ [(s / 65536) % cands.size]
+        ws := ws ++ [w]
+      let gens := ws.toArray.map (product cands)
+      if orbitRoots gens == orbits && reachesOrder gens target s then return ws
+  if !greedy then return []
+  let mut chosen : List (List Nat) := []
+  let mut c : (T : Array (Perm n)) × Construction T 0 := ⟨#[], Build.empty 0 (Nat.zero_le n)⟩
+  for h : i in [0:cands.size] do
+    if !c.2.chain.accepts 0 (cands[i]'h.2.1) then
+      chosen := chosen ++ [[i]]
+      c := extendAll c #[cands[i]'h.2.1]
+      if c.2.chain.orbitProduct == target then return chosen
+  return chosen
+
+/-- The levels of a certificate for the group of order `order` generated by the
+non-identity permutations `gens`. Each level's base is the least point moved
+by its generators, and the next level's generators are a few of its Schreier
+generators that generate the stabilizer. -/
+def certLevels (n : Nat) : Nat → Array (Perm n) → Nat → Nat → Except String Certificate
+  | 0, _, _, _ => throw "certificate construction did not terminate"
+  | fuel + 1, gens, order, hint => do
+    if gens.isEmpty then return []
+    let W := width n
+    let some b := (List.finRange n).find? fun x => gens.any fun s => s.get x != x
+      | throw "a nonidentity generator fixes every point"
+    let (points, parents, reps) := orbitTree gens b
+    let o := points.size
+    let index : Array Nat := Id.run do
+      let mut a := Array.replicate n 0
+      for h : j in [0:o] do
+        a := a.set! (points[j]'h.2.1).val (j + 1)
+      return a
+    let schreierPerm (i j : Nat) : Perm n :=
+      let s := gens[i]!
+      let k := match points[j]? with
+        | some x => index[(s.get x).val]! - 1
+        | none => 0
+      reps[k]!.inv.comp (s.comp reps[j]!)
+    let pairs := (List.range gens.size).flatMap fun i => (List.range o).map fun j => (i, j)
+    let cands := (pairs.filter fun (i, j) => schreierPerm i j != Perm.id n).toArray
+    let target := order / o
+    let candPerms := cands.map fun (i, j) => schreierPerm i j
+    let chosen := smallGenerating candPerms target (order + o) hint
+    let next := chosen.map fun w => w.map (cands[·]!)
+    let nextGens := chosen.toArray.map (product candPerms)
+    let level : Level :=
+      { base := b.val, size := o, gens := gens.toList.map pack,
+        orbit := rarrayOf (points.map (·.val)), reps := rarrayOf (reps.map pack),
+        invs := rarrayOf (reps.map fun t => pack t.inv), parents := rarrayOf parents,
+        lookup := packFn W (fun x => index[x]!) n, next := next }
+    -- The next level's search starts at the size this level needed.
+    let tail ← certLevels n fuel nextGens target chosen.length
     return level :: tail
 
-/-- The kernel certificate of the group generated by `S`. -/
-def certify (S : Array (Perm n)) : Except String Certificate :=
-  encodeLevels n (rawLevels (Group.ofGenerators S).chain 0)
+/-- The kernel certificate of the group generated by `S`. The first level's
+generators are a few products of the distinct non-identity inputs that generate
+the group, found by sampling sets of products of three and then of eight
+inputs, or those inputs themselves when sampling finds no smaller set. -/
+def certify (S : Array (Perm n)) : Except String Certificate := do
+  let order := orderOf S
+  -- The first occurrence of each distinct non-identity input.
+  let idx : Array Nat := Id.run do
+    let mut idx := #[]
+    for h : i in [0:S.size] do
+      let p := S[i]'h.2.1
+      if p != Perm.id n && !idx.any (fun j => S[j]! == p) then idx := idx.push i
+    return idx
+  let inputs := idx.map (S[·]!)
+  let single := (List.range inputs.size).map fun i => [i]
+  -- Short words suit inputs that already mix well, longer ones groups whose
+  -- inputs act on separate parts; failing both, keep the inputs themselves.
+  let chosen := Id.run do
+    if inputs.size ≤ 2 then return single
+    for len in [3, 8] do
+      let words := smallGenerating inputs order (order + inputs.size + len) 2 len (greedy := false)
+      if !words.isEmpty && words.length < inputs.size then return words
+    return single
+  let levels ← certLevels n (n + 1) (chosen.toArray.map (product inputs)) order chosen.length
+  return match levels with
+    | [] => []
+    | L :: rest => { L with inputWords := chosen.map (·.map (idx[·]!)) } :: rest
 
 /-! # Chunks -/
 
@@ -124,13 +325,15 @@ def pairCost (n : Nat) (L : Level) (rest : List Level) : Nat :=
   2 * n + L.size.log2 + siftCost n rest
 
 /-- Estimated work of `levelOk` for `L` followed by `rest`. -/
-def levelCost (n : Nat) (L : Level) (rest : List Level) : Nat :=
-  let g := L.gens.length
-  2 * L.size + 2 * n + g * g * n + 3 * L.size * n + (headGens rest).length * (2 * n + g * L.size)
+def levelCost (n : Nat) (L : Level) (_rest : List Level) : Nat :=
+  2 * L.size + 2 * n + 3 * L.size * n + L.next.foldl (fun acc w => acc + 3 * n * w.length + n) 0
 
 /-- Estimated work of `inputsOk`. -/
 def inputsCost (n inputCount : Nat) (c : Certificate) : Nat :=
-  inputCount * siftCost n c + (headGens c).length * inputCount * n
+  inputCount * siftCost n c +
+    match c with
+    | [] => 0
+    | L :: _ => L.inputWords.foldl (fun acc w => acc + n * (w.length + 1)) 0
 
 /-- Split `[0, total)` into adjacent ranges of at most `step` pairs. -/
 def ranges (total step : Nat) : List (Nat × Nat) :=

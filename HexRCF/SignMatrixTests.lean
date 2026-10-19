@@ -14,7 +14,7 @@ public section
 
 namespace Hex.RCF.SignMatrixTests
 
-open HexRealRootsMathlib
+open HexRealRootsTheory
 
 private def zero : ZPoly := 0
 private def minusOne : ZPoly := DensePoly.ofCoeffs #[(-1 : Int)]

@@ -1,0 +1,9 @@
+Hex.RealAlgebraicBench.runFlintRationalRoots2Protocol    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=c6b821d-dirty, 2026-10-04T04:14:35Z, host=chungus2
+  repeat 0  9.075 µs  (×2^13, total 74.347 ms)
+  median: 9.075 µs    min: 9.075 µs    max: 9.075 µs
+  hash: all repeats agree
+  observed hash: 0x6cec062c2935e3b5
+  expected hash: matches
+  peak RSS: 69_172 kB (across 1 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison/Rational-2-Flint-3-Flint-protocol.json

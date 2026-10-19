@@ -1,0 +1,12 @@
+{
+  "source_commit": "4a6a0a085b04e2b368b480db3704765dc4284a48",
+  "dirty": true,
+  "sources": {
+    "HexIntFactor/Construction.lean": "807409c36b8064834c19e66153b235472a47a438915364642249d6a411eebf99",
+    "HexPrimality/Construction.lean": "9e3cac1a25da9c5e9bfd20286504404dc4785785472f5200bfa86d5470c84e0e",
+    "bench/HexPrimality/FactorExperiment.lean": "b4edd6811d292d10d0b615f45e4142feb5ae11f83e67540707da0d1e5ac85c42"
+  },
+  "source_patch": "measured-source.patch",
+  "patch_sha256": "919e845135636f51ada503b79bac8b5b9029337a7c94cdd87a8b17ed0eff2829",
+  "executable_sha256": "5dfe56f60bdac212610ec00d7f77a65e475e96383aa0b3ad8369cf9e391f8232"
+}

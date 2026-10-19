@@ -1,0 +1,106 @@
+{
+  "source_commit": "dd32822835407d53a2aff7006ebe2f80ef5d9ae5",
+  "source_tree": "374ec7bc3d81194f80a480d9c7afb6aed5798e6f",
+  "integrated_parent": "2bde7905ed4afe6d7460e39752381e210192a60c",
+  "code_unchanged_from": "25c5f7afac",
+  "unchanged_paths": [
+    "*.lean",
+    "lake-manifest.json",
+    "lean-toolchain",
+    "libraries.yml"
+  ],
+  "base_record": {
+    "path": "reports/data/hexrcf-source-acceptance/context.json",
+    "sha256": "1f19ebdf23823dd10f3d73dbf05e573acb8e658a95ce321d9f9ac122a5cd11bf"
+  },
+  "metadata": {
+    "source_commit": "dd32822835407d53a2aff7006ebe2f80ef5d9ae5",
+    "source_tree": "374ec7bc3d81194f80a480d9c7afb6aed5798e6f",
+    "checks": {
+      "dag": {
+        "command": {
+          "argv": [
+            "python3",
+            "scripts/check_dag.py"
+          ],
+          "cwd": "/home/kim/.codex/tasks/hex-10358/boolean-worktree",
+          "source_commit": "dd32822835407d53a2aff7006ebe2f80ef5d9ae5",
+          "source_tree": "374ec7bc3d81194f80a480d9c7afb6aed5798e6f",
+          "script_sha256": "760236cb56f22dd916c677070713146ebd9bd652ba988b3f9427d6a671a4ea10"
+        },
+        "exit_status": 0,
+        "log": "source-acceptance-dag-5.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "copyright": {
+        "command": {
+          "argv": [
+            "python3",
+            "scripts/check_copyright_headers.py"
+          ],
+          "cwd": "/home/kim/.codex/tasks/hex-10358/boolean-worktree",
+          "source_commit": "dd32822835407d53a2aff7006ebe2f80ef5d9ae5",
+          "source_tree": "374ec7bc3d81194f80a480d9c7afb6aed5798e6f",
+          "script_sha256": "d7ccfbb8e737c342ff24f7ec875c403a76a678a75f581a8e7dcaf0b654325c84"
+        },
+        "exit_status": 0,
+        "log": "source-acceptance-copyright-5.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "lines": {
+        "command": {
+          "argv": [
+            "python3",
+            "scripts/check_file_line_counts.py"
+          ],
+          "cwd": "/home/kim/.codex/tasks/hex-10358/boolean-worktree",
+          "source_commit": "dd32822835407d53a2aff7006ebe2f80ef5d9ae5",
+          "source_tree": "374ec7bc3d81194f80a480d9c7afb6aed5798e6f",
+          "script_sha256": "0c9109c17128a11651f7a5d3784b5b35c859b87e2f58d12c2fbcd5c7562f1229"
+        },
+        "exit_status": 0,
+        "log": "source-acceptance-lines-5.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "admissions": {
+        "command": {
+          "argv": [
+            "python3",
+            "scripts/ci/check_named_admissions.py"
+          ],
+          "cwd": "/home/kim/.codex/tasks/hex-10358/boolean-worktree",
+          "source_commit": "dd32822835407d53a2aff7006ebe2f80ef5d9ae5",
+          "source_tree": "374ec7bc3d81194f80a480d9c7afb6aed5798e6f",
+          "script_sha256": "b2a2ceb6ba6422b4a54c8c797907c61574c1f60e6659441e8c1b357ee3c471ce"
+        },
+        "exit_status": 0,
+        "log": "source-acceptance-admissions-5.log",
+        "sha256": "e43ea625a5bd76ee270c4f04f155c2ed77ed259c673904377f0e30645bca03ca"
+      }
+    }
+  },
+  "artifacts": {
+    "reports/data/hexrcf-source-acceptance/integration/source-acceptance-dag-5.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reports/data/hexrcf-source-acceptance/integration/source-acceptance-copyright-5.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reports/data/hexrcf-source-acceptance/integration/source-acceptance-lines-5.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reports/data/hexrcf-source-acceptance/integration/source-acceptance-admissions-5.log": "e43ea625a5bd76ee270c4f04f155c2ed77ed259c673904377f0e30645bca03ca",
+    "reports/data/hexrcf-source-acceptance/integration/source-acceptance-integration-1.log.gz": "fcebba1e705c192feddc3c39888038b0343219909bf3dc745b20199dac150e5e"
+  },
+  "scope": "Focused integration after actual parent squash merge; Lean/manifest/toolchain/library metadata inputs are unchanged from the complete263+16 selection. No repeated cold-run or isolated performance claim.",
+  "build": {
+    "argv": [
+      "/home/kim/.codex/tasks/hex-10358/bin/lake-bounded",
+      "build",
+      "HexRCF",
+      "HexRCFRealCoefficients",
+      "+HexRCF.AlgebraicPreparationCases",
+      "+HexRCF.AlgebraicPreparationConformance",
+      "+HexRCF.SourceAcceptancePublic",
+      "HexRCFProofProbe",
+      "HexManual"
+    ],
+    "cwd": "/home/kim/.codex/tasks/hex-10358/boolean-worktree",
+    "log": "reports/data/hexrcf-source-acceptance/integration/source-acceptance-integration-1.log.gz",
+    "uncompressed_sha256": "b6437cc0486521e1fc832d73db479e038d47cb1ab36529545b026f65a7633e82"
+  }
+}

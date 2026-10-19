@@ -1,0 +1,367 @@
+{
+  "source_commit": "05ff198b353e0e184a188e8197d24e7cbffc415f",
+  "sources": {
+    "adapters/HexRCF/RealCoefficients/NativeSources.lean": {
+      "sha256": "2c83d2f077af9fc790adb0087f438250b92dd47c802d39491cc204c9ef9ae6b9",
+      "bytes": 5447
+    },
+    "adapters/HexRCF/RealCoefficients/NativeSpecialize.lean": {
+      "sha256": "a246b3ec62d35caf6c1a84f41941c508ebf34b55ff4a55cf1b671edda1060965",
+      "bytes": 18865
+    },
+    "adapters/HexRCF/RealCoefficients/NativeSamples.lean": {
+      "sha256": "5cd84e6cce6c24a6712d36ec472557e0bc993092d269645f38d274fb2d699219",
+      "bytes": 9868
+    },
+    "adapters/HexRCF/RealCoefficients/RepresentationSpecialize.lean": {
+      "sha256": "a5a14158189cdd56465ef1e25a9cf59c5301116278937961c389381dc956944b",
+      "bytes": 9243
+    },
+    "adapters/HexRCF/RealCoefficients.lean": {
+      "sha256": "c31af20f76d06599c54a96c3ff88d90fc604ffd24836b5bb8bcfb81f6261ea15",
+      "bytes": 4027
+    },
+    "conformance/HexRCF/NativeSourcesConformance.lean": {
+      "sha256": "97ce0e16050229df03bfb60b55914f3147cb7c251b369e8a7117d0bf64bf062e",
+      "bytes": 22937
+    },
+    "conformance/HexRCF/NativeSamplesConformance.lean": {
+      "sha256": "d06ea89bba4308ba2dc43e255d7d72ecd743a6a0787dfbf3be9cf52494b70d02",
+      "bytes": 26884
+    },
+    "conformance/HexRCF/SelectedRoot/Data.lean": {
+      "sha256": "57037435c1334204396657ef00f45225aaedd47db97bbcea5d97cca9d76b6fea",
+      "bytes": 9789
+    },
+    "conformance/HexRCF/SelectedRoot/Upper.lean": {
+      "sha256": "089ad57ccd494cbff122343c5c77f656a1c29d6fe6a1d54ef02be408200fac2d",
+      "bytes": 2192
+    },
+    "conformance/HexRCF/SelectedRoot/CatalogSource.lean": {
+      "sha256": "818b9fa008e08d779faf17a0e0078c3454550f59f7c33d791534d8764aef07a2",
+      "bytes": 2225
+    },
+    "conformance/HexRCF/SelectedRoot/Literals.lean": {
+      "sha256": "8ea46de6f8cfdb6990723cedf445a85c1b64a7885d5939c4c69857a6404ab0e6",
+      "bytes": 22612
+    },
+    "HexManual/Chapters/HexRCF.lean": {
+      "sha256": "92c71a7fbb9260dd3709aca014ca243534f73eff5f076ace8b06fe95e75bd40a",
+      "bytes": 142231
+    },
+    "HexManual/Chapters/HexRCF/NativeSources.lean": {
+      "sha256": "768776c988bb3bf61548bb40d4ebc258f696fd981a5f71f73560c7ce20fdb744",
+      "bytes": 4763
+    },
+    "HexRCF/README.md": {
+      "sha256": "3339451bae3aed13da5c7694a4ad98b3163a29c80f45bd753d5209404df2e47f",
+      "bytes": 28343
+    },
+    "reports/hexrcf-native-sources.md": {
+      "sha256": "5da5f262365ca569675f0d9d5fa54c46aad568026a5be934a26c90f9b286f823",
+      "bytes": 5040
+    },
+    "lakefile.lean": {
+      "sha256": "79fcc728760bc1456f78a85aeaf36044b4571384a2c187dae8c1115a6b9b7bf9",
+      "bytes": 97713
+    },
+    "lean-toolchain": {
+      "sha256": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+      "bytes": 29
+    },
+    "lake-manifest.json": {
+      "sha256": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+      "bytes": 5380
+    }
+  },
+  "records": [
+    {
+      "name": "native-sources-merged-integration-oct11.log",
+      "kind": "validation_log",
+      "file": "native-sources-merged-integration-oct11.log.xz",
+      "bytes": 217277,
+      "sha256": "3aa4ec30d8b7e550e5699a96ab3efc2cbf17742fdbf3e4c8e3f227a4188ab2ae",
+      "archive_bytes": 14680,
+      "archive_sha256": "038ba36e4cf2d81eefdca7441436676f262a11fc01a30878990740a74d1e1794",
+      "command": "lake build HexRCFRealCoefficients HexConformance HexManual",
+      "observed_exit_code": 0,
+      "validated_lean_sources": "37ebc453e5; identical at source_commit (only report changed)"
+    },
+    {
+      "name": "native-sources-fresh-ordinary-merged-oct11.log",
+      "kind": "validation_log",
+      "file": "native-sources-fresh-ordinary-merged-oct11.log.xz",
+      "bytes": 85127,
+      "sha256": "47f626f1d3d1dad9b50080c4138653d8a3a1c37448f3af5d40cef02c382d0c3f",
+      "archive_bytes": 6660,
+      "archive_sha256": "ab4eb8b4d9fd69b23d063692846031adeea767bbba443e6ca190bb6b3ba1e791",
+      "command": "lake build NativeSourcesOrdinaryUse",
+      "observed_exit_code": 0,
+      "validated_lean_sources": "37ebc453e5; identical at source_commit (only report changed)"
+    },
+    {
+      "name": "native-sources-render-oct11.log",
+      "kind": "validation_log",
+      "file": "native-sources-render-oct11.log.xz",
+      "bytes": 183192,
+      "sha256": "583754fcd45c83c7a52b6e9937b1a5513a71cd7c6465093ed290fe852079f703",
+      "archive_bytes": 11012,
+      "archive_sha256": "e3724564e66c269b0d5fab5431fb3d17b3346abe268ae35136e6847bdb179ae1",
+      "command": "lake build FullRender",
+      "observed_exit_code": 0,
+      "validated_lean_sources": "37ebc453e5; identical at source_commit (only report changed)"
+    },
+    {
+      "name": "native-sources-browser-oct11.log",
+      "kind": "validation_log",
+      "file": "native-sources-browser-oct11.log.xz",
+      "bytes": 53,
+      "sha256": "0a829b0196f263b79a610e5b871ff016dccebc5024bc8c3d603b804b342509db",
+      "archive_bytes": 112,
+      "archive_sha256": "b62122d9d299dc092c55cd980d2bd2931d61859fef6a34c7298345657626c74c",
+      "command": "node native-sources-browser.mjs",
+      "observed_exit_code": 0,
+      "validated_lean_sources": "37ebc453e5; identical at source_commit (only report changed)"
+    },
+    {
+      "name": "native-sources-merged-dag-oct11.log",
+      "kind": "static_log",
+      "file": "native-sources-merged-dag-oct11.log.xz",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archive_bytes": 32,
+      "archive_sha256": "0040f94d11d0039505328a90b2ff48968db873e9e7967307631bf40ef5679275",
+      "command": [
+        "python3",
+        "scripts/check_dag.py"
+      ],
+      "observed_exit_code": 0
+    },
+    {
+      "name": "native-sources-merged-admissions-oct11.log",
+      "kind": "static_log",
+      "file": "native-sources-merged-admissions-oct11.log.xz",
+      "bytes": 95,
+      "sha256": "3fcdece73af0b0e53f5a1ace92fbeee3ac1268f68669f6ad4160c31498e5f519",
+      "archive_bytes": 148,
+      "archive_sha256": "f85651efbb30988c1ce2ab7a7dbf8620508743f0caa632fbd5d6560a77213ec0",
+      "command": [
+        "python3",
+        "scripts/ci/check_named_admissions.py"
+      ],
+      "observed_exit_code": 0
+    },
+    {
+      "name": "native-sources-merged-copyright-oct11.log",
+      "kind": "static_log",
+      "file": "native-sources-merged-copyright-oct11.log.xz",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archive_bytes": 32,
+      "archive_sha256": "0040f94d11d0039505328a90b2ff48968db873e9e7967307631bf40ef5679275",
+      "command": [
+        "python3",
+        "scripts/check_copyright_headers.py"
+      ],
+      "observed_exit_code": 0
+    },
+    {
+      "name": "native-sources-merged-lines-oct11.log",
+      "kind": "static_log",
+      "file": "native-sources-merged-lines-oct11.log.xz",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archive_bytes": 32,
+      "archive_sha256": "0040f94d11d0039505328a90b2ff48968db873e9e7967307631bf40ef5679275",
+      "command": [
+        "python3",
+        "scripts/check_file_line_counts.py"
+      ],
+      "observed_exit_code": 0
+    },
+    {
+      "name": "native-sources-merged-manual-split-oct11.log",
+      "kind": "static_log",
+      "file": "native-sources-merged-manual-split-oct11.log.xz",
+      "bytes": 84,
+      "sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "archive_bytes": 132,
+      "archive_sha256": "539277b157d178b63c3dd5cd4aaf99420e8e45e9f4a3e7c896c4a9cc69cc18ec",
+      "command": [
+        "python3",
+        "scripts/release/check_manual_split.py"
+      ],
+      "observed_exit_code": 0
+    },
+    {
+      "name": "native-sources-merged-literals-oct11.log",
+      "kind": "static_log",
+      "file": "native-sources-merged-literals-oct11.log.xz",
+      "bytes": 29,
+      "sha256": "5b2703a612f8c434ac4e53bb05bfeef0dbca1d91cc9125441d5bd447be3dfbc3",
+      "archive_bytes": 88,
+      "archive_sha256": "c97a647bde68c635286d876874f0abae70843c30ceb70592a109e881e41439fa",
+      "command": [
+        "python3",
+        "scripts/rcf/selected_literals.py",
+        "--check"
+      ],
+      "observed_exit_code": 0
+    },
+    {
+      "name": "native-sources-merged-diff-oct11.log",
+      "kind": "static_log",
+      "file": "native-sources-merged-diff-oct11.log.xz",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archive_bytes": 32,
+      "archive_sha256": "0040f94d11d0039505328a90b2ff48968db873e9e7967307631bf40ef5679275",
+      "command": [
+        "git",
+        "diff",
+        "origin/main",
+        "--check"
+      ],
+      "observed_exit_code": 0
+    },
+    {
+      "name": "native-sources-merged-static-checks-oct11.json",
+      "kind": "static_metadata",
+      "file": "native-sources-merged-static-checks-oct11.json.xz",
+      "bytes": 1783,
+      "sha256": "aca84f9b60105dcbfce798a73e5efc4ec0511b24d2e7a7fec930feec9ffca875",
+      "archive_bytes": 456,
+      "archive_sha256": "993380cb19a23ac61522b144c8ffbd216c2190db707cbf2514d425128f75f228"
+    },
+    {
+      "name": "native-sources-relative-check-oct11.json",
+      "kind": "static_metadata",
+      "file": "native-sources-relative-check-oct11.json.xz",
+      "bytes": 2680,
+      "sha256": "e6cf8b23b154df8f2e8768b901f331cf7478557baf06214f5ef16b1ce262f31b",
+      "archive_bytes": 596,
+      "archive_sha256": "e27b0c4a20270de85e5bef42b60dc494a82112d12dcf5d329a471bd7d6855bd9"
+    },
+    {
+      "name": "NativeSourcesOrdinaryUse.lean",
+      "kind": "external_source",
+      "file": "NativeSourcesOrdinaryUse.lean.xz",
+      "bytes": 3749,
+      "sha256": "e19695cd5723ba9ae6812c471eced72a4cd36823614a3c1b6f3148961799ab75",
+      "archive_bytes": 1236,
+      "archive_sha256": "85911e98e668112395bdae3cd3177180032ad6a06de21bc83ebe2651d4bd6f34"
+    },
+    {
+      "name": "lakefile.lean",
+      "kind": "external_source",
+      "file": "lakefile.lean.xz",
+      "bytes": 4719,
+      "sha256": "03cc1abcb8dcb4e7932f1dc616ccc60732dee90722a16422d95f18fad17918db",
+      "archive_bytes": 1248,
+      "archive_sha256": "dcf71d8f1daf7db8319c315f510b968f3cc1dfb489c61e8c01afd465c1b251a8"
+    },
+    {
+      "name": "FullRender.lean",
+      "kind": "external_source",
+      "file": "FullRender.lean.xz",
+      "bytes": 244,
+      "sha256": "d94ef4cfa6c7787285cc0f9e5ecd2611f92830366f2283b2d2674c3eec3f6041",
+      "archive_bytes": 244,
+      "archive_sha256": "1142e594be61240ea3a76b9b470b045811c8a4c6e84416c9197b68e89d6d58cf"
+    },
+    {
+      "name": "native-sources-browser.mjs",
+      "kind": "external_source",
+      "file": "native-sources-browser.mjs.xz",
+      "bytes": 3505,
+      "sha256": "57ed2c195b8a1fc1325db80fa7b8971e879f6bc63104eae3dd1909084c55592b",
+      "archive_bytes": 1872,
+      "archive_sha256": "5a74ba3e7b0b0c9c428c2a886aa578af440ae0d57e60b52b7baef4bb69e806c8"
+    },
+    {
+      "name": "native-sources-inspection.json",
+      "kind": "external_source",
+      "file": "native-sources-inspection.json.xz",
+      "bytes": 4764,
+      "sha256": "e2d9c6c6318c591d70e4bbc189525a605d506c03b09f1d1ea717e2a6495bac6d",
+      "archive_bytes": 1164,
+      "archive_sha256": "0d10962eee341bc5e4106d191ac2ecad4ccaa63b94f3284cba43829e45e9d7f8"
+    },
+    {
+      "name": "native-sources-desktop-selection.png",
+      "kind": "manual_capture",
+      "file": "native-sources-desktop-selection.png.xz",
+      "bytes": 285123,
+      "sha256": "51708e872cbfa23aa586686ccb8d0a82f733c024985cb3a88c259e1793d7eda7",
+      "archive_bytes": 261840,
+      "archive_sha256": "1b8a19713961be9b6d869fa4682830267ef7226cf24d363ddf86bcf10e80222c",
+      "visually_inspected": true
+    },
+    {
+      "name": "native-sources-desktop-example.png",
+      "kind": "manual_capture",
+      "file": "native-sources-desktop-example.png.xz",
+      "bytes": 290322,
+      "sha256": "61be7c4509f0e7a3ca3c725e646d141ddca93c7e0508bf2a9c009bcf7da60bd7",
+      "archive_bytes": 264976,
+      "archive_sha256": "a9eac47f64c6709ae020e0bc9b4396925175bad28bcf67660f8f63cb2cc7bd18",
+      "visually_inspected": true
+    },
+    {
+      "name": "native-sources-desktop-boundary.png",
+      "kind": "manual_capture",
+      "file": "native-sources-desktop-boundary.png.xz",
+      "bytes": 295132,
+      "sha256": "4082e06bb29ce29c7dd6631ab99da394117d16194c542171e9aa22c6e61b6870",
+      "archive_bytes": 272124,
+      "archive_sha256": "58d1202f2976c9217c6a3c41fca999c19b5889ebace16a1d504ca942fc566773",
+      "visually_inspected": true
+    },
+    {
+      "name": "native-sources-narrow-selection.png",
+      "kind": "manual_capture",
+      "file": "native-sources-narrow-selection.png.xz",
+      "bytes": 97763,
+      "sha256": "172b5dea303d6e8f8e73bc9c75172ddb143c2d48c0c9a85ed1201f723d8a01c5",
+      "archive_bytes": 93076,
+      "archive_sha256": "4e311e5ba634eca7d22af13f3956d1a407878e64467511cea8f5ea3f3cb9cc14",
+      "visually_inspected": true
+    },
+    {
+      "name": "native-sources-narrow-example.png",
+      "kind": "manual_capture",
+      "file": "native-sources-narrow-example.png.xz",
+      "bytes": 116132,
+      "sha256": "bffef4e65b49083d8214705bf3b39a9eb7dadc9094f1fc533f8ba0b5e95f2931",
+      "archive_bytes": 112256,
+      "archive_sha256": "5d8a48412926b39968197f27396ffc1edee3a6221313ba40855594d9ef367b3a",
+      "visually_inspected": true
+    },
+    {
+      "name": "native-sources-narrow-boundary.png",
+      "kind": "manual_capture",
+      "file": "native-sources-narrow-boundary.png.xz",
+      "bytes": 94402,
+      "sha256": "b34616d859a72341680f5c2560e739e86234b409ec6f5abc34a16ecfc042763e",
+      "archive_bytes": 89764,
+      "archive_sha256": "eb063e33d0b23630f7f460ed7c176d972566fc7bccad068ce7dd49ead046883c",
+      "visually_inspected": true
+    }
+  ],
+  "scope": "Shared coefficient selection realized jointly with the source matrix; uniqueness relative to actual inherited identities authenticates selected suffix coordinates at the same finite reader.",
+  "axiom_inventories": {
+    "api_fixture": 16,
+    "fresh_import": 6,
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ]
+  },
+  "compiled_controls": 4,
+  "validation_boundary": "Builds attest the recorded Lean source hashes after upstream merge. Report-only commit does not change them. Operational build observations are not performance measurements. Source hashes cover the listed modules, not a full transitive source audit.",
+  "proof_boundary": "In-module elaboration/body markers consume actual selection, row and original-guard laws. Five fresh reexports confirm imported targets/dependencies without rechecking imported bodies; false_sentence composes the imported counterexample with shared semantics in its new proof body. Uncached imported-constant checks confirm targets/inventories.",
+  "import_boundary": "Concrete conformance and fresh files are non-module files, exposing the full private import closure in pinned Lean. No public-only concrete fixture elaboration claim. Generic NativeSources uses ordinary module/public imports without import all.",
+  "manual_boundary": "Six desktop/narrow selection/example/boundary captures visually inspected. Paragraph widths fit; narrow example scrolls horizontally. No whole-page overflow audit.",
+  "remaining": "General frozen recursive context/provider-history, root/sign and reached arithmetic assembly; root/cell coverage and all-live transport; general source-goal quotation, automatic common-field certificates, accepted algebraic completeness and full-scope evidence."
+}

@@ -104,7 +104,7 @@ private meta def withFirst (c : Certificate) (f : Level → Level) : Certificate
     if check 4 inputs (bad :: rest) then fail s!"check accepted a corrupted {name}"
   let shape := fun L => shapeOk 4 W L
   let trans := fun L => transversalOk 4 W e L
-  let next := fun L => nextOk 4 W L (headGens rest)
+  let next := fun L => nextOk 4 W e L (headGens rest)
   targets "transversal" trans { L with reps := setAt L.reps 1 (L.reps.get 2) }
   targets "stored inverse" trans { L with invs := setAt L.invs 1 (L.invs.get 2) }
   targets "lookup" shape { L with lookup := L.lookup ^^^ (1 <<< W) }
@@ -116,7 +116,7 @@ private meta def withFirst (c : Certificate) (f : Level → Level) : Certificate
   targets "parent generator index" trans
     { L with parents := setAt L.parents 1 (L.gens.length, (L.parents.get 1).2) }
   targets "next-level index" next
-    { L with next := L.next.map fun (i, j) => (i, (j + 1) % L.size) }
+    { L with next := L.next.map fun (w : List (Nat × Nat)) => w.map fun (i, j) => (i, (j + 1) % L.size) }
   -- A first-level generator unrelated to the inputs fails the input check.
   let bad := { L with
     gens := L.gens.map fun s => if s == L.gens.head! then pack (Perm.id 4) else s }

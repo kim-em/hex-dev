@@ -14,16 +14,16 @@ Scientific benchmark registrations for fixed-precision truncated series.
 Input construction is hoisted into `prep`.  Multiplication establishes the
 schoolbook baseline; inverse is registered beside the direct coefficient
 recurrence; composition registers Horner beside Brent--Kung; and reversion
-registers Newton beside Lagrange.  The paired registrations let scheduled
-runs enforce the SPEC's internal ratio checks without conflating them with the
-informational FLINT comparison.
+registers Newton beside Lagrange.  The paired registrations let manual
+scientific runs check the SPEC's internal ratios without conflating them with
+the orientation FLINT comparison.
 
 The FLINT arms use python-flint's `fmpq_series` wrapper around the named
-`fmpq_poly_*_series` kernels.  They are fixed, scheduled-only registrations:
+`fmpq_poly_*_series` kernels.  They are fixed registrations run only manually:
 one representative shared input per operation, driven through the repository's
 persistent subprocess.  `warmupFirstIter` starts that process before timing;
 subsequent auto-tuned calls reuse it.  `runFlintSeriesOverhead` records the
-steady-state JSON framing floor for the headline report.
+steady-state JSON framing floor.
 -/
 
 namespace Hex.TSeriesBench
@@ -448,11 +448,11 @@ setup_benchmark runRevertLagrange n => n ^ 3 * (Nat.log2 (n + 1) + 1)
     signalFloorMultiplier := 1.0
   }
 
-/-! # Informational FLINT comparator registrations
+/-! # FLINT comparator registrations
 
 Each pair returns the same coefficient checksum, so `compare` also checks
-cross-system agreement.  The comparator is informational and scheduled-only;
-python-flint must be installed in the scheduled/release environment. -/
+cross-system agreement.  The comparator is for orientation and runs only
+manually; python-flint must be installed in that environment. -/
 
 def leanCompareConfig : LeanBench.FixedBenchmarkConfig :=
   { repeats := 5, maxSecondsPerCall := 12.0, minTotalSeconds := 0.2,

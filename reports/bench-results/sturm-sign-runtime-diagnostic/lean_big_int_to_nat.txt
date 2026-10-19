@@ -1,0 +1,68 @@
+
+.lake/build/bin/hexsturm_bench:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000004a00960 <lean_big_int_to_nat>:
+ 4a00960:	55                   	push   %rbp
+ 4a00961:	53                   	push   %rbx
+ 4a00962:	48 83 ec 18          	sub    $0x18,%rsp
+ 4a00966:	48 89 fb             	mov    %rdi,%rbx
+ 4a00969:	48 8d 77 08          	lea    0x8(%rdi),%rsi
+ 4a0096d:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 4a00972:	e8 09 cf fa ff       	call   49ad880 <_ZN4lean3mpzC1ERKS0_>
+ 4a00977:	f6 c3 01             	test   $0x1,%bl
+ 4a0097a:	75 0b                	jne    4a00987 <lean_big_int_to_nat+0x27>
+ 4a0097c:	8b 03                	mov    (%rbx),%eax
+ 4a0097e:	83 f8 02             	cmp    $0x2,%eax
+ 4a00981:	7c 7a                	jl     4a009fd <lean_big_int_to_nat+0x9d>
+ 4a00983:	ff c8                	dec    %eax
+ 4a00985:	89 03                	mov    %eax,(%rbx)
+ 4a00987:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 4a0098c:	e8 8f cf fa ff       	call   49ad920 <_ZNK4lean3mpz9is_size_tEv>
+ 4a00991:	84 c0                	test   %al,%al
+ 4a00993:	74 23                	je     4a009b8 <lean_big_int_to_nat+0x58>
+ 4a00995:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 4a0099a:	e8 a1 cf fa ff       	call   49ad940 <_ZNK4lean3mpz10get_size_tEv>
+ 4a0099f:	48 85 c0             	test   %rax,%rax
+ 4a009a2:	78 14                	js     4a009b8 <lean_big_int_to_nat+0x58>
+ 4a009a4:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 4a009a9:	e8 92 cf fa ff       	call   49ad940 <_ZNK4lean3mpz10get_size_tEv>
+ 4a009ae:	48 8d 1c 45 01 00 00 	lea    0x1(,%rax,2),%rbx
+ 4a009b5:	00 
+ 4a009b6:	eb 31                	jmp    4a009e9 <lean_big_int_to_nat+0x89>
+ 4a009b8:	bf 18 00 00 00       	mov    $0x18,%edi
+ 4a009bd:	e8 5e 4f 06 00       	call   4a65920 <lean_alloc_small_object_core>
+ 4a009c2:	48 89 c3             	mov    %rax,%rbx
+ 4a009c5:	0f b7 68 04          	movzwl 0x4(%rax),%ebp
+ 4a009c9:	48 89 c7             	mov    %rax,%rdi
+ 4a009cc:	48 83 c7 08          	add    $0x8,%rdi
+ 4a009d0:	48 8d 74 24 08       	lea    0x8(%rsp),%rsi
+ 4a009d5:	e8 a6 ce fa ff       	call   49ad880 <_ZN4lean3mpzC1ERKS0_>
+ 4a009da:	c7 03 01 00 00 00    	movl   $0x1,(%rbx)
+ 4a009e0:	81 cd 00 00 00 fa    	or     $0xfa000000,%ebp
+ 4a009e6:	89 6b 04             	mov    %ebp,0x4(%rbx)
+ 4a009e9:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 4a009ee:	e8 ed cd fa ff       	call   49ad7e0 <_ZN4lean3mpzD1Ev>
+ 4a009f3:	48 89 d8             	mov    %rbx,%rax
+ 4a009f6:	48 83 c4 18          	add    $0x18,%rsp
+ 4a009fa:	5b                   	pop    %rbx
+ 4a009fb:	5d                   	pop    %rbp
+ 4a009fc:	c3                   	ret
+ 4a009fd:	85 c0                	test   %eax,%eax
+ 4a009ff:	74 86                	je     4a00987 <lean_big_int_to_nat+0x27>
+ 4a00a01:	48 89 df             	mov    %rbx,%rdi
+ 4a00a04:	e8 e7 b8 ff ff       	call   49fc2f0 <lean_dec_ref_cold>
+ 4a00a09:	e9 79 ff ff ff       	jmp    4a00987 <lean_big_int_to_nat+0x27>
+ 4a00a0e:	48 89 c3             	mov    %rax,%rbx
+ 4a00a11:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+ 4a00a16:	e8 c5 cd fa ff       	call   49ad7e0 <_ZN4lean3mpzD1Ev>
+ 4a00a1b:	48 89 df             	mov    %rbx,%rdi
+ 4a00a1e:	e8 1d cc 2d fc       	call   cdd640 <_Unwind_Resume>
+
+Disassembly of section .init:
+
+Disassembly of section .fini:
+
+Disassembly of section .plt:

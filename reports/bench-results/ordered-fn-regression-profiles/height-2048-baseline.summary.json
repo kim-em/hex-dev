@@ -1,0 +1,438 @@
+{
+  "allocation_share_percent": 3.48,
+  "classified_percent": 97.91,
+  "diagnostics": {
+    "bench_pid": 112702,
+    "bench_thread_name": "hexorderedfn_be",
+    "bench_thread_tid": "112717",
+    "calibration": {
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "boundary_residual_raw_max_ms": null,
+          "boundary_residual_trimmed_max_ms": null,
+          "hit_count": 0,
+          "regions_without_samples": 17,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "boundary_residual_raw_max_ms": 0.898615000071004,
+          "boundary_residual_trimmed_max_ms": 0.7980670001124963,
+          "hit_count": 574,
+          "regions_without_samples": 13,
+          "within_residual_limit": true
+        }
+      },
+      "configured_max_residual_ms": 5.0,
+      "effective_max_residual_ms": 5.0,
+      "raw_max_residual_ms": 0.898615000071004,
+      "residual_ms": 0.7980670001124963,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "sample_interval_ms": 1.001001,
+      "selected_mode": "relative-to-meta-start-ms",
+      "within_residual_limit": true
+    },
+    "calibration_max_residual_ms": 5.0,
+    "calibration_residual_ms": 0.7980670001124963,
+    "confidence": "passed",
+    "expected_samples_bench_thread": 574.1,
+    "low_confidence_reasons": [],
+    "minimum_retained_samples": 100,
+    "off_bench_thread_samples_in_window": 0,
+    "regions_total": 17,
+    "rejected_samples_bench_thread": 3,
+    "retained_samples_bench_thread": 574,
+    "samply_interval_ms": 1.001001,
+    "samply_meta_start_time_ms": 1791211601695.7083,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "schema": 2,
+    "sensitivity": {
+      "cases": {
+        "minus": {
+          "retained_samples": 569,
+          "shift_ms": -5.0,
+          "top_leaf_functions": [
+            {
+              "function": 46,
+              "name": "0x4d0cde6",
+              "samples": 268
+            },
+            {
+              "function": 30,
+              "name": "0x4d0ce2f",
+              "samples": 75
+            },
+            {
+              "function": 34,
+              "name": "0x4ce9633",
+              "samples": 44
+            }
+          ]
+        },
+        "nominal": {
+          "retained_samples": 574,
+          "shift_ms": 0.0,
+          "top_leaf_functions": [
+            {
+              "function": 46,
+              "name": "0x4d0cde6",
+              "samples": 270
+            },
+            {
+              "function": 30,
+              "name": "0x4d0ce2f",
+              "samples": 77
+            },
+            {
+              "function": 34,
+              "name": "0x4ce9633",
+              "samples": 44
+            }
+          ]
+        },
+        "plus": {
+          "retained_samples": 569,
+          "shift_ms": 5.0,
+          "top_leaf_functions": [
+            {
+              "function": 46,
+              "name": "0x4d0cde6",
+              "samples": 270
+            },
+            {
+              "function": 30,
+              "name": "0x4d0ce2f",
+              "samples": 76
+            },
+            {
+              "function": 34,
+              "name": "0x4ce9633",
+              "samples": 43
+            }
+          ]
+        }
+      },
+      "comparisons": {
+        "minus": {
+          "comparison_samples": 569,
+          "effective_max_total_variation_distance": 0.1,
+          "exchanged_fraction": 0.008787346221441126,
+          "exchanged_samples": 5,
+          "failure_reasons": [],
+          "leaf_function_support_size": 71,
+          "maximum_sampling_noise_allowance": 0.5,
+          "noise_allowance_discriminating": true,
+          "sample_count_adequate": true,
+          "sampling_noise_allowance": 0.028097530954954434,
+          "total_variation_distance": 0.004062999455000814,
+          "verdict": "passed"
+        },
+        "plus": {
+          "comparison_samples": 569,
+          "effective_max_total_variation_distance": 0.1,
+          "exchanged_fraction": 0.008787346221441126,
+          "exchanged_samples": 5,
+          "failure_reasons": [],
+          "leaf_function_support_size": 71,
+          "maximum_sampling_noise_allowance": 0.5,
+          "noise_allowance_discriminating": true,
+          "sample_count_adequate": true,
+          "sampling_noise_allowance": 0.028097530954954434,
+          "total_variation_distance": 0.006154204148117297,
+          "verdict": "passed"
+        }
+      },
+      "configured_max_total_variation_distance": 0.1,
+      "leaf_function_distributions_stable": true,
+      "maximum_sampling_noise_allowance": 0.5,
+      "minimum_comparison_samples": 100,
+      "reported_top_function_count": 3,
+      "sampling_noise_coefficient": 0.6,
+      "shift_ms": 5.0,
+      "verdict": "passed"
+    },
+    "sidecar_mono_anchor_ns": 575316750060,
+    "spawn_anchor_mono_ns": 575221705026,
+    "spawn_anchor_wall_ns": 1791211601671507027,
+    "stage": "complete",
+    "total_timed_ms": 574.653959
+  },
+  "inclusive_hex": [
+    {
+      "function": "_private.HexOrderedFn.Bench.0_Hex.OrderedFnBench.initFn_.lam_0.00_@.HexOrderedFn.Bench.2976905326__hygCtx_.hyg.33.",
+      "percent": 100.0
+    },
+    {
+      "function": "_private.HexOrderedFn.Bench.0_Hex.OrderedFnBench.initFn_.lam_0.00_@.HexOrderedFn.Bench.2976905326__hygCtx_.hyg.33__boxed",
+      "percent": 100.0
+    },
+    {
+      "function": "Hex.OrderedFn.Infinitesimal.sign",
+      "percent": 33.1
+    },
+    {
+      "function": "Hex.DensePoly.trimTrailingZerosGo",
+      "percent": 8.36
+    },
+    {
+      "function": "Hex.OrderedFn.Infinitesimal.lowestCoeff",
+      "percent": 8.36
+    },
+    {
+      "function": "Hex.OrderedFn.Infinitesimal.lowestIndex",
+      "percent": 6.27
+    },
+    {
+      "function": "Hex.OrderedFn.orderSign",
+      "percent": 5.57
+    }
+  ],
+  "leaf_categories": {
+    "allocation": 3.48,
+    "gmp": 0.7,
+    "lean-own-code": 5.75,
+    "lean-runtime": 87.98,
+    "other": 2.09
+  },
+  "profile": "/home/kim/.codex/tasks/hex-10575/orderedfn-perf-profiles/height-2048-baseline/filtered.json.gz",
+  "samples": 574,
+  "symbols": "/home/kim/.codex/tasks/hex-10575/orderedfn-perf-profiles/height-2048-baseline/symbols.json",
+  "top_inclusive": [
+    {
+      "function": "_ZN4lean7lthread3imp5_mainEPv",
+      "percent": 100.0
+    },
+    {
+      "function": "_ZNSt3__110__function6__funcIZ13lean_run_mainE3$_0FvvEEclEv",
+      "percent": 100.0
+    },
+    {
+      "function": "__clone3",
+      "percent": 100.0
+    },
+    {
+      "function": "_private.HexOrderedFn.Bench.0_Hex.OrderedFnBench.initFn_.lam_0.00_@.HexOrderedFn.Bench.2976905326__hygCtx_.hyg.33.",
+      "percent": 100.0
+    },
+    {
+      "function": "_private.HexOrderedFn.Bench.0_Hex.OrderedFnBench.initFn_.lam_0.00_@.HexOrderedFn.Bench.2976905326__hygCtx_.hyg.33__boxed",
+      "percent": 100.0
+    },
+    {
+      "function": "_private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
+      "percent": 100.0
+    },
+    {
+      "function": "lean-bench.LeanBench.Cli.runChildCmd",
+      "percent": 100.0
+    },
+    {
+      "function": "lean-bench.LeanBench.autoTune",
+      "percent": 100.0
+    },
+    {
+      "function": "lean-bench.LeanBench.runChildMode",
+      "percent": 100.0
+    },
+    {
+      "function": "lean-bench.LeanBench.wrapLoopForSidecar",
+      "percent": 100.0
+    },
+    {
+      "function": "lean_apply_2",
+      "percent": 100.0
+    },
+    {
+      "function": "start_thread",
+      "percent": 100.0
+    },
+    {
+      "function": "lean-bench.LeanBench.blackBox",
+      "percent": 66.03
+    },
+    {
+      "function": "lean_st_ref_take",
+      "percent": 47.39
+    },
+    {
+      "function": "Hex.OrderedFn.Infinitesimal.sign",
+      "percent": 33.1
+    },
+    {
+      "function": "lean_apply_1",
+      "percent": 15.16
+    },
+    {
+      "function": "lean_dec_ref_cold",
+      "percent": 13.41
+    },
+    {
+      "function": "lean_st_ref_set",
+      "percent": 13.41
+    },
+    {
+      "function": "Hex.DensePoly.trimTrailingZerosGo",
+      "percent": 8.36
+    },
+    {
+      "function": "Hex.OrderedFn.Infinitesimal.lowestCoeff",
+      "percent": 8.36
+    }
+  ],
+  "top_self": [
+    {
+      "function": "lean_st_ref_take",
+      "percent": 47.39
+    },
+    {
+      "function": "lean_st_ref_set",
+      "percent": 13.41
+    },
+    {
+      "function": "lean_dec_ref_cold",
+      "percent": 13.07
+    },
+    {
+      "function": "lean_apply_1",
+      "percent": 9.58
+    },
+    {
+      "function": "mi_malloc_small",
+      "percent": 2.79
+    },
+    {
+      "function": "Rat.blt",
+      "percent": 2.26
+    },
+    {
+      "function": "Hex.OrderedFn.Infinitesimal.lowestCoeff",
+      "percent": 2.09
+    },
+    {
+      "function": "instDecidableEqRat.decEq",
+      "percent": 1.92
+    },
+    {
+      "function": "Hex.OrderedFn.Infinitesimal.lowestIndex",
+      "percent": 1.22
+    },
+    {
+      "function": "Hex.OrderedFn.Infinitesimal.sign",
+      "percent": 1.22
+    },
+    {
+      "function": "Array.findIdx?.loop",
+      "percent": 1.05
+    },
+    {
+      "function": "Hex.OrderedFn.orderSign",
+      "percent": 1.05
+    },
+    {
+      "function": "_private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop",
+      "percent": 0.87
+    },
+    {
+      "function": "__gmpz_cmp_si",
+      "percent": 0.7
+    },
+    {
+      "function": "mi_free",
+      "percent": 0.52
+    },
+    {
+      "function": "lean_int_big_lt",
+      "percent": 0.35
+    },
+    {
+      "function": "lean_free_object",
+      "percent": 0.17
+    },
+    {
+      "function": "Hex.DensePoly.trimTrailingZerosGo",
+      "percent": 0.17
+    },
+    {
+      "function": "_ZN4leanL19lean_del_core_otherEP11lean_objecthS1_",
+      "percent": 0.17
+    }
+  ],
+  "top_self_undecorated": [
+    {
+      "percent": 47.39,
+      "symbol": "lean_st_ref_take"
+    },
+    {
+      "percent": 13.41,
+      "symbol": "lean_st_ref_set"
+    },
+    {
+      "percent": 13.07,
+      "symbol": "lean_dec_ref_cold"
+    },
+    {
+      "percent": 9.58,
+      "symbol": "lean_apply_1"
+    },
+    {
+      "percent": 2.79,
+      "symbol": "mi_malloc_small"
+    },
+    {
+      "percent": 2.26,
+      "symbol": "Rat.blt"
+    },
+    {
+      "percent": 2.09,
+      "symbol": "Hex.OrderedFn.Infinitesimal.lowestCoeff_.at_.00Hex.OrderedFn.Infinitesimal.sign_.at_.00Hex.OrderedFnBench.scan.spec_1.spec_2"
+    },
+    {
+      "percent": 1.92,
+      "symbol": "instDecidableEqRat.decEq"
+    },
+    {
+      "percent": 1.22,
+      "symbol": "Hex.OrderedFn.Infinitesimal.lowestIndex_.at_.00Hex.OrderedFn.Infinitesimal.lowestCoeff_.at_.00Hex.OrderedFn.Infinitesimal.sign_.at_.00Hex.OrderedFnBench.scan.spec_1.spec_2.spec_4"
+    },
+    {
+      "percent": 1.22,
+      "symbol": "Hex.OrderedFn.Infinitesimal.sign_.at_.00Hex.OrderedFnBench.scan.spec_1"
+    },
+    {
+      "percent": 1.05,
+      "symbol": "Array.findIdx?.loop_.at_.00Hex.OrderedFn.Infinitesimal.lowestIndex_.at_.00Hex.OrderedFn.Infinitesimal.lowestCoeff_.at_.00Hex.OrderedFn.Infinitesimal.sign_.at_.00Hex.OrderedFnBench.scan.spec_1.spec_2.spec_4.spec_6"
+    },
+    {
+      "percent": 1.05,
+      "symbol": "Hex.OrderedFn.orderSign_.at_.00Hex.OrderedFnBench.scan.spec_0"
+    },
+    {
+      "percent": 0.87,
+      "symbol": "_private.Init.Data.Range.Basic.0_Std.Legacy.Range.forIn'.loop_.at_.00_private.HexOrderedFn.Bench.0_Hex.OrderedFnBench.initFn.00_@.HexOrderedFn.Bench.2976905326__hygCtx_.hyg.33_spec_0_.redArg"
+    },
+    {
+      "percent": 0.7,
+      "symbol": "__gmpz_cmp_si"
+    },
+    {
+      "percent": 0.52,
+      "symbol": "mi_free"
+    },
+    {
+      "percent": 0.35,
+      "symbol": "lean_int_big_lt"
+    },
+    {
+      "percent": 0.17,
+      "symbol": "lean_free_object"
+    },
+    {
+      "percent": 0.17,
+      "symbol": "Hex.DensePoly.trimTrailingZerosGo_.redArg"
+    },
+    {
+      "percent": 0.17,
+      "symbol": "_ZN4leanL19lean_del_core_otherEP11lean_objecthS1_"
+    }
+  ],
+  "unresolved_leaf_percent": 0.0
+}

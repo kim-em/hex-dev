@@ -1,0 +1,208 @@
+{
+  "attempts": 24,
+  "completed_samples": 24,
+  "harness_dropped_leading": 0,
+  "harness_slope": -1.404948,
+  "harness_verdict": "inconclusive",
+  "interpretation": "Finite degree ladder over one fixed coefficient field; all six attempts retained per rung, including caps/errors. Medians use every completed point; incomplete rungs do not establish the full declared-family model. Descriptive medians/ranges and n^3-normalized medians, not an asymptotic theorem or host-independent budget.",
+  "rows": [
+    {
+      "batches": [
+        {
+          "below_signal_floor": false,
+          "inner_repeats": 1,
+          "total_nanos": 259515554,
+          "trial_index": 0
+        },
+        {
+          "below_signal_floor": false,
+          "inner_repeats": 2,
+          "total_nanos": 442135343,
+          "trial_index": 1
+        },
+        {
+          "below_signal_floor": false,
+          "inner_repeats": 2,
+          "total_nanos": 425076633,
+          "trial_index": 2
+        },
+        {
+          "below_signal_floor": false,
+          "inner_repeats": 2,
+          "total_nanos": 430229025,
+          "trial_index": 3
+        },
+        {
+          "below_signal_floor": false,
+          "inner_repeats": 2,
+          "total_nanos": 294212172,
+          "trial_index": 4
+        },
+        {
+          "below_signal_floor": false,
+          "inner_repeats": 2,
+          "total_nanos": 294724162,
+          "trial_index": 5
+        }
+      ],
+      "completed_trials": 6,
+      "degree": 3,
+      "descriptor_bytes": 21688,
+      "failures": [],
+      "head_bytes": 59,
+      "max_ns": 259515554.0,
+      "median_ns": 213826414.5,
+      "min_ns": 147106086.0,
+      "normalized_median_ns": 7919496.833333333
+    },
+    {
+      "batches": [
+        {
+          "below_signal_floor": false,
+          "inner_repeats": 1,
+          "total_nanos": 499304382,
+          "trial_index": 0
+        },
+        {
+          "below_signal_floor": false,
+          "inner_repeats": 1,
+          "total_nanos": 533767931,
+          "trial_index": 1
+        },
+        {
+          "below_signal_floor": false,
+          "inner_repeats": 1,
+          "total_nanos": 439645495,
+          "trial_index": 2
+        },
+        {
+          "below_signal_floor": false,
+          "inner_repeats": 1,
+          "total_nanos": 500755321,
+          "trial_index": 3
+        },
+        {
+          "below_signal_floor": false,
+          "inner_repeats": 1,
+          "total_nanos": 314137094,
+          "trial_index": 4
+        },
+        {
+          "below_signal_floor": false,
+          "inner_repeats": 1,
+          "total_nanos": 318093351,
+          "trial_index": 5
+        }
+      ],
+      "completed_trials": 6,
+      "degree": 5,
+      "descriptor_bytes": 60790,
+      "failures": [],
+      "head_bytes": 65,
+      "max_ns": 533767931.0,
+      "median_ns": 469474938.5,
+      "min_ns": 314137094.0,
+      "normalized_median_ns": 3755799.508
+    },
+    {
+      "batches": [
+        {
+          "below_signal_floor": false,
+          "inner_repeats": 1,
+          "total_nanos": 984343274,
+          "trial_index": 0
+        },
+        {
+          "below_signal_floor": false,
+          "inner_repeats": 1,
+          "total_nanos": 822203947,
+          "trial_index": 1
+        },
+        {
+          "below_signal_floor": false,
+          "inner_repeats": 1,
+          "total_nanos": 884790754,
+          "trial_index": 2
+        },
+        {
+          "below_signal_floor": false,
+          "inner_repeats": 1,
+          "total_nanos": 617229571,
+          "trial_index": 3
+        },
+        {
+          "below_signal_floor": false,
+          "inner_repeats": 1,
+          "total_nanos": 611720085,
+          "trial_index": 4
+        },
+        {
+          "below_signal_floor": false,
+          "inner_repeats": 1,
+          "total_nanos": 641600989,
+          "trial_index": 5
+        }
+      ],
+      "completed_trials": 6,
+      "degree": 7,
+      "descriptor_bytes": 121854,
+      "failures": [],
+      "head_bytes": 71,
+      "max_ns": 984343274.0,
+      "median_ns": 731902468.0,
+      "min_ns": 611720085.0,
+      "normalized_median_ns": 2133826.4373177844
+    },
+    {
+      "batches": [
+        {
+          "below_signal_floor": false,
+          "inner_repeats": 1,
+          "total_nanos": 1598862240,
+          "trial_index": 0
+        },
+        {
+          "below_signal_floor": false,
+          "inner_repeats": 1,
+          "total_nanos": 1534039480,
+          "trial_index": 1
+        },
+        {
+          "below_signal_floor": false,
+          "inner_repeats": 1,
+          "total_nanos": 1600144227,
+          "trial_index": 2
+        },
+        {
+          "below_signal_floor": false,
+          "inner_repeats": 1,
+          "total_nanos": 1053702004,
+          "trial_index": 3
+        },
+        {
+          "below_signal_floor": false,
+          "inner_repeats": 1,
+          "total_nanos": 1064839209,
+          "trial_index": 4
+        },
+        {
+          "below_signal_floor": false,
+          "inner_repeats": 1,
+          "total_nanos": 1051704739,
+          "trial_index": 5
+        }
+      ],
+      "completed_trials": 6,
+      "degree": 9,
+      "descriptor_bytes": 204318,
+      "failures": [],
+      "head_bytes": 77,
+      "max_ns": 1600144227.0,
+      "median_ns": 1299439344.5,
+      "min_ns": 1051704739.0,
+      "normalized_median_ns": 1782495.671467764
+    }
+  ],
+  "schema": 1,
+  "source": "14b03f863df9341f411a1f3df7461f41b82d4ab7"
+}

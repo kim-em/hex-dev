@@ -1,0 +1,44 @@
+{
+  "runReduced/runDirect:3": {
+    "left_median_ms": 6.238243,
+    "right_median_ms": 6.0867835,
+    "right_over_left_pair_geomean": 0.9697061828190952,
+    "left_peak_rss_median_MiB": 72.845703125,
+    "right_peak_rss_median_MiB": 72.6875
+  },
+  "runReduced/runDirect:7": {
+    "left_median_ms": 36.751889,
+    "right_median_ms": 38.101785,
+    "right_over_left_pair_geomean": 1.11859061106175,
+    "left_peak_rss_median_MiB": 72.6796875,
+    "right_peak_rss_median_MiB": 72.69140625
+  },
+  "runReduced/runDirect:15": {
+    "left_median_ms": 233.62214,
+    "right_median_ms": 261.886552,
+    "right_over_left_pair_geomean": 1.089268925918555,
+    "left_peak_rss_median_MiB": 72.69921875,
+    "right_peak_rss_median_MiB": 72.818359375
+  },
+  "runCheckReduced/runCheckDirect:3": {
+    "left_median_ms": 3.227715,
+    "right_median_ms": 3.0273725,
+    "right_over_left_pair_geomean": 0.9373722288892903,
+    "left_peak_rss_median_MiB": 72.71875,
+    "right_peak_rss_median_MiB": 72.8984375
+  },
+  "runCheckReduced/runCheckDirect:7": {
+    "left_median_ms": 19.4196445,
+    "right_median_ms": 19.025259,
+    "right_over_left_pair_geomean": 0.9806868124388772,
+    "left_peak_rss_median_MiB": 72.337890625,
+    "right_peak_rss_median_MiB": 72.64453125
+  },
+  "runCheckReduced/runCheckDirect:15": {
+    "left_median_ms": 120.9213535,
+    "right_median_ms": 128.368188,
+    "right_over_left_pair_geomean": 1.0873931901133207,
+    "left_peak_rss_median_MiB": 72.5625,
+    "right_peak_rss_median_MiB": 72.82421875
+  }
+}

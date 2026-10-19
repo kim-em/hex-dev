@@ -1,0 +1,37 @@
+{
+  "pr": 10975,
+  "reviewed_head": "ae50996ab1a1f3ee0c71959d38eea722f48bc45c",
+  "squash": "6c8a9a35f83fe2e75a71247d79a7cef615126118",
+  "trees": [
+    "efc6dc9745d850671303ad7fe7cc2bac907d1f6f",
+    "efc6dc9745d850671303ad7fe7cc2bac907d1f6f"
+  ],
+  "trees_equal": true,
+  "remote_branch_output": "ae50996ab1a1f3ee0c71959d38eea722f48bc45c\trefs/heads/issue-10358-reader\n",
+  "merged_at": "2026-10-17T06:15:26Z",
+  "ci_run": 39003871439,
+  "jobs": [
+    {
+      "id": 117312272681,
+      "name": "build",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "merge_argv": [
+    "gh",
+    "pr",
+    "merge",
+    "10975",
+    "--repo",
+    "kim-em/hex-dev",
+    "--squash",
+    "--auto",
+    "--match-head-commit",
+    "ae50996ab1a1f3ee0c71959d38eea722f48bc45c"
+  ],
+  "issue_comments": [
+    6230586523,
+    6230586625
+  ]
+}

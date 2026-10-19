@@ -75,7 +75,8 @@ degree (the same convention `Hex.DensePoly` uses in
 * ``resultant`` — returns the integer resultant of ``a`` and ``b``.
 * ``discriminant`` — returns the integer discriminant of ``a``.
 * ``overhead`` — returns ``0`` without constructing a polynomial; this is the
-  steady-state JSON framing / dispatch calibration used by headline reports.
+  steady-state JSON framing / dispatch calibration used for overhead-adjusted
+  comparator ratios.
 
 ### `fmpz_mpoly` (multivariate integer polynomial Z[x₀, ..., xₙ₋₁])
 
@@ -219,10 +220,9 @@ same schema as ``scripts/oracle/rcf_flint.py``.
 
 The driver imports ``flint`` once at startup; per-call cost in the
 steady state is JSON decode + dispatch + python-flint call + JSON
-encode. Measured per-call overhead is recorded in each consuming
-library's headline report (one figure per library is enough since
-the driver shape is identical across consumers); see HO-21..HO-26
-for the per-library write-ups. The shared smoke test
+encode. Measured per-call overhead is recorded with each consuming
+library's comparator ratios (one figure per library is enough since
+the driver shape is identical across consumers). The shared fast check
 ``python3 scripts/oracle/flint_bench_driver.py < smoke.txt`` is
 documented at the bottom of this file.
 

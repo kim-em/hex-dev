@@ -1,0 +1,46 @@
+Add-2-0-Before exit 0
+Add-2-0-After exit 0
+Add-4-0-Before exit 0
+Add-4-0-After exit 0
+Add-8-0-Before exit 0
+Add-8-0-After exit 0
+Sqrt-2-0-Before exit 0
+Sqrt-2-0-After exit 0
+Sqrt-4-0-Before exit 0
+Sqrt-4-0-After exit 0
+Sqrt-8-0-Before exit 0
+Sqrt-8-0-After exit 0
+Add-2-1-After exit 0
+Add-2-1-Before exit 0
+Add-4-1-After exit 0
+Add-4-1-Before exit 0
+Add-8-1-After exit 0
+Add-8-1-Before exit 0
+Sqrt-2-1-After exit 0
+Sqrt-2-1-Before exit 0
+Sqrt-4-1-After exit 0
+Sqrt-4-1-Before exit 0
+Sqrt-8-1-After exit 0
+Traceback (most recent call last):
+  File "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/scripts/bench/fixed_conversion_paired.py", line 143, in <module>
+    main()
+    ~~~~^^
+  File "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/scripts/bench/fixed_conversion_paired.py", line 117, in main
+    result = subprocess.run(command, cwd=ROOT, stdout=log,
+                            stderr=subprocess.STDOUT, check=False)
+  File "/nix/store/63bvfn4ci6vlacky3plkikwbz7la0nll-python3-3.14.7-env/lib/python3.14/subprocess.py", line 557, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/nix/store/63bvfn4ci6vlacky3plkikwbz7la0nll-python3-3.14.7-env/lib/python3.14/subprocess.py", line 1213, in communicate
+    self.wait()
+    ~~~~~~~~~^^
+  File "/nix/store/63bvfn4ci6vlacky3plkikwbz7la0nll-python3-3.14.7-env/lib/python3.14/subprocess.py", line 1279, in wait
+    return self._wait(timeout=timeout)
+           ~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/nix/store/63bvfn4ci6vlacky3plkikwbz7la0nll-python3-3.14.7-env/lib/python3.14/subprocess.py", line 2084, in _wait
+    (pid, sts) = self._try_wait(0)
+                 ~~~~~~~~~~~~~~^^^
+  File "/nix/store/63bvfn4ci6vlacky3plkikwbz7la0nll-python3-3.14.7-env/lib/python3.14/subprocess.py", line 2042, in _try_wait
+    (pid, sts) = os.waitpid(self.pid, wait_flags)
+                 ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt

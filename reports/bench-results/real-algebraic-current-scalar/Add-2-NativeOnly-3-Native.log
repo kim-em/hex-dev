@@ -1,0 +1,9 @@
+Hex.RealAlgebraicScaling.runAdd2    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=8461825, 2026-10-08T16:58:59Z, host=chungus2
+  repeat 0  487.988 µs  (×2^7, total 62.462 ms)
+  median: 487.988 µs    min: 487.988 µs    max: 487.988 µs
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 69_188 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-readiness/current-scalar/Add-2-NativeOnly-3-Native.json

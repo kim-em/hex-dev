@@ -1,0 +1,9 @@
+Hex.RealAlgebraicScaling.runCompare64    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a3ddc94-dirty, 2026-10-04T20:12:56Z, host=chungus2
+  repeat 0  20.996 µs  (×2^12, total 86.004 ms)
+  median: 20.996 µs    min: 20.996 µs    max: 20.996 µs
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 68_772 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Compare-64-Flint-3-Native.json

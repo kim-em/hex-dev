@@ -1,0 +1,35 @@
+{
+  "cpu": 64,
+  "host": "chungus2",
+  "load": [
+    8.490234375,
+    11.4892578125,
+    15.349609375
+  ],
+  "sampler": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "samply": "samply 0.13.1",
+  "cases": [
+    {
+      "family": "sturm-head",
+      "command": [
+        "python3",
+        "/tmp/hex10577-samply/scripts/profile_bench.py",
+        "--bench-exe",
+        ".lake/build/bin/hexsturm_bench",
+        "--bench-name",
+        "Hex.SturmFrontendBench.runFieldReplay",
+        "--param",
+        "20",
+        "--target-nanos",
+        "2000000000",
+        "--out",
+        "/tmp/issue-10577-profiles/sturm-head.json.gz",
+        "--label-filter",
+        "kernel",
+        "--samply-args",
+        "--rate 999 --unstable-presymbolicate"
+      ],
+      "exe_sha256": "feddb153b88861710dd379b300edc1818b2e115ebaf24cad25691457a5fd911e"
+    }
+  ]
+}

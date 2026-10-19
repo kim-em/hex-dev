@@ -32,7 +32,7 @@ private def quadReplay : SturmReplay where
 
 example : quadReplay.check quad = true := by decide
 
-example : Squarefree (HexRealRootsMathlib.toPolyℝ quad) :=
+example : Squarefree (HexRealRootsTheory.toPolyℝ quad) :=
   SturmReplay.squarefree_of_check (cert := quadReplay) (by decide)
 
 private def badScale : SturmReplay :=
@@ -105,8 +105,8 @@ example : quadReplay.count rightRoot = 1 := by decide
 example : quadReplay.count excludedLeftRoot = 0 := by decide
 example : quadReplay.total = 2 := by decide
 
-example : (HexRealRootsMathlib.Literal.rootsIn
-    (HexRealRootsMathlib.toPolyℝ quad) wide).card = 2 := by
+example : (HexRealRootsTheory.Literal.rootsIn
+    (HexRealRootsTheory.toPolyℝ quad) wide).card = 2 := by
   have h := SturmReplay.count_eq_card_roots
     (f := quad) (cert := quadReplay) (by decide) wide
   have hcount : quadReplay.count wide = 2 := by decide

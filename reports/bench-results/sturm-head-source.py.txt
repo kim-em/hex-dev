@@ -1,0 +1,39 @@
+"""Compare timed definitions with the exact retained head-wide snapshots."""
+import hashlib, importlib.util, json, re, subprocess
+from pathlib import Path
+spec = importlib.util.spec_from_file_location('admission', 'scripts/ci/check_named_admissions.py')
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+root = Path('reports/bench-results/prerequisite-sturm-head-wide')
+metadata = json.loads((root/'metadata.json').read_text())
+after = subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip()
+def definition(source, name):
+    code = module.code_only(source)
+    start = re.search(r'^def '+re.escape(name)+r'(?=\s|\(|:|$)', code, re.M)
+    assert start, name
+    end = re.search(r'^(?:@\[.*\]\s*)?(?:def |theorem |structure |instance |setup_benchmark |setup_fixed_benchmark |namespace |end |private def )', code[start.end():], re.M)
+    body = source[start.start():start.end()+end.start() if end else len(source)]
+    return (' '.join(module.code_only(body).split()), re.findall(r'"(?:\\.|[^"\\])*"', body))
+checks = {}
+for file, names in {
+    'Bench.lean': ['runInteger','runRational','runDomain','runInitial','runChain','runEndpoints','runSigns','runClearing'],
+    'Frontend.lean': ['runPrepared','runRetarget','runCount','runPreparedCount','runCertificate','runPreparedCertificate','runCountCertificate','runFieldReplay','runCachedReplay','runClear','runEmbed','runInfinite'],
+}.items():
+    path = 'bench/HexSturm/'+file
+    raw = (root/(file+'.txt')).read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == metadata['hashes'][path]
+    old = raw.decode()
+    new = subprocess.check_output(['git','show',after+':'+path],text=True)
+    if file == 'Frontend.lean':
+        assert definition(new,'prepare')[0] == 'def prepare (n : Nat) : Input := fromHead (head n)'
+        assert '(bounds : DyadicInterval := interval)' in module.code_only(new)
+        assert definition(new,'interval')[0] == 'def interval : DyadicInterval := ⟨Dyadic.ofInt (-2), Dyadic.ofInt 2, by decide⟩'
+    checks[path] = {}
+    for name in names:
+        before, current = definition(old,name), definition(new,name)
+        normalized = current[0].replace('i.bounds.lower.toRat','(-2)').replace('i.bounds.upper.toRat','2').replace('i.bounds','interval')
+        same_family = before == (normalized,current[1])
+        assert before==current or same_family,(path,name)
+        checks[path][name] = {'code_and_strings_identical':before==current,'identical_after_fixed_endpoint_substitution':same_family,'change':None if before==current else 'Current body reads endpoints from Input.bounds; prepare uses fromHead(head n) with default interval (-2,2). Added endpoint conversions have constant size on this family.'}
+
+print(json.dumps({'capture_head':metadata['head'],'after':after,'snapshot_hashes_checked':True,'definitions':checks,'fixed_family_binding':'Frontend.prepare = fromHead(head n); fromHead defaults bounds to interval = (Dyadic.ofInt (-2),Dyadic.ofInt 2). Verified against the current source; substitutions are limited to these bindings.', 'limits':'Checks all twenty timed bodies against retained dirty-tree snapshots, not unrecorded edits in other modules or current executable byte identity.'},indent=2))

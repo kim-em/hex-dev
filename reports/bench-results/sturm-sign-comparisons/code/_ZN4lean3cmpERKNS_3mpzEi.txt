@@ -1,0 +1,15 @@
+
+/home/kim/.local/state/hex/issue-10577-sign-fix/after-hexsturm_bench:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+00000000049adf88 <_ZN4lean3cmpERKNS_3mpzEi>:
+ 49adf88:	48 63 f6             	movslq %esi,%rsi
+ 49adf8b:	e9 e0 53 03 00       	jmp    49e3370 <__gmpz_cmp_si>
+
+Disassembly of section .init:
+
+Disassembly of section .fini:
+
+Disassembly of section .plt:

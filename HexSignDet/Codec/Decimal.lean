@@ -73,16 +73,19 @@ accept plus signs, decimal points or exponents. -/
     (readDigits (String.ofList text.toList.tail)).map fun n => -(Int.ofNat n)
   else (readDigits text).map Int.ofNat
 
+/-- Validate UTF-8 before reading an optional minus and decimal digits. -/
 @[expose] def readInt (input : ByteArray) : Option Int := do
   let text ← String.fromUTF8? input
   readIntText text
 
+/-- A printed natural number starts with a decimal digit, never a minus. -/
 private theorem head_repr_ne_minus (n : Nat) : n.repr.toList.head? ≠ some '-' := by
   intro h
   have hc : '-' ∈ Nat.toDigits 10 n := by simpa using List.mem_of_head? h
   have hd := Nat.isDigit_of_mem_toDigits (by decide : 0 < 10) (by decide : 10 ≤ 10) hc
   contradiction
 
+/-- Unsigned natural decimal text is read as the same nonnegative integer. -/
 private theorem readIntText_nat (n : Nat) : readIntText n.repr = some (Int.ofNat n) := by
   simp only [readIntText, ite_eq_right (head_repr_ne_minus n), readDigits_repr, Option.map_some]
 
@@ -97,6 +100,7 @@ theorem readInt_repr (n : Int) : readInt n.repr.toUTF8 = some n := by
     simp [Int.repr_eq_ite, readIntText, String.toList_append]
     simpa only [← Nat.repr_eq_ofList_toDigits] using readDigits_repr (n + 1)
 
+/-- The standard integer string printer survives actual UTF-8 decoding. -/
 theorem readInt_toString (n : Int) : readInt (toString n).toUTF8 = some n := by
   simpa only [Int.toString_eq_repr] using readInt_repr n
 

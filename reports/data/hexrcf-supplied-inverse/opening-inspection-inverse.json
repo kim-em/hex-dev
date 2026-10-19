@@ -1,0 +1,26 @@
+[
+  {
+    "label": "desktop",
+    "kind": "inverse-api",
+    "text": "\n                  InverseReplay.check reads a supplied\nclosed-coefficient inverse equation from a checked memo. It preflights every supplied original\ndivisor and the requested operand before reading that equation. A zero divisor returns the\nstructured divisor error; missing or mismatched equation evidence returns the evidence error.\nNeither case starts another solver. The caller still authenticates the source expressions and\nretains the complete original guard list, including guards removed by cancellation.",
+    "dimensions": "{\"viewport\":1440,\"body\":1694,\"scrollY\":243755}"
+  },
+  {
+    "label": "desktop",
+    "kind": "inverse-scope",
+    "text": "\n                  The frozen inverse regression\nchecks a supplied packing whose original polynomial contains an additional copy of the defining\npolynomial, reads its inverse equation and identifies its value with (Real.sqrt 2)⁻¹.\nA Mathlib-free producer generates the literal scalar, packing and inverse graphs; the ordinary\nkernel checks the stored data independently. The source and domain proofs use only the standard\nthree axioms. Zero guards take precedence over absent evidence; empty and out-of-range memos\nreturn the evidence error. This finite example supplies no recursive reached-data exporter.",
+    "dimensions": "{\"viewport\":1440,\"body\":1694,\"scrollY\":244089}"
+  },
+  {
+    "label": "narrow",
+    "kind": "inverse-api",
+    "text": "\n                  InverseReplay.check reads a supplied\nclosed-coefficient inverse equation from a checked memo. It preflights every supplied original\ndivisor and the requested operand before reading that equation. A zero divisor returns the\nstructured divisor error; missing or mismatched equation evidence returns the evidence error.\nNeither case starts another solver. The caller still authenticates the source expressions and\nretains the complete original guard list, including guards removed by cancellation.",
+    "dimensions": "{\"viewport\":390,\"body\":1398,\"scrollY\":371413}"
+  },
+  {
+    "label": "narrow",
+    "kind": "inverse-scope",
+    "text": "\n                  The frozen inverse regression\nchecks a supplied packing whose original polynomial contains an additional copy of the defining\npolynomial, reads its inverse equation and identifies its value with (Real.sqrt 2)⁻¹.\nA Mathlib-free producer generates the literal scalar, packing and inverse graphs; the ordinary\nkernel checks the stored data independently. The source and domain proofs use only the standard\nthree axioms. Zero guards take precedence over absent evidence; empty and out-of-range memos\nreturn the evidence error. This finite example supplies no recursive reached-data exporter.",
+    "dimensions": "{\"viewport\":390,\"body\":1398,\"scrollY\":372048}"
+  }
+]

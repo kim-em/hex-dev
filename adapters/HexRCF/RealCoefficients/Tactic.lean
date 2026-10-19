@@ -35,12 +35,18 @@ meta def positiveLowerBound (s : Q(DyadicSquare)) : MetaM Expr := do
 meta def checkGuards (source : Reify.Source) : MetaM Unit := do
   for divisor in source.divisors do
     let divisor : Q(ℝ) := divisor
-    let goal : Q(Prop) := q($divisor ≠ 0)
+    let (lowered, equality) ← Reify.lowerWithProof #[] divisor
+    let lowered : Q(ℝ) := lowered
+    let goal : Q(Prop) := q($lowered ≠ 0)
     let proof ← mkFreshExprMVar goal
-    let remaining ← Lean.Elab.runTactic' proof.mvarId! (← `(tactic| norm_num))
+    let remaining ← Lean.Elab.runTactic' proof.mvarId! (← `(tactic| norm_num
+      [RealAlgebraicNumber.ofRat_toReal]))
     unless remaining.isEmpty do
       throwError "rcf: could not prove a closed divisor nonzero"
-    check (← instantiateMVars proof)
+    let proof ← mkAppM ``ne_of_eq_of_ne #[equality, ← instantiateMVars proof]
+    unless ← isDefEq (← inferType proof) q($divisor ≠ 0) do
+      throwError "rcf: closed-divisor proof has the wrong target"
+    checkWithKernel proof
 
 private meta def selectedArgs? (coefficient : Expr) :
     MetaM (Option (Array Expr × Option Expr)) := do
@@ -228,10 +234,11 @@ private meta def shiftedCoefficient (argument : Expr) : MetaM Bool := do
     e := next
   return false
 
-/-- Inputs handled by the existing single-coefficient frontend. The common-field
-frontend uses the same predicate, together with rational original divisors,
-to preserve this handler's priority. Closed
-field computations are classified by their constructors, without reducing the
+/-- Bare source coordinates handled by the existing single-coefficient frontend.
+The common-field frontend uses the same predicate, together with rational
+original divisors, to preserve its priority for these coordinates. Maximal
+closed arithmetic around a named generator uses the common-field frontend.
+Closed field computations are classified by their constructors, without reducing the
 canonical-number conversion merely to compare with a named fixture. -/
 meta def handlesCoefficient (coefficient : Expr) : MetaM Bool := do
   if (← selectedArgs? coefficient).isSome then return true

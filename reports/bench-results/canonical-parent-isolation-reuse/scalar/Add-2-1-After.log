@@ -1,0 +1,9 @@
+Hex.RealAlgebraicScaling.runAdd2    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=630a403, 2026-10-05T12:42:20Z, host=chungus2
+  repeat 0  485.912 µs  (×2^7, total 62.197 ms)
+  median: 485.912 µs    min: 485.912 µs    max: 485.912 µs
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 69_408 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-parent-isolation/scalar-pairs-fixed/Add-2-1-After.json

@@ -1,0 +1,59 @@
++ samply record --save-only --no-open -o /tmp/lean-bench-samply-qun5r1fy/samply.json.gz --rate 999 --unstable-presymbolicate -- .lake/build/bin/hexsturm_bench _child --bench Hex.SturmFrontendBench.runFieldReplay --param 20 --target-nanos 2000000000 --cache-mode warm
+{"schema_version":1,"kind":"parametric","function":"Hex.SturmFrontendBench.runFieldReplay","param":20,"inner_repeats":4096,"total_nanos":2163953196,"per_call_nanos":528308.885742,"cache_mode":"warm","result_hash":"0xb","status":"ok","error":null,"alloc_bytes":null,"peak_rss_kb":72808,"env":{"arch":"x86_64","cpu_cores":96,"cpu_model":"AMD EPYC 9455 48-Core Processor","exe_name":"hexsturm_bench","git_commit":"4f44b806075ae95ad1b3f05c55e6c1ad5bd3f423","git_dirty":true,"hostname":"chungus2","lean_bench_version":"0.1.0","lean_toolchain":"leanprover/lean4:4.35.0-rc3","lean_version":"4.35.0-rc3","os":"linux","platform_target":"x86_64-unknown-linux-gnu","timestamp_iso":"2026-10-02T02:07:55Z","timestamp_unix_ms":1790906875520},"profile_kernel":true}
+error: filter_samply.py exited 2
+diagnostics:      /tmp/issue-10577-profiles/sturm-head.json.gz.failed-raw-8rl3ozf4/diagnostics.json
+{
+  "schema": 2,
+  "stage": "calibration",
+  "confidence": "low",
+  "low_confidence_reasons": [
+    "no matching candidate samply timestamp calibration: {\"absolute-monotonic-ms\": {\"boundary_residual_raw_max_ms\": null, \"boundary_residual_trimmed_max_ms\": null, \"hit_count\": 0, \"regions_without_samples\": 4111, \"within_residual_limit\": false}, \"relative-to-meta-start-ms\": {\"boundary_residual_raw_max_ms\": null, \"boundary_residual_trimmed_max_ms\": null, \"hit_count\": 0, \"regions_without_samples\": 4111, \"within_residual_limit\": false}}"
+  ],
+  "bench_pid": 1329400,
+  "bench_thread_name": null,
+  "bench_thread_tid": null,
+  "regions_total": 4111,
+  "total_timed_ms": 2171.796711,
+  "expected_samples_bench_thread": null,
+  "retained_samples_bench_thread": null,
+  "rejected_samples_bench_thread": null,
+  "off_bench_thread_samples_in_window": null,
+  "samply_interval_ms": 1.001001,
+  "spawn_anchor_wall_ns": 1790906875333803150,
+  "spawn_anchor_mono_ns": 316867094412040,
+  "sidecar_mono_anchor_ns": 316867282610689,
+  "samply_meta_start_time_ms": 1790906875335.1282,
+  "samply_timestamp_mode": null,
+  "calibration_residual_ms": null,
+  "calibration_max_residual_ms": 5.0,
+  "calibration": {
+    "selected_mode": null,
+    "residual_ms": null,
+    "raw_max_residual_ms": null,
+    "residual_statistic": "one-boundary-trimmed-maximum",
+    "configured_max_residual_ms": 5.0,
+    "sample_interval_ms": 1.001001,
+    "effective_max_residual_ms": 5.0,
+    "within_residual_limit": false,
+    "candidates": {
+      "absolute-monotonic-ms": {
+        "hit_count": 0,
+        "regions_without_samples": 4111,
+        "boundary_residual_trimmed_max_ms": null,
+        "boundary_residual_raw_max_ms": null,
+        "within_residual_limit": false
+      },
+      "relative-to-meta-start-ms": {
+        "hit_count": 0,
+        "regions_without_samples": 4111,
+        "boundary_residual_trimmed_max_ms": null,
+        "boundary_residual_raw_max_ms": null,
+        "within_residual_limit": false
+      }
+    }
+  },
+  "minimum_retained_samples": 100,
+  "sensitivity": null
+}
+raw artifacts:    /tmp/issue-10577-profiles/sturm-head.json.gz.failed-raw-8rl3ozf4
+retention:        remove this failed-raw directory after diagnosis

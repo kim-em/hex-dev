@@ -1,0 +1,135 @@
+{
+  "schema": "hex-rcf-window-signs-v1",
+  "measured_source": "ce95c8f1f8400bbc9e649ee366cdb6242503c808",
+  "audit_source_sha256": "59a754c404b4a71a207a27c6c9c7734efa66f036ef1abb4e6edd03e063a6d007",
+  "artifact_hash_capture": "captured after final timed arms, before the separate syntax audit; not per-arm hashes",
+  "probe_artifacts_unchanged_during_audit": true,
+  "final_probe_artifact_sha256": {
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/FixedOriginal.olean": "73151677414d0091ef45ffa3d58971d8974c6cc8fc0ee63dbd799f48dcc84d06",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/FixedOriginal.olean.private": "3efbfec57c1b8c40fa2a92114acfc741ea882561f53347e3c9c7e135fc8b3035",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/FixedRefined.olean": "984f72f0853517bc5220c5fcda88a9efde987f002ba76c58ac31b18024e7b53c",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/FixedRefined.olean.private": "f978c756a9a0d199fb1baa37091971ffd8f4d45dccb008c8ac22ba54401f68d7",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/FurtherOriginal.olean": "f773efa44c81d29008dbba09edc2d021833b2386f2a822b1ff1df590ad4f0bd9",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/FurtherOriginal.olean.private": "2ba53f67187d777e5e49efd77c0ff2d7339483c9c6d56bd534e36cac693123b4",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/FurtherRefined.olean": "4e842112ab12cc95bd4e0dc1f7042cd524ea46aba9f8a521d9f8469cdca8fac9",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/FurtherRefined.olean.private": "ce4f29c41fe47cb9f63ac4176f05fe6bf8ead3c3bb841581b6ff77beb4a77d9d",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/ReciprocalOriginal.olean": "914c20f2b824630b58b01a6f0f983551bfbcb4260e235651e9c283203048d687",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/ReciprocalOriginal.olean.private": "0aee7ab0bc360de64ab827e7a1e1cd084fb2aa61b7e7fc9ca8bc07852d0a810d",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/ReciprocalRefined.olean": "3a9f587704df9ac8b24b452ac4f5c37ededec68ad42731937a1f165d6960bf59",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/ReciprocalRefined.olean.private": "3a3935ba595ec9f74d5bfd02902314cda1fe77d220094cb57ca41648c37ce736",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/CubicOriginal.olean": "aae493c5466b688151d4e33b39ce3d50b6a2c84cd2dea0a23fe7922e0f5e9e16",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/CubicOriginal.olean.private": "29476d9ef87895b059f90e6dee5d4be0bca6459c0299d092d768636cfcdeb09c",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/CubicRefined.olean": "6795fde12726df97d35fb3e13b6db56256af570fa383d7745da46ebe5ce4de20",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Windows/CubicRefined.olean.private": "1e97be74298591c326c22934bbfac882e50f1be615b287ebd49eeb6876ed25fb"
+  },
+  "proofs": [
+    {
+      "distinct_table_syntax": 1,
+      "local_declarations": 6,
+      "proof": "Hex.RCF.ProofProbe.Windows.FixedOriginal.witness",
+      "tables": [
+        {
+          "interval_entries": 123,
+          "query_entries": 3,
+          "refined_window": false
+        }
+      ]
+    },
+    {
+      "distinct_table_syntax": 1,
+      "local_declarations": 10,
+      "proof": "Hex.RCF.ProofProbe.Windows.FixedRefined.witness",
+      "tables": [
+        {
+          "interval_entries": 126,
+          "query_entries": 0,
+          "refined_window": true
+        }
+      ]
+    },
+    {
+      "distinct_table_syntax": 1,
+      "local_declarations": 7,
+      "proof": "Hex.RCF.ProofProbe.Windows.FurtherOriginal.witness",
+      "tables": [
+        {
+          "interval_entries": 126,
+          "query_entries": 0,
+          "refined_window": false
+        }
+      ]
+    },
+    {
+      "distinct_table_syntax": 1,
+      "local_declarations": 7,
+      "proof": "Hex.RCF.ProofProbe.Windows.FurtherRefined.witness",
+      "tables": [
+        {
+          "interval_entries": 126,
+          "query_entries": 0,
+          "refined_window": false
+        }
+      ]
+    },
+    {
+      "distinct_table_syntax": 2,
+      "local_declarations": 10,
+      "proof": "Hex.RCF.ProofProbe.Windows.ReciprocalOriginal.witness",
+      "tables": [
+        {
+          "interval_entries": 0,
+          "query_entries": 1,
+          "refined_window": false
+        },
+        {
+          "interval_entries": 123,
+          "query_entries": 0,
+          "refined_window": false
+        }
+      ]
+    },
+    {
+      "distinct_table_syntax": 2,
+      "local_declarations": 10,
+      "proof": "Hex.RCF.ProofProbe.Windows.ReciprocalRefined.witness",
+      "tables": [
+        {
+          "interval_entries": 0,
+          "query_entries": 1,
+          "refined_window": false
+        },
+        {
+          "interval_entries": 123,
+          "query_entries": 0,
+          "refined_window": false
+        }
+      ]
+    },
+    {
+      "distinct_table_syntax": 1,
+      "local_declarations": 7,
+      "proof": "Hex.RCF.ProofProbe.Windows.CubicOriginal.witness",
+      "tables": [
+        {
+          "interval_entries": 120,
+          "query_entries": 0,
+          "refined_window": false
+        }
+      ]
+    },
+    {
+      "distinct_table_syntax": 1,
+      "local_declarations": 7,
+      "proof": "Hex.RCF.ProofProbe.Windows.CubicRefined.witness",
+      "tables": [
+        {
+          "interval_entries": 120,
+          "query_entries": 0,
+          "refined_window": false
+        }
+      ]
+    }
+  ],
+  "compiler_output_file": "compiler-output.json",
+  "decoded_compiler_output_sha256": "a0471e25de595b5d427c7997826e84b370e8afc65692fbbc21126d4405adf261"
+}

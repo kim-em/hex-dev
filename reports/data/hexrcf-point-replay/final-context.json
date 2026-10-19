@@ -1,0 +1,53 @@
+{
+  "schema": "hex-rcf-point-section-final-validation-v1",
+  "source_commit": "8969c5e0fb5ea02a5d76ef04f871500a0e392c15",
+  "selected_source_hashes": {
+    "HexManual/Chapters/HexRCF/NativeSources.lean": "4c11d57527f3e92d9500b2d4cf429e534acfe03b78c945bfaef9b27d997c5800",
+    "HexRCF/README.md": "95dec1ff9299306e587d60b8f198ce2affffa2e5cfac76c8fb1e8c0a0865b7e1",
+    "HexRCF/SPEC/hex-rcf.md": "37ee486d9ea1f02da2a0352c2f737b267c6952efa0f727e9bfa40244be1aaf30",
+    "adapters/HexRCF/RealCoefficients.lean": "925573a0aff7b4e029edaef31954f9c6c7e39da408040c4180617ff2530c007c",
+    "adapters/HexRCF/RealCoefficients/PointBuild.lean": "5b414f04ffefe03be8ac4b770042c70b47537c3404b2c0b8091a0cfa2b418a19",
+    "adapters/HexRCF/RealCoefficients/PointQuote.lean": "13c28c449cb8507b59a92a14329bf6fdacaafe878943ec19b0b0d862e73f35d0",
+    "adapters/HexRCF/RealCoefficients/PointReplay.lean": "cd512db39030de71fd8ebdf9edeaf1f6a4f5d637063c9971f0936b0a0508da38",
+    "bench/HexRCF/ProofProbe/Points/Point.lean": "7a3bbf6161884c6c793df26403c7b64ac2ef3ba97e27ae580b43faae10e3c58b",
+    "bench/HexRCF/ProofProbe/Points/Section.lean": "15749d1260006f0b83e27099a9899dba4d1eaeb82f201a7465c5fad0706b6005",
+    "conformance/HexRCF/PointOrdinaryConformance.lean": "bf3c65f64a0a6b08c71aca6b6c74e8e40a479afa6bad2715f5002c28aea74b86",
+    "conformance/HexRCF/PointProduceConformance.lean": "500bfe2b98ed2b6ad09d4839658333eadb1488b534931bea8123c45046587469",
+    "conformance/HexRCF/PointReplayConformance.lean": "38403796a2e9e5e60374ca8c0da83df8c8cdc2f8fa778b1c76520d90fede3c45",
+    "lakefile.lean": "e48b49cd3e3a687216437752457f7a46df360ddad97bb94cdff7ac2118c60fcc",
+    "reports/hexrcf-point-replay.md": "52b428610bde81d882e2964949e8c6982a1f335a05b9872cb373e10c4738b6d1",
+    "scripts/bench/rcf_point_selection.py": "1edcf468bd8d475f998b58c6006e79aa3be10ce21944b0524085db97a8936941",
+    "HexRCF/Tactic.lean": "09d895ba1dd2c1af0bfffca197494f2614380ded268ff13e4e0b02fea22b9224",
+    "conformance/HexRCF/ProofEvidence.lean": "b94ac7f25504f684b5caab07d7b56a76e6ffeb76c402349edb7f9514e228521c",
+    "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "dee0603c48007db76b74fad8d388f87c8e51fac02d20903149e0c83203a05a25",
+    "adapters/HexRCF/RealCoefficients/ScalarPacket.lean": "92793b69d8f773149c1237f81118b6f0e291071f8106fd2861296d5d08ad759a",
+    "adapters/HexRCF/RealCoefficients/Quote.lean": "d819b2900d0dc7f9530f0637665381ffd6093d8ec0cd3147ed8c8a1033ce65d7",
+    "adapters/HexRCF/RealCoefficients/SectionQuote.lean": "a1dc5b4bb5ccc7c7ec98b8949840b20aaeb799383271832254f42d079f057b69",
+    "reports/hexrcf-section-replay.md": "f23a59c37b8e867c60b3e320ba3ee1cea4d30f57120a9265b5c90b80c4f3eebc",
+    "conformance/HexRCF/SectionProduceConformance.lean": "c3c39613db7bdffc2620066af8cb6e23dc038d72769241f3fad5a2a687fea609"
+  },
+  "records": [
+    {
+      "path": "10879-assigned-source-final.log.xz",
+      "archive_sha256": "83ed888410832e7f4db0a4b3408e998730d5975fe8896e00781b5d88d575107b",
+      "decoded_sha256": "d74dfffb1f1dcdd86ff8f766869c98ed198696e96d56da68aec026cd07bb5b07",
+      "command": "lake build HexRCF.PointProduceConformance HexRCF.PointOrdinaryConformance HexRCF.SectionProduceConformance HexRCF.SectionOrdinaryConformance HexRCFRealCoefficients HexManual.Chapters.HexRCF.NativeSources",
+      "observed_exit_code": 0
+    },
+    {
+      "path": "10879-final-render.log.xz",
+      "archive_sha256": "51e16b5a880c4cfc4a91db3ea21872d5c428a502e4ed3609c8a19023bfaa0de9",
+      "decoded_sha256": "2d70545fdb4c41442e737e6b0c9d2d06dc4edaac1a1ebc1fcef414d89be8d767",
+      "command": "lake build FullRender",
+      "observed_exit_code": 0
+    },
+    {
+      "path": "10879-instantiated-model.log.xz",
+      "archive_sha256": "91b87bdb858da00db1431d512d9c95d108bd906fb5b5218354ece0fc62333f04",
+      "decoded_sha256": "f2c87110cd0c55a27871a90d47860814bff9416ad76919f5a6eac9d31aead34d",
+      "command": "lake build HexRCF.RealCoefficients.PointQuote HexRCF.RealCoefficients.SectionQuote",
+      "observed_exit_code": 0
+    }
+  ],
+  "validation_boundary": "Both reports and current point/section/shared-source modules bind to this commit. Source/fresh regressions cover assigned checker metavariables and exact refusal/state checks, an actual false row and guard-domain conclusions, and strictly negative left-ray semantics. Full rendering succeeds but is not a visual overflow audit. Imported bodies are leaves in local-body scans; complete axiom inventories are separate. Selected hashes are not a complete dependency cone. Historical timing archives retain their independent predecessor binding; this contains no current-helper timing."
+}

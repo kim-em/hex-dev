@@ -31,7 +31,7 @@ search on its `none`. Both emit `RealRootIsolations p` — pairwise-disjoint,
 ordered, Sturm-count-certified isolations, one per real root — so the driver
 is a one-liner that keeps whichever engine's certified output arrives first.
 
-The companion `HexRealRootsMathlib` proves `ZPoly.isolateRealRoots? p ≠ none` for squarefree
+The companion `HexRealRootsTheory` proves `ZPoly.isolateRealRoots? p ≠ none` for squarefree
 `p` (`isolateRealRoots?_isSome`), routed through the Sturm engine's completeness
 (`isolateSturm?_isSome`); the Descartes engine's own completeness waits on the
 unformalised two-circle theorem and no driver-level fact depends on it.

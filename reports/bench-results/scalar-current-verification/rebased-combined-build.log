@@ -1,0 +1,1463 @@
+✔ [1559/1806] Built HexSturm.Basic (531ms)
+✔ [2473/2776] Built HexSturm.Reduced (322ms)
+✔ [2474/2776] Built HexSturm.Transport (343ms)
+✔ [2475/2776] Built HexSturm.DomainOperations (316ms)
+✔ [3213/3263] Built HexSturm (259ms)
+✔ [8677/8865] Built HexSturmMathlib.Domain (1.0s)
+⚠ [9352/9397] Replayed HexBerlekamp.Factor
+warning: HexBerlekamp/Factor.lean:661:12: This simp argument is unused:
+  DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [DensePoly.degree?, DensePoly.size, hcoeffs]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+ℹ [9374/9682] Replayed HexBareiss.Bareiss
+info: HexBareiss/Bareiss.lean:240:2: Try these:
+  [apply] [grind
+    .] for pattern: [@getElem (Vector #9 #8) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ #5 #1 _) #4 _, @findPivot? _ #8 #7 #6 #5 #4 #3]
+  [apply] [grind →] for pattern: [@findPivot? #9 #8 #7 #6 #5 #4 #3, @LE.le `[Nat] `[instLENat] #3 (@Fin.val #8 #1)]
+  [apply] [grind
+    <=] for pattern: [@getElem (Vector #9 #8) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ #5 #1 _) #4 _, @LE.le `[Nat] `[instLENat] #3 (@Fin.val #8 #1)]
+  [apply] [grind! →] for pattern: [@findPivot? #9 #8 #7 #6 #5 #4 #3, @Fin.val #8 #1]
+info: HexBareiss/Bareiss.lean:982:2: Try this:
+  [apply] [grind =] for pattern: [@pivotLoopWith #7 #6 #5 #4 #3 #2 #1 `[0] #0]
+info: HexBareiss/Bareiss.lean:990:2: Try these:
+  [apply] [grind =] for pattern: [@pivotLoopWith #9 #8 #7 #6 #5 #4 #3 (#2 + 1) #1]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] #8 ((@BareissState.step #9 #8 #1) + 1), @pivotLoopWith _ #8 #7 #6 #5 #4 #3 (#2 + 1) #1]
+info: HexBareiss/Bareiss.lean:1000:2: Try these:
+  [apply] [grind =] for pattern: [@pivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+  [apply] [grind
+    =_] for pattern: [@pivotLoopWith #10 #9 #8 #7 #6 #5 #4 #3 (@BareissState.mk _ #9 ((@BareissState.step _ #9 #2) + 1) (@stepMatrixWith _ #9 _ _ _ #4 (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.prevPivot _ #9 #2)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.rowSwaps _ #9 #2) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @pivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1017:2: Try these:
+  [apply] [grind =] for pattern: [@pivotLoopWith #11 #10 #9 #8 #7 #6 #5 (#4 + 1) #3]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #11 #10 #3) + 2) #10, @findPivot? _ #10 #9 #6 (@BareissState.matrix _ #10 #3) (@Fin.mk #10 (@BareissState.step _ #10 #3) _) ((@BareissState.step _ #10 #3) + 1), @pivotLoopWith _ #10 _ #8 #7 _ #5 (#4 + 1) #3]
+info: HexBareiss/Bareiss.lean:1033:2: Try these:
+  [apply] [grind
+    =_] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 #6 (@BareissState.mk _ #12 ((@BareissState.step _ #12 #5) + 1) (@stepMatrixWith _ #12 _ _ _ #7 (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) (@BareissState.prevPivot _ #12 #5)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) ((@BareissState.rowSwaps _ #12 #5) + 1) `[none])]
+  [apply] [grind
+    .] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 (#6 + 1) #5, @pivotLoopWith _ #12 _ _ _ _ #7 #6 (@BareissState.mk _ #12 ((@BareissState.step _ #12 #5) + 1) (@stepMatrixWith _ #12 _ _ _ #7 (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) (@BareissState.prevPivot _ #12 #5)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2) (@BareissState.step _ #12 #5) _) (@BareissState.step _ #12 #5) _) ((@BareissState.rowSwaps _ #12 #5) + 1) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #13 #12 #5) + 2) #12, @findPivot? _ #12 #11 #8 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) ((@BareissState.step _ #12 #5) + 1), @some (Fin _) #2, @pivotLoopWith _ #12 _ #10 #9 _ #7 (#6 + 1) #5]
+  [apply] [grind!
+    .] for pattern: [@pivotLoopWith #13 #12 #11 #10 #9 #8 #7 (#6 + 1) #5, @rowSwap _ #12 #12 (@BareissState.matrix _ #12 #5) (@Fin.mk #12 (@BareissState.step _ #12 #5) _) #2]
+info: HexBareiss/Bareiss.lean:1141:2: Try this:
+  [apply] [grind =] for pattern: [@noPivotLoopWith #7 #6 #5 #4 #3 #2 #1 `[0] #0]
+info: HexBareiss/Bareiss.lean:1149:2: Try these:
+  [apply] [grind =] for pattern: [@noPivotLoopWith #9 #8 #7 #6 #5 #4 #3 (#2 + 1) #1]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] #8 ((@BareissState.step #9 #8 #1) + 1), @noPivotLoopWith _ #8 #7 #6 #5 #4 #3 (#2 + 1) #1]
+info: HexBareiss/Bareiss.lean:1158:2: Try these:
+  [apply] [grind =] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @noPivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1168:2: Try these:
+  [apply] [grind =] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+  [apply] [grind
+    =_] for pattern: [@noPivotLoopWith #10 #9 #8 #7 #6 #5 #4 #3 (@BareissState.mk _ #9 ((@BareissState.step _ #9 #2) + 1) (@stepMatrixWith _ #9 _ _ _ #4 (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.prevPivot _ #9 #2)) (@getElem (Vector _ _) `[Nat] _ _ _ (@getElem (Matrix _ _ _) `[Nat] (Vector _ _) _ _ (@BareissState.matrix _ #9 #2) (@BareissState.step _ #9 #2) _) (@BareissState.step _ #9 #2) _) (@BareissState.rowSwaps _ #9 #2) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step #10 #9 #2) + 2) #9, @noPivotLoopWith _ #9 #8 #7 #6 #5 #4 (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1185:2: Try these:
+  [apply] [grind
+    =] for pattern: [@getElem (Vector #11 #10) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ (@BareissState.matrix _ #10 (@noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3)) #2 _) #1 _]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #10 #2) (@BareissState.step #11 #10 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #10 #1) + 1) (@BareissState.step _ #10 #3), @getElem (Vector _ _) (Fin _) _ _ _ (@getElem (Matrix _ _ _) (Fin _) (Vector _ _) _ _ (@BareissState.matrix _ #10 (@noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3)) #2 _) #1 _]
+  [apply] [grind!
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #10 #2) (@BareissState.step #11 #10 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #10 #1) + 1) (@BareissState.step _ #10 #3), @noPivotLoopWith _ #10 #9 #8 #7 #6 #5 #4 #3]
+info: HexBareiss/Bareiss.lean:1660:2: Try this:
+  [apply] [grind
+    =] for pattern: [@pivotLoopWith `[Int] #1 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] `[0] #0]
+info: HexBareiss/Bareiss.lean:1665:2: Try these:
+  [apply] [grind
+    =] for pattern: [@pivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] #3 ((@BareissState.step `[Int] #3 #1) + 1), @pivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]
+info: HexBareiss/Bareiss.lean:1671:2: Try these:
+  [apply] [grind
+    =] for pattern: [@pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+  [apply] [grind
+    =_] for pattern: [@pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #3 (@BareissState.mk `[Int] #4 ((@BareissState.step `[Int] #4 #2) + 1) (@stepMatrixWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.prevPivot `[Int] #4 #2)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.rowSwaps `[Int] #4 #2) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @pivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1685:2: Try these:
+  [apply] [grind
+    =] for pattern: [@pivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#4 + 1) #3]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #5 #3) + 2) #5, @pivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#4 + 1) #3]
+info: HexBareiss/Bareiss.lean:1697:2: Try these:
+  [apply] [grind
+    =_] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #6 (@BareissState.mk `[Int] #7 ((@BareissState.step `[Int] #7 #5) + 1) (@stepMatrixWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) (@BareissState.prevPivot `[Int] #7 #5)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) ((@BareissState.rowSwaps `[Int] #7 #5) + 1) `[none])]
+  [apply] [grind
+    .] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5, @pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #6 (@BareissState.mk `[Int] #7 ((@BareissState.step `[Int] #7 #5) + 1) (@stepMatrixWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) (@BareissState.prevPivot `[Int] #7 #5)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2) (@BareissState.step `[Int] #7 #5) _) (@BareissState.step `[Int] #7 #5) _) ((@BareissState.rowSwaps `[Int] #7 #5) + 1) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #7 #5) + 2) #7, @some (Fin _) #2, @pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5]
+  [apply] [grind!
+    .] for pattern: [@pivotLoopWith `[Int] #7 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#6 + 1) #5, @rowSwap `[Int] #7 #7 (@BareissState.matrix `[Int] #7 #5) (@Fin.mk #7 (@BareissState.step `[Int] #7 #5) _) #2]
+info: HexBareiss/Bareiss.lean:1729:2: Try this:
+  [apply] [grind
+    =] for pattern: [@noPivotLoopWith `[Int] #1 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] `[0] #0]
+info: HexBareiss/Bareiss.lean:1734:2: Try these:
+  [apply] [grind
+    =] for pattern: [@noPivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] #3 ((@BareissState.step `[Int] #3 #1) + 1), @noPivotLoopWith `[Int] #3 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#2 + 1) #1]
+info: HexBareiss/Bareiss.lean:1740:2: Try these:
+  [apply] [grind
+    =] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1747:2: Try these:
+  [apply] [grind
+    =] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+  [apply] [grind
+    =_] for pattern: [@noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #3 (@BareissState.mk `[Int] #4 ((@BareissState.step `[Int] #4 #2) + 1) (@stepMatrixWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[HexArith.Int.exactDiv] (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.prevPivot `[Int] #4 #2)) (@getElem (Vector `[Int] _) `[Nat] `[Int] _ _ (@getElem (Matrix `[Int] _ _) `[Nat] (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #4 #2) (@BareissState.step `[Int] #4 #2) _) (@BareissState.step `[Int] #4 #2) _) (@BareissState.rowSwaps `[Int] #4 #2) `[none])]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] ((@BareissState.step `[Int] #4 #2) + 2) #4, @noPivotLoopWith `[Int] #4 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] (#3 + 1) #2]
+info: HexBareiss/Bareiss.lean:1761:2: Try these:
+  [apply] [grind
+    =] for pattern: [@getElem (Vector `[Int] #5) (Fin _) `[Int] _ _ (@getElem (Matrix `[Int] _ _) (Fin _) (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #5 (@noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3)) #2 _) #1 _]
+  [apply] [grind
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #5 #2) (@BareissState.step `[Int] #5 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #5 #1) + 1) (@BareissState.step `[Int] #5 #3), @getElem (Vector `[Int] _) (Fin _) `[Int] _ _ (@getElem (Matrix `[Int] _ _) (Fin _) (Vector `[Int] _) _ _ (@BareissState.matrix `[Int] #5 (@noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3)) #2 _) #1 _]
+  [apply] [grind!
+    =>] for pattern: [@LE.le `[Nat] `[instLENat] (@Fin.val #5 #2) (@BareissState.step `[Int] #5 #3), @LE.le `[Nat] `[instLENat] ((@Fin.val #5 #1) + 1) (@BareissState.step `[Int] #5 #3), @noPivotLoopWith `[Int] #5 `[Zero.ofOfNat0] `[Int.instSub] `[Int.instMul] `[Int.instDecidableEq] `[HexArith.Int.exactDiv] #4 #3]
+⚠ [9500/9682] Replayed HexBerlekamp.RabinSoundness.RabinCore
+warning: HexBerlekamp/RabinSoundness/RabinCore.lean:1431:10: This simp argument is unused:
+  DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [DensePoly.degree?] at hh_deg
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [9502/9682] Replayed HexBerlekamp.RabinSoundness.KernelWitness
+warning: HexBerlekamp/RabinSoundness/KernelWitness.lean:57:8: This simp argument is unused:
+  DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [DensePoly.degree?, DensePoly.size, hcoeffs]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [9504/9682] Replayed HexBerlekamp.DistinctDegree
+warning: HexBerlekamp/DistinctDegree.lean:344:8: This simp argument is unused:
+  DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [DensePoly.degree?, DensePoly.size, hcoeffs]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [9551/9682] Replayed HexNumberField.Convert
+warning: HexNumberField/Convert.lean:59:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexNumberField/Convert.lean:60:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexNumberField/Convert.lean:61:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexNumberField/Convert.lean:62:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexNumberField/Convert.lean:63:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexNumberField/Convert.lean:64:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexNumberField/Convert.lean:65:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexNumberField/Convert.lean:66:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexNumberField/Convert.lean:67:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexNumberField/Convert.lean:68:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexNumberField/Convert.lean:69:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexNumberField/Convert.lean:70:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexNumberField/Convert.lean:72:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexNumberField/Convert.lean:73:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexNumberField/Convert.lean:74:2: `@[expose]` has no effect; this declaration would be exposed by default
+warning: HexNumberField/Convert.lean:75:2: `@[expose]` has no effect; this declaration would be exposed by default
+⚠ [9593/9682] Replayed HexRootsMathlib.Taylor
+warning: HexRootsMathlib/Taylor.lean:73:10: This simp argument is unused:
+  Hex.DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [Hex.DensePoly.degree?, Nat.ne_of_gt hp]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [9594/9682] Replayed HexRootsMathlib.SoftPellet
+warning: HexRootsMathlib/SoftPellet.lean:504:12: This simp argument is unused:
+  Hex.DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [Hex.DensePoly.degree?, Nat.ne_of_gt hp]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [9595/9682] Replayed HexRootsMathlib.RootFree
+warning: HexRootsMathlib/RootFree.lean:109:12: This simp argument is unused:
+  Hex.DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [Hex.DensePoly.degree?, Nat.ne_of_gt hp]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [9600/9682] Replayed HexRootsMathlib.NKWitness
+warning: HexRootsMathlib/NKWitness.lean:256:10: This simp argument is unused:
+  Hex.DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [Hex.DensePoly.degree?, Nat.ne_of_gt hp]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [9623/9682] Replayed HexPolyFpMathlib.Basic
+warning: HexPolyFpMathlib/Basic.lean:303:12: This simp argument is unused:
+  Hex.DensePoly.natDegree
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [Hex.DensePoly.degree?, hsize]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [9663/9891] Replayed HexMatrixMathlib.Packed
+warning: HexMatrixMathlib/Packed.lean:141:10: `if_pos` has been deprecated: Use `ite_eq_left` instead
+
+Hint: Replace the deprecated name:
+  i̵f̵_̵p̵o̵s̵i̲t̲e̲_̲e̲q̲_̲l̲e̲f̲t̲
+warning: HexMatrixMathlib/Packed.lean:149:10: `if_neg` has been deprecated: Use `ite_eq_right` instead
+
+Hint: Replace the deprecated name:
+  i̵f̵_̵n̵e̵g̵i̲t̲e̲_̲e̲q̲_̲r̲i̲g̲h̲t̲
+✔ [9739/10179] Built HexSturm.Fixtures (304ms)
+⚠ [9788/10179] Replayed HexRationalFn.Map
+warning: HexRationalFn/Map.lean:61:8: automatically included section variable(s) unused in theorem `_private.HexRationalFn.Map.0.Hex.RationalFn.coeff_add`:
+  [DecidableEq K]
+  [DecidableEq L]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [DecidableEq K] [DecidableEq L] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+⚠ [9947/10789] Replayed HexNumberFieldMathlib.IntegerRoots
+warning: HexNumberFieldMathlib/IntegerRoots.lean:404:33: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+⚠ [9963/10789] Replayed HexNumberFieldMathlib.CommonField
+warning: HexNumberFieldMathlib/CommonField.lean:109:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: HexNumberFieldMathlib/CommonField.lean:145:4: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+⚠ [9980/10789] Replayed HexNumberFieldMathlib.RootSelection
+warning: HexNumberFieldMathlib/RootSelection.lean:172:33: Used `tac1 <;> tac2` where `(tac1; tac2)` would suffice
+
+Note: This linter can be disabled with `set_option linter.unnecessarySeqFocus false`
+⚠ [9985/10789] Replayed HexNumberFieldMathlib.Radical
+warning: HexNumberFieldMathlib/Radical.lean:32:12: This simp argument is unused:
+  hn
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [Ne.symm hn, neg_toComplex, Polynomial.coeff_C]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexNumberFieldMathlib/Radical.lean:35:18: This simp argument is unused:
+  Ne.symm hn
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [hn, neg_toComplex, Polynomial.coeff_C]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexNumberFieldMathlib/Radical.lean:35:30: This simp argument is unused:
+  neg_toComplex
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [hn, Ne.symm hn, Polynomial.coeff_C]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexNumberFieldMathlib/Radical.lean:63:48: `simp` already closes the goal
+
+Hint: Use `simp` instead of `simpa`:
+  [apply] simp [h] at hrmem
+
+Note: This linter can be disabled with `set_option linter.unnecessarySimpa false`
+✔ [10012/10789] Built HexSturm.DomainOperations:c.o (64ms)
+✔ [10013/10789] Built HexSturm:c.o (53ms)
+ℹ [10270/10789] Replayed HexPrimality.Table:c.o
+info: stderr:
+/home/kim/worktrees/hex-dev/hex-dev-issue-10389-toolchain/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]
+1 warning generated.
+⚠ [10369/10789] Replayed HexRealClosureMathlib.Ambient
+warning: adapters/HexRealClosureMathlib/Ambient.lean:51:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/Ambient.lean:52:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/Ambient.lean:340:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/Ambient.lean:350:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/Ambient.lean:361:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+⚠ [10371/10789] Replayed HexRealClosureMathlib.BaseAlgebraicity
+warning: adapters/HexRealClosureMathlib/BaseAlgebraicity.lean:30:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/BaseAlgebraicity.lean:33:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/BaseAlgebraicity.lean:34:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/BaseAlgebraicity.lean:39:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/BaseAlgebraicity.lean:41:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/BaseAlgebraicity.lean:53:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/BaseAlgebraicity.lean:54:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/BaseAlgebraicity.lean:57:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/BaseAlgebraicity.lean:79:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/BaseAlgebraicity.lean:80:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/BaseAlgebraicity.lean:106:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/BaseAlgebraicity.lean:107:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/BaseAlgebraicity.lean:108:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/BaseAlgebraicity.lean:110:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/BaseAlgebraicity.lean:114:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/BaseAlgebraicity.lean:116:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/BaseAlgebraicity.lean:135:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/BaseAlgebraicity.lean:136:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/BaseAlgebraicity.lean:152:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/BaseAlgebraicity.lean:153:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+⚠ [10372/10789] Replayed HexRealClosureMathlib.BaseBound
+warning: adapters/HexRealClosureMathlib/BaseBound.lean:90:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/BaseBound.lean:120:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/BaseBound.lean:140:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/BaseBound.lean:141:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+✔ [10375/10909] Built HexSignDet.Moment (300ms)
+✔ [10377/10909] Built HexSturm.Basic:c.o (145ms)
+✔ [10378/10909] Built HexSturm:shared (64ms)
+⚠ [10380/10909] Replayed HexRealClosureMathlib.EnlargementTests
+warning: adapters/HexRealClosureMathlib/EnlargementTests.lean:28:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/EnlargementTests.lean:29:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/EnlargementTests.lean:48:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/EnlargementTests.lean:64:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+✔ [10462/10909] Built HexRealClosure.BaseMap (458ms)
+✔ [10465/10909] Built HexSignDet.Reduction (387ms)
+✔ [10467/10909] Built HexRealClosure.Bounds (397ms)
+✔ [10469/10909] Built HexRealClosure.Bounds:dynlib (106ms)
+⚠ [10470/10909] Built HexSturmMathlib.Soundness (1.3s)
+warning: HexSturmMathlib/Soundness.lean:147:6: `simp` already closes the goal
+
+Hint: Use `simp` instead of `simpa`:
+  [apply] simp only [equal]
+
+Note: This linter can be disabled with `set_option linter.unnecessarySimpa false`
+✔ [10471/10909] Built HexSturmMathlib.Compare (1.3s)
+✔ [10472/10909] Built HexRealClosure.Bisection (697ms)
+✔ [10474/10909] Built HexSignDet.MomentReplay (360ms)
+✔ [10476/10909] Built HexRealClosure.Bisection:dynlib (112ms)
+✔ [10477/10909] Built HexSignDet.QueryReduction (446ms)
+✔ [10479/10909] Built HexRealClosureMathlib.TransportReduction (1.2s)
+✔ [10480/10909] Built HexSturmMathlib.Reduced (1.1s)
+✔ [10481/10909] Built HexRealClosure.BisectionFrontier (986ms)
+✔ [10484/10909] Built HexSignDet.Replay (1.1s)
+✔ [10485/10909] Built HexRealClosureMathlib.SpecializeRegular (2.3s)
+✔ [10487/10909] Built HexRealClosure.BaseContext (1.9s)
+✔ [10490/10909] Built HexSignDetMathlib.Reduction (1.4s)
+✔ [10491/10909] Built HexSturm.Frontend (2.2s)
+✔ [10493/10909] Built HexRealClosure.Isolation (480ms)
+✔ [10496/10909] Built HexSignDet.Induction (389ms)
+✔ [10498/10909] Built HexRealClosureMathlib.TransportClosedReduction (900ms)
+✔ [10499/10909] Built HexRealClosure.BaseCodec (463ms)
+✔ [10502/10909] Built HexSignDet.SignOperands (724ms)
+⚠ [10504/10909] Built HexSignDet.Produce (854ms)
+warning: HexSignDet/Produce.lean:142:5: Variable name `h` is not explicitly referenced.
+
+Hint: The binding can be removed (if unused) or named `_` (if used implicitly). Alternatively, prefix the name with `_` to silence this warning:
+  [apply] _h
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+✔ [10506/10909] Built HexSignDet.Table (820ms)
+✔ [10508/10909] Built HexRealClosure.BasePolynomial (654ms)
+✔ [10511/10909] Built HexSignDet.Reference (651ms)
+✔ [10513/10909] Built HexSignDet.CommonProduct (765ms)
+✔ [10515/10909] Built HexSignDetMathlib.ReductionProducer (1.5s)
+✔ [10516/10909] Built HexSignDetMathlib.NodeBasis (1.8s)
+✔ [10517/10909] Built HexSignDet.TableProducer (564ms)
+✔ [10519/10909] Built HexRealClosure.BaseCatalog (612ms)
+✔ [10522/10909] Built HexRealClosureMathlib.TransportPreparation (1.4s)
+✔ [10523/10909] Built HexRealRootsMathlib (4.5s)
+✔ [10525/10909] Built HexSignDet.Thom (713ms)
+✔ [10527/10909] Built HexSignDetMathlib.Solve (1.7s)
+✔ [10528/10909] Built HexRealClosureMathlib.TransportRegular (2.1s)
+✔ [10529/10909] Built HexSturm.Conformance (4.8s)
+✔ [10530/10909] Built HexRealClosureMathlib.SpecializeQuery (2.8s)
+✔ [10531/10909] Built HexSignDetMathlib.CommonProduct (1.3s)
+✔ [10532/10909] Built HexSturmMathlib.Rational (5.2s)
+✔ [10533/10909] Built HexRealClosureMathlib.TransportMoment (1.1s)
+✔ [10534/10909] Built HexSignDetMathlib.RationalSolve (2.3s)
+✔ [10535/10909] Built HexSignDet.Descriptor (724ms)
+✔ [10536/10909] Built HexSignDetMathlib.QueryReduction (1.5s)
+✔ [10537/10909] Built HexSturm.Bench (3.1s)
+✔ [10539/10909] Built HexSignDetMathlib.Foundation (3.0s)
+✔ [10540/10909] Built HexSignDetMathlib.Derivatives (917ms)
+✔ [10541/10909] Built HexSignDet.Descriptor:c.o (169ms)
+✔ [10542/10909] Built HexSignDet.DescriptorOperations (345ms)
+✔ [10543/10909] Built HexSignDet.Convert (390ms)
+✔ [10545/10909] Built HexSignDet.DescriptorOperations:c.o (64ms)
+✔ [10546/10909] Built hexsturm_bench:exe (440ms)
+✔ [10547/10909] Built HexSignDet.Complete (643ms)
+✔ [10549/10909] Built HexSignDet.SelectedSigns (774ms)
+⚠ [10551/10909] Built HexSignDet.Dag (1.1s)
+warning: HexSignDet/Dag.lean:164:26: This simp argument is unused:
+  bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [hr, Option.bind] at h
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexSignDet/Dag.lean:164:32: This simp argument is unused:
+  Option.bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [hr, bind] at h
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexSignDet/Dag.lean:166:23: This simp argument is unused:
+  bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [hr, Option.bind] at h
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexSignDet/Dag.lean:166:29: This simp argument is unused:
+  Option.bind
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [hr, bind] at h
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+✔ [10553/10909] Built HexRealClosureMathlib.SpecializeNested (4.3s)
+✔ [10554/10909] Built HexSignDet.ThomOrder (543ms)
+✔ [10556/10909] Built HexRealClosureMathlib.TransportTests (1.7s)
+✔ [10557/10909] Built HexSignDet.QueryHandle (559ms)
+✔ [10558/10909] Built HexSignDet.Reencode (745ms)
+✔ [10559/10909] Built HexSignDet.QueryHandle:c.o (95ms)
+✔ [10561/10909] Built HexSignDet.DagEncode (499ms)
+✔ [10562/10909] Built HexSignDet.DagOperations (457ms)
+✔ [10565/10909] Built HexSignDet.Codec.Basic (460ms)
+✔ [10567/10909] Built HexSignDetMathlib.FiniteSolve (1.5s)
+✔ [10568/10909] Built HexRealClosureMathlib.TransportReplay (1.8s)
+✔ [10569/10909] Built HexSignDet.HandleOperations (425ms)
+✔ [10570/10909] Built HexSignDetMathlib.NodeProducer (1.9s)
+✔ [10571/10909] Built HexSignDet.HandleOperations:c.o (69ms)
+✔ [10572/10909] Built HexSignDet.Compare (670ms)
+✔ [10573/10909] Built HexSignDet.DagSigns (990ms)
+✔ [10576/10909] Built HexSignDet.DagMemo (520ms)
+✔ [10578/10909] Built HexSignDet.Dependencies (575ms)
+✔ [10580/10909] Built HexSignDet.Codec.Laws (598ms)
+✔ [10582/10909] Built HexSignDet.RootList (1.0s)
+✔ [10584/10909] Built HexSignDet.Codec.Evidence (886ms)
+✔ [10586/10909] Built HexSignDet.Codec.Bytes (500ms)
+✔ [10588/10909] Built HexSturmMathlib.IntCast (3.0s)
+✔ [10589/10909] Built HexSignDetMathlib.Reencode (1.4s)
+✔ [10590/10909] Built HexSignDet.DagReplay (687ms)
+✔ [10591/10909] Built HexRealClosureMathlib.SpecializeTarski (3.3s)
+✔ [10593/10909] Built HexSturmMathlib.DenominatorClearing (3.2s)
+✔ [10594/10909] Built HexSignDet.Codec.EvidenceLaws (567ms)
+✔ [10596/10909] Built HexSignDetMathlib.ParentSystem (1.4s)
+✔ [10597/10909] Built HexSignDet.DependenciesCodec (645ms)
+✔ [10598/10909] Built HexSignDet.DagExpand (589ms)
+✔ [10601/10909] Built HexSignDet.Codec.Node (886ms)
+✔ [10603/10909] Built HexSignDetMathlib.NodeChecks (1.9s)
+✔ [10604/10909] Built HexSignDet.DagBounds (363ms)
+✔ [10606/10909] Built HexSignDet.Codec.NodeLaws (476ms)
+✔ [10608/10909] Built HexSignDet.DagSelectedSigns (612ms)
+✔ [10610/10909] Built HexSignDet.Codec (623ms)
+✔ [10612/10909] Built HexRealClosureMathlib.SpecializeReduction (1.9s)
+✔ [10613/10909] Built HexSignDetMathlib.NodeSolve (1.8s)
+✔ [10614/10909] Built HexRealClosureMathlib.SpecializeFractionRing (3.8s)
+✔ [10615/10909] Built HexSturmMathlib (2.0s)
+✔ [10617/10909] Built HexSignDetMathlib.TreeChecks (1.4s)
+✔ [10618/10909] Built HexSignDet.Codec.GraphLaws (681ms)
+✔ [10620/10909] Built HexSignDet.Codec.Coefficients (398ms)
+✔ [10622/10909] Built HexRealClosureMathlib.SpecializeMoment (1.4s)
+✔ [10623/10909] Built HexSignDet.Codec.FiniteLaws (574ms)
+⚠ [10625/10909] Built HexRealClosureMathlib.CoefficientMap (1.6s)
+warning: adapters/HexRealClosureMathlib/CoefficientMap.lean:35:0: automatically included section variable(s) unused in theorem `Hex.RealClosure.CoefficientMap.map_mem`:
+  [DecidableEq F]
+  [DecidableEq G]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [DecidableEq F] [DecidableEq G] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: adapters/HexRealClosureMathlib/CoefficientMap.lean:101:0: automatically included section variable(s) unused in theorem `Hex.RealClosure.CoefficientMap.polynomial_lift`:
+  [DecidableEq G]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [DecidableEq G] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+✔ [10626/10909] Built HexSignDet.Codec.FiniteGraph (418ms)
+✔ [10628/10909] Built HexSignDetMathlib.TreeSolve (1.6s)
+✔ [10629/10909] Built HexSignDet (286ms)
+✔ [10630/10909] Built HexSignDet:c.o (73ms)
+✔ [10631/10909] Built HexSignDetMathlib.RootModel (6.9s)
+✔ [10632/10909] Built HexSignDet:shared (75ms)
+ℹ [10633/10909] Built HexSturmMathlib.Tests.Replay.Rejected (2.2s)
+info: HexSturmMathlib/Tests/Replay/Rejected.lean:30:0: 'HexSturmMathlib.ReplayTests.rejected' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: HexSturmMathlib/Tests/Replay/Rejected.lean:35:0: 'HexSturmMathlib.ReplayTests.stale' depends on axioms: [propext, Classical.choice, Quot.sound]
+✔ [10634/10909] Built HexSturmMathlib.Tests.Replay.Baseline (2.2s)
+✔ [10635/10909] Built HexSturmMathlib.Tests.Reduced (2.3s)
+✔ [10636/10909] Built HexRealClosure.ContextData (213ms)
+✔ [10638/10909] Built HexRealClosure.ContextData:dynlib (110ms)
+ℹ [10639/10909] Built HexSturmMathlib.Tests.Replay.Accepted (2.5s)
+info: HexSturmMathlib/Tests/Replay/Accepted.lean:32:0: 'HexSturmMathlib.ReplayTests.accepted' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: HexSturmMathlib/Tests/Replay/Accepted.lean:37:0: 'HexSturmMathlib.ReplayTests.domain' depends on axioms: [propext, Classical.choice, Quot.sound]
+✔ [10640/10909] Built HexRealClosure.IsolationRoots (566ms)
+✔ [10642/10909] Built HexRealClosure.Basic (736ms)
+✔ [10644/10909] Built HexRealClosure.IsolationRoots:dynlib (113ms)
+✔ [10645/10909] Built HexRealClosure.Basic:dynlib (114ms)
+✔ [10646/10909] Built HexRealClosure.BaseJson (543ms)
+✔ [10648/10909] Built HexRealClosure.BaseJson:dynlib (107ms)
+✔ [10649/10909] Built HexRealClosure.IsolationPolicy (383ms)
+✔ [10650/10909] Built HexRealClosure.IsolationPolicy:c.o (118ms)
+✔ [10651/10909] Built HexRealClosure.RootOrder (547ms)
+✔ [10653/10909] Built HexRealClosureMathlib.TransportSample (1.2s)
+✔ [10654/10909] Built HexRealClosureMathlib.SpecializeReplay (2.3s)
+✔ [10655/10909] Built HexRealClosure.RootOrder:dynlib (115ms)
+✔ [10656/10909] Built HexRealClosure.IsolationPolicy:dynlib (117ms)
+✔ [10657/10909] Built HexSignDetMathlib.RootProducer (1.6s)
+✔ [10658/10909] Built HexRealClosure.Canonical (732ms)
+✔ [10661/10909] Built HexRealClosureMathlib.CoefficientQuery (2.3s)
+⚠ [10662/10909] Built HexSignDetMathlib.SelectedRoot (2.2s)
+warning: adapters/HexSignDetMathlib/SelectedRoot.lean:382:32: This simp argument is unused:
+  castSignPos
+
+Hint: Omit it from the simp argument list.
+  [apply] simp_all [Tarski.inInterval_iff, Endpoint.map, signsAt, RawDescriptor.constraints,
+    RawDescriptor.constraintSigns, endpoint_eval f hz h1 hs, castSignNeg]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: adapters/HexSignDetMathlib/SelectedRoot.lean:382:45: This simp argument is unused:
+  castSignNeg
+
+Hint: Omit it from the simp argument list.
+  [apply] simp_all [Tarski.inInterval_iff, Endpoint.map, signsAt, RawDescriptor.constraints,
+    RawDescriptor.constraintSigns, endpoint_eval f hz h1 hs, castSignPos]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+✔ [10663/10909] Built HexRealClosureMathlib.TransportDescriptor (1.4s)
+✔ [10664/10909] Built HexSturmMathlib.Tests.Replay.SemanticsBaseline (2.3s)
+✔ [10665/10909] Built HexRealClosure.Algebraic (2.7s)
+✔ [10666/10909] Built HexRealClosureMathlib.SpecializeSample (1.5s)
+✔ [10667/10909] Built HexSturmMathlib.Tests (2.7s)
+✔ [10669/10909] Built HexRealClosure.Element (1.5s)
+✔ [10672/10909] Built HexSturmMathlib.Tests.Replay.Semantics (2.8s)
+✔ [10673/10909] Built HexRealClosure.Algebraic:c.o (377ms)
+✔ [10674/10909] Built HexSignDetMathlib.TableProducer (1.6s)
+✔ [10675/10909] Built HexRealClosure.Algebraic:dynlib (116ms)
+✔ [10676/10909] Built HexSignDetMathlib.DagSelectedSigns (1.2s)
+✔ [10677/10909] Built HexRealClosure.AlgebraicContext (408ms)
+⚠ [10679/10909] Built HexRealClosure.AlgebraicCodec (515ms)
+warning: HexRealClosure/AlgebraicCodec.lean:25:2: `@[expose]` has no effect; this declaration would be exposed by default
+✔ [10681/10909] Built HexRealClosure.AlgebraicReencode (536ms)
+✔ [10683/10909] Built HexRealClosure.QAdjoin (648ms)
+✔ [10685/10909] Built HexRealClosure.AlgebraicContext:dynlib (119ms)
+✔ [10687/10909] Built HexSignDetMathlib.SelectedProducer (1.6s)
+✔ [10688/10909] Built HexSignDetMathlib.Convert (1.7s)
+✔ [10689/10909] Built HexRealClosure.AlgebraicCodec:dynlib (120ms)
+✔ [10690/10909] Built HexRealClosure.SignFacts (675ms)
+✔ [10692/10909] Built HexRealClosure.ContextOperations (607ms)
+✔ [10693/10909] Built HexRealClosure.AlgebraicReencode:dynlib (114ms)
+✔ [10694/10909] Built HexRealClosureMathlib.TransportSelected (1.2s)
+✔ [10695/10909] Built HexSignDetMathlib.Embedding (1.8s)
+✔ [10696/10909] Built HexRealClosure.ContextOperations:c.o (81ms)
+✔ [10697/10909] Built HexRealClosure.SignFacts:dynlib (114ms)
+✔ [10698/10909] Built HexRealClosure.ContextOperations:dynlib (142ms)
+✔ [10699/10909] Built HexSignDetMathlib.RootList (1.9s)
+✔ [10700/10909] Built HexRealClosure.Yun (1.2s)
+✔ [10703/10909] Built HexRealClosureMathlib.SpecializeSelected (1.6s)
+✔ [10704/10909] Built HexRealClosure.SignReplay (407ms)
+✔ [10706/10909] Built HexRealClosure.SignCodec (574ms)
+✔ [10708/10909] Built HexRealClosure.SignReplay:dynlib (112ms)
+✔ [10709/10909] Built HexRealClosure.SignCodec:dynlib (121ms)
+✔ [10710/10909] Built HexRealClosure.RootFactors (813ms)
+✔ [10713/10909] Built HexRealClosure.SignRequests (1.1s)
+✔ [10715/10909] Built HexRealClosureMathlib.CoefficientTarski (3.2s)
+✔ [10716/10909] Built HexRealClosure.SignRequests:dynlib (114ms)
+✔ [10717/10909] Built HexSignDetMathlib.QueryHandle (1.4s)
+✔ [10718/10909] Built HexSignDetMathlib.ReencodingProducer (1.4s)
+✔ [10719/10909] Built HexSignDetMathlib.CompletionProducer (1.9s)
+✔ [10720/10909] Built HexRealClosure.CompleteRoots (701ms)
+✔ [10723/10909] Built HexRealClosure.SignEvidence (777ms)
+✔ [10725/10909] Built HexRealClosure.SignEvidence:dynlib (111ms)
+✔ [10726/10909] Built HexRealClosure.TowerContext (2.3s)
+✔ [10728/10909] Built HexRealClosureMathlib.SpecializeDescriptor (1.8s)
+✔ [10729/10909] Built HexRealClosure.TowerContext:dynlib (115ms)
+✔ [10730/10909] Built HexRealClosure.RootPolicy (863ms)
+✔ [10731/10909] Built HexRealClosure.TowerOrder (335ms)
+✔ [10734/10909] Built HexRealClosure.FrameFormat (406ms)
+✔ [10737/10909] Built HexRealClosure.TowerCatalog (462ms)
+✔ [10740/10909] Built HexRealClosure.RootPolicy:c.o (254ms)
+✔ [10741/10909] Built HexRealClosureMathlib.CoefficientReduction (1.8s)
+✔ [10742/10909] Built HexRealClosure.RootPolicy:dynlib (113ms)
+✔ [10743/10909] Built HexRealClosure.BaseInclusion (399ms)
+✔ [10746/10909] Built HexRealClosure.TowerPolynomial (558ms)
+✔ [10749/10909] Built HexRealClosure.Trivial (1.4s)
+✔ [10752/10909] Built HexSignDetMathlib.ReencodingRefinement (1.6s)
+✔ [10753/10909] Built HexSignDetMathlib.Thom (1.6s)
+✔ [10754/10909] Built HexRealClosure.BaseEmbedding (355ms)
+✔ [10755/10909] Built HexRealClosure.BaseEmbedding:c.o (54ms)
+✔ [10756/10909] Built HexRealClosure.RootFrame (824ms)
+✔ [10758/10909] Built HexRealClosure.BaseEmbedding:dynlib (114ms)
+✔ [10760/10909] Built HexRealClosure.TowerRefinement (901ms)
+✔ [10762/10909] Built HexRealClosure.TowerRefinement:dynlib (113ms)
+⚠ [10763/10909] Built HexRealClosureMathlib.CoefficientMoment (1.5s)
+warning: adapters/HexRealClosureMathlib/CoefficientMoment.lean:24:8: automatically included section variable(s) unused in theorem `_private.HexRealClosureMathlib.CoefficientMoment.0.Hex.RealClosure.CoefficientMap.regular_coefficients`:
+  [DecidableEq G]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [DecidableEq G] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+✔ [10764/10909] Built HexSignDetMathlib.ThomReencoding (1.4s)
+✔ [10765/10909] Built HexSignDetMathlib.ThomRoots (1.4s)
+✔ [10766/10909] Built HexRealClosure.TowerTransport (1.3s)
+✔ [10769/10909] Built HexRealClosure.TowerInclusion (398ms)
+✔ [10772/10909] Built HexSignDetMathlib.ComparisonProducer (1.4s)
+✔ [10773/10909] Built HexRealClosure.TowerSuffix (694ms)
+✔ [10776/10909] Built HexRealClosureMathlib.CoefficientReplay (2.2s)
+✔ [10777/10909] Built HexRealClosure.TowerEnlarge (545ms)
+✔ [10780/10909] Built HexRealClosure.TowerRoots (1.4s)
+✔ [10783/10909] Built HexRealClosure.TowerEnlargement (442ms)
+✔ [10786/10909] Built HexRealClosure.TowerPresentation (713ms)
+✔ [10788/10909] Built HexRealClosure.RootList (654ms)
+✔ [10792/10909] Built HexRealClosure.TrivialTower (934ms)
+✔ [10795/10909] Built HexRealClosure.RootTransport (1.1s)
+✔ [10798/10909] Built HexRealClosureMathlib.CoefficientDescriptor (1.9s)
+✔ [10799/10909] Built HexRealClosure.TowerRootPolicy (1.7s)
+✔ [10800/10909] Built HexRealClosure.RootCollection (818ms)
+⚠ [10803/10909] Built HexRealClosure.Sample (1.0s)
+warning: HexRealClosure/Sample.lean:181:59: This simp argument is unused:
+  Nat.add_left_comm
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [between, ih, Nat.add_comm]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: HexRealClosure/Sample.lean:412:64: This simp argument is unused:
+  Nat.add_left_comm
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [afterRegions, ih, Nat.add_comm]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+✔ [10806/10909] Built HexRealClosureMathlib.CoefficientSelected (1.5s)
+✔ [10807/10909] Built HexRealClosure.TowerRootPolicy:c.o (2.7s)
+✔ [10808/10909] Built HexRealClosure.TowerRootPolicy:dynlib (109ms)
+⚠ [10809/10909] Built HexRealClosureMathlib.CoefficientEmbedding (2.3s)
+warning: adapters/HexRealClosureMathlib/CoefficientEmbedding.lean:213:0: automatically included section variable(s) unused in theorem `Hex.RealClosure.Specialize.Native.nestedFractions_heq`:
+  [LinearOrder F]
+  [IsStrictOrderedRing F]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [LinearOrder F] [IsStrictOrderedRing F] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+✔ [10810/10909] Built HexRealClosure.TowerIdentity (17s)
+✔ [10813/10909] Built HexRealClosure.TowerCache (806ms)
+✔ [10814/10909] Built HexRealClosure.TowerCache:c.o (1.3s)
+✔ [10815/10909] Built HexRealClosure.TowerCache:dynlib (112ms)
+✔ [10816/10909] Built HexRealClosure.LiveContext (749ms)
+✔ [10817/10909] Built HexRealClosure.LiveContext:c.o (162ms)
+✔ [10818/10909] Built HexRealClosure.LiveContext:dynlib (108ms)
+✔ [10819/10909] Built HexRealClosure (722ms)
+✔ [10820/10909] Built HexRealClosure:c.o (77ms)
+✔ [10821/10909] Built HexRealClosure:shared (99ms)
+✔ [10822/10909] Built HexRealClosureMathlib.Deflation (1.2s)
+✔ [10823/10909] Built HexRealClosureMathlib.ZeroFactor (1.2s)
+✔ [10824/10909] Built HexRealClosureMathlib.AlgebraicClean (1.4s)
+✔ [10825/10909] Built HexRealClosureMathlib.Bounds (1.6s)
+✔ [10826/10909] Built HexRealClosureMathlib.SelectedRoot (2.1s)
+✔ [10827/10909] Built HexRealClosureMathlib.BaseContext (2.2s)
+✔ [10828/10909] Built HexRealClosureMathlib.Bisection (1.2s)
+✔ [10829/10909] Built HexRealClosureMathlib.BaseClean (998ms)
+⚠ [10830/10909] Built HexRealClosureMathlib.AmbientTests (1.6s)
+warning: adapters/HexRealClosureMathlib/AmbientTests.lean:107:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+✔ [10831/10909] Built HexRealClosureMathlib.BisectionRoots (1.3s)
+✔ [10832/10909] Built HexRealClosureMathlib.BaseInterpretation (1.7s)
+✔ [10833/10909] Built HexRealClosureMathlib.SpecializeTests (1.8s)
+✔ [10834/10909] Built HexRealClosureMathlib.BisectionFrontier (1.5s)
+✔ [10835/10909] Built HexRealClosureMathlib.BaseRealization (1.8s)
+✔ [10836/10909] Built HexRealClosureMathlib.Canonical (4.0s)
+⚠ [10837/10909] Built HexRealClosureMathlib.Algebraic (6.1s)
+warning: adapters/HexRealClosureMathlib/Algebraic.lean:134:8: automatically included section variable(s) unused in theorem `_private.HexRealClosureMathlib.Algebraic.0.Hex.RealClosure.Algebraic.linear_eval`:
+  [One E]
+  [Add E]
+  [Neg E]
+  [Sub E]
+  [Mul E]
+  [Inv E]
+  [Div E]
+  [NatCast E]
+  [LinearOrder K]
+  [IsStrictOrderedRing K]
+  [IsRealClosed K]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [One
+  E] [Add
+  E] [Neg
+  E] [Sub E] [Mul E] [Inv E] [Div E] [NatCast E] [LinearOrder K] [IsStrictOrderedRing K] [IsRealClosed K] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: adapters/HexRealClosureMathlib/Algebraic.lean:150:8: automatically included section variable(s) unused in theorem `_private.HexRealClosureMathlib.Algebraic.0.Hex.RealClosure.Algebraic.linear_pos`:
+  [DecidableEq K]
+  [IsRealClosed K]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [DecidableEq K] [IsRealClosed K] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: adapters/HexRealClosureMathlib/Algebraic.lean:159:8: automatically included section variable(s) unused in theorem `_private.HexRealClosureMathlib.Algebraic.0.Hex.RealClosure.Algebraic.sign_pos_iff`:
+  [DecidableEq K]
+  [IsStrictOrderedRing K]
+  [IsRealClosed K]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: adapters/HexRealClosureMathlib/Algebraic.lean:169:8: automatically included section variable(s) unused in theorem `_private.HexRealClosureMathlib.Algebraic.0.Hex.RealClosure.Algebraic.sign_neg_iff`:
+  [DecidableEq K]
+  [IsStrictOrderedRing K]
+  [IsRealClosed K]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: adapters/HexRealClosureMathlib/Algebraic.lean:179:8: automatically included section variable(s) unused in theorem `_private.HexRealClosureMathlib.Algebraic.0.Hex.RealClosure.Algebraic.sign_zero_iff`:
+  [DecidableEq K]
+  [IsStrictOrderedRing K]
+  [IsRealClosed K]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: adapters/HexRealClosureMathlib/Algebraic.lean:188:8: automatically included section variable(s) unused in theorem `_private.HexRealClosureMathlib.Algebraic.0.Hex.RealClosure.Algebraic.linear_lower_sign`:
+  [DecidableEq K]
+  [IsRealClosed K]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [DecidableEq K] [IsRealClosed K] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: adapters/HexRealClosureMathlib/Algebraic.lean:199:8: automatically included section variable(s) unused in theorem `_private.HexRealClosureMathlib.Algebraic.0.Hex.RealClosure.Algebraic.linear_upper_sign`:
+  [DecidableEq K]
+  [IsRealClosed K]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [DecidableEq K] [IsRealClosed K] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+✔ [10838/10909] Built HexRealClosureMathlib.BisectionFactor (1.2s)
+✔ [10839/10909] Built HexRealClosureMathlib.Isolation (1.2s)
+✔ [10840/10909] Built HexRealClosureMathlib.BisectionCounts (1.3s)
+✔ [10841/10909] Built HexRealClosureMathlib.BaseProvider (1.8s)
+✔ [10842/10909] Built HexRealClosureMathlib.IsolationFactor (1.5s)
+✔ [10843/10909] Built HexRealClosureMathlib.BaseStagedRealization (2.3s)
+✔ [10844/10909] Built HexRealClosureMathlib.SignFacts (2.1s)
+✔ [10845/10909] Built HexRealClosureMathlib.AlgebraicReencode (2.3s)
+✔ [10846/10909] Built HexRealClosureMathlib.AlgebraicTower (2.4s)
+✔ [10847/10909] Built HexRealClosureMathlib.TowerModel (3.2s)
+✔ [10848/10909] Built HexRealClosureMathlib.AlgebraicTransport (3.2s)
+✔ [10849/10909] Built HexRealClosureMathlib.AlgebraicValue (3.3s)
+✔ [10850/10909] Built HexRealClosureMathlib.BasePrefixModels (2.2s)
+✔ [10851/10909] Built HexRealClosureMathlib.Element (4.4s)
+✔ [10852/10909] Built HexRealClosureMathlib.SignRequests (2.4s)
+⚠ [10853/10909] Built HexRealClosureMathlib.IsolationRoots (4.8s)
+warning: adapters/HexRealClosureMathlib/IsolationRoots.lean:69:0: automatically included section variable(s) unused in theorem `Hex.RealClosure.Isolation.cell_enumeration_present`:
+  [IsRealClosed K]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [IsRealClosed K] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: adapters/HexRealClosureMathlib/IsolationRoots.lean:81:0: automatically included section variable(s) unused in theorem `Hex.RealClosure.Isolation.Whole.enumeration_present`:
+  [IsRealClosed K]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [IsRealClosed K] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: adapters/HexRealClosureMathlib/IsolationRoots.lean:118:6: `simp` already closes the goal
+
+Hint: Use `simp` instead of `simpa`:
+  [apply] simp [noRoots] at member
+
+Note: This linter can be disabled with `set_option linter.unnecessarySimpa false`
+✔ [10854/10909] Built HexRealClosureMathlib.BaseModel (2.1s)
+✔ [10855/10909] Built HexRealClosureMathlib.TowerUnion (2.2s)
+✔ [10856/10909] Built HexRealClosureMathlib.SignEvidence (3.3s)
+✔ [10857/10909] Built HexRealClosureMathlib.TowerAlgebraic (2.2s)
+✔ [10858/10909] Built HexRealClosureMathlib.TowerRefinement (2.3s)
+✔ [10859/10909] Built HexRealClosureMathlib.BaseModels (1.0s)
+⚠ [10860/10909] Built HexRealClosureMathlib.IsolationTotal (2.0s)
+warning: adapters/HexRealClosureMathlib/IsolationTotal.lean:68:48: This simp argument is unused:
+  empty
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [completeCell, single, built, restored]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [10861/10909] Built HexRealClosureMathlib.RootOrder (2.5s)
+warning: adapters/HexRealClosureMathlib/RootOrder.lean:36:0: automatically included section variable(s) unused in theorem `Hex.RealClosure.Isolation.pointQuery_eval`:
+  [Add E]
+  [Mul E]
+  [NatCast E]
+  [Neg E]
+  [Inv E]
+  [Div E]
+  [LinearOrder K]
+  [IsStrictOrderedRing K]
+  [IsRealClosed K]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [Add
+  E] [Mul E] [NatCast E] [Neg E] [Inv E] [Div E] [LinearOrder K] [IsStrictOrderedRing K] [IsRealClosed K] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: adapters/HexRealClosureMathlib/RootOrder.lean:49:0: automatically included section variable(s) unused in theorem `Hex.RealClosure.Isolation.signOrder_sub`:
+  [DecidableEq K]
+  [IsRealClosed K]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [DecidableEq K] [IsRealClosed K] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: adapters/HexRealClosureMathlib/RootOrder.lean:203:0: automatically included section variable(s) unused in theorem `Hex.RealClosure.Isolation.Output.entries_values`:
+  [Neg E]
+  [Inv E]
+  [Div E]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [Neg E] [Inv E] [Div E] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+⚠ [10862/10909] Built HexRealClosureMathlib.UnionTests (2.3s)
+warning: adapters/HexRealClosureMathlib/UnionTests.lean:66:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+✔ [10863/10909] Built HexRealClosureMathlib.BaseOrder (2.5s)
+✔ [10864/10909] Built HexRealClosureMathlib.QAdjoin (3.6s)
+✔ [10865/10909] Built HexRealClosureMathlib.Polynomial (3.0s)
+✔ [10866/10909] Built HexRealClosureMathlib.Yun (4.2s)
+⚠ [10867/10909] Built HexRealClosureMathlib.TowerTransport (3.2s)
+warning: adapters/HexRealClosureMathlib/TowerTransport.lean:112:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/TowerTransport.lean:113:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/TowerTransport.lean:128:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/TowerTransport.lean:129:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/TowerTransport.lean:591:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/TowerTransport.lean:592:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/TowerTransport.lean:593:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/TowerTransport.lean:784:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+⚠ [10868/10909] Built HexRealClosureMathlib.IsolationPolicy (1.9s)
+warning: adapters/HexRealClosureMathlib/IsolationPolicy.lean:30:0: automatically included section variable(s) unused in theorem `Hex.RealClosure.Isolation.Policy.dispatch?_success`:
+  [IsRealClosed K]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [IsRealClosed K] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: adapters/HexRealClosureMathlib/IsolationPolicy.lean:49:8: automatically included section variable(s) unused in theorem `_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.standard_roots`:
+  [IsRealClosed K]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [IsRealClosed K] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: adapters/HexRealClosureMathlib/IsolationPolicy.lean:62:8: automatically included section variable(s) unused in theorem `_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.whole_roots`:
+  [IsStrictOrderedRing K]
+  [IsRealClosed K]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [IsStrictOrderedRing K] [IsRealClosed K] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: adapters/HexRealClosureMathlib/IsolationPolicy.lean:155:20: This simp argument is unused:
+  Except.map
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [complete?, dispatched] at built
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: adapters/HexRealClosureMathlib/IsolationPolicy.lean:166:20: This simp argument is unused:
+  Except.map
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [complete?, dispatched] at built
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: adapters/HexRealClosureMathlib/IsolationPolicy.lean:177:8: automatically included section variable(s) unused in theorem `_private.HexRealClosureMathlib.IsolationPolicy.0.Hex.RealClosure.Isolation.Policy.whole_nodup`:
+  hn
+  hi
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit hn hi in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+✔ [10869/10909] Built HexRealClosureMathlib.TowerNaturality (1.0s)
+✔ [10870/10909] Built HexRealClosureMathlib.TowerInclusion (1.8s)
+⚠ [10871/10909] Built HexRealClosureMathlib.TowerEnlarge (1.9s)
+warning: adapters/HexRealClosureMathlib/TowerEnlarge.lean:250:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+⚠ [10872/10909] Built HexRealClosureMathlib.TowerRestriction (1.9s)
+warning: adapters/HexRealClosureMathlib/TowerRestriction.lean:32:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/TowerRestriction.lean:33:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/TowerRestriction.lean:75:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/TowerRestriction.lean:76:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/TowerRestriction.lean:94:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/TowerRestriction.lean:95:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+✔ [10873/10909] Built HexRealClosureMathlib.YunInvariant (5.7s)
+✔ [10874/10909] Built HexRealClosureMathlib.BaseMapModel (1.8s)
+✔ [10875/10909] Built HexRealClosureMathlib.TowerTransportTests (2.1s)
+⚠ [10876/10909] Built HexRealClosureMathlib.TowerEnlargeOrder (2.3s)
+warning: adapters/HexRealClosureMathlib/TowerEnlargeOrder.lean:53:2: Try this: intro initial a
+
+Note: This linter can be disabled with `set_option linter.tacticAnalysis.introMerge false`
+warning: adapters/HexRealClosureMathlib/TowerEnlargeOrder.lean:94:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/TowerEnlargeOrder.lean:95:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/TowerEnlargeOrder.lean:125:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/TowerEnlargeOrder.lean:156:8: automatically included section variable(s) unused in theorem `_private.HexRealClosureMathlib.TowerEnlargeOrder.0.Hex.RealClosure.Tower.value_heq`:
+  [DecidableEq K]
+  [IsStrictOrderedRing K]
+  [IsRealClosed K]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: adapters/HexRealClosureMathlib/TowerEnlargeOrder.lean:204:10: Variable name `model` is not explicitly referenced.
+
+Hint: The binding can be removed (if unused) or named `_` (if used implicitly). Alternatively, prefix the name with `_` to silence this warning:
+  [apply] _model
+
+Note: This linter can be disabled with `set_option linter.unusedVariables false`
+warning: adapters/HexRealClosureMathlib/TowerEnlargeOrder.lean:323:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/TowerEnlargeOrder.lean:324:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+✔ [10877/10909] Built HexRealClosureMathlib.BaseFactory (1.0s)
+⚠ [10878/10909] Built HexRealClosureMathlib.TowerEnlargeOrderTests (2.4s)
+warning: adapters/HexRealClosureMathlib/TowerEnlargeOrderTests.lean:44:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/TowerEnlargeOrderTests.lean:45:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/TowerEnlargeOrderTests.lean:90:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+warning: adapters/HexRealClosureMathlib/TowerEnlargeOrderTests.lean:91:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+⚠ [10879/10909] Built HexRealClosureMathlib.LiveContext (2.6s)
+warning: adapters/HexRealClosureMathlib/LiveContext.lean:93:0: automatically included section variable(s) unused in theorem `Hex.RealClosure.Tower.Inclusions.Models.extend_original`:
+  [DecidableEq R]
+  [IsStrictOrderedRing R]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [DecidableEq R] [IsStrictOrderedRing R] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: adapters/HexRealClosureMathlib/LiveContext.lean:112:0: automatically included section variable(s) unused in theorem `Hex.RealClosure.Tower.Inclusions.Models.map_original`:
+  [DecidableEq R]
+  [IsStrictOrderedRing R]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [DecidableEq R] [IsStrictOrderedRing R] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: adapters/HexRealClosureMathlib/LiveContext.lean:130:0: automatically included section variable(s) unused in theorem `Hex.RealClosure.Tower.Inclusions.Models.value`:
+  [DecidableEq R]
+  [IsStrictOrderedRing R]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [DecidableEq R] [IsStrictOrderedRing R] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+warning: adapters/HexRealClosureMathlib/LiveContext.lean:140:0: automatically included section variable(s) unused in theorem `Hex.RealClosure.Tower.Inclusions.Models.polynomial`:
+  [IsStrictOrderedRing R]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [IsStrictOrderedRing R] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+⚠ [10880/10909] Built HexRealClosureMathlib.CoefficientEmbeddingTests (35s)
+warning: adapters/HexRealClosureMathlib/CoefficientEmbeddingTests.lean:208:2: Try this: 
+  letI̵
+
+The goal is a proposition, so `let` is preferred over `letI`.
+The difference between `let` and `letI` is that `letI` inlines the value.
+But this is not relevant for proofs because of proof irrelevance.
+
+Note: This linter can be disabled with `set_option linter.style.haveILetI false`
+✔ [10881/10909] Built HexRealClosureMathlib.TowerYun (3.4s)
+✔ [10882/10909] Built HexRealClosureMathlib.AlgebraicYun (3.7s)
+✔ [10883/10909] Built HexRealClosureMathlib.RootFactors (3.8s)
+✔ [10884/10909] Built HexRealClosureMathlib.ContextModel (1.9s)
+✔ [10885/10909] Built HexRealClosureMathlib.CacheModels (1.6s)
+✔ [10886/10909] Built HexRealClosureMathlib.TowerModelTests (2.0s)
+✔ [10887/10909] Built HexRealClosureMathlib.AlgebraicRoots (2.9s)
+✔ [10888/10909] Built HexRealClosureMathlib.CacheRebuild (1.4s)
+⚠ [10889/10909] Built HexRealClosureMathlib.CacheGather (2.6s)
+warning: adapters/HexRealClosureMathlib/CacheGather.lean:114:8: automatically included section variable(s) unused in theorem `_private.HexRealClosureMathlib.CacheGather.0.Hex.RealClosure.Tower.castModels_original`:
+  [DecidableEq R]
+  [IsStrictOrderedRing R]
+  [IsRealClosed R]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [DecidableEq R] [IsStrictOrderedRing R] [IsRealClosed R] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+⚠ [10890/10909] Built HexRealClosureMathlib.RootTotal (6.8s)
+warning: adapters/HexRealClosureMathlib/RootTotal.lean:35:0: automatically included section variable(s) unused in theorem `Hex.RealClosure.Roots.factorEntries_success`:
+  [Div E]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [Div E] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+✔ [10891/10909] Built HexRealClosureMathlib.GatherTests (1.3s)
+✔ [10892/10909] Built HexRealClosureMathlib.BaseFactoryTests (1.5s)
+✔ [10893/10909] Built HexRealClosureMathlib.Trivial (2.5s)
+✔ [10894/10909] Built HexRealClosureMathlib.TowerRoots (2.8s)
+✔ [10895/10909] Built HexRealClosureMathlib.RootTransport (2.7s)
+✔ [10896/10909] Built HexRealClosureMathlib.RootList (2.8s)
+⚠ [10897/10909] Built HexRealClosureMathlib.TowerCoverage (2.8s)
+warning: adapters/HexRealClosureMathlib/TowerCoverage.lean:58:0: automatically included section variable(s) unused in theorem `Hex.RealClosure.Tower.Model.representative_value`:
+  [DecidableEq K]
+  [IsStrictOrderedRing K]
+  [IsRealClosed K]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [DecidableEq K] [IsStrictOrderedRing K] [IsRealClosed K] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+⚠ [10898/10909] Built HexRealClosureMathlib.TrivialTower (2.9s)
+warning: adapters/HexRealClosureMathlib/TrivialTower.lean:51:15: This simp argument is unused:
+  h
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [Option.map_none, Option.getD_none, RealAlgebraicNumber.zero_toReal]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+⚠ [10899/10909] Built HexRealClosureMathlib.RootPolicy (7.1s)
+warning: adapters/HexRealClosureMathlib/RootPolicy.lean:40:0: automatically included section variable(s) unused in theorem `Hex.RealClosure.Roots.Policy.factorEntries_success`:
+  [Div E]
+consider restructuring your `variable` declarations so that the variables are not in scope or explicitly omit them:
+  omit [Div E] in theorem ...
+
+Note: This linter can be disabled with `set_option linter.unusedSectionVars false`
+✔ [10900/10909] Built HexRealClosureMathlib.TrivialTowerTests (2.4s)
+✔ [10901/10909] Built HexRealClosureMathlib.RootCollection (2.7s)
+✔ [10902/10909] Built HexRealClosureMathlib.TowerRootPolicy (2.4s)
+✔ [10903/10909] Built HexRealClosureMathlib.Sample (3.7s)
+✔ [10904/10909] Built HexRealClosureMathlib.Presentation (5.1s)
+✔ [10905/10909] Built HexRealClosureMathlib.SampleTests (2.7s)
+✔ [10906/10909] Built HexRealClosureMathlib.PresentationTests (2.6s)
+⚠ [10907/10909] Built HexRealClosureMathlib.LocalSample (4.1s)
+warning: adapters/HexRealClosureMathlib/LocalSample.lean:179:58: `simp` already closes the goal
+
+Hint: Use `simp` instead of `simpa`:
+  [apply] simp [boundaries] at member
+
+Note: This linter can be disabled with `set_option linter.unnecessarySimpa false`
+warning: adapters/HexRealClosureMathlib/LocalSample.lean:335:29: This simp argument is unused:
+  boundaries
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [Family.cells, List.map_nil, List.nil_append, Family.regions, boundaries, List.mem_singleton]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: adapters/HexRealClosureMathlib/LocalSample.lean:343:31: This simp argument is unused:
+  boundaries
+
+Hint: Omit it from the simp argument list.
+  [apply] simp only [Family.cells, Family.regions, boundaries, List.map_cons, List.mem_append, List.mem_cons,
+    afterRootCells]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: adapters/HexRealClosureMathlib/LocalSample.lean:394:29: This simp argument is unused:
+  equal
+
+Hint: Omit it from the simp argument list.
+  [apply] simp_all [matchesRegion, Region.Mem, Requested]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+warning: adapters/HexRealClosureMathlib/LocalSample.lean:444:83: This simp argument is unused:
+  equal
+
+Hint: Omit it from the simp argument list.
+  [apply] simp_all [matchesRegion, Endpoint.map]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+✔ [10908/10909] Built HexRealClosureMathlib.LocalSampleTests (2.6s)
+Build completed successfully (10909 jobs).

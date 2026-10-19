@@ -1,0 +1,10 @@
+Hex.RealAlgebraicScaling.runCompare4    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a3ddc94-dirty, 2026-10-04T20:04:43Z, host=chungus2
+  repeat 0  569.000 ns  (×2^17, total 74.598 ms)
+  median: 569.000 ns    min: 569.000 ns    max: 569.000 ns
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 69_108 kB (across 1 ok repeat(s))
+  ‼ median wall time below 1µs — possibly a compile-time-folded constant rather than work. If the workload is genuinely tiny this is fine; otherwise thread inputs through runtime state (e.g. `IO.Ref`, disk) so the body isn't closed at compile time. See issue #54.
+exported to /home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Compare-4-Z3-1-Native.json

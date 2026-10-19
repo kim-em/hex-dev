@@ -1,0 +1,253 @@
+{
+  "sources": {
+    "Before": {
+      "head": "121fc1e027cee801d64277adb2d4470e6101b990",
+      "executable_sha256": "79682a6846744c9261654b53a1e2e13d14437fb9022b3eeb511da3631a95c379",
+      "executable": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/numberfield-pairs/Before-79682a6846744c9261654b53a1e2e13d14437fb9022b3eeb511da3631a95c379",
+      "files": {
+        "lake-manifest.json": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e",
+        "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+        "bench/HexRealAlgebraic/Bench.lean": "91f6523fbbd8c6d8af8f53680d7500f0de5e11a245d48622e7ff446fd01555c5",
+        "HexNumberField/Basic.lean": "842491d3b7e65c29b198e533b5d68f41bed6e93b8106864859f05ec83b9a9082",
+        "HexNumberField/Convert.lean": "5ca7230f7647e69e139fbb1cdb9dcce569a3147f162d10631483d0d95eaa1507",
+        "HexNumberField/Lazy.lean": "b6e288456584c616c1015eaf9a2993be1f77f5f08c7969855946fd9f1ede89be",
+        "HexNumberFieldMathlib/Exact.lean": "57d7bcba1aef61e0c5e4c4b69b559b6c5fa9cd8ed27dc74c91c6f35ba48a21b0",
+        "HexRealAlgebraic/Basic.lean": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd"
+      }
+    },
+    "After": {
+      "head": "7ceaf9d47d8fe1b98d3daa86c699651c859c3aab",
+      "executable_sha256": "b392e84ccd391d423f59e62c52ceb7468a924a2caade5de47df19d70568e0546",
+      "executable": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/numberfield-pairs/After-b392e84ccd391d423f59e62c52ceb7468a924a2caade5de47df19d70568e0546",
+      "files": {
+        "lake-manifest.json": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e",
+        "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+        "bench/HexRealAlgebraic/Bench.lean": "91f6523fbbd8c6d8af8f53680d7500f0de5e11a245d48622e7ff446fd01555c5",
+        "HexNumberField/Basic.lean": "9b6c980a046b46467353b71ce39c4f7eb3480939e8c538c5907d1f48d2cb9e06",
+        "HexNumberField/Convert.lean": "3d2e6c2e356b070326718d975556b85e2aacd90a42df13ed44110173b9d9164a",
+        "HexNumberField/Lazy.lean": "b6e288456584c616c1015eaf9a2993be1f77f5f08c7969855946fd9f1ede89be",
+        "HexNumberFieldMathlib/Exact.lean": "16508d5bfe73271ea166affb7599007fe989dfa083f099e3bce35ee681036f6d",
+        "HexRealAlgebraic/Basic.lean": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd"
+      }
+    }
+  },
+  "compiled_source_from": "Frozen executables and source metadata retained by numberfield-pairs. Exporter git metadata identifies the current collector working directory, not the compiled source.",
+  "registered_min_total_seconds": 0.02,
+  "schedule": "Four fixed trial-major blocks; adjacent Before/After arms alternate AB/BA. No unchanged rerun, load rejection or cap change.",
+  "collector_correction": "Retain both earlier collector configurations (0.05 and 0.001 floors); neither is the registered floor. This capture uses the actual 0.02-second registration. No phase admission is inferred from earlier captures.",
+  "cpu": 33,
+  "load_start": [
+    3.23046875,
+    11.45068359375,
+    20.26025390625
+  ],
+  "arms": [
+    {
+      "case": "ExactLadder",
+      "block": 0,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/numberfield-pairs/Before-79682a6846744c9261654b53a1e2e13d14437fb9022b3eeb511da3631a95c379",
+        "run",
+        "Hex.NumberFieldBench.runExactLadder",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.02",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/registered-exact-ladder-pairs/ExactLadder-0-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.30940899399865884,
+      "output": "ExactLadder-0-Before.json"
+    },
+    {
+      "case": "ExactLadder",
+      "block": 0,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/numberfield-pairs/After-b392e84ccd391d423f59e62c52ceb7468a924a2caade5de47df19d70568e0546",
+        "run",
+        "Hex.NumberFieldBench.runExactLadder",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.02",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/registered-exact-ladder-pairs/ExactLadder-0-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.31135755400100606,
+      "output": "ExactLadder-0-After.json"
+    },
+    {
+      "case": "ExactLadder",
+      "block": 1,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/numberfield-pairs/After-b392e84ccd391d423f59e62c52ceb7468a924a2caade5de47df19d70568e0546",
+        "run",
+        "Hex.NumberFieldBench.runExactLadder",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.02",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/registered-exact-ladder-pairs/ExactLadder-1-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.30989173099806067,
+      "output": "ExactLadder-1-After.json"
+    },
+    {
+      "case": "ExactLadder",
+      "block": 1,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/numberfield-pairs/Before-79682a6846744c9261654b53a1e2e13d14437fb9022b3eeb511da3631a95c379",
+        "run",
+        "Hex.NumberFieldBench.runExactLadder",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.02",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/registered-exact-ladder-pairs/ExactLadder-1-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.28955350600153906,
+      "output": "ExactLadder-1-Before.json"
+    },
+    {
+      "case": "ExactLadder",
+      "block": 2,
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/numberfield-pairs/Before-79682a6846744c9261654b53a1e2e13d14437fb9022b3eeb511da3631a95c379",
+        "run",
+        "Hex.NumberFieldBench.runExactLadder",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.02",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/registered-exact-ladder-pairs/ExactLadder-2-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.288810353998997,
+      "output": "ExactLadder-2-Before.json"
+    },
+    {
+      "case": "ExactLadder",
+      "block": 2,
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/numberfield-pairs/After-b392e84ccd391d423f59e62c52ceb7468a924a2caade5de47df19d70568e0546",
+        "run",
+        "Hex.NumberFieldBench.runExactLadder",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.02",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/registered-exact-ladder-pairs/ExactLadder-2-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.3147920060000615,
+      "output": "ExactLadder-2-After.json"
+    },
+    {
+      "case": "ExactLadder",
+      "block": 3,
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/numberfield-pairs/After-b392e84ccd391d423f59e62c52ceb7468a924a2caade5de47df19d70568e0546",
+        "run",
+        "Hex.NumberFieldBench.runExactLadder",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.02",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/registered-exact-ladder-pairs/ExactLadder-3-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.3150549050005793,
+      "output": "ExactLadder-3-After.json"
+    },
+    {
+      "case": "ExactLadder",
+      "block": 3,
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/numberfield-pairs/Before-79682a6846744c9261654b53a1e2e13d14437fb9022b3eeb511da3631a95c379",
+        "run",
+        "Hex.NumberFieldBench.runExactLadder",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.02",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/registered-exact-ladder-pairs/ExactLadder-3-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.2927134109995677,
+      "output": "ExactLadder-3-Before.json"
+    }
+  ],
+  "load_end": [
+    3.23046875,
+    11.45068359375,
+    20.26025390625
+  ],
+  "retained_files": {
+    "ExactLadder-0-Before.log": "fbba97dd659c4c0b581debdc8b4b33db16f9c2dbea1fe357c4c1d0710ea918ca",
+    "ExactLadder-0-Before.json": "21f02323a3880a0930e88a71b39453a4b44058a74ba5107a7edc6d0a8e02f6a9",
+    "ExactLadder-0-After.log": "15e961c704569821b6ead48ffe5aeaa4878b680cd22152463f2b3947a9b0b251",
+    "ExactLadder-0-After.json": "8f19d8187e3ba94d1b6123bc08c4109dd54945a3fa21442c86c6f892bac5208f",
+    "ExactLadder-1-After.log": "06c2a1988db70f95181db9a314bd5a575a389c1ffab0250e190f6f0c4b8101d4",
+    "ExactLadder-1-After.json": "70f43e9f1990032109af815ddf7696e8289e4b667f30bc979546227bbd9dc19a",
+    "ExactLadder-1-Before.log": "9657b28d538ff0b5d3dbc3e52ad8bbc8f9c85e70dff427ae53c3f946da540d69",
+    "ExactLadder-1-Before.json": "24fd8497a71760aa4d310ab1c6714f21fb4d0dfb1a26ebd97a0b0972eb783074",
+    "ExactLadder-2-Before.log": "09dd6714f7952aa87b83f66aea6b22f3875e38ad3bf85af93641f41c584fc276",
+    "ExactLadder-2-Before.json": "b71b9768a5dc118828c6e342f1eb9f9c0aab6c60ce30ab7c063e43f644b16055",
+    "ExactLadder-2-After.log": "13244b1c264063a980bc7c31cf914d7dfc8d199c851becb8e9ed587c31fe9b92",
+    "ExactLadder-2-After.json": "f6218eeca89c0f84c98e72a0ec9fbb445bb2fc8edd3e6ab26d569e852c481e61",
+    "ExactLadder-3-After.log": "8bdca9217442caa228854f9959e805415e44155eda7b95dc7b77495fa3bea11b",
+    "ExactLadder-3-After.json": "558d59d98c975ee878f17ffc7da90c9c3b1f00d874432815727140674cdcc58b",
+    "ExactLadder-3-Before.log": "22e7ce11094ed2c760a35e4a3eb3675f2136f2dce738542748b0e8cdd054d589",
+    "ExactLadder-3-Before.json": "4ae7a2ddedd610d299a003fad5d5ded0007b7094858ae3c222ee479ac477d714"
+  }
+}

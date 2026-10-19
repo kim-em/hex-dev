@@ -1,0 +1,40 @@
+{
+  "question": "Does the existing perf recording path supply the samples absent from all six samply captures?",
+  "command": [
+    "perf",
+    "record",
+    "--clockid",
+    "mono",
+    "-e",
+    "cycles:u",
+    "-F",
+    "999",
+    "--call-graph",
+    "dwarf",
+    "-o",
+    "/home/kim/.codex/tasks/hex-10575/orderedfn-profile-findings/diagnostic.perf.data",
+    "--",
+    "env",
+    "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/home/kim/.codex/tasks/hex-10575/orderedfn-profile-findings/perf-timed-%p.jsonl",
+    "/home/kim/.codex/tasks/hex-10575/orderedfn-api-regression/hexorderedfn_bench-baseline",
+    "_child",
+    "--bench",
+    "Hex.OrderedFnBench.height",
+    "--param",
+    "2048",
+    "--target-nanos",
+    "1000000000"
+  ],
+  "cpu": 41,
+  "load_before": [
+    5.82861328125,
+    3.52783203125,
+    1.75390625
+  ],
+  "exit_code": 0,
+  "load_after": [
+    5.82861328125,
+    3.52783203125,
+    1.75390625
+  ]
+}

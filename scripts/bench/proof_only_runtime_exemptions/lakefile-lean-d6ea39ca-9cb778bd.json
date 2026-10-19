@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "d6ea39caa225a28e286472ef3eac764fb4bf54a3",
+  "current_blob": "9cb778bd3f0c190477cc28a08df5efe99c038778",
+  "reason": "This Lake configuration transition moves the HexArith and HexModArith C objects onto the native carrier libraries HexArithNative and HexModArithNative so module dynlibs link on Windows, compiles those objects with -DLEAN_EXPORTING (which only sets default symbol visibility outside Windows), and drops precompileModules from libraries without externs. The same C sources reach the hexbz_factor_service executable statically, through the carriers' moreLinkObjs instead of HexArith's and HexModArith's; Lake applies only the root library's moreLinkArgs to an executable, so moving -lgmp onto the carrier does not change its link line. The executable declaration, its compiler options, its Lean sources and the pinned Mathlib revision are unchanged."
+}

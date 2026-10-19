@@ -402,7 +402,7 @@ class Families(unittest.TestCase):
         self.assertTrue(family.matches("HexPolyZ/Rational.lean"))
         self.assertTrue(family.matches("HexPrimality/Table.lean"))
         self.assertTrue(family.matches("bench/corpus/hexbz-factor-corpus.jsonl"))
-        self.assertFalse(family.matches("HexPrimality/Sieve.lean"))
+        self.assertTrue(family.matches("HexPrimality/Sieve.lean"))
         self.assertFalse(family.matches("HexPolyZ/SPEC/hex-poly-z.md"))
 
     def test_comparator_families_see_only_their_own_adapter(self):
@@ -557,15 +557,7 @@ class ExcludedTestsAreUnreachable(unittest.TestCase):
                             f"{path} is excluded but does not exist")
 
     def test_an_imported_test_module_is_not_excluded(self):
-        """A boundary ladder its umbrella imports stays in, and this records why.
-
-        `HexBasic/ModuleBoundaryTests.lean` is a test by name, but the
-        `HexBasic` umbrella publicly imports it, so it is inside the closure
-        the factorization figures measure and its edits must force a sweep.
-        `HexGraphIso/ModuleBoundaryTests.lean` is built only by the
-        `HexReleaseTests` target, so it is outside the graph-iso closure and
-        excluded.
-        """
+        """An imported test stays tracked, independently of umbrella cleanup."""
         graphiso = import_closure(self.GRAPHISO_ROOTS)
         self.assertNotIn("HexGraphIso/ModuleBoundaryTests.lean", graphiso)
         self.assertIn("HexGraphIso/ModuleBoundaryTests.lean",
@@ -573,10 +565,19 @@ class ExcludedTestsAreUnreachable(unittest.TestCase):
         self.assertFalse(freshness.GRAPHISO.matches(
             "HexGraphIso/ModuleBoundaryTests.lean"))
 
-        factor = import_closure(self.FACTOR_ROOTS)
-        self.assertIn("HexBasic/ModuleBoundaryTests.lean", factor)
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            driver = root / self.FACTOR_ROOTS[0]
+            boundary = root / "HexBasic/ImportedTests.lean"
+            driver.parent.mkdir(parents=True)
+            boundary.parent.mkdir(parents=True)
+            driver.write_text("module\npublic import HexBasic.ImportedTests\n")
+            boundary.write_text("module\n")
+            with unittest.mock.patch.object(freshness, "ROOT", root):
+                factor = import_closure(self.FACTOR_ROOTS)
+        self.assertIn("HexBasic/ImportedTests.lean", factor)
         self.assertTrue(freshness.factor_family("hex-factor").matches(
-            "HexBasic/ModuleBoundaryTests.lean"))
+            "HexBasic/ImportedTests.lean"))
 
     def test_the_relevant_set_drops_the_excluded_tests(self):
         self.assertFalse(

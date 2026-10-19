@@ -1,0 +1,32 @@
+[
+  {
+    "name": "copyright",
+    "exit_code": 0,
+    "log": "public-packet-metadata-copyright-3.log"
+  },
+  {
+    "name": "lines",
+    "exit_code": 0,
+    "log": "public-packet-metadata-lines-3.log"
+  },
+  {
+    "name": "dag",
+    "exit_code": 0,
+    "log": "public-packet-metadata-dag-3.log"
+  },
+  {
+    "name": "admissions",
+    "exit_code": 0,
+    "log": "public-packet-metadata-admissions-3.log"
+  },
+  {
+    "name": "relative",
+    "exit_code": 0,
+    "log": "public-packet-metadata-relative-3.log"
+  },
+  {
+    "name": "diff",
+    "exit_code": 0,
+    "log": "public-packet-metadata-diff-3.log"
+  }
+]

@@ -30,7 +30,7 @@ open Hex
 
 Preconditions such as modular factor products and Bezout data are explicit.
 Failed executable checks are represented rather than assumed. The
-[`hex-hensel-mathlib`](https://github.com/leanprover/hex-hensel-mathlib)
+[`hex-hensel-theory`](https://github.com/leanprover/hex-hensel-theory)
 package supplies polynomial correctness and uniqueness theorems.
 
 # Verification

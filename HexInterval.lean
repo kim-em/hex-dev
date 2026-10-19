@@ -73,9 +73,9 @@ duplicate-port actions remain directly executable but are omitted from Search
 offers under a sticky incompleteness marker. Runtime snapshots also own the
 policy-facing residual budget view. Default policies,
 target/refutation/split correlation, proof quotation, and measurement-selected
-storage remain later layers. The Mathlib companion supplies a bounded
+storage remain later layers. The theory companion supplies a bounded
 authenticated callback-to-tree-recipe step driver; package callbacks and their
 recipe data remain untrusted. Exact public interval
-splitting is already supported; the Mathlib companion separately owns flat
+splitting is already supported; the theory companion separately owns flat
 forward replay and checked retained-tree proof folding.
 -/

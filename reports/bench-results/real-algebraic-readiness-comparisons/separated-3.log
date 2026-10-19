@@ -1,0 +1,41 @@
+env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=4f44b80-dirty, 2026-10-02T02:34:54Z, host=chungus2
+Hex.RealAlgebraicBench.runQqbarProtocol    [fixed] repeats=1
+  repeat 0  6.395 µs  (×2^8, total 1.637 ms)
+  median: 6.395 µs    min: 6.395 µs    max: 6.395 µs
+  hash: all repeats agree
+  observed hash: 0x0
+  expected hash: matches
+  peak RSS: 68_232 kB (across 1 ok repeat(s))
+
+Hex.RealAlgebraicBench.runQqbarCompare    [fixed] repeats=1
+  repeat 0  7.389 µs  (×2^8, total 1.892 ms)
+  median: 7.389 µs    min: 7.389 µs    max: 7.389 µs
+  hash: all repeats agree
+  observed hash: 0x0
+  expected hash: matches
+  peak RSS: 68_484 kB (across 1 ok repeat(s))
+
+Hex.RealAlgebraicBench.runCompareExact    [fixed] repeats=1
+  repeat 0  38.834 µs  (×2^5, total 1.243 ms)
+  median: 38.834 µs    min: 38.834 µs    max: 38.834 µs
+  hash: all repeats agree
+  observed hash: 0x0
+  expected hash: matches
+  peak RSS: 68_532 kB (across 1 ok repeat(s))
+
+Hex.RealAlgebraicBench.runCompare    [fixed] repeats=1
+  repeat 0  421.000 ns  (×2^12, total 1.727 ms)
+  median: 421.000 ns    min: 421.000 ns    max: 421.000 ns
+  hash: all repeats agree
+  observed hash: 0x0
+  expected hash: matches
+  peak RSS: 68_348 kB (across 1 ok repeat(s))
+  ‼ median wall time below 1µs — possibly a compile-time-folded constant rather than work. If the workload is genuinely tiny this is fine; otherwise thread inputs through runtime state (e.g. `IO.Ref`, disk) so the body isn't closed at compile time. See issue #54.
+
+relative median (baseline = Hex.RealAlgebraicBench.runQqbarProtocol, the first CLI argument):
+  Hex.RealAlgebraicBench.runQqbarProtocol: 1.000× (6.395 µs)
+  Hex.RealAlgebraicBench.runQqbarCompare: 1.155× (7.389 µs)
+  Hex.RealAlgebraicBench.runCompareExact: 6.073× (38.834 µs)
+  Hex.RealAlgebraicBench.runCompare: 0.066× (421.000 ns)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-readiness-comparisons/separated-3.json

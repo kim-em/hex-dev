@@ -85,7 +85,7 @@ The before/after hashes remain equal for both matrix schedules. The later
 inspection also records hashes of the retained failed native log and raw event
 file; those two hashes were not recorded at capture.
 
-Reproduce the successful schedule on the measured source with installed
+Reproduce the successful schedule on measured source `25b179f5c8f2143cd77753cd8c802d364aefd958` with installed
 Valgrind and its headers:
 
 ```sh

@@ -1,0 +1,1049 @@
+{
+  "cpu": 91,
+  "host": "chungus2",
+  "load_start": [
+    1.85205078125,
+    2.37451171875,
+    3.880859375
+  ],
+  "head": "6d78bf3e1fb1aa23129df83f7888979dd5afeb6d",
+  "commands": [
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardAdd",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Add-0-Hard.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareAdd",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Add-0-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareAdd",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Add-1-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardAdd",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Add-1-Hard.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardAdd",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Add-2-Hard.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareAdd",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Add-2-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareAdd",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Add-3-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardAdd",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Add-3-Hard.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardSub",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Sub-0-Hard.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareSub",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Sub-0-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareSub",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Sub-1-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardSub",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Sub-1-Hard.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardSub",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Sub-2-Hard.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareSub",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Sub-2-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareSub",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Sub-3-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardSub",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Sub-3-Hard.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardMul",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Mul-0-Hard.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareMul",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Mul-0-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareMul",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Mul-1-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardMul",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Mul-1-Hard.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardMul",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Mul-2-Hard.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareMul",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Mul-2-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareMul",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Mul-3-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardMul",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Mul-3-Hard.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardDiv",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Div-0-Hard.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareDiv",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Div-0-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareDiv",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Div-1-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardDiv",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Div-1-Hard.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardDiv",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Div-2-Hard.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareDiv",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Div-2-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareDiv",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Div-3-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardDiv",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Div-3-Hard.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardNeg",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Neg-0-Hard.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareNeg",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Neg-0-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareNeg",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Neg-1-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardNeg",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Neg-1-Hard.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardNeg",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Neg-2-Hard.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareNeg",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Neg-2-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareNeg",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Neg-3-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardNeg",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Neg-3-Hard.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardInv",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Inv-0-Hard.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareInv",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Inv-0-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareInv",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Inv-1-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardInv",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Inv-1-Hard.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardInv",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Inv-2-Hard.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareInv",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Inv-2-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareInv",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Inv-3-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardInv",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Inv-3-Hard.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardNatPow",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/NatPow-0-Hard.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareNatPow",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/NatPow-0-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareNatPow",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/NatPow-1-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardNatPow",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/NatPow-1-Hard.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardNatPow",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/NatPow-2-Hard.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareNatPow",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/NatPow-2-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareNatPow",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/NatPow-3-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardNatPow",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/NatPow-3-Hard.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardIntPow",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/IntPow-0-Hard.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareIntPow",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/IntPow-0-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareIntPow",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/IntPow-1-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardIntPow",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/IntPow-1-Hard.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardIntPow",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/IntPow-2-Hard.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareIntPow",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/IntPow-2-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardBareIntPow",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/IntPow-3-HardBare.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runHardIntPow",
+      "--repeats",
+      "1",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/IntPow-3-Hard.json"
+    ]
+  ],
+  "source_sha256": "a53f8e727946068ea6b61328bc1e7e986af042568420f3c819e8a427664de1dd",
+  "binary_sha256": "5737696b97d268c9d6fcb46658d6f757a78c4d241bc01ab59fa3ee4877cd437f",
+  "fixture": "positive real root of X^6-2 and sqrt(3); operands prepared outside timing",
+  "role": "baseline/reference calibration; operational cap is not an absolute budget",
+  "rows": [
+    {
+      "operation": "Add",
+      "trial": 0,
+      "arm": "Hard",
+      "median_nanos": 6614641836,
+      "hash": "0x7cc18faa80303c8"
+    },
+    {
+      "operation": "Add",
+      "trial": 0,
+      "arm": "HardBare",
+      "median_nanos": 6566091135,
+      "hash": "0x7cc18faa80303c8"
+    },
+    {
+      "operation": "Add",
+      "trial": 1,
+      "arm": "HardBare",
+      "median_nanos": 6667867537,
+      "hash": "0x7cc18faa80303c8"
+    },
+    {
+      "operation": "Add",
+      "trial": 1,
+      "arm": "Hard",
+      "median_nanos": 6486727378,
+      "hash": "0x7cc18faa80303c8"
+    },
+    {
+      "operation": "Add",
+      "trial": 2,
+      "arm": "Hard",
+      "median_nanos": 6522461405,
+      "hash": "0x7cc18faa80303c8"
+    },
+    {
+      "operation": "Add",
+      "trial": 2,
+      "arm": "HardBare",
+      "median_nanos": 6534689929,
+      "hash": "0x7cc18faa80303c8"
+    },
+    {
+      "operation": "Add",
+      "trial": 3,
+      "arm": "HardBare",
+      "median_nanos": 6623722847,
+      "hash": "0x7cc18faa80303c8"
+    },
+    {
+      "operation": "Add",
+      "trial": 3,
+      "arm": "Hard",
+      "median_nanos": 6597555634,
+      "hash": "0x7cc18faa80303c8"
+    },
+    {
+      "operation": "Sub",
+      "trial": 0,
+      "arm": "Hard",
+      "median_nanos": 6515956495,
+      "hash": "0xcfcded9e67ef422a"
+    },
+    {
+      "operation": "Sub",
+      "trial": 0,
+      "arm": "HardBare",
+      "median_nanos": 6589860908,
+      "hash": "0xcfcded9e67ef422a"
+    },
+    {
+      "operation": "Sub",
+      "trial": 1,
+      "arm": "HardBare",
+      "median_nanos": 6473476308,
+      "hash": "0xcfcded9e67ef422a"
+    },
+    {
+      "operation": "Sub",
+      "trial": 1,
+      "arm": "Hard",
+      "median_nanos": 6481415719,
+      "hash": "0xcfcded9e67ef422a"
+    },
+    {
+      "operation": "Sub",
+      "trial": 2,
+      "arm": "Hard",
+      "median_nanos": 6552563286,
+      "hash": "0xcfcded9e67ef422a"
+    },
+    {
+      "operation": "Sub",
+      "trial": 2,
+      "arm": "HardBare",
+      "median_nanos": 6518971460,
+      "hash": "0xcfcded9e67ef422a"
+    },
+    {
+      "operation": "Sub",
+      "trial": 3,
+      "arm": "HardBare",
+      "median_nanos": 6597744725,
+      "hash": "0xcfcded9e67ef422a"
+    },
+    {
+      "operation": "Sub",
+      "trial": 3,
+      "arm": "Hard",
+      "median_nanos": 6508363177,
+      "hash": "0xcfcded9e67ef422a"
+    },
+    {
+      "operation": "Mul",
+      "trial": 0,
+      "arm": "Hard",
+      "median_nanos": 82714535,
+      "hash": "0x7b833c10aa349c1"
+    },
+    {
+      "operation": "Mul",
+      "trial": 0,
+      "arm": "HardBare",
+      "median_nanos": 82377917,
+      "hash": "0x7b833c10aa349c1"
+    },
+    {
+      "operation": "Mul",
+      "trial": 1,
+      "arm": "HardBare",
+      "median_nanos": 80980896,
+      "hash": "0x7b833c10aa349c1"
+    },
+    {
+      "operation": "Mul",
+      "trial": 1,
+      "arm": "Hard",
+      "median_nanos": 82229778,
+      "hash": "0x7b833c10aa349c1"
+    },
+    {
+      "operation": "Mul",
+      "trial": 2,
+      "arm": "Hard",
+      "median_nanos": 81565252,
+      "hash": "0x7b833c10aa349c1"
+    },
+    {
+      "operation": "Mul",
+      "trial": 2,
+      "arm": "HardBare",
+      "median_nanos": 82163328,
+      "hash": "0x7b833c10aa349c1"
+    },
+    {
+      "operation": "Mul",
+      "trial": 3,
+      "arm": "HardBare",
+      "median_nanos": 82418297,
+      "hash": "0x7b833c10aa349c1"
+    },
+    {
+      "operation": "Mul",
+      "trial": 3,
+      "arm": "Hard",
+      "median_nanos": 82534880,
+      "hash": "0x7b833c10aa349c1"
+    },
+    {
+      "operation": "Div",
+      "trial": 0,
+      "arm": "Hard",
+      "median_nanos": 40465722,
+      "hash": "0xf93e953cb46d6203"
+    },
+    {
+      "operation": "Div",
+      "trial": 0,
+      "arm": "HardBare",
+      "median_nanos": 40224203,
+      "hash": "0xf93e953cb46d6203"
+    },
+    {
+      "operation": "Div",
+      "trial": 1,
+      "arm": "HardBare",
+      "median_nanos": 40050727,
+      "hash": "0xf93e953cb46d6203"
+    },
+    {
+      "operation": "Div",
+      "trial": 1,
+      "arm": "Hard",
+      "median_nanos": 39962316,
+      "hash": "0xf93e953cb46d6203"
+    },
+    {
+      "operation": "Div",
+      "trial": 2,
+      "arm": "Hard",
+      "median_nanos": 40149833,
+      "hash": "0xf93e953cb46d6203"
+    },
+    {
+      "operation": "Div",
+      "trial": 2,
+      "arm": "HardBare",
+      "median_nanos": 40507333,
+      "hash": "0xf93e953cb46d6203"
+    },
+    {
+      "operation": "Div",
+      "trial": 3,
+      "arm": "HardBare",
+      "median_nanos": 40283311,
+      "hash": "0xf93e953cb46d6203"
+    },
+    {
+      "operation": "Div",
+      "trial": 3,
+      "arm": "Hard",
+      "median_nanos": 40396799,
+      "hash": "0xf93e953cb46d6203"
+    },
+    {
+      "operation": "Neg",
+      "trial": 0,
+      "arm": "Hard",
+      "median_nanos": 26062953,
+      "hash": "0x90151aeb609428ad"
+    },
+    {
+      "operation": "Neg",
+      "trial": 0,
+      "arm": "HardBare",
+      "median_nanos": 25915154,
+      "hash": "0x90151aeb609428ad"
+    },
+    {
+      "operation": "Neg",
+      "trial": 1,
+      "arm": "HardBare",
+      "median_nanos": 26058906,
+      "hash": "0x90151aeb609428ad"
+    },
+    {
+      "operation": "Neg",
+      "trial": 1,
+      "arm": "Hard",
+      "median_nanos": 25914302,
+      "hash": "0x90151aeb609428ad"
+    },
+    {
+      "operation": "Neg",
+      "trial": 2,
+      "arm": "Hard",
+      "median_nanos": 25950305,
+      "hash": "0x90151aeb609428ad"
+    },
+    {
+      "operation": "Neg",
+      "trial": 2,
+      "arm": "HardBare",
+      "median_nanos": 25991497,
+      "hash": "0x90151aeb609428ad"
+    },
+    {
+      "operation": "Neg",
+      "trial": 3,
+      "arm": "HardBare",
+      "median_nanos": 25871929,
+      "hash": "0x90151aeb609428ad"
+    },
+    {
+      "operation": "Neg",
+      "trial": 3,
+      "arm": "Hard",
+      "median_nanos": 26109241,
+      "hash": "0x90151aeb609428ad"
+    },
+    {
+      "operation": "Inv",
+      "trial": 0,
+      "arm": "Hard",
+      "median_nanos": 33053024,
+      "hash": "0x7f480553f9384a48"
+    },
+    {
+      "operation": "Inv",
+      "trial": 0,
+      "arm": "HardBare",
+      "median_nanos": 32641734,
+      "hash": "0x7f480553f9384a48"
+    },
+    {
+      "operation": "Inv",
+      "trial": 1,
+      "arm": "HardBare",
+      "median_nanos": 32718218,
+      "hash": "0x7f480553f9384a48"
+    },
+    {
+      "operation": "Inv",
+      "trial": 1,
+      "arm": "Hard",
+      "median_nanos": 33687705,
+      "hash": "0x7f480553f9384a48"
+    },
+    {
+      "operation": "Inv",
+      "trial": 2,
+      "arm": "Hard",
+      "median_nanos": 33187364,
+      "hash": "0x7f480553f9384a48"
+    },
+    {
+      "operation": "Inv",
+      "trial": 2,
+      "arm": "HardBare",
+      "median_nanos": 33270706,
+      "hash": "0x7f480553f9384a48"
+    },
+    {
+      "operation": "Inv",
+      "trial": 3,
+      "arm": "HardBare",
+      "median_nanos": 33706813,
+      "hash": "0x7f480553f9384a48"
+    },
+    {
+      "operation": "Inv",
+      "trial": 3,
+      "arm": "Hard",
+      "median_nanos": 33030340,
+      "hash": "0x7f480553f9384a48"
+    },
+    {
+      "operation": "NatPow",
+      "trial": 0,
+      "arm": "Hard",
+      "median_nanos": 198326346,
+      "hash": "0xfac774ca5ef39829"
+    },
+    {
+      "operation": "NatPow",
+      "trial": 0,
+      "arm": "HardBare",
+      "median_nanos": 198882480,
+      "hash": "0xfac774ca5ef39829"
+    },
+    {
+      "operation": "NatPow",
+      "trial": 1,
+      "arm": "HardBare",
+      "median_nanos": 197834387,
+      "hash": "0xfac774ca5ef39829"
+    },
+    {
+      "operation": "NatPow",
+      "trial": 1,
+      "arm": "Hard",
+      "median_nanos": 197622613,
+      "hash": "0xfac774ca5ef39829"
+    },
+    {
+      "operation": "NatPow",
+      "trial": 2,
+      "arm": "Hard",
+      "median_nanos": 197704625,
+      "hash": "0xfac774ca5ef39829"
+    },
+    {
+      "operation": "NatPow",
+      "trial": 2,
+      "arm": "HardBare",
+      "median_nanos": 197207648,
+      "hash": "0xfac774ca5ef39829"
+    },
+    {
+      "operation": "NatPow",
+      "trial": 3,
+      "arm": "HardBare",
+      "median_nanos": 197149962,
+      "hash": "0xfac774ca5ef39829"
+    },
+    {
+      "operation": "NatPow",
+      "trial": 3,
+      "arm": "Hard",
+      "median_nanos": 196252042,
+      "hash": "0xfac774ca5ef39829"
+    },
+    {
+      "operation": "IntPow",
+      "trial": 0,
+      "arm": "Hard",
+      "median_nanos": 245346454,
+      "hash": "0xee54fcb23d356212"
+    },
+    {
+      "operation": "IntPow",
+      "trial": 0,
+      "arm": "HardBare",
+      "median_nanos": 241793808,
+      "hash": "0xee54fcb23d356212"
+    },
+    {
+      "operation": "IntPow",
+      "trial": 1,
+      "arm": "HardBare",
+      "median_nanos": 243072743,
+      "hash": "0xee54fcb23d356212"
+    },
+    {
+      "operation": "IntPow",
+      "trial": 1,
+      "arm": "Hard",
+      "median_nanos": 244659626,
+      "hash": "0xee54fcb23d356212"
+    },
+    {
+      "operation": "IntPow",
+      "trial": 2,
+      "arm": "Hard",
+      "median_nanos": 243777358,
+      "hash": "0xee54fcb23d356212"
+    },
+    {
+      "operation": "IntPow",
+      "trial": 2,
+      "arm": "HardBare",
+      "median_nanos": 241905514,
+      "hash": "0xee54fcb23d356212"
+    },
+    {
+      "operation": "IntPow",
+      "trial": 3,
+      "arm": "HardBare",
+      "median_nanos": 244360353,
+      "hash": "0xee54fcb23d356212"
+    },
+    {
+      "operation": "IntPow",
+      "trial": 3,
+      "arm": "Hard",
+      "median_nanos": 243838179,
+      "hash": "0xee54fcb23d356212"
+    }
+  ],
+  "load_end": [
+    4.17822265625,
+    4.02880859375,
+    4.05859375
+  ],
+  "source_unchanged": true,
+  "binary_unchanged": true
+}

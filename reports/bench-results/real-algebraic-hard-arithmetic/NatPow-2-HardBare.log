@@ -1,0 +1,8 @@
+Hex.RealAlgebraicBench.runHardBareNatPow    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=6d78bf3-dirty, 2026-10-02T03:58:32Z, host=chungus2
+  repeat 0  197.208 ms
+  median: 197.208 ms    min: 197.208 ms    max: 197.208 ms
+  hash: all repeats agree
+  observed hash: 0xfac774ca5ef39829
+  peak RSS: 68_268 kB (across 1 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/NatPow-2-HardBare.json

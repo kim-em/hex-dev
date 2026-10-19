@@ -1,0 +1,263 @@
+{
+  "source_commit": "5a7a8314e66a4c74d98dea774a6e0848e9f93498",
+  "sources": {
+    "adapters/HexRCF/RealCoefficients.lean": "495ff7a8a52b4f62c343fbf54934217263222cbde1ea0b1ad091723a08f6c51d",
+    "adapters/HexRCF/RealCoefficients/RootQuote.lean": "077ebdef38b44d8351fc5311c9ab460275a0282c6f594a0e5254482d28a7cd48",
+    "adapters/HexRCF/RealCoefficients/ScalarQuote.lean": "caafbbbfbb11a28f3eccfa7deb775698ba28f913b33943d9d582387d11f559d8",
+    "conformance/HexRCF/ScalarQuoteCases.lean": "47fb709b32df6893c3de72f078bf536954d926ec8dde93d169e76a8c056c4db8",
+    "conformance/HexRCF/ScalarQuoteConformance.lean": "fdfd1c1da04eda20f7ea22601fcf4d0f60efd150ca3b933d0d3318876d9744c5",
+    "conformance/HexRCF/ScalarQuotePublic.lean": "2418c0c2d932a5d7353005f49f1920fb95a2b4dd52ee4b96096c09d3b85217ae",
+    "conformance/HexRCF/NamedConstantProofs.lean": "54b6e99c42e5f43a254607fb438f77c10597a600cc39ed683c436d9a4bc74dd9",
+    "conformance/HexRCF/NamedConstants.lean": "3cc4f75fe7c1fc17863e5ca00cb4b5d154991ae1c155e1c2287efe35085d7c63",
+    "HexManual/Chapters/HexRCF/RootQuote.lean": "2e8323d3d0b5cd7b6a81ac622113dc7776de2f8a7190b90decabfcb25728d4d3",
+    "lakefile.lean": "d92a2aa95274bcabcad2272fc8094f698058a63fa74083a86c72447bbaa60527"
+  },
+  "proof_nodes": 818,
+  "scalar_theorem_bodies": 13,
+  "scalar_data_definitions": [
+    "Hex.RCF.ScalarQuoteTests.restored",
+    "Hex.RCF.ScalarQuoteTests.literal",
+    "Hex.RCF.ScalarQuoteTests.empty"
+  ],
+  "named_theorem_bodies": 42,
+  "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "resource_policy": "serial aggregate32GiB/noSwap/LeanThreads2",
+  "review_findings_addressed": [
+    "named auxiliaries rechecked",
+    "scalar definitions rechecked under producer guard",
+    "input charged and type-checked before reduction",
+    "signature arity/universe guards",
+    "ordinary umbrella export and module consumer",
+    "wrong-context before callbacks",
+    "success caller metavariables",
+    "wrong field count/nonarray/trailing zeros",
+    "actual core heartbeat epoch and typed exhaustion rethrow",
+    "assigned reader/literal/facts input accounting",
+    "explicit original named reader target",
+    "independent zero/nonzero source equations",
+    "nonvacuous transport-charge and exact exhaustion-stage regressions"
+  ],
+  "scope": {
+    "context_binding": "The facts list's declared element type must use the original context under reducible transparency; aliases in that index require explicit checked type transport.",
+    "wrong_context_control": "Fresh Core.Context epoch, maxHeartbeats2000000 raw; Exception.isMaxHeartbeat/isMaxRecDepth rethrown rather than counted as type rejection; decoder calls0.",
+    "assigned_inputs": "Reader, expanded literal and expanded fact-list assignments compared against direct inputs; all instantiate before work is charged.",
+    "targets": "Constructed explicitly from original ValueCodec.decode application, with independent zero/nonzero source type/body assertions.",
+    "prior_record_caveat": "Earlier withOptions heartbeat claim did not set Core.Context.maxHeartbeats; retained record is corrected separately.",
+    "transport_charge": "Total charge exceeds strict quote plus exact fact preflight count; one-below exhaustion consumed and requested fields must identify the final transport charge.",
+    "theorems": "13 scalar case bodies with complete standard-three axiom closure; two zero/nonzero source aliases have identical type/body constants and zero reductions; other theorem checks require nonempty diagnostics",
+    "definitions": "3 reachable scalar case definitions checked by ordinary kernel with producer diagnostics; literal definitions may have empty traces",
+    "named": "42 reachable original NamedConstants theorem bodies, including auxiliaries, re-added with fresh kernel checks; actual supplied registrations required",
+    "negative_inputs": "Wrong-context facts reject before callbacks under a fresh actual Core.Context maxHeartbeats2000000 raw; wrong field count, nonarray, trailing zeros, missing/wrong facts and admitted proposals refuse. Malformed codec applications are tested; the declaration signature guard is not tested by corrupting library declarations.",
+    "state_and_budget": "Assigned reader, expanded literal and expanded fact-list inputs have the same charge as direct forms; exact preflight count is excluded from the transport-charge comparison, and the one-below consumed/requested fields pin final-transport exhaustion; continued usage, rollback and caller metavariables are checked."
+  },
+  "render_command": "run-bounded env LAKE_NO_CACHE=true lake build ScalarReviewRender",
+  "live_limit_verification": {
+    "ActiveState": "active",
+    "MainPID": "1388596",
+    "MemoryMax": "34359738368",
+    "MemorySwapMax": "0",
+    "Environment": "PATH=/home/kim/.claude-patched:/home/kim/.local/bin:/home/kim/bin:/home/kim/.npm-global/bin:/run/wrappers/bin:/home/kim/.nix-profile/bin:/nix/profile/bin:/home/kim/.local/state/nix/profile/bin:/etc/profiles/per-user/kim/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin LEAN_NUM_THREADS=2",
+    "sampledWhileRunning": true
+  },
+  "visual": {
+    "captures": 8,
+    "widths": [
+      1440,
+      390
+    ],
+    "targets_per_width": [
+      19,
+      19
+    ],
+    "all_local_overflow_at_most_one_pixel": true,
+    "opened_captures": true
+  },
+  "render": {
+    "log": "manual-render.log.gz",
+    "terminal_summary": "ices and other narrow contexts. Long lines are likely to be truncated in the rendered output.\n\nHint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.\n\u2714 [14316/14318] Built HexManual (3.6s)\n\u2139 [14317/14318] Built ScalarReviewRender (6.5s)\ninfo: ScalarReviewRender.lean:3:0: 0\nBuild completed successfully (14318 jobs).\n          Finished with result: success\nMain processes terminated with: code=exited, status=0/SUCCESS\n               Service runtime: 2min 55.125s\n             CPU time consumed: 3min 21.800s\n                   Memory peak: 2.3G (swap: 0B)\n"
+  },
+  "artifacts": [
+    {
+      "path": "affected-validation.log.gz",
+      "sha256": "b393a570a9bc3d0656a870edb9ec6bd60aa22c2f08c5dd574ef1e59a25583303",
+      "bytes": 10216,
+      "uncompressed_sha256": "7bd58de5806420a223a3f93a02bdad7d5577d5ff3d7cbbf93e739fee4b747d1b",
+      "uncompressed_bytes": 123415
+    },
+    {
+      "path": "manual-render.log.gz",
+      "sha256": "305248d8d46c45dce7ba585b1bb59d815b2ddb82a332b85a52109f7754699000",
+      "bytes": 14308,
+      "uncompressed_sha256": "202f8f8e4e20212dd385895a47d2550311061fe99f4a55f43b256b39564a723b",
+      "uncompressed_bytes": 191620
+    },
+    {
+      "path": "browser-inspection.log.gz",
+      "sha256": "70b4ef7bea5538dcffb62224d4fc76a6d32bcf733e5e1028f61d15f1fe90beb8",
+      "bytes": 242,
+      "uncompressed_sha256": "e9ebe763d2915c63dcf151d9d46b1b93ebfb1dfd159fc1e7425729d6e0943e82",
+      "uncompressed_bytes": 327
+    },
+    {
+      "path": "metadata-0.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "metadata-1.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "metadata-2.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "metadata-3.log.gz",
+      "sha256": "b409d67a3a037936236130f7dc5c82bc279551dcaa501f4fdee7275c7bc3baef",
+      "bytes": 99,
+      "uncompressed_sha256": "d2dd145dfbb85665677c83dfa50f34878e648a170c291230b82ce0749ec0eb97",
+      "uncompressed_bytes": 95
+    },
+    {
+      "path": "metadata-4.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "browser.mjs",
+      "sha256": "17ed77c513c82314e7a7757e06632a63ad28b7a3849fff28709de84947c34f04",
+      "bytes": 5677
+    },
+    {
+      "path": "run-bounded.sh",
+      "sha256": "63bc5f97337e6b039bb3a9b1ba2a500be96fd1c2a2f73b43dae284aa9b18dda8",
+      "bytes": 302
+    },
+    {
+      "path": "renderer-lakefile.lean.txt",
+      "sha256": "568afb61e6829eb111a6b0c3c1ea83382f9d8ccd4f2a96f08fcc2b72c2107d42",
+      "bytes": 148
+    },
+    {
+      "path": "renderer.lean.txt",
+      "sha256": "664d37e07421cd5f5ee5df6e4fdb3f18fb67b1e58e3688267ff6ca6909180ef3",
+      "bytes": 206
+    },
+    {
+      "path": "scalar-quotation-desktop-boundary.png",
+      "sha256": "174032f2652ffdedc89a1b80ef6e40c64ea90554fd83026daaca81c9c78c27e9",
+      "bytes": 304288
+    },
+    {
+      "path": "../final/scalar-quotation-desktop-equivalence.png",
+      "sha256": "310957cc04764df4191f58bd7bbb4240e9fd2ed45296aff943a142216e2db9b4",
+      "bytes": 284417
+    },
+    {
+      "path": "../final/scalar-quotation-desktop-example.png",
+      "sha256": "cd90b60f43f347bcacf9e5ff50dfc336f07e6ca6f9606213c2cfd38dca748cd7",
+      "bytes": 275321
+    },
+    {
+      "path": "scalar-quotation-desktop-value.png",
+      "sha256": "edcb8e10d1f73bf50474116be054cda8aabe94057c01eedf29429ec1ea7f4b42",
+      "bytes": 279660
+    },
+    {
+      "path": "scalar-quotation-narrow-boundary.png",
+      "sha256": "00e3c9aae714b1290727e58d7bf4890097cfd8397a534a8691d3eae614a52064",
+      "bytes": 92570
+    },
+    {
+      "path": "../final/scalar-quotation-narrow-equivalence.png",
+      "sha256": "1702a913a1e1fac7e91b05f1e4af7042cdc9106746f69f6313d7f3be56cee958",
+      "bytes": 95466
+    },
+    {
+      "path": "../final/scalar-quotation-narrow-example.png",
+      "sha256": "10e0692a100ba11adfd1e7c8ea86ab517adce9a93da5bc50f576595c168488b9",
+      "bytes": 97735
+    },
+    {
+      "path": "../final/scalar-quotation-narrow-value.png",
+      "sha256": "c60a2752123b26d70732c9c527dae8eebce10d644d69582e3dc81143ac2a8ff1",
+      "bytes": 98096
+    },
+    {
+      "path": "scalar-quotation-inspection.json",
+      "sha256": "ddf7133941460acf6ecd8813262fcbfa2b8b9cfde919c3e70b89965e6315a495",
+      "bytes": 5054
+    },
+    {
+      "path": "scalar-quotation-section-overflow.json",
+      "sha256": "b20d9623526ed8173748cd5d8e1401ccc2bcd2212f715469a2fff903034d9537",
+      "bytes": 9350
+    }
+  ],
+  "metadata": [
+    {
+      "argv": [
+        "python3",
+        "scripts/check_dag.py"
+      ],
+      "exit_code": 0,
+      "log": "metadata-0.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_copyright_headers.py"
+      ],
+      "exit_code": 0,
+      "log": "metadata-1.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_file_line_counts.py"
+      ],
+      "exit_code": 0,
+      "log": "metadata-2.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/ci/check_named_admissions.py"
+      ],
+      "exit_code": 0,
+      "log": "metadata-3.log.gz"
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "metadata-4.log.gz"
+    }
+  ],
+  "verification": {
+    "affected_terminal_summary": "ll_toList: true\ninfo: conformance/HexRCF/RootQuoteConformance.lean:37:0: generated bodies directly use Array.foldlM_toList: true\ninfo: conformance/HexRCF/RootQuoteConformance.lean:37:0: fresh reader bindings, conditional controls and selected realRoot_spec checked; actual public replay/core laws present; complete standard-three axiom closure; reducibility restored\nBuild completed successfully (11783 jobs).\n          Finished with result: success\nMain processes terminated with: code=exited, status=0/SUCCESS\n               Service runtime: 1min 32.390s\n             CPU time consumed: 2min 26.779s\n                   Memory peak: 2.4G (swap: 0B)\n"
+  },
+  "limitations": [
+    "Earlier source973997 and failed diagnostics remain separately retained at../final/context.json; transient failed sources are not all retained.",
+    "The fixed admission scanner covers675 cones/1585 modules; actual proof closures have separate complete axiom audits.",
+    "Build observations include cached dependencies and are not matched scaling or speedup measurements.",
+    "No generic source/provider/predecessor histories, general tactic/accepted completeness, realization or strict compiled whole-reader missing-record claim."
+  ]
+}

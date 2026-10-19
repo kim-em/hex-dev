@@ -61,6 +61,7 @@ reduction by `x^n = -1`. -/
 def negacyclicCoeff (n k : Nat) (p : DensePoly R) : R :=
   (negacyclicCoeffs n p).getD k 0
 
+/-- The cyclic coefficient array has exactly the requested length. -/
 theorem size_cyclicCoeffs (n : Nat) (p : DensePoly R) :
     (cyclicCoeffs n p).size = n := by
   have aux : ∀ (xs : List Nat) (acc : Array R),
@@ -76,6 +77,7 @@ theorem size_cyclicCoeffs (n : Nat) (p : DensePoly R) :
   rw [aux]
   simp
 
+/-- The negacyclic coefficient array has exactly the requested length. -/
 theorem size_negacyclicCoeffs (n : Nat) (p : DensePoly R) :
     (negacyclicCoeffs n p).size = n := by
   have aux : ∀ (xs : List Nat) (acc : Array R),
@@ -208,6 +210,7 @@ private theorem foldl_cyclic_poly (n : Nat) (hn : 0 < n) (p : DensePoly R)
       apply ih
       simp [addCyclicCoeff, hsize]
 
+/-- Cyclic folding sums monomials with degrees reduced modulo the length. -/
 theorem ofCoeffs_cyclicCoeffs (n : Nat) (hn : 0 < n) (p : DensePoly R) :
     (ofCoeffs (cyclicCoeffs n p) : DensePoly R) =
       (List.range p.size).foldl
@@ -285,6 +288,7 @@ private theorem foldl_negacyclic_poly (n : Nat) (hn : 0 < n) (p : DensePoly R)
       · simp [addNegacyclicCoeff, hparity, hsize]
       · simp [addNegacyclicCoeff, hparity, hsize]
 
+/-- Negacyclic folding sums degree-reduced monomials with alternating signs. -/
 theorem ofCoeffs_negacyclicCoeffs (n : Nat) (hn : 0 < n) (p : DensePoly R) :
     (ofCoeffs (negacyclicCoeffs n p) : DensePoly R) =
       (List.range p.size).foldl (fun q i => q + negacyclicTerm n p i) 0 := by

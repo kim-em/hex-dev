@@ -29,7 +29,7 @@ Covered properties:
   `∏ liftedFactors ≡ f (mod p^k)`
 - linear and quadratic multifactor lifts agree on shared inputs after
   canonicalisation by `ZPoly.reduceModPow _ p k` (executable mirror of the
-  lift-uniqueness obligation discharged in `hex-hensel-mathlib`)
+  lift-uniqueness obligation discharged in `hex-hensel-theory`)
 Covered edge cases:
 - zero and empty polynomial inputs
 - empty factor arrays and identity products
@@ -109,6 +109,42 @@ private def reduceAdversarial : ZPoly := DensePoly.ofCoeffs #[-9, 0, 16, 24, 0, 
 #guard congrOn (ZPoly.reduceModPow reduceEdge 7 0) reduceEdge (7 ^ 0) 5
 #guard congrOn (ZPoly.reduceModPow reduceAdversarial 2 3) reduceAdversarial (2 ^ 3) 6
 
+-- Check both sides of the restored count and coefficient-shape dispatch.
+private def smallLinearFactors (n : Nat) : Array ZPoly :=
+  Array.replicate n (DensePoly.ofCoeffs #[1, 1])
+
+#guard Array.treeProductEligible (smallLinearFactors 8)
+#guard !Array.useProductTree (smallLinearFactors 7)
+#guard Array.useProductTree (smallLinearFactors 8)
+#guard Array.useProductTree (Array.replicate 1023 (1 : ZPoly))
+#guard !Array.useProductTree (Array.replicate 1024 (1 : ZPoly))
+#guard Array.useProductTree
+  (Array.replicate 8 (DensePoly.ofCoeffs #[-4, 1] : ZPoly))
+#guard !Array.useProductTree
+  (Array.replicate 8 (DensePoly.ofCoeffs #[-5, 1] : ZPoly))
+#guard !Array.useProductTree
+  ((smallLinearFactors 7).push (DensePoly.ofCoeffs #[1, 0, 1]))
+#guard !Array.useProductTree
+  ((smallLinearFactors 7).push (DensePoly.ofCoeffs #[5, 1]))
+#guard zcoeffs (Array.polyProductImpl (smallLinearFactors 7)) =
+  [1, 7, 21, 35, 35, 21, 7, 1]
+#guard zcoeffs (Array.polyProduct (smallLinearFactors 8)) =
+  [1, 8, 28, 56, 70, 56, 28, 8, 1]
+#guard zcoeffs (Array.polyProductImpl (smallLinearFactors 8)) =
+  [1, 8, 28, 56, 70, 56, 28, 8, 1]
+#guard Array.polyProductImpl (Array.replicate 1023 (1 : ZPoly)) = 1
+#guard Array.polyProductImpl (Array.replicate 1024 (1 : ZPoly)) = 1
+#guard !Array.treeProductEligible
+  (Array.replicate 8 (DensePoly.ofCoeffs #[5, 1] : ZPoly))
+#guard !Array.treeProductEligible
+  (Array.replicate 8 (DensePoly.ofCoeffs #[1, 0, 1] : ZPoly))
+#guard Array.polyProductImpl
+    (Array.replicate 8 (DensePoly.ofCoeffs #[-5, 1] : ZPoly)) =
+  (Array.replicate 8 (DensePoly.ofCoeffs #[-5, 1] : ZPoly)).foldl (· * ·) 1
+#guard Array.polyProductImpl
+    (Array.replicate 8 (DensePoly.ofCoeffs #[1, 0, 1] : ZPoly)) =
+  (Array.replicate 8 (DensePoly.ofCoeffs #[1, 0, 1] : ZPoly)).foldl (· * ·) 1
+
 private def productTypicalFactors : Array ZPoly :=
   #[DensePoly.ofCoeffs #[1, 1], DensePoly.ofCoeffs #[2, 1]]
 
@@ -187,7 +223,7 @@ private def reduceArrModPow (a : Array ZPoly) (p k : Nat) : Array ZPoly :=
 
 -- Linear/quadratic agreement after canonicalisation modulo `p^k`. This is
 -- the executable mirror of the lift-uniqueness statement that lives in
--- `hex-hensel-mathlib`: the two paths produce identical factor arrays
+-- `hex-hensel-theory`: the two paths produce identical factor arrays
 -- once each factor is reduced to its canonical representative in
 -- `[0, p^k)` via `ZPoly.reduceModPow`.
 

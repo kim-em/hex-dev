@@ -41,33 +41,33 @@ end Hex.PermGroup.Search
 
 namespace Hex.PermGroup.Group
 
-@[expose] def intersectionWith (budget : Search.Budget) (G H : Group n) :
+@[expose] def intersectionBudgeted (budget : Search.Budget) (G H : Group n) :
     Search.Outcome (Search.Intersection.constraint G H) budget :=
-  Search.solveWith budget (Search.Intersection.constraint G H) (Search.Tester.subgroup H)
+  Search.solveBudgeted budget (Search.Intersection.constraint G H) (Search.Tester.subgroup H)
 
-@[expose] def centralizerWith (budget : Search.Budget) (G H : Group n) :
+@[expose] def centralizerBudgeted (budget : Search.Budget) (G H : Group n) :
     Search.Outcome (Search.Centralizer.constraint G H) budget :=
-  Search.solveWith budget (Search.Centralizer.constraint G H) (Search.Tester.pure (Search.Predicate.centralizer H))
+  Search.solveBudgeted budget (Search.Centralizer.constraint G H) (Search.Tester.pure (Search.Predicate.centralizer H))
 
-@[expose] def centerWith (budget : Search.Budget) (G : Group n) :
-    Search.Outcome (Search.Centralizer.constraint G G) budget := G.centralizerWith budget G
+@[expose] def centerBudgeted (budget : Search.Budget) (G : Group n) :
+    Search.Outcome (Search.Centralizer.constraint G G) budget := G.centralizerBudgeted budget G
 
-@[expose] def centralizerPermWith (budget : Search.Budget) (G : Group n) (p : Perm n) :
+@[expose] def centralizerPermBudgeted (budget : Search.Budget) (G : Group n) (p : Perm n) :
     Search.Outcome (Search.Centralizer.constraint G (ofGenerators #[p])) budget :=
-  G.centralizerWith budget (ofGenerators #[p])
+  G.centralizerBudgeted budget (ofGenerators #[p])
 
-@[expose] def normalizerWith (budget : Search.Budget) (G H : Group n) :
+@[expose] def normalizerBudgeted (budget : Search.Budget) (G H : Group n) :
     Search.Outcome (Search.Normalizer.constraint G H) budget :=
-  Search.solveWith budget (Search.Normalizer.constraint G H) (Search.Tester.normalizer H)
+  Search.solveBudgeted budget (Search.Normalizer.constraint G H) (Search.Tester.normalizer H)
 
-@[expose] def setStabilizerWith (budget : Search.Budget) (G : Group n) (A : Vector Bool n) :
+@[expose] def setStabilizerBudgeted (budget : Search.Budget) (G : Group n) (A : Vector Bool n) :
     Search.Outcome (Search.Sets.constraint G A) budget :=
-  Search.solveWith budget (Search.Sets.constraint G A) (Search.Tester.pure (Search.Predicate.setStabilizer A))
+  Search.solveBudgeted budget (Search.Sets.constraint G A) (Search.Tester.pure (Search.Predicate.setStabilizer A))
 
 /-- The budget includes the original-generator witness program for a positive
 answer. Exhaustion has a separate constructor and cannot mean nonexistence. -/
-@[expose] def setTransporterWith (budget : Search.Budget) (G : Group n) (A B : Vector Bool n) :
+@[expose] def setTransporterBudgeted (budget : Search.Budget) (G : Group n) (A B : Vector Bool n) :
     Search.AnswerOutcome (Search.Sets.transporter G A B) budget :=
-  Search.firstWith budget (Search.Sets.transporter G A B) (Search.Evaluator.pure (Search.Sets.test A B))
+  Search.firstBudgeted budget (Search.Sets.transporter G A B) (Search.Evaluator.pure (Search.Sets.test A B))
 
 end Hex.PermGroup.Group

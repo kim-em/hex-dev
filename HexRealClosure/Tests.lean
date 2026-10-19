@@ -25,6 +25,7 @@ public import HexRealClosure.TowerYunTests
 public import HexRealClosure.TowerRefinementTests
 public import HexRealClosure.TowerConversionTests
 public import HexRealClosure.QAdjoinTests
+public import HexRealClosure.SampleTests
 public meta import HexSturm.Basic
 public meta import HexRealClosure.Bounds
 public meta import HexRealClosure.Deflation

@@ -16,7 +16,7 @@ public import HexInterval.Experiment.SemanticReplay
 
 This package exposes a provider-agnostic constant-enclosure boundary. The
 Mathlib-free side authenticates only the π operation key, exact request fact,
-and rational upper cut; the Mathlib companion supplies the proved identity and
+and rational upper cut; the theory companion supplies the proved identity and
 bound.
 -/
 

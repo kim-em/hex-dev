@@ -1,0 +1,22 @@
+{
+ "fingerprint": "a660c7f2ca32",
+ "host": "chungus2",
+ "date": "2026-10-06T01:46:31Z",
+ "describe": "1dc577efc0b0",
+ "label": "hasse-tauceti-rebased",
+ "measurement": {
+  "cpu": 2,
+  "command": [
+   "taskset",
+   "-c",
+   "2",
+   "bash",
+   "scripts/bench/graphiso_cactus_sweep.sh",
+   "hasse-tauceti-rebased"
+  ],
+  "environment": {
+   "LEAN_NUM_THREADS": "1"
+  },
+  "note": "The whole script, including its build and the tactic re-timing, ran under one leased CPU."
+ }
+}

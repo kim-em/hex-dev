@@ -1,0 +1,372 @@
+{
+  "family": "sturm-translated-preparedcount",
+  "function": "Hex.SturmFrontendBench.runPreparedCountBits",
+  "parameter": 32768,
+  "cpu": 57,
+  "load": [
+    20.82958984375,
+    12.86328125,
+    10.56787109375
+  ],
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "raw": "/tmp/issue-10577-perf/sturm-translated-preparedcount",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/tmp/hex10577-samply",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "record",
+        "--clockid",
+        "mono",
+        "-e",
+        "cycles:u",
+        "-F",
+        "999",
+        "--call-graph",
+        "dwarf",
+        "-o",
+        "/tmp/issue-10577-perf/sturm-translated-preparedcount/perf.data",
+        "--",
+        "env",
+        "LEAN_BENCH_PROFILE_KERNEL=1",
+        "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/tmp/issue-10577-perf/sturm-translated-preparedcount/timed-%p.jsonl",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "profile",
+        "Hex.SturmFrontendBench.runPreparedCountBits",
+        "--param",
+        "32768",
+        "--target-inner-nanos",
+        "2000000000",
+        "--max-seconds-per-call",
+        "60",
+        "--profiler",
+        "env"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "import",
+        "--save-only",
+        "--no-open",
+        "--unstable-presymbolicate",
+        "-o",
+        "/tmp/issue-10577-perf/sturm-translated-preparedcount/samply.json.gz",
+        "/tmp/issue-10577-perf/sturm-translated-preparedcount/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "script",
+        "--ns",
+        "-F",
+        "pid,tid,time,event",
+        "-i",
+        "/tmp/issue-10577-perf/sturm-translated-preparedcount/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/normalize_perf.py",
+        "--profile",
+        "/tmp/issue-10577-perf/sturm-translated-preparedcount/samply.json.gz",
+        "--perf-script",
+        "/tmp/issue-10577-perf/sturm-translated-preparedcount/perf-samples.txt",
+        "--spawn-anchor",
+        "/tmp/issue-10577-perf/sturm-translated-preparedcount/spawn-anchor.json",
+        "--output",
+        "/tmp/issue-10577-perf/sturm-translated-preparedcount/normalized.json.gz"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "/tmp/hex10577-samply/scripts/filter_samply.py",
+        "--samply-json",
+        "/tmp/issue-10577-perf/sturm-translated-preparedcount/normalized.json.gz",
+        "--sidecar",
+        "/tmp/issue-10577-perf/sturm-translated-preparedcount/timed-1336556.jsonl",
+        "--spawn-anchor",
+        "/tmp/issue-10577-perf/sturm-translated-preparedcount/spawn-anchor.json",
+        "--out",
+        "/tmp/issue-10577-perf/sturm-translated-preparedcount/filtered.json.gz",
+        "--diagnostics",
+        "/tmp/issue-10577-perf/sturm-translated-preparedcount/diagnostics.json",
+        "--label-filter",
+        "kernel"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/elf_symbols.py",
+        "/tmp/issue-10577-perf/sturm-translated-preparedcount/filtered.json.gz",
+        "--output",
+        "/tmp/issue-10577-perf/sturm-translated-preparedcount/symbols.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/summarize_profile.py",
+        "/tmp/issue-10577-perf/sturm-translated-preparedcount/filtered.json.gz",
+        "--symbols",
+        "/tmp/issue-10577-perf/sturm-translated-preparedcount/symbols.json",
+        "--diagnostics",
+        "/tmp/issue-10577-perf/sturm-translated-preparedcount/diagnostics.json",
+        "--thread",
+        "hexsturm_bench",
+        "--top",
+        "20",
+        "--output",
+        "reports/bench-results/prerequisite-readiness-profiles/growing-operands/sturm-translated-preparedcount.summary.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "executable_sha256": "2582ee10a5f694f04001b0aff3919a35ce90c970d8f2219e98a96c003b233f6a",
+  "commit": "6d78bf3e1fb1aa23129df83f7888979dd5afeb6d",
+  "dirty": true,
+  "profiler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.2.8",
+  "status": "profiled",
+  "diagnostics": {
+    "schema": 2,
+    "stage": "complete",
+    "confidence": "passed",
+    "low_confidence_reasons": [],
+    "bench_pid": 1336556,
+    "bench_thread_name": "hexsturm_bench",
+    "bench_thread_tid": "1336561",
+    "regions_total": 257,
+    "total_timed_ms": 1553.749024,
+    "expected_samples_bench_thread": 1552.2,
+    "retained_samples_bench_thread": 1551,
+    "rejected_samples_bench_thread": 68,
+    "off_bench_thread_samples_in_window": 0,
+    "samply_interval_ms": 1.001001,
+    "spawn_anchor_wall_ns": 1790918266493568872,
+    "spawn_anchor_mono_ns": 328258254178364,
+    "sidecar_mono_anchor_ns": 328258472125933,
+    "samply_meta_start_time_ms": 1790918266532.7656,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "calibration_residual_ms": 1.0226980447769165,
+    "calibration_max_residual_ms": 5.0,
+    "calibration": {
+      "selected_mode": "relative-to-meta-start-ms",
+      "residual_ms": 1.0226980447769165,
+      "raw_max_residual_ms": 1.0629159808158875,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "configured_max_residual_ms": 5.0,
+      "sample_interval_ms": 1.001001,
+      "effective_max_residual_ms": 5.0,
+      "within_residual_limit": true,
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "hit_count": 0,
+          "regions_without_samples": 257,
+          "boundary_residual_trimmed_max_ms": null,
+          "boundary_residual_raw_max_ms": null,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "hit_count": 1551,
+          "regions_without_samples": 0,
+          "boundary_residual_trimmed_max_ms": 1.0226980447769165,
+          "boundary_residual_raw_max_ms": 1.0629159808158875,
+          "within_residual_limit": true
+        }
+      }
+    },
+    "minimum_retained_samples": 100,
+    "sensitivity": {
+      "shift_ms": 5.0,
+      "reported_top_function_count": 3,
+      "configured_max_total_variation_distance": 0.1,
+      "sampling_noise_coefficient": 0.6,
+      "minimum_comparison_samples": 100,
+      "maximum_sampling_noise_allowance": 0.5,
+      "verdict": "passed",
+      "leaf_function_distributions_stable": true,
+      "comparisons": {
+        "minus": {
+          "total_variation_distance": 0.00444291924044841,
+          "leaf_function_support_size": 319,
+          "comparison_samples": 1550,
+          "exchanged_samples": 13,
+          "exchanged_fraction": 0.008387096774193548,
+          "sampling_noise_allowance": 0.03525344537814959,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        },
+        "plus": {
+          "total_variation_distance": 0.0054918261920371605,
+          "leaf_function_support_size": 318,
+          "comparison_samples": 1543,
+          "exchanged_samples": 10,
+          "exchanged_fraction": 0.0064808813998703824,
+          "sampling_noise_allowance": 0.031010865126185696,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        }
+      },
+      "cases": {
+        "minus": {
+          "shift_ms": -5.0,
+          "retained_samples": 1550,
+          "top_leaf_functions": [
+            {
+              "function": 139,
+              "name": "0x49691b5",
+              "samples": 55
+            },
+            {
+              "function": 88,
+              "name": "0x49691d6",
+              "samples": 52
+            },
+            {
+              "function": 120,
+              "name": "0x496adc1",
+              "samples": 50
+            }
+          ]
+        },
+        "nominal": {
+          "shift_ms": 0.0,
+          "retained_samples": 1551,
+          "top_leaf_functions": [
+            {
+              "function": 139,
+              "name": "0x49691b5",
+              "samples": 56
+            },
+            {
+              "function": 88,
+              "name": "0x49691d6",
+              "samples": 53
+            },
+            {
+              "function": 120,
+              "name": "0x496adc1",
+              "samples": 49
+            }
+          ]
+        },
+        "plus": {
+          "shift_ms": 5.0,
+          "retained_samples": 1543,
+          "top_leaf_functions": [
+            {
+              "function": 139,
+              "name": "0x49691b5",
+              "samples": 56
+            },
+            {
+              "function": 88,
+              "name": "0x49691d6",
+              "samples": 53
+            },
+            {
+              "function": 120,
+              "name": "0x496adc1",
+              "samples": 49
+            }
+          ]
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "0.stdout": "d40df5947dd338826ff79a6a053ccdc7edeaecd28d6667f6a092758534fc7d11",
+    "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stdout": "0df97c48d73fcb60d59b7b814093f47711de30dc438c86fd5377838306818975",
+    "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "2.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stdout": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "4.stdout": "1a89ef5bfd8650933a16c3a00d57ae7efdf4c1b72b0081ba5545f5745282a906",
+    "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "spawn-anchor.json": "f448c813c26ccd46de68381b98fb29ca286463c6439ae1123cebd08c45c67884",
+    "perf.data": "0d7ffbaf385861b933699d094e30ebd78dbf00d6b0576c5a2c93377753cb4cac",
+    "timed-1336556.jsonl": "cc4ee37d95d2bb3aeafdf02efdaff2d873e11f0132a2d12f648c374b2cd292e3",
+    "5.stdout": "dffa0148c5eb74931c660138c7d15351951edf5bd57d473dabbdf2d906b740eb",
+    "5.stderr": "fad60f75c71c9f6027800ea7e84c881adc62cb5724877d1698f7025cca6eb808",
+    "samply.json.gz": "00c1150ea2cc093a5366e4e1f8c0236417bfe0b7286b56cf5e79d2ea14c5e5fc",
+    "6.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "6.stderr": "5eecc03f5f55d77995f7cfb8c323ac8ca3c4743e4ce54d037b5098911eabdae4",
+    "7.stdout": "3a29b9773288f321c6393adce3e069dcdcd5c065441d522304d01803877eda61",
+    "7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "perf-samples.txt": "3a29b9773288f321c6393adce3e069dcdcd5c065441d522304d01803877eda61",
+    "normalized.json.gz": "a6b15d136fe190af81412b11bb521526466fb0bb4ffedf3da6a1f40522995a76",
+    "8.stdout": "4e01e40ede001766683cccc7285536f8e1811fda20a11b5d76946da882230c00",
+    "8.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "filtered.json.gz": "ef5d8bef665416c34a22acab1e1c1bfad5982f5519ff0d888d0361635a54ab4b",
+    "diagnostics.json": "8316f9c9b43a0c73fa024c0422f16132df20c81d30ce84973a414b85bfc1e236",
+    "9.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "9.stderr": "e6ccaaae24cf16fc636fdadfa503212f411b46865b1d969a0bb861c962eddc93",
+    "symbols.json": "78690616246b1680324f2ac98cae2b6fa813059916339699ef8a783798f55340",
+    "10.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "10.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

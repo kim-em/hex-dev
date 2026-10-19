@@ -22,8 +22,8 @@ theorem interval_total (root : RealAlgebraicNumber) (precision : Nat) :
 /-- Exact zero still has a strict interval, despite a zero approximation radius. -/
 theorem zero_section (precision : Nat) : ∃ interval,
     rootInterval 0 precision = some interval ∧
-    HexRealRootsMathlib.Dyadic.toReal interval.lower < 0 ∧
-    0 < HexRealRootsMathlib.Dyadic.toReal interval.upper := by
+    HexRealRootsTheory.Dyadic.toReal interval.lower < 0 ∧
+    0 < HexRealRootsTheory.Dyadic.toReal interval.upper := by
   obtain ⟨interval, produced, hlo, hhi, _⟩ := rootInterval_spec 0 precision
   exact ⟨interval, produced, by simpa using hlo, by simpa using hhi⟩
 
@@ -51,10 +51,10 @@ theorem enclosure_progress (root : RealAlgebraicNumber)
     (epsilon : ℝ) (hepsilon : 0 < epsilon) :
     ∃ K : Nat, ∀ k ≥ K, ∃ interval,
       rootInterval root (schedule k) = some interval ∧
-      HexRealRootsMathlib.Dyadic.toReal interval.lower < root.toReal ∧
-      root.toReal < HexRealRootsMathlib.Dyadic.toReal interval.upper ∧
-      HexRealRootsMathlib.Dyadic.toReal interval.upper -
-        HexRealRootsMathlib.Dyadic.toReal interval.lower < epsilon :=
+      HexRealRootsTheory.Dyadic.toReal interval.lower < root.toReal ∧
+      root.toReal < HexRealRootsTheory.Dyadic.toReal interval.upper ∧
+      HexRealRootsTheory.Dyadic.toReal interval.upper -
+        HexRealRootsTheory.Dyadic.toReal interval.lower < epsilon :=
   rootInterval_progress root schedule h epsilon hepsilon
 
 -- Nonzero constants produce the empty finite root list, even at precision zero.
@@ -75,7 +75,7 @@ private def cancelled : DensePoly Rat := FieldSpecialize.polynomial coordinate s
 
 /-- Real interpretation preserves the computed degree after leading cancellation. -/
 theorem cancelled_degree :
-    ((HexPolyMathlib.toPolynomial cancelled).map (Rat.castHom ℝ)).natDegree =
+    ((HexPolyTheory.toPolynomial cancelled).map (Rat.castHom ℝ)).natDegree =
       cancelled.natDegree :=
   FieldSpecialize.degree (Rat.castHom ℝ) (fun _ => Rat.cast_eq_zero) coordinate source
 

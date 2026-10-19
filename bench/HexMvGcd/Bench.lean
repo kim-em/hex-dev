@@ -415,15 +415,15 @@ def apiMode3Config (expectedHash : UInt64) : LeanBench.FixedBenchmarkConfig :=
 /- `contentIn` and `primPartIn` perform recursive dispatcher calls whose probe
 costs are omitted by the SPEC. Degree, coefficient count, and recursive arity
 schedules therefore provide no independently derived scalar model, and no
-cited bound covers the profiled recursive gcd work. Mode 3 pins `prepPublic 2`;
-the 10/15 ms body ceilings are calibration-plus-margin gates. -/
+cited bound covers the profiled recursive gcd work. The fixed registration pins
+`prepPublic 2`; the 10/15 ms body ceilings are calibration-plus-margin limits. -/
 setup_fixed_benchmark runContentInFixed where
   apiMode3Config 0xd1f9ea943ea7ea73
 setup_fixed_benchmark runPrimPartInFixed where
   apiMode3Config 0x358b5704b57e7de5
 
 /- The public exact-division row is a hash anchor only. `runCofactor` below
-carries its independently derived mode-1 model. -/
+carries its independently derived two-sided model. -/
 setup_fixed_benchmark runDivExactFixed where {
   expectedHash := some 0xeeadb45fd4afbeef
 }
@@ -431,7 +431,7 @@ setup_fixed_benchmark runDivExactFixed where {
 /- `gcd`, `cofactors`, `isCoprime`, `gcdList`, and `lcm` all inherit the
 dispatcher-dependent cost for which the SPEC supplies only route probe counts.
 Varying degree or support also changes the selected route and probe operands;
-there is no cited whole-dispatch upper bound. Mode 3 pins the shared canonical
+there is no cited whole-dispatch upper bound. The fixed registration pins the shared canonical
 public input. Body ceilings are 30 ms for `gcd`, 60 ms for `cofactors`, 35 ms
 for `isCoprime`, 60 ms for `gcdList`, and 35 ms for `lcm`; the route-specific
 hard cases remain in `Matrix`. -/
@@ -449,8 +449,9 @@ setup_fixed_benchmark runLcmFixed where
 /- `sqfDecomp` performs one dispatcher call per Yun level; `radical` and
 `isSquarefree` dispatch over the input and every derivative. Multiplicity,
 arity, and derivative support cannot be collapsed to a derived wall model, and
-no cited upper bound covers those gcds. Mode 3 uses `prepPublic 2` with 1 s
-body ceilings; the harder Yun pattern is independently gated in `Matrix`. -/
+no cited upper bound covers those gcds. The fixed registrations use
+`prepPublic 2` with 1 s body ceilings; the harder Yun pattern is independently
+budgeted in `Matrix`. -/
 setup_fixed_benchmark runSqfDecompFixed where
   apiMode3Config 0xc2c56dd345ace7ce
 setup_fixed_benchmark runRadicalFixed where
@@ -458,7 +459,7 @@ setup_fixed_benchmark runRadicalFixed where
 setup_fixed_benchmark runIsSquarefreeFixed where
   apiMode3Config 0x000000000000000d
 
-/- Family-level smoke/hash anchors.  The mode-3 operation evidence is in
+/- Family-level hash anchors.  The fixed-budget operation evidence is in
 `Hex.MvGcdBench.Matrix`; these rows are intentionally not used as coverage. -/
 setup_fixed_benchmark runCoprimeFamilyFixed where {
   expectedHash := some 0x42905229134041e6
@@ -472,7 +473,7 @@ setup_fixed_benchmark runSparseFixed where {
 
 /- The extended PRS has no useful asymptotic bound.  Degree and coefficient
 height jointly control swell, and the SPEC supplies neither a tight wall model
-nor a published bound for this implementation.  Mode 3 therefore uses the
+nor a published bound for this implementation.  The fixed registration therefore uses the
 canonical degree-5 swell input and a 10 ms body-scoped budget, with the child
 process cap serving only as a safety bound. -/
 setup_fixed_benchmark runSwell5 where {
@@ -483,7 +484,7 @@ setup_fixed_benchmark runSwell5 where {
   tags := #[scheduledHardwareTag]
 }
 
-/- Denominator-clearing and Yun wrapper hash anchors. Their mode-3 operation
+/- Denominator-clearing and Yun wrapper hash anchors. Their fixed-budget operation
 evidence is registered on canonical hard inputs in `Matrix`. -/
 setup_fixed_benchmark runRationalFixed where {
   expectedHash := some 0xf6040a6b74bc3ff1
@@ -492,11 +493,11 @@ setup_fixed_benchmark runSquarefreeFixed where {
   expectedHash := some 0x5262547c4fa35a9e
 }
 
-/-! # Informational FLINT comparator registrations
+/-! # FLINT comparator registrations
 
 The pair returns the same canonical sparse term list, so `compare` also checks
-cross-system agreement. The FLINT registration is scheduled-only;
-python-flint must be installed in that environment. -/
+cross-system agreement. The FLINT registration runs only in manual scientific
+runs; python-flint must be installed there. -/
 
 setup_fixed_benchmark Flint.runFlintMpolyOverhead where
   Flint.flintCompareConfig 0x0000000000000007

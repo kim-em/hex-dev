@@ -1,0 +1,94 @@
+{
+  "schema": "hex-rcf-nested-transport-validation-v1",
+  "source_commit": "e9d9510f2a90334b45f6dca3a888407fdc9f0634",
+  "selected_source_hashes": {
+    "HexManual/Chapters/HexRCF/NativeSources.lean": "876a8bf4758ab33b894aef83756427bd1e213f22ca5ddeb21b52e979f51e5957",
+    "HexRCF/README.md": "b41589f0ea08f1966e1d7b40aa9a1790ec143a01de18ae124c872c96b460e8ef",
+    "conformance-fixtures/HexRCF/nested-transport-signs.json": "582ccc1c30aeb54b2357c44431fe0cac0ee39aa60175bc110f633567a00646ee",
+    "conformance-fixtures/HexRCF/nested-transport.json": "5368b6a46e02f1942f9ddc5e424750ec34c87b0f04a7c7c844df008667c6a81b",
+    "conformance/HexRCF/NestedTransport/Constants.lean": "f47c6dbb85b1449eae07ca1dbcf6eed89bc5faed13ba1837c8ba8dd418c7508c",
+    "conformance/HexRCF/NestedTransport/Context.lean": "34ad7950333f6b2a3ab12706174812b2125d1ca2b93889587f50be904fb0505f",
+    "conformance/HexRCF/NestedTransport/Controls.lean": "149b1a0e6f71c16fa0582c2a0544bdc0d30b1541e873360304e244228e4957d4",
+    "conformance/HexRCF/NestedTransport/Conversion.lean": "546409755d5494666fd4edaa27eeff6a90e5fccc05c28a8270240502be8ee97b",
+    "conformance/HexRCF/NestedTransport/Facts.lean": "a9c840036134e02790764d5a6fc8f15261aa40c6a2e51757ecd6ec9ad0ca3939",
+    "conformance/HexRCF/NestedTransport/Fields.lean": "f4f087063248f1fc280aeb8990ec6228c4ac64c0d3c6522e88159b00450727b4",
+    "conformance/HexRCF/NestedTransport/Frame.lean": "4ad88261ccf1a8316c9038c0d53c43a1a80933841b75a952a4038a665cd0f800",
+    "conformance/HexRCF/NestedTransport/Literals.lean": "5e2d3b9e850824e4027912676e89201bc79029717b728cf4fc98da6bf84b09fa",
+    "conformance/HexRCF/NestedTransport/Map.lean": "0993c72acd7cf29132c9ef4e40ebdbbd6d98f60d2bb4a89394340d4a5b3fc129",
+    "conformance/HexRCF/NestedTransport/Model.lean": "763b0defdc24ad4f4b935a9936df909ed3d28d8bd891de21d8865e095f7780f8",
+    "conformance/HexRCF/NestedTransport/Operations.lean": "e4b9a6508474b56eaf020e7ec2080ce71d210158ff3be0be196ac2fe17ba6d77",
+    "conformance/HexRCF/NestedTransport/Ordinary.lean": "4b1936a74ef441edffcb3d0cb58d8a58c66ea245fa5b1e03e59b0bc7cd99ef71",
+    "conformance/HexRCF/NestedTransport/Predecessor.lean": "5bac067601a290da32892e711ee9c45fa41e1d32be37dbd12be680e527d5154a",
+    "conformance/HexRCF/NestedTransport/Read.lean": "9dd7c7ee0e20633d1ba575b5857f40dd2ddc0a4af06fbfefb580ef796681a4eb",
+    "conformance/HexRCF/NestedTransport/Restore.lean": "d422ed373939fb7bef00a0b3f4a7cbc9047d4a9628e34f498433d26eaa6cf12c",
+    "conformance/HexRCF/NestedTransport/RootRead.lean": "d3b90f631faae22813817dffdf42629c75fa813d854feafc8046808685c2e9ca",
+    "conformance/HexRCF/NestedTransport/SignData.lean": "cffbb4e404b118a8680c76600165399a05d977ca3682418932c6582e90cbba93",
+    "conformance/HexRCF/NestedTransport/SignLiterals.lean": "f5944f57818ac1f527f76adff14a648bc63d75ce32d76e1feaa882028f2fad8f",
+    "conformance/HexRCF/NestedTransport/Signs.lean": "6cbe77a65f79330c434afbc70def64ee2485dccd7c5ef9cfb5baef52021e09bb",
+    "conformance/HexRCF/NestedTransport/Source.lean": "b2226acd7cd8d67e5165a1acb4fa7bc5522e57f09d48fb04cdbd9d7b59df9dd5",
+    "lakefile.lean": "900ce85f66e53ffcc29a1c86c0240dd10b520ed9691ca4a8c5cc2d94a77e1795",
+    "reports/hexrcf-nested-transport.md": "f66d3986d720e8f72638a90e8a287be083bc07974caa57f0829c416eff235379",
+    "scripts/ci/check_named_admissions.py": "ba64ab006dbadb2ddc1d34853209d84593e70e684caae2c506b50a16dda9c803",
+    "scripts/ci/test_check_named_admissions.py": "4122a663945a3c9c145f7b09711692d5b027da89fafd8a4666d1dc1d821408d2",
+    "scripts/rcf/selected_literals.py": "de496eb7b6504a01156dcaf26db4e04a53335761e3874de66ff8999b543cd085"
+  },
+  "records": [
+    {
+      "file": "nested-transport-committed-integration.log.gz",
+      "sha256": "9eb9a6bcdb837e82a34ed40e2a3de656e77f8c0e66c04d4bd34c38936cc26eae",
+      "decoded_sha256": "9dbeaea2743374c9e3d787b1c4cd1608d34d95ebae3de78d5890f2911e0c3803",
+      "command": "lake build HexRCF.NestedTransport.Ordinary HexRCF.NestedTransport.Controls HexManual",
+      "exit_code": 0
+    },
+    {
+      "file": "nested-transport-full-render.log.gz",
+      "sha256": "d44404e5decfc4de83a467ee5277752ffd185e04a18206e876444e0956e589ec",
+      "decoded_sha256": "e43a354b788b9f5c8814aed09ca2d52d1557e213fb64715abbfb66fb4bf65636",
+      "command": "lake build FullRender (external scratch package importing HexManual)",
+      "exit_code": 0
+    },
+    {
+      "file": "nested-transport-admission-recursive-tests.log.gz",
+      "sha256": "320452f4aed403d524103baf35a8426daa83c40dffb24506f335567e3b2d3482",
+      "decoded_sha256": "8a11bfdb51fc1d3a84133c8b32781446379a0de0ab5d719d5c6eaddd69b88ad1",
+      "command": "python3 -m unittest discover -s scripts/ci -p test_check_named_admissions.py",
+      "exit_code": 0
+    }
+  ],
+  "visual_artifacts": [
+    {
+      "file": "nested-transport-desktop-boundary.png",
+      "sha256": "8034fef5043fb114bc0451e2f7010ecec05f95ed2e5f68c9cdf9643e306b2908"
+    },
+    {
+      "file": "nested-transport-desktop-records.png",
+      "sha256": "d45e071ae93e2fd03fb2b77da211209efeccc874ca8eebc42f0fbb2371d230da"
+    },
+    {
+      "file": "nested-transport-desktop-replay.png",
+      "sha256": "e5bf1edccac5034c25c4430aa29d437e32c11703faf50d55f0f44e5725bb2504"
+    },
+    {
+      "file": "nested-transport-narrow-boundary.png",
+      "sha256": "863f098c6809ebac7a7dff610ac01f7c4f45d159ffd5beda7a1b1a79ab518c86"
+    },
+    {
+      "file": "nested-transport-narrow-records.png",
+      "sha256": "f243b34c3688f57982275303ab7ae651f1466ecfaeae4751d43e93e9c8a41c4b"
+    },
+    {
+      "file": "nested-transport-narrow-replay.png",
+      "sha256": "1d41374630856dca97d5497a46411534eeff716efc49eb643183a1d58e2b3f52"
+    }
+  ],
+  "inspection": {
+    "file": "nested-transport-inspection.json",
+    "sha256": "be92cd8d12cd7477677ea2b40f13df8e711c786915edcdc578ddbb780663e5e6",
+    "inspected": [
+      "narrow replay",
+      "desktop replay"
+    ],
+    "scope": "New section only, desktop/narrow paragraph widths; no claim about all prior chapters."
+  },
+  "scope": "Ordinary-kernel acceptance/refusals, fresh actual-body and axiom audit, complete manual/render and recursive admission checker test. The source commit adds only the tested Python negative regression after the successful Lean/render commands; Lean/manual bytes are unchanged. No timing/scaling or arbitrary-history claim."
+}

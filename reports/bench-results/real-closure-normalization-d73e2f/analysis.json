@@ -1,0 +1,118 @@
+{
+  "commit": "d73e2f7e1bb7f29493a22d27c941b0e2e6e543ab",
+  "executable_sha256": "a3897599b1607c9fdef3830e4b77e843ec84f7a5bc83b89c25afcf188d6cb739",
+  "cpu": 48,
+  "complete_arms": 48,
+  "trials": 6,
+  "summary": [
+    {
+      "degree": 2,
+      "direction": "eager faster throughout",
+      "inner_repeats": {
+        "A": [
+          32768,
+          32768
+        ],
+        "B": [
+          65536,
+          65536
+        ]
+      },
+      "clean_ms": 0.016630215744018555,
+      "eager_ms": 0.010078378967285155,
+      "paired_eager_over_clean_median": 0.6061628485878676,
+      "paired_eager_over_clean_min": 0.6015393363695598,
+      "paired_eager_over_clean_max": 0.6144439413798349,
+      "clean_range_ms": [
+        0.01656729312133789,
+        0.01675584213256836
+      ],
+      "eager_range_ms": [
+        0.010029346588134766,
+        0.010214378784179688
+      ]
+    },
+    {
+      "degree": 4,
+      "direction": "eager faster throughout",
+      "inner_repeats": {
+        "A": [
+          2048,
+          2048
+        ],
+        "B": [
+          4096,
+          4096
+        ]
+      },
+      "clean_ms": 0.2524850607910156,
+      "eager_ms": 0.22822291369628905,
+      "paired_eager_over_clean_median": 0.9026664896705734,
+      "paired_eager_over_clean_min": 0.8916043576669712,
+      "paired_eager_over_clean_max": 0.9113048980321589,
+      "clean_range_ms": [
+        0.25092577783203124,
+        0.253163599609375
+      ],
+      "eager_range_ms": [
+        0.2255749638671875,
+        0.22905029052734374
+      ]
+    },
+    {
+      "degree": 8,
+      "direction": "eager faster throughout",
+      "inner_repeats": {
+        "A": [
+          512,
+          512
+        ],
+        "B": [
+          512,
+          512
+        ]
+      },
+      "clean_ms": 1.8766735478515626,
+      "eager_ms": 1.7053756259765624,
+      "paired_eager_over_clean_median": 0.9114117895850007,
+      "paired_eager_over_clean_min": 0.8862892407620342,
+      "paired_eager_over_clean_max": 0.9162824091970382,
+      "clean_range_ms": [
+        1.847358142578125,
+        1.917290474609375
+      ],
+      "eager_range_ms": [
+        1.677489095703125,
+        1.71778722265625
+      ]
+    },
+    {
+      "degree": 16,
+      "direction": "eager faster throughout",
+      "inner_repeats": {
+        "A": [
+          32,
+          32
+        ],
+        "B": [
+          32,
+          32
+        ]
+      },
+      "clean_ms": 18.29079028125,
+      "eager_ms": 17.09154390625,
+      "paired_eager_over_clean_median": 0.9292022888808328,
+      "paired_eager_over_clean_min": 0.9140597704069628,
+      "paired_eager_over_clean_max": 0.9532635544519209,
+      "clean_range_ms": [
+        17.96346090625,
+        18.8195473125
+      ],
+      "eager_range_ms": [
+        16.7251753125,
+        17.3207968125
+      ]
+    }
+  ],
+  "interpretation": "Descriptive shared-host data retaining all six trials. One Rat extension, 2n products, stored eager denominators at most 4; the selected root uses direct Sturm rather than BKR. Degree 2 uses the linear endpoint fast path. No policy, significance, scaling or regression-budget conclusion."
+}

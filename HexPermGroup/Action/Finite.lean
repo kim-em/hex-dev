@@ -8,6 +8,7 @@ module
 
 public import HexPermGroup.Action.Build
 public import HexPermGroup.Enumerate
+public import HexBasic.List.Nodup
 
 public section
 
@@ -41,7 +42,7 @@ theorem Exhausted.tooSmall_order (e : Exhausted a x cap) : cap < G.order := by
     exact hnew (him.symm ▸ Array.getElem_mem hi')
   have hn : (p :: e.queue.orbit.reps.toList).Nodup :=
     List.nodup_cons.mpr ⟨hnot, e.queue.reps_nodup⟩
-  have hlen := List.nodup_subset_length_le hn (l₂ := G.enumerate.toList)
+  have hlen := Hex.List.nodup_subset_length_le hn (l₂ := G.enumerate.toList)
     (fun q _ => by simpa using G.mem_enumerate q)
   have hh : cap + 1 ≤ G.order := by simpa [Queue.orbit, e.full, Group.enumerate_size] using hlen
   omega

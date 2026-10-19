@@ -14,6 +14,7 @@ from types import SimpleNamespace
 
 from scripts.release.check_released_manifest import (
     check_build_settings,
+    check_precompile_justified,
     check_ci_workflows,
     check_keep_paths,
     check_library_only,
@@ -88,6 +89,60 @@ class BuildSettingTests(unittest.TestCase):
     def test_a_library_absent_from_the_lakefile_is_rejected(self) -> None:
         with self.assertRaisesRegex(ValueError, "declares no lean_lib HexGone"):
             check_build_settings({"repo": "leanprover/hex-gone", "lib": "HexGone"})
+
+
+class PrecompileJustificationTests(unittest.TestCase):
+    """A published precompileModules needs an extern or a cited measurement."""
+
+    def setUp(self) -> None:
+        self.temporary = tempfile.TemporaryDirectory()
+        self.root = Path(self.temporary.name)
+        (self.root / "lakefile.lean").write_text(
+            "lean_lib HexFoo where\n  precompileModules := true\n\nlean_lib HexBar\n",
+            encoding="utf-8")
+        (self.root / "HexFoo" / "SPEC").mkdir(parents=True)
+        self.source = self.root / "HexFoo" / "Basic.lean"
+        self.source.write_text("def f : Nat := 1\n", encoding="utf-8")
+        self.spec = self.root / "HexFoo" / "SPEC" / "hex-foo.md"
+        self.spec.write_text("# hex-foo\n", encoding="utf-8")
+
+    def tearDown(self) -> None:
+        self.temporary.cleanup()
+
+    def check(self, lib: str = "HexFoo") -> None:
+        check_precompile_justified({"repo": "leanprover/hex-foo", "lib": lib},
+                                   self.root)
+
+    def test_an_unflagged_library_needs_nothing(self) -> None:
+        self.check("HexBar")
+
+    def test_an_undocumented_flag_is_rejected(self) -> None:
+        self.source.write_text('@[extern "f"] def f : Nat := 1\n', encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "does not say why"):
+            self.check()
+
+    def test_a_conditional_flag_still_needs_justification(self) -> None:
+        (self.root / "lakefile.lean").write_text(
+            'lean_lib HexFoo where\n'
+            '  precompileModules := get_config? native != some "false"\n')
+        with self.assertRaisesRegex(ValueError, "does not say why"):
+            self.check()
+
+    def test_a_documented_extern_flag_is_accepted(self) -> None:
+        self.source.write_text('@[expose, extern "f"] def f : Nat := 1\n',
+                               encoding="utf-8")
+        self.spec.write_text("It sets `precompileModules` for `f`.\n",
+                             encoding="utf-8")
+        self.check()
+
+    def test_a_speed_flag_must_cite_a_measurement(self) -> None:
+        self.spec.write_text("It sets `precompileModules` for speed.\n",
+                             encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "must cite the measurement"):
+            self.check()
+        self.spec.write_text("It sets `precompileModules`; see\n"
+                             "reports/hex-foo-precompile.md.\n", encoding="utf-8")
+        self.check()
 
 
 class Phase7AdmissionTests(unittest.TestCase):
@@ -172,6 +227,23 @@ class ReleasedCiTests(unittest.TestCase):
 
         return released_ci_workflows()["hex-basic"]
 
+    def test_explicit_external_dependency_cache_is_checked(self) -> None:
+        from scripts.release.sync_released import released_ci_workflows
+        workflow = released_ci_workflows()["hex-ecpp-theory"]
+        self.check(workflow, dependency_caches=["TauCeti"])
+        with self.assertRaisesRegex(ValueError, "cache paths differ"):
+            self.check(workflow)
+        with self.assertRaisesRegex(ValueError, "unique package names"):
+            self.check(workflow, dependency_caches=["TauCeti", "TauCeti"])
+        with self.assertRaisesRegex(ValueError, "unlocked package"):
+            self.check(workflow, dependency_caches=["missing"])
+
+        for package in ("mathlib", "batteries"):
+            with self.subTest(package=package), self.assertRaisesRegex(
+                ValueError, "upstream cache"
+            ):
+                self.check(workflow, dependency_caches=[package])
+
     def check(self, workflow: str, **entry_fields) -> None:
         entries = [{"repo": "leanprover/hex-example", **entry_fields}]
         with patch(
@@ -251,29 +323,29 @@ if __name__ == "__main__":
 
 
 class MathlibOnlyRowTests(unittest.TestCase):
-    """A Mathlib-facing library with no computational half takes the Mathlib column."""
+    """A Mathlib-facing library with no computational half takes the Theory column."""
 
-    def test_mathlib_only_entry_links_in_the_mathlib_column(self) -> None:
+    def test_theory_only_entry_links_in_the_theory_column(self) -> None:
         from scripts.release import aggregate_readme
 
         manifest = {
             "repos": [
                 {"repo": "leanprover/hex-foo", "lib": "HexFoo", "component": "Foo", "pins": []},
-                {"repo": "leanprover/hex-foo-mathlib", "lib": "HexFooMathlib", "pins": ["hex-foo"]},
+                {"repo": "leanprover/hex-foo-theory", "lib": "HexFooTheory", "pins": ["hex-foo"]},
                 {
                     "repo": "leanprover/hex-tac",
                     "lib": "HexTac",
                     "component": "A tactic",
-                    "mathlib_only": True,
+                    "theory_only": True,
                     "pins": [],
                 },
-                {"repo": "leanprover/hex", "pins_only": True, "pins": ["hex-foo", "hex-foo-mathlib", "hex-tac"]},
+                {"repo": "leanprover/hex", "pins_only": True, "pins": ["hex-foo", "hex-foo-theory", "hex-tac"]},
             ]
         }
         table = aggregate_readme.render_table(manifest)
         self.assertIn(
             "| Foo | [HexFoo](https://github.com/leanprover/hex-foo) | "
-            "[HexFooMathlib](https://github.com/leanprover/hex-foo-mathlib) |",
+            "[HexFooTheory](https://github.com/leanprover/hex-foo-theory) |",
             table,
         )
         self.assertIn(
@@ -334,7 +406,7 @@ class PublishedImportClosureTests(unittest.TestCase):
             root = Path(tmp)
             self._write(root, "HexGraph", [])
             self._write(root, "HexFoo", ["HexGraph"])
-            self._write(root, "HexFooMathlib", ["HexFoo", "HexGraph.Basic"])
+            self._write(root, "HexFooTheory", ["HexFoo", "HexGraph.Basic"])
             entries = [
                 {
                     "repo": "leanprover/hex-foo",
@@ -342,6 +414,6 @@ class PublishedImportClosureTests(unittest.TestCase):
                     "pins": [],
                     "extra_paths": [{"src": "HexGraph", "dest": "HexGraph"}],
                 },
-                {"repo": "leanprover/hex-foo-mathlib", "lib": "HexFooMathlib", "pins": ["hex-foo"]},
+                {"repo": "leanprover/hex-foo-theory", "lib": "HexFooTheory", "pins": ["hex-foo"]},
             ]
             self.assertEqual(published_import_closure_violations(entries, root), [])

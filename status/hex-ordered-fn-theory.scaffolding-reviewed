@@ -1,0 +1,19 @@
+Independent Phase-2 review of HexOrderedFnTheory against
+HexOrderedFnTheory/SPEC/hex-ordered-fn-theory.md, SPEC/Libraries/hex-ordered-fn-theory.md
+and PLAN/Phase2.md. Reviewed commit: 6b751bcaad0c7a4cc88c5cd5196e8f86827eb3af;
+at c8450dca0 only HexOrderedFnTheory/Tests.lean differs (singleton exact-zero
+identity). Reviewer: Claude Opus (fresh second-opinion session), independent of the authors.
+Scope: the change since e614d2d6d in full, and the public statement
+surface; proof bodies are kernel-checked and were not re-audited line by line.
+Verdict: authorized for Phase 2.
+
+Containment and convergence, injective real evaluation under relative transcendence,
+sign and approximation progress, sign/compare/order/approximation theorems, the
+Field/LinearOrder/IsStrictOrderedRing structures agreeing with the core dictionaries
+by rfl, the Hahn infinitesimal model with sign_eq covering formal zero, the sqrt(2)
+and singleton [2,2] semantic cases, and the Liouville integration fixture are present.
+
+Outstanding under #10376 (none blocks Phase 2): instantiate product_identity at
+C epsilon and X; optional StrictMono in OrderValid; the Phase-3 correspondence-only
+audit once HexOrderedFn reaches done_through 3, retaining the Liouville tests as
+HexOrderedFn's Extension coverage.

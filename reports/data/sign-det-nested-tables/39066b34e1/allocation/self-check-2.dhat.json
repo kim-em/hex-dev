@@ -1,0 +1,46 @@
+{"dhatFileVersion":2
+,"mode":"ad-hoc","verb":"Occurred"
+,"bklt":false,"bkacc":false
+,"bu":"unit","bsu":"units","bksu":"events"
+,"tu":"instrs","Mtu":"Minstr"
+,"cmd":"/home/kim/.local/state/hex/issue-10377-session-progress/nested-table-allocations/self-check-2"
+,"pid":1809551
+,"te":188885
+,"pps":
+ [{"tb":16,"tbk":1
+  ,"fs":[1,2,3,4]
+  }
+ ,{"tb":48,"tbk":1
+  ,"fs":[5,6,3,4]
+  }
+ ,{"tb":24,"tbk":1
+  ,"fs":[7,8,3,4]
+  }
+ ,{"tb":32,"tbk":1
+  ,"fs":[9,10,3,4]
+  }
+ ,{"tb":64,"tbk":1
+  ,"fs":[11,12,3,4]
+  }
+ ,{"tb":96,"tbk":1
+  ,"fs":[13,14,3,4]
+  }
+ ]
+,"ftbl":
+ ["[root]"
+ ,"0x40012AF: lean_alloc_small_object_core (in /home/kim/.local/state/hex/issue-10377-session-progress/nested-table-allocations/self-check-2)"
+ ,"0x4001D22: lp_Hex_Hex_SignDetBench_Joint_runComparison (in /home/kim/.local/state/hex/issue-10377-session-progress/nested-table-allocations/self-check-2)"
+ ,"0x4001BD7: lp_Hex_Hex_SignDetBench_Joint_runComparison (in /home/kim/.local/state/hex/issue-10377-session-progress/nested-table-allocations/self-check-2)"
+ ,"0x4001E30: main (in /home/kim/.local/state/hex/issue-10377-session-progress/nested-table-allocations/self-check-2)"
+ ,"0x4001410: lean_alloc_object (in /home/kim/.local/state/hex/issue-10377-session-progress/nested-table-allocations/self-check-2)"
+ ,"0x4001D47: lp_Hex_Hex_SignDetBench_Joint_runComparison (in /home/kim/.local/state/hex/issue-10377-session-progress/nested-table-allocations/self-check-2)"
+ ,"0x40016D0: mi_malloc_small (in /home/kim/.local/state/hex/issue-10377-session-progress/nested-table-allocations/self-check-2)"
+ ,"0x4001D6C: lp_Hex_Hex_SignDetBench_Joint_runComparison (in /home/kim/.local/state/hex/issue-10377-session-progress/nested-table-allocations/self-check-2)"
+ ,"0x40019BF: mi_new_n (in /home/kim/.local/state/hex/issue-10377-session-progress/nested-table-allocations/self-check-2)"
+ ,"0x4001D96: lp_Hex_Hex_SignDetBench_Joint_runComparison (in /home/kim/.local/state/hex/issue-10377-session-progress/nested-table-allocations/self-check-2)"
+ ,"0x4001830: __gmp_default_allocate (in /home/kim/.local/state/hex/issue-10377-session-progress/nested-table-allocations/self-check-2)"
+ ,"0x4001DBB: lp_Hex_Hex_SignDetBench_Joint_runComparison (in /home/kim/.local/state/hex/issue-10377-session-progress/nested-table-allocations/self-check-2)"
+ ,"0x4001B30: __gmp_default_reallocate (in /home/kim/.local/state/hex/issue-10377-session-progress/nested-table-allocations/self-check-2)"
+ ,"0x4001DE0: lp_Hex_Hex_SignDetBench_Joint_runComparison (in /home/kim/.local/state/hex/issue-10377-session-progress/nested-table-allocations/self-check-2)"
+ ]
+}

@@ -1,0 +1,24 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+module
+
+public import HexGF2Theory.Basic
+public import HexGF2Theory.Field
+public import HexGF2Theory.Algebra
+
+public section
+
+/-!
+The `HexGF2Theory` library connects the packed `HexGF2` execution path to the
+generic proof-facing polynomial and finite-field constructions.
+
+It exposes the packed-polynomial equivalence `Hex.GF2Poly ≃+* Hex.FpPoly 2`
+together with the corresponding single-word/arbitrary-degree `GF(2^n)`
+correspondence modules, and carries Mathlib's `CommRing` and `Field`
+structure, together with Euclidean-domain and gcd-domain structure on packed
+polynomials.
+-/

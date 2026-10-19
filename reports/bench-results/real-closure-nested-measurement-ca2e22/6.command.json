@@ -1,0 +1,12 @@
+{
+  "argv": [
+    "lake",
+    "build",
+    "hexrealclosure_nested_normalization"
+  ],
+  "stdout": "6.stdout",
+  "stderr": "6.stderr",
+  "exit_code": 0,
+  "incomplete": false,
+  "elapsed_ns": 1460394882
+}

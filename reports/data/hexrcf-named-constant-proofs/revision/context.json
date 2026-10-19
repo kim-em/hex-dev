@@ -1,0 +1,41 @@
+{
+  "source_commit": "d2627df9111717a92029321280b2b92955e095d8",
+  "sources": {
+    "adapters/HexRCF/RealCoefficients.lean": "495ff7a8a52b4f62c343fbf54934217263222cbde1ea0b1ad091723a08f6c51d",
+    "adapters/HexRCF/RealCoefficients/RootQuote.lean": "d71cd9471db6952c05584d0f18ae1087ec241281a61a9aeff8d58f3404ffa760",
+    "adapters/HexRCF/RealCoefficients/ScalarQuote.lean": "95621c9134f30795d93866e7d628c0a031433732d0c94094bf1e2c5f2fa4f74d",
+    "conformance/HexRCF/ScalarQuoteCases.lean": "81de82e83a890da70f4212eabbf1cf573084f4b87bbc2d2dd972e6bdd6304510",
+    "conformance/HexRCF/ScalarQuoteConformance.lean": "033985eb3b3defd1d5fa79bc72ab770317f70b49862d218bec9b04c0f85daef9",
+    "conformance/HexRCF/ScalarQuotePublic.lean": "2418c0c2d932a5d7353005f49f1920fb95a2b4dd52ee4b96096c09d3b85217ae",
+    "conformance/HexRCF/NamedConstantProofs.lean": "54b6e99c42e5f43a254607fb438f77c10597a600cc39ed683c436d9a4bc74dd9",
+    "conformance/HexRCF/NamedConstants.lean": "3cc4f75fe7c1fc17863e5ca00cb4b5d154991ae1c155e1c2287efe35085d7c63",
+    "HexManual/Chapters/HexRCF/RootQuote.lean": "e4ca5e3a57a0166fb6bdffaedb23ecbf461f412f39b2f9ecf84e093d5631245c",
+    "lakefile.lean": "d92a2aa95274bcabcad2272fc8094f698058a63fa74083a86c72447bbaa60527"
+  },
+  "theorem_bodies": 42,
+  "goals": [
+    "Hex.RCF.NamedConstants.pi_square",
+    "Hex.RCF.NamedConstants.exp_square",
+    "Hex.RCF.NamedConstants.exp_witness",
+    "Hex.RCF.NamedConstants.pi_inverse"
+  ],
+  "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "maxHeartbeats": 12000000,
+  "maxRecDepth": 32768,
+  "resource_policy": "serial aggregate32GiB/noSwap/LeanThreads2",
+  "combined_evidence": "../../hexrcf-scalar-quotation/revision/context.json",
+  "artifacts": [
+    {
+      "path": "proof-inventories.log.gz",
+      "sha256": "84b54d3cc384a78eedbb4d3596a32660df885c367ec6e580cb001dd58cb819d0",
+      "uncompressed_sha256": "19cc14978fe6ea5942b6cf9707a04645b07007cf4582b25e2892354ba7ba25f0",
+      "bytes": 9563,
+      "uncompressed_bytes": 120971
+    }
+  ],
+  "scope": "All reachable theorem bodies in the original NamedConstants module, including auxiliary proofs; imported library bodies are not all re-added. Complete transitive axioms and each actual registration dependency are checked. No provider convergence/transcendence claim."
+}

@@ -144,7 +144,7 @@ theorem polyCRT_mod_snd [CommRing R] [DecidableEq R]
 
 Given coprime `a, b` with Bezout coefficients `s, t`, constructs `h`
 with `h ≡ u (mod a)` and `h ≡ v (mod b)`. Used by hex-hensel,
-hex-gfq-ring, and hex-berlekamp-mathlib (Berlekamp correctness proof).
+hex-gfq-ring, and hex-berlekamp-theory (Berlekamp correctness proof).
 
 ## Ordered-domain pseudo-division
 
@@ -207,7 +207,7 @@ positive-scaling identities; it does not make all arithmetic return evidence.
 Prove reconstruction, degree decrease, zero cases, divisibility and field
 agreement as ordinary correctness theorems. Also provide companion transfer
 lemmas for operation-preserving, zero-reflecting representation maps; unlike
-the existing canonical polynomial equivalence, these maps need not be injective. The Mathlib companion relates
+the existing canonical polynomial equivalence, these maps need not be injective. The theory companion relates
 these to `Polynomial` and fraction-field arithmetic. Query certificates live
 with the query owner, not on individual coefficient additions/multiplications.
 No `Hex.PolyOps`, fallible arithmetic callbacks, shared limits/budgets or
@@ -223,7 +223,7 @@ growth and verifying that plain gcd does not compute Bézout accumulators.
 ## Noninjective polynomial correspondence
 
 Generic operation-only transfer lemmas belong here; Mathlib `Polynomial`
-interpretation belongs in hex-poly-mathlib. For `eval : E → K`, assume zero
+interpretation belongs in hex-poly-theory. For `eval : E → K`, assume zero
 reflection and preservation of each scalar operation used by a kernel,
 including natural casts where derivatives/powers need them. Do not assume
 `eval` injective or ring/field laws on `E`. Prove coefficientwise interpretation
@@ -241,13 +241,13 @@ the extension owner.
 
 ## External comparators
 
-| Comparator | Class | Scope |
-|---|---|---|
-| FLINT `fmpz_poly` via python-flint | informational | all `setup_benchmark` registrations against integer polynomial inputs |
+| Comparator | Scope |
+|---|---|
+| FLINT `fmpz_poly` via python-flint | all `setup_benchmark` registrations against integer polynomial inputs |
 
 FLINT's `fmpz_poly` is the standard reference for univariate
-integer polynomial arithmetic. The comparator is `informational`
-rather than `gating`: FLINT tunes Karatsuba/Toom-Cook/FFT
+integer polynomial arithmetic. It is an orientation comparator with no
+target ratio: FLINT tunes Karatsuba/Toom-Cook/FFT
 crossovers in `fmpz_poly_mul` and uses Newton-style algorithms for
 division and GCD; this library deliberately supplies only the schoolbook
 semantic foundation. The coefficient-specific and composed algorithms are

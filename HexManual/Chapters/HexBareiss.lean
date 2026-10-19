@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import VersoManual
 
-import HexBareissMathlib
+import HexBareissTheory
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -25,7 +25,7 @@ tag := "hex-bareiss-intro"
 
 Released as [hex-bareiss](https://github.com/leanprover/hex-bareiss), with
 the Mathlib correspondence in
-[hex-bareiss-mathlib](https://github.com/leanprover/hex-bareiss-mathlib).
+[hex-bareiss-theory](https://github.com/leanprover/hex-bareiss-theory).
 
 `HexBareiss` is an executable fraction-free Bareiss determinant over a
 coefficient type with a caller-supplied exact quotient. Its retained integer
@@ -41,7 +41,7 @@ specification it is checked against).
 `HexBareiss` is Mathlib-free. The theorem identifying the Bareiss
 determinant with the Leibniz determinant (and hence with Mathlib's
 {name _root_.Matrix.det}`Matrix.det`), via the Desnanot-Jacobi invariant, is the
-{ref "hex-bareiss-mathlib"}[last section].
+{ref "hex-bareiss-theory"}[last section].
 
 # The elimination record
 %%%
@@ -108,7 +108,7 @@ packaged record is the pivot loop's final state packaged as determinant
 data, and that the public {name}`Hex.Matrix.bareiss` value agrees with
 the determinant encoded by {name}`Hex.Matrix.bareissData`. It does not prove that the Bareiss
 determinant equals the Leibniz {name}`Hex.Matrix.det`. That
-identification is in `HexBareissMathlib`. Within `HexBareiss` itself the
+identification is in `HexBareissTheory`. Within `HexBareiss` itself the
 agreement is checked at build time by value-level conformance fixtures: a
 fixed bank of matrices on which `Hex.Matrix.bareiss M = Hex.Matrix.det M`
 is verified.
@@ -157,33 +157,33 @@ end HexBareissChapterExample
 
 # The Mathlib correspondence
 %%%
-tag := "hex-bareiss-mathlib"
+tag := "hex-bareiss-theory"
 %%%
 
-Everything above is executable and Mathlib-free. `HexBareissMathlib`
+Everything above is executable and Mathlib-free. `HexBareissTheory`
 connects it to Mathlib. The final public umbrella exposes the correspondence
 over any commutative coefficient ring supplied with an exact quotient. The
 single law says that quotient cancels a known nonzero right factor; no public
 domain or nontriviality hypothesis is added.
 
-{docstring HexMatrixMathlib.bareissWith_eq_det}
+{docstring HexMatrixTheory.bareissWith_eq_det}
 
 The matching theorem against Mathlib's determinant is available directly,
 without unfolding the generic loop or relying on definitional equality.
 
-{docstring HexMatrixMathlib.bareissWith_eq_mathlib_det}
+{docstring HexMatrixTheory.bareissWith_eq_mathlib_det}
 
 For integer matrices, {name}`Hex.Matrix.bareiss` remains the specialization
 using the native exact-division primitive. Its original theorem names and
 premise-free statements remain the convenient compatibility surface.
 
-{docstring HexMatrixMathlib.bareiss_eq_det}
+{docstring HexMatrixTheory.bareiss_eq_det}
 
-Composed with the {ref "hex-determinant-mathlib"}[determinant
+Composed with the {ref "hex-determinant-theory"}[determinant
 correspondence], this also identifies the Bareiss determinant with
 Mathlib's {name _root_.Matrix.det}`Matrix.det`.
 
-{docstring HexMatrixMathlib.bareissDet_eq_det}
+{docstring HexMatrixTheory.bareissDet_eq_det}
 
 # Cross-references
 %%%
@@ -196,6 +196,6 @@ tag := "hex-bareiss-cross-references"
   {ref "hex-determinant"}[HexDeterminant] for the Leibniz
   {name}`Hex.Matrix.det` it uses
   as its specification.
-* `HexBareissMathlib` proves the Bareiss determinant equals the Leibniz
+* `HexBareissTheory` proves the Bareiss determinant equals the Leibniz
   determinant (and hence Mathlib's), via the Desnanot-Jacobi invariant.
   `HexBareiss` itself is Mathlib-free.

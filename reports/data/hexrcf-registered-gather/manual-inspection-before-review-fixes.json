@@ -1,0 +1,20 @@
+[
+  {
+    "label": "desktop",
+    "kind": "registered-contract",
+    "text": "\n                  For a single coefficient in one authenticated real prefix,\nGather.run_registered\nderives the selected target and the identity-factory equations. The prefix must\nhave a nonempty key path and be the only installed nonrational entry. The\nreturned decision retains the coefficient's value in the caller's own\nRealPrefix.Model. That model already carries\nthe actual provider interpretations and relative-transcendence/progress laws;\na bounded rcf_constant registration alone does not supply it. A native further-root\nconformance case retains the literal (0, 2] domain as two shared guard atoms;\none ordinary real square root satisfies the equation and both guards together.",
+    "viewport": 1440,
+    "scrollY": 242904,
+    "paragraphWidth": 752,
+    "scrollWidth": 752
+  },
+  {
+    "label": "narrow",
+    "kind": "registered-contract",
+    "text": "\n                  For a single coefficient in one authenticated real prefix,\nGather.run_registered\nderives the selected target and the identity-factory equations. The prefix must\nhave a nonempty key path and be the only installed nonrational entry. The\nreturned decision retains the coefficient's value in the caller's own\nRealPrefix.Model. That model already carries\nthe actual provider interpretations and relative-transcendence/progress laws;\na bounded rcf_constant registration alone does not supply it. A native further-root\nconformance case retains the literal (0, 2] domain as two shared guard atoms;\none ordinary real square root satisfies the equation and both guards together.",
+    "viewport": 390,
+    "scrollY": 386138,
+    "paragraphWidth": 343,
+    "scrollWidth": 343
+  }
+]

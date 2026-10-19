@@ -7,7 +7,7 @@ supplies `MvPoly` arithmetic and `Hex.exactDiv`.
 
 `polyDetWitness?` returns a witness only after the compiled canonical-list
 check succeeds. `polyDet` computes the determinant with the existing Bareiss
-implementation. The Mathlib companion proves plain-check soundness and
+implementation. The theory companion proves plain-check soundness and
 provides the separate symbolic `det` evaluator.
 
 Supported executable coefficient domains include integers, rationals, and

@@ -1,0 +1,9 @@
+Hex.RealAlgebraicScaling.runAdd2    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=6edf1b7, 2026-10-04T19:27:41Z, host=chungus2
+  repeat 0  1.540 ms  (×2^6, total 98.551 ms)
+  median: 1.540 ms    min: 1.540 ms    max: 1.540 ms
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 69_264 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-scaling/Add-2-Z3-0-Native.json

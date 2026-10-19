@@ -1,0 +1,23 @@
+{
+  "cpu": 5,
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "load_before": [
+    15.1943359375,
+    15.01806640625,
+    28.61279296875
+  ],
+  "started_unix": 1791204424.176646,
+  "script_sha256": "789e2f744111cd7a4046adfd0ba5f56033a72baf8fac85942ed459442321da6c",
+  "finished_unix": 1791206735.5959756,
+  "load_after": [
+    12.42919921875,
+    11.02880859375,
+    17.00341796875
+  ],
+  "failed_arms": 0,
+  "binaries_after": {
+    "baseline": "ac7a257a18ed50b1c190004223c042498c846aafef6427b57dc33d9a91ec6af7",
+    "candidate": "6479b2306cb778b7f34ec681020322212607e518577ecae9912f06e0a1ab0fed"
+  }
+}

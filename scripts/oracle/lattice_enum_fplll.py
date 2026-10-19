@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Informational, pinned fplll 5.5.0 SVP/CVP comparison against Hex exact minima.
+"""Orientation-only, pinned fplll 5.5.0 SVP/CVP comparison against Hex exact minima.
 
 Input JSONL comes from `hexlatticeenum_bench comparisons`. The C++ subprocess
 uses proved search modes and checks the exact LLL prerequisites before search.

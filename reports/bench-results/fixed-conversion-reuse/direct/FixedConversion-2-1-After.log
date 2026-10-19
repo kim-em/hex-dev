@@ -1,0 +1,9 @@
+Hex.NumberFieldBench.runQAdjoinCanonical    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=e697757-dirty, 2026-10-05T01:47:12Z, host=chungus2
+  repeat 0  475.771 µs  (×2^7, total 60.899 ms)
+  median: 475.771 µs    min: 475.771 µs    max: 475.771 µs
+  hash: all repeats agree
+  observed hash: 0x3dacd77644bc8bba
+  expected hash: matches
+  peak RSS: 68_572 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-fixed-conversion/direct/FixedConversion-2-1-After.json

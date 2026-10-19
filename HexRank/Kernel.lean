@@ -56,7 +56,7 @@ before returning it.  The two halves are independent: nothing relates
 `denom` to the modular data, and each bound is sound on its own.
 
 The soundness theorem `rank_eq_of_checkList` (`Matrix.rank` of the Mathlib
-matrix equals `rank`) is in `HexRankMathlib`.
+matrix equals `rank`) is in `HexRankTheory`.
 -/
 
 namespace Hex.Matrix

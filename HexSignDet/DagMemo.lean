@@ -18,13 +18,16 @@ variable {α : Type w} {E : Type u} {Ctx : Type v} [Zero E] [DecidableEq E]
 @[expose] def Prefix (before after : Array α) : Prop :=
   ∀ (i : Nat) t, before[i]? = some t → after[i]? = some t
 
+/-- Identity preserves every successful memo lookup. -/
 theorem Prefix.refl (memo : Array α) : Prefix memo memo :=
   fun _ _ h => h
 
+/-- Compose exact preservation of successful memo lookups. -/
 theorem Prefix.trans {x y z : Array α}
     (hxy : Prefix x y) (hyz : Prefix y z) : Prefix x z :=
   fun i t h => hyz i t (hxy i t h)
 
+/-- Appending one value preserves all earlier successful memo lookups. -/
 theorem Prefix.push (memo : Array α) (t) :
     Prefix memo (memo.push t) := by
   intro i v h
@@ -38,10 +41,13 @@ cached index resolves to that function's exact result. This invariant serves
 both checked replay and structural expansion. -/
 structure Encoder.Valid (f : Array α → Entry E Ctx → Option α) (state : Encoder E Ctx)
     (memo : Array α) : Prop where
+  /-- The actual ordered fold starts empty and returns this memo. -/
   fold : state.entries.foldlM (init := #[]) (fun memo entry => do
     let next ← f memo entry
     pure (memo.push next)) = some memo
+  /-- Every stored entry has one corresponding memo position. -/
   size : state.entries.size = memo.size
+  /-- Every cached index resolves to the exact result of this step function. -/
   indices : ∀ entry (i : Nat), state.indices[entry]? = some i →
     ∃ t, memo[i]? = some t ∧ f memo entry = some t
 

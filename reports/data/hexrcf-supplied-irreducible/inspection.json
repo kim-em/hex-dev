@@ -1,0 +1,38 @@
+[
+  {
+    "label": "desktop",
+    "kind": "supplied-contract",
+    "text": "\n                  For a new common polynomial, the frontend first checks for an existing\nCheckedIrreducible instance for its exact quoted DensePoly.ofCoeffs literal.\nIt binds that literal to the runtime polynomial and checks the supplied proof's\ntype, axiom dependencies and ordinary-kernel validity. A rejected proof is a\nterminal failure. The degree-eight regression\nuses one previously proved instance for the compositum of the selected quartic\nand √2; its kernel irreducibility check reuses that theorem. Common-field\nconstruction still runs the normal native algorithm during search.",
+    "viewport": 1440,
+    "scrollY": 210729,
+    "paragraphWidth": 752,
+    "scrollWidth": 752
+  },
+  {
+    "label": "desktop",
+    "kind": "limits",
+    "text": "\n                  Without such an instance, the frontend tries quadratic-norm and free\nwitness certificates, then the owner's multi-prime certificate producer and\nordinary-kernel quotation. These certificate languages do not cover every\nirreducible common defining polynomial. Increasing a search bound need not\nresolve a refusal, and their failure does not imply reducibility.\nThe cubic example below verifies\nx / α = (α² − 1) * x at the selected positive root of X³ − X − 1.\nThe same example also uses the ordinary QAdjoin.toAlgebraicNumber\nconversion followed by a reality proof, without the Coefficients.ofField\nwrapper. Both forms preserve the selected embedding.",
+    "viewport": 1440,
+    "scrollY": 210919,
+    "paragraphWidth": 752,
+    "scrollWidth": 752
+  },
+  {
+    "label": "narrow",
+    "kind": "supplied-contract",
+    "text": "\n                  For a new common polynomial, the frontend first checks for an existing\nCheckedIrreducible instance for its exact quoted DensePoly.ofCoeffs literal.\nIt binds that literal to the runtime polynomial and checks the supplied proof's\ntype, axiom dependencies and ordinary-kernel validity. A rejected proof is a\nterminal failure. The degree-eight regression\nuses one previously proved instance for the compositum of the selected quartic\nand √2; its kernel irreducibility check reuses that theorem. Common-field\nconstruction still runs the normal native algorithm during search.",
+    "viewport": 390,
+    "scrollY": 336437,
+    "paragraphWidth": 343,
+    "scrollWidth": 343
+  },
+  {
+    "label": "narrow",
+    "kind": "limits",
+    "text": "\n                  Without such an instance, the frontend tries quadratic-norm and free\nwitness certificates, then the owner's multi-prime certificate producer and\nordinary-kernel quotation. These certificate languages do not cover every\nirreducible common defining polynomial. Increasing a search bound need not\nresolve a refusal, and their failure does not imply reducibility.\nThe cubic example below verifies\nx / α = (α² − 1) * x at the selected positive root of X³ − X − 1.\nThe same example also uses the ordinary QAdjoin.toAlgebraicNumber\nconversion followed by a reality proof, without the Coefficients.ofField\nwrapper. Both forms preserve the selected embedding.",
+    "viewport": 390,
+    "scrollY": 336824,
+    "paragraphWidth": 343,
+    "scrollWidth": 343
+  }
+]

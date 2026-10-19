@@ -32,7 +32,7 @@ circumscribed radius a constant `√2`.  `graeffe` applies
 
 whose roots are the squares of the roots of `p`.  Repeated squaring therefore
 amplifies root-modulus separation while coefficient mantissas remain bounded.
-The companion `HexRootsMathlib.SoftPellet` proves every enclosure and the
+The companion `HexRootsTheory.SoftPellet` proves every enclosure and the
 root-count preservation theorem.
 -/
 
@@ -558,9 +558,13 @@ circumscribed disc. -/
         softRootFreeLoop bits rounds (graeffe bits cs)
           (rlo * rlo) (rhi * rhi)
 
-/-- Soft single-radius Graeffe `T₀` filter for subdivision. -/
+/-- Soft single-radius Graeffe `T₀` filter for subdivision. If the constant
+coefficient ball contains zero, skip the remaining coefficients and Graeffe
+iterations: this uncertainty already permits a root at the centre. -/
 @[expose] def softRootFreeAt (p : ZPoly) (s : DyadicSquare) (bits : Nat) : Bool :=
-  softRootFreeLoop bits (graeffeRounds (p.natDegree))
+  let c := softTaylorCoeff p s.center 1 bits 0
+  if CoeffBall.normOne c.center ≤ c.radius then false
+  else softRootFreeLoop bits (graeffeRounds (p.natDegree))
     (taylorBalls p s bits) softSqrt2Lo softSqrt2Hi
 
 /-- Adaptive soft `T₀` discard. -/

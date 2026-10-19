@@ -1,0 +1,10 @@
+{
+  "source_commit": "b22ca86d55070de543a32cf03949a51aab0427a6",
+  "all_four_opened": true,
+  "sha256": {
+    "source-selection-desktop-details.png": "da75109036fa150af2841809b62d82499a7925aba8b4d0364f8e8e731a120aff",
+    "source-selection-desktop-example.png": "aae19f7e2da74564cf9a2d9e38c7f0680273371a8cef0ba5c0534ab27a963fb0",
+    "source-selection-narrow-details.png": "3d4fadf33bb03b7426bf135584067ce07ff2e6d44d05bac123c6dc71077512d1",
+    "source-selection-narrow-example.png": "0b8aca0ac47e3ff57efadb04e4d68c8bd50e31e88a88baeaef214ab6b24d0b01"
+  }
+}

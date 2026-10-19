@@ -1,0 +1,42 @@
+[
+  {
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "7de1d9",
+      "wall_time_seconds": 8.346634873,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    }
+  },
+  {
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "bc361e",
+      "wall_time_seconds": 0.11880169,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    }
+  },
+  {
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "975af9",
+      "wall_time_seconds": 0.152299092,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    }
+  },
+  {
+    "status": "fulfilled",
+    "value": {
+      "chunk_id": "2d236b",
+      "wall_time_seconds": 7.466043697,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    }
+  }
+]

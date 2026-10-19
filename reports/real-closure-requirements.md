@@ -1,8 +1,9 @@
 # Real-closure integration requirements
 
 This preparation audit accompanies [#10575](https://github.com/kim-em/hex-dev/issues/10575).
-Its source base revision, input digest and recorded phases are in the
-[package inventory](real-closure-package-inventory.json). It covers the family
+The [package inventory](real-closure-package-inventory.json) retains the separate
+package-preparation source snapshot, input digest and snapshot-time phases. This requirements
+index follows the merged APIs described below. It covers the family
 requirements in [future-work](../SPEC/future-work.md#real-closures-of-ordered-fields),
 the [execution contract](../SPEC/real-closure-execution.md), the eight owning
 SPECs below and the [real-coefficient RCF contract](../HexRCF/SPEC/hex-rcf.md#planned-real-coefficient-extension).
@@ -18,63 +19,64 @@ and caller hypotheses remain explicit throughout this audit.
 ## Shared computation and Sturm pair
 
 Owning SPECs: [Sturm](../HexSturm/SPEC/hex-sturm.md),
-[SturmMathlib](../HexSturmMathlib/SPEC/hex-sturm-mathlib.md).
+[SturmTheory](../HexSturmTheory/SPEC/hex-sturm-theory.md).
 
 | Requirement | Actual operation and proof | Tests / independent evidence | Acceptance status |
 | --- | --- | --- | --- |
-| Shared operation-only polynomial kernels and semantic equality | `DensePoly` and `HexPolyMathlib.Interpret`; zero reflection and arithmetic preservation, without injectivity or a field instance on representatives | `HexPoly.InterpretTests`; noncanonical instantiations in sign conformance | Delivered interface; preserve the computation/companion boundary during migration |
-| Valid open domains, finite/infinite endpoints, constant heads and refusal | `Sturm.prepare`, `query`, `rootCount`; `HexSturmMathlib.Domain`, `query_isSome`, `prepare_isSome` | `conformance/HexSturm`, including endpoint and replay tests | Domain correspondence delivered; [#10577](https://github.com/kim-em/hex-dev/issues/10577) owns readiness |
-| Arbitrary certificate soundness and prepared query reuse | `Sturm.check`, `queryPrepared`, `countPrepared`; `Tarski.check_rootSum`, `HexSturmMathlib.check_sound`, `queryPrepared_sound`, `countPrepared_sound` | `conformance/HexSturmMathlib`; new `RealClosureConsumer.Query` checks domain plus value and prepared cardinality | Delivered in development adapter target, not companion umbrella; caller interpretation/sign laws required |
-| Producer acceptance and natural root counts | `certify_checks`, `certifyPrepared_checks`, `rootCount_isSome`, `rootCount_query`, `rootCount_map`, `query_nonneg` | `HexSturmMathlib` conformance and axiom inventories | Delivered; combined `query_spec` and positive-clear `rootCount_sturm` additions in [#10580](https://github.com/kim-em/hex-dev/issues/10580) remain pending |
-| Integer/dyadic agreement after positive denominator clearing | Existing integer `ZPoly.tarskiQuery` and shared Tarski kernel; frontend agreement and domain coverage | `HexRealRoots.TarskiTests`, `HexRealRootsMathlib.TarskiTests`; [#10580](https://github.com/kim-em/hex-dev/issues/10580) adds agreement coverage | Do not attest the pending [#10580](https://github.com/kim-em/hex-dev/issues/10580) theorem as merged |
-| Scaling, comparators, prepared-query memory and attribution | Compiled Sturm/query producers, distinct construction/replay tracks | [Sturm report](hex-sturm-performance.md); [#10577](https://github.com/kim-em/hex-dev/issues/10577) retains further unpublished audit/evidence | Owner attestation incomplete; historical samples and successful fixtures are not a Phase-4 pass |
+| Shared operation-only polynomial kernels and semantic equality | `DensePoly` and `HexPolyTheory.Interpret`; zero reflection and arithmetic preservation, without injectivity or a field instance on representatives | `HexPoly.InterpretTests`; noncanonical instantiations in sign conformance | Delivered interface; preserve the computation/companion boundary during migration |
+| Valid open domains, finite/infinite endpoints, constant heads and refusal | `Sturm.prepare`, `query`, `rootCount`; `HexSturmTheory.Domain`, `query_isSome`, `prepare_isSome` | `conformance/HexSturm`, including endpoint and replay tests | Domain correspondence delivered; [individual declaration review](sturm-declaration-review/README.md) covers the owned production modules. [#10860](https://github.com/kim-em/hex-dev/pull/10860) supplies owner Phase-4 readiness; [proof acceptance](sturm-proof-acceptance.md) records Phases 5–7 |
+| Arbitrary certificate soundness and prepared query reuse | `Sturm.check`, `queryPrepared`, `countPrepared`; `Tarski.check_rootSum`, `HexSturmTheory.check_sound`, `queryPrepared_sound`, `countPrepared_sound` | `HexSturmTheoryTests` and `HexQuerySemantics` semantic replay tests; `RealClosureConsumer.Query` checks domain plus value and prepared cardinality | Delivered in the ordinary companion target and public umbrella; caller interpretation/sign laws required |
+| Producer acceptance and natural root counts | `certify_checks`, `certifyPrepared_checks`, `rootCount_isSome`, `rootCount_query`, `rootCount_map`, `query_nonneg` | `HexSturmTheory/Tests*`, `adapters/HexSturmTheory/Tests/Replay/Semantics*` and their axiom inventories | Delivered, including combined `query_spec` and positive-clear `rootCount_sturm` from merged #10580; the exact `query_iff` headline from merged [#10660](https://github.com/kim-em/hex-dev/pull/10660) is exposed by the companion umbrella |
+| Integer/dyadic agreement after positive denominator clearing | Existing integer `ZPoly.tarskiQuery` and shared Tarski kernel; frontend agreement and domain coverage | `HexRealRoots.TarskiTests`, `HexRealRootsTheory.TarskiTests`; #10580 adds natural-count agreement and semantic guards | Merged #10580 supplies the finite-dyadic agreement; the generic rational frontend retains its infinite endpoints |
+| Scaling, comparators, prepared-query memory and attribution | Compiled Sturm/query producers, distinct construction/replay tracks | [Sturm report](hex-sturm-performance.md); [readiness matrix](real-closure-prerequisites.md) and retained source-scoped evidence | Owner Phase-4 attestation merged in [#10860](https://github.com/kim-em/hex-dev/pull/10860); performance limits and historical/inconclusive observations remain explicit |
 
 The shared Tarski proof belongs to
-[HexRealRootsMathlib.TarskiSoundness](../adapters/HexRealRootsMathlib/TarskiSoundness.lean).
+[HexRealRootsTheory.TarskiSoundness](../HexRealRootsTheory/TarskiSoundness.lean).
 The frontend domain/producer laws are in
-[Domain](../HexSturmMathlib/Domain.lean), and root-sum/count semantics in
-[Soundness](../adapters/HexSturmMathlib/Soundness.lean).
+[Domain](../HexSturmTheory/Domain.lean), and root-sum/count semantics in
+[Soundness](../HexSturmTheory/Soundness.lean).
 
 ## Sign-determination pair
 
 Owning SPECs: [SignDet](../HexSignDet/SPEC/hex-sign-det.md),
-[SignDetMathlib](../HexSignDetMathlib/SPEC/hex-sign-det-mathlib.md).
+[SignDetTheory](../HexSignDetTheory/SPEC/hex-sign-det-theory.md).
 
 | Requirement | Actual operation and proof | Tests / independent evidence | Acceptance status |
 | --- | --- | --- | --- |
-| Recursive BKR moments, support, retained rank and exact counts | `Reduction.build`, `QueryReduction.build`, tree/system builders; `Reduction.build_checks`, `QueryReduction.check_signs`, `System.retained_rank`, `solveScaled_eq`, `buildTree_complete` | `conformance/HexSignDetMathlib`, noncanonical reduction tests; `sign_det_flint.py`, `sign_det_z3.py` | Finite algebra and correspondence delivered; rank producer prerequisite attested by [#10352](https://github.com/kim-em/hex-dev/issues/10352) |
-| Root/table producer success from a lawful domain | `Descriptor.build`, `validate`, `buildRoots`; `Descriptor.build_success_formal`, `validate_success_formal`, `buildRoots_success`, `buildRoots_isSome` | `RootSemantics`, `SelectedProducerConformance`, `TableConformance`, `ThomRootsConformance`; new `RealClosureConsumer.Sign` | Delivered development semantics, not only conditional checker soundness |
-| Thom uniqueness, complete coverage and strict order without rational separators | Descriptor full derivative word, `fullOrder`, complete root list; `RawDescriptor.full_unique`, `full_lt`, `Descriptor.buildRoots_roots` | `ThomConformance`, `ThomRootsConformance` (0 and ε in one interval), Z3 infinitesimal oracle | Delivered under an explicit ordered real-closed model, including non-Archimedean fields |
-| Selected sign, changed defining polynomial and comparison | `buildSigns`, `signAt`, reencoding and comparison producers; `buildSigns_success`, `signAt_correct`, checked conversion/root preservation | `ReencodingConformance`, `RefinementConformance`, `ComparisonConformance`, `ConvertConformance` | Delivered contracts retain embedding/input premises; do not infer joint real realization |
-| Shared serialized coefficient evidence, exact contexts and checked cross-level conversion | Integer-only JSON codec, selected-sign records, context-bound proof facts and `HexRealClosure.SignFacts` finite proof assembly | `GraphSignsConformance`, `PackingConformance`, `NestedSignsConformance`, byte roundtrip/rejection fixtures; [JSON byte report](sign-det-json-bytes.md); `sign_det_json_bytes.py` | [#10612](https://github.com/kim-em/hex-dev/issues/10612) is merged with its explicit opaque missing-fact boundary. [#10377](https://github.com/kim-em/hex-dev/issues/10377) still owns full cross-level graph/codec and compiled arithmetic replay; [#10615](https://github.com/kim-em/hex-dev/issues/10615)/[#10617](https://github.com/kim-em/hex-dev/issues/10617) remain pending partial PRs |
-| BKR/Thom production and replay scaling, height, witness growth and allocation | Actual compiled builders/checkers and matrix operations | [joint](sign-det-joint-performance.md), [height](sign-det-height-model.md), [nested](sign-det-nested-fields.md), [matrix allocations](sign-det-matrix-allocations.md), [height allocations](sign-det-height-allocations.md) | Retained evidence exists; remaining performance requirements and Phase-4 attestation belong to [#10377](https://github.com/kim-em/hex-dev/issues/10377) |
+| Recursive BKR moments, support, retained rank and exact counts | `Reduction.build`, `QueryReduction.build`, tree/system builders; `Reduction.build_checks`, `QueryReduction.check_signs`, `System.retained_rank`, `solveScaled_eq`, `buildTree_complete` | `conformance/HexSignDetTheory`, noncanonical reduction tests; `sign_det_flint.py`, `sign_det_z3.py` | Finite algebra and correspondence delivered; [companion declaration review](sign-det-declaration-review/README.md) covers its 37 production modules without phase promotion; rank producer prerequisite attested by [#10352](https://github.com/kim-em/hex-dev/issues/10352) |
+| Root/table producer success from a lawful domain | `Descriptor.build`, `validate`, `buildRoots`; `Descriptor.build_success_formal`, `validate_success_formal`, `buildRoots_success`, `buildRoots_isSome` | `conformance/HexSignDetTheory/Diagnostics/RootSemantics.lean`, `conformance/HexSignDet/FieldChecks.lean`, `RealClosureConsumer.Sign` | Delivered development semantics, not only conditional checker soundness |
+| Thom uniqueness, complete coverage and strict order without rational separators | Descriptor full derivative word, `fullOrder`, complete root list; `RawDescriptor.full_unique`, `full_lt`, `Descriptor.buildRoots_roots` | `conformance/HexSignDet/Infinitesimal.lean` (0 and ε in one interval), `FieldChecks.lean`, Z3 infinitesimal oracle | Delivered under an explicit ordered real-closed model, including non-Archimedean fields |
+| Selected sign, changed defining polynomial and comparison | `buildSigns`, `signAt`, reencoding and comparison producers; `buildSigns_success`, `signAt_correct`, checked conversion/root preservation | `conformance/HexSignDet/FieldChecks.lean`, `conformance/HexSignDetTheory/Diagnostics/RootSemantics.lean` | Delivered contracts retain embedding/input premises; do not infer joint real realization |
+| Shared serialized coefficient evidence, exact contexts and checked cross-level conversion | Integer-only JSON codec, selected-sign records, context-bound proof facts, `HexRealClosure.SignFacts` finite proof assembly and `Dependencies.Graph.decode`/`codec_bytes`/`Decoded.results_bound` | `conformance/HexRealClosureTheory/{DependenciesConformance,PackingConformance,NestedSignsConformance}.lean`, `conformance/HexSignDet/JsonBytes.lean`, byte roundtrip/rejection fixtures; [JSON byte report](sign-det-json-bytes.md); `sign_det_json_bytes.py` | [#10612](https://github.com/kim-em/hex-dev/issues/10612) is merged with its explicit opaque missing-fact boundary. The cross-level envelope supplies typed routing, literal bindings and byte roundtrip laws. Merged [#10758](https://github.com/kim-em/hex-dev/pull/10758) supplies generic coefficient/context reconstruction and paired byte readers with preserved acceptance/refusal. [#10861](https://github.com/kim-em/hex-dev/pull/10861) completes owner implementation, independent conformance and Phase-4 attestation for sign determination. Automatic reached-data assembly for the tower/tactic pipeline remains with their owners |
+| BKR/Thom production and replay scaling, height, witness growth and allocation | Actual compiled builders/checkers and matrix operations | [joint](sign-det-joint-performance.md), [height](sign-det-height-model.md), [nested](sign-det-nested-fields.md), [matrix allocations](sign-det-matrix-allocations.md), [height allocations](sign-det-height-allocations.md) | Owner Phase-4 attestation is merged in [#10861](https://github.com/kim-em/hex-dev/pull/10861); retained findings, rejected/inconclusive observations and the retained upstream numeral-construction finding and its repair remain explicit |
 
-Mathematical BKR algebra is already exposed by `HexSignDetMathlib`. Selected
-semantics and producer laws remain in [its adapters](../adapters/HexSignDetMathlib).
-Do not promote those additional imports merely because the ordinary umbrella
-builds. Exact package ownership is in the publication proposal.
+Mathematical BKR algebra, selected-root semantics and producer laws are
+exposed by the normal [companion](../HexSignDetTheory) and its
+`HexSignDetTheory` umbrella. Development availability does not attest owner
+performance or publication eligibility. Exact package ownership and remaining
+requirements are in the publication proposal.
 
 ## Ordered-function pair
 
 Owning SPECs: [OrderedFn](../HexOrderedFn/SPEC/hex-ordered-fn.md),
-[OrderedFnMathlib](../HexOrderedFnMathlib/SPEC/hex-ordered-fn-mathlib.md).
+[OrderedFnTheory](../HexOrderedFnTheory/SPEC/hex-ordered-fn-theory.md).
 
 | Requirement | Actual operation and proof | Tests / independent evidence | Acceptance status |
 | --- | --- | --- | --- |
-| Exact approximations and successful finite signs | `Real.enclose`, `finiteAttempt`, `sign?`, `approxAttempt`; `enclose_sound`, `finiteAttempt_sound`, `sign?_sound`, width/containment theorems | `HexOrderedFnMathlib.Tests`, `LiouvilleTests`, `conformance/HexOrderedFn`; `ordered_fn_real.py` | Delivered; finite success needs certified containment and denominator nonvanishing |
+| Exact approximations and successful finite signs | `Real.enclose`, `finiteAttempt`, `sign?`, `approxAttempt`; `enclose_sound`, `finiteAttempt_sound`, `sign?_sound`, width/containment theorems | `HexOrderedFnTheory.Tests`, `LiouvilleTests`, `conformance/HexOrderedFn`; `ordered_fn_real.py` | Delivered; finite success needs certified containment and denominator nonvanishing |
 | Total signs and approximation search for caller-supplied constants | `Real.sign`, `approx`, registered `Extension`; `attempt_progress`, `sign_acc`, `approx_acc`, `Extension.sign_eq`, `compare_eq` | Compiled Liouville integration; original divisor and wrong-subject tests | Delivered conditional on relative transcendence over the entire predecessor field plus source containment/width laws; no bundled π/e provider |
 | Infinitesimal positivity, comparisons, successive levels and ordered coefficient transport | `Infinitesimal.sign`, `compare`, `RationalFn.map`; Hahn `embed`, `X_pos`, `X_lt_C`, `X_lt_pow`, `mapHom_sign`, `mapHom_strictMono` | `InfinitesimalTests`, corrected Example-3 factor identity; `ordered_fn_z3.py`; new ordinary umbrella consumer | Delivered; the new consumer consumes order laws, not a nonstandard-analysis tactic |
-| Computational Phase 4 and companion proof policy | Scan, arithmetic, Horner, real refinement, two-/three-level approximation families | [OrderedFn report](hex-ordered-fn-performance.md), retained raw data, Z3/FLINT ratios and representative profiles | [#10376](https://github.com/kim-em/hex-dev/issues/10376) complete; report has no concerns and both counters are 4. Tower clean/eager evidence is a distinct [#10378](https://github.com/kim-em/hex-dev/issues/10378) obligation |
+| Computational Phase 4 and Phases 5–7 acceptance | Scan, arithmetic, Horner, real refinement, two-/three-level approximation families; proved native quotient and sign/scan replacements | [OrderedFn report](hex-ordered-fn-performance.md), retained raw data, Z3/FLINT ratios and representative profiles; [complete computational comparison](bench-results/ordered-fn-final-comparison/README.md) and [final acceptance](ordered-fn-proof-acceptance.md) | Owner Phase 4 is discharged by [#10376](https://github.com/kim-em/hex-dev/issues/10376). The companion's independent acceptance is merged in [#10928](https://github.com/kim-em/hex-dev/pull/10928), and core acceptance in [#10965](https://github.com/kim-em/hex-dev/pull/10965); both libraries record Phase 7. The changed-source comparison completes 816 arms and all 136 parameters with matching answers and no regressions under the unchanged 10% median rule. The earlier four flagged follow-up parameters and original separate finding remain retained at their source checkpoints. Individual declaration/retention/import judgments, native execution, kernel/conformance checks and rendered documentation are accepted together; timing success alone is insufficient. Tower clean/eager evidence remains a distinct [#10378](https://github.com/kim-em/hex-dev/issues/10378) obligation |
 
 The actual public umbrella is
-[HexOrderedFnMathlib](../HexOrderedFnMathlib.lean). Caller approximation
+[HexOrderedFnTheory](../HexOrderedFnTheory.lean). Caller approximation
 laws justify interpreted computation; successful finite examples without
 transcendence do not prove total sign search for arbitrary providers.
 
 ## Real-closure pair and integrated path
 
 Owning SPECs: [RealClosure](../SPEC/Libraries/hex-real-closure.md),
-[RealClosureMathlib](../SPEC/Libraries/hex-real-closure-mathlib.md).
+[RealClosureTheory](../SPEC/Libraries/hex-real-closure-theory.md).
 
 | Requirement | Actual operation and proof | Tests / independent evidence | Acceptance status |
 | --- | --- | --- | --- |
@@ -82,14 +84,15 @@ Owning SPECs: [RealClosure](../SPEC/Libraries/hex-real-closure.md),
 | Clean monic retention, non-monic/raw policy and value preservation | `Context.reduce`, `queryPoly`, element packing; `evalPoly_reduce`, clean companion laws, `reduce_nonmonic`, `reduce_unclean` | Algebraic tests and non-monic isolation fixtures | Delivered policies; do not treat scaled pseudo-remainders as value-preserving remainders |
 | Yun decomposition, zero/all, constants, termination, multiplicities and order | `Roots.roots`, `Context.roots`, `roots?`; `Roots.roots_success`, `Context.roots_all`, `roots?_success`, `roots_spec`, `roots_sorted` | `RootFactorsTests`, `TowerRootsTests`; `real_closure_deflation.py`, `real_closure_isolation.py`; new `RealClosureConsumer.Tower` | Delivered under a common model; consumer composes success and exact multiplicities without assuming successful output |
 | Root extensions, coefficient embeddings and stored native values | `Context.adjoin`, `Root.embed`, root materialization; `Model.adjoin_embed`, `Root.embed_value`, `convertedValue_value`, `signAt_value` | `TowerModelTests`, `TowerRootsTests`, isolation oracle | Delivered selected embeddings, separate from joint ordinary-real realization |
-| Persistent refinement, all requested live dependency closure and general enlargement | Context/refinement/conversion APIs; `TowerTransport`, rebuilt suffix model and selected-root preservation | `TowerTransportTests`, `TowerRefinementTests`, changed-context rejection | Partial delivered transport; [#10378](https://github.com/kim-em/hex-dev/issues/10378) still owns general dependency-closed live transport across differing staged bases |
+| Persistent refinement, all requested live dependency closure and general enlargement | Context/refinement/conversion APIs; `TowerTransport`, rebuilt suffix model and selected-root preservation | `TowerTransportTests`, `TowerRefinementTests`, changed-context rejection | Merged [#10651](https://github.com/kim-em/hex-dev/pull/10651)/[#10654](https://github.com/kim-em/hex-dev/pull/10654)/[#10655](https://github.com/kim-em/hex-dev/pull/10655) supply shared owner maps, real-prefix inclusions and ambient/base models. `Shared.enlarge?_models` preserves all original values assuming coherent `Inclusions.Models`; merged [#10662](https://github.com/kim-em/hex-dev/pull/10662) derives source/base owner models from a compatible target provider history through `BaseInclusion.Model.derive`, preserving the supplied target model. Merged [#10665](https://github.com/kim-em/hex-dev/pull/10665) supplies coherent gathering/cached rebuilds. Merged [#10762](https://github.com/kim-em/hex-dev/pull/10762) supplies `Tower.Shared.realize_values` through retained checked inclusions, actual gather success and a supplied base realization, constructing its symbolic reference internally; native provider reordering and `BaseReconciliation.Model.deriveCanonical` derive source realizations/models from the target alone; canonical owner lookup, cache consumers and joint target selection are integrated through the reconciled factories and validated-prefix catalog; canonical shared/live enlargement preserves these owners and caches through successive predecessor maps, with ordinary finite-inventory realization; missing joint provider histories are constructed under the explicit predecessor progress and semantic premises in the following row |
+| Missing joint provider histories and gathering | `RealPrefix.extend?`, `Catalog.construct?`, `Live.Request.gatherConstructed?`; the real-only prefix is constructed before its infinitesimal/algebraic suffix | `RealPrefix.extend?_isSome` characterizes producer success by path-local `Ready`; `RealPrefix.Model.extend?_model` and `extend?_embedding` prove existence and predecessor preservation under caller-proved `Valid`; `Catalog.Construction.models` preserves an input catalog model invariant; `gatherConstructed?_success` proves live gathering. Core `BaseHistoryTests` cover two stages, duplicate reuse and a missing second packet; semantic `install_providers` and `KernelReplay.ProviderHistoryAudit` cover the provider premises | Merged [#10962](https://github.com/kim-em/hex-dev/pull/10962). Gathering success requires a model of the seed prefix, actual-path progress/validity and distinct owner keys, without a completed target model. These are caller premises, not generated analytic evidence. Arbitrary serialized frontend/provider certification, interleaved ordinary-real realization and the owner Phase-4 attestation remain separate requirements. The constructed-catalog laws are development APIs in `HexQuerySemantics`, not published companion imports |
 | New infinitesimal below all transported positive old values | `Context.enlargeWithParameter?`; `enlargeWithParameter?_model`, `_ordered`, `_algebraic` | `TowerEnlargeOrderTests`: successive square roots, old inverse/gaps and preceding infinitesimal | Delivered for the actual returned conversion; not total all-live enlargement |
-| Compatible algebraic union and real-closedness | `Union`, `TowerUnion`, relative ambient model; union real-closedness and common extension | `UnionTests`, `TowerModelTests` | Mathematical relative union delivered; native presentation identification in [#10616](https://github.com/kim-em/hex-dev/issues/10616) is pending |
-| Sections/sectors, original-model signs and joint ordinary-real realization | Complete root families and sample/sector contracts | Native sample API and exact sample families in pending [#10607](https://github.com/kim-em/hex-dev/issues/10607) | [#10378](https://github.com/kim-em/hex-dev/issues/10378) owns sample completion and joint nested realization. Per-query sign replays do not imply one joint real realization |
-| Independent trivial-base fast path agreement | `Trivial.Rational.roots`; `Trivial.Rational.roots_eq`, `compare_eq` | `TrivialTests`, real-algebraic root/multiplicity/order conformance | Rational root enumeration agreement merged; full algebraic-coefficient/native-arithmetic agreement remains with [#10378](https://github.com/kim-em/hex-dev/issues/10378) |
-| Reconstructible printing, registered constants and exploration/number-field integration | Base/context/element codecs, `FrameFormat`; `read_write`, `read_stale`, exact registry/signature bindings | `CodecTests`, `BaseCatalogTests`, `FrameFormatTests`; nested read/replay fixtures | Codec slices delivered; full exploration and number-field audit remains with [#10378](https://github.com/kim-em/hex-dev/issues/10378). Registry names must resolve to the same caller-supplied source |
+| Compatible algebraic union and real-closedness | `Union`, `TowerUnion`, relative ambient model; union real-closedness and common extension | `UnionTests`, `TowerModelTests` | Native finite `Presentation` quotient bijection, algebra equivalence and real-closedness merged in [#10616](https://github.com/kim-em/hex-dev/pull/10616); gathered-union identification in [#10667](https://github.com/kim-em/hex-dev/pull/10667) is merged |
+| Sections/sectors, original-model signs and joint ordinary-real realization | Complete root families and sample/sector contracts | Native sample API and exact sample families from merged [#10607](https://github.com/kim-em/hex-dev/pull/10607); `Specialize.realizeReplay` for one rational-function infinitesimal step | Local section/sector coverage, actual interpretation and sector sign constancy delivered. One-step realization assumes an ordered real embedding of the base; merged [#10888](https://github.com/kim-em/hex-dev/pull/10888) adds finite native reconstruction from retained owners and a validated infinitesimal base, with dependency discovery before witnesses and checked requested propositions/guards. Its `KernelReplay.NativeAssemblyUse.coordinate` consumer derives the original root equation and coefficient-zero addition equation at one returned interpretation/coordinate. General interleaved normalization, simultaneous realization and a successful multilevel native fixture remain with #10378 |
+| Independent trivial-base fast path agreement | `Trivial.Rational.roots`; `Trivial.Rational.roots_eq`, `compare_eq` | `TrivialTests`, real-algebraic root/multiplicity/order conformance | Full native rational tower conversion, root/multiplicity/order, arithmetic and inverse agreement merged in [#10624](https://github.com/kim-em/hex-dev/pull/10624) with independent FLINT cases; merged [#10755](https://github.com/kim-em/hex-dev/pull/10755) retains original selected number-field coordinates through roots and samples. Broader registered-base coverage and the final evidence audit remain with #10378 |
+| Reconstructible printing, registered constants and exploration/number-field integration | Base/context/element codecs, `FrameFormat`; `read_write`, `read_stale`, exact registry/signature bindings | `CodecTests`, `BaseCatalogTests`, `FrameFormatTests`; nested read/replay fixtures | Codec slices and original number-field integration (#10755) are delivered. The test-only [#10914](https://github.com/kim-em/hex-dev/pull/10914) fixture uses the existing Liouville test provider to reconstruct six packed/indexed expressions after algebraic enlargement over a second infinitesimal. Its [checks](../HexRealClosureTheory/ReprProviderTests.lean) observe element/coefficient signs and eight missing/changed-version refusals for the four packed kinds; indexed root/root-set cases check text roundtrip. This evidence is separate from joint ordinary-real realization. Merged [#10964](https://github.com/kim-em/hex-dev/pull/10964) supplies the public `Tower.contextCodec_encode_self`, `contextCodec_self` and `contextCodec_self_iff` parent-reference laws; the ordinary-import `HexRCF.PublicGraphCodec` checks parsed forms and a decoder bind with kernel axiom guards. Reading that reference validates neither its supplied signature nor its selected roots. Complete serialization/exploration acceptance and the final evidence audit remain with [#10378](https://github.com/kim-em/hex-dev/issues/10378). Registry names must resolve to the same caller-supplied source |
 | Nested evidence and adversarial cases | Actual α²=2+ε₁, β²=α+ε₂ selected-sign fixture; selected inversion, shared prepared domain and literal context checks | `conformance/HexRealClosure/NestedReplay.lean`; changed consumers, cycles, stale contexts and zero/wrong denominators; isolation oracle | Functional evidence merged in [#10610](https://github.com/kim-em/hex-dev/issues/10610); no joint-realization or computational scaling attestation |
-| Corrected paper Example 3, tower8, MetiTarski, Rioboo/Strzeboński, clean/eager and representative attribution | Ordinary native tower/root algorithms | [arithmetic experiments](hex-real-closure/general-arithmetic.md), [isolation anchors](hex-real-closure/isolation-anchors.md), [storage experiment](real-closure-storage-experiments.md), owner conformance | Anchors/prototypes are retained, not complete required controlled evidence. [#10378](https://github.com/kim-em/hex-dev/issues/10378) must supply full source-matched schedules and attest Phase 4 |
+| Corrected paper Example 3, tower8, MetiTarski, Rioboo/Strzeboński, clean/eager and representative attribution | Ordinary native tower/root algorithms | [arithmetic experiments](hex-real-closure/general-arithmetic.md), [isolation anchors](hex-real-closure/isolation-anchors.md), [storage experiment](real-closure-storage-experiments.md), owner conformance | The [Phase-4 report](real-closure-phase4.md) indexes retained clean/eager and MetiTarski evidence, including inconclusive results and remaining obligations. The [original source archive](bench-results/real-closure-cade24-inputs/README.md), recovered in merged [#10899](https://github.com/kim-em/hex-dev/pull/10899), supplies `basic.py`/`nlsat.py` provenance and resolves the tower8 coefficient/premise discrepancy: executed stage degrees are 4, 2, 4, 5, 5, the first constant is `4 − 2ε²`, and the third executed polynomial has degree four despite its label. Native and exact Z3 conformance cover the original [Rioboo](real-closure-rioboo.md) and real [Strzeboński](real-closure-strz.md) inputs. Tower8 execution and matched clean/eager outcomes require caller constant inputs; the unsupported-case versus required tower8 evidence decision remains open with #10378 below. Required counters, certificate-sharing/depth costs, remaining trivial-path families and the final audit are still required. Owner Phase-4 attestation remains open; functional and provenance checks do not replace it |
 
 The consumer supplies a `Tower.Model` explicitly. Model existence and transport
 are separate theorems; a model over a non-Archimedean real closed field does
@@ -99,15 +102,102 @@ examples. Complete end-to-end constant → infinitesimal → algebraic extension
 → enlargement → reconstructible printing → ordinary-real tactic acceptance
 remains open across these rows.
 
+The finite ordinary-real consumer boundary is concrete:
+[`Transport.Finite.DescriptorData`](../adapters/HexRealClosureTheory/TransportDescriptor.lean)
+and [`Transport.Finite.ReplayData`](../adapters/HexRealClosureTheory/TransportReplay.lean)
+carry reached derivative, arithmetic, moment and reduction relations.
+`Transport.Finite.selected` needs both descriptor data and the selected-sign
+replay data for the descriptor queries extended by the new queries.
+
+The supplied inverse interface has its own
+[declaration review](real-closure-inverse-api.md).
+`Packing.Inverse.Equation.readMemo?` checks the retained operand/output equation
+without computing the native candidate. Its `eval_inv` law consumes reached
+product/subtraction data; `atPoint` also consumes original packing replay and
+descriptor data to retain the original equation, inverse law and both signs at
+the shared finite point. Native inverse records and their finite data convert
+to this interface without changing their literal replay. Existing
+`InversePackingTests` covers supplied-reader acceptance and refusal separately
+from the stronger native record. Automatic recursive premise assembly remains
+distinct from these proved conditional laws and finite executable controls.
+
+The relative route automatically covers original-owner descriptor inventories.
+`Live.Collection.realize` and `Enlargement.realize`/`realize_model` provide their
+agreement, and
+[`Transport.Inventory.descriptor_data`](../adapters/HexRealClosureTheory/TransportInventory.lean)
+produces closed `Transport.DescriptorData`. Refreshed target-side descriptors
+additionally require `Collection.inventory` as `extra`, or as `fresh` after an
+enlargement. The owner's
+[`collection_replay`, `enlargement_replay` and `target_replay`](../adapters/HexRealClosureTheory/SharedRealizationTests.lean)
+exercise these closed-data cases; `target_replay` explicitly passes that extra
+inventory, and `enlargement_replay` covers original-owner descriptors.
+
+Selected-sign replay machinery is also delivered: `Inventory.replay_data` and
+`Finite.ReplayData.of_closed` supply the corresponding data when given agreement
+for `Inventory.replay raw.head raw.lower raw.upper (raw.queries ++ qs) signs.evidence`.
+That inventory must be requested through `extra`/`fresh`, or assembled by the
+exporter; a frame does not store selected-sign records.
+[`TransportFiniteTests.identity_point`](../adapters/HexRealClosureTheory/TransportFiniteTests.lean)
+uses the identity reader on ℝ, derives both closed-data forms, and applies the
+finite conversions. Do not duplicate these delivered transport constructions.
+
+The required direct `Sample.realizeReplay` theorem remains missing. Its inputs
+are accepted finite replay evidence through interleaved algebraic/infinitesimal
+stages and authenticated real base-coefficient evidence, without `Realizes model Γ`
+or a relative ambient model. Reached finite arithmetic data and reached zero
+packings must be built from that evidence, including selected-sign replay
+inventories. General interleaved export assembly must then compose the returned
+factory models and retained inclusions with this independent direct theorem.
+Delivered `Specialize.realizeReplay` and `Specialize.selected_near` are one-step
+ingredients with a supplied ordered real embedding of the predecessor; they are
+not the recursive theorem. Relative realization chooses a new ordinary reader
+rather than extending an earlier one.
+
+The existing `separate_providers` example gathers an owner into a supplied,
+already validated joint parent. Constructing arbitrary jointly compatible real
+bases from incomparable key sets, and transporting permutations, remain open.
+`KernelReplay.collectMany` authenticates supplied facts without filling these
+assembly/realization obligations. `Tower.Shared.realize_values` supplies coherent
+relative readers without discharging the complete exporter contract.
+
 ## Optional RCF and prerequisite evidence
 
 | Requirement | Delivered operation/proof and reusable evidence | Remaining requirement |
 | --- | --- | --- |
 | Rational surface and original closed divisor guards | `import HexRCF`; `Certificate.check_sound`, decision/reification tests and [rational performance report](hex-rcf-performance.md) | Preserve ordinary rational import and fast-path agreement when optional packaging changes |
-| Authenticated real coefficients, fixed selected fields and total library production | `HexRCF.RealCoefficients`; `LiteralSign.Table`, `FieldBuildProgress`, `FieldDecisionProgress.forall_decision`/`exists_decision`, `FieldBuildBudget` | [#10611](https://github.com/kim-em/hex-dev/issues/10611) merged; broader source/schema coverage and frontend quotation still owned by [#10358](https://github.com/kim-em/hex-dev/issues/10358). [#10618](https://github.com/kim-em/hex-dev/issues/10618) is pending; [#10620](https://github.com/kim-em/hex-dev/issues/10620) owns public multi-prime quotation repair |
+| Authenticated real coefficients, fixed selected fields and total library production | `HexRCF.RealCoefficients`; `LiteralSign.Table`, `FieldBuildProgress`, `FieldDecisionProgress.forall_decision`/`exists_decision`, `FieldBuildBudget` | Merged [#10618](https://github.com/kim-em/hex-dev/pull/10618)/[#10650](https://github.com/kim-em/hex-dev/pull/10650)/[#10658](https://github.com/kim-em/hex-dev/pull/10658) authenticate fixed-field conversion and interval signs. [#10661](https://github.com/kim-em/hex-dev/pull/10661) adds positional checked sign keys, `FieldLiteral.replay`, rollback and kernel tests. Merged [#10668](https://github.com/kim-em/hex-dev/pull/10668) supplies public `Coefficients.prepare`, `Specialize.prepare` and input-bound finite `Replay.check`, with `check_domains`, `check_spec`, `check_sound`, `check_original` and bounded/total producer acceptance. Reuse `PreparedCoefficients`, `FiniteReplay` and the fresh `ProofProbe.Prepared` kernel guards. Merged [#10866](https://github.com/kim-em/hex-dev/pull/10866) uses a supplied ordinary-kernel irreducibility proof for one degree-eight common field through the ordinary-import frontend. General automatic certification and frozen source assembly remain with #10358 |
+| Independent literal root/cell packet replay | `RootTableCodec.read_roots`, `RootCodec.read_covered`, `CellFootprint.read_packet`; `CompleteReplay.read_covered`, `check_covered`, `check_sound`, `check_domains` from merged [#10942](https://github.com/kim-em/hex-dev/pull/10942); reuse the owner's [complete packet tests](../conformance/HexRCF/CellReplay/Algebraic/CompleteQuote.lean) and [fresh kernel quotation](../conformance/HexRCF/CellReplay/Algebraic/CompleteQuoted.lean) | Arbitrary-packet soundness uses an explicit lawful ordinary-real parent model. Finite coefficient/context coverage proves exact encoder roundtrips, rather than assuming reader success. General source/provider reconstruction remains open |
+| Total packet production in one selected number field | `NumberField.cells`/`cells_zero` from [#10932](https://github.com/kim-em/hex-dev/pull/10932), `cellsWith_complete`/`cells_complete` from [#10942](https://github.com/kim-em/hex-dev/pull/10942); actual presentation factory, native complete packets and both original-coordinate verdicts; [producer conformance and kernel audit](../conformance/HexRCF/NumberFieldCellsConformance.lean) | Delivered for supplied `QAdjoin` coordinates in one selected field and nonzero original guards; no child-success or caller model-agreement premise. General common-field certification and nested/frozen source assembly remain with #10358 |
 | Optional tactic proofs and refusal diagnostics | Reuse `conformance/HexRCF/TotalAlgebraicProofs.lean`, `ProductionProgress.lean` and manual examples; exact axiom guards and original zero-divisor rejection | No duplicate manual/example owner here. [#10358](https://github.com/kim-em/hex-dev/issues/10358) retains certification, joint-realization consumption and integrated scaling/sharing evidence |
 | Rank correctness, performance and proof track | `rankCertWith_check`, `checkRank_sound`, `rankWith_eq`; [rank report](hex-rank-performance.md) and ten axiom-guarded CI probes | [#10352](https://github.com/kim-em/hex-dev/issues/10352) complete through [#10579](https://github.com/kim-em/hex-dev/issues/10579)/[#10584](https://github.com/kim-em/hex-dev/issues/10584); counters 4. Their own Phases 5–7 remain separate distribution work |
-| Real-algebraic/Sturm prerequisites | Existing `compare_eq`, real root completeness/multiplicity/order, query/root-count semantics | [#10577](https://github.com/kim-em/hex-dev/issues/10577) open; [#10580](https://github.com/kim-em/hex-dev/issues/10580) pending, including operation-contract and performance audit. Do not copy its branch's claimed phase into main |
+| Real-algebraic/Sturm prerequisites | Existing `compare_eq`, real root completeness/multiplicity/order, query/root-count semantics | [#10860](https://github.com/kim-em/hex-dev/pull/10860) completes owner Phase-4 readiness for all four inputs. The query/root-count and real-algebraic root completeness/multiplicity/order APIs are proved. [Sturm proof acceptance](sturm-proof-acceptance.md) records Phase 7 for both Sturm libraries; real-algebraic Phases 5–7 remain separate distribution work |
+
+Merged [#10777](https://github.com/kim-em/hex-dev/pull/10777) adds
+[`NumberField.runWith`, `runWith_spec`, `run`, `run_spec`, `run_total` and `run_true`](../adapters/HexRCF/RealCoefficients/NumberField.lean).
+Native diagnostic production retains the original selected real embedding and
+`QAdjoin` coordinates, with frontend coefficient agreement from
+`value_eq_ofField` and `run_coefficients`. The owner's
+[NumberField conformance](../conformance/HexRCF/NumberField.lean) and tactic/manual
+examples supply the corresponding evidence. These total diagnostic APIs do not
+establish frozen frontend certificate quotation or general nested realization.
+
+Merged [#10698](https://github.com/kim-em/hex-dev/pull/10698) adds
+`RepresentationSpecialize.prepare`, all-valuation `prepare_eval` and semantic
+`prepare_degrees` for an authenticated native coefficient interpretation.
+The owner's `TowerSamples` consumes actual selected-field `Sample.Family`
+coverage and sign-vector laws, preserving original strict/non-strict guards,
+zero atoms, repeated atoms and leading cancellation. This covers ordinary
+samples over those selected coefficients; general joint nested realization
+and a frozen tower tactic backend remain separate requirements. Merged
+[#10692](https://github.com/kim-em/hex-dev/pull/10692) supplies checked
+generator-window replay with fresh axiom-guarded owner probes. These are reused
+owner APIs and examples, not duplicated here.
+
+Merged [#10677](https://github.com/kim-em/hex-dev/pull/10677) supplies typed
+cross-field dependency routing and byte roundtrip laws. The ordinary-kernel
+serialized-graph prototype in [#10693](https://github.com/kim-em/hex-dev/pull/10693)
+is retained experimental evidence; it does not discharge the missing compiled
+strict replay/automatic arithmetic evidence contract.
 
 Two-formula proof-cost observations in
 [RCF production proofs](hexrcf-production-proofs.md) are retained diagnostics,
@@ -116,24 +206,257 @@ applications follow current [Phase 4](../PLAN/Phase4.md) with representative
 CI-built proofs and kernel axiom audits. New experiments need a concrete
 unresolved decision; none is dispatched by this audit.
 
+## Supplied root tables and complete cells
+
+Merged [#10907](https://github.com/kim-em/hex-dev/pull/10907) exports complete
+root lists from accepted full derivative replay through
+`RootReplay.Result.coverage` and `ordered` in any lawful real-closed parent
+model. These wrappers reuse `Descriptor.rootsFrom_coverage` and
+`rootsFrom_ordered` from [#10903](https://github.com/kim-em/hex-dev/pull/10903).
+The finite quotation fixtures use a fixed positive-√2 parent and one ordinary
+selected point. They retain original divisors for zero and nonzero quotients and
+check supplied inverse equations, without assuming equality to a native
+inverse. The dictionaries remain kernel-assembly interfaces, rather than a
+strict compiled checker for arbitrary packets. See the
+[guarded matrix report](hexrcf-guarded-matrix.md).
+
+Merged [#10912](https://github.com/kim-em/hex-dev/pull/10912) checks complete
+supplied section/sector matrices through `CellReplay.check`.
+`check_domains` proves the original divisor conditions for any successful
+verdict; `check_sound` proves the shared one-quantifier formula at the interpreted values from
+`.ok true`, a whole-line `RootReplay.Result` for the radical core, and a
+supplied lawful ordinary-real parent model. An accepted `false` is diagnostic
+and proves no negation. The checker derives root coverage, cell membership
+and sign constancy from checked data; those conclusions are not supplied as
+semantic certificate fields. `CellRead` preflights original guards before
+decoding, while `CellReplay.check` checks guards before radical identities.
+Quotation checks the source formula, fixed coefficient valuation, divisor count
+and ordered divisor identities afresh.
+
+The [cell replay report](hexrcf-cell-replay.md) retains the rational-coefficient
+fixture: two root sections, three open sectors, repeated and zero atoms,
+strict finite boundaries, an accepted empty-root case and boundary refusal controls. This is
+accepted supplied-cell quotation, not general algebraic production, complete
+source/provider history assembly or strict replay for missing predecessors.
+The implementation and its manual examples remain owned by #10358.
+The owning [RCF SPEC](../HexRCF/SPEC/hex-rcf.md) and the earlier
+[root replay](hexrcf-root-replay.md) and
+[nested replay](hexrcf-nested-root-replay.md) reports still describe supplied
+coverage/order exports as missing. Updating those passages to match the merged
+APIs, and documenting the supplied-cell boundary, remains an explicit #10358
+documentation requirement; this audit does not replace the owning contract.
+
+## Complete packets and selected-field production
+
+Merged [#10932](https://github.com/kim-em/hex-dev/pull/10932) introduced
+[`NumberField.cells`, `cellsWith`, `cells_success` and `cells_zero`](../adapters/HexRCF/RealCoefficients/NumberFieldCells.lean)
+through the development `import HexRCF.RealCoefficients` umbrella.
+Merged [#10942](https://github.com/kim-em/hex-dev/pull/10942) adds
+`cellsWith_complete`/`cells_complete`, the packet's serialized root graph, and
+public imports of [`CompleteReplay`](../adapters/HexRCF/RealCoefficients/CompleteReplay.lean),
+`RootTableCodec`, `RootCodec` and `CellFootprint`. These are available merged
+APIs; distribution still uses the package boundary and prerequisites in the
+[publication plan](real-closure-publication.md).
+
+`CompleteReplay.check_sound` applies to arbitrary literal root/cell JSON when
+checking returns `.ok true`, under a supplied lawful ordinary-real parent model.
+It does not require producer provenance. `check_domains` retains every original
+divisor for either accepted Boolean verdict. `RootTableCodec.read_roots`
+restores the full root table; `RootCodec.read_covered` restores the individual
+sector descriptors inside `CellFootprint.read_packet`. These encoder roundtrips
+use finite coverage of actual coefficients/contexts and nonzero guards, and
+hold for any typed evidence encoded by the corresponding encoders.
+`CompleteReplay.read_covered` and `check_covered` compose the full-table and
+cell roundtrips; reader success is derived, not supplied as a premise.
+
+`NumberField.cells_complete` is a producer theorem, not just accepted-certificate
+soundness. Given a selected `RealAlgebraicNumber`, coefficients already expressed
+in its `QAdjoin` field, a `RealFormula.QF (n+1)` and nonzero original divisor
+guards, the actual presentation factory and `NumberField.cells` return a packet.
+For each of the two real quantifiers, independent complete-packet checking
+succeeds and its Boolean verdict is equivalent to the original sentence at
+`Coefficients.ofField`'s selected real values. It assumes no child producer's
+success, freely chosen replacement presentation or caller-provided model
+agreement. `cellsWith_complete` gives the corresponding law for an existing
+presentation; `cells_zero` rejects an original zero guard before construction.
+The Boolean equivalence belongs to produced packets; an arbitrary checker
+result `.ok false` still supplies no negation theorem. This does not extract
+arbitrary Lean coefficients into a common field or assemble general frozen
+providers, predecessors and reached records. The owner's
+[producer conformance](../conformance/HexRCF/NumberFieldCellsConformance.lean)
+runs both quantified checks on actual produced packets and zero-guard preflight;
+its kernel audit checks the producer theorem bodies, axioms and dependencies.
+
+The owner's [complete quotation controls](../conformance/HexRCF/CellReplay/Algebraic/CompleteQuote.lean)
+reuse the checked algebraic fixture, verify its frozen packet bytes, test both
+verdicts and original guards, and test refusals for mismatched source formula,
+verdict/checker and divisor data.
+[`CompleteQuoted`](../conformance/HexRCF/CellReplay/Algebraic/CompleteQuoted.lean)
+rechecks the fresh proof body and ordinary-kernel axioms. These controls reuse
+finite codec laws and checked fixture data; they do not claim a fresh native
+reduction of every serialized reader. `CellQuote.finishPacket` retains fresh
+source, valuation and ordered original-divisor identity checks. The separate
+[typed valuation controls](../conformance/HexRCF/CellReplay/Valuation.lean)
+exercise valuation refusal through the shared `finishWith` implementation.
+The existing [owner manual](../HexManual/Chapters/HexRCF/AlgebraicCells.lean)
+and proof examples remain #10358’s deliverables.
+
+Merged [#10938](https://github.com/kim-em/hex-dev/pull/10938) improves proof
+assembly by reusing audited axiom sets within the same Lean environment ancestry
+and elaborating the reader/dictionaries before attaching operands and membership
+proofs with `mkAppN`. Those attached arguments are checked by the existing final
+kernel check.
+The existing [ProofAudit controls](../experiments/KernelReplay/ProofAudit.lean)
+compare cached/uncached audits, restored environments, changed dependencies and
+corrupt memberships. This belongs to the CI-built proof track; it is not a
+computational performance pass or completion of the tower's Phase 4.
+
+## Finite native reconstruction
+
+Merged [#10888](https://github.com/kim-em/hex-dev/pull/10888), source
+`c5bd4afdad`, supplies the semantic development modules `FiniteConditions`,
+`FiniteReconstruction`, `NativeFactory`, `NativeAssembly` and their checked
+readers. Native evaluation provides literal graph/polynomial data; independent
+replay records and strict coefficient codecs supply kernel-checked meaning.
+Owner, depth, operand and record kind identify cache entries, and environment rollback
+also restores the cache. Fuel bounds dependency discovery; exhausted or absent
+evidence is an error rather than an accepted condition.
+
+The CI-built experiment consumer
+[`KernelReplay.NativeAssemblyUse`](../experiments/KernelReplay/NativeAssemblyUse.lean)
+reuses the staged fixture's exported `statement`/`exists_joint` through a public
+import, without `import all` in this consumer. The staged producer fixture itself
+uses `import all`; its one sealed import, `HexSturm.Basic`, has an exact
+entry in the `check_dag.py` allowlist. The consumer destructures both existential
+witnesses and all eleven conjuncts, deriving the original root equation and
+coefficient-zero addition at the same returned interpretation and coordinate.
+Its context proofs retain the original descriptor and the actual adjoined
+context. This supplies a mathematical consumer rather than an acceptance claim
+based only on native example output. CI names 32 `KernelReplay` module targets,
+19 of them added by #10888. A twentieth new module, `FiniteThomWitness`, builds
+as a dependency of `FiniteThomJoint`; CI also names two existing replay executables.
+Build-time controls reject exhausted discovery, missing owners and
+wrong-polynomial callbacks; the consumer has standard-three axiom guards.
+The 15 controls in [`run.py`](../experiments/KernelReplay/run.py) predate #10888
+and drive the existing `hexsigndet_kernel_replay_probe`: root, fact-operation,
+nested, generated and collection probes; emission and byte replay of the
+serialized SignDet graph, including count and context mutations; and argument
+handling. None invokes the #10888 native reconstruction path.
+
+The exercised path still does not establish general dependency-closed
+interleaved normalization, successful multilevel native joint reconstruction or
+the remaining specified conformance/performance evidence. Directly computed
+coefficient operands and product-law requests have no successful end-to-end
+fixture: the owning SPEC records dependency traversal exceeding the local
+8 GiB experiment limit. This is a retained resource limitation, not a scaling
+pass. Merged [#10899](https://github.com/kim-em/hex-dev/pull/10899) resolves
+the original `tower8` source and premise correction through the
+[verified CADE-24 input inventory](bench-results/real-closure-cade24-inputs/README.md).
+The first executed polynomial is reducible, with constant `4 − 2ε²`;
+the retained no-root finding applies to the paper's different printed quartic.
+The third executed polynomial is degree four, despite the degree-five label.
+The source inventory verifies all five root-selection indices and identical
+clean/eager script actions apart from the historical normalization setting;
+it establishes neither Hex execution nor matching semantic outcomes.
+Original workload execution, stage measurements, counters and matched storage
+comparisons remain with #10378 when the caller constant inputs are supplied. Ports must preserve the recorded root-index-zero
+selections and verify the returned ordering against the pinned Z3 oracle;
+source verification alone does not establish root ordering or selected values.
+The retained metadata links the paper/example release to the archived payload,
+but the download-number/file-UUID association is inferred rather than directly
+recorded. Earlier no-root and input-obstruction reports retain their stated
+paper-transcription scope.
+
+The original `tower8` registers π and e before ε and the algebraic roots.
+Although π first occurs in the coefficients of `r3` and e in those of `r4`,
+the whole tower is constructed over `ℚ(π)(e)`. Its initial context already needs
+the caller approximation procedures and effective progress/relative-transcendence
+assumptions specified by the [constant contract](../SPEC/Libraries/hex-real-closure.md#exploration-and-downstream-integration).
+Separate transcendence results would not justify transcendence of e over
+`ℚ(π)`. These are conditional caller inputs, not provider-production or
+transcendence-proof obligations of this family. When the required inputs are
+unavailable, record the original workload as unsupported. Running `r0`–`r2`
+over `ℚ(ε)` instead is a separate reduced case with a different coefficient
+field and sign path; it is not stage evidence for the original workload and
+cannot be extended by inserting π and e below the existing infinitesimal.
+Bounded certified sign attempts cannot replace the total tower coefficient field.
+This integration scope adds no bundled π/e providers.
+
+An owner SPEC decision remains open on #10378: core conformance requires
+“`tower8` over infinitesimals” and Phase 4 requires its isolation and matched
+clean/eager evidence, while the same SPEC allows unsupported-case records when
+caller constant inputs are absent. Without those inputs, the original workload
+cannot supply the required execution evidence. The owner must clarify whether
+an unsupported record discharges that requirement and which infinitesimal-only
+fixture, if any, fulfills the core requirement. This report accepts neither a
+reduced variant nor an unsupported record as a Phase-4 pass. The owning
+Phase-4 report's remaining-scope row lists caller inputs to supply; this is a
+conditional workload input, not a requirement to develop providers or prove
+relative transcendence within #10378. Revise the owning SPEC before implementing
+any changed acceptance contract.
+
+These semantic sources live under `adapters/`. #10888 also adds Mathlib-free
+record/query readers and packet modules to the computational umbrella, which
+remains Mathlib-free. Listing the adapter modules as explicit roots of the development
+`HexQuerySemantics` library, and the `KernelReplay` consumer targets, do not
+make them published companion imports.
+Companion migration, pinned package requirements and candidate downstream
+consumers remain in the [publication plan](real-closure-publication.md).
+
+## Additional merged adapter and evidence milestones
+
+Merged [#10922](https://github.com/kim-em/hex-dev/pull/10922) supplies
+[complete frozen cells over a fixed algebraic parent](hexrcf-algebraic-cells.md).
+For `p(X) = X² − √2` over the selected positive embedding of ℚ(√2),
+the matrix `p(x) ≥ 0 ∧ p(x) ≤ 0 ∧ 0 = 0` has two section rows and three
+sector packets. Ordinary-kernel replay consumes the
+supplied scalar inventory, checks radical identities and quotes the original
+real existential. The original `0 / (−1)` guard remains required after numerator
+normalization; zero-divisor preflight precedes malformed decoding. Wrong
+subjects, contexts, boundaries and samples have explicit refusal controls.
+This is available supplied-evidence integration, with a HexRCF manual chapter and
+proof examples that reuse the owner’s proved interfaces. General construction completeness and arbitrary missing-record
+compiled replay remain outside that milestone; its native arithmetic fallback
+is not evidence of a strict general checker.
+
+Merged [#10923](https://github.com/kim-em/hex-dev/pull/10923) strengthens finite
+base lookup: equality checks preserve the caller’s interpreter and reader
+metavariables. Candidate natural casts must match the complete guarded
+proposition definitionally. Closed agreements become kernel-checked theorems;
+open agreements retain their hypotheses for the enclosing kernel check.
+The new BaseLookup controls reject foreign or unspecified interpretations
+without assigning caller metavariables. They also cover symbolic/computed
+natural casts, definitional aliases and missing retained leading evidence.
+A shared expression with 48 arithmetic layers is refused within the heartbeat limit;
+it is not an acceptance example. These are finite evidence-reader contracts,
+not automatic all-live assembly or general joint ordinary-real realization.
+
+Merged [#10921](https://github.com/kim-em/hex-dev/pull/10921) retains
+[native MetiTarski producer counters](bench-results/real-closure-metitarski-counts/README.md).
+Its untimed instrumented commands agree with the ordinary packets at the four
+recorded degrees. The report distinguishes outer entry counts from lower-field
+arithmetic and overlapping counters. These data neither resolve the earlier
+inconclusive timing model nor attest the tower’s Phase 4. Archive verification
+and mutation controls check the retained evidence; no repeated timing collection
+is needed for this requirements update.
+
 ## Unresolved requirements and ownership
 
-- **[#10577](https://github.com/kim-em/hex-dev/issues/10577):** merged prerequisite implementation/readiness and complete Phase-4
-  attestation. [#10580](https://github.com/kim-em/hex-dev/issues/10580)'s still-open results must be distinguished from main.
-- **[#10377](https://github.com/kim-em/hex-dev/issues/10377):** shared serialized cross-level coefficient-proof dependencies,
-  compiled arithmetic replay/conversions, independent conformance and BKR/Thom
-  Phase 4. Merged [#10612](https://github.com/kim-em/hex-dev/issues/10612)'s finite proof assembly does not discharge the complete
-  contract; [#10615](https://github.com/kim-em/hex-dev/issues/10615)/[#10617](https://github.com/kim-em/hex-dev/issues/10617) remain pending partial PRs.
-- **[#10378](https://github.com/kim-em/hex-dev/issues/10378):** all-live dependency closure/general enlargement, joint ordinary-real
-  realization, full trivial-base arithmetic agreement, native union/sample and
-  exploration/number-field completion, required tower workloads/clean-eager
-  evidence and Phase 4. Pending [#10607](https://github.com/kim-em/hex-dev/issues/10607)/[#10616](https://github.com/kim-em/hex-dev/issues/10616) remain owner deliveries.
-- **[#10358](https://github.com/kim-em/hex-dev/issues/10358) / [#10620](https://github.com/kim-em/hex-dev/issues/10620):** complete coefficient/source certification, public multi-prime
-  quotation, actual joint-realization consumption and integrated tactic evidence.
-- **[#10575](https://github.com/kim-em/hex-dev/issues/10575):** final integrated acceptance tests, the eight libraries' substantive
-  Phases 5–7 review/proof/API/Verso documentation, adapter migration and agreed
-  optional boundary, fresh split-package consumers and exact eligible publication
-  changes. This preparation does not close those obligations.
+Current counters are 7 for both Sturm libraries and both OrderedFn libraries,
+5 for HexSignDet and 7 for HexSignDetTheory, and 0 for the RealClosure pair. Available proved APIs do not by
+themselves establish the applicable phase obligations.
+
+- **[#10577](https://github.com/kim-em/hex-dev/issues/10577):** closed by merged [#10860](https://github.com/kim-em/hex-dev/pull/10860). All four Sturm/real-algebraic inputs reached Phase 4. The readiness matrix retains computational coverage, finding dispositions, source provenance and practical isolation costs. The [direct Sturm oracle](sturm-direct-conformance/README.md) supplies the owning SPECs' rational selected-root sign fixtures without treating inherited integer tests as independent frontend coverage. The Sturm [proof acceptance](sturm-proof-acceptance.md) records Phases 5–7 for both libraries, using the [individual API/manual assessment](sturm-declaration-review/README.md) and complete native comparison; real-algebraic Phases 5–7 remain outside the eight-library polishing scope.
+- **[#10377](https://github.com/kim-em/hex-dev/issues/10377):** closed by merged [#10861](https://github.com/kim-em/hex-dev/pull/10861). Both sign-determination libraries completed owner Phase 4; implementation, correspondence, certificate interfaces, direct examples, independent conformance and retained performance evidence are delivered. Their [proof acceptance](sign-det-proof-acceptance.md) records Phase 5. SignDet Phases 6–7 belong to #10575.
+- **[#10378](https://github.com/kim-em/hex-dev/issues/10378):** general dependency-closed interleaved normalization and simultaneous ordinary-real realization; integration of constructed provider histories with generic interleaved reconstruction; the general direct `Sample.realizeReplay` theorem and composition with factory models/inclusions; automatic reached arithmetic, zero-packing and selected-sign inventory assembly; direct computed operand/product-law requests; successful multilevel native joint reconstruction; full serialization/exploration and specified conformance/performance evidence and acceptance. The finite reconstruction section supplies usable merged contracts; #10914 supplies native test evidence through the existing catalog APIs. The original CADE `tower8` and clean/eager obligations remain conditional on caller π/e procedures and laws; the required-evidence versus unsupported-case decision remains open. Neither reduced inputs nor reconstructed paper sources attest Phase 4.
+- **[#10358](https://github.com/kim-em/hex-dev/issues/10358):** generic frontend source/provider/history certification, reached-data and all-live assembly, accepted general algebraic production and completeness, automatic common-field irreducibility certification, and complete consumption of nested/successive-infinitesimal joint realization. Supplied root-table, inverse/divisor and cell contracts from #10907/#10912/#10922 use explicit lawful-model and accepted-evidence hypotheses. Independent complete-packet replay from merged [#10942](https://github.com/kim-em/hex-dev/pull/10942) removes the supplied-`RootReplay.Result` premise but keeps the lawful parent model. Its `NumberField.cells_complete` additionally proves actual packet production and both original-coordinate verdicts for one selected number field, without a child-success premise. General frontend/provider assembly, automatic common-field certification and missing-predecessor reconstruction remain open; the delivered single-field producer must not be recorded as merely supplied-cell acceptance. The [#10858](https://github.com/kim-em/hex-dev/pull/10858) supplied inverse contract binds the original operand/source and divisor guards under a supplied lawful ordinary-real predecessor model. The [#10867](https://github.com/kim-em/hex-dev/pull/10867) `NativeFormula` evaluator is not identified with `Samples.run` or `Tower.Sample.signs`, and frozen context/history/reached-data assembly into the tactic path remains incomplete. `NativeSamples.row_converted` separately connects sample signs to `NativeSpecialize.row`; full native/infinitesimal root coverage remains open. Reconcile the owning RCF SPEC and root-replay report passages with the merged coverage/order and cell interfaces. External unshipped prototypes are not merged acceptance evidence. Reuse the owner's existing API/manual examples.
+- **[#10575](https://github.com/kim-em/hex-dev/issues/10575):** final integrated acceptance and all applicable Phases 5–7 for the eight family libraries. The separately limited [package-preparation result](real-closure-package-inventory.json) remains an open #10575 obligation.
+
+  Both Sturm libraries and both OrderedFn libraries record Phase 7. Sturm's [final acceptance](sturm-proof-acceptance.md) combines individual API/manual decisions with its [complete 58-family, four-block comparison](bench-results/sturm-phase6-comparison/cap-complete-v3/README.md) under the reviewed cap adaptation; the failed capture and consumed reservation remain retained. OrderedFn's [final acceptance](ordered-fn-proof-acceptance.md), merged in [#10965](https://github.com/kim-em/hex-dev/pull/10965), combines its individual declarations, explicit retention/import judgments, whole-function native equalities, complete passing changed-source comparison, kernel/conformance checks and rendered manual. The older OrderedFn comparison findings remain records of their original sources, not open requirements on the accepted integrated implementation.
+
+  SignDet records core Phase 5 and companion Phase 7: its source assessments and [companion acceptance](sign-det-declaration-review/theory-acceptance.md) do not replace the outstanding final core computational comparison and applicable API/use acceptance. Its merged [serialization review #10913](https://github.com/kim-em/hex-dev/pull/10913), [parser review #10915](https://github.com/kim-em/hex-dev/pull/10915), [compiler/lint evidence #10917](https://github.com/kim-em/hex-dev/pull/10917), [companion acceptance #10930](https://github.com/kim-em/hex-dev/pull/10930) and [core-use assessment #10931](https://github.com/kim-em/hex-dev/pull/10931) retain their individual source and evidence scopes. The RationalFn repair from [#10871](https://github.com/kim-em/hex-dev/pull/10871) closes [#10863](https://github.com/kim-em/hex-dev/issues/10863) and restores HexRationalFn to 4 without promoting it further; the [nested-sign](sign-det-nested-signs.md) and [constant-construction](rationalfn-constants.md) reports retain the affected historical findings and repair evidence.
+
+  RealClosure's implementation, realization and owner Phase-4 requirements above remain required for its final pair acceptance. Owner-safe semantic adapter migration and integration, an agreed optional package boundary, fresh pinned candidate consumers and eligible publication preparation remain open #10575 obligations, separate from per-library phase acceptance. None of these deliveries promotes unrelated inputs or establishes distribution eligibility.
 
 Distribution requirements are separately enumerated in the
 [publication plan](real-closure-publication.md), including unreleased phase-1

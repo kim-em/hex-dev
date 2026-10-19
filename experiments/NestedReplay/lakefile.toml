@@ -1,0 +1,10 @@
+name = "nestedReplayExperiment"
+version = "0.1.0"
+packagesDir = "../../.lake/packages"
+defaultTargets = ["nestedReplay"]
+[[require]]
+name = "Hex"
+path = "../.."
+[[lean_exe]]
+name = "nestedReplay"
+root = "Main"

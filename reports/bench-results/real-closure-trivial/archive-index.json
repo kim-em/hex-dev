@@ -1,0 +1,20 @@
+{
+  "source": "10a175609f9b0f14d3774f1152f91c69590a3803",
+  "capture_sha256": "59673cb724c48ac5fd3ace978a073d1994037242e0682c532de7cac3d5231b0c",
+  "retained_files": 237,
+  "omitted_executable": {
+    "path": "hexrealclosure_trivial_bench",
+    "bytes": 122955904,
+    "sha256": "af74bfd64390c8790be7089e585c6afcf0571e1f2c7eaffc9ab12a4112f33fa1"
+  },
+  "original_capture": "/home/kim/.codex/tasks/hex-10378/trivial-measurements-capture-v1",
+  "source_git_blobs": {
+    "bench/HexRealClosure/TrivialMeasurements.lean": "7979c433b83464e6bf13299a0c2e7f82d714d40f",
+    "scripts/bench/collect_real_closure_trivial.py": "762dc8b7201286e7d7029c493dbfb5d39d40a8bd",
+    "scripts/oracle/real_closure_trivial_measurements.py": "f83d8ac725728803479ce392a49fc20a005818b4",
+    "scripts/bench/cpu_lease.py": "764589cae71658a2824d006adfb574ec57b79df4",
+    "reports/bench-results/real-closure-trivial/protocol.md": "6d7475d99688107229d241f7f29552785b294b3d",
+    "conformance-fixtures/HexRealClosure/trivial-measurements.jsonl": "b66ff6d84ed7cf1a46acb085bc910bc2a9220cd4"
+  },
+  "source_tag": "measurements/10378/trivial-10a175609f"
+}

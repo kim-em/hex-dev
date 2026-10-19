@@ -1,0 +1,9 @@
+Hex.RealAlgebraicScaling.runZ3Sqrt2    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=6120953, 2026-10-04T19:42:07Z, host=chungus2
+  repeat 0  286.525 µs  (×2^8, total 73.350 ms)
+  median: 286.525 µs    min: 286.525 µs    max: 286.525 µs
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 69_460 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-scaling/Sqrt-2-Z3-2-Z3.json

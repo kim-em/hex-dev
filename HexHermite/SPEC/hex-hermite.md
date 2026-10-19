@@ -3,7 +3,7 @@
 The Hermite normal form of an integer matrix: a canonical row-echelon
 representative of the integer row lattice, together with an optional
 unimodular transform and explicitly accumulated inverse. Mathlib-free;
-the companion `hex-hermite-mathlib` relates the executable output to
+the companion `hex-hermite-theory` relates the executable output to
 `Submodule.span ℤ`, `Matrix.rank`, and the general linear group over `ℤ`.
 
 This SPEC and [hex-smith](hex-smith.md) are a pair. Hermite normal form
@@ -722,10 +722,10 @@ general dense transform.
 | `isHNFForm` | direct entry-level HNF predicate | `O(n · m)` entry inspections with constant-time single-entry access | input entries only |
 | `hnfCert` | two packed product checks plus `isHNFForm` | `O(n² + n · m)` entry traversals; packed integer widths depend on the certified matrices | `A`, `H`, `U`, `W`, and packed rows |
 
-## The Mathlib layer
+## The theory layer
 
 The correspondence contract is authoritative in
-[`hex-hermite-mathlib`](../../HexHermiteMathlib/SPEC/hex-hermite-mathlib.md).
+[`hex-hermite-theory`](../../HexHermiteTheory/SPEC/hex-hermite-theory.md).
 That layer identifies the executable row lattice, transform, rank, membership
 decision, and kernel basis with Mathlib's span, units, matrix rank, and kernel
 submodule. It owns proofs only; all executable definitions and their
@@ -847,7 +847,7 @@ a single family would hide:
   treats the dimension as the conditioning knob.
 
 **Comparators.** FLINT `fmpz_mat_hnf` through python-flint, and PARI
-`mathnf` through `cypari2`, both `informational`. FLINT dispatches
+`mathnf` through `cypari2`, both recorded for orientation. FLINT dispatches
 across several algorithms including `hnf_pernet_stein`, which is
 asymptotically faster than anything specified here, so the ratio
 measures a different algorithm and does not hold a required threshold.
@@ -878,11 +878,11 @@ HexHermite/
   Lattice.lean       -- latticeCoeffs, latticeContains, kernelBasis, latticeIndex
   Cert.lean          -- hnfCert and its soundness
 HexHermite.lean      -- umbrella
-HexHermiteMathlib/
+HexHermiteTheory/
   Span.lean          -- span and lattice correspondence
   Rank.lean          -- hnfRank = Matrix.rank
   Kernel.lean        -- the executable kernel basis as a Module.Basis
-HexHermiteMathlib.lean
+HexHermiteTheory.lean
 ```
 
 `libraries.yml` gains:
@@ -893,25 +893,8 @@ HexHermiteMathlib.lean
     mathlib: false
     done_through: 0
     status: draft
-    phase4:
-      comparators:
-        - tool: FLINT fmpz_mat_hnf via python-flint
-          class: informational
-          rationale: FLINT dispatches to asymptotically faster algorithms outside this SPEC
-        - tool: PARI mathnf via cypari2
-          class: informational
-          rationale: PARI is column-style and the timing includes convention conversion
-      input_families:
-        - name: random-dense-hermite
-          description: dense square nonsingular integer matrices with uniformly bounded entries
-        - name: rank-deficient-hermite
-          description: rows drawn as integer combinations of a smaller independent set
-        - name: tall-hermite
-          description: tall matrices with many redundant row generators
-        - name: unimodular-conjugate
-          description: random unimodular left factors times a known diagonal form
-  HexHermiteMathlib:
-    deps: [HexHermite, HexRowReduceMathlib, HexDeterminantMathlib]
+  HexHermiteTheory:
+    deps: [HexHermite, HexRowReduceTheory, HexDeterminantTheory]
     mathlib: true
     done_through: 0
     status: draft
@@ -946,7 +929,7 @@ the first and third dependencies.
 ## Kernel certificates
 
 `HexHermite/Kernel.lean` owns the list certificate for the
-[hermite frontend](../../HexHermiteMathlib/SPEC/hex-hermite-mathlib.md#the-hermite-tactic).
+[hermite frontend](../../HexHermiteTheory/SPEC/hex-hermite-theory.md#the-hermite-tactic).
 `HermiteWitness` reshapes `hnfCert` into list data. `checkHermiteList`
 checks the full HNF shape and the products `transform * A = form` and
 `transform * inverse = I` by structural recursion. `checkRemainder` checks

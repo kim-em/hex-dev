@@ -38,13 +38,13 @@ new axioms or unfinished proofs.
 
 See the [SPEC](SPEC/hex-rational-fn.md),
 [manual chapter](../HexManual/Chapters/HexRationalFn.lean),
-[Mathlib companion](../HexRationalFnMathlib/README.md), and
+[theory companion](../HexRationalFnTheory/README.md), and
 [performance report](../reports/hex-rational-fn-performance.md).
 
 Verification:
 
 ```sh
-lake build HexRationalFn HexRationalFnMathlib HexRationalFn.Conformance \
+lake build HexRationalFn HexRationalFnTheory HexRationalFn.Conformance \
   hexrationalfn_emit_fixtures hexrationalfn_bench
 python3 scripts/oracle/rationalfn_sympy.py < conformance-fixtures/HexRationalFn/rationalfn.jsonl
 .lake/build/bin/hexrationalfn_bench verify

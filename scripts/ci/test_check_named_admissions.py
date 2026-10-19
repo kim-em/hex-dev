@@ -12,6 +12,26 @@ from check_named_admissions import ADMISSION, IMPORT, code_only
 
 
 class AdmissionScannerTests(unittest.TestCase):
+    def test_guard_roots(self):
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            directory = root / "experiments/KernelReplay"
+            (directory / "GuardNested").mkdir(parents=True)
+            for name in ("GuardFresh.lean", "GuardNested/Leaf.lean", "FrameOther.lean"):
+                (directory / name).write_text("theorem valid : True := by trivial\n")
+            with patch.object(audit, "ROOT", root):
+                roots = audit.guard_roots()
+                self.assertEqual(roots, ["KernelReplay.GuardFresh", "KernelReplay.GuardNested.Leaf"])
+                paths = audit.import_cones(roots)
+                self.assertIn(Path("experiments/KernelReplay/GuardFresh.lean"), paths)
+                (directory / "GuardFresh.lean").write_text("theorem bad : False := by sorry\n")
+                self.assertTrue(audit.find_admissions(code_only((directory / "GuardFresh.lean").read_text())))
+                shadow = root / "KernelReplay/GuardFresh.lean"
+                shadow.parent.mkdir()
+                shadow.write_text("theorem hidden : True := by trivial\n")
+                with self.assertRaisesRegex(ValueError, "shadowed"):
+                    audit.guard_roots()
+
     def test_imports_behind_comments_and_on_one_line(self):
         source = 'public import Foo.Bar /- note -/ import Baz.Qux\n'
         self.assertEqual([m.group(1) for m in IMPORT.finditer(code_only(source))],
@@ -34,6 +54,20 @@ class AdmissionScannerTests(unittest.TestCase):
             with self.subTest(token=token):
                 self.assertIsNotNone(ADMISSION.search(code_only(token)))
         self.assertIsNone(ADMISSION.search(code_only("rw [Array.foldl_push_eq_append (stop := n) rfl]")))
+
+    def test_expression_admission_detector(self):
+        for source in ("proof.hasSorry", "Expr.hasSorry proof", "type.hasSorry",
+                       "Term.withoutErrToSorry action", "Lean.Elab.Term.withoutErrToSorry action"):
+            with self.subTest(source=source):
+                self.assertEqual(audit.find_admissions(code_only(source)), [])
+        for source in ("hasSorry", "withoutErrToSorry action", "other.withoutErrToSorry action",
+                       "Other.Term.withoutErrToSorry action", "NotTerm.withoutErrToSorry action",
+                       "Term.withoutErrToSorry (Term.exceptionToSorry error)",
+                       "proof.mkSorry", "Expr.mkSyntheticSorry",
+                       "Lean.sorryAx", "proof.hasSorry || sorryAx", "by sorry",
+                       "proof.hasSorry && admitGoal"):
+            with self.subTest(source=source):
+                self.assertTrue(audit.find_admissions(code_only(source)))
 
     def test_constant_record_fields(self):
         source = "structure Settings where\n  constant : Nat\ndef settings : Settings where\n  constant := 1\n"
@@ -58,63 +92,87 @@ class AdmissionScannerTests(unittest.TestCase):
         source = 'def x := f x\' \'"\'\ntheorem bad : False := by sorry\n'
         self.assertIsNotNone(ADMISSION.search(code_only(source)))
 
+    def test_overlapping_cyclic_roots_and_fresh_source(self):
+        with TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "Local").mkdir()
+            sources = {
+                "Local/Left.lean": "import Local.Shared\n",
+                "Local/Right.lean": "public import Local.Shared\n",
+                "Local/Shared.lean": "import Local.Left\ntheorem h : True := by trivial\n",
+            }
+            for name, source in sources.items():
+                (root / name).write_text(source)
+            with patch.object(audit, "ROOT", root), patch.object(
+                audit, "code_only", wraps=code_only
+            ) as mask:
+                paths = audit.import_cones(["Local.Left", "Local.Right"])
+                self.assertEqual(paths, set(map(Path, sources)))
+                self.assertEqual(mask.call_count, 3)
+                # A shared dependency must be reread on the next audit.
+                (root / "Local/Shared.lean").write_text("import Local.Missing\n")
+                with self.assertRaisesRegex(ValueError, "missing local import Local.Missing"):
+                    audit.import_cones(["Local.Left", "Local.Right"])
+                (root / "Local/Shared.lean").write_text(sources["Local/Shared.lean"])
+                with self.assertRaisesRegex(ValueError, "missing local import Local.Absent"):
+                    audit.import_cones(["Local.Left", "Local.Absent"])
+
     def test_import_cone_and_present_adapter(self):
         with TemporaryDirectory() as temporary:
             root = Path(temporary)
             entry = root / "adapters/HexRCF/RealCoefficients.lean"
-            bridge = root / "adapters/HexRealRootsMathlib/TarskiSoundness.lean"
-            sign = root / "adapters/HexSignDetMathlib/RootProducer.lean"
-            conformance = root / "conformance/HexSignDetMathlib/SelectedProducerConformance.lean"
-            completion = root / "conformance/HexSignDetMathlib/CompletionConformance.lean"
-            handle = root / "conformance/HexSignDetMathlib/QueryHandleConformance.lean"
-            tables = root / "conformance/HexSignDetMathlib/TableConformance.lean"
-            reencoding = root / "conformance/HexSignDetMathlib/ReencodingConformance.lean"
-            roots = root / "conformance/HexSignDetMathlib/RootListConformance.lean"
-            refinement = root / "conformance/HexSignDetMathlib/RefinementConformance.lean"
-            conversion = root / "conformance/HexSignDetMathlib/ConvertConformance.lean"
+            bridge = root / "HexRealRootsTheory/TarskiSoundness.lean"
+            sign = root / "adapters/HexSignDetTheory/RootProducer.lean"
+            sign_umbrella = root / "HexSignDetTheory.lean"
+            relocated = root / "HexSignDetTheory/Relocated.lean"
+            conformance = root / "conformance/HexRCF/SignDetFieldProofs.lean"
+            completion = root / "conformance/HexSignDet/FieldChecks.lean"
             base = root / "HexRealClosure/BaseTests.lean"
-            model = root / "HexRealClosureMathlib/BaseTests.lean"
+            model = root / "HexRealClosureTheory/BaseTests.lean"
             catalog = root / "HexRealClosure/BaseCatalogTests.lean"
             deflation = root / "conformance/HexRealClosure/DeflationConformance.lean"
-            specialize = root / "adapters/HexRealClosureMathlib/Specialize.lean"
-            specialize_tests = root / "adapters/HexRealClosureMathlib/SpecializeTests.lean"
-            specialize_polynomial = root / "adapters/HexRealClosureMathlib/SpecializePolynomial.lean"
-            specialize_regular = root / "adapters/HexRealClosureMathlib/SpecializeRegular.lean"
-            specialize_query = root / "adapters/HexRealClosureMathlib/SpecializeQuery.lean"
-            specialize_tarski = root / "adapters/HexRealClosureMathlib/SpecializeTarski.lean"
-            specialize_reduction = root / "adapters/HexRealClosureMathlib/SpecializeReduction.lean"
-            specialize_moment = root / "adapters/HexRealClosureMathlib/SpecializeMoment.lean"
-            specialize_replay = root / "adapters/HexRealClosureMathlib/SpecializeReplay.lean"
-            specialize_sample = root / "adapters/HexRealClosureMathlib/SpecializeSample.lean"
-            specialize_selected = root / "adapters/HexRealClosureMathlib/SpecializeSelected.lean"
-            specialize_descriptor = root / "adapters/HexRealClosureMathlib/SpecializeDescriptor.lean"
-            transport_polynomial = root / "adapters/HexRealClosureMathlib/TransportPolynomial.lean"
-            transport_product = root / "adapters/HexRealClosureMathlib/TransportProduct.lean"
-            transport_arithmetic = root / "adapters/HexRealClosureMathlib/TransportArithmetic.lean"
-            transport_query = root / "adapters/HexRealClosureMathlib/TransportQuery.lean"
-            transport_tests = root / "adapters/HexRealClosureMathlib/TransportTests.lean"
-            transport_ring = root / "adapters/HexRealClosureMathlib/TransportRing.lean"
-            transport_power = root / "adapters/HexRealClosureMathlib/TransportPower.lean"
-            transport_tarski = root / "adapters/HexRealClosureMathlib/TransportTarski.lean"
-            transport_closed = root / "adapters/HexRealClosureMathlib/TransportClosed.lean"
-            transport_closed_query = root / "adapters/HexRealClosureMathlib/TransportClosedQuery.lean"
-            transport_regular = root / "adapters/HexRealClosureMathlib/TransportRegular.lean"
-            transport_reduction = root / "adapters/HexRealClosureMathlib/TransportReduction.lean"
-            transport_closed_reduction = root / "adapters/HexRealClosureMathlib/TransportClosedReduction.lean"
-            transport_preparation = root / "adapters/HexRealClosureMathlib/TransportPreparation.lean"
-            transport_moment = root / "adapters/HexRealClosureMathlib/TransportMoment.lean"
-            transport_replay = root / "adapters/HexRealClosureMathlib/TransportReplay.lean"
-            transport_sample = root / "adapters/HexRealClosureMathlib/TransportSample.lean"
-            transport_descriptor = root / "adapters/HexRealClosureMathlib/TransportDescriptor.lean"
-            transport_selected = root / "adapters/HexRealClosureMathlib/TransportSelected.lean"
-            algebraic_transport = root / "adapters/HexRealClosureMathlib/AlgebraicTransport.lean"
-            algebraic_yun = root / "adapters/HexRealClosureMathlib/AlgebraicYun.lean"
-            algebraic_reencode = root / "adapters/HexRealClosureMathlib/AlgebraicReencode.lean"
+            specialize = root / "adapters/HexRealClosureTheory/Specialize.lean"
+            specialize_tests = root / "adapters/HexRealClosureTheory/SpecializeTests.lean"
+            specialize_polynomial = root / "adapters/HexRealClosureTheory/SpecializePolynomial.lean"
+            specialize_regular = root / "adapters/HexRealClosureTheory/SpecializeRegular.lean"
+            specialize_query = root / "adapters/HexRealClosureTheory/SpecializeQuery.lean"
+            specialize_tarski = root / "adapters/HexRealClosureTheory/SpecializeTarski.lean"
+            specialize_reduction = root / "adapters/HexRealClosureTheory/SpecializeReduction.lean"
+            specialize_moment = root / "adapters/HexRealClosureTheory/SpecializeMoment.lean"
+            specialize_replay = root / "adapters/HexRealClosureTheory/SpecializeReplay.lean"
+            specialize_sample = root / "adapters/HexRealClosureTheory/SpecializeSample.lean"
+            specialize_selected = root / "adapters/HexRealClosureTheory/SpecializeSelected.lean"
+            specialize_descriptor = root / "adapters/HexRealClosureTheory/SpecializeDescriptor.lean"
+            transport_polynomial = root / "adapters/HexRealClosureTheory/TransportPolynomial.lean"
+            transport_product = root / "adapters/HexRealClosureTheory/TransportProduct.lean"
+            transport_arithmetic = root / "adapters/HexRealClosureTheory/TransportArithmetic.lean"
+            transport_query = root / "adapters/HexRealClosureTheory/TransportQuery.lean"
+            transport_tests = root / "adapters/HexRealClosureTheory/TransportTests.lean"
+            transport_ring = root / "adapters/HexRealClosureTheory/TransportRing.lean"
+            transport_power = root / "adapters/HexRealClosureTheory/TransportPower.lean"
+            transport_tarski = root / "adapters/HexRealClosureTheory/TransportTarski.lean"
+            transport_closed = root / "adapters/HexRealClosureTheory/TransportClosed.lean"
+            transport_closed_query = root / "adapters/HexRealClosureTheory/TransportClosedQuery.lean"
+            transport_regular = root / "adapters/HexRealClosureTheory/TransportRegular.lean"
+            transport_reduction = root / "adapters/HexRealClosureTheory/TransportReduction.lean"
+            transport_closed_reduction = root / "adapters/HexRealClosureTheory/TransportClosedReduction.lean"
+            transport_preparation = root / "adapters/HexRealClosureTheory/TransportPreparation.lean"
+            transport_moment = root / "adapters/HexRealClosureTheory/TransportMoment.lean"
+            transport_replay = root / "adapters/HexRealClosureTheory/TransportReplay.lean"
+            transport_sample = root / "adapters/HexRealClosureTheory/TransportSample.lean"
+            transport_descriptor = root / "adapters/HexRealClosureTheory/TransportDescriptor.lean"
+            transport_selected = root / "adapters/HexRealClosureTheory/TransportSelected.lean"
+            transport_finite_tests = root / "adapters/HexRealClosureTheory/TransportFiniteTests.lean"
+            algebraic_transport = root / "adapters/HexRealClosureTheory/AlgebraicTransport.lean"
+            algebraic_yun = root / "adapters/HexRealClosureTheory/AlgebraicYun.lean"
+            algebraic_reencode = root / "adapters/HexRealClosureTheory/AlgebraicReencode.lean"
             algebraic_reencode_tests = root / "HexRealClosure/AlgebraicReencodeTests.lean"
-            algebraic_roots = root / "adapters/HexRealClosureMathlib/AlgebraicRoots.lean"
-            union = root / "adapters/HexRealClosureMathlib/Union.lean"
-            union_tests = root / "adapters/HexRealClosureMathlib/UnionTests.lean"
+            algebraic_roots = root / "adapters/HexRealClosureTheory/AlgebraicRoots.lean"
+            union = root / "adapters/HexRealClosureTheory/Union.lean"
+            union_tests = root / "adapters/HexRealClosureTheory/UnionTests.lean"
             root_probes = [root / name for name in (
+                "conformance/HexRCF/PublicGraphCodec.lean",
+                "conformance/HexSignDet/PublicCodec.lean",
                 "examples/RealClosureConsumer/Query.lean",
                 "examples/RealClosureConsumer/Sign.lean",
                 "examples/RealClosureConsumer/Ordered.lean",
@@ -127,70 +185,272 @@ class AdmissionScannerTests(unittest.TestCase):
                 "HexRealClosure/FrameFormatTests.lean",
                 "HexRealClosure/TowerOrder.lean",
                 "HexRealClosure/TowerOrderTests.lean",
-                "adapters/HexRealClosureMathlib/TowerModel.lean",
-                "adapters/HexRealClosureMathlib/TowerModelTests.lean",
-                "adapters/HexRealClosureMathlib/TowerAlgebraic.lean",
-                "adapters/HexRealClosureMathlib/TowerYun.lean",
+                "adapters/HexRealClosureTheory/TowerModel.lean",
+                "adapters/HexRealClosureTheory/TowerModelTests.lean",
+                "adapters/HexRealClosureTheory/TowerAlgebraic.lean",
+                "adapters/HexRealClosureTheory/TowerYun.lean",
                 "HexRealClosure/TowerYunTests.lean",
                 "HexRealClosure/TowerPolynomial.lean",
                 "HexRealClosure/TowerRefinement.lean",
                 "HexRealClosure/TowerRefinementTests.lean",
-                "adapters/HexRealClosureMathlib/TowerRefinement.lean",
+                "adapters/HexRealClosureTheory/TowerRefinement.lean",
                 "HexRealClosure/TowerTransport.lean",
+                "HexRealClosure/TowerReuse.lean",
+                "adapters/HexRealClosureTheory/TowerReuse.lean",
                 "HexRealClosure/TowerTransportTests.lean",
+                "HexRealClosure/BaseInclusion.lean",
+                "HexRealClosure/BaseInclusionTests.lean",
+                "HexRealClosureTheory/BaseInterpretation.lean",
+                "HexRealClosureTheory/BaseRealization.lean",
+                "HexRealClosureTheory/BaseStagedRealization.lean",
+                "HexRealClosureTheory/BaseProvider.lean",
+                "HexRealClosure/BaseSubsequence.lean",
+                "HexRealClosureTheory/BaseSubsequence.lean",
+                "HexRealClosure/BaseEvaluate.lean",
+                "HexRealClosure/BaseEvaluateTests.lean",
+                "HexRealClosure/BaseTower.lean",
+                "HexRealClosure/BasePresentation.lean",
+                "HexRealClosure/BasePermutation.lean",
+                "HexRealClosure/BasePermutationTotal.lean",
+                "HexRealClosure/BaseReconciliation.lean",
+                "HexRealClosure/BaseReconciliationTests.lean",
+                "adapters/HexRealClosureTheory/BaseReconciliationModel.lean",
+                "adapters/HexRealClosureTheory/BaseReconstruction.lean",
+                "adapters/HexRealClosureTheory/BaseReconstructionTests.lean",
+                "HexRealClosure/BasePermutationTests.lean",
+                "HexRealClosureTheory/BasePermutation.lean",
+                "HexRealClosure/BaseStagedReorder.lean",
+                "HexRealClosureTheory/BaseStagedReorder.lean",
+                "HexRealClosureTheory/BaseStagedReorderTests.lean",
+                "HexRealClosureTheory/ReprProviderData.lean",
+                "HexRealClosureTheory/ReprProviderTests.lean",
+                "HexRealClosureTheory/BaseSubsequenceTests.lean",
+                "HexRealClosureTheory/BaseMap.lean",
+                "HexRealClosureTheory/BaseSubsequenceModels.lean",
+                "HexRealClosureTheory/BaseStagedSubsequence.lean",
+                "adapters/HexRealClosureTheory/BaseModel.lean",
+                "HexRealClosureTheory/BasePrefixModels.lean",
+                "HexRealClosureTheory/BaseModels.lean",
+                "adapters/HexRealClosureTheory/BaseFactory.lean",
+                "adapters/HexRealClosureTheory/BaseFactoryTests.lean",
+                "adapters/HexRealClosureTheory/BaseGatherTests.lean",
+                "adapters/HexRealClosureTheory/ContextModel.lean",
+                "adapters/HexRealClosureTheory/CacheModels.lean",
+                "adapters/HexRealClosureTheory/CacheRebuild.lean",
+                "adapters/HexRealClosureTheory/CacheGather.lean",
+                "adapters/HexRealClosureTheory/GatherTests.lean",
+                "adapters/HexRealClosureTheory/SpecializeNested.lean",
+                "adapters/HexRealClosureTheory/MonicEvaluation.lean",
+                "adapters/HexRealClosureTheory/RegularEvaluation.lean",
+                "adapters/HexRealClosureTheory/ModelEvaluation.lean",
+                "adapters/HexRealClosureTheory/AlgebraicEvaluation.lean",
+                "adapters/HexRealClosureTheory/SpecializeFractionRing.lean",
+                "adapters/HexRealClosureTheory/CoefficientMap.lean",
+                "adapters/HexRealClosureTheory/CoefficientQuery.lean",
+                "adapters/HexRealClosureTheory/CoefficientTarski.lean",
+                "adapters/HexRealClosureTheory/CoefficientEmbeddingTests.lean",
+                "adapters/HexRealClosureTheory/CoefficientEmbedding.lean",
+                "adapters/HexRealClosureTheory/CoefficientSelected.lean",
+                "adapters/HexRealClosureTheory/CoefficientDescriptor.lean",
+                "adapters/HexRealClosureTheory/CoefficientReplay.lean",
+                "adapters/HexRealClosureTheory/CoefficientMoment.lean",
+                "adapters/HexRealClosureTheory/CoefficientReduction.lean",
+                "adapters/HexRealClosureTheory/SharedPresentation.lean",
+                "adapters/HexRealClosureTheory/SharedPresentationTests.lean",
+                "adapters/HexRealClosureTheory/BaseOrder.lean",
+                "adapters/HexRealClosureTheory/BaseMapModel.lean",
+                "HexRealClosure/TowerInclusion.lean",
+                "HexRealClosure/LiveContext.lean",
+                "HexRealClosure/LiveContextTests.lean",
+                "adapters/HexRealClosureTheory/TowerInclusion.lean",
+                "adapters/HexRealClosureTheory/LiveContext.lean",
                 "HexRealClosure/TowerConversionTests.lean",
                 "HexRealClosure/TowerPresentationTests.lean",
                 "HexRealClosure/QueryReductionTests.lean",
-                "adapters/HexRealClosureMathlib/TowerTransport.lean",
-                "adapters/HexRealClosureMathlib/TowerTransportTests.lean",
+                "adapters/HexRealClosureTheory/TowerTransport.lean",
+                "adapters/HexRealClosureTheory/TowerTransportTests.lean",
                 "HexRealClosure/BisectionTests.lean",
-                "adapters/HexRealClosureMathlib/Bisection.lean",
-                "adapters/HexRealClosureMathlib/BisectionRoots.lean",
+                "adapters/HexRealClosureTheory/Bisection.lean",
+                "adapters/HexRealClosureTheory/BisectionRoots.lean",
                 "conformance/HexRealClosure/BisectionFrontierTests.lean",
-                "adapters/HexRealClosureMathlib/BisectionFrontier.lean",
-                "adapters/HexRealClosureMathlib/BisectionCounts.lean",
-                "adapters/HexRealClosureMathlib/Isolation.lean",
+                "adapters/HexRealClosureTheory/BisectionFrontier.lean",
+                "adapters/HexRealClosureTheory/BisectionCounts.lean",
+                "adapters/HexRealClosureTheory/Isolation.lean",
                 "conformance/HexRealClosure/IsolationTests.lean",
-                "adapters/HexRealClosureMathlib/BisectionFactor.lean",
-                "adapters/HexRealClosureMathlib/IsolationFactor.lean",
-                "adapters/HexRealClosureMathlib/IsolationRoots.lean",
+                "adapters/HexRealClosureTheory/BisectionFactor.lean",
+                "adapters/HexRealClosureTheory/IsolationFactor.lean",
+                "adapters/HexRealClosureTheory/IsolationRoots.lean",
+                "conformance/HexRealClosure/RootPolicyConformance.lean",
                 "conformance/HexRealClosure/IsolationConformance.lean",
-                "conformance/HexRealClosureMathlib/CoefficientSignsConformance.lean",
-                "adapters/HexRealClosureMathlib/RootOrder.lean",
+                "conformance/HexRealClosureTheory/CoefficientSignsConformance.lean",
+                "adapters/HexRealClosureTheory/RootOrder.lean",
                 "HexRealClosure/RootOrderTests.lean",
                 "HexRealClosure/RootFactorsTests.lean",
                 "HexRealClosure/CompleteRoots.lean",
-                "adapters/HexRealClosureMathlib/IsolationTotal.lean",
-                "adapters/HexRealClosureMathlib/RootTotal.lean",
+                "HexRealClosure/RootPolicyTests.lean",
+                "adapters/HexRealClosureTheory/TowerRootPolicy.lean",
+                "adapters/HexRealClosureTheory/RootPolicy.lean",
+                "adapters/HexRealClosureTheory/IsolationPolicy.lean",
+                "adapters/HexRealClosureTheory/IsolationTotal.lean",
+                "adapters/HexRealClosureTheory/RootTotal.lean",
                 "HexRealClosure/Trivial.lean",
                 "HexRealClosure/TrivialTests.lean",
-                "adapters/HexRealClosureMathlib/Trivial.lean",
+                "adapters/HexRealClosureTheory/Trivial.lean",
+                "HexRealClosure/TrivialTower.lean",
+                "HexRealClosure/TrivialTowerTests.lean",
+                "HexRealClosure/TrivialChecks.lean",
+                "conformance/HexRealClosure/TrivialConformance.lean",
+                "adapters/HexRealClosureTheory/TrivialTower.lean",
+                "adapters/HexRealClosureTheory/TrivialTowerTests.lean",
                 "HexRealClosure/TowerRoots.lean",
                 "HexRealClosure/TowerRootsTests.lean",
-                "adapters/HexRealClosureMathlib/TowerRoots.lean",
+                "adapters/HexRealClosureTheory/TowerRoots.lean",
                 "HexRealClosure/RootTransport.lean",
                 "HexRealClosure/RootCollection.lean",
                 "HexRealClosure/RootCollectionTests.lean",
-                "adapters/HexRealClosureMathlib/RootTransport.lean",
-                "adapters/HexRealClosureMathlib/RootCollection.lean",
-                "adapters/HexRealClosureMathlib/TowerCoverage.lean",
-                "adapters/HexRealClosureMathlib/TowerNaturality.lean",
-                "adapters/HexRealClosureMathlib/TowerEnlargeOrder.lean",
-                "adapters/HexRealClosureMathlib/TowerEnlargeOrderTests.lean",
+                "HexRealClosure/Sample.lean",
+                "HexRealClosure/SampleTests.lean",
+                "HexRealClosure/LocalSampleTests.lean",
+                "conformance/HexRealClosure/SampleConformance.lean",
+                "adapters/HexRealClosureTheory/Sample.lean",
+                "adapters/HexRealClosureTheory/PackingQuery.lean",
+                "adapters/HexRealClosureTheory/PackingMoment.lean",
+                "adapters/HexRealClosureTheory/PackingReduction.lean",
+                "adapters/HexRealClosureTheory/PackingReplay.lean",
+                "adapters/HexRealClosureTheory/FiniteRead.lean",
+                "adapters/HexRealClosureTheory/BaseFinite.lean",
+                "adapters/HexRealClosureTheory/PackingInventory.lean",
+                "adapters/HexRealClosureTheory/BaseFiniteReplay.lean",
+                "adapters/HexRealClosureTheory/PackingNext.lean",
+                "adapters/HexRealClosureTheory/FiniteData.lean",
+                "adapters/HexRealClosureTheory/FiniteSupport.lean",
+                "adapters/HexRealClosureTheory/FiniteBatch.lean",
+                "adapters/HexRealClosureTheory/NativeBatch.lean",
+                "adapters/HexRealClosureTheory/FiniteOperands.lean",
+                "adapters/HexRealClosureTheory/FiniteLift.lean",
+                "adapters/HexRealClosureTheory/FiniteScalars.lean",
+                "adapters/HexRealClosureTheory/FiniteBase.lean",
+                "adapters/HexRealClosureTheory/FiniteDependencies.lean",
+                "adapters/HexRealClosureTheory/FiniteConditions.lean",
+                "adapters/HexRealClosureTheory/FiniteReconstruction.lean",
+                "experiments/KernelReplay/FiniteReconstruction.lean",
+                "experiments/KernelReplay/FiniteThomWitness.lean",
+                "experiments/KernelReplay/FiniteThomJoint.lean",
+                "adapters/HexRealClosureTheory/FiniteChain.lean",
+                "experiments/KernelReplay/FiniteChain.lean",
+                "adapters/HexRealClosureTheory/NativePackets.lean",
+                "experiments/KernelReplay/NativePackets.lean",
+                "adapters/HexRealClosureTheory/NativeModels.lean",
+                "adapters/HexRealClosureTheory/SignReplay.lean",
+                "HexRealClosure/RecordOperations.lean",
+                "adapters/HexRealClosureTheory/NativeReplay.lean",
+                "experiments/KernelReplay/NativeReplay.lean",
+                "HexRealClosure/RecordQueries.lean",
+                "HexRealClosure/InversePackets.lean",
+                "adapters/HexRealClosureTheory/NativeValues.lean",
+                "adapters/HexRealClosureTheory/NativeRecords.lean",
+                "adapters/HexRealClosureTheory/NativeFactory.lean",
+                "experiments/KernelReplay/NativeValues.lean",
+                "experiments/KernelReplay/NativeFactory.lean",
+                "HexRealClosure/ChildPackets.lean",
+                "adapters/HexRealClosureTheory/NativeCodecs.lean",
+                "experiments/KernelReplay/NativeChildren.lean",
+                "HexRealClosure/RecordReaders.lean",
+                "HexRealClosure/QueryOperations.lean",
+                "adapters/HexRealClosureTheory/NativeReaders.lean",
+                "experiments/KernelReplay/NativeReaders.lean",
+                "adapters/HexRealClosureTheory/NativeAssembly.lean",
+                "adapters/HexRealClosureTheory/NativeAssemblyModels.lean",
+                "experiments/KernelReplay/NativeAssembly.lean",
+                "experiments/KernelReplay/NativeAssemblyModels.lean",
+                "experiments/KernelReplay/NativeAssemblyStaged.lean",
+                "experiments/KernelReplay/FrameEncode.lean",
+                "experiments/KernelReplay/FrameData.lean",
+                "experiments/KernelReplay/FrameDataProbe.lean",
+                "experiments/KernelReplay/FrameSource.lean",
+                "experiments/KernelReplay/NativeAssemblyNestedData.lean",
+                "experiments/KernelReplay/FrameNested.lean",
+                "experiments/KernelReplay/FrameJoint.lean",
+                "experiments/KernelReplay/FrameFrontier.lean",
+                "experiments/KernelReplay/FrameOwners.lean",
+                "experiments/KernelReplay/FrameOperand.lean",
+                "experiments/KernelReplay/FrameStorage.lean",
+                "experiments/KernelReplay/FramePublic.lean",
+                "experiments/KernelReplay/DecisionTrace.lean",
+                "experiments/KernelReplay/CoefficientSuffix.lean",
+                "experiments/KernelReplay/CoefficientMembers.lean",
+                "experiments/KernelReplay/NativeAssemblyUse.lean",
+                "experiments/KernelReplay/NativeModels.lean",
+                "experiments/KernelReplay/FiniteDependencies.lean",
+                "experiments/KernelReplay/FiniteBase.lean",
+                "experiments/KernelReplay/BaseLookup.lean",
+                "experiments/KernelReplay/CoefficientLookup.lean",
+                "experiments/KernelReplay/PackingLookup.lean",
+                "experiments/KernelReplay/LookupReplay.lean",
+                "experiments/KernelReplay/ProofAudit.lean",
+                "experiments/KernelReplay/AxiomClosure.lean",
+                "experiments/KernelReplay/AxiomClosureNative.lean",
+                "experiments/KernelReplay/AxiomClosureTest.lean",
+                "experiments/KernelReplay/AxiomClosureImports.lean",
+                "experiments/KernelReplay/SupportAudit.lean",
+                "experiments/KernelReplay/ProviderHistoryAudit.lean",
+                "experiments/KernelReplay/RationalCodecAudit.lean",
+                "HexRealClosure/BaseJsonTests.lean",
+                "HexRealClosure/SignatureCodecTests.lean",
+                "experiments/KernelReplay/GuardDependencyControls.lean",
+                "experiments/KernelReplay/GuardJointPublicAudit.lean",
+                "experiments/KernelReplay/FiniteRange.lean",
+                "experiments/KernelReplay/FiniteChecks.lean",
+                "experiments/KernelReplay/CoefficientMembers.lean",
+                "experiments/KernelReplay/CoefficientEntry.lean",
+                "experiments/KernelReplay/FiniteLift.lean",
+                "experiments/KernelReplay/FiniteOperands.lean",
+                "experiments/KernelReplay/FiniteSupport.lean",
+                "experiments/KernelReplay/FiniteData.lean",
+                "experiments/KernelReplay/FiniteWitness.lean",
+                "experiments/KernelReplay/FiniteJoint.lean",
+                "adapters/HexRealClosureTheory/SampleTests.lean",
+                "adapters/HexRealClosureTheory/RootTransport.lean",
+                "adapters/HexRealClosureTheory/RootCollection.lean",
+                "adapters/HexRealClosureTheory/TowerCoverage.lean",
+                "adapters/HexRealClosureTheory/TowerNaturality.lean",
+                "adapters/HexRealClosureTheory/TowerEnlargeOrder.lean",
+                "adapters/HexRealClosureTheory/TowerEnlargeOrderTests.lean",
                 "HexRealClosure/TowerEnlargeOrderTests.lean",
                 "HexRealClosure/TowerEnlargement.lean",
-                "adapters/HexRealClosureMathlib/RootFactors.lean")]
-            qadjoin = root / "adapters/HexRealClosureMathlib/QAdjoin.lean"
+                "adapters/HexRealClosureTheory/RootFactors.lean",
+                "HexRealClosure/TowerBytes.lean",
+                "HexRealClosure/FrameRoundtrip.lean",
+                "HexRealClosure/RootFormat.lean",
+                "HexRealClosure/RootBytes.lean",
+                "conformance/HexRealClosure/RootFormatConformance.lean",
+                "HexRealClosure/ReprFormat.lean",
+                "HexRealClosure/TowerRepr.lean",
+                "conformance/HexRealClosure/ReprConformance.lean",
+                "conformance/HexRealClosure/ReprChecks.lean",
+                "conformance/HexRealClosure/BytesConformance.lean",
+                "HexRealClosure/InverseEquation.lean",
+                "adapters/HexRealClosureTheory/InverseEquation.lean",
+                "adapters/HexRealClosureTheory/SuppliedInverse.lean",
+                "HexRealClosure/NumberField.lean",
+                "adapters/HexRealClosureTheory/NumberField.lean",
+                "conformance/HexRealClosure/NumberFieldConformance.lean",
+                "HexRealClosure/NumberFieldTower.lean",
+                "adapters/HexRealClosureTheory/NumberFieldTower.lean",
+                "conformance/HexRealClosure/NumberFieldSamples.lean",
+                "conformance/HexRealClosure/BasicConformance.lean",
+                "conformance/HexRealClosure/RiobooConformance.lean",
+                "conformance/HexRealClosure/StrzConformance.lean")]
+            qadjoin = root / "adapters/HexRealClosureTheory/QAdjoin.lean"
             qadjoin_tests = root / "HexRealClosure/QAdjoinTests.lean"
             dependency = root / "HexExtra/SelectedField.lean"
-            arithmetic = [root / f"adapters/HexRealClosureMathlib/{name}.lean"
+            arithmetic = [root / f"adapters/HexRealClosureTheory/{name}.lean"
                           for name in ("Algebraic", "AlgebraicClean", "AlgebraicValue",
                                        "BaseClean", "AlgebraicTower")]
             for path in root_probes:
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-            for path in (entry, bridge, sign, conformance, completion, handle, tables,
-                         reencoding, roots, refinement, conversion, base, model, catalog,
+            for path in (entry, bridge, sign, sign_umbrella, relocated, conformance, completion, base, model, catalog,
                          deflation, specialize, specialize_tests, specialize_polynomial,
                          specialize_regular, specialize_query, specialize_tarski,
                          specialize_reduction, specialize_moment, specialize_replay,
@@ -200,7 +460,7 @@ class AdmissionScannerTests(unittest.TestCase):
                          transport_tarski, transport_closed, transport_closed_query,
                          transport_regular, transport_reduction, transport_closed_reduction,
                          transport_preparation, transport_moment, transport_replay,
-                         transport_sample, transport_descriptor, transport_selected,
+                         transport_sample, transport_descriptor, transport_selected, transport_finite_tests,
                          algebraic_transport, algebraic_yun, algebraic_reencode,
                          algebraic_reencode_tests, algebraic_roots,
                          union, union_tests,
@@ -208,17 +468,13 @@ class AdmissionScannerTests(unittest.TestCase):
                 path.parent.mkdir(parents=True, exist_ok=True)
             for path in arithmetic:
                 path.write_text("public import HexRCF.RealCoefficients\n", encoding="utf-8")
-            entry.write_text("public import HexRealRootsMathlib.TarskiSoundness\n", encoding="utf-8")
+            entry.write_text("public import HexRealRootsTheory.TarskiSoundness\n", encoding="utf-8")
             bridge.write_text("theorem check_rootSum : True := by trivial\n", encoding="utf-8")
             sign.write_text("public import HexRCF.RealCoefficients\n", encoding="utf-8")
+            sign_umbrella.write_text("public import HexSignDetTheory.Relocated\n", encoding="utf-8")
+            relocated.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
             conformance.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             completion.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-            handle.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-            tables.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-            reencoding.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-            roots.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-            refinement.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-            conversion.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             base.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             model.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             catalog.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
@@ -237,16 +493,51 @@ class AdmissionScannerTests(unittest.TestCase):
             specialize_descriptor.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             transport_polynomial.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             transport_product.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-            for path in (transport_arithmetic, transport_query, transport_tests, transport_ring, transport_power, transport_tarski, transport_closed, transport_closed_query, transport_regular, transport_reduction, transport_closed_reduction, transport_preparation, transport_moment, transport_replay, transport_sample, transport_descriptor, transport_selected, algebraic_transport, algebraic_yun, algebraic_reencode, algebraic_reencode_tests, algebraic_roots):
+            for path in (transport_arithmetic, transport_query, transport_tests, transport_ring, transport_power, transport_tarski, transport_closed, transport_closed_query, transport_regular, transport_reduction, transport_closed_reduction, transport_preparation, transport_moment, transport_replay, transport_sample, transport_descriptor, transport_selected, transport_finite_tests, algebraic_transport, algebraic_yun, algebraic_reencode, algebraic_reencode_tests, algebraic_roots):
                 path.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             union.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             union_tests.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             qadjoin.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             qadjoin_tests.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
             dependency.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
+            gather_cells = root / "conformance/HexRCF/GatherCellsConformance.lean"
+            gather_cells.parent.mkdir(parents=True, exist_ok=True)
+            gather_cells.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+            gather_cells.with_name("AlgebraicCellsStress.lean").write_text(
+                "public import HexExtra.SelectedField\n", encoding="utf-8")
+            gather_cells.with_name("AlgebraicCellsConformance.lean").write_text(
+                "public import HexExtra.SelectedField\n", encoding="utf-8")
+            gather_cells.with_name("AlgebraicPreparationConformance.lean").write_text(
+                "public import HexExtra.SelectedField\n", encoding="utf-8")
+            live_probes = []
+            for module in ("HexRealClosure.LiveRequest", "HexRealClosure.LiveRequestTests",
+                           "HexRealClosureTheory.LiveRequest", "HexRealClosureTheory.LiveRequestTests",
+                           "HexRealClosure.ReconciledGather", "HexRealClosure.ReconciledGatherTests",
+                           "HexRealClosure.ReconciledLive", "HexRealClosureTheory.ReconciledContext",
+                           "HexRealClosureTheory.OwnerReader", "HexRealClosureTheory.ReconciledGatherModel",
+                           "HexRealClosureTheory.ReconciledGatherTests", "HexRealClosureTheory.ReconciledLive",
+                           "HexRealClosureTheory.ReconciledEnlargementTests",
+                           "HexRealClosureTheory.ReconciledRealization", "HexRealClosureTheory.ReconciledRealizationTests",
+                           "HexRealClosure.ReconciledBase", "HexRealClosure.ReconciledBaseTests",
+                           "HexRealClosureTheory.ReconciledCatalog", "HexRealClosureTheory.ReconciledCatalogTests",
+                           "HexRealClosureTheory.SharedRealization", "HexRealClosureTheory.SharedRealizationTests"):
+                directory = root / ("adapters" if "Theory" in module else "")
+                path = directory / (module.replace(".", "/") + ".lean")
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+                live_probes.append(path)
             with patch.object(audit, "ROOT", root), redirect_stdout(StringIO()):
                 audit.check()
-                for probe in (union, union_tests, qadjoin, qadjoin_tests):
+                # Relocated companion proofs remain covered even without any
+                # conformance/adapter imports of their public umbrella.
+                relocated.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "unapproved admission in HexSignDetTheory/Relocated"):
+                    audit.check()
+                relocated.unlink()
+                with self.assertRaisesRegex(ValueError, "missing local import HexSignDetTheory.Relocated"):
+                    audit.check()
+                relocated.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
+                for probe in (union, union_tests, qadjoin, qadjoin_tests, *live_probes):
                     probe.unlink()
                     with self.assertRaisesRegex(ValueError, "missing local import"):
                         audit.check()
@@ -262,21 +553,7 @@ class AdmissionScannerTests(unittest.TestCase):
                     with self.assertRaisesRegex(ValueError, "unapproved admission"):
                         audit.check()
                     probe.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-                refinement.unlink()
-                with self.assertRaisesRegex(ValueError, "missing local import"):
-                    audit.check()
-                refinement.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
-                with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/HexSignDetMathlib/RefinementConformance"):
-                    audit.check()
-                refinement.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-                conversion.unlink()
-                with self.assertRaisesRegex(ValueError, "missing local import"):
-                    audit.check()
-                conversion.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
-                with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/HexSignDetMathlib/ConvertConformance"):
-                    audit.check()
-                conversion.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-                for probe in (specialize, specialize_tests, specialize_polynomial, specialize_regular, specialize_query, specialize_tarski, specialize_reduction, specialize_moment, specialize_replay, specialize_sample, specialize_selected, specialize_descriptor, transport_polynomial, transport_product, transport_arithmetic, transport_query, transport_tests, transport_ring, transport_power, transport_tarski, transport_closed, transport_closed_query, transport_regular, transport_reduction, transport_closed_reduction, transport_preparation, transport_moment, transport_replay, transport_sample, transport_descriptor, transport_selected, algebraic_transport, algebraic_yun, algebraic_reencode, algebraic_reencode_tests, algebraic_roots):
+                for probe in (specialize, specialize_tests, specialize_polynomial, specialize_regular, specialize_query, specialize_tarski, specialize_reduction, specialize_moment, specialize_replay, specialize_sample, specialize_selected, specialize_descriptor, transport_polynomial, transport_product, transport_arithmetic, transport_query, transport_tests, transport_ring, transport_power, transport_tarski, transport_closed, transport_closed_query, transport_regular, transport_reduction, transport_closed_reduction, transport_preparation, transport_moment, transport_replay, transport_sample, transport_descriptor, transport_selected, transport_finite_tests, algebraic_transport, algebraic_yun, algebraic_reencode, algebraic_reencode_tests, algebraic_roots):
                     probe.unlink()
                     with self.assertRaisesRegex(ValueError, "missing local import"):
                         audit.check()
@@ -299,15 +576,8 @@ class AdmissionScannerTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/HexRealClosure/DeflationConformance"):
                     audit.check()
                 deflation.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
-                handle.unlink()
-                with self.assertRaisesRegex(ValueError, "missing local import"):
-                    audit.check()
-                handle.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
-                with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/HexSignDetMathlib/QueryHandleConformance"):
-                    audit.check()
-                handle.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
                 bridge.write_text("theorem check_rootSum : True := by sorry\n", encoding="utf-8")
-                with self.assertRaisesRegex(ValueError, "unapproved admission in adapters/HexRealRootsMathlib"):
+                with self.assertRaisesRegex(ValueError, "unapproved admission in HexRealRootsTheory"):
                     audit.check()
                 bridge.write_text("theorem check_rootSum : True := by trivial\n", encoding="utf-8")
                 dependency.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
@@ -315,14 +585,14 @@ class AdmissionScannerTests(unittest.TestCase):
                     audit.check()
                 dependency.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
                 completion.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
-                with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/HexSignDetMathlib/CompletionConformance"):
+                with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/HexSignDet/FieldChecks"):
                     audit.check()
                 completion.unlink()
                 with self.assertRaisesRegex(ValueError, "missing local import"):
                     audit.check()
                 completion.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
 
-                for library in ("HexSignDetMathlib", "HexRealClosureMathlib"):
+                for library in ("HexSignDetTheory", "HexRealClosureTheory"):
                     additional = root / "conformance" / library / "Nested/AnotherConformance.lean"
                     additional.parent.mkdir(parents=True, exist_ok=True)
                     additional.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
@@ -337,25 +607,45 @@ class AdmissionScannerTests(unittest.TestCase):
                             audit.check()
                         shadow.unlink()
                     additional.unlink()
-                adapter_shadow = root / "HexSignDetMathlib/RootProducer.lean"
+                proof = root / "bench/HexSignDetTheory/ProofProbe/Injected.lean"
+                proof.parent.mkdir(parents=True, exist_ok=True)
+                proof.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
+                audit.check()
+                proof.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "unapproved admission in bench/HexSignDetTheory/ProofProbe"):
+                    audit.check()
+                for tactic in ("native_decide", "ofReduceBool"):
+                    proof.write_text("theorem bad : True := by " + tactic + "\n", encoding="utf-8")
+                    with self.assertRaisesRegex(ValueError, "unapproved admission in bench/HexSignDetTheory/ProofProbe"):
+                        audit.check()
+                proof.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
+                proof_shadow = root / "adapters/HexSignDetTheory/ProofProbe/Injected.lean"
+                proof_shadow.parent.mkdir(parents=True, exist_ok=True)
+                proof_shadow.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "proof-probe module .* is shadowed"):
+                    audit.check()
+                proof_shadow.unlink()
+                proof.unlink()
+                adapter_shadow = root / "HexSignDetTheory/RootProducer.lean"
                 adapter_shadow.parent.mkdir(parents=True, exist_ok=True)
                 adapter_shadow.write_text("theorem checked : True := by trivial\n", encoding="utf-8")
                 with self.assertRaisesRegex(ValueError, "adapter module .* is shadowed"):
                     audit.check()
                 adapter_shadow.unlink()
-                nested_adapter = root / "adapters/HexSignDetMathlib/Nested/AnotherAdapter.lean"
+                nested_adapter = root / "adapters/HexSignDetTheory/Nested/AnotherAdapter.lean"
                 nested_adapter.parent.mkdir(exist_ok=True)
                 nested_adapter.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
-                with self.assertRaisesRegex(ValueError, "unapproved admission in adapters/HexSignDetMathlib/Nested/AnotherAdapter"):
+                with self.assertRaisesRegex(ValueError, "unapproved admission in adapters/HexSignDetTheory/Nested/AnotherAdapter"):
                     audit.check()
                 nested_adapter.unlink()
-                tables.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
-                with self.assertRaisesRegex(ValueError, "unapproved admission in conformance/HexSignDetMathlib/TableConformance"):
-                    audit.check()
-                tables.unlink()
-                with self.assertRaisesRegex(ValueError, "missing local import"):
-                    audit.check()
-                tables.write_text("public import HexExtra.SelectedField\n", encoding="utf-8")
+                for library in ("NestedTransport", "FiniteMatrix"):
+                    nested_rcf = root / f"conformance/HexRCF/{library}/Source.lean"
+                    nested_rcf.parent.mkdir(parents=True, exist_ok=True)
+                    nested_rcf.write_text("theorem bad : True := by sorry\n", encoding="utf-8")
+                    with self.assertRaisesRegex(ValueError,
+                            f"unapproved admission in conformance/HexRCF/{library}/Source"):
+                        audit.check()
+                    nested_rcf.unlink()
                 sign.write_text("public import HexRCF.RealCoefficients\ntheorem bad : True := by stop\n",
                                 encoding="utf-8")
                 with self.assertRaisesRegex(ValueError, "unapproved admission"):

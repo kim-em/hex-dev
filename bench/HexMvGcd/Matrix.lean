@@ -8,7 +8,7 @@ import HexMvGcd.Families
 import LeanBench
 
 /-!
-Mode-3 registrations for the route-dependent `hex-mv-gcd` families.
+Fixed-budget registrations for the route-dependent `hex-mv-gcd` families.
 
 The SPEC gives probe counts but no machine-operation model for these routes.
 Each registration therefore uses one canonical hard input and an enforced
@@ -56,7 +56,7 @@ def mode3Config (expectedHash : UInt64) (maxSeconds : Float) :
     warmupFirstIter := true, expectedHash := some expectedHash,
     tags := #[scheduledHardwareTag] }
 
-/-- Run one operation under its body-scoped mode-3 ceiling.  The process cap
+/-- Run one operation under its body-scoped fixed-budget ceiling.  The process cap
 in `mode3Config` is only a safety bound; a body overrun is reported directly. -/
 def budgeted (ceilingNanos : Nat) (work : IO UInt64) : IO UInt64 := do
   let start ← IO.monoNanosNow
@@ -138,7 +138,7 @@ def runSquarefree3m1to5 (_ : Unit) : IO UInt64 := budgeted 8_000_000_000 do
 univariate image-gcd operands, so the SPEC's `≤ n` probe count does not derive a
 tight wall model.  The old `2..8` arity grid was also invalid: `(f, f + 1)`
 fired the one-step-remainder prepass before route 1.  No cited bound covers
-image production plus certificate replay. Mode 3 pins genuine route-1 dense
+image production plus certificate replay. The fixed registrations pin genuine route-1 dense
 and sparse arity-8 inputs. Their 2 s ceilings exceed the worst clean
 calibration medians, 558.816 ms and 519.612 ms, by 3.58× and 3.85×. -/
 setup_fixed_benchmark runDenseCoprime8 where
@@ -149,14 +149,14 @@ setup_fixed_benchmark runSparseCoprime8 where
 /- Brown's `O(D)` count omits the cost of every image gcd, interpolation, CRT,
 and checked replay.  The attempted `3d5, 3d10, 3d20, 4d5, 5d5` grid varies
 several of those costs at once, and no published bound covers this concrete
-pipeline. Mode 3 uses `5d5`; 50 s is 3.04× its clean 16.466 s median. -/
+pipeline. The fixed registration uses `5d5`; 50 s is 3.04× its clean 16.466 s median. -/
 setup_fixed_benchmark runDenseGcd5d5 where
   mode3Config 0xbd6798d21ee1b1e0 90.0
 
 /- The sparse family deliberately reaches the dispatcher and dense PRS
 fallback, for which the SPEC gives no useful bound.  Degree-only endpoints do
 not control coefficient swell, and the degree-4096 bounded declines measured
-no completed gcd. Mode 3 uses the complete `5d16` call; 4 s is 3.65× its
+no completed gcd. The fixed registration uses the complete `5d16` call; 4 s is 3.65× its
 clean 1.097 s median. -/
 setup_fixed_benchmark runSparseStress5d16 where
   mode3Config 0xbd6798d21ee1b1e0 20.0
@@ -164,7 +164,7 @@ setup_fixed_benchmark runSparseStress5d16 where
 /- Rational lifting adds denominator scans and scaling to a dispatcher whose
 integer-route probe costs are already unmodelled.  The attempted five-shape
 grid changes arity, dense size, and coefficient work together, and no cited
-upper bound covers the profiled rational producer. Mode 3 pins `5d5`; 10 s is
+upper bound covers the profiled rational producer. The fixed registration pins `5d5`; 10 s is
 3.10× its clean 3.230 s median. -/
 setup_fixed_benchmark runRationalGcd5d5 where
   mode3Config 0xcb197b68a2a27c66 45.0
@@ -172,7 +172,7 @@ setup_fixed_benchmark runRationalGcd5d5 where
 /- Yun performs one dispatcher-dependent gcd per level and variable.  The
 attempted multiplicity patterns vary arity, factor count, and missing levels,
 so `n * M` probe count is not a wall model; no cited bound covers the gcd work.
-Mode 3 pins the hardest observed `3m1-to-5` input; 8 s is 3.33× its clean
+The fixed registration pins the hardest observed `3m1-to-5` input; 8 s is 3.33× its clean
 2.405 s median. -/
 setup_fixed_benchmark runSquarefree3m1to5 where
   mode3Config 0x664d8f4f4d3e40ef 20.0

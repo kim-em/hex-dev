@@ -1,0 +1,9 @@
+Hex.RealAlgebraicScaling.runSqrt4    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a3ddc94-dirty, 2026-10-04T20:02:57Z, host=chungus2
+  repeat 0  378.417 ms
+  median: 378.417 ms    min: 378.417 ms    max: 378.417 ms
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 67_448 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Sqrt-4-Z3-1-Native.json

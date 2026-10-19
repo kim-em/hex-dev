@@ -374,73 +374,23 @@ class DimensionEvidenceTests(unittest.TestCase):
             self.assertEqual(summary["validation_errors"], [])
             self.assertEqual(len(summary["observations"]), 2)
 
-    def test_script_failure_exit_is_distinct_from_inconclusive(self):
+    def test_retired_collection_cli_stops_before_running_commands(self):
         script = bench.ROOT/"scripts/bench/sign_det_maximal_matrix.py"
         with patch.object(sys, "argv", [str(script), "--output", "/unused-test-output"]), \
-             patch.object(subprocess, "check_output", side_effect=RuntimeError("forced early failure")), \
+             patch.object(subprocess, "check_output") as output, \
+             patch.object(subprocess, "Popen") as spawn, \
+             patch.object(subprocess, "run") as run, \
              redirect_stderr(io.StringIO()) as stderr:
             with self.assertRaises(SystemExit) as exit_error:
                 runpy.run_path(str(script), run_name="__main__")
+            with self.assertRaises(SystemExit) as direct_error:
+                bench.main()
+            self.assertEqual(direct_error.exception.code, 2)
         self.assertEqual(exit_error.exception.code, 2)
-        self.assertIn("forced early failure", stderr.getvalue())
-
-    def test_main_dispatches_dimension_inventory_and_retains_exit_status(self):
-        with TemporaryDirectory() as d:
-            root, out = Path(d)/"source", Path(d)/"records"
-            exe = root/".lake/build/bin/hexsigndet_bench"
-            exe.parent.mkdir(parents=True)
-            exe.write_bytes(b"test executable")
-            for name in ("scripts/bench/sign_det_maximal_matrix.py",
-                         "scripts/bench/test_sign_det_maximal_matrix.py",
-                         "scripts/bench/sign_det_compare.py", "reports/sign-det-maximal-matrices.md"):
-                p = root/name
-                p.parent.mkdir(parents=True, exist_ok=True)
-                p.write_text("test source")
-            commands = []
-            fail = [False]
-            def run(command, **kwargs):
-                commands.append(command)
-                if command[0] == str(exe):
-                    if command[1] == "inspect-maximal-matrix-dimensions":
-                        kwargs["stdout"].write("".join(json.dumps(r)+"\n" for r in self.rows))
-                    else:
-                        result = copy.deepcopy(self.result)
-                        result["function"] = command[2]
-                        if fail[0]:
-                            result["points"][0]["status"] = "error"
-                        if command[2].endswith("runCheckDimension"):
-                            for point in result["points"]:
-                                point["result_hash"] = hex(11)
-                        Path(command[-1]).write_text(json.dumps({"export_schema_version": 1, "results": [result]}))
-                return Mock(returncode=0)
-            def git(command, **kwargs):
-                return "source\n" if command[1] == "rev-parse" else ""
-            with patch.object(bench, "ROOT", root), \
-                 patch.object(sys, "argv", ["collector", "--parameter", "matrix-size", "--output", str(out)]), \
-                 patch.object(bench.subprocess, "check_output", side_effect=git), \
-                 patch.object(bench.subprocess, "run", side_effect=run), \
-                 patch.object(bench, "harness_binding", return_value={"clean": True}), \
-                 patch.object(bench, "archive_sources"), \
-                 patch.object(bench, "source_hashes", return_value={}), \
-                 patch.object(bench, "acquire_cpu", return_value=(0, Mock())), \
-                 patch.object(bench.os, "sched_setaffinity"), \
-                 patch.object(bench.os, "sched_getaffinity", return_value={0}):
-                self.assertEqual(bench.main(), 1)
-                fail[0] = True
-                failed_out = Path(d)/"failed-records"
-                sys.argv[-1] = str(failed_out)
-                with self.assertRaisesRegex(ValueError, "scientific validation failed"):
-                    bench.main()
-            self.assertIn([str(exe), "inspect-maximal-matrix-dimensions"], commands)
-            metadata = json.loads((out/"metadata.json").read_text())
-            self.assertEqual(metadata["collector_exit_code"], 1)
-            self.assertEqual(metadata["schema"], "hex-sign-det-maximal-matrix-timing-v2")
-            self.assertEqual(metadata["parameter"], "matrix-size")
-            failure = json.loads((failed_out/"metadata.json").read_text())
-            self.assertEqual(failure["collector_exit_code"], 2)
-            self.assertEqual(failure["state"], "failed")
-            self.assertTrue((failed_out/"runSolveDimension.json").exists())
-            self.assertTrue((failed_out/"runCheckDimension.json").exists())
+        self.assertIn("Reference-solve scaling registrations are retired", stderr.getvalue())
+        output.assert_not_called()
+        spawn.assert_not_called()
+        run.assert_not_called()
 
     def test_natural_dimension_records(self):
         self.assertEqual(self.inventory(self.rows), self.expected)

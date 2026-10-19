@@ -1,0 +1,6 @@
+{
+  "path": "HexBareiss/Kernel.lean",
+  "baseline_blob": "26fd6c151a22dbe6b883a6d3d709241b86f78624",
+  "current_blob": "e2537b29fe3b094657fd2699eba66e3382e966d3",
+  "reason": "Adds `meta import HexMatrix.Packed` so the module's elaboration-time #guard checks can evaluate HexMatrix code now that HexMatrix is not precompiled. The module already imports HexMatrix.Packed publicly; a meta import only makes that code available to elaboration-time evaluation and changes no definition, compiled code or runtime import of the hexbz_factor_service executable."
+}

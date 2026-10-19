@@ -7,7 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.Language
-import HexRealRootsMathlib.IsolateRoots
+import HexRealRootsTheory.IsolateRoots
 
 public section
 
@@ -30,8 +30,8 @@ private def zeroNe : Atom := ⟨0, .ne⟩
 
 /-- The real evaluation of the executable zero polynomial is zero. -/
 private theorem eval_zero (x : ℝ) :
-    Polynomial.aeval x (HexPolyZMathlib.toPolynomial (0 : ZPoly)) = 0 := by
-  rw [HexPolyZMathlib.toPolynomial_zero]
+    Polynomial.aeval x (HexPolyZTheory.toPolynomial (0 : ZPoly)) = 0 := by
+  rw [HexPolyZTheory.toPolynomial_zero]
   simp
 
 /-- The asymmetric polynomial `x³ - 1`, whose coefficient order is observable. -/
@@ -47,21 +47,21 @@ example : Cmp.ne.toProp (1 : ℝ) 2 := by norm_num [Cmp.toProp]
 
 example (p : ZPoly) (x : ℝ) :
     (Atom.mk p .gt).toProp x ↔
-      0 < Polynomial.aeval x (HexPolyZMathlib.toPolynomial p) :=
+      0 < Polynomial.aeval x (HexPolyZTheory.toPolynomial p) :=
   Iff.rfl
 
 example : zeroEq.toProp 2 := by
-  change Polynomial.aeval 2 (HexPolyZMathlib.toPolynomial (0 : ZPoly)) = 0
+  change Polynomial.aeval 2 (HexPolyZTheory.toPolynomial (0 : ZPoly)) = 0
   exact eval_zero 2
 
 example : cubeMinusOnePos.toProp 2 := by
   simp only [cubeMinusOnePos, Atom.toProp, Cmp.toProp,
-    HexRealRootsMathlib.aeval_toPolynomial_ofCoeffs]
+    HexRealRootsTheory.aeval_toPolynomial_ofCoeffs]
   norm_num [Finset.sum_range_succ]
 
 example : ¬cubeMinusOnePos.toProp 0 := by
   simp only [cubeMinusOnePos, Atom.toProp, Cmp.toProp,
-    HexRealRootsMathlib.aeval_toPolynomial_ofCoeffs]
+    HexRealRootsTheory.aeval_toPolynomial_ofCoeffs]
   norm_num [Finset.sum_range_succ]
 
 example : (Formula.atom zeroEq |>.and (.not (.atom zeroNe)) |>.toProp) (1 / 2) := by
@@ -76,13 +76,13 @@ example : (Formula.imp .ff .ff).toProp 0 := by simp [Formula.toProp]
 example : (Sentence.forallReal (.atom zeroEq)).toProp := by
   simp only [Sentence.toProp, Formula.toProp]
   intro x
-  change Polynomial.aeval x (HexPolyZMathlib.toPolynomial (0 : ZPoly)) = 0
+  change Polynomial.aeval x (HexPolyZTheory.toPolynomial (0 : ZPoly)) = 0
   exact eval_zero x
 
 example : (Sentence.existsReal (.atom zeroEq)).toProp := by
   simp only [Sentence.toProp, Formula.toProp]
   refine ⟨1, ?_⟩
-  change Polynomial.aeval 1 (HexPolyZMathlib.toPolynomial (0 : ZPoly)) = 0
+  change Polynomial.aeval 1 (HexPolyZTheory.toPolynomial (0 : ZPoly)) = 0
   exact eval_zero 1
 
 example : (Sentence.forallIoc (Dyadic.ofInt 0) (Dyadic.ofInt 1) .tt).toProp := by
@@ -91,9 +91,9 @@ example : (Sentence.forallIoc (Dyadic.ofInt 0) (Dyadic.ofInt 1) .tt).toProp := b
 example : (Sentence.existsIoc (Dyadic.ofInt 0) (Dyadic.ofInt 1) (.atom zeroEq)).toProp := by
   simp only [Sentence.toProp, Formula.toProp]
   refine ⟨1, ?_, ?_⟩
-  · rw [HexRealRootsMathlib.toReal_ofInt, HexRealRootsMathlib.toReal_ofInt]
+  · rw [HexRealRootsTheory.toReal_ofInt, HexRealRootsTheory.toReal_ofInt]
     norm_num [Set.mem_Ioc]
-  · change Polynomial.aeval 1 (HexPolyZMathlib.toPolynomial (0 : ZPoly)) = 0
+  · change Polynomial.aeval 1 (HexPolyZTheory.toPolynomial (0 : ZPoly)) = 0
     exact eval_zero 1
 
 /-- A genuinely fractional dyadic endpoint uses the shift exponent convention. -/
@@ -101,18 +101,18 @@ example : (Sentence.existsIoc (Dyadic.ofInt 0)
     ((Dyadic.ofInt 1) >>> (1 : Int)) .tt).toProp := by
   simp only [Sentence.toProp, Formula.toProp]
   refine ⟨1 / 2, ?_⟩
-  rw [HexRealRootsMathlib.toReal_ofInt,
-    HexRealRootsMathlib.toReal_ofInt_shiftRight]
+  rw [HexRealRootsTheory.toReal_ofInt,
+    HexRealRootsTheory.toReal_ofInt_shiftRight]
   norm_num [Set.mem_Ioc]
 
 /-- Reversed endpoints make the half-open interval empty. -/
 example : (Sentence.forallIoc (Dyadic.ofInt 1) (Dyadic.ofInt 0) .ff).toProp := by
   simp only [Sentence.toProp, Formula.toProp]
   intro x hx
-  have hle : HexRealRootsMathlib.Dyadic.toReal (Dyadic.ofInt 1) ≤
-      HexRealRootsMathlib.Dyadic.toReal (Dyadic.ofInt 0) :=
+  have hle : HexRealRootsTheory.Dyadic.toReal (Dyadic.ofInt 1) ≤
+      HexRealRootsTheory.Dyadic.toReal (Dyadic.ofInt 0) :=
     le_trans (le_of_lt hx.1) hx.2
-  rw [HexRealRootsMathlib.toReal_ofInt, HexRealRootsMathlib.toReal_ofInt] at hle
+  rw [HexRealRootsTheory.toReal_ofInt, HexRealRootsTheory.toReal_ofInt] at hle
   norm_num at hle
 
 end Hex.RCF.Tests

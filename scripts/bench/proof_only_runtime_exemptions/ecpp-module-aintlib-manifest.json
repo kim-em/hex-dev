@@ -1,0 +1,6 @@
+{
+  "path": "lake-manifest.json",
+  "baseline_blob": "30db00b2a65d7236a7b49480a563b1a3944e3963",
+  "current_blob": "4155ceaae5a9ddc9dc2e7ffabb5b9f39124e49fa",
+  "reason": "Relative to the measured manifest, only the AINTLIB entry changes. It provides optional Hasse proof theory outside the Mathlib-free factorization service import graph. All compiler, arithmetic and runtime dependency pins are unchanged; the pin advance cannot reach the measured factorization implementation or native link inputs."
+}

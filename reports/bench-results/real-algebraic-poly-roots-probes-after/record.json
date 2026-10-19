@@ -1,0 +1,38 @@
+{
+  "source_parent": "dafbe6e87afdcc48abf45252c5dc95068ae38efa",
+  "dirty": true,
+  "source_sha256": {
+    "bench/HexRealAlgebraic/Bench.lean": "91f6523fbbd8c6d8af8f53680d7500f0de5e11a245d48622e7ff446fd01555c5",
+    "HexRealAlgebraic/Basic.lean": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd",
+    "HexRealAlgebraicMathlib/Basic.lean": "b6f0f06f407e2731f1f31908f776382c35dba2d3d3041c6be5cfaf70cc17daaf"
+  },
+  "executable_sha256": "9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+  "exact_executable": "/home/kim/.local/state/hex/issue-10577-verification/poly-roots-probes-after/hexrealalgebraic_bench-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+  "classification": "Post-change operational complete-child probes with 60-second cap, including coefficient/input preparation. Not operation-only scientific timings or unchanged reruns.",
+  "arms": [
+    {
+      "case": "rational16",
+      "argv": [
+        "timeout",
+        "--signal=TERM",
+        "60",
+        "/home/kim/.local/state/hex/issue-10577-verification/poly-roots-probes-after/hexrealalgebraic_bench-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "probe-rational16"
+      ],
+      "exit_code": 0,
+      "complete_child_elapsed_seconds": 9.334478706999562
+    },
+    {
+      "case": "quadratic8",
+      "argv": [
+        "timeout",
+        "--signal=TERM",
+        "60",
+        "/home/kim/.local/state/hex/issue-10577-verification/poly-roots-probes-after/hexrealalgebraic_bench-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "probe-quadratic8"
+      ],
+      "exit_code": 0,
+      "complete_child_elapsed_seconds": 9.408868089999942
+    }
+  ]
+}

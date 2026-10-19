@@ -61,11 +61,71 @@ theorem bezout (f : RationalFn K) : DensePoly.Coprime f.num f.den :=
 
 /-- Embed a polynomial with denominator one. -/
 @[expose]
-def ofPoly (p : DensePoly K) : RationalFn K :=
+noncomputable def ofPoly (p : DensePoly K) : RationalFn K :=
   ⟨p, 1, DensePoly.monic_one, (DensePoly.coprime_iff _ _).mp (.one_right p)⟩
 
-instance : Zero (RationalFn K) := ⟨ofPoly 0⟩
-instance : One (RationalFn K) := ⟨ofPoly 1⟩
+/-- The field law supplies normalization of `#[1]` without a coefficient zero test. -/
+def onePoly : DensePoly K :=
+  ⟨#[1], Or.inr (by
+    intro h
+    have h1 : (1 : K) = (Zero.zero : K) := Option.some.inj (by simpa using h)
+    rw [show (Zero.zero : K) = 0 from rfl] at h1
+    exact Lean.Grind.Field.zero_ne_one h1.symm)⟩
+
+/-- The directly constructed polynomial is the ordinary canonical one. -/
+theorem onePoly_eq : onePoly (K := K) = 1 := by
+  apply DensePoly.ext_coeff
+  intro n
+  change onePoly.coeff n = (DensePoly.C (1 : K)).coeff n
+  rw [DensePoly.coeff_C]
+  cases n <;> simp [onePoly, DensePoly.coeff]
+
+/-- Polynomial embedding without normalization of its known unit denominator. -/
+def ofPolyImpl (p : DensePoly K) : RationalFn K :=
+  ⟨p, onePoly, by rw [onePoly_eq]; exact DensePoly.monic_one,
+    by rw [onePoly_eq]; exact (DensePoly.coprime_iff _ _).mp (.one_right p)⟩
+
+/-- The compiler uses the same stored pair with its unit denominator built directly. -/
+@[csimp] theorem ofPoly_eq : @ofPoly = @ofPolyImpl := by
+  funext K _ _ p
+  apply ext
+  · rfl
+  · exact onePoly_eq.symm
+
+/-- Share the polynomial one between numerator and denominator. -/
+@[instance_reducible] def oneImpl : One (RationalFn K) where
+  one :=
+    let p := onePoly (K := K)
+    { num := p
+      den := p
+      monic_den := by rw [show p = 1 from onePoly_eq]; exact DensePoly.monic_one
+      coprime := by
+        rw [show p = 1 from onePoly_eq]
+        exact (DensePoly.coprime_iff _ _).mp (.one_right 1) }
+
+/-- Construct zero with an empty numerator, without evaluating a lower-field zero. -/
+@[instance_reducible] def zeroImpl : Zero (RationalFn K) where
+  zero :=
+    { num := ⟨#[], Or.inl rfl⟩
+      den := onePoly
+      monic_den := by rw [onePoly_eq]; exact DensePoly.monic_one
+      coprime := by
+        rw [onePoly_eq]
+        exact (DensePoly.coprime_iff _ _).mp (.one_right _) }
+
+noncomputable instance : Zero (RationalFn K) := ⟨ofPoly 0⟩
+noncomputable instance : One (RationalFn K) := ⟨ofPoly 1⟩
+
+/-- The empty numerator and direct unit denominator are the canonical zero pair. -/
+@[csimp] theorem instZero_eq : @instZero = @zeroImpl := by
+  funext K _ _
+  simp only [instZero, zeroImpl, ofPoly, onePoly_eq]
+  rfl
+
+/-- Sharing the unit polynomial preserves the ordinary one instance. -/
+@[csimp] theorem instOne_eq : @instOne = @oneImpl := by
+  funext K _ _
+  simp only [instOne, oneImpl, ofPoly, onePoly_eq]
 
 /-- Polynomial embedding preserves zero. -/
 theorem ofPoly_zero : ofPoly (0 : DensePoly K) = 0 := rfl
@@ -117,3 +177,13 @@ theorem den_eq_one {f : RationalFn K} (h : f.num = 0) : f.den = 1 := by
 
 end RationalFn
 end Hex
+
+/-- info: 'Hex.RationalFn.ofPoly_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RationalFn.ofPoly_eq
+/-- info: 'Hex.RationalFn.instZero_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RationalFn.instZero_eq
+/-- info: 'Hex.RationalFn.instOne_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RationalFn.instOne_eq

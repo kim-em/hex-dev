@@ -1,0 +1,16 @@
+lean-bench profile: env LD_PRELOAD=/home/kim/.local/state/hex/issue-10377-session-progress/nested-table-allocations/wrapper-1.so /nix/store/mf7rzpknxwg0q1wf0nm8gfzikapg00h1-valgrind-3.27.1/bin/valgrind --tool=dhat --mode=ad-hoc --dhat-out-file=/home/kim/.local/state/hex/issue-10377-session-progress/nested-table-allocations/017.dhat.json -- /home/kim/worktrees/hex-dev/hex-dev-issue-10377-nested-tables/.lake/build/bin/hexsigndet_bench _child --bench Hex.SignDetBench.NestedTables.runTree1 --param 32 --target-nanos 100000000 --cache-mode cold
+==1903455== DHAT, a dynamic heap analysis tool
+==1903455== Copyright (C) 2010-2024, and GNU GPL'd, by Mozilla Foundation et al.
+==1903455== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==1903455== Command: /home/kim/worktrees/hex-dev/hex-dev-issue-10377-nested-tables/.lake/build/bin/hexsigndet_bench _child --bench Hex.SignDetBench.NestedTables.runTree1 --param 32 --target-nanos 100000000 --cache-mode cold
+==1903455== 
+SIGN_DET_ALLOCATIONS {"callbacks":1,"overflow":0,"lean_requests":603723,"lean_bytes":16312552,"mimalloc_requests":37479,"mimalloc_bytes":1238720,"gmp_requests":1017642,"gmp_bytes":10456496}
+{"schema_version":1,"kind":"parametric","function":"Hex.SignDetBench.NestedTables.runTree1","param":32,"inner_repeats":1,"total_nanos":1276204475,"per_call_nanos":1276204475.000000,"cache_mode":"cold","result_hash":"0x818b0a704cdc2dbc","status":"ok","error":null,"alloc_bytes":null,"peak_rss_kb":287200,"env":{"arch":"x86_64","cpu_cores":96,"cpu_model":"AMD EPYC 9455 48-Core Processor","exe_name":"hexsigndet_bench","git_commit":"39066b34e16620946959796b86d60c4af5b29e29","git_dirty":false,"hostname":"chungus2","lean_bench_version":"0.1.0","lean_toolchain":"leanprover/lean4:4.35.0-rc3","lean_version":"4.35.0-rc3","os":"linux","platform_target":"x86_64-unknown-linux-gnu","timestamp_iso":"2026-10-05T18:38:06Z","timestamp_unix_ms":1791225486383},"profile_kernel":true}
+==1903455== 
+==1903455== Total:     28,007,768 units in 1,658,844 events
+==1903455== 
+==1903455== To view the resulting profile, open
+==1903455==   file:///nix/store/mf7rzpknxwg0q1wf0nm8gfzikapg00h1-valgrind-3.27.1/libexec/valgrind/dh_view.html
+==1903455== in a web browser, click on "Load...", and then select the file
+==1903455==   /home/kim/.local/state/hex/issue-10377-session-progress/nested-table-allocations/017.dhat.json
+==1903455== The text at the bottom explains the abbreviations used in the output.

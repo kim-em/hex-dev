@@ -1,0 +1,9 @@
+Hex.RealAlgebraicScaling.runZ3Compare4Protocol    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a3ddc94-dirty, 2026-10-04T20:08:47Z, host=chungus2
+  repeat 0  7.143 µs  (×2^13, total 58.521 ms)
+  median: 7.143 µs    min: 7.143 µs    max: 7.143 µs
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 69_632 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Compare-4-Z3-2-Z3-protocol.json

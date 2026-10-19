@@ -8,7 +8,7 @@ so declared fixed points are preserved.
 
 ```toml
 [[require]]
-name = "hex-perm-group"
+name = "HexPermGroup"
 git = "https://github.com/leanprover/hex-perm-group.git"
 rev = "main"
 ```
@@ -32,7 +32,8 @@ def d4 : Group 4 := Group.ofGenerators #[rotation, reflection]
 
 Composition is a left action: `(p.comp q) x = p (q x)`. Programs returned by
 `word?` use the original generator order and can be checked independently with
-`checkWord`.
+`checkWord`. `Program.toWord?` expands a short program into a freely reduced
+word, which `Word.toString` prints as, for example, `g0 * g1`.
 
 The public surface includes point and pointwise stabilizers, containment,
 joins, element enumeration with output caps, left cosets, rank/unrank and
@@ -40,7 +41,7 @@ supplied-index sampling, finite tuple/subset/partition actions, images and
 kernels, complete or budgeted subgroup search, blocks and primitivity, normal
 closure, core, derived series, and direct and imprimitive wreath products.
 
-`Group.buildWith` and the bounded normal/product operations reserve cumulative
+`Group.buildBudgeted` and the bounded normal/product operations reserve cumulative
 producer work before each operation. Exhaustion returns the proved stopping
 state only: it never means negative membership, exact ambient order,
 nonsolvability, or a final image/kernel. Certificate and program replay use
@@ -56,7 +57,7 @@ structure, and products to their mathematical specifications. Conformance
 fixtures are independently checked by a small-degree enumerator and GAP.
 
 The Mathlib correspondence layer is published separately as
-[`hex-perm-group-mathlib`](https://github.com/leanprover/hex-perm-group-mathlib).
+[`hex-perm-group-theory`](https://github.com/leanprover/hex-perm-group-theory).
 
 # Contributing
 

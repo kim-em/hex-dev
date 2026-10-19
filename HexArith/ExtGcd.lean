@@ -36,7 +36,7 @@ Pure natural-number extended GCD.
 
 The result `(g, s, t)` satisfies `g = Nat.gcd a b` and
 `s * a + t * b = g` after coercing the inputs to `Int`. Use
-the GMP-backed `HexArith.Int.extGcd` entry point for integer inputs and
+`HexArith.Int.extGcd` for integer inputs and
 `HexArith.UInt64.extGcd` for `UInt64` inputs.
 -/
 @[expose]
@@ -437,7 +437,7 @@ the intermediate `extGcd_fst` step.
   rw [extGcd_bezout_proj, extGcd_fst]
 
 /--
-Combined correctness theorem for the GMP-backed integer extended GCD surface.
+Combined correctness theorem for the public integer extended GCD.
 
 The proved compiler rewrite uses the GMP-backed natural-number primitive on
 nonnegative inputs, while preserving the same public triple used by proofs.

@@ -21,19 +21,187 @@ variable {E Ctx : Type} [Zero E] [DecidableEq E]
 /-- The node decoder's structural bounds. These do not assert any arithmetic,
 rank, support-completeness or root-count identity. -/
 structure Shape (n : Node E Ctx) : Prop where
+  /-- Every stored moment exponent row has one entry per query. -/
   rows : ∀ x ∈ n.system.rows.toList, x.length = n.queries.length
+  /-- Every stored sign word has one entry per query. -/
   columns : ∀ x ∈ n.system.columns.toList, x.length = n.queries.length
+  /-- The basis rank fits the number of stored moment rows. -/
   rankRows : n.basis.rank ≤ n.size
+  /-- The basis rank fits the positive-count column list. -/
   rankCols : n.basis.rank ≤ n.system.positive.length
+  /-- Every stored moment-reduction step refers to an existing query. -/
   reductions : ∀ r ∈ n.reductions.toList, ∀ t ∈ r, ∀ s ∈ t.steps,
     s.index < n.queries.length
+  /-- Every stored query-preparation step refers to an existing query. -/
   preparation : ∀ t ∈ n.preparation, ∀ s ∈ t.steps, s.index < n.queries.length
 
+/-- Structural bounds and lawful readers reconstruct the literal node;
+the roundtrip asserts no arithmetic acceptance. -/
 theorem Shape.read_node (h : Shape n) (value : ValueCodec E) (context : ValueCodec Ctx)
     (hv : value.Lawful) (hc : context.Lawful) :
     readNode value context (node value context n) = .ok n :=
   Codec.read_node value context hv hc n h.rows h.columns h.rankRows h.rankCols
     h.reductions h.preparation
+
+section Check
+variable [One E] [Add E] [Sub E] [Mul E] [NatCast E]
+
+omit [NatCast E] in
+/-- Accepted query-reduction steps stay within the running query range. -/
+private theorem query_indices {sign : E → Int} {p : DensePoly E}
+    {qs : List (DensePoly E)} {ss : List (ReductionStep E)} {i : Nat}
+    (h : QueryReduction.checkFrom sign p i qs ss = true) :
+    ∀ s ∈ ss, s.index < i + qs.length := by
+  induction qs generalizing ss i with
+  | nil => cases ss <;> simp_all [QueryReduction.checkFrom]
+  | cons q qs ih =>
+    cases ss with
+    | nil => simp [QueryReduction.checkFrom] at h
+    | cons s ss =>
+      simp only [QueryReduction.checkFrom, Bool.and_eq_true] at h
+      intro t ht
+      rcases List.mem_cons.mp ht with rfl | ht
+      · have := (ReductionStep.check_eq h.1).1
+        simp only [List.length_cons]
+        omega
+      · have := ih h.2 t ht
+        simp only [List.length_cons]
+        omega
+
+omit [One E] [Add E] [Sub E] [Mul E] [NatCast E] in
+/-- Replicated factors keep indices within the original query list. -/
+private theorem factor_indices (qs : List (DensePoly E)) (es : List Nat) :
+    ∀ f ∈ factors qs es, f.1 < qs.length := by
+  intro f hf
+  obtain ⟨⟨⟨q, k⟩, i⟩, hi, hf⟩ := List.mem_flatMap.mp hf
+  have same := List.eq_of_mem_replicate hf
+  have bound := (List.mem_zipIdx' hi).1
+  simp only [List.length_zip] at bound
+  simpa only [same] using Nat.lt_of_lt_of_le bound (Nat.min_le_left _ _)
+
+omit [One E] [NatCast E] in
+/-- Checked product reductions inherit the supplied factor-index bounds. -/
+private theorem reduction_indices {sign : E → Int} {p prev result : DensePoly E}
+    {fs : List (Nat × DensePoly E)} {ss : List (ReductionStep E)} {arity : Nat}
+    (h : Reduction.checkFrom sign p prev fs ss result = true)
+    (bounds : ∀ f ∈ fs, f.1 < arity) : ∀ s ∈ ss, s.index < arity := by
+  induction fs generalizing prev ss with
+  | nil => cases ss <;> simp_all [Reduction.checkFrom]
+  | cons f fs ih =>
+    cases ss with
+    | nil => simp [Reduction.checkFrom] at h
+    | cons s ss =>
+      simp only [Reduction.checkFrom, Bool.and_eq_true] at h
+      intro t ht
+      rcases List.mem_cons.mp ht with rfl | ht
+      · rw [(ReductionStep.check_eq h.1).1]
+        exact bounds f (by simp)
+      · exact ih h.2 (fun f hf => bounds f (by simp [hf])) t ht
+
+variable [DecidableEq Ctx]
+
+/-- An accepted node and all its stored moments retain the caller's literal
+context, head and endpoints. No interpretation of the coefficients is needed. -/
+theorem bindings_of_check {sign : E → Int} {context : Ctx} {p : DensePoly E}
+    {lo hi : Endpoint E} {qs : List (DensePoly E)} {n : Node E Ctx}
+    (h : n.check sign context p lo hi qs = true) : bindings context p lo hi n = true := by
+  obtain ⟨subject, _⟩ := Node.check_bindings h
+  apply bindings_iff.mpr
+  refine ⟨⟨subject.1, subject.2.1, subject.2.2.1, subject.2.2.2.1⟩, ?_⟩
+  intro cert mem
+  obtain ⟨i, bound, same⟩ := Vector.mem_iff_getElem.mp (Vector.mem_toList_iff.mp mem)
+  subst cert
+  have checked := Sturm.check_bindings sign context p _ lo hi _ n.moments[i]
+    (checkMoment_query (Node.check_moment h ⟨i, bound⟩))
+  exact ⟨checked.1, checked.2.1, checked.2.2.2.1, checked.2.2.2.2.1⟩
+
+/-- Every accepted node meets the decoder's dimension and index bounds.
+These follow from the existing checker; callers need no additional shape
+certificate or coefficient interpretation. -/
+theorem Shape.of_check {sign : E → Int} {context : Ctx} {p : DensePoly E}
+    {lo hi : Endpoint E} {qs : List (DensePoly E)} {n : Node E Ctx}
+    (h : n.check sign context p lo hi qs = true) : Shape n := by
+  obtain ⟨binding, system⟩ := Node.check_bindings h
+  have rank : n.basis.rank = n.system.positive.length := by
+    simp only [Node.check_eq, Bool.and_eq_true, decide_eq_true_eq] at h
+    exact h.1.1.2
+  have prep := Node.check_preparation h
+  have length : (QueryReduction.operands qs n.preparation).length = qs.length := by
+    cases hp : n.preparation with
+    | none => rfl
+    | some r =>
+      simp only [hp] at prep
+      exact (QueryReduction.check_bounds prep).1
+  refine ⟨?_, ?_, ?_, Nat.le_of_eq rank, ?_, ?_⟩
+  · intro x hx
+    have checked := List.all_eq_true.mp (System.rows_valid system) x hx
+    simp only [Bool.and_eq_true, decide_eq_true_eq] at checked
+    exact checked.1.trans (congrArg List.length binding.2.2.2.2).symm
+  · intro x hx
+    have checked := List.all_eq_true.mp (System.columns_valid system) x hx
+    simp only [Bool.and_eq_true, decide_eq_true_eq] at checked
+    exact checked.1.trans (congrArg List.length binding.2.2.2.2).symm
+  · rw [rank]
+    have := List.length_filter_le (fun i : Fin n.size => decide (n.system.counts[i] > 0))
+      (List.finRange n.size)
+    simpa only [System.positive, List.length_finRange] using this
+  · intro r hr t ht s hs
+    obtain ⟨i, hi, same⟩ := Vector.mem_iff_getElem.mp (Vector.mem_toList_iff.mp hr)
+    have checked := Node.check_moment h ⟨i, hi⟩
+    change checkMoment sign context p lo _ (QueryReduction.operands qs n.preparation)
+      n.system.rows[i] n.system.values[i] n.moments[i] n.reductions[i] = true at checked
+    have some : n.reductions[i] = Option.some t := same.trans (Option.mem_def.mp ht)
+    rw [some] at checked
+    have reduced := checkMoment_reduction checked
+    simp only [Reduction.check, Bool.and_eq_true] at reduced
+    have bound := reduction_indices reduced.2
+      (factor_indices (QueryReduction.operands qs n.preparation) n.system.rows[i]) s hs
+    rw [length, ← binding.2.2.2.2] at bound
+    exact bound
+  · intro r hr s hs
+    have some := Option.mem_def.mp hr
+    rw [some] at prep
+    simp only [QueryReduction.check, Bool.and_eq_true] at prep
+    have bound := query_indices prep.2 s hs
+    simpa only [Nat.zero_add, ← binding.2.2.2.2] using bound
+
+/-- Validation establishes parser bounds for every serialized entry,
+including entries not reachable from the selected root. -/
+theorem Shape.of_validate {sign : E → Int} {context : Ctx} {p : DensePoly E}
+    {lo hi : Endpoint E} {d : Dag E Ctx}
+    {memo : Array (Dag.Checked sign context p lo hi)}
+    (h : d.validate? sign context p lo hi = some memo) :
+    ∀ e ∈ d.entries, Shape e.node := by
+  intro e he
+  have nodes := Dag.validate_nodes sign context p lo hi d memo h
+  have member : e.node ∈ d.entries.map Dag.Entry.node :=
+    Array.mem_map.mpr ⟨e, he, rfl⟩
+  rw [← nodes] at member
+  obtain ⟨checked, _, same⟩ := Array.mem_map.mp member
+  rw [← same]
+  exact Shape.of_check (Replay.check_node checked.accepted)
+
+/-- Whole-graph validation binds every retained node and moment to the caller's
+literal root domain, including entries not reachable from the selected root. -/
+theorem bindings_of_validate {sign : E → Int} {context : Ctx} {p : DensePoly E}
+    {lo hi : Endpoint E} {d : Dag E Ctx}
+    {memo : Array (Dag.Checked sign context p lo hi)}
+    (h : d.validate? sign context p lo hi = some memo) :
+    ∀ e ∈ d.entries, bindings context p lo hi e.node = true := by
+  intro e he
+  have nodes := Dag.validate_nodes sign context p lo hi d memo h
+  have member : e.node ∈ d.entries.map Dag.Entry.node :=
+    Array.mem_map.mpr ⟨e, he, rfl⟩
+  rw [← nodes] at member
+  obtain ⟨checked, _, same⟩ := Array.mem_map.mp member
+  rw [← same]
+  exact bindings_of_check (Replay.check_node checked.accepted)
+
+/-- info: 'Hex.SignDet.Codec.Shape.of_validate' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Shape.of_validate
+
+end Check
 
 /-- Earlier child indices roundtrip without changing their left/right order. -/
 theorem read_children (children : Option (Nat × Nat))

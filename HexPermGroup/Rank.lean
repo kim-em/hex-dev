@@ -184,11 +184,11 @@ theorem unrank?_isSome (G : Group n) (k : Nat) :
 
 /-- Apply unranking to one index from the supplied source. The source receives
 the positive exact order; its effects and failures are preserved by `map`. -/
-@[expose] def sampleWith {m : Type → Type} [Functor m]
+@[expose] def sampleFrom {m : Type → Type} [Functor m]
     (draw : (bound : Nat) → 0 < bound → m (Fin bound)) (G : Group n) : m (Element G) :=
   G.unrank <$> draw G.order G.order_pos
 
-theorem sampleWith_error {ε : Type} (error : ε) (G : Group n) :
-    sampleWith (m := Except ε) (fun _ _ => Except.error error) G = Except.error error := rfl
+theorem sampleFrom_error {ε : Type} (error : ε) (G : Group n) :
+    sampleFrom (m := Except ε) (fun _ _ => Except.error error) G = Except.error error := rfl
 
 end Hex.PermGroup.Group

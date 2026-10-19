@@ -1,0 +1,7 @@
+import HexPermGroup
+set_option profiler true
+set_option profiler.threshold 100000
+open Hex Hex.PermGroup
+
+example : HasOrder #[Perm.ofImages 23 [1, 0, 3, 2, 4, 5, 7, 6, 9, 8, 10, 11, 13, 12, 15, 14, 16, 17, 19, 18, 21, 20, 22], Perm.ofImages 23 [15, 8, 0, 4, 7, 21, 6, 22, 20, 9, 2, 1, 19, 17, 16, 10, 14, 5, 18, 12, 11, 13, 3]] 10200960 := by
+  perm_group

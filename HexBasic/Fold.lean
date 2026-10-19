@@ -28,7 +28,7 @@ mirror {name}`List.foldl_assoc`/`List.foldl_map`, and keep `foldl_add_eq_add_fol
 symmetric with `foldl_mul_eq_mul_foldl`. The one exception is
 `foldl_const_step`: core/Mathlib already use `List.foldl_const` for the
 unrelated iterate lemma, so reusing that name here would collide in the
-Mathlib bridge layers (which import both this module and Mathlib). These are
+Theory layers (which import both this module and Mathlib). These are
 kept here so the computational libraries can use them without importing
 Mathlib.
 -/
@@ -46,7 +46,7 @@ only to prove the lemmas below, whose conclusions use `Lean.Grind.Semiring`,
 with `Ring` or `CommRing` required only where negation or commutative
 multiplication is genuinely involved. Keeping them local avoids adding a
 second global `Std.Associative` resolution path for every `Grind.Semiring`
-(e.g. `Nat`/`Int` in the Mathlib bridge layers, where Mathlib already supplies
+(e.g. `Nat`/`Int` in the theory layers, where Mathlib already supplies
 its own). Promote / upstream them separately if a consumer ever needs them.
 -/
 

@@ -1,0 +1,107 @@
+{
+  "implementation_commit": "5da4aa647ee82620cf23a296f1a0d089bc063eed",
+  "base_commit": "c28de2d4db125e1e42b23084ecaee75b9531300a",
+  "source": "conformance/HexRCF/CellReplay/Algebraic/Check.lean",
+  "arms_sha256": {
+    "A": "0bed50d5122efb92833638ea155b619f0d19954807ded7123d1595f7b1f4e62c",
+    "B": "84c959308e45069b07fdb421be2b0f26a2aaee6c9a5c1ee90abad71795c93033"
+  },
+  "cpu": 23,
+  "schedule": [
+    [
+      "A",
+      "B"
+    ],
+    [
+      "B",
+      "A"
+    ]
+  ],
+  "target": "HexRCF.CellReplay.Algebraic.Check",
+  "memory_limit_bytes": 34359738368,
+  "swap_limit_bytes": 0,
+  "lean_threads": 2,
+  "samples": [
+    {
+      "trial": 0,
+      "arm": "A",
+      "load_before": [
+        4.4296875,
+        5.8203125,
+        5.447265625
+      ],
+      "time_start": 1792063120.1520092,
+      "log": "/home/kim/.codex/tasks/hex-10358/cell-fold-pair-0-A.log",
+      "peak_bytes_observed": 4697149440,
+      "elapsed_seconds": 69.45441495699924,
+      "exit_code": 0,
+      "load_after": [
+        4.52734375,
+        5.5556640625,
+        5.37890625
+      ],
+      "olean_bytes": 192024
+    },
+    {
+      "trial": 0,
+      "arm": "B",
+      "load_before": [
+        4.52734375,
+        5.5556640625,
+        5.37890625
+      ],
+      "time_start": 1792063189.6068568,
+      "log": "/home/kim/.codex/tasks/hex-10358/cell-fold-pair-0-B.log",
+      "peak_bytes_observed": 4536729600,
+      "elapsed_seconds": 66.0458711689862,
+      "exit_code": 0,
+      "load_after": [
+        4.90576171875,
+        5.35693359375,
+        5.3154296875
+      ],
+      "olean_bytes": 212328
+    },
+    {
+      "trial": 1,
+      "arm": "B",
+      "load_before": [
+        4.90576171875,
+        5.35693359375,
+        5.3154296875
+      ],
+      "time_start": 1792063255.6533566,
+      "log": "/home/kim/.codex/tasks/hex-10358/cell-fold-pair-1-B.log",
+      "peak_bytes_observed": 4607262720,
+      "elapsed_seconds": 60.6580866589793,
+      "exit_code": 0,
+      "load_after": [
+        7.126953125,
+        5.84423828125,
+        5.47998046875
+      ],
+      "olean_bytes": 212328
+    },
+    {
+      "trial": 1,
+      "arm": "A",
+      "load_before": [
+        7.126953125,
+        5.84423828125,
+        5.47998046875
+      ],
+      "time_start": 1792063316.3119533,
+      "log": "/home/kim/.codex/tasks/hex-10358/cell-fold-pair-1-A.log",
+      "peak_bytes_observed": 5233414144,
+      "elapsed_seconds": 63.25090432399884,
+      "exit_code": 0,
+      "load_after": [
+        4.759765625,
+        5.41064453125,
+        5.3525390625
+      ],
+      "olean_bytes": 192024
+    }
+  ],
+  "scope": "Build-only matched-import fresh single-module proof elaboration and kernel acceptance. Fixed adjacent AB/BA schedule; retain every completed sample. No clean build-rate or general scaling claim."
+}

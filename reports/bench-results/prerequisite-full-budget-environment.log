@@ -1,0 +1,955 @@
+Bench verify library filter: all libraries (no filter)
+::group::hextruncatedseries_bench
+registered benchmarks:
+  Hex.TSeriesBench.runRevertLagrange    expected complexity: n ^ 3 * (Nat.log2 (n + 1) + 1)
+  Hex.TSeriesBench.runCompHorner    expected complexity: n ^ 3
+  Hex.TSeriesBench.runInverseRecurrence    expected complexity: n ^ 2
+  Hex.TSeriesBench.runInverseNewton    expected complexity: n ^ 2
+  Hex.TSeriesBench.runMulInt    expected complexity: n ^ 2
+  Hex.TSeriesBench.runLog    expected complexity: n ^ 2
+  Hex.TSeriesBench.runMulRat    expected complexity: n ^ 2
+  Hex.TSeriesBench.runCompBrentKung    expected complexity: n ^ 2 * Nat.sqrt n
+  Hex.TSeriesBench.runExp    expected complexity: n ^ 2 * (Nat.log2 (n + 1) + 1) ^ 2
+  Hex.TSeriesBench.runSqrt    expected complexity: n ^ 2 * (Nat.log2 (n + 1) + 1)
+  Hex.TSeriesBench.runRevertNewton    expected complexity: n ^ 2 * Nat.sqrt n
+  Hex.TSeriesBench.runRevertNewton16    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintReversion8    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintExp16    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintComposition16    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runExp256    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintReversion64    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runSqrt16    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintSqrt128    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runLog32    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintLog64    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintSqrt256    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintSeriesOverhead    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runInverseNewton256    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runLog64    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runInverseNewton512    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runInverseNewton1024    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runRevertNewton64    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runExp128    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runSqrt32    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runRevertNewton8    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintComposition64    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintInverse64    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintLog32    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runInverseNewton64    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintSqrt64    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintComposition8    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runRevertNewton128    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintInverse256    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintInverse1024    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintReversion32    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintInverse128    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runCompBrentKung16    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runCompBrentKung8    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintComposition32    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runExp32    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintSqrt16    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintLog256    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runSqrt128    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintSqrt32    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintExp128    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runLog16    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runInverseNewton32    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintLog128    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintExp256    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runExp64    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runCompBrentKung32    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintExp64    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runSqrt64    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runCompBrentKung128    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runCompBrentKung64    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintInverse32    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintInverse512    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runLog256    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runExp16    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runLog128    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runSqrt256    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runRevertNewton32    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runInverseNewton128    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintReversion16    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintLog16    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintExp32    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintReversion128    [fixed] repeats=5  [flint-series]
+  Hex.TSeriesBench.runFlintComposition128    [fixed] repeats=5  [flint-series]
+verifying 74 benchmark(s)...
+  [ok ] Hex.TSeriesBench.runRevertLagrange
+  [ok ] Hex.TSeriesBench.runCompHorner
+  [ok ] Hex.TSeriesBench.runInverseRecurrence
+  [ok ] Hex.TSeriesBench.runInverseNewton
+  [ok ] Hex.TSeriesBench.runMulInt
+  [ok ] Hex.TSeriesBench.runLog
+  [ok ] Hex.TSeriesBench.runMulRat
+  [ok ] Hex.TSeriesBench.runCompBrentKung
+  [ok ] Hex.TSeriesBench.runExp
+  [ok ] Hex.TSeriesBench.runSqrt
+  [ok ] Hex.TSeriesBench.runRevertNewton
+  [ok ] Hex.TSeriesBench.runRevertNewton16  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintReversion8  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintExp16  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintComposition16  [fixed]
+  [ok ] Hex.TSeriesBench.runExp256  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintReversion64  [fixed]
+  [ok ] Hex.TSeriesBench.runSqrt16  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintSqrt128  [fixed]
+  [ok ] Hex.TSeriesBench.runLog32  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintLog64  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintSqrt256  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintSeriesOverhead  [fixed]
+  [ok ] Hex.TSeriesBench.runInverseNewton256  [fixed]
+  [ok ] Hex.TSeriesBench.runLog64  [fixed]
+  [ok ] Hex.TSeriesBench.runInverseNewton512  [fixed]
+  [ok ] Hex.TSeriesBench.runInverseNewton1024  [fixed]
+  [ok ] Hex.TSeriesBench.runRevertNewton64  [fixed]
+  [ok ] Hex.TSeriesBench.runExp128  [fixed]
+  [ok ] Hex.TSeriesBench.runSqrt32  [fixed]
+  [ok ] Hex.TSeriesBench.runRevertNewton8  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintComposition64  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintInverse64  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintLog32  [fixed]
+  [ok ] Hex.TSeriesBench.runInverseNewton64  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintSqrt64  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintComposition8  [fixed]
+  [ok ] Hex.TSeriesBench.runRevertNewton128  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintInverse256  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintInverse1024  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintReversion32  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintInverse128  [fixed]
+  [ok ] Hex.TSeriesBench.runCompBrentKung16  [fixed]
+  [ok ] Hex.TSeriesBench.runCompBrentKung8  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintComposition32  [fixed]
+  [ok ] Hex.TSeriesBench.runExp32  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintSqrt16  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintLog256  [fixed]
+  [ok ] Hex.TSeriesBench.runSqrt128  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintSqrt32  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintExp128  [fixed]
+  [ok ] Hex.TSeriesBench.runLog16  [fixed]
+  [ok ] Hex.TSeriesBench.runInverseNewton32  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintLog128  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintExp256  [fixed]
+  [ok ] Hex.TSeriesBench.runExp64  [fixed]
+  [ok ] Hex.TSeriesBench.runCompBrentKung32  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintExp64  [fixed]
+  [ok ] Hex.TSeriesBench.runSqrt64  [fixed]
+  [ok ] Hex.TSeriesBench.runCompBrentKung128  [fixed]
+  [ok ] Hex.TSeriesBench.runCompBrentKung64  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintInverse32  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintInverse512  [fixed]
+  [ok ] Hex.TSeriesBench.runLog256  [fixed]
+  [ok ] Hex.TSeriesBench.runExp16  [fixed]
+  [ok ] Hex.TSeriesBench.runLog128  [fixed]
+  [ok ] Hex.TSeriesBench.runSqrt256  [fixed]
+  [ok ] Hex.TSeriesBench.runRevertNewton32  [fixed]
+  [ok ] Hex.TSeriesBench.runInverseNewton128  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintReversion16  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintLog16  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintExp32  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintReversion128  [fixed]
+  [ok ] Hex.TSeriesBench.runFlintComposition128  [fixed]
+all 74 benchmark(s) passed
+::endgroup::
+::group::hexarith_bench
+registered benchmarks:
+  Hex.ArithBench.runUInt64ExtGcdShapes    expected complexity: n
+  Hex.ArithBench.runNatExtGcdShapes    expected complexity: n
+  Hex.ArithBench.runPowMod    expected complexity: n
+  Hex.ArithBench.runIntExtGcdShapes    expected complexity: n
+  Hex.ArithBench.runMontgomeryMulChain    expected complexity: n
+  Hex.ArithBench.runBarrettMulChain    expected complexity: n
+verifying 6 benchmark(s)...
+  [ok ] Hex.ArithBench.runUInt64ExtGcdShapes
+  [ok ] Hex.ArithBench.runNatExtGcdShapes
+  [ok ] Hex.ArithBench.runPowMod
+  [ok ] Hex.ArithBench.runIntExtGcdShapes
+  [ok ] Hex.ArithBench.runMontgomeryMulChain
+  [ok ] Hex.ArithBench.runBarrettMulChain
+all 6 benchmark(s) passed
+::endgroup::
+::group::hexpoly_bench
+registered benchmarks:
+  Hex.PolyBench.runEval    expected complexity: n
+  Hex.PolyBench.runContent    expected complexity: n
+  Hex.PolyBench.runDivChecksum    expected complexity: n * n
+  Hex.PolyBench.runAddChecksum    expected complexity: n
+  Hex.PolyBench.runPolyCRTChecksum    expected complexity: n * n
+  Hex.PolyBench.runPrimitivePartChecksum    expected complexity: n
+  Hex.PolyBench.runGcdChecksum    expected complexity: n * n
+  Hex.PolyBench.runPseudoDiv    expected complexity: n * n
+  Hex.PolyBench.runXGcdChecksum    expected complexity: n * n
+  Hex.PolyBench.runDerivativeChecksum    expected complexity: n
+  Hex.PolyBench.runSubChecksum    expected complexity: n
+  Hex.PolyBench.runComposeChecksum    expected complexity: n * n * n * n
+  Hex.PolyBench.runModByMonicChecksum    expected complexity: n * n
+  Hex.PolyBench.runModChecksum    expected complexity: n * n
+  Hex.PolyBench.runMulChecksum    expected complexity: n * n
+  Hex.PolyBench.runDivModChecksum    expected complexity: n * n
+  Hex.PolyBench.runPseudoGcd    expected complexity: n * n
+  Hex.PolyBench.runContent131072    [fixed] repeats=5
+  Hex.PolyBench.runComposeChecksum16    [fixed] repeats=5
+  Hex.PolyBench.runFlintAddChecksum65536    [fixed] repeats=5
+  Hex.PolyBench.runComposeChecksum48    [fixed] repeats=5
+  Hex.PolyBench.runFlintComposeChecksum56    [fixed] repeats=5
+  Hex.PolyBench.runFlintAddChecksum16384    [fixed] repeats=5
+  Hex.PolyBench.runFlintComposeChecksum40    [fixed] repeats=5
+  Hex.PolyBench.runFlintAddChecksum98304    [fixed] repeats=5
+  Hex.PolyBench.runFlintPrimitivePartChecksum131072    [fixed] repeats=5
+  Hex.PolyBench.runFlintMulChecksum128    [fixed] repeats=5
+  Hex.PolyBench.runFlintComposeChecksum16    [fixed] repeats=5
+  Hex.PolyBench.runAddChecksum49152    [fixed] repeats=5
+  Hex.PolyBench.runSubChecksum32768    [fixed] repeats=5
+  Hex.PolyBench.runSubChecksum131072    [fixed] repeats=5
+  Hex.PolyBench.runMulChecksum128    [fixed] repeats=5
+  Hex.PolyBench.runContent32768    [fixed] repeats=5
+  Hex.PolyBench.runFlintDerivativeChecksum32768    [fixed] repeats=5
+  Hex.PolyBench.runFlintAddChecksum49152    [fixed] repeats=5
+  Hex.PolyBench.runFlintMulChecksum384    [fixed] repeats=5
+  Hex.PolyBench.runDerivativeChecksum98304    [fixed] repeats=5
+  Hex.PolyBench.runFlintComposeChecksum64    [fixed] repeats=5
+  Hex.PolyBench.runFlintContent49152    [fixed] repeats=5
+  Hex.PolyBench.runFlintContent32768    [fixed] repeats=5
+  Hex.PolyBench.runDerivativeChecksum49152    [fixed] repeats=5
+  Hex.PolyBench.runSubChecksum65536    [fixed] repeats=5
+  Hex.PolyBench.runPrimitivePartChecksum16384    [fixed] repeats=5
+  Hex.PolyBench.runFlintDerivativeChecksum131072    [fixed] repeats=5
+  Hex.PolyBench.runMulChecksum256    [fixed] repeats=5
+  Hex.PolyBench.runDerivativeChecksum16384    [fixed] repeats=5
+  Hex.PolyBench.runAddChecksum65536    [fixed] repeats=5
+  Hex.PolyBench.runComposeChecksum32    [fixed] repeats=5
+  Hex.PolyBench.runFlintSubChecksum32768    [fixed] repeats=5
+  Hex.PolyBench.runFlintSubChecksum49152    [fixed] repeats=5
+  Hex.PolyBench.runFlintMulChecksum192    [fixed] repeats=5
+  Hex.PolyBench.runFlintMulChecksum320    [fixed] repeats=5
+  Hex.PolyBench.runFlintComposeChecksum48    [fixed] repeats=5
+  Hex.PolyBench.runPrimitivePartChecksum98304    [fixed] repeats=5
+  Hex.PolyBench.runComposeChecksum24    [fixed] repeats=5
+  Hex.PolyBench.runAddChecksum16384    [fixed] repeats=5
+  Hex.PolyBench.runPrimitivePartChecksum65536    [fixed] repeats=5
+  Hex.PolyBench.runFlintComposeChecksum24    [fixed] repeats=5
+  Hex.PolyBench.runContent49152    [fixed] repeats=5
+  Hex.PolyBench.runFlintMulChecksum512    [fixed] repeats=5
+  Hex.PolyBench.runComposeChecksum56    [fixed] repeats=5
+  Hex.PolyBench.runMulChecksum320    [fixed] repeats=5
+  Hex.PolyBench.runPrimitivePartChecksum32768    [fixed] repeats=5
+  Hex.PolyBench.runMulChecksum512    [fixed] repeats=5
+  Hex.PolyBench.runFlintSubChecksum98304    [fixed] repeats=5
+  Hex.PolyBench.runContent98304    [fixed] repeats=5
+  Hex.PolyBench.runFlintAddChecksum131072    [fixed] repeats=5
+  Hex.PolyBench.runMulChecksum448    [fixed] repeats=5
+  Hex.PolyBench.runFlintDerivativeChecksum49152    [fixed] repeats=5
+  Hex.PolyBench.runFlintPrimitivePartChecksum16384    [fixed] repeats=5
+  Hex.PolyBench.runFlintSubChecksum16384    [fixed] repeats=5
+  Hex.PolyBench.runAddChecksum98304    [fixed] repeats=5
+  Hex.PolyBench.runAddChecksum131072    [fixed] repeats=5
+  Hex.PolyBench.runFlintDerivativeChecksum16384    [fixed] repeats=5
+  Hex.PolyBench.runFlintPrimitivePartChecksum32768    [fixed] repeats=5
+  Hex.PolyBench.runFlintSubChecksum131072    [fixed] repeats=5
+  Hex.PolyBench.runFlintDerivativeChecksum65536    [fixed] repeats=5
+  Hex.PolyBench.runFlintMulChecksum256    [fixed] repeats=5
+  Hex.PolyBench.runFlintContent65536    [fixed] repeats=5
+  Hex.PolyBench.runFlintPrimitivePartChecksum49152    [fixed] repeats=5
+  Hex.PolyBench.runDerivativeChecksum131072    [fixed] repeats=5
+  Hex.PolyBench.runComposeChecksum64    [fixed] repeats=5
+  Hex.PolyBench.runPrimitivePartChecksum131072    [fixed] repeats=5
+  Hex.PolyBench.runFlintSubChecksum65536    [fixed] repeats=5
+  Hex.PolyBench.runFlintComposeChecksum32    [fixed] repeats=5
+  Hex.PolyBench.runDerivativeChecksum65536    [fixed] repeats=5
+  Hex.PolyBench.runComposeChecksum40    [fixed] repeats=5
+  Hex.PolyBench.runFlintContent131072    [fixed] repeats=5
+  Hex.PolyBench.runFlintPrimitivePartChecksum98304    [fixed] repeats=5
+  Hex.PolyBench.runMulChecksum384    [fixed] repeats=5
+  Hex.PolyBench.runFlintPrimitivePartChecksum65536    [fixed] repeats=5
+  Hex.PolyBench.runFlintOverhead    [fixed] repeats=5
+  Hex.PolyBench.runSubChecksum49152    [fixed] repeats=5
+  Hex.PolyBench.runSubChecksum16384    [fixed] repeats=5
+  Hex.PolyBench.runMulChecksum192    [fixed] repeats=5
+  Hex.PolyBench.runContent16384    [fixed] repeats=5
+  Hex.PolyBench.runFlintContent98304    [fixed] repeats=5
+  Hex.PolyBench.runContent65536    [fixed] repeats=5
+  Hex.PolyBench.runFlintDerivativeChecksum98304    [fixed] repeats=5
+  Hex.PolyBench.runPrimitivePartChecksum49152    [fixed] repeats=5
+  Hex.PolyBench.runFlintContent16384    [fixed] repeats=5
+  Hex.PolyBench.runFlintAddChecksum32768    [fixed] repeats=5
+  Hex.PolyBench.runFlintMulChecksum448    [fixed] repeats=5
+  Hex.PolyBench.runSubChecksum98304    [fixed] repeats=5
+  Hex.PolyBench.runAddChecksum32768    [fixed] repeats=5
+  Hex.PolyBench.runDerivativeChecksum32768    [fixed] repeats=5
+verifying 106 benchmark(s)...
+  [ok ] Hex.PolyBench.runEval
+  [ok ] Hex.PolyBench.runContent
+  [ok ] Hex.PolyBench.runDivChecksum
+  [ok ] Hex.PolyBench.runAddChecksum
+  [ok ] Hex.PolyBench.runPolyCRTChecksum
+  [ok ] Hex.PolyBench.runPrimitivePartChecksum
+  [ok ] Hex.PolyBench.runGcdChecksum
+  [ok ] Hex.PolyBench.runPseudoDiv
+  [ok ] Hex.PolyBench.runXGcdChecksum
+  [ok ] Hex.PolyBench.runDerivativeChecksum
+  [ok ] Hex.PolyBench.runSubChecksum
+  [ok ] Hex.PolyBench.runComposeChecksum
+  [ok ] Hex.PolyBench.runModByMonicChecksum
+  [ok ] Hex.PolyBench.runModChecksum
+  [ok ] Hex.PolyBench.runMulChecksum
+  [ok ] Hex.PolyBench.runDivModChecksum
+  [ok ] Hex.PolyBench.runPseudoGcd
+  [ok ] Hex.PolyBench.runContent131072  [fixed]
+  [ok ] Hex.PolyBench.runComposeChecksum16  [fixed]
+  [ok ] Hex.PolyBench.runFlintAddChecksum65536  [fixed]
+  [ok ] Hex.PolyBench.runComposeChecksum48  [fixed]
+  [ok ] Hex.PolyBench.runFlintComposeChecksum56  [fixed]
+  [ok ] Hex.PolyBench.runFlintAddChecksum16384  [fixed]
+  [ok ] Hex.PolyBench.runFlintComposeChecksum40  [fixed]
+  [ok ] Hex.PolyBench.runFlintAddChecksum98304  [fixed]
+  [ok ] Hex.PolyBench.runFlintPrimitivePartChecksum131072  [fixed]
+  [ok ] Hex.PolyBench.runFlintMulChecksum128  [fixed]
+  [ok ] Hex.PolyBench.runFlintComposeChecksum16  [fixed]
+  [ok ] Hex.PolyBench.runAddChecksum49152  [fixed]
+  [ok ] Hex.PolyBench.runSubChecksum32768  [fixed]
+  [ok ] Hex.PolyBench.runSubChecksum131072  [fixed]
+  [ok ] Hex.PolyBench.runMulChecksum128  [fixed]
+  [ok ] Hex.PolyBench.runContent32768  [fixed]
+  [ok ] Hex.PolyBench.runFlintDerivativeChecksum32768  [fixed]
+  [ok ] Hex.PolyBench.runFlintAddChecksum49152  [fixed]
+  [ok ] Hex.PolyBench.runFlintMulChecksum384  [fixed]
+  [ok ] Hex.PolyBench.runDerivativeChecksum98304  [fixed]
+  [ok ] Hex.PolyBench.runFlintComposeChecksum64  [fixed]
+  [ok ] Hex.PolyBench.runFlintContent49152  [fixed]
+  [ok ] Hex.PolyBench.runFlintContent32768  [fixed]
+  [ok ] Hex.PolyBench.runDerivativeChecksum49152  [fixed]
+  [ok ] Hex.PolyBench.runSubChecksum65536  [fixed]
+  [ok ] Hex.PolyBench.runPrimitivePartChecksum16384  [fixed]
+  [ok ] Hex.PolyBench.runFlintDerivativeChecksum131072  [fixed]
+  [ok ] Hex.PolyBench.runMulChecksum256  [fixed]
+  [ok ] Hex.PolyBench.runDerivativeChecksum16384  [fixed]
+  [ok ] Hex.PolyBench.runAddChecksum65536  [fixed]
+  [ok ] Hex.PolyBench.runComposeChecksum32  [fixed]
+  [ok ] Hex.PolyBench.runFlintSubChecksum32768  [fixed]
+  [ok ] Hex.PolyBench.runFlintSubChecksum49152  [fixed]
+  [ok ] Hex.PolyBench.runFlintMulChecksum192  [fixed]
+  [ok ] Hex.PolyBench.runFlintMulChecksum320  [fixed]
+  [ok ] Hex.PolyBench.runFlintComposeChecksum48  [fixed]
+  [ok ] Hex.PolyBench.runPrimitivePartChecksum98304  [fixed]
+  [ok ] Hex.PolyBench.runComposeChecksum24  [fixed]
+  [ok ] Hex.PolyBench.runAddChecksum16384  [fixed]
+  [ok ] Hex.PolyBench.runPrimitivePartChecksum65536  [fixed]
+  [ok ] Hex.PolyBench.runFlintComposeChecksum24  [fixed]
+  [ok ] Hex.PolyBench.runContent49152  [fixed]
+  [ok ] Hex.PolyBench.runFlintMulChecksum512  [fixed]
+  [ok ] Hex.PolyBench.runComposeChecksum56  [fixed]
+  [ok ] Hex.PolyBench.runMulChecksum320  [fixed]
+  [ok ] Hex.PolyBench.runPrimitivePartChecksum32768  [fixed]
+  [ok ] Hex.PolyBench.runMulChecksum512  [fixed]
+  [ok ] Hex.PolyBench.runFlintSubChecksum98304  [fixed]
+  [ok ] Hex.PolyBench.runContent98304  [fixed]
+  [ok ] Hex.PolyBench.runFlintAddChecksum131072  [fixed]
+  [ok ] Hex.PolyBench.runMulChecksum448  [fixed]
+  [ok ] Hex.PolyBench.runFlintDerivativeChecksum49152  [fixed]
+  [ok ] Hex.PolyBench.runFlintPrimitivePartChecksum16384  [fixed]
+  [ok ] Hex.PolyBench.runFlintSubChecksum16384  [fixed]
+  [ok ] Hex.PolyBench.runAddChecksum98304  [fixed]
+  [ok ] Hex.PolyBench.runAddChecksum131072  [fixed]
+  [ok ] Hex.PolyBench.runFlintDerivativeChecksum16384  [fixed]
+  [ok ] Hex.PolyBench.runFlintPrimitivePartChecksum32768  [fixed]
+  [ok ] Hex.PolyBench.runFlintSubChecksum131072  [fixed]
+  [ok ] Hex.PolyBench.runFlintDerivativeChecksum65536  [fixed]
+  [ok ] Hex.PolyBench.runFlintMulChecksum256  [fixed]
+  [ok ] Hex.PolyBench.runFlintContent65536  [fixed]
+  [ok ] Hex.PolyBench.runFlintPrimitivePartChecksum49152  [fixed]
+  [ok ] Hex.PolyBench.runDerivativeChecksum131072  [fixed]
+  [ok ] Hex.PolyBench.runComposeChecksum64  [fixed]
+  [ok ] Hex.PolyBench.runPrimitivePartChecksum131072  [fixed]
+  [ok ] Hex.PolyBench.runFlintSubChecksum65536  [fixed]
+  [ok ] Hex.PolyBench.runFlintComposeChecksum32  [fixed]
+  [ok ] Hex.PolyBench.runDerivativeChecksum65536  [fixed]
+  [ok ] Hex.PolyBench.runComposeChecksum40  [fixed]
+  [ok ] Hex.PolyBench.runFlintContent131072  [fixed]
+  [ok ] Hex.PolyBench.runFlintPrimitivePartChecksum98304  [fixed]
+  [ok ] Hex.PolyBench.runMulChecksum384  [fixed]
+  [ok ] Hex.PolyBench.runFlintPrimitivePartChecksum65536  [fixed]
+  [ok ] Hex.PolyBench.runFlintOverhead  [fixed]
+  [ok ] Hex.PolyBench.runSubChecksum49152  [fixed]
+  [ok ] Hex.PolyBench.runSubChecksum16384  [fixed]
+  [ok ] Hex.PolyBench.runMulChecksum192  [fixed]
+  [ok ] Hex.PolyBench.runContent16384  [fixed]
+  [ok ] Hex.PolyBench.runFlintContent98304  [fixed]
+  [ok ] Hex.PolyBench.runContent65536  [fixed]
+  [ok ] Hex.PolyBench.runFlintDerivativeChecksum98304  [fixed]
+  [ok ] Hex.PolyBench.runPrimitivePartChecksum49152  [fixed]
+  [ok ] Hex.PolyBench.runFlintContent16384  [fixed]
+  [ok ] Hex.PolyBench.runFlintAddChecksum32768  [fixed]
+  [ok ] Hex.PolyBench.runFlintMulChecksum448  [fixed]
+  [ok ] Hex.PolyBench.runSubChecksum98304  [fixed]
+  [ok ] Hex.PolyBench.runAddChecksum32768  [fixed]
+  [ok ] Hex.PolyBench.runDerivativeChecksum32768  [fixed]
+all 106 benchmark(s) passed
+::endgroup::
+::group::hexpolyfast_bench
+registered benchmarks:
+  Hex.PolyFastBench.runBlocksTail    expected complexity: karatsubaCost n  [multiplication, karatsuba, raw, ratio-64, suffix-copy]
+  Hex.PolyFastBench.runKaratsubaRatio2    expected complexity: karatsubaCost n  [multiplication, karatsuba, ratio-2]
+  Hex.PolyFastBench.runKaratsubaRatio4    expected complexity: karatsubaCost n  [multiplication, karatsuba, ratio-4]
+  Hex.PolyFastBench.runSchoolbookRat    expected complexity: (n ^ 2)  [multiplication, schoolbook, rat, balanced]
+  Hex.PolyFastBench.runSeriesSchoolbookRat    expected complexity: (n ^ 2)  [series-multiplication, schoolbook, rat, bounded]
+  Hex.PolyFastBench.runRepeatedCachedDivision    expected complexity: 8 * karatsubaCost n  [division, newton, repeated, warm-plan, field-65537]
+  Hex.PolyFastBench.runKaratsubaSquare    expected complexity: karatsubaCost n  [multiplication, karatsuba, square]
+  Hex.PolyFastBench.runColdMultipointEval    expected complexity: karatsubaCost n  [multipoint, remainder-tree, cold-plan, field-65537]
+  Hex.PolyFastBench.runEuclideanXgcd    expected complexity: (n ^ 2)  [half-gcd, euclidean, balanced]
+  Hex.PolyFastBench.runLongDivision    expected complexity: n ^ 2  [division, long, cold, field-65537]
+  Hex.PolyFastBench.runClippedLowRat    expected complexity: karatsubaCost n  [multiplication, karatsuba, rat, clipped-low]
+  Hex.PolyFastBench.runColdInterpolation    expected complexity: karatsubaCost n  [interpolation, product-tree, cold-plan, field-65537]
+  Hex.PolyFastBench.runKaratsubaMod    expected complexity: karatsubaCost n  [multiplication, karatsuba, zmod5, balanced]
+  Hex.PolyFastBench.runSchoolbookLoop    expected complexity: n ^ 2  [multiplication, schoolbook, raw, index-loop]
+  Hex.PolyFastBench.runDirectInterpolation    expected complexity: n ^ 3  [interpolation, lagrange, direct, field-65537]
+  Hex.PolyFastBench.runKaratsubaRat    expected complexity: karatsubaCost n  [multiplication, karatsuba, rat, balanced]
+  Hex.PolyFastBench.runSchoolbookList    expected complexity: n ^ 2  [multiplication, schoolbook, raw, list-diagonal]
+  Hex.PolyFastBench.runKaratsubaSquareMod    expected complexity: karatsubaCost n  [multiplication, karatsuba, zmod5, square]
+  Hex.PolyFastBench.runCachedDivision    expected complexity: karatsubaCost n  [division, newton, cached-divisor, warm-plan, field-65537]
+  Hex.PolyFastBench.runRepeatedDirectEval    expected complexity: (8 * n ^ 2)  [multipoint, horner, repeated, reused-points, field-65537]
+  Hex.PolyFastBench.runBlocksOffset    expected complexity: karatsubaCost n  [multiplication, karatsuba, raw, ratio-64, offset]
+  Hex.PolyFastBench.runSeriesKaratsubaRat    expected complexity: karatsubaCost n  [series-multiplication, karatsuba, rat, bounded]
+  Hex.PolyFastBench.runKaratsubaRatio16    expected complexity: karatsubaCost n  [multiplication, karatsuba, ratio-16]
+  Hex.PolyFastBench.runKaratsubaSkew    expected complexity: karatsubaCost n  [multiplication, karatsuba, ratio-64]
+  Hex.PolyFastBench.runHalfGcdLeft    expected complexity: karatsubaCost n * (Nat.log2 n + 1)  [half-gcd, matrix, one-sided]
+  Hex.PolyFastBench.runKaratsubaSquareRat    expected complexity: karatsubaCost n  [multiplication, karatsuba, rat, square]
+  Hex.PolyFastBench.runKaratsubaRatioUnder2    expected complexity: karatsubaCost n  [multiplication, karatsuba, ratio-under-2, cutoff-skew]
+  Hex.PolyFastBench.runRepeatedMultipointEval    expected complexity: 8 * karatsubaCost n  [multipoint, remainder-tree, repeated, reused-plan, field-65537]
+  Hex.PolyFastBench.runSkewLongDivision    expected complexity: (n ^ 2)  [division, long, ratio-4]
+  Hex.PolyFastBench.runDirectEval    expected complexity: n ^ 2  [multipoint, horner, reused-plan, field-65537]
+  Hex.PolyFastBench.runPlannedInterpolation    expected complexity: karatsubaCost n  [interpolation, product-tree, reused-plan, field-65537]
+  Hex.PolyFastBench.runSeriesKaratsubaInt    expected complexity: karatsubaCost n  [series-multiplication, karatsuba, int, bounded]
+  Hex.PolyFastBench.runFullThenLowRat    expected complexity: karatsubaCost n  [multiplication, karatsuba, rat, full-then-low]
+  Hex.PolyFastBench.runNewtonDivision    expected complexity: karatsubaCost n  [division, newton, cold, field-65537]
+  Hex.PolyFastBench.runFullThenLowInt    expected complexity: karatsubaCost n  [multiplication, karatsuba, int, full-then-low]
+  Hex.PolyFastBench.runHalfGcdPade    expected complexity: karatsubaCost n * (Nat.log2 n + 1)  [pade, half-gcd, normalized, field-65537]
+  Hex.PolyFastBench.runHalfGcd    expected complexity: karatsubaCost n * (Nat.log2 n + 1)  [half-gcd, matrix, balanced]
+  Hex.PolyFastBench.runSkewNewtonDivision    expected complexity: karatsubaCost n  [division, newton, ratio-4]
+  Hex.PolyFastBench.runClippedLowMod    expected complexity: karatsubaCost n  [multiplication, karatsuba, zmod5, clipped-low]
+  Hex.PolyFastBench.runSeriesSchoolbookInt    expected complexity: (n ^ 2)  [series-multiplication, schoolbook, int, bounded]
+  Hex.PolyFastBench.runFullThenLowMod    expected complexity: karatsubaCost n  [multiplication, karatsuba, zmod5, full-then-low]
+  Hex.PolyFastBench.runSchoolbookMod    expected complexity: (n ^ 2)  [multiplication, schoolbook, zmod5, balanced]
+  Hex.PolyFastBench.runProductTree    expected complexity: karatsubaCost n  [product-tree, karatsuba, cold, field-65537]
+  Hex.PolyFastBench.runClippedLowInt    expected complexity: karatsubaCost n  [multiplication, karatsuba, int, clipped-low]
+  Hex.PolyFastBench.runLinearPade    expected complexity: (n ^ 3)  [pade, linear-algebra, reference, field-65537]
+  Hex.PolyFastBench.runKaratsuba    expected complexity: karatsubaCost n  [multiplication, karatsuba, balanced]
+  Hex.PolyFastBench.runRemainderTree    expected complexity: karatsubaCost n  [remainder-tree, karatsuba, cold-plan, general-monic, field-65537]
+  Hex.PolyFastBench.runRepeatedNewtonDivision    expected complexity: 8 * karatsubaCost n  [division, newton, repeated, cold-plan, field-65537]
+  Hex.PolyFastBench.runHalfGcdSkew    expected complexity: karatsubaCost n * (Nat.log2 n + 1)  [half-gcd, matrix, ratio-4]
+  Hex.PolyFastBench.runMultipointEval    expected complexity: karatsubaCost n  [multipoint, remainder-tree, reused-plan, field-65537]
+  Hex.PolyFastBench.runSchoolbook    expected complexity: n ^ 2  [multiplication, schoolbook, balanced]
+  Hex.PolyFastBench.runLeanMod64    [fixed] repeats=3
+  Hex.PolyFastBench.runLeanMod256    [fixed] repeats=3
+  Hex.PolyFastBench.runLeanMod1024    [fixed] repeats=3
+  Hex.PolyFastBench.runLeanInt1024    [fixed] repeats=3
+  Hex.PolyFastBench.runFlintMod64    [fixed] repeats=3
+  Hex.PolyFastBench.runLeanInt64    [fixed] repeats=3
+  Hex.PolyFastBench.runFlintMod256    [fixed] repeats=3
+  Hex.PolyFastBench.runFlintMod1024    [fixed] repeats=3
+  Hex.PolyFastBench.runFlintOverhead    [fixed] repeats=3
+  Hex.PolyFastBench.runFlintInt64    [fixed] repeats=3
+  Hex.PolyFastBench.runFlintInt256    [fixed] repeats=3
+  Hex.PolyFastBench.runLeanInt256    [fixed] repeats=3
+  Hex.PolyFastBench.runFlintInt1024    [fixed] repeats=3
+verifying 64 benchmark(s)...
+  [ok ] Hex.PolyFastBench.runBlocksTail
+  [ok ] Hex.PolyFastBench.runKaratsubaRatio2
+  [ok ] Hex.PolyFastBench.runKaratsubaRatio4
+  [ok ] Hex.PolyFastBench.runSchoolbookRat
+  [ok ] Hex.PolyFastBench.runSeriesSchoolbookRat
+  [ok ] Hex.PolyFastBench.runRepeatedCachedDivision
+  [ok ] Hex.PolyFastBench.runKaratsubaSquare
+  [ok ] Hex.PolyFastBench.runColdMultipointEval
+  [ok ] Hex.PolyFastBench.runEuclideanXgcd
+  [ok ] Hex.PolyFastBench.runLongDivision
+  [ok ] Hex.PolyFastBench.runClippedLowRat
+  [ok ] Hex.PolyFastBench.runColdInterpolation
+  [ok ] Hex.PolyFastBench.runKaratsubaMod
+  [ok ] Hex.PolyFastBench.runSchoolbookLoop
+  [ok ] Hex.PolyFastBench.runDirectInterpolation
+  [ok ] Hex.PolyFastBench.runKaratsubaRat
+  [ok ] Hex.PolyFastBench.runSchoolbookList
+  [ok ] Hex.PolyFastBench.runKaratsubaSquareMod
+  [ok ] Hex.PolyFastBench.runCachedDivision
+  [ok ] Hex.PolyFastBench.runRepeatedDirectEval
+  [ok ] Hex.PolyFastBench.runBlocksOffset
+  [ok ] Hex.PolyFastBench.runSeriesKaratsubaRat
+  [ok ] Hex.PolyFastBench.runKaratsubaRatio16
+  [ok ] Hex.PolyFastBench.runKaratsubaSkew
+  [ok ] Hex.PolyFastBench.runHalfGcdLeft
+  [ok ] Hex.PolyFastBench.runKaratsubaSquareRat
+  [ok ] Hex.PolyFastBench.runKaratsubaRatioUnder2
+  [ok ] Hex.PolyFastBench.runRepeatedMultipointEval
+  [ok ] Hex.PolyFastBench.runSkewLongDivision
+  [ok ] Hex.PolyFastBench.runDirectEval
+  [ok ] Hex.PolyFastBench.runPlannedInterpolation
+  [ok ] Hex.PolyFastBench.runSeriesKaratsubaInt
+  [ok ] Hex.PolyFastBench.runFullThenLowRat
+  [ok ] Hex.PolyFastBench.runNewtonDivision
+  [ok ] Hex.PolyFastBench.runFullThenLowInt
+  [ok ] Hex.PolyFastBench.runHalfGcdPade
+  [ok ] Hex.PolyFastBench.runHalfGcd
+  [ok ] Hex.PolyFastBench.runSkewNewtonDivision
+  [ok ] Hex.PolyFastBench.runClippedLowMod
+  [ok ] Hex.PolyFastBench.runSeriesSchoolbookInt
+  [ok ] Hex.PolyFastBench.runFullThenLowMod
+  [ok ] Hex.PolyFastBench.runSchoolbookMod
+  [ok ] Hex.PolyFastBench.runProductTree
+  [ok ] Hex.PolyFastBench.runClippedLowInt
+  [ok ] Hex.PolyFastBench.runLinearPade
+  [ok ] Hex.PolyFastBench.runKaratsuba
+  [ok ] Hex.PolyFastBench.runRemainderTree
+  [ok ] Hex.PolyFastBench.runRepeatedNewtonDivision
+  [ok ] Hex.PolyFastBench.runHalfGcdSkew
+  [ok ] Hex.PolyFastBench.runMultipointEval
+  [ok ] Hex.PolyFastBench.runSchoolbook
+  [ok ] Hex.PolyFastBench.runLeanMod64  [fixed]
+  [ok ] Hex.PolyFastBench.runLeanMod256  [fixed]
+  [ok ] Hex.PolyFastBench.runLeanMod1024  [fixed]
+  [ok ] Hex.PolyFastBench.runLeanInt1024  [fixed]
+  [ok ] Hex.PolyFastBench.runFlintMod64  [fixed]
+  [ok ] Hex.PolyFastBench.runLeanInt64  [fixed]
+  [ok ] Hex.PolyFastBench.runFlintMod256  [fixed]
+  [ok ] Hex.PolyFastBench.runFlintMod1024  [fixed]
+  [ok ] Hex.PolyFastBench.runFlintOverhead  [fixed]
+  [ok ] Hex.PolyFastBench.runFlintInt64  [fixed]
+  [ok ] Hex.PolyFastBench.runFlintInt256  [fixed]
+  [ok ] Hex.PolyFastBench.runLeanInt256  [fixed]
+  [ok ] Hex.PolyFastBench.runFlintInt1024  [fixed]
+all 64 benchmark(s) passed
+::endgroup::
+::group::hexrationalfn_bench
+registered benchmarks:
+  Hex.RationalFnWorkloads.normalizeChain    expected complexity: multiplicationCost n * (Nat.log2 n + 1)  [degree, upper-bound]
+  Hex.RationalFnFamilies.checkedFraction    expected complexity: n  [degree]
+  Hex.RationalFnScaling.equal    expected complexity: n
+  Hex.RationalFnWorkloads.transportCoeffs    expected complexity: n  [degree]
+  Hex.RationalFnWorkloads.polynomialPart    expected complexity: n  [degree]
+  Hex.RationalFnFamilies.normalizeCancel    expected complexity: n  [degree]
+  Hex.RationalFnFamilies.normalizeDegree    expected complexity: n  [degree]
+  Hex.RationalFnWorkloads.unbalanced    expected complexity: n  [degree, ratio]
+  Hex.RationalFnWorkloads.derivativePolynomial    expected complexity: n  [degree]
+  Hex.RationalFnScaling.evaluatePole    expected complexity: n
+  Hex.RationalFnWorkloads.heightDerivative    expected complexity: n ^ 2  [coefficient-height, upper-bound]
+  Hex.RationalFnFamilies.addShared    expected complexity: n  [degree]
+  Hex.RationalFnFamilies.addCancel    expected complexity: n  [degree]
+  Hex.RationalFnWorkloads.constructors    expected complexity: 1  [degree]
+  Hex.RationalFnWorkloads.heightNormalize    expected complexity: n ^ 2  [coefficient-height, upper-bound]
+  Hex.RationalFnFamilies.divide    expected complexity: n  [degree]
+  Hex.RationalFnFamilies.addCoprime    expected complexity: n  [degree]
+  Hex.RationalFnFamilies.subtract    expected complexity: n  [degree]
+  Hex.RationalFnScaling.inverse    expected complexity: n
+  Hex.RationalFnWorkloads.unbalancedSchoolbook    expected complexity: n  [degree, ratio]
+  Hex.RationalFnWorkloads.square    expected complexity: multiplicationCost n  [degree]
+  Hex.RationalFnFamilies.checkedDivide    expected complexity: n  [degree]
+  Hex.RationalFnWorkloads.power    expected complexity: multiplicationCost n  [degree]
+  Hex.RationalFnFamilies.inverse    expected complexity: n  [degree]
+  Hex.RationalFnScaling.evaluate    expected complexity: n
+  Hex.RationalFnWorkloads.heightMultiply    expected complexity: n ^ 2  [coefficient-height, upper-bound]
+  Hex.RationalFnScaling.reject    expected complexity: n
+  Hex.RationalFnFamilies.addTotal    expected complexity: n  [degree]
+  Hex.RationalFnScaling.negate    expected complexity: n
+  Hex.RationalFnFamilies.generate    expected complexity: n  [degree]
+  Hex.RationalFnWorkloads.derivativeCancel    expected complexity: n  [degree]
+  Hex.RationalFnFamilies.multiply    expected complexity: n  [degree]
+  Hex.RationalFnFamilies.accept    expected complexity: n  [degree]
+  Hex.RationalFnFamilies.addEqual    expected complexity: n  [degree]
+  Hex.RationalFnWorkloads.multiply    expected complexity: multiplicationCost n  [degree]
+  Hex.RationalFnFamilies.cancelMultiply    expected complexity: n  [degree]
+  Hex.RationalFnWorkloads.heightAdd    expected complexity: n ^ 2  [coefficient-height, upper-bound]
+  Hex.RationalFnWorkloads.derivative    expected complexity: n  [degree]
+  Hex.RationalFnScaling.replay    expected complexity: n
+  Hex.RationalFnFamilies.checkedInverse    expected complexity: n  [degree]
+  Hex.RationalFnScaling.different    expected complexity: n
+  Hex.RationalFnBench.runKaratsuba16    [fixed] repeats=3
+  Hex.RationalFnBench.runCancel2    [fixed] repeats=3
+  Hex.RationalFnBench.runKaratsuba8    [fixed] repeats=3
+  Hex.RationalFnBench.runKaratsuba1    [fixed] repeats=3
+  Hex.RationalFnBench.runKaratsubaAt16    [fixed] repeats=3
+  Hex.RationalFnBench.runNaive8    [fixed] repeats=3
+  Hex.RationalFnBench.runNaive1    [fixed] repeats=3
+  Hex.RationalFnBench.runCancel8    [fixed] repeats=3
+  Hex.RationalFnBench.runNaive16    [fixed] repeats=3
+  Hex.RationalFnBench.runKaratsuba2    [fixed] repeats=3
+  Hex.RationalFnBench.runKaratsuba64    [fixed] repeats=3
+  Hex.RationalFnBench.runCancel4    [fixed] repeats=3
+  Hex.RationalFnBench.runNaive4    [fixed] repeats=3
+  Hex.RationalFnBench.runCalculus    [fixed] repeats=3
+  Hex.RationalFnBench.runGenerate    [fixed] repeats=3
+  Hex.RationalFnBench.runSchoolbook64    [fixed] repeats=3
+  Hex.RationalFnBench.runAddition    [fixed] repeats=3
+  Hex.RationalFnBench.runMultiplyNormalize    [fixed] repeats=3
+  Hex.RationalFnBench.runHeight    [fixed] repeats=3
+  Hex.RationalFnBench.runNormalization    [fixed] repeats=3
+  Hex.RationalFnBench.runSchoolbook16    [fixed] repeats=3
+  Hex.RationalFnBench.runKaratsubaAt128    [fixed] repeats=3
+  Hex.RationalFnBench.runReplay    [fixed] repeats=3
+  Hex.RationalFnBench.runQueries    [fixed] repeats=3
+  Hex.RationalFnBench.runKaratsuba4    [fixed] repeats=3
+  Hex.RationalFnBench.runKaratsuba32    [fixed] repeats=3
+  Hex.RationalFnBench.runCancel16    [fixed] repeats=3
+  Hex.RationalFnBench.runMultiplication    [fixed] repeats=3
+  Hex.RationalFnBench.runKaratsubaAt64    [fixed] repeats=3
+  Hex.RationalFnBench.runSchoolbook    [fixed] repeats=3
+  Hex.RationalFnBench.runKaratsubaAt32    [fixed] repeats=3
+  Hex.RationalFnBench.runSchoolbook128    [fixed] repeats=3
+  Hex.RationalFnBench.runCancel1    [fixed] repeats=3
+  Hex.RationalFnBench.runSchoolbook32    [fixed] repeats=3
+  Hex.RationalFnBench.runNaive2    [fixed] repeats=3
+verifying 76 benchmark(s)...
+  [ok ] Hex.RationalFnWorkloads.normalizeChain
+  [ok ] Hex.RationalFnFamilies.checkedFraction
+  [ok ] Hex.RationalFnScaling.equal
+  [ok ] Hex.RationalFnWorkloads.transportCoeffs
+  [ok ] Hex.RationalFnWorkloads.polynomialPart
+  [ok ] Hex.RationalFnFamilies.normalizeCancel
+  [ok ] Hex.RationalFnFamilies.normalizeDegree
+  [ok ] Hex.RationalFnWorkloads.unbalanced
+  [ok ] Hex.RationalFnWorkloads.derivativePolynomial
+  [ok ] Hex.RationalFnScaling.evaluatePole
+  [ok ] Hex.RationalFnWorkloads.heightDerivative
+  [ok ] Hex.RationalFnFamilies.addShared
+  [ok ] Hex.RationalFnFamilies.addCancel
+  [ok ] Hex.RationalFnWorkloads.constructors
+  [ok ] Hex.RationalFnWorkloads.heightNormalize
+  [ok ] Hex.RationalFnFamilies.divide
+  [ok ] Hex.RationalFnFamilies.addCoprime
+  [ok ] Hex.RationalFnFamilies.subtract
+  [ok ] Hex.RationalFnScaling.inverse
+  [ok ] Hex.RationalFnWorkloads.unbalancedSchoolbook
+  [ok ] Hex.RationalFnWorkloads.square
+  [ok ] Hex.RationalFnFamilies.checkedDivide
+  [ok ] Hex.RationalFnWorkloads.power
+  [ok ] Hex.RationalFnFamilies.inverse
+  [ok ] Hex.RationalFnScaling.evaluate
+  [ok ] Hex.RationalFnWorkloads.heightMultiply
+  [ok ] Hex.RationalFnScaling.reject
+  [ok ] Hex.RationalFnFamilies.addTotal
+  [ok ] Hex.RationalFnScaling.negate
+  [ok ] Hex.RationalFnFamilies.generate
+  [ok ] Hex.RationalFnWorkloads.derivativeCancel
+  [ok ] Hex.RationalFnFamilies.multiply
+  [ok ] Hex.RationalFnFamilies.accept
+  [ok ] Hex.RationalFnFamilies.addEqual
+  [ok ] Hex.RationalFnWorkloads.multiply
+  [ok ] Hex.RationalFnFamilies.cancelMultiply
+  [ok ] Hex.RationalFnWorkloads.heightAdd
+  [ok ] Hex.RationalFnWorkloads.derivative
+  [ok ] Hex.RationalFnScaling.replay
+  [ok ] Hex.RationalFnFamilies.checkedInverse
+  [ok ] Hex.RationalFnScaling.different
+  [ok ] Hex.RationalFnBench.runKaratsuba16  [fixed]
+  [ok ] Hex.RationalFnBench.runCancel2  [fixed]
+  [ok ] Hex.RationalFnBench.runKaratsuba8  [fixed]
+  [ok ] Hex.RationalFnBench.runKaratsuba1  [fixed]
+  [ok ] Hex.RationalFnBench.runKaratsubaAt16  [fixed]
+  [ok ] Hex.RationalFnBench.runNaive8  [fixed]
+  [ok ] Hex.RationalFnBench.runNaive1  [fixed]
+  [ok ] Hex.RationalFnBench.runCancel8  [fixed]
+  [ok ] Hex.RationalFnBench.runNaive16  [fixed]
+  [ok ] Hex.RationalFnBench.runKaratsuba2  [fixed]
+  [ok ] Hex.RationalFnBench.runKaratsuba64  [fixed]
+  [ok ] Hex.RationalFnBench.runCancel4  [fixed]
+  [ok ] Hex.RationalFnBench.runNaive4  [fixed]
+  [ok ] Hex.RationalFnBench.runCalculus  [fixed]
+  [ok ] Hex.RationalFnBench.runGenerate  [fixed]
+  [ok ] Hex.RationalFnBench.runSchoolbook64  [fixed]
+  [ok ] Hex.RationalFnBench.runAddition  [fixed]
+  [ok ] Hex.RationalFnBench.runMultiplyNormalize  [fixed]
+  [ok ] Hex.RationalFnBench.runHeight  [fixed]
+  [ok ] Hex.RationalFnBench.runNormalization  [fixed]
+  [ok ] Hex.RationalFnBench.runSchoolbook16  [fixed]
+  [ok ] Hex.RationalFnBench.runKaratsubaAt128  [fixed]
+  [ok ] Hex.RationalFnBench.runReplay  [fixed]
+  [ok ] Hex.RationalFnBench.runQueries  [fixed]
+  [ok ] Hex.RationalFnBench.runKaratsuba4  [fixed]
+  [ok ] Hex.RationalFnBench.runKaratsuba32  [fixed]
+  [ok ] Hex.RationalFnBench.runCancel16  [fixed]
+  [ok ] Hex.RationalFnBench.runMultiplication  [fixed]
+  [ok ] Hex.RationalFnBench.runKaratsubaAt64  [fixed]
+  [ok ] Hex.RationalFnBench.runSchoolbook  [fixed]
+  [ok ] Hex.RationalFnBench.runKaratsubaAt32  [fixed]
+  [ok ] Hex.RationalFnBench.runSchoolbook128  [fixed]
+  [ok ] Hex.RationalFnBench.runCancel1  [fixed]
+  [ok ] Hex.RationalFnBench.runSchoolbook32  [fixed]
+  [ok ] Hex.RationalFnBench.runNaive2  [fixed]
+all 76 benchmark(s) passed
+::endgroup::
+::group::hexorderedfn_bench
+registered benchmarks:
+  Hex.OrderedFnBench.second    expected complexity: n
+  Hex.OrderedFnBench.subtraction    expected complexity: n
+  Hex.OrderedFnBench.compareHeight    expected complexity: n
+  Hex.OrderedFnBench.approximation    expected complexity: n * n * n
+  Hex.OrderedFnBench.successiveApproximation    expected complexity: (n + 2) * (7 * n + 55) / 2
+  Hex.OrderedFnBench.refinement    expected complexity: n * n * n
+  Hex.OrderedFnBench.scan    expected complexity: n
+  Hex.OrderedFnBench.degree    expected complexity: 1
+  Hex.OrderedFnBench.comparison    expected complexity: n
+  Hex.OrderedFnBench.horner    expected complexity: n * n * n
+  Hex.OrderedFnBench.thirdApproximation    expected complexity: (n + 2) * (7 * n * n + 121 * n + 666) / 6
+  Hex.OrderedFnBench.third    expected complexity: n
+  Hex.OrderedFnBench.denominators    expected complexity: 3 ^ Nat.log2 (max n 1)
+  Hex.OrderedFnBench.realHeight    expected complexity: n
+  Hex.OrderedFnBench.jointRefinement    expected complexity: n * n * n
+  Hex.OrderedFnBench.height    expected complexity: 1
+  Hex.OrderedFnBench.provider    expected complexity: n
+verifying 17 benchmark(s)...
+  [ok ] Hex.OrderedFnBench.second
+  [ok ] Hex.OrderedFnBench.subtraction
+  [ok ] Hex.OrderedFnBench.compareHeight
+  [ok ] Hex.OrderedFnBench.approximation
+  [ok ] Hex.OrderedFnBench.successiveApproximation
+  [ok ] Hex.OrderedFnBench.refinement
+  [ok ] Hex.OrderedFnBench.scan
+  [ok ] Hex.OrderedFnBench.degree
+  [ok ] Hex.OrderedFnBench.comparison
+  [ok ] Hex.OrderedFnBench.horner
+  [ok ] Hex.OrderedFnBench.thirdApproximation
+  [ok ] Hex.OrderedFnBench.third
+  [ok ] Hex.OrderedFnBench.denominators
+  [ok ] Hex.OrderedFnBench.realHeight
+  [ok ] Hex.OrderedFnBench.jointRefinement
+  [ok ] Hex.OrderedFnBench.height
+  [ok ] Hex.OrderedFnBench.provider
+all 17 benchmark(s) passed
+::endgroup::
+::group::hexpolysmith_bench
+registered benchmarks:
+  Hex.PolySmithBench.runSnfRank    expected complexity: dimensionCost n
+  Hex.PolySmithBench.runChainSnf    expected complexity: chainCost n
+  Hex.PolySmithBench.runDenseSnfDataDimension    expected complexity: dimensionCost n
+  Hex.PolySmithBench.runDenseSnfDataDegree    expected complexity: degreeCost degree
+  Hex.PolySmithBench.runDenseSnfDimension    expected complexity: dimensionCost n
+  Hex.PolySmithBench.runQuotientOrder    expected complexity: dimensionCost n
+  Hex.PolySmithBench.runDirectProductCert    expected complexity: directCertCost n
+  Hex.PolySmithBench.runSmallField    expected complexity: smallFieldCost degree
+  Hex.PolySmithBench.runInvariantFactors    expected complexity: dimensionCost n
+  Hex.PolySmithBench.runRationalSnfDataDegree    expected complexity: rationalDegreeCost degree
+  Hex.PolySmithBench.runDenseSnfDegree    expected complexity: degreeCost degree
+  Hex.PolySmithBench.runRationalSnfDataDimension    expected complexity: dimensionCost n
+  Hex.PolySmithBench.runSolveSystem    expected complexity: dimensionCost n
+  Hex.PolySmithBench.runDiagonalSnf    expected complexity: dimensionCost n
+  Hex.PolySmithBench.runEvaluationCert    expected complexity: evaluationCertCost n
+  Hex.PolySmithBench.runModuleStructure    expected complexity: dimensionCost n
+  Hex.PolySmithBench.runPariDiagonal3    [fixed] repeats=5
+  Hex.PolySmithBench.runPariSmith4    [fixed] repeats=5
+  Hex.PolySmithBench.runPariSmith3    [fixed] repeats=5
+  Hex.PolySmithBench.runLeanSmall1    [fixed] repeats=5
+  Hex.PolySmithBench.runPariSmall2    [fixed] repeats=5
+  Hex.PolySmithBench.runPariDiagonal5    [fixed] repeats=5
+  Hex.PolySmithBench.runPariChain2    [fixed] repeats=5
+  Hex.PolySmithBench.runPariSmall4    [fixed] repeats=5
+  Hex.PolySmithBench.runSymPyChain1    [fixed] repeats=5
+  Hex.PolySmithBench.runSymPyDiagonal1    [fixed] repeats=5
+  Hex.PolySmithBench.runLeanDiagonal4    [fixed] repeats=5
+  Hex.PolySmithBench.runPariRational1    [fixed] repeats=5
+  Hex.PolySmithBench.runLeanDiagonal1    [fixed] repeats=5
+  Hex.PolySmithBench.runLeanDiagonal2    [fixed] repeats=5
+  Hex.PolySmithBench.runLeanSmith3    [fixed] repeats=5
+  Hex.PolySmithBench.runLeanChain3    [fixed] repeats=5
+  Hex.PolySmithBench.runPariChain4    [fixed] repeats=5
+  Hex.PolySmithBench.runLeanRational3    [fixed] repeats=5
+  Hex.PolySmithBench.runPariSmall1    [fixed] repeats=5
+  Hex.PolySmithBench.runSymPySmith4    [fixed] repeats=5
+  Hex.PolySmithBench.runPariSmith1    [fixed] repeats=5
+  Hex.PolySmithBench.runLeanDiagonal5    [fixed] repeats=5
+  Hex.PolySmithBench.runSymPyChain3    [fixed] repeats=5
+  Hex.PolySmithBench.runSymPyChain2    [fixed] repeats=5
+  Hex.PolySmithBench.runPariSmith5    [fixed] repeats=5
+  Hex.PolySmithBench.runPariChain1    [fixed] repeats=5
+  Hex.PolySmithBench.runLeanRational1    [fixed] repeats=5
+  Hex.PolySmithBench.runPariRational4    [fixed] repeats=5
+  Hex.PolySmithBench.runSymPyDiagonal2    [fixed] repeats=5
+  Hex.PolySmithBench.runSymPySmith2    [fixed] repeats=5
+  Hex.PolySmithBench.runLeanChain5    [fixed] repeats=5
+  Hex.PolySmithBench.runSymPySmall1    [fixed] repeats=5
+  Hex.PolySmithBench.runLeanChain2    [fixed] repeats=5
+  Hex.PolySmithBench.runLeanSmith4    [fixed] repeats=5
+  Hex.PolySmithBench.runPariSmall5    [fixed] repeats=5
+  Hex.PolySmithBench.runLeanSmall4    [fixed] repeats=5
+  Hex.PolySmithBench.runSymPyRational1    [fixed] repeats=5
+  Hex.PolySmithBench.runSymPyRational4    [fixed] repeats=5
+  Hex.PolySmithBench.runSymPyChain5    [fixed] repeats=5
+  Hex.PolySmithBench.runLeanSmith1    [fixed] repeats=5
+  Hex.PolySmithBench.runSymPySmall4    [fixed] repeats=5
+  Hex.PolySmithBench.runPariSmall3    [fixed] repeats=5
+  Hex.PolySmithBench.runSymPyRational5    [fixed] repeats=5
+  Hex.PolySmithBench.runLeanChain1    [fixed] repeats=5
+  Hex.PolySmithBench.runLeanRational5    [fixed] repeats=5
+  Hex.PolySmithBench.runLeanSmall5    [fixed] repeats=5
+  Hex.PolySmithBench.runPariRational5    [fixed] repeats=5
+  Hex.PolySmithBench.runLeanSmith2    [fixed] repeats=5
+  Hex.PolySmithBench.runSymPySmall3    [fixed] repeats=5
+  Hex.PolySmithBench.runPariChain5    [fixed] repeats=5
+  Hex.PolySmithBench.runSymPyDiagonal5    [fixed] repeats=5
+  Hex.PolySmithBench.runLeanDiagonal3    [fixed] repeats=5
+  Hex.PolySmithBench.runPariRational3    [fixed] repeats=5
+  Hex.PolySmithBench.runSymPyDiagonal4    [fixed] repeats=5
+  Hex.PolySmithBench.runSymPyRational2    [fixed] repeats=5
+  Hex.PolySmithBench.runPariRational2    [fixed] repeats=5
+  Hex.PolySmithBench.runPariChain3    [fixed] repeats=5
+  Hex.PolySmithBench.runSymPySmall5    [fixed] repeats=5
+  Hex.PolySmithBench.runSymPySmith1    [fixed] repeats=5
+  Hex.PolySmithBench.runSymPyChain4    [fixed] repeats=5
+  Hex.PolySmithBench.runLeanSmall2    [fixed] repeats=5
+  Hex.PolySmithBench.runLeanSmith5    [fixed] repeats=5
+  Hex.PolySmithBench.runLeanRational2    [fixed] repeats=5
+  Hex.PolySmithBench.runPariDiagonal4    [fixed] repeats=5
+  Hex.PolySmithBench.runPariSmith2    [fixed] repeats=5
+  Hex.PolySmithBench.runSymPyRational3    [fixed] repeats=5
+  Hex.PolySmithBench.runLeanChain4    [fixed] repeats=5
+  Hex.PolySmithBench.runPariDiagonal1    [fixed] repeats=5
+  Hex.PolySmithBench.runLeanSmall3    [fixed] repeats=5
+  Hex.PolySmithBench.runSymPySmith3    [fixed] repeats=5
+  Hex.PolySmithBench.runLeanRational4    [fixed] repeats=5
+  Hex.PolySmithBench.runSymPyDiagonal3    [fixed] repeats=5
+  Hex.PolySmithBench.runPariDiagonal2    [fixed] repeats=5
+  Hex.PolySmithBench.runSymPySmith5    [fixed] repeats=5
+  Hex.PolySmithBench.runSymPySmall2    [fixed] repeats=5
+  Hex.PolySmithBench.runComparatorOverhead    [fixed] repeats=5
+verifying 92 benchmark(s)...
+  [ok ] Hex.PolySmithBench.runSnfRank
+  [ok ] Hex.PolySmithBench.runChainSnf
+  [ok ] Hex.PolySmithBench.runDenseSnfDataDimension
+  [ok ] Hex.PolySmithBench.runDenseSnfDataDegree
+  [ok ] Hex.PolySmithBench.runDenseSnfDimension
+  [ok ] Hex.PolySmithBench.runQuotientOrder
+  [ok ] Hex.PolySmithBench.runDirectProductCert
+  [ok ] Hex.PolySmithBench.runSmallField
+  [ok ] Hex.PolySmithBench.runInvariantFactors
+  [ok ] Hex.PolySmithBench.runRationalSnfDataDegree
+  [ok ] Hex.PolySmithBench.runDenseSnfDegree
+  [ok ] Hex.PolySmithBench.runRationalSnfDataDimension
+  [ok ] Hex.PolySmithBench.runSolveSystem
+  [ok ] Hex.PolySmithBench.runDiagonalSnf
+  [ok ] Hex.PolySmithBench.runEvaluationCert
+  [ok ] Hex.PolySmithBench.runModuleStructure
+  [FAIL] Hex.PolySmithBench.runPariDiagonal3  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/pari_snf: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [FAIL] Hex.PolySmithBench.runPariSmith4  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/pari_snf: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [FAIL] Hex.PolySmithBench.runPariSmith3  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/pari_snf: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [ok ] Hex.PolySmithBench.runLeanSmall1  [fixed]
+  [FAIL] Hex.PolySmithBench.runPariSmall2  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/pari_snf: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [FAIL] Hex.PolySmithBench.runPariDiagonal5  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/pari_snf: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [FAIL] Hex.PolySmithBench.runPariChain2  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/pari_snf: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [FAIL] Hex.PolySmithBench.runPariSmall4  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/pari_snf: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [FAIL] Hex.PolySmithBench.runSymPyChain1  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/sympy_snf: ModuleNotFoundError: No module named 'sympy'
+  [FAIL] Hex.PolySmithBench.runSymPyDiagonal1  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/sympy_snf: ModuleNotFoundError: No module named 'sympy'
+  [ok ] Hex.PolySmithBench.runLeanDiagonal4  [fixed]
+  [FAIL] Hex.PolySmithBench.runPariRational1  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/pari_snf: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [ok ] Hex.PolySmithBench.runLeanDiagonal1  [fixed]
+  [ok ] Hex.PolySmithBench.runLeanDiagonal2  [fixed]
+  [ok ] Hex.PolySmithBench.runLeanSmith3  [fixed]
+  [ok ] Hex.PolySmithBench.runLeanChain3  [fixed]
+  [FAIL] Hex.PolySmithBench.runPariChain4  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/pari_snf: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [ok ] Hex.PolySmithBench.runLeanRational3  [fixed]
+  [FAIL] Hex.PolySmithBench.runPariSmall1  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/pari_snf: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [FAIL] Hex.PolySmithBench.runSymPySmith4  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/sympy_snf: ModuleNotFoundError: No module named 'sympy'
+  [FAIL] Hex.PolySmithBench.runPariSmith1  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/pari_snf: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [ok ] Hex.PolySmithBench.runLeanDiagonal5  [fixed]
+  [FAIL] Hex.PolySmithBench.runSymPyChain3  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/sympy_snf: ModuleNotFoundError: No module named 'sympy'
+  [FAIL] Hex.PolySmithBench.runSymPyChain2  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/sympy_snf: ModuleNotFoundError: No module named 'sympy'
+  [FAIL] Hex.PolySmithBench.runPariSmith5  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/pari_snf: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [FAIL] Hex.PolySmithBench.runPariChain1  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/pari_snf: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [ok ] Hex.PolySmithBench.runLeanRational1  [fixed]
+  [FAIL] Hex.PolySmithBench.runPariRational4  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/pari_snf: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [FAIL] Hex.PolySmithBench.runSymPyDiagonal2  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/sympy_snf: ModuleNotFoundError: No module named 'sympy'
+  [FAIL] Hex.PolySmithBench.runSymPySmith2  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/sympy_snf: ModuleNotFoundError: No module named 'sympy'
+  [ok ] Hex.PolySmithBench.runLeanChain5  [fixed]
+  [FAIL] Hex.PolySmithBench.runSymPySmall1  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/sympy_snf: ModuleNotFoundError: No module named 'sympy'
+  [ok ] Hex.PolySmithBench.runLeanChain2  [fixed]
+  [ok ] Hex.PolySmithBench.runLeanSmith4  [fixed]
+  [FAIL] Hex.PolySmithBench.runPariSmall5  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/pari_snf: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [ok ] Hex.PolySmithBench.runLeanSmall4  [fixed]
+  [FAIL] Hex.PolySmithBench.runSymPyRational1  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/sympy_snf: ModuleNotFoundError: No module named 'sympy'
+  [FAIL] Hex.PolySmithBench.runSymPyRational4  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/sympy_snf: ModuleNotFoundError: No module named 'sympy'
+  [FAIL] Hex.PolySmithBench.runSymPyChain5  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/sympy_snf: ModuleNotFoundError: No module named 'sympy'
+  [ok ] Hex.PolySmithBench.runLeanSmith1  [fixed]
+  [FAIL] Hex.PolySmithBench.runSymPySmall4  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/sympy_snf: ModuleNotFoundError: No module named 'sympy'
+  [FAIL] Hex.PolySmithBench.runPariSmall3  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/pari_snf: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [FAIL] Hex.PolySmithBench.runSymPyRational5  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/sympy_snf: ModuleNotFoundError: No module named 'sympy'
+  [ok ] Hex.PolySmithBench.runLeanChain1  [fixed]
+  [ok ] Hex.PolySmithBench.runLeanRational5  [fixed]
+  [ok ] Hex.PolySmithBench.runLeanSmall5  [fixed]
+  [FAIL] Hex.PolySmithBench.runPariRational5  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/pari_snf: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [ok ] Hex.PolySmithBench.runLeanSmith2  [fixed]
+  [FAIL] Hex.PolySmithBench.runSymPySmall3  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/sympy_snf: ModuleNotFoundError: No module named 'sympy'
+  [FAIL] Hex.PolySmithBench.runPariChain5  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/pari_snf: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [FAIL] Hex.PolySmithBench.runSymPyDiagonal5  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/sympy_snf: ModuleNotFoundError: No module named 'sympy'
+  [ok ] Hex.PolySmithBench.runLeanDiagonal3  [fixed]
+  [FAIL] Hex.PolySmithBench.runPariRational3  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/pari_snf: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [FAIL] Hex.PolySmithBench.runSymPyDiagonal4  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/sympy_snf: ModuleNotFoundError: No module named 'sympy'
+  [FAIL] Hex.PolySmithBench.runSymPyRational2  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/sympy_snf: ModuleNotFoundError: No module named 'sympy'
+  [FAIL] Hex.PolySmithBench.runPariRational2  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/pari_snf: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [FAIL] Hex.PolySmithBench.runPariChain3  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/pari_snf: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [FAIL] Hex.PolySmithBench.runSymPySmall5  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/sympy_snf: ModuleNotFoundError: No module named 'sympy'
+  [FAIL] Hex.PolySmithBench.runSymPySmith1  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/sympy_snf: ModuleNotFoundError: No module named 'sympy'
+  [FAIL] Hex.PolySmithBench.runSymPyChain4  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/sympy_snf: ModuleNotFoundError: No module named 'sympy'
+  [ok ] Hex.PolySmithBench.runLeanSmall2  [fixed]
+  [ok ] Hex.PolySmithBench.runLeanSmith5  [fixed]
+  [ok ] Hex.PolySmithBench.runLeanRational2  [fixed]
+  [FAIL] Hex.PolySmithBench.runPariDiagonal4  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/pari_snf: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [FAIL] Hex.PolySmithBench.runPariSmith2  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/pari_snf: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [FAIL] Hex.PolySmithBench.runSymPyRational3  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/sympy_snf: ModuleNotFoundError: No module named 'sympy'
+  [ok ] Hex.PolySmithBench.runLeanChain4  [fixed]
+  [FAIL] Hex.PolySmithBench.runPariDiagonal1  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/pari_snf: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [ok ] Hex.PolySmithBench.runLeanSmall3  [fixed]
+  [FAIL] Hex.PolySmithBench.runSymPySmith3  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/sympy_snf: ModuleNotFoundError: No module named 'sympy'
+  [ok ] Hex.PolySmithBench.runLeanRational4  [fixed]
+  [FAIL] Hex.PolySmithBench.runSymPyDiagonal3  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/sympy_snf: ModuleNotFoundError: No module named 'sympy'
+  [FAIL] Hex.PolySmithBench.runPariDiagonal2  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/pari_snf: RuntimeError: cypari2/PARI not available: ModuleNotFoundError("No module named 'cypari2'")
+  [FAIL] Hex.PolySmithBench.runSymPySmith5  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/sympy_snf: ModuleNotFoundError: No module named 'sympy'
+  [FAIL] Hex.PolySmithBench.runSymPySmall2  [fixed]
+         —  runner error: pari_bench_driver: polymatrix/sympy_snf: ModuleNotFoundError: No module named 'sympy'
+  [ok ] Hex.PolySmithBench.runComparatorOverhead  [fixed]
+50 of 92 benchmark(s) failed verification

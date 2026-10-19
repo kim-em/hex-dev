@@ -1,0 +1,52 @@
+{
+  "source_commit": "fd466de5b9126dfdb72dd70301c02d2b8eab6344",
+  "dirty": false,
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "cpu": 95,
+  "load_before": [
+    8.52099609375,
+    5.9541015625,
+    9.22314453125
+  ],
+  "command": [
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+    "run",
+    "Hex.RealAlgebraicBench.runRationalRecognition",
+    "Hex.RealAlgebraicBench.runRationalFloor",
+    "Hex.RealAlgebraicBench.runRationalCeil",
+    "--param-floor",
+    "8192",
+    "--param-ceiling",
+    "65536",
+    "--param-schedule",
+    "doubling",
+    "--max-seconds-per-call",
+    "600",
+    "--export-file",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-rational-height/higher/results.json"
+  ],
+  "schedule": "Explicit four-rung larger-height ladder uses four fixed trial-major samples; unchanged arithmetic body and linear model. Canonical preparation has a 600-second operational cap.",
+  "source_sha256": {
+    "bench/HexRealAlgebraic/Bench.lean": "1f9bf7a2017d8c2e082b3d4f40bd41fbde1d00a9274d063808c7a5814bb24756",
+    "HexRealAlgebraic/Order.lean": "f1a1249c280e7351f576b24544a00f55007a3b68fe4947dfd3f9a4a7a358c3ba",
+    "reports/bench-results/real-algebraic-rational-height/higher/derivation.md": "ed867189b46d47f7f1cf7da1443f1681422f913a4c72a1b7bd140cdac8bb2519"
+  },
+  "executable_sha256": "26673bd5918b3a2e05b7b531ec48d0b7557a0bd2e74c70c32017e302a23d4b8f",
+  "lean_bench_commit": "8a37daf1074c3bdbd0da479b55538bad4a0022db",
+  "lake_version": "Lake version 5.0.0-src+470d5ce (Lean version 4.35.0-rc3)",
+  "started_monotonic": 23896.766059038,
+  "exit_code": 0,
+  "elapsed_seconds": 1221.6422020009995,
+  "load_after": [
+    10.68359375,
+    17.57421875,
+    12.60986328125
+  ],
+  "source_sha256_after": {
+    "bench/HexRealAlgebraic/Bench.lean": "1f9bf7a2017d8c2e082b3d4f40bd41fbde1d00a9274d063808c7a5814bb24756",
+    "HexRealAlgebraic/Order.lean": "f1a1249c280e7351f576b24544a00f55007a3b68fe4947dfd3f9a4a7a358c3ba",
+    "reports/bench-results/real-algebraic-rational-height/higher/derivation.md": "ed867189b46d47f7f1cf7da1443f1681422f913a4c72a1b7bd140cdac8bb2519"
+  },
+  "dirty_scope": "The source was clean before creating evidence outputs. Harness git_dirty=true records those generated files; tracked implementation hashes did not change."
+}

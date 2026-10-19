@@ -1,0 +1,12 @@
+{
+  "producer_file": "RootTransportEmit.lean.txt",
+  "producer_sha256": "48391e551b7a2ba40be8ffe264e5ca569826de2eb86a7d8f867823767f394efc",
+  "fixture": "conformance-fixtures/HexRCF/root-transport.json",
+  "fixture_sha256": "2f42d8091275dc3794c37288202d3a8f905178ede131ccf919bbc8e71fac858a",
+  "record": "fixture-emit.log.gz",
+  "record_sha256": "9699e2b11c4a5eacc76edfba389e83196321bf961360b0cf0a10383f1fcd82c2",
+  "decoded_sha256": "30ec6ee509607b2da6503d2acee80fdc4a8714ed2fc71f756b6bed4fb660cf95",
+  "command": "lake build RootTransportEmit (external scratch package importing repository fixture inputs)",
+  "exit_code": 0,
+  "scope": "Untrusted production only. Exact JSON equality with the six stored subject/graph fields. Ordinary replay independently authenticates acceptance; the emitter is not proof evidence."
+}

@@ -3,7 +3,7 @@
 Factorization of natural numbers into primes with certificates, the
 divisor-function API built on it, and the multiplicative-order and
 primitive-root results that are the reason this tree wants it.
-Mathlib-free. The companion `hex-int-factor-mathlib` proves the
+Mathlib-free. The companion `hex-int-factor-theory` proves the
 correspondence with `Nat.factorization` and `Nat.primeFactorsList`,
 supplies factorization-derived witnesses for squarefree decomposition,
 and relates the order API to `orderOf` in `(ZMod n)ˣ`.
@@ -41,7 +41,7 @@ integer. [hex-mv-gcd](../../HexMvGcd/SPEC/hex-mv-gcd.md) says the `ℤ` instance
 It does not: Mathlib already has
 `instance : DecidablePred (Squarefree : ℕ → Prop)`
 (`Mathlib/Data/Nat/Squarefree.lean:234`, via `minSqFac`) and relates
-integer squarefreeness to `natAbs`, so hex-mv-gcd-mathlib can decide it
+integer squarefreeness to `natAbs`, so hex-mv-gcd-theory can decide it
 today with no dependency on this library.
 
 What this library adds is the *witness*: the square divisor, the
@@ -266,6 +266,227 @@ stated because the alternative -- a junk value at `0` -- makes
 the factorization's prime-support completeness theorem false and would be found only by a
 consumer.
 
+## Optional mixed primality evidence
+
+The mixed extension is explicitly imported. It preserves `PrimePower`,
+`Factorization`, `PartialFactorization`, their checked types, ordinary search,
+legacy suggestions and all unconditional Mathlib-free legacy theorems. It does
+not add a constructor to `PrimeCert` or change ECPP certificate semantics.
+
+### Modules and dependency boundary
+
+All computational additions belong to HexIntFactor, under `Hex.Nat.Mixed`:
+
+| Module | Responsibility | Imports across libraries |
+| --- | --- | --- |
+| `HexIntFactor.Mixed.Cert` | Evidence sum, complete/partial data, subject-bound Boolean replay, arithmetic and conditional number-theoretic proofs, legacy conversions | `HexPrimality.Cert`, `HexECPP.Cert` |
+| `HexIntFactor.Mixed.Replay` | Public frozen-data boundary | Mixed certificate module only |
+| `HexIntFactor.Mixed.Import` | Pure proposal validation and explicitly selected bounded completion | legacy importer/construction, `HexECPP.Search` |
+| `HexIntFactor.Mixed.Pari` | Explicit factor-proposal process adapter | legacy `HexIntFactor.Pari`, mixed importer |
+| `HexIntFactor.Mixed.Export` | Batch suggestion and exclusive source export, bounded syntax reading/reification and kernel validation | mixed importer/optional PARI, Lean elaboration, shared `HexECPP.ElabData` auditor/reifier |
+| `HexIntFactorTheory.Mixed` | Unconditional mixed soundness and `Nat.factorization` correspondence | mixed replay, `HexECPPTheory.Soundness`, `HexPrimalityTheory.Prime`, Mathlib |
+
+The library DAG adds the package-level dependency HexECPP to HexIntFactor
+and HexECPPTheory to HexIntFactorTheory. Optional here means explicit module
+imports; Lake consumers still fetch these package dependencies.
+HexECPP continues to depend on HexPrimality, never HexIntFactor; HexPrimality
+never depends on ECPP. Register these library dependencies in `libraries.yml` and build roots/globs
+in `lakefile.lean`. Neither factorization library is published in
+`scripts/release/released.yml` yet: update the prospective entry in
+`scripts/release/test_sync_released.py` and the managed-copy/build recipe in
+`scripts/release/check_intfactor_split.py`, including HexECPP dependencies and
+a fresh companion proof client with HexECPPTheory. Do not add publication
+entries or run a sync as part of this feature. Ordinary `HexIntFactor.Replay` and both legacy umbrellas
+retain their present import closures. Mixed frozen computational modules
+import `HexIntFactor.Mixed.Replay`, with no Mathlib, producer, parser, search,
+subprocess or elaborator dependency. Proof clients explicitly import the
+mixed companion. The new elaborator must not import that companion to validate
+computational acceptance.
+
+### Data and mathematical contract
+
+`Evidence` is a sum of legacy `PrimeCert` and `Hex.ECPP.Cert`. A mixed
+`PrimePower` stores an explicit `prime : Nat` base, positive exponent and evidence.
+`checkEvidence base evidence` requires the legacy subject to equal the base
+and `checkPrime` to accept, or `Hex.ECPP.checkAt base` to accept. No discovery
+label, apparent prime or completeness flag is evidence.
+
+Complete and partial raw data carry the subject and canonical strictly
+ascending distinct entries; partial data also carries an unresolved residual.
+Checked types are indexed by the caller's requested subject, with subject
+identity and checker acceptance fields. Replay requires a positive subject,
+positive exponents, accepted subject-bound evidence and exact product equality.
+All powers and multiplications use `boundedPowMul` against the subject;
+partial replay checks the certified product times residual. Zero rejects;
+one has the empty complete certificate. The residual carries no primality
+claim, and partial acceptance does not imply it is coprime to listed bases.
+Changed-subject substitutions reject even when supplied proof syntax is reused.
+
+Core reconstruction, positivity, exponent and ordering theorems are
+unconditional. Core primality, complete/partial prime support and exact multiplicity
+are conditional on the explicit statement
+`∀ n c, Hex.ECPP.checkAt n c = true → Hex.Nat.Prime n`.
+No assertion or axiom supplies this hypothesis in the computational library.
+The companion discharges it using `Hex.ECPP.natPrime_of_checkAt` and
+`Hex.Nat.prime_iff`; legacy entries use `prime_of_checkPrime`. Its headline
+`CheckedFactorization.factorization_eq` equates each Mathlib multiplicity
+with lookup in the canonical mixed list. Complete prime support is exact.
+For partial data the headline equation is
+
+```
+n.factorization p =
+  (raw.factors.find? (fun e => e.prime == p)).elim 0 (·.exponent) +
+  raw.residual.factorization p
+```
+
+Listed partial exponents are lower bounds. Exactness requires that the listed
+prime does not divide the residual. A prime dividing the subject occurs in the
+listed support or divides the residual. Prove these facts without certifying
+the residual; audit the headline proofs for standard logical axioms only.
+
+`PrimePower.ofLegacy`, `Factorization.ofLegacy`, `PartialFactorization.ofLegacy`
+and the two checked types' `ofLegacy` conversions wrap each accepted legacy
+certificate and preserve
+acceptance and subject indices, for complete and partial data. The checked types' explicit `toLegacy`
+conversion succeeds only when every evidence constructor is legacy, and then
+replays the legacy checker; it fails for ECPP entries. Legacy divisor,
+arithmetic-function, squarefree, order and primitive-root APIs still take
+legacy data. They accept mixed results only after successful explicit reverse
+conversion; no implicit conversion or advertised extension of those APIs is
+assigned. Mixed multiplicities and support are provided by the new theorems.
+
+### Import and independent finite allocations
+
+`FactorProposal` has a signed subject and signed base/exponent entries with
+optional mixed evidence. `importFactors` validates the entire proposal before
+completion. As in the legacy importer, unsorted/duplicate proposals are
+permitted: validate against the remaining quotient, check every supplied
+certificate, stable-sort and merge multiplicities, then complete each distinct
+base once. A malformed or substituted supplied certificate rejects the whole
+proposal. Missing factors and composite or unfinished admitted proposed bases remain
+in the checked residual; preserve unresolved hints and independently verify
+that they reconstruct it. Completion failure preserves useful certified progress. A proposed base above
+512 bits rejects with a bounds error; a larger unlisted quotient remains an
+allowed uncertified residual under the whole-subject bound.
+
+Initial admission allocations, frozen before experiments, are 4096 whole-subject bits independently of 512
+factor-base/evidence numeral bits, 64 proposal entries and exponent 4096.
+Supplied legacy evidence admits 4096 constructor/list nodes and depth 64 per
+entry; ECPP admits 20 rows, 32 total certificate nodes including the base
+wrapper and embedded legacy constructor nodes (not list cells), and 1024
+inverse witnesses per row. Caller structural settings may tighten but do not
+widen these supported ceilings. Bound
+transcript traversal before checker invocation. The batch surface additionally
+admits at most 1048576 expanded syntax nodes and 2097152 source bytes, with
+explicit 20000000-heartbeat and 65536-recursion ceilings. Meta reification
+uses its own fresh accounting origin. The synchronous kernel limit also counts
+allocations already used by the command, so earlier proposal elaboration and
+production leave less of that allocation for kernel replay.
+The batch commands install these explicit fixed allocations; callers of the
+public export APIs can select smaller `Budget` fields. The elaborator context
+receives the heartbeat allocation as well as the
+options. Fresh subject-indexed acceptance is synchronously kernel-checked with
+these limits and the cancellation token; the temporary declaration environment
+is discarded. Public export settings cannot widen the supported ceilings.
+The frozen two-trial endpoint campaign in `reports/intfactor/mixed` records
+both complete mixed outputs and the partial output fitting within these
+source/proof ceilings, including fresh ordinary-module replay. Those endpoints are included
+in existing CI targets. They are
+admission/resource policies, not claims that every admitted raw certificate
+completes replay. Public native ECPP policies are only 256 and
+512 bits; supplied evidence also supports at most 512 bits. A 512-bit base can
+occur in a larger product without violating the independently bounded subject.
+
+Keep structural validation, legacy completion, ECPP completion, factor
+discovery and frozen replay allocations separate. Legacy completion retains
+`Construction.runTraced` and one registered ECM retry. Each distinct base gets
+at most 128 attempts, with base bits 512; retry
+uses that base's remaining allowance. A separate total legacy attempt ceiling
+of 8192 initially covers 64 such calls. Explicit smaller total allocations
+clamp each base's package to the remaining total. If the total has already
+been spent, record `legacyStarved`, preserving the base in the residual unless
+explicit ECPP completion succeeds. Starved bases may use ECPP. Neither this
+allocation nor its diagnostics alter the legacy importer's per-base policy.
+The batch commands use the existing fixed legacy importer profile. The pure
+importer permits caller-selected finite `ConstructionBudget` suballocations
+for each attempt; these are independent of the clamped attempt, entry and
+structural ceilings, and are retained in the experiment records.
+ECPP completion is off by default and explicitly selected after attempted
+legacy construction exhausts, starves, or has an explicitly zero allocation.
+It reuses `Hex.ECPP.produce`. The 512-bit policy is `public512Budget`; the
+new `public256Budget` is the default search profile with depth 21, 20 rows,
+32 nodes and `backtrackOutput := true`. This profile serves mixed completion
+and leaves the existing explicit Native 256-bit policy unchanged.
+Reserve the full selected allocation before each call, across all distinct
+bases: at most two ECPP calls, even if a caller requests more, no refunded failures or hidden retry
+loop. Thus every SearchBudget counter has a subject-wide bound of at most
+two selected per-call allocations, including factor/scalar/root/polynomial
+work, memo/output and local retries. Keep legacy randomness separate from ECPP: an explicit `ecppSeed` defaults
+to zero, and reserved call index `i` uses `ecppSeed + i`. ECPP does not draw
+from or replace the legacy stream. Retain each ECPP result's advanced
+`state.rand`, counters and failure statistics in diagnostics. Zero calls skips ECPP. Distinguish legacy skipped/exhausted/composite,
+ECPP skipped/exhausted and replay-bounds failures. Output admission is separate
+from construction depth/rows; inspect terminal nodes and inverse transcripts.
+Ordinary native APIs remain subprocess-free.
+
+The optional mixed PARI adapter calls the existing bounded factor proposal
+producer, then the mixed importer; it invokes no external prime-certificate
+producer. Process/parser failures stay distinct from completion exhaustion. On producer
+failure the mixed adapter retains a checked empty-factor partial result for a
+positive admitted subject and the failure diagnostic; it performs no second
+discovery stage. The legacy PARI adapter and its native fallback remain
+unchanged. Accepted mixed entries are not repeatedly merged/replayed through
+the legacy native-fallback path.
+Factor discovery retains its existing 256-bit operational ceiling initially;
+supplied proposals and pure completion support the larger independent subject
+ceiling. Retain checked partial progress after unsuccessful completion.
+
+### Frozen export, verification and acceptance evidence
+
+The supplied-data commands are
+`#int_factor_mixed for n using proposal` and
+`#int_factor_mixed_export Module.Name cert for n using proposal`. An optional
+`(ecpp := 256)` or `(ecpp := 512)` selects completion explicitly; omission
+disables ECPP. The real-PARI variants replace `using proposal` with
+`(method := pari)` before `for n`. `Mixed.FactorExport.validate` and `source`
+are the shared kernel-validation and formatting APIs. `Mixed.Pari.factor` is
+the optional runtime proposal adapter; `Mixed.importFactors` is its pure
+acceptance/completion boundary.
+Suggestions and exports use one deterministic formatter. Before emitting text,
+preflight certificate bounds, construct source with incremental byte charging
+before kernel replay, reify raw constructors and kernel-check
+the subject-indexed acceptance proof anew. Compiled generation proofs are not
+trusted. Emit public exposed complete/partial raw and checked data importing
+only mixed replay. Enforce editor gating and exclusive file creation, checking
+destination validity/existence before production and using `writeNew` afterward.
+Pin exact `Try this:` text with deterministic `#guard_msgs`; compile verbatim
+suggestions and exported files as fresh ordinary modules with GP and generation
+unavailable. The mathematical client may import only the designated companion.
+
+Freeze subjects, seeds and allocations before tuning. At least two distinct
+complete mixed factorizations must include an ECPP base whose recorded legacy
+allocation exhausts. Use supplied arithmetic proposals to isolate completion;
+reuse frozen ECPP corpora only after measuring fit within the new replay policy.
+Include a checked partial exhausted result, and an operationally small live
+PARI case. Record proposal validation, legacy production, ECPP production,
+compiled checking, source bytes and fresh kernel replay separately. Native
+ECPP production includes its own terminal legacy-style calls, including its
+root attempt; its timing is the complete ECPP producer cost rather than an
+elliptic-only component. Preserve
+all failures and completed samples under the shared-host measurement policy.
+Independent oracles verify the original subject, exact factorization arithmetic
+and prime bases; backend labels do not participate in Lean acceptance.
+
+Build affected computational, companion, proof-probe and manual targets via
+`lake build`. Cover mixed evidence, duplicate/unsorted proposals, nonpositive
+multiplicities, composites, malformed inverse transcripts, substituted evidence
+and subjects, oversized syntax/source, exhausted shared allocations and partial
+residual reconstruction; preserve legacy fixtures and exact legacy suggestions.
+Update the build-checked manual, READMEs, release-managed paths/pins, conformance,
+oracles and affected phase evidence. Verify a fresh prospective computational
+split without Mathlib and a fresh companion proof client. Extend existing CI
+scripts/jobs only. Publication is a separate manually reviewed operation.
+
 ## Optional checked external production
 
 This route supplies larger-input proposals without changing `factor?`,
@@ -273,8 +494,8 @@ This route supplies larger-input proposals without changing `factor?`,
 Lean search remains the default. Importing any module runs no subprocess.
 Factor discovery and completion of primality evidence have independent finite
 allocations and independently reported failures. PARI's probable-prime labels
-and completeness flags are never evidence. The accepted language remains
-`Hex.Nat.PrimeCert`; ECPP-bearing factor certificates require a separate design.
+and completeness flags are never evidence. The legacy accepted language remains `Hex.Nat.PrimeCert`. The optional
+mixed-evidence extension above admits ECPP without changing this route.
 No native QS/NFS or change to SQUFOF dispatch is assigned here.
 
 ### Ownership and public boundary
@@ -330,11 +551,13 @@ supplied certificates need not have identical syntax, but every supplied one
 must be accepted for its base. Otherwise run bounded native `PrimeCert`
 completion once for that distinct base, threading randomness on success and
 failure. Composite bases and bases whose primality cannot be completed remain
-in the residual with distinct diagnostics. The initial importer does not split
-composite proposals further. Retain the canonical validated unresolved
+in the residual with distinct diagnostics. Zero completion attempts are reported
+as `skipped`, separately from attempted but unfinished completion. The initial
+importer does not split composite proposals further. Retain the canonical validated unresolved
 base/multiplicity pairs, their completion failure kinds, and the unlisted
 quotient as untrusted hints in the result. Independently check that their
-bounded product reconstructs the checked residual; these hints are never
+bounded product reconstructs the checked residual and, with the certified
+product, the requested subject; these hints are never
 prime-power evidence. Multiply their validated powers into the unlisted
 quotient with the same subject bound. Sort and merge only certified entries.
 Check the final partial candidate with `checkPartial`; residual one is checked
@@ -360,7 +583,7 @@ events retained. This is an existing pure callback, not an IO hook.
 Entry and node limits bound the number of completion calls and certificate
 replays. These are finite caller-selected allocations, not promises that every
 admitted base can be certified. With zero completion attempts the importer
-skips native construction entirely and records unfinished completion for
+skips native construction entirely and records skipped completion for
 uncertified bases, including table-range bases; supplied certificates remain
 usable. Adding external proposals for `p−1` or PARI `primecert(p, 1)` is a
 possible later optimization, excluded from the initial factor-list protocol.
@@ -396,20 +619,16 @@ Process limits are separate: 30000 ms, 16448 stdout bytes, 4096 stderr bytes,
 and a fixed initial GP stack with automatic growth disabled. Cancellation,
 timeout, excess output, non-UTF-8/malformed framing, missing executable,
 nonzero exit or nonempty stderr, invalid arithmetic, and primality-completion
-exhaustion have distinct diagnostics. The wall-clock deadline includes pipe
-completion, including when the leader has exited but descendants hold pipes.
-Adapt and attribute `HexECPPMathlib.Pari` and its `PariProcess` tests without
-importing HexECPP or HexECPPMathlib. On supported POSIX platforms retain the
-original session/process-group handle, use KILL on cancellation/exhaustion,
-on a kill path first send KILL, then join both dedicated bounded readers,
-and only then reap exactly once. The process-group cleanup assumption bounds
-reader joining: no supported descendant escapes the group or inherits these
-pipes outside it. Do not copy the older ECPP kill path's early `wait`. Do not reap the
-leader while descendants hold its pipes; after reaping, never kill or wait on
-that PID again. This contract covers descendants remaining in the created
-process group; an executable that deliberately escapes that group is outside
-the supported producer contract. No platform may silently claim these cleanup
-guarantees when its process runtime does not implement them.
+exhaustion have distinct diagnostics. Direct invocation and bounded output
+reading follow `HexECPPTheory.Pari` without importing HexECPP or HexECPPTheory.
+The initial producer supports POSIX platforms. Spawn an owned process group;
+on early exit, kill that group before reaping its leader. Pipe readers poll
+with a cancellation token, so cleanup never waits for EOF from a descendant
+that escaped the group. Join both readers, reap the owned child, and remove the
+request file on every exit path. If the operating system rejects signalling,
+report a pipe/cleanup failure and avoid waiting indefinitely for the live child.
+The small optional POSIX IO sidecar belongs
+to HexIntFactor and is excluded from computational replay.
 
 ### Explicit fallback and diagnostic preservation
 
@@ -417,9 +636,10 @@ guarantees when its process runtime does not implement them.
 fallback allocations. After unavailable, failed, malformed or rejected external
 production it runs native search on the original positive subject. After a
 checked partial import it preserves the validated residual pieces: run native
-factorization separately on composite pieces (factor the base, then scale its
-multiplicities) and on the unlisted quotient, preserving certified entries and
-advanced randomness. Bases whose bounded construction already exhausted stay
+factorization separately on composite or skipped pieces (factor the base, then
+scale its multiplicities) and on the unlisted quotient, preserving certified entries and
+advanced randomness. Skipped completion may use this separately allocated
+native stage. Bases whose bounded construction already exhausted stay
 unresolved; do not repeat a weaker certificate search or merge them back into
 an integer that would need rediscovery. A probable-prime test alone never
 certifies a piece or removes it from the residual.
@@ -436,7 +656,9 @@ At one, return the checked empty certificate without spawning.
 
 Merge checked residual progress by adding exponents for overlapping certified
 bases and replay the final complete/partial checker against the original
-subject. Retain backend/import/completion diagnostics alongside the eventual
+subject. Keep native attempt/event traces. When a native entry exceeds certificate
+limits, retain admissible entries and leave the others in the residual.
+Retain backend/import/completion diagnostics alongside the eventual
 native incomplete or rejected outcome and checked progress. A native rejection
 remains distinct from exhaustion; retain the rejected candidate diagnostics
 and prefer the previously checked snapshot. Explicit cancellation cleans up
@@ -455,23 +677,22 @@ an exposed raw complete or partial certificate named
 `MyCertificates.Factors.cert_checked`, also `@[expose]`. The checked declaration pins the literal
 requested subject and uses core `by decide +kernel` for the ordinary checker.
 Emit `set_option maxHeartbeats 2000000` and `set_option maxRecDepth 8192`
-in the generated module, and validate under precisely those options.
+in the generated module.
 All `PrimeCert` constructors are frozen explicitly: replay requires neither GP
 nor factor/certificate search and has no producer or converter proof dependency.
 The same source formatter drives suggestions and export. Text is deterministic
 for fixed checked data and producer outcome; GP availability, timeouts and
 versions may change that outcome. Complete and partial suggestions have exact
-certificate-text `#guard_msgs` regressions driven by the pure importer or an
-injected fake executable, never ambient GP; fresh modules
+certificate-text `#guard_msgs` regressions driven by the pure importer and
+fixed proposal data, never ambient GP; fresh modules
 compile those verbatim and reject subject substitution or unexposed data.
 
 Evaluate only closed transparent natural expressions. Before any suggestion or
 write, structurally bound and compiled-check the certificate, reify it, and
-kernel-check the actual subject-indexed acceptance proof, with finite proof
-heartbeats, recursion and source-size limits. The initial source ceiling is
-262144 bytes and proof limits are 2000000 heartbeats and recursion depth 8192.
-Proof exhaustion is a distinct export failure; it never publishes unchecked
-source. Validate ASCII module/declaration names and destination before production.
+check the actual subject-indexed acceptance proof using Lean’s existing
+`checkWithKernel` API. The initial source ceiling is 262144 bytes; generated
+modules use 2000000 elaboration heartbeats and recursion depth 8192. Acceptance
+failure never publishes source. Validate ASCII module/declaration names and destination before production.
 Create parent directories only after successful kernel checking; create files
 exclusively (`writeNew`), never overwrite, including concurrent creation races.
 
@@ -497,9 +718,7 @@ syntax, optional executable installation, support bounds and failure modes.
 
 Conformance covers degenerate subjects, powers, duplicates/order, composites,
 wrong products/subjects, omissions, negative/zero exponents, all bounds and
-supplied-certificate rejection/exhaustion. Adapt the audited ECPP fake-process
-suite for missing GP, exit failure, malformed/truncated framing, excess streams,
-cancellation/timeouts and pipe-holding descendants. Small optional real-GP tests
+supplied-certificate rejection/exhaustion. Small optional real-GP tests
 exercise the protocol; use one GP thread in recorded shared-host measurements.
 Committed replay never factors live. Explicit Lake/CI targets build Pari, Export
 and Replay even though they are outside the umbrella; prospective release
@@ -920,19 +1139,57 @@ including core table/screening work outside semantic attempt counts. The
 constructor independently validates products, selects subsets, recursively
 certifies children, and accepts only through the unchanged sound checker.
 
-Use `primality? (factor := Hex.Nat.ecmFactorSearch)` after importing
-`HexIntFactor.Construction` and `HexPrimality.Elab`. Automatic fallback after
-an exhausted construction is owned by
-[HexPrimality's construction contract](../../HexPrimality/SPEC/hex-primality.md#automatic-construction-fallback-and-caller-resources).
-`HexIntFactor.PrimalityTactic.constructionExtension` must use
-`ConstructionExtension` version 1 and name
-`Hex.Nat.ecmConstructionFactor : FactorSearch`, the default ECM provider wrapper.
-This registration is distinct from the ordinary `SearchExtension` version-3
-registration of `intFactorSearch`. It does not enable ECM in ordinary integer factorization. The provider must
-certify the three field-prime paths and preserve P-521's certificate and attempt
-total when its HexPrimality factor subset suffices. Retain native construction,
-checker and replay measurements in
-[the ECM field report](../../reports/hex-primality-ecm-stage2.md).
+Use `primality? (factor := Hex.Nat.ecmFactorSearch)` to select the original
+fixed-curve provider explicitly after importing `HexIntFactor.Construction`
+and `HexPrimality.Elab`. Its schedule and result accounting remain available
+for reproduction of retained comparisons.
+
+The standard `HexIntFactor` import selects
+`interleavedConstructionFactor : FactorSearch`, the default closure of
+`interleavedFactorSearch (trace := false) (early := true)`. The version-2
+`HexIntFactor.PrimalityTactic.constructionExtension` names this closure.
+Selection before the first complete construction is owned by
+[HexPrimality's construction contract](../../HexPrimality/SPEC/hex-primality.md#automatic-construction-selection-and-caller-resources).
+This remains independent of ordinary `SearchExtension` version 3 and changes
+neither ordinary integer factorization nor ordinary `primality`.
+
+The preliminary core search uses bounds `[64,512,4096,32768]` at the supplied
+bases and caps the supplied rho step limit at 8192. The supplied SQUFOF
+policy retains its core factoring semantics. Long stage-one p-minus-one calls use `[262144,524288]`
+at those bases and return a single validated proper divisor. Residuals through
+192 bits try this long ladder first; larger residuals try eight random ECM
+curves at bounds `(10000,1000000)` first. The remaining ladder is 42 random
+curves at those same bounds, 64 consecutive parameters from 6 at
+`(32768,524288)`, then 200 random curves at `(50000,4000000)`.
+Random parameters use the supplied advancing `Rand`; bounds and curve counts
+are fixed, finite policy choices rather than caller-specific factor hints.
+
+Keep both parts of every split. A failed complete long p-minus-one ladder is
+inherited by residual divisors, since each fixed base/exponent's ancestor gcd
+of one or the whole modulus cannot become a proper divisor on a descendant.
+After a successful split, the long ladder restarts on descendants. Merge every
+core-discovered factor power and retain all unsplit work in the residual.
+All stage calls and rho restarts share the supplied total attempt limit (1024
+if absent); each worklist is bounded by `factorFuel`. Default early stopping
+uses `Construction.sufficient constructionBudget` for the predecessor's
+subject. It is an untrusted search heuristic: the caller independently selects
+subsets, recursively certifies candidates and checks the complete certificate.
+`early := false` requests continued factoring. No probable-prime screen can
+establish a successful primality proof.
+
+Reuse bound-dependent prepared tables across curves and residuals, including
+both portions of the first ECM round. Keep stage-two preparation lazy and
+curve/modulus data local. Retain zero-input, attempt-boundary, repeated-factor,
+failed-search inheritance and exact certificate tests. Standard imports must
+prove secp256k1, P-384 and Curve448 through the public tactic; guard complete
+suggestion text and theorem axioms. Curve25519 retains its accepted certificate
+with 31 attempts, and the core-only route retains its 29-attempt construction.
+
+The [independent comparison](../../reports/primality/factor-policy/corpus-v3.md)
+records coverage, paired field timings and kernel replay of the policy adopted
+here. The original fixed-curve provider and
+[ECM field report](../../reports/hex-primality-ecm-stage2.md) remain historical
+comparison evidence, not descriptions of the automatic dispatch.
 
 #### Construction cost experiments and optimization contract
 
@@ -1027,7 +1284,7 @@ HexPrimality and HexIntFactor, with HexArith already precompiled; their Mathlib
 bridges remain unprecompiled.
 
 The heartbeat policy is owned by
-[HexPrimality's caller-resource contract](../../HexPrimality/SPEC/hex-primality.md#automatic-construction-fallback-and-caller-resources)
+[HexPrimality's caller-resource contract](../../HexPrimality/SPEC/hex-primality.md#automatic-construction-selection-and-caller-resources)
 and applies to all provider execution modes and table preparation. Examples
 must declare a finite user-set limit when the default is insufficient. Lower
 wall time alone does not establish lower heartbeat consumption. Preserve the
@@ -1593,7 +1850,7 @@ the subject.
 entries and is what every consumer wants. `numDivisors` exists
 separately because it is `O(k)` and computing it by `divisors.size`
 would be exponential. The local semantic theorems are deliberate: the
-Mathlib bridge proves correspondence with Mathlib's names, but the
+Theory companion proves correspondence with Mathlib's names, but the
 Mathlib-free library must already say what each public result means.
 At `k = 0`, `sigma` dispatches to `numDivisors`; an implementation using
 the geometric-series product must not evaluate its `0 / 0` form. For
@@ -1847,7 +2104,7 @@ Families:
   exponentiation-dominated exponent ladder and `n²` for the sequential product
   of bounded-size table-prime entry sums into a linearly growing accumulator.
 
-**Comparators.** PARI `factor` via cypari2 is **informational**:
+**Comparators.** PARI `factor` via cypari2 is recorded for orientation:
 PARI dispatches among trial division, SQUFOF, Pollard-Brent rho,
 `p - 1`, and MPQS with tuned crossovers. Hex specifies an explicit bounded
 SQUFOF route but has no implemented SQUFOF or MPQS production route; a
@@ -1858,18 +2115,15 @@ covers the table, balanced, and power-form families. A widening PARI ratio is
 reported as the observed cost of the portfolio difference, while the table
 and balanced internal controls above diagnose Hex dispatch and certificate
 construction and the rho registration/profile diagnose rho.
-GMP-ECM stage 1 is likewise **informational** on the unbalanced family: the
-comparison fixes the curve and `B1`, disables stage 2, and uses one fixed
-persistent-subprocess batch shape. Ratios are recorded at every shared rung;
-the protocol overhead for that batch shape is recorded and subtracted, and
-the eligibility rule in
-[SPEC/benchmarking.md](../../SPEC/benchmarking.md) marks which rungs may carry
-an interpretation. The PARI/python-flint oracle pairing is for conformance,
+GMP-ECM stage 1 is likewise recorded for orientation on the unbalanced family:
+the comparison fixes the curve and `B1`, disables stage 2, and uses one fixed
+persistent-subprocess batch shape. Ratios are recorded at every shared rung,
+with the protocol overhead for that batch shape measured alongside them. The
+PARI/python-flint oracle pairing is for conformance,
 not a performance requirement.
 
-The named factorization comparator suite has
-**no-comparable-surface-in-named-comparator** for kernel certificate replay,
-order/primitive-root computation, or generalized divisor sums: neither the
+Kernel certificate replay, order/primitive-root computation, and generalized
+divisor sums have no external comparator: neither the
 PARI `factor` endpoint nor GMP-ECM exposes those operations. Their evidence is
 therefore the native/kernel registration and profile rather than an external
 ratio.
@@ -1895,7 +2149,7 @@ no paired timing decision, timing ladder, absolute build-time gate, profile or
 headline-report requirement. The computational owner's LeanBench obligations
 remain separate.
 
-## The Mathlib layer
+## The theory layer
 
 ```lean
 theorem factors_eq (F : Factorization) (h : checkFactorization F = true) :
@@ -2032,7 +2286,7 @@ HexIntFactor/
   PMinusOne.lean    -- adapter from the shared p-1 primitive to the dispatch
   Ecm.lean          -- Montgomery-curve ECM stage 1
   EcmStage2.lean    -- bounded saved-point continuation
-  Construction.lean -- ECM provider and ecmConstructionFactor wrapper
+  Construction.lean -- interleaved and fixed-curve construction providers
   Cyclotomic.lean   -- cyclotomicSplit? and the checked candidate
   Order.lean        -- OrderCert, checkOrder, primitive roots, Carmichael
   Factor.lean       -- the dispatch, factor?, factorPartial?
@@ -2042,10 +2296,10 @@ HexIntFactor/
   Export.lean       -- explicitly imported batch suggestion/source export
   Replay.lean       -- computational certificate imports only
 HexIntFactor.lean
-HexIntFactorMathlib/
+HexIntFactorTheory/
   Factorization.lean -- factorization_eq, factors_eq and consequences
   Order.lean        -- general and certificate-level orderOf correspondences
-HexIntFactorMathlib.lean
+HexIntFactorTheory.lean
 ```
 
 The authoritative dependency and phase registrations are in
@@ -2053,7 +2307,7 @@ The authoritative dependency and phase registrations are in
 
 `HexConway` need only gain a dependency on `HexIntFactor` if its table
 growth is refactored to consume these shared certificates; Tier 2 has
-already landed without it. `HexMvGcdMathlib` does **not** gain one: as set out above,
+already landed without it. `HexMvGcdTheory` does **not** gain one: as set out above,
 Mathlib already decides squarefreeness on `Nat`; hex-mv-gcd's SPEC has
 already been corrected to use that instance and to cite this library
 only for factorization-derived witnesses.
@@ -2092,7 +2346,7 @@ and uses its separate `FactorSearchBudget` smooth bounds and bases.
 
 
 The ordinary `SearchExtension` primality adapter advertises ABI version 3.
-The separate `ConstructionExtension` registration uses version 1. The ordinary
+The separate `ConstructionExtension` registration uses version 2. The ordinary
 registered allocation has no total attempt limit. When a construction caller
 sets `FactorSearchBudget.attemptLimit`, the adapter declines with no attempts
 or random draws and retains the entire input as residual; it does not claim to

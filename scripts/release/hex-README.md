@@ -30,8 +30,9 @@ git = "https://github.com/leanprover/hex.git"
 rev = "main"
 ```
 
-Then `import Hex` re-exports every library in the table below at a single
-coherent pinned set:
+The requirement installs the libraries in the table below at a single
+coherent pinned set. The generated `import Hex` umbrella re-exports every
+aggregated library:
 
 ```lean
 import Hex
@@ -55,9 +56,9 @@ core) instead of the aggregator.
 # Libraries
 
 Each computational library is Mathlib-free; its Mathlib correspondence proofs
-and Mathlib-facing API, where they exist, live in a separate `*-mathlib`
+and Mathlib-facing API, where they exist, live in a separate `*-theory`
 library. A library whose subject is a Mathlib-facing tactic, such as
-`hex-rcf`, has no computational half and appears only in the Mathlib column.
+`hex-rcf`, has no computational half and appears only in the Theory column.
 
 <!-- LIBRARIES:BEGIN (generated from released.yml; do not edit by hand) -->
 <!-- LIBRARIES:END -->

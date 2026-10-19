@@ -1,0 +1,596 @@
+Bench verify library filter: HexNumberField HexRealAlgebraic
+::group::hexnumberfield_bench
+registered benchmarks:
+  Hex.NumberFieldBench.runCommonPresentationLadder    expected complexity: n
+  Hex.NumberFieldBench.runAlgebraicPolyBeq    expected complexity: n
+  Hex.NumberFieldBench.runQAdjoinDivLadder    expected complexity: n * n * (n + 7)
+  Hex.NumberFieldBench.runQAdjoinNegLadder    expected complexity: n
+  Hex.NumberFieldBench.runQAdjoinSmulLadder    expected complexity: n
+  Hex.NumberFieldBench.runQAdjoinMulLadder    expected complexity: n * n
+  Hex.NumberFieldBench.runCommonPrimitive    expected complexity: n
+  Hex.NumberFieldBench.runContainedPresentation    expected complexity: n
+  Hex.NumberFieldBench.runQAdjoinInvLadder    expected complexity: n * n * (n + 7)
+  Hex.NumberFieldBench.runMergeRootListLadder    expected complexity: n ^ 2 * (Nat.log2 (n + 2) + 1)
+  Hex.NumberFieldBench.runQAdjoinSubLadder    expected complexity: n
+  Hex.NumberFieldBench.runAddEliminantLadder    expected complexity: n * n * (Nat.log2 (n + 2) + 1)
+  Hex.NumberFieldBench.runQAdjoinAddLadder    expected complexity: n
+  Hex.NumberFieldBench.runAlgebraicPolyOfArray    expected complexity: n
+  Hex.NumberFieldBench.runComponentRoots    [fixed] repeats=3
+  Hex.NumberFieldBench.runQAdjoinMulPair20    [fixed] repeats=5
+  Hex.NumberFieldBench.runQAdjoinMulPair4    [fixed] repeats=5
+  Hex.NumberFieldBench.runQAdjoinInvPair10    [fixed] repeats=5
+  Hex.NumberFieldBench.runQAdjoinInvPair4    [fixed] repeats=5
+  Hex.NumberFieldBench.runPariPolmodMul6    [fixed] repeats=5
+  Hex.NumberFieldBench.runQAdjoinInvPair12    [fixed] repeats=5
+  Hex.NumberFieldBench.runLazyNeg    [fixed] repeats=5
+  Hex.NumberFieldBench.runCommonPowers    [fixed] repeats=3
+  Hex.NumberFieldBench.runAlgebraicRootsZ    [fixed] repeats=3
+  Hex.NumberFieldBench.runIsReal    [fixed] repeats=3
+  Hex.NumberFieldBench.runPariPolmodMul4    [fixed] repeats=5
+  Hex.NumberFieldBench.runQAdjoinMulPair6    [fixed] repeats=5
+  Hex.NumberFieldBench.runPariPolmodInv4    [fixed] repeats=5
+  Hex.NumberFieldBench.runAlgebraicSub    [fixed] repeats=3
+  Hex.NumberFieldBench.runAlgebraicPolyAccessors    [fixed] repeats=5
+  Hex.NumberFieldBench.runPariPolmodMul16    [fixed] repeats=5
+  Hex.NumberFieldBench.runCommonScale    [fixed] repeats=3
+  Hex.NumberFieldBench.runPariPolmodMul20    [fixed] repeats=5
+  Hex.NumberFieldBench.runPariPolmodMul8    [fixed] repeats=5
+  Hex.NumberFieldBench.runLazySub    [fixed] repeats=3
+  Hex.NumberFieldBench.runExactFactorLadder    [fixed] repeats=5
+  Hex.NumberFieldBench.runPariPolmodInv6    [fixed] repeats=5
+  Hex.NumberFieldBench.runCommonSignedDegree    [fixed] repeats=5
+  Hex.NumberFieldBench.runQAdjoinInvPair8    [fixed] repeats=5
+  Hex.NumberFieldBench.runLazyMul    [fixed] repeats=3
+  Hex.NumberFieldBench.runCommonAdd    [fixed] repeats=3
+  Hex.NumberFieldBench.runQAdjoinInvPair6    [fixed] repeats=5
+  Hex.NumberFieldBench.runExactLadder    [fixed] repeats=5
+  Hex.NumberFieldBench.runPariPolmodInv16    [fixed] repeats=5
+  Hex.NumberFieldBench.runCommonRational    [fixed] repeats=3
+  Hex.NumberFieldBench.runRoots    [fixed] repeats=3
+  Hex.NumberFieldBench.runPariPolmodInv8    [fixed] repeats=5
+  Hex.NumberFieldBench.runQAdjoinMulPair16    [fixed] repeats=5
+  Hex.NumberFieldBench.runQAdjoinApprox    [fixed] repeats=3
+  Hex.NumberFieldBench.runCommonExtend    [fixed] repeats=3
+  Hex.NumberFieldBench.runQAdjoinMulPair8    [fixed] repeats=5
+  Hex.NumberFieldBench.runAlgebraicNatPow    [fixed] repeats=3
+  Hex.NumberFieldBench.runFixedMul    [fixed] repeats=5
+  Hex.NumberFieldBench.runCommonCoordinates    [fixed] repeats=3
+  Hex.NumberFieldBench.runAlgebraicMul    [fixed] repeats=3
+  Hex.NumberFieldBench.runLazyAddLadder    [fixed] repeats=3
+  Hex.NumberFieldBench.runCommonMul    [fixed] repeats=3
+  Hex.NumberFieldBench.runAlgebraicConstructors    [fixed] repeats=3
+  Hex.NumberFieldBench.runPariPolmodOverhead    [fixed] repeats=5
+  Hex.NumberFieldBench.runAlgebraicNeg    [fixed] repeats=3
+  Hex.NumberFieldBench.runAlgebraicDiv    [fixed] repeats=3
+  Hex.NumberFieldBench.runCommonExtendStep    [fixed] repeats=3
+  Hex.NumberFieldBench.runPariPolmodInv10    [fixed] repeats=5
+  Hex.NumberFieldBench.runAddEliminant    [fixed] repeats=5
+  Hex.NumberFieldBench.runQAdjoinRootsLadder    [fixed] repeats=3
+  Hex.NumberFieldBench.runNormEliminant    [fixed] repeats=3
+  Hex.NumberFieldBench.runSelectAdd    [fixed] repeats=3
+  Hex.NumberFieldBench.runExact    [fixed] repeats=3
+  Hex.NumberFieldBench.runLazyDiv    [fixed] repeats=3
+  Hex.NumberFieldBench.runCommonShift    [fixed] repeats=3
+  Hex.NumberFieldBench.runLazyInv    [fixed] repeats=3
+  Hex.NumberFieldBench.runFixedMinpoly    [fixed] repeats=3
+  Hex.NumberFieldBench.runLazyAdd    [fixed] repeats=3
+  Hex.NumberFieldBench.runAlgebraicRootsLadder    [fixed] repeats=3
+  Hex.NumberFieldBench.runQAdjoinMulPair12    [fixed] repeats=5
+  Hex.NumberFieldBench.runAlgebraicInv    [fixed] repeats=3
+  Hex.NumberFieldBench.runExactSelection    [fixed] repeats=3
+  Hex.NumberFieldBench.runAlgebraicScalars    [fixed] repeats=3
+  Hex.NumberFieldBench.runPariPolmodMul12    [fixed] repeats=5
+  Hex.NumberFieldBench.runEvalMajorantFixed    [fixed] repeats=3
+  Hex.NumberFieldBench.runCanonicalRepLadder    [fixed] repeats=5
+  Hex.NumberFieldBench.runEvalEliminant    [fixed] repeats=3
+  Hex.NumberFieldBench.runZeroDecisions    [fixed] repeats=5
+  Hex.NumberFieldBench.runCommonTrace    [fixed] repeats=5
+  Hex.NumberFieldBench.runPariPolmodInv12    [fixed] repeats=5
+  Hex.NumberFieldBench.runQAdjoinInvPair16    [fixed] repeats=5
+  Hex.NumberFieldBench.runQAdjoinCanonical    [fixed] repeats=3
+  Hex.NumberFieldBench.runCommonExtendShift    [fixed] repeats=3
+  Hex.NumberFieldBench.runAlgebraicAdd    [fixed] repeats=3
+  Hex.NumberFieldBench.runAlgebraicIntPow    [fixed] repeats=3
+  Hex.NumberFieldBench.runFixedInv    [fixed] repeats=5
+  Hex.NumberFieldBench.runIsolateAdd    [fixed] repeats=3
+verifying 92 benchmark(s)...
+  [ok ] Hex.NumberFieldBench.runCommonPresentationLadder
+  [ok ] Hex.NumberFieldBench.runAlgebraicPolyBeq
+  [ok ] Hex.NumberFieldBench.runQAdjoinDivLadder
+  [ok ] Hex.NumberFieldBench.runQAdjoinNegLadder
+  [ok ] Hex.NumberFieldBench.runQAdjoinSmulLadder
+  [ok ] Hex.NumberFieldBench.runQAdjoinMulLadder
+  [ok ] Hex.NumberFieldBench.runCommonPrimitive
+  [ok ] Hex.NumberFieldBench.runContainedPresentation
+  [ok ] Hex.NumberFieldBench.runQAdjoinInvLadder
+  [ok ] Hex.NumberFieldBench.runMergeRootListLadder
+  [ok ] Hex.NumberFieldBench.runQAdjoinSubLadder
+  [ok ] Hex.NumberFieldBench.runAddEliminantLadder
+  [ok ] Hex.NumberFieldBench.runQAdjoinAddLadder
+  [ok ] Hex.NumberFieldBench.runAlgebraicPolyOfArray
+  [ok ] Hex.NumberFieldBench.runComponentRoots  [fixed]
+  [ok ] Hex.NumberFieldBench.runQAdjoinMulPair20  [fixed]
+  [ok ] Hex.NumberFieldBench.runQAdjoinMulPair4  [fixed]
+  [ok ] Hex.NumberFieldBench.runQAdjoinInvPair10  [fixed]
+  [ok ] Hex.NumberFieldBench.runQAdjoinInvPair4  [fixed]
+  [ok ] Hex.NumberFieldBench.runPariPolmodMul6  [fixed]
+  [ok ] Hex.NumberFieldBench.runQAdjoinInvPair12  [fixed]
+  [ok ] Hex.NumberFieldBench.runLazyNeg  [fixed]
+  [ok ] Hex.NumberFieldBench.runCommonPowers  [fixed]
+  [ok ] Hex.NumberFieldBench.runAlgebraicRootsZ  [fixed]
+  [ok ] Hex.NumberFieldBench.runIsReal  [fixed]
+  [ok ] Hex.NumberFieldBench.runPariPolmodMul4  [fixed]
+  [ok ] Hex.NumberFieldBench.runQAdjoinMulPair6  [fixed]
+  [ok ] Hex.NumberFieldBench.runPariPolmodInv4  [fixed]
+  [ok ] Hex.NumberFieldBench.runAlgebraicSub  [fixed]
+  [ok ] Hex.NumberFieldBench.runAlgebraicPolyAccessors  [fixed]
+  [ok ] Hex.NumberFieldBench.runPariPolmodMul16  [fixed]
+  [ok ] Hex.NumberFieldBench.runCommonScale  [fixed]
+  [ok ] Hex.NumberFieldBench.runPariPolmodMul20  [fixed]
+  [ok ] Hex.NumberFieldBench.runPariPolmodMul8  [fixed]
+  [ok ] Hex.NumberFieldBench.runLazySub  [fixed]
+  [ok ] Hex.NumberFieldBench.runExactFactorLadder  [fixed]
+  [ok ] Hex.NumberFieldBench.runPariPolmodInv6  [fixed]
+  [ok ] Hex.NumberFieldBench.runCommonSignedDegree  [fixed]
+  [ok ] Hex.NumberFieldBench.runQAdjoinInvPair8  [fixed]
+  [ok ] Hex.NumberFieldBench.runLazyMul  [fixed]
+  [ok ] Hex.NumberFieldBench.runCommonAdd  [fixed]
+  [ok ] Hex.NumberFieldBench.runQAdjoinInvPair6  [fixed]
+  [ok ] Hex.NumberFieldBench.runExactLadder  [fixed]
+  [ok ] Hex.NumberFieldBench.runPariPolmodInv16  [fixed]
+  [ok ] Hex.NumberFieldBench.runCommonRational  [fixed]
+  [ok ] Hex.NumberFieldBench.runRoots  [fixed]
+  [ok ] Hex.NumberFieldBench.runPariPolmodInv8  [fixed]
+  [ok ] Hex.NumberFieldBench.runQAdjoinMulPair16  [fixed]
+  [ok ] Hex.NumberFieldBench.runQAdjoinApprox  [fixed]
+  [ok ] Hex.NumberFieldBench.runCommonExtend  [fixed]
+  [ok ] Hex.NumberFieldBench.runQAdjoinMulPair8  [fixed]
+  [ok ] Hex.NumberFieldBench.runAlgebraicNatPow  [fixed]
+  [ok ] Hex.NumberFieldBench.runFixedMul  [fixed]
+  [ok ] Hex.NumberFieldBench.runCommonCoordinates  [fixed]
+  [ok ] Hex.NumberFieldBench.runAlgebraicMul  [fixed]
+  [ok ] Hex.NumberFieldBench.runLazyAddLadder  [fixed]
+  [ok ] Hex.NumberFieldBench.runCommonMul  [fixed]
+  [ok ] Hex.NumberFieldBench.runAlgebraicConstructors  [fixed]
+  [ok ] Hex.NumberFieldBench.runPariPolmodOverhead  [fixed]
+  [ok ] Hex.NumberFieldBench.runAlgebraicNeg  [fixed]
+  [ok ] Hex.NumberFieldBench.runAlgebraicDiv  [fixed]
+  [ok ] Hex.NumberFieldBench.runCommonExtendStep  [fixed]
+  [ok ] Hex.NumberFieldBench.runPariPolmodInv10  [fixed]
+  [ok ] Hex.NumberFieldBench.runAddEliminant  [fixed]
+  [ok ] Hex.NumberFieldBench.runQAdjoinRootsLadder  [fixed]
+  [ok ] Hex.NumberFieldBench.runNormEliminant  [fixed]
+  [ok ] Hex.NumberFieldBench.runSelectAdd  [fixed]
+  [ok ] Hex.NumberFieldBench.runExact  [fixed]
+  [ok ] Hex.NumberFieldBench.runLazyDiv  [fixed]
+  [ok ] Hex.NumberFieldBench.runCommonShift  [fixed]
+  [ok ] Hex.NumberFieldBench.runLazyInv  [fixed]
+  [ok ] Hex.NumberFieldBench.runFixedMinpoly  [fixed]
+  [ok ] Hex.NumberFieldBench.runLazyAdd  [fixed]
+  [ok ] Hex.NumberFieldBench.runAlgebraicRootsLadder  [fixed]
+  [ok ] Hex.NumberFieldBench.runQAdjoinMulPair12  [fixed]
+  [ok ] Hex.NumberFieldBench.runAlgebraicInv  [fixed]
+  [ok ] Hex.NumberFieldBench.runExactSelection  [fixed]
+  [ok ] Hex.NumberFieldBench.runAlgebraicScalars  [fixed]
+  [ok ] Hex.NumberFieldBench.runPariPolmodMul12  [fixed]
+  [ok ] Hex.NumberFieldBench.runEvalMajorantFixed  [fixed]
+  [ok ] Hex.NumberFieldBench.runCanonicalRepLadder  [fixed]
+  [ok ] Hex.NumberFieldBench.runEvalEliminant  [fixed]
+  [ok ] Hex.NumberFieldBench.runZeroDecisions  [fixed]
+  [ok ] Hex.NumberFieldBench.runCommonTrace  [fixed]
+  [ok ] Hex.NumberFieldBench.runPariPolmodInv12  [fixed]
+  [ok ] Hex.NumberFieldBench.runQAdjoinInvPair16  [fixed]
+  [ok ] Hex.NumberFieldBench.runQAdjoinCanonical  [fixed]
+  [ok ] Hex.NumberFieldBench.runCommonExtendShift  [fixed]
+  [ok ] Hex.NumberFieldBench.runAlgebraicAdd  [fixed]
+  [ok ] Hex.NumberFieldBench.runAlgebraicIntPow  [fixed]
+  [ok ] Hex.NumberFieldBench.runFixedInv  [fixed]
+  [ok ] Hex.NumberFieldBench.runIsolateAdd  [fixed]
+all 92 benchmark(s) passed
+::endgroup::
+::group::hexrealalgebraic_bench
+registered benchmarks:
+  Hex.RealAlgebraicBench.runRationalCeil    expected complexity: b
+  Hex.RealAlgebraicBench.runMembership    expected complexity: n
+  Hex.RealAlgebraicBench.runPolyConstructors    expected complexity: n
+  Hex.RealAlgebraicBench.runRationalQuotient    expected complexity: b
+  Hex.RealAlgebraicBench.runExactifyRoots    expected complexity: n
+  Hex.RealAlgebraicBench.runRationalRecognition    expected complexity: b
+  Hex.RealAlgebraicBench.runLeafChecks    expected complexity: 1
+  Hex.RealAlgebraicBench.runSortRoots    expected complexity: n * (Nat.log2 n + 1)
+  Hex.RealAlgebraicBench.runRootSet    expected complexity: 1
+  Hex.RealAlgebraicBench.runRationalFloor    expected complexity: b
+  Hex.RealAlgebraicBench.runHardBareDiv    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintSqrt8Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runBareDiv    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runFlintQuadraticRoots2Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runZ3Rational16Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runZ3Compare64    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintCeil16Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runZ3QuadraticRoots2    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runBareNeg    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runZ3Add4    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runFilterRoots    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runFlintQuadraticRoots2    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintCompare256    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintSqrt2    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintCeil4    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runZ3Rational1024    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runZ3Compare16    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runZ3RationalRoots8Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runRounding    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runHardBareIntPow    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runZ3Compare4    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintCompare64Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintRational16Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintRational1024Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runCasts    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runFlintRationalRoots8Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runZ3Compare256Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runFlintRationalRoots2    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runZ3Compare4Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runAdd    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runZ3Compare256    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintFloor16Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runFlintQuadraticRoots1Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runQqbarProtocol    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintAdd4Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintFloor256Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintFloor64    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintRational256Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runSub    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runCompare256    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runHardNatPow    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runConj    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runZ3QuadraticRoots4Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runZ3Compare64Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runRational16    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runHardBareSub    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintAdd4    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runQuadraticRoots4    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runCompare    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runZ3Rational64Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runZ3Sqrt2Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runConstructors    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runEquality    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runZ3QuadraticRoots1Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runAbs    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runFlintRationalRoots2Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintSqrt8    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runHardBareNeg    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runHardSub    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runEightRoots    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runZ3Sqrt2    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintRational64Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runFlintQuadraticRoots4Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runQuadraticRoots2    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runCompareExact    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runZ3Rational256    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runRationalRoots8    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runHardNeg    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runFieldSign    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runZ3QuadraticRoots4    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runBareAdd    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runZ3RationalRoots2    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runMul    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runComplexAbs    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runIntPow    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runNatPow    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runBareIntPow    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runSqrt8    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runOrder    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runHardBareNatPow    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runCeil64    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runCeil256    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintCompare64    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runApprox    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runHardBareAdd    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintAdd2    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintCompare4Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runCloseExact    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runQqbarCloseCompare    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFloor4    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintFloor256    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runFlintRationalRoots4Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runHardMul    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runBareMul    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runCeil4    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runHardBareMul    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runZ3RationalRoots8    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runCompare4    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintFloor4    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runSign    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runBareSub    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runZ3RationalRoots2Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runAdd2    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runInv    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runZ3Rational16    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintCeil16    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runDiv    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintAdd8Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runZ3Add2Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintFloor64Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintFloor4Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runFlintQuadraticRoots1    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runRepeatedRoots    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintFloor16    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runCompare16    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runZ3Sqrt4    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runZ3Rational1024Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintCompare4    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runZ3Add4Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintCompare256Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runAdd8    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runZ3Add2    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runQqbarCompare    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runZ3Rational256Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runHardBareInv    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runRational64    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runQuadraticRoots1    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runRationalRoots2    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFloor64    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runRational    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintAdd2Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintCeil64    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runRational256    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runZ3QuadraticRoots1    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintRational64    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runHardAdd    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintCeil64Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runNorm    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runNeg    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runSqrt2    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runZ3Rational64    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runRepr    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runCompare64    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runBareNatPow    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runFlintQuadraticRoots4    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runZ3Sqrt8Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runBareInv    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintSqrt4Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runRoots    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintCeil4Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintRational256    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runAdd4    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintSqrt4    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runSqrt4    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runScalars    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFloor16    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runZ3RationalRoots4Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFloor256    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runZ3Compare16Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintRational1024    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runZ3QuadraticRoots2Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runHardInv    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintCeil256    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runProjections    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runZ3Add8    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runHardDiv    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runZ3Sqrt8    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintCompare16Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runFlintRationalRoots8    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runHardIntPow    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintAdd8    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runRationalRoots4    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runZ3RationalRoots4    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runRational1024    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runIntegerRoots    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runSqrt    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runSqrtTotal    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintSqrt2Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runZ3Sqrt4Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintCeil256Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runFlintRationalRoots4    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runCeil16    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintRational16    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runFlintCompare16    [fixed] repeats=4
+  Hex.RealAlgebraicScaling.runZ3Add8Protocol    [fixed] repeats=4
+  Hex.RealAlgebraicBench.runCloseCompare    [fixed] repeats=4
+verifying 196 benchmark(s)...
+  [ok ] Hex.RealAlgebraicBench.runRationalCeil
+  [ok ] Hex.RealAlgebraicBench.runMembership
+  [ok ] Hex.RealAlgebraicBench.runPolyConstructors
+  [ok ] Hex.RealAlgebraicBench.runRationalQuotient
+  [ok ] Hex.RealAlgebraicBench.runExactifyRoots
+  [ok ] Hex.RealAlgebraicBench.runRationalRecognition
+  [ok ] Hex.RealAlgebraicBench.runLeafChecks
+  [ok ] Hex.RealAlgebraicBench.runSortRoots
+  [ok ] Hex.RealAlgebraicBench.runRootSet
+  [ok ] Hex.RealAlgebraicBench.runRationalFloor
+  [ok ] Hex.RealAlgebraicBench.runHardBareDiv  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintSqrt8Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runBareDiv  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runFlintQuadraticRoots2Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runZ3Rational16Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runZ3Compare64  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintCeil16Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runZ3QuadraticRoots2  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runBareNeg  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runZ3Add4  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runFilterRoots  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runFlintQuadraticRoots2  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintCompare256  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintSqrt2  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintCeil4  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runZ3Rational1024  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runZ3Compare16  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runZ3RationalRoots8Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runRounding  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runHardBareIntPow  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runZ3Compare4  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintCompare64Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintRational16Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintRational1024Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runCasts  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runFlintRationalRoots8Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runZ3Compare256Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runFlintRationalRoots2  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runZ3Compare4Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runAdd  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runZ3Compare256  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintFloor16Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runFlintQuadraticRoots1Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runQqbarProtocol  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintAdd4Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintFloor256Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintFloor64  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintRational256Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runSub  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runCompare256  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runHardNatPow  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runConj  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runZ3QuadraticRoots4Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runZ3Compare64Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runRational16  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runHardBareSub  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintAdd4  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runQuadraticRoots4  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runCompare  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runZ3Rational64Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runZ3Sqrt2Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runConstructors  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runEquality  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runZ3QuadraticRoots1Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runAbs  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runFlintRationalRoots2Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintSqrt8  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runHardBareNeg  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runHardSub  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runEightRoots  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runZ3Sqrt2  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintRational64Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runFlintQuadraticRoots4Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runQuadraticRoots2  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runCompareExact  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runZ3Rational256  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runRationalRoots8  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runHardNeg  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runFieldSign  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runZ3QuadraticRoots4  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runBareAdd  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runZ3RationalRoots2  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runMul  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runComplexAbs  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runIntPow  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runNatPow  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runBareIntPow  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runSqrt8  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runOrder  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runHardBareNatPow  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runCeil64  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runCeil256  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintCompare64  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runApprox  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runHardBareAdd  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintAdd2  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintCompare4Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runCloseExact  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runQqbarCloseCompare  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFloor4  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintFloor256  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runFlintRationalRoots4Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runHardMul  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runBareMul  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runCeil4  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runHardBareMul  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runZ3RationalRoots8  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runCompare4  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintFloor4  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runSign  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runBareSub  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runZ3RationalRoots2Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runAdd2  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runInv  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runZ3Rational16  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintCeil16  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runDiv  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintAdd8Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runZ3Add2Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintFloor64Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintFloor4Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runFlintQuadraticRoots1  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runRepeatedRoots  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintFloor16  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runCompare16  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runZ3Sqrt4  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runZ3Rational1024Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintCompare4  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runZ3Add4Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintCompare256Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runAdd8  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runZ3Add2  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runQqbarCompare  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runZ3Rational256Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runHardBareInv  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runRational64  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runQuadraticRoots1  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runRationalRoots2  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFloor64  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runRational  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintAdd2Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintCeil64  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runRational256  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runZ3QuadraticRoots1  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintRational64  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runHardAdd  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintCeil64Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runNorm  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runNeg  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runSqrt2  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runZ3Rational64  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runRepr  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runCompare64  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runBareNatPow  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runFlintQuadraticRoots4  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runZ3Sqrt8Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runBareInv  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintSqrt4Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runRoots  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintCeil4Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintRational256  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runAdd4  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintSqrt4  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runSqrt4  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runScalars  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFloor16  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runZ3RationalRoots4Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFloor256  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runZ3Compare16Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintRational1024  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runZ3QuadraticRoots2Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runHardInv  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintCeil256  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runProjections  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runZ3Add8  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runHardDiv  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runZ3Sqrt8  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintCompare16Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runFlintRationalRoots8  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runHardIntPow  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintAdd8  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runRationalRoots4  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runZ3RationalRoots4  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runRational1024  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runIntegerRoots  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runSqrt  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runSqrtTotal  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintSqrt2Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runZ3Sqrt4Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintCeil256Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runFlintRationalRoots4  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runCeil16  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintRational16  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runFlintCompare16  [fixed]
+  [ok ] Hex.RealAlgebraicScaling.runZ3Add8Protocol  [fixed]
+  [ok ] Hex.RealAlgebraicBench.runCloseCompare  [fixed]
+all 196 benchmark(s) passed
+::endgroup::
+::warning::hexrealalgebraic_bench verify took 45s (> 30s soft threshold). See SPEC/benchmarking.md §CI integration "Time budget".
+
+=== Bench verify wallclock breakdown ===
+     45s  hexrealalgebraic_bench
+     10s  hexnumberfield_bench
+  -----
+     55s  TOTAL
+
+check_bench_verify_budget: OK (55s total, hard cap 600s, warn-only=0).

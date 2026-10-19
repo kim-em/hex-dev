@@ -11,7 +11,9 @@ open Hex.SignDet
 open scoped Hex
 
 /-- The complete finite moment system, with every ternary word occurring once.
-Preparation uses the actual solver and validates all counts before timing.
+Reference checks use the actual solver and validate all counts; their tiny
+preparation is included in the fixed callback. Tensor checker preparation
+happens before timing.
 No polynomial or Tarski-query work is included in these matrix callbacks. -/
 structure Input where
   arity : Nat
@@ -58,74 +60,125 @@ literal row/column order, using the actual `System.check`. -/
 multiply/add pairs, including zero entries. All other checker work is
 O(r^2 s): constructing entries and checking distinct columns. Gauss-Jordan
 solve takes O(r^3) rational coefficient operations, and finishes with the same
-r^3 integer check. Thus both are Θ(r^3)=Θ(27^s) coefficient operations.
-This is not a constant-bit or general Tarski-query wall-time claim. -/
+r^3 integer check. This gives a cubic total scalar-operation count, but the
+structured reference solve mixes zero-skipping rational elimination with
+cheap integer checks. That count does not supply a useful wall-time model
+on its small-input comparison domain. Production uses rational inversion
+only at leaves of size at most three; parents use their child tensor inverses.
+Keep reference solves as small fixed checks. The production-relevant integer
+checker retains its independently derived cubic scaling registration, `runTensorCheck`.
+The earlier checker registrations are superseded by that same callback with
+tensor preparation; their archived verdicts and finite-range disposition
+are retained in reports/sign-det-matrix-wide.md. -/
 
--- Declared cost-model: Θ(27^s) coefficient operations, dense exact inverse identity plus Gauss-Jordan solve.
-setup_benchmark runSolve s => 27^s
-  with prep := input
+/- Fixed reference checks include their tiny preparation. Keeping it inside
+these callbacks avoids running reference solves at every executable startup. -/
+@[noinline] private def referenceAt (s : Nat) (_ : Unit) : IO (Option UInt64) :=
+  return runSolve (input s)
+
+def reference1 := referenceAt 1
+def reference2 := referenceAt 2
+def reference3 := referenceAt 3
+
+private def referenceConfig (s : Nat) : LeanBench.FixedBenchmarkConfig :=
+  let expected := (words [-1, 0, 1] s).map fun word => (word, (1 : Int))
+  { repeats := 2, maxSecondsPerCall := 10, minTotalSeconds := 0.01,
+    expectedHash := some (hash (some (hash expected))) }
+
+setup_fixed_benchmark reference1 where referenceConfig 1
+setup_fixed_benchmark reference2 where referenceConfig 2
+setup_fixed_benchmark reference3 where referenceConfig 3
+
+/-- Prepare the same complete system with the library's existing Kronecker
+product. Only preparation changes: the measured callback remains System.check.
+The small-input inspection compares every literal with the ordinary solver. -/
+def tensorInput : Nat → Option Input
+  | 0 => input 0
+  | s + 1 => do
+    let left ← tensorInput s
+    let right ← input 1
+    let rows := productVector left.system.rows right.system.rows
+    let columns := productVector left.system.columns right.system.columns
+    let system : System (left.size * right.size) := {
+      rows := rows
+      columns := columns
+      counts := Vector.replicate _ 1
+      values := moments rows columns.toList
+      inverse := tensor left.system.inverse right.system.inverse
+      denominator := left.system.denominator * right.system.denominator }
+    return ⟨s + 1, left.size * right.size, system⟩
+
+def wideDimensions : Array Nat := #[243, 729, 2187, 6561]
+
+def tensorDimensionInput (r : Nat) : Option Input := do
+  let s ← #[0, 1, 2, 3, 4, 5, 6, 7, 8].find? (fun s => 3^s == r)
+  tensorInput s
+
+@[noinline] def runTensorCheck (i : Option Input) : Bool := runCheck i
+
+-- Declared cost-model: Θ(r^3), the unchanged dense exact integer inverse check.
+-- Tensor preparation allows a wider range without timing rational inversion.
+setup_benchmark runTensorCheck r => r^3
+  with prep := tensorDimensionInput
   where {
-    paramSchedule := .custom #[1, 2, 3, 4, 5]
-    paramFloor := 1
-    paramCeiling := 5
+    paramSchedule := .custom wideDimensions
+    paramFloor := 243
+    paramCeiling := 6561
     outerTrials := 6
     targetInnerNanos := 100000000
     signalFloorMultiplier := 1
-    maxSecondsPerCall := 180
+    maxSecondsPerCall := 3600
   }
 
--- Declared cost-model: Θ(27^s) integer coefficient operations, dense scaled-inverse identity check.
-setup_benchmark runCheck s => 27^s
-  with prep := input
-  where {
-    paramSchedule := .custom #[1, 2, 3, 4, 5]
-    paramFloor := 1
-    paramCeiling := 5
-    outerTrials := 6
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1
-    maxSecondsPerCall := 180
-  }
+/-- Compare complete witnesses, moments and literal orders with the existing
+solver on the overlap. Includes the empty-word one-by-one system. -/
+def inspectTensorsFor (arities : Array Nat) : IO UInt32 := do
+  for s in arities do
+    let some prepared := tensorInput s | throw (IO.userError "tensor preparation failed")
+    let some original := input s | throw (IO.userError "ordinary preparation failed")
+    if h : prepared.size = original.size then
+      let system : System original.size := h ▸ prepared.system
+      unless system == original.system && runCheck (some prepared) do
+        throw (IO.userError s!"tensor witness differs from ordinary solve at {s}")
+    else throw (IO.userError "tensor matrix dimension differs")
+    IO.println s!"tensor matrix {prepared.size}: complete witness matches ordinary solve"
+    (← IO.getStdout).flush
+  return 0
 
-/-- Prepare the same full system by its literal matrix dimension. Unsupported
-sizes return `none`; scientific inspection validates every scheduled input. -/
-def dimensionInput (r : Nat) : Option Input := do
-  let s ← #[1, 2, 3, 4, 5, 6].find? (fun s => 3^s == r)
-  input s
-
-/-- The existing complete solver, with matrix dimension as the parameter. -/
-@[noinline] def runSolveDimension (i : Option Input) : Option UInt64 := runSolve i
-
-/-- The existing literal checker, with matrix dimension as the parameter. -/
-@[noinline] def runCheckDimension (i : Option Input) : Bool := runCheck i
-
--- Declared cost-model: Θ(r^3) coefficient operations, the same dense inverse identity plus Gauss-Jordan solve.
-setup_benchmark runSolveDimension r => r^3
-  with prep := dimensionInput
-  where {
-    paramSchedule := .custom #[3, 9, 27, 81, 243, 729]
-    paramFloor := 3
-    paramCeiling := 729
-    outerTrials := 6
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1
-    maxSecondsPerCall := 180
-  }
-
--- Declared cost-model: Θ(r^3) integer coefficient operations, the same dense scaled-inverse identity check.
-setup_benchmark runCheckDimension r => r^3
-  with prep := dimensionInput
-  where {
-    paramSchedule := .custom #[3, 9, 27, 81, 243, 729]
-    paramFloor := 3
-    paramCeiling := 729
-    outerTrials := 6
-    targetInnerNanos := 100000000
-    signalFloorMultiplier := 1
-    maxSecondsPerCall := 180
-  }
+def inspectTensors : IO UInt32 := inspectTensorsFor #[0, 1, 2, 3, 4, 5, 6]
 
 private def bits (z : Int) : Nat := if z = 0 then 0 else z.natAbs.log2 + 1
+
+/-- Inspect complete literal row/column orders, the closed finite-observation
+moments and both exact identities before collecting the wider checker ladder. -/
+def inspectWideChecks (arities : Array Nat := #[5, 6, 7, 8]) : IO UInt32 := do
+  for s in arities do
+    let some i := tensorInput s | throw (IO.userError "tensor preparation failed")
+    let exponents := words [0, 1, 2] s
+    let columns := words [-1, 0, 1] s
+    let expected := exponents.map fun word =>
+      (word.map fun k => if k == 0 then (3 : Int) else if k == 1 then 0 else 2).foldr (· * ·) 1
+    unless i.size == 3^s && i.system.rows.toList == exponents &&
+        i.system.columns.toList == columns && i.system.counts.toList.all (· == 1) &&
+        i.system.values.toList == expected && i.system.denominator == (2^s : Nat) do
+      throw (IO.userError "tensor subject or moments differ from the finite full-support oracle")
+    let checked := runCheck (some i)
+    unless checked do throw (IO.userError "tensor inverse or moment identities rejected")
+    let inverseBits := i.system.inverse.rows.toArray.foldl (fun n row =>
+      row.toArray.foldl (fun n z => max n (bits z)) n) 0
+    IO.println <| (Lean.Json.mkObj [
+      ("queries", Lean.toJson s), ("matrixSize", Lean.toJson i.size),
+      ("supportSize", Lean.toJson i.system.counts.toList.length),
+      ("countSum", Lean.toJson i.system.counts.toList.sum),
+      ("inverseIdentityScalarPairs", Lean.toJson (i.size^3)),
+      ("inverseBits", Lean.toJson inverseBits),
+      ("denominatorBits", Lean.toJson (bits i.system.denominator)),
+      ("valuesBits", Lean.toJson (i.system.values.toList.foldl (fun n z => max n (bits z)) 0)),
+      ("literalOrders", Lean.toJson true), ("finiteMoments", Lean.toJson true),
+      ("inputHash", Lean.toJson (hash (some i)).toNat),
+      ("checkResultHash", Lean.toJson (hash checked).toNat)]).compress
+    (← IO.getStdout).flush
+  return 0
 
 /-- Untimed dimensions, output checks and literal witness sizes. For the
 first three inputs, compare the complete system with the actual polynomial

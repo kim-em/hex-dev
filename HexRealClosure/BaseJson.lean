@@ -109,6 +109,19 @@ theorem Element.codec_lawful {registry : Registry} {K : Type}
   simp [Element.codec, Literal.ofJson_toJson, Syntax.ofLiteral_literal,
     Context.read_write, require, bind, Except.bind, pure, Except.pure]
 
+/-- A rational-base value is encoded by its canonical numerator and denominator. -/
+theorem Element.codec_encode_rational (registry : Registry) (q : Rat) :
+    (Element.codec (rational registry)).encode ⟨q⟩ =
+      (Syntax.rational q).literal.toJson := by
+  simp only [Element.codec, Context.write_rational]
+
+/-- The canonical rational payload decodes to the value storing that rational. -/
+theorem Element.codec_decode_rational (registry : Registry) (q : Rat) :
+    (Element.codec (rational registry)).decode (Syntax.rational q).literal.toJson =
+      .ok ⟨q⟩ := by
+  rw [← Element.codec_encode_rational registry q]
+  exact Element.codec_lawful (rational registry) ⟨q⟩
+
 end Hex.RealClosure.BaseContext
 
 /-- info: 'Hex.RealClosure.BaseContext.Element.codec_lawful' depends on axioms: [propext, Classical.choice, Quot.sound] -/

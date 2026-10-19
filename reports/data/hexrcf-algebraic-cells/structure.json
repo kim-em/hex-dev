@@ -1,0 +1,229 @@
+{
+  "schema": "hex-rcf-algebraic-cell-structure-v1",
+  "graph_occurrences": 34,
+  "retained_nodes": 75,
+  "expanded_visits": 80,
+  "distinct_graph_literals": 32,
+  "matrix_graphs": 13,
+  "fixtures": {
+    "cell-algebraic.json": {
+      "bytes": 203523,
+      "sha256": "a2dc4beb9a19e2349ef3b9540145876db879211a73664b69ec9c467fdb2754b7"
+    },
+    "cell-algebraic-scalars.json": {
+      "bytes": 35611,
+      "sha256": "b63c2223e4f59792355385f09b358f8d15427828d7c1882012d758a3a50b28bf"
+    },
+    "cell-algebraic-mutations.json": {
+      "bytes": 175439,
+      "sha256": "fa033e4c28106990aac2c090b1347f456073831c079787334888cdd9db0a1085"
+    }
+  },
+  "graphs": [
+    {
+      "path": "roots",
+      "retained_nodes": 3,
+      "expanded_visits": 3,
+      "sha256": "d13c331e0f775e3dd17198a937886a4031141c10f7cd8620f6d9612351b90aa3"
+    },
+    {
+      "path": "section/0",
+      "retained_nodes": 8,
+      "expanded_visits": 9,
+      "sha256": "e18fd40d7c056bb8c0a28c35e390eb16730ab7f64cfa85462a00ccceab769a42"
+    },
+    {
+      "path": "section/1",
+      "retained_nodes": 8,
+      "expanded_visits": 9,
+      "sha256": "e18fd40d7c056bb8c0a28c35e390eb16730ab7f64cfa85462a00ccceab769a42"
+    },
+    {
+      "path": "sector/0/right",
+      "retained_nodes": 5,
+      "expanded_visits": 5,
+      "sha256": "b2a143b4022f7c7414849d87b306bc30dce7ab601d2fc1d6c72a663ca4f8c0aa"
+    },
+    {
+      "path": "sector/0/point",
+      "retained_nodes": 1,
+      "expanded_visits": 1,
+      "sha256": "72ab505de702239e19ca671b30451832698178483351cfbd07c5c19989d9544f"
+    },
+    {
+      "path": "sector/0/row",
+      "retained_nodes": 4,
+      "expanded_visits": 5,
+      "sha256": "dacf6cd32b40a0faa091a592f7bf805e590b44149fb2345474cfa4f204827e79"
+    },
+    {
+      "path": "sector/1/left",
+      "retained_nodes": 5,
+      "expanded_visits": 5,
+      "sha256": "715bc78db513e3f864cf675d417a0a2653f1f4af3d16dfe99b63d1d7eea67bbd"
+    },
+    {
+      "path": "sector/1/right",
+      "retained_nodes": 5,
+      "expanded_visits": 5,
+      "sha256": "715bc78db513e3f864cf675d417a0a2653f1f4af3d16dfe99b63d1d7eea67bbd"
+    },
+    {
+      "path": "sector/1/point",
+      "retained_nodes": 1,
+      "expanded_visits": 1,
+      "sha256": "f143c3912baf763a5b3716ac56dca5dc960213a2ac562bbd585a5f4b0ef2bef9"
+    },
+    {
+      "path": "sector/1/row",
+      "retained_nodes": 4,
+      "expanded_visits": 5,
+      "sha256": "3513ef04a4a49044e462cdb99f40cc70a91262559496e423813d702a238944fe"
+    },
+    {
+      "path": "sector/2/left",
+      "retained_nodes": 5,
+      "expanded_visits": 5,
+      "sha256": "583ccc5c73f8f33a8a67ea7b5afb0b9de0711ceb44536fbfeba413201b0690c1"
+    },
+    {
+      "path": "sector/2/point",
+      "retained_nodes": 1,
+      "expanded_visits": 1,
+      "sha256": "629665f13f466453dd32f39ed1c1b17abb49dd1e303207978182b877484a21bb"
+    },
+    {
+      "path": "sector/2/row",
+      "retained_nodes": 4,
+      "expanded_visits": 5,
+      "sha256": "bac00f81a0fc6e7edf49959e14fcf989c6ef185f6736ee21039a931c2eb3a9ca"
+    },
+    {
+      "path": "scalar/0",
+      "retained_nodes": 1,
+      "expanded_visits": 1,
+      "sha256": "2f1b3c79fd32ff3b75c60225757676c1d9d7a53d66db54e9e4c41936cf50d23c"
+    },
+    {
+      "path": "scalar/1",
+      "retained_nodes": 1,
+      "expanded_visits": 1,
+      "sha256": "eda969005008e031549335f2b62b3d43baed5e1725c6192a3df64c3f414f600a"
+    },
+    {
+      "path": "scalar/2",
+      "retained_nodes": 1,
+      "expanded_visits": 1,
+      "sha256": "9911b2cd930ab7563854a69941bcbe8b25c432c6aac2b6166837078e27b62208"
+    },
+    {
+      "path": "scalar/3",
+      "retained_nodes": 1,
+      "expanded_visits": 1,
+      "sha256": "1195e56ade8c153a60a5bd17d88227dba64efd95bff761bb77e735c4f6a9de5b"
+    },
+    {
+      "path": "scalar/4",
+      "retained_nodes": 1,
+      "expanded_visits": 1,
+      "sha256": "4bf620553d6b426e49d69d7909afeb30272de342e4f9df33f6f0d2b3ea1353ee"
+    },
+    {
+      "path": "scalar/5",
+      "retained_nodes": 1,
+      "expanded_visits": 1,
+      "sha256": "8a26ad1d792c6c5110128a79e41f9df42a21e482363f4052e83195e056b24f01"
+    },
+    {
+      "path": "scalar/6",
+      "retained_nodes": 1,
+      "expanded_visits": 1,
+      "sha256": "cab89286b3e44b089809736772c22cb74b79875b3e5017a8fba19e949d65f7f6"
+    },
+    {
+      "path": "scalar/7",
+      "retained_nodes": 1,
+      "expanded_visits": 1,
+      "sha256": "c05e891657591f953f05608bd719142bc2a00add443140a45f16969d9ac37501"
+    },
+    {
+      "path": "scalar/8",
+      "retained_nodes": 1,
+      "expanded_visits": 1,
+      "sha256": "d6c2dad784d35ad12735fd77e0de346cd7c69a9645ce69ac2fc5076366f07250"
+    },
+    {
+      "path": "scalar/9",
+      "retained_nodes": 1,
+      "expanded_visits": 1,
+      "sha256": "eb83141076027714b0f037bce7335344d237133c182c5d8e512f2c03a357442f"
+    },
+    {
+      "path": "scalar/10",
+      "retained_nodes": 1,
+      "expanded_visits": 1,
+      "sha256": "809d9a1327ae69bc20d778f6833267368edb2c7acef3a8805a67f59201032b88"
+    },
+    {
+      "path": "scalar/11",
+      "retained_nodes": 1,
+      "expanded_visits": 1,
+      "sha256": "9407f9b74fdf390cd56a4f06e42a1f02749450bcd08492ccb8f3adbe2d89bf2b"
+    },
+    {
+      "path": "scalar/12",
+      "retained_nodes": 1,
+      "expanded_visits": 1,
+      "sha256": "34102e73466896d0d1188ecb0fb567b69cbce56537d13b5d17b784a9376fba9f"
+    },
+    {
+      "path": "scalar/13",
+      "retained_nodes": 1,
+      "expanded_visits": 1,
+      "sha256": "8e762a012f25f4194221ac1a79ce0296cc1ab58feba88a5b27af1316b6125613"
+    },
+    {
+      "path": "scalar/14",
+      "retained_nodes": 1,
+      "expanded_visits": 1,
+      "sha256": "f303ebf906207c3ac3c58c4df979dbe88f04e129d0c43830a1e315eeb7fce5ca"
+    },
+    {
+      "path": "scalar/15",
+      "retained_nodes": 1,
+      "expanded_visits": 1,
+      "sha256": "277db74f99348cd2c125c7a8b186fe5b65f5a7e358af111182051ad768f77fc5"
+    },
+    {
+      "path": "scalar/16",
+      "retained_nodes": 1,
+      "expanded_visits": 1,
+      "sha256": "f55344481f5d0641ccc72d92fb9cd173653c934328b6071d382619c5e37692b9"
+    },
+    {
+      "path": "scalar/17",
+      "retained_nodes": 1,
+      "expanded_visits": 1,
+      "sha256": "b024b6c9b61a7836c1beeaa0a8fd56fac03fe6d4524fe1baaf816e9cfde58b30"
+    },
+    {
+      "path": "scalar/18",
+      "retained_nodes": 1,
+      "expanded_visits": 1,
+      "sha256": "9cf2c97cf02e24780aa78b23f66214f59e45158b5e66f6c0cbe74b9376a22f94"
+    },
+    {
+      "path": "scalar/19",
+      "retained_nodes": 1,
+      "expanded_visits": 1,
+      "sha256": "5cfead8ea0b596d94233aa2a8bfb1d12429c9c32e322d9b923797c7c455118ff"
+    },
+    {
+      "path": "scalar/20",
+      "retained_nodes": 1,
+      "expanded_visits": 1,
+      "sha256": "9c53289a1e7e0d2499ec81f18f1698906ebc2c625d2df3ac82954a587b1f222a"
+    }
+  ],
+  "scope": "Graph occurrences explicitly consumed as matrix or scalar packets. Nested immutable context-frame literals and internal Sturm/Tarski records are not separate graph occurrences here. Expanded visits unroll repeated binary child references and do not measure validation work or kernel proof size."
+}

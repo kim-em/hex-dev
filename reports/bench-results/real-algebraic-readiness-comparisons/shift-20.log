@@ -1,0 +1,23 @@
+compare: 2 fixed benchmark(s) failed expectedHash check: Hex.RealAlgebraicBench.runCloseCompare, Hex.RealAlgebraicBench.runCloseExact
+env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=4f44b80-dirty, 2026-10-02T02:34:58Z, host=chungus2
+Hex.RealAlgebraicBench.runCloseCompare    [fixed] repeats=4
+  repeat 0  —  [error: child exited with code 1]
+  repeat 1  —  [error: child exited with code 1]
+  repeat 2  —  [error: child exited with code 1]
+  repeat 3  —  [error: child exited with code 1]
+  median: — (no successful repeats)
+  hash: all repeats agree
+  expected hash: FAIL — expected 0x0, got no observed hash (no `ok` repeat produced one)
+
+Hex.RealAlgebraicBench.runCloseExact    [fixed] repeats=4
+  repeat 0  —  [error: child exited with code 1]
+  repeat 1  —  [error: child exited with code 1]
+  repeat 2  —  [error: child exited with code 1]
+  repeat 3  —  [error: child exited with code 1]
+  median: — (no successful repeats)
+  hash: all repeats agree
+  expected hash: FAIL — expected 0x0, got no observed hash (no `ok` repeat produced one)
+
+relative median: baseline Hex.RealAlgebraicBench.runCloseCompare has no successful repeats
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-readiness-comparisons/shift-20.json

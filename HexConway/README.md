@@ -17,7 +17,7 @@ factor-prime certificates, and
 [`hex-gfq-ring`](https://github.com/leanprover/hex-gfq-ring) for the quotient
 that compatibility is stated in. The subfield embedding `GFq p m →+* GFq p n`
 and the Mathlib-side order statements live in
-[`hex-gfq-mathlib`](https://github.com/leanprover/hex-gfq-mathlib).
+[`hex-gfq-theory`](https://github.com/leanprover/hex-gfq-theory).
 
 # Quickstart
 
@@ -138,7 +138,7 @@ On-demand search for pairs the table does not cover is specified but not
 implemented. There is no API for it, and no `(p, n)` outside the committed
 slice can be constructed. The transport of primitivity into Mathlib's
 `orderOf` language, and the canonical embedding `conwayEmbed`, live in
-[`hex-gfq-mathlib`](https://github.com/leanprover/hex-gfq-mathlib). The scope is selected under a **300-second clean Conway rebuild ceiling**
+[`hex-gfq-theory`](https://github.com/leanprover/hex-gfq-theory). The scope is selected under a **300-second clean Conway rebuild ceiling**
 with dependencies already built, including both verification tiers and all
 normal library outputs. The additional Mathlib cost is measured separately.
 See the [SPEC](SPEC/hex-conway.md) and the

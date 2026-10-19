@@ -236,12 +236,12 @@ theorem cubeTwoRoots {x : ℝ} (root : x ^ 3 - 2 = 0) :
   exact closeReal evidence root
 
 theorem pisotRoots {z : ℂ} (root : z ^ 3 - z - 1 = 0) :
-    z ∈ HexRootsMathlib.DyadicSquare.closedSquare
-        HexRootsMathlib.Examples.pisotLowerSquare ∨
-      z ∈ HexRootsMathlib.DyadicSquare.closedSquare
-        HexRootsMathlib.Examples.pisotUpperSquare ∨
-      z ∈ HexRootsMathlib.DyadicSquare.closedSquare
-        HexRootsMathlib.Examples.pisotRealSquare := by
+    z ∈ HexRootsTheory.DyadicSquare.closedSquare
+        HexRootsTheory.Examples.pisotLowerSquare ∨
+      z ∈ HexRootsTheory.DyadicSquare.closedSquare
+        HexRootsTheory.Examples.pisotUpperSquare ∨
+      z ∈ HexRootsTheory.DyadicSquare.closedSquare
+        HexRootsTheory.Examples.pisotRealSquare := by
   change ComplexContains .pisotComplex z
   have evidence : Evidence
       (complexSemantics.Entails complexProgram complexBaseFacts complexCheckerInput.target) := by

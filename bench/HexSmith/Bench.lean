@@ -11,7 +11,7 @@ import Lean.Data.Json
 import LeanBench
 
 /-! Mathlib-free Smith benchmarks over the input families fixed by the SPEC,
-including informational FLINT/PARI comparisons and untimed entry-growth
+including orientation FLINT/PARI comparisons and untimed entry-growth
 instrumentation. -/
 
 namespace Hex.SmithBench

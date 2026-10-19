@@ -1,0 +1,277 @@
+{
+  "source_commit": "189d74dce166a3f68019135e56805f73a527e65c",
+  "source_tree": "3c908d7a1ec2b093792ebb819c2330e0429012eb",
+  "merged_codec_commit": "d2bff654dd294868402d44fb610266ab8943d06d",
+  "sources": {
+    "HexManual/Chapters/HexRCF.lean": "148724b7d39d37a139ecfd70a45e28c4727cb4fe9c45a6d33c546e02538e3c0e",
+    "HexManual/Chapters/HexRCF/RootQuote.lean": "a93a81c870d56e559fd3614f862abf1fc678e87c184372083ab7c15252dc22a7",
+    "adapters/HexRCF/RealCoefficients.lean": "2426e94f33924e04d8efd758e0755c79b570fa72216daf96061dd9d6fee51792",
+    "adapters/HexRCF/RealCoefficients/RootQuote.lean": "b91a80bc5b59a2523e221a799de1f49af0866124df7900aeb76a74f244c20874",
+    "conformance/HexRCF/RootQuoteCases.lean": "de3354ca864103b8eec96c0266ed102020f68a71bf78e84b722caec3ed18e4b5",
+    "conformance/HexRCF/RootQuoteConformance.lean": "21ed6017b5bf1e14ee5752f82688def3b8f9a4f208a57273f79cac8fd3a06f3d",
+    "conformance/HexRCF/RootQuoteData.lean": "63888ec8a05c1bc2ad4415bba56a441f83979fbec397a5a1a7dbbefac5d5d982",
+    "conformance/HexRCF/RootQuoteSource.lean": "43379f09a5fd9f1551e53378b9a4b75937de1aa95bad322ed3863419f341cd3c",
+    "lakefile.lean": "034ca505cdcca3895d3f17f3c9df8092b96db2a79c08c4e302dd43c038876178",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "libraries.yml": "14e3dd1c01bb0c369b2216e2733378d61172040fd9f69dd0354d4e1267d9c5c1",
+    "HexRealClosure/NumberFieldTower.lean": "bdb5934544c6c71bc3472c15fb2ce9a4a2a881554b639750e6729ad656f3380f",
+    "HexRealClosure/TowerContext.lean": "6ecb83b344c783d2a85ad1c253aeba6167e42a5475950ab8a88cbb0cbb16892f"
+  },
+  "artifacts": {
+    "reports/data/hexrcf-root-quotation/root-quote-final-metadata.json": "dccdf02091ec64a18009b5690cfdefcc3169e84e4bf7ab7b9fbc46a2cf762a17",
+    "reports/data/hexrcf-root-quotation/root-quote-final-live-limits.json": "3e92e05f67498ec391034b5d5ce7fd85139ed12ecbb07079b0874f4d67ddc769",
+    "reports/data/hexrcf-root-quotation/root-quote-final-metadata-0.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reports/data/hexrcf-root-quotation/root-quote-final-metadata-1.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reports/data/hexrcf-root-quotation/root-quote-final-metadata-2.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reports/data/hexrcf-root-quotation/root-quote-final-metadata-3.log": "e017452d2ee202384ea848419b1392dc2ac3f29fb1e48e0f2f03fa0f1502d8b3",
+    "reports/data/hexrcf-root-quotation/root-quote-final-metadata-4.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reports/data/hexrcf-root-quotation/root-quote-browser.mjs": "5b7ab12be258bb9158c6c7a82a127bf25a15612c667f81dcd2ed195cb9934767",
+    "reports/data/hexrcf-root-quotation/run-bounded.sh": "63bc5f97337e6b039bb3a9b1ba2a500be96fd1c2a2f73b43dae284aa9b18dda8",
+    "reports/data/hexrcf-root-quotation/browser-lib-paths.txt": "8ff8527ef406adcb43eacde8db594d9847d08d906c3d602bd9e8bc664079c318",
+    "reports/data/hexrcf-root-quotation/probe-lakefile.txt": "77164e1626373bdf429e04194f979788501669ce71c04fd3256d9fbd1d9e9cbb",
+    "reports/data/hexrcf-root-quotation/probe-lake-manifest.json": "d3a35d69fe67c301f7261c745f88dbe60dc8f06048673c3d4b8cd15cb292beaa",
+    "reports/data/hexrcf-root-quotation/root-quote-final-validation-1.log.gz": "bc314a1a8b648792a7cdaa1a57bc7e0e3dfe25438f47629c75ce3112326ea656",
+    "reports/data/hexrcf-root-quotation/root-quote-frozen-6.log.gz": "e038c376b00a926795217000fd437b7382adf1422d9868169a7073655a0aee04",
+    "reports/data/hexrcf-root-quotation/root-quote-frozen-8.log.gz": "8794131da5e6f7222fa5ca1b63b2364b259d8620dfea8d589e81b9ea51f58e08",
+    "reports/data/hexrcf-root-quotation/root-quote-inspection.json": "19355fd1da9c8e0cea7f3bbe2690b4ef602bf807d3f76cbfc05e4f52179d1e31",
+    "reports/data/hexrcf-root-quotation/root-quote-desktop-equivalence.png": "a2c38ac908c27a68e2a223040b8cfcf286d459b60d49143138633a49f5eceabf",
+    "reports/data/hexrcf-root-quotation/root-quote-desktop-example.png": "57244e66d3e3341f6609425c2a8bc7dc3e7789ffd8d35773f3957c02fb6f9eaa",
+    "reports/data/hexrcf-root-quotation/root-quote-desktop-boundary.png": "1966df134f26a5ce72410337256517b780c1351426fb274a7715451efe1dae45",
+    "reports/data/hexrcf-root-quotation/root-quote-narrow-equivalence.png": "b39d115ee5798718d4ceb1d62d28bb0a0b25bc1ee58afbff96878d131e301e95",
+    "reports/data/hexrcf-root-quotation/root-quote-narrow-example.png": "423bda0d60b42fc0e5c69ddcb41da8dbde771881b141848af3633e962a257a70",
+    "reports/data/hexrcf-root-quotation/root-quote-narrow-boundary.png": "2690d50c97c992771c8ebe12d53d3ba1ded5452e9d0e99d122be4f75313acde5",
+    "reports/data/hexrcf-root-quotation/root-quote-browser-3.log": "62140c07a33d113bf686a2dc8685c40e0a432270bfc3664d7c56bf3a5c98c4b5",
+    "reports/data/hexrcf-root-quotation/root-quote-browser-1.log": "3ffd52143a3e391fccf99b40d4e22fe410fe2819aceef0662e3187ee33505df0",
+    "reports/data/hexrcf-root-quotation/root-quote-browser-2.log": "b926580b3c317fdb3f6f31f5e30f8e84f4f9cabeb1b6752ca535dca5ef65a239",
+    "reports/data/hexrcf-root-quotation/initial-overflow-inspection.json": "05521b71824ec48516f1bfe687a0318f7f65d8d238f2cac60ee3acaa518d8911",
+    "reports/data/hexrcf-root-quotation/RootQuoteRender.lean.txt": "c7c65221423d0929f0d49dfe2c5eb6e6578a0494c5a19403a3265f044f570d21",
+    "reports/data/hexrcf-root-quotation/RootQuoteJointAudit.lean.txt": "891b45948ea2ba93286a8e945b64a234a7a0e37a164578556f75b27de035a3f7"
+  },
+  "builds": [
+    {
+      "source_commit": "189d74dce166a3f68019135e56805f73a527e65c",
+      "cwd": "/home/kim/.codex/tasks/hex-10358/root-quote-probes",
+      "argv": [
+        "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+        "env",
+        "LAKE_NO_CACHE=true",
+        "lake",
+        "build",
+        "+RootQuoteJointAudit",
+        "+RootQuoteRender",
+        "HexRCF",
+        "HexRCFRealCoefficients",
+        "+HexRCF.HandlerTests",
+        "+HexRCF.DecisionTests",
+        "+HexRCF.ReifyTests",
+        "+HexRCF.RootReplayConformance",
+        "+HexRCF.RootReplayOrdinaryConformance",
+        "+HexRealClosure.BaseJsonTests",
+        "+KernelReplay.RationalCodecAudit"
+      ],
+      "log": "reports/data/hexrcf-root-quotation/root-quote-final-validation-1.log.gz",
+      "uncompressed_sha256": "7bf249cc47ebce23fcb88734f07749cb0767199ffee862904aff04142c659601"
+    }
+  ],
+  "scope": "Frozen independent cubic reader quotation, its exact subject, 49-definition JSON closure and 158 actual quotation auxiliary theorem bodies; not generic source/provider authentication or full #10358 completion.",
+  "opened_images": [
+    "reports/data/hexrcf-root-quotation/root-quote-desktop-equivalence.png",
+    "reports/data/hexrcf-root-quotation/root-quote-desktop-example.png",
+    "reports/data/hexrcf-root-quotation/root-quote-desktop-boundary.png",
+    "reports/data/hexrcf-root-quotation/root-quote-narrow-equivalence.png",
+    "reports/data/hexrcf-root-quotation/root-quote-narrow-example.png",
+    "reports/data/hexrcf-root-quotation/root-quote-narrow-boundary.png"
+  ],
+  "metadata": {
+    "source_commit": "189d74dce166a3f68019135e56805f73a527e65c",
+    "checks": {
+      "0": {
+        "argv": [
+          "python3",
+          "scripts/check_dag.py"
+        ],
+        "exit_code": 0,
+        "log": "/home/kim/.codex/tasks/hex-10358/root-quote-final-metadata-0.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "script_sha256": "760236cb56f22dd916c677070713146ebd9bd652ba988b3f9427d6a671a4ea10"
+      },
+      "1": {
+        "argv": [
+          "python3",
+          "scripts/check_copyright_headers.py"
+        ],
+        "exit_code": 0,
+        "log": "/home/kim/.codex/tasks/hex-10358/root-quote-final-metadata-1.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "script_sha256": "d7ccfbb8e737c342ff24f7ec875c403a76a678a75f581a8e7dcaf0b654325c84"
+      },
+      "2": {
+        "argv": [
+          "python3",
+          "scripts/check_file_line_counts.py"
+        ],
+        "exit_code": 0,
+        "log": "/home/kim/.codex/tasks/hex-10358/root-quote-final-metadata-2.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "script_sha256": "0c9109c17128a11651f7a5d3784b5b35c859b87e2f58d12c2fbcd5c7562f1229"
+      },
+      "3": {
+        "argv": [
+          "python3",
+          "scripts/ci/check_named_admissions.py"
+        ],
+        "exit_code": 0,
+        "log": "/home/kim/.codex/tasks/hex-10358/root-quote-final-metadata-3.log",
+        "sha256": "e017452d2ee202384ea848419b1392dc2ac3f29fb1e48e0f2f03fa0f1502d8b3",
+        "script_sha256": "f280a4c96b2716a3ac28157cd5d03cde2fad0c45ca88f7f3e61c6e633582719a"
+      },
+      "4": {
+        "argv": [
+          "git",
+          "diff",
+          "--check",
+          "HEAD"
+        ],
+        "exit_code": 0,
+        "log": "/home/kim/.codex/tasks/hex-10358/root-quote-final-metadata-4.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    }
+  },
+  "proof_nodes_per_default_cubic_quote": 191702,
+  "literal_definitions": 49,
+  "quotation_theorem_bodies_with_kernel_diagnostics": 158,
+  "build_artifact_bytes": {
+    ".lake/build/lib/lean/HexRCF/RealCoefficients/RootQuote.olean.server": {
+      "bytes": 9968,
+      "sha256": "03f1683dee2d036d002777a5a59b9c5b1f784405cd1fa2805a856d6af52f398b"
+    },
+    ".lake/build/lib/lean/HexRCF/RealCoefficients/RootQuote.olean.private": {
+      "bytes": 1624648,
+      "sha256": "404e21e1725d7ab0afbec89f3e21b69851fe35e99ddb9f0f1570ce218dbf5d55"
+    },
+    ".lake/build/lib/lean/HexRCF/RealCoefficients/RootQuote.olean.private.hash": {
+      "bytes": 16,
+      "sha256": "ebb6c347db4eaea6ada5f3e85820155f98e9d4f1b6828c171e6164aa7620c930"
+    },
+    ".lake/build/lib/lean/HexRCF/RealCoefficients/RootQuote.olean.server.hash": {
+      "bytes": 16,
+      "sha256": "7542a0c1b60ef4d0359f7203960c0d76145d025bfac9d9106731246d4b8e9bdb"
+    },
+    ".lake/build/lib/lean/HexRCF/RealCoefficients/RootQuote.olean.hash": {
+      "bytes": 16,
+      "sha256": "10c933a475a176edff2c4ba5b0cd024fd573cc69bdcbdf79850a64ee51e0888e"
+    },
+    ".lake/build/lib/lean/HexRCF/RealCoefficients/RootQuote.olean": {
+      "bytes": 727672,
+      "sha256": "7545536e3c67fa92a4f3bfcc8fa1d3c4b976732201d4379742a7f9a4757c2782"
+    },
+    ".lake/build/lib/lean/HexRCF/RealCoefficients/RootQuote.ilean": {
+      "bytes": 78604,
+      "sha256": "7226fff16e63c5500b82fea19745fd93b4766d1901034a9b28a1cad34c86335a"
+    },
+    ".lake/build/lib/lean/HexRCF/RootQuoteData.olean.server.hash": {
+      "bytes": 16,
+      "sha256": "65c888d9ca127260542812ef4528f45a67624eea8e2619407b36e6bb358cc057"
+    },
+    ".lake/build/lib/lean/HexRCF/RootQuoteData.olean.private.hash": {
+      "bytes": 16,
+      "sha256": "6a7f6911ad288c5c327540432e10725eff2b0bd8420d5fdeecca3e5c0386bc78"
+    },
+    ".lake/build/lib/lean/HexRCF/RootQuoteData.olean.server": {
+      "bytes": 17488,
+      "sha256": "b1adcdc3cfc28a8c37c8bc5f2062bee823ccb1604c7431064d40a447dd42b007"
+    },
+    ".lake/build/lib/lean/HexRCF/RootQuoteData.olean.private": {
+      "bytes": 1254312,
+      "sha256": "93973614c3a928e4a91d9144403310156963241228ba7bd6ad4e4e939ff7494d"
+    },
+    ".lake/build/lib/lean/HexRCF/RootQuoteData.olean.hash": {
+      "bytes": 16,
+      "sha256": "21ec188745c4dda963c92c26df36d698e6f7996fb4f6ae0616ec2d96a209ba74"
+    },
+    ".lake/build/lib/lean/HexRCF/RootQuoteData.olean": {
+      "bytes": 129352,
+      "sha256": "2979dc03c28377c57f7ba3fcd2fd79f9f30236a5326c403b66d6fa43abd86ba9"
+    },
+    ".lake/build/lib/lean/HexRCF/RootQuoteData.ilean": {
+      "bytes": 46682,
+      "sha256": "329f9b7e8e716d8e29c3487127df958c89af6325dda4d9113c88ae4f3ba41469"
+    },
+    ".lake/build/lib/lean/HexRCF/RootQuoteCases.olean.private.hash": {
+      "bytes": 16,
+      "sha256": "f40c5032e3b592c5d8ee6266038715c25578d7591c7a539858e61232fdb1bd79"
+    },
+    ".lake/build/lib/lean/HexRCF/RootQuoteCases.olean.server.hash": {
+      "bytes": 16,
+      "sha256": "eddde2ab8e650f482524b9d3ebf100c55e1bdd9572e1c102819e88e08e76daa2"
+    },
+    ".lake/build/lib/lean/HexRCF/RootQuoteCases.olean.server": {
+      "bytes": 2216,
+      "sha256": "044c1d904b169dd4948c155ea150aac6de367fd942cc65d14254589449f6ea9c"
+    },
+    ".lake/build/lib/lean/HexRCF/RootQuoteCases.olean.private": {
+      "bytes": 1056056,
+      "sha256": "e3eb33c08bd1a36ec2be7cf0f99d4fb6c80bba30f49ee4142d801e7260e7f6dd"
+    },
+    ".lake/build/lib/lean/HexRCF/RootQuoteCases.olean.hash": {
+      "bytes": 16,
+      "sha256": "c231c7c7a5457c5dbd31e6ac26e7fe66498942aeba68965097a51a9840cbbb16"
+    },
+    ".lake/build/lib/lean/HexRCF/RootQuoteCases.olean": {
+      "bytes": 177464,
+      "sha256": "8daec18877f5b6a4849768b23436794de12235b1a25078ef55f3dce21a638c5f"
+    },
+    ".lake/build/lib/lean/HexRCF/RootQuoteCases.ilean": {
+      "bytes": 30556,
+      "sha256": "aaa9784876d7efbfecacaab9ca506fda3f1ab0d55c1aef96fca9ffd1e71f961d"
+    },
+    ".lake/build/lib/lean/HexRCF/RootQuoteSource.olean": {
+      "bytes": 15960,
+      "sha256": "bea424b565331b33c191446a1e27b59bcc12996411e5dab84b8c5d3965210954"
+    },
+    ".lake/build/lib/lean/HexRCF/RootQuoteSource.olean.hash": {
+      "bytes": 16,
+      "sha256": "0089d9dd5e7c46a0fc73dd6214ae27a82eb2d907b536db38ca99e1efe6a83dc0"
+    },
+    ".lake/build/lib/lean/HexRCF/RootQuoteSource.olean.private.hash": {
+      "bytes": 16,
+      "sha256": "e75efa5affdee3e3fb6537c145f6f3f5c7e206456987a517d7e9dd31f47e1083"
+    },
+    ".lake/build/lib/lean/HexRCF/RootQuoteSource.olean.server": {
+      "bytes": 1040,
+      "sha256": "092ce3254c123bca1c0a3033879895b4873dfeab320feb28a2eab75a4afbfe22"
+    },
+    ".lake/build/lib/lean/HexRCF/RootQuoteSource.olean.private": {
+      "bytes": 19696,
+      "sha256": "89ce97ffe0471c4ff36a032173b73f3460771962dfbfcd7b4bef99beec9df090"
+    },
+    ".lake/build/lib/lean/HexRCF/RootQuoteSource.olean.server.hash": {
+      "bytes": 16,
+      "sha256": "ee2449f05e7b78a8c8d51839d96b1c52fbdf77019354fa4261cb7877b209c666"
+    },
+    ".lake/build/lib/lean/HexRCF/RootQuoteSource.ilean": {
+      "bytes": 8208,
+      "sha256": "920c6cef0fc9aab411d6ec85f739a5632af9f5a6b9a9a8a3be2345e82f10ffec"
+    },
+    ".lake/build/lib/lean/HexRCF/RootQuoteConformance.olean": {
+      "bytes": 656848,
+      "sha256": "939ca23cfbee4db51968c70b6426a2486ec47af8366a8d207702022d74aa986e"
+    },
+    ".lake/build/lib/lean/HexRCF/RootQuoteConformance.olean.hash": {
+      "bytes": 16,
+      "sha256": "dba88969123d609c2c2194dd88cd6794430a6823b877b552cf84cc813e3877fd"
+    },
+    ".lake/build/lib/lean/HexRCF/RootQuoteConformance.ilean": {
+      "bytes": 15427,
+      "sha256": "baf5e5bf656440346ba5d5a4789ea36e64a2e55c50f0f7099fc335af61cc015f"
+    }
+  },
+  "measurement_limits": "Build observations include dependencies and differing scopes. No matched performance comparison, generic scaling, expanded-work or strict compiled replay claim.",
+  "image_inspection": {
+    "method": "view_image",
+    "opened_all_six": true,
+    "scope": "Changed RootQuote paragraphs and code block only."
+  }
+}

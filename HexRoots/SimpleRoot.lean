@@ -29,7 +29,7 @@ quotient would collapse them. With every disc strictly smaller than `sep(p)/4`,
 two intersecting discs contain points within `sep(p)` of both roots, forcing the
 roots to coincide. That argument is semantic, so this library takes the quotient
 with `Quot` (which needs no equivalence proof) and provides no
-`DecidableEq (SimpleRoot p)`. The Mathlib companion proves that `Intersects`
+`DecidableEq (SimpleRoot p)`. The theory companion proves that `Intersects`
 restricted to `RefinedIsolation` is an equivalence relation whose classes are
 exactly the simple roots, and hence that `sameRoot` decides equality in the
 quotient. Code in the Mathlib-free layer compares roots with `sameRoot`

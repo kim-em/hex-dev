@@ -1,0 +1,372 @@
+{
+  "family": "hard-div",
+  "function": "Hex.RealAlgebraicBench.runHardDiv",
+  "parameter": 0,
+  "cpu": 29,
+  "load": [
+    4.4990234375,
+    5.8720703125,
+    8.4833984375
+  ],
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "raw": "/tmp/issue-10577-perf/hard-div",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/tmp/hex10577-samply",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "record",
+        "--clockid",
+        "mono",
+        "-e",
+        "cycles:u",
+        "-F",
+        "999",
+        "--call-graph",
+        "dwarf",
+        "-o",
+        "/tmp/issue-10577-perf/hard-div/perf.data",
+        "--",
+        "env",
+        "LEAN_BENCH_PROFILE_KERNEL=1",
+        "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/tmp/issue-10577-perf/hard-div/timed-%p.jsonl",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+        "profile",
+        "Hex.RealAlgebraicBench.runHardDiv",
+        "--param",
+        "0",
+        "--target-inner-nanos",
+        "2000000000",
+        "--max-seconds-per-call",
+        "60",
+        "--profiler",
+        "env"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "import",
+        "--save-only",
+        "--no-open",
+        "--unstable-presymbolicate",
+        "-o",
+        "/tmp/issue-10577-perf/hard-div/samply.json.gz",
+        "/tmp/issue-10577-perf/hard-div/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "script",
+        "--ns",
+        "-F",
+        "pid,tid,time,event",
+        "-i",
+        "/tmp/issue-10577-perf/hard-div/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/normalize_perf.py",
+        "--profile",
+        "/tmp/issue-10577-perf/hard-div/samply.json.gz",
+        "--perf-script",
+        "/tmp/issue-10577-perf/hard-div/perf-samples.txt",
+        "--spawn-anchor",
+        "/tmp/issue-10577-perf/hard-div/spawn-anchor.json",
+        "--output",
+        "/tmp/issue-10577-perf/hard-div/normalized.json.gz"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "/tmp/hex10577-samply/scripts/filter_samply.py",
+        "--samply-json",
+        "/tmp/issue-10577-perf/hard-div/normalized.json.gz",
+        "--sidecar",
+        "/tmp/issue-10577-perf/hard-div/timed-1277829.jsonl",
+        "--spawn-anchor",
+        "/tmp/issue-10577-perf/hard-div/spawn-anchor.json",
+        "--out",
+        "/tmp/issue-10577-perf/hard-div/filtered.json.gz",
+        "--diagnostics",
+        "/tmp/issue-10577-perf/hard-div/diagnostics.json",
+        "--label-filter",
+        "kernel"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/elf_symbols.py",
+        "/tmp/issue-10577-perf/hard-div/filtered.json.gz",
+        "--output",
+        "/tmp/issue-10577-perf/hard-div/symbols.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/summarize_profile.py",
+        "/tmp/issue-10577-perf/hard-div/filtered.json.gz",
+        "--symbols",
+        "/tmp/issue-10577-perf/hard-div/symbols.json",
+        "--diagnostics",
+        "/tmp/issue-10577-perf/hard-div/diagnostics.json",
+        "--thread",
+        "hexrealalgebrai",
+        "--top",
+        "20",
+        "--output",
+        "reports/bench-results/prerequisite-readiness-profiles/hard-arithmetic/hard-div.summary.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "executable_sha256": "d9a1f72c4cc6fa592f3ebaeec3d96eb5c41794dedb9828b7e0b2b60a8532808b",
+  "commit": "6d78bf3e1fb1aa23129df83f7888979dd5afeb6d",
+  "dirty": true,
+  "profiler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.2.8",
+  "status": "profiled",
+  "diagnostics": {
+    "schema": 2,
+    "stage": "complete",
+    "confidence": "passed",
+    "low_confidence_reasons": [],
+    "bench_pid": 1277829,
+    "bench_thread_name": "hexrealalgebrai",
+    "bench_thread_tid": "1277832",
+    "regions_total": 33,
+    "total_timed_ms": 1340.593021,
+    "expected_samples_bench_thread": 1339.3,
+    "retained_samples_bench_thread": 1338,
+    "rejected_samples_bench_thread": 215,
+    "off_bench_thread_samples_in_window": 0,
+    "samply_interval_ms": 1.001001,
+    "spawn_anchor_wall_ns": 1790917963740266257,
+    "spawn_anchor_mono_ns": 327955500875608,
+    "sidecar_mono_anchor_ns": 327955880727847,
+    "samply_meta_start_time_ms": 1790917963772.9302,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "calibration_residual_ms": 0.969992995262146,
+    "calibration_max_residual_ms": 5.0,
+    "calibration": {
+      "selected_mode": "relative-to-meta-start-ms",
+      "residual_ms": 0.969992995262146,
+      "raw_max_residual_ms": 0.9722259640693665,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "configured_max_residual_ms": 5.0,
+      "sample_interval_ms": 1.001001,
+      "effective_max_residual_ms": 5.0,
+      "within_residual_limit": true,
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "hit_count": 0,
+          "regions_without_samples": 33,
+          "boundary_residual_trimmed_max_ms": null,
+          "boundary_residual_raw_max_ms": null,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "hit_count": 1338,
+          "regions_without_samples": 0,
+          "boundary_residual_trimmed_max_ms": 0.969992995262146,
+          "boundary_residual_raw_max_ms": 0.9722259640693665,
+          "within_residual_limit": true
+        }
+      }
+    },
+    "minimum_retained_samples": 100,
+    "sensitivity": {
+      "shift_ms": 5.0,
+      "reported_top_function_count": 3,
+      "configured_max_total_variation_distance": 0.1,
+      "sampling_noise_coefficient": 0.6,
+      "minimum_comparison_samples": 100,
+      "maximum_sampling_noise_allowance": 0.5,
+      "verdict": "passed",
+      "leaf_function_distributions_stable": true,
+      "comparisons": {
+        "minus": {
+          "total_variation_distance": 0.0037369207772795223,
+          "leaf_function_support_size": 567,
+          "comparison_samples": 1338,
+          "exchanged_samples": 10,
+          "exchanged_fraction": 0.007473841554559043,
+          "sampling_noise_allowance": 0.047753110356857885,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        },
+        "plus": {
+          "total_variation_distance": 0.003694341170222046,
+          "leaf_function_support_size": 566,
+          "comparison_samples": 1334,
+          "exchanged_samples": 6,
+          "exchanged_fraction": 0.004497751124437781,
+          "sampling_noise_allowance": 0.037067582209361044,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        }
+      },
+      "cases": {
+        "minus": {
+          "shift_ms": -5.0,
+          "retained_samples": 1338,
+          "top_leaf_functions": [
+            {
+              "function": 67,
+              "name": "0x4b0a5d3",
+              "samples": 97
+            },
+            {
+              "function": 38,
+              "name": "0x4b73d51",
+              "samples": 55
+            },
+            {
+              "function": 82,
+              "name": "0xae923",
+              "samples": 37
+            }
+          ]
+        },
+        "nominal": {
+          "shift_ms": 0.0,
+          "retained_samples": 1338,
+          "top_leaf_functions": [
+            {
+              "function": 67,
+              "name": "0x4b0a5d3",
+              "samples": 97
+            },
+            {
+              "function": 38,
+              "name": "0x4b73d51",
+              "samples": 55
+            },
+            {
+              "function": 82,
+              "name": "0xae923",
+              "samples": 37
+            }
+          ]
+        },
+        "plus": {
+          "shift_ms": 5.0,
+          "retained_samples": 1334,
+          "top_leaf_functions": [
+            {
+              "function": 67,
+              "name": "0x4b0a5d3",
+              "samples": 97
+            },
+            {
+              "function": 38,
+              "name": "0x4b73d51",
+              "samples": 55
+            },
+            {
+              "function": 82,
+              "name": "0xae923",
+              "samples": 37
+            }
+          ]
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "0.stdout": "d40df5947dd338826ff79a6a053ccdc7edeaecd28d6667f6a092758534fc7d11",
+    "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stdout": "3a4f78a74cce0d385cd8c09b89fa953186c6367fcb01cc769ff857a2fa007a9e",
+    "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "2.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stdout": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "4.stdout": "1a89ef5bfd8650933a16c3a00d57ae7efdf4c1b72b0081ba5545f5745282a906",
+    "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "spawn-anchor.json": "a8b0450bb556095cace5045eaff849dba7470f95530c9c3ff69500ac82583c84",
+    "perf.data": "a40d7bd45fe930c3caa31495958b0ddf96736ef1716dd9617754e46f23e7d9fb",
+    "timed-1277829.jsonl": "7c7d93dff956380c2f7940741d5796bff4ac421ce0e9729a4788c7dea371fa56",
+    "5.stdout": "7aabcf09d3f322ef6a68291eca7933236881945d655c5b7c4dc27a8e16bcb32a",
+    "5.stderr": "f5af8814831016cec7e8dfdda09b119f48dec5eb22545bc7f6e07f8cf77966b1",
+    "samply.json.gz": "7df392a005f9dd25d1a23156dd79af7ee3e82f4d49c9dd56e63ff9bd51a454bc",
+    "6.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "6.stderr": "5eecc03f5f55d77995f7cfb8c323ac8ca3c4743e4ce54d037b5098911eabdae4",
+    "7.stdout": "cd3d337762c39abeef531a58342620a5bcfc796fd443f353f2bdc7701cfc72ef",
+    "7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "perf-samples.txt": "cd3d337762c39abeef531a58342620a5bcfc796fd443f353f2bdc7701cfc72ef",
+    "normalized.json.gz": "f28da80312f88e879c7761e4ff4200a44e00028d6c44fdd7d2713191fa5f0113",
+    "8.stdout": "0d7283a8b1178c6a65f3028af290cf4bb68c8a86b7ab5a3534f6798145e731dc",
+    "8.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "filtered.json.gz": "06f6034ae7a89c7cac38c2fea431db3224a048b150794e4fe30c37c4dbfe9593",
+    "diagnostics.json": "d347fcf5946bb51e3d1f62a3f22332a09dd147a50b0353b64a3ecae54992441d",
+    "9.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "9.stderr": "2d6f582b72060f6608396f468409d93d1ab390e9a8d64ffcfcbdc9ec3844f097",
+    "symbols.json": "715e7c3423608b76ae6d10e1aadccf8e739cb92a4223818880b61e93d5284029",
+    "10.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "10.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

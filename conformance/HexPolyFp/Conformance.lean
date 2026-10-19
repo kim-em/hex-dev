@@ -12,7 +12,7 @@ import HexPolyFp.SquareFree
 /-!
 Core conformance checks for the `HexPolyFp` Frobenius, modular-composition,
 and square-free decomposition surface, together with the structural power and
-negation that the `hex-poly-fp-mathlib` correspondence transports.
+negation that the `hex-poly-fp-theory` correspondence transports.
 
 Oracle: none
 Mode: always
@@ -272,7 +272,7 @@ private theorem quadModulus_monic : DensePoly.Monic quadModulus := by
 
 /-!
 `linearPow` and `neg` on `FpPoly 5`. Both are advertised on the executable
-side of the `hex-poly-fp-mathlib` correspondence — `linearPow` through
+side of the `hex-poly-fp-theory` correspondence — `linearPow` through
 `linearPow_eq_pow` and `neg` through the `neg` field that layer's `CommRing`
 instance pins to the executable operation — and neither had a check here.
 

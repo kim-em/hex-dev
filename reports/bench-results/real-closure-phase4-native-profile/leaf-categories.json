@@ -1,0 +1,242 @@
+{
+  "scope": "Exclusive whole-process diagnostic only; percentages rounded by perf. No inclusive Hex attribution.",
+  "self_percent_by_category": {
+    "GMP arithmetic": 53.72,
+    "allocation": 30.5,
+    "Lean runtime": 5.5,
+    "Lean rational arithmetic": 1.65
+  },
+  "symbols": [
+    {
+      "symbol": "__gmpn_hgcd2",
+      "self_percent": 14.68,
+      "category": "GMP arithmetic"
+    },
+    {
+      "symbol": "div2",
+      "self_percent": 9.9,
+      "category": "GMP arithmetic"
+    },
+    {
+      "symbol": "malloc",
+      "self_percent": 8.82,
+      "category": "allocation"
+    },
+    {
+      "symbol": "__gmpn_gcd_11_x86_64",
+      "self_percent": 5.81,
+      "category": "GMP arithmetic"
+    },
+    {
+      "symbol": "_int_free_chunk",
+      "self_percent": 5.14,
+      "category": "allocation"
+    },
+    {
+      "symbol": "cfree@GLIBC_2.2.5",
+      "self_percent": 4.59,
+      "category": "allocation"
+    },
+    {
+      "symbol": "realloc",
+      "self_percent": 3.86,
+      "category": "allocation"
+    },
+    {
+      "symbol": "__gmpz_init_set",
+      "self_percent": 2.39,
+      "category": "GMP arithmetic"
+    },
+    {
+      "symbol": "_int_malloc",
+      "self_percent": 2.39,
+      "category": "allocation"
+    },
+    {
+      "symbol": "__gmpn_gcd",
+      "self_percent": 1.84,
+      "category": "GMP arithmetic"
+    },
+    {
+      "symbol": "__gmpz_gcd",
+      "self_percent": 1.65,
+      "category": "GMP arithmetic"
+    },
+    {
+      "symbol": "__gmpn_copyi_x86_64",
+      "self_percent": 1.65,
+      "category": "GMP arithmetic"
+    },
+    {
+      "symbol": "__gmp_default_allocate",
+      "self_percent": 1.47,
+      "category": "allocation"
+    },
+    {
+      "symbol": "__gmpn_gcd_22",
+      "self_percent": 1.29,
+      "category": "GMP arithmetic"
+    },
+    {
+      "symbol": "__gmpn_submul_1_x86_64",
+      "self_percent": 1.28,
+      "category": "GMP arithmetic"
+    },
+    {
+      "symbol": "lean_apply_2",
+      "self_percent": 1.1,
+      "category": "Lean runtime"
+    },
+    {
+      "symbol": "l_Rat_mul",
+      "self_percent": 1.1,
+      "category": "Lean rational arithmetic"
+    },
+    {
+      "symbol": "mi_free",
+      "self_percent": 1.1,
+      "category": "allocation"
+    },
+    {
+      "symbol": "__gmpn_rshift_x86_64",
+      "self_percent": 1.1,
+      "category": "GMP arithmetic"
+    },
+    {
+      "symbol": "lean_dec_ref_cold",
+      "self_percent": 1.1,
+      "category": "Lean runtime"
+    },
+    {
+      "symbol": "__gmpz_add",
+      "self_percent": 1.1,
+      "category": "GMP arithmetic"
+    },
+    {
+      "symbol": "__gmpn_gcd_1",
+      "self_percent": 0.93,
+      "category": "GMP arithmetic"
+    },
+    {
+      "symbol": "lean_alloc_small_object_core",
+      "self_percent": 0.92,
+      "category": "Lean runtime"
+    },
+    {
+      "symbol": "__libc_malloc2",
+      "self_percent": 0.92,
+      "category": "allocation"
+    },
+    {
+      "symbol": "lean_free_object",
+      "self_percent": 0.92,
+      "category": "allocation"
+    },
+    {
+      "symbol": "__gmpn_modexact_1c_odd_x86_64",
+      "self_percent": 0.92,
+      "category": "GMP arithmetic"
+    },
+    {
+      "symbol": "__gmpn_divexact_1_x86_64",
+      "self_percent": 0.92,
+      "category": "GMP arithmetic"
+    },
+    {
+      "symbol": "__gmpn_mul_2",
+      "self_percent": 0.74,
+      "category": "GMP arithmetic"
+    },
+    {
+      "symbol": "__gmpn_lshift_x86_64",
+      "self_percent": 0.74,
+      "category": "GMP arithmetic"
+    },
+    {
+      "symbol": "__gmpz_divexact",
+      "self_percent": 0.74,
+      "category": "GMP arithmetic"
+    },
+    {
+      "symbol": "__gmpn_sbpi1_div_qr",
+      "self_percent": 0.74,
+      "category": "GMP arithmetic"
+    },
+    {
+      "symbol": "__gmpn_mod_1_fat",
+      "self_percent": 0.73,
+      "category": "GMP arithmetic"
+    },
+    {
+      "symbol": "__gmpn_mul_1_x86_64",
+      "self_percent": 0.73,
+      "category": "GMP arithmetic"
+    },
+    {
+      "symbol": "__gmpz_init_set_ui",
+      "self_percent": 0.73,
+      "category": "GMP arithmetic"
+    },
+    {
+      "symbol": "lean_nat_gcd",
+      "self_percent": 0.73,
+      "category": "Lean runtime"
+    },
+    {
+      "symbol": "__gmpn_addmul_1_x86_64",
+      "self_percent": 0.73,
+      "category": "GMP arithmetic"
+    },
+    {
+      "symbol": "__gmp_default_reallocate",
+      "self_percent": 0.73,
+      "category": "allocation"
+    },
+    {
+      "symbol": "__gmpz_mul",
+      "self_percent": 0.73,
+      "category": "GMP arithmetic"
+    },
+    {
+      "symbol": "free@plt",
+      "self_percent": 0.56,
+      "category": "allocation"
+    },
+    {
+      "symbol": "__gmpn_sbpi1_div_q",
+      "self_percent": 0.55,
+      "category": "GMP arithmetic"
+    },
+    {
+      "symbol": "__gmpn_tdiv_qr",
+      "self_percent": 0.55,
+      "category": "GMP arithmetic"
+    },
+    {
+      "symbol": "lean_apply_1",
+      "self_percent": 0.55,
+      "category": "Lean runtime"
+    },
+    {
+      "symbol": "l_Rat_add",
+      "self_percent": 0.55,
+      "category": "Lean rational arithmetic"
+    },
+    {
+      "symbol": "__gmpn_divexact",
+      "self_percent": 0.55,
+      "category": "GMP arithmetic"
+    },
+    {
+      "symbol": "lean::mpz::mpz(unsigned long)",
+      "self_percent": 0.55,
+      "category": "Lean runtime"
+    },
+    {
+      "symbol": "lean_big_int_to_nat",
+      "self_percent": 0.55,
+      "category": "Lean runtime"
+    }
+  ],
+  "unlisted_self_percent": 8.63
+}

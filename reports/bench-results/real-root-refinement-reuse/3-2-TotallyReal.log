@@ -1,0 +1,9 @@
+Hex.RealAlgebraicBench.runTotallyReal2    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=1a1375b, 2026-10-08T17:54:43Z, host=chungus2
+  repeat 0  1.592 ms  (×2^5, total 50.934 ms)
+  median: 1.592 ms    min: 1.592 ms    max: 1.592 ms
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 68_896 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-readiness/totally-real/3-2-TotallyReal.json

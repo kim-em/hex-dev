@@ -36,7 +36,7 @@ def hiddenRep : RefinedIsolation CubeTwo.polynomial := exposedRep
     exact (congrArg Complex.im (Selected.normalized_toComplex
       CubeTwo.polynomial (by rfl) (by decide) (by decide)
       CubeTwo.checked CubeTwo.squarefree exposedRep _)).trans
-      ((HexRootsMathlib.RefinedIsolation.meetsRealAxis_iff exposedRep).mp (by decide)))
+      ((HexRootsTheory.RefinedIsolation.meetsRealAxis_iff exposedRep).mp (by decide)))
 
 @[expose] def hidden : RealAlgebraicNumber :=
   RealAlgebraicNumber.ofAlgebraic hiddenAlgebraic (by
@@ -44,6 +44,6 @@ def hiddenRep : RefinedIsolation CubeTwo.polynomial := exposedRep
     exact (congrArg Complex.im (Selected.normalized_toComplex
       CubeTwo.polynomial (by rfl) (by decide) (by decide)
       CubeTwo.checked CubeTwo.squarefree hiddenRep _)).trans
-      ((HexRootsMathlib.RefinedIsolation.meetsRealAxis_iff hiddenRep).mp (by decide)))
+      ((HexRootsTheory.RefinedIsolation.meetsRealAxis_iff hiddenRep).mp (by decide)))
 
 end Hex.RCF.NormalizedInputs

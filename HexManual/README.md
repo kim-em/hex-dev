@@ -7,10 +7,11 @@ reference chapter lives in `Chapters/`. `HexManual.lean` serves as the table of 
 `{docstring}`, `{ref}`, `#eval`/`leanOutput`, and `#guard` in the
 chapters as they elaborate. It does not produce a website.
 
-To view the manual, render it to static HTML with the `hexmanual`
-executable:
+To view the manual, render it to static HTML by running `Main.lean` in the
+interpreter:
 
-    lake exe hexmanual --output _out
+    lake build HexManual HexManual.Theme
+    lake env lean --run Main.lean --output _out
     python3 -m http.server -d _out/html-multi   # then open localhost:8000
 
 CI publishes the rendered manual to GitHub Pages on every push to `main`

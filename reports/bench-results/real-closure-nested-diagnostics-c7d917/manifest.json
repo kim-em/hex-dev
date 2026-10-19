@@ -1,0 +1,198 @@
+{
+  "source_head": "c7d917ccd3178db41014374244442f5716ed66fd",
+  "source_tag": "issue-10378-nested-diagnostics-source-c7d917",
+  "purpose": "functional and exact operation counts only; no scientific timings",
+  "runs": [
+    {
+      "depth": 2,
+      "steps": 2,
+      "policy": "clean",
+      "returncode": 0,
+      "operational_timeout_seconds": 600,
+      "arguments_basis": "Original parameter inventory and archive filenames; timeout files are empty",
+      "attributed_binary_sha256": "8f58c9c93f50cf92a47d026add8fbb6bad46b654b69e437c1908c08b194318e0",
+      "reconstructed_binary_arguments": [
+        "2",
+        "2",
+        "clean",
+        "trace"
+      ],
+      "binary_basis": "Attributed from build.json; no independent binary digest recorded at each launch"
+    },
+    {
+      "depth": 2,
+      "steps": 2,
+      "policy": "eager",
+      "returncode": 0,
+      "operational_timeout_seconds": 600,
+      "arguments_basis": "Original parameter inventory and archive filenames; timeout files are empty",
+      "attributed_binary_sha256": "8f58c9c93f50cf92a47d026add8fbb6bad46b654b69e437c1908c08b194318e0",
+      "reconstructed_binary_arguments": [
+        "2",
+        "2",
+        "eager",
+        "trace"
+      ],
+      "binary_basis": "Attributed from build.json; no independent binary digest recorded at each launch"
+    },
+    {
+      "depth": 2,
+      "steps": 4,
+      "policy": "clean",
+      "returncode": 0,
+      "operational_timeout_seconds": 600,
+      "arguments_basis": "Original parameter inventory and archive filenames; timeout files are empty",
+      "attributed_binary_sha256": "8f58c9c93f50cf92a47d026add8fbb6bad46b654b69e437c1908c08b194318e0",
+      "reconstructed_binary_arguments": [
+        "2",
+        "4",
+        "clean",
+        "trace"
+      ],
+      "binary_basis": "Attributed from build.json; no independent binary digest recorded at each launch"
+    },
+    {
+      "depth": 2,
+      "steps": 4,
+      "policy": "eager",
+      "returncode": 0,
+      "operational_timeout_seconds": 600,
+      "arguments_basis": "Original parameter inventory and archive filenames; timeout files are empty",
+      "attributed_binary_sha256": "8f58c9c93f50cf92a47d026add8fbb6bad46b654b69e437c1908c08b194318e0",
+      "reconstructed_binary_arguments": [
+        "2",
+        "4",
+        "eager",
+        "trace"
+      ],
+      "binary_basis": "Attributed from build.json; no independent binary digest recorded at each launch"
+    },
+    {
+      "depth": 3,
+      "steps": 1,
+      "policy": "clean",
+      "returncode": 124,
+      "operational_timeout_seconds": 600,
+      "arguments_basis": "Original parameter inventory and archive filenames; timeout files are empty",
+      "attributed_binary_sha256": "8f58c9c93f50cf92a47d026add8fbb6bad46b654b69e437c1908c08b194318e0",
+      "reconstructed_binary_arguments": [
+        "3",
+        "1",
+        "clean",
+        "trace"
+      ],
+      "binary_basis": "Attributed from build.json; no independent binary digest recorded at each launch"
+    },
+    {
+      "depth": 3,
+      "steps": 1,
+      "policy": "eager",
+      "returncode": 0,
+      "operational_timeout_seconds": 600,
+      "arguments_basis": "Original parameter inventory and archive filenames; timeout files are empty",
+      "attributed_binary_sha256": "8f58c9c93f50cf92a47d026add8fbb6bad46b654b69e437c1908c08b194318e0",
+      "reconstructed_binary_arguments": [
+        "3",
+        "1",
+        "eager",
+        "trace"
+      ],
+      "binary_basis": "Attributed from build.json; no independent binary digest recorded at each launch"
+    }
+  ],
+  "files": {
+    "nested-counts-c7d917-d2-m2-clean.jsonl": "5ef5615e13c1b94e839cf725a7d46ecc481a6259329665efca474860d08304a6",
+    "nested-counts-c7d917-d2-m2-clean.trace": "1c72bd39613caa645194076249735d67b038c3c04ce41e63791464fb8ee0015a",
+    "nested-counts-c7d917-d2-m2-eager.jsonl": "260fd8f53f82bb66a06839f2770c97f235cecc9dd8e76397164e4f3c48c89ce4",
+    "nested-counts-c7d917-d2-m2-eager.trace": "5bca8ce79189019a87777b921b14518617d66aadf71027e40fd1a61208c304bd",
+    "nested-counts-c7d917-d2-m4-clean.jsonl": "2f32ed2e2cb9806b2bf968731fac44e754d63f64a8c86b96760231d1953182f1",
+    "nested-counts-c7d917-d2-m4-clean.trace": "f3d0ecfda7362edb6e1caa3d61ddbf5b2aa7d74fa7770000503cf4fac890409d",
+    "nested-counts-c7d917-d2-m4-eager.jsonl": "a0926868a1a246738ce94da5e9f8eab88c13dadb85492f0d74abb9d31bc02147",
+    "nested-counts-c7d917-d2-m4-eager.trace": "8d0f6f78676ef56016b3cbfb298e05ba0a6fcdfecdabef2c58c952faf14655c0",
+    "nested-counts-c7d917-d3-m1-clean.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nested-counts-c7d917-d3-m1-clean.trace": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "nested-counts-c7d917-d3-m1-eager.jsonl": "5760e95f35a9d97ab41d403e7a51e79542c388dcd7b0cc70aae26fd870e1decd",
+    "nested-counts-c7d917-d3-m1-eager.trace": "7f02adda34b1ce7aa661e554e3fbd8200bb0e609ee184291563daeeea0fcb405",
+    "nested-c7d917-d2-m4-oracle-aggregate.json": "c34c1aa7e5a8b884887fc5608dd772f2995d4c0d7d1153967afa4272710d7baf",
+    "nested-c7d917-d3-m1-eager-oracle.json": "a522f0c7e7b1ca2a949678a442d64353f544e90335ba480334925e8ca7836477",
+    "build.json": "69759948d502b5b06ae927433f2e4416409200570ad4b6f0625a9f4dcb8ab477",
+    "d2-m2-oracle.json": "83e519f131853fc1fdc601de5e9e036eca96fa92917eb522f2f079083c8bdb1f",
+    "source-closure.json": "4f6c90c0a9315658cce88b700d0f78665609dfb95c61081e67cf3ba51f274d0d",
+    "checked-d2-m2.json": "c35461fb161cf5e5620ad4749917ca0a8e66be793d60feeb09ed493c506058f8",
+    "checked-d2-m4.json": "bec5854beeae118471d3e237733215260f278fa2dfadd007a88889928149bd95",
+    "checked-d3-m1.json": "218395b702b3369dd7ab6fc189d87474d9ff7df8ef8654324e33c1eaf4d93991",
+    "rebuild-2c2fab.json": "56127074fa7f1908ccd4629314a0ac0892e935dd40e7f3921502153a84e383d5",
+    "rebuild-comparison.json": "d907062b41c017960a745cac1aa348624d6592711ef1f5a5c636c965c5369860",
+    "builder-42e3701e.py": "42e3701e71b30e7c9aac50f6217e4257540a30dd65c799bf6108092c38413daf",
+    "oracle-478fefcc.py": "478fefcc194df40630ed3c9fb17a9d237a20875738e0e82d97905ba0031c228a"
+  },
+  "derived": [
+    {
+      "output": "checked-d2-m2.json",
+      "oracle_commit": "ba4635fabe468d71cb1a713db5515478ecfbb2bf",
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/phase4-oracles-env/bin/python",
+        "scripts/oracle/real_closure_nested_normalization.py",
+        "reports/bench-results/real-closure-nested-diagnostics-c7d917/nested-counts-c7d917-d2-m2-clean.jsonl",
+        "reports/bench-results/real-closure-nested-diagnostics-c7d917/nested-counts-c7d917-d2-m2-eager.jsonl",
+        "--trace",
+        "reports/bench-results/real-closure-nested-diagnostics-c7d917/nested-counts-c7d917-d2-m2-clean.trace",
+        "--trace",
+        "reports/bench-results/real-closure-nested-diagnostics-c7d917/nested-counts-c7d917-d2-m2-eager.trace"
+      ],
+      "inputs": [
+        "nested-counts-c7d917-d2-m2-clean.jsonl",
+        "nested-counts-c7d917-d2-m2-eager.jsonl",
+        "nested-counts-c7d917-d2-m2-clean.trace",
+        "nested-counts-c7d917-d2-m2-eager.trace"
+      ],
+      "oracle_sha256": "478fefcc194df40630ed3c9fb17a9d237a20875738e0e82d97905ba0031c228a",
+      "oracle_file": "oracle-478fefcc.py"
+    },
+    {
+      "output": "checked-d2-m4.json",
+      "oracle_commit": "ba4635fabe468d71cb1a713db5515478ecfbb2bf",
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/phase4-oracles-env/bin/python",
+        "scripts/oracle/real_closure_nested_normalization.py",
+        "reports/bench-results/real-closure-nested-diagnostics-c7d917/nested-counts-c7d917-d2-m4-clean.jsonl",
+        "reports/bench-results/real-closure-nested-diagnostics-c7d917/nested-counts-c7d917-d2-m4-eager.jsonl",
+        "--trace",
+        "reports/bench-results/real-closure-nested-diagnostics-c7d917/nested-counts-c7d917-d2-m4-clean.trace",
+        "--trace",
+        "reports/bench-results/real-closure-nested-diagnostics-c7d917/nested-counts-c7d917-d2-m4-eager.trace"
+      ],
+      "inputs": [
+        "nested-counts-c7d917-d2-m4-clean.jsonl",
+        "nested-counts-c7d917-d2-m4-eager.jsonl",
+        "nested-counts-c7d917-d2-m4-clean.trace",
+        "nested-counts-c7d917-d2-m4-eager.trace"
+      ],
+      "oracle_sha256": "478fefcc194df40630ed3c9fb17a9d237a20875738e0e82d97905ba0031c228a",
+      "oracle_file": "oracle-478fefcc.py"
+    },
+    {
+      "output": "checked-d3-m1.json",
+      "oracle_commit": "ba4635fabe468d71cb1a713db5515478ecfbb2bf",
+      "command": [
+        "/home/kim/.codex/tasks/hex-10378/phase4-oracles-env/bin/python",
+        "scripts/oracle/real_closure_nested_normalization.py",
+        "reports/bench-results/real-closure-nested-diagnostics-c7d917/nested-counts-c7d917-d3-m1-eager.jsonl",
+        "--trace",
+        "reports/bench-results/real-closure-nested-diagnostics-c7d917/nested-counts-c7d917-d3-m1-eager.trace",
+        "--unpaired"
+      ],
+      "inputs": [
+        "nested-counts-c7d917-d3-m1-eager.jsonl",
+        "nested-counts-c7d917-d3-m1-eager.trace"
+      ],
+      "oracle_sha256": "478fefcc194df40630ed3c9fb17a9d237a20875738e0e82d97905ba0031c228a",
+      "oracle_file": "oracle-478fefcc.py"
+    }
+  ],
+  "rebuild_builder": {
+    "file": "builder-42e3701e.py",
+    "sha256": "42e3701e71b30e7c9aac50f6217e4257540a30dd65c799bf6108092c38413daf",
+    "record": "rebuild-2c2fab.json"
+  }
+}

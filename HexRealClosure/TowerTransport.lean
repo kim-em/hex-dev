@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRealClosure.TowerRefinement
+public import HexRealClosure.BaseReconciliation
 
 public section
 
@@ -13,11 +14,18 @@ namespace Hex.RealClosure.Tower
 
 variable {registry : BaseContext.Registry}
 
-/-- A finite derivation of native conversion from identity, a new base
-infinitesimal, a root inclusion, a checked root refinement, and rebuilt later levels.
+/-- A finite derivation of native conversion from identity, checked ordered
+or reconciled base inclusions, a new infinitesimal, a root inclusion, a checked root refinement,
+reuse of a checked existing selected root, and rebuilt later levels.
 This is erased provenance, not a semantic arithmetic law record. -/
 inductive Transport : (source target : Context registry) → (source.Value → target.Value) → Prop
   | identity (context : Context registry) : Transport context context id
+  | base {source target : BaseContext.PackedContext registry}
+      (inclusion : BaseInclusion source target) :
+      Transport (Context.ofBase source) (Context.ofBase target) inclusion.value
+  | reconcileBase {source target : BaseContext.PackedContext registry}
+      (inclusion : BaseReconciliation source target) :
+      Transport (Context.ofBase source) (Context.ofBase target) inclusion.value
   | infinitesimal {K : Type} [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
       (context : BaseContext.Context registry K sign) :
       Transport (Context.base context) (Context.base context.infinitesimal)
@@ -40,23 +48,72 @@ inductive Transport : (source target : Context registry) → (source.Value → t
       Transport (source.adjoin descriptor).context (target.adjoin converted).context
         (fun x => target.ofPoly converted
           (DensePoly.ofCoeffs ((source.polynomial descriptor x).toArray.map value)))
-
+  | reuse {source target : Context registry} {value : source.Value → target.Value}
+      (previous : Transport source target value)
+      (descriptor : SignDet.Descriptor source.Value Signature source.sign source.signature)
+      (converted : SignDet.Descriptor target.Value Signature target.sign target.signature)
+      (binding : converted.raw = source.mapDescriptor target value descriptor)
+      (candidate : target.Value)
+      (selected : converted.raw.constraints.map (fun p => target.sign (p.eval candidate)) =
+        converted.raw.constraintSigns) :
+      Transport (source.adjoin descriptor).context target
+        (fun x => (DensePoly.ofCoeffs
+          ((source.polynomial descriptor x).toArray.map value)).eval candidate)
   | comp {source middle target : Context registry}
       {first : source.Value → middle.Value} {next : middle.Value → target.Value}
       (left : Transport source middle first) (right : Transport middle target next) :
       Transport source target (fun x => next (first x))
 
 /-- An immutable target context and its actual native conversion from a source.
-The erased proof records the native steps used to construct it. -/
+The erased proof records the native steps used to construct it. The transport
+constructors certify the exact source, target and value map; a public record
+constructor cannot supply an unrelated map or omit its native provenance. -/
 structure Conversion (source : Context registry) : Type 1 where
-  private mk ::
   context : Context registry
   value : source.Value → context.Value
   checked : Transport source context value
 
+/-- Package a native conversion with its finite transport derivation. -/
+@[expose] def Conversion.ofTransport {source target : Context registry}
+    (value : source.Value → target.Value) (checked : Transport source target value) :
+    Conversion source := ⟨target, value, checked⟩
+
 /-- Start conversion without changing the context. -/
 def Conversion.identity (source : Context registry) : Conversion source :=
   ⟨source, id, .identity source⟩
+
+/-- Retain the checked native coefficient map across real-key subsequence inclusion
+and ordered infinitesimal transport. -/
+@[expose] def Conversion.base {source target : BaseContext.PackedContext registry}
+    (inclusion : BaseInclusion source target) : Conversion (Context.ofBase source) :=
+  ⟨Context.ofBase target, inclusion.value, .base inclusion⟩
+
+/-- The base conversion keeps the declared target and cached coefficient map. -/
+theorem Conversion.base_spec {source target : BaseContext.PackedContext registry}
+    (inclusion : BaseInclusion source target) :
+    (Conversion.base inclusion).context = Context.ofBase target ∧
+      HEq (Conversion.base inclusion).value inclusion.value := ⟨rfl, HEq.rfl⟩
+
+/-- Retain the checked native map from staged provider-key reconciliation. -/
+@[expose] def Conversion.reconcileBase {source target : BaseContext.PackedContext registry}
+    (inclusion : BaseReconciliation source target) : Conversion (Context.ofBase source) :=
+  ⟨Context.ofBase target, inclusion.value, .reconcileBase inclusion⟩
+
+/-- Reconciled conversion retains its declared target and cached native map. -/
+theorem Conversion.reconcileBase_spec {source target : BaseContext.PackedContext registry}
+    (inclusion : BaseReconciliation source target) :
+    (Conversion.reconcileBase inclusion).context = Context.ofBase target ∧
+      HEq (Conversion.reconcileBase inclusion).value inclusion.value := ⟨rfl, HEq.rfl⟩
+
+/-- Reconciliation packages an available ordered map as the same complete
+conversion. Erased provenance does not change its cached runtime data. -/
+theorem Conversion.reconcileBase_ordered {source target : BaseContext.PackedContext registry}
+    (inclusion : BaseInclusion source target) :
+    Conversion.reconcileBase (BaseReconciliation.ofOrdered inclusion) = Conversion.base inclusion := by
+  unfold Conversion.reconcileBase Conversion.base
+  congr 1
+  funext a
+  exact BaseReconciliation.ordered_value inclusion a
 
 /-- Include a predecessor in one actual cached root extension. This records
 the native coefficient embedding for subsequent common-context transport. -/
@@ -98,6 +155,22 @@ theorem Conversion.infinitesimal_spec {K : Type} [Lean.Grind.Field K] [Decidable
         (BaseContext.Element.embed : (Context.base context).Value →
           (Context.base context.infinitesimal).Value) :=
   ⟨rfl, HEq.rfl⟩
+
+private theorem Conversion.infinitesimal_value_proof
+    {K : Type} [Lean.Grind.Field K] [DecidableEq K]
+    {sign : K → Int} (context : BaseContext.Context registry K sign)
+    (a : (Context.base context).Value) :
+    _root_.cast (congrArg Context.Value (Conversion.infinitesimal_spec context).1)
+      ((Conversion.infinitesimal context).value a) = BaseContext.Element.embed a := rfl
+
+/-- The checked infinitesimal conversion is the native constant embedding
+after aligning its returned context with the enlarged base. -/
+theorem Conversion.infinitesimal_value {K : Type} [Lean.Grind.Field K] [DecidableEq K]
+    {sign : K → Int} (context : BaseContext.Context registry K sign)
+    (a : (Context.base context).Value) :
+    _root_.cast (congrArg Context.Value (Conversion.infinitesimal_spec context).1)
+      ((Conversion.infinitesimal context).value a) = BaseContext.Element.embed a :=
+  Conversion.infinitesimal_value_proof context a
 
 /-- Compose two actual native conversions, retaining both packing closures. -/
 def Conversion.comp {source : Context registry} (first : Conversion source)
@@ -430,6 +503,19 @@ structure Rebuilt {source : Context registry} (initial : Conversion source)
   includeValue : initial.context.Value → result.context.Value
   include_eq : ∀ a, includeValue a =
     _root_.cast (congrArg Context.Value context_eq) (suffix.embed a)
+  includeChecked : Transport initial.context result.context includeValue
+
+/-- The cached inclusion of the entire initial context, with the native
+construction steps retained as erased provenance. -/
+def Rebuilt.input {source : Context registry} {initial : Conversion source}
+    {original : Suffix source} (rebuilt : Rebuilt initial original) :
+    Conversion initial.context :=
+  ⟨rebuilt.result.context, rebuilt.includeValue, rebuilt.includeChecked⟩
+
+theorem Rebuilt.input_spec {source : Context registry} {initial : Conversion source}
+    {original : Suffix source} (rebuilt : Rebuilt initial original) :
+    rebuilt.input.context = rebuilt.result.context ∧
+      HEq rebuilt.input.value rebuilt.includeValue := ⟨rfl, HEq.rfl⟩
 
 /-- A rebuilt nonempty suffix starts with a validated converted root. -/
 theorem Rebuilt.root_shape {source : Context registry} {initial : Conversion source}
@@ -440,7 +526,7 @@ theorem Rebuilt.root_shape {source : Context registry} {initial : Conversion sou
         initial.context.sign initial.context.signature,
       ∃ tail : Suffix (initial.context.adjoin converted).context,
         rebuilt.suffix = .root converted tail := by
-  rcases rebuilt with ⟨result, suffix, context_eq, checked, _, _⟩
+  rcases rebuilt with ⟨result, suffix, context_eq, checked, _, _, _⟩
   cases checked with
   | root _ _ _ converted h tail =>
     exact ⟨converted, _, rfl⟩
@@ -450,7 +536,7 @@ suffix supplies checked executable inputs for another refinement. -/
 def Conversion.rebuild? {source : Context registry} (conversion : Conversion source)
     (suffix : Suffix source) : Option (Rebuilt conversion suffix) :=
   match suffix with
-  | .nil => some ⟨conversion, .nil, rfl, .nil conversion, id, fun _ => rfl⟩
+  | .nil => some ⟨conversion, .nil, rfl, .nil conversion, id, fun _ => rfl, .identity _⟩
   | .root descriptor rest =>
     match h : SignDet.Descriptor.validate conversion.context.sign conversion.context.signature
         (source.mapDescriptor conversion.context conversion.value descriptor) with
@@ -469,7 +555,8 @@ def Conversion.rebuild? {source : Context registry} (conversion : Conversion sou
           fun a => rebuilt.includeValue (child.embed a), by
             intro a
             cases same
-            exact rebuilt.include_eq (child.embed a)⟩
+            exact rebuilt.include_eq (child.embed a),
+          .comp (.inclusion conversion.context converted child rfl) rebuilt.includeChecked⟩
 
 /-- Retaining rebuilt descriptors does not change the final native conversion
 returned by the existing suffix traversal. -/

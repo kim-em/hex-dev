@@ -1,0 +1,372 @@
+{
+  "family": "sturm-integer-1024",
+  "function": "Hex.SturmBench.runInteger",
+  "parameter": 1024,
+  "cpu": 15,
+  "load": [
+    18.96337890625,
+    13.19140625,
+    10.751953125
+  ],
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "raw": "/tmp/issue-10577-perf/sturm-integer-1024",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/tmp/hex10577-samply",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "record",
+        "--clockid",
+        "mono",
+        "-e",
+        "cycles:u",
+        "-F",
+        "999",
+        "--call-graph",
+        "dwarf",
+        "-o",
+        "/tmp/issue-10577-perf/sturm-integer-1024/perf.data",
+        "--",
+        "env",
+        "LEAN_BENCH_PROFILE_KERNEL=1",
+        "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/tmp/issue-10577-perf/sturm-integer-1024/timed-%p.jsonl",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "profile",
+        "Hex.SturmBench.runInteger",
+        "--param",
+        "1024",
+        "--target-inner-nanos",
+        "2000000000",
+        "--max-seconds-per-call",
+        "60",
+        "--profiler",
+        "env"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "import",
+        "--save-only",
+        "--no-open",
+        "--unstable-presymbolicate",
+        "-o",
+        "/tmp/issue-10577-perf/sturm-integer-1024/samply.json.gz",
+        "/tmp/issue-10577-perf/sturm-integer-1024/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "script",
+        "--ns",
+        "-F",
+        "pid,tid,time,event",
+        "-i",
+        "/tmp/issue-10577-perf/sturm-integer-1024/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/normalize_perf.py",
+        "--profile",
+        "/tmp/issue-10577-perf/sturm-integer-1024/samply.json.gz",
+        "--perf-script",
+        "/tmp/issue-10577-perf/sturm-integer-1024/perf-samples.txt",
+        "--spawn-anchor",
+        "/tmp/issue-10577-perf/sturm-integer-1024/spawn-anchor.json",
+        "--output",
+        "/tmp/issue-10577-perf/sturm-integer-1024/normalized.json.gz"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "/tmp/hex10577-samply/scripts/filter_samply.py",
+        "--samply-json",
+        "/tmp/issue-10577-perf/sturm-integer-1024/normalized.json.gz",
+        "--sidecar",
+        "/tmp/issue-10577-perf/sturm-integer-1024/timed-1343411.jsonl",
+        "--spawn-anchor",
+        "/tmp/issue-10577-perf/sturm-integer-1024/spawn-anchor.json",
+        "--out",
+        "/tmp/issue-10577-perf/sturm-integer-1024/filtered.json.gz",
+        "--diagnostics",
+        "/tmp/issue-10577-perf/sturm-integer-1024/diagnostics.json",
+        "--label-filter",
+        "kernel"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/elf_symbols.py",
+        "/tmp/issue-10577-perf/sturm-integer-1024/filtered.json.gz",
+        "--output",
+        "/tmp/issue-10577-perf/sturm-integer-1024/symbols.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/summarize_profile.py",
+        "/tmp/issue-10577-perf/sturm-integer-1024/filtered.json.gz",
+        "--symbols",
+        "/tmp/issue-10577-perf/sturm-integer-1024/symbols.json",
+        "--diagnostics",
+        "/tmp/issue-10577-perf/sturm-integer-1024/diagnostics.json",
+        "--thread",
+        "hexsturm_bench",
+        "--top",
+        "20",
+        "--output",
+        "reports/bench-results/prerequisite-readiness-profiles/growing-operands/sturm-integer-1024.summary.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "executable_sha256": "2582ee10a5f694f04001b0aff3919a35ce90c970d8f2219e98a96c003b233f6a",
+  "commit": "6d78bf3e1fb1aa23129df83f7888979dd5afeb6d",
+  "dirty": true,
+  "profiler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.2.8",
+  "status": "profiled",
+  "diagnostics": {
+    "schema": 2,
+    "stage": "complete",
+    "confidence": "passed",
+    "low_confidence_reasons": [],
+    "bench_pid": 1343411,
+    "bench_thread_name": "hexsturm_bench",
+    "bench_thread_tid": "1343414",
+    "regions_total": 3,
+    "total_timed_ms": 2755.901272,
+    "expected_samples_bench_thread": 2753.1,
+    "retained_samples_bench_thread": 2751,
+    "rejected_samples_bench_thread": 1161,
+    "off_bench_thread_samples_in_window": 0,
+    "samply_interval_ms": 1.001001,
+    "spawn_anchor_wall_ns": 1790918297707334299,
+    "spawn_anchor_mono_ns": 328289467943720,
+    "sidecar_mono_anchor_ns": 328290673467122,
+    "samply_meta_start_time_ms": 1790918297734.6826,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "calibration_residual_ms": 0.5112890005111694,
+    "calibration_max_residual_ms": 5.0,
+    "calibration": {
+      "selected_mode": "relative-to-meta-start-ms",
+      "residual_ms": 0.5112890005111694,
+      "raw_max_residual_ms": 0.5420179963111877,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "configured_max_residual_ms": 5.0,
+      "sample_interval_ms": 1.001001,
+      "effective_max_residual_ms": 5.0,
+      "within_residual_limit": true,
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "hit_count": 0,
+          "regions_without_samples": 3,
+          "boundary_residual_trimmed_max_ms": null,
+          "boundary_residual_raw_max_ms": null,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "hit_count": 2751,
+          "regions_without_samples": 0,
+          "boundary_residual_trimmed_max_ms": 0.5112890005111694,
+          "boundary_residual_raw_max_ms": 0.5420179963111877,
+          "within_residual_limit": true
+        }
+      }
+    },
+    "minimum_retained_samples": 100,
+    "sensitivity": {
+      "shift_ms": 5.0,
+      "reported_top_function_count": 3,
+      "configured_max_total_variation_distance": 0.1,
+      "sampling_noise_coefficient": 0.6,
+      "minimum_comparison_samples": 100,
+      "maximum_sampling_noise_allowance": 0.5,
+      "verdict": "passed",
+      "leaf_function_distributions_stable": true,
+      "comparisons": {
+        "minus": {
+          "total_variation_distance": 0.0017912164171706144,
+          "leaf_function_support_size": 639,
+          "comparison_samples": 2750,
+          "exchanged_samples": 9,
+          "exchanged_fraction": 0.0032727272727272726,
+          "sampling_noise_allowance": 0.023399427837887316,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        },
+        "plus": {
+          "total_variation_distance": 0.0017894980337728457,
+          "leaf_function_support_size": 637,
+          "comparison_samples": 2750,
+          "exchanged_samples": 9,
+          "exchanged_fraction": 0.0032727272727272726,
+          "sampling_noise_allowance": 0.02336278031682512,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        }
+      },
+      "cases": {
+        "minus": {
+          "shift_ms": -5.0,
+          "retained_samples": 2750,
+          "top_leaf_functions": [
+            {
+              "function": 53,
+              "name": "0xaf431",
+              "samples": 164
+            },
+            {
+              "function": 100,
+              "name": "0xabe6c",
+              "samples": 134
+            },
+            {
+              "function": 93,
+              "name": "0xad8e8",
+              "samples": 126
+            }
+          ]
+        },
+        "nominal": {
+          "shift_ms": 0.0,
+          "retained_samples": 2751,
+          "top_leaf_functions": [
+            {
+              "function": 53,
+              "name": "0xaf431",
+              "samples": 164
+            },
+            {
+              "function": 100,
+              "name": "0xabe6c",
+              "samples": 138
+            },
+            {
+              "function": 93,
+              "name": "0xad8e8",
+              "samples": 126
+            }
+          ]
+        },
+        "plus": {
+          "shift_ms": 5.0,
+          "retained_samples": 2750,
+          "top_leaf_functions": [
+            {
+              "function": 53,
+              "name": "0xaf431",
+              "samples": 163
+            },
+            {
+              "function": 100,
+              "name": "0xabe6c",
+              "samples": 139
+            },
+            {
+              "function": 93,
+              "name": "0xad8e8",
+              "samples": 126
+            }
+          ]
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "0.stdout": "d40df5947dd338826ff79a6a053ccdc7edeaecd28d6667f6a092758534fc7d11",
+    "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stdout": "0df97c48d73fcb60d59b7b814093f47711de30dc438c86fd5377838306818975",
+    "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "2.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stdout": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "4.stdout": "1a89ef5bfd8650933a16c3a00d57ae7efdf4c1b72b0081ba5545f5745282a906",
+    "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "spawn-anchor.json": "58847e7f8026879f549444a6f40c52bbeab3d32b77e2a01112e7888f43b5a05b",
+    "perf.data": "9826514014f87696924eaa560dfcecaf19250b0e0b944c496fcf5d3392ace562",
+    "timed-1343411.jsonl": "08d6aa991c9e76a256be2343c9539827f773a82961c5dd3b013617b77b5fbba3",
+    "5.stdout": "179ae34bffa2a5003a9c1b47a5b94f81c87ac0a254a4d2c04bdfeedc64dfcf42",
+    "5.stderr": "5fe0aa186dea8f57d2408690c464cd2898d031e9a659ab3a4f4d8b1aedbffc1d",
+    "samply.json.gz": "111026abb21921799c44cc12eda4719f9d30c8a77db7f149b2f2756a4966438e",
+    "6.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "6.stderr": "5eecc03f5f55d77995f7cfb8c323ac8ca3c4743e4ce54d037b5098911eabdae4",
+    "7.stdout": "117a9df27cc5eb3e0a6f2e54f6d51e135e47219c92c0cf1534d55747993fa2bb",
+    "7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "perf-samples.txt": "117a9df27cc5eb3e0a6f2e54f6d51e135e47219c92c0cf1534d55747993fa2bb",
+    "normalized.json.gz": "702e62924bf2633eb17d369250ee467b9b4a50dc60438916c40d5f20fb44066a",
+    "8.stdout": "544d45f510db5b7bd806afb44dec2673fea8cce7d207411433b2ee9fa9bb4a95",
+    "8.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "filtered.json.gz": "a1a0adaa8b92a6cd2679837bdfaa75181c230ad348700fe6af21c3240657884c",
+    "diagnostics.json": "7922e35494aa2656478b0990b2ee7f4a1a750a232b705ef05ee16b1bc7b10f38",
+    "9.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "9.stderr": "f5240facec9f6c22a3ddf8dc2865e02d90ed64dfd9d9637a8fc6e8fb40bf5823",
+    "symbols.json": "cb011b7b72f9d76c951d1524de187d04ca3e87c657186cc51e64ee4c526dadb1",
+    "10.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "10.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

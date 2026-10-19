@@ -1,0 +1,38 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+module
+public import HexRCF.RealCoefficients.SourceSelection
+public import HexRCF.NativeSelectionLiterals
+public import HexRealClosure.RootReplay
+public meta import HexRCF.RealCoefficients.RootQuote
+public section
+open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
+namespace SourceSelectionProbe
+@[expose] def reader := Algebraic.RootReplay.readDescriptor ValueCodec.rat ValueCodec.nat
+  Hex.Sturm.orderSign 7 Hex.RCF.RealCoefficients.NativeSelectionLiterals.subject
+    Hex.RCF.RealCoefficients.NativeSelectionLiterals.graph
+set_option maxHeartbeats 12000000
+set_option maxRecDepth 32768
+run_meta do
+  withExporting (isExporting := false) do
+    let quoted ← match ← RootQuote.quote (mkConst ``reader) with
+      | .ok result => pure result
+      | .error error => throwError "public rational-root probe: {Hex.RealFormula.Reify.Error.toMessageData error}"
+    logInfo m!"public rational-root proofNodes={quoted.usage.proofNodes}"
+    withExporting (isExporting := true) do
+      let declaration := Declaration.defnDecl {
+        name := `SourceSelectionProbe.root,
+        levelParams := [],type := ← inferType quoted.value,value := quoted.value,
+        hints := .regular 0,safety := .safe}
+      addDecl declaration (forceExpose := true)
+      compileDecl declaration (logErrors := true)
+      let statement ← mkEq (← mkAppM ``Except.toOption #[mkConst ``reader])
+        (← mkAppM ``Option.some #[mkConst `SourceSelectionProbe.root])
+      let proof := mkExpectedPropHint quoted.proof statement
+      addDecl (.thmDecl {
+        name := `SourceSelectionProbe.reader_eq,levelParams := [],
+        type := statement,value := proof})
+end SourceSelectionProbe

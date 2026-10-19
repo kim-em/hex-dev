@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 import VersoManual
 
--- Released libraries (dependency order).
+-- Library reference chapters; the released split and inclusion order are below.
 import HexManual.Chapters.HexBasic
 import HexManual.Chapters.HexArith
 import HexManual.Chapters.HexPrimality
@@ -22,6 +22,7 @@ import HexManual.Chapters.HexRoots
 import HexManual.Chapters.HexRealRoots
 import HexManual.Chapters.HexMatrix
 import HexManual.Chapters.HexRowReduce
+import HexManual.Chapters.HexPosDef
 import HexManual.Chapters.HexBerlekamp
 import HexManual.Chapters.HexGF2
 import HexManual.Chapters.HexGFqField
@@ -38,13 +39,16 @@ import HexManual.Chapters.HexRCF
 import HexManual.Chapters.HexResultant
 import HexManual.Chapters.HexNumberField
 import HexManual.Chapters.HexNumberFieldTower
--- Unreleased libraries (dependency order).
 import HexManual.Chapters.HexRealAlgebraic
 import HexManual.Chapters.HexTruncatedSeries
 import HexManual.Chapters.HexReflect
 import HexManual.Chapters.HexRealFormula
 import HexManual.Chapters.HexPolyFast
 import HexManual.Chapters.HexRationalFn
+import HexManual.Chapters.HexOrderedFn
+import HexManual.Chapters.HexSturm
+import HexManual.Chapters.HexSignDet
+import HexManual.Chapters.HexRealClosure
 import HexManual.Chapters.HexLatticeEnum
 import HexManual.Chapters.HexIntFactor
 import HexManual.Chapters.HexModular
@@ -65,6 +69,7 @@ import HexManual.Tutorials.AESModulus
 import HexManual.Tutorials.PrimeSplitting
 import HexManual.Tutorials.Coppersmith
 import HexManual.Tutorials.FieldPrimes
+import HexManual.Tutorials.RubiksCube
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -90,17 +95,23 @@ shortTitle := "hex"
 
 `hex` is executable computer algebra for Lean 4: finite and number fields,
 polynomial factorization, root isolation, and lattice reduction. The
-computational core is Mathlib-free; Mathlib companions state correspondence
+computational core is Mathlib-free; theory companions state correspondence
 contracts and, for mature libraries, supply their proofs.
 
 {include 0 HexManual.Chapters.HexBasic}
 
+{include 0 HexManual.Chapters.HexTruncatedSeries}
+
 {include 0 HexManual.Chapters.HexArith}
+
+{include 0 HexManual.Chapters.HexModular}
 
 {include 0 HexManual.Chapters.HexPrimality}
 {include 0 HexManual.Chapters.HexECPP}
 
 {include 0 HexManual.Chapters.HexPoly}
+
+{include 0 HexManual.Chapters.HexPolyFast}
 
 {include 0 HexManual.Chapters.HexMvPoly}
 
@@ -181,6 +192,8 @@ linked conformance targets.
 
 {include 2 HexManual.Tutorials.FieldPrimes}
 
+{include 2 HexManual.Tutorials.RubiksCube}
+
 # Draft sections for unreleased libraries
 %%%
 tag := "unreleased"
@@ -191,23 +204,27 @@ These libraries are still incubating in the
 split out for release yet, so their APIs may still change. They are grouped
 here to keep the reference chapters above focused on the released libraries.
 
-{include 2 HexManual.Chapters.HexRealAlgebraic}
+{include 2 HexManual.Chapters.HexPosDef}
 
-{include 2 HexManual.Chapters.HexTruncatedSeries}
+{include 2 HexManual.Chapters.HexRealAlgebraic}
 
 {include 2 HexManual.Chapters.HexReflect}
 
 {include 2 HexManual.Chapters.HexRealFormula}
 
-{include 2 HexManual.Chapters.HexPolyFast}
-
 {include 2 HexManual.Chapters.HexRationalFn}
+
+{include 2 HexManual.Chapters.HexOrderedFn}
+
+{include 2 HexManual.Chapters.HexSturm}
+
+{include 2 HexManual.Chapters.HexSignDet}
+
+{include 2 HexManual.Chapters.HexRealClosure}
 
 {include 2 HexManual.Chapters.HexLatticeEnum}
 
 {include 2 HexManual.Chapters.HexIntFactor}
-
-{include 2 HexManual.Chapters.HexModular}
 
 {include 2 HexManual.Chapters.HexCharPoly}
 

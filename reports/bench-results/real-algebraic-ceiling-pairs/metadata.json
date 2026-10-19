@@ -1,0 +1,163 @@
+{
+  "cpu": 89,
+  "host": "chungus2",
+  "load_start": [
+    56.2734375,
+    27.83203125,
+    16.81982421875
+  ],
+  "head": "6d78bf3e1fb1aa23129df83f7888979dd5afeb6d",
+  "commands": [
+    [
+      "/tmp/issue-10577-before-ceil",
+      "run",
+      "Hex.RealAlgebraicBench.runRounding",
+      "--repeats",
+      "1",
+      "--max-seconds-per-call",
+      "15",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-ceiling-pairs/0-before.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runRounding",
+      "--repeats",
+      "1",
+      "--max-seconds-per-call",
+      "15",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-ceiling-pairs/0-after.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runRounding",
+      "--repeats",
+      "1",
+      "--max-seconds-per-call",
+      "15",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-ceiling-pairs/1-after.json"
+    ],
+    [
+      "/tmp/issue-10577-before-ceil",
+      "run",
+      "Hex.RealAlgebraicBench.runRounding",
+      "--repeats",
+      "1",
+      "--max-seconds-per-call",
+      "15",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-ceiling-pairs/1-before.json"
+    ],
+    [
+      "/tmp/issue-10577-before-ceil",
+      "run",
+      "Hex.RealAlgebraicBench.runRounding",
+      "--repeats",
+      "1",
+      "--max-seconds-per-call",
+      "15",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-ceiling-pairs/2-before.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runRounding",
+      "--repeats",
+      "1",
+      "--max-seconds-per-call",
+      "15",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-ceiling-pairs/2-after.json"
+    ],
+    [
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+      "run",
+      "Hex.RealAlgebraicBench.runRounding",
+      "--repeats",
+      "1",
+      "--max-seconds-per-call",
+      "15",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-ceiling-pairs/3-after.json"
+    ],
+    [
+      "/tmp/issue-10577-before-ceil",
+      "run",
+      "Hex.RealAlgebraicBench.runRounding",
+      "--repeats",
+      "1",
+      "--max-seconds-per-call",
+      "15",
+      "--export-file",
+      "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-ceiling-pairs/3-before.json"
+    ]
+  ],
+  "binaries": {
+    "before": "90b969329635445407edc25bcda23e48e914436fb47c6a1b18fef67e12955740",
+    "after": "2023e41773a09095161f803ee60d43c10357cfb7a358fc30ee9eaf37d3dd2827"
+  },
+  "expected_result_hash": "0x89104a575971b244",
+  "fixture": "sqrt(2), and 1 + sqrt(2)/2^50, floor/ceil and rational recognition; input construction outside timed region",
+  "operational_cap_seconds": 15,
+  "rows": [
+    {
+      "trial": 0,
+      "arm": "before",
+      "per_call_nanos": 589122498,
+      "hash": "0x89104a575971b244"
+    },
+    {
+      "trial": 0,
+      "arm": "after",
+      "per_call_nanos": 15205,
+      "hash": "0x89104a575971b244"
+    },
+    {
+      "trial": 1,
+      "arm": "after",
+      "per_call_nanos": 14026,
+      "hash": "0x89104a575971b244"
+    },
+    {
+      "trial": 1,
+      "arm": "before",
+      "per_call_nanos": 466634013,
+      "hash": "0x89104a575971b244"
+    },
+    {
+      "trial": 2,
+      "arm": "before",
+      "per_call_nanos": 470114173,
+      "hash": "0x89104a575971b244"
+    },
+    {
+      "trial": 2,
+      "arm": "after",
+      "per_call_nanos": 9650,
+      "hash": "0x89104a575971b244"
+    },
+    {
+      "trial": 3,
+      "arm": "after",
+      "per_call_nanos": 9650,
+      "hash": "0x89104a575971b244"
+    },
+    {
+      "trial": 3,
+      "arm": "before",
+      "per_call_nanos": 408169117,
+      "hash": "0x89104a575971b244"
+    }
+  ],
+  "load_end": [
+    64.58251953125,
+    33.5439453125,
+    19.16650390625
+  ],
+  "binaries_unchanged": true
+}

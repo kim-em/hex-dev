@@ -1,0 +1,9 @@
+{
+  "medianNanos": {
+    "legacy": 110044377189.0,
+    "interval": 86251696049.5
+  },
+  "legacyOverInterval": 1.2758517481887584,
+  "completedSamples": 12,
+  "reruns": 0
+}

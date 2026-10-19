@@ -1,0 +1,9 @@
+Hex.SturmExternalBench.runNativeNegative    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=bc94cd3-dirty, 2026-10-03T17:37:20Z, host=chungus2
+  repeat 0  128.163 µs  (×2^4, total 2.051 ms)
+  median: 128.163 µs    min: 128.163 µs    max: 128.163 µs
+  hash: all repeats agree
+  observed hash: 0x99a2f57b9930f69a
+  expected hash: matches
+  peak RSS: 67_636 kB (across 1 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-comparisons/Negative-Z3-0-Native.json

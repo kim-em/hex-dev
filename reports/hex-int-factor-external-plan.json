@@ -1,0 +1,69 @@
+{
+  "seed": 1729,
+  "native": {
+    "factorFuel": [
+      4,
+      1
+    ],
+    "primeFuel": 8,
+    "rhoRestarts": 2,
+    "rhoSteps": 65536,
+    "squfof": "off",
+    "stage2": false
+  },
+  "completion": {
+    "maxBits": 256,
+    "maxDepth": 8,
+    "maxAttempts": 128,
+    "factorFuel": 16,
+    "primeFuel": 8,
+    "rhoRestarts": 2,
+    "rhoSteps": 65536,
+    "smoothBounds": [
+      64,
+      512,
+      4096
+    ],
+    "smoothBases": [
+      2,
+      3
+    ],
+    "witnessBases": [
+      2,
+      3,
+      5,
+      7,
+      11,
+      13,
+      17
+    ],
+    "randomWitnesses": 8,
+    "maxFactors": 32,
+    "maxSubsets": 256,
+    "maxSieveBound": 64,
+    "retry": {
+      "ecmB1": 128,
+      "ecmB2": 1024,
+      "curves": 2,
+      "sharedAttempts": true
+    }
+  },
+  "subjects": [
+    "1263407822267091861725148110322209",
+    "2136386824197929408955547135303871",
+    "42535295865117307778430344311653531707",
+    "53739425505922110098241478198196257576470600960682015825098539243996639",
+    "5865086737153646739775266298177935466733017070941921214531039",
+    "57896044618658097711785492504343953926634992332820282019728792003956564819949"
+  ],
+  "exhaustion_control": {
+    "subject": "1000036000099",
+    "maxAttempts": 0
+  },
+  "process": {
+    "timeoutMs": 30000,
+    "stdoutBytes": 16448,
+    "stderrBytes": 4096,
+    "gpThreads": 1
+  }
+}

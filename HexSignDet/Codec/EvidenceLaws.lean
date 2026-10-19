@@ -26,6 +26,7 @@ theorem read_remainder (value : ValueCodec E) (h : value.Lawful) (s : RemainderS
   simp [readRemainder, remainder, tuple, Json.getArr_arr, bind, Except.bind, pure,
     Except.pure, hv, read_poly value h]
 
+/-- A lawful coefficient codec reconstructs both literal terminal fields. -/
 theorem read_terminal (value : ValueCodec E) (h : value.Lawful) (t : E × DensePoly E) :
     readTerminal value (terminal value t) = .ok t := by
   have hv := h
@@ -33,6 +34,7 @@ theorem read_terminal (value : ValueCodec E) (h : value.Lawful) (t : E × DenseP
   simp [readTerminal, terminal, tuple, Json.getArr_arr, bind, Except.bind, pure,
     Except.pure, hv, read_poly value h]
 
+/-- A lawful coefficient codec reconstructs the whole chain and every supplied witness. -/
 theorem read_chain (value : ValueCodec E) (h : value.Lawful) (c : SignedRemainderChain E) :
     readChain value (chain value c) = .ok c := by
   simp [readChain, chain, tuple, Json.getArr_arr, bind, Except.bind, pure, Except.pure,
@@ -59,6 +61,7 @@ theorem read_step (value : ValueCodec E) (h : value.Lawful)
   simp [readReductionStep, reductionStep, tuple, Json.getArr_arr, bind, Except.bind,
     pure, Except.pure, index, bound, read_poly value h, read_remainder value h]
 
+/-- Every supplied reduction roundtrips under exactly its actual factor-index bounds. -/
 theorem read_reduction (value : ValueCodec E) (h : value.Lawful)
     (r : Reduction E) (bound : ∀ s ∈ r.steps, s.index < arity) :
     readReduction value arity (reduction value r) = .ok r := by
@@ -67,6 +70,7 @@ theorem read_reduction (value : ValueCodec E) (h : value.Lawful)
   simp [readReduction, reduction, tuple, Json.getArr_arr, bind, Except.bind,
     pure, Except.pure, hs, read_poly value h]
 
+/-- Preprocessing roundtrips when each actual step refers to an existing query. -/
 theorem read_preparation (value : ValueCodec E) (h : value.Lawful)
     (r : QueryReduction E) (bound : ∀ s ∈ r.steps, s.index < arity) :
     readPreparation value arity (preparation value r) = .ok r := by

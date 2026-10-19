@@ -17,7 +17,7 @@ public import HexInterval.Experiment.SemanticReplay
 This bounded package authenticates the twelve remaining two-sided
 natural-number entries in PNT+'s `LogTables.lean`.  Each row records a dyadic
 range reduction and an eight-term atanh certificate; real logarithm semantics
-live in the Mathlib companion.
+live in the theory companion.
 -/
 
 namespace Hex.Interval.Experiment.PntLogNatural

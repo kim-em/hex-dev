@@ -1,0 +1,60 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+import HexRCF.RootTableQuote.Cases
+import HexRCF.RealCoefficients.ScalarQuote
+open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
+open Hex.RCF.SelectedRootTests
+namespace Hex.RCF.RootTableQuoteTests
+set_option maxHeartbeats 12000000
+set_option maxRecDepth 32768
+open CellReplayTests.Algebraic
+
+def negative : Codec.Json := .array (.cons Scalars.j36 (.cons (.number (-1)) .nil))
+def zero : Codec.Json := .array .nil
+def positive : Codec.Json := .array (.cons Scalars.j23 (.cons (.number 1) .nil))
+def polynomialLiteral : Codec.Json := .array (.cons negative (.cons zero (.cons positive .nil)))
+def polynomialReader :=
+  Codec.readPoly (Algebraic.Element.codec (context := Data.native) Data.base.codec) polynomialLiteral
+
+run_meta do
+  withExporting (isExporting := false) do
+    let some reader ← unfoldDefinition? (mkConst ``polynomialReader)
+      | throwError "polynomial reader definition unavailable"
+    let decode : RootQuote.DecoderM := fun expression =>
+      liftM (RationalQuote.decoder (mkConst ``Data.registry) expression)
+    let .ok result ← RootQuote.runWith
+        (ScalarQuote.quotePolyWith reader (mkConst ``Records.facts) decode)
+      | throwError "fixed polynomial quotation failed"
+    logInfo m!"fixed polynomial quotation proofNodes={result.usage.proofNodes}"
+    withExporting (isExporting := true) do
+      let name := `Hex.RCF.RootTableQuoteTests.input
+      let declaration := Declaration.defnDecl {
+        name,levelParams := [],type := ← inferType result.value,
+        value := result.value,hints := .regular 0,safety := .safe}
+      addDecl declaration (forceExpose := true)
+      -- A compiled consumer needs code as well as the checked kernel declaration.
+      compileDecl declaration (logErrors := true)
+      let statement ← mkEq (← mkAppM ``Except.toOption #[mkConst ``polynomialReader])
+        (← mkAppM ``Option.some #[mkConst name])
+      let proof ← Hex.RCF.checkProof `fixedPolynomial statement result.proof
+      addDecl (.thmDecl {
+        name := `Hex.RCF.RootTableQuoteTests.input_read,levelParams := [],
+        type := statement,value := proof})
+
+theorem input_size : input.size = 3 := by rfl
+def defining : Data.base.Poly := DensePoly.ofList [-2,0,1]
+theorem defining_monic : defining.leadingCoeff = 1 := by decide +kernel
+
+def reduction (p : Data.base.Poly) : Data.base.Poly :=
+  (DensePoly.divModMonic p defining defining_monic).2
+
+theorem reduction_eq : reduction = Data.native.reduce := by
+  rw [← Data.reduction_eq]
+  funext p
+  unfold reduction Data.reduction
+  simp only [defining, Data.lowerData.1]
+
+end Hex.RCF.RootTableQuoteTests

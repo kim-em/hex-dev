@@ -122,10 +122,10 @@ def includes_module(manual_root: str, module: str) -> bool:
 
 
 def partner_chapter(root: Path, name: str) -> Path | None:
-    """The computational partner's chapter for a `*Mathlib` library."""
-    if not name.endswith("Mathlib"):
+    """The computational partner's chapter for a `*Theory` library."""
+    if not name.endswith("Theory"):
         return None
-    chapter = root / "HexManual" / "Chapters" / f"{name[: -len('Mathlib')]}.lean"
+    chapter = root / "HexManual" / "Chapters" / f"{name[: -len('Theory')]}.lean"
     return chapter if chapter.is_file() else None
 
 
@@ -143,10 +143,10 @@ def check(root: Path) -> list[str]:
 
         chapter = root / "HexManual" / "Chapters" / f"{name}.lean"
         partner = partner_chapter(root, name)
-        # An integrated `mathlib: true` library (no `Mathlib` suffix, e.g.
+        # An integrated `mathlib: true` library (no `Theory` suffix, e.g.
         # HexRCF) has no computational partner; it carries its own chapter and
         # falls through to the plain-library branch.
-        if library.mathlib and name.endswith("Mathlib"):
+        if library.mathlib and name.endswith("Theory"):
             if partner is None:
                 errors.append(
                     f"{name}: done_through 7, but no computational partner chapter exists to "

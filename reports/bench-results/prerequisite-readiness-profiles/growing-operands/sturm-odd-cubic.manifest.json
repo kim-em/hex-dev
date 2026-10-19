@@ -1,0 +1,372 @@
+{
+  "family": "sturm-odd-cubic",
+  "function": "Hex.SturmFrontendBench.runCoefficientBits",
+  "parameter": 32768,
+  "cpu": 54,
+  "load": [
+    21.06396484375,
+    12.5087890625,
+    10.41845703125
+  ],
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "raw": "/tmp/issue-10577-perf/sturm-odd-cubic",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/tmp/hex10577-samply",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "record",
+        "--clockid",
+        "mono",
+        "-e",
+        "cycles:u",
+        "-F",
+        "999",
+        "--call-graph",
+        "dwarf",
+        "-o",
+        "/tmp/issue-10577-perf/sturm-odd-cubic/perf.data",
+        "--",
+        "env",
+        "LEAN_BENCH_PROFILE_KERNEL=1",
+        "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/tmp/issue-10577-perf/sturm-odd-cubic/timed-%p.jsonl",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "profile",
+        "Hex.SturmFrontendBench.runCoefficientBits",
+        "--param",
+        "32768",
+        "--target-inner-nanos",
+        "2000000000",
+        "--max-seconds-per-call",
+        "60",
+        "--profiler",
+        "env"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "import",
+        "--save-only",
+        "--no-open",
+        "--unstable-presymbolicate",
+        "-o",
+        "/tmp/issue-10577-perf/sturm-odd-cubic/samply.json.gz",
+        "/tmp/issue-10577-perf/sturm-odd-cubic/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "script",
+        "--ns",
+        "-F",
+        "pid,tid,time,event",
+        "-i",
+        "/tmp/issue-10577-perf/sturm-odd-cubic/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/normalize_perf.py",
+        "--profile",
+        "/tmp/issue-10577-perf/sturm-odd-cubic/samply.json.gz",
+        "--perf-script",
+        "/tmp/issue-10577-perf/sturm-odd-cubic/perf-samples.txt",
+        "--spawn-anchor",
+        "/tmp/issue-10577-perf/sturm-odd-cubic/spawn-anchor.json",
+        "--output",
+        "/tmp/issue-10577-perf/sturm-odd-cubic/normalized.json.gz"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "/tmp/hex10577-samply/scripts/filter_samply.py",
+        "--samply-json",
+        "/tmp/issue-10577-perf/sturm-odd-cubic/normalized.json.gz",
+        "--sidecar",
+        "/tmp/issue-10577-perf/sturm-odd-cubic/timed-1330106.jsonl",
+        "--spawn-anchor",
+        "/tmp/issue-10577-perf/sturm-odd-cubic/spawn-anchor.json",
+        "--out",
+        "/tmp/issue-10577-perf/sturm-odd-cubic/filtered.json.gz",
+        "--diagnostics",
+        "/tmp/issue-10577-perf/sturm-odd-cubic/diagnostics.json",
+        "--label-filter",
+        "kernel"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/elf_symbols.py",
+        "/tmp/issue-10577-perf/sturm-odd-cubic/filtered.json.gz",
+        "--output",
+        "/tmp/issue-10577-perf/sturm-odd-cubic/symbols.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/run/current-system/sw/bin/python",
+        "scripts/profile/summarize_profile.py",
+        "/tmp/issue-10577-perf/sturm-odd-cubic/filtered.json.gz",
+        "--symbols",
+        "/tmp/issue-10577-perf/sturm-odd-cubic/symbols.json",
+        "--diagnostics",
+        "/tmp/issue-10577-perf/sturm-odd-cubic/diagnostics.json",
+        "--thread",
+        "hexsturm_bench",
+        "--top",
+        "20",
+        "--output",
+        "reports/bench-results/prerequisite-readiness-profiles/growing-operands/sturm-odd-cubic.summary.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "executable_sha256": "2582ee10a5f694f04001b0aff3919a35ce90c970d8f2219e98a96c003b233f6a",
+  "commit": "6d78bf3e1fb1aa23129df83f7888979dd5afeb6d",
+  "dirty": true,
+  "profiler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.2.8",
+  "status": "profiled",
+  "diagnostics": {
+    "schema": 2,
+    "stage": "complete",
+    "confidence": "passed",
+    "low_confidence_reasons": [],
+    "bench_pid": 1330106,
+    "bench_thread_name": "hexsturm_bench",
+    "bench_thread_tid": "1330109",
+    "regions_total": 129,
+    "total_timed_ms": 1643.719888,
+    "expected_samples_bench_thread": 1642.1,
+    "retained_samples_bench_thread": 1641,
+    "rejected_samples_bench_thread": 9,
+    "off_bench_thread_samples_in_window": 0,
+    "samply_interval_ms": 1.001001,
+    "spawn_anchor_wall_ns": 1790918252404240925,
+    "spawn_anchor_mono_ns": 328244164850396,
+    "sidecar_mono_anchor_ns": 328244351252478,
+    "samply_meta_start_time_ms": 1790918252438.253,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "calibration_residual_ms": 1.057574987411499,
+    "calibration_max_residual_ms": 5.0,
+    "calibration": {
+      "selected_mode": "relative-to-meta-start-ms",
+      "residual_ms": 1.057574987411499,
+      "raw_max_residual_ms": 1.4698089957237244,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "configured_max_residual_ms": 5.0,
+      "sample_interval_ms": 1.001001,
+      "effective_max_residual_ms": 5.0,
+      "within_residual_limit": true,
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "hit_count": 0,
+          "regions_without_samples": 129,
+          "boundary_residual_trimmed_max_ms": null,
+          "boundary_residual_raw_max_ms": null,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "hit_count": 1641,
+          "regions_without_samples": 0,
+          "boundary_residual_trimmed_max_ms": 1.057574987411499,
+          "boundary_residual_raw_max_ms": 1.4698089957237244,
+          "within_residual_limit": true
+        }
+      }
+    },
+    "minimum_retained_samples": 100,
+    "sensitivity": {
+      "shift_ms": 5.0,
+      "reported_top_function_count": 3,
+      "configured_max_total_variation_distance": 0.1,
+      "sampling_noise_coefficient": 0.6,
+      "minimum_comparison_samples": 100,
+      "maximum_sampling_noise_allowance": 0.5,
+      "verdict": "passed",
+      "leaf_function_distributions_stable": true,
+      "comparisons": {
+        "minus": {
+          "total_variation_distance": 0.0035993865975584402,
+          "leaf_function_support_size": 339,
+          "comparison_samples": 1638,
+          "exchanged_samples": 9,
+          "exchanged_fraction": 0.005494505494505495,
+          "sampling_noise_allowance": 0.02861366278305832,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        },
+        "plus": {
+          "total_variation_distance": 0.0034841140723098937,
+          "leaf_function_support_size": 337,
+          "comparison_samples": 1635,
+          "exchanged_samples": 6,
+          "exchanged_fraction": 0.003669724770642202,
+          "sampling_noise_allowance": 0.02333667977333526,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        }
+      },
+      "cases": {
+        "minus": {
+          "shift_ms": -5.0,
+          "retained_samples": 1638,
+          "top_leaf_functions": [
+            {
+              "function": 89,
+              "name": "0x496a552",
+              "samples": 57
+            },
+            {
+              "function": 69,
+              "name": "0x496a586",
+              "samples": 45
+            },
+            {
+              "function": 99,
+              "name": "0x496a8e5",
+              "samples": 43
+            }
+          ]
+        },
+        "nominal": {
+          "shift_ms": 0.0,
+          "retained_samples": 1641,
+          "top_leaf_functions": [
+            {
+              "function": 89,
+              "name": "0x496a552",
+              "samples": 57
+            },
+            {
+              "function": 69,
+              "name": "0x496a586",
+              "samples": 45
+            },
+            {
+              "function": 99,
+              "name": "0x496a8e5",
+              "samples": 43
+            }
+          ]
+        },
+        "plus": {
+          "shift_ms": 5.0,
+          "retained_samples": 1635,
+          "top_leaf_functions": [
+            {
+              "function": 89,
+              "name": "0x496a552",
+              "samples": 57
+            },
+            {
+              "function": 69,
+              "name": "0x496a586",
+              "samples": 45
+            },
+            {
+              "function": 99,
+              "name": "0x496a8e5",
+              "samples": 43
+            }
+          ]
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "0.stdout": "d40df5947dd338826ff79a6a053ccdc7edeaecd28d6667f6a092758534fc7d11",
+    "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stdout": "771efaa15dc6d8f5285562dc490acc851aaec67b1f1612a898fb49db5214b9a3",
+    "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "2.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stdout": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "4.stdout": "1a89ef5bfd8650933a16c3a00d57ae7efdf4c1b72b0081ba5545f5745282a906",
+    "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "spawn-anchor.json": "33897bca559dd79d8f808ab6613f1ded4f7ea710e1c47ea21b1beb10a8b3221f",
+    "perf.data": "8fc47702585e5e6fc34d83ddc1d1cedd36e28ec130e2955747b124dd00372cc4",
+    "timed-1330106.jsonl": "c1ee11be857d16f9f415fe219288a8a83e649c2184389491500483ffefe773d4",
+    "5.stdout": "ae301a55f1237a7ad52c0c8f26f9c89437ca6bafefda797af5a03a3808c79df3",
+    "5.stderr": "1492f5f0b44d48d50cd1fd7f95699121962892cbed9ecc01d2a2dd9fef9dac1f",
+    "samply.json.gz": "77754535d395c198f359aa20cbb6a16172b4bf24834a8e9e66044a8b0dcafb11",
+    "6.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "6.stderr": "5eecc03f5f55d77995f7cfb8c323ac8ca3c4743e4ce54d037b5098911eabdae4",
+    "7.stdout": "fe309571fe273956d10536b94adcee0896a4a34d7eb4f4479bb663172f9fc035",
+    "7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "perf-samples.txt": "fe309571fe273956d10536b94adcee0896a4a34d7eb4f4479bb663172f9fc035",
+    "normalized.json.gz": "5b5d5df574e95b56b13fc60d858e93a081819c49f6c7eff0624043efc34920c0",
+    "8.stdout": "7cda9e3f748978872add25444f573e55983529b6bb3c528fcf8eb9871eda1730",
+    "8.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "filtered.json.gz": "566757e28edb16190a8bfe0e4764fe7220fd2fc47ed7b21969a7d65cebd84810",
+    "diagnostics.json": "37f3697312b883568614627d6cf6d92617518559c36668bb6450b9cba8570d48",
+    "9.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "9.stderr": "cdecb61b0d0b7a785f54789d26c5f2b1d133132a576492cc47f8d7f9a5e75dfe",
+    "symbols.json": "cca4183f0e3726d3f3fcdc25da370ea8a0572a3f746d4a3cebe669b046d89ca0",
+    "10.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "10.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "11.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

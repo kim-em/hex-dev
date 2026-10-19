@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "bec3e8a34b5f1f1d3beeebf2a9877ae715e14071",
+  "current_blob": "0d3f54d52ea5f623352982296c8852c24c1e21fb",
+  "reason": "Relative to the recorded factorization build, the only changed declaration selected by factorization_blocks is HexReleaseTests: its literal glob list appends the Mathlib-free permutation-group tests and the two certificate-output tests. HexPermGroupTests likewise only appends these test modules, and the other library registrations remain outside the measured build. No benchmark-reachable library, executable, package option, dependency, native link input or benchmark configuration changes. The factorization service and benchmark executables do not import the added test modules."
+}

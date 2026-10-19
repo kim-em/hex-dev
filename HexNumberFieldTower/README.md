@@ -12,7 +12,7 @@ on [`hex-number-field`](https://github.com/leanprover/hex-number-field),
 [`hex-resultant`](https://github.com/leanprover/hex-resultant), and
 [`hex-berlekamp-zassenhaus`](https://github.com/leanprover/hex-berlekamp-zassenhaus);
 its Mathlib counterpart is
-[`hex-number-field-tower-mathlib`](https://github.com/leanprover/hex-number-field-tower-mathlib).
+[`hex-number-field-tower-theory`](https://github.com/leanprover/hex-number-field-tower-theory).
 
 # Quickstart
 
@@ -55,7 +55,7 @@ admit a level:
   primitive-element field, with coordinate maps in both directions.
 
 The `Option` results carry new dependent carrier indices and certificates,
-so there is no junk fallback value; the Mathlib companion proves every
+so there is no junk fallback value; the theory companion proves every
 valid input succeeds.
 
 # Verification
@@ -65,7 +65,7 @@ consistent chosen complex embedding by construction; the sealed
 representation means no other route can build a tower. This package does
 not itself turn those Boolean checks into semantic irreducibility or claim
 a law-bearing field instance. The companion
-[`hex-number-field-tower-mathlib`](https://github.com/leanprover/hex-number-field-tower-mathlib)
+[`hex-number-field-tower-theory`](https://github.com/leanprover/hex-number-field-tower-theory)
 interprets every validated tower as a finite extension of `ℚ` with a fixed
 complex embedding, proves the coordinate arithmetic computes the complex
 operations, and verifies Trager factorization, adjoining, splitting fields,

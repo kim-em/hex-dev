@@ -1,0 +1,26 @@
+{
+  "1": {
+    "degree": 3,
+    "median_ms": 22.028929187499998,
+    "min_ms": 19.966979375,
+    "max_ms": 22.579208125,
+    "median_peak_rss_MiB": 72.33984375,
+    "samples": 6
+  },
+  "2": {
+    "degree": 4,
+    "median_ms": 43.25602725,
+    "min_ms": 42.176448,
+    "max_ms": 45.75778725,
+    "median_peak_rss_MiB": 72.486328125,
+    "samples": 6
+  },
+  "3": {
+    "degree": 5,
+    "median_ms": 109.0066545,
+    "min_ms": 106.459384,
+    "max_ms": 114.091077,
+    "median_peak_rss_MiB": 72.69921875,
+    "samples": 6
+  }
+}

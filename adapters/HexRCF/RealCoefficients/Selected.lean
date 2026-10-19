@@ -6,9 +6,9 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RealCoefficients.Field
-public import HexNumberFieldMathlib.Exact
-public import HexNumberFieldMathlib.Nearest
-public import HexRealFormulaMathlib.Semantics
+public import HexNumberFieldTheory.Exact
+public import HexNumberFieldTheory.Nearest
+public import HexRealFormulaTheory.Semantics
 
 public section
 
@@ -93,9 +93,9 @@ theorem normalized_toReal (p : ZPoly)
   subst q
   subst s
   have hr : (Field.literalRep p rep.1.square hw hp).root = rep.root := by
-    change HexRootsMathlib.SimpleRoot.rootOf
+    change HexRootsTheory.SimpleRoot.rootOf
       (SimpleRoot.mk (Field.literalRep p rep.1.square hw hp)) = _
-    rw [Field.literalRep_mk, HexRootsMathlib.SimpleRoot.ofSquare_mk]
+    rw [Field.literalRep_mk, HexRootsTheory.SimpleRoot.ofSquare_mk]
     rfl
   change _ = (AlgebraicNumber.ofNormalized p prim pos_lc pos_degree checked
     squarefree rep h).toComplex.re
@@ -146,25 +146,25 @@ theorem real_rootNear (p : ZPoly) (s : DyadicSquare)
   have hb := Field.literalRep_bounds p s hw hp
   have hleft : (((s.re - s.radiusHi).toRat : Rat) : ℝ) =
       ((s.re.toRat : Rat) : ℝ) - ((s.radiusHi.toRat : Rat) : ℝ) := by
-    change HexRootsMathlib.Dyadic.toReal (s.re - s.radiusHi) =
-      HexRootsMathlib.Dyadic.toReal s.re - HexRootsMathlib.Dyadic.toReal s.radiusHi
-    exact HexRootsMathlib.Dyadic.toReal_sub s.re s.radiusHi
+    change HexRootsTheory.Dyadic.toReal (s.re - s.radiusHi) =
+      HexRootsTheory.Dyadic.toReal s.re - HexRootsTheory.Dyadic.toReal s.radiusHi
+    exact HexRootsTheory.Dyadic.toReal_sub s.re s.radiusHi
   have hright : (((s.re + s.radiusHi).toRat : Rat) : ℝ) =
       ((s.re.toRat : Rat) : ℝ) + ((s.radiusHi.toRat : Rat) : ℝ) := by
-    change HexRootsMathlib.Dyadic.toReal (s.re + s.radiusHi) =
-      HexRootsMathlib.Dyadic.toReal s.re + HexRootsMathlib.Dyadic.toReal s.radiusHi
-    exact HexRootsMathlib.Dyadic.toReal_add s.re s.radiusHi
+    change HexRootsTheory.Dyadic.toReal (s.re + s.radiusHi) =
+      HexRootsTheory.Dyadic.toReal s.re + HexRootsTheory.Dyadic.toReal s.radiusHi
+    exact HexRootsTheory.Dyadic.toReal_add s.re s.radiusHi
   rw [hleft, hright] at hb
   have habs : |((s.re.toRat : Rat) : ℝ) - rep.root.re| <
       ((s.radiusHi.toRat : Rat) : ℝ) := by
     exact abs_lt.mpr ⟨by linarith [hb.2], by linarith [hb.1]⟩
-  have hbound : HexRootsMathlib.Dyadic.toReal s.radiusHi ≤
+  have hbound : HexRootsTheory.Dyadic.toReal s.radiusHi ≤
       (2 : ℝ) ^ (-(mahlerPrec p : ℤ)) * (1449 / 1024 : ℝ) := by
-    rw [HexRootsMathlib.DyadicSquare.radiusHi_eq,
-      HexRootsMathlib.DyadicSquare.halfWidth_eq]
-    have hsqrt : HexRootsMathlib.Dyadic.toReal Hex.sqrt2Hi =
+    rw [HexRootsTheory.DyadicSquare.radiusHi_eq,
+      HexRootsTheory.DyadicSquare.halfWidth_eq]
+    have hsqrt : HexRootsTheory.Dyadic.toReal Hex.sqrt2Hi =
         (1449 / 1024 : ℝ) := by
-      norm_num [Hex.sqrt2Hi, HexRootsMathlib.Dyadic.toReal_ofIntWithPrec]
+      norm_num [Hex.sqrt2Hi, HexRootsTheory.Dyadic.toReal_ofIntWithPrec]
     rw [hsqrt]
     apply mul_le_mul_of_nonneg_right _ (by norm_num)
     apply zpow_le_zpow_right₀ (by norm_num : (1 : ℝ) ≤ 2)
@@ -172,7 +172,7 @@ theorem real_rootNear (p : ZPoly) (s : DyadicSquare)
   -- The nearest-root bound allows twice the separation unit.
   have hgap : ((s.radiusHi.toRat : Rat) : ℝ) <
       2 * ((2 : ℝ) ^ (-(mahlerPrec p : ℤ)) * (1449 / 1024)) := by
-    change HexRootsMathlib.Dyadic.toReal s.radiusHi < _
+    change HexRootsTheory.Dyadic.toReal s.radiusHi < _
     have hpos : 0 <
         (2 : ℝ) ^ (-(mahlerPrec p : ℤ)) * (1449 / 1024) := by positivity
     linarith
@@ -218,14 +218,14 @@ theorem generator_value (p : ZPoly) (s : DyadicSquare)
   rw [Field.value_complex rep (Field.literalRep_mk p s hw hp)
     (Field.literalRep_real p s hw hp hreal)]
   change Polynomial.eval₂ (algebraMap ℚ ℂ) rep.root
-    (HexPolyMathlib.toPolynomial
+    (HexPolyTheory.toPolynomial
       (PolyQuot.reduceCoeffs p (DensePoly.ofList [0, 1]))) =
       ((rep.root.re : ℝ) : ℂ)
   rw [PolyQuot.eval_reduceCoeffs]
-  have hX : HexPolyMathlib.toPolynomial (DensePoly.ofList ([0, 1] : List Rat)) =
+  have hX : HexPolyTheory.toPolynomial (DensePoly.ofList ([0, 1] : List Rat)) =
       Polynomial.X := by
     ext n
-    rw [HexPolyMathlib.coeff_toPolynomial, Polynomial.coeff_X]
+    rw [HexPolyTheory.coeff_toPolynomial, Polynomial.coeff_X]
     simp only [DensePoly.coeff_ofList]
     rcases n with _ | _ | n <;> simp [List.getD]; rfl
   rw [hX, Polynomial.eval₂_X]
@@ -241,26 +241,26 @@ theorem value_ofSquare (p : ZPoly) (s : DyadicSquare)
       (LiteralSign.realPoly f).eval (Field.literalRep p s hw hp).root.re := by
   let rep := Field.literalRep p s hw hp
   have hpoly : LiteralSign.realPoly f =
-      (HexPolyMathlib.toPolynomial f).map (Rat.castHom ℝ) := by
+      (HexPolyTheory.toPolynomial f).map (Rat.castHom ℝ) := by
     ext i
     simp [LiteralSign.realPoly]
   apply Complex.ofReal_injective
   rw [Field.value_complex rep (Field.literalRep_mk p s hw hp)
     (Field.literalRep_real p s hw hp hreal)]
-  change (HexPolyMathlib.toPolynomial (PolyQuot.reduceCoeffs p f)).eval₂
+  change (HexPolyTheory.toPolynomial (PolyQuot.reduceCoeffs p f)).eval₂
       (algebraMap Rat ℂ) rep.root =
     (((LiteralSign.realPoly f).eval rep.root.re : ℝ) : ℂ)
   rw [PolyQuot.eval_reduceCoeffs, hpoly, Polynomial.eval_map]
   have he : (rep.root.re : ℂ) = rep.root :=
     Complex.ext rfl (Field.literalRep_real p s hw hp hreal).symm
   calc
-    (HexPolyMathlib.toPolynomial f).eval₂ (algebraMap Rat ℂ) rep.root =
-        (HexPolyMathlib.toPolynomial f).eval₂
+    (HexPolyTheory.toPolynomial f).eval₂ (algebraMap Rat ℂ) rep.root =
+        (HexPolyTheory.toPolynomial f).eval₂
           (Complex.ofRealHom.comp (Rat.castHom ℝ))
           (Complex.ofRealHom rep.root.re) := by rw [← he]; rfl
     _ = Complex.ofRealHom
-        ((HexPolyMathlib.toPolynomial f).eval₂ (Rat.castHom ℝ) rep.root.re) :=
-      (Polynomial.hom_eval₂ (HexPolyMathlib.toPolynomial f)
+        ((HexPolyTheory.toPolynomial f).eval₂ (Rat.castHom ℝ) rep.root.re) :=
+      (Polynomial.hom_eval₂ (HexPolyTheory.toPolynomial f)
         (Rat.castHom ℝ) Complex.ofRealHom rep.root.re).symm
 
 /-- A computed coordinate in the generated field has the value certified by
@@ -277,11 +277,11 @@ theorem field_toReal (p : ZPoly) (s : DyadicSquare)
         (PolyQuot.ofSquare p s f hw hp) := by
   rw [field, Coefficients.ofField_toReal, real_toReal, hcoeff]
   have hmap : LiteralSign.realPoly f =
-      (HexPolyMathlib.toPolynomial f).map (Rat.castHom ℝ) := by
+      (HexPolyTheory.toPolynomial f).map (Rat.castHom ℝ) := by
     ext i
     simp [LiteralSign.realPoly]
   calc
-    (HexPolyMathlib.toPolynomial f).eval₂ (Rat.castHom ℝ)
+    (HexPolyTheory.toPolynomial f).eval₂ (Rat.castHom ℝ)
         (Field.literalRep p s hw hp).root.re =
         (LiteralSign.realPoly f).eval (Field.literalRep p s hw hp).root.re := by
       rw [hmap, Polynomial.eval_map]

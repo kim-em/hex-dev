@@ -1,0 +1,11 @@
+M11 kernel 52.7ms  producer 0.203ms  
+M12 kernel 72.6ms  producer 0.208ms  
+M22 kernel 170ms  producer 0.282ms  
+M23 kernel 242ms  producer 0.306ms  
+M24 kernel 301ms  producer 0.317ms  
+J2 kernel 1.69s  producer 0.947ms  
+HS kernel 2.58s  producer 0.974ms  
+Rubik kernel 4.09s  producer 1.58ms  
+Rubik_reassembly kernel 7.83s  producer 2.72ms  
+McL kernel 21.3s  producer 2.53ms  
+Co3 kernel 26.8s  producer 2.67ms  /home/kim/scratch/cube/cmp/K_Co3.lean:7:2: error: (deterministic) timeout at `isDefEq`, maximum number of heartbeats (200000) has been reached

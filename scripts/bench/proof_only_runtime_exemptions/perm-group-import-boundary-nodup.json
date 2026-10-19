@@ -1,0 +1,6 @@
+{
+  "path": "HexBasic/List/Nodup.lean",
+  "baseline_blob": null,
+  "current_blob": "97cc8da86391a61cfbc6195765f3b27e5747b8c1",
+  "reason": "Adds only the existing nodup_subset_length_le theorem in Hex.List. Its proof moves unchanged from ListShim; there are no executable definitions, instances or persistent attributes."
+}

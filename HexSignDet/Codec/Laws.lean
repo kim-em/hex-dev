@@ -22,16 +22,20 @@ structured and byte roundtrips, not for soundness of independent replay. -/
 
 namespace Codec
 
+/-- The natural-number JSON instances roundtrip exactly. -/
 @[simp] theorem read_nat (n : Nat) : Json.decode (Json.of n) = .ok n := by
   rfl
 
+/-- The integer JSON instances roundtrip exactly. -/
 @[simp] theorem read_int (n : Int) : Json.decode (Json.of n) = .ok n := by
   rfl
 
 end Codec
 
+/-- The natural-number value codec preserves every literal value. -/
 theorem ValueCodec.nat_lawful : nat.Lawful := Codec.read_nat
 
+/-- The strict rational pair codec preserves every canonical rational value. -/
 theorem ValueCodec.rat_lawful : rat.Lawful := by
   intro q
   simp [rat, Json.getArr_arr, bind, Except.bind, pure, Except.pure, q.den_nz, Rat.mkRat_self]
@@ -42,6 +46,7 @@ theorem ValueCodec.rat_lawful : rat.Lawful := by
 
 namespace Codec
 
+/-- Successful strict traversal transfers every result to the complete reader in order. -/
 private theorem list_refines (strict complete : α → Except String β)
     (h : ∀ x y, strict x = .ok y → complete x = .ok y)
     (xs : List α) (ys : List β) (hs : xs.mapM strict = .ok ys) :
@@ -108,6 +113,7 @@ theorem read_array (encode : α → Json) (read : Json → Except String α)
   rw [hf]
   simpa [pure, Except.pure] using (Array.mapM_pure (m := Except String) (xs := a) (f := id))
 
+/-- Global element roundtrips preserve the complete ordered list. -/
 theorem read_list (encode : α → Json) (read : Json → Except String α)
     (h : ∀ x, read (encode x) = .ok x) (a : List α) :
     readList read (list encode a) = .ok a := by
@@ -145,6 +151,7 @@ theorem read_array_of (encode : α → Json) (read : Json → Except String α)
     cases hl
     rfl
 
+/-- Global element roundtrips preserve the exact vector and its dimension. -/
 theorem read_vector (encode : α → Json) (read : Json → Except String α)
     (h : ∀ x, read (encode x) = .ok x) (a : Vector α n) :
     vector n read (array encode a.toArray) = .ok a := by
@@ -153,12 +160,14 @@ theorem read_vector (encode : α → Json) (read : Json → Except String α)
   simp [vector, tuple, array, Json.getArr_arr, bind, Except.bind, pure, Except.pure,
     a.size_toArray, hm]
 
+/-- Global element roundtrips preserve presence, absence and the literal value. -/
 theorem read_option (encode : α → Json) (read : Json → Except String α)
     (h : ∀ x, read (encode x) = .ok x) (a : Option α) :
     readOption read (option encode a) = .ok a := by
   cases a <;> simp [readOption, option, Json.getArr_arr, bind, Except.bind, pure,
     Except.pure, h, Functor.map, Except.map]
 
+/-- A lawful codec reconstructs the exact stored polynomial coefficient vector. -/
 theorem read_poly {E : Type} [Zero E] [DecidableEq E]
     (value : ValueCodec E) (h : value.Lawful) (p : DensePoly E) :
     readPoly value (poly value p) = .ok p := by
@@ -173,21 +182,35 @@ theorem read_poly_of {E : Type} [Zero E] [DecidableEq E]
   simp [readPoly, poly, read_array_of value.encode value.decode p.toArray h,
     bind, Except.bind, DensePoly.ofCoeffs_toArray, pure, Except.pure]
 
-theorem read_endpoint {E : Type} [Zero E] [DecidableEq E]
+/-- A lawful codec preserves both infinities and every finite endpoint. -/
+theorem read_endpoint {E : Type}
     (value : ValueCodec E) (h : value.Lawful) (e : Endpoint E) :
     readEndpoint value (endpoint value e) = .ok e := by
   unfold ValueCodec.Lawful at h
   cases e <;> simp [readEndpoint, endpoint, Json.getArr_arr, bind, Except.bind, pure,
     Except.pure, h, Functor.map, Except.map]
 
+/-- An endpoint roundtrip needs only its actual finite coefficient. -/
+theorem read_endpoint_of {E : Type} (value : ValueCodec E) (endpoint : Endpoint E)
+    (covered : ∀ x, endpoint = .finite x → value.decode (value.encode x) = .ok x) :
+    Codec.readEndpoint value (Codec.endpoint value endpoint) = .ok endpoint := by
+  cases endpoint with
+  | negInf => rfl
+  | posInf => rfl
+  | finite x =>
+    simp [Codec.readEndpoint, Codec.endpoint, Codec.Json.getArr_arr, covered x rfl,
+      bind, Except.bind, Functor.map, Except.map]
+
 /-- The standard JSON array instances use the same ordered traversal. -/
 theorem read_jsonArray {α : Type} [Json.To α] [Json.From α]
     (h : ∀ x : α, Json.decode (Json.of x) = .ok x) (a : Array α) :
     Json.decode (Json.of a) = .ok a := read_array Json.of Json.decode h a
 
+/-- A bounded natural-number index roundtrips without changing its value. -/
 theorem read_index (i : Fin n) : index n (Json.of i.val) = .ok i := by
   simp [index, bind, Except.bind, i.isLt, pure, Except.pure]
 
+/-- The integer matrix reader reconstructs every row and both dimensions. -/
 theorem read_matrix (a : Matrix Int n m) : matrix n m (encodeMatrix a) = .ok a := by
   have rows : (array (array Json.of) (a.rows.toArray.map Vector.toArray)) =
       array (fun row : Vector Int m => array Json.of row.toArray) a.rows.toArray := by

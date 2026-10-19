@@ -12,7 +12,7 @@ public section
 
 namespace Hex.RCF.RealCoefficients
 
-open HexPolyMathlib.Interpret
+open HexPolyTheory.Interpret
 
 /-- Strict ordinary enclosures of two distinct roots eventually separate
 along every precision schedule tending to infinity. -/
@@ -30,13 +30,13 @@ theorem rootInterval_separated (left right : RealAlgebraicNumber)
   obtain ⟨lower, hlo, hll, hlu, hlw⟩ := hL k (le_trans (le_max_left L R) hk)
   obtain ⟨upper, hhi, hul, huu, huw⟩ := hR k (le_trans (le_max_right L R) hk)
   refine ⟨lower, upper, hlo, hhi, ?_⟩
-  have gap : HexRealRootsMathlib.Dyadic.toReal lower.upper <
-      HexRealRootsMathlib.Dyadic.toReal upper.lower := by
+  have gap : HexRealRootsTheory.Dyadic.toReal lower.upper <
+      HexRealRootsTheory.Dyadic.toReal upper.lower := by
     dsimp [epsilon] at hlw huw
     linarith
-  apply HexRootsMathlib.Dyadic.toReal_lt_toReal_iff.mp
-  simpa only [HexRealRootsMathlib.toReal_eq_cast_toRat,
-    HexRootsMathlib.Dyadic.toReal] using gap
+  apply HexRootsTheory.Dyadic.toReal_lt_toReal_iff.mp
+  simpa only [HexRealRootsTheory.toReal_eq_cast_toRat,
+    HexRootsTheory.Dyadic.toReal] using gap
 
 /-- A finite strictly ordered root array eventually has disjoint strict
 enclosures; no minimum separation or precision bound is assumed. -/
@@ -129,7 +129,7 @@ theorem proposeIsolations_separated [RealAlgebraicNumber.Laws]
       proposeIsolations head (schedule k) = some cert ∧ cert.checkGaps = true := by
   have polynomialNe : (RealAlgebraicPoly.ofArray head.toArray).toPolynomial ≠ 0 := by
     rw [solver_polynomial]
-    exact fun h => nonzero ((HexPolyMathlib.Interpret.interpret_eq_zero
+    exact fun h => nonzero ((HexPolyTheory.Interpret.interpret_eq_zero
       RealAlgebraicNumber.toReal algebraic_zero head).mp h)
   exact solverIntervals_progress (RealAlgebraicPoly.ofArray head.toArray) polynomialNe schedule progress
 
@@ -138,8 +138,8 @@ encloses each root at its matching index, using the owner's root correspondence.
 theorem solverIntervals_spec (solver : RealAlgebraicPoly) (precision : Nat) (isolations : IsolationCert)
     (produced : solverIntervals solver precision = some isolations) :
     ∃ root : Fin isolations.intervals.size → ℝ,
-      (∀ i, HexRealRootsMathlib.Dyadic.toReal isolations.intervals[i].lower < root i ∧
-        root i < HexRealRootsMathlib.Dyadic.toReal isolations.intervals[i].upper) ∧
+      (∀ i, HexRealRootsTheory.Dyadic.toReal isolations.intervals[i].lower < root i ∧
+        root i < HexRealRootsTheory.Dyadic.toReal isolations.intervals[i].upper) ∧
       (∀ x, solver.toPolynomial.IsRoot x ↔ ∃ i, root i = x) := by
   classical
   cases rootsEq : solver.roots with
@@ -164,8 +164,8 @@ theorem solverIntervals_spec (solver : RealAlgebraicPoly) (precision : Nat) (iso
     refine ⟨root, ?_, ?_⟩
     · intro i
       have enclosed := (rootInterval_spec roots[i.val].root precision).choose_spec
-      change HexRealRootsMathlib.Dyadic.toReal (roots.map interval)[i.val].lower < roots[i.val].root.toReal ∧
-        roots[i.val].root.toReal < HexRealRootsMathlib.Dyadic.toReal (roots.map interval)[i.val].upper
+      change HexRealRootsTheory.Dyadic.toReal (roots.map interval)[i.val].lower < roots[i.val].root.toReal ∧
+        roots[i.val].root.toReal < HexRealRootsTheory.Dyadic.toReal (roots.map interval)[i.val].upper
       simpa only [Array.getElem_map, interval] using And.intro enclosed.2.1 enclosed.2.2.1
     · intro x
       change solver.toPolynomial.eval x = 0 ↔ _
@@ -184,8 +184,8 @@ theorem proposeIsolations_spec [RealAlgebraicNumber.Laws]
     (head : DensePoly RealAlgebraicNumber) (precision : Nat) (isolations : IsolationCert)
     (produced : proposeIsolations head precision = some isolations) :
     ∃ root : Fin isolations.intervals.size → ℝ,
-      (∀ i, HexRealRootsMathlib.Dyadic.toReal isolations.intervals[i].lower < root i ∧
-        root i < HexRealRootsMathlib.Dyadic.toReal isolations.intervals[i].upper) ∧
+      (∀ i, HexRealRootsTheory.Dyadic.toReal isolations.intervals[i].lower < root i ∧
+        root i < HexRealRootsTheory.Dyadic.toReal isolations.intervals[i].upper) ∧
       (∀ x, (interpret RealAlgebraicNumber.toReal algebraic_zero head).IsRoot x ↔ ∃ i, root i = x) := by
   simpa only [solver_polynomial] using
     solverIntervals_spec (RealAlgebraicPoly.ofArray head.toArray) precision isolations produced
@@ -212,7 +212,7 @@ theorem proposeIsolations_accepted [RealAlgebraicNumber.Laws] {Ctx : Type u} [De
     (fun n => by change RealAlgebraicNumber.toRealHom (n : RealAlgebraicNumber) = (n : ℝ); simp)
     RealAlgebraicNumber.sign algebraic_sign
     (fun d => RealAlgebraicNumber.ofRat d.toRat)
-    (fun d => by simp [HexRealRootsMathlib.toReal_eq_cast_toRat])
+    (fun d => by simp [HexRealRootsTheory.toReal_eq_cast_toRat])
     context head nonzero squarefree isolations gaps root bounds complete
 
 /-- Every nonzero squarefree canonical head eventually yields accepted
@@ -246,7 +246,7 @@ recheck that certificate in the ordinary kernel. It does not change the
 tactic's bounded attempt. -/
 def isolate [RealAlgebraicNumber.Laws] {Ctx : Type u} [DecidableEq Ctx]
     (context : Ctx) (head : DensePoly RealAlgebraicNumber) (nonzero : head ≠ 0)
-    (squarefree : Squarefree (HexPolyMathlib.Interpret.interpret
+    (squarefree : Squarefree (HexPolyTheory.Interpret.interpret
       RealAlgebraicNumber.toReal algebraic_zero head)) :
     {cert : IsolationReplay RealAlgebraicNumber Ctx //
       cert.check RealAlgebraicNumber.sign (fun d => RealAlgebraicNumber.ofRat d.toRat)

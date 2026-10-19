@@ -6,7 +6,9 @@ Authors: Kim Morrison
 
 import HexPrimality.Cert
 
-/-! Ordinary checker replay of the exact ECM construction certificates. -/
+/-! Ordinary checker replay of frozen certificates from the original fixed-curve
+ECM construction. The current interleaved provider emits a different Curve448
+certificate, guarded in FieldConstruction. -/
 
 namespace Hex.IntFactorFields
 

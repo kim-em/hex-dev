@@ -1,0 +1,9 @@
+Hex.RealAlgebraicScaling.runSqrt8    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=e697757, 2026-10-05T01:15:34Z, host=chungus2
+  repeat 0  27.507 s
+  median: 27.507 s    min: 27.507 s    max: 27.507 s
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 66_244 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-fixed-conversion/pairs/Sqrt-8-1-Before.json

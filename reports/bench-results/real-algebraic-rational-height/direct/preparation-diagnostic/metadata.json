@@ -1,0 +1,49 @@
+{
+  "purpose": "Diagnostic 20-second attach during unexpectedly expensive canonical fixture preparation; not operation-only Phase-4 attribution or scientific timing.",
+  "pid": 326189,
+  "child_command": [
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexrealalgebraic_bench",
+    "_child",
+    "--bench",
+    "Hex.RealAlgebraicBench.runRationalRecognition",
+    "--param",
+    "262144",
+    "--target-nanos",
+    "1000000"
+  ],
+  "source_commit": "a7e5fb9ebe61344b7af1d6bfe6c16ca1e6b7d35a",
+  "executable_sha256": "63ae5576437c4608455713991c2a6bd9b2ba8f8874dfea70c6fdcf96c6475acb",
+  "load_before": [
+    2.1787109375,
+    3.44775390625,
+    9.43310546875
+  ],
+  "cpu_affinity": [
+    75
+  ],
+  "command": [
+    "perf",
+    "record",
+    "--clockid",
+    "mono",
+    "-e",
+    "cycles:u",
+    "-F",
+    "999",
+    "--call-graph",
+    "dwarf",
+    "-p",
+    "326189",
+    "-o",
+    "/home/kim/.local/state/hex/issue-10577-profiles/rational-interior-preparation-a7e5fb9eb/perf.data",
+    "--",
+    "sleep",
+    "20"
+  ],
+  "exit_code": 0,
+  "load_after": [
+    2.27001953125,
+    3.3857421875,
+    9.2841796875
+  ]
+}

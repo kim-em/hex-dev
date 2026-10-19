@@ -63,7 +63,7 @@ This flattened representation avoids a runtime-dependent Lean carrier while the
 index `Elem T` still supplies the per-tower arithmetic operations required by
 `DensePoly` gcd and resultant algorithms. Coordinate equality is exact within a
 fixed checked tower. Inversion is totalized by `0⁻¹ = 0`. Rational scalar
-multiplication acts coordinatewise; the Mathlib companion pins this executable
+multiplication acts coordinatewise; the theory companion pins this executable
 action as the `qsmul` field of its law-bearing `Field (Elem T)` structure.
 
 Raw constructors are private. Only the smart constructors below may create a
@@ -71,7 +71,7 @@ Raw constructors are private. Only the smart constructors below may create a
 a consistent chosen complex embedding by construction. The computational
 library does not turn those Boolean checks into semantic irreducibility or claim
 a `Lean.Grind.Field` instance; factorization-check soundness and the law-bearing
-field structure live in the Mathlib companion.
+field structure live in the theory companion.
 
 ## Dependent result types
 
@@ -153,14 +153,14 @@ available for the implicit operations: write `factor? f`, not `T.factor? f`.
 
 `ofPolyQuot` takes squarefreeness explicitly because its returned extension
 stores an `AlgebraicRoot`. Although irreducibility implies squarefreeness in
-characteristic zero, that implication belongs to the Mathlib companion, while
+characteristic zero, that implication belongs to the theory companion, while
 `HasOnlySimpleRoots p` is already decidable and can be supplied by a
 Mathlib-free caller.
 
 These operations retain `Option` because their successful results contain new
 dependent carrier indices and certificates; there is no honest junk
 `Extension T` or `Flattening T` with which to implement a `panicWith` wrapper.
-The Mathlib companion proves every result is `some` for a valid input. Callers
+The theory companion proves every result is `some` for a valid input. Callers
 may preserve the checked API or eliminate `none` using those theorems.
 
 ## Embedding invariant
@@ -275,9 +275,8 @@ materialization and the exact algebraic reality test; charge that preparation
 separately. The sign bound then uses all chosen complex generator embeddings
 and still applies to the certified real result.
 
-Conformance and Phase-4 sign/compare families, informational python-flint and
-Z3 RCF comparisons, and mode-dependent required ceilings are specified by the
-consumer contract. Include coordinate zero, rational and negative values,
+Conformance and Phase-4 sign/compare families, python-flint and Z3 RCF
+comparisons, and any required ceilings are specified by the consumer contract. Include coordinate zero, rational and negative values,
 relations reducing to zero, close nonzero values, multiple choices of real
 generator embedding, and rejection of nonreal elements. Measure norm setup
 and recursive evaluation separately; do not hide materialization or flattening
@@ -334,7 +333,7 @@ For one squarefree component `g`:
 Each recursive step uses a one-level executable resultant, not a determinant
 materialized as a dense matrix. It is intentionally not replaced by one absolute
 norm: a factor defined over an intermediate field can make the absolute norm a
-repeated power for every top-generator shift. `hex-resultant-mathlib` full
+repeated power for every top-generator shift. `hex-resultant-theory` full
 agreement is required to prove that the norm factorization and gcd recovery are
 complete.
 
@@ -395,7 +394,7 @@ candidates whose validated linear-gcd coordinates succeed, and otherwise
 continues without invoking trace recovery. If it is exhausted,
 `AlgebraicPoly.Common.extendShift?` retains the maximum-degree candidate from
 the same bounded primitive-element search; the companion theorem proves that
-this candidate generates the compositum. The Mathlib companion proves both
+this candidate generates the compositum. The theory companion proves both
 searches and checked canonicalization total on valid algebraic inputs.
 Candidate factor selection uses `evalDisambiguationPrec`, so both shift
 searches and root selection have input-computable finite bounds.
@@ -484,30 +483,29 @@ Let `D = T.dim`, `n = deg f`, and let `H` bound coefficient height.
   has bit cost set by the flattening's primitive-basis images, whose heights
   are fixed by the accepted primitive-element shift rather than by the
   dimension, so it has no one-parameter wall model in the dimension and is a
-  canonical mode-3 case below.
+  canonical fixed case below.
 
 The fixed canonical cases for adjoining, identity adjoining, one- and
 two-level factorization, checked replay, splitting, flattening, division at
 the top rung of the recursive family, and one dense `toPrimitive` call use
 zero-grace whole-child ceilings derived from clean reference-host measurements
 plus stated margin. These budgets do not replace the contracts above; they are
-mode-3 regression ceilings for operations whose realised phase mixtures admit
-neither a tight family model nor a published bound covering the dominant
-executable phases.
+regression ceilings for operations whose realised phase mixtures admit neither
+a tight family model nor a published bound covering the dominant executable
+phases, and they make no scaling claim.
 
-Negation has mode-1 evidence on dense bounded-height coordinate arrays at
+Negation has a two-sided declared model on dense bounded-height coordinate arrays at
 dimensions 128 through 448. The source-derived linear model covers one public
 negation plus structural result hashing; its exactly sized result constructor
 does not copy or normalize the coordinate array. `Elem.mk` remains private;
 the checked constructor is exposed only as `Internal.ofCoeffs`, and requires a
 proof that the supplied array has exactly the tower dimension.
 
-Inversion has mode-1 evidence on the recursive family. Division and dense
-`toPrimitive` are mode-3 surfaces: the inverse's coordinate height crosses a
-64-bit limb boundary inside the measured range, and the primitive images'
-heights are input-determined, so neither admits a one-parameter wall model;
-the headline report records the attempted schedules and their residuals. The
-fixed unit-basis registration and the dimension-four arithmetic
+Inversion has a two-sided declared model on the recursive family. Division
+and dense `toPrimitive` have fixed registrations only: the inverse's
+coordinate height crosses a 64-bit limb boundary inside the measured range,
+and the primitive images' heights are input-determined, so neither admits a
+one-parameter wall model. The fixed unit-basis registration and the dimension-four arithmetic
 registrations are hash anchors, not performance evidence.
 
 Merge-facing conformance remains restricted to tower dimension at most 8 and
@@ -517,8 +515,8 @@ performance evidence, not a merge-facing conformance fixture.
 ## External comparators
 
 **PARI/GP nffactor via cypari2** (https://pari.math.u-bordeaux.fr/, driven
-through the cypari2 binding, the same binding the conformance oracle uses) —
-**informational**, scoped to the `factor?` bench targets. `nffactor(nfinit f,
+through the cypari2 binding, the same binding the conformance oracle uses),
+scoped to the `factor?` bench targets. `nffactor(nfinit f,
 t)` is the callable PARI unit surface for factoring a polynomial over a
 number field, the semantic task of `factor?` at one level. It is wired as a
 persistent-subprocess process call (`scripts/oracle/pari_bench_driver.py`,
@@ -529,10 +527,9 @@ live in each system's own field presentation and are not a shared
 observable; the degree/multiplicity multiset of a complete factorization
 is). PARI is a mature optimized C library running over `nfinit`'s absolute
 integral-basis presentation with maximal-order machinery, so the gap is
-structural; the ratio is recorded for orientation and does not gate Phase 4.
+structural; the ratio is recorded for orientation only.
 
-Absence declarations, all with reason
-**no-comparable-surface-in-named-comparator**:
+PARI exposes no comparable callable unit for the other surfaces:
 
 - *Tower element arithmetic* (`Elem` add/sub/neg/mul/inv/div/smul): PARI's
   number-field element operations (`nfelt*`) act on absolute integral-basis

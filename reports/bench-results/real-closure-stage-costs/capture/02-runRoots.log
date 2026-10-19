@@ -1,0 +1,9 @@
+Hex.RealClosure.Bench.runRoots    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=bd5e4f1, 2026-10-05T18:56:50Z, host=chungus2
+  repeat 0  8.841 ms  (×2^5, total 282.913 ms)
+  median: 8.841 ms    min: 8.841 ms    max: 8.841 ms
+  hash: all repeats agree
+  observed hash: 0x1
+  expected hash: matches
+  peak RSS: 69_856 kB (across 1 ok repeat(s))
+exported to /home/kim/.codex/tasks/hex-10378/stage-costs-bd5e4f-capture/02-runRoots.json

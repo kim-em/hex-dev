@@ -1,0 +1,206 @@
+{
+  "source": "b6cb8615458988bbf70e66bb57a59507b60fa0de",
+  "status": "",
+  "start": "2026-10-08T18:05:02.454110+00:00",
+  "host": "chungus2",
+  "cpu": 80,
+  "load_start": [
+    4.9150390625,
+    3.72119140625,
+    4.20751953125
+  ],
+  "binary_sha256": "f2c0ec37fe306974c866b126a052fdce1582835a505c6f14b82061a3b95aa019",
+  "sources": {
+    "HexRealAlgebraic/Roots.lean": "f104f80aabb5dc83e4a45ed79b34a53c4a6b0995fe4675348af8e3ff67b20009",
+    "bench/HexRealAlgebraic/Bench.lean": "006f07dbbc3259c10e6401e48412a0b7b3f9fe1937844289e84fb7b28ef087ed",
+    "conformance/HexRealAlgebraic/Conformance.lean": "6f7225487cbdb205c9b9227035fe57368dfb5fca05271bf9689a3753878a3948",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4"
+  },
+  "arms": [
+    {
+      "trial": 0,
+      "degree": 8,
+      "arm": "Reducible",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/reducible-control/hexrealalgebraic_bench-f2c0ec37fe306974c866b126a052fdce1582835a505c6f14b82061a3b95aa019",
+        "run",
+        "Hex.RealAlgebraicBench.runReducible8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/reducible-control/0-8-Reducible.json"
+      ],
+      "output": "0-8-Reducible.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.9678065170010086
+    },
+    {
+      "trial": 0,
+      "degree": 8,
+      "arm": "IndependentReducible",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/reducible-control/hexrealalgebraic_bench-f2c0ec37fe306974c866b126a052fdce1582835a505c6f14b82061a3b95aa019",
+        "run",
+        "Hex.RealAlgebraicBench.runIndependentReducible8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/reducible-control/0-8-IndependentReducible.json"
+      ],
+      "output": "0-8-IndependentReducible.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.9666199569983291
+    },
+    {
+      "trial": 1,
+      "degree": 8,
+      "arm": "IndependentReducible",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/reducible-control/hexrealalgebraic_bench-f2c0ec37fe306974c866b126a052fdce1582835a505c6f14b82061a3b95aa019",
+        "run",
+        "Hex.RealAlgebraicBench.runIndependentReducible8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/reducible-control/1-8-IndependentReducible.json"
+      ],
+      "output": "1-8-IndependentReducible.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.9673878449975746
+    },
+    {
+      "trial": 1,
+      "degree": 8,
+      "arm": "Reducible",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/reducible-control/hexrealalgebraic_bench-f2c0ec37fe306974c866b126a052fdce1582835a505c6f14b82061a3b95aa019",
+        "run",
+        "Hex.RealAlgebraicBench.runReducible8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/reducible-control/1-8-Reducible.json"
+      ],
+      "output": "1-8-Reducible.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.9680320000043139
+    },
+    {
+      "trial": 2,
+      "degree": 8,
+      "arm": "Reducible",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/reducible-control/hexrealalgebraic_bench-f2c0ec37fe306974c866b126a052fdce1582835a505c6f14b82061a3b95aa019",
+        "run",
+        "Hex.RealAlgebraicBench.runReducible8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/reducible-control/2-8-Reducible.json"
+      ],
+      "output": "2-8-Reducible.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.967389887002355
+    },
+    {
+      "trial": 2,
+      "degree": 8,
+      "arm": "IndependentReducible",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/reducible-control/hexrealalgebraic_bench-f2c0ec37fe306974c866b126a052fdce1582835a505c6f14b82061a3b95aa019",
+        "run",
+        "Hex.RealAlgebraicBench.runIndependentReducible8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/reducible-control/2-8-IndependentReducible.json"
+      ],
+      "output": "2-8-IndependentReducible.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.968430499000533
+    },
+    {
+      "trial": 3,
+      "degree": 8,
+      "arm": "IndependentReducible",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/reducible-control/hexrealalgebraic_bench-f2c0ec37fe306974c866b126a052fdce1582835a505c6f14b82061a3b95aa019",
+        "run",
+        "Hex.RealAlgebraicBench.runIndependentReducible8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/reducible-control/3-8-IndependentReducible.json"
+      ],
+      "output": "3-8-IndependentReducible.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.9661392409980181
+    },
+    {
+      "trial": 3,
+      "degree": 8,
+      "arm": "Reducible",
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-readiness/reducible-control/hexrealalgebraic_bench-f2c0ec37fe306974c866b126a052fdce1582835a505c6f14b82061a3b95aa019",
+        "run",
+        "Hex.RealAlgebraicBench.runReducible8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-readiness/reducible-control/3-8-Reducible.json"
+      ],
+      "output": "3-8-Reducible.json",
+      "exit_code": 0,
+      "elapsed_seconds": 0.9671894869970856
+    }
+  ],
+  "boundary": "Same current binary, actual polynomial roots API versus independent per-root selectors; polynomial preparation and warmup excluded; lazy root production, exactification, sorting and complete result guards timed. Four fixed trial-major adjacent AB/BA rounds, reducible degree8, one 50ms minimum batch per arm. Whole-child RSS includes setup. No filtering or reruns.",
+  "load_end": [
+    4.84130859375,
+    3.72607421875,
+    4.2060546875
+  ],
+  "source_unchanged": true,
+  "binary_unchanged": true,
+  "artifacts": {
+    "hexrealalgebraic_bench-f2c0ec37fe306974c866b126a052fdce1582835a505c6f14b82061a3b95aa019": "f2c0ec37fe306974c866b126a052fdce1582835a505c6f14b82061a3b95aa019",
+    "HexRealAlgebraic-Roots.lean.txt": "f104f80aabb5dc83e4a45ed79b34a53c4a6b0995fe4675348af8e3ff67b20009",
+    "bench-HexRealAlgebraic-Bench.lean.txt": "006f07dbbc3259c10e6401e48412a0b7b3f9fe1937844289e84fb7b28ef087ed",
+    "conformance-HexRealAlgebraic-Conformance.lean.txt": "6f7225487cbdb205c9b9227035fe57368dfb5fca05271bf9689a3753878a3948",
+    "lean-toolchain.txt": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "lake-manifest.json.txt": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "0-8-Reducible.log": "32c39b7649883b3049fa4ed7f41611c986815826ecae1f7081169d8ca7d66d83",
+    "0-8-Reducible.json": "5f45f62cc81a728260172be08e97a67a739a6e3e5c869615a13a830d9ee60c3a",
+    "0-8-IndependentReducible.log": "c9f238283fb5f7bd969ffa39b3cad642a8989e77312a2d1660b1bc65eedfca07",
+    "0-8-IndependentReducible.json": "84e3ac657305fb65eb3decf141ab2e717e08cce2170796ac142464d6b6830b3f",
+    "1-8-IndependentReducible.log": "6c07f431eed00b1226c51289f4ec5a424a91330e992cef99e0b5e691517664ff",
+    "1-8-IndependentReducible.json": "2d400a585b0fad55f17a81e2ce458a57d020a5c420bc91921e8203e136e831cb",
+    "1-8-Reducible.log": "3e94edf9660bf76692b3bf366436220921865f4004f765a6e6b6ec0231c59166",
+    "1-8-Reducible.json": "c9f0a7b2258634c4cbc81b8bb0cd3681642c1efc89700396823b03b332223d7f",
+    "2-8-Reducible.log": "09c8e282e76ccb57a6f73862cdaa52902dc7a70ee9605f8ad27bfb5966fd6b03",
+    "2-8-Reducible.json": "80ecb9ac9c81cf2f9411b3ef19d53ba213c4ccb5940e5e841f57fce73700f049",
+    "2-8-IndependentReducible.log": "45a1bfe47d6a9bc73b3befc8c86e4ef330e57f933c40ef28810948869ddeb50d",
+    "2-8-IndependentReducible.json": "ed2de70b9daf20c2fdae2d50aacabd1a7ffbc641c098e271799f91f58923f316",
+    "3-8-IndependentReducible.log": "da4894d79a2583a7789571df5b086f593d3eeb501896375d7929178cf53534c8",
+    "3-8-IndependentReducible.json": "609f082d539ea55e44aa2ca2f5ccffc693c5d3e3c288b82b3553c3e647091ded",
+    "3-8-Reducible.log": "74a59ce36e4eaeeb182cf0c19443fa8141fb51d6cd551d15ef2ff2c709cafc0c",
+    "3-8-Reducible.json": "40f148ad58650a1d9585b9bd66e2e53c411f8c772e9d4d9468d6ba1b5216aa9f"
+  }
+}

@@ -1,0 +1,118 @@
+Hex.RealAlgebraicBench.runRationalRecognition    expected complexity: bits    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=982c40e-dirty, 2026-10-03T13:35:29Z, host=chungus2
+  param  per-call    repeats  C
+    256  709.000 ns  ×2^17    C=2.777 [trial 1/4] †
+    512  738.000 ns  ×2^17    C=1.442 [trial 1/4]
+  1_024  807.000 ns  ×2^17    C=0.790 [trial 1/4]
+  2_048  998.000 ns  ×2^16    C=0.487 [trial 1/4]
+  4_096    1.348 µs  ×2^16    C=0.330 [trial 1/4]
+  8_192    2.222 µs  ×2^15    C=0.272 [trial 1/4]
+    256  716.000 ns  ×2^17    C=2.777 [trial 2/4] †
+    512  736.000 ns  ×2^17    C=1.442 [trial 2/4]
+  1_024  809.000 ns  ×2^17    C=0.790 [trial 2/4]
+  2_048  977.000 ns  ×2^16    C=0.487 [trial 2/4]
+  4_096    1.345 µs  ×2^16    C=0.330 [trial 2/4]
+  8_192    2.205 µs  ×2^15    C=0.272 [trial 2/4]
+    256  711.000 ns  ×2^17    C=2.777 [trial 3/4] †
+    512  738.000 ns  ×2^16    C=1.442 [trial 3/4]
+  1_024  855.000 ns  ×2^16    C=0.790 [trial 3/4]
+  2_048    1.004 µs  ×2^16    C=0.487 [trial 3/4]
+  4_096    1.362 µs  ×2^16    C=0.330 [trial 3/4]
+  8_192    2.285 µs  ×2^15    C=0.272 [trial 3/4]
+    256  710.000 ns  ×2^17    C=2.777 [trial 4/4] †
+    512  737.000 ns  ×2^17    C=1.442 [trial 4/4]
+  1_024  807.000 ns  ×2^17    C=0.790 [trial 4/4]
+  2_048  996.000 ns  ×2^16    C=0.487 [trial 4/4]
+  4_096    1.356 µs  ×2^16    C=0.330 [trial 4/4]
+  8_192    2.241 µs  ×2^15    C=0.272 [trial 4/4]
+  verdict: inconclusive (cMin=0.272, cMax=1.442, β=-0.607, looks faster than declared by ~n^0.607)
+  per-spawn floor (harness self-measurement): 44.785 ms
+  peak RSS: 68_180 kB..69_080 kB (across 24 ok row(s))
+  trial summaries (4 trials per param; spread = (max-min)/median):
+    param  trials  median      min         max         spread
+      256  4/4     710.000 ns  709.000 ns  716.000 ns  0.983%
+      512  4/4     738.000 ns  736.000 ns  738.000 ns  0.276%
+    1_024  4/4     808.000 ns  807.000 ns  855.000 ns  5.845%
+    2_048  4/4     997.000 ns  977.000 ns    1.004 µs  2.655%
+    4_096  4/4       1.352 µs    1.345 µs    1.362 µs  1.230%
+    8_192  4/4       2.231 µs    2.205 µs    2.285 µs  3.583%
+
+Hex.RealAlgebraicBench.runRationalFloor    expected complexity: bits    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=982c40e-dirty, 2026-10-03T13:35:34Z, host=chungus2
+  param  per-call    repeats  C
+    256  545.000 ns  ×2^17    C=2.119 [trial 1/4] †
+    512  626.000 ns  ×2^17    C=1.147 [trial 1/4]
+  1_024  657.000 ns  ×2^17    C=0.639 [trial 1/4]
+  2_048  811.000 ns  ×2^17    C=0.399 [trial 1/4]
+  4_096    1.145 µs  ×2^16    C=0.284 [trial 1/4]
+  8_192    1.875 µs  ×2^15    C=0.229 [trial 1/4]
+    256  539.000 ns  ×2^17    C=2.119 [trial 2/4] †
+    512  572.000 ns  ×2^17    C=1.147 [trial 2/4]
+  1_024  650.000 ns  ×2^17    C=0.639 [trial 2/4]
+  2_048  811.000 ns  ×2^17    C=0.399 [trial 2/4]
+  4_096    1.172 µs  ×2^16    C=0.284 [trial 2/4]
+  8_192    1.869 µs  ×2^15    C=0.229 [trial 2/4]
+    256  552.000 ns  ×2^17    C=2.119 [trial 3/4] †
+    512  590.000 ns  ×2^17    C=1.147 [trial 3/4]
+  1_024  650.000 ns  ×2^17    C=0.639 [trial 3/4]
+  2_048  827.000 ns  ×2^17    C=0.399 [trial 3/4]
+  4_096    1.170 µs  ×2^16    C=0.284 [trial 3/4]
+  8_192    1.893 µs  ×2^15    C=0.229 [trial 3/4]
+    256  537.000 ns  ×2^17    C=2.119 [trial 4/4] †
+    512  584.000 ns  ×2^17    C=1.147 [trial 4/4]
+  1_024  662.000 ns  ×2^17    C=0.639 [trial 4/4]
+  2_048  822.000 ns  ×2^17    C=0.399 [trial 4/4]
+  4_096    1.158 µs  ×2^16    C=0.284 [trial 4/4]
+  8_192    1.870 µs  ×2^15    C=0.229 [trial 4/4]
+  verdict: inconclusive (cMin=0.229, cMax=1.147, β=-0.582, looks faster than declared by ~n^0.582)
+  per-spawn floor (harness self-measurement): 43.843 ms
+  peak RSS: 68_424 kB..69_196 kB (across 24 ok row(s))
+  trial summaries (4 trials per param; spread = (max-min)/median):
+    param  trials  median      min         max         spread
+      256  4/4     542.000 ns  537.000 ns  552.000 ns  2.805%
+      512  4/4     587.000 ns  572.000 ns  626.000 ns  9.223%
+    1_024  4/4     654.000 ns  650.000 ns  662.000 ns  1.856%
+    2_048  4/4     816.000 ns  811.000 ns  827.000 ns  2.057%
+    4_096  4/4       1.164 µs    1.145 µs    1.172 µs  2.316%
+    8_192  4/4       1.872 µs    1.869 µs    1.893 µs  1.281%
+
+Hex.RealAlgebraicBench.runRationalCeil    expected complexity: bits    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=982c40e-dirty, 2026-10-03T13:35:39Z, host=chungus2
+  param  per-call    repeats  C
+    256  550.000 ns  ×2^17    C=2.115 [trial 1/4] †
+    512  566.000 ns  ×2^17    C=1.103 [trial 1/4]
+  1_024  657.000 ns  ×2^17    C=0.631 [trial 1/4]
+  2_048  809.000 ns  ×2^17    C=0.396 [trial 1/4]
+  4_096    1.152 µs  ×2^16    C=0.282 [trial 1/4]
+  8_192    1.862 µs  ×2^15    C=0.229 [trial 1/4]
+    256  536.000 ns  ×2^17    C=2.115 [trial 2/4] †
+    512  564.000 ns  ×2^17    C=1.103 [trial 2/4]
+  1_024  642.000 ns  ×2^17    C=0.631 [trial 2/4]
+  2_048  811.000 ns  ×2^17    C=0.396 [trial 2/4]
+  4_096    1.162 µs  ×2^16    C=0.282 [trial 2/4]
+  8_192    1.931 µs  ×2^15    C=0.229 [trial 2/4]
+    256  546.000 ns  ×2^17    C=2.115 [trial 3/4] †
+    512  564.000 ns  ×2^17    C=1.103 [trial 3/4]
+  1_024  647.000 ns  ×2^17    C=0.631 [trial 3/4]
+  2_048  815.000 ns  ×2^17    C=0.396 [trial 3/4]
+  4_096    1.148 µs  ×2^16    C=0.282 [trial 3/4]
+  8_192    1.873 µs  ×2^15    C=0.229 [trial 3/4]
+    256  536.000 ns  ×2^17    C=2.115 [trial 4/4] †
+    512  555.000 ns  ×2^17    C=1.103 [trial 4/4]
+  1_024  645.000 ns  ×2^17    C=0.631 [trial 4/4]
+  2_048  811.000 ns  ×2^17    C=0.396 [trial 4/4]
+  4_096    1.161 µs  ×2^16    C=0.282 [trial 4/4]
+  8_192    1.878 µs  ×2^15    C=0.229 [trial 4/4]
+  verdict: inconclusive (cMin=0.229, cMax=1.103, β=-0.570, looks faster than declared by ~n^0.570)
+  per-spawn floor (harness self-measurement): 43.790 ms
+  peak RSS: 68_348 kB..69_276 kB (across 24 ok row(s))
+  trial summaries (4 trials per param; spread = (max-min)/median):
+    param  trials  median      min         max         spread
+      256  4/4     541.000 ns  536.000 ns  550.000 ns  2.675%
+      512  4/4     564.000 ns  555.000 ns  566.000 ns  1.853%
+    1_024  4/4     646.000 ns  642.000 ns  657.000 ns  2.333%
+    2_048  4/4     811.000 ns  809.000 ns  815.000 ns  0.835%
+    4_096  4/4       1.156 µs    1.148 µs    1.162 µs  1.244%
+    8_192  4/4       1.875 µs    1.862 µs    1.931 µs  3.649%
+
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-rational-height/results.json

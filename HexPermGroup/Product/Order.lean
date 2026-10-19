@@ -8,6 +8,7 @@ module
 
 public import HexPermGroup.Product.Maps
 public import HexPermGroup.Enumerate
+public import HexBasic.List.Nodup
 
 public section
 
@@ -36,9 +37,9 @@ theorem directProduct_order (G : Group n) (H : Group m) : (G.directProduct H).or
     exact List.mem_map.mpr ⟨DirectProduct.snd r, by simpa using H.mem_enumerate _, DirectProduct.pair_factors r⟩
   have hl : values.length = G.order * H.order := by
     simp [values, List.length_flatMap, enumerate_size, List.map_const', List.sum_replicate_nat]
-  have h₁ := List.nodup_subset_length_le hn (l₂ := (G.directProduct H).enumerate.toList)
+  have h₁ := Hex.List.nodup_subset_length_le hn (l₂ := (G.directProduct H).enumerate.toList)
     (fun p _ => by simpa using (G.directProduct H).mem_enumerate p)
-  have h₂ := List.nodup_subset_length_le (G.directProduct H).enumerate_nodup (l₂ := values) (fun p _ => hm p)
+  have h₂ := Hex.List.nodup_subset_length_le (G.directProduct H).enumerate_nodup (l₂ := values) (fun p _ => hm p)
   simp only [Array.length_toList, enumerate_size, hl] at h₁ h₂
   omega
 

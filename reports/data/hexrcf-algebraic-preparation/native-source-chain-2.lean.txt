@@ -1,0 +1,32 @@
+import HexRCF.RealCoefficients.AlgebraicPreparation
+import HexRealClosureTheory.NativeAssemblyModels
+open Hex Lean Meta Qq Hex.RCF.RealCoefficients
+open Hex.RealClosure.Algebraic.KernelReplay.FiniteData
+set_option maxHeartbeats 2400000
+set_option maxRecDepth 8192
+private def note (message : String) : MetaM Unit := do
+  IO.FS.withFile "/home/kim/.codex/tasks/hex-10358/native-source-chain.events" .append fun file => do
+    file.putStrLn s!"{← IO.monoMsNow}: {message}"
+    file.flush
+run_meta do
+  let nonnegative : Expr → MetaM (Option Expr) := fun source => do
+    let source : Q(ℝ) := source
+    let goal ← mkFreshExprMVar q(0 ≤ $source)
+    let remaining ← Elab.runTactic' goal.mvarId! (← `(tactic| norm_num))
+    unless remaining.isEmpty do return none
+    return some (← instantiateMVars goal)
+  let .ok prepared ← AlgebraicPreparation.prepare q(∀ x : ℝ, x^2 + Real.sqrt 2 > 0) nonnegative
+    | throwError "source preparation failed"
+  let some entry := prepared.coefficients.toArray[0]? | throwError "source has no coefficient"
+  let a : Q(RealAlgebraicNumber) := entry.expression
+  let registry : Q(RealClosure.BaseContext.Registry) := q(fun _ => none)
+  let proposed ← mkAppM ``RealClosure.NumberField.present? #[a,registry]
+  let success ← mkAppM ``RealClosure.NumberField.present?_success #[a,registry]
+  let equivalence ← mkAppOptM ``Option.isSome_iff_exists #[none,some proposed]
+  let available ← mkAppM ``Iff.mpr #[equivalence,success]
+  let presentation ← mkAppM ``Option.get #[proposed,available]
+  let context ← mkAppM ``RealClosure.NumberField.Presentation.context #[presentation]
+  note "source prepared; actual selected-presentation context extraction begins"
+  let chain ← NativeChain.ofContext context
+  note s!"public original factory context extracted: {chain.owners.size} owners, {chain.bindings.size} bindings"
+  unless chain.owners.size > 0 do throwError "irrational source lost its original algebraic owner"

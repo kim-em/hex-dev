@@ -1,0 +1,4687 @@
+{
+  "source": "85720b978d54bf92dfa47cb262b3639fc88da040",
+  "cpu": 5,
+  "host": "chungus2",
+  "observations": 96,
+  "comparisons": [
+    {
+      "case": "Rational2",
+      "generic_ms": {
+        "samples": 6,
+        "median": 0.973234236328125,
+        "minimum": 0.94921546484375,
+        "maximum": 1.0138624892578125,
+        "values": [
+          1.0138624892578125,
+          0.94921546484375,
+          0.9580311201171875,
+          0.95985658984375,
+          0.9866118828125,
+          0.998514734375
+        ]
+      },
+      "canonical_ms": {
+        "samples": 6,
+        "median": 2.125377185546875,
+        "minimum": 2.101206046875,
+        "maximum": 2.703307890625,
+        "values": [
+          2.703307890625,
+          2.101206046875,
+          2.120976171875,
+          2.12977819921875,
+          2.1101231328125,
+          2.2414513046875
+        ]
+      },
+      "generic_over_canonical": {
+        "samples": 6,
+        "median": 0.4511886564239092,
+        "minimum": 0.3750451410931994,
+        "maximum": 0.46756128468080627,
+        "values": [
+          0.3750451410931994,
+          0.45174792174973144,
+          0.4516934856794087,
+          0.4506838271684097,
+          0.46756128468080627,
+          0.44547688021900234
+        ]
+      },
+      "generic_minus_canonical_ms": {
+        "samples": 6,
+        "median": -1.1664333305664063,
+        "minimum": -1.6894454013671876,
+        "maximum": -1.12351125,
+        "values": [
+          -1.6894454013671876,
+          -1.15199058203125,
+          -1.1629450517578128,
+          -1.1699216093749998,
+          -1.12351125,
+          -1.2429365703125002
+        ]
+      },
+      "generic_maximum_resident_set_kib": {
+        "samples": 6,
+        "median": 74690.0,
+        "minimum": 74360,
+        "maximum": 75072,
+        "values": [
+          74672,
+          74460,
+          74708,
+          75072,
+          74824,
+          74360
+        ]
+      },
+      "generic_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 68624.0,
+        "minimum": 65368,
+        "maximum": 69260,
+        "values": [
+          65368,
+          68560,
+          69256,
+          68548,
+          69260,
+          68688
+        ]
+      },
+      "canonical_maximum_resident_set_kib": {
+        "samples": 6,
+        "median": 75022.0,
+        "minimum": 74256,
+        "maximum": 75324,
+        "values": [
+          74848,
+          75196,
+          74256,
+          75208,
+          75324,
+          74372
+        ]
+      },
+      "canonical_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 68692.0,
+        "minimum": 67968,
+        "maximum": 69068,
+        "values": [
+          68600,
+          67968,
+          68784,
+          68820,
+          68128,
+          69068
+        ]
+      }
+    },
+    {
+      "case": "Rational4",
+      "generic_ms": {
+        "samples": 6,
+        "median": 6.6059515859375,
+        "minimum": 6.5587925859375,
+        "maximum": 6.965556984375,
+        "values": [
+          6.6729325546875,
+          6.5587925859375,
+          6.595475546875,
+          6.616427625,
+          6.5862331796875,
+          6.965556984375
+        ]
+      },
+      "canonical_ms": {
+        "samples": 6,
+        "median": 11.7391547109375,
+        "minimum": 11.622204890625,
+        "maximum": 26.49730325,
+        "values": [
+          26.49730325,
+          11.71587934375,
+          11.762430078125,
+          11.622204890625,
+          11.683876296875,
+          11.961023109375
+        ]
+      },
+      "generic_over_canonical": {
+        "samples": 6,
+        "median": 0.5622133190632781,
+        "minimum": 0.2518344033628214,
+        "maximum": 0.5823546130360224,
+        "values": [
+          0.2518344033628214,
+          0.5598207691884758,
+          0.5607238897972993,
+          0.569291944795872,
+          0.563702748329257,
+          0.5823546130360224
+        ]
+      },
+      "generic_minus_canonical_ms": {
+        "samples": 6,
+        "median": -5.1273649375,
+        "minimum": -19.824370695312503,
+        "maximum": -4.995466125000001,
+        "values": [
+          -19.824370695312503,
+          -5.1570867578125,
+          -5.16695453125,
+          -5.0057772656249995,
+          -5.0976431171875,
+          -4.995466125000001
+        ]
+      },
+      "generic_maximum_resident_set_kib": {
+        "samples": 6,
+        "median": 74642.0,
+        "minimum": 74164,
+        "maximum": 75072,
+        "values": [
+          74720,
+          74584,
+          74452,
+          75072,
+          74700,
+          74164
+        ]
+      },
+      "generic_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 68696.0,
+        "minimum": 68624,
+        "maximum": 69300,
+        "values": [
+          69300,
+          68648,
+          68968,
+          68724,
+          68624,
+          68668
+        ]
+      },
+      "canonical_maximum_resident_set_kib": {
+        "samples": 6,
+        "median": 74802.0,
+        "minimum": 74136,
+        "maximum": 75240,
+        "values": [
+          74136,
+          75108,
+          74776,
+          74828,
+          75240,
+          74332
+        ]
+      },
+      "canonical_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 68500.0,
+        "minimum": 68432,
+        "maximum": 68568,
+        "values": [
+          68540,
+          68568,
+          68460,
+          68432,
+          68548,
+          68452
+        ]
+      }
+    },
+    {
+      "case": "Rational6",
+      "generic_ms": {
+        "samples": 6,
+        "median": 34.3844014375,
+        "minimum": 33.9151195625,
+        "maximum": 39.426256625,
+        "values": [
+          34.2839469375,
+          34.4848559375,
+          34.1502018125,
+          33.9151195625,
+          34.643027875,
+          39.426256625
+        ]
+      },
+      "canonical_ms": {
+        "samples": 6,
+        "median": 76.5645731875,
+        "minimum": 75.91700575,
+        "maximum": 88.204839875,
+        "values": [
+          76.585594375,
+          76.543552,
+          75.91700575,
+          76.313569875,
+          76.691694125,
+          88.204839875
+        ]
+      },
+      "generic_over_canonical": {
+        "samples": 6,
+        "median": 0.448745645576349,
+        "minimum": 0.4444179405845153,
+        "maximum": 0.4517181198075405,
+        "values": [
+          0.44765529623794864,
+          0.4505259428971888,
+          0.4498359949147494,
+          0.4444179405845153,
+          0.4517181198075405,
+          0.446985184496374
+        ]
+      },
+      "generic_minus_canonical_ms": {
+        "samples": 6,
+        "median": -42.18017175,
+        "minimum": -48.778583250000004,
+        "maximum": -41.7668039375,
+        "values": [
+          -42.3016474375,
+          -42.058696062500005,
+          -41.7668039375,
+          -42.398450312499996,
+          -42.04866625,
+          -48.778583250000004
+        ]
+      },
+      "generic_maximum_resident_set_kib": {
+        "samples": 6,
+        "median": 74996.0,
+        "minimum": 74336,
+        "maximum": 75260,
+        "values": [
+          74968,
+          75180,
+          74480,
+          75260,
+          75024,
+          74336
+        ]
+      },
+      "generic_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 68530.0,
+        "minimum": 67804,
+        "maximum": 69204,
+        "values": [
+          68584,
+          68476,
+          68632,
+          69204,
+          67804,
+          68124
+        ]
+      },
+      "canonical_maximum_resident_set_kib": {
+        "samples": 6,
+        "median": 74864.0,
+        "minimum": 74288,
+        "maximum": 75264,
+        "values": [
+          74660,
+          75108,
+          74904,
+          74824,
+          74288,
+          75264
+        ]
+      },
+      "canonical_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 68478.0,
+        "minimum": 68172,
+        "maximum": 68944,
+        "values": [
+          68416,
+          68924,
+          68540,
+          68944,
+          68300,
+          68172
+        ]
+      }
+    },
+    {
+      "case": "Rational8",
+      "generic_ms": {
+        "samples": 6,
+        "median": 127.5099874375,
+        "minimum": 122.94355375,
+        "maximum": 133.511921,
+        "values": [
+          124.393373875,
+          124.16465625,
+          122.94355375,
+          132.556212,
+          133.511921,
+          130.626601
+        ]
+      },
+      "canonical_ms": {
+        "samples": 6,
+        "median": 533.075459,
+        "minimum": 518.222327,
+        "maximum": 572.994312,
+        "values": [
+          531.08288,
+          535.068038,
+          522.871059,
+          518.222327,
+          552.165109,
+          572.994312
+        ]
+      },
+      "generic_over_canonical": {
+        "samples": 6,
+        "median": 0.23467880092766522,
+        "minimum": 0.22797189826205463,
+        "maximum": 0.25579023730484696,
+        "values": [
+          0.23422591568946824,
+          0.2320539584350953,
+          0.2351316861658622,
+          0.25579023730484696,
+          0.24179709804880117,
+          0.22797189826205463
+        ]
+      },
+      "generic_minus_canonical_ms": {
+        "samples": 6,
+        "median": -408.79644393750004,
+        "minimum": -442.36771100000004,
+        "maximum": -385.666115,
+        "values": [
+          -406.68950612500004,
+          -410.90338175,
+          -399.92750524999997,
+          -385.666115,
+          -418.653188,
+          -442.36771100000004
+        ]
+      },
+      "generic_maximum_resident_set_kib": {
+        "samples": 6,
+        "median": 74728.0,
+        "minimum": 74140,
+        "maximum": 75160,
+        "values": [
+          74140,
+          75160,
+          74412,
+          74480,
+          74976,
+          75104
+        ]
+      },
+      "generic_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 68558.0,
+        "minimum": 68292,
+        "maximum": 69248,
+        "values": [
+          68644,
+          69248,
+          68472,
+          68292,
+          69044,
+          68312
+        ]
+      },
+      "canonical_maximum_resident_set_kib": {
+        "samples": 6,
+        "median": 74908.0,
+        "minimum": 74396,
+        "maximum": 75148,
+        "values": [
+          74860,
+          75148,
+          74396,
+          74456,
+          74956,
+          75128
+        ]
+      },
+      "canonical_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 68424.0,
+        "minimum": 68096,
+        "maximum": 68856,
+        "values": [
+          68404,
+          68776,
+          68096,
+          68444,
+          68856,
+          68108
+        ]
+      }
+    },
+    {
+      "case": "Quadratic2",
+      "generic_ms": {
+        "samples": 6,
+        "median": 6.596047101562499,
+        "minimum": 6.312531234375,
+        "maximum": 7.2465855078125,
+        "values": [
+          6.397794953125,
+          6.66409671875,
+          6.312531234375,
+          6.527997484375,
+          7.2465855078125,
+          6.6692216328125
+        ]
+      },
+      "canonical_ms": {
+        "samples": 6,
+        "median": 2.4998591992187498,
+        "minimum": 2.48330440625,
+        "maximum": 3.62827951953125,
+        "values": [
+          2.50536355078125,
+          2.49390202734375,
+          2.49435484765625,
+          2.48330440625,
+          3.62827951953125,
+          2.61148237109375
+        ]
+      },
+      "generic_over_canonical": {
+        "samples": 6,
+        "median": 2.5537231131752813,
+        "minimum": 1.9972511678892677,
+        "maximum": 2.6721565826095883,
+        "values": [
+          2.5536393515144615,
+          2.6721565826095883,
+          2.530727029599013,
+          2.6287544402310425,
+          1.9972511678892677,
+          2.5538068748361007
+        ]
+      },
+      "generic_minus_canonical_ms": {
+        "samples": 6,
+        "median": 3.968562240234375,
+        "minimum": 3.61830598828125,
+        "maximum": 4.17019469140625,
+        "values": [
+          3.8924314023437496,
+          4.17019469140625,
+          3.81817638671875,
+          4.044693078125,
+          3.61830598828125,
+          4.0577392617187495
+        ]
+      },
+      "generic_maximum_resident_set_kib": {
+        "samples": 6,
+        "median": 74384.0,
+        "minimum": 74280,
+        "maximum": 75096,
+        "values": [
+          74808,
+          74280,
+          74364,
+          74360,
+          74404,
+          75096
+        ]
+      },
+      "generic_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 68680.0,
+        "minimum": 68536,
+        "maximum": 69152,
+        "values": [
+          69152,
+          68720,
+          68640,
+          68620,
+          68996,
+          68536
+        ]
+      },
+      "canonical_maximum_resident_set_kib": {
+        "samples": 6,
+        "median": 74954.0,
+        "minimum": 74324,
+        "maximum": 75236,
+        "values": [
+          74912,
+          75008,
+          74324,
+          74996,
+          74788,
+          75236
+        ]
+      },
+      "canonical_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 68856.0,
+        "minimum": 68216,
+        "maximum": 69168,
+        "values": [
+          68404,
+          68804,
+          69132,
+          69168,
+          68908,
+          68216
+        ]
+      }
+    },
+    {
+      "case": "Quadratic4",
+      "generic_ms": {
+        "samples": 6,
+        "median": 89.9264284375,
+        "minimum": 87.872157625,
+        "maximum": 100.614859375,
+        "values": [
+          89.059988375,
+          87.872157625,
+          89.080516375,
+          100.614859375,
+          95.295171625,
+          90.7723405
+        ]
+      },
+      "canonical_ms": {
+        "samples": 6,
+        "median": 10.178843421875,
+        "minimum": 10.02811296875,
+        "maximum": 11.1625976875,
+        "values": [
+          10.033884328125,
+          10.02811296875,
+          10.05006440625,
+          10.3076224375,
+          11.1625976875,
+          10.663293859375
+        ]
+      },
+      "generic_over_canonical": {
+        "samples": 6,
+        "median": 8.813128856713902,
+        "minimum": 8.512598611375076,
+        "maximum": 9.761209239577369,
+        "values": [
+          8.87592336752026,
+          8.762581544387332,
+          8.863676169040472,
+          9.761209239577369,
+          8.53700673381005,
+          8.512598611375076
+        ]
+      },
+      "generic_minus_canonical_ms": {
+        "samples": 6,
+        "median": 79.56974930468749,
+        "minimum": 77.84404465625,
+        "maximum": 90.3072369375,
+        "values": [
+          79.026104046875,
+          77.84404465625,
+          79.03045196875,
+          90.3072369375,
+          84.1325739375,
+          80.109046640625
+        ]
+      },
+      "generic_maximum_resident_set_kib": {
+        "samples": 6,
+        "median": 74560.0,
+        "minimum": 74096,
+        "maximum": 75220,
+        "values": [
+          74096,
+          75220,
+          75168,
+          74616,
+          74428,
+          74504
+        ]
+      },
+      "generic_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 68746.0,
+        "minimum": 68460,
+        "maximum": 69100,
+        "values": [
+          69100,
+          68460,
+          69084,
+          68608,
+          68488,
+          68884
+        ]
+      },
+      "canonical_maximum_resident_set_kib": {
+        "samples": 6,
+        "median": 74650.0,
+        "minimum": 74144,
+        "maximum": 75268,
+        "values": [
+          75056,
+          74512,
+          74788,
+          74276,
+          74144,
+          75268
+        ]
+      },
+      "canonical_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 68462.0,
+        "minimum": 63044,
+        "maximum": 69032,
+        "values": [
+          63044,
+          69032,
+          68492,
+          68432,
+          69032,
+          65680
+        ]
+      }
+    },
+    {
+      "case": "Quadratic6",
+      "generic_ms": {
+        "samples": 6,
+        "median": 975.0102589999999,
+        "minimum": 924.081955,
+        "maximum": 1224.05454,
+        "values": [
+          953.655591,
+          924.081955,
+          927.210552,
+          996.364927,
+          1224.05454,
+          1133.963667
+        ]
+      },
+      "canonical_ms": {
+        "samples": 6,
+        "median": 37.970413343749996,
+        "minimum": 36.6890931875,
+        "maximum": 74.027821875,
+        "values": [
+          36.842698375,
+          37.4109563125,
+          36.6890931875,
+          40.4175929375,
+          74.027821875,
+          38.529870375
+        ]
+      },
+      "generic_over_canonical": {
+        "samples": 6,
+        "median": 24.986470418276546,
+        "minimum": 16.535060859508775,
+        "maximum": 29.43076776442438,
+        "values": [
+          25.88452076157139,
+          24.700837564295025,
+          25.27210327225807,
+          24.651763120597884,
+          16.535060859508775,
+          29.43076776442438
+        ]
+      },
+      "generic_minus_canonical_ms": {
+        "samples": 6,
+        "median": 936.3801133437499,
+        "minimum": 886.6709986875,
+        "maximum": 1150.0267181250001,
+        "values": [
+          916.8128926249999,
+          886.6709986875,
+          890.5214588125,
+          955.9473340625,
+          1150.0267181250001,
+          1095.433796625
+        ]
+      },
+      "generic_maximum_resident_set_kib": {
+        "samples": 6,
+        "median": 74806.0,
+        "minimum": 74536,
+        "maximum": 75076,
+        "values": [
+          74860,
+          74724,
+          75076,
+          74800,
+          74536,
+          74812
+        ]
+      },
+      "generic_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 70424.0,
+        "minimum": 66868,
+        "maximum": 70964,
+        "values": [
+          66868,
+          70224,
+          70964,
+          70092,
+          70624,
+          70824
+        ]
+      },
+      "canonical_maximum_resident_set_kib": {
+        "samples": 6,
+        "median": 74376.0,
+        "minimum": 68508,
+        "maximum": 74892,
+        "values": [
+          73004,
+          74456,
+          74804,
+          74892,
+          68508,
+          74296
+        ]
+      },
+      "canonical_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 68698.0,
+        "minimum": 65288,
+        "maximum": 69016,
+        "values": [
+          65288,
+          68512,
+          69016,
+          68908,
+          66104,
+          68884
+        ]
+      }
+    },
+    {
+      "case": "Quadratic8",
+      "generic_ms": {
+        "samples": 6,
+        "median": 5577.2445365,
+        "minimum": 5446.654989,
+        "maximum": 6402.381008,
+        "values": [
+          5593.400985,
+          5531.321658,
+          5561.088088,
+          6402.381008,
+          5446.654989,
+          6305.967121
+        ]
+      },
+      "canonical_ms": {
+        "samples": 6,
+        "median": 198.24312937500002,
+        "minimum": 195.268227,
+        "maximum": 214.328149,
+        "values": [
+          199.76914375,
+          195.268227,
+          196.717115,
+          214.328149,
+          195.97093275,
+          202.90523575
+        ]
+      },
+      "generic_over_canonical": {
+        "samples": 6,
+        "median": 28.298127717884174,
+        "minimum": 27.7931778584138,
+        "maximum": 31.078385423082903,
+        "values": [
+          27.999324019728647,
+          28.326787941798642,
+          28.269467493969707,
+          29.87186255222127,
+          27.7931778584138,
+          31.078385423082903
+        ]
+      },
+      "generic_minus_canonical_ms": {
+        "samples": 6,
+        "median": 5379.001407125001,
+        "minimum": 5250.684056249999,
+        "maximum": 6188.052859,
+        "values": [
+          5393.63184125,
+          5336.053431,
+          5364.370973,
+          6188.052859,
+          5250.684056249999,
+          6103.061885249999
+        ]
+      },
+      "generic_maximum_resident_set_kib": {
+        "samples": 6,
+        "median": 74614.0,
+        "minimum": 72328,
+        "maximum": 75176,
+        "values": [
+          75132,
+          75176,
+          74500,
+          74448,
+          72328,
+          74728
+        ]
+      },
+      "generic_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 70338.0,
+        "minimum": 69900,
+        "maximum": 71032,
+        "values": [
+          69900,
+          71032,
+          70572,
+          70344,
+          70332,
+          70160
+        ]
+      },
+      "canonical_maximum_resident_set_kib": {
+        "samples": 6,
+        "median": 74540.0,
+        "minimum": 68856,
+        "maximum": 75048,
+        "values": [
+          74688,
+          74516,
+          74564,
+          74492,
+          75048,
+          68856
+        ]
+      },
+      "canonical_child_peak_rss_kib": {
+        "samples": 6,
+        "median": 68740.0,
+        "minimum": 68268,
+        "maximum": 68924,
+        "values": [
+          68924,
+          68624,
+          68504,
+          68864,
+          68268,
+          68856
+        ]
+      }
+    }
+  ],
+  "raw_batches": [
+    {
+      "trial": 0,
+      "case": "Rational2",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "00-Rational2-generic.json",
+      "command_index": 7,
+      "exit_code": 0,
+      "per_call_ms": 1.0138624892578125,
+      "raw_point": {
+        "total_nanos": 1038195189,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 65368,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74672,
+        "user_seconds": 3.19,
+        "system_seconds": 0.07,
+        "elapsed_seconds": 3.3,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 0,
+      "case": "Rational2",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "00-Rational2-canonical.json",
+      "command_index": 8,
+      "exit_code": 0,
+      "per_call_ms": 2.703307890625,
+      "raw_point": {
+        "total_nanos": 692046820,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68600,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74848,
+        "user_seconds": 2.54,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 2.61,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 0,
+      "case": "Rational4",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "00-Rational4-generic.json",
+      "command_index": 9,
+      "exit_code": 0,
+      "per_call_ms": 6.6729325546875,
+      "raw_point": {
+        "total_nanos": 854135367,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69300,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74720,
+        "user_seconds": 3.62,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 3.72,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 0,
+      "case": "Rational4",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "00-Rational4-canonical.json",
+      "command_index": 10,
+      "exit_code": 0,
+      "per_call_ms": 26.49730325,
+      "raw_point": {
+        "total_nanos": 847913704,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68540,
+        "inner_repeats": 32,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74136,
+        "user_seconds": 3.02,
+        "system_seconds": 0.06,
+        "elapsed_seconds": 3.15,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 0,
+      "case": "Rational6",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "00-Rational6-generic.json",
+      "command_index": 11,
+      "exit_code": 0,
+      "per_call_ms": 34.2839469375,
+      "raw_point": {
+        "total_nanos": 548543151,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68584,
+        "inner_repeats": 16,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74968,
+        "user_seconds": 2.56,
+        "system_seconds": 0.06,
+        "elapsed_seconds": 2.7,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 0,
+      "case": "Rational6",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "00-Rational6-canonical.json",
+      "command_index": 12,
+      "exit_code": 0,
+      "per_call_ms": 76.585594375,
+      "raw_point": {
+        "total_nanos": 612684755,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68416,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74660,
+        "user_seconds": 2.57,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 2.65,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 0,
+      "case": "Rational8",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "00-Rational8-generic.json",
+      "command_index": 13,
+      "exit_code": 0,
+      "per_call_ms": 124.393373875,
+      "raw_point": {
+        "total_nanos": 995146991,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68644,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74140,
+        "user_seconds": 4.08,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 4.16,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 0,
+      "case": "Rational8",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "00-Rational8-canonical.json",
+      "command_index": 14,
+      "exit_code": 0,
+      "per_call_ms": 531.08288,
+      "raw_point": {
+        "total_nanos": 531082880,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68404,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74860,
+        "user_seconds": 2.21,
+        "system_seconds": 0.04,
+        "elapsed_seconds": 2.28,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 0,
+      "case": "Quadratic2",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "00-Quadratic2-generic.json",
+      "command_index": 15,
+      "exit_code": 0,
+      "per_call_ms": 6.397794953125,
+      "raw_point": {
+        "total_nanos": 818917754,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69152,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74808,
+        "user_seconds": 3.43,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 3.53,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 0,
+      "case": "Quadratic2",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "00-Quadratic2-canonical.json",
+      "command_index": 16,
+      "exit_code": 0,
+      "per_call_ms": 2.50536355078125,
+      "raw_point": {
+        "total_nanos": 641373069,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68404,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74912,
+        "user_seconds": 2.68,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 2.76,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 0,
+      "case": "Quadratic4",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "00-Quadratic4-generic.json",
+      "command_index": 17,
+      "exit_code": 0,
+      "per_call_ms": 89.059988375,
+      "raw_point": {
+        "total_nanos": 712479907,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69100,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74096,
+        "user_seconds": 2.94,
+        "system_seconds": 0.04,
+        "elapsed_seconds": 3.0,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 0,
+      "case": "Quadratic4",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "00-Quadratic4-canonical.json",
+      "command_index": 18,
+      "exit_code": 0,
+      "per_call_ms": 10.033884328125,
+      "raw_point": {
+        "total_nanos": 642168597,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 63044,
+        "inner_repeats": 64,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 75056,
+        "user_seconds": 2.69,
+        "system_seconds": 0.09,
+        "elapsed_seconds": 2.81,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 0,
+      "case": "Quadratic6",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "00-Quadratic6-generic.json",
+      "command_index": 19,
+      "exit_code": 0,
+      "per_call_ms": 953.655591,
+      "raw_point": {
+        "total_nanos": 953655591,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 66868,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74860,
+        "user_seconds": 3.83,
+        "system_seconds": 0.14,
+        "elapsed_seconds": 4.01,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 0,
+      "case": "Quadratic6",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "00-Quadratic6-canonical.json",
+      "command_index": 20,
+      "exit_code": 0,
+      "per_call_ms": 36.842698375,
+      "raw_point": {
+        "total_nanos": 589483174,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 65288,
+        "inner_repeats": 16,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 73004,
+        "user_seconds": 2.49,
+        "system_seconds": 0.16,
+        "elapsed_seconds": 2.71,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 0,
+      "case": "Quadratic8",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "00-Quadratic8-generic.json",
+      "command_index": 21,
+      "exit_code": 0,
+      "per_call_ms": 5593.400985,
+      "raw_point": {
+        "total_nanos": 5593400985,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69900,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 75132,
+        "user_seconds": 22.09,
+        "system_seconds": 0.1,
+        "elapsed_seconds": 22.33,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 0,
+      "case": "Quadratic8",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "00-Quadratic8-canonical.json",
+      "command_index": 22,
+      "exit_code": 0,
+      "per_call_ms": 199.76914375,
+      "raw_point": {
+        "total_nanos": 799076575,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68924,
+        "inner_repeats": 4,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74688,
+        "user_seconds": 3.31,
+        "system_seconds": 0.07,
+        "elapsed_seconds": 3.42,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 1,
+      "case": "Rational2",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "01-Rational2-canonical.json",
+      "command_index": 23,
+      "exit_code": 0,
+      "per_call_ms": 2.101206046875,
+      "raw_point": {
+        "total_nanos": 537908748,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 67968,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 75196,
+        "user_seconds": 2.3,
+        "system_seconds": 0.04,
+        "elapsed_seconds": 2.38,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 1,
+      "case": "Rational2",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "01-Rational2-generic.json",
+      "command_index": 24,
+      "exit_code": 0,
+      "per_call_ms": 0.94921546484375,
+      "raw_point": {
+        "total_nanos": 971996636,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68560,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74460,
+        "user_seconds": 4.03,
+        "system_seconds": 0.04,
+        "elapsed_seconds": 4.1,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 1,
+      "case": "Rational4",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "01-Rational4-canonical.json",
+      "command_index": 25,
+      "exit_code": 0,
+      "per_call_ms": 11.71587934375,
+      "raw_point": {
+        "total_nanos": 749816278,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68568,
+        "inner_repeats": 64,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 75108,
+        "user_seconds": 3.1,
+        "system_seconds": 0.04,
+        "elapsed_seconds": 3.18,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 1,
+      "case": "Rational4",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "01-Rational4-generic.json",
+      "command_index": 26,
+      "exit_code": 0,
+      "per_call_ms": 6.5587925859375,
+      "raw_point": {
+        "total_nanos": 839525451,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68648,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74584,
+        "user_seconds": 3.51,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 3.6,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 1,
+      "case": "Rational6",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "01-Rational6-canonical.json",
+      "command_index": 27,
+      "exit_code": 0,
+      "per_call_ms": 76.543552,
+      "raw_point": {
+        "total_nanos": 612348416,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68924,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 75108,
+        "user_seconds": 2.58,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 2.66,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 1,
+      "case": "Rational6",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "01-Rational6-generic.json",
+      "command_index": 28,
+      "exit_code": 0,
+      "per_call_ms": 34.4848559375,
+      "raw_point": {
+        "total_nanos": 551757695,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68476,
+        "inner_repeats": 16,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 75180,
+        "user_seconds": 2.3,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 2.38,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 1,
+      "case": "Rational8",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "01-Rational8-canonical.json",
+      "command_index": 29,
+      "exit_code": 0,
+      "per_call_ms": 535.068038,
+      "raw_point": {
+        "total_nanos": 535068038,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68776,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 75148,
+        "user_seconds": 2.24,
+        "system_seconds": 0.04,
+        "elapsed_seconds": 2.33,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 1,
+      "case": "Rational8",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "01-Rational8-generic.json",
+      "command_index": 30,
+      "exit_code": 0,
+      "per_call_ms": 124.16465625,
+      "raw_point": {
+        "total_nanos": 993317250,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69248,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 75160,
+        "user_seconds": 3.1,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 3.18,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 1,
+      "case": "Quadratic2",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "01-Quadratic2-canonical.json",
+      "command_index": 31,
+      "exit_code": 0,
+      "per_call_ms": 2.49390202734375,
+      "raw_point": {
+        "total_nanos": 638438919,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68804,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 75008,
+        "user_seconds": 2.7,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 2.78,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 1,
+      "case": "Quadratic2",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "01-Quadratic2-generic.json",
+      "command_index": 32,
+      "exit_code": 0,
+      "per_call_ms": 6.66409671875,
+      "raw_point": {
+        "total_nanos": 853004380,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68720,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74280,
+        "user_seconds": 2.72,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 2.8,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 1,
+      "case": "Quadratic4",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "01-Quadratic4-canonical.json",
+      "command_index": 33,
+      "exit_code": 0,
+      "per_call_ms": 10.02811296875,
+      "raw_point": {
+        "total_nanos": 641799230,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69032,
+        "inner_repeats": 64,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74512,
+        "user_seconds": 2.72,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 2.81,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 1,
+      "case": "Quadratic4",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "01-Quadratic4-generic.json",
+      "command_index": 34,
+      "exit_code": 0,
+      "per_call_ms": 87.872157625,
+      "raw_point": {
+        "total_nanos": 702977261,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68460,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 75220,
+        "user_seconds": 2.95,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 3.03,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 1,
+      "case": "Quadratic6",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "01-Quadratic6-canonical.json",
+      "command_index": 35,
+      "exit_code": 0,
+      "per_call_ms": 37.4109563125,
+      "raw_point": {
+        "total_nanos": 598575301,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68512,
+        "inner_repeats": 16,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74456,
+        "user_seconds": 2.49,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 2.58,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 1,
+      "case": "Quadratic6",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "01-Quadratic6-generic.json",
+      "command_index": 36,
+      "exit_code": 0,
+      "per_call_ms": 924.081955,
+      "raw_point": {
+        "total_nanos": 924081955,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70224,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74724,
+        "user_seconds": 3.81,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 3.91,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 1,
+      "case": "Quadratic8",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "01-Quadratic8-canonical.json",
+      "command_index": 37,
+      "exit_code": 0,
+      "per_call_ms": 195.268227,
+      "raw_point": {
+        "total_nanos": 781072908,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68624,
+        "inner_repeats": 4,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74516,
+        "user_seconds": 3.26,
+        "system_seconds": 0.04,
+        "elapsed_seconds": 3.33,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 1,
+      "case": "Quadratic8",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "01-Quadratic8-generic.json",
+      "command_index": 38,
+      "exit_code": 0,
+      "per_call_ms": 5531.321658,
+      "raw_point": {
+        "total_nanos": 5531321658,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 71032,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 75176,
+        "user_seconds": 23.66,
+        "system_seconds": 0.06,
+        "elapsed_seconds": 23.86,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 2,
+      "case": "Rational2",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "02-Rational2-generic.json",
+      "command_index": 39,
+      "exit_code": 0,
+      "per_call_ms": 0.9580311201171875,
+      "raw_point": {
+        "total_nanos": 981023867,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69256,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74708,
+        "user_seconds": 4.07,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 4.16,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 2,
+      "case": "Rational2",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "02-Rational2-canonical.json",
+      "command_index": 40,
+      "exit_code": 0,
+      "per_call_ms": 2.120976171875,
+      "raw_point": {
+        "total_nanos": 542969900,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68784,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74256,
+        "user_seconds": 2.3,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 2.4,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 2,
+      "case": "Rational4",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "02-Rational4-generic.json",
+      "command_index": 41,
+      "exit_code": 0,
+      "per_call_ms": 6.595475546875,
+      "raw_point": {
+        "total_nanos": 844220870,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68968,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74452,
+        "user_seconds": 3.47,
+        "system_seconds": 0.04,
+        "elapsed_seconds": 3.56,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 2,
+      "case": "Rational4",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "02-Rational4-canonical.json",
+      "command_index": 42,
+      "exit_code": 0,
+      "per_call_ms": 11.762430078125,
+      "raw_point": {
+        "total_nanos": 752795525,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68460,
+        "inner_repeats": 64,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74776,
+        "user_seconds": 3.14,
+        "system_seconds": 0.04,
+        "elapsed_seconds": 3.23,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 2,
+      "case": "Rational6",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "02-Rational6-generic.json",
+      "command_index": 43,
+      "exit_code": 0,
+      "per_call_ms": 34.1502018125,
+      "raw_point": {
+        "total_nanos": 546403229,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68632,
+        "inner_repeats": 16,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74480,
+        "user_seconds": 2.29,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 2.35,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 2,
+      "case": "Rational6",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "02-Rational6-canonical.json",
+      "command_index": 44,
+      "exit_code": 0,
+      "per_call_ms": 75.91700575,
+      "raw_point": {
+        "total_nanos": 607336046,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68540,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74904,
+        "user_seconds": 2.56,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 2.63,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 2,
+      "case": "Rational8",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "02-Rational8-generic.json",
+      "command_index": 45,
+      "exit_code": 0,
+      "per_call_ms": 122.94355375,
+      "raw_point": {
+        "total_nanos": 983548430,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68472,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74412,
+        "user_seconds": 4.07,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 4.16,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 2,
+      "case": "Rational8",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "02-Rational8-canonical.json",
+      "command_index": 46,
+      "exit_code": 0,
+      "per_call_ms": 522.871059,
+      "raw_point": {
+        "total_nanos": 522871059,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68096,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74396,
+        "user_seconds": 2.2,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 2.3,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 2,
+      "case": "Quadratic2",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "02-Quadratic2-generic.json",
+      "command_index": 47,
+      "exit_code": 0,
+      "per_call_ms": 6.312531234375,
+      "raw_point": {
+        "total_nanos": 808003998,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68640,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74364,
+        "user_seconds": 3.37,
+        "system_seconds": 0.04,
+        "elapsed_seconds": 3.46,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 2,
+      "case": "Quadratic2",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "02-Quadratic2-canonical.json",
+      "command_index": 48,
+      "exit_code": 0,
+      "per_call_ms": 2.49435484765625,
+      "raw_point": {
+        "total_nanos": 638554841,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69132,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74324,
+        "user_seconds": 2.69,
+        "system_seconds": 0.04,
+        "elapsed_seconds": 2.75,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 2,
+      "case": "Quadratic4",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "02-Quadratic4-generic.json",
+      "command_index": 49,
+      "exit_code": 0,
+      "per_call_ms": 89.080516375,
+      "raw_point": {
+        "total_nanos": 712644131,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69084,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 75168,
+        "user_seconds": 2.93,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 3.0,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 2,
+      "case": "Quadratic4",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "02-Quadratic4-canonical.json",
+      "command_index": 50,
+      "exit_code": 0,
+      "per_call_ms": 10.05006440625,
+      "raw_point": {
+        "total_nanos": 643204122,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68492,
+        "inner_repeats": 64,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74788,
+        "user_seconds": 2.7,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 2.78,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 2,
+      "case": "Quadratic6",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "02-Quadratic6-generic.json",
+      "command_index": 51,
+      "exit_code": 0,
+      "per_call_ms": 927.210552,
+      "raw_point": {
+        "total_nanos": 927210552,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70964,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 75076,
+        "user_seconds": 3.79,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 3.88,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 2,
+      "case": "Quadratic6",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "02-Quadratic6-canonical.json",
+      "command_index": 52,
+      "exit_code": 0,
+      "per_call_ms": 36.6890931875,
+      "raw_point": {
+        "total_nanos": 587025491,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69016,
+        "inner_repeats": 16,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74804,
+        "user_seconds": 2.49,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 2.58,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 2,
+      "case": "Quadratic8",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "02-Quadratic8-generic.json",
+      "command_index": 53,
+      "exit_code": 0,
+      "per_call_ms": 5561.088088,
+      "raw_point": {
+        "total_nanos": 5561088088,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70572,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74500,
+        "user_seconds": 21.96,
+        "system_seconds": 0.06,
+        "elapsed_seconds": 22.15,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 2,
+      "case": "Quadratic8",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "02-Quadratic8-canonical.json",
+      "command_index": 54,
+      "exit_code": 0,
+      "per_call_ms": 196.717115,
+      "raw_point": {
+        "total_nanos": 786868460,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68504,
+        "inner_repeats": 4,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74564,
+        "user_seconds": 3.25,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 3.33,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 3,
+      "case": "Rational2",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "03-Rational2-canonical.json",
+      "command_index": 55,
+      "exit_code": 0,
+      "per_call_ms": 2.12977819921875,
+      "raw_point": {
+        "total_nanos": 545223219,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68820,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 75208,
+        "user_seconds": 2.3,
+        "system_seconds": 0.04,
+        "elapsed_seconds": 2.38,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 3,
+      "case": "Rational2",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "03-Rational2-generic.json",
+      "command_index": 56,
+      "exit_code": 0,
+      "per_call_ms": 0.95985658984375,
+      "raw_point": {
+        "total_nanos": 982893148,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68548,
+        "inner_repeats": 1024,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 75072,
+        "user_seconds": 4.05,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 4.16,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 3,
+      "case": "Rational4",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "03-Rational4-canonical.json",
+      "command_index": 57,
+      "exit_code": 0,
+      "per_call_ms": 11.622204890625,
+      "raw_point": {
+        "total_nanos": 743821113,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68432,
+        "inner_repeats": 64,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74828,
+        "user_seconds": 3.13,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 3.2,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 3,
+      "case": "Rational4",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "03-Rational4-generic.json",
+      "command_index": 58,
+      "exit_code": 0,
+      "per_call_ms": 6.616427625,
+      "raw_point": {
+        "total_nanos": 846902736,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68724,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 75072,
+        "user_seconds": 3.49,
+        "system_seconds": 0.04,
+        "elapsed_seconds": 3.58,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 3,
+      "case": "Rational6",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "03-Rational6-canonical.json",
+      "command_index": 59,
+      "exit_code": 0,
+      "per_call_ms": 76.313569875,
+      "raw_point": {
+        "total_nanos": 610508559,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68944,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74824,
+        "user_seconds": 2.57,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 2.68,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 3,
+      "case": "Rational6",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "03-Rational6-generic.json",
+      "command_index": 60,
+      "exit_code": 0,
+      "per_call_ms": 33.9151195625,
+      "raw_point": {
+        "total_nanos": 542641913,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69204,
+        "inner_repeats": 16,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 75260,
+        "user_seconds": 2.3,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 2.38,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 3,
+      "case": "Rational8",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "03-Rational8-canonical.json",
+      "command_index": 61,
+      "exit_code": 0,
+      "per_call_ms": 518.222327,
+      "raw_point": {
+        "total_nanos": 518222327,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68444,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74456,
+        "user_seconds": 2.19,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 2.28,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 3,
+      "case": "Rational8",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "03-Rational8-generic.json",
+      "command_index": 62,
+      "exit_code": 0,
+      "per_call_ms": 132.556212,
+      "raw_point": {
+        "total_nanos": 1060449696,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68292,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74480,
+        "user_seconds": 4.08,
+        "system_seconds": 0.06,
+        "elapsed_seconds": 4.21,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 3,
+      "case": "Quadratic2",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "03-Quadratic2-canonical.json",
+      "command_index": 63,
+      "exit_code": 0,
+      "per_call_ms": 2.48330440625,
+      "raw_point": {
+        "total_nanos": 635725928,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69168,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74996,
+        "user_seconds": 2.67,
+        "system_seconds": 0.06,
+        "elapsed_seconds": 2.76,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 3,
+      "case": "Quadratic2",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "03-Quadratic2-generic.json",
+      "command_index": 64,
+      "exit_code": 0,
+      "per_call_ms": 6.527997484375,
+      "raw_point": {
+        "total_nanos": 835583678,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68620,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74360,
+        "user_seconds": 3.41,
+        "system_seconds": 0.04,
+        "elapsed_seconds": 3.48,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 3,
+      "case": "Quadratic4",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "03-Quadratic4-canonical.json",
+      "command_index": 65,
+      "exit_code": 0,
+      "per_call_ms": 10.3076224375,
+      "raw_point": {
+        "total_nanos": 659687836,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68432,
+        "inner_repeats": 64,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74276,
+        "user_seconds": 2.77,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 2.86,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 3,
+      "case": "Quadratic4",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "03-Quadratic4-generic.json",
+      "command_index": 66,
+      "exit_code": 0,
+      "per_call_ms": 100.614859375,
+      "raw_point": {
+        "total_nanos": 804918875,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68608,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74616,
+        "user_seconds": 3.33,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 3.41,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 3,
+      "case": "Quadratic6",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "03-Quadratic6-canonical.json",
+      "command_index": 67,
+      "exit_code": 0,
+      "per_call_ms": 40.4175929375,
+      "raw_point": {
+        "total_nanos": 646681487,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68908,
+        "inner_repeats": 16,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74892,
+        "user_seconds": 2.85,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 2.94,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 3,
+      "case": "Quadratic6",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "03-Quadratic6-generic.json",
+      "command_index": 68,
+      "exit_code": 0,
+      "per_call_ms": 996.364927,
+      "raw_point": {
+        "total_nanos": 996364927,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70092,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74800,
+        "user_seconds": 4.07,
+        "system_seconds": 0.08,
+        "elapsed_seconds": 4.19,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 3,
+      "case": "Quadratic8",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "03-Quadratic8-canonical.json",
+      "command_index": 69,
+      "exit_code": 0,
+      "per_call_ms": 214.328149,
+      "raw_point": {
+        "total_nanos": 857312596,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68864,
+        "inner_repeats": 4,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74492,
+        "user_seconds": 3.48,
+        "system_seconds": 0.06,
+        "elapsed_seconds": 3.61,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 3,
+      "case": "Quadratic8",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "03-Quadratic8-generic.json",
+      "command_index": 70,
+      "exit_code": 0,
+      "per_call_ms": 6402.381008,
+      "raw_point": {
+        "total_nanos": 6402381008,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70344,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74448,
+        "user_seconds": 25.03,
+        "system_seconds": 0.06,
+        "elapsed_seconds": 25.27,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 4,
+      "case": "Rational2",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "04-Rational2-generic.json",
+      "command_index": 71,
+      "exit_code": 0,
+      "per_call_ms": 0.9866118828125,
+      "raw_point": {
+        "total_nanos": 505145284,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69260,
+        "inner_repeats": 512,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74824,
+        "user_seconds": 3.06,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 3.15,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 4,
+      "case": "Rational2",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "04-Rational2-canonical.json",
+      "command_index": 72,
+      "exit_code": 0,
+      "per_call_ms": 2.1101231328125,
+      "raw_point": {
+        "total_nanos": 540191522,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68128,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 75324,
+        "user_seconds": 2.27,
+        "system_seconds": 0.04,
+        "elapsed_seconds": 2.35,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 4,
+      "case": "Rational4",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "04-Rational4-generic.json",
+      "command_index": 73,
+      "exit_code": 0,
+      "per_call_ms": 6.5862331796875,
+      "raw_point": {
+        "total_nanos": 843037847,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68624,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74700,
+        "user_seconds": 3.48,
+        "system_seconds": 0.04,
+        "elapsed_seconds": 3.55,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 4,
+      "case": "Rational4",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "04-Rational4-canonical.json",
+      "command_index": 74,
+      "exit_code": 0,
+      "per_call_ms": 11.683876296875,
+      "raw_point": {
+        "total_nanos": 747768083,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68548,
+        "inner_repeats": 64,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 75240,
+        "user_seconds": 3.11,
+        "system_seconds": 0.04,
+        "elapsed_seconds": 3.18,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 4,
+      "case": "Rational6",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "04-Rational6-generic.json",
+      "command_index": 75,
+      "exit_code": 0,
+      "per_call_ms": 34.643027875,
+      "raw_point": {
+        "total_nanos": 554288446,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 67804,
+        "inner_repeats": 16,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 75024,
+        "user_seconds": 2.3,
+        "system_seconds": 0.06,
+        "elapsed_seconds": 2.4,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 4,
+      "case": "Rational6",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "04-Rational6-canonical.json",
+      "command_index": 76,
+      "exit_code": 0,
+      "per_call_ms": 76.691694125,
+      "raw_point": {
+        "total_nanos": 613533553,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68300,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74288,
+        "user_seconds": 2.55,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 2.63,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 4,
+      "case": "Rational8",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "04-Rational8-generic.json",
+      "command_index": 77,
+      "exit_code": 0,
+      "per_call_ms": 133.511921,
+      "raw_point": {
+        "total_nanos": 534047684,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69044,
+        "inner_repeats": 4,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74976,
+        "user_seconds": 3.22,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 3.33,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 4,
+      "case": "Rational8",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "04-Rational8-canonical.json",
+      "command_index": 78,
+      "exit_code": 0,
+      "per_call_ms": 552.165109,
+      "raw_point": {
+        "total_nanos": 552165109,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68856,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74956,
+        "user_seconds": 2.33,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 2.42,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 4,
+      "case": "Quadratic2",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "04-Quadratic2-generic.json",
+      "command_index": 79,
+      "exit_code": 0,
+      "per_call_ms": 7.2465855078125,
+      "raw_point": {
+        "total_nanos": 927562945,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68996,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74404,
+        "user_seconds": 3.83,
+        "system_seconds": 0.07,
+        "elapsed_seconds": 3.93,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 4,
+      "case": "Quadratic2",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "04-Quadratic2-canonical.json",
+      "command_index": 80,
+      "exit_code": 0,
+      "per_call_ms": 3.62827951953125,
+      "raw_point": {
+        "total_nanos": 928839557,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68908,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74788,
+        "user_seconds": 3.6,
+        "system_seconds": 0.07,
+        "elapsed_seconds": 3.71,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 4,
+      "case": "Quadratic4",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "04-Quadratic4-generic.json",
+      "command_index": 81,
+      "exit_code": 0,
+      "per_call_ms": 95.295171625,
+      "raw_point": {
+        "total_nanos": 762361373,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68488,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74428,
+        "user_seconds": 2.94,
+        "system_seconds": 0.07,
+        "elapsed_seconds": 3.09,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 4,
+      "case": "Quadratic4",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "04-Quadratic4-canonical.json",
+      "command_index": 82,
+      "exit_code": 0,
+      "per_call_ms": 11.1625976875,
+      "raw_point": {
+        "total_nanos": 714406252,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69032,
+        "inner_repeats": 64,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74144,
+        "user_seconds": 2.92,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 3.01,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 4,
+      "case": "Quadratic6",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "04-Quadratic6-generic.json",
+      "command_index": 83,
+      "exit_code": 0,
+      "per_call_ms": 1224.05454,
+      "raw_point": {
+        "total_nanos": 1224054540,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70624,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74536,
+        "user_seconds": 4.65,
+        "system_seconds": 0.12,
+        "elapsed_seconds": 4.84,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 4,
+      "case": "Quadratic6",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "04-Quadratic6-canonical.json",
+      "command_index": 84,
+      "exit_code": 0,
+      "per_call_ms": 74.027821875,
+      "raw_point": {
+        "total_nanos": 592222575,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 66104,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 68508,
+        "user_seconds": 3.35,
+        "system_seconds": 0.2,
+        "elapsed_seconds": 3.64,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 4,
+      "case": "Quadratic8",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "04-Quadratic8-generic.json",
+      "command_index": 85,
+      "exit_code": 0,
+      "per_call_ms": 5446.654989,
+      "raw_point": {
+        "total_nanos": 5446654989,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70332,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 72328,
+        "user_seconds": 28.93,
+        "system_seconds": 0.2,
+        "elapsed_seconds": 29.37,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 4,
+      "case": "Quadratic8",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "04-Quadratic8-canonical.json",
+      "command_index": 86,
+      "exit_code": 0,
+      "per_call_ms": 195.97093275,
+      "raw_point": {
+        "total_nanos": 783883731,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68268,
+        "inner_repeats": 4,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 75048,
+        "user_seconds": 3.28,
+        "system_seconds": 0.04,
+        "elapsed_seconds": 3.36,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 5,
+      "case": "Rational2",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "05-Rational2-canonical.json",
+      "command_index": 87,
+      "exit_code": 0,
+      "per_call_ms": 2.2414513046875,
+      "raw_point": {
+        "total_nanos": 573811534,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 69068,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74372,
+        "user_seconds": 2.32,
+        "system_seconds": 0.06,
+        "elapsed_seconds": 2.44,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 5,
+      "case": "Rational2",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "05-Rational2-generic.json",
+      "command_index": 88,
+      "exit_code": 0,
+      "per_call_ms": 0.998514734375,
+      "raw_point": {
+        "total_nanos": 511239544,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68688,
+        "inner_repeats": 512,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74360,
+        "user_seconds": 3.12,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 3.2,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 5,
+      "case": "Rational4",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "05-Rational4-canonical.json",
+      "command_index": 89,
+      "exit_code": 0,
+      "per_call_ms": 11.961023109375,
+      "raw_point": {
+        "total_nanos": 765505479,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68452,
+        "inner_repeats": 64,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74332,
+        "user_seconds": 3.18,
+        "system_seconds": 0.06,
+        "elapsed_seconds": 3.26,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 5,
+      "case": "Rational4",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "05-Rational4-generic.json",
+      "command_index": 90,
+      "exit_code": 0,
+      "per_call_ms": 6.965556984375,
+      "raw_point": {
+        "total_nanos": 891591294,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68668,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74164,
+        "user_seconds": 3.64,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 3.74,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 5,
+      "case": "Rational6",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "05-Rational6-canonical.json",
+      "command_index": 91,
+      "exit_code": 0,
+      "per_call_ms": 88.204839875,
+      "raw_point": {
+        "total_nanos": 705638719,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68172,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 75264,
+        "user_seconds": 2.84,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 2.94,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 5,
+      "case": "Rational6",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "05-Rational6-generic.json",
+      "command_index": 92,
+      "exit_code": 0,
+      "per_call_ms": 39.426256625,
+      "raw_point": {
+        "total_nanos": 630820106,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68124,
+        "inner_repeats": 16,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74336,
+        "user_seconds": 2.65,
+        "system_seconds": 0.07,
+        "elapsed_seconds": 2.76,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 5,
+      "case": "Rational8",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "05-Rational8-canonical.json",
+      "command_index": 93,
+      "exit_code": 0,
+      "per_call_ms": 572.994312,
+      "raw_point": {
+        "total_nanos": 572994312,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68108,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 75128,
+        "user_seconds": 2.37,
+        "system_seconds": 0.06,
+        "elapsed_seconds": 2.49,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 5,
+      "case": "Rational8",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "05-Rational8-generic.json",
+      "command_index": 94,
+      "exit_code": 0,
+      "per_call_ms": 130.626601,
+      "raw_point": {
+        "total_nanos": 522506404,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68312,
+        "inner_repeats": 4,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 75104,
+        "user_seconds": 2.22,
+        "system_seconds": 0.06,
+        "elapsed_seconds": 2.33,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 5,
+      "case": "Quadratic2",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "05-Quadratic2-canonical.json",
+      "command_index": 95,
+      "exit_code": 0,
+      "per_call_ms": 2.61148237109375,
+      "raw_point": {
+        "total_nanos": 668539487,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68216,
+        "inner_repeats": 256,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 75236,
+        "user_seconds": 2.83,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 2.91,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 5,
+      "case": "Quadratic2",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "05-Quadratic2-generic.json",
+      "command_index": 96,
+      "exit_code": 0,
+      "per_call_ms": 6.6692216328125,
+      "raw_point": {
+        "total_nanos": 853660369,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68536,
+        "inner_repeats": 128,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 75096,
+        "user_seconds": 3.52,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 3.61,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 5,
+      "case": "Quadratic4",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "05-Quadratic4-canonical.json",
+      "command_index": 97,
+      "exit_code": 0,
+      "per_call_ms": 10.663293859375,
+      "raw_point": {
+        "total_nanos": 682450807,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 65680,
+        "inner_repeats": 64,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 75268,
+        "user_seconds": 2.79,
+        "system_seconds": 0.35,
+        "elapsed_seconds": 3.2,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 5,
+      "case": "Quadratic4",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "05-Quadratic4-generic.json",
+      "command_index": 98,
+      "exit_code": 0,
+      "per_call_ms": 90.7723405,
+      "raw_point": {
+        "total_nanos": 726178724,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68884,
+        "inner_repeats": 8,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74504,
+        "user_seconds": 3.02,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 3.11,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 5,
+      "case": "Quadratic6",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "05-Quadratic6-canonical.json",
+      "command_index": 99,
+      "exit_code": 0,
+      "per_call_ms": 38.529870375,
+      "raw_point": {
+        "total_nanos": 616477926,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68884,
+        "inner_repeats": 16,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74296,
+        "user_seconds": 2.58,
+        "system_seconds": 0.05,
+        "elapsed_seconds": 2.66,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 5,
+      "case": "Quadratic6",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "05-Quadratic6-generic.json",
+      "command_index": 100,
+      "exit_code": 0,
+      "per_call_ms": 1133.963667,
+      "raw_point": {
+        "total_nanos": 1133963667,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70824,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74812,
+        "user_seconds": 4.0,
+        "system_seconds": 0.06,
+        "elapsed_seconds": 4.15,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 5,
+      "case": "Quadratic8",
+      "pair": "generic",
+      "arm": "canonical",
+      "export": "05-Quadratic8-canonical.json",
+      "command_index": 101,
+      "exit_code": 0,
+      "per_call_ms": 202.90523575,
+      "raw_point": {
+        "total_nanos": 811620943,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 68856,
+        "inner_repeats": 4,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 68856,
+        "user_seconds": 3.59,
+        "system_seconds": 0.12,
+        "elapsed_seconds": 3.85,
+        "exit_status": 0
+      }
+    },
+    {
+      "trial": 5,
+      "case": "Quadratic8",
+      "pair": "generic",
+      "arm": "generic",
+      "export": "05-Quadratic8-generic.json",
+      "command_index": 102,
+      "exit_code": 0,
+      "per_call_ms": 6305.967121,
+      "raw_point": {
+        "total_nanos": 6305967121,
+        "status": "ok",
+        "result_hash": "0x1",
+        "repeat_index": 0,
+        "peak_rss_kb": 70160,
+        "inner_repeats": 1,
+        "error": null,
+        "alloc_bytes": null
+      },
+      "config": {
+        "warmup_first_iter": true,
+        "warmup": true,
+        "repeats": 1,
+        "min_total_seconds": 0.5,
+        "max_seconds_per_call": 120,
+        "expected_hash": "0x1"
+      },
+      "budget_truncated": false,
+      "whole_arm_resources": {
+        "maximum_resident_set_kib": 74728,
+        "user_seconds": 24.25,
+        "system_seconds": 0.12,
+        "elapsed_seconds": 24.56,
+        "exit_status": 0
+      }
+    }
+  ],
+  "inference": "descriptive paired batch estimates on this shared host; no significance or asymptotic claim",
+  "suite": "distinct",
+  "functional_inputs": [
+    {
+      "index": 6,
+      "method": "generic",
+      "family": "rational",
+      "degree": 2,
+      "multiplicity": 1,
+      "all": false,
+      "distinct_roots": 2,
+      "coefficient_bits": 2,
+      "generic_points": 1,
+      "generic_selected": 1
+    },
+    {
+      "index": 6,
+      "method": "canonical",
+      "family": "rational",
+      "degree": 2,
+      "multiplicity": 1,
+      "all": false,
+      "distinct_roots": 2,
+      "coefficient_bits": 2,
+      "generic_points": 1,
+      "generic_selected": 1
+    },
+    {
+      "index": 7,
+      "method": "generic",
+      "family": "rational",
+      "degree": 4,
+      "multiplicity": 1,
+      "all": false,
+      "distinct_roots": 4,
+      "coefficient_bits": 6,
+      "generic_points": 2,
+      "generic_selected": 2
+    },
+    {
+      "index": 7,
+      "method": "canonical",
+      "family": "rational",
+      "degree": 4,
+      "multiplicity": 1,
+      "all": false,
+      "distinct_roots": 4,
+      "coefficient_bits": 6,
+      "generic_points": 2,
+      "generic_selected": 2
+    },
+    {
+      "index": 8,
+      "method": "generic",
+      "family": "rational",
+      "degree": 6,
+      "multiplicity": 1,
+      "all": false,
+      "distinct_roots": 6,
+      "coefficient_bits": 11,
+      "generic_points": 3,
+      "generic_selected": 3
+    },
+    {
+      "index": 8,
+      "method": "canonical",
+      "family": "rational",
+      "degree": 6,
+      "multiplicity": 1,
+      "all": false,
+      "distinct_roots": 6,
+      "coefficient_bits": 11,
+      "generic_points": 3,
+      "generic_selected": 3
+    },
+    {
+      "index": 9,
+      "method": "generic",
+      "family": "rational",
+      "degree": 8,
+      "multiplicity": 1,
+      "all": false,
+      "distinct_roots": 8,
+      "coefficient_bits": 17,
+      "generic_points": 4,
+      "generic_selected": 4
+    },
+    {
+      "index": 9,
+      "method": "canonical",
+      "family": "rational",
+      "degree": 8,
+      "multiplicity": 1,
+      "all": false,
+      "distinct_roots": 8,
+      "coefficient_bits": 17,
+      "generic_points": 4,
+      "generic_selected": 4
+    },
+    {
+      "index": 10,
+      "method": "generic",
+      "family": "quadratic",
+      "degree": 2,
+      "multiplicity": 1,
+      "all": false,
+      "distinct_roots": 2,
+      "coefficient_bits": 2,
+      "generic_points": 0,
+      "generic_selected": 2
+    },
+    {
+      "index": 10,
+      "method": "canonical",
+      "family": "quadratic",
+      "degree": 2,
+      "multiplicity": 1,
+      "all": false,
+      "distinct_roots": 2,
+      "coefficient_bits": 2,
+      "generic_points": 0,
+      "generic_selected": 2
+    },
+    {
+      "index": 11,
+      "method": "generic",
+      "family": "quadratic",
+      "degree": 4,
+      "multiplicity": 1,
+      "all": false,
+      "distinct_roots": 4,
+      "coefficient_bits": 3,
+      "generic_points": 0,
+      "generic_selected": 4
+    },
+    {
+      "index": 11,
+      "method": "canonical",
+      "family": "quadratic",
+      "degree": 4,
+      "multiplicity": 1,
+      "all": false,
+      "distinct_roots": 4,
+      "coefficient_bits": 3,
+      "generic_points": 0,
+      "generic_selected": 4
+    },
+    {
+      "index": 12,
+      "method": "generic",
+      "family": "quadratic",
+      "degree": 6,
+      "multiplicity": 1,
+      "all": false,
+      "distinct_roots": 6,
+      "coefficient_bits": 5,
+      "generic_points": 0,
+      "generic_selected": 6
+    },
+    {
+      "index": 12,
+      "method": "canonical",
+      "family": "quadratic",
+      "degree": 6,
+      "multiplicity": 1,
+      "all": false,
+      "distinct_roots": 6,
+      "coefficient_bits": 5,
+      "generic_points": 0,
+      "generic_selected": 6
+    },
+    {
+      "index": 13,
+      "method": "generic",
+      "family": "quadratic",
+      "degree": 8,
+      "multiplicity": 1,
+      "all": false,
+      "distinct_roots": 8,
+      "coefficient_bits": 8,
+      "generic_points": 0,
+      "generic_selected": 8
+    },
+    {
+      "index": 13,
+      "method": "canonical",
+      "family": "quadratic",
+      "degree": 8,
+      "multiplicity": 1,
+      "all": false,
+      "distinct_roots": 8,
+      "coefficient_bits": 8,
+      "generic_points": 0,
+      "generic_selected": 8
+    }
+  ],
+  "resource_scope": "whole benchmark arm including driver and child processes",
+  "host_load_before_1min": {
+    "samples": 96,
+    "median": 18.27294921875,
+    "minimum": 7.833984375,
+    "maximum": 43.8125,
+    "values": [
+      41.623046875,
+      39.89111328125,
+      38.1376953125,
+      38.1376953125,
+      43.8125,
+      43.8125,
+      41.0244140625,
+      38.93994140625,
+      38.93994140625,
+      37.1025390625,
+      35.81298828125,
+      35.81298828125,
+      33.58544921875,
+      31.9365234375,
+      31.9365234375,
+      24.9990234375,
+      24.9990234375,
+      23.6376953125,
+      22.30517578125,
+      22.30517578125,
+      21.2392578125,
+      20.4189453125,
+      20.4189453125,
+      20.4189453125,
+      19.42431640625,
+      18.50927734375,
+      18.50927734375,
+      18.06787109375,
+      18.06787109375,
+      17.50146484375,
+      16.580078125,
+      16.580078125,
+      13.15087890625,
+      12.73828125,
+      12.2783203125,
+      12.2783203125,
+      11.935546875,
+      11.935546875,
+      11.6201171875,
+      11.25,
+      11.25,
+      10.98974609375,
+      10.98974609375,
+      10.509765625,
+      10.62939453125,
+      10.62939453125,
+      10.41845703125,
+      9.07763671875,
+      8.7509765625,
+      8.3701171875,
+      8.3701171875,
+      8.26025390625,
+      8.0791015625,
+      8.0791015625,
+      7.99267578125,
+      7.99267578125,
+      7.99365234375,
+      7.833984375,
+      7.833984375,
+      7.84765625,
+      10.82275390625,
+      10.82275390625,
+      10.99755859375,
+      11.958984375,
+      16.6845703125,
+      16.6845703125,
+      16.06884765625,
+      15.74267578125,
+      15.74267578125,
+      15.12255859375,
+      15.12255859375,
+      14.7119140625,
+      14.7119140625,
+      15.5361328125,
+      17.73583984375,
+      18.47802734375,
+      18.47802734375,
+      21.00244140625,
+      24.60595703125,
+      31.35107421875,
+      29.56103515625,
+      29.56103515625,
+      28.5546875,
+      28.5546875,
+      28.43017578125,
+      28.0751953125,
+      28.0751953125,
+      27.34814453125,
+      27.34814453125,
+      26.67919921875,
+      26.14404296875,
+      26.14404296875,
+      24.85107421875,
+      24.85107421875,
+      23.74169921875,
+      23.68212890625
+    ]
+  }
+}

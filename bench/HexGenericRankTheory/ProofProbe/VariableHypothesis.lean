@@ -1,0 +1,18 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+import HexGenericRankTheory
+import Mathlib.Algebra.Field.ZMod
+
+
+open Matrix
+
+theorem result (x : ℚ) (hx : x ≠ 0) : (!![x]).rank = 1 := by
+  rank
+
+/-- info: 'result' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms result

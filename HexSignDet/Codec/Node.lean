@@ -17,20 +17,22 @@ def system (s : System n) : Json :=
   .arr #[Json.of s.rows.toArray, Json.of s.columns.toArray, Json.of s.counts.toArray,
     Json.of s.values.toArray, encodeMatrix s.inverse, Json.of s.denominator]
 
-def readSystem (n arity : Nat) (j : Json) : Except String (System n) := do
+/-- Read every literal system field against the same dimensions and word arity. -/
+@[expose] def readSystem (n arity : Nat) (j : Json) : Except String (System n) := do
   let a ← tuple 6 j
   let rows ← vector n (fun j => Vector.toList <$> vector arity (Json.decode (α := Nat)) j) a[0]
   let columns ← vector n (fun j => Vector.toList <$> vector arity (Json.decode (α := Int)) j) a[1]
   return ⟨rows, columns, ← vector n Json.decode a[2], ← vector n Json.decode a[3],
     ← matrix n n a[4], ← Json.decode a[5]⟩
 
+/-- Encode the claimed rank, ordered index vectors, denominator and complete inverse block. -/
 def basis (b : Matrix.RankCert Int n m) : Json :=
   .arr #[Json.of b.rank, Json.of (b.rows.toArray.map Fin.val), Json.of (b.cols.toArray.map Fin.val),
     Json.of b.denom, encodeMatrix b.adj]
 
 /-- Selected indices are checked against the decoded matrix dimensions before
 constructing `Fin` values. No rank or nonsingularity claim is assumed. -/
-def readBasis (n m : Nat) (j : Json) : Except String (Matrix.RankCert Int n m) := do
+@[expose] def readBasis (n m : Nat) (j : Json) : Except String (Matrix.RankCert Int n m) := do
   let a ← tuple 5 j
   let rank ← Json.decode (α := Nat) a[0]
   if rank > n || rank > m then throw "rank exceeds matrix dimensions"
@@ -39,6 +41,7 @@ def readBasis (n m : Nat) (j : Json) : Except String (Matrix.RankCert Int n m) :
 
 variable {E Ctx : Type} [Zero E] [DecidableEq E]
 
+/-- Encode all eleven literal node fields, including every witness and basis entry. -/
 def node (value : ValueCodec E) (context : ValueCodec Ctx) (n : Node E Ctx) : Json :=
   .arr #[context.encode n.context, poly value n.head, endpoint value n.lower,
     endpoint value n.upper, list (poly value) n.queries, Json.of n.size, system n.system,
@@ -49,7 +52,7 @@ def node (value : ValueCodec E) (context : ValueCodec Ctx) (n : Node E Ctx) : Js
 /-- Decode all size-indexed fields against the same declared size. The rank
 column dimension is computed from the literal integer counts, not supplied
 as a separate unbound claim. -/
-def readNode (value : ValueCodec E) (context : ValueCodec Ctx) (j : Json) :
+@[expose] def readNode (value : ValueCodec E) (context : ValueCodec Ctx) (j : Json) :
     Except String (Node E Ctx) := do
   let a ← tuple 11 j
   let ctx ← context.decode a[0]
@@ -67,10 +70,19 @@ def readNode (value : ValueCodec E) (context : ValueCodec Ctx) (j : Json) :
 
 /-- Both node and child query certificates retain the caller's full literal
 context and root domain. Equal meanings or context hashes are insufficient. -/
-def bindings [DecidableEq Ctx] (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
+@[expose] def bindings [DecidableEq Ctx] (context : Ctx) (p : DensePoly E) (a b : Endpoint E)
     (n : Node E Ctx) : Bool :=
   decide (n.context = context ∧ n.head = p ∧ n.lower = a ∧ n.upper = b) &&
     n.moments.toList.all fun c =>
       decide (c.context = context ∧ c.head = p ∧ c.lower = a ∧ c.upper = b)
+
+/-- Binding succeeds exactly when the node and every stored moment retain
+all four caller-supplied context and domain fields. No arithmetic is checked. -/
+theorem bindings_iff [DecidableEq Ctx] {context : Ctx} {p : DensePoly E} {a b : Endpoint E}
+    {n : Node E Ctx} : bindings context p a b n = true ↔
+    (n.context = context ∧ n.head = p ∧ n.lower = a ∧ n.upper = b) ∧
+    ∀ c ∈ n.moments.toList,
+      c.context = context ∧ c.head = p ∧ c.lower = a ∧ c.upper = b := by
+  simp only [bindings, Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true]
 
 end Hex.SignDet.Codec

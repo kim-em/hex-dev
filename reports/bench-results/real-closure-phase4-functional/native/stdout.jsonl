@@ -1,0 +1,3 @@
+{"backend":"native","elapsed_ns":4975545954,"root_count":3,"stage":"first-isolation","workload":"metitarski"}
+{"backend":"native","elapsed_ns":149759645,"root_count":1,"stage":"second-isolation","workload":"metitarski"}
+{"backend":"native","checked":true,"first_context_depth":1,"workload":"metitarski"}

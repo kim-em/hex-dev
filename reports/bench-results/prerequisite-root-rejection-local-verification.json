@@ -1,0 +1,96 @@
+{
+  "source_commit": "ca1f80de414d61d823288e48f5e903b1604d6ca8",
+  "all_four_phase_counters": 3,
+  "checks": {
+    "full_lake_build": {
+      "status": "pass",
+      "count": 15818,
+      "log": "/home/kim/.local/state/hex/issue-10577-verification/root-rejection-full-lake-build.log",
+      "log_sha256": "b54895dd5222f446506b2d75ad3d5d4434162990951913a704da1ecfc3ebb2f0"
+    },
+    "companion_and_native_bench_build": {
+      "status": "pass",
+      "count": 10013,
+      "log": "/home/kim/.local/state/hex/issue-10577-verification/early-reality-tests-build.log",
+      "log_sha256": "e74fcf6661fb8b57007f172c8d24ea05debbd7d59cc16dee5f15ad89ab10e7dd"
+    },
+    "full_conformance_build": {
+      "status": "pass",
+      "count": 14758,
+      "log": "/home/kim/.local/state/hex/issue-10577-verification/early-reality-all-conformance-build.log",
+      "log_sha256": "005b43d1821fd86ed3ed1793baac263c75fc472d7cb15d7c309adecf952e1934"
+    },
+    "compiled_conformance_runtime": {
+      "status": "pass",
+      "count": null,
+      "log": "/home/kim/.local/state/hex/issue-10577-verification/early-reality-conformance-runtime.log",
+      "log_sha256": "03c1996c6cfa66dbab0b4276023ec3ca837514c97752e6d5030f9b66b68cebf7"
+    },
+    "exact_oracle": {
+      "status": "pass",
+      "count": 83,
+      "log": "/home/kim/.local/state/hex/issue-10577-verification/early-reality-oracle.log",
+      "log_sha256": "534ab1fbb8538ad6001ce1232ea9ac12f2bc6bae57d05e6d7e659aa01d1730ef"
+    },
+    "oracle_endpoint_units": {
+      "status": "pass",
+      "count": 9,
+      "log": "/home/kim/.local/state/hex/issue-10577-verification/root-rejection-oracle-unit.log",
+      "log_sha256": "5499216e2c12a89f06d1e1e5aae0cc3ebcdea16c8b36ff1d84165b7e8d3aa27c"
+    },
+    "owned_benchmark_verification": {
+      "status": "pass",
+      "count": 193,
+      "log": "/home/kim/.local/state/hex/issue-10577-verification/early-reality-owned-verify.log",
+      "log_sha256": "dbb9cfa61548395245ebfc448698ecd28450333c6fe7656736b956d7ca42ebd5"
+    },
+    "dependency_dag": {
+      "status": "pass",
+      "count": null,
+      "log": "/home/kim/.local/state/hex/issue-10577-verification/root-rejection-dag.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "phase4_policy": {
+      "status": "pass",
+      "count": null,
+      "log": "/home/kim/.local/state/hex/issue-10577-verification/root-rejection-phase4.log",
+      "log_sha256": "6cb935d325978f335e5a655ec20dfa11ed44793c51b8139bf74c25cf98d95df0"
+    },
+    "line_counts": {
+      "status": "pass",
+      "count": null,
+      "log": "/home/kim/.local/state/hex/issue-10577-verification/root-rejection-lines.log",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "mathlib_free_benches": {
+      "status": "pass",
+      "count": 62,
+      "log": "/home/kim/.local/state/hex/issue-10577-verification/poly-roots-mathlib-free.log",
+      "log_sha256": "0b7f2e917624ef4eeaa98d2ba72b1416f82606bfd7077e54a4425d31250b7614"
+    },
+    "persistent_comparator_warmup": {
+      "status": "pass",
+      "count": 667,
+      "log": "/home/kim/.local/state/hex/issue-10577-verification/root-rejection-warmup.log",
+      "log_sha256": "378b6baf4cda472890f3e49da529baea184d1d3eb0fde50a77e3c65221bf3657"
+    }
+  },
+  "ordinary_kernel_axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "complete_root_api_equality": "Hex.RealAlgebraicNumber.ofRoot?_eq",
+  "boundary": "No parent arithmetic, downstream owner implementation, CI workflow/cap or phase metadata changes. Forward comparison-strategy extension remains excluded. This local evidence does not replace required CI on the PR head.",
+  "retained_failures": [
+    "early-reality-conformance-build.log: unknown mistyped target hexrealalgebraic_emitfixtures; corrected target hexrealalgebraic_emit_fixtures passes",
+    "historical rational-degree16 and quadratic-degree8 whole-child cap probes before early rejection; no unchanged rerun"
+  ],
+  "benchmark_verification_seconds": {
+    "HexSturm": 1,
+    "HexRealAlgebraic": 39,
+    "total": 40,
+    "cap": 360
+  },
+  "source_check_exit_codes": "root-rejection-checks/record.json (repository-retained logs and explicit exit codes; silent checks intentionally have empty logs)"
+}

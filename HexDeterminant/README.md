@@ -7,7 +7,7 @@ with spec-driven development.
 `hex-determinant` provides the determinant of a dense square matrix via the
 Leibniz formula, together with the cofactor and adjugate theory. This library
 depends only on [`hex-matrix`](https://github.com/leanprover/hex-matrix). See
-[`hex-determinant-mathlib`](https://github.com/leanprover/hex-determinant-mathlib)
+[`hex-determinant-theory`](https://github.com/leanprover/hex-determinant-theory)
 for the correspondence with Mathlib's types and theory.
 
 # Quickstart
@@ -105,7 +105,7 @@ among `nDet`s.
 
 Desnanot-Jacobi itself, and the unrestricted three-term relation for any
 `p1 < p2 < p3`, are stated in
-[`hex-determinant-mathlib`](https://github.com/leanprover/hex-determinant-mathlib).
+[`hex-determinant-theory`](https://github.com/leanprover/hex-determinant-theory).
 Sylvester's determinant identity, the general `m × m` bordered-minor statement,
 is not proved anywhere in the project.
 

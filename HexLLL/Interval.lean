@@ -26,7 +26,7 @@ back to the exact integer checker. The kernel below is the Mathlib-free
 executable surface: closed dyadic intervals whose endpoints are `Int`
 mantissas at a shared power-of-two scale. Per-operation containment lemmas
 and the composed soundness theorem (`lllReducedInterval_sound`) live in
-HexLLLMathlib. -/
+HexLLLTheory. -/
 
 /-- Closed dyadic interval `[lo / S, hi / S]` whose endpoints are integer
 mantissas at a shared power-of-two scale `S = 2 ^ prec`. The scale is not

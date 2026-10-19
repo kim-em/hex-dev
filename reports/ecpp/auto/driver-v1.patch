@@ -1,0 +1,15 @@
+diff --git a/bench/HexECPP/Native.lean b/bench/HexECPP/Native.lean
+index 5c7747dbe..44696ab96 100644
+--- a/bench/HexECPP/Native.lean
++++ b/bench/HexECPP/Native.lean
+@@ -70,6 +70,10 @@ def main (args : List String) : IO UInt32 := do
+         pure (n, seed, { maxBits := 512, maxDepth := 20 })
+     | [n, seed, "native512"] => pure (n, seed, native512Budget)
+     | [n, seed, "native512-public"] => pure (n, seed, public512Budget)
++    | [n, seed, "automatic"] => pure (n, seed, { public512Budget with
++        maxCandidates := 1024, maxRoots := 8192, maxNonresidues := 4096
++        maxPoints := 4096, maxFactorWork := 4096, maxScalarWork := 1000000
++        maxPolynomialWork := 1048576, maxRootWork := 1048576 })
+     | [n, seed, depth, candidates] =>
+         let some depth := depth.toNat? | throw <| IO.userError "invalid depth"
+         let some candidates := candidates.toNat? | throw <| IO.userError "invalid candidates"

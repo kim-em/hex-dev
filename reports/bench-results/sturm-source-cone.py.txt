@@ -1,0 +1,28 @@
+import argparse,hashlib,importlib.util,json,re,subprocess
+from pathlib import Path
+spec=importlib.util.spec_from_file_location('admission','scripts/ci/check_named_admissions.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+parser=argparse.ArgumentParser();parser.add_argument('before');parser.add_argument('after');parser.add_argument('--root',default='HexSturm.Bench');args=parser.parse_args()
+old=subprocess.check_output(['git','rev-parse',args.before],text=True).strip();new=subprocess.check_output(['git','rev-parse',args.after],text=True).strip()
+def content(rev,path):return subprocess.check_output(['git','show',f'{rev}:{path}'],text=True)
+def cone(rev):
+ files=set(subprocess.check_output(['git','ls-tree','-r','--name-only',rev],text=True).splitlines())
+ found={};external=set();queue=[args.root]
+ while queue:
+  name=queue.pop()
+  if name in found or name in external:continue
+  path=name.replace('.','/')+'.lean';paths=[prefix+path for prefix in ['', 'bench/', 'conformance/', 'adapters/', 'examples/'] if prefix+path in files]
+  if not paths:external.add(name);continue
+  assert len(paths)==1,(name,paths)
+  text=content(rev,paths[0]);found[name]={'path':paths[0],'sha256':hashlib.sha256(text.encode()).hexdigest(),'text':text}
+  for imports in re.findall(r'^(?:(?:public|private|meta|all)\s+)*import\s+([^\n]+)',m.code_only(text),re.M):queue.extend(token for token in imports.split() if token != 'all')
+ return found,external
+left,le=cone(old);right,rex=cone(new);changed=[]
+for name in sorted(set(left)|set(right)):
+ a,b=left.get(name),right.get(name)
+ if a and b and a['sha256']==b['sha256']:continue
+ changed.append({'module':name,'path':(b or a)['path'],'before_sha256':a and a['sha256'],'after_sha256':b and b['sha256'],'code_tokens_unchanged':bool(a and b and ' '.join(m.code_only(a['text']).split())==' '.join(m.code_only(b['text']).split()))})
+pins={}
+for rev in [old,new]:
+ manifest=json.loads(content(rev,'lake-manifest.json'));pins[rev]={p['name']:p.get('rev') for p in manifest['packages']}
+result={'root':args.root,'before':old,'after':new,'before_modules':len(left),'after_modules':len(right),'before_external_imports':sorted(le),'after_external_imports':sorted(rex),'changed':changed,'toolchain_unchanged':content(old,'lean-toolchain')==content(new,'lean-toolchain'),'lean_bench_pin_unchanged':pins[old]['«lean-bench»']==pins[new]['«lean-bench»'],'changed_dependency_pins':{name:{'before':pins[old].get(name),'after':pins[new].get(name)} for name in sorted(set(pins[old])|set(pins[new])) if pins[old].get(name)!=pins[new].get(name)},'limits':'Import-cone diff, not proof that all imported code executes in a timed body. Changed computational definitions require individual call-path assessment.'}
+print(json.dumps(result,indent=2))

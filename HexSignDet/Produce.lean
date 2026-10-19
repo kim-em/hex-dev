@@ -13,20 +13,26 @@ public import HexRowReduce.Inverse
 public section
 
 /-! Construction of recursive BKR certificates from prepared Tarski queries.
-The diagnostic result exposes unproved producer obligations; it is not the
-domain-only `Option` API of sign determination. In particular, singularity and
-nonintegral counts must eventually be excluded by the completeness proof. -/
+The diagnostic result distinguishes internal construction errors from domain
+failure. The companion’s `determinePrepared_success` and `buildPrepared_complete`
+exclude those internal errors under lawful coefficient interpretations. -/
 namespace Hex.SignDet
 
 open scoped Hex
 
 /-- Internal construction diagnostics, distinct from mathematical domain failure. -/
 inductive BuildError where
+  /-- Supplied row and column lists have different lengths. -/
   | dimensions
+  /-- The inverse is unavailable, or its supplied denominator is zero. -/
   | singular
+  /-- The solved counts are not exact integers. -/
   | nonintegral
+  /-- At least one solved count is negative. -/
   | negative
+  /-- Word arity or alphabets are invalid, columns repeat, or `System.check` fails. -/
   | system
+  /-- The constructed tree failed independent literal replay. -/
   | replay
   deriving DecidableEq, Repr
 
@@ -139,7 +145,7 @@ preparation lets individual nodes construct their own reductions. -/
 @[expose] def buildTreeFrom (context : Ctx) (domain : Sturm.PreparedDomain E)
     (qs : List (DensePoly E)) (reduced : Bool) (preparation : Option (QueryReduction E)) :
     Except BuildError (Replay E Ctx) := do
-  if h : qs.length ≤ 1 then
+  if _h : qs.length ≤ 1 then
     return .leaf (← buildNode context domain qs (leafRows qs.length) (leafColumns qs.length)
       reduced none preparation)
   else

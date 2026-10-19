@@ -69,7 +69,7 @@ Successful leaves stop child traversal before constructing a witness program. -/
   match m.spend .nodes 1 with
   | .error failure => .incomplete failure
   | .ok meter =>
-    match C.refineWith t meter with
+    match C.refineBudgeted t meter with
     | .exhausted failure => .incomplete failure
     | .ok (some reason) meter =>
       finish C t (fun _ => .rejected reason.val) (by simpa only [checkFailure] using reason.property) meter
@@ -112,13 +112,13 @@ inductive AnswerOutcome {G : Group n} {test : Perm n → Bool} (C : Pruner G tes
   | complete (answer : Answer C) (meter : Meter budget)
   | incomplete (failure : Exhausted budget)
 
-@[expose] def firstWith (budget : Budget) {G : Group n} {test : Perm n → Bool} (C : Pruner G test)
+@[expose] def firstBudgeted (budget : Budget) {G : Group n} {test : Perm n → Bool} (C : Pruner G test)
     (Q : Evaluator test budget) : AnswerOutcome C budget :=
   match BoundedFirst.visit C Q (Node.root G) (_root_.Hex.PermGroup.Execution.Meter.empty budget) with
   | .incomplete failure => .incomplete failure
   | .absent certificate checked meter => .complete (.absent certificate checked) meter
   | .found p _ hp meter =>
-    match Witness.ofElementWith p hp meter with
+    match Witness.ofElementBudgeted p hp meter with
     | .exhausted failure => .incomplete failure
     | .ok witness meter => .complete (.found witness) meter
 

@@ -1,0 +1,41 @@
+env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=4f44b80-dirty, 2026-10-02T02:34:51Z, host=chungus2
+Hex.RealAlgebraicBench.runCompare    [fixed] repeats=1
+  repeat 0  412.000 ns  (×2^12, total 1.688 ms)
+  median: 412.000 ns    min: 412.000 ns    max: 412.000 ns
+  hash: all repeats agree
+  observed hash: 0x0
+  expected hash: matches
+  peak RSS: 68_524 kB (across 1 ok repeat(s))
+  ‼ median wall time below 1µs — possibly a compile-time-folded constant rather than work. If the workload is genuinely tiny this is fine; otherwise thread inputs through runtime state (e.g. `IO.Ref`, disk) so the body isn't closed at compile time. See issue #54.
+
+Hex.RealAlgebraicBench.runCompareExact    [fixed] repeats=1
+  repeat 0  39.284 µs  (×2^5, total 1.257 ms)
+  median: 39.284 µs    min: 39.284 µs    max: 39.284 µs
+  hash: all repeats agree
+  observed hash: 0x0
+  expected hash: matches
+  peak RSS: 68_548 kB (across 1 ok repeat(s))
+
+Hex.RealAlgebraicBench.runQqbarCompare    [fixed] repeats=1
+  repeat 0  7.511 µs  (×2^8, total 1.923 ms)
+  median: 7.511 µs    min: 7.511 µs    max: 7.511 µs
+  hash: all repeats agree
+  observed hash: 0x0
+  expected hash: matches
+  peak RSS: 68_680 kB (across 1 ok repeat(s))
+
+Hex.RealAlgebraicBench.runQqbarProtocol    [fixed] repeats=1
+  repeat 0  6.368 µs  (×2^8, total 1.630 ms)
+  median: 6.368 µs    min: 6.368 µs    max: 6.368 µs
+  hash: all repeats agree
+  observed hash: 0x0
+  expected hash: matches
+  peak RSS: 68_336 kB (across 1 ok repeat(s))
+
+relative median (baseline = Hex.RealAlgebraicBench.runCompare, the first CLI argument):
+  Hex.RealAlgebraicBench.runCompare: 1.000× (412.000 ns)
+  Hex.RealAlgebraicBench.runCompareExact: 95.350× (39.284 µs)
+  Hex.RealAlgebraicBench.runQqbarCompare: 18.231× (7.511 µs)
+  Hex.RealAlgebraicBench.runQqbarProtocol: 15.456× (6.368 µs)
+agreement: all functions agree on output
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-readiness-comparisons/separated-0.json

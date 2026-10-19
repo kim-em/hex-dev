@@ -1,0 +1,6 @@
+{
+  "path": "HexBasic/Fold.lean",
+  "baseline_blob": "103d2a8178f881c04590c6da5fe84f441dd09cc7",
+  "current_blob": "3e07680dcdd1201280d9e6b3034ff3ecbca138f6",
+  "reason": "Renames the `*Mathlib` theory companions to `*Theory` inside documentation comments only; once comments are removed the two blobs are identical, so every definition, proof and compiler input of this file is unchanged and the measured factorization executable is unaffected."
+}

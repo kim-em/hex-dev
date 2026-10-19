@@ -6,7 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RealCoefficients.Coefficients
-public import HexNumberFieldMathlib.Radical
+public import HexNumberFieldTheory.Radical
 
 public section
 

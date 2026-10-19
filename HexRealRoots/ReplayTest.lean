@@ -18,7 +18,7 @@ public import HexRealRoots.Cert
 /-!
 Regression lock for the kernel-replay exposure.
 
-The `isolate_roots` term elaborator in `HexRealRootsMathlib` reifies a Sturm
+The `isolate_roots` term elaborator in `HexRealRootsTheory` reifies a Sturm
 chain as a literal and discharges its certificates by `decide` against the
 exposed closure, with a plain `import` (no `import all`). This module reproduces
 that reduction discipline on small literal data, so the exposure cannot silently

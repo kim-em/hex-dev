@@ -1,0 +1,37 @@
+{
+  "source_commit": "79b991882a486a8c8d05fd26aaf1656358834b7e",
+  "modules": {
+    "HexOrderedFn/Extension.lean": "3f336ac83236b9378d62aa680fcf714683de79c1ef8ba0a5a4c6aafa7bf00246",
+    "HexOrderedFn/Infinitesimal.lean": "07150528a009eae5b0bbacc1df73e871d10a5412d35e5b62ae180b87fe918672",
+    "HexOrderedFn/Oracle.lean": "b89a4b6f24340218744966956b0f6bdbe679bbe04e773b697e6bd81b977be17f",
+    "HexOrderedFn/Real.lean": "1b1e7b3c2f35bc73db8e17bfc08892fb83580c45f2833c424fd3efec06076f44",
+    "HexOrderedFn/Search.lean": "94d4c0dcb8a7bd8fd9a725c672dd22865d779f4c84cb8f634050751a1c348cc0",
+    "HexOrderedFnMathlib/Convergence.lean": "9f514d85727d0b06c9753a2dbe3afb8ec19a39db2900f8c01862b4a576f56bcc",
+    "HexOrderedFnMathlib/Evaluation.lean": "dc030ac2b197a92cfbcd87de04e6666684d9bed1e6119a1ce2f9407dd0ab74cb",
+    "HexOrderedFnMathlib/Extension.lean": "9c1c01fce0e0c0f995ac37995134d07d62ab6342a7bb574cb2519330008345ed",
+    "HexOrderedFnMathlib/Hahn.lean": "b97cf1960dd82325f22450a824ccafc6a63588b7a393fecf39d24c639ed01c5f",
+    "HexOrderedFnMathlib/Infinitesimal.lean": "97f4ffb1d618439237b672344640469980625704b4a32e5242b97ef0a76ebf7d",
+    "HexOrderedFnMathlib/Oracle.lean": "1461a3a63cdf818244667eeb8bf0a349508f41a03abf07fbc4cef93dfa040900",
+    "HexOrderedFnMathlib/Progress.lean": "484665ddcb65c8770a17e0274cf4fb0cea0dea1ae203c77f562c4fb14376c499",
+    "HexOrderedFnMathlib/Real.lean": "c9e462fa61f5c18b33700a044a329c63257fbb571c2946b917bede01298be2e4"
+  },
+  "producer_sha256": "726529576cb647703722a1856079c8790a4616639f77179723cbb1f588c3a104",
+  "constants": 545,
+  "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+  ],
+  "build_log": "orderedfn-usage-audit-build.log, retained under /home/kim/.codex/tasks/hex-10575",
+  "build_result": "13487 Lake jobs complete; audit module compiled",
+  "limitations": [
+    "Named imported proof-body references count non-rfl simp/ext/instance uses; anonymous examples, rfl/dsimp reductions and unfolded elaboration instances may leave no named reference.",
+    "The snapshot imports HexManual at the preserved source tag, including OrderedFn Tests/LiouvilleTests; it is not the entire bench/conformance/examples tree.",
+    "Users include test declarations; nonzero reference counts do not establish production use. Generated declarations are also included.",
+    "Rebuilding at a later HexManual import closure changes users even when all thirteen production modules are byte-identical."
+  ],
+  "source_tag": "audit/issue-10575-orderedfn-review",
+  "matching_integrated_source_commit": "d07b00469d75085b3fe6161f5896a6134c2037b2",
+  "output_sha256": "257c8158c83e631f929ce922d01c55b3c11365cb67f770f766b7ea0ae93678bb",
+  "zero_reference_handwritten": 49
+}

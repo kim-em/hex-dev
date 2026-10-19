@@ -509,7 +509,7 @@ constructor. It does not alter the resultant or discriminant contracts.
   `Law`/`CofactorStep` packaging, `brownScale`, and the
   `subresultantChainExt_law` Bezout/exactness/value laws.
 - `HexResultant/Discriminant.lean`: the Mathlib-free executable `disc`.
-- `HexResultantMathlib/Discriminant.lean`: discriminant correspondence and
+- `HexResultantTheory/Discriminant.lean`: discriminant correspondence and
   the algebraic identities needed downstream. In characteristic zero, for
   positive-degree `f` and `g`, this includes
   `disc (f * g) = disc f · disc g · (resultant f g)²`; the degree
@@ -523,16 +523,14 @@ constructor. It does not alter the resultant or discriminant contracts.
   They are Mathlib-free, per
   [SPEC/benchmarking.md](../../SPEC/benchmarking.md). Mathlib's
   `Polynomial.resultant` is noncomputable, so it is not an in-process
-  comparator. The informational external comparator is
+  comparator. The external comparator is
   [FLINT](https://flintlib.org/) `fmpz_poly.resultant` and
   `fmpz_poly.discriminant`, called through python-flint's persistent-process
   interface on every rung of the equal-degree bounded-dense input ladder. It
   covers `runResultant` and `runDisc`. The `runChain` and `runPseudoDiv`
-  targets declare **no-comparable-surface-in-named-comparator**: python-flint
-  exposes neither a subresultant chain nor pseudo-division on `fmpz_poly`.
+  targets have no external comparator: python-flint exposes neither a subresultant chain nor pseudo-division on `fmpz_poly`.
   FLINT's modular and asymptotically fast kernels differ structurally from
-  Hex's integral Brown recurrence, so its ratios orient the Phase-4 report but
-  do not gate it. Exact value cross-checking against both FLINT and PARI
+  Hex's integral Brown recurrence, so its ratios are for orientation only. Exact value cross-checking against both FLINT and PARI
   remains independently covered by the conformance oracle.
 
 ## Conformance fixtures

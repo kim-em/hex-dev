@@ -1,0 +1,306 @@
+{
+  "source_commit": "973997c0c15e8059ecf14929c2743613f8e874f9",
+  "sources": {
+    "adapters/HexRCF/RealCoefficients.lean": "495ff7a8a52b4f62c343fbf54934217263222cbde1ea0b1ad091723a08f6c51d",
+    "adapters/HexRCF/RealCoefficients/RootQuote.lean": "077ebdef38b44d8351fc5311c9ab460275a0282c6f594a0e5254482d28a7cd48",
+    "adapters/HexRCF/RealCoefficients/ScalarQuote.lean": "4de515f22e6629631892d9f1c8d0324be312b251b8b6422dfd555ca97564845c",
+    "conformance/HexRCF/ScalarQuoteCases.lean": "adf250d872791082d08e389918f8f8709509a12a0d0bd893fa99452e5f564d33",
+    "conformance/HexRCF/ScalarQuoteConformance.lean": "fdfd1c1da04eda20f7ea22601fcf4d0f60efd150ca3b933d0d3318876d9744c5",
+    "conformance/HexRCF/ScalarQuotePublic.lean": "2418c0c2d932a5d7353005f49f1920fb95a2b4dd52ee4b96096c09d3b85217ae",
+    "conformance/HexRCF/NamedConstantProofs.lean": "54b6e99c42e5f43a254607fb438f77c10597a600cc39ed683c436d9a4bc74dd9",
+    "conformance/HexRCF/NamedConstants.lean": "3cc4f75fe7c1fc17863e5ca00cb4b5d154991ae1c155e1c2287efe35085d7c63",
+    "HexManual/Chapters/HexRCF/RootQuote.lean": "72ac52d932a853255be93536781a80e4229277040c777d1d694bb546e36e7a2d",
+    "lakefile.lean": "d92a2aa95274bcabcad2272fc8094f698058a63fa74083a86c72447bbaa60527"
+  },
+  "proof_nodes": 818,
+  "scalar_theorem_bodies": 13,
+  "scalar_data_definitions": [
+    "Hex.RCF.ScalarQuoteTests.restored",
+    "Hex.RCF.ScalarQuoteTests.literal",
+    "Hex.RCF.ScalarQuoteTests.empty"
+  ],
+  "named_theorem_bodies": 42,
+  "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "resource_policy": "serial aggregate32GiB/noSwap/LeanThreads2",
+  "review_findings_addressed": [
+    "named auxiliaries rechecked",
+    "scalar definitions rechecked under producer guard",
+    "input charged and type-checked before reduction",
+    "signature arity/universe guards",
+    "ordinary umbrella export and module consumer",
+    "wrong-context before callbacks",
+    "success caller metavariables",
+    "wrong field count/nonarray/trailing zeros"
+  ],
+  "scope": {
+    "context_binding": "Fact context must match the original codec context under reducible transparency; other aliases require explicit type transport.",
+    "wrong_context_control": "Fresh Core.Context epoch, maxHeartbeats2000000 raw; Exception.isMaxHeartbeat/isMaxRecDepth rethrown rather than counted as type rejection; decoder calls0.",
+    "assigned_inputs": "Instantiated before source/proof work charges; assigned reader and expanded assigned literal compared against direct inputs.",
+    "targets": "Constructed explicitly from original ValueCodec.decode application, with independent zero/nonzero source type/body assertions.",
+    "prior_record_caveat": "Earlier withOptions heartbeat claim did not set Core.Context.maxHeartbeats; retained record is corrected separately.",
+    "theorems": "13 scalar case bodies with complete standard-three axiom closure; two zero/nonzero source aliases have identical type/body constants and zero reductions; other theorem checks require nonempty diagnostics",
+    "definitions": "3 reachable scalar case definitions checked by ordinary kernel with producer diagnostics; literal definitions may have empty traces",
+    "named": "42 reachable original NamedConstants theorem bodies, including auxiliaries, re-added with fresh kernel checks; actual supplied registrations required",
+    "negative_inputs": "Wrong-context facts reject before callbacks under a fresh actual Core.Context maxHeartbeats2000000 raw; wrong field count, nonarray, trailing zeros, missing/wrong facts and admitted proposals refuse. Malformed codec applications are tested; the declaration signature guard is not tested by corrupting library declarations.",
+    "state_and_budget": "Assigned reader and expanded literal inputs have the same charge as their direct forms; continued/exact/one-below and late transport-exhaustion rollback tested; caller metavariables preserved on success."
+  },
+  "live_limit_verification": {
+    "MainPID": "1126687",
+    "MemoryMax": "34359738368",
+    "MemorySwapMax": "0",
+    "Environment": "PATH=/home/kim/.claude-patched:/home/kim/.local/bin:/home/kim/bin:/home/kim/.npm-global/bin:/run/wrappers/bin:/home/kim/.nix-profile/bin:/nix/profile/bin:/home/kim/.local/state/nix/profile/bin:/etc/profiles/per-user/kim/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin LEAN_NUM_THREADS=2",
+    "sampledWhileRunning": true
+  },
+  "render_command": "run-bounded env LAKE_NO_CACHE=true lake build ScalarReviewRender",
+  "visual": {
+    "captures": 8,
+    "widths": [
+      1440,
+      390
+    ],
+    "targets_per_width": [
+      19,
+      19
+    ],
+    "all_local_overflow_at_most_one_pixel": true,
+    "opened_captures": true
+  },
+  "render": {
+    "log": "manual-render.log.gz",
+    "terminal_summary": "ices and other narrow contexts. Long lines are likely to be truncated in the rendered output.\n\nHint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.\n\u2714 [14316/14318] Built HexManual (4.0s)\n\u2139 [14317/14318] Built ScalarReviewRender (7.4s)\ninfo: ScalarReviewRender.lean:3:0: 0\nBuild completed successfully (14318 jobs).\n          Finished with result: success\nMain processes terminated with: code=exited, status=0/SUCCESS\n               Service runtime: 3min 16.332s\n             CPU time consumed: 3min 47.167s\n                   Memory peak: 2.2G (swap: 0B)\n"
+  },
+  "artifacts": [
+    {
+      "path": "boundary-audit.log.gz",
+      "sha256": "8d3b2f47f447ba0026f97b23ce60410af9518a3bca0ecbe5979a612e29e90a76",
+      "bytes": 9250,
+      "uncompressed_sha256": "031911229b2a107b6b9aff2de608603d11d611537a5cc6992ca8e6074013496e",
+      "uncompressed_bytes": 117813
+    },
+    {
+      "path": "affected-validation.log.gz",
+      "sha256": "610832c41228c47f2a0a05898fac557f3ad32dc725de3bd95936e0a15bf2f030",
+      "bytes": 10169,
+      "uncompressed_sha256": "8d4b4266628bc34f12f17d02aec3fa0bb0e903949c3a58edc7e144583bf25550",
+      "uncompressed_bytes": 123173
+    },
+    {
+      "path": "manual-render.log.gz",
+      "sha256": "67aa2446805bb052fcd5620ac9bcc0be3a3de73a7028bf79435340595f46f324",
+      "bytes": 14283,
+      "uncompressed_sha256": "dbe901ee820077103e1f84fa9f1189b673a2a18768a53314075a6bc37ce8bbb1",
+      "uncompressed_bytes": 191620
+    },
+    {
+      "path": "browser-inspection.log.gz",
+      "sha256": "5f9adc97cc14d1976bf3cddbc5dd6c6133bc1eaeed0b61821e4ad523d073bd22",
+      "bytes": 242,
+      "uncompressed_sha256": "841fc45a3af92d85143144c33d53a3b91b1da9e58b0480fc614781191ee27cea",
+      "uncompressed_bytes": 327
+    },
+    {
+      "path": "boundary-diagnostic-1.log.gz",
+      "sha256": "27a39f62ca99fa39e9141145ac32ab7f6d4079127251597fe94d0455fa27db0e",
+      "bytes": 9469,
+      "uncompressed_sha256": "70f1f0ac364bef412ba7949b14609e81f060e5f64477707b10cdd7f261556cc2",
+      "uncompressed_bytes": 118889
+    },
+    {
+      "path": "boundary-diagnostic-2.log.gz",
+      "sha256": "9338b58c3acdba11dfc48940736313838bb22e51f83d64fafe7222d5570e50a0",
+      "bytes": 9439,
+      "uncompressed_sha256": "7ecb8d9f14ec81e4932aeda4a02fb9b6d2cef071ea39c05ff4f1e3b3c8238c20",
+      "uncompressed_bytes": 118758
+    },
+    {
+      "path": "boundary-diagnostic-3.log.gz",
+      "sha256": "86e6e52152ef75214c363ed197a4ba9aac9e8c12968080c1c6b1448bc08fb49f",
+      "bytes": 9389,
+      "uncompressed_sha256": "5f0e062fa8c4165c423668810e19bb3e3498634c54afc2ef60779d769b80e98f",
+      "uncompressed_bytes": 118582
+    },
+    {
+      "path": "boundary-diagnostic-4.log.gz",
+      "sha256": "d69da525cab74630ce8b9ad94168279bc2adca00cf06e58dcc510ec62d9635aa",
+      "bytes": 9251,
+      "uncompressed_sha256": "a6279eb3886e18b6b16edaac093fe1590cbe63a98000db46804360c190686f44",
+      "uncompressed_bytes": 118322
+    },
+    {
+      "path": "boundary-diagnostic-5.log.gz",
+      "sha256": "ca3c4844a6d4e4a6ce928e36f13573f1d361e3d7479c715e99a81ed55aa781b9",
+      "bytes": 9370,
+      "uncompressed_sha256": "0f6c92f3f001b2e1b5edc506bef2a226e7c63227dcd2f0ad28db6971524934a7",
+      "uncompressed_bytes": 118736
+    },
+    {
+      "path": "boundary-diagnostic-6.log.gz",
+      "sha256": "a8cbf2077e2b4e8c2fdcbeaeae8fbdddacc094dcdcd7fc0eb245b6d878233002",
+      "bytes": 7481,
+      "uncompressed_sha256": "ebf4c2ef3f68f435499e831f0d7a0e7fc341817ae23fb76fc1a27ef06ee8cad4",
+      "uncompressed_bytes": 78314
+    },
+    {
+      "path": "metadata-0.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "metadata-1.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "metadata-2.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "metadata-3.log.gz",
+      "sha256": "b409d67a3a037936236130f7dc5c82bc279551dcaa501f4fdee7275c7bc3baef",
+      "bytes": 99,
+      "uncompressed_sha256": "d2dd145dfbb85665677c83dfa50f34878e648a170c291230b82ce0749ec0eb97",
+      "uncompressed_bytes": 95
+    },
+    {
+      "path": "metadata-4.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "browser.mjs",
+      "sha256": "17ed77c513c82314e7a7757e06632a63ad28b7a3849fff28709de84947c34f04",
+      "bytes": 5677
+    },
+    {
+      "path": "run-bounded.sh",
+      "sha256": "63bc5f97337e6b039bb3a9b1ba2a500be96fd1c2a2f73b43dae284aa9b18dda8",
+      "bytes": 302
+    },
+    {
+      "path": "renderer-lakefile.lean.txt",
+      "sha256": "568afb61e6829eb111a6b0c3c1ea83382f9d8ccd4f2a96f08fcc2b72c2107d42",
+      "bytes": 148
+    },
+    {
+      "path": "renderer.lean.txt",
+      "sha256": "664d37e07421cd5f5ee5df6e4fdb3f18fb67b1e58e3688267ff6ca6909180ef3",
+      "bytes": 206
+    },
+    {
+      "path": "scalar-quotation-desktop-boundary.png",
+      "sha256": "81ce9e855a36e72e1448375310167533a39e3762729af20dc2259c26edfd7372",
+      "bytes": 301521
+    },
+    {
+      "path": "scalar-quotation-desktop-equivalence.png",
+      "sha256": "310957cc04764df4191f58bd7bbb4240e9fd2ed45296aff943a142216e2db9b4",
+      "bytes": 284417
+    },
+    {
+      "path": "scalar-quotation-desktop-example.png",
+      "sha256": "cd90b60f43f347bcacf9e5ff50dfc336f07e6ca6f9606213c2cfd38dca748cd7",
+      "bytes": 275321
+    },
+    {
+      "path": "scalar-quotation-desktop-value.png",
+      "sha256": "94bed06e389e83a6c7f963f8104fcda28322501467be00851888287379f999b5",
+      "bytes": 280272
+    },
+    {
+      "path": "scalar-quotation-narrow-boundary.png",
+      "sha256": "458e5c140ceb64d2b54a88750e835f3253acd848177e572af99043825c1b5975",
+      "bytes": 94358
+    },
+    {
+      "path": "scalar-quotation-narrow-equivalence.png",
+      "sha256": "1702a913a1e1fac7e91b05f1e4af7042cdc9106746f69f6313d7f3be56cee958",
+      "bytes": 95466
+    },
+    {
+      "path": "scalar-quotation-narrow-example.png",
+      "sha256": "10e0692a100ba11adfd1e7c8ea86ab517adce9a93da5bc50f576595c168488b9",
+      "bytes": 97735
+    },
+    {
+      "path": "scalar-quotation-narrow-value.png",
+      "sha256": "c60a2752123b26d70732c9c527dae8eebce10d644d69582e3dc81143ac2a8ff1",
+      "bytes": 98096
+    },
+    {
+      "path": "scalar-quotation-inspection.json",
+      "sha256": "0c13e9f912732f599312d564a8f2d5077f635ff71dd72fab96ac42fe22c96769",
+      "bytes": 5054
+    },
+    {
+      "path": "scalar-quotation-section-overflow.json",
+      "sha256": "b20d9623526ed8173748cd5d8e1401ccc2bcd2212f715469a2fff903034d9537",
+      "bytes": 9350
+    }
+  ],
+  "metadata": [
+    {
+      "argv": [
+        "python3",
+        "scripts/check_dag.py"
+      ],
+      "exit_code": 0,
+      "log": "metadata-0.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_copyright_headers.py"
+      ],
+      "exit_code": 0,
+      "log": "metadata-1.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_file_line_counts.py"
+      ],
+      "exit_code": 0,
+      "log": "metadata-2.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/ci/check_named_admissions.py"
+      ],
+      "exit_code": 0,
+      "log": "metadata-3.log.gz"
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "metadata-4.log.gz"
+    }
+  ],
+  "verification": {
+    "affected": "11783 jobs; 1min26.754s; CPU2min19.767s; peak1.8GiB/noSwap",
+    "boundary_audit": "11171 jobs; 17.574s; CPU25.738s; peak1.6GiB/noSwap"
+  },
+  "limitations": [
+    "Earlier failed diagnostics are retained separately; transient source snapshots are not all retained.",
+    "The fixed admission scanner covers its existing675 cones/1585 modules; actual source proof closures have separate complete axiom audits.",
+    "Build observations include cached dependencies and are not matched scaling or speedup measurements.",
+    "No generic source/provider/predecessor histories, general tactic/accepted completeness, realization or strict compiled whole-reader missing-record claim."
+  ]
+}

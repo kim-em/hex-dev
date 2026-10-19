@@ -28,7 +28,7 @@ def main() -> None:
                                  for name in ("campaign-updated.json", "validation.json")]
     cases = [case for path in campaigns for case in json.loads(path.read_text())["cases"]
              if case["native"]["verdict"] == "success"]
-    source = "import HexECPPMathlib.Native\n\nopen Lean\n\nset_option maxHeartbeats 0\n\n"
+    source = "import HexECPPTheory.Native\n\nopen Lean\n\nset_option maxHeartbeats 0\n\n"
     source += "run_cmd Lean.Elab.Command.liftTermElabM do\n"
     for case in cases:
         source += f'''  let (rows, _) ← Hex.ECPP.Native.generate {case['subject']} {case['seed']}
@@ -41,7 +41,7 @@ def main() -> None:
         (folder / "Generate.lean").write_text(source)
         start = time.monotonic_ns()
         result = subprocess.run(["taskset", "-c", str(cpu), "lake", "build",
-                                 "+HexECPPMathlib." + folder.name + ".Generate:olean"],
+                                 "+HexECPPTheory." + folder.name + ".Generate:olean"],
                                 cwd=ROOT, capture_output=True, text=True)
         output = result.stdout + result.stderr
         confirmations = [line for line in output.splitlines() if "NATIVE_KERNEL" in line]

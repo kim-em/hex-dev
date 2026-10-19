@@ -15,8 +15,8 @@ public meta import HexSignDet.Conformance
 
 public section
 
-/-! Literal graph replay and rejection tests. Computational conformance owner:
-`HexSignDet`. The successful probes run through the ordinary kernel. -/
+/-! Literal graph replay and rejection tests. The successful probes run through
+the ordinary kernel. -/
 namespace Hex.SignDet.CrossCheck
 open Hex.SignDet.Conformance
 
@@ -547,3 +547,11 @@ end Hex.SignDet.CrossCheck
 /-- info: 'Hex.SignDet.Dag.descriptor_encode' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Hex.SignDet.Dag.descriptor_encode
+
+/-- info: 'Hex.SignDet.Codec.bindings_of_check' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.SignDet.Codec.bindings_of_check
+
+/-- info: 'Hex.SignDet.Codec.bindings_of_validate' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Hex.SignDet.Codec.bindings_of_validate

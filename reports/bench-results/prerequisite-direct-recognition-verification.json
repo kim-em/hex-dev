@@ -1,0 +1,151 @@
+{
+  "source_commit": "d542e84f4770e09126ad5cfb1accb3c402920b10",
+  "base_runtime_commit": "4a028ba8408ded1ceaaaaa92318ef035d4b2ad1c",
+  "scope": "Follow-up direct rational recognition, query/root headlines, added rational-height registrations and retained profile/preparation evidence. No Phase-4 advancement or transitive implementation change.",
+  "tested_source_sha256": {
+    "HexRealAlgebraic/Order.lean": "4b3ef510f4358d75de4d90f267f067572585be83421aa06958a4246a8245a66a",
+    "HexRealAlgebraicMathlib/Rational.lean": "88e0c6ef4cbc10f826d6a16b36893596fa2e8a4609a17d9fda0e64ec085655d4",
+    "HexRealAlgebraicMathlib/Roots.lean": "37161c65df791fd265297013de6fa9d4c571bed8154bcbf1493918c3219c5717",
+    "HexRealAlgebraicMathlib/Tests.lean": "386dee77f9e1dc658aaf67263bf8f77ae7341f53f6c1d6aba2bdcfec1201d7fe",
+    "adapters/HexSturmMathlib/Soundness.lean": "d48888d286d47b784ea4c42b3c11df191dd9e9da8f7ac67a1cd78bb91d5f3a36",
+    "adapters/HexSturmMathlib/Tests/Replay/Semantics.lean": "c512261a78e8162b7e68fc49460340ce6d7e8a789ce8a4bd1deb4f3ec097b155",
+    "bench/HexRealAlgebraic/Bench.lean": "a6637f702ae6b285176b0f43d07333e83be2879c2270068d1cef4892719ab95e"
+  },
+  "checks": [
+    {
+      "command": "lake build HexQuerySemantics HexRealAlgebraicMathlibTests",
+      "result": "passed",
+      "jobs": 10774,
+      "includes": "composed query/root headlines, recognition correspondence and ordinary-kernel axiom guards"
+    },
+    {
+      "command": "lake build",
+      "result": "passed",
+      "jobs": 15574,
+      "compiled_source_commit": "a7e5fb9ebe61344b7af1d6bfe6c16ca1e6b7d35a",
+      "source_scope": "default targets; subsequent changes are benchmark smoke fixture and evidence only"
+    },
+    {
+      "command": "lake build hexrealalgebraic_bench HexConformance hexrealalgebraic_emit_fixtures",
+      "result": "passed",
+      "jobs": 14797
+    },
+    {
+      "command": "python3 scripts/check_dag.py",
+      "result": "passed"
+    },
+    {
+      "command": "python3 scripts/check_phase4.py",
+      "result": "passed",
+      "headline_reports": 43,
+      "changed_registrations": 48
+    },
+    {
+      "command": "python3 scripts/ci/check_named_admissions.py",
+      "result": "passed",
+      "cones": 275,
+      "local_modules": 1050
+    },
+    {
+      "command": "HEX_FLINT_BENCH_PYTHON=/tmp/hex-10577-oracles/bin/python BENCH_VERIFY_HARD_CAP_SECONDS=360 bash scripts/ci/check_bench_verify_budget.sh HexSturm=hexsturm_bench HexRealAlgebraic=hexrealalgebraic_bench",
+      "result": "passed",
+      "bench_counts": {
+        "HexSturm": 44,
+        "HexRealAlgebraic": 71
+      },
+      "sturm_fixture_degrees": 129,
+      "seconds": {
+        "HexSturm": 4,
+        "HexRealAlgebraic": 32,
+        "total": 36
+      },
+      "scope": "Two owned executables only; not repo-wide CI headroom"
+    },
+    {
+      "command": ".lake/build/bin/hexrealalgebraic_emit_fixtures",
+      "result": "passed",
+      "cases": 83
+    },
+    {
+      "command": "/tmp/hex-10577-oracles/bin/python scripts/oracle/real_algebraic_flint.py --require-oracles /tmp/issue-10577-direct-fastpath-fresh.jsonl",
+      "result": "passed",
+      "cases": 83,
+      "unavailable_component_skips": 0
+    },
+    {
+      "command": "cmp /tmp/issue-10577-direct-fastpath-fresh.jsonl conformance-fixtures/HexRealAlgebraic/real_algebraic.jsonl",
+      "result": "passed"
+    }
+  ],
+  "axiom_allowlist": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "retained_local_failed_checks": [
+    {
+      "command": "lake build HexConformance hexrealalgebraic_emit_fixtures hexrealalgebraic_bench",
+      "result": "failed",
+      "reason": "Unqualified max was ambiguous with the opened real-algebraic namespace in the new smoke fixture. Qualified Nat.max; corrected complete build above passes."
+    },
+    {
+      "command": "python3 scripts/check_phase4.py",
+      "result": "failed",
+      "reason": "First scan saw uncommitted line shifts and the quotient control comment lacked an ASCII cost-model keyword. The committed adjacent linear derivation and final scan above pass."
+    }
+  ],
+  "scientific_performance_status": "No current admission of direct-recognition height models; first-rung preparation probe failed and is retained separately. Existing historical observations remain source-scoped.",
+  "required_ci": "Follow-up PR must pass on its final revision; PR #10580 CI attests only the preceding source.",
+  "retained_logs": [
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/direct-recognition-d542e84f4/issue-10577-direct-recognition-and-headlines-build.log",
+      "bytes": 70054,
+      "sha256": "e189d7444cfb1f1a4b9636e56176ff1f1b0218b48b40859b2ee3b50b08ed76e0"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/direct-recognition-d542e84f4/issue-10577-direct-fastpath-default-build.log",
+      "bytes": 166240,
+      "sha256": "f527b9c1f55d08091360535219b6825841333e78f587a9384b4b5972356a0230"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/direct-recognition-d542e84f4/issue-10577-direct-fastpath-conformance-bench-build.log",
+      "bytes": 532001,
+      "sha256": "399d2d659d8a541bc4be767635c19caa32240b6e06d570f8b4987d5d9649d35a"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/direct-recognition-d542e84f4/issue-10577-direct-fastpath-conformance-bench-build-corrected.log",
+      "bytes": 527465,
+      "sha256": "ef2d84bbcc102775410bbfd43cc797eb33c669692a33c0df36ec8044de306faa"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/direct-recognition-d542e84f4/issue-10577-direct-fastpath-owned-verify.log",
+      "bytes": 53995,
+      "sha256": "7841a51f70d4962ea9e45f88089f13216b3d9c77ab3c24b9aa5a003df82712a8"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/direct-recognition-d542e84f4/issue-10577-direct-fastpath-admissions.log",
+      "bytes": 95,
+      "sha256": "cf3475a510cf3f6117c6cfb76f935c2685b4fb44ea582d3fbe86e5e61bf8053e"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/direct-recognition-d542e84f4/issue-10577-direct-fastpath-dag.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/direct-recognition-d542e84f4/issue-10577-direct-fastpath-phase4.log",
+      "bytes": 330,
+      "sha256": "a2b6ad31a64b259c99266248961bff6732f5c1c42f0188969f94ae95781ad927"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/direct-recognition-d542e84f4/issue-10577-direct-fastpath-phase4-corrected.log",
+      "bytes": 72,
+      "sha256": "99585bea8c37a0990c837d5585636891303d557caf182fe79af28d7815dd4e65"
+    },
+    {
+      "path": "/home/kim/.local/state/hex/issue-10577-verification/direct-recognition-d542e84f4/issue-10577-direct-fastpath-oracle.log",
+      "bytes": 76,
+      "sha256": "534ab1fbb8538ad6001ce1232ea9ac12f2bc6bae57d05e6d7e659aa01d1730ef"
+    }
+  ]
+}

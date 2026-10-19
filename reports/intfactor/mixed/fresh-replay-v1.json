@@ -1,0 +1,72 @@
+{
+  "cpu": 30,
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "loadavg": [
+    7.4072265625,
+    9.61181640625,
+    12.9453125
+  ],
+  "samples": [
+    {
+      "case": "CaseA",
+      "trial": 0,
+      "returncode": 0,
+      "wall_ns": 12872466576,
+      "source_bytes": 1052861,
+      "source_sha256": "389a52aaeaa07d5ff86b1d576106add2cae74626e161486374319cb91987339f",
+      "stdout": "\u2139 [115/191] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2714 [191/191] Built HexIntFactor.Mixed.FreshReplayScratch.Trial0CaseA (11s)\nBuild completed successfully (191 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "case": "CaseB",
+      "trial": 0,
+      "returncode": 0,
+      "wall_ns": 13220727909,
+      "source_bytes": 1122923,
+      "source_sha256": "c971983a4474764c43c2db6987651f0d937f7279e1d0eabea920f4d139b3578b",
+      "stdout": "\u2139 [115/191] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2714 [191/191] Built HexIntFactor.Mixed.FreshReplayScratch.Trial0CaseB (12s)\nBuild completed successfully (191 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "case": "Partial",
+      "trial": 0,
+      "returncode": 0,
+      "wall_ns": 1284791811,
+      "source_bytes": 1087,
+      "source_sha256": "1287b753f2d612df41c583f08fcea8be07500ce5b9fd37f85aa1e5596a132742",
+      "stdout": "\u2139 [115/191] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2714 [191/191] Built HexIntFactor.Mixed.FreshReplayScratch.Trial0Partial (236ms)\nBuild completed successfully (191 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "case": "CaseA",
+      "trial": 1,
+      "returncode": 0,
+      "wall_ns": 13207907633,
+      "source_bytes": 1052861,
+      "source_sha256": "389a52aaeaa07d5ff86b1d576106add2cae74626e161486374319cb91987339f",
+      "stdout": "\u2139 [115/191] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2714 [191/191] Built HexIntFactor.Mixed.FreshReplayScratch.Trial1CaseA (12s)\nBuild completed successfully (191 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "case": "CaseB",
+      "trial": 1,
+      "returncode": 0,
+      "wall_ns": 13367709519,
+      "source_bytes": 1122923,
+      "source_sha256": "c971983a4474764c43c2db6987651f0d937f7279e1d0eabea920f4d139b3578b",
+      "stdout": "\u2139 [115/191] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2714 [191/191] Built HexIntFactor.Mixed.FreshReplayScratch.Trial1CaseB (12s)\nBuild completed successfully (191 jobs).\n",
+      "stderr": ""
+    },
+    {
+      "case": "Partial",
+      "trial": 1,
+      "returncode": 0,
+      "wall_ns": 1286784834,
+      "source_bytes": 1087,
+      "source_sha256": "1287b753f2d612df41c583f08fcea8be07500ce5b9fd37f85aa1e5596a132742",
+      "stdout": "\u2139 [115/191] Replayed HexPrimality.Table:c.o\ninfo: stderr:\n/home/kim/worktrees/hex-dev/hex-dev-issue-10637/.lake/build/ir/HexPrimality/Table.c:37:114: warning: implicit truncation from '__size_t' (aka 'unsigned long') to bit-field changes value from 76760 to 11224 [-Wbitfield-constant-conversion]\n1 warning generated.\n\u2714 [191/191] Built HexIntFactor.Mixed.FreshReplayScratch.Trial1Partial (247ms)\nBuild completed successfully (191 jobs).\n",
+      "stderr": ""
+    }
+  ]
+}

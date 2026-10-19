@@ -25,7 +25,7 @@ overshoot rather than the old next-power-of-two schedule.
 
 The companion theorem states the ordered-product congruence contract for
 the lifted array. The linear-vs-quadratic agreement obligation lives in
-`hex-hensel-mathlib`.
+`hex-hensel-theory`.
 -/
 
 namespace Hex
@@ -928,7 +928,7 @@ under the recursive precondition package consumed by the quadratic
 multifactor lifting tree.
 
 The lift-uniqueness companion (linear-vs-quadratic agreement after
-canonicalisation) lives in `hex-hensel-mathlib`.
+canonicalisation) lives in `hex-hensel-theory`.
 -/
 theorem multifactorLiftQuadratic_spec
     (p k : Nat) [ZMod64.Bounds p]

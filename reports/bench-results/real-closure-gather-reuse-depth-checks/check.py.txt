@@ -1,0 +1,31 @@
+import hashlib,json,subprocess,re
+from pathlib import Path
+root=Path('/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse')
+baseline=Path('/home/kim/worktrees/hex-dev/hex-dev-issue-10378-gather-baseline')
+out=root/'reports/bench-results/real-closure-gather-reuse-depth-checks'
+out.mkdir(exist_ok=True)
+if (out/'results.json').exists():raise RuntimeError('checks already recorded')
+metadata={'kind':'untimed semantic and presentation-depth checks; no timing samples','arms':{}}
+for arm,wt in [('baseline',baseline),('cached',root)]:
+ binary=wt/'.lake/build/bin/hexrealclosure_bench'
+ metadata['arms'][arm]={'head':subprocess.check_output(['git','rev-parse','HEAD'],cwd=wt,text=True).strip(),'dirty':subprocess.check_output(['git','status','--short'],cwd=wt,text=True),'executable_sha256':hashlib.sha256(binary.read_bytes()).hexdigest()}
+ (out/(arm+'-Bench.lean.txt')).write_text((wt/'bench/HexRealClosure/Bench.lean').read_text())
+(out/'metadata.json').write_text(json.dumps(metadata,indent=2)+'\n')
+(out/'check.py.txt').write_text(Path(__file__).read_text())
+results=[]
+for degree,owners in [(2,[2,4,6,8]),(4,[1,2,3,4])]:
+ for count in owners:
+  for arm,wt in [('baseline',baseline),('cached',root)]:
+   command=[str(wt/'.lake/build/bin/hexrealclosure_bench'),'gather-reuse-check',str(degree),str(count)]
+   completed=subprocess.run(command,cwd=wt,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True)
+   label=f'degree-{degree}-owners-{count}-{arm}'
+   record={'degree':degree,'owners':count,'arm':arm,'command':command,'returncode':completed.returncode,'output':completed.stdout}
+   match=re.search(r'target_depth=(\d+)',completed.stdout)
+   record['depth']=int(match[1]) if match else None
+   record['expected_depth']=1 if arm=='cached' else count
+   record['depth_matches']=record['depth']==record['expected_depth']
+   (out/(label+'.log')).write_text(completed.stdout)
+   results.append(record)
+   (out/'results.json').write_text(json.dumps(results,indent=2)+'\n')
+   print(label,record['returncode'],record['depth'],flush=True)
+   if completed.returncode or not record['depth_matches']:raise SystemExit(completed.returncode or 1)

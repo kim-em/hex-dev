@@ -18,7 +18,7 @@ This is the executable half of a production-scale batching probe. It carries
 all 1,000 source cells of pinned shard 11 (`b = 11010` through `b' = 12050`)
 and checks them in fifty independently scheduled chunks of twenty. The
 numeric check uses exact Core rationals and a 128-way exponential split; its
-Mathlib companion proves the shared Taylor remainder and transport once.
+Theory companion proves the shared Taylor remainder and transport once.
 -/
 
 namespace Hex.Interval.Experiment.PntFks2Shard

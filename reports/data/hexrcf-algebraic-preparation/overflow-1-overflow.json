@@ -1,0 +1,15 @@
+{
+  "label": "narrow",
+  "kind": "api-start",
+  "anchorText": "\n                  Meta clients can prepare these native inputs from the original Lean statement\nwith AlgebraicPreparation.prepare. It reuses the shared source translator and\nthe checked algebraic interpretation of each coefficient and original divisor.\nThe callback supplies an ordinary proof when a radical base needs a\nnonnegativity fact. Preparation checks that proof and retains one aggregate\nreflection budget across the source, coefficients and divisors:",
+  "targetTop": 0.25,
+  "targetBottom": 509.25,
+  "viewport": 390,
+  "scrollY": 433030,
+  "paragraphWidth": 343,
+  "scrollWidth": 343,
+  "targetTag": "CODE",
+  "targetWidth": 331,
+  "targetScrollWidth": 336,
+  "descendantOverflow": 5
+}

@@ -7,7 +7,7 @@ Authors: Kim Morrison
 import VersoManual
 
 import HexGFq.Basic
-import HexGFqMathlib
+import HexGFqTheory
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -204,19 +204,19 @@ when the library compiles, not a runtime assertion.
 
 # The Mathlib correspondence
 %%%
-tag := "hex-gfq-mathlib"
+tag := "hex-gfq-theory"
 %%%
 
-Everything above is executable and Mathlib-free. `HexGFqMathlib`
+Everything above is executable and Mathlib-free. `HexGFqTheory`
 connects it to Mathlib: for prime `p`, the executable field
 {name}`Hex.GFq` is ring-isomorphic to Mathlib's `GaloisField p n`, with
 `p ^ n` elements.
 
-{docstring HexGFqMathlib.GFq.equivGaloisField}
+{docstring HexGFqTheory.GFq.equivGaloisField}
 
-{docstring HexGFqMathlib.GFq.fintype_card_eq_pow}
+{docstring HexGFqTheory.GFq.fintype_card_eq_pow}
 
-{docstring HexGFqMathlib.GFq.card_eq_galoisField_card}
+{docstring HexGFqTheory.GFq.card_eq_galoisField_card}
 
 # Cross-references
 %%%
@@ -238,5 +238,5 @@ tag := "hex-gfq-cross-references"
   packed certificates discharge.
 
 `HexGFq` is Mathlib-free. Its Mathlib correspondence
-({ref "hex-gfq-mathlib"}[above], via `HexGFqMathlib`) identifies the
+({ref "hex-gfq-theory"}[above], via `HexGFqTheory`) identifies the
 executable field with Mathlib's {name}`GaloisField`.

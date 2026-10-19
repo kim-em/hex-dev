@@ -1,0 +1,61 @@
+{
+  "measurements_sha256": "0cd4299b2011f0c3ca1ede5e1ce02f6b9c707eba09da83338e346b288e90abd4",
+  "source": "bench/HexPrimalityMathlib/ProofProbe/Adoption.lean",
+  "source_sha256": "c54a64de801e25daea872bd967693266f1bb05ad5093950f554ecc7714b93056",
+  "certificates": {
+    "13664edef8a245ef5b5f77a868fbaf3e41d3f253669dedc65ba9898308c0fa0b": {
+      "subject": 69720056183201689673043526946867998580043318488979852658170286968852334279321,
+      "theorem": "Hex.PrimalityAdoption.h13664edef8a245ef5b5f",
+      "certificate": "Hex.Nat.PrimeCert.pock3\n  69720056183201689673043526946867998580043318488979852658170286968852334279321\n  8155740637493983986425013211175\n  179327126798440\n  8155740637493983986425013211174\n  [(7, 2, Hex.Nat.PrimeCert.small 2),\n   (2,\n    0,\n    Hex.Nat.PrimeCert.pock3\n      1742813375229269179225295318389\n      466369261\n      797985852\n      466369254\n      [(2, 1, Hex.Nat.PrimeCert.small 2),\n       (2, 2, Hex.Nat.PrimeCert.small 3),\n       (2, 0, Hex.Nat.PrimeCert.small 41),\n       (2, 0, Hex.Nat.PrimeCert.small 113),\n       (2, 0, Hex.Nat.PrimeCert.small 211),\n       (2, 0, Hex.Nat.PrimeCert.small 313)])]"
+    },
+    "1727418a767668f8bdd3378c44b684b291e909e7670cbaa272d1d3316d948248": {
+      "subject": 115219968303613180170318760115437973610941062152781770424416328511434156923419,
+      "theorem": "Hex.PrimalityAdoption.h1727418a767668f8bdd3",
+      "certificate": "Hex.Nat.PrimeCert.pock\n  115219968303613180170318760115437973610941062152781770424416328511434156923419\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock\n      45862237193743742748804221806010957525504490853138766903\n      [(2,\n        0,\n        Hex.Nat.PrimeCert.pock3\n          24346916115929274623004442222697564856736319119699\n          207033914835407159\n          458172508331345\n          207033914835407158\n          [(2, 0, Hex.Nat.PrimeCert.small 2),\n           (2,\n            0,\n            Hex.Nat.PrimeCert.pock\n              81500912810811491\n              [(2,\n                0,\n                Hex.Nat.PrimeCert.pock\n                  1308410865481\n                  [(2, 0, Hex.Nat.PrimeCert.small 2557), (2, 0, Hex.Nat.PrimeCert.small 4999)])])])])]"
+    },
+    "191be6736f1737947bdd442c298d2b82aac2969414725a1f4ecfe29658eedb17": {
+      "subject": 96590133568377947488922651108406533027621815589740576200326951544495709460191,
+      "theorem": "Hex.PrimalityAdoption.h191be6736f1737947bdd",
+      "certificate": "Hex.Nat.PrimeCert.pock\n  96590133568377947488922651108406533027621815589740576200326951544495709460191\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock\n      13596502756513155034176285505009231528806356541260779742862268109\n      [(2,\n        0,\n        Hex.Nat.PrimeCert.pock\n          11671899846949893238322767694352121508952208909719338567749\n          [(2, 0, Hex.Nat.PrimeCert.small 17327),\n           (2,\n            0,\n            Hex.Nat.PrimeCert.pock3\n              54816603279049951812177013\n              949352873\n              36667897\n              949352872\n              [(2, 1, Hex.Nat.PrimeCert.small 2),\n               (5, 4, Hex.Nat.PrimeCert.small 3),\n               (2, 1, Hex.Nat.PrimeCert.small 11),\n               (2, 0, Hex.Nat.PrimeCert.small 7351)])])])]"
+    },
+    "3d2c3dbb7bfc1177a75ca973db96ff3c9f832850fd46f50e4f2f8a920418782d": {
+      "subject": 8303243761314623153536298383293640890258824928930362945199766069795505229347391151296947598482864968712933522433529495861410413812952831043952026306423823,
+      "theorem": "Hex.PrimalityAdoption.h3d2c3dbb7bfc1177a75c",
+      "certificate": "Hex.Nat.PrimeCert.pock\n  8303243761314623153536298383293640890258824928930362945199766069795505229347391151296947598482864968712933522433529495861410413812952831043952026306423823\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock\n      231392247121855978133901766920235943779795090217764365202095841950595408010261529694920315912705259316767035574545980825506006625180389834577710157\n      [(2,\n        0,\n        Hex.Nat.PrimeCert.pock3Sieve\n          263727278085898508909776859276785530295439768420955106495189836494449359368507512761372224758574088787986913\n          403239302758865286702996050846888501\n          969115179775050853745794979379854619\n          403239302758865286702996050846888491\n          2\n          [(5, 4, Hex.Nat.PrimeCert.small 2),\n           (2, 2, Hex.Nat.PrimeCert.small 3),\n           (5, 0, Hex.Nat.PrimeCert.small 11),\n           (2, 0, Hex.Nat.PrimeCert.small 17),\n           (2, 0, Hex.Nat.PrimeCert.small 211),\n           (2, 0, Hex.Nat.PrimeCert.small 2017),\n           (2,\n            0,\n            Hex.Nat.PrimeCert.pock\n              431325071899\n              [(2, 0, Hex.Nat.PrimeCert.small 10889), (2, 0, Hex.Nat.PrimeCert.small 15461)]),\n           (2,\n            0,\n            Hex.Nat.PrimeCert.pock3\n              12437309001451\n              37949\n              13237\n              37947\n              [(2, 0, Hex.Nat.PrimeCert.small 2), (2, 0, Hex.Nat.PrimeCert.small 10837)])])])]"
+    },
+    "0fd47bae858921b84b04d8da1498722b615e24bf575b536f2e9c5952c2edf98e": {
+      "subject": 7983226596738841058766325436315975273752711604126516516644200892341180092058466758226580125510711294302178552878759289723290167401444678034498033356114163,
+      "theorem": "Hex.PrimalityAdoption.h0fd47bae858921b84b04",
+      "certificate": "Hex.Nat.PrimeCert.pock\n  7983226596738841058766325436315975273752711604126516516644200892341180092058466758226580125510711294302178552878759289723290167401444678034498033356114163\n  [(2,\n    0,\n    Hex.Nat.PrimeCert.pock\n      6350026621933690113386201325499420177229374151571760086097788127770776076328881406780335094248779495090930898571905058477877334847597\n      [(2,\n        0,\n        Hex.Nat.PrimeCert.pock\n          182065818633715903389934318172758908668707966092882963494153075183581188211079735798695012717\n          [(2,\n            0,\n            Hex.Nat.PrimeCert.pock3Sieve\n              1119031572209027825034916254932913431565573527312281693778835431145982732381\n              5238291556606449239293289\n              15682955142102726053495642\n              5238291556606449239293277\n              2\n              [(2, 1, Hex.Nat.PrimeCert.small 2),\n               (2, 0, Hex.Nat.PrimeCert.small 5),\n               (2, 0, Hex.Nat.PrimeCert.pock 580627 [(2, 0, Hex.Nat.PrimeCert.small 32257)]),\n               (2, 0, Hex.Nat.PrimeCert.pock 5729747 [(2, 0, Hex.Nat.PrimeCert.small 7039)]),\n               (2,\n                0,\n                Hex.Nat.PrimeCert.pock\n                  89769654379\n                  [(2, 0, Hex.Nat.PrimeCert.small 347), (2, 0, Hex.Nat.PrimeCert.small 5981)])])])])]"
+    }
+  },
+  "links": [
+    {
+      "sample": 10,
+      "certificate_sha256": "13664edef8a245ef5b5f77a868fbaf3e41d3f253669dedc65ba9898308c0fa0b"
+    },
+    {
+      "sample": 13,
+      "certificate_sha256": "1727418a767668f8bdd3378c44b684b291e909e7670cbaa272d1d3316d948248"
+    },
+    {
+      "sample": 14,
+      "certificate_sha256": "191be6736f1737947bdd442c298d2b82aac2969414725a1f4ecfe29658eedb17"
+    },
+    {
+      "sample": 19,
+      "certificate_sha256": "3d2c3dbb7bfc1177a75ca973db96ff3c9f832850fd46f50e4f2f8a920418782d"
+    },
+    {
+      "sample": 21,
+      "certificate_sha256": "0fd47bae858921b84b04d8da1498722b615e24bf575b536f2e9c5952c2edf98e"
+    }
+  ],
+  "build_command": [
+    "lake",
+    "build",
+    "HexPrimalityMathlib.ProofProbe.Adoption"
+  ],
+  "build_returncode": 0,
+  "log_sha256": "d532ca3140d805d03c2198b9b7a986535ab02f11c663503f15b1de31bee07ea9"
+}

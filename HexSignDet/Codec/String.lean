@@ -21,6 +21,7 @@ namespace Hex.SignDet.Codec.Str
   else if 65 ≤ c.toNat ∧ c.toNat ≤ 70 then some (c.toNat - 55)
   else none
 
+/-- Read exactly four hexadecimal digits and combine their base-sixteen values. -/
 @[expose] def hex4 (a b c d : Char) : Option Nat := do
   let a ← hex a
   let b ← hex b
@@ -61,6 +62,7 @@ combined; lone surrogates are rejected. Ordinary Unicode is read directly. -/
     ['\\', 'u', '0', '0', Nat.digitChar (c.toNat / 16), Nat.digitChar (c.toNat % 16)]
   else [c]
 
+/-- Escape every character in order without adding the surrounding quotes. -/
 @[expose] def writeBody (cs : List Char) : List Char := cs.flatMap writeChar
 
 /-- Finite reference parser for proofs, with fuel bounding decoded characters.
@@ -92,6 +94,7 @@ frame per character. -/
     else readBodyLoop fuel rest (c :: reversed)
   | _, [], _ => none
 
+/-- The accumulator body reader agrees with the reference while retaining its reversed prefix. -/
 private theorem readBodyLoop_eq (fuel : Nat) (input reversed : List Char) :
     readBodyLoop fuel input reversed =
       (readBody fuel input).map (fun (cs, suffix) => (reversed.reverse ++ cs, suffix)) := by
@@ -116,12 +119,14 @@ private theorem readBodyLoop_eq (fuel : Nat) (input reversed : List Char) :
           · rw [ih]
             cases readBody fuel rest <;> simp [List.reverse_cons, List.append_assoc]
 
+/-- Every hexadecimal digit below sixteen decodes to its original value. -/
 private theorem hex_digit (n : Nat) (h : n < 16) : hex n.digitChar = some n := by
   match n with
   | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 =>
     simp [hex, Nat.digitChar]
   | n + 16 => omega
 
+/-- Four-digit control-character escaping reconstructs every value below thirty-two. -/
 private theorem hex4_control (n : Nat) (h : n < 32) :
     hex4 '0' '0' (Nat.digitChar (n / 16)) (Nat.digitChar (n % 16)) = some n := by
   have hz : hex '0' = some 0 := by simp [hex]
@@ -130,11 +135,13 @@ private theorem hex4_control (n : Nat) (h : n < 32) :
     bind, Option.bind, pure, Option.some.injEq]
   omega
 
+/-- The emitted control escape consumes only its own digits and preserves the suffix. -/
 private theorem readEscape_control (n : Nat) (h : n < 32) (suffix : List Char) :
     readEscape (['u', '0', '0', Nat.digitChar (n / 16), Nat.digitChar (n % 16)] ++ suffix) =
       some (Char.ofNat n, suffix) := by
   simp [readEscape, hex4_control n h, show n < 0xd800 by omega]
 
+/-- Reading one emitted character preserves the following reference-body result. -/
 private theorem readBody_char (c : Char) (tail : List Char) (fuel : Nat) :
     readBody (fuel + 1) (writeChar c ++ tail) =
       (readBody fuel tail).map (fun (cs, suffix) => (c :: cs, suffix)) := by
@@ -174,6 +181,7 @@ theorem readBody_write (cs suffix : List Char) (fuel : Nat) (h : cs.length < fue
       rw [ih fuel (by simpa using h)]
       rfl
 
+/-- Every escaped character emits at least one character. -/
 private theorem writeChar_length (c : Char) : 1 ≤ (writeChar c).length := by
   unfold writeChar
   split
@@ -182,6 +190,7 @@ private theorem writeChar_length (c : Char) : 1 ≤ (writeChar c).length := by
     · decide
     · split <;> simp only [List.length_cons, List.length_nil] <;> omega
 
+/-- Escaping a body emits at least as many characters as the original body. -/
 private theorem writeBody_length (cs : List Char) : cs.length ≤ (writeBody cs).length := by
   induction cs with
   | nil => simp [writeBody]
@@ -217,6 +226,7 @@ private theorem writeBody_length (cs : List Char) : cs.length ≤ (writeBody cs)
       | _ :: rest => scanLoop rest (count + 2)
     else scanLoop rest (count + 1)
 
+/-- The accumulator scan adds exactly the reference quoted-prefix length. -/
 private theorem scanLoop_eq (input : List Char) (count : Nat) :
     scanLoop input count = count + scanBody input := by
   cases input with
@@ -240,6 +250,7 @@ private theorem scanLoop_eq (input : List Char) (count : Nat) :
         omega
 termination_by input.length
 
+/-- Hexadecimal digit characters cannot terminate or escape a quoted body. -/
 private theorem digit_not_delimiter (n : Nat) (h : n < 16) :
     n.digitChar ≠ '"' ∧ n.digitChar ≠ '\\' := by
   have hd := hex_digit n h
@@ -247,6 +258,7 @@ private theorem digit_not_delimiter (n : Nat) (h : n < 16) :
   · intro he; rw [he] at hd; simp [hex] at hd
   · intro he; rw [he] at hd; simp [hex] at hd
 
+/-- Scanning an emitted body ends at exactly its closing quote, before the arbitrary suffix. -/
 private theorem scanBody_write (cs : List Char) (suffix : List Char) :
     scanBody (writeBody cs ++ '"' :: suffix) = (writeBody cs).length + 1 := by
   induction cs with
@@ -294,6 +306,7 @@ counts the quoted prefix, so later strings are not repeatedly scanned. -/
       (String.ofList cs, suffix)
   | _ => none
 
+/-- Reading the actual quoted printer output preserves the original string and arbitrary suffix. -/
 theorem readPrefix_write (text : String) (suffix : List Char) :
     readPrefix ((write text).toList ++ suffix) = some (text, suffix) := by
   have hn := writeBody_length text.toList
@@ -306,6 +319,7 @@ theorem readPrefix_write (text : String) (suffix : List Char) :
   rw [readBody_write text.toList suffix _ (by omega)]
   simp
 
+/-- Print the complete quoted string as actual UTF-8 bytes. -/
 @[expose] def writeBytes (text : String) : ByteArray := (write text).toUTF8
 
 /-- Validate UTF-8 and require that the quoted string consumes all bytes. -/

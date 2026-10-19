@@ -1,0 +1,47 @@
+import HexRCF.RealCoefficients.AlgebraicCells
+import HexRealAlgebraicTheory.Rational
+
+open Hex Hex.RealClosure
+namespace RationalPresentation
+
+def present (generator : RealAlgebraicNumber) (registry : BaseContext.Registry) :
+    Option (NumberField.Presentation generator registry) :=
+  match generator.toRat? with
+  | some q => NumberField.Presentation.ofRoot? generator registry (.point ⟨q⟩)
+  | none => NumberField.present? generator registry
+
+theorem point_success (generator : RealAlgebraicNumber) (registry : BaseContext.Registry)
+    (q : Rat) (recognized : generator.toRat? = some q) :
+    ∃ source, NumberField.Presentation.ofRoot? generator registry (.point ⟨q⟩) = some source := by
+  apply Option.isSome_iff_exists.mp
+  apply (NumberField.Presentation.ofRoot?_isSome generator registry (.point ⟨q⟩)).mpr
+  apply (RealAlgebraicNumber.beq_iff _ _).mpr
+  change RealAlgebraicNumber.ofRat q = generator
+  exact ((RealAlgebraicNumber.toRat?_eq_some generator q).mp recognized).symm
+
+theorem success (generator : RealAlgebraicNumber) (registry : BaseContext.Registry) :
+    ∃ source, present generator registry = some source := by
+  cases recognized : generator.toRat? with
+  | none =>
+    simpa only [present, recognized] using NumberField.present?_success generator registry
+  | some q =>
+    simpa only [present, recognized] using point_success generator registry q recognized
+
+private def registry : BaseContext.Registry := fun _ => none
+
+private def pointKind {a : RealAlgebraicNumber} (source : NumberField.Presentation a registry) : Bool :=
+  match source.root with
+  | .point _ => true
+  | .selected .. => false
+
+#eval do
+  for q in ([0, 1, -1, 7/3] : List Rat) do
+    let a := RealAlgebraicNumber.ofRat q
+    let some source := present a registry | throw (IO.userError "rational point rejected")
+    unless pointKind source do throw (IO.userError "rational recognition added a selected extension")
+    IO.println s!"rational {q}: checked parent point"
+  let some original := NumberField.present? (RealAlgebraicNumber.ofRat 1) registry
+    | throw (IO.userError "original factory rejected one")
+  IO.println s!"original factory one is parent point: {pointKind original}"
+
+end RationalPresentation

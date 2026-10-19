@@ -1,0 +1,9 @@
+{
+  "module": "HexSturm/Bench",
+  "generated_c": ".lake/build/ir/HexSturm/Bench.c",
+  "generated_c_sha256": "67bbd23168c31119b263f5f0fefa765440d9b3eee2368437b8071d6a1f89ad50",
+  "persistent_generated_c": "/home/kim/.local/state/hex/issue-10577-sign-fix/HexSturm-Bench.c",
+  "binary_sha256": "55640ad98ad3cf2323b93922272b28fec5d0c093115cfd29df8e11590d6ddc57",
+  "source": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+  "excerpt": "HexSturm-Bench-callsite.txt"
+}

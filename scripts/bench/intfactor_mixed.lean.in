@@ -1,0 +1,58 @@
+import HexIntFactor.Mixed.Export
+
+open Lean Elab Command Meta Hex.Nat.Mixed
+
+set_option maxHeartbeats 20000000
+set_option maxRecDepth 65536
+
+run_cmd liftTermElabM do
+  let n : Nat := @SUBJECT@
+  let p : Nat := @BASE@
+  let proposal : FactorProposal := ⟨n, [(@SMALL@, @EXPONENT@, some (.legacy (.small @SMALL@))), (p, 1, none)]⟩
+  let rng := Hex.Rand.ofSeed @LEGACY_SEED@
+  let budget : ImportBudget := { maxLegacyAttempts := 128, ecppBits := some 512, ecppSeed := @NATIVE_SEED@ }
+  let start ← IO.monoNanosNow
+  let .ok _ := FactorImport.prepare { budget with completion := { maxAttempts := 0 }, ecppBits := none } n proposal rng
+    | throwError "validation failed"
+  let validationNs := (← IO.monoNanosNow) - start
+  let mut legacyNs := 0
+  let mut nativeNs := 0
+  let mut nativeStats := ""
+  for arm in @ORDER@ do
+    let start ← IO.monoNanosNow
+    if arm == "legacy" then
+      let .ok legacy := FactorImport.prepare { budget with ecppBits := none } n proposal rng
+        | throwError "legacy preparation failed"
+      unless legacy.raw.residual == p && legacy.completions.any (fun c => c.base == p && c.legacyStop == .legacyExhausted) do
+        throwError "frozen legacy allocation did not exhaust"
+      legacyNs := (← IO.monoNanosNow) - start
+    else
+      let native := Hex.ECPP.produce p @NATIVE_SEED@ Hex.ECPP.public512Budget
+      nativeNs := (← IO.monoNanosNow) - start
+      nativeStats := reprStr native.state.stats
+  let start ← IO.monoNanosNow
+  let .ok candidate := FactorImport.prepare budget n proposal rng
+    | throwError "mixed preparation failed"
+  let completionNs := (← IO.monoNanosNow) - start
+  unless candidate.completions.any (fun c => c.base == p && c.legacyStop == .legacyExhausted) do
+    throwError "mixed legacy allocation did not exhaust"
+  unless (candidate.raw.residual == 1) == @COMPLETE@ do throwError "unexpected completion outcome"
+  let start ← IO.monoNanosNow
+  let .ok accepted := FactorImport.accept n candidate.raw | throwError "checking failed"
+  let checkingNs := (← IO.monoNanosNow) - start
+  let start ← IO.monoNanosNow
+  let text ← FactorExport.source `Hex.IntFactorMixedFrozen.@DECL@ n accepted
+  let kernelSourceNs := (← IO.monoNanosNow) - start
+  let file ← IO.FS.Handle.mk "@SOURCE_FILE@" .writeNew
+  file.putStr text
+  file.flush
+  let report := Json.mkObj [
+    ("validation_ns", toJson validationNs), ("legacy_ns", toJson legacyNs),
+    ("ecpp_ns", toJson nativeNs), ("completion_ns", toJson completionNs),
+    ("compiled_checking_ns", toJson checkingNs), ("reification_kernel_source_ns", toJson kernelSourceNs),
+    ("source_bytes", toJson text.utf8ByteSize), ("attempts", toJson candidate.attempts),
+    ("ecpp_calls", toJson candidate.ecppCalls), ("residual", toJson (toString candidate.raw.residual)),
+    ("legacy_stops", toJson (candidate.completions.map fun c => reprStr c.legacyStop)),
+    ("ecpp_stops", toJson (candidate.completions.map fun c => reprStr c.ecppStop)),
+    ("native_stats", toJson nativeStats)]
+  IO.FS.writeFile "@REPORT_FILE@" (report.pretty ++ "\n")

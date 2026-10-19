@@ -39,7 +39,7 @@ coefficient congruence, decomposition helpers, and conservative factor bounds.
 The zero polynomial, constants, signs, and content have explicit normalization
 conventions documented in the [SPEC](SPEC/hex-poly-z.md). For equivalence with
 `Polynomial ℤ` and the theorem-level bounds, use
-[`hex-poly-z-mathlib`](https://github.com/leanprover/hex-poly-z-mathlib).
+[`hex-poly-z-theory`](https://github.com/leanprover/hex-poly-z-theory).
 
 # Contributing
 

@@ -12,6 +12,44 @@ open Hex Hex.RCF.RealCoefficients
 
 namespace Hex.RCF.LiteralSignConformance
 
+-- Exact enclosure signs and an actual zero at the selected root use
+-- different evidence branches; a zero-containing interval is inconclusive.
+private def quadratic : DensePoly Rat := DensePoly.ofList [-2, 0, 1]
+private def coordinate : DensePoly Rat := DensePoly.ofList [0, 1]
+
+#guard IntervalSign.sign? coordinate 1 2 == some 1
+#guard IntervalSign.sign? (-coordinate) 1 2 == some (-1)
+#guard IntervalSign.sign? (0 : DensePoly Rat) 1 2 == some 0
+#guard IntervalSign.sign? (1 : DensePoly Rat) 1 2 == some 1
+#guard IntervalSign.sign? coordinate (-1) 1 == none
+#guard IntervalSign.sign? coordinate 0 1 == none
+#guard IntervalSign.sign? coordinate 2 1 == none
+#guard IntervalSign.sign? quadratic 1 2 == none
+
+example : IntervalSign.sign? coordinate 1 2 = some 1 := by decide +kernel
+example : IntervalSign.sign? (0 : DensePoly Rat) 1 2 = some 0 := by decide +kernel
+
+private def mixedTable? : Option (LiteralSign.Table (DensePoly Rat)) :=
+  LiteralSign.Table.build quadratic 1 2 [coordinate, -coordinate, 0, quadratic] id
+
+#guard match mixedTable? with
+  | none => false
+  | some table =>
+      table.check id &&
+      table.entries.map (·.value) == [1, -1, 0, 0] &&
+      table.entries.map (·.evidence.isSome) == [false, false, false, true] &&
+      table.lookup? quadratic == some 0 &&
+      !({ table with entries :=
+        (⟨coordinate, 1, some table.count⟩ : LiteralSign.Entry (DensePoly Rat)) ::
+          table.entries.tail }).check id &&
+      !({ table with entries := table.entries.map fun (entry : LiteralSign.Entry (DensePoly Rat)) =>
+        { entry with evidence := none } }).check id &&
+      !({ table with entries := table.entries.map fun (entry : LiteralSign.Entry (DensePoly Rat)) =>
+        { entry with value := entry.value + 1 } }).check id &&
+      !({ table with entries := table.entries.map fun (entry : LiteralSign.Entry (DensePoly Rat)) =>
+        { entry with evidence := some table.count } }).check id &&
+      !({ table with lower := 3, upper := 4 }).check id
+
 private def cubePoly : ZPoly := DensePoly.ofList [-2, 0, 0, 1]
 private def cubeSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 5411319705 32, 0, 32⟩
@@ -69,7 +107,7 @@ private def table? : Option (LiteralSign.Table CubeField) :=
         { table with count := { table.count with value := 2 } } &&
       !Field.checkSignTable cubePoly cubeSquare cubeWitness cubePrecision
         { table with entries := table.entries.map fun entry =>
-            { entry with evidence := { entry.evidence with queryPoly := 1 } } } &&
+            { entry with evidence := some { table.count with queryPoly := 1 } } } &&
       !Field.checkSignTable cubePoly cubeSquare cubeWitness cubePrecision
         { table with entries := table.entries.map fun entry =>
             { entry with value := entry.value + 1 } }
@@ -128,3 +166,15 @@ theorem cubeZero (a : CubeField) :
 #print axioms CommonPresentation.checkPresentation_sound
 
 end Hex.RCF.LiteralSignConformance
+
+/-- info: 'Hex.RCF.RealCoefficients.IntervalSign.sign_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RCF.RealCoefficients.IntervalSign.sign_spec
+
+/-- info: 'Hex.RCF.RealCoefficients.LiteralSign.Entry.check_spec' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RCF.RealCoefficients.LiteralSign.Entry.check_spec
+
+/-- info: 'Hex.RCF.RealCoefficients.LiteralSign.Table.build_success' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.RCF.RealCoefficients.LiteralSign.Table.build_success

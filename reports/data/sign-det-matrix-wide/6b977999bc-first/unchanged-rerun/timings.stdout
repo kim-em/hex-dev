@@ -1,0 +1,37 @@
+Hex.SignDetBench.MaximalMatrix.runTensorCheck    expected complexity: r^3    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=6b97799, 2026-10-05T18:03:49Z, host=chungus2
+  param  per-call    repeats  C
+    243   88.540 ms  ×2^0     C=3.569 [trial 1/6]
+    729    1.367 s   ×2^0     C=2.542 [trial 1/6]
+  2_187   22.944 s   ×2^0     C=2.186 [trial 1/6]
+  6_561  606.471 s   ×2^0     C=2.127 [trial 1/6]
+    243   51.181 ms  ×2^0     C=3.569 [trial 2/6]
+    729  980.717 ms  ×2^0     C=2.542 [trial 2/6]
+  2_187   22.786 s   ×2^0     C=2.186 [trial 2/6]
+  6_561  578.510 s   ×2^0     C=2.127 [trial 2/6]
+    243   51.253 ms  ×2^0     C=3.569 [trial 3/6]
+    729  984.118 ms  ×2^0     C=2.542 [trial 3/6]
+  2_187   22.813 s   ×2^0     C=2.186 [trial 3/6]
+  6_561  605.420 s   ×2^0     C=2.127 [trial 3/6]
+    243   51.138 ms  ×2^0     C=3.569 [trial 4/6]
+    729  986.729 ms  ×2^0     C=2.542 [trial 4/6]
+  2_187   22.934 s   ×2^0     C=2.186 [trial 4/6]
+  6_561  579.000 s   ×2^0     C=2.127 [trial 4/6]
+    243   51.164 ms  ×2^0     C=3.569 [trial 5/6]
+    729  983.047 ms  ×2^0     C=2.542 [trial 5/6]
+  2_187   22.808 s   ×2^0     C=2.186 [trial 5/6]
+  6_561  602.163 s   ×2^0     C=2.127 [trial 5/6]
+    243   51.585 ms  ×2^0     C=3.569 [trial 6/6]
+    729  985.741 ms  ×2^0     C=2.542 [trial 6/6]
+  2_187   22.914 s   ×2^0     C=2.186 [trial 6/6]
+  6_561  599.319 s   ×2^0     C=2.127 [trial 6/6]
+  verdict: inconclusive (cMin=2.127, cMax=3.569, β=-0.155, looks faster than declared by ~n^0.155)
+  per-spawn floor (harness self-measurement): 40.422 ms
+  peak RSS: 69_604 kB..2_181_504 kB (across 24 ok row(s))
+  trial summaries (6 trials per param; spread = (max-min)/median):
+    param  trials  median      min         max         spread 
+      243  6/6      51.217 ms   51.138 ms   88.540 ms  73.026%
+      729  6/6     984.929 ms  980.717 ms    1.367 s   39.205%
+    2_187  6/6      22.864 s    22.786 s    22.944 s   0.693% 
+    6_561  6/6     600.741 s   578.510 s   606.471 s   4.654% 
+exported to /home/kim/.local/state/hex/issue-10377-session-progress/matrix-wide-timing-rerun/timings.json

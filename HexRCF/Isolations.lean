@@ -8,7 +8,7 @@ module
 
 public import HexRCF.IsolationCheck
 public import HexRCF.SturmReplay
-public import HexRealRootsMathlib.LiteralIsolations
+public import HexRealRootsTheory.LiteralIsolations
 
 public section
 
@@ -23,7 +23,7 @@ the executable pseudo-remainder chain.
 
 namespace Hex.RCF
 
-open HexRealRootsMathlib
+open HexRealRootsTheory
 
 namespace IsolationCert
 

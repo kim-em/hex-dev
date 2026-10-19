@@ -7,6 +7,7 @@ import sys
 
 from libgraph import (
     EXTERNAL_IMPORT_ROOTS,
+    PROOF_IMPORT_ROOTS,
     KNOWN_EXCEPTIONS,
     check_lakefile_alignment,
     library_owner_for_path,
@@ -38,36 +39,53 @@ IMPORT_ALL_RE = re.compile(
 SEALED_IMPORT_ALL_ALLOWLIST: dict[str, frozenset[Path]] = {
     "HexIntFactor.EcmStage2": frozenset({
         Path("bench/HexPrimality/EcmDiagnostics/EcmPreparation.lean")}),
-    "HexSturm.Basic": frozenset(),
+    # Ordinary-kernel replay of the actual validated native context needs the
+    # opaque preparation body. This fixture does not construct unchecked domains.
+    "HexSturm.Basic": frozenset({
+        Path("experiments/KernelReplay/NativeAssemblyStaged.lean"),
+        Path("experiments/KernelReplay/FrameDataProbe.lean"),
+        Path("experiments/KernelReplay/FrameJoint.lean"),
+        Path("experiments/KernelReplay/FrameOwners.lean"),
+        Path("experiments/KernelReplay/FrameOperand.lean"),
+        Path("experiments/KernelReplay/FrameFrontier.lean")}),
     "HexInterval.Executable": frozenset(),
     "HexInterval.Runtime": frozenset(),
     "HexInterval.RuntimeController": frozenset(),
     "HexInterval.Search": frozenset(),
-    "HexIntervalMathlib.Driver": frozenset(),
-    "HexIntervalMathlib.Controller": frozenset(),
-    "HexIntervalMathlib.Proof": frozenset(),
-    "HexIntervalMathlib.RuntimeProof": frozenset(),
-    "HexIntervalMathlib.RuntimeTerminal": frozenset(),
+    "HexIntervalTheory.Driver": frozenset(),
+    "HexIntervalTheory.Controller": frozenset(),
+    "HexIntervalTheory.Proof": frozenset(),
+    "HexIntervalTheory.RuntimeProof": frozenset(),
+    "HexIntervalTheory.RuntimeTerminal": frozenset(),
 }
 
 UMBRELLA_BUILD_TARGETS = {
+    "HexPosDefTheoryTests",
+    "HexPosDefTheoryProofProbe",
     "HexOrderedFnTests",
     "HexRealClosureTests",
     "HexRealClosureConformanceSupport",
-    "HexRealClosureMathlibTests",
-    "HexPolyFastKernels",
+    "HexRealClosureTheoryTests",
     "HexLLLBenchSupport",
     "HexGF2BenchSupport",
     "HexRankBenchSupport",
     "HexSignDetBenchSupport",
+    "HexSturmBenchSupport",
     "HexBerlekampKernelProbe",
     "HexPrimalityKernelProbe",
     "HexPrimalityElabProbe",
     "HexPrimalityElabProbeScientific",
     "HexPrimalityConstructionProbe",
-    "HexPrimalityMathlibProofProbe",
-    "HexECPPMathlibProofProbe",
+    "HexPrimalityTheoryProofProbe",
+    "HexECPPTheoryProofProbe",
+    "HexECPPTheoryPariIO",
+    "HexIntFactorPariIO",
+    "HexECPPTheoryTests",
     "HexIntFactorKernelProbe",
+    "HexIntFactorTests",
+    "HexIntFactorMixedFrozen",
+    "HexIntFactorTheoryTests",
+    "HexIntFactorTheoryProofProbe",
     "HexIntFactorFieldConformance",
     "HexMvGcdKernelProbe",
     "HexMvGcdBenchSupport",
@@ -75,30 +93,34 @@ UMBRELLA_BUILD_TARGETS = {
     "HexRationalFnKernelProbe",
     "HexMvPolyBenchSupport",
     "HexModularBenchSupport",
-    "HexMvPolyMathlibProofProbe",
-    "HexBerlekampZassenhausMathlibProofProbe",
-    "HexBerlekampMathlibProofProbe",
+    "HexMvPolyTheoryProofProbe",
+    "HexBerlekampZassenhausTheoryProofProbe",
+    "HexBerlekampTheoryProofProbe",
     "HexIntervalExperiment",
     "HexGenericRankTests",
-    "HexGenericRankMathlibProofProbe",
-    "HexDeterminantalIdealMathlibProofProbe",
+    "HexGenericRankTheoryProofProbe",
+    "HexDeterminantalIdealTheoryProofProbe",
     "HexRankTests",
-    "HexRankMathlibProofProbe",
-    "HexCharPolyMathlibProofProbe",
-    "HexCharPolyMathlibMeasurements",
-    "HexBareissMathlibProofProbe",
-    "HexPolyDetMathlibProofProbe",
-    "HexPolyDetMathlibDiagnostics",
+    "HexRealAlgebraicTheoryTests",
+    "HexSturmTheoryTests",
+    "HexRankTheoryProofProbe",
+    "HexCharPolyTheoryProofProbe",
+    "HexCharPolyTheoryMeasurements",
+    "HexBareissTheoryProofProbe",
+    "HexPolyDetTheoryProofProbe",
+    "HexPolyDetTheoryDiagnostics",
     "HexKroneckerTests",
-    "HexKroneckerMathlibProofProbe",
-    "HexIntervalMathlibExperiment",
+    "HexIntervalTheoryExperiment",
     "HexIntervalPntFks2Local",
     "HexIntervalPntFks2ConformanceLocal",
     "HexIntervalReplayProbe",
-    "HexIntervalMathlibReplayProbe",
-    "HexRealRootsMathlibReplayProbe",
+    "HexIntervalTheoryReplayProbe",
+    "HexRealRootsTheoryReplayProbe",
     "HexRCFBenchSupport",
     "HexRCFProofProbe",
+    "HexRCFProofProbeMeasurements",
+    "HexRCFCellRequestedStress",
+    "HexRCFAlgebraicCellsStress",
     "HexRealFormulaProofProbe",
     "HexRCFRealFormula",
     "HexRCFRealCoefficients",
@@ -122,6 +144,15 @@ UMBRELLA_BUILD_TARGETS = {
 }
 
 
+# SPEC-assigned optional public modules build with their owning library while
+# staying outside its ordinary umbrella. Only these exact modules are allowed.
+OPTIONAL_BUILD_MODULES = {
+    "HexIntFactor": {"HexIntFactor.Pari", "HexIntFactor.Export",
+        "HexIntFactor.Mixed.Replay", "HexIntFactor.Mixed.Import",
+        "HexIntFactor.Mixed.Pari", "HexIntFactor.Mixed.Export"},
+}
+
+
 def parse_imports(path: Path) -> list[str]:
     imports: list[str] = []
     for line in path.read_text(encoding="utf-8").splitlines():
@@ -131,13 +162,20 @@ def parse_imports(path: Path) -> list[str]:
     return imports
 
 
-def lean_exe_roots(lakefile: Path) -> set[str]:
-    r"""Module names declared as ``lean_exe ... root := `X.Y.Z`/``."""
+def lean_build_roots(lakefile: Path) -> set[str]:
+    """Explicit executable roots and library entry modules, including opt-ins."""
     roots: set[str] = set()
+    in_roots = False
     for line in lakefile.read_text(encoding="utf-8").splitlines():
         match = LEAN_EXE_ROOT_RE.match(line)
         if match:
             roots.add(match.group(1))
+        if line.strip().startswith("roots := #["):
+            in_roots = True
+        if in_roots:
+            roots.update(LEAN_GLOB_MODULE_RE.findall(line))
+            if "]" in line:
+                in_roots = False
     return roots
 
 
@@ -347,9 +385,11 @@ def main() -> int:
             )
 
     lakefile = root / "lakefile.lean"
-    build_roots = lean_exe_roots(lakefile) | lean_glob_modules(
+    build_roots = lean_build_roots(lakefile) | lean_glob_modules(
         lakefile, UMBRELLA_BUILD_TARGETS
     )
+    for target, modules in OPTIONAL_BUILD_MODULES.items():
+        build_roots |= lean_glob_modules(lakefile, {target}) & modules
     errors.extend(check_umbrella_completeness(root, libraries, build_roots))
 
     lean_files = project_lean_files(root)
@@ -365,7 +405,7 @@ def main() -> int:
             for imported_root in import_roots(line):
                 if imported_root == owner:
                     continue
-                if imported_root in {"Mathlib", "TauCeti"}:
+                if imported_root in PROOF_IMPORT_ROOTS:
                     if owner != "HexManual" and not libraries[owner].mathlib:
                         errors.append(
                             f"{rel_path}:{line_no} imports {imported_root} but {owner} is not a mathlib bridge"

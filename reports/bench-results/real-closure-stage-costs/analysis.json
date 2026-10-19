@@ -1,0 +1,189 @@
+{
+  "source": "bd5e4f10826060517b465c3759bb4795d095baf2",
+  "binary_sha256": "88d50c5d65f58d882ebe51de4cacc745ac8d0c304323f8eb8890a1f1db166958",
+  "cpu": 80,
+  "measurements": 24,
+  "stages": {
+    "runYun": {
+      "median_ms": 0.0613510556640625,
+      "minimum_ms": 0.0604004951171875,
+      "maximum_ms": 0.06166667358398437,
+      "per_call_nanos": [
+        61318.56005859375,
+        61666.673583984375,
+        61106.993896484375,
+        61539.700927734375,
+        60400.4951171875,
+        61383.55126953125
+      ],
+      "batches": [
+        {
+          "trial": 0,
+          "inner_repeats": 4096,
+          "total_nanos": 251160822
+        },
+        {
+          "trial": 1,
+          "inner_repeats": 4096,
+          "total_nanos": 252586695
+        },
+        {
+          "trial": 2,
+          "inner_repeats": 4096,
+          "total_nanos": 250294247
+        },
+        {
+          "trial": 3,
+          "inner_repeats": 4096,
+          "total_nanos": 252066615
+        },
+        {
+          "trial": 4,
+          "inner_repeats": 4096,
+          "total_nanos": 247400428
+        },
+        {
+          "trial": 5,
+          "inner_repeats": 4096,
+          "total_nanos": 251427026
+        }
+      ]
+    },
+    "runAssembly": {
+      "median_ms": 0.1997890283203125,
+      "minimum_ms": 0.1971954130859375,
+      "maximum_ms": 0.20128567578125,
+      "per_call_nanos": [
+        199621.1962890625,
+        200193.6865234375,
+        197195.4130859375,
+        199956.8603515625,
+        198356.890625,
+        201285.67578125
+      ],
+      "batches": [
+        {
+          "trial": 0,
+          "inner_repeats": 1024,
+          "total_nanos": 204412105
+        },
+        {
+          "trial": 1,
+          "inner_repeats": 1024,
+          "total_nanos": 204998335
+        },
+        {
+          "trial": 2,
+          "inner_repeats": 1024,
+          "total_nanos": 201928103
+        },
+        {
+          "trial": 3,
+          "inner_repeats": 1024,
+          "total_nanos": 204755825
+        },
+        {
+          "trial": 4,
+          "inner_repeats": 1024,
+          "total_nanos": 203117456
+        },
+        {
+          "trial": 5,
+          "inner_repeats": 1024,
+          "total_nanos": 206116532
+        }
+      ]
+    },
+    "runRoots": {
+      "median_ms": 8.894095671875,
+      "minimum_ms": 8.8061316875,
+      "maximum_ms": 9.06622725,
+      "per_call_nanos": [
+        8918369.3125,
+        9066227.25,
+        8841044.6875,
+        8869822.03125,
+        8806131.6875,
+        8952964.34375
+      ],
+      "batches": [
+        {
+          "trial": 0,
+          "inner_repeats": 32,
+          "total_nanos": 285387818
+        },
+        {
+          "trial": 1,
+          "inner_repeats": 32,
+          "total_nanos": 290119272
+        },
+        {
+          "trial": 2,
+          "inner_repeats": 32,
+          "total_nanos": 282913430
+        },
+        {
+          "trial": 3,
+          "inner_repeats": 32,
+          "total_nanos": 283834305
+        },
+        {
+          "trial": 4,
+          "inner_repeats": 32,
+          "total_nanos": 281796214
+        },
+        {
+          "trial": 5,
+          "inner_repeats": 32,
+          "total_nanos": 286494859
+        }
+      ]
+    },
+    "runNativeRoots": {
+      "median_ms": 10.19345440625,
+      "minimum_ms": 10.117254875,
+      "maximum_ms": 10.24273215625,
+      "per_call_nanos": [
+        10165705.4375,
+        10208463.84375,
+        10178444.96875,
+        10240429.34375,
+        10242732.15625,
+        10117254.875
+      ],
+      "batches": [
+        {
+          "trial": 0,
+          "inner_repeats": 32,
+          "total_nanos": 325302574
+        },
+        {
+          "trial": 1,
+          "inner_repeats": 32,
+          "total_nanos": 326670843
+        },
+        {
+          "trial": 2,
+          "inner_repeats": 32,
+          "total_nanos": 325710239
+        },
+        {
+          "trial": 3,
+          "inner_repeats": 32,
+          "total_nanos": 327693739
+        },
+        {
+          "trial": 4,
+          "inner_repeats": 32,
+          "total_nanos": 327767429
+        },
+        {
+          "trial": 5,
+          "inner_repeats": 32,
+          "total_nanos": 323752156
+        }
+      ]
+    }
+  },
+  "claim": "Fixed-input inclusive stage observations; no scaling or exclusive cost claim."
+}

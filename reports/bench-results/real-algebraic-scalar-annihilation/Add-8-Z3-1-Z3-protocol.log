@@ -1,0 +1,9 @@
+Hex.RealAlgebraicScaling.runZ3Add8Protocol    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a3ddc94-dirty, 2026-10-04T20:02:47Z, host=chungus2
+  repeat 0  10.449 µs  (×2^13, total 85.600 ms)
+  median: 10.449 µs    min: 10.449 µs    max: 10.449 µs
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 67_372 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Add-8-Z3-1-Z3-protocol.json

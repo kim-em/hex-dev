@@ -1,0 +1,14 @@
+Running as unit: hex-10358-lean-build.service
+file:///home/kim/.codex/tasks/hex-10358/root-quote-browser.mjs:48
+ if(metadata.some(e=>e.targetScrollWidth>e.targetWidth+1 || e.descendantOverflow>1)) throw new Error('Changed content overflows; retained captures and metrics identify the affected block.');
+                                                                                           ^
+
+Error: Changed content overflows; retained captures and metrics identify the affected block.
+    at file:///home/kim/.codex/tasks/hex-10358/root-quote-browser.mjs:48:92
+
+Node.js v24.20.0
+          Finished with result: exit-code
+Main processes terminated with: code=exited, status=1/FAILURE
+               Service runtime: 10.703s
+             CPU time consumed: 16.121s
+                   Memory peak: 2.7G (swap: 0B)

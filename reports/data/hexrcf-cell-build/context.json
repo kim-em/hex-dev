@@ -1,0 +1,193 @@
+{
+  "schema": 1,
+  "source_commit": "74b835299f324478b48709a49e0c95e9ebf2efde",
+  "selected_source_hashes": {
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "f0346a3af775d2e62d79248d67493c7d0a2dc99401795e8bd03e5d92eec5da1b",
+    "adapters/HexRCF/RealCoefficients.lean": "4d3bb9b56d06ba76e7638ede43d469c2ed074ab6eea6a33ab35bb3b0614d7b01",
+    "adapters/HexRCF/RealCoefficients/CellBuild.lean": "dab4e6ea3e3e231744048b4a47657ed18f256a16c1c56128acba53df5d8cf23d",
+    "adapters/HexRCF/RealCoefficients/RootBuild.lean": "be8e2b24aad8e67946afbe70d48a83ff2ca6db75cb62cca0185ec309f596994a",
+    "adapters/HexRCF/RealCoefficients/RowEncode.lean": "ed60f8e11b84a797a17fbc3baa68a21f5dd64bd82c87eebcfdaba83542291046",
+    "conformance/HexRCF/CellBuildConformance.lean": "f2bf6581f212a61bfcd76befd40b71dbe809bc8f0e27c4cf8b0023a67129a7cb",
+    "lakefile.lean": "f6ba9fe8b58ad0bd144cc0a39d489485e9b0b9d8909a315c44f565ac19ab1dac"
+  },
+  "full_build_source_commit": "beeee8b24b1875c55da4c203db2be9ea2c0a4700",
+  "full_build_source_hashes": {
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "250721c12186c2b1c0a92fb0c9a3cfe25a19f8b127b21bb75c62613cf6e6e901",
+    "adapters/HexRCF/RealCoefficients.lean": "4d3bb9b56d06ba76e7638ede43d469c2ed074ab6eea6a33ab35bb3b0614d7b01",
+    "adapters/HexRCF/RealCoefficients/CellBuild.lean": "dab4e6ea3e3e231744048b4a47657ed18f256a16c1c56128acba53df5d8cf23d",
+    "adapters/HexRCF/RealCoefficients/RootBuild.lean": "be8e2b24aad8e67946afbe70d48a83ff2ca6db75cb62cca0185ec309f596994a",
+    "adapters/HexRCF/RealCoefficients/RowEncode.lean": "ed60f8e11b84a797a17fbc3baa68a21f5dd64bd82c87eebcfdaba83542291046",
+    "conformance/HexRCF/CellBuildConformance.lean": "f2bf6581f212a61bfcd76befd40b71dbe809bc8f0e27c4cf8b0023a67129a7cb",
+    "lakefile.lean": "f6ba9fe8b58ad0bd144cc0a39d489485e9b0b9d8909a315c44f565ac19ab1dac"
+  },
+  "validation_records": [
+    {
+      "file": "construction-repository-full-build-1.log.gz",
+      "sha256": "4c9224f9e7cb975614b31f8d2a66c7e5fc85e98c78e1da62331a4f4a0367267f",
+      "decoded_sha256": "f4b1dc1b66080a9f7590e909d38eab9646682c287686010218ac0f853e540def",
+      "command": "bounded lake build HexRCFRealCoefficients HexConformance HexManual",
+      "source_commit": "beeee8b24b1875c55da4c203db2be9ea2c0a4700",
+      "exit_code": 0
+    },
+    {
+      "file": "construction-repository-conformance-2.log.gz",
+      "sha256": "e78d16c12ee2bdb52b1b6f84cc17e876c0121af126a3f603ae67bda11d68e596",
+      "decoded_sha256": "84b2fe37b75d218baa0f85a38c3d319549e84dc8e9b8b1e8d03a7ae0c49f5a58",
+      "command": "bounded lake build +HexRCF.CellBuildConformance",
+      "source_commit": "beeee8b24b1875c55da4c203db2be9ea2c0a4700",
+      "exit_code": 0
+    },
+    {
+      "file": "construction-manual-narrow-fix-1.log.gz",
+      "sha256": "60bd07412297dea9fc1a4c08568cb83783b3cedad88b3022f5a41e480441520b",
+      "decoded_sha256": "68056a9e765eb7733e141719a2ac01cb92964c7e9a808cbe185f7945a04f2dcc",
+      "command": "bounded lake build HexManual",
+      "source_commit": "74b835299f324478b48709a49e0c95e9ebf2efde",
+      "exit_code": 0
+    },
+    {
+      "file": "construction-manual-render-2.log.gz",
+      "sha256": "462b51276fa8f92ba78bc31f9bec2dd06a3df6f95a10614a349ae35621290fc3",
+      "decoded_sha256": "4ed1e383a4bbbbc192f66e69424cfb8c3c77e0b661b3619a09f4576cbf617468",
+      "command": "bounded lake build FullRender",
+      "source_commit": "74b835299f324478b48709a49e0c95e9ebf2efde",
+      "exit_code": 0
+    },
+    {
+      "file": "construction-manual-browser-3.log.gz",
+      "sha256": "302b6765647538b75bff4ad4af0c03cb01a8fa1e226b41f1510650222b29a4c6",
+      "decoded_sha256": "51680b2e2132273290fe0a8f686d8e019eb6e76b7685b78e3bae16a1d822347a",
+      "command": "node construction-cell-browser.mjs <render-directory>",
+      "source_commit": "74b835299f324478b48709a49e0c95e9ebf2efde",
+      "exit_code": 0
+    },
+    {
+      "file": "construction-repository-dag.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": "python3 scripts/check_dag.py",
+      "source_commit": "beeee8b24b1875c55da4c203db2be9ea2c0a4700",
+      "exit_code": 0
+    },
+    {
+      "file": "construction-repository-admissions.log.gz",
+      "sha256": "a8bac14f60458d0dbf5538de4322fac2b60736a80967d0b199e70bb4d8903781",
+      "decoded_sha256": "29dff9961007439a9a8105683209bc72655ad3881f37b3610b77e16f33ff55c6",
+      "command": "python3 scripts/ci/check_named_admissions.py",
+      "source_commit": "beeee8b24b1875c55da4c203db2be9ea2c0a4700",
+      "exit_code": 0
+    },
+    {
+      "file": "construction-repository-admission-tests.log.gz",
+      "sha256": "53cf99cce1de36a66a577c20dd7fb0575d9c540ebfdd45392f2d6aca29866dc8",
+      "decoded_sha256": "754324a135dd97b17657ccb13f31beffd387c0bde7853aca648b54c92981df20",
+      "command": "python3 scripts/ci/test_check_named_admissions.py",
+      "source_commit": "beeee8b24b1875c55da4c203db2be9ea2c0a4700",
+      "exit_code": 0
+    },
+    {
+      "file": "construction-repository-copyright.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": "python3 scripts/check_copyright_headers.py",
+      "source_commit": "beeee8b24b1875c55da4c203db2be9ea2c0a4700",
+      "exit_code": 0
+    },
+    {
+      "file": "construction-repository-manual-split.log.gz",
+      "sha256": "48a9e140081495d1ab8296879fffbda28bea260c48c63a9e7a2bfa5754ef1009",
+      "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "command": "python3 scripts/release/check_manual_split.py",
+      "source_commit": "beeee8b24b1875c55da4c203db2be9ea2c0a4700",
+      "exit_code": 0
+    },
+    {
+      "file": "construction-repository-literals.log.gz",
+      "sha256": "d363c41d04cc71aaa8b2bb97d1faf6ff4b311e5874c10d339f87aba4d4b97158",
+      "decoded_sha256": "5b2703a612f8c434ac4e53bb05bfeef0dbca1d91cc9125441d5bd447be3dfbc3",
+      "command": "python3 scripts/rcf/selected_literals.py --check",
+      "source_commit": "beeee8b24b1875c55da4c203db2be9ea2c0a4700",
+      "exit_code": 0
+    },
+    {
+      "file": "construction-repository-targets.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": "python3 scripts/conformance_targets.py --check",
+      "source_commit": "beeee8b24b1875c55da4c203db2be9ea2c0a4700",
+      "exit_code": 0
+    }
+  ],
+  "retained_attempts": [
+    {
+      "file": "construction-manual-browser-1.log.gz",
+      "sha256": "435848a5d2ec6156659ed8bf1014fae7db9c1e4604bae9ac9155e7f03620b5b1",
+      "decoded_sha256": "d4f3d50baa9d9492bb22f08a733684261e9cef336eb084ad54c763d4f418c270",
+      "source_commit": "beeee8b24b1875c55da4c203db2be9ea2c0a4700",
+      "outcome": "failed",
+      "reason": "Qualified API types overflowed the narrow code block. Namespace opens and shorter lines fix it; final manual/render/browser checks pass."
+    },
+    {
+      "file": "construction-manual-browser-2.log.gz",
+      "sha256": "6b7c7dfe1b39d30ca98e05b71c467f37be9d86644f36e6e6554959f4db856a66",
+      "decoded_sha256": "5b1f2ce61a7e51c959a4eb34567d2e687b01f6d0eb9384b2ec7e347e6165fa4b",
+      "source_commit": "beeee8b24b1875c55da4c203db2be9ea2c0a4700",
+      "outcome": "failed",
+      "reason": "Qualified API types overflowed the narrow code block. Namespace opens and shorter lines fix it; final manual/render/browser checks pass."
+    }
+  ],
+  "artifacts": [
+    {
+      "file": "construction-cell-desktop-preflight.png",
+      "sha256": "d31ac789f08ef2e4b1ce46b1b5cd94ae1413a73b756ed5215e4ff924a2c3207b"
+    },
+    {
+      "file": "construction-cell-desktop-scope.png",
+      "sha256": "8c77b4c6e266c412d4eaec2e0157f861f7cb9515206fe2314fd5e849a8b82701"
+    },
+    {
+      "file": "construction-cell-desktop-source.png",
+      "sha256": "c5a989ac799e71617b47fe6d95004c0eed41d59cc398029abb3f0689c3cf2c7c"
+    },
+    {
+      "file": "construction-cell-narrow-preflight.png",
+      "sha256": "1743c19ccbb6e2263753945093686d23db9c4008202ec88208ccbcbbd10a5f4d"
+    },
+    {
+      "file": "construction-cell-narrow-scope.png",
+      "sha256": "f1daefabf350340f101c07ab31df85783d3ebee44be1b594c1d975369a5136a3"
+    },
+    {
+      "file": "construction-cell-narrow-source.png",
+      "sha256": "d7b5150048fd93709936f00abceee0c675c3aa74db9b36fbaebf7377a3043374"
+    },
+    {
+      "file": "browser.mjs",
+      "sha256": "f4e131abcf4bacaa7a59d1e8377bbeeac8f8793c3b95308b42d1e201db192898"
+    },
+    {
+      "file": "inspection.json",
+      "sha256": "cc1c3231c3a37dc7257cff4037eaf8cae94445f80faee92559f501eae4060ef9"
+    },
+    {
+      "file": "narrow-before.png",
+      "sha256": "482e84c77c9da60cc3c5c77ffb684430746bf40a48566a7bbce83c9bd96d5e08"
+    },
+    {
+      "file": "overflow-before.json",
+      "sha256": "7c60daaadbe154c620694faedd96461264cd1a34663da8853735c656a5769665"
+    },
+    {
+      "file": "visual-inspection.txt",
+      "sha256": "cc95f73b1247f674690287054627334eb016ccde2faee327bf1709ccb167e1fa"
+    }
+  ],
+  "reused_fixture": "conformance-fixtures/HexRCF/cell-algebraic.json",
+  "reused_fixture_sha256": "a2dc4beb9a19e2349ef3b9540145876db879211a73664b69ec9c467fdb2754b7",
+  "resource_limits": {
+    "memory_max_bytes": 34359738368,
+    "swap_max_bytes": 0,
+    "lean_num_threads": 2
+  },
+  "scope": "Actual carrier/root progress under a lawful ordinary-real model; complete native row production with explicit ordinary point proposals; independent frozen replay and existing fixture equality. No general point/source/history/strict missing-record/frontend accepted-completeness claim."
+}

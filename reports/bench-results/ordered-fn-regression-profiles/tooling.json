@@ -1,0 +1,10 @@
+{
+  "perf": "perf version 7.2.8",
+  "samply": "samply 0.13.1",
+  "pipeline_sources": {
+    "scripts/profile/normalize_perf.py": "fbe80a6081d4c952ccbf0e0c7d34096b7aab8b4ca3baa1850c3015cf2e6ca8c2",
+    "scripts/profile/elf_symbols.py": "5b1293b476d7e3df82ad8f93212000a5efc11603d49d50d43821c5013d111207",
+    "scripts/profile/summarize_profile.py": "bc5cbef8b8c9fccc71ef584b4144b3eef3dcd5c6a0e3b25e8af30e9449ca41b3"
+  },
+  "capture_script_sha256": "7a14284e07eccbb6ee34ef632dffa9528e5eb4ec6b056f36ddd02889a4ac082d"
+}

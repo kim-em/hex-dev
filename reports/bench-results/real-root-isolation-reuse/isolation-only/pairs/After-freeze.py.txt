@@ -1,0 +1,17 @@
+from pathlib import Path
+import hashlib,json,subprocess,shutil,sys
+root=Path.cwd();out=Path(sys.argv[1]);out.mkdir(parents=True,exist_ok=False)
+status=subprocess.check_output(['git','status','--porcelain'],text=True)
+if status: raise SystemExit('Freeze requires a clean source checkout')
+paths=subprocess.check_output(['git','ls-files','*.lean','lean-toolchain','lake-manifest.json'],text=True).splitlines()
+tree={p:hashlib.sha256((root/p).read_bytes()).hexdigest() for p in paths}
+selected=['HexRealAlgebraic/Roots.lean','HexRealAlgebraicMathlib/Tests.lean',
+ 'conformance/HexRealAlgebraic/Conformance.lean','bench/HexRealAlgebraic/Bench.lean',
+ 'lean-toolchain','lake-manifest.json']
+for p in selected: shutil.copyfile(root/p,out/(p.replace('/','-')+'.txt'))
+exe=out/'hexrealalgebraic_bench';shutil.copy2(root/'.lake/build/bin/hexrealalgebraic_bench',exe)
+metadata={'head':subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),
+ 'status':status,'sources':{p:tree[p] for p in selected},'tree_sources':tree,
+ 'binaries':{'hexrealalgebraic_bench':{'path':str(exe),'sha256':hashlib.sha256(exe.read_bytes()).hexdigest()}}}
+(out/'metadata.json').write_text(json.dumps(metadata,indent=2)+'\n')
+shutil.copyfile(__file__,out/'freeze.py.txt')

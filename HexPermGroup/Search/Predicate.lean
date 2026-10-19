@@ -59,7 +59,7 @@ theorem Pruner.find_none {G : Group n} {test : Perm n → Bool} (C : Pruner G te
 
 /-- Bounded refinement counts individual rejection tests and distinguishes an
 unfinished scan from a completed scan that found no rejecting reason. -/
-@[expose] def Pruner.findWith {G : Group n} {test : Perm n → Bool} (C : Pruner G test)
+@[expose] def Pruner.findBudgeted {G : Group n} {test : Perm n → Bool} (C : Pruner G test)
     (t : Node G) (capacity : Nat) : Trials.Run (C.trials t) (C.reject t) 0 capacity :=
   (C.trials t).scan (C.reject t) 0 capacity
 

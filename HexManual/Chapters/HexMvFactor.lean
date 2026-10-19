@@ -149,5 +149,5 @@ tag := "hex-mv-factor-cross-references"
   square-free decomposition.
 * {ref "hex-mv-hensel"}[`HexMvHensel`] supplies checked reconstruction from
   suitable univariate image factorizations.
-* The Mathlib companion transports checked results to `MvPolynomial` and
+* The theory companion transports checked results to `MvPolynomial` and
   provides the `factor_poly` and `irreducibility` tactics.

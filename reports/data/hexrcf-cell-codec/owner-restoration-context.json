@@ -1,0 +1,95 @@
+{
+  "source_commit": "1f319907c2ff0e8faa208c28f23ec8a8d1481fd1",
+  "owner_main": "446b7f2991",
+  "owner_binding_commit": "db46b363438e1b22c4487770298e60447074579c",
+  "sources_sha256": {
+    "adapters/HexRCF/RealCoefficients.lean": "7d1b8da1e3ba1e027bc0a1ebe8f490e637512159891954336e63c3fd49715173",
+    "adapters/HexRCF/RealCoefficients/RootCodec.lean": "7f1e58b025879267c70beafcaaf54b4b58d6435b8b2ecbddd5bb6de5a3d5c05f",
+    "adapters/HexRCF/RealCoefficients/CellFootprint.lean": "def0d16e838455c42152362f61705c99a201dc766586a37a8b9c177ec486c948",
+    "adapters/HexRCF/RealCoefficients/CellBuild.lean": "fd3dea832bbcca47f883911c203a92681de109420c9d90bbf5f7a0bda11c0205",
+    "adapters/HexRCF/RealCoefficients/CellExecution.lean": "070479438514a2198acc491cd08b234f4223a85d42a27fa38c01092ac08f7f59",
+    "adapters/HexRCF/RealCoefficients/CellCodec.lean": "123dde4976c70a0537bb087b7ed5abfa53583b52dd6cb138518be9001b810bb4",
+    "adapters/HexRCF/RealCoefficients/CellEncode.lean": "e56572fa8b91b70e0abd1271adcc1ce6a73a6944873576cabac191ac44f1261b",
+    "adapters/HexRCF/RealCoefficients/SectorEncode.lean": "d8901cb13a0523530d91a0b8a5cc5727a85c6c171084b2f983d8db9286409b6e",
+    "conformance/HexRCF/CellCodecProofs.lean": "807a39a1ccd8cd68a8973c0ae63db00277bc4f72055c7a56dd7b02a829b008eb",
+    "conformance/HexRCF/CellExecutionProofs.lean": "6d90b6a6f95fdea64ff1d90465c2813bb71bda49fa50e617e89e930c75dc32c4",
+    "conformance/HexRCF/CellBuildConformance.lean": "6aeea69ee6f0b47a76682257fbbd6890da36a8104aebc00e6891784ff48610bc",
+    "conformance/HexRCF/NumberFieldCellsConformance.lean": "4402abc6f5a7251dd5314c8885e657597938369a42464df8123e8bf3f9f0a10d",
+    "HexRealClosure/RootFrame.lean": "301c14efb07d2a7065539586895050af264c571de1e22e0bdcbf03a487a4a46d",
+    "HexRealClosure/RootReplay.lean": "2f07e625a7665a983444e299f532800450770a2758a99710087ef506525f875f",
+    "HexRealClosure/SignEvidence.lean": "be902438488fe083368f45aa263f229efb1262ea54ed6065dd04eb14d584a165",
+    "HexSignDet/Codec/GraphLaws.lean": "290d321792cc0c940ca7bea9ab872a2214784733ed87da8f5ede69036aac8791",
+    "HexSignDet/Codec/FiniteGraph.lean": "bb1e0611aa74d7c7b4a74f83f05e481ccd4584523e0aaeca7beba53c70a6895c",
+    "HexSignDet/DagExpand.lean": "6b051dc00bed5de01fc534d2aa3eef835641080693ea6f2cbfb4a908d302f8dc",
+    "HexSignDet/Descriptor.lean": "7fbda360d1ff37e7540b4a0c7cc7c29b16a76d90448aa8179909e618ab654375",
+    "lakefile.lean": "180667146baa557745f17161f58890616221f29a8ce058a839b776b1ad0e4738",
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "87c6f122fb5c47f38d3f9532c5552ae231c0aab91f4328bb15b3dad9292db023"
+  },
+  "logs": {
+    "reports/data/hexrcf-cell-codec/root-codec-owner-admissions-1.log.gz": {
+      "sha256": "8e4c5d4caf3e65eec0e86567dfaa21f6737fe2bf858aec00441981133584428a",
+      "uncompressed_sha256": "a5283375685e7f1529cf766cf9af2541f7125324ee51a22dea4645a9aea700a9"
+    },
+    "reports/data/hexrcf-cell-codec/root-codec-owner-affected-build-1.log.gz": {
+      "sha256": "a2dd9f79429724abfa1d2ee21dbb702c3d048136e3ab578f3dbc3841468bc8f0",
+      "uncompressed_sha256": "f0312871e33c8fb3dab66ea67bcaae9151818c356f33d4861095ec02fba3e8f4"
+    },
+    "reports/data/hexrcf-cell-codec/root-codec-owner-audits-1.log.gz": {
+      "sha256": "3e9e1fa849e78dfcd67643314ad4708a0c2e62d17782fe7083c23912109e0df2",
+      "uncompressed_sha256": "44be840f85c144d467f1ff1581f67aa55195bfda26bcf14907ff92fe877830d1"
+    },
+    "reports/data/hexrcf-cell-codec/root-codec-owner-copyright-1.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-cell-codec/root-codec-owner-dag-1.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-cell-codec/root-codec-owner-literals-1.log.gz": {
+      "sha256": "d363c41d04cc71aaa8b2bb97d1faf6ff4b311e5874c10d339f87aba4d4b97158",
+      "uncompressed_sha256": "5b2703a612f8c434ac4e53bb05bfeef0dbca1d91cc9125441d5bd447be3dfbc3"
+    },
+    "reports/data/hexrcf-cell-codec/root-codec-owner-proof-1.log.gz": {
+      "sha256": "7a4a23b5d4cab3fad704d325ad1efd7a7d5061735292a2879ca767427940238c",
+      "uncompressed_sha256": "012f738e9060b03f928780af855aeaff22c0590508fde71244ff40c0701ee498"
+    },
+    "reports/data/hexrcf-cell-codec/root-codec-owner-proof-2.log.gz": {
+      "sha256": "9babcb63a697217a921e0e03abd9b8aeeaf1aad616bcb0b5ee9af70b84d2be07",
+      "uncompressed_sha256": "39f7b832708152f899693ad90ea6d8f5a22b481767c63b00069f9fd265abaaf0"
+    },
+    "reports/data/hexrcf-cell-codec/root-codec-build-bridge-1.log.gz": {
+      "sha256": "8f146cd932e17344f4c743452c42492b5a7951abd8a4caff70fd254b9db46de4",
+      "uncompressed_sha256": "bad97f9a15120ece70d20211e668615108cd13799fa140e820fbdb97b801d06e"
+    },
+    "reports/data/hexrcf-cell-codec/root-codec-run-replay-1.log.gz": {
+      "sha256": "28a343b5759a7f13797972d6cbbedfb0ca568a2ddf74f2bc943dda3ee5d327f5",
+      "uncompressed_sha256": "b4a198e705e9bedae07ac0b17d3f0ec92227ed3b423579c36d6c502caf38220e"
+    }
+  },
+  "validation": {
+    "serialization_actual_bodies": 13,
+    "execution_actual_bodies": 12,
+    "other_retained_audit_bodies": 40,
+    "entry_law": "CellDiscover.run_replay",
+    "finite_payload_law": "CellFootprint.read_packet",
+    "descriptor_law": "RootCodec.read_covered",
+    "memory_bytes": 34359738368,
+    "swap_bytes": 0,
+    "lean_threads": 2,
+    "own_build_concurrency": 1
+  },
+  "limits": [
+    "The explicit descriptor-success premise is discharged through actual merged owner laws.",
+    "Finite payload coverage is not coverage of every reached intermediate arithmetic key.",
+    "Native producer-to-reader progress uses its actual context codec law and does not reconstruct general frozen predecessor histories.",
+    "Strict arbitrary-missing-predecessor compiled replay, all-live/source/provider integration, automatic common-field certification and general frontend completeness remain.",
+    "Source-scoped previous evidence is preserved, including the earlier conditional descriptor boundary.",
+    "These are cached-dependency integration observations, not performance comparisons."
+  ],
+  "document_commit": "073e685414ac4b69f8665780d33e6ab7705b4cfa",
+  "documents_sha256": {
+    "reports/hexrcf-cell-codec.md": "8ef4805a55a19b69687395dc321114b1fcce186d67a6f15d0ac56d82670348ee",
+    "reports/data/hexrcf-cell-codec/collect-owner-restoration.py": "c60a1c58e339b4de0efcfc6b11f8a7f6f2787dec0f7b0af185a868cce78f3295"
+  }
+}

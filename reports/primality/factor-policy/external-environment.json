@@ -1,0 +1,11 @@
+{
+  "sympy_version": "1.14.0",
+  "ground_types": "python",
+  "python": "3.14.6 (main, Jun 23 2026, 15:18:23) [Clang 22.1.3 ]",
+  "executable": "/home/kim/.cache/uv/builds-v0/.tmpmceI3o/bin/python3",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "factor_source": "/home/kim/.cache/uv/archive-v0/3MTBhRY7zOWZMrch/lib/python3.14/site-packages/sympy/ntheory/factor_.py",
+  "factor_sha256": "3104094a78d2a73f81f5ec7d7ea3029ebacd4dfa853a584957d4405b2de0253c",
+  "ecm_source": "/home/kim/.cache/uv/archive-v0/3MTBhRY7zOWZMrch/lib/python3.14/site-packages/sympy/ntheory/ecm.py",
+  "ecm_sha256": "ce0fc684bd174b21b965549d1afdd871e0a0b8f66b15a4be842faf5ea3953864"
+}

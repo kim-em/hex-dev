@@ -6,8 +6,8 @@ Authors: Kim Morrison
 module
 
 public import HexRCF.RealCoefficients.RadicalCheck
-public import HexPolyMathlib.Interpret
-public import HexRealAlgebraicMathlib.Order
+public import HexPolyTheory.Interpret
+public import HexRealAlgebraicTheory.Order
 public import Mathlib.Basic.Real.Basic
 
 public section
@@ -16,7 +16,7 @@ public section
 
 namespace Hex.RCF.RealCoefficients
 
-open HexPolyMathlib.Interpret
+open HexPolyTheory.Interpret
 
 private theorem interpret_natPow {E : Type u} [Zero E] [One E] [Add E] [Mul E]
     [DecidableEq E]
@@ -32,6 +32,9 @@ private theorem interpret_natPow {E : Type u} [Zero E] [One E] [Add E] [Mul E]
       · subst n
         simp [interpret_one f hz h1]
       · rw [ite_eq_right hn]
+        by_cases hOne : n = 1
+        · rw [ite_eq_left hOne, hOne, pow_one]
+        rw [ite_eq_right hOne]
         have hlt : n / 2 < n := Nat.div_lt_self (Nat.pos_of_ne_zero hn) (by decide)
         by_cases heven : n % 2 = 0
         · rw [ite_eq_left heven, ih (n / 2) hlt (p * p),

@@ -1,0 +1,13 @@
+"""Read-only comparison of committed frozen/current generated C."""
+from pathlib import Path
+import gzip,hashlib,json
+out=Path.cwd()/'reports/bench-results/sturm-sign-comparisons/code'
+record=json.loads((out/'rename-code-check.json').read_text())
+for row in record['modules']:
+ name=row['module'].replace('/','-')+'.c.gz'
+ frozen=gzip.decompress((out/('frozen-'+name)).read_bytes())
+ current=gzip.decompress((out/('current-'+name)).read_bytes())
+ assert hashlib.sha256(frozen).hexdigest()==row['frozen_c_sha256']
+ assert hashlib.sha256(current).hexdigest()==row['current_c_sha256']
+ assert current.replace(b'lp_Hex_Hex_Int_signImpl',b'lp_Hex_Hex_signInt')==frozen
+ print(row['module'], 'equal after replacing only helper symbol')

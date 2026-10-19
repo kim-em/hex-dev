@@ -34,7 +34,7 @@ private def cubic : RealAlgebraicNumber :=
     exact (congrArg Complex.im (Selected.normalized_toComplex
       CubeTwo.polynomial (by rfl) (by decide) (by decide)
       CubeTwo.checked CubeTwo.squarefree cubicRep _)).trans
-      ((HexRootsMathlib.RefinedIsolation.meetsRealAxis_iff cubicRep).mp (by decide)))
+      ((HexRootsTheory.RefinedIsolation.meetsRealAxis_iff cubicRep).mp (by decide)))
 
 private abbrev coordinate : QAdjoin cubic.toAlgebraic :=
   (cubic.toAlgebraic.toQAdjoin ^ 2 + 1) / 2
@@ -129,16 +129,30 @@ theorem normalized_selected : ∀ x : ℝ,
   rcf
 
 -- Executability alone does not authenticate a hidden isolation square.
-/-- error: rcf: normalized source square must reduce to its literal encoding in the kernel -/
-#guard_msgs in
-example : ∀ x : ℝ, x ^ 2 + Hex.RCF.NormalizedInputs.hidden.toReal > 0 := by
-  rcf
+-- Check the stable frontend prefix; kernel auxiliary names are incidental.
+open Lean Meta Qq in
+local elab "squareRejection%" : term => do
+  let saved ← saveState
+  let target := q(∀ x : ℝ,
+    x ^ 2 + Hex.RCF.NormalizedInputs.hidden.toReal > 0)
+  let rejection ← try
+    let _ ← CommonTactic.handle target
+    pure none
+  catch error => pure (some (← error.toMessageData.toString))
+  saved.restore
+  let some message := rejection | throwError "hidden square was accepted"
+  unless message.startsWith
+      "rcf: normalized source square must reduce to its literal encoding in the kernel" do
+    throwError "unexpected hidden-square rejection: {message}"
+  return q(True.intro)
+
+example : True := squareRejection%
 
 open Lean Meta Qq in
 local elab "mixedDecline%" : term => do
   let saved ← saveState
   let target := q(∀ x : ℝ,
-    x ^ 2 + Hex.RCF.NormalizedInputs.hidden.toReal + Real.sqrt (1 / 2) > 0)
+    x ^ 2 + Hex.RCF.NormalizedInputs.hidden.toReal + Real.sqrt Real.pi > 0)
   let .ok source ← Reify.prepare target |
     throwError "mixed source must prepare before handler classification"
   unless source.coefficients.size == 2 do

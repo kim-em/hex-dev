@@ -10,7 +10,7 @@ the degree. It depends on
 [`hex-basic`](https://github.com/leanprover/hex-basic) and
 [`hex-poly`](https://github.com/leanprover/hex-poly), with explicit
 conversions to and from the dense representation. See
-[`hex-sparse-poly-mathlib`](https://github.com/leanprover/hex-sparse-poly-mathlib)
+[`hex-sparse-poly-theory`](https://github.com/leanprover/hex-sparse-poly-theory)
 for the correspondence with Mathlib's `Polynomial`.
 
 # Quickstart
@@ -72,7 +72,7 @@ homomorphism. The division and gcd laws transport from `hex-poly`'s
 `DivModLaws`/`GcdLaws` packages. The identification with Mathlib's
 `Polynomial` (including the support characterisation that makes the
 representation "sparse") lives in
-[`hex-sparse-poly-mathlib`](https://github.com/leanprover/hex-sparse-poly-mathlib).
+[`hex-sparse-poly-theory`](https://github.com/leanprover/hex-sparse-poly-theory).
 
 # Contributing
 

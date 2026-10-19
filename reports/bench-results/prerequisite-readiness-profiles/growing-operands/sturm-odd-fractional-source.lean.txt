@@ -1,0 +1,112 @@
+def oddMantissa (bits seed : Nat) : Int :=
+  let b := max bits 2
+  let (_, value) := (List.range ((b + 63) / 64)).foldl
+    (fun (state, value) _ =>
+      let next : UInt64 := state * 6364136223846793005 + 1442695040888963407
+      (next, value * 2 ^ (64 : Nat) + next.toNat)) ((UInt64.ofNat seed), 0)
+  let value := value % 2 ^ (b - 1)
+  Int.ofNat (2 ^ (b - 1) + value / 2 * 2 + 1)
+
+def coefficientInput (bits : Nat) : AxisInput :=
+  let b := max bits 16
+  -- B² < 3AC, A,C > 0: the derivative is positive on the real line.
+  -- A dominates the other coefficients at ±2, so this squarefree cubic
+  -- has exactly one root there. Nonreal repeated roots would force degree ≥4.
+  ⟨ofCoeffs #[-oddMantissa (b - 1) 41, oddMantissa (b - 1) 23,
+      oddMantissa (b - 2) 9, oddMantissa b 1], interval⟩
+
+def endpointBounds (bits : Nat) (fractional : Bool := false) : DyadicInterval :=
+  let b := max bits 16
+  let u := oddMantissa b 17
+  let prec : Int := if fractional then (b / 2 : Nat) else 0
+  let a := Dyadic.ofIntWithPrec (-u) prec
+  let c := Dyadic.ofIntWithPrec u prec
+  if h : a < c then ⟨a, c, h⟩
+  else panic! "endpoint-size fixture must be ordered"
+
+def endpointInput (bits : Nat) : AxisInput := ⟨head 8, endpointBounds bits⟩
+def fractionalInput (bits : Nat) : AxisInput := ⟨head 8, endpointBounds bits true⟩
+
+def runCoefficientBits (i : AxisInput) : Option Int := ZPoly.tarskiQuery i.p 1 i.interval
+def runEndpointBits (i : AxisInput) : Option Int := ZPoly.tarskiQuery i.p 1 i.interval
+def runFractionalBits (i : AxisInput) : Option Int := ZPoly.tarskiQuery i.p 1 i.interval
+
+/- Cost-model derivation, mode 2: fixed degree bounds the number of scalar operations; operand and
+intermediate widths are O(bits). GMP's published quadratic multiplication/gcd
+bounds give O(bits²). Binary normalization, allocation and GMP crossover
+thresholds prevent a uniform tight monomial for the whole pipeline. -/
+setup_benchmark runCoefficientBits bits => bits ^ 2
+  with prep := coefficientInput
+  where {
+    paramSchedule := .custom #[2048, 4096, 8192, 16384, 32768]
+    paramFloor := 2048
+    paramCeiling := 32768
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 600
+  }
+
+/- Cost-model derivation, mode 2: eight fixed Horner steps per fixed chain entry perform arithmetic
+on O(bits)-wide dyadic accumulators. The same published GMP upper bounds
+cover their scalar products. This is an endpoint-size axis, not a head- or
+query-degree axis. No fitted arithmetic-regime exponent is used. -/
+setup_benchmark runEndpointBits bits => bits ^ 2
+  with prep := endpointInput
+  where {
+    paramSchedule := .custom #[2048, 4096, 8192, 16384, 32768]
+    paramFloor := 2048
+    paramCeiling := 32768
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 600
+  }
+
+structure RetargetInput where
+  p : DensePoly Rat
+  domain : Option (Sturm.PreparedDomain Rat)
+
+instance : Hashable RetargetInput where
+  hash i := hash i.p.toArray
+
+def retargetInput (n : Nat) : RetargetInput :=
+  let p : DensePoly Rat := ofCoeffs
+    ((Array.replicate (max n 2 + 1) (0 : Rat)).set! 0 (-2) |>.set! (max n 2) 1)
+  ⟨p, Sturm.prepare Sturm.orderSign p (.finite (-1)) (.finite 1)⟩
+
+def runRetargetWide (i : RetargetInput) : Bool :=
+  i.domain.any fun d => (d.withEndpoints? (.finite (-3)) (.finite 3)).isSome
+
+/- Cost-model derivation, mode 1: X^n−2 has a short derivative chain, so preparation needs only
+linear storage. Retargeting at ±3 performs n big-by-small Horner products
+with Θ(n)-bit accumulators. Θ(n²) bit work dominates the Θ(n) dispatch term
+on the preregistered 1600..13000-limb regime. The original Chebyshev attempt
+and its faster-than-declared failure are retained. -/
+setup_benchmark runRetargetWide n => n ^ 2
+  with prep := retargetInput
+  where {
+    paramSchedule := .custom #[65536, 131072, 262144, 524288]
+    paramFloor := 65536
+    paramCeiling := 524288
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 600
+  }
+
+/- Cost-model derivation, mode 2: unlike the withdrawn power-of-two endpoint family, odd b-bit
+mantissas make each nontrivial fixed-degree Horner product growing-by-growing.
+Both integral and fractional endpoints exercise GMP multiplication. -/
+setup_benchmark runFractionalBits bits => bits ^ 2
+  with prep := fractionalInput
+  where {
+    paramSchedule := .custom #[2048, 4096, 8192, 16384, 32768]
+    paramFloor := 2048
+    paramCeiling := 32768
+    outerTrials := 4
+    targetInnerNanos := 100000000
+    signalFloorMultiplier := 1
+    maxSecondsPerCall := 600
+  }
+

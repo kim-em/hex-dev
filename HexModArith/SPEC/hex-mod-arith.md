@@ -8,8 +8,9 @@ types.
 
 ## Native build
 
-The `hexmodarithffi` Lake target compiles `zmod64_mul.c` with `cc`, Lean’s
-include directory, `-fPIC`, and `-O3`. It sets `TMPDIR` to the object directory
+The `hexmodarithO` Lake target compiles `zmod64_mul.c` with `cc`, Lean’s
+include directory, `-fPIC`, and `-O3`, and the `HexModArithNative` carrier
+library links it (see `PLAN/Conventions.md` on native code). It sets `TMPDIR` to the object directory
 for that compiler process, keeping temporary files inside `.lake/build` when
 a downstream sandbox forbids writes to `/tmp`. The release sync copies the
 recipe from the monorepo Lake file.
@@ -46,7 +47,7 @@ a single-word product plus one `%`. Code that still needs the raw
 machine-word bound goes through the derived `Bounds.pLtWord`.
 
 Mathlib's `Fact` is unavailable to `hex-mod-arith` (it is a
-computational library, not a Mathlib bridge). The project-local
+computational library, not a theory companion). The project-local
 `Bounds` class gives the same instance-synthesis ergonomics with no
 Mathlib dependency.
 
@@ -185,7 +186,7 @@ def MontCtx.fromMont (ctx : MontCtx p) (a : MontResidue p)   : ZMod64 p
 invariant; it is **not** a parallel residue type to `ZMod64 p` (its
 values are not canonical representatives in `[0, p)`). Use it inside
 hot loops only — convert in at the loop header, convert out at the
-loop tail. The `CommRing` instance and the Mathlib bridge are stated
+loop tail. The `CommRing` instance and the theory companion are stated
 for `ZMod64`, not for `MontResidue`.
 
 ## Ring instance and properties
@@ -265,18 +266,15 @@ dispatchers can select a different verified kernel.
 
 ## External comparators
 
-No external comparator is required.
-
-**Justification:** scalar operations are `implementation-is-extern` per
-`SPEC/benchmarking.md §"Comparator naming"`: they route through GMP or the
+No external comparator is required. Scalar operations route through GMP or the
 dedicated word-arithmetic C externs, leaving no algorithmically distinct
 external implementation. The NTT surface is an internal building block rather
 than a user-facing result type; FLINT comparison belongs to the `FpPoly` and
 `ZPoly` convolution consumers where inputs and outputs match.
 
-The architecturally important within-Lean comparisons — Barrett versus
+The architecturally important within-Lean comparisons (Barrett versus
 Montgomery modular multiplication, and canonical versus redundant-residue
-butterflies — are registered as
+butterflies) are registered as
 `compare` groups in `HexModArith/Bench.lean` (per
 `SPEC/benchmarking.md §"Within-Lean comparisons"`). Those
 comparisons are the right shape for this library; an external tool
@@ -288,3 +286,12 @@ would just be wrapping the same underlying word-level operations.
 `none` for a nonunit. `inv?_eq_some` proves the inverse equation on success
 for every supported modulus, without primality. `toNat_intCast` identifies
 the canonical representative of an integer cast with its integer remainder.
+
+## Native code
+
+`lean_lib HexModArith` sets `precompileModules := true` because the library binds
+native implementations with `@[extern]`: `ZMod64` multiplication, powering and inversion, and the word-level `addModWord` and `subModWord`. Lean's interpreter cannot run
+an `@[extern]` declaration, so without the flag a downstream `#eval`, `#guard`
+or tactic that evaluates one fails with "Could not find native implementation
+of external declaration". The release consumer check exercises this from a
+downstream package before every publish.

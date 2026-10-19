@@ -1,0 +1,41 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+import HexRCF.NestedTransport.Context
+import HexRCF.SelectedRoot.Upper
+import HexRealClosure.SignEvidence
+import HexSignDet.DagEncode
+open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet
+open Hex.RCF.SelectedRootTests
+namespace NestedTransportEmit
+open Hex.RCF.RealCoefficients.NestedTransportTests.Context
+set_option maxRecDepth 32768
+set_option maxHeartbeats 8000000
+private def rootPacket (variant : Nat) : Codec.Json :=
+  let raw := Data.parent.mapDescriptor conversion.context conversion.value Upper.root
+  let raw := if variant = 1 then {raw with lower := .finite 0} else raw
+  match Descriptor.validate conversion.context.sign conversion.context.signature raw with
+  | none => .null
+  | some root =>
+    letI : Hashable conversion.context.Value := ⟨fun a => hash (conversion.context.codec.encode a)⟩
+    letI : Hashable Signature := ⟨fun a => hash (Signature.codec.encode a)⟩
+    .arr #[Algebraic.SignRequests.binding conversion.context.codec Signature.codec root.raw,
+      Codec.graph conversion.context.codec Signature.codec (Dag.encode root.evidence)]
+private def signs : Codec.Json :=
+  let p : DensePoly Data.parent.Value := DensePoly.ofList [0, -1]
+  let ps := [p, -p, DensePoly.C 1+p, DensePoly.C 2+p, DensePoly.C 4+p]
+  letI : Hashable Data.parent.Value := ⟨fun a => hash (Data.parent.codec.encode a)⟩
+  letI : Hashable Signature := ⟨fun a => hash (Signature.codec.encode a)⟩
+  letI : Hashable Hex.RCF.RealCoefficients.RootTransportData.conversion.context.Value :=
+    ⟨fun a => hash (Hex.RCF.RealCoefficients.RootTransportData.conversion.context.codec.encode a)⟩
+  match native.buildEvidence (ps.map native.queryPoly) with
+  | .error _ => .null
+  | .ok evidence => .arr #[Codec.list (Codec.poly Data.parent.codec) ps,
+    (Algebraic.SignEvidence.codec Data.parent.codec Signature.codec descriptor.raw).encode evidence]
+-- Produce untrusted packets; ordinary replay is the separate proof boundary.
+#eval IO.println ("NESTED_ROOT:" ++ String.fromUTF8! (rootPacket 0).writeBytes)
+#eval IO.println ("NESTED_SIGNS:" ++ String.fromUTF8! signs.writeBytes)
+#eval IO.println ("NESTED_ENDPOINT:" ++ String.fromUTF8! (rootPacket 1).writeBytes)
+end NestedTransportEmit

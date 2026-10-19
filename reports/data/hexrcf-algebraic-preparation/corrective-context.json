@@ -1,0 +1,191 @@
+{
+  "source_commit": "49aa1cde65ac4f4eadb5231eb5a41b6b9a42cf0d",
+  "sources_sha256": {
+    "adapters/HexRCF/RealCoefficients/AlgebraicPreparation.lean": "36e86bc1140850128eb090f67fa0e97450036e6940ce11fd22581f53e1c03b3c",
+    "adapters/HexRCF/RealCoefficients/FieldRuntime.lean": "fbf37668ef16914db6ae1304c8f879706dacceb8cb831c5912f65e26dfd9926a",
+    "adapters/HexRCF/RealCoefficients/Interpret.lean": "869aedf6a09753be163e9c82ab8533f0668344d83fcf576460e24d4c2564ad72",
+    "adapters/HexRCF/RealCoefficients.lean": "fcffa756d74c99fabf10c6fbaaf206e093c52f578d257245c290a9c613b1b73b",
+    "HexRCF/Tactic.lean": "09d895ba1dd2c1af0bfffca197494f2614380ded268ff13e4e0b02fea22b9224",
+    "conformance/HexRCF/AlgebraicPreparationCases.lean": "b052b12bbb3025cbd80d7c12268b8575b699e685a74b5e23015e63829e455c2d",
+    "conformance/HexRCF/AlgebraicPreparationConformance.lean": "2567797e86f104712a4a856e99d777f3f0fd1734601f7bda7d44af83ac84f137",
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "5b80af8a93fd880aae31109fc5743c46c9d6804ceaa80a836a74a353b4cd5bc9",
+    "HexRCF/README.md": "2c6e845ac57424951195cc5a981e219d9e328a2568ad1c75c4657e1ed3e13b5f",
+    "lakefile.lean": "b578c11ac900104788affe12d916387915cd53c3351778306cf4f7204218fe1e",
+    "scripts/ci/check_named_admissions.py": "bfc10445d47fd5906c862903e3faf10b68180229a030fa4a1f97cbfda4367e38",
+    "scripts/ci/test_check_named_admissions.py": "484c1d1d61ce9ac5317d8deb41119026943bf2377774d921f477180f22f76b28",
+    "adapters/HexRealClosureTheory/FiniteBase.lean": "b8a27c59af80abfd04da193a5e917eed1a075739509785a01034b39c94f4bb8d",
+    "libraries.yml": "2d774a6de86747fbc73c4b708d74afe63cba75b98291f76b889c657d5fc7fa2f",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47"
+  },
+  "logs": {
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-landed-parent-1.log.gz": {
+      "sha256": "6f781b5e1058473278433cd062712e378127b153164fd2540178975fb422bc6e",
+      "uncompressed_sha256": "cd7153b7c5493cea5209ecd9e412a92830235e9a57eb0a17af0b6f2c2ea0a806"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-order-1.log.gz": {
+      "sha256": "0350702ebacb9814c448374540fd71d7281611a6ab94998de91e0c3a2ecf450e",
+      "uncompressed_sha256": "a4056c7b03e65aa77002b39a75a61a57131b2b68210a7af54e52e7f81f91afd2"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-order-2.log.gz": {
+      "sha256": "847db083a78bcf42bd5bfff7d99ba3f407482044efdf9c473d4f2df0eff130d7",
+      "uncompressed_sha256": "13b1c6fad6de4524d95ca43a077d8c920d3dcad4fdaa7bca3260e1c37aa68879"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-resources-1.log.gz": {
+      "sha256": "c0d57729fcb2445e0fdbb356ac7794d718929bbfa41e13a369af80ba99987729",
+      "uncompressed_sha256": "d81506ccc8610e901928e83c42bace86963cd3091a70be853c539669fb50c195"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-resources-2.log.gz": {
+      "sha256": "6d70e6730a3be7e7398f29d1845c072aef7d4440fbb06896cd6b24e0bf65d087",
+      "uncompressed_sha256": "c4a91830e77e47a0a655af35af2dd4a700d2c258c2a7a240902310e246b753a9"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-resources-3.log.gz": {
+      "sha256": "a122e2eac20b1db76e72ad831586719840de681cf52a2cb66a4eb23319a73ca5",
+      "uncompressed_sha256": "2c0df2ed5117e54dc3c7a4b11b28aa7177d5dfcf125029127d2fb701ee05efd7"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-resources-4.log.gz": {
+      "sha256": "20525bcbad333331e0defbc27f2e8df54bfa7d3cf03df2ad0ec454287bd26f1f",
+      "uncompressed_sha256": "4ff111e1cc5de0d4e9b7027dcf5821d788ba45f126d07346b898b36a9f4526c8"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-review-1.log.gz": {
+      "sha256": "1e53be21cc9968b14108f8df77887b00b51913e437cbab5ac3066671dde48cc1",
+      "uncompressed_sha256": "673bec04f64627e506d9f7ed91d7fab9180f9dd04d015e66c560f8640e33560f"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-review-2.log.gz": {
+      "sha256": "3378249a682655c8dccce0b83ee189154b116d6437c1eedbb6c7575fab19b278",
+      "uncompressed_sha256": "9e12c37cad209d6523f108c9094cc25cddb06ce34939c16542e7513281f95f3e"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-review-admission-tests-1.log.gz": {
+      "sha256": "967e2631b813105eb329e184c73cc4a3759f7910bee77f4717a6d36e880b12b0",
+      "uncompressed_sha256": "0ebe19058c038a34b8a4bc8838d4854db232a44d464278bd3351781945450875"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-review-admission-tests-2.log.gz": {
+      "sha256": "c687b786a11b443316305c5a9fcc41a10a5b5a239d2fd55f85f77f222677194e",
+      "uncompressed_sha256": "209ae63a7c17d6405c0146fb6781a65341d06d733ff719d065bfcd9d98c9dc73"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-review-admissions-1.log.gz": {
+      "sha256": "0bdee8178502e5ba1b73e7f17d173b22133521a9d34aeb599674546fd0584ff9",
+      "uncompressed_sha256": "c2679c6fb96df0e457cfdcb11d3d558531135a4618ab27b20dc9014b05616e1c"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-review-admissions-2.log.gz": {
+      "sha256": "db9dc3c00ccfb6f5354464e7502d7b98bc629ae8fddfa56c96c12eea558b3a74",
+      "uncompressed_sha256": "65ca982455b50dda06c690c826cc565f500464485028030cd73b79684424a96d"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-review-browser-1.log.gz": {
+      "sha256": "2f746e8475aad3df06aaf2da184b75ffdaf166d9798698c358f736f85f7029f4",
+      "uncompressed_sha256": "3783359764a6c78d5978f9431f7574b5692c170839af8d3042c65294911ffa3a"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-review-browser-2.log.gz": {
+      "sha256": "650da833334a8c3d0e4431e035f0df1baeadfe6786c57d4eb721ee3ae8252381",
+      "uncompressed_sha256": "215bc73a8afee53fc777e3fbc3a4ffcfac44c431f0acc7734f13b2be22c28241"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-review-copyright-1.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-review-copyright-2.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-review-dag-1.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-review-dag-2.log.gz": {
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-review-dag-tests-1.log.gz": {
+      "sha256": "23d078523879b6d8536f09d72a027901e02d7e2829a1234edaf5fc6890706b07",
+      "uncompressed_sha256": "1716b47a03188bc918a0e69af2d063dbf3f51ded577934827cd953a60bd6070d"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-review-dag-tests-2.log.gz": {
+      "sha256": "23d078523879b6d8536f09d72a027901e02d7e2829a1234edaf5fc6890706b07",
+      "uncompressed_sha256": "1716b47a03188bc918a0e69af2d063dbf3f51ded577934827cd953a60bd6070d"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-review-integration-1.log.gz": {
+      "sha256": "2940acca8b6710efb91b5859f87186a18a89fc8b7fc8836cc5c07701386ed761",
+      "uncompressed_sha256": "83341d52d5ec76c35bc349ff8a95a760d2d91c85bf56ac56456b9498809c32b9"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-review-integration-2.log.gz": {
+      "sha256": "1b5ba21598b4df26649fa653145244491f10eeb911ff8d75ce28fb76051286b0",
+      "uncompressed_sha256": "9b7bb417881814447cf0a409cb6d151434c4d72e76808beb874d8b0af9291b08"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-review-literals-1.log.gz": {
+      "sha256": "d363c41d04cc71aaa8b2bb97d1faf6ff4b311e5874c10d339f87aba4d4b97158",
+      "uncompressed_sha256": "5b2703a612f8c434ac4e53bb05bfeef0dbca1d91cc9125441d5bd447be3dfbc3"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-review-render-1.log.gz": {
+      "sha256": "6f6a6cef96300be06750f9089cba9bd17595340cf2b3ac81e55d54ece136c12e",
+      "uncompressed_sha256": "7f6305997d872d0615927c25bcb0351b49b8f40e972f29c6868201a1697e8688"
+    },
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-review-render-2.log.gz": {
+      "sha256": "8ccd5be23e69fefcc3872c579690ab1bb49b63e41cf9e89c784a261fbf3a1e67",
+      "uncompressed_sha256": "1c4bc3b72a55752c70e85932946e8d1efacbc0f40a8d1b3e2473e3c447bfba43"
+    }
+  },
+  "artifacts_sha256": {
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-order-source.lean.txt": "44ae9573a270c6b42c94f20d71bf01bdc8e631c128653725adb49196caf8b594",
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-corrected-browser.mjs": "958984d54117c215b9f924e012e0aa85eeabc2ff647e55c40a9868dc80a022f0",
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-review-statuses.json": "f77752b5296a83e61ff71391982eea58fe3a92b32a5e45d3c6c5c2e24b159298",
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-pr-opus-1.log": "7aa8072a41fc28fc627c0ace4c1b3dacc3e41741cc2130e78e1352a29fa8f318",
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-review-inspection.json": "29330bf326bb9ac0c86d6db97e49976ddbfc951d940ada4419eae7d2e724c242",
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-review-desktop-api-start.png": "328e7e61d98401b51e9a912e371575721bb7a3815fa25f016eb7d5dadf221c69",
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-review-desktop-api-end.png": "73cd982713c0b64a3359bd545d57556a624266d713ea1e1cbaccac6698d85993",
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-review-desktop-scope.png": "52b8daa2508ac910f4fb44c0cffc0c39d172eb8e4056f1ad77fa851e462b1e73",
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-review-narrow-api-start.png": "3d739e9d8999d6b01babb3957c50a85f3722ff05207513091513fff139bdf196",
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-review-narrow-api-end.png": "f253164f776a398fb49dd6d1e9e150257b27b5e0b6ea23ed0a8096ebb4113102",
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-review-narrow-scope.png": "3374f13baed0454c519aa49c673e92e1a3c287b9a77769210761e98a0436a4e6",
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-corrected-inspection.json": "29330bf326bb9ac0c86d6db97e49976ddbfc951d940ada4419eae7d2e724c242",
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-corrected-desktop-api-start.png": "328e7e61d98401b51e9a912e371575721bb7a3815fa25f016eb7d5dadf221c69",
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-corrected-desktop-api-end.png": "73cd982713c0b64a3359bd545d57556a624266d713ea1e1cbaccac6698d85993",
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-corrected-desktop-scope.png": "52b8daa2508ac910f4fb44c0cffc0c39d172eb8e4056f1ad77fa851e462b1e73",
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-corrected-narrow-api-start.png": "3d739e9d8999d6b01babb3957c50a85f3722ff05207513091513fff139bdf196",
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-corrected-narrow-api-end.png": "f253164f776a398fb49dd6d1e9e150257b27b5e0b6ea23ed0a8096ebb4113102",
+    "reports/data/hexrcf-algebraic-preparation/algebraic-preparation-corrected-narrow-scope.png": "3374f13baed0454c519aa49c673e92e1a3c287b9a77769210761e98a0436a4e6"
+  },
+  "rendered_html_sha256": "11442eba90fbb81c5ed4ac59870c576484937d94c7f745378f55d93c385c650c",
+  "validation": {
+    "final_selected_jobs": 14302,
+    "own_conformance_marker": "native source identities, ordered irrational and guard-only inputs, aggregate budget and transactional refusals checked",
+    "independent_completion_marker": "native source conformance completion independently checked",
+    "strict_argument_before_postcheck_helper": true,
+    "visual_inspected": [
+      "algebraic-preparation-review-desktop-api-start.png",
+      "algebraic-preparation-review-desktop-api-end.png",
+      "algebraic-preparation-review-desktop-scope.png",
+      "algebraic-preparation-review-narrow-api-start.png",
+      "algebraic-preparation-review-narrow-api-end.png",
+      "algebraic-preparation-review-narrow-scope.png",
+      "algebraic-preparation-corrected-desktop-api-start.png",
+      "algebraic-preparation-corrected-desktop-api-end.png",
+      "algebraic-preparation-corrected-desktop-scope.png",
+      "algebraic-preparation-corrected-narrow-api-start.png",
+      "algebraic-preparation-corrected-narrow-api-end.png",
+      "algebraic-preparation-corrected-narrow-scope.png"
+    ],
+    "memory_bytes": 34359738368,
+    "swap_bytes": 0,
+    "lean_threads": 2,
+    "own_build_concurrency": 1
+  },
+  "log_scopes": {
+    "landed-parent-1": "Exact old PR head b23d570a631f3afbe058433b780e7c417b17267f.",
+    "review-integration-2": "The final source commit in this record.",
+    "order-2": "The retained trace source matches the final API source except trace options.",
+    "resources-3": "Aggregate success without the completion marker: an uncaught test interrupt stopped the command. Not a completed conformance result.",
+    "other_earlier_logs": "Retained diagnostic intermediate versions, not final-source validation."
+  },
+  "limits": [
+    "This record supersedes the earlier checkpoint cancellation-order interpretation.",
+    "The first three records retain their distinct historical source/document bindings.",
+    "Build/render observations have distinct incremental scopes and are not performance comparisons.",
+    "No general frozen quotation, literal authentication or strict arbitrary-missing-record compiled replay is established."
+  ],
+  "document_commit": "daaf14352197270f5a1199d9cc67e6cec5ae3449",
+  "documents_sha256": {
+    "reports/hexrcf-algebraic-preparation.md": "2eaa1838f70231296998dae7f78a298304640e668f3efd4055214f184a889a7f",
+    "reports/data/hexrcf-algebraic-preparation/collect-corrective.py": "8cad9800ebda52a3fb9b8e08a67fbbfcad3cd2cb2d0fb6682fa52d789502a12f"
+  },
+  "artifact_commit": "daaf14352197270f5a1199d9cc67e6cec5ae3449"
+}

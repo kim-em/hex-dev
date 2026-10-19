@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexPermGroup.Cycles
+public import HexBasic.List.Nodup
 
 public section
 
@@ -35,7 +36,7 @@ theorem Follows.push {p : Perm n} {c : Array (Fin n)} {x : Fin n} (h : Follows p
     simp [Array.getElem_push]
 
 theorem nodup_size {c : Array (Fin n)} (h : c.toList.Nodup) : c.size ≤ n := by
-  have hh := List.nodup_subset_length_le h (l₂ := List.finRange n) (fun x _ => List.mem_finRange x)
+  have hh := Hex.List.nodup_subset_length_le h (l₂ := List.finRange n) (fun x _ => List.mem_finRange x)
   simpa using hh
 
 theorem get_injective {c : Array (Fin n)} (h : c.toList.Nodup) {i j : Nat}

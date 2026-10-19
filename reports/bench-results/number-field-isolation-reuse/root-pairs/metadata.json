@@ -1,0 +1,1271 @@
+{
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "load_start": [
+    11.56103515625,
+    11.7421875,
+    23.51318359375
+  ],
+  "schedule": "Four fixed trial-major blocks; rational degrees 2/4/8 then quadratic degrees 1/2/4; adjacent Before/After arms alternate AB/BA by block. No sample rejection or unchanged rerun.",
+  "scope": "Informational controlled before/after observations of unchanged complete RealAlgebraicPoly.roots with complete sorted polynomial/sign/multiplicity fingerprints and expected hashes. Prepared fixed operands and separate warmup excluded. No scientific mode admission or portable timing budget.",
+  "arms": [
+    {
+      "block": 0,
+      "case": "RationalRoots2",
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/RationalRoots2-0-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.7261112920004962,
+      "output": "RationalRoots2-0-Before.json"
+    },
+    {
+      "block": 0,
+      "case": "RationalRoots2",
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/RationalRoots2-0-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.4746174619995145,
+      "output": "RationalRoots2-0-After.json"
+    },
+    {
+      "block": 0,
+      "case": "RationalRoots4",
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/RationalRoots4-0-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.5516532040001039,
+      "output": "RationalRoots4-0-Before.json"
+    },
+    {
+      "block": 0,
+      "case": "RationalRoots4",
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/RationalRoots4-0-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.6136356509996403,
+      "output": "RationalRoots4-0-After.json"
+    },
+    {
+      "block": 0,
+      "case": "RationalRoots8",
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/RationalRoots8-0-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 1.5644870020005328,
+      "output": "RationalRoots8-0-Before.json"
+    },
+    {
+      "block": 0,
+      "case": "RationalRoots8",
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/RationalRoots8-0-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.9588382929996442,
+      "output": "RationalRoots8-0-After.json"
+    },
+    {
+      "block": 0,
+      "case": "QuadraticRoots1",
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots1",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/QuadraticRoots1-0-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.5229364639999403,
+      "output": "QuadraticRoots1-0-Before.json"
+    },
+    {
+      "block": 0,
+      "case": "QuadraticRoots1",
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots1",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/QuadraticRoots1-0-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.48946986100054346,
+      "output": "QuadraticRoots1-0-After.json"
+    },
+    {
+      "block": 0,
+      "case": "QuadraticRoots2",
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/QuadraticRoots2-0-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.5117516130012518,
+      "output": "QuadraticRoots2-0-Before.json"
+    },
+    {
+      "block": 0,
+      "case": "QuadraticRoots2",
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/QuadraticRoots2-0-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.5390167229998042,
+      "output": "QuadraticRoots2-0-After.json"
+    },
+    {
+      "block": 0,
+      "case": "QuadraticRoots4",
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/QuadraticRoots4-0-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 1.5162152949997107,
+      "output": "QuadraticRoots4-0-Before.json"
+    },
+    {
+      "block": 0,
+      "case": "QuadraticRoots4",
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/QuadraticRoots4-0-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 1.0007058809987939,
+      "output": "QuadraticRoots4-0-After.json"
+    },
+    {
+      "block": 1,
+      "case": "RationalRoots2",
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/RationalRoots2-1-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.653960053999981,
+      "output": "RationalRoots2-1-After.json"
+    },
+    {
+      "block": 1,
+      "case": "RationalRoots2",
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/RationalRoots2-1-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.530328033000842,
+      "output": "RationalRoots2-1-Before.json"
+    },
+    {
+      "block": 1,
+      "case": "RationalRoots4",
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/RationalRoots4-1-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.4692047200005618,
+      "output": "RationalRoots4-1-After.json"
+    },
+    {
+      "block": 1,
+      "case": "RationalRoots4",
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/RationalRoots4-1-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.6629332960001193,
+      "output": "RationalRoots4-1-Before.json"
+    },
+    {
+      "block": 1,
+      "case": "RationalRoots8",
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/RationalRoots8-1-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 1.0053856199992879,
+      "output": "RationalRoots8-1-After.json"
+    },
+    {
+      "block": 1,
+      "case": "RationalRoots8",
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/RationalRoots8-1-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 1.5043505300000106,
+      "output": "RationalRoots8-1-Before.json"
+    },
+    {
+      "block": 1,
+      "case": "QuadraticRoots1",
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots1",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/QuadraticRoots1-1-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.675207013000545,
+      "output": "QuadraticRoots1-1-After.json"
+    },
+    {
+      "block": 1,
+      "case": "QuadraticRoots1",
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots1",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/QuadraticRoots1-1-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.5818097440005658,
+      "output": "QuadraticRoots1-1-Before.json"
+    },
+    {
+      "block": 1,
+      "case": "QuadraticRoots2",
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/QuadraticRoots2-1-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.5779085109988955,
+      "output": "QuadraticRoots2-1-After.json"
+    },
+    {
+      "block": 1,
+      "case": "QuadraticRoots2",
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/QuadraticRoots2-1-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.4629961770006048,
+      "output": "QuadraticRoots2-1-Before.json"
+    },
+    {
+      "block": 1,
+      "case": "QuadraticRoots4",
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/QuadraticRoots4-1-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.8703719599998294,
+      "output": "QuadraticRoots4-1-After.json"
+    },
+    {
+      "block": 1,
+      "case": "QuadraticRoots4",
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/QuadraticRoots4-1-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 1.2992716210010258,
+      "output": "QuadraticRoots4-1-Before.json"
+    },
+    {
+      "block": 2,
+      "case": "RationalRoots2",
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/RationalRoots2-2-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.44654425800035824,
+      "output": "RationalRoots2-2-Before.json"
+    },
+    {
+      "block": 2,
+      "case": "RationalRoots2",
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/RationalRoots2-2-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.5392632319999393,
+      "output": "RationalRoots2-2-After.json"
+    },
+    {
+      "block": 2,
+      "case": "RationalRoots4",
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/RationalRoots4-2-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.5181691710004088,
+      "output": "RationalRoots4-2-Before.json"
+    },
+    {
+      "block": 2,
+      "case": "RationalRoots4",
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/RationalRoots4-2-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.5513202759993874,
+      "output": "RationalRoots4-2-After.json"
+    },
+    {
+      "block": 2,
+      "case": "RationalRoots8",
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/RationalRoots8-2-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 1.2963125960013713,
+      "output": "RationalRoots8-2-Before.json"
+    },
+    {
+      "block": 2,
+      "case": "RationalRoots8",
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/RationalRoots8-2-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.8436663109987421,
+      "output": "RationalRoots8-2-After.json"
+    },
+    {
+      "block": 2,
+      "case": "QuadraticRoots1",
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots1",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/QuadraticRoots1-2-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.5357271000011679,
+      "output": "QuadraticRoots1-2-Before.json"
+    },
+    {
+      "block": 2,
+      "case": "QuadraticRoots1",
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots1",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/QuadraticRoots1-2-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.4179895369998121,
+      "output": "QuadraticRoots1-2-After.json"
+    },
+    {
+      "block": 2,
+      "case": "QuadraticRoots2",
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/QuadraticRoots2-2-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.547002256000269,
+      "output": "QuadraticRoots2-2-Before.json"
+    },
+    {
+      "block": 2,
+      "case": "QuadraticRoots2",
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/QuadraticRoots2-2-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.514439262000451,
+      "output": "QuadraticRoots2-2-After.json"
+    },
+    {
+      "block": 2,
+      "case": "QuadraticRoots4",
+      "arm": "Before",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/QuadraticRoots4-2-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 1.292857776999881,
+      "output": "QuadraticRoots4-2-Before.json"
+    },
+    {
+      "block": 2,
+      "case": "QuadraticRoots4",
+      "arm": "After",
+      "order": [
+        "Before",
+        "After"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/QuadraticRoots4-2-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.8386842269992485,
+      "output": "QuadraticRoots4-2-After.json"
+    },
+    {
+      "block": 3,
+      "case": "RationalRoots2",
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/RationalRoots2-3-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.5374936400003207,
+      "output": "RationalRoots2-3-After.json"
+    },
+    {
+      "block": 3,
+      "case": "RationalRoots2",
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/RationalRoots2-3-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.4520588649993442,
+      "output": "RationalRoots2-3-Before.json"
+    },
+    {
+      "block": 3,
+      "case": "RationalRoots4",
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/RationalRoots4-3-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.5902614480000921,
+      "output": "RationalRoots4-3-After.json"
+    },
+    {
+      "block": 3,
+      "case": "RationalRoots4",
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/RationalRoots4-3-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.5292402450013469,
+      "output": "RationalRoots4-3-Before.json"
+    },
+    {
+      "block": 3,
+      "case": "RationalRoots8",
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/RationalRoots8-3-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.9183474969995586,
+      "output": "RationalRoots8-3-After.json"
+    },
+    {
+      "block": 3,
+      "case": "RationalRoots8",
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runRationalRoots8",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/RationalRoots8-3-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 1.2507412830000249,
+      "output": "RationalRoots8-3-Before.json"
+    },
+    {
+      "block": 3,
+      "case": "QuadraticRoots1",
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots1",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/QuadraticRoots1-3-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.4111073269996268,
+      "output": "QuadraticRoots1-3-After.json"
+    },
+    {
+      "block": 3,
+      "case": "QuadraticRoots1",
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots1",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/QuadraticRoots1-3-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.520592435999788,
+      "output": "QuadraticRoots1-3-Before.json"
+    },
+    {
+      "block": 3,
+      "case": "QuadraticRoots2",
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/QuadraticRoots2-3-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.46679339000002074,
+      "output": "QuadraticRoots2-3-After.json"
+    },
+    {
+      "block": 3,
+      "case": "QuadraticRoots2",
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots2",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/QuadraticRoots2-3-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 0.46895658699941123,
+      "output": "QuadraticRoots2-3-Before.json"
+    },
+    {
+      "block": 3,
+      "case": "QuadraticRoots4",
+      "arm": "After",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/QuadraticRoots4-3-After.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 1.045121889001166,
+      "output": "QuadraticRoots4-3-After.json"
+    },
+    {
+      "block": 3,
+      "case": "QuadraticRoots4",
+      "arm": "Before",
+      "order": [
+        "After",
+        "Before"
+      ],
+      "command": [
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+        "run",
+        "Hex.RealAlgebraicBench.runQuadraticRoots4",
+        "--repeats",
+        "1",
+        "--min-total-seconds",
+        "0.05",
+        "--export-file",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/QuadraticRoots4-3-Before.json"
+      ],
+      "exit_code": 0,
+      "whole_child_seconds": 1.7577169950000098,
+      "output": "QuadraticRoots4-3-Before.json"
+    }
+  ],
+  "sources": {
+    "Before": {
+      "head": "121fc1e027cee801d64277adb2d4470e6101b990",
+      "executable_sha256": "9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+      "executable": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+      "files": {
+        "lake-manifest.json": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e",
+        "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+        "bench/HexRealAlgebraic/Bench.lean": "91f6523fbbd8c6d8af8f53680d7500f0de5e11a245d48622e7ff446fd01555c5",
+        "HexNumberField/Basic.lean": "842491d3b7e65c29b198e533b5d68f41bed6e93b8106864859f05ec83b9a9082",
+        "HexNumberField/Convert.lean": "5ca7230f7647e69e139fbb1cdb9dcce569a3147f162d10631483d0d95eaa1507",
+        "HexNumberField/Lazy.lean": "b6e288456584c616c1015eaf9a2993be1f77f5f08c7969855946fd9f1ede89be",
+        "HexNumberFieldMathlib/Exact.lean": "57d7bcba1aef61e0c5e4c4b69b559b6c5fa9cd8ed27dc74c91c6f35ba48a21b0",
+        "HexRealAlgebraic/Basic.lean": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd"
+      }
+    },
+    "After": {
+      "head": "7ceaf9d47d8fe1b98d3daa86c699651c859c3aab",
+      "executable_sha256": "8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+      "executable": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/root-pairs/After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+      "files": {
+        "lake-manifest.json": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e",
+        "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+        "bench/HexRealAlgebraic/Bench.lean": "91f6523fbbd8c6d8af8f53680d7500f0de5e11a245d48622e7ff446fd01555c5",
+        "HexNumberField/Basic.lean": "9b6c980a046b46467353b71ce39c4f7eb3480939e8c538c5907d1f48d2cb9e06",
+        "HexNumberField/Convert.lean": "3d2e6c2e356b070326718d975556b85e2aacd90a42df13ed44110173b9d9164a",
+        "HexNumberField/Lazy.lean": "b6e288456584c616c1015eaf9a2993be1f77f5f08c7969855946fd9f1ede89be",
+        "HexNumberFieldMathlib/Exact.lean": "16508d5bfe73271ea166affb7599007fe989dfa083f099e3bce35ee681036f6d",
+        "HexRealAlgebraic/Basic.lean": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd"
+      }
+    }
+  },
+  "cpu": 15,
+  "load_end": [
+    29.20849609375,
+    16.44189453125,
+    24.6103515625
+  ],
+  "retained_files": {
+    "Before-9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26": "9268c53cf13f1ecc96b3d293aee61212a821531dc03168ba88c58fead6af0e26",
+    "Before-lake-manifest.json.txt": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e",
+    "Before-lean-toolchain.txt": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "Before-bench-HexRealAlgebraic-Bench.lean.txt": "91f6523fbbd8c6d8af8f53680d7500f0de5e11a245d48622e7ff446fd01555c5",
+    "Before-HexNumberField-Basic.lean.txt": "842491d3b7e65c29b198e533b5d68f41bed6e93b8106864859f05ec83b9a9082",
+    "Before-HexNumberField-Convert.lean.txt": "5ca7230f7647e69e139fbb1cdb9dcce569a3147f162d10631483d0d95eaa1507",
+    "Before-HexNumberField-Lazy.lean.txt": "b6e288456584c616c1015eaf9a2993be1f77f5f08c7969855946fd9f1ede89be",
+    "Before-HexNumberFieldMathlib-Exact.lean.txt": "57d7bcba1aef61e0c5e4c4b69b559b6c5fa9cd8ed27dc74c91c6f35ba48a21b0",
+    "Before-HexRealAlgebraic-Basic.lean.txt": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd",
+    "After-8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d": "8626a68c47cf4f6ce81418b7477c64628a334bbc63a695e26dd396930db5e24d",
+    "After-lake-manifest.json.txt": "726a5dd281c6e6970e84883d8bf3f6d6cc48d86b4e4dc519510dd2a07a3cfa0e",
+    "After-lean-toolchain.txt": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "After-bench-HexRealAlgebraic-Bench.lean.txt": "91f6523fbbd8c6d8af8f53680d7500f0de5e11a245d48622e7ff446fd01555c5",
+    "After-HexNumberField-Basic.lean.txt": "9b6c980a046b46467353b71ce39c4f7eb3480939e8c538c5907d1f48d2cb9e06",
+    "After-HexNumberField-Convert.lean.txt": "3d2e6c2e356b070326718d975556b85e2aacd90a42df13ed44110173b9d9164a",
+    "After-HexNumberField-Lazy.lean.txt": "b6e288456584c616c1015eaf9a2993be1f77f5f08c7969855946fd9f1ede89be",
+    "After-HexNumberFieldMathlib-Exact.lean.txt": "16508d5bfe73271ea166affb7599007fe989dfa083f099e3bce35ee681036f6d",
+    "After-HexRealAlgebraic-Basic.lean.txt": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd",
+    "RationalRoots2-0-Before.log": "58798b8ade88716467f7a8a34c9624707b0c341c40cd0ecd2145a6a092d20338",
+    "RationalRoots2-0-Before.json": "cf54e43357bc1653922cdd4726bf462fdf2c52bee1ee3b83595f9fc84b8c907c",
+    "RationalRoots2-0-After.log": "e984cc06c863ae766e4d63c973382af3456138f3c2d38865e1ce20981c624240",
+    "RationalRoots2-0-After.json": "f99c674f305767bd52c2b64e042784e036f4c7d7e47e6804a69b55b39630f701",
+    "RationalRoots4-0-Before.log": "1b7afebaefb73e25aa81bc0f389d5090c504c56fd2b195dbbba43ea57c7b14b7",
+    "RationalRoots4-0-Before.json": "12f475a2a0e1f6c34c912280dd90910be0e65be128dc1920d9f5fc87a738ca81",
+    "RationalRoots4-0-After.log": "b729a78acb8f9dc913d5297ca869412ec560072f428d8ccaa2e5428816d755a9",
+    "RationalRoots4-0-After.json": "03c2dfff221aeb8cc68ba6a2d349d18c4b35d86c5384fc76cfe919d5e35aa035",
+    "RationalRoots8-0-Before.log": "98fa58fcd1124fe8e16cf8a4d59dcd8cc346c7c85b498289c1f1f95d9dd8634c",
+    "RationalRoots8-0-Before.json": "b95a7c34aabc6b8b6e908d37ab8d8a94702a53982fe39d67134bc71c5a480657",
+    "RationalRoots8-0-After.log": "acb1c80540978b4ed3da6cc3e7861265b3f864cdfdf3ce827cd5f754413fac55",
+    "RationalRoots8-0-After.json": "a0acb24fa2ec14a3503d48d09b0ca7123d7332147f0c3672bd1b7c4c80f1e446",
+    "QuadraticRoots1-0-Before.log": "7f648462f5a49d7d0226158567cab87e6569a66322c4712154f5025a75b6d60d",
+    "QuadraticRoots1-0-Before.json": "4b8cecbad26e94574f017618b804e24379860b65d77dc6fc619d0fa9fd38f3a1",
+    "QuadraticRoots1-0-After.log": "3211aaeeaaa185e22383d9c66f80751486f4b98c1feb65ea6ffa347ef90f6233",
+    "QuadraticRoots1-0-After.json": "1cd5de34cf9c9656192eb7d1b9524a95a632d362179c43ad5e82de357e181fbb",
+    "QuadraticRoots2-0-Before.log": "cc26efca835cf37f30adf35309b0d93e7654afaf3e28e72580ec48cb9a479a41",
+    "QuadraticRoots2-0-Before.json": "0735a27afa755235102d4bed0a91511485ffbe3109776a870eea4097fe0315e8",
+    "QuadraticRoots2-0-After.log": "ffedf67415ec2f9e74fd15efbe56d6e79dd6d919c6fc983b723c35a0f2bda81a",
+    "QuadraticRoots2-0-After.json": "fb792030fd737839211f6f15afb49465a81df7abe9a48689cd7c446ee360f9cd",
+    "QuadraticRoots4-0-Before.log": "a058b2991bc9d70e2518cf96fb8ad7a643d0bee6f803bf4bdc198ac003eec8ed",
+    "QuadraticRoots4-0-Before.json": "aa4b6b1a3aa11af31c6704607b516596539e685537740559318063cb6eae3208",
+    "QuadraticRoots4-0-After.log": "2d9c943a8536d09358e2afe9cefffb42d3bda56ee3f4b45773ccc6107386de68",
+    "QuadraticRoots4-0-After.json": "b9784726f9cbce86e2994bb33705f0ce20ab1b71cc2a20ffa374062b761c13b1",
+    "RationalRoots2-1-After.log": "21ae98de148564ba3a23bb018d15be754dd6860bcfa41ebbde1dcefefea254de",
+    "RationalRoots2-1-After.json": "a8df2e9bc309958c0b15a8e9a17de4ec2b6a4bc77f13db05df29c4c55a316ab0",
+    "RationalRoots2-1-Before.log": "5e4ee6db159d9fc784ffe3e1ff2278553a856c024ca722547615c597c3b1c0f6",
+    "RationalRoots2-1-Before.json": "6121db57bfc963e4d397c9b8f48fc1736089d80f117d0c2290f267f43522214b",
+    "RationalRoots4-1-After.log": "ef7106ee1f9efb41c6ed03784b4841ee2d61155c9bbaca2f91a42d3164a9ae52",
+    "RationalRoots4-1-After.json": "af05dbefce5d00705e1ebe5d1079267e760243be51b028c16fc7f5a8b01b3908",
+    "RationalRoots4-1-Before.log": "459ca3c4053f88c6a0f69505c55ff0b9821e373fef2ba4820feab82152feb87b",
+    "RationalRoots4-1-Before.json": "55c09eb0c0cf7e468f8bfe7f82a8df4ba54a880ac22b98790e7618d415f0238a",
+    "RationalRoots8-1-After.log": "bc64dd4e1ce08538a80dfb2b74a5cf8f579452e03f8d6cefd282bdf5b1d4b886",
+    "RationalRoots8-1-After.json": "066c942ea4983859635e79b58ebc8402a5a725c3e2e5b778edf1d1b7a3af0069",
+    "RationalRoots8-1-Before.log": "5ab55266ea4d7a8129cfe4464e360f53e6aa9b5ef0453fd4e8a4e6788d5d7421",
+    "RationalRoots8-1-Before.json": "f7d4f247581035c7b0ff0f82cd3a928730753ad75102064d6ad11e4ecdd9975b",
+    "QuadraticRoots1-1-After.log": "1380f25dcbf0b827e58535eeca29383c8fface3e17fd95bbbbf937e5776403e4",
+    "QuadraticRoots1-1-After.json": "eae06e0b70a87e839ffaf309753d5f93b88ef26e58bf53aecb09eb7a33addc50",
+    "QuadraticRoots1-1-Before.log": "ecdc3d73999cee304a893393d98e40c9dd40981b12fb29beb4cdcf67887aad8e",
+    "QuadraticRoots1-1-Before.json": "4f0c5ad08972384d1ce51e178aa860e00de551b8a84cdefe43dd007a1e996860",
+    "QuadraticRoots2-1-After.log": "4e218bc0346bb95828d686724dfe875efcbbe828e7cfc6c96b88fd43e501333d",
+    "QuadraticRoots2-1-After.json": "aa9cc87c5332b8e00155a6b462f8aeb2c2da36faada1577471f66bfdb5b645d0",
+    "QuadraticRoots2-1-Before.log": "d9a894a4c2395ee3682d43176fc89b9fec085e9ae1e1d2e3ebacfc5f8f9aaf72",
+    "QuadraticRoots2-1-Before.json": "d40e62cced823e2bf245ea8be91a60fc4bf61f8d51fd180b337f0b29492efb1e",
+    "QuadraticRoots4-1-After.log": "eec9d7507ecfab985db048a6c303c9ed3b819b2a62654f7cb697d8c814346ad8",
+    "QuadraticRoots4-1-After.json": "1f03fe65b3866ae24533d39378e32cfea90a5bb48d9e91a12f266a8a77d6bdbd",
+    "QuadraticRoots4-1-Before.log": "4b6605488930030b0b03d34fb47f07acd248a93a45b5364d65df0f7659fe5191",
+    "QuadraticRoots4-1-Before.json": "af355fd5c572adb633c069fc17150ff5b8f2793285c37d085160b08d96337ccf",
+    "RationalRoots2-2-Before.log": "040a784b74dab2593d85a3db5122d7e73cc9b336eddc416c3e866d4babf7c838",
+    "RationalRoots2-2-Before.json": "b70fb7294443ce06cf792a529382b2f1b3c6225515b2587db984bdb5c9afb775",
+    "RationalRoots2-2-After.log": "1cf7a991e5a6f57f33485e0b7740d6b0e727f1cd91e2f18ecd1f21f1264deb5f",
+    "RationalRoots2-2-After.json": "39f191792ba961307c29881a7791bd074d2ca2b56ab67db29a634594b6777ca4",
+    "RationalRoots4-2-Before.log": "f6b5f908df87cbba3773a2ba2e4bb5e4bf72907452595fc2e9151ca93cc6c003",
+    "RationalRoots4-2-Before.json": "0161f054845b193ef96bcafd1db44170253649f41e07c8e945bb6eaae394ca63",
+    "RationalRoots4-2-After.log": "202f5ad66c714c710cc632508201c1e295290498eeb2f2d04d9346cc49ef2c12",
+    "RationalRoots4-2-After.json": "b1ba4c9e73bb5f6d30a002cd872c009bf3ddfdf17186ecba5c8a1fae09f11d87",
+    "RationalRoots8-2-Before.log": "7d80c7c5c849ee2bca4cf2489804c9d69cf7af9e0451d73f19b52dfd5e3024cd",
+    "RationalRoots8-2-Before.json": "f863165c73f0de7326f0a03543cd343b3815c4109e6bfa7e544b73164c51d415",
+    "RationalRoots8-2-After.log": "88bf3a82c47f39790004977fba74468aa6489430e1b831fb50a240e74e7caf98",
+    "RationalRoots8-2-After.json": "e2885098b711adac1cd030859c0be52bfbf060ad0a72b55a9ccaeb69f0c557f9",
+    "QuadraticRoots1-2-Before.log": "e09500c71fa6aabb428a1b6d250197ea25f70b348167d473a51927ed9cce2d94",
+    "QuadraticRoots1-2-Before.json": "e17d391dd58d4d0975906b03c8cc07764e400ac09ef0aa9aff8c1a84e6ade44e",
+    "QuadraticRoots1-2-After.log": "d8f994b5d3df140f0250a39095f6fa9b5e8f02340bb82cc3c93c089a2b317881",
+    "QuadraticRoots1-2-After.json": "8df3deddcae2655f8be2c9443071b255275075c295b2ab4481722bb3722f18fb",
+    "QuadraticRoots2-2-Before.log": "4a3ff49ffaddd367006008a31bdd8e94133bc480a61e55b60dd47a21d6c61e97",
+    "QuadraticRoots2-2-Before.json": "51fc0a79e757945e7665793f547fd2c0230be10d973fe06e31a81347b687b738",
+    "QuadraticRoots2-2-After.log": "da6a85f7c002ce5adebd2146ce71e5e8eec5dc8a85713b1ebeb564449d4871c1",
+    "QuadraticRoots2-2-After.json": "39c7f7044b0117b94cce8e0136132def3f6e2231cd9f4bb9fd145d770955f07f",
+    "QuadraticRoots4-2-Before.log": "a0f4ce3e5f82ba82822ba3d4f65577007592f5d5bea0926ca8e28446cec3698e",
+    "QuadraticRoots4-2-Before.json": "f7bf5f4f0baab7417913593dd4f721f84fbeeeb8bdea7b42eed0c7552352ae3e",
+    "QuadraticRoots4-2-After.log": "58abb518067c302a44e228376cff7996394a8c3c2f6f7e4177961f053402aaa0",
+    "QuadraticRoots4-2-After.json": "01b64a42ee5bb7a8a3436fa0dc58b41dbd7dc6ac112b50c02c7b36860c20bb3e",
+    "RationalRoots2-3-After.log": "ce3bfa279b8235454f74772e61b88e79a2990ea9279f57564c80dd76b96e824e",
+    "RationalRoots2-3-After.json": "312768afd8098ab4b6dff687c998500c629c09a9fb162b0768f3351ef38dc944",
+    "RationalRoots2-3-Before.log": "93ab66fc6420b7a7d86f4dac926a348bf7cba6d16f3f6df4cf9e020016c63922",
+    "RationalRoots2-3-Before.json": "de0a9e084e2574b914b646d044d19a41ff68e9c9ab1220880779fc5171c3b2c5",
+    "RationalRoots4-3-After.log": "0bf002962c87658bf5748db3a6789004fa4828d0a73cc54154d502d6683129c6",
+    "RationalRoots4-3-After.json": "7cc2868fc6f82442e8d368d594d3ca16917b513a596fb39772204368f0266ff2",
+    "RationalRoots4-3-Before.log": "56d2bdfe38b9c5d560c411a733a2acda5f56f8fd73b0048f2695ed29e3c91e3d",
+    "RationalRoots4-3-Before.json": "cfd95a6deecc8d4df97f1d2569ce2b6f7a673fe57452085e65967c57fed08371",
+    "RationalRoots8-3-After.log": "93a3cc2b83488b8ab3c49717ccdc4f7d7afaa1ddacc40809d7cb7c4b2b35e36d",
+    "RationalRoots8-3-After.json": "6a0020e775ae25e8d4fb0b59f1d396b191d5f5e4577200dbd6d49f4a6f681ac2",
+    "RationalRoots8-3-Before.log": "77aaed469fbdf7f938f816bed1b530a6891779cc57d589a4dd350aebecdef552",
+    "RationalRoots8-3-Before.json": "2f68466308d7d9fef4fcf83af40ca0be8a7eae9f05e9bbe07ebad1039d501914",
+    "QuadraticRoots1-3-After.log": "4f6082425ce442330d02e53b9ab739d16aa5547e4aafd5814151ec60b03e8ac9",
+    "QuadraticRoots1-3-After.json": "88084ab953bebcf1bf159f7a09643e0105c10de2140a82abdb523fa40250806e",
+    "QuadraticRoots1-3-Before.log": "0c04793c530bda3e04b586c27100b14f0449b1a789cb90690bd963bde5661b16",
+    "QuadraticRoots1-3-Before.json": "8c4005d373bfab43c0edacb424699eae57fa68f465508f94ca321021a14c2746",
+    "QuadraticRoots2-3-After.log": "a709b03ea5ab8bd65cf7ccc59888807042aae4cd1a0513a9fbc90558cc46678d",
+    "QuadraticRoots2-3-After.json": "38ce928f1ae876dfda7ee27261c320911f993e46cb9434cbfce06e8459f28040",
+    "QuadraticRoots2-3-Before.log": "1e3acd610c4fd2fc06f9f5f573a86e8585545234c4d3dba667ba0ee2ff6d1c89",
+    "QuadraticRoots2-3-Before.json": "6fe1b11a001ee72a7a7d92149d3beb9adf9a50e7845a9877c28bd09d2362de48",
+    "QuadraticRoots4-3-After.log": "ea5ab50a6f67b210ae756d2e02a96280e51ae027455ebcde84f276bb8dc63477",
+    "QuadraticRoots4-3-After.json": "b61bd99f09f58a8b9911555234ee6a6409830b25639435d52186a528bcba7469",
+    "QuadraticRoots4-3-Before.log": "dd0dfe4885fcd20f5abb566f72578210762274358c69816650e50a8bc59d85c1",
+    "QuadraticRoots4-3-Before.json": "0583f493d7f98504642c8b161b59ceca97edaec01b02fddab613e60bdd5cb841"
+  }
+}

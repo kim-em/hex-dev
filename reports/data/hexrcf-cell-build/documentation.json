@@ -1,0 +1,10 @@
+{
+  "source_commit": "e68e6768907c27fbb769f08180c922c0220a9881",
+  "checked_implementation": "74b835299f324478b48709a49e0c95e9ebf2efde",
+  "selected_source_hashes": {
+    "HexRCF/README.md": "5f357f52faf4b39b82d48cdfd9dde7904517ee0f74c33d4234907dac981c164f",
+    "reports/hexrcf-adapter-evidence.md": "70bf14d81baf9ca776551b9c21aa1a6001086a859c5a7d91862998d5f2e8ac13",
+    "reports/hexrcf-cell-build.md": "609e970b7b8ce949ee5cf0263f2626ec630e56fc0c69824f109d3318c7b2145a"
+  },
+  "scope": "Overview/report links and exact native construction versus pending general source/point/history/completeness boundaries. No Lean/Lake/pin changes after the checked implementation."
+}

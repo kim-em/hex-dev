@@ -384,8 +384,8 @@ setup_fixed_benchmark runFirstShortVectorBZRecombinationChecksum where {
   }
 
 /- Fixed bottom-rung Lean/fpLLL comparison for the BZ recombination family.
-The fpLLL target is informational and FFI-call based via fplll-ffi; scheduled
-and release bench runs use
+The fpLLL target is an orientation comparator, FFI-call based via fplll-ffi;
+manual scientific runs use
 `compare runFirstShortVectorBZRecombinationChecksum runFpLLLFirstShortVectorBZRecombinationChecksum`
 to record its ratio. -/
 setup_fixed_benchmark runFpLLLFirstShortVectorBZRecombinationChecksum where {
@@ -841,7 +841,7 @@ setup_benchmark runFirstShortVectorRandomBoundedChecksum n =>
 
 /- Complexity derivation: harsh-cubic inputs have square dimension `n` and
 entry bit-length approximately `3.3 * n`, following the verified-Isabelle
-paper regime named in `phase4.input_families`. The committed fixture is still
+paper regime named by the harsh-cubic input family. The committed fixture is still
 near-orthogonal rather than worst-case LLL; it exercises the quartic row-
 operation surface and repeated logarithmic coefficient-growth factors from the
 exact-integer row operations, while the separate

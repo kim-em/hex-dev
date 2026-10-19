@@ -33,6 +33,27 @@ class NativeDependencyTests(unittest.TestCase):
             'lean_lib HexBasic where\n  precompileModules := true\n  moreLeancArgs := #["-O1"]')
         self.assertTrue(check.lakefile_texts_differ(self.BASE, after))
 
+    def test_shared_parser_unknown_commands_stay_relevant(self):
+        for declaration in ('set_option maxRecDepth 1000', 'abbrev flag := 1000',
+                            '@[default_instance] instance : Nat := 1000'):
+            before = self.BASE + '\n' + declaration + '\nlean_lib Other\n'
+            with self.subTest(declaration=declaration):
+                self.assertTrue(check.lakefile_texts_differ(before, before.replace('1000', '2000')))
+        uncertain = self.BASE + '\nscript s do\n  let c := (\n'
+        self.assertTrue(check.lakefile_texts_differ(self.BASE, uncertain))
+
+    def test_handwritten_target_attribute_stays_relevant(self):
+        before = self.BASE + '\n@[extern_lib] def configured := "-O3"\n'
+        self.assertTrue(check.lakefile_texts_differ(before, before.replace('-O3', '-O0')))
+
+    def test_attribute_with_split_modifier_stays_relevant(self):
+        before = self.BASE + '\nlean_lib Other\n@[extern_lib]\n  private\n  def nativeArchive := "-O3"\n'
+        self.assertTrue(check.lakefile_texts_differ(before, before.replace('-O3', '-O0')))
+
+    def test_inline_attribute_with_split_modifier_stays_relevant(self):
+        before = self.BASE + '\nlean_lib Other\n  @[extern_lib] private\n  def nativeArchive := "-O3"\n'
+        self.assertTrue(check.lakefile_texts_differ(before, before.replace('-O3', '-O0')))
+
     def test_quoted_flag_does_not_establish_native_loading(self):
         before = self.BASE.replace('  precompileModules := true',
             '  moreLeancArgs := #["\n  precompileModules := true\n"]')
@@ -43,21 +64,6 @@ class NativeDependencyTests(unittest.TestCase):
         after = self.BASE.replace("lean_lib HexBasic where",
             "lean_lib HexBasic where\n  precompileModules := (true && true)")
         self.assertTrue(check.lakefile_texts_differ(self.BASE, after))
-
-    def test_independent_hasse_requirement(self):
-        requirement = ('\nrequire AINTLIB from git\n'
-                       '  "https://github.com/CBirkbeck/AINTLIB.git" @\n'
-                       '    "' + 'a' * 40 + '"\n')
-        with patch.object(check, "graph_import_prefixes",
-                          return_value={"HexGraphIso", "HexBasic"}):
-            self.assertFalse(check.lakefile_texts_differ(self.BASE,
-                self.BASE + requirement))
-            self.assertTrue(check.lakefile_texts_differ(self.BASE,
-                self.BASE + requirement.replace("CBirkbeck", "other")))
-        with patch.object(check, "graph_import_prefixes",
-                          return_value={"HexGraphIso", "HasseWeil"}):
-            self.assertTrue(check.lakefile_texts_differ(self.BASE,
-                self.BASE + requirement))
 
     def test_exact_independent_thom_pin(self):
         requirement = ('\nrequire TauCeti from git\n'

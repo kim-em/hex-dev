@@ -1,0 +1,80 @@
+{
+  "source_commit": "3ef41951ce493d279fddd0e1dff867ac466d549c",
+  "checks": [
+    {
+      "name": "real-verify",
+      "argv": [
+        ".lake/build/bin/hexrealalgebraic_bench",
+        "verify"
+      ],
+      "exit_code": 0,
+      "seconds": 35.36565942800007,
+      "log": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/rebased-real-verify.log",
+      "sha256": "ab3969c54072b105e7114a251b5c83161f65d27be1f005787648da7d12f47683"
+    },
+    {
+      "name": "numberfield-verify",
+      "argv": [
+        ".lake/build/bin/hexnumberfield_bench",
+        "verify"
+      ],
+      "exit_code": 0,
+      "seconds": 13.184338385999581,
+      "log": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/rebased-numberfield-verify.log",
+      "sha256": "2e9dbf84c8e83f58bfab5c2a7292edf41560fbdc70269a7b03ed92d71c1f4812"
+    },
+    {
+      "name": "sturm-verify",
+      "argv": [
+        ".lake/build/bin/hexsturm_bench",
+        "verify"
+      ],
+      "exit_code": 0,
+      "seconds": 1.0059711970006902,
+      "log": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/rebased-sturm-verify.log",
+      "sha256": "92530315f6790d69149249fb9b077cc65c54ba6a1f30ebd456d68b4748e59789"
+    },
+    {
+      "name": "real-emit",
+      "argv": [
+        ".lake/build/bin/hexrealalgebraic_emit_fixtures"
+      ],
+      "exit_code": 0,
+      "seconds": 238.57073049300016,
+      "log": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/rebased-real-fixtures.jsonl",
+      "sha256": "e4dfe3290c71f5497c18350712ab962ce2aa4889545c9a6117a5393c6ce63e78"
+    },
+    {
+      "name": "real-oracle",
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-oracles/bin/python",
+        "scripts/oracle/real_algebraic_flint.py",
+        "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/rebased-real-fixtures.jsonl",
+        "--require-oracles"
+      ],
+      "exit_code": 1,
+      "seconds": 0.09766798300006485,
+      "log": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/rebased-real-oracle.log",
+      "sha256": "1bb08c0fe3c5b30c63602ff0df0433e875b42a86297ff387094c1ed0c45a5063"
+    }
+  ],
+  "environment": {
+    "HEX_FLINT_BENCH_PYTHON": "/home/kim/.local/state/hex/issue-10577-oracles/bin/python",
+    "HEX_PARI_BENCH_PYTHON": "/home/kim/.local/state/hex/issue-10577-oracles/bin/python",
+    "PYTHONPATH": "/nix/store/dmhf4vk1p6qpbpb8fkgh9jadir4i3fm9-python3.14-cypari2-2.2.4/lib/python3.14/site-packages:/nix/store/pp6zajyqb7c4sxfaql7r5klb00sshis1-python3.14-cysignals-1.12.6/lib/python3.14/site-packages",
+    "LD_LIBRARY_PATH": "/nix/store/chqq8mpmpyfi9kgsngya71akv5xicn03-gcc-15.2.0-lib/lib"
+  },
+  "scope": "Fresh local verification after rebase onto main77aadd66f6. The initial oracle invocation retained below merged stderr into JSONL and fails parsing; rebased-real-conformance-corrected.json records byte-exact stdout and 83 required exact cases with zero skips. No source or oracle weakening.",
+  "builds": [
+    {
+      "targets": 15821,
+      "path": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/rebased-full-build.log",
+      "sha256": "c99005f97fd0f80ec837cfc153fb05614c5954046789751fe0c6391db4c7b084"
+    },
+    {
+      "targets": 885,
+      "path": "/home/kim/.local/state/hex/issue-10577-proposals/isolation-reuse/rebased-bench-conformance-build.log",
+      "sha256": "7f44c3bb1123c62352f2d6e8004d4cbb9ecda03bbbd94397a6a9fa07330ea86d"
+    }
+  ]
+}

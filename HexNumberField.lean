@@ -20,6 +20,8 @@ public import HexNumberField.CommonField
 public import HexNumberField.Order
 public import HexNumberField.Radical
 
+public import HexNumberField.RealSign
+
 public section
 
 /-!

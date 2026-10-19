@@ -1,0 +1,195 @@
+[New LWP 627836]
+[New LWP 627835]
+[New LWP 627834]
+[New LWP 627833]
+[New LWP 627832]
+[New LWP 627831]
+[New LWP 627830]
+[New LWP 627829]
+[New LWP 627828]
+[New LWP 627827]
+[New LWP 627452]
+[New LWP 627436]
+[New LWP 627434]
+[New LWP 627433]
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/nix/store/lm3pknxi0ipypy3lxh1wmm8wvvavdwrn-glibc-2.42-84/lib/libthread_db.so.1".
+0x00007ece91aa5a02 in __syscall_cancel_arch () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+
+Thread 15 (Thread 0x7ece9b9e8840 (LWP 627433) "iou-sqp-627431"):
+#0  0x0000000000000000 in ?? ()
+Backtrace stopped: Cannot access memory at address 0x0
+
+Thread 14 (Thread 0x7ece917bf6c0 (LWP 627434) "lean"):
+#0  0x00007ece91aa5a02 in __syscall_cancel_arch () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#1  0x00007ece91a9910c in __internal_syscall_cancel () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#2  0x00007ece91a99184 in __syscall_cancel () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#3  0x00007ece91b242f5 in epoll_pwait () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#4  0x00007ece9b53822d in uv.io_poll () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#5  0x00007ece9b52531b in uv_run () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#6  0x00007ece9b45598d in lean::event_loop_run_loop(lean::event_loop_t*) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#7  0x00007ece9b42177a in lean::lthread::imp::_main(void*) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#8  0x00007ece91a9ce53 in start_thread () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#9  0x00007ece91b2407c in __clone3 () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+
+Thread 13 (Thread 0x7ece4bfff6c0 (LWP 627436) "lean"):
+#0  0x00007ece91aa5a02 in __syscall_cancel_arch () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#1  0x00007ece91a9910c in __internal_syscall_cancel () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#2  0x00007ece91a9988c in __futex_abstimed_wait_common () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#3  0x00007ece91a9c2ee in pthread_cond_wait@@GLIBC_2.3.2 () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#4  0x00007ece9b485abf in std::__1::condition_variable::wait(std::__1::unique_lock<std::__1::mutex>&) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#5  0x00007ece9b42de4b in lean::task_manager::wait_for(lean_task*) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#6  0x00007ece9b424875 in lean_task_get () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#7  0x00007ece95bad852 in l_Lean_Language_SnapshotTask_get___redArg () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#8  0x00007ece95bb31f7 in l___private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00Lean_Language_SnapshotTree_foldM___at___00Lean_Language_SnapshotTree_runAndReport_spec__0_spec__0 () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#9  0x00007ece95bb3015 in l_Lean_Language_SnapshotTree_foldM___at___00Lean_Language_SnapshotTree_runAndReport_spec__0 () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#10 0x00007ece95bb320c in l___private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00Lean_Language_SnapshotTree_foldM___at___00Lean_Language_SnapshotTree_runAndReport_spec__0_spec__0 () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#11 0x00007ece95bb3015 in l_Lean_Language_SnapshotTree_foldM___at___00Lean_Language_SnapshotTree_runAndReport_spec__0 () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#12 0x00007ece95bb320c in l___private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00Lean_Language_SnapshotTree_foldM___at___00Lean_Language_SnapshotTree_runAndReport_spec__0_spec__0 () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#13 0x00007ece95bb3015 in l_Lean_Language_SnapshotTree_foldM___at___00Lean_Language_SnapshotTree_runAndReport_spec__0 () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#14 0x00007ece95bb320c in l___private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00Lean_Language_SnapshotTree_foldM___at___00Lean_Language_SnapshotTree_runAndReport_spec__0_spec__0 () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#15 0x00007ece95bb3015 in l_Lean_Language_SnapshotTree_foldM___at___00Lean_Language_SnapshotTree_runAndReport_spec__0 () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#16 0x00007ece95bb320c in l___private_Init_Data_Array_Basic_0__Array_foldlMUnsafe_fold___at___00Lean_Language_SnapshotTree_foldM___at___00Lean_Language_SnapshotTree_runAndReport_spec__0_spec__0 () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#17 0x00007ece95bb3015 in l_Lean_Language_SnapshotTree_foldM___at___00Lean_Language_SnapshotTree_runAndReport_spec__0 () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+
+Thread 12 (Thread 0x7ece03fff6c0 (LWP 627452) "lean"):
+#0  0x00007ece91aa5a02 in __syscall_cancel_arch () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#1  0x00007ece91a9910c in __internal_syscall_cancel () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#2  0x00007ece91a9988c in __futex_abstimed_wait_common () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#3  0x00007ece91a9c2ee in pthread_cond_wait@@GLIBC_2.3.2 () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#4  0x00007ece9b485abf in std::__1::condition_variable::wait(std::__1::unique_lock<std::__1::mutex>&) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#5  0x00007ece9b42f5e3 in lean::task_manager::spawn_worker()::{lambda()#1}::operator()() const () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#6  0x00007ece9b42177a in lean::lthread::imp::_main(void*) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#7  0x00007ece91a9ce53 in start_thread () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#8  0x00007ece91b2407c in __clone3 () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+
+Thread 11 (Thread 0x7ecdbbfff6c0 (LWP 627827) "lean"):
+#0  0x00007ece9b423ae9 in lean_dec_ref_cold () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#1  0x00007ece9b3cf59b in std::__1::__hash_table<std::__1::__hash_value_type<lean::expr, lean::expr>, std::__1::__unordered_map_hasher<lean::expr, std::__1::pair<lean::expr const, lean::expr>, lean::expr_hash, std::__1::equal_to<lean::expr> >, std::__1::__unordered_map_equal<lean::expr, std::__1::pair<lean::expr const, lean::expr>, std::__1::equal_to<lean::expr>, lean::expr_hash>, mi_stl_allocator<std::__1::pair<lean::expr const, lean::expr> > >::__deallocate_node[abi:nqe230100](std::__1::__hash_node<std::__1::__hash_value_type<lean::expr, lean::expr>, void*>*) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#2  0x00007ece9b3cf03b in lean::type_checker::state::~state() () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#3  0x00007ece9b3cc19d in lean::type_checker::~type_checker() () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#4  0x00007ece9b3b861f in lean::environment::add_theorem(lean::declaration const&, bool) const () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#5  0x00007ece9b3b95e3 in lean::environment::add(lean::declaration const&, bool) const () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#6  0x00007ece9b3b9982 in std::__1::__function::__func<lean_add_decl::$_0, lean::environment ()>::operator()[abi:nqe230100]() () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#7  0x00007ece9b3ba3db in lean_object* lean::catch_kernel_exceptions<lean::environment>(std::__1::function<lean::environment ()> const&) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#8  0x00007ece9b3b96d8 in lean_add_decl () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#9  0x00007ece95ec3e83 in l_Lean_Kernel_Environment_addDecl___boxed () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#10 0x00007ece9b40e7c3 in lean::ir::interpreter::call(lean::name const&, lean::array_ref<lean::object_ref> const&) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#11 0x00007ece9b40ccd0 in lean::ir::interpreter::eval_body(lean::object_ref const&) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#12 0x00007ece9b40e976 in lean::ir::interpreter::call(lean::name const&, lean::array_ref<lean::object_ref> const&) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#13 0x00007ece9b40ccd0 in lean::ir::interpreter::eval_body(lean::object_ref const&) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#14 0x00007ece9b40e976 in lean::ir::interpreter::call(lean::name const&, lean::array_ref<lean::object_ref> const&) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#15 0x00007ece9b40ccd0 in lean::ir::interpreter::eval_body(lean::object_ref const&) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#16 0x00007ece9b40e976 in lean::ir::interpreter::call(lean::name const&, lean::array_ref<lean::object_ref> const&) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#17 0x00007ece9b40ccd0 in lean::ir::interpreter::eval_body(lean::object_ref const&) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+
+Thread 10 (Thread 0x7ecd73fff6c0 (LWP 627828) "lean"):
+#0  0x00007ece91aa5a02 in __syscall_cancel_arch () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#1  0x00007ece91a9910c in __internal_syscall_cancel () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#2  0x00007ece91a9988c in __futex_abstimed_wait_common () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#3  0x00007ece91a9c2ee in pthread_cond_wait@@GLIBC_2.3.2 () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#4  0x00007ece9b485abf in std::__1::condition_variable::wait(std::__1::unique_lock<std::__1::mutex>&) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#5  0x00007ece9b42f5e3 in lean::task_manager::spawn_worker()::{lambda()#1}::operator()() const () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#6  0x00007ece9b42177a in lean::lthread::imp::_main(void*) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#7  0x00007ece91a9ce53 in start_thread () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#8  0x00007ece91b2407c in __clone3 () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+
+Thread 9 (Thread 0x7ecd2bfff6c0 (LWP 627829) "lean"):
+#0  0x00007ece91aa5a02 in __syscall_cancel_arch () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#1  0x00007ece91a9910c in __internal_syscall_cancel () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#2  0x00007ece91a9988c in __futex_abstimed_wait_common () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#3  0x00007ece91a9c2ee in pthread_cond_wait@@GLIBC_2.3.2 () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#4  0x00007ece9b485abf in std::__1::condition_variable::wait(std::__1::unique_lock<std::__1::mutex>&) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#5  0x00007ece9b42f5e3 in lean::task_manager::spawn_worker()::{lambda()#1}::operator()() const () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#6  0x00007ece9b42177a in lean::lthread::imp::_main(void*) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#7  0x00007ece91a9ce53 in start_thread () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#8  0x00007ece91b2407c in __clone3 () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+
+Thread 8 (Thread 0x7ecce3fff6c0 (LWP 627830) "lean"):
+#0  0x00007ece91aa5a02 in __syscall_cancel_arch () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#1  0x00007ece91a9910c in __internal_syscall_cancel () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#2  0x00007ece91a9988c in __futex_abstimed_wait_common () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#3  0x00007ece91a9c2ee in pthread_cond_wait@@GLIBC_2.3.2 () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#4  0x00007ece9b485abf in std::__1::condition_variable::wait(std::__1::unique_lock<std::__1::mutex>&) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#5  0x00007ece9b42f5e3 in lean::task_manager::spawn_worker()::{lambda()#1}::operator()() const () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#6  0x00007ece9b42177a in lean::lthread::imp::_main(void*) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#7  0x00007ece91a9ce53 in start_thread () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#8  0x00007ece91b2407c in __clone3 () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+
+Thread 7 (Thread 0x7ecc9bfff6c0 (LWP 627831) "lean"):
+#0  0x00007ece91aa5a02 in __syscall_cancel_arch () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#1  0x00007ece91a9910c in __internal_syscall_cancel () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#2  0x00007ece91a9988c in __futex_abstimed_wait_common () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#3  0x00007ece91a9c2ee in pthread_cond_wait@@GLIBC_2.3.2 () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#4  0x00007ece9b485abf in std::__1::condition_variable::wait(std::__1::unique_lock<std::__1::mutex>&) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#5  0x00007ece9b42f5e3 in lean::task_manager::spawn_worker()::{lambda()#1}::operator()() const () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#6  0x00007ece9b42177a in lean::lthread::imp::_main(void*) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#7  0x00007ece91a9ce53 in start_thread () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#8  0x00007ece91b2407c in __clone3 () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+
+Thread 6 (Thread 0x7ecc53fff6c0 (LWP 627832) "lean"):
+#0  0x00007ece91aa5a02 in __syscall_cancel_arch () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#1  0x00007ece91a9910c in __internal_syscall_cancel () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#2  0x00007ece91a9988c in __futex_abstimed_wait_common () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#3  0x00007ece91a9c2ee in pthread_cond_wait@@GLIBC_2.3.2 () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#4  0x00007ece9b485abf in std::__1::condition_variable::wait(std::__1::unique_lock<std::__1::mutex>&) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#5  0x00007ece9b42f5e3 in lean::task_manager::spawn_worker()::{lambda()#1}::operator()() const () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#6  0x00007ece9b42177a in lean::lthread::imp::_main(void*) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#7  0x00007ece91a9ce53 in start_thread () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#8  0x00007ece91b2407c in __clone3 () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+
+Thread 5 (Thread 0x7ecc13ffe6c0 (LWP 627833) "lean"):
+#0  0x00007ece91aa5a02 in __syscall_cancel_arch () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#1  0x00007ece91a9910c in __internal_syscall_cancel () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#2  0x00007ece91a9988c in __futex_abstimed_wait_common () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#3  0x00007ece91a9c2ee in pthread_cond_wait@@GLIBC_2.3.2 () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#4  0x00007ece9b485abf in std::__1::condition_variable::wait(std::__1::unique_lock<std::__1::mutex>&) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#5  0x00007ece9b42f5e3 in lean::task_manager::spawn_worker()::{lambda()#1}::operator()() const () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#6  0x00007ece9b42177a in lean::lthread::imp::_main(void*) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#7  0x00007ece91a9ce53 in start_thread () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#8  0x00007ece91b2407c in __clone3 () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+
+Thread 4 (Thread 0x7ecba4eff6c0 (LWP 627834) "lean"):
+#0  0x00007ece91aa5a02 in __syscall_cancel_arch () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#1  0x00007ece91a9910c in __internal_syscall_cancel () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#2  0x00007ece91a9988c in __futex_abstimed_wait_common () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#3  0x00007ece91a9c2ee in pthread_cond_wait@@GLIBC_2.3.2 () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#4  0x00007ece9b485abf in std::__1::condition_variable::wait(std::__1::unique_lock<std::__1::mutex>&) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#5  0x00007ece9b42f5e3 in lean::task_manager::spawn_worker()::{lambda()#1}::operator()() const () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#6  0x00007ece9b42177a in lean::lthread::imp::_main(void*) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#7  0x00007ece91a9ce53 in start_thread () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#8  0x00007ece91b2407c in __clone3 () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+
+Thread 3 (Thread 0x7ecb64efe6c0 (LWP 627835) "lean"):
+#0  0x00007ece91aa5a02 in __syscall_cancel_arch () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#1  0x00007ece91a9910c in __internal_syscall_cancel () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#2  0x00007ece91a9988c in __futex_abstimed_wait_common () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#3  0x00007ece91a9c2ee in pthread_cond_wait@@GLIBC_2.3.2 () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#4  0x00007ece9b485abf in std::__1::condition_variable::wait(std::__1::unique_lock<std::__1::mutex>&) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#5  0x00007ece9b42f5e3 in lean::task_manager::spawn_worker()::{lambda()#1}::operator()() const () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#6  0x00007ece9b42177a in lean::lthread::imp::_main(void*) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#7  0x00007ece91a9ce53 in start_thread () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#8  0x00007ece91b2407c in __clone3 () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+
+Thread 2 (Thread 0x7ecb24efd6c0 (LWP 627836) "lean"):
+#0  0x00007ece91aa5a02 in __syscall_cancel_arch () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#1  0x00007ece91a9910c in __internal_syscall_cancel () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#2  0x00007ece91a9988c in __futex_abstimed_wait_common () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#3  0x00007ece91a9c2ee in pthread_cond_wait@@GLIBC_2.3.2 () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#4  0x00007ece9b485abf in std::__1::condition_variable::wait(std::__1::unique_lock<std::__1::mutex>&) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#5  0x00007ece9b42f5e3 in lean::task_manager::spawn_worker()::{lambda()#1}::operator()() const () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#6  0x00007ece9b42177a in lean::lthread::imp::_main(void*) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#7  0x00007ece91a9ce53 in start_thread () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#8  0x00007ece91b2407c in __clone3 () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+
+Thread 1 (Thread 0x7ece9b9e8840 (LWP 627431) "lean"):
+#0  0x00007ece91aa5a02 in __syscall_cancel_arch () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#1  0x00007ece91a9910c in __internal_syscall_cancel () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#2  0x00007ece91a9988c in __futex_abstimed_wait_common () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#3  0x00007ece91a9ec6c in __pthread_clockjoin_ex () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#4  0x00007ece9b4209c1 in lean::run_with_thread_stack(std::__1::function<void ()> const&) () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#5  0x00007ece9529f069 in lean_main () from /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/bin/../lib/lean/libleanshared.so
+#6  0x00007ece91a2b285 in __libc_start_call_main () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#7  0x00007ece91a2b338 in __libc_start_main_impl () from /nix/store/qqiqd3ah10x8hzsif4j1y4xc1miw23nx-glibc-2.42-67/lib/libc.so.6
+#8  0x00006321a00a88da in _start () at ../sysdeps/x86_64/start.S:120
+[Inferior 1 (process 627431) detached]

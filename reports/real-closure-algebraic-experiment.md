@@ -214,15 +214,15 @@ statements, proof dependencies, and conformance/performance acceptance criteria:
 
 | Computational SPEC / companion SPEC | Decisions to write or revise |
 |---|---|
-| [hex-sturm](../SPEC/Libraries/hex-sturm.md) / [hex-sturm-mathlib](../SPEC/Libraries/hex-sturm-mathlib.md) | Operation-only kernels, sign and endpoint interfaces, Tarski replay and trivial-tower agreement; identify the abstract Sturm–Tarski statements consumed from Tau Ceti and the Hex correspondence proofs. |
-| [hex-sign-det](../SPEC/Libraries/hex-sign-det.md) / [hex-sign-det-mathlib](../SPEC/Libraries/hex-sign-det-mathlib.md) | Thom identity/order, BKR certificates including support completeness, and the sample-point interface; state correctness and imported abstract-field obligations. |
-| [hex-ordered-fn](../SPEC/Libraries/hex-ordered-fn.md) / [hex-ordered-fn-mathlib](../SPEC/Libraries/hex-ordered-fn-mathlib.md) | Infinitesimal arithmetic and order; caller-supplied approximation with separate containment and requested-width proofs, relative-transcendence termination and its computational proof interface. Keep hex-interval and bundled pi/e providers out of scope. |
-| [hex-real-closure](../SPEC/Libraries/hex-real-closure.md) / [hex-real-closure-mathlib](../SPEC/Libraries/hex-real-closure-mathlib.md) | Storage policy, validated descriptors, recursive contexts, splitting/transport, total isolation and extension order; selected-root arithmetic/sign semantics, proof slices, and exploration/tactic integration boundaries. Preserve the existing real-algebraic fast path and its one-way dependency relationship. |
+| [hex-sturm](../SPEC/Libraries/hex-sturm.md) / [hex-sturm-theory](../SPEC/Libraries/hex-sturm-theory.md) | Operation-only kernels, sign and endpoint interfaces, Tarski replay and trivial-tower agreement; identify the abstract Sturm–Tarski statements consumed from Tau Ceti and the Hex correspondence proofs. |
+| [hex-sign-det](../SPEC/Libraries/hex-sign-det.md) / [hex-sign-det-theory](../SPEC/Libraries/hex-sign-det-theory.md) | Thom identity/order, BKR certificates including support completeness, and the sample-point interface; state correctness and imported abstract-field obligations. |
+| [hex-ordered-fn](../SPEC/Libraries/hex-ordered-fn.md) / [hex-ordered-fn-theory](../SPEC/Libraries/hex-ordered-fn-theory.md) | Infinitesimal arithmetic and order; caller-supplied approximation with separate containment and requested-width proofs, relative-transcendence termination and its computational proof interface. Keep hex-interval and bundled pi/e providers out of scope. |
+| [hex-real-closure](../SPEC/Libraries/hex-real-closure.md) / [hex-real-closure-theory](../SPEC/Libraries/hex-real-closure-theory.md) | Storage policy, validated descriptors, recursive contexts, splitting/transport, total isolation and extension order; selected-root arithmetic/sign semantics, proof slices, and exploration/tactic integration boundaries. Preserve the existing real-algebraic fast path and its one-way dependency relationship. |
 
 Specify the first rational-algebraic slice explicitly: its owning library,
 reuse of existing real-algebraic functionality, general sign interface,
 `valid d = true` hypotheses, and interpretation in ℝ. Name the available
-`HexRealRootsMathlib.sturmCount_eq_card_roots` theorem, its positive-degree and
+`HexRealRootsTheory.sturmCount_eq_card_roots` theorem, its positive-degree and
 rational-squarefreeness assumptions, and the required primitive-part/divisor
 bridges. This is theorem and API specification; proving those statements is
 stage C. Likewise, specifying root-preserving transport is distinct from

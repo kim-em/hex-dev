@@ -1,0 +1,343 @@
+{
+  "source_commit": "c5efa57cbb00e06114ff05ee819bce4591c56c40",
+  "counts": {
+    "cases": 13,
+    "scientific_points": 208,
+    "comparison_arms": 8,
+    "paired_parameters": 16
+  },
+  "source_and_executable_unchanged": true,
+  "all_compiled_rungs_and_trials_retained": true,
+  "cases": [
+    {
+      "case": "Hex.SturmFrontendBench.runSparseDomain",
+      "mode": 1,
+      "model": "n",
+      "verdict": "consistent_with_declared_complexity",
+      "residual_slope": 0.013762,
+      "points": 16,
+      "final_median_ms": 263.623387
+    },
+    {
+      "case": "Hex.SturmFrontendBench.runSparseQuery",
+      "mode": 1,
+      "model": "n",
+      "verdict": "consistent_with_declared_complexity",
+      "residual_slope": 0.000898,
+      "points": 16,
+      "final_median_ms": 565.90126
+    },
+    {
+      "case": "Hex.SturmFrontendBench.runSparseInteger",
+      "mode": 1,
+      "model": "n",
+      "verdict": "consistent_with_declared_complexity",
+      "residual_slope": 0.017369,
+      "points": 16,
+      "final_median_ms": 47.71035275
+    },
+    {
+      "case": "Hex.SturmFrontendBench.runSparsePrepared",
+      "mode": 1,
+      "model": "n",
+      "verdict": "consistent_with_declared_complexity",
+      "residual_slope": -0.002854,
+      "points": 16,
+      "final_median_ms": 305.9098975
+    },
+    {
+      "case": "Hex.SturmFrontendBench.runSparseCount",
+      "mode": 1,
+      "model": "n",
+      "verdict": "consistent_with_declared_complexity",
+      "residual_slope": 0.008508,
+      "points": 16,
+      "final_median_ms": 567.332032
+    },
+    {
+      "case": "Hex.SturmFrontendBench.runSparsePreparedCount",
+      "mode": 1,
+      "model": "n",
+      "verdict": "consistent_with_declared_complexity",
+      "residual_slope": -0.000744,
+      "points": 16,
+      "final_median_ms": 98.2365595
+    },
+    {
+      "case": "Hex.SturmFrontendBench.runSparseCertificate",
+      "mode": 1,
+      "model": "n",
+      "verdict": "consistent_with_declared_complexity",
+      "residual_slope": 0.008263,
+      "points": 16,
+      "final_median_ms": 567.284803
+    },
+    {
+      "case": "Hex.SturmFrontendBench.runSparsePreparedCertificate",
+      "mode": 1,
+      "model": "n",
+      "verdict": "consistent_with_declared_complexity",
+      "residual_slope": 0.003988,
+      "points": 16,
+      "final_median_ms": 312.209296
+    },
+    {
+      "case": "Hex.SturmFrontendBench.runSparseCountCertificate",
+      "mode": 1,
+      "model": "n",
+      "verdict": "consistent_with_declared_complexity",
+      "residual_slope": 0.011565,
+      "points": 16,
+      "final_median_ms": 103.5553695
+    },
+    {
+      "case": "Hex.SturmFrontendBench.runSparseReplay",
+      "mode": 1,
+      "model": "n",
+      "verdict": "consistent_with_declared_complexity",
+      "residual_slope": 0.00269,
+      "points": 16,
+      "final_median_ms": 604.8025195
+    },
+    {
+      "case": "Hex.SturmFrontendBench.runSparseCachedReplay",
+      "mode": 1,
+      "model": "n",
+      "verdict": "consistent_with_declared_complexity",
+      "residual_slope": 0.007708,
+      "points": 16,
+      "final_median_ms": 333.080211
+    },
+    {
+      "case": "Hex.SturmFrontendBench.runSparseClear",
+      "mode": 1,
+      "model": "n",
+      "verdict": "consistent_with_declared_complexity",
+      "residual_slope": -0.011337,
+      "points": 16,
+      "final_median_ms": 290.791612
+    },
+    {
+      "case": "Hex.SturmFrontendBench.runSparseEmbed",
+      "mode": 1,
+      "model": "n",
+      "verdict": "consistent_with_declared_complexity",
+      "residual_slope": 0.019652,
+      "points": 16,
+      "final_median_ms": 10.88234
+    }
+  ],
+  "paired_results": [
+    {
+      "block": 0,
+      "parameter": 16384,
+      "order": [
+        "Query",
+        "Integer"
+      ],
+      "result_hash": "0x8238a831bee59ad",
+      "query_nanos": 70722608,
+      "integer_nanos": 5712743.5625,
+      "query_over_integer": 12.379797417171392
+    },
+    {
+      "block": 0,
+      "parameter": 32768,
+      "order": [
+        "Query",
+        "Integer"
+      ],
+      "result_hash": "0x8238a831bee59ad",
+      "query_nanos": 140496912,
+      "integer_nanos": 11649522.875,
+      "query_over_integer": 12.060314701944392
+    },
+    {
+      "block": 0,
+      "parameter": 65536,
+      "order": [
+        "Query",
+        "Integer"
+      ],
+      "result_hash": "0x8238a831bee59ad",
+      "query_nanos": 283253894,
+      "integer_nanos": 23979482,
+      "query_over_integer": 11.812344153222325
+    },
+    {
+      "block": 0,
+      "parameter": 131072,
+      "order": [
+        "Query",
+        "Integer"
+      ],
+      "result_hash": "0x8238a831bee59ad",
+      "query_nanos": 574312778,
+      "integer_nanos": 49007328,
+      "query_over_integer": 11.718916362875364
+    },
+    {
+      "block": 1,
+      "parameter": 16384,
+      "order": [
+        "Integer",
+        "Query"
+      ],
+      "result_hash": "0x8238a831bee59ad",
+      "query_nanos": 69462731,
+      "integer_nanos": 5971623.5625,
+      "query_over_integer": 11.632134924948227
+    },
+    {
+      "block": 1,
+      "parameter": 32768,
+      "order": [
+        "Integer",
+        "Query"
+      ],
+      "result_hash": "0x8238a831bee59ad",
+      "query_nanos": 140089618,
+      "integer_nanos": 11672348,
+      "query_over_integer": 12.00183699115208
+    },
+    {
+      "block": 1,
+      "parameter": 65536,
+      "order": [
+        "Integer",
+        "Query"
+      ],
+      "result_hash": "0x8238a831bee59ad",
+      "query_nanos": 278635228,
+      "integer_nanos": 23492174.75,
+      "query_over_integer": 11.860767722239084
+    },
+    {
+      "block": 1,
+      "parameter": 131072,
+      "order": [
+        "Integer",
+        "Query"
+      ],
+      "result_hash": "0x8238a831bee59ad",
+      "query_nanos": 562608628,
+      "integer_nanos": 47390016,
+      "query_over_integer": 11.871880946400188
+    },
+    {
+      "block": 2,
+      "parameter": 16384,
+      "order": [
+        "Query",
+        "Integer"
+      ],
+      "result_hash": "0x8238a831bee59ad",
+      "query_nanos": 71036414,
+      "integer_nanos": 5727071.6875,
+      "query_over_integer": 12.403618790916347
+    },
+    {
+      "block": 2,
+      "parameter": 32768,
+      "order": [
+        "Query",
+        "Integer"
+      ],
+      "result_hash": "0x8238a831bee59ad",
+      "query_nanos": 140766221,
+      "integer_nanos": 11558141.25,
+      "query_over_integer": 12.1789670116724
+    },
+    {
+      "block": 2,
+      "parameter": 65536,
+      "order": [
+        "Query",
+        "Integer"
+      ],
+      "result_hash": "0x8238a831bee59ad",
+      "query_nanos": 288676993,
+      "integer_nanos": 23845636.25,
+      "query_over_integer": 12.106072153977438
+    },
+    {
+      "block": 2,
+      "parameter": 131072,
+      "order": [
+        "Query",
+        "Integer"
+      ],
+      "result_hash": "0x8238a831bee59ad",
+      "query_nanos": 563276338,
+      "integer_nanos": 49009030.5,
+      "query_over_integer": 11.493317297921248
+    },
+    {
+      "block": 3,
+      "parameter": 16384,
+      "order": [
+        "Integer",
+        "Query"
+      ],
+      "result_hash": "0x8238a831bee59ad",
+      "query_nanos": 70978939,
+      "integer_nanos": 5735761.375,
+      "query_over_integer": 12.374806823270259
+    },
+    {
+      "block": 3,
+      "parameter": 32768,
+      "order": [
+        "Integer",
+        "Query"
+      ],
+      "result_hash": "0x8238a831bee59ad",
+      "query_nanos": 140292108,
+      "integer_nanos": 11528742.625,
+      "query_over_integer": 12.168899294861308
+    },
+    {
+      "block": 3,
+      "parameter": 65536,
+      "order": [
+        "Integer",
+        "Query"
+      ],
+      "result_hash": "0x8238a831bee59ad",
+      "query_nanos": 282064831,
+      "integer_nanos": 23842954.75,
+      "query_over_integer": 11.83011224730861
+    },
+    {
+      "block": 3,
+      "parameter": 131072,
+      "order": [
+        "Integer",
+        "Query"
+      ],
+      "result_hash": "0x8238a831bee59ad",
+      "query_nanos": 566915332,
+      "integer_nanos": 47885580.5,
+      "query_over_integer": 11.838957073935859
+    }
+  ],
+  "median_ratios": [
+    {
+      "parameter": 16384,
+      "median_paired_query_over_integer": 12.377302120220826
+    },
+    {
+      "parameter": 32768,
+      "median_paired_query_over_integer": 12.11460699840285
+    },
+    {
+      "parameter": 65536,
+      "median_paired_query_over_integer": 11.845439984773847
+    },
+    {
+      "parameter": 131072,
+      "median_paired_query_over_integer": 11.77893671840561
+    }
+  ],
+  "limitations": "Family-specific bounded-word short-chain coverage only. No admission of long-chain/growing-bit/extension/nested-evidence families, portable timing budget, or whole-library Phase-4 completion."
+}

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-import subprocess
+import re
 import sys
 
 from libgraph import (
@@ -73,7 +73,46 @@ def print_scoped_library(libraries, name: str) -> int:
     return 0
 
 
+EXAMPLES_LIB = "HexReleaseExamples"
+CI_WORKFLOW = Path(".github") / "workflows" / "ci.yml"
+
+
+def lean_lib_modules(lakefile_text: str, lib: str) -> list[str]:
+    """Return the backticked module names in `lean_lib <lib>`'s declaration.
+
+    The block runs from its `lean_lib` line to the next top-level line; `--`
+    comments are ignored. Raises ValueError unless exactly one block exists.
+    """
+    lines = lakefile_text.splitlines()
+    starts = [i for i, line in enumerate(lines) if re.fullmatch(rf"lean_lib {lib} where\s*", line)]
+    if len(starts) != 1:
+        raise ValueError(f"expected one `lean_lib {lib}` declaration, found {len(starts)}")
+    body = []
+    for line in lines[starts[0] + 1:]:
+        if line and not line[0].isspace():
+            break
+        body.append(line.split("--", 1)[0])
+    modules = re.findall(r"`([A-Za-z0-9_.]+)", "\n".join(body))
+    if not modules:
+        raise ValueError(f"`lean_lib {lib}` lists no modules")
+    return modules
+
+
+def ci_builds_lib(workflow_text: str, lib: str) -> bool:
+    """Whether the CI workflow's `HEX_LIB_TARGETS` list contains `lib`."""
+    for match in re.finditer(r"HEX_LIB_TARGETS=([^\"\n]*)", workflow_text):
+        if lib in match.group(1).split():
+            return True
+    return False
+
+
 def check_release(root: Path, release: int, libraries) -> int:
+    """Report release readiness without building anything.
+
+    CI builds the integration example through the `HexReleaseExamples` target,
+    so this checks that the example is covered by that target; whether it
+    builds is the CI result for the commit being released.
+    """
     if release not in RELEASE_LIBRARIES:
         print(f"unknown release: {release}", file=sys.stderr)
         return 1
@@ -84,7 +123,14 @@ def check_release(root: Path, release: int, libraries) -> int:
         required_names.update(closure[name])
     required = [name for name in topological_order(libraries) if name in required_names]
     missing = [name for name in required if not libraries[name].is_active or libraries[name].done_through < 7]
+    module = f"Examples.Release{release}"
     example = root / "Examples" / f"Release{release}.lean"
+    try:
+        registered = module in lean_lib_modules((root / "lakefile.lean").read_text(), EXAMPLES_LIB)
+    except ValueError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+    ci_covered = registered and ci_builds_lib((root / CI_WORKFLOW).read_text(), EXAMPLES_LIB)
     print(f"Release {release}")
     print(f"libraries (including transitive dependencies): {len(required)}")
     if missing:
@@ -99,24 +145,9 @@ def check_release(root: Path, release: int, libraries) -> int:
         print("missing libraries: none")
     print(f"integration example: {example.relative_to(root)}")
     print(f"exists: {'yes' if example.exists() else 'no'}")
-    example_builds = False
-    if example.exists():
-        result = subprocess.run(
-            ["lake", "build", f"+Examples.Release{release}"],
-            cwd=root,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            check=False,
-        )
-        example_builds = result.returncode == 0
-        print(f"builds: {'yes' if example_builds else 'no'}")
-        if result.returncode != 0:
-            print(result.stdout.rstrip())
-    else:
-        print("builds: no")
-    ready = not missing and example_builds
-    print(f"ready: {'yes' if ready else 'no'}")
+    print(f"CI-covered ({EXAMPLES_LIB} in {CI_WORKFLOW}): {'yes' if ci_covered else 'no'}")
+    ready = not missing and example.exists() and ci_covered
+    print(f"ready: {'yes, subject to green CI on the release commit' if ready else 'no'}")
     return 0
 
 

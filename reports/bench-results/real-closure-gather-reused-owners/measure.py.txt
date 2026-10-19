@@ -1,0 +1,38 @@
+import hashlib, json, os, subprocess, sys, time
+from pathlib import Path
+root=Path('/home/kim/worktrees/hex-dev/hex-dev-issue-10378-root-reuse')
+baseline=Path('/home/kim/worktrees/hex-dev/hex-dev-issue-10378-gather-baseline')
+sys.path.insert(0,str(root/'scripts/bench'))
+from cpu_lease import cpu_lease
+cpu,lease=cpu_lease()
+output=root/'reports/bench-results/real-closure-gather-reused-owners'
+output.mkdir(exist_ok=True)
+if (output/'results.json').exists():raise RuntimeError('completed samples already exist; choose a new output directory')
+metadata={'cpu':cpu,'affinity':sorted(os.sched_getaffinity(0)),'load_before':os.getloadavg(),'schedule':'two trial-major adjacent AB/BA arms; degrees2,4; owners2,4,8,16,32,64; all owners select the positive root of X^d-2 with distinct upper bounds3+i; repeats3; retain every completed sample','arms':{}}
+for arm,checkout in [('baseline',baseline),('cached',root)]:
+    binary=checkout/'.lake/build/bin/hexrealclosure_bench'
+    metadata['arms'][arm]={'head':subprocess.check_output(['git','rev-parse','HEAD'],cwd=checkout,text=True).strip(),'dirty':subprocess.check_output(['git','status','--short'],cwd=checkout,text=True),'executable_sha256':hashlib.sha256(binary.read_bytes()).hexdigest()}
+    for source_name in ['bench/HexRealClosure/Bench.lean','HexRealClosure/TowerCache.lean','HexRealClosure/TowerReuse.lean','HexRealClosure/LiveContext.lean']:
+        source=checkout/source_name
+        (output/(arm+'-'+Path(source_name).name+'.txt')).write_text(source.read_text() if source.exists() else 'ABSENT in this baseline\n')
+(output/'measure.py.txt').write_text(Path(__file__).read_text())
+(output/'metadata.json').write_text(json.dumps(metadata,indent=2)+'\n')
+results=[]
+for trial in range(2):
+    for degree,counts in [(2,[2,4,8,16,32,64]),(4,[2,4,8,16,32,64])]:
+        for count in counts:
+            for arm in (['baseline','cached'] if trial%2==0 else ['cached','baseline']):
+                checkout=baseline if arm=='baseline' else root
+                label=f'trial-{trial}-degree-{degree}-owners-{count}-{arm}'
+                cmd=['taskset','-c',str(cpu),str(checkout/'.lake/build/bin/hexrealclosure_bench'),'gather-reuse-timing',str(degree),str(count),'3']
+                print('START',label,flush=True)
+                started=time.monotonic()
+                completed=subprocess.run(cmd,cwd=checkout,text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+                record={'trial':trial,'degree':degree,'owners':count,'arm':arm,'command':cmd,'wall_seconds':time.monotonic()-started,'load_after':os.getloadavg(),'returncode':completed.returncode,'output':completed.stdout}
+                (output/(label+'.log')).write_text(completed.stdout)
+                (output/(label+'.json')).write_text(json.dumps(record,indent=2)+'\n')
+                results.append(record)
+                (output/'results.json').write_text(json.dumps(results,indent=2)+'\n')
+                print('DONE',label,completed.returncode,completed.stdout.strip(),flush=True)
+                if completed.returncode:raise SystemExit(completed.returncode)
+lease.close()

@@ -153,10 +153,10 @@ The computational code decides only the rank test and does not evaluate a
 determinant. There is no fuel, search limit, or resource-failure return.
 This API exposes singularity through its completeness theorem. A separate
 witness-producing inverse operation is outside this algorithm extension's
-scope. The [inverse tactic contract](../../HexRowReduceMathlib/SPEC/hex-row-reduce-mathlib.md#the-inverse-tactic)
+scope. The [inverse tactic contract](../../HexRowReduceTheory/SPEC/hex-row-reduce-theory.md#the-inverse-tactic)
 additionally requests a certificate-producer wrapper here: retain this RREF
 and extract a nonzero nullspace column on singular input, without changing
-`inverse?`. The [solve tactic contract](../../HexRowReduceMathlib/SPEC/hex-row-reduce-mathlib.md#the-solve-tactic)
+`inverse?`. The [solve tactic contract](../../HexRowReduceTheory/SPEC/hex-row-reduce-theory.md#the-solve-tactic)
 requests retained inverse-transform data for its complete list certificate.
 Those wrappers and list checkers are required before the frontends ship;
 their reduction paths never execute inverse, solve or RREF producers.
@@ -166,7 +166,7 @@ their reduction paths never execute inverse, solve or RREF producers.
 `HexRowReduce/Kernel.lean` owns `InverseWitness`, `SolveWitness`,
 `checkInverseList`, `checkSolveList`, and the direct supplied-solution check
 `checkSolutionList`. Their contracts are the companion's
-[kernel-certificate sections](../../HexRowReduceMathlib/SPEC/hex-row-reduce-mathlib.md#the-inverse-tactic).
+[kernel-certificate sections](../../HexRowReduceTheory/SPEC/hex-row-reduce-theory.md#the-inverse-tactic).
 Positive scales, exact shapes, cross-multiplied literal identities and integer
 products are checked by structural list recursion. Complete solve witnesses
 include `R`, `U`, `W`, the pivot/free partition and the canonical affine basis;
@@ -358,7 +358,7 @@ and repeat counts. Measure total `verify` time across registrations against
 the existing per-library warning and repository cap. Adjust only verification
 budgets if needed, retaining the scientific ladders and input families.
 
-Informational external comparisons use `fmpq_mat.inv()` and, for nonsingular
+Orientation-only external comparisons use `fmpq_mat.inv()` and, for nonsingular
 square inputs with empty nullspace, `fmpq_mat.solve()`. Compare complete
 outputs on the same inputs, with construction outside timing. The general
 affine solution/witness surface has no matching python-flint callable;
@@ -380,7 +380,7 @@ column-to-pivot-row lookup once and then writes `m(m - r)` output entries with
 constant-time lookup per entry; its fixed-aspect bound is quadratic.
 
 `bench/HexRowReduce/Bench.lean` gives the 12 existing executable operations
-direct mode-1 coverage:
+direct two-sided declared models:
 
 | Operations | Prepared state | Model |
 | --- | --- | --- |
@@ -397,13 +397,12 @@ Preparation is outside the timed region and result forcing is inside it.
 
 ## External comparators
 
-The identical constant-size rank result is compared informationally with
+The identical constant-size rank result is compared, for orientation, with
 python-flint's `fmpq_mat.rref()` through the shared persistent driver.  Both
 arms use the same dense `I + J` family; construction is cached during warmup,
 and each timed request returns only the integer rank.
 
-The remaining existing operations declare
-`no-comparable-surface-in-named-comparator`: Hex `rowReduce` returns the row
+The remaining existing operations have no external comparator: Hex `rowReduce` returns the row
 transform that `fmpq_mat.rref()` omits; python-flint 0.9.0's `fmpq_mat` has no
 native nullspace callable; and span coefficients are transform-dependent
 witnesses.  A comparator-specific derived algorithm would not be the same

@@ -135,7 +135,7 @@ def normalizeChain (i : DensePoly F × DensePoly F) :=
     (f.num.toArray, f.den.toArray)
   else (#[], #[])
 
--- Mode 2: O(M(n) log n) field operations for half-gcd and O(M(n)) divisions,
+-- Cited upper bound: O(M(n) log n) field operations for half-gcd and O(M(n)) divisions,
 -- with M(n)=n^log₂3 for the selected Karatsuba plan. All field costs are bounded.
 -- Source: van der Hoeven, Optimizing the half-gcd algorithm, introduction,
 -- https://www.texmacs.org/joris/gcd/gcd.pdf . A tight family wallclock model is
@@ -171,7 +171,7 @@ def heightDerivative (i : Pair) := output (RationalFn.derivative i.f)
 def heightConfig : LeanBench.BenchmarkConfig :=
   { config with paramSchedule := .custom #[128, 256, 512, 1024, 2048, 4096, 8192, 16384] }
 
--- Mode 2 for all four height cases: fixed polynomial degrees bound the number
+-- Cited upper bound for all four height cases: fixed polynomial degrees bound the number
 -- of field operations and all intermediate bit lengths by O(bits). Classical
 -- multiplication/division and Lehmer gcd are O(bits²); faster GMP dispatches
 -- preserve that upper bound. Source: GNU MP manual, Lehmer's Algorithm,

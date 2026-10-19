@@ -102,11 +102,276 @@ namespace RealAlgebraicPoly
   return ⟨a, r.multiplicity, r.multiplicity_pos⟩
 
 /-- Extract real roots from an existing root set and sort by exact value. -/
-@[expose] def realRoots : RootSet → RealRootSet
+@[expose] noncomputable def realRoots : RootSet → RealRootSet
   | .all => .all
   | .finite roots => .finite
     (((roots.filterMap realRoot?).toList.mergeSort
       (fun a b => decide (a.root ≤ b.root))).toArray)
+
+namespace Internal
+
+/-- Reuse a parent's factorization when exactifying its real entries. Factor
+checks and canonical isolation use the existing number-field selector. -/
+@[expose] def factorPicker (p : ZPoly) (factors : Factorization)
+    (_hfactor : ZPoly.factorize p = factors)
+    (fallback : RootCount → Option RealRootCount) (r : RootCount) :
+    Option RealRootCount :=
+  if p = r.root.p then
+    if r.root.isReal then do
+      let exact := factors.factors.foldl
+        (fun found entry => match found with
+          | some a => some a
+          | none => r.root.exactFactor? entry.1) none
+      let canonical := match exact with
+        | some a => a
+        | none => Hex.panicWith 0 "AlgebraicRoot.exact: certification failed"
+      let a ← RealAlgebraicNumber.ofAlgebraic? canonical
+      return ⟨a, r.multiplicity, r.multiplicity_pos⟩
+    else none
+  else fallback r
+
+set_option backward.isDefEq.respectTransparency false in
+/-- Sharing the factor array preserves all checked exactification results. -/
+theorem factorPicker_eq (p : ZPoly) (factors : Factorization)
+    (hfactor : ZPoly.factorize p = factors) :
+    factorPicker p factors hfactor realRoot? = realRoot? := by
+  funext r
+  unfold factorPicker
+  split
+  · rename_i hp
+    rw [← hfactor, hp]
+    change (if r.root.isReal then do
+      let a ← RealAlgebraicNumber.ofAlgebraic? (match r.root.exact? with
+        | some a => a
+        | none => Hex.panicWith 0 "AlgebraicRoot.exact: certification failed")
+      pure ⟨a, r.multiplicity, r.multiplicity_pos⟩ else none) = realRoot? r
+    unfold realRoot? RealAlgebraicNumber.ofRoot? AlgebraicRoot.exact
+    split
+    · cases r.root.exact? <;> rfl
+    · rfl
+  · rfl
+
+/-- Select a canonical parent root from one shared Mahler refinement.
+The supplied irreducibility and refinement equations retain the existing
+number-field selector's exact result and failure behavior. -/
+@[expose] def parentExact? (a : AlgebraicRoot)
+    (isolations : Array (DyadicRootIsolation a.p))
+    (refined : Array (RefinedIsolation a.p))
+    (hisolate : ZPoly.isolateComplexRoots? a.p a.squarefree
+      (separationDepth a.p : Int) = some isolations)
+    (hrefine : isolations.mapM DyadicRootIsolation.toRefined? = some refined)
+    (hirred : ZPoly.isIrreducible a.p = true)
+    (comparable : Array (RefinedIsolation a.p))
+    (_hcomparable : refined.mapM (fun r =>
+      (r.refineTo? (mahlerPrec a.p : Int)).unattach) = some comparable) :
+    Option AlgebraicNumber := do
+  let matching ← comparable.toList.find? fun r =>
+    decide ((mahlerPrec a.p : Int) ≤ r.1.square.prec) &&
+      r.1.square.discsMeet a.rep.1.square
+  AlgebraicNumber.ofNormalizedIn? a.p a.prim a.pos_lc a.pos_degree
+    ⟨hirred, a.pos_degree⟩ a.squarefree matching isolations refined hisolate hrefine
+
+set_option backward.isDefEq.respectTransparency false in
+/-- Cached refinement preserves the existing complete parent selector. -/
+theorem parentExact?_eq (a : AlgebraicRoot)
+    (isolations : Array (DyadicRootIsolation a.p))
+    (refined : Array (RefinedIsolation a.p))
+    (hisolate : ZPoly.isolateComplexRoots? a.p a.squarefree
+      (separationDepth a.p : Int) = some isolations)
+    (hrefine : isolations.mapM DyadicRootIsolation.toRefined? = some refined)
+    (hirred : ZPoly.isIrreducible a.p = true)
+    (comparable : Array (RefinedIsolation a.p))
+    (hcomparable : refined.mapM (fun r =>
+      (r.refineTo? (mahlerPrec a.p : Int)).unattach) = some comparable) :
+    parentExact? a isolations refined hisolate hrefine hirred comparable hcomparable =
+      a.exactParent? isolations refined hisolate hrefine := by
+  unfold parentExact? AlgebraicRoot.exactParent?
+  simp only [hirred, dite_true, hcomparable, Option.bind_eq_bind, Option.bind_some]
+
+/-- Exactify roots of `p` using cached factors and certified parent refinements. Other
+polynomials use the supplied selector; nonreal roots retain early rejection.
+The factor fold mirrors `exact?` so the equality proof follows its branches. -/
+@[expose] def rootPicker (p : ZPoly) (squarefree : HasOnlySimpleRoots p)
+    (isolations : Array (DyadicRootIsolation p))
+    (refined : Array (RefinedIsolation p))
+    (hisolate : ZPoly.isolateComplexRoots? p squarefree (separationDepth p : Int) =
+      some isolations)
+    (hrefine : isolations.mapM DyadicRootIsolation.toRefined? = some refined)
+    (factors : Factorization) (_hfactor : ZPoly.factorize p = factors)
+    (hirred : ZPoly.isIrreducible p = true)
+    (comparable : Array (RefinedIsolation p))
+    (hcomparable : refined.mapM (fun r =>
+      (r.refineTo? (mahlerPrec p : Int)).unattach) = some comparable)
+    (fallback : RootCount → Option RealRootCount) (r : RootCount) :
+    Option RealRootCount :=
+  if hp : p = r.root.p then
+    if r.root.isReal then do
+      let exact := factors.factors.foldl (fun found entry =>
+        match found with
+        | some a => some a
+        | none =>
+          if entry.1 = p then
+            parentExact? r.root (hp ▸ isolations) (hp ▸ refined)
+              (by cases hp; exact hisolate) (by cases hp; exact hrefine)
+              (hp ▸ hirred) (hp ▸ comparable) (by cases hp; exact hcomparable)
+          else r.root.exactFactor? entry.1) none
+      let canonical := match exact with
+        | some a => a
+        | none => Hex.panicWith 0 "AlgebraicRoot.exact: certification failed"
+      let a ← RealAlgebraicNumber.ofAlgebraic? canonical
+      return ⟨a, r.multiplicity, r.multiplicity_pos⟩
+    else none
+  else fallback r
+
+set_option backward.isDefEq.respectTransparency false in
+/-- Cached factors and Mahler refinement preserve the complete selector. -/
+theorem rootPicker_eq (p : ZPoly) (squarefree : HasOnlySimpleRoots p)
+    (isolations : Array (DyadicRootIsolation p))
+    (refined : Array (RefinedIsolation p))
+    (hisolate : ZPoly.isolateComplexRoots? p squarefree (separationDepth p : Int) =
+      some isolations)
+    (hrefine : isolations.mapM DyadicRootIsolation.toRefined? = some refined)
+    (factors : Factorization) (hfactor : ZPoly.factorize p = factors)
+    (hirred : ZPoly.isIrreducible p = true)
+    (comparable : Array (RefinedIsolation p))
+    (hcomparable : refined.mapM (fun r =>
+      (r.refineTo? (mahlerPrec p : Int)).unattach) = some comparable) :
+    rootPicker p squarefree isolations refined hisolate hrefine factors hfactor
+      hirred comparable hcomparable realRoot? = realRoot? := by
+  funext r
+  unfold rootPicker
+  split
+  · rename_i hp
+    cases hp
+    have hexact : factors.factors.foldl (fun found entry =>
+        match found with
+        | some a => some a
+        | none =>
+          if entry.1 = r.root.p then
+            parentExact? r.root isolations refined hisolate hrefine hirred
+              comparable hcomparable
+          else r.root.exactFactor? entry.1) none = r.root.exact? := by
+      rw [← hfactor]
+      unfold AlgebraicRoot.exact?
+      congr 1
+      funext found entry
+      cases found with
+      | some a => rfl
+      | none =>
+        dsimp only
+        split
+        · rename_i h
+          rw [parentExact?_eq, AlgebraicRoot.exactParent?_eq, h]
+        · rfl
+    rw [hexact]
+    unfold realRoot? RealAlgebraicNumber.ofRoot? AlgebraicRoot.exact
+    split
+    · cases r.root.exact? <;> rfl
+    · rfl
+  · rfl
+
+/-- Share factorization within groups with at least two real entries, and
+parent isolation and Mahler refinement when that parent is irreducible. Other groups
+use the original selector. Return a concrete pair and prevent inlining: returning only a
+function lets compiler uncurrying rebuild the cache on every application.
+The cache contains functions and polynomial keys, without changing root storage. -/
+@[noinline, expose] def rootSelectors (roots : Array RootCount) :
+    Array ZPoly × (RootCount → Option RealRootCount) :=
+  roots.foldl (fun (state : Array ZPoly × (RootCount → Option RealRootCount)) (r : RootCount) =>
+    if !r.root.isReal || state.1.contains r.root.p then state
+    else
+      let seen := state.1.push r.root.p
+      if (roots.countP fun s => s.root.isReal && s.root.p == r.root.p) < 2 then
+        (seen, state.2)
+      else
+        let factors := ZPoly.factorize r.root.p
+        let fallback := factorPicker r.root.p factors rfl state.2
+        if !(factors.factors.any fun entry => entry.1 == r.root.p) then
+          (seen, fallback)
+        else
+          let checked := decide (factors.scalar.natAbs = 1) &&
+            factors.factors.size == 1 &&
+            match factors.factors.toList with
+            | [entry] => decide (entry.2 = 1)
+            | _ => false
+          if hi : checked = true then
+            have hirred : ZPoly.isIrreducible r.root.p = true := by
+              have hp : r.root.p ≠ 0 := by
+                intro hz
+                have hdegree := r.root.pos_degree
+                rw [hz] at hdegree
+                exact (Nat.lt_irrefl 0) hdegree
+              have hd : r.root.p.natDegree ≠ 0 := Nat.ne_of_gt r.root.pos_degree
+              simp only [ZPoly.isIrreducible, hp, hd, ite_false]
+              exact hi
+            match hisolate : ZPoly.isolateComplexRoots? r.root.p r.root.squarefree
+                (separationDepth r.root.p : Int) with
+            | none => (seen, fallback)
+            | some isolations =>
+              match hrefine : isolations.mapM DyadicRootIsolation.toRefined? with
+              | none => (seen, fallback)
+              | some refined =>
+                match hcomparable : refined.mapM (fun s =>
+                    (s.refineTo? (mahlerPrec r.root.p : Int)).unattach) with
+                | none => (seen, fallback)
+                | some comparable =>
+                  (seen, rootPicker r.root.p r.root.squarefree isolations refined
+                    hisolate hrefine factors rfl hirred comparable hcomparable fallback)
+          else (seen, fallback)) (#[], realRoot?)
+
+/-- Every cached selector is identical to independent exactification. -/
+theorem rootSelectors_eq (roots : Array RootCount) : (rootSelectors roots).2 = realRoot? := by
+  unfold rootSelectors
+  apply Array.foldl_induction (as := roots)
+    (motive := fun _ (state : Array ZPoly × (RootCount → Option RealRootCount)) =>
+      state.2 = realRoot?)
+  · rfl
+  · intro i state hstate
+    dsimp only
+    split
+    · exact hstate
+    · split
+      · exact hstate
+      · split
+        · dsimp only
+          rw [hstate]
+          exact factorPicker_eq _ _ _
+        · split
+          · split
+            · dsimp only
+              rw [hstate]
+              exact factorPicker_eq _ _ _
+            · split
+              · dsimp only
+                rw [hstate]
+                exact factorPicker_eq _ _ _
+              · split
+                · dsimp only
+                  rw [hstate]
+                  exact factorPicker_eq _ _ _
+                · dsimp only
+                  rw [hstate, factorPicker_eq]
+                  apply rootPicker_eq
+          · dsimp only
+            rw [hstate]
+            exact factorPicker_eq _ _ _
+
+end Internal
+
+/-- Real-root filtering with parent isolation shared across real entries. -/
+@[expose] def realRootsImpl : RootSet → RealRootSet
+  | .all => .all
+  | .finite roots => .finite
+    (((roots.filterMap (Internal.rootSelectors roots).2).toList.mergeSort
+      (fun a b => decide (a.root ≤ b.root))).toArray)
+
+/-- Compile through certified reuse without changing the public root result,
+its canonical representatives, multiplicities, order or checked failures. -/
+@[csimp] theorem realRoots_eq_impl : realRoots = realRootsImpl := by
+  funext roots
+  cases roots with
+  | all => rfl
+  | finite roots => simp only [realRoots, realRootsImpl, Internal.rootSelectors_eq]
 
 /-- Real roots in increasing order, with multiplicities and the zero case preserved. -/
 @[expose] def roots (f : RealAlgebraicPoly) : RealRootSet :=
@@ -122,13 +387,14 @@ Every constant, including zero, inherits the empty-array convention. -/
 
 namespace RealAlgebraicNumber
 
-/-- Select the unique nonnegative root of the square-root polynomial. -/
+/-- Select the unique nonnegative root of the square-root polynomial.
+This entry point checks the argument sign and rejects negative inputs. -/
 @[expose] def sqrtRoot? (a : RealAlgebraicNumber) : Option RealAlgebraicNumber :=
   if a < 0 then none else ofAlgebraic? a.toAlgebraic.sqrt
 
 /-- Return the nonnegative square root, or none for a negative argument. -/
 @[expose] def sqrt? (a : RealAlgebraicNumber) : Option RealAlgebraicNumber :=
-  if a < 0 then none else sqrtRoot? a
+  sqrtRoot? a
 
 /-- Square root of a nonnegative argument. The companion proves selection succeeds,
 so the fallback is unreachable-by-pipeline-invariant under the supplied hypothesis. -/

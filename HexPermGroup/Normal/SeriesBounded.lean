@@ -108,6 +108,6 @@ namespace Hex.PermGroup.Group
 
 /-- A bounded derived series preserves its complete checked prefix on
 exhaustion; only terminal certificates produce a Boolean solvability answer. -/
-@[expose] def derivedSeriesWith (G : Group n) (terms : Nat) : Series.BoundedResult G := Series.bounded terms G
+@[expose] def derivedSeriesCapped (G : Group n) (terms : Nat) : Series.BoundedResult G := Series.bounded terms G
 
 end Hex.PermGroup.Group

@@ -5,7 +5,7 @@ Authors: Kim Morrison
 -/
 module
 
-public import HexOrderedFnMathlib.Oracle
+public import HexOrderedFnTheory.Oracle
 public meta import Lean
 public meta import HexRCF.Reify
 public meta import HexReflect.Budget

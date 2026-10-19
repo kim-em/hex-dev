@@ -1,0 +1,54 @@
+[
+  {
+    "label": "desktop",
+    "kind": "quotient",
+    "text": "\n                    The supplied-inverse regression\nquotes ∃ x : ℝ, x² + 1 = 1 / (Real.sqrt 2 - 1) + 0 / (-1 : ℝ) ∧\n1 < x ∧ x < 2. The inverse is a coefficient used by the matrix. The owner's\nchecked inverse equation identifies its supplied value at the selected positive\n√2 root. One further packing record lets canonical specialization recover the\nexisting selected-point queries; the matrix packet is reused through that\nchecked equality. Both original divisors remain authenticated in source order.",
+    "viewport": 1440,
+    "scrollY": 258291,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752,
+    "descendantOverflow": 0
+  },
+  {
+    "label": "desktop",
+    "kind": "inverse-refusals",
+    "text": "\n                    A separate inverse packet is valid for the different pair\n(√2 + 1)·(√2 - 1) = 1; using it for the original request rejects.\nChanged outputs and context identifiers reject too. A zero inverse operand\nrejects before graph decoding. Source quotation refuses a changed numerator\nor zero denominator and restores state. The\nfresh inverse proof audit\nrequires the actual inverse law, reader binding and whole-matrix checker in\nthe proof dependencies. This is a supplied finite certificate at a fixed parent.",
+    "viewport": 1440,
+    "scrollY": 258446,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752,
+    "descendantOverflow": 0
+  },
+  {
+    "label": "narrow",
+    "kind": "quotient",
+    "text": "\n                    The supplied-inverse regression\nquotes ∃ x : ℝ, x² + 1 = 1 / (Real.sqrt 2 - 1) + 0 / (-1 : ℝ) ∧\n1 < x ∧ x < 2. The inverse is a coefficient used by the matrix. The owner's\nchecked inverse equation identifies its supplied value at the selected positive\n√2 root. One further packing record lets canonical specialization recover the\nexisting selected-point queries; the matrix packet is reused through that\nchecked equality. Both original divisors remain authenticated in source order.",
+    "viewport": 390,
+    "scrollY": 413765,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343,
+    "descendantOverflow": 0
+  },
+  {
+    "label": "narrow",
+    "kind": "inverse-refusals",
+    "text": "\n                    A separate inverse packet is valid for the different pair\n(√2 + 1)·(√2 - 1) = 1; using it for the original request rejects.\nChanged outputs and context identifiers reject too. A zero inverse operand\nrejects before graph decoding. Source quotation refuses a changed numerator\nor zero denominator and restores state. The\nfresh inverse proof audit\nrequires the actual inverse law, reader binding and whole-matrix checker in\nthe proof dependencies. This is a supplied finite certificate at a fixed parent.",
+    "viewport": 390,
+    "scrollY": 414071,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343,
+    "descendantOverflow": 0
+  }
+]

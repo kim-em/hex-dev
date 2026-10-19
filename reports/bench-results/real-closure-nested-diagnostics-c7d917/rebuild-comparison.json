@@ -1,0 +1,9 @@
+{
+  "captured_source": "c7d917ccd3178db41014374244442f5716ed66fd",
+  "rebuilt_source": "2c2faba6b7bfcba9e253432c9e7ea244d788e1ea",
+  "byte_identical_binaries": {
+    "ordinary_binary_sha256": "d057bdeb151eb3f2c621a64947fa7aece3b9e52a2efcc7987cdeb9f9b1116ef0",
+    "diagnostic_binary_sha256": "8f58c9c93f50cf92a47d026add8fbb6bad46b654b69e437c1908c08b194318e0"
+  },
+  "all_link_inputs": 153
+}

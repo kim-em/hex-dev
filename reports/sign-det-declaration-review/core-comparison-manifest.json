@@ -1,0 +1,60 @@
+{
+  "scope": "27 named declarations and sixteen source fields; partial core review, no phase promotion",
+  "files": {
+    "HexSignDet/CommonProduct.lean": "78a84ed8c0172573e2c607deedaae8ea0e15877f7a6ae2de9ba068e8b3f5ec87",
+    "HexSignDet/Reencode.lean": "c767d41ce4cbff48edc7d4af58aeb578698e7847a19ed0d0e5c45b8f3c243e1a",
+    "HexSignDet/Compare.lean": "c145c522f8a31d2a6f86f04c7d1cdeb09b5adf49fde502e56d4d897292bc8eca",
+    "HexSignDetTheory/CommonProduct.lean": "b369200b08015c511319cbac79cde33cb611646cc2592bdfc2202812de244c6e",
+    "HexSignDetTheory/ThomReencoding.lean": "b76556b6cd71c1000bde0803f45c9c7a7c9718b5be96fb940cce8766a2700c5b",
+    "HexSignDetTheory/ReencodingRefinement.lean": "ab8aaa08d13bff551009528ab9afdc53c69ba31dae219d69a5f0980b6ea72903",
+    "conformance/HexSignDet/Conformance.lean": "a8a37b03f7b99208b550644289e0d668a2a4f5bf7426c18531244fc2a1e1782c",
+    "HexManual/Chapters/HexSignDet.lean": "6cf774c0d04b484265c361d16b061b8e57039511c025810520f383169ecfb8e1",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "83520887f6307511e2db9aa18862adaa47d66df6aadcdf2870cd6c2b635c8928"
+  },
+  "file_roles": {
+    "HexSignDet/CommonProduct.lean": "reviewed module",
+    "HexSignDet/Reencode.lean": "reviewed module",
+    "HexSignDet/Compare.lean": "reviewed module",
+    "HexSignDetTheory/CommonProduct.lean": "proof client",
+    "HexSignDetTheory/ThomReencoding.lean": "proof client",
+    "HexSignDetTheory/ReencodingRefinement.lean": "proof client",
+    "conformance/HexSignDet/Conformance.lean": "existing conformance and axiom audit",
+    "HexManual/Chapters/HexSignDet.lean": "public API documentation",
+    "reports/sign-det-declaration-review/check_foundation_bindings.py": "binding checker"
+  },
+  "declarations": {
+    "HexSignDet/CommonProduct.lean": [
+      "CommonProduct",
+      "CommonProduct.check",
+      "CommonProduct.check_iff",
+      "CommonProduct.check_eq",
+      "CommonProduct.build",
+      "CommonProduct.build_of_check"
+    ],
+    "HexSignDet/Reencode.lean": [
+      "RawDescriptor.constraints",
+      "RawDescriptor.constraintSigns",
+      "Descriptor.checkReencoding",
+      "Descriptor.checkReencoding_iff",
+      "Reencoding",
+      "Reencoding.check_eq",
+      "Reencoding.count",
+      "Descriptor.buildReencoding",
+      "Descriptor.buildReencoding_ofNone",
+      "Descriptor.buildReencoding_ofEmpty",
+      "Descriptor.buildReencoding_ofTable",
+      "Descriptor.buildReencoding_full"
+    ],
+    "HexSignDet/Compare.lean": [
+      "Comparison",
+      "Descriptor.buildComparison",
+      "Descriptor.buildComparison_of_success",
+      "Descriptor.buildOrder",
+      "Descriptor.buildOrder_ofCompletion",
+      "Descriptor.buildOrder_ofComparison",
+      "Descriptor.compare",
+      "Descriptor.compare_ofBuild",
+      "Descriptor.compare_ofError"
+    ]
+  }
+}

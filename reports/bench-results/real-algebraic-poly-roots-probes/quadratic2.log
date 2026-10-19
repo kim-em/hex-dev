@@ -1,0 +1,9 @@
+Hex.RealAlgebraicBench.runQuadraticRoots2    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=b905eef-dirty, 2026-10-04T04:06:40Z, host=chungus2
+  repeat 0  23.668 ms  (×2^2, total 94.671 ms)
+  median: 23.668 ms    min: 23.668 ms    max: 23.668 ms
+  hash: all repeats agree
+  observed hash: 0xf1a1204ac3404b40
+  expected hash: matches
+  peak RSS: 68_872 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-verification/poly-roots-smoke/quadratic2.json

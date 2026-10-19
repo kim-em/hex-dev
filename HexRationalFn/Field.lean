@@ -166,14 +166,23 @@ theorem pow_succ (f : RationalFn K) (n : Nat) : f ^ (n + 1) = f ^ n * f := by
 
 attribute [local instance] Lean.Grind.Semiring.natCast Lean.Grind.Ring.intCast
 
-instance : NatCast (RationalFn K) := ⟨fun n => ofPoly (Nat.cast n)⟩
+instance : NatCast (RationalFn K) := ⟨fun n => match n with
+  | 0 => Zero.zero
+  | 1 => One.one
+  | n + 2 => ofPoly (Nat.cast (n + 2))⟩
 instance : (n : Nat) → OfNat (RationalFn K) n
-  | 0 => ⟨ofPoly 0⟩
-  | 1 => ⟨ofPoly 1⟩
+  | 0 => ⟨Zero.zero⟩
+  | 1 => ⟨One.one⟩
   | n + 2 => ⟨ofPoly (Nat.cast (n + 2))⟩
 instance : IntCast (RationalFn K) := ⟨fun n => ofPoly (Int.cast n)⟩
 instance : SMul Nat (RationalFn K) := ⟨fun n f => (Nat.cast n : RationalFn K) * f⟩
 instance : SMul Int (RationalFn K) := ⟨fun n f => (Int.cast n : RationalFn K) * f⟩
+
+/-- Reusing the zero and one instances preserves the natural cast. -/
+theorem natCast_eq (n : Nat) : (Nat.cast n : RationalFn K) = ofPoly (Nat.cast n) := by
+  cases n with
+  | zero => rfl
+  | succ n => cases n <;> rfl
 
 /-- The executable arithmetic forms a commutative ring without Mathlib. -/
 instance instCommRing : Lean.Grind.CommRing (RationalFn K) where
@@ -218,7 +227,8 @@ instance instCommRing : Lean.Grind.CommRing (RationalFn K) where
     unfold Represents at *
     grind
   zsmul_natCast_eq_nsmul n f := by
-    change ofPoly (Int.cast (n : Int)) * f = ofPoly (Nat.cast n) * f
+    change ofPoly (Int.cast (n : Int)) * f = (Nat.cast n : RationalFn K) * f
+    rw [natCast_eq]
     rw [Lean.Grind.Ring.intCast_natCast]
   intCast_ofNat n := by
     cases n with

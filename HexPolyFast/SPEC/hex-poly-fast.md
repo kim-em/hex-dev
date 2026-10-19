@@ -109,7 +109,7 @@ Out of scope:
 - a limb-level arbitrary-precision integer middle product;
 - multivariate multiplication, sparse interpolation, or polynomial-matrix
   approximant bases;
-- a new Mathlib companion.
+- a new theory companion.
 
 ## The semantic boundary stays schoolbook
 
@@ -773,8 +773,8 @@ Required families:
 - direct Lagrange interpolation against the reusable interpolation plan;
 - linear-algebra reference Padé against half-gcd Padé on small shared cases.
 
-FLINT `fmpz_poly` and `nmod_poly` are informational external comparators. The
-gating comparisons are within Lean: no production cell selected by a committed
+FLINT `fmpz_poly` and `nmod_poly` are orientation-only external comparators.
+The deciding comparisons are within Lean: no production cell selected by a committed
 dispatch table may lose to the retained implementation outside the uncertainty
 band defined by the benchmark protocol. Each table records the host, toolchain,
 sample count, and script that regenerates it.
@@ -849,11 +849,11 @@ A call site changes only when its representative end-to-end benchmark wins.
 A measured loss keeps the old path and is a completed audit result, not a
 reason to move the global crossover until unrelated cells regress.
 
-## The Mathlib layer
+## The theory layer
 
-There is no `hex-poly-fast-mathlib`. Each optimized multiplication and
+There is no `hex-poly-fast-theory`. Each optimized multiplication and
 division theorem lands on an existing `DensePoly` operation, and
-hex-poly-mathlib already transports those operations to `Polynomial`.
+hex-poly-theory already transports those operations to `Polynomial`.
 Likewise, evaluation and interpolation soundness are stated directly with
 `DensePoly.eval`; a later Mathlib-facing consumer can rewrite through the
 existing equivalence.
@@ -930,24 +930,6 @@ HexPolyZ/NttMul.lean
     mathlib: false
     done_through: 0
     status: planned
-    phase4:
-      comparators:
-        - tool: FLINT fmpz_poly and nmod_poly via python-flint
-          class: informational
-          rationale: "FLINT has independently tuned coefficient-specific dispatch; within-Lean agreement and crossover cells gate production selection."
-      input_families:
-        - name: full-and-clipped-multiplication
-          description: Balanced and unbalanced full, square, low, and middle products across crossover sizes.
-        - name: newton-division
-          description: One-shot and cached-divisor division against long division.
-        - name: half-gcd
-          description: Gcd, full xgcd, and one-sided xgcd across balanced and skewed degree pairs.
-        - name: multipoint
-          description: Cold and reused product/remainder trees for evaluation and interpolation.
-        - name: pade
-          description: Homogeneous and normalized Padé cases, including normalized failure.
-        - name: coefficient-kernels
-          description: Forced Kronecker and direct/CRT-NTT paths across degree, width, and modulus ladders.
 ```
 
 hex-poly-fp and hex-poly-z then add `HexPolyFast` and `HexModular`; hex-poly-z

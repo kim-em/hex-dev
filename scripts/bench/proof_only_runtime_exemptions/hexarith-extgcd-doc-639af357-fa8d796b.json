@@ -1,0 +1,6 @@
+{
+  "path": "HexArith/ExtGcd.lean",
+  "baseline_blob": "639af357365cfb74ff0c6f0d45a27a7b3e582973",
+  "current_blob": "fa8d796b0b5d9d05847bdd6d0a3a392d350c639c",
+  "reason": "Removes unqualified GMP descriptions from two extended-GCD API docstrings. Both edits are inside documentation comments; every definition, proof and compiler rewrite in this Lean file is unchanged, so the measured factorization executable is unaffected."
+}

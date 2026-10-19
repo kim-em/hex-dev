@@ -1,0 +1,395 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 3b9df31862..2254699264 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -164,0 +165 @@ jobs:
++          python3 -m unittest scripts/bench/test_sign_det_matrix_wide.py
+diff --git a/bench/HexSignDet/Bench.lean b/bench/HexSignDet/Bench.lean
+index b8f836333d..e20defab1a 100644
+--- a/bench/HexSignDet/Bench.lean
++++ b/bench/HexSignDet/Bench.lean
+@@ -328,0 +329,6 @@ def main (args : List String) : IO UInt32 :=
++  else if args == ["inspect-wide-matrix-checks"] then Hex.SignDetBench.MaximalMatrix.inspectWideChecks
++  else if let ["inspect-wide-matrix-checks", arity] := args then
++    match arity.toNat? with
++    | some s => Hex.SignDetBench.MaximalMatrix.inspectWideChecks #[s]
++    | none => throw (IO.userError "expected an integer query count")
++  else if args == ["inspect-maximal-matrix-tensors"] then Hex.SignDetBench.MaximalMatrix.inspectTensors
+@@ -354,0 +361 @@ def main (args : List String) : IO UInt32 :=
++    discard <| Hex.SignDetBench.MaximalMatrix.inspectTensorsFor #[0, 1, 2]
+diff --git a/bench/HexSignDet/MaximalMatrix.lean b/bench/HexSignDet/MaximalMatrix.lean
+index bff6393394..c5dd9e0ab5 100644
+--- a/bench/HexSignDet/MaximalMatrix.lean
++++ b/bench/HexSignDet/MaximalMatrix.lean
+@@ -127,0 +128,58 @@ setup_benchmark runCheckDimension r => r^3
++/-- Prepare the same complete system with the library's existing Kronecker
++product. Only preparation changes: the measured callback remains System.check.
++The small-input inspection compares every literal with the ordinary solver. -/
++def tensorInput : Nat → Option Input
++  | 0 => input 0
++  | s + 1 => do
++    let left ← tensorInput s
++    let right ← input 1
++    let rows := productVector left.system.rows right.system.rows
++    let columns := productVector left.system.columns right.system.columns
++    let system : System (left.size * right.size) := {
++      rows := rows
++      columns := columns
++      counts := Vector.replicate _ 1
++      values := moments rows columns.toList
++      inverse := tensor left.system.inverse right.system.inverse
++      denominator := left.system.denominator * right.system.denominator }
++    return ⟨s + 1, left.size * right.size, system⟩
++
++def wideDimensions : Array Nat := #[243, 729, 2187, 6561]
++
++def tensorDimensionInput (r : Nat) : Option Input := do
++  let s ← #[0, 1, 2, 3, 4, 5, 6, 7, 8].find? (fun s => 3^s == r)
++  tensorInput s
++
++@[noinline] def runTensorCheck (i : Option Input) : Bool := runCheck i
++
++-- Declared cost-model: Θ(r^3), the unchanged dense exact integer inverse check.
++-- Tensor preparation allows a wider range without timing rational inversion.
++setup_benchmark runTensorCheck r => r^3
++  with prep := tensorDimensionInput
++  where {
++    paramSchedule := .custom wideDimensions
++    paramFloor := 243
++    paramCeiling := 6561
++    outerTrials := 6
++    targetInnerNanos := 100000000
++    signalFloorMultiplier := 1
++    maxSecondsPerCall := 3600
++  }
++
++/-- Compare complete witnesses, moments and literal orders with the existing
++solver on the overlap. Includes the empty-word one-by-one system. -/
++def inspectTensorsFor (arities : Array Nat) : IO UInt32 := do
++  for s in arities do
++    let some prepared := tensorInput s | throw (IO.userError "tensor preparation failed")
++    let some original := input s | throw (IO.userError "ordinary preparation failed")
++    if h : prepared.size = original.size then
++      let system : System original.size := h ▸ prepared.system
++      unless system == original.system && runCheck (some prepared) do
++        throw (IO.userError s!"tensor witness differs from ordinary solve at {s}")
++    else throw (IO.userError "tensor matrix dimension differs")
++    IO.println s!"tensor matrix {prepared.size}: complete witness matches ordinary solve"
++    (← IO.getStdout).flush
++  return 0
++
++def inspectTensors : IO UInt32 := inspectTensorsFor #[0, 1, 2, 3, 4, 5, 6]
++
+@@ -129,0 +188,31 @@ private def bits (z : Int) : Nat := if z = 0 then 0 else z.natAbs.log2 + 1
++/-- Inspect complete literal row/column orders, the closed finite-observation
++moments and both exact identities before collecting the wider checker ladder. -/
++def inspectWideChecks (arities : Array Nat := #[5, 6, 7, 8]) : IO UInt32 := do
++  for s in arities do
++    let some i := tensorInput s | throw (IO.userError "tensor preparation failed")
++    let exponents := words [0, 1, 2] s
++    let columns := words [-1, 0, 1] s
++    let expected := exponents.map fun word =>
++      (word.map fun k => if k == 0 then (3 : Int) else if k == 1 then 0 else 2).foldr (· * ·) 1
++    unless i.size == 3^s && i.system.rows.toList == exponents &&
++        i.system.columns.toList == columns && i.system.counts.toList.all (· == 1) &&
++        i.system.values.toList == expected do
++      throw (IO.userError "tensor subject or moments differ from the finite full-support oracle")
++    let checked := runCheck (some i)
++    unless checked do throw (IO.userError "tensor inverse or moment identities rejected")
++    let inverseBits := i.system.inverse.rows.toArray.foldl (fun n row =>
++      row.toArray.foldl (fun n z => max n (bits z)) n) 0
++    IO.println <| (Lean.Json.mkObj [
++      ("queries", Lean.toJson s), ("matrixSize", Lean.toJson i.size),
++      ("supportSize", Lean.toJson i.system.counts.toList.length),
++      ("countSum", Lean.toJson i.system.counts.toList.sum),
++      ("inverseIdentityScalarPairs", Lean.toJson (i.size^3)),
++      ("inverseBits", Lean.toJson inverseBits),
++      ("denominatorBits", Lean.toJson (bits i.system.denominator)),
++      ("valuesBits", Lean.toJson (i.system.values.toList.foldl (fun n z => max n (bits z)) 0)),
++      ("literalOrders", Lean.toJson true), ("finiteMoments", Lean.toJson true),
++      ("inputHash", Lean.toJson (hash (some i)).toNat),
++      ("checkResultHash", Lean.toJson (hash checked).toNat)]).compress
++    (← IO.getStdout).flush
++  return 0
++
+diff --git a/reports/sign-det-matrix-wide.md b/reports/sign-det-matrix-wide.md
+new file mode 100644
+index 0000000000..d26e063a2c
+--- /dev/null
++++ b/reports/sign-det-matrix-wide.md
+@@ -0,0 +1,53 @@
++# Wider complete-support matrix checking
++
++This registration measures the existing `System.check` on complete ternary
++moment systems at dimensions 243,729,2187,6561. The finite problem and cubic
++coefficient-operation declaration are unchanged. The earlier size-3-through-729
++solve/check observations and their inconclusive verdicts remain separate.
++
++Preparation uses the existing library Kronecker product on witnesses obtained
++from its ordinary one-column solver. It concatenates rows and columns in that
++same order, gives every sign pattern count one, and computes moments using
++the existing finite-observation operation. It does not implement a second
++solver or Tarski-query kernel. Untimed inspection compares the entire system
++with the ordinary solver at dimensions 1,3,9,27,81,243,729.
++
++Before timing, larger inputs check the complete ordered row/column lists,
++all counts, and the closed finite-observation moment formula: each exponent
++coordinate contributes 3,0,2 at exponents 0,1,2 respectively, and the complete
++moment is their product. Both exact inverse and count identities pass the
++actual checker. The inventory records inverse/denominator/value bits, dimensions
++and input/result hashes. No polynomial-root oracle is claimed at these sizes.
++
++Only `System.check` is timed. It still performs all r³ integer multiply/add
++pairs in the dense inverse identity, including zero entries. Other checker
++work is O(r² log r) on this family. The declared model remains `r^3`; no
++exponent, normalization constant or tolerance is fitted to old measurements.
++The fixed four-rung schedule has six trial-major rounds and the unchanged
++100 ms repeat target and shared harness settings. The operational child cap
++is 3600 seconds. The old size-729 check was about one second; cubic extrapolation
++to 6561 is roughly 730 seconds for planning, not a promised duration or
++scientific budget. Host, bit costs and memory effects can differ. A timeout
++or inconclusive result remains a retained finding.
++
++The preparation change avoids repeating large rational inversion for a
++checker-only measurement. It does not change the timed checker, optimize the
++library solver or resolve the separate complete-solve finding. The larger
++integer witnesses are supplied data; matching the ordinary solver in the
++overlap verifies their literal comparability.
++
++Run:
++
++```sh
++lake build hexsigndet_bench
++.lake/build/bin/hexsigndet_bench inspect-maximal-matrix-tensors
++python3 scripts/bench/sign_det_matrix_wide.py --output /path/to/new-captures
++```
++
++The output must be new and outside the worktree. The collector uses the shared
++automatic CPU lease, records host load, retains all completed observations
++and binds clean source, executable and pinned harness before and after the
++run. It performs full input guards before collecting the 24 timing points.
++Child peak RSS includes startup and preparation; it is not an isolated
++callback allocation or live-object count. This protocol alone establishes no
++performance result or Phase-4 completion.
+diff --git a/scripts/bench/sign_det_matrix_wide.py b/scripts/bench/sign_det_matrix_wide.py
+new file mode 100644
+index 0000000000..2d14348e78
+--- /dev/null
++++ b/scripts/bench/sign_det_matrix_wide.py
+@@ -0,0 +1,143 @@
++#!/usr/bin/env python3
++"""Collect the unchanged full-support checker on tensor-prepared larger systems."""
++from __future__ import annotations
++import argparse
++import hashlib
++import json
++import math
++import os
++from pathlib import Path
++import platform
++import subprocess
++import sys
++import time
++
++ROOT = Path(__file__).resolve().parents[2]
++sys.path.insert(0, str(ROOT))
++from scripts.bench.cpu_lease import cpu_lease
++from scripts.bench.sign_det_compare import archive_sources
++from scripts.bench.sign_det_sparse import source_hashes
++from scripts.bench.sign_det_joint_timing import harness_binding
++
++ARITIES = [5, 6, 7, 8]
++PARAMS = [3**s for s in ARITIES]
++FUNCTION = "Hex.SignDetBench.MaximalMatrix.runTensorCheck"
++CONFIG = {"param_floor": PARAMS[0], "param_ceiling": PARAMS[-1], "outer_trials": 6,
++          "param_schedule": {"kind": "custom", "params": PARAMS},
++          "target_inner_nanos": 100000000, "max_seconds_per_call": 3600,
++          "signal_floor_multiplier": 1, "cache_mode": "warm",
++          "verdict_warmup_fraction": 0.2, "slope_tolerance": 0.15,
++          "narrow_range_noise_floor": 1.5}
++
++
++def validate_inputs(path):
++    rows = [json.loads(line) for line in Path(path).read_text().splitlines()]
++    if [r["queries"] for r in rows] != ARITIES:
++        raise ValueError("missing or reordered wide checker inputs")
++    for row, s in zip(rows, ARITIES, strict=True):
++        r = 3**s
++        expected = {"queries": s, "matrixSize": r, "supportSize": r, "countSum": r,
++                    "inverseIdentityScalarPairs": r**3, "inverseBits": s+1,
++                    "denominatorBits": s+1, "valuesBits": r.bit_length()}
++        if any(type(row.get(k)) is not int or row[k] != v for k, v in expected.items()):
++            raise ValueError("wrong full-support dimensions or witness sizes")
++        if row.get("literalOrders") is not True or row.get("finiteMoments") is not True:
++            raise ValueError("missing literal-order or finite-moment guard")
++        for k in ("inputHash", "checkResultHash"):
++            if type(row.get(k)) is not int or not 0 <= row[k] < 2**64:
++                raise ValueError("invalid input or result hash")
++    if len({r["checkResultHash"] for r in rows}) != 1:
++        raise ValueError("successful checker answers disagree")
++    return {r["matrixSize"]: hex(r["checkResultHash"]) for r in rows}
++
++
++def validate_result(path, expected, revision):
++    export = json.loads(Path(path).read_text())
++    if export["export_schema_version"] != 1 or len(export["results"]) != 1:
++        raise ValueError("wrong wide checker export")
++    result = export["results"][0]
++    if (result["function"] != FUNCTION or result["kind"] != "parametric" or
++            result["hashable"] is not True or result["budget_truncated"] is not False or
++            result["complexity_formula"].replace(" ", "") != "r^3" or
++            any(type(result["config"][k]) is not type(v) or result["config"][k] != v for k, v in CONFIG.items()) or
++            result["env"]["git_commit"] != revision or result["env"]["git_dirty"] is not False):
++        raise ValueError("wrong wide checker declaration, configuration or source binding")
++    points = result["points"]
++    if [(p["trial_index"], p["param"]) for p in points] != [
++            (trial, r) for trial in range(6) for r in PARAMS]:
++        raise ValueError("incomplete or reordered wide checker observations")
++    for point in points:
++        duration = point["per_call_nanos"]
++        if (point["status"] != "ok" or point["result_hash"] != expected[point["param"]] or
++                point["part_of_verdict"] is not True or point["below_signal_floor"] is not False or
++                type(duration) not in (int, float) or not math.isfinite(duration) or duration <= 0 or
++                type(point["inner_repeats"]) is not int or point["inner_repeats"] <= 0 or
++                type(point["trial_index"]) is not int or type(point["param"]) is not int or
++                type(point["peak_rss_kb"]) is not int or point["peak_rss_kb"] <= 0 or
++                point["alloc_bytes"] is not None):
++            raise ValueError("failed or substituted wide checker observation")
++    if result["verdict"] not in ("consistent_with_declared_complexity", "inconclusive"):
++        raise ValueError("unknown wide checker verdict")
++    return {key: result[key] for key in ["verdict", "slope", "complexity_formula", "advisories"]}
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--output", type=Path, required=True)
++    args = parser.parse_args()
++    revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
++    if subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True):
++        raise ValueError("commit sources before collection")
++    subprocess.run(["lake", "build", "--no-build", "hexsigndet_bench"], cwd=ROOT, check=True)
++    executable = ROOT / ".lake/build/bin/hexsigndet_bench"
++    out = args.output.resolve()
++    if out.is_relative_to(ROOT):
++        raise ValueError("collect outside the worktree")
++    out.mkdir(parents=True, exist_ok=False)
++    cpu, lease = cpu_lease()
++    os.sched_setaffinity(0, {cpu})
++    digest = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
++    sources = source_hashes()
++    for name in ("scripts/bench/sign_det_matrix_wide.py", "scripts/bench/test_sign_det_matrix_wide.py",
++                 "scripts/bench/sign_det_compare.py", "scripts/bench/sign_det_joint_timing.py",
++                 "reports/sign-det-matrix-wide.md"):
++        sources[name] = digest(ROOT / name)
++    m = {"kind": "wide-full-support-checker-timing", "revision": revision,
++         "source_sha256": sources, "binary_sha256": digest(executable), "harness_binding": harness_binding(ROOT),
++         "host": platform.node(), "cpu": cpu, "load_before": os.getloadavg(),
++         "runs": [], "state": "running"}
++    def save(): (out / "metadata.json").write_text(json.dumps(m, indent=2) + "\n")
++    def run(label, arguments):
++        record = {"label": label, "command": [str(executable), *arguments], "state": "running"}
++        m["runs"].append(record); save()
++        start = time.monotonic()
++        with (out / (label + ".stdout")).open("w") as stdout, (out / (label + ".stderr")).open("w") as stderr:
++            code = subprocess.run(record["command"], cwd=ROOT, stdout=stdout, stderr=stderr).returncode
++        record.update(state="complete", exit_code=code, elapsed_seconds=time.monotonic()-start,
++                      load_after=os.getloadavg()); save()
++        return code
++    try:
++        archive_sources(out, m); save()
++        if run("inputs", ["inspect-wide-matrix-checks"]):
++            raise ValueError("wide checker inspection failed")
++        expected = validate_inputs(out / "inputs.stdout")
++        if run("timings", ["run", FUNCTION, "--export-file", str(out / "timings.json")]) not in (0, 1):
++            raise ValueError("wide checker runner failed; raw output retained")
++        summary = validate_result(out / "timings.json", expected, revision)
++        (out / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
++        m["source_sha256_after"] = {name: digest(ROOT / name) for name in sources}
++        if (m["source_sha256_after"] != sources or digest(executable) != m["binary_sha256"] or harness_binding(ROOT) != m["harness_binding"] or
++                subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip() != revision or
++                subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True)):
++            raise ValueError("source, binary or harness changed during collection")
++        m.update(state="complete", scientific_samples=24)
++        return int(summary["verdict"] == "inconclusive")
++    except BaseException as error:
++        m.update(state="failed", error=str(error)); raise
++    finally:
++        m["file_sha256"] = {p.name: digest(p) for p in out.iterdir() if p.is_file() and p.name != "metadata.json"}
++        m["load_after"] = os.getloadavg(); save(); lease.close()
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/scripts/bench/test_sign_det_matrix_wide.py b/scripts/bench/test_sign_det_matrix_wide.py
+new file mode 100644
+index 0000000000..5d5859be6c
+--- /dev/null
++++ b/scripts/bench/test_sign_det_matrix_wide.py
+@@ -0,0 +1,67 @@
++"""Protect full-support checker subjects, fixed schedules and raw declarations."""
++import copy
++import json
++from pathlib import Path
++import tempfile
++import unittest
++from scripts.bench import sign_det_matrix_wide as bench
++
++
++class WideMatrix(unittest.TestCase):
++    def setUp(self):
++        self.temporary = tempfile.TemporaryDirectory()
++        self.addCleanup(self.temporary.cleanup)
++        self.path = Path(self.temporary.name) / "records.json"
++        self.rows = [{"queries": s, "matrixSize": 3**s, "supportSize": 3**s,
++                      "countSum": 3**s, "inverseIdentityScalarPairs": 27**s,
++                      "inverseBits": s+1, "denominatorBits": s+1,
++                      "valuesBits": (3**s).bit_length(), "literalOrders": True,
++                      "finiteMoments": True, "inputHash": 1, "checkResultHash": 2}
++                     for s in bench.ARITIES]
++
++    def inputs(self, rows):
++        self.path.write_text("\n".join(map(json.dumps, rows)))
++        return bench.validate_inputs(self.path)
++
++    def test_subject_and_complete_schedule(self):
++        self.inputs(self.rows)
++        for key, value in (("queries", 5.0), ("countSum", 1), ("inverseBits", True),
++                           ("finiteMoments", False), ("literalOrders", False),
++                           ("checkResultHash", -1)):
++            changed = copy.deepcopy(self.rows)
++            changed[0][key] = value
++            with self.subTest(key=key), self.assertRaises(ValueError):
++                self.inputs(changed)
++        with self.assertRaises(ValueError):
++            self.inputs(self.rows[:-1])
++        with self.assertRaises(ValueError):
++            self.inputs(list(reversed(self.rows)))
++
++    def test_unchanged_declaration_and_exact_observations(self):
++        expected = self.inputs(self.rows)
++        result = {"function": bench.FUNCTION, "kind": "parametric", "hashable": True,
++                  "budget_truncated": False, "complexity_formula": "r^3", "config": bench.CONFIG,
++                  "env": {"git_commit": "source", "git_dirty": False}, "verdict": "inconclusive",
++                  "slope": 1, "advisories": [], "points": [
++                      {"trial_index": trial, "param": r, "status": "ok", "result_hash": "0x2",
++                       "part_of_verdict": True, "below_signal_floor": False,
++                       "per_call_nanos": r**3, "inner_repeats": 1, "peak_rss_kb": 100, "alloc_bytes": None}
++                      for trial in range(6) for r in bench.PARAMS]}
++        def check(value):
++            self.path.write_text(json.dumps({"export_schema_version": 1, "results": [value]}))
++            return bench.validate_result(self.path, expected, "source")
++        self.assertEqual(check(result)["verdict"], "inconclusive")
++        for key, value in (("complexity_formula", "r^2"), ("budget_truncated", True),
++                           ("function", "oldChecker")):
++            changed = copy.deepcopy(result); changed[key] = value
++            with self.subTest(key=key), self.assertRaises(ValueError):
++                check(changed)
++        for key, value in (("status", "killed_at_cap"), ("per_call_nanos", float("nan")),
++                           ("result_hash", "0x0"), ("part_of_verdict", False),
++                           ("alloc_bytes", 12)):
++            changed = copy.deepcopy(result); changed["points"][0][key] = value
++            with self.subTest(key=key), self.assertRaises(ValueError):
++                check(changed)
++        changed = copy.deepcopy(result); changed["points"].pop()
++        with self.assertRaises(ValueError):
++            check(changed)

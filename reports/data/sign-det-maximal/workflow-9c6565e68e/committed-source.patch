@@ -1,0 +1,293 @@
+diff --git a/bench/HexSignDet/Bench.lean b/bench/HexSignDet/Bench.lean
+index e08b967d37..cc7e387c0f 100644
+--- a/bench/HexSignDet/Bench.lean
++++ b/bench/HexSignDet/Bench.lean
+@@ -41,0 +42,19 @@ open Hex.SignDet
++/-- Complete maximal-support workflow, including input construction, all
++three table producers and their existing independent root/sign checks.
++This is an end-to-end fixed observation, not isolated production or replay. -/
++@[noinline, never_extract] def runMaximal (s : Nat) : Option UInt64 :=
++  match buildMaximal s with
++  | .error _ => none
++  | .ok i => some (hash i)
++
++@[noinline, never_extract] def maximalOne : Unit → Option UInt64 := fun () => runMaximal 1
++@[noinline, never_extract] def maximalTwo : Unit → Option UInt64 := fun () => runMaximal 2
++@[noinline, never_extract] def maximalThree : Unit → Option UInt64 := fun () => runMaximal 3
++
++-- Finite complete-workflow inputs: 3, 9 and 27 roots, with all 3^s words
++-- realized. Coefficient sizes grow with interpolation and remainder work,
++-- so no constant-cost wall-time scaling law is asserted for these fixed cases.
++setup_fixed_benchmark maximalOne where { repeats := 1, minTotalSeconds := 0.1, maxSecondsPerCall := 30 }
++setup_fixed_benchmark maximalTwo where { repeats := 1, minTotalSeconds := 0.1, maxSecondsPerCall := 30 }
++setup_fixed_benchmark maximalThree where { repeats := 1, minTotalSeconds := 0.1, maxSecondsPerCall := 30 }
++
+@@ -196 +215,5 @@ The inventory checks these structural hypotheses. Rational bit sizes grow;
+-this is not a unit-bit model or a general-head complexity claim. See
++this is not a unit-bit model or a general-head complexity claim. The n³
++formulas below count coefficient operations, not elapsed time: their fitted
++verdicts are descriptive. Factorial coefficient sizes vary with n, and
++normalization, dense zero products and allocation have different costs.
++Representative comparisons retain actual times and matching answers. See
+@@ -199 +222 @@ reports/sign-det-joint-performance.md for the scope and derivation. -/
+--- Declared cost-model: Θ(n³) coefficient operations for two source completion tables; see the joint derivation above.
++-- Descriptive operation-count derivation: Θ(n³) coefficient operations for two source completion tables; see the joint derivation above.
+@@ -212 +235 @@ setup_benchmark Joint.runCompletion n => n^3
+--- Declared cost-model: Θ(n³) coefficient operations for four common-head re-encoding/descriptor tables; see the joint derivation above.
++-- Descriptive operation-count derivation: Θ(n³) coefficient operations for four common-head re-encoding/descriptor tables; see the joint derivation above.
+@@ -225 +248 @@ setup_benchmark Joint.runComparison n => n^3
+--- Declared cost-model: Θ(n³) coefficient operations for both joint tables with reduced products; see the joint derivation above.
++-- Descriptive operation-count derivation: Θ(n³) coefficient operations for both joint tables with reduced products; see the joint derivation above.
+@@ -238 +261 @@ setup_benchmark Joint.runReduced n => n^3
+--- Declared cost-model: Θ(n³) coefficient operations for both joint tables with direct products; see the joint derivation above.
++-- Descriptive operation-count derivation: Θ(n³) coefficient operations for both joint tables with direct products; see the joint derivation above.
+@@ -251 +274 @@ setup_benchmark Joint.runDirect n => n^3
+--- Declared cost-model: Θ(n³) coefficient operations for literal reduced evidence checks; see the joint derivation above.
++-- Descriptive operation-count derivation: Θ(n³) coefficient operations for literal reduced evidence checks; see the joint derivation above.
+@@ -264 +287 @@ setup_benchmark Joint.runCheckReduced n => n^3
+--- Declared cost-model: Θ(n³) coefficient operations for literal direct evidence checks; see the joint derivation above.
++-- Descriptive operation-count derivation: Θ(n³) coefficient operations for literal direct evidence checks; see the joint derivation above.
+@@ -330,0 +354 @@ def main (args : List String) : IO UInt32 :=
++  else if args == ["inspect-shared-roots-work"] then Hex.SignDetBench.SharedRoots.inspectWork
+@@ -333,0 +358,7 @@ def main (args : List String) : IO UInt32 :=
++  else if args == ["inspect-maximal-workflow"] then do
++    for s in #[1, 2, 3] do
++      let .ok i := Hex.SignDetBench.buildMaximal s | throw (IO.userError "maximal workflow failed")
++      IO.println (Lean.Json.mkObj [("queries", Lean.toJson s),
++        ("inputHash", Lean.toJson (hash i).toNat),
++        ("expectedHash", Lean.toJson (hash (some (hash i))).toNat)]).compress
++    return 0
+@@ -377 +408 @@ def main (args : List String) : IO UInt32 :=
+-    discard <| Hex.SignDetBench.SharedRoots.inspect
++    discard <| Hex.SignDetBench.SharedRoots.inspectWork
+diff --git a/bench/HexSignDet/SharedRoots.lean b/bench/HexSignDet/SharedRoots.lean
+index 7e96bb3025..fc6e8a1a74 100644
+--- a/bench/HexSignDet/SharedRoots.lean
++++ b/bench/HexSignDet/SharedRoots.lean
+@@ -6,0 +7 @@ import HexSignDet.Small
++import HexSignDet.Height
+@@ -89,0 +91,46 @@ def inspect : IO UInt32 := do
++private def bitLength (z : Int) : Nat := if z == 0 then 0 else z.natAbs.log2 + 1
++private def coefficientBits (p : DensePoly Rat) : Nat := p.toArray.foldl (fun b q =>
++  max b (max (bitLength q.num) (q.den.log2 + 1))) 0
++private def orderLabel : Ordering → String
++  | .lt => "lt" | .eq => "eq" | .gt => "gt"
++private def interval (d : Root) : Lean.Json :=
++  match d.raw.lower, d.raw.upper with
++  | .finite lo, .finite hi => Lean.toJson ((lo.num, lo.den), (hi.num, hi.den))
++  | _, _ => .null
++
++/-- All eleven table constructions in the callback: three initial descriptors,
++four target validations, and four joint re-encodings. Counts describe literal
++work returned by those actual constructors, not instrumented arithmetic calls. -/
++def inspectWork : IO UInt32 := do
++  for n in #[1, 2, 3] do
++    let some i := input n | throw (IO.userError s!"shared-root case failed at {n}")
++    let ts := [i.left.evidence, i.same.evidence, i.last.evidence,
++      i.equal.leftEncoding.target.evidence, i.equal.rightEncoding.target.evidence,
++      i.strict.leftEncoding.target.evidence, i.strict.rightEncoding.target.evidence,
++      i.equal.leftEncoding.evidence, i.equal.rightEncoding.evidence,
++      i.strict.leftEncoding.evidence, i.strict.rightEncoding.evidence]
++    let queryCounts := ts.map fun t => (nodes t).foldl (fun k node => k + node.size) 0
++    let literalBits := ts.foldl (fun b t => max b <| max (Height.witnessBits t)
++      ((nodes t).foldl (fun b node =>
++        node.queries.foldl (fun b q => max b (coefficientBits q))
++          (max b (coefficientBits node.head))) 0)) 0
++    IO.println <| (Lean.Json.mkObj [
++      ("extraFactors", Lean.toJson n), ("left", polynomial i.left.raw.head),
++      ("right", polynomial i.same.raw.head), ("lastHead", polynomial i.last.raw.head),
++      ("factor", polynomial i.equal.common.factor),
++      ("commonHead", polynomial i.equal.common.head),
++      ("strictFactor", polynomial i.strict.common.factor),
++      ("strictCommonHead", polynomial i.strict.common.head),
++      ("equalOrder", Lean.toJson (orderLabel i.equal.order)),
++      ("strictOrder", Lean.toJson (orderLabel i.strict.order)),
++      ("leftInterval", interval i.left), ("sameInterval", interval i.same),
++      ("lastInterval", interval i.last),
++      ("tableLabels", Lean.toJson (["source-left", "source-same", "source-last",
++        "target-equal-left", "target-equal-right", "target-strict-left", "target-strict-right",
++        "joint-equal-left", "joint-equal-right", "joint-strict-left", "joint-strict-right"] : List String)),
++      ("tableMomentCounts", Lean.toJson queryCounts),
++      ("totalTableMoments", Lean.toJson queryCounts.sum),
++      ("maxTableCoefficientBits", Lean.toJson literalBits),
++      ("resultHash", Lean.toJson (hash (some (result i))).toNat)]).compress
++  return 0
++
+diff --git a/scripts/bench/sign_det_maximal_workflow.py b/scripts/bench/sign_det_maximal_workflow.py
+new file mode 100644
+index 0000000000..e212062e2d
+--- /dev/null
++++ b/scripts/bench/sign_det_maximal_workflow.py
+@@ -0,0 +1,124 @@
++#!/usr/bin/env python3
++"""Measure three complete maximal-support workflows; no timing law is assumed."""
++import argparse
++import hashlib
++import json
++import math
++import os
++from pathlib import Path
++import platform
++import statistics
++import subprocess
++import sys
++
++ROOT = Path(__file__).resolve().parents[2]
++sys.path.insert(0, str(ROOT))
++from scripts.bench.cpu_lease import cpu_lease
++from scripts.bench.sign_det_compare import archive_sources
++from scripts.bench.sign_det_sparse import source_hashes
++from scripts.bench.sign_det_maximal import validate_inventory
++
++CASES = ("maximalOne", "maximalTwo", "maximalThree")
++TRIALS = 6
++
++
++def validate_export(path, case, expected, revision):
++    data = json.loads(path.read_text())
++    if data["export_schema_version"] != 1 or len(data["results"]) != 1:
++        raise ValueError("wrong export schema")
++    r = data["results"][0]
++    required = {"function": "Hex.SignDetBench." + case, "kind": "fixed",
++                "hashable": True, "hashes_agree": True, "budget_truncated": False,
++                "observed_hash": hex(expected)}
++    if any(r.get(k) != v for k, v in required.items()):
++        raise ValueError("wrong, incomplete or incorrect workflow result")
++    if r["env"]["git_commit"] != revision or r["env"]["git_dirty"] is not False:
++        raise ValueError("measurement is not bound to clean sources")
++    if r["config"] != {"warmup_first_iter": False, "warmup": True, "repeats": 1,
++                       "min_total_seconds": 0.1, "max_seconds_per_call": 30,
++                       "expected_hash": None}:
++        raise ValueError("changed fixed measurement schedule")
++    if len(r["points"]) != 1:
++        raise ValueError("missing or extra observations")
++    p = r["points"][0]
++    if (p["status"] != "ok" or p["repeat_index"] != 0 or
++            p["result_hash"] != hex(expected) or type(p["inner_repeats"]) is not int or
++            p["inner_repeats"] <= 0 or type(p["total_nanos"]) is not int or
++            p["total_nanos"] <= 0):
++        raise ValueError("invalid fixed observation")
++    nanos = r["median_nanos"]
++    if (type(nanos) not in (float, int) or not math.isfinite(nanos) or
++            nanos <= 0 or nanos != p["total_nanos"] // p["inner_repeats"]):
++        raise ValueError("summary disagrees with retained observation")
++    return nanos
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    parser.add_argument("--output", type=Path, required=True)
++    args = parser.parse_args()
++    if subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT):
++        raise ValueError("commit measured sources first")
++    subprocess.run(["lake", "build", "--no-build", "hexsigndet_bench"], cwd=ROOT, check=True)
++    out = args.output.resolve()
++    if out.is_relative_to(ROOT):
++        raise ValueError("collect outside the source worktree")
++    out.mkdir(parents=True, exist_ok=False)
++    exe = ROOT / ".lake/build/bin/hexsigndet_bench"
++    sources = source_hashes()
++    for path in ("scripts/bench/sign_det_maximal_workflow.py", "scripts/bench/sign_det_maximal.py",
++                 "scripts/bench/sign_det_compare.py", "scripts/bench/test_sign_det_maximal_workflow.py"):
++        sources[path] = hashlib.sha256((ROOT / path).read_bytes()).hexdigest()
++    cpu, lease = cpu_lease()
++    os.sched_setaffinity(0, {cpu})
++    metadata = {"kind": "fixed-complete-maximal-workflows", "trials": TRIALS,
++                "cases": list(CASES), "schedule": "trial-major", "state": "running",
++                "revision": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
++                "source_sha256": sources, "binary_sha256": hashlib.sha256(exe.read_bytes()).hexdigest(),
++                "host": platform.node(), "platform": platform.platform(), "cpu": cpu,
++                "affinity": sorted(os.sched_getaffinity(0)), "load_start": os.getloadavg()}
++    record = out / "metadata.json"
++    try:
++        archive_sources(out, metadata)
++        record.write_text(json.dumps(metadata, indent=2) + "\n")
++        for command, name in (("inspect-maximal", "inventory"),
++                              ("inspect-maximal-workflow", "hashes")):
++            with (out / (name + ".jsonl")).open("w") as stdout, (out / (name + ".stderr")).open("w") as stderr:
++                subprocess.run([str(exe), command], cwd=ROOT, stdout=stdout, stderr=stderr, check=True)
++        inventory = validate_inventory(out / "inventory.jsonl")
++        hashes = [json.loads(line) for line in (out / "hashes.jsonl").read_text().splitlines()]
++        if [r["queries"] for r in hashes] != [1, 2, 3] or any(
++                r["inputHash"] != i["inputHash"] or type(r["expectedHash"]) is not int or
++                not 0 <= r["expectedHash"] < 2**64 for r, i in zip(hashes, inventory, strict=True)):
++            raise ValueError("workflow hashes do not bind the checked inputs")
++        observations = {case: [] for case in CASES}
++        with (out / "commands.jsonl").open("w") as journal:
++            for trial in range(TRIALS):
++                for case, binding in zip(CASES, hashes, strict=True):
++                    path = out / f"{trial}-{case}.json"
++                    command = [str(exe), "run", "--filter", case, "--export-file", str(path)]
++                    with path.with_suffix(".stdout").open("w") as stdout, path.with_suffix(".stderr").open("w") as stderr:
++                        result = subprocess.run(command, cwd=ROOT, stdout=stdout, stderr=stderr)
++                    journal.write(json.dumps({"trial": trial, "case": case, "command": command,
++                        "exit_code": result.returncode, "export": path.name, "load": os.getloadavg()}) + "\n")
++                    journal.flush()
++                    result.check_returncode()
++                    observations[case].append(validate_export(path, case, binding["expectedHash"], metadata["revision"]))
++        if any(hashlib.sha256((ROOT / p).read_bytes()).hexdigest() != h for p, h in sources.items()) or (
++                hashlib.sha256(exe.read_bytes()).hexdigest() != metadata["binary_sha256"] or
++                subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip() != metadata["revision"]):
++            raise ValueError("sources or executable changed during collection")
++        metadata.update(state="complete", observations=observations,
++                        median_nanos={k: statistics.median(v) for k, v in observations.items()})
++    except Exception as error:
++        metadata.update(state="failed", error=str(error))
++        raise
++    finally:
++        metadata["load_end"] = os.getloadavg()
++        record.write_text(json.dumps(metadata, indent=2) + "\n")
++        lease.close()
++    print(json.dumps(metadata["median_nanos"]))
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/scripts/bench/test_sign_det_maximal_workflow.py b/scripts/bench/test_sign_det_maximal_workflow.py
+new file mode 100644
+index 0000000000..c420d808f4
+--- /dev/null
++++ b/scripts/bench/test_sign_det_maximal_workflow.py
+@@ -0,0 +1,42 @@
++"""Reject corrupted workflow results, bindings and measurement schedules."""
++import copy
++import json
++from pathlib import Path
++import tempfile
++import unittest
++from scripts.bench.sign_det_maximal_workflow import validate_export
++
++
++class WorkflowTest(unittest.TestCase):
++    def test_reject_mutations(self):
++        r = {"function": "Hex.SignDetBench.maximalOne", "kind": "fixed", "hashable": True,
++             "hashes_agree": True, "budget_truncated": False, "observed_hash": "0x7",
++             "env": {"git_commit": "a" * 40, "git_dirty": False},
++             "config": {"warmup_first_iter": False, "warmup": True, "repeats": 1,
++                        "min_total_seconds": 0.1, "max_seconds_per_call": 30,
++                        "expected_hash": None}, "median_nanos": 100,
++             "points": [{"status": "ok", "repeat_index": 0, "result_hash": "0x7",
++                         "inner_repeats": 10, "total_nanos": 1000}]}
++        with tempfile.TemporaryDirectory() as tmp:
++            p = Path(tmp) / "export.json"
++            def check(row):
++                p.write_text(json.dumps({"export_schema_version": 1, "results": [row]}))
++                return validate_export(p, "maximalOne", 7, "a" * 40)
++            self.assertEqual(check(r), 100)
++            mutations = [("observed_hash", "0x8"), ("budget_truncated", True),
++                         ("median_nanos", 101), ("points", []), ("hashes_agree", False)]
++            for key, value in mutations:
++                bad = copy.deepcopy(r); bad[key] = value
++                with self.subTest(key=key), self.assertRaises(ValueError): check(bad)
++            for section, key, value in (("env", "git_dirty", True), ("env", "git_commit", "b" * 40),
++                                        ("config", "repeats", 2)):
++                bad = copy.deepcopy(r); bad[section][key] = value
++                with self.subTest(key=key), self.assertRaises(ValueError): check(bad)
++            for key, value in (("status", "error"), ("result_hash", "0x8"),
++                               ("inner_repeats", 0), ("total_nanos", -1)):
++                bad = copy.deepcopy(r); bad["points"][0][key] = value
++                with self.subTest(key=key), self.assertRaises(ValueError): check(bad)
++
++
++if __name__ == "__main__":
++    unittest.main()

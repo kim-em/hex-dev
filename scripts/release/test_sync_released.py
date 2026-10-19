@@ -7,16 +7,29 @@ import json
 import subprocess
 import tempfile
 import unittest
+import re
+import shutil
+import tomllib
 from pathlib import Path
 from unittest.mock import patch
 
 import yaml
 
 from scripts.release import aggregate_readme, sync_released
+from scripts.release.intfactor_prospective import ENTRY as INTFACTOR_ENTRY
 
 
 class SyncReleasedTests(unittest.TestCase):
     def setUp(self) -> None:
+        self.enterContext(patch.object(sync_released, "publication_fingerprint", return_value="a" * 64))
+        self.enterContext(patch.object(sync_released, "reuse_published"))
+        self.enterContext(patch.object(sync_released, "mathlib_dependencies", return_value=[]))
+        closure = sync_released.closure_external_packages
+        self.enterContext(patch.object(sync_released, "closure_external_packages",
+                                      side_effect=lambda e, es: closure(e, es)
+                                      if e.get("lib") or e.get("pins_only") else set()))
+        classification = sync_released._library_mathlib() | {"HexProbe": True}
+        self.enterContext(patch.object(sync_released, "_library_mathlib", return_value=classification))
         self.temporary = tempfile.TemporaryDirectory()
         self.repo = Path(self.temporary.name)
         (self.repo / "lean-toolchain").write_text(
@@ -405,151 +418,6 @@ class SyncReleasedTests(unittest.TestCase):
         with patch.object(sync_released, "RELEASED_CI", source):
             sync_released.validate_ci_helpers(entry, self.repo)
 
-    def test_direct_pins_rewrite_toml_and_lean(self) -> None:
-        (self.repo / "lakefile.toml").write_text(
-            '[[require]]\n'
-            'name = "mathlib"\n'
-            'git = "https://github.com/leanprover-community/mathlib4.git"\n'
-            'rev = "v4.32.0-rc1-patch1"\n',
-            encoding="utf-8",
-        )
-        (self.repo / "bench" / "lakefile.lean").write_text(
-            'require verso from git\n'
-            '  "https://github.com/leanprover/verso.git" @ "v4.32.0-rc1"\n',
-            encoding="utf-8",
-        )
-        sync_released.rewrite_external_pins(self.repo, self.pins)
-        self.assertIn(
-            f'rev = "{self.mathlib["inputRev"]}"',
-            (self.repo / "lakefile.toml").read_text(),
-        )
-        self.assertIn(
-            f'@ "{self.verso["inputRev"]}"',
-            (self.repo / "bench" / "lakefile.lean").read_text(),
-        )
-
-    def test_hex_pins_use_one_release_version(self) -> None:
-        sha = "a" * 40
-        (self.repo / "lakefile.toml").write_text(
-            '[[require]]\nname = "HexBasic"\n'
-            'git = "https://github.com/kim-em/hex-basic.git"\n'
-            f'rev = "{sha}"\n',
-            encoding="utf-8",
-        )
-        (self.repo / "bench" / "lakefile.lean").write_text(
-            'require HexBasic from git\n'
-            '  "https://github.com/kim-em/hex-basic.git" @ "v0.1.0"\n',
-            encoding="utf-8",
-        )
-        notes = sync_released.rewrite_pins(
-            {}, self.repo, {"hex-basic": sha},
-            {"hex-basic": "leanprover"}, "v0.2.0")
-        self.assertEqual(len(notes), 2)
-        self.assertIn(
-            'git = "https://github.com/leanprover/hex-basic.git"\n'
-            'rev = "v0.2.0"',
-            (self.repo / "lakefile.toml").read_text(),
-        )
-        self.assertIn(
-            '"https://github.com/leanprover/hex-basic.git" @ "v0.2.0"',
-            (self.repo / "bench" / "lakefile.lean").read_text(),
-        )
-
-    def test_reservoir_toml_pin_rewrites_by_package_name(self) -> None:
-        (self.repo / "lakefile.toml").write_text(
-            'name = "consumer"\n'
-            '\n'
-            '[[require]]\n'
-            'name = "mathlib"\n'
-            'scope = "leanprover-community"\n'
-            'rev = "v4.32.0-rc1-patch1"\n'
-            '\n'
-            '[[require]]\n'
-            'rev = "v4.32.0-rc1"\n'
-            'git = "https://github.com/leanprover/verso.git"\n'
-            'name = "verso"\n'
-            '\n'
-            '[[lean_lib]]\n'
-            'name = "Consumer"\n',
-            encoding="utf-8",
-        )
-        notes = sync_released.rewrite_external_pins(self.repo, self.pins)
-        rewritten = (self.repo / "lakefile.toml").read_text()
-        self.assertIn(f'rev = "{self.mathlib["inputRev"]}"', rewritten)
-        self.assertIn(f'rev = "{self.verso["inputRev"]}"', rewritten)
-        self.assertEqual(len(notes), 2)
-
-    def test_external_toml_requirement_without_rev_fails_closed(self) -> None:
-        (self.repo / "lakefile.toml").write_text(
-            '[[require]]\n'
-            'name = "mathlib"\n'
-            'scope = "leanprover-community"\n',
-            encoding="utf-8",
-        )
-        with self.assertRaisesRegex(RuntimeError, "has no rev"):
-            sync_released.rewrite_external_pins(self.repo, self.pins)
-
-    def test_release_skeleton_checks_build_roots(self) -> None:
-        (self.repo / "lakefile.lean").write_text(
-            "import Lake\n"
-            "lean_lib ConsumerTests where\n"
-            "  globs := #[`Consumer.Tests]\n"
-            "lean_lib ConsumerModules where\n"
-            "  globs := #[`Consumer.All]\n"
-            "lean_exe consumer_check where\n"
-            "  root := `Consumer.Check\n"
-            "lean_exe unrelated where\n"
-            "  root := `Consumer.Other\n",
-            encoding="utf-8",
-        )
-        entry = {
-            "lakefile": "lean",
-            "test_modules": ["Consumer.Tests"],
-            "build_modules": ["Consumer.All"],
-            "executables": {"consumer_check": "Consumer.Check"},
-        }
-        sync_released.validate_skeleton(entry, self.repo)
-
-        entry["executables"]["consumer_check"] = "Consumer.Other"
-        with self.assertRaisesRegex(RuntimeError, "must define executable"):
-            sync_released.validate_skeleton(entry, self.repo)
-
-    def test_release_skeleton_requires_declared_lake_format(self) -> None:
-        (self.repo / "lakefile.lean").write_text("import Lake\n", encoding="utf-8")
-        with self.assertRaisesRegex(RuntimeError, "lakefile.toml"):
-            sync_released.validate_skeleton({"lakefile": "toml"}, self.repo)
-
-    def test_release_test_target_tracks_manifest_in_toml(self) -> None:
-        lakefile = self.repo / "lakefile.toml"
-        lakefile.write_text(
-            '[[lean_lib]]\nname = "HexProbe"\n\n'
-            '[[lean_lib]]\nname = "HexProbeTests"\n'
-            'globs = ["HexProbe.OldTest"]\n',
-            encoding="utf-8",
-        )
-        entry = {"lib": "HexProbe", "lakefile": "toml",
-                 "test_modules": ["HexProbe.FirstTest", "HexProbe.SecondTest"]}
-        self.assertEqual(sync_released.rewrite_test_target(entry, self.repo),
-                         ["  release tests on lean_lib HexProbeTests (lakefile.toml)"])
-        self.assertIn(
-            'globs = ["HexProbe.FirstTest", "HexProbe.SecondTest"]',
-            lakefile.read_text(encoding="utf-8"),
-        )
-        self.assertEqual(sync_released.rewrite_test_target(entry, self.repo), [])
-
-    def test_release_test_target_is_created_in_lean(self) -> None:
-        lakefile = self.repo / "lakefile.lean"
-        lakefile.write_text("import Lake\n\nlean_lib HexProbe\n", encoding="utf-8")
-        entry = {"lib": "HexProbe", "lakefile": "lean",
-                 "test_modules": ["HexProbe.FirstTest", "HexProbe.SecondTest"]}
-        sync_released.rewrite_test_target(entry, self.repo)
-        self.assertIn(
-            "lean_lib HexProbeTests where\n"
-            "  globs := #[`HexProbe.FirstTest, `HexProbe.SecondTest]\n",
-            lakefile.read_text(encoding="utf-8"),
-        )
-        sync_released.validate_skeleton(entry, self.repo)
-
     def test_manifest_uses_exact_external_commit(self) -> None:
         manifest = {
             "version": "1.1.0",
@@ -610,6 +478,36 @@ class SyncReleasedTests(unittest.TestCase):
             {"pins": ["hex-basic", "hex-arith", "hex-poly"]}, self.repo,
             synced, {}, self.pins, "v0.1.0", catalog)
         self.assertFalse(any("manifest +" in note for note in again))
+
+    def test_manifest_follows_renamed_repositories(self) -> None:
+        (self.repo / "lakefile.toml").write_text(
+            '[[require]]\n'
+            'name = "HexPolyTheory"\n'
+            'git = "https://github.com/leanprover/hex-poly-theory.git"\n'
+            'rev = "v0.2.0"\n',
+            encoding="utf-8",
+        )
+        manifest = {"version": "1.2.0", "name": "«hex-poly-z-theory»", "packages": [{
+            "name": "HexPolyTheory",
+            "url": "https://github.com/leanprover/hex-poly-theory.git",
+            "rev": "0000000",
+            "inputRev": "v0.1.0",
+            "configFile": "lakefile.toml",
+        }]}
+        path = self.repo / "lake-manifest.json"
+        path.write_text(json.dumps(manifest), encoding="utf-8")
+        sync_released.rewrite_manifest(
+            {"repo": "leanprover/hex-poly-z-theory", "lib": "HexPolyZTheory",
+             "pins": ["hex-poly-theory"]},
+            self.repo, {"hex-poly-theory": "a" * 40}, {}, self.pins, "v0.2.0",
+            {"hex-poly-theory": {"lib": "HexPolyTheory", "lakefile": "toml"}})
+        doc = json.loads(path.read_text())
+        self.assertEqual(doc["name"], "«hex-poly-z-theory»")
+        self.assertEqual([(p["name"], p["url"], p["rev"], p["inherited"])
+                          for p in doc["packages"] if p["name"].startswith("Hex")],
+                         [("HexPolyTheory",
+                           "https://github.com/leanprover/hex-poly-theory.git",
+                           "a" * 40, False)])
 
     def test_manifest_records_direct_pins_as_not_inherited(self) -> None:
         (self.repo / "lakefile.toml").write_text(
@@ -672,63 +570,23 @@ class SyncReleasedTests(unittest.TestCase):
             encoding="utf-8")
         sync_released.validate_external_imports(entry, self.repo)
 
-    def test_direct_imports_gain_direct_requires_in_toml(self) -> None:
-        lib = self.repo / "HexProbe"
-        lib.mkdir()
-        (lib / "Basic.lean").write_text(
-            "module\n\npublic import HexArith.Basic\nimport HexMatrix\n"
-            "import HexProbe.Other\n", encoding="utf-8")
-        (self.repo / "lakefile.toml").write_text(
-            'name = "hex-probe"\n\n[[require]]\nname = "HexMatrix"\n'
-            'git = "https://github.com/leanprover/hex-matrix.git"\nrev = "0"\n\n'
-            '[[lean_lib]]\nname = "HexProbe"\n', encoding="utf-8")
-        entry = {"repo": "leanprover/hex-probe", "lib": "HexProbe",
-                 "lakefile": "toml", "readme": False,
-                 "pins": ["hex-basic", "hex-arith", "hex-matrix"]}
-        synced = {"hex-basic": "a" * 40, "hex-arith": "b" * 40,
-                  "hex-matrix": "c" * 40}
-        catalog = {"hex-basic": {"lib": "HexBasic", "lakefile": "toml"},
-                   "hex-arith": {"lib": "HexArith", "lakefile": "lean"},
-                   "hex-matrix": {"lib": "HexMatrix", "lakefile": "toml"}}
-        notes = sync_released.rewrite_requires(
-            entry, self.repo, synced, {}, "v0.1.0", catalog)
-        text = (self.repo / "lakefile.toml").read_text()
-        self.assertEqual(notes, [
-            '  require + hex-arith (HexArith) -> v0.1.0 (lakefile.toml)'])
-        self.assertNotIn("hex-basic.git", text)
-        block = ('[[require]]\nname = "HexArith"\n'
-                 'git = "https://github.com/leanprover/hex-arith.git"\n'
-                 'rev = "v0.1.0"\n\n[[lean_lib]]')
-        self.assertIn(block, text)
-        self.assertEqual(text.count("[[require]]"), 2)
-        self.assertEqual(
-            sync_released.rewrite_requires(
-                entry, self.repo, synced, {}, "v0.1.0", catalog),
-            [])
+    def test_external_validation_ignores_comments_and_strings(self) -> None:
+        entry = self._external_import_entry('name = "probe"\n',
+            '/-\nimport TauCeti\n/- import Mathlib -/\n-/\n'
+            'def diagnostic := "import Batteries"\n')
+        sync_released.validate_external_imports(entry, self.repo)
+        (self.repo / "HexProbe" / "Basic.lean").write_text(
+            "import Init TauCeti.Data.Matrix.OccCount\n")
+        with self.assertRaisesRegex(RuntimeError, "imports TauCeti"):
+            sync_released.validate_external_imports(entry, self.repo)
 
-    def test_direct_imports_gain_direct_requires_in_lean(self) -> None:
-        lib = self.repo / "HexProbe"
-        lib.mkdir()
-        (lib / "Basic.lean").write_text(
-            "import HexBasic.Core\n", encoding="utf-8")
+    def test_commented_requirement_does_not_provide_tauceti(self) -> None:
+        entry = self._external_import_entry('', 'import TauCeti\n')
+        entry["lakefile"] = "lean"
         (self.repo / "lakefile.lean").write_text(
-            "import Lake\n\nopen Lake DSL\n\npackage «hex-probe» where\n"
-            "  leanOptions := #[]\n\nrequire HexArith from git\n"
-            '  "https://github.com/leanprover/hex-arith.git" @ "0"\n\n'
-            "@[default_target]\nlean_lib HexProbe\n", encoding="utf-8")
-        entry = {"repo": "leanprover/hex-probe", "lib": "HexProbe",
-                 "lakefile": "lean", "readme": False,
-                 "pins": ["hex-basic", "hex-arith"]}
-        sync_released.rewrite_requires(
-            entry, self.repo, {"hex-basic": "a" * 40, "hex-arith": "b" * 40}, {},
-            "v0.1.0",
-            {"hex-basic": {"lib": "HexBasic", "lakefile": "toml"},
-             "hex-arith": {"lib": "HexArith", "lakefile": "lean"}})
-        text = (self.repo / "lakefile.lean").read_text()
-        self.assertIn(
-            '@ "0"\n\nrequire HexBasic from git\n'
-            '  "https://github.com/leanprover/hex-basic.git" @ "v0.1.0"\n\n'
-            "@[default_target]", text)
+            '/-\nrequire "TauCetiProject" / "TauCeti"\n-/\n')
+        with self.assertRaisesRegex(RuntimeError, "imports TauCeti"):
+            sync_released.validate_external_imports(entry, self.repo)
 
     def test_missing_root_toolchain_fails_closed(self) -> None:
         (self.repo / "lean-toolchain").unlink()
@@ -750,7 +608,8 @@ class SyncReleasedTests(unittest.TestCase):
         )
 
         def publish(entry, _source_sha, _token, _dry_run, synced,
-                    _baseline, _force, _dep_owner, _pins, version, resuming):
+                    _baseline, _force, _dep_owner, _pins, version, resuming,
+                    *_rest):
             self.assertEqual(version, "v0.2.0")
             self.assertFalse(resuming)
             if entry["repo"].endswith("/first"):
@@ -780,7 +639,9 @@ class SyncReleasedTests(unittest.TestCase):
         self.assertEqual(advanced["first"], "new-first")
         self.assertEqual(advanced["second"], "old-second")
         self.assertEqual(advanced["_pending_release"], {
-            "version": "v0.2.0", "source": "source-sha", "repos": ["first"]})
+            "version": "v0.2.0", "source": "source-sha", "repos": ["first"],
+            "planned_repos": ["first", "second"], "fingerprints": {"first": "a" * 64},
+            "sources": {"first": "source-sha"}})
         self.assertNotIn("_version", advanced)
 
     def test_completed_publication_advances_the_shared_version(self) -> None:
@@ -799,7 +660,8 @@ class SyncReleasedTests(unittest.TestCase):
         }), encoding="utf-8")
 
         def publish(entry, _source_sha, _token, _dry_run, synced,
-                    _baseline, _force, _dep_owner, _pins, version, resuming):
+                    _baseline, _force, _dep_owner, _pins, version, resuming,
+                    *_rest):
             self.assertEqual(version, "v0.2.0")
             self.assertFalse(resuming)
             short = entry["repo"].split("/")[-1]
@@ -846,7 +708,8 @@ class SyncReleasedTests(unittest.TestCase):
         }), encoding="utf-8")
 
         def publish(entry, _source_sha, _token, _dry_run, synced,
-                    _baseline, _force, _dep_owner, _pins, version, resuming):
+                    _baseline, _force, _dep_owner, _pins, version, resuming,
+                    *_rest):
             self.assertEqual(version, "v0.2.0")
             self.assertTrue(resuming)
             short = entry["repo"].split("/")[-1]
@@ -885,7 +748,8 @@ class SyncReleasedTests(unittest.TestCase):
         )
 
         def publish(entry, _source_sha, _token, _dry_run, synced,
-                    _baseline, _force, _dep_owner, _pins, version, resuming):
+                    _baseline, _force, _dep_owner, _pins, version, resuming,
+                    *_rest):
             self.assertEqual(version, "v0.2.0")
             self.assertFalse(resuming)
             self.assertEqual(entry["repo"], "leanprover/downstream")
@@ -919,6 +783,52 @@ class SyncReleasedTests(unittest.TestCase):
         self.assertEqual(advanced["downstream"], "new-downstream")
         self.assertEqual(advanced["_pending_release"]["repos"], ["downstream"])
 
+    def test_intfactor_optional_modules_and_frozen_data_are_managed(self) -> None:
+        # Prospective publication: HexIntFactor is not a released.yml entry yet.
+        entry = INTFACTOR_ENTRY
+        (self.repo / "lakefile.lean").write_text(
+            "import Lake\nopen Lake DSL\npackage factor\n"
+            "lean_lib HexIntFactor where\n"
+            "  globs := #[`HexIntFactor, `HexIntFactor.Pari, `HexIntFactor.Export, "
+            "`HexIntFactor.Replay, `HexIntFactor.Mixed.Replay, `HexIntFactor.Mixed.Import, "
+            "`HexIntFactor.Mixed.Pari, `HexIntFactor.Mixed.Export].map Glob.one\n")
+        with patch.object(sync_released, "apply_ci_workflow", return_value=[]):
+            sync_released.apply_paths(entry, self.repo)
+        for module in entry["build_modules"] + entry["test_modules"]:
+            path = self.repo / (module.replace(".", "/") + ".lean")
+            self.assertTrue(path.is_file(), module)
+        text = (self.repo / "HexIntFactor/Frozen/Case3.lean").read_text()
+        self.assertIn("public import HexIntFactor.Replay", text)
+        self.assertNotIn("HexIntFactor.Export", text)
+        mixed = (self.repo / "HexIntFactor/Mixed/Frozen/CaseA.lean").read_text()
+        self.assertIn("public import HexIntFactor.Mixed.Replay", mixed)
+        self.assertNotIn("Mathlib", mixed)
+        self.assertNotIn("Mixed.Export", mixed)
+        self.assertTrue((self.repo / "HexIntFactor/Pari/IO.lean").is_file())
+        self.assertTrue((self.repo / "HexIntFactor/ffi/pari_pipe.c").is_file())
+        self.assertFalse((self.repo / "bench").joinpath("HexIntFactor").exists())
+        self.assertTrue((self.repo / "SPEC/hex-int-factor.md").is_file())
+
+    def test_intfactor_prospective_lakefile_links_pari_pipes(self) -> None:
+        # The prospective Lake file copies the native PARI pipe target and its
+        # carrier library from this monorepo's lakefile, as a generated one would.
+        import sys
+        sys.path.insert(0, str(Path(sync_released.__file__).parent))
+        try:
+            from scripts.release import check_intfactor_split
+        finally:
+            sys.path.pop(0)
+        for name in INTFACTOR_ENTRY["lake_declarations"]:
+            sync_released.lake_declaration(sync_released.LAKEFILE.read_text(), name)
+        text = check_intfactor_split.prospective_lakefile()
+        target = text.index("target hexintfactorpariio pkg")
+        library = text.index("lean_lib HexIntFactor where")
+        carrier = text.index("lean_lib HexIntFactorPariIO where")
+        self.assertLess(target, library)
+        self.assertLess(library, carrier)
+        self.assertIn("moreLinkObjs := #[hexintfactorpariio]", text[carrier:])
+        self.assertIn('"pari_pipe.c"', text[target:library])
+
     def test_repo_push_updates_main_and_tag_atomically(self) -> None:
         remote = self.repo / "remote.git"
         seed = self.repo / "seed"
@@ -947,7 +857,8 @@ class SyncReleasedTests(unittest.TestCase):
                  "lakefile": "toml"}
         with (
             patch.object(sync_released, "clone_url", return_value=str(remote)),
-            patch.object(sync_released, "validate_skeleton"),
+            patch.object(sync_released, "write_lakefile", return_value=[]),
+            patch.object(sync_released, "validate_manifest"),
             patch.object(sync_released, "validate_ci_helpers"),
             patch.object(sync_released, "apply_paths", side_effect=apply),
             patch.object(sync_released, "rewrite_toolchains", return_value=[]),
@@ -966,240 +877,71 @@ class SyncReleasedTests(unittest.TestCase):
         self.assertEqual(synced["probe"], main)
 
 
-class LakeDeclarationTests(unittest.TestCase):
+class BaselineLoadingTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.temporary = tempfile.TemporaryDirectory()
-        self.addCleanup(self.temporary.cleanup)
-        self.root = Path(self.temporary.name)
-        self.source = self.root / "source.lean"
-        self.clone = self.root / "clone"
-        self.clone.mkdir()
-        self.target = self.clone / "lakefile.lean"
-        self.entry = {"lakefile": "lean", "lake_declarations": ["compileTarget"]}
-        self.definition = (
-            "private def compileTarget (pkg : Package) : FetchM (Job FilePath) := do\n"
-            "  let flags := #[\"-pipe\"]\n"
-            "  compileO output source flags\n\n"
-        )
-        self.source.write_text("import Lake\n\n" + self.definition + "lean_lib Other\n")
-        self.original = (
-            "import Lake\n\n"
-            "private def compileTarget (pkg : Package) : FetchM (Job FilePath) := do\n"
-            "  compileO output source #[]\n\n"
-            "@[default_target]\nlean_lib Consumer where\n  precompileModules := true\n"
-        )
-        self.target.write_text(self.original)
+        temporary = self.enterContext(tempfile.TemporaryDirectory())
+        self.root = Path(temporary)
+        self.remote = self.root / "remote.git"
+        self.checkout = self.root / "checkout"
+        self.git("init", "--bare", str(self.remote))
+        self.git("init", "--initial-branch=release-sync-baseline", str(self.checkout))
+        self.git("remote", "add", "origin", str(self.remote), cwd=self.checkout)
+        self.seed = self.root / "seed.json"
+        self.seed.write_text(json.dumps({"_version": "v0.1.0"}))
+        self.output = self.root / "baseline.json"
+        self.enterContext(patch.object(sync_released, "REPO_ROOT", self.checkout))
+        self.enterContext(patch.object(sync_released, "BASELINE", self.seed))
 
-    def rewrite(self) -> list[str]:
-        with patch.object(sync_released, "LAKEFILE", self.source):
-            return sync_released.rewrite_lake_declarations(self.entry, self.clone)
+    def git(self, *args: str, cwd: Path | None = None) -> str:
+        return subprocess.run(["git", *args], cwd=cwd, check=True, text=True,
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout.strip()
 
-    def test_copies_recipe_preserving_skeleton_and_is_idempotent(self) -> None:
-        self.assertEqual(len(self.rewrite()), 1)
-        self.assertEqual(self.target.read_text(),
-            "import Lake\n\n" + self.definition
-            + "@[default_target]\nlean_lib Consumer where\n  precompileModules := true\n")
-        self.assertEqual(self.rewrite(), [])
+    def publish(self, text: str) -> None:
+        (self.checkout / "synced.json").write_text(text)
+        self.git("add", ".", cwd=self.checkout)
+        self.git("-c", "user.name=Test", "-c", "user.email=test@example.org",
+                 "commit", "-m", "baseline", cwd=self.checkout)
+        self.git("push", "origin", "release-sync-baseline", cwd=self.checkout)
 
-    def test_missing_helper_does_not_write_partial_result(self) -> None:
-        self.entry["lake_declarations"].append("missing")
-        with self.assertRaisesRegex(RuntimeError, "expected one Lake declaration missing"):
-            self.rewrite()
-        self.assertEqual(self.target.read_text(), self.original)
+    def test_absent_branch_uses_bootstrap_seed(self) -> None:
+        sync_released.load_baseline(self.output, "release-sync-baseline")
+        self.assertEqual(json.loads(self.output.read_text()), {"_version": "v0.1.0"})
 
-    def test_duplicate_declarations_are_rejected(self) -> None:
-        self.source.write_text(self.definition * 2)
-        with self.assertRaisesRegex(RuntimeError, "found 2"):
-            self.rewrite()
-        self.assertEqual(self.target.read_text(), self.original)
+    def test_live_branch_preserves_pending_progress(self) -> None:
+        document = {"_version": "v0.6.0", "_pending_release": {
+            "version": "v0.7.0", "source": "source-one", "repos": ["hex-basic"]}}
+        self.publish(json.dumps(document))
+        sync_released.load_baseline(self.output, "release-sync-baseline")
+        self.assertEqual(json.loads(self.output.read_text()), document)
 
-    def test_toml_target_is_rejected(self) -> None:
-        self.entry["lakefile"] = "toml"
-        with self.assertRaisesRegex(RuntimeError, "requires a Lean Lake file"):
-            self.rewrite()
+    def test_unreachable_remote_never_uses_seed(self) -> None:
+        self.git("remote", "set-url", "origin", str(self.root / "missing.git"),
+                 cwd=self.checkout)
+        with self.assertRaises(subprocess.CalledProcessError):
+            sync_released.load_baseline(self.output, "release-sync-baseline")
+        self.assertFalse(self.output.exists())
 
-    def test_migrates_an_extern_lib_to_a_custom_target(self) -> None:
-        self.entry["lake_declarations"] = ["compileArchive"]
-        replacement = (
-            "target compileArchive pkg : FilePath := do\n"
-            "  buildStaticLib (pkg.staticLibDir / \"libffi.a\") #[]\n\n"
-        )
-        self.source.write_text("import Lake\n\n" + replacement)
-        self.target.write_text(
-            "import Lake\n\n"
-            "extern_lib compileArchive (pkg) := do\n"
-            "  buildStaticLib (pkg.staticLibDir / \"libffi.a\") #[]\n"
-        )
-        self.assertEqual(self.rewrite(),
-                         ["  build declaration compileArchive (lakefile.lean)"])
-        self.assertEqual(self.target.read_text(), "import Lake\n\n" + replacement)
+    def test_fetch_failure_never_uses_seed(self) -> None:
+        self.publish('{"_version": "v0.6.0"}')
+        original = sync_released.run
 
+        def fail_fetch(command, **kwargs):
+            if command[:2] == ["git", "fetch"]:
+                raise subprocess.CalledProcessError(1, command)
+            return original(command, **kwargs)
 
-class LibBuildSettingTests(unittest.TestCase):
-    """The mirror's `lean_lib` must be built the way hex-dev builds it.
+        with patch.object(sync_released, "run", side_effect=fail_fetch):
+            with self.assertRaises(subprocess.CalledProcessError):
+                sync_released.load_baseline(self.output, "release-sync-baseline")
+        self.assertFalse(self.output.exists())
 
-    A mirror that drops `precompileModules` still compiles; the failure surfaces
-    only downstream, where an `@[extern]` declaration has no native
-    implementation because its module dynlib was never built.
-    """
-
-    SOURCE = (
-        "lean_lib Plain where\n"
-        "\n"
-        "lean_lib Consumer where\n"
-        "  -- comment lines are not settings\n"
-        "  precompileModules := true\n"
-        "\n"
-        "lean_lib Scoped where\n"
-        "  precompileModules := true\n"
-        "  moreLinkObjs := #[scopedffi]\n"
-        "\n"
-        "lean_lib Linked where\n"
-        "  precompileModules := true\n"
-        "  extraDepTargets := #[`consumerffi]\n"
-        "  moreLinkArgs :=\n"
-        "    if System.Platform.isOSX then\n"
-        "      #[]\n"
-        "    else\n"
-        "      #[\"-ldl\"]\n"
-    )
-
-    def setUp(self) -> None:
-        self.temporary = tempfile.TemporaryDirectory()
-        # The monorepo lakefile and the mirror clone are separate trees, and
-        # both are called lakefile.lean.
-        self.repo = Path(self.temporary.name) / "clone"
-        self.repo.mkdir()
-        self.source = Path(self.temporary.name) / "hex-dev" / "lakefile.lean"
-        self.source.parent.mkdir()
-        self.source.write_text(self.SOURCE, encoding="utf-8")
-
-    def tearDown(self) -> None:
-        self.temporary.cleanup()
-
-    def settings(self, lib: str) -> dict[str, str]:
-        return sync_released.source_build_settings(lib, self.source)
-
-    def rewrite(self, entry: dict) -> list[str]:
-        with patch.object(sync_released, "LAKEFILE", self.source):
-            return sync_released.rewrite_lib_settings(entry, self.repo)
-
-    def test_settings_are_read_from_the_monorepo_lakefile(self) -> None:
-        self.assertEqual(self.settings("Plain"), {})
-        self.assertEqual(self.settings("Consumer"), {"precompileModules": "true"})
-        self.assertEqual(self.settings("Scoped"), {
-            "precompileModules": "true",
-            "moreLinkObjs": "#[scopedffi]",
-        })
-        self.assertEqual(self.settings("Linked"), {
-            "precompileModules": "true",
-            "extraDepTargets": "#[`consumerffi]",
-            "moreLinkArgs": 'if System.Platform.isOSX then #[] else #["-ldl"]',
-        })
-
-    def test_a_released_library_must_be_a_lean_lib_here(self) -> None:
-        with self.assertRaisesRegex(RuntimeError, "declares no lean_lib Absent"):
-            self.settings("Absent")
-
-    def test_toml_mirror_gains_precompilation(self) -> None:
-        lakefile = self.repo / "lakefile.toml"
-        lakefile.write_text(
-            'name = "consumer"\n\n[[lean_lib]]\nname = "Consumer"\n\n'
-            '[[lean_lib]]\nname = "ConsumerTests"\nglobs = ["Consumer.Tests"]\n',
-            encoding="utf-8")
-        entry = {"lib": "Consumer", "lakefile": "toml"}
-        notes = self.rewrite(entry)
-        self.assertEqual(notes, ["  precompileModules on lean_lib Consumer "
-                                 "(lakefile.toml)"])
-        text = lakefile.read_text(encoding="utf-8")
-        self.assertIn('name = "Consumer"\nprecompileModules = true\n', text)
-        self.assertNotIn("ConsumerTests\"\nprecompileModules", text)
-        self.assertEqual(self.rewrite(entry), [])
-
-    def test_lean_mirror_gains_precompilation(self) -> None:
-        lakefile = self.repo / "lakefile.lean"
-        lakefile.write_text(
-            "@[default_target]\nlean_lib Consumer where\n"
-            "  moreLinkArgs := #[]\n\nlean_exe check where\n"
-            "  root := `Consumer.Check\n",
-            encoding="utf-8")
-        entry = {"lib": "Consumer", "lakefile": "lean"}
-        self.assertEqual(self.rewrite(entry),
-                         ["  precompileModules on lean_lib Consumer "
-                          "(lakefile.lean)"])
-        self.assertIn("lean_lib Consumer where\n  precompileModules := true\n"
-                      "  moreLinkArgs := #[]\n",
-                      lakefile.read_text(encoding="utf-8"))
-        self.assertEqual(self.rewrite(entry), [])
-
-    def test_a_bare_lean_lib_gains_a_settings_block(self) -> None:
-        lakefile = self.repo / "lakefile.lean"
-        lakefile.write_text(
-            "@[default_target]\nlean_lib Consumer\n\nlean_lib Other where\n",
-            encoding="utf-8")
-        self.rewrite({"lib": "Consumer", "lakefile": "lean"})
-        self.assertIn("lean_lib Consumer where\n  precompileModules := true\n",
-                      lakefile.read_text(encoding="utf-8"))
-
-    def test_lean_mirror_gains_scoped_link_objects(self) -> None:
-        lakefile = self.repo / "lakefile.lean"
-        lakefile.write_text(
-            "lean_lib Scoped where\n  precompileModules := true\n",
-            encoding="utf-8")
-        entry = {"lib": "Scoped", "lakefile": "lean"}
-        self.assertEqual(self.rewrite(entry),
-                         ["  moreLinkObjs on lean_lib Scoped (lakefile.lean)"])
-        self.assertIn(
-            "lean_lib Scoped where\n"
-            "  precompileModules := true\n"
-            "  moreLinkObjs := #[scopedffi]\n",
-            lakefile.read_text(encoding="utf-8"))
-        self.assertEqual(self.rewrite(entry), [])
-
-    def test_toml_mirror_rejects_scoped_link_objects(self) -> None:
-        lakefile = self.repo / "lakefile.toml"
-        lakefile.write_text(
-            '[[lean_lib]]\nname = "Scoped"\nprecompileModules = true\n',
-            encoding="utf-8")
-        with self.assertRaisesRegex(RuntimeError, "only publishes managed target references"):
-            self.rewrite({"lib": "Scoped", "lakefile": "toml"})
-
-    def test_a_library_without_settings_is_left_alone(self) -> None:
-        lakefile = self.repo / "lakefile.toml"
-        original = '[[lean_lib]]\nname = "PlainLib"\n'
-        lakefile.write_text(original, encoding="utf-8")
-        self.assertEqual(self.rewrite({"lib": "Plain", "lakefile": "toml"}), [])
-        self.assertEqual(lakefile.read_text(encoding="utf-8"), original)
-
-    def test_a_missing_link_setting_stops_the_publication(self) -> None:
-        lakefile = self.repo / "lakefile.lean"
-        lakefile.write_text(
-            "lean_lib Linked where\n  extraDepTargets := #[`consumerffi]\n",
-            encoding="utf-8")
-        with self.assertRaisesRegex(RuntimeError, "must set moreLinkArgs"):
-            self.rewrite({"lib": "Linked", "lakefile": "lean"})
-
-    def test_a_missing_mirror_library_stops_the_publication(self) -> None:
-        (self.repo / "lakefile.toml").write_text(
-            '[[lean_lib]]\nname = "Other"\n', encoding="utf-8")
-        with self.assertRaisesRegex(RuntimeError, "declares no lean_lib Consumer"):
-            self.rewrite({"lib": "Consumer", "lakefile": "toml"})
-
-    def test_a_contradicting_mirror_setting_stops_the_publication(self) -> None:
-        (self.repo / "lakefile.toml").write_text(
-            '[[lean_lib]]\nname = "Consumer"\nprecompileModules = false\n',
-            encoding="utf-8")
-        with self.assertRaisesRegex(RuntimeError, "contradicting"):
-            self.rewrite({"lib": "Consumer", "lakefile": "toml"})
-
-    def test_every_released_library_keeps_its_monorepo_lean_lib(self) -> None:
-        manifest = yaml.safe_load(
-            sync_released.MANIFEST.read_text(encoding="utf-8"))
-        for entry in manifest["repos"]:
-            if entry.get("pins_only"):
-                continue
-            with self.subTest(repo=entry["repo"]):
-                sync_released.source_build_settings(entry["lib"])
+    def test_invalid_live_document_never_uses_seed(self) -> None:
+        for text in ("invalid JSON", "[]"):
+            with self.subTest(text=text):
+                self.publish(text)
+                with self.assertRaises((ValueError, RuntimeError)):
+                    sync_released.load_baseline(self.output, "release-sync-baseline")
+                self.assertFalse(self.output.exists())
 
 
 class TokenPreflightTests(unittest.TestCase):
@@ -1283,7 +1025,8 @@ class TokenPreflightTests(unittest.TestCase):
         seen_tokens: list = []
 
         def publish(entry, _source_sha, token, _dry_run, synced,
-                    _baseline, _force, _dep_owner, _pins, version, resuming):
+                    _baseline, _force, _dep_owner, _pins, version, resuming,
+                    *_rest):
             seen_tokens.append(token)
             self.assertEqual(version, "v0.2.0")
             self.assertFalse(resuming)
@@ -1414,9 +1157,12 @@ class TokenPreflightTests(unittest.TestCase):
         publish.assert_not_called()
 
     def setUp(self) -> None:
+        self.enterContext(patch.object(sync_released, "closure_external_packages", return_value=set()))
         self.temporary = tempfile.TemporaryDirectory()
         self.repo = Path(self.temporary.name)
         self.addCleanup(self.temporary.cleanup)
+        self.enterContext(patch.object(sync_released, "publication_fingerprint", return_value="a" * 64))
+        self.enterContext(patch.object(sync_released, "reuse_published"))
 
 
 class AggregateReadmeTests(unittest.TestCase):
@@ -1426,7 +1172,7 @@ class AggregateReadmeTests(unittest.TestCase):
         "repos": [
             {"repo": "leanprover/hex-matrix", "lib": "HexMatrix",
              "component": "Matrices"},
-            {"repo": "leanprover/hex-matrix-mathlib", "lib": "HexMatrixMathlib"},
+            {"repo": "leanprover/hex-matrix-theory", "lib": "HexMatrixTheory"},
             {"repo": "leanprover/hex-lll", "lib": "HexLLL",
              "component": "LLL lattice reduction"},
             {"repo": "leanprover/hex-test-kit", "lib": "Hex", "aggregate": False},
@@ -1452,7 +1198,7 @@ class AggregateReadmeTests(unittest.TestCase):
 
     def test_rows_cover_computational_libraries_only(self) -> None:
         rows = [entry["repo"] for entry in aggregate_readme.table_entries(self.MANIFEST)]
-        # the Mathlib companion occupies a column, the test kit is not aggregated,
+        # the theory companion occupies a column, the test kit is not aggregated,
         # and the aggregate does not list itself
         self.assertEqual(rows, ["leanprover/hex-matrix", "leanprover/hex-lll"])
 
@@ -1463,10 +1209,10 @@ class AggregateReadmeTests(unittest.TestCase):
         self.assertTrue(text.endswith("trailer\n"))
         self.assertIn(
             "| Matrices | [HexMatrix](https://github.com/leanprover/hex-matrix) | "
-            "[HexMatrixMathlib](https://github.com/leanprover/hex-matrix-mathlib) |",
+            "[HexMatrixTheory](https://github.com/leanprover/hex-matrix-theory) |",
             text,
         )
-        # a computational library with no Mathlib companion still gets a row
+        # a computational library with no theory companion still gets a row
         self.assertIn(
             "| LLL lattice reduction | [HexLLL](https://github.com/leanprover/hex-lll) "
             f"| {aggregate_readme.NO_LAYER} |",
@@ -1515,6 +1261,723 @@ class AggregateReadmeTests(unittest.TestCase):
         bare.write_text("# hex\n", encoding="utf-8")
         with self.assertRaises(ValueError):
             aggregate_readme.render(self.MANIFEST, bare)
+
+
+class GeneratedLakefileTests(unittest.TestCase):
+    """A mirror's Lake file is rendered from released.yml and the monorepo's."""
+
+    SOURCE = (
+        "import Lake\n\n"
+        "private def fooO (pkg : Package) : FetchM (Job FilePath) := do\n"
+        "  pure default\n\n"
+        "target fooObj pkg : FilePath := fooO pkg\n\n"
+        "lean_lib HexFoo where\n"
+        "  precompileModules := true\n\n"
+        "lean_lib HexFooNative where\n"
+        "  roots := #[`HexFooNative]\n"
+        "  moreLinkObjs := #[fooObj]\n\n"
+        "lean_lib HexBar where\n\n"
+        "lean_lib HexLinked where\n"
+        "  moreLinkArgs := #[\"-lm\"]\n"
+    )
+    ENTRIES = [
+        {"repo": "leanprover/hex-bar", "lib": "HexBar", "lakefile": "toml"},
+        {"repo": "leanprover/hex-foo", "lib": "HexFoo", "lakefile": "lean",
+         "lake_declarations": ["fooO", "fooObj", "HexFooNative"],
+         "test_modules": ["HexFoo.Tests"], "executables": {"foo": "HexFoo.Main"},
+         "build_modules": ["HexFoo.All"]},
+        {"repo": "leanprover/hex-plain", "lib": "HexPlain", "lakefile": "toml",
+         "test_modules": ["HexPlain.Tests"], "aggregate": False},
+        {"repo": "leanprover/hex-linked", "lib": "HexLinked", "lakefile": "toml"},
+        {"repo": "leanprover/hex", "pins_only": True},
+    ]
+    DEPS = {"HexFoo": ("HexBar",), "HexPlain": ("HexBar",), "HexBar": (), "HexLinked": ()}
+
+    def setUp(self) -> None:
+        self.enterContext(patch.object(sync_released, "mathlib_dependencies", return_value=[]))
+        cached = sync_released._source_import_roots_cached
+        fixtures = {e["repo"] for e in self.ENTRIES}
+        self.enterContext(patch.object(sync_released, "_source_import_roots_cached",
+                                      side_effect=lambda repo: frozenset() if repo in fixtures else cached(repo)))
+        classification = sync_released._library_mathlib() | {"HexPlain": True, "HexFoo": False}
+        self.enterContext(patch.object(sync_released, "_library_mathlib", return_value=classification))
+
+    def render(self, short: str, roots: set[str] = frozenset()) -> str:
+        entry = next(e for e in self.ENTRIES if e["repo"].endswith("/" + short))
+        pins = {"https://github.com/leanprover-community/mathlib4": {
+            "name": "mathlib", "url": "https://github.com/leanprover-community/mathlib4.git",
+            "rev": "abc", "inputRev": "abc"}}
+        with patch.object(sync_released, "_source_import_roots", return_value=set(roots)), \
+                patch.object(sync_released, "_source_import_roots_cached", return_value=frozenset(roots)):
+            return sync_released.render_lakefile(
+                entry, self.ENTRIES, "v0.9.0", {}, pins, self.DEPS, self.SOURCE)
+
+    def test_computation_cannot_gain_direct_proof_requirements(self) -> None:
+        for root in ("Mathlib", "TauCeti"):
+            with self.subTest(root=root), self.assertRaisesRegex(
+                    RuntimeError, "computational repository"):
+                self.render("hex-foo", {root})
+
+    def test_computation_cannot_gain_inherited_proof_requirements(self) -> None:
+        entry = {"repo": "leanprover/hex-foo", "lib": "HexFoo"}
+        with patch.object(sync_released, "closure_external_packages", return_value={"TauCeti"}), \
+                self.assertRaisesRegex(RuntimeError, "computational repository"):
+            sync_released._add_closure_externals(entry, {"packages": []}, [])
+
+    def test_tarski_companion_requires_the_exact_tau_pin(self) -> None:
+        entries = yaml.safe_load(sync_released.MANIFEST.read_text())["repos"]
+        entry = next(e for e in entries if e.get("lib") == "HexRealRootsTheory")
+        pins = sync_released.external_pins()
+        text = sync_released.render_lakefile(entry, entries, "v0.9.0", {}, pins)
+        requires = tomllib.loads(text)["require"]
+        tau = next(pin for pin in pins.values() if pin["name"] == "TauCeti")
+        self.assertIn({"name": "TauCeti", "git": tau["url"], "rev": tau["inputRev"]}, requires)
+        self.assertEqual(tau["inputRev"], tau["rev"])
+        self.assertRegex(tau["rev"], r"^[0-9a-f]{40}$")
+        self.assertEqual(requires[-1]["name"], "mathlib")
+        doc = {"packages": []}
+        sync_released._add_closure_externals(entry, doc, [])
+        self.assertEqual(next(p["rev"] for p in doc["packages"] if p["name"] == "TauCeti"), tau["rev"])
+
+    def test_import_headers_cover_line_endings_continuations_and_quoted_names(self) -> None:
+        source = 'module\r\npublic meta import\r\n  «TauCeti».Data.Matrix\r\n  Mathlib.Tactic\r\n\r\nnamespace Unimported\r\n'
+        self.assertEqual(sync_released._import_roots(source), {"TauCeti", "Mathlib"})
+        self.assertEqual(sync_released._import_modules(source), {"TauCeti.Data.Matrix", "Mathlib.Tactic"})
+        self.assertEqual(sync_released._import_roots('import «Mathlib.Foo»\n'), {"Mathlib.Foo"})
+
+    def test_source_requirements_ignore_comments_and_find_all_imports(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "HexProbe.lean"
+            source.write_text('/-\nimport Mathlib\n-/\n'
+                              'def s := "import Batteries"\n'
+                              'public import HexFoo HexBar.Basic\n')
+            with patch.object(sync_released, "managed_paths", return_value=[(source, source.name, False)]):
+                self.assertEqual(sync_released._source_import_roots({}), {"HexFoo", "HexBar"})
+
+    def test_toml_mirror_is_rendered_from_the_manifest(self) -> None:
+        text = self.render("hex-plain", {"Mathlib"})
+        document = tomllib.loads(text)
+        self.assertEqual(document["name"], "hex-plain")
+        self.assertEqual(document["defaultTargets"], ["HexPlain"])
+        self.assertEqual([(r["name"], r["rev"]) for r in document["require"]],
+                         [("HexBar", "v0.9.0"), ("mathlib", "abc")])
+        self.assertEqual(document["lean_lib"], [
+            {"name": "HexPlain"},
+            {"name": "HexPlainTests", "globs": ["HexPlain.Tests"]}])
+
+    def test_lean_mirror_copies_declarations_around_the_library(self) -> None:
+        text = self.render("hex-foo")
+        order = [text.index(s) for s in (
+            "require HexBar from git", "private def fooO", "target fooObj",
+            "@[default_target]\nlean_lib HexFoo where\n  precompileModules := true",
+            "lean_lib HexFooNative where", "lean_lib HexFooModules where",
+            "lean_lib HexFooTests where", "lean_exe foo where\n  root := `HexFoo.Main")]
+        self.assertEqual(order, sorted(order))
+        self.assertIn('"https://github.com/leanprover/hex-bar.git" @ "v0.9.0"', text)
+
+    def test_lean_mirror_preserves_consumer_precompilation_option(self) -> None:
+        option = 'get_config? hexPermGroupNative != some "false"'
+        self.SOURCE = self.SOURCE.replace("precompileModules := true",
+                                          f"precompileModules := {option}")
+        self.assertIn(f"precompileModules := {option}", self.render("hex-foo"))
+
+    def test_toml_mirror_rejects_conditional_precompilation(self) -> None:
+        self.SOURCE += ('\nlean_lib HexPlain where\n'
+                        '  precompileModules := get_config? native != some "false"\n')
+        with self.assertRaisesRegex(RuntimeError, "only a Lean Lake file"):
+            self.render("hex-plain")
+
+    def test_mathlib_consumers_disable_hex_native_precompilation(self) -> None:
+        expected = {"hexPermGroupNative": "false"}
+        self.assertEqual(sync_released.require_options(
+            {"lib": "HexPlain"}, "HexPermGroup", self.ENTRIES), expected)
+        self.assertEqual(sync_released.require_options(
+            {"lib": "HexFoo"}, "HexPermGroup", self.ENTRIES), {})
+        self.assertEqual(sync_released.require_options(
+            {"lib": "HexPlain"}, "HexBar", self.ENTRIES), {})
+        self.assertEqual(sync_released.require_options(
+            {"pins_only": True}, "HexPermGroup", self.ENTRIES), {})
+        entries = [{**e, "aggregate": True} for e in self.ENTRIES]
+        self.assertEqual(sync_released.require_options(
+            {"pins_only": True}, "HexPermGroup", entries), expected)
+
+    def test_rendered_mathlib_consumers_select_hex_configuration(self) -> None:
+        entries = yaml.safe_load(sync_released.MANIFEST.read_text())["repos"]
+        pins = sync_released.external_pins()
+        for lib in ("HexPermGroupTheory", "HexGraphIsoTheory", None):
+            entry = next(e for e in entries if e.get("lib") == lib) if lib else next(
+                e for e in entries if e.get("pins_only"))
+            text = sync_released.render_lakefile(entry, entries, "v0.9.0", {}, pins)
+            requirement = next(r for r in tomllib.loads(text)["require"]
+                               if r["name"] == "HexPermGroup")
+            self.assertEqual(requirement["options"], {"hexPermGroupNative": "false"})
+            if lib:
+                text = sync_released.render_lakefile(
+                    {**entry, "lakefile": "lean"}, entries, "v0.9.0", {}, pins)
+                self.assertIn('require HexPermGroup from git\n'
+                              '  "https://github.com/leanprover/hex-perm-group.git" @ "v0.9.0"\n'
+                              '  with NameMap.empty.insert `hexPermGroupNative "false"', text)
+
+    def test_toml_extra_library_rejects_conditional_precompilation(self) -> None:
+        self.SOURCE = self.SOURCE.replace("lean_lib HexBar where\n", "lean_lib HexBar where\n"
+            '  precompileModules := get_config? native != some "false"\n')
+        entry = next(e for e in self.ENTRIES if e["lib"] == "HexPlain")
+        with patch.dict(entry, extra_paths=[{"src": "HexBar", "dest": "HexBar"}]):
+            with self.assertRaisesRegex(RuntimeError, "needs a Lean Lake file"):
+                self.render("hex-plain")
+
+    def test_link_settings_need_a_lean_lake_file(self) -> None:
+        with self.assertRaisesRegex(RuntimeError, "only a Lean Lake file"):
+            self.render("hex-linked")
+
+    def test_aggregate_requires_every_aggregate_library(self) -> None:
+        document = tomllib.loads(self.render("hex"))
+        self.assertEqual([r["name"] for r in document["require"]],
+                         ["HexBar", "HexFoo", "HexLinked"])
+        self.assertEqual(sync_released.render_aggregate_umbrella(self.ENTRIES),
+                         "module\n\npublic import HexBar\npublic import HexFoo\n"
+                         "public import HexLinked\n")
+
+    def test_extra_path_library_is_declared(self) -> None:
+        entry = {"repo": "leanprover/hex-plain", "lib": "HexPlain", "lakefile": "toml",
+                 "extra_paths": [{"src": "HexBar", "dest": "HexBar"},
+                                 {"src": "HexBar.lean", "dest": "HexBar.lean"}]}
+        with patch.object(sync_released, "_source_import_roots", return_value=set()):
+            document = tomllib.loads(sync_released.render_lakefile(
+                entry, self.ENTRIES, "v0.9.0", {}, {}, self.DEPS, self.SOURCE))
+        self.assertEqual([lib["name"] for lib in document["lean_lib"]],
+                         ["HexPlain", "HexBar"])
+
+    def test_lockfile_hex_packages_follow_the_published_closure(self) -> None:
+        doc = {"packages": [
+            {"name": "HexBar", "url": "https://github.com/leanprover/hex-bar.git",
+             "configFile": "lakefile.lean"},
+            {"name": "HexGone", "url": "https://github.com/leanprover/hex-gone.git",
+             "configFile": "lakefile.toml"},
+            {"name": "mathlib", "url": "https://github.com/leanprover-community/mathlib4.git",
+             "configFile": "lakefile.lean"}]}
+        catalog = {"hex-bar": {"lib": "HexBar", "lakefile": "toml"}}
+        notes: list[str] = []
+        sync_released._reconcile_hex_packages(
+            {"repo": "leanprover/hex-plain", "pins": ["hex-bar"]}, doc, catalog, notes)
+        self.assertEqual([(p["name"], p["configFile"]) for p in doc["packages"]],
+                         [("HexBar", "lakefile.toml"), ("mathlib", "lakefile.lean")])
+        self.assertEqual(notes, ["  manifest - HexGone (no longer a dependency)"])
+
+    def test_a_requirement_missing_from_the_lockfile_stops_the_sync(self) -> None:
+        clone = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, clone)
+        (clone / "lakefile.toml").write_text(
+            '[[require]]\nname = "mathlib"\ngit = "x"\nrev = "v"\n', encoding="utf-8")
+        (clone / "lake-manifest.json").write_text(json.dumps({"packages": []}),
+                                                  encoding="utf-8")
+        with self.assertRaisesRegex(RuntimeError, "requires mathlib"):
+            sync_released.validate_manifest({"repo": "leanprover/hex-plain"}, clone)
+
+    def test_every_released_lake_file_declares_each_target_once(self) -> None:
+        entries = yaml.safe_load(sync_released.MANIFEST.read_text())["repos"]
+        pins = sync_released.external_pins()
+        for entry in entries:
+            text = sync_released.render_lakefile(entry, entries, "v0.0.0", {}, pins)
+            if entry.get("pins_only") or entry.get("lakefile") != "lean":
+                names = [lib["name"] for lib in tomllib.loads(text).get("lean_lib", [])]
+            else:
+                names = re.findall(
+                    r"(?m)^(?:lean_lib|lean_exe|target|extern_lib)\s+(\S+)", text)
+            self.assertEqual(len(names), len(set(names)), entry["repo"])
+
+    def test_aggregate_lockfile_gains_closure_external_packages(self) -> None:
+        entries = yaml.safe_load(sync_released.MANIFEST.read_text())["repos"]
+        hex_entry = next(e for e in entries if e.get("pins_only"))
+        doc = {"packages": [{"name": "mathlib", "url": "u", "inherited": False}]}
+        notes: list[str] = []
+        sync_released._add_closure_externals(hex_entry, doc, notes)
+        names = {p["name"] for p in doc["packages"]}
+        self.assertIn("TauCeti", names)  # hex -> HexECPPTheory -> TauCeti
+        self.assertTrue(next(p for p in doc["packages"] if p["name"] == "TauCeti")["inherited"])
+
+    def test_lockfile_inherited_flags_follow_the_lake_file(self) -> None:
+        clone = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, clone)
+        (clone / "lakefile.toml").write_text(
+            '[[require]]\nname = "HexBar"\ngit = "x"\nrev = "v"\n', encoding="utf-8")
+        (clone / "lake-manifest.json").write_text(json.dumps({"packages": [
+            {"name": "HexBar", "url": "u", "inherited": True},
+            {"name": "HexBasic", "url": "u", "inherited": False}]}), encoding="utf-8")
+        sync_released.rewrite_manifest({"repo": "leanprover/hex-plain", "pins": []},
+                                       clone, {}, {}, {}, "v0.9.0", {})
+        packages = json.loads((clone / "lake-manifest.json").read_text())["packages"]
+        self.assertEqual({p["name"]: p["inherited"] for p in packages},
+                         {"HexBar": False, "HexBasic": True})
+
+
+class StagedReleaseTests(unittest.TestCase):
+    """Exercise real local Git publication across different source commits."""
+
+    def setUp(self) -> None:
+        self.mathlib_packages = []
+        self.enterContext(patch.object(sync_released, "mathlib_dependencies",
+                                      side_effect=lambda: self.mathlib_packages))
+        self.temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name)
+        self.source = self.root / "source"
+        self.source.mkdir()
+        self.entries = [
+            {"repo": "leanprover/hex-first", "lib": "HexFirst", "readme": False,
+             "umbrella": True, "pins": [], "lakefile": "toml"},
+            {"repo": "leanprover/hex-second", "lib": "HexSecond", "readme": False,
+             "umbrella": True, "pins": ["hex-first"], "lakefile": "toml"},
+        ]
+        self.manifest = self.source / "released.yml"
+        self.manifest.write_text(yaml.safe_dump({"repos": self.entries}, sort_keys=False))
+        self.lakefile = self.source / "lakefile.lean"
+        self.lakefile.write_text("import Lake\nopen Lake DSL\npackage Hex\n"
+                                 "lean_lib HexFirst\nlean_lib HexSecond\n")
+        self.toolchain = self.source / "lean-toolchain"
+        self.toolchain.write_text("leanprover/lean4:v4.35.0-rc3\n")
+        self.lock = self.source / "lake-manifest.json"
+        self.lock.write_text(json.dumps({"packages": []}))
+        for lib, text in [("HexFirst", "def first := 1\n"),
+                          ("HexSecond", "import HexFirst\ndef second := first\n")]:
+            (self.source / lib).mkdir()
+            (self.source / lib / "Basic.lean").write_text(text)
+            (self.source / f"{lib}.lean").write_text(f"import {lib}.Basic\n")
+        self.remotes = {}
+        self.baseline = self.root / "baseline.json"
+        heads = {}
+        for entry in self.entries:
+            name = entry["repo"].split("/")[-1]
+            bare = self.root / f"{name}.git"
+            checkout = self.root / name
+            self.git("init", "--bare", "--initial-branch=main", str(bare))
+            self.git("clone", str(bare), str(checkout))
+            (checkout / "lakefile.toml").write_text(f'name = "{entry["lib"]}"\n')
+            (checkout / "lake-manifest.json").write_text(json.dumps({
+                "version": "1.3.0", "name": entry["lib"], "packages": []}))
+            (checkout / "lean-toolchain").write_text(self.toolchain.read_text())
+            self.git("add", ".", cwd=checkout)
+            self.git("-c", "user.name=Test", "-c", "user.email=test@example.org",
+                     "commit", "-m", "skeleton", cwd=checkout)
+            self.git("push", "origin", "main", cwd=checkout)
+            heads[name] = self.git("rev-parse", "HEAD", cwd=checkout)
+            self.remotes[entry["repo"]] = bare
+        self.baseline.write_text(json.dumps(dict(heads, _version="v0.1.0")))
+        self.sha = "source-one"
+        self.real_run = sync_released.run
+
+        def run(command, cwd=None, capture=False):
+            if command == ["git", "rev-parse", "HEAD"] and cwd == self.source:
+                return self.sha
+            return self.real_run(command, cwd=cwd, capture=capture)
+
+        def workflow(entry, clone):
+            target = clone / ".github/workflows/ci.yml"
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text("name: CI\njobs: {}\n")
+            return []
+
+        for attribute, value in [("REPO_ROOT", self.source), ("MANIFEST", self.manifest),
+                                 ("LAKEFILE", self.lakefile), ("TOOLCHAIN", self.toolchain),
+                                 ("LAKE_MANIFEST", self.lock)]:
+            self.enterContext(patch.object(sync_released, attribute, value))
+        self.enterContext(patch.object(sync_released, "run", side_effect=run))
+        self.enterContext(patch.object(sync_released, "clone_url",
+                                      side_effect=lambda repo, token: str(self.remotes[repo])))
+        self.enterContext(patch.object(sync_released, "selection_check", return_value=None))
+        self.enterContext(patch.object(sync_released, "apply_ci_workflow", side_effect=workflow))
+        self.enterContext(patch.object(sync_released, "released_ci_workflows", return_value={
+            "hex-first": "name: CI\njobs: {}\n", "hex-second": "name: CI\njobs: {}\n"}))
+        self.enterContext(patch.object(sync_released, "_library_deps", return_value={
+            "HexFirst": (), "HexSecond": ("HexFirst",)}))
+        self.enterContext(patch.object(sync_released, "_library_mathlib", return_value={
+            "HexFirst": False, "HexSecond": False}))
+        sync_released._source_import_roots_cached.cache_clear()
+        self.addCleanup(sync_released._source_import_roots_cached.cache_clear)
+
+    def git(self, *args, cwd=None) -> str:
+        return subprocess.run(["git", *args], cwd=cwd, check=True, text=True,
+                              stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout.strip()
+
+    def publish(self, *args) -> int:
+        with patch("sys.argv", ["sync_released.py", "--token", "fixture-token",
+                               "--baseline", str(self.baseline), *args]):
+            return sync_released.main()
+
+    def first_phase(self) -> str:
+        self.assertEqual(self.publish("--only", "hex-first"), 0)
+        state = json.loads(self.baseline.read_text())
+        self.assertEqual(state["_version"], "v0.1.0")
+        self.assertEqual(state["_pending_release"]["repos"], ["hex-first"])
+        return self.git("--git-dir", str(self.remotes["leanprover/hex-first"]),
+                        "rev-parse", "v0.2.0")
+
+    def test_two_sources_publish_one_version_without_rewriting_first_repo(self) -> None:
+        first = self.first_phase()
+        self.sha = "source-two"
+        # A Mathlib pin update and compatibility changes are allowed in the
+        # unpublished part; the published source and build settings stay fixed.
+        (self.source / "HexSecond/Basic.lean").write_text(
+            "import HexFirst\ndef second := first + 1\n")
+        self.assertEqual(self.publish("--advance-source"), 0)
+        state = json.loads(self.baseline.read_text())
+        self.assertEqual(state["_version"], "v0.2.0")
+        self.assertNotIn("_pending_release", state)
+        self.assertEqual(state["hex-first"], first)
+        remote = str(self.remotes["leanprover/hex-first"])
+        self.assertEqual(self.git("--git-dir", remote, "rev-parse", "main"), first)
+        self.assertEqual(self.git("--git-dir", remote, "rev-parse", "v0.2.0"), first)
+        manifest = json.loads(self.git("--git-dir", str(self.remotes["leanprover/hex-second"]),
+                                       "show", "main:lake-manifest.json"))
+        self.assertEqual(manifest["packages"][0]["rev"], first)
+        self.assertEqual(manifest["packages"][0]["inputRev"], "v0.2.0")
+
+    def test_source_changes_in_published_repo_stop_before_second_push(self) -> None:
+        self.first_phase()
+        self.sha = "source-two"
+        (self.source / "HexFirst/Basic.lean").write_text("def first := 2\n")
+        old = self.baseline.read_bytes()
+        self.assertEqual(self.publish("--advance-source"), 1)
+        self.assertEqual(self.baseline.read_bytes(), old)
+        self.assertEqual(self.git("--git-dir", str(self.remotes["leanprover/hex-second"]),
+                                  "tag", "--list"), "")
+
+    def test_toolchain_and_build_changes_in_published_repo_are_rejected(self) -> None:
+        self.first_phase()
+        self.sha = "source-two"
+        old = self.toolchain.read_text()
+        self.toolchain.write_text("leanprover/lean4:v4.36.0\n")
+        self.assertEqual(self.publish("--advance-source"), 1)
+        self.toolchain.write_text(old)
+        self.lakefile.write_text(self.lakefile.read_text().replace(
+            "lean_lib HexFirst", "lean_lib HexFirst where\n  precompileModules := true"))
+        self.assertEqual(self.publish("--advance-source"), 1)
+
+    def test_missing_dependency_and_premature_aggregate_are_rejected(self) -> None:
+        self.assertEqual(self.publish("--only", "hex-second"), 1)
+        aggregate = {"repo": "leanprover/hex", "pins_only": True}
+        with self.assertRaisesRegex(ValueError, "earlier publication"):
+            sync_released.release_selection(self.entries + [aggregate], set(), ["hex"])
+
+    def test_multi_selection_and_default_release_still_work(self) -> None:
+        self.assertEqual(self.publish("--only", "hex-first,hex-second"), 0)
+        self.assertEqual(json.loads(self.baseline.read_text())["_version"], "v0.2.0")
+
+    def test_checked_plan_rejects_baseline_drift(self) -> None:
+        stage = self.root / "stage"
+        self.assertEqual(self.publish("--dry-run", "--only", "hex-first", "--stage", str(stage)), 0)
+        state = json.loads(self.baseline.read_text())
+        state["_version"] = "v0.2.0"
+        self.baseline.write_text(json.dumps(state))
+        self.assertEqual(self.publish("--only", "hex-first", "--plan",
+                                      str(stage / "release-stage.json")), 1)
+
+    def test_partial_stage_reuses_published_commits(self) -> None:
+        first = self.first_phase()
+        self.sha = "source-two"
+        stage = self.root / "stage"
+        self.assertEqual(self.publish("--dry-run", "--advance-source", "--only", "hex-second",
+                                      "--stage", str(stage)), 0)
+        self.assertEqual((stage / "hex-first/HexFirst/Basic.lean").read_text(), "def first := 1\n")
+        plan = json.loads((stage / "release-stage.json").read_text())
+        self.assertEqual(plan["selected"], ["hex-second"])
+        self.assertEqual(set(plan["fingerprints"]), {"hex-second"})
+        from scripts.release.consumer_check import point_at_stage
+        point_at_stage(stage, stage / "hex-second", set(plan["fingerprints"]))
+        lock = json.loads((stage / "hex-second/lake-manifest.json").read_text())
+        self.assertEqual(lock["packages"][0]["rev"], first)
+        self.assertEqual(lock["packages"][0]["type"], "git")
+
+    def test_uncoordinated_completed_head_cannot_be_overridden(self) -> None:
+        self.first_phase()
+        remote = self.remotes["leanprover/hex-first"]
+        checkout = self.root / "out-of-band"
+        self.git("clone", str(remote), str(checkout))
+        (checkout / "HexFirst/Basic.lean").write_text("def first := 99\n")
+        self.git("add", ".", cwd=checkout)
+        self.git("-c", "user.name=Test", "-c", "user.email=test@example.org",
+                 "commit", "-m", "out of band", cwd=checkout)
+        self.git("push", "origin", "main", cwd=checkout)
+        self.assertEqual(self.publish("--force"), 1)
+        self.assertEqual(self.git("--git-dir", str(self.remotes["leanprover/hex-second"]),
+                                  "tag", "--list"), "")
+
+    def test_source_advance_requires_recovery_of_unrecorded_tags(self) -> None:
+        self.first_phase()
+        self.git("--git-dir", str(self.remotes["leanprover/hex-second"]), "tag", "v0.2.0")
+        self.sha = "source-two"
+        old = self.baseline.read_bytes()
+        self.assertEqual(self.publish("--advance-source"), 1)
+        self.assertEqual(self.baseline.read_bytes(), old)
+
+    def test_legacy_pending_state_can_retry_but_cannot_advance(self) -> None:
+        self.first_phase()
+        state = json.loads(self.baseline.read_text())
+        del state["_pending_release"]["fingerprints"]
+        self.baseline.write_text(json.dumps(state))
+        self.sha = "source-two"
+        self.assertEqual(self.publish("--advance-source"), 1)
+        self.sha = "source-one"
+        self.assertEqual(self.publish(), 0)
+
+    def test_external_pin_update_keeps_published_fingerprint(self) -> None:
+        (self.source / "HexFirst/Basic.lean").write_text("import Mathlib\ndef first := 1\n")
+        url = "https://github.com/leanprover-community/mathlib4.git"
+        pins = {sync_released._git_url(url): {
+            "name": "mathlib", "url": url, "rev": "old", "inputRev": "old"}}
+        with patch.object(sync_released, "_library_mathlib", return_value={"HexFirst": True}):
+            old = sync_released.publication_fingerprint(self.entries[0], self.entries, "v0.2.0", pins)
+            pins[sync_released._git_url(url)].update(rev="new", inputRev="new")
+            self.assertEqual(old, sync_released.publication_fingerprint(
+                self.entries[0], self.entries, "v0.2.0", pins))
+
+    def test_mathlib_update_preserves_an_earlier_companions_pin(self) -> None:
+        package = {"name": "mathlib", "type": "git", "subDir": None,
+                   "url": "https://github.com/leanprover-community/mathlib4.git",
+                   "rev": "old-mathlib", "inputRev": "old-mathlib",
+                   "inherited": False, "configFile": "lakefile.lean"}
+        self.lock.write_text(json.dumps({"packages": [package]}))
+        (self.source / "HexFirst/Basic.lean").write_text("import Mathlib\ndef first := 1\n")
+        (self.source / "HexSecond/Basic.lean").write_text(
+            "import HexFirst Mathlib\ndef second := first\n")
+        with patch.object(sync_released, "_library_mathlib", return_value={
+                "HexFirst": True, "HexSecond": True}):
+            first = self.first_phase()
+            self.sha = "source-two"
+            package.update(rev="new-mathlib", inputRev="new-mathlib")
+            self.lock.write_text(json.dumps({"packages": [package]}))
+            self.assertEqual(self.publish("--advance-source"), 0)
+        for name, expected in [("hex-first", "old-mathlib"), ("hex-second", "new-mathlib")]:
+            lock = json.loads(self.git("--git-dir", str(self.remotes[f"leanprover/{name}"]),
+                                       "show", "main:lake-manifest.json"))
+            self.assertEqual(next(p for p in lock["packages"] if p["name"] == "mathlib")["rev"],
+                             expected)
+        self.assertEqual(self.git("--git-dir", str(self.remotes["leanprover/hex-first"]),
+                                  "rev-parse", "v0.2.0"), first)
+
+    def test_checked_plan_can_publish_and_rejects_changed_external_pins(self) -> None:
+        stage = self.root / "stage"
+        self.assertEqual(self.publish("--dry-run", "--only", "hex-first", "--stage", str(stage)), 0)
+        self.lock.write_text(json.dumps({"packages": [{
+            "name": "mathlib", "type": "git", "url": "https://example.org/mathlib.git",
+            "rev": "new", "inputRev": "new"}]}))
+        self.assertEqual(self.publish("--only", "hex-first", "--plan",
+                                      str(stage / "release-stage.json")), 1)
+        self.lock.write_text(json.dumps({"packages": []}))
+        self.assertEqual(self.publish("--only", "hex-first", "--plan",
+                                      str(stage / "release-stage.json")), 0)
+
+    def test_checked_trees_cover_same_phase_dependency_revisions(self) -> None:
+        stage = self.root / "stage"
+        self.assertEqual(self.publish("--dry-run", "--stage", str(stage)), 0)
+        plan = json.loads((stage / "release-stage.json").read_text())
+        self.assertEqual(set(plan["trees"]), {"hex-first", "hex-second"})
+        self.assertEqual(self.publish("--plan", str(stage / "release-stage.json")), 0)
+
+    def test_force_cannot_publish_preserved_files_changed_since_staging(self) -> None:
+        stage = self.root / "stage"
+        self.assertEqual(self.publish("--dry-run", "--force", "--stage", str(stage)), 0)
+        checkout = self.root / "out-of-band"
+        self.git("clone", str(self.remotes["leanprover/hex-first"]), str(checkout))
+        (checkout / "LICENSE").write_text("changed after staging\n")
+        self.git("add", ".", cwd=checkout)
+        self.git("-c", "user.name=Test", "-c", "user.email=test@example.org",
+                 "commit", "-m", "out of band", cwd=checkout)
+        self.git("push", "origin", "main", cwd=checkout)
+        self.assertEqual(self.publish("--force", "--plan", str(stage / "release-stage.json")), 1)
+        for remote in self.remotes.values():
+            self.assertEqual(self.git("--git-dir", str(remote), "tag", "--list"), "")
+
+    def test_atomic_push_recovery_can_be_staged_and_completed(self) -> None:
+        self.first_phase()
+        self.sha = "source-two"
+        interrupted = False
+        ordinary_run = sync_released.run
+
+        def interrupt_after_push(command, cwd=None, capture=False):
+            nonlocal interrupted
+            output = ordinary_run(command, cwd=cwd, capture=capture)
+            if command[:3] == ["git", "push", "--atomic"]:
+                interrupted = True
+                raise OSError("interrupted after the atomic push")
+            return output
+
+        with patch.object(sync_released, "run", side_effect=interrupt_after_push):
+            self.assertEqual(self.publish("--advance-source"), 1)
+        self.assertTrue(interrupted)
+        second_remote = str(self.remotes["leanprover/hex-second"])
+        second = self.git("--git-dir", second_remote, "rev-parse", "v0.2.0")
+        stage = self.root / "recovery-stage"
+        self.assertEqual(self.publish("--dry-run", "--stage", str(stage)), 0)
+        self.assertTrue((stage / "hex-second/HexSecond/Basic.lean").is_file())
+        self.assertEqual(self.publish("--plan", str(stage / "release-stage.json")), 0)
+        self.assertEqual(self.git("--git-dir", second_remote, "rev-parse", "v0.2.0"), second)
+        self.assertEqual(json.loads(self.baseline.read_text())["_version"], "v0.2.0")
+
+    def test_skipped_target_stops_its_dependents_and_fails_partial_phase(self) -> None:
+        checkout = self.root / "out-of-band"
+        self.git("clone", str(self.remotes["leanprover/hex-first"]), str(checkout))
+        (checkout / "new.txt").write_text("uncoordinated\n")
+        self.git("add", ".", cwd=checkout)
+        self.git("-c", "user.name=Test", "-c", "user.email=test@example.org",
+                 "commit", "-m", "uncoordinated", cwd=checkout)
+        self.git("push", "origin", "main", cwd=checkout)
+        self.assertEqual(self.publish("--only", "hex-first,hex-second"), 1)
+        self.assertEqual(json.loads(self.baseline.read_text())["_pending_release"]["repos"], [])
+        for remote in self.remotes.values():
+            self.assertEqual(self.git("--git-dir", str(remote), "tag", "--list"), "")
+
+    def test_failed_push_does_not_persist_an_unpublished_commit(self) -> None:
+        old = json.loads(self.baseline.read_text())["hex-first"]
+        ordinary_run = sync_released.run
+
+        def reject_push(command, cwd=None, capture=False):
+            if command[:3] == ["git", "push", "--atomic"]:
+                raise subprocess.CalledProcessError(1, command)
+            return ordinary_run(command, cwd=cwd, capture=capture)
+
+        with patch.object(sync_released, "run", side_effect=reject_push):
+            self.assertEqual(self.publish("--only", "hex-first"), 1)
+        state = json.loads(self.baseline.read_text())
+        self.assertEqual(state["hex-first"], old)
+        self.assertEqual(state["_pending_release"]["repos"], [])
+        self.assertEqual(self.publish(), 0)
+
+    def test_arbitrary_tagged_commit_cannot_claim_interrupted_push_recovery(self) -> None:
+        self.first_phase()
+        checkout = self.root / "out-of-band"
+        self.git("clone", str(self.remotes["leanprover/hex-second"]), str(checkout))
+        (checkout / "new.txt").write_text("uncoordinated\n")
+        self.git("add", ".", cwd=checkout)
+        self.git("-c", "user.name=Test", "-c", "user.email=test@example.org",
+                 "commit", "-m", "uncoordinated", cwd=checkout)
+        self.git("tag", "v0.2.0", cwd=checkout)
+        self.git("push", "origin", "main", "v0.2.0", cwd=checkout)
+        self.assertEqual(self.publish("--dry-run", "--stage", str(self.root / "stage")), 1)
+
+    def use_mathlib_with_first_dependency(self, revision: str) -> None:
+        self.enterContext(patch.object(sync_released, "_library_mathlib", return_value={
+            "HexFirst": False, "HexSecond": True}))
+        self.lock.write_text(json.dumps({"packages": [{
+            "name": "mathlib", "type": "git", "subDir": None,
+            "url": "https://github.com/leanprover-community/mathlib4.git",
+            "rev": "mathlib-rev", "inputRev": "mathlib-rev",
+            "configFile": "lakefile.lean"}]}))
+        (self.source / "HexSecond/Basic.lean").write_text("import Mathlib\ndef second := 1\n")
+        self.mathlib_packages = [{
+            "name": "HexFirst", "type": "git", "subDir": None,
+            "url": "https://github.com/leanprover/hex-first.git",
+            "rev": revision, "inputRev": "v0.2.0", "configFile": "lakefile.toml"}]
+
+    def test_mathlib_requires_exact_completed_hex_pins_before_publishing(self) -> None:
+        self.use_mathlib_with_first_dependency("old")
+        self.assertEqual(self.publish(), 1)
+        first = self.first_phase()
+        self.sha = "source-two"
+        self.assertEqual(self.publish("--advance-source"), 1)
+        self.mathlib_packages[0]["rev"] = first
+        self.assertEqual(self.publish("--advance-source"), 0)
+
+    def test_mathlib_inherited_hex_dependencies_survive_lockfile_reconciliation(self) -> None:
+        first = self.first_phase()
+        self.use_mathlib_with_first_dependency(first)
+        self.mathlib_packages[0]["url"] = "https://github.com/leanprover/hex-first"
+        self.entries[1]["pins"] = []
+        self.enterContext(patch.object(sync_released, "_library_deps", return_value={
+            "HexFirst": (), "HexSecond": ()}))
+        self.manifest.write_text(yaml.safe_dump({"repos": self.entries}, sort_keys=False))
+        self.sha = "source-two"
+        stage = self.root / "stage"
+        self.assertEqual(self.publish("--dry-run", "--advance-source", "--only", "hex-second",
+                                      "--stage", str(stage)), 0)
+        self.assertTrue((stage / "hex-first/HexFirst/Basic.lean").is_file())
+        self.assertEqual(self.publish("--advance-source"), 0)
+        lock = json.loads(self.git("--git-dir", str(self.remotes["leanprover/hex-second"]),
+                                   "show", "main:lake-manifest.json"))
+        dependency = next(p for p in lock["packages"] if p["name"] == "HexFirst")
+        self.assertEqual(dependency["rev"], first)
+        self.assertEqual(dependency["url"], self.mathlib_packages[0]["url"])
+        self.assertTrue(dependency["inherited"])
+
+    def test_mathlib_lockfile_is_read_at_its_immutable_revision(self) -> None:
+        import io
+        local = self.source / ".lake/packages/mathlib"
+        local.mkdir(parents=True)
+        self.git("init", "-q", "-b", "main", cwd=local)
+        package = {"name": "batteries", "type": "git", "rev": "a" * 40,
+                   "url": "https://github.com/leanprover-community/batteries"}
+        (local / "lake-manifest.json").write_text(json.dumps({"packages": [package]}))
+        self.git("add", ".", cwd=local)
+        self.git("-c", "user.name=Test", "-c", "user.email=test@example.org",
+                 "commit", "-qm", "lock", cwd=local)
+        revision = self.git("rev-parse", "HEAD", cwd=local)
+        url = "https://github.com/leanprover-community/mathlib4.git"
+        # A dirty dependency checkout must not replace the immutable lockfile.
+        (local / "lake-manifest.json").write_text(json.dumps({"packages": []}))
+        with patch.object(sync_released.urllib.request, "urlopen") as fetch:
+            self.assertEqual(sync_released._mathlib_dependencies_at(url, revision, self.source), [package])
+            fetch.assert_not_called()
+        package["rev"] = "b" * 40
+        response = io.BytesIO(json.dumps({"packages": [package]}).encode())
+        with patch.object(sync_released.urllib.request, "urlopen", return_value=response) as fetch:
+            self.assertEqual(sync_released._mathlib_dependencies_at(url, "c" * 40, self.source), [package])
+            fetch.assert_called_once_with(
+                "https://raw.githubusercontent.com/leanprover-community/mathlib4/"
+                + "c" * 40 + "/lake-manifest.json", timeout=60)
+
+
+class ConsumerPinTests(unittest.TestCase):
+    def test_external_and_mathlib_pin_drift_is_rejected_before_cache_get(self) -> None:
+        from scripts.release.consumer_check import check_consumer_pins
+        with tempfile.TemporaryDirectory() as directory:
+            consumer = Path(directory)
+            mathlib = consumer / ".lake/packages/mathlib"
+            mathlib.mkdir(parents=True)
+            dependency = {"name": "batteries", "type": "git", "subDir": None,
+                          "url": "https://github.com/leanprover-community/batteries", "rev": "new"}
+            (mathlib / "lake-manifest.json").write_text(json.dumps({"packages": [dependency]}))
+            package = {"name": "mathlib", "type": "git", "rev": "m", "subDir": None,
+                       "url": "https://github.com/leanprover-community/mathlib4.git"}
+            lock = consumer / "lake-manifest.json"
+            lock.write_text(json.dumps({"packages": [package, dict(dependency, rev="old")]}))
+            with self.assertRaisesRegex(RuntimeError, "batteries"):
+                check_consumer_pins(consumer, None)
+            lock.write_text(json.dumps({"packages": [package, dependency]}))
+            check_consumer_pins(consumer, None)
+            lock.write_text(json.dumps({"packages": [package, dict(dependency, url=dependency["url"] + ".git")]}))
+            with self.assertRaisesRegex(RuntimeError, "batteries"):
+                check_consumer_pins(consumer, None)
+            lock.write_text(json.dumps({"packages": [package, dependency]}))
+            plan = {"external_pins": {"mathlib": dict(package, rev="other")}, "baseline": {}}
+            with self.assertRaisesRegex(RuntimeError, "mathlib"):
+                check_consumer_pins(consumer, plan)
+
+    def test_published_hex_dependency_must_resolve_to_recorded_commit(self) -> None:
+        from scripts.release.consumer_check import check_consumer_pins
+        with tempfile.TemporaryDirectory() as directory:
+            consumer = Path(directory)
+            package = {"name": "HexBasic", "type": "git", "rev": "wrong",
+                       "url": "https://github.com/leanprover/hex-basic.git"}
+            (consumer / "lake-manifest.json").write_text(json.dumps({"packages": [package]}))
+            plan = {"external_pins": {}, "baseline": {
+                "hex-basic": "recorded", "_pending_release": {"repos": ["hex-basic"]}}}
+            with self.assertRaisesRegex(RuntimeError, "published pin"):
+                check_consumer_pins(consumer, plan)
+
+    def test_mathlib_locked_hex_dependency_cannot_resolve_as_staged_path(self) -> None:
+        from scripts.release.consumer_check import check_consumer_pins
+        with tempfile.TemporaryDirectory() as directory:
+            consumer = Path(directory)
+            mathlib = consumer / ".lake/packages/mathlib"
+            mathlib.mkdir(parents=True)
+            dependency = {"name": "HexBasic", "type": "git", "rev": "recorded",
+                          "url": "https://github.com/leanprover/hex-basic.git"}
+            (mathlib / "lake-manifest.json").write_text(json.dumps({"packages": [dependency]}))
+            (consumer / "lake-manifest.json").write_text(json.dumps({"packages": [
+                {"name": "mathlib"}, {"name": "HexBasic", "type": "path", "dir": "../hex-basic"}]}))
+            with self.assertRaisesRegex(RuntimeError, "HexBasic"):
+                check_consumer_pins(consumer, None)
 
 
 if __name__ == "__main__":

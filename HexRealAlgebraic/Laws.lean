@@ -19,7 +19,7 @@ operations; the companion supplies its concrete witness by real interpretation.
 namespace Hex.RealAlgebraicNumber
 
 /-- Laws of the executable operations, without alternative data or a field
-instance assumption. The Mathlib companion proves this package unconditionally. -/
+instance assumption. The theory companion proves this package unconditionally. -/
 class Laws : Prop where
   /-- Boolean equality recognizes structural equality. -/
   beq_iff : ∀ a b : RealAlgebraicNumber, (a == b) = true ↔ a = b

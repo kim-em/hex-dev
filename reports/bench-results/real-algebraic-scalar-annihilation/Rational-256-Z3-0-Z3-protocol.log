@@ -1,0 +1,9 @@
+Hex.RealAlgebraicScaling.runZ3Rational256Protocol    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a3ddc94-dirty, 2026-10-04T20:02:18Z, host=chungus2
+  repeat 0  12.327 µs  (×2^12, total 50.494 ms)
+  median: 12.327 µs    min: 12.327 µs    max: 12.327 µs
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 65_300 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-proposals/real-algebraic-scalar-annihilation/Rational-256-Z3-0-Z3-protocol.json

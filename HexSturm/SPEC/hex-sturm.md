@@ -7,23 +7,31 @@ pseudo-remainder and literal replay kernel in `hex-real-roots`.
 
 The computational frontend is implemented in `HexSturm/Basic.lean`, using the
 shared query producer and literal checker. It provides `prepare`, `query`,
-`queryPrepared`, `certify`, `certifyPrepared` and `check`, with explicit
+`queryPrepared`, `queryReduced`, `queryReducedPrepared`, `certify`,
+`certifyPrepared` and `check`, with explicit
 coefficient signs and finite/infinite endpoints. `PreparedDomain` has a private
 constructor and retains its sign operation, head, endpoints and validated
-squarefree chain. `orderSign` is the canonical ordered-coefficient sign function. The frontend
+squarefree chain. A domain is prepared by the shared producer, or restored
+from proofs of endpoint validity, a constant terminal entry and exact equality
+with the producer's chain. Restoration retains those data and invariants;
+serialized data alone do not establish them. `orderSign` is the canonical ordered-coefficient sign function. The frontend
 uses ordinary coefficient inversion to divide each remainder by its positive
 absolute leading coefficient, preserving negative leading signs. The shared
 integer backend retains its content normalization.
 
-The [companion](../../HexSturmMathlib/SPEC/hex-sturm-mathlib.md) proves exact
+The [companion](../../HexSturmTheory/SPEC/hex-sturm-theory.md) proves exact
 semantic domain equivalence, produced-certificate acceptance, prepared-query
 agreement and whole-`Option` rational/integer agreement on finite ordered dyadic
 intervals after positive denominator clearing. It also proves whole-`Option`
 congruence across field representations, with finite or infinite endpoints,
 and acceptance of literal certificate translations by denominator clearing
 and integer-to-rational embedding. The shared root-sum theorem supplies replay semantics, `rootCount` and
-singleton/sign bounds. Remaining Phase-4 evidence is required.
-No release or phase completion is claimed.
+singleton/sign bounds. Current phase counters are maintained in
+[libraries.yml](../../libraries.yml);
+the [readiness audit](../../reports/real-closure-prerequisites.md) gives the
+dependency checks, retained evidence dispositions and supported limits.
+The [proof acceptance](../../reports/sturm-proof-acceptance.md) records the
+sorry-free build and conformance. No release is claimed.
 
 `HexSturm` depends on `HexPoly` and `HexRealRoots`, with no Mathlib or
 Batteries import. Its namespace is `Hex.Sturm`. Its substantive work is
@@ -37,13 +45,24 @@ Both integer and field frontends invoke that algorithm. No upstream input
 library imports this family. In particular `hex-real-algebraic` remains an
 independent rational-base implementation.
 
-`HexSturmMathlib` imports this library, `HexPolyMathlib` and
-`HexRealRootsMathlib`, and consumes the shared abstract theorem through the
+`HexSturmTheory` imports this library, `HexPolyTheory` and
+`HexRealRootsTheory`, and consumes the shared abstract theorem through the
 last of these. Only companions import Mathlib or Tau Ceti. BKR matrices,
 complete sign tables and Thom encodings belong in `hex-sign-det`; extension
 construction and isolation in `hex-real-closure`; coefficient orders and
 approximation protocols in `hex-ordered-fn`. There is no root-search,
 Archimedean separation, CAD, coverings, or tactic completeness claim here.
+
+## Headline correctness theorem
+
+The bridge headline is `HexSturmTheory.query_iff`: an ordinary query returns
+an integer exactly when its domain holds and that integer is the signed sum
+over the distinct roots in the open interval. Its
+[companion contract](../../HexSturmTheory/SPEC/hex-sturm-theory.md#headline-correctness-theorem)
+states the lawful-interpretation hypotheses, the independently required
+prepared/count/replay/transport contracts, and the development-adapter boundary.
+The [performance report](../../reports/hex-sturm-performance.md) records the
+separate compiled evidence and its limits; the headline is a correctness theorem.
 
 ## Coefficients and evidence
 
@@ -115,12 +134,21 @@ The required public operations use the same shared arithmetic kernel:
 | `domain.withEndpoints? a b` | Retain the exact head, sign operation and squarefree chain, checking the new endpoints. Return the same whole result as fresh preparation of that head. A changed head requires fresh preparation. |
 | `query p f a b` | Return `Option Int`; `none` exactly when the domain fails. |
 | `queryPrepared domain f` | Return the query for an already validated domain. |
+| `queryReduced p f a b` | Validate the same domain, reduce `f` by remainder-only division modulo `p`, and invoke the shared producer on that remainder. Under lawful coefficient division its whole result equals `query`, including `none`. |
+| `queryReducedPrepared domain f` | Reduce modulo the prepared head and invoke `queryPrepared`. The companion proves the same signed value under lawful division. |
 | `countPrepared domain` | Return the query of `1` as `Int`, reusing the stored squarefree chain for both certificate positions and recomputing the current endpoint signs. Under the lawful interpretation this is the nonnegative root cardinality. Compare integer counts directly or prove nonnegativity before `Nat` conversion; never clamp an unexpected negative result. |
 | `rootCount p a b` | Query `f=1`, returning `Option Nat` with the same domain. Prove nonnegativity before conversion; never clamp an unexpected negative value. |
 | `certify p f a b` | Run the shared kernel while retaining its literal query certificate. Return `none` on the same invalid domain. |
 | `certifyPrepared context domain f` | Retain the literal query certificate while reusing the prepared squarefree chain and binding the supplied context. |
 | `certifyCountPrepared context domain` | Produce the query-one certificate with the stored chain, fresh endpoint signs and exact context bindings. It equals the ordinary prepared certificate for `1`; old interval counts or endpoint evidence are not reused. |
 | `check` | Check a supplied finite certificate; return `Bool`, false on malformed or incorrect data. |
+
+The reduced value APIs reuse `DensePoly` remainder-only division and the shared
+Tarski producer. They avoid retaining the original high-degree quotient as
+literal certificate evidence. They do not return a certificate bound to the
+unreduced query; use the existing certificate APIs for that contract. Their
+correspondence additionally requires coefficient division to have its lawful
+field interpretation. Storage itself still needs no field/order instance.
 
 No operation takes a caller resource budget. Squarefreeness uses the existing
 plain field gcd of `P,P'`, testing that it is a nonzero constant, or a plain
@@ -254,11 +282,11 @@ and `[IsRealClosed R]` on the Mathlib side.
 
 | Statement | Required conclusion / owner |
 | --- | --- |
-| `query_sound` | `query p f a b = some q` implies `Domain p a b` and `q = TaQ(F,P;a,b)`; development `HexQuerySemantics` adapter. |
-| `check_sound` | Accepted replay implies the same domain and query equality; development `HexQuerySemantics` adapter via the shared replay theorem. |
+| `query_sound` | `query p f a b = some q` implies `Domain p a b` and `q = TaQ(F,P;a,b)`; ordinary `HexSturmTheory.Soundness` companion. |
+| `check_sound` | Accepted replay implies the same domain and query equality; ordinary `HexSturmTheory.Soundness` companion via the shared replay theorem. |
 | `query_isSome` | `(query p f a b).isSome ↔ Domain p a b`; executable guard/termination proof here, interpretation in companion. |
 | `certify_checks` | Certificates produced on the domain pass replay and carry the same value as `query`. |
-| `rootCount_eq`, `query_sign` | Count equals `Roots.card`; a singleton root set gives the evaluation sign; proved in the development `HexQuerySemantics` adapters, for eventual companion publication. |
+| `rootCount_eq`, `query_sign` | Count equals `Roots.card`; a singleton root set gives the evaluation sign; proved in ordinary `HexSturmTheory.Soundness` and exported by the companion umbrella. |
 | `query_congr` | Order-preserving field maps and transported endpoints preserve query results, including domain validity. |
 | `check_congr` | Checked positive-scaled chains have equal values; producer acceptance gives whole-`Option` rational/integer agreement with different normalizers. |
 | `query_rat_eq` | Positive denominator clearing at rational coefficients and dyadic endpoints agrees, including `none`, with `ZPoly.tarskiQuery`; companion. |
@@ -276,7 +304,7 @@ The integer frontend retains its public type, integer content removal and
 exact dyadic Horner optimizations; it does not acquire a `Field Int` instance.
 
 The foundation is imported once, through
-[hex-real-roots-mathlib](../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md#sturm-tarski-correspondence).
+[hex-real-roots-theory](../../HexRealRootsTheory/SPEC/hex-real-roots-theory.md#sturm-tarski-correspondence).
 Tau Ceti supplies polynomial IVT and Rolle over abstract real closed fields
 and the signed-remainder identity equating variation drop to the finite root
 sum. The companion records the imported modules and declarations, including
@@ -291,7 +319,7 @@ specialization in real-roots and its companion. That companion also proves
 results. HexSturm supplies frontend guards, generic endpoint operations and denominator
 clearing; its companion proves their correspondence and coefficient-evidence composition. Ambient real-closure existence
 for arbitrary `K` is a separate Tau Ceti obligation consumed by
-`hex-real-closure-mathlib`; this API's semantics are conditional on a supplied
+`hex-real-closure-theory`; this API's semantics are conditional on a supplied
 `R,ι` until that obligation is discharged. It does not construct that field.
 
 ## Conformance and Phase-4 evidence
@@ -303,6 +331,9 @@ python-flint exact selected-root signs. Pin oracle versions and provenance;
 never use printed decimals as expected signs. Lower-level pseudo-division,
 gcd/xgcd identities and coefficient-interpretation agreement also have fixtures in hex-poly;
 shared recurrence/replay cases live in hex-real-roots.
+The [direct frontend corpus](../../reports/sturm-direct-conformance/README.md)
+checks original rational and noncanonical inputs with pinned exact FLINT roots,
+including finite/infinite domains and guarded integer-count and Tarski-query agreement.
 
 Required cases include:
 
@@ -335,13 +366,24 @@ remain their owners' obligations.
 
 The registered input families are `head-degree` (Chebyshev heads `T_n` with
 query `1` on `(-2,2)`) and `query-degree` (fixed head `x²-2`, query `x^m+1`
-on `(-2,2)`). They exercise normal degree descent and initial reduction,
-respectively; the additional sweep dimensions below remain required.
+on `(-2,2)`), and `short-chain-degree` (`2X^n−1`, query one on `(-1,1)`,
+with a three-entry chain). They separate normal descent, initial reduction and
+growing degree with a fixed short chain; the additional sweep dimensions below
+remain required. The short-chain frontend registrations have independently
+derived linear bounded-word models and retained passes; their scope does not extend
+to long-chain or growing-bit inputs. Those families have separate retained
+evidence and dispositions in the performance report.
 
 Phase 4 measures domain/squarefree checks, initial reduction, subsequent chain
 production, endpoint evaluation, coefficient signs and literal replay
 separately. Sweep `degree P`, `degree F`, coefficient bit size, endpoint size,
-chain length, extension depth and nested evidence size. With classical dense
+chain length, extension depth and nested evidence size. The extension/nested
+integration sweeps are supplied by the consumers that instantiate those
+coefficient domains; [retained consumer observations](../../reports/sturm-downstream-evidence.md)
+are part of this library's readiness evidence. They retain their measured
+source and scope. Full BKR/tower performance attestation stays with the
+consumers, independently of this prerequisite's direct dependency eligibility.
+With classical dense
 arithmetic a conservative query bound after validation is
 `O((degree F+1)*degree P + (degree P)^3)` ring operations for positive-degree
 `P`, excluding coefficient-oracle cost; finite endpoint work is bounded by
@@ -350,8 +392,8 @@ coefficient sizes, gcd work, coefficient calls and certificate bytes; use the
 actual polynomial lengths and certificate sizes for replay costs.
 
 Compare the rational frontend with the optimized integer/dyadic backend
-on identical queries; correctness agreement is gating. Pinned python-flint
-and Z3 end-to-end comparisons are informational where they expose comparable
+on identical queries; correctness agreement is required. Pinned python-flint
+and Z3 end-to-end comparisons are for orientation where they expose comparable
 queries; record any lack of a matching query surface rather than timing root
 isolation as if it were query evaluation. No external system supplies a
 comparable Lean kernel proof surface. The companion's correctness tests
@@ -363,3 +405,8 @@ Follow the shared-host fixed trial-major and adjacent alternating `AB`/`BA`
 schedules, retain every completed sample, and allow at most one unchanged
 rerun of an inconclusive result. No performance measurements or phase
 advancement follow merely from this contract.
+
+Phase attestation is recorded in `libraries.yml`. The
+[proof acceptance](../../reports/sturm-proof-acceptance.md) records Phases 5–7; the
+[readiness audit](../../reports/real-closure-prerequisites.md) gives Phase-4
+conformance/correctness evidence and supported limits.

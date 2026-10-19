@@ -1,0 +1,9 @@
+Hex.RealAlgebraicBench.runZ3RationalRoots2Protocol    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=edb3ef9-dirty, 2026-10-04T04:25:57Z, host=chungus2
+  repeat 0  9.375 µs  (×2^13, total 76.807 ms)
+  median: 9.375 µs    min: 9.375 µs    max: 9.375 µs
+  hash: all repeats agree
+  observed hash: 0x6cec062c2935e3b5
+  expected hash: matches
+  peak RSS: 68_420 kB (across 1 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-poly-roots-comparison-after/Rational-2-Z3-2-Z3-protocol.json

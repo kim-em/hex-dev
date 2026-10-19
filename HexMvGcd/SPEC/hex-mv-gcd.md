@@ -2,7 +2,7 @@
 
 Greatest common divisors, cofactors, content, primitive part, exact
 division, and squarefree decomposition for `MvPoly n R cmp`. Mathlib-free.
-The companion `hex-mv-gcd-mathlib` transports the Mathlib-free soundness
+The companion `hex-mv-gcd-theory` transports the Mathlib-free soundness
 theorems onto `MvPolynomial (Fin n) R`, proves the squarefree
 correspondence, and supplies the decidability instances that make the
 operations usable from a Mathlib goal.
@@ -56,7 +56,7 @@ than in its SPEC, and both stated again below:
 **Divisibility and squarefree tests from Mathlib.** The companion supplies
 `Decidable (a ∣ b)` and `Decidable (Squarefree p)` for
 `MvPolynomial (Fin n) ℤ`, and the same squarefree instance over `ℚ`, in
-the style of `hex-berlekamp-mathlib`'s `Decidable (Irreducible f)`.
+the style of `hex-berlekamp-theory`'s `Decidable (Irreducible f)`.
 The integer case combines the polynomial-part test here with Mathlib's
 existing decision procedure for squarefreeness of the integer content;
 integer factorization is not a dependency.
@@ -1221,7 +1221,7 @@ Over a field, "no square of a nonunit divides `p`" is the whole story.
 Over `ℤ` it is not, and the distinction has to be made before any
 signature is written. `12x` is not squarefree in `ℤ[x]`, because
 `4 ∣ 12`, so the ring-theoretic predicate over `ℤ[x₁, …, xₙ]` is partly a
-question about the integer content. The Mathlib companion can decide that
+question about the integer content. The theory companion can decide that
 scalar predicate without factoring the integer; the Mathlib-free API here
 deliberately specifies only the polynomial-part convention below.
 
@@ -1648,20 +1648,20 @@ The Singular driver uses `gcd`, checked exact quotient, and `factorize` in a
 persistent characteristic-zero polynomial ring. SymPy remains the oracle and
 is not a performance comparator.
 
-Both performance comparators are `informational`. FLINT selects among Brown,
+Both performance comparators are recorded for orientation. FLINT selects among Brown,
 Zippel, a sparse Hensel route, and subresultants with tuned crossovers, while
 this library specifies Brown and the subresultant fallback; Singular likewise
 has sparse routes outside this SPEC. A required broad ratio would therefore
-check routes that do not exist. The written-down expectation is narrow: on
+check routes that do not exist. Performance target: on
 the **coprime** family the ratio should be within a small constant, since all
 three sides should discharge the inputs without full interpolation. A large
 ratio there means the fast path is not firing. No advance ratio claim is made
 on the remaining families, especially sparse stress, where the comparator
 route has no Hex counterpart.
 
-## The Mathlib layer
+## The theory layer
 
-`hex-mv-gcd-mathlib` transports the Mathlib-free soundness and maximality
+`hex-mv-gcd-theory` transports the Mathlib-free soundness and maximality
 theorems; it does not supply a missing gcd-domain hypothesis. Writing `e`
 for hex-mv-poly's
 `equiv : MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`:
@@ -1783,11 +1783,11 @@ HexMvGcd/
   Gcd.lean          -- config/backends, dispatch, public API, GcdOps instance
   Squarefree.lean   -- Yun, the content recursion, radical, isSquarefree
 HexMvGcd.lean
-HexMvGcdMathlib/
+HexMvGcdTheory/
   Gcd.lean          -- transport of divisibility and Associated statements
   Squarefree.lean   -- Squarefree correspondence and uniqueness
   Decide.lean       -- divisibility and ℚ/ℤ squarefree decisions
-HexMvGcdMathlib.lean
+HexMvGcdTheory.lean
 ```
 
 `libraries.yml` records the active core library and the planned companion:
@@ -1798,8 +1798,8 @@ HexMvGcdMathlib.lean
     mathlib: false
     done_through: 1
     status: active
-  HexMvGcdMathlib:
-    deps: [HexMvGcd, HexMvPolyMathlib]
+  HexMvGcdTheory:
+    deps: [HexMvGcd, HexMvPolyTheory]
     mathlib: true
     done_through: 0
     status: planned
@@ -1818,7 +1818,7 @@ bundled bounded-prime stream.
 
 All dependencies named above are active. `HexMvGcd` is registered as active
 at `done_through: 1`; the prerequisite and coefficient-kernel milestone is
-complete. `HexMvGcdMathlib` remains a planned companion and is not yet
+complete. `HexMvGcdTheory` remains a planned companion and is not yet
 registered in `libraries.yml`.
 
 ## Why gcd and squarefree decomposition are one library

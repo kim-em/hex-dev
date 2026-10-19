@@ -1,0 +1,9 @@
+Hex.RealClosure.Bench.runAssembly    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=bd5e4f1, 2026-10-05T18:56:49Z, host=chungus2
+  repeat 0  197.195 µs  (×2^10, total 201.928 ms)
+  median: 197.195 µs    min: 197.195 µs    max: 197.195 µs
+  hash: all repeats agree
+  observed hash: 0x1
+  expected hash: matches
+  peak RSS: 69_804 kB (across 1 ok repeat(s))
+exported to /home/kim/.codex/tasks/hex-10378/stage-costs-bd5e4f-capture/02-runAssembly.json

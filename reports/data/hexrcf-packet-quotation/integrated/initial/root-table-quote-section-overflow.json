@@ -1,0 +1,84 @@
+[
+  {
+    "label": "desktop",
+    "width": 1440,
+    "targets": [
+      {
+        "tag": "P",
+        "text": "\n                  A polynomial over a selected real number field can require a new algebraic\nroot. For example, if the coefficient is the selected positive squ",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.RootTableQuoteTests in\nexample : ∃ x : ℝ,\n    x ^ 2 = Real.sqrt 2 ∧\n      1 < x ∧ x < 2 :=\n  witness\n",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  This example reads the complete supplied root table with\nRootTable.read.\nThe polynomial's stored coefficients are first reconstructed with\nSc",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  RootReplay.fromTable\ntransports the checked table to the existing real root-coverage theorem.\nThe coefficient interpretation identifies the e",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The fresh importing conformance module checks all 70 reachable example theorem\nbodies and 14 definitions under the kernel producer guard, inc",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The retained prototype audit build took 40.499 seconds with a 3.1 GiB peak\non the shared host, including reused dependencies. These observati",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  This is a direct checked API example. It does not install the general\nsource-to-certificate tactic, authenticate arbitrary provider histories",
+        "overflow": 0
+      }
+    ]
+  },
+  {
+    "label": "narrow",
+    "width": 390,
+    "targets": [
+      {
+        "tag": "P",
+        "text": "\n                  A polynomial over a selected real number field can require a new algebraic\nroot. For example, if the coefficient is the selected positive squ",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.RootTableQuoteTests in\nexample : ∃ x : ℝ,\n    x ^ 2 = Real.sqrt 2 ∧\n      1 < x ∧ x < 2 :=\n  witness\n",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  This example reads the complete supplied root table with\nRootTable.read.\nThe polynomial's stored coefficients are first reconstructed with\nSc",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  RootReplay.fromTable\ntransports the checked table to the existing real root-coverage theorem.\nThe coefficient interpretation identifies the e",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The fresh importing conformance module checks all 70 reachable example theorem\nbodies and 14 definitions under the kernel producer guard, inc",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The retained prototype audit build took 40.499 seconds with a 3.1 GiB peak\non the shared host, including reused dependencies. These observati",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  This is a direct checked API example. It does not install the general\nsource-to-certificate tactic, authenticate arbitrary provider histories",
+        "overflow": 0
+      }
+    ]
+  }
+]

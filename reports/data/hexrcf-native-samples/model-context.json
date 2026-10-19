@@ -1,0 +1,369 @@
+{
+  "source_commit": "8a3b1ff96a2ca1b18df40dba1cd66b255e5da0ee",
+  "scope": "Selected X^2-epsilon sample over the actual infinitesimal-parent reference model, with one real reader retaining the square equation and original converted epsilon guard.",
+  "sources": {
+    "adapters/HexRCF/RealCoefficients/NativeSamples.lean": {
+      "sha256": "5cd84e6cce6c24a6712d36ec472557e0bc993092d269645f38d274fb2d699219",
+      "bytes": 9868
+    },
+    "adapters/HexRCF/RealCoefficients/RepresentationSpecialize.lean": {
+      "sha256": "a5a14158189cdd56465ef1e25a9cf59c5301116278937961c389381dc956944b",
+      "bytes": 9243
+    },
+    "adapters/HexRCF/RealCoefficients.lean": {
+      "sha256": "b1251fdba35e33a01fe8358d568be6bc73fcd9210b95e7f0f28ce1bea1751d22",
+      "bytes": 3975
+    },
+    "conformance/HexRCF/NativeSampleModelConformance.lean": {
+      "sha256": "4a642e24dc0552e7a765583bae05cdd6bd786b3a49e3451c1db7768e13b275d4",
+      "bytes": 7700
+    },
+    "conformance/HexRCF/NativeSampleModelLiterals.lean": {
+      "sha256": "30430af7885f91dd8afadc3a3c9a351b70ed5a48ef460347dc047baac1885a44",
+      "bytes": 10019
+    },
+    "conformance-fixtures/HexRCF/native-sample-root.json": {
+      "sha256": "601990e16f87bfcb409f052cd7444c6e96017294a27845464cb2aab3e75d02ef",
+      "bytes": 8727
+    },
+    "scripts/rcf/selected_literals.py": {
+      "sha256": "95c415db8ba56d08ec36d008e4352154377814a9b683bbbca950d350a4d2db6f",
+      "bytes": 12747
+    },
+    "lakefile.lean": {
+      "sha256": "1d2e1677d8cdeb762755fe22e3e00a5099a1930aab3db7864dd15885aee257aa",
+      "bytes": 97598
+    },
+    "HexManual/Chapters/HexRCF/NativeSamples.lean": {
+      "sha256": "fbe1fbb6f6c04c4449e0ffa1a1a30a82e31dc409c769e47ba60e6577b777e12c",
+      "bytes": 5942
+    },
+    "reports/hexrcf-native-samples.md": {
+      "sha256": "b63ca7af3db50fc66799a57e368fcc7884ddd9648caab74e47653688a4c0f7a5",
+      "bytes": 7566
+    }
+  },
+  "records": [
+    {
+      "name": "native-sample-selected-model-square-conformance-oct11.log",
+      "kind": "validation_log",
+      "file": "model-native-sample-selected-model-square-conformance-oct11.log.xz",
+      "bytes": 81345,
+      "sha256": "b4afd199f07d6fae5d0b72a52325785229d18b930ce861a743f771bbd0bb1d77",
+      "archive_bytes": 6288,
+      "archive_sha256": "a7807b8585689c13cf09d0dd1eb22de5f4d92f341c7e3bb25f1b673cc503a66f",
+      "command": "lake build HexRCF.NativeSampleModelConformance",
+      "observed_exit_code": 0,
+      "validated_source_snapshot": "8a3b1ff96a2ca1b18df40dba1cd66b255e5da0ee"
+    },
+    {
+      "name": "native-sample-source-reader-ordinary-oct11.log",
+      "kind": "validation_log",
+      "file": "model-native-sample-source-reader-ordinary-oct11.log.xz",
+      "bytes": 85346,
+      "sha256": "7394b31aa6635d87e1bb3bb2a7af301bf0ff9fa15b9be923b6c1a5fa016d1cce",
+      "archive_bytes": 6704,
+      "archive_sha256": "8b88a5029dbb54f7ba99a89d7be40edcb271c13dae466a97d6c77c51d02bc62f",
+      "command": "lake build NativeSampleModelOrdinaryUse NativeSourcesTest",
+      "observed_exit_code": 0,
+      "validated_source_snapshot": "8a3b1ff96a2ca1b18df40dba1cd66b255e5da0ee"
+    },
+    {
+      "name": "native-sample-selected-model-pure-emit-oct11.log",
+      "kind": "validation_log",
+      "file": "model-native-sample-selected-model-pure-emit-oct11.log.xz",
+      "bytes": 44255,
+      "sha256": "dda9c8c1a67fa8aa2959a8e3c9e77d9c4226e85399c29f78e15c2e8622a1448e",
+      "archive_bytes": 3864,
+      "archive_sha256": "4ab4b12f738ff5155e951b68ef7a6b723dd27e0e3c8351d388e3c77b7f648556",
+      "command": "lake build NativeSampleModelEmit",
+      "observed_exit_code": 0,
+      "validated_source_snapshot": "8a3b1ff96a2ca1b18df40dba1cd66b255e5da0ee"
+    },
+    {
+      "name": "native-sample-selected-model-final-integration-oct11.log",
+      "kind": "validation_log",
+      "file": "model-native-sample-selected-model-final-integration-oct11.log.xz",
+      "bytes": 217336,
+      "sha256": "79e6673c50b28eccd20b9abab27d4ccdd53897d5832ad67ab57f8bf36baec6c2",
+      "archive_bytes": 14700,
+      "archive_sha256": "6b2ffa87f57ad237dffca3e3ec4c821c6a9107c46f07b6c3b1b2e913f03409c1",
+      "command": "lake build HexRCFRealCoefficients HexConformance HexManual",
+      "observed_exit_code": 0,
+      "validated_source_snapshot": "8a3b1ff96a2ca1b18df40dba1cd66b255e5da0ee"
+    },
+    {
+      "name": "native-sample-selected-model-final-render-oct11.log",
+      "kind": "validation_log",
+      "file": "model-native-sample-selected-model-final-render-oct11.log.xz",
+      "bytes": 183191,
+      "sha256": "f9e5afbd0a0fff831659eb189a773c25603f041983ede4a63dac74c75ec958b4",
+      "archive_bytes": 11020,
+      "archive_sha256": "33a6c2a11cdd42364747f51949f8616c185cfc09e63dbb911fdb9e8ed3c9b6d8",
+      "command": "lake build FullRender",
+      "observed_exit_code": 0,
+      "validated_source_snapshot": "8a3b1ff96a2ca1b18df40dba1cd66b255e5da0ee"
+    },
+    {
+      "name": "native-sample-selected-model-final-browser-oct11.log",
+      "kind": "validation_log",
+      "file": "model-native-sample-selected-model-final-browser-oct11.log.xz",
+      "bytes": 57,
+      "sha256": "cf391c2a9e49a94a85aa57e126013927775e205d499894d1a1b0e2aabd4571f5",
+      "archive_bytes": 116,
+      "archive_sha256": "a63b7bbba6b4ad7c7affccd1c6dd9bd9f302bdda0e505d0a6904d97ac4c33981",
+      "command": "node native-samples-model-browser.mjs",
+      "observed_exit_code": 0,
+      "validated_source_snapshot": "8a3b1ff96a2ca1b18df40dba1cd66b255e5da0ee"
+    },
+    {
+      "name": "native-sample-selected-model-final-dag-oct11.log",
+      "kind": "static_log",
+      "file": "model-native-sample-selected-model-final-dag-oct11.log.xz",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archive_bytes": 32,
+      "archive_sha256": "0040f94d11d0039505328a90b2ff48968db873e9e7967307631bf40ef5679275",
+      "command": [
+        "python3",
+        "scripts/check_dag.py"
+      ],
+      "observed_exit_code": 0
+    },
+    {
+      "name": "native-sample-selected-model-final-admissions-oct11.log",
+      "kind": "static_log",
+      "file": "model-native-sample-selected-model-final-admissions-oct11.log.xz",
+      "bytes": 95,
+      "sha256": "c968bc6be597cd49ffe55872df53b3360cba6a6b66bd5c9a567c2a556c0650cf",
+      "archive_bytes": 148,
+      "archive_sha256": "cbfee69992ca11683715b5de17a74efe0d893c75270776e87c4751fdb7823dd2",
+      "command": [
+        "python3",
+        "scripts/ci/check_named_admissions.py"
+      ],
+      "observed_exit_code": 0
+    },
+    {
+      "name": "native-sample-selected-model-final-copyright-oct11.log",
+      "kind": "static_log",
+      "file": "model-native-sample-selected-model-final-copyright-oct11.log.xz",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archive_bytes": 32,
+      "archive_sha256": "0040f94d11d0039505328a90b2ff48968db873e9e7967307631bf40ef5679275",
+      "command": [
+        "python3",
+        "scripts/check_copyright_headers.py"
+      ],
+      "observed_exit_code": 0
+    },
+    {
+      "name": "native-sample-selected-model-final-lines-oct11.log",
+      "kind": "static_log",
+      "file": "model-native-sample-selected-model-final-lines-oct11.log.xz",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archive_bytes": 32,
+      "archive_sha256": "0040f94d11d0039505328a90b2ff48968db873e9e7967307631bf40ef5679275",
+      "command": [
+        "python3",
+        "scripts/check_file_line_counts.py"
+      ],
+      "observed_exit_code": 0
+    },
+    {
+      "name": "native-sample-selected-model-final-manual-split-oct11.log",
+      "kind": "static_log",
+      "file": "model-native-sample-selected-model-final-manual-split-oct11.log.xz",
+      "bytes": 84,
+      "sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "archive_bytes": 132,
+      "archive_sha256": "539277b157d178b63c3dd5cd4aaf99420e8e45e9f4a3e7c896c4a9cc69cc18ec",
+      "command": [
+        "python3",
+        "scripts/release/check_manual_split.py"
+      ],
+      "observed_exit_code": 0
+    },
+    {
+      "name": "native-sample-selected-model-final-literals-oct11.log",
+      "kind": "static_log",
+      "file": "model-native-sample-selected-model-final-literals-oct11.log.xz",
+      "bytes": 29,
+      "sha256": "5b2703a612f8c434ac4e53bb05bfeef0dbca1d91cc9125441d5bd447be3dfbc3",
+      "archive_bytes": 88,
+      "archive_sha256": "c97a647bde68c635286d876874f0abae70843c30ceb70592a109e881e41439fa",
+      "command": [
+        "python3",
+        "scripts/rcf/selected_literals.py",
+        "--check"
+      ],
+      "observed_exit_code": 0
+    },
+    {
+      "name": "native-sample-selected-model-final-diff-oct11.log",
+      "kind": "static_log",
+      "file": "model-native-sample-selected-model-final-diff-oct11.log.xz",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archive_bytes": 32,
+      "archive_sha256": "0040f94d11d0039505328a90b2ff48968db873e9e7967307631bf40ef5679275",
+      "command": [
+        "git",
+        "diff",
+        "origin/main",
+        "--check"
+      ],
+      "observed_exit_code": 0
+    },
+    {
+      "name": "static-checks.json",
+      "kind": "static_metadata",
+      "file": "model-static-checks.json.xz",
+      "bytes": 1874,
+      "sha256": "1250fd05412b3df23beda9e4d0845dd12c1e153691225f0672bcb28bf4852ab0",
+      "archive_bytes": 464,
+      "archive_sha256": "984764169fdd1519a129677dfe9deeb6ffc8ea52c287b3d8ecdcf37a9c0bf479"
+    },
+    {
+      "name": "pure-imports.json",
+      "kind": "producer_import_closure",
+      "file": "model-pure-imports.json.xz",
+      "bytes": 18388,
+      "sha256": "1857798ec575722ab473e722ce5626958c7ab40e2469e5173d0c13693d9d31fa",
+      "archive_bytes": 2184,
+      "archive_sha256": "975d1d30a74effe8f6e6a7575400e0be55f183f5f4b312251a14e94c0d36b747"
+    },
+    {
+      "name": "NativeSampleModelOrdinaryUse.lean",
+      "kind": "external_source",
+      "file": "model-NativeSampleModelOrdinaryUse.lean.xz",
+      "bytes": 1216,
+      "sha256": "d94bb4ea94aa3833caae30da39632c1ec8dc20a5df163a815693e9683fdfb3bf",
+      "archive_bytes": 644,
+      "archive_sha256": "11cbd94a4a3f0d7e15e55d762ec3d766a337868d3a37c96eb39b50cedc745996"
+    },
+    {
+      "name": "NativeSampleModelEmit.lean",
+      "kind": "external_source",
+      "file": "model-NativeSampleModelEmit.lean.xz",
+      "bytes": 1254,
+      "sha256": "af37dd380d0b0825b560bcc67e36da82036e51f6f71fa6207a598138302b8658",
+      "archive_bytes": 656,
+      "archive_sha256": "23d647fb44926f5de4c61d14b68486cbe29b1cb67403e64c05fd1257fe1a7489"
+    },
+    {
+      "name": "FullRender.lean",
+      "kind": "external_source",
+      "file": "model-FullRender.lean.xz",
+      "bytes": 244,
+      "sha256": "d94ef4cfa6c7787285cc0f9e5ecd2611f92830366f2283b2d2674c3eec3f6041",
+      "archive_bytes": 244,
+      "archive_sha256": "1142e594be61240ea3a76b9b470b045811c8a4c6e84416c9197b68e89d6d58cf"
+    },
+    {
+      "name": "native-samples-model-browser.mjs",
+      "kind": "external_source",
+      "file": "model-native-samples-model-browser.mjs.xz",
+      "bytes": 3407,
+      "sha256": "f1d7b1ae815d625fc1a94f20391d54716576e2a85af5eb3822f805e6845c0bf8",
+      "archive_bytes": 1816,
+      "archive_sha256": "acddd32cb278b37a5985ce20667afbc6e670b437522addf1b4b8997d2fb4a7da"
+    },
+    {
+      "name": "native-samples-model-inspection.json",
+      "kind": "external_source",
+      "file": "model-native-samples-model-inspection.json.xz",
+      "bytes": 2364,
+      "sha256": "5dc4003428504f20c69261df3d7c7e5d10fe04e769349e814a4e97881090f09f",
+      "archive_bytes": 796,
+      "archive_sha256": "f3cc92655847af897b88e9c0121f4987e066b06040f90fb21439c42d5c4665d2"
+    },
+    {
+      "name": "lakefile.lean",
+      "kind": "external_source",
+      "file": "model-lakefile.lean.xz",
+      "bytes": 4684,
+      "sha256": "7c3c323e32d526d055a94af7b25ec7866f5fcc28ef6d671eb544d8746a2c019c",
+      "archive_bytes": 1248,
+      "archive_sha256": "69a87919921d85719116f5eaa88f5e58e30e59ec1714174fa3a85bf7c6a87f55"
+    },
+    {
+      "name": "NativeSources.lean",
+      "kind": "independent_source_identity_prototype",
+      "file": "model-NativeSources.lean.xz",
+      "bytes": 2873,
+      "sha256": "d3939d13297f6282d3b0e13d0d539ad95eba686b8d5a0a6446626c3d77f63c25",
+      "archive_bytes": 1188,
+      "archive_sha256": "c10a3509ebdf4c7ce39f973978a937061fb50e63bbb8d508dab2c29b6d12c9a6"
+    },
+    {
+      "name": "NativeSourcesTest.lean",
+      "kind": "independent_source_identity_prototype",
+      "file": "model-NativeSourcesTest.lean.xz",
+      "bytes": 3625,
+      "sha256": "b104dfcf136e49fabf905a95989c5d7ee5dc6615139965ad1bfcfb950ddfc8a7",
+      "archive_bytes": 1248,
+      "archive_sha256": "782bff028344b5130bda84eca4e9edfa120aba8c637862a941d98f698fbf41d7"
+    },
+    {
+      "name": "NativeSelectedReal.lean",
+      "kind": "independent_source_identity_prototype",
+      "file": "model-NativeSelectedReal.lean.xz",
+      "bytes": 5376,
+      "sha256": "2174ef13cb172e5355dce9add40847179e3edd9306771dcf2ebc0f399aa25df5",
+      "archive_bytes": 1840,
+      "archive_sha256": "23ff250f7f1d940b39a27c27a397a174be4f239be7ecf797d293bd3ed1b5da53"
+    },
+    {
+      "name": "native-samples-desktop-model.png",
+      "kind": "manual_capture",
+      "file": "model-native-samples-desktop-model.png.xz",
+      "bytes": 314600,
+      "sha256": "6019d56024a16e9b52b0396ab0d9f3d91e60287b0db80ddb0c7ec95545cdb22e",
+      "archive_bytes": 291768,
+      "archive_sha256": "c27bd2a09009000f23dd9bb909b4e50a894b095640227aab85249d87400bee19",
+      "visually_inspected": true
+    },
+    {
+      "name": "native-samples-narrow-model.png",
+      "kind": "manual_capture",
+      "file": "model-native-samples-narrow-model.png.xz",
+      "bytes": 97957,
+      "sha256": "157141bcc62388fb19403f3b72a00b943e193bbe89c85ab95844b8bbb2df9db1",
+      "archive_bytes": 93408,
+      "archive_sha256": "19d4e8b0389a2f0d4c6b3902bbf2a8fb21b284e530367bd87df2277eb95412c2",
+      "visually_inspected": true
+    }
+  ],
+  "axiom_inventories": {
+    "additional_fixture": 4,
+    "additional_fresh_reader": 1,
+    "total_api_fixture": 28,
+    "total_fresh_import": 16,
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ]
+  },
+  "compiled_controls": {
+    "additional": 2,
+    "total": 15
+  },
+  "import_boundary": "Conformance/fresh consumer files are non-module files; Lean v4.35.0-rc3 gives their full import closures private access. They do not attest public-only concrete fixture elaboration. The public generic NativeSamples module has no import all.",
+  "proof_boundary": "In-module elaboration and body markers consume actual reference/section factories, native row conversion, native original guard input and square identity. Uncached imported-constant checks confirm exact targets/inventories, not imported proof bodies.",
+  "producer": {
+    "source_archive": "model-NativeSampleModelEmit.lean.xz",
+    "command": "lake build NativeSampleModelEmit",
+    "package_archive": "model-lakefile.lean.xz",
+    "pure_project_imports": 166,
+    "regeneration": "Parse emitted native-sample-model-pure-root.json and compare exact complete JSON to conformance-fixtures/HexRCF/native-sample-root.json; equality checked. Numerical producer imports no Mathlib or bridge.",
+    "literal_regeneration": "python3 scripts/rcf/selected_literals.py --check"
+  },
+  "validation_boundary": "Fixture and final fresh reader were checked in the working tree subsequently committed at this snapshot; integration/render/static checks use the committed snapshot. Supplemental evidence commits add records only. Builds are operational observations, not performance measurements.",
+  "manual_boundary": "Two current desktop/narrow model-paragraph captures visually inspected. No whole-page overflow audit. Earlier six captures retain their recorded source.",
+  "independent_prototype": "The ordinary log also checks NativeSourcesTest with selected sqrt2 coefficient identity and a further-root real witness jointly. Its three external sources are retained as unpublished experiments; these do not close the general source quotation/certificate/completeness obligations.",
+  "remaining": "Checked generic frozen context/provider-history, reached arithmetic and all-live transport/cell coverage; general source-goal quotation, automatic common-field certificates and accepted algebraic completeness; full-scope conformance/manual/evidence."
+}

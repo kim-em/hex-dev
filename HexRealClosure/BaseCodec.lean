@@ -97,6 +97,11 @@ theorem Chain.read_write {registry : Registry} {K : Type}
     [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
     (context : Context registry K sign) : K → Syntax := context.chain.write
 
+/-- Rational-base coefficients use their canonical rational syntax. -/
+theorem Context.write_rational (registry : Registry) (q : Rat) :
+    (rational registry).write q = .rational q := by
+  simp only [Context.write, rational_chain, Chain.write, RealChain.write]
+
 @[expose] def Context.read {registry : Registry} {K : Type}
     [Lean.Grind.Field K] [DecidableEq K] {sign : K → Int}
     (context : Context registry K sign) : Syntax → Option K := context.chain.read

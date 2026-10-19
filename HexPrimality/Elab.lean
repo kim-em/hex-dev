@@ -16,7 +16,7 @@ public section
 The `primality` term elaborator and tactic.
 
 `primality n` elaborates to a proof of `Hex.Nat.Prime n` for a literal `n`:
-the compiled certificate search runs at elaboration time as untrusted code,
+the certificate search runs at elaboration time, in Lean's interpreter, as untrusted code,
 and the emitted term applies `prime_of_checkPrimeAt` to the reified
 certificate with an `Eq.refl true` slot, so the kernel replays only
 `checkPrime` — `O(K log n)` modular and bounded ordinary multiplications,
@@ -95,18 +95,18 @@ meta def searchExtensions : MetaM (List SearchExtension) := do
       found := found ++ [ext]
   return found
 
-/-- ABI version of construction providers supporting a shared total allowance. -/
-meta def constructionExtensionVersion : Nat := 1
+/-- ABI version of providers selected before bounded certificate construction. -/
+meta def constructionExtensionVersion : Nat := 2
 
-/-- A downstream bounded construction provider, separate from ordinary search. -/
+/-- A downstream default construction provider, separate from ordinary search. -/
 meta structure ConstructionExtension where
   /-- Version of the bounded-construction registration ABI. -/
   version : Nat
   /-- An ordinary definition at `Hex.Nat.FactorSearch`. -/
   factorName : Name
 
-/-- Fixed discovery order. Each retry repeats the complete construction with
-the remaining allowance. Changes require a HexPrimality release. -/
+/-- Fixed discovery order. The first present registration supplies the factor
+provider for the entire construction. Changes require a HexPrimality release. -/
 meta def constructionExtensionNames : List Name :=
   [`HexIntFactor.PrimalityTactic.constructionExtension]
 
@@ -135,23 +135,21 @@ meta def constructionExtension? (n : Name) : MetaM (Option ConstructionExtension
       {n} has unexpected type{indentExpr factor.type}"
   return some ext
 
-/-- Retry registered providers lazily after exhaustion. Each receives the remaining
-shared allowance and the last random state; the core success is returned untouched. -/
+/-- Select the first registered construction provider before searching, or the
+core provider when none is imported. Table primes, composites, invalid sizes
+and zero allowances return without inspecting registrations. A single run
+shares its allocation across factoring, children and witnesses. -/
 meta def construct (n : Nat) (budget : Hex.Nat.ConstructionBudget) :
     MetaM (Except Hex.Nat.Construction.Failure (Hex.Nat.Internal.PrimeCertSuccess n) ×
       List (Name × Nat)) := do
-  let mut result := Hex.Nat.Construction.runTraced n (Hex.Rand.ofSeed n) budget
-  let mut allocations := []
-  for name in constructionExtensionNames do
-    match result with
-    | .ok _ => break
-    | .error f =>
-      unless Hex.Nat.Construction.retryable n budget f do break
+  if n.log2 + 1 ≤ budget.maxBits && !Hex.Nat.isTablePrime n &&
+      Hex.Nat.isProbablePrime n && budget.maxAttempts > 0 && budget.maxDepth > 0 then
+    for name in constructionExtensionNames do
       let some ext ← constructionExtension? name | continue
       let factor ← evalFactorSearchCore ext.factorName
-      allocations := allocations ++ [(ext.factorName, budget.maxAttempts - f.attempts)]
-      result := Hex.Nat.Construction.retry n budget f factor
-  return (result, allocations)
+      return (Hex.Nat.Construction.runTraced n (Hex.Rand.ofSeed n) budget factor,
+        [(ext.factorName, budget.maxAttempts)])
+  return (Hex.Nat.Construction.runTraced n (Hex.Rand.ofSeed n) budget, [])
 
 /-- `Eq.refl true` as a raw proof slot: the kernel verifies the reified
 Bool equation by reduction alone. -/
@@ -404,9 +402,13 @@ meta def certificateSyntax (cert : Hex.Nat.PrimeCert) : MetaM Term :=
 
 /-- The complete finite construction resource description used in diagnostics. -/
 meta def constructionDescription (b : Hex.Nat.ConstructionBudget)
-    (provider : Option String := none) : String :=
+    (provider : Option String := none) (registered : Bool := false) : String :=
   let factoring := match provider with
-    | some name => s!"explicit factor provider {name} (its per-attempt bounds apply)"
+    | some name =>
+        let kind := if registered then "registered" else "explicit"
+        let continuation := if b.factor.pMinusOneStage2 then
+          "; bounded p-minus-one stage 2 requested" else ""
+        s!"{kind} factor provider {name} (its per-attempt bounds apply){continuation}"
     | none => s!"p-minus-one bounds {b.factor.smoothBounds} at bases \
         {b.factor.smoothBases}, {if b.factor.pMinusOneStage2 then "stage 2 at eight times bounds up to 4096, " else ""}{b.factor.primeBudget.rhoRestarts} rho restarts with \
         {b.factor.primeBudget.rhoSteps} steps, ECM bounds [] and 0 curves"
@@ -461,7 +463,7 @@ syntax (name := primalitySuggestFactorTac) "primality?"
 
 /-- Construct a reusable certificate with an optional total attempt limit. -/
 syntax (name := primalitySuggestTac) "primality?"
-  (" (" &"maxAttempts" " := " num ")")?
+  (atomic(" (" &"maxAttempts" " := ") num ")")?
   (" (" &"pMinusOneStage2" " := " ident ")")? : tactic
 
 /-- Check and render an explicitly selected closed certificate producer. -/
@@ -523,16 +525,17 @@ meta def suggestPrime (predicate head : Name) (stx : Syntax) : Tactic.TacticM Un
         let (result, allocations) ← if provider.isSome then
           pure (Hex.Nat.Construction.runTraced n (Hex.Rand.ofSeed n) budget factor, [])
         else construct n budget
-        let description := if allocations.isEmpty then description else
-          s!"core allocation: {description}"
-        let retries := if allocations.isEmpty then "" else
-          s!"; construction retries {allocations.map fun (name, allowance) => s!"{name} allocated {allowance} attempts"} (their per-attempt bounds apply)"
+        let description := match allocations with
+          | [] => description
+          | (name, _) :: _ => constructionDescription budget (some name.toString) true
+        let allocation := if allocations.isEmpty then "" else
+          s!"; construction provider {allocations.map fun (name, allowance) => s!"{name} allocated {allowance} attempts"}"
         match result with
         | .error f =>
             if f.stop == .composite then
               throwError "primality?: {n} is not prime"
             throwError "primality?: certificate construction for {n} exhausted after \
-              {f.attempts} attempts (seed {n}; {description}{retries}); unresolved obligation {f.obligation.getD n}"
+              {f.attempts} attempts (seed {n}; {description}{allocation}); unresolved obligation {f.obligation.getD n}"
         | .ok success =>
             let cert := success.cert.raw
             unless cert.subject == n && Hex.Nat.checkPrime cert do

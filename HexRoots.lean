@@ -31,5 +31,5 @@ is exact: Gaussian-dyadic Taylor coefficients compared against dyadic
 bounds, with no floats and no error budget.
 
 This is the Mathlib-free computational layer; the correctness and
-completeness theorems live in the companion `HexRootsMathlib`.
+completeness theorems live in the companion `HexRootsTheory`.
 -/

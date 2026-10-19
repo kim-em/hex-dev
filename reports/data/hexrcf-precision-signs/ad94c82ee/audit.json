@@ -1,0 +1,96 @@
+{
+  "schema": "hex-rcf-precision-production-syntax-v1",
+  "measured_source": "ed0697dacbd808ad1c28270d458929e896aeddca",
+  "audit_source": "ad94c82eeaf0ab17e0df63335eab5bd0417d5f94",
+  "probe_source_sha256_matches_measured": true,
+  "probe_source_sha256": {
+    "bench/HexRCF/ProofProbe/Precision/Full8.lean": "35907d7bd99180c93d87cc65e8212b82440f1ba867a5fa77a0e4494c8d661742",
+    "bench/HexRCF/ProofProbe/Precision/Full16.lean": "c146a39089517471dd1d211ff2a60028bf0496191418c6f8542b392fe93ccbda",
+    "bench/HexRCF/ProofProbe/Precision/Full32.lean": "a8bfb45e8af6682252877ee834a40c67b0ab2b17df54e21f8659106e3af1e0ae",
+    "bench/HexRCF/ProofProbe/Precision/Full64.lean": "3f6dea6441aae0bb5be7887bf36d3b7097ad217d44e1df844890d4107de1e95a"
+  },
+  "audit_module_sha256": "da89a135b3b199dc5e6f1b8de37b3be7d97dda9a179a28d4aa20a8c96f8e0d97",
+  "traversal_module_sha256": "5809d4889c9057519ffc73e039fba0128f2e586e8597a570a674428c1623b188",
+  "compiler_output_sha256": "25da3328b4083ee4f9a72fc98c0ab4afdad30bc924cbbf852d35a9955695d8cd",
+  "final_probe_artifact_sha256": {
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full64.olean.private": "c0b8318dd70f30aed9853b2cb1e4fb41d60c06e89fbf2ad36f84bc932fd3dba0",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full32.olean": "d22bf7c6efed0c1a3b7e8c5609acaad6e38b22c6274bd159592cfbc77f901247",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full32.olean.private": "1cd8376d4c603d61992376ce4ed42ddd0fcabfaaa6e513fc2bf27236eaf2aaba",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full8.olean": "6e11b897c37ca54c346e4d04ccc55a0dfc9fbad2e85f6bfcdfcd13885cd8b6c7",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full8.olean.private": "b40bda8f0a73cae7bef633b1badde1e9d743c504a86b7b627d153ad0f6cc9226",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full16.olean": "2ce6c48fdfd5b7a4ac2c379febf0dcd197b7302a87b148b83b40b13bcb698c91",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full16.olean.private": "cd37203b617a200f1e8e24db7299dd139a85a20a43f817992696396bcda5860b",
+    ".lake/build/lib/lean/HexRCF/ProofProbe/Precision/Full64.olean": "22686d5b0a58973cbad932a3f7d074ab36aa0e29b3caeafbb8ed72c64bbda5d2"
+  },
+  "probe_artifacts_unchanged_across_audit": true,
+  "artifact_hash_capture": "public/private probe oleans before and after separate audit; not per-arm hashes",
+  "imported_positive_window_control": true,
+  "expression_equality": "Lean.Expr.eqv: alpha equivalence, ignoring binder annotations",
+  "scope": "root-owned local declaration type/body traversal; imported bodies are leaves; expanded references are syntactic recurrence without reductions or let substitution, not kernel work",
+  "records": [
+    {
+      "distinct_table_syntax": 1,
+      "expanded_local_nodes": 649463932852,
+      "local_declarations": 21,
+      "proof": "Hex.RCF.ProofProbe.Precision.Full8.witness",
+      "tables": [
+        {
+          "interval_entries": 123,
+          "query_entries": 3,
+          "refined_window": false
+        }
+      ],
+      "unique_conjunction_apps": 3,
+      "unique_expressions": 15607,
+      "window_regions": []
+    },
+    {
+      "distinct_table_syntax": 1,
+      "expanded_local_nodes": 648889962238,
+      "local_declarations": 21,
+      "proof": "Hex.RCF.ProofProbe.Precision.Full16.witness",
+      "tables": [
+        {
+          "interval_entries": 126,
+          "query_entries": 0,
+          "refined_window": false
+        }
+      ],
+      "unique_conjunction_apps": 3,
+      "unique_expressions": 15386,
+      "window_regions": []
+    },
+    {
+      "distinct_table_syntax": 1,
+      "expanded_local_nodes": 648889962238,
+      "local_declarations": 21,
+      "proof": "Hex.RCF.ProofProbe.Precision.Full32.witness",
+      "tables": [
+        {
+          "interval_entries": 126,
+          "query_entries": 0,
+          "refined_window": false
+        }
+      ],
+      "unique_conjunction_apps": 3,
+      "unique_expressions": 15392,
+      "window_regions": []
+    },
+    {
+      "distinct_table_syntax": 1,
+      "expanded_local_nodes": 648889962238,
+      "local_declarations": 21,
+      "proof": "Hex.RCF.ProofProbe.Precision.Full64.witness",
+      "tables": [
+        {
+          "interval_entries": 126,
+          "query_entries": 0,
+          "refined_window": false
+        }
+      ],
+      "unique_conjunction_apps": 3,
+      "unique_expressions": 15389,
+      "window_regions": []
+    }
+  ]
+}

@@ -18,7 +18,7 @@ This bounded Mathlib-free package authenticates the 79 direct
 `exp (-x)` upper-bound declarations in PNT+'s `IEANTN/LogTables.lean`.
 Every source argument is represented in sixths, so one checked
 `exp (-1/6)` enclosure supplies a uniform range-reduction certificate.
-Real exponential semantics live in the Mathlib companion.
+Real exponential semantics live in the theory companion.
 -/
 
 namespace Hex.Interval.Experiment.PntExpNegative

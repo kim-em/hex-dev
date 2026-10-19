@@ -66,8 +66,11 @@ structure MulPlan (R : Type u) [DecidableEq R] [Lean.Grind.CommRing R] where
   square : DensePoly R → DensePoly R
   /-- `len` coefficients beginning at product degree `lo`, shifted down. -/
   slice : Nat → Nat → DensePoly R → DensePoly R → DensePoly R
+  /-- Full multiplication agrees with the reference product. -/
   mul_eq : ∀ a b, mul a b = a * b
+  /-- Squaring agrees with the reference product. -/
   square_eq : ∀ a, square a = a * a
+  /-- The slice contains exactly the selected product coefficients. -/
   coeff_slice : ∀ lo len a b i,
     (slice lo len a b).coeff i =
       if i < len then (a * b).coeff (lo + i) else 0

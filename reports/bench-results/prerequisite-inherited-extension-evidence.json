@@ -1,0 +1,96 @@
+{
+  "scope": "Reuse unchanged downstream conformance only. Does not supply extension-depth or nested-evidence scientific timing, nor lower-level kernel sign-proof certificate scaling.",
+  "ci_run": 37132624256,
+  "ci_source": "4a028ba8408ded1ceaaaaa92318ef035d4b2ad1c",
+  "native_local_record": "reports/data/sign-det-nested-fields/anchor-fields/execution.json",
+  "unchanged_retained_scope_checks": {
+    "native_local_source_hash_matches": true,
+    "ci_fixture_hash_matches": true,
+    "local_fixture_hash_matches": true,
+    "execution_hash_matches": true
+  },
+  "current_sha256": {
+    "conformance/HexSignDet/Infinitesimal.lean": "94fc98bfdb4c82c68aaa9017382593c9d0b82b73ed0c86636b346aac27851662",
+    "conformance/HexSignDet/EmitInfinitesimal.lean": "8b84df4cb39e228899dade33f48649d90c6d724c7fb496ad5bf382953f38a435",
+    "conformance/HexSignDet/EmitNestedFields.lean": "0e4441af90e0235c05614a4241dd2d5602730b8a3221507e1d5caee3fd6de920",
+    "conformance-fixtures/HexSignDet/infinitesimal.jsonl": "979d3988d6ca7e18db277e693550192cb349b8e32f144ebde80b9045e9653818",
+    "conformance-fixtures/HexSignDet/nested-fields.jsonl": "2c33a5bed8ed66c0357ef52845d3119c59d243ab500d898e430b0c2e690962ca",
+    "conformance-fixtures/HexSignDet/nested-fields-local.jsonl": "a769d32d13fefe200e8c0343a49d4413179590dd2d0e89198dbd9e75f108f8fd",
+    "scripts/oracle/sign_det_z3.py": "fda77c2011a95f145a80903757a7caba214584066c4e894873b083f904140fb8",
+    "scripts/oracle/sign_det_nested_z3.py": "282904996d7e791015af3075c094c0dd93f561d7dd95c1166ceee836277ce217",
+    "reports/data/sign-det-nested-fields/anchor-fields/execution.json": "949e1fd792beea41667a5263f93b65b5fae2cc97c6f62922283ffbbfe0c9cc33",
+    "reports/data/sign-det-nested-fields/anchor-fields/artifacts.json": "8c8f8a5ce8a9c7f69cf810941749104ad9f80ba9e8e7b7ed974b341aafc3fdb2"
+  },
+  "passmore_observations": [
+    {
+      "case": "infinitesimal/passmore/whole",
+      "modes": {
+        "direct": {
+          "count": 3,
+          "signed_sum": 1,
+          "replay": true
+        },
+        "reduced": {
+          "count": 3,
+          "signed_sum": 1,
+          "replay": true
+        },
+        "reference": {
+          "count": 3,
+          "signed_sum": 1,
+          "replay": true
+        }
+      }
+    },
+    {
+      "case": "infinitesimal/passmore/positive",
+      "modes": {
+        "direct": {
+          "count": 2,
+          "signed_sum": 0,
+          "replay": true
+        },
+        "reduced": {
+          "count": 2,
+          "signed_sum": 0,
+          "replay": true
+        },
+        "reference": {
+          "count": 2,
+          "signed_sum": 0,
+          "replay": true
+        }
+      }
+    },
+    {
+      "case": "infinitesimal/passmore/empty",
+      "modes": {
+        "direct": {
+          "count": 2,
+          "signed_sum": null,
+          "replay": true
+        },
+        "reduced": {
+          "count": 2,
+          "signed_sum": null,
+          "replay": true
+        },
+        "reference": {
+          "count": 2,
+          "signed_sum": null,
+          "replay": true
+        }
+      }
+    }
+  ],
+  "ci_oracle_cases": {
+    "infinitesimal": 31,
+    "nested_fields": 2
+  },
+  "local_native_depths": [
+    1,
+    2,
+    3,
+    4
+  ]
+}

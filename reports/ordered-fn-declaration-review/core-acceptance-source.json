@@ -1,0 +1,40 @@
+{
+  "original_review_source": "79b991882a486a8c8d05fd26aaf1656358834b7e",
+  "measured_candidate_source": "b4e1e1522a81b09205ff792f8b1d0dc650a63e37",
+  "production_modules": {
+    "HexOrderedFn.lean": "ec490b15e97045da9e4bfbf1fb88e73f7ff2ecc3e5525de2a7947352202a94e3",
+    "HexOrderedFn/Extension.lean": "3f336ac83236b9378d62aa680fcf714683de79c1ef8ba0a5a4c6aafa7bf00246",
+    "HexOrderedFn/Infinitesimal.lean": "5c8d751409bc7d3ea4a4172248ab7c7af5fc43d7cb3ea5e695528e365a30a875",
+    "HexOrderedFn/Oracle.lean": "b2f9923602d3396af6ce32e8470ba7510105664943bc47b7ebfaedaa8af04d56",
+    "HexOrderedFn/Real.lean": "1b1e7b3c2f35bc73db8e17bfc08892fb83580c45f2833c424fd3efec06076f44",
+    "HexOrderedFn/Search.lean": "94d4c0dcb8a7bd8fd9a725c672dd22865d779f4c84cb8f634050751a1c348cc0",
+    "HexOrderedFnTheory.lean": "6874a6f008cfd5c1e832049699badac3de8cf3d0178689d719abdaa2f4dbd061",
+    "HexOrderedFnTheory/Convergence.lean": "c15b57dbffa8e0d5702265415a6f4b77ecbe0ca62b3549e1a2268c21cb96ccef",
+    "HexOrderedFnTheory/Evaluation.lean": "d9931460c976831cc8be959744e4939588abdca7cf3e32da41df0c6a796d7c09",
+    "HexOrderedFnTheory/Extension.lean": "347026e212d533b91de1cc1deb59f4cb37257b6a27d548eca2b63b063c546c68",
+    "HexOrderedFnTheory/Hahn.lean": "e3cb714ae3469c1dd74cabf31071e14f811db69fd4ca2dd556b2f54353603415",
+    "HexOrderedFnTheory/Infinitesimal.lean": "794e3f0dfc3606dc86a67282f0d160f4a5a67ca8401075d7c0d7df3489e3897a",
+    "HexOrderedFnTheory/Oracle.lean": "f2afa0b4d739b856a504a95c40a1807b216d05025434b647f18875c7cff235d3",
+    "HexOrderedFnTheory/Progress.lean": "919ca1bf5aa5d7ce98d515423fbd844ed3458d264563674650b039ca04512dae",
+    "HexOrderedFnTheory/Real.lean": "0d07b3d1a5b02937e42a1086c40cc44d47e622b98d00032e8a2e96ded30b9ec8",
+    "HexOrderedFnTheory/Sign.lean": "e1f33aa0698346968556aed33c3ee85db7f1bc40d27bf9980985713d7bb222af"
+  },
+  "unchanged_core_modules": [
+    "HexOrderedFn/Search.lean",
+    "HexOrderedFn/Real.lean",
+    "HexOrderedFn/Extension.lean"
+  ],
+  "changed_core_assessments": {
+    "HexOrderedFn/Oracle.lean": "bench-results/ordered-fn-positive-quotient/README.md#declaration-assessment",
+    "HexOrderedFn/Infinitesimal.lean": "bench-results/ordered-fn-sign-scan/README.md#declaration-assessment"
+  },
+  "manual_inputs": {
+    "HexManual/Chapters/HexOrderedFn.lean": "0034b89518f34e6ca2593001c2c9cb47feb33c8bed12509a5097fb36823c4a17",
+    "HexOrderedFn/README.md": "38779c72b37c26736180d86f3b4195f1073b35d043459568b8d862aae2278576",
+    "HexOrderedFnTheory/README.md": "114311d961f4069cf138fd8352b2868d7ae7bb9ec9578b9c19318430a3732192"
+  },
+  "limits": [
+    "Historical named-reference counts are not current counts.",
+    "The native comparison binds its own complete inputs; this record does not bind transitive inputs or claim publication eligibility."
+  ]
+}

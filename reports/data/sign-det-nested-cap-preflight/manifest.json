@@ -1,0 +1,13 @@
+{
+  "kind": "operational setup-plus-callback inspection, not scientific timing",
+  "revision": "f45fe7e8eac44df33e229c3afdea539e822acbc1",
+  "host": "chungus2",
+  "binary_sha256": "2cb49a19a1ae65f49e5cbebe87d8eed1537c566e7b8f90d0e84f438054318477",
+  "callback_source_sha256": "0d849151fc7bcf7452993b3611c1619e1207f81c22cfd8c3772a895134378068",
+  "cases": 10,
+  "independent_literal_validation": "passed",
+  "files_sha256": {
+    "inputs.stdout.gz": "d672ae5a15c9c3b1421f10981bc6b5eede3108fb932ba3825d798eed7c08695c",
+    "inputs.stderr": "9b16bc0166855ff85ecdef3f4221f4e7ce9d53e5952fab5a059bc1452c9c9f6f"
+  }
+}

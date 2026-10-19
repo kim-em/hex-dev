@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 import VersoManual
 
-import HexBerlekampZassenhausMathlib
-import HexBerlekampZassenhausMathlib.LatticeTotality
+import HexBerlekampZassenhausTheory
+import HexBerlekampZassenhausTheory.LatticeTotality
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -184,36 +184,36 @@ theorems.
 
 # The Mathlib correspondence
 %%%
-tag := "hex-berlekamp-zassenhaus-mathlib"
+tag := "hex-berlekamp-zassenhaus-theory"
 %%%
 
 Everything above is executable and Mathlib-free.
-`HexBerlekampZassenhausMathlib` is the companion that restates the
+`HexBerlekampZassenhausTheory` is the companion that restates the
 guarantees of {name}`Hex.ZPoly.factorize` against Mathlib's
-`Polynomial ℤ`, transported through `HexPolyZMathlib.toPolynomial`.
+`Polynomial ℤ`, transported through `HexPolyZTheory.toPolynomial`.
 
 The product identity holds unconditionally and is re-exported as a
 `simp` lemma:
 
-{docstring HexBerlekampZassenhausMathlib.factorize_product}
+{docstring HexBerlekampZassenhausTheory.factorize_product}
 
 Every emitted factor is irreducible, with no hypothesis on the input:
 
-{docstring HexBerlekampZassenhausMathlib.factorize_irreducible_of_nonUnit}
+{docstring HexBerlekampZassenhausTheory.factorize_irreducible_of_nonUnit}
 
 The headline theorem bundles the full normal form of a nonzero input's
 factorization:
 
-{docstring HexBerlekampZassenhausMathlib.factorize_normalized}
+{docstring HexBerlekampZassenhausTheory.factorize_normalized}
 
 That normal form is canonical. Any two factorizations satisfying it
 with the same product agree up to the packing of multiplicities:
 
-{docstring HexBerlekampZassenhausMathlib.factorize_unique}
+{docstring HexBerlekampZassenhausTheory.factorize_unique}
 
 The companion also carries the tactic surface across the boundary.
 The base library's `factor_poly` and `irreducibility` elaborators work
-on {name}`Hex.ZPoly` goals; importing `HexBerlekampZassenhausMathlib`
+on {name}`Hex.ZPoly` goals; importing `HexBerlekampZassenhausTheory`
 upgrades them to accept `Polynomial ℤ` as well, and adds the
 kernel-checked `factor_poly!` and `irreducibility!` variants whose
 certificate checks reduce inside the kernel.

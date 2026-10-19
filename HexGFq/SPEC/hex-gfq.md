@@ -49,7 +49,7 @@ API intent:
   representation.
 - `GF2q n ≃+* GFq 2 n`, so users can move between the optimized and generic
   `p = 2` models without changing the mathematics. That equivalence is
-  `GF2q.equivGFq` and it lives in `hex-gfq-mathlib`, not here: `≃+*` is
+  `GF2q.equivGFq` and it lives in `hex-gfq-theory`, not here: `≃+*` is
   Mathlib's `RingEquiv`, and this library is Mathlib-free. The Mathlib-free
   one-way map `GF2q.toGFq` lives here.
 - Both constructors choose the modulus automatically via Conway polynomials, so
@@ -64,19 +64,16 @@ hex-gf2.
 
 ## External comparators
 
-No external comparator is required.
-
-**Justification:** `structural-layer` per
-`SPEC/benchmarking.md §"Comparator naming"`. HexGFq is a
+No external comparator is required. HexGFq is a
 convenience wrapper that selects the Conway polynomial from
 HexConway and constructs `FiniteField p (conwayPoly p n) ...`
 using HexGFqField's generic quotient-field machinery (or
 `GF2q` via HexGF2's packed representation for `p = 2`). The
 runtime cost is dominated by the underlying quotient-field
 arithmetic, which is covered by HexGFqField's external comparator
-declaration (FLINT `fq_default`, informational); the `GF2q` path
+declaration (FLINT `fq_default`); the `GF2q` path
 is covered by HexGF2's external comparator declaration
-(NTL `GF2X`, informational). HexGFq itself contributes only the
+(NTL `GF2X`). HexGFq itself contributes only the
 modulus-selection step, which is a Conway-table lookup and a
-constructor call — not an algorithmic surface that benefits from
+constructor call, not an algorithmic surface that benefits from
 an independent external reference.

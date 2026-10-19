@@ -1,0 +1,125 @@
+{
+  "before": "62399ddd0cc7416287cafcfb19c51bc6184aef6d",
+  "after": "90c4f0e144a05c3014b38f49e502c4875b8ffb88",
+  "before_modules": 34,
+  "after_modules": 38,
+  "before_external_imports": [
+    "Init.Data.Array.Lemmas",
+    "Init.Data.List.Lemmas",
+    "Init.Data.Zero",
+    "Init.Grind.Ring.Basic",
+    "Lean.Data.Json",
+    "LeanBench",
+    "Std"
+  ],
+  "after_external_imports": [
+    "Init.Data.Array.Lemmas",
+    "Init.Data.List.Lemmas",
+    "Init.Data.Zero",
+    "Init.Grind.Ring.Basic",
+    "Lean.Data.Json",
+    "Lean.Data.Json.FromToJson",
+    "LeanBench",
+    "Std"
+  ],
+  "changed": [
+    {
+      "module": "Hex.BenchOracle.Flint",
+      "path": "Hex/BenchOracle/Flint.lean",
+      "before_sha256": null,
+      "after_sha256": "aacd1a67738c94d983ab930ddb3727ded8c421f5e529652fe2f8082e52e5646b",
+      "code_tokens_unchanged": false
+    },
+    {
+      "module": "HexPoly.Instances",
+      "path": "HexPoly/Instances.lean",
+      "before_sha256": "bab233dd7885b965f8bcfd14de738c520a2a737859a2c148e1e6a66a3bf59f82",
+      "after_sha256": "5556090c3f6f1a9e4b29da59a5416f3dba55ed2f958c0d47c57d9b066c27f7f9",
+      "code_tokens_unchanged": false
+    },
+    {
+      "module": "HexPoly.Interpret",
+      "path": "HexPoly/Interpret.lean",
+      "before_sha256": "06ef5ced17a9869fe6dcf1987566b1cefbbe89d8228f9637e887b93e6e510c81",
+      "after_sha256": "9557c364d0a7c85581aec62cfb1c2c0a32e016ef792e1f28ff39cdba0d7cb2ed",
+      "code_tokens_unchanged": false
+    },
+    {
+      "module": "HexRealRoots.Basic",
+      "path": "HexRealRoots/Basic.lean",
+      "before_sha256": "8f5193e33a7743f2aa908062bd352587bc01618cbc343b760298e71b2e844360",
+      "after_sha256": "089494227717b849615e8661ce88eef0f82d60beae9a1fabbb0dcb07a99a3676",
+      "code_tokens_unchanged": false
+    },
+    {
+      "module": "HexRealRoots.Sign",
+      "path": "HexRealRoots/Sign.lean",
+      "before_sha256": null,
+      "after_sha256": "1d25492fcc7011b2f74972621e063d2c57731268bbc2544076e66d7d54cdad9b",
+      "code_tokens_unchanged": false
+    },
+    {
+      "module": "HexSturm",
+      "path": "HexSturm.lean",
+      "before_sha256": "ba494b2a02a0d356b55c8875c9be596bcf57b46acf4eb283186a5a23eedfbe4e",
+      "after_sha256": "2ba87e1d06770a87d89b21097ed43ee2b04b073aa3c4e4cdac4111ea17ff180c",
+      "code_tokens_unchanged": false
+    },
+    {
+      "module": "HexSturm.Basic",
+      "path": "HexSturm/Basic.lean",
+      "before_sha256": "e94705d172a585b5d9c718941e1e8251a145ee6bb152cbaaf695d0d0e3a20beb",
+      "after_sha256": "8e32b2f98430439a0ab5d6b1f51035b7a3e95c3a90aaba51837341cde14a4430",
+      "code_tokens_unchanged": false
+    },
+    {
+      "module": "HexSturm.Bench",
+      "path": "bench/HexSturm/Bench.lean",
+      "before_sha256": "7751900fd74a8276480eb0c2e2cd4a13fb0d45aa6eb53dd0ecd92f01a3abdb7c",
+      "after_sha256": "e6af2c89c87dfa320cf30fecbcccf40eb600e104da6e2996e421dcf83bd52148",
+      "code_tokens_unchanged": false
+    },
+    {
+      "module": "HexSturm.DomainOperations",
+      "path": "HexSturm/DomainOperations.lean",
+      "before_sha256": null,
+      "after_sha256": "c50227b4fc52759ec78bae222bde5733b59510ac1520107544363484f3f5ab5e",
+      "code_tokens_unchanged": false
+    },
+    {
+      "module": "HexSturm.Frontend",
+      "path": "bench/HexSturm/Frontend.lean",
+      "before_sha256": "0c3b863fa239164ea04e339b9a552e77be30f9a640a00aa356b4638108c1673d",
+      "after_sha256": "eae5de236fe875fec210d8305ac99fcb4212ca1301fbb991e7eea3d9f8f8b1a0",
+      "code_tokens_unchanged": false
+    },
+    {
+      "module": "HexSturm.Reduced",
+      "path": "HexSturm/Reduced.lean",
+      "before_sha256": null,
+      "after_sha256": "8b3ee4261f0c1d9ccbda74f687abfcaa80bc475888f29de58c12101ad2300632",
+      "code_tokens_unchanged": false
+    }
+  ],
+  "toolchain_unchanged": true,
+  "lean_bench_pin_unchanged": true,
+  "changed_dependency_pins": {
+    "AINTLIB": {
+      "before": "3808ce862c09ad5b4de0c76f10ba00946ed2eff3",
+      "after": null
+    },
+    "TauCeti": {
+      "before": "0dbbe255a4f418084b30a3ffe6763d824a6b4250",
+      "after": "1c497c347f615b3087cb605f8cf743e591376105"
+    },
+    "importGraph": {
+      "before": "a6d31147557d4b044a3ce226768572919acc1def",
+      "after": "10a2cfff285e1c7c2ebc49c0ba22cab0f3c58ee5"
+    },
+    "mathlib": {
+      "before": "d870b9068518a0870842d15a0cd42637ec30b587",
+      "after": "6b7abb3c7686292736be2955bd3eb9ebf63b456a"
+    }
+  },
+  "limits": "Import-cone diff, not proof that all imported code executes in a timed body. Changed computational definitions require individual call-path assessment."
+}

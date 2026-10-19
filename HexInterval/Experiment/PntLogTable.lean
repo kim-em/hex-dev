@@ -17,7 +17,7 @@ This package is a deliberately small acceptance vertical for the first two
 entries of PNT+'s pinned `LogTables.lean`: the lower and upper bounds on
 `log 2`.  The executable side knows neither real logarithms nor decimal
 semantics.  It only propagates a package-owned finite fact from an exact-input
-fact.  `HexIntervalMathlib` supplies and checks the mathematical meaning.
+fact.  `HexIntervalTheory` supplies and checks the mathematical meaning.
 
 The finite fact domain is intentionally local to the probe.  It demonstrates
 the generic watched-input planning and replay boundary without pretending to

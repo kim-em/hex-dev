@@ -20,6 +20,11 @@ variable [One E] [Add E] [Neg E] [Sub E] [Mul E] [Inv E] [Div E] [NatCast E]
 variable [DecidableEq Ctx] {coeffSign : E → Int} {parent : Ctx}
 variable {context : Context E Ctx coeffSign parent}
 
+/-- Hash stored literals in their fixed context. Graph sharing still checks
+exact equality after lookup; equal denotations do not merge distinct keys. -/
+@[expose] instance [Hashable E] : Hashable (Element context) :=
+  ⟨fun a => hash (a.polynomial.toArray, a.sign)⟩
+
 /-- Exact stored coefficient encoding: `[]` is the unique zero, while a
 nonzero is `[polynomial, cachedSign]`. Decoding checks every predecessor
 coefficient, rejects trailing zeros, and recomputes the claimed sign. -/

@@ -35,7 +35,7 @@ public section
 
 namespace Hex.RCF.SeparationTests
 
-open HexRealRootsMathlib
+open HexRealRootsTheory
 
 private def quad : ZPoly := DensePoly.ofCoeffs #[(-1 : Int), 0, 1]
 private def x : ZPoly := DensePoly.ofCoeffs #[(0 : Int), 1]
@@ -228,9 +228,9 @@ example : Separation.checkCmp quad replay left (Dyadic.ofInt (-1)) .lt = false :
   decide
 
 /-- Checked endpoint claims expose their semantic order in the kernel. -/
-example : ∃! root : ℝ, (HexRealRootsMathlib.toPolyℝ quad).IsRoot root ∧
-    HexRealRootsMathlib.Literal.InInterval touching.intervals[0] root ∧
-    Separation.RootCmp.eq.Holds root (HexRealRootsMathlib.Dyadic.toReal (Dyadic.ofInt (-1))) :=
+example : ∃! root : ℝ, (HexRealRootsTheory.toPolyℝ quad).IsRoot root ∧
+    HexRealRootsTheory.Literal.InInterval touching.intervals[0] root ∧
+    Separation.RootCmp.eq.Holds root (HexRealRootsTheory.Dyadic.toReal (Dyadic.ofInt (-1))) :=
   Separation.checkCmp_sound (f := quad) (replay := replay) (cert := touching)
     (by decide) (by decide) ⟨0, by decide⟩ (Dyadic.ofInt (-1)) .eq (by decide)
 

@@ -1,0 +1,276 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+module
+
+public import HexRealRoots.TarskiShared
+public import HexPoly.InterpretTests
+public meta import HexPoly.InterpretTests
+public meta import HexRealRoots.Tarski
+public meta import HexRealRoots.TarskiShared
+public meta import HexRealRoots.SignedRemainderChain
+public meta import HexRealRoots.Basic
+public meta import HexPoly.Dense
+public meta import HexPoly.Operations
+
+public section
+
+namespace Hex.TarskiTests
+
+open DensePoly
+open scoped Hex
+
+-- Exercise the imported compiler rewrite on immediate and multiprecision
+-- integers, including both sides of the signed machine-integer boundary.
+#guard (#[0, 1, -1, 2 ^ 62 - 1, 2 ^ 62, -(2 ^ 62), 2 ^ 4096, -(2 ^ 4096)] : Array Int).map
+  Int.sign == #[0, 1, -1, 1, 1, -1, 1, -1]
+
+example : Int.sign (2 ^ 128) = 1 ∧ Int.sign (-(2 ^ 128)) = -1 := by decide +kernel
+
+/-- info: 'Hex.sign_eq' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms Hex.sign_eq
+
+@[expose] def p : ZPoly := ofCoeffs #[-1, 0, 1]
+@[expose] def x : ZPoly := ofCoeffs #[0, 1]
+@[expose] def interval : DyadicInterval := ⟨Dyadic.ofInt (-2), Dyadic.ofInt 2, by decide +kernel⟩
+
+#guard ZPoly.tarskiQuery p 1 interval == some 2
+#guard ZPoly.tarskiQuery p (C (-1)) interval == some (-2)
+#guard ZPoly.tarskiQuery p x interval == some 0
+#guard ZPoly.tarskiQuery p (x - 1) interval == some (-1)
+#guard ZPoly.tarskiQuery p p interval == some 0
+#guard ZPoly.tarskiQuery p (natPow x 4) interval == some 2
+#guard ZPoly.tarskiQuery p 0 interval == some 0
+#guard ZPoly.tarskiQuery (C 5) (natPow x 4) interval == some 0
+#guard ZPoly.tarskiQuery (scale 4 x) 1 interval == some 1
+#guard ZPoly.tarskiQuery (-p) 1 interval == some 2
+#guard ZPoly.tarskiQuery 0 0 interval == none
+#guard ZPoly.tarskiQuery (natPow (x - 1) 2) 0 interval == none
+#guard ZPoly.tarskiQuery p 0 ⟨Dyadic.ofInt (-1), Dyadic.ofInt 2, by decide +kernel⟩ == none
+
+#guard match IntTarskiCertificate.certify p (x - 1) interval with
+  | none => false
+  | some cert => cert.remainders.chain.size == 2 &&
+    (cert.remainders.chain.getD 1 0).natDegree == 1 && IntTarskiCertificate.check p (x - 1) interval (-1) cert
+
+#guard match IntTarskiCertificate.certify p p interval with
+  | none => false
+  | some cert => cert.remainders.chain.size == 1 && cert.remainders.terminal.isNone &&
+    IntTarskiCertificate.check p p interval 0 cert
+
+#guard match IntTarskiCertificate.certify p 1 interval with
+  | none => false
+  | some cert =>
+    IntTarskiCertificate.check p 1 interval 2 cert &&
+    !IntTarskiCertificate.check p 0 interval 2 cert &&
+    !IntTarskiCertificate.check p 1 interval 1 cert &&
+    !IntTarskiCertificate.check p 1 interval 2 { cert with lowerSigns := #[1, 1, 1] } &&
+    !IntTarskiCertificate.check p 1 interval 2
+      { cert with remainders := { cert.remainders with terminal := none } } &&
+    !IntTarskiCertificate.check p 1 interval 2
+      { cert with remainders := { cert.remainders with
+        initial := { cert.remainders.initial with leftScale := -1 } } }
+
+#guard match TarskiCertificate.certify Int.sign EndpointSigns.intDyadic ZPoly.normalizeContent (7 : Nat)
+    p 1 (.finite interval.lower) (.finite interval.upper) with
+  | none => false
+  | some cert => TarskiCertificate.check Int.sign EndpointSigns.intDyadic 7 p 1
+      (.finite interval.lower) (.finite interval.upper) 2 cert &&
+    !TarskiCertificate.check Int.sign EndpointSigns.intDyadic 8 p 1
+      (.finite interval.lower) (.finite interval.upper) 2 cert
+
+#guard TarskiCertificate.query Int.sign EndpointSigns.intDyadic ZPoly.normalizeContent p 1 .negInf .posInf == some 2
+#guard TarskiCertificate.query Int.sign EndpointSigns.intDyadic ZPoly.normalizeContent p 0 .posInf .posInf == none
+#guard TarskiCertificate.query Int.sign EndpointSigns.intDyadic ZPoly.normalizeContent p 0 .posInf .negInf == none
+#guard TarskiCertificate.query Int.sign EndpointSigns.intDyadic ZPoly.normalizeContent p 0
+  (.finite interval.upper) (.finite interval.lower) == none
+
+/-- Literal certificate: replay does not regenerate a remainder chain. -/
+@[expose] def literalChain : SignedRemainderChain Int where
+  chain := #[p, x, 1]
+  degrees := #[2, 1, 0]
+  initial := ⟨1, 0, 2⟩
+  steps := #[⟨1, x, 1⟩]
+  terminal := some (1, x)
+
+@[expose] def literal : IntTarskiCertificate where
+  context := ()
+  head := p
+  queryPoly := 1
+  lower := .finite interval.lower
+  upper := .finite interval.upper
+  squarefree := literalChain
+  remainders := literalChain
+  lowerSigns := #[1, -1, 1]
+  upperSigns := #[1, 1, 1]
+  lowerVariations := 2
+  upperVariations := 0
+  value := 2
+
+#guard IntTarskiCertificate.check p 1 interval 2 literal
+
+
+
+theorem literal_checks : IntTarskiCertificate.check p 1 interval 2 literal = true := by
+  simp only [IntTarskiCertificate.check, TarskiCertificate.check_eq, SignedRemainderChain.check,
+    ← Array.all_toList, Array.toList_range]
+  decide +kernel
+
+#guard !IntTarskiCertificate.check p 1 interval 2
+  { literal with remainders := { literalChain with degrees := #[2, 1, 1] } }
+#guard !IntTarskiCertificate.check p 1 interval 2
+  { literal with remainders := { literalChain with steps := #[] } }
+#guard !IntTarskiCertificate.check p 1 interval 2
+  { literal with remainders := { literalChain with steps := #[⟨1, x, 1⟩, ⟨1, x, 1⟩] } }
+#guard !IntTarskiCertificate.check p 1 interval 2
+  { literal with remainders := { literalChain with chain := #[p, x, 1, 1] } }
+#guard !IntTarskiCertificate.check p 1 interval 2
+  { literal with remainders := { literalChain with terminal := some (0, 0) } }
+
+@[expose] def sharedDomain : TarskiCertificate.Domain Int Dyadic Nat :=
+  ⟨7, p, .finite interval.lower, .finite interval.upper, literalChain⟩
+
+@[expose] def sharedLiteral : TarskiCertificate Int Dyadic Nat :=
+  { context := 7, head := p, queryPoly := 1,
+    lower := .finite interval.lower, upper := .finite interval.upper,
+    squarefree := literalChain, remainders := literalChain,
+    lowerSigns := #[1, -1, 1], upperSigns := #[1, 1, 1],
+    lowerVariations := 2, upperVariations := 0, value := 2 }
+
+@[expose] def sharedProbe (raw : TarskiCertificate.Domain Int Dyadic Nat)
+    (cert : TarskiCertificate Int Dyadic Nat) : Bool :=
+  match raw.replay? Int.sign EndpointSigns.intDyadic with
+  | none => false
+  | some d => TarskiCertificate.checkHit Int.sign EndpointSigns.intDyadic
+      7 p 1 (.finite interval.lower) (.finite interval.upper) 2 d cert
+
+private theorem sharedProbe_eq (raw : TarskiCertificate.Domain Int Dyadic Nat)
+    (cert : TarskiCertificate Int Dyadic Nat) :
+    sharedProbe raw cert =
+      (TarskiCertificate.checkDomain Int.sign EndpointSigns.intDyadic
+        raw.head raw.lower raw.upper raw.squarefree &&
+       raw.binds 7 p (.finite interval.lower) (.finite interval.upper) cert.squarefree &&
+       TarskiCertificate.checkBindings 7 p 1 (.finite interval.lower) (.finite interval.upper) 2 cert &&
+       TarskiCertificate.checkQuery Int.sign EndpointSigns.intDyadic p 1
+        (.finite interval.lower) (.finite interval.upper) 2 cert) := by
+  have h := TarskiCertificate.checkHit_replay Int.sign EndpointSigns.intDyadic
+    (7 : Nat) p 1 (.finite interval.lower) (.finite interval.upper) 2 raw cert
+  cases hr : raw.replay? Int.sign EndpointSigns.intDyadic with
+  | none => simpa only [sharedProbe, hr, Option.elim_none] using h
+  | some d => simpa only [sharedProbe, hr, Option.elim_some] using h
+
+set_option maxRecDepth 32768 in
+/-- The ordinary kernel checks successful shared replay and rejects a foreign
+context and a changed squarefree witness despite an otherwise valid query. -/
+theorem shared_kernel :
+    sharedProbe sharedDomain sharedLiteral = true ∧
+    sharedProbe {sharedDomain with context := 8} sharedLiteral = false ∧
+    sharedProbe sharedDomain {sharedLiteral with squarefree :=
+      {literalChain with degrees := #[2, 1, 1]}} = false := by
+  simp only [sharedProbe_eq, TarskiCertificate.checkDomain,
+    TarskiCertificate.checkBindings, TarskiCertificate.checkQuery,
+    TarskiCertificate.Domain.binds, SignedRemainderChain.check,
+    ← Array.all_toList, Array.toList_range]
+  decide +kernel
+
+#guard !sharedProbe sharedDomain {sharedLiteral with context := 8}
+#guard !sharedProbe {sharedDomain with head := -p} sharedLiteral
+#guard !sharedProbe {sharedDomain with lower := .finite interval.upper} sharedLiteral
+#guard !sharedProbe {sharedDomain with squarefree :=
+  {literalChain with terminal := none}} sharedLiteral
+#guard !sharedProbe sharedDomain {sharedLiteral with remainders :=
+  {literalChain with terminal := none}}
+#guard !sharedProbe sharedDomain {sharedLiteral with value := -2}
+#guard !sharedProbe sharedDomain {sharedLiteral with queryPoly := 0}
+
+-- A single validated domain is reused across both an accepted and a rejected
+-- query result, and each result agrees with the complete checker.
+#guard match sharedDomain.replay? Int.sign EndpointSigns.intDyadic with
+  | none => false
+  | some d =>
+    let checkHit := TarskiCertificate.checkHit Int.sign EndpointSigns.intDyadic
+      7 p 1 (.finite interval.lower) (.finite interval.upper) 2 d
+    let checkFull := TarskiCertificate.check Int.sign EndpointSigns.intDyadic
+      7 p 1 (.finite interval.lower) (.finite interval.upper) 2
+    let bad := {sharedLiteral with upperVariations := 1}
+    checkHit sharedLiteral && !checkHit bad &&
+      checkHit sharedLiteral == checkFull sharedLiteral && checkHit bad == checkFull bad
+
+-- A different valid squarefree witness passes full replay, but cannot reuse
+-- a cache bound to the original literal witness.
+#guard let alternate := {sharedLiteral with squarefree :=
+    {literalChain with initial := ⟨2, 0, 4⟩}}
+  TarskiCertificate.check Int.sign EndpointSigns.intDyadic 7 p 1
+    (.finite interval.lower) (.finite interval.upper) 2 alternate &&
+  !sharedProbe sharedDomain alternate &&
+  sharedProbe {sharedDomain with squarefree := alternate.squarefree} alternate
+
+-- Cache misses fall back to complete replay, while malformed evidence never
+-- inherits acceptance from another query's valid squarefree witness.
+#guard match sharedDomain.replay? Int.sign EndpointSigns.intDyadic with
+  | none => false
+  | some d =>
+    let check := TarskiCertificate.checkCached Int.sign EndpointSigns.intDyadic
+      7 p 1 (.finite interval.lower) (.finite interval.upper) 2 (some d)
+    let alternate := {sharedLiteral with squarefree :=
+      {literalChain with initial := ⟨2, 0, 4⟩}}
+    check sharedLiteral && check alternate &&
+      !check {alternate with squarefree := {alternate.squarefree with terminal := none}} &&
+      !check {sharedLiteral with context := 8}
+
+/-- info: 'Hex.TarskiCertificate.checkCached_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms TarskiCertificate.checkCached_eq
+
+/-- info: 'Hex.TarskiCertificate.check_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms TarskiCertificate.check_eq
+/-- info: 'Hex.TarskiCertificate.Domain.replay_data' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms TarskiCertificate.Domain.replay_data
+/-- info: 'Hex.TarskiCertificate.checkHit_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms TarskiCertificate.checkHit_eq
+/-- info: 'Hex.TarskiCertificate.checkHit_replay' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms TarskiCertificate.checkHit_replay
+/-- info: 'Hex.TarskiCertificate.checkHit_checks' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms TarskiCertificate.checkHit_checks
+/-- info: 'Hex.TarskiTests.shared_kernel' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms shared_kernel
+
+namespace Noncanonical
+open HexPoly.InterpretTests
+
+@[expose] def sign (a : Rep) : Int := (value a).num.sign
+@[expose] def endpointSigns : EndpointSigns Rep Rep where
+  compare a b := sign (a - b)
+  evalSign p a := sign (p.eval a)
+
+@[expose] def head : Poly := ofCoeffs #[-1, 0, root]
+@[expose] def count : Option Int := TarskiCertificate.query sign endpointSigns SignedRemainderChain.normalizeId head 1
+  (.finite (pack (-2) 0)) (.finite (pack 2 0))
+#guard count == some 2
+#guard TarskiCertificate.query sign endpointSigns SignedRemainderChain.normalizeId head (C root) .negInf .posInf == some 2
+#guard TarskiCertificate.query sign endpointSigns SignedRemainderChain.normalizeId head 0 .negInf .posInf == some 0
+
+-- The two literal query polynomials are semantically equal but replay bindings
+-- still reject substitution of the unbound representative.
+#guard match TarskiCertificate.certify sign endpointSigns SignedRemainderChain.normalizeId () head (C root)
+    .negInf .posInf with
+  | none => false
+  | some cert => TarskiCertificate.check sign endpointSigns () head (C root) .negInf .posInf 2 cert &&
+    !TarskiCertificate.check sign endpointSigns () head 1 .negInf .posInf 2 cert
+
+end Noncanonical
+
+/-- info: 'Hex.TarskiTests.literal_checks' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms literal_checks
+
+end Hex.TarskiTests

@@ -35,11 +35,13 @@ theorem step_mono {before after : Array (Checked sign context p a b)}
       | some r =>
         simpa only [hl, hr, hm left l hl, hm right r hr] using h
 
+/-- An accepted leaf gives its exact checked local-step result in any memo. -/
 theorem step_leaf (memo : Array (Checked sign context p a b)) {n : Node E Ctx}
     (h : (Replay.leaf n).check sign context p a b n.queries = true) :
     step sign context p a b memo ⟨n, none⟩ = some ⟨.leaf n, h⟩ := by
   simp only [step_eq, h, dite_eq_left, pure]
 
+/-- Accepted split replay gives its exact local-step result at the supplied child indices. -/
 theorem step_split {memo : Array (Checked sign context p a b)} {n : Node E Ctx}
     {l r : Checked sign context p a b} {left right : Nat}
     (hl : memo[left]? = some l) (hr : memo[right]? = some r)
@@ -53,9 +55,9 @@ theorem step_split {memo : Array (Checked sign context p a b)} {n : Node E Ctx}
       decide (n.system.columns.toList = product l.value.node.system.support r.value.node.system.support) &&
       decide (n.system.rows.toList = product l.value.node.rows r.value.node.rows) &&
       n.check sign context p a b n.queries) = true := by
-    simp only [Replay.check, Bool.and_eq_true] at h
-    simp only [Bool.and_eq_true]
-    exact ⟨⟨⟨h.1.1.1.1.1, h.1.1.2⟩, h.1.2⟩, h.2⟩
+    obtain ⟨arity, _, _, columns, rows, nodeAccepted⟩ := Replay.check_split.mp h
+    simp only [Bool.and_eq_true, decide_eq_true_eq]
+    exact ⟨⟨⟨arity, columns⟩, rows⟩, nodeAccepted⟩
   simp only [step_eq, hl, hr, bind, Option.bind, hlq, hrq, dite_eq_left, hn, pure]
 
 variable [Hashable E] [Hashable Ctx]
@@ -102,6 +104,16 @@ theorem replay_encode {tree : Replay E Ctx} {qs : List (DensePoly E)}
   unfold encode
   rw [hv.fold]
   simp only [bind, Option.bind, hi, hq, dite_eq_left, pure]
+
+/-- Encoding accepted evidence validates every stored entry, independently of
+the caller's hashing. -/
+theorem validate_encode {tree : Replay E Ctx} {qs : List (DensePoly E)}
+    (h : tree.check sign context p a b qs = true) :
+    ∃ memo, (encode tree).validate? sign context p a b = some memo := by
+  have replay := replay_encode h
+  cases checked : (encode tree).validate? sign context p a b with
+  | none => simp [replay?, checked, bind, Option.bind] at replay
+  | some memo => exact ⟨memo, rfl⟩
 
 /-- Graph encoding cannot fail checked replay for an accepted tree. -/
 theorem check_encode {tree : Replay E Ctx} {qs : List (DensePoly E)}

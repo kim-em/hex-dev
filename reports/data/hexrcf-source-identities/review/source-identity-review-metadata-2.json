@@ -1,0 +1,66 @@
+{
+  "source_commit": "7188977171dbac1e7da2906e3245066274021a6d",
+  "source_tree": "82eec8254c7a8adf6156023db216070b2cd0037c",
+  "checks": {
+    "dag": {
+      "command": {
+        "argv": [
+          "python3",
+          "scripts/check_dag.py"
+        ],
+        "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10358",
+        "source_commit": "7188977171dbac1e7da2906e3245066274021a6d",
+        "source_tree": "82eec8254c7a8adf6156023db216070b2cd0037c",
+        "script_sha256": "760236cb56f22dd916c677070713146ebd9bd652ba988b3f9427d6a671a4ea10"
+      },
+      "exit_status": 0,
+      "log": "source-identity-review-dag-2.log",
+      "sha256": "13af277460de3ca330f96040f493efe0daa401ac7a723ab5af0e22862a7c512d"
+    },
+    "copyright": {
+      "command": {
+        "argv": [
+          "python3",
+          "scripts/check_copyright_headers.py"
+        ],
+        "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10358",
+        "source_commit": "7188977171dbac1e7da2906e3245066274021a6d",
+        "source_tree": "82eec8254c7a8adf6156023db216070b2cd0037c",
+        "script_sha256": "d7ccfbb8e737c342ff24f7ec875c403a76a678a75f581a8e7dcaf0b654325c84"
+      },
+      "exit_status": 0,
+      "log": "source-identity-review-copyright-2.log",
+      "sha256": "5c8daa005aff022b695d6ef1bbb5b88a4cab9d50727ce401a4bae5ec8aef3ba0"
+    },
+    "lines": {
+      "command": {
+        "argv": [
+          "python3",
+          "scripts/check_file_line_counts.py"
+        ],
+        "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10358",
+        "source_commit": "7188977171dbac1e7da2906e3245066274021a6d",
+        "source_tree": "82eec8254c7a8adf6156023db216070b2cd0037c",
+        "script_sha256": "0c9109c17128a11651f7a5d3784b5b35c859b87e2f58d12c2fbcd5c7562f1229"
+      },
+      "exit_status": 0,
+      "log": "source-identity-review-lines-2.log",
+      "sha256": "b45cc43afe943b07da29a13ba3fbb962649ec4e3120c75e329e0848b64dfd469"
+    },
+    "admissions": {
+      "command": {
+        "argv": [
+          "python3",
+          "scripts/ci/check_named_admissions.py"
+        ],
+        "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10358",
+        "source_commit": "7188977171dbac1e7da2906e3245066274021a6d",
+        "source_tree": "82eec8254c7a8adf6156023db216070b2cd0037c",
+        "script_sha256": "088e8ab986da0e7992968deed1121b156e17c5d3930cb8e8d2a524756bbdea2f"
+      },
+      "exit_status": 0,
+      "log": "source-identity-review-admissions-2.log",
+      "sha256": "4e1d91d796fb119971b37574eb362a6f3306ba2c3832c8af4226516ba3ed445a"
+    }
+  }
+}

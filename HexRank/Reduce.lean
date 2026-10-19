@@ -26,7 +26,7 @@ block), and the reduced matrix.
 
 The loop-step lemmas here are structural: they describe one step of the loop
 without any hypothesis on `quot`. The invariant that makes every division
-exact and identifies the output is proved in the Mathlib companion.
+exact and identifies the output is proved in the theory companion.
 -/
 
 namespace Hex.Matrix

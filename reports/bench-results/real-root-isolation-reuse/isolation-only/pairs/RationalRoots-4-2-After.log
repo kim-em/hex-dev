@@ -1,0 +1,9 @@
+Hex.RealAlgebraicBench.runRationalRoots4    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=b4b5021, 2026-10-08T11:01:22Z, host=chungus2
+  repeat 0  7.149 ms  (×2^3, total 57.189 ms)
+  median: 7.149 ms    min: 7.149 ms    max: 7.149 ms
+  hash: all repeats agree
+  observed hash: 0xf1a1204ac3404b40
+  expected hash: matches
+  peak RSS: 69_424 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-root-cache/pairs-fixed/RationalRoots-4-2-After.json

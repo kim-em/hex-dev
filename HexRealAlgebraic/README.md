@@ -1,5 +1,9 @@
 # hex-real-algebraic
 
+The implemented surface records Phase 4 in `libraries.yml`. The
+[readiness audit](../reports/real-closure-prerequisites.md) documents proved APIs,
+verification and performance limits. Split-package publication is separate.
+
 Executable real algebraic numbers with exact comparison, developed in the
 [Hex monorepo](https://github.com/kim-em/hex-dev). The implementation is
 Mathlib-free and reuses canonical `AlgebraicNumber` arithmetic and isolations.
@@ -30,6 +34,12 @@ the nonnegative square root or `none` for negative input; `sqrt a h` takes a
 proof of nonnegativity. `Repr` emits an ordinary checked Lean expression that
 reconstructs the value.
 
+`signField generator value` wraps `QAdjoin.signApprox` and determines the sign of a `QAdjoin` coordinate in
+its chosen real embedding. It handles constants directly and otherwise uses
+certified interval evaluation, with a finite precision bound derived from an
+integer polynomial satisfied by the value. The companion proves agreement
+with mathematical evaluation and the canonical real-algebraic sign.
+
 `RealAlgebraicPoly.ofArray` normalizes real coefficient arrays.
 `RealAlgebraicPoly.roots` returns `.all` for zero and `.finite` otherwise,
 with distinct increasing roots and positive multiplicities. Inspect `finite?`
@@ -39,7 +49,7 @@ roots and uses the integer API's empty-array convention for every constant.
 
 Core order-law classes and `Lean.Grind.Field` / `Lean.Grind.OrderedRing` are
 conditional on the proof-only `RealAlgebraicNumber.Laws`. The
-[Mathlib companion](../HexRealAlgebraicMathlib/README.md) proves this package
+[theory companion](../HexRealAlgebraicTheory/README.md) proves this package
 and provides the ordinary Mathlib field and linear-order structures. None of
 its proofs enters the computational dependency graph.
 
@@ -51,7 +61,9 @@ at the separation precision of the product of the minimal polynomials.
 ## Verification
 
 ```sh
-lake build HexRealAlgebraic.Conformance HexRealAlgebraic.ReprChecks hexrealalgebraic_conformance
+lake build HexRealAlgebraic.Conformance HexRealAlgebraic.ReprChecks \
+  HexRealAlgebraic.FieldSignConformance HexRealAlgebraicTheory.FieldSignConformance \
+  hexrealalgebraic_conformance
 .lake/build/bin/hexrealalgebraic_conformance
 lake build hexrealalgebraic_emit_fixtures
 .lake/build/bin/hexrealalgebraic_emit_fixtures > /tmp/real-algebraic.jsonl

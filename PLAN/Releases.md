@@ -22,7 +22,7 @@ example that exercises the advertised user story end-to-end.
 
 ### Release 2: Irreducibility engine
 
-- **Libraries:** Release 1 + `HexBerlekamp`, `HexBerlekampMathlib`,
+- **Libraries:** Release 1 + `HexBerlekamp`, `HexBerlekampTheory`,
   `HexConway`, `HexGFq`
 - **User story:** Users can check irreducibility over `F_p` and use it
   to instantiate `FiniteField p f hf hirr`.
@@ -36,7 +36,7 @@ example that exercises the advertised user story end-to-end.
 ### Release 3: Certified integer factorization
 
 - **Libraries:** Release 2 + `HexPolyZ`, `HexHensel`,
-  `HexBerlekampZassenhaus`, and `HexBerlekampZassenhausMathlib`, together
+  `HexBerlekampZassenhaus`, and `HexBerlekampZassenhausTheory`, together
   with their transitive dependencies.
 - **User story:** Every integer polynomial has a sound, total factorization
   through the production cascade. The result may use the exponential exact
@@ -65,14 +65,14 @@ example that exercises the advertised user story end-to-end.
 
 ### Release 5: Certified root isolation
 
-- **Libraries:** `HexRoots`, `HexRootsMathlib`, `HexRealRoots`, and
-  `HexRealRootsMathlib`, together with their transitive dependencies.
+- **Libraries:** `HexRoots`, `HexRootsTheory`, `HexRealRoots`, and
+  `HexRealRootsTheory`, together with their transitive dependencies.
 - **User story:** Users can isolate every complex root of a nonzero squarefree
   integer polynomial and every distinct real root of an arbitrary nonzero
   integer polynomial. Results carry checked coverage, uniqueness,
   disjointness, count, and precision guarantees.
 - **Integration example:** `Examples/Release5.lean` — use the none-free
-  `HexRootsMathlib.isolateComplexRoots` wrapper for complex roots and the
+  `HexRootsTheory.isolateComplexRoots` wrapper for complex roots and the
   `isolate_roots` elaborator for repeated real roots.
 
 ## Release readiness predicate
@@ -84,7 +84,10 @@ A release `R` is ready when, computed from `libraries.yml`:
 > **and `R.integration-example` builds and its test passes in CI**.
 
 `scripts/status.py release <N>` computes the dependency closure from
-`libraries.yml` and evaluates this predicate.
+`libraries.yml` and evaluates this predicate without building anything:
+it checks that the integration example exists and is in the
+`HexReleaseExamples` target that `ci.yml` builds, so the build half of
+the predicate is the CI result for the commit being released.
 
 This is the only release-level gate. Per-library requirements that
 were previously stated as project-wide release criteria (the
@@ -115,10 +118,15 @@ Per release:
 
 `HexManual` is a Verso document. `lake build HexManual` only *typechecks*
 it -- every `{docstring}`, `{ref}`, `#eval`/`leanOutput`, and `#guard` is
-checked as the chapters elaborate. To produce the browsable site, the
-`hexmanual` executable (`Main.lean`) renders it to static HTML:
+checked as the chapters elaborate. To produce the browsable site, run
+`Main.lean` in the interpreter, which renders it to static HTML:
 
-    lake exe hexmanual --output _out
+    lake build HexManual HexManual.Theme
+    lake env lean --run Main.lean --output _out
+
+Rendering through the interpreter avoids compiling Mathlib and every Hex
+library imported by the manual to C, which a native executable requires.
+Verso's own modules are precompiled, so the render still runs Verso natively.
 
 The multi-page site lands in `_out/html-multi`; open its `index.html`, or
 serve it with `python3 -m http.server -d _out/html-multi`.
@@ -150,18 +158,18 @@ rather than any count restated here. Broadly it contains:
 
 - the shared `hex-basic` and `hex-test-kit` foundations;
 - the arithmetic/polynomial stack from `hex-arith` through `hex-gfq-ring`,
-  `hex-hensel`, and their Mathlib bridges;
-- `hex-roots`, `hex-real-roots`, and their Mathlib bridges;
+  `hex-hensel`, and their theory companions;
+- `hex-roots`, `hex-real-roots`, and their theory companions;
 - the matrix, determinant, Gram--Schmidt, and LLL repositories already
   published by the earlier release work; and
-- `hex-berlekamp`, `hex-berlekamp-zassenhaus`, and their Mathlib bridges.
+- `hex-berlekamp`, `hex-berlekamp-zassenhaus`, and their theory companions.
 
 `python3 scripts/release/check_released_manifest.py` checks the set, managed
 paths, pin closure, and publication order without network access.
 
 This is the current set, not a permanent one; more sublibraries may be
 published later. The computational repos are Mathlib-free; the
-`*-mathlib` repos are the bridge layers.
+`*-theory` repos are the bridge layers.
 
 ### Uniform per-library layout
 
@@ -177,23 +185,24 @@ copy:
 The first two lines are the product; a mirror receives them and nothing else,
 plus the library's README. The rest are development instruments: they build in
 this monorepo's shared root Lake graph, run in this monorepo's CI, and are
-never published. A mirror is therefore a single root Lake project, whose
-skeleton `scripts/release/BOOTSTRAP.md` documents; the sync manages source and
-rewrites the lockfile but deliberately leaves that skeleton intact. The
-mirrors' CI workflows are managed centrally in
+never published. A mirror is therefore a single root Lake project whose Lake
+file the sync generates on every publish (see *The generated Lake file* below);
+`scripts/release/BOOTSTRAP.md` documents the few files a new mirror starts
+with. The mirrors' CI workflows are managed centrally in
 `scripts/release/released-ci.yml` and published by the same guarded sync.
 
 "Nothing else" is computed, not listed. `allowed_paths` in `sync_released.py`
 derives what each mirror may contain from its manifest entry — the managed
-paths, the workflows `released-ci.yml` declares for it, and the skeleton the
-sync does not author — and `prune_unmanaged` deletes the rest of the clone
+paths, the workflows `released-ci.yml` declares for it, and the generated Lake
+file and the few skeleton files the sync does not author — and `prune_unmanaged` deletes the rest of the clone
 before anything is copied in, so a library admitted to the manifest inherits
 the policy without a cleanup list of its own. Nothing else under `.github/`
 survives, so a mirror cannot accumulate a workflow beside its build-only
 one, and a mirror carries neither a `reports/` tree nor `.claude/` notes beyond
 the figures its entry names. The `pins_only` aggregate is exempt, since its
 umbrella module, lakefile and documentation tree live only in the released
-repository. `keep_paths` is the
+repository, though its lakefile and umbrella module are generated too.
+`keep_paths` is the
 escape hatch for a mirror-local file outside both sets; one entry uses it, for
 `hex-test-kit`'s fixed `HexTestKit.lean` umbrella. Because it can only
 preserve, a forgotten entry appears as a deletion in the dry run instead of as
@@ -202,7 +211,7 @@ had backwards.
 
 ### The publish mechanism
 
-Five pieces, under `scripts/release/` and `.github/workflows/`:
+Six pieces, under `scripts/release/` and `.github/workflows/`:
 
 - `released.yml` — a per-repo manifest: which paths to copy, which mirror-local
   paths to keep, and which upstream repos to pin, in dependency order.
@@ -220,41 +229,105 @@ Five pieces, under `scripts/release/` and `.github/workflows/`:
   pushing; run it first.
 - `synced.json` — the baseline seed (see below).
 - `sync-released.yml` — a manual workflow (`workflow_dispatch`, dry by
-  default). One dispatch drives the whole publish.
+  default). A dispatch publishes all remaining repositories or a selected phase.
+- `consumer_check.py` — builds a fresh downstream Lake project against the
+  trees a dry run stages with `--stage`, the way a user would `require` and
+  `import` them. `sync-released.yml` runs it on Ubuntu, macOS and Windows and
+  requires Ubuntu and macOS to pass; Windows remains advisory until the published FFI
+  builds support it. See
+  [SPEC/CI.md §Release consumer check](../SPEC/CI.md#release-consumer-check).
 
 Each mirror's own CI runs on the sync's push, so a mirror whose published tree
-does not build reports it directly, on the commit that caused it.
+does not build reports it directly, on the commit that caused it. That CI builds
+each mirror as a root package, which cannot show what a downstream user meets;
+the consumer check covers that, before anything is pushed.
 
-Rewriting the cross-repo revisions touches **every** lakefile and
-`lake-manifest.json` in a repo, updating both `rev` and `inputRev`. Lake
-trusts the manifest, so a stale lockfile would otherwise rebuild against
-the old revision. A published dependency that the mirror's lockfile has
-never seen (a library split out upstream, or a companion that gained a
-requirement) is appended as a new lockfile entry at its synced revision,
-since Lake otherwise refuses to build with "dependency X of Y not in
-manifest". A published library that the sources import directly but the
-mirror's Lake file never required is added as a direct `require` at its
-synced revision, since otherwise the mirror builds only while some other
-dependency happens to pull that library in (hex-bareiss lost `HexArith`
-this way when it was split out). The sync also refuses, before pushing
-anything, to publish a library whose sources import `Batteries` or
-`Mathlib` when the mirror's Lake file requires no package providing them:
-inside the monorepo those imports always resolve, in a mirror they resolve
-only through its own `require`s.
+### Staged publication
 
-How a library is *built* is decided by this monorepo's `lakefile.lean` and
-carried across the same way. The sync reads the `lean_lib <lib>` block here and
-writes `precompileModules` into the mirror's own `lean_lib` when the mirror has
-lost it: without it Lake never builds the module dynlib that carries the
-library's `@[extern]` symbols, so the mirror compiles while any downstream
-package that evaluates the library during elaboration fails to find the native
-implementation. `extraDepTargets` and `moreLinkArgs` are validated rather than
-written, since they name `extern_lib` targets defined only in the mirror's own
-skeleton and, in `HexLLL`'s case, take the form of a platform conditional that
-no `lakefile.toml` can express; a mirror missing one stops the publication.
-Deriving all of this from the lakefile rather than restating it in
-`released.yml` is deliberate: a hand-maintained copy of a build decision is one
-that can disagree with the build.
+A shared release can span multiple runs. This permits computational Hex
+libraries to be published before Mathlib updates its dependency pins, followed
+by the companions that need that Mathlib update. Publish any companions that
+already pass consumer checks in an earlier phase. The aggregate is published
+last, after every split repository has joined the shared version.
+The shared version coordinates Hex sources; earlier companions may retain an
+older Mathlib requirement. Later phases and the aggregate explicitly select
+their current external pins and test the earlier companions against them.
+
+The workflow's `only` input accepts space- or comma-separated repository short
+names; the CLI accepts repeated `--only` arguments too. A selected repository's
+Hex dependencies must be selected earlier in manifest order or already published
+at the pending version. Each deliberate partial run succeeds and retains that
+pending version. An empty selection publishes all remaining repositories;
+the shared minor version advances only when the release is complete.
+
+After a Mathlib pin update, resume with `advance_source=true` (`--advance-source`
+on the CLI). Before any new push, the driver checks source fingerprints for
+every completed repository and verifies its recorded `main` and release tag.
+Fingerprints include owned sources, documentation, workflows, toolchains and
+generated build settings. External revisions are normalized for this comparison:
+earlier repositories retain their original pins and are never regenerated or
+retagged. Changes to their owned exports or build settings reject the resume.
+Use a release branch when unrelated changes on main would invalidate that check.
+Legacy pending releases without fingerprints must resume at their original commit.
+The workflow loads the live baseline before staging and publication. It uses the
+bootstrap seed only when the remote baseline branch is confirmed absent; fetch
+failures stop the phase without replacing the baseline.
+
+Each phase stages only its selected dependency closure. Unpublished repositories
+use staged paths; completed dependencies retain their immutable Git pins, so
+Mathlib sees the same foundation pins it records. Partial consumers import the
+selected libraries, build their tests and eligible examples, and link a native
+executable. The last phase checks the complete aggregate. Publishing checks the
+saved stage plan against the source, selected repositories and live baseline,
+so a baseline change during consumer validation cannot silently publish another
+version or dependency graph. Perform a dry run before every real phase.
+The plan also records complete staged-tree fingerprints, including lockfiles
+and preserved mirror files. Publication verifies each rendered tree before its
+push; only this phase's not-yet-known Hex commit IDs are normalized.
+
+Before selecting Mathlib-dependent repositories, publish every Hex dependency
+recorded in Mathlib's own lockfile and update Mathlib to those exact commits.
+The driver verifies this requirement, preserves those transitive dependencies
+in companion lockfiles, and checks their exact revisions. Consumers compare
+all resolved Mathlib dependencies with Mathlib's lockfile before fetching its
+cache, so an older Batteries or Hex pin cannot silently cause a Mathlib rebuild.
+The list of repositories is fixed for a pending release; add new libraries in
+the next release rather than changing it between phases.
+
+### The generated Lake file
+
+Each mirror's Lake file is rendered by `render_lakefile` in `sync_released.py`
+on every publish, from `released.yml` and this monorepo's `lakefile.lean`;
+nothing in it is maintained by hand. It contains:
+
+- the package, with native Verso docstrings enabled;
+- a `require` at the shared release version for every published library the
+  library depends on (per `libraries.yml`) or its sources import directly, and
+  one for Mathlib, Batteries or Tau Ceti when the sources import them, at this
+  monorepo's locked inputs;
+- the library's `lean_lib` with this monorepo's build settings
+  (`precompileModules`, link objects and arguments), and any declarations the
+  entry lists under `lake_declarations` (native targets, and carrier libraries
+  such as `HexArithNative`), copied verbatim;
+- a `lean_lib` for any library shipped through `extra_paths`, and the
+  `<Lib>Tests`, `<Lib>Modules` and executable targets for the entry's
+  `test_modules`, `build_modules` and `executables`.
+
+The `hex` aggregate's lakefile requires every `aggregate:` library, and its
+`Hex.lean` imports each of them, so a newly published library reaches the
+aggregate in the same publish. The format (TOML or Lean) follows the entry's
+`lakefile` field, because downstream lockfiles record which file to read; an
+entry whose build settings only Lean can express must use `lakefile: lean`, and
+`check_released_manifest.py` renders every entry to catch that before a
+release. How a library is built is therefore decided in one place, this
+monorepo's `lakefile.lean`, and a mirror cannot keep a stale target, lose a
+setting, or miss a dependency.
+
+The lockfile is rewritten, not generated: Hex packages move to the release tag
+and its exact commit, external packages to this monorepo's locked revisions, a
+published dependency the lockfile has never seen is appended, and each
+package's `inherited` flag follows whether the generated Lake file requires it
+directly.
 
 ### The Lake cache
 
@@ -330,8 +403,8 @@ routes that repository's clone and push through that token, so a new library
 goes on whichever token has room. Publishing one takes three steps in this
 order:
 
-1. create the repository under `leanprover`, give it the un-managed Lake
-   skeleton, and add its managed CI workflow in hex-dev
+1. create the repository under `leanprover` with the starting files
+   `scripts/release/BOOTSTRAP.md` lists, and add its managed CI workflow in hex-dev
    (`scripts/release/BOOTSTRAP.md`); the sync clones but never creates;
 2. add that repository to the selected repositories of a token with room,
    with `Contents: Read and write` and `Workflows: Read and write`, and have an
@@ -366,7 +439,9 @@ repository outside its list, so the clone succeeds from public https and only
 the push returns `403 Permission to leanprover/<repo>.git denied`.
 `sync_released.py` now preflights every target repository against the tokens
 before the first push and refuses to start, naming the repositories no token
-covers. A dry run does not preflight, using no token and pushing nothing.
+covers. The driver's `--dry-run` mode uses no token and pushes nothing. The
+workflow runs a separate read-only grant diagnostic before staging; see the
+verification instructions in the token inventory below.
 
 **What the preflight does not prove.** Its receive-pack probe verifies that a
 token can push ordinary content to the selected repository. GitHub checks the
@@ -383,53 +458,106 @@ GitHub UI (https://github.com/settings/personal-access-tokens); this
 inventory is the durable record of that state, kept current by rule:
 whoever widens a token records the change here in the same working
 session. A fine-grained token selects at most 50 repositories.
-Snapshot verified against the live tokens on 2026-09-03 (routing
-measured by a branch-only debug step on the sync workflow counting
-`route_tokens`' output; selections confirmed from the UI) and updated
-from the UI on 2026-09-05 for the number-field batch.
+When preparing a new mirror, the agent must choose one token using this
+inventory and the 50-repository limit, record the allocation, and give the
+user clickable [token settings](https://github.com/settings/personal-access-tokens)
+and [Leanprover approval](https://github.com/organizations/leanprover/settings/personal-access-token-requests)
+links. Name the selected token explicitly; do not offer alternatives or ask
+the user to track allocations or capacity. Keep requested allocations distinct
+from confirmed selections and approved grants. If the token's numeric ID is
+available, link directly to its edit page.
 
-`hex-publishing` carries every repository in `released.yml` except the
-eight listed as released under `hex-publishing-2` below: 48 of 50. The
-number-field batch (`hex-number-field`, `hex-number-field-mathlib`,
-`hex-number-field-tower`, `hex-number-field-tower-mathlib`, `hex-rcf`)
-is on this token.
+Approval and write access are verifiable information; agents must investigate
+rather than asking the maintainer to confirm them. An organization owner can
+inspect the approved tokens and pending requests through
+[GitHub's token API](https://docs.github.com/en/rest/orgs/personal-access-tokens):
+`gh api --paginate orgs/leanprover/personal-access-tokens` and
+`gh api --paginate orgs/leanprover/personal-access-token-requests`.
+For each token, its `repositories_url` lists its approved repository scope;
+its `permissions.repository` records Contents and Workflows grants.
+These owner-only endpoints can return 404 to a member even when the tokens exist.
 
-`hex-publishing-2` carries 44 of 50:
+The dry-run workflow's **Check publishing-token grants (read-only)** step uses
+the actual `RELEASED_SYNC_PAT` and `RELEASED_SYNC_PAT_2` secrets, calling
+`route_tokens`/`selection_check` in `scripts/release/sync_released.py`.
+It probes each repository's receive-pack advertisement without pushing and
+reports the publishing secret name with Contents write access. Inspect this step's
+logs to update approved coverage in this inventory. Its diagnostic failure does
+not prevent staging or consumer builds; the real sync repeats the preflight and
+fails before any push if a grant is missing. Public repository metadata, a
+successful clone, SSH access, and repository selection alone are not evidence
+that a publishing token can write. The receive-pack probe cannot check the
+separate Workflows permission; inspect the approved permission metadata where
+available, and keep this limitation distinct from verified Contents access.
 
-- released: `hex-primality`, `hex-primality-mathlib`,
-  `hex-sparse-poly`, `hex-sparse-poly-mathlib`, `hex-resultant`,
-  `hex-resultant-mathlib`, `hex-graph-iso`, `hex-graph-iso-mathlib`;
-- created for publication, not yet in `released.yml`: `hex-modular`,
-  `hex-modular-mathlib`, `hex-mv-gcd`, `hex-mv-gcd-mathlib`,
-  `hex-mv-hensel`, `hex-mv-hensel-mathlib`, `hex-mv-factor`,
-  `hex-mv-factor-mathlib`, `hex-poly-z-gcd`,
-  `hex-poly-z-gcd-mathlib`, `hex-cyclotomic`,
-  `hex-cyclotomic-mathlib`, `hex-finite-field`,
-  `hex-finite-field-mathlib`, `hex-hermite`, `hex-hermite-mathlib`,
-  `hex-int-factor`, `hex-int-factor-mathlib`,
-  `hex-invariant-factors`, `hex-invariant-factors-mathlib`,
-  `hex-min-poly`, `hex-min-poly-mathlib`, `hex-modular-matrix`,
-  `hex-modular-matrix-mathlib`, `hex-padics`, `hex-padics-mathlib`,
-  `hex-poly-smith`, `hex-poly-smith-mathlib`, `hex-smith`,
-  `hex-smith-mathlib`, `hex-summation`, `hex-summation-mathlib`,
-  `hex-truncated-series`, `hex-truncated-series-mathlib`,
-  `hex-char-poly`, `hex-char-poly-mathlib`.
+`hex-publishing` selects all managed repositories in `released.yml` except
+those listed on `hex-publishing-2` below, plus
+[`leanprover/fplll`](https://github.com/leanprover/fplll), which is outside
+the publish manifest: 50 selections in total. This includes `hex-test-kit`,
+the `hex` aggregate, the number-field batch, and `hex-poly-fast`.
+The read-only [publishing-token grant check](https://github.com/kim-em/hex-dev/actions/runs/37272440824/job/111659598036)
+verified Contents write access for every managed repository: `hex-poly-fast`
+through `RELEASED_SYNC_PAT`, and its three Phase-7 siblings through
+`RELEASED_SYNC_PAT_2`. The same check verified the ECPP and permutation-group
+mirrors on token 2. Workflows permission is separate from this receive-pack check.
 
-Both tokens have a pending organization-owner approval
-(https://github.com/organizations/leanprover/settings/personal-access-token-requests)
-for adding the Workflows read-and-write permission, which the sync needs
-to write each mirror's managed `.github/workflows/ci.yml`. Until it is
-approved, a real sync cannot push a workflow file to any mirror.
+`hex-publishing-2` has 50 confirmed selected repositories, filling its
+50-repository limit:
+
+`hex-ecpp` and `hex-ecpp-theory` have verified Contents write access.
+The new `hex-lattice-enum` and
+`hex-lattice-enum-theory` empty repositories are also selected on this token
+and awaiting organization approval. The existing `hex-perm-group` and
+`hex-perm-group-theory` mirrors are also selected. Both lattice libraries
+are at Phase 7; repository
+reservation alone does not publish their sources or admit them into the
+release manifest.
+
+- selected for publication, approval pending: `hex-lattice-enum`,
+  `hex-lattice-enum-theory`;
+- released: `hex-primality`, `hex-primality-theory`,
+  `hex-sparse-poly`, `hex-sparse-poly-theory`, `hex-resultant`,
+  `hex-resultant-theory`, `hex-graph-iso`, `hex-graph-iso-theory`,
+  `hex-modular`, `hex-truncated-series`, `hex-truncated-series-theory`,
+  `hex-ecpp`, `hex-ecpp-theory`, `hex-perm-group`, `hex-perm-group-theory`
+  (admitted to the manifest; Contents write access verified);
+- created for publication, not yet in `released.yml`: `hex-modular-theory`,
+  `hex-mv-gcd`, `hex-mv-gcd-theory`,
+  `hex-mv-hensel`, `hex-mv-hensel-theory`, `hex-mv-factor`,
+  `hex-mv-factor-theory`, `hex-poly-z-gcd`,
+  `hex-poly-z-gcd-theory`, `hex-cyclotomic`,
+  `hex-cyclotomic-theory`, `hex-finite-field`,
+  `hex-finite-field-theory`, `hex-hermite`, `hex-hermite-theory`,
+  `hex-int-factor`, `hex-int-factor-theory`,
+  `hex-invariant-factors`, `hex-invariant-factors-theory`,
+  `hex-min-poly`, `hex-min-poly-theory`, `hex-modular-matrix`,
+  `hex-modular-matrix-theory`, `hex-padics`, `hex-padics-theory`,
+  `hex-poly-smith`, `hex-poly-smith-theory`, `hex-smith`,
+  `hex-smith-theory`, `hex-summation`, `hex-summation-theory`,
+  `hex-char-poly`, `hex-char-poly-theory`.
+
+The lattice additions on `hex-publishing-2` are awaiting
+[organization-owner approval](https://github.com/organizations/leanprover/settings/personal-access-token-requests).
+The token owner cannot approve their own request. Each publishing token needs
+Contents and Workflows read/write; the latter permits changes to the mirrors'
+managed `.github/workflows/ci.yml`. Keep selected repositories and approved
+write grants distinct in this inventory.
 
 `hex-publishing-2` additionally holds organization-level permissions;
 `hex-publishing` holds none.
 
-With `hex-publishing` at 48 and `hex-publishing-2` at 44, the next
-batch larger than two repositories needs a third token
-(`hex-publishing-3`, a new `RELEASED_SYNC_PAT_3` secret, and one line in
-`.github/workflows/sync-released.yml` and `sync_released.py`'s token
-list). The sync's per-repository routing makes the split invisible to
-everything else.
+Both publishing tokens are at their 50-repository limit. The next new
+repository needs `hex-publishing-3`: create the fine-grained token, select
+that repository with Contents and Workflows read/write, obtain organization
+approval, store it as `RELEASED_SYNC_PAT_3`, and add its environment line to
+both the `sync` job and the stage job's read-only grant-check step in
+`.github/workflows/sync-released.yml`. The driver already probes numbered
+environment slots in order.
+
+Selection alone does not establish write access. The real-sync preflight
+checks every target again before pushing any repository; the diagnostic
+workflow check above is evidence of current Contents access, not a replacement
+for that preflight.
 
 
 ### Baseline and the uncoordinated-commit guard
@@ -445,3 +573,26 @@ sync. The baseline lives on the unprotected `release-sync-baseline`
 branch, which the workflow reads and advances on every real run;
 `scripts/release/synced.json` is the seed used before that branch
 exists.
+
+## Bootstrapping a split mirror
+
+A new manifest entry needs an existing public repository and a publishing
+write grant before it can join the release graph. Its initial unmanaged
+skeleton contains the Lake configuration, `lean-toolchain`, license,
+`.gitignore` and a `lake-manifest.json` generated by `lake update`. The
+companion template in
+[`scripts/release/skeletons/hex-ecpp-theory`](../scripts/release/skeletons/hex-ecpp-theory)
+provides the Lake files, lock and toolchain, with explicit Mathlib and TauCeti
+requirements and the native IO sidecar. Copy the root license and add the
+mirror’s `.gitignore` separately.
+Keep Mathlib last when resolving this template so its exact pin and transitive
+pins win over TauCeti's floating Mathlib requirement; the sync preserves that
+order when adding Hex requirements.
+
+Add the repository to either fine-grained publishing token with Contents and
+Workflows read/write, and approve the organization grant. The managed mirror
+CI, library sources, README and SPEC are then supplied by the ordinary sync.
+Validate a standalone build and published trust-test target against compatible
+published upstreams, followed by the guarded dry run against the live release
+baseline. A local prospective source split does not discharge that upstream
+publication gate. Initial skeleton preparation does not publish the library.

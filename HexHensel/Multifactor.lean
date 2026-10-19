@@ -8,6 +8,7 @@ module
 
 public import HexBasic
 public import HexHensel.Linear
+public import HexPolyFast.Tree
 
 public section
 
@@ -25,6 +26,47 @@ namespace Array
 @[expose]
 def polyProduct (factors : Array Hex.ZPoly) : Hex.ZPoly :=
   factors.foldl (· * ·) 1
+
+/-- Smallest measured factor count at which the balanced integer product tree
+beats the retained left fold on the Hensel linear-factor family. -/
+@[expose] def treeProductMin : Nat := 8
+
+/-- Exclusive end of the measured winning interval.  At 1024 linear factors
+the left fold is reproducibly faster and also uses substantially less memory. -/
+@[expose] def treeProductLimit : Nat := 1024
+
+/-- The product-tree crossover was measured on monic linear factors whose
+non-leading coefficient has absolute value at most four.  Larger-degree or
+wider factors follow the retained fold: BZ-shaped measurements show that a
+factor-count-only decision can reverse sharply as intermediate coefficient
+width grows. The guard also admits constants, zero, and non-monic linear
+factors satisfying the same coefficient bound. -/
+def treeProductEligible (factors : Array Hex.ZPoly) : Bool :=
+  factors.all fun factor => factor.size ≤ 2 && Hex.ZPoly.maxAbs factor ≤ 4
+
+/-- Select the product tree within its measured count and coefficient bounds. -/
+@[inline] def useProductTree (factors : Array Hex.ZPoly) : Bool :=
+  treeProductMin ≤ factors.size && factors.size < treeProductLimit &&
+    treeProductEligible factors
+
+/-- Compiled ordered-product dispatcher.  The balanced tree is selected only
+on the measured small-linear-factor interval; both branches preserve the exact
+ordered product observed by `polyProduct`. -/
+def polyProductImpl (factors : Array Hex.ZPoly) : Hex.ZPoly :=
+  if useProductTree factors then
+    (Hex.DensePoly.ProductTree.build Hex.ZPoly.fastPlan factors).root
+  else
+    factors.foldl (· * ·) 1
+
+/-- The compiled product-tree dispatch is extensionally the specified ordered
+left fold, independently of its measured crossover constants. -/
+@[csimp] theorem polyProduct_eq_impl : @polyProduct = @polyProductImpl := by
+  funext factors
+  unfold polyProductImpl
+  split
+  · exact (Hex.DensePoly.ProductTree.root_build_eq_foldl
+      Hex.ZPoly.fastPlan factors).symm
+  · rfl
 
 end Array
 
@@ -145,7 +187,7 @@ empty list and no preconditions for a singleton.
 
 This invariant is **proof-internal**: it is the correctness substrate consumed
 by `multifactorLift_spec` and by the Mathlib-side lift-uniqueness statement
-`HexHenselMathlib.multifactorLift_eq_multifactorLiftQuadratic`, and is not
+`HexHenselTheory.multifactorLift_eq_multifactorLiftQuadratic`, and is not
 intended to be constructed directly by external callers. Unlike the quadratic
 path, no `multifactorLiftInvariant_of_factorsModP` smart constructor is
 provided: the four-conjunct shape mentions per-iteration `LinearLiftLoopInvariant`
@@ -164,7 +206,7 @@ Berlekamp-Zassenhaus boundary). The executable Berlekamp-Zassenhaus computation
 already uses the quadratic invariant exclusively
 (`HexBerlekampZassenhaus/Basic.lean`). A Mathlib-side downstream caller that
 needs the linear-path lifted factors modulo `p^k` should obtain them via
-`HexHenselMathlib.multifactorLift_eq_multifactorLiftQuadratic`, which equates
+`HexHenselTheory.multifactorLift_eq_multifactorLiftQuadratic`, which equates
 the two paths under the Mathlib `Polynomial.map (Int.castRingHom (ZMod (p^k)))`
 canonicalisation.
 -/

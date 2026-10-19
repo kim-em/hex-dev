@@ -1,0 +1,94 @@
+{
+  "schema": "hex-rcf-selected-root-transport-validation-v1",
+  "source_commit": "bdbfd411a91d3dada6e7b4def4fb4071c94937eb",
+  "selected_source_hashes": {
+    "HexManual/Chapters/HexRCF/NativeSources.lean": "1db37cd353a0bd802635e090f588b076f57bf282a9eeae69cea979db88e1b536",
+    "HexRCF/README.md": "bf3ca0f177afd3aa2950fd8182893fdaa34bc5d25f7b4db2cc78f5a4b2623183",
+    "adapters/HexRCF/RealCoefficients.lean": "6171536dcf261cec3f9f7c8dc8b5263124cadcf70482a153ab22713d337b3416",
+    "adapters/HexRCF/RealCoefficients/RootTransport.lean": "e0867a82acfb28e497e803ebf8ab7cdd58b6b56a770646b88a336a533ae51b47",
+    "conformance-fixtures/HexRCF/root-transport.json": "2f42d8091275dc3794c37288202d3a8f905178ede131ccf919bbc8e71fac858a",
+    "conformance/HexRCF/RootTransportConformance.lean": "095b2941cf562133e8a2dc93c048500425b6d88c5f1b5a0b9d825fce88749708",
+    "conformance/HexRCF/RootTransportData.lean": "d9eb1d80d1fda7d1254610783b4739421599ed7c8a7b3bf75f098f662be34c3a",
+    "conformance/HexRCF/RootTransportLiterals.lean": "0a3b961bab929ad4bba0486b20ba05ce4510da0ef57e1a70da8f1adf3fbde81f",
+    "conformance/HexRCF/RootTransportOrdinaryConformance.lean": "36d8c5b4090728ca4fda59d053cc5d47cba17ff0d8e8aa953cac8659cd6dde5a",
+    "lakefile.lean": "42e1eb96787a68b9a413fc2dab1be472deaf575f6de63d509860ded9559412bf",
+    "reports/hexrcf-root-transport.md": "a960802f42a7f4f43ca60e41e72dd4fa426744f61f11927bc07f6487c0dde243",
+    "scripts/rcf/selected_literals.py": "3ce8ac431b37b7d81842c663f1afa058b3012964a9bee3626ff45d9f72e3dd3a",
+    "HexRealClosure/TowerTransport.lean": "40a9f978ebc3e37673497196bff70d770d2fb5911297d9c1223a20526a353d14",
+    "adapters/HexRealClosureMathlib/TowerTransport.lean": "5bbd00ba894c37db6e5fc12619cfb888ca49a1e2033a6c00edb1062b8718e50f",
+    "HexSignDet/DescriptorOperations.lean": "f03035f4df6d5777b6c07ac61b889e62266ac9acca6acb4db1806ac0ff0a6aa7",
+    "HexRealClosure/RootReplay.lean": "2f07e625a7665a983444e299f532800450770a2758a99710087ef506525f875f",
+    "HexRealClosure/SignFacts.lean": "9c22837e93e6f50cc96310163e352ac608fbcfbd6275edab33751da2fd84f47c",
+    "HexRealClosure/SignCodec.lean": "7126323c97b77204386795a0f252f1babfd0ed7f3dba7ee3927a99b9d5c1852a",
+    "conformance/HexRCF/SelectedRoot/Data.lean": "57037435c1334204396657ef00f45225aaedd47db97bbcea5d97cca9d76b6fea",
+    "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "dee0603c48007db76b74fad8d388f87c8e51fac02d20903149e0c83203a05a25",
+    "conformance/HexRCF/ProofEvidence.lean": "b94ac7f25504f684b5caab07d7b56a76e6ffeb76c402349edb7f9514e228521c",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "libraries.yml": "517fc155720143a755056f87307d814c006a0a4e039f9380df8ad78b8697c962",
+    "HexRCF/SPEC/hex-rcf.md": "85d3d196f9639fd37dce49710888f2482262650429f729e9a8e3cd9b85e1a9ec",
+    "SPEC/real-closure-execution.md": "7b5c15a9f548b51624704fb74f156028aeca947105733aea22295086dc500c82"
+  },
+  "records": [
+    {
+      "file": "root-transport-integration-fixed.log.gz",
+      "sha256": "341a2b666f800d1d4f6debc0d1c097c12db88c1c2cfbf420b7a86286ed11c6d1",
+      "decoded_sha256": "9256796c1cfbdea712dccb546a9b227121ac405c124761968a275aaa820ae1a1",
+      "command": "lake build HexRCFRealCoefficients HexRCF.RootTransportConformance HexRCF.RootTransportOrdinaryConformance HexManual",
+      "exit_code": 0,
+      "jobs": 14177
+    },
+    {
+      "file": "root-transport-full-render.log.gz",
+      "sha256": "6e07ee84b73e68678318686c55f3442b1555bfd71abff5e95c550781e41c33ae",
+      "decoded_sha256": "319bce309c635863907b406e6c4e8843da244517313bf92fafea104a8946ff8b",
+      "command": "lake build FullRender (external scratch package importing HexManual)",
+      "exit_code": 0,
+      "jobs": 14169
+    }
+  ],
+  "visual_artifacts": [
+    {
+      "file": "root-transport-integration-desktop-boundary.png",
+      "sha256": "b9a5784c8dc0759d8594cf44658bde575e7f7b5903ced0fc7823166c40865405"
+    },
+    {
+      "file": "root-transport-integration-desktop-example.png",
+      "sha256": "4b288ece7a5e64e2c48bf41b9b1dffb3348d88679771487081a63e5c668bb110"
+    },
+    {
+      "file": "root-transport-integration-desktop-replay.png",
+      "sha256": "24809906c24cfc0fcda3565f017d1c32bd8565c8965370f5aa4546366860abaa"
+    },
+    {
+      "file": "root-transport-integration-narrow-boundary.png",
+      "sha256": "c3147a6e386d4d613130c32085f0d749052b4f6a50a9d2de3f3603ad749c2528"
+    },
+    {
+      "file": "root-transport-integration-narrow-example.png",
+      "sha256": "0b7a8217cd80eb15fb09f362f7c13f6012eb53900deaec0afe563559223596b4"
+    },
+    {
+      "file": "root-transport-integration-narrow-replay.png",
+      "sha256": "32fa3735f6c27a26e3e38a837d7c4cf293506e9690d8d49422b8dc10b0c58f39"
+    }
+  ],
+  "inspection": {
+    "file": "root-transport-integration-inspection.json",
+    "sha256": "654d17113577603b092135c38c1f0dc966b828c786f79eddc51d088929039195",
+    "inspected": [
+      "desktop replay",
+      "narrow example"
+    ],
+    "scope": "New section paragraph/code widths fit both viewports. No assertion about every pre-existing chapter."
+  },
+  "render_driver": {
+    "file": "FullRender.lean.txt",
+    "sha256": "d94ef4cfa6c7787285cc0f9e5ecd2611f92830366f2283b2d2674c3eec3f6041"
+  },
+  "browser_driver": {
+    "file": "root-transport-integration-browser.mjs",
+    "sha256": "c7870e57b19157cb4ec6f49580e39fbec4b1d5ab5428711388ba21237cc0a364"
+  },
+  "scope": "Ordinary-kernel integration and complete manual render at the named source commit. No executable timing, scaling or performance claim."
+}

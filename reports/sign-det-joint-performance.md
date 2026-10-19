@@ -23,10 +23,38 @@ Completion and comparison construct the domains required by their actual APIs. R
 hashes include both returned derivative words or both table counts; the comparison hash
 also includes its common head and ordering.
 
-Preparation constructs and validates the source descriptors, completes them, computes a
-comparison and both direct tables, and retains the supplied trees and graphs. It is
-outside the timed loops. Untimed callback checks compare answers with exact evaluation
-at the known roots before any measurement. This family has realized support two,
+Each registration prepares its source descriptors, domains or supplied trees.
+Completion receives only
+the two validated partial descriptors. Comparison receives the two completed source
+identities. Table production receives the actual common polynomial, checked prepared
+domain and ordered queries, without producing either table first. Replay receives the
+two supplied trees for its selected reduced or direct mode, checked against exact
+evaluation at the known roots. Reduced replay trees are constructed by
+`buildPrepared` in reduced mode and compared by complete serialized-graph
+equality with the comparison producer’s re-encoding evidence. Preparation
+remains outside the timed loops.
+
+The combined case constructor is retained for independent input inspection. Callback
+inspection checks separate preparations against the combined case’s literal source
+descriptors and complete serialized evidence, as well as the common head and both ordered
+query lists, then compares the six callbacks with the same exact root answers. Type
+indices prevent completion/comparison or reduced/direct replay preparations from being
+swapped in a registration. The retained collections below used the combined
+constructor; their input inventories, callback result hashes and observations
+remain unchanged. Separating preparation supplies no new scientific timing
+verdict and changes no cubic operation bound. It does not authorize another
+unchanged rerun. The source and attribution evidence below distinguish that
+operation bound from an unsupported wall-time prediction; see the final scope
+section for the applicable disposition.
+
+The new reduced/direct replay arms retain only their respective supplied trees,
+whereas both historical arms retained the same complete combined case. Heap
+contents, allocator locality and process resident peaks can therefore differ.
+Future replay ratios and resident measurements are not directly comparable
+with the retained combined-preparation ratios and memory observations. Both
+production arms still use the same prepared input.
+
+This family has realized support two,
 candidate matrices of width at most four, infinite endpoints and no shared source roots.
 It does not cover maximal support, finite endpoint constraints, common roots or nested
 coefficient fields.
@@ -59,9 +87,10 @@ The direct path uses `DensePoly.natPow`. In the measured implementation, `natPow
 evaluates `q*q` before recursing to exponent zero, and discards that square. Exponent
 two consequently also computes and discards a fourth power. These additional dense
 products retain the cubic bound and contribute to the direct timings. Reduced/direct
-ratios compare the complete current implementations, including this work and their
+ratios compare the complete measured implementations, including this work and their
 replay costs; they do not isolate the mathematical benefit of reducing products modulo
-the head.
+the head. The [polynomial-power correction](sign-det-poly-power.md) removes this
+unused work; the historical measurements are unchanged.
 
 The complete child restrictions have at most two sign conditions. The retained row basis
 starts with the constant row and, when two conditions occur, one separating query row.
@@ -94,16 +123,40 @@ afterward.
 
 ## Collection protocol
 
-The explicit degree schedule is 3, 7, 15, 31 and 63, with six trial-major rounds.
+The current explicit degree schedule is 15, 31, 63, 127 and 255, with six
+trial-major rounds. It extends the geometric degree ladder to exercise the
+dense coefficient operations at larger degrees. Historical collections keep
+their original 3, 7, 15, 31 and 63 schedule and settings.
 Reduced/direct production and replay use adjacent alternating AB/BA arms. Completion and
 comparison each use the ordinary shared LeanBench schedule. The target inner duration is
-100 ms; a 180-second child-process cap is an operational safeguard that includes
+100 ms; a 3600-second child-process cap is an operational safeguard that includes
 preparation and calibration, although the reported per-call timing excludes them. Every
 completed observation is retained. One CPU is automatically leased, and host activity is
 recorded without an idleness test or sample filtering.
 
+The cap is a planning safeguard. The earlier size-63 comparison child took
+about 29 seconds including preparation; cubic extrapolation to 255 gives
+roughly 1900 seconds. A full collection may take around 18 hours. These are
+estimates, not measured size-255 guarantees: the larger coefficient operands
+and host activity can increase the duration. The collector checks all five
+sizes and all actual callbacks before beginning the scientific arms, retaining
+their elapsed wall times. A cap hit is a failed observation, retained with the
+later scheduled samples, rather than a passed or inconclusive verdict.
+
+After the fixed warmup exclusion, the wider fit uses degrees 31 through 255.
+At 255 the stored reduced and direct witnesses have about 3900 and 7700 bits.
+A consistent cubic verdict is finite-range wall-time evidence; it does not
+separate coefficient-operation counts from growing bit costs. A slope outside
+the fixed tolerance remains an investigated finding. The model, exponent,
+tolerance and completed samples are not changed to obtain a desired verdict.
+The explicit commands with suffix `-wide` select this ladder; the commands
+`inspect-joint` and `inspect-joint-timings` retain their historical defaults.
+
 The independent input validator checks literal polynomials, both exact sign tables and
-dimensions. Callback result hashes bind the measured answers to those checked inputs.
+dimensions. Production, completion and comparison result hashes bind the measured answers
+to those checked inputs. Replay returns a Boolean, so its successful hash is
+the same at every degree; the exact parameter schedule binds replay samples
+to their degrees.
 The collector retains source reconstruction, executable identity, command output, exact
 schedules and the shared harness verdicts. Inconclusive verdicts remain observations,
 not successful performance gates. At most one unchanged rerun is allowed after an
@@ -225,10 +278,10 @@ verdicts, with no failed scientific points or validation errors. The outer log c
 Lake freshness output, not an independently recorded collector exit status. This
 collection uses the permitted unchanged rerun; no further unchanged rerun is permitted.
 This is family-level accounting: the production and replay arms also use up that rerun,
-even though the original collector stopped before scheduling them. The [benchmark finding on #10377](https://github.com/kim-em/hex-dev/issues/10377#issuecomment-5882834592) records the required disposition: inclusive
-attribution followed by a changed schedule or an independently demonstrated declaration
-error and fresh validation. Fitting a declaration to the observed slopes cannot satisfy
-the gate.
+even though the original collector stopped before scheduling them. The [benchmark finding on #10377](https://github.com/kim-em/hex-dev/issues/10377#issuecomment-5882834592) records the investigation requirement. The retained inclusive attribution,
+source operand inventory and wider observations supply that investigation.
+The final scope section states the operation-count interpretation; no
+declaration is fitted to the observed slopes.
 
 Adjacent paired direct/reduced production ratios have medians 1.108, 1.223, 1.329, 1.441
 and 1.478 over increasing degrees. Replay ratios are 1.047, 1.174, 1.313, 1.371 and
@@ -393,10 +446,11 @@ substring-filtered allocation stacks; the inclusive CPU profile separately attri
 This supplies a GMP allocation observation. The operation-scoped collection
 below adds intercepted Lean, direct mimalloc and GMP request counts for joint
 table production, completion, comparison and replay across three degrees.
-Coverage of additional allocation paths, live heap,
-wider allocation families, representative profiles for those families,
-disposition of all six inconclusive verdicts, wider matrices and nested
-coefficient evidence remain completion requirements.
+The [consolidated report](sign-det-performance.md) links the separate wider
+matrix, nested-field, allocation and representative profile evidence.
+These records do not measure live heap objects; the allocation contract does
+not require that stronger claim. The six fitted verdicts retain their original values under the
+operation-count interpretation in the final scope section.
 
 ## Operation-scoped allocation
 
@@ -406,3 +460,174 @@ both replay modes at degrees 3, 7 and 15, plus one degree-31 comparison check. I
 entry-point requests and checks native result agreement. These cumulative
 requested-byte observations have their own coverage limits; they do not supply
 peak live memory or resolve the running-time verdicts above.
+
+
+## Completed wider observations and interrupted comparison
+
+The [retained archive](data/sign-det-joint-timing/432958c4fc-interrupted/archive.json)
+binds source `432958c4fc14dbff1ea8110e47c5d1b073bd5ac8`, its compiled binary,
+pinned harness, source patch and all original outputs. The source is reconstructed
+from merged base `98cab2feb5` plus `committed-source.patch`; the archived metadata
+records that reconstruction check. The measurements describe that snapshot,
+whose commit need not remain reachable after rebasing. Equality with current
+main’s executable is not claimed. The input inventory and
+callback checks completed at degrees 15, 31, 63, 127 and 255. Completion and
+cross-polynomial comparison each completed all 30 scheduled timing points,
+with exact result hashes checked against the callback inventory.
+
+| Source degree | Completion median (s) | Comparison median (s) |
+| ---: | ---: | ---: |
+| 15 | 0.028601 | 0.521794 |
+| 31 | 0.166799 | 3.771672 |
+| 63 | 1.098908 | 28.216194 |
+| 127 | 7.815629 | 220.943285 |
+| 255 | 58.274983 | 1750.337582 |
+
+The unchanged cubic declaration gives **inconclusive** for completion
+(residual slope −0.219255) and **consistent with declared complexity** for
+comparison (−0.084199). The fits exclude the leading degree-15 warmup rung,
+while retaining all its observations. These are the original harness verdicts. The cubic
+coefficient-operation count is not a bit-cost bound. The varying factorial
+coefficients, dense zero entries and rational normalization have different
+costs; passing this fit does not establish the running time of arbitrary
+comparison inputs. Completion has appreciable trial variation, including a
+92.1-second degree-255 observation; all completed samples and recorded host
+load remain included. Host activity is context, not a reason to remove points.
+
+The collection was interrupted during the subsequent adjacent production
+comparison. It retains nine completed points, in the original scheduled
+order, plus the header. No production summary was emitted and replay timing
+did not begin. These partial points are not a complete comparison or a scaling
+verdict. The original collector metadata records `failed` with
+`KeyboardInterrupt`; its last operation record remains `running` because the
+collector was interrupted inside that operation. A separate
+[final binding](data/sign-det-joint-timing/432958c4fc-interrupted/final-binding.json)
+records unchanged source, binary, revision and harness revision after interruption.
+A separate [later harness inspection](data/sign-det-joint-timing/432958c4fc-interrupted/harness-inspection.json)
+records its clean status and manifest-pin agreement, with its actual observation
+time and commands; this is not an original collector after-check.
+The remaining measurement processes were stopped; none continued separately.
+No original record is rewritten as a completed collection.
+
+The input inspection took 5,883 seconds, callback inspection 11,621 seconds,
+completion collection 440 seconds and comparison collection 12,708 seconds.
+Those durations include preparation and child startup. They are not per-call
+timings. Extending the campaign adds substantial cost and is
+not required merely to obtain another fitted verdict. The retained smaller
+adjacent production/replay comparisons remain separate evidence. This archive
+supplies completed wider observations and explicit limits, not final Phase-4
+attestation. Under the changed schedule, comparison is consistent; completion
+remains inconclusive. This collection does not resolve the four earlier
+production/replay findings. Their disposition remains separate, using the
+applicable evidence policy rather than continuing this interrupted campaign.
+
+The existing CI test `scripts.bench.test_sign_det_joint_timing` checks archive
+hashes, unchanged bindings, input and callback answers, both complete timing
+schedules, the recomputed medians and the partial schedule prefix. It also
+checks that the incomplete production file is rejected by the ordinary full
+comparison validator.
+
+## Whole-child resident memory and practical range
+
+The following values are median native process high-water marks in MiB across
+six trials at each size. They include preparation, startup and harness tuning,
+not just the timed callback; they are neither peak live heap nor isolated
+callback working sets. The original preparation built a combined case for all
+arms. The wider collection used the later separated preparations. Their
+resident values must not be treated as adjacent before/after measurements.
+
+| Callback, original collection | 3 | 7 | 15 | 31 | 63 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Completion | 66.2 | 67.8 | 72.1 | 87.8 | 152.1 |
+| Comparison | 66.2 | 68.1 | 74.1 | 96.1 | 182.6 |
+| Reduced production | 66.1 | 67.6 | 71.8 | 90.0 | 160.3 |
+| Direct production | 66.1 | 68.0 | 72.1 | 90.3 | 160.7 |
+| Reduced replay | 65.6 | 68.2 | 72.0 | 87.6 | 152.1 |
+| Direct replay | 66.0 | 68.1 | 71.9 | 87.2 | 152.4 |
+
+These values come from every successful sample's `peak_rss_kb` in
+`reports/data/sign-det-joint-timing/394c3c548/`: `runCompletion.json`,
+`runComparison.json`, `production.jsonl` and `replay.jsonl`.
+
+| Callback, wider collection | 15 | 31 | 63 | 127 | 255 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Completion | 66.3 | 66.4 | 70.2 | 81.8 | 127.9 |
+| Comparison | 70.2 | 80.4 | 122.1 | 284.6 | 863.8 |
+
+The wider collection's complete completion/comparison JSON records supply these
+values. Its interrupted production/replay output does not provide a complete
+resident-memory comparison.
+
+The intended representative joint examples have source degrees 3–15; degree
+31 is a stress case. In the original collection comparison medians are about
+13 ms, 80 ms, 522 ms and 3.73 s at degrees 3, 7, 15 and 31. At degree 63 the
+same operation takes 28.28 s. In the wider collection comparison reaches
+220.94 s at 127 and 1750.34 s at 255, with completion reaching 58.28 s at 255.
+The low-degree cases are usable library examples. These large comparison
+cases are slow and are not presented as practical interactive workloads.
+The 864 MiB median process peak at 255 reinforces that limitation. No new
+measurement or retrospective acceptance threshold is inferred from this table.
+
+## Scope of the coefficient-operation declaration
+
+The six `Joint.*` formulas count coefficient operations. They do not provide
+an independently justified wall-time model for these rational computations.
+The literal input inventory identifies growing factorial coefficients, but
+that growth does not explain the observed *subcubic* residuals. Lower-order
+per-row work and unequal costs of zero and nonzero operations can affect the
+finite range. The comparison profile shows substantial dense multiplication
+and rational normalization. The wider comparison's local exponents approach
+three (2.97 and 2.99), and its original verdict is consistent; wider completion
+retains its inconclusive −0.219 residual. These observations support no claim
+of unexpectedly supercubic timing growth.
+
+An operand-size correction was considered. Stored witness maxima are not
+peak intermediate operands, and pricing all dense coefficient visits by the
+largest factorial coefficient would ignore the predominance of zeros. No
+proved bit-complexity bound for the combined rational/GMP implementation is
+available here. Consequently this report asserts the derived cubic
+coefficient-operation bound, not a substitute bit-aware timing law. It does
+not claim that timings establish the operation count or certify a bit bound.
+
+Under the representative-observation rule in
+[SPEC/benchmarking.md](../SPEC/benchmarking.md#choosing-the-complexity-claim),
+the original formulas, measurements and fitted verdicts remain intact and the
+fits are descriptive. The historical-formula preservation clause covers the
+unpaired completion/comparison registrations as well as the paired table
+registrations. Exact answers and all scheduled original points are
+checked. The tables above supply time and process-memory context on the
+representative range. No exponent or constant is fitted to repair a declaration.
+The wider complete observations are additional evidence, not a requirement to
+repeat expensive large cases.
+
+This replaces the obligation to obtain a passing cubic timing fit; it does not
+relabel historical verdicts as passing. A source-bound violation, excessive
+cost on intended inputs, or a failed explicit comparison target still requires
+a fix. The [operand supplement](sign-det-operand-work.md) supplies actual
+outer rational operand maxima for the degree-3/7/15 joint pipeline, together
+with explicit common-product gcd/division counts and independent subject
+checks. These observations cover the complete source/completion/comparison
+pipeline, not the isolated timed callback or backend scratch storage.
+The bound concerns this two-root, bounded-candidate family, not arbitrary
+real-root problems. This disposition uses the current evidence policy;
+it is not itself a Phase-4 attestation.
+
+## Practical improvements
+
+The measured direct reference computes unused polynomial powers. PR #10810 removes the exponent-one square and preserves the power and
+coefficient-interpretation proofs; the historical timings retain that work.
+Its [small adjacent comparison](sign-det-poly-power.md) retains all 72 cold
+production/replay observations at degrees 3, 7 and 15. It shows no uniform
+winner and makes no before/after timing claim. The power correction is merged;
+those records identify its source explicitly.
+
+Skipping zero coefficients in dense multiplication could save substantial
+work on these sparse inputs. The generic executable interface currently
+assumes operations but no zero-annihilation laws, so that change needs a
+lawful optimized interface and a proof of agreement; it is not silently
+applied to arbitrary coefficient operations. Denominator-one normalization
+and small-integer gcd fast paths are further candidates indicated by the
+profile. The latter belongs to Lean's runtime, and no C runtime change is
+made here. These are potential improvements, not demonstrated speedups or
+reasons to collect longer ladders. The immediate avoidable power computation
+is addressed before any additional optimization campaign.

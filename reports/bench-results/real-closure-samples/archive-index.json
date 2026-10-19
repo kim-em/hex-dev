@@ -1,0 +1,10 @@
+{
+  "source": "33003db1a06a5bf8d0ee97a9cdad8740999c8330",
+  "archive_sha256": "1fdc4c93f68d2e5d27cc50d588afa16e1835f931ca9c63224b5b57bd9def6a18",
+  "retained_files": 309,
+  "omitted_executable": {
+    "path": "hexrealclosure_samples_bench",
+    "sha256": "25241ae57e05bd86484f64f49ac2f9f652afe9ae2fdfb9824f1cddfe7ff8ffae"
+  },
+  "preparation_failure": "Escaped package-name mismatch, before measurement; source correction is committed in 33003db1a0."
+}

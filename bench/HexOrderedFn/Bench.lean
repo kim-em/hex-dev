@@ -168,7 +168,7 @@ private def prepRefinement (joint : Bool) (n : Nat) : IO SignQuery :=
   let f := RationalFn.ofPoly (DensePoly.ofList [-(2 - Real.precision n), 1])
   signQuery a f (n + 3)
 
--- Mode 2 upper bound O(n³): O(n) trials use O(n)-bit rational operands.
+-- Cited upper bound O(n³): O(n) trials use O(n)-bit rational operands.
 -- Multiplication, division and gcd each have the published quadratic upper
 -- bounds cited in the performance report. This is not a tight scaling claim;
 -- GMP changes algorithms with operand size and exploits special operands.
@@ -178,7 +178,7 @@ initialize do
 
 def jointRefinement (q : SignQuery) : Int := refinement q
 
--- Mode 2 upper bound O(n³), including refinement of coefficients and argument.
+-- Cited upper bound O(n³), including refinement of coefficients and argument.
 initialize do
   registerSearch ``jointRefinement "n * n * n" (fun n => n * n * n) searchConfig
     (prepRefinement true) jointRefinement
@@ -188,7 +188,7 @@ private def prepHorner (n : Nat) : IO SignQuery :=
 
 def horner (q : SignQuery) : Int := refinement q
 
--- Mode 2 upper bound O(n³): n Horner steps at argument [-1/2,1/2] create
+-- Cited upper bound O(n³): n Horner steps at argument [-1/2,1/2] create
 -- O(n)-bit endpoints; each rational operation costs at most O(n²).
 initialize do
   registerSearch ``horner "n * n * n" (fun n => n * n * n)
@@ -224,7 +224,7 @@ def approximation (q : ApproxQuery) : Rat × Rat :=
   let b := Real.approx q.source q.subject q.width q.progress
   (b.lower, b.upper)
 
--- Mode 2 upper bound O(n³): O(n) joint refinement trials operate on O(n)-bit
+-- Cited upper bound O(n³): O(n) joint refinement trials operate on O(n)-bit
 -- endpoints, including exact quotient formation, reduction and width checks.
 initialize do
   registerSearch ``approximation "n * n * n" (fun n => n * n * n) searchConfig
@@ -417,7 +417,7 @@ end ThirdLevel
 coefficient request; prepared witnesses never replace those searches. -/
 def successiveApproximation (q : Successive.Query) : Rat × Rat := Successive.run q
 
--- Mode 1: count exact bound operations, including both search levels. There
+-- Two-sided cost model: count exact bound operations, including both search levels. There
 -- are (n+2)(n+3)/2 negative-X trials (7 operations each), two constant-1
 -- trials per outer trial (5 each), and 7 operations in each outer trial.
 -- This ladder measures small operands; runtime gcd still calls GMP even
@@ -434,7 +434,7 @@ initialize do
 
 def thirdApproximation (q : ThirdLevel.Query) : Rat × Rat := ThirdLevel.run q
 
--- Mode 1: outer trial k costs B₂(k)+37 bound operations, where
+-- Two-sided cost model: outer trial k costs B₂(k)+37 bound operations, where
 -- B₂(k)=(k+2)(7k+55)/2 is the second-level search. Each constant coefficient
 -- costs 15 operations across two levels, and the outer trial adds 7.
 -- Summing through k=n+1 gives (n+2)(7n²+121n+666)/6. Unit operation weights

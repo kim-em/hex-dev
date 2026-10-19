@@ -1,0 +1,430 @@
+{
+  "family": "reduced-query",
+  "function": "Hex.SturmBench.runReducedRational",
+  "parameter": 262144,
+  "cpu": 19,
+  "load": [
+    5.41064453125,
+    12.8583984375,
+    16.9208984375
+  ],
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "raw": "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current",
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/packages/lean-bench",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "lake",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/home/kim/.local/state/hex/issue-10377-profiles/lean-bench-samply",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/home/kim/.local/state/hex/issue-10377-profiles/lean-bench-samply",
+        "config",
+        "--get",
+        "remote.origin.url"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "record",
+        "--clockid",
+        "mono",
+        "-e",
+        "cycles:u",
+        "-F",
+        "999",
+        "--call-graph",
+        "dwarf",
+        "-o",
+        "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/perf.data",
+        "--",
+        "env",
+        "LEAN_BENCH_TIMED_REGIONS_SIDECAR=/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/timed-%p.jsonl",
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10577/.lake/build/bin/hexsturm_bench",
+        "profile",
+        "Hex.SturmBench.runReducedRational",
+        "--param",
+        "262144",
+        "--target-inner-nanos",
+        "1000000000",
+        "--profiler",
+        "env"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "samply",
+        "import",
+        "--save-only",
+        "--no-open",
+        "--unstable-presymbolicate",
+        "-o",
+        "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/samply.json.gz",
+        "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "perf",
+        "script",
+        "--ns",
+        "-F",
+        "pid,tid,time,event",
+        "-i",
+        "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/perf.data"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-oracles/bin/python",
+        "scripts/profile/normalize_perf.py",
+        "--profile",
+        "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/samply.json.gz",
+        "--perf-script",
+        "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/perf-samples.txt",
+        "--spawn-anchor",
+        "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/spawn-anchor.json",
+        "--output",
+        "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/normalized.json.gz"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-oracles/bin/python",
+        "/home/kim/.local/state/hex/issue-10377-profiles/lean-bench-samply/scripts/filter_samply.py",
+        "--samply-json",
+        "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/normalized.json.gz",
+        "--sidecar",
+        "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/timed-1652124.jsonl",
+        "--spawn-anchor",
+        "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/spawn-anchor.json",
+        "--out",
+        "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/filtered.json.gz",
+        "--diagnostics",
+        "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/diagnostics.json",
+        "--label-filter",
+        "kernel"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-oracles/bin/python",
+        "scripts/profile/elf_symbols.py",
+        "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/filtered.json.gz",
+        "--output",
+        "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/symbols.json"
+      ],
+      "exit_code": 0
+    },
+    {
+      "argv": [
+        "/home/kim/.local/state/hex/issue-10577-oracles/bin/python",
+        "scripts/profile/summarize_profile.py",
+        "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/filtered.json.gz",
+        "--symbols",
+        "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/symbols.json",
+        "--diagnostics",
+        "/home/kim/.local/state/hex/issue-10577-profiles/reduced-query-current/diagnostics.json",
+        "--thread",
+        "hexsturm_bench",
+        "--top",
+        "20",
+        "--output",
+        "/home/kim/.local/state/hex/issue-10577-proposals/readiness-profiles/reduced-query.summary.json"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "executable_sha256": "0ddab7d3f340e79ab654798bf1c0a610af42aabb4227eefdda74e7d69708f30d",
+  "driver_sha256": "a7db8dbed1af3cf845ddc70e9fd6dacadb82146323233e4c29e5f2ae671d7257",
+  "cpu_model": "AMD EPYC 9455 48-Core Processor",
+  "purpose": "Required representative attribution for the remainder-only query path and unexpected canonical scalar square-root cost. Not a timing sweep or phase admission.",
+  "commit": "20e29ae7626d2a4a171d28e71c50e2ab3f8c7252",
+  "dirty": false,
+  "lean_bench_commit": "8a37daf1074c3bdbd0da479b55538bad4a0022db",
+  "lake_version": "Lake version 5.0.0-src+470d5ce (Lean version 4.35.0-rc3)",
+  "computational_source_sha256": {
+    "bench/HexRealAlgebraic/Bench.lean": "8ec200aabde0070e6dc34383de1abcbcc018efd170fa892ba8f2ba7a334dd6ce",
+    "bench/HexSturm/Bench.lean": "f8c803b090c2ba78d6c888b40f0744bc0af914b2d8b38319bbd0b26c9aac3e95",
+    "HexSturm/Reduced.lean": "1fb74c85ccc88f238a4ad0ea74ab8389b804bedf95b202994a086600c69fc669",
+    "HexPoly/Euclid/DivGcd.lean": "d56dbe5cf69e9abe58436486e4b3870afe1a07650d62aa2a36af0e528b73f149",
+    "HexRealAlgebraic/Basic.lean": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd",
+    "HexRealAlgebraic/Roots.lean": "0fb67cb79123c00b6cbda25a171e25801fe3543d3fd5e7148f153e84d3ff692d",
+    "HexNumberField/Roots.lean": "28d43bf52f318e9e943a91f7f66e37793fe6c0a808c813b650fac6fc899e839c",
+    "HexNumberField/Convert.lean": "059b2d9716d199c4b60fdbe9a51fcdb527728cbd554a75bf626ca7363c0a0b86",
+    "HexArith/Nat/Sqrt.lean": "02684a5167ec604cdf432554058be0c4674e926fdb356934e45bf1964c81746e"
+  },
+  "profiler_commit": "9356baa2f5757ee40320a897bd284914d5bb9f5e",
+  "profiler_remote": "https://github.com/kim-em/lean-bench-samply.git",
+  "samply_version": "samply 0.13.1",
+  "perf_version": "perf version 7.2.8",
+  "timed_duration_ns": 4337908760,
+  "status": "profiled",
+  "diagnostics": {
+    "schema": 2,
+    "stage": "complete",
+    "confidence": "passed",
+    "low_confidence_reasons": [],
+    "bench_pid": 1652124,
+    "bench_thread_name": "hexsturm_bench",
+    "bench_thread_tid": "1652131",
+    "regions_total": 1,
+    "total_timed_ms": 4337.90876,
+    "expected_samples_bench_thread": 4333.6,
+    "retained_samples_bench_thread": 4333,
+    "rejected_samples_bench_thread": 5,
+    "off_bench_thread_samples_in_window": 0,
+    "samply_interval_ms": 1.001001,
+    "spawn_anchor_wall_ns": 1791142608207471082,
+    "spawn_anchor_mono_ns": 57040055160891,
+    "sidecar_mono_anchor_ns": 57040177171680,
+    "samply_meta_start_time_ms": 1791142608234.9277,
+    "samply_timestamp_mode": "relative-to-meta-start-ms",
+    "calibration_residual_ms": 0.34598899632692337,
+    "calibration_max_residual_ms": 5.0,
+    "calibration": {
+      "selected_mode": "relative-to-meta-start-ms",
+      "residual_ms": 0.34598899632692337,
+      "raw_max_residual_ms": 0.40537499636411667,
+      "residual_statistic": "one-boundary-trimmed-maximum",
+      "configured_max_residual_ms": 5.0,
+      "sample_interval_ms": 1.001001,
+      "effective_max_residual_ms": 5.0,
+      "within_residual_limit": true,
+      "candidates": {
+        "absolute-monotonic-ms": {
+          "hit_count": 0,
+          "regions_without_samples": 1,
+          "boundary_residual_trimmed_max_ms": null,
+          "boundary_residual_raw_max_ms": null,
+          "within_residual_limit": false
+        },
+        "relative-to-meta-start-ms": {
+          "hit_count": 4333,
+          "regions_without_samples": 0,
+          "boundary_residual_trimmed_max_ms": 0.34598899632692337,
+          "boundary_residual_raw_max_ms": 0.40537499636411667,
+          "within_residual_limit": true
+        }
+      }
+    },
+    "minimum_retained_samples": 100,
+    "sensitivity": {
+      "shift_ms": 5.0,
+      "reported_top_function_count": 3,
+      "configured_max_total_variation_distance": 0.1,
+      "sampling_noise_coefficient": 0.6,
+      "minimum_comparison_samples": 100,
+      "maximum_sampling_noise_allowance": 0.5,
+      "verdict": "passed",
+      "leaf_function_distributions_stable": true,
+      "comparisons": {
+        "minus": {
+          "total_variation_distance": 0.0011507362072790159,
+          "leaf_function_support_size": 166,
+          "comparison_samples": 4329,
+          "exchanged_samples": 6,
+          "exchanged_fraction": 0.001386001386001386,
+          "sampling_noise_allowance": 0.006185977437123048,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        },
+        "plus": {
+          "total_variation_distance": 0.0013613605199368816,
+          "leaf_function_support_size": 165,
+          "comparison_samples": 4327,
+          "exchanged_samples": 6,
+          "exchanged_fraction": 0.0013866420152530623,
+          "sampling_noise_allowance": 0.006170167449397824,
+          "maximum_sampling_noise_allowance": 0.5,
+          "sample_count_adequate": true,
+          "noise_allowance_discriminating": true,
+          "effective_max_total_variation_distance": 0.1,
+          "verdict": "passed",
+          "failure_reasons": []
+        }
+      },
+      "cases": {
+        "minus": {
+          "shift_ms": -5.0,
+          "retained_samples": 4329,
+          "top_leaf_functions": [
+            {
+              "function": 82,
+              "name": "0x49b1e41",
+              "samples": 496
+            },
+            {
+              "function": 99,
+              "name": "0x49b1e3a",
+              "samples": 364
+            },
+            {
+              "function": 116,
+              "name": "0x49b1e4a",
+              "samples": 350
+            }
+          ]
+        },
+        "nominal": {
+          "shift_ms": 0.0,
+          "retained_samples": 4333,
+          "top_leaf_functions": [
+            {
+              "function": 82,
+              "name": "0x49b1e41",
+              "samples": 496
+            },
+            {
+              "function": 99,
+              "name": "0x49b1e3a",
+              "samples": 364
+            },
+            {
+              "function": 116,
+              "name": "0x49b1e4a",
+              "samples": 350
+            }
+          ]
+        },
+        "plus": {
+          "shift_ms": 5.0,
+          "retained_samples": 4327,
+          "top_leaf_functions": [
+            {
+              "function": 82,
+              "name": "0x49b1e41",
+              "samples": 496
+            },
+            {
+              "function": 99,
+              "name": "0x49b1e3a",
+              "samples": 364
+            },
+            {
+              "function": 116,
+              "name": "0x49b1e4a",
+              "samples": 350
+            }
+          ]
+        }
+      }
+    }
+  },
+  "artifacts": {
+    "0.stdout": "c09bceaa62f30b438f8622033b653b1ff9e6d3dc201cfe925e93e3398d713afa",
+    "0.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "2.stdout": "ea4051d25617d0e024f030bda5851a0455d525691cc814683f878e4ccdb2ed5d",
+    "2.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "3.stdout": "e35d3608d07cf59f7870878491e6b275a359bb34ea901c9e8086aed6bec6e07a",
+    "3.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bench-HexRealAlgebraic-Bench.lean.txt": "8ec200aabde0070e6dc34383de1abcbcc018efd170fa892ba8f2ba7a334dd6ce",
+    "bench-HexSturm-Bench.lean.txt": "f8c803b090c2ba78d6c888b40f0744bc0af914b2d8b38319bbd0b26c9aac3e95",
+    "HexSturm-Reduced.lean.txt": "1fb74c85ccc88f238a4ad0ea74ab8389b804bedf95b202994a086600c69fc669",
+    "HexPoly-Euclid-DivGcd.lean.txt": "d56dbe5cf69e9abe58436486e4b3870afe1a07650d62aa2a36af0e528b73f149",
+    "HexRealAlgebraic-Basic.lean.txt": "8292312466bc1a07cb0278a9c03bd90c5087f82d6a869c80bba52dcfc7111ccd",
+    "HexRealAlgebraic-Roots.lean.txt": "0fb67cb79123c00b6cbda25a171e25801fe3543d3fd5e7148f153e84d3ff692d",
+    "HexNumberField-Roots.lean.txt": "28d43bf52f318e9e943a91f7f66e37793fe6c0a808c813b650fac6fc899e839c",
+    "HexNumberField-Convert.lean.txt": "059b2d9716d199c4b60fdbe9a51fcdb527728cbd554a75bf626ca7363c0a0b86",
+    "HexArith-Nat-Sqrt.lean.txt": "02684a5167ec604cdf432554058be0c4674e926fdb356934e45bf1964c81746e",
+    "4.stdout": "019a5767e150ec4632cc3fc8841d0bdeefb35338aa63fd774f07df272d8b1ed3",
+    "4.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "5.stdout": "773fb1f2e2e076dd506d133fd9f11106c30eb440541d879fe11125a6e75495ce",
+    "5.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "6.stdout": "d0718b06965fcb4a5aca0f1a22bec6129aeb1888ed5e657f21983d7820e47700",
+    "6.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "7.stdout": "1a89ef5bfd8650933a16c3a00d57ae7efdf4c1b72b0081ba5545f5745282a906",
+    "7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "spawn-anchor.json": "31215ff9616213c025ead896e1e79cd60a160ead33bb194a6579699357597ca7",
+    "perf.data": "c55c69b718d529a21431d818a0b01816dfda24a61b1ca4c66c5031fc98ee0521",
+    "timed-1652124.jsonl": "310d2951988b79f5d8ead107c3bf60cb1c7e9b10bfb7b7da90617004eb04eb33",
+    "8.stdout": "1d56b70811632a417e19d526259200e5ef305c38e32be5e54c80acc9d90dc1f7",
+    "8.stderr": "5f02bd694c58e57bf8f644b45e3a3038f940889b638e80bc2538168e82cfd5d5",
+    "samply.json.gz": "6f6b539952e4cda6dbf9c66d8b09a00e125986876b651d1d7b47f31b4fdbb17b",
+    "9.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "9.stderr": "5eecc03f5f55d77995f7cfb8c323ac8ca3c4743e4ce54d037b5098911eabdae4",
+    "10.stdout": "deb582d46c0f5a7d34953fbc034008517c3fcb12dcffe7c90fb119d5afaabc0d",
+    "10.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "perf-samples.txt": "deb582d46c0f5a7d34953fbc034008517c3fcb12dcffe7c90fb119d5afaabc0d",
+    "normalized.json.gz": "ab6632c92c8b1d9f5fa0ae6fc74a7b5b220775b45600a9cd32ab88aa92293bf0",
+    "11.stdout": "0e810359cd4d42659a30b7badf43a1d41b262eb417dd958e791dd70c18922d23",
+    "11.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "filtered.json.gz": "eaac3cab30ddc542a3451cd827ac0b06af9d0b704551ef3ad90c4bfeb716459b",
+    "diagnostics.json": "c94937c3fa164aa8b98bbe0e2ad37ce677ac9c83443e1372576555b7893d73cc",
+    "12.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "12.stderr": "7962ea9255b4fa3bbe9b2cc86c660bfd430525ccf4f04c5b6cac2b8fded37122",
+    "symbols.json": "c27bc27967c565a26204e0c1670ced171ba79c8a7d1c0806e5b238fcd43b05cd",
+    "13.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "13.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "14.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "14.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

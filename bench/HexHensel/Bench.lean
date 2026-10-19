@@ -47,7 +47,7 @@ Compare groups:
   checks the linear and quadratic multifactor lifters on the shared degree
   schedule at `k = 64`.
 
-Informational external comparators (FLINT `fmpz_poly` Newton-style Hensel
+External comparators (FLINT `fmpz_poly` Newton-style Hensel
 emulation via the shared persistent-subprocess python-flint driver, per
 `HexHensel/SPEC/hex-hensel.md §"External comparators"` and
 `SPEC/benchmarking.md §"External comparators" §"Process call"`):
@@ -74,8 +74,8 @@ have no comparable FLINT entry point.
 Hex's lifted factors are reduced via `reduceModPow` to non-negative residues in
 `[0, p^k)`; the FLINT driver returns centred residues in `(-p^k/2, p^k/2]`. The
 two checksum streams therefore diverge by representation choice and are
-recorded independently for stability — the informational verdict tracks wall
-times only.
+recorded independently for stability; the comparison tracks wall times
+only.
 -/
 
 namespace Hex
@@ -351,9 +351,8 @@ not expose FLINT's native Hensel entry points. Hex normalises
 lifted factors to non-negative residues in `[0, p^k)` while the driver returns
 centred residues in `(-p^k/2, p^k/2]`; the comparator checksum is computed
 directly on the FLINT-returned coefficient list and is therefore not expected
-to equal the Hex-side checksum at the same rung. The comparator is
-`informational` per `HexHensel/SPEC/hex-hensel.md §"External comparators"`,
-so the headline report records wall-times only. -/
+to equal the Hex-side checksum at the same rung, so the comparison records
+wall-times only (`HexHensel/SPEC/hex-hensel.md §"External comparators"`). -/
 
 /-- Stable checksum over an integer coefficient list returned by FLINT. The
 list is consumed in the order the driver supplies. -/
@@ -502,8 +501,7 @@ def runFlintMultifactorLiftQuadraticChecksumAt (param : Nat) :
 
 /-! Per-rung concrete bindings used by `setup_fixed_benchmark`. The rung
 ladders pick six points inside each Hex registration's eligible
-parameter range so the headline report records the ratio's shape
-across the range. -/
+parameter range so a run records the ratio's shape across the range. -/
 
 -- Linear Hensel step: `n` in `[64, 512]`, six rungs.
 def runLinearHenselStep64 : Unit → IO UInt64 := runLinearHenselStepChecksumAt 64
@@ -695,7 +693,7 @@ setup_benchmark runQuadraticHenselStepChecksum n => n * n
 The public dispatcher's scientific ladder lies wholly in the retained fallback
 interval (`n ≥ treeProductLimit`). Left-folding `n` linear factors grows the
 accumulator degree by one per step, so the total number of coefficient
-operations is the tight mode-1 model `O(n^2)`. The separate compare group
+operations is the tight two-sided model `O(n^2)`. The separate compare group
 measures the balanced-tree winning interval and the crossover at `n = 1024`.
 -/
 setup_benchmark runPolyProductChecksum n => n * n
@@ -711,7 +709,7 @@ setup_benchmark runPolyProductChecksum n => n * n
 
 /-
 Left-folding `n` linear factors grows the accumulator degree one step at a
-time, giving a tight mode-1 quadratic total coefficient-operation count. This
+time, giving a tight two-sided quadratic total coefficient-operation count. This
 is the retained comparator on both sides of the product-tree interval.
 -/
 setup_benchmark runPolyProductFoldChecksum n => n * n
@@ -732,7 +730,7 @@ width are `O(j)`, so Kronecker packing has `O(j^2)` bits. `ZPoly.fastPlan`
 then dispatches among schoolbook and KS1--KS4 kernels while GMP independently
 crosses integer-multiplication regimes, so no tight single family model follows
 from the source. Schoolbook multiplication of the packed integers gives the
-published mode-2 upper bound `O(j^4)`; the geometric tree sum is root-dominated.
+published (cited) upper bound `O(j^4)`; the geometric tree sum is root-dominated.
 This registration shares every fixture and rung with the retained fold for
 hash and crossover checks.
 -/
@@ -785,10 +783,9 @@ setup_benchmark runMultifactorLiftQuadraticChecksum n => n * n
 Each Hensel-lift Lean target is paired with the matching emulated
 `nmod_poly_hensel` protocol op via the shared persistent-subprocess driver. The pairs
 are registered as `setup_fixed_benchmark` rungs at the same parameter inside
-the existing eligible parametric range, six rungs per pair, so the headline
-report records raw and overhead-adjusted ratios at each rung and a trend
-across the ladder. The comparator is `informational` per
-`HexHensel/SPEC/hex-hensel.md §"External comparators"`. -/
+the existing eligible parametric range, six rungs per pair, so a run records
+raw and overhead-adjusted ratios at each rung and a trend across the ladder
+(`HexHensel/SPEC/hex-hensel.md §"External comparators"`). -/
 
 def leanCompareConfig : LeanBench.FixedBenchmarkConfig :=
   { repeats := 5, maxSecondsPerCall := 6.0, minTotalSeconds := 0.1 }

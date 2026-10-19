@@ -24,7 +24,7 @@ The fixed cases expose the Phase-4 components named by the library SPEC:
 
 The component cases stay within tower dimension four and input degree four;
 the isolated recovery adversary uses absolute degree six, and the canonical
-mode-3 factorization case uses input degree 24 over the quadratic base.
+fixed-budget factorization case uses input degree 24 over the quadratic base.
 
 The parametric ladders carry the Phase-4 arithmetic evidence:
 
@@ -38,19 +38,19 @@ Negation has source-derived linear evidence on a larger-dimension dense family
 after its exact-width result construction removed a redundant normalization
 copy. Inversion passes its model on the normalized monic extended-gcd chain.
 Division (`runTowerDivRecursive`, the top rung of the recursive family) and
-one dense `toPrimitive` call (`runToPrimitiveDense`) are canonical mode-3
+one dense `toPrimitive` call (`runToPrimitiveDense`) are canonical fixed-budget
 cases: the inverse's coordinate height crosses a limb boundary inside the
 measured range, and the primitive images' heights are input-determined, so
 neither admits a one-parameter wall model. The untimed `tower-inv-chain-stats`,
 `tower-div-chain-stats`, and `tower-to-primitive-stats` subcommands record the
 operation counts and operand heights behind those conclusions.
 
-The degree-24 Selmer factor case is a mode-3 fixed registration because its
+The degree-24 Selmer factor case is a fixed registration with an absolute budget because its
 realised Trager route mixes coefficient-growth gcd, resultant, certificate,
 and integer-factorization phases without a stable independently derived
 one-parameter wall model.
 
-Informational PARI comparator (`SPEC/benchmarking.md` §External comparators
+PARI comparator (`SPEC/benchmarking.md` §External comparators
 §Process call): `nffactor` is the callable PARI surface matching tower
 polynomial factorization at one level. The `runTowerFactorPair*` /
 `runPariNfFactor*` fixed rungs consume the same deterministic Selmer input
@@ -436,14 +436,14 @@ def runAdjoinIdentity : Unit → IO UInt64 := fun _ => do
   return extensionChecksum
     (← requireSome "adjoin/identity" (adjoin? base.tower base.root))
 
-/- Expected-hash anchor only. `runOfQAdjoinLadder` supplies mode-1 performance
+/- Expected-hash anchor only. `runOfQAdjoinLadder` supplies two-sided performance
 coverage for the public constructor. -/
 setup_fixed_benchmark runOfQAdjoin where {
   repeats := 5, maxSecondsPerCall := 2.0,
   expectedHash := some 0x51ddf5878af8a696
 }
 
-/- Expected-hash anchor only. `runTowerAddLadder` supplies mode-1 performance
+/- Expected-hash anchor only. `runTowerAddLadder` supplies two-sided performance
 coverage for this operation. -/
 setup_fixed_benchmark runAdd where {
   repeats := 5, maxSecondsPerCall := 2.0,
@@ -451,7 +451,7 @@ setup_fixed_benchmark runAdd where {
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Expected-hash anchor only. `runTowerMulLadder` supplies mode-1 performance
+/- Expected-hash anchor only. `runTowerMulLadder` supplies two-sided performance
 coverage for this operation. -/
 setup_fixed_benchmark runMul where {
   repeats := 5, maxSecondsPerCall := 2.0,
@@ -459,7 +459,7 @@ setup_fixed_benchmark runMul where {
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Expected-hash anchor only. `runTowerInvLadder` supplies mode-1 performance
+/- Expected-hash anchor only. `runTowerInvLadder` supplies two-sided performance
 coverage for this operation. -/
 setup_fixed_benchmark runInv where {
   repeats := 5, maxSecondsPerCall := 2.0,
@@ -467,7 +467,7 @@ setup_fixed_benchmark runInv where {
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Mode 3. The attempted root-degree schedule `2,3,4,6,8,12` measured
+/- Fixed budget. The attempted root-degree schedule `2,3,4,6,8,12` measured
 13.7 ms, 35.5 ms, 98.1 ms, 804.5 ms, 4.71 s, then hit a 30 s cap: embedding
 selection, factorization, isolation, and validation change dominance, so no
 stable independently derived wall model is reachable, and no published bound
@@ -480,7 +480,7 @@ setup_fixed_benchmark runAdjoin where {
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Mode 3 for the distinct identity branch. The attempted presentation-degree
+/- Fixed budget for the distinct identity branch. The attempted presentation-degree
 schedule `2,3,4,6,8,12` measured 18.0 ms, 2.37 s, 1.68 s, then hit a 30 s cap
 at degree 6: branch-sensitive embedding recovery is nonmonotone and supplies no
 stable independently derived model; no complete published bound applies.
@@ -589,7 +589,7 @@ setup_fixed_benchmark runFactorRetry where {
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Mode 3 for genuine height-two relative factorization. The degree schedule
+/- Fixed budget for genuine height-two relative factorization. The degree schedule
 `2,3,4,6` measures 7.598, 12.320, 18.591, and 46.578 ms and rejects a linear
 candidate with residual `+0.636`: recursive norms, gcd, rational factorization,
 and replay change shares, and no published bound covers all phases. The
@@ -664,7 +664,7 @@ def runRecoverSearch : Unit → IO UInt64 := fun _ => do
   return recoveredChecksum (← requireSome "flatten/recover-search"
     (Flatten.searchRecoveredAux input.theta input.alpha 6 1 2))
 
-/- Mode 3. The attempted factor-count schedule `1,2,3` (degrees `2,4,6`)
+/- Fixed budget. The attempted factor-count schedule `1,2,3` (degrees `2,4,6`)
 measured 19.5 ms, 68.3 ms, and 1.89 s as repeated factorization, isolation,
 adjoining, and root collection change dominance. No tight independent wall
 model or published dominant-isolation bound applies. The canonical quartic
@@ -716,7 +716,7 @@ setup_fixed_benchmark runCoordinateMaps where {
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Expected-hash anchor only. `runToPrimitiveDense` is the mode-3
+/- Expected-hash anchor only. `runToPrimitiveDense` is the fixed-budget
 diagnostic; neither registration discharges performance coverage for the
 public closure. -/
 setup_fixed_benchmark runToPrimitive where {
@@ -725,7 +725,7 @@ setup_fixed_benchmark runToPrimitive where {
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Mode 3. The attempted top-degree schedule `1,2,3,4` (tower dimensions
+/- Fixed budget. The attempted top-degree schedule `1,2,3,4` (tower dimensions
 `2,4,6,8`) measured 0.96 ms, 21.0 ms, 107.7 ms, and 460.4 ms while candidate
 enumeration, eliminants, isolation, recovery, and certification change
 dominance. No stable independent wall model or published dominant-isolation
@@ -763,7 +763,7 @@ def runSMul : Unit → IO UInt64 := fun _ => do
   let value := sqrtTwo + tower.extension.gen
   return elemChecksum ((mkRat 3 7) • value)
 
-/- Expected-hash anchor only. `runTowerSubLadder` supplies mode-1 performance
+/- Expected-hash anchor only. `runTowerSubLadder` supplies two-sided performance
 coverage for this operation. -/
 setup_fixed_benchmark runSub where {
   repeats := 5, maxSecondsPerCall := 2.0,
@@ -780,15 +780,15 @@ setup_fixed_benchmark runNeg where {
 }
 
 /- Expected-hash anchor only. The checked height-two ladder is retained as a
-failed mode-1 diagnostic; this dimension-four case is not a canonical hard
-input and therefore supplies no mode-3 evidence. -/
+failed two-sided diagnostic; this dimension-four case is not a canonical hard
+input and therefore supplies no fixed-budget evidence. -/
 setup_fixed_benchmark runDiv where {
   repeats := 5, maxSecondsPerCall := 2.0,
   expectedHash := some 0xe534ce65592907a8,
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-/- Expected-hash anchor only. `runTowerSMulLadder` supplies mode-1 performance
+/- Expected-hash anchor only. `runTowerSMulLadder` supplies two-sided performance
 coverage for this operation. -/
 setup_fixed_benchmark runSMul where {
   repeats := 5, maxSecondsPerCall := 2.0,
@@ -1135,7 +1135,7 @@ def runTowerDivRecursive : Unit → IO UInt64 := fun _ => do
   let input ← getRecursiveDivInput
   return elemChecksum (input.a / input.b)
 
-/- Mode 3. Division is the recursive inversion above followed by one top-level
+/- Fixed budget. Division is the recursive inversion above followed by one top-level
 product by the inverse. The untimed replay (`tower-div-chain-stats`) charges
 that product at 9% to 20% of the division's limb work, so inversion is the
 dominant phase and division reuses its `n² log n` model from source. On the
@@ -1442,14 +1442,14 @@ def runTowerFactorLadder : Unit → IO UInt64 := fun _ => do
   | some result => factorChecksum result
   | none => 1
 
-/- Mode 3. The historical degree sweep `2,3,4,6,8,12,16,24` tried the
+/- Fixed budget. The historical degree sweep `2,3,4,6,8,12,16,24` tried the
 SPEC's Trager/BHKS envelope, but its local exponents rose from 0.80 to 4.48
 as the dominant rational-polynomial gcd, resultant, and checked-replay shares
 changed with coefficient growth. That is not a stable independently derived
 family model. Integer factorization is 1.42% of the whole-thread capture, while
 gcd alone is 47.28%; the target frame is 58.24%. Non-uniform GMP stack-unwind
 loss makes renormalized within-target ratios only qualitative, but the direct
-whole-capture shares already exclude a BHKS-only mode-2 bound for the dominant
+whole-capture shares already exclude a cited BHKS-only upper bound for the dominant
 inclusive work.
 
 The degree-24 Selmer trinomial over `Q(sqrt(2))` is the top completed rung and
@@ -1584,8 +1584,8 @@ setup_fixed_benchmark runPariNfFactor12 where pariCompareConfig
 /-- Per-call driver overhead for the PARI comparator: one `nf`-family
 request whose PARI-side work is a constant `0`, so the measured time is the
 JSON request/reply round trip alone. `SPEC/benchmarking.md` §External
-comparators §Process call requires this figure so the headline report can
-quote overhead-adjusted ratios. -/
+comparators §Process call uses this figure to quote overhead-adjusted
+ratios. -/
 def runPariNfFactorOverhead : Unit → IO UInt64 := fun _ => do
   let result ← Hex.BenchOracle.Pari.runOp "nf" "overhead" #[]
   match result.getInt? with
@@ -1595,7 +1595,7 @@ def runPariNfFactorOverhead : Unit → IO UInt64 := fun _ => do
 
 /- Driver round-trip floor for the PARI comparator: no algorithmic work on
 either side, so this registration measures only the per-call request/reply
-cost that the headline report subtracts from the PARI wall times. -/
+cost that is subtracted from the PARI wall times. -/
 setup_fixed_benchmark runPariNfFactorOverhead where
   { pariCompareConfig with expectedHash := some 0x0 }
 
@@ -1633,7 +1633,7 @@ def runTowerCheckFactorization : Unit → IO UInt64 := fun _ => do
   let input ← getCheckCanonicalInput
   return hash (checkFactorization input.f input.scalar input.factors)
 
-/- Mode 3. The diagnostic degree schedule `2,3,4,6,8,12,16,24` rose from
+/- Fixed budget. The diagnostic degree schedule `2,3,4,6,8,12,16,24` rose from
 0.404 ms to 126.3 ms with a `+1.485` residual even against a linear candidate;
 its changing squarefree, Trager, gcd, and replay phases admit no independent
 tight wall model, and no published bound covers the dominant gcd/replay work.
@@ -1683,7 +1683,7 @@ def runToPrimitiveDense : Unit → IO UInt64 := fun _ => do
   | some result => return qAdjoinChecksum (result.toPrimitive input.dense)
   | none => return 0
 
-/- Mode 3. One dense `toPrimitive` call performs `D` rational scalar actions
+/- Fixed budget. One dense `toPrimitive` call performs `D` rational scalar actions
 and additions on degree-`D` primitive coordinates, `Θ(D²)` rational
 operations, but its bit cost is set by the flattening's primitive-basis
 images, not by the prepared input. The untimed `tower-to-primitive-stats`

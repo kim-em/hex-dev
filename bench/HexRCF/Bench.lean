@@ -16,7 +16,7 @@ All fixture construction is hoisted through `with prep := ...`. In particular,
 the replay targets time only `Certificate.replay?` on already accepted `.cells`
 certificates; they never rebuild witnesses in the timed region.
 
-The informational python-flint comparator covers only the compiled
+The orientation python-flint comparator covers only the compiled
 carrier-degree decision family at `n = 16, 20, 24, 28, 32`. Both sides consume
 the same precomputed reflected sentence; FLINT receives its precomputed
 version-1 JSON encoding through the shared persistent driver protocol. A
@@ -70,7 +70,7 @@ def prepDecisionCarrierDegree (n : Nat) : Sentence :=
 def runDecisionCarrierDegree (sentence : Sentence) : Option Bool :=
   Hex.RCF.decide sentence
 
-/-! # Informational python-flint decision comparator -/
+/-! # Orientation python-flint decision comparator -/
 
 private def cmpJson : Cmp → Lean.Json
   | .lt => .str "lt"

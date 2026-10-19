@@ -1,0 +1,18 @@
+{
+  "source": "5408295214a3fea3a3b6d47525b9f8aeba59ff09",
+  "source_status_after": "",
+  "command": [
+    "/home/kim/.codex/tasks/hex-10378/sort-diagnostic-v1/hexrealclosure_trivial_bench",
+    "emit-sort"
+  ],
+  "executable_sha256": "3bd48180234d51ca91a3c8e08fae7a595389486e61c5558e14c3fdbc27fc2df4",
+  "executable_size_bytes": 123396632,
+  "benchmark_git_blob": "98f33a48cfa09a2f321c44f27f7f482c21474147",
+  "files": {
+    "sort.jsonl": "70274ddaf2adaeda45a28c2da167e25953a0046a7be439278f7e820ba02e5768",
+    "sort-launcher.stdout": "70274ddaf2adaeda45a28c2da167e25953a0046a7be439278f7e820ba02e5768",
+    "sort-launcher.stderr": "8746f50f7f6062510f53af30da1a9394fa58b31b3373cc5dab9f3fd552fd545b",
+    "sort-benchmark.lean.txt": "c5f8a3ae51c5f78dee63bb432db6e8d6b4efb2a61c58801ca6f469a34c464246"
+  },
+  "scope": "Later untimed replay of the outer entry sort from actual Roots.assemble input. Each comparison calls Root.compare; final original indices checked against Root.sortBy. Frozen paired timing executables unchanged."
+}

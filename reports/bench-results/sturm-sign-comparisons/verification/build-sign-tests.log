@@ -1,0 +1,7 @@
+✔ [27/32] Built HexRealRoots.Basic (337ms)
+✔ [28/32] Built HexRealRoots.Chain (381ms)
+✔ [29/32] Built HexRealRoots.Var (548ms)
+✔ [30/32] Built HexRealRoots.Tarski (566ms)
+✔ [31/32] Built HexRealRoots.TarskiShared (403ms)
+✔ [32/32] Built HexRealRoots.TarskiTests (1.0s)
+Build completed successfully (32 jobs).

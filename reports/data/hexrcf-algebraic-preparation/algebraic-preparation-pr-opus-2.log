@@ -1,0 +1,104 @@
+cut: write error: Broken pipe
+sort: write failed: 'standard output': Broken pipe
+sort: write error
+No blocking findings. Every soundness-relevant path ends in a kernel check plus an axiom screen, and the transaction handling is correct for all three finalizer outcomes. Each concern from the previous review is fixed or knowingly retained. What remains are two conformance gaps, one API-contract edge case and some stale prose.
+
+**Limit on this review:** Bash was denied, so I could not run `git diff origin/main...HEAD` or hash files myself. I reviewed the current tree through file reads: the 16 bound sources, `collect-corrective.py`, the raw logs and the core Lean source for v4.35. The collector asserts that the worktree matches the `49aa1c` blobs (`collect-corrective.py:41`). I did not independently confirm that `daaf14`/`d2a941` touch only reports and data.
+
+## Previous concerns: verified
+
+1. **Cancellation order: fixed.**
+   - In the optimized IR (`order-2.log:1799-1837`), `buildWith._redArg` checks `cancelTk?` first and only then jumps to the join point that calls `Inputs.build`.
+   - The built result then goes to `consumeBuilt._redArg`, which runs `IO.CancelToken.isSet` before `consume result` (`:1732-1775`).
+   - `presentations` is eager (`AlgebraicCells.lean:21-28`), so no production work is deferred into `consume`.
+   - The collector checks textual order only, which works here: the join point is defined above the first check in the text but is reached only after it.
+2. **Zero divisor: fixed.** The test requires `prepare` to return `.ok` with exactly one retained divisor, then `buildWith` to return exactly `.error .divisor` (`AlgebraicPreparationCases.lean:89-95`).
+3. **Real coefficients: mostly fixed.** True and false nonempty irrational builds exist, and the source divisor order is now checked against literal expressions. See finding 2 for what is still missing.
+4. **Callback: fixed.** `FieldRuntime.nonnegative` is public and the default, and the `√(-1)` case checks the structured decline.
+5. **Fail-fast quantifier check: fixed.** The one-quantifier check now runs before interpretation. Keeping the entry `checkProof` is correct; see the last section.
+6. **Evidence binding: fixed** by the corrective record and the collector's blob-equality assertion.
+7. **Markers: fixed.** Both markers are present:
+   - `integration-2.log:3053,3056`, with `14302 jobs` at line 3253.
+   - `resources-4.log:1704,1706`.
+   - `resources-3.log:1704-1706` shows the silent-green failure: the module built, but no info line was printed.
+8. **Cleanups: fixed.** The `ProofEvidence` import is gone and the record is renamed to `Inputs`. The budget test now has a positive control, and the rollback test creates a real fresh mvar and a declaration.
+
+## Findings
+
+**1. Low-medium (conformance): no test makes a terminal exception arrive after state has changed, so rollback on that path is never tested.**
+- **Location:** `AlgebraicPreparationCases.lean:102-118`; `FieldRuntime.lean:78-81`; `AlgebraicPreparation.lean:139` (the `none` branch).
+- **Why it matters:**
+  - All three resource cases fire before `nonnegative` changes any state: heartbeat and interrupt at the first `Core.checkSystem` (line 66), recursion depth at `withIncRecDepth`.
+  - So the `unchanged` wrapper around them can never fail. Removing either finalizer would still pass.
+  - The lying-callback test covers only the structured `.error` branch, because `abort` is an `ExceptT` result in `ReifyM`.
+- **The observer itself is sound.** It has to sit below `Core.tryCatch`, which rethrows interrupts and runtime exceptions (`CoreM.lean:806-830`), and it rethrows anything with the wrong tag, so it is not a weakening.
+- **Fix:** add a `prepare` case whose callback first creates an mvar and a declaration, then throws:
+  - one variant with `throwInterruptException`;
+  - one with an ordinary `throwError`.
+
+  Observe each through `observeTerminal`, then assert that the declaration is absent and the mctx count is unchanged.
+
+**2. Low-medium (conformance): the coefficients-first layout is never built with both roles nonempty.**
+- **Location:** `AlgebraicPreparationCases.lean:119-166`.
+- **Why it matters:**
+  - In the irrational builds there are no divisors, so `indices = Fin.castAdd 0` is the identity map.
+  - In the guard-only builds there are no coefficients.
+  - So a bug that put divisors first, or offset `indices`, would not change any tested verdict.
+  - Lines 128-130 are also still true by definition (`Fin.addCases` composed with `natAdd`).
+- **Fix:** build a mixed case where the coefficient and the divisor have opposite signs:
+  - `∀ x : ℝ, x^2 + (Real.sqrt 2 - 2) / (Real.sqrt 3 + 1) ≥ 0` must be false;
+  - the same with the sign of the coefficient flipped must be true.
+
+  A coefficient slot that read the positive divisor would flip the first verdict. Drop lines 128-130 or replace them with this case.
+
+**3. Low (API contract): an accepted but non-compilable source becomes an exception instead of `.unsupported`.**
+- **Location:** `Interpret.lean:149-150` accepts any closed `RealAlgebraicNumber.toReal x`; `AlgebraicPreparation.lean:89` then calls `evalReal`.
+- **Failure:** take a `noncomputable` `x` built with `Classical.choice`. It passes `checkExpr`, because that axiom is allowed, and then `evalExpr` fails to compile, so `prepare` throws. The docstring says unsupported input and resource failures stay distinct.
+- A lying `implemented_by` constant could also make the proposal differ from the kernel value. That is covered by the disclosed literal-authentication work.
+- **Fix:** in `prepareCore`, catch `evalReal` failures with the standard `try` (which already rethrows runtime exceptions and interrupts) and return `.error (.unsupported source …)`. Alternatively, document that these inputs throw.
+
+**4. Low (maintainability and docs):**
+- **Stale "environment" naming:**
+  - Parameters `environment : Inputs` at `AlgebraicPreparation.lean:39-78`.
+  - Prose: report line 12, manual `AlgebraicCells.lean:542`, `HexRCF/README.md:677`.
+  - `Inputs.inputs` reads awkwardly; `Inputs.generators` would match `AlgebraicCells.build`.
+- **Report link:** report line 21 links to `AlgebraicPreparationConformance.lean`, which now holds only the completion check. Link `AlgebraicPreparationCases.lean` as well.
+- **Report wording:** "a cancelled zero divisor" (lines 27-28) is easy to misread as being about cancellation. Say "an algebraically zero divisor yields exactly `.divisor`".
+- **Budget double-charging:** divisors that are also coefficient subterms are interpreted and charged twice. This only causes extra refusals, never unsoundness, but the report does not mention it. One sentence would do.
+
+## Keeping the entry `checkProof`: agreed, don't remove it
+
+`Coefficients.interpret` calls `Lean.Meta.checkWithKernel` (`Check.lean:377-381`), which is documented as debug-only. It only infers a type for the term in the kernel. It does not:
+- check agreement with a target;
+- screen axioms;
+- create a named theorem.
+
+The target agreement inside `Interpret.lean:136-140` uses elaborator `isDefEq`, not the kernel. So `entry`'s `checkProof` is the only place that does all of the following:
+- checks the exact `toReal expression = source` equality in the kernel after instantiation;
+- rejects `sorryAx`/`ofReduceBool` coming from the callback, which also appear inside `expression` through `root … h`;
+- produces the private auxiliary theorem that the conformance checks (`isPrivateName`).
+
+Suggested fix: add a two-line comment in `entry` saying this, so a later reviewer doesn't drop it as redundant.
+
+## Transactions
+
+- **`prepare`'s finalizer:** success keeps the environment and restores the mctx. Structured errors and exceptions run `saved.restore`, and since `tryFinally'` sits at the EIO level, the finalizer also runs on interrupts.
+- **`Reify.prepare`:** it instantiates all its mvars before returning, so nothing dangles after the mctx is restored.
+- **The completion marker:** it is meaningful, not a weakening.
+  - An escaped interrupt is logged silently, and `liftCoreM` discards the command's environment when it is aborted.
+  - So `runFinished` exists only if the whole `run_meta` completed, and the importing module fails loudly with "unknown constant" otherwise.
+  - Its `checkProof` on `True` is ceremonial but harmless.
+  - The admission checker reaches `Cases` through the import graph from the `Conformance` root.
+
+## Disclosed full-issue work (not defects in this PR)
+
+These are correctly disclosed in report lines 183-187 and the record's `limits`:
+- frozen source/provider/predecessor histories;
+- literal authentication of proposals;
+- general quotation and accepted completeness;
+- strict compiled replay that rejects arbitrary missing records;
+- unbudgeted native evaluation with no internal checkpoints;
+- tower growth from unused divisors;
+- stress acceptance and performance.
+
+None of the PR text or records claims that #10358 is complete, or claims any speedup or completeness result.

@@ -1,0 +1,62 @@
+import SignPacketEncodedProbe
+import SignPacketEncodedProbe
+import HexRCF.ProofEvidence
+import KernelReplay.AxiomClosure
+import HexRCF.SelectedRoot.KernelCheck
+meta section
+open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
+set_option maxHeartbeats 12000000
+set_option maxRecDepth 32768
+run_meta do
+  withoutExporting do
+    let roots := #[``Hex.RCF.SignPacketPublic.read_checked,
+      ``Hex.RCF.SignPacketPublic.accepted,``Hex.RCF.SignPacketPublic.sign]
+    let axioms ← Algebraic.KernelReplay.AxiomClosure.collect roots
+    unless axioms.all (fun name => [``propext,``Classical.choice,``Quot.sound].contains name) do
+      throwError "public packet axiom closure changed: {axioms}"
+    let dependencies ← Hex.RCF.ProofEvidence.projectDependencies roots
+    for required in #[``Algebraic.Context.signPoly_checked,``ScalarPacket.fields,
+        ``Tower.Signature.codec_lawful,``Hex.RCF.RootQuoteTests.root_raw] do
+      unless dependencies.contains required do throwError "public packet omitted {required}"
+    let originalNames := (← (← getEnv).getLocalConstantInfos).map (·.name)
+    let modules := (← getEnv).header.moduleNames
+    let allowed := #[`SignPacketEncodedProbe,`ScratchRootQuote,
+      `HexRCF.RootQuoteCases,`HexRCF.RootQuoteSource,`HexRCF.RootQuoteData,
+      `HexRCF.RealCoefficients.ScalarPacket]
+    let mut theorems : Nat := 0
+    let mut definitions : Nat := 0
+    let mut traces : Nat := 0
+    for name in dependencies.toArray do
+      let some index := (← getEnv).getModuleIdxFor? name | continue
+      unless allowed.contains modules[index]! do continue
+      let declaration ← match ← getConstInfo name with
+        | .thmInfo info =>
+          theorems := theorems+1
+          pure (Declaration.thmDecl {info with name := ← mkFreshUserName `__publicPacketBody})
+        | .defnInfo info =>
+          definitions := definitions+1
+          pure (Declaration.defnDecl {info with name := ← mkFreshUserName `__publicPacketData})
+        | _ => continue
+      IO.FS.withFile "/home/kim/.codex/tasks/hex-10358/public-audit-protected-bodies.log" .append fun file => do
+        file.putStrLn s!"BEGIN {name}"
+        file.flush
+      let options := (← getOptions).setBool `debug.skipKernelTC false
+      let environment := Kernel.enableDiag (Kernel.resetDiag (← getEnv)) true
+      let checked ← ofExceptKernelException <| environment.addDeclCore
+        (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
+        declaration none (doCheck := true)
+      IO.FS.withFile "/home/kim/.codex/tasks/hex-10358/public-audit-protected-bodies.log" .append fun file => do
+        file.putStrLn s!"END {name}"
+        file.flush
+      let diagnostics := Kernel.getDiagnostics checked
+      unless diagnostics.enabled do throwError "public packet body diagnostics are disabled"
+      if let some (producer,count) := Hex.RCF.SelectedRootTests.KernelCheck.violation? diagnostics
+          #[``ScalarPacket.build,``ScalarPacket.buildLiteral,``Algebraic.Element.codec,
+            ``Descriptor.ofReplay?] then
+        throwError "public packet reduced producer {producer}: {count}; body={name}"
+      if !diagnostics.unfoldCounter.isEmpty then traces := traces+1
+    unless theorems > 0 && definitions > 0 && traces > 0 do
+      throwError "public packet audit did not check actual bodies"
+    unless (← (← getEnv).getLocalConstantInfos).map (·.name) == originalNames do
+      throwError "public packet audit retained declarations"
+    logInfo m!"public packet actual bodies: {theorems} theorems/{definitions} definitions; nonempty traces={traces}; full axioms={axioms}"

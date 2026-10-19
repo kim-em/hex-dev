@@ -1,0 +1,905 @@
+{
+  "source_commit": "b60d6af51ec54790df557b177ed6280dbaef93ff",
+  "scope": "Direct native sample coefficient conversion, signs, degrees and sizes; point realization remains conditional on actual provider history/source identities.",
+  "sources": {
+    "HexManual/Chapters/HexRCF.lean": {
+      "sha256": "a06c4aa5b7f3ee873119d6a7c1be8cfd95e0b307af9380463ea2857d55990993",
+      "bytes": 142131
+    },
+    "HexManual/Chapters/HexRCF/NativeSamples.lean": {
+      "sha256": "b173b1353f58cfe54f73c71e4fb14d73daa71b951ff6ca8f3bca8e4bb4aee3e8",
+      "bytes": 4151
+    },
+    "HexRCF/README.md": {
+      "sha256": "3f2ab776c94aee32ac5bc5abea80d73091acd445129cc96640a6af755560da19",
+      "bytes": 27118
+    },
+    "HexRCF/SPEC/hex-rcf.md": {
+      "sha256": "53ad711ee320c5ce4000d009188d26fc7809a179d6c5f6f8808f18668bc7b8d3",
+      "bytes": 102572
+    },
+    "adapters/HexRCF/RealCoefficients.lean": {
+      "sha256": "b1251fdba35e33a01fe8358d568be6bc73fcd9210b95e7f0f28ce1bea1751d22",
+      "bytes": 3975
+    },
+    "adapters/HexRCF/RealCoefficients/NativeSamples.lean": {
+      "sha256": "9095a20de6a1814c34b4e25eb4b779f4e13ca1518892d1c7a23c8a631624092e",
+      "bytes": 9638
+    },
+    "adapters/HexRCF/RealCoefficients/RepresentationSpecialize.lean": {
+      "sha256": "a5a14158189cdd56465ef1e25a9cf59c5301116278937961c389381dc956944b",
+      "bytes": 9243
+    },
+    "conformance/HexRCF/NativeSamplesConformance.lean": {
+      "sha256": "46432e6c9212f783e5746406e548b24df6ea392d780b12f593be346aa32840d3",
+      "bytes": 16031
+    },
+    "lakefile.lean": {
+      "sha256": "cb854e2d25d4a2e64ccb77327b9f68686b2fb8b4eef0f55583e931dbffcb456c",
+      "bytes": 97502
+    },
+    "reports/hexrcf-adapter-evidence.md": {
+      "sha256": "fe966489ed4cb833cbfc8a58b5bc8339e3ed3cd69219a08d3a8389dd9e20fe30",
+      "bytes": 50986
+    },
+    "reports/hexrcf-native-samples.md": {
+      "sha256": "14859f89b966144519bb306c192ef2670f500f3d3973e90b0d72e5f7f09e3368",
+      "bytes": 4313
+    }
+  },
+  "records": [
+    {
+      "name": "sample-conversion-nested-conformance-oct11.log",
+      "kind": "validation_log",
+      "file": "sample-conversion-nested-conformance-oct11.log.xz",
+      "bytes": 84731,
+      "sha256": "63834bf6212740f07ce386a8f8c31b7a889df8900f0c617798f5cab49e3d87cf",
+      "archive_bytes": 6540,
+      "archive_sha256": "6fd6778c2483f6f777c87232dbce61881e88ccd90cc67ba88bb7e1e7bb2dbc2f",
+      "command": "lake build HexRCF.NativeSamplesConformance",
+      "observed_exit_code": 0,
+      "validated_snapshot": "b17d8e197b66052137750ce8f870aa22b186208e"
+    },
+    {
+      "name": "sample-conversion-nested-ordinary-oct11.log",
+      "kind": "validation_log",
+      "file": "sample-conversion-nested-ordinary-oct11.log.xz",
+      "bytes": 84725,
+      "sha256": "11b57f0a3fc53f89dc4f54bde029ad906aef75bd5d943844d2a2b0d26bcd4cc4",
+      "archive_bytes": 6552,
+      "archive_sha256": "2a570734349aed61c2e79c1c41022a79169dd642d3f455a92b81adc39f84cca2",
+      "command": "lake build NativeSamplesOrdinaryUse",
+      "observed_exit_code": 0,
+      "validated_snapshot": "b17d8e197b66052137750ce8f870aa22b186208e"
+    },
+    {
+      "name": "sample-conversion-main-integration-oct11.log",
+      "kind": "validation_log",
+      "file": "sample-conversion-main-integration-oct11.log.xz",
+      "bytes": 217276,
+      "sha256": "730bcbf215ca84a8193c527969d3eafe84205772b056958065b9f85ea5701bfe",
+      "archive_bytes": 14660,
+      "archive_sha256": "10fba6b245a962f0c9bbda607518960c2b38790f339803622657801c216b1d8c",
+      "command": "lake build HexRCFRealCoefficients HexConformance HexManual",
+      "observed_exit_code": 0,
+      "validated_snapshot": "6dc3d9ac05daeca12cab01594b48537f7028fcd0"
+    },
+    {
+      "name": "sample-conversion-main-render-oct11.log",
+      "kind": "validation_log",
+      "file": "sample-conversion-main-render-oct11.log.xz",
+      "bytes": 183308,
+      "sha256": "7ccb9f021ed89d2f833adfbc63524f7f37fddca290603b4b0c4a8249cb8b9ab6",
+      "archive_bytes": 11056,
+      "archive_sha256": "2cf31040631d339f96aecdeb804783f1a689d3cc08a7260ed619b790f401218c",
+      "command": "lake build FullRender",
+      "observed_exit_code": 0,
+      "validated_snapshot": "b60d6af51ec54790df557b177ed6280dbaef93ff"
+    },
+    {
+      "name": "sample-conversion-current-browser-oct11.log",
+      "kind": "validation_log",
+      "file": "sample-conversion-current-browser-oct11.log.xz",
+      "bytes": 62,
+      "sha256": "58df7de35094e9c5e2ae5becf9799325692d8904541b5277bb2cfdb845dd24a4",
+      "archive_bytes": 120,
+      "archive_sha256": "bd6b1b6f023dec68c5b8d80562248373951d8e7d6554227697f6a092e700163f",
+      "command": "node native-samples-browser.mjs",
+      "observed_exit_code": 0,
+      "validated_snapshot": "b60d6af51ec54790df557b177ed6280dbaef93ff"
+    },
+    {
+      "name": "sample-conversion-current-dag-oct11.log",
+      "kind": "static_log",
+      "file": "sample-conversion-current-dag-oct11.log.xz",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archive_bytes": 32,
+      "archive_sha256": "0040f94d11d0039505328a90b2ff48968db873e9e7967307631bf40ef5679275",
+      "command": "python3 scripts/check_dag.py",
+      "observed_exit_code": 0
+    },
+    {
+      "name": "sample-conversion-current-admissions-oct11.log",
+      "kind": "static_log",
+      "file": "sample-conversion-current-admissions-oct11.log.xz",
+      "bytes": 95,
+      "sha256": "c968bc6be597cd49ffe55872df53b3360cba6a6b66bd5c9a567c2a556c0650cf",
+      "archive_bytes": 148,
+      "archive_sha256": "cbfee69992ca11683715b5de17a74efe0d893c75270776e87c4751fdb7823dd2",
+      "command": "python3 scripts/ci/check_named_admissions.py",
+      "observed_exit_code": 0
+    },
+    {
+      "name": "sample-conversion-current-copyright-oct11.log",
+      "kind": "static_log",
+      "file": "sample-conversion-current-copyright-oct11.log.xz",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archive_bytes": 32,
+      "archive_sha256": "0040f94d11d0039505328a90b2ff48968db873e9e7967307631bf40ef5679275",
+      "command": "python3 scripts/check_copyright_headers.py",
+      "observed_exit_code": 0
+    },
+    {
+      "name": "sample-conversion-current-lines-oct11.log",
+      "kind": "static_log",
+      "file": "sample-conversion-current-lines-oct11.log.xz",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archive_bytes": 32,
+      "archive_sha256": "0040f94d11d0039505328a90b2ff48968db873e9e7967307631bf40ef5679275",
+      "command": "python3 scripts/check_file_line_counts.py",
+      "observed_exit_code": 0
+    },
+    {
+      "name": "sample-conversion-current-manual-split-oct11.log",
+      "kind": "static_log",
+      "file": "sample-conversion-current-manual-split-oct11.log.xz",
+      "bytes": 84,
+      "sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "archive_bytes": 132,
+      "archive_sha256": "539277b157d178b63c3dd5cd4aaf99420e8e45e9f4a3e7c896c4a9cc69cc18ec",
+      "command": "python3 scripts/release/check_manual_split.py",
+      "observed_exit_code": 0
+    },
+    {
+      "name": "sample-conversion-current-diff-oct11.log",
+      "kind": "static_log",
+      "file": "sample-conversion-current-diff-oct11.log.xz",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archive_bytes": 32,
+      "archive_sha256": "0040f94d11d0039505328a90b2ff48968db873e9e7967307631bf40ef5679275",
+      "command": "git diff origin/main --check",
+      "observed_exit_code": 0
+    },
+    {
+      "name": "static-context.json",
+      "kind": "static_metadata",
+      "file": "static-context.json.xz",
+      "bytes": 20466,
+      "sha256": "efdeb3d2d850076988207503e1184274395b8476d70bdb92fb52c077f7c3f33d",
+      "archive_bytes": 1888,
+      "archive_sha256": "a20acd9c6f1ab618b9634043d40cf6c78272f550bf8a8e027cf405977d4f874c"
+    },
+    {
+      "name": "NativeSamplesOrdinaryUse.lean",
+      "kind": "external_consumer_or_capture_source",
+      "file": "NativeSamplesOrdinaryUse.lean.xz",
+      "bytes": 3923,
+      "sha256": "a43545273d5ef0585a6d4af7c6bc56720206f0a990aa81ec9f574d0bbe2b9383",
+      "archive_bytes": 900,
+      "archive_sha256": "b8b6dc3a47e2b19a2212cc78e4e3f961d4f76dc5c3f14340e641f04033b88dd0"
+    },
+    {
+      "name": "FullRender.lean",
+      "kind": "external_consumer_or_capture_source",
+      "file": "FullRender.lean.xz",
+      "bytes": 244,
+      "sha256": "d94ef4cfa6c7787285cc0f9e5ecd2611f92830366f2283b2d2674c3eec3f6041",
+      "archive_bytes": 244,
+      "archive_sha256": "1142e594be61240ea3a76b9b470b045811c8a4c6e84416c9197b68e89d6d58cf"
+    },
+    {
+      "name": "native-samples-browser.mjs",
+      "kind": "external_consumer_or_capture_source",
+      "file": "native-samples-browser.mjs.xz",
+      "bytes": 3608,
+      "sha256": "710e385bf0c0a60c97849e0a948994598b8d07ce8d553f31ee66ded8208da0d8",
+      "archive_bytes": 1920,
+      "archive_sha256": "e0f259077a82a4a201fff4da4b69b7b3a95a81347366c8be73aa2d90a71f1f9a"
+    },
+    {
+      "name": "native-samples-inspection.json",
+      "kind": "external_consumer_or_capture_source",
+      "file": "native-samples-inspection.json.xz",
+      "bytes": 4932,
+      "sha256": "9e57305b76438868ead8380662575daa1d51c6761dc73f829fdefaa6d9a61d5f",
+      "archive_bytes": 1168,
+      "archive_sha256": "a0a3d321ec5386c3944726d6c09cf9200537a812047948c9ae5b03c087f4f72b"
+    },
+    {
+      "name": "lakefile.lean",
+      "kind": "external_consumer_or_capture_source",
+      "file": "lakefile.lean.xz",
+      "bytes": 4018,
+      "sha256": "68c6c88289aafeb470f2dda0707473e8372b2dd3cece46a28e914b6703e92acf",
+      "archive_bytes": 1136,
+      "archive_sha256": "610b5b6dfd28c1caa5e69c57a8a97044a9cbc17d6a90dc0cf1a295c96defcf8c"
+    },
+    {
+      "name": "native-samples-desktop-conversion.png",
+      "kind": "manual_capture",
+      "file": "native-samples-desktop-conversion.png.xz",
+      "bytes": 284276,
+      "sha256": "71a229c6a986d517fb50f2eca6065d4c95b5c0132296028ce676f8a19d412de7",
+      "archive_bytes": 259944,
+      "archive_sha256": "940fd1a58df811b1980047258dee40784a32ba351ef251a239210237aa4b94c9",
+      "visually_inspected": true
+    },
+    {
+      "name": "native-samples-desktop-native-example.png",
+      "kind": "manual_capture",
+      "file": "native-samples-desktop-native-example.png.xz",
+      "bytes": 283512,
+      "sha256": "ab94052539b2501641dccc3d227d6c5d37bce6943b974d71774e33087160fc9f",
+      "archive_bytes": 257752,
+      "archive_sha256": "0907af4d30c9c318aaba05b4efe1030469feedefa5c122b7b4744847cdfdfa9f",
+      "visually_inspected": true
+    },
+    {
+      "name": "native-samples-desktop-boundary.png",
+      "kind": "manual_capture",
+      "file": "native-samples-desktop-boundary.png.xz",
+      "bytes": 293569,
+      "sha256": "ed79e7aaa7ef0930af00879cbc1092cb41a022956b52015dc2ae35de8eebb51f",
+      "archive_bytes": 269860,
+      "archive_sha256": "c4fc1fda83bf22d65f5617b49c17ae6520029437e05966acedfb4934cf933787",
+      "visually_inspected": true
+    },
+    {
+      "name": "native-samples-narrow-conversion.png",
+      "kind": "manual_capture",
+      "file": "native-samples-narrow-conversion.png.xz",
+      "bytes": 99143,
+      "sha256": "14c42fb719fb682b5cf3e270fa3b8fe06a5521cd49e9d36874d9d61add21e6b4",
+      "archive_bytes": 94736,
+      "archive_sha256": "9dce9c1c94fad997ceba2e50803db1c921052fbe24880ec1bb2d2159c7583feb",
+      "visually_inspected": true
+    },
+    {
+      "name": "native-samples-narrow-native-example.png",
+      "kind": "manual_capture",
+      "file": "native-samples-narrow-native-example.png.xz",
+      "bytes": 111232,
+      "sha256": "1691535d8c671d5afc20de7b8aa84dd5b6f647367063b4c7abb02e99b00837f7",
+      "archive_bytes": 107296,
+      "archive_sha256": "1bd1315dfbe21a725be891d43ef3eeb70f2a7207f5cff1c3eeb18f13b975cd1b",
+      "visually_inspected": true
+    },
+    {
+      "name": "native-samples-narrow-boundary.png",
+      "kind": "manual_capture",
+      "file": "native-samples-narrow-boundary.png.xz",
+      "bytes": 95443,
+      "sha256": "73ab9abbcc8938fc800a7634b2414c8de3b86cf44dcf7abded2530040bd380d0",
+      "archive_bytes": 90740,
+      "archive_sha256": "5e6210175d8488769e5bc27c047812dae825867ba7eb885a63eecc6eb6056cf4",
+      "visually_inspected": true
+    }
+  ],
+  "complete_axiom_inventories": {
+    "api_and_fixture": 17,
+    "fresh_ordinary_import": 8,
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ]
+  },
+  "compiled_guards": 11,
+  "proof_check_boundary": "In-module uncached exact-target checks and consumption markers; imported reexports confirm targets and complete inventories, not imported proof bodies.",
+  "validation_snapshots": "Conformance and fresh consumer validated the working source subsequently committed at b17d8e197b. Integration includes main reconciliation at 6dc3d9ac05. b60d6af51e only removes one trailing blank line from the new manual child; rendering and static checks validate that final source. Source hashes and full logs are retained; no performance measurements are claimed.",
+  "relative_paths": {
+    "count": 148,
+    "fragment_check": false,
+    "links": [
+      {
+        "source": "HexManual/Chapters/HexRCF.lean",
+        "link": "../../conformance/HexRCF/SuppliedIrreducibleProofs.lean"
+      },
+      {
+        "source": "HexManual/Chapters/HexRCF.lean",
+        "link": "../../reports/hexrcf-irreducibility-cost.md"
+      },
+      {
+        "source": "HexManual/Chapters/HexRCF.lean",
+        "link": "../../conformance/HexRCF/NativeFormulaConformance.lean"
+      },
+      {
+        "source": "HexManual/Chapters/HexRCF.lean",
+        "link": "../../conformance/HexRCF/NativeSpecializeConformance.lean"
+      },
+      {
+        "source": "HexManual/Chapters/HexRCF/NativeSamples.lean",
+        "link": "../../../conformance/HexRCF/NativeSamplesConformance.lean"
+      },
+      {
+        "source": "HexRCF/README.md",
+        "link": "../conformance/HexRCF/RationalRoots.lean"
+      },
+      {
+        "source": "HexRCF/README.md",
+        "link": "../conformance/HexRCF/AlgebraicRoots.lean"
+      },
+      {
+        "source": "HexRCF/README.md",
+        "link": "../conformance/HexRCF/MixedConstants.lean"
+      },
+      {
+        "source": "HexRCF/README.md",
+        "link": "../conformance/HexRCF/NamedConstants.lean"
+      },
+      {
+        "source": "HexRCF/README.md",
+        "link": "../conformance/HexRCF/CoarseConstants.lean"
+      },
+      {
+        "source": "HexRCF/README.md",
+        "link": "SPEC/hex-rcf.md#planned-real-coefficient-extension"
+      },
+      {
+        "source": "HexRCF/README.md",
+        "link": "../conformance/HexRCF/PreparedCoefficients.lean"
+      },
+      {
+        "source": "HexRCF/README.md",
+        "link": "../conformance/HexRCF/FiniteReplay.lean"
+      },
+      {
+        "source": "HexRCF/README.md",
+        "link": "../conformance/HexRCF/TowerSamples.lean"
+      },
+      {
+        "source": "HexRCF/README.md",
+        "link": "../conformance/HexRCF/Samples.lean"
+      },
+      {
+        "source": "HexRCF/README.md",
+        "link": "../conformance/HexRCF/NumberField.lean"
+      },
+      {
+        "source": "HexRCF/README.md",
+        "link": "../conformance/HexRCF/Gather.lean"
+      },
+      {
+        "source": "HexRCF/README.md",
+        "link": "../conformance/HexRCF/GatherCatalog.lean"
+      },
+      {
+        "source": "HexRCF/README.md",
+        "link": "../conformance/HexRCF/Realization.lean"
+      },
+      {
+        "source": "HexRCF/README.md",
+        "link": "../conformance/HexRCF/NativeFormulaConformance.lean"
+      },
+      {
+        "source": "HexRCF/README.md",
+        "link": "../conformance/HexRCF/NativeSpecializeConformance.lean"
+      },
+      {
+        "source": "HexRCF/README.md",
+        "link": "../conformance/HexRCF/NativeSamplesConformance.lean"
+      },
+      {
+        "source": "HexRCF/README.md",
+        "link": "../conformance/HexRCF/CertificationInputs.lean"
+      },
+      {
+        "source": "HexRCF/README.md",
+        "link": "../conformance/HexRCF/CertificationProofs.lean"
+      },
+      {
+        "source": "HexRCF/README.md",
+        "link": "../conformance/HexRCF/SelectedRoot/Proofs.lean"
+      },
+      {
+        "source": "HexRCF/README.md",
+        "link": "../reports/hexrcf-selected-root.md#byte-decoding-of-the-same-selected-row"
+      },
+      {
+        "source": "HexRCF/README.md",
+        "link": "../reports/hexrcf-adapter-evidence.md"
+      },
+      {
+        "source": "HexRCF/README.md",
+        "link": "../reports/hexrcf-window-proofs.md"
+      },
+      {
+        "source": "HexRCF/README.md",
+        "link": "../reports/hexrcf-precision-proofs.md"
+      },
+      {
+        "source": "HexRCF/SPEC/hex-rcf.md",
+        "link": "../../HexRealRootsMathlib/SPEC/hex-real-roots-mathlib.md"
+      },
+      {
+        "source": "HexRCF/SPEC/hex-rcf.md",
+        "link": "../../SPEC/testing.md"
+      },
+      {
+        "source": "HexRCF/SPEC/hex-rcf.md",
+        "link": "../../SPEC/testing.md"
+      },
+      {
+        "source": "HexRCF/SPEC/hex-rcf.md",
+        "link": "../../SPEC/future-work.md#real-closures-of-ordered-fields"
+      },
+      {
+        "source": "HexRCF/SPEC/hex-rcf.md",
+        "link": "../../SPEC/Libraries/hex-real-formula.md"
+      },
+      {
+        "source": "HexRCF/SPEC/hex-rcf.md",
+        "link": "../../SPEC/real-closure-execution.md"
+      },
+      {
+        "source": "HexRCF/SPEC/hex-rcf.md",
+        "link": "../../HexPoly/SPEC/hex-poly.md"
+      },
+      {
+        "source": "HexRCF/SPEC/hex-rcf.md",
+        "link": "../../SPEC/Libraries/hex-real-closure-mathlib.md#finite-sign-realization"
+      },
+      {
+        "source": "HexRCF/SPEC/hex-rcf.md",
+        "link": "../../conformance/HexRCF/CertificationProofs.lean"
+      },
+      {
+        "source": "HexRCF/SPEC/hex-rcf.md",
+        "link": "../../SPEC/testing.md"
+      },
+      {
+        "source": "HexRCF/SPEC/hex-rcf.md",
+        "link": "../../PLAN/Phase4.md#evidence-tracks"
+      },
+      {
+        "source": "HexRCF/SPEC/hex-rcf.md",
+        "link": "../../SPEC/Libraries/hex-ordered-fn.md"
+      },
+      {
+        "source": "HexRCF/SPEC/hex-rcf.md",
+        "link": "../../SPEC/Libraries/hex-ordered-fn-mathlib.md"
+      },
+      {
+        "source": "HexRCF/SPEC/hex-rcf.md",
+        "link": "../../SPEC/Libraries/hex-sturm.md"
+      },
+      {
+        "source": "HexRCF/SPEC/hex-rcf.md",
+        "link": "../../SPEC/Libraries/hex-sturm-mathlib.md"
+      },
+      {
+        "source": "HexRCF/SPEC/hex-rcf.md",
+        "link": "../../SPEC/Libraries/hex-sign-det.md"
+      },
+      {
+        "source": "HexRCF/SPEC/hex-rcf.md",
+        "link": "../../SPEC/Libraries/hex-sign-det-mathlib.md"
+      },
+      {
+        "source": "HexRCF/SPEC/hex-rcf.md",
+        "link": "../../SPEC/Libraries/hex-real-closure.md"
+      },
+      {
+        "source": "HexRCF/SPEC/hex-rcf.md",
+        "link": "../../SPEC/Libraries/hex-real-closure-mathlib.md"
+      },
+      {
+        "source": "reports/hexrcf-native-samples.md",
+        "link": "../conformance/HexRCF/NativeSamplesConformance.lean"
+      },
+      {
+        "source": "reports/hexrcf-native-samples.md",
+        "link": "data/hexrcf-native-samples/context.json"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../HexRCF/SPEC/hex-rcf.md#planned-real-coefficient-extension"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../PLAN/Phase4.md#evidence-tracks"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../SPEC/real-closure-execution.md"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../HexRCF/HandlerTests.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/CheckedConversions.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/NormalizedCoefficients.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/RootAliasesConformance.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/CertificationProofs.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/SuppliedIrreducible.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/SuppliedIrreducibleProofs.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/AlgebraicDivision.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/CheckedConversions.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/PreparedCoefficients.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/FieldSpecializeConformance.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/TowerSamples.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "hexrcf-irreducibility-cost.md"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/SuppliedBudget.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../adapters/HexRCF/RealCoefficients/NativeFormula.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/NativeFormulaConformance.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "hexrcf-native-formula.md"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "hexrcf-catalog-gather.md"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/GatherCatalog.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../adapters/HexRCF/RealCoefficients/ReconciledGather.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/GatherCatalog.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "hexrcf-reconciled-gather.md"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../adapters/HexRCF/RealCoefficients/InverseReplay.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/SelectedRoot/InverseReplay.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/SelectedRoot/InverseControls.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../adapters/HexRCF/RealCoefficients/RegisteredGather.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/RegisteredGatherConformance.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/GatherCatalog.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "hexrcf-registered-many.md"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "hexrcf-registered-gather.md"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/SelectedRoot/Proofs.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/SelectedRoot/Refusals.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/SelectedRoot/Audit.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance-fixtures/HexRCF/selected-root.json"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../scripts/rcf/selected_literals.py"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/SelectedRoot/PackingReplay.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/SelectedRoot/PackingMissing.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/SelectedRoot/PackingAudit.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "hexrcf-selected-packing.md"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/SelectedRoot/ByteProofs.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/SelectedRoot/ByteAudit.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/SelectedRoot/ByteChecks.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "hexrcf-selected-root.md#byte-decoding-of-the-same-selected-row"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/RealizationData.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/Realization.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/FiniteReplay.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/PreparedCoefficients.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/NumberField.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/Samples.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/SignIndex.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/GeneratorWindow.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/FieldRootsConformance.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/ProductionProgress.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/AlgebraicProgress.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/CarrierModes.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/NamedConstants.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/RegisteredConstants.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/CoarseConstants.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/Gather.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/RationalRoots.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/AlgebraicRoots.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../adapters/HexRCF/RealCoefficients/AlgebraicRoot.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/MixedConstants.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../HexManual/Chapters/HexRCF.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "hexrcf-validation-proofs.md"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "hexrcf-production-proofs.md"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "hexrcf-production-sharing.md"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "hexrcf-literal-proofs.md"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "hexrcf-interval-proofs.md"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "hexrcf-index-proofs.md"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "hexrcf-window-proofs.md"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "hexrcf-precision-proofs.md"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "hexrcf-precision-full-proofs.md"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "hexrcf-precision-production-proofs.md"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "hexrcf-common-root-proofs.md"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "hexrcf-carrier-proofs.md"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "hexrcf-replay-proofs.md"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "hexrcf-scaling-proofs.md"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "hexrcf-selected-catalog-compiled.md"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../HexSturm/Basic.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "hexrcf-selected-root.md"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "hexrcf-selected-catalog.md"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../adapters/HexRCF/RealCoefficients/NativeSpecialize.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../conformance/HexRCF/NativeSpecializeConformance.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "hexrcf-native-specialize.md"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "hexrcf-native-samples.md"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "hexrcf-common-kernel.md"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../adapters/HexRealClosureMathlib/NativeRealization.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../adapters/HexRealClosureMathlib/SignEvidence.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../HexSignDet/DependenciesCodec.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../HexSignDet/DagOperations.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../HexRealClosure/InverseEquation.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../adapters/HexRealClosureMathlib/SuppliedInverse.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../HexSturmMathlib/Soundness.lean"
+      },
+      {
+        "source": "reports/hexrcf-adapter-evidence.md",
+        "link": "../HexSturmMathlib.lean"
+      }
+    ]
+  },
+  "protected_paths_unchanged": true,
+  "manual_boundary": "Six desktop/narrow captures visually inspected. Paragraphs fit; narrow code scrolls horizontally. No whole-page overflow audit.",
+  "remaining": "Frozen history/arithmetic/cell coverage, exact source-goal quotation, automatic common-field certificates, accepted algebraic completeness and full-scope evidence."
+}

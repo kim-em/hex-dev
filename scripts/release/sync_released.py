@@ -6,21 +6,20 @@ For each repo in scripts/release/released.yml (topological order), this:
   2. removes everything outside the entry's managed paths and the unmanaged
      skeleton, then overwrites its *managed* paths and centrally owned CI
      workflow,
-  3. for managed-source repos, enables native Verso docstrings and carries the
-     `lean_lib` build settings this monorepo's lakefile gives the library,
-  4. copies the stable Lean toolchain and exact external dependency pins,
-  5. rewrites cross-repo Hex requirements to one shared semantic version,
+  3. generates the repo's Lake file from released.yml and this monorepo's
+     lakefile (see `render_lakefile`), requiring other Hex repos at one shared
+     semantic version,
+  4. copies the stable Lean toolchain,
+  5. rewrites the lockfile to that version and the exact external pins,
   6. commits `chore: sync from hex-dev@<sha>`, pushes to `main`, and tags the
      resulting commit with that version
      (unless --dry-run, which prints the planned changes and pin rewrites).
 
-A `pins_only` entry (the `leanprover/hex` aggregate) receives the managed CI
-workflow but no library source or Verso rewrite from the monorepo. The sync
-re-pins it to the version published this run. Listed last, after its upstreams,
-its lockfile resolves those requirements to the freshly-pushed commits. Its
-other managed artifact is the
-README, rendered by `aggregate_readme.py` from a template plus the manifest's
-`component:` labels so the published library table cannot fall behind.
+A `pins_only` entry (the `leanprover/hex` aggregate) receives generated Lake
+requirements and a generated public umbrella from the manifest's aggregated
+entries, alongside managed CI and README. Listed last, its lockfile resolves
+those requirements to freshly synchronized commits. Its README is rendered by
+`aggregate_readme.py` from a template and the manifest's `component:` labels.
 
 Auth (non-dry-run): tokens from --token (repeatable) or the environment
 ($RELEASED_SYNC_PAT, $RELEASED_SYNC_PAT_2, ... in numeric order) are used as
@@ -41,6 +40,8 @@ from __future__ import annotations
 
 import argparse
 import base64
+import functools
+import hashlib
 import json
 import os
 import re
@@ -60,6 +61,10 @@ import yaml
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import aggregate_readme  # noqa: E402
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from check_trust_surface import code_without_comments_and_strings  # noqa: E402
+from libgraph import PROOF_IMPORT_ROOTS  # noqa: E402
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = REPO_ROOT / "scripts" / "release" / "released.yml"
@@ -95,31 +100,10 @@ TOKEN_HELP = (
 LAKE_MANIFEST = REPO_ROOT / "lake-manifest.json"
 LAKEFILE = REPO_ROOT / "lakefile.lean"
 
-# `lean_lib` settings a consumer of a released library sees. They are derived
-# from this monorepo's lakefile rather than declared in released.yml, because
-# hex-dev is the source of truth for how a library is built and a second,
-# hand-maintained copy of that decision drifts.
-#
-# `precompileModules` is one setting the sync writes: it decides whether Lake
-# builds and ships the module dynlib carrying a library's `@[extern]` symbols,
-# so a mirror that drops it still compiles yet fails in any downstream package
-# that evaluates the library during elaboration ("Could not find native
-# implementation of external declaration"). It is a self-contained Boolean,
-# expressible in both Lake file flavours, so the sync can insert it.
-#
-# `moreLinkObjs` is also written for Lean Lake files. It attaches a managed
-# native target to the library that uses it, without exporting the target to
-# every executable in a downstream package.
-#
-# `extraDepTargets` and `moreLinkArgs` are validated but never written.
-# The former can name targets defined only in the mirror's own unmanaged Lake
-# skeleton, while the latter may be an arbitrary Lean expression (HexLLL's is
-# a platform conditional) with no `lakefile.toml` form. Synthesizing either
-# could produce a Lake file that does not elaborate, so the sync reports a
-# missing setting and refuses to publish instead.
-WRITTEN_LIB_SETTINGS = ("precompileModules", "moreLinkObjs")
-CHECKED_LIB_SETTINGS = ("extraDepTargets", "moreLinkArgs")
-BUILD_LIB_SETTINGS = WRITTEN_LIB_SETTINGS + CHECKED_LIB_SETTINGS
+# The `lean_lib` settings that decide how a consumer builds a library; the
+# generated Lake file copies them from this monorepo's lakefile.
+BUILD_LIB_SETTINGS = ("precompileModules", "moreLinkObjs", "extraDepTargets",
+                      "moreLinkArgs")
 SEMVER = re.compile(r"^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$")
 
 
@@ -135,12 +119,12 @@ def next_release_version(current: object = None) -> str:
     return f"v{major}.{minor + 1}.0"
 
 
-def release_transaction(document: dict, source_sha: str) -> tuple[str, set[str], bool]:
+def release_transaction(document: dict, source_sha: str,
+                        advance_source: bool = False) -> tuple[str, set[str], bool]:
     """Return ``(version, completed repos, resumed)`` for the next publication.
 
-    A pending transaction is deliberately tied to one hex-dev commit. This
-    prevents a retry from placing the same version on different source states
-    after main has advanced.
+    Retries use the same source unless --advance-source is explicit. main()
+    then checks the saved exports and immutable tags before any new push.
     """
     pending = document.get("_pending_release")
     if pending is None:
@@ -156,18 +140,119 @@ def release_transaction(document: dict, source_sha: str) -> tuple[str, set[str],
             or not all(isinstance(repo, str) for repo in repos)
             or len(repos) != len(set(repos))):
         raise ValueError("invalid _pending_release record")
+    for field in ("fingerprints", "sources"):
+        values = pending.get(field, {})
+        if (not isinstance(values, dict) or set(values) - set(repos) or
+                any(not isinstance(value, str) for value in values.values())):
+            raise ValueError(f"invalid pending {field}")
+    planned = pending.get("planned_repos", repos)
+    if (not isinstance(planned, list) or any(not isinstance(name, str) for name in planned)
+            or len(planned) != len(set(planned)) or set(repos) - set(planned)):
+        raise ValueError("invalid pending repository set")
     expected = next_release_version(document.get("_version"))
     if version != expected:
         raise ValueError(
             f"pending release is {version}, but {expected} must follow the "
             "completed release"
         )
-    if source != source_sha:
+    if source != source_sha and not advance_source:
         raise RuntimeError(
             f"release {version} is pending from hex-dev@{source[:12]}; rerun "
-            "the sync at that commit before starting another release"
+            "the sync at that commit, or use --advance-source with unchanged "
+            "published sources, before starting another release"
         )
     return version, set(repos), True
+
+
+def release_selection(entries: list[dict], completed: set[str],
+                      only: list[str]) -> tuple[set[str], list[dict]]:
+    """Select roots, requiring their whole Hex closure at the pending version."""
+    by_name = {e["repo"].split("/")[-1]: e for e in entries}
+    selected = {name for value in only for name in re.split(r"[\s,]+", value) if name}
+    if only and (not selected or selected - by_name.keys()):
+        raise ValueError(f"--only matches unknown repositories: {sorted(selected - by_name.keys())}")
+    if not only:
+        selected = set(by_name)
+    earlier = set(completed)
+    for entry in entries:
+        name = entry["repo"].split("/")[-1]
+        if name not in selected or name in completed:
+            continue
+        needed = set(entry.get("pins") or [])
+        if entry.get("pins_only"):
+            needed |= set(by_name) - {name}
+        missing = needed - earlier
+        if missing:
+            raise ValueError(f"{name} needs earlier publication of {', '.join(sorted(missing))}; "
+                             "include its dependencies in --only or publish them first")
+        earlier.add(name)
+    return selected, [e for e in entries
+                      if e["repo"].split("/")[-1] in selected - completed]
+
+
+def publication_fingerprint(entry: dict, entries: list[dict], version: str,
+                            pins: dict[str, dict[str, str]]) -> str:
+    """Hash owned exports and build settings, allowing external pin upgrades.
+
+    Previously published repositories retain their actual dependency pins.
+    Normalize external revisions only for this source-compatibility check;
+    consumer staging always uses the real published files and pins.
+    """
+    canonical = {url: dict(pin, rev="external-pin", inputRev="external-pin")
+                 for url, pin in pins.items()}
+    owners = {e["repo"].split("/")[-1]: e["repo"].split("/")[0] for e in entries}
+    with tempfile.TemporaryDirectory() as directory:
+        root = Path(directory)
+        for source, _, _ in managed_paths(entry):
+            if not source.exists():
+                raise RuntimeError(f"missing published source: {source}")
+        apply_paths(entry, root)
+        write_lakefile(entry, root, entries, version, owners, canonical)
+        (root / "lean-toolchain").write_bytes(TOOLCHAIN.read_bytes())
+        return tree_fingerprint(root)
+
+
+def tree_fingerprint(root: Path, unpublished: set[str] | None = None) -> str:
+    """Hash the complete rendered tree, including locks and preserved files.
+
+    Commits for this phase's unpublished Hex dependencies cannot be known at
+    staging time. Only those revisions are normalized; their sources are
+    checked by their own tree fingerprints before publication.
+    """
+    digest = hashlib.sha256()
+    for path in sorted(root.rglob("*")):
+        relative = path.relative_to(root)
+        if ".git" in relative.parts or not (path.is_file() or path.is_symlink()):
+            continue
+        name = relative.as_posix().encode()
+        data = os.readlink(path).encode() if path.is_symlink() else path.read_bytes()
+        if path.name == "lake-manifest.json" and not path.is_symlink():
+            document = json.loads(data)
+            for package in document.get("packages", []):
+                url = package.get("url", "")
+                if HEX_PACKAGE_URL.search(url) and _git_url(url).split("/")[-1] in (unpublished or set()):
+                    package["rev"] = "unpublished-hex"
+            data = json.dumps(document, sort_keys=True).encode()
+        kind = b"symlink" if path.is_symlink() else b"file"
+        digest.update(kind + bytes([bool(path.lstat().st_mode & 0o111)]))
+        digest.update(len(name).to_bytes(8, "big") + name)
+        digest.update(len(data).to_bytes(8, "big") + data)
+    return digest.hexdigest()
+
+
+def reuse_published(entry: dict, expected: str, version: str,
+                    stage: Path | None = None) -> None:
+    """Verify a completed mirror and optionally stage its immutable contents."""
+    name = entry["repo"].split("/")[-1]
+    with tempfile.TemporaryDirectory() as directory:
+        clone = Path(directory) / name
+        run(["git", "clone", "--depth", "1", clone_url(entry["repo"], None), str(clone)],
+            capture=True)
+        head = run(["git", "rev-parse", "HEAD"], cwd=clone, capture=True)
+        if head != expected or remote_tag_target(clone, version) != expected:
+            raise RuntimeError(f"{entry['repo']}@main and {version} must both remain at {expected}")
+        if stage is not None:
+            shutil.copytree(clone, stage / name, ignore=shutil.ignore_patterns(".git"))
 
 
 def write_baseline(path: Path, document: dict) -> None:
@@ -175,6 +260,25 @@ def write_baseline(path: Path, document: dict) -> None:
     temporary = path.with_name(f".{path.name}.tmp")
     temporary.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
     temporary.replace(path)
+
+
+def load_baseline(path: Path, branch: str) -> None:
+    """Load the live baseline; bootstrap only when its branch is absent.
+
+    Remote, fetch and JSON failures must not produce a publishable baseline.
+    In particular, a network failure is not evidence that the branch is absent.
+    """
+    advertised = run(["git", "ls-remote", "--heads", "origin", f"refs/heads/{branch}"],
+                     cwd=REPO_ROOT, capture=True)
+    if advertised:
+        run(["git", "fetch", "origin", branch], cwd=REPO_ROOT)
+        document = json.loads(run(["git", "show", "FETCH_HEAD:synced.json"],
+                                  cwd=REPO_ROOT, capture=True))
+    else:
+        document = json.loads(BASELINE.read_text(encoding="utf-8"))
+    if not isinstance(document, dict):
+        raise RuntimeError("release baseline must be a JSON object")
+    write_baseline(path, document)
 
 
 def run(cmd: list[str], cwd: Path | None = None, capture: bool = False) -> str:
@@ -653,6 +757,57 @@ def external_pins() -> dict[str, dict[str, str]]:
     return pins
 
 
+def mathlib_dependencies() -> list[dict]:
+    """Read the lockfile at the exact Mathlib revision selected for publication.
+
+    Staging runners have no Lake checkout. Fetch the immutable lockfile rather
+    than relying on a possibly stale local checkout or resolving moving refs.
+    """
+    pins = external_pins()
+    pin = next((p for p in pins.values() if p["name"] == "mathlib"), None)
+    if pin is None:
+        raise RuntimeError("Mathlib publication needs a locked Mathlib dependency")
+    return _mathlib_dependencies_at(pin["url"], pin["rev"], REPO_ROOT)
+
+
+@functools.lru_cache(maxsize=None)
+def _mathlib_dependencies_at(git_url: str, revision: str, source: Path) -> list[dict]:
+    match = re.fullmatch(r"https://github.com/([^/]+)/([^/]+)", _git_url(git_url))
+    if match is None or not re.fullmatch(r"[0-9a-f]{40}", revision):
+        raise RuntimeError("Mathlib publication requires an immutable GitHub commit")
+    local = source / ".lake/packages/mathlib"
+    if (local / "lake-manifest.json").is_file() and run(
+            ["git", "rev-parse", "HEAD"], cwd=local, capture=True) == revision:
+        document = json.loads(run(["git", "show", f"{revision}:lake-manifest.json"],
+                                  cwd=local, capture=True))
+    else:
+        url = f"https://raw.githubusercontent.com/{match[1]}/{match[2]}/{revision}/lake-manifest.json"
+        with urllib.request.urlopen(url, timeout=60) as response:
+            document = json.load(response)
+    packages = document["packages"]
+    if any(p.get("type") != "git" or not p.get("url") or not p.get("rev")
+           for p in packages):
+        raise RuntimeError("Mathlib's dependency lockfile must contain immutable Git sources")
+    return packages
+
+
+def check_mathlib_hex_pins(packages: list[dict], entries: list[dict],
+                           completed: set[str], baseline: dict[str, str]) -> None:
+    """Mathlib's Hex dependencies must already have their exact release tags."""
+    catalog = {e["repo"].split("/")[-1]: e for e in entries}
+    for package in packages:
+        url = package.get("url", "")
+        if not HEX_PACKAGE_URL.search(url):
+            continue
+        name = _git_url(url).split("/")[-1]
+        entry = catalog.get(name)
+        if (entry is None or name not in completed or
+                package["rev"] != baseline.get(name) or
+                package["name"] != entry.get("lean_lib_name", entry.get("lib"))):
+            raise RuntimeError(f"Mathlib must pin the already-published commit of {name}; "
+                               "publish its foundation phase and update Mathlib first")
+
+
 def rewrite_toolchains(clone: Path) -> list[str]:
     """Use one stable Lean toolchain in the root and every side project."""
     notes: list[str] = []
@@ -730,133 +885,20 @@ def source_build_settings(lib: str, path: Path | None = None) -> dict[str, str]:
             if name in BUILD_LIB_SETTINGS}
 
 
-def _toml_lib_block(text: str, lib: str) -> re.Match[str] | None:
-    """The `[[lean_lib]]` array-of-tables entry naming `lib`, if there is one."""
-    for block in re.finditer(r"(?ms)^\[\[lean_lib\]\][ \t]*\n(.*?)(?=^\[|\Z)", text):
-        if re.search(r'(?m)^[ \t]*name[ \t]*=[ \t]*"' + re.escape(lib) + r'"[ \t]*$',
-                     block.group(1)):
-            return block
-    return None
-
-
-def _toml_settings(body: str) -> dict[str, str]:
-    """Keys assigned in a TOML table body (single-line values suffice here)."""
-    return {match.group(1): match.group(2).strip() for match in re.finditer(
-        r"(?m)^[ \t]*([A-Za-z][A-Za-z0-9_]*)[ \t]*=(.*)$", body)}
-
-
-def rewrite_lib_settings(entry: dict, clone: Path) -> list[str]:
-    """Carry this monorepo's `lean_lib` build settings into the mirror.
-
-    The mirror's Lake skeleton is otherwise unmanaged, and a library built one
-    way here and another way there is a defect its own CI cannot see: the mirror
-    builds, and only a downstream consumer discovers the difference. So the sync
-    writes `precompileModules` and Lean `moreLinkObjs` into the mirror's
-    `lean_lib` when this monorepo sets them and the mirror does not, exactly as
-    it rewrites pins, and refuses to publish when a setting it cannot safely
-    synthesize has gone missing. See `BUILD_LIB_SETTINGS`.
-    """
-    if entry.get("pins_only"):
-        return []
-    lib = entry["lib"]
-    required = source_build_settings(lib)
-    if not required:
-        return []
-    lakefile = clone / f"lakefile.{entry['lakefile']}"
-    text = lakefile.read_text(encoding="utf-8")
-    toml = entry["lakefile"] == "toml"
-    block = _toml_lib_block(text, lib) if toml else _lean_lib_header(text, lib)
-    if block is None:
-        raise RuntimeError(
-            f"released Lake file {lakefile} declares no lean_lib {lib}, so the "
-            f"build settings hex-dev gives it ({', '.join(sorted(required))}) "
-            "cannot be carried across"
-        )
-    if toml:
-        body_start = block.start(1)
-        body = block.group(1)
-        present = _toml_settings(body)
-    else:
-        body_start = block.end()
-        body = text[body_start:_block_end(text, body_start)]
-        present = _lean_settings(body)
-    for setting in CHECKED_LIB_SETTINGS:
-        if setting in required and setting not in present:
-            raise RuntimeError(
-                f"released Lake file {lakefile} must set {setting} on lean_lib "
-                f"{lib}, as hex-dev's lakefile.lean does; the sync cannot write "
-                "it, because it names targets defined only in this repository's "
-                "own Lake skeleton"
-            )
-    notes: list[str] = []
-    if "precompileModules" in required:
-        setting = "precompileModules"
-        if required[setting] != "true":
-            raise RuntimeError(
-                f"hex-dev's lakefile.lean sets {setting} on lean_lib {lib} to "
-                f"{required[setting]!r}; only `true` can be published"
-            )
-        if present.get(setting) != "true":
-            if setting in present:
-                raise RuntimeError(
-                    f"released Lake file {lakefile} sets {setting} on lean_lib "
-                    f"{lib} to {present[setting]!r}, contradicting hex-dev's `true`"
-                )
-            if toml:
-                insert_at = body_start + len(body.rstrip())
-                text = f"{text[:insert_at]}\n{setting} = true{text[insert_at:]}"
-            else:
-                opener = "" if block.group("where") else " where"
-                text = f"{text[:body_start]}{opener}\n  {setting} := true{text[body_start:]}"
-            notes.append(f"  {setting} on lean_lib {lib} ({lakefile.name})")
-    if "moreLinkObjs" in required:
-        setting = "moreLinkObjs"
-        expected = required[setting]
-        if toml:
-            raise RuntimeError(
-                f"hex-dev's lakefile.lean sets {setting} on lean_lib {lib}, but "
-                "the sync only publishes managed target references to Lean Lake files"
-            )
-        if setting in present and present[setting] != expected:
-            raise RuntimeError(
-                f"released Lake file {lakefile} sets {setting} on lean_lib "
-                f"{lib} to {present[setting]!r}, contradicting hex-dev's "
-                f"{expected!r}"
-            )
-        if setting not in present:
-            block = _lean_lib_header(text, lib)
-            assert block is not None
-            body_start = block.end()
-            body_end = _block_end(text, body_start)
-            body = text[body_start:body_end]
-            insert_at = body_start + len(body.rstrip())
-            text = f"{text[:insert_at]}\n  {setting} := {expected}{text[insert_at:]}"
-            notes.append(f"  {setting} on lean_lib {lib} ({lakefile.name})")
-    if notes:
-        if toml:
-            try:
-                tomllib.loads(text)
-            except tomllib.TOMLDecodeError as err:
-                raise RuntimeError(
-                    f"build-setting rewrite produced invalid TOML in {lakefile}: "
-                    f"{err}"
-                ) from err
-        lakefile.write_text(text, encoding="utf-8")
-    return notes
-
-
 def lake_declaration(text: str, name: str) -> tuple[int, int]:
     """Locate an unindented named Lake declaration and its indented body.
 
-    Managed declarations use `def`, `target`, or `extern_lib` without
-    attributes. Supporting both target forms lets the sync migrate an old
-    package-wide `extern_lib` into a library-scoped custom `target`. Refuse
+    Managed declarations use `def`, `target`, `extern_lib` or `lean_lib`
+    without attributes. Supporting both target forms lets the sync migrate an
+    old package-wide `extern_lib` into a library-scoped custom `target`, and
+    `lean_lib` carries a native carrier or sidecar library (see
+    `HexArithNative`). Refuse
     missing or ambiguous declarations rather than modifying the wrong recipe.
     """
     if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_']*", name):
         raise RuntimeError(f"invalid Lake declaration name: {name!r}")
     matches = list(re.finditer(
-        r"(?m)^(?:private |public )?(?:def|target|extern_lib) "
+        r"(?m)^(?:private |public )?(?:def|target|extern_lib|lean_lib) "
         + re.escape(name) + r"(?=\s|\()[^\n]*\n",
         text,
     ))
@@ -865,141 +907,6 @@ def lake_declaration(text: str, name: str) -> tuple[int, int]:
     start = matches[0].start()
     end = _block_end(text, matches[0].end())
     return start, end
-
-
-def rewrite_lake_declarations(entry: dict, clone: Path) -> list[str]:
-    """Copy selected build declarations from the source-of-truth Lake file."""
-    names = entry.get("lake_declarations", [])
-    if not names:
-        return []
-    if (entry.get("lakefile") != "lean" or not isinstance(names, list)
-            or not all(isinstance(name, str) for name in names)
-            or len(names) != len(set(names))):
-        raise RuntimeError("lake_declarations requires a Lean Lake file and unique helper names")
-    source = LAKEFILE.read_text(encoding="utf-8")
-    path = clone / "lakefile.lean"
-    text = path.read_text(encoding="utf-8")
-    notes = []
-    for name in names:
-        src_start, src_end = lake_declaration(source, name)
-        dst_start, dst_end = lake_declaration(text, name)
-        definition = source[src_start:src_end].rstrip() + "\n\n"
-        if text[dst_start:dst_end] != definition:
-            text = text[:dst_start] + definition + text[dst_end:]
-            notes.append(f"  build declaration {name} (lakefile.lean)")
-    if notes:
-        path.write_text(text, encoding="utf-8")
-    return notes
-
-
-def rewrite_test_target(entry: dict, clone: Path) -> list[str]:
-    """Build exactly the release regressions declared by the manifest.
-
-    Test modules live in the managed library tree, so requiring a hand-edited
-    mirror target whenever that list changes defeats publish-out synchronization.
-    The mirror's conventional ``<Lib>Tests`` target is therefore generated from
-    ``test_modules`` while the rest of its Lake skeleton remains local.
-    """
-    modules = entry.get("test_modules") or []
-    if entry.get("pins_only") or not modules:
-        return []
-    lib = entry["lib"]
-    target = f"{lib}Tests"
-    lakefile = clone / f"lakefile.{entry['lakefile']}"
-    text = lakefile.read_text(encoding="utf-8")
-    original = text
-    if entry["lakefile"] == "toml":
-        rendered = "globs = " + json.dumps(modules)
-        block = _toml_lib_block(text, target)
-        if block is None:
-            text = text.rstrip() + (
-                f'\n\n[[lean_lib]]\nname = "{target}"\n{rendered}\n'
-            )
-        else:
-            body = block.group(1)
-            rewritten, count = re.subn(
-                r"(?m)^[ \t]*globs[ \t]*=[ \t]*\[[^\]]*\][ \t]*$",
-                rendered,
-                body,
-                count=1,
-            )
-            if count == 0:
-                rewritten = body.rstrip() + f"\n{rendered}\n"
-            text = text[:block.start(1)] + rewritten + text[block.end(1):]
-        try:
-            tomllib.loads(text)
-        except tomllib.TOMLDecodeError as exc:
-            raise RuntimeError(
-                f"release-test rewrite produced invalid TOML in {lakefile}: {exc}"
-            ) from exc
-    else:
-        rendered = "  globs := #[" + ", ".join(f"`{module}" for module in modules) + "]"
-        header = _lean_lib_header(text, target)
-        if header is None:
-            text = text.rstrip() + f"\n\nlean_lib {target} where\n{rendered}\n"
-        else:
-            body_start = header.end()
-            body_end = _block_end(text, body_start)
-            body = text[body_start:body_end]
-            rewritten, count = re.subn(
-                r"(?m)^[ \t]+globs[ \t]*:=[ \t]*#\[[^\]]*\][ \t]*$",
-                rendered,
-                body,
-                count=1,
-            )
-            if count == 0:
-                opener = "" if header.group("where") else " where"
-                text = text[:body_start] + opener + "\n" + rendered + text[body_start:]
-            else:
-                text = text[:body_start] + rewritten + text[body_end:]
-    if text == original:
-        return []
-    lakefile.write_text(text, encoding="utf-8")
-    return [f"  release tests on lean_lib {target} ({lakefile.name})"]
-
-
-def validate_skeleton(entry: dict, clone: Path) -> None:
-    """Check the unmanaged Lake file carries every release build root.
-
-    Source synchronization deliberately does not overwrite a released
-    repository's Lake configuration.  This check keeps that boundary explicit:
-    a renamed executable or newly separate development umbrella must be added
-    to the mirror skeleton before publication can proceed.
-    """
-    lakefile = clone / f"lakefile.{entry['lakefile']}"
-    if not lakefile.is_file():
-        raise RuntimeError(
-            f"released repository expects {lakefile.name}, but it is missing: "
-            f"{clone}"
-        )
-    text = lakefile.read_text(encoding="utf-8")
-    for module in entry.get("test_modules", []):
-        if module not in text:
-            raise RuntimeError(
-                f"released Lake file {lakefile} does not build test module "
-                f"{module}"
-            )
-    for module in entry.get("build_modules", []):
-        if module not in text:
-            raise RuntimeError(
-                f"released Lake file {lakefile} does not build development "
-                f"module {module}"
-            )
-    for executable, module in entry.get("executables", {}).items():
-        executable_pattern = (
-            rf"(?ms)^\s*lean_exe\s+[«\"]?{re.escape(executable)}[»\"]?\s+where\s*$"
-            rf"(?P<body>.*?)(?=^\S|\Z)"
-        )
-        executable_match = re.search(executable_pattern, text)
-        root_pattern = rf"(?m)^\s*root\s*:=\s*`{re.escape(module)}\s*$"
-        if (
-            executable_match is None
-            or not re.search(root_pattern, executable_match.group("body"))
-        ):
-            raise RuntimeError(
-                f"released Lake file {lakefile} must define executable "
-                f"{executable} at {module}"
-            )
 
 
 def validate_ci_helpers(entry: dict, clone: Path) -> None:
@@ -1030,289 +937,6 @@ def validate_ci_helpers(entry: dict, clone: Path) -> None:
         )
 
 
-def rewrite_external_pins(clone: Path,
-                          pins: dict[str, dict[str, str]]) -> list[str]:
-    """Synchronize direct non-Hex requirements with the monorepo lock.
-
-    Lake files retain a readable tag or branch in ``inputRev`` form. Their
-    manifests carry the exact resolved commit, updated separately below.
-    """
-    notes: list[str] = []
-    pins_by_name = {pin["name"].lower(): pin for pin in pins.values()}
-    for lakefile in _lake_files(clone, ["lakefile.toml", "lakefile.lean"]):
-        text = lakefile.read_text(encoding="utf-8")
-        original = text
-        if lakefile.name == "lakefile.toml":
-            # A Reservoir requirement commonly has only `name`, `scope`, and
-            # `rev`; it need not repeat the resolved Git URL.  Rewrite each
-            # complete require table by parsed package identity, while
-            # preserving the author's TOML formatting.
-            def rewrite_require(match: re.Match[str]) -> str:
-                block = match.group(0)
-                try:
-                    requirement = tomllib.loads(block)["require"][0]
-                except (KeyError, IndexError, tomllib.TOMLDecodeError) as exc:
-                    raise RuntimeError(
-                        f"cannot parse require table in {lakefile}: {exc}"
-                    ) from exc
-                git = requirement.get("git")
-                pin = (
-                    pins.get(_git_url(git))
-                    if isinstance(git, str)
-                    else pins_by_name.get(str(requirement.get("name", "")).lower())
-                )
-                if pin is None:
-                    return block
-                if "rev" not in requirement:
-                    raise RuntimeError(
-                        f"direct external requirement {pin['name']} in "
-                        f"{lakefile} has no rev"
-                    )
-                rewritten, count = re.subn(
-                    r'(?m)^(\s*rev\s*=\s*")[^"]+(")',
-                    lambda rev_match: (
-                        rev_match.group(1)
-                        + pin["inputRev"]
-                        + rev_match.group(2)
-                    ),
-                    block,
-                    count=1,
-                )
-                if count != 1:
-                    raise RuntimeError(
-                        f"cannot locate rev for {pin['name']} in {lakefile}"
-                    )
-                if rewritten != block:
-                    notes.append(
-                        f"  external pin {pin['url']} -> {pin['inputRev']} "
-                        f"({lakefile.relative_to(clone)})"
-                    )
-                return rewritten
-
-            text = re.sub(
-                r"(?ms)^\[\[require\]\][^\n]*\n.*?(?=^\[|\Z)",
-                rewrite_require,
-                text,
-            )
-            if text != original:
-                lakefile.write_text(text, encoding="utf-8")
-            continue
-        for normalized, pin in pins.items():
-            before = text
-            url_pattern = re.escape(normalized) + r"(?:\.git)?"
-            pattern = (r'("' + url_pattern
-                       + r'"\s*@\s*")[^"]+(")')
-            text, count = re.subn(
-                pattern,
-                lambda match, rev=pin["inputRev"]:
-                    match.group(1) + rev + match.group(2),
-                text,
-                flags=re.IGNORECASE,
-            )
-            if count and text != before:
-                notes.append(
-                    f"  external pin {pin['url']} -> {pin['inputRev']} "
-                    f"({lakefile.relative_to(clone)})")
-        if text != original:
-            lakefile.write_text(text, encoding="utf-8")
-    return notes
-
-
-def _flatten_lean_options(options: dict, prefix: str = "") -> list[tuple[str, object]]:
-    """Flatten Lake's dotted-table option encoding to ``(name, value)`` pairs."""
-    flattened: list[tuple[str, object]] = []
-    for key, value in options.items():
-        name = f"{prefix}.{key}" if prefix else key
-        if isinstance(value, dict):
-            flattened.extend(_flatten_lean_options(value, name))
-        else:
-            flattened.append((name, value))
-    return flattened
-
-
-def _render_lean_options(options: list[tuple[str, object]]) -> str:
-    """Render options using Lake's array form, which permits prefix option names."""
-    lines = ["leanOptions = ["]
-    for name, value in options:
-        if isinstance(value, bool):
-            rendered = "true" if value else "false"
-        elif isinstance(value, int) and value >= 0:
-            rendered = str(value)
-        elif isinstance(value, str):
-            rendered = json.dumps(value)
-        else:
-            raise RuntimeError(f"unsupported Lean option value for {name}: {value!r}")
-        lines.append(f"  {{ name = {json.dumps(name)}, value = {rendered} }},")
-    lines.append("]")
-    return "\n".join(lines)
-
-
-def _replace_toml_lean_options(text: str, source: Path) -> str:
-    """Add the Verso options while preserving all existing package options."""
-    try:
-        parsed = tomllib.loads(text)
-    except tomllib.TOMLDecodeError as err:
-        raise RuntimeError(f"invalid TOML in {source}: {err}") from err
-
-    raw_options = parsed.get("leanOptions")
-    if raw_options is None:
-        options: list[tuple[str, object]] = []
-    elif isinstance(raw_options, dict):
-        options = _flatten_lean_options(raw_options)
-    elif isinstance(raw_options, list):
-        options = []
-        for option in raw_options:
-            if (not isinstance(option, dict) or
-                    not isinstance(option.get("name"), str) or
-                    "value" not in option):
-                raise RuntimeError(f"unsupported leanOptions entry in {source}: {option!r}")
-            options.append((option["name"], option["value"]))
-    else:
-        raise RuntimeError(f"unsupported leanOptions value in {source}: {raw_options!r}")
-
-    required = {"doc.verso": True, "doc.verso.suggestions": False}
-    merged: list[tuple[str, object]] = []
-    seen: set[str] = set()
-    for name, value in options:
-        if name in seen:
-            raise RuntimeError(f"duplicate Lean option {name} in {source}")
-        seen.add(name)
-        merged.append((name, required.get(name, value)))
-    for name, value in required.items():
-        if name not in seen:
-            merged.append((name, value))
-    replacement = _render_lean_options(merged)
-
-    section = re.search(r"(?m)^\[leanOptions\]\s*(?:#.*)?$", text)
-    if section is not None:
-        following = re.search(r"(?m)^\[", text[section.end():])
-        end = section.end() + following.start() if following is not None else len(text)
-        text = text[:section.start()] + replacement + "\n\n" + text[end:]
-    else:
-        assignment = re.search(r"(?m)^leanOptions\s*=", text)
-        if assignment is not None:
-            first_table = re.search(r"(?m)^\[", text)
-            if first_table is not None and assignment.start() > first_table.start():
-                raise RuntimeError(f"cannot locate package leanOptions assignment in {source}")
-            value_start = assignment.end()
-            while value_start < len(text) and text[value_start].isspace():
-                value_start += 1
-            if value_start >= len(text) or text[value_start] not in "[{":
-                raise RuntimeError(f"unsupported leanOptions syntax in {source}")
-            opening = text[value_start]
-            closing = "]" if opening == "[" else "}"
-            depth = 0
-            in_string = False
-            escaped = False
-            end = value_start
-            while end < len(text):
-                char = text[end]
-                if in_string:
-                    if escaped:
-                        escaped = False
-                    elif char == "\\":
-                        escaped = True
-                    elif char == '"':
-                        in_string = False
-                elif char == '"':
-                    in_string = True
-                elif char == opening:
-                    depth += 1
-                elif char == closing:
-                    depth -= 1
-                    if depth == 0:
-                        end += 1
-                        break
-                end += 1
-            else:
-                raise RuntimeError(f"unterminated leanOptions value in {source}")
-            text = text[:assignment.start()] + replacement + text[end:]
-        else:
-            first_table = re.search(r"(?m)^\[", text)
-            insert_at = first_table.start() if first_table is not None else len(text)
-            text = text[:insert_at] + replacement + "\n\n" + text[insert_at:]
-
-    try:
-        tomllib.loads(text)
-    except tomllib.TOMLDecodeError as err:
-        raise RuntimeError(f"Verso rewrite produced invalid TOML in {source}: {err}") from err
-    return text
-
-
-def rewrite_doc_verso(clone: Path) -> list[str]:
-    """Enable native Verso docstrings in every released Lake project.
-
-    Managed Lean sources use native Verso markup, including declaration roles
-    and module-doc headings. Released repos keep their Lake files locally, so
-    the sync must carry the parser options across explicitly.
-    """
-    notes: list[str] = []
-    for lf in _lake_files(clone, ["lakefile.toml", "lakefile.lean"]):
-        text = lf.read_text(encoding="utf-8")
-        orig = text
-        if lf.name == "lakefile.toml":
-            text = _replace_toml_lean_options(text, lf)
-        else:
-            package = re.search(r"(?m)^package\b[^\n]*\bwhere\s*$", text)
-            if package is None:
-                raise RuntimeError(f"cannot find package declaration in {lf}")
-            following = re.search(r"(?m)^\S", text[package.end():])
-            block_end = (package.end() + following.start()
-                         if following is not None else len(text))
-            package_block = text[package.end():block_end]
-            has_verso = re.search(r"⟨`doc\.verso,\s*true⟩", package_block)
-            has_suggestions = re.search(
-                r"⟨`doc\.verso\.suggestions,\s*false⟩", package_block)
-            if has_verso and has_suggestions:
-                pass
-            elif re.search(r"(?m)^\s+leanOptions\s*:=", package_block):
-                raise RuntimeError(
-                    f"cannot safely merge native Verso options into existing "
-                    f"package leanOptions in {lf}")
-            else:
-                insert_at = package.end()
-                options = ("\n  leanOptions := #[⟨`doc.verso, true⟩, "
-                           "⟨`doc.verso.suggestions, false⟩]")
-                text = text[:insert_at] + options + text[insert_at:]
-        if text != orig:
-            lf.write_text(text, encoding="utf-8")
-            notes.append(f"  native Verso docstrings ({lf.relative_to(clone)})")
-    return notes
-
-
-def rewrite_pins(entry: dict, clone: Path, synced: dict[str, str],
-                 dep_owner: dict[str, str], version: str) -> list[str]:
-    """Rewrite every published Hex requirement to the shared release tag."""
-    notes: list[str] = []
-    match_owner = r'(?:kim-em|leanprover)'
-    for lf in _lake_files(clone, ["lakefile.toml", "lakefile.lean"]):
-        text = lf.read_text(encoding="utf-8")
-        orig = text
-        for dep, sha in synced.items():
-            # Match either owner so a pin still carrying the pre-transfer owner is
-            # found, and rewrite it to the owner released.yml declares for this
-            # dep (the single source of truth) — kim-em pre-cutover, leanprover
-            # after. That makes this a no-op until released.yml flips.
-            target = dep_owner.get(dep, "leanprover")
-            tail = re.escape(f"{dep}.git")
-            # toml: `git = "https://github.com/<owner>/<dep>.git"\n  rev = "..."`
-            text, n1 = re.subn(
-                r'(git\s*=\s*"https://github\.com/)' + match_owner
-                + r'(/' + tail + r'"\s*\n\s*rev\s*=\s*")[^"]+(")',
-                lambda m, t=target: m.group(1) + t + m.group(2) + version + m.group(3), text)
-            # lean: `"https://github.com/<owner>/<dep>.git" @ "<version>"`
-            text, n2 = re.subn(
-                r'("https://github\.com/)' + match_owner
-                + r'(/' + tail + r'"\s*@\s*")[^"]+(")',
-                lambda m, t=target: m.group(1) + t + m.group(2) + version + m.group(3), text)
-            if n1 or n2:
-                notes.append(
-                    f"  pin {dep} -> {version} ({sha[:12]}; {lf.relative_to(clone)})")
-        if text != orig:
-            lf.write_text(text, encoding="utf-8")
-    return notes
-
-
 def rewrite_manifest(entry: dict, clone: Path, synced: dict[str, str],
                      dep_owner: dict[str, str],
                      pins: dict[str, dict[str, str]],
@@ -1321,6 +945,11 @@ def rewrite_manifest(entry: dict, clone: Path, synced: dict[str, str],
     """Resolve Hex release tags to exact SHAs in every Lake manifest."""
     notes: list[str] = []
     import json as _json
+    entries = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))["repos"]
+    mathlib_packages = (mathlib_dependencies()
+                        if "mathlib" in closure_external_packages(entry, entries) else [])
+    mathlib_hex = {p["name"]: p for p in mathlib_packages
+                   if HEX_PACKAGE_URL.search(p.get("url", ""))}
     # Match either owner so a manifest still carrying the pre-transfer URL is
     # found; the url's owner is then rewritten to what released.yml declares.
     by_url = {f"github.com/{o}/{dep}.git": dep
@@ -1328,6 +957,8 @@ def rewrite_manifest(entry: dict, clone: Path, synced: dict[str, str],
     for mf in _lake_files(clone, ["lake-manifest.json"]):
         doc = _json.loads(mf.read_text(encoding="utf-8"))
         changed = 0
+        if mf == clone / "lake-manifest.json":
+            changed += _add_closure_externals(entry, doc, notes)
         for pkg in doc.get("packages", []):
             url = pkg.get("url", "")
             pin = pins.get(_git_url(url)) if isinstance(url, str) else None
@@ -1349,12 +980,150 @@ def rewrite_manifest(entry: dict, clone: Path, synced: dict[str, str],
                     pkg["inputRev"] = version
                     changed += 1
                     notes.append(f"  manifest {dep} -> {synced[dep][:12]} ({mf.relative_to(clone)})")
+            if pkg.get("name") in mathlib_hex:
+                # Mathlib's cache compares raw source URLs as well as commits.
+                exact = mathlib_hex[pkg["name"]]
+                for field in ("url", "rev", "subDir"):
+                    if pkg.get(field) != exact.get(field):
+                        pkg[field] = exact.get(field)
+                        changed += 1
         if mf == clone / "lake-manifest.json":
+            # The Lake file names the package after the repository, so the
+            # lockfile's root name follows a repository rename.
+            short = entry.get("repo", "").split("/")[-1]
+            root = short if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", short) else f"«{short}»"
+            if short and doc.get("name") != root:
+                notes.append(f"  manifest name {doc.get('name')} -> {root}")
+                doc["name"] = root
+                changed += 1
             changed += _synthesize_manifest_packages(
                 entry, clone, doc, synced, dep_owner, version, catalog, notes)
+            changed += _reconcile_hex_packages(entry, doc, catalog, notes)
+            changed += _add_closure_externals(entry, doc, notes)
+            # The Lake file is generated, so which packages it requires
+            # directly can change; the lockfile's `inherited` flags follow it.
+            direct = _direct_requires(clone)
+            for pkg in doc.get("packages", []):
+                inherited = pkg.get("name") not in direct
+                if pkg.get("inherited") != inherited:
+                    pkg["inherited"] = inherited
+                    changed += 1
         if changed:
             mf.write_text(_json.dumps(doc, indent=2) + "\n", encoding="utf-8")
     return notes
+
+
+HEX_PACKAGE_URL = re.compile(r"github\.com/(?:kim-em|leanprover)/hex(?:-[A-Za-z0-9-]+)?(?:\.git)?$")
+
+
+def _reconcile_hex_packages(entry: dict, doc: dict,
+                            catalog: dict[str, dict[str, str]] | None,
+                            notes: list[str]) -> int:
+    """Make the lockfile's Hex packages exactly the entry's published closure.
+
+    The generated Lake file can stop requiring a library, and a dependency can
+    change Lake file format; the lockfile follows, so Lake is never handed a
+    package set or `configFile` that disagrees with the Lake files it reads.
+    """
+    if catalog is None:
+        catalog = _manifest_catalog()
+    wanted = {catalog[dep]["lib"]: dep for dep in entry.get("pins") or []
+              if dep in catalog and catalog[dep]["lib"]}
+    entries = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))["repos"]
+    inherited = {}
+    if "mathlib" in closure_external_packages(entry, entries):
+        inherited = {p["name"]: p for p in mathlib_dependencies()
+                     if HEX_PACKAGE_URL.search(p.get("url", ""))}
+    changed = 0
+    kept = []
+    for pkg in doc.get("packages", []):
+        if HEX_PACKAGE_URL.search(pkg.get("url") or ""):
+            name = pkg.get("name")
+            if name not in wanted and name not in inherited:
+                notes.append(f"  manifest - {name} (no longer a dependency)")
+                changed += 1
+                continue
+            config = (inherited[name]["configFile"] if name in inherited else
+                      f"lakefile.{catalog[wanted[name]]['lakefile']}")
+            if pkg.get("configFile") != config:
+                pkg["configFile"] = config
+                changed += 1
+        kept.append(pkg)
+    doc["packages"] = kept
+    return changed
+
+
+def _add_closure_externals(entry: dict, doc: dict, notes: list[str]) -> int:
+    """Copy missing closure-wide external packages from this monorepo's lockfile."""
+    entries = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))["repos"]
+    wanted = {name.lower() for name in closure_external_packages(entry, entries)}
+    _check_external_boundary(entry, {root for root, name in EXTERNAL_IMPORT_ROOTS.items()
+                                    if name.lower() in wanted})
+    present = {str(pkg.get("name", "")).lower() for pkg in doc.get("packages", [])}
+    source = json.loads(LAKE_MANIFEST.read_text(encoding="utf-8"))["packages"]
+    if "mathlib" in wanted:
+        dependencies = mathlib_dependencies()
+        wanted.update(p["name"].lower() for p in dependencies)
+        source = dependencies + source
+    added = 0
+    for pkg in source:
+        name = str(pkg.get("name", ""))
+        if name.lower() in wanted and name.lower() not in present:
+            copy = dict(pkg)
+            copy["inherited"] = True
+            doc.setdefault("packages", []).append(copy)
+            notes.append(f"  manifest + {name} (required in the dependency closure)")
+            added += 1
+    return added
+
+
+def validate_manifest(entry: dict, clone: Path) -> None:
+    """Refuse to publish a lockfile that disagrees with the generated Lake file.
+
+    Every direct requirement must have a lockfile entry; a missing external one
+    (a mirror that newly needs Mathlib, say) cannot be synthesized without
+    Lake resolving its own dependencies, so it stops the sync instead.
+    """
+    path = clone / "lake-manifest.json"
+    if not path.is_file():
+        raise RuntimeError(f"{entry['repo']} has no lake-manifest.json")
+    present = {pkg.get("name") for pkg in
+               json.loads(path.read_text(encoding="utf-8")).get("packages", [])}
+    entries = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))["repos"]
+    needed = _direct_requires(clone) | (
+        set() if entry.get("pins_only") and not entry.get("pins")
+        else closure_external_packages(entry, entries))
+    lowered = {str(name).lower() for name in present}
+    missing = sorted(name for name in needed if name.lower() not in lowered)
+    if missing:
+        raise RuntimeError(
+            f"{entry['repo']}'s dependency graph requires {', '.join(missing)}, "
+            "which its lake-manifest.json lacks; run `lake update` on the staged "
+            "repository and commit the resulting lockfile to the mirror first")
+    if "mathlib" in {name.lower() for name in needed}:
+        packages = {p["name"]: p for p in json.loads(path.read_text())["packages"]}
+        for expected in mathlib_dependencies():
+            actual = packages.get(expected["name"])
+            if (actual is None or actual.get("type") != "git" or
+                    actual.get("rev") != expected["rev"] or
+                    actual.get("url") != expected["url"] or
+                    actual.get("subDir") != expected.get("subDir")):
+                raise RuntimeError(f"{entry['repo']}'s lockfile disagrees with Mathlib "
+                                   f"on {expected['name']}")
+
+
+def _direct_requires(clone: Path) -> set[str]:
+    """Package names the mirror's root Lake file requires directly."""
+    names: set[str] = set()
+    toml = clone / "lakefile.toml"
+    if toml.is_file():
+        names.update(r["name"] for r in tomllib.loads(
+            toml.read_text(encoding="utf-8")).get("require", []))
+    lean = clone / "lakefile.lean"
+    if lean.is_file():
+        names.update(re.findall(r"(?m)^require\s+«?([A-Za-z0-9_]+)»?\s+from",
+                                lean.read_text(encoding="utf-8")))
+    return names
 
 
 def _manifest_catalog() -> dict[str, dict[str, str]]:
@@ -1423,126 +1192,429 @@ def _synthesize_manifest_packages(entry: dict, clone: Path, doc: dict,
     return added
 
 
-def _hex_import_roots(entry: dict, clone: Path) -> set[str]:
-    """Hex library roots the synced sources import directly."""
-    pattern = re.compile(
-        r"^\s*(?:(?:public|private|meta)\s+)*import\s+(?:all\s+)?(Hex[A-Za-z0-9]*)",
-        re.M)
+MODULE_PART = r"(?:«[^»\r\n]+»|[\w]+)"
+MODULE_NAME = re.compile(MODULE_PART + r"(?:\." + MODULE_PART + r")*")
+IMPORT_COMMAND = re.compile(
+    r"^[ \t]*(?:(?:public|private|meta)[ \t]+)*import(?:[ \t]+all)?(?:[ \t]+|$)(.*)$")
+
+
+def _module_parts(module: str) -> tuple[str, ...]:
+    return tuple(part[1:-1] if part.startswith("«") else part
+                 for part in re.findall(MODULE_PART, module))
+
+
+def _import_modules(source: str) -> set[str]:
+    """Read full import names, including continued and quoted identifiers."""
+    lines = code_without_comments_and_strings(source).splitlines()
     roots: set[str] = set()
+    for i, line in enumerate(lines):
+        command = IMPORT_COMMAND.match(line)
+        if command is None:
+            continue
+        text = command[1].strip()
+        while True:
+            matches = list(MODULE_NAME.finditer(text))
+            if text and not re.sub(MODULE_NAME, "", text).strip():
+                for match in matches:
+                    parts = _module_parts(match[0])
+                    roots.add(".".join(part if re.fullmatch(r"\w+", part)
+                                       else f"«{part}»" for part in parts))
+            elif text:
+                break
+            i += 1
+            if i >= len(lines):
+                break
+            text = lines[i].strip()
+            # Continuation module names in this tree start with a capital or
+            # use quoted identifiers. A new Lean command ends the header.
+            if text and not (text[0].isupper() or text.startswith("«")):
+                break
+    return roots
+
+
+def _import_roots(source: str) -> set[str]:
+    return {_module_parts(module)[0] for module in _import_modules(source)}
+
+
+def _external_import_roots(entry: dict, clone: Path) -> dict[str, str]:
+    """Direct external imports in managed Lean code, excluding comments/strings."""
+    roots: dict[str, str] = {}
     for src, dest_rel, is_dir in managed_paths(entry):
-        dest = clone / dest_rel
+        dest = src if clone == REPO_ROOT else clone / dest_rel
         files = list(dest.rglob("*.lean")) if is_dir else (
             [dest] if dest.suffix == ".lean" else [])
         for lean in files:
             if lean.is_file():
-                roots.update(pattern.findall(lean.read_text(encoding="utf-8")))
-    roots.discard(entry.get("lib", ""))
+                for root in _import_roots(lean.read_text(encoding="utf-8")):
+                    if root in EXTERNAL_IMPORT_ROOTS:
+                        roots.setdefault(root, str(lean.relative_to(clone)))
     return roots
 
 
-def rewrite_requires(entry: dict, clone: Path, synced: dict[str, str],
-                     dep_owner: dict[str, str],
-                     version: str,
-                     catalog: dict[str, dict[str, str]] | None = None) -> list[str]:
-    """Require directly every published library the sources import directly.
-
-    Inside the monorepo one root Lake file requires everything, so a library
-    may import an upstream that its own mirror's Lake file has never
-    required, and the mirror only builds while some other dependency happens
-    to pull that upstream in. Once the upstream is split out (hex-arith from
-    hex-bareiss) or a dependency stops requiring it, the mirror fails with
-    "unknown module prefix". A direct require for each direct import is
-    always correct and never redundant enough to matter, so the sync appends
-    the missing ones at the shared release version: a `[[require]]` block before the
-    first target in `lakefile.toml`, or a `require ... from git` after the
-    last one in `lakefile.lean`.
-    """
-    notes: list[str] = []
-    pins = entry.get("pins") or []
-    if entry.get("pins_only") or not pins:
-        return notes
-    if catalog is None:
-        catalog = _manifest_catalog()
-    lakefile = clone / f"lakefile.{entry['lakefile']}"
-    if not lakefile.is_file():
-        return notes
-    text = lakefile.read_text(encoding="utf-8")
-    roots = _hex_import_roots(entry, clone)
-    additions: list[tuple[str, str, str]] = []
-    for dep in pins:
-        spec = catalog.get(dep)
-        if spec is None or not spec["lib"] or spec["lib"] not in roots:
-            continue
-        if f"{dep}.git" in text or dep not in synced:
-            continue
-        owner = dep_owner.get(dep, "leanprover")
-        additions.append((dep, spec["lib"], f"https://github.com/{owner}/{dep}.git"))
-    if not additions:
-        return notes
-    if entry["lakefile"] == "toml":
-        block = "".join(
-            f'[[require]]\nname = "{lib}"\ngit = "{url}"\nrev = "{version}"\n\n'
-            for dep, lib, url in additions)
-        anchor = re.search(r"(?m)^\[\[(?:lean_lib|lean_exe)\]\]", text)
-        if anchor:
-            text = text[:anchor.start()] + block + text[anchor.start():]
-        else:
-            text = text.rstrip("\n") + "\n\n" + block
+def _declared_external_packages(text: str, lake_format: str) -> set[str]:
+    if lake_format == "toml":
+        names = {str(requirement.get("name", "")).lower()
+                 for requirement in tomllib.loads(text).get("require", [])}
     else:
-        block = "".join(
-            f'\nrequire {lib} from git\n  "{url}" @ "{version}"\n'
-            for dep, lib, url in additions)
-        requires = list(re.finditer(r"(?m)^require\b.*(?:\n[ \t]+.*)*\n", text))
-        if requires:
-            end = requires[-1].end()
-        else:
-            package = re.search(r"(?ms)^package\b.*?(?=^\S|\Z)", text)
-            end = package.end() if package else len(text)
-        text = text[:end] + block + text[end:]
-    lakefile.write_text(text, encoding="utf-8")
-    for dep, lib, _url in additions:
-        notes.append(f"  require + {dep} ({lib}) -> {version} ({lakefile.name})")
-    return notes
+        code = code_without_comments_and_strings(text)
+        names = {name.lower() for name in re.findall(
+            r"(?m)^require[ \t]+«?([A-Za-z0-9_-]+)»?[ \t]+from\b", code)}
+        # Lake's scoped Reservoir spelling also provides the named package.
+        names.update(match[1].lower() for match in re.finditer(
+            r'(?m)^require[ \t]+"[^"\n]+"[ \t]*/[ \t]*"([^"\n]+)"', text)
+            if code[match.start():].startswith("require"))
+    return names
+
+
+def _provided_external_roots(text: str, lake_format: str) -> set[str]:
+    names = _declared_external_packages(text, lake_format)
+    provided = {root for root, package in EXTERNAL_IMPORT_ROOTS.items()
+                if package.lower() in names}
+    if "Mathlib" in provided:
+        provided.add("Batteries")
+    return provided
+
+
+def _check_external_boundary(entry: dict, roots: set[str]) -> None:
+    """Never synthesize proof dependencies for a computational mirror."""
+    if entry.get("pins_only") or _library_mathlib().get(entry.get("lib", ""), False):
+        return
+    forbidden = roots & PROOF_IMPORT_ROOTS
+    if forbidden:
+        raise RuntimeError(f"computational repository {entry['repo']} imports "
+                           f"proof dependencies: {', '.join(sorted(forbidden))}")
 
 
 def validate_external_imports(entry: dict, clone: Path) -> None:
-    """Require the mirror's Lake file to provide checked external import roots.
-
-    The monorepo provides Batteries, Mathlib and Tau Ceti; a mirror only has
-    what its own Lake file requires. Scan synced sources for those roots and
-    fail before pushing when a corresponding requirement is absent. Mathlib
-    also provides Batteries, but does not provide Tau Ceti.
-    """
+    """Reject missing direct providers before publishing managed Lean sources."""
     if entry.get("pins_only"):
         return
     lakefile = clone / f"lakefile.{entry['lakefile']}"
     text = lakefile.read_text(encoding="utf-8") if lakefile.is_file() else ""
-    provided: set[str] = set()
-    if re.search(r'(?i)mathlib4?\.git|name\s*=\s*"mathlib"|require\s+mathlib\b', text):
-        provided.update({"Mathlib", "Batteries"})
-    if re.search(r'(?i)batteries\.git|name\s*=\s*"batteries"|require\s+batteries\b', text):
-        provided.add("Batteries")
-    if re.search(r'(?i)tauceti\.git|name\s*=\s*"TauCeti"|require\s+TauCeti\b', text):
-        provided.add("TauCeti")
-    roots: dict[str, str] = {}
-    pattern = re.compile(
-        r"^\s*(?:(?:public|private|meta)\s+)*import\s+(?:all\s+)?(Batteries|Mathlib|TauCeti)\b",
-        re.M)
-    for src, dest_rel, is_dir in managed_paths(entry):
-        dest = clone / dest_rel
-        files = list(dest.rglob("*.lean")) if is_dir else (
-            [dest] if dest.suffix == ".lean" else [])
-        for lean in files:
-            if not lean.is_file():
-                continue
-            for root in pattern.findall(lean.read_text(encoding="utf-8")):
-                roots.setdefault(root, str(lean.relative_to(clone)))
-    missing = {root: where for root, where in roots.items() if root not in provided}
+    provided = _provided_external_roots(text, entry["lakefile"])
+    roots = _external_import_roots(entry, clone)
+    _check_external_boundary(entry, set(roots))
+    missing = {root: where for root, where in roots.items()
+               if root not in provided}
     if missing:
         raise RuntimeError(
             f"released repository {entry['repo']} imports "
             + ", ".join(f"{root} ({where})" for root, where in sorted(missing.items()))
             + f" but {lakefile.name} requires no package providing it")
+
+
+# Generated Lake files. A mirror's Lake file is rendered here, from
+# released.yml and this monorepo's lakefile.lean, on every sync: nothing in it is
+# hand-maintained, so it cannot drift from how this repository builds the
+# library, keep a target that no longer exists, or miss a newly published
+# dependency. The format (TOML or Lean) follows the entry's `lakefile` field,
+# because dependents' lockfiles record which file to read.
+DOC_VERSO_OPTIONS = (("doc.verso", "true"), ("doc.verso.suggestions", "false"))
+EXTERNAL_IMPORT_ROOTS = {"Mathlib": "mathlib", "Batteries": "batteries",
+                         "TauCeti": "TauCeti"}
+
+
+@functools.lru_cache(maxsize=1)
+def _library_mathlib() -> dict[str, bool]:
+    from libgraph import load_libraries
+    return {name: info.mathlib for name, info in load_libraries().items()}
+
+
+def _library_deps() -> dict[str, tuple[str, ...]]:
+    sys.path.insert(0, str(REPO_ROOT / "scripts"))
+    from libgraph import load_libraries
+    return {name: info.deps for name, info in load_libraries().items()}
+
+
+@functools.lru_cache(maxsize=None)
+def _source_import_roots_cached(repo: str) -> frozenset[str]:
+    entries = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))["repos"]
+    entry = next(e for e in entries if e["repo"] == repo)
+    return frozenset(_source_import_roots(entry))
+
+
+def closure_external_packages(entry: dict, entries: list[dict]) -> set[str]:
+    """External package names any library in the entry's published closure requires.
+
+    A lockfile records every package in the dependency graph, so a library
+    that newly requires TauCeti puts TauCeti in the lockfile of everything that
+    depends on it, the `hex` aggregate included.
+    """
+    shorts = set(entry.get("pins") or []) | {entry.get("repo", "").split("/")[-1]}
+    names: set[str] = set()
+    for other in entries:
+        if other.get("pins_only") or other["repo"].split("/")[-1] not in shorts:
+            continue
+        roots = _source_import_roots_cached(other["repo"])
+        externals = {EXTERNAL_IMPORT_ROOTS[r] for r in EXTERNAL_IMPORT_ROOTS if r in roots}
+        if "mathlib" in externals:
+            externals.discard("batteries")
+        names |= externals
+    return names
+
+
+def _source_import_roots(entry: dict) -> set[str]:
+    """Top-level module roots imported by the library's published sources."""
+    roots: set[str] = set()
+    for src, _dest, is_dir in managed_paths(entry):
+        files = list(src.rglob("*.lean")) if is_dir else (
+            [src] if src.suffix == ".lean" else [])
+        for lean in files:
+            if lean.is_file():
+                roots.update(_import_roots(lean.read_text(encoding="utf-8")))
+    return roots
+
+
+def release_requires(entry: dict, entries: list[dict], version: str,
+                     dep_owner: dict[str, str],
+                     pins: dict[str, dict[str, str]],
+                     library_deps: dict[str, tuple[str, ...]] | None = None
+                     ) -> list[tuple[str, str, str]]:
+    """The mirror's direct requirements as (name, git URL, revision).
+
+    A published Hex library is required when the library declares it as a
+    dependency in libraries.yml or its sources import it directly, so a
+    mirror never builds only because some other dependency happens to pull a
+    library in. External packages are required for the roots the sources
+    import (Mathlib also covers Batteries), at this monorepo's locked inputs.
+    """
+    if library_deps is None:
+        library_deps = _library_deps()
+    by_lib = {e["lib"]: e["repo"].split("/")[-1]
+              for e in entries if e.get("lib") and not e.get("pins_only")}
+    roots = _source_import_roots(entry)
+    closure = closure_external_packages(entry, entries)
+    mathlib_urls = ({p["name"]: p["url"] for p in mathlib_dependencies()}
+                    if "mathlib" in closure else {})
+    wanted = set(library_deps.get(entry["lib"], ())) | roots
+    # Select the cache-compatible configuration at the workspace root even
+    # when a computational dependency also pulls in HexPermGroup natively.
+    if (_library_mathlib().get(entry["lib"], False)
+            and "hex-perm-group" in (entry.get("pins") or [])):
+        wanted.add("HexPermGroup")
+    out: list[tuple[str, str, str]] = []
+    for other in entries:
+        lib = other.get("lib")
+        if other.get("pins_only") or not lib or lib == entry["lib"] or lib not in wanted:
+            continue
+        short = by_lib[lib]
+        owner = dep_owner.get(short, "leanprover")
+        out.append((lib, mathlib_urls.get(lib, f"https://github.com/{owner}/{short}.git"), version))
+    externals = {root for root in EXTERNAL_IMPORT_ROOTS if root in roots}
+    if "Mathlib" in externals:
+        externals.discard("Batteries")
+    if "mathlib" in closure:
+        # An earlier companion may retain an older Mathlib pin. Select this
+        # phase's Mathlib explicitly, and its Batteries when a computational
+        # dependency also requires Batteries, so Lake cannot prefer the old pin.
+        externals.update(root for root, name in EXTERNAL_IMPORT_ROOTS.items()
+                         if name in closure)
+    by_name = {pin["name"].lower(): pin for pin in pins.values()}
+    _check_external_boundary(entry, externals)
+    for root in sorted(externals, key=lambda root: (root == "Mathlib", root)):
+        pin = by_name.get(EXTERNAL_IMPORT_ROOTS[root].lower())
+        if pin is None:
+            raise RuntimeError(
+                f"{entry['repo']} imports {root}, but this monorepo's lockfile has "
+                f"no {EXTERNAL_IMPORT_ROOTS[root]} package to pin it to")
+        out.append((pin["name"], pin["url"], pin["inputRev"]))
+    return out
+
+
+def _lean_declaration_text(source: str, name: str) -> str:
+    start, end = lake_declaration(source, name)
+    return source[start:end].rstrip() + "\n"
+
+
+def _main_lib_text(source: str, lib: str) -> str:
+    """This monorepo's `lean_lib` declaration for `lib`, verbatim."""
+    header = _lean_lib_header(source, lib)
+    if header is None:
+        raise RuntimeError(f"lakefile.lean declares no lean_lib {lib}")
+    end = _block_end(source, header.end())
+    return source[header.start():end].rstrip() + "\n"
+
+
+def require_options(entry: dict, name: str, entries: list[dict]) -> dict[str, str]:
+    """Match Mathlib's Hex native setting throughout a generated workspace."""
+    if name != "HexPermGroup":
+        return {}
+    classification = _library_mathlib()
+    uses_mathlib = (any(classification.get(e.get("lib"), False)
+                        for e in aggregate_libraries(entries)) if entry.get("pins_only")
+                   else classification.get(entry.get("lib"), False))
+    return {"hexPermGroupNative": "false"} if uses_mathlib else {}
+
+
+def render_lakefile(entry: dict, entries: list[dict], version: str,
+                    dep_owner: dict[str, str],
+                    pins: dict[str, dict[str, str]],
+                    library_deps: dict[str, tuple[str, ...]] | None = None,
+                    source: str | None = None) -> str:
+    """Render a mirror's complete Lake file."""
+    short = entry["repo"].split("/")[-1]
+    if source is None:
+        source = LAKEFILE.read_text(encoding="utf-8")
+    if entry.get("pins_only"):
+        return _render_aggregate_lakefile(entries, version, dep_owner, pins)
+    requires = release_requires(entry, entries, version, dep_owner, pins, library_deps)
+    lib = entry.get("lean_lib_name", entry["lib"])
+    tests = entry.get("test_modules") or []
+    modules = entry.get("build_modules") or []
+    executables = entry.get("executables") or {}
+    defaults = [lib] + ([f"{lib}Modules"] if modules else [])
+    # A source tree published through `extra_paths` that is a library here
+    # (hex-graph-iso ships HexGraph) needs its own `lean_lib` in the mirror.
+    declared = set(entry.get("lake_declarations") or [])
+    source_libs = lean_lib_settings(source)
+    extra_libs: list[str] = []
+    for extra in entry.get("extra_paths") or []:
+        name = Path(extra["dest"]).parts[0].removesuffix(".lean")
+        if (name in source_libs and name != entry["lib"] and name not in declared
+                and name not in extra_libs):
+            extra_libs.append(name)
+    if entry.get("lakefile") == "lean":
+        out = ["import Lake", "open System Lake DSL", "",
+               f"package «{short}» where",
+               "  leanOptions := #["
+               + ", ".join(f"⟨`{k}, {v}⟩" for k, v in DOC_VERSO_OPTIONS) + "]", ""]
+        for name, url, rev in requires:
+            out += [f"require {name} from git", f'  "{url}" @ "{rev}"']
+            if require_options(entry, name, entries):
+                out += ['  with NameMap.empty.insert `hexPermGroupNative "false"']
+        declarations = entry.get("lake_declarations") or []
+        helpers = [d for d in declarations
+                   if not re.search(rf"(?m)^lean_lib {re.escape(d)}\b", source)]
+        # The main library is always emitted from this monorepo's declaration
+        # below, so listing it under `lake_declarations` must not repeat it.
+        carriers = [d for d in declarations
+                    if d not in helpers and d != entry["lib"]]
+        for name in helpers:
+            out += ["", _lean_declaration_text(source, name).rstrip()]
+        out += ["", "@[default_target]", _main_lib_text(source, entry["lib"]).rstrip()]
+        for name in carriers:
+            out += ["", _lean_declaration_text(source, name).rstrip()]
+        for name in extra_libs:
+            out += ["", _main_lib_text(source, name).rstrip()]
+        if modules:
+            out += ["", "@[default_target]", f"lean_lib {lib}Modules where",
+                    "  globs := #[" + ", ".join(f"`{m}" for m in modules) + "]"]
+        if tests:
+            out += ["", f"lean_lib {lib}Tests where",
+                    "  globs := #[" + ", ".join(f"`{m}" for m in tests) + "]"]
+        for exe, root in executables.items():
+            out += ["", f"lean_exe {exe} where", f"  root := `{root}"]
+        return "\n".join(out) + "\n"
+    settings = {name: value for name, value in
+                source_libs.get(entry["lib"], {}).items()
+                if name in BUILD_LIB_SETTINGS}
+    unsupported = sorted(set(settings) - {"precompileModules"})
+    if settings.get("precompileModules", "false") not in ("true", "false"):
+        unsupported.append("conditional precompileModules")
+    if unsupported or entry.get("lake_declarations"):
+        raise RuntimeError(
+            f"{entry['repo']} needs {', '.join(unsupported) or 'lake_declarations'}, "
+            "which only a Lean Lake file can express; set `lakefile: lean`")
+    quote = lambda items: "[" + ", ".join(f'"{item}"' for item in items) + "]"
+    out = [f'name = "{short}"', f"defaultTargets = {quote(defaults)}", "",
+           "leanOptions = ["]
+    out += [f'  {{ name = "{k}", value = {v} }},' for k, v in DOC_VERSO_OPTIONS]
+    out += ["]"]
+    for name, url, rev in requires:
+        out += ["", "[[require]]", f'name = "{name}"', f'git = "{url}"', f'rev = "{rev}"']
+        if require_options(entry, name, entries):
+            out += ['options = { hexPermGroupNative = "false" }']
+    out += ["", "[[lean_lib]]", f'name = "{lib}"']
+    if entry.get("globs"):
+        out += [f"globs = {quote(entry['globs'])}"]
+    if settings.get("precompileModules") == "true":
+        out += ["precompileModules = true"]
+    for name in extra_libs:
+        extra_settings = source_libs[name]
+        if (set(extra_settings) - {"precompileModules"} or
+                extra_settings.get("precompileModules", "false") not in ("true", "false")):
+            raise RuntimeError(f"{entry['repo']}: {name} needs a Lean Lake file")
+        out += ["", "[[lean_lib]]", f'name = "{name}"']
+        if extra_settings.get("precompileModules") == "true":
+            out += ["precompileModules = true"]
+    if modules:
+        out += ["", "[[lean_lib]]", f'name = "{lib}Modules"', f"globs = {quote(modules)}"]
+    if tests:
+        out += ["", "[[lean_lib]]", f'name = "{lib}Tests"', f"globs = {quote(tests)}"]
+    for exe, root in executables.items():
+        out += ["", "[[lean_exe]]", f'name = "{exe}"', f'root = "{root}"']
+    return "\n".join(out) + "\n"
+
+
+AGGREGATE_HEADER = (
+    "# Aggregator: requires every released Hex library at one shared release\n"
+    "# version. Require `hex` to depend on everything released; or require an\n"
+    "# individual library (e.g. hex-mv-poly or hex-lll) for just that piece.\n"
+    "# Generated by hex-dev's scripts/release/sync_released.py from released.yml."
+)
+
+
+def aggregate_libraries(entries: list[dict]) -> list[dict]:
+    return [e for e in entries
+            if not e.get("pins_only") and e.get("aggregate", True)]
+
+
+def _render_aggregate_lakefile(entries: list[dict], version: str,
+                               dep_owner: dict[str, str],
+                               pins: dict[str, dict[str, str]] | None = None) -> str:
+    aggregate = {"repo": "leanprover/hex", "pins_only": True,
+                 "pins": [e["repo"].split("/")[-1] for e in aggregate_libraries(entries)]}
+    closure = closure_external_packages(aggregate, entries) if pins is not None else set()
+    mathlib_urls = ({p["name"]: p["url"] for p in mathlib_dependencies()}
+                    if "mathlib" in closure else {})
+    out = ['name = "hex"', 'defaultTargets = ["Hex"]', "",
+           AGGREGATE_HEADER]
+    for e in aggregate_libraries(entries):
+        short = e["repo"].split("/")[-1]
+        owner = dep_owner.get(short, "leanprover")
+        url = mathlib_urls.get(e["lib"], f"https://github.com/{owner}/{short}.git")
+        out += ["", "[[require]]", f'name = "{e["lib"]}"',
+                f'git = "{url}"', f'rev = "{version}"']
+        if require_options(aggregate, e["lib"], entries):
+            out += ['options = { hexPermGroupNative = "false" }']
+    if pins is not None and "mathlib" in closure:
+        for pin in pins.values():
+            if pin["name"].lower() in closure:
+                out += ["", "[[require]]", f'name = "{pin["name"]}"',
+                        f'git = "{pin["url"]}"', f'rev = "{pin["inputRev"]}"']
+    out += ["", "[[lean_lib]]", 'name = "Hex"']
+    return "\n".join(out) + "\n"
+
+
+def render_aggregate_umbrella(entries: list[dict]) -> str:
+    return "module\n\n" + "".join(
+        f"public import {e['lib']}\n" for e in aggregate_libraries(entries))
+
+
+def write_lakefile(entry: dict, clone: Path, entries: list[dict], version: str,
+                   dep_owner: dict[str, str],
+                   pins: dict[str, dict[str, str]]) -> list[str]:
+    """Replace the mirror's Lake file (and the aggregate's umbrella) with the rendering."""
+    notes: list[str] = []
+    fmt = "toml" if entry.get("pins_only") else entry.get("lakefile", "toml")
+    path = clone / f"lakefile.{fmt}"
+    text = render_lakefile(entry, entries, version, dep_owner, pins)
+    if fmt == "toml":
+        tomllib.loads(text)
+    other = clone / f"lakefile.{'lean' if fmt == 'toml' else 'toml'}"
+    if other.exists():
+        other.unlink()
+        notes.append(f"  removed {other.name}")
+    if not path.is_file() or path.read_text(encoding="utf-8") != text:
+        path.write_text(text, encoding="utf-8")
+        notes.append(f"  generated {path.name}")
+    if entry.get("pins_only"):
+        umbrella = clone / "Hex.lean"
+        body = render_aggregate_umbrella(entries)
+        if not umbrella.is_file() or umbrella.read_text(encoding="utf-8") != body:
+            umbrella.write_text(body, encoding="utf-8")
+            notes.append("  generated Hex.lean")
+    return notes
 
 
 def remote_tag_target(clone: Path, version: str) -> str | None:
@@ -1584,8 +1656,19 @@ def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
               synced: dict[str, str], baseline: dict[str, str], force: bool,
               dep_owner: dict[str, str],
               pins: dict[str, dict[str, str]], version: str,
-              resuming: bool) -> bool:
-    """Sync and tag one repo; return whether it belongs to this release."""
+              resuming: bool, stage: Path | None = None,
+              entries: list[dict] | None = None,
+              checked_tree: str | None = None,
+              unpublished: set[str] | None = None,
+              trees: dict[str, str] | None = None) -> bool:
+    """Sync and tag one repo; return whether it belongs to this release.
+
+    With `stage`, the rewritten tree (without `.git`) is also copied to
+    `stage/<short name>`, so `consumer_check.py` can build exactly what this
+    run would publish.
+    """
+    if entries is None:
+        entries = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))["repos"]
     repo = entry["repo"]
     short = repo.split("/")[-1]
     print(f"\n=== {repo} ===")
@@ -1600,42 +1683,43 @@ def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
         if expected and head != expected:
             # The process may have been interrupted after its atomic main+tag
             # push and before the baseline write. A recorded pending transaction
-            # makes that exact tag a sufficient, immutable recovery marker.
+            # binds recovery to the expected parent and source commit.
             if resuming and tagged == head:
+                run(["git", "fetch", "--depth", "2", "origin", "main"], cwd=clone, capture=True)
+                parent = run(["git", "rev-parse", "HEAD^"], cwd=clone, capture=True)
+                message = run(["git", "log", "-1", "--format=%s"], cwd=clone, capture=True)
+                if parent != expected or message != f"chore: sync from hex-dev@{source_sha[:12]}":
+                    raise RuntimeError(f"{repo}@{version} is not an interrupted sync from this source")
                 print(f"  resumed {repo}@{version} ({head[:12]})")
-                synced[short] = head
-                return True
-            msg = (f"  UNCOORDINATED: {repo} main is {head[:12]}, baseline expects "
-                   f"{expected[:12]}. Reconcile (re-seed from main) before syncing.")
-            if not force:
-                print(msg + " Skipping (use --force to override).")
-                synced[short] = expected
-                return False
-            print(msg + " Overriding (--force).")
-        for line in rewrite_test_target(entry, clone):
-            print(line)
-        validate_skeleton(entry, clone)
+                # Continue through rendering and staging. A recovered tag must
+                # still match the source; a dry run must supply its consumer tree.
+            else:
+                msg = (f"  UNCOORDINATED: {repo} main is {head[:12]}, baseline expects "
+                       f"{expected[:12]}. Reconcile (re-seed from main) before syncing.")
+                if not force:
+                    print(msg + " Skipping (use --force to override).")
+                    synced[short] = expected
+                    return False
+                print(msg + " Overriding (--force).")
         validate_ci_helpers(entry, clone)
         for line in apply_paths(entry, clone):
             print(line)
+        for line in write_lakefile(entry, clone, entries, version, dep_owner, pins):
+            print(line)
         validate_external_imports(entry, clone)
-        if not entry.get("pins_only"):
-            for line in rewrite_doc_verso(clone):
-                print(line)
-            for line in rewrite_lib_settings(entry, clone):
-                print(line)
-            for line in rewrite_lake_declarations(entry, clone):
-                print(line)
         for line in rewrite_toolchains(clone):
-            print(line)
-        for line in rewrite_external_pins(clone, pins):
-            print(line)
-        for line in rewrite_requires(entry, clone, synced, dep_owner, version):
-            print(line)
-        for line in rewrite_pins(entry, clone, synced, dep_owner, version):
             print(line)
         for line in rewrite_manifest(entry, clone, synced, dep_owner, pins, version):
             print(line)
+        validate_manifest(entry, clone)
+        tree = tree_fingerprint(clone, unpublished)
+        if checked_tree is not None and checked_tree != tree:
+            raise RuntimeError(f"{repo}'s rendered tree differs from the consumer-checked stage")
+        if trees is not None:
+            trees[short] = tree
+        if stage is not None:
+            shutil.copytree(clone, stage / short,
+                            ignore=shutil.ignore_patterns(".git"))
         status = run(["git", "status", "--porcelain"], cwd=clone, capture=True)
         if not status:
             print("  (no changes)")
@@ -1658,6 +1742,11 @@ def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
         print("  changed files:")
         for l in status.splitlines():
             print(f"    {l}")
+        if tagged is not None:
+            raise RuntimeError(
+                f"{repo} already has {version} at {tagged[:12]}, but this sync "
+                "would change its contents"
+            )
         if dry_run:
             workflow_diff = run(
                 ["git", "diff", "--", ".github/workflows/ci.yml"],
@@ -1671,19 +1760,15 @@ def sync_repo(entry: dict, source_sha: str, token: str | None, dry_run: bool,
             synced[short] = head  # stand-in so downstream pin previews resolve
             print(f"  DRY-RUN: would commit, push, and tag {version}")
             return False
-        if tagged is not None:
-            raise RuntimeError(
-                f"{repo} already has {version} at {tagged[:12]}, but this sync "
-                "would change its contents"
-            )
         run(["git", "add", "-A"], cwd=clone)
         run(["git", "-c", "user.name=hex-dev sync",
              "-c", "user.email=noreply@anthropic.com",
              "commit", "-q", "-m", f"chore: sync from hex-dev@{source_sha[:12]}"], cwd=clone)
-        synced[short] = run(["git", "rev-parse", "HEAD"], cwd=clone, capture=True)
-        run(["git", "tag", version, synced[short]], cwd=clone)
+        published = run(["git", "rev-parse", "HEAD"], cwd=clone, capture=True)
+        run(["git", "tag", version, published], cwd=clone)
         run(["git", "push", "--atomic", "origin", "HEAD:main",
              f"refs/tags/{version}"], cwd=clone)
+        synced[short] = published
         print(f"  pushed {synced[short][:12]} to {repo}@main and tagged {version}")
         return True
 
@@ -1713,13 +1798,27 @@ def main() -> int:
                          "on (a subset of) the released repos; repeatable, "
                          "tried in order per repo. "
                          "Defaults to $RELEASED_SYNC_PAT, $RELEASED_SYNC_PAT_2, ...")
-    ap.add_argument("--only", help="sync only this repo short-name (e.g. hex-matrix)")
+    ap.add_argument("--only", action="append", default=[],
+                    help="publish these repository short names; repeatable, comma/space separated")
+    ap.add_argument("--advance-source", action="store_true",
+                    help="resume at a new source commit after checking already-published exports")
+    ap.add_argument("--plan", type=Path,
+                    help="publish only if the source, selection and baseline match this staged plan")
     ap.add_argument("--force", action="store_true",
                     help="override the uncoordinated-commit guard and overwrite anyway")
     ap.add_argument("--baseline", default=str(BASELINE), type=Path,
                     help="path to the per-repo baseline JSON to read and advance "
                          "(the workflow points this at the release-sync-baseline branch's copy)")
+    ap.add_argument("--stage", type=Path,
+                    help="with --dry-run, copy every rewritten repository to "
+                         "STAGE/<name> for scripts/release/consumer_check.py")
     args = ap.parse_args()
+    if args.stage is not None and not args.dry_run:
+        ap.error("--stage requires --dry-run")
+    if args.stage is not None:
+        args.stage.mkdir(parents=True, exist_ok=True)
+        if any(args.stage.iterdir()):
+            ap.error(f"--stage directory {args.stage} is not empty")
 
     # An empty token would probe anonymously, win the routing for every public
     # repository, and only fail at push time — after earlier repositories were
@@ -1736,7 +1835,8 @@ def main() -> int:
     baseline = {k: v for k, v in baseline_doc.items() if not k.startswith("_")}
     source_sha = run(["git", "rev-parse", "HEAD"], cwd=REPO_ROOT, capture=True)
     try:
-        version, completed, resuming = release_transaction(baseline_doc, source_sha)
+        version, completed, resuming = release_transaction(
+            baseline_doc, source_sha, args.advance_source)
     except (RuntimeError, ValueError) as exc:
         print(f"release sync: {exc}", file=sys.stderr)
         return 1
@@ -1754,19 +1854,64 @@ def main() -> int:
     dep_owner = {e["repo"].split("/")[-1]: e["repo"].split("/")[0]
                  for e in manifest["repos"]}
     pins = external_pins()
-    # A staged `--only` publication still has to pin all of its already-published
-    # upstreams. Seed the pin map from the live baseline; otherwise an isolated
-    # downstream sync silently retains stale pins because skipped entries never
-    # populate `synced`.
-    synced: dict[str, str] = dict(baseline) if args.only else {}
-
-    targets = [entry for entry in manifest["repos"]
-               if not args.only or entry["repo"].split("/")[-1] == args.only]
-    # A misspelled --only would otherwise select nothing, preflight vacuously,
-    # publish nothing, and still exit 0 reporting the seeded baseline count.
-    if args.only and len(targets) != 1:
-        print(f"release sync: --only {args.only} matches {len(targets)} manifest "
-              "entries; expected exactly one", file=sys.stderr)
+    pending = dict(baseline_doc.get("_pending_release") or {})
+    changed_source = resuming and pending["source"] != source_sha
+    if "planned_repos" in pending and set(pending["planned_repos"]) != all_repos:
+        print("release sync: the repository set changed during a pending release", file=sys.stderr)
+        return 1
+    synced: dict[str, str] = dict(baseline)
+    try:
+        selected, targets = release_selection(manifest["repos"], completed, args.only)
+        mathlib_packages = []
+        if any("mathlib" in closure_external_packages(entry, manifest["repos"])
+               for entry in targets):
+            mathlib_packages = mathlib_dependencies()
+            check_mathlib_hex_pins(mathlib_packages, manifest["repos"], completed, baseline)
+        fingerprints = dict(pending.get("fingerprints") or {})
+        for entry in manifest["repos"]:
+            name = entry["repo"].split("/")[-1]
+            if name in completed:
+                if changed_source and name not in fingerprints:
+                    raise RuntimeError(f"{name} has no saved source fingerprint; "
+                                       "resume this legacy release at its original commit")
+                if name in fingerprints and publication_fingerprint(
+                        entry, manifest["repos"], version, pins) != fingerprints[name]:
+                    raise RuntimeError(f"already-published exports changed: {name}")
+        new_fingerprints = {
+            entry["repo"].split("/")[-1]: publication_fingerprint(
+                entry, manifest["repos"], version, pins) for entry in targets}
+        plan = {"version": version, "source": source_sha, "selected": sorted(selected),
+                "baseline": baseline_doc, "fingerprints": new_fingerprints,
+                "external_pins": pins, "mathlib_dependencies": mathlib_packages,
+                "force": args.force}
+        checked_trees = {}
+        if args.plan:
+            checked = json.loads(args.plan.read_text())
+            checked_trees = checked.pop("trees", {})
+            if checked != plan or set(checked_trees) != set(new_fingerprints):
+                raise RuntimeError("source, selection or baseline differs from the consumer-checked plan")
+        # Every completed mirror is guarded before the first new push, including
+        # repositories outside this run's consumer closure.
+        closure = set(selected)
+        closure.update(_git_url(p["url"]).split("/")[-1] for p in mathlib_packages
+                       if HEX_PACKAGE_URL.search(p["url"]))
+        for entry in manifest["repos"]:
+            if entry["repo"].split("/")[-1] in selected:
+                closure.update(entry.get("pins") or [])
+        for entry in manifest["repos"]:
+            name = entry["repo"].split("/")[-1]
+            if name in completed:
+                reuse_published(entry, baseline[name], version,
+                               args.stage if name in closure else None)
+        if changed_source:
+            unexpected = version_tag_collisions(
+                [e for e in manifest["repos"] if e["repo"].split("/")[-1] not in completed],
+                version)
+            if unexpected:
+                raise RuntimeError("unrecorded published tags; recover at the original source "
+                                   f"commit before advancing: {sorted(unexpected)}")
+    except (OSError, RuntimeError, ValueError, subprocess.CalledProcessError) as exc:
+        print(f"release sync: {exc}", file=sys.stderr)
         return 1
     if not resuming:
         try:
@@ -1808,6 +1953,9 @@ def main() -> int:
             "version": version,
             "source": source_sha,
             "repos": sorted(completed),
+            "planned_repos": sorted(all_repos),
+            "fingerprints": fingerprints,
+            "sources": dict(pending.get("sources") or {}),
         }
         write_baseline(args.baseline, baseline_doc)
         print(f"release {version}: " + ("resuming" if resuming else "started"))
@@ -1816,20 +1964,29 @@ def main() -> int:
 
     failed_repo: str | None = None
     current_repo = "<manifest>"
+    trees: dict[str, str] = {}
     try:
-        for entry in manifest["repos"]:
+        for entry in targets:
             current_repo = entry["repo"]
-            if args.only and entry["repo"].split("/")[-1] != args.only:
-                continue
+            if not args.dry_run:
+                missing = set(entry.get("pins") or []) - completed
+                if missing:
+                    raise RuntimeError(f"dependencies were not published: {sorted(missing)}")
             # Dry runs skip routing and clone over public https; real runs index
             # the routed map so a repository routing ever missed fails closed.
             token = None if args.dry_run else repo_token[entry["repo"]]
             released = sync_repo(entry, source_sha, token, args.dry_run,
                                  synced, baseline, args.force, dep_owner, pins,
-                                 version, resuming)
+                                 version, resuming, args.stage, manifest["repos"],
+                                 checked_trees.get(entry["repo"].split("/")[-1]),
+                                 set(new_fingerprints), trees)
             if not args.dry_run:
-                if released:
-                    completed.add(entry["repo"].split("/")[-1])
+                if not released:
+                    raise RuntimeError("selected repository was not published; stopping its dependents")
+                name = entry["repo"].split("/")[-1]
+                completed.add(name)
+                baseline_doc["_pending_release"]["fingerprints"][name] = new_fingerprints[name]
+                baseline_doc["_pending_release"]["sources"][name] = source_sha
                 baseline_doc.update(synced)
                 baseline_doc["_pending_release"]["repos"] = sorted(completed)
                 write_baseline(args.baseline, baseline_doc)
@@ -1861,7 +2018,10 @@ def main() -> int:
         missing = ", ".join(sorted(all_repos - completed))
         failed_repo = "<release>"
         print(f"\nrelease {version} remains incomplete: {missing}", file=sys.stderr)
-    print(f"\nsynced {len(synced)} repo(s) from hex-dev@{source_sha[:12]}"
+    if args.stage is not None and failed_repo is None:
+        plan["trees"] = trees
+        (args.stage / "release-stage.json").write_text(json.dumps(plan, indent=2) + "\n")
+    print(f"\nprocessed {len(targets)} target repo(s) from hex-dev@{source_sha[:12]}"
           + (f" for {version} (dry-run)" if args.dry_run else f" for {version}"))
     return 1 if failed_repo else 0
 

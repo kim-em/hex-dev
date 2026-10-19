@@ -1,0 +1,168 @@
+# hex-row-reduce-theory
+
+Part of [`hex`](https://github.com/kim-em/hex-dev), a computer algebra
+library for Lean 4. The aim is fast executable code, fully verified, built
+with spec-driven development.
+
+`hex-row-reduce-theory` is the theory companion of
+[`hex-row-reduce`](https://github.com/leanprover/hex-row-reduce). It proves that
+the executable row reduction, rank, row span, and nullspace agree with
+Mathlib's noncomputable linear-algebra definitions. It depends on
+[`hex-row-reduce`](https://github.com/leanprover/hex-row-reduce),
+[`hex-matrix-theory`](https://github.com/leanprover/hex-matrix-theory), and
+Mathlib.
+
+# Quickstart
+
+Add to your `lakefile.toml`:
+
+```toml
+[[require]]
+name = "hex-row-reduce-theory"
+git = "https://github.com/leanprover/hex-row-reduce-theory.git"
+rev = "main"
+```
+
+```lean
+import HexRowReduceTheory
+
+open HexMatrixTheory
+
+-- The computed rank agrees with Mathlib's `Matrix.rank`.
+#check @rank_eq
+
+-- The computed nullspace basis spans exactly the kernel of `mulVecLin`.
+#check @nullspace_span_eq_ker
+
+-- The executable span-membership test agrees with `Submodule.span`.
+#check @spanContains_iff_mem_span
+```
+
+# Field inverse and complete solve
+
+`inverse?_eq_inv` identifies a successful executable inverse with Mathlib's
+`Matrix.inv`. `inverse?_eq_none` identifies failure with determinant zero;
+Mathlib's zero inverse at singular input is not an executable inverse witness.
+
+`solve?_spec` identifies the solution set with an affine translate of the
+kernel of `Matrix.mulVecLin`. `solve?_parameters` gives its unique basis
+coefficients, and `solve?_span` connects the returned columns to
+`nullspace_span_eq_ker`. `solve_error` transports the actual separating row;
+`solve?_none_witness` characterises failure by existence of a left-kernel
+separator. All statements include zero dimensions and rectangular systems.
+
+The companion uses Mathlib's `[Field F]` and its induced `Lean.Grind.Field F`.
+Select that instance before constructing matrices or calling elimination; the
+companion does not identify it with an independently installed executable
+field. `Examples/RowReduce.lean` in hex-dev checks rationals, rational functions,
+and entrywise transport from `ZMod64 p` to `ZMod p` without assuming a Mathlib
+field on `ZMod64 p`.
+
+# Inverse and solve tactics
+
+`inverse` and `solve` certify closed rational matrix literals. Each tactic
+accepts either orientation of its equation:
+
+```lean
+example : (!![1, 2; 3, 4] : Matrix (Fin 2) (Fin 2) ℚ)⁻¹ =
+    !![-2, 1; 3 / 2, -1 / 2] := by inverse
+
+example : (!![0, 1, 1] : Matrix (Fin 1) (Fin 3) ℚ).mulVec ![3, 0, 2] =
+    ![2] := by solve
+
+noncomputable def affine :=
+  solve% (!![0, 1, 1] : Matrix (Fin 1) (Fin 3) ℚ) ![2]
+```
+
+`inverse` also proves `A * B = 1`; singular inputs prove `A⁻¹ = 0` and
+decline product goals with a nonzero kernel vector. `inverse% A` returns
+an `InverseResult A`, containing either the literal inverse with both
+product identities, or a nonzero kernel vector with singularity proofs.
+
+`solve` checks any supplied solution, proves `∃ x, A.mulVec x = b`, or
+proves its negation with a separating row. `solve% A b` returns a
+`SolveResult A b`: either a particular solution and literal nullspace basis
+with unique affine coordinates, or a separator with `yᵀA = 0` and
+`yᵀb ≠ 0`. Particular solutions returned by the producer have zero free
+coordinates. Both term forms handle empty shapes.
+
+Arithmetic proof checking uses scaled integer lists and structural recursion.
+`HexMatrixTheory.inverse_of_checkList`, `solve_of_checkList` and
+`solveResult_of_checkList` prove soundness for arbitrary passing certificates;
+their proofs do not replay elimination. The initial numeric handler accepts
+`ℚ`; other carriers are available to separately registered extensions.
+
+For function literals, give the matrix a named `Matrix`-typed definition
+before writing `A⁻¹`: Lean can select pointwise function inversion for a
+bare lambda. The tactic accepts matrix inversion and multiplication.
+The dimension limit is 32 per axis; the measured performance ladder covers
+square matrices through 16 and rectangular solve systems through 32 × 16
+or 16 × 32. The limit is not a runtime guarantee for other inputs.
+
+# Functionality
+
+The library transports the executable row-reduction data of an
+`Hex.Matrix R n m` to Mathlib's function-based matrix `matrixEquiv M`, then
+states the correspondence theorems:
+
+- `vectorEquiv_vecMul`: an executable row combination transports to
+  Mathlib's `Fintype.linearCombination` over the rows of `matrixEquiv M`;
+- `spanCoeffs_eq_linearCombination` and `spanContains_iff_mem_span`: the
+  executable span witnesses and the decidable span-membership test agree with
+  `Submodule.span`;
+- `rowReduce_echelon_row_mem_span` and
+  `rowReduce_mem_span_echelon_of_mem_span`: row reduction preserves the row
+  span, in both directions;
+- `nullspace_mem_ker` and `nullspace_span_eq_ker`: the computed nullspace
+  basis lies in, and spans, `LinearMap.ker (Matrix.mulVecLin (matrixEquiv M))`;
+- `rank_eq`: the rank from row reduction equals `Matrix.rank (matrixEquiv M)`.
+
+# Verification
+
+Over a `Field R`, the correspondence is fully proven. The computed rank,
+row span, and nullspace are computable witnesses for Mathlib's noncomputable
+`Matrix.rank`, `Submodule.span`, and `LinearMap.ker` definitions.
+
+Rank, `rank_eq`:
+
+```lean
+theorem rank_eq [Field R]
+    {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
+    (E : Hex.Matrix.IsRowReduced M D) :
+    D.rank = _root_.Matrix.rank (matrixEquiv M)
+```
+
+Nullspace, `nullspace_span_eq_ker`:
+
+```lean
+theorem nullspace_span_eq_ker [Field R]
+    {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
+    (E : Hex.Matrix.IsRowReduced M D) :
+    Submodule.span R (Set.range fun k : Fin (m - D.rank) => vectorEquiv (E.nullspace.get k)) =
+      LinearMap.ker (_root_.Matrix.mulVecLin (matrixEquiv M))
+```
+
+Span, `spanContains_iff_mem_span`:
+
+```lean
+theorem spanContains_iff_mem_span [Field R] [DecidableEq R]
+    {M : Hex.Matrix R n m} {D : Hex.Matrix.RowEchelonData R n m}
+    (E : Hex.Matrix.IsRowReduced M D) (v : Vector R m) :
+    E.toIsEchelonForm.spanContains v = true ↔
+      vectorEquiv v ∈ Submodule.span R (Set.range (_root_.Matrix.row (matrixEquiv M)))
+```
+
+The executable row reduction itself lives in
+[`hex-row-reduce`](https://github.com/leanprover/hex-row-reduce).
+
+# Reference manual
+
+The hex reference manual covers this library and its computational base at
+<https://kim-em.github.io/hex-dev/find/?domain=Verso.Genre.Manual.section&name=hex-row-reduce>.
+
+# Contributing
+
+Development happens in the [`hex-dev`](https://github.com/kim-em/hex-dev)
+monorepo, not in this published mirror. Contributions are welcome as pull
+requests to the `SPEC/` directory: describe the behaviour you want, and
+leave the implementation to the maintainer.

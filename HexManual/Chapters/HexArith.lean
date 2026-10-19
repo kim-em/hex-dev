@@ -34,7 +34,7 @@ native-word code. Two single-word modular reducers,
 {name}`barrettReduce` and {name}`montgomeryReduce`, each come
 with a `Nat`-level model stating the arithmetic before the machine-word
 encoding is pinned down. {name}`HexArith.extGcd` is the extended
-Euclidean algorithm in three flavours ({name}`Nat`, GMP-backed {name}`Int`, and
+Euclidean algorithm in three flavours ({name}`Nat`, {name}`Int`, and
 {name}`UInt64`), and {name}`Hex.Nat.isPrimeTrial` is a trial-division
 primality test that produces a primality witness without `native_decide`
 or a hardcoded prime list.
@@ -239,12 +239,11 @@ prime searches can certify candidates beyond any precomputed list.
 tag := "hex-arith-worked"
 %%%
 
-The block below runs the pure (non-`@[extern]`) operations: the `Nat`
-extended GCD, the trial-division test, and the `Nat`-level Barrett
-reducer. The wide-word operations are `@[extern]`: the interpreter runs
-their native C symbol rather than the Lean definition, and that symbol is
-not linked into the manual's evaluator, so `#eval` and `#guard` cannot
-run them. They are documented by signature and law above.
+The block below runs the `Nat` extended GCD, the trial-division test, the
+`Nat`-level Barrett reducer, and one wide-word operation. The wide-word
+operations are `@[extern]`: elaboration runs their native C symbol rather than
+the Lean definition. `HexArith` is built with `precompileModules`, so that
+symbol is loaded for `#eval` and `#guard` here and in downstream packages.
 
 ```lean
 open HexArith Hex.Nat
@@ -266,6 +265,10 @@ namespace HexArithChapter
 -- reproduces ordinary remainder: 1000 mod 97 = 30.
 #guard barrettReduceNat 97 (barrettRadix / 97) 1000 = 30
 
+-- High word of (2^64 - 1)^2 is 2^64 - 2, from
+-- the native `lean_hex_uint64_mul_hi`.
+#guard UInt64.mulHi (0 - 1) (0 - 1) = 0 - 2
+
 end HexArithChapter
 ```
 
@@ -286,7 +289,7 @@ tag := "hex-arith-cross-references"
   specification those bindings are proved against. The library's meaning
   does not depend on the native code being linked.
 * The arithmetic here has no Mathlib correspondence library of its own.
-  The Mathlib correspondences live in the consuming libraries' `*Mathlib`
+  The Mathlib correspondences live in the consuming libraries' `*Theory`
   counterparts. `HexArith` itself imports only `Std` and never depends
   on Mathlib.
 

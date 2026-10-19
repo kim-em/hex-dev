@@ -50,20 +50,19 @@ The `hexgf2_bench` executable root additionally imports `HexGF2Bench`, which
 registers cross-library `GF2Poly` versus `FpPoly 2` comparison workloads outside
 the `HexGF2` library ownership boundary.
 
-Informational external comparator:
+External comparator:
 
 * `NTL GF2X` (via the persistent C++ subprocess driver
   `scripts/oracle/gf2_ntl_bench_driver.cc`): paired Hex/NTL
   `setup_fixed_benchmark` registrations record raw and overhead-adjusted
   wall-time ratios on the packed polynomial operations over `GF(2)`
-  (`add`, `mul`, `div` quotient, `rem` modular reduction, `gcd`). The
-  comparator is classified `informational` in
+  (`add`, `mul`, `div` quotient, `rem` modular reduction, `gcd`); see
   `HexGF2/SPEC/hex-gf2.md §"External comparators"`. Addition is a
   correctness/protocol anchor because hex serialization dominates the NTL
   round trip. Multiplication, division, remainder, and GCD are the
   performance surfaces: NTL uses asymptotically faster polynomial kernels
   while Hex currently uses schoolbook multiplication, long division, and
-  Euclidean GCD. Ratios are recorded for orientation but do not block Phase 4.
+  Euclidean GCD. Ratios are recorded for orientation.
 
 # NTL comparator-call protocol (persistent subprocess)
 
@@ -392,11 +391,10 @@ def runGF2nPolyPowChecksum (input : GF2nPolyPowInput) : UInt64 :=
 /-! # NTL `GF2X` persistent-subprocess driver
 
 Wires `scripts/oracle/gf2_ntl_bench_driver.cc` (built on-demand by
-`scripts/oracle/setup_gf2_ntl_driver.sh`) as the informational external
-comparator for the packed polynomial operations over `GF(2)`. Per-rung
-paired Hex/NTL `setup_fixed_benchmark` registrations populate the
-headline report's Comparator Ratios subsection at densified rungs of
-each parametric ladder. -/
+`scripts/oracle/setup_gf2_ntl_driver.sh`) as the external comparator for
+the packed polynomial operations over `GF(2)`. Per-rung paired Hex/NTL
+`setup_fixed_benchmark` registrations record comparator ratios at densified
+rungs of each parametric ladder. -/
 
 /-- Persistent child process for the NTL bench driver. `stdin` is the
 writable handle returned by `Child.takeStdin`; `child` is the
@@ -623,8 +621,8 @@ serialization dominates the NTL round trip.
 
 Mul/Div/Mod/Gcd ladders: in-fill of the parametric
 `[16, 24, 32, 48, 64, 96, 128]` schedule and upper rungs expose the
-different algorithm classes while retaining enough rungs below the headline
-report's ten-second eligibility ceiling. -/
+different algorithm classes while retaining enough rungs below a ten-second
+per-call ceiling. -/
 
 def runAdd4096 : Unit → IO UInt64 := runAddAt 4096
 def runNtlAdd4096 : Unit → IO UInt64 := runNtlAddAt 4096
@@ -960,14 +958,12 @@ setup_benchmark runGF2nPolyPowChecksum n => Nat.log2 (n + 1)
     signalFloorMultiplier := 1.0
   }
 
-/-! # NTL `GF2X` informational comparator fixed registrations
+/-! # NTL `GF2X` comparator fixed registrations
 
-Paired Hex/NTL `setup_fixed_benchmark` rungs feed the headline report's
-Comparator Ratios subsection at densified rungs of each SPEC-named
-parametric ladder. `lean-bench` reports each pair's observed hashes and
-median wall time; per `HexGF2/SPEC/hex-gf2.md §"External
-comparators"` the comparator is `informational` and no gating-goal
-verdict is required. -/
+Paired Hex/NTL `setup_fixed_benchmark` rungs record comparator ratios at
+densified rungs of each SPEC-named parametric ladder. `lean-bench` reports
+each pair's observed hashes and median wall time; the ratios are recorded for
+orientation (`HexGF2/SPEC/hex-gf2.md §"External comparators"`). -/
 
 def ntlCompare5 : LeanBench.FixedBenchmarkConfig :=
   { repeats := 5, maxSecondsPerCall := 5.0, warmupFirstIter := true,

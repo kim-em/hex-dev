@@ -80,16 +80,16 @@ Reviewer checklist for Phase 3 PRs:
   issue for any deliberately uncovered op (with the conformance
   docstring not claiming it as covered).
 
-### Mathlib libraries
+### Theory libraries
 
 The criteria and checklist above presuppose an executable surface to conform
 to. A `mathlib: true` library whose API is theorems about executable operations
 owned elsewhere has none, and has no conformance module:
-`conformance/HexFooMathlib/Conformance.lean` does not exist, per
+`conformance/HexFooTheory/Conformance.lean` does not exist, per
 [SPEC/testing.md §Banned anti-patterns](../SPEC/testing.md#banned-anti-patterns),
 and the operations it states theorems about are covered by the conformance of
 the Mathlib-free libraries that implement them. Phase 3 for such a library is
-done when `lake build HexFooMathlib` is green; record completion by bumping
+done when `lake build HexFooTheory` is green; record completion by bumping
 `libraries.yml[L].done_through` to `3`.
 
 A Mathlib-importing library that owns an executable reifier, certificate

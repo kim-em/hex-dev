@@ -8,7 +8,7 @@ module
 public import HexRCF.RealCoefficients.Isolations
 public import HexRCF.RealCoefficients.IsolationSemantics
 public import HexRCF.RealCoefficients.RootAliases
-public import HexRealAlgebraicMathlib.Laws
+public import HexRealAlgebraicTheory.Laws
 public meta import HexRCF.RealCoefficients.IsolationBuild
 public import HexSturm.Fixtures
 public meta import HexRCF.RealCoefficients.IsolationCheck
@@ -155,7 +155,7 @@ recursive producer inside the kernel. -/
 
 private theorem rational_sign (x : Rat) :
     Sturm.orderSign x = (SignType.sign (x : ℝ) : Int) := by
-  rw [HexSturmMathlib.orderSign_eq]
+  rw [HexSturmTheory.orderSign_eq]
   congr 1
   exact (StrictMono.sign_comp (f := Rat.castHom ℝ) Rat.cast_strictMono x).symm
 
@@ -179,18 +179,18 @@ theorem negativeLiteral_wrong_interval :
 
 /-- The accepted count-one query is the mathematical sign at that root. -/
 theorem negativeQuery_semantics (x : ℝ)
-    (hx : (HexPolyMathlib.Interpret.interpret (fun r : Rat => (r : ℝ))
+    (hx : (HexPolyTheory.Interpret.interpret (fun r : Rat => (r : ℝ))
       (fun _ => Rat.cast_eq_zero) Sturm.Fixtures.p).IsRoot x)
-    (hl : HexRealRootsMathlib.Dyadic.toReal (Dyadic.ofInt (-2)) < x)
-    (hu : x < HexRealRootsMathlib.Dyadic.toReal (-half)) :
-    (SignType.sign ((HexPolyMathlib.Interpret.interpret
+    (hl : HexRealRootsTheory.Dyadic.toReal (Dyadic.ofInt (-2)) < x)
+    (hu : x < HexRealRootsTheory.Dyadic.toReal (-half)) :
+    (SignType.sign ((HexPolyTheory.Interpret.interpret
       (fun r : Rat => (r : ℝ)) (fun _ => Rat.cast_eq_zero) samplePoly).eval x) : Int) = -1 := by
   have hquery := certificate.check_sign
     (fun r : Rat => (r : ℝ)) (fun _ => Rat.cast_eq_zero)
     (by simp) (fun _ _ => Rat.cast_add _ _) (fun _ _ => Rat.cast_sub _ _)
     (fun _ _ => Rat.cast_mul _ _) (fun _ => by simp)
     Sturm.orderSign rational_sign Dyadic.toRat
-    (fun d => (HexRealRootsMathlib.toReal_eq_cast_toRat d).symm)
+    (fun d => (HexRealRootsTheory.toReal_eq_cast_toRat d).symm)
     7 Sturm.Fixtures.p accepted ⟨0, by decide⟩ samplePoly
     negativeLiteral.value negativeLiteral negativeQuery_checked x hx hl hu
   exact hquery.symm
@@ -199,13 +199,13 @@ theorem negativeQuery_semantics (x : ℝ)
 This semantic result uses the explicitly owned shared query admission. -/
 theorem covered : ∃ root : Fin certificate.isolations.intervals.size → ℝ,
     StrictMono root ∧ ∀ x,
-      (HexPolyMathlib.Interpret.interpret (fun r : Rat => (r : ℝ))
+      (HexPolyTheory.Interpret.interpret (fun r : Rat => (r : ℝ))
         (fun _ => Rat.cast_eq_zero) Sturm.Fixtures.p).IsRoot x ↔ ∃ i, root i = x := by
   obtain ⟨root, _, hmono, hcomplete, _⟩ := certificate.check_roots
     (fun r : Rat => (r : ℝ)) (fun _ => Rat.cast_eq_zero)
     (by simp) (fun _ _ => Rat.cast_add _ _) (fun _ _ => Rat.cast_sub _ _)
     (fun _ _ => Rat.cast_mul _ _) (fun _ => by simp) Sturm.orderSign rational_sign
-    Dyadic.toRat (fun d => (HexRealRootsMathlib.toReal_eq_cast_toRat d).symm)
+    Dyadic.toRat (fun d => (HexRealRootsTheory.toReal_eq_cast_toRat d).symm)
     7 Sturm.Fixtures.p accepted
   exact ⟨root, hmono, hcomplete⟩
 
@@ -217,14 +217,14 @@ theorem left_sample_sign :
         Cell.Region root (.open ⟨0, by decide⟩) x →
         Sturm.orderSign (Sturm.Fixtures.p.eval
           (Dyadic.toRat (certificate.isolations.openPoint ⟨0, by decide⟩))) =
-          (SignType.sign ((HexPolyMathlib.Interpret.interpret
+          (SignType.sign ((HexPolyTheory.Interpret.interpret
             (fun r : Rat => (r : ℝ)) (fun _ => Rat.cast_eq_zero)
             Sturm.Fixtures.p).eval x) : Int) := by
   obtain ⟨root, _, hmono, hcomplete, hopen⟩ := certificate.check_roots
     (fun r : Rat => (r : ℝ)) (fun _ => Rat.cast_eq_zero)
     (by simp) (fun _ _ => Rat.cast_add _ _) (fun _ _ => Rat.cast_sub _ _)
     (fun _ _ => Rat.cast_mul _ _) (fun _ => by simp) Sturm.orderSign rational_sign
-    Dyadic.toRat (fun d => (HexRealRootsMathlib.toReal_eq_cast_toRat d).symm)
+    Dyadic.toRat (fun d => (HexRealRootsTheory.toReal_eq_cast_toRat d).symm)
     7 Sturm.Fixtures.p accepted
   refine ⟨root, hmono, ?_⟩
   intro x hx
@@ -232,7 +232,7 @@ theorem left_sample_sign :
     (fun r : Rat => (r : ℝ)) (fun _ => Rat.cast_eq_zero)
     (fun _ _ => Rat.cast_add _ _) (fun _ _ => Rat.cast_mul _ _)
     Sturm.orderSign rational_sign Dyadic.toRat
-    (fun d => (HexRealRootsMathlib.toReal_eq_cast_toRat d).symm)
+    (fun d => (HexRealRootsTheory.toReal_eq_cast_toRat d).symm)
     Sturm.Fixtures.p Sturm.Fixtures.p root hmono hcomplete
     ⟨0, by decide⟩ (hopen ⟨0, by decide⟩)
     (Or.inr (fun _ h => h)) x hx

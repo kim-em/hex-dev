@@ -1,0 +1,115 @@
+{
+  "cpu": 24,
+  "host": "chungus2",
+  "platform": "Linux-6.12.111-x86_64-with-glibc2.42",
+  "source": "31e4cfebc6deb29208d3d0c7ad459e827fcebb1d",
+  "source_hashes": {
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "lake-manifest.json": "a2440490b8954368bd3de4d4e7142d0a75ef6b4e1cbe664c152a87e0715a0e56",
+    "bench/HexECPP/Bench.lean": "3f7c8a2f33b7b7e142763360beff1040ac92fc52959e399d299b387cd4e7fbf8",
+    "scripts/bench/ecpp_audit.py": "f39da6071d80f866b9d3af9f607d648c7a74618d787d90139355d5f907effeaa",
+    "HexECPP/Affine.lean": "e1a749485731b258030c61ecdb769b697f6b1877434ec589a27a920c164e5c6b",
+    "HexECPP/CM/ClassPolynomials.lean": "8f50cc32e4d275de8641ac16abc2fb99652e6b8863d68237bd373d4284b2b3d9",
+    "HexECPP/CM/Roots.lean": "c933d44ba1461ae71f88e342346380bbcc877eb28e8bdd125f3fbeed924545fe",
+    "HexECPP/CM.lean": "05a06a0dafb457e5831f0b6bba2abd2c9c9c2f5a8319772673e0140f858a8de3",
+    "HexECPP/Cert.lean": "1d3261fbe6c581e630811277c83ef36e44bcdce87b042ff4eac4e60409d73100",
+    "HexECPP/Data.lean": "98690924d6648202e8e2f43d118934eb0e4fb3899a3127aa02bf4ef605d5bd81",
+    "HexECPP/Import.lean": "3763bfe5d9cab83cf2b9f558343ceea06e70b98894a49690ec3f2f75c9cc89a1",
+    "HexECPP/Replay.lean": "365360db2a51992dfdd0c48e6e37a8bbc61e13bc57faa448abffd851c26856dc",
+    "HexECPP/Search.lean": "258b97b093a73b8cd0c94a9ddae410bd53681aeef8fc73b2a85016409d5f6d78"
+  },
+  "executable_sha256": "0ae4f284c90ad4b8ef078dbe0868d128ca1972754b33c80ac8ab0c8062dfed04",
+  "lean": "Lake version 5.0.0-src+470d5ce (Lean version 4.35.0-rc3)",
+  "host_before": {
+    "loadavg": [
+      5.78369140625,
+      5.36083984375,
+      9.173828125
+    ]
+  },
+  "commands": [
+    {
+      "command": [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10600/.lake/build/bin/hexecpp_bench",
+        "run",
+        "runNative512",
+        "runNative512Check",
+        "runNative512Convert",
+        "--repeats",
+        "5",
+        "--export-file",
+        "reports/ecpp/native512/endpoints-v2.artifacts/endpoints.json"
+      ],
+      "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10600",
+      "returncode": 0,
+      "stdout": "runNative512    [fixed] repeats=5\n  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=31e4cfe, 2026-10-03T14:01:53Z, host=chungus2\n  repeat 0  1.560 s\n  repeat 1  1.552 s\n  repeat 2  1.571 s\n  repeat 3  1.606 s\n  repeat 4  1.554 s\n  median: 1.560 s    min: 1.552 s    max: 1.606 s\n  hash: all repeats agree\n  observed hash: 0x1\n  expected hash: matches\n  peak RSS: 71_068 kB..71_612 kB (across 5 ok repeat(s))\n\nrunNative512Check    [fixed] repeats=5\n  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=31e4cfe, 2026-10-03T14:02:03Z, host=chungus2\n  repeat 0  28.417 ms\n  repeat 1  28.765 ms\n  repeat 2  28.244 ms\n  repeat 3  28.404 ms\n  repeat 4  28.448 ms\n  median: 28.417 ms    min: 28.244 ms    max: 28.765 ms\n  hash: all repeats agree\n  observed hash: 0x1\n  expected hash: matches\n  peak RSS: 71_344 kB..71_840 kB (across 5 ok repeat(s))\n\nrunNative512Convert    [fixed] repeats=5\n  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=31e4cfe, 2026-10-03T14:02:12Z, host=chungus2\n  repeat 0  139.247 ms\n  repeat 1  142.303 ms\n  repeat 2  142.405 ms\n  repeat 3  148.235 ms\n  repeat 4  162.623 ms\n  median: 142.405 ms    min: 139.247 ms    max: 162.623 ms\n  hash: all repeats agree\n  observed hash: 0x1\n  expected hash: matches\n  peak RSS: 70_828 kB..74_072 kB (across 5 ok repeat(s))\n\nexported to reports/ecpp/native512/endpoints-v2.artifacts/endpoints.json\n",
+      "stderr": "",
+      "loadavg": [
+        8.52099609375,
+        5.9541015625,
+        9.22314453125
+      ]
+    }
+  ],
+  "budgets_seconds": {
+    "runCheck65": 0.00032,
+    "runCheck256": 0.012,
+    "runCheck512": 0.045,
+    "runConvert65": 0.0016,
+    "runConvert256": 0.17,
+    "runConvert512": 1.05,
+    "runNative128": 0.125,
+    "runNative256": 1.45,
+    "runNativeHard": 3.3,
+    "runNativeCheck": 0.01,
+    "runNativeConvert": 0.14,
+    "runParse512": 0.0016,
+    "runNativeExhaust": 0.075,
+    "runCM128": 0.00023,
+    "runCM256": 0.0002,
+    "runCountedConvert65": 0.0021,
+    "runNative512": 5.0,
+    "runNative512Check": 0.08,
+    "runNative512Convert": 0.3
+  },
+  "samples": [],
+  "fixed_verdicts": {
+    "runNative512": {
+      "median_seconds": 1.560326425,
+      "budget_seconds": 5.0,
+      "within_budget": true,
+      "hashes_agree": true,
+      "expected_hash_check": {
+        "status": "match"
+      }
+    },
+    "runNative512Check": {
+      "median_seconds": 0.028416566,
+      "budget_seconds": 0.08,
+      "within_budget": true,
+      "hashes_agree": true,
+      "expected_hash_check": {
+        "status": "match"
+      }
+    },
+    "runNative512Convert": {
+      "median_seconds": 0.142404989,
+      "budget_seconds": 0.3,
+      "within_budget": true,
+      "hashes_agree": true,
+      "expected_hash_check": {
+        "status": "match"
+      }
+    }
+  },
+  "host_after": {
+    "loadavg": [
+      8.52099609375,
+      5.9541015625,
+      9.22314453125
+    ]
+  },
+  "artifact_sha256": {
+    "endpoints.json": "13b810da54a25988ee2f0c89cd564c46bf817e2304846abbd4d0f97f207f7a37"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "trial": 0,
+  "degree": 2,
+  "owners": 8,
+  "arm": "baseline",
+  "command": [
+    "taskset",
+    "-c",
+    "11",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10378-gather-baseline/.lake/build/bin/hexrealclosure_bench",
+    "gather-timing",
+    "2",
+    "8",
+    "1"
+  ],
+  "wall_seconds": 34.07965757400052,
+  "load_after": [
+    8.5068359375,
+    25.9619140625,
+    31.32080078125
+  ],
+  "returncode": 0,
+  "output": "degree=2 owners=8 repeats=1 nanoseconds=16952186180 semantic_hash=8\n"
+}

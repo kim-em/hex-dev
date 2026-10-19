@@ -21,7 +21,8 @@ CASES = [('transcript-length', 'Hex.ECPPBench.runReplay', 4096),
          ('scalar-modulus-widths', 'Hex.ECPPBench.runSizedProposal', 512),
          ('scalar-modulus-replay', 'Hex.ECPPBench.runSizedReplay', 4096),
          ('supplied-certificates', 'runConvert512', 0),
-         ('native-production', 'runNativeHard', 0)]
+         ('native-production', 'runNativeHard', 0),
+         ('native-production-512', 'runNative512', 0)]
 
 
 def digest(path):
@@ -45,7 +46,7 @@ def main():
                   executable_sha256=digest(exe),
                   sources={str(p.relative_to(ROOT)): digest(p) for p in
                            [ROOT / 'scripts/profile/ecpp.py', ROOT / 'bench/HexECPP/Bench.lean',
-                            *sorted((ROOT / 'HexECPP').glob('*.lean'))]},
+                            *sorted((ROOT / 'HexECPP').rglob('*.lean'))]},
                   profiler_source=subprocess.check_output(
                       ['git', '-C', str(args.profiler_root), 'rev-parse', 'HEAD'], text=True).strip(),
                   commands=[], profiles=[])

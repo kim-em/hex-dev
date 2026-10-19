@@ -3,8 +3,10 @@
 This report records partial HexPolyFp Phase-4 evidence from clean source
 revision `5e7d93547984331e2db21178e7ff5deb636283e0`, measured on 2026-08-31 on
 `chungus2` (AMD EPYC 9455, Linux x86-64) with Lean 4.34.0-rc2 and lean-bench
-0.1.0. The repaired Frobenius and GCD ladders pass, but the library remains at
-Phase 3 because the concerns at the end of this report still block Phase 4.
+0.1.0. The repaired Frobenius and GCD ladders pass. §Karatsuba and GCD
+re-measurement records the later correction of the Karatsuba cost model and
+the GCD fixture. The items under Concerns are open follow-up work under the
+going-forward rule of `PLAN/Phase4.md`, not defects in the library.
 
 The scientific artifact is
 [`hex-poly-fp-5e7d935-scientific.json`](bench-results/hex-poly-fp-5e7d935-scientific.json)
@@ -55,13 +57,13 @@ in `bench/HexPolyFp/Bench.lean`.
 |---|---|
 | `runMulSchoolbook257Checksum` | `(n * n)` |
 | `runMulPacked257Checksum` | `(n * n)` |
-| `runMulKaratsuba257Checksum` | `(n * Nat.sqrt n)` |
+| `runMulKaratsuba257Checksum` | `karatsubaCost FpPoly.karatsubaCutoff n` |
 | `runMulDirectNtt257Checksum` | `(n * Nat.log2 (n + 1))` |
 | `runMulCrtNtt257Checksum` | `(n * Nat.log2 (n + 1))` |
 | `runMulFast257Checksum` | `(n * n)` |
 | `runMulSchoolbookChecksum` | `(n * n)` |
 | `runMulPackedChecksum` | `(n * n)` |
-| `runMulKaratsubaChecksum` | `(n * Nat.sqrt n)` |
+| `runMulKaratsubaChecksum` | `karatsubaCost FpPoly.karatsubaCutoff n` |
 | `runMulDirectNttChecksum` | `(n * Nat.log2 (n + 1))` |
 | `runMulDirectNttColdChecksum` | `(n * Nat.log2 (n + 1))` |
 | `runMulCrtNttChecksum` | `(n * Nat.log2 (n + 1))` |
@@ -148,6 +150,34 @@ the full 8-through-2048 schedule.
 1.5-fold narrow-range noise floor. The square-free row passes its declared
 0.30 slope tolerance, but its alternating input shape gives the weakest fit of
 the eight (`C` spans 2.94-fold); it remains tracked under Concerns.
+
+## Karatsuba and GCD re-measurement
+
+The Karatsuba registrations previously declared `n * Nat.sqrt n`, which is
+`n^1.5`, not the `n^(log₂ 3)` of the algorithm. They now declare
+`karatsubaCost`, which follows `DensePoly.karatsubaAux`: schoolbook `n²` at or
+below the 32-coefficient cutoff, otherwise `2·T(⌈n/2⌉) + T(⌊n/2⌋) + n`. The GCD
+fixture previously had gcd `1` at every rung, so its paired hash check was
+vacuous; both operands are now multiplied by `X + n`, which keeps the `n`
+quotient-`X` Euclidean steps and makes the gcd differ per rung.
+
+Measured on 2026-10-05 on `chungus2` with Lean 4.35.0-rc3, one leased CPU
+(`taskset`, `LEAN_NUM_THREADS=1`, `nice -n 19`), host load average about 35,
+declared settings, after `verify` passed for all 27 registrations:
+
+| Target | Harness verdict | C min | C max | beta |
+|---|---|---:|---:|---:|
+| `runMulKaratsubaChecksum` | consistent with declared complexity | 10.785 | 15.299 | +0.022 |
+| `runMulKaratsuba257Checksum` | inconclusive, faster than declared | 10.860 | 23.984 | -0.265 |
+| `runGcdChecksum` | consistent with declared complexity | 7.531 | 17.126 | -0.117 |
+| `runGcdFastChecksum` | inconclusive, faster than declared | 106.214 | 523.800 | -0.289 |
+
+The `F_257` Karatsuba ladder spans 4 to 128 coefficients. Above the cutoff
+(33 to 128) `C` is flat at 10.9 to 13.9; the slope comes from rungs 4 to 16,
+where per-call linear work is a large fraction of the schoolbook `n²`. The
+half-gcd candidate declares `n²` as an upper bound for a subquadratic
+algorithm, so a faster-than-declared result is expected. The `runGcdChecksum`
+row in §Verdicts predates the fixture change.
 
 ## Comparator Ratios
 
@@ -247,10 +277,6 @@ remainder chain, not fixture preparation or an unregistered phase.
   registration, overhead treatment, and measured ratios. The python-flint
   oracle demonstrates comparable `nmod_poly` surfaces, so absence would not be
   accurate.
-- [#9809](https://github.com/kim-em/hex-dev/issues/9809): The
-  polynomial-Fibonacci GCD result is `1` at every rung, making the paired GCD
-  hash check vacuous. Both targets must mix the same input checksum before the
-  comparison can count as complete evidence.
 - [#9809](https://github.com/kim-em/hex-dev/issues/9809): The square-free
   ladder passes its declared 0.30 tolerance but has the weakest fit of the
   eight recorded mode-1 rows (`C` spans 2.94-fold in an alternating pattern),

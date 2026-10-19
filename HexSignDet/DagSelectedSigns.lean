@@ -27,10 +27,7 @@ unique extending row. No tree replay is repeated. -/
         [(d.raw.signs ++ values.toList, 1)]) : SelectedSigns d qs where
   values := values
   evidence := t
-  accepted := by
-    obtain ⟨hw, hctx, _, _⟩ := RawDescriptor.check_eq d.accepted
-    simp only [Descriptor.checkSigns, RawDescriptor.checkSigns, hw, hctx,
-      decide_true, Bool.true_and, hc, hr]
+  accepted := Descriptor.checkSigns_eq.mpr ⟨hc, hr⟩
 
 /-- Read selected signs from one entry of an already checked graph. The
 unique extending row and exact query prefix still have to match. -/
@@ -171,10 +168,10 @@ theorem selectedSigns_replay {sign : E → Int} {context : Ctx}
     (h : dag.replay? sign context d.raw.head d.raw.lower d.raw.upper
       (d.raw.queries ++ qs) = some t) :
     (dag.selectedSigns? d qs values).isSome = d.checkSigns qs values t.val := by
-  obtain ⟨hw, hctx, _, _⟩ := RawDescriptor.check_eq d.accepted
+  rw [Bool.eq_iff_iff, Descriptor.checkSigns_eq]
+  simp only [t.property, true_and]
   unfold selectedSigns?
-  simp only [h, bind, Option.bind, Descriptor.checkSigns, RawDescriptor.checkSigns,
-    hw, hctx, decide_true, Bool.true_and, t.property]
+  simp only [h, bind, Option.bind]
   split <;> simp_all [pure]
 
 /-- Every checked selected-sign tree, encoded with sharing, is accepted again
@@ -197,10 +194,8 @@ theorem selectedSigns_encode_eq [Hashable E] [Hashable Ctx]
       if d.checkSigns qs values tree then some (values, tree) else none := by
   by_cases hc : tree.check sign context d.raw.head d.raw.lower d.raw.upper
       (d.raw.queries ++ qs) = true
-  · obtain ⟨hw, hctx, _, _⟩ := RawDescriptor.check_eq d.accepted
-    simp only [selectedSigns?, replay_encode hc, bind, Option.bind,
-      Descriptor.checkSigns, RawDescriptor.checkSigns, hw, hctx, decide_true,
-      Bool.true_and, hc]
+  · simp only [selectedSigns?, replay_encode hc, bind, Option.bind,
+      Descriptor.checkSigns_eq, hc, true_and]
     split <;> simp_all [pure, SelectedSigns.ofTable]
   · have hn : replay? sign context d.raw.head d.raw.lower d.raw.upper
         (d.raw.queries ++ qs) (encode tree) = none := by
@@ -212,8 +207,7 @@ theorem selectedSigns_encode_eq [Hashable E] [Hashable Ctx]
           (d.raw.queries ++ qs) (encode tree) with
       | none => rfl
       | some t => simp [hr, hc] at he
-    simp [selectedSigns?, hn, bind, Option.bind,
-      Descriptor.checkSigns, RawDescriptor.checkSigns, hc]
+    simp [selectedSigns?, hn, bind, Option.bind, Descriptor.checkSigns_eq, hc]
 
 /-- Agreement on every stored graph node preserves rejection and the literal
 selected-query signs and evidence. The caller descriptors must name the same

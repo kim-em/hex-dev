@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "bec3e8a34b5f1f1d3beeebf2a9877ae715e14071",
+  "current_blob": "5fe6cffe20c1cbee2886eab514503425a130df59",
+  "reason": "Move HexModular.KernelTests and LoopTests between monorepo regression targets, register the HexPolyFast declaration lint in HexConformance, and clarify publication/lint comments. Also retain the upstream additions of HexPermGroup computational and certificate regression tests in HexReleaseTests. No measured factorization or graph-isomorphism executable, compiler setting, dependency pin, native archive, or runtime source changes. Broad regression targets share library namespaces, so the conservative Lake claimant check requires this exact transition."
+}

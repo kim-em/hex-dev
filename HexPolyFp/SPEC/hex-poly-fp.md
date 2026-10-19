@@ -82,14 +82,12 @@ order. `mulFast` is total without those extra inputs: it uses generic
 schoolbook multiplication below 16 coefficients in the shorter operand,
 packed lazy-reduction multiplication up to the auxiliary crossover, then
 tries CRT-NTT and falls back to generic Karatsuba rather than exposing
-catalogue exhaustion. The published consumers (`powModMonic`, Frobenius
-powers, modular composition, and hex-gfq-ring multiplication) call
-`mulPackedFast`, the same dispatcher without the CRT-NTT and Karatsuba tail;
-that tail lives in `HexPolyFp.NttMul`, which imports hex-poly-fast and
-hex-modular, is built by hex-dev's `HexPolyFastKernels` target, and is not
-exported by the released umbrella until those libraries are published
-(https://github.com/kim-em/hex-dev/issues/10001). Every measured consumer size below is under the 8192-coefficient
-crossover, so the published dispatcher performs exactly the measured work.
+catalogue exhaustion. The consumers (`powModMonic`, Frobenius powers,
+modular composition, and hex-gfq-ring multiplication) call `mulFast`.
+`HexPolyFp.NttMul` is exported by the umbrella and depends on hex-poly-fast
+and hex-modular, both included in the release manifest. Every measured
+consumer size below is under the 8192-coefficient crossover, so these
+consumers retain the measured schoolbook or packed work at those sizes.
 
 The schoolbook-to-packed boundary is shared by `F_257` and `F_65537`. Three
 warm outer trials on `chungus2` with Lean `4.34.0-rc2` give:
@@ -160,3 +158,12 @@ target-modulus and operand-ratio ladders are part of the broader
 hex-poly-fast calibration grid. Conformance forces the available kernels and
 checks them against schoolbook multiplication; an invalid direct root or
 insufficient CRT product is a required fallback case.
+
+## Native code
+
+`lean_lib HexPolyFp` sets `precompileModules := true` because the library binds
+native implementations with `@[extern]`: the packed convolution `fpConvolve` behind `mulPacked`, which `powModMonic` also reaches. Lean's interpreter cannot run
+an `@[extern]` declaration, so without the flag a downstream `#eval`, `#guard`
+or tactic that evaluates one fails with "Could not find native implementation
+of external declaration". The release consumer check exercises this from a
+downstream package before every publish.

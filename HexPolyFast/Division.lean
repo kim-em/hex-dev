@@ -173,14 +173,22 @@ theorem quotientLength_eq (p q : DensePoly R) :
 
 /-- A reusable divisor with a reciprocal cached to a fixed capacity. -/
 structure DivPlan (R : Type u) [DecidableEq R] [Lean.Grind.CommRing R] where
+  /-- Multiplication plan used by Newton division. -/
   mul : MulPlan R
+  /-- Nonzero divisor represented by this plan. -/
   divisor : DensePoly R
+  /-- Maximum quotient precision supported by the cached reciprocal. -/
   capacity : Nat
+  /-- Inverse of the reversed divisor's constant coefficient. -/
   unitInv : R
+  /-- Cached reciprocal of the reversed divisor. -/
   reciprocal : TSeries R capacity
+  /-- The divisor is nonzero. -/
   divisor_ne : divisor ≠ 0
+  /-- At positive precision, the supplied inverse is a unit witness. -/
   unitInv_spec : 0 < capacity →
     (reverseSeries divisor capacity).coeff 0 * unitInv = 1
+  /-- The cached reciprocal agrees with series inversion. -/
   reciprocal_spec :
     reciprocal = TSeries.invOfUnit (reverseSeries divisor capacity)
       unitInv

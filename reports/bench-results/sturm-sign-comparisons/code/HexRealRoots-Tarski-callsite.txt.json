@@ -1,0 +1,9 @@
+{
+  "module": "HexRealRoots/Tarski",
+  "generated_c": ".lake/build/ir/HexRealRoots/Tarski.c",
+  "generated_c_sha256": "0e6734d6c8b300dd187a587eba152f8877894c89c071913b1197a267926b9899",
+  "persistent_generated_c": "/home/kim/.local/state/hex/issue-10577-sign-fix/HexRealRoots-Tarski.c",
+  "binary_sha256": "55640ad98ad3cf2323b93922272b28fec5d0c093115cfd29df8e11590d6ddc57",
+  "source": "75fbfa04550ae0f76df074176f44bf0f2533334a",
+  "excerpt": "HexRealRoots-Tarski-callsite.txt"
+}

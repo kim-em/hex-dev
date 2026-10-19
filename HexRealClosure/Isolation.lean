@@ -35,7 +35,8 @@ theorem Whole.prepare?_isSome (sign : E → Int) (p : DensePoly E) :
   split <;> simp_all
 
 /-- The two routes awaiting descriptor completion. The bounded route retains
-its accepted original bound and every cell after capped refinement. -/
+its accepted original bound and current frontier cells. Finite policies
+may retain the initial frontier or apply capped refinement. -/
 inductive Route (sign : E → Int) (p : DensePoly E) where
   | bounded (bound : Bounds.Bound sign p) (frontier : Bisection.Frontier sign)
   | whole (domain : Whole sign p)

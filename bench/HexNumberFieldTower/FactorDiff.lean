@@ -471,7 +471,7 @@ def appendComponent? (levels : List Level)
 
 /-- Full executable raw factorization certificate check. At proper tower
 levels, “irreducible” means a piece the recursive Trager checker cannot split;
-the Mathlib companion supplies the semantic irreducibility theorem. Cheap
+the theory companion supplies the semantic irreducibility theorem. Cheap
 reconstruction and canonical-order checks precede recursive replay. -/
 @[expose]
 def check (levels : List Level) (f : Array (Array Rat)) (scalar : Array Rat)

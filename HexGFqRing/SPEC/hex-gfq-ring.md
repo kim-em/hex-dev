@@ -64,15 +64,15 @@ supports a field structure; that extension belongs to hex-gfq-field.
 
 ## Fast-arithmetic adoption
 
-The quotient multiplication operation calls `FpPoly.mulPackedFast`; the
+The quotient multiplication operation calls `FpPoly.mulFast`; the
 coefficient-owner dispatcher retains schoolbook multiplication below 16
 coefficients and selects the packed lazy-reduction kernel above that measured
-boundary. (The NTT-backed tail of `FpPoly.mulFast` depends on unpublished
-libraries and only engages above 8192 coefficients, far beyond every degree
-measured here; the published consumers switch to it when hex-poly-fast is
-released, https://github.com/kim-em/hex-dev/issues/10001.) Square-and-multiply exponentiation inherits that choice.
-Canonical representatives and every `reduceMod` theorem are unchanged because
-`FpPoly.mulPackedFast_eq` identifies the selected product with `DensePoly.mul`.
+boundary. At 8192 coefficients it tries the CRT-NTT kernel and falls back to
+Karatsuba if the auxiliary-prime catalogue is insufficient. Its dependencies
+hex-poly-fast and hex-modular are included in the release manifest.
+Square-and-multiply exponentiation inherits that choice. Canonical
+representatives and every `reduceMod` theorem are unchanged because
+`FpPoly.mulFast_eq` identifies the selected product with `DensePoly.mul`.
 
 Three warm outer trials on `chungus2`, Lean `4.34.0-rc2`, over `F_65537` give
 these representative medians; all result hashes agree:
@@ -98,10 +98,7 @@ the screens with `lake exe hexgfqring_bench compare` and the paired
 
 ## External comparators
 
-No external comparator is required.
-
-**Justification:** `structural-layer` per
-`SPEC/benchmarking.md §"Comparator naming"`. HexGFqRing's semantic
+No external comparator is required. HexGFqRing's semantic
 domain is `F_p[x]/(f)` for *any* nonconstant `f`, including reducible
 moduli (see the contents section: "This does NOT require `f` to be
 irreducible — the quotient is always a ring"). The natural FLINT
@@ -119,7 +116,7 @@ quotient-ring constant-factor parity.
 
 Coverage at the finite-field subset of HexGFqRing's domain is provided
 upstream by HexGFqField's external comparator declaration (FLINT
-`fq_default`, informational), which exercises HexGFqRing's quotient
+`fq_default`), which exercises HexGFqRing's quotient
 arithmetic transitively through `FiniteField p f hf hirr`'s thin
 wrapper over `PolyQuotient p f hf`. The irreducibility precondition
 that breaks the declaration at this layer is naturally satisfied at

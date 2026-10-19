@@ -1,0 +1,201 @@
+{
+  "schema": "hex-rcf-cell-replay-validation-v1",
+  "source_commit": "2a03a33ecdc9bb7e57cd08c909915f2f7f398887",
+  "selected_source_hashes": {
+    "HexManual/Chapters/HexRCF.lean": "8d0650eed1f7776bc18e3061d91bd9015b740be8cf97e00ec9ce45b1b03803af",
+    "HexManual/Chapters/HexRCF/CellReplay.lean": "6a89f28b128b106683d1279579e97dd2b166f65f5c77ad93fa7364dfbebabb7e",
+    "HexRCF/README.md": "65fd2c8218071da12cc09e6d0af435d60bea929878ee466d10806db519352a82",
+    "adapters/HexRCF/RealCoefficients.lean": "4f5b89da2fd3ebb719282379acd6105dcd7c19266d4b7c623dbf12ca90cb250d",
+    "adapters/HexRCF/RealCoefficients/BoundarySigns.lean": "b4ce91f907b9fcf7d32fd80e3f288cc2dff54a6bda89c19a3ae2ff79d7d80617",
+    "adapters/HexRCF/RealCoefficients/CellQuote.lean": "6b3e67572ce3f01bfa7fd1194f737515dfc7c3efbbcb46c6629b1720fc20b5ba",
+    "adapters/HexRCF/RealCoefficients/CellRead.lean": "a5a8319a885fb2513b456fdc312abe7afd5972fe9197214ffd00fed11345e980",
+    "adapters/HexRCF/RealCoefficients/CellReplay.lean": "b651d03f2da34444564405f1adc47778d0e0385b62d34aacba2b96f9983a6b5e",
+    "adapters/HexRCF/RealCoefficients/PointRows.lean": "2b042c6fa700d223efe718b628b905d3befc79ce095ce092477e307a59917693",
+    "adapters/HexRCF/RealCoefficients/RepresentationCarrier.lean": "6ffa0ec64de2c5798cda345921eccafb3c9b4dd2d259033526d6361459e2c3be",
+    "adapters/HexRCF/RealCoefficients/RepresentationCells.lean": "9321b2e755f74f084ec4ad698f7d7c41c3b3f2b8721273b5d1555fbc51c4432c",
+    "adapters/HexRCF/RealCoefficients/RootCells.lean": "d1bc0987a75d6bf1dcc11b8734f1986b6bfe04850a8897fdb6bbca37219ca4ba",
+    "adapters/HexRCF/RealCoefficients/RowReplay.lean": "92c2383ce1f265003f116c4c8e37825003bed6ff3cf885711bd20b3c6711ab2b",
+    "adapters/HexRCF/RealCoefficients/SectorReplay.lean": "ebbad3cf2c2fa3821928719c42f9aaf90da5e5249b3a06284d43132544c0f9fb",
+    "adapters/HexRCF/RealCoefficients/SectorSamples.lean": "4c8a824d3edac974cb0f6822e49cd7ec9d7f71c582555b30b91ce52c290efa84",
+    "conformance-fixtures/HexRCF/cell-replay-mutations.json": "d8d8c0bf81ec33e9e7e58d4e3ec85263cd6c7b1da987c7dedbff6dc437b1b69c",
+    "conformance-fixtures/HexRCF/cell-replay.json": "0a304dbf96d44dfe41ad44bd3e58dfaf898a044b664291b8a50329954a9d4134",
+    "conformance-fixtures/HexRCF/cell-zero.json": "e8b993c98a04c9f9230d3beb2d8ecc30044e4a01b5a781a570a191cbf5510b17",
+    "conformance/HexRCF/CellReplay/Check.lean": "310ec5aa53d879ba37048c4c71bf0d576dc7d632cb8110eb3c412b09f38561cd",
+    "conformance/HexRCF/CellReplay/Controls.lean": "8b68be91e5d95ed301dfda4b22893ffcc2ff2ada7d9e4c25bb8d7dddf7429cdf",
+    "conformance/HexRCF/CellReplay/Emit.lean": "af4c75442c4d3a6abea3918679c7488b6ccf56e78178b5e7f05a9f477a67b332",
+    "conformance/HexRCF/CellReplay/LiteralData0.lean": "4549ed8faf68eba29cff68e0756f467260096926a25c23381fd62d496ba79e22",
+    "conformance/HexRCF/CellReplay/Literals.lean": "027075b4ce4515f033597fd9a5f5450cc85fec5493ebebe241b231c40870f047",
+    "conformance/HexRCF/CellReplay/ModuleCheck.lean": "5804ea6bf0892e80efd0b665124657d034158e9a095b6374fa3b5506215ced2b",
+    "conformance/HexRCF/CellReplay/MutationData0.lean": "f9272d10a914da84e88874f2299f91b1626d09157941c25a7bead98e66616502",
+    "conformance/HexRCF/CellReplay/Mutations.lean": "7fbd031686382c4dcc8b58de3dcb96841f9480d394cd6afb7c5335c918a7eeed",
+    "conformance/HexRCF/CellReplay/Ordinary.lean": "d6e38ae7e74ec68b0de17e57413a03c59d1bd106da15b81e099903c2178f9399",
+    "conformance/HexRCF/CellReplay/Quote.lean": "76b22d1daa496ad8075dfd307420c611b4900f74c241008b1235899d8c594fee",
+    "conformance/HexRCF/CellReplay/Quoted.lean": "41bb8dc90fc66538c4d7f1df1f1f51822613b12aee0edf4cdde6121b1fc14117",
+    "conformance/HexRCF/CellReplay/Refusals.lean": "2a72f1a14f95908fed0272867269699233645ba1520e17eb81106b60ae719911",
+    "conformance/HexRCF/CellReplay/Schema.lean": "a7425e39beb5b6f2acb4f6e020d71a159c5610b03b470a7a009a3fb31bdf4130",
+    "conformance/HexRCF/CellReplay/Valuation.lean": "8fa954a89f36eb579436e72a59c2947d5f70d712e2015416d103c115449f076c",
+    "conformance/HexRCF/CellReplay/Zero.lean": "5daa2c254d84a6896096153b1b1180cb8e3288da2ed05c38c5599f6263df4ff7",
+    "conformance/HexRCF/CellReplay/ZeroLiterals.lean": "085a2d317988070ca4724e7c47c39fa4fe4f3053589574f7ed3cdf88610436ba",
+    "lakefile.lean": "28016a3508539ffb43642230e6acd5b6b0f02754d41e86dba3aac0768a72bbb1",
+    "scripts/rcf/selected_literals.py": "00ddf79f0f2b286bb1847d4d4e8da4a0592eec083632ff53917cc193d02d9f0a"
+  },
+  "validation_records": [
+    {
+      "source_commit": "2a03a33ecdc9bb7e57cd08c909915f2f7f398887",
+      "file": "cell-review-full-build.log.gz",
+      "sha256": "8e39429de55c99e5a7fd4afaa02c8e60797a430b85622af65275475848919d6c",
+      "decoded_sha256": "1799325296c73164fba217a433334fd4960c1bbbcf9411b550ccf3592f905644",
+      "command": "lake build HexRCFRealCoefficients HexConformance HexManual",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "2a03a33ecdc9bb7e57cd08c909915f2f7f398887",
+      "file": "cell-review-emitter.log.gz",
+      "sha256": "4ae441c11eea1873cd5afa17502df1ec86684e7a5d3634edb187983259e0324f",
+      "decoded_sha256": "41a98c368e7673e8bcd87c6b9d7225007d8be5883ac84e54b1be2bab2222a8f1",
+      "command": "HEX_RCF_CELL_OUTPUT=<scratch> lake build +HexRCF.CellReplay.Emit",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "2a03a33ecdc9bb7e57cd08c909915f2f7f398887",
+      "file": "cell-review-render.log.gz",
+      "sha256": "7f964919b8717d68131c60f803681f2a45a68e0969f2437e9ae4abbac80f12cd",
+      "decoded_sha256": "5eb3127738ec07134d20700e376818aa1bd5a2d942af6d7db6c1f0c5fb18548c",
+      "command": "lake build FullRender (external scratch package)",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "2a03a33ecdc9bb7e57cd08c909915f2f7f398887",
+      "file": "cell-review-dag.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": "python3 scripts/check_dag.py",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "2a03a33ecdc9bb7e57cd08c909915f2f7f398887",
+      "file": "cell-review-admissions.log.gz",
+      "sha256": "28aad24ad31142c3005a6136da45bec688bf631d6784a48bc6f6a3b4b86b56b2",
+      "decoded_sha256": "9987357d4f09fe9cd64fd153119bc79bdc609e61616c1afd97e19445c15066ef",
+      "command": "python3 scripts/ci/check_named_admissions.py",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "2a03a33ecdc9bb7e57cd08c909915f2f7f398887",
+      "file": "cell-review-admission-tests.log.gz",
+      "sha256": "7e2158482edf29861d169a10e598449695e0b1b2f4b1b40ba1f4f1a799d33f4f",
+      "decoded_sha256": "b4e250dc0d9b61cb167a6584b31d1fce40d7ac51a3e4b0458d7f0b27bf5be547",
+      "command": "python3 scripts/ci/test_check_named_admissions.py",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "2a03a33ecdc9bb7e57cd08c909915f2f7f398887",
+      "file": "cell-review-copyright.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "decoded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "command": "python3 scripts/check_copyright_headers.py",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "2a03a33ecdc9bb7e57cd08c909915f2f7f398887",
+      "file": "cell-review-manual-split.log.gz",
+      "sha256": "48a9e140081495d1ab8296879fffbda28bea260c48c63a9e7a2bfa5754ef1009",
+      "decoded_sha256": "1aa61ffc8bf01b54065da7d805d56ddb2ec52b9efde8c583b0fe58d8e2b525f6",
+      "command": "python3 scripts/release/check_manual_split.py",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "2a03a33ecdc9bb7e57cd08c909915f2f7f398887",
+      "file": "cell-review-literals.log.gz",
+      "sha256": "d363c41d04cc71aaa8b2bb97d1faf6ff4b311e5874c10d339f87aba4d4b97158",
+      "decoded_sha256": "5b2703a612f8c434ac4e53bb05bfeef0dbca1d91cc9125441d5bd447be3dfbc3",
+      "command": "python3 scripts/rcf/selected_literals.py --check",
+      "exit_code": 0
+    },
+    {
+      "source_commit": "2a03a33ecdc9bb7e57cd08c909915f2f7f398887",
+      "file": "cell-review-links-lines.log.gz",
+      "sha256": "935a2a5464dd531062a0e848758607a2701f4882386426a9e6ceb6d532241c50",
+      "decoded_sha256": "5cab17b902840b7b547ab269ec3904d2bb8d21af8b0e4c1b84b0d99cfb11f71a",
+      "command": "relative links, changed Lean line limits and git diff --check",
+      "exit_code": 0
+    }
+  ],
+  "packet_roundtrip": {
+    "source_commit": "2a03a33ecdc9bb7e57cd08c909915f2f7f398887",
+    "file": "roundtrip.json.gz",
+    "sha256": "c747bc8bcf43ac21ac25a4e4b8b67006778051992d6528f465bbf60f7eec1c9a",
+    "decoded_sha256": "924945753fcc2ad660b44807f84326d9f9ef19ea4e04130e3b3c7565cc179332",
+    "source_file": "conformance-fixtures/HexRCF/cell-replay.json",
+    "source_sha256": "0a304dbf96d44dfe41ad44bd3e58dfaf898a044b664291b8a50329954a9d4134",
+    "parsed_equal": true
+  },
+  "artifacts": [
+    {
+      "source_commit": "2a03a33ecdc9bb7e57cd08c909915f2f7f398887",
+      "file": "FullRender.lean.txt",
+      "sha256": "cc970381459bc4ac2c7df721b4376d69000a28ed21ba53d2a58d4fdb13639e42"
+    },
+    {
+      "source_commit": "2a03a33ecdc9bb7e57cd08c909915f2f7f398887",
+      "file": "browser.mjs",
+      "sha256": "8abf50bc47bc284ba2663ff2346d4a8dc5594ea60f2bc676f13357ca4ac5acaa"
+    },
+    {
+      "source_commit": "2a03a33ecdc9bb7e57cd08c909915f2f7f398887",
+      "file": "cell-replay-desktop-composition.png",
+      "sha256": "01559bad0229f201ca1c9ac5b076250da9b0c3a2e59de90f0933e559b5b5b8df"
+    },
+    {
+      "source_commit": "2a03a33ecdc9bb7e57cd08c909915f2f7f398887",
+      "file": "cell-replay-desktop-controls.png",
+      "sha256": "cc754e1d4efb90c23adf8c4d44868b2eceeb219b6ab5849df58d6e8291aebb1e"
+    },
+    {
+      "source_commit": "2a03a33ecdc9bb7e57cd08c909915f2f7f398887",
+      "file": "cell-replay-desktop-example.png",
+      "sha256": "691a97f8d67b40853a0819419aa1e239da446f098da28ea987c6380fa90e7c9a"
+    },
+    {
+      "source_commit": "2a03a33ecdc9bb7e57cd08c909915f2f7f398887",
+      "file": "cell-replay-desktop-quotation.png",
+      "sha256": "ccdc7ce69410adc10ef275b7ca00d555a3cccf649cb25a6b18b791f48525b537"
+    },
+    {
+      "source_commit": "2a03a33ecdc9bb7e57cd08c909915f2f7f398887",
+      "file": "cell-replay-desktop-scope.png",
+      "sha256": "2a5c532797e1677fc745fe5daa42452731b4911b18d977e05beb0062a5129cc2"
+    },
+    {
+      "source_commit": "2a03a33ecdc9bb7e57cd08c909915f2f7f398887",
+      "file": "cell-replay-narrow-composition.png",
+      "sha256": "03921133dc00dda0228bf8d1901d2e70bee470ebb54dddf3c9ddc0e3b6b4f6cf"
+    },
+    {
+      "source_commit": "2a03a33ecdc9bb7e57cd08c909915f2f7f398887",
+      "file": "cell-replay-narrow-controls.png",
+      "sha256": "6fd2a423f678738cb6beed5b731dbdc782b54dcbddab75c06fd5e323d53e3346"
+    },
+    {
+      "source_commit": "2a03a33ecdc9bb7e57cd08c909915f2f7f398887",
+      "file": "cell-replay-narrow-example.png",
+      "sha256": "42930280246ad98c96f33e7a79ac8d330faba2857c66169adf0e48c8a0e7ec72"
+    },
+    {
+      "source_commit": "2a03a33ecdc9bb7e57cd08c909915f2f7f398887",
+      "file": "cell-replay-narrow-quotation.png",
+      "sha256": "ffda7d20c59c801497511c20d44ca00d674ccbadf8ed86ca544f86c73c78092b"
+    },
+    {
+      "source_commit": "2a03a33ecdc9bb7e57cd08c909915f2f7f398887",
+      "file": "cell-replay-narrow-scope.png",
+      "sha256": "b490ecd2c217d1998d764870ddaae93fab7c30d6139eae86336dd3ac6165714a"
+    },
+    {
+      "source_commit": "2a03a33ecdc9bb7e57cd08c909915f2f7f398887",
+      "file": "inspection.json",
+      "sha256": "05b0aa49f93ddeee5b654fdba1a2883f35840b32ed00208331349f519dcee6bb"
+    }
+  ],
+  "scope": "Complete supplied ordinary-model cell assembly and original-source quotation. Rational frozen five-cell and empty-table regressions, with nonempty source valuation and two ordered original guards; no general algebraic producer/completeness, provider history, arbitrary missing-record compiled checking or performance/scaling claim."
+}

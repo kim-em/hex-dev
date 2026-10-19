@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public import HexRealAlgebraicMathlib.Order
-public import HexNumberFieldMathlib.CommonField
+public import HexRealAlgebraicTheory.Order
+public import HexNumberFieldTheory.CommonField
 public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 
 public section
@@ -15,6 +15,15 @@ public section
 /-! Checked real interpretations of existing algebraic-number coefficients. -/
 
 namespace Hex.RCF.RealCoefficients.Coefficients
+
+/-- A literal array length bounds coordinate degree without evaluating its
+rational coefficients. Quotation still checks the supplied integer bound. -/
+theorem degree_bound (data : Array Rat) (p : ZPoly)
+    (bound : data.size - 1 < p.natDegree) :
+    (DensePoly.ofCoeffs data).natDegree < p.natDegree := by
+  rw [DensePoly.natDegree_eq_size_sub_one]
+  exact Nat.lt_of_le_of_lt
+    (Nat.sub_le_sub_right (DensePoly.size_ofCoeffs_le data) 1) bound
 
 /-- Convert a fixed-field result while retaining its generator's real embedding.
 Arithmetic producing `value` remains the existing `QAdjoin` arithmetic. -/
@@ -33,17 +42,25 @@ theorem ofField_value (generator : RealAlgebraicNumber)
   rw [RealAlgebraicNumber.ofReal_toReal]
   exact PolyQuot.toAlgebraicNumber_toComplex value _ _
 
+/-- Converting the existing field generator retains the original selected
+real value. This consumes the owner's fixed-field generator correspondence. -/
+theorem ofField_gen (generator : RealAlgebraicNumber) :
+    (ofField generator generator.toAlgebraic.toQAdjoin).toReal = generator.toReal := by
+  apply Complex.ofReal_injective
+  rw [ofField_value, AlgebraicNumber.toQAdjoin_toComplex,
+    RealAlgebraicNumber.ofReal_toReal]
+
 /-- Fixed-field coordinates evaluate at the generator's selected real value. -/
 theorem ofField_toReal (generator : RealAlgebraicNumber)
     (value : QAdjoin generator.toAlgebraic) :
     (ofField generator value).toReal =
-      (HexPolyMathlib.toPolynomial value.coeffs).eval₂ (Rat.castHom ℝ) generator.toReal := by
+      (HexPolyTheory.toPolynomial value.coeffs).eval₂ (Rat.castHom ℝ) generator.toReal := by
   apply Complex.ofReal_injective
   rw [ofField_value]
   change _ = Complex.ofRealHom
-    ((HexPolyMathlib.toPolynomial value.coeffs).eval₂ (Rat.castHom ℝ) generator.toReal)
+    ((HexPolyTheory.toPolynomial value.coeffs).eval₂ (Rat.castHom ℝ) generator.toReal)
   rw [Polynomial.hom_eval₂]
-  change _ = (HexPolyMathlib.toPolynomial value.coeffs).eval₂
+  change _ = (HexPolyTheory.toPolynomial value.coeffs).eval₂
     (Complex.ofRealHom.comp (Rat.castHom ℝ)) (generator.toReal : ℂ)
   rw [RealAlgebraicNumber.ofReal_toReal]
   rfl

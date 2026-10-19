@@ -1,0 +1,604 @@
+{
+  "validation_groups": [
+    {
+      "source_commit": "35bb1c7e815a31ae2b447aef720d1373223bfcef",
+      "source_tree": "c78da44fd3d9df88d5a04dfbacdd5b46f3e57209",
+      "scope": "All 262 HexRCF conformance roots, base/optional umbrellas and full manual; base tests are not selected.",
+      "selection": "rcf-all-conformance-selection-3.json",
+      "logs": [
+        "rcf-all-conformance-3.log"
+      ]
+    },
+    {
+      "source_commit": "7188977171dbac1e7da2906e3245066274021a6d",
+      "source_tree": "82eec8254c7a8adf6156023db216070b2cd0037c",
+      "scope": "Every one of the 262 HexRCF roots in HexConformance globs, all 16 HexRCF base-test roots in HexReleaseTests globs, base/optional library umbrellas and full manual. Earlier selections 1/2/3 built the base umbrella but did not select those base tests; source hash inventories do not imply every listed file was executed.",
+      "selection": "rcf-all-conformance-selection-4.json",
+      "logs": [
+        "rcf-all-conformance-4.log"
+      ]
+    }
+  ],
+  "logs": {
+    "reports/data/hexrcf-source-identities/review/rcf-all-conformance-3.log.gz": {
+      "sha256": "2d0395b50253d8ad494a321e2f2eda5eae3c46cb10fdf69baca2b293906635de",
+      "uncompressed_sha256": "70a7b68f935920174880a6bb6d192ac4a279091101c7b2a761c9a3e0585f1487"
+    },
+    "reports/data/hexrcf-source-identities/review/rcf-all-conformance-4.log.gz": {
+      "sha256": "3015c3e38af796d4c4b82b3ae9b97c4749eb552e94e31945b8aa242094ff6ed6",
+      "uncompressed_sha256": "f7219de94089db8edfd997ab2900ba15f32f24a8855fad5cc176bce6a5935290"
+    },
+    "reports/data/hexrcf-source-identities/review/source-identity-review-fixes-1.log.gz": {
+      "sha256": "8ad1ef32ae1427cb93771e5534d5e87b28eee0c021a0848b3773e530dadc5744",
+      "uncompressed_sha256": "af8893b9dc6890aecea5453625b73672a34110871482da98aef8694032817d54"
+    },
+    "reports/data/hexrcf-source-identities/review/source-identity-review-fixes-2.log.gz": {
+      "sha256": "09ff0a940e1a26aed3656bc11ee5e4feffe3108179c18facbe5b9f0bc935c5f8",
+      "uncompressed_sha256": "81189e8c4f2eb1334d85d792c1fe20eaf45d53f321994a41e326ee442912e862"
+    },
+    "reports/data/hexrcf-source-identities/review/routing-copy-1.log.gz": {
+      "sha256": "47f87e42dcafacebe5b1e7ffc09882dbbdd6e6152a648eb324d9e1044a1d6c7c",
+      "uncompressed_sha256": "f86fc02079eecf1b31db13fcf6c7d8977f55986489dad31e40cac4856f2f348c"
+    },
+    "reports/data/hexrcf-source-identities/review/routing-proof-pairs-driver-1.log.gz": {
+      "sha256": "af0c08762a0fc08da0b1c9c2a4a87912f659c5af468193e29b11bb10e9db59ac",
+      "uncompressed_sha256": "0d689467fdb8c29e77b9f7515a43fb54452e0773de3e4389724e1f258d69060d"
+    },
+    "reports/data/hexrcf-source-identities/review/source-identity-review-admissions-2.log.gz": {
+      "sha256": "10d93d191314387ff0027027083513210cfcd52ad6806fdb818a4140128d5319",
+      "uncompressed_sha256": "4e1d91d796fb119971b37574eb362a6f3306ba2c3832c8af4226516ba3ed445a"
+    },
+    "reports/data/hexrcf-source-identities/review/source-identity-review-copyright-2.log.gz": {
+      "sha256": "bb00a2ec5ad8885ff01109bc6156eaa25312df8bf288aa7f9aaff895f12e3ddf",
+      "uncompressed_sha256": "5c8daa005aff022b695d6ef1bbb5b88a4cab9d50727ce401a4bae5ec8aef3ba0"
+    },
+    "reports/data/hexrcf-source-identities/review/source-identity-review-dag-2.log.gz": {
+      "sha256": "03233d0f4c81faa655f49a4044ad091e3956a3ece93e80efd808e86bb7899eca",
+      "uncompressed_sha256": "13af277460de3ca330f96040f493efe0daa401ac7a723ab5af0e22862a7c512d"
+    },
+    "reports/data/hexrcf-source-identities/review/source-identity-review-lines-2.log.gz": {
+      "sha256": "71f17c952a6058d87cdc7aa21539fafe396e6ce939644763c2a6eee592c72eb7",
+      "uncompressed_sha256": "b45cc43afe943b07da29a13ba3fbb962649ec4e3120c75e329e0848b64dfd469"
+    },
+    "reports/data/hexrcf-source-identities/review/source-identity-review-metadata-driver-2.log.gz": {
+      "sha256": "68d54e9be69a3d4acea0f1e708794b0d2268dc632de6467674e07a79c7ed56e2",
+      "uncompressed_sha256": "d22e56a1283e1715f26bd55137a9d5e3833f1e07b5f0eadde16d69137ed49990"
+    },
+    "reports/data/hexrcf-source-identities/review/routing-warm-A.log.gz": {
+      "sha256": "ea370edf5f1206292571fb20b5a3178e5301bdca73bf5819a041bc54b6394283",
+      "uncompressed_sha256": "95d662a3f7fe048b6b5eda78694ece358665dc9ccde7002faacc84b6d21efbea"
+    },
+    "reports/data/hexrcf-source-identities/review/routing-warm-B.log.gz": {
+      "sha256": "564fa181ebab1b7194d7b0285b2ca0e499b3728d9f99968f84bd1de33bf54a9b",
+      "uncompressed_sha256": "fe6066b436668aff7fa4991ce5e0f220a8b6612496892b1771fa7a9ff395d28b"
+    },
+    "reports/data/hexrcf-source-identities/review/routing-pair-0-A.log.gz": {
+      "sha256": "4ba8ece24a70e46b485da23571591c058fb46cbc5804918820dacc1d0c46e195",
+      "uncompressed_sha256": "88a25e0b121991a5a344c21d54cda44f3ea53fd2c740911c827f930c51eee033"
+    },
+    "reports/data/hexrcf-source-identities/review/routing-pair-0-B.log.gz": {
+      "sha256": "537c2dc8e27de8b69d4d0f1977e9a8f1ca7cd0346edd3c451ca8b8b6e8ba05b7",
+      "uncompressed_sha256": "3f95effc98c69d8dbef64e4a459bb09f818df484cb1eb4224e9d9ab89c2f5368"
+    },
+    "reports/data/hexrcf-source-identities/review/routing-pair-1-B.log.gz": {
+      "sha256": "bb149b5db9db5544503b7f4386cde0c441276b8d0b9c28963a0a6b05d0289231",
+      "uncompressed_sha256": "d85174a5127928153a8ced191d0a71cd64bcf333443b992ad55296c0d0cf6a36"
+    },
+    "reports/data/hexrcf-source-identities/review/routing-pair-1-A.log.gz": {
+      "sha256": "18eeceb4eb9265b987eeb1f73c0336c48dd49314cd199b24704cd0f32d92da8b",
+      "uncompressed_sha256": "1e5d57542a458f7da0551701c9829269756e99f73792130cd45851a53eff3352"
+    },
+    "reports/data/hexrcf-source-identities/review/routing-pair-2-A.log.gz": {
+      "sha256": "e1145d2cafbe967f64e7615da586c66f67f3546c5878319124e8f3cc3033fa23",
+      "uncompressed_sha256": "522dd28c774394b445e30b76f7743f716ed88dd3bc7860a3515a7a120989b7c7"
+    },
+    "reports/data/hexrcf-source-identities/review/routing-pair-2-B.log.gz": {
+      "sha256": "713e82b8740d0de0f2d9e2d4079e70a4ff018ba1b91e852acb6098b4fc810b33",
+      "uncompressed_sha256": "eb2e9cf83ed6d76c88fabc948fc75eba8a96ad3b5376895fbcc2fe4c07baf4a0"
+    },
+    "reports/data/hexrcf-source-identities/review/routing-pair-3-B.log.gz": {
+      "sha256": "bd8b8dacd506a68982bd68e02df8e6072f2e3329b23985385da4fceca93cda1a",
+      "uncompressed_sha256": "1c31d1e04441f8f9c6fb0ac53603ed54c6028a11e34ac2194cfb979779fa12ba"
+    },
+    "reports/data/hexrcf-source-identities/review/routing-pair-3-A.log.gz": {
+      "sha256": "6607d1fac05fb6ea29e1cdedf11e67d256bfd3a1f047595c191e55fbd50f99d3",
+      "uncompressed_sha256": "ba6f768d82e6a7d727e9fbc49ff403904df409a8f1c7763a29417413ce628688"
+    }
+  },
+  "artifacts_sha256": {
+    "reports/data/hexrcf-source-identities/review/rcf-all-conformance-selection-3.json": "aa8693653eca4598188bd683e5d11a90386c2971ef890bd463b2472c2db4fc1e",
+    "reports/data/hexrcf-source-identities/review/rcf-all-conformance-selection-4.json": "2932b966acaf75884553af0742c7140fbc035b5230ab70fa45be946c5438653d",
+    "reports/data/hexrcf-source-identities/review/source-identity-review-metadata-2.json": "e4161b2e2373b283c28740c11ba10f36c60aa3edb0a726e4bae6801e9911b9d4",
+    "reports/data/hexrcf-source-identities/review/run-source-review-metadata.py.txt": "7a8bc377d6935a37560cf24fb4203f25d96628921a112b2c425f918bf97b2c60",
+    "reports/data/hexrcf-source-identities/review/run-routing-proof-pairs.py.txt": "813d19a832d83d6d94b95d9421c7dbda27a4355dc204d66bc67903ab22ec3f1c",
+    "reports/data/hexrcf-source-identities/review/routing-proof-pairs.json": "2d2d05a244482ce18aca7aaf8ca1917d72a762e3c11187c42d33038b7b27edd2",
+    "reports/data/hexrcf-source-identities/review/routing-proof-summary.json": "89212a168bc00dbbf7b25426d2f8b42b6e846b152d24f6aea19fe6c9f028f13e",
+    "reports/data/hexrcf-source-identities/review/base-test-coverage-4.json": "cb690c9cc71af74da2cc01cd04f0f88193d5bd8339b4cb3c846368bfe4b1ec7f",
+    "reports/data/hexrcf-source-identities/review/HexRCF.HandlerTests.Support.trace.json": "46789650ffad5d0a405e996a532a73e204f1f903497f559b93f31e73bee3599d",
+    "reports/data/hexrcf-source-identities/review/HexRCF.HandlerTests.trace.json": "cc14216a6aa71bc05718433a803f4fa08e68e53579c8584f78e302bf1b216b5e",
+    "reports/data/hexrcf-source-identities/review/routing-A-RoutingProbe.lean.txt": "0034b507316c1ee4dbb3fd6672b54ecf96b1df4d6e969f5ffdba80641e34305f",
+    "reports/data/hexrcf-source-identities/review/routing-A-RoutingInventory.lean.txt": "ac77ac4b99f7a885e800dbc77c030dcafe6c6d608bbb6e4ad45022ee305c15ed",
+    "reports/data/hexrcf-source-identities/review/routing-A-lakefile.lean.txt": "382a3c46781fd7d0764bd8352d3061c0acfe0be483b5702b835f2b179ce45943",
+    "reports/data/hexrcf-source-identities/review/routing-A-lake-manifest.json.txt": "cf9d2a798ae79cd02d49b7f09213050c4703f2686c832e9b20545b3de0391ed9",
+    "reports/data/hexrcf-source-identities/review/routing-B-RoutingProbe.lean.txt": "0034b507316c1ee4dbb3fd6672b54ecf96b1df4d6e969f5ffdba80641e34305f",
+    "reports/data/hexrcf-source-identities/review/routing-B-RoutingInventory.lean.txt": "d05dad2322e923bb3a63429ba4148aba77903cb8614112e44ba63ba03c63801d",
+    "reports/data/hexrcf-source-identities/review/routing-B-lakefile.lean.txt": "24fb88df52f99da5d0383c8a8fc97b9bfb354755dd7a553216d71ac48034eed9",
+    "reports/data/hexrcf-source-identities/review/routing-B-lake-manifest.json.txt": "32eac4e7a35c48781b9d612ccdd626db3e1e7e197edf667dc66813bc7cc0fb5f"
+  },
+  "documents": {
+    "reports/hexrcf-source-identities.md": {
+      "sha256": "027080b1fcec232a200f9ece75d2769e9d9b0166122964d80a28ea4931f09913",
+      "snapshot": "reports/data/hexrcf-source-identities/review/hexrcf-source-identities.md.txt"
+    },
+    "reports/hexrcf-maximal-coefficients.md": {
+      "sha256": "9b82fc03d7ace1cb7e894333b8579a86c06a2d4473c8062a49072c3576c2f98a",
+      "snapshot": "reports/data/hexrcf-source-identities/review/hexrcf-maximal-coefficients.md.txt"
+    }
+  },
+  "metadata": {
+    "source_commit": "7188977171dbac1e7da2906e3245066274021a6d",
+    "source_tree": "82eec8254c7a8adf6156023db216070b2cd0037c",
+    "checks": {
+      "dag": {
+        "command": {
+          "argv": [
+            "python3",
+            "scripts/check_dag.py"
+          ],
+          "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10358",
+          "source_commit": "7188977171dbac1e7da2906e3245066274021a6d",
+          "source_tree": "82eec8254c7a8adf6156023db216070b2cd0037c",
+          "script_sha256": "760236cb56f22dd916c677070713146ebd9bd652ba988b3f9427d6a671a4ea10"
+        },
+        "exit_status": 0,
+        "log": "source-identity-review-dag-2.log",
+        "sha256": "13af277460de3ca330f96040f493efe0daa401ac7a723ab5af0e22862a7c512d"
+      },
+      "copyright": {
+        "command": {
+          "argv": [
+            "python3",
+            "scripts/check_copyright_headers.py"
+          ],
+          "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10358",
+          "source_commit": "7188977171dbac1e7da2906e3245066274021a6d",
+          "source_tree": "82eec8254c7a8adf6156023db216070b2cd0037c",
+          "script_sha256": "d7ccfbb8e737c342ff24f7ec875c403a76a678a75f581a8e7dcaf0b654325c84"
+        },
+        "exit_status": 0,
+        "log": "source-identity-review-copyright-2.log",
+        "sha256": "5c8daa005aff022b695d6ef1bbb5b88a4cab9d50727ce401a4bae5ec8aef3ba0"
+      },
+      "lines": {
+        "command": {
+          "argv": [
+            "python3",
+            "scripts/check_file_line_counts.py"
+          ],
+          "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10358",
+          "source_commit": "7188977171dbac1e7da2906e3245066274021a6d",
+          "source_tree": "82eec8254c7a8adf6156023db216070b2cd0037c",
+          "script_sha256": "0c9109c17128a11651f7a5d3784b5b35c859b87e2f58d12c2fbcd5c7562f1229"
+        },
+        "exit_status": 0,
+        "log": "source-identity-review-lines-2.log",
+        "sha256": "b45cc43afe943b07da29a13ba3fbb962649ec4e3120c75e329e0848b64dfd469"
+      },
+      "admissions": {
+        "command": {
+          "argv": [
+            "python3",
+            "scripts/ci/check_named_admissions.py"
+          ],
+          "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10358",
+          "source_commit": "7188977171dbac1e7da2906e3245066274021a6d",
+          "source_tree": "82eec8254c7a8adf6156023db216070b2cd0037c",
+          "script_sha256": "088e8ab986da0e7992968deed1121b156e17c5d3930cb8e8d2a524756bbdea2f"
+        },
+        "exit_status": 0,
+        "log": "source-identity-review-admissions-2.log",
+        "sha256": "4e1d91d796fb119971b37574eb362a6f3306ba2c3832c8af4226516ba3ed445a"
+      }
+    }
+  },
+  "performance": {
+    "question": "Does maximal closed-coefficient routing change the build-only proof cost of the existing goal forall x, x^2 + 2*sqrt(2) > 0?",
+    "cpu": 28,
+    "schedule": [
+      [
+        "A",
+        "B"
+      ],
+      [
+        "B",
+        "A"
+      ],
+      [
+        "A",
+        "B"
+      ],
+      [
+        "B",
+        "A"
+      ]
+    ],
+    "goal_sha256": "0034b507316c1ee4dbb3fd6672b54ecf96b1df4d6e969f5ffdba80641e34305f",
+    "imports": [
+      "HexRCF.RealCoefficients.CommonTactic"
+    ],
+    "scope": "Fresh one-module actual rcf elaboration and ordinary-kernel proof construction, with cached imports. Whole bounded Lake invocation is timed, including dependency checks and startup. Not isolated tactic runtime, numerical solver scaling or a generic speedup claim.",
+    "limits": {
+      "memory_max_bytes": 34359738368,
+      "swap_max_bytes": 0,
+      "lean_threads": 2,
+      "own_build_concurrency": 1
+    },
+    "arms": {
+      "A": {
+        "source_commit": "435a617b7ce679c76b486acec9f524567ec019d8",
+        "source_tree": "6394c9ea6c30e507a5f48634600240e3b43c72cf",
+        "reifier_sha256": "baed5653cd76b6911e23d1260e79964ce6ecc47ba3bcffc484bfc330465ede54",
+        "manifest_sha256": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+        "project": "/home/kim/.codex/tasks/hex-10358/routing-A"
+      },
+      "B": {
+        "source_commit": "7188977171dbac1e7da2906e3245066274021a6d",
+        "source_tree": "82eec8254c7a8adf6156023db216070b2cd0037c",
+        "reifier_sha256": "3b0d08f14332d7f9d95ac569d9512c67370b01cb8ad74ae3578450c151aa0cee",
+        "manifest_sha256": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+        "project": "/home/kim/.codex/tasks/hex-10358/routing-B"
+      }
+    },
+    "warmups": [
+      {
+        "arm": "A",
+        "target": "RoutingInventory",
+        "argv": [
+          "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+          "/run/current-system/sw/bin/env",
+          "LAKE_NO_CACHE=true",
+          "/run/current-system/sw/bin/taskset",
+          "-c",
+          "28",
+          "/run/current-system/sw/bin/lake",
+          "build",
+          "RoutingInventory"
+        ],
+        "cwd": "/home/kim/.codex/tasks/hex-10358/routing-A",
+        "load_before": [
+          5.15966796875,
+          6.05712890625,
+          7.05712890625
+        ],
+        "started_unix": 1792131897.9271464,
+        "log": "routing-warm-A.log",
+        "exit_code": 0,
+        "elapsed_seconds": 66.50477918700199,
+        "load_after": [
+          4.91943359375,
+          5.79296875,
+          6.8916015625
+        ],
+        "log_sha256": "95d662a3f7fe048b6b5eda78694ece358665dc9ccde7002faacc84b6d21efbea"
+      },
+      {
+        "arm": "B",
+        "target": "RoutingInventory",
+        "argv": [
+          "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+          "/run/current-system/sw/bin/env",
+          "LAKE_NO_CACHE=true",
+          "/run/current-system/sw/bin/taskset",
+          "-c",
+          "28",
+          "/run/current-system/sw/bin/lake",
+          "build",
+          "RoutingInventory"
+        ],
+        "cwd": "/home/kim/.codex/tasks/hex-10358/routing-B",
+        "load_before": [
+          4.91943359375,
+          5.79296875,
+          6.8916015625
+        ],
+        "started_unix": 1792131964.4324064,
+        "log": "routing-warm-B.log",
+        "exit_code": 0,
+        "elapsed_seconds": 29.552551051980117,
+        "load_after": [
+          4.97607421875,
+          5.73095703125,
+          6.83642578125
+        ],
+        "log_sha256": "fe6066b436668aff7fa4991ce5e0f220a8b6612496892b1771fa7a9ff395d28b"
+      }
+    ],
+    "samples": [
+      {
+        "arm": "A",
+        "target": "RoutingProbe",
+        "argv": [
+          "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+          "/run/current-system/sw/bin/env",
+          "LAKE_NO_CACHE=true",
+          "/run/current-system/sw/bin/taskset",
+          "-c",
+          "28",
+          "/run/current-system/sw/bin/lake",
+          "build",
+          "RoutingProbe"
+        ],
+        "cwd": "/home/kim/.codex/tasks/hex-10358/routing-A",
+        "load_before": [
+          4.97607421875,
+          5.73095703125,
+          6.83642578125
+        ],
+        "started_unix": 1792131993.9855309,
+        "log": "routing-pair-0-A.log",
+        "exit_code": 0,
+        "elapsed_seconds": 10.493007949000457,
+        "load_after": [
+          4.7392578125,
+          5.65673828125,
+          6.7998046875
+        ],
+        "log_sha256": "88a25e0b121991a5a344c21d54cda44f3ea53fd2c740911c827f930c51eee033",
+        "olean_bytes": 548640,
+        "trial": 0
+      },
+      {
+        "arm": "B",
+        "target": "RoutingProbe",
+        "argv": [
+          "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+          "/run/current-system/sw/bin/env",
+          "LAKE_NO_CACHE=true",
+          "/run/current-system/sw/bin/taskset",
+          "-c",
+          "28",
+          "/run/current-system/sw/bin/lake",
+          "build",
+          "RoutingProbe"
+        ],
+        "cwd": "/home/kim/.codex/tasks/hex-10358/routing-B",
+        "load_before": [
+          4.7392578125,
+          5.65673828125,
+          6.7998046875
+        ],
+        "started_unix": 1792132004.4791899,
+        "log": "routing-pair-0-B.log",
+        "exit_code": 0,
+        "elapsed_seconds": 9.886580246995436,
+        "load_after": [
+          5.314453125,
+          5.75048828125,
+          6.81884765625
+        ],
+        "log_sha256": "3f95effc98c69d8dbef64e4a459bb09f818df484cb1eb4224e9d9ab89c2f5368",
+        "olean_bytes": 616456,
+        "trial": 0
+      },
+      {
+        "arm": "B",
+        "target": "RoutingProbe",
+        "argv": [
+          "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+          "/run/current-system/sw/bin/env",
+          "LAKE_NO_CACHE=true",
+          "/run/current-system/sw/bin/taskset",
+          "-c",
+          "28",
+          "/run/current-system/sw/bin/lake",
+          "build",
+          "RoutingProbe"
+        ],
+        "cwd": "/home/kim/.codex/tasks/hex-10358/routing-B",
+        "load_before": [
+          5.314453125,
+          5.75048828125,
+          6.81884765625
+        ],
+        "started_unix": 1792132014.366368,
+        "log": "routing-pair-1-B.log",
+        "exit_code": 0,
+        "elapsed_seconds": 9.879756340000313,
+        "load_after": [
+          5.259765625,
+          5.7255859375,
+          6.798828125
+        ],
+        "log_sha256": "d85174a5127928153a8ced191d0a71cd64bcf333443b992ad55296c0d0cf6a36",
+        "olean_bytes": 616456,
+        "trial": 1
+      },
+      {
+        "arm": "A",
+        "target": "RoutingProbe",
+        "argv": [
+          "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+          "/run/current-system/sw/bin/env",
+          "LAKE_NO_CACHE=true",
+          "/run/current-system/sw/bin/taskset",
+          "-c",
+          "28",
+          "/run/current-system/sw/bin/lake",
+          "build",
+          "RoutingProbe"
+        ],
+        "cwd": "/home/kim/.codex/tasks/hex-10358/routing-A",
+        "load_before": [
+          5.259765625,
+          5.7255859375,
+          6.798828125
+        ],
+        "started_unix": 1792132024.2467444,
+        "log": "routing-pair-1-A.log",
+        "exit_code": 0,
+        "elapsed_seconds": 10.394330230017658,
+        "load_after": [
+          5.44775390625,
+          5.75146484375,
+          6.7958984375
+        ],
+        "log_sha256": "1e5d57542a458f7da0551701c9829269756e99f73792130cd45851a53eff3352",
+        "olean_bytes": 548640,
+        "trial": 1
+      },
+      {
+        "arm": "A",
+        "target": "RoutingProbe",
+        "argv": [
+          "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+          "/run/current-system/sw/bin/env",
+          "LAKE_NO_CACHE=true",
+          "/run/current-system/sw/bin/taskset",
+          "-c",
+          "28",
+          "/run/current-system/sw/bin/lake",
+          "build",
+          "RoutingProbe"
+        ],
+        "cwd": "/home/kim/.codex/tasks/hex-10358/routing-A",
+        "load_before": [
+          5.44775390625,
+          5.75146484375,
+          6.7958984375
+        ],
+        "started_unix": 1792132034.6416943,
+        "log": "routing-pair-2-A.log",
+        "exit_code": 0,
+        "elapsed_seconds": 10.531832761975238,
+        "load_after": [
+          5.4462890625,
+          5.74267578125,
+          6.7822265625
+        ],
+        "log_sha256": "522dd28c774394b445e30b76f7743f716ed88dd3bc7860a3515a7a120989b7c7",
+        "olean_bytes": 548640,
+        "trial": 2
+      },
+      {
+        "arm": "B",
+        "target": "RoutingProbe",
+        "argv": [
+          "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+          "/run/current-system/sw/bin/env",
+          "LAKE_NO_CACHE=true",
+          "/run/current-system/sw/bin/taskset",
+          "-c",
+          "28",
+          "/run/current-system/sw/bin/lake",
+          "build",
+          "RoutingProbe"
+        ],
+        "cwd": "/home/kim/.codex/tasks/hex-10358/routing-B",
+        "load_before": [
+          5.4462890625,
+          5.74267578125,
+          6.7822265625
+        ],
+        "started_unix": 1792132045.1741927,
+        "log": "routing-pair-2-B.log",
+        "exit_code": 0,
+        "elapsed_seconds": 11.475650877982844,
+        "load_after": [
+          5.826171875,
+          5.81689453125,
+          6.79541015625
+        ],
+        "log_sha256": "eb2e9cf83ed6d76c88fabc948fc75eba8a96ad3b5376895fbcc2fe4c07baf4a0",
+        "olean_bytes": 616456,
+        "trial": 2
+      },
+      {
+        "arm": "B",
+        "target": "RoutingProbe",
+        "argv": [
+          "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+          "/run/current-system/sw/bin/env",
+          "LAKE_NO_CACHE=true",
+          "/run/current-system/sw/bin/taskset",
+          "-c",
+          "28",
+          "/run/current-system/sw/bin/lake",
+          "build",
+          "RoutingProbe"
+        ],
+        "cwd": "/home/kim/.codex/tasks/hex-10358/routing-B",
+        "load_before": [
+          5.826171875,
+          5.81689453125,
+          6.79541015625
+        ],
+        "started_unix": 1792132056.6505475,
+        "log": "routing-pair-3-B.log",
+        "exit_code": 0,
+        "elapsed_seconds": 11.401202390989056,
+        "load_after": [
+          5.99365234375,
+          5.85546875,
+          6.7978515625
+        ],
+        "log_sha256": "1c31d1e04441f8f9c6fb0ac53603ed54c6028a11e34ac2194cfb979779fa12ba",
+        "olean_bytes": 616456,
+        "trial": 3
+      },
+      {
+        "arm": "A",
+        "target": "RoutingProbe",
+        "argv": [
+          "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+          "/run/current-system/sw/bin/env",
+          "LAKE_NO_CACHE=true",
+          "/run/current-system/sw/bin/taskset",
+          "-c",
+          "28",
+          "/run/current-system/sw/bin/lake",
+          "build",
+          "RoutingProbe"
+        ],
+        "cwd": "/home/kim/.codex/tasks/hex-10358/routing-A",
+        "load_before": [
+          5.99365234375,
+          5.85546875,
+          6.7978515625
+        ],
+        "started_unix": 1792132068.0526001,
+        "log": "routing-pair-3-A.log",
+        "exit_code": 0,
+        "elapsed_seconds": 25.51371070498135,
+        "load_after": [
+          7.24267578125,
+          6.1708984375,
+          6.87841796875
+        ],
+        "log_sha256": "ba6f768d82e6a7d727e9fbc49ff403904df409a8f1c7763a29417413ce628688",
+        "olean_bytes": 548640,
+        "trial": 3
+      }
+    ]
+  },
+  "manual": {
+    "source_file": "HexManual/Chapters/HexRCF/AlgebraicCells.lean",
+    "sha256": "57c005e4a8c9488fb08529be16d6219156a5bfc03fa5c31d7a699c81fa6d0837",
+    "inspected_source_commit": "4a857a1587eb0298fd4dfec2a09c893dcb25f335",
+    "same_visible_source": true,
+    "captures_record": "reports/data/hexrcf-source-identities/context.json"
+  },
+  "scope": "Selected-source equation and conjugate-margin replay, strict source-selected dependency audit, metadata maximality, uniform nested divisor order, 262 conformance roots, explicit 16 base-test roots and full manual. Whole repository source trees bind owner implementations and package pins; tracked file inventories alone are not executed coverage. No general literal-source/history reconstruction, strict compiled rejection of arbitrary missing intermediate records, algebraic accepted-source completeness or realization claim.",
+  "historical_corrections": {
+    "base_tests": "Selections 1/2/3 did not explicitly build the base tests despite the base library/tests label. Selection 4 does.",
+    "first_failed_selection_commit": "aa0bcf7dbfc9c1dd34453c9b3c5d5996dd357317",
+    "quiet_checks": "Earlier metadata stdout is quiet by design and did not record argv. The added command records include exact argv/cwd/tree/script hashes and exit codes.",
+    "typed_coefficient": "The final coefficient representation retains its original sign proof and its earlier root-fact dependencies. The stricter exclusion of earlier root facts applies to source_selected.",
+    "explicit_queries": "Scalar polynomial bindings are to queries explicitly requested by the frontend, not arbitrary independently proposed source polynomials."
+  },
+  "artifact_commit": "07e92d8100bf8b340615d666f01c5f7f3452da1f",
+  "document_commit": "07e92d8100bf8b340615d666f01c5f7f3452da1f",
+  "documents_sha256": {
+    "reports/hexrcf-source-identities.md": "027080b1fcec232a200f9ece75d2769e9d9b0166122964d80a28ea4931f09913",
+    "reports/hexrcf-maximal-coefficients.md": "9b82fc03d7ace1cb7e894333b8579a86c06a2d4473c8062a49072c3576c2f98a"
+  }
+}

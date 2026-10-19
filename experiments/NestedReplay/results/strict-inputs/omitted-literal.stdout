@@ -1,0 +1,8 @@
+productionNanos=17862292
+thirdRootAndProductionNanos=18933900
+factsAfterProduction
+level=1 facts=178 used=0 { calls := 13483, signs := 13483, nonconstantSigns := 2975, hits := 0, inverses := 306 }
+level=2 facts=42 used=0 { calls := 2733, signs := 2733, nonconstantSigns := 572, hits := 0, inverses := 28 }
+nonconstantFacts1=159 nonconstantFacts2=32
+literalKeys1=18 literalKeys2=17
+removed one actually used nonconstant level=2 fact

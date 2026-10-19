@@ -1,0 +1,9 @@
+Hex.SturmExternalBench.runNativeCount    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=bc94cd3-dirty, 2026-10-03T17:37:15Z, host=chungus2
+  repeat 0  102.124 µs  (×2^4, total 1.634 ms)
+  median: 102.124 µs    min: 102.124 µs    max: 102.124 µs
+  hash: all repeats agree
+  observed hash: 0xb86baf9ace1766b1
+  expected hash: matches
+  peak RSS: 67_104 kB (across 1 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-external-comparisons/Count-Z3-1-Native.json

@@ -72,7 +72,7 @@ The result records:
 
 For every monic input, the Mathlib-free theorem
 `Berlekamp.prod_berlekampFactor` proves that the returned factors
-multiply to the input. `hex-berlekamp-mathlib` proves that the factors
+multiply to the input. `hex-berlekamp-theory` proves that the factors
 returned from a square-free input are irreducible.
 
 Distinct-degree factorization is provided separately. It partitions a
@@ -135,7 +135,7 @@ The emitted term contains:
 - one irreducibility-certificate check per distinct factor;
 - no invocation of the factorization search.
 
-`hex-berlekamp-mathlib` adds the same syntax for
+`hex-berlekamp-theory` adds the same syntax for
 `Polynomial (ZMod p)`.
 
 ## Fast-arithmetic adoption
@@ -166,7 +166,7 @@ Reproduce the end-to-end screen with
 
 ## Mathematical companion
 
-`hex-berlekamp-mathlib` uses the ring equivalence
+`hex-berlekamp-theory` uses the ring equivalence
 
 ```text
 FpPoly p ≃+* Polynomial (ZMod p)
@@ -199,8 +199,7 @@ protocol.
 
 ## External comparators
 
-Two comparators are declared, both `informational`
-(see `libraries.yml` for the machine-readable form):
+Two external comparators are wired:
 
 - **FLINT `nmod_poly.is_irreducible` via python-flint**, paired with
   the Lean `runRabinTestChecksum` ladder.
@@ -215,12 +214,10 @@ structural: FLINT's hand-tuned C word-level kernels (nmod arithmetic
 with precomputed inverses, tuned modular composition and Frobenius
 strategies) against Hex's verified generic `FpPoly` arithmetic, at
 10x-373x (Rabin) and 44x-749x (DDF) across the eligible ladders in the
-2026-08-22 paired refresh. These comparators were originally declared
-`gating` with a parity goal; that goal was an aspiration the library's
-algorithm class does not support at comparable engineering effort, and
-the reclassification to `informational` records the structural nature
-of the gap rather than a harness artefact. The ratios are reported for
-orientation and do not gate Phase 4.
+2026-08-22 paired refresh. Parity with FLINT is not a target: the
+library's algorithm class does not support it at comparable engineering
+effort, and the gap is structural rather than a harness artefact. The
+ratios are recorded for orientation.
 
 ## References
 

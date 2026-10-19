@@ -1,0 +1,59 @@
+Hex.SturmBench.runInitialWide    expected complexity: n ^ 2    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=6d78bf3-dirty, 2026-10-02T05:08:41Z, host=chungus2
+    param  per-call    repeats  C
+   16_384   25.427 ms  ×2^1     C=0.092 [trial 1/4]
+   32_768  114.795 ms  ×2^0     C=0.105 [trial 1/4]
+   65_536  498.008 ms  ×2^0     C=0.098 [trial 1/4]
+  131_072    1.771 s   ×2^0     C=0.082 [trial 1/4]
+   16_384   24.229 ms  ×2^1     C=0.092 [trial 2/4]
+   32_768  106.432 ms  ×2^0     C=0.105 [trial 2/4]
+   65_536  370.558 ms  ×2^0     C=0.098 [trial 2/4]
+  131_072    1.432 s   ×2^0     C=0.082 [trial 2/4]
+   16_384   24.655 ms  ×2^1     C=0.092 [trial 3/4]
+   32_768  169.483 ms  ×2^0     C=0.105 [trial 3/4]
+   65_536  459.251 ms  ×2^0     C=0.098 [trial 3/4]
+  131_072    1.371 s   ×2^0     C=0.082 [trial 3/4]
+   16_384   24.944 ms  ×2^1     C=0.092 [trial 4/4]
+   32_768  110.956 ms  ×2^0     C=0.105 [trial 4/4]
+   65_536  380.777 ms  ×2^0     C=0.098 [trial 4/4]
+  131_072    1.290 s   ×2^0     C=0.082 [trial 4/4]
+  verdict: consistent with declared complexity (cMin=0.082, cMax=0.105, β=-0.064)
+  per-spawn floor (harness self-measurement): 25.543 ms
+  peak RSS: 112_688 kB..3_244_852 kB (across 16 ok row(s))
+  trial summaries (4 trials per param; spread = (max-min)/median):
+      param  trials  median      min         max         spread 
+     16_384  4/4      24.799 ms   24.229 ms   25.427 ms  4.834% 
+     32_768  4/4     112.875 ms  106.432 ms  169.483 ms  55.859%
+     65_536  4/4     420.014 ms  370.558 ms  498.008 ms  30.344%
+    131_072  4/4       1.401 s     1.290 s     1.771 s   34.349%
+
+Hex.SturmBench.runClearingWide    expected complexity: n ^ 2    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=6d78bf3-dirty, 2026-10-02T05:09:00Z, host=chungus2
+    param  per-call    repeats  C
+   16_384   37.053 ms  ×2^1     C=0.136 [trial 1/4]
+   32_768  138.405 ms  ×2^0     C=0.129 [trial 1/4]
+   65_536  501.159 ms  ×2^0     C=0.115 [trial 1/4]
+  131_072    1.951 s   ×2^0     C=0.113 [trial 1/4]
+   16_384   35.172 ms  ×2^1     C=0.136 [trial 2/4]
+   32_768  138.724 ms  ×2^0     C=0.129 [trial 2/4]
+   65_536  498.060 ms  ×2^0     C=0.115 [trial 2/4]
+  131_072    1.986 s   ×2^0     C=0.113 [trial 2/4]
+   16_384   35.751 ms  ×2^1     C=0.136 [trial 3/4]
+   32_768  138.436 ms  ×2^0     C=0.129 [trial 3/4]
+   65_536  491.518 ms  ×2^0     C=0.115 [trial 3/4]
+  131_072    1.943 s   ×2^0     C=0.113 [trial 3/4]
+   16_384   37.912 ms  ×2^1     C=0.136 [trial 4/4]
+   32_768  138.162 ms  ×2^0     C=0.129 [trial 4/4]
+   65_536  493.359 ms  ×2^0     C=0.115 [trial 4/4]
+  131_072    1.935 s   ×2^0     C=0.113 [trial 4/4]
+  verdict: consistent with declared complexity (cMin=0.113, cMax=0.136, β=-0.094)
+  per-spawn floor (harness self-measurement): 23.582 ms
+  peak RSS: 101_300 kB..2_194_312 kB (across 16 ok row(s))
+  trial summaries (4 trials per param; spread = (max-min)/median):
+      param  trials  median      min         max         spread
+     16_384  4/4      36.402 ms   35.172 ms   37.912 ms  7.528%
+     32_768  4/4     138.421 ms  138.162 ms  138.724 ms  0.406%
+     65_536  4/4     495.709 ms  491.518 ms  501.159 ms  1.945%
+    131_072  4/4       1.947 s     1.935 s     1.986 s   2.650%
+
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/prerequisite-sturm-growing-operands/head-and-sparse.json

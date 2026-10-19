@@ -1,0 +1,27 @@
+{
+  "source_commit": "8942ef312e7a88419e814a28afd0340f0db24dde",
+  "base_commit": "c0ccea2e82673ad06bd20a727bdab4ccb44b0e83",
+  "source_sha256": {
+    "HexArith/Nat/Sqrt.lean": "02684a5167ec604cdf432554058be0c4674e926fdb356934e45bf1964c81746e",
+    "HexSturm/Basic.lean": "089f16c57fae8c14943fa6bcf42ca4c0310dc46db596d1e6c16e12a6d6118c88",
+    "HexSturm/Reduced.lean": "bc45c2958590e0d5f2793d574b5b6f77664730082512c2dc209ca2f9b3e2229a",
+    "HexSturmMathlib/Reduced.lean": "60cbd8fb35fb4da3f57d72af210258247ab8577459b5294d95240f707a65547d",
+    "HexRealRootsMathlib/TarskiMod.lean": "9a57a749fc57c0509f4e958ce61ce231cf60c8a705931fb4831b59892e94e977",
+    "bench/HexSturm/Bench.lean": "9655257c41bb922388fb90980687a6d7e7e325e470f28f9d1e5a4bbc4b94e499",
+    "bench/HexRealAlgebraic/Bench.lean": "ce266771fc5752e1ea17f9f326877177dc8a635b09ef0d449aef227ff0454d71",
+    "scripts/ci/check_named_admissions.py": "4ccd6bcb8c65021f6970c68ab80e3dcc12c5b7323182fcd12ba92526f94230c9",
+    "scripts/ci/test_check_named_admissions.py": "802043a8251ba6f02274eb16631cfb5069942dc89448ecef3459d68520173c08"
+  },
+  "lake_build_jobs": 10909,
+  "admission_roots": 319,
+  "admission_modules": 1135,
+  "scalar_cases": 196,
+  "sturm_cases": 93,
+  "local_smoke_seconds": {
+    "scalar": 71,
+    "sturm": 1,
+    "total": 72,
+    "hard_cap": 600
+  },
+  "boundary": "Local verification after rebasing onto merged public imports and intervening main changes. The uncommitted changes during verification are reports, plots and descriptive metadata. No hosted CI or whole-repository headroom claim."
+}

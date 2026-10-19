@@ -1,0 +1,261 @@
+{
+  "observations": [
+    {
+      "trial": 0,
+      "size": 32768,
+      "backend": "original",
+      "nanos": 164354027,
+      "peak_rss_mib": 137.40234375,
+      "result_hash": "0x8238a831bee59ad"
+    },
+    {
+      "trial": 0,
+      "size": 32768,
+      "backend": "reduced",
+      "nanos": 92953537,
+      "peak_rss_mib": 137.40234375,
+      "result_hash": "0x8238a831bee59ad"
+    },
+    {
+      "trial": 0,
+      "size": 65536,
+      "backend": "original",
+      "nanos": 519301027,
+      "peak_rss_mib": 210.4609375,
+      "result_hash": "0x8238a831bee59ad"
+    },
+    {
+      "trial": 0,
+      "size": 65536,
+      "backend": "reduced",
+      "nanos": 318742102,
+      "peak_rss_mib": 137.40234375,
+      "result_hash": "0x8238a831bee59ad"
+    },
+    {
+      "trial": 0,
+      "size": 131072,
+      "backend": "original",
+      "nanos": 1749138993,
+      "peak_rss_mib": 609.33984375,
+      "result_hash": "0x8238a831bee59ad"
+    },
+    {
+      "trial": 0,
+      "size": 131072,
+      "backend": "reduced",
+      "nanos": 1151725493,
+      "peak_rss_mib": 137.40234375,
+      "result_hash": "0x8238a831bee59ad"
+    },
+    {
+      "trial": 0,
+      "size": 262144,
+      "backend": "original",
+      "nanos": 6410695761,
+      "peak_rss_mib": 2174.78125,
+      "result_hash": "0x8238a831bee59ad"
+    },
+    {
+      "trial": 0,
+      "size": 262144,
+      "backend": "reduced",
+      "nanos": 4340090760,
+      "peak_rss_mib": 137.40234375,
+      "result_hash": "0x8238a831bee59ad"
+    },
+    {
+      "trial": 1,
+      "size": 32768,
+      "backend": "reduced",
+      "nanos": 92289972,
+      "peak_rss_mib": 137.40234375,
+      "result_hash": "0x8238a831bee59ad"
+    },
+    {
+      "trial": 1,
+      "size": 32768,
+      "backend": "original",
+      "nanos": 164789390,
+      "peak_rss_mib": 137.40234375,
+      "result_hash": "0x8238a831bee59ad"
+    },
+    {
+      "trial": 1,
+      "size": 65536,
+      "backend": "reduced",
+      "nanos": 318084564,
+      "peak_rss_mib": 137.40234375,
+      "result_hash": "0x8238a831bee59ad"
+    },
+    {
+      "trial": 1,
+      "size": 65536,
+      "backend": "original",
+      "nanos": 518607994,
+      "peak_rss_mib": 210.453125,
+      "result_hash": "0x8238a831bee59ad"
+    },
+    {
+      "trial": 1,
+      "size": 131072,
+      "backend": "reduced",
+      "nanos": 1155080139,
+      "peak_rss_mib": 137.40234375,
+      "result_hash": "0x8238a831bee59ad"
+    },
+    {
+      "trial": 1,
+      "size": 131072,
+      "backend": "original",
+      "nanos": 1750221563,
+      "peak_rss_mib": 609.390625,
+      "result_hash": "0x8238a831bee59ad"
+    },
+    {
+      "trial": 1,
+      "size": 262144,
+      "backend": "reduced",
+      "nanos": 4349112739,
+      "peak_rss_mib": 137.40234375,
+      "result_hash": "0x8238a831bee59ad"
+    },
+    {
+      "trial": 1,
+      "size": 262144,
+      "backend": "original",
+      "nanos": 6541770347,
+      "peak_rss_mib": 2174.00390625,
+      "result_hash": "0x8238a831bee59ad"
+    },
+    {
+      "trial": 2,
+      "size": 32768,
+      "backend": "original",
+      "nanos": 166018963,
+      "peak_rss_mib": 137.40234375,
+      "result_hash": "0x8238a831bee59ad"
+    },
+    {
+      "trial": 2,
+      "size": 32768,
+      "backend": "reduced",
+      "nanos": 92569806,
+      "peak_rss_mib": 137.40234375,
+      "result_hash": "0x8238a831bee59ad"
+    },
+    {
+      "trial": 2,
+      "size": 65536,
+      "backend": "original",
+      "nanos": 515256038,
+      "peak_rss_mib": 210.5,
+      "result_hash": "0x8238a831bee59ad"
+    },
+    {
+      "trial": 2,
+      "size": 65536,
+      "backend": "reduced",
+      "nanos": 317721702,
+      "peak_rss_mib": 137.40234375,
+      "result_hash": "0x8238a831bee59ad"
+    },
+    {
+      "trial": 2,
+      "size": 131072,
+      "backend": "original",
+      "nanos": 1747517159,
+      "peak_rss_mib": 609.33984375,
+      "result_hash": "0x8238a831bee59ad"
+    },
+    {
+      "trial": 2,
+      "size": 131072,
+      "backend": "reduced",
+      "nanos": 1153134924,
+      "peak_rss_mib": 137.40234375,
+      "result_hash": "0x8238a831bee59ad"
+    },
+    {
+      "trial": 2,
+      "size": 262144,
+      "backend": "original",
+      "nanos": 6422479841,
+      "peak_rss_mib": 2173.9765625,
+      "result_hash": "0x8238a831bee59ad"
+    },
+    {
+      "trial": 2,
+      "size": 262144,
+      "backend": "reduced",
+      "nanos": 4359035595,
+      "peak_rss_mib": 137.40234375,
+      "result_hash": "0x8238a831bee59ad"
+    },
+    {
+      "trial": 3,
+      "size": 32768,
+      "backend": "reduced",
+      "nanos": 93017749,
+      "peak_rss_mib": 137.40234375,
+      "result_hash": "0x8238a831bee59ad"
+    },
+    {
+      "trial": 3,
+      "size": 32768,
+      "backend": "original",
+      "nanos": 165117635,
+      "peak_rss_mib": 137.40234375,
+      "result_hash": "0x8238a831bee59ad"
+    },
+    {
+      "trial": 3,
+      "size": 65536,
+      "backend": "reduced",
+      "nanos": 317844082,
+      "peak_rss_mib": 137.40234375,
+      "result_hash": "0x8238a831bee59ad"
+    },
+    {
+      "trial": 3,
+      "size": 65536,
+      "backend": "original",
+      "nanos": 518638190,
+      "peak_rss_mib": 210.46484375,
+      "result_hash": "0x8238a831bee59ad"
+    },
+    {
+      "trial": 3,
+      "size": 131072,
+      "backend": "reduced",
+      "nanos": 1153302454,
+      "peak_rss_mib": 137.40234375,
+      "result_hash": "0x8238a831bee59ad"
+    },
+    {
+      "trial": 3,
+      "size": 131072,
+      "backend": "original",
+      "nanos": 1757402195,
+      "peak_rss_mib": 610.12890625,
+      "result_hash": "0x8238a831bee59ad"
+    },
+    {
+      "trial": 3,
+      "size": 262144,
+      "backend": "reduced",
+      "nanos": 4328953039,
+      "peak_rss_mib": 137.40234375,
+      "result_hash": "0x8238a831bee59ad"
+    },
+    {
+      "trial": 3,
+      "size": 262144,
+      "backend": "original",
+      "nanos": 6452347164,
+      "peak_rss_mib": 2174.78125,
+      "result_hash": "0x8238a831bee59ad"
+    }
+  ],
+  "failures": []
+}

@@ -13,7 +13,14 @@ canonical minimal-polynomial form with decidable equality. It builds on
 [`hex-resultant`](https://github.com/leanprover/hex-resultant),
 [`hex-berlekamp-zassenhaus`](https://github.com/leanprover/hex-berlekamp-zassenhaus),
 and the matrix stack; its Mathlib counterpart is
-[`hex-number-field-mathlib`](https://github.com/leanprover/hex-number-field-mathlib).
+[`hex-number-field-theory`](https://github.com/leanprover/hex-number-field-theory).
+
+For a real generator `a`, `QAdjoin.signApprox? f` decides the sign of the
+coordinate `f` by certified interval evaluation. It rejects nonreal generators.
+`QAdjoin.signApprox f h` is total when `h : a.isReal = true`; its companion
+proves that the internal fallback is unreachable and that its result agrees
+with canonical comparison to zero. Neither operation constructs a canonical
+algebraic number for each sign query.
 
 # Quickstart
 
@@ -38,7 +45,7 @@ def sqrt3 : AlgebraicNumber :=
 
 -- Arithmetic is exact; `p` is the minimal polynomial.
 #guard (sqrt2 + sqrt3).p = #p[1, 0, -10, 0, 1]
--- Equality is decidable. Without the Mathlib companion,
+-- Equality is decidable. Without the theory companion,
 -- compare with `==`; with it, `=` works too.
 #guard (sqrt2 + sqrt3)⁻¹ == sqrt3 - sqrt2
 
@@ -79,6 +86,10 @@ APIs (`roots?`) for both fixed-field and algebraic-coefficient polynomials.
   algebraic-coefficient root solver.
 - `QAdjoin.ofAlgebraic?` and `ofAlgebraics?` recover coordinates in a chosen
   field; `QAdjoin.common` returns one generator and coordinates for a collection.
+- Common polynomial presentations first check the field of the first nonzero
+  coefficient with one shared power table. A failed membership check uses the
+  bounded primitive-element search; every coordinate is checked at its selected
+  embedding. See [common presentations](SPEC/hex-number-field.md#common-field-construction).
 - The incubating `HexRealAlgebraic` extension supplies typed `.re` and `.im`
   projections and exact total order on the real subtype.
 
@@ -90,7 +101,7 @@ though factorization is lazy. The `Option`-valued operations are the honest
 computational boundary; their total wrappers are backed by companion
 `_isSome` completeness theorems rather than silent assumptions. The
 companion
-[`hex-number-field-mathlib`](https://github.com/leanprover/hex-number-field-mathlib)
+[`hex-number-field-theory`](https://github.com/leanprover/hex-number-field-theory)
 interprets every representation in `ℂ`, proves the arithmetic computes the
 corresponding complex operations (including the convention `0⁻¹ = 0`),
 proves `Hex.AlgebraicNumber.toComplex` injective, and installs a lawful

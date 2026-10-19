@@ -1,0 +1,57 @@
+# Reprocess retained profiles; no new measurement or mutation of raw artifacts.
+# Run from the repository root: python3 reports/bench-results/sturm-profile-sign-attribution.py.txt
+import collections
+import gzip
+import hashlib
+import json
+from pathlib import Path
+import sys
+sys.path.insert(0, 'scripts/profile')
+from factor_sampling_profile import Symbolicator, frame_names, stack_chain
+
+base = Path('reports/bench-results/prerequisite-representative-profiles-62399ddd0')
+result = {'source_commit': '62399ddd0cc7416287cafcfb19c51bc6184aef6d',
+          'method': 'Disjoint visible-stack buckets: sign helper takes precedence over Rat arithmetic; remaining samples unassigned.',
+          'limits': ['Visible frames give lower bounds, not an exhaustive time partition of semantic operations.',
+                     'Inline sign work and truncated stacks can be unassigned or enclosed by arithmetic frames.',
+                     'No sign sample does not prove zero sign cost.',
+                     'Attribution describes retained pre-sign-replacement binaries, not current absolute timing.'],
+          'profiles': {}}
+for name in ['sturm-head', 'sturm-query']:
+    manifest_path = base / (name + '.manifest.json')
+    manifest = json.loads(manifest_path.read_text())
+    raw = Path(manifest['raw'])
+    checks = {}
+    for filename in ['filtered.json.gz', 'symbols.json', 'diagnostics.json']:
+        path = raw / filename
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        assert digest == manifest['artifacts'][filename], path
+        checks[filename] = digest
+    diagnostics = json.loads((raw / 'diagnostics.json').read_text())
+    assert diagnostics['calibration']['within_residual_limit']
+    assert diagnostics['sensitivity']['verdict'] == 'passed'
+    with gzip.open(raw / 'filtered.json.gz') as stream:
+        profile = json.load(stream)
+    threads = [thread for thread in profile['threads'] if thread['name'] == 'hexsturm_bench']
+    assert len(threads) == 1
+    thread = threads[0]
+    names = frame_names(profile, thread, Symbolicator(raw / 'symbols.json'))
+    counts = collections.Counter()
+    arithmetic = {'Rat.mul', 'Rat.add', 'Rat.sub', 'Rat.div', 'Rat.inv', 'Rat.normalize'}
+    for stack in thread['samples']['stack']:
+        visible = {names[i][0] for i in stack_chain(thread, stack)} if stack is not None else set()
+        if 'Hex.Sturm.orderSign' in visible:
+            counts['visible_sign_helper'] += 1
+        elif visible & arithmetic:
+            counts['visible_Rat_arithmetic'] += 1
+        else:
+            counts['other_or_unassigned'] += 1
+    total = thread['samples']['length']
+    assert sum(counts.values()) == total
+    assert total == json.loads((base / (name + '.summary.json')).read_text())['samples']
+    result['profiles'][name] = {'function': manifest['function'],
+        'parameter': manifest['parameter'], 'input_sha256': checks,
+        'samples': total, 'counts': dict(counts),
+        'percent': {k: round(100 * v / total, 2) for k, v in counts.items()},
+        'diagnostics_pass': True}
+print(json.dumps(result, indent=2))

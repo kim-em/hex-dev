@@ -299,7 +299,7 @@ implementation the compiled binary actually calls is an assumption, on the
 same footing as the GMP externs elsewhere in the project.
 
 The arithmetic is Mathlib-free. If you want to connect it to Mathlib's finite
-field theory, `HexGF2Mathlib` provides the ring equivalence with the generic
+field theory, `HexGF2Theory` provides the ring equivalence with the generic
 quotient-field construction, along with finiteness and cardinality for the
 packed representation. That cardinality is where `2⁸` is actually proved; this
 page only ever exhibits elements.

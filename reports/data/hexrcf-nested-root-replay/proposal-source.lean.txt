@@ -1,0 +1,20 @@
+import HexRCF.SelectedRoot.Data
+import HexSignDet.RootList
+import HexSignDet.DagEncode
+open Hex Hex.SignDet Hex.RealClosure
+open Hex.RCF.SelectedRootTests
+open scoped Hex
+private def freeze (p : Data.parent.Poly) (lo hi : Endpoint Data.parent.Value) : Codec.Json :=
+  match Sturm.prepare Data.parent.sign p lo hi with
+  | none => .null
+  | some domain =>
+    let raw : RawDescriptor Data.parent.Value Tower.Signature :=
+      ⟨Data.parent.signature,p,lo,hi,[],[]⟩
+    match SignDet.buildPrepared Data.parent.signature domain (raw.full []).queries with
+    | .error _ => .null
+    | .ok t =>
+      letI : Hashable Data.parent.Value := ⟨fun a => hash (Data.parent.codec.encode a)⟩
+      letI : Hashable Tower.Signature := ⟨fun a => hash (Tower.Signature.codec.encode a)⟩
+      Codec.graph Data.parent.codec Tower.Signature.codec (Dag.encode t.val)
+#eval IO.println ("NESTED_ROOT_PACKET:" ++ String.fromUTF8!
+  (freeze (DensePoly.ofList [-Data.alpha,0,1]) (.finite 1) (.finite 2)).writeBytes)

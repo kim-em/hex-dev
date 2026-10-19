@@ -14,7 +14,7 @@ public section
 
 namespace Hex.RCF.CertificateTests
 
-open HexRealRootsMathlib
+open HexRealRootsTheory
 
 private def zero : ZPoly := 0
 private def one : ZPoly := DensePoly.ofCoeffs #[(1 : Int)]

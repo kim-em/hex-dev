@@ -1,0 +1,131 @@
+import PacketQuoteTable
+import HexRCF.RealCoefficients.RootReplay
+open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
+open Hex.RCF.SelectedRootTests Hex.RealClosure.Tower
+namespace Hex.RCF.PacketQuoteTests
+open CellReplayTests.Algebraic
+set_option maxHeartbeats 12000000
+set_option maxRecDepth 32768
+
+private theorem negative_polynomial : (input.coeff 0).polynomial =
+    DensePoly.ofCoeffs (#[⟨(0 : Rat)⟩,⟨(-1 : Rat)⟩] : Array Data.base.Value) := by rfl
+
+private theorem negative_interpretation :
+    HexPolyTheory.Interpret.interpret Data.rational.value Data.rational.zero_iff
+      (DensePoly.ofCoeffs (#[⟨(0 : Rat)⟩,⟨(-1 : Rat)⟩] : Array Data.base.Value)) =
+        Polynomial.C (-1 : ℝ) * Polynomial.X := by
+  ext i
+  rw [HexPolyTheory.Interpret.coeff_interpret]
+  rcases i with _ | _ | i
+  · change Data.rational.value (0 : Data.base.Value) = _
+    rw [Data.rationalZero]
+    norm_num
+  · change Data.rational.value (-1 : Data.base.Value) = _
+    rw [Data.rationalNeg,Data.rationalOne]
+    norm_num
+  · rw [DensePoly.coeff_eq_zero_of_size_le _ (by change 2 ≤ i+1+1; omega)]
+    change Data.rational.value (0 : Data.base.Value) = _
+    rw [Data.rationalZero]
+    simp [Polynomial.coeff_X]
+
+theorem negative_value : Data.original.value (input.coeff 0) = -Real.sqrt 2 := by
+  change (Data.rational.root (.base (BaseContext.rational Data.registry))
+    Data.lower Data.frozenFrame Data.frameEncoded).value (input.coeff 0) = _
+  erw [Tower.Model.root_value]
+  unfold Algebraic.Element.denote
+  erw [negative_polynomial]
+  change (HexPolyTheory.Interpret.interpret Data.rational.value Data.rational.zero_iff
+    (DensePoly.ofCoeffs (#[⟨(0 : Rat)⟩,⟨(-1 : Rat)⟩] : Array Data.base.Value))).eval
+      Data.selectedReal = _
+  rw [negative_interpretation, Polynomial.eval_mul,Polynomial.eval_C,Polynomial.eval_X,Data.selectedSqrt]
+  ring
+
+theorem middle_zero : input.coeff 1 = 0 := by rfl
+
+private theorem positive_polynomial : (input.coeff 2).polynomial =
+    DensePoly.C (1 : Data.base.Value) := by rfl
+
+theorem positive_value : Data.original.value (input.coeff 2) = 1 := by
+  change (Data.rational.root (.base (BaseContext.rational Data.registry))
+    Data.lower Data.frozenFrame Data.frameEncoded).value (input.coeff 2) = _
+  erw [Tower.Model.root_value]
+  unfold Algebraic.Element.denote
+  erw [positive_polynomial]
+  change (HexPolyTheory.Interpret.interpret Data.rational.value Data.rational.zero_iff
+    (DensePoly.C (1 : Data.base.Value))).eval Data.selectedReal = _
+  rw [HexPolyTheory.Interpret.interpret_C,Polynomial.eval_C,Data.rationalOne]
+
+theorem polynomial_value :
+    HexPolyTheory.Interpret.interpret Data.original.value Data.original.zero_iff input =
+      Polynomial.X ^ 2 - Polynomial.C (Real.sqrt 2) := by
+  ext i
+  erw [HexPolyTheory.Interpret.coeff_interpret]
+  rcases i with _ | _ | _ | i
+  · erw [negative_value]
+    simp
+  · erw [middle_zero,(Data.original.zero_iff 0).mpr rfl]
+    simp
+  · erw [positive_value]
+    simp
+  · erw [DensePoly.coeff_eq_zero_of_size_le _ (by erw [input_size]; omega)]
+    erw [(Data.original.zero_iff 0).mpr rfl]
+    simp
+
+noncomputable def canonical : RootTable.Result Schema.parent.sign Schema.parent.signature input .negInf .posInf :=
+  RootTable.changeOps
+    (Algebraic.Element.cachedOne reduction reduction_eq Records.facts)
+    (Algebraic.Element.cachedAdd reduction reduction_eq Records.facts)
+    (Algebraic.Element.cachedSub reduction reduction_eq Records.facts)
+    (Algebraic.Element.cachedMul reduction reduction_eq Records.facts)
+    (Algebraic.Element.cachedNatCast reduction reduction_eq Records.facts)
+    (Algebraic.Element.cachedOne_eq reduction reduction_eq Records.facts)
+    (Algebraic.Element.cachedAdd_eq reduction reduction_eq Records.facts)
+    (Algebraic.Element.cachedSub_eq reduction reduction_eq Records.facts)
+    (Algebraic.Element.cachedMul_eq reduction reduction_eq Records.facts)
+    (Algebraic.Element.cachedNatCast_eq reduction reduction_eq Records.facts)
+    Schema.parent.sign Schema.parent.signature input .negInf .posInf restored
+
+noncomputable def roots : RootReplay.Result (parent := Schema.parent) input .negInf .posInf :=
+  RootReplay.fromTable (parent := Schema.parent) input .negInf .posInf canonical
+
+theorem count : roots.roots.length = 2 := by
+  dsimp only [roots,RootReplay.fromTable,canonical,RootTable.changeOps]
+  erw [List.length_map]
+  exact roots_count
+
+theorem has_real_root : ∃ x : ℝ, x ^ 2 = Real.sqrt 2 := by
+  have length : (roots.values Data.original).length = 2 := by
+    unfold RootReplay.Result.values
+    rw [List.length_map]
+    exact count
+  have nonzero : HexPolyTheory.Interpret.interpret Data.original.value Data.original.zero_iff input ≠ 0 := by
+    rw [polynomial_value]
+    intro zero
+    have coefficient := congrArg (fun p : Polynomial ℝ => p.coeff 2) zero
+    norm_num at coefficient
+  cases values : roots.values Data.original with
+  | nil => simp [values] at length
+  | cons x xs =>
+    have member : x ∈ roots.values Data.original := by rw [values]; simp
+    have root := (roots.coverage Data.original).1 x |>.mpr member
+    have equation := (HexRealRootsTheory.Tarski.mem_rootsIn_iff _ nonzero _ _ _).mp root
+    refine ⟨x,?_⟩
+    rw [polynomial_value] at equation
+    simpa [Polynomial.eval_sub,Polynomial.eval_pow,Polynomial.eval_X,Polynomial.eval_C,
+      sub_eq_zero] using equation.1
+
+theorem witness : ∃ x : ℝ, x ^ 2 = Real.sqrt 2 ∧ 1 < x ∧ x < 2 := by
+  obtain ⟨x,equation⟩ := has_real_root
+  have square : |x| ^ 2 = Real.sqrt 2 := by simpa only [sq_abs] using equation
+  have lower : 1 < Real.sqrt 2 := by rw [← Data.selectedSqrt]; exact Data.selectedFacts.2.1
+  have upper : Real.sqrt 2 < 2 := by rw [← Data.selectedSqrt]; exact Data.selectedFacts.2.2
+  refine ⟨|x|,square,?_,?_⟩
+  · apply (sq_lt_sq₀ (by norm_num : (0:ℝ) ≤ 1) (abs_nonneg x)).mp
+    rw [square]
+    norm_num
+    exact lower
+  · apply (sq_lt_sq₀ (abs_nonneg x) (by norm_num : (0:ℝ) ≤ 2)).mp
+    rw [square]
+    nlinarith
+
+end Hex.RCF.PacketQuoteTests

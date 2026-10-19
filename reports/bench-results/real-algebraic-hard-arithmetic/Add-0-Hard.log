@@ -1,0 +1,8 @@
+Hex.RealAlgebraicBench.runHardAdd    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=6d78bf3-dirty, 2026-10-02T03:50:54Z, host=chungus2
+  repeat 0  6.615 s
+  median: 6.615 s    min: 6.615 s    max: 6.615 s
+  hash: all repeats agree
+  observed hash: 0x7cc18faa80303c8
+  peak RSS: 70_404 kB (across 1 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-hard-arithmetic/Add-0-Hard.json

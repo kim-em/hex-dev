@@ -1,0 +1,20 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+module
+
+public import HexIntFactor.Mixed.Replay
+
+public section
+
+set_option maxHeartbeats 20000000
+set_option maxRecDepth 65536
+
+@[expose] def Hex.IntFactorMixedFrozen.partial : Hex.Nat.Mixed.PartialFactorization :=
+  ⟨19972938954922454472594064715153540410375188333443142017278553894582675601823908816765939309445916823559594556919594244786968649255333913906221567321069054, [⟨2, 1, (Hex.Nat.Mixed.Evidence.legacy (Hex.Nat.PrimeCert.small 2))⟩], 9986469477461227236297032357576770205187594166721571008639276947291337800911954408382969654722958411779797278459797122393484324627666956953110783660534527⟩
+
+@[expose] def Hex.IntFactorMixedFrozen.partial_checked : Hex.Nat.Mixed.CheckedPartialFactorization 19972938954922454472594064715153540410375188333443142017278553894582675601823908816765939309445916823559594556919594244786968649255333913906221567321069054 :=
+  ⟨Hex.IntFactorMixedFrozen.partial, rfl, by decide +kernel⟩

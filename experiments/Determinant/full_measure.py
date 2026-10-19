@@ -78,7 +78,7 @@ def source(fixture, arm, mode="full", clock="command", case="quadratic4"):
         tactic = {'Hex': 'det', 'Deferred': 'deferred_bird', 'Shared': 'shared_bird'}.get(arm, 'simp only [norm_det]; ring')
         full = header + theorem + f' := by\n  {tactic}\n#print axioms result\nend Determinant.Full\n'
     if arm == 'Transport':
-        full = full.replace('import HexPolyDetMathlib.Tree', 'import Determinant.Transport')
+        full = full.replace('import HexPolyDetTheory.Tree', 'import Determinant.Transport')
         full = full.replace('ext i j; fin_cases i <;> fin_cases j <;> simp [Matrix.map_apply, φ]',
             "simp only [mapRows, mapEmpty, compCons, compEmpty, Function.comp_apply, φ, "
             "map_add, map_mul, map_neg, map_pow, map_ofNat, map_one, map_zero, "

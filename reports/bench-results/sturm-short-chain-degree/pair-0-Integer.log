@@ -1,0 +1,11 @@
+Hex.SturmFrontendBench.runSparseInteger    expected complexity: n    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=c5efa57-dirty, 2026-10-03T16:58:41Z, host=chungus2
+    param  per-call   repeats  C
+   16_384   5.713 ms  ×2^4     C=348.678
+   32_768  11.650 ms  ×2^3     C=355.515
+   65_536  23.979 ms  ×2^2     C=365.898
+  131_072  49.007 ms  ×2^1     C=373.896
+  verdict: consistent with declared complexity (cMin=348.678, cMax=373.896, β=+0.034)
+  per-spawn floor (harness self-measurement): 22.121 ms
+  peak RSS: 97_220 kB..174_028 kB (across 4 ok row(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/sturm-short-chain-degree/pair-0-Integer.json

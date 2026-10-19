@@ -1,0 +1,268 @@
+{
+  "source_commit": "31bc27b91906882443f77490510a4d929f6a4e61",
+  "capturedAt": "2026-10-16T22:08:46.639440+00:00",
+  "sources": {
+    "adapters/HexRCF/RealCoefficients/RootQuote.lean": "ac2d1f646834309cc88a476feb27273ef610bf61ede7f18dc535a3254e8216df",
+    "adapters/HexRCF/RealCoefficients/ScalarQuote.lean": "b4f27aaaa34fc0191117ce8f67fa55005b4ae0f877ae8d34d2ea684fb1a61f24",
+    "conformance/HexRCF/SharedQuoteCases.lean": "b253ebcaa0b6f00645d130f694d7d948303b1de5fbe82b307dd4737b24d08af1",
+    "conformance/HexRCF/SharedQuoteConformance.lean": "02c392c283bc55b0d301ca4743443f9df28fd273496ae3a86b94d638c263b587",
+    "HexManual/Chapters/HexRCF/RootQuote.lean": "e873b0af3526b43cc603d2979269d25c9dcf1833eb69b299173df801f177695e",
+    "lakefile.lean": "179ce59200f976ce5ed7590f9428d7071e07903adb428f0b78a0fd82ddf78ca5",
+    "conformance/HexRCF/ScalarQuotePublic.lean": "c2b3dc6750abcb288ba817ce70972ad579cdf723d93d87f04cb8f09d38315019",
+    "adapters/HexRCF/RealCoefficients.lean": "79fdd2daa760cee15fdd27122243d5d7ae0f1817189972917ea5d8de0039682a",
+    "conformance/HexRCF/ScalarQuoteCases.lean": "adf250d872791082d08e389918f8f8709509a12a0d0bd893fa99452e5f564d33",
+    "conformance/HexRCF/ScalarQuoteConformance.lean": "fdfd1c1da04eda20f7ea22601fcf4d0f60efd150ca3b933d0d3318876d9744c5",
+    "conformance/HexRCF/NamedConstantProofs.lean": "54b6e99c42e5f43a254607fb438f77c10597a600cc39ed683c436d9a4bc74dd9"
+  },
+  "validation_log": "shared-quote-resource-validation-2.log",
+  "validation": "11785 jobs; 4.389s; CPU6.483s; peak269.5MiB/noSwap; reused dependencies from the retained preceding attempt, whose failures were three nonexistent target names",
+  "resource_policy": "Serial aggregate32GiB, MemorySwapMax0, LEAN_NUM_THREADS2; live renderer properties captured separately",
+  "original_scalar_pr": 10973,
+  "original_scalar_pr_head": "6c99a1898d21a4ff84a0e2317b211633498be9d7",
+  "baseline_tree": "bc8e1ba7601daab18bba1310f5d9c70acfd6766c",
+  "proof_nodes": {
+    "scalar": 818,
+    "polynomial": 1066,
+    "composed": 1884
+  },
+  "scope": "Supplied finite sign facts and exact polynomial reader; not generic source/provider/predecessor histories, strict compiled whole-reader missing-record behavior or complete extension. Assigned polynomial readers instantiate before work accounting; shared scalar and polynomial strict-codec construction enforces original fact context under reducible transparency.",
+  "proof_audit": {
+    "theorem_bodies": 6,
+    "data_definitions": 3,
+    "scalar_theorem_bodies": 13,
+    "scalar_data_definitions": 3,
+    "named_theorem_bodies": 42,
+    "axioms": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ]
+  },
+  "initial_source": "cde546ecf995374706bfa99e4ec5e788f8470d25",
+  "layout_change": "Split two long example lines after retained narrow-screen overflow16px/4px at initial source; final rerender and inspection recorded separately.",
+  "initial_render": "14323 jobs; 3min56.321s; CPU4min27.032s; peak4.1GiB/noSwap; sourcecde546ecf995374706bfa99e4ec5e788f8470d25",
+  "current_scalar_pr_head": "3a7c1a224e23bf394ff07cdf28c051a7ee480319",
+  "current_scalar_pr_code": "973997c0c15e8059ecf14929c2743613f8e874f9",
+  "final_render_log": "shared-quote-render-3.log",
+  "live_limit_verification": {
+    "ActiveState": "active",
+    "MainPID": "1229649",
+    "MemoryMax": "34359738368",
+    "MemorySwapMax": "0",
+    "Environment": "PATH=/home/kim/.claude-patched:/home/kim/.local/bin:/home/kim/bin:/home/kim/.npm-global/bin:/run/wrappers/bin:/home/kim/.nix-profile/bin:/nix/profile/bin:/home/kim/.local/state/nix/profile/bin:/etc/profiles/per-user/kim/bin:/nix/var/nix/profiles/default/bin:/run/current-system/sw/bin LEAN_NUM_THREADS=2",
+    "sampledWhileRunning": true
+  },
+  "artifacts": [
+    {
+      "path": "logs/shared-quote-resource-integration-1.log.gz",
+      "sha256": "5844b4dabd6c08d790788258595889d744c6cf7872f25654142a0f61e3bf8b0f",
+      "bytes": 9500,
+      "uncompressed_sha256": "078131b31160350dd9699faa0dff9602f4e40eee272bd3c5058011d0e0205a94",
+      "uncompressed_bytes": 118697
+    },
+    {
+      "path": "logs/shared-quote-resource-integration-2.log.gz",
+      "sha256": "e46f0681b9c5c0480f3316dd3c4c8a4d8617c743bbeb06a0fe8c27a165b5df7c",
+      "bytes": 9254,
+      "uncompressed_sha256": "fc3a2a4326f4fada8ec6768daad7eaf5198cd7f67f135a83ea292850a17d0003",
+      "uncompressed_bytes": 116986
+    },
+    {
+      "path": "logs/shared-quote-resource-validation-1.log.gz",
+      "sha256": "729357b8f0debcaa57013554403c9e32798d579074fdf265304f9e950d3a5c8e",
+      "bytes": 10447,
+      "uncompressed_sha256": "6ae6ff22659fbc7a0e454442026d417a56e34e185a34a88334e5341f1b8ff00f",
+      "uncompressed_bytes": 124457
+    },
+    {
+      "path": "logs/shared-quote-resource-validation-2.log.gz",
+      "sha256": "420958e19714ad67071b9d8f3ece53b0aa8be7b9d32fb9837f56f7e10cc9569c",
+      "bytes": 10186,
+      "uncompressed_sha256": "95c2cb30fce955c2f6f5822f655644197119d659a00230b69d540ce4f8d88054",
+      "uncompressed_bytes": 123654
+    },
+    {
+      "path": "logs/shared-quote-resource-metadata-0.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "logs/shared-quote-resource-metadata-1.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "logs/shared-quote-resource-metadata-2.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "logs/shared-quote-resource-metadata-3.log.gz",
+      "sha256": "b409d67a3a037936236130f7dc5c82bc279551dcaa501f4fdee7275c7bc3baef",
+      "bytes": 99,
+      "uncompressed_sha256": "d2dd145dfbb85665677c83dfa50f34878e648a170c291230b82ce0749ec0eb97",
+      "uncompressed_bytes": 95
+    },
+    {
+      "path": "logs/shared-quote-resource-metadata-4.log.gz",
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "bytes": 20,
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "uncompressed_bytes": 0
+    },
+    {
+      "path": "logs/shared-quote-render-3.log.gz",
+      "sha256": "176b4f28274d9e83ebe91913556875f053355d4686122e0787cf04d08314cd10",
+      "bytes": 14566,
+      "uncompressed_sha256": "999330301a91126523e0632f0330892c9595057a37f0fdf01e7788a6c984ab6c",
+      "uncompressed_bytes": 192128
+    },
+    {
+      "path": "logs/shared-quote-browser-3.log.gz",
+      "sha256": "3423f065dfd95d2f550752bc95f7cd99643f00e668f7ffc7e32e3a273e4bcf90",
+      "bytes": 242,
+      "uncompressed_sha256": "9496e3f1acef3638ec3453319c4f2a0b9b6d668b7da7f5882192f84e4e1d76b2",
+      "uncompressed_bytes": 327
+    },
+    {
+      "path": "validation-command.json",
+      "sha256": "9b8c3147b51fbd3770aa17c07b6c1907cc4142f5a87dedb5be93ecf4fb03d700",
+      "bytes": 478
+    },
+    {
+      "path": "final/shared-quote-desktop-boundary.png",
+      "sha256": "75d5a81ba17d3755ff4a89e402c9c67be4ea0c041255bbe61c7db0d398937257",
+      "bytes": 277414
+    },
+    {
+      "path": "final/shared-quote-desktop-equivalence.png",
+      "sha256": "26b195893fe6421deafe12cd176a306a081cc098c71611a9880daff1c469cdcf",
+      "bytes": 263113
+    },
+    {
+      "path": "final/shared-quote-desktop-example.png",
+      "sha256": "597b38608d883ee72e3cccf371e16f74a599c667e8e92bb4d5bd65db1d507f8c",
+      "bytes": 266656
+    },
+    {
+      "path": "final/shared-quote-desktop-value.png",
+      "sha256": "204d38f5ffb39d572bbc80c7061eedf62ed51b2a56f510ac7dd5f1351844489e",
+      "bytes": 257808
+    },
+    {
+      "path": "final/shared-quote-narrow-boundary.png",
+      "sha256": "50a58d9ae5309e6fa8e0582174e3260bbfe7a2238a19a4da6bffb98fcfcb907c",
+      "bytes": 90530
+    },
+    {
+      "path": "final/shared-quote-narrow-equivalence.png",
+      "sha256": "7eb23ffaef6fd3f591c1173354302c4ca59bc1b4a7f7fe8e7cba4d5b8ba580bb",
+      "bytes": 91824
+    },
+    {
+      "path": "final/shared-quote-narrow-example.png",
+      "sha256": "c8f69020ffa553bbef4d768e6390361be0ca8dccb026325b41da9f78b04847d2",
+      "bytes": 98320
+    },
+    {
+      "path": "final/shared-quote-narrow-value.png",
+      "sha256": "33e29a5ca82a4168a1f5e69f1c428c3a826e7a74c576e4cd41053045ae2766a9",
+      "bytes": 97509
+    },
+    {
+      "path": "final/shared-quote-inspection.json",
+      "sha256": "f40363ca35f02046827c2f60693706d19634d5c6e9bf97b8286c7326c3c2865d",
+      "bytes": 5846
+    },
+    {
+      "path": "final/shared-quote-section-overflow.json",
+      "sha256": "c518ff7639656bf1a73d361cdbf5f825c0424f077fbbf4b00f08ffc39d42c108",
+      "bytes": 12278
+    },
+    {
+      "path": "renderer.lean.txt",
+      "sha256": "4d33c8324da890bc696d11dce729aad59fbb2024c9dd03ae56437fe771c68963",
+      "bytes": 205
+    },
+    {
+      "path": "renderer-lakefile.lean.txt",
+      "sha256": "b517509d2e0ab87edca6b417f6e266443613b516c37b365a43020935fae8815e",
+      "bytes": 148
+    },
+    {
+      "path": "run-bounded.sh",
+      "sha256": "63bc5f97337e6b039bb3a9b1ba2a500be96fd1c2a2f73b43dae284aa9b18dda8",
+      "bytes": 302
+    }
+  ],
+  "metadata": [
+    {
+      "argv": [
+        "python3",
+        "scripts/check_dag.py"
+      ],
+      "exit_code": 0,
+      "log": "logs/shared-quote-resource-metadata-0.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_copyright_headers.py"
+      ],
+      "exit_code": 0,
+      "log": "logs/shared-quote-resource-metadata-1.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/check_file_line_counts.py"
+      ],
+      "exit_code": 0,
+      "log": "logs/shared-quote-resource-metadata-2.log.gz"
+    },
+    {
+      "argv": [
+        "python3",
+        "scripts/ci/check_named_admissions.py"
+      ],
+      "exit_code": 0,
+      "log": "logs/shared-quote-resource-metadata-3.log.gz"
+    },
+    {
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0,
+      "log": "logs/shared-quote-resource-metadata-4.log.gz"
+    }
+  ],
+  "visual": {
+    "captures": 8,
+    "widths": [
+      1440,
+      390
+    ],
+    "targets_per_width": [
+      25,
+      25
+    ],
+    "all_local_overflow_at_most_one_pixel": true,
+    "opened_captures": true
+  },
+  "render_summary": "evices and other narrow contexts. Long lines are likely to be truncated in the rendered output.\n\nHint: The limit of this linter can be changed with the option `verso.code.warnLineLength`. This linter can be disabled by setting this option to 0.\n\u2714 [14321/14323] Built HexManual (7.4s)\n\u2139 [14322/14323] Built SharedQuoteRender (6.6s)\ninfo: SharedQuoteRender.lean:3:0: 0\nBuild completed successfully (14323 jobs).\n          Finished with result: success\nMain processes terminated with: code=exited, status=0/SUCCESS\n               Service runtime: 8min 21.628s\n             CPU time consumed: 7min 32.294s\n                   Memory peak: 9.7G (swap: 0B)\n",
+  "limitations": [
+    "Current source31bc27b919 follows scalar fixes973997; prior d951490 record remains separately pinned at../context.json.",
+    "The retained first full validation attempted three nonexistent conformance target names and exited1 despite actual proof audits passing. The corrected target selection passes with dependencies reused. Earlier array-map experiments belong to the historical record.",
+    "One array-map experiment was operator-interrupted; its process signal15 is not a passing audit despite systemd reporting operator-stop success.",
+    "Proof-node counts are deterministic request accounting, not physical-sharing or executed-work scaling claims; build times include reused dependencies.",
+    "No generic original source/provider/predecessor authentication, general handler/accepted completeness, arbitrary-depth realization, strict compiled whole-reader missing-record or native stress repair claim."
+  ]
+}

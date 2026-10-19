@@ -1,0 +1,55 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 4K of event 'cycles:u'
+# Event count (approx.): 187587833717
+#
+# Children      Self  Command          Shared Object         Symbol                                                                                        
+# ........  ........  ...............  ....................  ..............................................................................................
+#
+     8.56%     8.56%  hexrealclosure_  hexrealclosure_bench  [.] lean_free_object
+     8.34%     8.32%  hexrealclosure_  libc.so.6             [.] cfree@GLIBC_2.2.5
+            |
+            ---cfree@GLIBC_2.2.5
+
+     7.84%     7.82%  hexrealclosure_  libc.so.6             [.] malloc
+            |          
+             --7.80%--malloc
+
+     7.59%     7.57%  hexrealclosure_  hexrealclosure_bench  [.] lean_apply_2
+     4.99%     4.99%  hexrealclosure_  hexrealclosure_bench  [.] __gmpz_add
+     3.61%     3.61%  hexrealclosure_  libc.so.6             [.] realloc
+            |
+            ---realloc
+
+     3.52%     3.52%  hexrealclosure_  hexrealclosure_bench  [.] l_Rat_mul
+     3.07%     3.07%  hexrealclosure_  hexrealclosure_bench  [.] lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)
+     2.50%     2.50%  hexrealclosure_  hexrealclosure_bench  [.] mi_free
+     2.35%     2.35%  hexrealclosure_  hexrealclosure_bench  [.] lean_dec_ref_cold
+     2.35%     2.35%  hexrealclosure_  hexrealclosure_bench  [.] lean_alloc_small_object_core
+     2.21%     2.21%  hexrealclosure_  hexrealclosure_bench  [.] lp_Hex_Hex_DensePoly_trimTrailingZerosGo___redArg
+     2.00%     2.00%  hexrealclosure_  hexrealclosure_bench  [.] __gmpz_realloc
+     1.95%     1.95%  hexrealclosure_  hexrealclosure_bench  [.] __gmpz_init_set_ui
+     1.78%     1.78%  hexrealclosure_  hexrealclosure_bench  [.] lp_Hex_Hex_RealClosure_Algebraic_Element_instDecidableEq___boxed
+     1.78%     1.74%  hexrealclosure_  hexrealclosure_bench  [.] __gmp_default_allocate
+     1.66%     1.66%  hexrealclosure_  hexrealclosure_bench  [.] lp_Hex_Hex_DensePoly_arrayDegreeAux___redArg
+     1.59%     1.59%  hexrealclosure_  hexrealclosure_bench  [.] lean::mpz::get_size_t() const
+     1.50%     1.50%  hexrealclosure_  hexrealclosure_bench  [.] lean_apply_1
+     1.47%     1.47%  hexrealclosure_  hexrealclosure_bench  [.] mi_malloc
+     1.43%     1.43%  hexrealclosure_  hexrealclosure_bench  [.] __gmpz_gcd
+     1.33%     1.33%  hexrealclosure_  hexrealclosure_bench  [.] __gmpz_mul_2exp
+     1.31%     1.31%  hexrealclosure_  hexrealclosure_bench  [.] l_Rat_sub
+     1.26%     1.26%  hexrealclosure_  hexrealclosure_bench  [.] l_Option_instDecidableEq___redArg
+     1.12%     1.12%  hexrealclosure_  hexrealclosure_bench  [.] __gmpn_gcd_1
+     1.10%     0.93%  hexrealclosure_  hexrealclosure_bench  [.] lp_Hex_Hex_RealClosure_BaseContext_Element_instDecidableEq___boxed
+     1.07%     1.07%  hexrealclosure_  hexrealclosure_bench  [.] lp_Hex___private_HexPoly_Euclid_DivGcd_0__Hex_DensePoly_divModArrayAuxImplGo___redArg
+     1.07%     1.05%  hexrealclosure_  hexrealclosure_bench  [.] l_List_foldl___redArg
+     1.05%     1.05%  hexrealclosure_  hexrealclosure_bench  [.] __gmpz_clear
+     1.02%     1.00%  hexrealclosure_  hexrealclosure_bench  [.] lean::mpz::mpz(unsigned long)
+
+
+#
+# (Tip: Print event counts in machine readable CSV format with: perf stat -x\;)
+#

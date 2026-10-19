@@ -387,7 +387,7 @@ graphs: the root separator first, then certificate replay. The
 certificates replay only because every declaration they reach is
 exposed across module boundaries, which `HexGraphIso.ModuleBoundaryTests`
 checks. Both the `Colored` negative branch and downstream extensions use
-this: `HexGraphIsoMathlib` calls it on the encoded graphs. -/
+this: `HexGraphIsoTheory` calls it on the encoded graphs. -/
 meta def proveNotIso (cfg : Config) (GE HE : Expr) : MetaM Expr := do
   let G ← mkSide GE
   let H ← mkSide HE
@@ -577,7 +577,7 @@ Two logical limits are optional and may appear in any order:
 graph_iso (maxSearchNodes := 200000) (maxCertRecords := 200000)
 ```
 
-Both default to 100000. Importing `HexGraphIsoMathlib`
+Both default to 100000. Importing `HexGraphIsoTheory`
 extends this same tactic to Mathlib `SimpleGraph` goals. See the module
 docstring for the proof routes. -/
 syntax (name := graphIsoTac) "graph_iso" optConfig : tactic
@@ -610,7 +610,7 @@ on the `Graph` shapes, and then each registered `Extension` in turn. -/
             throwError "graph_iso: the goal is not an `Isomorphic` or \
                 `¬ Isomorphic` proposition over executable graphs, \
                 coloured or not:{indentExpr target}\
-                \nFor `SimpleGraph` goals, import `HexGraphIsoMathlib`."
+                \nFor `SimpleGraph` goals, import `HexGraphIsoTheory`."
           else
             throwError "graph_iso: the goal is not a supported isomorphism \
                 proposition:{indentExpr target}"

@@ -66,7 +66,7 @@ theorem dvd_gcd (d f g : P) (hf : d ∣ f) (hg : d ∣ g) :
 ```
 
 The executable library does not import Mathlib. Correspondence with
-Mathlib's `MvPolynomial` belongs in the sibling Mathlib bridge package.
+Mathlib's `MvPolynomial` belongs in the sibling theory companion package.
 
 # Contributing
 

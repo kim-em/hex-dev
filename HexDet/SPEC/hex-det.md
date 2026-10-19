@@ -9,7 +9,7 @@ consumers request, while `determinant` names that existing foundational
 library. The new entry point is `Hex.Det.det`, so neither the library nor
 the Lean declaration replaces or overloads the reference definition.
 
-This is a specification, with a [Mathlib companion](../../HexDetMathlib/SPEC/hex-det-mathlib.md).
+This is a specification, with a [theory companion](../../HexDetTheory/SPEC/hex-det-theory.md).
 It adds no determinant implementation. Noncommutative rings, approximate
 floating-point determinants, rank, and characteristic-polynomial dispatch
 are outside its scope.
@@ -231,7 +231,7 @@ to obtain their production policy. Partial imports can change the selected
 arm while preserving correctness.
 
 When registered and implemented, add `HexModularMatrix` to `HexDet.deps`,
-and `HexModularMatrixMathlib` to the companion's dependencies. Neither
+and `HexModularMatrixTheory` to the companion's dependencies. Neither
 modular library may depend on `HexDet`. The lower determinant wrappers use `Hex.ModularMatrix.det` and
 `Hex.ModularMatrix.detViaDivisor`, distinct from `Hex.Matrix.det` and
 `Hex.Det.det`. Its image, bound, and partial reconstruction helpers may
@@ -247,7 +247,7 @@ when their targets exist. the matrix tactics ([SPEC/matrix-tactics.md](../../SPE
 
 Every shipped arm must equal `Hex.Matrix.det A`. All dispatch correctness
 statements and proofs in the first version live in
-[hex-det-mathlib](../../HexDetMathlib/SPEC/hex-det-mathlib.md), including statements whose two sides
+[hex-det-theory](../../HexDetTheory/SPEC/hex-det-theory.md), including statements whose two sides
 are Mathlib-free expressions. A Mathlib-free executable is not thereby a
 Mathlib-free proof. A Mathlib-free proof of the Berkowitz determinant arm
 is future work. No axiom, `native_decide`, or invented lower-layer proof
@@ -288,7 +288,7 @@ sizes only. Larger oracle comparisons use python-flint `fmpz_mat.det()`,
 residues. Polynomial carriers use SymPy `Matrix.det(method="berkowitz")`
 over identical exact polynomial domains.
 
-The required Phase-4 input families are:
+The benchmark input families are:
 
 | Family | Sweep and compared arms |
 |---|---|
@@ -302,12 +302,8 @@ Crossovers are benchmark outputs, never numerical SPEC constants. Record
 each enabled cutoff, coefficient-size region, tie rule, seed, and fuel
 setting with the source revision, fixture identifiers, command, host context,
 raw measurements, and adjacent-arm ratios in
-`reports/hex-det-performance.md`. Register these families under
-`HexDet.phase4.input_families` in `libraries.yml`. When a policy is enabled
-or changed, update the corresponding family's `description` with the exact
-policy constant names and values and a reference to the report's policy
-table. This uses the existing `phase4` schema, which has no `crossovers`
-field. The report and executable policy must agree with that record.
+`reports/hex-det-performance.md`, together with the exact policy constant
+names and values. The report and executable policy must agree.
 
 Use the shared-host discipline in [benchmarking](../../SPEC/benchmarking.md):
 automatically select and pin a CPU when supported, retain host context and
@@ -319,10 +315,10 @@ initial availability policies above must be labeled unmeasured until the
 first evidence is collected.
 
 Internal comparisons determine selection. External comparators are
-informational because their algorithm selection and process overhead differ.
-The dispatch-overhead and route-agreement surfaces have comparator-absence
-class `no-comparable-surface-in-named-comparator`: python-flint and SymPy do
-not expose Hex's arm selection or fallback route as callable operations.
+orientation only because their algorithm selection and process overhead
+differ. The dispatch-overhead and route-agreement surfaces have no external
+comparator: python-flint and SymPy do not expose Hex's arm selection or
+fallback route as callable operations.
 Ordinary Mathlib-free bench targets verify bounded fixture outputs and route
 agreement. Timing runs are manual, extending the existing benchmark setup
 under its CI wall-clock cap, with no new workflow jobs. Tactic elaboration,

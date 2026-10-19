@@ -1,0 +1,49 @@
+{
+  "schema": "hex-nested-signs-archive-v1",
+  "collections": {
+    "timing": {
+      "files": {
+        "committed-source.patch": {
+          "stored": "committed-source.patch.gz",
+          "raw_sha256": "97962caac127113f1e26f6df5264c1cbca66eaceee46a10fbebf947a9ae31171",
+          "stored_sha256": "340b3f7bbcd1d7855deb3d37edb7c8e77938de59bf70025ab5c46976c54be8cf"
+        },
+        "inputs.stderr": {
+          "stored": "inputs.stderr.gz",
+          "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stored_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+        },
+        "inputs.stdout": {
+          "stored": "inputs.stdout.gz",
+          "raw_sha256": "fcca6557dcefbfd14d924a7ce410e4b21378924e0e80060550c8e0cfbc55f6cb",
+          "stored_sha256": "4d68b0bce334b9ba7fc4536473d5bdf537eebf313608c77bd1bf5dea54750ac3"
+        },
+        "metadata.json": {
+          "stored": "metadata.json",
+          "raw_sha256": "1273ebc8a7104377a5ed0384836466737b6ba5be03b9581cdb57fb87d1404d4d",
+          "stored_sha256": "1273ebc8a7104377a5ed0384836466737b6ba5be03b9581cdb57fb87d1404d4d"
+        },
+        "summary.json": {
+          "stored": "summary.json.gz",
+          "raw_sha256": "801de27fc8b9d448d04c424da5be7a36e44849125b26431eac6e337caafd967b",
+          "stored_sha256": "ea7cfce2a98defa58ba233a741b7f380c8308553be48d69a797d3fc22b2dbc01"
+        },
+        "timings.json": {
+          "stored": "timings.json.gz",
+          "raw_sha256": "284e01aabc06d31de6d9223c18394258a364186f99a858589c1672e817822c5b",
+          "stored_sha256": "55383d6266afa198f5e868dd36dc84ee74dd9814e3e4cf33ee588bc2b545a94b"
+        },
+        "timings.stderr": {
+          "stored": "timings.stderr.gz",
+          "raw_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stored_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+        },
+        "timings.stdout": {
+          "stored": "timings.stdout.gz",
+          "raw_sha256": "3f31e6420df219a4ef265032c45ffd09b3531fcd34c41b0d8591d5b7cf4dde9c",
+          "stored_sha256": "f8281f4c73d9ff143d4812b7b916e28aabe29569052c52b5004f31ed6ce8840c"
+        }
+      }
+    }
+  }
+}

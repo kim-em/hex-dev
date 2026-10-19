@@ -13,10 +13,10 @@ Benchmark registrations for `hex-det`.
 The measured question this library owns is which arm dispatch should select, so
 the registrations are internal adjacent-arm comparisons: fraction-free Bareiss
 against Berkowitz on identical inputs, and dispatch against the arm it selects.
-External comparators are informational and belong to the headline report, not to
-the selection decision.
+External comparators are for orientation and belong to the performance report,
+not to the selection decision.
 
-Scientific registrations, one per Phase-4 input family:
+Scientific registrations, one per input family:
 
 * `runDetInt`: dispatch over `Int`, `O(n^3)`.
 * `runDetRat`: dispatch over `Rat`, `O(n^3)` ring operations.

@@ -1,0 +1,27 @@
+
+/home/kim/.local/state/hex/issue-10577-sign-fix/after-hexsturm_bench:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000004a02790 <lean_int_big_eq>:
+ 4a02790:	89 f0                	mov    %esi,%eax
+ 4a02792:	09 f8                	or     %edi,%eax
+ 4a02794:	a8 01                	test   $0x1,%al
+ 4a02796:	75 18                	jne    4a027b0 <lean_int_big_eq+0x20>
+ 4a02798:	50                   	push   %rax
+ 4a02799:	48 83 c7 08          	add    $0x8,%rdi
+ 4a0279d:	48 83 c6 08          	add    $0x8,%rsi
+ 4a027a1:	e8 d2 b7 fa ff       	call   49adf78 <_ZN4lean3cmpERKNS_3mpzES2_>
+ 4a027a6:	85 c0                	test   %eax,%eax
+ 4a027a8:	0f 94 c0             	sete   %al
+ 4a027ab:	48 83 c4 08          	add    $0x8,%rsp
+ 4a027af:	c3                   	ret
+ 4a027b0:	31 c0                	xor    %eax,%eax
+ 4a027b2:	c3                   	ret
+
+Disassembly of section .init:
+
+Disassembly of section .fini:
+
+Disassembly of section .plt:

@@ -1,0 +1,9 @@
+Hex.RealAlgebraicScaling.runAdd2    [fixed] repeats=1
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=e697757, 2026-10-05T01:20:15Z, host=chungus2
+  repeat 0  1.562 ms  (×2^6, total 99.942 ms)
+  median: 1.562 ms    min: 1.562 ms    max: 1.562 ms
+  hash: all repeats agree
+  observed hash: 0xb
+  expected hash: matches
+  peak RSS: 68_568 kB (across 1 ok repeat(s))
+exported to /home/kim/.local/state/hex/issue-10577-fixed-conversion/pairs/Add-2-3-Before.json

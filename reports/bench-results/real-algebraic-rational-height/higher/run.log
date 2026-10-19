@@ -1,0 +1,88 @@
+Hex.RealAlgebraicBench.runRationalRecognition    expected complexity: bits    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=fd466de-dirty, 2026-10-03T14:02:26Z, host=chungus2
+   param  per-call   repeats  C
+   8_192   2.294 µs  ×2^15    C=0.270 [trial 1/4]
+  16_384   4.028 µs  ×2^14    C=0.244 [trial 1/4]
+  32_768   7.007 µs  ×2^13    C=0.214 [trial 1/4]
+  65_536  13.341 µs  ×2^13    C=0.204 [trial 1/4]
+   8_192   2.216 µs  ×2^15    C=0.270 [trial 2/4]
+   8_192   2.195 µs  ×2^15    C=0.270 [trial 3/4]
+   8_192   2.207 µs  ×2^15    C=0.270 [trial 4/4]
+  16_384   3.979 µs  ×2^14    C=0.244 [trial 2/4]
+  16_384   4.011 µs  ×2^14    C=0.244 [trial 3/4]
+  16_384   3.995 µs  ×2^14    C=0.244 [trial 4/4]
+  32_768   7.027 µs  ×2^13    C=0.214 [trial 2/4]
+  32_768   6.995 µs  ×2^13    C=0.214 [trial 3/4]
+  32_768   7.002 µs  ×2^13    C=0.214 [trial 4/4]
+  65_536  13.439 µs  ×2^12    C=0.204 [trial 2/4]
+  65_536  13.355 µs  ×2^13    C=0.204 [trial 3/4]
+  65_536  13.324 µs  ×2^13    C=0.204 [trial 4/4]
+  verdict: consistent with declared complexity (cMin=0.204, cMax=0.270, β=-0.141)
+  per-spawn floor (harness self-measurement): 80.700 ms
+  peak RSS: 61_676 kB..69_188 kB (across 16 ok row(s))
+  trial summaries (4 trials per param; spread = (max-min)/median):
+     param  trials  median     min        max        spread
+     8_192  4/4      2.211 µs   2.195 µs   2.294 µs  4.504%
+    16_384  4/4      4.003 µs   3.979 µs   4.028 µs  1.208%
+    32_768  4/4      7.004 µs   6.995 µs   7.027 µs  0.455%
+    65_536  4/4     13.348 µs  13.324 µs  13.439 µs  0.859%
+
+Hex.RealAlgebraicBench.runRationalFloor    expected complexity: bits    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=fd466de-dirty, 2026-10-03T14:09:02Z, host=chungus2
+   param  per-call   repeats  C
+   8_192   1.862 µs  ×2^15    C=0.228 [trial 1/4]
+  16_384   3.512 µs  ×2^14    C=0.214 [trial 1/4]
+  32_768   6.254 µs  ×2^14    C=0.191 [trial 1/4]
+  65_536  12.111 µs  ×2^13    C=0.185 [trial 1/4]
+   8_192   1.867 µs  ×2^15    C=0.228 [trial 2/4]
+   8_192   1.865 µs  ×2^15    C=0.228 [trial 3/4]
+   8_192   1.873 µs  ×2^15    C=0.228 [trial 4/4]
+  16_384   3.507 µs  ×2^14    C=0.214 [trial 2/4]
+  16_384   3.532 µs  ×2^14    C=0.214 [trial 3/4]
+  16_384   3.499 µs  ×2^14    C=0.214 [trial 4/4]
+  32_768   6.278 µs  ×2^14    C=0.191 [trial 2/4]
+  32_768   6.309 µs  ×2^14    C=0.191 [trial 3/4]
+  32_768   6.266 µs  ×2^14    C=0.191 [trial 4/4]
+  65_536  12.268 µs  ×2^13    C=0.185 [trial 2/4]
+  65_536  12.142 µs  ×2^13    C=0.185 [trial 3/4]
+  65_536  12.113 µs  ×2^13    C=0.185 [trial 4/4]
+  verdict: consistent with declared complexity (cMin=0.185, cMax=0.228, β=-0.106)
+  per-spawn floor (harness self-measurement): 45.826 ms
+  peak RSS: 68_304 kB..69_220 kB (across 16 ok row(s))
+  trial summaries (4 trials per param; spread = (max-min)/median):
+     param  trials  median     min        max        spread
+     8_192  4/4      1.866 µs   1.862 µs   1.873 µs  0.587%
+    16_384  4/4      3.509 µs   3.499 µs   3.532 µs  0.941%
+    32_768  4/4      6.272 µs   6.254 µs   6.309 µs  0.885%
+    65_536  4/4     12.127 µs  12.111 µs  12.268 µs  1.289%
+
+Hex.RealAlgebraicBench.runRationalCeil    expected complexity: bits    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=fd466de-dirty, 2026-10-03T14:15:38Z, host=chungus2
+   param  per-call   repeats  C
+   8_192   1.893 µs  ×2^15    C=0.303 [trial 1/4]
+  16_384   3.539 µs  ×2^14    C=0.238 [trial 1/4]
+  32_768   6.290 µs  ×2^14    C=0.223 [trial 1/4]
+  65_536  16.407 µs  ×2^12    C=0.185 [trial 1/4]
+   8_192   2.453 µs  ×2^15    C=0.303 [trial 2/4]
+   8_192   2.510 µs  ×2^15    C=0.303 [trial 3/4]
+   8_192   2.589 µs  ×2^15    C=0.303 [trial 4/4]
+  16_384   4.283 µs  ×2^14    C=0.238 [trial 2/4]
+  16_384   4.261 µs  ×2^14    C=0.238 [trial 3/4]
+  16_384   3.517 µs  ×2^14    C=0.238 [trial 4/4]
+  32_768   8.874 µs  ×2^13    C=0.223 [trial 2/4]
+  32_768   7.453 µs  ×2^13    C=0.223 [trial 3/4]
+  32_768   7.181 µs  ×2^13    C=0.223 [trial 4/4]
+  65_536  12.118 µs  ×2^13    C=0.185 [trial 2/4]
+  65_536  12.149 µs  ×2^13    C=0.185 [trial 3/4]
+  65_536  12.128 µs  ×2^12    C=0.185 [trial 4/4]
+  verdict: inconclusive (cMin=0.185, cMax=0.303, β=-0.222, looks faster than declared by ~n^0.222)
+  per-spawn floor (harness self-measurement): 46.496 ms
+  peak RSS: 68_376 kB..69_156 kB (across 16 ok row(s))
+  trial summaries (4 trials per param; spread = (max-min)/median):
+     param  trials  median     min        max        spread 
+     8_192  4/4      2.482 µs   1.893 µs   2.589 µs  28.046%
+    16_384  4/4      3.900 µs   3.517 µs   4.283 µs  19.643%
+    32_768  4/4      7.317 µs   6.290 µs   8.874 µs  35.317%
+    65_536  4/4     12.139 µs  12.118 µs  16.407 µs  35.332%
+
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10577/reports/bench-results/real-algebraic-rational-height/higher/results.json

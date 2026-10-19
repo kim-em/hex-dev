@@ -15,7 +15,7 @@ import HexGF2.Irreducibility
 import HexGF2.RabinSoundness
 import HexGF2.CommonIrreducibility
 
-import HexGF2Mathlib
+import HexGF2Theory
 
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -106,7 +106,7 @@ and the compiled path merely runs faster.
 Lifting the word-level product to packed polynomials gives
 {name}`Hex.GF2Poly.mul` (the `*` of the `Mul GF2Poly` instance). Its
 correctness is stated as the carry-less convolution coefficient law,
-which `HexGF2Mathlib` is checked against.
+which `HexGF2Theory` is checked against.
 
 {docstring Hex.GF2Poly.coeff_mul_diagonal}
 
@@ -339,10 +339,10 @@ those ratios describe the harness rather than the kernel.
 
 # The Mathlib correspondence
 %%%
-tag := "hex-gf2-mathlib"
+tag := "hex-gf2-theory"
 %%%
 
-Everything above is executable and Mathlib-free. `HexGF2Mathlib` is the
+Everything above is executable and Mathlib-free. `HexGF2Theory` is the
 companion that connects it to Mathlib, and this section is where that
 library is documented.
 
@@ -351,34 +351,34 @@ dense one in disguise. Unpacking a {name}`Hex.GF2Poly` bit by bit gives a
 {name}`Hex.FpPoly` over `ZMod64 2`, and the two directions are mutually
 inverse ring maps.
 
-{docstring HexGF2Mathlib.GF2Poly.toFpPoly}
+{docstring HexGF2Theory.GF2Poly.toFpPoly}
 
-{docstring HexGF2Mathlib.GF2Poly.ofFpPoly}
+{docstring HexGF2Theory.GF2Poly.ofFpPoly}
 
-{docstring HexGF2Mathlib.GF2Poly.equiv}
+{docstring HexGF2Theory.GF2Poly.equiv}
 
 That lands on a Hex type. A Mathlib user wants `Polynomial (ZMod 2)`, one
 composition further along.
 
-{docstring HexGF2Mathlib.GF2Poly.equivPolynomial}
+{docstring HexGF2Theory.GF2Poly.equivPolynomial}
 
-{docstring HexGF2Mathlib.GF2Poly.coeff_equivPolynomial}
+{docstring HexGF2Theory.GF2Poly.coeff_equivPolynomial}
 
 The field wrappers correspond the same way, to the quotient-field
 construction of {ref "hex-gfq-field"}[`HexGFqField`] over the transported
 modulus.
 
-{docstring HexGF2Mathlib.GF2n.equiv}
+{docstring HexGF2Theory.GF2n.equiv}
 
-{docstring HexGF2Mathlib.GF2nPoly.equiv}
+{docstring HexGF2Theory.GF2nPoly.equiv}
 
 Cardinality comes from indexing the elements directly rather than from
 transporting finiteness across those equivalences: `GF2n` by its `val`
 bound, `GF2nPoly` through its reduced-representative subtype.
 
-{docstring HexGF2Mathlib.GF2n.fintype_card}
+{docstring HexGF2Theory.GF2n.fintype_card}
 
-{docstring HexGF2Mathlib.GF2nPoly.fintype_card}
+{docstring HexGF2Theory.GF2nPoly.fintype_card}
 
 The `Equiv`s are computable; the `Fintype` instances behind these are
 deliberately not. A carrier here has `2 ^ n` elements, and for a
@@ -387,18 +387,18 @@ one would be a footgun rather than a feature.
 
 ## Mathlib algebraic structure
 %%%
-tag := "hex-gf2-mathlib-instances"
+tag := "hex-gf2-theory-instances"
 %%%
 
 A `RingEquiv` does not install a `CommRing`. `SPEC/design-principles.md`
 asks for those instances to live in the companion, transported so that
 they keep the executable operations, and they do.
 
-{docstring HexGF2Mathlib.commRing}
+{docstring HexGF2Theory.commRing}
 
-{docstring HexGF2Mathlib.GF2Poly.euclideanDomain}
+{docstring HexGF2Theory.GF2Poly.euclideanDomain}
 
-{docstring HexGF2Mathlib.GF2Poly.gcdMonoid}
+{docstring HexGF2Theory.GF2Poly.gcdMonoid}
 
 That instance is built from the laws `HexGF2` proves, not by copying
 Mathlib's operations across the equivalence, so multiplication under it
@@ -421,7 +421,7 @@ Mathlib's recursive Euclidean gcd is a separate definition. Over `F₂[x]`
 the only unit is `1`, so mutual divisibility fixes the representative and the
 two gcd algorithms agree exactly:
 
-{docstring HexGF2Mathlib.GF2Poly.euclidean_gcd_eq_packed}
+{docstring HexGF2Theory.GF2Poly.euclidean_gcd_eq_packed}
 
 The instance supplies Mathlib's Bezout, principal-ideal, and
 unique-factorization interfaces directly on the packed type.
@@ -435,7 +435,7 @@ example (p q : GF2Poly) :
   ring
 ```
 
-{docstring HexGF2Mathlib.GF2nPoly.field}
+{docstring HexGF2Theory.GF2nPoly.field}
 
 The `Fact (0 < f.natDegree)` hypothesis on that instance is not
 bureaucracy. {name}`Hex.GF2Poly.Irreducible` asks that the modulus be
@@ -450,7 +450,7 @@ bound is asked for here instead.
 {name}`Hex.GF2n` has no Mathlib `Field` instance yet: `HexGF2` proves its
 laws for the field operations but not the bare ring laws that the
 minimal-axioms constructor needs, so reaching Mathlib from a `GF2n` today
-means going through {name}`HexGF2Mathlib.GF2n.equiv`.
+means going through {name}`HexGF2Theory.GF2n.equiv`.
 
 # Cross-references
 %%%
@@ -468,7 +468,7 @@ Where `HexGF2` fits in the executable DAG:
   it (the packed characteristic-two entries of the `GFq` constructors),
   which reuse its {name}`Hex.GF2n` and {name}`Hex.GF2nPoly` wrappers and committed
   irreducibility certificates.
-* `HexGF2` is Mathlib-free. Its Mathlib correspondence is `HexGF2Mathlib`,
+* `HexGF2` is Mathlib-free. Its Mathlib correspondence is `HexGF2Theory`,
   which unpacks `GF2Poly` into the generic `FpPoly 2` representation,
   identifies both `GF2n` and `GF2nPoly` with the quotient-field
   construction from {ref "hex-gfq-field"}[`HexGFqField`], and carries the

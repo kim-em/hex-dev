@@ -228,7 +228,11 @@ This supplies costs for nonunit-denominator arithmetic, normalization
 certificate replay, rejection causes and stale bindings in addition to the
 polynomial-generator graph family. It does not establish an asymptotic
 bound, count allocated bytes, or implement shared coefficient-sign proofs
-across field levels. The remaining Phase-4 gates are unchanged.
+across field levels. The current in-process proof assembly and finite
+coefficient-fact interfaces supply cross-level kernel checking; the
+[in-process proof example](../experiments/KernelReplay/ProofProbe.lean) supplies
+the CI kernel check. The [consolidated report](sign-det-performance.md) records the
+separate compiled evidence and prerequisite phase gate.
 
 ## Rational-function compatibility
 

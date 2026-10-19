@@ -413,10 +413,10 @@ def companions(entries):
     for library, folder, namespace, core in [
         ("HexGFq", "Entries", "Hex.GFq", "HexGFq.Entry"),
         (
-            "HexGFqMathlib",
+            "HexGFqTheory",
             "GeneratorOrder",
-            "HexGFqMathlib",
-            "HexGFqMathlib.PrimitivityCore",
+            "HexGFqTheory",
+            "HexGFqTheory.PrimitivityCore",
         ),
     ]:
         directory = ROOT / library / folder
@@ -447,22 +447,22 @@ def companions(entries):
 
 def embeddings(entries):
     """Specialize the canonical embedding at every supported divisor pair."""
-    directory = ROOT / "HexGFqMathlib/Embeddings"
+    directory = ROOT / "HexGFqTheory/Embeddings"
     directory.mkdir(parents=True, exist_ok=True)
     for old in directory.glob("*.lean"):
         old.unlink()
     pairs = [(p, m, n) for p, n, _ in entries for m in range(1, n) if n % m == 0]
     names = []
     for i in range(0, len(pairs), 128):
-        names.append(f"HexGFqMathlib.Embeddings.S{i//128}")
+        names.append(f"HexGFqTheory.Embeddings.S{i//128}")
         body = (
             HEADER
-            + "public import HexGFqMathlib.Subfield\n\npublic section\n\nnamespace HexGFqMathlib.Conway\n\n"
+            + "public import HexGFqTheory.Subfield\n\npublic section\n\nnamespace HexGFqTheory.Conway\n\n"
         )
         for p, m, n in pairs[i : i + 128]:
             body += f"/-- The canonical embedding of GF({p}^{m}) into GF({p}^{n}). -/\nnoncomputable def embed_{p}_{m}_{n} :\n    Hex.GFq {p} {m} Hex.Conway.supportedEntry_{p}_{m} →+*\n      Hex.GFq {p} {n} Hex.Conway.supportedEntry_{p}_{n} :=\n  conwayEmbed {p} {m} {n} _ _ Hex.Conway.compat_{p}_{m}_{n}\n\n"
-        (directory / f"S{i//128}.lean").write_text(body + "end HexGFqMathlib.Conway\n")
-    (ROOT / "HexGFqMathlib/Embeddings.lean").write_text(
+        (directory / f"S{i//128}.lean").write_text(body + "end HexGFqTheory.Conway\n")
+    (ROOT / "HexGFqTheory/Embeddings.lean").write_text(
         HEADER + "".join(f"public import {n}\n" for n in names) + "\npublic section\n"
     )
 
@@ -517,7 +517,7 @@ def main():
     temp = tempfile.TemporaryDirectory() if args.check else None
     if temp:
         ROOT = Path(temp.name)
-        for part in ["HexConway", "HexGFq", "HexGFqMathlib"]:
+        for part in ["HexConway", "HexGFq", "HexGFqTheory"]:
             (ROOT / part).mkdir()
         for part in ["HexConway/Primitivity.lean", "HexConway/Compatibility.lean"]:
             shutil.copyfile(original_root / part, ROOT / part)
@@ -631,8 +631,8 @@ def main():
                 raise SystemExit(f"Generated file set differs: HexConway/{folder}")
         for folder in [
             "HexGFq/Entries",
-            "HexGFqMathlib/GeneratorOrder",
-            "HexGFqMathlib/Embeddings",
+            "HexGFqTheory/GeneratorOrder",
+            "HexGFqTheory/Embeddings",
         ]:
             if {p.name for p in (ROOT / folder).glob("*.lean")} != {
                 p.name for p in (original_root / folder).glob("*.lean")

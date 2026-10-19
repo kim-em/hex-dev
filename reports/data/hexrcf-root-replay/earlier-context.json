@@ -1,0 +1,76 @@
+{
+  "schema": "hex-rcf-frozen-root-replay-validation-v1",
+  "source_commit": "a802a6986c575c326a24cf317f9e5f3bd31153fb",
+  "selected_source_hashes": {
+    "adapters/HexRCF/RealCoefficients/RootReplay.lean": "f39494a4d603f2a262ba33049259fcc7631919be89c3fa68153ec6a57cf928b0",
+    "adapters/HexRCF/RealCoefficients.lean": "f875b4768f517510887f5724010c6cfd27325ce86577d41c3c4d4897a9c03c57",
+    "conformance/HexRCF/RootReplayConformance.lean": "c56f372651a404101ca2aea9d4c49103e863eab9fbdb319c36cf6807fc243bd1",
+    "conformance/HexRCF/RootReplayOrdinaryConformance.lean": "8bf254ee34eea718d5c179ef1d9af115a0e269e9566bcee95928e07c7cdc6ed5",
+    "conformance/HexRCF/RootReplayLiterals.lean": "970bc1cf835bbed0040fe258fa1f9dde03aecc1bea9b609ec426fa3d287c5146",
+    "conformance-fixtures/HexRCF/root-replay.json": "1f3ad8e8681836b192827cb0ee25a7f8dd8a682f736a557b9e6c2c7814ee7ef7",
+    "scripts/rcf/selected_literals.py": "bd1cf395edf3b9a3e2fe92ce3fe06faf48298e831dcb6d8c39b2ef07575f2faf",
+    "lakefile.lean": "96d9d0421ba442aab2204d7ba25631429357baee93a2735d3b85e61c8ce66e01",
+    "HexManual/Chapters/HexRCF/NativeSources.lean": "ea280807f10ec0ce34589b1f22f5326ca9b4a1083bb5867749ae035dd0fe0013",
+    "HexRCF/README.md": "b62436e3abf64e575a214a5666df825c0544d858315d9f6c7987b1059e0f0835",
+    "HexRCF/SPEC/hex-rcf.md": "5e51f99c42b1bc7e4e238e49c8259aee6bc44635d18aebfc72a8e2b124fc7bae",
+    "reports/hexrcf-root-replay.md": "7384c3166dbbba62734aa8e30af216c2c7a5054485bf4b1f041b6f3aa96faded",
+    "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "dee0603c48007db76b74fad8d388f87c8e51fac02d20903149e0c83203a05a25",
+    "conformance/HexRCF/SelectedRoot/Data.lean": "57037435c1334204396657ef00f45225aaedd47db97bbcea5d97cca9d76b6fea",
+    "conformance/HexRCF/ProofEvidence.lean": "b94ac7f25504f684b5caab07d7b56a76e6ffeb76c402349edb7f9514e228521c",
+    "HexSignDet/RootList.lean": "f5147151bd255cb2e234717cad76109bf68278ec8499491ea9cb46f68bfc60c5",
+    "HexSignDet/Codec.lean": "cdfea75af38381420c365c93d02eaacb02f5305ec33cdc49cd9aa9e9114e8d3d",
+    "HexSignDet/Dag.lean": "1a458092a55d164900ea7846bc0c48b060891ca33b99f0e13f583f13bd9956b7",
+    "HexSignDetMathlib/RootList.lean": "de0b65c019f14797b46624aa12c8b2f4720d572c44ad6d04bf11654eae8531bc",
+    "HexSignDetMathlib/RootModel.lean": "59d46af132efcbb60453398ca8202c279b4ae3ea7a6970c13ad973bea8138e03",
+    "HexSignDetMathlib/SelectedRoot.lean": "41445b48ed980679308371669ebc43193b9affabd2f4d75537377b07c47c746b",
+    "HexSignDetMathlib/ThomRoots.lean": "7520fb76253d5c300e242f15601ac6d6d19cfca073d2062f6489c73e5efd126d",
+    "HexSturm/Basic.lean": "8e32b2f98430439a0ab5d6b1f51035b7a3e95c3a90aaba51837341cde14a4430",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47"
+  },
+  "records": [
+    {
+      "path": "reports/data/hexrcf-root-replay/integration.log.gz",
+      "command": "lake build HexRCFRealCoefficients HexRCF.RootReplayConformance HexRCF.RootReplayOrdinaryConformance HexManual",
+      "source_commit": "a802a6986c575c326a24cf317f9e5f3bd31153fb",
+      "exit_code": 0,
+      "sha256": "2b678ac75a5d5a1170bc92365180980451ebe555482588eac6b4ee6f262e21f3",
+      "decoded_sha256": "14b8265c3d10db87d7d1a5ace8409a0bdd4141cd97c824c1870f112bdf2aa4a3",
+      "decoded_bytes": 188174
+    },
+    {
+      "path": "reports/data/hexrcf-root-replay/render.log.gz",
+      "command": "lake build FullRender",
+      "source_commit": "a802a6986c575c326a24cf317f9e5f3bd31153fb",
+      "exit_code": 0,
+      "sha256": "f3c9f482eda5254e69f2479639a604eba3bffbe8a360d5abff71ccdd7a23fa43",
+      "decoded_sha256": "3cec854c073e3ba169aa049db2429671968f6867836ba8b0da142eb7b36308b7",
+      "decoded_bytes": 183191
+    }
+  ],
+  "proposal": {
+    "source": "reports/data/hexrcf-root-replay/proposal-source.lean.txt",
+    "source_sha256": "273810910c2330d8124465cf1b88a4c3c6d0f4f6bb7b5a67d5cc4d6a63e8fbda",
+    "log": "reports/data/hexrcf-root-replay/proposal.log.gz",
+    "sha256": "c4cfed07e12f0f2cd90484638209a3aec01db053d18968da9e1209d544ddce19",
+    "decoded_sha256": "187c239ef0cd6969161ca2b1b0dfcbf8085e4a760e67f6e503c8eda855129764",
+    "decoded_bytes": 89041,
+    "command": "lake build RootPackets",
+    "scope": "Offline untrusted production. Four graphs independently checked by conformance; the repeated X\u00b2 proposal is null because this query preparation requires squarefreeness. The snapshot is the exact external driver, not a public fixture proof. Owner sources are unchanged from 8e7f260e6054e1569a5bb30b3eddcc7dca8ea98e."
+  },
+  "axiom_inventories": {
+    "api_and_fixture": 28,
+    "fresh_sources": 2,
+    "allowlist": [
+      "propext",
+      "Classical.choice",
+      "Quot.sound"
+    ]
+  },
+  "limits": [
+    "Ordinary correctness/build observations, no performance or scaling claim.",
+    "Concrete decoder fixtures use the pinned non-module private import closure; generic APIs use ordinary public imports.",
+    "Imported declarations are leaves in local proof-body scans.",
+    "No complete interpreted coverage, value Nodup or mathematical-order export is supplied by this adapter.",
+    "Merge a802a6986c has the same tree as functional predecessor f4e78731b3; validation and render code did not change in the merge."
+  ]
+}

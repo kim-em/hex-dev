@@ -149,3 +149,50 @@ private def firstChild := produce hard 0 { maxDepth := 1, maxCandidates := 2 }
 #guard match (produce hard 0 { maxDepth := 1 }).result with
   | .error e => e.subject < hard && e.resource == .depth
   | .ok _ => false
+
+-- The added root portfolio agrees with exhaustive roots on small prime fields.
+private def rootOracle (n : Nat) : Bool :=
+  let z := ((List.range n).find? fun z => CM.symbol z n == -1).getD 0
+  CM.classPolynomials.all fun p =>
+    (CM.roots? n z p).mergeSort (· ≤ ·) ==
+      ((List.range n).filter fun x => CM.evaluate n x p.coefficients == 0)
+#guard [17, 31, 41, 101, 113].all rootOracle
+-- Composite root proposals still satisfy the actual polynomial equation.
+#guard [9, 25, 35, 49, 121].all fun n => CM.classPolynomials.all fun p =>
+  (CM.roots? n 2 p).all fun x => x < n && CM.evaluate n x p.coefficients == 0
+#guard CM.roots? 31 3 ⟨15, [-121287375, 191025, 1]⟩ == [11, 17]
+#guard [11, 17].all fun j => orders 31 15 j 3 == expected 31 15 8 2
+#guard CM.roots? 35 2 ⟨15, [1, 1, 2]⟩ == []
+#guard CM.classPolynomials.length == 33
+#guard CM.classPolynomials.all fun p => p.coefficients.length ≤ 3
+#guard certShape 1 (.base (.small 17)) == some (0, 2, 1)
+#guard certShape 0 (.base (.small 17)) == none
+#guard certBitsAt 1 (.base (.pock 13 [(2, 0, .small 2)])) == none
+#guard (certBitsAt 2 (.base (.pock 13 [(2, 0, .small 2)]))).isSome
+
+-- Rejection of an oversized terminal retains charged work and permits search.
+private def tinyOutput := produce 17 0 { public512Budget with maxNodes := some 1 }
+#guard tinyOutput.result.toOption.isNone
+#guard tinyOutput.state.stats.outputRejects > 0
+#guard tinyOutput.state.stats.factorWork ≥ leafBudget.maxAttempts
+#guard exhausted 17 { maxNodes := some 1 } .nodes
+#guard (produce 17 0 { public512Budget with maxRows := some 0 }).result.toOption.any (checkAt 17)
+#guard exhausted hard { native512Budget with maxPolynomialWork := 0 } .polynomialWork
+#guard exhausted hard { native512Budget with maxRootWork := 0 } .rootWork
+#guard exhausted hard { order := some { orderBudget with attemptLimit := none } } .factorPolicy
+
+-- A checked memo cannot bypass tighter remaining output or recursion limits.
+private def limitedMemo (depth : Nat) (rows nodes : Option Nat) : Bool :=
+  match (produce hard 0).result with
+  | .error _ => false
+  | .ok c =>
+      let budget := { public512Budget with
+        maxDepth := depth, maxRows := rows, maxNodes := nodes, maxFactorWork := 0 }
+      let (result, _) := (search budget depth hard).run.run {
+        rand := Hex.Rand.ofSeed 0, memo := [c] }
+      match result with
+      | .error e => e.resource == .factorWork
+      | .ok _ => false
+#guard limitedMemo 21 (some 0) (some 32)
+#guard limitedMemo 21 (some 20) (some 1)
+#guard limitedMemo 1 (some 20) (some 32)

@@ -1,0 +1,48 @@
+{
+  "kind": "untimed native comparison-route replay",
+  "comparison_schema": 2,
+  "source_commit": "14fdfbe55238f5d9ead75d1041019eab0f0a1b96",
+  "source_tag": "measurements/10378/interval-sort-source-v1",
+  "command": [
+    ".lake/build/bin/hexrealclosure_trivial_bench",
+    "emit-sort"
+  ],
+  "exit_code": 0,
+  "executable_sha256": "69aa23154f559a7f924843a0d64e209819e4d7822a074396c245a2fd8bfe683b",
+  "aggregate_memory_bytes": 8589934592,
+  "swap_bytes": 0,
+  "repository_paths": {
+    "RootOrder.lean.txt": "HexRealClosure/RootOrder.lean",
+    "TrivialMeasurements.lean.txt": "bench/HexRealClosure/TrivialMeasurements.lean"
+  },
+  "source_git_blobs": {
+    "RootOrder.lean.txt": "25058d8494492d95ca38120cc792840c645468bf",
+    "TrivialMeasurements.lean.txt": "c525ad68c0ebb5b24d6f324d8b893c250c7edb87"
+  },
+  "files": {
+    "RootOrder.lean.txt": {
+      "bytes": 8393,
+      "sha256": "99490abdde000647df41d8cb95d32ff96a94198a3c8ac0a9ea25be71632e6fdd"
+    },
+    "TrivialMeasurements.lean.txt": {
+      "bytes": 18092,
+      "sha256": "2bfd5a2d2f10b2981ec5b001e7546f9e40db34ffbb848d51dc4a91e88f4e4e42"
+    },
+    "sort-analysis.json": {
+      "bytes": 1598,
+      "sha256": "896d5400482e692063296d7f6a0e9b740aaf8e5462c000c5f71e67be04205368"
+    },
+    "sort.jsonl": {
+      "bytes": 10456,
+      "sha256": "40d085dda0a1366d7d424ce7058637a355fede3dc01f00f961574fe6a809ceb7"
+    },
+    "sort.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "launcher.log": {
+      "bytes": 50176,
+      "sha256": "468c1196ff162dfb1cdd93ae87a5b5e6352862bc2eea448326ddfd46125ad65a"
+    }
+  }
+}
