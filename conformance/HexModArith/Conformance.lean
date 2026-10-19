@@ -230,10 +230,12 @@ end PrimeModulusAutomation
 /-- The largest advertised catalogue length is supported without constructing
 its enormous twiddle array during conformance elaboration. -/
 example :
-    ((nttPrimes[6]'(by decide)).plan? (2 ^ 27)).isSome = true := by
+    ((nttPrimes[6]'(by simp)).plan? (2 ^ 27)).isSome = true := by
   apply NttPrime.plan?_isSome_of_supported
   · decide
-  · decide
+  · have h : (nttPrimes[6]'(by simp)).maxLog = 27 := by
+      simpa using congrArg (·[6]?) nttPrimes_map_maxLog
+    rw [NttPrime.maxLength_eq, h]
 
 private def negacyclicPlanFive? : Option (Ntt.NegacyclicPlan 5 2) :=
   match NttPlan.build? (p := 5) (n := 2) (ofNat 5 4) with
