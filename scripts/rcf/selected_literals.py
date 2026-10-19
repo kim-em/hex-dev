@@ -414,6 +414,42 @@ def render_catalog_bytes(value):
     return "\n".join(lines) + "\n"
 
 
+def render_enumerated_sources(check):
+    fixture = "enumerated-source.json"
+    records = json.loads((ROOT / "conformance-fixtures/HexRCF" / fixture).read_text())
+    if len(records) != 3:
+        raise ValueError("expected positive/negative quadratic and cubic sources")
+    directory = ROOT / "conformance/HexRCF/EnumeratedSource"
+    directory.mkdir(exist_ok=True)
+    for name, record in zip(["Positive", "Negative", "Cubic"], records):
+        subject, graph, equation, margin = record
+        if len(equation) != 3 or len(margin) != 3 or equation[1] != 0 or margin[1] != 1:
+            raise ValueError("source packets must propose the exact zero/positive signs")
+        values = [subject, graph, equation[0], equation[2], margin[0], margin[2], record]
+        names = ["subject", "graph", "equation", "equationGraph", "margin", "marginGraph", "packet"]
+        output = render("EnumeratedSource." + name, values, root_replay=True,
+                        root_fixture=fixture, root_names=names)
+        lines = output.splitlines()
+        first = next(i for i, line in enumerate(lines) if line.startswith("@[expose] def j0 "))
+        header = "\n".join(lines[:first]) + "\n"
+        body = lines[first:-1]
+        chunks = [body[i:i + 240] for i in range(0, len(body), 240)]
+        for i, chunk in enumerate(chunks):
+            module = name if i == len(chunks) - 1 else name + f"Data{i}"
+            prefix = header
+            if i:
+                prefix = prefix.replace("public import HexSignDet.Codec.Json",
+                    "public import HexSignDet.Codec.Json\n"
+                    f"public import HexRCF.EnumeratedSource.{name}Data{i - 1}")
+            text = prefix + "\n".join(chunk) + f"\nend Hex.RCF.RealCoefficients.EnumeratedSource.{name}\n"
+            destination = directory / f"{module}.lean"
+            if check:
+                if destination.read_text() != text:
+                    raise SystemExit(f"stale generated literals: {destination.relative_to(ROOT)}")
+            else:
+                destination.write_text(text)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true")
@@ -599,6 +635,7 @@ def main():
     render_guarded_quotient(args.check)
     render_cell_replay(args.check)
     render_algebraic_cells(args.check)
+    render_enumerated_sources(args.check)
     print("selected-root literals match" if args.check else "selected-root literals regenerated")
 
 

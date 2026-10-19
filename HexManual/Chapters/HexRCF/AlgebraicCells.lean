@@ -14,6 +14,7 @@ import HexRCF.RealCoefficients.AlgebraicPreparation
 import HexRCF.RealCoefficients.CellOperations
 import HexRCF.RealCoefficients.RealModel
 import HexRCF.RealCoefficients.SourceIdentity
+import HexRCF.RealCoefficients.SourceBuild
 import HexRCF.RealCoefficients.CellQuote
 import HexRCF.CellQuoteStages
 import HexRCF.CellSourceQuote
@@ -775,6 +776,76 @@ one-node-below exhaustion also restore the complete caller state. The dedicated
 fresh audit checks 218 theorem bodies, 179 definitions and 385 nonempty kernel
 traces, excludes the handwritten source identities and native fact fixtures,
 and retains the producer guard and complete standard-three axiom closure.
+
+The native producer {name Hex.RCF.RealCoefficients.SourceBuild.build}`SourceBuild.build`
+can discover a selected source from its defining polynomial and a window
+polynomial whose sign is positive at exactly one of its real roots. For an
+isolating square, use `SourceIdentity.margin` as that window. The producer
+enumerates roots with the existing family algorithm, visits every candidate,
+and proposes the equation and window packets for the unique positive match.
+Two matches produce `ambiguous`; no match produces `unselected`. A failed
+equation or enclosure calculation remains an error.
+
+This direct API example proposes the positive root of X²−2, using its checked
+source square:
+
+```lean
+open Hex Hex.RealClosure
+open Hex.RCF.RealCoefficients
+
+def proposeSquareRoot
+    (registry :
+      BaseContext.Registry) :=
+  Id.run do
+    let parent :=
+      RealClosure.NumberField.base
+        registry
+    let polynomial : parent.Poly :=
+      DensePoly.ofCoeffs
+        #[⟨-2⟩, ⟨0⟩, ⟨1⟩]
+    let margin :=
+      SourceIdentity.margin
+        SquareTwo.square
+    let window : parent.Poly :=
+      DensePoly.ofCoeffs
+        (margin.coeffs.map
+          fun coefficient => ⟨coefficient⟩)
+    return SourceBuild.build
+      polynomial window
+
+#eval
+  let proposal :=
+    proposeSquareRoot
+      (fun _ => none)
+  proposal.toOption.isSome
+```
+
+The output reports proposal production. Independent frozen replay establishes
+the selected real identity. `ScalarPacket.buildParts` retains the proposed
+polynomial, sign and graph separately; its `packet` method preserves the
+existing three-field scalar format. `SourceIdentity.quoteWith` checks those
+fields at the exact restored descriptor and original source alias.
+
+`ScalarPacket.buildParts_success` and `build_success` prove actual packet
+production for every query at a validated descriptor with a lawful ordinary-real
+parent model. They consume the owner's selected-sign production theorem,
+without assuming a successful table or producer result. Acceptance of the
+frozen serialized packet remains a separate obligation.
+
+The [enumerated-source controls](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/SourceBuild.lean)
+produce both quadratic conjugates and a positive cubic root from X³−2, compare
+their complete bytes with frozen constructor literals, and independently
+validate all six scalar graphs. They also reject an ambiguous window, empty
+and zero windows, a wrong source equation and duplicate roots. The separate
+[ordinary quotation](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/EnumeratedSource/Quote.lean)
+identifies these roots from the frozen descriptors and packets, with the
+rational model, alias selection and coefficient-map laws supplied. Its three
+quotation requests charge 6,371,355, 6,442,217 and 8,127,841 proof nodes
+respectively; the separate final driver checks and exports are outside those
+counts. The combined build
+took 624 seconds and peaked at 2.2 GiB on the shared host. These costs describe
+three fixed proof constructions. General predecessor-history assembly and
+automatic source discovery from a tactic goal remain separate work.
 
 `CellQuote.finishOperations` takes the supplied-operation acceptance expression
 and an ordinary proof that its result is `some ()`. It kernel-checks that exact

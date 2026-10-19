@@ -13,16 +13,55 @@ namespace Hex.RCF.RealCoefficients.ScalarPacket
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet
 variable {registry : BaseContext.Registry} {parent : Tower.Context registry}
 
+/-- Untrusted literal fields proposed by scalar production. Keeping the sign
+separate lets source selection inspect it without decoding its own output. -/
+structure Proposal where
+  polynomial : Codec.Json
+  sign : Int
+  evidence : Codec.Json
+
+/-- The existing three-field scalar packet layout. -/
+@[expose] def Proposal.packet (proposal : Proposal) : Codec.Json :=
+  .arr #[proposal.polynomial, Codec.Json.of proposal.sign, proposal.evidence]
+
+/-- Produce literal fields for one demanded polynomial. Neither the proposed
+sign nor the producer's checked row replaces independent frozen replay. -/
+def buildParts (context : Algebraic.Context parent.Value Signature parent.sign parent.signature)
+    (value : ValueCodec parent.Value) (polynomial : DensePoly parent.Value) :
+    Option Proposal := do
+  let _ : Hashable parent.Value := ⟨fun a => hash (value.encode a)⟩
+  let _ : Hashable Signature := ⟨fun a => hash (Signature.codec.encode a)⟩
+  let .ok signs := context.buildSigns [context.queryPoly polynomial] | none
+  return ⟨Codec.poly value polynomial, signs.value,
+    Codec.graph value Signature.codec (Dag.encode signs.evidence)⟩
+
 /-- Produce a proposed scalar packet for one demanded polynomial. This is
 search code; the output must subsequently pass `read` in the ordinary kernel. -/
 def build (context : Algebraic.Context parent.Value Signature parent.sign parent.signature)
     (value : ValueCodec parent.Value) (polynomial : DensePoly parent.Value) :
-    Option Codec.Json := do
-  let _ : Hashable parent.Value := ⟨fun a => hash (value.encode a)⟩
-  let _ : Hashable Signature := ⟨fun a => hash (Signature.codec.encode a)⟩
-  let .ok signs := context.buildSigns [context.queryPoly polynomial] | none
-  return .arr #[Codec.poly value polynomial, Codec.Json.of signs.value,
-    Codec.graph value Signature.codec (Dag.encode signs.evidence)]
+    Option Codec.Json :=
+  (buildParts context value polynomial).map Proposal.packet
+
+/-- The actual selected-sign producer supplies a packet at every query over
+a lawful ordinary-real parent. No successful producer result is assumed.
+Independent frozen acceptance remains a separate obligation. -/
+theorem buildParts_success (model : Model parent ℝ)
+    (context : Algebraic.Context parent.Value Signature parent.sign parent.signature)
+    (value : ValueCodec parent.Value) (polynomial : DensePoly parent.Value) :
+    ∃ proposal, buildParts context value polynomial = some proposal := by
+  obtain ⟨signs, produced⟩ := context.root.buildSigns_success model.value model.zero_iff
+    model.one model.add model.sub model.mul model.nat model.sign model.neg model.inv
+    [context.queryPoly polynomial]
+  simp [buildParts, Algebraic.Context.buildSigns_eq, produced]
+
+/-- Literal assembly preserves actual production progress for a validated
+descriptor in its ordinary-real parent model. -/
+theorem build_success (model : Model parent ℝ)
+    (context : Algebraic.Context parent.Value Signature parent.sign parent.signature)
+    (value : ValueCodec parent.Value) (polynomial : DensePoly parent.Value) :
+    ∃ packet, build context value polynomial = some packet := by
+  obtain ⟨proposal, produced⟩ := buildParts_success model context value polynomial
+  exact ⟨proposal.packet, by simp only [build, produced, Option.map_some]⟩
 
 /-- A literal production boundary keeps partially reduced interpreter terms
 out of the compiler. Parsing here proposes data; `read` independently checks it. -/

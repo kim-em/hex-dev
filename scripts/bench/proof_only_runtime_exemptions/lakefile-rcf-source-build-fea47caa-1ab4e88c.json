@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "fea47caa0a9c4cdc271c9e126cc12cf4020b2994",
+  "current_blob": "1ab4e88caeafa3fdbef7463ddeee13d151e5399b",
+  "reason": "The previous exact endpoint f1117c9ca553db82ee65e1d16c6f314401655dc3 covers the RCF admission test registration. This endpoint additionally registers SourceBuild in the existing optional HexRCFRealCoefficients target and the enumerated-source producer, constructor literals, quotation and importing-audit modules in the existing HexConformance target. Removing exactly those added literal glob lines reproduces f1117c9c byte for byte. The changed declarations only select optional RCF modules or conformance tests; they change no package/dependency setting, archive, linker input, compiler option, factor service declaration or factorization module body. The factorization service imports neither the optional real-coefficient adapter nor conformance tests. No executable benchmark imports Mathlib and no factorization measurement is used as evidence for this new adapter producer. Existing measurements and their source manifests remain unchanged."
+}
