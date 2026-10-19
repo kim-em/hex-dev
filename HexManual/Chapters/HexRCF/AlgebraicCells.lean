@@ -770,9 +770,40 @@ context and its checked equality. All work shares the enclosing reflection
 budget and transaction. This authenticates a supplied selected source; it does
 not construct an arbitrary predecessor history or run missing root/sign searches.
 
+{name Hex.RCF.RealCoefficients.SourceIdentity.restorePacketWith}`restorePacketWith`
+also performs descriptor/header quotation and context preparation from the
+literal `Packet` and exact parent/model. It returns the checked header, prepared
+context and source identity together. The header's reader equation can bind an
+existing stored coefficient to this same root. The compact
+{name Hex.RCF.RealCoefficients.SourceIdentity.quotePacketWith}`quotePacketWith`
+returns only the source identity. Both share the enclosing request's budget;
+neither discovers a predecessor history or supplies an original alias proof.
+
+```lean
+open Lean Hex.RealFormula
+open Hex.Reflect
+open Hex.RCF.RealCoefficients
+meta def quoteSourcePacket
+    (anchor : SourceIdentity.Anchor)
+    (packet : SourceIdentity.Packet)
+    (parent model : Expr)
+    (decode : RootQuote.DecoderM)
+    (config : Reify.Config)
+    (used : BudgetUsage) :=
+  RootQuote.runWith (do
+    let restored ←
+      SourceIdentity.restorePacketWith
+        anchor packet parent model decode
+    pure ⟨anchor.value,
+      restored.identity.proof,
+      restored.identity.usage⟩)
+    config used
+```
+
 The frozen square-root regression quotes its parent descriptor and both
-packets in 673,461 proof nodes. Its coefficient identity supplies the complete
-algebraic source example above. A separate negative-window packet has an
+packets in 673,461 proof nodes. This is a separate identity check; the complete
+algebraic source example above authenticates its coefficient within its own
+request. A separate negative-window packet has an
 accepted literal reader and sign −1; it cannot identify the positive native
 root with the negative selected conjugate. Wrong coefficient proofs and
 one-node-below exhaustion also restore the complete caller state. The dedicated
