@@ -1,0 +1,16 @@
+[
+  {
+    "path": "adapters/HexRCF/RealCoefficients/SourceBuild.lean",
+    "base_commit": "d1c635143ac1dd2bbd136995495cc6028cb5add1",
+    "base_sha256": "e4e6d8fd707f32e78091e42f5996a0dfd703b82973ed993b0a7795efc15388ca",
+    "projection_sha256": "e4e6d8fd707f32e78091e42f5996a0dfd703b82973ed993b0a7795efc15388ca",
+    "status": "byte-exact recovery after removing new theorem regions or restoring only the expanded Meta audit"
+  },
+  {
+    "path": "conformance/HexRCF/SourceBuild.lean",
+    "base_commit": "d1c635143ac1dd2bbd136995495cc6028cb5add1",
+    "base_sha256": "c12b24a04234a45da0f4bf3be83bee517ec9ccff2451e804d258bf9bcab2ba5e",
+    "projection_sha256": "c12b24a04234a45da0f4bf3be83bee517ec9ccff2451e804d258bf9bcab2ba5e",
+    "status": "byte-exact recovery after removing new theorem regions or restoring only the expanded Meta audit"
+  }
+]

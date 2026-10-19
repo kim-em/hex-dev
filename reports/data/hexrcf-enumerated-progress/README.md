@@ -1,0 +1,7 @@
+# Enumerated-source progress and acceptance
+
+See [the report](../../hexrcf-enumerated-progress.md). Run `python3 reports/data/hexrcf-enumerated-progress/verify.py --check-head` to check current source bindings, or omit the flag to verify the immutable implementation commit.
+
+The five new theorems prove progress from semantic uniqueness and literal acceptance for arbitrary enumerated roots. They consume the actual owner root-coverage and no-duplicate laws. No successful root/scalar result or serializer equation is a progress hypothesis. Source models, squarefreeness and unique positive windows remain explicit mathematical inputs; generic predecessor/history discovery and complete tactic integration are not inferred.
+
+Removing only the new theorem regions, one proof-audit import and the expanded Meta audit recovers both prior files exactly. Executable production, rejection, replay and quotation bodies are unchanged. Logs and failed-source snapshots retain elaboration attempts; only the final source is claimed. The successful native run checks seven actual theorem bodies with standard-three axiom closure, original conjugate/cubic packets and refusal controls. Affected integration includes the optional umbrella and prior frozen source proofs; cached dependencies are identified in its log. The record is not a full conformance/manual rerun or scientific timing study. Prior evidence records retain their original pins.
