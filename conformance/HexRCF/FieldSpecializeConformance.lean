@@ -63,7 +63,7 @@ private def guarded : RealFormula.QF 3 :=
 #guard (FieldSpecialize.prepare (fun _ : Fin 2 => root) guarded).map
   DensePoly.natDegree == [2, 0, 1, 1]
 
-private instance : ZPoly.CheckedIrreducible cubePoly :=
+instance : ZPoly.CheckedIrreducible cubePoly :=
   Field.checkedIrreducible cubePoly (.eisenstein 2 0) cubeIrred cubeDegree
 private noncomputable instance : Field CubeField :=
   Hex.PolyQuot.field cubePoly

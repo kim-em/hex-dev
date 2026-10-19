@@ -3,14 +3,10 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-module
-
-public import HexRCF.RealCoefficients.CellDecision
-public import HexRCF.RealCoefficients.CellReuse
-public import HexRCF.ProofEvidence
-public import HexRCF.Tactic
-
-public section
+import HexRCF.RealCoefficients.CellDecision
+import HexRCF.RealCoefficients.CellReuse
+import HexRCF.ProofEvidence
+import HexRCF.Tactic
 namespace Hex.RCF.RealCoefficients.CellDecisionProofs
 open Lean Meta
 run_meta do

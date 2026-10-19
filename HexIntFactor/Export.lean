@@ -121,7 +121,7 @@ private def asciiName (s : String) : Bool :=
   s != "_" && s.toList.head?.any alpha &&
     s.toList.all (fun c => alpha c || ('0' ≤ c && c ≤ '9'))
 
-private def destination (modName declName : Name) : Except String System.FilePath := do
+private meta def destination (modName declName : Name) : Except String System.FilePath := do
   unless modName.toString.splitOn "." |>.all asciiName do
     throw "module name must consist of ASCII identifier components"
   unless declName.isAtomic && asciiName declName.toString do

@@ -27,7 +27,7 @@ namespace Hex.ReflectConformance
 
 open Lean Meta Hex.Reflect
 
-private def finExpr (n : Nat) : Lean.Expr := mkApp (mkConst ``Fin) (mkNatLit n)
+private meta def finExpr (n : Nat) : Lean.Expr := mkApp (mkConst ``Fin) (mkNatLit n)
 
 private def onCarrier (ring : CarrierRequest) (carrier : Lean.Expr)
     (k : Lean.Meta.Sym.SymM (ProviderOutcome Evidence)) :

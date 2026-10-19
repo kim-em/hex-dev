@@ -74,6 +74,17 @@ EXEMPT_FILES = {
     "experiments/KernelReplay/ProviderHistoryAudit.lean",
     "experiments/KernelReplay/RationalCodecAudit.lean",
     "experiments/KernelReplay/SupportAudit.lean",
+    "experiments/KernelReplay/FiniteChecks.lean",  # imports the two audits above
+    # Real-closure conformance audits that check library theorems' proof terms.
+    "conformance/HexRCF/AlgebraicCellsConformance.lean",
+    "conformance/HexRCF/AlgebraicPreparationConformance.lean",
+    "conformance/HexRCF/CellCodecProofs.lean",
+    "conformance/HexRCF/CellDecisionProofs.lean",
+    "conformance/HexRCF/CellDiscoverProofs.lean",
+    "conformance/HexRCF/CellExecutionProofs.lean",
+    "conformance/HexRCF/GatherCellsConformance.lean",
+    "conformance/HexRCF/MaximalCoefficientsKernel.lean",
+    "conformance/HexRCF/NamedConstantProofs.lean",
     # Times the `meta` function `quoteTerms` from compiled code, which a module may not call.
     "bench/HexReflect/Bench.lean",
 }

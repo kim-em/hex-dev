@@ -10,6 +10,7 @@ public import HexPolyDet
 public import HexBareiss.Conformance
 public meta import HexBareiss.Conformance
 public meta import HexBareiss.Kernel
+public meta import HexMvPoly.Kernel
 
 public section
 

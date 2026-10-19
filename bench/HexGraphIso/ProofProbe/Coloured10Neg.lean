@@ -8,6 +8,7 @@ module
 
 public import HexGraphIso.ProofProbe.Support
 public meta import HexGraphIso.TestGraphs
+public meta import HexGraphIso.ProofProbe.Support
 
 public section
 

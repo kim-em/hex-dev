@@ -187,7 +187,7 @@ local instance : Lean.Grind.Field Fp where
         change a ^ (m + 1) = ((a ^ (m + 1))⁻¹)⁻¹
         exact (field_inv_inv (a ^ (m + 1))).symm
 
-private instance : Hashable Fp where
+instance : Hashable Fp where
   hash value := hash value.toNat
 
 /-- Generic multiplication operands over the small word field `ZMod64 5`. -/

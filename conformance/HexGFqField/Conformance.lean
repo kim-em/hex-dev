@@ -10,6 +10,7 @@ public import HexGFqField.Operations
 public import HexBerlekamp.RabinSoundness
 public meta import HexGFqRing.PolynomialQuotient
 public meta import HexGFqRing.Operations
+public meta import HexGFqField.Operations
 
 public section
 

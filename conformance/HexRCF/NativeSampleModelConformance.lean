@@ -21,6 +21,7 @@ public meta import HexRealClosure.TowerContext
 public meta import HexRCF.RealCoefficients.RepresentationSpecialize
 public meta import HexRealClosure.Sample
 public meta import HexRCF.NativeSampleModelLiterals
+public meta import HexRCF.RealCoefficients.Samples
 
 public section
 

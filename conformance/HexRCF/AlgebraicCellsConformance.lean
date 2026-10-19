@@ -3,16 +3,9 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-module
-
-public import HexRCF.RealCoefficients.AlgebraicCells
-public import HexRCF.ProofEvidence
-public import HexRCF.Tactic
-public meta import HexRCF.RealCoefficients.GatherCells
-public meta import HexRealClosure.NumberFieldTower
-public meta import HexRCF.RealCoefficients.AlgebraicCells
-
-public section
+import HexRCF.RealCoefficients.AlgebraicCells
+import HexRCF.ProofEvidence
+import HexRCF.Tactic
 open Hex Hex.RealClosure Hex.RealFormula Hex.RCF.RealCoefficients
 namespace Hex.RCF.AlgebraicCellsConformance
 private def registry : BaseContext.Registry := fun _ => none

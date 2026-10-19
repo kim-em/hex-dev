@@ -3,13 +3,9 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-module
-
-public import HexRCF.RealCoefficients.CellAlignment
-public import HexRCF.ProofEvidence
-public import HexRCF.Tactic
-
-public section
+import HexRCF.RealCoefficients.CellAlignment
+import HexRCF.ProofEvidence
+import HexRCF.Tactic
 namespace Hex.RCF.RealCoefficients.CellDiscoverProofs
 open Lean Meta
 run_meta do

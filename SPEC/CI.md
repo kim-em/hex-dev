@@ -308,7 +308,8 @@ modules they could see those only through `import all`, so the manual stays
 outside the module system. Nothing imports the manual. For the same reason
 `scripts/check_modules.py` names a short list of other sources that stay
 legacy files: environment lint tests that check imported docstrings, kernel
-replay audits that walk private declaration bodies, and one benchmark that
+replay and real-closure audits that walk private declaration bodies and
+library proof terms, and one benchmark that
 times a `meta` function from compiled code. Nothing imports them either. Foreign-project
 benchmark templates use `.lean.in` and are copied into their pinned external
 projects; they are inputs rather than Hex modules.

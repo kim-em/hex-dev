@@ -99,7 +99,7 @@ structure ReplayInput where
   q : DensePoly Rat
   cert : Cert Rat
 
-private instance : Hashable ReplayInput := ⟨fun i =>
+instance : Hashable ReplayInput := ⟨fun i =>
   hash (i.p.toArray, i.q.toArray, i.cert.num.toArray, i.cert.den.toArray,
     i.cert.s.toArray, i.cert.t.toArray)⟩
 

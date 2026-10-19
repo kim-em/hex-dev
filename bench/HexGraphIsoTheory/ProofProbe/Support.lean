@@ -30,7 +30,7 @@ def perm12 : Array Nat := #[11, 10, 1, 7, 3, 5, 4, 2, 9, 6, 8, 0]
 /-- The recorded pair bitmask of `Random.gnpMask ⟨Random.seed2⟩ 12`. -/
 def mask12b : Nat := 61032603037995048816
 
-def gOfMask (mask : Nat) : SimpleGraph (Fin 12) where
+@[expose] def gOfMask (mask : Nat) : SimpleGraph (Fin 12) where
   Adj i j := i ≠ j ∧
     mask.testBit (pairIdx (Nat.min i.val j.val) (Nat.max i.val j.val))
   symm := ⟨by

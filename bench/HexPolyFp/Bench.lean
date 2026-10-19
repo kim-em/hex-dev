@@ -92,10 +92,10 @@ set_option maxRecDepth 8192 in
 private theorem prime_65537 : Hex.Nat.Prime 65537 :=
   Hex.Nat.prime_of_bounded 65537 256 (by decide) (by decide) (by decide)
 
-private instance benchPrimeLarge : ZMod64.PrimeModulus 65537 :=
+instance benchPrimeLarge : ZMod64.PrimeModulus 65537 :=
   ZMod64.primeModulusOfPrime prime_65537
 
-private instance benchPrimeFermat : ZMod64.PrimeModulus 257 :=
+instance benchPrimeFermat : ZMod64.PrimeModulus 257 :=
   ZMod64.primeModulusOfPrime prime_257
 
 instance {p : Nat} [ZMod64.Bounds p] : Hashable (ZMod64 p) where

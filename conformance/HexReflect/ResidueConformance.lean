@@ -87,7 +87,7 @@ run_meta do
       throwError "missing downstream coefficient instances"
     logInfo "ZMod 3 matrix: residue coefficients, X₀³ - X₀, kernel accepted"
 
-private def checkAux (coeffType : Expr) : List Expr → MetaM Unit
+private meta def checkAux (coeffType : Expr) : List Expr → MetaM Unit
   | [] => do
     let target ← mkAppOptM ``Hex.LawfulGcdOps
       #[coeffType, none, none, none, none, none, none]

@@ -7,6 +7,7 @@ module
 
 public import HexGraphIso.SparseProofProbe.Support
 public meta import HexGraphIso.TestGraphs
+public meta import HexGraphIso.SparseTestGraphs
 
 public section
 
