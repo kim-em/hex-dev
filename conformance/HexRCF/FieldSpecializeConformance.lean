@@ -65,7 +65,7 @@ private def guarded : RealFormula.QF 3 :=
 
 instance : ZPoly.CheckedIrreducible cubePoly :=
   Field.checkedIrreducible cubePoly (.eisenstein 2 0) cubeIrred cubeDegree
-private noncomputable instance : Field CubeField :=
+noncomputable instance : Field CubeField :=
   Hex.PolyQuot.field cubePoly
     (SimpleRoot.ofSquare cubePoly cubeSquare cubeWitness cubePrecision)
 

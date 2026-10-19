@@ -22,6 +22,7 @@ transport their answers entrywise to `ZMod`.
 
 namespace Examples.RowReduce
 open HexMatrixTheory
+open scoped Hex
 attribute [local instance 2000] Field.toGrindField
 
 example (A B : Hex.Matrix Rat n n) (h : Hex.Matrix.inverse? A = some B) :

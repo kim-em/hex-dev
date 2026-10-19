@@ -9,7 +9,7 @@ module
 public import HexGraphIso
 public import HexGraphIso.TestGraphs
 
-public section
+@[expose] public section
 
 /-!
 Shared inputs for the CI-built `graph_iso` examples and optional CFI diagnostics.

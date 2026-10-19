@@ -40,7 +40,7 @@ inductive Cmp where
   | gt
   /-- The relation `≠`. -/
   | ne
-  deriving DecidableEq
+  deriving @[expose] DecidableEq
 
 /-- An atomic comparison between an integer polynomial and zero. -/
 structure Atom where
@@ -48,7 +48,7 @@ structure Atom where
   p : ZPoly
   /-- The comparison with zero. -/
   cmp : Cmp
-  deriving DecidableEq
+  deriving @[expose] DecidableEq
 
 /-- Boolean combinations of univariate polynomial atoms. -/
 inductive Formula where
@@ -66,7 +66,7 @@ inductive Formula where
   | or (φ ψ : Formula)
   /-- Boolean implication. -/
   | imp (φ ψ : Formula)
-  deriving DecidableEq
+  deriving @[expose] DecidableEq
 
 /-- A quantifier-free formula under exactly one real or bounded-real
 quantifier. Bounded quantifiers use the half-open convention `(a, b]` inherited
@@ -80,7 +80,7 @@ inductive Sentence where
   | forallIoc (a b : Dyadic) (φ : Formula)
   /-- Existential quantification over the half-open dyadic interval `(a, b]`. -/
   | existsIoc (a b : Dyadic) (φ : Formula)
-  deriving DecidableEq
+  deriving @[expose] DecidableEq
 
 /-- All atom polynomials in a formula, in deterministic left-to-right order. -/
 @[expose]

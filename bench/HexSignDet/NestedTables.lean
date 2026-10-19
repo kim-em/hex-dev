@@ -16,7 +16,7 @@ public section
 namespace Hex.SignDetBench.NestedTables
 open Hex.SignDet
 
-private structure Coefficients where
+structure Coefficients where
   Carrier : Type
   field : Lean.Grind.Field Carrier
   equality : DecidableEq Carrier
@@ -25,7 +25,7 @@ private structure Coefficients where
   encode : Carrier → Lean.Json
   epsilon : Carrier
 
-private def coefficients : Nat → Coefficients
+def coefficients : Nat → Coefficients
   | 0 => ⟨Rat, inferInstance, inferInstance, OrderedFn.orderSign, hash,
       fun q => Lean.toJson #[q.num, (q.den : Int)], 1⟩
   | depth + 1 =>
@@ -96,7 +96,7 @@ private def domainHash (d : Sturm.PreparedDomain E) : UInt64 :=
 
 end Hashes
 
-private structure Data (E : Type) [Lean.Grind.Field E] [DecidableEq E] [NatCast E] where
+structure Data (E : Type) [Lean.Grind.Field E] [DecidableEq E] [NatCast E] where
   head : DensePoly E
   queries : List (DensePoly E)
   domain : Sturm.PreparedDomain E
@@ -105,7 +105,7 @@ private structure Data (E : Type) [Lean.Grind.Field E] [DecidableEq E] [NatCast 
 
 /-- A genuine typed field and supplied evidence, rather than a callback closure.
 The complete polynomial/domain/tree/graph fingerprint is computed in preparation. -/
-private structure Input where
+structure Input where
   coefficients : Coefficients
   data :
     letI := coefficients.field
@@ -114,9 +114,9 @@ private structure Input where
     Data coefficients.Carrier
   fingerprint : UInt64
 
-private instance : Hashable Input := ⟨Input.fingerprint⟩
+instance : Hashable Input := ⟨Input.fingerprint⟩
 
-private def input (depth size : Nat) : Option Input :=
+def input (depth size : Nat) : Option Input :=
   let k := coefficients depth
   letI := k.field
   letI := k.equality

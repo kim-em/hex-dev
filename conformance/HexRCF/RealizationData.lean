@@ -21,7 +21,7 @@ attribute [local instance 2500] Field.toGrindField
 namespace Hex.RCF.RealizationTests
 abbrev E := RationalFn Rat
 @[expose] def sign : E → Int := OrderedFn.Infinitesimal.sign OrderedFn.orderSign
-def epsilon : E := RationalFn.X
+@[expose] def epsilon : E := RationalFn.X
 def x : DensePoly E := DensePoly.ofList [0, 1]
 @[expose] def p : DensePoly E := x - DensePoly.C (1 + epsilon)
 @[expose] def first : DensePoly E := x - 1
@@ -35,7 +35,7 @@ def chain (c : E) (quotient : DensePoly E) : SignedRemainderChain E where
   initial := ⟨1, quotient, 1⟩
   steps := #[]
   terminal := some (c * c, DensePoly.C c * p)
-def count : TarskiCertificate E E Nat where
+@[expose] def count : TarskiCertificate E E Nat where
   context := 7
   head := p
   queryPoly := 1
@@ -60,7 +60,7 @@ def moment (query : DensePoly E) (c : E) (quotient : DensePoly E) (s : Int) :
     value := s }
 def inverse3 : Matrix Int 3 3 :=
   Matrix.ofRows #v[#v[0, -1, 1], #v[2, 0, -2], #v[0, 1, 1]]
-def child (q : DensePoly E) (c : E) (quotient : DensePoly E) (s : Int) : Node E Nat where
+@[expose] def child (q : DensePoly E) (c : E) (quotient : DensePoly E) (s : Int) : Node E Nat where
   context := 7
   head := p
   lower := .finite 1

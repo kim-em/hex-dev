@@ -8,7 +8,7 @@ module
 
 public import HexIntFactor
 
-public section
+@[expose] public section
 
 namespace Hex.IntFactor.ProofProbe
 
