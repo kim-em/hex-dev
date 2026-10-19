@@ -1,0 +1,9 @@
+{
+  "base": "ff85306782a282c7741b3a69ca4df6610fa308b7",
+  "files": [
+    "adapters/HexRCF/RealCoefficients/ScalarPacket.lean",
+    "adapters/HexRCF/RealCoefficients/SourceBuild.lean",
+    "conformance/HexRCF/BoundedSource.lean"
+  ],
+  "result": "PASS exact byte projection after removing only new theorem blocks and fresh Meta audit"
+}
