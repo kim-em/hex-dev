@@ -1,0 +1,12 @@
+{
+  "actually_viewed": true,
+  "images": [
+    "bounded-source-final-desktop-api.png",
+    "bounded-source-final-desktop-apicode.png",
+    "bounded-source-final-desktop-source.png",
+    "bounded-source-final-narrow-api.png",
+    "bounded-source-final-narrow-apicode.png",
+    "bounded-source-final-narrow-source.png"
+  ],
+  "inspection": "All six images were opened with view_image. Desktop1440px and narrow390px text and full code block are legible without local clipping; pre-existing global page scrollbar is outside changed-target overflow claims."
+}
