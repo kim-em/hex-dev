@@ -847,6 +847,63 @@ took 624 seconds and peaked at 2.2 GiB on the shared host. These costs describe
 three fixed proof constructions. General predecessor-history assembly and
 automatic source discovery from a tactic goal remain separate work.
 
+When a source already supplies an isolating square, a bounded proposal avoids
+constructing all real roots and their derivative words. The existing
+{name Hex.RCF.RealCoefficients.SourceBuild.buildOn}`SourceBuild.buildOn`
+checks an open interval with root-free endpoints and exactly one root, then
+still produces the equation and original square-margin packets. It rejects
+invalid endpoints, absent or ambiguous roots; it does not retry enumeration.
+For this rational source, twice the square's half-width supplies candidate
+endpoints. The checked count and subsequent source identity establish their
+meaning; the producer assumes no unchecked interval-isolation claim.
+
+```lean
+def proposeBoundedRoot
+    (registry :
+      BaseContext.Registry) :=
+  Id.run do
+    let parent :=
+      RealClosure.NumberField.base
+        registry
+    let square := SquareTwo.square
+    let embed (x : Rat) :
+        parent.Value := ⟨x⟩
+    let polynomial :=
+      DensePoly.ofCoeffs
+        #[embed (-2), embed 0, embed 1]
+    let margin :=
+      SourceIdentity.margin square
+    let window :=
+      DensePoly.ofCoeffs
+        (margin.coeffs.map embed)
+    let center := square.re.toRat
+    let radius :=
+      2 * square.halfWidth.toRat
+    return SourceBuild.buildOn
+      polynomial window
+      (.finite (embed (center-radius)))
+      (.finite (embed (center+radius)))
+
+#eval
+  let proposal :=
+    proposeBoundedRoot
+      (fun _ => none)
+  proposal.toOption.isSome
+```
+
+The [bounded-source controls](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/BoundedSource.lean)
+produce both quadratic conjugates and the cubic source, retaining 25,477
+canonical bytes. Separate ordinary-kernel quotation authenticates their
+original identities at 687,781, 690,200 and 731,070 charged proof nodes,
+respectively, with the unchanged one-million-node default. Final driver checks
+and exports are outside these counts. The first default-budget quotation
+module built in 49 seconds. The combined native/proof/fresh-audit build took
+83 seconds and peaked at 1.9 GiB. These fixed observations are not a matched
+timing comparison. The source alias, rational model and coefficient-map laws are
+still supplied. Bounded proposals do not discover a general predecessor
+history, prove complete cell coverage or complete the tactic's algebraic
+decision procedure.
+
 `CellQuote.finishOperations` takes the supplied-operation acceptance expression
 and an ordinary proof that its result is `some ()`. It kernel-checks that exact
 equation, transports it to the canonical checker, and performs the original

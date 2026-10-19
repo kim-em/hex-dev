@@ -14,6 +14,8 @@ variable {registry : BaseContext.Registry} {parent : Tower.Context registry}
 
 inductive Error where
   | roots (error : RootBuild.Error)
+  | production (error : BuildError)
+  | descriptor (error : DescriptorError)
   | equation
   | enclosure
   | ambiguous
@@ -61,5 +63,21 @@ does not prove them, reconstruct a frozen parent, or establish completeness. -/
 def build (polynomial window : DensePoly parent.Value) : Except Error (Result parent) := do
   let roots ← RootBuild.build polynomial |>.mapError Error.roots
   select polynomial window roots.roots
+
+/-- Propose a source in an open interval with root-free endpoints. The
+owner checks the endpoints and exactly one root before constructing a
+descriptor with no derivative queries. The independent equation and original
+window packets are still required. Invalid domains, absent/ambiguous roots
+and production failures remain distinct; no all-real enumeration is retried.
+This is certificate production, not source identification or completeness. -/
+def buildOn (polynomial window : DensePoly parent.Value)
+    (lower upper : Endpoint parent.Value) : Except Error (Result parent) := do
+  let raw : RawDescriptor parent.Value Signature :=
+    ⟨parent.signature, polynomial, lower, upper, [], []⟩
+  let root ← match Descriptor.build parent.sign parent.signature raw with
+    | .error error => .error (.production error)
+    | .ok (.error error) => .error (.descriptor error)
+    | .ok (.ok root) => .ok root
+  select polynomial window [root]
 
 end Hex.RCF.RealCoefficients.SourceBuild

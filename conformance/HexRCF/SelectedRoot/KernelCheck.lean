@@ -24,6 +24,7 @@ def producers : Array Name := #[``Read.rootRead, ``Hex.RealClosure.Roots.roots?,
     ``Algebraic.Element.ofPoly, ``Descriptor.prepareQueries,
     -- Literal names keep native adapter production out of proof-only imports.
     `Hex.RCF.RealCoefficients.SourceBuild.build,
+    `Hex.RCF.RealCoefficients.SourceBuild.buildOn,
     `Hex.RCF.RealCoefficients.SourceBuild.select,
     `Hex.RCF.RealCoefficients.ScalarPacket.buildParts]
 
