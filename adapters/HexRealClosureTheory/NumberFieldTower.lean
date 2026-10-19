@@ -109,6 +109,12 @@ noncomputable def model (source : Presentation generator registry) :
     Tower.Model source.context ℝ :=
   (source.root.conversionModel (rationalModel registry)).target
 
+/-- A presentation's real model is the target of its coefficient-conversion model.
+Use this equation instead of unfolding `model`, whose body is not exported. -/
+-- Parentheses suppress implicit `@[defeq]`, since `model` is abstract.
+theorem model_eq (source : Presentation generator registry) :
+    source.model = (source.root.conversionModel (rationalModel registry)).target := (rfl)
+
 /-- The retained generator has the original selected embedding. -/
 theorem generator_value (source : Presentation generator registry) :
     source.model.value source.root.convertedValue = generator.toReal := by
