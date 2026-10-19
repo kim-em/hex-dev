@@ -20,6 +20,9 @@ public meta import HexConway.Supported.S3_1
 public meta import HexConway.Supported.S3_3
 public meta import HexConway.Supported.S3_4
 public meta import HexConway.Supported.S3_6
+public meta import HexConway.CompatibilityCore
+public meta import HexConway.PrimitivityCore
+public meta import HexConway.Supported.S1_6
 
 public section
 

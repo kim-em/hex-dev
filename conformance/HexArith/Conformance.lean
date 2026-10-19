@@ -16,6 +16,7 @@ public meta import HexArith.ExtGcd
 public meta import HexArith.Montgomery.Context
 public meta import HexArith.Nat.Sqrt
 public meta import HexArith.UInt64.Wide
+public meta import HexArith.Barrett.Context
 
 public section
 

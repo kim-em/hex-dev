@@ -9,6 +9,8 @@ module
 public import HexPosDef
 public import HexMatrix.Notation
 public meta import HexPosDef.Certificate
+public meta import HexPosDef.Producer
+public meta import HexPosDef.Scaled
 
 public section
 

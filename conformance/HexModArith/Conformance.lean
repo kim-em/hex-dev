@@ -20,6 +20,7 @@ public meta import HexModArith.Ntt.Convolution
 public meta import HexModArith.Ntt.CrtInput
 public meta import HexModArith.Residue
 public meta import HexModArith.Ring
+public meta import HexModArith.HotLoop
 
 public section
 

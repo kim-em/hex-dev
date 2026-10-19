@@ -18,6 +18,7 @@ public meta import HexMinPoly.Krylov
 public meta import HexMinPoly.MinPoly
 public meta import HexMinPoly.Order
 public meta import HexModArith.Ring
+public meta import HexModArith.Field
 
 public section
 

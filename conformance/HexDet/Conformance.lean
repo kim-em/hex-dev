@@ -15,6 +15,7 @@ public meta import HexDet.Poly
 public meta import HexModArith.Residue
 public meta import HexModArith.Ring
 public meta import HexMvPoly.Ring
+public meta import HexDet.MvPoly
 
 public section
 

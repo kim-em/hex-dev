@@ -11,6 +11,8 @@ public meta import HexMvPoly.Basic
 public meta import HexMvPoly.Mono
 public meta import HexMvPoly.Operations
 public meta import HexMvPoly.Structural
+public meta import HexMvPolyTheory.Aeval
+public meta import HexMvPolyTheory.Equiv
 
 public section
 

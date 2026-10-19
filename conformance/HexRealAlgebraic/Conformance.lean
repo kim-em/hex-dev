@@ -16,6 +16,8 @@ public meta import HexNumberField.Roots
 public meta import HexRealAlgebraic.Basic
 public meta import HexRealAlgebraic.Order
 public meta import HexRealAlgebraic.Roots
+public meta import HexRealAlgebraic.Complex
+public meta import HexRealAlgebraic.Norm
 
 public section
 

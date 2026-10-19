@@ -17,6 +17,8 @@ public meta import HexBareiss.Fixtures
 public meta import HexModArith.Residue
 public meta import HexModArith.Ring
 public meta import HexMvPoly.Ring
+public meta import HexModArith.Field
+public meta import HexMvGcd.Instances
 
 public section
 

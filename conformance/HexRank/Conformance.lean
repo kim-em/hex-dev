@@ -17,6 +17,8 @@ public meta import HexRank.Int
 public meta import HexRank.Kernel
 public meta import HexRank.Produce
 public meta import HexRank.ReduceImpl
+public meta import HexMvGcd.Instances
+public meta import HexMvPoly.Ring
 
 public section
 

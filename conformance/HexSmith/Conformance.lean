@@ -16,6 +16,7 @@ public meta import HexSmith.Contracts
 public meta import HexSmith.Diagonal
 public meta import HexSmith.Kernel
 public meta import HexSmith.Smith
+public meta import HexSmith.Structure
 
 public section
 

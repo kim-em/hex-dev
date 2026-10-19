@@ -17,6 +17,9 @@ public meta import HexMvPoly.Basic
 public meta import HexMvPoly.Mono
 public meta import HexMvPoly.Operations
 public meta import HexMvPoly.Ring
+public meta import HexMvFactor.Eez
+public meta import HexMvFactor.Factor
+public meta import HexMvFactor.Input
 
 public section
 

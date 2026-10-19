@@ -11,6 +11,7 @@ public import HexRCF.RealCoefficients.SignInputs
 public import HexRCF.RealCoefficients.FieldCarrier
 public meta import HexRCF.RealCoefficients.FieldSpecialize
 public meta import HexSturm.Basic
+public meta import HexRCF.RealCoefficients.SignInputs
 
 public section
 

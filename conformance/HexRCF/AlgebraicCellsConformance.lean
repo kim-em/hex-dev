@@ -10,6 +10,7 @@ public import HexRCF.ProofEvidence
 public import HexRCF.Tactic
 public meta import HexRCF.RealCoefficients.GatherCells
 public meta import HexRealClosure.NumberFieldTower
+public meta import HexRCF.RealCoefficients.AlgebraicCells
 
 public section
 open Hex Hex.RealClosure Hex.RealFormula Hex.RCF.RealCoefficients

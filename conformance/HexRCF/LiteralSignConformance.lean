@@ -12,6 +12,7 @@ public import HexRCF.RealCoefficients.SquareTwo
 public meta import HexRCF.RealCoefficients.IntervalSign
 public meta import HexRCF.RealCoefficients.LiteralSign
 public meta import HexRCF.RealCoefficients.SquareTwo
+public meta import HexRCF.RealCoefficients.CommonPresentation
 
 public section
 

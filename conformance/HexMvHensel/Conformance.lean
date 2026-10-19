@@ -10,6 +10,9 @@ public import HexMvHensel
 public meta import HexMvHensel.Diophantine
 public meta import HexMvHensel.Uni
 public meta import HexMvPoly.Ring
+public meta import HexMvHensel.Complete
+public meta import HexMvHensel.Lift
+public meta import HexMvHensel.Seed
 
 public section
 
