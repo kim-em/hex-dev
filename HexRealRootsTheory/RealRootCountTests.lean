@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRealRootsTheory.RealRootCount
+module
+
+public import HexRealRootsTheory.RealRootCount
+
+public section
 
 open Polynomial
 

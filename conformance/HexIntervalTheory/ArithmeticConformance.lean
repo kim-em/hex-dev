@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Mathlib.Tactic.NormNum
-import HexIntervalTheory.Experiment.Arithmetic
-import HexInterval.Experiment.PayloadSession
-import HexInterval.Experiment.ProofEmitter
+module
+
+public import Mathlib.Tactic.NormNum
+public import HexIntervalTheory.Experiment.Arithmetic
+public import HexInterval.Experiment.PayloadSession
+public import HexInterval.Experiment.ProofEmitter
+
+public section
 
 /-!
 # Exact arithmetic replay conformance

@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexDet
-import Lean.Data.Json
+module
+
+public import HexDet
+public import Lean.Data.Json
+
+public section
 
 /-!
 Symbolic carrier fixtures for `hex-det`, in the canonical wire encoding

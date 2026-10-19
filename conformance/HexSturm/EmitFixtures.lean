@@ -3,10 +3,14 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexSturm
-import HexRealRoots.TarskiTests
-import Hex.Conformance.Emit
-import Lean.Data.Json
+module
+
+public import HexSturm
+public import HexRealRoots.TarskiTests
+public import Hex.Conformance.Emit
+public import Lean.Data.Json
+
+public section
 
 /-! Direct rational and noncanonical frontend fixtures. The pinned FLINT oracle
 reads the original polynomials and endpoints; it does not replay Lean chains.

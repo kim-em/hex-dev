@@ -3,11 +3,15 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.RecursiveScalarQuote
-import HexRCF.RecursiveScalarPublic
-import HexRCF.ProofEvidence
-import KernelReplay.AxiomClosure
-import HexRCF.SelectedRoot.KernelCheck
+module
+
+public import HexRCF.RecursiveScalarQuote
+public import HexRCF.RecursiveScalarPublic
+public import HexRCF.ProofEvidence
+public import KernelReplay.AxiomClosure
+public import HexRCF.SelectedRoot.KernelCheck
+
+public section
 open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
 namespace Hex.RCF.RecursiveScalarProofs
 set_option maxHeartbeats 12000000

@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.RealCoefficients
-import HexSturm.Basic
-import HexRealAlgebraicTheory.Complex
-import Lean.Elab.Command
+module
+
+public import HexRCF.RealCoefficients
+public import HexSturm.Basic
+public import HexRealAlgebraicTheory.Complex
+public import Lean.Elab.Command
+
+public section
 
 /-! Exact source-schema equivalences and original divisor retention. -/
 

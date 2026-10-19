@@ -7,9 +7,13 @@ Authors: Kim Morrison
 -- module system, ordinary imports can hide theorem bodies, unexposed
 -- definitions and opaques behind placeholders, and omit private declarations.
 
-import KernelReplay.AxiomClosure
-import KernelReplay.ProofAudit
-import Lean.Util.CollectAxioms
+module
+
+public import KernelReplay.AxiomClosure
+public import KernelReplay.ProofAudit
+public import Lean.Util.CollectAxioms
+
+public section
 
 section
 namespace Hex.RealClosure.Algebraic.KernelReplay.AxiomClosureTest

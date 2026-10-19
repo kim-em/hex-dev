@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGenericRank.Fixtures
+module
+
+public import HexGenericRank.Fixtures
+
+public section
 
 /-!
 Oracle: SymPy fraction-field rank through `matrix_carriers.py`.

@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.SelectedRoot.InverseReplay
+module
+
+public import HexRCF.SelectedRoot.InverseReplay
+
+public section
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet Hex.RCF.RealCoefficients
 open Hex.RCF.SelectedRootTests.Data
 namespace Hex.RCF.SelectedRootTests.InverseControls

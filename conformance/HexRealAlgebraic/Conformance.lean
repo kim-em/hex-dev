@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRealAlgebraic
-import Lean.Compiler.CSimpAttr
-import Lean.Compiler.IR.CompilerM
-import Lean.Elab.Command
+module
+
+public import HexRealAlgebraic
+public import Lean.Compiler.CSimpAttr
+public import Lean.Compiler.IR.CompilerM
+public import Lean.Elab.Command
+
+public section
 
 /-!
 Oracle: none (core); exact python-flint qqbar arithmetic and certified FLINT root balls

@@ -5,12 +5,16 @@ Authors: Kim Morrison
 -/
 -- This independent audit needs full private import data.
 
-import KernelReplay.AxiomClosure
-import KernelReplay.ProofAudit
-import KernelReplay.FrameOperand
-import KernelReplay.FramePublic
-import KernelReplay.NativeAssemblyUse
-import Lean.Util.CollectAxioms
+module
+
+public import KernelReplay.AxiomClosure
+public import KernelReplay.ProofAudit
+public import KernelReplay.FrameOperand
+public import KernelReplay.FramePublic
+public import KernelReplay.NativeAssemblyUse
+public import Lean.Util.CollectAxioms
+
+public section
 
 section
 open Lean Meta Elab

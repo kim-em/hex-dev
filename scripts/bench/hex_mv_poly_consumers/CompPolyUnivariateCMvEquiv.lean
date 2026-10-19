@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import CompPoly.Univariate.ToPoly.Impl
-import HexMvPolyTheory
+module
+
+public import CompPoly.Univariate.ToPoly.Impl
+public import HexMvPolyTheory
+
+public section
 
 /-!
 # Equivalence between `CPolynomial` and `Hex.MvPoly 1`

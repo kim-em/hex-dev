@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexInterval.Experiment.SemanticReplay
+module
+
+public import HexInterval.Experiment.SemanticReplay
+
+public section
 
 /-!
 Canary for semantic replay of two unrelated opaque unary functions.  The two

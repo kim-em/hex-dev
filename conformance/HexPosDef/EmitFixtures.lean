@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Hex.Conformance.Emit
-import HexPosDef
-import Lean.Data.Json
+module
+
+public import Hex.Conformance.Emit
+public import HexPosDef
+public import Lean.Data.Json
+
+public section
 
 /-! Bounded exact classifications and explicit negative witnesses for the matrix oracle. -/
 

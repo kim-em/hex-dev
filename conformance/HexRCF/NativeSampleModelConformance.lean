@@ -3,18 +3,22 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.RealCoefficients.NativeSamples
-import HexRCF.NativeSampleModelLiterals
-import HexRealClosure.RootReplay
-import HexRCF.ProofEvidence
-import HexRCF.Tactic
-import HexRealClosure.BaseContext
-import HexRealClosure.TowerSuffix
-import HexRealClosure.Sample
-import HexRealClosure.TowerTransport
-import HexRealClosure.TowerContext
-import HexRationalFn.Field
-import HexRealClosure.BaseJson
+module
+
+public import HexRCF.RealCoefficients.NativeSamples
+public import HexRCF.NativeSampleModelLiterals
+public import HexRealClosure.RootReplay
+public import HexRCF.ProofEvidence
+public import HexRCF.Tactic
+public import HexRealClosure.BaseContext
+public import HexRealClosure.TowerSuffix
+public import HexRealClosure.Sample
+public import HexRealClosure.TowerTransport
+public import HexRealClosure.TowerContext
+public import HexRationalFn.Field
+public import HexRealClosure.BaseJson
+
+public section
 
 /-! Oracle: checked frozen descriptor for the positive root of X²−ε in (0,1),
 the actual staged ordered real-closed reference model, and native signs;

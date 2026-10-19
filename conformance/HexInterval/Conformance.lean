@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexInterval
-import HexInterval.Experiment.Representation
+module
+
+public import HexInterval
+public import HexInterval.Experiment.Representation
+
+public section
 
 /-!
 Conformance checks for exact raw interval cuts and canonical normalization.

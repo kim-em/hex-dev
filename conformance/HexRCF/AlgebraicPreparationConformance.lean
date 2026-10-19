@@ -3,10 +3,14 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.AlgebraicPreparationCases
-import HexRCF.SourceAcceptancePublic
-import KernelReplay.AxiomClosure
-import HexRCF.ProofEvidence
+module
+
+public import HexRCF.AlgebraicPreparationCases
+public import HexRCF.SourceAcceptancePublic
+public import KernelReplay.AxiomClosure
+public import HexRCF.ProofEvidence
+
+public section
 open Lean Meta
 
 -- A separate importing module requires the end-of-run marker. A swallowed

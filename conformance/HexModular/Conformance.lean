@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexModular
+module
+
+public import HexModular
+
+public section
 
 /-!
 Core conformance checks for integer CRT and rational reconstruction.

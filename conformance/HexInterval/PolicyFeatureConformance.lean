@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexInterval.Experiment.PolicyFeature
+module
+
+public import HexInterval.Experiment.PolicyFeature
+
+public section
 
 /-!
 # Package policy-feature conformance

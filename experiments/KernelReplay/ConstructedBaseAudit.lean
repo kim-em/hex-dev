@@ -3,8 +3,12 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRealClosureTheory.ConstructedCatalog
-import KernelReplay.AxiomClosure
+module
+
+public import HexRealClosureTheory.ConstructedCatalog
+public import KernelReplay.AxiomClosure
+
+public section
 
 namespace Hex.RealClosure.Algebraic.KernelReplay.ConstructedBaseAudit
 open Lean Meta Elab

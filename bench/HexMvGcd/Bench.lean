@@ -4,15 +4,19 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexMvGcd
-import HexMvGcd.Families
-import HexMvGcd.Matrix
-import HexMvGcd.Comparators
-import HexMvGcd.Profile
-import HexMvPolyCorpus
-import HexMvGcdFlint
-import HexMvGcdSingular
-import LeanBench
+module
+
+public import HexMvGcd
+public import HexMvGcd.Families
+public import HexMvGcd.Matrix
+public import HexMvGcd.Comparators
+public import HexMvGcd.Profile
+public import HexMvPolyCorpus
+public import HexMvGcdFlint
+public import HexMvGcdSingular
+public import LeanBench
+
+public section
 
 /-!
 Native benchmark registrations for `hex-mv-gcd`.

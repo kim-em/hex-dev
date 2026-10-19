@@ -4,12 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexECPP.Search
-import HexECPP.Fixture17
-import HexECPP.Fixture65
-import HexECPP.Fixture256
-import HexECPP.Fixture512
-import Lean.Data.Json
+module
+
+public import HexECPP.Search
+public import HexECPP.Fixture17
+public import HexECPP.Fixture65
+public import HexECPP.Fixture256
+public import HexECPP.Fixture512
+public import Lean.Data.Json
+
+public section
 
 /-! Frozen ECPP cases for the independent PARI/Python oracle. -/
 

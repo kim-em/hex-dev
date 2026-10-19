@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntFactor.FieldBench
-import LeanBench
+module
+
+public import HexIntFactor.FieldBench
+public import LeanBench
+
+public section
 
 /-! Manual native construction benchmarks. Full searches are excluded from the
 routine smoke gate; the ordinary benchmark retains the three checker targets. -/

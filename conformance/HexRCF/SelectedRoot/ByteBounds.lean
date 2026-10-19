@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.SelectedRoot.ByteData
-import Batteries.Data.Except
+module
+
+public import HexRCF.SelectedRoot.ByteData
+public import Batteries.Data.Except
+
+public section
 
 open Hex.SignDet
 namespace Hex.RCF.SelectedRootTests.ByteBounds

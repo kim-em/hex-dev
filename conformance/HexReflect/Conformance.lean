@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexReflect
-import HexReflect.TestProviders
+module
+
+public import HexReflect
+public import HexReflect.TestProviders
+
+public section
 
 /-!
 # HexReflect conformance

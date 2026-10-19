@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.RealCoefficients.Realization
+module
+
+public import HexRCF.RealCoefficients.Realization
+
+public section
 
 
 /-! Literal recursive BKR data for the root of `X − (1 + ε)` and the entire

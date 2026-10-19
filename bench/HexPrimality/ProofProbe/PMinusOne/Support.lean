@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPrimality.PMinusOneMeasure
+module
+
+public import HexPrimality.PMinusOneMeasure
+
+public section
 
 /-! Fixed construction corpora for fresh-module phase attribution. Every input
 is evaluated once per arm. The external runner measures module builds; this

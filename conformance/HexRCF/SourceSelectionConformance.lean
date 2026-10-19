@@ -3,10 +3,14 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.RealCoefficients.SourceSelection
-import HexRCF.SourceSelectionCases
-import HexRCF.SourceSelectionNegative
-import HexRCF.ProofEvidence
+module
+
+public import HexRCF.RealCoefficients.SourceSelection
+public import HexRCF.SourceSelectionCases
+public import HexRCF.SourceSelectionNegative
+public import HexRCF.ProofEvidence
+
+public section
 namespace Hex.RCF.SourceSelectionConformance
 open Hex Hex.RealClosure Hex.RealFormula Hex.RCF.RealCoefficients
 open scoped Hex

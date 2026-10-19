@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexReflect
-import LeanBench
+module
+
+public import HexReflect
+public import LeanBench
+
+public section
 
 /-!
 Benchmark registrations for `hex-reflect`.

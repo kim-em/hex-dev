@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.BenchHash
-import Hex.BenchOracle.Flint
-import LeanBench
+module
+
+public import HexRCF.BenchHash
+public import Hex.BenchOracle.Flint
+public import LeanBench
+
+public section
 
 /-!
 Benchmark registrations for the Mathlib-free compiled HexRCF decision and

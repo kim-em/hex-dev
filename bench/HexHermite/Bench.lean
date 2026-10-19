@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexHermite
-import Hex.BenchOracle.Flint
-import Hex.BenchOracle.Pari
-import LeanBench
+module
+
+public import HexHermite
+public import Hex.BenchOracle.Flint
+public import Hex.BenchOracle.Pari
+public import LeanBench
+
+public section
 
 /-! Mathlib-free HNF benchmarks over the four input families fixed by the SPEC. -/
 

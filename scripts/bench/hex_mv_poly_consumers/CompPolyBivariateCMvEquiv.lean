@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import CompPoly.Bivariate.ToPoly
-import HexMvPolyTheory
+module
+
+public import CompPoly.Bivariate.ToPoly
+public import HexMvPolyTheory
+
+public section
 
 /-!
 # Equivalence between `CBivariate` and `Hex.MvPoly 2`

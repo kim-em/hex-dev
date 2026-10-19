@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexInterval.Experiment.GenericInstanceReconstruction
+module
+
+public import HexInterval.Experiment.GenericInstanceReconstruction
+
+public section
 
 /-!
 This conformance isolates generic program reconstruction from package replay.

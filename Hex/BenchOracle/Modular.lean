@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Hex.BenchOracle.Flint
-import Lean.Data.Json
+module
+
+public import Hex.BenchOracle.Flint
+public import Lean.Data.Json
+
+public section
 
 /-!
 # Persistent external comparators for `hex-modular`

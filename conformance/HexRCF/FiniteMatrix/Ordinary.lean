@@ -3,11 +3,15 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.FiniteMatrix.Quote
-import HexRCF.NestedTransport.Ordinary
-import HexRCF.FiniteMatrix.Controls
-import HexRCF.FiniteMatrix.Refusals
-import HexRCF.FiniteMatrix.KernelControls
+module
+
+public import HexRCF.FiniteMatrix.Quote
+public import HexRCF.NestedTransport.Ordinary
+public import HexRCF.FiniteMatrix.Controls
+public import HexRCF.FiniteMatrix.Refusals
+public import HexRCF.FiniteMatrix.KernelControls
+
+public section
 namespace Hex.RCF.RealCoefficients.FiniteMatrixTests.Ordinary
 open Hex.RealClosure.Algebraic Hex.RealClosure.Algebraic.KernelReplay
 open Lean Meta

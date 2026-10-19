@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPolyDet.Conformance
-import Lean.Data.Json
+module
+
+public import HexPolyDet.Conformance
+public import Lean.Data.Json
+
+public section
 
 namespace Hex.PolyDetFixtures
 open Lean (Json toJson)

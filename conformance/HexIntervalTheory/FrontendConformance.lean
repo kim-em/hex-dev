@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalTheory.Frontend
-import HexIntervalTheory.RuleConformance
+module
+
+public import HexIntervalTheory.Frontend
+public import HexIntervalTheory.RuleConformance
+
+public section
 
 /-!
 # Supported arithmetic frontend conformance

@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPrimality
-import HexPrimality.ConstructionConformance
-import HexPrimality.SqufofConformance
+module
+
+public import HexPrimality
+public import HexPrimality.ConstructionConformance
+public import HexPrimality.SqufofConformance
+
+public section
 
 /-!
 Core conformance checks for the `hex-primality` decision, certificate, and

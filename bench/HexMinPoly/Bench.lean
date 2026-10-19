@@ -4,11 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexMinPoly
-import HexPolyFp.PrimeField
-import Hex.BenchOracle.Flint
-import Hex.BenchOracle.Pari
-import LeanBench
+module
+
+public import HexMinPoly
+public import HexPolyFp.PrimeField
+public import Hex.BenchOracle.Flint
+public import Hex.BenchOracle.Pari
+public import LeanBench
+
+public section
 
 /-!
 Benchmark registrations for deterministic matrix minimal polynomials.

@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexECPP.Search
+module
+
+public import HexECPP.Search
+
+public section
 
 /-! Arithmetic proposals, exceptional twist families, shared allocation
 exhaustion and native subject binding. Composite failures carry no verdict. -/

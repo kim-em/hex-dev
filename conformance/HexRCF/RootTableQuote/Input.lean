@@ -3,8 +3,12 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.RootTableQuote.Cases
-import HexRCF.RealCoefficients.ScalarQuote
+module
+
+public import HexRCF.RootTableQuote.Cases
+public import HexRCF.RealCoefficients.ScalarQuote
+
+public section
 open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
 open Hex.RCF.SelectedRootTests
 namespace Hex.RCF.RootTableQuoteTests

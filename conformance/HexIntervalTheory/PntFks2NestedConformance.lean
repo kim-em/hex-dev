@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalTheory.Experiment.PntFks2Nested
+module
+
+public import HexIntervalTheory.Experiment.PntFks2Nested
+
+public section
 
 /-!
 # Source-pinned FKS2 nested-log conformance

@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexECPPTheory.Native
+module
+
+public import HexECPPTheory.Native
+
+public section
 
 /-! Explicit opt-in dispatch, bounded exhaustion and unsupported goals. -/
 

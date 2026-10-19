@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalTheory
+module
+
+public import HexIntervalTheory
+
+public section
 
 /-!
 Conformance checks for the supported public interval semantics.  Computational

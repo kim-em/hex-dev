@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPrimality.PMinusOneFixtures
+module
+
+public import HexPrimality.PMinusOneFixtures
+
+public section
 
 /-! Generated exact prime parents for the shared construction family. -/
 namespace Hex.PrimalityBench.Stage2

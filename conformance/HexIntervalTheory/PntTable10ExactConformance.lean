@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalTheory.Experiment.PntTable10Exact
+module
+
+public import HexIntervalTheory.Experiment.PntTable10Exact
+
+public section
 
 /-!
 # Exact-supremum acceptance for PNT+ BKLNW Table 10

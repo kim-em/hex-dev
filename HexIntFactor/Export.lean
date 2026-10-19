@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntFactor.Pari
-import HexPrimality.Elab
-import Lean.Elab.Command
+module
+
+public import HexIntFactor.Pari
+public import HexPrimality.Elab
+public import Lean.Elab.Command
+
+public section
 
 /-! Explicit batch production/export. The reifier is HexPrimality.Elab's existing
 PrimeCert reifier. Exclusive creation and editor gating follow

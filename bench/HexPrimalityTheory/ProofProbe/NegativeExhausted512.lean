@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPrimalityTheory
+module
+
+public import HexPrimalityTheory
+
+public section
 
 /-! One-restart, `2^16`-step exhaustion on a balanced 512-bit semiprime: the
 product of the secp256k1 and NIST P-256 field primes. -/

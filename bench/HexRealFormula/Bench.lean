@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRealFormula
-import LeanBench
+module
+
+public import HexRealFormula
+public import LeanBench
+
+public section
 
 /-!
 Compiled structural and exact-rational operations. Prepared inputs keep syntax,

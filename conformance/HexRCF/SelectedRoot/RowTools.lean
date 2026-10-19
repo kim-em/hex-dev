@@ -4,11 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.SelectedRoot.Row
-import HexRCF.SelectedRoot.ReplayTools
-import Lean.Elab.Command
+module
 
-meta section
+public import HexRCF.SelectedRoot.Row
+public import HexRCF.SelectedRoot.ReplayTools
+public import Lean.Elab.Command
+
+public meta section
 namespace Hex.RCF.SelectedRootTests.RowTools
 open Hex.RCF.SelectedRootTests
 open Lean Meta Elab Command Hex Hex.RealClosure Hex.SignDet

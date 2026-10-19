@@ -3,10 +3,14 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexBareissTheory
-import Mathlib.Data.ZMod.Basic
-import Mathlib.Tactic.NormDet
-import Mathlib.Tactic.Ring
+module
+
+public import HexBareissTheory
+public import Mathlib.Data.ZMod.Basic
+public import Mathlib.Tactic.NormDet
+public import Mathlib.Tactic.Ring
+
+public section
 
 /-! Build-only examples for the kernel determinant certificate and the `det`
 tactic: a hand-written certificate discharged in the kernel, and the tactic in both orientations, on the four literal syntaxes, behind

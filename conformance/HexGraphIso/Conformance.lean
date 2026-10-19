@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGraphIso.Cases
-import HexGraphIso.Nauty.Policy.Complete
+module
+
+public import HexGraphIso.Cases
+public import HexGraphIso.Nauty.Policy.Complete
+
+public section
 
 /-!
 Core conformance for `HexGraphIso`.

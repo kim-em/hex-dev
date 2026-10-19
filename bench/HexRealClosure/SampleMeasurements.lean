@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRealClosure.Sample
-import HexRealClosure.TowerEnlargement
-import LeanBench
-import Lean.Data.Json
+module
+
+public import HexRealClosure.Sample
+public import HexRealClosure.TowerEnlargement
+public import LeanBench
+public import Lean.Data.Json
+
+public section
 
 namespace Hex.RealClosure.SampleMeasurements
 open Hex.SignDet Tower

@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.RealCoefficients.RootTransport
-import HexRCF.SelectedRoot.Data
+module
+
+public import HexRCF.RealCoefficients.RootTransport
+public import HexRCF.SelectedRoot.Data
+
+public section
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet
 open Hex.RCF.SelectedRootTests
 namespace Hex.RCF.RealCoefficients.RootTransportData

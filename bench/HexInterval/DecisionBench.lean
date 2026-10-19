@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexInterval.Search
-import LeanBench
+module
+
+public import HexInterval.Search
+public import LeanBench
+
+public section
 
 /-!
 # Authenticated interval decision benchmark

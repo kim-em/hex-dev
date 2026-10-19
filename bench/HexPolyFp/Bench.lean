@@ -4,13 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPolyFp.Frobenius
-import HexPolyFp.ModCompose
-import HexPolyFp.NttMul
-import HexPolyFp.PrimeField
-import HexPolyFp.SquareFree
-import HexPolyFast.HalfGcd
-import LeanBench
+module
+
+public import HexPolyFp.Frobenius
+public import HexPolyFp.ModCompose
+public import HexPolyFp.NttMul
+public import HexPolyFp.PrimeField
+public import HexPolyFp.SquareFree
+public import HexPolyFast.HalfGcd
+public import LeanBench
+
+public section
 
 /-!
 Benchmark registrations for `hex-poly-fp`.

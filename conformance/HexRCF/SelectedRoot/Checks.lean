@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.SelectedRoot.Refusals
-import HexRealClosure.SignEvidence
+module
+
+public import HexRCF.SelectedRoot.Refusals
+public import HexRealClosure.SignEvidence
+
+public section
 
 open Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
 open Hex.RCF.SelectedRootTests.Data Hex.RCF.SelectedRootTests.Upper Hex.RCF.SelectedRootTests.Controls

@@ -4,13 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.RealCoefficients.SectionReplay
-import HexRCF.SelectedRoot.RowCollect
-import HexRCF.SelectedRoot.Source
-import HexRCF.SelectedRoot.RowTools
-import HexRCF.SelectedRoot.Controls
-import HexRCF.ProofEvidence
-import HexRCF.Tactic
+module
+
+public import HexRCF.RealCoefficients.SectionReplay
+public import HexRCF.SelectedRoot.RowCollect
+public import HexRCF.SelectedRoot.Source
+public import HexRCF.SelectedRoot.RowTools
+public import HexRCF.SelectedRoot.Controls
+public import HexRCF.ProofEvidence
+public import HexRCF.Tactic
+
+public section
 
 open Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
 open Hex.RCF.SelectedRootTests

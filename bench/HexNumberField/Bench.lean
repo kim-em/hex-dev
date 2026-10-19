@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexNumberField
-import Hex.BenchOracle.Pari
-import Lean.Data.Json
-import LeanBench
+module
+
+public import HexNumberField
+public import Hex.BenchOracle.Pari
+public import Lean.Data.Json
+public import LeanBench
+
+public section
 
 /-! Fixed AB/BA comparison of tag conjugation and the former root-search algorithm.
 Construction is timed separately; all eight blocks are retained. -/

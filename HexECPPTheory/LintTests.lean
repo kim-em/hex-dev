@@ -4,11 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexECPPTheory
-import HexECPPTheory.Native
-import HexECPPTheory.Pari
-import Batteries.Tactic.Lint
-import Mathlib.Tactic.Linter.Lint
+module
+
+public import HexECPPTheory
+public import HexECPPTheory.Native
+public import HexECPPTheory.Pari
+public import Batteries.Tactic.Lint
+public import Mathlib.Tactic.Linter.Lint
+
+public section
 
 /-! # Companion API lint regression
 

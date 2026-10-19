@@ -3,8 +3,12 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.NestedRootProduceConformance
-import HexRCF.ProofEvidence
+module
+
+public import HexRCF.NestedRootProduceConformance
+public import HexRCF.ProofEvidence
+
+public section
 open Lean Meta
 namespace Hex.RCF.RealCoefficients.NestedRootOrdinaryConformance
 theorem source : ∃ x : ℝ, x ^ 2 = Real.sqrt 2 ∧ 1 < x ∧ x < 2 := Hex.RCF.RealCoefficients.NestedRootProduceConformance.source

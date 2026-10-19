@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexMvFactor
+module
+
+public import HexMvFactor
+
+public section
 
 /-!
 Executable conformance checks for multivariate integer factorization.

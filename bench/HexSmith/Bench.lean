@@ -4,11 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexSmith
-import Hex.BenchOracle.Flint
-import Hex.BenchOracle.Pari
-import Lean.Data.Json
-import LeanBench
+module
+
+public import HexSmith
+public import Hex.BenchOracle.Flint
+public import Hex.BenchOracle.Pari
+public import Lean.Data.Json
+public import LeanBench
+
+public section
 
 /-! Mathlib-free Smith benchmarks over the input families fixed by the SPEC,
 including orientation FLINT/PARI comparisons and untimed entry-growth

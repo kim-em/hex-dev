@@ -4,13 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRealClosure.Element
-import HexRealClosure.AlgebraicContext
-import HexRealClosure.CompleteRoots
-import HexRealClosure.TowerRoots
-import HexRealClosure.LiveContext
-import LeanBench
-import Lean.Data.Json
+module
+
+public import HexRealClosure.Element
+public import HexRealClosure.AlgebraicContext
+public import HexRealClosure.CompleteRoots
+public import HexRealClosure.TowerRoots
+public import HexRealClosure.LiveContext
+public import LeanBench
+public import Lean.Data.Json
+
+public section
 
 namespace Hex.RealClosure.Bench
 

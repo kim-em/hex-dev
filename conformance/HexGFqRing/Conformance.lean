@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGFqRing.Operations
+module
+
+public import HexGFqRing.Operations
+
+public section
 
 /-!
 Core conformance checks for the canonical quotient-ring surface in

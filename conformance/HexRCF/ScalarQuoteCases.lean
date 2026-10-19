@@ -3,10 +3,14 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.CellReplay.Algebraic.Records
-import HexRCF.RealCoefficients.ScalarQuote
-import HexRCF.RealCoefficients.RationalQuote
-import HexRCF.SelectedRoot.Upper
+module
+
+public import HexRCF.CellReplay.Algebraic.Records
+public import HexRCF.RealCoefficients.ScalarQuote
+public import HexRCF.RealCoefficients.RationalQuote
+public import HexRCF.SelectedRoot.Upper
+
+public section
 open Lean Meta Qq Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
 open Hex.RCF.SelectedRootTests
 namespace Hex.RCF.ScalarQuoteTests

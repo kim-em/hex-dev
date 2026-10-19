@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Hex.Conformance.Emit
-import HexBerlekamp.DistinctDegree
-import HexPolyFp.SquareFree
+module
+
+public import Hex.Conformance.Emit
+public import HexBerlekamp.DistinctDegree
+public import HexPolyFp.SquareFree
+
+public section
 
 /-!
 JSONL emit driver for the `hex-berlekamp` oracle.

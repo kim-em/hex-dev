@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Hex.Conformance.Emit
-import HexRowReduce
-import HexRowReduce.FieldFixtures
+module
+
+public import Hex.Conformance.Emit
+public import HexRowReduce
+public import HexRowReduce.FieldFixtures
+
+public section
 
 /-!
 JSONL emit driver for the `hex-row-reduce` oracle.

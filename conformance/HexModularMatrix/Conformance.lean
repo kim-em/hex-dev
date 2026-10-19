@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexModularMatrix.Fixtures
-import HexMatrix.Notation
+module
+
+public import HexModularMatrix.Fixtures
+public import HexMatrix.Notation
+
+public section
 
 /-!
 Oracle: `scripts/oracle/modmat_flint.py` (FLINT integer determinants).

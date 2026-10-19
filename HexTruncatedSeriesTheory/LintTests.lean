@@ -4,11 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexTruncatedSeriesTheory
-import Batteries.Tactic.Lint
-import Mathlib.Tactic.Linter.Lint
-import Mathlib.Tactic.Linter.Style
-import Mathlib.Tactic.Linter.TacticDocumentation
+module
+
+public import HexTruncatedSeriesTheory
+public import Batteries.Tactic.Lint
+public import Mathlib.Tactic.Linter.Lint
+public import Mathlib.Tactic.Linter.Style
+public import Mathlib.Tactic.Linter.TacticDocumentation
+
+public section
 
 /-!
 # Truncated-series lint regression

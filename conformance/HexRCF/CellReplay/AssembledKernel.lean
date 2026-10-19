@@ -3,8 +3,12 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.CellReplay.Assembled
-import KernelReplay.AxiomClosure
+module
+
+public import HexRCF.CellReplay.Assembled
+public import KernelReplay.AxiomClosure
+
+public section
 open Hex Lean Meta Hex.RCF.RealCoefficients
 set_option maxHeartbeats 2400000
 set_option maxRecDepth 32768

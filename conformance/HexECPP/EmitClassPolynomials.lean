@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexECPP.CM.Roots
-import Lean.Data.Json
+module
+
+public import HexECPP.CM.Roots
+public import Lean.Data.Json
+
+public section
 
 /-! Compiled table and bounded roots for the independent analytic oracle. -/
 

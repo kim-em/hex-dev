@@ -4,11 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGFqRing.Operations
-import HexPolyFast.Division
-import HexPolyFp.NttMul
-import HexPolyFp.PrimeField
-import LeanBench
+module
+
+public import HexGFqRing.Operations
+public import HexPolyFast.Division
+public import HexPolyFp.NttMul
+public import HexPolyFp.PrimeField
+public import LeanBench
+
+public section
 
 /-!
 Benchmark registrations for `hex-gfq-ring`.

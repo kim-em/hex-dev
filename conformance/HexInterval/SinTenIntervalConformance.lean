@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexInterval.Experiment.SinTenInterval
-import HexInterval.Experiment.ProofFrontend
-import HexInterval.Experiment.TargetRun
+module
+
+public import HexInterval.Experiment.SinTenInterval
+public import HexInterval.Experiment.ProofFrontend
+public import HexInterval.Experiment.TargetRun
+
+public section
 
 namespace Hex.Interval.SinTenIntervalConformance
 

@@ -3,8 +3,12 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import KernelReplay.GuardPackingBranchPublic
-import KernelReplay.GuardPackingRootPublicAudit
+module
+
+public import KernelReplay.GuardPackingBranchPublic
+public import KernelReplay.GuardPackingRootPublicAudit
+
+public section
 
 namespace Hex.RealClosure.Algebraic.KernelReplay.GuardPackingBranchPublicAudit
 open Lean Meta Elab FiniteData GuardDescriptorInputs

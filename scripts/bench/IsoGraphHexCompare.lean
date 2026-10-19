@@ -24,8 +24,12 @@ separate repository and nothing here is published into it.
 Measured against IsoGraph 7cfa2370 (2026-09-02), Lean v4.34.0-rc2.
 -/
 
-import IsoGraph.Canon.Algorithm
-import Lean.Data.Json
+module
+
+public import IsoGraph.Canon.Algorithm
+public import Lean.Data.Json
+
+public section
 
 /-!
 Head-to-head timing driver: `IsoGraph.Canon.canonical` on exactly the

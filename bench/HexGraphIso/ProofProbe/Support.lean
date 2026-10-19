@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGraphIso
-import HexGraphIso.TestGraphs
+module
+
+public import HexGraphIso
+public import HexGraphIso.TestGraphs
+
+public section
 
 /-!
 Shared inputs for the CI-built `graph_iso` examples and optional CFI diagnostics.

@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPrimalityTheory
+module
+
+public import HexPrimalityTheory
+
+public section
 
 /-! Parity-factor probe at the supported 512-bit input ceiling (`2^511`). -/
 

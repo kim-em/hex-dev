@@ -4,11 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexECPPTheory
-import HexECPPTheory.Tests.ModuleReplay
-import HexECPPTheory.Tests.Frozen512
-import HexECPPTheory.Tests.Native512
-import HexECPPTheory.LintTests
+module
+
+public import HexECPPTheory
+public import HexECPPTheory.Tests.ModuleReplay
+public import HexECPPTheory.Tests.Frozen512
+public import HexECPPTheory.Tests.Native512
+public import HexECPPTheory.LintTests
+
+public section
 
 /-! # Published companion trust checks
 

@@ -3,10 +3,14 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.RealCoefficients.NativeSources
-import HexRCF.NativeSamplesConformance
-import HexRealClosureTheory.NativeRealization
-import HexRealClosure.SharedPresentation
+module
+
+public import HexRCF.RealCoefficients.NativeSources
+public import HexRCF.NativeSamplesConformance
+public import HexRealClosureTheory.NativeRealization
+public import HexRealClosure.SharedPresentation
+
+public section
 
 /-! Oracle: actual owner selected-root facts and independently stated complete
 joint sign words; mode: always. The selection and source matrix are realized

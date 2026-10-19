@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import CompPoly.Multivariate.CMvPolynomial
-import HexMvPoly.Corpus
-import LeanBench
+module
+
+public import CompPoly.Multivariate.CMvPolynomial
+public import HexMvPoly.Corpus
+public import LeanBench
+
+public section
 
 /-!
 External native comparator driver for CompPoly's `CMvPolynomial`.

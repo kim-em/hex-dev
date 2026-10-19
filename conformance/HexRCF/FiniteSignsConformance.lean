@@ -3,8 +3,12 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.RealCoefficients.FiniteSigns
-import HexRCF.SelectedRoot.KernelCheck
+module
+
+public import HexRCF.RealCoefficients.FiniteSigns
+public import HexRCF.SelectedRoot.KernelCheck
+
+public section
 open Hex
 namespace Hex.RCF.RealCoefficients.FiniteSignsTests
 private def atom (cmp : RealFormula.Cmp) : RealFormula.QF 1 := .atom ⟨MvPoly.X 0, cmp⟩

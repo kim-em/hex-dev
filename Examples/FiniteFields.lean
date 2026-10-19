@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGF2
-import HexGFq
+module
+
+public import HexGF2
+public import HexGFq
+
+public section
 
 /-!
 # Finite fields: `GF(2^8)` two ways, and the canonical `GFq` constructors

@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexReflectTheory
-import HexMvGcd.Instances
-import Mathlib.Algebra.Field.ZMod
-import Mathlib.LinearAlgebra.Matrix.Notation
+module
+
+public import HexReflectTheory
+public import HexMvGcd.Instances
+public import Mathlib.Algebra.Field.ZMod
+public import Mathlib.LinearAlgebra.Matrix.Notation
+
+public section
 
 /-!
 # Residue coefficient conformance

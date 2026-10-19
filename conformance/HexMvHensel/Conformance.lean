@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexMvHensel
+module
+
+public import HexMvHensel
+
+public section
 
 /-!
 Executable conformance checks for checked multivariate Hensel lifting.

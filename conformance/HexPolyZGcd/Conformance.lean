@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPolyZGcd
+module
+
+public import HexPolyZGcd
+
+public section
 
 /-!
 Core conformance checks for checked integer-polynomial gcd.

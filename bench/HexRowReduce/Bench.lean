@@ -4,12 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRowReduce
-import HexPolyFp.PrimeField
-import HexRationalFn
-import Hex.BenchOracle.Flint
-import Lean.Data.Json
-import LeanBench
+module
+
+public import HexRowReduce
+public import HexPolyFp.PrimeField
+public import HexRationalFn
+public import Hex.BenchOracle.Flint
+public import Lean.Data.Json
+public import LeanBench
+
+public section
 
 /-!
 Two-sided benchmarks for every advertised executable `HexRowReduce` operation.

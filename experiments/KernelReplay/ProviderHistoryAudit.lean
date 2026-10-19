@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 -- Independent dependency auditing needs the full imported checked bodies.
-import KernelReplay.AxiomClosure
-import HexRealClosure.BaseHistoryTests
-import HexRealClosureTheory.ConstructedCatalog
-import HexRealClosureTheory.BaseHistoryTests
+module
+
+public import KernelReplay.AxiomClosure
+public import HexRealClosure.BaseHistoryTests
+public import HexRealClosureTheory.ConstructedCatalog
+public import HexRealClosureTheory.BaseHistoryTests
+
+public section
 
 open Lean Meta Elab
 open Hex.RealClosure.BaseContext Hex.RealClosure.Tower

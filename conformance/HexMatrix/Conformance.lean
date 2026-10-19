@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexMatrix
+module
+
+public import HexMatrix
+
+public section
 
 /-!
 Core conformance checks for `hex-matrix` (the dense base).

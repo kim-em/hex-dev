@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPolyFp.Frobenius
-import HexPolyFp.ModCompose
-import HexPolyFp.NttMul
-import HexPolyFp.SquareFree
+module
+
+public import HexPolyFp.Frobenius
+public import HexPolyFp.ModCompose
+public import HexPolyFp.NttMul
+public import HexPolyFp.SquareFree
+
+public section
 
 /-!
 Core conformance checks for the `HexPolyFp` Frobenius, modular-composition,

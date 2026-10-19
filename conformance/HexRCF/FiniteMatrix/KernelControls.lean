@@ -3,8 +3,12 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.FiniteMatrix.Restore
-import HexRCF.RealCoefficients.FiniteSigns
+module
+
+public import HexRCF.FiniteMatrix.Restore
+public import HexRCF.RealCoefficients.FiniteSigns
+
+public section
 namespace Hex.RCF.RealCoefficients.FiniteMatrixTests.KernelControls
 open Lean Meta
 private meta def probe (forbidden required : Array Name) : MetaM Unit := do

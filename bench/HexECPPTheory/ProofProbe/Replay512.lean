@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexECPPTheory.CompactFixtures
+module
+
+public import HexECPPTheory.CompactFixtures
 -- Serialize the two large kernel probes in Lake's build graph.
-import HexECPPTheory.ProofProbe.Replay256
+public import HexECPPTheory.ProofProbe.Replay256
+
+public section
 
 theorem result512 : Nat.Prime 6703903964971298549787012499102923063739682910296196688861780721860882015036773488400937149083451713845015929093243025426876941405973284973216824503096753 := by
   ecpp using Hex.ECPP.CompactFixtures.cert512

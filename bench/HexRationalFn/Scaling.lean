@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRationalFn
-import LeanBench
+module
+
+public import HexRationalFn
+public import LeanBench
+
+public section
 
 /-!
 Operation-specific degree ladders over bounded rational coefficients. Preparation

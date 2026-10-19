@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexMvGcd
+module
+
+public import HexMvGcd
+
+public section
 
 /-!
 Kernel-only replay probes for the recursive `hex-mv-gcd` certificate checker.

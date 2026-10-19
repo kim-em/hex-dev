@@ -3,13 +3,17 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.SelectedRoot.Data
-import HexRCF.CellReplay.Algebraic.Scalars
-import HexRCF.RealCoefficients.ScalarPacket
-import HexRCF.RealCoefficients.ScalarPacketQuote
-import HexRCF.RealCoefficients.ScalarQuote
-import HexRCF.RealCoefficients.RootQuote
-import HexRCF.RealCoefficients.RationalQuote
+module
+
+public import HexRCF.SelectedRoot.Data
+public import HexRCF.CellReplay.Algebraic.Scalars
+public import HexRCF.RealCoefficients.ScalarPacket
+public import HexRCF.RealCoefficients.ScalarPacketQuote
+public import HexRCF.RealCoefficients.ScalarQuote
+public import HexRCF.RealCoefficients.RootQuote
+public import HexRCF.RealCoefficients.RationalQuote
+
+public section
 open Lean Meta Qq Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
 open Hex.RCF.SelectedRootTests
 namespace Hex.RCF.SignPacketQuote

@@ -297,17 +297,35 @@ job, enforces two rules:
   rule diffs against the merge base, so it applies in pull-request context
   and is skipped when no base is available.
 
+Every tracked Lean source MUST use the module system: its first
+non-comment token is `module`. `scripts/check_modules.py`, run as a step in
+the single `build` job, scans headers without invoking Lean or Lake. It
+covers libraries, tests, benchmarks, conformance drivers, examples and
+experiments. It excludes `lakefile.lean` build configuration, retained files
+under `reports/`, and the manual (`HexManual.lean` and `HexManual/`). Manual
+chapters render library docstrings and evaluate library definitions; as
+modules they could see those only through `import all`, so the manual stays
+outside the module system. Nothing imports the manual. Foreign-project
+benchmark templates use `.lean.in` and are copied into their pinned external
+projects; they are inputs rather than Hex modules.
+
+`import all` is not a way to satisfy this lint. A converted source imports
+what it uses with `public import`, `import`, or `meta import` (for
+definitions that run at elaboration time, such as those in `#guard` or
+`native_decide`). Where a proof needs to unfold a definition, prefer
+`@[expose]` on that definition when its body is part of its contract;
+`import all` remains the tool for proofs about a library's internals.
+
 ## Released-aggregate mirror
 
 `leanprover/hex` supplies a module-system umbrella. The manifest defines the
 complete released import set; the mirror's generated `Hex.lean` follows it.
-A module may not import a non-module module, so a
-library that never adopted the module system builds fine here and breaks
-the aggregate: nothing inside this monorepo imports a released umbrella
-from module code, and the non-module conformance and bench drivers may
-import anything.
+A module may not import a non-module module. The module-header lint
+(§Source-file lints) covers every current Lean source outside the manual,
+including conformance and bench drivers, so a library that never adopted
+the module system fails here instead of breaking the aggregate.
 
-`HexAggregateCheck.lean` closes that hole. It is a `module` whose only
+`HexAggregateCheck.lean` additionally checks the combined import closure. It is a `module` whose only
 content is the complete `public import` set declared by the aggregate's
 manifest pins, so module compatibility failures surface in `lake build` here
 instead of after the publish-out sync has pushed the library. This verifies

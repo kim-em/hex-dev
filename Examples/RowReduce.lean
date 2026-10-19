@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRowReduceTheory
-import HexRationalFnTheory
-import HexModArithTheory
-import HexPolyFp.PrimeField
+module
+
+public import HexRowReduceTheory
+public import HexRationalFnTheory
+public import HexModArithTheory
+public import HexPolyFp.PrimeField
+
+public section
 
 /-!
 Proof checks of field inversion, complete affine solving, and inconsistency

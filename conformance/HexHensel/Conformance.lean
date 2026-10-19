@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexHensel.Multifactor
-import HexHensel.QuadraticMultifactor
+module
+
+public import HexHensel.Multifactor
+public import HexHensel.QuadraticMultifactor
+
+public section
 
 /-!
 Core conformance checks for the `HexHensel` conversion and ordered-product surface.

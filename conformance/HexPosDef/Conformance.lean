@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPosDef
-import HexMatrix.Notation
+module
+
+public import HexPosDef
+public import HexMatrix.Notation
+
+public section
 
 /-! Independent certificate, producer, malformed-data, and Gaussian conjugation checks. -/
 

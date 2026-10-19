@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekampZassenhaus
+module
+
+public import HexBerlekampZassenhaus
+
+public section
 
 /-!
 Conformance checks for `HexBerlekampZassenhaus` integer

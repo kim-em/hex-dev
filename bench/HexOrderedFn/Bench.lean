@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexOrderedFn.Infinitesimal
-import HexOrderedFn.Real
-import LeanBench
+module
+
+public import HexOrderedFn.Infinitesimal
+public import HexOrderedFn.Real
+public import LeanBench
+
+public section
 
 namespace Hex.OrderedFnBench
 

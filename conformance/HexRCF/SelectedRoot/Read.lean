@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.SelectedRoot.Data
-import HexRealClosure.SignCodec
-import HexRealClosure.FactOperations
-import HexRCF.SelectedRoot.Literals
+module
+
+public import HexRCF.SelectedRoot.Data
+public import HexRealClosure.SignCodec
+public import HexRealClosure.FactOperations
+public import HexRCF.SelectedRoot.Literals
+
+public section
 
 open Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
 open Hex.RCF.SelectedRootTests.Data

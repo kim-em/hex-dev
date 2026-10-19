@@ -4,11 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPrimalityBench.Inputs
-import HexPrimality.PMinusOneFixtures
-import HexPrimality.PMinusOneMeasure
-import HexPrimality.PMinusOneParents
-import LeanBench
+module
+
+public import HexPrimalityBench.Inputs
+public import HexPrimality.PMinusOneFixtures
+public import HexPrimality.PMinusOneMeasure
+public import HexPrimality.PMinusOneParents
+public import LeanBench
+
+public section
 
 /-!
 Complete compiled Phase-4 evidence for `HexPrimality`.

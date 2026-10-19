@@ -4,10 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.SelectedRoot.Frozen
-import Lean.Elab.Command
+module
 
-meta section
+public import HexRCF.SelectedRoot.Frozen
+public import Lean.Elab.Command
+
+public meta section
 namespace Hex.RCF.SelectedRootTests.FrozenCollect
 open Hex.RCF.SelectedRootTests
 open Lean Meta Elab Command Hex Hex.RealClosure Hex.SignDet

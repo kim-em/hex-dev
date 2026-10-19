@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexModular
-import Hex.BenchOracle.Modular
-import Lean.Data.Json
-import LeanBench
+module
+
+public import HexModular
+public import Hex.BenchOracle.Modular
+public import Lean.Data.Json
+public import LeanBench
+
+public section
 
 /-!
 # HexModular external-comparator registrations

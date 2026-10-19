@@ -3,10 +3,14 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.CellReplay.Quote
-import HexRCF.CellReplay.Controls
-import HexRCF.CellReplay.Valuation
-import HexRCF.CellReplay.Zero
+module
+
+public import HexRCF.CellReplay.Quote
+public import HexRCF.CellReplay.Controls
+public import HexRCF.CellReplay.Valuation
+public import HexRCF.CellReplay.Zero
+
+public section
 open Lean Meta
 run_meta do
   for name in #[``Hex.RCF.RealCoefficients.CellReplayTests.Quote.original, ``Hex.RCF.RealCoefficients.CellReplayTests.Quote.universal, ``Hex.RCF.RealCoefficients.CellReplayTests.Quote.guarded,

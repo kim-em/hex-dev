@@ -3,9 +3,13 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.SourceIdentityCases
-import HexRCF.Tactic
-import KernelReplay.AxiomClosure
+module
+
+public import HexRCF.SourceIdentityCases
+public import HexRCF.Tactic
+public import KernelReplay.AxiomClosure
+
+public section
 open Hex.RCF.RealCoefficients Hex.RCF.SourceIdentityCases Lean Meta
 set_option maxHeartbeats 12000000
 set_option maxRecDepth 32768

@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGF2
-import LeanBench
+module
+
+public import HexGF2
+public import LeanBench
+
+public section
 
 /-!
 Benchmark registrations for `hex-gf2`.

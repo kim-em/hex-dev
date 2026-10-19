@@ -3,18 +3,22 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexSignDet.Phases
-import HexSignDet.Small
-import HexSignDet.Joint
-import HexSignDet.Paired
-import HexSignDet.Maximal
-import HexSignDet.MaximalMatrix
-import HexSignDet.Height
-import HexSignDet.NestedSigns
-import HexSignDet.NestedTables
-import HexSignDet.SharedRoots
-import LeanBench
-import Lean.Data.Json
+module
+
+public import HexSignDet.Phases
+public import HexSignDet.Small
+public import HexSignDet.Joint
+public import HexSignDet.Paired
+public import HexSignDet.Maximal
+public import HexSignDet.MaximalMatrix
+public import HexSignDet.Height
+public import HexSignDet.NestedSigns
+public import HexSignDet.NestedTables
+public import HexSignDet.SharedRoots
+public import LeanBench
+public import Lean.Data.Json
+
+public section
 
 /-!
 The sparse-support family fixes P=X²−1, uses s copies of X and takes s to be

@@ -3,16 +3,20 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.NestedTransport.Source
-import HexRCF.NestedTransport.Controls
-import HexRCF.RealCoefficients
-import HexRCF.ProofEvidence
+module
+
+public import HexRCF.NestedTransport.Source
+public import HexRCF.NestedTransport.Controls
+public import HexRCF.RealCoefficients
+public import HexRCF.ProofEvidence
 -- These imports let forbidden proof names resolve and fail on renames.
-import HexRCF.SelectedRoot.Proofs
-import HexRCF.SelectedRoot.CatalogSource
-import HexRCF.SectionReplayConformance
-import HexRCF.NestedRootProduceConformance
-import Lean.Elab.Command
+public import HexRCF.SelectedRoot.Proofs
+public import HexRCF.SelectedRoot.CatalogSource
+public import HexRCF.SectionReplayConformance
+public import HexRCF.NestedRootProduceConformance
+public import Lean.Elab.Command
+
+public section
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet
 open Hex.RCF.SelectedRootTests
 namespace Hex.RCF.RealCoefficients.NestedTransportTests.Ordinary

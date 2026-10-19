@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexSmith
-import HexMatrix.Notation
+module
+
+public import HexSmith
+public import HexMatrix.Notation
+
+public section
 
 /-!
 # Smith conformance

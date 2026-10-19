@@ -4,13 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.RootTransportData
-import HexRCF.RootTransportLiterals
-import HexRCF.SelectedRoot.Data
-import HexRCF.SelectedRoot.KernelCheck
-import Lean.Elab.Command
-import HexRCF.ProofEvidence
-import HexRCF.RealCoefficients.ScalarPacket
+module
+
+public import HexRCF.RootTransportData
+public import HexRCF.RootTransportLiterals
+public import HexRCF.SelectedRoot.Data
+public import HexRCF.SelectedRoot.KernelCheck
+public import Lean.Elab.Command
+public import HexRCF.ProofEvidence
+public import HexRCF.RealCoefficients.ScalarPacket
+
+public section
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet
 open Hex.RCF.SelectedRootTests Hex.RCF.SelectedRootTests.Data
 namespace Hex.RCF.RealCoefficients.RootTransportConformance

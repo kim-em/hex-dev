@@ -3,8 +3,12 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.CellReplay.Algebraic.Boolean
-import HexRCF.RealCoefficients.CellQuote
+module
+
+public import HexRCF.CellReplay.Algebraic.Boolean
+public import HexRCF.RealCoefficients.CellQuote
+
+public section
 namespace Hex.RCF.RealCoefficients.CellReplayTests.Algebraic.BooleanSources
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.RealFormula
 open Hex.RCF.RealCoefficients

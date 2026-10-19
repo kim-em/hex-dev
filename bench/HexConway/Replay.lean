@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexConway
+module
+
+public import HexConway
+
+public section
 
 open Hex Hex.Conway Lean
 

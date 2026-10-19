@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexMinPoly
-import HexMinPoly.Fixtures
-import HexPolyFp.PrimeField
+module
+
+public import HexMinPoly
+public import HexMinPoly.Fixtures
+public import HexPolyFp.PrimeField
+
+public section
 
 /-!
 # HexMinPoly conformance contract

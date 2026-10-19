@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalTheory.Experiment.PntExpNegative
-import HexInterval.Experiment.ProofFrontend
-import HexInterval.Experiment.TargetRun
-import Mathlib.Lean.Elab.Tactic.Meta
+module
+
+public import HexIntervalTheory.Experiment.PntExpNegative
+public import HexInterval.Experiment.ProofFrontend
+public import HexInterval.Experiment.TargetRun
+public import Mathlib.Lean.Elab.Tactic.Meta
+
+public section
 
 /-!
 # Source-pinned PNT+ negative exponential table

@@ -3,11 +3,15 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.DependentQuote
-import HexRCF.RealCoefficients.ScalarPacket
-import HexRCF.ProofEvidence
-import KernelReplay.AxiomClosure
-import HexRCF.SelectedRoot.KernelCheck
+module
+
+public import HexRCF.DependentQuote
+public import HexRCF.RealCoefficients.ScalarPacket
+public import HexRCF.ProofEvidence
+public import KernelReplay.AxiomClosure
+public import HexRCF.SelectedRoot.KernelCheck
+
+public section
 /-! Recheck actual imported bodies, their complete axiom closure and the
 unchanged native-producer exclusion guard. -/
 

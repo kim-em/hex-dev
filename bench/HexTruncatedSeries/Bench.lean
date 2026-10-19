@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexTruncatedSeries
-import Hex.BenchOracle.Flint
-import LeanBench
+module
+
+public import HexTruncatedSeries
+public import Hex.BenchOracle.Flint
+public import LeanBench
+
+public section
 
 /-!
 Scientific benchmark registrations for fixed-precision truncated series.

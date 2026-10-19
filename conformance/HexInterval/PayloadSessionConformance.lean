@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexInterval.Experiment.PayloadSession
+module
+
+public import HexInterval.Experiment.PayloadSession
+
+public section
 
 /-!
 Focused checks for package invocation, payload freezing, and engine admission

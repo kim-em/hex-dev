@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGFqField.Operations
-import HexBerlekamp.RabinSoundness
-import Hex.BenchOracle.Flint
-import LeanBench
+module
+
+public import HexGFqField.Operations
+public import HexBerlekamp.RabinSoundness
+public import Hex.BenchOracle.Flint
+public import LeanBench
+
+public section
 
 /-!
 Benchmark registrations for `hex-gfq-field`.

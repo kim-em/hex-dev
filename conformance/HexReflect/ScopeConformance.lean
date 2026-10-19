@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexReflect
-import HexReflect.TestProviders
-import HexReflectTheory
+module
+
+public import HexReflect
+public import HexReflect.TestProviders
+public import HexReflectTheory
+
+public section
 
 /-!
 # HexReflect scope conformance

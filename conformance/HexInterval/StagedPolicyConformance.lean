@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexInterval.Experiment.StagedPolicy
-import HexInterval.Experiment.ExpSign
-import HexInterval.Experiment.SemanticReplay
-import HexInterval.Experiment.AdaptivePolicy
+module
+
+public import HexInterval.Experiment.StagedPolicy
+public import HexInterval.Experiment.ExpSign
+public import HexInterval.Experiment.SemanticReplay
+public import HexInterval.Experiment.AdaptivePolicy
+
+public section
 
 /-!
 # Staged policy conformance

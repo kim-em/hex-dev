@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexMvPolyTheory
+module
+
+public import HexMvPolyTheory
+
+public section
 
 /-!
 Bridge-import regression checks for `Hex.MvPoly`.

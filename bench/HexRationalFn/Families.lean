@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRationalFn.Scaling
+module
+
+public import HexRationalFn.Scaling
+
+public section
 
 /-!
 Controlled rational-function families. Degree and cancellation are independent

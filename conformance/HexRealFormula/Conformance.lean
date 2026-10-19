@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRealFormula
+module
+
+public import HexRealFormula
+
+public section
 
 /-!
 Oracle: none for core; independent Python Fraction evaluation for emitted CI fixtures.

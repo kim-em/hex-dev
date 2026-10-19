@@ -3,9 +3,13 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexSturmTheory
-import Batteries.Tactic.Lint
-import Mathlib.Tactic.Linter.Lint
+module
+
+public import HexSturmTheory
+public import Batteries.Tactic.Lint
+public import Mathlib.Tactic.Linter.Lint
+
+public section
 
 /-! Environment lints cover both production module roots, including theorem
 documentation. Legacy imports retain the imported docstring metadata needed by

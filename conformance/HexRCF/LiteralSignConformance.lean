@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.RealCoefficients.Field
-import HexRCF.RealCoefficients.CommonPresentation
-import HexRCF.RealCoefficients.SquareTwo
+module
+
+public import HexRCF.RealCoefficients.Field
+public import HexRCF.RealCoefficients.CommonPresentation
+public import HexRCF.RealCoefficients.SquareTwo
+
+public section
 
 open Hex Hex.RCF.RealCoefficients
 

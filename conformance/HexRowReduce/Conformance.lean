@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRowReduce
-import HexRowReduce.Witness
-import HexRowReduce.FieldFixtures
+module
+
+public import HexRowReduce
+public import HexRowReduce.Witness
+public import HexRowReduce.FieldFixtures
+
+public section
 
 /-!
 Core conformance checks for `hex-row-reduce`.
