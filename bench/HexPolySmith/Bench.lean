@@ -11,6 +11,7 @@ public import HexPolyFp.PrimeField
 public import HexPolySmith
 public import Lean.Data.Json
 public import LeanBench
+public meta import HexMatrix.Basic
 
 public section
 

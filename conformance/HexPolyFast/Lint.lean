@@ -22,7 +22,7 @@ The explicit list covers the default Batteries/Mathlib checks plus theorem docs.
 
 open Lean Meta Batteries.Tactic.Lint in
 /-- Check structure fields through their recorded projection names, including private fields. -/
-@[env_linter disabled] def structureInType' : Batteries.Tactic.Lint.Linter :=
+@[env_linter disabled] meta def structureInType' : Batteries.Tactic.Lint.Linter :=
   { structureInType with
     test := fun declName => do
       unless isStructure (← getEnv) declName do return none

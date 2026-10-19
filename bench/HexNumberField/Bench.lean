@@ -10,6 +10,7 @@ public import HexNumberField
 public import Hex.BenchOracle.Pari
 public import Lean.Data.Json
 public import LeanBench
+public meta import HexNumberField.Roots
 
 public section
 
@@ -1804,7 +1805,7 @@ setup_fixed_benchmark runCanonicalRepLadder where {
 `g` dense of degree `m` and every coefficient `√2`-dependent, so Yun
 produces a genuine multiplicity-2 component and the norm eliminant has
 degree `2m`. -/
-private structure FieldRootsInput where
+structure FieldRootsInput where
   f : DensePoly (PolyQuot sqrtTwoPoly sqrtTwoRoot)
   checked : Option (PLift (ZPoly.CheckedIrreducible sqrtTwoPoly))
 
@@ -1846,7 +1847,7 @@ private def getPolyQuotRootsLadderInput : IO FieldRootsInput := do
 def runQAdjoinRootsLadder : Unit → IO UInt64 := fun _ => do
   return qAdjoinRootsChecksum (← getPolyQuotRootsLadderInput)
 
-private structure RootPhaseInput where
+structure RootPhaseInput where
   f : DensePoly (PolyQuot sqrtTwoPoly sqrtTwoRoot)
   multiplicity : Nat
   multiplicity_pos : 0 < multiplicity
@@ -1926,7 +1927,7 @@ setup_fixed_benchmark runComponentRoots where {
 `prepFieldRootsInput`. Component root construction is intentionally outside
 the timed region; the timed kernel starts with the linear component and folds
 the degree-`m` component through `mergeRootList`, matching `PolyQuot.roots?`. -/
-private structure MergeRootsInput where
+structure MergeRootsInput where
   initial : List RootCount
   candidates : Array RootCount
 
@@ -1973,7 +1974,7 @@ def runMergeRootListLadder (input : MergeRootsInput) : UInt64 :=
 `AlgebraicPoly` whose linear coefficient is `√2` and whose remaining
 coefficients are nonzero rationals, forcing a genuine common-field
 embedding into `ℚ(√2)` before the fixed-field root algorithm. -/
-private structure AlgPolyInput where
+structure AlgPolyInput where
   f : AlgebraicPoly
 
 private instance : Hashable AlgPolyInput where
@@ -2084,7 +2085,7 @@ setup_fixed_benchmark runCommonTrace where {
   apiAnchorConfig with expectedHash := some 0xad12ba043c7b5045
 }
 
-private structure CommonPowersInput where
+structure CommonPowersInput where
   gamma : AlgebraicNumber
   last : Nat
 
@@ -2155,7 +2156,7 @@ setup_benchmark runCommonPrimitive n => n
     slopeTolerance := 0.35
   }
 
-private structure CoordinatesInput where
+structure CoordinatesInput where
   gamma : AlgebraicNumber
   a : AlgebraicNumber
   powers : Array AlgebraicNumber

@@ -10,6 +10,7 @@ public import HexRCF.ProofEvidence
 public import HexRCF.Tactic
 public meta import HexRealFormula.Syntax
 public meta import HexRealClosure.TowerContext
+public meta import HexRCF.RealCoefficients.GatherCells
 
 public section
 namespace Hex.RCF.RealCoefficients.GatherCellsConformance

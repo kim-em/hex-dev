@@ -65,7 +65,7 @@ instance (level : Level) : Inv level.Carrier := level.inv
 instance (level : Level) : Div level.Carrier := level.div
 instance (level : Level) : NatCast level.Carrier := level.nat
 
-private def ratJson (q : Rat) : Codec.Json := .arr #[.number q.num, .number q.den]
+def ratJson (q : Rat) : Codec.Json := .arr #[.number q.num, .number q.den]
 
 /-- Rat retains its exact ordinary primitives. Trace wrappers add no arithmetic
 and never reject a completed operation or timing sample. -/

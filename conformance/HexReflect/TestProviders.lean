@@ -35,7 +35,7 @@ private def onCarrier (ring : CarrierRequest) (carrier : Lean.Expr)
   if ring.type == carrier then k else return .notApplicable
 
 /-- A provider whose evidence does not prove the coefficient laws. -/
-def bogusCoefficients : Registration where
+meta def bogusCoefficients : Registration where
   id := { name := `Hex.ReflectConformance.bogusCoefficients }
   capability := .commRingNormalize
   priority := 10
@@ -46,7 +46,7 @@ def bogusCoefficients : Registration where
       laws := mkConst ``True.intro }) Budget.zero
 
 /-- A second provider of the same priority for `Fin 13`. -/
-def rivalCoefficients : Registration where
+meta def rivalCoefficients : Registration where
   id := { name := `Hex.ReflectConformance.rivalCoefficients }
   capability := .commRingNormalize
   priority := 10
@@ -56,7 +56,7 @@ def rivalCoefficients : Registration where
       id := { name := `Hex.ReflectConformance.rivalCoefficients } }) Budget.zero
 
 /-- A third provider of the same priority for `Fin 13`. -/
-def otherCoefficients : Registration where
+meta def otherCoefficients : Registration where
   id := { name := `Hex.ReflectConformance.otherCoefficients }
   capability := .commRingNormalize
   priority := 10
@@ -67,7 +67,7 @@ def otherCoefficients : Registration where
 
 /-- A provider whose `LawfulBEq` evidence is not an instance, although its
 laws are correct. -/
-def malformedInstanceCoefficients : Registration where
+meta def malformedInstanceCoefficients : Registration where
   id := { name := `Hex.ReflectConformance.malformedInstanceCoefficients }
   capability := .commRingNormalize
   priority := 10

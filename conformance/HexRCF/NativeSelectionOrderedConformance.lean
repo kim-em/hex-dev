@@ -14,6 +14,7 @@ public import HexMvPoly.Basic
 public import HexPolyZ.IntegerPolynomial
 public import HexSignDet.Thom
 public meta import HexRCF.RealCoefficients.Samples
+public meta import HexRCF.SourceSelectionCases
 
 public section
 open Hex Hex.RealClosure Hex.RealFormula

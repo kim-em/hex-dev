@@ -43,7 +43,7 @@ instance {p : Nat} [ZMod64.Bounds p] : Hashable (ZMod64 p) where
 instance [Hashable R] [Zero R] [DecidableEq R] : Hashable (DensePoly R) where
   hash p := hash p.toArray
 
-private abbrev F2Poly := FpPoly 2
+abbrev F2Poly := FpPoly 2
 
 /-- Prepared shared-domain packed/generic comparison input. -/
 structure CompareInput where

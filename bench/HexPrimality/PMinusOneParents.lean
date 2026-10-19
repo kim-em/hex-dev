@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexPrimality.PMinusOneFixtures
+public meta import HexPrimality.PMinusOneFixtures
 
 public section
 

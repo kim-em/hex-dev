@@ -29,14 +29,14 @@ structure Budget where
   maxRecDepth : Nat := 8192
 
 mutual
-private def primeText : PrimeCert → String
+private meta def primeText : PrimeCert → String
   | .small n => s!"(Hex.Nat.PrimeCert.small {n})"
   | .pock n fs => s!"(Hex.Nat.PrimeCert.pock {n} [{factorsText fs}])"
   | .pock3 n r s w fs => s!"(Hex.Nat.PrimeCert.pock3 {n} {r} {s} {w} [{factorsText fs}])"
   | .pock3Sieve n r s w m fs =>
       s!"(Hex.Nat.PrimeCert.pock3Sieve {n} {r} {s} {w} {m} [{factorsText fs}])"
 
-private def factorsText : List (Nat × Nat × PrimeCert) → String
+private meta def factorsText : List (Nat × Nat × PrimeCert) → String
   | [] => ""
   | (a, e, c) :: rest =>
       s!"({a}, {e}, {primeText c})" ++ (if rest.isEmpty then "" else ", " ++ factorsText rest)

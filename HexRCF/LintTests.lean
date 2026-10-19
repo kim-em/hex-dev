@@ -36,7 +36,7 @@ generated name (it recognises `ofNat`, `toCtorIdx`, and `ctorIdx`, but not
 `ofNat_ctorIdx`), so plain `docBlameThm` reports those theorems as
 undocumented; `@[nolint]` cannot repair this from here because it only applies
 in the defining module. -/
-@[env_linter disabled] def docBlameThm' : Linter :=
+@[env_linter disabled] meta def docBlameThm' : Linter :=
   { docBlameThm with
     test := fun declName => do
       if declName.components.getLast? == some `ofNat_ctorIdx then return none

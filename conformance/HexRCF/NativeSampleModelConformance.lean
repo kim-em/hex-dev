@@ -19,6 +19,8 @@ public import HexRationalFn.Field
 public import HexRealClosure.BaseJson
 public meta import HexRealClosure.TowerContext
 public meta import HexRCF.RealCoefficients.RepresentationSpecialize
+public meta import HexRealClosure.Sample
+public meta import HexRCF.NativeSampleModelLiterals
 
 public section
 

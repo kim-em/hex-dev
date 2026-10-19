@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGraphIso.ProofProbe.Support
+public meta import HexGraphIso.TestGraphs
 
 public section
 

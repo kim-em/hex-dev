@@ -28,7 +28,7 @@ theorem linter below makes theorem docstring coverage build-enforced too.
 open Batteries.Tactic.Lint in
 /-- `docBlameThm`, excluding compiler-generated enum constructor-index
 theorems that cannot carry a source docstring. -/
-@[env_linter disabled] def docBlameThm' : Linter :=
+@[env_linter disabled] meta def docBlameThm' : Linter :=
   { docBlameThm with
     test := fun declName => do
       if declName.components.getLast? == some `ofNat_ctorIdx then return none

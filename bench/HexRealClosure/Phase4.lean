@@ -21,7 +21,7 @@ def metiCoefficients : Array Rat := #[592704, 402192, 90972, 3266731,
   -931392, -193914, -5792221, 756756, 140742, 3046158, -259308,
   -42336, -520884, 31752, 4536, 216]
 
-private def registry : BaseContext.Registry := fun _ => none
+def registry : BaseContext.Registry := fun _ => none
 def base := Tower.Context.base (BaseContext.rational registry)
 private def nativeHead : DensePoly base.Value :=
   DensePoly.ofCoeffs (metiCoefficients.map fun q => ⟨q⟩)

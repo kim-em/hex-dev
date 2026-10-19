@@ -150,7 +150,7 @@ private def recoveredChecksum (result : Flatten.Recovered) : UInt64 :=
 
 /-! # Shared fixed-embedding fixtures -/
 
-private def sqrtTwoPoly : ZPoly := DensePoly.ofList [-2, 0, 1]
+def sqrtTwoPoly : ZPoly := DensePoly.ofList [-2, 0, 1]
 
 private def sqrtTwoSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
@@ -1414,7 +1414,7 @@ private def selmerPoly (m : Nat) (T : NumberTower) : Poly T :=
 fixed base `ℚ(√2)`. Rational coefficients make the shift-zero one-level
 norm the square `f^2`, so the bounded search always performs a genuine
 retry before accepting a squarefree norm. -/
-private structure FactorInput where
+structure FactorInput where
   tower : NumberTower
   f : Poly tower
 
@@ -1605,7 +1605,7 @@ setup_fixed_benchmark runPariNfFactorOverhead where
 
 /-! # Checked replay and coordinate-map performance surfaces -/
 
-private structure CheckInput where
+structure CheckInput where
   tower : NumberTower
   f : Poly tower
   scalar : Elem tower
@@ -1650,7 +1650,7 @@ setup_fixed_benchmark runTowerCheckFactorization where {
   warmupFirstIter := true, minTotalSeconds := 0.2
 }
 
-private structure MapLadderInput where
+structure MapLadderInput where
   tower : NumberTower
   result : Option (Flattening tower)
   dense : Elem tower

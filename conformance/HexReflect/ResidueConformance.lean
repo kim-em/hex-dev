@@ -52,7 +52,7 @@ example : Hex.LawfulGcdOps (ZMod64 3) := inferInstance
 example (F : Type u) [Field F] [CharP F 3] : Function.Injective (residueHom 3 F) :=
   residueHom_injective 3 F
 
-private def kernelCheck (xs : Array Expr) (proof : Expr) : MetaM Unit := do
+private meta def kernelCheck (xs : Array Expr) (proof : Expr) : MetaM Unit := do
   let name ← mkFreshUserName `Hex.ReflectResidueConformance.proof
   let type ← mkForallFVars xs (← inferType proof)
   let value ← mkLambdaFVars xs proof
@@ -358,7 +358,7 @@ open Lean Meta Hex.Reflect
 -- Pin the literal characteristic so inference need not discover it through Nat.lcm.
 local instance : CharP (ZMod 3 × ZMod 3) 3 := inferInstance
 
-private def probe (ty : Expr) : MetaM Unit :=
+private meta def probe (ty : Expr) : MetaM Unit :=
   withLocalDeclD `x ty fun x => do
     let outcome ← reflectRing x
     let .declined (.providerCondition id message) _ := outcome
