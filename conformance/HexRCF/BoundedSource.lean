@@ -11,6 +11,7 @@ import HexRCF.BoundedSource.Positive
 import HexRCF.BoundedSource.Negative
 import HexRCF.BoundedSource.Cubic
 import HexRCF.SelectedRoot.KernelCheck
+import KernelReplay.AxiomClosure
 
 /-! Native bounded-source production and exact frozen-byte controls.
 Ordinary proof authentication is checked separately in `BoundedSource.Quote`. -/
@@ -34,6 +35,22 @@ open Lean in
 run_meta do
   unless Hex.RCF.SelectedRootTests.KernelCheck.producers.contains ``SourceBuild.buildOn do
     throwError "bounded source producer is missing from the kernel guard"
+  let roots := #[``ScalarPacket.buildParts_sign, ``SourceBuild.select_single,
+    ``SourceBuild.buildOn_success]
+  let axioms ← Algebraic.KernelReplay.AxiomClosure.collect roots
+  unless axioms.all (fun name => [``propext, ``Classical.choice, ``Quot.sound].contains name) do
+    throwError "bounded source progress has inadmissible dependencies: {axioms}"
+  let names := (← (← getEnv).getLocalConstantInfos).map (·.name)
+  for name in roots do
+    let .thmInfo info ← getConstInfo name | throwError "progress declaration is not a theorem: {name}"
+    let declaration := Declaration.thmDecl {info with name := ← mkFreshUserName `__sourceProgress}
+    let options := (← getOptions).setBool `debug.skipKernelTC false
+    let _ ← ofExceptKernelException <| (← getEnv).addDeclCore
+      (Core.getMaxHeartbeats options).toUSize (maxRecDepth.get options).toUSize
+      declaration none (doCheck := true)
+  unless (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
+    throwError "source progress audit retained copied declarations"
+  logInfo m!"bounded source progress: three actual theorem bodies rechecked; full axioms={axioms}"
 
 private def descriptorError (polynomial : base.Poly) (lower upper : Rat)
     (expected : DescriptorError) : IO Unit := do

@@ -54,6 +54,21 @@ theorem buildParts_success (model : Model parent ℝ)
     [context.queryPoly polynomial]
   simp [buildParts, Algebraic.Context.buildSigns_eq, produced]
 
+/-- A produced scalar proposal retains the sign of the same polynomial at
+the same selected root. This production law does not replace frozen replay. -/
+theorem buildParts_sign (model : Model parent ℝ)
+    (context : Algebraic.Context parent.Value Signature parent.sign parent.signature)
+    (value : ValueCodec parent.Value) (polynomial : DensePoly parent.Value)
+    (proposal : Proposal) (produced : buildParts context value polynomial = some proposal) :
+    proposal.sign = context.signPoly polynomial := by
+  cases built : context.buildSigns [context.queryPoly polynomial] with
+  | error error => simp [buildParts, built] at produced
+  | ok signs =>
+    have retained : signs.value = proposal.sign := by
+      simpa [buildParts, built] using congrArg (Option.map Proposal.sign) produced
+    exact retained.symm.trans (context.signPoly_checked model.value model.zero_iff
+      model.one model.add model.sub model.mul model.nat model.sign model.neg model.inv polynomial signs).symm
+
 /-- Literal assembly preserves actual production progress for a validated
 descriptor in its ordinary-real parent model. -/
 theorem build_success (model : Model parent ℝ)

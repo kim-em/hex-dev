@@ -55,6 +55,38 @@ def select (polynomial window : DensePoly parent.Value)
   | none => throw .unselected
   | some result => return result
 
+/-- A lawful selected root satisfying the original equation and strictly
+positive window produces both scalar packets. No successful producer output
+or table is assumed. This establishes proposal progress, not frozen replay. -/
+theorem select_single (model : Model parent ℝ)
+    (root : Descriptor parent.Value Signature parent.sign parent.signature)
+    (polynomial window : DensePoly parent.Value)
+    (zero : (HexPolyTheory.Interpret.interpret model.value model.zero_iff polynomial).eval
+      (root.root model.value model.zero_iff model.one model.add model.sub model.mul model.nat model.sign) = 0)
+    (positive : 0 < (HexPolyTheory.Interpret.interpret model.value model.zero_iff window).eval
+      (root.root model.value model.zero_iff model.one model.add model.sub model.mul model.nat model.sign)) :
+    ∃ result, select polynomial window [root] = .ok result := by
+  let context := Algebraic.Context.adjoin root parent.isClean
+  have equationSign : context.signPoly polynomial = 0 := by
+    rw [context.signPoly_spec model.value model.zero_iff model.one model.add model.sub
+      model.mul model.nat model.sign model.neg model.inv]
+    simp [Algebraic.Context.evalPoly, Algebraic.Context.rootValue,
+      context, Algebraic.Context.root_adjoin, zero]
+  have windowSign : context.signPoly window = 1 := by
+    rw [context.signPoly_spec model.value model.zero_iff model.one model.add model.sub
+      model.mul model.nat model.sign model.neg model.inv]
+    have sign := congrArg (fun sign : SignType => (sign : Int)) (sign_eq_one_iff.mpr positive)
+    simpa [Algebraic.Context.evalPoly, Algebraic.Context.rootValue,
+      context, Algebraic.Context.root_adjoin] using sign
+  obtain ⟨equation, equationBuilt⟩ := ScalarPacket.buildParts_success model context parent.codec polynomial
+  obtain ⟨enclosure, enclosureBuilt⟩ := ScalarPacket.buildParts_success model context parent.codec window
+  have equationZero := (ScalarPacket.buildParts_sign model context parent.codec polynomial equation equationBuilt).trans equationSign
+  have enclosurePositive := (ScalarPacket.buildParts_sign model context parent.codec window enclosure enclosureBuilt).trans windowSign
+  dsimp only [context] at equationBuilt enclosureBuilt
+  refine ⟨⟨root,equation,enclosure,equationZero,enclosurePositive⟩, ?_⟩
+  simp [select, equationBuilt, enclosureBuilt, equationZero, enclosurePositive,
+    pure, Except.pure, bind, Except.bind]
+
 /-- Enumerate with the existing owner root producer and select exactly one
 root using the supplied enclosure polynomial. The usual window is the source
 isolating-square margin. Its original-source interpretation and selected-root
@@ -79,5 +111,52 @@ def buildOn (polynomial window : DensePoly parent.Value)
     | .ok (.error error) => .error (.descriptor error)
     | .ok (.ok root) => .ok root
   select polynomial window [root]
+
+/-- An ordinary-real count-one domain with a positive original window yields
+an actual bounded source proposal. The domain, count and sign premises are
+mathematical properties of the input, not successful producer equations.
+Frozen serialization acceptance and source alias identification are separate. -/
+theorem buildOn_success (model : Model parent ℝ)
+    (polynomial window : DensePoly parent.Value) (lower upper : Endpoint parent.Value)
+    (domain : HexSturmTheory.Domain model.value model.zero_iff polynomial lower upper)
+    (one : (HexRealRootsTheory.Tarski.rootsIn
+      (HexPolyTheory.Interpret.interpret model.value model.zero_iff polynomial)
+      (lower.map model.value) (upper.map model.value)).card = 1)
+    (positive : ∀ x ∈ HexRealRootsTheory.Tarski.rootsIn
+      (HexPolyTheory.Interpret.interpret model.value model.zero_iff polynomial)
+      (lower.map model.value) (upper.map model.value),
+      0 < (HexPolyTheory.Interpret.interpret model.value model.zero_iff window).eval x) :
+    ∃ result, buildOn polynomial window lower upper = .ok result := by
+  classical
+  have countPositive : 0 < (HexRealRootsTheory.Tarski.rootsIn
+      (HexPolyTheory.Interpret.interpret model.value model.zero_iff polynomial)
+      (lower.map model.value) (upper.map model.value)).card := by
+    rw [one]
+    exact Nat.zero_lt_one
+  obtain ⟨witness, inDomain⟩ := Finset.card_pos.mp countPositive
+  have rootZero := ((HexRealRootsTheory.Tarski.mem_rootsIn_iff _ domain.1 _ _ _).mp inDomain).1
+  have semanticDegree := Polynomial.natDegree_pos_iff_degree_pos.mpr
+    (Polynomial.degree_pos_of_root domain.1 rootZero)
+  have degree : 0 < polynomial.natDegree := by
+    simpa only [HexPolyTheory.Interpret.natDegree_interpret] using semanticDegree
+  let raw : RawDescriptor parent.Value Signature :=
+    ⟨parent.signature,polynomial,lower,upper,[],[]⟩
+  obtain ⟨root, built⟩ := (Descriptor.build_success_iff model.value model.zero_iff
+    model.one model.add model.sub model.mul model.nat model.neg model.inv
+    parent.sign model.sign parent.signature raw).mpr
+    ⟨rfl, by simp [raw, RawDescriptor.wellFormed, degree], domain,
+      by simpa [raw, RawDescriptor.queries, signsAt] using one⟩
+  have retained := Descriptor.build_raw built
+  have member : root.root model.value model.zero_iff model.one model.add model.sub
+      model.mul model.nat model.sign ∈ HexRealRootsTheory.Tarski.rootsIn
+      (HexPolyTheory.Interpret.interpret model.value model.zero_iff polynomial)
+      (lower.map model.value) (upper.map model.value) := by
+    simpa only [retained] using (root.root_spec model.value model.zero_iff model.one
+      model.add model.sub model.mul model.nat model.sign).1
+  have zero := ((HexRealRootsTheory.Tarski.mem_rootsIn_iff _ domain.1 _ _ _).mp member).1
+  obtain ⟨result, selected⟩ := select_single model root polynomial window zero (positive _ member)
+  dsimp only [raw] at built
+  refine ⟨result, ?_⟩
+  simpa only [buildOn, built, bind, Except.bind] using selected
 
 end Hex.RCF.RealCoefficients.SourceBuild
