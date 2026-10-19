@@ -1,0 +1,30 @@
+[
+  {
+    "label": "desktop",
+    "kind": "dimensions",
+    "text": "\n                  A separate selected-source packet study\nretains 440 observations on 22 adapter-produced packets, varying degree, query count,\ncoefficient size, interval precision and predecessor depth independently. It includes\ncommon and repeated roots, malformed evidence and resource-limit controls, and records\nserialized size, row sharing and memory. On this host, median cumulative selected-sign\nreplay is about 0.84 ms at depth zero and 7.93 ms at depth two. Preparation and proof\nconstruction are excluded; reconstruction retains native predecessor arithmetic.\nThese are numerical component observations, not full tactic timings or a general\ncomplexity bound.\n",
+    "viewport": 1440,
+    "scrollY": 297533,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752,
+    "descendantOverflow": 0,
+    "overflowElements": []
+  },
+  {
+    "label": "narrow",
+    "kind": "dimensions",
+    "text": "\n                  A separate selected-source packet study\nretains 440 observations on 22 adapter-produced packets, varying degree, query count,\ncoefficient size, interval precision and predecessor depth independently. It includes\ncommon and repeated roots, malformed evidence and resource-limit controls, and records\nserialized size, row sharing and memory. On this host, median cumulative selected-sign\nreplay is about 0.84 ms at depth zero and 7.93 ms at depth two. Preparation and proof\nconstruction are excluded; reconstruction retains native predecessor arithmetic.\nThese are numerical component observations, not full tactic timings or a general\ncomplexity bound.\n",
+    "viewport": 390,
+    "scrollY": 480182,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343,
+    "descendantOverflow": 0,
+    "overflowElements": []
+  }
+]

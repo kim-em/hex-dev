@@ -1,0 +1,5 @@
+# Manual link to compiled source-packet observations
+
+The one added paragraph links the completed [numerical study](../../hexrcf-source-replay-dimensions.md), states representative costs and distinguishes numerical replay from preparation and proof construction. The compiled study retains its original source pin and all observations.
+
+Run `python3 reports/data/hexrcf-source-replay-manual/verify.py --check-head`. The source snapshot and exact patch bind the manual-only change to its base commit. Removing only this paragraph recovers the original file exactly. Successful complete-manual build/render and changed-paragraph browser logs, two viewport captures and zero local overflow are retained. Both captures were visually inspected. HTML has a recorded digest; its large generated output is not committed. The first build/render succeeded before the line-count check rejected placement in the main chapter; their logs and source are retained as superseded attempts. The final placement is in the existing quotation subchapter. Build/render runtimes are operational observations, not a new timing comparison, full conformance sweep or proof of full #10358 completion.

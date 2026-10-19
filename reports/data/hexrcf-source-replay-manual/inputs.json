@@ -1,0 +1,12 @@
+{
+  "base_commit": "b842ec5cc39b32e8a68cd1754b06222d29b9eb05",
+  "path": "HexManual/Chapters/HexRCF/RootQuote.lean",
+  "sha256": "2e0746d1a35c192d1127a0c9768470e6e36b14d9d96b5eebbb29c26a03c91e78",
+  "patch_sha256": "6b70833843d7fb56b146afbe10d8febdf7d5aea79d3b15241b63c7173e2717f7",
+  "build": [
+    "run-bounded",
+    "lake",
+    "build",
+    "HexManual"
+  ]
+}

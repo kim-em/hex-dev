@@ -674,3 +674,13 @@ simplifier's step limit is separately configurable; its exceptions remain
 terminal. Retention does not freeze root frames, authenticate a real source,
 or construct an ordinary-real model. Those conclusions require their existing
 separate bridges.
+
+A separate [selected-source packet study](https://github.com/kim-em/hex-dev/blob/b842ec5cc39b32e8a68cd1754b06222d29b9eb05/reports/hexrcf-source-replay-dimensions.md)
+retains 440 observations on 22 adapter-produced packets, varying degree, query count,
+coefficient size, interval precision and predecessor depth independently. It includes
+common and repeated roots, malformed evidence and resource-limit controls, and records
+serialized size, row sharing and memory. On this host, median cumulative selected-sign
+replay is about 0.84 ms at depth zero and 7.93 ms at depth two. Preparation and proof
+construction are excluded; reconstruction retains native predecessor arithmetic.
+These are numerical component observations, not full tactic timings or a general
+complexity bound.

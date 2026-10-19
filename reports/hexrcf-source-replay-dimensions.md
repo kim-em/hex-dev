@@ -47,3 +47,5 @@ The Hex source is `46c6114a4fc18ace27ff8167b51866f89d1f0d23`, clean at collectio
 Ordinary-kernel source authentication and bounded packet quotation remain separately evidenced in the [bounded-source](hexrcf-bounded-source.md) and [scalar-acceptance](hexrcf-scalar-acceptance.md) records. Compiled result hashes here are test results, not proof evidence.
 
 This supplies numerical-source component evidence. It does not complete missing original-syntax/history discovery, automatic tactic integration, strict compiled-record coverage, overall algebraic completeness, joint realization or remaining API/manual/proof evidence for #10358.
+
+The [manual supplement](data/hexrcf-source-replay-manual/README.md) binds the short documentation link to this study, the final complete-manual build/render and two inspected viewport captures. Its final source-file checks pass. Earlier successful build/render attempts with the paragraph in the oversized main chapter are retained as superseded; the final paragraph belongs to the existing quotation subchapter. The numerical source and measurement record are unchanged.
