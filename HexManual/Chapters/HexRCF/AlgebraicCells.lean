@@ -15,6 +15,7 @@ import HexRCF.RealCoefficients.CellOperations
 import HexRCF.RealCoefficients.RealModel
 import HexRCF.RealCoefficients.SourceIdentity
 import HexRCF.RealCoefficients.SourceBuild
+import HexRCF.RealCoefficients.TowerCompile
 import HexRCF.RealCoefficients.CellQuote
 import HexRCF.CellQuoteStages
 import HexRCF.CellSourceQuote
@@ -810,6 +811,54 @@ one-node-below exhaustion also restore the complete caller state. The dedicated
 fresh audit checks 218 theorem bodies, 179 definitions and 385 nonempty kernel
 traces, excludes the handwritten source identities and native fact fixtures,
 and retains the producer guard and complete standard-three axiom closure.
+
+After source authentication,
+{name Hex.RCF.RealCoefficients.TowerCompile.compile}`TowerCompile.compile`
+composes arithmetic from checked leaves in a retained ordinary-real tower
+model. It uses that context's total stored operations and their interpretation
+laws, including a repeated product for natural powers. A leaf supplies a stored
+expression and a proof of its exact original real value; a proof for another
+source or context is rejected. Rational literals and casts use bounded rational
+normalization. This does not install a field instance on stored expressions.
+
+```lean
+open Lean Hex.RealFormula Hex.Reflect
+open Hex.RealFormula.Reify
+open Hex.RCF.RealCoefficients
+meta def quoteTowerArithmetic
+    (model source : Expr)
+    (leaf : Expr → ReifyM
+      (Option TowerCompile.Term))
+    (config : Reify.Config)
+    (used : BudgetUsage) :=
+  RootQuote.runWith (do
+    let term ←
+      TowerCompile.compile
+        model leaf source
+    pure ⟨term.expression, term.proof,
+      (← get).budget.consumed⟩)
+    config used
+```
+
+The returned proof identifies the model's value of the stored expression with
+the source. For an existing prepared sentence,
+{name Hex.RCF.RealCoefficients.TowerCompile.prepareWith}`prepareWith` compiles
+both ordered inventories: coefficients first and original divisors separately.
+The enclosing request must continue the source preparation's recorded usage;
+resetting that accounting or lowering a limit below prior usage is rejected.
+Every original divisor is retained,
+including one under zero multiplication. Compiling its arithmetic does not
+prove it nonzero or accept the sentence. A declining leaf restores its
+metavariables and declarations before arithmetic continues; terminal failure
+and exhaustion use the enclosing transaction's rollback.
+
+Nine source checks include a rational cast, the selected √2, compound division,
+inversion and natural powers. They use 247–2,284 charged proof nodes. A fresh
+module rechecks 36 actual theorem bodies, including private generated proofs,
+with 35 nonempty kernel traces and the standard three axioms. The selected leaf
+identity and real parent model remain supplied. This arithmetic interface does
+not discover arbitrary source roots, assemble frozen histories or establish
+complete certificate acceptance.
 
 The native producer {name Hex.RCF.RealCoefficients.SourceBuild.build}`SourceBuild.build`
 can discover a selected source from its defining polynomial and a window
