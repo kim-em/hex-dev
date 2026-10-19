@@ -207,7 +207,9 @@ run_meta do
 #guard_msgs in
 #print axioms Hex.RCF.NumberFieldTests.coefficients
 run_meta do
-  for name in [``Hex.RCF.RealCoefficients.NumberField.value_eq_ofField,
+  for name in [``Hex.RealClosure.NumberField.Presentation.model_eq,
+      ``Hex.RCF.RealCoefficients.NumberField.model_read,
+      ``Hex.RCF.RealCoefficients.NumberField.value_eq_ofField,
       ``Hex.RCF.RealCoefficients.NumberField.runWith_spec,
       ``Hex.RCF.RealCoefficients.NumberField.run_coefficients,
       ``Hex.RCF.NumberFieldTests.coefficients] do

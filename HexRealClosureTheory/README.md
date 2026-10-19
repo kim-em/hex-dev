@@ -47,6 +47,9 @@ example {registry : BaseContext.Registry}
   appropriate cofactor, including reducible defining polynomials.
 - Conversion, enlargement and sample-family proofs retain their explicit
   model, dependency and selected-embedding hypotheses.
+- The development `NumberFieldTower` import exports
+  `NumberField.Presentation.model_eq`, identifying a presentation's real model
+  with the target of its actual coefficient-conversion model.
 
 # Verification
 
