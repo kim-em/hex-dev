@@ -61,7 +61,7 @@ theorem lowerLeaf : lower.evidence = .leaf lower.evidence.node := by
   cases he : lower.evidence with
   | leaf node => rfl
   | split node left right => simp only [he, Bool.false_eq_true] at shape
-def extension := base.adjoin lower
+@[expose] def extension := base.adjoin lower
 def upperFieldsRead := Codec.tuple 6 Literals.upperSubject
 set_option maxRecDepth 32768 in
 theorem upperFieldsAccepted : upperFieldsRead.toOption.isSome = true := by decide +kernel

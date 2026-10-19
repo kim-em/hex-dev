@@ -14,9 +14,9 @@ open scoped Hex.PolyQuot.QAdjoinField
 
 namespace RankProbe
 
-def p : ZPoly := DensePoly.ofList [-2, 0, 1]
-def square : DyadicSquare := ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
-def root : SimpleRoot p := SimpleRoot.ofSquare p square
+@[expose] def p : ZPoly := DensePoly.ofList [-2, 0, 1]
+@[expose] def square : DyadicSquare := ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
+@[expose] def root : SimpleRoot p := SimpleRoot.ofSquare p square
 instance : ZPoly.CheckedIrreducible p :=
   ⟨(ZPoly.isIrreducible_iff p).mpr (by irreducibility), by decide⟩
 abbrev K := PolyQuot p root

@@ -25,9 +25,9 @@ open Hex Hex.DensePoly
 
 abbrev F2 := Fin 2
 
-def f2Inv (a : F2) : F2 := a
-def f2Div (a b : F2) : F2 := a * b
-def f2Zpow (a : F2) (n : Int) : F2 :=
+@[expose] def f2Inv (a : F2) : F2 := a
+@[expose] def f2Div (a b : F2) : F2 := a * b
+@[expose] def f2Zpow (a : F2) (n : Int) : F2 :=
   if n = 0 then 1 else a
 
 local instance (priority := 2000) : Inv F2 := ⟨f2Inv⟩
