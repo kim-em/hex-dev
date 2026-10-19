@@ -1,0 +1,15 @@
+{
+  "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10358",
+  "argv": [
+    "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+    "lake",
+    "build",
+    "HexRCFRealCoefficients",
+    "HexRCF.BoundedSource",
+    "HexRCF.BoundedSource.Proofs",
+    "HexRCF.SourceIdentityProofs",
+    "HexRCF.CellReplay.Algebraic.Quoted",
+    "HexRCF.CellReplay.Algebraic.CompleteQuoted"
+  ],
+  "targets": 6
+}
