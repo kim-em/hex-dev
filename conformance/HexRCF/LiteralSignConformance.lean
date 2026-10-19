@@ -58,18 +58,18 @@ private def mixedTable? : Option (LiteralSign.Table (DensePoly Rat)) :=
         { entry with evidence := some table.count } }).check id &&
       !({ table with lower := 3, upper := 4 }).check id
 
-private def cubePoly : ZPoly := DensePoly.ofList [-2, 0, 0, 1]
-private def cubeSquare : DyadicSquare :=
+def cubePoly : ZPoly := DensePoly.ofList [-2, 0, 0, 1]
+def cubeSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 5411319705 32, 0, 32⟩
-private theorem cubeWitness : atomWitness cubePoly cubeSquare := by decide +kernel
-private theorem cubePrecision :
+theorem cubeWitness : atomWitness cubePoly cubeSquare := by decide +kernel
+theorem cubePrecision :
     (mahlerPrec cubePoly : Int) ≤ cubeSquare.prec := by decide +kernel
 private theorem cubeIrred :
     ZPoly.checkIrredWitness cubePoly (.eisenstein 2 0) = true := by decide +kernel
 private theorem cubeDegree : 0 < cubePoly.natDegree := by decide +kernel
 private theorem cubeReal : cubeSquare.meetsRealAxis = true := by decide +kernel
 
-private abbrev CubeField := PolyQuot cubePoly
+abbrev CubeField := PolyQuot cubePoly
   (SimpleRoot.ofSquare cubePoly cubeSquare cubeWitness cubePrecision)
 
 private def root : CubeField :=

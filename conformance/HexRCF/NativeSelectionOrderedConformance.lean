@@ -21,9 +21,9 @@ open Hex.RCF.RealCoefficients
 namespace Hex.RCF.RealCoefficients.NativeSelectionOrderedConformance
 open SignDet
 open scoped Hex
-private def root? := Hex.RCF.SourceSelectionCases.reader
+def root? := Hex.RCF.SourceSelectionCases.reader
 private theorem accepted : root?.toOption.isSome = true := Hex.RCF.SourceSelectionCases.accepted
-private def root : Root 7 := Hex.RCF.SourceSelectionCases.root
+def root : Root 7 := Hex.RCF.SourceSelectionCases.root
 private theorem subject : root.raw =
     ⟨7, #p[-2,0,1], .finite (7/5), .finite (3/2), [1,2], [1,1]⟩ := by
   simpa only [root, Hex.RCF.SourceSelectionCases.rawSubject,

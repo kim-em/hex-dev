@@ -106,7 +106,7 @@ structure IntInput (n : Nat) where
   /-- The prepared matrix; construction stays out of the timed region. -/
   matrix : Matrix Int n n
 
-private def matrixChecksum {n m : Nat} (M : Matrix Int n m) : UInt64 :=
+def matrixChecksum {n m : Nat} (M : Matrix Int n m) : UInt64 :=
   M.rows.toArray.foldl (fun acc row => mixHash acc (hash row.toArray)) (hash n)
 
 instance {n : Nat} : Hashable (IntInput n) where

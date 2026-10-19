@@ -87,7 +87,7 @@ namespace F7
 def ofNat (n : Nat) : F7 :=
   { val := ⟨n % 7, Nat.mod_lt n (by decide)⟩ }
 
-private def invNat : Nat → Nat
+def invNat : Nat → Nat
   | 1 => 1
   | 2 => 4
   | 3 => 5

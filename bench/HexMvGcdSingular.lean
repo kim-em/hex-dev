@@ -26,7 +26,7 @@ namespace Hex.MvGcdBench.Singular
 open Hex.MvPoly
 open Lean (Json)
 
-private abbrev PersistentComparator :=
+abbrev PersistentComparator :=
   Hex.BenchOracle.Flint.PersistentComparator
 
 initialize driverRef : IO.Ref (Option PersistentComparator) ← IO.mkRef none

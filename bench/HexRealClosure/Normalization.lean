@@ -15,7 +15,7 @@ public section
 
 namespace Hex.RealClosure.Normalization
 
-private abbrev Context := Algebraic.Context Rat Unit OrderedFn.orderSign ()
+abbrev Context := Algebraic.Context Rat Unit OrderedFn.orderSign ()
 
 /-- Both storage arms use this one checked root and coefficient backend. The
 monic working polynomial is used only by the eager measurement arm. -/

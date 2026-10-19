@@ -24,11 +24,11 @@ namespace Hex.MvGcdBench.Kernel
 open Hex
 open Hex.MvPoly
 
-private abbrev P0 := MvPoly 0 Int Mono.lex
+abbrev P0 := MvPoly 0 Int Mono.lex
 private abbrev P1 := MvPoly 1 Int Mono.lex
-private abbrev Q0 := MvPoly 0 Rat Mono.lex
+abbrev Q0 := MvPoly 0 Rat Mono.lex
 
-private def x : P1 := X 0
+def x : P1 := X 0
 
 private theorem normalizeOneP0 : polyNormalize (1 : P0) == 1 := by
   change polyNormalize (C 1 : P0) == C 1
@@ -116,11 +116,11 @@ private theorem modularCombination :
   unfold x imageAt
   decide +kernel
 
-private def modularSplit : CoprimeCert 1 Int Mono.lex :=
+def modularSplit : CoprimeCert 1 Int Mono.lex :=
   .split 0 Mono.lex primeTwo (intCoeffHom primeTwo) noPoint
     1 1 xContent xPlusOneContent .unit
 
-private def badModularSplit : CoprimeCert 1 Int Mono.lex :=
+def badModularSplit : CoprimeCert 1 Int Mono.lex :=
   .split 0 Mono.lex primeTwo (intCoeffHom primeTwo) noPoint
     1 0 xContent xPlusOneContent .unit
 
@@ -140,11 +140,11 @@ theorem modularSplitCorrupt :
     checkCoprime x (x + 1) badModularSplit = false := by
   decide +kernel
 
-private def bezoutSplit : CoprimeCert 1 Int Mono.lex :=
+def bezoutSplit : CoprimeCert 1 Int Mono.lex :=
   .splitBezout 0 Mono.lex (-1) 1 1
     xContent xPlusOneContent .unit
 
-private def badBezoutSplit : CoprimeCert 1 Int Mono.lex :=
+def badBezoutSplit : CoprimeCert 1 Int Mono.lex :=
   .splitBezout 0 Mono.lex (-1) 1 2
     xContent xPlusOneContent .unit
 
@@ -164,7 +164,7 @@ theorem bezoutSplitCorrupt :
     checkCoprime x (x + 1) badBezoutSplit = false := by
   decide +kernel
 
-private def strippedReplay (cert : CoprimeCert 1 Int Mono.lex) : Bool :=
+def strippedReplay (cert : CoprimeCert 1 Int Mono.lex) : Bool :=
   match Cert.stripCoprime? cert with
   | none => false
   | some ordinary =>
@@ -182,10 +182,10 @@ theorem stripBezoutValid : strippedReplay bezoutSplit = true := by
   change checkCoprime x (x + 1) bezoutSplit = true
   exact bezoutSplitValid
 
-private def directBezout : CoprimeCert 1 Int Mono.lex :=
+def directBezout : CoprimeCert 1 Int Mono.lex :=
   .bezout (-1) 1
 
-private def badDirectBezout : CoprimeCert 1 Int Mono.lex :=
+def badDirectBezout : CoprimeCert 1 Int Mono.lex :=
   .bezout 0 1
 
 theorem directBezoutValid :
@@ -200,10 +200,10 @@ theorem directBezoutCorrupt :
   unfold x
   decide +kernel
 
-private def baseCert : GcdCert 0 Int Mono.lex :=
+def baseCert : GcdCert 0 Int Mono.lex :=
   .mk (C 6) (C 2) (C 3) (.base (-1) 1)
 
-private def badBaseCert : GcdCert 0 Int Mono.lex :=
+def badBaseCert : GcdCert 0 Int Mono.lex :=
   .mk (C 6) (C 2) (C 3) (.base 0 1)
 
 theorem baseValid : checkGcd (C 12 : P0) (C 18) baseCert = true := by
@@ -218,10 +218,10 @@ theorem baseCorrupt : checkGcd (C 12 : P0) (C 18) badBaseCert = false := by
   rw [normalizeSixP0]
   decide +kernel
 
-private def ratLift : CoprimeCert 0 Rat Mono.lex :=
+def ratLift : CoprimeCert 0 Rat Mono.lex :=
   .ratLift 2 3 1 1 .unit
 
-private def badRatLift : CoprimeCert 0 Rat Mono.lex :=
+def badRatLift : CoprimeCert 0 Rat Mono.lex :=
   .ratLift 2 4 1 1 .unit
 
 theorem ratLiftValid : checkCoprime (C 2 : Q0) (C 3) ratLift = true := by
@@ -237,10 +237,10 @@ private def firstNestedStep : GcdCert 1 Int Mono.lex :=
 private def secondNestedStep : GcdCert 1 Int Mono.lex :=
   .mk 1 x (x + 1) bezoutSplit
 
-private def nestedContent : ContentCert 1 Int Mono.lex :=
+def nestedContent : ContentCert 1 Int Mono.lex :=
   .ofSteps 1 [firstNestedStep, secondNestedStep]
 
-private def badNestedContent : ContentCert 1 Int Mono.lex :=
+def badNestedContent : ContentCert 1 Int Mono.lex :=
   .ofSteps 2 [firstNestedStep, secondNestedStep]
 
 private theorem firstNestedValid :
@@ -283,10 +283,10 @@ theorem nestedContentCorrupt :
     secondNestedGcd, firstNestedValid, secondNestedValid]
   decide +kernel
 
-private def zeroCert : GcdCert 0 Int Mono.lex :=
+def zeroCert : GcdCert 0 Int Mono.lex :=
   .mk 0 1 1 .unit
 
-private def badZeroCert : GcdCert 0 Int Mono.lex :=
+def badZeroCert : GcdCert 0 Int Mono.lex :=
   .mk 1 1 1 .unit
 
 theorem zeroValid : checkGcd (0 : P0) 0 zeroCert = true := by
@@ -295,10 +295,10 @@ theorem zeroValid : checkGcd (0 : P0) 0 zeroCert = true := by
 theorem zeroCorrupt : checkGcd (0 : P0) 0 badZeroCert = false := by
   decide +kernel
 
-private def unitCert : GcdCert 1 Int Mono.lex :=
+def unitCert : GcdCert 1 Int Mono.lex :=
   .mk 1 1 (x + 1) .unit
 
-private def badUnitCert : GcdCert 1 Int Mono.lex :=
+def badUnitCert : GcdCert 1 Int Mono.lex :=
   .mk 1 1 x .unit
 
 theorem unitValid : checkGcd 1 (x + 1) unitCert = true := by
@@ -336,7 +336,7 @@ end ConstructionApi
 private def orderedProducer (_ q : P0) : GcdCert 0 Int Mono.lex :=
   .mk q 0 0 .unit
 
-private def orderedContent : ContentCert 0 Int Mono.lex :=
+def orderedContent : ContentCert 0 Int Mono.lex :=
   contentCertWith orderedProducer [C 2, C 3, C 5]
 
 /-- Producer accumulation preserves coefficient order in the public steps. -/
@@ -344,7 +344,7 @@ theorem orderedContentSteps :
     orderedContent.steps.map GcdCert.gcd = [C 2, C 3, C 5] := by
   decide +kernel
 
-private def flatRatLift : RatLiftCert 0 Mono.lex where
+def flatRatLift : RatLiftCert 0 Mono.lex where
   scaleL := 2
   scaleR := 3
   left := 1

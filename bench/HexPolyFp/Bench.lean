@@ -57,9 +57,9 @@ namespace FpPolyBench
 
 open FpPoly
 
-private instance benchBoundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
-private instance benchBoundsFermat : ZMod64.Bounds 257 := ⟨by decide, by decide⟩
-private instance benchBoundsLarge : ZMod64.Bounds 65537 := ⟨by decide, by decide⟩
+instance benchBoundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
+instance benchBoundsFermat : ZMod64.Bounds 257 := ⟨by decide, by decide⟩
+instance benchBoundsLarge : ZMod64.Bounds 65537 := ⟨by decide, by decide⟩
 
 private theorem one_ne_zero_five : (1 : ZMod64 5) ≠ 0 := by
   intro h

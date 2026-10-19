@@ -57,7 +57,7 @@ namespace GFqFieldBench
 
 open GFqField
 
-private instance benchBoundsSeven : ZMod64.Bounds 7 := ⟨by decide, by decide⟩
+instance benchBoundsSeven : ZMod64.Bounds 7 := ⟨by decide, by decide⟩
 
 private theorem one_ne_zero_seven : (1 : ZMod64 7) ≠ 0 := by
   intro h
@@ -97,7 +97,7 @@ private theorem noNontrivialDivisors_sound {p n m : Nat} (hp0 : 0 < p)
           contradiction
 
 set_option maxRecDepth 100000 in
-private theorem prime_seven : Hex.Nat.Prime 7 := by
+theorem prime_seven : Hex.Nat.Prime 7 := by
   constructor
   · decide
   · intro m hm

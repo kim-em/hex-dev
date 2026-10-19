@@ -22,7 +22,7 @@ open DensePoly RationalFn
 open RationalFnScaling (dense consecutive output)
 
 private instance : Inhabited (RationalFn Rat) := ⟨0⟩
-private instance : Hashable (RationalFn Rat) := ⟨fun f => hash (output f)⟩
+instance : Hashable (RationalFn Rat) := ⟨fun f => hash (output f)⟩
 
 def fraction (p q : DensePoly Rat) : RationalFn Rat :=
   if h : q ≠ 0 then normalize p q h else panic! "zero benchmark denominator"
@@ -31,7 +31,7 @@ structure Raw where
   p : DensePoly Rat
   q : DensePoly Rat
 
-private instance : Hashable Raw := ⟨fun i => hash (i.p.toArray, i.q.toArray)⟩
+instance : Hashable Raw := ⟨fun i => hash (i.p.toArray, i.q.toArray)⟩
 
 def degreeInput (n : Nat) : Raw :=
   let a := dense (max n 1)

@@ -244,7 +244,7 @@ abbrev Second := RationalFn First
 private def window (q δ : Rat) : Bounds :=
   if h : 0 < δ then ⟨q - δ / 2, q + δ / 2, by grind⟩ else .singleton q
 
-private def inner : Approximation Rat := .ofConstant (window 2)
+def inner : Approximation Rat := .ofConstant (window 2)
 
 structure Entry where
   subject : First

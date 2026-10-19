@@ -52,7 +52,7 @@ namespace BerlekampBench
 
 open Berlekamp
 
-private instance benchBoundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
+instance benchBoundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
 
 private theorem benchPrimeFive : Hex.Nat.Prime 5 := by
   constructor

@@ -19,13 +19,13 @@ open Hex Hex.RCF.RealCoefficients Hex.RealFormula
 
 namespace Hex.RCF.FieldSpecializeConformance
 
-private def cubePoly : ZPoly := DensePoly.ofList [-2, 0, 0, 1]
-private def cubeSquare : DyadicSquare :=
+def cubePoly : ZPoly := DensePoly.ofList [-2, 0, 0, 1]
+def cubeSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 5411319705 32, 0, 32⟩
-private theorem cubeWitness : atomWitness cubePoly cubeSquare := by decide +kernel
-private theorem cubePrecision :
+theorem cubeWitness : atomWitness cubePoly cubeSquare := by decide +kernel
+theorem cubePrecision :
     (mahlerPrec cubePoly : Int) ≤ cubeSquare.prec := by decide +kernel
-private theorem cubeReal : cubeSquare.meetsRealAxis = true := by decide +kernel
+theorem cubeReal : cubeSquare.meetsRealAxis = true := by decide +kernel
 private theorem cubeIrred :
     ZPoly.checkIrredWitness cubePoly (.eisenstein 2 0) = true := by decide +kernel
 private theorem cubeDegree : 0 < cubePoly.natDegree := by decide +kernel
@@ -37,9 +37,9 @@ private def root : CubeField :=
   PolyQuot.ofSquare cubePoly cubeSquare (DensePoly.ofList [0, 1])
     cubeWitness cubePrecision
 
-private def atom : RealFormula.Poly 2 := MvPoly.X 1 - MvPoly.X 0
+def atom : RealFormula.Poly 2 := MvPoly.X 1 - MvPoly.X 0
 
-private def specialized : DensePoly CubeField :=
+def specialized : DensePoly CubeField :=
   FieldSpecialize.literalPolynomial (fun _ : Fin 1 => root) atom
 
 -- The executable substitution uses only the reduced rational coordinates.

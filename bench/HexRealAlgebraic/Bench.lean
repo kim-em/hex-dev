@@ -23,7 +23,7 @@ open RealAlgebraicNumber
 private def real (a : AlgebraicNumber) : RealAlgebraicNumber :=
   (ofAlgebraic? a).getD (Hex.panicWith 0 "nonreal scaling fixture")
 
-private structure Input where
+structure Input where
   a : RealAlgebraicNumber
   b : RealAlgebraicNumber
   -- Rational reference or near-integer rounding operand; unused for add/sqrt.
@@ -492,7 +492,7 @@ private def observations : LeanBench.FixedBenchmarkConfig := {
   warmupFirstIter := true
 }
 
-private structure FieldInput where
+structure FieldInput where
   generator : RealAlgebraicNumber
   values : Array (QAdjoin generator.toAlgebraic)
 

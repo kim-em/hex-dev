@@ -47,7 +47,7 @@ namespace GFqRingBench
 
 open GFqRing
 
-private instance benchBoundsLarge : ZMod64.Bounds 65537 := ⟨by decide, by decide⟩
+instance benchBoundsLarge : ZMod64.Bounds 65537 := ⟨by decide, by decide⟩
 
 -- `PolyQuotient` is a prime-modulus type.  65537 is far too large for the
 -- linear primality decision procedure, so the trial-division bound is supplied
@@ -56,7 +56,7 @@ set_option maxRecDepth 8192 in
 private theorem prime_65537 : Hex.Nat.Prime 65537 :=
   Hex.Nat.prime_of_bounded 65537 256 (by decide) (by decide) (by decide)
 
-private instance benchPrimeLarge : ZMod64.PrimeModulus 65537 :=
+instance benchPrimeLarge : ZMod64.PrimeModulus 65537 :=
   ZMod64.primeModulusOfPrime prime_65537
 
 private theorem one_ne_zero_large : (1 : ZMod64 65537) ≠ 0 := by

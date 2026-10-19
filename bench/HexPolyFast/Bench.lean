@@ -23,11 +23,11 @@ namespace Hex.PolyFastBench
 
 open Hex Hex.DensePoly
 
-private abbrev F2 := Fin 2
+abbrev F2 := Fin 2
 
-private def f2Inv (a : F2) : F2 := a
-private def f2Div (a b : F2) : F2 := a * b
-private def f2Zpow (a : F2) (n : Int) : F2 :=
+def f2Inv (a : F2) : F2 := a
+def f2Div (a b : F2) : F2 := a * b
+def f2Zpow (a : F2) (n : Int) : F2 :=
   if n = 0 then 1 else a
 
 local instance (priority := 2000) : Inv F2 := ⟨f2Inv⟩
@@ -91,10 +91,10 @@ structure BinaryRat where
 instance : Hashable BinaryRat where
   hash input := mixHash (hash input.left.toArray) (hash input.right.toArray)
 
-private instance boundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
-private instance boundsLarge : ZMod64.Bounds 65537 := ⟨by decide, by decide⟩
+instance boundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
+instance boundsLarge : ZMod64.Bounds 65537 := ⟨by decide, by decide⟩
 
-private abbrev Fp := ZMod64 65537
+abbrev Fp := ZMod64 65537
 
 private instance : Inhabited Fp := ⟨0⟩
 
@@ -102,19 +102,19 @@ set_option maxRecDepth 8192 in
 private theorem prime65537 : Hex.Nat.Prime 65537 :=
   Hex.Nat.prime_of_bounded 65537 256 (by decide) (by decide) (by decide)
 
-private instance primeLarge : ZMod64.PrimeModulus 65537 :=
+instance primeLarge : ZMod64.PrimeModulus 65537 :=
   ZMod64.primeModulusOfPrime prime65537
 
 local instance : Div Fp where
   div a b := a * b⁻¹
 
-private def fieldZpow (a : Fp) : Int → Fp
+def fieldZpow (a : Fp) : Int → Fp
   | .ofNat n => a ^ n
   | .negSucc n => (a ^ (n + 1))⁻¹
 
 local instance : HPow Fp Int Fp := ⟨fieldZpow⟩
 
-private theorem field_inv_zero : (0 : Fp)⁻¹ = 0 := by
+theorem field_inv_zero : (0 : Fp)⁻¹ = 0 := by
   apply ZMod64.ext
   apply UInt64.toNat_inj.mp
   change (ZMod64.inv (0 : Fp)).toNat = (0 : Fp).toNat
@@ -197,7 +197,7 @@ structure BinaryMod where
 
 instance : Nonempty BinaryMod := ⟨{ left := 0, right := 0 }⟩
 
-private def hashModPoly (p : DensePoly (ZMod64 5)) : UInt64 :=
+def hashModPoly (p : DensePoly (ZMod64 5)) : UInt64 :=
   p.toArray.foldl (fun acc x => mixHash acc (hash x.toNat)) 0
 
 instance : Hashable BinaryMod where

@@ -20,11 +20,11 @@ open Hex.RCF.RealCoefficients
 
 namespace Hex.RCF.RealCoefficientsConformance
 
-private def cubic : Hex.RealAlgebraicNumber :=
+def cubic : Hex.RealAlgebraicNumber :=
   (Hex.RealAlgebraicNumber.ofAlgebraic?
     (Hex.ZPoly.rootNear #p[-1, -1, 0, 1] 1.3)).getD 0
 
-private def fieldCoefficient : Hex.RealAlgebraicNumber :=
+def fieldCoefficient : Hex.RealAlgebraicNumber :=
   Coefficients.ofField cubic (cubic.toAlgebraic.toQAdjoin ^ 2 - 1)
 
 private abbrev plasticPolynomial : Hex.ZPoly :=
@@ -441,7 +441,7 @@ run_meta do
 private def xPoly : Hex.DensePoly Rat := Hex.DensePoly.ofCoeffs #[0, 1]
 private def xSquare : Hex.DensePoly Rat := xPoly * xPoly
 
-private def radical : RadicalCert Rat Nat :=
+def radical : RadicalCert Rat Nat :=
   { context := 7, core := xPoly, quotient := xPoly,
     cofactor := 1, exponent := 0 }
 

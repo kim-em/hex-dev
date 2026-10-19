@@ -22,7 +22,7 @@ def metiCoefficients : Array Rat := #[592704, 402192, 90972, 3266731,
   -42336, -520884, 31752, 4536, 216]
 
 private def registry : BaseContext.Registry := fun _ => none
-private def base := Tower.Context.base (BaseContext.rational registry)
+def base := Tower.Context.base (BaseContext.rational registry)
 private def nativeHead : DensePoly base.Value :=
   DensePoly.ofCoeffs (metiCoefficients.map fun q => ⟨q⟩)
 private def trivialHead : RealAlgebraicPoly :=

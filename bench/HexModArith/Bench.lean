@@ -46,7 +46,7 @@ namespace Hex.ModArithBench
 def benchModulus : Nat :=
   65_537
 
-private instance benchBounds : ZMod64.Bounds benchModulus :=
+instance benchBounds : ZMod64.Bounds benchModulus :=
   ⟨by decide, by decide⟩
 
 set_option maxRecDepth 8192 in

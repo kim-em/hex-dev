@@ -85,7 +85,7 @@ only.
 namespace Hex
 namespace HenselBench
 
-private instance benchBoundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
+instance benchBoundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
 
 instance : Hashable ZPoly where
   hash p := hash p.toArray

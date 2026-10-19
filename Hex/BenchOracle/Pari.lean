@@ -29,7 +29,7 @@ namespace Hex.BenchOracle.Pari
 
 open Lean (Json JsonNumber)
 
-private abbrev PersistentComparator :=
+abbrev PersistentComparator :=
   Hex.BenchOracle.Flint.PersistentComparator
 
 initialize pariDriverRef : IO.Ref (Option PersistentComparator) ←

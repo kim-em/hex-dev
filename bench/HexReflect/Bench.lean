@@ -78,7 +78,7 @@ def runSharing (input : SharingInput) : UInt64 := Id.run do
 def prepProduct (n : Nat) : RingExpr :=
   (List.range n).foldl (fun acc i => .mul acc (.add (.var i) (.num 1))) (.num 1)
 
-private def termsHash {n : Nat} (ts : List (Mono n × Int)) : UInt64 :=
+def termsHash {n : Nat} (ts : List (Mono n × Int)) : UInt64 :=
   ts.foldl (fun acc t => mixHash acc (mixHash (hash t.1.toArray) (hash t.2))) (hash ts.length)
 
 /-- Convert without characteristic evidence. -/
