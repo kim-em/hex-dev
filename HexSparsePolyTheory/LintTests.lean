@@ -4,15 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-module
-
-public import HexSparsePolyTheory
-public import Batteries.Tactic.Lint
-public import Mathlib.Tactic.Linter.Lint
-public import Mathlib.Tactic.Linter.Style
-public import Mathlib.Tactic.Linter.TacticDocumentation
-
-public section
+import HexSparsePolyTheory
+import Batteries.Tactic.Lint
+import Mathlib.Tactic.Linter.Lint
+import Mathlib.Tactic.Linter.Style
+import Mathlib.Tactic.Linter.TacticDocumentation
 
 /-!
 # Sparse-polynomial lint regression

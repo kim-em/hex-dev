@@ -4,12 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-module
-
-public import HexReflect
-public import LeanBench
-
-public section
+import HexReflect
+import LeanBench
 
 /-!
 Benchmark registrations for `hex-reflect`.
@@ -78,7 +74,7 @@ def runSharing (input : SharingInput) : UInt64 := Id.run do
 def prepProduct (n : Nat) : RingExpr :=
   (List.range n).foldl (fun acc i => .mul acc (.add (.var i) (.num 1))) (.num 1)
 
-def termsHash {n : Nat} (ts : List (Mono n × Int)) : UInt64 :=
+private def termsHash {n : Nat} (ts : List (Mono n × Int)) : UInt64 :=
   ts.foldl (fun acc t => mixHash acc (mixHash (hash t.1.toArray) (hash t.2))) (hash ts.length)
 
 /-- Convert without characteristic evidence. -/

@@ -4,15 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-module
-
-public import HexRCF
-public import Batteries.Tactic.Lint
-public import Mathlib.Tactic.Linter.Lint
-public import Mathlib.Tactic.Linter.Style
-public import Mathlib.Tactic.Linter.TacticDocumentation
-
-public section
+import HexRCF
+import Batteries.Tactic.Lint
+import Mathlib.Tactic.Linter.Lint
+import Mathlib.Tactic.Linter.Style
+import Mathlib.Tactic.Linter.TacticDocumentation
 
 /-!
 # Public RCF lint regression
@@ -36,7 +32,7 @@ generated name (it recognises `ofNat`, `toCtorIdx`, and `ctorIdx`, but not
 `ofNat_ctorIdx`), so plain `docBlameThm` reports those theorems as
 undocumented; `@[nolint]` cannot repair this from here because it only applies
 in the defining module. -/
-@[env_linter disabled] meta def docBlameThm' : Linter :=
+@[env_linter disabled] def docBlameThm' : Linter :=
   { docBlameThm with
     test := fun declName => do
       if declName.components.getLast? == some `ofNat_ctorIdx then return none

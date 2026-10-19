@@ -4,15 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-module
-
-public import HexTruncatedSeriesTheory
-public import Batteries.Tactic.Lint
-public import Mathlib.Tactic.Linter.Lint
-public import Mathlib.Tactic.Linter.Style
-public import Mathlib.Tactic.Linter.TacticDocumentation
-
-public section
+import HexTruncatedSeriesTheory
+import Batteries.Tactic.Lint
+import Mathlib.Tactic.Linter.Lint
+import Mathlib.Tactic.Linter.Style
+import Mathlib.Tactic.Linter.TacticDocumentation
 
 /-!
 # Truncated-series lint regression
@@ -30,7 +26,7 @@ Mathlib-free core and its Mathlib correspondence layer.
 open Batteries.Tactic.Lint in
 /-- `docBlameThm`, minus compiler-generated support theorems whose docstrings
 cannot be repaired from this downstream regression module. -/
-@[env_linter disabled] meta def docBlameThm' : Linter :=
+@[env_linter disabled] def docBlameThm' : Linter :=
   { docBlameThm with
     test := fun declName => do
       if declName.components.getLast? == some `ext_coeff_iff then return none

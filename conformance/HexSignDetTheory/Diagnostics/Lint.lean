@@ -3,15 +3,11 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-module
-
-public import HexSignDet
-public import HexSignDetTheory
-public import Batteries.Tactic.Lint
-public import Mathlib.Tactic.Linter.Lint
-public import Lean.Util.CollectAxioms
-
-public section
+import HexSignDet
+import HexSignDetTheory
+import Batteries.Tactic.Lint
+import Mathlib.Tactic.Linter.Lint
+import Lean.Util.CollectAxioms
 
 /-! Environment lints cover both production module roots, including theorem
 documentation. The imported modules supply the docstring metadata used by these

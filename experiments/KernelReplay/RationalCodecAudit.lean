@@ -4,12 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 -- Independent dependency auditing needs the full imported checked bodies.
-module
-
-public import KernelReplay.AxiomClosure
-public import HexRealClosure.BaseJsonTests
-
-public section
+import KernelReplay.AxiomClosure
+import HexRealClosure.BaseJsonTests
 
 open Lean Meta Elab
 open Hex.RealClosure

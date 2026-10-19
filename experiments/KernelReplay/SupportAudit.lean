@@ -4,13 +4,9 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 -- Direct dependency auditing requires full private import data.
-module
-
-public import KernelReplay.AxiomClosure
-public import KernelReplay.FiniteReconstruction
-public import KernelReplay.NativeAssemblyUse
-
-public section
+import KernelReplay.AxiomClosure
+import KernelReplay.FiniteReconstruction
+import KernelReplay.NativeAssemblyUse
 
 open Lean Meta Elab
 open Hex.RealClosure.Algebraic.KernelReplay

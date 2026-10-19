@@ -7,13 +7,9 @@ Authors: Kim Morrison
 -- module system, ordinary imports can hide theorem bodies, unexposed
 -- definitions and opaques behind placeholders, and omit private declarations.
 
-module
-
-public import KernelReplay.AxiomClosure
-public import KernelReplay.ProofAudit
-public import Lean.Util.CollectAxioms
-
-public section
+import KernelReplay.AxiomClosure
+import KernelReplay.ProofAudit
+import Lean.Util.CollectAxioms
 
 section
 namespace Hex.RealClosure.Algebraic.KernelReplay.AxiomClosureTest
@@ -28,7 +24,7 @@ private def reject (message : String) (action : MetaM Unit) : MetaM Unit := do
     pure true
   unless rejected do throwError "independent axiom audit accepted invalid input"
 
-private meta def restored : MetaM Unit := do
+private def restored : MetaM Unit := do
   let saved ← Meta.saveState
   try
     let name ← mkFreshUserName `closureBranch

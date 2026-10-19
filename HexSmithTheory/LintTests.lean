@@ -4,15 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-module
-
-public import HexSmithTheory
-public import Batteries.Tactic.Lint
-public import Mathlib.Tactic.Linter.Lint
-public import Mathlib.Tactic.Linter.Style
-public import Mathlib.Tactic.Linter.TacticDocumentation
-
-public section
+import HexSmithTheory
+import Batteries.Tactic.Lint
+import Mathlib.Tactic.Linter.Lint
+import Mathlib.Tactic.Linter.Style
+import Mathlib.Tactic.Linter.TacticDocumentation
 
 /-!
 # Integer Smith-normal-form lint regression
@@ -28,7 +24,7 @@ theorem linter below makes theorem docstring coverage build-enforced too.
 open Batteries.Tactic.Lint in
 /-- `docBlameThm`, excluding compiler-generated enum constructor-index
 theorems that cannot carry a source docstring. -/
-@[env_linter disabled] meta def docBlameThm' : Linter :=
+@[env_linter disabled] def docBlameThm' : Linter :=
   { docBlameThm with
     test := fun declName => do
       if declName.components.getLast? == some `ofNat_ctorIdx then return none

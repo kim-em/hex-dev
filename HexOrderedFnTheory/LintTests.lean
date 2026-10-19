@@ -4,17 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-module
-
-public import HexOrderedFn
-public import HexOrderedFnTheory
-public import Batteries.Tactic.Lint
-public import Mathlib.Tactic.Linter.Lint
-public import Mathlib.Tactic.Linter.Style
-public import Mathlib.Tactic.Linter.TacticDocumentation
-public import Lean.Util.CollectAxioms
-
-public section
+import HexOrderedFn
+import HexOrderedFnTheory
+import Batteries.Tactic.Lint
+import Mathlib.Tactic.Linter.Lint
+import Mathlib.Tactic.Linter.Style
+import Mathlib.Tactic.Linter.TacticDocumentation
+import Lean.Util.CollectAxioms
 
 /-!
 # Ordered-function API lint checks

@@ -3,12 +3,8 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-module
-
-public import HexRealClosure.LiveFrame
-public import KernelReplay.AxiomClosure
-
-public section
+import HexRealClosure.LiveFrame
+import KernelReplay.AxiomClosure
 
 namespace Hex.RealClosure.Algebraic.KernelReplay.GuardLiveFrameAudit
 open Lean Meta Elab

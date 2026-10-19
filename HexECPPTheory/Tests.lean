@@ -10,7 +10,6 @@ public import HexECPPTheory
 public import HexECPPTheory.Tests.ModuleReplay
 public import HexECPPTheory.Tests.Frozen512
 public import HexECPPTheory.Tests.Native512
-public import HexECPPTheory.LintTests
 
 public section
 

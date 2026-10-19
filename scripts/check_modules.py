@@ -4,7 +4,8 @@
 Lake configuration is a build script. Files in reports/ are retained artifacts,
 not current source. The manual (HexManual.lean and HexManual/) is not module
 code: its chapters render library docstrings and evaluate library definitions,
-which a module could only see through `import all`. Every other tracked .lean
+which a module could only see through `import all`. EXEMPT_FILES names the
+other sources that inspect library internals. Every other tracked .lean
 file is checked, including tests, benchmarks, conformance drivers, examples and
 experiments.
 """
@@ -50,9 +51,37 @@ def first_token(text: str) -> str:
 
 EXEMPT_ROOTS = {"reports", "HexManual", "HexManual.lean"}
 
+# Sources that inspect the libraries themselves, which a module could do only
+# through `import all`. Each stays a legacy (non-module) source; nothing imports it.
+EXEMPT_FILES = {
+    # Environment linters that check imported docstrings.
+    "HexECPPTheory/LintTests.lean",
+    "HexLatticeEnumTheory/LintTests.lean",
+    "HexOrderedFnTheory/LintTests.lean",
+    "HexRCF/LintTests.lean",
+    "HexSmithTheory/LintTests.lean",
+    "HexSparsePolyTheory/LintTests.lean",
+    "HexSturmTheory/LintTests.lean",
+    "HexTruncatedSeriesTheory/LintTests.lean",
+    "conformance/HexPolyFast/Lint.lean",
+    "conformance/HexSignDetTheory/Diagnostics/Lint.lean",
+    # Kernel-replay audits that walk private declaration bodies and axiom closures.
+    "experiments/KernelReplay/AxiomClosureNative.lean",
+    "experiments/KernelReplay/AxiomClosureTest.lean",
+    "experiments/KernelReplay/ConstructedBaseAudit.lean",
+    "experiments/KernelReplay/GuardDependencyControls.lean",
+    "experiments/KernelReplay/GuardLiveFrameAudit.lean",
+    "experiments/KernelReplay/ProviderHistoryAudit.lean",
+    "experiments/KernelReplay/RationalCodecAudit.lean",
+    "experiments/KernelReplay/SupportAudit.lean",
+    # Times the `meta` function `quoteTerms` from compiled code, which a module may not call.
+    "bench/HexReflect/Bench.lean",
+}
+
 
 def is_source(path: Path) -> bool:
-    return path.suffix == ".lean" and path.name != "lakefile.lean" and path.parts[0] not in EXEMPT_ROOTS
+    return (path.suffix == ".lean" and path.name != "lakefile.lean"
+            and path.parts[0] not in EXEMPT_ROOTS and path.as_posix() not in EXEMPT_FILES)
 
 
 def main() -> int:
