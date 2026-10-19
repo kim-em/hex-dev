@@ -319,7 +319,8 @@ def main() -> int:
                 f"--ref <commit>")
             continue
         verdict = freshness.assess(
-            family, [recorded], allow=lambda difference: build_only_lakefile_edit(difference, family))
+            family, [recorded], allow=lambda difference: (freshness.module_header_only(difference)
+                                            or build_only_lakefile_edit(difference, family)))
         errors.extend(f"{system}: {error}" for error in verdict.errors)
 
     # Newest-per-system plots may combine records made at different times.

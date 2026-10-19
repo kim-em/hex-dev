@@ -1,0 +1,6 @@
+{
+  "path": "bench/HexBench/FactorService.lean",
+  "baseline_blob": "9114099faf18a3ee9118b4a21378e2acbb952518",
+  "current_blob": "642511f004be3bfbac871e67780771dff8c12254",
+  "reason": "Composes two runtime-neutral transitions from the measured baseline. The first, 9114099f -> 2bd6e17b, is the Theory rename exempted in theory-rename-bench-hexbench-factorservice-9114099f-2bd6e17b.json. The second, 2bd6e17b -> 642511f0, converts the file to the module system without other edits: it inserts `module`, turns each `import` into `public import`, and opens `public section` after the imports; undoing exactly that reproduces 2bd6e17b byte for byte (the check `sweep_freshness.module_header_only` performs). Neither step changes a definition, compiled code or runtime import of the measured executables."
+}
