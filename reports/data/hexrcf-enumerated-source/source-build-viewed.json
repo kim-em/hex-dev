@@ -1,0 +1,13 @@
+{
+  "viewed": [
+    "source-build-final-desktop-api.png",
+    "source-build-final-desktop-apicode.png",
+    "source-build-final-desktop-source.png",
+    "source-build-final-narrow-api.png",
+    "source-build-final-narrow-apicode.png",
+    "source-build-final-narrow-source.png"
+  ],
+  "all_changed_targets_readable": true,
+  "scope": "All six final captures actually viewed; new API prose, full code example and proof-cost/scope paragraphs readable at1440px/390px. Existing page-wide horizontal scroll is outside these changed targets; local overflow zero.",
+  "failed_capture_viewed": "attempt1 narrow apicode, clippedcode confirmed; failed six captures/metrics retained separately."
+}

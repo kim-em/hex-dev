@@ -1,0 +1,894 @@
+[
+  {
+    "label": "desktop",
+    "width": 1440,
+    "targets": [
+      {
+        "tag": "P",
+        "text": "\n                  Fix the coefficient field ℚ(√2), with its positive selected embedding in ℝ.\nThe polynomial X²−√2 has two real roots. The supplied complete ta",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  These examples import the monorepo fixture HexRCF.CellReplay.Algebraic.Quoted.\nThe original real source is proved by fresh schema preparation",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.RealCoefficients\nopen CellReplayTests\nexample : ∃ x : ℝ,\n    x ^ 2 - Real.sqrt 2 ≥ 0 ∧\n    x ^ 2 - Real.sqrt 2 ≤ 0 ∧\n    (0 : ℝ) = 0 := Algebraic.Q",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The complete-packet interface reads the full root table before its cell rows.\nCompleteReplay.check then checks the radical identities and str",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex Hex.RealClosure Hex.SignDet\nopen Hex.RealFormula\nopen Hex.RCF.RealCoefficients\nexample\n    {r : BaseContext.Registry}\n    {c : Tower.Context r} {n : Na",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  CellQuote.finishPacket additionally binds this checked shared sentence to a\nfreshly reified original source, its fixed coefficient valuation ",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.RealCoefficients\nopen CellReplayTests.Algebraic\nexample : ∃ x : ℝ,\n    x ^ 2 - Real.sqrt 2 ≥ 0 ∧\n    x ^ 2 - Real.sqrt 2 ≤ 0 ∧\n    0 / (-1 : ℝ) = 0",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The source-boundary checks refuse a false verdict, a different original\nformula, missing divisor identities and a cancelled zero divisor. A s",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The table's exact root set and strict order are proved conclusions of the\nsupplied replay. The positive and negative fourth roots of 2 have t",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.RealCoefficients\nopen CellReplayTests\nexample (x : ℝ) :\n    x ∈\n      Algebraic.Canonical.roots.values\n        Algebraic.Schema.original ↔\n      x ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  All coefficient signs used by these readers come from 21 distinct frozen\nscalar packets. Each packet passes the owner's scalar reader in the ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Original divisors still enter preflight when a zero numerator removes their\nvalue from the normalized matrix. This source retains and authent",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.RealCoefficients\nopen CellReplayTests\nexample : ∃ x : ℝ,\n    x ^ 2 - Real.sqrt 2 ≥ 0 ∧\n    x ^ 2 - Real.sqrt 2 ≤ 0 ∧\n    0 / (-1 : ℝ) = 0 :=\n  Alge",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  A supplied zero divisor is rejected before decoding, including with a malformed\npacket. The fresh quotation module rechecks both original pro",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The same checked rows can be reused when the entire ordered specialized\npolynomial list is unchanged, including repeated and zero atoms. Chan",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.RealCoefficients\nopen CellReplayTests\nexample : ∀ x : ℝ,\n    (x ^ 2 - Real.sqrt 2 < 0 ∨\n      x ^ 2 - Real.sqrt 2 ≥ 0) ∧\n    (0 : ℝ) = 0 :=\n  Algeb",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Additional fresh proofs cover equality/non-equality and positive outer\nsectors. All six comparisons, conjunction, disjunction and negation ar",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  This example uses one supplied lawful ordinary-real parent and one fixed\ncomplete packet. It establishes finite replay over a non-rational st",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The native construction API can produce the same complete packet. RootBuild.build\nretains the owner's full derivative table and its extracted",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.RealCoefficients\nopen Hex.RealClosure\nopen HexPolyTheory.Interpret\nexample\n    {r : BaseContext.Registry}\n    {c : Tower.Context r}\n    (model : To",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  CellBuild.prepare first checks the original divisors, then specializes the\nshared atoms and constructs their radical carrier and complete roo",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  CellBuild.build constructs every section row and every sector record for that\ncomplete root table and proposed ordinary parent-field points. ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  This explicit-point interface does not discover ordinary sector points in\narbitrary parents, assemble missing scalar/provider histories or pr",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The separate native CellDiscover.run API obtains ordinary points from the\nowner's complete partition. Its actual collection converts all fixe",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.RealCoefficients\nopen Hex.RealClosure\nexample\n    {r : BaseContext.Registry}\n    {c : Tower.Context r}\n    {ps : List c.Poly}\n    (family : Tower.S",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  CellAlignment.aligned derives exact equality between the partition's ordered\nreal boundaries and the independently checked radical root table",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  This is native production followed by independent cell replay. The returned\ncollection retains native conversion history; it is not a frozen ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  CellDiscover.run uses SectorRequest.points and the owner's proved\nboundary-request API. Cut.adjacent establishes the requested endpoints for ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  CellProgress obtains each selected-sign row and each ordinary-point descriptor\nfrom the owner's actual construction theorems. A checked linea",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex Hex.RealClosure\nopen Hex.RealFormula\nopen Hex.RCF.RealCoefficients\nexample\n    {r : BaseContext.Registry}\n    {c : Tower.Context r} {n : Nat}\n    (mode",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  CellDecision.complete composes the actual collection, source conversion,\nradical/root preparation, requested sector points and complete typed",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  CellBuild.evidence now produces those typed rows before freezing them.\nThe public CellBuild.build serializes that same result in the existing",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The discovery result emits its full rootGraph as well as cells.\nPacket.rootGraph_eq binds the graph to the actual typed root table and native",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RealClosure\nopen Hex.RealFormula\nopen Hex.RCF.RealCoefficients\nexample\n    {r : BaseContext.Registry}\n    {c : Tower.Context r} {n : Nat}\n    (model : ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Original fixed-field inputs can enter this producer through\nNumberField.cells. The existing number-field factory checks the original\nselected",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex\nopen Hex.RealClosure\nopen Hex.RealFormula\nopen Hex.RCF.RealCoefficients\nexample\n    {n : Nat} (g : RealAlgebraicNumber)\n    (registry : BaseContext.Reg",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The native conformance constructs both selected roots of X²−2 and a computed\ncoordinate in the field generated by the positive root of X³−2. ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Literal-reader acceptance still needs finite coverage of every serialized\ncoefficient and context. Frozen provider/context histories, strict ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Independently constructed coefficient contexts can enter complete packet\nproduction through GatherCells.build. Each input retains its origina",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  buildWith reuses the actual owner's gathering result. A compatible ordinary\nmodel proves complete packet production without assuming a succes",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex Hex.RealClosure\nopen Hex.RealClosure.Tower\nopen Hex.RealFormula\nopen Hex.RCF.RealCoefficients\nexample\n    {r : BaseContext.Registry}\n    {b : BaseConte",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  build_complete additionally derives successful gathering from the original\nowners' compatible base signatures and an ordinary base interpreta",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The native conformance combines separate positive √2 and √3 owners, repeats\none source coordinate, and checks a leading cancellation and repe",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  AlgebraicCells.build starts from original RealAlgebraicNumber inputs.\nIt constructs their checked selected presentations and gathers the resu",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The automatic constructor needs only the original nonzero guards for its\nprogress theorem. The rational interpretation, owner compatibility a",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex Hex.RealClosure\nopen Hex.RealFormula\nopen Hex.RCF.RealCoefficients\nexample (r : BaseContext.Registry)\n    {m n : Nat}\n    (vs : Fin m →\n      RealAlgeb",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  These native-input theorems preserve both emitted quantifier verdicts at the\noriginal selected real values. build_domains concludes every ori",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The complete literal checker can use checked cached arithmetic through\nCellOperations.check. It takes the owner's existing Replay.Operations\n",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex Hex.RealClosure Hex.SignDet\nopen Hex.RealFormula\nopen Hex.RCF.RealCoefficients\nopen Hex.RealClosure.Replay\nexample {r : BaseContext.Registry}\n    {p : ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Original guard preflight, radical identities, complete root/cell coverage and\nthe strict fold retain their existing soundness and domain theo",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  CellQuote.replayWith\nquotes a supplied CellOperations.check expression in three stages. It first\nchecks the complete root table, then each de",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean Hex.RealFormula\nopen Hex.Reflect\nopen Hex.RCF.RealCoefficients\nmeta def quoteCellPacket\n    (program : Expr)\n    (decode : RootQuote.DecoderM)\n    (co",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  set_option trace.Hex.RCF.CellQuote true reports reader and finite-family\nboundaries with cumulative proof-node usage. Lean heartbeats remain ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  CellQuote.finishPacketWith\ncontinues this request through the original source proof. It consumes the\nprepared source and the accepted canonic",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The separate finishing action can also continue already recorded usage:",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean Hex.RealFormula\nopen Hex.Reflect\nopen Hex.RCF.RealCoefficients\nmeta def finishCellPacket\n    (source : Reify.Source)\n    (target checker accepted : Ex",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  That separate transaction rolls back its own work. Clients needing rollback\nof quotation as well must combine both actions in one transaction",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Within this request, row quotation parses each literal sign packet and checks\nits exact ordered queries. It validates a graph once for each d",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The returned equation retains both Boolean verdicts. CellQuote.finishPacket\nperforms source authentication separately and requires an accepte",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "example : ∀ _x : ℝ, (0 : ℝ) = 0 :=\n  Hex.RCF.CellQuoteStages.source\n",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Its replay quotation uses 441,039 nodes for true and 441,041 for false. These\ncounts cover the three replay stages, separately from source re",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  A separate rational quadratic packet checks two root sections and three\nsectors in 5,911,125 proof nodes. Its trace records two graph-memo re",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  A fresh importing audit checks 1,247 theorem bodies and 101 definitions, with\n1,298 nonempty kernel traces, the unchanged producer guard and ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The algebraic source regression independently reads the complete frozen packet\nover the retained positive square root of 2. It reifies the fo",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "example : ∃ x : ℝ,\n    x ^ 2 - Real.sqrt 2 ≥ 0 ∧\n    x ^ 2 - Real.sqrt 2 ≤ 0 ∧\n    (0 : ℝ) = 0 :=\n  Hex.RCF.CellSourceQuote.source\n",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The shared reification and quotation budget records 8,644,422 proof nodes\nbefore source finishing and 8,651,669 for the complete original-sou",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Its importing proof audit checks 1,193 theorem bodies, 202 definitions and\n1,353 nonempty kernel traces. It excludes the older complete-packe",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  For a closed retained base/root context, RealModel.build constructs its\nordinary-real interpretation from a caller-supplied real base model a",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  A source equation alone does not distinguish real conjugates.\nSourceIdentity.observe\nreads a checked scalar sign at the native descriptor's s",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  SourceIdentity.quoteWith\nconstructs this identity from two supplied scalar readers. Its Anchor retains\nthe original polynomial, isolating squ",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean Hex.RealFormula\nopen Hex.Reflect\nopen Hex.RCF.RealCoefficients\nmeta def quoteSourceIdentity\n    (anchor : SourceIdentity.Anchor)\n    (packets : Source",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The result proves that the reader's selected real root equals the original\nanchor value. Quotation checks both packets, their keys, signs, su",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The frozen square-root regression quotes its parent descriptor and both\npackets in 673,461 proof nodes. Its coefficient identity supplies the",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The native producer SourceBuild.build\ncan discover a selected source from its defining polynomial and a window\npolynomial whose sign is posit",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  This direct API example proposes the positive root of X²−2, using its checked\nsource square:",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex Hex.RealClosure\nopen Hex.RCF.RealCoefficients\n\ndef proposeSquareRoot\n    (registry :\n      BaseContext.Registry) :=\n  Id.run do\n    let parent :=\n     ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The output reports proposal production. Independent frozen replay establishes\nthe selected real identity. ScalarPacket.buildParts retains the",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  ScalarPacket.buildParts_success and build_success prove actual packet\nproduction for every query at a validated descriptor with a lawful ordi",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The enumerated-source controls\nproduce both quadratic conjugates and a positive cubic root from X³−2, compare\ntheir complete bytes with froze",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  CellQuote.finishOperations takes the supplied-operation acceptance expression\nand an ordinary proof that its result is some (). It kernel-che",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Meta clients can prepare these native inputs from the original Lean statement\nwith AlgebraicPreparation.prepare. It reuses the shared source ",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean Meta Qq\nopen Hex.RCF.RealCoefficients\nrun_meta do\n  let .ok prepared ←\n      AlgebraicPreparation.prepare\n        q(∀ x : ℝ,\n          x^2 + 1 /\n     ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The resulting environment stores coefficient proposals first and every original\ndivisor afterward, with separate ordered indices for each rol",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  For the retained algebraic expressions, prepared.acceptanceIff proves an exact\nacceptance equivalence. The left side requires the actual alge",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex Lean Meta Qq\nopen Hex.RCF.RealCoefficients\nopen Hex.RealClosure.BaseContext\nrun_meta do\n  let target : Q(Prop) :=\n    q(∀ x : ℝ, x^2 + Real.sqrt 2 > 0)",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  This proof uses the checked algebraic expressions and their source identities.\nIt does not identify separately computed proposals with frozen",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The automatic-input conformance uses both selected signs of √2 alongside an\nindependent positive √3. It checks simultaneous conditions and a ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The explicit HexRCFAlgebraicCellsStress target retains the stronger condition\nx² = √2 with 1 < x < √3 and its negative-conjugate control. A r",
+        "overflow": 0
+      }
+    ]
+  },
+  {
+    "label": "narrow",
+    "width": 390,
+    "targets": [
+      {
+        "tag": "P",
+        "text": "\n                  Fix the coefficient field ℚ(√2), with its positive selected embedding in ℝ.\nThe polynomial X²−√2 has two real roots. The supplied complete ta",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  These examples import the monorepo fixture HexRCF.CellReplay.Algebraic.Quoted.\nThe original real source is proved by fresh schema preparation",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.RealCoefficients\nopen CellReplayTests\nexample : ∃ x : ℝ,\n    x ^ 2 - Real.sqrt 2 ≥ 0 ∧\n    x ^ 2 - Real.sqrt 2 ≤ 0 ∧\n    (0 : ℝ) = 0 := Algebraic.Q",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The complete-packet interface reads the full root table before its cell rows.\nCompleteReplay.check then checks the radical identities and str",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex Hex.RealClosure Hex.SignDet\nopen Hex.RealFormula\nopen Hex.RCF.RealCoefficients\nexample\n    {r : BaseContext.Registry}\n    {c : Tower.Context r} {n : Na",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  CellQuote.finishPacket additionally binds this checked shared sentence to a\nfreshly reified original source, its fixed coefficient valuation ",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.RealCoefficients\nopen CellReplayTests.Algebraic\nexample : ∃ x : ℝ,\n    x ^ 2 - Real.sqrt 2 ≥ 0 ∧\n    x ^ 2 - Real.sqrt 2 ≤ 0 ∧\n    0 / (-1 : ℝ) = 0",
+        "overflow": 1
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The source-boundary checks refuse a false verdict, a different original\nformula, missing divisor identities and a cancelled zero divisor. A s",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The table's exact root set and strict order are proved conclusions of the\nsupplied replay. The positive and negative fourth roots of 2 have t",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.RealCoefficients\nopen CellReplayTests\nexample (x : ℝ) :\n    x ∈\n      Algebraic.Canonical.roots.values\n        Algebraic.Schema.original ↔\n      x ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  All coefficient signs used by these readers come from 21 distinct frozen\nscalar packets. Each packet passes the owner's scalar reader in the ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Original divisors still enter preflight when a zero numerator removes their\nvalue from the normalized matrix. This source retains and authent",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.RealCoefficients\nopen CellReplayTests\nexample : ∃ x : ℝ,\n    x ^ 2 - Real.sqrt 2 ≥ 0 ∧\n    x ^ 2 - Real.sqrt 2 ≤ 0 ∧\n    0 / (-1 : ℝ) = 0 :=\n  Alge",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  A supplied zero divisor is rejected before decoding, including with a malformed\npacket. The fresh quotation module rechecks both original pro",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The same checked rows can be reused when the entire ordered specialized\npolynomial list is unchanged, including repeated and zero atoms. Chan",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.RealCoefficients\nopen CellReplayTests\nexample : ∀ x : ℝ,\n    (x ^ 2 - Real.sqrt 2 < 0 ∨\n      x ^ 2 - Real.sqrt 2 ≥ 0) ∧\n    (0 : ℝ) = 0 :=\n  Algeb",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Additional fresh proofs cover equality/non-equality and positive outer\nsectors. All six comparisons, conjunction, disjunction and negation ar",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  This example uses one supplied lawful ordinary-real parent and one fixed\ncomplete packet. It establishes finite replay over a non-rational st",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The native construction API can produce the same complete packet. RootBuild.build\nretains the owner's full derivative table and its extracted",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.RealCoefficients\nopen Hex.RealClosure\nopen HexPolyTheory.Interpret\nexample\n    {r : BaseContext.Registry}\n    {c : Tower.Context r}\n    (model : To",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  CellBuild.prepare first checks the original divisors, then specializes the\nshared atoms and constructs their radical carrier and complete roo",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  CellBuild.build constructs every section row and every sector record for that\ncomplete root table and proposed ordinary parent-field points. ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  This explicit-point interface does not discover ordinary sector points in\narbitrary parents, assemble missing scalar/provider histories or pr",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The separate native CellDiscover.run API obtains ordinary points from the\nowner's complete partition. Its actual collection converts all fixe",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.RealCoefficients\nopen Hex.RealClosure\nexample\n    {r : BaseContext.Registry}\n    {c : Tower.Context r}\n    {ps : List c.Poly}\n    (family : Tower.S",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  CellAlignment.aligned derives exact equality between the partition's ordered\nreal boundaries and the independently checked radical root table",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  This is native production followed by independent cell replay. The returned\ncollection retains native conversion history; it is not a frozen ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  CellDiscover.run uses SectorRequest.points and the owner's proved\nboundary-request API. Cut.adjacent establishes the requested endpoints for ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  CellProgress obtains each selected-sign row and each ordinary-point descriptor\nfrom the owner's actual construction theorems. A checked linea",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex Hex.RealClosure\nopen Hex.RealFormula\nopen Hex.RCF.RealCoefficients\nexample\n    {r : BaseContext.Registry}\n    {c : Tower.Context r} {n : Nat}\n    (mode",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  CellDecision.complete composes the actual collection, source conversion,\nradical/root preparation, requested sector points and complete typed",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  CellBuild.evidence now produces those typed rows before freezing them.\nThe public CellBuild.build serializes that same result in the existing",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The discovery result emits its full rootGraph as well as cells.\nPacket.rootGraph_eq binds the graph to the actual typed root table and native",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RealClosure\nopen Hex.RealFormula\nopen Hex.RCF.RealCoefficients\nexample\n    {r : BaseContext.Registry}\n    {c : Tower.Context r} {n : Nat}\n    (model : ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Original fixed-field inputs can enter this producer through\nNumberField.cells. The existing number-field factory checks the original\nselected",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex\nopen Hex.RealClosure\nopen Hex.RealFormula\nopen Hex.RCF.RealCoefficients\nexample\n    {n : Nat} (g : RealAlgebraicNumber)\n    (registry : BaseContext.Reg",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The native conformance constructs both selected roots of X²−2 and a computed\ncoordinate in the field generated by the positive root of X³−2. ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Literal-reader acceptance still needs finite coverage of every serialized\ncoefficient and context. Frozen provider/context histories, strict ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Independently constructed coefficient contexts can enter complete packet\nproduction through GatherCells.build. Each input retains its origina",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  buildWith reuses the actual owner's gathering result. A compatible ordinary\nmodel proves complete packet production without assuming a succes",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex Hex.RealClosure\nopen Hex.RealClosure.Tower\nopen Hex.RealFormula\nopen Hex.RCF.RealCoefficients\nexample\n    {r : BaseContext.Registry}\n    {b : BaseConte",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  build_complete additionally derives successful gathering from the original\nowners' compatible base signatures and an ordinary base interpreta",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The native conformance combines separate positive √2 and √3 owners, repeats\none source coordinate, and checks a leading cancellation and repe",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  AlgebraicCells.build starts from original RealAlgebraicNumber inputs.\nIt constructs their checked selected presentations and gathers the resu",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The automatic constructor needs only the original nonzero guards for its\nprogress theorem. The rational interpretation, owner compatibility a",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex Hex.RealClosure\nopen Hex.RealFormula\nopen Hex.RCF.RealCoefficients\nexample (r : BaseContext.Registry)\n    {m n : Nat}\n    (vs : Fin m →\n      RealAlgeb",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  These native-input theorems preserve both emitted quantifier verdicts at the\noriginal selected real values. build_domains concludes every ori",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The complete literal checker can use checked cached arithmetic through\nCellOperations.check. It takes the owner's existing Replay.Operations\n",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex Hex.RealClosure Hex.SignDet\nopen Hex.RealFormula\nopen Hex.RCF.RealCoefficients\nopen Hex.RealClosure.Replay\nexample {r : BaseContext.Registry}\n    {p : ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Original guard preflight, radical identities, complete root/cell coverage and\nthe strict fold retain their existing soundness and domain theo",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  CellQuote.replayWith\nquotes a supplied CellOperations.check expression in three stages. It first\nchecks the complete root table, then each de",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean Hex.RealFormula\nopen Hex.Reflect\nopen Hex.RCF.RealCoefficients\nmeta def quoteCellPacket\n    (program : Expr)\n    (decode : RootQuote.DecoderM)\n    (co",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  set_option trace.Hex.RCF.CellQuote true reports reader and finite-family\nboundaries with cumulative proof-node usage. Lean heartbeats remain ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  CellQuote.finishPacketWith\ncontinues this request through the original source proof. It consumes the\nprepared source and the accepted canonic",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The separate finishing action can also continue already recorded usage:",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean Hex.RealFormula\nopen Hex.Reflect\nopen Hex.RCF.RealCoefficients\nmeta def finishCellPacket\n    (source : Reify.Source)\n    (target checker accepted : Ex",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  That separate transaction rolls back its own work. Clients needing rollback\nof quotation as well must combine both actions in one transaction",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Within this request, row quotation parses each literal sign packet and checks\nits exact ordered queries. It validates a graph once for each d",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The returned equation retains both Boolean verdicts. CellQuote.finishPacket\nperforms source authentication separately and requires an accepte",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "example : ∀ _x : ℝ, (0 : ℝ) = 0 :=\n  Hex.RCF.CellQuoteStages.source\n",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Its replay quotation uses 441,039 nodes for true and 441,041 for false. These\ncounts cover the three replay stages, separately from source re",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  A separate rational quadratic packet checks two root sections and three\nsectors in 5,911,125 proof nodes. Its trace records two graph-memo re",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  A fresh importing audit checks 1,247 theorem bodies and 101 definitions, with\n1,298 nonempty kernel traces, the unchanged producer guard and ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The algebraic source regression independently reads the complete frozen packet\nover the retained positive square root of 2. It reifies the fo",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "example : ∃ x : ℝ,\n    x ^ 2 - Real.sqrt 2 ≥ 0 ∧\n    x ^ 2 - Real.sqrt 2 ≤ 0 ∧\n    (0 : ℝ) = 0 :=\n  Hex.RCF.CellSourceQuote.source\n",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The shared reification and quotation budget records 8,644,422 proof nodes\nbefore source finishing and 8,651,669 for the complete original-sou",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Its importing proof audit checks 1,193 theorem bodies, 202 definitions and\n1,353 nonempty kernel traces. It excludes the older complete-packe",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  For a closed retained base/root context, RealModel.build constructs its\nordinary-real interpretation from a caller-supplied real base model a",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  A source equation alone does not distinguish real conjugates.\nSourceIdentity.observe\nreads a checked scalar sign at the native descriptor's s",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  SourceIdentity.quoteWith\nconstructs this identity from two supplied scalar readers. Its Anchor retains\nthe original polynomial, isolating squ",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean Hex.RealFormula\nopen Hex.Reflect\nopen Hex.RCF.RealCoefficients\nmeta def quoteSourceIdentity\n    (anchor : SourceIdentity.Anchor)\n    (packets : Source",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The result proves that the reader's selected real root equals the original\nanchor value. Quotation checks both packets, their keys, signs, su",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The frozen square-root regression quotes its parent descriptor and both\npackets in 673,461 proof nodes. Its coefficient identity supplies the",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The native producer SourceBuild.build\ncan discover a selected source from its defining polynomial and a window\npolynomial whose sign is posit",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  This direct API example proposes the positive root of X²−2, using its checked\nsource square:",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex Hex.RealClosure\nopen Hex.RCF.RealCoefficients\n\ndef proposeSquareRoot\n    (registry :\n      BaseContext.Registry) :=\n  Id.run do\n    let parent :=\n     ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The output reports proposal production. Independent frozen replay establishes\nthe selected real identity. ScalarPacket.buildParts retains the",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  ScalarPacket.buildParts_success and build_success prove actual packet\nproduction for every query at a validated descriptor with a lawful ordi",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The enumerated-source controls\nproduce both quadratic conjugates and a positive cubic root from X³−2, compare\ntheir complete bytes with froze",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  CellQuote.finishOperations takes the supplied-operation acceptance expression\nand an ordinary proof that its result is some (). It kernel-che",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Meta clients can prepare these native inputs from the original Lean statement\nwith AlgebraicPreparation.prepare. It reuses the shared source ",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean Meta Qq\nopen Hex.RCF.RealCoefficients\nrun_meta do\n  let .ok prepared ←\n      AlgebraicPreparation.prepare\n        q(∀ x : ℝ,\n          x^2 + 1 /\n     ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The resulting environment stores coefficient proposals first and every original\ndivisor afterward, with separate ordered indices for each rol",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  For the retained algebraic expressions, prepared.acceptanceIff proves an exact\nacceptance equivalence. The left side requires the actual alge",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex Lean Meta Qq\nopen Hex.RCF.RealCoefficients\nopen Hex.RealClosure.BaseContext\nrun_meta do\n  let target : Q(Prop) :=\n    q(∀ x : ℝ, x^2 + Real.sqrt 2 > 0)",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  This proof uses the checked algebraic expressions and their source identities.\nIt does not identify separately computed proposals with frozen",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The automatic-input conformance uses both selected signs of √2 alongside an\nindependent positive √3. It checks simultaneous conditions and a ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The explicit HexRCFAlgebraicCellsStress target retains the stronger condition\nx² = √2 with 1 < x < √3 and its negative-conjugate control. A r",
+        "overflow": 0
+      }
+    ]
+  }
+]
