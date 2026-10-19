@@ -8,6 +8,7 @@ module
 
 public import HexIntFactor.Export
 public import HexIntFactor.Frozen.Case3
+public meta import HexIntFactor.Export
 
 public section
 
@@ -96,7 +97,6 @@ set_option Elab.inServer true in
 info: module
 
 public import HexIntFactor.Replay
-public meta import HexIntFactor.Export
 
 public section
 

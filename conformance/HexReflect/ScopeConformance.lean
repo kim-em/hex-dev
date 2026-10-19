@@ -42,7 +42,7 @@ namespace Hex.ReflectScopeConformance
 
 open Lean Meta Hex Hex.Reflect
 
-private def carrier : MetaM Lean.Expr := do
+private meta def carrier : MetaM Lean.Expr := do
   let cmp ← mkAppOptM ``Hex.Mono.lex #[mkNatLit 2]
   mkAppOptM ``Hex.MvPoly #[mkNatLit 2, mkConst ``Int, none, cmp, none, none]
 
