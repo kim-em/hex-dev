@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexRankTheory.ProofProbe.NumberFieldSupport
+public meta import HexRankTheory.ProofProbe.NumberFieldSupport
 
 public section
 

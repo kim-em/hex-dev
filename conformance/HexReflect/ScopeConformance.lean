@@ -49,7 +49,7 @@ private def carrier : MetaM Lean.Expr := do
 /-- Reify `p * q + p` over the carrier, report the head constant of the exact
 commutative-ring instance recorded by the classification, and kernel-check the
 interpretation proof. -/
-private def probe (label : String) : MetaM Unit := do
+private meta def probe (label : String) : MetaM Unit := do
   let ty ← carrier
   withLocalDeclD `p ty fun p => do
   withLocalDeclD `q ty fun q => do

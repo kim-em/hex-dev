@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexIntFactor.Construction
+public meta import HexIntFactor.EcmStage2
 
 public section
 

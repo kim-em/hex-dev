@@ -217,7 +217,7 @@ private def entry (bt : RingBatch) (i : Nat) : MetaM RingEntry :=
 private def showTerms (entries : Array RingEntry) : String :=
   "\n".intercalate (entries.toList.map fun e => toString (repr (terms e)))
 
-private def checkProofs : Hex.Reflect.Config := { checkProofs := true }
+private meta def checkProofs : Hex.Reflect.Config := { checkProofs := true }
 
 -- Repeated atoms share one index, different atoms differ, division is one
 -- atom, and every proof is kernel-checked against the caller's source.

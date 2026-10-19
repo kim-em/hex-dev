@@ -8,6 +8,9 @@ module
 
 public import HexIntFactor
 public import HexIntFactor.FieldReplay
+public meta import HexIntFactor.Divisors
+public meta import HexIntFactor.Cyclotomic
+public meta import HexIntFactor.Order
 
 public section
 

@@ -47,6 +47,8 @@ info: Try this:
 module
 
 public import HexIntFactor.Mixed.Replay
+public meta import HexIntFactor.Mixed.Frozen.Small
+public meta import HexIntFactor.Mixed.Export
 
 public section
 

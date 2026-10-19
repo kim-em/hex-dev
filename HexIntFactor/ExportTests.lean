@@ -96,6 +96,7 @@ set_option Elab.inServer true in
 info: module
 
 public import HexIntFactor.Replay
+public meta import HexIntFactor.Export
 
 public section
 

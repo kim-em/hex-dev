@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexIntFactor.Pari
+public meta import HexIntFactor.Pari
 
 public section
 

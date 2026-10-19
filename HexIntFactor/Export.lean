@@ -116,7 +116,7 @@ private meta def generate (n : Nat) : MetaM (CheckedFactors n) := do
   let some value := result.value | throwError "integer factorization: no checked result"
   return value
 
-private def asciiName (s : String) : Bool :=
+private meta def asciiName (s : String) : Bool :=
   let alpha := fun c => ('a' ≤ c && c ≤ 'z') || ('A' ≤ c && c ≤ 'Z') || c == '_'
   s != "_" && s.toList.head?.any alpha &&
     s.toList.all (fun c => alpha c || ('0' ≤ c && c ≤ '9'))
