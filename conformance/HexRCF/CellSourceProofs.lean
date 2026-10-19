@@ -72,7 +72,7 @@ run_meta do
           ``Hex.SignDet.Descriptor.ofReplay?] then
       throwError "complete source reduced producer {producer}: {count}; body={name}"
     if !diagnostics.unfoldCounter.isEmpty then traces := traces+1
-  unless theorems == 1191 && definitions == 202 && traces == 1351 do
+  unless theorems == 1192 && definitions == 202 && traces == 1352 do
     throwError "complete source inventory changed: {theorems}/{definitions}/{traces}"
   unless (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
     throwError "complete source audit retained copied declarations"

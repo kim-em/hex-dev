@@ -10,6 +10,7 @@ import HexRCF.RealCoefficients.RationalQuote
 import HexRCF.RealCoefficients.ScalarQuote
 import HexRCF.RootTableQuote.Input
 import HexRCF.RealCoefficients.CellQuote
+import HexRCF.RealCoefficients.TowerCompile
 import HexRCF.SourceIdentityPacket
 open Lean Meta Qq Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
 open Hex.RCF.RealCoefficients.CellReplayTests
@@ -95,7 +96,17 @@ run_meta do
         Hex.RCF.SelectedRootTests.Data.base.codec)
     let reader ← mkAppM ``Codec.readPoly #[codec,mkConst ``polynomial]
     let result ← match ← RootQuote.runWith (do
-        let coefficient ← sourceCoefficient
+        let (coefficients,divisors) ← TowerCompile.prepareWith source
+          (mkConst ``Schema.original) fun expression => do
+            if expression != q(Real.sqrt 2) then return none
+            return some ⟨mkConst ``Hex.RCF.SelectedRootTests.Data.alpha,← sourceCoefficient⟩
+        unless coefficients.size == 1 && divisors.isEmpty do
+          throwError "compiled original source changed its coefficient/guard inventory"
+        let some compiled := coefficients[0]?
+          | throwError "compiled original source omitted its coefficient"
+        unless ← isDefEq compiled.expression q(Schema.values 0) do
+          throwError "compiled original source changed the retained certificate coordinate"
+        logInfo m!"prepared source coefficient inventory compiled in request; proofNodes={(← get).budget.consumed.proofNodes}"
         let p ← ScalarQuote.quotePolyWith reader (mkConst ``Records.facts) fun expression =>
           liftM (RationalQuote.decoder (mkConst ``Hex.RCF.SelectedRootTests.Data.registry) expression)
         logInfo m!"literal polynomial reconstructed; proofNodes={p.usage.proofNodes}"
@@ -177,20 +188,8 @@ run_meta do
           throwError "fresh complete literal quote has inadmissible dependencies"
         addDecl (.thmDecl {
           name := `Hex.RCF.CellSourceQuote.checked,levelParams := [],type := target,value := proof})
-        let valuation ← withLocalDeclD `i (← mkAppM ``Fin #[mkNatLit 1]) fun i => do
-          let value ← mkAppM ``Tower.Model.value
-            #[mkConst ``Schema.original,mkApp (mkConst ``Schema.values) i]
-          mkLambdaFVars #[i] value
-        let identityType ← mkEq valuation source.valuation
-        let identity ← mkFreshExprMVar identityType
-        let coefficientTerm := mkIdent coefficient.getAppFn.constName!
-        let remaining ← Lean.Elab.runTactic' identity.mvarId!
-          (← `(tactic| funext i; fin_cases i; exact $coefficientTerm))
-        unless remaining.isEmpty do throwError "original coefficient identity left goals"
-        let identity ← instantiateMVars identity
-        Hex.RealFormula.Reify.accountProof identityType
-        Hex.RealFormula.Reify.accountProof identity
-        let identity ← Hex.RCF.checkProof `completeSourceIdentity identityType identity
+        let identity ← CellQuote.valuationWith source (mkConst ``Schema.original)
+          (mkConst ``Schema.values) (coefficients.map (·.proof))
         let realTarget := source.original
         let arguments := program.getAppArgs
         let info ← getFunInfoNArgs program.getAppFn arguments.size

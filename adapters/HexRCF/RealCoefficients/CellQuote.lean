@@ -426,4 +426,29 @@ def finishOperations (target program accepted model valuationIdentity : Expr)
       | none => saved.restore
   return result
 
+/-- Assemble the exact source valuation from ordered scalar identities. -/
+def valuationWith (source : Reify.Source) (model values : Expr) (proofs : Array Expr) :
+    Hex.RealFormula.Reify.ReifyM Expr := do
+  for input in #[model,values,source.valuation] do
+    if input.hasFVar || input.hasMVar || input.hasLooseBVars then
+      throwError "rcf: source valuation requires closed inputs"
+    Hex.RealFormula.Reify.accountProof input
+    let _ ← Hex.RCF.checkExpr `CellQuote.input input
+    Meta.check input
+  unless proofs.size == source.coefficients.size do
+    throwError "rcf: source coefficient proof count differs from its inventory"
+  let domain ← mkAppM ``Fin #[mkNatLit source.coefficients.size]
+  let .forallE _ actualDomain _ _ ← whnf (← inferType values)
+    | throwError "rcf: source coordinates are not a finite function"
+  unless ← isDefEq actualDomain domain do
+    throwError "rcf: source coordinate count differs from its inventory"
+  let valuation ← withLocalDeclD `i domain fun i => do
+    let value ← mkAppM ``Hex.RealClosure.Tower.Model.value #[model,mkApp values i]
+    mkLambdaFVars #[i] value
+  let family ← withLocalDeclD `i domain fun i => do
+    mkLambdaFVars #[i] (← mkEq (mkApp valuation i) (mkApp source.valuation i))
+  let pointwise ← buildFamily family proofs
+  let proof ← mkAppM ``funext #[pointwise]
+  checked `CellQuote.sourceValuation (← mkEq valuation source.valuation) proof
+
 end Hex.RCF.RealCoefficients.CellQuote

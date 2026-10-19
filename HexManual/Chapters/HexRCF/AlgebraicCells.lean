@@ -684,7 +684,9 @@ The algebraic source regression independently reads the complete frozen packet
 over the retained positive square root of 2. It reifies the following original
 sentence, authenticates its fixed coefficient from the descriptor and two
 scalar packets inside the same request, reconstructs the coefficient polynomial
-and composes the checked cell verdict with the original source:
+and composes the checked cell verdict with the original source. The prepared
+coefficient inventory passes through `TowerCompile.prepareWith`, and
+`CellQuote.valuationWith` assembles its checked scalar identities for finishing:
 
 ```lean
 example : ∃ x : ℝ,
@@ -694,16 +696,16 @@ example : ∃ x : ℝ,
   Hex.RCF.CellSourceQuote.source
 ```
 
-The shared reification and quotation budget records 9,330,067 proof nodes
-before source finishing and 9,337,314 for the complete original-source attempt.
+The shared reification and quotation budget records 9,330,130 proof nodes
+before source finishing and 9,337,057 for the complete original-source attempt.
 Source authentication, cell replay and finishing run in one transaction. The test supplies 24M proof nodes and
 60M heartbeats. Its trace records two memo reuses and seven validations.
-Lake reports 821 seconds for this source module on the recorded shared host;
+Lake reports 793 seconds for this source module on the recorded shared host;
 this remains an expensive fixed-input proof build. These observations do not
 measure compiled replay or establish a general tactic running time.
 
-Its importing proof audit checks 1,191 theorem bodies, 202 definitions and
-1,351 nonempty kernel traces. It excludes the older complete-packet acceptance
+Its importing proof audit checks 1,192 theorem bodies, 202 definitions and
+1,352 nonempty kernel traces. It excludes the older complete-packet acceptance
 and source proofs, the handwritten coefficient identity and the separately
 proved source-selection/coefficient identities. It checks transitive
 axiom dependencies, and rejects native
@@ -859,6 +861,43 @@ with 35 nonempty kernel traces and the standard three axioms. The selected leaf
 identity and real parent model remain supplied. This arithmetic interface does
 not discover arbitrary source roots, assemble frozen histories or establish
 complete certificate acceptance.
+
+{name Hex.RCF.RealCoefficients.CellQuote.valuationWith}`CellQuote.valuationWith`
+assembles ordered scalar identities into equality of the entire source
+valuation for a supplied native coordinate function. Coordinate and proof
+counts must match the source; every finite branch is checked in the ordinary
+kernel. Closed inputs and empty coefficient families are supported. Swapped
+coordinates or proofs, missing entries, a wrong coordinate count and unresolved
+coordinate metavariables are rejected. Rejection restores the enclosing
+transaction's declarations and metavariables.
+
+```lean
+open Lean Hex.RealFormula Hex.Reflect
+open Hex.RealFormula.Reify
+open Hex.RCF.RealCoefficients
+meta def quoteSourceValuation
+    (source : Reify.Source)
+    (model values : Expr)
+    (identities : Array Expr)
+    (config : Reify.Config)
+    (used : BudgetUsage) :=
+  RootQuote.runWith (do
+    let proof ← CellQuote.valuationWith
+      source model values identities
+    pure ⟨values, proof,
+      (← get).budget.consumed⟩)
+    config used
+```
+
+The supplied usage continues the enclosing preparation and quotation work;
+the complete source example assembles this identity in its existing request.
+
+The zero-, one- and two-coordinate conformance requests consume 7,590, 11,174
+and 16,484 charged nodes, including source preparation, arithmetic and finite
+coordinate-function construction. Their fresh importing audit rechecks 14
+actual theorem bodies with 13 nonempty traces and exactly the standard three
+axioms. Original divisor identities remain separate obligations for source
+finishing; a valuation equality alone does not establish them.
 
 The native producer {name Hex.RCF.RealCoefficients.SourceBuild.build}`SourceBuild.build`
 can discover a selected source from its defining polynomial and a window
