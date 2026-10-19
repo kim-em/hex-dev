@@ -1,0 +1,1 @@
+{"autoMergeRequest":null,"mergeable":"MERGEABLE","reviewDecision":"","state":"OPEN","statusCheckRollup":[{"__typename":"CheckRun","completedAt":"2026-10-19T00:32:03Z","conclusion":"SUCCESS","detailsUrl":"https://github.com/kim-em/hex-dev/actions/runs/39175085494/job/117815973821","name":"build","startedAt":"2026-10-18T23:06:15Z","status":"COMPLETED","workflowName":"CI"}]}

@@ -1,0 +1,7 @@
+# Public presentation-model integration
+
+See [the report](../../hexrcf-public-model.md). Run `python3 reports/data/hexrcf-public-model/verify.py --check-head` for current source binding, or omit the flag to check the immutable consumer source commit.
+
+The record binds actual owner PR #10967's exact green head, recorded review comments, squash artifact and all six landed file contents. The continuing branch consumes those files unchanged and validates the actual ordinary-import adapter and native/source acceptance. Its manual documents current retained-header source quotation and corrects the old statement about importing a coefficient identity. Fresh full-goal proof compatibility and the complete current manual are checked separately from the targeted owner/consumer build.
+
+All build, metadata, render and browser logs, six visually inspected desktop/narrow captures and exact source inputs are retained. Skipped conditional CI steps are not treated as failures; the retained exact-head CI has no failed or cancelled steps. The owner review is reported by its existing public comments, not performed anew in this record. Every own build/render/browser invocation is serial under a hard aggregate 32 GiB cap, zero swap and two Lean threads. Prior proof/measurement records retain their own pins; this is not a new scientific timing study, entire default conformance run or completion of #10358.
