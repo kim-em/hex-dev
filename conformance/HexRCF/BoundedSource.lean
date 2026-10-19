@@ -36,7 +36,10 @@ run_meta do
   unless Hex.RCF.SelectedRootTests.KernelCheck.producers.contains ``SourceBuild.buildOn do
     throwError "bounded source producer is missing from the kernel guard"
   let roots := #[``ScalarPacket.buildParts_sign, ``SourceBuild.select_single,
-    ``SourceBuild.buildOn_success]
+    ``SourceBuild.buildOn_success, ``ScalarPacket.buildParts_poly,
+    ``ScalarPacket.read_checked, ``ScalarPacket.buildParts_accepted, ``ScalarPacket.buildParts_checks,
+    ``SourceBuild.select_checked, ``SourceBuild.buildOn_checked, ``SourceBuild.buildOn_checks,
+    ``SourceBuild.buildOn_identify]
   let axioms ← Algebraic.KernelReplay.AxiomClosure.collect roots
   unless axioms.all (fun name => [``propext, ``Classical.choice, ``Quot.sound].contains name) do
     throwError "bounded source progress has inadmissible dependencies: {axioms}"
@@ -50,7 +53,7 @@ run_meta do
       declaration none (doCheck := true)
   unless (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
     throwError "source progress audit retained copied declarations"
-  logInfo m!"bounded source progress: three actual theorem bodies rechecked; full axioms={axioms}"
+  logInfo m!"bounded source progress: {roots.size} actual theorem bodies rechecked; full axioms={axioms}"
 
 private def descriptorError (polynomial : base.Poly) (lower upper : Rat)
     (expected : DescriptorError) : IO Unit := do

@@ -7,6 +7,9 @@ module
 public import HexRCF.RealCoefficients.SectionReplay
 public import HexRealClosureTheory.SignFacts
 public import HexSignDet.DagEncode
+public import HexSignDet.DagBounds
+public import HexSignDet.Codec.GraphLaws
+public import HexSignDet.Codec.FiniteGraph
 
 public section
 namespace Hex.RCF.RealCoefficients.ScalarPacket
@@ -53,6 +56,20 @@ theorem buildParts_success (model : Model parent ℝ)
     model.one model.add model.sub model.mul model.nat model.sign model.neg model.inv
     [context.queryPoly polynomial]
   simp [buildParts, Algebraic.Context.buildSigns_eq, produced]
+
+/-- The wire key retains the original input polynomial, not just the reduced
+query used internally to determine its sign. -/
+theorem buildParts_poly
+    (context : Algebraic.Context parent.Value Signature parent.sign parent.signature)
+    (value : ValueCodec parent.Value) (polynomial : DensePoly parent.Value)
+    (proposal : Proposal) (produced : buildParts context value polynomial = some proposal) :
+    proposal.polynomial = Codec.poly value polynomial := by
+  cases built : context.buildSigns [context.queryPoly polynomial] with
+  | error error => simp [buildParts, built] at produced
+  | ok signs =>
+    have retained : Codec.poly value polynomial = proposal.polynomial := by
+      simpa [buildParts, built] using congrArg (Option.map Proposal.polynomial) produced
+    exact retained.symm
 
 /-- A produced scalar proposal retains the sign of the same polynomial at
 the same selected root. This production law does not replace frozen replay. -/
@@ -101,6 +118,78 @@ requires their checked operations. The model is used only in proofs. -/
     context.root.raw.lower context.root.raw.upper
   context.readSignFact? original.value original.zero_iff original.one original.add original.sub
     original.mul original.nat original.sign original.neg original.inv p claimed memo graph.root
+
+/-- Checked selected-sign evidence passes literal scalar replay with finite
+coverage of the actual polynomial and graph coefficients. A partial reader
+needs no global codec law. Graph shape, bindings and bounds are checked
+conclusions of the owner encoding laws, not additional hypotheses. -/
+theorem read_checked [Hashable parent.Value] [Hashable Signature] (model : Model parent ℝ)
+    (context : Algebraic.Context parent.Value Signature parent.sign parent.signature)
+    (value : ValueCodec parent.Value) (polynomial : DensePoly parent.Value)
+    (signs : SelectedSigns context.root [context.queryPoly polynomial])
+    (polynomialCovered : value.Covers (Codec.Coefficients.poly polynomial))
+    (graphCovered : value.Covers (Codec.Coefficients.graph (Dag.encode signs.evidence))) :
+    (read model value context (Codec.poly value polynomial) signs.value
+      (Codec.graph value Signature.codec (Dag.encode signs.evidence))).isSome = true := by
+  obtain ⟨memo, validated⟩ := Dag.validate_encode signs.check_eq.1
+  have decoded := Codec.read_graph_covered value Signature.codec parent.signature
+    context.root.raw.head context.root.raw.lower context.root.raw.upper
+    (Dag.encode signs.evidence) graphCovered (Signature.codec_lawful.covers _)
+    (Dag.encode_root signs.evidence)
+    (Codec.Shape.of_validate validated) (Codec.bindings_of_validate validated)
+    (Dag.encode_bounds signs.evidence)
+  have values : signs.values = #v[signs.value] := by
+    apply Vector.ext
+    intro i hi
+    simp only [List.length_singleton] at hi
+    have same : i = 0 := by omega
+    subst i
+    rfl
+  have selected : (context.readSigns? polynomial signs.value memo
+      (Dag.encode signs.evidence).root).isSome = true := by
+    rw [Algebraic.Context.readSigns?, SelectedSigns.readMemo_same,
+      Dag.selectedSigns_memo context.root [context.queryPoly polynomial] #v[signs.value]
+        (Dag.encode signs.evidence) memo validated, ← values]
+    have encoded := congrArg Option.isSome (Dag.selectedSigns_encode signs)
+    simpa using encoded
+  simp only [read, Codec.read_poly_covered value polynomial polynomialCovered, decoded, Except.toOption,
+    validated, bind, Option.bind]
+  unfold Algebraic.Context.readSignFact?
+  split
+  · simp_all
+  · rfl
+
+
+/-- A produced packet passes independent literal replay under a lawful
+coefficient codec. Graph shape, bindings and bounds follow from the owner's
+checked encoding laws; they are not additional hypotheses. -/
+theorem buildParts_accepted (model : Model parent ℝ)
+    (context : Algebraic.Context parent.Value Signature parent.sign parent.signature)
+    (value : ValueCodec parent.Value) (lawful : value.Lawful)
+    (polynomial : DensePoly parent.Value) (proposal : Proposal)
+    (produced : buildParts context value polynomial = some proposal) :
+    (read model value context proposal.polynomial proposal.sign proposal.evidence).isSome = true := by
+  let _ : Hashable parent.Value := ⟨fun a => hash (value.encode a)⟩
+  let _ : Hashable Signature := ⟨fun a => hash (Signature.codec.encode a)⟩
+  cases built : context.buildSigns [context.queryPoly polynomial] with
+  | error error => simp [buildParts, built] at produced
+  | ok signs =>
+    have payload : (⟨Codec.poly value polynomial, signs.value,
+        Codec.graph value Signature.codec (Dag.encode signs.evidence)⟩ : Proposal) = proposal := by
+      simpa [buildParts, built] using produced
+    cases payload
+    exact read_checked model context value polynomial signs (lawful.covers _) (lawful.covers _)
+
+/-- A lawful real parent and codec yield an actually produced, accepted scalar
+packet. No successful producer or accepted certificate is assumed. This is a
+progress theorem, not a replacement for quoting frozen data independently. -/
+theorem buildParts_checks (model : Model parent ℝ)
+    (context : Algebraic.Context parent.Value Signature parent.sign parent.signature)
+    (value : ValueCodec parent.Value) (lawful : value.Lawful) (polynomial : DensePoly parent.Value) :
+    ∃ proposal, buildParts context value polynomial = some proposal ∧
+      (read model value context proposal.polynomial proposal.sign proposal.evidence).isSome = true := by
+  obtain ⟨proposal, produced⟩ := buildParts_success model context value polynomial
+  exact ⟨proposal, produced, buildParts_accepted model context value lawful polynomial proposal produced⟩
 
 /-- The fallback is unobservable after successful packet acceptance. -/
 @[expose] def key (value : ValueCodec parent.Value) (literal : Codec.Json) :=
