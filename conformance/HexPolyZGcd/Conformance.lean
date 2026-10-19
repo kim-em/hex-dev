@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexPolyZGcd
+public meta import HexPolyZGcd.SquareFree
 
 public section
 

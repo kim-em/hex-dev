@@ -8,6 +8,8 @@ module
 
 public import HexGF2
 public import HexGFq
+public meta import HexGF2.Field.Word
+public meta import HexGFq.Basic
 
 public section
 

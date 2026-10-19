@@ -9,6 +9,7 @@ module
 public import HexRCF.BenchHash
 public import Hex.BenchOracle.Flint
 public import LeanBench
+public meta import HexRCF.Syntax
 
 public section
 

@@ -9,6 +9,8 @@ module
 public import HexIntFactor.Pari
 public import HexPrimality.Elab
 public import Lean.Elab.Command
+public meta import HexIntFactor.Import
+public meta import HexIntFactor.Pari
 
 public section
 

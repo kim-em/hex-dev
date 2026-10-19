@@ -8,6 +8,7 @@ module
 
 public import HexMvPolyCorpus
 public import LeanBench
+public meta import HexMvPoly.Operations
 
 public section
 

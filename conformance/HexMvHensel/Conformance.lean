@@ -7,6 +7,9 @@ Authors: Kim Morrison
 module
 
 public import HexMvHensel
+public meta import HexMvHensel.Diophantine
+public meta import HexMvHensel.Uni
+public meta import HexMvPoly.Ring
 
 public section
 

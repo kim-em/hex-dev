@@ -7,6 +7,10 @@ Authors: Kim Morrison
 module
 
 public import HexLLL
+public meta import HexLLL.Checker
+public meta import HexLLL.ExternalReducer
+public meta import HexLLL.Native
+public meta import HexMatrix.Basic
 
 public section
 

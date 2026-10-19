@@ -7,6 +7,9 @@ Authors: Kim Morrison
 module
 
 public import HexKronecker
+public meta import HexKronecker.Check
+public meta import HexKronecker.Expr
+public meta import HexKronecker.Size
 
 public section
 

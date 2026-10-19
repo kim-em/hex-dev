@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexECPPTheory.NativeFixtures
+public meta import HexECPPTheory.NativeFixtures
 
 public section
 

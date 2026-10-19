@@ -7,6 +7,11 @@ Authors: Kim Morrison
 module
 
 public import HexMvPolyFixtures
+public meta import HexMvPoly.Basic
+public meta import HexMvPoly.Mono
+public meta import HexMvPoly.Query
+public meta import HexMvPoly.Ring
+public meta import HexMvPolyFixtures
 
 public section
 

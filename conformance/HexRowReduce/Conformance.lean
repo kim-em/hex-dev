@@ -9,6 +9,12 @@ module
 public import HexRowReduce
 public import HexRowReduce.Witness
 public import HexRowReduce.FieldFixtures
+public meta import HexMatrix.Basic
+public meta import HexModArith.Ring
+public meta import HexRowReduce.Api
+public meta import HexRowReduce.FieldFixtures
+public meta import HexRowReduce.Kernel
+public meta import HexRowReduce.Loop
 
 public section
 

@@ -10,6 +10,7 @@ public import HexPoly.Euclid
 public import HexPoly.PseudoGcd
 public import HexPoly.Lcm
 public import HexPoly.InterpretTests
+public meta import HexPoly.PseudoGcd
 
 public section
 

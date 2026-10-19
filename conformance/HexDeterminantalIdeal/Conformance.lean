@@ -7,6 +7,12 @@ Authors: Kim Morrison
 module
 
 public import HexDeterminantalIdealFixtures
+public meta import HexDeterminantalIdeal.Minors
+public meta import HexDeterminantalIdeal.MvPoly
+public meta import HexDeterminantalIdealFixtures
+public meta import HexMatrix.Basic
+public meta import HexMvPoly.Basic
+public meta import HexMvPoly.Ring
 
 public section
 

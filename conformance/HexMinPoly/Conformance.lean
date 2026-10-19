@@ -9,6 +9,15 @@ module
 public import HexMinPoly
 public import HexMinPoly.Fixtures
 public import HexPolyFp.PrimeField
+public meta import HexMatrix.Basic
+public meta import HexMinPoly.Cert
+public meta import HexMinPoly.EvalVec
+public meta import HexMinPoly.Fixtures
+public meta import HexMinPoly.Kernel
+public meta import HexMinPoly.Krylov
+public meta import HexMinPoly.MinPoly
+public meta import HexMinPoly.Order
+public meta import HexModArith.Ring
 
 public section
 

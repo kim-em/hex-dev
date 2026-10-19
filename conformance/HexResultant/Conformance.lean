@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexResultant
+public meta import HexResultant.Discriminant
 
 public section
 

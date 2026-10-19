@@ -7,6 +7,16 @@ Authors: Kim Morrison
 module
 
 public import HexMvFactor
+public meta import HexMvFactor.Decomp
+public meta import HexMvFactor.Irred
+public meta import HexMvFactor.IrredData
+public meta import HexMvFactor.Kronecker
+public meta import HexMvFactor.Leading
+public meta import HexMvFactor.Point
+public meta import HexMvPoly.Basic
+public meta import HexMvPoly.Mono
+public meta import HexMvPoly.Operations
+public meta import HexMvPoly.Ring
 
 public section
 

@@ -10,6 +10,11 @@ public import HexPolyFp.Frobenius
 public import HexPolyFp.ModCompose
 public import HexPolyFp.NttMul
 public import HexPolyFp.SquareFree
+public meta import HexPolyFp.Frobenius
+public meta import HexPolyFp.ModCompose
+public meta import HexPolyFp.NttMul
+public meta import HexPolyFp.SquareFree
+public meta import HexPolyFp.SquareFree.Algebra
 
 public section
 

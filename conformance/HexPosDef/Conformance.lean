@@ -8,6 +8,7 @@ module
 
 public import HexPosDef
 public import HexMatrix.Notation
+public meta import HexPosDef.Certificate
 
 public section
 

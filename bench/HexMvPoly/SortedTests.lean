@@ -8,6 +8,8 @@ module
 
 public import HexMvPoly.Sorted
 public import HexMvPolyCorpus
+public meta import HexMvPoly.Sorted
+public meta import HexMvPolyCorpus
 
 public section
 

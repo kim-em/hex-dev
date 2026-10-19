@@ -8,6 +8,10 @@ module
 
 public import HexPolyFp.PrimeField
 public import HexPolySmith
+public meta import HexMatrix.Basic
+public meta import HexModArith.Ring
+public meta import HexPolySmith.Cert
+public meta import HexPolySmith.Structure
 
 public section
 

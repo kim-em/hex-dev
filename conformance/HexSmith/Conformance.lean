@@ -8,6 +8,14 @@ module
 
 public import HexSmith
 public import HexMatrix.Notation
+public meta import HexHermite.Hermite
+public meta import HexHermite.Lattice
+public meta import HexMatrix.Basic
+public meta import HexMatrix.Diagonal
+public meta import HexSmith.Contracts
+public meta import HexSmith.Diagonal
+public meta import HexSmith.Kernel
+public meta import HexSmith.Smith
 
 public section
 

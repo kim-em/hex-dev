@@ -8,6 +8,7 @@ module
 
 public import HexGraphIso.Cases
 public import HexGraphIso.Nauty.Policy.Complete
+public meta import HexGraphIso.Families
 
 public section
 

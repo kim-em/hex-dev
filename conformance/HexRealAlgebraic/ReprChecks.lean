@@ -7,6 +7,8 @@ Authors: Kim Morrison
 module
 
 public import HexRealAlgebraic
+public meta import HexNumberField.Nearest
+public meta import HexRealAlgebraic.Basic
 
 public section
 

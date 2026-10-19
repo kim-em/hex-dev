@@ -9,6 +9,11 @@ module
 public import HexBerlekamp.DegreePattern
 public import HexBerlekamp.DistinctDegree
 public import HexBerlekamp.DelayedKernel
+public meta import HexBerlekamp.BerlekampMatrix
+public meta import HexBerlekamp.DegreePattern
+public meta import HexBerlekamp.DistinctDegree
+public meta import HexBerlekamp.Factor
+public meta import HexBerlekamp.Irreducibility
 
 public section
 

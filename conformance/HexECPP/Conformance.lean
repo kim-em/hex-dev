@@ -13,6 +13,12 @@ public import HexECPP.Fixture256
 public import HexECPP.Fixture512
 public import HexECPP.ImportConformance
 public import HexECPP.PariFixtures
+public meta import HexECPP.Fixture17
+public meta import HexECPP.Fixture256
+public meta import HexECPP.Fixture512
+public meta import HexECPP.Fixture65
+public meta import HexECPP.Import
+public meta import HexECPP.ImportConformance
 
 public section
 

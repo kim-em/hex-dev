@@ -7,6 +7,19 @@ Authors: Kim Morrison
 module
 
 public import HexConway
+public meta import HexConway.ApiCore
+public meta import HexConway.Supported.S0_0
+public meta import HexConway.Supported.S0_4
+public meta import HexConway.Supported.S0_6
+public meta import HexConway.Supported.S1_4
+public meta import HexConway.Supported.S1_5
+public meta import HexConway.Supported.S2_2
+public meta import HexConway.Supported.S2_3
+public meta import HexConway.Supported.S2_6
+public meta import HexConway.Supported.S3_1
+public meta import HexConway.Supported.S3_3
+public meta import HexConway.Supported.S3_4
+public meta import HexConway.Supported.S3_6
 
 public section
 

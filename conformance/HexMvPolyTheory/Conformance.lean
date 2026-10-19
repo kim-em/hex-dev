@@ -7,6 +7,10 @@ Authors: Kim Morrison
 module
 
 public import HexMvPolyTheory
+public meta import HexMvPoly.Basic
+public meta import HexMvPoly.Mono
+public meta import HexMvPoly.Operations
+public meta import HexMvPoly.Structural
 
 public section
 

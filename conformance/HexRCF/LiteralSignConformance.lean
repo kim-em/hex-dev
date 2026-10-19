@@ -9,6 +9,9 @@ module
 public import HexRCF.RealCoefficients.Field
 public import HexRCF.RealCoefficients.CommonPresentation
 public import HexRCF.RealCoefficients.SquareTwo
+public meta import HexRCF.RealCoefficients.IntervalSign
+public meta import HexRCF.RealCoefficients.LiteralSign
+public meta import HexRCF.RealCoefficients.SquareTwo
 
 public section
 

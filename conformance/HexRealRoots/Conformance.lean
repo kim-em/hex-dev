@@ -8,6 +8,12 @@ module
 
 public import HexRealRoots
 public import HexRealRoots.TarskiTests
+public meta import HexRealRoots.Isolate
+public meta import HexRealRoots.IsolateDescartes
+public meta import HexRealRoots.IsolateSturm
+public meta import HexRealRoots.Mobius
+public meta import HexRealRoots.Prec
+public meta import HexRealRoots.Refine
 
 public section
 

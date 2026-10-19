@@ -9,6 +9,8 @@ module
 public import HexRCF.RealFormula
 public import HexRealFormulaTheory.Reify
 public import Lean.Elab.Tactic
+public meta import HexRCF.RealFormula
+public meta import HexRCF.Syntax
 
 public section
 

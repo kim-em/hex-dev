@@ -8,6 +8,14 @@ module
 
 public import HexDeterminant
 public import HexDeterminant.Carriers
+public meta import HexDeterminant.Carriers
+public meta import HexDeterminant.Leibniz
+public meta import HexMatrix.Basic
+public meta import HexMatrix.Elementary
+public meta import HexModArith.Residue
+public meta import HexModArith.Ring
+public meta import HexMvPoly.Basic
+public meta import HexMvPoly.Ring
 
 public section
 

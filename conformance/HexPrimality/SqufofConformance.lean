@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexPrimality.Squfof
+public meta import HexPrimality.Squfof
 
 public section
 

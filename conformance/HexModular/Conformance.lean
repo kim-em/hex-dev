@@ -7,6 +7,12 @@ Authors: Kim Morrison
 module
 
 public import HexModular
+public meta import HexModular.Crt
+public meta import HexModular.CrtPlan
+public meta import HexModular.Euclid
+public meta import HexModular.Loop
+public meta import HexModular.Recon
+public meta import HexModular.SymMod
 
 public section
 

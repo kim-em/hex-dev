@@ -7,6 +7,13 @@ Authors: Kim Morrison
 module
 
 public import HexSparsePolyFixtures
+public meta import HexModArith.Residue
+public meta import HexModArith.Ring
+public meta import HexSparsePoly.Arith
+public meta import HexSparsePoly.Basic
+public meta import HexSparsePoly.Dense
+public meta import HexSparsePoly.Eval
+public meta import HexSparsePolyFixtures
 
 public section
 

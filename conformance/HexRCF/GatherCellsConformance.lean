@@ -8,6 +8,7 @@ module
 public import HexRCF.RealCoefficients.GatherCells
 public import HexRCF.ProofEvidence
 public import HexRCF.Tactic
+public meta import HexRealFormula.Syntax
 
 public section
 namespace Hex.RCF.RealCoefficients.GatherCellsConformance

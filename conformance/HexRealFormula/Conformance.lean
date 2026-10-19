@@ -7,6 +7,11 @@ Authors: Kim Morrison
 module
 
 public import HexRealFormula
+public meta import HexMvPoly.Basic
+public meta import HexMvPoly.Ring
+public meta import HexRealFormula.Kernel
+public meta import HexRealFormula.Prenex
+public meta import HexRealFormula.Syntax
 
 public section
 

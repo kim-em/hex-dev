@@ -7,6 +7,9 @@ Authors: Kim Morrison
 module
 
 public import HexSmith
+public meta import HexMatrix.Notation
+public meta import HexSmith.Smith
+public meta import HexSmith.Structure
 
 public section
 

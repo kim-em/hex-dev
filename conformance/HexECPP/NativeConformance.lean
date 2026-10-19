@@ -7,6 +7,14 @@ Authors: Kim Morrison
 module
 
 public import HexECPP.Search
+public meta import HexBasic.Rand
+public meta import HexECPP.CM
+public meta import HexECPP.CM.ClassPolynomials
+public meta import HexECPP.CM.Roots
+public meta import HexECPP.Cert
+public meta import HexECPP.Import
+public meta import HexECPP.Search
+public meta import HexPrimality.Cert
 
 public section
 

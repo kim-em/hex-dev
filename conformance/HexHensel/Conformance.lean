@@ -8,6 +8,9 @@ module
 
 public import HexHensel.Multifactor
 public import HexHensel.QuadraticMultifactor
+public meta import HexHensel.ModularPolynomial
+public meta import HexHensel.Multifactor
+public meta import HexHensel.QuadraticMultifactor
 
 public section
 

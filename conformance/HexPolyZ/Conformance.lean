@@ -10,6 +10,12 @@ public import HexPolyZ.KroneckerMulti
 public import HexPolyZ.NttMul
 public import HexPolyZ.Mignotte
 public import HexPolyZ.ExactDivision
+public meta import HexArith.Nat.Prime
+public meta import HexPolyFast.Plan
+public meta import HexPolyZ.ExactDivision
+public meta import HexPolyZ.IntegerPolynomial
+public meta import HexPolyZ.Mignotte
+public meta import HexPolyZ.NttMul
 
 public section
 

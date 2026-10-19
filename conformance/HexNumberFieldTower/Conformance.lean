@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexNumberFieldTower
+public meta import HexNumberFieldTower.Flatten
 
 public section
 

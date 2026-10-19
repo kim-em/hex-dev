@@ -8,6 +8,10 @@ module
 
 public import HexCharPoly.Fixtures
 public import HexCharPoly.Carriers
+public meta import HexCharPoly.Carriers
+public meta import HexCharPoly.Fixtures
+public meta import HexModArith.Residue
+public meta import HexMvPoly.Ring
 
 public section
 

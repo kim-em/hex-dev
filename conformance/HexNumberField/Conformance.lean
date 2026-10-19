@@ -7,6 +7,9 @@ Authors: Kim Morrison
 module
 
 public import HexNumberField
+public meta import HexNumberField.IntegerRoots
+public meta import HexNumberField.Nearest
+public meta import HexNumberField.Roots
 
 public section
 

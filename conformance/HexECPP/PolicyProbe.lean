@@ -8,6 +8,8 @@ module
 
 public import HexPrimality.Search
 public import HexECPP.Fixture256
+public meta import HexECPP.Fixture256
+public meta import HexPrimality.Search
 
 public section
 

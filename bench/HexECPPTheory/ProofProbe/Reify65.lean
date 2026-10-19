@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexECPPTheory.ProofProbe.Support
+public meta import HexECPP.Fixture65
 
 public section
 

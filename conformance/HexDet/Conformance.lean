@@ -7,6 +7,14 @@ Authors: Kim Morrison
 module
 
 public import HexDet
+public meta import HexBareiss.Bareiss
+public meta import HexDet.Basic
+public meta import HexDet.Field
+public meta import HexDet.Int
+public meta import HexDet.Poly
+public meta import HexModArith.Residue
+public meta import HexModArith.Ring
+public meta import HexMvPoly.Ring
 
 public section
 

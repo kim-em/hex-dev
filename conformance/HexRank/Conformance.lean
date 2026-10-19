@@ -11,6 +11,12 @@ public import HexMatrix.Notation
 public import HexPolyFp.PrimeField
 public import HexResultant.ExactDiv
 public import HexMvGcd
+public meta import HexMvPoly.Operations
+public meta import HexRank.Cert
+public meta import HexRank.Int
+public meta import HexRank.Kernel
+public meta import HexRank.Produce
+public meta import HexRank.ReduceImpl
 
 public section
 

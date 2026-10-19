@@ -7,6 +7,12 @@ Authors: Kim Morrison
 module
 
 public import HexMatrix
+public meta import HexMatrix.Basic
+public meta import HexMatrix.Elementary
+public meta import HexMatrix.Gram
+public meta import HexMatrix.Notation
+public meta import HexMatrix.Strassen
+public meta import HexMatrix.Submatrix
 
 public section
 

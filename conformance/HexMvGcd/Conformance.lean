@@ -7,6 +7,11 @@ Authors: Kim Morrison
 module
 
 public import HexMvGcd
+public meta import HexMvGcd.Brown
+public meta import HexMvGcd.Fast
+public meta import HexMvPoly.Basic
+public meta import HexMvPoly.Mono
+public meta import HexMvPoly.Ring
 
 public section
 

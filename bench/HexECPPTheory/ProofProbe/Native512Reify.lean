@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexECPPTheory.Tests.Frozen512
+public meta import HexECPPTheory.Tests.Frozen512
 
 public section
 

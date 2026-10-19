@@ -10,6 +10,7 @@ public import HexPrimality
 public import HexPrimality.Curve25519Replay
 public import HexPrimality.Curve448Replay
 public import HexPrimality.CertificateProducer
+public meta import HexPrimality.CertificateProducer
 
 public section
 

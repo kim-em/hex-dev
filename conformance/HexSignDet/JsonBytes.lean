@@ -6,6 +6,7 @@ Authors: Kim Morrison
 module
 
 public import HexSignDet.Codec.Value
+public meta import HexSignDet.Codec.Value
 
 public section
 

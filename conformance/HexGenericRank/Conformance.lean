@@ -7,6 +7,9 @@ Authors: Kim Morrison
 module
 
 public import HexGenericRank.Fixtures
+public meta import HexGenericRank.Fixtures
+public meta import HexModArith.Residue
+public meta import HexModArith.Ring
 
 public section
 

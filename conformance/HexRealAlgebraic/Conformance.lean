@@ -10,6 +10,12 @@ public import HexRealAlgebraic
 public import Lean.Compiler.CSimpAttr
 public import Lean.Compiler.IR.CompilerM
 public import Lean.Elab.Command
+public meta import HexNumberField.IntegerRoots
+public meta import HexNumberField.Nearest
+public meta import HexNumberField.Roots
+public meta import HexRealAlgebraic.Basic
+public meta import HexRealAlgebraic.Order
+public meta import HexRealAlgebraic.Roots
 
 public section
 

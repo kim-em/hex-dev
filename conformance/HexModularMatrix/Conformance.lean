@@ -8,6 +8,22 @@ module
 
 public import HexModularMatrix.Fixtures
 public import HexMatrix.Notation
+public meta import HexMatrix.Basic
+public meta import HexModArith.Modulus
+public meta import HexModArith.Residue
+public meta import HexModArith.Ring
+public meta import HexModularMatrix.Decomp
+public meta import HexModularMatrix.Det
+public meta import HexModularMatrix.Divisor
+public meta import HexModularMatrix.Fixtures
+public meta import HexModularMatrix.Image
+public meta import HexModularMatrix.Kernel
+public meta import HexModularMatrix.Normalise
+public meta import HexModularMatrix.Numerator
+public meta import HexModularMatrix.Rank
+public meta import HexModularMatrix.Reconstruction
+public meta import HexModularMatrix.Solve
+public meta import HexModularMatrix.SolveMat
 
 public section
 

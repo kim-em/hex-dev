@@ -7,6 +7,9 @@ Authors: Kim Morrison
 module
 
 public import HexGFqRing.Operations
+public meta import HexGFqRing.Operations
+public meta import HexGFqRing.PolynomialQuotient
+public meta import HexModArith.Residue
 
 public section
 

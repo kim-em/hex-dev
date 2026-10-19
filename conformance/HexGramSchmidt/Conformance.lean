@@ -7,6 +7,10 @@ Authors: Kim Morrison
 module
 
 public import HexGramSchmidt.Update
+public meta import HexGramSchmidt.Int.Combination
+public meta import HexGramSchmidt.Int.Core
+public meta import HexGramSchmidt.Int.Scaled
+public meta import HexGramSchmidt.Update
 
 public section
 
