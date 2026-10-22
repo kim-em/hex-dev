@@ -1,0 +1,6 @@
+{
+  "path": "HexModArith/Ntt/Catalogue.lean",
+  "baseline_blob": "ab4a4b723e6a6460b3487e25c527097451e6df6d",
+  "current_blob": "0b16324d6d5a2cc221f784a43f997ed47860ee83",
+  "reason": "Adds three theorems (`NttPrime.maxLength_eq`, `nttPrimes_length`, `nttPrimes_map_maxLog`) for importing modules to rewrite with. Theorems produce no compiled code, and no definition in the catalogue changes."
+}
