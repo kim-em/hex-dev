@@ -18,15 +18,23 @@ namespace Hex.RealClosure.NestedNormalization
 
 open SignDet
 
-/-- Runtime diagnostics preserve the ordinary kernel computation. The event
-counts one executed callback; rational gcds internal to Rat are not observed. -/
-def traceOp {A : Type} (enabled : Bool) (depth : Nat) (operation : String)
+/-- Compiled implementation of `traceOp`: when enabled, emits one diagnostic
+line before running the callback. -/
+def traceOpImpl {A : Type} (enabled : Bool) (depth : Nat) (operation : String)
     (run : Unit → A) : A :=
   if enabled then dbgTrace s!"NESTED {depth} {operation}" run else run ()
 
+/-- Runtime diagnostics preserve the ordinary kernel computation. The event
+counts one executed callback; rational gcds internal to Rat are not observed.
+Logically this is the callback; compiled code traces through `traceOpImpl`. -/
+@[implemented_by traceOpImpl]
+def traceOp {A : Type} (enabled : Bool) (depth : Nat) (operation : String)
+    (run : Unit → A) : A :=
+  run ()
+
 theorem traceOp_eq {A : Type} (enabled : Bool) (depth : Nat) (operation : String)
     (run : Unit → A) : traceOp enabled depth operation run = run () := by
-  cases enabled <;> rfl
+  simp only [traceOp]
 
 /-- Ordinary coefficient operations. Raw algebraic values are deliberately
 not given a ring or field instance. Each arm changes packing at every level. -/

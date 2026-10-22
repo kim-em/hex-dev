@@ -23,7 +23,7 @@ short names and hashes never replace these fields. -/
 structure Signature where
   base : BaseContext.Signature
   roots : List Literal
-  deriving DecidableEq, Repr
+  deriving @[expose] DecidableEq, Repr
 
 attribute [-instance] instDecidableEqSignature
 

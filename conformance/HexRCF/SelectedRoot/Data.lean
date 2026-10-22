@@ -97,7 +97,10 @@ theorem parent_eq : extension.context = parent := by
     lower frozenFrame frameEncoded
 
 set_option maxRecDepth 32768 in
-theorem signature_eq : parent.signature = frozenSignature := by decide +kernel
+theorem signature_eq : parent.signature = frozenSignature := by
+  -- Decide with the structural instance; the default one adds a pointer shortcut.
+  letI : DecidableEq Tower.Signature := Tower.instDecidableEqSignature
+  decide +kernel
 /-- info: 'Hex.RCF.SelectedRootTests.Data.frozenRootData' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms frozenRootData

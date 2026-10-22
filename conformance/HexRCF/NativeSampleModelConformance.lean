@@ -59,7 +59,10 @@ private def descriptor := root?.toOption.get accepted
 set_option maxRecDepth 32768 in
 private theorem subject : descriptor.raw =
     ⟨context.signature, DensePoly.ofCoeffs #[-parameter, 0, 1], .finite 0, .finite 1,
-      [1, 2], [1, 1]⟩ := by decide +kernel
+      [1, 2], [1, 1]⟩ := by
+  -- Decide with the structural signature instance; the default one adds a pointer shortcut.
+  letI : DecidableEq Tower.Signature := Tower.instDecidableEqSignature
+  decide +kernel
 
 def sample : Tower.Sample context := Tower.Sample.section context descriptor
 private noncomputable def original : Model context reference.Carrier := reference.model
