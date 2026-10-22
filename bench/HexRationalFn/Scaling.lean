@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRationalFn
-import LeanBench
+module
+
+public import HexRationalFn
+public import LeanBench
+
+public section
 
 /-!
 Operation-specific degree ladders over bounded rational coefficients. Preparation
@@ -95,7 +99,7 @@ structure ReplayInput where
   q : DensePoly Rat
   cert : Cert Rat
 
-private instance : Hashable ReplayInput := ⟨fun i =>
+instance : Hashable ReplayInput := ⟨fun i =>
   hash (i.p.toArray, i.q.toArray, i.cert.num.toArray, i.cert.den.toArray,
     i.cert.s.toArray, i.cert.t.toArray)⟩
 

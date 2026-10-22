@@ -4,13 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.SelectedRoot.KernelCheck
-import HexRCF.SelectedRoot.PacketFields
-import HexRCF.SelectedRoot.Packets
-import HexRealClosureTheory.KernelReplay
-import Lean.Elab.Command
+module
 
-meta section
+public import HexRCF.SelectedRoot.KernelCheck
+public import HexRCF.SelectedRoot.PacketFields
+public import HexRCF.SelectedRoot.Packets
+public import HexRealClosureTheory.KernelReplay
+public import Lean.Elab.Command
+
+public meta section
 namespace Hex.RCF.SelectedRootTests.ReplayTools
 open Hex.RCF.SelectedRootTests
 open Lean Meta Elab Command Hex Hex.RealClosure Hex.SignDet

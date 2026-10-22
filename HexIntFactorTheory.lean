@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntFactorTheory.Factorization
-import HexIntFactorTheory.Order
+module
+
+public import HexIntFactorTheory.Factorization
+public import HexIntFactorTheory.Order
+
+public section
 
 /-! Mathlib correspondences for `HexIntFactor`. -/

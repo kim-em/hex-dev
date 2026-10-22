@@ -3,9 +3,13 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexGraphIso
-import HexGraphIso.SparseTestGraphs
-import HexGraphIso.ProofProbe.Support
+module
+
+public import HexGraphIso
+public import HexGraphIso.SparseTestGraphs
+public import HexGraphIso.ProofProbe.Support
+
+public section
 
 /-! Imported native sparse inputs for fresh-module kernel replay probes.
 The CFI pair shares the dense probe's adjacency predicate, constructing sparse

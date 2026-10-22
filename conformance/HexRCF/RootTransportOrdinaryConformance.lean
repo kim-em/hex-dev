@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.RealCoefficients
-import HexRCF.RootTransportConformance
-import HexRCF.ProofEvidence
-import Lean.Elab.Command
+module
+
+public import HexRCF.RealCoefficients
+public import HexRCF.RootTransportConformance
+public import HexRCF.ProofEvidence
+public import Lean.Elab.Command
+
+public section
 open Hex.RCF.SelectedRootTests.Data
 namespace Hex.RCF.RealCoefficients.RootTransportOrdinaryConformance
 open Hex.RCF.RealCoefficients.RootTransportConformance

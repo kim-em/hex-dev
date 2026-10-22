@@ -3,8 +3,12 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import KernelReplay.GuardBaseAgreement
-import KernelReplay.GuardPrefixAudit
+module
+
+public import KernelReplay.GuardBaseAgreement
+public import KernelReplay.GuardPrefixAudit
+
+public section
 
 namespace Hex.RealClosure.Algebraic.KernelReplay.GuardBasePrefixAudit
 open Lean Meta Elab GuardDescriptorInputs

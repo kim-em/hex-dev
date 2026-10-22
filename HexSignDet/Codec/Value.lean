@@ -20,17 +20,17 @@ inductive Value where
   | string (value : String)
   | array (values : Values)
   | object (fields : Fields)
-  deriving DecidableEq, Repr
+  deriving @[expose] DecidableEq, Repr
 /-- Literal recursive JSON arrays retaining every ordered value. -/
 inductive Values where
   | nil
   | cons (value : Value) (rest : Values)
-  deriving DecidableEq, Repr
+  deriving @[expose] DecidableEq, Repr
 /-- Literal recursive JSON object fields retaining order and duplicate keys. -/
 inductive Fields where
   | nil
   | cons (key : String) (value : Value) (rest : Fields)
-  deriving DecidableEq, Repr
+  deriving @[expose] DecidableEq, Repr
 end
 
 mutual

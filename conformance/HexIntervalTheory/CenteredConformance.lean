@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalTheory.Experiment.Centered
-import HexInterval.Experiment.PayloadSession
-import HexInterval.Experiment.ProofEmitter
+module
+
+public import HexIntervalTheory.Experiment.Centered
+public import HexInterval.Experiment.PayloadSession
+public import HexInterval.Experiment.ProofEmitter
+
+public section
 
 /-!
 # Centered arbitrary-function replay conformance

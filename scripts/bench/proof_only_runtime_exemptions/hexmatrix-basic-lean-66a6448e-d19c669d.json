@@ -1,0 +1,6 @@
+{
+  "path": "HexMatrix/Basic.lean",
+  "baseline_blob": "66a6448eaad9825f614df3a2e1f01fe036551f81",
+  "current_blob": "d19c669de9c2f3adb931e7527d8ab142456a2af0",
+  "reason": "Composes the theory-rename transition 66a6448e -> 6c74f517 with adding `@[expose]` to `writeRow` so importing modules' kernel checks can unfold it. `expose` only publishes the body to importing proofs; `writeRow` keeps its definition and `@[inline]`, so compiled code is unchanged."
+}

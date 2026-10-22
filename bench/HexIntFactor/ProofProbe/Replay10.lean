@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntFactor.ProofProbe.Support
+module
+
+public import HexIntFactor.ProofProbe.Support
+
+public section
 namespace Hex.IntFactor.ProofProbe
 theorem replay10 : Hex.Nat.checkFactorization (replayCase 10) = true := by
   decide +kernel

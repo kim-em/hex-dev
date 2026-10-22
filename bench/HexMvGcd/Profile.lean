@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexMvGcd.Comparators
-import LeanBench
+module
+
+public import HexMvGcd.Comparators
+public import LeanBench
+
+public section
 
 /-!
 Parametric handles for sampling the fixed HexMvGcd comparator cases.

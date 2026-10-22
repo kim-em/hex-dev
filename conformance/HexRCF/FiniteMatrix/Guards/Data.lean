@@ -3,8 +3,12 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.FiniteMatrix.Guards.Records
-import HexRCF.FiniteMatrix.Guards.Binding
+module
+
+public import HexRCF.FiniteMatrix.Guards.Records
+public import HexRCF.FiniteMatrix.Guards.Binding
+
+public section
 open Hex Hex.SignDet Hex.RealClosure Hex.RealClosure.Algebraic
 open Hex.RealClosure.Algebraic.KernelReplay
 open Hex.RCF.RealCoefficients Hex.RCF.RealCoefficients.FiniteMatrixTests

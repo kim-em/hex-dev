@@ -3,10 +3,14 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.FiniteMatrix.Guards.Controls
-import HexRCF.FiniteMatrix.Guards.Domains
-import HexRCF.FiniteMatrix.Guards.Refusals
-import HexRCF.FiniteMatrix.Ordinary
+module
+
+public import HexRCF.FiniteMatrix.Guards.Controls
+public import HexRCF.FiniteMatrix.Guards.Domains
+public import HexRCF.FiniteMatrix.Guards.Refusals
+public import HexRCF.FiniteMatrix.Ordinary
+
+public section
 namespace Hex.RCF.RealCoefficients.FiniteMatrixTests.Guards.Ordinary
 open Lean Meta Hex.RealClosure.Algebraic.KernelReplay
 private theorem priorWitness : ∃ x : ℝ, x ^ 2 = Real.sqrt 2 ∧ 1 < x ∧ x < 2 :=

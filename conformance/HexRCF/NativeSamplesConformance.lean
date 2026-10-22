@@ -3,15 +3,19 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.RealCoefficients.NativeSamples
-import HexRCF.ProofEvidence
-import HexRCF.Tactic
-import HexRCF.SelectedRoot.Data
-import HexRCF.SelectedRoot.Upper
-import HexRCF.SelectedRoot.CatalogSource
-import HexRealClosure.SharedPresentation
-import HexRealClosure.Sample
-import HexRCF.RealCoefficients.NativeSpecialize
+module
+
+public import HexRCF.RealCoefficients.NativeSamples
+public import HexRCF.ProofEvidence
+public import HexRCF.Tactic
+public import HexRCF.SelectedRoot.Data
+public import HexRCF.SelectedRoot.Upper
+public import HexRCF.SelectedRoot.CatalogSource
+public import HexRealClosure.SharedPresentation
+public import HexRealClosure.Sample
+public import HexRCF.RealCoefficients.NativeSpecialize
+
+public section
 /-! Oracle: independently stated selected-root facts and expected sign words;
 mode: always. Covers actual coefficient conversion, shared atom order, root
 sections, repeated/zero atoms, leading cancellation and half-open guard atoms.

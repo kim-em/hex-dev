@@ -3,13 +3,17 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.CellReplay.Operations
-import HexRCF.SourceIdentityCases
-import HexRCF.RealCoefficients.AlgebraicCells
-import HexRCF.RealCoefficients.CellOperations
-import HexRCF.RealCoefficients.RealModel
-import HexRealClosureTheory.NativeAssemblyModels
-import KernelReplay.AxiomClosure
+module
+
+public import HexRCF.CellReplay.Operations
+public import HexRCF.SourceIdentityCases
+public import HexRCF.RealCoefficients.AlgebraicCells
+public import HexRCF.RealCoefficients.CellOperations
+public import HexRCF.RealCoefficients.RealModel
+public import HexRealClosureTheory.NativeAssemblyModels
+public import KernelReplay.AxiomClosure
+
+public section
 namespace Hex.RCF.RealCoefficients.CellReplayTests.Assembled
 open Hex Lean Meta Elab Command Term
 open Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients

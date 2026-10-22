@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexECPPTheory.Soundness
+module
+
+public import HexECPPTheory.Soundness
+
+public section
 
 /-- info: 'Hex.ECPP.natPrime_of_check' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in

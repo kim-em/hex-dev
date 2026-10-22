@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexResultant
-import Hex.BenchOracle.Flint
-import Lean.Data.Json
-import LeanBench
+module
+
+public import HexResultant
+public import Hex.BenchOracle.Flint
+public import Lean.Data.Json
+public import LeanBench
+
+public section
 
 /-!
 Benchmark registrations for `HexResultant`.

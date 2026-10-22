@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPrimality
-import HexPrimality.ProofProbe.Curve25519.Literal
-import Lean.Data.Json
+module
+
+public import HexPrimality
+public import HexPrimality.ProofProbe.Curve25519.Literal
+public import Lean.Data.Json
+
+public section
 
 /-!
 A deliberately small native timing probe for the production

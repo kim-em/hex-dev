@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexECPPTheory.Elab
-import HexPrimalityTheory.NormNum
-import HexECPP.Fixture17
+module
+
+public import HexECPPTheory.Elab
+public import HexPrimalityTheory.NormNum
+public import HexECPP.Fixture17
+
+public section
 
 /-! Shared imports for the matched five-bit subject proof probes. -/

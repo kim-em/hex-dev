@@ -4,15 +4,19 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBareiss
-import HexPolyFp.PrimeField
-import HexResultant.ExactDiv
-import HexMvGcd.Divide
-import HexMvGcd.Instances
-import Hex.BenchOracle.Carriers
-import Hex.BenchOracle.Flint
-import Lean.Data.Json
-import LeanBench
+module
+
+public import HexBareiss
+public import HexPolyFp.PrimeField
+public import HexResultant.ExactDiv
+public import HexMvGcd.Divide
+public import HexMvGcd.Instances
+public import Hex.BenchOracle.Carriers
+public import Hex.BenchOracle.Flint
+public import Lean.Data.Json
+public import LeanBench
+
+public section
 
 /-!
 Benchmark registrations for `hex-bareiss`.

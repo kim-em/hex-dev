@@ -3,7 +3,12 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRankTheory.ProofProbe.NumberFieldSupport
+module
+
+public import HexRankTheory.ProofProbe.NumberFieldSupport
+public meta import HexRankTheory.ProofProbe.NumberFieldSupport
+
+public section
 
 open RankProbe
 open scoped Hex.PolyQuot.QAdjoinField

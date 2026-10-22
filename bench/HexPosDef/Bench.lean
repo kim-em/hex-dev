@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPosDef
-import HexMatrix.Notation
-import LeanBench
+module
+
+public import HexPosDef
+public import HexMatrix.Notation
+public import LeanBench
+
+public section
 
 /-! Native production and checking on a deterministic integer Gram family.
 The cubic model counts scalar operations. Integer operands grow with minors;

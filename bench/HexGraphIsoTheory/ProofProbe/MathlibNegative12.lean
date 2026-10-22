@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGraphIsoTheory.ProofProbe.Support
+module
+
+public import HexGraphIsoTheory.ProofProbe.Support
+
+public section
 
 /-! The negative random `n = 12` pair on the Mathlib route. -/
 

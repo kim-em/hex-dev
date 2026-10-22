@@ -117,7 +117,7 @@ structure DyadicSquare where
   im : Dyadic
   /-- Base-2 exponent of the half-width `2^{−prec}`. -/
   prec : Int
-deriving DecidableEq
+deriving @[expose] DecidableEq
 
 /-- The Gaussian-dyadic centre `re + im·i` of the square. -/
 @[expose] def DyadicSquare.center (s : DyadicSquare) : GaussDyadic := (s.re, s.im)

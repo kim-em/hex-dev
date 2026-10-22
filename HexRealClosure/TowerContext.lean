@@ -23,7 +23,7 @@ short names and hashes never replace these fields. -/
 structure Signature where
   base : BaseContext.Signature
   roots : List Literal
-  deriving DecidableEq, Repr
+  deriving @[expose] DecidableEq, Repr
 
 attribute [-instance] instDecidableEqSignature
 
@@ -118,7 +118,7 @@ theorem Signature.codec_literal (signature : Signature) :
 /-- A node's reference to the exact enclosing predecessor is encoded once by
 that enclosing signature. Other literal contexts are retained in full. This
 avoids copying the entire predecessor into every node of its replay graph. -/
-def contextCodec (parent : Signature) : ValueCodec Signature where
+@[expose] def contextCodec (parent : Signature) : ValueCodec Signature where
   encode context := if context = parent then .arr #[.number 0]
     else .arr #[.number 1, context.literal.toJson]
   decode j := match Literal.ofJson j with

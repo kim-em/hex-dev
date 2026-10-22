@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPrimality.Construction
-import Lean
+module
+
+public import HexPrimality.Construction
+public import Lean
+
+public section
 
 /-! Shared output and construction boundaries for Pollard p−1 measurements.
 Native benches place serialization outside their LeanBench timing boundary.

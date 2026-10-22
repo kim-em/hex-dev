@@ -3,9 +3,13 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.RealCoefficients
-import HexRCF.SectionProduceConformance
-import HexRCF.ProofEvidence
+module
+
+public import HexRCF.RealCoefficients
+public import HexRCF.SectionProduceConformance
+public import HexRCF.ProofEvidence
+
+public section
 
 namespace Hex.RCF.RealCoefficients.SectionOrdinaryConformance
 

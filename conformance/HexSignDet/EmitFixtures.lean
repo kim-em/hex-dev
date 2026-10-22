@@ -4,12 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexSignDet
-import HexSignDet.Compare
-import Hex.Conformance.Emit
-import HexRealAlgebraic.Roots
-import HexPolyZ.IntegerPolynomial
-import Lean.Data.Json
+module
+
+public import HexSignDet
+public import HexSignDet.Compare
+public import Hex.Conformance.Emit
+public import HexRealAlgebraic.Roots
+public import HexPolyZ.IntegerPolynomial
+public import Lean.Data.Json
+
+public section
 
 /-! Rational BKR fixtures with independent real-algebraic root evaluation.
 This consumer-only import of `HexRealAlgebraic` creates no library dependency

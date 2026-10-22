@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalTheory.Experiment.PntFks2XpowResults
+module
+
+public import HexIntervalTheory.Experiment.PntFks2XpowResults
+
+public section
 
 /-!
 # Source-pinned FKS2 inverse-power conformance

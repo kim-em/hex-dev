@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexInterval.Experiment.Scale
+module
+
+public import HexInterval.Experiment.Scale
+
+public section
 
 /-!
 Conformance checks for deterministic centered-checker scaling workloads.

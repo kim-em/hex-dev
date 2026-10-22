@@ -3,11 +3,15 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.CellReplay.Algebraic.Guards
-import HexRCF.CellReplay.Algebraic.Meaning
-import HexRCF.CellReplay.Algebraic.Refusals
-import HexRCF.ProofEvidence
-import HexRCF.Tactic
+module
+
+public import HexRCF.CellReplay.Algebraic.Guards
+public import HexRCF.CellReplay.Algebraic.Meaning
+public import HexRCF.CellReplay.Algebraic.Refusals
+public import HexRCF.ProofEvidence
+public import HexRCF.Tactic
+
+public section
 namespace Hex.RCF.RealCoefficients.CellReplayTests.Algebraic
 open Lean Meta
 run_meta do

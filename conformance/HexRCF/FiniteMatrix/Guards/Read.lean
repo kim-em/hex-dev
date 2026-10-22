@@ -3,7 +3,11 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.FiniteMatrix.Guards.Schema
+module
+
+public import HexRCF.FiniteMatrix.Guards.Schema
+
+public section
 namespace Hex.RCF.RealCoefficients.FiniteMatrixTests.Guards.Read
 open Hex Hex.SignDet Hex.RealClosure.Algebraic Hex.RealClosure.Algebraic.KernelReplay
 def selected (zero : Bool) (facts : List (SignFact FiniteTower.first)) (packet : Codec.Json)

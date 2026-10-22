@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.SelectedRoot.CatalogSource
-import HexRCF.SelectedRoot.CatalogData
+module
+
+public import HexRCF.SelectedRoot.CatalogSource
+public import HexRCF.SelectedRoot.CatalogData
+
+public section
 
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet Hex.RCF.SelectedRootTests
 namespace Hex.RCF.SelectedRootTests.CatalogPacket

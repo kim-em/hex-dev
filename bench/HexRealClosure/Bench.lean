@@ -4,13 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRealClosure.Element
-import HexRealClosure.AlgebraicContext
-import HexRealClosure.CompleteRoots
-import HexRealClosure.TowerRoots
-import HexRealClosure.LiveContext
-import LeanBench
-import Lean.Data.Json
+module
+
+public import HexRealClosure.Element
+public import HexRealClosure.AlgebraicContext
+public import HexRealClosure.CompleteRoots
+public import HexRealClosure.TowerRoots
+public import HexRealClosure.LiveContext
+public import LeanBench
+public import Lean.Data.Json
+
+public section
 
 namespace Hex.RealClosure.Bench
 
@@ -297,8 +301,8 @@ setup_fixed_benchmark runRoots where {
   repeats := 10, maxSecondsPerCall := 10.0, expectedHash := some 0x1
 }
 
-private def nativeRegistry : BaseContext.Registry := fun _ => none
-private def nativeBase := Tower.Context.base (BaseContext.rational nativeRegistry)
+def nativeRegistry : BaseContext.Registry := fun _ => none
+@[expose] def nativeBase := Tower.Context.base (BaseContext.rational nativeRegistry)
 
 private def nativeRepeated : DensePoly nativeBase.Value :=
   let two : nativeBase.Value := 1 + 1

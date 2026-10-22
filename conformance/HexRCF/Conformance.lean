@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.Decision
-import HexRCF.Tactic
+module
+
+public import HexRCF.Decision
+public import HexRCF.Tactic
+
+public section
 
 /-!
 # HexRCF conformance

@@ -3,10 +3,14 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.SourceSelectionConformance
-import HexRCF.FieldSelectionConformance
-import HexRCF.NativeSamplesConformance
-import HexRCF.RealCoefficients.FieldSelection
+module
+
+public import HexRCF.SourceSelectionConformance
+public import HexRCF.FieldSelectionConformance
+public import HexRCF.NativeSamplesConformance
+public import HexRCF.RealCoefficients.FieldSelection
+
+public section
 
 /-! Oracle: the existing native square-root section and its independently
 proved real value. The four-coordinate selector is generated from actual

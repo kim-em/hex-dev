@@ -690,6 +690,19 @@ base. Used to measure exponentiation separately from enumeration and setup. -/
 def smoothPower (n x B₁ : Nat) (ps : List Nat) : Nat :=
   raiseSmooth n (smoothBound B₁) ps x
 
+/-- `smoothPower` leaves the residue unchanged once the prime list is exhausted. -/
+@[simp] theorem smoothPower_nil (n x B₁ : Nat) : smoothPower n x B₁ [] = x := by
+  simp only [smoothPower, raiseSmooth]
+
+/-- One step of `smoothPower`: a prime within the effective bound raises the
+residue by its stage-1 power; the first prime beyond the bound stops the loop. -/
+theorem smoothPower_cons (n x B₁ q : Nat) (qs : List Nat) :
+    smoothPower n x B₁ (q :: qs) =
+      if q ≤ smoothBound B₁ then
+        smoothPower n (HexArith.powModNat x (primePower q B₁) n) B₁ qs
+      else x := by
+  simp only [smoothPower, raiseSmooth, primePower]
+
 /-- The continuation on a prepared prime interval and saved residue. This
 measurement boundary omits the public raw-residue preflight and enumeration;
 callers supply the prepared data. Factor exits are still dynamically checked.

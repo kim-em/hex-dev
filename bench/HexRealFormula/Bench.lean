@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRealFormula
-import LeanBench
+module
+
+public import HexRealFormula
+public import LeanBench
+
+public section
 
 /-!
 Compiled structural and exact-rational operations. Prepared inputs keep syntax,
@@ -19,28 +23,28 @@ namespace Hex.RealFormula.Bench
 
 private def hashCmp : Cmp → UInt64
   | .eq => 1 | .ne => 2 | .lt => 3 | .le => 4 | .gt => 5 | .ge => 6
-private def hashPoly (p : Poly n) : UInt64 :=
+def hashPoly (p : Poly n) : UInt64 :=
   p.termsList.foldl (fun h t => mixHash h (mixHash (hash t.1.toList) (hash t.2))) 0
-private def hashBody : Kernel.Body → UInt64
+def hashBody : Kernel.Body → UInt64
   | .atom p c => mixHash (hash p) (hashCmp c)
   | .tt => 11 | .ff => 12
   | .not p => mixHash 13 (hashBody p)
   | .and p q => mixHash 14 (mixHash (hashBody p) (hashBody q))
   | .or p q => mixHash 15 (mixHash (hashBody p) (hashBody q))
-private def hashQF : QF n → UInt64
+def hashQF : QF n → UInt64
   | .atom a => mixHash (hashPoly a.p) (hashCmp a.cmp)
   | .tt => 11 | .ff => 12
   | .not p => mixHash 13 (hashQF p)
   | .and p q => mixHash 14 (mixHash (hashQF p) (hashQF q))
   | .or p q => mixHash 15 (mixHash (hashQF p) (hashQF q))
-private def hashPrenex : Prenex n → UInt64
+def hashPrenex : Prenex n → UInt64
   | .matrix p => hashQF p
   | .quant q p => mixHash (if q == .existsReal then 16 else 17) (hashPrenex p)
 
 instance : Hashable (Poly n) where hash := hashPoly
 instance : Hashable (QF n) where hash := hashQF
 instance : Hashable (Prenex n) where hash := hashPrenex
-private def hashPrefix (qs : List Quantifier) : UInt64 :=
+def hashPrefix (qs : List Quantifier) : UInt64 :=
   hash (qs.map fun q => if q == .existsReal then (0 : Nat) else 1)
 instance : Hashable (Prenex.View n) where
   hash p := mixHash (hashPrefix p.prefix) (hashQF p.matrix)

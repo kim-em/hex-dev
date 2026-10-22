@@ -3,9 +3,13 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.NestedTransport.Read
-import HexRCF.NestedTransport.EndpointLiterals
-import HexRCF.RealCoefficients
+module
+
+public import HexRCF.NestedTransport.Read
+public import HexRCF.NestedTransport.EndpointLiterals
+public import HexRCF.RealCoefficients
+
+public section
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet
 open Hex.RCF.SelectedRootTests
 namespace Hex.RCF.RealCoefficients.NestedTransportTests.Controls

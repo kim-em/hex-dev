@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexLLLBench.Inputs
-import LeanBench
+module
+
+public import HexLLLBench.Inputs
+public import LeanBench
+
+public section
 
 /-!
 Focused benchmark registrations for exact Gram-row construction in HexLLL's

@@ -3,10 +3,14 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import KernelReplay.GuardJointPublic
-import KernelReplay.GuardJointUse
-import KernelReplay.GuardJointAudit
-import KernelReplay.GuardDependencyControls
+module
+
+public import KernelReplay.GuardJointPublic
+public import KernelReplay.GuardJointUse
+public import KernelReplay.GuardJointAudit
+public import KernelReplay.GuardDependencyControls
+
+public section
 
 namespace Hex.RealClosure.Algebraic.KernelReplay.GuardJointPublicAudit
 open Lean Meta Elab FiniteData GuardDescriptorInputs

@@ -19,7 +19,7 @@ open Hex Polynomial
 variable {R : Type*} [Field R] [LinearOrder R]
 
 /-- Membership in an open interval with possibly infinite endpoints. -/
-def InInterval (a b : Endpoint R) (x : R) : Prop :=
+@[expose] def InInterval (a b : Endpoint R) (x : R) : Prop :=
   (match a with | .negInf => True | .finite a => a < x | .posInf => False) ∧
   (match b with | .posInf => True | .finite b => x < b | .negInf => False)
 
@@ -32,7 +32,7 @@ theorem inInterval_iff (a b : Endpoint R) (x : R) :
 
 /-- The distinct roots in the open interval. This is a semantic finite set,
 not an executable root enumeration. -/
-noncomputable def rootsIn (p : Polynomial R) (a b : Endpoint R) : Finset R := by
+@[expose] noncomputable def rootsIn (p : Polynomial R) (a b : Endpoint R) : Finset R := by
   classical
   exact p.roots.toFinset.filter (InInterval a b)
 
@@ -64,7 +64,7 @@ theorem rootsIn_C_mul (p : Polynomial R) (c : R) (hc : c ≠ 0) (a b : Endpoint 
 
 /-- The mathematical Sturm–Tarski sum. Its general executable-query identity
 requires the separately owned signed-remainder theorem. -/
-noncomputable def rootSum (p f : Polynomial R) (a b : Endpoint R) : Int :=
+@[expose] noncomputable def rootSum (p f : Polynomial R) (a b : Endpoint R) : Int :=
   ∑ x ∈ rootsIn p a b, (SignType.sign (f.eval x) : Int)
 
 /-- Expand a query into its finite sum of signs over distinct roots. -/

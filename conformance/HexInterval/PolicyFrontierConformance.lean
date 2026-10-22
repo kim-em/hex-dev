@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexInterval.Experiment.PolicyFrontier
-import HexInterval.PolicyConformance
+module
+
+public import HexInterval.Experiment.PolicyFrontier
+public import HexInterval.PolicyConformance
+
+public section
 
 /-!
 Small merge-gated equivalence canaries for the two policy-frontier

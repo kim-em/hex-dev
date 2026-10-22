@@ -4,11 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGenericRank
-import HexMvPoly.Kernel
-import Init.Data.List.Control
-import Lean.Data.Json
-import LeanBench
+module
+
+public import HexGenericRank
+public import HexMvPoly.Kernel
+public import Init.Data.List.Control
+public import Lean.Data.Json
+public import LeanBench
+
+public section
 
 /-!
 The symbolic family uses the full Cartesian product of dimensions 2/4/8,

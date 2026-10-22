@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexECPPTheory.ProofProbe.Support
+module
+
+public import HexECPPTheory.ProofProbe.Support
+
+public section
 
 /-! Checker equation and kernel replay without elaborator reification. -/
 

@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexECPPTheory.NativeFixtures
+module
+
+public import HexECPPTheory.NativeFixtures
+
+public section
 
 /-! Kernel replay of a complete native output. -/
 

@@ -4,10 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexNumberField
-import Hex.BenchOracle.Pari
-import Lean.Data.Json
-import LeanBench
+module
+
+public import HexNumberField
+public import Hex.BenchOracle.Pari
+public import Lean.Data.Json
+public import LeanBench
+public meta import HexNumberField.Roots
+
+public section
 
 /-! Fixed AB/BA comparison of tag conjugation and the former root-search algorithm.
 Construction is timed separately; all eight blocks are retained. -/
@@ -239,7 +244,7 @@ private def fixedChecksum {p : ZPoly} {x : SimpleRoot p}
 
 /-! # Degree-10 fixed presentation -/
 
-private def degreeTenPoly : ZPoly :=
+def degreeTenPoly : ZPoly :=
   DensePoly.ofList [-2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
 
 private def degreeTenSquare : DyadicSquare :=
@@ -255,7 +260,7 @@ private def degreeTenRep : RefinedIsolation degreeTenPoly :=
       set_option exponentiation.threshold 2000 in
         decide⟩
 
-private def degreeTenRoot : SimpleRoot degreeTenPoly :=
+def degreeTenRoot : SimpleRoot degreeTenPoly :=
   SimpleRoot.mk degreeTenRep
 
 private def degreeTenInput : PolyQuot degreeTenPoly degreeTenRoot :=
@@ -317,7 +322,7 @@ setup_fixed_benchmark runFixedMinpoly where {
 
 /-! # Lazy arithmetic fixtures -/
 
-private def sqrtTwoPoly : ZPoly := DensePoly.ofList [-2, 0, 1]
+def sqrtTwoPoly : ZPoly := DensePoly.ofList [-2, 0, 1]
 
 private def sqrtTwoSquare : DyadicSquare :=
   ⟨Dyadic.ofIntWithPrec 181 7, 0, 8⟩
@@ -361,7 +366,7 @@ private def addRaw : ZPoly :=
 private def addCore : ZPoly :=
   ZPoly.squareFreeCore addRaw
 
-private structure IsolateInput where
+structure IsolateInput where
   polynomial : ZPoly
   simple : HasOnlySimpleRoots polynomial
   depth : Nat
@@ -475,7 +480,7 @@ setup_fixed_benchmark runExact where {
   expectedHash := some 0xafd3fbfd3a66fc82
 }
 
-private def sqrtTwoRoot : SimpleRoot sqrtTwoPoly :=
+def sqrtTwoRoot : SimpleRoot sqrtTwoPoly :=
   SimpleRoot.mk sqrtTwoRep
 
 private def fixedSqrtTwo : PolyQuot sqrtTwoPoly sqrtTwoRoot :=
@@ -777,7 +782,7 @@ setup_fixed_benchmark runZeroDecisions where {
   apiAnchorConfig with expectedHash := some 0x071179c329e9a368
 }
 
-private structure AlgebraicPolyInput where
+structure AlgebraicPolyInput where
   coefficients : Array AlgebraicNumber
   left : AlgebraicPoly
   right : AlgebraicPoly
@@ -862,7 +867,7 @@ setup_fixed_benchmark runAlgebraicPolyAccessors where {
   apiAnchorConfig with expectedHash := some 0x256c50de964804d1
 }
 
-private structure MajorantInput where
+structure MajorantInput where
   f : DensePoly Rat
 
 private instance : Hashable MajorantInput where
@@ -1030,7 +1035,7 @@ private def mkFactorRoot? (p q : ZPoly) : Option AlgebraicRoot :=
 
 /-- Prepared degree-`m` fixed-field arithmetic fixture: the field
 `ℚ(2^{1/m})` with two dense all-nonzero-coordinate elements. -/
-private structure FieldInput where
+structure FieldInput where
   p : ZPoly
   x : SimpleRoot p
   rep : RefinedIsolation p
@@ -1061,7 +1066,7 @@ def prepFieldInput (n : Nat) : FieldInput :=
 /-- Prepared inversion fixture: `FieldInput` data plus the runtime-checked
 irreducibility instance, decided in prep so no factorization work leaks
 into the timed extended-gcd region. -/
-private structure InvInput where
+structure InvInput where
   p : ZPoly
   x : SimpleRoot p
   rep : RefinedIsolation p
@@ -1420,7 +1425,7 @@ setup_benchmark runQAdjoinDivLadder n => n * n * (n + 7)
 
 /-- Prepared eliminant-construction pair: `X^m - 2` against the fixed
 quadratic `X^2 - 3` (no isolation is needed for construction alone). -/
-private structure EliminantInput where
+structure EliminantInput where
   p : ZPoly
   q : ZPoly
 
@@ -1437,7 +1442,7 @@ def runAddEliminantLadder (input : EliminantInput) : UInt64 :=
 
 /-- Prepared lazy-addition pair: the first isolated root of `X^m - 2`
 against `√3`, degree product `2m` (merge-facing ceiling `20`). -/
-private structure LazyAddInput where
+structure LazyAddInput where
   a : Option AlgebraicRoot
   b : Option AlgebraicRoot
 
@@ -1519,7 +1524,7 @@ setup_fixed_benchmark runLazyAddLadder where {
 /-- Prepared certification fixture: a root of `(X^m - 2)(X + 3)` pinned to
 the nonlinear candidate, so factor selection always succeeds independently
 of the enclosing isolator's emission order. -/
-private structure SelectionInput where
+structure SelectionInput where
   root : Option AlgebraicRoot
   candidate : ZPoly
 
@@ -1571,7 +1576,7 @@ private def exactFactorChecksum (input : SelectionInput) : UInt64 :=
     | none => 1
   | none => 0
 
-private structure CanonicalInput where
+structure CanonicalInput where
   p : ZPoly
   squarefree : HasOnlySimpleRoots p
   rep : RefinedIsolation p
@@ -1608,7 +1613,7 @@ private def exactFactorFamily (count : Nat) : ZPoly :=
     (fun acc prime => acc * DensePoly.ofList [-prime, 0, 1])
     (1 : ZPoly)
 
-private structure ExactInput where
+structure ExactInput where
   root : Option AlgebraicRoot
 
 private instance : Hashable ExactInput where
@@ -1800,7 +1805,7 @@ setup_fixed_benchmark runCanonicalRepLadder where {
 `g` dense of degree `m` and every coefficient `√2`-dependent, so Yun
 produces a genuine multiplicity-2 component and the norm eliminant has
 degree `2m`. -/
-private structure FieldRootsInput where
+structure FieldRootsInput where
   f : DensePoly (PolyQuot sqrtTwoPoly sqrtTwoRoot)
   checked : Option (PLift (ZPoly.CheckedIrreducible sqrtTwoPoly))
 
@@ -1842,7 +1847,7 @@ private def getPolyQuotRootsLadderInput : IO FieldRootsInput := do
 def runQAdjoinRootsLadder : Unit → IO UInt64 := fun _ => do
   return qAdjoinRootsChecksum (← getPolyQuotRootsLadderInput)
 
-private structure RootPhaseInput where
+structure RootPhaseInput where
   f : DensePoly (PolyQuot sqrtTwoPoly sqrtTwoRoot)
   multiplicity : Nat
   multiplicity_pos : 0 < multiplicity
@@ -1922,7 +1927,7 @@ setup_fixed_benchmark runComponentRoots where {
 `prepFieldRootsInput`. Component root construction is intentionally outside
 the timed region; the timed kernel starts with the linear component and folds
 the degree-`m` component through `mergeRootList`, matching `PolyQuot.roots?`. -/
-private structure MergeRootsInput where
+structure MergeRootsInput where
   initial : List RootCount
   candidates : Array RootCount
 
@@ -1969,7 +1974,7 @@ def runMergeRootListLadder (input : MergeRootsInput) : UInt64 :=
 `AlgebraicPoly` whose linear coefficient is `√2` and whose remaining
 coefficients are nonzero rationals, forcing a genuine common-field
 embedding into `ℚ(√2)` before the fixed-field root algorithm. -/
-private structure AlgPolyInput where
+structure AlgPolyInput where
   f : AlgebraicPoly
 
 private instance : Hashable AlgPolyInput where
@@ -2080,7 +2085,7 @@ setup_fixed_benchmark runCommonTrace where {
   apiAnchorConfig with expectedHash := some 0xad12ba043c7b5045
 }
 
-private structure CommonPowersInput where
+structure CommonPowersInput where
   gamma : AlgebraicNumber
   last : Nat
 
@@ -2151,7 +2156,7 @@ setup_benchmark runCommonPrimitive n => n
     slopeTolerance := 0.35
   }
 
-private structure CoordinatesInput where
+structure CoordinatesInput where
   gamma : AlgebraicNumber
   a : AlgebraicNumber
   powers : Array AlgebraicNumber

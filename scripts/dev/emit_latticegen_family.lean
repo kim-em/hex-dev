@@ -11,7 +11,11 @@ cross-check against fplll's `latticegen`. Run with:
 
   lake env lean --run scripts/dev/emit_latticegen_family.lean ajtai 6 8 10 12
 -/
-import HexLLLBench.Inputs
+module
+
+public import HexLLLBench.Inputs
+
+public section
 open Hex.LLLBench
 
 /-- The basis a family's `prepXInput` builds at parameter `d`, as a JSON matrix

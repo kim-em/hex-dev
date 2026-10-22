@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Hex.Conformance.Emit
-import HexRealAlgebraic.Checks
-import HexNumberField.ComplexChecks
-import Lean.Data.Json
+module
+
+public import Hex.Conformance.Emit
+public import HexRealAlgebraic.Checks
+public import HexNumberField.ComplexChecks
+public import Lean.Data.Json
+
+public section
 
 /-! Self-contained JSONL results with exact polynomial-and-disc operand identities. -/
 

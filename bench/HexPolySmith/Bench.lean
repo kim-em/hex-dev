@@ -4,11 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Hex.BenchOracle.Pari
-import HexPolyFp.PrimeField
-import HexPolySmith
-import Lean.Data.Json
-import LeanBench
+module
+
+public import Hex.BenchOracle.Pari
+public import HexPolyFp.PrimeField
+public import HexPolySmith
+public import Lean.Data.Json
+public import LeanBench
+public meta import HexMatrix.Basic
+
+public section
 
 /-!
 Benchmark registrations for polynomial Smith form.

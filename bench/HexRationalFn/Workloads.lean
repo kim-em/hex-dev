@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRationalFn.Families
-import HexPolyFp.PrimeField
+module
+
+public import HexRationalFn.Families
+public import HexPolyFp.PrimeField
+
+public section
 
 /-!
 Complementary degree, output-size, Euclidean-chain, and coefficient-height

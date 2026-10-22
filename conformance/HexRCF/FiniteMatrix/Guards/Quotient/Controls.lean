@@ -3,7 +3,11 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.FiniteMatrix.Guards.Quotient.Quote
+module
+
+public import HexRCF.FiniteMatrix.Guards.Quotient.Quote
+
+public section
 open Hex Hex.SignDet Hex.RealClosure.Algebraic Hex.RealClosure.Algebraic.KernelReplay
 open Hex.RCF.RealCoefficients.FiniteMatrixTests
 open Lean Meta Elab Command

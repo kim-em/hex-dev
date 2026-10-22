@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexInterval.Experiment.Policy
-import HexInterval.Experiment.PackageRegistry
+module
+
+public import HexInterval.Experiment.Policy
+public import HexInterval.Experiment.PackageRegistry
+
+public section
 
 /-!
 # Engine-owned structural matcher conformance

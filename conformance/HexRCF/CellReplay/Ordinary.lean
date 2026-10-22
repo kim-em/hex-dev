@@ -3,13 +3,17 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.CellReplay.Check
-import HexRCF.CellReplay.Refusals
-import HexRCF.RootReplayOrdinaryConformance
-import HexRCF.ProofEvidence
-import HexRCF.Tactic
-import HexRCF.RealCoefficients.SectionBuild
-import HexRCF.RealCoefficients.PointBuild
+module
+
+public import HexRCF.CellReplay.Check
+public import HexRCF.CellReplay.Refusals
+public import HexRCF.RootReplayOrdinaryConformance
+public import HexRCF.ProofEvidence
+public import HexRCF.Tactic
+public import HexRCF.RealCoefficients.SectionBuild
+public import HexRCF.RealCoefficients.PointBuild
+
+public section
 open Lean Meta
 run_meta do
   let .thmInfo source ← getConstInfo ``Hex.RCF.RealCoefficients.CellReplayTests.Check.source | throwError "expected actual cell source"

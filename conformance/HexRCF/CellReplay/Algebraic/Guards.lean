@@ -3,7 +3,11 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.CellReplay.Algebraic.Quote
+module
+
+public import HexRCF.CellReplay.Algebraic.Quote
+
+public section
 namespace Hex.RCF.RealCoefficients.CellReplayTests.Algebraic.Guards
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet
 open Hex.RCF.SelectedRootTests Hex.RCF.RealCoefficients

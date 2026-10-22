@@ -3,14 +3,18 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.RealCoefficients.CellBuild
-import HexRCF.RealCoefficients.CompleteReplay
-import HexRCF.RealCoefficients.RootBuild
-import HexRCF.RealCoefficients.RowEncode
-import HexRCF.CellReplay.Algebraic.Schema
-import HexRCF.CellReplay.Algebraic.Literals
-import HexRCF.RealCoefficients.RadicalBuild
-import HexSignDet.Codec.Bytes
+module
+
+public import HexRCF.RealCoefficients.CellBuild
+public import HexRCF.RealCoefficients.CompleteReplay
+public import HexRCF.RealCoefficients.RootBuild
+public import HexRCF.RealCoefficients.RowEncode
+public import HexRCF.CellReplay.Algebraic.Schema
+public import HexRCF.CellReplay.Algebraic.Literals
+public import HexRCF.RealCoefficients.RadicalBuild
+public import HexSignDet.Codec.Bytes
+
+public section
 namespace Hex.RCF.RealCoefficients.CellBuildConformance
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet
 open Hex.RCF.RealCoefficients Hex.RCF.SelectedRootTests

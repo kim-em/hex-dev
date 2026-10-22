@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalTheory.Experiment.SinTen
+module
+
+public import HexIntervalTheory.Experiment.SinTen
+
+public section
 
 /-!
 # Machin range-reduction conformance

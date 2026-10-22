@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Prototype
-import Search
+module
+
+public import Prototype
+public import Search
+
+public section
 open Prototype
 
 def main : IO Unit := do

@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexInterval.Experiment.PayloadArena
+module
+
+public import HexInterval.Experiment.PayloadArena
+
+public section
 
 /-!
 Focused checks for transactional proof-payload freezing and relocation.

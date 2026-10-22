@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexMvPoly.Sorted
-import HexMvPolyCorpus
-import LeanBench
+module
+
+public import HexMvPoly.Sorted
+public import HexMvPolyCorpus
+public import LeanBench
+
+public section
 
 /-!
 External native driver for the canonical sorted-list `MvSparsePoly` proxy.

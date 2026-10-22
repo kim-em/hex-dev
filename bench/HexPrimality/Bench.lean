@@ -4,11 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPrimalityBench.Inputs
-import HexPrimality.PMinusOneFixtures
-import HexPrimality.PMinusOneMeasure
-import HexPrimality.PMinusOneParents
-import LeanBench
+module
+
+public import HexPrimalityBench.Inputs
+public import HexPrimality.PMinusOneFixtures
+public import HexPrimality.PMinusOneMeasure
+public import HexPrimality.PMinusOneParents
+public import LeanBench
+
+public section
 
 /-!
 Complete compiled Phase-4 evidence for `HexPrimality`.
@@ -751,14 +755,12 @@ def preparedSmooth (power : PreparedPower) (bound : Nat) : List Nat → Nat → 
 theorem preparedSmooth_eq (n bound : Nat) (ps : List Nat) (x : Nat) :
     preparedSmooth (preparePower n) bound ps x = PMinusOne.smoothPower n x bound ps := by
   induction ps generalizing x with
-  | nil => rfl
+  | nil => rw [PMinusOne.smoothPower_nil]; rfl
   | cons q qs ih =>
+    rw [PMinusOne.smoothPower_cons]
     change (if q ≤ smoothBound bound then
       preparedSmooth (preparePower n) bound qs
-        ((preparePower n).power x (PMinusOne.primePower q bound)) else x) =
-      (if q ≤ smoothBound bound then
-        PMinusOne.smoothPower n (HexArith.powModNat x (PMinusOne.primePower q bound) n)
-          bound qs else x)
+        ((preparePower n).power x (PMinusOne.primePower q bound)) else x) = _
     split
     · rw [preparePower_eq, HexArith.powMod_eq_powModNat]
       exact ih _

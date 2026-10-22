@@ -356,7 +356,7 @@ owned. -/
 
 /-- Overwrite the `m` entries of row `dst` of the flat buffer `d` with the entries
 of `v`, in place when `d` is uniquely referenced. -/
-@[inline]
+@[expose, inline]
 def writeRow (d : Vector R (n * m)) (dst : Nat) (hdst : dst < n) (v : Vector R m) :
     Vector R (n * m) :=
   Fin.foldl m (fun d (t : Fin m) => d.set (dst * m + t.val) v[t] (flatIdx_lt hdst t.isLt)) d

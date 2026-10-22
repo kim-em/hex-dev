@@ -4,11 +4,23 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRank
-import HexMatrix.Notation
-import HexPolyFp.PrimeField
-import HexResultant.ExactDiv
-import HexMvGcd
+module
+
+public import HexRank
+public import HexMatrix.Notation
+public import HexPolyFp.PrimeField
+public import HexResultant.ExactDiv
+public import HexMvGcd
+public meta import HexMvPoly.Operations
+public meta import HexRank.Cert
+public meta import HexRank.Int
+public meta import HexRank.Kernel
+public meta import HexRank.Produce
+public meta import HexRank.ReduceImpl
+public meta import HexMvGcd.Instances
+public meta import HexMvPoly.Ring
+
+public section
 
 /-!
 Core conformance checks for `hex-rank`.

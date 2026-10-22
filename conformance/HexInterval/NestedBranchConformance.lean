@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexInterval.Experiment.BranchProof
-import HexInterval.Experiment.ExpSign
-import Lean.Elab.Tactic.Basic
+module
+
+public import HexInterval.Experiment.BranchProof
+public import HexInterval.Experiment.ExpSign
+public import Lean.Elab.Tactic.Basic
+
+public section
 
 /-!
 # Nested branch scheduling conformance

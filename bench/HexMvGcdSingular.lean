@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Hex.BenchOracle.Flint
-import HexMvGcdFlint
-import LeanBench
+module
+
+public import Hex.BenchOracle.Flint
+public import HexMvGcdFlint
+public import LeanBench
+
+public section
 
 /-!
 Singular's like-for-like coprime multivariate-GCD comparator.
@@ -22,7 +26,7 @@ namespace Hex.MvGcdBench.Singular
 open Hex.MvPoly
 open Lean (Json)
 
-private abbrev PersistentComparator :=
+abbrev PersistentComparator :=
   Hex.BenchOracle.Flint.PersistentComparator
 
 initialize driverRef : IO.Ref (Option PersistentComparator) ← IO.mkRef none

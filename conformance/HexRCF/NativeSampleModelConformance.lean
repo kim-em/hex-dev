@@ -3,18 +3,27 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.RealCoefficients.NativeSamples
-import HexRCF.NativeSampleModelLiterals
-import HexRealClosure.RootReplay
-import HexRCF.ProofEvidence
-import HexRCF.Tactic
-import HexRealClosure.BaseContext
-import HexRealClosure.TowerSuffix
-import HexRealClosure.Sample
-import HexRealClosure.TowerTransport
-import HexRealClosure.TowerContext
-import HexRationalFn.Field
-import HexRealClosure.BaseJson
+module
+
+public import HexRCF.RealCoefficients.NativeSamples
+public import HexRCF.NativeSampleModelLiterals
+public import HexRealClosure.RootReplay
+public import HexRCF.ProofEvidence
+public import HexRCF.Tactic
+public import HexRealClosure.BaseContext
+public import HexRealClosure.TowerSuffix
+public import HexRealClosure.Sample
+public import HexRealClosure.TowerTransport
+public import HexRealClosure.TowerContext
+public import HexRationalFn.Field
+public import HexRealClosure.BaseJson
+public meta import HexRealClosure.TowerContext
+public meta import HexRCF.RealCoefficients.RepresentationSpecialize
+public meta import HexRealClosure.Sample
+public meta import HexRCF.NativeSampleModelLiterals
+public meta import HexRCF.RealCoefficients.Samples
+
+public section
 
 /-! Oracle: checked frozen descriptor for the positive root of X²−ε in (0,1),
 the actual staged ordered real-closed reference model, and native signs;
@@ -50,7 +59,10 @@ private def descriptor := root?.toOption.get accepted
 set_option maxRecDepth 32768 in
 private theorem subject : descriptor.raw =
     ⟨context.signature, DensePoly.ofCoeffs #[-parameter, 0, 1], .finite 0, .finite 1,
-      [1, 2], [1, 1]⟩ := by decide +kernel
+      [1, 2], [1, 1]⟩ := by
+  -- Decide with the structural signature instance; the default one adds a pointer shortcut.
+  letI : DecidableEq Tower.Signature := Tower.instDecidableEqSignature
+  decide +kernel
 
 def sample : Tower.Sample context := Tower.Sample.section context descriptor
 private noncomputable def original : Model context reference.Carrier := reference.model

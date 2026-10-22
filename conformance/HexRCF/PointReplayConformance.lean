@@ -3,10 +3,14 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.RealCoefficients.PointReplay
-import HexRCF.SelectedRoot.RowCollect
-import HexRCF.SelectedRoot.RowTools
-import HexRCF.SelectedRoot.Upper
+module
+
+public import HexRCF.RealCoefficients.PointReplay
+public import HexRCF.SelectedRoot.RowCollect
+public import HexRCF.SelectedRoot.RowTools
+public import HexRCF.SelectedRoot.Upper
+
+public section
 open Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
 open Hex.RCF.SelectedRootTests
 open Hex.RCF.SelectedRootTests.Data Hex.RCF.SelectedRootTests.Upper

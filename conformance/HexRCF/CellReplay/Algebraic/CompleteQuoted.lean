@@ -3,9 +3,13 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.CellReplay.Algebraic.CompleteQuote
-import HexRCF.ProofEvidence
-import HexRCF.Tactic
+module
+
+public import HexRCF.CellReplay.Algebraic.CompleteQuote
+public import HexRCF.ProofEvidence
+public import HexRCF.Tactic
+
+public section
 namespace Hex.RCF.RealCoefficients.CellReplayTests.Algebraic
 open Lean Meta
 run_meta do

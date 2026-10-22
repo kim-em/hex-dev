@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexInterval.Experiment.PolicyDriver
-import HexInterval.PolicyConformance
+module
+
+public import HexInterval.Experiment.PolicyDriver
+public import HexInterval.PolicyConformance
+
+public section
 
 /-!
 Conformance canaries for the external policy driver.

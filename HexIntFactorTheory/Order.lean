@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntFactor.Order
-import Mathlib.Data.ZMod.Basic
-import Mathlib.GroupTheory.OrderOfElement
+module
+
+public import HexIntFactor.Order
+public import Mathlib.Data.ZMod.Basic
+public import Mathlib.GroupTheory.OrderOfElement
+
+public section
 
 /-! Correspondence between checked natural modular orders and Mathlib's
 unit-group order. -/

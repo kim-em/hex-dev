@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPoly
-import Hex.BenchOracle.Flint
-import Lean.Data.Json
-import LeanBench
+module
+
+public import HexPoly
+public import Hex.BenchOracle.Flint
+public import Lean.Data.Json
+public import LeanBench
+
+public section
 
 /-!
 Benchmark registrations for `hex-poly`.
@@ -83,7 +87,7 @@ namespace F7
 def ofNat (n : Nat) : F7 :=
   { val := ⟨n % 7, Nat.mod_lt n (by decide)⟩ }
 
-private def invNat : Nat → Nat
+def invNat : Nat → Nat
   | 1 => 1
   | 2 => 4
   | 3 => 5

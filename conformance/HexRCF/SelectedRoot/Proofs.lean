@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.SelectedRoot.RowCollect
-import HexRCF.SelectedRoot.Source
+module
+
+public import HexRCF.SelectedRoot.RowCollect
+public import HexRCF.SelectedRoot.Source
+
+public section
 
 namespace Hex.RCF.SelectedRootTests.Proofs
 open Hex.RCF.SelectedRootTests

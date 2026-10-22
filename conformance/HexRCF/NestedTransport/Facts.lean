@@ -3,13 +3,17 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.NestedTransport.Restore
-import HexRCF.NestedTransport.Constants
-import HexRCF.NestedTransport.Predecessor
-import HexRCF.NestedTransport.SignLiterals
-import HexRealClosureTheory.FactReplay
-import HexRCF.SelectedRoot.KernelCheck
-import Lean.Elab.Command
+module
+
+public import HexRCF.NestedTransport.Restore
+public import HexRCF.NestedTransport.Constants
+public import HexRCF.NestedTransport.Predecessor
+public import HexRCF.NestedTransport.SignLiterals
+public import HexRealClosureTheory.FactReplay
+public import HexRCF.SelectedRoot.KernelCheck
+public import Lean.Elab.Command
+
+public section
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet
 open Hex.RCF.SelectedRootTests
 namespace Hex.RCF.RealCoefficients.NestedTransportTests.Facts

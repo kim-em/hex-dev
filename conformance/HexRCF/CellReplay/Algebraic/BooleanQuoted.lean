@@ -3,9 +3,13 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.CellReplay.Algebraic.BooleanSources
-import HexRCF.CellReplay.Algebraic.BooleanBinding
-import HexRCF.ProofEvidence
+module
+
+public import HexRCF.CellReplay.Algebraic.BooleanSources
+public import HexRCF.CellReplay.Algebraic.BooleanBinding
+public import HexRCF.ProofEvidence
+
+public section
 namespace Hex.RCF.RealCoefficients.CellReplayTests.Algebraic.BooleanQuoted
 open Lean Meta
 run_meta do

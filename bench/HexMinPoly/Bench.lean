@@ -4,11 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexMinPoly
-import HexPolyFp.PrimeField
-import Hex.BenchOracle.Flint
-import Hex.BenchOracle.Pari
-import LeanBench
+module
+
+public import HexMinPoly
+public import HexPolyFp.PrimeField
+public import Hex.BenchOracle.Flint
+public import Hex.BenchOracle.Pari
+public import LeanBench
+
+public section
 
 /-!
 Benchmark registrations for deterministic matrix minimal polynomials.
@@ -44,7 +48,7 @@ private def orderDegreeSum {F : Type} [Lean.Grind.Field F] [DecidableEq F]
   (List.finRange n).foldl
     (fun total i => total + Matrix.krylovDeg A (Matrix.basisVec n i)) 0
 
-private def checksumPoly {F : Type} [Hashable F] [Zero F] [DecidableEq F]
+def checksumPoly {F : Type} [Hashable F] [Zero F] [DecidableEq F]
     (p : DensePoly F) : UInt64 :=
   hash p.toArray
 
@@ -52,11 +56,11 @@ private def checksumMinPoly {F : Type} [Lean.Grind.Field F] [DecidableEq F]
     [Hashable F] {n : Nat} (A : Matrix F n n) : UInt64 :=
   checksumPoly (Matrix.minPoly A)
 
-private def checksumVector {F : Type} [Hashable F] {n : Nat}
+def checksumVector {F : Type} [Hashable F] {n : Nat}
     (v : Vector F n) : UInt64 :=
   hash v.toArray
 
-private def checksumMatrix {F : Type} [Hashable F] {n m : Nat}
+def checksumMatrix {F : Type} [Hashable F] {n m : Nat}
     (A : Matrix F n m) : UInt64 :=
   A.rows.toArray.foldl
     (fun checksum row => mixHash checksum (checksumVector row))
@@ -122,7 +126,7 @@ private def checksumOrder {n : Nat} (order : Matrix.OrderCert Rat n) : UInt64 :=
   mixHash (checksumPoly order.poly)
     (mixHash (hash order.deg) (checksumMatrix order.inv))
 
-private def checksumCert {n : Nat} (cert : Matrix.MinPolyCert Rat n) : UInt64 :=
+def checksumCert {n : Nat} (cert : Matrix.MinPolyCert Rat n) : UInt64 :=
   let orders := cert.order.toArray.foldl
     (fun checksum order => mixHash checksum (checksumOrder order)) 0
   let steps := cert.steps.toArray.foldl

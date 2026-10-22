@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRealAlgebraic.Checks
-import HexNumberField.ComplexChecks
+module
+
+public import HexRealAlgebraic.Checks
+public import HexNumberField.ComplexChecks
+
+public section
 
 /-! Standalone compiled runner for the larger real algebraic fixtures. -/
 

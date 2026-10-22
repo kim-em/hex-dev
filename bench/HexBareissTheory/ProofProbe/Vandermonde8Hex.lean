@@ -3,7 +3,11 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexBareissTheory
+module
+
+public import HexBareissTheory
+
+public section
 
 /-! `Vandermonde8Hex`: the `vandermonde-8` family, a `8 × 8` literal over `ℤ`, proved by `det`. -/
 

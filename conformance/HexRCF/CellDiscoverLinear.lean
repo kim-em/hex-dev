@@ -3,9 +3,13 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.RealCoefficients.CellDiscover
-import HexRCF.RealCoefficients.CompleteReplay
-import HexRCF.SelectedRoot.Data
+module
+
+public import HexRCF.RealCoefficients.CellDiscover
+public import HexRCF.RealCoefficients.CompleteReplay
+public import HexRCF.SelectedRoot.Data
+
+public section
 namespace Hex.RCF.RealCoefficients.CellDiscoverLinear
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.RealFormula
 open Hex.RCF.RealCoefficients Hex.RCF.SelectedRootTests

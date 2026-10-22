@@ -3,13 +3,17 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.RealCoefficients.RootReplay
-import HexRCF.NestedRootLiterals
-import HexRCF.SelectedRoot.RowCollect
-import HexRCF.SelectedRoot.RowTools
-import HexRCF.SelectedRoot.KernelCheck
-import HexRCF.RealCoefficients.ScalarPacket
-import HexRCF.ProofEvidence
+module
+
+public import HexRCF.RealCoefficients.RootReplay
+public import HexRCF.NestedRootLiterals
+public import HexRCF.SelectedRoot.RowCollect
+public import HexRCF.SelectedRoot.RowTools
+public import HexRCF.SelectedRoot.KernelCheck
+public import HexRCF.RealCoefficients.ScalarPacket
+public import HexRCF.ProofEvidence
+
+public section
 open Hex Hex.RealClosure Hex.SignDet
 open Hex.RCF.SelectedRootTests Hex.RCF.SelectedRootTests.Data
 open Lean Meta Elab Command

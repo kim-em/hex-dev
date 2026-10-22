@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexInterval.Experiment.PackageRegistry
-import HexInterval.Experiment.PolicyDriver
+module
+
+public import HexInterval.Experiment.PackageRegistry
+public import HexInterval.Experiment.PolicyDriver
+
+public section
 
 /-!
 Focused conformance for independently composable propagator packages.  The

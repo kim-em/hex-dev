@@ -3,11 +3,15 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.NestedTransport.Facts
-import HexRCF.NestedTransport.Operations
-import HexRCF.SelectedRoot.KernelCheck
-import HexRCF.SelectedRoot.RowTools
-import Lean.Elab.Command
+module
+
+public import HexRCF.NestedTransport.Facts
+public import HexRCF.NestedTransport.Operations
+public import HexRCF.SelectedRoot.KernelCheck
+public import HexRCF.SelectedRoot.RowTools
+public import Lean.Elab.Command
+
+public section
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet
 open Hex.RCF.SelectedRootTests
 namespace Hex.RCF.RealCoefficients.NestedTransportTests.RootRead

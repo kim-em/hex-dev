@@ -3,9 +3,13 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.CellReplay.Schema
-import HexRCF.RealCoefficients.CellRead
-import HexRCF.CellReplay.Literals
+module
+
+public import HexRCF.CellReplay.Schema
+public import HexRCF.RealCoefficients.CellRead
+public import HexRCF.CellReplay.Literals
+
+public section
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet
 open Hex.RCF.SelectedRootTests Hex.RCF.RealCoefficients
 open RootReplayConformance Hex.RCF.RealCoefficients.CellReplayTests.Schema

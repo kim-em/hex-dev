@@ -4,11 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Hex.Conformance.Emit
-import HexRank
-import HexPolyFp.PrimeField
-import HexResultant.ExactDiv
-import HexMvGcd
+module
+
+public import Hex.Conformance.Emit
+public import HexRank
+public import HexPolyFp.PrimeField
+public import HexResultant.ExactDiv
+public import HexMvGcd
+
+public section
 
 /-!
 JSONL emit driver for the `hex-rank` oracle.
