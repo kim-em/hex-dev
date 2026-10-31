@@ -37,7 +37,7 @@ FAMILY = Family(
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("benchmark", choices=("internMonomials", "cyclic4", "cyclic5", "katsura3"))
+    parser.add_argument("benchmark", choices=("internMonomials", "cyclic4", "cyclic5", "cyclic6", "katsura3"))
     parser.add_argument("--repeat", action="store_true")
     args = parser.parse_args()
     os.chdir(ROOT)

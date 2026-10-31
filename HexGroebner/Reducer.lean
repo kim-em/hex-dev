@@ -104,5 +104,29 @@ def find (context : Context) (limits : Limits) (index : ReducerIndex)
           pending := pending.push ((Packed.read .u32 n.edges (2 * i + 1)).toNat, coordinate + 1)
   return result
 
+/-- Enumerate indexed divisors rather than scanning the entire basis. The trie
+stores one representative per distinct leading monomial; F4 basis leading
+monomials are distinct. Every returned identifier passes the exact path tests. -/
+def divisors (context : Context) (limits : Limits) (index : ReducerIndex)
+    (monomial : Nat) : Computation (Array Nat) := do
+  let table := (← get).table
+  let mut pending := #[(0, 0)]
+  let mut result := #[]
+  for _ in [:index.nodes.size] do
+    if pending.isEmpty then break
+    let (node, coordinate) := pending.back!
+    pending := pending.pop
+    spend limits 1
+    let n := index.nodes[node]!
+    if coordinate == context.variables then
+      if let some reducer := n.reducer then result := result.push reducer
+    else
+      let exponent := table.exponent monomial coordinate
+      spend limits (n.edges.size / 8)
+      for i in [:n.edges.size / 8] do
+        if Packed.read .u32 n.edges (2 * i) ≤ exponent then
+          pending := pending.push ((Packed.read .u32 n.edges (2 * i + 1)).toNat, coordinate + 1)
+  return result
+
 end ReducerIndex
 end Hex.Groebner

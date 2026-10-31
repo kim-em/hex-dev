@@ -63,6 +63,8 @@ def main():
                 oracle_name="SymPy F5B", oracle_version=sympy.__version__, diff=str(exc))
             raise SystemExit(f"{record.get('case')}: {exc}; replay: {path}") from exc
     assert len(records) == 567, f"incomplete F4 corpus: {len(records)}"
+    assert any(json.loads(line)["value"]["chainPairs"] > 0 for line in records), "chain criterion not exercised"
+    assert any(json.loads(line)["value"]["serialChainPairs"] > 0 for line in records), "serial chain criterion not exercised"
     print(f"OK: {len(records)} reduced bases match SymPy {sympy.__version__} F5B")
 
 

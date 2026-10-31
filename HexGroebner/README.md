@@ -9,6 +9,8 @@ combined, zero coefficients removed and supports sorted. Sugar-degree critical
 pairs are held in a persistent leftist heap; product and resolved-dependency chain criteria
 discard unneeded pairs. Symbolic preprocessing closes a selected batch under a
 basis-specific divisibility trie and constructs one joint Macaulay matrix.
+The chain test visits indexed LCM divisors; final tail reductions share one
+immutable reducer index.
 Final minimal-leading-monomial selection and tail reduction produce canonical
 monic, sorted, reduced output. Empty/all-zero input produces an empty basis;
 the unit ideal produces `[1]`, including zero-variable inputs. Ordinary
@@ -44,14 +46,21 @@ Its immutable identity retains the generators, field, order and seed. Input
 normalization, each F4 round and final interreduction are atomic basis/pair
 checkpoints. On exhaustion, no partially processed batch loses unresolved pairs;
 temporary interned monomials and charged work survive. Retrying a stage charges
-its repeated work. Invalid input, representation exhaustion and consumed
-allowances remain distinct. `Limits.bytes` bounds monomial arenas plus
+its repeated work. Invalid input, internal invariant failures, representation
+exhaustion and consumed allowances remain distinct. `Limits.packedBytes` bounds monomial arenas plus
 cumulative packed polynomial/matrix allocation and decoded interchange scalar
 payload; it excludes headers and allocator capacity. Pair attempts, rounds,
-basis size, matrix entries, monomials and variables have separate bounds.
+basis size, cumulative matrix rows/entries, monomials and variables have
+separate bounds.
 Batch size has a minimum of one. Nested hashing, widening, sorting, polynomial
 arithmetic and matrix work share the remaining parent allowance. These are
 operational counters, not predictions of elapsed time.
+
+The packed-payload allowance is not a process-memory limit: it excludes
+hash tables, tree nodes, object headers and allocator capacity. Structural
+monomial, pair-attempt, basis and variable bounds also limit metadata growth.
+Accounting for live heap overhead remains an outstanding memory-control
+requirement of the SPEC.
 
 Monomial identifiers index an append-only packed arena, with cached degree,
 semantic hash and support mask. Hash buckets use full exponent equality checks.
@@ -105,20 +114,26 @@ work bounds. Monomial tests force collisions, table growth and both widening
 boundaries, check overflow rejection and compare packed ordering with the
 lawful Hex orders. Ordinary-kernel byte decoding has an axiom audit.
 
-The 567-system F4 corpus compares complete reduced bases with SymPy F5B over
+The 567-system F4 corpus compares complete reduced bases with SymPy F5B and,
+when available, Singular over
 seven primes and three orders. Cases include cyclic-3, Katsura-2, generated
 quadratic systems, positive-dimensional systems, nonmonic inputs, raw
 cancellation and ordinary characteristic-two polynomials. Oracle rejection
 tests cover wrong ideals, missing S-pairs, nonmonic output, wrong orders and
 false Boolean-quotient reductions. Core tests also exercise cumulative-state
-resumption and scalar-preserving remainders.
+resumption at every work boundary of the S-pair example, every resource
+category, scalar-preserving remainders and sealed checkpoint identities. The
+emitter also recomputes all 567 systems with batch size one and requires the
+same reduced basis. Product/chain counters demonstrate criterion use.
 
 Lean-bench registrations cover dense elimination with/without provenance,
 clustered and spread sparse supports, monomial interning, and fixed cyclic-4,
 cyclic-5 and Katsura-3 F4 calls. Full-system timings are candidate production
 through final interreduction; input generation, certification and kernel
 checking are excluded. IO-backed input reads prevent cached pure fixed results.
-Portable accessors retain checked byte operations and `Nat` indices. Wide gaps
+Packed helpers require canonical workspace-owned identifiers and coefficients;
+`Polynomial.remainder` operates on unchecked internal divisors and supplies no
+certified membership claim. Portable accessors retain checked byte operations and `Nat` indices. Wide gaps
 inside an active interval are still scanned. No performance leadership is
 claimed from these kernel or candidate measurements.
 

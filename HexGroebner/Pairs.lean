@@ -135,21 +135,21 @@ def install (context : Context) (limits : Limits) (queue : PairQueue)
       queue ← queue.push limits ⟨i, new, lcm, sugar⟩
   return queue
 
-/-- Buchberger's chain test with explicit resolved dependencies. -/
+/-- Buchberger's chain test with explicit resolved dependencies. Only indexed
+divisors of the pair LCM need dependency lookups. -/
 def chain (context : Context) (limits : Limits) (queue : PairQueue)
-    (basis : Array BasisElement) (pair : CriticalPair) : Computation Bool := do
-  let table := (← get).table
-  for k in [:basis.size] do
-    spend limits (context.variables + 1 + 8 * (queue.resolved.size + 2).log2)
+    (index : ReducerIndex) (pair : CriticalPair) : Computation Bool := do
+  for k in ← index.divisors context limits pair.lcm do
+    spend limits (1 + 8 * (queue.resolved.size + 2).log2)
     if k != pair.left && k != pair.right &&
-        queue.resolved.contains (key pair.left k) && queue.resolved.contains (key k pair.right) &&
-        table.divides (basis[k]!.polynomial.monomial 0) pair.lcm then return true
+        queue.resolved.contains (key pair.left k) && queue.resolved.contains (key k pair.right) then
+      return true
   return false
 
 /-- Select one fair sugar batch; batch size is bounded independently of degree.
 Skipped chain pairs become resolved only after the dependency test succeeds. -/
 def select (context : Context) (limits : Limits) (queue : PairQueue)
-    (basis : Array BasisElement) : Computation (Array CriticalPair × PairQueue) := do
+    (index : ReducerIndex) : Computation (Array CriticalPair × PairQueue) := do
   let mut queue := queue
   let mut selected := #[]
   let mut sugar : Option Nat := none
@@ -161,7 +161,7 @@ def select (context : Context) (limits : Limits) (queue : PairQueue)
     let (pair, next) ← queue.pop limits
     queue := next
     if let some pair := pair then
-      if ← queue.chain context limits basis pair then
+      if ← queue.chain context limits index pair then
         queue ← queue.resolve limits pair.left pair.right
         modify fun s => { s with statistics.chainPairs := s.statistics.chainPairs + 1 }
       else

@@ -29,14 +29,25 @@ private def emit : IO Unit := do
         let context : Context := ⟨field, c.variables, order⟩
         let (candidate, stats) ← match computeWith context {} c.generators with
           | .candidate candidate stats => pure (candidate, stats)
+          | .internal e _ => throw (IO.userError s!"F4 internal {reprStr e}")
           | .invalid e _ => throw (IO.userError s!"{c.name}: {reprStr e}")
           | .exhausted r _ => throw (IO.userError s!"{c.name}: exhausted {reprStr r}")
           | .representation e _ => throw (IO.userError s!"{c.name}: representation {reprStr e}")
+        let (serial, serialStats) ← match computeWith context { batchSize := 1 } c.generators with
+          | .candidate candidate stats => pure (candidate, stats)
+          | .internal e _ => throw (IO.userError s!"{c.name}: internal {reprStr e}")
+          | .invalid e _ => throw (IO.userError s!"{c.name}: {reprStr e}")
+          | .exhausted r _ => throw (IO.userError s!"{c.name}: serial exhausted {reprStr r}")
+          | .representation e _ => throw (IO.userError s!"{c.name}: serial representation {reprStr e}")
+        if candidate.polynomials != serial.polynomials then
+          throw (IO.userError s!"{c.name}: batch-size-dependent reduced basis")
         let value := "{" ++ s!"\"p\":{field.modulus.toNat},\"variables\":{c.variables}," ++
           "\"order\":\"" ++ orderName order ++ "\",\"generators\":" ++
           array (c.generators.map polynomial) ++ ",\"basis\":" ++
           array (candidate.polynomials.map polynomial) ++
-          s!",\"rounds\":{stats.rounds},\"pairs\":{stats.pairs},\"work\":{stats.work}" ++ "}"
+          s!",\"rounds\":{stats.rounds},\"pairs\":{stats.pairs},\"work\":{stats.work}," ++
+          s!"\"productPairs\":{stats.productPairs},\"chainPairs\":{stats.chainPairs}," ++
+          s!"\"serialChainPairs\":{serialStats.chainPairs},\"serialWork\":{serialStats.work}" ++ "}"
         Hex.Conformance.Emit.emitResult "HexGroebner" s!"p{field.modulus.toNat}/{orderName order}/{c.name}" "f4" value
 
 end Hex.Groebner.EmitF4

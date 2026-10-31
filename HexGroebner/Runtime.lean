@@ -31,7 +31,9 @@ structure RawTerm where
 /-- A raw polynomial is normalized by combining repeated monomials. -/
 abbrev RawPolynomial := Array RawTerm
 
-/-- Packed polynomial supports use stable monomial identifiers in decreasing
+/-- Internal packed polynomials require canonical coefficients and identifiers
+from their associated workspace; raw construction does not enforce this invariant.
+Supports use stable monomial identifiers in decreasing
 mathematical order. Unlike matrix columns, identifiers need not be increasing. -/
 structure Polynomial where
   support : ByteArray := {}
@@ -51,7 +53,7 @@ structure Polynomial where
 
 /-- Whole-computation resource categories. -/
 inductive F4Resource where
-  | work | bytes | monomials | pairs | rounds | matrixEntries | basis | variables
+  | work | packedBytes | monomials | pairs | rounds | matrixEntries | matrixRows | basis | variables
   deriving BEq, Repr
 
 /-- Invalid input, representation exhaustion and consumed allowances are
@@ -65,18 +67,20 @@ inductive ComputeError where
   deriving BEq, Repr
 
 /-- Absolute cumulative allowances, also used when resuming a computation.
-Bytes count monomial arenas plus cumulatively allocated polynomial/matrix packed
-payload. They exclude object headers and allocator capacity. Pair and basis
-counts bound the corresponding metadata. Work units include exponent visits,
+`packedBytes` counts monomial arenas plus cumulative polynomial/matrix packed
+payload. It excludes object headers and allocator capacity. Pair attempts bound
+pair metadata, including attempts in retried stages. The basis limit bounds
+basis metadata. Work units include exponent visits,
 hash operations, sort comparison reservations, scalar operations and the matrix
 kernel's work units. No timing result is implied by these operational limits. -/
 structure Limits where
   work : Nat := 100000000
-  bytes : Nat := 256 * 1024 * 1024
+  packedBytes : Nat := 256 * 1024 * 1024
   monomials : Nat := 1000000
   pairs : Nat := 1000000
   rounds : Nat := 10000
   matrixEntries : Nat := 10000000
+  matrixRows : Nat := 1000000
   basis : Nat := 100000
   variables : Nat := 10000
   batchSize : Nat := 64
@@ -89,6 +93,7 @@ structure Statistics where
   pairs : Nat := 0
   rounds : Nat := 0
   matrixEntries : Nat := 0
+  matrixRows : Nat := 0
   matrixCalls : Nat := 0
   productPairs : Nat := 0
   chainPairs : Nat := 0
@@ -116,7 +121,7 @@ def allocate (limits : Limits) (amount : Nat) : Computation Unit := do
   let s ← get
   let allocated := s.statistics.allocatedBytes + amount
   let total := allocated + s.table.exponents.size + s.table.metadata.size
-  if total > limits.bytes then throw (.exhausted .bytes)
+  if total > limits.packedBytes then throw (.exhausted .packedBytes)
   if total ≥ USize.size then throw (.representation .address)
   set { s with statistics.allocatedBytes := allocated }
 
@@ -126,7 +131,7 @@ private def tableResult (limits : Limits)
     let statistics := state.statistics
     let table := { state.table with work := statistics.work }
     let outcome := operation table limits.monomials
-      (limits.bytes - statistics.allocatedBytes) limits.work
+      (limits.packedBytes - statistics.allocatedBytes) limits.work
     match outcome.result with
     | .ok id =>
       (.ok id, ⟨outcome.table, { statistics with work := outcome.table.work }⟩)
@@ -134,7 +139,7 @@ private def tableResult (limits : Limits)
       let error := match failure.error with
         | .work => ComputeError.exhausted .work
         | .exhausted => if outcome.table.count ≥ limits.monomials then
-            ComputeError.exhausted .monomials else .exhausted .bytes
+            ComputeError.exhausted .monomials else .exhausted .packedBytes
         | e => ComputeError.representation e
       (.error error, ⟨outcome.table, { statistics with work := failure.work }⟩)
 

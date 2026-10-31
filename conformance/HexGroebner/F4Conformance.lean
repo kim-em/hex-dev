@@ -7,7 +7,7 @@ Authors: Kim Morrison
 import HexGroebner
 
 /-!
-Oracle: independent SymPy reduced Groebner bases (fixture emitter).
+Oracle: none (core); independent basis oracles consume the fixture emitter.
 Mode: always.
 Covered operations: raw normalization, packed polynomial arithmetic, symbolic
 preprocessing, deterministic F4, normal forms, and cumulative-state resumption.
@@ -37,6 +37,7 @@ private def result (context : Context) (input : Array RawPolynomial) :
     Except String (Array RawPolynomial) :=
   match computeWith context {} input with
   | .candidate candidate _ => .ok candidate.polynomials
+  | .internal error _ => .error (reprStr error)
   | .invalid error _ => .error (reprStr error)
   | .exhausted resource _ => .error (reprStr resource)
   | .representation error _ => .error (reprStr error)
@@ -71,8 +72,8 @@ private def result (context : Context) (input : Array RawPolynomial) :
     | _ => false
   | _ => false
 
-#guard match computeWith context { bytes := 0 } input with
-  | .exhausted .bytes state =>
+#guard match computeWith context { packedBytes := 0 } input with
+  | .exhausted .packedBytes state =>
     state.workspace.statistics.work > 0 && state.workspace.statistics.work < 100000000 &&
     match resumeWith {} state with
     | .candidate candidate _ => .ok candidate.polynomials == result context input
@@ -97,10 +98,54 @@ private def result (context : Context) (input : Array RawPolynomial) :
 #guard let calculation : Computation RawPolynomial := do
     let divisor ← Polynomial.normalize context {} 0 #[⟨#[1, 0], 1⟩, ⟨#[0, 0], 6⟩]
     let p ← Polynomial.normalize context {} 1 #[⟨#[2, 0], 3⟩, ⟨#[0, 1], 2⟩]
-    let r ← reducePolynomial context {} #[⟨divisor, 1⟩] p
+    let r ← Polynomial.remainder context {} #[⟨divisor, 1⟩] p
     return r.toRaw field (← get).table
   match calculation.run ⟨{ arity := 2 }, {}⟩ with
   | (.ok r, _) => r == #[⟨#[0, 1], 2⟩, ⟨#[0, 0], 3⟩]
+  | _ => false
+
+private def budgets : Bool := Id.run do
+  let expected := result context input
+  let agrees := fun candidate => .ok candidate.polynomials == expected && candidate.randomState == 37
+  let resume := fun state => match resumeWith {} state with
+    | .candidate candidate _ => agrees candidate
+    | _ => false
+  let boundaries : Array (Limits × F4Resource) := #[
+    ({ work := 0 }, .work), ({ packedBytes := 0 }, .packedBytes),
+    ({ monomials := 0 }, .monomials), ({ pairs := 0 }, .pairs),
+    ({ rounds := 0 }, .rounds), ({ matrixEntries := 0 }, .matrixEntries),
+    ({ matrixRows := 0 }, .matrixRows), ({ basis := 0 }, .basis),
+    ({ variables := 0 }, .variables)]
+  for (limits, resource) in boundaries do
+    match computeWith context limits input 37 with
+    | .exhausted r state => if r != resource || !resume state then return false
+    | _ => return false
+  let total := match computeWith context {} input 37 with
+    | .candidate _ statistics => statistics.work
+    | _ => 0
+  if total == 0 then return false
+  let mut failedRound := false
+  -- Every work boundary includes failures after selection has popped pairs.
+  for work in [:total + 1] do
+    match computeWith context { work } input 37 with
+    | .candidate candidate _ => if !agrees candidate then return false
+    | .exhausted .work state =>
+      failedRound := failedRound || (state.workspace.statistics.rounds > 0 &&
+        state.checkpoint.phase == .pairs)
+      if !resume state then return false
+    | _ => return false
+  for bytes in [:2000:23] do
+    match computeWith context { packedBytes := bytes } input 37 with
+    | .candidate candidate _ => if !agrees candidate then return false
+    | .exhausted .packedBytes state => if !resume state then return false
+    | _ => return false
+  return failedRound
+
+#guard budgets
+
+-- Empty generators still consume work proportional to the outer input size.
+#guard match computeWith context { work := 20 } (Array.replicate 100 #[]) with
+  | .exhausted .work _ => true
   | _ => false
 
 -- An ordinary importing client cannot replace the identity of a checkpoint.

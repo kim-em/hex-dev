@@ -231,6 +231,7 @@ def katsura (n : Nat) : Array RawPolynomial := Id.run do
 
 initialize cyclic4Input : IO.Ref (Array RawPolynomial) ← IO.mkRef (cyclic 4)
 initialize cyclic5Input : IO.Ref (Array RawPolynomial) ← IO.mkRef (cyclic 5)
+initialize cyclic6Input : IO.Ref (Array RawPolynomial) ← IO.mkRef (cyclic 6)
 initialize katsura3Input : IO.Ref (Array RawPolynomial) ← IO.mkRef (katsura 3)
 
 private def compute (variables : Nat) (input : Array RawPolynomial) : IO (Array RawPolynomial) := do
@@ -238,6 +239,7 @@ private def compute (variables : Nat) (input : Array RawPolynomial) : IO (Array 
   | .candidate candidate _ => return candidate.polynomials
   | .exhausted r _ => throw (IO.userError s!"F4 exhausted {reprStr r}")
   | .representation r _ => throw (IO.userError s!"F4 representation {reprStr r}")
+  | .internal e _ => throw (IO.userError s!"F4 internal {reprStr e}")
   | .invalid e _ => throw (IO.userError s!"F4 invalid {reprStr e}")
 
 /-- Candidate-only cyclic-4; input generation is excluded, canonicalization and
@@ -247,6 +249,9 @@ def cyclic4 (_ : Unit) : IO (Array RawPolynomial) := do compute 4 (← cyclic4In
 /-- Candidate-only cyclic-5 under the same field, order and output contract. -/
 def cyclic5 (_ : Unit) : IO (Array RawPolynomial) := do compute 5 (← cyclic5Input.get)
 
+/-- Candidate-only cyclic-6, with a larger matrix/pair sequence. -/
+def cyclic6 (_ : Unit) : IO (Array RawPolynomial) := do compute 6 (← cyclic6Input.get)
+
 /-- Candidate-only Katsura-3 under the same field, order and output contract. -/
 def katsura3 (_ : Unit) : IO (Array RawPolynomial) := do compute 4 (← katsura3Input.get)
 
@@ -255,6 +260,7 @@ def katsura3 (_ : Unit) : IO (Array RawPolynomial) := do compute 4 (← katsura3
 -- a failed call. Certification and kernel checking are not performed here.
 setup_fixed_benchmark cyclic4 where { repeats := 5 }
 setup_fixed_benchmark cyclic5 where { repeats := 5 }
+setup_fixed_benchmark cyclic6 where { repeats := 5 }
 setup_fixed_benchmark katsura3 where { repeats := 5 }
 
 end Hex.Groebner.Bench

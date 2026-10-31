@@ -53,6 +53,7 @@ private def install (context : Context) (limits : Limits) (basis : Array BasisEl
 
 private def inputBasis (context : Context) (limits : Limits) (raw : Array RawPolynomial) :
     Computation Checkpoint := do
+  spend limits raw.size
   let mut inputs := #[]
   for i in [:raw.size] do
     let p ← Polynomial.normalize context limits i raw[i]!
@@ -72,7 +73,8 @@ private def round (context : Context) (limits : Limits) (checkpoint : Checkpoint
   let s ← get
   if s.statistics.rounds ≥ limits.rounds then throw (.exhausted .rounds)
   set { s with statistics.rounds := s.statistics.rounds + 1 }
-  let (pairs, queue) ← checkpoint.queue.select context limits checkpoint.basis
+  let index ← ReducerIndex.build context limits checkpoint.basis
+  let (pairs, queue) ← checkpoint.queue.select context limits index
   if pairs.isEmpty then return { checkpoint with queue }
   let mut targets := #[]
   for pair in pairs do
@@ -80,7 +82,7 @@ private def round (context : Context) (limits : Limits) (checkpoint : Checkpoint
     let g := checkpoint.basis[pair.right]!.polynomial
     let p ← f.sPolynomial context limits g
     if p.size != 0 then targets := targets.push ⟨p, pair.sugar⟩
-  let matrix ← SymbolicMatrix.prepare context limits checkpoint.basis targets
+  let matrix ← SymbolicMatrix.prepareWith context limits index checkpoint.basis targets
   let new ← matrix.eliminate context limits
   let basis := checkpoint.basis ++ new
   if let some g ← unit limits new then
@@ -105,6 +107,7 @@ private def interreduce (context : Context) (limits : Limits) (basis : Array Bas
         redundant := true
         break
     if !redundant then minimal := minimal.push basis[i]!
+  let index ← ReducerIndex.build context limits minimal
   let mut reduced := #[]
   for g in minimal do
     let p := g.polynomial
@@ -115,15 +118,16 @@ private def interreduce (context : Context) (limits : Limits) (basis : Array Bas
       tail := {
         support := p.support.extract 4 p.support.size
         coefficients := p.coefficients.extract context.field.width.bytes p.coefficients.size }
-      tail ← reducePolynomial context limits minimal tail
+      tail ← Polynomial.remainderWith context limits index minimal tail
     allocate limits ((tail.size + 1) * (4 + context.field.width.bytes))
     spend limits tail.size
     let mut support := Packed.push .u32 {} (p.monomial 0).toUInt64
-    let mut coefficients := Packed.push context.field.width {} 1
+    let mut coefficients := Packed.push context.field.width {} (p.coefficient context.field 0)
     for i in [:tail.size] do
       support := Packed.push .u32 support (tail.monomial i).toUInt64
       coefficients := Packed.push context.field.width coefficients (tail.coefficient context.field i)
-    reduced := reduced.push ⟨{ support, coefficients }, g.sugar⟩
+    let p ← Polynomial.monic context limits { support, coefficients }
+    reduced := reduced.push ⟨p, g.sugar⟩
   let leading := reduced.map fun g => g.polynomial.monomial 0
   let order ← sort context limits leading
   spend limits reduced.size
@@ -169,6 +173,7 @@ and a consumed allowance. Only the latter two expose a resumable checkpoint. -/
 inductive ComputeResult where
   | candidate (value : Candidate) (statistics : Statistics)
   | invalid (error : ComputeError) (statistics : Statistics)
+  | internal (error : ComputeError) (statistics : Statistics)
   | exhausted (resource : F4Resource) (state : ResumeState)
   | representation (error : MonomialError) (state : ResumeState)
 
@@ -176,6 +181,7 @@ private def fail (state : ResumeState) (error : ComputeError) : ComputeResult :=
   match error with
   | .exhausted resource => .exhausted resource state
   | .representation error => .representation error state
+  | .matrix error => .internal (.matrix error) state.workspace.statistics
   | error => .invalid error state.workspace.statistics
 
 private def decode (state : ResumeState) (limits : Limits) : Computation Candidate := do
@@ -194,11 +200,12 @@ def resumeWith (limits : Limits) (initial : ResumeState) : ComputeResult := Id.r
   let mut state := initial
   let statistics := state.workspace.statistics
   if statistics.work > limits.work then return fail state (.exhausted .work)
-  if statistics.allocatedBytes + state.workspace.table.exponents.size + state.workspace.table.metadata.size > limits.bytes then
-    return fail state (.exhausted .bytes)
+  if statistics.allocatedBytes + state.workspace.table.exponents.size + state.workspace.table.metadata.size > limits.packedBytes then
+    return fail state (.exhausted .packedBytes)
   if statistics.pairs > limits.pairs then return fail state (.exhausted .pairs)
   if statistics.rounds > limits.rounds then return fail state (.exhausted .rounds)
   if statistics.matrixEntries > limits.matrixEntries then return fail state (.exhausted .matrixEntries)
+  if statistics.matrixRows > limits.matrixRows then return fail state (.exhausted .matrixRows)
   if state.checkpoint.basis.size > limits.basis then return fail state (.exhausted .basis)
   if state.context.variables > limits.variables then return fail state (.exhausted .variables)
   if state.workspace.table.count > limits.monomials then return fail state (.exhausted .monomials)

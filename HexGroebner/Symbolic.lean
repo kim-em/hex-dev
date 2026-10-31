@@ -36,9 +36,8 @@ namespace SymbolicMatrix
 /-- Close every selected term under the required reducers. A monomial is queued
 once and has at most one chosen reducer. Multiplication can extend the arena and
 trigger checked exponent widening, without invalidating any existing identifier. -/
-def prepare (context : Context) (limits : Limits) (basis : Array BasisElement)
-    (targets : Array BasisElement) : Computation SymbolicMatrix := do
-  let index ← ReducerIndex.build context limits basis
+def prepareWith (context : Context) (limits : Limits) (index : ReducerIndex)
+    (basis : Array BasisElement) (targets : Array BasisElement) : Computation SymbolicMatrix := do
   let mut support : Std.HashSet Nat := {}
   let mut pending : Array Nat := #[]
   for target in targets do
@@ -70,6 +69,12 @@ def prepare (context : Context) (limits : Limits) (basis : Array BasisElement)
   if cursor < pending.size then throw (.exhausted .monomials)
   let columns ← sort context limits pending
   return ⟨columns, reducers, targets⟩
+
+/-- Build a basis-specific reducer index and close the selected supports.
+Call `prepareWith` when the immutable basis index can be reused. -/
+def prepare (context : Context) (limits : Limits) (basis : Array BasisElement)
+    (targets : Array BasisElement) : Computation SymbolicMatrix := do
+  prepareWith context limits (← ReducerIndex.build context limits basis) basis targets
 
 private def row (_context : Context) (limits : Limits) (positions : Std.HashMap Nat Nat)
     (p : Polynomial) : Computation SparseRow := do
@@ -109,11 +114,16 @@ def eliminate (context : Context) (limits : Limits) (matrix : SymbolicMatrix) (m
     inputBytes := inputBytes + r.columns.size + r.coefficients.size
     targets := targets.push r
   let s ← get
+  let rows := reducers.size + targets.size
+  if matrix.columns.size ≥ 2 ^ 32 || rows ≥ 2 ^ 32 then throw (.representation .index)
+  if matrix.columns.size * (context.field.width.bytes + 4) ≥ USize.size then
+    throw (.representation .address)
+  if s.statistics.matrixRows + rows > limits.matrixRows then throw (.exhausted .matrixRows)
   if s.statistics.matrixEntries + entries > limits.matrixEntries then
     throw (.exhausted .matrixEntries)
-  let remainingBytes := limits.bytes - s.statistics.allocatedBytes - s.table.exponents.size - s.table.metadata.size
+  let remainingBytes := limits.packedBytes - s.statistics.allocatedBytes - s.table.exponents.size - s.table.metadata.size
   let matrixLimits : MatrixLimits := {
-    columns := limits.monomials, rows := limits.monomials + limits.basis
+    columns := limits.monomials, rows := limits.matrixRows - s.statistics.matrixRows
     inputEntries := entries
     outputEntries := limits.matrixEntries - s.statistics.matrixEntries - entries
     packedBytes := remainingBytes + inputBytes
@@ -124,15 +134,17 @@ def eliminate (context : Context) (limits : Limits) (matrix : SymbolicMatrix) (m
     work := s.statistics.work + stats.work
     allocatedBytes := s.statistics.allocatedBytes + (stats.packedBytes - inputBytes)
     matrixEntries := s.statistics.matrixEntries + stats.inputEntries + stats.outputEntries
+    matrixRows := s.statistics.matrixRows + rows
     matrixCalls := s.statistics.matrixCalls + 1 } }
   let echelon ← match outcome.result with
     | .ok e => pure e
-    | .error (.exhausted r) => throw (.exhausted (match r with
-      | .work => .work
-      | .packedBytes => .bytes
-      | .inputEntries | .outputEntries => .matrixEntries
-      | .columns => .monomials
-      | _ => .basis))
+    | .error (.exhausted r) => match r with
+      | .work => throw (.exhausted .work)
+      | .packedBytes => throw (.exhausted .packedBytes)
+      | .inputEntries | .outputEntries => throw (.exhausted .matrixEntries)
+      | .columns => throw (.exhausted .monomials)
+      | .rows => throw (.exhausted .matrixRows)
+      | .traceNodes => throw (.matrix (.exhausted .traceNodes))
     | .error e => throw (.matrix e)
   let mut output := #[]
   for pivot in echelon.rows do
@@ -156,14 +168,21 @@ end SymbolicMatrix
 Macaulay elimination. For a completed Gröbner basis this is its unique normal
 form; against arbitrary divisors it is the remainder for the selected reducers.
 No field equations or Boolean quotient identities are added. -/
-def reducePolynomial (context : Context) (limits : Limits) (basis : Array BasisElement)
-    (p : Polynomial) : Computation Polynomial := do
+def Polynomial.remainderWith (context : Context) (limits : Limits) (index : ReducerIndex)
+    (basis : Array BasisElement) (p : Polynomial) : Computation Polynomial := do
   if p.size == 0 then return p
   let table := (← get).table
   spend limits p.size
   let sugar := (Array.range p.size).foldl (fun d i => max d (table.degree (p.monomial i))) 0
-  let matrix ← SymbolicMatrix.prepare context limits basis #[⟨p, sugar⟩]
+  let matrix ← SymbolicMatrix.prepareWith context limits index basis #[⟨p, sugar⟩]
   let output ← matrix.eliminate context limits false
   return (output[0]?.map BasisElement.polynomial).getD {}
+
+/-- Remainder with respect to unchecked internal divisors. All packed
+polynomials and identifiers must belong to the supplied workspace/context.
+This helper supplies no certified-basis or ideal-membership claim. -/
+def Polynomial.remainder (context : Context) (limits : Limits) (basis : Array BasisElement)
+    (p : Polynomial) : Computation Polynomial := do
+  Polynomial.remainderWith context limits (← ReducerIndex.build context limits basis) basis p
 
 end Hex.Groebner
