@@ -375,4 +375,59 @@ private def monomialResume : Bool := Id.run do
 
 #guard monomialResume
 
+private def sameOutcome (a b : ComputeResult) : Bool :=
+  match a, b with
+  | .candidate a sa, .candidate b sb => a.polynomials == b.polynomials && sa == sb
+  | .exhausted a sa, .exhausted b sb => a == b &&
+      sa.workspace.statistics == sb.workspace.statistics && sa.workspace.table.bytes == sb.workspace.table.bytes
+  | .representation a sa, .representation b sb => a == b &&
+      sa.workspace.statistics == sb.workspace.statistics && sa.workspace.table.bytes == sb.workspace.table.bytes
+  | .invalid a sa, .invalid b sb => a == b && sa == sb
+  | .internal a sa, .internal b sb => a == b && sa == sb
+  | _, _ => false
+
+private def monomialBudgets : Bool := Id.run do
+  let expected := result context input
+  let .candidate _ statistics := computeWith context {} input | return false
+  let mut completedBytes := false
+  let mut cachedCheckpoint := false
+  for bytes in [:statistics.allocatedBytes + 4096] do
+    let native := computeWith context { packedBytes := bytes } input 37
+    let portable := computeWith context { packedBytes := bytes, nativeMonomials := false } input 37
+    if !sameOutcome native portable then return false
+    match native with
+    | .candidate candidate _ =>
+      if .ok candidate.polynomials != expected then return false
+      completedBytes := true
+      break
+    | .exhausted .packedBytes state =>
+      cachedCheckpoint := cachedCheckpoint || state.workspace.table.workspace.size > 0
+    | _ => return false
+    for (outcome, nativeMonomials) in [(native, false), (portable, true)] do
+      let .exhausted .packedBytes state := outcome | return false
+      match resumeWith { nativeMonomials } state with
+      | .candidate candidate statistics =>
+        if .ok candidate.polynomials != expected || candidate.randomState != 37 ||
+            statistics.work < state.workspace.statistics.work then return false
+      | _ => return false
+  let mut completedCount := false
+  for count in [:64] do
+    let native := computeWith context { monomials := count } input 37
+    let portable := computeWith context { monomials := count, nativeMonomials := false } input 37
+    if !sameOutcome native portable then return false
+    match native with
+    | .candidate _ _ => completedCount := true; break
+    | .exhausted .monomials _ => pure ()
+    | _ => return false
+    for (outcome, nativeMonomials) in [(native, false), (portable, true)] do
+      let .exhausted .monomials state := outcome | return false
+      match resumeWith { nativeMonomials } state with
+      | .candidate candidate statistics =>
+        if .ok candidate.polynomials != expected || candidate.randomState != 37 ||
+            statistics.work < state.workspace.statistics.work then return false
+      | _ => return false
+  return completedBytes && completedCount && cachedCheckpoint
+
+#guard monomialBudgets
+
 end Hex.Groebner.F4Conformance

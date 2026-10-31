@@ -38,7 +38,7 @@ instance (order : TermOrder) (n : Nat) : IsMonomialOrder (order.cmp n) := by
 /-- Representation errors are distinct from the caller's resource allowance. -/
 inductive MonomialError where
   | arity | index | exponent | degree | address
-  | exhausted | work
+  | monomials | packedBytes | work
   deriving BEq, Repr
 
 /-- Failed monomial operations retain their charged work, including validation
@@ -48,7 +48,9 @@ structure MonomialFailure where
   work : Nat
   deriving BEq, Repr
 
-/-- Cached degree, support mask and semantic hash occupy 24 bytes per monomial. -/
+/-- Cached degree, support mask and semantic hash occupy 24 bytes per monomial.
+Operations require arenas and bucket identifiers produced by this API; raw
+record fabrication does not establish these internal invariants. -/
 structure MonomialTable where
   arity : Nat
   width : Width := .u8
@@ -64,7 +66,9 @@ structure MonomialTable where
   work : Nat := 0
 
 /-- Owned operations always return the table, on success and failure. This
-avoids retaining a rollback alias while growing its packed buffers/hash map. -/
+avoids retaining a rollback alias while growing its packed buffers/hash map.
+On failure, `MonomialFailure.work` is the full charged counter; `table.work`
+retains the portable interning boundary's counter. -/
 structure InternResult where
   result : Except MonomialFailure Nat
   table : MonomialTable
@@ -76,9 +80,17 @@ private def word64 (bytes : @& ByteArray) (index : Nat) : UInt64 :=
 
 private def read64 (bytes : @& ByteArray) (index : Nat) : UInt64 := word64 bytes (2 * index)
 
-/-- Live packed exponent, metadata and reusable workspace payload. -/
+@[inline] private def reserve (arity : Nat) : Nat :=
+  if arity > 0 && arity ≤ 4096 then arity * 4 + 28 else 0
+
+@[inline] private def workspaceBytes (table : @& MonomialTable) : Nat :=
+  max table.workspace.size (if table.count == 0 then 0 else reserve table.arity)
+
+/-- Packed arenas plus a common workspace reservation in both backends. The
+reservation begins with the first monomial and remains after a failed operation,
+even if the physical workspace must be recreated. -/
 @[inline] def bytes (table : @& MonomialTable) : Nat :=
-  table.exponents.size + table.metadata.size + table.workspace.size
+  table.exponents.size + table.metadata.size + table.workspaceBytes
 
 private def push64 (bytes : ByteArray) (value : UInt64) : ByteArray :=
   Packed.push .u32 (Packed.push .u32 bytes (value &&& 0xffffffff)) (value >>> 32)
@@ -148,6 +160,7 @@ def internOwned (table : MonomialTable) (values : Array UInt64)
   if values.size != table.arity then return ⟨.error ⟨.arity, table.work⟩, table⟩
   let mut work := table.work + values.size
   if work > maxWork then return ⟨.error ⟨.work, maxWork⟩, table⟩
+  if table.bytes > maxBytes then return ⟨.error ⟨.packedBytes, work⟩, table⟩
   let mut width := table.width
   let mut degree : Nat := 0
   let mut mask : UInt64 := 0
@@ -168,11 +181,11 @@ def internOwned (table : MonomialTable) (values : Array UInt64)
     work := work + table.arity
     if work > maxWork then return ⟨.error ⟨.work, maxWork⟩, table⟩
     if table.equal id values then return ⟨.ok id, { table with work }⟩
-  if table.count ≥ maxCount then return ⟨.error ⟨.exhausted, work⟩, table⟩
+  if table.count ≥ maxCount then return ⟨.error ⟨.monomials, work⟩, table⟩
   if table.count + 1 > 4294967295 then return ⟨.error ⟨.index, work⟩, table⟩
   let size := (table.count + 1) * table.arity * width.bytes + (table.count + 1) * 24
-  let peak := size + table.workspace.size + if width != table.width then table.exponents.size else 0
-  if peak > maxBytes then return ⟨.error ⟨.exhausted, work⟩, table⟩
+  let peak := size + max table.workspace.size (reserve table.arity) + if width != table.width then table.exponents.size else 0
+  if peak > maxBytes then return ⟨.error ⟨.packedBytes, work⟩, table⟩
   if peak ≥ USize.size then return ⟨.error ⟨.address, work⟩, table⟩
   work := work + table.arity + if width != table.width then table.count * table.arity else 0
   if work > maxWork then return ⟨.error ⟨.work, maxWork⟩, table⟩
@@ -233,9 +246,6 @@ private def combinePacked (table : MonomialTable) (operation : Operation) (a b :
   let mut work := table.work + table.arity
   if work > maxWork then return ⟨.error ⟨.work, maxWork⟩, table⟩
   let size := table.arity * 4 + 28
-  let peak := table.exponents.size + table.metadata.size + size
-  if peak > maxBytes then return ⟨.error ⟨.exhausted, work⟩, table⟩
-  if peak ≥ USize.size then return ⟨.error ⟨.address, work⟩, table⟩
   let workspace := if table.workspace.size == size then table.workspace else zeros size
   -- Move the reusable buffer out before the native call, preserving ownership.
   let table := { table with workspace := {} }
@@ -243,6 +253,8 @@ private def combinePacked (table : MonomialTable) (operation : Operation) (a b :
   let some prepared := Native.Monomial.prepare code table.width.bytes.toUInt8 table.arity.toUInt64
       table.count.toUInt64 a.toUInt64 b.toUInt64 table.exponents workspace
     | return ⟨.error ⟨.exponent, work⟩, table⟩
+  -- Match the portable call's state when entering its intern operation.
+  let table := { table with work }
   work := work + table.arity
   if work > maxWork then return ⟨.error ⟨.work, maxWork⟩, { table with workspace := prepared }⟩
   let degree := word64 prepared table.arity
@@ -258,11 +270,11 @@ private def combinePacked (table : MonomialTable) (operation : Operation) (a b :
     if work > maxWork then return ⟨.error ⟨.work, maxWork⟩, { table with workspace := prepared }⟩
     if Native.Monomial.equal table.width.bytes.toUInt8 table.arity.toUInt64 id.toUInt64
         table.exponents prepared then return ⟨.ok id, { table with work, workspace := prepared }⟩
-  if table.count ≥ maxCount then return ⟨.error ⟨.exhausted, work⟩, { table with workspace := prepared }⟩
+  if table.count ≥ maxCount then return ⟨.error ⟨.monomials, work⟩, { table with workspace := prepared }⟩
   if table.count + 1 > 4294967295 then return ⟨.error ⟨.index, work⟩, { table with workspace := prepared }⟩
   let size := (table.count + 1) * table.arity * width.bytes + (table.count + 1) * 24
   let peak := size + prepared.size + if width != table.width then table.exponents.size else 0
-  if peak > maxBytes then return ⟨.error ⟨.exhausted, work⟩, { table with workspace := prepared }⟩
+  if peak > maxBytes then return ⟨.error ⟨.packedBytes, work⟩, { table with workspace := prepared }⟩
   if peak ≥ USize.size then return ⟨.error ⟨.address, work⟩, { table with workspace := prepared }⟩
   work := work + table.arity + if width != table.width then table.count * table.arity else 0
   if work > maxWork then return ⟨.error ⟨.work, maxWork⟩, { table with workspace := prepared }⟩
@@ -277,10 +289,15 @@ private def combinePacked (table : MonomialTable) (operation : Operation) (a b :
 
 /-- Packed native preparation and exact comparison for arities 1 through 4096.
 Larger arities, zero variables and `native := false` retain the portable
-coordinate-array route. A reusable bounded workspace is counted alongside the
+coordinate-array route. A bounded workspace reservation is counted in both backends alongside the
 arenas; exponent/degree overflow and collision handling remain exact. -/
 def combineOwned (table : MonomialTable) (operation : Operation) (a b : Nat)
     (maxCount maxBytes : Nat) (maxWork : Nat := 100000000) (native := true) : InternResult :=
+  if a ≥ table.count || b ≥ table.count then ⟨.error ⟨.index, table.work⟩, table⟩ else
+  let work := table.work + table.arity
+  if work > maxWork then ⟨.error ⟨.work, maxWork⟩, table⟩ else
+  if table.bytes > maxBytes then ⟨.error ⟨.packedBytes, work⟩, table⟩ else
+  if table.bytes ≥ USize.size then ⟨.error ⟨.address, work⟩, table⟩ else
   if native && table.arity > 0 && table.arity ≤ 4096 && table.count ≤ 4294967295 then
     combinePacked table operation a b maxCount maxBytes maxWork
   else combinePortable table operation a b maxCount maxBytes maxWork

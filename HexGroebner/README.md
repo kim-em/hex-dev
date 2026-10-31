@@ -76,9 +76,10 @@ packed preparation and full-coordinate collision comparisons. LCM, product and
 exact quotient share one owned reusable buffer for u32 coordinates and cached
 metadata. `Limits.nativeMonomials := false` retains the coordinate-array route;
 zero and larger arities use it automatically. Both routes preserve stable IDs,
-exact overflow rejection and successful work counters. The workspace counts
-against packed-byte limits, so tight memory allowances may exhaust earlier
-than on the array route. Native primitives have transparent portable bodies,
+exact overflow rejection and successful work counters. Both backends reserve the same workspace payload after the first monomial,
+including when the physical buffer has not yet been allocated or was consumed
+by a failed operation. Byte and monomial-count exhaustion are explicit distinct
+errors. Shared states copy the workspace before mutation; unique owners reuse it. Native primitives have transparent portable bodies,
 check geometry before access and preserve borrowed source bytes under aliasing.
 The `*Arrays` benchmarks compare complete candidates on these two routes.
 

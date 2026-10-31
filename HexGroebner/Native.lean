@@ -12,7 +12,9 @@ public section
 library, so its native carrier can resolve the C binding on every platform.
 The byte layout and rejection behavior are part of the pure function's contract.
 Matrix callers validate entire rows before calling it on chunks of at most
-4096 entries; the native provider repeats shape and access checks defensively. -/
+4096 entries; the native provider repeats shape and access checks defensively.
+Monomial calls validate packed geometry and process at most 4096 coordinates,
+reusing an owned preparation buffer. -/
 
 namespace Hex.Groebner.Native
 
@@ -115,7 +117,9 @@ little-endian exponents of width 1/2/4. Arity lies in `[1,4096]`; both identifie
 are below count. Workspace has `4*arity+28` bytes. Success writes u32 coordinates,
 then u64 degree, support mask and FNV hash, then u32 maximum coordinate.
 Overflow or inexact quotient, invalid geometry or opcode returns none.
-The degree fits u64 because the admitted coordinate count is bounded. -/
+The degree fits u64 because the admitted coordinate count is bounded.
+Failure consumes the workspace and returns no partial buffer; a caller may
+recreate it within its existing workspace reservation. -/
 @[expose] def preparePortable (operation width : UInt8) (arity count left right : UInt64)
     (source : @& ByteArray) (workspace : ByteArray) : Option ByteArray :=
   let n := arity.toNat

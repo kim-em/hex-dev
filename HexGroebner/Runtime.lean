@@ -68,7 +68,7 @@ inductive ComputeError where
   deriving BEq, Repr
 
 /-- Absolute cumulative allowances, also used when resuming a computation.
-`packedBytes` counts monomial arenas and reusable workspace plus cumulative polynomial/matrix packed
+`packedBytes` counts monomial arenas and a common workspace reservation plus cumulative polynomial/matrix packed
 payload. It excludes object headers and allocator capacity. Pair attempts bound
 pair metadata, including attempts in retried stages. The basis limit bounds
 basis metadata. Work units include exponent visits,
@@ -148,8 +148,8 @@ private def tableResult (limits : Limits)
     | .error failure =>
       let error := match failure.error with
         | .work => ComputeError.exhausted .work
-        | .exhausted => if outcome.table.count ≥ limits.monomials then
-            ComputeError.exhausted .monomials else .exhausted .packedBytes
+        | .monomials => ComputeError.exhausted .monomials
+        | .packedBytes => ComputeError.exhausted .packedBytes
         | e => ComputeError.representation e
       (.error error, ⟨outcome.table, { statistics with work := failure.work }⟩)
 

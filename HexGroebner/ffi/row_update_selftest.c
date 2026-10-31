@@ -74,6 +74,26 @@ static void check_monomials(void) {
             free(source); free(output); free(left); free(right);
         }
     }
+    {
+        size_t n = 4096, source_bytes = 2 * n * 4, workspace_bytes = n * 4 + 28;
+        uint8_t *source = malloc(source_bytes), *workspace = malloc(workspace_bytes);
+        if (!source || !workspace) fail("maximum-arity allocation");
+        memset(source, 255, source_bytes);
+        if (!prepare_monomial(0, 4, n, 2, 0, 1, source, source_bytes, workspace, workspace_bytes))
+            fail("maximum arity rejected");
+        uint64_t degree = read_le(workspace + 4 * n, 4) |
+            (read_le(workspace + 4 * n + 4, 4) << 32);
+        if (degree != UINT64_C(4096) * UINT32_MAX ||
+            read_le(workspace + 4 * n + 8, 4) != UINT32_MAX ||
+            read_le(workspace + 4 * n + 12, 4) != UINT32_MAX ||
+            !equal_monomial(4, n, 1, source, source_bytes, workspace, workspace_bytes))
+            fail("maximum-arity metadata");
+        if (prepare_monomial(0, 4, n, 2, 2, 0, source, source_bytes, workspace, workspace_bytes) ||
+            prepare_monomial(0, 4, n, 2, 0, 2, source, source_bytes, workspace, workspace_bytes) ||
+            prepare_monomial(0, 4, n, 2, 0, 1, source, source_bytes - 1, workspace, workspace_bytes))
+            fail("maximum-arity invalid identifier or length");
+        free(source); free(workspace);
+    }
     if (monomial_shape(0, 4, 4096, UINT64_MAX, 0, 0, SIZE_MAX, 16412) ||
         monomial_shape(0, 4, 4097, 1, 0, 0, 16388, 16416) ||
         monomial_shape(0, 4, 0, 1, 0, 0, 0, 28) ||
