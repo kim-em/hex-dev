@@ -1,0 +1,25 @@
+Hex.Groebner.Bench.cauchy    expected complexity: n * n * n    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=59ba455-dirty, 2026-10-31T04:05:32Z, host=chungus2
+  param  per-call    repeats  C
+     32  350.108 µs  ×2^10    C=10.620 [trial 1/3]
+     64    2.042 ms  ×2^8     C= 7.802 [trial 1/3]
+    128   13.913 ms  ×2^5     C= 6.638 [trial 1/3]
+    256  102.749 ms  ×2^2     C= 6.124 [trial 1/3]
+     32  347.996 µs  ×2^10    C=10.620 [trial 2/3]
+     64    2.045 ms  ×2^8     C= 7.802 [trial 2/3]
+    128   13.922 ms  ×2^5     C= 6.638 [trial 2/3]
+    256  102.814 ms  ×2^2     C= 6.124 [trial 2/3]
+     32  347.471 µs  ×2^10    C=10.620 [trial 3/3]
+     64    2.090 ms  ×2^8     C= 7.802 [trial 3/3]
+    128   13.924 ms  ×2^5     C= 6.638 [trial 3/3]
+    256  102.700 ms  ×2^2     C= 6.124 [trial 3/3]
+  verdict: inconclusive (cMin=6.124, cMax=10.620, β=-0.262, looks faster than declared by ~n^0.262)
+  per-spawn floor (harness self-measurement): 22.123 ms
+  peak RSS: 71_688 kB..73_736 kB (across 12 ok row(s))
+  trial summaries (3 trials per param; spread = (max-min)/median):
+    param  trials  median      min         max         spread
+       32  3/3     347.996 µs  347.471 µs  350.108 µs  0.758%
+       64  3/3       2.045 ms    2.042 ms    2.090 ms  2.366%
+      128  3/3      13.922 ms   13.913 ms   13.924 ms  0.077%
+      256  3/3     102.749 ms  102.700 ms  102.814 ms  0.111%
+exported to reports/bench-results/hexgroebner-cauchy-71383709ad2f.json
