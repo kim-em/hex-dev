@@ -1,0 +1,83 @@
+/* Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+   Released under Apache 2.0 license as described in the file LICENSE.
+   Authors: Kim Morrison */
+#ifndef HEX_GROEBNER_SIMD_H
+#define HEX_GROEBNER_SIMD_H
+#include <stdint.h>
+#include <stddef.h>
+#include <string.h>
+
+#if (defined(__x86_64__) || defined(__i386__)) && defined(__GNUC__) && !defined(HEX_GROEBNER_NO_AVX2)
+#define HEX_GROEBNER_AVX2 1
+#include <immintrin.h>
+
+static inline int hex_avx2_available(void) {
+    return __builtin_cpu_supports("avx2");
+}
+
+static inline uint32_t hex_mont32_inverse(uint32_t p) {
+    uint32_t inverse=1;
+    for(unsigned i=0;i<5;++i) inverse*=2-p*inverse;
+    return UINT32_C(0)-inverse;
+}
+
+/* For odd 2 < p < 2^31, R=2^32 and 0<=a,b<p:
+   f=(aR mod p), t=f*b<p^2, m=(t*(-p^-1)) mod R.
+   t+m*p < p^2+R*p < 3*2^62 < 2^64 and is divisible by R.
+   u=(t+m*p)/R < 2p, so one subtraction gives the canonical a*b mod p.
+   Each 64-bit lane holds one product; the upper 32-bit lanes are unused. */
+__attribute__((target("avx2"),always_inline))
+static inline __m256i hex_mont32_even(__m256i b,__m256i factor,
+        __m256i negative_inverse,__m256i p64,__m256i pm1) {
+    __m256i t=_mm256_mul_epu32(b,factor);
+    __m256i m=_mm256_mullo_epi32(t,negative_inverse);
+    __m256i sum=_mm256_add_epi64(t,_mm256_mul_epu32(m,p64));
+    __m256i u=_mm256_srli_epi64(sum,32);
+    return _mm256_sub_epi64(u,_mm256_and_si256(_mm256_cmpgt_epi64(u,pm1),p64));
+}
+
+/* Eight independent canonical updates, or zero with dense unchanged.
+   The caller supplies eight in-bounds packed row entries and disjoint owned
+   dense/borrowed source buffers. All row validation precedes gathers/stores;
+   invalid vectors fall back to scalar processing to preserve failure prefixes. */
+__attribute__((target("avx2"),always_inline))
+static inline unsigned hex_scan8(uint8_t *dense,const uint8_t *columns,const uint8_t *coefficients,
+        size_t entry,uint64_t column_count,uint32_t p,uint32_t factor_mont,uint32_t negative_inverse) {
+    __m256i j=_mm256_loadu_si256((const __m256i *)(columns+entry*4));
+    __m256i b=_mm256_loadu_si256((const __m256i *)(coefficients+entry*4));
+    int32_t first=_mm256_extract_epi32(j,0),last=_mm256_extract_epi32(j,7);
+    if(first<0 || last<0 || (uint64_t)last>=column_count) return 0;
+    if(entry) {uint32_t previous;memcpy(&previous,columns+(entry-1)*4,4);if(previous>=(uint32_t)first) return 0;}
+    __m256i before=_mm256_permutevar8x32_epi32(j,_mm256_setr_epi32(0,0,1,2,3,4,5,6));
+    __m256i sorted=_mm256_or_si256(_mm256_cmpgt_epi32(j,before),_mm256_setr_epi32(-1,0,0,0,0,0,0,0));
+    __m256i pv=_mm256_set1_epi32((int32_t)p);
+    __m256i valid=_mm256_and_si256(sorted,_mm256_and_si256(
+        _mm256_cmpgt_epi32(b,_mm256_setzero_si256()),_mm256_cmpgt_epi32(pv,b)));
+    if(_mm256_movemask_epi8(valid)!=-1) return 0;
+    __m256i consecutive=_mm256_add_epi32(_mm256_set1_epi32(first),_mm256_setr_epi32(0,1,2,3,4,5,6,7));
+    int contiguous=_mm256_movemask_epi8(_mm256_cmpeq_epi32(j,consecutive))==-1;
+    __m256i a=contiguous?_mm256_loadu_si256((const __m256i *)(dense+(size_t)first*4)):
+        _mm256_i32gather_epi32((const int *)dense,j,4);
+    valid=_mm256_and_si256(_mm256_cmpgt_epi32(a,_mm256_set1_epi32(-1)),_mm256_cmpgt_epi32(pv,a));
+    if(_mm256_movemask_epi8(valid)!=-1) return 0;
+    __m256i f=_mm256_set1_epi32((int32_t)factor_mont),inv=_mm256_set1_epi32((int32_t)negative_inverse);
+    __m256i p64=_mm256_set1_epi64x(p),pm1=_mm256_set1_epi64x(p-1);
+    __m256i even=hex_mont32_even(b,f,inv,p64,pm1);
+    __m256i odd=hex_mont32_even(_mm256_srli_epi64(b,32),f,inv,p64,pm1);
+    __m256i product=_mm256_or_si256(even,_mm256_slli_epi64(odd,32));
+    __m256i difference=_mm256_sub_epi32(a,product);
+    difference=_mm256_add_epi32(difference,_mm256_and_si256(_mm256_srai_epi32(difference,31),pv));
+    if(contiguous) {
+        _mm256_storeu_si256((__m256i *)(dense+(size_t)first*4),difference);
+        return 8;
+    }
+    uint32_t indices[8],values[8];
+    _mm256_storeu_si256((__m256i *)indices,j);
+    _mm256_storeu_si256((__m256i *)values,difference);
+    for(unsigned k=0;k<8;++k) memcpy(dense+(size_t)indices[k]*4,&values[k],4);
+    return 8;
+}
+#else
+#define HEX_GROEBNER_AVX2 0
+#endif
+#endif

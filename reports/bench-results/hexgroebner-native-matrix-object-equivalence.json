@@ -1,0 +1,50 @@
+{
+  "measured_source_fingerprint": "8be04f0b8bd6",
+  "final_source_fingerprint": "b3c928b09605",
+  "changes": "Remove trailing whitespace and final blank line in matrix_scan.c and matrix_scan_impl.h; identical compiled object bytes.",
+  "object_sha256": "71c20648b96d1a988615391e243641bdcb19fbee85cf511ca425c6586b5d196c",
+  "final_object_sha256": "71c20648b96d1a988615391e243641bdcb19fbee85cf511ca425c6586b5d196c",
+  "compile_trace": {
+    "synthetic": false,
+    "schemaVersion": "2025-09-10",
+    "outputs": "34104e65d547dc13.o",
+    "log": [
+      {
+        "message": ".> cc -c -o /home/kim/worktrees/hex-dev/hex-dev-issue-10987/.lake/build/HexGroebner/ffi/matrix_scan.o /home/kim/worktrees/hex-dev/hex-dev-issue-10987/HexGroebner/ffi/matrix_scan.c -I /home/kim/.elan/toolchains/leanprover--lean4---v4.35.0-rc3/include -O3 -Wall -Wextra -fPIC -DLEAN_EXPORTING",
+        "level": "trace"
+      }
+    ],
+    "inputs": [
+      [
+        "/home/kim/worktrees/hex-dev/hex-dev-issue-10987/HexGroebner/ffi/matrix_scan.c",
+        [
+          [
+            "/home/kim/worktrees/hex-dev/hex-dev-issue-10987/HexGroebner/ffi/matrix_simd.h",
+            "09de64463d5758c6"
+          ],
+          [
+            "/home/kim/worktrees/hex-dev/hex-dev-issue-10987/HexGroebner/ffi/matrix_scan_impl.h",
+            "c519036a58b7f613"
+          ]
+        ]
+      ],
+      [
+        "x86_64-unknown-linux-gnu",
+        "53a0e8937c307c28"
+      ],
+      [
+        "traceArgs: #[-O3, -Wall, -Wextra, -fPIC, -DLEAN_EXPORTING]",
+        "b952322c5b6cd502"
+      ],
+      [
+        "Lean 4.35.0, commit 470d5ce1400764999581fd26d5d72b00d990b0f4",
+        "6e1b3f3248ad81dc"
+      ],
+      [
+        "<nil>",
+        "00000000000006bb"
+      ]
+    ],
+    "depHash": "9ed37e574444bc09"
+  }
+}

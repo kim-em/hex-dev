@@ -112,20 +112,34 @@ Outputs are monic echelon rows in the original column order. `fromTarget`
 identifies added row-space dimension. The retained reducer rows span the input
 reducer space. Pivot metadata retains the normalization scalar and propagated
 sugar, allowing ordinary remainders to preserve their original coefficients.
-Native row updates operate in chunks of at most 4096 entries;
-`eliminateWith (... native := false)` and `Limits.nativeRows := false` retain
-the scalar Lean row-update route. Both routes
-produce identical pivots, provenance and resource counters. The binding has a
-transparent structurally recursive Lean body, validates all shapes and accessed
-residues, and preserves original borrowed buffers when inputs alias. C code
-uses little-endian scalar access, uint128 Barrett reduction when available and
-exact word remainder otherwise. No ISA extension or floating point is required.
-Barrett parameters are hoisted outside coefficient loops; products fit below
-`p² < 2^62`. One- and two-byte residues use a 32-bit Barrett reciprocal;
-four-byte residues use a 64-bit reciprocal with the uint128 high product.
-Canonical subtraction uses an unsigned wrap mask. Both paths are compared with
-exact remainder, including exhaustive products for the largest one-byte moduli
-and cancellation boundaries at every coefficient width.
+Native scan and row-extraction calls process at most 4096 transitions or
+columns. A scan transition visits a column, updates one sparse entry, or completes
+one reduction; a long row resumes with its work already reserved. Row extraction
+normalizes nonzero entries and clears the accumulator. Both operations retain
+charged prefixes on exhaustion, including the ordering of trace-node and byte
+failures. `eliminateWith (... native := false)` and `Limits.nativeRows := false`
+select the scalar Lean reference. Both routes produce identical pivots,
+provenance, sugar and resource counters. The transparent portable definitions
+also support ordinary-kernel replay independently of the C implementation.
+Owned accumulator/output buffers use copy-on-write when aliased; input pivot
+buffers remain borrowed.
+
+The native scan dispatches once per bounded call to specialized one-, two- or
+four-byte scalar loops. Scalar products use uint128 Barrett reduction when
+available and exact word remainder otherwise. One- and two-byte residues use a
+32-bit reciprocal; four-byte residues use a 64-bit reciprocal. Products fit below
+`p² < 2^62`; subtraction uses an unsigned wrap mask.
+On x86 with runtime AVX2 support, odd four-byte moduli additionally use eight
+exact Montgomery products at a time. The factor alone is temporarily converted
+to Montgomery form; stored coefficients remain canonical residues. For
+`R = 2^32`, the unreduced numerator is below `p² + R*p < 3*2^62`, so unsigned
+64-bit lanes cannot overflow and one correction suffices. Contiguous columns
+use vector loads/stores; other supports use gathers and scalar stores. A vector
+is validated before mutation; a malformed vector falls back to scalar handling
+so the exact failure prefix is preserved. Other architectures and CPUs use the
+scalar implementation. No floating-point arithmetic or global ISA flag is
+required. The standalone native tests also compile with AVX2 disabled and with
+uint128 reduction disabled.
 
 `reduceRowsWith` instead reduces every target independently against the same
 reducer echelon space. It preserves scalars, input order and zero rows; no target
