@@ -78,13 +78,21 @@ operations. Composite moduli are invalid field inputs, even when a particular
 matrix happens to have invertible pivots. Raw input can accept supplied
 prime evidence or use Hex's checked primality facilities within a budget.
 No unchecked Boolean flag stands for primality.
+For `p < 2^31`, `Hex.Nat.isPrimeTrial` and its soundness/completeness
+theorems in `HexArith` provide checked trial division. Using that
+route requires no additional primality-library dependency.
 
 Provide generic adapters for the quotient fields in `HexGFqField` with
 supplied irreducibility evidence, and the packed characteristic-two fields
 in `HexGF2`. Conway tables are conveniences, not a bound on supported field
 presentations. Preserve the defining polynomial and basis in serialized data
 and comparisons. Equal cardinalities do not make coefficient encodings
-interchangeable. Invalid or reducible extension moduli must be rejected.
+interchangeable. Every extension modulus must have positive degree as well
+as supplied irreducibility evidence. Reject constant moduli, including `1`:
+`GF2Poly.Irreducible 1` holds, but its quotient is the trivial ring. The
+`GF2nPoly` adapter must install `GF2nPoly.fieldOfDegreePos` from the
+positive-degree proof. The `HexGFqField` adapter retains the corresponding
+`hf` parameter. Reject reducible moduli and invalid presentations too.
 
 The performance programme includes larger machine-word primes and specialized
 extension-field arithmetic. Add a lawful carrier or widen the existing
@@ -347,6 +355,24 @@ when runtime and kernel implementations differ, except for the explicitly
 approved native primitives below. Preserve a kernel-reducible specification
 body for every such primitive used by replay.
 
+The correspondence with Mathlib includes the order, not just the polynomial
+ring. Construct `toMonomialOrder : MonomialOrder (Fin n)` from each
+`Hex.IsMonomialOrder cmp`, using `HexMvPolyTheory.monoEquiv` on exponent
+vectors. Prove that `cmp a b = .lt` exactly when
+`toMonomialOrder.toSyn (monoEquiv a) < toMonomialOrder.toSyn (monoEquiv b)`.
+Prove agreement of leading monomials, leading coefficients, divisibility,
+LCMs and S-polynomials under the polynomial conversion. The existing ring
+equivalence alone does not establish these order-dependent statements.
+
+Supply `IsGroebnerBasis` for the converted polynomial family and order: every
+nonzero polynomial in the generated ideal has leading monomial divisible by
+the leading monomial of some nonzero family member. Prove its equivalence
+with Buchberger's S-pair criterion and prove reduced-basis uniqueness. Reuse
+Mathlib's monomial-order division results where applicable. Obtain the
+ascending-chain condition for monomial ideals from Dickson's lemma, using
+the `Finsupp` partial-well-order results. These are explicit obligations of
+`HexGroebnerTheory`, not consequences of the ring equivalence.
+
 `HexGroebnerTheory` supplies the following named theorem contracts, with all
 field, order and representation hypotheses explicit:
 
@@ -386,6 +412,10 @@ Useful `@[extern]` implementations are explicitly allowed for this library.
 The authorization covers the operation families below, including their
 batched, blocked and parallel variants. It is not restricted to scalar
 arithmetic, and does not require waiting for a compiler improvement.
+This is the explicit family-level authorization recognized by
+[the project proof policy](../SPEC.md#project-wide-proof-policy).
+Bindings within these families need no separate SPEC amendment or approval.
+Document each binding's precise contract alongside its implementation.
 
 | Operation family | Native contract | Portable behavior |
 | --- | --- | --- |
@@ -404,6 +434,24 @@ A C implementation's agreement with its Lean body is an audited native
 implementation obligation, not established merely by proving a theorem about
 the Lean body. Include native-versus-portable conformance tests. A bound
 whose native violation could corrupt memory must be enforced before the call.
+
+An explicitly seeded probabilistic algorithm can be a pure function with a
+Lean body. Its native implementation must agree with that logical function,
+including the returned data and advanced random state. Producing a different
+echelon matrix with the same row space is not by itself agreement with a pure
+Lean function's result. Use an explicit IO operation or an untrusted candidate
+provider when implementation-dependent choices require that distinction.
+
+An optional external provider that proposes candidates without implementing
+a specified Lean function follows the project's untrusted-dispatch rule:
+its hook is `opaque`, returns data only, and is absent from the kernel replay
+path and all proof assumptions. Validate its ABI and returned shapes. Its
+output reaches a completed result only through `checkBasis` and
+`checkBasis_sound` (or the membership checker and soundness theorem for that
+result kind). Absence or rejection uses the native Lean algorithm within the
+remaining budget. Never assert equality with a pure fallback merely because
+both outputs are candidates. Seeded pure kernels are not automatically
+optional-provider hooks.
 
 Bulk mutation acquires unique ownership once and borrows immutable inputs.
 Overlapping views require explicitly supported semantics or rejection. Do not
@@ -444,14 +492,22 @@ Use [the shared conformance framework](../testing.md). Add
 under `conformance-fixtures/HexGroebner/`, and independent oracle code under
 `scripts/oracle/`. Extend the existing oracle runner and existing CI job.
 
-Use Singular or Sage/Singular to compute canonical reduced bases over prime
-and explicitly presented extension fields. Use msolve and Groebner.jl as
-additional prime-field checks where their input contracts apply. Transport
-coefficients through an explicit presentation isomorphism for extension-field
-comparisons. Oracle comparison includes the whole canonical basis, division
-identities and normal forms, not just dimension, leading degrees or sampled
-zeros. Add small exhaustive finite-field cases without confusing equality of
-functions with equality of polynomials.
+The `core` profile has oracle `none` and mode `always`. Singular is the
+independent basis oracle. Use the shared CI job's Singular dependency.
+Use mode `if_available` for the CI oracle profile, recording a skip if it is
+absent, and mode `required` for manual oracle validation. Declare these modes
+and covered operations in the conformance module docstring. No Sage or Julia
+installation is required by this library's CI checks.
+
+Use Singular to compute canonical reduced bases over prime and explicitly
+presented extension fields. Additional msolve and Groebner.jl correctness
+comparisons run manually alongside their comparator sweeps, with their
+requirements checked explicitly. Transport coefficients through an explicit
+presentation isomorphism for extension-field comparisons. Oracle comparison
+includes the whole canonical basis, division identities and normal forms,
+not just dimension, leading degrees or sampled zeros. Add small exhaustive
+finite-field cases without confusing equality of functions with equality
+of polynomials.
 
 Required families include homogeneous and inhomogeneous systems, positive
 dimension, elimination blocks, sparse and dense inputs, empty and unit ideals,
@@ -526,12 +582,16 @@ consistently, or state and measure the separately excluded costs. Compare
 optimized builds of supported versions and retain the invocation and flags.
 
 The fastest-open-source milestone requires no reduction in solved-instance
-coverage under matched resource limits, and lower aggregate time than every
-fully open-source comparator on the fixed balanced suite, together with
-per-family and per-instance results. Use geometric means of paired runtime
-ratios on jointly solved inputs, equal family weights, and solved-count and
-cactus summaries including failures. A geometric mean that hides timeouts
-is not success. Report substantial losses and peak memory separately.
+coverage under matched resource limits and a family-balanced geometric mean
+of paired runtime ratios strictly below one against each fully open-source
+comparator on the fixed suite. For each comparator, compute the geometric
+mean of Hex/comparator time ratios on jointly solved inputs within each
+family, then the geometric mean of those family values with equal family
+weights. This is the primary speed criterion. Report per-family and
+per-instance results, total elapsed time and solved-count and cactus
+summaries as secondary evidence, including all failures. A geometric mean
+that hides timeouts is not success. Report substantial losses and peak
+memory separately.
 No finite corpus establishes universal dominance. State the precise domain
 and hardware for every leadership claim.
 
@@ -551,10 +611,15 @@ Collect on the shared host with automatically selected CPU affinity when
 supported. Adjacent comparisons alternate AB/BA. Retain every completed
 sample, host activity and all seeds. Allow at most one unchanged repeat
 after an inconclusive run. Do not use best-of-three selection, quiet-core
-preflights or contamination-based sample removal. Publish reproducible raw
-results and figures under `reports/` with source/toolchain/compiler/ISA
-identity, elapsed time, peak memory, round/pair/matrix counts, reduction work
-and certificate sizes. Attribute unexpected gaps before choosing between
+preflights or contamination-based sample removal. Commit comparator-sweep
+records under `reports/bench-results/`, with content fingerprints and
+measurement manifests following
+[figure freshness](../benchmarking.md#figure-freshness). Published figures
+must identify the records and source fingerprints used to generate them.
+Declare any mechanically enforced figure family under that shared policy.
+Written reports under `reports/` are optional. Retain source, toolchain,
+compiler and ISA identity, elapsed time, peak memory, round/pair/matrix
+counts, reduction work and certificate sizes. Attribute unexpected gaps before choosing between
 algorithm changes, representation changes and compiler/runtime requests.
 
 ## Documentation and completion
@@ -568,9 +633,8 @@ Theory examples begin with Mathlib polynomial and ideal statements and keep
 the conversion to Hex data inside the proof.
 
 Implement incrementally with actual F4 operations and intended complexity.
-Register the two libraries as planned before source exists, activate them
-with real implementation work, and follow the project phase checks. Useful
-intermediate functionality may ship with explicit measured limitations.
+Follow the project phase checks. Useful intermediate functionality may ship
+with explicit measured limitations.
 Correctness completion requires the headline theorems and the conformance
 suite. Performance completion additionally requires the evidence above.
 Neither a placeholder Buchberger loop nor permanently delegating the whole
