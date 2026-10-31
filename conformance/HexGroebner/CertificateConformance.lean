@@ -26,27 +26,27 @@ def generators : Array Certificate.Polynomial := #[
 def target : Certificate.Polynomial := [([1, 0], 6), ([0, 2], 1)]
 
 -- x*(xy-1) - y*(x²-y) = y²-x, serialized in descending lex order.
-def witness : Certificate.Member := ⟨[
+def witness : Certificate.Derivation := ⟨[
   .generator 0, .generator 1,
   .multiply [([1, 0], 1)] 1, .multiply [([0, 1], 1)] 0,
   .scale 6 3, .add 2 4], 5⟩
 
-#guard checkMember context generators target witness
-#guard !checkMember context #[] target witness
-#guard !checkMember context generators [] witness
-#guard !checkMember context generators (target.reverse) witness
-#guard !checkMember context generators target { witness with root := 6 }
-#guard !checkMember context generators target ⟨[], 0⟩
-#guard !checkMember context generators target ⟨[.add 0 0], 0⟩
-#guard !checkMember context generators target ⟨[.generator 0, .scale 7 0], 1⟩
-#guard !checkMember context generators target ⟨[.generator 0, .multiply [([1], 1)] 0], 1⟩
-#guard !checkMember context generators target ⟨[.generator 0, .multiply [([1, 0], 7)] 0], 1⟩
-#guard !checkMember context generators target ⟨[.generator 0, .multiply [([1, 0], 0)] 0], 1⟩
-#guard !checkMember context generators target ⟨[.generator 0, .multiply [([1, 0], 1), ([1, 0], 1)] 0], 1⟩
-#guard !checkMember context #[[([1], 1)]] [] ⟨[.zero], 0⟩
-#guard checkMember context #[] [] ⟨[.zero], 0⟩
-#guard checkMember context generators [] ⟨[.generator 0, .scale 0 0], 1⟩
-#guard checkMember context generators [([1, 0], 5), ([0, 2], 2)]
+#guard checkDerivation context generators target witness
+#guard !checkDerivation context #[] target witness
+#guard !checkDerivation context generators [] witness
+#guard !checkDerivation context generators (target.reverse) witness
+#guard !checkDerivation context generators target { witness with root := 6 }
+#guard !checkDerivation context generators target ⟨[], 0⟩
+#guard !checkDerivation context generators target ⟨[.add 0 0], 0⟩
+#guard !checkDerivation context generators target ⟨[.generator 0, .scale 7 0], 1⟩
+#guard !checkDerivation context generators target ⟨[.generator 0, .multiply [([1], 1)] 0], 1⟩
+#guard !checkDerivation context generators target ⟨[.generator 0, .multiply [([1, 0], 7)] 0], 1⟩
+#guard !checkDerivation context generators target ⟨[.generator 0, .multiply [([1, 0], 0)] 0], 1⟩
+#guard !checkDerivation context generators target ⟨[.generator 0, .multiply [([1, 0], 1), ([1, 0], 1)] 0], 1⟩
+#guard !checkDerivation context #[[([1], 1)]] [] ⟨[.zero], 0⟩
+#guard checkDerivation context #[] [] ⟨[.zero], 0⟩
+#guard checkDerivation context generators [] ⟨[.generator 0, .scale 0 0], 1⟩
+#guard checkDerivation context generators [([1, 0], 5), ([0, 2], 2)]
   ⟨witness.nodes ++ [.add 5 5], 6⟩
 
 #guard Certificate.leading .lex target = some ([1, 0], 6)
@@ -63,7 +63,7 @@ theorem ordered_leading : Certificate.leading .grevlex target = some ([0, 2], 1)
   decide +kernel
 
 -- The checker body, including shared lookup, reduces in the ordinary kernel.
-theorem accepted : checkMember context generators target witness = true := by
+theorem accepted : checkDerivation context generators target witness = true := by
   decide +kernel
 
 /-- info: 'Hex.Groebner.CertificateConformance.accepted' depends on axioms: [propext, Quot.sound] -/

@@ -207,6 +207,14 @@ jobs:
       - name: Validate committed CADE-24 inventory (offline)
         run: python3 -m unittest scripts/bench/test_real_closure_cade24.py
       # --- System + Python deps (union of the bench comparator and the oracles) ---
+      - name: Reclaim runner disk for Lean artifacts
+        if: steps.classify.outputs.docs_only != 'true'
+        run: |
+          # These hosted SDKs are unused by Lean and the conformance oracles.
+          # Keep room for the unpacked caches and generated native objects.
+          df -h "$GITHUB_WORKSPACE"
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet
+          df -h "$GITHUB_WORKSPACE"
       - name: Install system dependencies
         if: steps.classify.outputs.docs_only != 'true'
         uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9 # v1.6.3

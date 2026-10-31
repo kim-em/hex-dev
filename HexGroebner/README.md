@@ -18,11 +18,10 @@ characteristic-two polynomials receive no implicit field equations.
 
 Success is an **unchecked candidate**, carrying the field/order identity,
 canonical interchange polynomials and explicit random state. Deterministic
-execution consumes no random samples. No API promotes a candidate to a
-certified result. `certifyWith`, `basisWith` and bounded certificate production
-remain separate work. `checkBasis` independently
-replays an explicitly supplied complete certificate; it does not promote a
-producer result automatically.
+execution consumes no random samples. `certifyWith`, `basisWith` and automatic certificate production remain separate
+work. `checkBasis` independently replays an explicitly supplied complete
+certificate. `Certificate.BasisVerification.verifyWith` checks that witness
+under cumulative replay limits and returns a sealed `CheckedBasis` on acceptance.
 
 `PrimeField.ofZMod64` reuses actual primality and bounds evidence. Every prime
 `2 ≤ p < 2^31` is supported. A context can also carry a proof from
@@ -146,15 +145,67 @@ slots and checks both orientations and the diagonal. This type is provisional,
 not a stable interchange format. Sparse shared pair witnesses and triangular
 pair coverage remain necessary for large computations.
 
-This pure checker currently has no replay allowance. Bounded certificate
-generation, bounded replay, compressed S-pair derivations and automatic checked
-computation remain required. Candidate timing excludes all these checks.
+The pure predicates have no operational allowance. The separate
+`Certificate.BasisVerification.verifyWith` wrapper validates and reserves nested
+replay work, coefficient products, degree comparisons, shared derivations,
+term storage and certificate nodes/pairs before invoking `checkBasis`. Repeated
+preflight work is charged on resumption. Certificate generation, compressed
+S-pair derivations and automatic checked F4 computation remain required.
+Candidate timing excludes all these checks.
+
+`divideWith` performs exact ordered division on canonical natural-residue term
+lists and returns explicit quotients plus an irreducible remainder. Divisors
+need not form a Gröbner basis; zero divisors are skipped and nonmonic divisors
+use exact prime-field inverses. Independent `Certificate.checkDivision` replay
+checks reconstruction, irreducibility and product-degree bounds before success.
+`Certificate.Division.computeWith` separately exposes unchecked division
+candidates. Quotient and remainder terms accumulate in reverse and undergo
+one final balanced normalization. This list-based certificate route is separate from packed F4 hot
+loops. `normalFormWith` requires a `CheckedBasis` and yields the unique normal
+form in the original ideal coset. Positive queries compose the accepted
+containment and checked division proofs, avoiding repeated evaluation of the
+forward derivation; the standalone checker remains independent. `memberWith` distinguishes membership with
+explicit cofactors against that accepted basis and a standalone composed
+certificate against the original generators from a checked nonmembership
+witness with nonzero normal form. `checkMember` accepts direct shared derivations or a forward containment with
+explicit zero-remainder cofactors;
+`checkNonmember` checks the complete basis and division witness.
+`Certificate.Derivation` stores direct nodes and a result root; wrap it with
+`Certificate.Member.derivation`. `Certificate.Member.combination` specializes
+in standard zero-remainder representations and shares a forward containment.
+Direct derivations also support arbitrary cofactor identities with cancellation.
+
+`Certificate.Budget` counts cumulative scalar/coordinate work, attempted
+division steps, certificate nodes and pairs. `allocatedBytes` and
+`allocatedTerms` are cumulative logical allocation allowances, including input
+and temporary payload; they measure neither live nor peak memory. It also
+bounds variables and exponent bits. Logical bytes reserve list
+cells, exponent limbs and auxiliary payload, excluding allocator capacity,
+call stacks and general runtime control objects. Exponent width is an
+allowance: 81-bit exponent inputs work when the allowance is raised. Natural
+size arithmetic is checked before allocation. Addressability checks apply to
+single allocations separately from cumulative allocation counters. Production, reconstruction replay and membership classification
+consume the same parent allowance. `resumeDivideWith`, `resumeMemberWith` and
+basis replay retain sealed input/field/order identity and consumed counters;
+production retains committed division transitions. Replay preflight is atomic
+and retains identity and counters, rather than a validated prefix; retrying it
+charges repeated work and allocation. Node/pair caps count witness structure
+once, including across retries. Basis-replay continuations retain the parent
+baselines. Membership applies the caps to all returned certificate data,
+including pointer-shared forward/backward derivations and final pairs. Low-level `verifyFrom` helpers accept caller-supplied
+parent counters, which callers must preserve across nested operations. Invalid
+input, rejection, exhaustion and arithmetic invariant failure remain distinct.
+Completed checked receipts carry actual Boolean acceptance proofs. Compiled
+verification and downstream kernel checking remain separate stages.
 
 Verification:
 
 ```sh
 lake build HexGroebner +HexGroebner.Conformance +HexGroebner.MonomialConformance \
-  +HexGroebner.F4Conformance hexgroebner_emit_fixtures hexgroebner_emit_f4 hexgroebner_bench
+  +HexGroebner.F4Conformance +HexGroebner.DivisionConformance \
+  +HexGroebner.DivisionAPIConformance +HexGroebner.MembershipConformance \
+  +HexGroebner.BasisReplayConformance +HexGroebner.NormalFormConformance hexgroebner_emit_fixtures hexgroebner_emit_f4 \
+  hexgroebner_emit_division hexgroebner_bench
 HEX_LIBRARY_FILTER=HexGroebner bash scripts/ci/run_oracles.sh
 lake exe hexgroebner_bench verify
 ```
@@ -188,6 +239,20 @@ same reduced basis. It also compares shared versus separate tail reductions.
 Core resume sweeps switch both pair criteria and final-reduction strategy at
 every work boundary. Product/chain counters demonstrate criterion use.
 
+The division emitter checks 1,134 ordered divisions against exact SymPy
+quotients and remainders over seven fields and three orders, using both
+original generator lists and completed bases. Another 154 bounded normal-form
+and membership cases use independently replayed basis receipts over `𝔽₂` and
+`𝔽₇`. SymPy recomputes the complete reduced bases from their original generators
+and checks every normal form and membership outcome. Zero, unit, linear and
+nontrivial three-polynomial bases are included. Fixture data excludes work
+counters. Core tests sweep every work boundary of a nontrivial division and
+of a smaller independent replay, exercise all relevant resource categories
+and oversized exponents, and reject malformed division and shared-basis
+witnesses. Bounded basis replay agrees with the pure checker on the complete
+three-polynomial witness and its malformed-certificate variants. Ordinary
+characteristic-two division retains `x² mod (x²+x) = x`.
+
 Lean-bench registrations cover dense elimination with/without provenance,
 clustered and spread sparse supports, monomial interning, and fixed cyclic-4,
 cyclic-5, cyclic-6 and Katsura-3 F4 calls. Full-system timings are candidate production
@@ -199,13 +264,13 @@ certified membership claim. Portable accessors retain checked byte operations an
 inside an active interval are still scanned. No performance leadership is
 claimed from these kernel or candidate measurements.
 
-Complete basis/negative-membership certificates and their soundness proofs,
-resource-bounded certificate production/replay (the pure `checkMember` currently
-has no allowance), deterministic producer correctness and termination,
-finite extensions,
-elimination block orders, the full pair-coverage proof, checked probabilistic
-computation, validated learning/traces, delayed reduction, SIMD/parallel kernels
-and balanced multi-comparator acceptance comparisons remain outstanding.
+Automatic F4 certificate generation and `basisWith`, deterministic producer
+correctness/termination, finite-extension adapters, elimination block orders,
+the full pair-coverage proof, checked probabilistic computation, validated
+learning/traces, delayed reduction, SIMD/parallel kernels and balanced
+multi-comparator acceptance comparisons remain outstanding. Complete basis,
+division and both membership checkers and soundness proofs are available;
+standalone pure predicates have no operational allowance.
 [#10987](https://github.com/kim-em/hex-dev/issues/10987) tracks the continuing
 correctness, finite-field scope and fastest-open-source requirements. No
 library phase or performance milestone is claimed.

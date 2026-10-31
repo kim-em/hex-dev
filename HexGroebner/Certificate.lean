@@ -35,7 +35,7 @@ inductive Node where
 
 /-- Shared derivation with an explicit result reference. An empty derivation
 has no result, including for zero; use the `zero` node to prove zero membership. -/
-structure Member where
+structure Derivation where
   nodes : List Node
   root : Nat
   deriving Repr, Inhabited
@@ -73,8 +73,8 @@ end Certificate
 the target and every explicit multiplication factor must be canonical residue
 term lists. Acceptance proves a formal polynomial identity, without requiring
 or claiming a complete Gröbner basis. -/
-def checkMember (context : Context) (generators : Array Certificate.Polynomial)
-    (target : Certificate.Polynomial) (certificate : Certificate.Member) : Bool :=
+def checkDerivation (context : Context) (generators : Array Certificate.Polynomial)
+    (target : Certificate.Polynomial) (certificate : Certificate.Derivation) : Bool :=
   let p := context.field.modulus.toNat
   let n := context.variables
   if !generators.toList.all (Hex.MvPoly.Kernel.isCanonicalMod p n) ||

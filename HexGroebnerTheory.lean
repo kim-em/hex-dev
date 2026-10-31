@@ -18,3 +18,9 @@ public import HexGroebnerTheory.CertificateContainment
 public import HexGroebnerTheory.CertificateShape
 public import HexGroebnerTheory.CertificateBasis
 public import HexGroebnerTheory.Pairs
+public import HexGroebnerTheory.CertificateDivision
+public import HexGroebnerTheory.CertificateNormalForm
+public import HexGroebnerTheory.Division
+public import HexGroebnerTheory.NormalForm
+public import HexGroebnerTheory.Member
+public import HexGroebnerTheory.Membership

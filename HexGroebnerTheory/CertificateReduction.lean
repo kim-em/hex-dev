@@ -146,7 +146,7 @@ theorem checkReduction_sound [Fact p.Prime] (basis cofactors : Array Polynomial)
     have hp := products_canonical basis cofactors hb hc
     have accepted : (products p basis cofactors).all (fun row => degreeLE order row target) = true ∧
         Hex.MvPoly.Kernel.beq (sum p (products p basis cofactors)) target = true := by
-      simpa only [Bool.and_eq_true] using h
+      simpa only [Bool.and_eq_true, degreeLELeading_eq] using h
     have identity := (HexMvPolyTheory.Kernel.beq_mod_iff p
       (cmp := order.cmp n) (sum_canonical _ hp) ht).mp accepted.2
     have sum_identity := identity.symm.trans (sum_denote order _ hp)
