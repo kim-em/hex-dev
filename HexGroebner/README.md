@@ -16,12 +16,15 @@ monic, sorted, reduced output. Empty/all-zero input produces an empty basis;
 the unit ideal produces `[1]`, including zero-variable inputs. Ordinary
 characteristic-two polynomials receive no implicit field equations.
 
-Success is an **unchecked candidate**, carrying the field/order identity,
-canonical interchange polynomials and explicit random state. Deterministic
-execution consumes no random samples. `certifyWith`, `basisWith` and automatic certificate production remain separate
-work. `checkBasis` independently replays an explicitly supplied complete
-certificate. `Certificate.BasisVerification.verifyWith` checks that witness
-under cumulative replay limits and returns a sealed `CheckedBasis` on acceptance.
+`computeWith` success is an **unchecked candidate**, carrying the field/order
+identity, canonical interchange polynomials and explicit random state.
+Deterministic execution consumes no random samples. `basisWith` computes and
+independently certifies a basis; `certifyWith` constructs and checks a certificate
+for explicit candidate data. Their canonical natural-residue inputs are
+distinct from `computeWith` raw interchange arrays. `checkBasis` independently
+replays a complete certificate. `Certificate.BasisVerification.verifyWith`
+checks a supplied witness under cumulative replay limits and returns a sealed
+`CheckedBasis` on acceptance.
 
 `PrimeField.ofZMod64` reuses actual primality and bounds evidence. Every prime
 `2 ≤ p < 2^31` is supported. A context can also carry a proof from
@@ -37,6 +40,22 @@ def candidate : Hex.Groebner.ComputeResult :=
     #[⟨#[2, 0], 1⟩, ⟨#[0, 1], 6⟩],
     #[⟨#[1, 1], 1⟩, ⟨#[0, 0], 6⟩]]
 ```
+
+The same system can be computed with complete independent certification:
+
+```lean
+def checked : Hex.Groebner.BasisResult ⟨field, 2, .grevlex⟩
+    #[[([2, 0], 1), ([0, 1], 6)], [([1, 1], 1), ([0, 0], 6)]] none :=
+  Hex.Groebner.basisWith ⟨field, 2, .grevlex⟩ {}
+    #[[([2, 0], 1), ([0, 1], 6)], [([1, 1], 1), ([0, 0], 6)]]
+```
+
+A successful receipt's `value` supplies the checked basis for `normalFormWith`
+and `memberWith`. `HexGroebnerTheory.basisWith_sound` proves that its polynomials
+are the reduced Gröbner basis of these exact generators. The downstream
+[`PolynomialExample`](../HexGroebnerTheory/PolynomialExample.lean) states
+`x ∉ (x² − y, xy − 1)` directly with Mathlib polynomials over `ZMod 7` and proves
+it by ordinary kernel replay of a generated certificate.
 
 This example needs the additional basis polynomial `y² - x`; checking only
 ideal-membership identities for the two original generators would miss that
@@ -149,9 +168,8 @@ The pure predicates have no operational allowance. The separate
 `Certificate.BasisVerification.verifyWith` wrapper validates and reserves nested
 replay work, coefficient products, degree comparisons, shared derivations,
 term storage and certificate nodes/pairs before invoking `checkBasis`. Repeated
-preflight work is charged on resumption. Certificate generation, compressed
-S-pair derivations and automatic checked F4 computation remain required.
-Candidate timing excludes all these checks.
+preflight work is charged on resumption. Compressed S-pair derivations remain
+required. Candidate timing excludes certificate production and replay.
 
 `divideWith` performs exact ordered division on canonical natural-residue term
 lists and returns explicit quotients plus an irreducible remainder. Divisors
@@ -198,13 +216,60 @@ input, rejection, exhaustion and arithmetic invariant failure remain distinct.
 Completed checked receipts carry actual Boolean acceptance proofs. Compiled
 verification and downstream kernel checking remain separate stages.
 
+`basisWith context limits generators` accepts canonical natural-residue
+polynomials in descending lex storage; `context.order` selects the mathematical
+order independently. Coefficients are nonzero and below the explicit prime.
+`certifyWith` takes an additional candidate in the same format. Its accepted
+receipt is indexed by the exact original context, generators and candidate;
+no producer metadata can substitute a different ideal. Access the receipt's
+`value` to use its `CheckedBasis` with normal forms and membership.
+
+`BasisLimits.computation` controls F4 shape, matrix, pair and round allowances.
+`BasisLimits.certificate` controls certificate work, cumulative logical
+allocation, term slots, division steps, nodes/pairs and exponent bits. Both
+phases use the smaller work, allocation and variable cap, including input
+conversion and final receipt construction. Completed F4 history is retained
+through certification: lowering a consumed F4 allowance on resume still
+reports exhaustion. Node/pair caps bound certificate structure; work and
+allocation include failed/repeated attempts.
+
+A separate traced F4 pass constructs the forward containment using the same
+packed polynomials, pair queue, reducer lookup, symbolic closure and exact
+matrix elimination. Shared `RowOp` derivations become polynomial certificate
+nodes. Independent tail reductions retain each target's coefficient one, so
+restoring its head gives the corresponding full derivation. Original-generator
+divisions construct the reverse containment, and every ordered final S-pair
+gets explicit degree-bounded cofactors. Complete independent `checkBasis`
+replay precedes success. `certifyWith` can check external candidates without
+using their producer seed or strategy. It may reject malformed candidates or
+exhaust its allowance; no such result is a checked basis.
+
+The traced producer is separate from the fast unchecked candidate route.
+Certificate production and final replay are separately charged and reported;
+these costs are excluded from existing candidate benchmark claims. Traced
+input/pair/interreduction stages retain committed checkpoints. Certificate
+assembly and final replay are atomic reservations: resumption keeps the
+completed traced candidate and all consumed work, and repeated attempts pay
+again. `resumeBasisWith` retains the original input identity through all stages.
+Invalid input, rejection, F4 exhaustion, certificate exhaustion and platform
+representation limits remain distinct.
+
+The prime-field route retains its current unsigned-32-bit exponent arena.
+Canonical inputs beyond that representation return an explicit exponent
+representation failure; a larger certificate exponent allowance does not
+silently narrow them. Wider representations, compressed/shared S-pair
+witnesses and more efficient certificate production remain required.
+
 Verification:
 
 ```sh
 lake build HexGroebner +HexGroebner.Conformance +HexGroebner.MonomialConformance \
   +HexGroebner.F4Conformance +HexGroebner.DivisionConformance \
   +HexGroebner.DivisionAPIConformance +HexGroebner.MembershipConformance \
-  +HexGroebner.BasisReplayConformance +HexGroebner.NormalFormConformance hexgroebner_emit_fixtures hexgroebner_emit_f4 \
+  +HexGroebner.BasisReplayConformance +HexGroebner.NormalFormConformance \
+  +HexGroebner.TraceConformance +HexGroebner.CertificateProducerConformance \
+  +HexGroebner.ProducerConformance +HexGroebner.BasisCorpusConformance \
+  +HexGroebner.BasisConformance hexgroebner_emit_fixtures hexgroebner_emit_f4 \
   hexgroebner_emit_division hexgroebner_bench
 HEX_LIBRARY_FILTER=HexGroebner bash scripts/ci/run_oracles.sh
 lake exe hexgroebner_bench verify
@@ -224,6 +289,11 @@ counters, scalar/sugar metadata, scan-block extension and 100,000-column sparse
 work bounds. Monomial tests force collisions, table growth and both widening
 boundaries, check overflow rejection and compare packed ordering with the
 lawful Hex orders. Ordinary-kernel byte decoding has an axiom audit.
+
+The emitter also computes and independently certifies every one of the 567
+systems, comparing its accepted basis with fast candidate production. The
+indexed API separately certifies supplied candidates, exercises all phase
+allowances and resumes sealed computations with their original input identity.
 
 The 567-system F4 corpus compares complete reduced bases with SymPy F5B and,
 when available, Singular over
@@ -264,13 +334,12 @@ certified membership claim. Portable accessors retain checked byte operations an
 inside an active interval are still scanned. No performance leadership is
 claimed from these kernel or candidate measurements.
 
-Automatic F4 certificate generation and `basisWith`, deterministic producer
-correctness/termination, finite-extension adapters, elimination block orders,
-the full pair-coverage proof, checked probabilistic computation, validated
-learning/traces, delayed reduction, SIMD/parallel kernels and balanced
-multi-comparator acceptance comparisons remain outstanding. Complete basis,
-division and both membership checkers and soundness proofs are available;
-standalone pure predicates have no operational allowance.
+Deterministic producer correctness/termination, finite-extension adapters,
+elimination block orders, the full pair-coverage proof, checked probabilistic
+computation, validated learning/traces, delayed reduction, SIMD/parallel kernels
+and balanced multi-comparator acceptance comparisons remain outstanding.
+Complete basis, division and both membership checkers and soundness proofs are
+available; standalone pure predicates have no operational allowance.
 [#10987](https://github.com/kim-em/hex-dev/issues/10987) tracks the continuing
 correctness, finite-field scope and fastest-open-source requirements. No
 library phase or performance milestone is claimed.

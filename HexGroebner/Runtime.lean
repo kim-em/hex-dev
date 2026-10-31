@@ -138,7 +138,7 @@ def allocate (limits : Limits) (amount : Nat) : Computation Unit := do
   let allocated := s.statistics.allocatedBytes + amount
   let total := allocated + s.table.bytes
   if total > limits.packedBytes then throw (.exhausted .packedBytes)
-  if total ≥ USize.size then throw (.representation .address)
+  if amount ≥ USize.size then throw (.representation .address)
   set { s with statistics.allocatedBytes := allocated }
 
 private def tableResult (limits : Limits)

@@ -27,6 +27,10 @@ private def orderName : TermOrder → String
   | .grlex => "grlex"
   | .grevlex => "grevlex"
 
+private def canonical (p : Nat) (raw : RawPolynomial) : Certificate.Polynomial :=
+  raw.foldl (fun f term => if term.coefficient == 0 then f else
+    Hex.MvPoly.Kernel.addMod p f [(term.exponents.toList,term.coefficient.toNat)]) []
+
 private def emit : IO Unit := do
   for field in Fixtures.fields do
     for order in [TermOrder.lex, .grlex, .grevlex] do
@@ -38,6 +42,12 @@ private def emit : IO Unit := do
           | .invalid e _ => throw (IO.userError s!"{c.name}: {reprStr e}")
           | .exhausted r _ => throw (IO.userError s!"{c.name}: exhausted {reprStr r}")
           | .representation e _ => throw (IO.userError s!"{c.name}: representation {reprStr e}")
+        let original := c.generators.map (canonical field.modulus.toNat)
+        let checked ← match basisWith context {} original with
+          | .success value _ => pure value
+          | _ => throw (IO.userError s!"{c.name}: checked F4 computation failed")
+        if checked.value.polynomials != candidate.polynomials.map (canonical field.modulus.toNat) then
+          throw (IO.userError s!"{c.name}: checked/candidate reduced basis mismatch")
         let (serial, serialStats) ← match computeWith context { batchSize := 1 } c.generators with
           | .candidate candidate stats => pure (candidate, stats)
           | .internal e _ => throw (IO.userError s!"{c.name}: internal {reprStr e}")
