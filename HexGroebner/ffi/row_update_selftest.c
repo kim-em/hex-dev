@@ -47,6 +47,14 @@ static void check_arithmetic(void) {
         }
     }
     const uint64_t wide[] = {257, 65521, 65536, 65537, 2147483647};
+    /* Exhaust every b at the largest two-byte prime with maximal factor,
+       checking both signs and exact cancellation of the reduced product. */
+    for (uint64_t b = 0; b < 65521; ++b) {
+        uint64_t product = (UINT64_C(65520) * b) % 65521;
+        check_scalar(65521, 2, 0, b, 65520);
+        check_scalar(65521, 2, 65520, b, 65520);
+        check_scalar(65521, 2, product, b, 65520);
+    }
     for (size_t i = 0; i < sizeof(wide) / sizeof(wide[0]); ++i) {
         uint64_t p = wide[i];
         unsigned width = p <= 65536 ? 2 : 4;

@@ -29,7 +29,10 @@ theorem checkPairs_sound {p n : Nat} [Hex.ZMod64.Bounds p] [Fact p.Prime]
         (HexMvPolyTheory.Kernel.denoteMod p (cmp := order.cmp n) basis[j]))
       (Set.range fun k : Fin basis.size =>
         HexMvPolyTheory.Kernel.denoteMod p (cmp := order.cmp n) basis[k]) 0 := by
-  simp only [checkPairs] at h
+  have hc : basis.toList.all (Hex.MvPoly.Kernel.isCanonicalMod p n) = true :=
+    List.all_eq_true.mpr fun a ha => Hex.MvPoly.Kernel.isCanonicalMod_iff.mpr
+      (canonical a (Array.mem_def.mpr ha))
+  rw [checkPairs_eq p n order basis pairs hc] at h
   have hi := List.all_eq_true.mp (Bool.and_eq_true_iff.mp h).2 i (by simp)
   have hij := List.all_eq_true.mp hi j (by simp)
   cases hc : pairs[i.val]?.bind (fun row => row[j.val]?) with
@@ -95,5 +98,19 @@ theorem checkBasis_sound (context : Hex.Groebner.Context)
   exact ⟨groebner,
     Certificate.checkShape_reduced order basis forward.2.1 h.1.2,
     Certificate.checkShape_sorted order basis forward.2.1 h.1.2⟩
+
+/-- Independently accepted outputs for the same original ideal are the same
+reduced Gröbner basis as a set of formal polynomials. -/
+theorem checkBasis_unique (context : Hex.Groebner.Context)
+    (generators G H : Array Hex.Groebner.Certificate.Polynomial)
+    (g : Hex.Groebner.Certificate.Basis) (h : Hex.Groebner.Certificate.Basis)
+    (hg : Hex.Groebner.checkBasis context generators G g = true)
+    (hh : Hex.Groebner.checkBasis context generators H h = true) :
+    (Set.range fun i : Fin G.size => denote context G[i]) =
+      (Set.range fun i : Fin H.size => denote context H[i]) := by
+  let : Fact context.field.modulus.toNat.Prime := ⟨fieldPrime context.field⟩
+  have left := checkBasis_sound context generators G g hg
+  have right := checkBasis_sound context generators H h hh
+  exact reduced_unique _ left.1 right.1 left.2.1 right.2.1
 
 end HexGroebnerTheory

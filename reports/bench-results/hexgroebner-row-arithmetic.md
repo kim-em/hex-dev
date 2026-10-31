@@ -3,7 +3,8 @@
 Source `cbca23e34e93` specializes the scalar row kernel in two ways. For 8/16-bit
 residues, `factor*b < 2^32`, so the reciprocal `floor(2^32/p)` suffices and its
 product fits in uint64. Four-byte residues retain the uint128 Barrett path.
-The exact-remainder fallback remains available.
+The exact-remainder fallback remains available. No separate speed benefit is
+established for the narrow reciprocal specialization by these measurements.
 
 After product reduction, `a` and `product` are canonical and below `2^31`.
 Their uint64 difference has its top bit set exactly when subtraction wrapped.
@@ -31,7 +32,9 @@ excluded. Every completed sample is retained; no unchanged rerun was used.
 
 All 48 samples succeed and each paired full basis hash agrees. The small
 Katsura result is close to unchanged; the larger cyclic-6 and Reimer cases
-improve by about 9% and 13%.
+improve by about 9% and 13%. This benchmark uses four-byte residues, so it
+never exercises the new 32-bit reciprocal path. The arithmetic change measured
+on this route is the unsigned subtraction correction mask.
 
 [Raw samples and logs](hexgroebner-row-arithmetic-cbca23e34e93.tar.gz),
 [commands and host context](hexgroebner-row-arithmetic-cbca23e34e93.measurement.json),
@@ -48,8 +51,33 @@ adjacent AB/BA schedule, one computation thread, 16 GiB address-space limit
 and 64 MiB output limit. All 64 samples succeed; every coefficient and exponent
 of all 32 paired full bases agrees. Internal candidate time, whole-process time
 and memory are retained separately. Whole-process Eco10 improves by about 35%
-at both field widths; Reimer-5 improves by about 11–12%. This experiment compares
-only the two Hex binaries; msolve was not rerun.
+at both field widths; Reimer-5 improves by about 11–12%. Similar Eco10 gains
+on the unchanged four-byte reciprocal route support the mask as the main
+measured improvement; the two-byte reciprocal effect was not isolated.
+Several small cases regress by 2–6% in whole-process time, and MinRank also
+regresses by about 4–5% internally. Noncandidate setup, parsing, field validation
+and output costs dominate several small inputs, so internal gains can coexist
+with whole-process losses. All inputs and both timing contracts are listed
+below. This experiment compares only the two Hex binaries; msolve was not rerun.
+
+| Input | Internal candidate B/A | Whole-process B/A |
+| --- | ---: | ---: |
+| cyclic5-15 | 0.969 | 0.997 |
+| cyclic5-31 | 0.978 | 1.033 |
+| cyclic6-15 | 0.906 | 0.967 |
+| cyclic6-31 | 0.904 | 0.967 |
+| kat6-15 | 0.931 | 1.026 |
+| kat6-31 | 0.930 | 1.026 |
+| eco10-15 | 0.645 | 0.656 |
+| eco10-31 | 0.643 | 0.655 |
+| noon4-15 | 0.999 | 1.052 |
+| noon4-31 | 0.994 | 1.042 |
+| reimer5-15 | 0.866 | 0.890 |
+| reimer5-31 | 0.856 | 0.883 |
+| minrank_d_2_p_2_q_3_r_2-15 | 1.048 | 1.056 |
+| minrank_d_2_p_2_q_3_r_2-31 | 1.040 | 1.040 |
+| quadratic5-32003 | 0.909 | 1.020 |
+| quadratic5-2147483647 | 0.906 | 1.023 |
 
 The [metadata](hexgroebner-row-arithmetic-diagnostic-cbca23e34e93.json) and
 [raw records](hexgroebner-row-arithmetic-diagnostic-cbca23e34e93.tar.gz) retain
@@ -63,6 +91,6 @@ finite-field adapters and the remaining performance gap remain open.
 
 The measured source archives preserve the exact historical inputs. Current
 sources additionally contain the shared checked monomial append and matrix
-peak telemetry from the batch comparison, arithmetic boundary tests and the
-independent certificate checker. Those additions are not included in this
+peak telemetry from the batch comparison, arithmetic boundary tests (including the exhaustive maximal two-byte-factor
+sweep) and the independent certificate checker. Those additions are not included in this
 timing attribution.

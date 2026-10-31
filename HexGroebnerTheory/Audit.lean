@@ -60,3 +60,6 @@ standard foundational axioms. No native success bit is a proof assumption. -/
 
 /-- info: 'HexGroebnerTheory.checkBasis_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in #print axioms HexGroebnerTheory.checkBasis_sound
+
+/-- info: 'HexGroebnerTheory.checkBasis_unique' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms HexGroebnerTheory.checkBasis_unique

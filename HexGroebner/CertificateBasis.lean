@@ -16,7 +16,9 @@ namespace Certificate
 
 /-- Both ideal containments and a bounded cofactor representation for each
 ordered final S-pair. Pair arrays use the proposed basis indices, including
-diagonal zero pairs. This initial exact checker deliberately checks all pairs. -/
+diagonal zero pairs. This initial exact checker deliberately checks all pairs.
+This dense witness type is provisional; it is not a stable interchange format.
+Sparse/shared pair witnesses remain required for large computations. -/
 structure Basis where
   forward : Containment
   backward : Containment
@@ -26,26 +28,17 @@ structure Basis where
 /-- Monic, nonzero, reduced and sorted basis shape. Every divisibility test uses
 exact exponents; a term may be divisible only by its own leading monomial. -/
 def checkShape (order : TermOrder) (basis : Array Polynomial) : Bool :=
+  let heads := basis.map (leading order)
   (List.finRange basis.size).all fun i =>
-    match leading order basis[i] with
+    match heads[i.val]'(by simp [heads]) with
     | none => false
     | some a => a.2 == 1 && (List.finRange basis.size).all fun j =>
-      match leading order basis[j] with
+      match heads[j.val]'(by simp [heads]) with
       | none => false
       | some b =>
         (if i.val < j.val then compare order a.1 b.1 == .gt else true) &&
         basis[i].all fun term =>
           !divides b.1 term.1 || (i.val == j.val && term.1 == a.1)
-
-/-- Every final S-polynomial must have a checked bounded zero representation. -/
-def checkPairs (p n : Nat) (order : TermOrder) (basis : Array Polynomial)
-    (pairs : Array (Array (Array Polynomial))) : Bool :=
-  pairs.size == basis.size && pairs.toList.all (fun row => row.size == basis.size) &&
-    (List.finRange basis.size).all fun i => (List.finRange basis.size).all fun j =>
-      match pairs[i.val]?.bind (fun row => row[j.val]?) with
-      | none => false
-      | some cofactors => checkReduction p n order basis cofactors
-        (sPolynomial p order basis[i] basis[j])
 
 end Certificate
 

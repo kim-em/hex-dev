@@ -44,4 +44,48 @@ def checkReduction (p n : Nat) (order : TermOrder) (basis cofactors : Array Poly
     rows.all (fun row => degreeLE order row target) &&
       Hex.MvPoly.Kernel.beq (sum p rows) target
 
+/-- Pair replay requiring a separately validated canonical basis. Public
+entrypoints `checkReduction` and `checkPairs` perform that validation. -/
+def checkReductionCore (p n : Nat) (order : TermOrder)
+    (basis cofactors : Array Polynomial) (target : Polynomial) : Bool :=
+  if basis.size != cofactors.size ||
+      !cofactors.toList.all (Hex.MvPoly.Kernel.isCanonicalMod p n) ||
+      !Hex.MvPoly.Kernel.isCanonicalMod p n target then false else
+    let rows := products p basis cofactors
+    rows.all (fun row => degreeLE order row target) &&
+      Hex.MvPoly.Kernel.beq (sum p rows) target
+
+private theorem checkReductionCore_eq (p n : Nat) (order : TermOrder)
+    (basis cofactors : Array Polynomial) (target : Polynomial)
+    (h : basis.toList.all (Hex.MvPoly.Kernel.isCanonicalMod p n) = true) :
+    checkReductionCore p n order basis cofactors target =
+      checkReduction p n order basis cofactors target := by
+  simp [checkReductionCore, checkReduction, h]
+
+/-- Every final S-polynomial must have a checked bounded zero representation.
+Common basis canonicality is checked once for the entire pair family. -/
+def checkPairs (p n : Nat) (order : TermOrder) (basis : Array Polynomial)
+    (pairs : Array (Array (Array Polynomial))) : Bool :=
+  basis.toList.all (Hex.MvPoly.Kernel.isCanonicalMod p n) &&
+    pairs.size == basis.size && pairs.toList.all (fun row => row.size == basis.size) &&
+    (List.finRange basis.size).all fun i => (List.finRange basis.size).all fun j =>
+      match pairs[i.val]?.bind (fun row => row[j.val]?) with
+      | none => false
+      | some cofactors => checkReductionCore p n order basis cofactors
+        (sPolynomial p order basis[i] basis[j])
+
+/-- Cached validation preserves full independent reduction checking for every
+pair. This equation is also the pure boundary used by the soundness proof. -/
+theorem checkPairs_eq (p n : Nat) (order : TermOrder) (basis : Array Polynomial)
+    (pairs : Array (Array (Array Polynomial)))
+    (h : basis.toList.all (Hex.MvPoly.Kernel.isCanonicalMod p n) = true) :
+    checkPairs p n order basis pairs =
+      (pairs.size == basis.size && pairs.toList.all (fun row => row.size == basis.size) &&
+        (List.finRange basis.size).all fun i => (List.finRange basis.size).all fun j =>
+          match pairs[i.val]?.bind (fun row => row[j.val]?) with
+          | none => false
+          | some cofactors => checkReduction p n order basis cofactors
+            (sPolynomial p order basis[i] basis[j])) := by
+  simp only [checkPairs, h, Bool.true_and, checkReductionCore_eq p n order basis _ _ h]
+
 end Hex.Groebner.Certificate

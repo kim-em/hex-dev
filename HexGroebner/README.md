@@ -140,6 +140,12 @@ identities cannot replace this bound. `HexGroebnerTheory.checkBasis_sound`
 proves the complete semantic postcondition through the existing polynomial and
 order correspondences. Literal examples replay in the ordinary kernel.
 
+Pair replay validates the common basis once, and shape checking caches its
+leading terms. The initial dense pair witness still occupies Θ(|G|³) cofactor
+slots and checks both orientations and the diagonal. This type is provisional,
+not a stable interchange format. Sparse shared pair witnesses and triangular
+pair coverage remain necessary for large computations.
+
 This pure checker currently has no replay allowance. Bounded certificate
 generation, bounded replay, compressed S-pair derivations and automatic checked
 computation remain required. Candidate timing excludes all these checks.

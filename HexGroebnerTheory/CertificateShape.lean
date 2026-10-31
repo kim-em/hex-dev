@@ -23,19 +23,21 @@ private theorem shape_row (order : Hex.Groebner.TermOrder) (basis : Array Polyno
       ∀ j : Fin basis.size, ∃ b, leading order basis[j.val] = some b ∧
         (i.val < j.val → compare order a.1 b.1 = .gt) ∧
         ∀ term ∈ basis[i.val], divides b.1 term.1 = true → i = j ∧ term.1 = a.1 := by
+  simp only [checkShape, Array.getElem_map] at h
   have hi := List.all_eq_true.mp h i (by simp)
+  simp only [Fin.getElem_fin] at hi
   cases ha : leading order basis[i.val] with
-  | none => erw [ha] at hi; contradiction
+  | none => rw [ha] at hi; contradiction
   | some a =>
-    erw [ha] at hi
+    rw [ha] at hi
     have parts := Bool.and_eq_true_iff.mp hi
     refine ⟨a, rfl, by simpa using parts.1, ?_⟩
     intro j
     have hj := List.all_eq_true.mp parts.2 j (by simp)
     cases hb : leading order basis[j.val] with
-    | none => erw [hb] at hj; contradiction
+    | none => rw [hb] at hj; contradiction
     | some b =>
-      erw [hb] at hj
+      rw [hb] at hj
       have conditions := Bool.and_eq_true_iff.mp hj
       refine ⟨b, rfl, ?_, ?_⟩
       · intro hij

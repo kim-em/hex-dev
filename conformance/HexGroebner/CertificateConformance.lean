@@ -106,12 +106,20 @@ def basisWitness : Certificate.Basis := {
 
 #guard checkBasis context generators basis basisWitness
 #guard !checkBasis { context with order := .lex } generators basis basisWitness
+#guard !checkBasis { context with
+  field := ⟨11, Hex.Nat.isPrimeTrial_isPrime (by decide), by decide⟩ } generators basis basisWitness
 #guard !checkBasis context #[] basis basisWitness
 #guard !checkBasis context generators basis { basisWitness with
   forward := { basisWitness.forward with roots := #[0, 1] } }
 #guard !checkBasis context generators basis { basisWitness with
   backward := { basisWitness.backward with roots := #[0, 0] } }
+#guard !checkBasis context generators basis { basisWitness with
+  forward := { basisWitness.forward with roots := #[0, 1, 99] } }
+#guard !checkBasis context generators basis { basisWitness with
+  forward := ⟨[.generator 7], #[0, 0, 0]⟩ }
 #guard !checkBasis context generators basis { basisWitness with pairs := #[] }
+#guard !checkBasis context generators basis { basisWitness with
+  pairs := basisWitness.pairs.push basisWitness.pairs[0]! }
 #guard !checkBasis context generators basis { basisWitness with
   pairs := basisWitness.pairs.set! 0 #[] }
 #guard !checkBasis context generators basis { basisWitness with
@@ -122,6 +130,27 @@ def basisWitness : Certificate.Basis := {
 #guard !Certificate.checkShape .grevlex (basis.push [])
 #guard !Certificate.checkShape .grevlex #[[([1, 0], 2)]]
 #guard !Certificate.checkShape .grevlex #[[([2, 0], 1)], [([1, 0], 1)]]
+
+-- Replacing g₀ by g₀+g₁ preserves the ideal and Gröbner property, with valid
+-- containment and bounded pair witnesses. Its xy tail is reducible by g₁.
+def nonreduced : Array Certificate.Polynomial := basis.set! 0
+  [([2, 0], 1), ([1, 1], 1), ([0, 1], 6), ([0, 0], 6)]
+
+def nonreducedWitness : Certificate.Basis := {
+  forward := ⟨witness.nodes ++ [.add 0 1], #[6, 1, 5]⟩
+  backward := ⟨[.generator 0, .generator 1, .scale 6 1, .add 0 2], #[3, 1]⟩
+  pairs := #[
+    #[#[[], [], []], #[[], [([0, 1], 1)], [([0, 0], 6)]],
+      #[[([1, 0], 1)], target, [([0, 1], 6)]]],
+    #[#[[], [([0, 1], 6)], [([0, 0], 1)]], #[[], [], []],
+      #[[([0, 0], 1)], [([0, 0], 6)], []]],
+    #[#[[([1, 0], 6)], [([1, 0], 1), ([0, 2], 6)], [([0, 1], 1)]],
+      #[[([0, 0], 6)], [([0, 0], 1)], []], #[[], [], []]]] }
+
+#guard Certificate.checkContainment 7 2 generators nonreduced nonreducedWitness.forward
+#guard Certificate.checkContainment 7 2 nonreduced generators nonreducedWitness.backward
+#guard Certificate.checkPairs 7 2 .grevlex nonreduced nonreducedWitness.pairs
+#guard !checkBasis context generators nonreduced nonreducedWitness
 #guard checkBasis context #[] #[] ⟨⟨[], #[]⟩, ⟨[], #[]⟩, #[]⟩
 #guard checkBasis context #[[]] #[] ⟨⟨[], #[]⟩, ⟨[.zero], #[0]⟩, #[]⟩
 #guard checkBasis context #[[([0, 0], 3)]] #[[([0, 0], 1)]] {

@@ -20,9 +20,10 @@ are excluded. Every completed sample is retained; no unchanged rerun was used.
 | Katsura-3 | 0.314 → 0.304 ms | 0.314 → 0.313 ms | 0.981 |
 | Reimer-5 | 131.690 → 126.834 ms | 129.434 → 128.282 ms | 0.977 |
 
-All 48 samples succeed with matching paired basis hashes. These are small
-observed gains, particularly for Katsura and Reimer, rather than a large
-elimination speedup.
+All 48 samples succeed with matching paired basis hashes. The observed gains
+are largest on cyclic-5/6 and smallest on Katsura/Reimer. Baseline cyclic-5
+changes by about 3.6% between blocks, comparable to these small effects; the
+measurements do not establish a large elimination speedup.
 
 [Raw samples and logs](hexgroebner-flat-scan-d42e621f1253.tar.gz),
 [commands and context](hexgroebner-flat-scan-d42e621f1253.measurement.json),
@@ -38,8 +39,11 @@ Raw archive SHA256:
 The unchanged 16-input frozen suite uses leased CPU 90, one computation thread,
 adjacent AB/BA comparisons, a 10-second timeout, 16 GiB address-space limit and
 64 MiB output limit. All 64 samples succeed and all 32 paired full bases match.
-Whole-process observations vary substantially between adjacent arms and blocks,
-including regressions. No general whole-process speedup is established.
+Both internal candidate and whole-process times vary substantially between
+adjacent arms and blocks, including regressions. For cyclic6-15, baseline
+internal times are 28.7 and 60.1 ms across the two blocks. Internal ratios in
+this table are descriptive observations, with no reliable speedup established
+by this diagnostic run. The whole-process comparison is also inconclusive.
 Maximum observed RSS is 88,496 KiB for A and 90,384 KiB for B. Per-input memory,
 all failures and complete outputs are retained in the records.
 

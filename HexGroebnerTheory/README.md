@@ -38,6 +38,8 @@ Buchberger's criterion to prove `checkBasis_sound`. The postcondition is the
 reduced Gröbner basis of the original ideal, without producer provenance.
 `Examples.certificate_basis` proves a complete three-polynomial basis over 𝔽₇
 by ordinary kernel replay of both containments and all nine final pair identities.
+`checkBasis_unique` combines acceptance with reduced-basis uniqueness, so two
+accepted outputs for the same original ideal agree as formal polynomial sets.
 
 `Groebner` states the basis predicate by leading-monomial divisibility and
 proves its equivalence with the leading-term-ideal predicate. It supplies

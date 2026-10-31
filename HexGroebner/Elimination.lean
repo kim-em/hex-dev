@@ -211,7 +211,9 @@ private def scaleSparse (field : PrimeField) (ctx : BarrettCtx field.modulus)
       (ctx.mulMod (Packed.read width row.coefficients i) inverse)
   return ⟨row.columns, coefficients⟩
 
-/-- Flat loop state avoids a nested tuple of mutable values at every column. -/
+/-- Flat loop state avoids a nested tuple of mutable values at every column.
+Keep it uniquely owned through the loop: sharing it can force dense/trace
+copies. Changes to its ownership should be checked with the matrix benchmarks. -/
 private structure Scan where
   dense : ByteArray
   last : Nat
