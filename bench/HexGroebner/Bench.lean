@@ -304,61 +304,61 @@ def cyclic5 (_ : Unit) : IO (Array RawPolynomial) := do compute 5 (← cyclic5In
 def cyclic6 (_ : Unit) : IO (Array RawPolynomial) := do compute 6 (← cyclic6Input.get)
 
 /-- Identical cyclic-6 candidate call using scalar Lean row updates. -/
-def cyclic6Portable (_ : Unit) : IO (Array RawPolynomial) := do compute 6 (← cyclic6Input.get) false
+def cyclic6Portable (_ : Unit) : IO (Array RawPolynomial) := do compute 6 (← cyclic6Input.get) (nativeRows := false)
 
 /-- Candidate-only Katsura-3 under the same field, order and output contract. -/
 def katsura3 (_ : Unit) : IO (Array RawPolynomial) := do compute 4 (← katsura3Input.get)
 
 /-- Cyclic-5 reference using only product/resolved chain criteria. -/
 def cyclic5Buchberger (_ : Unit) : IO (Array RawPolynomial) := do
-  compute 5 (← cyclic5Input.get) true false
+  compute 5 (← cyclic5Input.get) (gebauerMoller := false)
 
 /-- Cyclic-6 reference under identical input, arithmetic and resource allowances. -/
 def cyclic6Buchberger (_ : Unit) : IO (Array RawPolynomial) := do
-  compute 6 (← cyclic6Input.get) true false
+  compute 6 (← cyclic6Input.get) (gebauerMoller := false)
 
 /-- Katsura-3 reference without Gebauer–Möller pruning. -/
 def katsura3Buchberger (_ : Unit) : IO (Array RawPolynomial) := do
-  compute 4 (← katsura3Input.get) true false
+  compute 4 (← katsura3Input.get) (gebauerMoller := false)
 
 /-- Reimer-5 candidate with the full input and output contract. -/
 def reimer5 (_ : Unit) : IO (Array RawPolynomial) := do compute 5 (← reimer5Input.get)
 
 /-- Reimer-5 reference without Gebauer–Möller pruning. -/
 def reimer5Buchberger (_ : Unit) : IO (Array RawPolynomial) := do
-  compute 5 (← reimer5Input.get) true false
+  compute 5 (← reimer5Input.get) (gebauerMoller := false)
 
 /-- Identical cyclic5 candidate using separate final tail reductions. -/
 def cyclic5Separate (_ : Unit) : IO (Array RawPolynomial) := do
-  compute 5 (← cyclic5Input.get) true true false
+  compute 5 (← cyclic5Input.get) (batchInterreduce := false)
 
 /-- Identical cyclic6 candidate using separate final tail reductions. -/
 def cyclic6Separate (_ : Unit) : IO (Array RawPolynomial) := do
-  compute 6 (← cyclic6Input.get) true true false
+  compute 6 (← cyclic6Input.get) (batchInterreduce := false)
 
 /-- Identical katsura3 candidate using separate final tail reductions. -/
 def katsura3Separate (_ : Unit) : IO (Array RawPolynomial) := do
-  compute 4 (← katsura3Input.get) true true false
+  compute 4 (← katsura3Input.get) (batchInterreduce := false)
 
 /-- Identical reimer5 candidate using separate final tail reductions. -/
 def reimer5Separate (_ : Unit) : IO (Array RawPolynomial) := do
-  compute 5 (← reimer5Input.get) true true false
+  compute 5 (← reimer5Input.get) (batchInterreduce := false)
 
 /-- Identical cyclic5 candidate using portable coordinate-array monomial operations. -/
 def cyclic5Arrays (_ : Unit) : IO (Array RawPolynomial) := do
-  compute 5 (← cyclic5Input.get) true true true false
+  compute 5 (← cyclic5Input.get) (nativeMonomials := false)
 
 /-- Identical cyclic6 candidate using portable coordinate-array monomial operations. -/
 def cyclic6Arrays (_ : Unit) : IO (Array RawPolynomial) := do
-  compute 6 (← cyclic6Input.get) true true true false
+  compute 6 (← cyclic6Input.get) (nativeMonomials := false)
 
 /-- Identical katsura3 candidate using portable coordinate-array monomial operations. -/
 def katsura3Arrays (_ : Unit) : IO (Array RawPolynomial) := do
-  compute 4 (← katsura3Input.get) true true true false
+  compute 4 (← katsura3Input.get) (nativeMonomials := false)
 
 /-- Identical reimer5 candidate using portable coordinate-array monomial operations. -/
 def reimer5Arrays (_ : Unit) : IO (Array RawPolynomial) := do
-  compute 5 (← reimer5Input.get) true true true false
+  compute 5 (← reimer5Input.get) (nativeMonomials := false)
 
 -- Fixed full-system calls make no polynomial-time claim in variable count.
 -- Every registration hashes the full canonical basis and reports exhaustion as

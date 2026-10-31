@@ -158,4 +158,21 @@ private def exhaustion : Bool := Id.run do
 
 #guard exhaustion
 
+private def storage : Bool := Id.run do
+  let .ok (_, t) := ({ arity := 2, hashBits := 0 } : MonomialTable).intern #[1, 0] 10 10000
+    | return false
+  for malformed in [{ t with exponents := t.exponents.push 0 },
+      { t with metadata := t.metadata.push 0 },
+      { t with buckets := t.buckets.insert 0 #[10] }] do
+    for native in [false, true] do
+      match (malformed.combineOwned .lcm 0 0 10 10000 10000 native).result with
+      | .error error => if error.error != .storage then return false
+      | _ => return false
+    match (malformed.internOwned #[1, 0] 10 10000).result with
+    | .error error => if error.error != .storage then return false
+    | _ => return false
+  return true
+
+#guard storage
+
 end Hex.Groebner.MonomialConformance

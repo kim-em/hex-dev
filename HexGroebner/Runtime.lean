@@ -104,6 +104,12 @@ structure Statistics where
   matrixEntries : Nat := 0
   matrixRows : Nat := 0
   matrixCalls : Nat := 0
+  /-- Largest number of reducer and target rows supplied to one matrix call. -/
+  peakMatrixRows : Nat := 0
+  /-- Largest logical validated input-plus-output entry count of one matrix call. -/
+  peakMatrixEntries : Nat := 0
+  /-- Largest selected critical-pair batch, including exhausted attempts. -/
+  largestBatch : Nat := 0
   productPairs : Nat := 0
   chainPairs : Nat := 0
   gmPairs : Nat := 0

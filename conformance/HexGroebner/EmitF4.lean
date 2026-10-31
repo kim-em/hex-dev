@@ -77,6 +77,8 @@ private def emit : IO Unit := do
           array (c.generators.map polynomial) ++ ",\"basis\":" ++
           array (candidate.polynomials.map polynomial) ++
           s!",\"rounds\":{stats.rounds},\"pairs\":{stats.pairs},\"work\":{stats.work}," ++
+          s!"\"batchSize\":{candidate.batchSize},\"largestBatch\":{stats.largestBatch}," ++
+          s!"\"peakMatrixRows\":{stats.peakMatrixRows},\"peakMatrixEntries\":{stats.peakMatrixEntries}," ++
           s!"\"productPairs\":{stats.productPairs},\"chainPairs\":{stats.chainPairs},\"gmPairs\":{stats.gmPairs}," ++
           s!"\"serialChainPairs\":{serialStats.chainPairs},\"serialWork\":{serialStats.work}," ++
           s!"\"serialRounds\":{serialStats.rounds},\"referenceWork\":{referenceStats.work}," ++

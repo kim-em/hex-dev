@@ -446,7 +446,9 @@ private def largeBatch : Bool := Id.run do
   let .candidate reference previous := computeWith context { work := 1000000000, batchSize := 64 } generators
     | return false
   return actual.polynomials == reference.polynomials && actual.polynomials.size == 38 &&
-    statistics.rounds < previous.rounds && statistics.matrixEntries < previous.matrixEntries
+    statistics.rounds < previous.rounds && statistics.matrixEntries < previous.matrixEntries &&
+    actual.batchSize == 1024 && statistics.largestBatch > 64 &&
+    statistics.peakMatrixRows > statistics.largestBatch && statistics.peakMatrixEntries > 0
 
 #guard largeBatch
 

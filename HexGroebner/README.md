@@ -179,7 +179,7 @@ has no allowance), deterministic producer correctness and termination,
 finite extensions,
 elimination block orders, the full pair-coverage proof, checked probabilistic
 computation, validated learning/traces, delayed reduction, SIMD/parallel kernels
-and matched full-system external comparisons remain outstanding.
+and balanced multi-comparator acceptance comparisons remain outstanding.
 [#10987](https://github.com/kim-em/hex-dev/issues/10987) tracks the continuing
 correctness, finite-field scope and fastest-open-source requirements. No
 library phase or performance milestone is claimed.
@@ -206,3 +206,11 @@ larger caps. Degree/sugar boundaries still separate batches, and all nested
 matrix/memory/work allowances remain in force. The retained
 [batch comparisons](../reports/bench-results/hexgroebner-batches.md) explain the
 choice and include failures, full output comparisons and variability.
+
+Candidates report the batch cap and implementation controls supplied at
+completion; earlier resumed stages may have used different controls.
+`Statistics.largestBatch` records the largest selected pair batch, while
+`peakMatrixRows` and `peakMatrixEntries` record maximum rows and logical
+validated input-plus-output entries of one matrix call, including failed calls.
+These are matrix-size counters, separate from process peak RSS and cumulative
+matrix work.

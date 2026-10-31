@@ -141,7 +141,9 @@ private def solve (context : Context) (limits : Limits) (matrix : SymbolicMatrix
     allocatedBytes := s.statistics.allocatedBytes + (stats.packedBytes - inputBytes)
     matrixEntries := s.statistics.matrixEntries + stats.inputEntries + stats.outputEntries
     matrixRows := s.statistics.matrixRows + rows
-    matrixCalls := s.statistics.matrixCalls + 1 } }
+    matrixCalls := s.statistics.matrixCalls + 1
+    peakMatrixRows := max s.statistics.peakMatrixRows rows
+    peakMatrixEntries := max s.statistics.peakMatrixEntries (stats.inputEntries + stats.outputEntries) } }
   let rows ← match result with
     | .ok e => pure e
     | .error (.exhausted r) => match r with

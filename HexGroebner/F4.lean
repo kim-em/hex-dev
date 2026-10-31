@@ -75,6 +75,7 @@ private def round (context : Context) (limits : Limits) (checkpoint : Checkpoint
   set { s with statistics.rounds := s.statistics.rounds + 1 }
   let index ← ReducerIndex.build context limits checkpoint.basis
   let (pairs, queue) ← checkpoint.queue.select context limits index checkpoint.basis
+  modify fun s => { s with statistics.largestBatch := max s.statistics.largestBatch pairs.size }
   if pairs.isEmpty then return { checkpoint with queue }
   let mut targets := #[]
   for pair in pairs do
@@ -177,6 +178,14 @@ structure Candidate where
   context : Context
   polynomials : Array RawPolynomial
   randomState : UInt64
+  /-- Cap supplied at completion; earlier resumed stages may use different caps.
+  `Statistics.largestBatch` records the largest batch actually selected. -/
+  batchSize : Nat
+  /-- Implementation controls at completion; resumed stages may have differed. -/
+  nativeRows : Bool
+  nativeMonomials : Bool
+  gebauerMoller : Bool
+  batchInterreduce : Bool
 
 /-- A sealed resumable computation fixes its field, order, generators and random
 state. Ordinary callers cannot substitute incompatible metadata or fabricate a
@@ -214,7 +223,8 @@ private def decode (state : ResumeState) (limits : Limits) : Computation Candida
     spend limits (g.polynomial.size * (state.context.variables + 1))
     allocate limits (8 * g.polynomial.size * (state.context.variables + 1))
     polynomials := polynomials.push (g.polynomial.toRaw field (← get).table)
-  return ⟨state.context, polynomials, state.randomState⟩
+  return ⟨state.context, polynomials, state.randomState, limits.batchSize,
+    limits.nativeRows, limits.nativeMonomials, limits.gebauerMoller, limits.batchInterreduce⟩
 
 /-- Resume under new absolute cumulative allowances. Used work is never reset;
 restarting an exhausted stage charges its work again. Identity is sealed inside
