@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGroebner.Packed
+public import HexGroebner.Native
 public import HexMvPoly.Mono
 public import Std.Data.HashMap
 
@@ -36,8 +37,8 @@ instance (order : TermOrder) (n : Nat) : IsMonomialOrder (order.cmp n) := by
 
 /-- Representation errors are distinct from the caller's resource allowance. -/
 inductive MonomialError where
-  | arity | index | exponent | degree | address
-  | exhausted | work
+  | arity | index | exponent | degree | address | storage
+  | monomials | packedBytes | work
   deriving BEq, Repr
 
 /-- Failed monomial operations retain their charged work, including validation
@@ -47,13 +48,17 @@ structure MonomialFailure where
   work : Nat
   deriving BEq, Repr
 
-/-- Cached degree, support mask and semantic hash occupy 24 bytes per monomial. -/
+/-- Cached degree, support mask and semantic hash occupy 24 bytes per monomial.
+Operations require arenas and bucket identifiers produced by this API; raw
+record fabrication does not establish these internal invariants. -/
 structure MonomialTable where
   arity : Nat
   width : Width := .u8
   exponents : ByteArray := {}
   metadata : ByteArray := {}
   count : Nat := 0
+  /-- Reusable prepared-coordinate buffer, included in packed payload bounds. -/
+  workspace : ByteArray := {}
   buckets : Std.HashMap UInt64 (Array Nat) := {}
   /-- Reducing hash bits is useful for exact-collision conformance tests. -/
   hashBits : Nat := 64
@@ -61,15 +66,35 @@ structure MonomialTable where
   work : Nat := 0
 
 /-- Owned operations always return the table, on success and failure. This
-avoids retaining a rollback alias while growing its packed buffers/hash map. -/
+avoids retaining a rollback alias while growing its packed buffers/hash map.
+On failure, `MonomialFailure.work` is the full charged counter; `table.work`
+retains the portable interning boundary's counter. -/
 structure InternResult where
   result : Except MonomialFailure Nat
   table : MonomialTable
 
 namespace MonomialTable
 
-private def read64 (bytes : @& ByteArray) (index : Nat) : UInt64 :=
-  Packed.read .u32 bytes (2 * index) ||| (Packed.read .u32 bytes (2 * index + 1) <<< 32)
+private def word64 (bytes : @& ByteArray) (index : Nat) : UInt64 :=
+  Packed.read .u32 bytes index ||| (Packed.read .u32 bytes (index + 1) <<< 32)
+
+private def read64 (bytes : @& ByteArray) (index : Nat) : UInt64 := word64 bytes (2 * index)
+
+@[inline] private def reserve (arity : Nat) : Nat :=
+  if arity > 0 && arity ≤ 4096 then arity * 4 + 28 else 0
+
+@[inline] private def workspaceBytes (table : @& MonomialTable) : Nat :=
+  max table.workspace.size (if table.count == 0 then 0 else reserve table.arity)
+
+/-- Packed arenas plus a common workspace reservation in both backends. The
+reservation begins with the first monomial and remains after a failed operation,
+even if the physical workspace must be recreated. -/
+@[inline] def bytes (table : @& MonomialTable) : Nat :=
+  table.exponents.size + table.metadata.size + table.workspaceBytes
+
+@[inline] private def shape (table : @& MonomialTable) : Bool :=
+  table.exponents.size == table.count * table.arity * table.width.bytes &&
+    table.metadata.size == table.count * 24
 
 private def push64 (bytes : ByteArray) (value : UInt64) : ByteArray :=
   Packed.push .u32 (Packed.push .u32 bytes (value &&& 0xffffffff)) (value >>> 32)
@@ -130,6 +155,27 @@ private def widen (table : MonomialTable) (width : Width) : MonomialTable := Id.
       exponents := Packed.push width exponents (table.exponent id i)
   return { table with width, exponents }
 
+/-- Shared checked append for array and packed-coordinate interning. -/
+@[specialize] private def append (table : MonomialTable) (width : Width)
+    (degree mask hash : UInt64) (bucket : Array Nat) (coordinate : Nat → UInt64)
+    (work maxCount maxBytes maxWork : Nat) : InternResult := Id.run do
+  if table.count ≥ maxCount then return ⟨.error ⟨.monomials, work⟩, table⟩
+  if table.count + 1 > 4294967295 then return ⟨.error ⟨.index, work⟩, table⟩
+  let size := (table.count + 1) * table.arity * width.bytes + (table.count + 1) * 24
+  let peak := size + max table.workspace.size (reserve table.arity) + if width != table.width then table.exponents.size else 0
+  if peak > maxBytes then return ⟨.error ⟨.packedBytes, work⟩, table⟩
+  if peak ≥ USize.size then return ⟨.error ⟨.address, work⟩, table⟩
+  let work := work + table.arity + if width != table.width then table.count * table.arity else 0
+  if work > maxWork then return ⟨.error ⟨.work, maxWork⟩, table⟩
+  let mut table := if width == table.width then table else table.widen width
+  let id := table.count
+  let mut exponents := table.exponents
+  for i in [:table.arity] do exponents := Packed.push width exponents (coordinate i)
+  let metadata := push64 (push64 (push64 table.metadata degree) mask) hash
+  let buckets := table.buckets.insert hash (bucket.push id)
+  table := { table with exponents, metadata, buckets, count := id + 1, work }
+  return ⟨.ok id, table⟩
+
 /-- Hash-cons exponents with checked widening and exact collision handling.
 The byte allowance bounds both old and new arenas during re-encoding, excluding
 hash-table/array headers. The count allowance is checked before append. -/
@@ -137,8 +183,10 @@ def internOwned (table : MonomialTable) (values : Array UInt64)
     (maxCount maxBytes : Nat) (maxWork : Nat := 100000000) :
     InternResult := Id.run do
   if values.size != table.arity then return ⟨.error ⟨.arity, table.work⟩, table⟩
+  if !table.shape then return ⟨.error ⟨.storage, table.work⟩, table⟩
   let mut work := table.work + values.size
   if work > maxWork then return ⟨.error ⟨.work, maxWork⟩, table⟩
+  if table.bytes > maxBytes then return ⟨.error ⟨.packedBytes, work⟩, table⟩
   let mut width := table.width
   let mut degree : Nat := 0
   let mut mask : UInt64 := 0
@@ -158,23 +206,10 @@ def internOwned (table : MonomialTable) (values : Array UInt64)
   for id in bucket do
     work := work + table.arity
     if work > maxWork then return ⟨.error ⟨.work, maxWork⟩, table⟩
+    if id ≥ table.count then return ⟨.error ⟨.storage, work⟩, table⟩
     if table.equal id values then return ⟨.ok id, { table with work }⟩
-  if table.count ≥ maxCount then return ⟨.error ⟨.exhausted, work⟩, table⟩
-  if table.count + 1 > 4294967295 then return ⟨.error ⟨.index, work⟩, table⟩
-  let size := (table.count + 1) * table.arity * width.bytes + (table.count + 1) * 24
-  let peak := size + if width != table.width then table.exponents.size else 0
-  if peak > maxBytes then return ⟨.error ⟨.exhausted, work⟩, table⟩
-  if peak ≥ USize.size then return ⟨.error ⟨.address, work⟩, table⟩
-  work := work + table.arity + if width != table.width then table.count * table.arity else 0
-  if work > maxWork then return ⟨.error ⟨.work, maxWork⟩, table⟩
-  let mut table := if width == table.width then table else table.widen width
-  let id := table.count
-  let mut exponents := table.exponents
-  for x in values do exponents := Packed.push width exponents x
-  let metadata := push64 (push64 (push64 table.metadata degree.toUInt64) mask) hash
-  let buckets := table.buckets.insert hash (bucket.push id)
-  table := { table with exponents, metadata, buckets, count := id + 1, work }
-  return ⟨.ok id, table⟩
+  return append table width degree.toUInt64 mask hash bucket (fun i => values[i]!)
+    work maxCount maxBytes maxWork
 
 /-- Non-resumable convenience projection. Performance-sensitive callers use
 `internOwned` and install its returned table before inspecting the status. -/
@@ -191,12 +226,8 @@ inductive Operation where
   deriving BEq
 
 /-- Perform a packed exponent operation and intern its result. -/
-def combineOwned (table : MonomialTable) (operation : Operation) (a b : Nat)
-    (maxCount maxBytes : Nat) (maxWork : Nat := 100000000) :
-    InternResult := Id.run do
-  if a ≥ table.count || b ≥ table.count then return ⟨.error ⟨.index, table.work⟩, table⟩
-  let work := table.work + table.arity
-  if work > maxWork then return ⟨.error ⟨.work, maxWork⟩, table⟩
+private def combinePortable (table : MonomialTable) (operation : Operation) (a b : Nat)
+    (maxCount maxBytes maxWork work : Nat) : InternResult := Id.run do
   let mut values := Array.emptyWithCapacity table.arity
   for i in [:table.arity] do
     let x := table.exponent a i
@@ -212,6 +243,59 @@ def combineOwned (table : MonomialTable) (operation : Operation) (a b : Nat)
       | .quotient => x - y
     values := values.push z
   return { table with work }.internOwned values maxCount maxBytes maxWork
+
+private def zeros (size : Nat) : ByteArray := Id.run do
+  let mut bytes := ByteArray.emptyWithCapacity size
+  for _ in [:size] do bytes := bytes.push 0
+  return bytes
+
+private def combinePacked (table : MonomialTable) (operation : Operation) (a b : Nat)
+    (maxCount maxBytes maxWork initialWork : Nat) : InternResult := Id.run do
+  let mut work := initialWork
+  let size := table.arity * 4 + 28
+  let workspace := if table.workspace.size == size then table.workspace else zeros size
+  -- Move the reusable buffer out before the native call, preserving ownership.
+  let table := { table with workspace := {} }
+  let code : UInt8 := match operation with | .lcm => 0 | .product => 1 | .quotient => 2
+  let some prepared := Native.Monomial.prepare code table.width.bytes.toUInt8 table.arity.toUInt64
+      table.count.toUInt64 a.toUInt64 b.toUInt64 table.exponents workspace
+    | return ⟨.error ⟨.exponent, work⟩, table⟩
+  -- Match the portable call's state when entering its intern operation.
+  let table := { table with work }
+  work := work + table.arity
+  if work > maxWork then return ⟨.error ⟨.work, maxWork⟩, { table with workspace := prepared }⟩
+  let degree := word64 prepared table.arity
+  let mask := word64 prepared (table.arity + 2)
+  let mut hash := word64 prepared (table.arity + 4)
+  let largest := Packed.read .u32 prepared (table.arity + 6)
+  let width := if largest > 65535 then Width.u32 else
+    if largest > 255 && table.width == .u8 then Width.u16 else table.width
+  if table.hashBits < 64 then hash := hash &&& (((1 : UInt64) <<< table.hashBits.toUInt64) - 1)
+  let bucket := table.buckets[hash]?.getD #[]
+  for id in bucket do
+    work := work + table.arity
+    if work > maxWork then return ⟨.error ⟨.work, maxWork⟩, { table with workspace := prepared }⟩
+    if id ≥ table.count then return ⟨.error ⟨.storage, work⟩, { table with workspace := prepared }⟩
+    if Native.Monomial.equal table.width.bytes.toUInt8 table.arity.toUInt64 id.toUInt64
+        table.exponents prepared then return ⟨.ok id, { table with work, workspace := prepared }⟩
+  return append { table with workspace := prepared } width degree mask hash bucket
+    (fun i => Packed.read .u32 prepared i) work maxCount maxBytes maxWork
+
+/-- Packed native preparation and exact comparison for arities 1 through 4096.
+Larger arities, zero variables and `native := false` retain the portable
+coordinate-array route. A bounded workspace reservation is counted in both backends alongside the
+arenas; exponent/degree overflow and collision handling remain exact. -/
+def combineOwned (table : MonomialTable) (operation : Operation) (a b : Nat)
+    (maxCount maxBytes : Nat) (maxWork : Nat := 100000000) (native := true) : InternResult :=
+  if a ≥ table.count || b ≥ table.count then ⟨.error ⟨.index, table.work⟩, table⟩ else
+  if !table.shape then ⟨.error ⟨.storage, table.work⟩, table⟩ else
+  let work := table.work + table.arity
+  if work > maxWork then ⟨.error ⟨.work, maxWork⟩, table⟩ else
+  if table.bytes > maxBytes then ⟨.error ⟨.packedBytes, work⟩, table⟩ else
+  if table.bytes ≥ USize.size then ⟨.error ⟨.address, work⟩, table⟩ else
+  if native && table.arity > 0 && table.arity ≤ 4096 && table.count ≤ 4294967295 then
+    combinePacked table operation a b maxCount maxBytes maxWork work
+  else combinePortable table operation a b maxCount maxBytes maxWork work
 
 /-- Convenience projection of the ownership-preserving monomial operation. -/
 def combine (table : MonomialTable) (operation : Operation) (a b : Nat)

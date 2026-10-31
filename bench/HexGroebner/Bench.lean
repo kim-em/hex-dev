@@ -285,8 +285,8 @@ initialize cyclic5Input : IO.Ref (Array RawPolynomial) ← IO.mkRef (cyclic 5)
 initialize cyclic6Input : IO.Ref (Array RawPolynomial) ← IO.mkRef (cyclic 6)
 initialize katsura3Input : IO.Ref (Array RawPolynomial) ← IO.mkRef (katsura 3)
 
-private def compute (variables : Nat) (input : Array RawPolynomial) (nativeRows := true) (gebauerMoller := true) : IO (Array RawPolynomial) := do
-  match computeWith ⟨field, variables, .grevlex⟩ { nativeRows, gebauerMoller, work := 1000000000 } input with
+private def compute (variables : Nat) (input : Array RawPolynomial) (nativeRows := true) (gebauerMoller := true) (batchInterreduce := true) (nativeMonomials := true) : IO (Array RawPolynomial) := do
+  match computeWith ⟨field, variables, .grevlex⟩ { nativeRows, gebauerMoller, batchInterreduce, nativeMonomials, work := 1000000000 } input with
   | .candidate candidate _ => return candidate.polynomials
   | .exhausted r _ => throw (IO.userError s!"F4 exhausted {reprStr r}")
   | .representation r _ => throw (IO.userError s!"F4 representation {reprStr r}")
@@ -304,29 +304,61 @@ def cyclic5 (_ : Unit) : IO (Array RawPolynomial) := do compute 5 (← cyclic5In
 def cyclic6 (_ : Unit) : IO (Array RawPolynomial) := do compute 6 (← cyclic6Input.get)
 
 /-- Identical cyclic-6 candidate call using scalar Lean row updates. -/
-def cyclic6Portable (_ : Unit) : IO (Array RawPolynomial) := do compute 6 (← cyclic6Input.get) false
+def cyclic6Portable (_ : Unit) : IO (Array RawPolynomial) := do compute 6 (← cyclic6Input.get) (nativeRows := false)
 
 /-- Candidate-only Katsura-3 under the same field, order and output contract. -/
 def katsura3 (_ : Unit) : IO (Array RawPolynomial) := do compute 4 (← katsura3Input.get)
 
 /-- Cyclic-5 reference using only product/resolved chain criteria. -/
 def cyclic5Buchberger (_ : Unit) : IO (Array RawPolynomial) := do
-  compute 5 (← cyclic5Input.get) true false
+  compute 5 (← cyclic5Input.get) (gebauerMoller := false)
 
 /-- Cyclic-6 reference under identical input, arithmetic and resource allowances. -/
 def cyclic6Buchberger (_ : Unit) : IO (Array RawPolynomial) := do
-  compute 6 (← cyclic6Input.get) true false
+  compute 6 (← cyclic6Input.get) (gebauerMoller := false)
 
 /-- Katsura-3 reference without Gebauer–Möller pruning. -/
 def katsura3Buchberger (_ : Unit) : IO (Array RawPolynomial) := do
-  compute 4 (← katsura3Input.get) true false
+  compute 4 (← katsura3Input.get) (gebauerMoller := false)
 
 /-- Reimer-5 candidate with the full input and output contract. -/
 def reimer5 (_ : Unit) : IO (Array RawPolynomial) := do compute 5 (← reimer5Input.get)
 
 /-- Reimer-5 reference without Gebauer–Möller pruning. -/
 def reimer5Buchberger (_ : Unit) : IO (Array RawPolynomial) := do
-  compute 5 (← reimer5Input.get) true false
+  compute 5 (← reimer5Input.get) (gebauerMoller := false)
+
+/-- Identical cyclic5 candidate using separate final tail reductions. -/
+def cyclic5Separate (_ : Unit) : IO (Array RawPolynomial) := do
+  compute 5 (← cyclic5Input.get) (batchInterreduce := false)
+
+/-- Identical cyclic6 candidate using separate final tail reductions. -/
+def cyclic6Separate (_ : Unit) : IO (Array RawPolynomial) := do
+  compute 6 (← cyclic6Input.get) (batchInterreduce := false)
+
+/-- Identical katsura3 candidate using separate final tail reductions. -/
+def katsura3Separate (_ : Unit) : IO (Array RawPolynomial) := do
+  compute 4 (← katsura3Input.get) (batchInterreduce := false)
+
+/-- Identical reimer5 candidate using separate final tail reductions. -/
+def reimer5Separate (_ : Unit) : IO (Array RawPolynomial) := do
+  compute 5 (← reimer5Input.get) (batchInterreduce := false)
+
+/-- Identical cyclic5 candidate using portable coordinate-array monomial operations. -/
+def cyclic5Arrays (_ : Unit) : IO (Array RawPolynomial) := do
+  compute 5 (← cyclic5Input.get) (nativeMonomials := false)
+
+/-- Identical cyclic6 candidate using portable coordinate-array monomial operations. -/
+def cyclic6Arrays (_ : Unit) : IO (Array RawPolynomial) := do
+  compute 6 (← cyclic6Input.get) (nativeMonomials := false)
+
+/-- Identical katsura3 candidate using portable coordinate-array monomial operations. -/
+def katsura3Arrays (_ : Unit) : IO (Array RawPolynomial) := do
+  compute 4 (← katsura3Input.get) (nativeMonomials := false)
+
+/-- Identical reimer5 candidate using portable coordinate-array monomial operations. -/
+def reimer5Arrays (_ : Unit) : IO (Array RawPolynomial) := do
+  compute 5 (← reimer5Input.get) (nativeMonomials := false)
 
 -- Fixed full-system calls make no polynomial-time claim in variable count.
 -- Every registration hashes the full canonical basis and reports exhaustion as
@@ -341,6 +373,16 @@ setup_fixed_benchmark cyclic6Buchberger where { repeats := 5 }
 setup_fixed_benchmark katsura3Buchberger where { repeats := 5 }
 setup_fixed_benchmark reimer5 where { repeats := 5 }
 setup_fixed_benchmark reimer5Buchberger where { repeats := 5 }
+
+setup_fixed_benchmark cyclic5Separate where { repeats := 5 }
+setup_fixed_benchmark cyclic6Separate where { repeats := 5 }
+setup_fixed_benchmark katsura3Separate where { repeats := 5 }
+setup_fixed_benchmark reimer5Separate where { repeats := 5 }
+
+setup_fixed_benchmark cyclic5Arrays where { repeats := 5 }
+setup_fixed_benchmark cyclic6Arrays where { repeats := 5 }
+setup_fixed_benchmark katsura3Arrays where { repeats := 5 }
+setup_fixed_benchmark reimer5Arrays where { repeats := 5 }
 
 end Hex.Groebner.Bench
 

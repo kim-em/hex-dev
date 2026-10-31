@@ -73,4 +73,106 @@ private def bounds : Bool := Id.run do
 
 #guard bounds
 
+private def same (a b : InternResult) : Bool :=
+  (match a.result, b.result with
+    | .ok a, .ok b => a == b
+    | .error a, .error b => a == b
+    | _, _ => false) && a.table.count == b.table.count && a.table.width == b.table.width &&
+    a.table.exponents.data == b.table.exponents.data && a.table.metadata.data == b.table.metadata.data &&
+    a.table.work == b.table.work && a.table.bytes == b.table.bytes
+
+private def packed : Bool := Id.run do
+  for arity in [0, 1, 2, 10, 65, 4096, 4097] do
+    let mut reference : MonomialTable := { arity, hashBits := 0 }
+    for seed in [:5] do
+      let values := (Array.range arity).map fun i => ((seed + i * 3) % 17).toUInt64
+      let result := reference.internOwned values 200 1000000000 1000000000
+      if !result.result.isOk then return false
+      reference := result.table
+    let mut native := reference
+    for seed in [:(if arity > 65 then 10 else 100)] do
+      let count := reference.count
+      let a := seed % count
+      let b := (seed * 7 + 1) % count
+      let operation := match seed % 3 with
+        | 0 => MonomialTable.Operation.lcm
+        | 1 => .product
+        | _ => .quotient
+      let first := native.combineOwned operation a b 200 1000000000 1000000000 true
+      let second := reference.combineOwned operation a b 200 1000000000 1000000000 false
+      if !same first second then return false
+      native := first.table
+      reference := second.table
+  for boundary in ([255, 65535, 4294967295] : List UInt64) do
+    let .ok (a, t) := ({ arity := 1 } : MonomialTable).intern #[boundary] 10 10000 | return false
+    let .ok (b, t) := t.intern #[1] 10 10000 | return false
+    let native := t.combineOwned .product a b 10 10000 100000 true
+    let portable := t.combineOwned .product a b 10 10000 100000 false
+    if !same native portable then return false
+  let .ok (a, t) := ({ arity := 2 } : MonomialTable).intern #[1, 0] 10 10000 | return false
+  let .ok (b, t) := t.intern #[0, 1] 10 10000 | return false
+  let output := t.combineOwned .product a b 10 114
+  if !output.result.isOk || output.table.bytes != 114 then return false
+  if (t.combineOwned .product a b 10 113).result.isOk then return false
+  if (output.table.internOwned #[2, 0] 10 139).result.isOk then return false
+  if !(output.table.internOwned #[2, 0] 10 140).result.isOk then return false
+  for work in [:output.table.work] do
+    let result := t.combineOwned .product a b 10 10000 work
+    if result.result.isOk then return false
+    match result.result with
+    | .error failure => if failure.error != .work || failure.work > work then return false
+    | _ => return false
+  return true
+
+#guard packed
+
+private def exhaustion : Bool := Id.run do
+  let .ok (a, t) := ({ arity := 3, hashBits := 0 } : MonomialTable).intern #[255, 0, 1] 10 10000
+    | return false
+  let .ok (b, t) := t.intern #[1, 1, 0] 10 10000 | return false
+  let .ok (_, t) := t.intern #[0, 1, 1] 10 10000 | return false
+  let cases := [(MonomialTable.Operation.lcm, a, a), (.product, a, b), (.quotient, b, a)]
+  for cached in [false, true] do
+    let t := if cached then (t.combineOwned .lcm a a 10 10000).table else t
+    for (operation, a, b) in cases do
+      for count in [:5] do
+        for bytes in [:190] do
+          if !same (t.combineOwned operation a b count bytes 10000 true)
+              (t.combineOwned operation a b count bytes 10000 false) then return false
+      for count in [t.count, t.count + 1] do
+        for bytes in [t.bytes - 1, t.bytes, 168, 169] do
+          for work in [:80] do
+            if !same (t.combineOwned operation a b count bytes work true)
+                (t.combineOwned operation a b count bytes work false) then return false
+    let hit := t.combineOwned .lcm a a t.count (t.bytes - 1)
+    match hit.result with
+    | .error failure => if failure.error != .packedBytes then return false
+    | _ => return false
+    let widened := t.combineOwned .product a b 10 10000
+    if !widened.result.isOk || widened.table.width != .u16 then return false
+    let portable := t.combineOwned .product a b 10 10000 100000 false
+    if !same widened portable then return false
+    for i in [:t.count] do
+      if widened.table.exponentsAt i != t.exponentsAt i then return false
+  return true
+
+#guard exhaustion
+
+private def storage : Bool := Id.run do
+  let .ok (_, t) := ({ arity := 2, hashBits := 0 } : MonomialTable).intern #[1, 0] 10 10000
+    | return false
+  for malformed in [{ t with exponents := t.exponents.push 0 },
+      { t with metadata := t.metadata.push 0 },
+      { t with buckets := t.buckets.insert 0 #[10] }] do
+    for native in [false, true] do
+      match (malformed.combineOwned .lcm 0 0 10 10000 10000 native).result with
+      | .error error => if error.error != .storage then return false
+      | _ => return false
+    match (malformed.internOwned #[1, 0] 10 10000).result with
+    | .error error => if error.error != .storage then return false
+    | _ => return false
+  return true
+
+#guard storage
+
 end Hex.Groebner.MonomialConformance

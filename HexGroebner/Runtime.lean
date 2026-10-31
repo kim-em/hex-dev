@@ -68,7 +68,7 @@ inductive ComputeError where
   deriving BEq, Repr
 
 /-- Absolute cumulative allowances, also used when resuming a computation.
-`packedBytes` counts monomial arenas plus cumulative polynomial/matrix packed
+`packedBytes` counts monomial arenas and a common workspace reservation plus cumulative polynomial/matrix packed
 payload. It excludes object headers and allocator capacity. Pair attempts bound
 pair metadata, including attempts in retried stages. The basis limit bounds
 basis metadata. Work units include exponent visits,
@@ -84,11 +84,15 @@ structure Limits where
   matrixRows : Nat := 10000000
   basis : Nat := 100000
   variables : Nat := 10000
-  batchSize : Nat := 64
+  batchSize : Nat := 1024
   /-- Use the approved native row kernel; false selects scalar Lean updates. -/
   nativeRows : Bool := true
+  /-- Use bounded packed monomial preparation and exact collision comparison. -/
+  nativeMonomials : Bool := true
   /-- Enable minimal-LCM installation and proper-LCM chain pruning. -/
   gebauerMoller : Bool := true
+  /-- Share symbolic preprocessing across independent final tail reductions. -/
+  batchInterreduce : Bool := true
   deriving Inhabited
 
 /-- Cumulative counters survive failure and resumption. -/
@@ -100,6 +104,12 @@ structure Statistics where
   matrixEntries : Nat := 0
   matrixRows : Nat := 0
   matrixCalls : Nat := 0
+  /-- Largest number of reducer and target rows supplied to one matrix call. -/
+  peakMatrixRows : Nat := 0
+  /-- Largest logical validated input-plus-output entry count of one matrix call. -/
+  peakMatrixEntries : Nat := 0
+  /-- Largest selected critical-pair batch, including exhausted attempts. -/
+  largestBatch : Nat := 0
   productPairs : Nat := 0
   chainPairs : Nat := 0
   gmPairs : Nat := 0
@@ -126,7 +136,7 @@ namespace Computation
 def allocate (limits : Limits) (amount : Nat) : Computation Unit := do
   let s ← get
   let allocated := s.statistics.allocatedBytes + amount
-  let total := allocated + s.table.exponents.size + s.table.metadata.size
+  let total := allocated + s.table.bytes
   if total > limits.packedBytes then throw (.exhausted .packedBytes)
   if total ≥ USize.size then throw (.representation .address)
   set { s with statistics.allocatedBytes := allocated }
@@ -144,8 +154,8 @@ private def tableResult (limits : Limits)
     | .error failure =>
       let error := match failure.error with
         | .work => ComputeError.exhausted .work
-        | .exhausted => if outcome.table.count ≥ limits.monomials then
-            ComputeError.exhausted .monomials else .exhausted .packedBytes
+        | .monomials => ComputeError.exhausted .monomials
+        | .packedBytes => ComputeError.exhausted .packedBytes
         | e => ComputeError.representation e
       (.error error, ⟨outcome.table, { statistics with work := failure.work }⟩)
 
@@ -155,7 +165,7 @@ def intern (limits : Limits) (values : Array UInt64) : Computation Nat :=
 
 /-- Multiply, divide or take an LCM without wrapping exponents. -/
 def combine (limits : Limits) (operation : MonomialTable.Operation) (a b : Nat) : Computation Nat :=
-  tableResult limits fun table count bytes work => table.combineOwned operation a b count bytes work
+  tableResult limits fun table count bytes work => table.combineOwned operation a b count bytes work limits.nativeMonomials
 
 /-- Exact multiplicative inverse, with all products charged to the parent. -/
 def inverse (field : PrimeField) (limits : Limits) (a : UInt64) : Computation UInt64 := do

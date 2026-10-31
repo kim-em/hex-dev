@@ -75,6 +75,7 @@ private def round (context : Context) (limits : Limits) (checkpoint : Checkpoint
   set { s with statistics.rounds := s.statistics.rounds + 1 }
   let index ← ReducerIndex.build context limits checkpoint.basis
   let (pairs, queue) ← checkpoint.queue.select context limits index checkpoint.basis
+  modify fun s => { s with statistics.largestBatch := max s.statistics.largestBatch pairs.size }
   if pairs.isEmpty then return { checkpoint with queue }
   let mut targets := #[]
   for pair in pairs do
@@ -108,7 +109,7 @@ private def interreduce (context : Context) (limits : Limits) (basis : Array Bas
         break
     if !redundant then minimal := minimal.push basis[i]!
   let index ← ReducerIndex.build context limits minimal
-  let mut reduced := #[]
+  let mut inputs : Array BasisElement := #[]
   for g in minimal do
     let p := g.polynomial
     let mut tail : Polynomial := {}
@@ -118,7 +119,28 @@ private def interreduce (context : Context) (limits : Limits) (basis : Array Bas
       tail := {
         support := p.support.extract 4 p.support.size
         coefficients := p.coefficients.extract context.field.width.bytes p.coefficients.size }
-      tail ← Polynomial.remainderWith context limits index minimal tail
+    inputs := inputs.push ⟨tail, g.sugar⟩
+  let tails ← if limits.batchInterreduce then do
+    spend limits inputs.size
+    let nonzero := inputs.filter (fun p => p.polynomial.size != 0)
+    if nonzero.isEmpty then pure inputs else
+      let matrix ← SymbolicMatrix.prepareWith context limits index minimal nonzero
+      let remainders ← matrix.reduce context limits
+      let mut cursor := 0
+      let mut output := #[]
+      for p in inputs do
+        spend limits 1
+        if p.polynomial.size == 0 then output := output.push p else
+          output := output.push remainders[cursor]!
+          cursor := cursor + 1
+      pure output
+  else inputs.mapM fun tail => do
+    return ⟨← Polynomial.remainderWith context limits index minimal tail.polynomial, tail.sugar⟩
+  let mut reduced := #[]
+  for i in [:minimal.size] do
+    let g := minimal[i]!
+    let p := g.polynomial
+    let tail := tails[i]!.polynomial
     allocate limits ((tail.size + 1) * (4 + context.field.width.bytes))
     spend limits tail.size
     let mut support := Packed.push .u32 {} (p.monomial 0).toUInt64
@@ -156,6 +178,14 @@ structure Candidate where
   context : Context
   polynomials : Array RawPolynomial
   randomState : UInt64
+  /-- Cap supplied at completion; earlier resumed stages may use different caps.
+  `Statistics.largestBatch` records the largest batch actually selected. -/
+  batchSize : Nat
+  /-- Implementation controls at completion; resumed stages may have differed. -/
+  nativeRows : Bool
+  nativeMonomials : Bool
+  gebauerMoller : Bool
+  batchInterreduce : Bool
 
 /-- A sealed resumable computation fixes its field, order, generators and random
 state. Ordinary callers cannot substitute incompatible metadata or fabricate a
@@ -193,7 +223,8 @@ private def decode (state : ResumeState) (limits : Limits) : Computation Candida
     spend limits (g.polynomial.size * (state.context.variables + 1))
     allocate limits (8 * g.polynomial.size * (state.context.variables + 1))
     polynomials := polynomials.push (g.polynomial.toRaw field (← get).table)
-  return ⟨state.context, polynomials, state.randomState⟩
+  return ⟨state.context, polynomials, state.randomState, limits.batchSize,
+    limits.nativeRows, limits.nativeMonomials, limits.gebauerMoller, limits.batchInterreduce⟩
 
 /-- Resume under new absolute cumulative allowances. Used work is never reset;
 restarting an exhausted stage charges its work again. Identity is sealed inside
@@ -202,7 +233,7 @@ def resumeWith (limits : Limits) (initial : ResumeState) : ComputeResult := Id.r
   let mut state := initial
   let statistics := state.workspace.statistics
   if statistics.work > limits.work then return fail state (.exhausted .work)
-  if statistics.allocatedBytes + state.workspace.table.exponents.size + state.workspace.table.metadata.size > limits.packedBytes then
+  if statistics.allocatedBytes + state.workspace.table.bytes > limits.packedBytes then
     return fail state (.exhausted .packedBytes)
   if statistics.pairs > limits.pairs then return fail state (.exhausted .pairs)
   if statistics.rounds > limits.rounds then return fail state (.exhausted .rounds)

@@ -51,6 +51,33 @@ class MatrixOracleTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "invalid output reference"):
                 check(value)
 
+    def test_independent_zero_retained(self):
+        self.value["remainders"].pop()
+        with self.assertRaisesRegex(ValueError, "lost zero"):
+            check(self.value)
+
+    def test_independent_wrong_scalar(self):
+        path = Path(__file__).resolve().parents[2] / "conformance-fixtures/HexGroebner/matrix.jsonl"
+        value = next(json.loads(line)["value"] for line in path.read_text().splitlines()
+                     if json.loads(line)["case"] == "p3/full-rank")
+        value["remainders"][0] = [c * 2 % 3 for c in value["remainders"][0]]
+        with self.assertRaisesRegex(ValueError, "scalar mismatch"):
+            check(value)
+
+    def test_independent_false_derivation(self):
+        self.value["remainderRefs"][0] = self.value["refs"][0]
+        with self.assertRaisesRegex(ValueError, "incorrect row derivation"):
+            check(self.value)
+
+    def test_zero_from_wrong_input(self):
+        # A dependent reducer and a target both evaluate to zero, but only the
+        # target's own coefficient-one derivation proves its reduction.
+        trace = self.value["remainderTrace"]
+        zero_reducer = next(i for i, node in enumerate(trace) if node[0] == 1)
+        self.value["remainderRefs"][0] = zero_reducer
+        with self.assertRaisesRegex(ValueError, "mixed target inputs"):
+            check(self.value)
+
 
 if __name__ == "__main__":
     unittest.main()

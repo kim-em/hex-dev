@@ -334,17 +334,17 @@ private def strategyResume : Bool := Id.run do
   let context := { context with order := TermOrder.lex }
   let expected := result context input
   let mut prunedCheckpoint := false
-  for strategy in [false, true] do
-    let total := match computeWith context { gebauerMoller := strategy } input with
+  for (strategy, batchInterreduce) in [(false, false), (false, true), (true, false), (true, true)] do
+    let total := match computeWith context { gebauerMoller := strategy, batchInterreduce } input with
       | .candidate _ statistics => statistics.work
       | _ => 0
     if total == 0 then return false
     for work in [:total] do
-      match computeWith context { work, gebauerMoller := strategy } input 37 with
+      match computeWith context { work, gebauerMoller := strategy, batchInterreduce } input 37 with
       | .candidate candidate _ => if .ok candidate.polynomials != expected then return false
       | .exhausted .work state =>
         prunedCheckpoint := prunedCheckpoint || state.workspace.statistics.gmPairs > 0
-        match resumeWith { gebauerMoller := !strategy } state with
+        match resumeWith { gebauerMoller := !strategy, batchInterreduce := !batchInterreduce } state with
         | .candidate candidate statistics =>
           if .ok candidate.polynomials != expected || candidate.randomState != 37 ||
               statistics.work < state.workspace.statistics.work then return false
@@ -353,5 +353,103 @@ private def strategyResume : Bool := Id.run do
   return prunedCheckpoint
 
 #guard strategyResume
+
+private def monomialResume : Bool := Id.run do
+  let expected := result context input
+  for nativeMonomials in [false, true] do
+    let total := match computeWith context { nativeMonomials } input with
+      | .candidate _ statistics => statistics.work
+      | _ => 0
+    if total == 0 then return false
+    for work in [:total] do
+      match computeWith context { work, nativeMonomials } input 37 with
+      | .candidate candidate _ => if .ok candidate.polynomials != expected then return false
+      | .exhausted .work state =>
+        match resumeWith { nativeMonomials := !nativeMonomials } state with
+        | .candidate candidate statistics =>
+          if .ok candidate.polynomials != expected || candidate.randomState != 37 ||
+              statistics.work < state.workspace.statistics.work then return false
+        | _ => return false
+      | _ => return false
+  return true
+
+#guard monomialResume
+
+private def sameOutcome (a b : ComputeResult) : Bool :=
+  match a, b with
+  | .candidate a sa, .candidate b sb => a.polynomials == b.polynomials && sa == sb
+  | .exhausted a sa, .exhausted b sb => a == b &&
+      sa.workspace.statistics == sb.workspace.statistics && sa.workspace.table.bytes == sb.workspace.table.bytes
+  | .representation a sa, .representation b sb => a == b &&
+      sa.workspace.statistics == sb.workspace.statistics && sa.workspace.table.bytes == sb.workspace.table.bytes
+  | .invalid a sa, .invalid b sb => a == b && sa == sb
+  | .internal a sa, .internal b sb => a == b && sa == sb
+  | _, _ => false
+
+private def monomialBudgets : Bool := Id.run do
+  let expected := result context input
+  let .candidate _ statistics := computeWith context {} input | return false
+  let mut completedBytes := false
+  let mut cachedCheckpoint := false
+  for bytes in [:statistics.allocatedBytes + 4096] do
+    let native := computeWith context { packedBytes := bytes } input 37
+    let portable := computeWith context { packedBytes := bytes, nativeMonomials := false } input 37
+    if !sameOutcome native portable then return false
+    match native with
+    | .candidate candidate _ =>
+      if .ok candidate.polynomials != expected then return false
+      completedBytes := true
+      break
+    | .exhausted .packedBytes state =>
+      cachedCheckpoint := cachedCheckpoint || state.workspace.table.workspace.size > 0
+    | _ => return false
+    for (outcome, nativeMonomials) in [(native, false), (portable, true)] do
+      let .exhausted .packedBytes state := outcome | return false
+      match resumeWith { nativeMonomials } state with
+      | .candidate candidate statistics =>
+        if .ok candidate.polynomials != expected || candidate.randomState != 37 ||
+            statistics.work < state.workspace.statistics.work then return false
+      | _ => return false
+  let mut completedCount := false
+  for count in [:64] do
+    let native := computeWith context { monomials := count } input 37
+    let portable := computeWith context { monomials := count, nativeMonomials := false } input 37
+    if !sameOutcome native portable then return false
+    match native with
+    | .candidate _ _ => completedCount := true; break
+    | .exhausted .monomials _ => pure ()
+    | _ => return false
+    for (outcome, nativeMonomials) in [(native, false), (portable, true)] do
+      let .exhausted .monomials state := outcome | return false
+      match resumeWith { nativeMonomials } state with
+      | .candidate candidate statistics =>
+        if .ok candidate.polynomials != expected || candidate.randomState != 37 ||
+            statistics.work < state.workspace.statistics.work then return false
+      | _ => return false
+  return completedBytes && completedCount && cachedCheckpoint
+
+#guard monomialBudgets
+
+private def largeBatch : Bool := Id.run do
+  let field : PrimeField := ⟨65537, Hex.Nat.isPrimeTrial_isPrime (by decide), by decide⟩
+  let context : Context := ⟨field, 5, .grevlex⟩
+  let mut generators : Array RawPolynomial := #[]
+  for degree in [2:7] do
+    let mut polynomial : RawPolynomial := #[]
+    for i in [:5] do
+      polynomial := polynomial.push ⟨(Array.replicate 5 0).set! i degree,
+        if i % 2 == 0 then 2 else field.modulus - 2⟩
+    polynomial := polynomial.push ⟨Array.replicate 5 0, field.modulus - 1⟩
+    generators := generators.push polynomial
+  let .candidate actual statistics := computeWith context { work := 1000000000 } generators
+    | return false
+  let .candidate reference previous := computeWith context { work := 1000000000, batchSize := 64 } generators
+    | return false
+  return actual.polynomials == reference.polynomials && actual.polynomials.size == 38 &&
+    statistics.rounds < previous.rounds && statistics.matrixEntries < previous.matrixEntries &&
+    actual.batchSize == 1024 && statistics.largestBatch > 64 &&
+    statistics.peakMatrixRows > statistics.largestBatch && statistics.peakMatrixEntries > 0
+
+#guard largeBatch
 
 end Hex.Groebner.F4Conformance

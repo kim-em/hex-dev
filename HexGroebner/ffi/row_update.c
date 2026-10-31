@@ -80,6 +80,59 @@ static int update_bytes(uint64_t modulus, unsigned width, uint8_t *out,
     return 1;
 }
 
+/* Monomial preparation uses one reusable, owned buffer. The trailing metadata
+   is degree:u64, support-mask:u64, FNV-hash:u64, maximum-coordinate:u32. */
+static inline int monomial_shape(unsigned operation, unsigned width, uint64_t arity,
+        uint64_t count, uint64_t left, uint64_t right, size_t source_bytes,
+        size_t workspace_bytes) {
+    if (operation > 2 || (width != 1 && width != 2 && width != 4) ||
+        arity == 0 || arity > 4096 || left >= count || right >= count) return 0;
+    if (count > SIZE_MAX / arity / width) return 0;
+    return source_bytes == (size_t)count * (size_t)arity * width &&
+        workspace_bytes == (size_t)arity * 4 + 28;
+}
+
+static inline int prepare_monomial(unsigned operation, unsigned width, uint64_t arity,
+        uint64_t count, uint64_t left, uint64_t right, const uint8_t *source,
+        size_t source_bytes, uint8_t *workspace, size_t workspace_bytes) {
+    if (!monomial_shape(operation, width, arity, count, left, right,
+                        source_bytes, workspace_bytes)) return 0;
+    uint64_t degree = 0, mask = 0, hash = UINT64_C(14695981039346656037), largest = 0;
+    for (size_t i = 0; i < (size_t)arity; ++i) {
+        uint64_t x = read_le(source + ((size_t)left * (size_t)arity + i) * width, width);
+        uint64_t y = read_le(source + ((size_t)right * (size_t)arity + i) * width, width);
+        if ((operation == 1 && x + y > UINT32_MAX) || (operation == 2 && y > x)) return 0;
+        uint64_t z = operation == 0 ? (x > y ? x : y) : operation == 1 ? x + y : x - y;
+        write_le(workspace + 4 * i, 4, z);
+        degree += z;
+        if (z) mask |= UINT64_C(1) << (i % 64);
+        hash = (hash ^ z) * UINT64_C(1099511628211);
+        if (z > largest) largest = z;
+    }
+    size_t offset = (size_t)arity * 4;
+    write_le(workspace + offset, 4, degree);
+    write_le(workspace + offset + 4, 4, degree >> 32);
+    write_le(workspace + offset + 8, 4, mask);
+    write_le(workspace + offset + 12, 4, mask >> 32);
+    write_le(workspace + offset + 16, 4, hash);
+    write_le(workspace + offset + 20, 4, hash >> 32);
+    write_le(workspace + offset + 24, 4, largest);
+    return 1;
+}
+
+static inline int equal_monomial(unsigned width, uint64_t arity, uint64_t id,
+        const uint8_t *source, size_t source_bytes, const uint8_t *candidate,
+        size_t candidate_bytes) {
+    if ((width != 1 && width != 2 && width != 4) || arity == 0 || arity > 4096) return 0;
+    size_t stride = (size_t)arity * width;
+    if (source_bytes % stride || id >= source_bytes / stride ||
+        candidate_bytes != (size_t)arity * 4 + 28) return 0;
+    for (size_t i = 0; i < (size_t)arity; ++i)
+        if (read_le(source + (size_t)id * stride + i * width, width) !=
+            read_le(candidate + i * 4, 4)) return 0;
+    return 1;
+}
+
 #ifndef HEX_GROEBNER_NO_LEAN
 static inline lean_object *some_buffer(lean_object *data) {
     lean_object *result = lean_alloc_ctor(1, 1, 0);
@@ -125,4 +178,37 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_subtract_row(
     }
     return some_buffer(dense);
 }
+
+LEAN_EXPORT lean_obj_res lean_hex_groebner_prepare_monomial(
+        uint8_t operation, uint8_t width, uint64_t arity, uint64_t count,
+        uint64_t left, uint64_t right, b_lean_obj_arg source, lean_obj_arg workspace) {
+    size_t source_bytes = lean_sarray_size(source), workspace_bytes = lean_sarray_size(workspace);
+    if (!monomial_shape(operation, width, arity, count, left, right, source_bytes, workspace_bytes)) {
+        lean_dec(workspace);
+        return lean_box(0);
+    }
+    lean_object *alias = NULL;
+    if (source == workspace) {
+        alias = workspace;
+        lean_inc(alias);
+    }
+    workspace = lean_sarray_ensure_exclusive(workspace);
+    int ok = prepare_monomial(operation, width, arity, count, left, right,
+        lean_sarray_cptr(source), source_bytes, lean_sarray_cptr(workspace), workspace_bytes);
+    if (alias) lean_dec(alias);
+    if (!ok) {
+        lean_dec(workspace);
+        return lean_box(0);
+    }
+    return some_buffer(workspace);
+}
+
+LEAN_EXPORT uint8_t lean_hex_groebner_equal_monomial(
+        uint8_t width, uint64_t arity, uint64_t id,
+        b_lean_obj_arg source, b_lean_obj_arg candidate) {
+    return (uint8_t)equal_monomial(width, arity, id,
+        lean_sarray_cptr(source), lean_sarray_size(source),
+        lean_sarray_cptr(candidate), lean_sarray_size(candidate));
+}
+
 #endif

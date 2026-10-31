@@ -114,4 +114,96 @@ theorem row_example : (Native.subtract 7 (ByteArray.mk #[5])
 /-- info: 'Hex.Groebner.NativeConformance.row_example' does not depend on any axioms -/
 #guard_msgs in #print axioms row_example
 
+private def monomials : Bool := Id.run do
+  for width in [Width.u8, .u16, .u32] do
+    for arity in [1, 2, 3, 10, 65] do
+      for seed in [:32] do
+        let values := (Array.range (arity * 3)).map fun i =>
+          ((i * 7919 + seed * 65537).toUInt64 % (if width == .u8 then 256 else if width == .u16 then 65536 else 4294967296))
+        let source := encode width values
+        for operation in ([0, 1, 2] : List UInt8) do
+          let workspace := encode .u8 (Array.replicate (4 * arity + 28) 91)
+          let expected := Native.Monomial.preparePortable operation width.bytes.toUInt8
+            arity.toUInt64 3 (seed % 3).toUInt64 ((seed + 1) % 3).toUInt64 source workspace
+          let actual := Native.Monomial.prepare operation width.bytes.toUInt8
+            arity.toUInt64 3 (seed % 3).toUInt64 ((seed + 1) % 3).toUInt64 source workspace
+          if !equal actual expected || workspace.data != Array.replicate (4 * arity + 28) 91 then return false
+          if let some candidate := actual then
+            for id in [:3] do
+              if Native.Monomial.equal width.bytes.toUInt8 arity.toUInt64 id.toUInt64 source candidate !=
+                  Native.Monomial.equalPortable width.bytes.toUInt8 arity.toUInt64 id.toUInt64 source candidate then
+                return false
+        let workspace := encode .u8 (Array.replicate (4 * arity + 28) 0)
+        let some candidate := Native.Monomial.prepare 0 width.bytes.toUInt8 arity.toUInt64 3 0 0 source workspace
+          | return false
+        if !Native.Monomial.equal width.bytes.toUInt8 arity.toUInt64 0 source candidate then return false
+        if source.data != (encode width values).data then return false
+  return true
+
+#guard monomials
+
+private def aliasMonomial (native : Bool) (width : Width) (seed : Nat) : Option ByteArray :=
+  let count := 8 / width.bytes
+  let source := encode width ((Array.range (7 * count)).map fun i => (seed + i).toUInt64)
+  -- No owner of source survives the call; the borrowed source aliases the
+  -- consumed workspace, including bytes needed by later coordinates.
+  if native then Native.Monomial.prepare 1 width.bytes.toUInt8 7 count.toUInt64 0 1 source source
+  else Native.Monomial.preparePortable 1 width.bytes.toUInt8 7 count.toUInt64 0 1 source source
+
+#guard [Width.u8, .u16].all fun width => (List.range 31).all fun seed =>
+  [false, true].all fun native =>
+    match aliasMonomial native width seed with
+    | none => false
+    | some result => (Array.range 7).all fun i =>
+      Native.read result 4 (i * 4) == 2 * seed + 7 + 2 * i
+
+private def monomialBounds : Bool := Id.run do
+  let source := encode .u32 #[4294967295, 1, 0, 0, 0, 0, 0, 0]
+  let copy := source.data
+  -- Exact aliasing must preserve borrowed source bytes on success and failure.
+  if !equal (Native.Monomial.prepare 0 4 1 8 0 1 source source)
+      (Native.Monomial.preparePortable 0 4 1 8 0 1 source source) then return false
+  if (Native.Monomial.prepare 1 4 1 8 0 1 source source).isSome || source.data != copy then return false
+  let overflowSource := encode .u32 #[1, 4294967295, 2, 1]
+  let shared := encode .u8 (Array.replicate 36 19)
+  if (Native.Monomial.prepare 1 4 2 2 0 1 overflowSource shared).isSome ||
+      shared.data != Array.replicate 36 19 then return false
+  let workspace := encode .u8 (Array.replicate 32 0)
+  for width in ([0, 3, 8] : List UInt8) do
+    if (Native.Monomial.prepare 0 width 1 8 0 1 source workspace).isSome then return false
+  for operation in ([3, 255] : List UInt8) do
+    if (Native.Monomial.prepare operation 4 1 8 0 1 source workspace).isSome then return false
+  for arity in ([0, 4097, 18446744073709551615] : List UInt64) do
+    if (Native.Monomial.prepare 0 4 arity 8 0 1 source workspace).isSome then return false
+  if (Native.Monomial.prepare 0 4 1 8 8 0 source workspace).isSome then return false
+  if (Native.Monomial.prepare 0 4 1 8 0 8 source workspace).isSome then return false
+  if (Native.Monomial.prepare 0 4 1 18446744073709551615 0 0 source workspace).isSome then return false
+  if (Native.Monomial.prepare 0 4 1 8 0 1 (source.push 0) workspace).isSome then return false
+  if (Native.Monomial.prepare 0 4 1 8 0 1 source (workspace.push 0)).isSome then return false
+  for arity in [1, 65, 4096] do
+    let source := encode .u32 (Array.replicate (arity * 2) 4294967295)
+    let workspace := encode .u8 (Array.replicate (arity * 4 + 28) 0)
+    let expected := Native.Monomial.preparePortable 0 4 arity.toUInt64 2 0 1 source workspace
+    let actual := Native.Monomial.prepare 0 4 arity.toUInt64 2 0 1 source workspace
+    if !equal actual expected then return false
+    let some candidate := actual | return false
+    if !Native.Monomial.equal 4 arity.toUInt64 0 source candidate then return false
+    if Native.Monomial.equal 4 arity.toUInt64 2 source candidate then return false
+    if Native.Monomial.equal 4 arity.toUInt64 18446744073709551615 source candidate then return false
+    if Native.Monomial.equal 4 arity.toUInt64 0 (source.push 0) candidate then return false
+    if Native.Monomial.equal 4 arity.toUInt64 0 source (candidate.push 0) then return false
+  return true
+
+#guard monomialBounds
+
+/-- Literal packed monomial preparation reduces using the ordinary kernel body. -/
+theorem monomial_example : (Native.Monomial.prepare 1 1 2 2 0 1
+    (ByteArray.mk #[2, 3, 4, 5]) (ByteArray.mk (Array.replicate 36 0))).map
+      (fun b => [Native.read b 4 0, Native.read b 4 4, Native.read b 8 8,
+        Native.read b 8 16, Native.read b 8 24, Native.read b 4 32]) =
+    some [6, 8, 14, 3, 588762121494699011, 8] := by decide
+
+/-- info: 'Hex.Groebner.NativeConformance.monomial_example' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms monomial_example
+
 end Hex.Groebner.NativeConformance

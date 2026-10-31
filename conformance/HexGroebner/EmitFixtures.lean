@@ -35,6 +35,15 @@ private def emitAll : IO Unit := do
       let e ← match r.result with
         | .ok e => pure e
         | .error err => throw (IO.userError (reprStr err))
+      let reducers ← match sparse field c.columns c.reducers with
+        | .ok r => pure r
+        | .error e => throw (IO.userError e)
+      let targets ← match sparse field c.columns c.targets with
+        | .ok r => pure r
+        | .error e => throw (IO.userError e)
+      let remainders ← match (reduceRowsWith field {} c.columns reducers targets true).result with
+        | .ok r => pure r
+        | .error e => throw (IO.userError (reprStr e))
       let value := "{" ++
         s!"\"p\":{field.modulus.toNat},\"columns\":{c.columns}," ++
         "\"reducers\":" ++ matrix c.reducers ++ ",\"targets\":" ++ matrix c.targets ++
@@ -42,7 +51,10 @@ private def emitAll : IO Unit := do
         s!",\"reducerRank\":{e.reducerRank},\"fromTarget\":" ++
         array (e.rows.map fun p => if p.fromTarget then "true" else "false") ++
         ",\"trace\":" ++ array (e.trace.map op) ++
-        ",\"refs\":" ++ array (e.rows.map fun p => p.derivation.elim "null" toString) ++ "}"
+        ",\"refs\":" ++ array (e.rows.map fun p => p.derivation.elim "null" toString) ++
+        ",\"remainders\":" ++ matrix (remainders.rows.map fun r => dense field c.columns r.row) ++
+        ",\"remainderTrace\":" ++ array (remainders.trace.map op) ++
+        ",\"remainderRefs\":" ++ array (remainders.rows.map fun r => r.derivation.elim "null" toString) ++ "}"
       emitResult "HexGroebner" s!"p{field.modulus.toNat}/{c.name}" "eliminate" value
 
 end Hex.Groebner.Emit

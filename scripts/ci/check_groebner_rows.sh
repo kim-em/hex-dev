@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Compile and check both modular-reduction paths with bounded byte buffers.
+# Check bounded monomial operations and both modular row-reduction paths.
 # The Lean conformance module checks the wrapper's ownership and aliasing.
 set -euo pipefail
 cd "$(dirname "$0")/../.."

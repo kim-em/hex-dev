@@ -71,6 +71,18 @@ Polynomials use separate packed stable-identifier and coefficient buffers.
 Coefficients occupy one byte below modulus 256, two below 65536, and four for
 larger supported primes. Interchange decoding occurs outside the hot loops.
 
+For arities 1 through 4096, `MonomialTable.combineOwned` uses bounded native
+packed preparation and full-coordinate collision comparisons. LCM, product and
+exact quotient share one owned reusable buffer for u32 coordinates and cached
+metadata. `Limits.nativeMonomials := false` retains the coordinate-array route;
+zero and larger arities use it automatically. Both routes preserve stable IDs,
+exact overflow rejection and successful work counters. Both backends reserve the same workspace payload after the first monomial,
+including when the physical buffer has not yet been allocated or was consumed
+by a failed operation. Byte and monomial-count exhaustion are explicit distinct
+errors. Shared states copy the workspace before mutation; unique owners reuse it. Native primitives have transparent portable bodies,
+check geometry before access and preserve borrowed source bytes under aliasing.
+The `*Arrays` benchmarks compare complete candidates on these two routes.
+
 `eliminateWith` accepts a fixed column count, canonical sparse reducer rows and
 target rows. Columns must follow decreasing monomial order. Reducers with free
 leading columns install directly; other rows scan their active interval,
@@ -90,6 +102,13 @@ uses little-endian scalar access, uint128 Barrett reduction when available and
 exact word remainder otherwise. No ISA extension or floating point is required.
 Barrett parameters are hoisted outside coefficient loops; products fit below
 `p² < 2^62`.
+
+`reduceRowsWith` instead reduces every target independently against the same
+reducer echelon space. It preserves scalars, input order and zero rows; no target
+becomes a pivot for another target. Final interreduction shares symbolic closure
+across nonzero tails and uses this mode. `Limits.batchInterreduce := false`
+retains separate tail calls. The `*Separate` lean-bench registrations compare
+these routes under identical fields, inputs and allowances.
 
 `MatrixLimits` bounds one call's columns, rows, input/output nonzeros, packed
 payload, work and optional provenance nodes. Packed payload counts input,
@@ -115,7 +134,9 @@ lake exe hexgroebner_bench verify
 ```
 
 The 175 matrix cases independently check row-space equality, reducer subspaces
-and derivations with Python exact modular RREF. Native/portable comparisons cover every matrix fixture, both provenance modes,
+and derivations with Python exact modular RREF. The oracle also checks every
+unscaled independent target remainder and tracks input coefficients to ensure
+its derivation contains its own target exactly once and no other target. Native/portable comparisons cover every matrix fixture, both provenance modes,
 and a 5000-entry pivot spanning multiple native calls. Primitive tests cover
 all coefficient widths, boundary moduli, aliasing and malformed slices. Both
 compiled C arithmetic paths have standalone reference checks and sanitizer
@@ -137,7 +158,9 @@ false Boolean-quotient reductions. Core tests also exercise cumulative-state
 resumption at every work boundary of the S-pair example, every resource
 category, scalar-preserving remainders and sealed checkpoint identities. The
 emitter also recomputes all 567 systems with batch size one and requires the
-same reduced basis. Product/chain counters demonstrate criterion use.
+same reduced basis. It also compares shared versus separate tail reductions.
+Core resume sweeps switch both pair criteria and final-reduction strategy at
+every work boundary. Product/chain counters demonstrate criterion use.
 
 Lean-bench registrations cover dense elimination with/without provenance,
 clustered and spread sparse supports, monomial interning, and fixed cyclic-4,
@@ -156,7 +179,7 @@ has no allowance), deterministic producer correctness and termination,
 finite extensions,
 elimination block orders, the full pair-coverage proof, checked probabilistic
 computation, validated learning/traces, delayed reduction, SIMD/parallel kernels
-and matched full-system external comparisons remain outstanding.
+and balanced multi-comparator acceptance comparisons remain outstanding.
 [#10987](https://github.com/kim-em/hex-dev/issues/10987) tracks the continuing
 correctness, finite-field scope and fastest-open-source requirements. No
 library phase or performance milestone is claimed.
@@ -177,3 +200,17 @@ Those stable monomials remain in the arena and count against `monomials` and
 `packedBytes`; a GM run can exhaust an allowance that suffices for the reference
 route. The strategy controls in `Limits` may be changed on resume, while all
 allowances remain absolute cumulative bounds.
+
+The default sugar-batch cap is 1024; `Limits.batchSize` permits smaller or
+larger caps. Degree/sugar boundaries still separate batches, and all nested
+matrix/memory/work allowances remain in force. The retained
+[batch comparisons](../reports/bench-results/hexgroebner-batches.md) explain the
+choice and include failures, full output comparisons and variability.
+
+Candidates report the batch cap and implementation controls supplied at
+completion; earlier resumed stages may have used different controls.
+`Statistics.largestBatch` records the largest selected pair batch, while
+`peakMatrixRows` and `peakMatrixEntries` record maximum rows and logical
+validated input-plus-output entries of one matrix call, including failed calls.
+These are matrix-size counters, separate from process peak RSS and cumulative
+matrix work.

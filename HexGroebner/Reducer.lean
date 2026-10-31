@@ -78,6 +78,8 @@ def build (context : Context) (limits : Limits) (basis : Array BasisElement) :
 
 /-- Exact divisibility lookup. Masks/degrees reject candidates; they never
 replace the exponent tests performed by the trie path. -/
+-- For a fixed immutable basis/index, selection depends only on the monomial.
+-- Shared and separate symbolic closures rely on this deterministic choice.
 def find (context : Context) (limits : Limits) (index : ReducerIndex)
     (basis : Array BasisElement) (monomial : Nat) : Computation (Option Nat) := do
   let table := (← get).table
