@@ -55,14 +55,26 @@ lemma names. These adapters retain upstream declaration names. A Mathlib pin
 update supplying those declarations must remove the local copies and import
 upstream modules in the same change, avoiding duplicate declarations.
 
-Negative-membership certificate soundness, automatic checked computation,
-deterministic F4 correctness and termination remain
-required by the same contract. Resource-bounded certificate production and
-replay wrappers, including certificate-size and nested arithmetic budgets,
-also remain required; the current pure `checkMember` and `checkBasis` have no
-replay allowance. S-pair witnesses currently use explicit cofactor arrays;
-compression and efficient shared S-pair derivations remain required.
-The executable candidate API remains unchecked.
+`CertificateDivision` proves independent division replay sound, including
+explicit quotient reconstruction, Mathlib's standard degree bounds and full
+remainder irreducibility without a Gröbner-basis assumption. `Division` gives
+`divideWith_sound` for sealed accepted results. `CertificateNormalForm` proves
+`checkNonmember_sound` and `normalForm_spec`: the accepted remainder is the
+unique irreducible representative of the original ideal coset, including
+comparison with arbitrary representatives. `NormalForm` and `Membership`
+connect those results to the bounded checked APIs. `DivisionExample` replays
+ordinary characteristic-two nonmembership and normal-form examples in the
+kernel. `Audit` checks the new theorems use only Lean's standard foundational
+axioms.
+
+Automatic certificate generation and checked F4 computation, deterministic F4
+correctness and termination remain required by the same contract. Pure
+`checkMember`, `checkBasis` and `checkNonmember` predicates have no operational
+allowance. Division and complete-basis verification provide separate bounded
+wrappers with cumulative nested-work reservations and sealed resumption.
+S-pair witnesses currently use explicit cofactor arrays; compression and
+efficient shared S-pair derivations remain required. The executable F4
+candidate API remains unchecked.
 
 The producer's pair-coverage proof also requires Buchberger's strict-LCM
 standard-representation criterion and closure under the installation measure

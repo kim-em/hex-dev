@@ -23,3 +23,13 @@ public import HexGroebner.CertificatePair
 public import HexGroebner.CertificateReduction
 public import HexGroebner.CertificateContainment
 public import HexGroebner.CertificateBasis
+public import HexGroebner.CertificateBudget
+public import HexGroebner.CertificateArithmetic
+public import HexGroebner.CertificateDivision
+public import HexGroebner.CertificateDivisionCheck
+public import HexGroebner.CertificateReplay
+public import HexGroebner.Division
+public import HexGroebner.NormalForm
+public import HexGroebner.Membership
+public import HexGroebner.CertificateNonmember
+public import HexGroebner.CertificateBasisReplay
