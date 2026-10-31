@@ -20,6 +20,18 @@ derivations. `MemberExample` replays a literal six-node witness and proves
 Malformed nodes, forward references, noncanonical factors and wrong identities
 are rejected by the Mathlib-free checker.
 
-Complete basis and negative-membership certificate soundness, Buchberger's criterion,
-reduced-basis uniqueness, deterministic F4 correctness and termination remain
+`Groebner` states the basis predicate by leading-monomial divisibility and
+proves its equivalence with the leading-term-ideal predicate. It supplies
+Buchberger's criterion using bounded zero-remainder representations, and unique
+remainders. `Reduced` proves uniqueness of reduced Gröbner bases of an ideal.
+
+`Upstream/Remainder` and `Upstream/Groebner` adapt the open
+[Mathlib PR #29203](https://github.com/leanprover-community/mathlib4/pull/29203)
+by Junyu Guo and Hao Shen, at revision
+`cb459855cbe79d8550c86a11220b65ab517810a5`. Original copyright and attribution
+are preserved. The adapters use pinned Mathlib's division results and current
+lemma names; they can be removed when the dependency supplies these results.
+
+Complete basis and negative-membership certificate soundness, deterministic F4
+correctness and termination remain
 required by the same contract. The executable candidate API remains unchecked.

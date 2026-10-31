@@ -4,7 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGroebner.Certificate
+import HexGroebner.CertificateOrder
 
 /-!
 Oracle: none (core); complete polynomial identities are replayed independently.
@@ -48,6 +48,19 @@ def witness : Certificate.Member := ⟨[
 #guard checkMember context generators [] ⟨[.generator 0, .scale 0 0], 1⟩
 #guard checkMember context generators [([1, 0], 5), ([0, 2], 2)]
   ⟨witness.nodes ++ [.add 5 5], 6⟩
+
+#guard Certificate.leading .lex target = some ([1, 0], 6)
+#guard Certificate.leading .grlex target = some ([0, 2], 1)
+#guard Certificate.leading .grevlex target = some ([0, 2], 1)
+#guard Certificate.leading .lex [] = none
+#guard Certificate.divides [2, 0] [3, 4]
+#guard !Certificate.divides [2, 1] [3, 0]
+#guard !Certificate.divides [0] [0, 0]
+#guard Certificate.lcm [2, 0] [1, 3] = some [2, 3]
+#guard Certificate.lcm [0] [0, 0] = none
+
+theorem ordered_leading : Certificate.leading .grevlex target = some ([0, 2], 1) := by
+  decide +kernel
 
 -- The checker body, including shared lookup, reduces in the ordinary kernel.
 theorem accepted : checkMember context generators target witness = true := by

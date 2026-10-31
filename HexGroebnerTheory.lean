@@ -8,3 +8,6 @@ module
 
 public import HexGroebnerTheory.Order
 public import HexGroebnerTheory.Certificate
+public import HexGroebnerTheory.Groebner
+public import HexGroebnerTheory.Reduced
+public import HexGroebnerTheory.CertificateOrder

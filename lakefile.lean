@@ -429,7 +429,7 @@ lean_lib HexPolyTheory where
 
 @[default_target]
 lean_lib HexGroebnerTheory where
-  roots := #[`HexGroebnerTheory, `HexGroebnerTheory.Examples, `HexGroebnerTheory.MemberExample]
+  roots := #[`HexGroebnerTheory, `HexGroebnerTheory.Examples, `HexGroebnerTheory.MemberExample, `HexGroebnerTheory.Audit]
 
 @[default_target]
 lean_lib HexMvPolyTheory where
