@@ -16,3 +16,5 @@ public import HexGroebner.Reducer
 public import HexGroebner.Symbolic
 public import HexGroebner.Pairs
 public import HexGroebner.F4
+
+public import HexGroebner.Certificate

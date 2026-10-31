@@ -7,3 +7,4 @@ Authors: Kim Morrison
 module
 
 public import HexGroebnerTheory.Order
+public import HexGroebnerTheory.Certificate
