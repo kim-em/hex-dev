@@ -103,6 +103,16 @@ libraries:
     mathlib: false
     done_through: 7
     status: active
+  HexGroebner:
+    deps: [HexBasic, HexArith, HexModArith, HexMvPoly, HexGFqField, HexGF2]
+    mathlib: false
+    done_through: 0
+    status: planned
+  HexGroebnerTheory:
+    deps: [HexGroebner, HexMvPolyTheory, HexModArithTheory, HexGFqTheory]
+    mathlib: true
+    done_through: 0
+    status: planned
   HexMvGcd:
     deps: [HexBasic, HexMvPoly, HexPoly, HexPolyFp, HexResultant, HexArith, HexModArith, HexModular, HexPolyZGcd]
     mathlib: false
