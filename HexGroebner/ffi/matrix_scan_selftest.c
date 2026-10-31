@@ -4,6 +4,10 @@
 #if defined(__linux__) && !defined(_GNU_SOURCE)
 #define _GNU_SOURCE
 #endif
+/* Selftests must execute their assertions even with external release flags. */
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include "matrix_simd.h"
 #if HEX_GROEBNER_AVX2 && (defined(__unix__) || defined(__APPLE__))
 #include <sys/mman.h>
@@ -11,6 +15,7 @@
 #endif
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #if HEX_GROEBNER_AVX2
 static uint64_t random_state=UINT64_C(0x6390743202398481);
 static uint32_t random32(void) {
@@ -52,20 +57,20 @@ static void check(uint32_t p,uint32_t factor) {
 }
 #if defined(__unix__) || defined(__APPLE__)
 struct guarded_buffer { uint8_t *mapping,*data;size_t page; };
-static struct guarded_buffer guarded(size_t bytes) {
+static struct guarded_buffer guarded(size_t bytes,unsigned at_end) {
     long length=sysconf(_SC_PAGESIZE);assert(length>0 && bytes<=(size_t)length);
     size_t page=(size_t)length;
     uint8_t *mapping=mmap(NULL,3*page,PROT_NONE,MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
     assert(mapping!=MAP_FAILED);
     assert(mprotect(mapping+page,page,PROT_READ|PROT_WRITE)==0);
-    return (struct guarded_buffer){mapping,mapping+2*page-bytes,page};
+    return (struct guarded_buffer){mapping,at_end?mapping+2*page-bytes:mapping+page,page};
 }
 static void release(struct guarded_buffer buffer) {
     assert(munmap(buffer.mapping,3*buffer.page)==0);
 }
 __attribute__((target("avx2")))
-static void check_guard_pages(uint32_t p,unsigned stride) {
-    struct guarded_buffer d=guarded(128*4),c=guarded(16*4),v=guarded(16*4);
+static void check_guard_pages(uint32_t p,unsigned stride,unsigned at_end) {
+    struct guarded_buffer d=guarded(128*4,at_end),c=guarded(16*4,at_end),v=guarded(16*4,at_end);
     uint32_t columns[16],coefficients[16],dense[128],expected[128];
     for(unsigned i=0;i<128;++i) dense[i]=i%3?p-1:0;
     for(unsigned i=0;i<16;++i) {
@@ -113,12 +118,21 @@ int main(void) {
         }
 #if defined(__unix__) || defined(__APPLE__)
         for(unsigned stride=1;stride<=8;++stride) {
-            check_guard_pages(65537,stride);check_guard_pages(2147483647,stride);
+            for(unsigned at_end=0;at_end<2;++at_end) {
+                check_guard_pages(65537,stride,at_end);
+                check_guard_pages(2147483647,stride,at_end);
+            }
         }
-        puts("SIMD guard pages: contiguous/strided vectors end at the last valid byte; invalid vectors preserve data");
+        puts("SIMD guard pages: start/end boundaries, contiguous/strided vectors and invalid-prefix preservation passed");
 #endif
         puts("exact AVX2 Montgomery updates: residues, boundary fields and invalid-prefix fallback passed");
         return 0;
+    }
+#endif
+#if !defined(HEX_GROEBNER_NO_AVX2)
+    const char *required=getenv("HEX_GROEBNER_REQUIRE_AVX2");
+    if(required && strcmp(required,"1")==0) {
+        fputs("AVX2 coverage required but unavailable\n",stderr);return 1;
     }
 #endif
     puts("AVX2 unavailable; scalar fallback selected");

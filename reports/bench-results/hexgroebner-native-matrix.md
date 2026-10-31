@@ -1,8 +1,10 @@
 # Bounded native matrix scans and exact SIMD
 
-The integrated native scan and row extraction reduce candidate time to **0.9141**
-of the previous Lean scan with native sparse updates on the frozen 16-case
-diagnostic suite. Whole-process time, including startup, parsing and full output,
+The reviewed native scan and row-extraction sweep observes candidate-time ratio
+**0.9141** against the previous Lean scan with native sparse updates on the frozen
+16-case diagnostic suite. Small-case order effects are substantial; this is a
+descriptive ratio of retained samples, not a confidence interval or a stable
+per-input speed guarantee. Whole-process time, including startup, parsing and full output,
 has ratio **0.9406**. All 32 full reduced-basis comparisons and every recorded
 operation counter agree. These observations support the native operations;
 they do not establish performance leadership or the SPEC's family-balanced
@@ -100,6 +102,10 @@ nonzeros per row and linear work, as derived in the registrations.
 | 128 | 0.4235 | 0.5224 | 1.1183 |
 | 256 | 0.3964 | 0.4559 | 1.0024 |
 | 512 | 0.3855 | 0.3531 | — |
+
+The sparse family regresses at sizes 64 and 128 by about 6.5% and 11.8% in
+this sweep, while its earlier observation had ratios 0.94–0.97. These samples
+and changes remain visible; no further unchanged rerun is used.
 
 ## Native operation variants and controls
 
@@ -210,10 +216,10 @@ The incomplete refreshed attempt is [retained separately](raw/reviewed-native-pr
 - `reviewed-native-production-records-a21473499ab9-repeat.tar.gz`: `609de087b56622f3b8b834377309a6badc0341e484911b6d26d04aec4dd0e6b7`
 - `reviewed-native-production-records-a21473499ab9.tar.gz`: `dbbbb9594c84834eefe0b5dda0cb2a3575ec3f268be22a9c7b83bd950ebe41ae`
 
-The submitted family fingerprint is `3940d502ee50`. It differs from measured
+The submitted family fingerprint is `3f146af557b8`. It differs from measured
 `a21473499ab9` only in the standalone C selftest; the benchmark executable hash
 is unchanged. [Validation metadata](hexgroebner-native-matrix-validation.json)
 and [raw validation logs](raw/native-matrix-validation.tar.gz) retain compiler,
 variant, vector-call, guard-page mutation and operational-time evidence.
-The four-variant harness took 18–26 seconds in these shared-host runs; this is
+The four-variant harness took 16–26 seconds in these shared-host runs; this is
 an operational observation, not a CI timing or performance acceptance claim.

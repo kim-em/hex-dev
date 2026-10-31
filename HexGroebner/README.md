@@ -148,7 +148,7 @@ including valid strided vectors and even moduli. Native call counters ensure
 that the linked test implementations actually run; successful contiguous and
 strided SIMD calls are counted separately. `HEX_GROEBNER_REQUIRE_AVX2=1` requires
 hardware SIMD coverage. Set `HEX_GROEBNER_SANITIZE=1` for UBSan and ASan on
-C-owned memory, and
+C-owned memory (the kernel buffers themselves are Lean sarrays), and
 `HEX_GROEBNER_NATIVE_LOG_DIR` to retain its generated Lake project. The compiled
 variant harness uses ELF linker wrapping on Linux; ordinary Lean conformance
 and standalone tests apply on other platforms too. Sanitizer runtime and loader

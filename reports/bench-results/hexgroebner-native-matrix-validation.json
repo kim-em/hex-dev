@@ -1,6 +1,6 @@
 {
   "measured_source_fingerprint": "a21473499ab9",
-  "submitted_family_fingerprint": "3940d502ee50",
+  "submitted_family_fingerprint": "3f146af557b8",
   "changes_since_measurement": [
     "HexGroebner/ffi/matrix_scan_selftest.c"
   ],
@@ -32,5 +32,15 @@
   },
   "ordinary_elapsed_seconds": 25.87,
   "gcc_elapsed_seconds": 17.92,
-  "sanitized_elapsed_seconds": 18.13
+  "sanitized_elapsed_seconds": 15.98,
+  "fatal_ubsan_probe": {
+    "returncode": 1,
+    "UBSAN_OPTIONS": "halt_on_error=0",
+    "conclusion": "compile-time no-recover makes an invalid shift fatal despite runtime override"
+  },
+  "guard_layouts": [
+    "start of readable page",
+    "end of readable page"
+  ],
+  "assertions_enabled_with_NDEBUG": true
 }
