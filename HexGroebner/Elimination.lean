@@ -18,7 +18,8 @@ namespace Hex.Groebner
 
 /-- Resource categories. Packed bytes count logical input, workspace and output
 payload, excluding allocator capacity and Lean object headers. Work counts row
-visits, scalar visits and modular multiplications, including validation/setup. -/
+visits, sparse entry updates (including their product), dense column visits,
+normalization/inversion products and workspace bytes initialized. -/
 inductive Resource where
   | columns | rows | inputEntries | outputEntries | packedBytes | work | traceNodes
   deriving BEq, Repr
@@ -58,7 +59,11 @@ structure MatrixStats where
 
 /-- Shared row provenance. Inputs are numbered reducers first, then targets.
 Every operation refers only to earlier nodes. This is derivation data, not a
-complete basis certificate and not a proof of any Gröbner property. -/
+complete basis certificate and not a proof of any Gröbner property. Interpret
+`addScaled l r c` as `l + c*r` and `scale r c` as `c*r` in the call's field
+and fixed column map. Coefficients lie in `[1,p)`. The trace borrows that field
+identity from the call; it is not a standalone serialized certificate. Nodes
+for rows reducing to zero may be unreferenced by the output pivots. -/
 inductive RowOp where
   | input (row : Nat)
   | addScaled (left right : Nat) (coefficient : UInt64)
@@ -131,16 +136,19 @@ private def record (limits : MatrixLimits) (enabled : Bool)
     (trace : Array RowOp) (op : RowOp) : Work (Array RowOp × Option Nat) := do
   if !enabled then return (trace, none)
   charge .traceNodes 1 limits.traceNodes (·.traceNodes) fun s n => { s with traceNodes := n }
-  return (trace.push op, some trace.size)
+  let index := trace.size
+  return (trace.push op, some index)
 
 /-- Square-and-multiply, with each multiply charged to the parent allowance.
 The exponent is at most 31 bits; Fermat inversion also covers characteristic two. -/
 private def inverse (field : PrimeField) (ctx : BarrettCtx field.modulus)
     (limits : MatrixLimits) (a : UInt64) : Work UInt64 := do
+  if a == 1 then return 1
   let mut exponent := field.modulus.toNat - 2
   let mut a := a
   let mut value : UInt64 := 1
-  while exponent > 0 do
+  for _ in [:31] do
+    if exponent == 0 then break
     if exponent % 2 == 1 then
       work limits 1
       value := ctx.mulMod value a
@@ -149,6 +157,22 @@ private def inverse (field : PrimeField) (ctx : BarrettCtx field.modulus)
       work limits 1
       a := ctx.mulMod a a
   return value
+
+/-- Install a known sparse reducer without scattering or scanning empty columns.
+Its free leading column guarantees independence of the preceding pivots; its
+tail need not be reduced to maintain forward echelon form. -/
+private def scaleSparse (field : PrimeField) (ctx : BarrettCtx field.modulus)
+    (limits : MatrixLimits) (row : SparseRow) (inverse : UInt64) : Work SparseRow := do
+  charge .outputEntries row.size limits.outputEntries (·.outputEntries)
+    fun s n => { s with outputEntries := n }
+  packedBytes limits (row.columns.size + row.coefficients.size)
+  work limits row.size
+  let width := field.width
+  let mut coefficients := ByteArray.emptyWithCapacity row.coefficients.size
+  for i in [:row.size] do
+    coefficients := Packed.push width coefficients
+      (ctx.mulMod (Packed.read width row.coefficients i) inverse)
+  return ⟨row.columns, coefficients⟩
 
 /-- Reduce against sparse pivots in a fixed column map. Each scalar update uses
 canonical residues: `a + p - (b*c mod p)` fits below `2*p < 2^32`, and the
@@ -182,65 +206,87 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
     let (nextTrace, node) ← record limits provenance trace (.input input)
     trace := nextTrace
     let mut node := node
-    work limits row.size
-    for i in [:row.size] do
-      let column := (Packed.read .u32 row.columns i).toNat
-      dense := Packed.set width dense column (Packed.read width row.coefficients i)
-    let mut leading : Option Nat := none
-    for column in [:columns] do
-      work limits 1
-      let a := Packed.read width dense column
-      if a != 0 then
-        let slot := (Packed.read .u32 slots column).toNat
-        if slot != 0 then
-          let pivot := pivots[slot - 1]!
-          work limits pivot.row.size
-          for i in [:pivot.row.size] do
-            let j := (Packed.read .u32 pivot.row.columns i).toNat
-            let b := Packed.read width pivot.row.coefficients i
-            let product := ctx.mulMod a b
-            let difference := Packed.read width dense j + field.modulus - product
-            dense := Packed.set width dense j
-              (if difference ≥ field.modulus then difference - field.modulus else difference)
-          modify fun s => { s with reductions := s.reductions + 1 }
-          if let (some left, some right) := (node, pivot.derivation) then
-            let (nextTrace, nextNode) ← record limits provenance trace
-              (.addScaled left right (field.modulus - a))
-            trace := nextTrace
-            node := nextNode
-        else if leading.isNone then
-          leading := some column
-    if let some column := leading then
-      let a := Packed.read width dense column
-      let inv ← inverse field ctx limits a
-      let (nextTrace, nextNode) ← match node with
-        | some n => record limits provenance trace (.scale n inv)
-        | none => pure (trace, none)
-      trace := nextTrace
-      let mut output : SparseRow := {}
-      for j in [column:columns] do
-        work limits 1
-        let a := Packed.read width dense j
-        if a != 0 then
-          charge .outputEntries 1 limits.outputEntries (·.outputEntries)
-            fun s n => { s with outputEntries := n }
-          packedBytes limits (4 + width.bytes)
-          if output.columns.size + 4 ≥ USize.size ||
-              output.coefficients.size + width.bytes ≥ USize.size then throw .dimensions
-          work limits 1
-          output := {
-            columns := Packed.push .u32 output.columns j.toUInt64
-            coefficients := Packed.push width output.coefficients (ctx.mulMod a inv) }
-          dense := Packed.set width dense j 0
-      slots := Packed.set .u32 slots column (pivots.size + 1).toUInt64
-      pivots := pivots.push ⟨output, fromTarget, nextNode⟩
-      if !fromTarget then reducerRank := reducerRank + 1
-    else
+    if row.size == 0 then
       modify fun s => { s with zeroRows := s.zeroRows + 1 }
+    else
+      let first := (Packed.read .u32 row.columns 0).toNat
+      if !fromTarget && Packed.read .u32 slots first == 0 then
+        let inv ← inverse field ctx limits (Packed.read width row.coefficients 0)
+        let output ← scaleSparse field ctx limits row inv
+        let (nextTrace, nextNode) ← match node with
+          | some n => record limits provenance trace (.scale n inv)
+          | none => pure (trace, none)
+        trace := nextTrace
+        slots := Packed.set .u32 slots first (pivots.size + 1).toUInt64
+        pivots := pivots.push ⟨output, false, nextNode⟩
+        reducerRank := reducerRank + 1
+      else
+        work limits row.size
+        for i in [:row.size] do
+          let column := (Packed.read .u32 row.columns i).toNat
+          dense := Packed.set width dense column (Packed.read width row.coefficients i)
+        let mut last := (Packed.read .u32 row.columns (row.size - 1)).toNat
+        let mut chargedUntil := first
+        let mut leading : Option Nat := none
+        for column in [first:columns] do
+          if column > last then break
+          -- Reserve bounded scan blocks; a pivot can extend the active range.
+          if column ≥ chargedUntil then
+            chargedUntil := min (column + 64) (last + 1)
+            work limits (chargedUntil - column)
+          let a := Packed.read width dense column
+          if a != 0 then
+            let slot := (Packed.read .u32 slots column).toNat
+            if slot != 0 then
+              let pivot := pivots[slot - 1]!
+              last := max last (Packed.read .u32 pivot.row.columns (pivot.row.size - 1)).toNat
+              work limits pivot.row.size
+              for i in [:pivot.row.size] do
+                let j := (Packed.read .u32 pivot.row.columns i).toNat
+                let b := Packed.read width pivot.row.coefficients i
+                let product := ctx.mulMod a b
+                let difference := Packed.read width dense j + field.modulus - product
+                dense := Packed.set width dense j
+                  (if difference ≥ field.modulus then difference - field.modulus else difference)
+              modify fun s => { s with reductions := s.reductions + 1 }
+              if let (some left, some right) := (node, pivot.derivation) then
+                let (nextTrace, nextNode) ← record limits provenance trace
+                  (.addScaled left right (field.modulus - a))
+                trace := nextTrace
+                node := nextNode
+            else if leading.isNone then
+              leading := some column
+        if let some column := leading then
+          let a := Packed.read width dense column
+          let inv ← inverse field ctx limits a
+          let (nextTrace, nextNode) ← match node with
+            | some n => record limits provenance trace (.scale n inv)
+            | none => pure (trace, none)
+          trace := nextTrace
+          let mut output : SparseRow := {}
+          work limits (last + 1 - column)
+          for j in [column:last + 1] do
+            let a := Packed.read width dense j
+            if a != 0 then
+              charge .outputEntries 1 limits.outputEntries (·.outputEntries)
+                fun s n => { s with outputEntries := n }
+              packedBytes limits (4 + width.bytes)
+              if output.columns.size + 4 ≥ USize.size ||
+                  output.coefficients.size + width.bytes ≥ USize.size then throw .dimensions
+              work limits 1
+              output := {
+                columns := Packed.push .u32 output.columns j.toUInt64
+                coefficients := Packed.push width output.coefficients (ctx.mulMod a inv) }
+              dense := Packed.set width dense j 0
+          slots := Packed.set .u32 slots column (pivots.size + 1).toUInt64
+          pivots := pivots.push ⟨output, fromTarget, nextNode⟩
+          if !fromTarget then reducerRank := reducerRank + 1
+        else
+          modify fun s => { s with zeroRows := s.zeroRows + 1 }
     modify fun s => { s with processedRows := s.processedRows + 1 }
   let mut ordered := #[]
+  work limits columns
   for column in [:columns] do
-    work limits 1
     let slot := (Packed.read .u32 slots column).toNat
     if slot != 0 then ordered := ordered.push pivots[slot - 1]!
   return ⟨ordered, reducerRank, trace⟩

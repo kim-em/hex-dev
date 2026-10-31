@@ -23,7 +23,7 @@ inductive Width where
   deriving BEq, Repr, Inhabited
 
 /-- Number of bytes in each encoded scalar. -/
-@[expose] def Width.bytes : Width → Nat
+@[expose, inline] def Width.bytes : Width → Nat
   | .u8 => 1
   | .u16 => 2
   | .u32 => 4
@@ -58,8 +58,8 @@ structure PrimeField where
 namespace Packed
 
 /-- Read a scalar at an element index. Matrix validation establishes the byte
-range before this operation is used in a hot loop. -/
-@[expose] def read (width : Width) (data : @& ByteArray) (index : Nat) : UInt64 :=
+range before use. The portable implementation retains checked byte accesses. -/
+@[expose, inline] def read (width : Width) (data : @& ByteArray) (index : Nat) : UInt64 :=
   let offset := index * width.bytes
   let a := data[offset]!.toUInt64
   match width with
@@ -69,7 +69,7 @@ range before this operation is used in a hot loop. -/
       (data[offset + 2]!.toUInt64 <<< 16) ||| (data[offset + 3]!.toUInt64 <<< 24)
 
 /-- Append the low bytes of a scalar. Callers validate its range before packing. -/
-@[expose] def push (width : Width) (data : ByteArray) (value : UInt64) : ByteArray :=
+@[expose, inline] def push (width : Width) (data : ByteArray) (value : UInt64) : ByteArray :=
   let data := data.push value.toUInt8
   match width with
   | .u8 => data
@@ -77,8 +77,9 @@ range before this operation is used in a hot loop. -/
   | .u32 => ((data.push (value >>> 8).toUInt8).push (value >>> 16).toUInt8).push
       (value >>> 24).toUInt8
 
-/-- Replace a scalar in a uniquely owned workspace. -/
-@[expose] def set (width : Width) (data : ByteArray) (index : Nat)
+/-- Replace a scalar in a uniquely owned workspace. Requires a valid element
+index and a scalar fitting the selected width; matrix callers validate these. -/
+@[expose, inline] def set (width : Width) (data : ByteArray) (index : Nat)
     (value : UInt64) : ByteArray :=
   let offset := index * width.bytes
   let data := data.set! offset value.toUInt8
@@ -120,7 +121,8 @@ unsorted/duplicate columns and indices outside the admitted 32-bit map. -/
     previous := some column
   return some row
 
-/-- Decode a row for interchange, diagnostics and independent tests. -/
+/-- Decode a validated row for interchange, diagnostics and independent tests.
+Malformed raw buffers can fail through the checked byte accesses. -/
 @[expose] def SparseRow.entries (field : PrimeField) (row : SparseRow) : Array (Nat × UInt64) :=
   (Array.range row.size).map fun i =>
     ((Packed.read .u32 row.columns i).toNat, Packed.read field.width row.coefficients i)

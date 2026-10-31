@@ -79,11 +79,12 @@ private def summary : Except String (Array (Array (Nat × UInt64)) × Nat × Nat
   | .ok ⟨.ok e, _⟩ => shape field e
   | _ => false
 
-#guard (match run field typical {} false, run field typical {} true with
+#guard fields.all fun field => (cases field).all fun c =>
+  match run field c {} false, run field c {} true with
   | .ok ⟨.ok a, sa⟩, .ok ⟨.ok b, sb⟩ =>
     a.rows.map (·.row.entries field) == b.rows.map (·.row.entries field) &&
       a.trace.isEmpty && sa.traceNodes == 0 && b.trace.size == sb.traceNodes
-  | _, _ => false)
+  | _, _ => false
 
 private def fails (limits : MatrixLimits) (resource : Resource) : Bool :=
   match run field typical limits with
@@ -108,12 +109,17 @@ private def fails (limits : MatrixLimits) (resource : Resource) : Bool :=
     let limits : MatrixLimits := {
       work := s.work, packedBytes := s.packedBytes
       inputEntries := s.inputEntries, outputEntries := s.outputEntries
+      columns := 3, rows := 4
       traceNodes := s.traceNodes }
     match run field typical limits with
     | .ok ⟨.ok _, t⟩ => t.work == s.work &&
       fails { limits with work := s.work - 1 } .work &&
       fails { limits with packedBytes := s.packedBytes - 1 } .packedBytes &&
-      fails { limits with traceNodes := s.traceNodes - 1 } .traceNodes
+      fails { limits with traceNodes := s.traceNodes - 1 } .traceNodes &&
+      fails { limits with inputEntries := s.inputEntries - 1 } .inputEntries &&
+      fails { limits with outputEntries := s.outputEntries - 1 } .outputEntries &&
+      fails { limits with columns := 2 } .columns &&
+      fails { limits with rows := 3 } .rows
     | _ => false
   | _ => false
 
@@ -132,5 +138,33 @@ private def rejects (row : SparseRow) (error : MatrixError) : Bool :=
 #guard match (eliminateWith field {} (2 ^ 32) #[] #[]).result with
   | .error e => e == .dimensions
   | _ => false
+
+-- Wrong coefficient widths are rejected before any out-of-range read.
+#guard fields.all fun f =>
+  let row : SparseRow := ⟨Packed.push .u32 {} 0,
+    Packed.push (if f.width == .u8 then .u16 else .u8) {} 1⟩
+  match (eliminateWith f {} 3 #[] #[row]).result with
+  | .error e => e == .rowLength 0
+  | _ => false
+
+-- Both exhaustion and malformed data retain already charged work.
+#guard match run field typical { work := 20 } with
+  | .ok ⟨.error (.exhausted .work), s⟩ => s.work > 0 && s.work ≤ 20
+  | _ => false
+#guard let r := eliminateWith field {} 3 #[{}] #[⟨Packed.push .u32 {} 0, ByteArray.empty.push 7⟩]
+  match r.result with
+  | .error e => e == .coefficient 1 0 && r.stats.work > 0 && r.stats.inputEntries == 1
+  | _ => false
+
+-- Sparse known pivots must not cost rows*columns scans. The work allowance
+-- covers workspace setup, one final column scan and the actual short supports.
+#guard match (Array.range 64).mapM (fun i =>
+    SparseRow.ofEntries field 100000 #[(90000 + i, 1)]) with
+  | some rows =>
+    let r := eliminateWith field { work := 610000 } 100000 rows rows
+    match r.result with
+    | .ok e => e.rows.size == 64 && r.stats.zeroRows == 64
+    | _ => false
+  | none => false
 
 end Hex.Groebner.Conformance

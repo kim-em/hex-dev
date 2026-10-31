@@ -51,6 +51,16 @@ def cases (field : PrimeField) : Array Case := Id.run do
     ⟨"dependent", 3, #[#[p - 1, 1, p - 1], #[p - 1, 1, p - 1]],
       #[#[p - 1, 1, p - 1], #[0, 0, 0]]⟩,
     ⟨"full-rank", 3, #[], #[#[0, p - 1, 1], #[1, 0, p - 1], #[0, 0, 1]]⟩]
+  out := out.push ⟨"tail-extension", 130,
+    #[(Array.replicate 130 0).set! 0 1 |>.set! 129 (p - 1)],
+    #[(Array.replicate 130 0).set! 0 1, (Array.replicate 130 0).set! 0 1]⟩
+  let reducers : Array (Array UInt64) := (Array.range 20).map fun i =>
+    (Array.range 60).map fun j => if j / 3 == i then
+      (if j % 3 == 1 then 1 else p - 1) else 0
+  let targets : Array (Array UInt64) := (Array.range 20).map fun i =>
+    (Array.range 60).map fun j =>
+      (reducers[i]![j]! + (p - (1 : UInt64)) * reducers[(i + 1) % 20]![j]!) % p
+  out := out.push ⟨"wide-dependent", 60, reducers, targets⟩
   for seed in [:16] do
     let columns := seed % 7 + 1
     let rows := (Array.range (seed % 9 + 1)).map fun i =>
