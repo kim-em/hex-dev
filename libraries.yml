@@ -112,7 +112,7 @@ libraries:
     deps: [HexGroebner, HexMvPolyTheory, HexModArithTheory, HexGFqTheory]
     mathlib: true
     done_through: 0
-    status: planned
+    status: active
   HexMvGcd:
     deps: [HexBasic, HexMvPoly, HexPoly, HexPolyFp, HexResultant, HexArith, HexModArith, HexModular, HexPolyZGcd]
     mathlib: false

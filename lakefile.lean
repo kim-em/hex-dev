@@ -428,6 +428,10 @@ lean_lib HexInterval where
 lean_lib HexPolyTheory where
 
 @[default_target]
+lean_lib HexGroebnerTheory where
+  roots := #[`HexGroebnerTheory, `HexGroebnerTheory.Examples]
+
+@[default_target]
 lean_lib HexMvPolyTheory where
 
 @[default_target]

@@ -1,0 +1,73 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+module
+
+public import HexGroebnerTheory.Order
+
+public section
+
+/-! Downstream ordinary-kernel examples for the monomial-order bridge. -/
+
+namespace HexGroebnerTheory.Examples
+open Hex
+open scoped HexMvPolyTheory
+
+/-- A polynomial whose leading term distinguishes lex from graded orders. -/
+@[expose] def polynomial (cmp : Mono 2 → Mono 2 → Ordering) [IsMonomialOrder cmp] :
+    Hex.MvPoly 2 Int cmp :=
+  .ofTerms [(#v[2, 0], 3), (#v[0, 3], -2), (Mono.zero, 1)]
+
+private theorem lead (cmp : Mono 2 → Mono 2 → Ordering) [IsMonomialOrder cmp]
+    (m : Mono 2) (c : Int)
+    (hc : (polynomial cmp).coeff m = c) (hnc : c ≠ 0)
+    (hmax : ∀ k ∈ ([#v[2, 0], #v[0, 3], Mono.zero] : List (Mono 2)), (cmp k m).isLE) :
+    (polynomial cmp).leadingTerm = some (m, c) := by
+  apply (MvPoly.leadingTerm_eq_some_iff _ _ _).mpr
+  constructor
+  · unfold MvPoly.coeff at hc
+    cases h : (polynomial cmp).coeff? m with
+    | none => simp [h] at hc; exact False.elim (hnc hc.symm)
+    | some d => simpa [h] using hc
+  · intro k hk
+    apply hmax k
+    have hc := (MvPoly.mem_monomials_iff k _).mp hk
+    by_contra h
+    have hne : #v[2, 0] ≠ k ∧ #v[0, 3] ≠ k ∧ Mono.zero ≠ k := by
+      simpa only [List.mem_cons, List.mem_singleton, List.not_mem_nil, not_false_eq_true, and_true, not_or, ne_eq, eq_comm] using h
+    simp [polynomial, MvPoly.coeff_ofTerms, hne.1, hne.2.1, hne.2.2] at hc
+
+/-- Lex chooses the first variable despite the other term's larger total degree. -/
+theorem lex_degree :
+    (toMonomialOrder (@Mono.lex 2)).degree
+      (HexMvPolyTheory.toMvPolynomial (polynomial Mono.lex)) =
+        HexMvPolyTheory.monoEquiv #v[2, 0] := by
+  apply leading_degree Mono.lex (c := (3 : Int))
+  apply lead <;> first | (simp [polynomial, MvPoly.coeff_ofTerms]; decide +kernel) | decide +kernel
+
+/-- Graded lex chooses the term of greater total degree. -/
+theorem grlex_degree :
+    (toMonomialOrder (@Mono.grlex 2)).degree
+      (HexMvPolyTheory.toMvPolynomial (polynomial Mono.grlex)) =
+        HexMvPolyTheory.monoEquiv #v[0, 3] := by
+  apply leading_degree Mono.grlex (c := (-2 : Int))
+  apply lead <;> first | (simp [polynomial, MvPoly.coeff_ofTerms]; decide +kernel) | decide +kernel
+
+/-- Graded reverse lex preserves the leading coefficient's sign. -/
+theorem grevlex_coefficient :
+    (toMonomialOrder (@Mono.grevlex 2)).leadingCoeff
+      (HexMvPolyTheory.toMvPolynomial (polynomial Mono.grevlex)) = (-2 : Int) := by
+  apply leading_coefficient Mono.grevlex (m := #v[0, 3])
+  apply lead <;> first | (simp [polynomial, MvPoly.coeff_ofTerms]; decide +kernel) | decide +kernel
+
+/-- info: 'HexGroebnerTheory.Examples.lex_degree' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms lex_degree
+/-- info: 'HexGroebnerTheory.Examples.grlex_degree' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms grlex_degree
+/-- info: 'HexGroebnerTheory.Examples.grevlex_coefficient' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms grevlex_coefficient
+
+end HexGroebnerTheory.Examples
