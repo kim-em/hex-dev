@@ -8,7 +8,7 @@ module
 
 public import HexGroebner.NormalForm
 public import HexGroebner.CertificateNonmember
-public import HexGroebner.CertificateBasisReplay
+public import HexGroebner.Member
 
 public section
 
@@ -32,6 +32,8 @@ structure MemberState (basis : CheckedBasis) (target : Certificate.Polynomial) w
   private mk ::
   stage : Sum (DivideState basis.context basis.polynomials target)
     (Certificate.CheckedDivision basis.context basis.polynomials target × Certificate.Usage)
+  nodeBase : Nat
+  pairBase : Nat
 
 /-- Positive results retain explicit cofactors against the accepted basis, a
 checked zero remainder and a standalone shared derivation against the original
@@ -42,74 +44,37 @@ inductive MemberResult (basis : CheckedBasis) (target : Certificate.Polynomial) 
       (zero : Hex.MvPoly.Kernel.isZero division.value.remainder = true) (usage : Certificate.Usage)
   | nonmember (value : CheckedNonmember basis target) (usage : Certificate.Usage)
   | invalid (index : Nat) (usage : Certificate.Usage)
-  | rejected (usage : Certificate.Usage)
   | exhausted (resource : Certificate.Resource) (state : MemberState basis target)
   | address (state : MemberState basis target)
   | internal (usage : Certificate.Usage)
-
-private def produceMember (basis : CheckedBasis) (budget : Certificate.Budget)
-    (division : Certificate.Division) : Certificate.Work Certificate.Member := do
-  let remaining := budget.nodes - (← get).nodes
-  let mut count := 0
-  for _ in basis.certificate.forward.nodes do
-    Certificate.spend budget 1
-    count := count+1
-    if count > remaining then throw (.exhausted .nodes)
-  Certificate.reserveBytes budget (count*64)
-  if basis.certificate.forward.roots.size != division.quotients.size then throw .arithmetic
-  let mut extra : List Certificate.Node := []
-  if count ≥ remaining then throw (.exhausted .nodes)
-  Certificate.reserveBytes budget 64
-  Certificate.spend budget 1
-  let mut root := count
-  extra := .zero :: extra
-  count := count+1
-  for i in [:division.quotients.size] do
-    Certificate.spend budget 1
-    if !division.quotients[i]!.isEmpty then
-      if count+2 > remaining then throw (.exhausted .nodes)
-      Certificate.reserveBytes budget 128
-      extra := .multiply division.quotients[i]! basis.certificate.forward.roots[i]! :: extra
-      extra := .add root count :: extra
-      root := count+1
-      count := count+2
-  Certificate.reserveBytes budget (count*24)
-  Certificate.spend budget count
-  return ⟨basis.certificate.forward.nodes ++ extra.reverse,root⟩
 
 private def finishPositive (basis : CheckedBasis) (budget : Certificate.Budget)
     (target : Certificate.Polynomial)
     (value : Certificate.CheckedDivision basis.context basis.polynomials target)
     (zero : Hex.MvPoly.Kernel.isZero value.value.remainder = true)
-    (initial : Certificate.Usage) : MemberResult basis target := Id.run do
-  let action : Certificate.Work Certificate.Member := do
-    let witness ← produceMember basis budget value.value
-    let before ← get
-    for i in [:basis.generators.size] do
-      Certificate.Arithmetic.validate basis.context budget i basis.generators[i]!
-    Certificate.Arithmetic.validate basis.context budget basis.generators.size target
-    let after ← get
-    Certificate.spend budget (after.work-before.work)
-    Certificate.BasisVerification.reserveContainment basis.context budget basis.generators #[target]
-      ⟨witness.nodes,#[witness.root]⟩
-    return witness
-  let (result,usage) := action.run initial
-  match result with
-  | .error (.exhausted r) => return .exhausted r ⟨.inr (value,usage)⟩
-  | .error .address => return .address ⟨.inr (value,usage)⟩
-  | .error _ => return .internal usage
-  | .ok witness =>
-    if accepted : checkMember basis.context basis.generators target witness = true then
-      return .member value ⟨witness,accepted⟩ zero usage
-    else return .internal usage
+    (initial : Certificate.Usage) : MemberResult basis target :=
+  if initial.nodes+basis.forwardNodes > budget.nodes then
+    .exhausted .nodes ⟨.inr (value,initial),initial.nodes,initial.pairs⟩
+  else
+    let usage := { initial with nodes := initial.nodes+basis.forwardNodes }
+    let witness : Certificate.Member := .combination
+      ⟨basis.polynomials,basis.certificate.forward,value.value⟩
+    have forward : Certificate.checkContainment basis.context.field.modulus.toNat
+        basis.context.variables basis.generators basis.polynomials basis.certificate.forward = true := by
+      have h := basis.accepted
+      simp only [checkBasis, Bool.and_eq_true] at h
+      exact h.1.1.1
+    have accepted : checkMember basis.context basis.generators target witness = true := by
+      simp [checkMember, witness, forward, value.accepted, zero]
+    .member value ⟨witness,accepted⟩ zero usage
 
 private def finishMember (basis : CheckedBasis) (budget : Certificate.Budget)
     (target : Certificate.Polynomial)
     (value : Certificate.CheckedDivision basis.context basis.polynomials target)
     (initial : Certificate.Usage) : MemberResult basis target := Id.run do
-  if basis.context.variables > budget.variables then return .exhausted .variables ⟨.inr (value, initial)⟩
+  if basis.context.variables > budget.variables then return .exhausted .variables ⟨.inr (value, initial),initial.nodes,initial.pairs⟩
   match Certificate.checkUsage budget initial with
-  | .error (.exhausted r) => return .exhausted r ⟨.inr (value, initial)⟩
+  | .error (.exhausted r) => return .exhausted r ⟨.inr (value, initial),initial.nodes,initial.pairs⟩
   | .error _ => return .internal initial
   | .ok _ => pure ()
   let action : Certificate.Work Unit := do
@@ -117,8 +82,8 @@ private def finishMember (basis : CheckedBasis) (budget : Certificate.Budget)
     Certificate.reserveBytes budget 64
   let (result, usage) := action.run initial
   match result with
-  | .error (.exhausted r) => return .exhausted r ⟨.inr (value, usage)⟩
-  | .error .address => return .address ⟨.inr (value, usage)⟩
+  | .error (.exhausted r) => return .exhausted r ⟨.inr (value, usage),initial.nodes,initial.pairs⟩
+  | .error .address => return .address ⟨.inr (value, usage),initial.nodes,initial.pairs⟩
   | .error _ => return .internal usage
   | .ok _ =>
     match hz : Hex.MvPoly.Kernel.isZero value.value.remainder with
@@ -134,9 +99,8 @@ private def classified (basis : CheckedBasis) (budget : Certificate.Budget)
     DivideResult basis.context basis.polynomials target → MemberResult basis target
   | .success value usage => finishMember basis budget target value usage
   | .invalid i usage => .invalid i usage
-  | .rejected usage => .rejected usage
-  | .exhausted r state => .exhausted r ⟨.inl state⟩
-  | .address state => .address ⟨.inl state⟩
+  | .exhausted r state => .exhausted r ⟨.inl state,0,0⟩
+  | .address state => .address ⟨.inl state,0,0⟩
   | .internal usage => .internal usage
 
 /-- Resume without changing the accepted basis, original ideal or target. -/
@@ -144,7 +108,8 @@ def resumeMemberWith {basis : CheckedBasis} {target : Certificate.Polynomial}
     (budget : Certificate.Budget) (state : MemberState basis target) : MemberResult basis target :=
   match state.stage with
   | .inl division => classified basis budget target (resumeDivideWith budget division)
-  | .inr (value, usage) => finishMember basis budget target value usage
+  | .inr (value, usage) => finishMember basis budget target value
+      { usage with nodes := state.nodeBase, pairs := state.pairBase }
 
 /-- Bounded positive/negative membership against an accepted complete basis.
 Division, independent replay and final classification share one allowance.

@@ -22,4 +22,5 @@ public import HexGroebnerTheory.CertificateDivision
 public import HexGroebnerTheory.CertificateNormalForm
 public import HexGroebnerTheory.Division
 public import HexGroebnerTheory.NormalForm
+public import HexGroebnerTheory.Member
 public import HexGroebnerTheory.Membership

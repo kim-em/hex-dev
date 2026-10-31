@@ -32,7 +32,7 @@ private def multiply (context : Context) (budget : Budget) (a b : Polynomial) : 
   witness context budget result
   return result
 
-def reserveContainment (context : Context) (budget : Budget)
+def evaluateContainment (context : Context) (budget : Budget)
     (generators targets : Array Polynomial) (certificate : Containment) : Work Unit := do
   let before ← get
   spend budget 1
@@ -75,6 +75,34 @@ def reserveContainment (context : Context) (budget : Budget)
     if !Hex.MvPoly.Kernel.beq value targets[i]! then throw .rejected
   reserveAgain budget before (← get)
 
+/-- Reserve pure cofactor reduction with previously validated divisor sizes.
+This performs no divisor revalidation or polynomial multiplication. -/
+private def reserveReduction (context : Context) (budget : Budget) (divisorSizes : Array Nat)
+    (cofactors : Array Polynomial) (target : Polynomial) : Work Unit := do
+  spend budget 1
+  if cofactors.size != divisorSizes.size then throw .rejected
+  witness context budget target
+  let f ← Arithmetic.size budget target
+  let width := (context.variables + 1) * (budget.exponentBits / 64 + 3)
+  let mut total := 0
+  let mut quotientTerms := 0
+  for i in [:divisorSizes.size] do
+    witness context budget cofactors[i]!
+    let a ← Arithmetic.size budget cofactors[i]!
+    let b := divisorSizes[i]!
+    quotientTerms := quotientTerms+a
+    let product := a*b
+    let depth := a.log2+4
+    reserve budget context.variables (product*depth)
+    spend budget ((product*(depth+2)+a+b+1)*width*8)
+    reserveBytes budget ((product+1)*context.variables*48)
+    total := total+product
+    reserve budget context.variables (total+product)
+    spend budget ((total+product+1)*width*4)
+  spend budget ((quotientTerms+f+divisorSizes.size+1)*width*4)
+  reserveBytes budget ((f+1)*context.variables*48 + divisorSizes.size*32)
+  spend budget ((total+f+1)*width*4)
+
 private def prepare (context : Context) (budget : Budget) (generators basis : Array Polynomial)
     (certificate : Basis) : Work Unit := do
   let initial ← get
@@ -82,8 +110,10 @@ private def prepare (context : Context) (budget : Budget) (generators basis : Ar
   for f in basis do witness context budget f
   let validated ← get
   spend budget ((validated.work-initial.work)*3)
-  reserveContainment context budget generators basis certificate.forward
-  reserveContainment context budget basis generators certificate.backward
+  let beforeForward ← get
+  evaluateContainment context budget generators basis certificate.forward
+  spend budget ((← get).nodes-beforeForward.nodes)
+  evaluateContainment context budget basis generators certificate.backward
   checkAddress (64 + basis.size*16)
   let beforeHeads ← get
   let mut sizes : Array Nat := #[]
@@ -122,7 +152,7 @@ private def prepare (context : Context) (budget : Budget) (generators basis : Ar
           Arithmetic.subtract context budget left right
         | _,_ => pure []
       reserveAgain budget beforeTarget (← get)
-      Verification.reserveReduction context budget sizes certificate.pairs[i]![j]! target
+      reserveReduction context budget sizes certificate.pairs[i]![j]! target
 
 /-- Sealed identity and cumulative replay reservations. -/
 structure State where
@@ -132,6 +162,8 @@ structure State where
   basis : Array Polynomial
   certificate : Basis
   usage : Usage
+  nodeBase : Nat
+  pairBase : Nat
 
 inductive Result where
   | checked (basis : CheckedBasis) (usage : Usage)
@@ -156,7 +188,7 @@ def resumeWith (budget : Budget) (initial : State) : Result := Id.run do
   | .error e => return failure initial e
   | .ok _ => pure ()
   let (result,usage) := (prepare initial.context budget initial.generators initial.basis
-    initial.certificate).run initial.usage
+    initial.certificate).run { initial.usage with nodes := initial.nodeBase, pairs := initial.pairBase }
   let state := { initial with usage }
   match result with
   | .error e => return failure state e
@@ -169,7 +201,7 @@ def resumeWith (budget : Budget) (initial : State) : Result := Id.run do
 The caller is responsible for preserving that parent accounting. -/
 def verifyFrom (context : Context) (budget : Budget) (generators basis : Array Polynomial)
     (certificate : Basis) (usage : Usage) : Result :=
-  resumeWith budget ⟨context,generators,basis,certificate,usage⟩
+  resumeWith budget ⟨context,generators,basis,certificate,usage,usage.nodes,usage.pairs⟩
 
 def verifyWith (context : Context) (budget : Budget) (generators basis : Array Polynomial)
     (certificate : Basis) : Result :=

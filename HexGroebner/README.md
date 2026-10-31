@@ -159,12 +159,16 @@ need not form a Gröbner basis; zero divisors are skipped and nonmonic divisors
 use exact prime-field inverses. Independent `Certificate.checkDivision` replay
 checks reconstruction, irreducibility and product-degree bounds before success.
 `Certificate.Division.computeWith` separately exposes unchecked division
-candidates. This list-based certificate route is separate from packed F4 hot
+candidates. Quotient and remainder terms accumulate in reverse and undergo
+one final balanced normalization. This list-based certificate route is separate from packed F4 hot
 loops. `normalFormWith` requires a `CheckedBasis` and yields the unique normal
-form in the original ideal coset. `memberWith` distinguishes membership with
-explicit cofactors against that accepted basis and a standalone shared
-derivation against the original generators from a checked nonmembership
-witness with nonzero normal form. `checkMember` checks the positive derivation;
+form in the original ideal coset. Positive queries compose the accepted
+containment and checked division proofs, avoiding repeated evaluation of the
+forward derivation; the standalone checker remains independent. `memberWith` distinguishes membership with
+explicit cofactors against that accepted basis and a standalone composed
+certificate against the original generators from a checked nonmembership
+witness with nonzero normal form. `checkMember` accepts direct shared derivations or a forward containment with
+explicit zero-remainder cofactors;
 `checkNonmember` checks the complete basis and division witness.
 
 `Certificate.Budget` counts cumulative scalar/coordinate work, attempted
@@ -181,7 +185,8 @@ consume the same parent allowance. `resumeDivideWith`, `resumeMemberWith` and
 basis replay retain sealed input/field/order identity and consumed counters;
 production retains committed division transitions. Replay preflight is atomic
 and retains identity and counters, rather than a validated prefix; retrying it
-charges repeated work. Low-level `verifyFrom` helpers accept caller-supplied
+charges repeated work and allocation. Node/pair caps count witness structure
+once, including across retries; sealed continuations retain the parent baselines. Low-level `verifyFrom` helpers accept caller-supplied
 parent counters, which callers must preserve across nested operations. Invalid
 input, rejection, exhaustion and arithmetic invariant failure remain distinct.
 Completed checked receipts carry actual Boolean acceptance proofs. Compiled

@@ -124,3 +124,23 @@ private def larger : Bool := Id.run do
 #guard larger
 
 end Hex.Groebner.Certificate.BasisCorpusTest
+
+namespace Hex.Groebner.Certificate.BasisCorpusTest
+open Hex.Groebner.CertificateConformance
+
+private def pairResume : Bool := Id.run do
+  let parent : Usage := { nodes := 2, pairs := 3 }
+  let .checked _ total := BasisVerification.verifyFrom context {} generators basis basisWitness parent
+    | return false
+  let budget : Budget := { work := total.work-1, nodes := total.nodes, pairs := total.pairs }
+  let .exhausted .work state := BasisVerification.verifyFrom context budget generators basis basisWitness parent
+    | return false
+  if state.usage.nodes != total.nodes || state.usage.pairs == parent.pairs then return false
+  match BasisVerification.resumeWith { nodes := total.nodes, pairs := total.pairs } state with
+  | .checked receipt final => return receipt.polynomials == basis && final.nodes == total.nodes &&
+      final.pairs == total.pairs && final.work >= state.usage.work
+  | _ => return false
+
+#guard pairResume
+
+end Hex.Groebner.Certificate.BasisCorpusTest

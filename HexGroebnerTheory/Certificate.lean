@@ -136,15 +136,15 @@ theorem fieldPrime (field : Hex.Groebner.PrimeField) : Nat.Prime field.modulus.t
 
 /-- Positive certificate acceptance proves formal polynomial ideal membership,
 without any assumption about the producer or a Gröbner basis. -/
-theorem checkMember_sound (context : Hex.Groebner.Context)
+theorem checkDerivation_sound (context : Hex.Groebner.Context)
     (generators : Array Hex.Groebner.Certificate.Polynomial)
     (target : Hex.Groebner.Certificate.Polynomial)
-    (certificate : Hex.Groebner.Certificate.Member)
-    (h : Hex.Groebner.checkMember context generators target certificate = true) :
+    (certificate : Hex.Groebner.Certificate.Derivation)
+    (h : Hex.Groebner.checkDerivation context generators target certificate = true) :
     denote context target ∈ Ideal.span
       (Set.range fun i : Fin generators.size => denote context generators[i]) := by
   let := fieldBounds context.field
-  simp only [Hex.Groebner.checkMember] at h
+  simp only [Hex.Groebner.checkDerivation] at h
   split at h
   · contradiction
   · rename_i hc

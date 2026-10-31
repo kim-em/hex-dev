@@ -25,7 +25,6 @@ inductive DivideResult (context : Context) (divisors : Array Certificate.Polynom
     (dividend : Certificate.Polynomial) where
   | success (value : Certificate.CheckedDivision context divisors dividend) (usage : Certificate.Usage)
   | invalid (index : Nat) (usage : Certificate.Usage)
-  | rejected (usage : Certificate.Usage)
   | exhausted (resource : Certificate.Resource) (state : DivideState context divisors dividend)
   | address (state : DivideState context divisors dividend)
   | internal (usage : Certificate.Usage)

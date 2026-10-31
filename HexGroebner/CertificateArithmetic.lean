@@ -106,4 +106,15 @@ def multiply (context : Context) (budget : Budget) (factor : List Nat × Nat)
     if c != 0 then output := (e, c) :: output
   return output.reverse
 
+/-- Canonicalize an accumulated term list with balanced modular merges.
+The depth bound reserves all singleton rows, merge levels and result slots. -/
+def canonicalize (context : Context) (budget : Budget) (f : Polynomial) : Work Polynomial := do
+  let count ← size budget f
+  let depth := count.log2+3
+  spend budget (count*depth*(context.variables+1)*(budget.exponentBits/64+2)*4)
+  reserve budget context.variables (count*(depth+1))
+  reserveBytes budget (count*(depth+1)*24)
+  letI : Add Nat := ⟨Hex.MvPoly.Kernel.residueAdd context.field.modulus.toNat⟩
+  return Hex.MvPoly.Kernel.mergeRows count (f.map fun term => [term])
+
 end Hex.Groebner.Certificate.Arithmetic

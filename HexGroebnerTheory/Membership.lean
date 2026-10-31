@@ -8,6 +8,7 @@ module
 
 public import HexGroebner.Membership
 public import HexGroebnerTheory.NormalForm
+public import HexGroebnerTheory.Member
 
 public section
 

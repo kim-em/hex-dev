@@ -22,7 +22,9 @@ structure Division where
 namespace Division
 
 /-- A complete atomic division prefix. The active dividend and all previous
-quotients/remainder remain committed only after a whole transition succeeds. -/
+quotients/remainder remain committed only after a whole transition succeeds.
+Their internal term accumulators are reversed and need not be canonical; final
+balanced normalization precedes every candidate result. -/
 structure Checkpoint where
   active : Polynomial := []
   quotients : Array Polynomial := #[]
@@ -91,7 +93,8 @@ private def advance (context : Context) (budget : Budget) (divisors : Array Poly
     reserve budget context.variables 1
     let singleton := [term]
     let active ← Arithmetic.subtract context budget checkpoint.active singleton
-    let remainder ← Arithmetic.add context budget checkpoint.remainder singleton
+    reserve budget context.variables 1
+    let remainder := term :: checkpoint.remainder
     return { checkpoint with active, remainder }
   | some (i, head) =>
     spend budget ((context.variables + 1) * (budget.exponentBits / 64 + 2))
@@ -105,10 +108,25 @@ private def advance (context : Context) (budget : Budget) (divisors : Array Poly
     let factor := (shift, coefficient)
     let product ← Arithmetic.multiply context budget factor divisors[i]!
     let active ← Arithmetic.subtract context budget checkpoint.active product
-    let quotient ← Arithmetic.add context budget checkpoint.quotients[i]! [factor]
+    reserve budget context.variables 1
+    let quotient := factor :: checkpoint.quotients[i]!
     checkAddress (64 + checkpoint.quotients.size * 16)
     reserveBytes budget (checkpoint.quotients.size * 8)
     return { checkpoint with active, quotients := checkpoint.quotients.set! i quotient }
+
+private def finish (budget : Budget) (state : State) (checkpoint : Checkpoint) : Result :=
+  let action : Work Division := do
+    checkAddress (64+checkpoint.quotients.size*16)
+    reserveBytes budget (64+checkpoint.quotients.size*8)
+    let mut quotients := Array.emptyWithCapacity checkpoint.quotients.size
+    for quotient in checkpoint.quotients do
+      quotients := quotients.push (← Arithmetic.canonicalize state.context budget quotient)
+    let remainder ← Arithmetic.canonicalize state.context budget checkpoint.remainder
+    return ⟨quotients,remainder⟩
+  let (result,usage) := action.run state.usage
+  match result with
+  | .ok value => .candidate value usage
+  | .error e => failure { state with usage } e
 
 /-- Continue under absolute cumulative allowances. Every transition consumes the
 remaining parent budget; retrying a failed transition charges its work again. -/
@@ -127,7 +145,7 @@ def resumeWith (budget : Budget) (initial : State) : Result := Id.run do
   for _ in [:budget.steps - state.usage.steps] do
     let checkpoint := state.checkpoint.getD {}
     if checkpoint.active.isEmpty then
-      return .candidate ⟨checkpoint.quotients, checkpoint.remainder⟩ state.usage
+      return finish budget state checkpoint
     let (result, usage) := (advance state.context budget state.divisors checkpoint).run state.usage
     state := { state with usage }
     match result with
@@ -135,7 +153,7 @@ def resumeWith (budget : Budget) (initial : State) : Result := Id.run do
     | .ok checkpoint => state := { state with checkpoint := some checkpoint }
   let checkpoint := state.checkpoint.getD {}
   if checkpoint.active.isEmpty then
-    return .candidate ⟨checkpoint.quotients, checkpoint.remainder⟩ state.usage
+    return finish budget state checkpoint
   return .exhausted .steps state
 
 /-- Bounded deterministic division candidate production on canonical ordinary

@@ -49,7 +49,7 @@ namespace Hex.Groebner.MembershipTest
 
 private def positiveBoundary : Bool := Id.run do
   let .success _ division := normalFormWith receipt {} generators[0]! | return false
-  let .exhausted .work state := memberWith receipt { work := division.work+1 } generators[0]! | return false
+  let .exhausted .work state := memberWith receipt { work := division.work } generators[0]! | return false
   if !state.stage.isRight then return false
   let .member _ certificate _ usage := resumeMemberWith {} state | return false
   if !checkMember receipt.context receipt.generators generators[0]! certificate.witness ||
@@ -60,5 +60,43 @@ private def positiveBoundary : Bool := Id.run do
   | _ => return false
 
 #guard positiveBoundary
+
+end Hex.Groebner.MembershipTest
+
+namespace Hex.Groebner.MembershipTest
+
+private def structuralResume : Bool := Id.run do
+  let target := generators[0]!
+  let .member _ _ _ total := memberWith receipt {} target | return false
+  for byteLimit in [false,true] do
+    let budget : Certificate.Budget := if byteLimit then
+      { allocatedBytes := total.allocatedBytes-1, nodes := total.nodes, pairs := total.pairs }
+      else { work := total.work-1, nodes := total.nodes, pairs := total.pairs }
+    let .exhausted _ state := memberWith receipt budget target | return false
+    match resumeMemberWith { nodes := total.nodes, pairs := total.pairs } state with
+    | .member _ witness _ final =>
+      if final.nodes != total.nodes || final.pairs != total.pairs ||
+          !checkMember receipt.context receipt.generators target witness.witness then return false
+    | _ => return false
+  return true
+
+#guard structuralResume
+
+end Hex.Groebner.MembershipTest
+
+namespace Hex.Groebner.MembershipTest
+
+private def tampered : Bool := Id.run do
+  let target := generators[0]!
+  let .member _ checked _ _ := memberWith receipt {} target | return false
+  let .combination witness := checked.witness | return false
+  return !checkMember receipt.context receipt.generators target (.combination
+      { witness with forward := { witness.forward with roots := #[99] } }) &&
+    !checkMember receipt.context receipt.generators target (.combination
+      { witness with forward := { witness.forward with nodes := [] } }) &&
+    !checkMember receipt.context receipt.generators target (.combination
+      { witness with division := { witness.division with quotients := #[[]] } })
+
+#guard tampered
 
 end Hex.Groebner.MembershipTest
