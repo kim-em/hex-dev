@@ -7,7 +7,7 @@ module
 
 public import HexSignDetTheory.CompletionProducer
 public import HexSignDet.ThomOrder
-public import TauCeti.Algebra.Polynomial.Thom
+public import TauCeti.Algebra.Polynomial.Thom.Roots
 public import TauCeti.FieldTheory.RealClosure.AbstractRolle
 
 public section
@@ -17,6 +17,40 @@ universe u v w
 namespace Hex.SignDet
 
 open HexPolyTheory.Interpret HexRealRootsTheory
+
+open Polynomial in
+/-- Distinct Thom encodings have a last disagreement strictly below the degree.
+All larger derivative signs agree, including the highest derivative sign.
+Tau Ceti dropped this statement when it split `TauCeti.Algebra.Polynomial.Thom`. -/
+private theorem exists_derivativeSign_ne {R : Type*} [Semiring R] [LinearOrder R]
+    (p : R[X]) {a b : R} (henc : p.thomEncoding a ≠ p.thomEncoding b) :
+    ∃ k, 0 < k ∧ k < p.natDegree ∧
+      p.derivativeSign a k ≠ p.derivativeSign b k ∧
+      ∀ j, k < j → p.derivativeSign a j = p.derivativeSign b j := by
+  obtain ⟨i, hi⟩ := Function.ne_iff.mp henc
+  let s := (Finset.range (p.natDegree + 1)).filter
+    (fun j => p.derivativeSign a j ≠ p.derivativeSign b j)
+  have hi_mem : i.val + 1 ∈ s := by
+    simp only [s, Finset.mem_filter, Finset.mem_range]
+    exact ⟨by omega, by simpa only [thomEncoding_apply] using hi⟩
+  have hs : s.Nonempty := ⟨i.val + 1, hi_mem⟩
+  let k := s.max' hs
+  have hk : k ∈ s := Finset.max'_mem s hs
+  have hk' := (Finset.mem_filter.mp hk).2
+  have hpos : 0 < k := (Nat.succ_pos i.val).trans_le (Finset.le_max' s _ hi_mem)
+  have hdeg : k < p.natDegree := by
+    by_contra hn
+    exact hk' (derivativeSign_const p a b (by omega))
+  refine ⟨k, hpos, hdeg, hk', ?_⟩
+  intro j hj
+  by_cases hd : p.natDegree ≤ j
+  · exact derivativeSign_const p a b hd
+  · by_contra hne
+    have hjs : j ∈ s := by
+      simp only [s, Finset.mem_filter, Finset.mem_range]
+      exact ⟨by omega, hne⟩
+    have hle : j ≤ k := Finset.le_max' s j hjs
+    omega
 
 section Word
 
@@ -88,7 +122,7 @@ theorem RawDescriptor.full_lt (raw : RawDescriptor E Ctx)
   have henc : p.thomEncoding x ≠ p.thomEncoding y := by
     intro h
     exact hxy.ne (Polynomial.thomEncoding_injOn p hrolle hp hx hy h)
-  obtain ⟨k, hkpos, hkdeg, hne, htail⟩ := Polynomial.exists_derivativeSign_ne p henc
+  obtain ⟨k, hkpos, hkdeg, hne, htail⟩ := exists_derivativeSign_ne p henc
   have hk : k < raw.head.natDegree := by
     simpa only [p, natDegree_interpret] using hkdeg
   let word (z : K) : List Int := (List.range raw.head.natDegree).map

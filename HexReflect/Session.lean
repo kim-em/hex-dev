@@ -570,7 +570,7 @@ def Conversion.mkProof (c : Conversion) (input : Expr) (cfg : Config := {}) :
   -- `checkProofs`: a type hint asserts nothing by itself, and the pinned
   -- reifier accepts numerals without inspecting their `OfNat` instance, so a
   -- nonstandard instance can make the denoted syntax differ from the source.
-  let denoted ← (denoteRingExpr c.sealed.atoms c.reflected.expr : ReaderT Nat m Expr).run
+  let denoted ← (denoteRingExpr' c.sealed.atoms c.reflected.expr : ReaderT Nat m Expr).run
     c.reflected.ringId
   unless ← (isDefEq rhs denoted : MetaM Bool) do
     failWith (.illTypedProof "the denoted reflected syntax is not definitionally the \

@@ -143,6 +143,10 @@ theorem refineWith_state (G : Hex.SparseGraph n) (level : Nat) (lab ptn : Array 
   case vc6.step.isFalse.isTrue =>
     rename_i hin hne hd hscan hf
     exact distance hin.1.1 hin.1.2.1 hin.1.2.2 hf hin.2.2.1 hin.2.2.2
+  case vc7.step.isFalse.isFalse =>
+    rename_i hin _ _ _ hf hle
+    have hc := hin.1.1.cell hf hin.2.2.1
+    exact ⟨hin.1, by omega, endpoint hin.1.1 hf hin.2.2.1, hin.2.2.2⟩
   case vc8.post.success.isFalse.isTrue.pre =>
     rename_i hne hd hscan
     have hq := queue_done hscan.1 hscan.2

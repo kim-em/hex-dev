@@ -8,6 +8,7 @@ module
 
 public import HexIntervalTheory.RuntimeTerminal
 public meta import HexIntervalTheory.RuntimeTerminal
+import Lean.Meta.AppBuilder
 
 @[expose] public section
 

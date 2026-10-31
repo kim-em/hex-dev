@@ -518,11 +518,11 @@ factor certificate for that same support. -/
 def directTrueSupports
     (core : Hex.ZPoly) (B : Nat) (data : Hex.PrimeChoiceData) :
     Set (Set (LiftedFactorIndex (Hex.ZPoly.directLiftData core B data))) :=
-  fun U =>
+  {U |
     ∃ S : ModPFactorSubset data,
       Nonempty (DirectFactorCertificate core B data S) ∧
         (↑(directLiftedSupport core B data S) :
-          Set (LiftedFactorIndex (Hex.ZPoly.directLiftData core B data))) = U
+          Set (LiftedFactorIndex (Hex.ZPoly.directLiftData core B data))) = U}
 
 namespace directTrueSupports
 

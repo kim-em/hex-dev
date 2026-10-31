@@ -369,7 +369,7 @@ theorem isRoot_toPolyℂ {r : ℝ} (hr : (toPolyℝ p).IsRoot r) :
         = ((HexPolyZTheory.toPolynomial p).map (Int.castRingHom ℝ)).map (algebraMap ℝ ℂ)
     rw [Polynomial.map_map, hcomp]
   rw [hmap]
-  have h2 : Polynomial.IsRoot ((toPolyℝ p).map (algebraMap ℝ ℂ)) (algebraMap ℝ ℂ r) := hr.map
+  have h2 : Polynomial.IsRoot ((toPolyℝ p).map (algebraMap ℝ ℂ)) (algebraMap ℝ ℂ r) := hr.map (algebraMap ℝ ℂ)
   simpa using h2
 
 /-- **Separation caps the count.** An interval no wider than `2^(−sepPrec p)`

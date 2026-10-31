@@ -8,6 +8,7 @@ module
 
 public import HexIntervalTheory.Program
 public import Mathlib.Lean.Elab.Tactic.Basic
+import Lean.Meta.Check
 
 @[expose] public section
 
