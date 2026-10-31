@@ -1,7 +1,14 @@
 /* Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
    Released under Apache 2.0 license as described in the file LICENSE.
    Authors: Kim Morrison */
+#if defined(__linux__) && !defined(_GNU_SOURCE)
+#define _GNU_SOURCE
+#endif
 #include "matrix_simd.h"
+#if HEX_GROEBNER_AVX2 && (defined(__unix__) || defined(__APPLE__))
+#include <sys/mman.h>
+#include <unistd.h>
+#endif
 #include <assert.h>
 #include <stdio.h>
 #if HEX_GROEBNER_AVX2
@@ -43,6 +50,53 @@ static void check(uint32_t p,uint32_t factor) {
     cols[7]=UINT32_MAX;
     assert(hex_scan8((uint8_t*)dense,(uint8_t*)cols,(uint8_t*)coeff,0,128,p,f,inverse)==0);
 }
+#if defined(__unix__) || defined(__APPLE__)
+struct guarded_buffer { uint8_t *mapping,*data;size_t page; };
+static struct guarded_buffer guarded(size_t bytes) {
+    long length=sysconf(_SC_PAGESIZE);assert(length>0 && bytes<=(size_t)length);
+    size_t page=(size_t)length;
+    uint8_t *mapping=mmap(NULL,3*page,PROT_NONE,MAP_PRIVATE|MAP_ANONYMOUS,-1,0);
+    assert(mapping!=MAP_FAILED);
+    assert(mprotect(mapping+page,page,PROT_READ|PROT_WRITE)==0);
+    return (struct guarded_buffer){mapping,mapping+2*page-bytes,page};
+}
+static void release(struct guarded_buffer buffer) {
+    assert(munmap(buffer.mapping,3*buffer.page)==0);
+}
+__attribute__((target("avx2")))
+static void check_guard_pages(uint32_t p,unsigned stride) {
+    struct guarded_buffer d=guarded(128*4),c=guarded(16*4),v=guarded(16*4);
+    uint32_t columns[16],coefficients[16],dense[128],expected[128];
+    for(unsigned i=0;i<128;++i) dense[i]=i%3?p-1:0;
+    for(unsigned i=0;i<16;++i) {
+        columns[i]=127-(15-i)*stride;coefficients[i]=i%2?p-1:1;
+    }
+    memcpy(expected,dense,sizeof(dense));
+    uint32_t factor=p-1,f=(uint32_t)(((uint64_t)factor<<32)%p),inverse=hex_mont32_inverse(p);
+    for(unsigned i=0;i<16;++i)
+        expected[columns[i]]=(uint32_t)((expected[columns[i]]+(uint64_t)p-
+            (uint64_t)factor*coefficients[i]%p)%p);
+    memcpy(d.data,dense,sizeof(dense));memcpy(c.data,columns,sizeof(columns));
+    memcpy(v.data,coefficients,sizeof(coefficients));
+    assert(hex_scan8(d.data,c.data,v.data,0,128,p,f,inverse)==8);
+    assert(hex_scan8(d.data,c.data,v.data,8,128,p,f,inverse)==8);
+    assert(memcmp(d.data,expected,sizeof(expected))==0);
+    /* Every source ends at its guard page; the last valid dense column is 127.
+       Invalid vectors must return before any gather or store. */
+    columns[15]=128;memcpy(c.data,columns,sizeof(columns));
+    assert(hex_scan8(d.data,c.data,v.data,8,128,p,f,inverse)==0);
+    assert(memcmp(d.data,expected,sizeof(expected))==0);
+    columns[15]=127;columns[12]=UINT32_MAX;memcpy(c.data,columns,sizeof(columns));
+    assert(hex_scan8(d.data,c.data,v.data,8,128,p,f,inverse)==0);
+    assert(memcmp(d.data,expected,sizeof(expected))==0);
+    columns[12]=127-3*stride;coefficients[15]=p;
+    memcpy(c.data,columns,sizeof(columns));memcpy(v.data,coefficients,sizeof(coefficients));
+    assert(hex_scan8(d.data,c.data,v.data,8,128,p,f,inverse)==0);
+    assert(memcmp(d.data,expected,sizeof(expected))==0);
+    release(d);release(c);release(v);
+}
+#endif
+
 #endif
 int main(void) {
 #if HEX_GROEBNER_AVX2
@@ -57,6 +111,12 @@ int main(void) {
             uint32_t p=(random32()&UINT32_C(0x7fffffff))|UINT32_C(0x10001);
             check(p,random32()%p);
         }
+#if defined(__unix__) || defined(__APPLE__)
+        for(unsigned stride=1;stride<=8;++stride) {
+            check_guard_pages(65537,stride);check_guard_pages(2147483647,stride);
+        }
+        puts("SIMD guard pages: contiguous/strided vectors end at the last valid byte; invalid vectors preserve data");
+#endif
         puts("exact AVX2 Montgomery updates: residues, boundary fields and invalid-prefix fallback passed");
         return 0;
     }

@@ -27,7 +27,9 @@ static lean_obj_res HEX_SCAN_NAME(uint64_t p,
         return result(initial,lean_alloc_array(0,0),0,0,0,4);
     uint64_t work_limit=bounded_nat(work_arg,UINT64_C(1)<<45);
     uint64_t trace_limit=bounded_nat(trace_arg,4096);
-    lean_object *events=lean_alloc_array(0,provenance?(size_t)(quantum<trace_limit?quantum:trace_limit):0);
+    uint64_t event_capacity=quantum<trace_limit?quantum:trace_limit;
+    if(event_capacity>8) event_capacity=8;
+    lean_object *events=lean_alloc_array(0,provenance?(size_t)event_capacity:0);
     lean_object *sugar=lean_ctor_get(initial,7);
     lean_inc(dense);lean_inc(sugar);
     lean_object *alias=NULL;

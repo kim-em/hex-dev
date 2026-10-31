@@ -340,7 +340,7 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
         trace := nextTrace
         slots := Packed.set .u32 slots first (pivots.size + 1).toUInt64
         pivots := pivots.push ⟨output, false, nextNode, inv, sugar⟩
-        nativePivots := nativePivots.push ⟨output.columns,output.coefficients,sugar⟩
+        if native then nativePivots := nativePivots.push ⟨output.columns,output.coefficients,sugar⟩
         reducerRank := reducerRank + 1
       else
         work limits row.size
@@ -422,7 +422,7 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
           else
             slots := Packed.set .u32 slots column (pivots.size + 1).toUInt64
             pivots := pivots.push ⟨output, fromTarget, nextNode, inv, sugar⟩
-            nativePivots := nativePivots.push ⟨output.columns,output.coefficients,sugar⟩
+            if native then nativePivots := nativePivots.push ⟨output.columns,output.coefficients,sugar⟩
             if !fromTarget then reducerRank := reducerRank + 1
         else
           if independent && fromTarget then remainders := remainders.push ⟨{}, node, sugar⟩

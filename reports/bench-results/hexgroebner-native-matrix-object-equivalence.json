@@ -1,10 +1,11 @@
 {
   "measured_source_fingerprint": "8be04f0b8bd6",
-  "final_source_fingerprint": "b3c928b09605",
   "changes": "Remove trailing whitespace and final blank line in matrix_scan.c and matrix_scan_impl.h; identical compiled object bytes.",
   "object_sha256": "71c20648b96d1a988615391e243641bdcb19fbee85cf511ca425c6586b5d196c",
-  "final_object_sha256": "71c20648b96d1a988615391e243641bdcb19fbee85cf511ca425c6586b5d196c",
-  "compile_trace": {
+  "cleanup_commit": "2e80ce9490d690b151f4b5c6903b75d394095643",
+  "whitespace_cleanup_source_fingerprint": "b3c928b09605",
+  "cleanup_object_sha256": "71c20648b96d1a988615391e243641bdcb19fbee85cf511ca425c6586b5d196c",
+  "measured_compile_trace": {
     "synthetic": false,
     "schemaVersion": "2025-09-10",
     "outputs": "34104e65d547dc13.o",

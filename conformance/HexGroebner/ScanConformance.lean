@@ -76,7 +76,7 @@ def equal (a b : Scan.Result) : Bool :=
       (portable 7 slots pivots initial q work traces true)
 
 private def fuzz : Bool := Id.run do
-  for p in [2,3,251,256,257,65521,65536,65537,2147483647] do
+  for p in [2,3,251,256,257,65521,65536,65537,65538,2147483646,2147483647] do
     let w := Hex.Groebner.Native.width p
     for seed in [:12] do
       let mut rows : Array Scan.Pivot := #[]
@@ -167,6 +167,23 @@ def runtimeWideChecks : Bool := Id.run do
           for provenance in [false,true] do
             if !equal (transition p.toUInt64 slots pivots initial quantum 100000 100 provenance)
                 (portable p.toUInt64 slots pivots initial quantum 100000 100 provenance) then return false
+  -- Valid strided vectors exercise gather/scatter independently of malformed fallback.
+  for p in [65537,65538,2147483646,2147483647] do
+    for stride in [2,3] do
+      let support := (Array.range 16).map (·*stride)
+      let columns := 15*stride+1
+      let slots := packed 4 (#[1] ++ Array.replicate (columns-1) 0)
+      let values := (Array.range 16).map fun i => if i == 0 then 1 else p-1-i
+      let pivots : Array Scan.Pivot := #[⟨packed 4 support,packed 4 values,2^90⟩]
+      let initial : Scan.State := {
+        dense := packed 4 (Array.replicate columns (p-1))
+        column := 0
+        last := columns-1
+        chargedUntil := 0 }
+      for quantum in [1,7,8,9,16,17,32,4096] do
+        for provenance in [false,true] do
+          if !equal (transition p.toUInt64 slots pivots initial quantum 100000 100 provenance)
+              (portable p.toUInt64 slots pivots initial quantum 100000 100 provenance) then return false
   return true
 
 #guard runtimeWideChecks

@@ -10,9 +10,25 @@
 #if (defined(__x86_64__) || defined(__i386__)) && defined(__GNUC__) && !defined(HEX_GROEBNER_NO_AVX2)
 #define HEX_GROEBNER_AVX2 1
 #include <immintrin.h>
+#include <cpuid.h>
+#include <stdatomic.h>
 
+/* Cache only an ISA capability, with no compiler-runtime CPU model symbols.
+   XGETBV is executed only after CPU and OS XSAVE support are established. */
 static inline int hex_avx2_available(void) {
-    return __builtin_cpu_supports("avx2");
+    static atomic_uint cached=0;
+    unsigned known=atomic_load_explicit(&cached,memory_order_relaxed);
+    if(known) return known==2;
+    unsigned a,b,c,d,lo,hi;
+    int available=0;
+    const unsigned xsave=(1u<<26)|(1u<<27)|(1u<<28);
+    if(__get_cpuid(1,&a,&b,&c,&d) && (c&xsave)==xsave) {
+        __asm__ volatile("xgetbv" : "=a"(lo),"=d"(hi) : "c"(0));
+        (void)hi;
+        if((lo&6)==6 && __get_cpuid_count(7,0,&a,&b,&c,&d) && (b&(1u<<5))) available=1;
+    }
+    atomic_store_explicit(&cached,available?2:1,memory_order_relaxed);
+    return available;
 }
 
 static inline uint32_t hex_mont32_inverse(uint32_t p) {

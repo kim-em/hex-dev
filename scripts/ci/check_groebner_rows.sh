@@ -28,3 +28,5 @@ for variant in simd scalar; do
   "$row_probe_cc" "${row_probe_flags[@]}" HexGroebner/ffi/matrix_scan_selftest.c -o "$row_probe_dir/$variant"
   "$row_probe_dir/$variant"
 done
+
+python3 scripts/ci/check_groebner_matrix.py
