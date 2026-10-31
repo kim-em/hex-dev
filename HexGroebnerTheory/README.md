@@ -25,6 +25,19 @@ leading exponent and coefficient under all three explicit orders. It uses the
 existing residue-polynomial correspondence; canonical arity, unique exponents,
 nonzero coefficients and residue bounds are hypotheses. `Examples` also checks
 literal residue lists through this bridge using ordinary kernel reduction.
+`CertificatePair` proves that exact list S-polynomials denote Mathlib's
+S-polynomials, including nonmonic leading coefficients and zero inputs.
+`CertificateReduction` proves that accepted cofactor identities with checked
+product-degree bounds are zero-remainder representations in Mathlib.
+`Examples` replays a literal final S-pair obligation; the executable tests reject
+an exact ideal-membership identity whose products exceed the required bound.
+`CertificateContainment` proves shared ideal-containment replay sound.
+`CertificateShape` proves monicity, reducedness and decreasing leading order.
+`CertificateBasis` combines those results with all final S-pair obligations and
+Buchberger's criterion to prove `checkBasis_sound`. The postcondition is the
+reduced Gröbner basis of the original ideal, without producer provenance.
+`Examples.certificate_basis` proves a complete three-polynomial basis over 𝔽₇
+by ordinary kernel replay of both containments and all nine final pair identities.
 
 `Groebner` states the basis predicate by leading-monomial divisibility and
 proves its equivalence with the leading-term-ideal predicate. It supplies
@@ -40,11 +53,14 @@ lemma names. These adapters retain upstream declaration names. A Mathlib pin
 update supplying those declarations must remove the local copies and import
 upstream modules in the same change, avoiding duplicate declarations.
 
-Complete basis and negative-membership certificate soundness, S-polynomial
-agreement under conversion, deterministic F4 correctness and termination remain
+Negative-membership certificate soundness, automatic checked computation,
+deterministic F4 correctness and termination remain
 required by the same contract. Resource-bounded certificate production and
 replay wrappers, including certificate-size and nested arithmetic budgets,
-also remain required; the current pure `checkMember` has no replay allowance. The executable candidate API remains unchecked.
+also remain required; the current pure `checkMember` and `checkBasis` have no
+replay allowance. S-pair witnesses currently use explicit cofactor arrays;
+compression and efficient shared S-pair derivations remain required.
+The executable candidate API remains unchecked.
 
 The producer's pair-coverage proof also requires Buchberger's strict-LCM
 standard-representation criterion and closure under the installation measure

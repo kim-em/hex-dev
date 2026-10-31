@@ -156,7 +156,8 @@ private theorem residue_coeff {p n : Nat} [Hex.ZMod64.Bounds p]
   exact HexMvPolyTheory.Kernel.residueEquiv_coeff p
     (Hex.MvPoly.Kernel.denoteMod p (cmp := cmp) terms) m
 
-private theorem support_mem {p n : Nat} [Hex.ZMod64.Bounds p]
+/-- Every nonzero denoted monomial comes from a stored serialized term. -/
+theorem support_term {p n : Nat} [Hex.ZMod64.Bounds p]
     {cmp : Hex.Mono n → Hex.Mono n → Ordering} [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
     (terms : Polynomial) {d : Fin n →₀ Nat}
     (h : d ∈ (HexMvPolyTheory.Kernel.denoteMod p (cmp := cmp) terms).support) :
@@ -193,7 +194,7 @@ theorem leading_degree {p n : Nat} [Hex.ZMod64.Bounds p]
   apply le_antisymm
   · apply MonomialOrder.degree_le_iff.mpr
     intro d hd
-    obtain ⟨a, ha, rfl⟩ := support_mem terms hd
+    obtain ⟨a, ha, rfl⟩ := support_term terms hd
     apply (compare_le (order.cmp n) _ _).mp
     have bound := leading_max canonical.1.1 h a ha
     have hc := compare_eq order (Hex.MvPoly.Kernel.mono n a.1)
@@ -218,5 +219,18 @@ theorem leading_coefficient {p n : Nat} [Hex.ZMod64.Bounds p]
         (HexMvPolyTheory.Kernel.denoteMod p (cmp := order.cmp n) terms) = (term.2 : ZMod p) := by
   rw [MonomialOrder.leadingCoeff, leading_degree order canonical h]
   exact leading_coeff order canonical h
+
+/-- A maximum scan reports zero exactly for the empty serialized polynomial. -/
+@[simp] theorem leading_eq_none {order : Hex.Groebner.TermOrder} {terms : Polynomial} :
+    leading order terms = none ↔ terms = [] := by
+  cases terms <;> simp [leading]
+
+/-- Canonical residue serialization denotes zero exactly when it is empty. -/
+theorem denote_eq_zero_iff {p n : Nat} [Hex.ZMod64.Bounds p]
+    {cmp : Hex.Mono n → Hex.Mono n → Ordering} [Std.TransCmp cmp] [Std.LawfulEqCmp cmp]
+    {terms : Polynomial} (canonical : Hex.MvPoly.Kernel.CanonicalMod p n terms) :
+    HexMvPolyTheory.Kernel.denoteMod p (cmp := cmp) terms = 0 ↔ terms = [] := by
+  rw [← HexMvPolyTheory.Kernel.isZero_mod_iff p canonical]
+  cases terms <;> simp [Hex.MvPoly.Kernel.isZero]
 
 end HexGroebnerTheory.Certificate

@@ -8,6 +8,9 @@ module
 
 public import HexGroebnerTheory.Order
 public import HexGroebnerTheory.CertificateLeading
+public import HexGroebnerTheory.CertificatePair
+public import HexGroebnerTheory.CertificateReduction
+public import HexGroebnerTheory.CertificateBasis
 
 public section
 
@@ -105,5 +108,79 @@ theorem certificate_grevlex :
 #guard_msgs in #print axioms certificate_grlex
 /-- info: 'HexGroebnerTheory.Examples.certificate_grevlex' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in #print axioms certificate_grevlex
+
+/-- A literal nonmonic S-pair agrees with Mathlib after ordinary kernel replay. -/
+theorem certificate_pair :
+    (toMonomialOrder (Hex.Groebner.TermOrder.grevlex.cmp 2)).sPolynomial
+      (HexMvPolyTheory.Kernel.denoteMod 7 (cmp := Hex.Groebner.TermOrder.grevlex.cmp 2)
+        [([2, 0], 3), ([0, 1], 4)])
+      (HexMvPolyTheory.Kernel.denoteMod 7 (cmp := Hex.Groebner.TermOrder.grevlex.cmp 2)
+        [([1, 1], 2), ([0, 0], 5)]) =
+      HexMvPolyTheory.Kernel.denoteMod 7 (cmp := Hex.Groebner.TermOrder.grevlex.cmp 2)
+        [([1, 0], 6), ([0, 2], 1)] := by
+  rw [← Certificate.sPolynomial_eq .grevlex
+    (Hex.MvPoly.Kernel.isCanonicalMod_iff.mp (by decide +kernel))
+    (Hex.MvPoly.Kernel.isCanonicalMod_iff.mp (by decide +kernel))]
+  have h : Hex.Groebner.Certificate.sPolynomial 7 .grevlex
+      [([2, 0], 3), ([0, 1], 4)] [([1, 1], 2), ([0, 0], 5)] =
+        [([1, 0], 6), ([0, 2], 1)] := by decide +kernel
+  rw [h]
+
+/-- info: 'HexGroebnerTheory.Examples.certificate_pair' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms certificate_pair
+
+local instance : Fact (Nat.Prime 7) := ⟨by decide⟩
+
+/-- The completed three-polynomial basis used for a literal S-pair reduction. -/
+@[expose] def certificateBasis : Array Hex.Groebner.Certificate.Polynomial := #[
+  [([2, 0], 1), ([0, 1], 6)], [([1, 1], 1), ([0, 0], 6)],
+  [([1, 0], 6), ([0, 2], 1)]]
+
+/-- A kernel-checked bounded identity supplies the actual zero-remainder
+obligation for the original pair, rather than just ideal membership. -/
+theorem certificate_reduction :
+    (toMonomialOrder (Hex.Groebner.TermOrder.grevlex.cmp 2)).IsRemainder
+      ((toMonomialOrder (Hex.Groebner.TermOrder.grevlex.cmp 2)).sPolynomial
+        (HexMvPolyTheory.Kernel.denoteMod 7 (cmp := Hex.Groebner.TermOrder.grevlex.cmp 2)
+          [([2, 0], 1), ([0, 1], 6)])
+        (HexMvPolyTheory.Kernel.denoteMod 7 (cmp := Hex.Groebner.TermOrder.grevlex.cmp 2)
+          [([1, 1], 1), ([0, 0], 6)]))
+      (Set.range fun i : Fin certificateBasis.size =>
+        HexMvPolyTheory.Kernel.denoteMod 7 (cmp := Hex.Groebner.TermOrder.grevlex.cmp 2)
+          certificateBasis[i]) 0 := by
+  rw [← Certificate.sPolynomial_eq .grevlex
+    (Hex.MvPoly.Kernel.isCanonicalMod_iff.mp (by decide +kernel))
+    (Hex.MvPoly.Kernel.isCanonicalMod_iff.mp (by decide +kernel))]
+  exact Certificate.checkReduction_sound .grevlex certificateBasis
+    #[[], [], [([0, 0], 6)]] _ (by decide +kernel)
+
+/-- info: 'HexGroebnerTheory.Examples.certificate_reduction' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms certificate_reduction
+
+/-- Original two generators for complete literal basis certification. -/
+@[expose] def certificateGenerators : Array Hex.Groebner.Certificate.Polynomial := #[
+  [([2, 0], 1), ([0, 1], 6)], [([1, 1], 1), ([0, 0], 6)]]
+
+/-- Explicit finite-field and monomial-order metadata for the complete example. -/
+@[expose] def basisContext : Hex.Groebner.Context :=
+  ⟨⟨7, Hex.Nat.isPrimeTrial_isPrime (by decide), by decide⟩, 2, .grevlex⟩
+
+/-- Shared ideal containments and all nine bounded final S-pair identities. -/
+@[expose] def basisWitness : Hex.Groebner.Certificate.Basis := {
+  forward := ⟨[.generator 0, .generator 1,
+    .multiply [([1, 0], 1)] 1, .multiply [([0, 1], 1)] 0,
+    .scale 6 3, .add 2 4], #[0, 1, 5]⟩
+  backward := ⟨[.generator 0, .generator 1], #[0, 1]⟩
+  pairs := #[
+    #[#[[], [], []], #[[], [], [([0, 0], 6)]], #[[([1, 0], 1)], [], [([0, 1], 6)]]],
+    #[#[[], [], [([0, 0], 1)]], #[[], [], []], #[[([0, 0], 1)], [], []]],
+    #[#[[([1, 0], 6)], [], [([0, 1], 1)]], #[[([0, 0], 6)], [], []], #[[], [], []]]] }
+
+/-- A complete Gröbner basis theorem obtained from literal-data kernel replay. -/
+theorem certificate_basis : IsReducedBasis basisContext certificateGenerators certificateBasis :=
+  checkBasis_sound basisContext certificateGenerators certificateBasis basisWitness (by decide +kernel)
+
+/-- info: 'HexGroebnerTheory.Examples.certificate_basis' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms certificate_basis
 
 end HexGroebnerTheory.Examples

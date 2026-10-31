@@ -63,5 +63,6 @@ finite-field adapters and the remaining performance gap remain open.
 
 The measured source archives preserve the exact historical inputs. Current
 sources additionally contain the shared checked monomial append and matrix
-peak telemetry from the batch comparison, plus arithmetic boundary tests;
-those additions are not included in this timing attribution.
+peak telemetry from the batch comparison, arithmetic boundary tests and the
+independent certificate checker. Those additions are not included in this
+timing attribution.
