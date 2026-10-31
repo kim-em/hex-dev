@@ -62,6 +62,11 @@ private def emit : IO Unit := do
           | .representation e _ => throw (IO.userError s!"{c.name}: reference representation {reprStr e}")
         if candidate.polynomials != reference.polynomials then
           throw (IO.userError s!"{c.name}: Gebauer–Möller/reference candidate mismatch")
+        let (portableMonomials, monomialStats) ← match computeWith context { nativeMonomials := false } c.generators with
+          | .candidate candidate statistics => pure (candidate, statistics)
+          | _ => throw (IO.userError s!"{c.name}: portable monomial computation failed")
+        if candidate.polynomials != portableMonomials.polynomials || stats != monomialStats then
+          throw (IO.userError s!"{c.name}: packed/portable monomial or counter mismatch")
         let separate ← match computeWith context { batchInterreduce := false } c.generators with
           | .candidate candidate _ => pure candidate
           | _ => throw (IO.userError s!"{c.name}: separate tail reduction failed")

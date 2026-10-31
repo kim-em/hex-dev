@@ -122,7 +122,7 @@ private def solve (context : Context) (limits : Limits) (matrix : SymbolicMatrix
   if s.statistics.matrixRows + rows > limits.matrixRows then throw (.exhausted .matrixRows)
   if s.statistics.matrixEntries + entries > limits.matrixEntries then
     throw (.exhausted .matrixEntries)
-  let remainingBytes := limits.packedBytes - s.statistics.allocatedBytes - s.table.exponents.size - s.table.metadata.size
+  let remainingBytes := limits.packedBytes - s.statistics.allocatedBytes - s.table.bytes
   let matrixLimits : MatrixLimits := {
     columns := limits.monomials, rows := limits.matrixRows - s.statistics.matrixRows
     inputEntries := entries

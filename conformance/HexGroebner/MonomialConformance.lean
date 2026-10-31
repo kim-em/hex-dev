@@ -73,4 +73,57 @@ private def bounds : Bool := Id.run do
 
 #guard bounds
 
+private def same (a b : InternResult) : Bool :=
+  (match a.result, b.result with
+    | .ok a, .ok b => a == b
+    | .error a, .error b => a == b
+    | _, _ => false) && a.table.count == b.table.count && a.table.width == b.table.width &&
+    a.table.exponents.data == b.table.exponents.data && a.table.metadata.data == b.table.metadata.data &&
+    a.table.work == b.table.work
+
+private def packed : Bool := Id.run do
+  for arity in [0, 1, 2, 10, 65, 4096, 4097] do
+    let mut reference : MonomialTable := { arity, hashBits := 0 }
+    for seed in [:5] do
+      let values := (Array.range arity).map fun i => ((seed + i * 3) % 17).toUInt64
+      let result := reference.internOwned values 200 1000000000 1000000000
+      if !result.result.isOk then return false
+      reference := result.table
+    let mut native := reference
+    for seed in [:(if arity > 65 then 10 else 100)] do
+      let count := reference.count
+      let a := seed % count
+      let b := (seed * 7 + 1) % count
+      let operation := match seed % 3 with
+        | 0 => MonomialTable.Operation.lcm
+        | 1 => .product
+        | _ => .quotient
+      let first := native.combineOwned operation a b 200 1000000000 1000000000 true
+      let second := reference.combineOwned operation a b 200 1000000000 1000000000 false
+      if !same first second then return false
+      native := first.table
+      reference := second.table
+  for boundary in ([255, 65535, 4294967295] : List UInt64) do
+    let .ok (a, t) := ({ arity := 1 } : MonomialTable).intern #[boundary] 10 10000 | return false
+    let .ok (b, t) := t.intern #[1] 10 10000 | return false
+    let native := t.combineOwned .product a b 10 10000 100000 true
+    let portable := t.combineOwned .product a b 10 10000 100000 false
+    if !same native portable then return false
+  let .ok (a, t) := ({ arity := 2 } : MonomialTable).intern #[1, 0] 10 10000 | return false
+  let .ok (b, t) := t.intern #[0, 1] 10 10000 | return false
+  let output := t.combineOwned .product a b 10 114
+  if !output.result.isOk || output.table.bytes != 114 then return false
+  if (t.combineOwned .product a b 10 113).result.isOk then return false
+  if (output.table.internOwned #[2, 0] 10 139).result.isOk then return false
+  if !(output.table.internOwned #[2, 0] 10 140).result.isOk then return false
+  for work in [:output.table.work] do
+    let result := t.combineOwned .product a b 10 10000 work
+    if result.result.isOk then return false
+    match result.result with
+    | .error failure => if failure.error != .work || failure.work > work then return false
+    | _ => return false
+  return true
+
+#guard packed
+
 end Hex.Groebner.MonomialConformance

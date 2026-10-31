@@ -71,6 +71,17 @@ Polynomials use separate packed stable-identifier and coefficient buffers.
 Coefficients occupy one byte below modulus 256, two below 65536, and four for
 larger supported primes. Interchange decoding occurs outside the hot loops.
 
+For arities 1 through 4096, `MonomialTable.combineOwned` uses bounded native
+packed preparation and full-coordinate collision comparisons. LCM, product and
+exact quotient share one owned reusable buffer for u32 coordinates and cached
+metadata. `Limits.nativeMonomials := false` retains the coordinate-array route;
+zero and larger arities use it automatically. Both routes preserve stable IDs,
+exact overflow rejection and successful work counters. The workspace counts
+against packed-byte limits, so tight memory allowances may exhaust earlier
+than on the array route. Native primitives have transparent portable bodies,
+check geometry before access and preserve borrowed source bytes under aliasing.
+The `*Arrays` benchmarks compare complete candidates on these two routes.
+
 `eliminateWith` accepts a fixed column count, canonical sparse reducer rows and
 target rows. Columns must follow decreasing monomial order. Reducers with free
 leading columns install directly; other rows scan their active interval,

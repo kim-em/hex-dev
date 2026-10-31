@@ -223,7 +223,7 @@ def resumeWith (limits : Limits) (initial : ResumeState) : ComputeResult := Id.r
   let mut state := initial
   let statistics := state.workspace.statistics
   if statistics.work > limits.work then return fail state (.exhausted .work)
-  if statistics.allocatedBytes + state.workspace.table.exponents.size + state.workspace.table.metadata.size > limits.packedBytes then
+  if statistics.allocatedBytes + state.workspace.table.bytes > limits.packedBytes then
     return fail state (.exhausted .packedBytes)
   if statistics.pairs > limits.pairs then return fail state (.exhausted .pairs)
   if statistics.rounds > limits.rounds then return fail state (.exhausted .rounds)

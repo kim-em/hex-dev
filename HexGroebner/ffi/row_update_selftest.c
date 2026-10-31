@@ -21,7 +21,69 @@ static void fail(const char *message) {
     exit(1);
 }
 
+static void check_monomials(void) {
+    unsigned cases = 0;
+    for (unsigned width = 1; width <= 4; width *= 2) {
+        for (unsigned trial = 0; trial < 500; ++trial) {
+            size_t n = trial % 129 + 1, bytes = 2 * n * width, output_bytes = 4 * n + 28;
+            uint8_t *source = malloc(bytes), *output = malloc(output_bytes);
+            uint64_t *left = malloc(n * sizeof(uint64_t)), *right = malloc(n * sizeof(uint64_t));
+            if (!source || !output || !left || !right) fail("monomial allocation");
+            uint64_t bound = width == 1 ? 256 : width == 2 ? 65536 : UINT64_C(4294967296);
+            for (size_t i = 0; i < n; ++i) {
+                left[i] = random_word() % bound;
+                right[i] = trial % 2 ? random_word() % (left[i] + 1) : random_word() % bound;
+                write_le(source + i * width, width, left[i]);
+                write_le(source + (n + i) * width, width, right[i]);
+            }
+            for (unsigned operation = 0; operation < 3; ++operation) {
+                int valid = 1, equal_left = 1, equal_right = 1;
+                uint64_t degree = 0, mask = 0, hash = UINT64_C(14695981039346656037), largest = 0;
+                int actual = prepare_monomial(operation, width, n, 2, 0, 1,
+                    source, bytes, output, output_bytes);
+                for (size_t i = 0; i < n; ++i) {
+                    uint64_t x = left[i], y = right[i];
+                    if ((operation == 1 && x + y >= UINT64_C(4294967296)) ||
+                        (operation == 2 && y > x)) { valid = 0; break; }
+                    uint64_t z = operation == 0 ? (x >= y ? x : y) : operation == 1 ? x + y : x - y;
+                    if (actual && read_le(output + i * 4, 4) != z) fail("monomial coordinate");
+                    equal_left &= z == x; equal_right &= z == y;
+                    degree += z; if (z) mask |= UINT64_C(1) << (i % 64);
+                    hash = (hash ^ z) * UINT64_C(1099511628211);
+                    if (z > largest) largest = z;
+                }
+                if (actual != valid) fail("monomial overflow or quotient rejection");
+                if (valid) {
+                    uint64_t metadata[] = {degree, mask, hash};
+                    for (size_t i = 0; i < 3; ++i) {
+                        size_t offset = 4 * n + 8 * i;
+                        uint64_t value = read_le(output + offset, 4) |
+                            (read_le(output + offset + 4, 4) << 32);
+                        if (value != metadata[i]) fail("monomial metadata");
+                    }
+                    if (read_le(output + 4 * n + 24, 4) != largest) fail("monomial maximum");
+                    if (equal_monomial(width, n, 0, source, bytes, output, output_bytes) != equal_left ||
+                        equal_monomial(width, n, 1, source, bytes, output, output_bytes) != equal_right)
+                        fail("monomial exact equality");
+                    if (equal_monomial(width, n, 2, source, bytes, output, output_bytes) ||
+                        equal_monomial(width, n, 0, source, bytes, output, output_bytes - 1))
+                        fail("monomial equality geometry");
+                }
+                ++cases;
+            }
+            free(source); free(output); free(left); free(right);
+        }
+    }
+    if (monomial_shape(0, 4, 4096, UINT64_MAX, 0, 0, SIZE_MAX, 16412) ||
+        monomial_shape(0, 4, 4097, 1, 0, 0, 16388, 16416) ||
+        monomial_shape(0, 4, 0, 1, 0, 0, 0, 28) ||
+        monomial_shape(3, 1, 1, 1, 0, 0, 1, 32) ||
+        monomial_shape(0, 3, 1, 1, 0, 0, 3, 32)) fail("monomial malformed geometry");
+    printf("monomial_selftest: %u cases and malformed boundaries OK\n", cases);
+}
+
 int main(void) {
+    check_monomials();
     const uint64_t moduli[] = {2, 3, 251, 256, 257, 65521, 65536, 65537, 2147483647};
     unsigned cases = 0;
     for (unsigned field = 0; field < sizeof(moduli) / sizeof(moduli[0]); ++field) {

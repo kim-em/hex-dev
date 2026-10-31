@@ -5,5 +5,5 @@ Authors: Kim Morrison
 -/
 module
 
-/-! Native carrier for the bounded packed row-update binding. The root imports
+/-! Native carrier for the bounded packed row and monomial bindings. The root imports
 nothing; Lake loads the carrier as a plugin with its C object attached. -/
