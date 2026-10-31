@@ -49,25 +49,38 @@ theorem degreeLE_sound {f g : Polynomial} (hf : Canonical f) (hg : Canonical g)
       rwa [compare_mono order (hf.1.1 _ (leading_mem ha)) (hg.1.1 _ (leading_mem hb))] at hc
 
 omit [Hex.ZMod64.Bounds p] in
+private theorem fold_canonical (rows : List Polynomial) (h : ∀ row ∈ rows, Canonical row)
+    (acc : Polynomial) (ha : Canonical acc) :
+    Canonical (rows.foldl (Hex.MvPoly.Kernel.addMod p) acc) := by
+  induction rows generalizing acc with
+  | nil => exact ha
+  | cons row rows ih =>
+    exact ih (fun a ha => h a (List.mem_cons_of_mem _ ha)) _
+      (Hex.MvPoly.Kernel.addMod_canonical p ha (h row (by simp)))
+
+omit [Hex.ZMod64.Bounds p] in
 /-- Summation of canonical serialized polynomials remains canonical. -/
 theorem sum_canonical (rows : List Polynomial) (h : ∀ row ∈ rows, Canonical row) :
-    Canonical (sum p rows) := by
-  induction rows with
-  | nil => simp [sum, Hex.MvPoly.Kernel.CanonicalMod, Hex.MvPoly.Kernel.Canonical]
+    Canonical (sum p rows) :=
+  fold_canonical rows h [] (by simp [Hex.MvPoly.Kernel.CanonicalMod, Hex.MvPoly.Kernel.Canonical])
+
+private theorem fold_denote (rows : List Polynomial) (h : ∀ row ∈ rows, Canonical row)
+    (acc : Polynomial) (ha : Canonical acc) :
+    denote (rows.foldl (Hex.MvPoly.Kernel.addMod p) acc) = denote acc + (rows.map denote).sum := by
+  induction rows generalizing acc with
+  | nil => simp
   | cons row rows ih =>
-    exact Hex.MvPoly.Kernel.addMod_canonical p (h row (by simp))
-      (ih fun a ha => h a (List.mem_cons_of_mem _ ha))
+    rw [List.foldl_cons,
+      ih (fun a ha => h a (List.mem_cons_of_mem _ ha)) _
+        (Hex.MvPoly.Kernel.addMod_canonical p ha (h row (by simp))),
+      HexMvPolyTheory.Kernel.denoteMod_addMod p ha (h row (by simp))]
+    simp only [List.map_cons, List.sum_cons, add_assoc]
 
 /-- Serialized summation transports to ordinary polynomial summation. -/
 theorem sum_denote (rows : List Polynomial) (h : ∀ row ∈ rows, Canonical row) :
     denote (sum p rows) = (rows.map denote).sum := by
-  induction rows with
-  | nil => simp [sum]
-  | cons row rows ih =>
-    rw [sum, HexMvPolyTheory.Kernel.denoteMod_addMod p (h row (by simp))
-      (sum_canonical rows fun a ha => h a (List.mem_cons_of_mem _ ha)),
-      ih fun a ha => h a (List.mem_cons_of_mem _ ha)]
-    rfl
+  simpa [sum] using fold_denote order rows h []
+    (by simp [Hex.MvPoly.Kernel.CanonicalMod, Hex.MvPoly.Kernel.Canonical])
 
 omit [Hex.ZMod64.Bounds p] in
 private theorem lookup_canonical (values : Array Polynomial)

@@ -19,10 +19,10 @@ def degreeLE (order : TermOrder) (f g : Polynomial) : Bool :=
   | some _, none => false
   | some a, some b => (compare order a.1 b.1).isLE
 
-/-- Sum canonical residue polynomials without changing their storage order. -/
-def sum (p : Nat) : List Polynomial → Polynomial
-  | [] => []
-  | f :: fs => Hex.MvPoly.Kernel.addMod p f (sum p fs)
+/-- Sum canonical residue polynomials with a tail-recursive accumulator,
+without changing their storage order. -/
+def sum (p : Nat) (rows : List Polynomial) : Polynomial :=
+  rows.foldl (Hex.MvPoly.Kernel.addMod p) []
 
 /-- Actual products for a cofactor representation, in basis order. Missing
 cofactors denote zero internally; the checker rejects a mismatched array size. -/

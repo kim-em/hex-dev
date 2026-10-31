@@ -74,3 +74,7 @@ These observations compare two Hex candidates, without a fresh external
 comparator. They are not the balanced acceptance suite or held-out inputs and
 make no leadership claim. Complete checked-call timings and the existing gap
 to faster open-source engines remain outstanding.
+
+The archived measured source fixes the exact checker body present in those
+binaries. The tail-recursive certificate summation added separately does not
+participate in candidate production and is outside this timing attribution.
