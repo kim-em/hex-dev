@@ -1,0 +1,34 @@
+{
+  "cpu": 42,
+  "command": [
+    "perf",
+    "record",
+    "-F",
+    "199",
+    "-g",
+    "--call-graph",
+    "dwarf",
+    "-o",
+    "/tmp/hex-groebner-native-cyclic6.perf.data",
+    "--",
+    ".lake/build/bin/hexgroebner_bench",
+    "run",
+    "Hex.Groebner.Bench.cyclic6",
+    "--repeats",
+    "1",
+    "--min-total-seconds",
+    "2",
+    "--export-file",
+    "/tmp/hex-groebner-native-cyclic6-profile.json"
+  ],
+  "binary_sha256": "9f00b4f44fc6959616f8df6a95d2e44fc7c096222f4e4d228983090f218786ff",
+  "load_start": [
+    3.19970703125,
+    1.583984375,
+    1.49755859375
+  ],
+  "source_fingerprint": "1c423e2b8a95",
+  "kind": "diagnostic sampling; excluded from timing comparisons",
+  "raw_perf_sha256": "fe6f34b6f38dcf3f2548e59f1c49042d1f1981f7417a9421306fc777c3b023fa",
+  "log": "WARNING: Kernel address maps (/proc/{kallsyms,modules}) are restricted,\ncheck /proc/sys/kernel/kptr_restrict and /proc/sys/kernel/perf_event_paranoid.\n\nSamples in kernel functions may not be resolved if a suitable vmlinux\nfile is not found in the buildid cache or in the vmlinux path.\n\nSamples in kernel modules won't be resolved at all.\n\nIf some relocation was applied (e.g. kexec) symbols may be misresolved\neven with a suitable vmlinux or kallsyms file.\n\nCouldn't record kernel reference relocation symbol\nSymbol resolution may be skewed if relocation was used (e.g. kexec).\nCheck /proc/kallsyms permission or run as root.\nHex.Groebner.Bench.cyclic6    [fixed] repeats=1\n  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=7f8a8b5-dirty, 2026-10-31T12:26:31Z, host=chungus2\n  repeat 0  105.801 ms  (\u00d72^5, total 3.386 s)\n  median: 105.801 ms    min: 105.801 ms    max: 105.801 ms\n  hash: all repeats agree\n  observed hash: 0xc997cda88375c1ba\n  peak RSS: 66_296 kB (across 1 ok repeat(s))\nexported to /tmp/hex-groebner-native-cyclic6-profile.json\n[ perf record: Woken up 87 times to write data ]\n[ perf record: Captured and wrote 21.608 MB /tmp/hex-groebner-native-cyclic6.perf.data (2682 samples) ]\n"
+}

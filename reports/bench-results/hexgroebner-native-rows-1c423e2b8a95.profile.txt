@@ -1,0 +1,38 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 2K of event 'cpu/cycles/P'
+# Event count (approx.): 58339434966
+#
+# Overhead  Command          Shared Object         Symbol
+# ........  ...............  ....................  ................................................................................................................................................................................................................................................................................................................................................
+#
+    11.58%  hexgroebner_ben  hexgroebner_bench     [.] lean_dec_ref_cold
+     7.56%  hexgroebner_ben  hexgroebner_bench     [.] lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_Groebner_ReducerIndex_find_spec__0___redArg
+     7.07%  hexgroebner_ben  hexgroebner_bench     [.] lp_Hex_Hex_Groebner_Computation_spend
+     6.80%  hexgroebner_ben  hexgroebner_bench     [.] lean_alloc_small_object_core
+     6.61%  hexgroebner_ben  hexgroebner_bench     [.] mi_free
+     5.65%  hexgroebner_ben  hexgroebner_bench     [.] lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_Groebner_MonomialTable_internOwned_spec__0___redArg
+     5.53%  hexgroebner_ben  hexgroebner_bench     [.] lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_Groebner_ReducerIndex_divisors_spec__0___redArg
+     5.00%  hexgroebner_ben  hexgroebner_bench     [.] lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_Groebner_MonomialTable_combineOwned_spec__0___redArg
+     4.09%  hexgroebner_ben  hexgroebner_bench     [.] lean_hex_groebner_subtract_row
+     3.13%  hexgroebner_ben  hexgroebner_bench     [.] lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_HexGroebner_Elimination_0__Hex_Groebner_eliminate_spec__5_spec__5___redArg
+     2.30%  hexgroebner_ben  hexgroebner_bench     [.] lp_Hex_Hex_Groebner_MonomialTable_internOwned
+     2.09%  hexgroebner_ben  hexgroebner_bench     [.] lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00__private_HexGroebner_Monomial_0__Hex_Groebner_MonomialTable_equal_spec__0___redArg
+     2.02%  hexgroebner_ben  hexgroebner_bench     [.] lp_Hex___private_HexGroebner_Monomial_0__Hex_Groebner_MonomialTable_read64
+
+
+#
+# (Tip: To show assembler sample context control flow use perf record -b / perf report --samples 10 and then browse context)
+#
+Warning:
+Kernel address maps (/proc/{kallsyms,modules}) were restricted.
+
+Check /proc/sys/kernel/kptr_restrict before running 'perf record'.
+
+As no suitable kallsyms nor vmlinux was found, kernel samples
+can't be resolved.
+
+Samples in kernel modules can't be resolved as well.

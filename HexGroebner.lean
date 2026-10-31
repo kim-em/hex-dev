@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 module
 
+public import HexGroebner.Native
 public import HexGroebner.Packed
 public import HexGroebner.Elimination
 public import HexGroebner.Monomial

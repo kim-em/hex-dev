@@ -85,6 +85,8 @@ structure Limits where
   basis : Nat := 100000
   variables : Nat := 10000
   batchSize : Nat := 64
+  /-- Use the approved native row kernel; false selects scalar Lean updates. -/
+  nativeRows : Bool := true
   deriving Inhabited
 
 /-- Cumulative counters survive failure and resumption. -/
@@ -98,7 +100,7 @@ structure Statistics where
   matrixCalls : Nat := 0
   productPairs : Nat := 0
   chainPairs : Nat := 0
-  deriving Repr, Inhabited
+  deriving Repr, BEq, Inhabited
 
 /-- Mutable logical workspace, separate from the immutable computation identity. -/
 structure Workspace where

@@ -11,7 +11,7 @@ import LeanBench
 /-! Full-rank Hilbert matrices (a Cauchy family) exercise dense pivot tails.
 Sparse rectangular matrices exercise known pivots and rank defects. Preparation
 is excluded; validation, workspace allocation, elimination and output decoding
-are included. This measures a Macaulay kernel, not full-system F4. -/
+are included. Fixed cyclic and Katsura cases measure full F4 candidate production separately. -/
 
 namespace Hex.Groebner.Bench
 
@@ -44,7 +44,14 @@ def prepare (n : Nat) : Input := Id.run do
 /-- Return the actual decoded result for structural hashing, including an
 explicit failure flag. No parameter-only digest replaces the matrix output. -/
 def cauchy (input : Input) : Bool × Array (Array (Nat × UInt64)) :=
-  match (eliminateWith field {} input.columns input.reducers input.targets).result with
+  match (eliminateWith field { work := 1000000000 } input.columns input.reducers input.targets).result with
+  | .ok e => (e.rows.size == input.columns, e.rows.map (·.row.entries field))
+  | .error _ => (false, #[])
+
+/-- Identical matrix/allowances with scalar Lean row updates. -/
+def cauchyPortable (input : Input) : Bool × Array (Array (Nat × UInt64)) :=
+  match (eliminateWith field { work := 1000000000 } input.columns input.reducers input.targets
+      false #[] false).result with
   | .ok e => (e.rows.size == input.columns, e.rows.map (·.row.entries field))
   | .error _ => (false, #[])
 
@@ -57,7 +64,7 @@ private def wireOp : RowOp → Array UInt64
 structural hashing of the derivation as well as the decoded matrix. -/
 def cauchyTrace (input : Input) :
     Bool × Array (Array (Nat × UInt64)) × Array (Array UInt64) :=
-  match (eliminateWith field {} input.columns input.reducers input.targets true).result with
+  match (eliminateWith field { work := 1000000000 } input.columns input.reducers input.targets true).result with
   | .ok e => (e.rows.size == input.columns, e.rows.map (·.row.entries field), e.trace.map wireOp)
   | .error _ => (false, #[], #[])
 
@@ -95,7 +102,7 @@ def prepareSpread (n : Nat) : Input := Id.run do
 
 /-- Sparse rank-deficient matrix output, structurally hashed. -/
 def sparse (input : Input) : Bool × Array (Array (Nat × UInt64)) :=
-  match (eliminateWith field {} input.columns input.reducers input.targets).result with
+  match (eliminateWith field { work := 1000000000 } input.columns input.reducers input.targets).result with
   | .ok e => (e.reducerRank == input.reducers.size && e.rows.size == e.reducerRank,
       e.rows.map (·.row.entries field))
   | .error _ => (false, #[])
@@ -115,8 +122,8 @@ setup_benchmark cauchy n => n * n * n
   with prep := prepare
   where {
     paramFloor := 32
-    paramCeiling := 256
-    paramSchedule := .custom #[32, 64, 128, 256]
+    paramCeiling := 1024
+    paramSchedule := .custom #[32, 64, 128, 256, 512, 1024]
     maxSecondsPerCall := 8.0
     targetInnerNanos := 500000000
   }
@@ -128,8 +135,8 @@ setup_benchmark cauchyTrace n => n * n * n
   with prep := prepare
   where {
     paramFloor := 32
-    paramCeiling := 256
-    paramSchedule := .custom #[32, 64, 128, 256]
+    paramCeiling := 1024
+    paramSchedule := .custom #[32, 64, 128, 256, 512, 1024]
     maxSecondsPerCall := 8.0
     targetInnerNanos := 500000000
   }
@@ -139,6 +146,36 @@ setup_benchmark cauchyTrace n => n * n * n
 -- directly and targets cancel in one six-entry update, so validation, actual
 -- support work, bounded inversion, decoding and structural hashing are O(n).
 setup_benchmark sparse n => n
+  with prep := prepareSparse
+  where {
+    paramFloor := 32
+    paramCeiling := 256
+    paramSchedule := .custom #[32, 64, 128, 256]
+    maxSecondsPerCall := 8.0
+    targetInnerNanos := 500000000
+  }
+
+/-- Identical sparse matrix/allowances with scalar Lean row updates. -/
+def sparsePortable (input : Input) : Bool × Array (Array (Nat × UInt64)) :=
+  match (eliminateWith field { work := 1000000000 } input.columns input.reducers input.targets
+      false #[] false).result with
+  | .ok e => (e.reducerRank == input.reducers.size && e.rows.size == e.reducerRank,
+      e.rows.map (·.row.entries field))
+  | .error _ => (false, #[])
+
+-- The same exact (n^3-n)/3 updates and O(n^2) validation/scans/output as cauchy.
+setup_benchmark cauchyPortable n => n * n * n
+  with prep := prepare
+  where {
+    paramFloor := 32
+    paramCeiling := 1024
+    paramSchedule := .custom #[32, 64, 128, 256, 512, 1024]
+    maxSecondsPerCall := 8.0
+    targetInnerNanos := 500000000
+  }
+
+-- The same O(n) initialized bytes and six nonzeros per row as sparse.
+setup_benchmark sparsePortable n => n
   with prep := prepareSparse
   where {
     paramFloor := 32
@@ -234,8 +271,8 @@ initialize cyclic5Input : IO.Ref (Array RawPolynomial) ← IO.mkRef (cyclic 5)
 initialize cyclic6Input : IO.Ref (Array RawPolynomial) ← IO.mkRef (cyclic 6)
 initialize katsura3Input : IO.Ref (Array RawPolynomial) ← IO.mkRef (katsura 3)
 
-private def compute (variables : Nat) (input : Array RawPolynomial) : IO (Array RawPolynomial) := do
-  match computeWith ⟨field, variables, .grevlex⟩ {} input with
+private def compute (variables : Nat) (input : Array RawPolynomial) (nativeRows := true) : IO (Array RawPolynomial) := do
+  match computeWith ⟨field, variables, .grevlex⟩ { nativeRows } input with
   | .candidate candidate _ => return candidate.polynomials
   | .exhausted r _ => throw (IO.userError s!"F4 exhausted {reprStr r}")
   | .representation r _ => throw (IO.userError s!"F4 representation {reprStr r}")
@@ -252,6 +289,9 @@ def cyclic5 (_ : Unit) : IO (Array RawPolynomial) := do compute 5 (← cyclic5In
 /-- Candidate-only cyclic-6, with a larger matrix/pair sequence. -/
 def cyclic6 (_ : Unit) : IO (Array RawPolynomial) := do compute 6 (← cyclic6Input.get)
 
+/-- Identical cyclic-6 candidate call using scalar Lean row updates. -/
+def cyclic6Portable (_ : Unit) : IO (Array RawPolynomial) := do compute 6 (← cyclic6Input.get) false
+
 /-- Candidate-only Katsura-3 under the same field, order and output contract. -/
 def katsura3 (_ : Unit) : IO (Array RawPolynomial) := do compute 4 (← katsura3Input.get)
 
@@ -261,6 +301,7 @@ def katsura3 (_ : Unit) : IO (Array RawPolynomial) := do compute 4 (← katsura3
 setup_fixed_benchmark cyclic4 where { repeats := 5 }
 setup_fixed_benchmark cyclic5 where { repeats := 5 }
 setup_fixed_benchmark cyclic6 where { repeats := 5 }
+setup_fixed_benchmark cyclic6Portable where { repeats := 5 }
 setup_fixed_benchmark katsura3 where { repeats := 5 }
 
 end Hex.Groebner.Bench

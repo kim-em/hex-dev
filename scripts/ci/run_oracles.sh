@@ -322,6 +322,10 @@ run_tuple() {
   fi
 
   if [ "$oracle" = "scripts/oracle/groebner_matrix.py" ]; then
+    if ! bash scripts/ci/check_groebner_rows.sh; then
+      echo "FAIL: $lib :: native row-update paths failed"
+      return 1
+    fi
     if ! python3 -m unittest scripts.oracle.test_groebner_matrix; then
       echo "FAIL: $lib :: matrix oracle rejection checks failed"
       return 1

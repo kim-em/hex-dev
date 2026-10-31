@@ -80,6 +80,14 @@ Outputs are monic echelon rows in the original column order. `fromTarget`
 identifies added row-space dimension. The retained reducer rows span the input
 reducer space. Pivot metadata retains the normalization scalar and propagated
 sugar, allowing ordinary remainders to preserve their original coefficients.
+Native row updates operate in chunks of at most 4096 entries;
+`eliminateWith (... native := false)` and `Limits.nativeRows := false` retain
+the scalar Lean row-update route. Both routes
+produce identical pivots, provenance and resource counters. The binding has a
+transparent structurally recursive Lean body, validates all shapes and accessed
+residues, and preserves original borrowed buffers when inputs alias. C code
+uses little-endian scalar access, uint128 Barrett reduction when available and
+exact word remainder otherwise. No ISA extension or floating point is required.
 Barrett parameters are hoisted outside coefficient loops; products fit below
 `p² < 2^62`.
 
@@ -107,7 +115,12 @@ lake exe hexgroebner_bench verify
 ```
 
 The 175 matrix cases independently check row-space equality, reducer subspaces
-and derivations with Python exact modular RREF. Core checks cover malformed
+and derivations with Python exact modular RREF. Native/portable comparisons cover every matrix fixture, both provenance modes,
+and a 5000-entry pivot spanning multiple native calls. Primitive tests cover
+all coefficient widths, boundary moduli, aliasing and malformed slices. Both
+compiled C arithmetic paths have standalone reference checks and sanitizer
+coverage. A downstream literal row update reduces in the kernel with no
+axioms. Core checks cover malformed
 representations, all resource categories, inclusive boundaries, retained failure
 counters, scalar/sugar metadata, scan-block extension and 100,000-column sparse
 work bounds. Monomial tests force collisions, table growth and both widening
@@ -128,7 +141,7 @@ same reduced basis. Product/chain counters demonstrate criterion use.
 
 Lean-bench registrations cover dense elimination with/without provenance,
 clustered and spread sparse supports, monomial interning, and fixed cyclic-4,
-cyclic-5 and Katsura-3 F4 calls. Full-system timings are candidate production
+cyclic-5, cyclic-6 and Katsura-3 F4 calls. Full-system timings are candidate production
 through final interreduction; input generation, certification and kernel
 checking are excluded. IO-backed input reads prevent cached pure fixed results.
 Packed helpers require canonical workspace-owned identifiers and coefficients;

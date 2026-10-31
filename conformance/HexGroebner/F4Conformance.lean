@@ -94,6 +94,13 @@ private def result (context : Context) (input : Array RawPolynomial) :
   | .invalid (.coefficient 0 0) _ => true
   | _ => false
 
+#guard match computeWith context { work := 150 } input 37 with
+  | .exhausted .work state =>
+    match resumeWith { nativeRows := false } state with
+    | .candidate candidate _ => .ok candidate.polynomials == result context input && candidate.randomState == 37
+    | _ => false
+  | _ => false
+
 -- Matrix extraction must undo monic normalization for ordinary remainders.
 #guard let calculation : Computation RawPolynomial := do
     let divisor ← Polynomial.normalize context {} 0 #[⟨#[1, 0], 1⟩, ⟨#[0, 0], 6⟩]

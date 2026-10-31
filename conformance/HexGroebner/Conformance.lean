@@ -88,6 +88,37 @@ private def summary : Except String (Array (Array (Nat × UInt64)) × Nat × Nat
       a.trace.isEmpty && sa.traceNodes == 0 && b.trace.size == sb.traceNodes
   | _, _ => false
 
+private def same (field : PrimeField) (a b : MatrixResult) : Bool :=
+  a.stats == b.stats && match a.result, b.result with
+  | .error a, .error b => a == b
+  | .ok a, .ok b =>
+    let rows := fun (e : Echelon) => e.rows.map fun p =>
+      (p.row.entries field, p.fromTarget, p.derivation, p.multiplier, p.sugar)
+    rows a == rows b && a.reducerRank == b.reducerRank && a.trace == b.trace
+  | _, _ => false
+
+#guard fields.all fun field => (cases field).all fun c =>
+  [true, false].all fun provenance =>
+    match run field c {} provenance true, run field c {} provenance false with
+    | .ok a, .ok b => same field a b
+    | _, _ => false
+
+private def chunks : Bool := Id.run do
+  let entries := (Array.range 5000).map fun i => (i, (1 : UInt64))
+  let targets := (entries.map fun (i, _) => (i, (2 : UInt64))).push (5000, 3)
+  let some reducer := SparseRow.ofEntries field 5001 entries | return false
+  let some target := SparseRow.ofEntries field 5001 targets | return false
+  let native := eliminateWith field {} 5001 #[reducer] #[target] true #[] true
+  let portable := eliminateWith field {} 5001 #[reducer] #[target] true #[] false
+  if !same field native portable then return false
+  match native.result with
+  | .error _ => return false
+  | .ok echelon =>
+    return echelon.reducerRank == 1 && echelon.rows.size == 2 &&
+      echelon.rows[1]!.row.entries field == #[(5000, 1)]
+
+#guard chunks
+
 private def fails (limits : MatrixLimits) (resource : Resource) : Bool :=
   match run field typical limits with
   | .ok r => match r.result with

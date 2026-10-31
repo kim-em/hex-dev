@@ -128,7 +128,7 @@ def eliminate (context : Context) (limits : Limits) (matrix : SymbolicMatrix) (m
     outputEntries := limits.matrixEntries - s.statistics.matrixEntries - entries
     packedBytes := remainingBytes + inputBytes
     work := limits.work - s.statistics.work }
-  let outcome := eliminateWith context.field matrixLimits matrix.columns.size reducers targets false sugars
+  let outcome := eliminateWith context.field matrixLimits matrix.columns.size reducers targets false sugars limits.nativeRows
   let stats := outcome.stats
   set { s with statistics := { s.statistics with
     work := s.statistics.work + stats.work

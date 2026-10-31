@@ -46,6 +46,14 @@ private def emit : IO Unit := do
           | .representation e _ => throw (IO.userError s!"{c.name}: serial representation {reprStr e}")
         if candidate.polynomials != serial.polynomials then
           throw (IO.userError s!"{c.name}: batch-size-dependent reduced basis")
+        let (scalar, scalarStats) ← match computeWith context { nativeRows := false } c.generators with
+          | .candidate candidate stats => pure (candidate, stats)
+          | .internal e _ => throw (IO.userError s!"{c.name}: scalar internal {reprStr e}")
+          | .invalid e _ => throw (IO.userError s!"{c.name}: {reprStr e}")
+          | .exhausted r _ => throw (IO.userError s!"{c.name}: scalar exhausted {reprStr r}")
+          | .representation e _ => throw (IO.userError s!"{c.name}: scalar representation {reprStr e}")
+        if candidate.polynomials != scalar.polynomials || stats != scalarStats then
+          throw (IO.userError s!"{c.name}: native/scalar candidate or counter mismatch")
         let value := "{" ++ s!"\"p\":{field.modulus.toNat},\"variables\":{c.variables}," ++
           "\"order\":\"" ++ orderName order ++ "\",\"generators\":" ++
           array (c.generators.map polynomial) ++ ",\"basis\":" ++
