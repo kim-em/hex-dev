@@ -25,8 +25,9 @@ The full-rank Hilbert family over p = 65,537 has exactly `(n³−n)/3` sparse
 entry updates. Validation, scans, decoding and output hashing add quadratic
 work. Input preparation is excluded; all those other operations and workspace
 allocation are included. Both routes use a nonbinding one-billion-unit work
-allowance. Cauchy registrations also admit n = 1024; this paired observation
-uses the declared doubling subdomain n = 64 through 512.
+allowance. The measured snapshot admits n = 1024, but this paired observation uses
+the declared doubling subdomain n = 64 through 512. The retained registrations
+cap the domain at the observed n = 512 boundary.
 
 | n | AB medians A → B | BA medians A → B | Paired geometric mean B/A |
 | ---: | ---: | ---: | ---: |

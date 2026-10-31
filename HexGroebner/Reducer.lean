@@ -31,7 +31,10 @@ structure DivisorNode where
   depth : Nat := 0
   deriving Inhabited
 
-/-- Leading-monomial index for one immutable basis version. -/
+/-- Leading-monomial index for one immutable basis version. `build` establishes
+that every edge points to a distinct child whose depth is its parent depth plus
+one; leaves have depth `context.variables`, and the root has depth zero. Lookup
+requires this invariant, valid basis references and the associated monomial arena. -/
 structure ReducerIndex where
   nodes : Array DivisorNode := #[{}]
 

@@ -36,9 +36,12 @@ shows a small 2–3% reduction. Record destructuring compiles to the same nested
 record copy and has essentially unchanged time. The explicit function boundary
 permits reuse of the statistics record but reallocates the outer workspace;
 its measured time is slightly worse. Both record rewrites are excluded from
-the implementation. Removing traversal pairs shows about 7%, 4% and 2% less
-time on these cases. The cyclic-5 AB baseline is slower than its BA baseline;
-both observations remain in the aggregate and raw data.
+the implementation. Removing traversal pairs shows about 4% and 2% less time on cyclic-6 and
+Katsura-3. Cyclic-5 has B/A = 0.891 in AB and 0.970 in BA: its AB baseline
+is slower than its BA baseline and than the same binary in the preceding
+inlining observation. The 0.930 paired aggregate retains both blocks, but the
+size of the cyclic-5 effect is **inconclusive**. The per-block range is about
+3–11% less time; no 7% representative improvement is established.
 
 Conformance compares trie results with an exhaustive scan on 400 queries,
 including zero variables, duplicate leading monomials, sparse-reducer preference

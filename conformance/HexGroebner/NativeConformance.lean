@@ -84,9 +84,13 @@ private def malformed : Bool := Id.run do
   if (Native.subtract 7 dense columns coefficients 3 0 1).isSome then return false
   if (Native.subtract 7 dense columns coefficients 1 2 1).isSome then return false
   if (Native.subtract 7 dense columns coefficients (2 ^ 100) 0 1).isSome then return false
+  if (Native.subtract 257 (encode .u8 #[1, 2, 3]) columns (encode .u16 #[1, 1]) 0 2 1).isSome then return false
+  if (Native.subtract 7 dense columns coefficients 0 (2 ^ 100) 1).isSome then return false
   let invalidColumns := encode .u32 #[0, 4294967295]
   if (Native.subtract 7 dense invalidColumns coefficients 0 2 1).isSome then return false
   if !check 7 dense invalidColumns coefficients 0 2 1 then return false
+  let rejected := Native.subtract 7 dense invalidColumns coefficients 0 2 1
+  if rejected.isSome || dense.data != #[1, 2] then return false
   if (Native.subtract 7 dense columns (encode .u8 #[1, 7]) 0 2 1).isSome then return false
   if !check 7 (encode .u8 #[1, 7]) columns coefficients 0 2 1 then return false
   -- Unaccessed malformed residues are irrelevant to a zero-length slice.
@@ -94,6 +98,9 @@ private def malformed : Bool := Id.run do
   let longColumns := encode .u32 (Array.replicate 4097 0)
   let longCoefficients := encode .u8 (Array.replicate 4097 1)
   if (Native.subtract 2 (encode .u8 #[0]) longColumns longCoefficients 0 4097 1).isSome then return false
+  let longDense := encode .u8 #[0]
+  let rejected := Native.subtract 2 longDense longColumns longCoefficients 0 4097 1
+  if rejected.isSome || longDense.data != #[0] then return false
   if !check 2 (encode .u8 #[0]) longColumns longCoefficients 0 4096 1 then return false
   return true
 

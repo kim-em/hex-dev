@@ -122,8 +122,8 @@ setup_benchmark cauchy n => n * n * n
   with prep := prepare
   where {
     paramFloor := 32
-    paramCeiling := 1024
-    paramSchedule := .custom #[32, 64, 128, 256, 512, 1024]
+    paramCeiling := 512
+    paramSchedule := .custom #[32, 64, 128, 256, 512]
     maxSecondsPerCall := 8.0
     targetInnerNanos := 500000000
   }
@@ -135,8 +135,8 @@ setup_benchmark cauchyTrace n => n * n * n
   with prep := prepare
   where {
     paramFloor := 32
-    paramCeiling := 1024
-    paramSchedule := .custom #[32, 64, 128, 256, 512, 1024]
+    paramCeiling := 512
+    paramSchedule := .custom #[32, 64, 128, 256, 512]
     maxSecondsPerCall := 8.0
     targetInnerNanos := 500000000
   }
@@ -168,8 +168,8 @@ setup_benchmark cauchyPortable n => n * n * n
   with prep := prepare
   where {
     paramFloor := 32
-    paramCeiling := 1024
-    paramSchedule := .custom #[32, 64, 128, 256, 512, 1024]
+    paramCeiling := 512
+    paramSchedule := .custom #[32, 64, 128, 256, 512]
     maxSecondsPerCall := 8.0
     targetInnerNanos := 500000000
   }

@@ -17,6 +17,14 @@ rows are retained, with one reusable packed dense accumulator. -/
 
 namespace Hex.Groebner
 
+/-- Both representations choose the same minimal residue width. -/
+theorem native_width (field : PrimeField) :
+    Native.width field.modulus.toNat = field.width.bytes := by
+  simp only [Native.width, PrimeField.width, UInt64.le_iff_toNat_le]
+  simp only [show (256 : UInt64).toNat = 256 from rfl,
+    show (65536 : UInt64).toNat = 65536 from rfl]
+  split <;> (try split) <;> rfl
+
 /-- Resource categories. Packed bytes count logical input, workspace and output
 payload, excluding allocator capacity and Lean object headers. Work counts row
 visits, sparse entry updates (including their product), dense column visits,
@@ -25,10 +33,11 @@ inductive Resource where
   | columns | rows | inputEntries | outputEntries | packedBytes | work | traceNodes
   deriving BEq, Repr
 
-/-- Invalid serialized matrix data and resource exhaustion remain distinct. -/
+/-- Invalid serialized data, resource exhaustion and internal row-provider failure remain distinct. -/
 inductive MatrixError where
   | dimensions
-  | kernel
+  /-- The checked native row provider rejected a validated row; internal invariant failure. -/
+  | rowUpdate
   | rowLength (row : Nat)
   | column (row entry : Nat)
   | coefficient (row entry : Nat)
@@ -256,12 +265,13 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
               last := max last (Packed.read .u32 pivot.row.columns (pivot.row.size - 1)).toNat
               work limits pivot.row.size
               if native then
+                -- Cancellation or additional allowance checks belong between chunks.
                 for chunk in [:((pivot.row.size + 4095) / 4096)] do
                   let start := chunk * 4096
                   let count := min 4096 (pivot.row.size - start)
                   match Native.subtract field.modulus dense pivot.row.columns
                       pivot.row.coefficients start count a with
-                  | none => throw .kernel
+                  | none => throw .rowUpdate
                   | some next => dense := next
               else
                 for i in [:pivot.row.size] do
