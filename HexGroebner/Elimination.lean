@@ -211,6 +211,16 @@ private def scaleSparse (field : PrimeField) (ctx : BarrettCtx field.modulus)
       (ctx.mulMod (Packed.read width row.coefficients i) inverse)
   return ⟨row.columns, coefficients⟩
 
+/-- Flat loop state avoids a nested tuple of mutable values at every column. -/
+private structure Scan where
+  dense : ByteArray
+  last : Nat
+  chargedUntil : Nat
+  leading : Option Nat
+  trace : Array RowOp
+  node : Option Nat
+  sugar : Nat
+
 /-- Reduce against sparse pivots in a fixed column map. Each scalar update uses
 canonical residues: `a + p - (b*c mod p)` fits below `2*p < 2^32`, and the
 Barrett product fits below `p^2 < 2^62`. No floating-point arithmetic is used. -/
@@ -268,48 +278,53 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
         for i in [:row.size] do
           let column := (Packed.read .u32 row.columns i).toNat
           dense := Packed.set width dense column (Packed.read width row.coefficients i)
-        let mut last := (Packed.read .u32 row.columns (row.size - 1)).toNat
-        let mut chargedUntil := first
-        let mut leading : Option Nat := none
+        let mut scan : Scan := ⟨dense, (Packed.read .u32 row.columns (row.size - 1)).toNat,
+          first, none, trace, node, sugar⟩
         for column in [first:columns] do
-          if column > last then break
+          if column > scan.last then break
           -- Reserve bounded scan blocks; a pivot can extend the active range.
-          if column ≥ chargedUntil then
-            chargedUntil := min (column + 64) (last + 1)
-            work limits (chargedUntil - column)
-          let a := Packed.read width dense column
+          if column ≥ scan.chargedUntil then
+            scan := { scan with chargedUntil := min (column + 64) (scan.last + 1) }
+            work limits (scan.chargedUntil - column)
+          let a := Packed.read width scan.dense column
           if a != 0 then
             let slot := (Packed.read .u32 slots column).toNat
             if slot != 0 then
               let pivot := pivots[slot - 1]!
-              sugar := max sugar pivot.sugar
-              last := max last (Packed.read .u32 pivot.row.columns (pivot.row.size - 1)).toNat
+              scan := { scan with
+                sugar := max scan.sugar pivot.sugar
+                last := max scan.last (Packed.read .u32 pivot.row.columns (pivot.row.size - 1)).toNat }
               work limits pivot.row.size
               if native then
                 -- Cancellation or additional allowance checks belong between chunks.
                 for chunk in [:((pivot.row.size + 4095) / 4096)] do
                   let start := chunk * 4096
                   let count := min 4096 (pivot.row.size - start)
-                  match Native.subtract field.modulus dense pivot.row.columns
+                  match Native.subtract field.modulus scan.dense pivot.row.columns
                       pivot.row.coefficients start count a with
                   | none => throw .rowUpdate
-                  | some next => dense := next
+                  | some next => scan := { scan with dense := next }
               else
                 for i in [:pivot.row.size] do
                   let j := (Packed.read .u32 pivot.row.columns i).toNat
                   let b := Packed.read width pivot.row.coefficients i
                   let product := ctx.mulMod a b
-                  let difference := Packed.read width dense j + field.modulus - product
-                  dense := Packed.set width dense j
-                    (if difference ≥ field.modulus then difference - field.modulus else difference)
+                  let difference := Packed.read width scan.dense j + field.modulus - product
+                  let value := if difference ≥ field.modulus then difference - field.modulus else difference
+                  scan := { scan with dense := Packed.set width scan.dense j value }
               modify fun s => { s with reductions := s.reductions + 1 }
-              if let (some left, some right) := (node, pivot.derivation) then
-                let (nextTrace, nextNode) ← record limits provenance trace
+              if let (some left, some right) := (scan.node, pivot.derivation) then
+                let (nextTrace, nextNode) ← record limits provenance scan.trace
                   (.addScaled left right (field.modulus - a))
-                trace := nextTrace
-                node := nextNode
-            else if leading.isNone then
-              leading := some column
+                scan := { scan with trace := nextTrace, node := nextNode }
+            else if scan.leading.isNone then
+              scan := { scan with leading := some column }
+        dense := scan.dense
+        trace := scan.trace
+        node := scan.node
+        sugar := scan.sugar
+        let last := scan.last
+        let leading := scan.leading
         if let some column := leading then
           let a := Packed.read width dense column
           let inv ← if independent && fromTarget then pure 1 else inverse field ctx limits a
