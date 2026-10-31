@@ -157,3 +157,7 @@ and matched full-system external comparisons remain outstanding.
 [#10987](https://github.com/kim-em/hex-dev/issues/10987) tracks the continuing
 correctness, finite-field scope and fastest-open-source requirements. No
 library phase or performance milestone is claimed.
+
+Reducer-trie traversal caches node depths and keeps node IDs alone on its stacks.
+[Matched allocation measurements](../reports/bench-results/hexgroebner-allocation.md)
+retain all successful and unsuccessful variants and their complete samples.

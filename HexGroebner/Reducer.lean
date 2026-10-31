@@ -27,6 +27,8 @@ structure BasisElement where
 structure DivisorNode where
   edges : ByteArray := {}
   reducer : Option Nat := none
+  /-- Path length from the root, so traversal stacks store only node IDs. -/
+  depth : Nat := 0
   deriving Inhabited
 
 /-- Leading-monomial index for one immutable basis version. -/
@@ -63,7 +65,7 @@ def build (context : Context) (limits : Limits) (basis : Array BasisElement) :
         if id > 4294967295 then throw (.representation .index)
         let edges := Packed.push .u32 (Packed.push .u32 edges exponent) id.toUInt64
         nodes := nodes.modify node fun n => { n with edges }
-        nodes := nodes.push {}
+        nodes := nodes.push { depth := coordinate + 1 }
         node := id
     spend limits 1
     let old := nodes[node]!.reducer
@@ -76,15 +78,16 @@ replace the exponent tests performed by the trie path. -/
 def find (context : Context) (limits : Limits) (index : ReducerIndex)
     (basis : Array BasisElement) (monomial : Nat) : Computation (Option Nat) := do
   let table := (← get).table
-  let mut pending := #[(0, 0)]
+  let mut pending := #[0]
   let mut result : Option Nat := none
   -- Each trie node has one parent, so at most nodes.size nodes can be visited.
   for _ in [:index.nodes.size] do
     if pending.isEmpty then break
-    let (node, coordinate) := pending.back!
+    let node := pending.back!
     pending := pending.pop
     spend limits 1
     let n := index.nodes[node]!
+    let coordinate := n.depth
     if coordinate == context.variables then
       if let some candidate := n.reducer then
         let p := basis[candidate]!.polynomial
@@ -101,7 +104,7 @@ def find (context : Context) (limits : Limits) (index : ReducerIndex)
       spend limits (n.edges.size / 8)
       for i in [:n.edges.size / 8] do
         if Packed.read .u32 n.edges (2 * i) ≤ exponent then
-          pending := pending.push ((Packed.read .u32 n.edges (2 * i + 1)).toNat, coordinate + 1)
+          pending := pending.push (Packed.read .u32 n.edges (2 * i + 1)).toNat
   return result
 
 /-- Enumerate indexed divisors rather than scanning the entire basis. The trie
@@ -110,14 +113,15 @@ monomials are distinct. Every returned identifier passes the exact path tests. -
 def divisors (context : Context) (limits : Limits) (index : ReducerIndex)
     (monomial : Nat) : Computation (Array Nat) := do
   let table := (← get).table
-  let mut pending := #[(0, 0)]
+  let mut pending := #[0]
   let mut result := #[]
   for _ in [:index.nodes.size] do
     if pending.isEmpty then break
-    let (node, coordinate) := pending.back!
+    let node := pending.back!
     pending := pending.pop
     spend limits 1
     let n := index.nodes[node]!
+    let coordinate := n.depth
     if coordinate == context.variables then
       if let some reducer := n.reducer then result := result.push reducer
     else
@@ -125,7 +129,7 @@ def divisors (context : Context) (limits : Limits) (index : ReducerIndex)
       spend limits (n.edges.size / 8)
       for i in [:n.edges.size / 8] do
         if Packed.read .u32 n.edges (2 * i) ≤ exponent then
-          pending := pending.push ((Packed.read .u32 n.edges (2 * i + 1)).toNat, coordinate + 1)
+          pending := pending.push (Packed.read .u32 n.edges (2 * i + 1)).toNat
   return result
 
 end ReducerIndex

@@ -113,7 +113,7 @@ abbrev Computation := ExceptT ComputeError (StateM Workspace)
 namespace Computation
 
 /-- Charge work before executing a bounded block. -/
-def spend (limits : Limits) (amount : Nat) : Computation Unit := do
+@[inline] def spend (limits : Limits) (amount : Nat) : Computation Unit := do
   let s ← get
   let work := s.statistics.work + amount
   if work > limits.work then throw (.exhausted .work)

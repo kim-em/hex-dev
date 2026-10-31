@@ -211,4 +211,56 @@ private def queueAgreement : Bool := Id.run do
 
 #guard queueAgreement
 
+-- A flat exhaustive scan is independent of trie paths, masks and degree filters.
+private def reducerLookup : Bool := Id.run do
+  for variables in [0, 1, 3, 7] do
+    let context : Context := ⟨field, variables, .grevlex⟩
+    let limits : Limits := { work := 1000000000 }
+    let trial : Computation Bool := do
+      let boundaries : Array Nat := #[0, 1, 2, 3, 255, 256, 65535, 65536, 4294967295]
+      let mut basis : Array BasisElement := #[⟨{}, 0⟩]
+      for k in [:72] do
+        let powers := (Array.range variables).map fun i => boundaries[((k % 18) / (i + 1) + i) % boundaries.size]!
+        let mut raw : RawPolynomial := #[⟨powers, 1⟩]
+        if k % 3 == 0 then raw := raw.push ⟨Array.replicate variables 0, 1⟩
+        let p ← Polynomial.normalize context limits k raw
+        basis := basis.push ⟨p, 0⟩
+      let index ← ReducerIndex.build context limits basis
+      for k in [:100] do
+        let powers := (Array.range variables).map fun i => boundaries[(k / (i + 1) + 2 * i) % boundaries.size]!
+        let monomial ← Computation.intern limits (powers.map Nat.toUInt64)
+        let table := (← get).table
+        let mut expected : Array Nat := #[]
+        for i in [:basis.size] do
+          let p := basis[i]!.polynomial
+          if p.size == 0 then continue
+          let leading := p.monomial 0
+          let divides := (Array.range variables).all fun j => table.exponent leading j ≤ powers[j]!.toUInt64
+          if !divides then continue
+          let mut representative := true
+          for j in [:basis.size] do
+            let q := basis[j]!.polynomial
+            if q.size != 0 && q.monomial 0 == leading &&
+                (q.size < p.size || (q.size == p.size && j < i)) then
+              representative := false
+          if representative then expected := expected.push i
+        let divisors ← index.divisors context limits monomial
+        if divisors.size != expected.size || !expected.all divisors.contains then return false
+        match ← index.find context limits basis monomial with
+        | none => if !expected.isEmpty then return false
+        | some i =>
+          if !expected.contains i then return false
+          let p := basis[i]!.polynomial
+          for j in expected do
+            let q := basis[j]!.polynomial
+            if q.size < p.size || (q.size == p.size && table.degree (q.monomial 0) > table.degree (p.monomial 0)) then
+              return false
+      return true
+    match trial.run ⟨{ arity := variables }, {}⟩ with
+    | (.ok true, _) => pure ()
+    | _ => return false
+  return true
+
+#guard reducerLookup
+
 end Hex.Groebner.F4Conformance
