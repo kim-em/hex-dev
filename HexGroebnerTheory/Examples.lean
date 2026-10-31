@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGroebnerTheory.Order
+public import HexGroebnerTheory.CertificateLeading
 
 public section
 
@@ -69,5 +70,40 @@ theorem grevlex_coefficient :
 #guard_msgs in #print axioms grlex_degree
 /-- info: 'HexGroebnerTheory.Examples.grevlex_coefficient' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in #print axioms grevlex_coefficient
+
+local instance : Hex.ZMod64.Bounds 7 where
+  pPos := by decide
+  pLtR := by decide
+
+/-- Ordinary residue term lists retain lex leading exponents after transport. -/
+theorem certificate_lex :
+    (toMonomialOrder (Hex.Groebner.TermOrder.lex.cmp 2)).degree
+      (HexMvPolyTheory.Kernel.denoteMod 7 (cmp := Hex.Groebner.TermOrder.lex.cmp 2)
+        [([2, 0], 3), ([0, 3], 5)]) = HexMvPolyTheory.monoEquiv #v[2, 0] := by
+  exact Certificate.leading_degree .lex (term := ([2, 0], 3))
+    (Hex.MvPoly.Kernel.isCanonicalMod_iff.mp (by decide +kernel)) (by decide +kernel)
+
+/-- The same serialized list has a different leading exponent in graded lex. -/
+theorem certificate_grlex :
+    (toMonomialOrder (Hex.Groebner.TermOrder.grlex.cmp 2)).degree
+      (HexMvPolyTheory.Kernel.denoteMod 7 (cmp := Hex.Groebner.TermOrder.grlex.cmp 2)
+        [([2, 0], 3), ([0, 3], 5)]) = HexMvPolyTheory.monoEquiv #v[0, 3] := by
+  exact Certificate.leading_degree .grlex (term := ([0, 3], 5))
+    (Hex.MvPoly.Kernel.isCanonicalMod_iff.mp (by decide +kernel)) (by decide +kernel)
+
+/-- Graded reverse lex selects the stored coefficient of its actual leading term. -/
+theorem certificate_grevlex :
+    (toMonomialOrder (Hex.Groebner.TermOrder.grevlex.cmp 2)).leadingCoeff
+      (HexMvPolyTheory.Kernel.denoteMod 7 (cmp := Hex.Groebner.TermOrder.grevlex.cmp 2)
+        [([2, 0], 3), ([0, 3], 5)]) = 5 := by
+  exact Certificate.leading_coefficient .grevlex (term := ([0, 3], 5))
+    (Hex.MvPoly.Kernel.isCanonicalMod_iff.mp (by decide +kernel)) (by decide +kernel)
+
+/-- info: 'HexGroebnerTheory.Examples.certificate_lex' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms certificate_lex
+/-- info: 'HexGroebnerTheory.Examples.certificate_grlex' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms certificate_grlex
+/-- info: 'HexGroebnerTheory.Examples.certificate_grevlex' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms certificate_grevlex
 
 end HexGroebnerTheory.Examples

@@ -101,7 +101,11 @@ residues, and preserves original borrowed buffers when inputs alias. C code
 uses little-endian scalar access, uint128 Barrett reduction when available and
 exact word remainder otherwise. No ISA extension or floating point is required.
 Barrett parameters are hoisted outside coefficient loops; products fit below
-`p² < 2^62`.
+`p² < 2^62`. One- and two-byte residues use a 32-bit Barrett reciprocal;
+four-byte residues use a 64-bit reciprocal with the uint128 high product.
+Canonical subtraction uses an unsigned wrap mask. Both paths are compared with
+exact remainder, including exhaustive products for the largest one-byte moduli
+and cancellation boundaries at every coefficient width.
 
 `reduceRowsWith` instead reduces every target independently against the same
 reducer echelon space. It preserves scalars, input order and zero rows; no target

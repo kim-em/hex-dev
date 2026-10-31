@@ -11,4 +11,5 @@ public import HexGroebnerTheory.Certificate
 public import HexGroebnerTheory.Groebner
 public import HexGroebnerTheory.Reduced
 public import HexGroebnerTheory.CertificateOrder
+public import HexGroebnerTheory.CertificateLeading
 public import HexGroebnerTheory.Pairs

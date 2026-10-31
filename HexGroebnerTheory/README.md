@@ -20,6 +20,12 @@ derivations. `MemberExample` replays a literal six-node witness and proves
 Malformed nodes, forward references, noncanonical factors and wrong identities
 are rejected by the Mathlib-free checker.
 
+`CertificateLeading` proves that the certificate list scan selects the actual
+leading exponent and coefficient under all three explicit orders. It uses the
+existing residue-polynomial correspondence; canonical arity, unique exponents,
+nonzero coefficients and residue bounds are hypotheses. `Examples` also checks
+literal residue lists through this bridge using ordinary kernel reduction.
+
 `Groebner` states the basis predicate by leading-monomial divisibility and
 proves its equivalence with the leading-term-ideal predicate. It supplies
 Buchberger's criterion using bounded zero-remainder representations, and unique

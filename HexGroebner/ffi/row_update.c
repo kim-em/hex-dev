@@ -54,8 +54,14 @@ static int update_bytes(uint64_t modulus, unsigned width, uint8_t *out,
                         size_t start, size_t count, uint64_t factor) {
     size_t dense_elements = dense_bytes / width;
 #if defined(__SIZEOF_INT128__) && !defined(HEX_GROEBNER_NO_UINT128)
-    uint64_t reciprocal = UINT64_MAX / modulus;
-    if (UINT64_MAX % modulus == modulus - 1) ++reciprocal;
+    uint64_t reciprocal;
+    if (width < 4) {
+        /* factor*b < 2^32, so a 32-bit Barrett reciprocal is sufficient. */
+        reciprocal = UINT64_C(4294967296) / modulus;
+    } else {
+        reciprocal = UINT64_MAX / modulus;
+        if (UINT64_MAX % modulus == modulus - 1) ++reciprocal;
+    }
 #endif
     for (size_t k = 0; k < count; ++k) {
         size_t i = start + k;
@@ -67,14 +73,18 @@ static int update_bytes(uint64_t modulus, unsigned width, uint8_t *out,
         if (a >= modulus || b >= modulus) return 0;
         uint64_t product = factor * b;
 #if defined(__SIZEOF_INT128__) && !defined(HEX_GROEBNER_NO_UINT128)
-        uint64_t quotient = (uint64_t)(((__uint128_t)product * reciprocal) >> 64);
+        uint64_t quotient = width < 4 ? (product * reciprocal) >> 32 :
+            (uint64_t)(((__uint128_t)product * reciprocal) >> 64);
         product -= quotient * modulus;
         if (product >= modulus) product -= modulus;
 #else
         product %= modulus;
 #endif
-        uint64_t difference = a + modulus - product;
-        if (difference >= modulus) difference -= modulus;
+        /* a and product are canonical and below 2^31. Unsigned subtraction
+           wraps precisely when a < product; only that case has its top bit
+           set. Adding p under this mask gives the canonical difference. */
+        uint64_t difference = a - product;
+        difference += modulus & (UINT64_C(0) - (difference >> 63));
         write_le(out + offset, width, difference);
     }
     return 1;
