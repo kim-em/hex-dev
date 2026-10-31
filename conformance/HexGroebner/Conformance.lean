@@ -54,6 +54,8 @@ private def shape (field : PrimeField) (e : Echelon) : Bool := Id.run do
 #guard (SparseRow.ofEntries field 4 #[(2, 1), (1, 3)]).isNone
 
 #guard (Packed.read .u32 (Packed.push .u32 {} 4294967295) 0).toNat == 4294967295
+#guard (Packed.push .u32 {} 0x12345678).data.toList == [0x78, 0x56, 0x34, 0x12]
+#guard Packed.read .u32 ⟨#[0x78, 0x56, 0x34, 0x12]⟩ 0 == 0x12345678
 #guard (Packed.read .u16 (Packed.set .u16 (Packed.push .u16 {} 65535) 0 256) 0) == 256
 -- Downstream ordinary-kernel evaluation of the literal byte encoding.
 /-- Literal storage decoding reduces in the ordinary downstream kernel. -/
