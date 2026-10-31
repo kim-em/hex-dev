@@ -12,7 +12,8 @@ public import Std.Data.TreeSet
 public section
 
 /-! Critical pairs in a persistent leftist sugar-degree heap. Pair resolution is explicit:
-the chain criterion only cites pairs already resolved, never queued pairs. -/
+the resolved chain criterion cites completed dependencies; Gebauer–Möller
+installation and proper-LCM chains retain a separate deferred-obligation contract. -/
 
 namespace Hex.Groebner
 open Computation
@@ -76,7 +77,10 @@ decreasing_by all_goals simp_wf; omega
 
 end PairHeap
 
-/-- Sugar-ordered queue plus resolved-pair obligations. -/
+/-- Sugar-ordered queue plus completed pair obligations. Pairs omitted by GM
+retain an implicit dependency on retained pairs smaller in the installation
+measure; they are deliberately absent from `resolved`. A complete producer
+proof must establish coverage by queued, completed or justified omitted pairs. -/
 structure PairQueue where
   heap : PairHeap := .empty
   resolved : Std.TreeSet (Nat × Nat)
@@ -112,9 +116,7 @@ private def coprime (table : MonomialTable) (a b : Nat) : Bool := Id.run do
     if table.exponent a i != 0 && table.exponent b i != 0 then return false
   return true
 
-/-- Install every pair involving the new basis element. Product pairs are
-resolved immediately; no unresolved pair is removed by a degree heuristic. -/
-def install (context : Context) (limits : Limits) (queue : PairQueue)
+private def installBuchberger (context : Context) (limits : Limits) (queue : PairQueue)
     (basis : Array BasisElement) (new : Nat) : Computation PairQueue := do
   let mut queue := queue
   for i in [:new] do
@@ -135,21 +137,103 @@ def install (context : Context) (limits : Limits) (queue : PairQueue)
       queue ← queue.push limits ⟨i, new, lcm, sugar⟩
   return queue
 
-/-- Buchberger's chain test with explicit resolved dependencies. Only indexed
-divisors of the pair LCM need dependency lookups. -/
+/-- Install minimal new LCMs using the Gebauer–Möller strategy (Becker and
+Weispfenning, algorithm UPDATE). Product pairs remain available as divisibility
+filters. Equal LCMs prefer a product pair, then the earliest basis index.
+Omitted pairs are never marked resolved: their justification can still depend
+on retained pairs. The justification is ordered by LCM, then maximum basis
+index, then representative priority within an equal-LCM group. Install-time
+chains may cite an old pair with the same LCM and a smaller maximum index;
+LCM induction alone is insufficient. Proper old-pair pruning is deferred to
+selection. Unlike the full UPDATE algorithm, no basis entry is deleted. -/
+def install (context : Context) (limits : Limits) (queue : PairQueue)
+    (basis : Array BasisElement) (new : Nat) : Computation PairQueue := do
+  if !limits.gebauerMoller then return ← installBuchberger context limits queue basis new
+  let mut queue := queue
+  let mut candidates : Std.HashMap Nat (CriticalPair × Bool) := {}
+  let mut lcms : Array Nat := #[]
+  for i in [:new] do
+    let state ← get
+    if state.statistics.pairs ≥ limits.pairs then throw (.exhausted .pairs)
+    set { state with statistics.pairs := state.statistics.pairs + 1 }
+    spend limits (context.variables + 1)
+    let a := basis[i]!.polynomial.monomial 0
+    let b := basis[new]!.polynomial.monomial 0
+    let lcm ← combine limits .lcm a b
+    let table := (← get).table
+    let product := coprime table a b
+    let sugar := max (basis[i]!.sugar + table.degree lcm - table.degree a)
+      (basis[new]!.sugar + table.degree lcm - table.degree b)
+    let pair : CriticalPair := ⟨i, new, lcm, sugar⟩
+    if product then
+      queue ← queue.resolve limits i new
+      modify fun s => { s with statistics.productPairs := s.statistics.productPairs + 1 }
+    match candidates[lcm]? with
+    | none =>
+      lcms := lcms.push lcm
+      candidates := candidates.insert lcm (pair, product)
+    | some (_, oldProduct) =>
+      if !product || !oldProduct then
+        modify fun s => { s with statistics.gmPairs := s.statistics.gmPairs + 1 }
+      if product && !oldProduct then candidates := candidates.insert lcm (pair, true)
+  -- Divisibility implies non-strict mathematical monomial order, so every
+  -- proper divisor occurs first. Stable IDs make equal-LCM groups exact.
+  let ordered ← sort context limits lcms
+  let table := (← get).table
+  let mut minimal : Array Nat := #[]
+  for lcm in ordered.reverse do
+    let mut dominated := false
+    for divisor in minimal do
+      spend limits (context.variables + 1)
+      if table.divides divisor lcm then
+        dominated := true
+        break
+    let (pair, product) := candidates[lcm]!
+    if dominated then
+      if !product then
+        modify fun s => { s with statistics.gmPairs := s.statistics.gmPairs + 1 }
+    else
+      minimal := minimal.push lcm
+      if !product then queue ← queue.push limits pair
+  return queue
+
+/-- A completed chain and a proper-LCM chain have different dependency contracts. -/
+inductive PairCriterion where
+  | keep | resolved | proper
+  deriving BEq, Repr
+
+/-- Indexed chain criteria. A resolved chain cites two completed obligations.
+A proper-LCM chain cites two strictly smaller LCMs; it can be omitted by
+well-founded induction on the LCM, but must never enter the resolved-pair set. -/
 def chain (context : Context) (limits : Limits) (queue : PairQueue)
-    (index : ReducerIndex) (pair : CriticalPair) : Computation Bool := do
+    (index : ReducerIndex) (basis : Array BasisElement) (pair : CriticalPair) :
+    Computation PairCriterion := do
+  let table := (← get).table
+  let left := basis[pair.left]!.polynomial.monomial 0
+  let right := basis[pair.right]!.polynomial.monomial 0
   for k in ← index.divisors context limits pair.lcm do
+    if k == pair.left || k == pair.right then continue
     spend limits (1 + 8 * (queue.resolved.size + 2).log2)
-    if k != pair.left && k != pair.right &&
-        queue.resolved.contains (key pair.left k) && queue.resolved.contains (key k pair.right) then
-      return true
-  return false
+    if queue.resolved.contains (key pair.left k) && queue.resolved.contains (key k pair.right) then
+      return .resolved
+    if !limits.gebauerMoller then continue
+    spend limits (2 * context.variables)
+    let middle := basis[k]!.polynomial.monomial 0
+    let mut properLeft := false
+    let mut properRight := false
+    for i in [:context.variables] do
+      let bound := table.exponent pair.lcm i
+      let value := table.exponent middle i
+      if max (table.exponent left i) value < bound then properLeft := true
+      if max (table.exponent right i) value < bound then properRight := true
+    if properLeft && properRight then return .proper
+  return .keep
 
 /-- Select one fair sugar batch; batch size is bounded independently of degree.
-Skipped chain pairs become resolved only after the dependency test succeeds. -/
+Only completed-dependency chains enter `resolved`. Proper-LCM omissions
+remain distinct; both classes are removed atomically with the checkpoint. -/
 def select (context : Context) (limits : Limits) (queue : PairQueue)
-    (index : ReducerIndex) : Computation (Array CriticalPair × PairQueue) := do
+    (index : ReducerIndex) (basis : Array BasisElement) : Computation (Array CriticalPair × PairQueue) := do
   let mut queue := queue
   let mut selected := #[]
   let mut sugar : Option Nat := none
@@ -161,10 +245,13 @@ def select (context : Context) (limits : Limits) (queue : PairQueue)
     let (pair, next) ← queue.pop limits
     queue := next
     if let some pair := pair then
-      if ← queue.chain context limits index pair then
+      match ← queue.chain context limits index basis pair with
+      | .resolved =>
         queue ← queue.resolve limits pair.left pair.right
         modify fun s => { s with statistics.chainPairs := s.statistics.chainPairs + 1 }
-      else
+      | .proper =>
+        modify fun s => { s with statistics.gmPairs := s.statistics.gmPairs + 1 }
+      | .keep =>
         sugar := some pair.sugar
         selected := selected.push pair
   return (selected, queue)

@@ -69,6 +69,7 @@ def main():
                for line in records), "batch schedules not distinguished"
     assert any(json.loads(line)["value"]["chainPairs"] > 0 for line in records), "chain criterion not exercised"
     assert any(json.loads(line)["value"]["serialChainPairs"] > 0 for line in records), "serial chain criterion not exercised"
+    assert any(json.loads(line)["value"].get("gmPairs", 0) > 0 for line in records), "Gebauer–Möller criteria not exercised"
     print(f"OK: {len(records)} reduced bases match SymPy {sympy.__version__} F5B")
     from scripts.oracle.groebner_singular import check_available
     check_available([json.loads(line) for line in records], args.require_oracles)

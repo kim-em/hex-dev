@@ -54,14 +54,23 @@ private def emit : IO Unit := do
           | .representation e _ => throw (IO.userError s!"{c.name}: scalar representation {reprStr e}")
         if candidate.polynomials != scalar.polynomials || stats != scalarStats then
           throw (IO.userError s!"{c.name}: native/scalar candidate or counter mismatch")
+        let (reference, referenceStats) ← match computeWith context { gebauerMoller := false } c.generators with
+          | .candidate candidate stats => pure (candidate, stats)
+          | .internal e _ => throw (IO.userError s!"{c.name}: reference internal {reprStr e}")
+          | .invalid e _ => throw (IO.userError s!"{c.name}: reference {reprStr e}")
+          | .exhausted r _ => throw (IO.userError s!"{c.name}: reference exhausted {reprStr r}")
+          | .representation e _ => throw (IO.userError s!"{c.name}: reference representation {reprStr e}")
+        if candidate.polynomials != reference.polynomials then
+          throw (IO.userError s!"{c.name}: Gebauer–Möller/reference candidate mismatch")
         let value := "{" ++ s!"\"p\":{field.modulus.toNat},\"variables\":{c.variables}," ++
           "\"order\":\"" ++ orderName order ++ "\",\"generators\":" ++
           array (c.generators.map polynomial) ++ ",\"basis\":" ++
           array (candidate.polynomials.map polynomial) ++
           s!",\"rounds\":{stats.rounds},\"pairs\":{stats.pairs},\"work\":{stats.work}," ++
-          s!"\"productPairs\":{stats.productPairs},\"chainPairs\":{stats.chainPairs}," ++
+          s!"\"productPairs\":{stats.productPairs},\"chainPairs\":{stats.chainPairs},\"gmPairs\":{stats.gmPairs}," ++
           s!"\"serialChainPairs\":{serialStats.chainPairs},\"serialWork\":{serialStats.work}," ++
-          s!"\"serialRounds\":{serialStats.rounds}" ++ "}"
+          s!"\"serialRounds\":{serialStats.rounds},\"referenceWork\":{referenceStats.work}," ++
+          s!"\"referenceMatrixEntries\":{referenceStats.matrixEntries},\"matrixEntries\":{stats.matrixEntries}" ++ "}"
         Hex.Conformance.Emit.emitResult "HexGroebner" s!"p{field.modulus.toNat}/{orderName order}/{c.name}" "f4" value
 
 end Hex.Groebner.EmitF4

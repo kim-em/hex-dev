@@ -87,6 +87,8 @@ structure Limits where
   batchSize : Nat := 64
   /-- Use the approved native row kernel; false selects scalar Lean updates. -/
   nativeRows : Bool := true
+  /-- Enable minimal-LCM installation and proper-LCM chain pruning. -/
+  gebauerMoller : Bool := true
   deriving Inhabited
 
 /-- Cumulative counters survive failure and resumption. -/
@@ -100,6 +102,7 @@ structure Statistics where
   matrixCalls : Nat := 0
   productPairs : Nat := 0
   chainPairs : Nat := 0
+  gmPairs : Nat := 0
   deriving Repr, BEq, Inhabited
 
 /-- Mutable logical workspace, separate from the immutable computation identity. -/

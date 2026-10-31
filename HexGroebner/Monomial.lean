@@ -24,7 +24,7 @@ inductive TermOrder where
   deriving BEq, Repr, Inhabited
 
 /-- The mathematical comparator carried by a named order. -/
-def TermOrder.cmp (order : TermOrder) (n : Nat) : Mono n → Mono n → Ordering :=
+@[expose] def TermOrder.cmp (order : TermOrder) (n : Nat) : Mono n → Mono n → Ordering :=
   match order with
   | .lex => Mono.lex
   | .grlex => Mono.grlex

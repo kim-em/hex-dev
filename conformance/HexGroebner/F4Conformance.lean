@@ -111,7 +111,7 @@ private def result (context : Context) (input : Array RawPolynomial) :
   | (.ok r, _) => r == #[⟨#[0, 1], 2⟩, ⟨#[0, 0], 3⟩]
   | _ => false
 
-private def budgets : Bool := Id.run do
+private def budgets (context : Context) (input : Array RawPolynomial) : Bool := Id.run do
   let expected := result context input
   let agrees := fun candidate => .ok candidate.polynomials == expected && candidate.randomState == 37
   let resume := fun state => match resumeWith {} state with
@@ -171,7 +171,13 @@ private def budgets : Bool := Id.run do
     if !later then return false
   return failedRound
 
-#guard budgets
+#guard budgets context input
+
+#guard match computeWith { context with order := .lex } {} input with
+  | .candidate _ stats => stats.gmPairs > 0
+  | _ => false
+
+#guard budgets { context with order := .lex } input
 
 -- Empty generators still consume work proportional to the outer input size.
 #guard match computeWith context { work := 20 } (Array.replicate 100 #[]) with
@@ -262,5 +268,90 @@ private def reducerLookup : Bool := Id.run do
   return true
 
 #guard reducerLookup
+
+-- Pair-set regressions distinguish proper LCM dependencies from equality and
+-- from completed zero reductions. They test the queue state itself, not just
+-- monomial systems whose S-polynomials happen to vanish.
+private def pairCriteria : Bool := Id.run do
+  let context : Context := ⟨field, 2, .grevlex⟩
+  let limits : Limits := {}
+  let setup (powers : Array (Array Nat)) : Computation (Array BasisElement) := do
+    let mut basis := #[]
+    for i in [:powers.size] do
+      let p ← Polynomial.normalize context limits i #[⟨powers[i]!, 1⟩]
+      basis := basis.push ⟨p, 0⟩
+    return basis
+  let proper : Computation Bool := do
+    let basis ← setup #[#[2, 1], #[1, 2], #[1, 1]]
+    let index ← ReducerIndex.build context limits basis
+    let lcm ← Computation.combine limits .lcm (basis[0]!.polynomial.monomial 0)
+      (basis[1]!.polynomial.monomial 0)
+    let pair : CriticalPair := ⟨0, 1, lcm, 0⟩
+    let queue ← ({} : PairQueue).push limits pair
+    if (← queue.chain context limits index basis pair) != .proper then return false
+    if (← queue.chain context { limits with gebauerMoller := false } index basis pair) != .keep then return false
+    let (selected, queue) ← queue.select context limits index basis
+    return selected.isEmpty && queue.heap.isEmpty && !queue.resolved.contains (PairQueue.key 0 1)
+  let equal : Computation Bool := do
+    let basis ← setup #[#[2, 0], #[1, 1], #[0, 1]]
+    let index ← ReducerIndex.build context limits basis
+    let lcm ← Computation.combine limits .lcm (basis[0]!.polynomial.monomial 0)
+      (basis[1]!.polynomial.monomial 0)
+    let pair : CriticalPair := ⟨0, 1, lcm, 0⟩
+    let queue ← ({} : PairQueue).install context limits basis 2
+    if (← queue.chain context limits index basis pair) != .keep then return false
+    let queue ← queue.resolve limits 1 2
+    return (← queue.chain context limits index basis pair) == .resolved
+  let product : Computation Bool := do
+    let basis ← setup #[#[1, 1], #[0, 1], #[1, 0]]
+    let queue ← ({} : PairQueue).install context limits basis 2
+    let statistics := (← get).statistics
+    return queue.heap.isEmpty && queue.resolved.contains (PairQueue.key 1 2) &&
+      !queue.resolved.contains (PairQueue.key 0 2) && statistics.gmPairs == 1 && statistics.productPairs == 1
+  let dominated : Computation Bool := do
+    let basis ← setup #[#[2, 1], #[2, 0], #[1, 0], #[1, 1]]
+    let queue ← ({} : PairQueue).install context limits basis 3
+    return queue.heap.size == 1 && queue.heap.first?.any (fun p => p.left == 2 && p.right == 3) &&
+      queue.resolved.isEmpty && (← get).statistics.gmPairs == 2
+  let multiple : Computation Bool := do
+    let basis ← setup #[#[2, 1], #[1, 2], #[1, 1], #[1, 0]]
+    let mut queue : PairQueue := {}
+    for new in [:basis.size] do queue ← queue.install context limits basis new
+    if queue.heap.size != 4 then return false
+    let index ← ReducerIndex.build context limits basis
+    let (selected, remainder) ← queue.select context limits index basis
+    return selected.size == 3 && remainder.heap.isEmpty && remainder.resolved.isEmpty &&
+      (← get).statistics.gmPairs == 3
+  for trial in [proper, equal, product, dominated, multiple] do
+    match trial.run ⟨{ arity := 2 }, {}⟩ with
+    | (.ok true, _) => pure ()
+    | _ => return false
+  return true
+
+#guard pairCriteria
+
+private def strategyResume : Bool := Id.run do
+  let context := { context with order := TermOrder.lex }
+  let expected := result context input
+  let mut prunedCheckpoint := false
+  for strategy in [false, true] do
+    let total := match computeWith context { gebauerMoller := strategy } input with
+      | .candidate _ statistics => statistics.work
+      | _ => 0
+    if total == 0 then return false
+    for work in [:total] do
+      match computeWith context { work, gebauerMoller := strategy } input 37 with
+      | .candidate candidate _ => if .ok candidate.polynomials != expected then return false
+      | .exhausted .work state =>
+        prunedCheckpoint := prunedCheckpoint || state.workspace.statistics.gmPairs > 0
+        match resumeWith { gebauerMoller := !strategy } state with
+        | .candidate candidate statistics =>
+          if .ok candidate.polynomials != expected || candidate.randomState != 37 ||
+              statistics.work < state.workspace.statistics.work then return false
+        | _ => return false
+      | _ => return false
+  return prunedCheckpoint
+
+#guard strategyResume
 
 end Hex.Groebner.F4Conformance
