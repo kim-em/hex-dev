@@ -85,7 +85,8 @@ private def summary : Except String (Array (Array (Nat × UInt64)) × Nat × Nat
   match run field c {} false, run field c {} true with
   | .ok ⟨.ok a, sa⟩, .ok ⟨.ok b, sb⟩ =>
     a.rows.map (·.row.entries field) == b.rows.map (·.row.entries field) &&
-      a.trace.isEmpty && sa.traceNodes == 0 && b.trace.size == sb.traceNodes
+      a.trace.isEmpty && sa.traceNodes == 0 && b.trace.size == sb.traceNodes &&
+      sb.packedBytes == sa.packedBytes + 64 * sb.traceNodes
   | _, _ => false
 
 private def same (field : PrimeField) (a b : MatrixResult) : Bool :=

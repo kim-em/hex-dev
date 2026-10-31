@@ -22,7 +22,7 @@ namespace Hex.Groebner
 /-- Supported named global orders, with their existing Hex order laws. -/
 inductive TermOrder where
   | lex | grlex | grevlex
-  deriving BEq, Repr, Inhabited
+  deriving BEq, Repr, DecidableEq, Inhabited
 
 /-- The mathematical comparator carried by a named order. -/
 @[expose] def TermOrder.cmp (order : TermOrder) (n : Nat) : Mono n → Mono n → Ordering :=

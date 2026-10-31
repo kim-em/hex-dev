@@ -35,3 +35,5 @@ public import HexGroebner.Member
 public import HexGroebner.Membership
 public import HexGroebner.CertificateNonmember
 public import HexGroebner.CertificateBasisReplay
+
+public import HexGroebner.Basis

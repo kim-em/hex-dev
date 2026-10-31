@@ -31,14 +31,14 @@ inductive Node where
   | add (left right : Nat)
   | scale (coefficient source : Nat)
   | multiply (factor : Polynomial) (source : Nat)
-  deriving Repr, Inhabited
+  deriving Repr, BEq, Inhabited
 
 /-- Shared derivation with an explicit result reference. An empty derivation
 has no result, including for zero; use the `zero` node to prove zero membership. -/
 structure Derivation where
   nodes : List Node
   root : Nat
-  deriving Repr, Inhabited
+  deriving Repr, BEq, Inhabited
 
 /-- Evaluate one node against previously evaluated nodes. Invalid indices,
 noncanonical scalar residues or noncanonical factors are rejected. -/

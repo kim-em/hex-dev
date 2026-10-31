@@ -19,6 +19,7 @@ public import HexGroebnerTheory.Division
 public import HexGroebnerTheory.NormalForm
 public import HexGroebnerTheory.Membership
 public import HexGroebnerTheory.Member
+public import HexGroebnerTheory.Basis
 
 /-! The mathematical bridge and independent membership checker use only Lean's
 standard foundational axioms. No native success bit is a proof assumption. -/
@@ -83,3 +84,8 @@ standard foundational axioms. No native success bit is a proof assumption. -/
 
 /-- info: 'HexGroebnerTheory.checkDerivation_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in #print axioms HexGroebnerTheory.checkDerivation_sound
+
+/-- info: 'HexGroebnerTheory.basisWith_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms HexGroebnerTheory.basisWith_sound
+/-- info: 'HexGroebnerTheory.certifyWith_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms HexGroebnerTheory.certifyWith_sound

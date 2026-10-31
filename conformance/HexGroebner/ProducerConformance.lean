@@ -1,0 +1,129 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+import HexGroebner.Producer.Pipeline
+
+open Hex.Groebner
+
+namespace Hex.Groebner.Producer.Test
+private def context : Context := ⟨⟨7,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩,2,.grevlex⟩
+private def generators : Array RawPolynomial := #[#[⟨#[2,0],1⟩,⟨#[0,1],6⟩],#[⟨#[1,1],1⟩,⟨#[0,0],6⟩]]
+
+private def complete : Bool := Id.run do
+  let .success value _ _ := basisWith context {} generators | return false
+  let .success accepted _ _ := certifyWith context {} generators value.polynomials | return false
+  return accepted.polynomials == value.polynomials &&
+    Hex.Groebner.checkBasis context value.generators value.polynomials value.certificate
+
+#guard complete
+#guard match basisWith context {} #[#[⟨#[0],1⟩]] with
+  | .invalid (.arity 0 0) _ => true
+  | _ => false
+#guard match certifyWith context {} generators #[[([1,0],1)]] with
+  | .rejected _ => true
+  | _ => false
+#guard match certifyWith context {} generators #[[([0,0],7)]] with
+  | .rejected _ => true
+  | _ => false
+
+private def resume (operation : Bool) : Bool := Id.run do
+  let .success expected total _ := basisWith context {} generators | return false
+  let mut production := false
+  let mut certification := false
+  for work in [0,1,total.work/2,total.work-1,total.work] do
+    let budget : Budget := { certificate.work := work }
+    let outcome := if operation then certifyWith context budget generators expected.polynomials
+      else basisWith context budget generators
+    let state ← match outcome with
+      | .computeExhausted .work state =>
+        production := true
+        pure (some state)
+      | .certificateExhausted .work state =>
+        certification := true
+        pure (some state)
+      | .success actual _ _ =>
+        if actual.polynomials != expected.polynomials then return false
+        pure none
+      | _ => return false
+    if let some state := state then
+      let .success actual usage _ := resumeBasisWith {} state | return false
+      if actual.polynomials != expected.polynomials || usage.work < work then return false
+  return production || certification
+
+#guard resume false
+#guard resume true
+
+private def categories : Bool := Id.run do
+  for budget in [({ certificate.nodes := 0 } : Budget),{ certificate.allocatedTerms := 0 },
+      { certificate.allocatedBytes := 0 },{ certificate.pairs := 0 },{ certificate.steps := 0 },
+      { certificate.variables := 0 },{ certificate.exponentBits := 0 },{ computation.monomials := 0 },{ computation.matrixEntries := 0 }] do
+    let state ← match basisWith context budget generators with
+      | .computeExhausted _ state => pure state
+      | .certificateExhausted _ state => pure state
+      | _ => return false
+    let .success value _ _ := resumeBasisWith {} state | return false
+    if !Hex.Groebner.checkBasis context value.generators value.polynomials value.certificate then return false
+  let .success expected _ _ := basisWith context {} generators | return false
+  match certifyWith context { certificate.allocatedTerms := 0 } generators expected.polynomials with
+  | .certificateExhausted .allocatedTerms state =>
+    let .success actual _ _ := resumeBasisWith {} state | return false
+    return actual.polynomials == expected.polynomials
+  | _ => return false
+
+#guard categories
+/-- A nested computation cannot spend node slots retained by its caller. -/
+private def parentNodes : Bool := Id.run do
+  let .certificateExhausted .nodes state := basisFrom context
+      { certificate.nodes := 1 } generators { nodes := 1 } | return false
+  let .computation _ parent := state.stage | return false
+  if parent.nodes != 1 then return false
+  let .success basis usage _ := resumeBasisWith {} state | return false
+  return usage.nodes > 1 && checkBasis context basis.generators basis.polynomials basis.certificate
+
+#guard parentNodes
+
+/-- A wrong but canonical candidate pays its comparison cost before F4. -/
+private def comparisonBudget : Bool := Id.run do
+  let wrong : Array Certificate.Polynomial := #[
+    [([2,0],1),([0,1],6)], [([1,1],1),([0,0],6)], [([1,0],6),([0,2],2)]]
+  let .candidate _ statistics := computeWith context {} 1000000 generators | return false
+  let .rejected total := certifyWith context {} generators wrong | return false
+  let validation : Certificate.Work Unit := do
+    for polynomial in wrong do Certificate.Arithmetic.validate context {} 0 polynomial
+  let (.ok _, validationUsage) := validation.run {} | return false
+  -- The equal prefix visits six terms: twelve coordinates and six coefficients.
+  if total.work < statistics.work + validationUsage.work + 18 then return false
+  let .rejected exact := certifyWith context { certificate.work := total.work } generators wrong
+    | return false
+  if exact.work != total.work then return false
+  let state ← match certifyWith context { certificate.work := statistics.work } generators wrong with
+    | .computeExhausted .work state | .certificateExhausted .work state => pure state
+    | _ => return false
+  let .rejected resumed := resumeBasisWith {} state | return false
+  return resumed.work ≥ total.work
+
+#guard comparisonBudget
+
+#guard match basisWith context { certificate.nodes := 0 } #[] with
+  | .success value usage _ => value.polynomials.isEmpty && usage.nodes == 0
+  | _ => false
+
+end Hex.Groebner.Producer.Test
+
+namespace Hex.Groebner.Producer.AllocationTest
+
+#guard match (do
+    Computation.allocate { packedBytes := USize.size*2 } (USize.size/2)
+    Computation.allocate { packedBytes := USize.size*2 } (USize.size/2)).run
+    ⟨{ arity := 0 },{}⟩ with
+  | (.ok _,workspace) => workspace.statistics.allocatedBytes == USize.size
+  | _ => false
+#guard match (Computation.allocate { packedBytes := USize.size*2 } USize.size).run
+    ⟨{ arity := 0 },{}⟩ with
+  | (.error (.representation .address),workspace) => workspace.statistics.allocatedBytes == 0
+  | _ => false
+
+end Hex.Groebner.Producer.AllocationTest

@@ -21,6 +21,7 @@ structure Context where
   field : PrimeField
   variables : Nat
   order : TermOrder := .grevlex
+  deriving DecidableEq
 
 /-- One raw interchange term, with arbitrary-precision input exponents. -/
 structure RawTerm where
@@ -69,7 +70,8 @@ inductive ComputeError where
 
 /-- Absolute cumulative allowances, also used when resuming a computation.
 `packedBytes` counts monomial arenas and a common workspace reservation plus cumulative polynomial/matrix packed
-payload. It excludes object headers and allocator capacity. Pair attempts bound
+payload, including 64 logical bytes per recorded row-derivation operation.
+It excludes other object headers and allocator capacity. Pair attempts bound
 pair metadata, including attempts in retried stages. The basis limit bounds
 basis metadata. Work units include exponent visits,
 hash operations, sort comparison reservations, scalar operations and the matrix
@@ -138,7 +140,7 @@ def allocate (limits : Limits) (amount : Nat) : Computation Unit := do
   let allocated := s.statistics.allocatedBytes + amount
   let total := allocated + s.table.bytes
   if total > limits.packedBytes then throw (.exhausted .packedBytes)
-  if total ≥ USize.size then throw (.representation .address)
+  if amount ≥ USize.size then throw (.representation .address)
   set { s with statistics.allocatedBytes := allocated }
 
 private def tableResult (limits : Limits)

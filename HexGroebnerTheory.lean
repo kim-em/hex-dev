@@ -24,3 +24,4 @@ public import HexGroebnerTheory.Division
 public import HexGroebnerTheory.NormalForm
 public import HexGroebnerTheory.Member
 public import HexGroebnerTheory.Membership
+public import HexGroebnerTheory.Basis

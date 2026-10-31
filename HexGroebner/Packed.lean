@@ -34,6 +34,7 @@ structure PrimeField where
   modulus : UInt64
   prime : Hex.Nat.Prime modulus.toNat
   bound : modulus.toNat < 2 ^ 31
+  deriving DecidableEq
 
 /-- Construct metadata from the existing lawful residue field. -/
 @[expose] def PrimeField.ofZMod64 (p : Nat) [ZMod64.Bounds p]

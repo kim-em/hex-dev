@@ -26,7 +26,8 @@ theorem native_width (field : PrimeField) :
   split <;> (try split) <;> rfl
 
 /-- Resource categories. Packed bytes count logical input, workspace and output
-payload, excluding allocator capacity and Lean object headers. Work counts row
+payload and 64 logical bytes per recorded derivation operation, excluding
+allocator capacity and other Lean object headers. Work counts row
 visits, sparse entry updates (including their product), dense column visits,
 normalization/inversion products and workspace bytes initialized. -/
 inductive Resource where
@@ -171,6 +172,7 @@ private def record (limits : MatrixLimits) (enabled : Bool)
     (trace : Array RowOp) (op : RowOp) : Work (Array RowOp × Option Nat) := do
   if !enabled then return (trace, none)
   charge .traceNodes 1 limits.traceNodes (·.traceNodes) fun s n => { s with traceNodes := n }
+  packedBytes limits 64
   let index := trace.size
   return (trace.push op, some index)
 

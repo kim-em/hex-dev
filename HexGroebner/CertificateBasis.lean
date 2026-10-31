@@ -23,7 +23,7 @@ structure Basis where
   forward : Containment
   backward : Containment
   pairs : Array (Array (Array Polynomial))
-  deriving Repr, Inhabited
+  deriving Repr, BEq, Inhabited
 
 /-- Monic, nonzero, reduced and sorted basis shape. Every divisibility test uses
 exact exponents; a term may be divisible only by its own leading monomial. -/
