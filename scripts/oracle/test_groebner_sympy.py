@@ -16,6 +16,12 @@ class GroebnerOracleTests(unittest.TestCase):
     def test_valid_basis(self):
         check(self.cases["p3/grevlex/missing-s-pair"])
 
+    def test_all_orders_and_field_widths(self):
+        for prime in (2, 251, 257, 65521, 65537, 2147483647):
+            for order in ("lex", "grlex", "grevlex"):
+                with self.subTest(prime=prime, order=order):
+                    check(self.cases[f"p{prime}/{order}/missing-s-pair"])
+
     def test_missing_s_pair(self):
         value = copy.deepcopy(self.cases["p3/grevlex/missing-s-pair"])
         value["basis"] = value["basis"][:2]

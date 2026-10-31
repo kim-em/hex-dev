@@ -35,7 +35,7 @@ def check(value):
     else:
         gb = sympy.groebner(generators, *symbols, modulus=p, order=order, method="f5b")
         expected = [[ [list(powers), int(coefficient) % p]
-                      for powers, coefficient in f.terms(order=order)] for f in gb.polys]
+                      for powers, coefficient in f.terms(order=monomial_key(order))] for f in gb.polys]
         expected.sort(key=lambda f: monomial_key(order)(tuple(f[0][0])), reverse=True)
     if expected != value["basis"]:
         raise ValueError(f"different reduced basis\nLean: {value['basis']}\nSymPy: {expected}")
