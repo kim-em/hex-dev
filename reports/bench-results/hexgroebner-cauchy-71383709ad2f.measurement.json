@@ -1,0 +1,57 @@
+{
+  "source_fingerprint": "71383709ad2f",
+  "include": [
+    "HexGroebner/",
+    "HexGroebner.lean",
+    "HexArith/",
+    "HexArith.lean",
+    "HexArithNative.lean",
+    "HexModArith/",
+    "HexModArithNative.lean",
+    "bench/HexGroebner/Bench.lean",
+    "lakefile.lean",
+    "lean-toolchain",
+    "lake-manifest.json"
+  ],
+  "exclude": [
+    "HexGroebner/README.md",
+    "HexArith/README.md",
+    "HexModArith/README.md",
+    "HexArith/SPEC/",
+    "HexModArith/SPEC/"
+  ],
+  "cpu": 79,
+  "affinity": [
+    79
+  ],
+  "threads": 1,
+  "isa": "portable scalar Lean plus existing HexArith wide multiply",
+  "field": 65537,
+  "output": "monic echelon with fixed columns; structural hash of decoded output",
+  "provenance": false,
+  "host": "chungus2",
+  "toolchain": "leanprover/lean4:v4.35.0-rc3",
+  "command": [
+    ".lake/build/bin/hexgroebner_bench",
+    "run",
+    "Hex.Groebner.Bench.cauchy",
+    "--outer-trials",
+    "3",
+    "--export-file",
+    "reports/bench-results/hexgroebner-cauchy-71383709ad2f.json"
+  ],
+  "load_start": [
+    2.1416015625,
+    5.35302734375,
+    6.7890625
+  ],
+  "schedule": "lean-bench fixed trial-major, 3 outer trials, n=32,64,128,256; no discarded completed samples",
+  "returncode": 0,
+  "elapsed_seconds": 6.000875719997566,
+  "load_end": [
+    2.1259765625,
+    5.2421875,
+    6.7373046875
+  ],
+  "peak_child_rss_kib": 1625468
+}

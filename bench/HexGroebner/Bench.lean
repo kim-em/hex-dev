@@ -62,7 +62,7 @@ setup_benchmark cauchy n => n * n * n
     paramCeiling := 256
     paramSchedule := .custom #[32, 64, 128, 256]
     maxSecondsPerCall := 8.0
-    targetInnerNanos := 100000000
+    targetInnerNanos := 500000000
   }
 
 end Hex.Groebner.Bench
