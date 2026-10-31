@@ -10,6 +10,7 @@ public import HexRowReduceTheory
 public import HexRationalFnTheory
 public import HexModArithTheory
 public import HexPolyFp.PrimeField
+import all HexRowReduce.Solve
 
 public section
 
