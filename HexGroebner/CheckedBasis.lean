@@ -21,6 +21,9 @@ structure CheckedBasis where
   polynomials : Array Certificate.Polynomial
   certificate : Certificate.Basis
   forwardNodes : Nat
+  backwardNodes : Nat
+  forward_size : forwardNodes = certificate.forward.nodes.length
+  backward_size : backwardNodes = certificate.backward.nodes.length
   accepted : checkBasis context generators polynomials certificate = true
 
 /-- Import a literal certificate with a proof of independent acceptance. This
@@ -29,6 +32,6 @@ constructor after charging replay and proving its Boolean branch. -/
 def CheckedBasis.ofCertificate (context : Context) (generators basis : Array Certificate.Polynomial)
     (certificate : Certificate.Basis) (accepted : checkBasis context generators basis certificate = true) :
     CheckedBasis :=
-  ⟨context, generators, basis, certificate, certificate.forward.nodes.length, accepted⟩
+  ⟨context, generators, basis, certificate, certificate.forward.nodes.length, certificate.backward.nodes.length, rfl, rfl, accepted⟩
 
 end Hex.Groebner

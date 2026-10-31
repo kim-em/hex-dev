@@ -32,7 +32,7 @@ private def multiply (context : Context) (budget : Budget) (a b : Polynomial) : 
   witness context budget result
   return result
 
-def evaluateContainment (context : Context) (budget : Budget)
+private def evaluateContainment (context : Context) (budget : Budget)
     (generators targets : Array Polynomial) (certificate : Containment) : Work Unit := do
   let before ← get
   spend budget 1
@@ -113,7 +113,9 @@ private def prepare (context : Context) (budget : Budget) (generators basis : Ar
   let beforeForward ← get
   evaluateContainment context budget generators basis certificate.forward
   spend budget ((← get).nodes-beforeForward.nodes)
+  let beforeBackward ← get
   evaluateContainment context budget basis generators certificate.backward
+  spend budget ((← get).nodes-beforeBackward.nodes)
   checkAddress (64 + basis.size*16)
   let beforeHeads ← get
   let mut sizes : Array Nat := #[]

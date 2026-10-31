@@ -170,6 +170,10 @@ certificate against the original generators from a checked nonmembership
 witness with nonzero normal form. `checkMember` accepts direct shared derivations or a forward containment with
 explicit zero-remainder cofactors;
 `checkNonmember` checks the complete basis and division witness.
+`Certificate.Derivation` stores direct nodes and a result root; wrap it with
+`Certificate.Member.derivation`. `Certificate.Member.combination` specializes
+in standard zero-remainder representations and shares a forward containment.
+Direct derivations also support arbitrary cofactor identities with cancellation.
 
 `Certificate.Budget` counts cumulative scalar/coordinate work, attempted
 division steps, certificate nodes and pairs. `allocatedBytes` and
@@ -186,7 +190,9 @@ basis replay retain sealed input/field/order identity and consumed counters;
 production retains committed division transitions. Replay preflight is atomic
 and retains identity and counters, rather than a validated prefix; retrying it
 charges repeated work and allocation. Node/pair caps count witness structure
-once, including across retries; sealed continuations retain the parent baselines. Low-level `verifyFrom` helpers accept caller-supplied
+once, including across retries. Basis-replay continuations retain the parent
+baselines. Membership applies the caps to all returned certificate data,
+including pointer-shared forward/backward derivations and final pairs. Low-level `verifyFrom` helpers accept caller-supplied
 parent counters, which callers must preserve across nested operations. Invalid
 input, rejection, exhaustion and arithmetic invariant failure remain distinct.
 Completed checked receipts carry actual Boolean acceptance proofs. Compiled
@@ -258,13 +264,13 @@ certified membership claim. Portable accessors retain checked byte operations an
 inside an active interval are still scanned. No performance leadership is
 claimed from these kernel or candidate measurements.
 
-Complete basis/negative-membership certificates and their soundness proofs,
-resource-bounded certificate production/replay (the pure `checkMember` currently
-has no allowance), deterministic producer correctness and termination,
-finite extensions,
-elimination block orders, the full pair-coverage proof, checked probabilistic
-computation, validated learning/traces, delayed reduction, SIMD/parallel kernels
-and balanced multi-comparator acceptance comparisons remain outstanding.
+Automatic F4 certificate generation and `basisWith`, deterministic producer
+correctness/termination, finite-extension adapters, elimination block orders,
+the full pair-coverage proof, checked probabilistic computation, validated
+learning/traces, delayed reduction, SIMD/parallel kernels and balanced
+multi-comparator acceptance comparisons remain outstanding. Complete basis,
+division and both membership checkers and soundness proofs are available;
+standalone pure predicates have no operational allowance.
 [#10987](https://github.com/kim-em/hex-dev/issues/10987) tracks the continuing
 correctness, finite-field scope and fastest-open-source requirements. No
 library phase or performance milestone is claimed.

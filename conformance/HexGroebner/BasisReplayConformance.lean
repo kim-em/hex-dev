@@ -144,3 +144,25 @@ private def pairResume : Bool := Id.run do
 #guard pairResume
 
 end Hex.Groebner.Certificate.BasisCorpusTest
+
+namespace Hex.Groebner.Certificate.BasisCorpusTest
+open Hex.Groebner.CertificateConformance
+
+private def allResume : Bool := Id.run do
+  let .checked _ total := BasisVerification.verifyWith context {} generators basis basisWitness
+    | return false
+  let full : Budget := { nodes := total.nodes, pairs := total.pairs }
+  for work in [:total.work+1] do
+    match BasisVerification.verifyWith context { full with work } generators basis basisWitness with
+    | .checked _ usage => if usage.nodes != total.nodes || usage.pairs != total.pairs then return false
+    | .exhausted .work state =>
+      match BasisVerification.resumeWith full state with
+      | .checked _ usage =>
+        if usage.nodes != total.nodes || usage.pairs != total.pairs || usage.work < state.usage.work then return false
+      | _ => return false
+    | _ => return false
+  return true
+
+#guard allResume
+
+end Hex.Groebner.Certificate.BasisCorpusTest

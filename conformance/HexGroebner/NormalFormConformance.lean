@@ -16,13 +16,15 @@ private def checked : Bool := Id.run do
     let .checked receipt _ := Certificate.BasisVerification.verifyWith c.context {}
         c.generators c.basis c.certificate | return false
     for target in DivisionFixtures.targets c do
-      let .success nf _ := normalFormWith receipt {} target | return false
+      let .success nf statistics := normalFormWith receipt {} target | return false
       match memberWith receipt {} target with
-      | .member division certificate _ _ =>
+      | .member division certificate _ usage =>
+        if usage.work != statistics.work+1 || usage.allocatedBytes != statistics.allocatedBytes+64 then return false
         positive := true
         if division.value.remainder != nf.value.remainder ||
             !checkMember receipt.context receipt.generators target certificate.witness then return false
-      | .nonmember certificate _ =>
+      | .nonmember certificate usage =>
+        if usage.work != statistics.work+1 || usage.allocatedBytes != statistics.allocatedBytes+64 then return false
         negative := true
         if certificate.witness.division.remainder != nf.value.remainder ||
             !checkNonmember receipt.context receipt.generators target certificate.witness then return false

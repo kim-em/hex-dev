@@ -65,7 +65,7 @@ end Hex.Groebner.MembershipTest
 
 namespace Hex.Groebner.MembershipTest
 
-private def structuralResume : Bool := Id.run do
+private def classificationResume : Bool := Id.run do
   let target := generators[0]!
   let .member _ _ _ total := memberWith receipt {} target | return false
   for byteLimit in [false,true] do
@@ -80,7 +80,7 @@ private def structuralResume : Bool := Id.run do
     | _ => return false
   return true
 
-#guard structuralResume
+#guard classificationResume
 
 end Hex.Groebner.MembershipTest
 
@@ -95,8 +95,24 @@ private def tampered : Bool := Id.run do
     !checkMember receipt.context receipt.generators target (.combination
       { witness with forward := { witness.forward with nodes := [] } }) &&
     !checkMember receipt.context receipt.generators target (.combination
-      { witness with division := { witness.division with quotients := #[[]] } })
+      { witness with division := { witness.division with quotients := #[[]] } }) &&
+    !checkMember receipt.context receipt.generators target (.combination
+      { witness with division := { witness.division with remainder := target } })
 
 #guard tampered
+
+end Hex.Groebner.MembershipTest
+
+namespace Hex.Groebner.MembershipTest
+
+#guard match memberWith receipt { nodes := 0 } target with
+  | .exhausted .nodes state =>
+    match resumeMemberWith { nodes := 2, pairs := 1 } state with
+    | .nonmember _ usage => usage.nodes == 2 && usage.pairs == 1
+    | _ => false
+  | _ => false
+#guard match memberWith receipt { pairs := 0 } target with
+  | .exhausted .pairs _ => true
+  | _ => false
 
 end Hex.Groebner.MembershipTest
