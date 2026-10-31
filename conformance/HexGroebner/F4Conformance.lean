@@ -334,17 +334,17 @@ private def strategyResume : Bool := Id.run do
   let context := { context with order := TermOrder.lex }
   let expected := result context input
   let mut prunedCheckpoint := false
-  for strategy in [false, true] do
-    let total := match computeWith context { gebauerMoller := strategy } input with
+  for (strategy, batchInterreduce) in [(false, false), (false, true), (true, false), (true, true)] do
+    let total := match computeWith context { gebauerMoller := strategy, batchInterreduce } input with
       | .candidate _ statistics => statistics.work
       | _ => 0
     if total == 0 then return false
     for work in [:total] do
-      match computeWith context { work, gebauerMoller := strategy } input 37 with
+      match computeWith context { work, gebauerMoller := strategy, batchInterreduce } input 37 with
       | .candidate candidate _ => if .ok candidate.polynomials != expected then return false
       | .exhausted .work state =>
         prunedCheckpoint := prunedCheckpoint || state.workspace.statistics.gmPairs > 0
-        match resumeWith { gebauerMoller := !strategy } state with
+        match resumeWith { gebauerMoller := !strategy, batchInterreduce := !batchInterreduce } state with
         | .candidate candidate statistics =>
           if .ok candidate.polynomials != expected || candidate.randomState != 37 ||
               statistics.work < state.workspace.statistics.work then return false

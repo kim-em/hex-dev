@@ -91,6 +91,13 @@ exact word remainder otherwise. No ISA extension or floating point is required.
 Barrett parameters are hoisted outside coefficient loops; products fit below
 `p² < 2^62`.
 
+`reduceRowsWith` instead reduces every target independently against the same
+reducer echelon space. It preserves scalars, input order and zero rows; no target
+becomes a pivot for another target. Final interreduction shares symbolic closure
+across nonzero tails and uses this mode. `Limits.batchInterreduce := false`
+retains separate tail calls. The `*Separate` lean-bench registrations compare
+these routes under identical fields, inputs and allowances.
+
 `MatrixLimits` bounds one call's columns, rows, input/output nonzeros, packed
 payload, work and optional provenance nodes. Packed payload counts input,
 workspace and output buffers; it excludes headers and allocator capacity, and
@@ -115,7 +122,9 @@ lake exe hexgroebner_bench verify
 ```
 
 The 175 matrix cases independently check row-space equality, reducer subspaces
-and derivations with Python exact modular RREF. Native/portable comparisons cover every matrix fixture, both provenance modes,
+and derivations with Python exact modular RREF. The oracle also checks every
+unscaled independent target remainder and tracks input coefficients to ensure
+its derivation contains its own target exactly once and no other target. Native/portable comparisons cover every matrix fixture, both provenance modes,
 and a 5000-entry pivot spanning multiple native calls. Primitive tests cover
 all coefficient widths, boundary moduli, aliasing and malformed slices. Both
 compiled C arithmetic paths have standalone reference checks and sanitizer
@@ -137,7 +146,9 @@ false Boolean-quotient reductions. Core tests also exercise cumulative-state
 resumption at every work boundary of the S-pair example, every resource
 category, scalar-preserving remainders and sealed checkpoint identities. The
 emitter also recomputes all 567 systems with batch size one and requires the
-same reduced basis. Product/chain counters demonstrate criterion use.
+same reduced basis. It also compares shared versus separate tail reductions.
+Core resume sweeps switch both pair criteria and final-reduction strategy at
+every work boundary. Product/chain counters demonstrate criterion use.
 
 Lean-bench registrations cover dense elimination with/without provenance,
 clustered and spread sparse supports, monomial interning, and fixed cyclic-4,

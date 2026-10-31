@@ -169,7 +169,9 @@ private def solve (context : Context) (limits : Limits) (matrix : SymbolicMatrix
     output := output.push ⟨p, sugar⟩
   return output
 
-/-- Joint target elimination; new target pivots are monic and independent. -/
+/-- Joint target elimination. Return new target rows spanning the quotient by
+reducer rows. Rows are monic by default; `monic := false` undoes each pivot's
+normalization. Later targets may reduce by earlier target pivots. -/
 def eliminate (context : Context) (limits : Limits) (matrix : SymbolicMatrix) (monic := true) :
     Computation (Array BasisElement) := solve context limits matrix monic false
 

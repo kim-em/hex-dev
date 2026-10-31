@@ -120,9 +120,19 @@ private def interreduce (context : Context) (limits : Limits) (basis : Array Bas
         coefficients := p.coefficients.extract context.field.width.bytes p.coefficients.size }
     inputs := inputs.push ⟨tail, g.sugar⟩
   let tails ← if limits.batchInterreduce then do
-    if inputs.all (fun p => p.polynomial.size == 0) then pure inputs else
-      let matrix ← SymbolicMatrix.prepareWith context limits index minimal inputs
-      matrix.reduce context limits
+    spend limits inputs.size
+    let nonzero := inputs.filter (fun p => p.polynomial.size != 0)
+    if nonzero.isEmpty then pure inputs else
+      let matrix ← SymbolicMatrix.prepareWith context limits index minimal nonzero
+      let remainders ← matrix.reduce context limits
+      let mut cursor := 0
+      let mut output := #[]
+      for p in inputs do
+        spend limits 1
+        if p.polynomial.size == 0 then output := output.push p else
+          output := output.push remainders[cursor]!
+          cursor := cursor + 1
+      pure output
   else inputs.mapM fun tail => do
     return ⟨← Polynomial.remainderWith context limits index minimal tail.polynomial, tail.sugar⟩
   let mut reduced := #[]

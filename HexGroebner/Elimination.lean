@@ -345,6 +345,7 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
           if independent && fromTarget then remainders := remainders.push ⟨{}, node, sugar⟩
           modify fun s => { s with zeroRows := s.zeroRows + 1 }
     modify fun s => { s with processedRows := s.processedRows + 1 }
+  if independent then return (⟨#[], reducerRank, trace⟩, remainders)
   let mut ordered := #[]
   work limits columns
   for column in [:columns] do

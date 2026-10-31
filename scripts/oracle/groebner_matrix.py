@@ -80,11 +80,16 @@ def check(value):
             expected.append(row)
         require(output == expected, "independent target remainder or scalar mismatch")
         require(len(value["remainderRefs"]) == len(output), "remainder metadata length")
-        replay(inputs, output, value["remainderTrace"], value["remainderRefs"], p)
+        weights = replay(inputs, output, value["remainderTrace"], value["remainderRefs"], p)
+        for i, ref in enumerate(value["remainderRefs"]):
+            expected = [int(j == i) for j in range(len(targets))]
+            require(weights[ref][len(reducers):] == expected,
+                    "remainder derivation changed or mixed target inputs")
 
 
 def replay(inputs, output, trace, refs, p):
     nodes = []
+    weights = []
     for node in trace:
         require(isinstance(node, list) and node, "invalid derivation node")
         tag = node[0]
@@ -92,6 +97,7 @@ def replay(inputs, output, trace, refs, p):
             require(len(node) == 2 and type(node[1]) is int and 0 <= node[1] < len(inputs),
                     "bad input reference")
             row = inputs[node[1]][:]
+            coefficients = [int(i == node[1]) for i in range(len(inputs))]
         else:
             require(tag in (1, 2) and len(node) == (4 if tag == 1 else 3), "bad operation")
             indices = node[1:-1]
@@ -101,10 +107,14 @@ def replay(inputs, output, trace, refs, p):
             require(type(c) is int and 0 < c < p, "invalid operation coefficient")
             row = ([c * x % p for x in nodes[indices[0]]] if tag == 2 else
                    [(x + c * y) % p for x, y in zip(nodes[indices[0]], nodes[indices[1]])])
+            coefficients = ([c * x % p for x in weights[indices[0]]] if tag == 2 else
+                            [(x + c * y) % p for x, y in zip(weights[indices[0]], weights[indices[1]])])
         nodes.append(row)
+        weights.append(coefficients)
     for row, ref in zip(output, refs):
         require(type(ref) is int and 0 <= ref < len(nodes), "invalid output reference")
         require(nodes[ref] == row, "incorrect row derivation")
+    return weights
 
 
 def main():
