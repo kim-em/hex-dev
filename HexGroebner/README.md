@@ -200,3 +200,9 @@ Those stable monomials remain in the arena and count against `monomials` and
 `packedBytes`; a GM run can exhaust an allowance that suffices for the reference
 route. The strategy controls in `Limits` may be changed on resume, while all
 allowances remain absolute cumulative bounds.
+
+The default sugar-batch cap is 1024; `Limits.batchSize` permits smaller or
+larger caps. Degree/sugar boundaries still separate batches, and all nested
+matrix/memory/work allowances remain in force. The retained
+[batch comparisons](../reports/bench-results/hexgroebner-batches.md) explain the
+choice and include failures, full output comparisons and variability.

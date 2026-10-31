@@ -430,4 +430,24 @@ private def monomialBudgets : Bool := Id.run do
 
 #guard monomialBudgets
 
+private def largeBatch : Bool := Id.run do
+  let field : PrimeField := ⟨65537, Hex.Nat.isPrimeTrial_isPrime (by decide), by decide⟩
+  let context : Context := ⟨field, 5, .grevlex⟩
+  let mut generators : Array RawPolynomial := #[]
+  for degree in [2:7] do
+    let mut polynomial : RawPolynomial := #[]
+    for i in [:5] do
+      polynomial := polynomial.push ⟨(Array.replicate 5 0).set! i degree,
+        if i % 2 == 0 then 2 else field.modulus - 2⟩
+    polynomial := polynomial.push ⟨Array.replicate 5 0, field.modulus - 1⟩
+    generators := generators.push polynomial
+  let .candidate actual statistics := computeWith context { work := 1000000000 } generators
+    | return false
+  let .candidate reference previous := computeWith context { work := 1000000000, batchSize := 64 } generators
+    | return false
+  return actual.polynomials == reference.polynomials && actual.polynomials.size == 38 &&
+    statistics.rounds < previous.rounds && statistics.matrixEntries < previous.matrixEntries
+
+#guard largeBatch
+
 end Hex.Groebner.F4Conformance

@@ -84,7 +84,7 @@ structure Limits where
   matrixRows : Nat := 10000000
   basis : Nat := 100000
   variables : Nat := 10000
-  batchSize : Nat := 64
+  batchSize : Nat := 1024
   /-- Use the approved native row kernel; false selects scalar Lean updates. -/
   nativeRows : Bool := true
   /-- Use bounded packed monomial preparation and exact collision comparison. -/
