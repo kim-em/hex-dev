@@ -151,7 +151,7 @@ inside an active interval are still scanned. No performance leadership is
 claimed from these kernel or candidate measurements.
 
 Complete certificates/checkers and `HexGroebnerTheory`, finite extensions,
-elimination block orders, Gebauer-Möller installation, checked probabilistic
+elimination block orders, the full pair-coverage proof, checked probabilistic
 computation, validated learning/traces, delayed reduction, SIMD/parallel kernels
 and matched full-system external comparisons remain outstanding.
 [#10987](https://github.com/kim-em/hex-dev/issues/10987) tracks the continuing
@@ -161,3 +161,10 @@ library phase or performance milestone is claimed.
 Reducer-trie traversal caches node depths and keeps node IDs alone on its stacks.
 [Matched allocation measurements](../reports/bench-results/hexgroebner-allocation.md)
 retain all successful and unsuccessful variants and their complete samples.
+
+`Limits.gebauerMoller` enables minimal-LCM pair installation and proper-LCM
+chain pruning by default. Set it to false for the product/resolved-chain
+reference. Omitted obligations remain distinct from completed pairs, and the
+basis is not deleted or renumbered. [Matched pair-management measurements](../reports/bench-results/hexgroebner-gm.md)
+include the small-system regression and full raw samples. Full F4 invariant
+and termination proofs remain required.

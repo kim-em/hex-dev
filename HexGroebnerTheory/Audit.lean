@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGroebnerTheory.Reduced
+public import HexGroebnerTheory.Pairs
 public import HexGroebnerTheory.Certificate
 
 /-! The mathematical bridge and independent membership checker use only Lean's
@@ -20,3 +21,8 @@ standard foundational axioms. No native success bit is a proof assumption. -/
 #guard_msgs in #print axioms HexGroebnerTheory.reduced_unique
 /-- info: 'HexGroebnerTheory.checkMember_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in #print axioms HexGroebnerTheory.checkMember_sound
+
+/-- info: 'HexGroebnerTheory.spoly_chain' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms HexGroebnerTheory.spoly_chain
+/-- info: 'HexGroebnerTheory.lcm_lt' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms HexGroebnerTheory.lcm_lt

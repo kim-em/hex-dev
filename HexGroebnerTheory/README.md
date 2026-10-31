@@ -35,3 +35,10 @@ lemma names; they can be removed when the dependency supplies these results.
 Complete basis and negative-membership certificate soundness, deterministic F4
 correctness and termination remain
 required by the same contract. The executable candidate API remains unchecked.
+
+The producer's pair-coverage proof also requires Buchberger's strict-LCM
+standard-representation criterion and closure under the installation measure
+(LCM, maximum basis index, representative priority). `buchberger_iff` instead
+states the full zero-remainder criterion, bounded by the S-polynomial degree.
+`spoly_chain` and `lcm_lt` provide the exact chain identity and proper-divisor
+comparison; they do not by themselves complete the producer invariant.

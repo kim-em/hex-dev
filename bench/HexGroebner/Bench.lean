@@ -266,13 +266,27 @@ def katsura (n : Nat) : Array RawPolynomial := Id.run do
     generators := generators.push polynomial
   return generators
 
+/-- Reimer-n with alternating ±2 pure powers of degrees 2 through n+1. -/
+private def reimer (n : Nat) : Array RawPolynomial := Id.run do
+  let mut generators := #[]
+  for degree in [2:n + 2] do
+    let mut polynomial := #[]
+    for coordinate in [:n] do
+      let powers := (Array.replicate n 0).set! coordinate degree
+      polynomial := polynomial.push ⟨powers, if coordinate % 2 == 0 then 2 else field.modulus - 2⟩
+    polynomial := polynomial.push ⟨Array.replicate n 0, field.modulus - 1⟩
+    generators := generators.push polynomial
+  return generators
+
+initialize reimer5Input : IO.Ref (Array RawPolynomial) ← IO.mkRef (reimer 5)
+
 initialize cyclic4Input : IO.Ref (Array RawPolynomial) ← IO.mkRef (cyclic 4)
 initialize cyclic5Input : IO.Ref (Array RawPolynomial) ← IO.mkRef (cyclic 5)
 initialize cyclic6Input : IO.Ref (Array RawPolynomial) ← IO.mkRef (cyclic 6)
 initialize katsura3Input : IO.Ref (Array RawPolynomial) ← IO.mkRef (katsura 3)
 
-private def compute (variables : Nat) (input : Array RawPolynomial) (nativeRows := true) : IO (Array RawPolynomial) := do
-  match computeWith ⟨field, variables, .grevlex⟩ { nativeRows } input with
+private def compute (variables : Nat) (input : Array RawPolynomial) (nativeRows := true) (gebauerMoller := true) : IO (Array RawPolynomial) := do
+  match computeWith ⟨field, variables, .grevlex⟩ { nativeRows, gebauerMoller, work := 1000000000 } input with
   | .candidate candidate _ => return candidate.polynomials
   | .exhausted r _ => throw (IO.userError s!"F4 exhausted {reprStr r}")
   | .representation r _ => throw (IO.userError s!"F4 representation {reprStr r}")
@@ -295,6 +309,25 @@ def cyclic6Portable (_ : Unit) : IO (Array RawPolynomial) := do compute 6 (← c
 /-- Candidate-only Katsura-3 under the same field, order and output contract. -/
 def katsura3 (_ : Unit) : IO (Array RawPolynomial) := do compute 4 (← katsura3Input.get)
 
+/-- Cyclic-5 reference using only product/resolved chain criteria. -/
+def cyclic5Buchberger (_ : Unit) : IO (Array RawPolynomial) := do
+  compute 5 (← cyclic5Input.get) true false
+
+/-- Cyclic-6 reference under identical input, arithmetic and resource allowances. -/
+def cyclic6Buchberger (_ : Unit) : IO (Array RawPolynomial) := do
+  compute 6 (← cyclic6Input.get) true false
+
+/-- Katsura-3 reference without Gebauer–Möller pruning. -/
+def katsura3Buchberger (_ : Unit) : IO (Array RawPolynomial) := do
+  compute 4 (← katsura3Input.get) true false
+
+/-- Reimer-5 candidate with the full input and output contract. -/
+def reimer5 (_ : Unit) : IO (Array RawPolynomial) := do compute 5 (← reimer5Input.get)
+
+/-- Reimer-5 reference without Gebauer–Möller pruning. -/
+def reimer5Buchberger (_ : Unit) : IO (Array RawPolynomial) := do
+  compute 5 (← reimer5Input.get) true false
+
 -- Fixed full-system calls make no polynomial-time claim in variable count.
 -- Every registration hashes the full canonical basis and reports exhaustion as
 -- a failed call. Certification and kernel checking are not performed here.
@@ -303,6 +336,11 @@ setup_fixed_benchmark cyclic5 where { repeats := 5 }
 setup_fixed_benchmark cyclic6 where { repeats := 5 }
 setup_fixed_benchmark cyclic6Portable where { repeats := 5 }
 setup_fixed_benchmark katsura3 where { repeats := 5 }
+setup_fixed_benchmark cyclic5Buchberger where { repeats := 5 }
+setup_fixed_benchmark cyclic6Buchberger where { repeats := 5 }
+setup_fixed_benchmark katsura3Buchberger where { repeats := 5 }
+setup_fixed_benchmark reimer5 where { repeats := 5 }
+setup_fixed_benchmark reimer5Buchberger where { repeats := 5 }
 
 end Hex.Groebner.Bench
 

@@ -74,7 +74,7 @@ private def round (context : Context) (limits : Limits) (checkpoint : Checkpoint
   if s.statistics.rounds ≥ limits.rounds then throw (.exhausted .rounds)
   set { s with statistics.rounds := s.statistics.rounds + 1 }
   let index ← ReducerIndex.build context limits checkpoint.basis
-  let (pairs, queue) ← checkpoint.queue.select context limits index
+  let (pairs, queue) ← checkpoint.queue.select context limits index checkpoint.basis
   if pairs.isEmpty then return { checkpoint with queue }
   let mut targets := #[]
   for pair in pairs do
@@ -159,7 +159,8 @@ structure Candidate where
 
 /-- A sealed resumable computation fixes its field, order, generators and random
 state. Ordinary callers cannot substitute incompatible metadata or fabricate a
-checkpoint that silently loses unresolved pairs. -/
+checkpoint that substitutes its generators or its pair state. Pair omissions
+follow the producer's criteria and remain distinct from completed reductions. -/
 structure ResumeState where
   private mk ::
   context : Context
