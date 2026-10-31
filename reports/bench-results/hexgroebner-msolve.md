@@ -105,8 +105,8 @@ these two cases. Absolute times are host-specific. This is a local workaround
 for a compiler cost, not an argument that upstream changes are prerequisites.
 
 The comparison's [metadata and exact measuring script](hexgroebner-literals-aab7c5780f68-d481e4329e7e.measurement.json),
-[before manifest](hexgroebner-literals-aab7c5780f68-d481e4329e7e.old.manifest),
-[after manifest](hexgroebner-literals-aab7c5780f68-d481e4329e7e.new.manifest)
+[before manifest](hexgroebner-literals-before-aab7c5780f68.manifest),
+[after manifest](hexgroebner-literals-after-d481e4329e7e.manifest)
 and eight matching `-b{0,1}-{cyclic6,katsura3}-{A,B}.json` / `.log` exports
 retain commands, all samples, hashes, memory and variability.
 
