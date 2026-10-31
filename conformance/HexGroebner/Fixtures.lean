@@ -75,9 +75,9 @@ def cases (field : PrimeField) : Array Case := Id.run do
 
 /-- Call the matrix entry point with validated fixture rows. -/
 def run (field : PrimeField) (c : Case) (limits : MatrixLimits := {})
-    (provenance := true) : Except String MatrixResult := do
+    (provenance := true) (native := true) : Except String MatrixResult := do
   let reducers ← sparse field c.columns c.reducers
   let targets ← sparse field c.columns c.targets
-  return eliminateWith field limits c.columns reducers targets provenance
+  return eliminateWith field limits c.columns reducers targets provenance #[] native
 
 end Hex.Groebner.Fixtures

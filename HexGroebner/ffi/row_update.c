@@ -1,0 +1,128 @@
+/* Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+   Released under Apache 2.0 license as described in the file LICENSE.
+   Authors: Kim Morrison */
+
+#ifndef HEX_GROEBNER_NO_LEAN
+#include <lean/lean.h>
+#endif
+#include <stdint.h>
+#include <stddef.h>
+
+/* Implements Native.subtractPortable exactly. Logical arrays are byte arrays,
+   with explicit little-endian u32 columns and 1/2/4-byte modular residues.
+   All sizes/offsets are checked before access. The public matrix boundary
+   already validates complete rows; these checks also protect direct calls.
+   `dense` is owned; columns and coefficients are borrowed and may alias it.
+   No retained pointer outlives this call. Invalid input returns Option.none;
+   no partially updated buffer is returned. Calls process <=4096 entries. */
+
+static inline uint64_t read_le(const uint8_t *p, unsigned width) {
+    if (width == 1) return p[0];
+    uint64_t value = (uint64_t)p[0] | ((uint64_t)p[1] << 8);
+    if (width == 4) value |= ((uint64_t)p[2] << 16) | ((uint64_t)p[3] << 24);
+    return value;
+}
+
+static inline void write_le(uint8_t *p, unsigned width, uint64_t value) {
+    p[0] = (uint8_t)value;
+    if (width != 1) p[1] = (uint8_t)(value >> 8);
+    if (width == 4) {
+        p[2] = (uint8_t)(value >> 16);
+        p[3] = (uint8_t)(value >> 24);
+    }
+}
+
+/* Geometry validation is shared by the Lean wrapper and the standalone probe. */
+static unsigned row_shape(uint64_t modulus, size_t dense_bytes, size_t column_bytes,
+                          size_t coefficient_bytes, size_t start, size_t count,
+                          uint64_t factor) {
+    if (modulus < 2 || modulus >= UINT64_C(2147483648) ||
+        factor >= modulus || count > 4096) return 0;
+    unsigned width = modulus <= 256 ? 1 : modulus <= 65536 ? 2 : 4;
+    size_t rows = column_bytes / 4;
+    /* rows*width cannot overflow: width<=4 and rows=floor(column_bytes/4). */
+    if (column_bytes % 4 || coefficient_bytes != rows * width ||
+        dense_bytes % width || start > rows || count > rows - start) return 0;
+    return width;
+}
+
+/* Buffers have the validated geometry and out does not alias either input.
+   A failed residue/index check may leave partial internal work in out; callers
+   discard it and never return a partial buffer as a successful result. */
+static int update_bytes(uint64_t modulus, unsigned width, uint8_t *out,
+                        size_t dense_bytes, const uint8_t *cols, const uint8_t *coeffs,
+                        size_t start, size_t count, uint64_t factor) {
+    size_t dense_elements = dense_bytes / width;
+#if defined(__SIZEOF_INT128__) && !defined(HEX_GROEBNER_NO_UINT128)
+    uint64_t reciprocal = UINT64_MAX / modulus;
+    if (UINT64_MAX % modulus == modulus - 1) ++reciprocal;
+#endif
+    for (size_t k = 0; k < count; ++k) {
+        size_t i = start + k;
+        uint64_t column = read_le(cols + 4 * i, 4);
+        if (column >= dense_elements) return 0;
+        size_t offset = (size_t)column * width;
+        uint64_t b = read_le(coeffs + i * width, width);
+        uint64_t a = read_le(out + offset, width);
+        if (a >= modulus || b >= modulus) return 0;
+        uint64_t product = factor * b;
+#if defined(__SIZEOF_INT128__) && !defined(HEX_GROEBNER_NO_UINT128)
+        uint64_t quotient = (uint64_t)(((__uint128_t)product * reciprocal) >> 64);
+        product -= quotient * modulus;
+        if (product >= modulus) product -= modulus;
+#else
+        product %= modulus;
+#endif
+        uint64_t difference = a + modulus - product;
+        if (difference >= modulus) difference -= modulus;
+        write_le(out + offset, width, difference);
+    }
+    return 1;
+}
+
+#ifndef HEX_GROEBNER_NO_LEAN
+static inline lean_object *some_buffer(lean_object *data) {
+    lean_object *result = lean_alloc_ctor(1, 1, 0);
+    lean_ctor_set(result, 0, data);
+    return result;
+}
+
+LEAN_EXPORT lean_obj_res lean_hex_groebner_subtract_row(
+        uint64_t modulus, lean_obj_arg dense,
+        b_lean_obj_arg columns, b_lean_obj_arg coefficients,
+        b_lean_obj_arg start_arg, b_lean_obj_arg count_arg, uint64_t factor) {
+    /* Admissible starts are <=floor(SIZE_MAX/4), hence scalar Nats on both
+       word sizes. Non-scalar counts exceed the 4096-entry call bound. */
+    if (!lean_is_scalar(start_arg) || !lean_is_scalar(count_arg)) {
+        lean_dec(dense);
+        return lean_box(0);
+    }
+    size_t start = lean_unbox(start_arg);
+    size_t count = lean_unbox(count_arg);
+    size_t dense_bytes = lean_sarray_size(dense);
+    unsigned width = row_shape(modulus, dense_bytes, lean_sarray_size(columns),
+                               lean_sarray_size(coefficients), start, count, factor);
+    if (!width) {
+        lean_dec(dense);
+        return lean_box(0);
+    }
+    if (count == 0) return some_buffer(dense);
+    /* Retain a borrowed alias before requesting unique storage. That keeps
+       original row reads stable even for an exclusively owned aliased input. */
+    lean_object *alias = NULL;
+    if (dense == columns || dense == coefficients) {
+        alias = dense;
+        lean_inc(alias);
+    }
+    dense = lean_sarray_ensure_exclusive(dense);
+    int ok = update_bytes(modulus, width, lean_sarray_cptr(dense), dense_bytes,
+                           lean_sarray_cptr(columns), lean_sarray_cptr(coefficients),
+                           start, count, factor);
+    if (alias) lean_dec(alias);
+    if (!ok) {
+        lean_dec(dense);
+        return lean_box(0);
+    }
+    return some_buffer(dense);
+}
+#endif

@@ -1,0 +1,29 @@
+Hex.Groebner.Bench.internMonomials    expected complexity: n    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a76c5fb-dirty, 2026-10-31T10:45:06Z, host=chungus2
+   param  per-call    repeats  C
+   2_048  593.866 µs  ×2^11    C=286.869 [trial 1/3] †
+   4_096    1.205 ms  ×2^10    C=294.581 [trial 1/3]
+   8_192    2.503 ms  ×2^8     C=305.468 [trial 1/3]
+  16_384    5.195 ms  ×2^8     C=319.075 [trial 1/3]
+  32_768   10.654 ms  ×2^7     C=327.329 [trial 1/3]
+   2_048  585.558 µs  ×2^11    C=286.869 [trial 2/3] †
+   4_096    1.213 ms  ×2^10    C=294.581 [trial 2/3]
+   8_192    2.502 ms  ×2^9     C=305.468 [trial 2/3]
+  16_384    5.237 ms  ×2^8     C=319.075 [trial 2/3]
+  32_768   10.861 ms  ×2^7     C=327.329 [trial 2/3]
+   2_048  587.508 µs  ×2^11    C=286.869 [trial 3/3] †
+   4_096    1.207 ms  ×2^10    C=294.581 [trial 3/3]
+   8_192    2.502 ms  ×2^9     C=305.468 [trial 3/3]
+  16_384    5.228 ms  ×2^8     C=319.075 [trial 3/3]
+  32_768   10.726 ms  ×2^7     C=327.329 [trial 3/3]
+  verdict: consistent with declared complexity (cMin=294.581, cMax=327.329, β=+0.052)
+  per-spawn floor (harness self-measurement): 22.511 ms
+  peak RSS: 66_660 kB..75_688 kB (across 15 ok row(s))
+  trial summaries (3 trials per param; spread = (max-min)/median):
+     param  trials  median      min         max         spread
+     2_048  3/3     587.508 µs  585.558 µs  593.866 µs  1.414%
+     4_096  3/3       1.207 ms    1.205 ms    1.213 ms  0.689%
+     8_192  3/3       2.502 ms    2.502 ms    2.503 ms  0.030%
+    16_384  3/3       5.228 ms    5.195 ms    5.237 ms  0.790%
+    32_768  3/3      10.726 ms   10.654 ms   10.861 ms  1.925%
+exported to reports/bench-results/hexgroebner-intern-54ad046fe11c.json

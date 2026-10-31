@@ -88,6 +88,37 @@ private def summary : Except String (Array (Array (Nat × UInt64)) × Nat × Nat
       a.trace.isEmpty && sa.traceNodes == 0 && b.trace.size == sb.traceNodes
   | _, _ => false
 
+private def same (field : PrimeField) (a b : MatrixResult) : Bool :=
+  a.stats == b.stats && match a.result, b.result with
+  | .error a, .error b => a == b
+  | .ok a, .ok b =>
+    let rows := fun (e : Echelon) => e.rows.map fun p =>
+      (p.row.entries field, p.fromTarget, p.derivation, p.multiplier, p.sugar)
+    rows a == rows b && a.reducerRank == b.reducerRank && a.trace == b.trace
+  | _, _ => false
+
+#guard fields.all fun field => (cases field).all fun c =>
+  [true, false].all fun provenance =>
+    match run field c {} provenance true, run field c {} provenance false with
+    | .ok a, .ok b => same field a b
+    | _, _ => false
+
+private def chunks : Bool := Id.run do
+  let entries := (Array.range 5000).map fun i => (i, (1 : UInt64))
+  let targets := (entries.map fun (i, _) => (i, (2 : UInt64))).push (5000, 3)
+  let some reducer := SparseRow.ofEntries field 5001 entries | return false
+  let some target := SparseRow.ofEntries field 5001 targets | return false
+  let native := eliminateWith field {} 5001 #[reducer] #[target] true #[] true
+  let portable := eliminateWith field {} 5001 #[reducer] #[target] true #[] false
+  if !same field native portable then return false
+  match native.result with
+  | .error _ => return false
+  | .ok echelon =>
+    return echelon.reducerRank == 1 && echelon.rows.size == 2 &&
+      echelon.rows[1]!.row.entries field == #[(5000, 1)]
+
+#guard chunks
+
 private def fails (limits : MatrixLimits) (resource : Resource) : Bool :=
   match run field typical limits with
   | .ok r => match r.result with
@@ -149,6 +180,19 @@ private def rejects (row : SparseRow) (error : MatrixError) : Bool :=
 #guard rejects ⟨Packed.push .u32 (Packed.push .u32 {} 1) 1,
   (ByteArray.empty.push 1).push 2⟩ (.column 0 1)
 #guard match (eliminateWith field {} (2 ^ 32) #[] #[]).result with
+  | .error e => e == .dimensions
+  | _ => false
+
+-- Normalization scalars and sugar propagate through actual row updates.
+#guard match Fixtures.sparse field 2 #[#[1, 1]], Fixtures.sparse field 2 #[#[3, 5]] with
+  | .ok reducers, .ok targets =>
+    match (eliminateWith field {} 2 reducers targets false #[100, 2]).result with
+    | .ok e =>
+      let target := e.rows.filter (·.fromTarget)
+      target.size == 1 && target[0]!.sugar == 100 && target[0]!.multiplier == 4
+    | _ => false
+  | _, _ => false
+#guard match (eliminateWith field {} 0 #[] #[] false #[1]).result with
   | .error e => e == .dimensions
   | _ => false
 

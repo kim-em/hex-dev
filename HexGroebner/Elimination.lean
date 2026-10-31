@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGroebner.Packed
+public import HexGroebner.Native
 
 public section
 
@@ -16,6 +17,14 @@ rows are retained, with one reusable packed dense accumulator. -/
 
 namespace Hex.Groebner
 
+/-- Both representations choose the same minimal residue width. -/
+theorem native_width (field : PrimeField) :
+    Native.width field.modulus.toNat = field.width.bytes := by
+  simp only [Native.width, PrimeField.width, UInt64.le_iff_toNat_le]
+  simp only [show (256 : UInt64).toNat = 256 from rfl,
+    show (65536 : UInt64).toNat = 65536 from rfl]
+  split <;> (try split) <;> rfl
+
 /-- Resource categories. Packed bytes count logical input, workspace and output
 payload, excluding allocator capacity and Lean object headers. Work counts row
 visits, sparse entry updates (including their product), dense column visits,
@@ -24,9 +33,11 @@ inductive Resource where
   | columns | rows | inputEntries | outputEntries | packedBytes | work | traceNodes
   deriving BEq, Repr
 
-/-- Invalid serialized matrix data and resource exhaustion remain distinct. -/
+/-- Invalid serialized data, resource exhaustion and internal row-provider failure remain distinct. -/
 inductive MatrixError where
   | dimensions
+  /-- The checked native row provider rejected a validated row; internal invariant failure. -/
+  | rowUpdate
   | rowLength (row : Nat)
   | column (row entry : Nat)
   | coefficient (row entry : Nat)
@@ -55,7 +66,7 @@ structure MatrixStats where
   processedRows : Nat := 0
   reductions : Nat := 0
   zeroRows : Nat := 0
-  deriving Repr, Inhabited
+  deriving Repr, BEq, Inhabited
 
 /-- Shared row provenance. Inputs are numbered reducers first, then targets.
 Every operation refers only to earlier nodes. This is derivation data, not a
@@ -76,6 +87,11 @@ structure Pivot where
   row : SparseRow
   fromTarget : Bool
   derivation : Option Nat
+  /-- Scalar applied to the residual row when making this pivot monic. Retaining
+  it allows a one-target triangular solve to return the unscaled remainder. -/
+  multiplier : UInt64 := 1
+  /-- Maximum propagated sugar label of the rows actually used in this pivot. -/
+  sugar : Nat := 0
   deriving Inhabited
 
 /-- Echelon rows in increasing pivot-column order, without permuting columns.
@@ -180,11 +196,13 @@ private def scaleSparse (field : PrimeField) (ctx : BarrettCtx field.modulus)
 canonical residues: `a + p - (b*c mod p)` fits below `2*p < 2^32`, and the
 Barrett product fits below `p^2 < 2^62`. No floating-point arithmetic is used. -/
 private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
-    (reducers targets : Array SparseRow) (provenance : Bool) : Work Echelon := do
-  if columns ≥ 2 ^ 32 || reducers.size + targets.size ≥ 2 ^ 32 then
+    (reducers targets : Array SparseRow) (provenance : Bool) (sugars : Array Nat)
+    (native : Bool) : Work Echelon := do
+  if columns > 4294967295 || reducers.size + targets.size > 4294967295 then
     throw .dimensions
   if columns > limits.columns then throw (.exhausted .columns)
   if reducers.size + targets.size > limits.rows then throw (.exhausted .rows)
+  if !sugars.isEmpty && sugars.size != reducers.size + targets.size then throw .dimensions
   for i in [:reducers.size] do validate field limits columns i reducers[i]!
   for i in [:targets.size] do validate field limits columns (reducers.size + i) targets[i]!
   let width := field.width
@@ -208,6 +226,7 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
     let (nextTrace, node) ← record limits provenance trace (.input input)
     trace := nextTrace
     let mut node := node
+    let mut sugar := sugars[input]?.getD 0
     if row.size == 0 then
       modify fun s => { s with zeroRows := s.zeroRows + 1 }
     else
@@ -221,7 +240,7 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
           | none => pure (trace, none)
         trace := nextTrace
         slots := Packed.set .u32 slots first (pivots.size + 1).toUInt64
-        pivots := pivots.push ⟨output, false, nextNode⟩
+        pivots := pivots.push ⟨output, false, nextNode, inv, sugar⟩
         reducerRank := reducerRank + 1
       else
         work limits row.size
@@ -242,15 +261,26 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
             let slot := (Packed.read .u32 slots column).toNat
             if slot != 0 then
               let pivot := pivots[slot - 1]!
+              sugar := max sugar pivot.sugar
               last := max last (Packed.read .u32 pivot.row.columns (pivot.row.size - 1)).toNat
               work limits pivot.row.size
-              for i in [:pivot.row.size] do
-                let j := (Packed.read .u32 pivot.row.columns i).toNat
-                let b := Packed.read width pivot.row.coefficients i
-                let product := ctx.mulMod a b
-                let difference := Packed.read width dense j + field.modulus - product
-                dense := Packed.set width dense j
-                  (if difference ≥ field.modulus then difference - field.modulus else difference)
+              if native then
+                -- Cancellation or additional allowance checks belong between chunks.
+                for chunk in [:((pivot.row.size + 4095) / 4096)] do
+                  let start := chunk * 4096
+                  let count := min 4096 (pivot.row.size - start)
+                  match Native.subtract field.modulus dense pivot.row.columns
+                      pivot.row.coefficients start count a with
+                  | none => throw .rowUpdate
+                  | some next => dense := next
+              else
+                for i in [:pivot.row.size] do
+                  let j := (Packed.read .u32 pivot.row.columns i).toNat
+                  let b := Packed.read width pivot.row.coefficients i
+                  let product := ctx.mulMod a b
+                  let difference := Packed.read width dense j + field.modulus - product
+                  dense := Packed.set width dense j
+                    (if difference ≥ field.modulus then difference - field.modulus else difference)
               modify fun s => { s with reductions := s.reductions + 1 }
               if let (some left, some right) := (node, pivot.derivation) then
                 let (nextTrace, nextNode) ← record limits provenance trace
@@ -285,7 +315,7 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
                 coefficients := Packed.push width output.coefficients value }
               dense := Packed.set width dense j 0
           slots := Packed.set .u32 slots column (pivots.size + 1).toUInt64
-          pivots := pivots.push ⟨output, fromTarget, nextNode⟩
+          pivots := pivots.push ⟨output, fromTarget, nextNode, inv, sugar⟩
           if !fromTarget then reducerRank := reducerRank + 1
         else
           modify fun s => { s with zeroRows := s.zeroRows + 1 }
@@ -299,13 +329,16 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
 
 /-- Deterministic finite-prime-field Macaulay elimination, with sparse reducers,
 packed dense accumulation, monic output, stable columns and optional provenance.
-Input rows must be canonical and use the field's coefficient width. Limits cover
+`native := false` retains scalar Lean updates; the default uses bounded native
+chunks with identical rows, provenance and counters. Input rows must be canonical
+and use the field's coefficient width. Limits cover
 validation and nested arithmetic as well as elimination. Successful rows span
 the input row space; they are echelon, not reduced echelon. The polynomial layer
 is responsible for supplying columns in the chosen lawful monomial order. -/
 def eliminateWith (field : PrimeField) (limits : MatrixLimits)
-    (columns : Nat) (reducers targets : Array SparseRow) (provenance : Bool := false) : MatrixResult :=
-  let (result, stats) := (eliminate field limits columns reducers targets provenance).run {}
+    (columns : Nat) (reducers targets : Array SparseRow) (provenance : Bool := false)
+    (sugars : Array Nat := #[]) (native : Bool := true) : MatrixResult :=
+  let (result, stats) := (eliminate field limits columns reducers targets provenance sugars native).run {}
   ⟨result, stats⟩
 
 end Hex.Groebner

@@ -1,93 +1,163 @@
 # HexGroebner
 
-Mathlib-free finite-field F4 operations under
-[the F4 contract](../SPEC/Libraries/hex-groebner.md).
+Mathlib-free finite-field F4 under [the governing contract](../SPEC/Libraries/hex-groebner.md).
 
-The implemented API is the deterministic Macaulay matrix kernel
-`Hex.Groebner.eliminateWith`. It accepts a prime-field context, a fixed column
-count, sparse reducer rows and sparse target rows. Supply columns in decreasing
-order of the intended monomials; the matrix kernel preserves their positions.
-`PrimeField.ofZMod64` reuses the existing bounds and primality evidence. The
-supported modulus range is every prime `2 ≤ p < 2^31`.
+`Hex.Groebner.computeWith` performs deterministic prime-field F4 candidate
+production. Its explicit context fixes the prime field, variable count and
+lawful lex, grlex or grevlex order. Raw terms are validated, repeated monomials
+combined, zero coefficients removed and supports sorted. Sugar-degree critical
+pairs are held in a persistent leftist heap; product and resolved-dependency chain criteria
+discard unneeded pairs. Symbolic preprocessing closes a selected batch under a
+basis-specific divisibility trie and constructs one joint Macaulay matrix.
+The chain test visits indexed LCM divisors; final tail reductions share one
+immutable reducer index.
+Final minimal-leading-monomial selection and tail reduction produce canonical
+monic, sorted, reduced output. Empty/all-zero input produces an empty basis;
+the unit ideal produces `[1]`, including zero-variable inputs. Ordinary
+characteristic-two polynomials receive no implicit field equations.
 
-Rows store increasing 32-bit column indices and canonical residues in separate
-little-endian byte buffers. Moduli below 256 use one byte per coefficient,
-moduli below 65536 use two, and larger supported primes use four. Raw buffers
-are validated before use; `SparseRow.ofEntries` also provides a checked
-interchange constructor. There is no implicit reduction of malformed residues.
+Success is an **unchecked candidate**, carrying the field/order identity,
+canonical interchange polynomials and explicit random state. Deterministic
+execution consumes no random samples. No API promotes a candidate to a
+certified result. `certifyWith`, `basisWith`, complete basis certificates and
+soundness theorems remain separate work.
 
-Elimination retains sparse monic pivots and reuses one packed dense accumulator
-and one packed pivot table. Reducers with a free leading column install directly
-from sparse storage; other rows scan from their first stored column through an
-active upper bound, extended when a pivot introduces a later column. Empty
-rows bypass the accumulator. Reducers are processed first. Target rows reduce
-against both reducer and preceding target pivots. Output is echelon in the
-original columns, sorted by leading column; rows marked `fromTarget` supply the
-additional row-space dimension. The reducer rows retained in the output span
-the original reducer subspace. This is forward elimination, so tails may still
-contain later pivot columns. Multiplication uses HexArith's Barrett reciprocal,
-hoisted outside coefficient loops. Every product is below `p² < 2^62`.
+`PrimeField.ofZMod64` reuses actual primality and bounds evidence. Every prime
+`2 ≤ p < 2^31` is supported. A context can also carry a proof from
+`Hex.Nat.isPrimeTrial_isPrime`; no unchecked primality flag is accepted.
+`Polynomial.toMvPoly` and `ofMvPoly` preserve the fixed-arity interchange terms.
 
-`MatrixLimits` bounds columns, rows, input/output nonzeros, packed payload bytes,
-work and optional provenance nodes. Packed bytes count all input buffers, the
-two workspaces and retained output buffers; they exclude allocator capacity,
-object headers and provenance objects, which have a separate node limit. This
-is a logical payload bound, not a bound on process memory; short rows can have
-more metadata than payload, and shared input/output columns are counted twice.
-One work unit covers each row header/processing visit, each sparse entry
-validated, scattered or updated (the update includes its modular product),
-each dense column inspected, each normalization or inversion product, and each
-workspace byte initialized. Direct sparse normalization charges one unit per
-nonmonic entry; monic sparse rows reuse their buffers and derivation node,
-with no identity scaling or coefficient multiplication. Scan blocks of at most
-64 positions and other loops' allowances are
-charged before execution. Exhaustion and invalid input
-are different errors. Counters survive either error. There is no resumable
-state or implicit fallback in this matrix API.
+```lean
+def field : Hex.Groebner.PrimeField :=
+  ⟨7, Hex.Nat.isPrimeTrial_isPrime (by decide), by decide⟩
+
+def candidate : Hex.Groebner.ComputeResult :=
+  Hex.Groebner.computeWith ⟨field, 2, .grevlex⟩ {} #[
+    #[⟨#[2, 0], 1⟩, ⟨#[0, 1], 6⟩],
+    #[⟨#[1, 1], 1⟩, ⟨#[0, 0], 6⟩]]
+```
+
+This example needs the additional basis polynomial `y² - x`; checking only
+ideal-membership identities for the two original generators would miss that
+S-pair obligation. Candidate production alone supplies no Lean ideal theorem.
+
+`resumeWith` accepts a sealed state and larger absolute cumulative allowances.
+Its immutable identity retains the generators, field, order and seed. Input
+normalization, each F4 round and final interreduction are atomic basis/pair
+checkpoints. On exhaustion, no partially processed batch loses unresolved pairs;
+temporary interned monomials and charged work survive. Retrying a stage charges
+its repeated work. Invalid input, internal invariant failures, representation
+exhaustion and consumed allowances remain distinct. `Limits.packedBytes` bounds monomial arenas plus
+cumulative packed polynomial/matrix allocation and decoded interchange scalar
+payload; it excludes headers and allocator capacity. Pair attempts, rounds,
+basis size, cumulative matrix rows/entries, monomials and variables have
+separate bounds.
+Batch size has a minimum of one. Nested hashing, widening, sorting, polynomial
+arithmetic and matrix work share the remaining parent allowance. These are
+operational counters, not predictions of elapsed time.
+
+The packed-payload allowance is not a process-memory limit: it excludes
+hash tables, tree nodes, object headers and allocator capacity. Structural
+monomial, pair-attempt, basis and variable bounds also limit metadata growth.
+Accounting for live heap overhead remains an outstanding memory-control
+requirement of the SPEC.
+
+Monomial identifiers index an append-only packed arena, with cached degree,
+semantic hash and support mask. Hash buckets use full exponent equality checks.
+Exponent storage widens from 8 to 16 to 32 bits before overflow, preserving
+identifiers and hashes. Larger exponents produce representation exhaustion.
+Divisibility masks only reject candidates; trie paths inspect exact exponents.
+Polynomials use separate packed stable-identifier and coefficient buffers.
+Coefficients occupy one byte below modulus 256, two below 65536, and four for
+larger supported primes. Interchange decoding occurs outside the hot loops.
+
+`eliminateWith` accepts a fixed column count, canonical sparse reducer rows and
+target rows. Columns must follow decreasing monomial order. Reducers with free
+leading columns install directly; other rows scan their active interval,
+extending it when a pivot introduces a later term. Empty rows bypass the dense
+accumulator. Target rows reduce against reducers and earlier target pivots.
+Outputs are monic echelon rows in the original column order. `fromTarget`
+identifies added row-space dimension. The retained reducer rows span the input
+reducer space. Pivot metadata retains the normalization scalar and propagated
+sugar, allowing ordinary remainders to preserve their original coefficients.
+Native row updates operate in chunks of at most 4096 entries;
+`eliminateWith (... native := false)` and `Limits.nativeRows := false` retain
+the scalar Lean row-update route. Both routes
+produce identical pivots, provenance and resource counters. The binding has a
+transparent structurally recursive Lean body, validates all shapes and accessed
+residues, and preserves original borrowed buffers when inputs alias. C code
+uses little-endian scalar access, uint128 Barrett reduction when available and
+exact word remainder otherwise. No ISA extension or floating point is required.
+Barrett parameters are hoisted outside coefficient loops; products fit below
+`p² < 2^62`.
+
+`MatrixLimits` bounds one call's columns, rows, input/output nonzeros, packed
+payload, work and optional provenance nodes. Packed payload counts input,
+workspace and output buffers; it excludes headers and allocator capacity, and
+may count shared buffers twice. Work covers row visits, sparse updates
+(including their products), dense-column visits, normalization/inversion
+products and workspace bytes initialized. Monic sparse rows reuse their
+buffers. Dense scans reserve blocks of at most 64 positions. Counters survive
+errors. Matrix calls expose no partial echelon result as success.
 
 Optional `RowOp` provenance shares input, scaled-addition and scaling nodes.
-References point backward and each output pivot references its derivation.
-This data does not certify a Gröbner basis: both polynomial ideal containments,
-final S-pair reductions, reducedness and the theory soundness proofs are
-separate requirements.
+References point backward and each output pivot refers to its derivation.
+This data alone does not certify a Gröbner basis: both ideal containments,
+all final S-pair reductions and reducedness remain separate obligations.
 
 Verification:
 
 ```sh
-lake build HexGroebner +HexGroebner.Conformance hexgroebner_emit_fixtures hexgroebner_bench
+lake build HexGroebner +HexGroebner.Conformance +HexGroebner.MonomialConformance \
+  +HexGroebner.F4Conformance hexgroebner_emit_fixtures hexgroebner_emit_f4 hexgroebner_bench
 HEX_LIBRARY_FILTER=HexGroebner bash scripts/ci/run_oracles.sh
 lake exe hexgroebner_bench verify
 ```
 
-The committed matrix corpus covers characteristic two, both storage-width
-boundaries, `2^31 - 1`, zero shapes, dependent rows, 40-by-60 rank defects,
-later reducer pivots and active-range extension across scan blocks.
-An independent Python integer RREF checks row-space equality and reducer-space
-preservation; separate replay checks the shared derivations. Core Lean checks
-cover malformed representations at every width, every resource category and
-exact inclusive budget boundaries, counters retained on failure, provenance
-agreement across the corpus, and a 100,000-column sparse work bound. Packed
-byte encoding also has an ordinary-kernel example.
+The 175 matrix cases independently check row-space equality, reducer subspaces
+and derivations with Python exact modular RREF. Native/portable comparisons cover every matrix fixture, both provenance modes,
+and a 5000-entry pivot spanning multiple native calls. Primitive tests cover
+all coefficient widths, boundary moduli, aliasing and malformed slices. Both
+compiled C arithmetic paths have standalone reference checks and sanitizer
+coverage. A downstream literal row update reduces in the kernel with no
+axioms. Core checks cover malformed
+representations, all resource categories, inclusive boundaries, retained failure
+counters, scalar/sugar metadata, scan-block extension and 100,000-column sparse
+work bounds. Monomial tests force collisions, table growth and both widening
+boundaries, check overflow rejection and compare packed ordering with the
+lawful Hex orders. Ordinary-kernel byte decoding has an axiom audit.
 
-The Hilbert-matrix (Cauchy family) lean-bench kernels include validation,
-allocation, elimination, decoding and structural output hashing, with separate
-provenance-off and provenance-on registrations; input preparation is excluded. Their
-registered domain has full rank and dense trailing supports, giving cubic
-fixed-word update work and quadratic scans/output work. A sparse rectangular
-rank-deficient family has constant clustered row support and both dimensions
-proportional to its parameter, with linear setup/support work. A separate
-spread-support family reaches the last column and exposes quadratic interval
-scanning despite having only three entries per row. These make no claim about
-complete F4 systems or comparative performance leadership. Portable accessors
-retain checked byte operations and `Nat` indices. The active interval can still
-contain large internal gaps; it is not a sparse support queue. Performance
-evidence and unresolved fitted verdicts are in the
-[matrix report](../reports/bench-results/hexgroebner-cauchy.md).
+The 567-system F4 corpus compares complete reduced bases with SymPy F5B and,
+when available, Singular over
+seven primes and three orders. Cases include cyclic-3, Katsura-2, generated
+quadratic systems, positive-dimensional systems, nonmonic inputs, raw
+cancellation and ordinary characteristic-two polynomials. Oracle rejection
+tests cover wrong ideals, missing S-pairs, nonmonic output, wrong orders and
+false Boolean-quotient reductions. Core tests also exercise cumulative-state
+resumption at every work boundary of the S-pair example, every resource
+category, scalar-preserving remainders and sealed checkpoint identities. The
+emitter also recomputes all 567 systems with batch size one and requires the
+same reduced basis. Product/chain counters demonstrate criterion use.
 
-Full polynomial input/output, monomial interning, symbolic preprocessing,
-critical pairs, basis computation/certification, extension adapters, delayed
-reduction, SIMD/parallel kernels and `HexGroebnerTheory` remain unimplemented.
-Issue [#10987](https://github.com/kim-em/hex-dev/issues/10987) tracks these
-requirements and the full-system comparator sweeps. The gap to both
-fastest-open-source and overall-fastest F4 is unmeasured; no such milestone
-has been demonstrated. No library phase completion is claimed.
+Lean-bench registrations cover dense elimination with/without provenance,
+clustered and spread sparse supports, monomial interning, and fixed cyclic-4,
+cyclic-5, cyclic-6 and Katsura-3 F4 calls. Full-system timings are candidate production
+through final interreduction; input generation, certification and kernel
+checking are excluded. IO-backed input reads prevent cached pure fixed results.
+Packed helpers require canonical workspace-owned identifiers and coefficients;
+`Polynomial.remainder` operates on unchecked internal divisors and supplies no
+certified membership claim. Portable accessors retain checked byte operations and `Nat` indices. Wide gaps
+inside an active interval are still scanned. No performance leadership is
+claimed from these kernel or candidate measurements.
+
+Complete certificates/checkers and `HexGroebnerTheory`, finite extensions,
+elimination block orders, Gebauer-Möller installation, checked probabilistic
+computation, validated learning/traces, delayed reduction, SIMD/parallel kernels
+and matched full-system external comparisons remain outstanding.
+[#10987](https://github.com/kim-em/hex-dev/issues/10987) tracks the continuing
+correctness, finite-field scope and fastest-open-source requirements. No
+library phase or performance milestone is claimed.
+
+Reducer-trie traversal caches node depths and keeps node IDs alone on its stacks.
+[Matched allocation measurements](../reports/bench-results/hexgroebner-allocation.md)
+retain all successful and unsuccessful variants and their complete samples.
