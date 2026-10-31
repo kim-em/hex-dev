@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexGroebner.CertificateBasisReplay
+import HexGroebner.CertificateConformance
 
 namespace Hex.Groebner.Certificate.BasisReplayTest
 
@@ -27,8 +28,8 @@ private def exhausts (budget : Budget) (resource : Resource) : Bool :=
   | _ => false
 
 #guard exhausts { work := 0 } .work
-#guard exhausts { bytes := 0 } .bytes
-#guard exhausts { terms := 0 } .terms
+#guard exhausts { allocatedBytes := 0 } .allocatedBytes
+#guard exhausts { allocatedTerms := 0 } .allocatedTerms
 #guard exhausts { nodes := 0 } .nodes
 #guard exhausts { pairs := 0 } .pairs
 #guard exhausts { «variables» := 0 } .variables
@@ -69,3 +70,57 @@ private def shared : Basis := { certificate with forward :=
   | _ => false
 
 end Hex.Groebner.Certificate.BasisReplayTest
+
+namespace Hex.Groebner.Certificate.BasisCorpusTest
+open Hex.Groebner.CertificateConformance
+
+private def unbounded : Basis := { basisWitness with
+  pairs := basisWitness.pairs.set! 0
+    ((basisWitness.pairs[0]!).set! 1 #[[([0,1],1)],[([1,0],6)],[]]) }
+
+private def corpus : List (Context × Array Polynomial × Array Polynomial × Basis) := [
+  (context,generators,basis,basisWitness),
+  ({ context with order := .lex },generators,basis,basisWitness),
+  ({ context with field := ⟨11,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩ },generators,basis,basisWitness),
+  (context,#[],basis,basisWitness),
+  (context,generators,basis,{ basisWitness with forward := { basisWitness.forward with roots := #[0,1] } }),
+  (context,generators,basis,{ basisWitness with backward := { basisWitness.backward with roots := #[0,0] } }),
+  (context,generators,basis,{ basisWitness with forward := { basisWitness.forward with roots := #[0,1,99] } }),
+  (context,generators,basis,{ basisWitness with forward := ⟨[.generator 7],#[0,0,0]⟩ }),
+  (context,generators,basis,{ basisWitness with pairs := #[] }),
+  (context,generators,basis,{ basisWitness with pairs := basisWitness.pairs.push basisWitness.pairs[0]! }),
+  (context,generators,basis,{ basisWitness with pairs := basisWitness.pairs.set! 0 #[] }),
+  (context,generators,basis,unbounded),
+  (context,generators,nonreduced,nonreducedWitness),
+  (context,generators,basis.reverse,basisWitness)]
+
+#guard corpus.all fun (context,generators,basis,certificate) =>
+  match BasisVerification.verifyWith context {} generators basis certificate with
+  | .checked receipt _ => checkBasis context generators basis certificate && receipt.polynomials == basis
+  | .rejected _ => !checkBasis context generators basis certificate
+  | _ => false
+
+#guard match BasisVerification.verifyWith context {} generators basis basisWitness with
+  | .checked _ usage => usage.pairs == 9 && usage.nodes == 8
+  | _ => false
+
+end Hex.Groebner.Certificate.BasisCorpusTest
+
+namespace Hex.Groebner.Certificate.BasisCorpusTest
+
+private def larger : Bool := Id.run do
+  let n := 16
+  let ctx : Context := ⟨Hex.Groebner.CertificateConformance.context.field,n,.grevlex⟩
+  let basis : Array Polynomial := (Array.range n).map fun i =>
+    [((List.range n).map fun j => if i == j then 1 else 0,1)]
+  let nodes := (List.range n).map Node.generator
+  let roots := Array.range n
+  let certificate : Basis := ⟨⟨nodes,roots⟩,⟨nodes,roots⟩,
+    Array.replicate n (Array.replicate n (Array.replicate n []))⟩
+  match BasisVerification.verifyWith ctx {} basis basis certificate with
+  | .checked _ usage => return usage.pairs == n*n && usage.nodes == 2*n
+  | _ => return false
+
+#guard larger
+
+end Hex.Groebner.Certificate.BasisCorpusTest

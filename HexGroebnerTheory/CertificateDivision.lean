@@ -26,6 +26,7 @@ theorem irreducible_sound (divisors : Array Polynomial) (remainder : Polynomial)
     (h : irreducible order divisors remainder = true) :
     ∀ c ∈ (denote remainder).support, ∀ i : Fin divisors.size,
       denote divisors[i] ≠ 0 → ¬ (m).degree (denote divisors[i]) ≤ c := by
+  rw [irreducible_eq] at h
   intro c hc i hn hle
   obtain ⟨term, ht, rfl⟩ := support_term remainder hc
   have test := List.all_eq_true.mp (List.all_eq_true.mp h term ht)

@@ -5,6 +5,8 @@ Authors: Kim Morrison
 -/
 
 import HexGroebner.Division
+import HexGroebner.DivisionFixtures
+import HexGroebner.Membership
 import Hex.Conformance.Emit
 import HexGroebner.F4Fixtures
 import Lean.Data.Json
@@ -17,12 +19,7 @@ private def canonical (p : Nat) (raw : RawPolynomial) : Certificate.Polynomial :
   raw.foldl (fun f t => if t.coefficient == 0 then f else
     Hex.MvPoly.Kernel.addMod p f [(t.exponents.toList,t.coefficient.toNat)]) []
 
-private def dividend (p n seed : Nat) : Certificate.Polynomial :=
-  (List.range 8).foldl (fun f i =>
-    let exponents := (List.range n).map fun j =>
-      ((seed+1)*1103515245 + (i+3)*12345 + (j+1)*69069 + i*j*17) % 4
-    let coefficient := ((seed+1)*69069 + (i+1)*12345) % p
-    if coefficient == 0 then f else Hex.MvPoly.Kernel.addMod p f [(exponents,coefficient)]) []
+private def dividend (p n seed : Nat) : Certificate.Polynomial := DivisionFixtures.dividend p n seed
 
 private def orderName : TermOrder → String
   | .lex => "lex"
@@ -39,16 +36,33 @@ private def emit : IO Unit := do
           | _ => throw (IO.userError s!"{c.name}: F4 candidate failed")
         for (name,divisors) in [("generators",c.generators.map (canonical field.modulus.toNat)),("basis",basis)] do
           let f := dividend field.modulus.toNat c.variables seed
-          let (result,usage) ← match divideWith context {} divisors f with
-            | .success result usage => pure (result.value,usage)
+          let result ← match divideWith context {} divisors f with
+            | .success result _ => pure result.value
             | _ => throw (IO.userError s!"{c.name}/{name}: checked division failed")
           let value := Json.mkObj [
             ("p",toJson field.modulus.toNat),("variables",toJson c.variables),
             ("order",toJson (orderName order)),("generators",toJson divisors),
             ("dividend",toJson f),("quotients",toJson result.quotients),
-            ("remainder",toJson result.remainder),("work",toJson usage.work)]
+            ("remainder",toJson result.remainder)]
           Hex.Conformance.Emit.emitResult "HexGroebner"
             s!"p{field.modulus.toNat}/{orderName order}/{c.name}/{name}" "division" value.compress
+  for c in DivisionFixtures.cases do
+    let .checked receipt _ := Certificate.BasisVerification.verifyWith c.context {}
+        c.generators c.basis c.certificate | throw (IO.userError s!"{c.name}: basis replay failed")
+    for (f,seed) in (DivisionFixtures.targets c).zipIdx do
+      let result ← match normalFormWith receipt {} f with
+        | .success result _ => pure result.value
+        | _ => throw (IO.userError s!"{c.name}: normal form failed")
+      let member ← match memberWith receipt {} f with
+        | .member _ _ _ _ => pure true
+        | .nonmember _ _ => pure false
+        | _ => throw (IO.userError s!"{c.name}: membership failed")
+      let value := Json.mkObj [
+        ("p",toJson c.context.field.modulus.toNat),("variables",toJson c.context.variables),
+        ("order",toJson (orderName c.context.order)),("generators",toJson c.basis),
+        ("original",toJson c.generators),("normalForm",toJson true),("member",toJson member),
+        ("dividend",toJson f),("quotients",toJson result.quotients),("remainder",toJson result.remainder)]
+      Hex.Conformance.Emit.emitResult "HexGroebner" s!"normal-form/{c.name}/{seed}" "division" value.compress
 
 end Hex.Groebner.EmitDivision
 

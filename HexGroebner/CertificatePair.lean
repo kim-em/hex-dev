@@ -27,4 +27,16 @@ def sPolynomial (p : Nat) (order : TermOrder) (f g : Polynomial) : Polynomial :=
       (Hex.MvPoly.Kernel.mulMod p [(difference a.1 b.1, a.2)] g)
   | _, _ => []
 
+/-- S-polynomial with separately cached actual leading terms. -/
+def sPolynomialHeads (p : Nat) (f g : Polynomial)
+    (left right : Option (List Nat × Nat)) : Polynomial :=
+  match left,right with
+  | some a,some b => Hex.MvPoly.Kernel.subMod p
+      (Hex.MvPoly.Kernel.mulMod p [(difference b.1 a.1,b.2)] f)
+      (Hex.MvPoly.Kernel.mulMod p [(difference a.1 b.1,a.2)] g)
+  | _,_ => []
+
+theorem sPolynomialHeads_eq (p : Nat) (order : TermOrder) (f g : Polynomial) :
+    sPolynomialHeads p f g (leading order f) (leading order g) = sPolynomial p order f g := rfl
+
 end Hex.Groebner.Certificate

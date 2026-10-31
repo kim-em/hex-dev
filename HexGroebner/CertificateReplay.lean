@@ -42,6 +42,34 @@ private def validateWitness (context : Context) (budget : Budget) (f : Polynomia
     | .invalid _ => throw .rejected
     | e => throw e
 
+/-- Reserve pure cofactor reduction with previously validated divisor sizes.
+This performs no divisor revalidation or polynomial multiplication. -/
+def reserveReduction (context : Context) (budget : Budget) (divisorSizes : Array Nat)
+    (cofactors : Array Polynomial) (target : Polynomial) : Work Unit := do
+  spend budget 1
+  if cofactors.size != divisorSizes.size then throw .rejected
+  validateWitness context budget target
+  let f ← Arithmetic.size budget target
+  let width := (context.variables + 1) * (budget.exponentBits / 64 + 3)
+  let mut total := 0
+  let mut quotientTerms := 0
+  for i in [:divisorSizes.size] do
+    validateWitness context budget cofactors[i]!
+    let a ← Arithmetic.size budget cofactors[i]!
+    let b := divisorSizes[i]!
+    quotientTerms := quotientTerms+a
+    let product := a*b
+    let depth := a.log2+4
+    reserve budget context.variables (product*depth)
+    spend budget ((product*(depth+2)+a+b+1)*width*8)
+    reserveBytes budget ((product+1)*context.variables*48)
+    total := total+product
+    reserve budget context.variables (total+product)
+    spend budget ((total+product+1)*width*4)
+  spend budget ((quotientTerms+f+divisorSizes.size+1)*width*4)
+  reserveBytes budget ((f+1)*context.variables*48 + divisorSizes.size*32)
+  spend budget ((total+f+1)*width*4)
+
 /-- Reserve the pure checker's nested work before invoking it. Canonical
 translated product rows have linear construction and balanced merge cost;
 folded summation additionally reserves every possible growing prefix.
@@ -80,8 +108,8 @@ def reserveReplay (context : Context) (budget : Budget) (divisors : Array Polyno
   spend budget ((total + r + f + 1) * width * 4)
   spend budget ((r + f + 1) * width * 4)
   reserveBytes budget ((r + f + 1) * context.variables * 48)
-  spend budget (r * (divisorTerms + divisors.size + 1) * width * 4)
-  reserveBytes budget (r * divisorTerms * context.variables * 48)
+  spend budget ((divisorTerms + r * (divisors.size + 1) + 1) * width * 4)
+  reserveBytes budget (divisorTerms * context.variables * 48 + divisors.size * 64)
 
 private def failure {context : Context} {divisors : Array Polynomial} {dividend : Polynomial}
     (state : State context divisors dividend) : Error → Result context divisors dividend
@@ -114,7 +142,8 @@ def verifyWith (context : Context) (budget : Budget) (divisors : Array Polynomia
     (dividend : Polynomial) (result : Division) : Result context divisors dividend :=
   resumeWith budget ⟨result, {}⟩
 
-/-- Use the remaining parent allowance after a separate production pass. -/
+/-- Use caller-supplied cumulative parent counters after a production pass.
+The caller is responsible for preserving that parent accounting. -/
 def verifyFrom (context : Context) (budget : Budget) (divisors : Array Polynomial)
     (dividend : Polynomial) (result : Division) (usage : Usage) : Result context divisors dividend :=
   resumeWith budget ⟨result, usage⟩

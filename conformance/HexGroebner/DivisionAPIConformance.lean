@@ -49,3 +49,31 @@ end Hex.Groebner.Certificate.DivisionTest
 example (state : Hex.Groebner.Certificate.Division.State) :
     Hex.Groebner.Certificate.Division.State :=
   { state with context := { state.context with order := .lex } }
+
+namespace Hex.Groebner.Certificate.DivisionTest
+
+private def replayBoundaries : Bool := Id.run do
+  let ctx : Context := ⟨⟨2,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩,1,.grevlex⟩
+  let ds : Array Polynomial := #[[([2],1),([1],1)]]
+  let f : Polynomial := [([2],1)]
+  let witness : Division := ⟨#[[([0],1)]],[([1],1)]⟩
+  let .checked _ total := Verification.verifyWith ctx {} ds f witness | return false
+  for work in [:total.work+1] do
+    match Verification.verifyWith ctx { work } ds f witness with
+    | .checked actual _ => if actual.value.remainder != witness.remainder then return false
+    | .exhausted .work state =>
+      match Verification.resumeWith {} state with
+      | .checked actual final =>
+        if actual.value.remainder != witness.remainder || final.work < state.usage.work then return false
+      | _ => return false
+    | _ => return false
+  return true
+
+#guard replayBoundaries
+#guard match (do
+    reserveBytes { allocatedBytes := USize.size*2 } (USize.size/2)
+    reserveBytes { allocatedBytes := USize.size*2 } (USize.size/2)).run {} with
+  | (.ok _,usage) => usage.allocatedBytes == USize.size
+  | _ => false
+
+end Hex.Groebner.Certificate.DivisionTest

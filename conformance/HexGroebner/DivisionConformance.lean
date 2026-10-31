@@ -93,8 +93,8 @@ private def exhausts (budget : Budget) (resource : Resource) : Bool :=
   | _ => false
 
 #guard exhausts { work := 0 } .work
-#guard exhausts { bytes := 0 } .bytes
-#guard exhausts { terms := 0 } .terms
+#guard exhausts { allocatedBytes := 0 } .allocatedBytes
+#guard exhausts { allocatedTerms := 0 } .allocatedTerms
 #guard exhausts { steps := 0 } .steps
 #guard exhausts { variables := 1 } .variables
 #guard exhausts { exponentBits := 0 } .exponentBits
@@ -127,11 +127,11 @@ end Hex.Groebner.Certificate.DivisionTest
 
 namespace Hex.Groebner.Certificate.DivisionTest
 
-#guard match (reserveBytes { bytes := USize.size } USize.size).run {} with
-  | (.error .address,usage) => usage.bytes == 0
+#guard match (checkAddress USize.size).run {} with
+  | (.error .address,usage) => usage.allocatedBytes == 0
   | _ => false
-#guard match (reserve { bytes := USize.size*2,terms := USize.size } 1 USize.size).run {} with
-  | (.error (.exhausted .bytes),usage) => usage.bytes == 0 && usage.terms == 0
+#guard match (reserve { allocatedBytes := USize.size*2,allocatedTerms := USize.size } 1 USize.size).run {} with
+  | (.error (.exhausted .allocatedBytes),usage) => usage.allocatedBytes == 0 && usage.allocatedTerms == 0
   | _ => false
 
 end Hex.Groebner.Certificate.DivisionTest

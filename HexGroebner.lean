@@ -29,6 +29,7 @@ public import HexGroebner.CertificateDivision
 public import HexGroebner.CertificateDivisionCheck
 public import HexGroebner.CertificateReplay
 public import HexGroebner.Division
+public import HexGroebner.CheckedBasis
 public import HexGroebner.NormalForm
 public import HexGroebner.Membership
 public import HexGroebner.CertificateNonmember

@@ -62,7 +62,10 @@ remainder irreducibility without a Gröbner-basis assumption. `Division` gives
 `checkNonmember_sound` and `normalForm_spec`: the accepted remainder is the
 unique irreducible representative of the original ideal coset, including
 comparison with arbitrary representatives. `NormalForm` and `Membership`
-connect those results to the bounded checked APIs. `DivisionExample` replays
+connect those results to the bounded checked APIs. Positive results include
+a standalone shared membership derivation against the original generators,
+accepted by `checkMember`; their original-generator theorem follows directly
+from `checkMember_sound`. `DivisionExample` replays
 ordinary characteristic-two nonmembership and normal-form examples in the
 kernel. `Audit` checks the new theorems use only Lean's standard foundational
 axioms.

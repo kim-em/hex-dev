@@ -6,7 +6,8 @@ Authors: Kim Morrison
 
 module
 
-public import HexGroebner.NormalForm
+public import HexGroebner.CheckedBasis
+public import HexGroebner.CertificateReplay
 
 public section
 
@@ -31,8 +32,9 @@ private def multiply (context : Context) (budget : Budget) (a b : Polynomial) : 
   witness context budget result
   return result
 
-private def containment (context : Context) (budget : Budget)
+def reserveContainment (context : Context) (budget : Budget)
     (generators targets : Array Polynomial) (certificate : Containment) : Work Unit := do
+  let before ← get
   spend budget 1
   if certificate.roots.size != targets.size then throw .rejected
   let mut values : Array Polynomial := #[]
@@ -61,6 +63,7 @@ private def containment (context : Context) (budget : Budget)
         witness context budget factor
         let some f := values[i]? | throw .rejected
         multiply context budget factor f
+    checkAddress (64 + (values.size+1)*16)
     values := values.push value
   for i in [:targets.size] do
     spend budget 1
@@ -70,15 +73,30 @@ private def containment (context : Context) (budget : Budget)
     spend budget ((size + targetSize + 1) * (context.variables + 1) *
       (budget.exponentBits / 64 + 3) * 4)
     if !Hex.MvPoly.Kernel.beq value targets[i]! then throw .rejected
+  reserveAgain budget before (← get)
 
 private def prepare (context : Context) (budget : Budget) (generators basis : Array Polynomial)
     (certificate : Basis) : Work Unit := do
+  let initial ← get
   for i in [:generators.size] do Arithmetic.validate context budget i generators[i]!
   for f in basis do witness context budget f
-  containment context budget generators basis certificate.forward
-  containment context budget basis generators certificate.backward
+  let validated ← get
+  spend budget ((validated.work-initial.work)*3)
+  reserveContainment context budget generators basis certificate.forward
+  reserveContainment context budget basis generators certificate.backward
+  checkAddress (64 + basis.size*16)
+  let beforeHeads ← get
+  let mut sizes : Array Nat := #[]
+  let mut heads : Array (Option (List Nat × Nat)) := #[]
   let mut total := 0
-  for f in basis do total := total + (← Arithmetic.size budget f)
+  for f in basis do
+    let size ← Arithmetic.size budget f
+    total := total+size
+    sizes := sizes.push size
+    heads := heads.push (← Arithmetic.leading context budget f)
+  let afterHeads ← get
+  reserveAgain budget beforeHeads afterHeads
+  reserveAgain budget beforeHeads afterHeads
   let width := (context.variables + 1) * (budget.exponentBits / 64 + 3)
   spend budget ((total + basis.size + 1) * (basis.size + 1) * width * 8)
   reserveBytes budget ((total + 1) * context.variables * 48 + basis.size * 64)
@@ -92,8 +110,9 @@ private def prepare (context : Context) (budget : Budget) (generators basis : Ar
       let used ← get
       if used.pairs ≥ budget.pairs then throw (.exhausted .pairs)
       modify fun s => { s with pairs := s.pairs + 1 }
-      let a ← Arithmetic.leading context budget basis[i]!
-      let b ← Arithmetic.leading context budget basis[j]!
+      let a := heads[i]!
+      let b := heads[j]!
+      let beforeTarget ← get
       let target ← match a,b with
         | some a, some b => do
           spend budget (width * 4)
@@ -102,7 +121,8 @@ private def prepare (context : Context) (budget : Budget) (generators basis : Ar
           let right ← Arithmetic.multiply context budget (difference a.1 b.1,a.2) basis[j]!
           Arithmetic.subtract context budget left right
         | _,_ => pure []
-      Verification.reserveReplay context budget basis target ⟨certificate.pairs[i]![j]!,[]⟩
+      reserveAgain budget beforeTarget (← get)
+      Verification.reserveReduction context budget sizes certificate.pairs[i]![j]! target
 
 /-- Sealed identity and cumulative replay reservations. -/
 structure State where
@@ -135,20 +155,8 @@ def resumeWith (budget : Budget) (initial : State) : Result := Id.run do
   match checkUsage budget initial.usage with
   | .error e => return failure initial e
   | .ok _ => pure ()
-  let operation : Work Unit := do
-    let before ← get
-    prepare initial.context budget initial.generators initial.basis initial.certificate
-    let after ← get
-    -- Replaying the pure checker repeats polynomial operations even when a
-    -- large expression cancels to zero. Reserve operand-based preflight costs
-    -- again; charging only the final value size would miss that work.
-    spend budget (after.work - before.work)
-    reserveBytes budget (after.bytes - before.bytes)
-    let current ← get
-    let terms := current.terms + (after.terms - before.terms)
-    if terms > budget.terms then throw (.exhausted .terms)
-    modify fun s => { s with terms }
-  let (result,usage) := operation.run initial.usage
+  let (result,usage) := (prepare initial.context budget initial.generators initial.basis
+    initial.certificate).run initial.usage
   let state := { initial with usage }
   match result with
   | .error e => return failure state e
@@ -157,7 +165,8 @@ def resumeWith (budget : Budget) (initial : State) : Result := Id.run do
       return .checked (.ofCertificate state.context state.generators state.basis state.certificate h) usage
     else return .rejected usage
 
-/-- Check a literal complete basis witness using the remaining parent budget. -/
+/-- Check a literal witness with caller-supplied cumulative parent counters.
+The caller is responsible for preserving that parent accounting. -/
 def verifyFrom (context : Context) (budget : Budget) (generators basis : Array Polynomial)
     (certificate : Basis) (usage : Usage) : Result :=
   resumeWith budget ⟨context,generators,basis,certificate,usage⟩

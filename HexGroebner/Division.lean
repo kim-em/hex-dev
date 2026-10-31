@@ -35,7 +35,7 @@ private def verified {context : Context} {divisors : Array Certificate.Polynomia
     Certificate.Verification.Result context divisors dividend → DivideResult context divisors dividend
   | .checked value usage => .success value usage
   | .invalid i usage => .invalid i usage
-  | .rejected usage => .rejected usage
+  | .rejected usage => .internal usage
   | .exhausted resource state => .exhausted resource ⟨.inr state⟩
   | .address state => .address ⟨.inr state⟩
   | .internal usage => .internal usage

@@ -27,6 +27,7 @@ structure Checkpoint where
   active : Polynomial := []
   quotients : Array Polynomial := #[]
   remainder : Polynomial := []
+  inverses : Array Nat := #[]
   heads : Array (Option (List Nat × Nat)) := #[]
   deriving Inhabited
 
@@ -56,19 +57,26 @@ private def failure (state : State) : Error → Result
 
 private def prepare (context : Context) (budget : Budget) (divisors : Array Polynomial)
     (dividend : Polynomial) : Work Checkpoint := do
+  checkAddress (64 + divisors.size * 16)
   reserveBytes budget (64 + divisors.size * 32)
   let mut heads := Array.emptyWithCapacity divisors.size
+  let mut inverses := Array.emptyWithCapacity divisors.size
   for i in [:divisors.size] do
     Arithmetic.validate context budget i divisors[i]!
-    heads := heads.push (← Arithmetic.leading context budget divisors[i]!)
+    let head ← Arithmetic.leading context budget divisors[i]!
+    heads := heads.push head
+    inverses := inverses.push (← match head with
+      | none => pure 0
+      | some term => Arithmetic.inverse context budget term.2)
   Arithmetic.validate context budget divisors.size dividend
-  return { active := dividend, heads, quotients := Array.replicate divisors.size [] }
+  return { active := dividend, heads, inverses, quotients := Array.replicate divisors.size [] }
 
 private def advance (context : Context) (budget : Budget) (divisors : Array Polynomial)
     (checkpoint : Checkpoint) : Work Checkpoint := do
   step budget
   spend budget 1
-  if checkpoint.heads.size != divisors.size || checkpoint.quotients.size != divisors.size then
+  if checkpoint.heads.size != divisors.size || checkpoint.inverses.size != divisors.size ||
+      checkpoint.quotients.size != divisors.size then
     throw .arithmetic
   let some term ← Arithmetic.leading context budget checkpoint.active | throw .arithmetic
   let mut selected : Option (Nat × (List Nat × Nat)) := none
@@ -89,7 +97,8 @@ private def advance (context : Context) (budget : Budget) (divisors : Array Poly
     spend budget ((context.variables + 1) * (budget.exponentBits / 64 + 2))
     reserve budget context.variables 1
     let shift := difference term.1 head.1
-    let inverse ← Arithmetic.inverse context budget head.2
+    let inverse := checkpoint.inverses[i]!
+    if inverse == 0 then throw .arithmetic
     spend budget 1
     let coefficient := (context.field.barrett.mulMod term.2.toUInt64 inverse.toUInt64).toNat
     if coefficient == 0 then throw .arithmetic
@@ -97,6 +106,7 @@ private def advance (context : Context) (budget : Budget) (divisors : Array Poly
     let product ← Arithmetic.multiply context budget factor divisors[i]!
     let active ← Arithmetic.subtract context budget checkpoint.active product
     let quotient ← Arithmetic.add context budget checkpoint.quotients[i]! [factor]
+    checkAddress (64 + checkpoint.quotients.size * 16)
     reserveBytes budget (checkpoint.quotients.size * 8)
     return { checkpoint with active, quotients := checkpoint.quotients.set! i quotient }
 

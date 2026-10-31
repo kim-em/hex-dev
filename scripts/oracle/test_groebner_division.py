@@ -47,6 +47,18 @@ class DivisionOracleTests(unittest.TestCase):
         check(dict(p=7, variables=0, order="lex", generators=[[], [[[], 3]]],
                    dividend=[[[], 5]], quotients=[[], [[[], 4]]], remainder=[]))
 
+    def test_certified_normal_form(self):
+        self.value.update(normalForm=True, original=self.value["generators"], member=False)
+        check(self.value)
+        self.value["member"] = True
+        with self.assertRaises(ValueError):
+            check(self.value)
+
+    def test_normal_form_wrong_original_ideal(self):
+        self.value.update(normalForm=True, original=[[[[2], 1], [[0], 1]]], member=False)
+        with self.assertRaises(ValueError):
+            check(self.value)
+
 
 if __name__ == "__main__":
     unittest.main()

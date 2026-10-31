@@ -12,22 +12,22 @@ public section
 
 namespace Hex.Groebner.Certificate
 
-/-- Cumulative resources for certificate production and independent replay. -/
+/-- Cumulative work and allocation counters for certificate production and replay. -/
 inductive Resource where
-  | work | bytes | terms | steps | nodes | pairs | variables | exponentBits
+  | work | allocatedBytes | allocatedTerms | steps | nodes | pairs | variables | exponentBits
   deriving BEq, Repr
 
-/-- Work counts charged scalar/coordinate visits and arithmetic operations.
-Bytes conservatively reserve logical term storage: list cells, pairs and exponent limbs;
-terms count cumulative input and produced term slots, including temporaries.
-Steps count attempted division transitions. Nodes and pairs have separate caps.
-Exponent bits are a resource allowance, not a polynomial-ring restriction.
-Work includes reserved worst-case arithmetic. Logical bytes exclude allocator
-capacity, call stacks and general runtime control objects. -/
+/-- Work counts scalar/coordinate visits and arithmetic operations.
+`allocatedBytes` and `allocatedTerms` reserve cumulative logical input,
+temporary and output payload; they are allocation allowances, not live or peak
+memory limits. Bytes include list cells, pairs and exponent limbs, excluding
+allocator capacity, call stacks and general runtime control objects. Steps count
+attempted division transitions. Nodes/pairs separately bound witness structure.
+Exponent bits are an allowance, not a polynomial-ring restriction. -/
 structure Budget where
   work : Nat := 100000000
-  bytes : Nat := 256 * 1024 * 1024
-  terms : Nat := 1000000
+  allocatedBytes : Nat := 256 * 1024 * 1024
+  allocatedTerms : Nat := 1000000
   steps : Nat := 1000000
   nodes : Nat := 1000000
   pairs : Nat := 1000000
@@ -35,11 +35,12 @@ structure Budget where
   exponentBits : Nat := 64
   deriving Inhabited
 
-/-- Charged resources survive failure and retried atomic transitions. -/
+/-- Charged work and allocation survive failure and retried atomic transitions.
+Allocation counters measure cumulative logical allocation, not live or peak memory. -/
 structure Usage where
   work : Nat := 0
-  bytes : Nat := 0
-  terms : Nat := 0
+  allocatedBytes : Nat := 0
+  allocatedTerms : Nat := 0
   steps : Nat := 0
   nodes : Nat := 0
   pairs : Nat := 0
@@ -67,25 +68,38 @@ def spend (budget : Budget) (amount : Nat) : Work Unit := do
   if used > budget.work then throw (.exhausted .work)
   set { s with work := used }
 
+/-- Reject an unaddressable single allocation before allocating it. This is
+separate from cumulative allocation accounting, which may exceed `USize.size`. -/
+def checkAddress (size : Nat) : Work Unit := do
+  if size ≥ USize.size then throw .address
+
 /-- Reserve non-term logical payload, including temporary exponent lists. -/
 def reserveBytes (budget : Budget) (amount : Nat) : Work Unit := do
   let s ← get
-  let total := s.bytes + amount
-  if total > budget.bytes then throw (.exhausted .bytes)
-  if total ≥ USize.size then throw .address
-  set { s with bytes := total }
+  let total := s.allocatedBytes + amount
+  if total > budget.allocatedBytes then throw (.exhausted .allocatedBytes)
+  set { s with allocatedBytes := total }
 
 /-- Reserve ordinary term storage before constructing it. The limb bound
 includes the one-bit intermediate possible when adding exponent coordinates. -/
-def reserve (budget : Budget) (variables terms : Nat) : Work Unit := do
+def reserve (budget : Budget) (variables allocatedTerms : Nat) : Work Unit := do
   let s ← get
-  let count := s.terms + terms
-  if count > budget.terms then throw (.exhausted .terms)
-  let bytes := terms * (128 + variables * (64 + 16 * ((budget.exponentBits + 1) / 64 + 1)))
-  let total := s.bytes + bytes
-  if total > budget.bytes then throw (.exhausted .bytes)
-  if total ≥ USize.size then throw .address
-  set { s with bytes := total, terms := count }
+  let count := s.allocatedTerms + allocatedTerms
+  if count > budget.allocatedTerms then throw (.exhausted .allocatedTerms)
+  let allocatedBytes := allocatedTerms * (128 + variables * (64 + 16 * ((budget.exponentBits + 1) / 64 + 1)))
+  let total := s.allocatedBytes + allocatedBytes
+  if total > budget.allocatedBytes then throw (.exhausted .allocatedBytes)
+  set { s with allocatedBytes := total, allocatedTerms := count }
+
+/-- Reserve a repeated pure evaluation of work performed during preflight.
+Node and pair caps count witness structure once. -/
+def reserveAgain (budget : Budget) (before after : Usage) : Work Unit := do
+  spend budget (after.work - before.work)
+  reserveBytes budget (after.allocatedBytes - before.allocatedBytes)
+  let current ← get
+  let allocatedTerms := current.allocatedTerms + (after.allocatedTerms - before.allocatedTerms)
+  if allocatedTerms > budget.allocatedTerms then throw (.exhausted .allocatedTerms)
+  modify fun s => { s with allocatedTerms }
 
 /-- Count one attempted atomic division transition. -/
 def step (budget : Budget) : Work Unit := do
@@ -103,8 +117,8 @@ def exponent (budget : Budget) (value : Nat) : Work Unit := do
 /-- Reject a smaller cumulative allowance before resuming existing work. -/
 def checkUsage (budget : Budget) (s : Usage) : Except Error Unit := do
   if s.work > budget.work then throw (.exhausted .work)
-  if s.bytes > budget.bytes then throw (.exhausted .bytes)
-  if s.terms > budget.terms then throw (.exhausted .terms)
+  if s.allocatedBytes > budget.allocatedBytes then throw (.exhausted .allocatedBytes)
+  if s.allocatedTerms > budget.allocatedTerms then throw (.exhausted .allocatedTerms)
   if s.steps > budget.steps then throw (.exhausted .steps)
   if s.nodes > budget.nodes then throw (.exhausted .nodes)
   if s.pairs > budget.pairs then throw (.exhausted .pairs)

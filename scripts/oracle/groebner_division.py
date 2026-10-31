@@ -8,6 +8,7 @@ from pathlib import Path
 import sys
 
 import sympy
+from sympy.polys.orderings import monomial_key
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from scripts.oracle.common import write_failure
@@ -54,6 +55,19 @@ def check(value):
             expected_r = terms(r)
         else:
             expected_r = dividend
+    if value.get("normalForm", False):
+        original = value["original"]
+        for poly in original:
+            canonical(poly, p, n)
+        gb = sympy.groebner([expression(poly) for poly in original], *symbols,
+                            modulus=p, order=order, method="f5b")
+        expected_basis = [terms(poly.as_expr()) for poly in gb.polys]
+        key = monomial_key(order)
+        expected_basis.sort(key=lambda f: max(key(tuple(t[0])) for t in f), reverse=True)
+        if expected_basis != divisors:
+            raise ValueError("accepted basis differs from independent reduced basis of original ideal")
+        if value["member"] != (expected_r == []):
+            raise ValueError("membership result differs from independent normal form")
     if expected_q != quotients or expected_r != remainder:
         raise ValueError(f"different ordered division: expected {(expected_q, expected_r)}, got {(quotients, remainder)}")
 
@@ -79,10 +93,14 @@ def main():
                 lean_output=record.get("value"), oracle_output=None,
                 oracle_name="SymPy reduced", oracle_version=sympy.__version__, diff=str(exc))
             raise SystemExit(f"{record.get('case')}: {exc}; replay: {path}") from exc
-    assert len(records) == 1134, f"incomplete division corpus: {len(records)}"
+    assert len(records) == 1288, f"incomplete division corpus: {len(records)}"
     assert {json.loads(line)["value"]["order"] for line in records} == {"lex", "grlex", "grevlex"}
-    assert {json.loads(line)["value"]["p"] for line in records} == {2, 3, 251, 257, 65521, 65537, 2147483647}
-    print(f"OK: {len(records)} ordered divisions match SymPy {sympy.__version__}")
+    assert {json.loads(line)["value"]["p"] for line in records} == {2, 3, 7, 251, 257, 65521, 65537, 2147483647}
+    nonzero_fields = {json.loads(line)["value"]["p"] for line in records
+                      if json.loads(line)["value"]["dividend"]}
+    assert nonzero_fields == {2, 3, 7, 251, 257, 65521, 65537, 2147483647}
+    assert sum(bool(json.loads(line)["value"].get("normalForm")) for line in records) == 154
+    print(f"OK: {len(records)} ordered divisions, including 154 certified normal forms/membership results, match SymPy {sympy.__version__}")
 
 
 if __name__ == "__main__":

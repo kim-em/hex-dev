@@ -162,21 +162,27 @@ checks reconstruction, irreducibility and product-degree bounds before success.
 candidates. This list-based certificate route is separate from packed F4 hot
 loops. `normalFormWith` requires a `CheckedBasis` and yields the unique normal
 form in the original ideal coset. `memberWith` distinguishes membership with
-explicit cofactors against that accepted basis from a checked nonmembership
-witness with nonzero normal form. `checkNonmember` independently checks the
-complete basis and division witness.
+explicit cofactors against that accepted basis and a standalone shared
+derivation against the original generators from a checked nonmembership
+witness with nonzero normal form. `checkMember` checks the positive derivation;
+`checkNonmember` checks the complete basis and division witness.
 
-`Certificate.Budget` counts cumulative scalar/coordinate work, logical bytes,
-input/temporary term slots, attempted division steps, certificate nodes and
-pairs. It also bounds variables and exponent bits. Logical bytes reserve list
+`Certificate.Budget` counts cumulative scalar/coordinate work, attempted
+division steps, certificate nodes and pairs. `allocatedBytes` and
+`allocatedTerms` are cumulative logical allocation allowances, including input
+and temporary payload; they measure neither live nor peak memory. It also
+bounds variables and exponent bits. Logical bytes reserve list
 cells, exponent limbs and auxiliary payload, excluding allocator capacity,
 call stacks and general runtime control objects. Exponent width is an
 allowance: 81-bit exponent inputs work when the allowance is raised. Natural
-size arithmetic is checked before allocation, with addressability failure kept
-separate. Production, reconstruction replay and membership classification
+size arithmetic is checked before allocation. Addressability checks apply to
+single allocations separately from cumulative allocation counters. Production, reconstruction replay and membership classification
 consume the same parent allowance. `resumeDivideWith`, `resumeMemberWith` and
 basis replay retain sealed input/field/order identity and consumed counters;
-retrying an atomic transition or preflight charges its repeated work. Invalid
+production retains committed division transitions. Replay preflight is atomic
+and retains identity and counters, rather than a validated prefix; retrying it
+charges repeated work. Low-level `verifyFrom` helpers accept caller-supplied
+parent counters, which callers must preserve across nested operations. Invalid
 input, rejection, exhaustion and arithmetic invariant failure remain distinct.
 Completed checked receipts carry actual Boolean acceptance proofs. Compiled
 verification and downstream kernel checking remain separate stages.
@@ -187,7 +193,7 @@ Verification:
 lake build HexGroebner +HexGroebner.Conformance +HexGroebner.MonomialConformance \
   +HexGroebner.F4Conformance +HexGroebner.DivisionConformance \
   +HexGroebner.DivisionAPIConformance +HexGroebner.MembershipConformance \
-  +HexGroebner.BasisReplayConformance hexgroebner_emit_fixtures hexgroebner_emit_f4 \
+  +HexGroebner.BasisReplayConformance +HexGroebner.NormalFormConformance hexgroebner_emit_fixtures hexgroebner_emit_f4 \
   hexgroebner_emit_division hexgroebner_bench
 HEX_LIBRARY_FILTER=HexGroebner bash scripts/ci/run_oracles.sh
 lake exe hexgroebner_bench verify
@@ -223,11 +229,17 @@ Core resume sweeps switch both pair criteria and final-reduction strategy at
 every work boundary. Product/chain counters demonstrate criterion use.
 
 The division emitter checks 1,134 ordered divisions against exact SymPy
-quotients and remainders over the same seven fields and three orders, using
-both original generator lists and completed bases. Core tests sweep every
-work boundary of a nontrivial division, resume production and independent
-replay, exercise all relevant resource categories and oversized exponents,
-and reject malformed division and shared-basis witnesses. Ordinary
+quotients and remainders over seven fields and three orders, using both
+original generator lists and completed bases. Another 154 bounded normal-form
+and membership cases use independently replayed basis receipts over `𝔽₂` and
+`𝔽₇`. SymPy recomputes the complete reduced bases from their original generators
+and checks every normal form and membership outcome. Zero, unit, linear and
+nontrivial three-polynomial bases are included. Fixture data excludes work
+counters. Core tests sweep every work boundary of a nontrivial division and
+of a smaller independent replay, exercise all relevant resource categories
+and oversized exponents, and reject malformed division and shared-basis
+witnesses. Bounded basis replay agrees with the pure checker on the complete
+three-polynomial witness and its malformed-certificate variants. Ordinary
 characteristic-two division retains `x² mod (x²+x) = x`.
 
 Lean-bench registrations cover dense elimination with/without provenance,
