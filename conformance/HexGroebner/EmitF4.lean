@@ -7,6 +7,11 @@ Authors: Kim Morrison
 import Hex.Conformance.Emit
 import HexGroebner.F4Fixtures
 
+/-! Oracle profile: Singular reduced bases, `if_available` by default and
+`required` for manual validation with `--require-oracles` or
+`HEX_REQUIRE_ORACLES=1`. SymPy F5B provides an additional always-run oracle.
+The core profile in F4Conformance has no external oracle. -/
+
 namespace Hex.Groebner.EmitF4
 
 private def array (values : Array String) : String :=
@@ -29,7 +34,7 @@ private def emit : IO Unit := do
         let context : Context := ⟨field, c.variables, order⟩
         let (candidate, stats) ← match computeWith context {} c.generators with
           | .candidate candidate stats => pure (candidate, stats)
-          | .internal e _ => throw (IO.userError s!"F4 internal {reprStr e}")
+          | .internal e _ => throw (IO.userError s!"{c.name}: internal {reprStr e}")
           | .invalid e _ => throw (IO.userError s!"{c.name}: {reprStr e}")
           | .exhausted r _ => throw (IO.userError s!"{c.name}: exhausted {reprStr r}")
           | .representation e _ => throw (IO.userError s!"{c.name}: representation {reprStr e}")
@@ -47,7 +52,8 @@ private def emit : IO Unit := do
           array (candidate.polynomials.map polynomial) ++
           s!",\"rounds\":{stats.rounds},\"pairs\":{stats.pairs},\"work\":{stats.work}," ++
           s!"\"productPairs\":{stats.productPairs},\"chainPairs\":{stats.chainPairs}," ++
-          s!"\"serialChainPairs\":{serialStats.chainPairs},\"serialWork\":{serialStats.work}" ++ "}"
+          s!"\"serialChainPairs\":{serialStats.chainPairs},\"serialWork\":{serialStats.work}," ++
+          s!"\"serialRounds\":{serialStats.rounds}" ++ "}"
         Hex.Conformance.Emit.emitResult "HexGroebner" s!"p{field.modulus.toNat}/{orderName order}/{c.name}" "f4" value
 
 end Hex.Groebner.EmitF4

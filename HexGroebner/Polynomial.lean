@@ -39,7 +39,7 @@ def normalize (context : Context) (limits : Limits) (index : Nat)
     if t.coefficient != 0 then
       let mut exponents := Array.emptyWithCapacity context.variables
       for e in t.exponents do
-        if e ≥ 2 ^ 32 then throw (.representation .exponent)
+        if e > 4294967295 then throw (.representation .exponent)
         exponents := exponents.push e.toUInt64
       let id ← intern limits exponents
       let sum := coefficients[id]?.getD 0 + t.coefficient

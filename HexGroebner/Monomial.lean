@@ -145,7 +145,8 @@ def internOwned (table : MonomialTable) (values : Array UInt64)
   let mut hash : UInt64 := 14695981039346656037
   for i in [:values.size] do
     let x := values[i]!
-    if x.toNat ≥ 2 ^ 32 then return ⟨.error ⟨.exponent, work⟩, table⟩
+    -- `> 0xffffffff` avoids per-visit Nat-literal parsing (lean4#16007).
+    if x > 4294967295 then return ⟨.error ⟨.exponent, work⟩, table⟩
     if x > 65535 then width := .u32
     else if x > 255 && width == .u8 then width := .u16
     degree := degree + x.toNat
@@ -159,7 +160,7 @@ def internOwned (table : MonomialTable) (values : Array UInt64)
     if work > maxWork then return ⟨.error ⟨.work, maxWork⟩, table⟩
     if table.equal id values then return ⟨.ok id, { table with work }⟩
   if table.count ≥ maxCount then return ⟨.error ⟨.exhausted, work⟩, table⟩
-  if table.count + 1 ≥ 2 ^ 32 then return ⟨.error ⟨.index, work⟩, table⟩
+  if table.count + 1 > 4294967295 then return ⟨.error ⟨.index, work⟩, table⟩
   let size := (table.count + 1) * table.arity * width.bytes + (table.count + 1) * 24
   let peak := size + if width != table.width then table.exponents.size else 0
   if peak > maxBytes then return ⟨.error ⟨.exhausted, work⟩, table⟩
@@ -200,7 +201,8 @@ def combineOwned (table : MonomialTable) (operation : Operation) (a b : Nat)
   for i in [:table.arity] do
     let x := table.exponent a i
     let y := table.exponent b i
-    if operation == .product && x.toNat + y.toNat ≥ 2 ^ 32 then
+    -- Packed coordinates are at most 2^32-1, so their UInt64 sum cannot wrap.
+    if operation == .product && x + y > 4294967295 then
       return ⟨.error ⟨.exponent, work⟩, table⟩
     if operation == .quotient && y > x then
       return ⟨.error ⟨.exponent, work⟩, table⟩

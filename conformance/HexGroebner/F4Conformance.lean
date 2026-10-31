@@ -120,9 +120,10 @@ private def budgets : Bool := Id.run do
     match computeWith context limits input 37 with
     | .exhausted r state => if r != resource || !resume state then return false
     | _ => return false
-  let total := match computeWith context {} input 37 with
-    | .candidate _ statistics => statistics.work
-    | _ => 0
+  let statistics := match computeWith context {} input 37 with
+    | .candidate _ statistics => statistics
+    | _ => {}
+  let total := statistics.work
   if total == 0 then return false
   let mut failedRound := false
   -- Every work boundary includes failures after selection has popped pairs.
@@ -139,6 +140,28 @@ private def budgets : Bool := Id.run do
     | .candidate candidate _ => if !agrees candidate then return false
     | .exhausted .packedBytes state => if !resume state then return false
     | _ => return false
+  let campaigns : Array (F4Resource × Nat) := #[
+    (.pairs, statistics.pairs), (.matrixRows, statistics.matrixRows),
+    (.matrixEntries, statistics.matrixEntries), (.basis, 5), (.monomials, 12),
+    (.rounds, statistics.rounds)]
+  for (resource, maximum) in campaigns do
+    let mut later := false
+    for value in [:maximum + 1] do
+      let limits : Limits := match resource with
+        | .pairs => { pairs := value }
+        | .matrixRows => { matrixRows := value }
+        | .matrixEntries => { matrixEntries := value }
+        | .basis => { basis := value }
+        | .monomials => { monomials := value }
+        | .rounds => { rounds := value }
+        | _ => {}
+      match computeWith context limits input 37 with
+      | .candidate candidate _ => if !agrees candidate then return false
+      | .exhausted r state =>
+        if r != resource || !resume state then return false
+        later := later || state.workspace.statistics.rounds > 0
+      | _ => return false
+    if !later then return false
   return failedRound
 
 #guard budgets

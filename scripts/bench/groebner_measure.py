@@ -41,6 +41,11 @@ def main():
     parser.add_argument("--repeat", action="store_true")
     args = parser.parse_args()
     os.chdir(ROOT)
+    changed = subprocess.check_output(["git", "diff", "--name-only"], text=True).splitlines()
+    untracked = subprocess.check_output(
+        ["git", "ls-files", "--others", "--exclude-standard"], text=True).splitlines()
+    if any(FAMILY.matches(path) for path in changed + untracked):
+        parser.error("stage every measured source before fingerprinting")
     listing = index_listing(FAMILY)
     digest = fingerprint(listing)
     base = ROOT / "reports/bench-results" / f"hexgroebner-{args.benchmark}-{digest}"

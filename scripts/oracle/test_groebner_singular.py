@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from scripts.oracle.groebner_singular import polynomial, run
+from scripts.oracle.groebner_singular import check_available, polynomial, run
 
 
 class Parsing(unittest.TestCase):
@@ -17,6 +17,12 @@ class Parsing(unittest.TestCase):
         for text in ["system('bad')", "x2", "(x0+1)"]:
             with self.assertRaises(ValueError):
                 polynomial(text, 2, 7)
+
+    def test_required_oracle_missing(self):
+        with patch("scripts.oracle.groebner_singular.shutil.which", return_value=None):
+            with self.assertRaisesRegex(RuntimeError, "required but unavailable"):
+                check_available([], required=True)
+
 
 
 @unittest.skipUnless(shutil.which("Singular"), "Singular is an if_available oracle")

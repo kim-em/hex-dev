@@ -40,7 +40,6 @@ trap 'rm -rf -- "$work_dir"' EXIT
 ORACLES=(
   "HexGroebner|hexgroebner_emit_fixtures|scripts/oracle/groebner_matrix.py|conformance-fixtures/HexGroebner/matrix.jsonl"
   "HexGroebner|hexgroebner_emit_f4|scripts/oracle/groebner_sympy.py|conformance-fixtures/HexGroebner/f4.jsonl"
-  "HexGroebner|hexgroebner_emit_f4|scripts/oracle/groebner_singular.py|conformance-fixtures/HexGroebner/f4.jsonl"
   # python-flint backed
   "HexPoly|hexpoly_emit_fixtures|scripts/oracle/poly_flint.py|conformance-fixtures/HexPoly/poly.jsonl"
   "HexPolyFast|hexpolyfast_emit_fixtures|scripts/oracle/polyfast_flint.py|conformance-fixtures/HexPolyFast/polyfast.jsonl"

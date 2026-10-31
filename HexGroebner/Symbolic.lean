@@ -115,7 +115,7 @@ def eliminate (context : Context) (limits : Limits) (matrix : SymbolicMatrix) (m
     targets := targets.push r
   let s ← get
   let rows := reducers.size + targets.size
-  if matrix.columns.size ≥ 2 ^ 32 || rows ≥ 2 ^ 32 then throw (.representation .index)
+  if matrix.columns.size > 4294967295 || rows > 4294967295 then throw (.representation .index)
   if matrix.columns.size * (context.field.width.bytes + 4) ≥ USize.size then
     throw (.representation .address)
   if s.statistics.matrixRows + rows > limits.matrixRows then throw (.exhausted .matrixRows)
@@ -144,6 +144,8 @@ def eliminate (context : Context) (limits : Limits) (matrix : SymbolicMatrix) (m
       | .inputEntries | .outputEntries => throw (.exhausted .matrixEntries)
       | .columns => throw (.exhausted .monomials)
       | .rows => throw (.exhausted .matrixRows)
+      -- Provenance is disabled here, so this is an internal invariant failure.
+      -- A traced F4 route must supply its own resumable provenance allowance.
       | .traceNodes => throw (.matrix (.exhausted .traceNodes))
     | .error e => throw (.matrix e)
   let mut output := #[]
@@ -164,10 +166,9 @@ def eliminate (context : Context) (limits : Limits) (matrix : SymbolicMatrix) (m
 
 end SymbolicMatrix
 
-/-- Deterministic polynomial remainder by symbolic closure and triangular
-Macaulay elimination. For a completed Gröbner basis this is its unique normal
-form; against arbitrary divisors it is the remainder for the selected reducers.
-No field equations or Boolean quotient identities are added. -/
+/-- Linear polynomial remainder by symbolic closure and triangular elimination.
+Requires canonical polynomials from the current workspace and an index built
+from exactly the supplied unchecked divisors. No field equations are added. -/
 def Polynomial.remainderWith (context : Context) (limits : Limits) (index : ReducerIndex)
     (basis : Array BasisElement) (p : Polynomial) : Computation Polynomial := do
   if p.size == 0 then return p

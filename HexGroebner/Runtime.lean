@@ -57,7 +57,8 @@ inductive F4Resource where
   deriving BEq, Repr
 
 /-- Invalid input, representation exhaustion and consumed allowances are
-distinct. Matrix errors indicate rejection by the checked matrix boundary. -/
+distinct. Matrix errors indicate a broken invariant at the internal checked
+matrix boundary. -/
 inductive ComputeError where
   | arity (polynomial term : Nat)
   | coefficient (polynomial term : Nat)
@@ -80,7 +81,7 @@ structure Limits where
   pairs : Nat := 1000000
   rounds : Nat := 10000
   matrixEntries : Nat := 10000000
-  matrixRows : Nat := 1000000
+  matrixRows : Nat := 10000000
   basis : Nat := 100000
   variables : Nat := 10000
   batchSize : Nat := 64

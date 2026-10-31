@@ -106,7 +106,7 @@ structure SparseRow where
 unsorted/duplicate columns and indices outside the admitted 32-bit map. -/
 @[expose] def SparseRow.ofEntries (field : PrimeField) (columnCount : Nat)
     (entries : Array (Nat × UInt64)) : Option SparseRow := Id.run do
-  if columnCount ≥ 2 ^ 32 then return none
+  if columnCount > 4294967295 then return none
   if entries.size * (4 + field.width.bytes) ≥ USize.size then return none
   let mut row : SparseRow := {}
   let mut previous : Option Nat := none

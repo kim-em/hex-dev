@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
 import re
 import shutil
@@ -69,7 +70,7 @@ def run(records, binary):
         inputs = ",".join(expression(f) for f in value["generators"]) or "0"
         commands += [f"ring r={value['p']},({names}),{order};", f"ideal I={inputs};",
                      "ideal B=interred(std(I));", f'print("CASE {i}");',
-                     'for(k=1;k<=size(B);k++){if(B[k]!=0){print("POLY "+string(B[k]/leadcoef(B[k])));}}',
+                     'for(k=1;k<=ncols(B);k++){if(B[k]!=0){print("POLY "+string(B[k]/leadcoef(B[k])));}}',
                      'print("END");', "setring host;", "kill r;"]
     commands.append("quit;")
     result = subprocess.run([binary, "-q"], input="\n".join(commands) + "\n", text=True,
@@ -111,19 +112,26 @@ def run(records, binary):
     return len(records)
 
 
+def check_available(records, required=False):
+    binary = shutil.which("Singular")
+    if binary is None:
+        if required or os.environ.get("HEX_REQUIRE_ORACLES") == "1":
+            raise RuntimeError("Singular required but unavailable")
+        print("SKIP: Singular unavailable (if_available oracle)")
+        return
+    print(f"OK: {run(records, binary)} reduced bases match Singular")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", type=Path)
+    parser.add_argument("--require-oracles", action="store_true")
     args = parser.parse_args()
-    binary = shutil.which("Singular")
-    if binary is None:
-        print("SKIP: Singular unavailable (if_available oracle)")
-        return
     records = [json.loads(line) for line in
                (args.check.read_text() if args.check else sys.stdin.read()).splitlines()]
     if len(records) != 567:
         raise ValueError(f"incomplete F4 corpus: {len(records)}")
-    print(f"OK: {run(records, binary)} reduced bases match Singular")
+    check_available(records, args.require_oracles)
 
 
 if __name__ == "__main__":

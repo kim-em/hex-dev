@@ -60,7 +60,7 @@ def build (context : Context) (limits : Limits) (basis : Array BasisElement) :
       | none =>
         allocate limits 8
         let id := nodes.size
-        if id ≥ 2 ^ 32 then throw (.representation .index)
+        if id > 4294967295 then throw (.representation .index)
         let edges := Packed.push .u32 (Packed.push .u32 edges exponent) id.toUInt64
         nodes := nodes.modify node fun n => { n with edges }
         nodes := nodes.push {}

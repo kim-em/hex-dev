@@ -168,12 +168,13 @@ structure ResumeState where
   checkpoint : F4.Checkpoint
   randomState : UInt64
 
-/-- Candidate production distinguishes invalid input, representation exhaustion
-and a consumed allowance. Only the latter two expose a resumable checkpoint. -/
+/-- Candidate production distinguishes invalid input, internal matrix failures,
+representation exhaustion and consumed allowances. Only representation and
+allowance exhaustion expose a resumable checkpoint. -/
 inductive ComputeResult where
   | candidate (value : Candidate) (statistics : Statistics)
   | invalid (error : ComputeError) (statistics : Statistics)
-  | internal (error : ComputeError) (statistics : Statistics)
+  | internal (error : MatrixError) (statistics : Statistics)
   | exhausted (resource : F4Resource) (state : ResumeState)
   | representation (error : MonomialError) (state : ResumeState)
 
@@ -181,7 +182,7 @@ private def fail (state : ResumeState) (error : ComputeError) : ComputeResult :=
   match error with
   | .exhausted resource => .exhausted resource state
   | .representation error => .representation error state
-  | .matrix error => .internal (.matrix error) state.workspace.statistics
+  | .matrix error => .internal error state.workspace.statistics
   | error => .invalid error state.workspace.statistics
 
 private def decode (state : ResumeState) (limits : Limits) : Computation Candidate := do

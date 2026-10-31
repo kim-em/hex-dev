@@ -186,7 +186,7 @@ canonical residues: `a + p - (b*c mod p)` fits below `2*p < 2^32`, and the
 Barrett product fits below `p^2 < 2^62`. No floating-point arithmetic is used. -/
 private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
     (reducers targets : Array SparseRow) (provenance : Bool) (sugars : Array Nat) : Work Echelon := do
-  if columns ≥ 2 ^ 32 || reducers.size + targets.size ≥ 2 ^ 32 then
+  if columns > 4294967295 || reducers.size + targets.size > 4294967295 then
     throw .dimensions
   if columns > limits.columns then throw (.exhausted .columns)
   if reducers.size + targets.size > limits.rows then throw (.exhausted .rows)
