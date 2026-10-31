@@ -71,3 +71,10 @@ the other required comparators, field adapters and parallel sweeps. Hex loses
 to msolve on every input here. There is no fastest-open-source milestone or
 measured language-impossibility barrier. Complete basis certificates and F4
 soundness/termination remain required independently of candidate speed.
+
+The measured fingerprint `9f64edec57c7` differs from the committed producer only
+in comments in `Pairs.lean` and `F4.lean`; executable bodies are identical.
+The [exact measured source archive](hexgroebner-gm-sources-9f64edec57c7.tar.gz)
+contains every source blob in its manifest, so reconstruction does not depend
+on a pre-rebase commit remaining reachable. Historical metadata retains the
+actual dirty-tree status and commit recorded during measurement.

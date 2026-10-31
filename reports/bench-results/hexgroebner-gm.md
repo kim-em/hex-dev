@@ -78,3 +78,10 @@ The fixed benchmark names now select the default GM route with a one-billion-uni
 work allowance. Earlier reports identify their own source fingerprints and
 measured the pre-GM route with its stated allowance. Those historical observations
 are not silently reinterpreted as measurements of this implementation.
+
+The measured fingerprint `9f64edec57c7` differs from the committed producer only
+in comments in `Pairs.lean` and `F4.lean`; executable bodies are identical.
+The [exact measured source archive](hexgroebner-gm-sources-9f64edec57c7.tar.gz)
+contains every source blob in its manifest, so reconstruction does not depend
+on a pre-rebase commit remaining reachable. Historical metadata retains the
+actual dirty-tree status and commit recorded during measurement.

@@ -9,6 +9,7 @@ module
 public import HexGroebnerTheory.Reduced
 public import HexGroebnerTheory.Pairs
 public import HexGroebnerTheory.Certificate
+public import HexGroebnerTheory.CertificateOrder
 
 /-! The mathematical bridge and independent membership checker use only Lean's
 standard foundational axioms. No native success bit is a proof assumption. -/
@@ -26,3 +27,16 @@ standard foundational axioms. No native success bit is a proof assumption. -/
 #guard_msgs in #print axioms HexGroebnerTheory.spoly_chain
 /-- info: 'HexGroebnerTheory.lcm_lt' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in #print axioms HexGroebnerTheory.lcm_lt
+
+/-- info: 'HexGroebnerTheory.groebner_iff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms HexGroebnerTheory.groebner_iff
+/-- info: 'HexGroebnerTheory.toMonomialOrder' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms HexGroebnerTheory.toMonomialOrder
+/-- info: 'HexGroebnerTheory.compare_lt' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms HexGroebnerTheory.compare_lt
+/-- info: 'HexGroebnerTheory.leading_degree' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms HexGroebnerTheory.leading_degree
+/-- info: 'HexGroebnerTheory.leading_coefficient' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms HexGroebnerTheory.leading_coefficient
+/-- info: 'HexGroebnerTheory.Certificate.compare_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms HexGroebnerTheory.Certificate.compare_eq

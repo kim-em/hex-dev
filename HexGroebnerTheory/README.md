@@ -30,11 +30,15 @@ remainders. `Reduced` proves uniqueness of reduced Gröbner bases of an ideal.
 by Junyu Guo and Hao Shen, at revision
 `cb459855cbe79d8550c86a11220b65ab517810a5`. Original copyright and attribution
 are preserved. The adapters use pinned Mathlib's division results and current
-lemma names; they can be removed when the dependency supplies these results.
+lemma names. These adapters retain upstream declaration names. A Mathlib pin
+update supplying those declarations must remove the local copies and import
+upstream modules in the same change, avoiding duplicate declarations.
 
-Complete basis and negative-membership certificate soundness, deterministic F4
-correctness and termination remain
-required by the same contract. The executable candidate API remains unchecked.
+Complete basis and negative-membership certificate soundness, S-polynomial
+agreement under conversion, deterministic F4 correctness and termination remain
+required by the same contract. Resource-bounded certificate production and
+replay wrappers, including certificate-size and nested arithmetic budgets,
+also remain required; the current pure `checkMember` has no replay allowance. The executable candidate API remains unchecked.
 
 The producer's pair-coverage proof also requires Buchberger's strict-LCM
 standard-representation criterion and closure under the installation measure

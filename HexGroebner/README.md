@@ -150,7 +150,10 @@ certified membership claim. Portable accessors retain checked byte operations an
 inside an active interval are still scanned. No performance leadership is
 claimed from these kernel or candidate measurements.
 
-Complete certificates/checkers and `HexGroebnerTheory`, finite extensions,
+Complete basis/negative-membership certificates and their soundness proofs,
+resource-bounded certificate production/replay (the pure `checkMember` currently
+has no allowance), deterministic producer correctness and termination,
+finite extensions,
 elimination block orders, the full pair-coverage proof, checked probabilistic
 computation, validated learning/traces, delayed reduction, SIMD/parallel kernels
 and matched full-system external comparisons remain outstanding.
@@ -168,3 +171,9 @@ reference. Omitted obligations remain distinct from completed pairs, and the
 basis is not deleted or renumbered. [Matched pair-management measurements](../reports/bench-results/hexgroebner-gm.md)
 include the small-system regression and full raw samples. Full F4 invariant
 and termination proofs remain required.
+
+GM installation interns LCMs even for pairs later omitted by its criteria.
+Those stable monomials remain in the arena and count against `monomials` and
+`packedBytes`; a GM run can exhaust an allowance that suffices for the reference
+route. The strategy controls in `Limits` may be changed on resume, while all
+allowances remain absolute cumulative bounds.
