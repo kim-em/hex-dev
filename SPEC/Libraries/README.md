@@ -10,6 +10,7 @@
 - **[hex-ordered-fn](hex-ordered-fn.md)**: user-supplied real-constant and infinitesimal orders on rational functions, with conditional total field adapters
 - **hex-sparse-poly**: canonical sparse univariate polynomials as a sorted exponent/coefficient term array, with explicit conversions to and from the dense representation
 - **hex-mv-poly**: canonical distributed multivariate polynomials at fixed arity with explicit monomial orders
+- **[hex-groebner](hex-groebner.md)** (planned): finite-field F4 with packed polynomials, specialized native elimination, checked bases and a continuing fastest-open-source performance goal
 - **hex-reflect**: shared `Lean.Meta.Sym.Arith` sessions, batch variable sealing, direct `Hex.MvPoly` conversion, provider results, conditions and budgets
 - **hex-kronecker**: deterministic kernel-checked polynomial identities by Kronecker substitution, for expression trees, term lists and polynomial-matrix products
 - **hex-mv-gcd**: multivariate gcd with cofactors, content and primitive part, exact division, squarefree decomposition
@@ -93,6 +94,7 @@ Mathlib, and supplies correspondence proofs or Mathlib-facing APIs):
 - **[hex-ordered-fn-theory](hex-ordered-fn-theory.md)**: real evaluation, Hahn-series infinitesimal semantics, arithmetic correspondence and total-order laws
 - **hex-sparse-poly-theory**: `SparsePoly R ≃+* Polynomial R`, and the identification of the stored term array with `Polynomial.support`
 - **hex-mv-poly-theory**: `MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`, `aeval`, and operation correspondence
+- **[hex-groebner-theory](hex-groebner-theory.md)** (planned): Buchberger's criterion, F4 termination, reduced-basis correctness and positive and negative ideal-membership certificates
 - **hex-reflect-theory**: Mathlib carrier translations and the `MvPolynomial` correspondence for reflected batches
 - **hex-kronecker-theory**: bounded-box soundness and the `kronecker` tactic over any commutative ring
 - **hex-mv-gcd-theory**: gcd maximality transported to `MvPolynomial (Fin n) R`, and decidable divisibility and squarefreeness
@@ -784,6 +786,8 @@ for developments whose source-local move has not happened yet.
 - [hex-sparse-poly](../../HexSparsePoly/SPEC/hex-sparse-poly.md): canonical sparse univariate polynomials, the operations that keep sparsity, and the dense conversions (the theory companion is specified in the same file)
 - [hex-mv-poly](../../HexMvPoly/SPEC/hex-mv-poly.md): canonical distributed multivariate polynomials with explicit monomial orders
 - [hex-mv-poly-theory](../../HexMvPolyTheory/SPEC/hex-mv-poly-theory.md): `MvPoly n R cmp ≃+* MvPolynomial (Fin n) R`, `aeval`, and operation correspondence
+- [hex-groebner](hex-groebner.md) (planned): state-of-the-art finite-field F4, approved native operations, performance comparisons and certified results
+- [hex-groebner-theory](hex-groebner-theory.md) (planned): companion contracts specified with hex-groebner
 - [hex-reflect](../../HexReflect/SPEC/hex-reflect.md): the `Lean.Meta.Sym.Arith` adapter, batch variable sealing, direct `Hex.MvPoly` conversion, provider protocol, conditions and budgets
 - [hex-reflect-theory](../../HexReflectTheory/SPEC/hex-reflect-theory.md): Mathlib carrier translations and the `MvPolynomial` correspondence for reflected batches
 - [hex-kronecker](../../HexKronecker/SPEC/hex-kronecker.md): deterministic dense-box polynomial identity checks by Kronecker substitution
