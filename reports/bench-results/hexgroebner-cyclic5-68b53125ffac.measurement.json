@@ -1,0 +1,61 @@
+{
+  "source_fingerprint": "68b53125ffac",
+  "include": [
+    "HexGroebner/",
+    "HexGroebner.lean",
+    "HexArith/",
+    "HexArith.lean",
+    "HexArithNative.lean",
+    "HexModArith/",
+    "HexModArith.lean",
+    "HexModArithNative.lean",
+    "HexBasic/",
+    "HexBasic.lean",
+    "HexMvPoly/",
+    "HexMvPoly.lean",
+    "bench/HexGroebner/Bench.lean",
+    "lakefile.lean",
+    "lake-manifest.json",
+    "lean-toolchain",
+    "scripts/bench/groebner_measure.py"
+  ],
+  "exclude": [
+    "HexGroebner/README.md",
+    "HexArith/README.md",
+    "HexModArith/README.md",
+    "HexMvPoly/README.md",
+    "HexArith/SPEC/",
+    "HexModArith/SPEC/",
+    "HexMvPoly/SPEC/"
+  ],
+  "cpu": 78,
+  "affinity": [
+    78
+  ],
+  "threads": 1,
+  "host": "chungus2",
+  "toolchain": "leanprover/lean4:v4.35.0-rc3",
+  "command": [
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10987/.lake/build/bin/hexgroebner_bench",
+    "run",
+    "Hex.Groebner.Bench.cyclic5",
+    "--export-file",
+    "/home/kim/worktrees/hex-dev/hex-dev-issue-10987/reports/bench-results/hexgroebner-cyclic5-68b53125ffac.json"
+  ],
+  "load_start": [
+    1.09765625,
+    0.998046875,
+    0.73046875
+  ],
+  "binary_sha256": "9c5a4d25a7151916dbbbdd6faa5151d8d92e9e82ec9591655ed24e7fd5167426",
+  "schedule": "declared lean-bench schedule; all completed samples retained",
+  "contract": "candidate only; input generation, certification and kernel checking excluded",
+  "returncode": 0,
+  "elapsed_seconds": 0.3147841489990242,
+  "load_end": [
+    1.09765625,
+    0.998046875,
+    0.73046875
+  ],
+  "peak_child_rss_kib": 879512
+}

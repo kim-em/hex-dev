@@ -165,6 +165,98 @@ setup_benchmark spread n => n * n
     targetInnerNanos := 500000000
   }
 
+/-- Append-only monomial hash-consing, including exponent-width changes and a
+structural hash of the complete packed arena and metadata. -/
+def internMonomials (n : Nat) : Bool × Nat × ByteArray × ByteArray := Id.run do
+  let mut table : MonomialTable := { arity := 3 }
+  for i in [:n] do
+    let outcome := table.internOwned #[i.toUInt64, (i % 17).toUInt64, (i % 31).toUInt64]
+      (n + 1) 1000000000 1000000000
+    table := outcome.table
+    match outcome.result with
+    | .error _ => return (false, 0, {}, {})
+    | .ok id =>
+      if id != i then return (false, 0, {}, {})
+  return (true, table.width.bytes, table.exponents, table.metadata)
+
+-- Expected amortized work: n hash-cons insertions at fixed arity, exact
+-- collision checks, and geometrically growing arenas take O(n); each width
+-- transition re-encodes at most the current arena once. Hashing all logical
+-- output bytes is also O(n). Hash collisions retain exact comparisons.
+setup_benchmark internMonomials n => n
+  where {
+    paramFloor := 2048
+    paramCeiling := 32768
+    paramSchedule := .custom #[2048, 4096, 8192, 16384, 32768]
+    maxSecondsPerCall := 8.0
+    targetInnerNanos := 4000000000
+  }
+
+private def term (p : UInt64) (coefficient : Int) (exponents : Array Nat) : RawTerm :=
+  ⟨exponents, (coefficient % (p.toNat : Int)).toNat.toUInt64⟩
+
+/-- Standard cyclic polynomial systems, without added field equations. -/
+def cyclic (n : Nat) : Array RawPolynomial := Id.run do
+  let mut generators := #[]
+  for length in [1:n] do
+    let mut polynomial := #[]
+    for start in [:n] do
+      let mut powers := Array.replicate n 0
+      for offset in [:length] do powers := powers.modify ((start + offset) % n) (· + 1)
+      polynomial := polynomial.push (term field.modulus 1 powers)
+    generators := generators.push polynomial
+  generators := generators.push #[term field.modulus 1 (Array.replicate n 1),
+    term field.modulus (-1) (Array.replicate n 0)]
+  return generators
+
+/-- Standard Katsura-n system in n+1 variables, with the symmetric convolution
+written as raw terms so duplicate coefficients are normalized by the entry API. -/
+def katsura (n : Nat) : Array RawPolynomial := Id.run do
+  let size := n + 1
+  let mut linear := #[term field.modulus (-1) (Array.replicate size 0)]
+  for i in [:size] do
+    linear := linear.push (term field.modulus (if i == 0 then 1 else 2)
+      ((Array.replicate size 0).set! i 1))
+  let mut generators := #[linear]
+  for m in [:n] do
+    let mut polynomial := #[term field.modulus (-1) ((Array.replicate size 0).set! m 1)]
+    for k in [:2 * n + 1] do
+      let i : Int := (k : Int) - n
+      let j : Int := (m : Int) - i
+      if j.natAbs ≤ n then
+        let powers := ((Array.replicate size 0).modify i.natAbs (· + 1)).modify j.natAbs (· + 1)
+        polynomial := polynomial.push (term field.modulus 1 powers)
+    generators := generators.push polynomial
+  return generators
+
+initialize cyclic4Input : IO.Ref (Array RawPolynomial) ← IO.mkRef (cyclic 4)
+initialize cyclic5Input : IO.Ref (Array RawPolynomial) ← IO.mkRef (cyclic 5)
+initialize katsura3Input : IO.Ref (Array RawPolynomial) ← IO.mkRef (katsura 3)
+
+private def compute (variables : Nat) (input : Array RawPolynomial) : IO (Array RawPolynomial) := do
+  match computeWith ⟨field, variables, .grevlex⟩ {} input with
+  | .candidate candidate _ => return candidate.polynomials
+  | .exhausted r _ => throw (IO.userError s!"F4 exhausted {reprStr r}")
+  | .representation r _ => throw (IO.userError s!"F4 representation {reprStr r}")
+  | .invalid e _ => throw (IO.userError s!"F4 invalid {reprStr e}")
+
+/-- Candidate-only cyclic-4; input generation is excluded, canonicalization and
+final interreduction included. IO.Ref reads prevent cached pure results. -/
+def cyclic4 (_ : Unit) : IO (Array RawPolynomial) := do compute 4 (← cyclic4Input.get)
+
+/-- Candidate-only cyclic-5 under the same field, order and output contract. -/
+def cyclic5 (_ : Unit) : IO (Array RawPolynomial) := do compute 5 (← cyclic5Input.get)
+
+/-- Candidate-only Katsura-3 under the same field, order and output contract. -/
+def katsura3 (_ : Unit) : IO (Array RawPolynomial) := do compute 4 (← katsura3Input.get)
+
+-- Fixed full-system calls make no polynomial-time claim in variable count.
+-- Every registration hashes the full canonical basis and reports exhaustion as
+-- a failed call. Certification and kernel checking are not performed here.
+setup_fixed_benchmark cyclic4 where { repeats := 5 }
+setup_fixed_benchmark cyclic5 where { repeats := 5 }
+setup_fixed_benchmark katsura3 where { repeats := 5 }
+
 end Hex.Groebner.Bench
 
 def main (args : List String) : IO UInt32 := LeanBench.Cli.dispatch args

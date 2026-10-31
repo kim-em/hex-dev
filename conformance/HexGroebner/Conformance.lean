@@ -152,6 +152,19 @@ private def rejects (row : SparseRow) (error : MatrixError) : Bool :=
   | .error e => e == .dimensions
   | _ => false
 
+-- Normalization scalars and sugar propagate through actual row updates.
+#guard match Fixtures.sparse field 2 #[#[1, 1]], Fixtures.sparse field 2 #[#[3, 5]] with
+  | .ok reducers, .ok targets =>
+    match (eliminateWith field {} 2 reducers targets false #[100, 2]).result with
+    | .ok e =>
+      let target := e.rows.filter (·.fromTarget)
+      target.size == 1 && target[0]!.sugar == 100 && target[0]!.multiplier == 4
+    | _ => false
+  | _, _ => false
+#guard match (eliminateWith field {} 0 #[] #[] false #[1]).result with
+  | .error e => e == .dimensions
+  | _ => false
+
 -- Wrong coefficient widths are rejected before any out-of-range read.
 #guard fields.all fun f =>
   let row : SparseRow := ⟨Packed.push .u32 {} 0,

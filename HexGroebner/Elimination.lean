@@ -76,6 +76,11 @@ structure Pivot where
   row : SparseRow
   fromTarget : Bool
   derivation : Option Nat
+  /-- Scalar applied to the residual row when making this pivot monic. Retaining
+  it allows a one-target triangular solve to return the unscaled remainder. -/
+  multiplier : UInt64 := 1
+  /-- Maximum propagated sugar label of the rows actually used in this pivot. -/
+  sugar : Nat := 0
   deriving Inhabited
 
 /-- Echelon rows in increasing pivot-column order, without permuting columns.
@@ -180,11 +185,12 @@ private def scaleSparse (field : PrimeField) (ctx : BarrettCtx field.modulus)
 canonical residues: `a + p - (b*c mod p)` fits below `2*p < 2^32`, and the
 Barrett product fits below `p^2 < 2^62`. No floating-point arithmetic is used. -/
 private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
-    (reducers targets : Array SparseRow) (provenance : Bool) : Work Echelon := do
+    (reducers targets : Array SparseRow) (provenance : Bool) (sugars : Array Nat) : Work Echelon := do
   if columns ≥ 2 ^ 32 || reducers.size + targets.size ≥ 2 ^ 32 then
     throw .dimensions
   if columns > limits.columns then throw (.exhausted .columns)
   if reducers.size + targets.size > limits.rows then throw (.exhausted .rows)
+  if !sugars.isEmpty && sugars.size != reducers.size + targets.size then throw .dimensions
   for i in [:reducers.size] do validate field limits columns i reducers[i]!
   for i in [:targets.size] do validate field limits columns (reducers.size + i) targets[i]!
   let width := field.width
@@ -208,6 +214,7 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
     let (nextTrace, node) ← record limits provenance trace (.input input)
     trace := nextTrace
     let mut node := node
+    let mut sugar := sugars[input]?.getD 0
     if row.size == 0 then
       modify fun s => { s with zeroRows := s.zeroRows + 1 }
     else
@@ -221,7 +228,7 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
           | none => pure (trace, none)
         trace := nextTrace
         slots := Packed.set .u32 slots first (pivots.size + 1).toUInt64
-        pivots := pivots.push ⟨output, false, nextNode⟩
+        pivots := pivots.push ⟨output, false, nextNode, inv, sugar⟩
         reducerRank := reducerRank + 1
       else
         work limits row.size
@@ -242,6 +249,7 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
             let slot := (Packed.read .u32 slots column).toNat
             if slot != 0 then
               let pivot := pivots[slot - 1]!
+              sugar := max sugar pivot.sugar
               last := max last (Packed.read .u32 pivot.row.columns (pivot.row.size - 1)).toNat
               work limits pivot.row.size
               for i in [:pivot.row.size] do
@@ -285,7 +293,7 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
                 coefficients := Packed.push width output.coefficients value }
               dense := Packed.set width dense j 0
           slots := Packed.set .u32 slots column (pivots.size + 1).toUInt64
-          pivots := pivots.push ⟨output, fromTarget, nextNode⟩
+          pivots := pivots.push ⟨output, fromTarget, nextNode, inv, sugar⟩
           if !fromTarget then reducerRank := reducerRank + 1
         else
           modify fun s => { s with zeroRows := s.zeroRows + 1 }
@@ -304,8 +312,9 @@ validation and nested arithmetic as well as elimination. Successful rows span
 the input row space; they are echelon, not reduced echelon. The polynomial layer
 is responsible for supplying columns in the chosen lawful monomial order. -/
 def eliminateWith (field : PrimeField) (limits : MatrixLimits)
-    (columns : Nat) (reducers targets : Array SparseRow) (provenance : Bool := false) : MatrixResult :=
-  let (result, stats) := (eliminate field limits columns reducers targets provenance).run {}
+    (columns : Nat) (reducers targets : Array SparseRow) (provenance : Bool := false)
+    (sugars : Array Nat := #[]) : MatrixResult :=
+  let (result, stats) := (eliminate field limits columns reducers targets provenance sugars).run {}
   ⟨result, stats⟩
 
 end Hex.Groebner

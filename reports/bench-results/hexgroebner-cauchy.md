@@ -1,6 +1,6 @@
 # Packed Macaulay elimination
 
-The current scalar prime-field kernels over `p = 65537` have source fingerprint
+The scalar prime-field kernels at commit `a76c5fbd57` over `p = 65537` have source fingerprint
 `892c46e6e126`. They were measured on the shared `chungus2` host with Lean
 `v4.35.0-rc3`, one automatically leased CPU and three trial-major outer trials.
 Input preparation is excluded; validation, workspace allocation, elimination,

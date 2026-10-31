@@ -1,0 +1,12 @@
+Hex.Groebner.Bench.katsura3    [fixed] repeats=5
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a76c5fb-dirty, 2026-10-31T10:45:55Z, host=chungus2
+  repeat 0  541.827 µs  (×2^1, total 1.084 ms)
+  repeat 1  542.083 µs  (×2^1, total 1.084 ms)
+  repeat 2  542.233 µs  (×2^1, total 1.084 ms)
+  repeat 3  547.471 µs  (×2^1, total 1.095 ms)
+  repeat 4  537.471 µs  (×2^1, total 1.075 ms)
+  median: 542.083 µs    min: 537.471 µs    max: 547.471 µs
+  hash: all repeats agree
+  observed hash: 0x97aae8dcaec9e6c0
+  peak RSS: 67_764 kB (across 5 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10987/reports/bench-results/hexgroebner-katsura3-68b53125ffac.json
