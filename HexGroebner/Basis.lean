@@ -80,9 +80,9 @@ private def finish (context : Context) (budget : Producer.Budget)
         | some candidate =>
           if hp : value.polynomials = candidate then
             return .success ⟨value,history,hc,hg,by intro data h; exact hp.trans (Option.some.inj (he.symm.trans h))⟩ usage
-          else return .rejected usage
-      else return .rejected usage
-    else return .rejected usage
+          else return .internal usage
+      else return .internal usage
+    else return .internal usage
 
 private def produced (context : Context) (budget : Producer.Budget)
     (generators : Array Certificate.Polynomial) (expected : Option (Array Certificate.Polynomial)) :

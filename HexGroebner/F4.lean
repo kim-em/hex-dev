@@ -16,8 +16,9 @@ symbolic preprocessing and joint Macaulay elimination. Candidates are explicitly
 unchecked; no constructor promotes one to a certified result. -/
 
 /-! `HexGroebner/Producer/F4.lean` mirrors this driver with shared polynomial
-derivations. Scheduling and interreduction changes must preserve the complete
-output comparisons in the conformance emitter. -/
+derivations. Scheduling and interreduction changes must preserve the default
+output comparisons on every emitter fixture and both final-reduction strategies
+on the named `TraceConformance` cases. -/
 
 namespace Hex.Groebner
 open Computation

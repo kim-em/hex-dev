@@ -85,6 +85,32 @@ private def parentNodes : Bool := Id.run do
 
 #guard parentNodes
 
+/-- A wrong but canonical candidate pays its comparison cost before F4. -/
+private def comparisonBudget : Bool := Id.run do
+  let wrong : Array Certificate.Polynomial := #[
+    [([2,0],1),([0,1],6)], [([1,1],1),([0,0],6)], [([1,0],6),([0,2],2)]]
+  let .candidate _ statistics := computeWith context {} 1000000 generators | return false
+  let .rejected total := certifyWith context {} generators wrong | return false
+  let validation : Certificate.Work Unit := do
+    for polynomial in wrong do Certificate.Arithmetic.validate context {} 0 polynomial
+  let (.ok _, validationUsage) := validation.run {} | return false
+  -- The equal prefix visits six terms: twelve coordinates and six coefficients.
+  if total.work < statistics.work + validationUsage.work + 18 then return false
+  let .rejected exact := certifyWith context { certificate.work := total.work } generators wrong
+    | return false
+  if exact.work != total.work then return false
+  let state ← match certifyWith context { certificate.work := statistics.work } generators wrong with
+    | .computeExhausted .work state | .certificateExhausted .work state => pure state
+    | _ => return false
+  let .rejected resumed := resumeBasisWith {} state | return false
+  return resumed.work ≥ total.work
+
+#guard comparisonBudget
+
+#guard match basisWith context { certificate.nodes := 0 } #[] with
+  | .success value usage _ => value.polynomials.isEmpty && usage.nodes == 0
+  | _ => false
+
 end Hex.Groebner.Producer.Test
 
 namespace Hex.Groebner.Producer.AllocationTest

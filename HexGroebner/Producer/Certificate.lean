@@ -60,8 +60,10 @@ S-pair witnesses remain untrusted until complete independent basis replay. -/
 def assemble (context : Context) (budget : Budget) (candidate : Candidate) :
     Certificate.Work Certificate.Basis := do
   let mut nodes : Array Certificate.Node := #[]
-  for i in [:candidate.polynomials.size] do nodes ← node budget nodes (.generator i)
-  nodes ← node budget nodes .zero
+  checkAddress (64+candidate.polynomials.size*16)
+  reserveBytes budget (64+candidate.polynomials.size*8)
+  let mut sources := Array.replicate candidate.polynomials.size 0
+  if !candidate.generators.isEmpty then nodes ← node budget nodes .zero
   let zeroRoot := nodes.size-1
   checkAddress (64+candidate.generators.size*16)
   reserveBytes budget (64+candidate.generators.size*8)
@@ -72,8 +74,13 @@ def assemble (context : Context) (budget : Budget) (candidate : Candidate) :
     for i in [:cofactors.size] do
       spend budget 1
       if !cofactors[i]!.isEmpty then
+        let source ← if sources[i]! != 0 then pure (sources[i]!-1) else do
+          let source := nodes.size
+          nodes ← node budget nodes (.generator i)
+          sources := sources.set! i (source+1)
+          pure source
         let product := nodes.size
-        nodes ← node budget nodes (.multiply cofactors[i]! i)
+        nodes ← node budget nodes (.multiply cofactors[i]! source)
         nodes ← node budget nodes (.add root product)
         root := nodes.size-1
     roots := roots.push root

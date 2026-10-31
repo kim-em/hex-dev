@@ -11,8 +11,9 @@ public import HexGroebner.Producer.Matrix
 public section
 
 /-! This certificate-oriented driver mirrors `HexGroebner/F4.lean`. Changes to
-pair scheduling or final interreduction must update both drivers; the conformance
-emitter compares their complete outputs on every F4 fixture. -/
+pair scheduling or final interreduction must update both drivers. The emitter
+compares default outputs on every fixture; `TraceConformance` checks both final
+reduction strategies on its named representative cases. -/
 
 namespace Hex.Groebner.Producer
 

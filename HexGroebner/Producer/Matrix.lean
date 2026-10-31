@@ -57,10 +57,11 @@ def solve (context : Context) (limits : Limits) (nodeLimit : Nat)
     let some source := basis[reducer.basis]? | throw (.matrix .dimensions)
     inputRoots := inputRoots.push (← monomial context limits nodeLimit reducer.multiplier source.root)
   for target in targetsTraced do inputRoots := inputRoots.push target.root
-  let traceCapacity := min (nodeLimit-(← get).derivation.nodes.size)
-    ((reducers.size+targets.size)*(matrix.columns.size+2))
-  let s ← lift get
   let rows := reducers.size + targets.size
+  -- Input records reuse roots and consume no polynomial certificate node.
+  let traceCapacity := min (nodeLimit-(← get).derivation.nodes.size+rows)
+    (rows*(matrix.columns.size+2))
+  let s ← lift get
   if matrix.columns.size > 4294967295 || rows > 4294967295 then throw (.representation .index)
   if matrix.columns.size * (context.field.width.bytes + 4) ≥ USize.size then
     throw (.representation .address)

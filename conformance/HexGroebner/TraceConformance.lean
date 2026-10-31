@@ -25,9 +25,11 @@ private def canonical (p : Nat) (raw : RawPolynomial) : Certificate.Polynomial :
 private def corpus : Bool := Id.run do
   for field in Fixtures.fields do
     for order in [TermOrder.lex,.grlex,.grevlex] do
-      for c in (F4Fixtures.cases field).filter (fun c =>
-          ["missing-s-pair", "cyclic-3", "ordinary-f2", "nonmonic",
-            "positive-dimensional", "inhomogeneous"].contains c.name) do
+      let names := ["missing-s-pair", "cyclic-3", "ordinary-f2", "nonmonic",
+        "positive-dimensional", "inhomogeneous"]
+      let cases := F4Fixtures.cases field
+      if !names.all (fun name => cases.any (fun c => c.name == name)) then return false
+      for c in cases.filter (fun c => names.contains c.name) do
         for batchInterreduce in [false, true] do
           let context : Context := ⟨field,c.variables,order⟩
           let .candidate expected _ := computeWith context { batchInterreduce } c.generators | return false
@@ -53,4 +55,11 @@ private def pruneExample : Bool :=
 #guard match (Producer.prune {} #[.zero] #[1]).run
     ⟨⟨{ arity := 0 }, {}⟩, {}⟩ with
   | (.error (.matrix .dimensions), _) => true
+  | _ => false
+
+/- A matrix input record can reuse a root even when no new node slots remain. -/
+#guard match Producer.computeWith
+    ⟨⟨7, Hex.Nat.isPrimeTrial_isPrime (by decide), by decide⟩, 1, .lex⟩ {} 1
+    #[#[⟨#[1], 1⟩]] with
+  | .candidate value _ => value.forward.nodes == [.generator 0]
   | _ => false

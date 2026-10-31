@@ -24,10 +24,9 @@ def certificate : Certificate.Basis := {
     roots := #[0, 1, 6] }
   backward := {
     nodes := [
-      .generator 0, .generator 1, .generator 2, .zero,
-      .multiply [([0, 0], 1)] 0, .add 3 4,
-      .multiply [([0, 0], 1)] 1, .add 3 6]
-    roots := #[5, 7] }
+      .zero, .generator 0, .multiply [([0, 0], 1)] 1, .add 0 2,
+      .generator 1, .multiply [([0, 0], 1)] 4, .add 0 5]
+    roots := #[3, 6] }
   pairs := #[
     #[#[[], [], []], #[[], [], [([0, 0], 6)]],
       #[[([1, 0], 1)], [], [([0, 1], 6)]]],

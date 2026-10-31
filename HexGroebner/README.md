@@ -232,7 +232,10 @@ phases use the smaller work, allocation and variable cap, including input
 conversion and final receipt construction. Completed F4 history is retained
 through certification: lowering a consumed F4 allowance on resume still
 reports exhaustion. Node/pair caps bound certificate structure; work and
-allocation include failed/repeated attempts.
+allocation include failed/repeated attempts. The node allowance also bounds
+the unpruned polynomial derivation during traced F4; pruning can make the final
+witness smaller. Matrix input records reuse existing roots and have an
+additional row-count allowance rather than consuming polynomial-node capacity.
 
 A separate traced F4 pass constructs the forward containment using the same
 packed polynomials, pair queue, reducer lookup, symbolic closure and exact
