@@ -9,6 +9,7 @@ module
 public import HexGroebner.CertificateOrder
 public import HexGroebnerTheory.Order
 public import Mathlib.Data.List.OfFn
+public import Mathlib.Data.List.Forall2
 
 public section
 
@@ -36,5 +37,38 @@ theorem compare_eq {n : Nat} (order : Hex.Groebner.TermOrder)
   | grevlex =>
     simp [Hex.Groebner.Certificate.compare, Hex.Groebner.TermOrder.cmp,
       Mono.grevlex, Mono.revlex, compareLex, degree_eq_sum]
+
+/-- Fixed-arity serialized exponents have the existing monomial comparison. -/
+theorem compare_mono {n : Nat} (order : Hex.Groebner.TermOrder) {a b : List Nat}
+    (ha : a.length = n) (hb : b.length = n) :
+    Hex.Groebner.Certificate.compare order a b =
+      order.cmp n (Hex.MvPoly.Kernel.mono n a) (Hex.MvPoly.Kernel.mono n b) := by
+  simpa only [Hex.MvPoly.Kernel.toList_mono ha, Hex.MvPoly.Kernel.toList_mono hb] using
+    compare_eq order (Hex.MvPoly.Kernel.mono n a) (Hex.MvPoly.Kernel.mono n b)
+
+private theorem divides_forall₂ (a b : List Nat) :
+    Hex.Groebner.Certificate.divides a b = true ↔ List.Forall₂ (· ≤ ·) a b := by
+  induction a generalizing b with
+  | nil => cases b <;> simp [Hex.Groebner.Certificate.divides]
+  | cons a as ih =>
+    cases b <;> simp [Hex.Groebner.Certificate.divides, List.forall₂_cons, ih]
+
+/-- Checked list divisibility is exactly pointwise exponent divisibility. -/
+theorem divides_mono {n : Nat} {a b : List Nat} (ha : a.length = n) (hb : b.length = n) :
+    Hex.Groebner.Certificate.divides a b = true ↔
+      HexMvPolyTheory.monoEquiv (Hex.MvPoly.Kernel.mono n a) ≤
+        HexMvPolyTheory.monoEquiv (Hex.MvPoly.Kernel.mono n b) := by
+  rw [divides_forall₂, Finsupp.le_def]
+  simp only [HexMvPolyTheory.monoEquiv_apply, Hex.MvPoly.Kernel.get_mono]
+  constructor
+  · intro h i
+    have hia : i.val < a.length := by omega
+    have hib : i.val < b.length := by omega
+    simpa [List.getD_eq_getElem?_getD, hia, hib] using h.get hia hib
+  · intro h
+    apply List.forall₂_of_length_eq_of_get (ha.trans hb.symm)
+    intro i hi hj
+    have hin : i < n := by omega
+    simpa [List.getD_eq_getElem?_getD, hi, hj] using h ⟨i, hin⟩
 
 end HexGroebnerTheory.Certificate

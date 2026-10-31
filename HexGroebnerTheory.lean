@@ -11,4 +11,10 @@ public import HexGroebnerTheory.Certificate
 public import HexGroebnerTheory.Groebner
 public import HexGroebnerTheory.Reduced
 public import HexGroebnerTheory.CertificateOrder
+public import HexGroebnerTheory.CertificateLeading
+public import HexGroebnerTheory.CertificatePair
+public import HexGroebnerTheory.CertificateReduction
+public import HexGroebnerTheory.CertificateContainment
+public import HexGroebnerTheory.CertificateShape
+public import HexGroebnerTheory.CertificateBasis
 public import HexGroebnerTheory.Pairs

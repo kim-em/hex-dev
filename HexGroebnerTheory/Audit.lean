@@ -10,6 +10,10 @@ public import HexGroebnerTheory.Reduced
 public import HexGroebnerTheory.Pairs
 public import HexGroebnerTheory.Certificate
 public import HexGroebnerTheory.CertificateOrder
+public import HexGroebnerTheory.CertificateLeading
+public import HexGroebnerTheory.CertificatePair
+public import HexGroebnerTheory.CertificateReduction
+public import HexGroebnerTheory.CertificateBasis
 
 /-! The mathematical bridge and independent membership checker use only Lean's
 standard foundational axioms. No native success bit is a proof assumption. -/
@@ -40,3 +44,22 @@ standard foundational axioms. No native success bit is a proof assumption. -/
 #guard_msgs in #print axioms HexGroebnerTheory.leading_coefficient
 /-- info: 'HexGroebnerTheory.Certificate.compare_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in #print axioms HexGroebnerTheory.Certificate.compare_eq
+
+/-- info: 'HexGroebnerTheory.Certificate.leading_degree' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms HexGroebnerTheory.Certificate.leading_degree
+/-- info: 'HexGroebnerTheory.Certificate.leading_coefficient' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms HexGroebnerTheory.Certificate.leading_coefficient
+/-- info: 'HexMvPolyTheory.Kernel.residueEquiv_coeff' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms HexMvPolyTheory.Kernel.residueEquiv_coeff
+
+/-- info: 'HexGroebnerTheory.Certificate.sPolynomial_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms HexGroebnerTheory.Certificate.sPolynomial_eq
+
+/-- info: 'HexGroebnerTheory.Certificate.checkReduction_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms HexGroebnerTheory.Certificate.checkReduction_sound
+
+/-- info: 'HexGroebnerTheory.checkBasis_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms HexGroebnerTheory.checkBasis_sound
+
+/-- info: 'HexGroebnerTheory.checkBasis_unique' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms HexGroebnerTheory.checkBasis_unique

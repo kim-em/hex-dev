@@ -24,7 +24,7 @@ local notation "denote" => HexMvPolyTheory.Kernel.denoteMod p (n := n) (cmp := c
 local notation "Canonical" => Hex.MvPoly.Kernel.CanonicalMod p n
 
 /-- Every computed row is canonical and belongs to the original generated ideal. -/
-def Valid (generators : Array Polynomial) (a : Polynomial) : Prop :=
+@[expose] def Valid (generators : Array Polynomial) (a : Polynomial) : Prop :=
   Canonical a ∧ denote a ∈ Ideal.span (Set.range fun i : Fin generators.size => denote generators[i])
 
 private theorem input_valid (generators : Array Polynomial)
@@ -121,6 +121,10 @@ theorem fieldBounds (field : Hex.Groebner.PrimeField) :
     Hex.ZMod64.Bounds field.modulus.toNat where
   pPos := by have := field.prime.two_le; omega
   pLtR := field.bound
+
+/-- Explicit executable primality evidence satisfies Mathlib's prime criterion. -/
+theorem fieldPrime (field : Hex.Groebner.PrimeField) : Nat.Prime field.modulus.toNat :=
+  Nat.prime_def.mpr field.prime
 
 /-- Interpret a certificate polynomial through the existing residue equivalence. -/
 @[expose] noncomputable def denote (context : Hex.Groebner.Context)

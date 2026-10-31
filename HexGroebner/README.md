@@ -19,8 +19,10 @@ characteristic-two polynomials receive no implicit field equations.
 Success is an **unchecked candidate**, carrying the field/order identity,
 canonical interchange polynomials and explicit random state. Deterministic
 execution consumes no random samples. No API promotes a candidate to a
-certified result. `certifyWith`, `basisWith`, complete basis certificates and
-soundness theorems remain separate work.
+certified result. `certifyWith`, `basisWith` and bounded certificate production
+remain separate work. `checkBasis` independently
+replays an explicitly supplied complete certificate; it does not promote a
+producer result automatically.
 
 `PrimeField.ofZMod64` reuses actual primality and bounds evidence. Every prime
 `2 ≤ p < 2^31` is supported. A context can also carry a proof from
@@ -101,7 +103,11 @@ residues, and preserves original borrowed buffers when inputs alias. C code
 uses little-endian scalar access, uint128 Barrett reduction when available and
 exact word remainder otherwise. No ISA extension or floating point is required.
 Barrett parameters are hoisted outside coefficient loops; products fit below
-`p² < 2^62`.
+`p² < 2^62`. One- and two-byte residues use a 32-bit Barrett reciprocal;
+four-byte residues use a 64-bit reciprocal with the uint128 high product.
+Canonical subtraction uses an unsigned wrap mask. Both paths are compared with
+exact remainder, including exhaustive products for the largest one-byte moduli
+and cancellation boundaries at every coefficient width.
 
 `reduceRowsWith` instead reduces every target independently against the same
 reducer echelon space. It preserves scalars, input order and zero rows; no target
@@ -123,6 +129,26 @@ Optional `RowOp` provenance shares input, scaled-addition and scaling nodes.
 References point backward and each output pivot refers to its derivation.
 This data alone does not certify a Gröbner basis: both ideal containments,
 all final S-pair reductions and reducedness remain separate obligations.
+
+`Certificate.Basis` supplies shared derivations for both ideal containments and
+cofactor arrays for every ordered final S-pair. The Mathlib-free `checkBasis`
+validates canonical residue lists, nonzero monic reduced output, decreasing
+leading order, both containments and every S-polynomial identity. It also checks
+that each cofactor-times-divisor product has degree at most that S-polynomial's
+actual degree, keeping zero separate from degree zero. Unrestricted ideal
+identities cannot replace this bound. `HexGroebnerTheory.checkBasis_sound`
+proves the complete semantic postcondition through the existing polynomial and
+order correspondences. Literal examples replay in the ordinary kernel.
+
+Pair replay validates the common basis once, and shape checking caches its
+leading terms. The initial dense pair witness still occupies Θ(|G|³) cofactor
+slots and checks both orientations and the diagonal. This type is provisional,
+not a stable interchange format. Sparse shared pair witnesses and triangular
+pair coverage remain necessary for large computations.
+
+This pure checker currently has no replay allowance. Bounded certificate
+generation, bounded replay, compressed S-pair derivations and automatic checked
+computation remain required. Candidate timing excludes all these checks.
 
 Verification:
 

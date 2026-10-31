@@ -21,6 +21,51 @@ static void fail(const char *message) {
     exit(1);
 }
 
+static void check_scalar(uint64_t p, unsigned width, uint64_t a, uint64_t b, uint64_t factor) {
+    uint8_t dense[4], coefficient[4], column[4] = {0};
+    write_le(dense, width, a);
+    write_le(coefficient, width, b);
+    uint64_t expected = (a + p - (factor * b) % p) % p;
+    if (!update_bytes(p, width, dense, width, column, coefficient, 0, 1, factor) ||
+        read_le(dense, width) != expected) fail("scalar arithmetic boundary");
+}
+
+static void check_arithmetic(void) {
+    /* Exhaust all products in the largest one-byte fields, placing a on both
+       sides of the subtraction correction and exactly at cancellation. */
+    const uint64_t small[] = {2, 3, 251, 256};
+    for (size_t i = 0; i < sizeof(small) / sizeof(small[0]); ++i) {
+        uint64_t p = small[i];
+        for (uint64_t factor = 0; factor < p; ++factor) {
+            for (uint64_t b = 0; b < p; ++b) {
+                uint64_t product = (factor * b) % p;
+                const uint64_t inputs[] = {0, p - 1, product,
+                    product ? product - 1 : p - 1, product + 1 < p ? product + 1 : 0};
+                for (size_t j = 0; j < sizeof(inputs) / sizeof(inputs[0]); ++j)
+                    check_scalar(p, 1, inputs[j], b, factor);
+            }
+        }
+    }
+    const uint64_t wide[] = {257, 65521, 65536, 65537, 2147483647};
+    /* Exhaust every b at the largest two-byte prime with maximal factor,
+       checking both signs and exact cancellation of the reduced product. */
+    for (uint64_t b = 0; b < 65521; ++b) {
+        uint64_t product = (UINT64_C(65520) * b) % 65521;
+        check_scalar(65521, 2, 0, b, 65520);
+        check_scalar(65521, 2, 65520, b, 65520);
+        check_scalar(65521, 2, product, b, 65520);
+    }
+    for (size_t i = 0; i < sizeof(wide) / sizeof(wide[0]); ++i) {
+        uint64_t p = wide[i];
+        unsigned width = p <= 65536 ? 2 : 4;
+        const uint64_t values[] = {0, 1, 2, p / 2, p - 2, p - 1};
+        for (size_t a = 0; a < sizeof(values) / sizeof(values[0]); ++a)
+            for (size_t b = 0; b < sizeof(values) / sizeof(values[0]); ++b)
+                for (size_t f = 0; f < sizeof(values) / sizeof(values[0]); ++f)
+                    check_scalar(p, width, values[a], values[b], values[f]);
+    }
+}
+
 static void check_monomials(void) {
     unsigned cases = 0;
     for (unsigned width = 1; width <= 4; width *= 2) {
@@ -103,6 +148,7 @@ static void check_monomials(void) {
 }
 
 int main(void) {
+    check_arithmetic();
     check_monomials();
     const uint64_t moduli[] = {2, 3, 251, 256, 257, 65521, 65536, 65537, 2147483647};
     unsigned cases = 0;

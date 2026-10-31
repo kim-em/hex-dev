@@ -19,3 +19,7 @@ public import HexGroebner.F4
 
 public import HexGroebner.Certificate
 public import HexGroebner.CertificateOrder
+public import HexGroebner.CertificatePair
+public import HexGroebner.CertificateReduction
+public import HexGroebner.CertificateContainment
+public import HexGroebner.CertificateBasis
