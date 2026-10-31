@@ -50,7 +50,9 @@ def cases (field : PrimeField) : Array Case := Id.run do
       #[#[1, 0, p - 1, 0], #[0, 1, 1, 0], #[0, 0, 1, p - 1]]⟩,
     ⟨"dependent", 3, #[#[p - 1, 1, p - 1], #[p - 1, 1, p - 1]],
       #[#[p - 1, 1, p - 1], #[0, 0, 0]]⟩,
-    ⟨"full-rank", 3, #[], #[#[0, p - 1, 1], #[1, 0, p - 1], #[0, 0, 1]]⟩]
+    ⟨"full-rank", 3, #[], #[#[0, p - 1, 1], #[1, 0, p - 1], #[0, 0, 1]]⟩,
+    ⟨"unordered-reducers", 4, #[#[0, 0, 1, 1], #[0, 1, 1, 0], #[1, 1, 0, 0]],
+      #[#[1, 0, 0, 0]]⟩]
   out := out.push ⟨"tail-extension", 130,
     #[(Array.replicate 130 0).set! 0 1 |>.set! 129 (p - 1)],
     #[(Array.replicate 130 0).set! 0 1, (Array.replicate 130 0).set! 0 1]⟩

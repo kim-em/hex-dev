@@ -61,19 +61,35 @@ def cauchyTrace (input : Input) :
   | .ok e => (e.rows.size == input.columns, e.rows.map (·.row.entries field), e.trace.map wireOp)
   | .error _ => (false, #[], #[])
 
-/-- Rectangular matrices with three nonzeros per row and a large zero prefix.
+/-- Rectangular matrices with six nonzeros per row and a large zero prefix.
 The targets duplicate the independent reducers, so their rank contribution is
-zero. Both dimensions grow with `n`, while support size stays fixed. -/
+zero. Nonunit leading coefficients exercise inversion and normalization; tails
+overlap later pivots. Both dimensions grow with `n`, with fixed support size. -/
 def prepareSparse (n : Nat) : Input := Id.run do
   let columns := n * 256
   let mut rows := #[]
   for i in [:n] do
     let first := columns / 2 + i * 4
     let mut row : SparseRow := {}
-    for j in [:3] do
+    for j in [:6] do
       row := {
         columns := Packed.push .u32 row.columns (first + j).toUInt64
-        coefficients := Packed.push .u32 row.coefficients (j + 1).toUInt64 }
+        coefficients := Packed.push .u32 row.coefficients (j + 2).toUInt64 }
+    rows := rows.push row
+  return ⟨columns, rows, rows⟩
+
+/-- Sparse supports reaching the final column expose the dense interval scan
+cost independently of the clustered-support family. -/
+def prepareSpread (n : Nat) : Input := Id.run do
+  let columns := n * 256
+  let mut rows := #[]
+  for i in [:n] do
+    let first := columns / 2 + i * 4
+    let mut row : SparseRow := {}
+    for (j, c) in #[(first, 2), (first + 1, 1), (columns - 1, 1)] do
+      row := {
+        columns := Packed.push .u32 row.columns j.toUInt64
+        coefficients := Packed.push .u32 row.coefficients c }
     rows := rows.push row
   return ⟨columns, rows, rows⟩
 
@@ -89,6 +105,7 @@ def sparse (input : Input) : Bool × Array (Array (Nat × UInt64)) :=
 #guard (cauchy (prepare 16)).1
 #guard (cauchyTrace (prepare 16)).1
 #guard (sparse (prepareSparse 16)).1
+#guard (sparse (prepareSpread 16)).1
 
 -- Independently derived model: n full-rank Cauchy rows encounter n monic pivots
 -- with trailing supports of lengths n-j. Sum_i sum_{j<i} (n-j) = Theta(n^3)
@@ -118,11 +135,28 @@ setup_benchmark cauchyTrace n => n * n * n
   }
 
 -- Independently derived model: 256*n columns need O(n) workspace initialization
--- and one final pivot scan. Each of 2*n rows has three nonzeros. Reducers install
--- directly and targets cancel in one three-entry update, so validation, actual
+-- and one final pivot scan. Each of 2*n rows has six nonzeros. Reducers install
+-- directly and targets cancel in one six-entry update, so validation, actual
 -- support work, bounded inversion, decoding and structural hashing are O(n).
 setup_benchmark sparse n => n
   with prep := prepareSparse
+  where {
+    paramFloor := 32
+    paramCeiling := 256
+    paramSchedule := .custom #[32, 64, 128, 256]
+    maxSecondsPerCall := 8.0
+    targetInnerNanos := 500000000
+  }
+
+/-- The sparse runner applied to the spread-support family. -/
+def spread (input : Input) : Bool × Array (Array (Nat × UInt64)) := sparse input
+
+-- Independently derived model: n dependent targets have three stored entries
+-- each, but their active interval reaches the final column among 256*n columns.
+-- They inspect Theta(n^2) positions in total, despite cancelling to zero after
+-- one sparse update. Setup, normalization, decoding and hashing are only O(n).
+setup_benchmark spread n => n * n
+  with prep := prepareSpread
   where {
     paramFloor := 32
     paramCeiling := 256

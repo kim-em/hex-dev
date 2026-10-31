@@ -38,7 +38,9 @@ One work unit covers each row header/processing visit, each sparse entry
 validated, scattered or updated (the update includes its modular product),
 each dense column inspected, each normalization or inversion product, and each
 workspace byte initialized. Direct sparse normalization charges one unit per
-entry. Scan blocks of at most 64 positions and other loops' allowances are
+nonmonic entry; monic sparse rows reuse their buffers and derivation node,
+with no identity scaling or coefficient multiplication. Scan blocks of at most
+64 positions and other loops' allowances are
 charged before execution. Exhaustion and invalid input
 are different errors. Counters survive either error. There is no resumable
 state or implicit fallback in this matrix API.
@@ -72,8 +74,10 @@ allocation, elimination, decoding and structural output hashing, with separate
 provenance-off and provenance-on registrations; input preparation is excluded. Their
 registered domain has full rank and dense trailing supports, giving cubic
 fixed-word update work and quadratic scans/output work. A sparse rectangular
-rank-deficient family has constant row support and both dimensions proportional
-to its parameter, with linear setup/support work. These make no claim about
+rank-deficient family has constant clustered row support and both dimensions
+proportional to its parameter, with linear setup/support work. A separate
+spread-support family reaches the last column and exposes quadratic interval
+scanning despite having only three entries per row. These make no claim about
 complete F4 systems or comparative performance leadership. Portable accessors
 retain checked byte operations and `Nat` indices. The active interval can still
 contain large internal gaps; it is not a sparse support queue. Performance

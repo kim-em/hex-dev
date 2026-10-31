@@ -140,14 +140,15 @@ private def record (limits : MatrixLimits) (enabled : Bool)
   return (trace.push op, some index)
 
 /-- Square-and-multiply, with each multiply charged to the parent allowance.
-The exponent is at most 31 bits; Fermat inversion also covers characteristic two. -/
+The modulus bit length bounds the loop; `PrimeField.bound` makes it at most
+31 bits. Fermat inversion also covers characteristic two. -/
 private def inverse (field : PrimeField) (ctx : BarrettCtx field.modulus)
     (limits : MatrixLimits) (a : UInt64) : Work UInt64 := do
   if a == 1 then return 1
   let mut exponent := field.modulus.toNat - 2
   let mut a := a
   let mut value : UInt64 := 1
-  for _ in [:31] do
+  for _ in [:field.modulus.toNat.log2 + 1] do
     if exponent == 0 then break
     if exponent % 2 == 1 then
       work limits 1
@@ -166,6 +167,7 @@ private def scaleSparse (field : PrimeField) (ctx : BarrettCtx field.modulus)
   charge .outputEntries row.size limits.outputEntries (·.outputEntries)
     fun s n => { s with outputEntries := n }
   packedBytes limits (row.columns.size + row.coefficients.size)
+  if inverse == 1 then return row
   work limits row.size
   let width := field.width
   let mut coefficients := ByteArray.emptyWithCapacity row.coefficients.size
@@ -213,7 +215,8 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
       if !fromTarget && Packed.read .u32 slots first == 0 then
         let inv ← inverse field ctx limits (Packed.read width row.coefficients 0)
         let output ← scaleSparse field ctx limits row inv
-        let (nextTrace, nextNode) ← match node with
+        let (nextTrace, nextNode) ← if inv == 1 then pure (trace, node) else
+          match node with
           | some n => record limits provenance trace (.scale n inv)
           | none => pure (trace, none)
         trace := nextTrace
@@ -259,7 +262,8 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
         if let some column := leading then
           let a := Packed.read width dense column
           let inv ← inverse field ctx limits a
-          let (nextTrace, nextNode) ← match node with
+          let (nextTrace, nextNode) ← if inv == 1 then pure (trace, node) else
+            match node with
             | some n => record limits provenance trace (.scale n inv)
             | none => pure (trace, none)
           trace := nextTrace
@@ -273,10 +277,12 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
               packedBytes limits (4 + width.bytes)
               if output.columns.size + 4 ≥ USize.size ||
                   output.coefficients.size + width.bytes ≥ USize.size then throw .dimensions
-              work limits 1
+              let value ← if inv == 1 then pure a else do
+                work limits 1
+                pure (ctx.mulMod a inv)
               output := {
                 columns := Packed.push .u32 output.columns j.toUInt64
-                coefficients := Packed.push width output.coefficients (ctx.mulMod a inv) }
+                coefficients := Packed.push width output.coefficients value }
               dense := Packed.set width dense j 0
           slots := Packed.set .u32 slots column (pivots.size + 1).toUInt64
           pivots := pivots.push ⟨output, fromTarget, nextNode⟩

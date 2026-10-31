@@ -110,7 +110,7 @@ def main():
                 oracle_version=sys.version.split()[0], diff=str(exc))
             raise SystemExit(f"{record.get('case')}: {exc}; replay: {path}") from exc
         count += 1
-    require(count == 168, f"incomplete matrix corpus: {count}")
+    require(count == 175, f"incomplete matrix corpus: {count}")
     print(f"OK: {count} prime-field matrices: echelon, row space, reducer space, derivations")
 
 

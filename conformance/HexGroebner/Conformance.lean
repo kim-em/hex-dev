@@ -15,7 +15,9 @@ Covered properties: monic echelon shape, reducer/target rank split, canonical
 residues, packed widths, shared budgets and exact boundary acceptance.
 Covered edge cases: empty matrices, zero columns/rows, rank defects, later
 reducer pivots, characteristic two, 8/16/32-bit boundaries, maximal prime,
-malformed lengths/columns/residues, every exhaustion category.
+malformed lengths/columns/residues, every exhaustion category, direct sparse
+installation, unordered reducer tails, scan-block extension, and clustered and
+spread supports over 100,000 columns.
 -/
 
 namespace Hex.Groebner.Conformance
@@ -123,6 +125,17 @@ private def fails (limits : MatrixLimits) (resource : Resource) : Bool :=
     | _ => false
   | _ => false
 
+-- Exact work boundaries also exercise active ranges crossing 64-column blocks.
+#guard (cases field).all fun c => match run field c with
+  | .ok ⟨.ok _, s⟩ =>
+    match run field c { work := s.work } with
+    | .ok ⟨.ok _, t⟩ => t.work == s.work && (s.work == 0 ||
+      match run field c { work := s.work - 1 } with
+      | .ok ⟨.error (.exhausted .work), _⟩ => true
+      | _ => false)
+    | _ => false
+  | _ => false
+
 private def rejects (row : SparseRow) (error : MatrixError) : Bool :=
   match (eliminateWith field {} 3 #[] #[row]).result with
   | .error e => e == error
@@ -162,6 +175,17 @@ private def rejects (row : SparseRow) (error : MatrixError) : Bool :=
     SparseRow.ofEntries field 100000 #[(90000 + i, 1)]) with
   | some rows =>
     let r := eliminateWith field { work := 610000 } 100000 rows rows
+    match r.result with
+    | .ok e => e.rows.size == 64 && r.stats.zeroRows == 64
+    | _ => false
+  | none => false
+
+-- Wide tails retain a dense-interval cost; pin a valid spread-support result
+-- under an explicit allowance without asserting a linear sparse-work claim.
+#guard match (Array.range 64).mapM (fun i => SparseRow.ofEntries field 100000
+    #[(50000 + i * 4, 2), (50001 + i * 4, 1), (99999, 1)]) with
+  | some rows =>
+    let r := eliminateWith field { work := 4000000 } 100000 rows rows
     match r.result with
     | .ok e => e.rows.size == 64 && r.stats.zeroRows == 64
     | _ => false
