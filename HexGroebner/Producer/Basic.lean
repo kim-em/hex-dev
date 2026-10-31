@@ -56,16 +56,13 @@ def reserveExponent (limits : Limits) (value : Nat) : Work Unit := do
   if bits > data.exponentBits then throw (.certificate .exponentBits)
   modify fun s => { s with derivation.maxExponentBits := max data.maxExponentBits bits }
 
+/-- Append a node; factor payload is reserved by its constructor before allocation. -/
 def emit (limits : Limits) (nodeLimit : Nat) (node : Certificate.Node) : Work Nat := do
   let data := (← get).derivation
   lift (Computation.spend limits 1)
   if data.nodes.size ≥ nodeLimit then throw (.matrix (.exhausted .traceNodes))
   lift (Computation.allocate limits 64)
   let index := data.nodes.size
-  if let .multiply factor _ := node then
-    for _ in factor do
-      lift (Computation.spend limits 1)
-      reserveTerms 1
   modify fun s => { s with derivation.nodes := data.nodes.push node }
   return index
 

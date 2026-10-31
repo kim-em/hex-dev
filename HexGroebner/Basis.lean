@@ -12,28 +12,6 @@ public section
 
 namespace Hex.Groebner.Checked
 
-private instance : DecidableEq TermOrder := by
-  intro a b
-  cases a <;> cases b <;>
-    first | exact isTrue rfl | exact isFalse (by intro h; cases h)
-
-private instance : DecidableEq PrimeField := by
-  intro a b
-  rcases a with ⟨a,ap,ab⟩
-  rcases b with ⟨b,bp,bb⟩
-  exact if h : a=b then isTrue (by subst b; rfl) else isFalse (by intro eq; cases eq; exact h rfl)
-
-private instance : DecidableEq Context := by
-  intro a b
-  rcases a with ⟨af,an,ao⟩
-  rcases b with ⟨bf,bn,bo⟩
-  exact if hf : af=bf then
-    if hn : an=bn then
-      if ho : ao=bo then isTrue (by subst bf; subst bn; subst bo; rfl)
-      else isFalse (by intro eq; cases eq; exact ho rfl)
-    else isFalse (by intro eq; cases eq; exact hn rfl)
-  else isFalse (by intro eq; cases eq; exact hf rfl)
-
 /-- A complete accepted result is indexed by the exact original context and
 canonical input generators, independently of producer metadata. -/
 structure Basis (context : Context) (generators : Array Certificate.Polynomial)

@@ -99,7 +99,7 @@ theorem x_not_mem : X (0 : Fin 2) ∉ Ideal.span
     have h := term 1 0 1
     change denote GeneratedExample.context [([1,0],1)] =
       (C (1 : ZMod 7) * X (0 : Fin 2)^1 * X 1^0 : MvPolynomial (Fin 2) (ZMod 7)) at h
-    simpa only [GeneratedExample.target,map_one,pow_one,pow_zero,one_mul,mul_one] using h
+    simpa only [GeneratedExample.target,Hex.Groebner.PrimeExample.target,map_one,pow_one,pow_zero,one_mul,mul_one] using h
   rw [target,generators] at checked
   exact checked
 

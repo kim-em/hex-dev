@@ -50,7 +50,7 @@ inductive BasisResult where
 private def certified (expected : Option (Array Certificate.Polynomial)) (history : History) : CertResult → BasisResult
   | .success basis usage => .success basis usage history
   | .invalid _ usage => .internal usage
-  | .rejected usage => .rejected usage
+  | .rejected usage => .internal usage
   | .exhausted resource state => .certificateExhausted resource ⟨.certification state history,expected⟩
   | .address state => .address ⟨.certification state history,expected⟩
   | .internal usage => .internal usage
@@ -71,11 +71,16 @@ private def produced (budget : Budget) (expected : Option (Array Certificate.Pol
 private def validate (context : Context) (budget : Certificate.Budget)
     (candidate : Array Certificate.Polynomial) : Certificate.Work Unit := do
   if context.variables > budget.variables then throw (.exhausted .variables)
+  -- Reserve the later exact candidate comparison here, before entering F4.
+  -- The validated candidate bounds every compared prefix, even on rejection.
+  Certificate.spend budget 1
   for polynomial in candidate do
     try Certificate.Arithmetic.validate context budget 0 polynomial
     catch error => match error with
       | .invalid _ => throw .rejected
       | e => throw e
+    let count ← Certificate.Arithmetic.size budget polynomial
+    Certificate.spend budget (1+count*(context.variables+1)*(budget.exponentBits/64+3))
 
 /-- Resume the retained original identity and cumulative counters. Candidate
 validation and certificate generation are atomic; retries charge repeated work. -/
@@ -92,7 +97,7 @@ def resumeBasisWith (budget : Budget) (state : BasisState) : BasisResult :=
       | .ok _ =>
         let initial := begin context generators { work := usage.work,allocatedBytes := usage.allocatedBytes }
         produced budget (some expected) usage
-          (resumeWith (effective budget).1 (effective budget).2.nodes initial
+          (resumeWith (effective budget).1 ((effective budget).2.nodes-usage.nodes) initial
             ((effective budget).2.allocatedTerms-usage.allocatedTerms) (effective budget).2.exponentBits)
       | .error .rejected => .rejected usage
       | .error (.exhausted resource) => .certificateExhausted resource state
@@ -103,7 +108,7 @@ def resumeBasisWith (budget : Budget) (state : BasisState) : BasisResult :=
     | .error (.exhausted resource) => .certificateExhausted resource state
     | .error _ => .internal parent
     | .ok _ => produced budget state.expected parent
-        (resumeWith (effective budget).1 (effective budget).2.nodes computation
+        (resumeWith (effective budget).1 ((effective budget).2.nodes-parent.nodes) computation
           ((effective budget).2.allocatedTerms-parent.allocatedTerms) (effective budget).2.exponentBits)
   | .certification certification history =>
     match checkHistory (effective budget).1 history with

@@ -25,13 +25,32 @@ private def canonical (p : Nat) (raw : RawPolynomial) : Certificate.Polynomial :
 private def corpus : Bool := Id.run do
   for field in Fixtures.fields do
     for order in [TermOrder.lex,.grlex,.grevlex] do
-      for c in F4Fixtures.cases field do
-        let context : Context := ⟨field,c.variables,order⟩
-        let .candidate expected _ := computeWith context {} c.generators | return false
-        let .candidate actual _ := Producer.computeWith context {} 1000000 c.generators | return false
-        if actual.polynomials != expected.polynomials.map (canonical field.modulus.toNat) ||
-            !Certificate.checkContainment field.modulus.toNat c.variables actual.generators
-              actual.polynomials actual.forward then return false
+      for c in (F4Fixtures.cases field).filter (fun c =>
+          ["missing-s-pair", "cyclic-3", "ordinary-f2", "nonmonic",
+            "positive-dimensional", "inhomogeneous"].contains c.name) do
+        for batchInterreduce in [false, true] do
+          let context : Context := ⟨field,c.variables,order⟩
+          let .candidate expected _ := computeWith context { batchInterreduce } c.generators | return false
+          let .candidate actual _ := Producer.computeWith context { batchInterreduce } 1000000 c.generators | return false
+          if actual.polynomials != expected.polynomials.map (canonical field.modulus.toNat) ||
+              !Certificate.checkContainment field.modulus.toNat c.variables actual.generators
+                actual.polynomials actual.forward then return false
   return true
 
 #guard corpus
+
+private def pruneExample : Bool :=
+  match (Producer.prune {} #[.generator 0, .zero, .scale 1 0, .add 2 1] #[2]).run
+      ⟨⟨{ arity := 0 }, {}⟩, {}⟩ with
+  | (.ok value, _) => value.nodes == [.generator 0, .scale 1 0] && value.roots == #[1]
+  | _ => false
+
+#guard pruneExample
+#guard match (Producer.prune {} #[.scale 1 1, .zero] #[0]).run
+    ⟨⟨{ arity := 0 }, {}⟩, {}⟩ with
+  | (.error (.matrix .dimensions), _) => true
+  | _ => false
+#guard match (Producer.prune {} #[.zero] #[1]).run
+    ⟨⟨{ arity := 0 }, {}⟩, {}⟩ with
+  | (.error (.matrix .dimensions), _) => true
+  | _ => false

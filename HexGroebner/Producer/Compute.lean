@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGroebner.Producer.F4
+public import HexGroebner.Producer.Prune
 
 public section
 
@@ -87,9 +88,8 @@ private def decode (state : State) (limits : Limits) : Work Candidate := do
     polynomials := polynomials.push (← canonical state.context limits raw)
     roots := roots.push g.root
   let generators ← state.generators.mapM (canonical state.context limits)
-  lift (Computation.spend limits state.derivation.nodes.size)
-  lift (Computation.allocate limits (state.derivation.nodes.size*24+roots.size*8))
-  return ⟨state.context,generators,polynomials,⟨state.derivation.nodes.toList,roots⟩,
+  let forward ← prune limits state.derivation.nodes roots
+  return ⟨state.context,generators,polynomials,forward,
     (← lift get).table.bytes,(← get).derivation.allocatedTerms,(← get).derivation.maxExponentBits,
     ⟨(← lift get).statistics,(← lift get).table.count,(← lift get).table.bytes,polynomials.size⟩⟩
 

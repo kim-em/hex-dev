@@ -17,7 +17,7 @@ exactly to the target array; every node is evaluated once. -/
 structure Containment where
   nodes : List Node
   roots : Array Nat
-  deriving Repr, Inhabited
+  deriving Repr, BEq, Inhabited
 
 /-- Replay a shared derivation and compare every target with its explicit root.
 Malformed references, noncanonical polynomials and mismatched root counts fail. -/

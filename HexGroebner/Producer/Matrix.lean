@@ -59,7 +59,6 @@ def solve (context : Context) (limits : Limits) (nodeLimit : Nat)
   for target in targetsTraced do inputRoots := inputRoots.push target.root
   let traceCapacity := min (nodeLimit-(← get).derivation.nodes.size)
     ((reducers.size+targets.size)*(matrix.columns.size+2))
-  lift (Computation.allocate limits (traceCapacity*64))
   let s ← lift get
   let rows := reducers.size + targets.size
   if matrix.columns.size > 4294967295 || rows > 4294967295 then throw (.representation .index)
@@ -99,8 +98,7 @@ def solve (context : Context) (limits : Limits) (nodeLimit : Nat)
       | .inputEntries | .outputEntries => throw (.exhausted .matrixEntries)
       | .columns => throw (.exhausted .monomials)
       | .rows => throw (.exhausted .matrixRows)
-      -- Provenance is disabled here, so this is an internal invariant failure.
-      -- A traced F4 route must supply its own resumable provenance allowance.
+      -- Trace exhaustion retains the committed F4 checkpoint and counters.
       | .traceNodes => throw (.matrix (.exhausted .traceNodes))
     | .error e => throw (.matrix e)
   let mut nodes : Array Nat := #[]

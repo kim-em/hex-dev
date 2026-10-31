@@ -136,7 +136,8 @@ these routes under identical fields, inputs and allowances.
 
 `MatrixLimits` bounds one call's columns, rows, input/output nonzeros, packed
 payload, work and optional provenance nodes. Packed payload counts input,
-workspace and output buffers; it excludes headers and allocator capacity, and
+workspace and output buffers plus 64 logical bytes per recorded derivation
+operation; it excludes other headers and allocator capacity, and
 may count shared buffers twice. Work covers row visits, sparse updates
 (including their products), dense-column visits, normalization/inversion
 products and workspace bytes initialized. Monic sparse rows reuse their
@@ -239,10 +240,19 @@ matrix elimination. Shared `RowOp` derivations become polynomial certificate
 nodes. Independent tail reductions retain each target's coefficient one, so
 restoring its head gives the corresponding full derivation. Original-generator
 divisions construct the reverse containment, and every ordered final S-pair
-gets explicit degree-bounded cofactors. Complete independent `checkBasis`
-replay precedes success. `certifyWith` can check external candidates without
-using their producer seed or strategy. It may reject malformed candidates or
-exhaust its allowance; no such result is a checked basis.
+gets explicit degree-bounded cofactors. A bounded reverse reachability pass
+drops unused forward nodes and renumbers the retained shared derivation before
+replay. Matrix provenance reserves logical bytes per operation actually recorded,
+then polynomial-node construction charges its separately allocated data. Complete
+independent `checkBasis` replay precedes success.
+
+The current `certifyWith` implementation reruns traced F4 and compares its
+canonical output with the supplied candidate before generating the certificate.
+It does not use the external producer's seed or internal state, but still needs
+a full F4 rerun within its allowance. Candidate-only certificate generation with
+early shape, containment and S-pair checks remains required. Checking an existing
+supplied complete certificate through `BasisVerification.verifyWith` does not
+rerun F4. Rejection and exhaustion never produce a checked basis.
 
 The traced producer is separate from the fast unchecked candidate route.
 Certificate production and final replay are separately charged and reported;
@@ -268,7 +278,7 @@ lake build HexGroebner +HexGroebner.Conformance +HexGroebner.MonomialConformance
   +HexGroebner.DivisionAPIConformance +HexGroebner.MembershipConformance \
   +HexGroebner.BasisReplayConformance +HexGroebner.NormalFormConformance \
   +HexGroebner.TraceConformance +HexGroebner.CertificateProducerConformance \
-  +HexGroebner.ProducerConformance +HexGroebner.BasisCorpusConformance \
+  +HexGroebner.ProducerConformance \
   +HexGroebner.BasisConformance hexgroebner_emit_fixtures hexgroebner_emit_f4 \
   hexgroebner_emit_division hexgroebner_bench
 HEX_LIBRARY_FILTER=HexGroebner bash scripts/ci/run_oracles.sh
@@ -290,7 +300,9 @@ work bounds. Monomial tests force collisions, table growth and both widening
 boundaries, check overflow rejection and compare packed ordering with the
 lawful Hex orders. Ordinary-kernel byte decoding has an axiom audit.
 
-The emitter also computes and independently certifies every one of the 567
+The literal prime-field example shares Mathlib-free data with an exact
+automatic-generation regression check. The emitter also computes and
+independently certifies every one of the 567
 systems, comparing its accepted basis with fast candidate production. The
 indexed API separately certifies supplied candidates, exercises all phase
 allowances and resumes sealed computations with their original input identity.

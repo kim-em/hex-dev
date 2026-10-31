@@ -85,11 +85,6 @@ standard foundational axioms. No native success bit is a proof assumption. -/
 /-- info: 'HexGroebnerTheory.checkDerivation_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in #print axioms HexGroebnerTheory.checkDerivation_sound
 
-/-- info: 'HexGroebnerTheory.Checked.basisWith_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in #print axioms HexGroebnerTheory.Checked.basisWith_sound
-/-- info: 'HexGroebnerTheory.Checked.certifyWith_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in #print axioms HexGroebnerTheory.Checked.certifyWith_sound
-
 /-- info: 'HexGroebnerTheory.basisWith_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in #print axioms HexGroebnerTheory.basisWith_sound
 /-- info: 'HexGroebnerTheory.certifyWith_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/

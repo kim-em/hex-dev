@@ -22,29 +22,6 @@ theorem basis_sound {context : Context} {generators : Array Certificate.Polynomi
     basis.value.certificate basis.value.accepted
   simpa only [basis.context_eq,basis.generators_eq] using sound
 
-/-- Checked computation needs no producer provenance or mathematical assumption
-about its seed, pair criteria or elimination strategy. -/
-theorem basisWith_sound (context : Context) (budget : Producer.Budget)
-    (generators : Array Certificate.Polynomial) (basis : Checked.Basis context generators none)
-    (usage : Certificate.Usage)
-    (_h : Checked.basisWith context budget generators = .success basis usage) :
-    IsReducedBasis context generators basis.value.polynomials := basis_sound basis
-
-/-- Certification proves the supplied candidate, rather than merely some basis
-for an ideal associated with producer metadata. -/
-theorem certifyWith_sound (context : Context) (budget : Producer.Budget)
-    (generators candidate : Array Certificate.Polynomial)
-    (basis : Checked.Basis context generators (some candidate)) (usage : Certificate.Usage)
-    (_h : Checked.certifyWith context budget generators candidate = .success basis usage) :
-    IsReducedBasis context generators candidate := by
-  rw [← basis.candidate_eq candidate rfl]
-  exact basis_sound basis
-
-/-- info: 'HexGroebnerTheory.Checked.basisWith_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in #print axioms basisWith_sound
-/-- info: 'HexGroebnerTheory.Checked.certifyWith_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in #print axioms certifyWith_sound
-
 end HexGroebnerTheory.Checked
 
 namespace HexGroebnerTheory

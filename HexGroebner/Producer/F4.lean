@@ -10,6 +10,10 @@ public import HexGroebner.Producer.Matrix
 
 public section
 
+/-! This certificate-oriented driver mirrors `HexGroebner/F4.lean`. Changes to
+pair scheduling or final interreduction must update both drivers; the conformance
+emitter compares their complete outputs on every F4 fixture. -/
+
 namespace Hex.Groebner.Producer
 
 structure Checkpoint where

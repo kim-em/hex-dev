@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexGroebner.Basis
+import HexGroebner.PrimeExample
 import HexGroebner.F4Fixtures
 
 open Hex.Groebner
@@ -96,3 +97,9 @@ private def checked : Bool := Id.run do
 #guard checked
 
 end Hex.Groebner.BasisUseTest
+
+/- Keep the literal downstream kernel example tied to automatic generation. -/
+#guard match basisWith PrimeExample.context {} PrimeExample.generators with
+  | .success value _ => value.value.polynomials == PrimeExample.polynomials &&
+      value.value.certificate == PrimeExample.certificate
+  | _ => false

@@ -74,6 +74,17 @@ private def categories : Bool := Id.run do
   | _ => return false
 
 #guard categories
+/-- A nested computation cannot spend node slots retained by its caller. -/
+private def parentNodes : Bool := Id.run do
+  let .certificateExhausted .nodes state := basisFrom context
+      { certificate.nodes := 1 } generators { nodes := 1 } | return false
+  let .computation _ parent := state.stage | return false
+  if parent.nodes != 1 then return false
+  let .success basis usage _ := resumeBasisWith {} state | return false
+  return usage.nodes > 1 && checkBasis context basis.generators basis.polynomials basis.certificate
+
+#guard parentNodes
+
 end Hex.Groebner.Producer.Test
 
 namespace Hex.Groebner.Producer.AllocationTest
