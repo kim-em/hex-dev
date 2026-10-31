@@ -102,6 +102,25 @@ structure Echelon where
   reducerRank : Nat
   trace : Array RowOp
 
+/-- An unscaled target remainder after reduction by the supplied reducer rows.
+Targets are independent: none becomes a reducer for another target. Empty rows
+retain their input position and optional zero derivation. -/
+structure RemainderRow where
+  row : SparseRow
+  derivation : Option Nat
+  sugar : Nat
+  deriving Inhabited
+
+/-- Independent target remainders in input order, including zeros. -/
+structure Remainders where
+  rows : Array RemainderRow
+  trace : Array RowOp
+
+/-- Bounded independent triangular solves, retaining charged counters on failure. -/
+structure RemainderResult where
+  result : Except MatrixError Remainders
+  stats : MatrixStats
+
 /-- Explicit success/failure with the counters charged against the caller's
 allowance. Exhaustion exposes no incomplete matrix as a completed answer. -/
 structure MatrixResult where
@@ -197,7 +216,7 @@ canonical residues: `a + p - (b*c mod p)` fits below `2*p < 2^32`, and the
 Barrett product fits below `p^2 < 2^62`. No floating-point arithmetic is used. -/
 private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
     (reducers targets : Array SparseRow) (provenance : Bool) (sugars : Array Nat)
-    (native : Bool) : Work Echelon := do
+    (native independent : Bool) : Work (Echelon × Array RemainderRow) := do
   if columns > 4294967295 || reducers.size + targets.size > 4294967295 then
     throw .dimensions
   if columns > limits.columns then throw (.exhausted .columns)
@@ -217,6 +236,7 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
   let mut slots := zeros (columns * 4)
   let mut pivots : Array Pivot := #[]
   let mut trace : Array RowOp := #[]
+  let mut remainders : Array RemainderRow := #[]
   let mut reducerRank := 0
   let ctx := field.barrett
   for input in [:reducers.size + targets.size] do
@@ -228,6 +248,7 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
     let mut node := node
     let mut sugar := sugars[input]?.getD 0
     if row.size == 0 then
+      if independent && fromTarget then remainders := remainders.push ⟨{}, node, sugar⟩
       modify fun s => { s with zeroRows := s.zeroRows + 1 }
     else
       let first := (Packed.read .u32 row.columns 0).toNat
@@ -291,7 +312,7 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
               leading := some column
         if let some column := leading then
           let a := Packed.read width dense column
-          let inv ← inverse field ctx limits a
+          let inv ← if independent && fromTarget then pure 1 else inverse field ctx limits a
           let (nextTrace, nextNode) ← if inv == 1 then pure (trace, node) else
             match node with
             | some n => record limits provenance trace (.scale n inv)
@@ -314,10 +335,14 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
                 columns := Packed.push .u32 output.columns j.toUInt64
                 coefficients := Packed.push width output.coefficients value }
               dense := Packed.set width dense j 0
-          slots := Packed.set .u32 slots column (pivots.size + 1).toUInt64
-          pivots := pivots.push ⟨output, fromTarget, nextNode, inv, sugar⟩
-          if !fromTarget then reducerRank := reducerRank + 1
+          if independent && fromTarget then
+            remainders := remainders.push ⟨output, nextNode, sugar⟩
+          else
+            slots := Packed.set .u32 slots column (pivots.size + 1).toUInt64
+            pivots := pivots.push ⟨output, fromTarget, nextNode, inv, sugar⟩
+            if !fromTarget then reducerRank := reducerRank + 1
         else
+          if independent && fromTarget then remainders := remainders.push ⟨{}, node, sugar⟩
           modify fun s => { s with zeroRows := s.zeroRows + 1 }
     modify fun s => { s with processedRows := s.processedRows + 1 }
   let mut ordered := #[]
@@ -325,7 +350,7 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
   for column in [:columns] do
     let slot := (Packed.read .u32 slots column).toNat
     if slot != 0 then ordered := ordered.push pivots[slot - 1]!
-  return ⟨ordered, reducerRank, trace⟩
+  return (⟨ordered, reducerRank, trace⟩, remainders)
 
 /-- Deterministic finite-prime-field Macaulay elimination, with sparse reducers,
 packed dense accumulation, monic output, stable columns and optional provenance.
@@ -338,7 +363,19 @@ is responsible for supplying columns in the chosen lawful monomial order. -/
 def eliminateWith (field : PrimeField) (limits : MatrixLimits)
     (columns : Nat) (reducers targets : Array SparseRow) (provenance : Bool := false)
     (sugars : Array Nat := #[]) (native : Bool := true) : MatrixResult :=
-  let (result, stats) := (eliminate field limits columns reducers targets provenance sugars native).run {}
-  ⟨result, stats⟩
+  let (result, stats) := (eliminate field limits columns reducers targets provenance sugars native false).run {}
+  ⟨result.map Prod.fst, stats⟩
+
+/-- Reduce each target by the same reducer echelon space, preserving its scalar
+and input position. Targets never reduce each other. Validation, sparse reducer
+installation, bounded native updates and allowances are shared with elimination.
+This is a linear triangular solve; polynomial normal-form claims additionally
+require the symbolic closure and a Gröbner basis. -/
+def reduceRowsWith (field : PrimeField) (limits : MatrixLimits)
+    (columns : Nat) (reducers targets : Array SparseRow) (provenance : Bool := false)
+    (sugars : Array Nat := #[]) (native : Bool := true) : RemainderResult :=
+  let (result, stats) :=
+    (eliminate field limits columns reducers targets provenance sugars native true).run {}
+  ⟨result.map (fun (e, rows) => ⟨rows, e.trace⟩), stats⟩
 
 end Hex.Groebner

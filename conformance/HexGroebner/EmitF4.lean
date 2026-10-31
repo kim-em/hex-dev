@@ -62,6 +62,11 @@ private def emit : IO Unit := do
           | .representation e _ => throw (IO.userError s!"{c.name}: reference representation {reprStr e}")
         if candidate.polynomials != reference.polynomials then
           throw (IO.userError s!"{c.name}: Gebauer–Möller/reference candidate mismatch")
+        let separate ← match computeWith context { batchInterreduce := false } c.generators with
+          | .candidate candidate _ => pure candidate
+          | _ => throw (IO.userError s!"{c.name}: separate tail reduction failed")
+        if candidate.polynomials != separate.polynomials then
+          throw (IO.userError s!"{c.name}: shared/separate tail reduction mismatch")
         let value := "{" ++ s!"\"p\":{field.modulus.toNat},\"variables\":{c.variables}," ++
           "\"order\":\"" ++ orderName order ++ "\",\"generators\":" ++
           array (c.generators.map polynomial) ++ ",\"basis\":" ++

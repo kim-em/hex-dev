@@ -62,8 +62,30 @@ def check(value):
     require(value["reducerRank"] == rank == flags.count(False), "reducer rank")
     retained = [row for row, flag in zip(output, flags) if not flag]
     require(rref(retained, n, p) == rref(reducers, n, p), "lost reducer subspace")
+    replay(inputs, output, value["trace"], refs, p)
+    if "remainders" in value:
+        output = value["remainders"]
+        require(len(output) == len(targets), "lost zero or reordered target")
+        for row in output:
+            require(len(row) == n and all(type(x) is int and 0 <= x < p for x in row),
+                    "invalid remainder row")
+        pivots = rref(reducers, n, p)
+        expected = []
+        for target in targets:
+            row = target[:]
+            for pivot in pivots:
+                j = next(j for j, c in enumerate(pivot) if c)
+                c = row[j]
+                row = [(x - c * y) % p for x, y in zip(row, pivot)]
+            expected.append(row)
+        require(output == expected, "independent target remainder or scalar mismatch")
+        require(len(value["remainderRefs"]) == len(output), "remainder metadata length")
+        replay(inputs, output, value["remainderTrace"], value["remainderRefs"], p)
+
+
+def replay(inputs, output, trace, refs, p):
     nodes = []
-    for node in value["trace"]:
+    for node in trace:
         require(isinstance(node, list) and node, "invalid derivation node")
         tag = node[0]
         if tag == 0:
@@ -101,6 +123,7 @@ def main():
             require(record["lib"] == "HexGroebner" and record["op"] == "eliminate", "record kind")
             require(record["case"] not in seen, "duplicate case")
             seen.add(record["case"])
+            require("remainders" in record["value"], "missing independent target profile")
             check(record["value"])
         except (ValueError, KeyError, TypeError, IndexError) as exc:
             path = write_failure(args.failure_dir, library="HexGroebner", profile=args.profile,
@@ -111,7 +134,7 @@ def main():
             raise SystemExit(f"{record.get('case')}: {exc}; replay: {path}") from exc
         count += 1
     require(count == 175, f"incomplete matrix corpus: {count}")
-    print(f"OK: {count} prime-field matrices: echelon, row space, reducer space, derivations")
+    print(f"OK: {count} prime-field matrices: echelon, row space, reducer space, independent target remainders, derivations")
 
 
 if __name__ == "__main__":

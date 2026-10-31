@@ -89,6 +89,8 @@ structure Limits where
   nativeRows : Bool := true
   /-- Enable minimal-LCM installation and proper-LCM chain pruning. -/
   gebauerMoller : Bool := true
+  /-- Share symbolic preprocessing across independent final tail reductions. -/
+  batchInterreduce : Bool := true
   deriving Inhabited
 
 /-- Cumulative counters survive failure and resumption. -/

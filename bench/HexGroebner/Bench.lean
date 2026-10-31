@@ -285,8 +285,8 @@ initialize cyclic5Input : IO.Ref (Array RawPolynomial) ← IO.mkRef (cyclic 5)
 initialize cyclic6Input : IO.Ref (Array RawPolynomial) ← IO.mkRef (cyclic 6)
 initialize katsura3Input : IO.Ref (Array RawPolynomial) ← IO.mkRef (katsura 3)
 
-private def compute (variables : Nat) (input : Array RawPolynomial) (nativeRows := true) (gebauerMoller := true) : IO (Array RawPolynomial) := do
-  match computeWith ⟨field, variables, .grevlex⟩ { nativeRows, gebauerMoller, work := 1000000000 } input with
+private def compute (variables : Nat) (input : Array RawPolynomial) (nativeRows := true) (gebauerMoller := true) (batchInterreduce := true) : IO (Array RawPolynomial) := do
+  match computeWith ⟨field, variables, .grevlex⟩ { nativeRows, gebauerMoller, batchInterreduce, work := 1000000000 } input with
   | .candidate candidate _ => return candidate.polynomials
   | .exhausted r _ => throw (IO.userError s!"F4 exhausted {reprStr r}")
   | .representation r _ => throw (IO.userError s!"F4 representation {reprStr r}")
@@ -328,6 +328,22 @@ def reimer5 (_ : Unit) : IO (Array RawPolynomial) := do compute 5 (← reimer5In
 def reimer5Buchberger (_ : Unit) : IO (Array RawPolynomial) := do
   compute 5 (← reimer5Input.get) true false
 
+/-- Identical cyclic5 candidate using separate final tail reductions. -/
+def cyclic5Separate (_ : Unit) : IO (Array RawPolynomial) := do
+  compute 5 (← cyclic5Input.get) true true false
+
+/-- Identical cyclic6 candidate using separate final tail reductions. -/
+def cyclic6Separate (_ : Unit) : IO (Array RawPolynomial) := do
+  compute 6 (← cyclic6Input.get) true true false
+
+/-- Identical katsura3 candidate using separate final tail reductions. -/
+def katsura3Separate (_ : Unit) : IO (Array RawPolynomial) := do
+  compute 4 (← katsura3Input.get) true true false
+
+/-- Identical reimer5 candidate using separate final tail reductions. -/
+def reimer5Separate (_ : Unit) : IO (Array RawPolynomial) := do
+  compute 5 (← reimer5Input.get) true true false
+
 -- Fixed full-system calls make no polynomial-time claim in variable count.
 -- Every registration hashes the full canonical basis and reports exhaustion as
 -- a failed call. Certification and kernel checking are not performed here.
@@ -341,6 +357,11 @@ setup_fixed_benchmark cyclic6Buchberger where { repeats := 5 }
 setup_fixed_benchmark katsura3Buchberger where { repeats := 5 }
 setup_fixed_benchmark reimer5 where { repeats := 5 }
 setup_fixed_benchmark reimer5Buchberger where { repeats := 5 }
+
+setup_fixed_benchmark cyclic5Separate where { repeats := 5 }
+setup_fixed_benchmark cyclic6Separate where { repeats := 5 }
+setup_fixed_benchmark katsura3Separate where { repeats := 5 }
+setup_fixed_benchmark reimer5Separate where { repeats := 5 }
 
 end Hex.Groebner.Bench
 

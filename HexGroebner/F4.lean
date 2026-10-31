@@ -108,7 +108,7 @@ private def interreduce (context : Context) (limits : Limits) (basis : Array Bas
         break
     if !redundant then minimal := minimal.push basis[i]!
   let index ← ReducerIndex.build context limits minimal
-  let mut reduced := #[]
+  let mut inputs : Array BasisElement := #[]
   for g in minimal do
     let p := g.polynomial
     let mut tail : Polynomial := {}
@@ -118,7 +118,18 @@ private def interreduce (context : Context) (limits : Limits) (basis : Array Bas
       tail := {
         support := p.support.extract 4 p.support.size
         coefficients := p.coefficients.extract context.field.width.bytes p.coefficients.size }
-      tail ← Polynomial.remainderWith context limits index minimal tail
+    inputs := inputs.push ⟨tail, g.sugar⟩
+  let tails ← if limits.batchInterreduce then do
+    if inputs.all (fun p => p.polynomial.size == 0) then pure inputs else
+      let matrix ← SymbolicMatrix.prepareWith context limits index minimal inputs
+      matrix.reduce context limits
+  else inputs.mapM fun tail => do
+    return ⟨← Polynomial.remainderWith context limits index minimal tail.polynomial, tail.sugar⟩
+  let mut reduced := #[]
+  for i in [:minimal.size] do
+    let g := minimal[i]!
+    let p := g.polynomial
+    let tail := tails[i]!.polynomial
     allocate limits ((tail.size + 1) * (4 + context.field.width.bytes))
     spend limits tail.size
     let mut support := Packed.push .u32 {} (p.monomial 0).toUInt64

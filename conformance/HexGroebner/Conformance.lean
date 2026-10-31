@@ -103,6 +103,47 @@ private def same (field : PrimeField) (a b : MatrixResult) : Bool :=
     | .ok a, .ok b => same field a b
     | _, _ => false
 
+private def independent : Bool := Id.run do
+  for field in fields do
+    for c in cases field do
+      let .ok reducers := sparse field c.columns c.reducers | return false
+      let .ok targets := sparse field c.columns c.targets | return false
+      let native := reduceRowsWith field {} c.columns reducers targets true #[] true
+      let portable := reduceRowsWith field {} c.columns reducers targets true #[] false
+      if native.stats != portable.stats then return false
+      let .ok a := native.result | return false
+      let .ok b := portable.result | return false
+      let values := fun (e : Remainders) => e.rows.map fun r =>
+        (r.row.entries field, r.derivation, r.sugar)
+      if values a != values b || a.trace != b.trace || a.rows.size != targets.size then return false
+  let some reducer := SparseRow.ofEntries field 3 #[(0, 1), (2, 2)] | return false
+  let some target := SparseRow.ofEntries field 3 #[(0, 3), (1, 4), (2, 1)] | return false
+  let result := reduceRowsWith field {} 3 #[reducer] #[target, target, {}, reducer] true
+  let .ok rows := result.result | return false
+  if rows.rows.map (·.row.entries field) != #[#[(1, 4), (2, 2)], #[(1, 4), (2, 2)], #[], #[]] then
+    return false
+  let stats := result.stats
+  let limits : MatrixLimits := {
+    columns := 3, rows := 5, inputEntries := stats.inputEntries
+    outputEntries := stats.outputEntries, packedBytes := stats.packedBytes
+    work := stats.work, traceNodes := stats.traceNodes }
+  let exact := reduceRowsWith field limits 3 #[reducer] #[target, target, {}, reducer] true
+  if exact.stats != stats then return false
+  let .ok _ := exact.result | return false
+  for resource in [Resource.work, .packedBytes, .outputEntries, .traceNodes] do
+    let limits := match resource with
+      | .work => { limits with work := stats.work - 1 }
+      | .packedBytes => { limits with packedBytes := stats.packedBytes - 1 }
+      | .outputEntries => { limits with outputEntries := stats.outputEntries - 1 }
+      | .traceNodes => { limits with traceNodes := stats.traceNodes - 1 }
+      | _ => limits
+    match (reduceRowsWith field limits 3 #[reducer] #[target, target, {}, reducer] true).result with
+    | .error (.exhausted r) => if r != resource then return false
+    | _ => return false
+  return true
+
+#guard independent
+
 private def chunks : Bool := Id.run do
   let entries := (Array.range 5000).map fun i => (i, (1 : UInt64))
   let targets := (entries.map fun (i, _) => (i, (2 : UInt64))).push (5000, 3)
