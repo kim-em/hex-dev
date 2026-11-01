@@ -1,11 +1,11 @@
 # F4 matrices from multiplied critical-pair rows
 
 Grouping multiplied basis faces by their actual LCM avoids constructing explicit
-S-polynomial differences before symbolic preprocessing. Diagnostic candidate B/A
-has geometric mean **0.9374**, median **0.9110**, across the original experiment
-and its one unchanged rerun. Registered fixed Reimer5 improves with pooled
-geometric mean **0.7548**, while cyclic4 regresses to **1.0489**. All complete
-bases agree. Fresh msolve comparisons still leave a substantial gap; this does
+S-polynomial differences before symbolic preprocessing. Against the arena-validated
+cache engine, diagnostic candidate B/A has geometric mean **0.8955**, median
+**0.8788**. Fixed cyclic5/6 improve to **0.8711/0.8531**, while cyclic4 regresses
+to **1.0301**. All complete bases agree. Earlier experiments and fresh msolve
+comparisons remain below; a substantial gap remains and these observations do
 not establish the fastest-open-source milestone.
 
 ## Algorithm and correctness boundary
@@ -100,6 +100,36 @@ mixed adjacent-arm observations. CPUs are 44 and 66.
 Every regression and outlier remains. No additional unchanged rerun is used.
 These finite fixed inputs do not establish a general complexity law.
 
+## Arena-validated cache baseline
+
+The final computational snapshot is `68086d6576`, fingerprint `c9fcd659ff93`.
+A is the frozen arena-validated cache/access engine `65d5517c4d57` (computational
+commit `a74d092a08`); B adds multiplied pair rows. Both source manifests and
+frozen executable hashes are archived. The same host, toolchain, diagnostic
+inputs, output contract, limits and adjacent AB/BA schedule above apply.
+This is a separate comparison from the earlier context-bound cache experiment;
+its ratios are not pooled with that experiment.
+
+All 64 diagnostic processes complete on CPU89 with equal full bases. Candidate
+geometric mean is **0.8955**, median **0.8788**, range **0.8343–1.0979**.
+Process geometric mean is **0.9549**, median **0.9666**, range **0.8839–1.0465**.
+Counters retain the changes caused by the different matrices and intermediate
+bases. The registered sweep completes all 120 points on CPU71 with matching
+full structural basis hashes and five declared repetitions per arm and order.
+
+| Fixed case | Geometric mean B/A | Median | Range |
+| --- | ---: | ---: | --- |
+| cyclic4 | 1.0301 | 1.0347 | 0.9809–1.0475 |
+| cyclic5 | 0.8711 | 0.8721 | 0.8644–0.8814 |
+| cyclic6 | 0.8531 | 0.8531 | 0.8456–0.8610 |
+| katsura3 | 0.9684 | 0.9676 | 0.9121–1.0337 |
+| reimer5 | 0.9007 | 0.9099 | 0.8423–0.9129 |
+| cyclic6Small | 0.8588 | 0.8586 | 0.8547–0.8631 |
+
+Every completed sample, including regressions, remains. No unchanged rerun was
+used for this snapshot. `ldd` confirms these frozen binaries contain the Hex and
+Lean code statically; subsequent worktree edits cannot change either arm.
+
 ## Fresh current-msolve comparisons
 
 Upstream msolve remains at `3672113ee2c696a2ac9c637636e0f7214f500ba1`
@@ -138,3 +168,6 @@ that checkout, and build `production_compare`; fixed cases use
 - [pair-rows-production-records-064a09798b72.tar.gz](raw/pair-rows-production-records-064a09798b72.tar.gz): `6bd76d6c22f2efe6ce795ec289c15f7c978d0f72324b275286da7bc5b2dd4986`
 - [pair-rows-production-records-064a09798b72-repeat.tar.gz](raw/pair-rows-production-records-064a09798b72-repeat.tar.gz): `95dead937e2dc2263b9fec4c45ef8047ed99529fe7b836d93b7ea5f39c1d9897`
 - [pair-rows-validation.tar.gz](raw/pair-rows-validation.tar.gz): `2d62bf540b1096936a56914f543c933322426967a76ce8a33aa3b8d206474eb0`
+
+- [pair-rows-verified-production-bench-c9fcd659ff93.tar.gz](raw/pair-rows-verified-production-bench-c9fcd659ff93.tar.gz): `32f9c3ca2da871270b1e4b5ce62d5f24faa916fa14910ae5fa9044a70482431a`
+- [pair-rows-verified-production-records-c9fcd659ff93.tar.gz](raw/pair-rows-verified-production-records-c9fcd659ff93.tar.gz): `81b0ee3677df574983a0d6d698aba63a241a1a028c3b3652aeaef9d76ec5aa8a`
