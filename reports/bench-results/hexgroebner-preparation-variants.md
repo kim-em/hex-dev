@@ -86,3 +86,16 @@ the fastest-open-source milestone. The issue remains open.
 - [prototype-append-packed-6b380360b565.tar.gz](raw/prototype-append-packed-6b380360b565.tar.gz): `f680b13b39b84f54d125517fe887527152b826a4c5264208b9b6c4435e79f9ec`.
 - [prototype-prepared-info-325788939fd4.tar.gz](raw/prototype-prepared-info-325788939fd4.tar.gz): `2b62297d8efd0f20068a7345c2cba2bdde2e0e5c0addbbf0a16563da2fbe6af5`.
 - [prototype-append-alias-6302d3c58d00.tar.gz](raw/prototype-append-alias-6302d3c58d00.tar.gz): `c7545687139332a2226950bf148ed4e436e5d9348610cb3baf4bc71d4dacb1b1`.
+
+A separate target-sort-key variant, source `70d510e4fd93`, computes leading
+column and support size once per row before sorting. It retains stable ties,
+traced root associations and positional independent remainders, charging the
+extra linear pass. A fresh 188-job driver build and one 64-process small and
+56-process medium observation give candidate ratios 0.9970/1.0018 and
+process family ratios 0.9802/0.9889. Every complete basis agrees. No unchanged
+repeat, fixed sweep, full oracle profile or new native validation is claimed.
+The baseline is target-column source `b9c671b4f9af`; these observations are
+separate from compact indexing. The variant is not selected because it shows
+no established candidate gain.
+
+- [prototype-target-keys-70d510e4fd93.tar.gz](raw/prototype-target-keys-70d510e4fd93.tar.gz): `b3ba7ebface08bc05f7c266fa1c0511fe90941d20ed1aafa576caae7f3d9db76`.
