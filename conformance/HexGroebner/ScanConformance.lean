@@ -220,8 +220,11 @@ def runtimeZeroChecks (seed : Nat) : Bool := Id.run do
         let values := (Array.replicate 70 0).setIfInBounds position bad
         let dense := packed w values
         let slots := packed 4 (Array.replicate 70 4294967295)
-        let input : Scan.State := {dense,column:=seed%7,last:=69,
-          chargedUntil:=if seed%2 == 0 then 0 else 64}
+        let input : Scan.State := {
+          dense
+          column := seed % 7
+          last := 69
+          chargedUntil := if seed % 2 == 0 then 0 else 64 }
         for quantum in [0,1,7,8,9,15,16,63,64,65,4096] do
           for work in [0,1,63,64,65,70,4096] do
             for provenance in [false,true] do
