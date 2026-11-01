@@ -71,8 +71,11 @@ static inline __m256i hex_mersenne31_even(__m256i b,__m256i factor) {
    invalid vectors fall back to scalar processing to preserve failure prefixes.
    Width is 1, 2 or 4. For narrow widths, multiplier is the canonical factor and
    reduction=floor(2^32/p). For width 4, multiplier=factor*2^32 mod p and
-   reduction=-p^-1 mod 2^32. Narrow gathers read four bytes only when the complete
-   read lies within the logical dense buffer; otherwise the caller uses scalar updates. */
+   reduction=-p^-1 mod 2^32. Mode mersenne=1 requires width 4 and p=2^31-1;
+   its contiguous fold recovers the factor from that same Montgomery multiplier.
+   The guarded m31 wrapper enforces these preconditions; mode 0 is generic.
+   Narrow gathers read four bytes only when the complete read lies within the
+   logical dense buffer; otherwise the caller uses scalar updates. */
 __attribute__((target("avx2"),always_inline))
 static inline unsigned hex_scan8_mode(uint8_t *dense,const uint8_t *columns,const uint8_t *coefficients,
         size_t entry,uint64_t column_count,uint32_t p,uint32_t multiplier,uint32_t reduction,unsigned width,unsigned mersenne) {

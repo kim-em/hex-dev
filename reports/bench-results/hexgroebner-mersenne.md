@@ -4,10 +4,13 @@ The production implementation selects a dedicated transition for p = 2^31−1.
 It folds contiguous products exactly and retains Montgomery reduction for
 scattered updates. Generic field loops are unchanged. The current measurements
 and validation are in “Separate dispatch”; earlier snapshots remain separate.
+Archived source blobs, manifests and executable hashes are authoritative. Commit
+IDs are supplementary references and need not remain reachable after squash
+merges or local worktree cleanup.
 
 The prime is p=2147483647. For canonical factors and coefficients, x=ab<p².
 The fold (x AND p)+(x>>31) is congruent to x modulo p and below 2p, so one
-conditional subtraction is exact. The existing u32 row ABI supplies2a mod p;
+conditional subtraction is exact. The existing u32 row ABI supplies 2a mod p;
 modular halving recovers a as (m>>1)+(m AND 1)*1073741824. No buffer format,
 field bound, output convention or work accounting changes. Other primes retain
 the exact Montgomery or narrow Barrett implementation.
@@ -25,7 +28,7 @@ All retained measurements use a leased CPU, one thread and adjacent AB/BA order
 on the shared host. Raw metadata records toolchain, ISA, load and binary hashes.
 No CI timing is used for scientific claims.
 
-The 96 kernel points on CPU 30 cover64/128/256/512 with three fixed outer
+The 96 kernel points on CPU 30 cover 64/128/256/512 with three fixed outer
 trials, 4 sec inner target and 32 sec call cap. Every complete output hash agrees.
 All eight complexity fits are inconclusive; none is budget-truncated. These are
 finite-size observations, not a complexity or overall-fastest claim.
@@ -47,14 +50,14 @@ repeat is retained; every outlier remains in both runs.
 | Original | 12 | 0.8923 | 0.9774 | 0.3624–1.4818 | 0.9859 |
 | Repeat | 54 | 0.9974 | 1.0053 | 0.5677–1.7608 | 1.0359 |
 
-Pooled 128-process candidate geometric mean is 0.9434, median 0.9877, range 0.3624–1.7608; process geometric mean 1.0106. Existing fixed cases use other primes and retain 240 points, including the5.9096 cyclic6Small ratio. Per-case means, medians, ranges and all points remain in the analyses.
+Pooled 128-process candidate geometric mean is 0.9434, median 0.9877, range 0.3624–1.7608; process geometric mean 1.0106. Existing fixed cases use other primes and retain 240 points, including the 5.9096 cyclic6Small ratio. Per-case means, medians, ranges and all points remain in the analyses.
 
-The 2065-job library/theory/emitter build passes. Its emitters pass175 matrix, 567 SymPy/Singular basis
+The 2065-job library/theory/emitter build passes. Its emitters pass 175 matrix, 567 SymPy/Singular basis
 and 1288 division oracle cases; fixture bytes are unchanged. Four Clang/GCC
 ASan/UBSan variants pass native/portable equality, aliases, malformed prefixes
 and budgets. The AVX2 F4 counter window includes 10111 actual Mersenne vectors;
-scalar variants include zero. The two new registered benchmarks pass the32-case
-bench verification gate in 5 sec. These are correctness checks, not performance
+scalar variants include zero. The two new registered benchmarks pass the 32-case
+bench verification check in 5 sec. These are correctness checks, not performance
 measurements. Full global conformance completion is recorded separately.
 
 Archives contain source blobs for both kernel arms, compiled-driver source,
@@ -101,7 +104,7 @@ means are 0.9637 cyclic4, 1.0449 cyclic5, 1.0783 cyclic6, 1.0548 katsura3,
 1.1094 reimer5 and 1.3535 cyclic6Small. The fixed regressions, including a
 5.5145 ratio, remain in the evidence. No further unchanged repeat is used.
 
-The u8/u16 scan disassemblies contain1894/1892 instructions respectively in
+The u8/u16 scan disassemblies contain 1894/1892 instructions respectively in
 both frozen executables. After normalizing call target addresses and RIP
 displacements, those instruction strings agree. Raw and normalized disassembly
 are retained. This comparison is not a semantic proof, does not explain the
@@ -157,7 +160,9 @@ All source blobs and both compiled-driver source trees are retained.
 The 96-point kernel sweep on CPU 70 has matching complete output hashes. All
 eight complexity fits are inconclusive and none is budget-truncated. Ratios
 are finite-size observations for this implementation, without pooling earlier
-compiled variants or claiming a full-system speedup.
+compiled variants or claiming a full-system speedup. Scattered packets use
+Montgomery arithmetic in both arms; their ratios contextualize the smaller
+contiguous differences and do not establish a distinct benefit at 64 columns.
 
 | Size | Contiguous mean B/A | Median | Range | Strided mean B/A | Median | Range |
 | ---: | ---: | ---: | --- | ---: | ---: | --- |
@@ -186,8 +191,8 @@ The 2079-job library/theory/emitter build, all 30 Groebner conformance modules
 in a 216-job build, all 175/567/1288 external oracle cases, 32-case benchmark
 verification and project audits pass. Four Clang and four GCC ASan/UBSan
 variants pass. Targeted contiguous products compare generic and specialized
-paths at factors {0, 1, 2, 2^30−1, 2^30,p−1} and coefficients
-{1, 2, 2^30, 2^30+1,p−1}, with an assertion that the fold executed. The F4
+paths at factors {0, 1, 2, 2^30−1, 2^30, p−1} and coefficients
+{1, 2, 2^30, 2^30+1, p−1}, with an assertion that the fold executed. The F4
 counter window includes 8351 actual Mersenne vectors; scalar variants use zero.
 The two preceding snapshots also complete their 14036-job global conformance
 builds; the validation archive retains those completed logs separately.

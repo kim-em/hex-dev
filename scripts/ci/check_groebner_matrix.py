@@ -104,7 +104,7 @@ static inline unsigned hex_test_scan8_m31_counted(uint8_t *dense,const uint8_t *
  unsigned n=hex_test_scan8_m31_base(dense,columns,coefficients,entry,column_count,p,multiplier,reduction,width);
  if(n) {uint32_t first,last;memcpy(&first,columns+entry*4,4);memcpy(&last,columns+(entry+7)*4,4);
   if(last-first==7) ++vector_contiguous;else ++vector_gather;
-  unsigned group=width==1?0:width==2?1:2;
+  unsigned group=3;
   vector_widths|=1u<<(2*group+(last-first!=7));}
  return n;
 }
@@ -239,7 +239,7 @@ def main : IO Unit := do
   IO.println s!"native call counts: scan={scan}, gather={gather}; AVX2={available}, contiguous={contiguous}, strided={gathered}, width paths={covered}, byte comparisons={compared}, product validations={cacheProducts}, Mersenne vectors={mersenne}"
   if VECTOR && available && mersenne ≤ beforeMersenne then
     throw (IO.userError "complete F4 did not exercise Mersenne vectors")
-  if VECTOR && available && (contiguous == 0 || gathered == 0 || covered != 63) then
+  if VECTOR && available && (contiguous == 0 || gathered == 0 || covered != 255) then
     throw (IO.userError "an AVX2 path was not exercised")
   if VECTOR && (← IO.getEnv "HEX_GROEBNER_REQUIRE_AVX2") == some "1" && !available then
     throw (IO.userError "AVX2 coverage required but unavailable")

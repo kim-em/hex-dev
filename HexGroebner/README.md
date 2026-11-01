@@ -162,13 +162,15 @@ available and exact word remainder otherwise. One- and two-byte residues use a
 On x86 with runtime AVX2 support, odd moduli use eight exact products at a time.
 One- and two-byte coefficients use a 32-bit Barrett reciprocal: the product is
 below `2^32`, so the approximate quotient is low by at most one. Four-byte
-coefficients use Montgomery products. For `p = 2^31 - 1`, a separate dispatch
-uses exact Mersenne folding on contiguous vectors and Montgomery products on
-scattered vectors. The native harness counts these folds inside complete F4
-calls. The factor alone is temporarily converted to Montgomery form; stored
-coefficients remain canonical residues. For
+coefficients use Montgomery products. The factor alone is temporarily converted
+to Montgomery form; stored coefficients remain canonical residues. For
 `R = 2^32`, the unreduced numerator is below `p² + R*p < 3*2^62`, so unsigned
-64-bit lanes cannot overflow and one correction suffices. Contiguous columns
+64-bit lanes cannot overflow and one correction suffices.
+
+For `p = 2^31 - 1`, a separate dispatch uses exact Mersenne folding on contiguous
+vectors and Montgomery products on scattered vectors. The folded product is below
+`2*p`, so one subtraction gives the canonical residue. The native harness counts
+these folds inside complete F4 calls and checks both vector layouts separately. Contiguous columns
 use vector loads/stores; other supports use gathers and scalar stores. Narrow
 gathers mask the requested scalar out of a four-byte read and require that the
 entire read lies within the logical buffer. Boundary vectors use scalar updates.
