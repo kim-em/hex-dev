@@ -100,8 +100,20 @@ static lean_obj_res HEX_SCAN_NAME(uint64_t p,
             }
             uint64_t a=rd(data+(size_t)col*w,w);
             if(a>=p) {status=4;break;}
+            if(!a) {
+#if HEX_SCAN_VECTOR
+                /* last<columns and charged>col hold here. Keep the packet
+                   inside the active interval, quantum and reserved work. */
+                if(last-col>=7 && quantum-tick>=8 && charged-col>=8 &&
+                        hex_scan_zero8(data+(size_t)col*w,w)) {
+                    HEX_GROEBNER_ZERO_SCAN_USED();
+                    col+=8;tick+=7;continue;
+                }
+#endif
+                ++col;continue;
+            }
             uint64_t slot=rd(slot_bytes+(size_t)col*4,4);
-            if(!a || !slot) {if(a && !leading) leading=col+1;++col;}
+            if(!slot) {if(!leading) leading=col+1;++col;}
             else {
                 if(slot>count) {status=4;break;}
                 lean_object *pivot=lean_array_cptr(pivots)[slot-1];

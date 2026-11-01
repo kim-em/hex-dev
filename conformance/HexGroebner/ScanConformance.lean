@@ -210,6 +210,73 @@ def runtimeWideChecks : Bool := Id.run do
 
 #guard runtimeWideChecks
 
+/-- Zero scans preserve every quantum/work prefix, including invalid slots
+that must remain unread until a nonzero coefficient is reached. -/
+def runtimeZeroChecks (seed : Nat) : Bool := Id.run do
+  for p in [2,251,257,65521,65537,2147483647] do
+    let w := Hex.Groebner.Native.width p
+    for position in [0,7,8,15,16,63,64,69,70] do
+      for bad in [1,p] do
+        let values := (Array.replicate 70 0).setIfInBounds position bad
+        let dense := packed w values
+        let slots := packed 4 (Array.replicate 70 4294967295)
+        let input : Scan.State := {
+          dense
+          column := seed % 7
+          last := 69
+          chargedUntil := if seed % 2 == 0 then 0 else 64 }
+        for quantum in [0,1,7,8,9,15,16,63,64,65,4096] do
+          for work in [0,1,63,64,65,70,4096] do
+            for provenance in [false,true] do
+              if !equal (transition p.toUInt64 slots #[] input quantum work 0 provenance)
+                  (portable p.toUInt64 slots #[] input quantum work 0 provenance) then return false
+  let shared := packed 4 (Array.replicate 70 0)
+  let input : Scan.State := {dense:=shared,column:=0,last:=69,chargedUntil:=0}
+  if !equal (transition 65537 shared #[] input 4096 70 0 false)
+      (portable 65537 shared #[] input 4096 70 0 false) then return false
+  return shared.data.all (· == 0)
+
+#guard runtimeZeroChecks 0
+
+/-- Exercise reservation and active-interval bounds independently of a seed. -/
+def zeroBoundaryChecks (seed : Nat) : Bool := Id.run do
+  for p in [251,257,65537,2147483647] do
+    let w := Hex.Groebner.Native.width p
+    let zeros := packed w (Array.replicate 70 0)
+    let slots := packed 4 (Array.replicate 70 4294967295)
+    for offset in [:8] do
+      let column := (offset + seed % 8) % 8
+      for charged in #[0,column+1,column+2,column+3,column+4,column+5,column+6,column+7,64] do
+        let initial : Scan.State := {
+          dense := zeros
+          column
+          last := 69
+          chargedUntil := charged }
+        for quantum in [1,7,8,9,15,16,64,65,4096] do
+          for work in [0,1,7,8,63,64,70,4096] do
+            if !equal (transition p.toUInt64 slots #[] initial quantum work 0 false)
+                (portable p.toUInt64 slots #[] initial quantum work 0 false) then return false
+      for last in [7,8,15] do
+        for marker in [0,1,p] do
+          let values := (Array.replicate 70 0).setIfInBounds (last+1) marker
+          let initial : Scan.State := {
+            dense := packed w values
+            column
+            last
+            chargedUntil := 70 }
+          let result := transition p.toUInt64 slots #[] initial 4096 4096 0 false
+          if !equal result (portable p.toUInt64 slots #[] initial 4096 4096 0 false) ||
+              result.status != 1 || result.state.column != last+1 then return false
+  let values := #[1] ++ Array.replicate 69 0
+  let shared := packed 4 values
+  let rows : Array Scan.Pivot := #[⟨packed 4 #[0,8],packed 4 #[1,65536],7⟩]
+  let initial : Scan.State := { dense := shared, column := 0, last := 69, chargedUntil := 0 }
+  let result := transition 65537 shared rows initial 4096 4096 100 true
+  if !equal result (portable 65537 shared rows initial 4096 4096 100 true) then return false
+  return shared.data == (packed 4 values).data && result.state.dense.data != shared.data
+
+#guard zeroBoundaryChecks 0
+
 set_option maxRecDepth 8192 in
 /-- The transparent scan model replays independently of the native implementation. -/
 theorem scan_literal :
