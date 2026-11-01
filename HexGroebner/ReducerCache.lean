@@ -17,8 +17,8 @@ private structure ReducerProduct where
   base : Polynomial
   product : Polynomial
 
-/-- Multiplied reducers from one append-only monomial arena. F4 retains this
-cache in its sealed checkpoint. Hits validate every product exponent in the
+/-- Multiplied reducers over monomial arenas produced by the interning API.
+F4 retains this cache in its sealed checkpoint. Hits validate every product exponent in the
 current arena, so public raw calls cannot reuse incompatible identifier meanings.
 The context binds field and order; complete base payloads identify each basis
 polynomial. Product validation also checks the multiplier and result identifiers. -/

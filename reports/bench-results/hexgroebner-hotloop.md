@@ -103,6 +103,10 @@ No language or runtime impossibility has been established.
 - [hotloop-production-records-57149c9cc2f7-repeat.tar.gz](raw/hotloop-production-records-57149c9cc2f7-repeat.tar.gz): `b86dae05d239eac86b03dbbc8de431c9f4d861f32f4165a931e7d7218db6efc5`
 - [hotloop-final-validation.tar.gz](raw/hotloop-final-validation.tar.gz): `3e373cfc6c1c5d18ef8ab03e0bb843a96122bbde5ac76104b698227d5c27bfb9`
 
+
+- [hotloop-context-profile.tar.gz](raw/hotloop-context-profile.tar.gz): `da4b3fb6328e8df8f16187f371d7911d8aee23fddb71479ec8b4ba62809ed0fe`
+- [hotloop-context-profile-amortized.tar.gz](raw/hotloop-context-profile-amortized.tar.gz): `54d5ef57ee83c567c695c9e8347c145e980d45ad3327f3e4d1529af65d591788`
+
 A separate cyclic6 profile compares this guarded engine with the pre-guard
 lookup engine `cfb2c79989e2`. Initial whole-process profiles include initialization
 and lose samples; they remain archived without algorithm attribution. A second
@@ -114,6 +118,17 @@ allocation 5.1–5.5% and freeing 4.9–5.2%. The context comparison has no sepa
 sample group above the 0.3% display threshold. These profiles do not identify
 the cause of the short fixed-run regression or replace its completed timings.
 
+The retained amortized profile rows report 21.816 ms per call for the guarded
+engine and 22.807 ms for the pre-guard lookup engine, each at 128 inner repeats.
+These are single sequential captures under perf, rather than adjacent AB/BA
+scientific comparisons, and their baseline is `cfb2c79989e2` (PR-equivalent
+computational commit `c42506d087`), not A. Metadata records host load averages
+29.3/26.6/19.1. They do not reproduce the direction of the short fixed campaign
+and do not establish its cause. `ReducerCache.multiply` self samples account for
+0.34% and 0.31%, respectively. Exported `env.git_commit` is the invoking checkout
+`a5b40ea5b7`, not either frozen binary's source; fingerprints and executable
+SHA-256 identities identify the actual build inputs.
+
 The baseline A cyclic6-31 candidate observations in the original diagnostic
 campaign are about 22–25ms; the rerun is about 44ms. These absolute observations
 show the changed execution context without rejecting or adjusting any sample.
@@ -122,6 +137,3 @@ All gains and losses have the reported dispersion, including Reimer/Katsura.
 This source snapshot precedes exact cached-product validation against the current
 arena. Its public raw cache entry points require the associated arena; the
 subsequent implementation validates the exponent identities before reuse.
-
-- [hotloop-context-profile.tar.gz](raw/hotloop-context-profile.tar.gz): `da4b3fb6328e8df8f16187f371d7911d8aee23fddb71479ec8b4ba62809ed0fe`
-- [hotloop-context-profile-amortized.tar.gz](raw/hotloop-context-profile-amortized.tar.gz): `54d5ef57ee83c567c695c9e8347c145e980d45ad3327f3e4d1529af65d591788`

@@ -37,6 +37,14 @@ def runtimeChecks (seed : Nat) : Bool := Id.run do
           (arity,3,1,18446744073709551615,0)] do
         if !check width n.toUInt64 count.toUInt64 multiplier.toUInt64 start.toUInt64 terms.toUInt64
             arena base result false then return false
+    let x := 3 + seed%17
+    let arena := ([0,x,2*x,3*x] : List Nat).foldl (fun bytes n => Packed.push width bytes n.toUInt64) {}
+    let base := ([0,1,2] : List UInt64).foldl (fun bytes n => Packed.push .u32 bytes n) {}
+    let result := ([1,2,2] : List UInt64).foldl (fun bytes n => Packed.push .u32 bytes n) {}
+    -- The first two terms are valid; only the final in-range ID has wrong exponents.
+    if !check width 1 4 1 0 2 arena base result true ||
+        !check width 1 4 1 1 2 arena base result false ||
+        !check width 1 4 1 2 1 arena base result false then return false
   let arena := Packed.push .u32 (Packed.push .u32 (Packed.push .u32 {} 0) 4294967295) 4294967294
   if !check .u32 1 3 1 0 1 arena (Packed.push .u32 {} 1) (Packed.push .u32 {} 2) false then return false
   return true

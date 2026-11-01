@@ -210,6 +210,14 @@ static void check_products(void) {
             free(arena);free(base);free(result);
         }
     }
+    /* A nonzero slice must inspect its last term, whose ID is valid but whose
+       exponent sum is wrong. Checking only the first term or ignoring start fails. */
+    uint8_t arena[]={0,1,2,3},base[12],result[12];
+    for(size_t i=0;i<3;++i) {write_le(base+4*i,4,i);write_le(result+4*i,4,i<2?i+1:2);}
+    if(!equal_products(1,1,4,1,0,2,arena,4,base,12,result,12) ||
+       equal_products(1,1,4,1,1,2,arena,4,base,12,result,12) ||
+       equal_products(1,1,4,1,2,1,arena,4,base,12,result,12))
+        fail("late in-range product mismatch or nonzero start");
     puts("cached products: all widths, coordinate bounds, aliases and malformed arenas passed");
 }
 

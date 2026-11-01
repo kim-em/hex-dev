@@ -22,7 +22,8 @@ work to the parent allowance, and shares already charged polynomial buffers.
 When key storage would not fit, multiplication continues without caching that
 product. Every hit also validates all product exponents against the current
 arena, with at most 4096 coordinate comparisons per native call; incompatible
-identifier meanings in public raw calls therefore cannot return a stale row.
+identifier meanings in public raw calls over arenas produced by the interning
+API therefore cannot return a stale row.
 The portable route checks the same exact identities. Full caches permit
 replacement of an existing key, charging each insertion cumulatively.
 The [cache measurements](../reports/bench-results/hexgroebner-arena-cache.md)

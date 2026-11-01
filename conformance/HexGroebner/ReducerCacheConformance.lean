@@ -159,6 +159,36 @@ private def arenaChecks (seed : Nat) : Bool := Id.run do
 
 #guard arenaChecks 0
 
+/-- The base and multiplier have identical meanings in two interned arenas.
+Only the last two result IDs are swapped, beyond the first 4096-term chunk. -/
+private def longArenaChecks (seed : Nat) : Bool := Id.run do
+  let context : Context := ⟨field,1,.grevlex⟩
+  let raw := (Array.range 4200).map fun i => RawTerm.mk #[2*(i+1)+seed%2] 1
+  let first : Computation (ReducerCache × Polynomial) := do
+    let p ← Polynomial.normalize context {} 0 raw
+    let multiplier ← intern {} #[1]
+    let (product, cache) ← ReducerCache.empty.multiply context {} p multiplier
+    return (cache, product)
+  let (.ok (cache, previous), _) := first.run { table := { arity := 1 } } | return false
+  for native in [true,false] do
+    let limits : Limits := { nativeMonomials := native }
+    let second : Computation Bool := do
+      let p ← Polynomial.normalize context limits 0 raw
+      let multiplier ← intern limits #[1]
+      for i in [:4200] do
+        let position := if i == 4198 then 4199 else if i == 4199 then 4198 else i
+        let _ ← intern limits #[(2*(4200-position)+seed%2+1).toUInt64]
+      let (actual, _) ← cache.multiply context limits p multiplier
+      let expected ← p.multiply context limits multiplier
+      return actual.support != previous.support && actual.support == expected.support &&
+        actual.coefficients == expected.coefficients
+    match second.run { table := { arity := 1 } } with
+    | (.ok true, _) => pure ()
+    | _ => return false
+  return true
+
+#guard longArenaChecks 0
+
 private def capacityChecks (seed : Nat) : Bool := Id.run do
   let context : Context := ⟨field,1,.grevlex⟩
   let action : Computation Bool := do
@@ -207,6 +237,6 @@ def f4Checks (seed : Nat) : Bool := Id.run do
   | _ => return false
 
 /-- Multi-chunk hits, coefficient-only changes, context changes and widening. -/
-def runtimeChecks (seed : Nat) : Bool := cacheChecks seed && longChecks seed && contextChecks seed && arenaChecks seed && capacityChecks seed
+def runtimeChecks (seed : Nat) : Bool := cacheChecks seed && longChecks seed && contextChecks seed && arenaChecks seed && longArenaChecks seed && capacityChecks seed
 
 end Hex.Groebner.ReducerCacheConformance

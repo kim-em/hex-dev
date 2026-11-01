@@ -208,6 +208,6 @@ expanded validation are reported separately.
 
 Current cache hits additionally validate every product exponent against the
 current monomial arena, rejecting incompatible identifier reuse through public
-raw calls. Native calls compare at most4096 coordinate identities; the portable
+raw calls. Native calls compare at most 4096 coordinate identities; the portable
 route checks the same identities. This later validation has its own [measured
 source snapshot](hexgroebner-arena-cache.md); the earlier cache timings above do not include its cost.
