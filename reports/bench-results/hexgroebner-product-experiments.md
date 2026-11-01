@@ -1,8 +1,8 @@
-# F4 product-cache and owned-loop experiments
+# F4 product-cache, owned-loop and reducer-bound experiments
 
-The production engine keeps symbolic reducer caching. The additional S-pair
-row cache, general monomial-product map, stronger pair hash and owned support
-loop below are excluded from production: these experiments do not establish
+The production engine keeps symbolic reducer caching. The standalone explicit S-polynomial
+cache, general monomial-product map, stronger pair hash, owned support loop and
+subtree-priority bounds below are excluded from production: these experiments do not establish
 consistent gains sufficient to justify their cumulative complexity. No language
 or runtime impossibility follows from these results.
 
@@ -108,6 +108,41 @@ these percentages are not rescaled or attributed to an algorithm. This is one
 cost profile, not an AB timing experiment. It supplies no evidence requiring
 language changes before further algorithmic improvements.
 
+## Subtree priority bounds
+
+A separate reducer-trie prototype caches the smallest descendant support size
+and largest leading degree at that size. It skips a subtree only when no leaf
+can improve the current reducer, preserving the original depth-first tie choice.
+Exhaustive small-query comparisons with the unpruned traversal and a linear
+basis-divisor oracle pass. Explicit work cutoffs, implemented library/theory
+builds, all 567 complete certificate outputs and all 175/567/1288 external oracles
+pass. Only three work fields change in 483 fixtures; all other fields agree.
+
+The contrast is fingerprint `9ca810666762` against the frozen multiplied-row
+engine `064a09798b72`, before the subsequent exact arena-validation change.
+All 64 diagnostic processes match full bases and every non-work counter.
+CPU 30 candidate geometric mean/median are 0.9905/0.9915, range 0.9393–1.0262;
+process geometric mean/median are 0.9915/0.9930, range 0.9595–1.0313. No failures,
+timeouts, discarded points or unchanged rerun occur. It uses the same 16-input,
+single-thread adjacent AB/BA contract described above.
+
+The registered fixed experiment has 120 points on CPU 40, with every full hash
+matching. Its case ratios are:
+
+| Case | Geometric mean | Median | Range |
+| --- | ---: | ---: | --- |
+| cyclic4 | 1.0122 | 1.0128 | 0.9743–1.0444 |
+| cyclic5 | 1.0071 | 1.0075 | 1.0024–1.0128 |
+| cyclic6 | 0.9962 | 0.9956 | 0.9887–1.0045 |
+| katsura3 | 1.0098 | 0.9979 | 0.9816–1.1404 |
+| reimer5 | 0.9775 | 0.9779 | 0.9689–0.9839 |
+| cyclic6Small | 0.9996 | 0.9991 | 0.9894–1.0100 |
+
+The mixed fixed results and small diagnostic improvement do not establish enough
+benefit to retain the extra node bounds and invariant. Production keeps the
+unpruned deterministic lookup. The prototype, updated fixtures and every
+completed sample remain in the archives; no additional unchanged rerun is used.
+
 ## Retained evidence
 
 SHA-256 values cover every archive, including negative and inconclusive results:
@@ -128,3 +163,6 @@ SHA-256 values cover every archive, including negative and inconclusive results:
 - [product-batch-production-records-15b6fea84d14.tar.gz](raw/product-batch-production-records-15b6fea84d14.tar.gz): `4043da904a3895f3da0376704d6d54937cf4445fab5e2f30b396adbe919f4838`
 - [product-batch-production-records-15b6fea84d14-repeat.tar.gz](raw/product-batch-production-records-15b6fea84d14-repeat.tar.gz): `bd384b0a5fd07db4ceb615eba21d7ed68105b39c9ca7e5aaf82f7d45d317e655`
 - [hex-groebner-product-batch-production-validation.tar.gz](raw/hex-groebner-product-batch-production-validation.tar.gz): `a5eaef6644881461ae19261617c4575046babb37255424ea0db42222a6931df6`
+- [reducer-pruning-production-bench-9ca810666762.tar.gz](raw/reducer-pruning-production-bench-9ca810666762.tar.gz): `6b185248164a826746432f66660c6ef7856f9e607510ba952be4aa5c88f8e485`
+- [reducer-pruning-production-records-9ca810666762.tar.gz](raw/reducer-pruning-production-records-9ca810666762.tar.gz): `3676d83328aeb9837d03bcf2fd5bb8c74e7ba9909576c85daa6f98962909d27d`
+- [reducer-pruning-validation.tar.gz](raw/reducer-pruning-validation.tar.gz): `9f1971122e533da4db6162503b34602ff56ae78884aa1432cb0be07ee998378c`
