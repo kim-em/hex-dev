@@ -131,3 +131,16 @@ baseline, point the archived Lake driver at that checkout, and build
 - [arena-production-bench-65d5517c4d57.tar.gz](raw/arena-production-bench-65d5517c4d57.tar.gz): `fe2d6a7e1d59346b2b8c7e27e260ad78808f69501bda07096ca401d6e246a25c`
 - [arena-production-records-65d5517c4d57.tar.gz](raw/arena-production-records-65d5517c4d57.tar.gz): `b71bf69c6f7893ba50b1b4f0f7c0e120ec82fda7de9fcb7132214f87e4e9e874`
 - [arena-cache-validation.tar.gz](raw/arena-cache-validation.tar.gz): `f6d160b6fa4d1040f2ebb86a1c1caff49300a65ad7f17f16184973e296ca4535`
+
+The supplemental tests require rejecting a valid in-range mismatch after a
+nonzero slice start and rejecting a cached row whose only wrong product IDs
+are terms 4198/4199 in the second chunk. The base and multiplier meanings stay
+unchanged. Both native and portable paths pass. The full 14203-job build and
+independent oracles still pass; all four Clang/GCC ordinary/sanitized variants
+now execute 4092 byte comparisons and 216 product validations. Production
+functions are unchanged from the measured snapshot: the reducer-cache comment
+now explicitly requires arenas produced by the interning API, and the remaining
+changes are tests, C selftests and documentation. The retained timings therefore
+continue to describe exactly those computational functions.
+
+- [late-product-validation.tar.gz](raw/late-product-validation.tar.gz): `a54032686afc74346b8aa581875f1d4e4003123604e042ea2c727dac9ce40106`
