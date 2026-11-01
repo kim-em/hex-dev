@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntFactor
+module
+
+public import HexIntFactor
+
+public section
 
 /-!
 Kernel-replay probes for `hex-int-factor` checkers and factor-list consumers.
@@ -19,38 +23,38 @@ namespace HexBench.IntFactorKernel
 
 open Hex.Nat
 
-private def raw360 : Factorization :=
+def raw360 : Factorization :=
   ⟨360, [⟨3, .small 2⟩, ⟨2, .small 3⟩, ⟨1, .small 5⟩]⟩
 
-private def corruptProduct : Factorization :=
+def corruptProduct : Factorization :=
   ⟨361, [⟨3, .small 2⟩, ⟨2, .small 3⟩, ⟨1, .small 5⟩]⟩
 
-private def checked360 : CheckedFactorization 360 :=
+def checked360 : CheckedFactorization 360 :=
   ⟨raw360, rfl, by decide +kernel⟩
 
 private def raw30 : Factorization :=
   ⟨30, [⟨1, .small 2⟩, ⟨1, .small 3⟩, ⟨1, .small 5⟩]⟩
 
-private def checked30 : CheckedFactorization 30 :=
+def checked30 : CheckedFactorization 30 :=
   ⟨raw30, rfl, by decide +kernel⟩
 
-private def checkedPow64 : CheckedFactorization (2 ^ 64) :=
+def checkedPow64 : CheckedFactorization (2 ^ 64) :=
   ⟨⟨2 ^ 64, [⟨64, .small 2⟩]⟩, rfl, by decide +kernel⟩
 
-private def checkedHugeTau :
+def checkedHugeTau :
     CheckedFactorization ((2 * 3 * 5 * 7 * 11 * 13) ^ 100) :=
   ⟨⟨(2 * 3 * 5 * 7 * 11 * 13) ^ 100,
     [⟨100, .small 2⟩, ⟨100, .small 3⟩, ⟨100, .small 5⟩,
       ⟨100, .small 7⟩, ⟨100, .small 11⟩, ⟨100, .small 13⟩]⟩,
     rfl, by decide +kernel⟩
 
-private def rawPock7 : Factorization :=
+def rawPock7 : Factorization :=
   ⟨7, [⟨1, .pock 7 [(2, 0, .small 3)]⟩]⟩
 
-private def orderTwoModSeven : OrderCert :=
+def orderTwoModSeven : OrderCert :=
   ⟨2, 7, 3, ⟨3, [⟨1, .small 3⟩]⟩⟩
 
-private def corruptOrder : OrderCert :=
+def corruptOrder : OrderCert :=
   ⟨2, 7, 2, ⟨2, [⟨1, .small 2⟩]⟩⟩
 
 /- The final entry is a 61-bit prime, so this 1-through-10 ladder exercises
@@ -68,7 +72,7 @@ private def replayCerts : List PrimeCert :=
 private def replayFactors (count : Nat) : List PrimePower :=
   (replayCerts.take count).map fun cert => ⟨1, cert⟩
 
-private def replayCase (count : Nat) : Factorization :=
+def replayCase (count : Nat) : Factorization :=
   let factors := replayFactors count
   ⟨(factors.map (·.prime)).prod, factors⟩
 

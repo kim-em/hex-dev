@@ -4,15 +4,19 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPoly.Euclid.DivGcd
-import HexPoly.Instances
-import HexPoly.Lcm
-import Init.Data.Rat.Lemmas
+module
+
+public import HexPoly.Euclid.DivGcd
+public import HexPoly.Instances
+public import HexPoly.Lcm
+public import Init.Data.Rat.Lemmas
+
+public section
 
 namespace Prototype
 
 /-- Only zero is canonical; other representations can have equal denotations. -/
-def ZeroRep (A : Type) (isZero : A → Bool) := Option {a : A // isZero a = false}
+@[expose] def ZeroRep (A : Type) (isZero : A → Bool) := Option {a : A // isZero a = false}
 
 namespace ZeroRep
 variable {A : Type} {isZero : A → Bool}

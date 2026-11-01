@@ -4,12 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.SelectedRoot.Controls
-import HexRCF.SelectedRoot.RowCollect
-import HexRealClosureTheory.KernelReplay
-import Lean.Elab.Command
+module
 
-meta section
+public import HexRCF.SelectedRoot.Controls
+public import HexRCF.SelectedRoot.RowCollect
+public import HexRealClosureTheory.KernelReplay
+public import Lean.Elab.Command
+
+public meta section
 namespace Hex.RCF.SelectedRootTests.Refusals
 open Hex.RCF.SelectedRootTests
 open Lean Meta Elab Command Hex.RealClosure.Algebraic

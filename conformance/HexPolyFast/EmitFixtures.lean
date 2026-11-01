@@ -4,15 +4,19 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Hex.Conformance.Emit
-import HexPolyFast
-import HexModArith.Ntt.Butterfly
-import HexModArith.Ntt.Catalogue
-import HexModArith.Ntt.Convolution
-import HexModArith.Ntt.CrtInput
-import HexPolyFp.NttMul
-import HexPolyZ.KroneckerMulti
-import HexPolyZ.NttMul
+module
+
+public import Hex.Conformance.Emit
+public import HexPolyFast
+public import HexModArith.Ntt.Butterfly
+public import HexModArith.Ntt.Catalogue
+public import HexModArith.Ntt.Convolution
+public import HexModArith.Ntt.CrtInput
+public import HexPolyFp.NttMul
+public import HexPolyZ.KroneckerMulti
+public import HexPolyZ.NttMul
+
+public section
 
 /-!
 JSONL fixtures for the generic hex-poly-fast surface.
@@ -369,7 +373,7 @@ private def emitButterflyBoundaries : IO Unit := do
     (by decide) (by decide)
 
 private def emitCrtSelectionBoundaries : IO Unit := do
-  let first := ZMod64.nttPrimes[0]'(by decide)
+  let first := ZMod64.nttPrimes[0]'(by simp)
   let below := (first.modulus - 1) / 2
   let above := (first.modulus + 1) / 2
   for (id, bound) in [("below", below), ("above", above)] do
@@ -427,7 +431,7 @@ private def emitNtt : IO Unit := do
       | none => "null"
       | some p => polyValue p.toArray.toList)
 
-  let prime := ZMod64.nttPrimes[6]'(by decide)
+  let prime := ZMod64.nttPrimes[6]'(by simp)
   let maxLength := ZMod64.NttPrime.maxLength prime
   -- The owner conformance module proves support at `maxLength` without
   -- allocating its enormous twiddle table.  These executable cases call the

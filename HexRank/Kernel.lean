@@ -343,7 +343,7 @@ implies a passing `checkRankList`; see the companion's
 variable {n m : Nat}
 
 /-- The rows of a matrix as lists. -/
-def toLists (A : Matrix Int n m) : List (List Int) := A.rows.toList.map (·.toList)
+@[expose] def toLists (A : Matrix Int n m) : List (List Int) := A.rows.toList.map (·.toList)
 
 /-- The moduli tried in order, Mersenne primes.  Primality is irrelevant
 to soundness; it makes the leading pivot-block determinants likely to be

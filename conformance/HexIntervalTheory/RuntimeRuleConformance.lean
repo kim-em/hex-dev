@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalTheory.RuntimeRule
-import HexIntervalTheory.RuntimeTerminal
+module
+
+public import HexIntervalTheory.RuntimeRule
+public import HexIntervalTheory.RuntimeTerminal
+
+public section
 
 /-!
 # Executable arithmetic-rule conformance

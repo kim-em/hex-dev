@@ -3,11 +3,15 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.RealCoefficients.RootQuote
-import HexRCF.RealCoefficients.Replay
-import HexRCF.CellReplay.Algebraic.Inputs
-import HexRCF.CellReplay.Algebraic.Records
-import HexRCF.RealCoefficients.RationalQuote
+module
+
+public import HexRCF.RealCoefficients.RootQuote
+public import HexRCF.RealCoefficients.Replay
+public import HexRCF.CellReplay.Algebraic.Inputs
+public import HexRCF.CellReplay.Algebraic.Records
+public import HexRCF.RealCoefficients.RationalQuote
+
+public section
 open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
 namespace Hex.RCF.RootTableQuoteTests
 set_option maxHeartbeats 12000000

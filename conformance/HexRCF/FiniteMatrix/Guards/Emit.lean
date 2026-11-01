@@ -3,9 +3,13 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.FiniteMatrix.Guards.Ordinary
-import HexRCF.FiniteMatrix.Guards.Refusals
-import HexSignDet.Codec.Bytes
+module
+
+public import HexRCF.FiniteMatrix.Guards.Ordinary
+public import HexRCF.FiniteMatrix.Guards.Refusals
+public import HexSignDet.Codec.Bytes
+
+public section
 open Hex Hex.SignDet Hex.RealClosure.Algebraic Hex.RealClosure.Algebraic.KernelReplay
 open Hex.RCF.RealCoefficients.FiniteMatrixTests
 open Lean Meta Elab Command

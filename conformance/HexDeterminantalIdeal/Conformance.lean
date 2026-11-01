@@ -4,7 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexDeterminantalIdealFixtures
+module
+
+public import HexDeterminantalIdealFixtures
+public meta import HexDeterminantalIdeal.Minors
+public meta import HexDeterminantalIdeal.MvPoly
+public meta import HexDeterminantalIdealFixtures
+public meta import HexMatrix.Basic
+public meta import HexMvPoly.Basic
+public meta import HexMvPoly.Ring
+
+public section
 
 /-!
 Core executable conformance checks for `hex-determinantal-ideal`.

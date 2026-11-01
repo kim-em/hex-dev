@@ -4,12 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexDeterminant
-import HexPoly.Instances
-import HexModArith
-import HexMvPoly.Ring
-import HexRationalFn.Field
-import Lean.Data.Json
+module
+
+public import HexDeterminant
+public import HexPoly.Instances
+public import HexModArith
+public import HexMvPoly.Ring
+public import HexRationalFn.Field
+public import Lean.Data.Json
+
+public section
 
 /-! Integration fixtures and canonical wire encodings for symbolic determinants.
 This module belongs to the conformance target, not the published library. -/

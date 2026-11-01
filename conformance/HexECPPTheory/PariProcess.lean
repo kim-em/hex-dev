@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexECPPTheory.Pari
+module
+
+public import HexECPPTheory.Pari
+
+public section
 
 open Hex.ECPP.Pari
 

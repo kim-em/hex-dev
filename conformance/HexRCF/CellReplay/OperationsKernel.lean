@@ -3,8 +3,12 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.RealCoefficients
-import HexRCF.CellReplay.Operations
+module
+
+public import HexRCF.RealCoefficients
+public import HexRCF.CellReplay.Operations
+
+public section
 namespace Hex.RCF.RealCoefficients.CellReplayTests.OperationsKernel
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet
 open Hex.RCF.RealCoefficients.CellReplayTests.Algebraic.Schema

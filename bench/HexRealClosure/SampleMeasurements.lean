@@ -4,16 +4,20 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRealClosure.Sample
-import HexRealClosure.TowerEnlargement
-import LeanBench
-import Lean.Data.Json
+module
+
+public import HexRealClosure.Sample
+public import HexRealClosure.TowerEnlargement
+public import LeanBench
+public import Lean.Data.Json
+
+public section
 
 namespace Hex.RealClosure.SampleMeasurements
 open Hex.SignDet Tower
 
-private def registry : BaseContext.Registry := fun _ => none
-private def base : Context registry := Context.base (BaseContext.rational registry)
+def registry : BaseContext.Registry := fun _ => none
+@[expose] def base : Context registry := Context.base (BaseContext.rational registry)
 
 /-- Identical original boundaries and polynomials for all three methods. -/
 structure Input where

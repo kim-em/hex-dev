@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.RealCoefficients.Realization
+module
+
+public import HexRCF.RealCoefficients.Realization
+
+public section
 
 
 /-! Literal recursive BKR data for the root of `X − (1 + ε)` and the entire
@@ -16,14 +20,14 @@ open scoped Hex
 attribute [local instance 2500] Field.toGrindField
 namespace Hex.RCF.RealizationTests
 abbrev E := RationalFn Rat
-def sign : E → Int := OrderedFn.Infinitesimal.sign OrderedFn.orderSign
-def epsilon : E := RationalFn.X
+@[expose] def sign : E → Int := OrderedFn.Infinitesimal.sign OrderedFn.orderSign
+@[expose] def epsilon : E := RationalFn.X
 def x : DensePoly E := DensePoly.ofList [0, 1]
-def p : DensePoly E := x - DensePoly.C (1 + epsilon)
-def first : DensePoly E := x - 1
-def second : DensePoly E := x - 2
-def values : Fin 1 → Rat := fun _ => 1
-def formula : QF 2 := .and (.atom ⟨MvPoly.X 1 - MvPoly.X 0, .gt⟩)
+@[expose] def p : DensePoly E := x - DensePoly.C (1 + epsilon)
+@[expose] def first : DensePoly E := x - 1
+@[expose] def second : DensePoly E := x - 2
+@[expose] def values : Fin 1 → Rat := fun _ => 1
+@[expose] def formula : QF 2 := .and (.atom ⟨MvPoly.X 1 - MvPoly.X 0, .gt⟩)
   (.atom ⟨MvPoly.X 1 - 2, .le⟩)
 def chain (c : E) (quotient : DensePoly E) : SignedRemainderChain E where
   chain := #[p, DensePoly.C c]
@@ -31,7 +35,7 @@ def chain (c : E) (quotient : DensePoly E) : SignedRemainderChain E where
   initial := ⟨1, quotient, 1⟩
   steps := #[]
   terminal := some (c * c, DensePoly.C c * p)
-def count : TarskiCertificate E E Nat where
+@[expose] def count : TarskiCertificate E E Nat where
   context := 7
   head := p
   queryPoly := 1
@@ -56,7 +60,7 @@ def moment (query : DensePoly E) (c : E) (quotient : DensePoly E) (s : Int) :
     value := s }
 def inverse3 : Matrix Int 3 3 :=
   Matrix.ofRows #v[#v[0, -1, 1], #v[2, 0, -2], #v[0, 1, 1]]
-def child (q : DensePoly E) (c : E) (quotient : DensePoly E) (s : Int) : Node E Nat where
+@[expose] def child (q : DensePoly E) (c : E) (quotient : DensePoly E) (s : Int) : Node E Nat where
   context := 7
   head := p
   lower := .finite 1
@@ -83,7 +87,7 @@ def child (q : DensePoly E) (c : E) (quotient : DensePoly E) (s : Int) : Node E 
         exact ⟨(0 : Fin 3), by norm_num⟩⟩]
     denom := 1
     adj := Matrix.identity 1}
-def node : Node E Nat where
+@[expose] def node : Node E Nat where
   context := 7
   head := p
   lower := .finite 1
@@ -104,7 +108,7 @@ def node : Node E Nat where
     cols := #v[⟨0, by decide +kernel⟩]
     denom := 1
     adj := Matrix.identity 1}
-def replay : Replay E Nat :=
+@[expose] def replay : Replay E Nat :=
   .split node (.leaf (child first epsilon 1 1))
     (.leaf (child second (epsilon - 1) 1 (-1)))
 

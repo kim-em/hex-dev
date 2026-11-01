@@ -4,13 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexECPP.Search
-import HexECPP.Fixture65
-import HexECPP.Fixture256
-import HexECPP.Fixture512
-import HexECPP.ImportConformance
-import HexECPP.PariFixtures
-import LeanBench
+module
+
+public import HexECPP.Search
+public import HexECPP.Fixture65
+public import HexECPP.Fixture256
+public import HexECPP.Fixture512
+public import HexECPP.ImportConformance
+public import HexECPP.PariFixtures
+public import LeanBench
+
+public section
 
 /-!
 Mathlib-free compiled ECPP measurements. Conversion, checking, and raw

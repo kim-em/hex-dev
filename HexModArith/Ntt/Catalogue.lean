@@ -148,6 +148,10 @@ namespace NttPrime
 def maxLength (prime : NttPrime) : Nat :=
   2 ^ prime.maxLog
 
+/-- The maximum transform length is the power of two named by `maxLog`. -/
+theorem maxLength_eq (prime : NttPrime) : prime.maxLength = 2 ^ prime.maxLog := by
+  simp only [maxLength]
+
 /-- Derive the root requested for a smaller transform length. The checked
 builder below rejects lengths that do not divide the maximum. -/
 def rootFor (prime : NttPrime) (n : Nat) : @ZMod64 prime.modulus prime.bounds :=
@@ -500,6 +504,15 @@ def nttPrimes : List NttPrime :=
   , prime1224736769
   , prime2013265921
   ]
+
+/-- The catalogue holds seven primes. -/
+@[simp] theorem nttPrimes_length : nttPrimes.length = 7 := by
+  decide
+
+/-- The catalogue's maximum transform exponents, in catalogue order. -/
+theorem nttPrimes_map_maxLog :
+    nttPrimes.map NttPrime.maxLog = [25, 26, 24, 23, 21, 24, 27] := by
+  decide
 
 end ZMod64
 

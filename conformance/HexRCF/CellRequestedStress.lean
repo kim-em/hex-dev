@@ -3,7 +3,11 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.CellRequestedConformance
+module
+
+public import HexRCF.CellRequestedConformance
+
+public section
 namespace Hex.RCF.RealCoefficients.CellRequestedStress
 open Hex Hex.RealFormula CellRequestedConformance
 /- Four distinct boundaries exercise the full union of domain and equation roots.

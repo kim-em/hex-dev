@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalTheory.RuntimeRuleEmit
-import HexIntervalTheory.RuntimeRuleConformance
-import HexIntervalTheory.RuntimeProofConformance
+module
+
+public import HexIntervalTheory.RuntimeRuleEmit
+public import HexIntervalTheory.RuntimeRuleConformance
+public import HexIntervalTheory.RuntimeProofConformance
+
+public section
 
 /-!
 # Typed runtime expression-emission conformance

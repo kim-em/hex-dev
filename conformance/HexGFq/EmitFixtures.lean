@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Hex.Conformance.Emit
-import HexGFq.CrossCheck
-import HexGFq.Basic
+module
+
+public import Hex.Conformance.Emit
+public import HexGFq.CrossCheck
+public import HexGFq.Basic
+
+public section
 
 /-!
 JSONL emit driver for the `hex-gfq` packed/generic correspondence oracle.

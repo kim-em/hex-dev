@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexInterval.Experiment.DyadicRules
-import HexInterval.Experiment.PolicySession
-import HexInterval.PayloadSessionConformance
+module
+
+public import HexInterval.Experiment.DyadicRules
+public import HexInterval.Experiment.PolicySession
+public import HexInterval.PayloadSessionConformance
+
+public section
 
 /-!
 End-to-end conformance for the proof-producing policy session.  A scripted

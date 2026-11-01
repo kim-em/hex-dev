@@ -4,13 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRationalFn
-import LeanBench
-import HexRationalFn.Scaling
-import HexRationalFn.Families
-import HexRationalFn.Workloads
-import HexRationalFn.Fixtures
-import HexRationalFn.Nested
+module
+
+public import HexRationalFn
+public import LeanBench
+public import HexRationalFn.Scaling
+public import HexRationalFn.Families
+public import HexRationalFn.Workloads
+public import HexRationalFn.Fixtures
+public import HexRationalFn.Nested
+
+public section
 
 /-!
 Fixed-workload latency measurements, not fitted asymptotic claims: rational

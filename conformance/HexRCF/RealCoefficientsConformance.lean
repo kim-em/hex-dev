@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.RealCoefficients
-import HexSturm.Basic
-import HexRealAlgebraicTheory.Complex
-import Lean.Elab.Command
+module
+
+public import HexRCF.RealCoefficients
+public import HexSturm.Basic
+public import HexRealAlgebraicTheory.Complex
+public import Lean.Elab.Command
+
+public section
 
 /-! Exact source-schema equivalences and original divisor retention. -/
 
@@ -16,11 +20,11 @@ open Hex.RCF.RealCoefficients
 
 namespace Hex.RCF.RealCoefficientsConformance
 
-private def cubic : Hex.RealAlgebraicNumber :=
+def cubic : Hex.RealAlgebraicNumber :=
   (Hex.RealAlgebraicNumber.ofAlgebraic?
     (Hex.ZPoly.rootNear #p[-1, -1, 0, 1] 1.3)).getD 0
 
-private def fieldCoefficient : Hex.RealAlgebraicNumber :=
+def fieldCoefficient : Hex.RealAlgebraicNumber :=
   Coefficients.ofField cubic (cubic.toAlgebraic.toQAdjoin ^ 2 - 1)
 
 private abbrev plasticPolynomial : Hex.ZPoly :=
@@ -435,9 +439,9 @@ run_meta do
 #print axioms Coefficients.ofField_toReal
 
 private def xPoly : Hex.DensePoly Rat := Hex.DensePoly.ofCoeffs #[0, 1]
-private def xSquare : Hex.DensePoly Rat := xPoly * xPoly
+def xSquare : Hex.DensePoly Rat := xPoly * xPoly
 
-private def radical : RadicalCert Rat Nat :=
+def radical : RadicalCert Rat Nat :=
   { context := 7, core := xPoly, quotient := xPoly,
     cofactor := 1, exponent := 0 }
 

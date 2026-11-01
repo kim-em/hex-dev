@@ -3,8 +3,12 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.RealCoefficients.RealModel
-import HexRCF.SelectedRoot.Data
+module
+
+public import HexRCF.RealCoefficients.RealModel
+public import HexRCF.SelectedRoot.Data
+
+public section
 open Hex Lean Meta Qq Hex.RCF.RealCoefficients
 namespace Hex.RCF.RealModelConformance
 private meta def rejected (expected : String) (action : MetaM Expr) : MetaM Bool :=

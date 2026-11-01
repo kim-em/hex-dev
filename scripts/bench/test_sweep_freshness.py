@@ -26,6 +26,31 @@ FAMILY = freshness.Family(
 )
 
 
+class ModuleHeaderConversion(unittest.TestCase):
+    HEADER = "/-\nCopyright (c) 2026 Lean FRO, LLC. All rights reserved.\n-/\n\n"
+    BODY = "\n/-! Doc. -/\n\ndef f : Nat := 1\n"
+
+    def test_imports_round_trip(self) -> None:
+        legacy = self.HEADER + "import A\nimport B.C -- why\n" + self.BODY
+        module = (self.HEADER + "module\n\npublic import A\npublic import B.C -- why\n"
+                  "\npublic section\n" + self.BODY)
+        self.assertEqual(freshness.legacy_from_module_header(module), legacy)
+
+    def test_no_imports_round_trip(self) -> None:
+        legacy = self.HEADER + "/-! Doc. -/\n"
+        module = self.HEADER + "module\n\npublic section\n\n/-! Doc. -/\n"
+        self.assertEqual(freshness.legacy_from_module_header(module), legacy)
+
+    def test_other_edits_do_not_qualify(self) -> None:
+        for header in ("public meta import A\n", "import all A\n", "import A\n"):
+            module = self.HEADER + "module\n\n" + header + "\npublic section\n" + self.BODY
+            self.assertIsNone(freshness.legacy_from_module_header(module), header)
+        self.assertIsNone(freshness.legacy_from_module_header(self.HEADER + "import A\n" + self.BODY))
+        legacy = self.HEADER + "import A\n" + self.BODY
+        edited = self.HEADER + "module\n\npublic import A\n\npublic section\n" + self.BODY + "#eval f\n"
+        self.assertNotEqual(freshness.legacy_from_module_header(edited), legacy)
+
+
 class EntryMatching(unittest.TestCase):
     def test_directory_prefix_matches_below_it(self):
         self.assertTrue(FAMILY.matches("Lib/Deep/Nested.lean"))

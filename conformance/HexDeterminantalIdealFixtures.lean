@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexDeterminantalIdeal
+module
+
+public import HexDeterminantalIdeal
+
+public section
 
 /-!
 Single source of committed inputs shared by HexDeterminantalIdeal's Lean

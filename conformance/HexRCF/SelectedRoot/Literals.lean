@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexSignDet.Codec.Json
+module
+
+public import HexSignDet.Codec.Json
+
+public section
 
 /-! Shared constructor literals generated from
 `conformance-fixtures/HexRCF/selected-root.json` by
@@ -281,5 +285,5 @@ def j260 : Codec.Json := .array (.cons (j257) (.cons (j259) .nil))
 def j261 : Codec.Json := .array (.cons (j110) (.cons (j171) (.cons (j235) (.cons (j248) (.cons (j260) .nil)))))
 def j262 : Codec.Json := .array (.cons (.number (1)) (.cons (.number (4)) (.cons (j261) .nil)))
 def j263 : Codec.Json := .array (.cons (.number (1)) (.cons (j55) (.cons (j81) (.cons (j82) (.cons (j262) .nil)))))
-def rowPacket : Codec.Json := j263
+@[expose] def rowPacket : Codec.Json := j263
 end Hex.RCF.SelectedRootTests.Literals

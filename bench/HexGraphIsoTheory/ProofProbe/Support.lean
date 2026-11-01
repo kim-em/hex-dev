@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGraphIsoTheory
+module
+
+public import HexGraphIsoTheory
+
+@[expose] public section
 
 /-! Recorded positive and negative random `n = 12` pairs as `SimpleGraph`s
 for the Mathlib-route `graph_iso` CI examples. Cross-type goals remain covered

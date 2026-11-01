@@ -4,7 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexECPPTheory.Tests.Frozen512
+module
+
+public import HexECPPTheory.Tests.Frozen512
+public meta import HexECPPTheory.Tests.Frozen512
+
+public section
 
 /-! Fresh-module proof phases for the frozen native 512-bit endpoint. -/
 

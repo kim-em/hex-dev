@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Hex.Conformance.Emit
-import HexGFqRing.Operations
+module
+
+public import Hex.Conformance.Emit
+public import HexGFqRing.Operations
+
+public section
 
 /-!
 JSONL emit driver for the `hex-gfq-ring` oracle.

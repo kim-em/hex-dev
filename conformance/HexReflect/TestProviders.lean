@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexReflect
+module
+
+public import HexReflect
+
+public section
 
 /-!
 Test provider registrations for the `HexReflect` conformance modules. Each
@@ -23,15 +27,15 @@ namespace Hex.ReflectConformance
 
 open Lean Meta Hex.Reflect
 
-private def finExpr (n : Nat) : Lean.Expr := mkApp (mkConst ``Fin) (mkNatLit n)
+private meta def finExpr (n : Nat) : Lean.Expr := mkApp (mkConst ``Fin) (mkNatLit n)
 
-private def onCarrier (ring : CarrierRequest) (carrier : Lean.Expr)
+private meta def onCarrier (ring : CarrierRequest) (carrier : Lean.Expr)
     (k : Lean.Meta.Sym.SymM (ProviderOutcome Evidence)) :
     Lean.Meta.Sym.SymM (ProviderOutcome Evidence) := do
   if ring.type == carrier then k else return .notApplicable
 
 /-- A provider whose evidence does not prove the coefficient laws. -/
-def bogusCoefficients : Registration where
+meta def bogusCoefficients : Registration where
   id := { name := `Hex.ReflectConformance.bogusCoefficients }
   capability := .commRingNormalize
   priority := 10
@@ -42,7 +46,7 @@ def bogusCoefficients : Registration where
       laws := mkConst ``True.intro }) Budget.zero
 
 /-- A second provider of the same priority for `Fin 13`. -/
-def rivalCoefficients : Registration where
+meta def rivalCoefficients : Registration where
   id := { name := `Hex.ReflectConformance.rivalCoefficients }
   capability := .commRingNormalize
   priority := 10
@@ -52,7 +56,7 @@ def rivalCoefficients : Registration where
       id := { name := `Hex.ReflectConformance.rivalCoefficients } }) Budget.zero
 
 /-- A third provider of the same priority for `Fin 13`. -/
-def otherCoefficients : Registration where
+meta def otherCoefficients : Registration where
   id := { name := `Hex.ReflectConformance.otherCoefficients }
   capability := .commRingNormalize
   priority := 10
@@ -63,7 +67,7 @@ def otherCoefficients : Registration where
 
 /-- A provider whose `LawfulBEq` evidence is not an instance, although its
 laws are correct. -/
-def malformedInstanceCoefficients : Registration where
+meta def malformedInstanceCoefficients : Registration where
   id := { name := `Hex.ReflectConformance.malformedInstanceCoefficients }
   capability := .commRingNormalize
   priority := 10
@@ -74,7 +78,7 @@ def malformedInstanceCoefficients : Registration where
       lawfulBEqInst := mkConst ``True.intro }) Budget.zero
 
 /-- A provider that recognizes `Fin 23` and declines it. -/
-def decliningCoefficients : Registration where
+meta def decliningCoefficients : Registration where
   id := { name := `Hex.ReflectConformance.decliningCoefficients }
   capability := .commRingNormalize
   priority := 10
@@ -89,7 +93,7 @@ theorem ratCoeffLaws : CoeffLaws (C := Rat) (α := Rat) Int.cast id where
   interp_add _ _ := rfl
 
 /-- The rational coefficient provider for the carrier `Rat`. -/
-def ratCoefficients : Registration where
+meta def ratCoefficients : Registration where
   id := { name := `Hex.ReflectConformance.ratCoefficients }
   capability := .commRingNormalize
   priority := 10

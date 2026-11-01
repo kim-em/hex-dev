@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Hex.Conformance.Emit
-import HexMvGcd
+module
+
+public import Hex.Conformance.Emit
+public import HexMvGcd
+
+public section
 
 /-!
 Deterministic JSONL fixtures for the `HexMvGcd` SymPy oracle.

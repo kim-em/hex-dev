@@ -4,6 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPrimalityTheory.ProofProbe.Support
+module
+
+public import HexPrimalityTheory.ProofProbe.Support
+
+public section
 
 /-! Import-only baseline for the bridge-owned Phase-4 proof probes. -/

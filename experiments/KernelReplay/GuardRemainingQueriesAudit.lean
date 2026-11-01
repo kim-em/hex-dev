@@ -3,8 +3,12 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import KernelReplay.GuardRemainingQueriesPublic
-import KernelReplay.GuardRemainingRootQueriesAudit
+module
+
+public import KernelReplay.GuardRemainingQueriesPublic
+public import KernelReplay.GuardRemainingRootQueriesAudit
+
+public section
 
 namespace Hex.RealClosure.Algebraic.KernelReplay.GuardRemainingQueriesAudit
 open Lean Meta Elab FiniteData GuardDescriptorInputs

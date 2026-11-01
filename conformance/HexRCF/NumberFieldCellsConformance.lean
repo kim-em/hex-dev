@@ -3,9 +3,13 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.RealCoefficients.NumberFieldCells
-import HexRCF.ProofEvidence
-import HexRCF.Tactic
+module
+
+public import HexRCF.RealCoefficients.NumberFieldCells
+public import HexRCF.ProofEvidence
+public import HexRCF.Tactic
+
+public section
 open Hex Hex.RealClosure Hex.RCF.RealCoefficients
 namespace Hex.RCF.NumberFieldCellsConformance
 private def registry : BaseContext.Registry := fun _ => none

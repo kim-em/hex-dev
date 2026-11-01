@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexECPPTheory.Compact
+module
+
+public import HexECPPTheory.Compact
+
+public section
 
 /-! Kernel replay of complete outputs from the frozen validation corpus. -/
 

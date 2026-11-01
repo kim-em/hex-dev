@@ -4,9 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.RealFormula
-import HexRealFormulaTheory.Reify
-import Lean.Elab.Tactic
+module
+
+public import HexRCF.RealFormula
+public import HexRealFormulaTheory.Reify
+public import Lean.Elab.Tactic
+public meta import HexRCF.RealFormula
+public meta import HexRCF.Syntax
+
+public section
 
 /-!
 Oracle: none. Mode: always.

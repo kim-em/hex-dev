@@ -3,10 +3,14 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.NestedTransport.Context
-import HexRCF.SelectedRoot.KernelCheck
-import HexRCF.NestedTransport.Predecessor
-import HexRealClosure.FactOperations
+module
+
+public import HexRCF.NestedTransport.Context
+public import HexRCF.SelectedRoot.KernelCheck
+public import HexRCF.NestedTransport.Predecessor
+public import HexRealClosure.FactOperations
+
+public section
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet
 open Hex.RCF.SelectedRootTests
 namespace Hex.RCF.RealCoefficients.NestedTransportTests.Operations

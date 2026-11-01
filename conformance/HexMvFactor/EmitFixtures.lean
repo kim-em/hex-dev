@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Hex.Conformance.Emit
-import HexMvFactor
+module
+
+public import Hex.Conformance.Emit
+public import HexMvFactor
+
+public section
 
 /-!
 Deterministic public-answer and point-route fixtures for `HexMvFactor`.

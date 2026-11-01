@@ -27,7 +27,7 @@ def entry (value : ValueCodec E) (context : ValueCodec Ctx) (e : Dag.Entry E Ctx
 /-- Version 1 is `[1, root, entries]`. Coefficient/context codecs use JSON
 values with integer numeric tokens. Every record has an exact positional
 field count, so extra fields cannot be silently ignored. -/
-def graph (value : ValueCodec E) (context : ValueCodec Ctx) (d : Dag E Ctx) : Json :=
+@[expose] def graph (value : ValueCodec E) (context : ValueCodec Ctx) (d : Dag E Ctx) : Json :=
   .arr #[Json.of (1 : Nat), Json.of d.root, array (entry value context) d.entries]
 
 /-- The literal entry fields, available without unfolding the encoder. This

@@ -4,11 +4,15 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexSturm
-import HexSturm.Frontend
-import Hex.BenchOracle.Flint
-import LeanBench
-import Lean.Data.Json
+module
+
+public import HexSturm
+public import HexSturm.Frontend
+public import Hex.BenchOracle.Flint
+public import LeanBench
+public import Lean.Data.Json
+
+public section
 
 /-!
 Shared query stage measurements and rational/integer comparison.

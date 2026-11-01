@@ -3,8 +3,12 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.RealCoefficients.NativeSelection
-import HexRCF.NativeSourcesConformance
+module
+
+public import HexRCF.RealCoefficients.NativeSelection
+public import HexRCF.NativeSourcesConformance
+
+public section
 /-! Oracle: the existing frozen positive sqrt2 descriptor and independent
 selected-value facts; mode: always. Exercises exact ordered constraints,
 wrong-conjugate native rows, finite-reader composition, polynomial relations

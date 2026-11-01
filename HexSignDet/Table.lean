@@ -144,7 +144,7 @@ variable [One E] [Add E] [Sub E] [Mul E] [NatCast E] [DecidableEq Ctx]
 
 /-- Extract a sparse table only after the full recursive replay has passed.
 The companion must still supply the root interpretation of its query values. -/
-def Replay.table {sign : E → Int} {context : Ctx} {p : DensePoly E} {a b : Endpoint E}
+@[expose] def Replay.table {sign : E → Int} {context : Ctx} {p : DensePoly E} {a b : Endpoint E}
     {qs : List (DensePoly E)} (t : Replay E Ctx)
     (h : t.check sign context p a b qs = true) : SignTable qs.length :=
   SignTable.ofSystem t.node.system (Node.check_bindings (Replay.check_node h)).2

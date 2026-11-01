@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGF2.Bench
-import HexPolyFp
+module
+
+public import HexGF2.Bench
+public import HexPolyFp
+
+public section
 
 /-!
 Executable-root additions for `hexgf2_bench`.
@@ -39,7 +43,7 @@ instance {p : Nat} [ZMod64.Bounds p] : Hashable (ZMod64 p) where
 instance [Hashable R] [Zero R] [DecidableEq R] : Hashable (DensePoly R) where
   hash p := hash p.toArray
 
-private abbrev F2Poly := FpPoly 2
+abbrev F2Poly := FpPoly 2
 
 /-- Prepared shared-domain packed/generic comparison input. -/
 structure CompareInput where

@@ -3,9 +3,13 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.FiniteMatrix.Guards.Schema
-import HexRCF.FiniteMatrix.Guards.Meaning
-import HexRCF.FiniteMatrix.Semantics
+module
+
+public import HexRCF.FiniteMatrix.Guards.Schema
+public import HexRCF.FiniteMatrix.Guards.Meaning
+public import HexRCF.FiniteMatrix.Semantics
+
+public section
 open Hex Hex.RealClosure Hex.RealClosure.Algebraic Hex.RealClosure.Algebraic.KernelReplay
 open HexPolyTheory.Interpret
 namespace Hex.RCF.RealCoefficients.FiniteMatrixTests.Guards.Binding

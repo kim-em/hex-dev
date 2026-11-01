@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import VersoManual
-import HexManual
-import HexManual.Theme
+module
+
+public import VersoManual
+public import HexManual
+public import HexManual.Theme
+
+public section
 
 open Verso.Genre Manual
 

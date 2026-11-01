@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Hex.Conformance.Emit
-import Hex.BenchOracle.Flint
-import Hex.BenchOracle.Pari
-import Hex.BenchOracle.Nauty
+module
+
+public import Hex.Conformance.Emit
+public import Hex.BenchOracle.Flint
+public import Hex.BenchOracle.Pari
+public import Hex.BenchOracle.Nauty
+
+public section
 
 /-! Top-level helpers shared by the per-library `Hex<X>` packages.
 

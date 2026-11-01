@@ -3,12 +3,16 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.RealCoefficients.SourceIdentity
-import HexRCF.RealCoefficients.AlgebraicCells
-import HexRCF.RealCoefficients.SquareTwo
-import HexRCF.SelectedRoot.Data
-import HexRealClosureTheory.NativeAssemblyModels
-import HexRCF.ProofEvidence
+module
+
+public import HexRCF.RealCoefficients.SourceIdentity
+public import HexRCF.RealCoefficients.AlgebraicCells
+public import HexRCF.RealCoefficients.SquareTwo
+public import HexRCF.SelectedRoot.Data
+public import HexRealClosureTheory.NativeAssemblyModels
+public import HexRCF.ProofEvidence
+
+public section
 namespace Hex.RCF.SourceIdentityCases
 open Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
 open Hex.RCF.SelectedRootTests

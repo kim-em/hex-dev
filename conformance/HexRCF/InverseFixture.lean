@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRealClosure.TowerCatalog
-import HexRealClosure.InverseEquation
-import HexSignDet.Codec
+module
+
+public import HexRealClosure.TowerCatalog
+public import HexRealClosure.InverseEquation
+public import HexSignDet.Codec
+
+public section
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet
 
 namespace Hex.RCF.SelectedInverseFixture

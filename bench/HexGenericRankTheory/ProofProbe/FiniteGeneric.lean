@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGenericRankTheory
-import Mathlib.Algebra.Field.ZMod
+module
+
+public import HexGenericRankTheory
+public import Mathlib.Algebra.Field.ZMod
+
+public section
 
 
 open Matrix MvPolynomial in

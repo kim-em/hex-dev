@@ -484,6 +484,74 @@ def lean_comment_only(difference: Difference) -> bool:
             == strip_lean_comments(blob_text(difference.current)))
 
 
+
+def legacy_from_module_header(text: str) -> str | None:
+    """Undo a legacy-to-module header conversion, or return ``None``.
+
+    The conversion inserts ``module`` before the imports, turns each
+    ``import X`` into ``public import X`` and opens ``public section`` after
+    them, which preserves legacy visibility. Anything else in the header
+    (``meta`` or ``all`` imports, attributes, other sections) is not this
+    conversion.
+    """
+    lines = text.split("\n")
+    k = 0
+    depth = 0
+    while k < len(lines):
+        t = lines[k].strip()
+        if depth:
+            depth += t.count("/-") - t.count("-/")
+        elif t == "" or t.startswith("--"):
+            pass
+        elif t.startswith("/-") and not t.startswith(("/-!", "/--")):
+            depth = t.count("/-") - t.count("-/")
+        else:
+            break
+        k += 1
+    if k + 1 >= len(lines) or lines[k] != "module" or lines[k + 1] != "":
+        return None
+    try:
+        p = lines.index("public section", k + 2)
+    except ValueError:
+        return None
+    header = lines[k + 2:p]
+    if not header or header == [""]:
+        imports = []
+    elif header[-1] == "":
+        imports = header[:-1]
+    else:
+        return None
+    legacy = []
+    for line in imports:
+        match = re.fullmatch(r"public import ([A-Za-z0-9_.']+)(\s*--.*)?", line)
+        if match:
+            legacy.append("import " + line[len("public import "):])
+        elif line == "" or line.lstrip().startswith("--"):
+            legacy.append(line)
+        else:
+            return None
+    if not imports:
+        if p + 1 >= len(lines) or lines[p + 1] != "":
+            return None
+        return "\n".join(lines[:k] + lines[p + 2:])
+    return "\n".join(lines[:k] + legacy + lines[p + 1:])
+
+
+def module_header_only(difference: Difference) -> bool:
+    """Whether a `.lean` path changed only by a legacy-to-module header conversion.
+
+    Checked like ``lean_comment_only``: undoing the conversion on the current
+    blob must reproduce the baseline blob byte for byte, so a body edit, a
+    ``meta`` import or any added attribute does not qualify.
+    """
+    if not difference.path.endswith(".lean"):
+        return False
+    if difference.baseline is None or difference.current is None:
+        return False
+    if difference.baseline_mode != difference.current_mode:
+        return False
+    return legacy_from_module_header(blob_text(difference.current)) == blob_text(difference.baseline)
+
 @dataclass
 class Verdict:
     """Why a family's figures are current, or how they went stale."""

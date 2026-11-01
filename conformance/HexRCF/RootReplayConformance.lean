@@ -3,11 +3,15 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.RealCoefficients.RootReplay
-import HexRCF.RootReplayLiterals
-import HexRCF.SelectedRoot.Data
-import HexRCF.SelectedRoot.KernelCheck
-import Lean.Elab.Tactic.Decide
+module
+
+public import HexRCF.RealCoefficients.RootReplay
+public import HexRCF.RootReplayLiterals
+public import HexRCF.SelectedRoot.Data
+public import HexRCF.SelectedRoot.KernelCheck
+public import Lean.Elab.Tactic.Decide
+
+public section
 
 /-! Frozen graph acceptance is checked in the ordinary kernel, independently of
 the proposal producer. These concrete fixtures use ordinary non-module imports

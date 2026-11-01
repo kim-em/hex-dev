@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekamp
-import Lean.Data.Json
+module
+
+public import HexBerlekamp
+public import Lean.Data.Json
+
+public section
 
 /-!
 # Root-extraction versus Berlekamp splitting for fully split modular images

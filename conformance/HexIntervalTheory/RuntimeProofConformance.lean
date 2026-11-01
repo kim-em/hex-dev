@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalTheory.RuntimeProof
-import HexIntervalTheory.Experiment.SineSign
+module
+
+public import HexIntervalTheory.RuntimeProof
+public import HexIntervalTheory.Experiment.SineSign
+
+public section
 
 /-!
 # Typed runtime-to-proof conformance

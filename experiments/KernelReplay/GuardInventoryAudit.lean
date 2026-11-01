@@ -3,8 +3,12 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import KernelReplay.GuardInventoryReplay
-import KernelReplay.GuardRecordAudit
+module
+
+public import KernelReplay.GuardInventoryReplay
+public import KernelReplay.GuardRecordAudit
+
+public section
 
 namespace Hex.RealClosure.Algebraic.KernelReplay.GuardInventoryAudit
 open Lean Meta Elab FiniteData

@@ -3,8 +3,12 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.FiniteMatrix.Packings
-import HexRCF.FiniteMatrix.Inputs
+module
+
+public import HexRCF.FiniteMatrix.Packings
+public import HexRCF.FiniteMatrix.Inputs
+
+public section
 namespace Hex.RCF.RealCoefficients.FiniteMatrixTests.Signs
 open Hex.RealClosure.Algebraic Hex.RealClosure.Algebraic.KernelReplay
 open Lean Meta Elab Command

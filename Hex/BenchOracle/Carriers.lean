@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Hex.BenchOracle.Flint
+module
+
+public import Hex.BenchOracle.Flint
+
+public section
 
 /-! Persistent exact matrix-carrier comparator, using the common transport. -/
 namespace Hex.BenchOracle.Carriers

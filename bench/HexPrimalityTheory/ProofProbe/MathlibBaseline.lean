@@ -4,6 +4,10 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPrimalityTheory
+module
+
+public import HexPrimalityTheory
+
+public section
 
 /-! Import-only baseline for the Mathlib `primality` fresh-module probes. -/

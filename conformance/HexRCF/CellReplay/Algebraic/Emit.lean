@@ -3,9 +3,13 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.CellReplay.Algebraic.Quoted
-import HexSignDet.Codec.Bytes
-import HexSignDet.DagEncode
+module
+
+public import HexRCF.CellReplay.Algebraic.Quoted
+public import HexSignDet.Codec.Bytes
+public import HexSignDet.DagEncode
+
+public section
 namespace Hex.RCF.RealCoefficients.CellReplayTests.Algebraic.Emit
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet
 open Hex.RCF.SelectedRootTests Hex.RCF.RealCoefficients

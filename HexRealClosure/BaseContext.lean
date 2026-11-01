@@ -19,7 +19,7 @@ open OrderedFn OrderedFn.Oracle
 structure ConstantKey where
   name : String
   version : Nat
-  deriving DecidableEq, Repr
+  deriving @[expose] DecidableEq, Repr
 
 /-- Readers are relative to one fixed registry. A key is never rebound within it. -/
 abbrev Registry := ConstantKey → Option (Rat → Bounds)
@@ -28,7 +28,7 @@ abbrev Registry := ConstantKey → Option (Rat → Bounds)
 structure Signature where
   constants : List ConstantKey
   infinitesimals : Nat
-  deriving DecidableEq, Repr
+  deriving @[expose] DecidableEq, Repr
 
 /-- A real-constant prefix. Each search uses the exact predecessor bounds.
 Only termination premises are stored; interpretation is a companion obligation. -/

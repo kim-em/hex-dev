@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBerlekamp.DistinctDegree
-import Hex.BenchOracle.Flint
-import Lean.Data.Json
-import LeanBench
+module
+
+public import HexBerlekamp.DistinctDegree
+public import Hex.BenchOracle.Flint
+public import Lean.Data.Json
+public import LeanBench
+
+public section
 
 /-!
 Benchmark registrations for `hex-berlekamp`.
@@ -48,7 +52,7 @@ namespace BerlekampBench
 
 open Berlekamp
 
-private instance benchBoundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
+instance benchBoundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
 
 private theorem benchPrimeFive : Hex.Nat.Prime 5 := by
   constructor

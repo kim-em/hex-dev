@@ -4,13 +4,17 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexPolyFp.Frobenius
-import HexPolyFp.ModCompose
-import HexPolyFp.NttMul
-import HexPolyFp.PrimeField
-import HexPolyFp.SquareFree
-import HexPolyFast.HalfGcd
-import LeanBench
+module
+
+public import HexPolyFp.Frobenius
+public import HexPolyFp.ModCompose
+public import HexPolyFp.NttMul
+public import HexPolyFp.PrimeField
+public import HexPolyFp.SquareFree
+public import HexPolyFast.HalfGcd
+public import LeanBench
+
+public section
 
 /-!
 Benchmark registrations for `hex-poly-fp`.
@@ -53,9 +57,9 @@ namespace FpPolyBench
 
 open FpPoly
 
-private instance benchBoundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
-private instance benchBoundsFermat : ZMod64.Bounds 257 := ⟨by decide, by decide⟩
-private instance benchBoundsLarge : ZMod64.Bounds 65537 := ⟨by decide, by decide⟩
+instance benchBoundsFive : ZMod64.Bounds 5 := ⟨by decide, by decide⟩
+instance benchBoundsFermat : ZMod64.Bounds 257 := ⟨by decide, by decide⟩
+instance benchBoundsLarge : ZMod64.Bounds 65537 := ⟨by decide, by decide⟩
 
 private theorem one_ne_zero_five : (1 : ZMod64 5) ≠ 0 := by
   intro h
@@ -88,10 +92,10 @@ set_option maxRecDepth 8192 in
 private theorem prime_65537 : Hex.Nat.Prime 65537 :=
   Hex.Nat.prime_of_bounded 65537 256 (by decide) (by decide) (by decide)
 
-private instance benchPrimeLarge : ZMod64.PrimeModulus 65537 :=
+instance benchPrimeLarge : ZMod64.PrimeModulus 65537 :=
   ZMod64.primeModulusOfPrime prime_65537
 
-private instance benchPrimeFermat : ZMod64.PrimeModulus 257 :=
+instance benchPrimeFermat : ZMod64.PrimeModulus 257 :=
   ZMod64.primeModulusOfPrime prime_257
 
 instance {p : Nat} [ZMod64.Bounds p] : Hashable (ZMod64 p) where

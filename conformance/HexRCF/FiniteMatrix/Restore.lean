@@ -3,10 +3,14 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.FiniteMatrix.Read
-import HexRCF.FiniteMatrix.Literals
-import HexRCF.SelectedRoot.KernelCheck
-import Lean.Elab.Command
+module
+
+public import HexRCF.FiniteMatrix.Read
+public import HexRCF.FiniteMatrix.Literals
+public import HexRCF.SelectedRoot.KernelCheck
+public import Lean.Elab.Command
+
+public section
 namespace Hex.RCF.RealCoefficients.FiniteMatrixTests
 open Hex Hex.RealClosure.Algebraic Hex.RealClosure.Algebraic.KernelReplay
 open Lean Meta Elab Command

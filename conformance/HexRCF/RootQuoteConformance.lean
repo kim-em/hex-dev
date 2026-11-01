@@ -3,10 +3,14 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.RootQuoteSource
-import KernelReplay.AxiomClosure
-import HexRCF.ProofEvidence
-import HexRCF.SelectedRoot.KernelCheck
+module
+
+public import HexRCF.RootQuoteSource
+public import KernelReplay.AxiomClosure
+public import HexRCF.ProofEvidence
+public import HexRCF.SelectedRoot.KernelCheck
+
+public section
 open Lean Meta Hex Hex.RealClosure Hex.SignDet
 namespace Hex.RCF.RootQuoteTests
 set_option maxHeartbeats 12000000

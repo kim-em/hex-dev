@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexBareiss.Conformance
-import Lean.Data.Json
+module
+
+public import HexBareiss.Conformance
+public import Lean.Data.Json
+
+public section
 
 /-! Canonical complete carrier records for the independent matrix oracle. -/
 namespace Hex.BareissCarriers

@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntFactor.Construction
-import HexIntFactor.FieldReplay
-import LeanBench
+module
+
+public import HexIntFactor.Construction
+public import HexIntFactor.FieldReplay
+public import LeanBench
+
+public section
 
 /-! Fixed native construction and checker observations for explicit ECM
 and the automatic interleaved provider. The input references prevent closed-term lifting. Search includes the

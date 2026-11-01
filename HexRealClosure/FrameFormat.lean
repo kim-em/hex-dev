@@ -27,7 +27,7 @@ theorem Context.adjoin_isSome (context : Context registry)
 
 /-- Total native extension from an already validated descriptor. All frame
 data and the actual embedding/generator are the existing checked operations. -/
-def Context.adjoin (context : Context registry)
+@[expose] def Context.adjoin (context : Context registry)
     (descriptor : Descriptor context.Value Signature context.sign context.signature) :
     Extension context descriptor :=
   (context.adjoin? descriptor).get (context.adjoin_isSome descriptor)

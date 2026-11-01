@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGF2
-import LeanBench
+module
+
+public import HexGF2
+public import LeanBench
+
+public section
 
 /-!
 Benchmark registrations for `hex-gf2`.
@@ -147,11 +151,11 @@ structure ShiftInput where
   shift : Nat
   deriving Hashable
 
-private theorem aesIrreducible :
+theorem aesIrreducible :
     GF2Poly.Irreducible (GF2Poly.ofUInt64Monic 0x1B 8) :=
   GF2Poly.aes_modulus_irreducible
 
-private abbrev AESField : Type :=
+abbrev AESField : Type :=
   GF2n 8 0x1B (by decide) (by decide) aesIrreducible
 
 private def aesField (w : UInt64) : AESField :=
@@ -175,11 +179,11 @@ structure GF2nPowInput where
 def gf2nPolyModulus : GF2Poly :=
   GF2Poly.ofWords #[0x87, 0, 1]
 
-private theorem gf2nPolyIrreducible :
+theorem gf2nPolyIrreducible :
     GF2Poly.Irreducible gf2nPolyModulus :=
   GF2Poly.gf2nPoly_modulus_irreducible
 
-private abbrev PolyField : Type :=
+abbrev PolyField : Type :=
   GF2nPoly gf2nPolyModulus gf2nPolyIrreducible
 
 private def polyField (p : GF2Poly) : PolyField :=

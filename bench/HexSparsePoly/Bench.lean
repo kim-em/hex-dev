@@ -4,10 +4,14 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexSparsePoly
-import HexModArith
-import HexPolyFp
-import LeanBench
+module
+
+public import HexSparsePoly
+public import HexModArith
+public import HexPolyFp
+public import LeanBench
+
+public section
 
 /-!
 Native benchmark registrations for `hex-sparse-poly`, covering the six

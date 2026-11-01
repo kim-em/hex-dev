@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexMvGcd.ComparatorCases
-import LeanBench
+module
+
+public import HexMvGcd.ComparatorCases
+public import LeanBench
+
+public section
 
 /-!
 Fixed external-comparator registrations for the seven Phase-4 input families.

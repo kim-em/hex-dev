@@ -249,7 +249,8 @@ def observations() -> tuple[list[freshness.Observation], list[str]]:
 
 def runtime_neutral(difference: freshness.Difference) -> bool:
     """The checked allowances shared by freshness and sweep selection."""
-    return (freshness.lean_comment_only(difference)
+    return (freshness.module_header_only(difference)
+            or freshness.lean_comment_only(difference)
             or independent_lake_targets(difference)
             or build_only_lakefile_edit(difference))
 

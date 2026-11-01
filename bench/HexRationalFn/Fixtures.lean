@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRationalFn.Workloads
+module
+
+public import HexRationalFn.Workloads
+
+public section
 
 namespace Hex.RationalFnFixtures
 open DensePoly RationalFn RationalFnFamilies

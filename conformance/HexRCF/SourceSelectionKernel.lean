@@ -3,10 +3,14 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.SourceSelectionNative
-import HexRCF.SourceSelectionPublic
-import HexRCF.ProofEvidence
-import HexRCF.SelectedRoot.KernelCheck
+module
+
+public import HexRCF.SourceSelectionNative
+public import HexRCF.SourceSelectionPublic
+public import HexRCF.ProofEvidence
+public import HexRCF.SelectedRoot.KernelCheck
+
+public section
 open Lean Meta Hex Hex.RealClosure Hex.RCF.RealCoefficients
 namespace Hex.RCF.SourceSelectionKernel
 set_option maxHeartbeats 12000000

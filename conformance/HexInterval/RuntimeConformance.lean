@@ -4,7 +4,11 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexInterval.RuntimeController
+module
+
+public import HexInterval.RuntimeController
+
+public section
 
 /-!
 Conformance for the sealed Mathlib-free typed runtime transition. The fixture

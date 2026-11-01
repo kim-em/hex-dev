@@ -4,14 +4,18 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRealClosure.Algebraic
-import HexOrderedFn.Infinitesimal
-import LeanBench
-import Lean.Data.Json
+module
+
+public import HexRealClosure.Algebraic
+public import HexOrderedFn.Infinitesimal
+public import LeanBench
+public import Lean.Data.Json
+
+public section
 
 namespace Hex.RealClosure.Normalization
 
-private abbrev Context := Algebraic.Context Rat Unit OrderedFn.orderSign ()
+abbrev Context := Algebraic.Context Rat Unit OrderedFn.orderSign ()
 
 /-- Both storage arms use this one checked root and coefficient backend. The
 monic working polynomial is used only by the eager measurement arm. -/

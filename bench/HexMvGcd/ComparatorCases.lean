@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexMvGcd.Matrix
-import HexMvGcdFlint
-import HexMvGcdSingular
+module
+
+public import HexMvGcd.Matrix
+public import HexMvGcdFlint
+public import HexMvGcdSingular
+
+public section
 
 /-!
 Matched Hex/FLINT/Singular cases for every `hex-mv-gcd` Phase-4 family.

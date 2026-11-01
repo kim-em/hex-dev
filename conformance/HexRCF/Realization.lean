@@ -4,12 +4,16 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.RealizationData
-import HexRCF.ProofEvidence
-import HexRCF.Tactic
-import HexSignDet.Produce
-import HexSignDet.TableProducer
-import HexSignDet.DagExpand
+module
+
+public import HexRCF.RealizationData
+public import HexRCF.ProofEvidence
+public import HexRCF.Tactic
+public import HexSignDet.Produce
+public import HexSignDet.TableProducer
+public import HexSignDet.DagExpand
+
+public section
 
 /-! Frozen one-infinitesimal replay for the complete shared `(1, 2]` guard
 conjunction. The ordinary witness follows from the owner realization law;

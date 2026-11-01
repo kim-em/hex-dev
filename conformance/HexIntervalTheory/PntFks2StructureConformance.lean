@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Mathlib.Data.Rat.Cast.Order
-import HexInterval.Experiment.PntFks2Structure
+module
+
+public import Mathlib.Data.Rat.Cast.Order
+public import HexInterval.Experiment.PntFks2Structure
+
+public section
 
 /-!
 # Source-pinned FKS2 list-structure conformance

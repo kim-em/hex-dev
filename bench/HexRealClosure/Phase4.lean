@@ -4,9 +4,13 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRealClosure.TowerRoots
-import HexRealAlgebraic.Roots
-import Lean.Data.Json
+module
+
+public import HexRealClosure.TowerRoots
+public import HexRealAlgebraic.Roots
+public import Lean.Data.Json
+
+public section
 
 namespace Hex.RealClosure.Phase4
 
@@ -17,8 +21,8 @@ def metiCoefficients : Array Rat := #[592704, 402192, 90972, 3266731,
   -931392, -193914, -5792221, 756756, 140742, 3046158, -259308,
   -42336, -520884, 31752, 4536, 216]
 
-private def registry : BaseContext.Registry := fun _ => none
-private def base := Tower.Context.base (BaseContext.rational registry)
+def registry : BaseContext.Registry := fun _ => none
+@[expose] def base := Tower.Context.base (BaseContext.rational registry)
 private def nativeHead : DensePoly base.Value :=
   DensePoly.ofCoeffs (metiCoefficients.map fun q => ⟨q⟩)
 private def trivialHead : RealAlgebraicPoly :=

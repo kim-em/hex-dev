@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import Hex.Conformance.Emit
-import HexGraphIso
+module
+
+public import Hex.Conformance.Emit
+public import HexGraphIso
+
+public section
 
 /-!
 The `HexGraphIso` conformance corpus and the searches a record is read

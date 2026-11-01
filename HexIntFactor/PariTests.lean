@@ -4,7 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntFactor.Pari
+module
+
+public import HexIntFactor.Pari
+public meta import HexIntFactor.Pari
+
+public section
 
 /-!
 Optional producer conformance.

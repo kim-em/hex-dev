@@ -3,9 +3,13 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.MaximalCoefficients
-import HexRCF.RealCoefficients
-import HexRCF.ProofEvidence
+module
+
+public import HexRCF.MaximalCoefficients
+public import HexRCF.RealCoefficients
+public import HexRCF.ProofEvidence
+
+public section
 
 set_option maxHeartbeats 5000000
 set_option maxRecDepth 32768

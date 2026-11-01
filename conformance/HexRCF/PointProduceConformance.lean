@@ -4,14 +4,18 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRCF.RealCoefficients.PointBuild
-import HexRCF.RealCoefficients.PointQuote
-import HexRCF.RealCoefficients.ScalarPacket
-import HexRCF.SelectedRoot.RowCollect
-import HexRCF.SelectedRoot.RowTools
-import HexRCF.RealCoefficients.FieldRuntime
-import HexRCF.ProofEvidence
-import HexRCF.PointReplayConformance
+module
+
+public import HexRCF.RealCoefficients.PointBuild
+public import HexRCF.RealCoefficients.PointQuote
+public import HexRCF.RealCoefficients.ScalarPacket
+public import HexRCF.SelectedRoot.RowCollect
+public import HexRCF.SelectedRoot.RowTools
+public import HexRCF.RealCoefficients.FieldRuntime
+public import HexRCF.ProofEvidence
+public import HexRCF.PointReplayConformance
+
+public section
 
 open Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
 open Hex.RCF.SelectedRootTests

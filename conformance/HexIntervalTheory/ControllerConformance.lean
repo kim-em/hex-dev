@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexIntervalTheory.Controller
-import HexIntervalTheory.DriverConformance
+module
+
+public import HexIntervalTheory.Controller
+public import HexIntervalTheory.DriverConformance
+
+public section
 
 /-!
 # Autonomous controller conformance

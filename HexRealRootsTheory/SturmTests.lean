@@ -4,8 +4,12 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexRealRootsTheory.SturmCertificate
-import Mathlib.Tactic.NormNum
+module
+
+public import HexRealRootsTheory.SturmCertificate
+public import Mathlib.Tactic.NormNum
+
+public section
 
 open Polynomial Sturm
 

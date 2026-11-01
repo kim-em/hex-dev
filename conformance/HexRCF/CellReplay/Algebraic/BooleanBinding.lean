@@ -3,7 +3,11 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.CellReplay.Algebraic.BooleanSources
+module
+
+public import HexRCF.CellReplay.Algebraic.BooleanSources
+
+public section
 open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet Hex.RealFormula
 open Hex.RCF.SelectedRootTests Hex.RCF.RealCoefficients
 open Hex.RCF.RealCoefficients.CellReplayTests.Algebraic

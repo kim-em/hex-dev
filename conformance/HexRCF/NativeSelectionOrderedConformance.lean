@@ -3,22 +3,28 @@ Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
-import HexRCF.RealCoefficients.NativeSelection
-import HexRCF.RealCoefficients.Samples
-import HexRCF.NativeSelectionLiterals
-import HexRCF.SourceSelectionCases
-import HexRealClosure.RootReplay
-import HexMvPoly.Basic
-import HexPolyZ.IntegerPolynomial
-import HexSignDet.Thom
+module
+
+public import HexRCF.RealCoefficients.NativeSelection
+public import HexRCF.RealCoefficients.Samples
+public import HexRCF.NativeSelectionLiterals
+public import HexRCF.SourceSelectionCases
+public import HexRealClosure.RootReplay
+public import HexMvPoly.Basic
+public import HexPolyZ.IntegerPolynomial
+public import HexSignDet.Thom
+public meta import HexRCF.RealCoefficients.Samples
+public meta import HexRCF.SourceSelectionCases
+
+public section
 open Hex Hex.RealClosure Hex.RealFormula
 open Hex.RCF.RealCoefficients
 namespace Hex.RCF.RealCoefficients.NativeSelectionOrderedConformance
 open SignDet
 open scoped Hex
-private def root? := Hex.RCF.SourceSelectionCases.reader
+def root? := Hex.RCF.SourceSelectionCases.reader
 private theorem accepted : root?.toOption.isSome = true := Hex.RCF.SourceSelectionCases.accepted
-private def root : Root 7 := Hex.RCF.SourceSelectionCases.root
+def root : Root 7 := Hex.RCF.SourceSelectionCases.root
 private theorem subject : root.raw =
     ⟨7, #p[-2,0,1], .finite (7/5), .finite (3/2), [1,2], [1,1]⟩ := by
   simpa only [root, Hex.RCF.SourceSelectionCases.rawSubject,
