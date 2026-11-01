@@ -29,13 +29,17 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--hex", type=Path, required=True)
     parser.add_argument("--reference", type=Path)
+    parser.add_argument("--baseline", type=Path)
+    parser.add_argument("--baseline-manifest", type=Path)
     parser.add_argument("--msolve", type=Path)
     parser.add_argument("--msolve-source", type=Path)
     parser.add_argument("--msolve-mode", type=int, choices=[2, 42], default=2)
     parser.add_argument("--time", default=shutil.which("time"))
     args = parser.parse_args()
-    if bool(args.reference) == bool(args.msolve):
-        parser.error("select exactly one of --reference or --msolve")
+    if sum(map(bool, [args.reference, args.baseline, args.msolve])) != 1:
+        parser.error("select exactly one of --reference, --baseline or --msolve")
+    if bool(args.baseline) != bool(args.baseline_manifest):
+        parser.error("--baseline and --baseline-manifest are required together")
     if args.msolve and not args.msolve_source:
         parser.error("--msolve requires --msolve-source for provenance")
     if not args.time:
@@ -83,6 +87,14 @@ def main():
         != manifest["binary_sha256"]["compute-reference"]
     ):
         parser.error("reference binary differs from frozen manifest")
+    baseline_manifest = None
+    if args.baseline:
+        baseline_manifest = json.loads(args.baseline_manifest.read_text())
+        if (
+            sha(args.baseline.resolve())
+            != baseline_manifest["binary_sha256"]["compute"]
+        ):
+            parser.error("baseline binary differs from its frozen manifest")
     inputs = out / "inputs"
     inputs.mkdir()
     shutil.copy2(args.suite, inputs / args.suite.name)
@@ -129,7 +141,7 @@ def main():
         "1000000000",
     ]
     binaries = {
-        "A": (args.hex if mode else args.reference).resolve(),
+        "A": (args.hex if mode else args.baseline or args.reference).resolve(),
         "B": (args.msolve if mode else args.hex).resolve(),
     }
     environments = {arm: dict(env) for arm in ["A", "B"]}
@@ -148,7 +160,13 @@ def main():
         "suite_sha256": sha(args.suite),
         "schedule": "two fixed blocks, adjacent AB then BA per input; retain all completed samples",
         "contract": "Full unchecked reduced candidates; no certificate generation, independent final certification or kernel replay in timing. GNU time wrapper is identical on both arms and supplies post-exec peak RSS; wall time includes wrapper/launch/startup/parse/full output. A/B are ordinary/minimal SDK initialization of identical driver code unless msolve mode is present, then A is the dedicated driver and B is msolve full reduced grevlex output. One algorithm thread; resource caps match. No quiet-host filtering.",
-        "baseline_source_fingerprint": manifest["source_fingerprint"],
+        "baseline_source_fingerprint": (baseline_manifest or manifest)[
+            "source_fingerprint"
+        ],
+        "baseline_manifest": baseline_manifest,
+        "baseline_manifest_sha256": sha(args.baseline_manifest)
+        if args.baseline_manifest
+        else None,
         "script": Path(__file__).read_text(),
         "samples": [],
         "msolve_mode": mode,
@@ -159,9 +177,13 @@ def main():
             **plan["protocol"],
             "A": "Hex unchecked candidate"
             if mode
+            else "previous unchecked candidate driver"
+            if args.baseline
             else "identical driver, full initialization",
             "B": f"msolve direct ELF, mode {mode}"
             if mode
+            else "new unchecked candidate driver"
+            if args.baseline
             else "identical driver, minimal initialization",
         },
         "manifest_binary_sha256": manifest["binary_sha256"],
@@ -195,6 +217,10 @@ def main():
         },
         "input_sha256": {f.name: sha(f) for f in sorted(inputs.iterdir())},
     }
+    if args.baseline:
+        m["contract"] = (
+            "Full unchecked reduced candidates from two separately frozen source snapshots; algorithm statistics may differ, but complete reduced bases and all field/order/batch/random-state metadata must agree. Candidate time includes canonicalization, F4 and final interreduction; process time additionally includes initialization, parse, full output and identical GNU-time wrappers. Certificate generation, independent final certification and kernel checking are excluded. One thread, matched resource caps, adjacent AB then BA; every completed sample retained."
+        )
     if mode:
         ms = args.msolve_source.resolve()
         assert args.msolve.resolve() == (ms / ".libs/msolve").resolve(), (
@@ -335,7 +361,12 @@ def main():
                                 results[arm] = {
                                     k: v
                                     for k, v in payload.items()
-                                    if k not in ["basis", "candidateNanos"]
+                                    if k
+                                    not in (
+                                        ["basis", "candidateNanos", "statistics"]
+                                        if args.baseline
+                                        else ["basis", "candidateNanos"]
+                                    )
                                 }
                                 record["statistics"] = {
                                     **payload["statistics"],
@@ -424,7 +455,11 @@ def main():
         },
         "timeouts": sum(s["status"] == "timeout" for s in m["samples"]),
         "failed_processes": sum(s["status"] != "ok" for s in m["samples"]),
-        "ratio_direction": "Hex/msolve process" if mode else "minimal/full process",
+        "ratio_direction": "Hex/msolve process"
+        if mode
+        else "candidate/baseline process"
+        if args.baseline
+        else "minimal/full process",
         "geomean": g(ratios),
         "median": statistics.median(ratios) if ratios else None,
         "minimum": min(ratios) if ratios else None,

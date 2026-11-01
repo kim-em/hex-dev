@@ -11,6 +11,11 @@ discard unneeded pairs. Symbolic preprocessing closes a selected batch under a
 basis-specific divisibility trie and constructs one joint Macaulay matrix.
 The chain test visits indexed LCM divisors; final tail reductions share one
 immutable reducer index.
+Joint matrix elimination stably orders targets by increasing support size before
+choosing new pivots, retaining original order for equal sizes. Sorting work is
+charged before the sort. Independent normal forms retain their input order;
+traced production moves each target's derivation root with its polynomial.
+Sugar pair scheduling and known reducer pivots keep their existing contracts.
 F4 checkpoints retain a `ReducerCache` of multiplied reducers from the same
 append-only monomial arena. Stable IDs survive exponent-width changes. Field/order metadata is checked before
 reuse, and the complete base payload identifies the basis polynomial. A cache
