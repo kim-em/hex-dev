@@ -1,0 +1,25 @@
+run: 1 benchmark(s) produced zero verdict-eligible rows: Hex.Groebner.Bench.internMonomials
+Hex.Groebner.Bench.internMonomials    expected complexity: n    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a76c5fb-dirty, 2026-10-31T10:42:27Z, host=chungus2
+   param  per-call    repeats  C
+   2_048  586.651 µs  ×2^9     C=— [<floor] [trial 1/3]
+   4_096    1.207 ms  ×2^4     C=— [<floor] [trial 1/3]
+   8_192    2.513 ms  ×2^7     C=— [<floor] [trial 1/3]
+  16_384    5.416 ms  ×2^6     C=— [<floor] [trial 1/3]
+  32_768   10.748 ms  ×2^4     C=— [<floor] [trial 1/3]
+   2_048  588.758 µs  ×2^9     C=— [<floor] [trial 2/3]
+   4_096    1.226 ms  ×2^8     C=— [<floor] [trial 2/3]
+   8_192    2.543 ms  ×2^3     C=— [<floor] [trial 2/3]
+  16_384    5.247 ms  ×2^6     C=— [<floor] [trial 2/3]
+  32_768   11.231 ms  ×2^4     C=— [<floor] [trial 2/3]
+   2_048  604.610 µs  ×2^9     C=— [<floor] [trial 3/3]
+   4_096    1.217 ms  ×2^5     C=— [<floor] [trial 3/3]
+   8_192    2.534 ms  ×2^7     C=— [<floor] [trial 3/3]
+  16_384    5.270 ms  ×2^6     C=— [<floor] [trial 3/3]
+  32_768   10.973 ms  ×2^4     C=— [<floor] [trial 3/3]
+  verdict: inconclusive (cMin=—, cMax=—, β=—)
+  per-spawn floor (harness self-measurement): 65.749 ms
+  peak RSS: 63_180 kB..67_688 kB (across 15 ok row(s))
+  ‼ every measurement was below 10.000× the per-spawn floor (per-spawn floor ≈ 65.749 ms); the function is too fast for child-process measurement at the configured params. Try the following: extend the declared `paramSchedule := .custom #[...]` array with larger params, wrap the function in a hot inner loop, or use `setup_fixed_benchmark` for a single-shot reading.
+  ‼ only 0 verdict-eligible row(s) survived warmup-trim + signal-floor filter; the verdict is below resolution. Lower `--warmup-fraction`, extend the declared `paramSchedule := .custom #[...]` array with larger params.
+exported to reports/bench-results/hexgroebner-intern-0c15209abaec.json

@@ -1,0 +1,1790 @@
+{
+  "metadata": {
+    "source_fingerprint": "2a390ee6b209",
+    "source_manifest": "100644 7da5741531860eef0e8558b81a28d5f4df3707b2 0\tHexArith.lean\n100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0\tHexArith/.keep\n100644 37049f16fd4de8d71e4fea95acf0da85bdf420ce 0\tHexArith/Barrett/Accumulator.lean\n100644 9ce91028d8103d3f9a8d704365c4b8aa6028bc71 0\tHexArith/Barrett/Context.lean\n100644 5e8e8f82b207b40d514011c462a06b13b061e93c 0\tHexArith/Barrett/Reduce.lean\n100644 e7c27fd38459bb8cea2e7d7b38717ae70ed270de 0\tHexArith/Barrett/ReduceNat.lean\n100644 28f3b16ef5ab02837d08c48e921db253e3a8ccaf 0\tHexArith/ExactDiv.lean\n100644 fa8d796b0b5d9d05847bdd6d0a3a392d350c639c 0\tHexArith/ExtGcd.lean\n100644 2b517f4f178c8d9672d5e1403a77e04c7256490a 0\tHexArith/ExtendedGcdTests.lean\n100644 683a342b15d0721430cfa289b6ea3d2007b060dc 0\tHexArith/Montgomery/Context.lean\n100644 8d9fbf0bf282af9fdc45c8bc64c8c5a32a66633d 0\tHexArith/Montgomery/InvNat.lean\n100644 3e51b8b921374e508004114e4d5839267603dc97 0\tHexArith/Montgomery/Redc.lean\n100644 f404c64465d1dc58bd343c1d13f9a17c5d5c65e4 0\tHexArith/Montgomery/RedcNat.lean\n100644 b44b51f1d5fbd45698357e5c5b745d569554a957 0\tHexArith/Nat/ExtendedGcd.lean\n100644 72bc18c4080ed5d7daf368ce41f67527be699b37 0\tHexArith/Nat/ModArith.lean\n100644 ad523f08c614335af242c32d0483518fb7be3626 0\tHexArith/Nat/Pow.lean\n100644 79835bd403b7f80148457fdaaa135ced6340ae5c 0\tHexArith/Nat/Prime.lean\n100644 1223bdb41b766623435028e69ca1ef49776da9f7 0\tHexArith/Nat/Sqrt.lean\n100644 56a55c1fb12787775e4eb1dd35f1d5ced7f11d42 0\tHexArith/UInt64/Wide.lean\n100644 f4f3a29c15b2ce0383c7c9d1995ea133c39f75fd 0\tHexArith/ffi/extended_gcd.c\n100644 ae8f3df882b1b4e07dbba25b9d691d5428242325 0\tHexArith/ffi/wide_arith.c\n100644 7f88a6dfd013f61e91a4916dc22ecaaabc1f347f 0\tHexArithNative.lean\n100644 72e7cda38d4854f0b7f9c7a137db9ba1014b34c6 0\tHexBasic.lean\n100644 25e2ef4207843776854211debddd6af069de698b 0\tHexBasic/ArrayDecEq.lean\n100644 99f06ed96dca11bdb660aa7a22b463db9a7b254e 0\tHexBasic/ExactDiv.lean\n100644 11d2d37c19c04011947fa7dacf3fc04c8cd954a7 0\tHexBasic/ExtTreeMap.lean\n100644 3e07680dcdd1201280d9e6b3034ff3ecbca138f6 0\tHexBasic/Fold.lean\n100644 0217ab55e98021f89bfcbbff6a69530f19293837 0\tHexBasic/Kernel.lean\n100644 e495f2df26b2591ebadf97831bf3d1cc24dabf06 0\tHexBasic/List.lean\n100644 97cc8da86391a61cfbc6195765f3b27e5747b8c1 0\tHexBasic/List/Nodup.lean\n100644 13684daef6deb627f8b1a11c1bee4b15c65038d3 0\tHexBasic/ListShim.lean\n100644 baf5160104823c81e6c7d16ebecdc9e5ec929727 0\tHexBasic/ModuleBoundaryTests.lean\n100644 72a79162cc362c9c3a4701652436694d6784bfaf 0\tHexBasic/OfFn.lean\n100644 ae4a0ab74c3f7e4bdb6f05d56502803f5e037610 0\tHexBasic/Rand.lean\n100644 349ad9397c8ee2d8d27ea967fafef3e4370b8497 0\tHexBasic/Sort.lean\n100644 6ecb260329bf11be59dbd1a1c502532ab2102bea 0\tHexBasic/Vector/Modify.lean\n100644 24e00be3b510a886d023aba10df262fd8565410f 0\tHexGroebner.lean\n100644 af5df5e646b497fd12d9a8e854898c95b0f5aac6 0\tHexGroebner/Certificate.lean\n100644 569114121753d608c16d60f442da947f6fdd7318 0\tHexGroebner/CertificateOrder.lean\n100644 837ea5bc51c523abda6b6f5edbca83d5bb079867 0\tHexGroebner/Elimination.lean\n100644 8c260dbeb2401eea15cf39fa850436ec200c44a1 0\tHexGroebner/F4.lean\n100644 50dd1c21e7f9b05939e514ca2c9cfca74b8f4174 0\tHexGroebner/Monomial.lean\n100644 06e7279e25a633ec29e403195d915f9c64905b4b 0\tHexGroebner/Native.lean\n100644 dfb2cdaa77d02b934f58a1303c2d257756517877 0\tHexGroebner/Packed.lean\n100644 a52ca5e6d412362e25341a01332e73dce6718d13 0\tHexGroebner/Pairs.lean\n100644 afefbb9e6f813fec53a6cef8dbe844f9df60c32e 0\tHexGroebner/Polynomial.lean\n100644 a498d8002f00a454f36097e808d0114bbb054249 0\tHexGroebner/Reducer.lean\n100644 a7423a8b614222abfa8fa9ad3f892cb28d5df5c8 0\tHexGroebner/Runtime.lean\n100644 63e4ecc6e60478a9fe1243502c563fde8a4225f4 0\tHexGroebner/Symbolic.lean\n100644 e913dadfab239c7cbf008ed02ac6958f93bd985b 0\tHexGroebner/ffi/row_update.c\n100644 e1c8548e65b441376b48eae434cf1e87090c1cc6 0\tHexGroebner/ffi/row_update_selftest.c\n100644 29dbf397b3f9f8f549a0c571ab3c7d5bd4cda751 0\tHexGroebnerNative.lean\n100644 d1d13c28648c2967bfcd1dc1850520fb7ee2c3be 0\tHexModArith.lean\n100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0\tHexModArith/.keep\n100644 783a952afe16bfe30297e839b0f2bd3a4f63d597 0\tHexModArith/Field.lean\n100644 ce0d15dc25c16520746c52cd82bc71ca692f9bec 0\tHexModArith/HotLoop.lean\n100644 fb3181c6324603a94713301f35402eb64a802894 0\tHexModArith/Modulus.lean\n100644 9b5389e653f39aa062619b14e430909d28987de6 0\tHexModArith/Ntt/Butterfly.lean\n100644 ab4a4b723e6a6460b3487e25c527097451e6df6d 0\tHexModArith/Ntt/Catalogue.lean\n100644 4d68a5cddf67990cbc7e0bb7ac7ffcec3b70d1a8 0\tHexModArith/Ntt/Convolution.lean\n100644 7ec5e278225bee41282981d8d24612e9856a76d4 0\tHexModArith/Ntt/CrtInput.lean\n100644 3e3f8efb7eaaab2dd0541640ebce94bd88a7f30f 0\tHexModArith/Ntt/Dft.lean\n100644 cb9bbdaf9fb43a9298d5abbc227306c7df2cb265 0\tHexModArith/Ntt/Plan.lean\n100644 1b6811d3246c9cc87a060b849d896fcfa7d0450b 0\tHexModArith/Ntt/Transform.lean\n100644 a3adefb685a093ee5fe08b599a994cca28e1dee4 0\tHexModArith/Prime.lean\n100644 84724fc5d4bde4c805589644ce66f60686138ca6 0\tHexModArith/Residue.lean\n100644 25d77491b7f1d9cde974c883e5907ce7874a617c 0\tHexModArith/Ring.lean\n100644 791c19eed7a203e0ebc8c8fce0265aebf88f30e6 0\tHexModArith/WordMod.lean\n100644 91c212edac6c78aba684763e418fdecebcae98c8 0\tHexModArith/ffi/zmod64_mul.c\n100644 f0c5cb0dc0fe6e155345b1b89feb87cecbcec480 0\tHexModArithNative.lean\n100644 ce26c08134acf1e4955b402475adf17503c20db5 0\tHexMvPoly.lean\n100644 4c7b6c5c6e305803741d263d1e484c290b311a07 0\tHexMvPoly/Basic.lean\n100644 0544964365b30be63440a959cfc772797fdf8aa8 0\tHexMvPoly/Eval.lean\n100644 8a8db39c5553ac0789968d3c3fbe1a0efd176510 0\tHexMvPoly/Kernel.lean\n100644 662d2828023e199e4ae5afe903014b741dd085bc 0\tHexMvPoly/KernelMap.lean\n100644 6c2b365ecd644efa5874323d691dad780fb4c261 0\tHexMvPoly/KernelResidue.lean\n100644 df95e5f9e86d3e548eecb87bed05db589a894a40 0\tHexMvPoly/KernelResidue/Denote.lean\n100644 ef8f1c8658b3836cd78b0a8e2ffe1da7d3c9f794 0\tHexMvPoly/KernelResidueTests.lean\n100644 25de47487c689375d49c24bff7b4132c41125330 0\tHexMvPoly/KernelTests.lean\n100644 5895e7b38746a875f688d4ab4e4bfef5e1a5ca2d 0\tHexMvPoly/Mono.lean\n100644 7e4ed420ebb0330cd73d39331eab81342421503c 0\tHexMvPoly/Operations.lean\n100644 d883be27d56d40b492b6cf15f1c2d1f55bd0e631 0\tHexMvPoly/Query.lean\n100644 878b46daacfad8e5b3689a95c546626e00d03d19 0\tHexMvPoly/Recursive.lean\n100644 566d5374887cbea4f97bfd5d4b632c81c33f069f 0\tHexMvPoly/Ring.lean\n100644 6554e8619333ca502ff739e63adfa79e4c32ca34 0\tHexMvPoly/Structural.lean\n100644 ab035255b06a2e8688c2cbb399bff51255f653ac 0\tbench/HexGroebner/Bench.lean\n100644 3a8ccef5afb55a841cb4de7f60817cd68145c45a 0\tlake-manifest.json\n100644 8d0600f8ee3907e104bbb09a809319fa3e1e1e9d 0\tlakefile.lean\n100644 f0e00b3338bac0d6f050d9a64e277314a9f7830f 0\tlean-toolchain\n100755 55c23ce4d6ce734aeab72436cccdb271c7d5d300 0\tscripts/bench/groebner_measure.py\n",
+    "suite_sha256": "59cec100d5b9dc6977e61f7b7f747ca26e987584811ab41a445dbd020e567e0b",
+    "cpu": 7,
+    "threads": 1,
+    "host": "chungus2",
+    "load_start": [
+      0.40625,
+      1.0,
+      3.39599609375
+    ],
+    "binary_sha256": "23c099c4be5d74b374ef2edf69e6aae71c6b4410eb37a8143f0548afde0adb6f",
+    "driver_sha256": "6ac1b13b7331cc2a87cdabc4fb3c5c0af881b427fd3fd5921b7124fb7aea6918",
+    "script": "import ctypes,hashlib,json,os,pathlib,resource,select,signal,subprocess,sys,time\nsys.path.insert(0,'/home/kim/worktrees/hex-dev/hex-dev-issue-10987')\nfrom scripts.bench.cpu_lease import cpu_lease\nfrom scripts.bench.groebner_measure import FAMILY\nfrom scripts.bench.sweep_freshness import fingerprint,index_listing\nlisting=index_listing(FAMILY);fp=fingerprint(listing)\nROOT=pathlib.Path(__file__).resolve().parent\nOUT=ROOT/f'batch256-records-{fp}';OUT.mkdir(exist_ok=False)\nplan=json.loads((ROOT/'diagnostic-suite.json').read_text()); protocol=plan['protocol']\nbinary=ROOT/'.lake/build/bin/f4_compare'; sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()\ncpu,lease=cpu_lease();os.sched_setaffinity(0,{cpu});env=dict(os.environ,OMP_NUM_THREADS='1',OPENBLAS_NUM_THREADS='1')\nmeta=dict(source_fingerprint=fp,source_manifest=listing,suite_sha256=sha(ROOT/'diagnostic-suite.json'),cpu=cpu,threads=1,host=os.uname().nodename,load_start=os.getloadavg(),binary_sha256=sha(binary),driver_sha256=sha(ROOT/'Main.lean'),script=pathlib.Path(__file__).read_text(),contract='same binary and limits; A batchSize64; B batchSize256; both native monomials and shared final reductions; unchecked canonical reduced candidate output; whole process and internal candidate time recorded separately; certification and kernel checking excluded',schedule='two blocks, adjacent AB then BA per input; retain every completed sample',samples=[])\ndef limits():\n os.setsid()\n resource.setrlimit(resource.RLIMIT_AS,(protocol['address_space_bytes'],)*2)\n resource.setrlimit(resource.RLIMIT_FSIZE,(64*1024**2,)*2)\ntry:\n for block,order in enumerate(['AB','BA']):\n  for case in plan['cases']:\n   outputs={}\n   for arm in order:\n    prefix=f\"{case['name']}-b{block}-{arm}\"\n    command=[str(binary),str(ROOT/(case['name']+'.json'))]+(['--batch256'] if arm=='B' else [])\n    start=time.monotonic_ns()\n    with (OUT/(prefix+'.stdout')).open('wb') as stdout,(OUT/(prefix+'.stderr')).open('wb') as stderr:\n     proc=subprocess.Popen(command,stdout=stdout,stderr=stderr,env=env,preexec_fn=limits)\n     libc=ctypes.CDLL(None,use_errno=True)\n     libc.pidfd_open.argtypes=[ctypes.c_int,ctypes.c_uint];libc.pidfd_open.restype=ctypes.c_int\n     fd=libc.pidfd_open(proc.pid,0)\n     if fd<0: raise OSError(ctypes.get_errno(),'pidfd_open')\n     ready,_,_=select.select([fd],[],[],10)\n     if not ready:os.killpg(proc.pid,signal.SIGKILL)\n     _,status,usage=os.wait4(proc.pid,0);proc.returncode=os.waitstatus_to_exitcode(status)\n     os.close(fd)\n    elapsed=time.monotonic_ns()-start\n    record=dict(case=case['name'],family=case['family'],p=case['p'],block=block,arm=arm,command=command,wall_nanos=elapsed,returncode=proc.returncode,peak_rss_kib=usage.ru_maxrss,status='timeout' if not ready else 'ok' if proc.returncode==0 else 'failed')\n    if proc.returncode==0:\n     data=json.loads((OUT/(prefix+'.stdout')).read_text());outputs[arm]=data['basis'];record['statistics']={k:v for k,v in data.items() if k!='basis'}\n    meta['samples'].append(record);print(prefix,record['status'],round(elapsed/1e6,2),flush=True)\n   if len(outputs)==2 and outputs['A']!=outputs['B']:raise RuntimeError('complete basis mismatch '+case['name'])\n   for arm in order:meta['samples'][-2 if arm==order[0] else -1]['complete_basis_equal']=len(outputs)==2 and outputs['A']==outputs['B']\nfinally:\n meta['load_end']=os.getloadavg();(OUT/'metadata.json').write_text(json.dumps(meta,indent=2)+'\\n');lease.close()\n",
+    "contract": "same binary and limits; A batchSize64; B batchSize256; both native monomials and shared final reductions; unchecked canonical reduced candidate output; whole process and internal candidate time recorded separately; certification and kernel checking excluded",
+    "schedule": "two blocks, adjacent AB then BA per input; retain every completed sample",
+    "samples": [
+      {
+        "case": "cyclic5-15",
+        "family": "cyclic",
+        "p": 32003,
+        "block": 0,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/cyclic5-15.json"
+        ],
+        "wall_nanos": 28217539,
+        "returncode": 0,
+        "peak_rss_kib": 72000,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 116052,
+          "candidate_nanos": 3803526,
+          "matrix_calls": 16,
+          "matrix_entries": 9401,
+          "pairs": 903,
+          "rounds": 14,
+          "work": 279627
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "cyclic5-15",
+        "family": "cyclic",
+        "p": 32003,
+        "block": 0,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/cyclic5-15.json",
+          "--batch256"
+        ],
+        "wall_nanos": 25188380,
+        "returncode": 0,
+        "peak_rss_kib": 72064,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 116052,
+          "candidate_nanos": 3749557,
+          "matrix_calls": 16,
+          "matrix_entries": 9401,
+          "pairs": 903,
+          "rounds": 14,
+          "work": 279627
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "cyclic5-31",
+        "family": "cyclic",
+        "p": 2147483647,
+        "block": 0,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/cyclic5-31.json"
+        ],
+        "wall_nanos": 26764114,
+        "returncode": 0,
+        "peak_rss_kib": 72000,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 132536,
+          "candidate_nanos": 3823015,
+          "matrix_calls": 16,
+          "matrix_entries": 9401,
+          "pairs": 903,
+          "rounds": 14,
+          "work": 282164
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "cyclic5-31",
+        "family": "cyclic",
+        "p": 2147483647,
+        "block": 0,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/cyclic5-31.json",
+          "--batch256"
+        ],
+        "wall_nanos": 26548175,
+        "returncode": 0,
+        "peak_rss_kib": 72064,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 132536,
+          "candidate_nanos": 3838909,
+          "matrix_calls": 16,
+          "matrix_entries": 9401,
+          "pairs": 903,
+          "rounds": 14,
+          "work": 282164
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "cyclic6-15",
+        "family": "cyclic",
+        "p": 32003,
+        "block": 0,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/cyclic6-15.json"
+        ],
+        "wall_nanos": 50911031,
+        "returncode": 0,
+        "peak_rss_kib": 74120,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 1051600,
+          "candidate_nanos": 29426891,
+          "matrix_calls": 24,
+          "matrix_entries": 101451,
+          "pairs": 7021,
+          "rounds": 22,
+          "work": 3064618
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "cyclic6-15",
+        "family": "cyclic",
+        "p": 32003,
+        "block": 0,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/cyclic6-15.json",
+          "--batch256"
+        ],
+        "wall_nanos": 50764875,
+        "returncode": 0,
+        "peak_rss_kib": 74116,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 1051600,
+          "candidate_nanos": 29335616,
+          "matrix_calls": 24,
+          "matrix_entries": 101451,
+          "pairs": 7021,
+          "rounds": 22,
+          "work": 3064618
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "cyclic6-31",
+        "family": "cyclic",
+        "p": 2147483647,
+        "block": 0,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/cyclic6-31.json"
+        ],
+        "wall_nanos": 54837190,
+        "returncode": 0,
+        "peak_rss_kib": 74116,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 1205812,
+          "candidate_nanos": 30170272,
+          "matrix_calls": 24,
+          "matrix_entries": 101451,
+          "pairs": 7021,
+          "rounds": 22,
+          "work": 3073816
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "cyclic6-31",
+        "family": "cyclic",
+        "p": 2147483647,
+        "block": 0,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/cyclic6-31.json",
+          "--batch256"
+        ],
+        "wall_nanos": 53923455,
+        "returncode": 0,
+        "peak_rss_kib": 74116,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 1205812,
+          "candidate_nanos": 30107550,
+          "matrix_calls": 24,
+          "matrix_entries": 101451,
+          "pairs": 7021,
+          "rounds": 22,
+          "work": 3073816
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "kat6-15",
+        "family": "kat",
+        "p": 32003,
+        "block": 0,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/kat6-15.json"
+        ],
+        "wall_nanos": 25870401,
+        "returncode": 0,
+        "peak_rss_kib": 74116,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 184756,
+          "candidate_nanos": 4491176,
+          "matrix_calls": 8,
+          "matrix_entries": 17796,
+          "pairs": 276,
+          "rounds": 6,
+          "work": 400403
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "kat6-15",
+        "family": "kat",
+        "p": 32003,
+        "block": 0,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/kat6-15.json",
+          "--batch256"
+        ],
+        "wall_nanos": 25517928,
+        "returncode": 0,
+        "peak_rss_kib": 74052,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 184756,
+          "candidate_nanos": 4466139,
+          "matrix_calls": 8,
+          "matrix_entries": 17796,
+          "pairs": 276,
+          "rounds": 6,
+          "work": 400403
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "kat6-31",
+        "family": "kat",
+        "p": 2147483647,
+        "block": 0,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/kat6-31.json"
+        ],
+        "wall_nanos": 27706962,
+        "returncode": 0,
+        "peak_rss_kib": 74052,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 210232,
+          "candidate_nanos": 4606577,
+          "matrix_calls": 8,
+          "matrix_entries": 17796,
+          "pairs": 276,
+          "rounds": 6,
+          "work": 402623
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "kat6-31",
+        "family": "kat",
+        "p": 2147483647,
+        "block": 0,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/kat6-31.json",
+          "--batch256"
+        ],
+        "wall_nanos": 27733862,
+        "returncode": 0,
+        "peak_rss_kib": 74116,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 210232,
+          "candidate_nanos": 4576943,
+          "matrix_calls": 8,
+          "matrix_entries": 17796,
+          "pairs": 276,
+          "rounds": 6,
+          "work": 402623
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "eco10-15",
+        "family": "eco",
+        "p": 32003,
+        "block": 0,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/eco10-15.json"
+        ],
+        "wall_nanos": 2148669095,
+        "returncode": 0,
+        "peak_rss_kib": 98408,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 66202774,
+          "candidate_nanos": 2104590671,
+          "matrix_calls": 40,
+          "matrix_entries": 8867016,
+          "pairs": 43071,
+          "rounds": 38,
+          "work": 295082444
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "eco10-15",
+        "family": "eco",
+        "p": 32003,
+        "block": 0,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/eco10-15.json",
+          "--batch256"
+        ],
+        "wall_nanos": 1590957970,
+        "returncode": 0,
+        "peak_rss_kib": 98636,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 37767218,
+          "candidate_nanos": 1544648539,
+          "matrix_calls": 22,
+          "matrix_entries": 4588163,
+          "pairs": 42195,
+          "rounds": 20,
+          "work": 212486341
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "eco10-31",
+        "family": "eco",
+        "p": 2147483647,
+        "block": 0,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/eco10-31.json"
+        ],
+        "wall_nanos": 2189292579,
+        "returncode": 0,
+        "peak_rss_kib": 98528,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 76053704,
+          "candidate_nanos": 2141368825,
+          "matrix_calls": 40,
+          "matrix_entries": 8867017,
+          "pairs": 43071,
+          "rounds": 38,
+          "work": 295269558
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "eco10-31",
+        "family": "eco",
+        "p": 2147483647,
+        "block": 0,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/eco10-31.json",
+          "--batch256"
+        ],
+        "wall_nanos": 1635901326,
+        "returncode": 0,
+        "peak_rss_kib": 98628,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 43230288,
+          "candidate_nanos": 1587661364,
+          "matrix_calls": 22,
+          "matrix_entries": 4588298,
+          "pairs": 42195,
+          "rounds": 20,
+          "work": 212599725
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "noon4-15",
+        "family": "noon",
+        "p": 32003,
+        "block": 0,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/noon4-15.json"
+        ],
+        "wall_nanos": 27517702,
+        "returncode": 0,
+        "peak_rss_kib": 74116,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 105846,
+          "candidate_nanos": 3436463,
+          "matrix_calls": 9,
+          "matrix_entries": 8903,
+          "pairs": 378,
+          "rounds": 7,
+          "work": 206382
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "noon4-15",
+        "family": "noon",
+        "p": 32003,
+        "block": 0,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/noon4-15.json",
+          "--batch256"
+        ],
+        "wall_nanos": 25562494,
+        "returncode": 0,
+        "peak_rss_kib": 74052,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 105846,
+          "candidate_nanos": 3378207,
+          "matrix_calls": 9,
+          "matrix_entries": 8903,
+          "pairs": 378,
+          "rounds": 7,
+          "work": 206382
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "noon4-31",
+        "family": "noon",
+        "p": 2147483647,
+        "block": 0,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/noon4-31.json"
+        ],
+        "wall_nanos": 26622355,
+        "returncode": 0,
+        "peak_rss_kib": 74052,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 121012,
+          "candidate_nanos": 3432928,
+          "matrix_calls": 9,
+          "matrix_entries": 8903,
+          "pairs": 378,
+          "rounds": 7,
+          "work": 209147
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "noon4-31",
+        "family": "noon",
+        "p": 2147483647,
+        "block": 0,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/noon4-31.json",
+          "--batch256"
+        ],
+        "wall_nanos": 26390711,
+        "returncode": 0,
+        "peak_rss_kib": 74052,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 121012,
+          "candidate_nanos": 3426438,
+          "matrix_calls": 9,
+          "matrix_entries": 8903,
+          "pairs": 378,
+          "rounds": 7,
+          "work": 209147
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "reimer5-15",
+        "family": "reimer",
+        "p": 32003,
+        "block": 0,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/reimer5-15.json"
+        ],
+        "wall_nanos": 181621917,
+        "returncode": 0,
+        "peak_rss_kib": 76100,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 7806580,
+          "candidate_nanos": 159395275,
+          "matrix_calls": 28,
+          "matrix_entries": 999582,
+          "pairs": 18336,
+          "rounds": 26,
+          "work": 16955030
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "reimer5-15",
+        "family": "reimer",
+        "p": 32003,
+        "block": 0,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/reimer5-15.json",
+          "--batch256"
+        ],
+        "wall_nanos": 176520576,
+        "returncode": 0,
+        "peak_rss_kib": 78148,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 7387722,
+          "candidate_nanos": 153628199,
+          "matrix_calls": 26,
+          "matrix_entries": 936387,
+          "pairs": 18528,
+          "rounds": 24,
+          "work": 16439505
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "reimer5-31",
+        "family": "reimer",
+        "p": 2147483647,
+        "block": 0,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/reimer5-31.json"
+        ],
+        "wall_nanos": 187740865,
+        "returncode": 0,
+        "peak_rss_kib": 76164,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 9016892,
+          "candidate_nanos": 162938026,
+          "matrix_calls": 28,
+          "matrix_entries": 999582,
+          "pairs": 18336,
+          "rounds": 26,
+          "work": 16986935
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "reimer5-31",
+        "family": "reimer",
+        "p": 2147483647,
+        "block": 0,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/reimer5-31.json",
+          "--batch256"
+        ],
+        "wall_nanos": 181803445,
+        "returncode": 0,
+        "peak_rss_kib": 78148,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 8534572,
+          "candidate_nanos": 157222606,
+          "matrix_calls": 26,
+          "matrix_entries": 936388,
+          "pairs": 18528,
+          "rounds": 24,
+          "work": 16469697
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "minrank_d_2_p_2_q_3_r_2-15",
+        "family": "minrank",
+        "p": 32003,
+        "block": 0,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/minrank_d_2_p_2_q_3_r_2-15.json"
+        ],
+        "wall_nanos": 21857513,
+        "returncode": 0,
+        "peak_rss_kib": 72004,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 8948,
+          "candidate_nanos": 288437,
+          "matrix_calls": 4,
+          "matrix_entries": 768,
+          "pairs": 10,
+          "rounds": 2,
+          "work": 7913
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "minrank_d_2_p_2_q_3_r_2-15",
+        "family": "minrank",
+        "p": 32003,
+        "block": 0,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/minrank_d_2_p_2_q_3_r_2-15.json",
+          "--batch256"
+        ],
+        "wall_nanos": 21111437,
+        "returncode": 0,
+        "peak_rss_kib": 72068,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 8948,
+          "candidate_nanos": 279024,
+          "matrix_calls": 4,
+          "matrix_entries": 768,
+          "pairs": 10,
+          "rounds": 2,
+          "work": 7913
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "minrank_d_2_p_2_q_3_r_2-31",
+        "family": "minrank",
+        "p": 2147483647,
+        "block": 0,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/minrank_d_2_p_2_q_3_r_2-31.json"
+        ],
+        "wall_nanos": 22820029,
+        "returncode": 0,
+        "peak_rss_kib": 72000,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 10372,
+          "candidate_nanos": 286304,
+          "matrix_calls": 4,
+          "matrix_entries": 768,
+          "pairs": 10,
+          "rounds": 2,
+          "work": 8248
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "minrank_d_2_p_2_q_3_r_2-31",
+        "family": "minrank",
+        "p": 2147483647,
+        "block": 0,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/minrank_d_2_p_2_q_3_r_2-31.json",
+          "--batch256"
+        ],
+        "wall_nanos": 22757827,
+        "returncode": 0,
+        "peak_rss_kib": 72064,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 10372,
+          "candidate_nanos": 289810,
+          "matrix_calls": 4,
+          "matrix_entries": 768,
+          "pairs": 10,
+          "rounds": 2,
+          "work": 8248
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "quadratic5-32003",
+        "family": "dense-quadratic",
+        "p": 32003,
+        "block": 0,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/quadratic5-32003.json"
+        ],
+        "wall_nanos": 24824540,
+        "returncode": 0,
+        "peak_rss_kib": 72068,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 195202,
+          "candidate_nanos": 3963353,
+          "matrix_calls": 7,
+          "matrix_entries": 19560,
+          "pairs": 210,
+          "rounds": 5,
+          "work": 355018
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "quadratic5-32003",
+        "family": "dense-quadratic",
+        "p": 32003,
+        "block": 0,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/quadratic5-32003.json",
+          "--batch256"
+        ],
+        "wall_nanos": 24940412,
+        "returncode": 0,
+        "peak_rss_kib": 72068,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 195202,
+          "candidate_nanos": 3973158,
+          "matrix_calls": 7,
+          "matrix_entries": 19560,
+          "pairs": 210,
+          "rounds": 5,
+          "work": 355018
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "quadratic5-2147483647",
+        "family": "dense-quadratic",
+        "p": 2147483647,
+        "block": 0,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/quadratic5-2147483647.json"
+        ],
+        "wall_nanos": 26979944,
+        "returncode": 0,
+        "peak_rss_kib": 74116,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 222840,
+          "candidate_nanos": 4082240,
+          "matrix_calls": 7,
+          "matrix_entries": 19560,
+          "pairs": 210,
+          "rounds": 5,
+          "work": 356889
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "quadratic5-2147483647",
+        "family": "dense-quadratic",
+        "p": 2147483647,
+        "block": 0,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/quadratic5-2147483647.json",
+          "--batch256"
+        ],
+        "wall_nanos": 27197046,
+        "returncode": 0,
+        "peak_rss_kib": 74120,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 222840,
+          "candidate_nanos": 4127087,
+          "matrix_calls": 7,
+          "matrix_entries": 19560,
+          "pairs": 210,
+          "rounds": 5,
+          "work": 356889
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "cyclic5-15",
+        "family": "cyclic",
+        "p": 32003,
+        "block": 1,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/cyclic5-15.json",
+          "--batch256"
+        ],
+        "wall_nanos": 24706796,
+        "returncode": 0,
+        "peak_rss_kib": 72064,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 116052,
+          "candidate_nanos": 3747624,
+          "matrix_calls": 16,
+          "matrix_entries": 9401,
+          "pairs": 903,
+          "rounds": 14,
+          "work": 279627
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "cyclic5-15",
+        "family": "cyclic",
+        "p": 32003,
+        "block": 1,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/cyclic5-15.json"
+        ],
+        "wall_nanos": 24567980,
+        "returncode": 0,
+        "peak_rss_kib": 72000,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 116052,
+          "candidate_nanos": 3723649,
+          "matrix_calls": 16,
+          "matrix_entries": 9401,
+          "pairs": 903,
+          "rounds": 14,
+          "work": 279627
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "cyclic5-31",
+        "family": "cyclic",
+        "p": 2147483647,
+        "block": 1,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/cyclic5-31.json",
+          "--batch256"
+        ],
+        "wall_nanos": 26729543,
+        "returncode": 0,
+        "peak_rss_kib": 72068,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 132536,
+          "candidate_nanos": 3786101,
+          "matrix_calls": 16,
+          "matrix_entries": 9401,
+          "pairs": 903,
+          "rounds": 14,
+          "work": 282164
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "cyclic5-31",
+        "family": "cyclic",
+        "p": 2147483647,
+        "block": 1,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/cyclic5-31.json"
+        ],
+        "wall_nanos": 26549777,
+        "returncode": 0,
+        "peak_rss_kib": 72004,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 132536,
+          "candidate_nanos": 3816266,
+          "matrix_calls": 16,
+          "matrix_entries": 9401,
+          "pairs": 903,
+          "rounds": 14,
+          "work": 282164
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "cyclic6-15",
+        "family": "cyclic",
+        "p": 32003,
+        "block": 1,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/cyclic6-15.json",
+          "--batch256"
+        ],
+        "wall_nanos": 50951091,
+        "returncode": 0,
+        "peak_rss_kib": 74056,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 1051600,
+          "candidate_nanos": 29508382,
+          "matrix_calls": 24,
+          "matrix_entries": 101451,
+          "pairs": 7021,
+          "rounds": 22,
+          "work": 3064618
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "cyclic6-15",
+        "family": "cyclic",
+        "p": 32003,
+        "block": 1,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/cyclic6-15.json"
+        ],
+        "wall_nanos": 51044820,
+        "returncode": 0,
+        "peak_rss_kib": 74116,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 1051600,
+          "candidate_nanos": 29551636,
+          "matrix_calls": 24,
+          "matrix_entries": 101451,
+          "pairs": 7021,
+          "rounds": 22,
+          "work": 3064618
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "cyclic6-31",
+        "family": "cyclic",
+        "p": 2147483647,
+        "block": 1,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/cyclic6-31.json",
+          "--batch256"
+        ],
+        "wall_nanos": 53823498,
+        "returncode": 0,
+        "peak_rss_kib": 74052,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 1205812,
+          "candidate_nanos": 30265413,
+          "matrix_calls": 24,
+          "matrix_entries": 101451,
+          "pairs": 7021,
+          "rounds": 22,
+          "work": 3073816
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "cyclic6-31",
+        "family": "cyclic",
+        "p": 2147483647,
+        "block": 1,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/cyclic6-31.json"
+        ],
+        "wall_nanos": 53820343,
+        "returncode": 0,
+        "peak_rss_kib": 74052,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 1205812,
+          "candidate_nanos": 30023966,
+          "matrix_calls": 24,
+          "matrix_entries": 101451,
+          "pairs": 7021,
+          "rounds": 22,
+          "work": 3073816
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "kat6-15",
+        "family": "kat",
+        "p": 32003,
+        "block": 1,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/kat6-15.json",
+          "--batch256"
+        ],
+        "wall_nanos": 26086911,
+        "returncode": 0,
+        "peak_rss_kib": 74120,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 184756,
+          "candidate_nanos": 4474531,
+          "matrix_calls": 8,
+          "matrix_entries": 17796,
+          "pairs": 276,
+          "rounds": 6,
+          "work": 400403
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "kat6-15",
+        "family": "kat",
+        "p": 32003,
+        "block": 1,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/kat6-15.json"
+        ],
+        "wall_nanos": 25766687,
+        "returncode": 0,
+        "peak_rss_kib": 74116,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 184756,
+          "candidate_nanos": 4498938,
+          "matrix_calls": 8,
+          "matrix_entries": 17796,
+          "pairs": 276,
+          "rounds": 6,
+          "work": 400403
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "kat6-31",
+        "family": "kat",
+        "p": 2147483647,
+        "block": 1,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/kat6-31.json",
+          "--batch256"
+        ],
+        "wall_nanos": 27908261,
+        "returncode": 0,
+        "peak_rss_kib": 74052,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 210232,
+          "candidate_nanos": 4589322,
+          "matrix_calls": 8,
+          "matrix_entries": 17796,
+          "pairs": 276,
+          "rounds": 6,
+          "work": 402623
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "kat6-31",
+        "family": "kat",
+        "p": 2147483647,
+        "block": 1,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/kat6-31.json"
+        ],
+        "wall_nanos": 27741513,
+        "returncode": 0,
+        "peak_rss_kib": 74052,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 210232,
+          "candidate_nanos": 4607058,
+          "matrix_calls": 8,
+          "matrix_entries": 17796,
+          "pairs": 276,
+          "rounds": 6,
+          "work": 402623
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "eco10-15",
+        "family": "eco",
+        "p": 32003,
+        "block": 1,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/eco10-15.json",
+          "--batch256"
+        ],
+        "wall_nanos": 1586323591,
+        "returncode": 0,
+        "peak_rss_kib": 98640,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 37767218,
+          "candidate_nanos": 1542642084,
+          "matrix_calls": 22,
+          "matrix_entries": 4588163,
+          "pairs": 42195,
+          "rounds": 20,
+          "work": 212486341
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "eco10-15",
+        "family": "eco",
+        "p": 32003,
+        "block": 1,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/eco10-15.json"
+        ],
+        "wall_nanos": 2137579459,
+        "returncode": 0,
+        "peak_rss_kib": 98556,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 66202774,
+          "candidate_nanos": 2091638163,
+          "matrix_calls": 40,
+          "matrix_entries": 8867016,
+          "pairs": 43071,
+          "rounds": 38,
+          "work": 295082444
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "eco10-31",
+        "family": "eco",
+        "p": 2147483647,
+        "block": 1,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/eco10-31.json",
+          "--batch256"
+        ],
+        "wall_nanos": 1636397701,
+        "returncode": 0,
+        "peak_rss_kib": 98692,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 43230288,
+          "candidate_nanos": 1588142526,
+          "matrix_calls": 22,
+          "matrix_entries": 4588298,
+          "pairs": 42195,
+          "rounds": 20,
+          "work": 212599725
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "eco10-31",
+        "family": "eco",
+        "p": 2147483647,
+        "block": 1,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/eco10-31.json"
+        ],
+        "wall_nanos": 2189255973,
+        "returncode": 0,
+        "peak_rss_kib": 98464,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 76053704,
+          "candidate_nanos": 2141866651,
+          "matrix_calls": 40,
+          "matrix_entries": 8867017,
+          "pairs": 43071,
+          "rounds": 38,
+          "work": 295269558
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "noon4-15",
+        "family": "noon",
+        "p": 32003,
+        "block": 1,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/noon4-15.json",
+          "--batch256"
+        ],
+        "wall_nanos": 27489500,
+        "returncode": 0,
+        "peak_rss_kib": 74116,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 105846,
+          "candidate_nanos": 3430875,
+          "matrix_calls": 9,
+          "matrix_entries": 8903,
+          "pairs": 378,
+          "rounds": 7,
+          "work": 206382
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "noon4-15",
+        "family": "noon",
+        "p": 32003,
+        "block": 1,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/noon4-15.json"
+        ],
+        "wall_nanos": 25828378,
+        "returncode": 0,
+        "peak_rss_kib": 74116,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 105846,
+          "candidate_nanos": 3390094,
+          "matrix_calls": 9,
+          "matrix_entries": 8903,
+          "pairs": 378,
+          "rounds": 7,
+          "work": 206382
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "noon4-31",
+        "family": "noon",
+        "p": 2147483647,
+        "block": 1,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/noon4-31.json",
+          "--batch256"
+        ],
+        "wall_nanos": 26773469,
+        "returncode": 0,
+        "peak_rss_kib": 74052,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 121012,
+          "candidate_nanos": 3486437,
+          "matrix_calls": 9,
+          "matrix_entries": 8903,
+          "pairs": 378,
+          "rounds": 7,
+          "work": 209147
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "noon4-31",
+        "family": "noon",
+        "p": 2147483647,
+        "block": 1,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/noon4-31.json"
+        ],
+        "wall_nanos": 26757074,
+        "returncode": 0,
+        "peak_rss_kib": 74052,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 121012,
+          "candidate_nanos": 3473247,
+          "matrix_calls": 9,
+          "matrix_entries": 8903,
+          "pairs": 378,
+          "rounds": 7,
+          "work": 209147
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "reimer5-15",
+        "family": "reimer",
+        "p": 32003,
+        "block": 1,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/reimer5-15.json",
+          "--batch256"
+        ],
+        "wall_nanos": 176146992,
+        "returncode": 0,
+        "peak_rss_kib": 78152,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 7387722,
+          "candidate_nanos": 153207735,
+          "matrix_calls": 26,
+          "matrix_entries": 936387,
+          "pairs": 18528,
+          "rounds": 24,
+          "work": 16439505
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "reimer5-15",
+        "family": "reimer",
+        "p": 32003,
+        "block": 1,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/reimer5-15.json"
+        ],
+        "wall_nanos": 183497896,
+        "returncode": 0,
+        "peak_rss_kib": 76104,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 7806580,
+          "candidate_nanos": 160253217,
+          "matrix_calls": 28,
+          "matrix_entries": 999582,
+          "pairs": 18336,
+          "rounds": 26,
+          "work": 16955030
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "reimer5-31",
+        "family": "reimer",
+        "p": 2147483647,
+        "block": 1,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/reimer5-31.json",
+          "--batch256"
+        ],
+        "wall_nanos": 182474389,
+        "returncode": 0,
+        "peak_rss_kib": 78148,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 8534572,
+          "candidate_nanos": 157432717,
+          "matrix_calls": 26,
+          "matrix_entries": 936388,
+          "pairs": 18528,
+          "rounds": 24,
+          "work": 16469697
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "reimer5-31",
+        "family": "reimer",
+        "p": 2147483647,
+        "block": 1,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/reimer5-31.json"
+        ],
+        "wall_nanos": 187771530,
+        "returncode": 0,
+        "peak_rss_kib": 76100,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 9016892,
+          "candidate_nanos": 162677540,
+          "matrix_calls": 28,
+          "matrix_entries": 999582,
+          "pairs": 18336,
+          "rounds": 26,
+          "work": 16986935
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "minrank_d_2_p_2_q_3_r_2-15",
+        "family": "minrank",
+        "p": 32003,
+        "block": 1,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/minrank_d_2_p_2_q_3_r_2-15.json",
+          "--batch256"
+        ],
+        "wall_nanos": 22003620,
+        "returncode": 0,
+        "peak_rss_kib": 72004,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 8948,
+          "candidate_nanos": 289880,
+          "matrix_calls": 4,
+          "matrix_entries": 768,
+          "pairs": 10,
+          "rounds": 2,
+          "work": 7913
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "minrank_d_2_p_2_q_3_r_2-15",
+        "family": "minrank",
+        "p": 32003,
+        "block": 1,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/minrank_d_2_p_2_q_3_r_2-15.json"
+        ],
+        "wall_nanos": 21455887,
+        "returncode": 0,
+        "peak_rss_kib": 72004,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 8948,
+          "candidate_nanos": 284152,
+          "matrix_calls": 4,
+          "matrix_entries": 768,
+          "pairs": 10,
+          "rounds": 2,
+          "work": 7913
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "minrank_d_2_p_2_q_3_r_2-31",
+        "family": "minrank",
+        "p": 2147483647,
+        "block": 1,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/minrank_d_2_p_2_q_3_r_2-31.json",
+          "--batch256"
+        ],
+        "wall_nanos": 23059144,
+        "returncode": 0,
+        "peak_rss_kib": 72000,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 10372,
+          "candidate_nanos": 289860,
+          "matrix_calls": 4,
+          "matrix_entries": 768,
+          "pairs": 10,
+          "rounds": 2,
+          "work": 8248
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "minrank_d_2_p_2_q_3_r_2-31",
+        "family": "minrank",
+        "p": 2147483647,
+        "block": 1,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/minrank_d_2_p_2_q_3_r_2-31.json"
+        ],
+        "wall_nanos": 23211139,
+        "returncode": 0,
+        "peak_rss_kib": 72064,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 10372,
+          "candidate_nanos": 293825,
+          "matrix_calls": 4,
+          "matrix_entries": 768,
+          "pairs": 10,
+          "rounds": 2,
+          "work": 8248
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "quadratic5-32003",
+        "family": "dense-quadratic",
+        "p": 32003,
+        "block": 1,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/quadratic5-32003.json",
+          "--batch256"
+        ],
+        "wall_nanos": 25132517,
+        "returncode": 0,
+        "peak_rss_kib": 72068,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 195202,
+          "candidate_nanos": 4001160,
+          "matrix_calls": 7,
+          "matrix_entries": 19560,
+          "pairs": 210,
+          "rounds": 5,
+          "work": 355018
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "quadratic5-32003",
+        "family": "dense-quadratic",
+        "p": 32003,
+        "block": 1,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/quadratic5-32003.json"
+        ],
+        "wall_nanos": 25110114,
+        "returncode": 0,
+        "peak_rss_kib": 72008,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 195202,
+          "candidate_nanos": 4017324,
+          "matrix_calls": 7,
+          "matrix_entries": 19560,
+          "pairs": 210,
+          "rounds": 5,
+          "work": 355018
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "quadratic5-2147483647",
+        "family": "dense-quadratic",
+        "p": 2147483647,
+        "block": 1,
+        "arm": "B",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/quadratic5-2147483647.json",
+          "--batch256"
+        ],
+        "wall_nanos": 27227331,
+        "returncode": 0,
+        "peak_rss_kib": 74052,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 222840,
+          "candidate_nanos": 4067488,
+          "matrix_calls": 7,
+          "matrix_entries": 19560,
+          "pairs": 210,
+          "rounds": 5,
+          "work": 356889
+        },
+        "complete_basis_equal": true
+      },
+      {
+        "case": "quadratic5-2147483647",
+        "family": "dense-quadratic",
+        "p": 2147483647,
+        "block": 1,
+        "arm": "A",
+        "command": [
+          "/tmp/hex-groebner-compare/.lake/build/bin/f4_compare",
+          "/tmp/hex-groebner-compare/quadratic5-2147483647.json"
+        ],
+        "wall_nanos": 27457152,
+        "returncode": 0,
+        "peak_rss_kib": 74120,
+        "status": "ok",
+        "statistics": {
+          "allocated_bytes": 222840,
+          "candidate_nanos": 4097724,
+          "matrix_calls": 7,
+          "matrix_entries": 19560,
+          "pairs": 210,
+          "rounds": 5,
+          "work": 356889
+        },
+        "complete_basis_equal": true
+      }
+    ],
+    "load_end": [
+      0.63818359375,
+      1.01513671875,
+      3.34912109375
+    ]
+  },
+  "cases": [
+    {
+      "case": "cyclic5-15",
+      "paired_B_over_A": 0.9474668876157679,
+      "blocks": [
+        0.8926497806913636,
+        1.005650281382515
+      ]
+    },
+    {
+      "case": "cyclic5-31",
+      "paired_B_over_A": 0.9993237944475659,
+      "blocks": [
+        0.9919317710274287,
+        1.006770904328123
+      ]
+    },
+    {
+      "case": "cyclic6-15",
+      "paired_B_over_A": 0.997646354959127,
+      "blocks": [
+        0.9971291879749989,
+        0.9981637901749874
+      ]
+    },
+    {
+      "case": "cyclic6-31",
+      "paired_B_over_A": 0.9916627228805941,
+      "blocks": [
+        0.9833373117769164,
+        1.0000586209567635
+      ]
+    },
+    {
+      "case": "kat6-15",
+      "paired_B_over_A": 0.9993167362947657,
+      "blocks": [
+        0.9863754334538533,
+        1.0124278297788147
+      ]
+    },
+    {
+      "case": "kat6-31",
+      "paired_B_over_A": 1.0034876611546069,
+      "blocks": [
+        1.0009708751179578,
+        1.006010775259446
+      ]
+    },
+    {
+      "case": "eco10-15",
+      "paired_B_over_A": 0.7412749809956942,
+      "blocks": [
+        0.7404388017225146,
+        0.7421121045680856
+      ]
+    },
+    {
+      "case": "eco10-31",
+      "paired_B_over_A": 0.7473478826612767,
+      "blocks": [
+        0.7472282789846336,
+        0.7474675054820554
+      ]
+    },
+    {
+      "case": "noon4-15",
+      "paired_B_over_A": 0.9943296355768558,
+      "blocks": [
+        0.9289472645644611,
+        1.064313833412226
+      ]
+    },
+    {
+      "case": "noon4-31",
+      "paired_B_over_A": 0.9959449257669428,
+      "blocks": [
+        0.9912988914767308,
+        1.0006127351593077
+      ]
+    },
+    {
+      "case": "reimer5-15",
+      "paired_B_over_A": 0.9659076628350151,
+      "blocks": [
+        0.9719123050551217,
+        0.959940118332474
+      ]
+    },
+    {
+      "case": "reimer5-31",
+      "paired_B_over_A": 0.9700804079344151,
+      "blocks": [
+        0.9683743866845399,
+        0.9717894347455123
+      ]
+    },
+    {
+      "case": "minrank_d_2_p_2_q_3_r_2-15",
+      "paired_B_over_A": 0.9952503902673469,
+      "blocks": [
+        0.9658663819621198,
+        1.025528331688175
+      ]
+    },
+    {
+      "case": "minrank_d_2_p_2_q_3_r_2-31",
+      "paired_B_over_A": 0.9953611009710684,
+      "blocks": [
+        0.9972742365927756,
+        0.99345163544107
+      ]
+    },
+    {
+      "case": "quadratic5-32003",
+      "paired_B_over_A": 1.0027781380130585,
+      "blocks": [
+        1.0046676393600849,
+        1.0008921902943173
+      ]
+    },
+    {
+      "case": "quadratic5-2147483647",
+      "paired_B_over_A": 0.9998046159991543,
+      "blocks": [
+        1.008046792091192,
+        0.9916298310910032
+      ]
+    }
+  ],
+  "archive_sha256": "ebdddabe90120908dc8a851c8ba3699bc7f941909a96f19ce3a1d7e0a028f833"
+}

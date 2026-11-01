@@ -1,0 +1,11 @@
+Hex.Groebner.Bench.sparse    expected complexity: n    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=7f8a8b5-dirty, 2026-10-31T12:09:48Z, host=chungus2
+  param  per-call    repeats  C
+     32  203.260 µs  ×2^13    C=6351.879
+     64  378.413 µs  ×2^12    C=5912.709
+    128  760.340 µs  ×2^11    C=5940.157
+    256    1.525 ms  ×2^10    C=5958.495
+  verdict: consistent with declared complexity (cMin=5912.709, cMax=6351.879, β=-0.027)
+  per-spawn floor (harness self-measurement): 21.754 ms
+  peak RSS: 68_352 kB..68_360 kB (across 4 ok row(s))
+exported to reports/bench-results/hexgroebner-native-rows-1c423e2b8a95-b0-sparse-B.json

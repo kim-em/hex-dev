@@ -1,0 +1,11 @@
+Hex.Groebner.Bench.cauchyPortable    expected complexity: n * n * n    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=7f8a8b5-dirty, 2026-10-31T12:10:13Z, host=chungus2
+  param  per-call    repeats  C
+     64    1.587 ms  ×2^10    C=6.054
+    128   10.298 ms  ×2^7     C=4.911
+    256   73.761 ms  ×2^4     C=4.397
+    512  559.485 ms  ×2^1     C=4.168
+  verdict: inconclusive (cMin=4.168, cMax=6.054, β=-0.177, looks faster than declared by ~n^0.177)
+  per-spawn floor (harness self-measurement): 21.826 ms
+  peak RSS: 68_304 kB..80_556 kB (across 4 ok row(s))
+exported to reports/bench-results/hexgroebner-native-rows-1c423e2b8a95-b1-cauchy-A.json

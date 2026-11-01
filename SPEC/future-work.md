@@ -247,6 +247,14 @@ decomposition from irreducible factorization.
 
 ### Gröbner bases
 
+Finite-field F4 and its theory companion are specified in
+[hex-groebner](Libraries/hex-groebner.md). That contract includes packed
+storage, specialized sparse/dense elimination, useful `@[extern]` operations,
+independent certification and the continuing goal of the fastest open-source
+F4 implementation, ideally the fastest available. It also specifies repeated
+optimization as Lean compiler and runtime capabilities improve. Rational
+reconstruction and the downstream ideal operations below extend that scope.
+
 A Hex Gröbner engine is justified only at the performance of the open-source
 industrial engines. Lean's `grind` already contains a Gröbner-basis-based
 commutative-ring solver for small ideal-membership goals, exposed as the

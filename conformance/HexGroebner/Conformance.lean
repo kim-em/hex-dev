@@ -1,0 +1,289 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+
+import HexGroebner.Fixtures
+
+/-!
+Oracle: independent Python modular RREF and derivation replay.
+Mode: always (no optional dependencies).
+Covered operations: packed read/write, canonical sparse construction,
+deterministic Macaulay elimination with and without provenance.
+Covered properties: monic echelon shape, reducer/target rank split, canonical
+residues, packed widths, shared budgets and exact boundary acceptance.
+Covered edge cases: empty matrices, zero columns/rows, rank defects, later
+reducer pivots, characteristic two, 8/16/32-bit boundaries, maximal prime,
+malformed lengths/columns/residues, every exhaustion category, direct sparse
+installation, unordered reducer tails, scan-block extension, and clustered and
+spread supports over 100,000 columns.
+-/
+
+namespace Hex.Groebner.Conformance
+open Fixtures
+
+private def field : PrimeField := ⟨7, Hex.Nat.isPrimeTrial_isPrime (by decide), by decide⟩
+
+local instance : ZMod64.PrimeModulus 2 := ⟨Hex.Nat.isPrimeTrial_isPrime (by decide)⟩
+#guard (PrimeField.ofZMod64 2).modulus == 2
+
+private def typical : Case :=
+  ⟨"typical", 3, #[#[0, 2, 2]], #[#[2, 2, 0], #[0, 0, 0], #[0, 4, 4]]⟩
+
+private def shape (field : PrimeField) (e : Echelon) : Bool := Id.run do
+  let mut previous : Option Nat := none
+  for pivot in e.rows do
+    let entries := pivot.row.entries field
+    if entries.isEmpty || entries[0]!.2 != 1 then return false
+    let column := entries[0]!.1
+    if let some p := previous then
+      if column ≤ p then return false
+    previous := some column
+    if entries.any (fun (_, c) => c == 0 || c ≥ field.modulus) then return false
+  return e.reducerRank == (e.rows.filter (!·.fromTarget)).size
+
+#guard fields.map (·.width) == #[.u8, .u8, .u8, .u16, .u16, .u32, .u32]
+
+#guard (SparseRow.ofEntries field 4 #[(0, 3), (3, 6)]).map (·.entries field) ==
+  some #[(0, 3), (3, 6)]
+#guard (SparseRow.ofEntries field 0 #[]).isSome
+#guard (SparseRow.ofEntries field (2 ^ 32) #[]).isNone
+#guard (SparseRow.ofEntries field 4 #[(1, 0)]).isNone
+#guard (SparseRow.ofEntries field 4 #[(1, 7)]).isNone
+#guard (SparseRow.ofEntries field 4 #[(4, 1)]).isNone
+#guard (SparseRow.ofEntries field 4 #[(2, 1), (2, 3)]).isNone
+#guard (SparseRow.ofEntries field 4 #[(2, 1), (1, 3)]).isNone
+
+#guard (Packed.read .u32 (Packed.push .u32 {} 4294967295) 0).toNat == 4294967295
+#guard (Packed.push .u32 {} 0x12345678).data.toList == [0x78, 0x56, 0x34, 0x12]
+#guard Packed.read .u32 ⟨#[0x78, 0x56, 0x34, 0x12]⟩ 0 == 0x12345678
+#guard (Packed.read .u16 (Packed.set .u16 (Packed.push .u16 {} 65535) 0 256) 0) == 256
+-- Downstream ordinary-kernel evaluation of the literal byte encoding.
+/-- Literal storage decoding reduces in the ordinary downstream kernel. -/
+theorem decode_literal :
+    (Packed.read .u16 (Packed.push .u16 {} 65535) 0).toNat = 65535 := by decide
+
+/-- info: 'Hex.Groebner.Conformance.decode_literal' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms decode_literal
+
+private def summary : Except String (Array (Array (Nat × UInt64)) × Nat × Nat) := do
+  let r ← run field typical
+  match r.result with
+  | .error e => throw (reprStr e)
+  | .ok e => pure (e.rows.map (·.row.entries field), e.reducerRank, r.stats.zeroRows)
+
+/-- info: Except.ok (#[#[(0, 1), (2, 6)], #[(1, 1), (2, 1)]], 1, 2) -/
+#guard_msgs in #eval summary
+
+#guard fields.all fun field => (cases field).all fun c =>
+  match run field c with
+  | .ok ⟨.ok e, _⟩ => shape field e
+  | _ => false
+
+#guard fields.all fun field => (cases field).all fun c =>
+  match run field c {} false, run field c {} true with
+  | .ok ⟨.ok a, sa⟩, .ok ⟨.ok b, sb⟩ =>
+    a.rows.map (·.row.entries field) == b.rows.map (·.row.entries field) &&
+      a.trace.isEmpty && sa.traceNodes == 0 && b.trace.size == sb.traceNodes &&
+      sb.packedBytes == sa.packedBytes + 64 * sb.traceNodes
+  | _, _ => false
+
+private def same (field : PrimeField) (a b : MatrixResult) : Bool :=
+  a.stats == b.stats && match a.result, b.result with
+  | .error a, .error b => a == b
+  | .ok a, .ok b =>
+    let rows := fun (e : Echelon) => e.rows.map fun p =>
+      (p.row.entries field, p.fromTarget, p.derivation, p.multiplier, p.sugar)
+    rows a == rows b && a.reducerRank == b.reducerRank && a.trace == b.trace
+  | _, _ => false
+
+#guard fields.all fun field => (cases field).all fun c =>
+  [true, false].all fun provenance =>
+    match run field c {} provenance true, run field c {} provenance false with
+    | .ok a, .ok b => same field a b
+    | _, _ => false
+
+private def independent : Bool := Id.run do
+  for field in fields do
+    for c in cases field do
+      let .ok reducers := sparse field c.columns c.reducers | return false
+      let .ok targets := sparse field c.columns c.targets | return false
+      for provenance in [false, true] do
+        let native := reduceRowsWith field {} c.columns reducers targets provenance #[] true
+        let portable := reduceRowsWith field {} c.columns reducers targets provenance #[] false
+        if native.stats != portable.stats then return false
+        let .ok a := native.result | return false
+        let .ok b := portable.result | return false
+        let values := fun (e : Remainders) => e.rows.map fun r =>
+          (r.row.entries field, r.derivation, r.sugar)
+        if values a != values b || a.trace != b.trace || a.rows.size != targets.size then return false
+  let some reducer := SparseRow.ofEntries field 3 #[(0, 1), (2, 2)] | return false
+  let some target := SparseRow.ofEntries field 3 #[(0, 3), (1, 4), (2, 1)] | return false
+  let result := reduceRowsWith field {} 3 #[reducer] #[target, target, {}, reducer] true
+  let .ok rows := result.result | return false
+  if rows.rows.map (·.row.entries field) != #[#[(1, 4), (2, 2)], #[(1, 4), (2, 2)], #[], #[]] then
+    return false
+  let .ok labeled := (reduceRowsWith field {} 3 #[reducer] #[target, target, {}, reducer]
+    true #[7, 2, 3, 11, 5]).result | return false
+  if labeled.rows.map (·.sugar) != #[7, 7, 11, 7] then return false
+  let stats := result.stats
+  let limits : MatrixLimits := {
+    columns := 3, rows := 5, inputEntries := stats.inputEntries
+    outputEntries := stats.outputEntries, packedBytes := stats.packedBytes
+    work := stats.work, traceNodes := stats.traceNodes }
+  let exact := reduceRowsWith field limits 3 #[reducer] #[target, target, {}, reducer] true
+  if exact.stats != stats then return false
+  let .ok _ := exact.result | return false
+  for resource in [Resource.work, .packedBytes, .outputEntries, .traceNodes, .rows, .columns, .inputEntries] do
+    let limits := match resource with
+      | .work => { limits with work := stats.work - 1 }
+      | .packedBytes => { limits with packedBytes := stats.packedBytes - 1 }
+      | .outputEntries => { limits with outputEntries := stats.outputEntries - 1 }
+      | .traceNodes => { limits with traceNodes := stats.traceNodes - 1 }
+      | .rows => { limits with rows := 4 }
+      | .columns => { limits with columns := 2 }
+      | .inputEntries => { limits with inputEntries := stats.inputEntries - 1 }
+    let failed := reduceRowsWith field limits 3 #[reducer] #[target, target, {}, reducer] true
+    if failed.stats.work > limits.work || failed.stats.packedBytes > limits.packedBytes then return false
+    if resource == .work && failed.stats.processedRows == 0 then return false
+    match failed.result with
+    | .error (.exhausted r) => if r != resource then return false
+    | _ => return false
+  return true
+
+#guard independent
+
+private def chunks : Bool := Id.run do
+  let entries := (Array.range 5000).map fun i => (i, (1 : UInt64))
+  let targets := (entries.map fun (i, _) => (i, (2 : UInt64))).push (5000, 3)
+  let some reducer := SparseRow.ofEntries field 5001 entries | return false
+  let some target := SparseRow.ofEntries field 5001 targets | return false
+  let native := eliminateWith field {} 5001 #[reducer] #[target] true #[] true
+  let portable := eliminateWith field {} 5001 #[reducer] #[target] true #[] false
+  if !same field native portable then return false
+  match native.result with
+  | .error _ => return false
+  | .ok echelon =>
+    return echelon.reducerRank == 1 && echelon.rows.size == 2 &&
+      echelon.rows[1]!.row.entries field == #[(5000, 1)]
+
+#guard chunks
+
+private def fails (limits : MatrixLimits) (resource : Resource) : Bool :=
+  match run field typical limits with
+  | .ok r => match r.result with
+    | .error e => e == .exhausted resource
+    | _ => false
+  | _ => false
+
+#guard fails { columns := 2 } .columns
+#guard fails { rows := 3 } .rows
+#guard fails { inputEntries := 1 } .inputEntries
+#guard fails { outputEntries := 1 } .outputEntries
+#guard fails { packedBytes := 1 } .packedBytes
+#guard fails { work := 0 } .work
+#guard fails { traceNodes := 0 } .traceNodes
+
+-- Inclusive boundaries, also ensuring nested inversion and validation work
+-- contribute to the same counters as the outer call.
+#guard match run field typical with
+  | .ok r =>
+    let s := r.stats
+    let limits : MatrixLimits := {
+      work := s.work, packedBytes := s.packedBytes
+      inputEntries := s.inputEntries, outputEntries := s.outputEntries
+      columns := 3, rows := 4
+      traceNodes := s.traceNodes }
+    match run field typical limits with
+    | .ok ⟨.ok _, t⟩ => t.work == s.work &&
+      fails { limits with work := s.work - 1 } .work &&
+      fails { limits with packedBytes := s.packedBytes - 1 } .packedBytes &&
+      fails { limits with traceNodes := s.traceNodes - 1 } .traceNodes &&
+      fails { limits with inputEntries := s.inputEntries - 1 } .inputEntries &&
+      fails { limits with outputEntries := s.outputEntries - 1 } .outputEntries &&
+      fails { limits with columns := 2 } .columns &&
+      fails { limits with rows := 3 } .rows
+    | _ => false
+  | _ => false
+
+-- Exact work boundaries also exercise active ranges crossing 64-column blocks.
+#guard (cases field).all fun c => match run field c with
+  | .ok ⟨.ok _, s⟩ =>
+    match run field c { work := s.work } with
+    | .ok ⟨.ok _, t⟩ => t.work == s.work && (s.work == 0 ||
+      match run field c { work := s.work - 1 } with
+      | .ok ⟨.error (.exhausted .work), _⟩ => true
+      | _ => false)
+    | _ => false
+  | _ => false
+
+private def rejects (row : SparseRow) (error : MatrixError) : Bool :=
+  match (eliminateWith field {} 3 #[] #[row]).result with
+  | .error e => e == error
+  | _ => false
+
+#guard rejects ⟨ByteArray.empty.push 0, {}⟩ (.rowLength 0)
+#guard rejects ⟨Packed.push .u32 {} 0, {}⟩ (.rowLength 0)
+#guard rejects ⟨Packed.push .u32 {} 3, ByteArray.empty.push 1⟩ (.column 0 0)
+#guard rejects ⟨Packed.push .u32 {} 0, ByteArray.empty.push 0⟩ (.coefficient 0 0)
+#guard rejects ⟨Packed.push .u32 {} 0, ByteArray.empty.push 7⟩ (.coefficient 0 0)
+#guard rejects ⟨Packed.push .u32 (Packed.push .u32 {} 1) 1,
+  (ByteArray.empty.push 1).push 2⟩ (.column 0 1)
+#guard match (eliminateWith field {} (2 ^ 32) #[] #[]).result with
+  | .error e => e == .dimensions
+  | _ => false
+
+-- Normalization scalars and sugar propagate through actual row updates.
+#guard match Fixtures.sparse field 2 #[#[1, 1]], Fixtures.sparse field 2 #[#[3, 5]] with
+  | .ok reducers, .ok targets =>
+    match (eliminateWith field {} 2 reducers targets false #[100, 2]).result with
+    | .ok e =>
+      let target := e.rows.filter (·.fromTarget)
+      target.size == 1 && target[0]!.sugar == 100 && target[0]!.multiplier == 4
+    | _ => false
+  | _, _ => false
+#guard match (eliminateWith field {} 0 #[] #[] false #[1]).result with
+  | .error e => e == .dimensions
+  | _ => false
+
+-- Wrong coefficient widths are rejected before any out-of-range read.
+#guard fields.all fun f =>
+  let row : SparseRow := ⟨Packed.push .u32 {} 0,
+    Packed.push (if f.width == .u8 then .u16 else .u8) {} 1⟩
+  match (eliminateWith f {} 3 #[] #[row]).result with
+  | .error e => e == .rowLength 0
+  | _ => false
+
+-- Both exhaustion and malformed data retain already charged work.
+#guard match run field typical { work := 20 } with
+  | .ok ⟨.error (.exhausted .work), s⟩ => s.work > 0 && s.work ≤ 20
+  | _ => false
+#guard let r := eliminateWith field {} 3 #[{}] #[⟨Packed.push .u32 {} 0, ByteArray.empty.push 7⟩]
+  match r.result with
+  | .error e => e == .coefficient 1 0 && r.stats.work > 0 && r.stats.inputEntries == 1
+  | _ => false
+
+-- Sparse known pivots must not cost rows*columns scans. The work allowance
+-- covers workspace setup, one final column scan and the actual short supports.
+#guard match (Array.range 64).mapM (fun i =>
+    SparseRow.ofEntries field 100000 #[(90000 + i, 1)]) with
+  | some rows =>
+    let r := eliminateWith field { work := 610000 } 100000 rows rows
+    match r.result with
+    | .ok e => e.rows.size == 64 && r.stats.zeroRows == 64
+    | _ => false
+  | none => false
+
+-- Wide tails retain a dense-interval cost; pin a valid spread-support result
+-- under an explicit allowance without asserting a linear sparse-work claim.
+#guard match (Array.range 64).mapM (fun i => SparseRow.ofEntries field 100000
+    #[(50000 + i * 4, 2), (50001 + i * 4, 1), (99999, 1)]) with
+  | some rows =>
+    let r := eliminateWith field { work := 4000000 } 100000 rows rows
+    match r.result with
+    | .ok e => e.rows.size == 64 && r.stats.zeroRows == 64
+    | _ => false
+  | none => false
+
+end Hex.Groebner.Conformance

@@ -32,6 +32,14 @@ noncomputable def residueEquiv :
   (HexMvPolyTheory.equiv (cmp := cmp)).trans
     (MvPolynomial.mapEquiv (Fin n) HexModArithTheory.ZMod64.equiv)
 
+/-- Residue transport preserves the coefficient of each existing monomial. -/
+theorem residueEquiv_coeff (a : MvPoly n (Hex.ZMod64 p) cmp) (m : Mono n) :
+    (residueEquiv p (cmp := cmp) a).coeff (HexMvPolyTheory.monoEquiv m) =
+      HexModArithTheory.ZMod64.equiv (a.coeff m) := by
+  rw [residueEquiv, RingEquiv.trans_apply, MvPolynomial.mapEquiv_apply,
+    HexMvPolyTheory.equiv_apply, MvPolynomial.coeff_map, HexMvPolyTheory.coeff_toMvPolynomial]
+  rfl
+
 /-- Mathlib denotation of the kernel's natural-residue encoding. -/
 @[expose] noncomputable def denoteMod (a : PolyList Nat) :
     MvPolynomial (Fin n) (ZMod p) :=

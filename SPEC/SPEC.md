@@ -63,6 +63,15 @@ implementation. For each approved extern, the corresponding library spec
 should state the intended contract, any fallback path, and any relevant
 platform assumptions.
 
+For `HexGroebner`, the operation families in
+[its native-operation contract](Libraries/hex-groebner.md#approved-native-operations-and-compiler-evolution)
+are explicit authorization for useful bindings within those families.
+Adding such a binding does not require a separate SPEC amendment or approval.
+The implementation PR must document its precise contract, fallback and
+platform assumptions with the Lean declaration and native implementation.
+The distinction between a pure implementation and an opaque candidate
+provider below still applies.
+
 **Property all `@[extern]` declarations must satisfy.** The C body of
 every `@[extern]` declaration must do work that is not equivalent to
 calling its Lean fallback. An `@[extern]` shim whose only effect is to
