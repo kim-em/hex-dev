@@ -28,9 +28,11 @@ def main():
     parser.add_argument("--suite", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--hex", type=Path, required=True)
+    parser.add_argument("--hex-scheduling", choices=["degree", "sugar"])
     parser.add_argument("--reference", type=Path)
     parser.add_argument("--baseline", type=Path)
     parser.add_argument("--baseline-manifest", type=Path)
+    parser.add_argument("--baseline-scheduling", choices=["degree", "sugar"])
     parser.add_argument("--msolve", type=Path)
     parser.add_argument("--msolve-source", type=Path)
     parser.add_argument("--msolve-mode", type=int, choices=[2, 42], default=2)
@@ -40,6 +42,8 @@ def main():
         parser.error("select exactly one of --reference, --baseline or --msolve")
     if bool(args.baseline) != bool(args.baseline_manifest):
         parser.error("--baseline and --baseline-manifest are required together")
+    if args.baseline_scheduling and not args.baseline:
+        parser.error("--baseline-scheduling requires --baseline")
     if args.msolve and not args.msolve_source:
         parser.error("--msolve requires --msolve-source for provenance")
     if not args.time:
@@ -145,6 +149,14 @@ def main():
         "B": (args.msolve if mode else args.hex).resolve(),
     }
     environments = {arm: dict(env) for arm in ["A", "B"]}
+    scheduling = {
+        "A": args.hex_scheduling
+        if mode
+        else args.baseline_scheduling
+        if args.baseline
+        else args.hex_scheduling,
+        "B": None if mode else args.hex_scheduling,
+    }
     if mode:
         library_path = str(args.msolve_source.resolve() / "src/neogb/.libs")
         inherited = environments["B"].get("LD_LIBRARY_PATH", "")
@@ -155,6 +167,7 @@ def main():
         **manifest,
         "cpu": cpu,
         "threads": 1,
+        "requested_scheduling": scheduling,
         "host": os.uname().nodename,
         "load_start": os.getloadavg(),
         "suite_sha256": sha(args.suite),
@@ -219,7 +232,7 @@ def main():
     }
     if args.baseline:
         m["contract"] = (
-            "Full unchecked reduced candidates from two separately frozen source snapshots; algorithm statistics may differ, but complete reduced bases and all field/order/batch/random-state metadata must agree. Candidate time includes canonicalization, F4 and final interreduction; process time additionally includes initialization, parse, full output and identical GNU-time wrappers. Certificate generation, independent final certification and kernel checking are excluded. One thread, matched resource caps, adjacent AB then BA; every completed sample retained."
+            "Full unchecked reduced candidates from two separately frozen source snapshots; algorithm statistics and explicit degree/sugar scheduling may differ, but complete reduced bases and all other field/order/batch/random-state metadata must agree. Requested and returned scheduling are retained for each arm; older baselines without that field use their archived source's default. Candidate time includes canonicalization, F4 and final interreduction; process time additionally includes initialization, parse, full output and identical GNU-time wrappers. Certificate generation, independent final certification and kernel checking are excluded. One thread, matched resource caps, adjacent AB then BA; every completed sample retained."
         )
     if mode:
         ms = args.msolve_source.resolve()
@@ -284,6 +297,11 @@ def main():
                         else [
                             str(binaries[arm]),
                             *cliargs,
+                            *(
+                                ["--scheduling", scheduling[arm]]
+                                if scheduling[arm]
+                                else []
+                            ),
                             str(root / (case["name"] + ".json")),
                         ]
                     )
@@ -357,13 +375,34 @@ def main():
                                     (out / (prefix + ".stdout")).read_text()
                                 )
                                 assert payload["kind"] == "unchecked_candidate"
+                                selected = payload.get("scheduling")
+                                if selected is None:
+                                    assert (
+                                        args.baseline
+                                        and arm == "A"
+                                        and scheduling[arm] is None
+                                    ), "missing scheduling metadata"
+                                else:
+                                    assert selected in ["degree", "sugar"], (
+                                        "invalid scheduling metadata"
+                                    )
+                                if scheduling[arm] is not None:
+                                    assert selected == scheduling[arm], (
+                                        "requested scheduling was ignored"
+                                    )
+                                record["scheduling"] = selected
                                 bases[arm] = canonical(payload["basis"])
                                 results[arm] = {
                                     k: v
                                     for k, v in payload.items()
                                     if k
                                     not in (
-                                        ["basis", "candidateNanos", "statistics"]
+                                        [
+                                            "basis",
+                                            "candidateNanos",
+                                            "statistics",
+                                            "scheduling",
+                                        ]
                                         if args.baseline
                                         else ["basis", "candidateNanos"]
                                     )

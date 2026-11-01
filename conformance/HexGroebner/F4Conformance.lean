@@ -195,7 +195,7 @@ private def queueAgreement : Bool := Id.run do
     let mut queue : PairQueue := {}
     let mut expected : Array (Nat × Nat × Nat) := #[]
     for i in [:300] do
-      let pair : CriticalPair := ⟨i % 17, i, 0, (i * 37) % 23⟩
+      let pair : CriticalPair := ⟨i % 17, i, 0, (i * 37) % 23, (i * 37) % 23⟩
       queue ← queue.push {} pair
       expected := expected.push (pair.sugar, pair.left, pair.right)
     let saved := queue
@@ -272,9 +272,9 @@ private def reducerLookup : Bool := Id.run do
 -- Pair-set regressions distinguish proper LCM dependencies from equality and
 -- from completed zero reductions. They test the queue state itself, not just
 -- monomial systems whose S-polynomials happen to vanish.
-private def pairCriteria : Bool := Id.run do
+private def pairCriteria (scheduling : Scheduling) : Bool := Id.run do
   let context : Context := ⟨field, 2, .grevlex⟩
-  let limits : Limits := {}
+  let limits : Limits := { scheduling }
   let setup (powers : Array (Array Nat)) : Computation (Array BasisElement) := do
     let mut basis := #[]
     for i in [:powers.size] do
@@ -286,7 +286,7 @@ private def pairCriteria : Bool := Id.run do
     let index ← ReducerIndex.build context limits basis
     let lcm ← Computation.combine limits .lcm (basis[0]!.polynomial.monomial 0)
       (basis[1]!.polynomial.monomial 0)
-    let pair : CriticalPair := ⟨0, 1, lcm, 0⟩
+    let pair : CriticalPair := ⟨0, 1, lcm, 0, 0⟩
     let queue ← ({} : PairQueue).push limits pair
     if (← queue.chain context limits index basis pair) != .proper then return false
     if (← queue.chain context { limits with gebauerMoller := false } index basis pair) != .keep then return false
@@ -297,7 +297,7 @@ private def pairCriteria : Bool := Id.run do
     let index ← ReducerIndex.build context limits basis
     let lcm ← Computation.combine limits .lcm (basis[0]!.polynomial.monomial 0)
       (basis[1]!.polynomial.monomial 0)
-    let pair : CriticalPair := ⟨0, 1, lcm, 0⟩
+    let pair : CriticalPair := ⟨0, 1, lcm, 0, 0⟩
     let queue ← ({} : PairQueue).install context limits basis 2
     if (← queue.chain context limits index basis pair) != .keep then return false
     let queue ← queue.resolve limits 1 2
@@ -319,8 +319,12 @@ private def pairCriteria : Bool := Id.run do
     for new in [:basis.size] do queue ← queue.install context limits basis new
     if queue.heap.size != 4 then return false
     let index ← ReducerIndex.build context limits basis
-    let (selected, remainder) ← queue.select context limits index basis
-    return selected.size == 3 && remainder.heap.isEmpty && remainder.resolved.isEmpty &&
+    let mut selectedCount := 0
+    for _ in [:4] do
+      let (selected, next) ← queue.select context limits index basis
+      selectedCount := selectedCount + selected.size
+      queue := next
+    return selectedCount == 3 && queue.heap.isEmpty && queue.resolved.isEmpty &&
       (← get).statistics.gmPairs == 3
   for trial in [proper, equal, product, dominated, multiple] do
     match trial.run ⟨{ arity := 2 }, {}⟩ with
@@ -328,7 +332,8 @@ private def pairCriteria : Bool := Id.run do
     | _ => return false
   return true
 
-#guard pairCriteria
+#guard pairCriteria .degree
+#guard pairCriteria .sugar
 
 private def strategyResume : Bool := Id.run do
   let context := { context with order := TermOrder.lex }
@@ -441,9 +446,9 @@ private def reimerBatch : Bool := Id.run do
         if i % 2 == 0 then 2 else field.modulus - 2⟩
     polynomial := polynomial.push ⟨Array.replicate 5 0, field.modulus - 1⟩
     generators := generators.push polynomial
-  let .candidate actual statistics := computeWith context { work := 1000000000 } generators
+  let .candidate actual statistics := computeWith context { work := 1000000000, scheduling := .sugar } generators
     | return false
-  let .candidate reference previous := computeWith context { work := 1000000000, batchSize := 64 } generators
+  let .candidate reference previous := computeWith context { work := 1000000000, batchSize := 64, scheduling := .sugar } generators
     | return false
   return actual.polynomials == reference.polynomials && actual.polynomials.size == 38 &&
     statistics == previous && actual.batchSize == 1024 && reference.batchSize == 64 &&
@@ -460,9 +465,9 @@ private def largeBatch : Bool := Id.run do
   for i in [1:14] do
     let exponents := (Array.replicate 14 0).set! 0 1 |>.set! i 1
     generators := generators.push #[⟨exponents,1⟩,⟨Array.replicate 14 0,1⟩]
-  let .candidate actual statistics := computeWith context { work := 1000000000 } generators
+  let .candidate actual statistics := computeWith context { work := 1000000000, scheduling := .sugar } generators
     | return false
-  let .candidate reference previous := computeWith context { work := 1000000000, batchSize := 64 } generators
+  let .candidate reference previous := computeWith context { work := 1000000000, batchSize := 64, scheduling := .sugar } generators
     | return false
   return actual.polynomials == reference.polynomials && actual.polynomials.size == 13 &&
     statistics.rounds < previous.rounds && statistics.matrixEntries < previous.matrixEntries &&

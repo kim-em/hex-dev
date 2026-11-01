@@ -12,7 +12,7 @@ public import HexGroebner.PairRows
 
 public section
 
-/-! Deterministic finite-prime-field F4 candidate production. Sugar batches use
+/-! Deterministic finite-prime-field F4 candidate production. Degree/sugar batches use
 symbolic preprocessing and joint Macaulay elimination. Candidates are explicitly
 unchecked; no constructor promotes one to a certified result. -/
 
@@ -191,6 +191,7 @@ structure Candidate where
   nativeMonomials : Bool
   gebauerMoller : Bool
   batchInterreduce : Bool
+  scheduling : Scheduling
 
 /-- A sealed resumable computation fixes its field, order, generators and random
 state. Ordinary callers cannot substitute incompatible metadata or fabricate a
@@ -203,6 +204,7 @@ structure ResumeState where
   workspace : Workspace
   checkpoint : F4.Checkpoint
   randomState : UInt64
+  scheduling : Scheduling
 
 /-- Candidate production distinguishes invalid input, internal matrix failures,
 representation exhaustion and consumed allowances. Only representation and
@@ -229,12 +231,14 @@ private def decode (state : ResumeState) (limits : Limits) : Computation Candida
     allocate limits (8 * g.polynomial.size * (state.context.variables + 1))
     polynomials := polynomials.push (g.polynomial.toRaw field (← get).table)
   return ⟨state.context, polynomials, state.randomState, limits.batchSize,
-    limits.nativeRows, limits.nativeMonomials, limits.gebauerMoller, limits.batchInterreduce⟩
+    limits.nativeRows, limits.nativeMonomials, limits.gebauerMoller, limits.batchInterreduce,
+    state.scheduling⟩
 
 /-- Resume under new absolute cumulative allowances. Used work is never reset;
 restarting an exhausted stage charges its work again. Identity is sealed inside
 the state, so resumption cannot change its field, order or generators. -/
 def resumeWith (limits : Limits) (initial : ResumeState) : ComputeResult := Id.run do
+  let limits := { limits with scheduling := initial.scheduling }
   let mut state := initial
   let statistics := state.workspace.statistics
   if statistics.work > limits.work then return fail state (.exhausted .work)
@@ -259,12 +263,13 @@ def resumeWith (limits : Limits) (initial : ResumeState) : ComputeResult := Id.r
     | .error error => return fail { state with workspace } error
   return fail state (.exhausted .rounds)
 
-/-- Deterministic finite-prime-field F4 with sugar batching, exact symbolic
+/-- Deterministic finite-prime-field F4 with explicit degree/sugar batching, exact symbolic
 closure, joint Macaulay elimination, product/chain criteria and final canonical
 interreduction. Success is explicitly an unchecked candidate. Deterministic
 execution consumes no random samples and returns the supplied state unchanged. -/
 def computeWith (context : Context) (limits : Limits) (generators : Array RawPolynomial)
     (randomState : UInt64 := 0) : ComputeResult :=
-  resumeWith limits ⟨context, generators, ⟨{ arity := context.variables }, {}⟩, {}, randomState⟩
+  resumeWith limits ⟨context, generators, ⟨{ arity := context.variables }, {}⟩, {}, randomState,
+    limits.scheduling⟩
 
 end Hex.Groebner

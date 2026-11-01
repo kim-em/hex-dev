@@ -5,8 +5,8 @@ Mathlib-free finite-field F4 under [the governing contract](../SPEC/Libraries/he
 `Hex.Groebner.computeWith` performs deterministic prime-field F4 candidate
 production. Its explicit context fixes the prime field, variable count and
 lawful lex, grlex or grevlex order. Raw terms are validated, repeated monomials
-combined, zero coefficients removed and supports sorted. Sugar-degree critical
-pairs are held in a persistent leftist heap; product and resolved-dependency chain criteria
+combined, zero coefficients removed and supports sorted. Critical pairs use
+explicit total-degree or sugar-degree batching and are held in a persistent leftist heap; product and resolved-dependency chain criteria
 discard unneeded pairs. Symbolic preprocessing closes a selected batch under a
 basis-specific divisibility trie and constructs one joint Macaulay matrix.
 The chain test visits indexed LCM divisors; final tail reductions share one
@@ -15,7 +15,7 @@ Joint matrix elimination stably orders targets by increasing support size before
 choosing new pivots, retaining original order for equal sizes. Sorting work is
 charged before the sort. Independent normal forms retain their input order;
 traced production moves each target's derivation root with its polynomial.
-Sugar pair scheduling and known reducer pivots keep their existing contracts.
+Known reducer pivots retain their contracts with either scheduling strategy.
 F4 checkpoints retain a `ReducerCache` of multiplied reducers from the same
 append-only monomial arena. Stable IDs survive exponent-width changes. Field/order metadata is checked before
 reuse, and the complete base payload identifies the basis polynomial. A cache
@@ -473,17 +473,27 @@ and termination proofs remain required.
 GM installation interns LCMs even for pairs later omitted by its criteria.
 Those stable monomials remain in the arena and count against `monomials` and
 `packedBytes`; a GM run can exhaust an allowance that suffices for the reference
-route. The strategy controls in `Limits` may be changed on resume, while all
-allowances remain absolute cumulative bounds.
+route. Native execution, pair criteria, final reduction and batch-cap controls
+may change on resume; allowances remain absolute cumulative bounds. Scheduling
+is fixed when the computation starts and retained by its sealed continuations.
 
-The default sugar-batch cap is 1024; `Limits.batchSize` permits smaller or
+`Limits.scheduling` defaults to `.degree`, selecting the actual critical-pair
+LCM total degree; `.sugar` selects the propagated sugar degree. Both use stable
+basis-index ties and process a whole priority class in bounded batches. A new
+inhomogeneous pair may have lower degree than an earlier batch. Sugar remains
+separate propagated metadata under both strategies. Pair coverage, final
+interreduction and independent certification remain required.
+
+The default batch cap is 1024; `Limits.batchSize` permits smaller or
 larger caps. Degree/sugar boundaries still separate batches, and all nested
 matrix/memory/work allowances remain in force. The retained
 [batch comparisons](../reports/bench-results/hexgroebner-batches.md) explain the
 choice and include failures, full output comparisons and variability.
 
 Candidates report the batch cap and implementation controls supplied at
-completion; earlier resumed stages may have used different controls.
+completion; earlier resumed stages may have used different controls. The
+reported scheduling strategy is the original retained choice. Checked results
+record that choice in `history.scheduling`.
 `Statistics.largestBatch` records the largest selected pair batch, while
 `peakMatrixRows` and `peakMatrixEntries` record maximum rows and logical
 validated input-plus-output entries of one matrix call, including failed calls.
@@ -528,7 +538,7 @@ zero/unit-ideal conventions apply, including ordinary polynomial semantics at
 characteristic two.
 
 Successful output has `kind: "unchecked_candidate"`, explicit field/order
-metadata, the complete candidate basis and cumulative statistics. It is not a
+metadata, `scheduling: "degree"` or `"sugar"`, the complete candidate basis and cumulative statistics. It is not a
 checked basis receipt. Use `certifyWith` or `basisWith` for checked results.
 Malformed input, exhausted allowances, representation exhaustion and internal
 matrix failures have distinct kinds: exit 2 is invalid input, 3 exhaustion,
@@ -539,7 +549,8 @@ text. On handled failure, no partial basis is
 reported as a completed candidate. The driver does not serialize resumable
 states; the library APIs retain that facility.
 
-`--help` lists resource options; options precede the input filename.
+`--help` lists options; options precede the input filename.
+`--scheduling degree` is the default; `--scheduling sugar` selects sugar batches.
 `--basis` and `--variables` adjust their corresponding bounds.
 `--batch-size 0` selects the effective minimum batch size one. Allowances are the same absolute cumulative
 `Limits` used by `computeWith`; for example `--work 1000000000` raises the work

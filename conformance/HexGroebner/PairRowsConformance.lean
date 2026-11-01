@@ -25,7 +25,7 @@ private def groupCheck (variables : Nat) (raw : Array RawPolynomial)
     let mut pairs := #[]
     for (a,b) in indices do
       let lcm ← combine {} .lcm (basis[a]!.polynomial.monomial 0) (basis[b]!.polynomial.monomial 0)
-      pairs := pairs.push (CriticalPair.mk a b lcm 3)
+      pairs := pairs.push (CriticalPair.mk a b lcm 3 3)
     let rows ← PairRows.prepare context {} basis pairs .empty
     if rows.reducers.map (·.basis) != expectedReducers || rows.targets.size != targetCount then return false
     let all := rows.reducers ++ rows.targets
@@ -77,7 +77,7 @@ private def invalidSeeds : Bool := Id.run do
     let g ← Polynomial.normalize context {} 1 #[⟨#[0,1],1⟩]
     let basis := #[BasisElement.mk f 1, BasisElement.mk g 1]
     let lcm ← combine {} .lcm (f.monomial 0) (g.monomial 0)
-    let rows ← PairRows.prepare context {} basis #[CriticalPair.mk 0 1 lcm 2] .empty
+    let rows ← PairRows.prepare context {} basis #[CriticalPair.mk 0 1 lcm 2 2] .empty
     let index ← ReducerIndex.build context {} basis
     let targets := rows.targets.map fun r => BasisElement.mk r.polynomial r.sugar
     let some seed := rows.reducers[0]? | return false
@@ -88,7 +88,7 @@ private def invalidSeeds : Bool := Id.run do
       catch
         | .matrix .dimensions => pure ()
         | _ => return false
-    for bad in [CriticalPair.mk 0 2 lcm 2, CriticalPair.mk 2 0 lcm 2] do
+    for bad in [CriticalPair.mk 0 2 lcm 2 2, CriticalPair.mk 2 0 lcm 2 2] do
       try
         let _ ← PairRows.prepare context {} basis #[bad] .empty
         return false
@@ -97,7 +97,7 @@ private def invalidSeeds : Bool := Id.run do
         | _ => return false
     try
       let _ ← PairRows.prepare context {} #[basis[0]!,BasisElement.mk {} 0]
-        #[CriticalPair.mk 0 1 lcm 2] .empty
+        #[CriticalPair.mk 0 1 lcm 2 2] .empty
       return false
     catch
       | .matrix .dimensions => pure ()

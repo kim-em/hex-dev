@@ -11,7 +11,7 @@ public import Std.Data.TreeSet
 
 public section
 
-/-! Critical pairs in a persistent leftist sugar-degree heap. Pair resolution is explicit:
+/-! Critical pairs in a persistent leftist degree/sugar heap. Pair resolution is explicit:
 the resolved chain criterion cites completed dependencies; Gebauer–Möller
 installation and proper-LCM chains retain a separate deferred-obligation contract. -/
 
@@ -24,6 +24,8 @@ structure CriticalPair where
   right : Nat
   lcm : Nat
   sugar : Nat
+  /-- Cached scheduling key, distinct from the propagated sugar label. -/
+  priority : Nat := sugar
   deriving Inhabited
 
 /-- Persistent leftist heap. Cached rank bounds the right spine; cached count
@@ -60,7 +62,7 @@ private def branch (pair : CriticalPair) (a b : PairHeap) : PairHeap :=
   else .node (rank a + 1) count pair b a
 
 private def before (a b : CriticalPair) : Bool :=
-  a.sugar < b.sugar || (a.sugar == b.sugar &&
+  a.priority < b.priority || (a.priority == b.priority &&
     (a.left < b.left || (a.left == b.left && a.right < b.right)))
 
 /-- Meld visits only the right spines. It preserves sharing with saved
@@ -77,7 +79,7 @@ decreasing_by all_goals simp_wf; omega
 
 end PairHeap
 
-/-- Sugar-ordered queue plus completed pair obligations. Pairs omitted by GM
+/-- Priority-ordered queue plus completed pair obligations. Pairs omitted by GM
 retain an implicit dependency on retained pairs smaller in the installation
 measure; they are deliberately absent from `resolved`. A complete producer
 proof must establish coverage by queued, completed or justified omitted pairs. -/
@@ -102,7 +104,7 @@ def push (limits : Limits) (queue : PairQueue) (pair : CriticalPair) : Computati
   spend limits (queue.heap.size.log2 + 2)
   return { queue with heap := queue.heap.meld (.node 1 1 pair .empty .empty) }
 
-/-- Remove the least sugar pair, sharing all untouched checkpoint subtrees. -/
+/-- Remove the least priority pair, sharing all untouched checkpoint subtrees. -/
 def pop (limits : Limits) (queue : PairQueue) : Computation (Option CriticalPair × PairQueue) := do
   match queue.heap with
   | .empty => return (none, queue)
@@ -134,7 +136,10 @@ private def installBuchberger (context : Context) (limits : Limits) (queue : Pai
       let table := (← get).table
       let sugar := max (basis[i]!.sugar + table.degree lcm - table.degree a)
         (basis[new]!.sugar + table.degree lcm - table.degree b)
-      queue ← queue.push limits ⟨i, new, lcm, sugar⟩
+      let priority := match limits.scheduling with
+        | .degree => table.degree lcm
+        | .sugar => sugar
+      queue ← queue.push limits ⟨i, new, lcm, sugar, priority⟩
   return queue
 
 /-- Install minimal new LCMs using the Gebauer–Möller strategy (Becker and
@@ -164,7 +169,10 @@ def install (context : Context) (limits : Limits) (queue : PairQueue)
     let product := coprime table a b
     let sugar := max (basis[i]!.sugar + table.degree lcm - table.degree a)
       (basis[new]!.sugar + table.degree lcm - table.degree b)
-    let pair : CriticalPair := ⟨i, new, lcm, sugar⟩
+    let priority := match limits.scheduling with
+      | .degree => table.degree lcm
+      | .sugar => sugar
+    let pair : CriticalPair := ⟨i, new, lcm, sugar, priority⟩
     if product then
       queue ← queue.resolve limits i new
       modify fun s => { s with statistics.productPairs := s.statistics.productPairs + 1 }
@@ -229,19 +237,19 @@ def chain (context : Context) (limits : Limits) (queue : PairQueue)
     if properLeft && properRight then return .proper
   return .keep
 
-/-- Select one fair sugar batch; batch size is bounded independently of degree.
+/-- Select one fair priority batch; batch size is bounded independently of degree.
 Only completed-dependency chains enter `resolved`. Proper-LCM omissions
 remain distinct; both classes are removed atomically with the checkpoint. -/
 def select (context : Context) (limits : Limits) (queue : PairQueue)
     (index : ReducerIndex) (basis : Array BasisElement) : Computation (Array CriticalPair × PairQueue) := do
   let mut queue := queue
   let mut selected := #[]
-  let mut sugar : Option Nat := none
+  let mut priority : Option Nat := none
   let count := queue.heap.size
   for _ in [:count] do
     if queue.heap.isEmpty || selected.size ≥ max 1 limits.batchSize then break
-    if let some d := sugar then
-      if queue.heap.first?.any (fun pair => pair.sugar != d) then break
+    if let some d := priority then
+      if queue.heap.first?.any (fun pair => pair.priority != d) then break
     let (pair, next) ← queue.pop limits
     queue := next
     if let some pair := pair then
@@ -252,7 +260,7 @@ def select (context : Context) (limits : Limits) (queue : PairQueue)
       | .proper =>
         modify fun s => { s with statistics.gmPairs := s.statistics.gmPairs + 1 }
       | .keep =>
-        sugar := some pair.sugar
+        priority := some pair.priority
         selected := selected.push pair
   return (selected, queue)
 
