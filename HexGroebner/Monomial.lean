@@ -122,6 +122,8 @@ def divides (table : @& MonomialTable) (a b : Nat) : Bool := Id.run do
   if a ≥ table.count || b ≥ table.count then return false
   if table.degree a > table.degree b || table.mask a &&& table.mask b != table.mask a then
     return false
+  if let some result := Native.Monomial.divides table.width.bytes.toUInt8 table.arity a b table.exponents then
+    return result
   for i in [:table.arity] do
     if table.exponent a i > table.exponent b i then return false
   return true
@@ -133,6 +135,8 @@ def compare (table : @& MonomialTable) (order : TermOrder) (a b : Nat) : Orderin
   if order != .lex then
     let d := Ord.compare (table.degree a) (table.degree b)
     if d != .eq then return d
+  if let some result := Native.Monomial.compare (order == .grevlex)
+      table.width.bytes.toUInt8 table.arity a b table.exponents then return result
   for k in [:table.arity] do
     let i := if order == .grevlex then table.arity - 1 - k else k
     let x := table.exponent a i

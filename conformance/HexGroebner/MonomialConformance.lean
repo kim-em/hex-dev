@@ -50,6 +50,35 @@ private def orderAgreement : Bool := Id.run do
         if t.compare order i j != order.cmp 3 a b then return false
   return true
 
+-- Exercise every exponent width through the actual table methods, including
+-- the portable dispatch beyond the 4096-coordinate native bound.
+def orderChecks : Bool := Id.run do
+  for n in [3,65,4096,4097] do
+    for base in [2,257,65537] do
+      let zero := Array.replicate n 0
+      let common := Array.replicate n base
+      let values := #[zero,common,common.set! 0 (base+1) |>.set! (n-1) (base-1),
+        common.set! (n-1) (base+1),zero.set! (n-1) (base+2),
+        (common.set! 0 (base+1)).set! 1 (base-1),
+        (common.set! (n-2) (base+1)).set! (n-1) (base-1)]
+      let mut table : MonomialTable := { arity := n }
+      for exponents in values do
+        let .ok (_, next) := table.intern (exponents.map Nat.toUInt64) 10 1000000 1000000000
+          | return false
+        table := next
+      if table.width != (if base < 256 then Width.u8 else if base < 65536 then .u16 else .u32) then return false
+      for i in [:values.size] do
+        for j in [:values.size] do
+          let a : Mono n := Vector.ofFn (fun k => values[i]![k.val]!)
+          let b : Mono n := Vector.ofFn (fun k => values[j]![k.val]!)
+          for order in [TermOrder.lex,.grlex,.grevlex] do
+            if table.compare order i j != order.cmp n a b then return false
+          let divides := (values[i]!.toList.zip values[j]!.toList).all (fun (x,y) => x ≤ y)
+          if table.divides i j != divides then return false
+  return true
+
+#guard orderChecks
+
 #guard campaign
 #guard orderAgreement
 
