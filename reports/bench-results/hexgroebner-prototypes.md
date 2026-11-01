@@ -132,3 +132,15 @@ only where the protocol explicitly records matched GNU-time wrappers; older
 
 - [prototype-sparse-targets-668abb190c63.tar.gz](raw/prototype-sparse-targets-668abb190c63.tar.gz): `0d3f5b42634afd01227d9ad899b6d5b5f0d2a4b23b65186d6256d53f91a46abb`.
 - [trie-validation-9e0ab9d9c2d6.tar.gz](raw/trie-validation-9e0ab9d9c2d6.tar.gz): `fd854c5b1b2a19d9564967430694bc41f7d58d3f5f9a59d7a895905c7a11db48`.
+
+A larger-window trie prototype (`9fdfe4b5fab1`) admits 8192 nodes and 16383
+charged visits. Its single CPU1 campaign has 64 successful processes and 32
+agreeing complete bases, with candidate/process ratios 1.0010/0.9913 against
+combined snapshot `a00d1a3e57a9`. All non-timing algorithm counters agree; these
+inputs do not exercise the newly admitted interval. Maximum read-only guard
+pages under Clang ASan/UBSan, the TrieConformance target, a 328-job core/bench
+build and a fresh 188-job driver build pass. No full conformance or independent
+oracle profile is claimed for this prototype. No unchanged repeat is used, and
+it is not selected.
+
+- [prototype-wide-trie-9fdfe4b5fab1.tar.gz](raw/prototype-wide-trie-9fdfe4b5fab1.tar.gz): `6f28f722540d475cb0a7b0fdee94ecefba16d36d95e15e8d5d435c5fa1a89449`.
