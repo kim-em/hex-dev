@@ -187,6 +187,8 @@ setup_benchmark cauchy8 n => n * n * n
     targetInnerNanos := 500000000
   }
 
+-- Full-rank Hilbert rows make sum_i sum_{j<i} (n-j) = (n^3-n)/3
+-- fixed-word entry updates. Validation, scans and result hashing take O(n^2).
 setup_benchmark cauchy16 n => n * n * n
   with prep := prepare16
   where {
@@ -197,6 +199,8 @@ setup_benchmark cauchy16 n => n * n * n
     targetInnerNanos := 500000000
   }
 
+-- The same (n^3-n)/3 entry updates, plus O(n^2) shared derivation nodes.
+-- Appending and hashing the actual trace each cost O(n^2) in total.
 setup_benchmark cauchy16Trace n => n * n * n
   with prep := prepare16
   where {
