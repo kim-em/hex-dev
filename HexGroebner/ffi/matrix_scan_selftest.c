@@ -37,23 +37,23 @@ static void check(uint32_t p,uint32_t factor) {
         expected[cols[k]]=(uint32_t)((expected[cols[k]]+(uint64_t)p-product)%p);
     }
     for(unsigned entry=0;entry<16;entry+=8)
-        assert(hex_scan8((uint8_t*)dense,(uint8_t*)cols,(uint8_t*)coeff,entry,128,p,f,inverse)==8);
+        assert(hex_scan8((uint8_t*)dense,(uint8_t*)cols,(uint8_t*)coeff,entry,128,p,f,inverse,4)==8);
     assert(memcmp(expected,dense,sizeof(dense))==0);
     for(unsigned bad=0;bad<8;++bad) {
         uint32_t saved=coeff[bad];coeff[bad]=p;
         memcpy(expected,dense,sizeof(dense));
-        assert(hex_scan8((uint8_t*)dense,(uint8_t*)cols,(uint8_t*)coeff,0,128,p,f,inverse)==0);
+        assert(hex_scan8((uint8_t*)dense,(uint8_t*)cols,(uint8_t*)coeff,0,128,p,f,inverse,4)==0);
         assert(memcmp(expected,dense,sizeof(dense))==0);coeff[bad]=saved;
         saved=dense[cols[bad]];dense[cols[bad]]=p;
         memcpy(expected,dense,sizeof(dense));
-        assert(hex_scan8((uint8_t*)dense,(uint8_t*)cols,(uint8_t*)coeff,0,128,p,f,inverse)==0);
+        assert(hex_scan8((uint8_t*)dense,(uint8_t*)cols,(uint8_t*)coeff,0,128,p,f,inverse,4)==0);
         assert(memcmp(expected,dense,sizeof(dense))==0);dense[cols[bad]]=saved;
     }
     uint32_t saved=cols[4];cols[4]=cols[3];memcpy(expected,dense,sizeof(dense));
-    assert(hex_scan8((uint8_t*)dense,(uint8_t*)cols,(uint8_t*)coeff,0,128,p,f,inverse)==0);
+    assert(hex_scan8((uint8_t*)dense,(uint8_t*)cols,(uint8_t*)coeff,0,128,p,f,inverse,4)==0);
     assert(memcmp(expected,dense,sizeof(dense))==0);cols[4]=saved;
     cols[7]=UINT32_MAX;
-    assert(hex_scan8((uint8_t*)dense,(uint8_t*)cols,(uint8_t*)coeff,0,128,p,f,inverse)==0);
+    assert(hex_scan8((uint8_t*)dense,(uint8_t*)cols,(uint8_t*)coeff,0,128,p,f,inverse,4)==0);
 }
 #if defined(__unix__) || defined(__APPLE__)
 struct guarded_buffer { uint8_t *mapping,*data;size_t page; };
@@ -83,22 +83,56 @@ static void check_guard_pages(uint32_t p,unsigned stride,unsigned at_end) {
             (uint64_t)factor*coefficients[i]%p)%p);
     memcpy(d.data,dense,sizeof(dense));memcpy(c.data,columns,sizeof(columns));
     memcpy(v.data,coefficients,sizeof(coefficients));
-    assert(hex_scan8(d.data,c.data,v.data,0,128,p,f,inverse)==8);
-    assert(hex_scan8(d.data,c.data,v.data,8,128,p,f,inverse)==8);
+    assert(hex_scan8(d.data,c.data,v.data,0,128,p,f,inverse,4)==8);
+    assert(hex_scan8(d.data,c.data,v.data,8,128,p,f,inverse,4)==8);
     assert(memcmp(d.data,expected,sizeof(expected))==0);
     /* Every source ends at its guard page; the last valid dense column is 127.
        Invalid vectors must return before any gather or store. */
     columns[15]=128;memcpy(c.data,columns,sizeof(columns));
-    assert(hex_scan8(d.data,c.data,v.data,8,128,p,f,inverse)==0);
+    assert(hex_scan8(d.data,c.data,v.data,8,128,p,f,inverse,4)==0);
     assert(memcmp(d.data,expected,sizeof(expected))==0);
     columns[15]=127;columns[12]=UINT32_MAX;memcpy(c.data,columns,sizeof(columns));
-    assert(hex_scan8(d.data,c.data,v.data,8,128,p,f,inverse)==0);
+    assert(hex_scan8(d.data,c.data,v.data,8,128,p,f,inverse,4)==0);
     assert(memcmp(d.data,expected,sizeof(expected))==0);
     columns[12]=127-3*stride;coefficients[15]=p;
     memcpy(c.data,columns,sizeof(columns));memcpy(v.data,coefficients,sizeof(coefficients));
-    assert(hex_scan8(d.data,c.data,v.data,8,128,p,f,inverse)==0);
+    assert(hex_scan8(d.data,c.data,v.data,8,128,p,f,inverse,4)==0);
     assert(memcmp(d.data,expected,sizeof(expected))==0);
     release(d);release(c);release(v);
+}
+static unsigned width(uint32_t p) {return p<=256?1:p<=65536?2:4;}
+static uint32_t read_value(const uint8_t *b,unsigned w,unsigned i) {uint32_t v=0;memcpy(&v,b+(size_t)i*w,w);return v;}
+static void write_value(uint8_t *b,unsigned w,unsigned i,uint32_t v) {memcpy(b+(size_t)i*w,&v,w);}
+__attribute__((target("avx2")))
+static void check_narrow(uint32_t p,uint32_t factor,unsigned stride,unsigned padding,unsigned end) {
+ unsigned w=width(p);struct guarded_buffer d=guarded(128*w,end),c=guarded(16*4,end),v=guarded(16*w,end);
+ uint8_t expected[128*4],before[128*4];uint32_t columns[16],coefficients[16];
+ for(unsigned i=0;i<128;++i) write_value(d.data,w,i,i%3==0?0:i%3==1?p-1:random32()%p);
+ for(unsigned i=0;i<16;++i) {columns[i]=127-padding-(15-i)*stride;coefficients[i]=i%3==0?1:i%3==1?p-1:random32()%(p-1)+1;write_value(v.data,w,i,coefficients[i]);}
+ memcpy(c.data,columns,sizeof(columns));memcpy(expected,d.data,128*w);
+ uint32_t inverse=w<4?(uint32_t)(UINT64_C(4294967296)/p):hex_mont32_inverse(p);
+ uint32_t f=w<4?factor:(uint32_t)(((uint64_t)factor<<32)%p);
+ if(w==4) assert((uint32_t)(inverse*p)==UINT32_MAX);
+ for(unsigned entry=0;entry<16;entry+=8) {
+  memcpy(before,d.data,128*w);
+  unsigned n=hex_scan8(d.data,c.data,v.data,entry,128,p,f,inverse,w);
+  unsigned should= (stride==1 || w==4 || 128-columns[entry+7]>=4/w)?8:0;
+  assert(n==should);
+  if(n) for(unsigned i=entry;i<entry+8;++i) {
+   uint32_t a=read_value(expected,w,columns[i]);uint64_t product=(uint64_t)factor*coefficients[i]%p;
+   write_value(expected,w,columns[i],(uint32_t)((a+(uint64_t)p-product)%p));
+  } else assert(memcmp(before,d.data,128*w)==0);
+  assert(memcmp(expected,d.data,128*w)==0);
+ }
+ for(unsigned bad=0;bad<8;++bad) {
+  uint32_t saved=coefficients[bad];write_value(v.data,w,bad,p);memcpy(before,d.data,128*w);
+  assert(hex_scan8(d.data,c.data,v.data,0,128,p,f,inverse,w)==0);assert(memcmp(before,d.data,128*w)==0);write_value(v.data,w,bad,saved);
+  saved=read_value(d.data,w,columns[bad]);write_value(d.data,w,columns[bad],p);memcpy(before,d.data,128*w);
+  assert(hex_scan8(d.data,c.data,v.data,0,128,p,f,inverse,w)==0);assert(memcmp(before,d.data,128*w)==0);write_value(d.data,w,columns[bad],saved);
+ }
+ columns[15]=128;memcpy(c.data,columns,sizeof(columns));memcpy(before,d.data,128*w);
+ assert(hex_scan8(d.data,c.data,v.data,8,128,p,f,inverse,w)==0);assert(memcmp(before,d.data,128*w)==0);
+ release(d);release(c);release(v);
 }
 #endif
 
@@ -123,9 +157,23 @@ int main(void) {
                 check_guard_pages(2147483647,stride,at_end);
             }
         }
+        uint32_t narrow[]={3,5,127,251,257,32003,65521};
+        for(unsigned i=0;i<sizeof(narrow)/sizeof(narrow[0]);++i) {
+            uint32_t p=narrow[i];
+            for(unsigned stride=1;stride<=8;++stride) {
+                for(unsigned padding=0;padding<=4;++padding) {
+                    for(unsigned at_end=0;at_end<2;++at_end) {
+                        check_narrow(p,0,stride,padding,at_end);
+                        check_narrow(p,1,stride,padding,at_end);
+                        check_narrow(p,p-1,stride,padding,at_end);
+                        check_narrow(p,random32()%p,stride,padding,at_end);
+                    }
+                }
+            }
+        }
         puts("SIMD guard pages: start/end boundaries, contiguous/strided vectors and invalid-prefix preservation passed");
 #endif
-        puts("exact AVX2 Montgomery updates: residues, boundary fields and invalid-prefix fallback passed");
+        puts("exact AVX2 Barrett/Montgomery updates: all widths, boundary fields and invalid-prefix fallback passed");
         return 0;
     }
 #endif

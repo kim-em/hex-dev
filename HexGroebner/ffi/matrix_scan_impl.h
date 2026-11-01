@@ -46,7 +46,7 @@ static lean_obj_res HEX_SCAN_NAME(uint64_t p,
     else {reciprocal=UINT64_MAX/p;if(UINT64_MAX%p==p-1) ++reciprocal;}
 #endif
 #if HEX_SCAN_VECTOR
-    uint32_t negative_inverse=hex_mont32_inverse((uint32_t)p);
+    uint32_t reduction=w<4?(uint32_t)(UINT64_C(4294967296)/p):hex_mont32_inverse((uint32_t)p);
 #endif
     for(uint64_t tick=0;tick<quantum;++tick) {
         if(pending) {
@@ -70,10 +70,10 @@ static lean_obj_res HEX_SCAN_NAME(uint64_t p,
                 if(updates>quantum-tick) updates=quantum-tick;
 #if HEX_SCAN_VECTOR
                 if(updates>=8) {
-                    uint32_t factor_mont=(uint32_t)((factor<<32)%p);
+                    uint32_t multiplier=w<4?(uint32_t)factor:(uint32_t)((factor<<32)%p);
                     for(uint64_t k=0;k<updates;++k) {
                         if(updates-k>=8 && hex_scan8(data,cs,vs,(size_t)entry,columns,
-                                (uint32_t)p,factor_mont,negative_inverse)) {
+                                (uint32_t)p,multiplier,reduction,w)) {
                             entry+=8;k+=7;continue;
                         }
                         if(!scalar_update(data,cs,vs,w,columns,entry,p,factor,reciprocal)) {status=4;break;}
