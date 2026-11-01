@@ -61,7 +61,11 @@ and with sanitizers: 116054 scan and 198139 gather calls per variant, with
 61471 contiguous and 740 strided SIMD calls and width/access mask 63. These
 counts describe the expanded run, separately from the original counts above.
 [Expanded logs and sources](raw/small-fields-expanded-validation.tar.gz) retain
-the complete build, oracles, sanitizer checks and audits.
+the complete build, oracles, sanitizer checks and audits. Its `scope.json`
+labels the source snapshot at collection, rather than every individual run:
+the Clang sanitizer and standalone checks used `30846bd626` before the
+`70441ea57e` calibration-only change. The native code and tests are identical
+across those snapshots; benchmark settings changed.
 
 ## Measurement contract
 
@@ -227,18 +231,18 @@ decoding. These observations therefore have different conversion boundaries
 and are coarser than the process samples. A displayed t seconds has rounding
 interval approximately `[max(0,t-0.005),t+0.005]`. Below 0.05 s only a conservative
 ratio lower bound is given. In particular, `0.00` is bounded by about 5 ms and
-is never interpreted as zero running time.
+is never interpreted as zero running time. Displayed bounds round outward.
 
 | Route | Input | Hex candidate ms, AB/BA | Msolve displayed s, AB/BA | Rounding-aware ratio interval/bound across both samples |
 | --- | --- | --- | --- | --- |
-| -l 2 | eco10-15 | 590.2 / 589.5 | 0.06 / 0.06 | 9.1–10.7 |
-| -l 2 | eco10-31 | 604.4 / 631.9 | 0.06 / 0.06 | 9.3–11.5 |
-| -l 2 | reimer5-15 | 104.8 / 104.9 | 0.00 / 0.00 | > 21.0 |
-| -l 2 | reimer5-31 | 107.0 / 106.9 | 0.00 / 0.00 | > 21.4 |
-| -l 42 | eco10-15 | 589.7 / 586.8 | 0.06 / 0.06 | 9.0–10.7 |
-| -l 42 | eco10-31 | 614.3 / 608.0 | 0.03 / 0.03 | > 17.4 |
+| -l 2 | eco10-15 | 590.2 / 589.5 | 0.06 / 0.06 | 9.0–10.8 |
+| -l 2 | eco10-31 | 604.4 / 631.9 | 0.06 / 0.06 | 9.2–11.5 |
+| -l 2 | reimer5-15 | 104.8 / 104.9 | 0.00 / 0.00 | > 20.9 |
+| -l 2 | reimer5-31 | 107.0 / 106.9 | 0.00 / 0.00 | > 21.3 |
+| -l 42 | eco10-15 | 589.7 / 586.8 | 0.06 / 0.06 | 9.0–10.8 |
+| -l 42 | eco10-31 | 614.3 / 608.0 | 0.03 / 0.03 | > 17.3 |
 | -l 42 | reimer5-15 | 104.1 / 104.3 | 0.00 / 0.00 | > 20.8 |
-| -l 42 | reimer5-31 | 106.0 / 106.2 | 0.00 / 0.00 | > 21.2 |
+| -l 42 | reimer5-31 | 106.0 / 106.2 | 0.00 / 0.00 | > 21.1 |
 
 These counters show a larger gap than process time: Reimer's internal comparison
 is above about 20 times, and wider-prime Eco against probabilistic elimination
@@ -312,18 +316,52 @@ original old-engine comparison, these arms use the same current source with
 `HEX_GROEBNER_NO_AVX2` selecting scalar A. Timed C providers contain no counters;
 the pure benchmark bodies include elimination, decoding and complete hashing.
 All **192 points** complete with matching hashes. Separate untimed strided-64
-probes execute 10024 strided vector calls and zero contiguous calls; scalar
+probes from the `c8fa3b5641aa` counted-provider build execute 10024 strided
+vector calls and zero contiguous calls; scalar
 executes zero vector calls. Both return 64 valid rows. These probes are path
-evidence, not timings. This one-host result does not establish gather performance
+evidence, not timings. Their logs are
+`issue-10987-strided-{native,scalar}-paths.log` in the expanded validation archive.
+The stride-two case places eight lanes within 32 bytes and has favorable locality;
+it measures gather instruction cost without reproducing irregular sparse-support
+memory behavior. This one-host result does not establish gather performance
 on other processors or under different microcode mitigations.
 
-| Case | n=64 B/A | n=128 B/A | n=256 B/A | n=512 B/A |
-| --- | ---: | ---: | ---: | ---: |
-| cauchy16 | 0.7584 | 0.5494 | 0.4477 | 0.3485 |
-| cauchy16Trace | 0.8195 | 0.6928 | 0.5615 | 0.4479 |
-| cauchy16Strided | 0.8520 | 0.7095 | 0.6152 | 0.5354 |
+An [untimed Eco-10 probe](raw/small-fields-followup-validation.tar.gz) over
+32003 records 181657 contiguous and 12859981 strided vector updates, with 29886
+scan and 498 gather transitions. Every coefficient/exponent of its complete
+basis matches frozen production. The counted provider is excluded from timing
+claims. These counts establish a mostly strided vector mix for this particular
+F4 input; they do not generalize from the dense conformance mix.
+Separate scalar and SIMD checks explicitly require success at every one of
+the sixteen benchmark/family rungs, including n=512, in addition to matching
+hashes. The four new small guards run in the registered benchmark build.
 
-The one-byte ratios at n=32/64/96/125 are 0.9256/0.7978/0.6893/0.6371.
+| Case | Size | Geometric mean B/A | Median | Range |
+| --- | ---: | ---: | ---: | --- |
+| cauchy8 | 32 | 0.9256 | 0.9011 | 0.8837–1.0817 |
+| cauchy8 | 64 | 0.7978 | 0.7454 | 0.7333–0.9589 |
+| cauchy8 | 96 | 0.6893 | 0.6489 | 0.6194–0.8345 |
+| cauchy8 | 125 | 0.6371 | 0.5945 | 0.5873–0.7632 |
+| cauchy16 | 64 | 0.7584 | 0.7443 | 0.7370–0.8271 |
+| cauchy16 | 128 | 0.5494 | 0.5687 | 0.4930–0.5721 |
+| cauchy16 | 256 | 0.4477 | 0.4486 | 0.3895–0.5132 |
+| cauchy16 | 512 | 0.3485 | 0.3622 | 0.3068–0.3714 |
+| cauchy16Trace | 64 | 0.8195 | 0.8135 | 0.7845–0.8824 |
+| cauchy16Trace | 128 | 0.6928 | 0.6876 | 0.6832–0.7201 |
+| cauchy16Trace | 256 | 0.5615 | 0.5606 | 0.5561–0.5676 |
+| cauchy16Trace | 512 | 0.4479 | 0.4471 | 0.4425–0.4534 |
+| cauchy16Strided | 64 | 0.8520 | 0.8029 | 0.7090–1.2987 |
+| cauchy16Strided | 128 | 0.7095 | 0.6957 | 0.6161–0.8592 |
+| cauchy16Strided | 256 | 0.6152 | 0.6059 | 0.5435–0.7398 |
+| cauchy16Strided | 512 | 0.5354 | 0.5382 | 0.4921–0.5734 |
+
+Block 0 of cauchy16 has spawn floors about 57/69 ms, compared with about
+20 ms in most exports. Its scalar per-update observations are about 20% higher
+than block 1. The 512-row mean across both blocks (0.3485) is lower than block 1
+alone (about 0.362). Strided n=64 includes a SIMD/scalar ratio of 1.299; one-byte
+n=32 includes 1.082. Every sample is retained, and these host-dependent spreads
+are not treated as isolated algorithm improvements or discarded as contamination.
+
 All sixteen exports fit a slope, and all remain inconclusive. One export has
 some rows below the spawn guard; each has enough verdict rows to fit.
 
@@ -395,3 +433,4 @@ Archive SHA-256 values:
 - `small-fields-final-calibrated-records-97a2e5357071.tar.gz`: `5079315c580f09dda66d9329a96b23b1ddd239051c9b33a6f62e1447ab3a3141`
 - `small-fields-expanded-validation.tar.gz`: `58c00381756d5d733fe62c7682a3fd83c9def37a9c48d52cc41c1c76354a98d6`
 - `small-fields-coarse-timers.tar.gz`: `145019d205c747346f0051d4b025523cec11fd2cb656f121b7bf0da32d9bd25d`
+- `small-fields-followup-validation.tar.gz`: `38da6fc2df2c62a8d549bde17d83237b12bdf70fc7882d15cce102fb191a8eb2`
