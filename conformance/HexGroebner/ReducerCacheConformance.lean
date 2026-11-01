@@ -30,7 +30,6 @@ def budgetChecks : Bool := Id.run do
   return true
 #guard budgetChecks
 
-
 private def cacheChecks : Bool := Id.run do
   let limits : Limits := {work:=1000000,packedBytes:=1000000}
   let action : Computation Bool := do
@@ -48,6 +47,13 @@ private def cacheChecks : Bool := Id.run do
     for (a,b) in first.reducers.zip second.reducers do
       if a.polynomial.support != b.polynomial.support || a.polynomial.coefficients != b.polynomial.coefficients then return false
     if after.allocatedBytes != before.allocatedBytes then return false
+    -- Re-encoding the exponent arena must preserve cached polynomial IDs.
+    let _ ← intern limits #[65536,0]
+    if (← get).table.width != .u32 then return false
+    let widened ← SymbolicMatrix.prepareWith context limits index basis targets second.cache
+    if widened.reducers.size != first.reducers.size then return false
+    for (a,b) in first.reducers.zip widened.reducers do
+      if a.polynomial.support != b.polynomial.support || a.polynomial.coefficients != b.polynomial.coefficients then return false
     let changed : Array BasisElement := #[⟨h,1⟩]
     let index ← ReducerIndex.build context limits changed
     let reused ← SymbolicMatrix.prepareWith context limits index changed targets second.cache
