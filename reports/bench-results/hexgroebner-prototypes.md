@@ -39,6 +39,18 @@ production selections.
 | text | `802ae51122d7` | 64 | 1.1301 | 0.3854 | 0 |
 | minimal-init | `802ae51122d7` | 128 | 1.4120 | 0.4654 | 0 |
 
+A separate corrected sparse-first joint-target experiment (`668abb190c63`)
+retains 128 diagnostic processes and 240 fixed points. Every one of its 64
+complete basis pairs agrees; pooled candidate/process ratios are 0.9080/0.9129.
+Fixed Reimer ratio is 0.5361 (median 0.5582), with matrix entries reduced from
+960252 to 435489 at the large prime. Eco entries fall 3268590→2939286.
+Sugar scheduling remains unchanged. The capsule also retains the original
+`29215102b484` failure: two completed processes exposed a complete-basis mismatch
+because independent final normal-form rows had been reordered. The correction
+restricts ordering to joint elimination. The failed snapshot has its own source
+manifest and is never pooled with the corrected one. These timing observations
+precede traced-producer integration and its further conformance checks.
+
 Batched support products preserve termwise failure prefixes and all computation
 counters. They show a modest candidate gain without an overall process gain.
 Pure packed column maps add preparation cost; native support translation
@@ -72,8 +84,8 @@ observations, not complexity proofs:
 | 512 | 0.7517 | 0.9315 |
 
 AVX-512 validation comprises six Clang and six GCC ASan/UBSan variants and
-1950 relevant conformance/theory targets. No independent oracle rerun is claimed
-for this snapshot. Its protocol's later eight-lane phrase is corrected in the
+1950 relevant conformance/theory targets. A later unchanged-kernel oracle rerun passes all 175 matrix, 567 reduced-basis
+and 1288 division cases; the separate validation capsule retains its log. Its protocol's later eight-lane phrase is corrected in the
 capsule scope file; the A/B definition identifies sixteen-lane experimental code.
 
 Both higher-degree-first and lower-degree-first reducer preferences increase
@@ -117,3 +129,6 @@ only where the protocol explicitly records matched GNU-time wrappers; older
 - [prototype-json-runtime-802ae51122d7.tar.gz](raw/prototype-json-runtime-802ae51122d7.tar.gz): `4ebf93af9cc4e9e6c3351dafb86289432609e17996a183ba15e65d8fb1224466`.
 - [prototype-text-802ae51122d7.tar.gz](raw/prototype-text-802ae51122d7.tar.gz): `c65afdab001e550fb86b4ca0cdc0a06f8fc3ff1b54bd38d7639c11254113bda5`.
 - [prototype-minimal-init-802ae51122d7.tar.gz](raw/prototype-minimal-init-802ae51122d7.tar.gz): `566e91fd3d040b89c7c5b0749c5ebf6cff3d5feabb60e62eaaef9049be3fe414`.
+
+- [prototype-sparse-targets-668abb190c63.tar.gz](raw/prototype-sparse-targets-668abb190c63.tar.gz): `0d3f5b42634afd01227d9ad899b6d5b5f0d2a4b23b65186d6256d53f91a46abb`.
+- [trie-validation-9e0ab9d9c2d6.tar.gz](raw/trie-validation-9e0ab9d9c2d6.tar.gz): `fd854c5b1b2a19d9564967430694bc41f7d58d3f5f9a59d7a895905c7a11db48`.
