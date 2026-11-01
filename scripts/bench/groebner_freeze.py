@@ -51,6 +51,9 @@ def msolve_build(source: Path, require_clean: bool = True) -> dict:
         )
         if recorded.returncode == 0 and "String dump" in recorded.stdout:
             commands = recorded.stdout
+    if "-march=native" in (source / "src/neogb/Makefile").read_text():
+        if commands is None or "-march=native" not in commands.split():
+            raise ValueError("requested native CPU tuning is absent from recorded engine commands")
     return {
         "commit": git("rev-parse", "HEAD").decode().strip(),
         "tracked_status": status,

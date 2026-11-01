@@ -42,7 +42,7 @@ Hex dispatches exact AVX2 kernels with portable fallbacks. Generated C uses the
 pinned Lean SDK; FFI uses Clang 23.1.3. ISA availability and toolchain context are
 retained, without filtering host activity.
 
-On CPU95, default/full process B/A is 0.4145 (A full, B default; below one favors
+At snapshot `1bc68da7b1c1` on CPU95, default/full process B/A is 0.4145 (A full, B default; below one favors
 default), median 0.3338, range 0.2096–0.9646, or 0.4167 with equal family weights.
 Peak observed RSS is 42348 KiB default and 92652 KiB full. Reduced initialization
 cost does not imply faster F4 arithmetic.
@@ -56,9 +56,10 @@ Configure's OpenMP probe cannot find `omp.h` for that Clang, so `OPENMP_CFLAGS`
 is empty. Full SIMD/CPU/OpenMP flags, configure arguments, generated input hashes
 and build logs are retained. Both modes execute `.libs/msolve` directly, with
 its neogb library directory explicitly recorded in `LD_LIBRARY_PATH`. The ELF
-and actual engine hashes are retained.
+and expected engine-file hashes are retained.
 Mode 2 is exact; mode 42 uses probabilistic elimination, with uncontrolled seeds
-retained in stderr. Both request full reduced grevlex output, one thread and
+retained in stderr. Its `-v 2` diagnostics are included in its process time; Hex
+emits its structured result without corresponding verbose logging. Both request full reduced grevlex output, one thread and
 matched time/address-space caps. The runner independently checks characteristic,
 variable order and canonical input generators across JSON and msolve files,
 requires grevlex, and parses every complete output.
@@ -93,7 +94,7 @@ separately (Hex 3.2521–5.3046 ms; msolve 3.9604–11.1440 ms).
 
 The older direct-ELF snapshot `1bc68da7b1c1` used a build that requested
 `-march=native`, but Nix stripped that flag. Explicit AVX-512 flags remained
-enabled. It observed family-balanced ratios 2.1093/2.4298 (exact CPU9 /
+enabled. That build also used Clang 23.1.3 without OpenMP support. It observed family-balanced ratios 2.1093/2.4298 (exact CPU9 /
 probabilistic CPU10), with all complete bases agreeing. It is retained separately
 and superseded by the effective-native table above. It is not pooled with it.
 
@@ -103,13 +104,13 @@ wrapper that added overhead only to msolve, biasing Hex/msolve ratios in favor
 of Hex. Their equal-family ratios 1.2250/1.2422 and 1.2526/1.2807 are retained
 historical observations and are superseded by the direct-ELF table above.
 They are not pooled or used as evidence of a smaller comparator gap.
-Across the separate `b42ce333603b` and direct campaigns, median paired per-input new-minus-old
+Across the separate `b42ce333603b` and `1bc68da7b1c1` direct campaigns, median paired per-input new-minus-old
 process shifts are −0.7326 ms Hex and −7.5190 ms msolve in exact mode, and
 −0.8256/−8.0957 ms in probabilistic mode. These are observations on different
 leased CPUs and host contexts, not adjacent wrapper/direct comparisons; they
 do not isolate the wrapper's entire contribution. Their
 initialization-only default/full observations, 0.4133 and 0.4293 respectively,
-remain separate from the current 0.4145. The older protocol arm labels were
+remain separate from the `1bc68da7b1c1` value 0.4145. The older protocol arm labels were
 inherited from an exact-comparator suite; the current runner records each mode
 and both named-manifest and executed-arm hashes explicitly.
 
@@ -141,7 +142,11 @@ Hex timing run is used. An earlier cached build/freeze at `f663c8bac968` matched
 those hashes from an existing build tree; its archive remains as historical
 provenance and is not evidence of fresh compilation. Comparator checks reject
 tracked edits and retain generated build-input hashes and recorded engine
-compiler commands when available. Clean tracked sources alone do not certify
+compiler commands when available. Requested native tuning now fails validation
+when the engine has no recorded command containing that flag; optimized Python
+mode is rejected so input and output assertions remain active. These validation
+changes follow the archived `17aa8e10ff23` campaigns and add no timing samples.
+Clean tracked sources alone do not certify
 the contents of ignored generated Makefiles, so those are separately hashed.
 
 [`groebner_cli_measure.py`](../../scripts/bench/groebner_cli_measure.py) retains

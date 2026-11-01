@@ -21,6 +21,8 @@ from scripts.bench.sweep_freshness import fingerprint, index_listing
 
 
 def main():
+    if not __debug__:
+        raise RuntimeError("measurement validation requires Python without -O")
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--suite", type=Path, required=True)

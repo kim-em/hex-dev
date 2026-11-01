@@ -4,6 +4,8 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
+from types import SimpleNamespace
 
 from scripts.bench.groebner_freeze import msolve_build
 
@@ -37,6 +39,28 @@ class ComparatorBuildTests(unittest.TestCase):
             self.assertIn("SIMD_FLAGS = -mavx512f", flags)
             self.assertIn("CPUEXT_FLAGS = -mbmi", flags)
             self.assertIn("OPENMP_CFLAGS = ", flags)
+
+    def test_requested_native_tuning_requires_effective_engine_flags(self):
+        makefile = self.root / "src/neogb/Makefile"
+        makefile.write_text(makefile.read_text().replace("CFLAGS = -O3", "CFLAGS = -O3 -march=native"))
+        self.git("add", ".")
+        self.git("commit", "--quiet", "-m", "native flags")
+        engine = self.root / "src/neogb/.libs/libneogb.so.4.0.0"
+        engine.parent.mkdir()
+        engine.touch()
+        original_run = subprocess.run
+        for output, valid in [("", False), ("String dump -O3", False),
+                              ("String dump -O3 -march=native", True)]:
+            def run(command, *args, **kwargs):
+                if command[0] == "readelf":
+                    return SimpleNamespace(returncode=0, stdout=output)
+                return original_run(command, *args, **kwargs)
+            with self.subTest(output=output), patch("subprocess.run", side_effect=run):
+                if valid:
+                    self.assertEqual(msolve_build(self.root)["engine_recorded_compile_commands"], output)
+                else:
+                    with self.assertRaisesRegex(ValueError, "native CPU tuning"):
+                        msolve_build(self.root)
 
     def test_staged_and_unstaged_patches_are_rejected(self):
         (self.root / "Makefile").write_text("CC = patched\n")

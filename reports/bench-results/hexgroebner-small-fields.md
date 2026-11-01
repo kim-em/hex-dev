@@ -1,5 +1,12 @@
 # Exact SIMD for narrow finite-field coefficients
 
+Historical comparator-build caveat: compiler labels and `-march=native` commands
+below record the original build description. Nix can strip requested native CPU
+tuning, and effective flags were not independently established for every older
+build. These samples remain retained observations. The direct-ELF comparison
+with recorded effective native flags in [the driver report](hexgroebner-driver.md)
+supersedes them as evidence of the current msolve gap.
+
 The production AVX2 route now handles one- and two-byte canonical coefficients
 with exact Barrett products, alongside the existing four-byte Montgomery route.
 On the shared host, the 512-row Cauchy case over 32003 has observed B/A time
