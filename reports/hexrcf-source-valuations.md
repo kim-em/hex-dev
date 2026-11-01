@@ -18,23 +18,25 @@ helper instead of a source-specific one-coordinate tactic proof.
 The [standalone conformance](../conformance/HexRCF/SourceValuationConformance.lean)
 constructs zero-, one- and two-coordinate valuations using the actual selected
 √2 model and supplied leaf identity. Full-request charged node counts are 7,590,
-11,174 and 16,484, including preparation, arithmetic, the zero fallback and finite
+11,306 and 16,802, including preparation, arithmetic, the zero fallback and finite
 function construction. Swapped coordinates, swapped proofs, missing proofs,
 wrong coordinate counts and unresolved caller-owned coordinate functions reject.
 The unresolved-input control checks that the caller's metavariable remains
 unassigned and the declaration inventory is unchanged. The
 [fresh importing audit](../conformance/HexRCF/SourceValuationProofs.lean)
-rechecks fourteen actual theorem bodies, including private generated proofs,
-with thirteen nonempty kernel traces. Its complete transitive axiom inventory
+rechecks thirteen actual theorem bodies, including private generated proofs,
+with twelve nonempty kernel traces. Its complete transitive axiom inventory
 is exactly `propext`, `Classical.choice` and `Quot.sound`; copied declarations
 are not retained. These standalone proofs intentionally consume an authenticated
 leaf; they do not reconstruct it automatically.
 
-The final complete original-goal quotation records 705,649 charged nodes after
+The historical source-bound implementation records 705,649 charged nodes after
 fresh source authentication, 705,699 after inventory compilation, 707,592 after
 polynomial reconstruction, 9,330,130 before finishing, 9,336,963 at the completed
 source proof and 9,337,057 for the entire request. The graph memo still reports
-two reuses and seven validations. Its build passes 11,177 Lake jobs with cached
+two reuses and seven validations. This example explicitly supplies a 24,000,000
+proof-node budget and 60,000,000 heartbeats; it does not run within the default
+1,000,000-node request budget. Its build passes 11,177 Lake jobs with cached
 dependencies reused in 13 min 17.611 s, peak 2.3 GiB/no swap. The separate fresh
 full-source audit rechecks 1,192 theorem bodies and 202 definitions, with 1,352
 nonempty kernel traces and exactly the standard three axioms. It passes in
@@ -66,8 +68,17 @@ combined valuation build rejected two leftover identifiers before quotation
 ran; those redundant lines were removed. Neither failure validates final code.
 Earlier proof and numerical records retain their original source pins.
 
-This connects prepared coefficient arithmetic and general finite valuation
-assembly to one complete original source proof. It does not discover arbitrary
+This connects selected-coefficient preparation and general finite valuation
+assembly to one complete original source proof. That complete source uses a
+bare selected coefficient and no original divisor. Arithmetic and original
+divisor compilation are tested separately; this example does not establish
+their composition with complete-cell finishing. The separate
+[compound-source regression](hexrcf-source-composition.md) now covers that
+composition using a supplied checked typed fixture, with a 40/39 compiler audit,
+13/12 valuation audit and 30/30 compound-source/domain audit. These current
+checks include per-call term sharing and exact rejection diagnostics. They do
+not turn the historical literal-reader record into evidence for later source
+edits. The adapter does not discover arbitrary
 source leaves, providers, predecessor histories, coefficient maps or seed facts.
 It does not establish full automatic tactic integration, strict all-depth
 missing-record rejection, accepted algebraic completeness or general finite

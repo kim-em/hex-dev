@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 import HexRCF.TowerCompileConformance
 import HexRCF.ProofEvidence
+import HexRCF.ProofPaths
 import KernelReplay.AxiomClosure
 
 open Lean Meta Hex.RealClosure Hex.RCF.RealCoefficients
@@ -14,11 +15,18 @@ set_option maxHeartbeats 8000000
 run_meta do
   let roots := (List.range 9).toArray.map
     (Name.num `Hex.RCF.TowerCompileConformance.quoted)
-  let roots := roots ++ #[``TowerCompile.pow_value,``Hex.RCF.TowerCompileConformance.runFinished]
+  let roots := roots ++ #[``TowerCompile.pow_value,``Hex.RCF.TowerCompileConformance.shared,
+    ``Hex.RCF.TowerCompileConformance.annotated,``Hex.RCF.TowerCompileConformance.runFinished]
   let axioms ← Algebraic.KernelReplay.AxiomClosure.collect roots
   unless axioms == (#[``propext,``Classical.choice,``Quot.sound].qsort Name.lt) do
     throwError "tower coefficient quotation has an unexpected complete axiom closure"
   let dependencies ← Hex.RCF.ProofEvidence.projectDependencies roots
+  for (index,required) in #[(0,``Tower.Model.nat),(1,``Tower.Model.neg),
+      (2,``Tower.Model.div),(3,``Tower.Model.nat),(4,``Tower.Model.add),
+      (5,``Tower.Model.sub),(6,``TowerCompile.pow_value),(7,``Tower.Model.inv),
+      (8,``TowerCompile.pow_value)] do
+    Hex.RCF.ProofPaths.require `HexRCF.TowerCompileConformance
+      (Name.num `Hex.RCF.TowerCompileConformance.quoted index) #[required]
   for required in #[``Tower.Model.nat,``Tower.Model.add,``Tower.Model.sub,
       ``Tower.Model.mul,``Tower.Model.neg,``Tower.Model.inv,``Tower.Model.div,
       ``TowerCompile.pow_value,``Hex.RCF.SelectedRootTests.Data.alpha_value] do
@@ -45,6 +53,6 @@ run_meta do
     if !diagnostics.unfoldCounter.isEmpty then traces := traces + 1
   unless (← (← getEnv).getLocalConstantInfos).map (·.name) == before do
     throwError "fresh tower quotation audit retained copied declarations"
-  unless bodies == 36 && traces == 35 do
+  unless bodies == 40 && traces == 39 do
     throwError "fresh tower quotation inventory changed: {bodies}/{traces}"
   logInfo m!"fresh tower quotation: {bodies} actual theorem bodies; nonempty traces={traces}; full axioms={axioms}"

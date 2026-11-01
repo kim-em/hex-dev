@@ -18,6 +18,12 @@ private meta def leaf (source : Expr) : Hex.RealFormula.Reify.ReifyM (Option Tow
     return some ⟨mkConst ``Data.alpha,mkConst ``Data.alpha_value⟩
   return none
 
+private meta def expectFailure (expected : String) (action : MetaM α) : MetaM Unit := do
+  let failure ← tryCatchRuntimeEx (do let _ ← action; pure none)
+    (fun error => do pure (some (← error.toMessageData.toString)))
+  unless failure == some expected do
+    throwError "source valuation returned the wrong failure: {failure}; expected {expected}"
+
 run_meta do
   let targets : Array Expr := #[q(∀ x : ℝ, x^2 ≥ 0),
       q(∀ x : ℝ, x^2 + Real.sqrt 2 > 0),
@@ -46,7 +52,12 @@ run_meta do
       x^2 + x * (Real.sqrt 2 + 1) + (Real.sqrt 2 + 2) > 0)
     | throwError "permutation control did not prepare"
   for mode in [0,1,2,3] do
-    let rejected ← try
+    let expected := if mode == 2 then
+        "rcf: source coefficient proof count differs from its inventory"
+      else if mode == 3 then
+        "rcf: source coordinate count differs from its inventory"
+      else "rcf: source coefficient identity does not match its coordinate"
+    expectFailure expected do
       let _ ← RootQuote.runWith (do
         let (coefficients,_) ← TowerCompile.prepareWith source (mkConst ``Data.original) leaf
         let zero ← TowerCompile.compile (mkConst ``Data.original) leaf q((0 : ℝ))
@@ -59,9 +70,7 @@ run_meta do
           (entries.map (·.expression)) zero.expression
         let proof ← CellQuote.valuationWith source (mkConst ``Data.original) values proofs
         pure ⟨values,proof,(← get).budget.consumed⟩) {} source.usage
-      pure false
-    catch _ => pure true
-    unless rejected do throwError "valuation accepted a swapped coordinate/proof or missing entry"
+      pure ()
   logInfo "swapped coordinates/proofs, missing entries and wrong coordinate counts rejected"
 
 run_meta do
@@ -71,15 +80,13 @@ run_meta do
   let carrier ← mkAppM ``RealClosure.Tower.Context.Value #[mkConst ``Data.parent]
   let values ← mkFreshExprMVar (← mkArrow domain carrier)
   let names := (← (← getEnv).getLocalConstantInfos).map (·.name)
-  let rejected ← try
+  expectFailure "rcf: source valuation requires closed inputs" do
     let _ ← RootQuote.runWith (do
       let (coefficients,_) ← TowerCompile.prepareWith source (mkConst ``Data.original) leaf
       let proof ← CellQuote.valuationWith source (mkConst ``Data.original) values
         (coefficients.map (·.proof))
       pure ⟨values,proof,(← get).budget.consumed⟩) {} source.usage
-    pure false
-  catch _ => pure true
-  unless rejected do throwError "unresolved source coordinates were accepted"
+    pure ()
   if ← values.mvarId!.isAssigned then throwError "valuation construction assigned caller coordinates"
   unless (← (← getEnv).getLocalConstantInfos).map (·.name) == names do
     throwError "failed valuation construction retained declarations"

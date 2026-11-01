@@ -19,6 +19,7 @@ import HexRCF.RealCoefficients.TowerCompile
 import HexRCF.RealCoefficients.CellQuote
 import HexRCF.CellQuoteStages
 import HexRCF.CellSourceQuote
+import HexRCF.TowerFinishProofs
 import HexRCF.SourceIdentityPacket
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
@@ -697,10 +698,10 @@ example : ∃ x : ℝ,
 ```
 
 The shared reification and quotation budget records 9,330,130 proof nodes
-before source finishing and 9,337,057 for the complete original-source attempt.
+before source finishing and 9,337,150 for the complete original-source attempt.
 Source authentication, cell replay and finishing run in one transaction. The test supplies 24M proof nodes and
 60M heartbeats. Its trace records two memo reuses and seven validations.
-Lake reports 793 seconds for this source module on the recorded shared host;
+Lake reports 841 seconds for this source module on the recorded shared host;
 this remains an expensive fixed-input proof build. These observations do not
 measure compiled replay or establish a general tactic running time.
 
@@ -851,13 +852,17 @@ resetting that accounting or lowering a limit below prior usage is rejected.
 Every original divisor is retained,
 including one under zero multiplication. Compiling its arithmetic does not
 prove it nonzero or accept the sentence. A declining leaf restores its
-metavariables and declarations before arithmetic continues; terminal failure
-and exhaustion use the enclosing transaction's rollback.
+metavariables, declarations and frontend state before arithmetic continues,
+while retaining charged work; terminal failure and exhaustion use the enclosing
+transaction's rollback. Checked subterms share a temporary cache across both
+inventories within one call. Separate calls use fresh caches. Leaf recognition
+removes outer source metadata before matching.
 
 Nine source checks include a rational cast, the selected √2, compound division,
-inversion and natural powers. They use 247–2,284 charged proof nodes. A fresh
-module rechecks 36 actual theorem bodies, including private generated proofs,
-with 35 nonempty kernel traces and the standard three axioms. The selected leaf
+inversion and natural powers. They use 247–1,857 charged proof nodes. Controls
+check repeated leaves across both inventories, cache isolation and metadata.
+A fresh module rechecks 40 actual theorem bodies, including private generated
+proofs, with 39 nonempty kernel traces and the standard three axioms. The selected leaf
 identity and real parent model remain supplied. This arithmetic interface does
 not discover arbitrary source roots, assemble frozen histories or establish
 complete certificate acceptance.
@@ -866,7 +871,9 @@ complete certificate acceptance.
 assembles ordered scalar identities into equality of the entire source
 valuation for a supplied native coordinate function. Coordinate and proof
 counts must match the source; every finite branch is checked in the ordinary
-kernel. Closed inputs and empty coefficient families are supported. Swapped
+kernel. The model, coordinate function and source valuation are closed; scalar
+identities may use caller hypotheses, which the generated theorem retains.
+Empty coefficient families are supported. Swapped
 coordinates or proofs, missing entries, a wrong coordinate count and unresolved
 coordinate metavariables are rejected. Rejection restores the enclosing
 transaction's declarations and metavariables.
@@ -892,12 +899,38 @@ meta def quoteSourceValuation
 The supplied usage continues the enclosing preparation and quotation work;
 the complete source example assembles this identity in its existing request.
 
-The zero-, one- and two-coordinate conformance requests consume 7,590, 11,174
-and 16,484 charged nodes, including source preparation, arithmetic and finite
-coordinate-function construction. Their fresh importing audit rechecks 14
-actual theorem bodies with 13 nonempty traces and exactly the standard three
+The zero-, one- and two-coordinate conformance requests consume 7,590, 11,306
+and 16,802 charged nodes, including source preparation, arithmetic and finite
+coordinate-function construction. Their fresh importing audit rechecks 13
+actual theorem bodies with 12 nonempty traces and exactly the standard three
 axioms. Original divisor identities remain separate obligations for source
 finishing; a valuation equality alone does not establish them.
+
+A supplied-fixture regression compiles a compound coefficient and an original
+divisor, aligns their interpretations with that fixture's stored values, then
+finishes the original statement:
+
+```lean
+open Hex.RCF
+example : ∃ x : ℝ,
+    x^2 - ((Real.sqrt 2 + 1) - 1) ≥ 0 ∧
+    x^2 - ((Real.sqrt 2 + 1) - 1) ≤ 0 ∧
+    0 / ((-1 : ℝ) + 0) = 0 :=
+  TowerFinishConformance.source
+```
+
+This request consumes 32,257 charged nodes. Its separate importing audit checks
+30 actual theorem bodies, including the original-divisor proof emitted by
+source finishing, with 30 nonempty traces and the standard three axioms. The selected
+leaf identity, real model and already checked complete-cell fixture are inputs;
+this does not construct a new certificate or freshly reduce its literal readers.
+The model's arithmetic laws and the checker's soundness and domain laws occur
+in the audited dependencies. The final real proposition uses total division,
+so its proof need not retain the separate nonzero preflight proof.
+
+Compilation still checks and charges the full newly visited subexpressions;
+deep expressions can have quadratic aggregate charged work. No linear-cost or
+general speedup claim follows from sharing repeated terms.
 
 The native producer {name Hex.RCF.RealCoefficients.SourceBuild.build}`SourceBuild.build`
 can discover a selected source from its defining polynomial and a window

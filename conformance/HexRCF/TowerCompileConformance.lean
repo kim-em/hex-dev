@@ -21,6 +21,10 @@ private meta def action (source : Expr) : Hex.RealFormula.Reify.ReifyM RootQuote
   let term ← TowerCompile.compile (mkConst ``Data.original) leaf source
   return ⟨term.expression,term.proof,(← get).budget.consumed⟩
 
+private meta def failure (action : MetaM α) : MetaM (Option String) :=
+  tryCatchRuntimeEx (do let _ ← action; pure none)
+    (fun error => do pure (some (← error.toMessageData.toString)))
+
 run_meta do
   let sources : Array Expr := #[q((2 : ℝ)),q((-3 : ℝ)),q((1 / 7 : ℝ)),
     q(((3 / 2 : ℚ) : ℝ)),q(Real.sqrt 2 + 3),q(Real.sqrt 2 - 1),
@@ -58,14 +62,14 @@ run_meta do
 
 run_meta do
   let before ← saveState
-  let rejected ← try
+  let rejected ← failure do
     let _ ← RootQuote.runWith (do
       let term ← TowerCompile.compile (mkConst ``Data.original)
         (fun _ => pure (some ⟨mkConst ``Data.alpha,mkConst ``Data.alpha_value⟩)) q((0 : ℝ))
       pure ⟨term.expression,term.proof,(← get).budget.consumed⟩)
-    pure false
-  catch _ => pure true
-  unless rejected do throwError "wrong source identity was accepted"
+    pure ()
+  unless rejected == some "rcf: handler TowerCompile.identity proposed a proof of a different goal" do
+    throwError "wrong source identity returned the wrong failure: {rejected}"
   before.restore
   let config : Hex.RealFormula.Reify.Config := {}
   let config := {config with ring := {config.ring with budget :=
@@ -111,25 +115,26 @@ run_meta do
 run_meta do
   let marker ← mkFreshExprMVar (mkConst ``Nat)
   let declaration ← mkFreshUserName `failedTowerLeaf
-  let failed ← try
+  let failed ← failure do
     let _ ← RootQuote.runWith (do
       let term ← TowerCompile.compile (mkConst ``Data.original) (fun _ => do
         marker.mvarId!.assign (mkNatLit 42)
         let _ ← mkAuxDefinition declaration (mkConst ``Nat) (mkNatLit 42) (compile := false)
         throwError "deliberate leaf failure") q(Real.sqrt 2)
       pure ⟨term.expression,term.proof,(← get).budget.consumed⟩)
-    pure false
-  catch _ => pure true
-  unless failed do throwError "leaf failure was swallowed"
+    pure ()
+  unless failed == some "deliberate leaf failure" do
+    throwError "leaf failure was swallowed or replaced: {failed}"
   if ← marker.mvarId!.isAssigned then throwError "failed leaf retained a metavariable assignment"
   if (← getEnv).contains declaration then throwError "failed leaf retained a declaration"
-  let swapped ← try
+  let swapped ← failure do
     let _ ← RootQuote.runWith (do
       let term ← TowerCompile.compile (mkConst ``Data.rational) leaf q(Real.sqrt 2)
       pure ⟨term.expression,term.proof,(← get).budget.consumed⟩)
-    pure false
-  catch _ => pure true
-  unless swapped do throwError "coefficient proof accepted a different context model"
+    pure ()
+  let some message := swapped | throwError "coefficient proof accepted a different context model"
+  unless (message.toLower.splitOn "type mismatch").length > 1 do
+    throwError "wrong-context value returned an unrelated failure: {message}"
   let .error (.unsupported _ _) ← RootQuote.runWith (action q(Real.sin (0 : ℝ)))
     | throwError "arbitrary closed function entered coefficient arithmetic"
   logInfo "terminal leaf failure restored state; swapped model and unsupported function rejected"
@@ -139,14 +144,14 @@ run_meta do
     | throwError "empty-inventory source preparation failed"
   unless source.coefficients.isEmpty && source.divisors.isEmpty do
     throwError "rational empty-inventory control acquired a coefficient"
-  let rejected ← try
+  let rejected ← failure do
     let _ ← RootQuote.runWith (do
       let _ ← TowerCompile.prepareWith source (mkNatLit 0) leaf
       let zero := mkNatLit 0
       pure ⟨zero,← mkEqRefl zero,(← get).budget.consumed⟩) {} source.usage
-    pure false
-  catch _ => pure true
-  unless rejected do throwError "empty inventories bypassed model validation"
+    pure ()
+  unless rejected == some "rcf: coefficient compilation requires a tower model" do
+    throwError "empty-inventory model returned the wrong failure: {rejected}"
   logInfo "empty coefficient/divisor inventories still validate the retained real model"
 
 run_meta do
@@ -163,6 +168,62 @@ run_meta do
     | throwError "transferred source usage exceeded its new request's limit"
   unless exhausted.dimension == .sourceNodes do throwError "wrong transferred-budget refusal"
   logInfo "transferred source usage is checked against every enclosing limit"
+
+run_meta do
+  let calls ← IO.mkRef 0
+  let counted := fun (expression : Expr) => do
+    if expression == q(Real.sqrt 2) then calls.modify (· + 1)
+    leaf expression
+  let target : Q(Prop) := q(∀ x : ℝ,
+    x^2 + x * (Real.sqrt 2 + 1) + (Real.sqrt 2 + 2) > 0 ∧
+    0 / (Real.sqrt 2 + 1) = 0)
+  let .ok source ← Reify.prepare target | throwError "memo control did not prepare"
+  for pass in [0,1] do
+    let .ok result ← RootQuote.runWith (do
+        let (coefficients,_) ← TowerCompile.prepareWith source (mkConst ``Data.original) counted
+        let some term := coefficients[0]? | throwError "memo control lost its coefficient"
+        pure ⟨term.expression,term.proof,(← get).budget.consumed⟩) {} source.usage
+      | throwError "memo control refused"
+    unless (← calls.get) == pass + 1 do
+      throwError "checked leaves were repeated or cached across independent requests: pass={pass}, calls={← calls.get}"
+    if pass == 0 then
+      addDecl (.thmDecl {
+        name := `Hex.RCF.TowerCompileConformance.shared,
+        levelParams := [],type := ← inferType result.proof,value := result.proof})
+  let annotated := Expr.mdata {} q(Real.sqrt 2)
+  let .ok result ← RootQuote.runWith (do
+      let term ← TowerCompile.compile (mkConst ``Data.original) counted annotated
+      pure ⟨term.expression,term.proof,(← get).budget.consumed⟩)
+    | throwError "metadata-wrapped leaf was declined"
+  unless (← calls.get) == 3 do throwError "leaf did not receive the unannotated source"
+  addDecl (.thmDecl {
+    name := `Hex.RCF.TowerCompileConformance.annotated,
+    levelParams := [],type := ← inferType result.proof,value := result.proof})
+  logInfo "checked leaf shared across both inventories, fresh per request, outer metadata removed"
+
+run_meta do
+  let mut usage : Array Nat := #[]
+  for cost in [0,9] do
+    let .ok result ← RootQuote.runWith (do
+        let before ← get
+        let decline := fun (_ : Expr) => do
+          Hex.RealFormula.Reify.charge .proofNodes cost
+          modify fun state => {state with
+            inputs := #[q((17 : ℝ))]
+            binders := #[q((19 : ℝ))]
+            formulaSize := 37}
+          pure (none : Option TowerCompile.Term)
+        let term ← TowerCompile.compile (mkConst ``Data.original) decline q((3 : ℝ))
+        let after ← get
+        unless after.inputs == before.inputs && after.binders == before.binders &&
+            after.formulaSize == before.formulaSize do
+          throwError "declining leaf changed frontend state"
+        pure ⟨term.expression,term.proof,after.budget.consumed⟩)
+      | throwError "frontend rollback control refused"
+    usage := usage.push result.usage.proofNodes
+  unless usage[1]! == usage[0]! + 9 do
+    throwError "declining leaf did not retain exactly its nine-node charge: {usage}"
+  logInfo "declining leaf restores frontend state; charged/uncharged difference is exactly nine"
 
 namespace Hex.RCF.TowerCompileConformance
 theorem runFinished : True := trivial

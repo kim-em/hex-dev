@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 import HexRCF.SourceValuationConformance
 import HexRCF.ProofEvidence
+import HexRCF.ProofPaths
 import KernelReplay.AxiomClosure
 
 open Lean Meta Hex.RealClosure
@@ -19,6 +20,9 @@ run_meta do
   unless axioms == (#[``propext,``Classical.choice,``Quot.sound].qsort Name.lt) do
     throwError "source valuation has an unexpected complete axiom closure"
   let dependencies ← Hex.RCF.ProofEvidence.projectDependencies roots
+  Hex.RCF.ProofPaths.require `HexRCF.SourceValuationConformance
+    (Name.num `Hex.RCF.SourceValuationConformance.quoted 2)
+    #[``Tower.Model.add,``Tower.Model.nat,``Hex.RCF.SelectedRootTests.Data.alpha_value]
   for required in #[``Tower.Model.add,``Tower.Model.nat,
       ``Hex.RCF.SelectedRootTests.Data.alpha_value] do
     unless dependencies.contains required do
@@ -41,7 +45,7 @@ run_meta do
     let diagnostics := Kernel.getDiagnostics checked
     unless diagnostics.enabled do throwError "source valuation kernel diagnostics disabled"
     if !diagnostics.unfoldCounter.isEmpty then traces := traces + 1
-  unless bodies == 14 && traces == 13 do
+  unless bodies == 13 && traces == 12 do
     throwError "source valuation inventory changed: {bodies}/{traces}"
   unless (← (← getEnv).getLocalConstantInfos).map (·.name) == before do
     throwError "source valuation audit retained copied declarations"

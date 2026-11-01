@@ -82,6 +82,7 @@ run_meta do
       {basic.ring.budget with proofNodes := 24000000}}}
     let .ok source ← Reify.prepare target config
       | throwError "original complete-cell source was not recognized"
+    let originalTarget := target
     unless source.coefficients.size == 1 && source.divisors.isEmpty do
       throwError "original complete-cell source changed its coefficient/guard inventory"
     let quantified ← whnf source.formula
@@ -190,7 +191,7 @@ run_meta do
           name := `Hex.RCF.CellSourceQuote.checked,levelParams := [],type := target,value := proof})
         let identity ← CellQuote.valuationWith source (mkConst ``Schema.original)
           (mkConst ``Schema.values) (coefficients.map (·.proof))
-        let realTarget := source.original
+        let realTarget := originalTarget
         let arguments := program.getAppArgs
         let info ← getFunInfoNArgs program.getAppFn arguments.size
         let inputs := arguments.zipIdx |>.filterMap fun (argument,index) =>

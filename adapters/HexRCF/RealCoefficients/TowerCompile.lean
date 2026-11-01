@@ -100,7 +100,7 @@ Leaves are authenticated by exact target checking. Use an enclosing
 `RootQuote.runWith` request for failure rollback and aggregate accounting.
 Original source divisors must still be independently retained and discharged. -/
 private meta partial def compileCore (model : Expr) (leaf : Expr → ReifyM (Option Term))
-    (source : Expr) : ReifyM Term := do
+    (cache : IO.Ref (ExprMap Term)) (source : Expr) : ReifyM Term := do
   Core.checkSystem "tower coefficient compilation"
   charge .proofNodes 1
   let e := source.consumeMData
@@ -108,69 +108,78 @@ private meta partial def compileCore (model : Expr) (leaf : Expr → ReifyM (Opt
     abort (.unsupported source "coefficient must be closed")
   unless ← isDefEq (← inferType e) q(ℝ) do
     abort (.unsupported source "coefficient must have type Real")
-  let saved : Meta.SavedState ← liftM (saveState : MetaM Meta.SavedState)
-  match ← leaf source with
-  | some term => return ← checked model source term
-  | none => liftM (saved.restore : MetaM Unit)
-  let args := e.getAppArgs
-  let op := e.getAppFn.constName?
-  if [``HAdd.hAdd,``HSub.hSub,``HMul.hMul,``HDiv.hDiv].any (op == some ·) &&
-      args.size == 6 then
-    let x : Q(ℝ) ← pure args[4]!
-    let y : Q(ℝ) ← pure args[5]!
-    let canonical := if op == some ``HAdd.hAdd then q($x + $y)
-      else if op == some ``HSub.hSub then q($x - $y)
-      else if op == some ``HMul.hMul then q($x * $y) else q($x / $y)
-    unless ← isDefEq e canonical do
-      abort (.unsupported source "nonstandard real arithmetic instance")
-    let a ← compileCore model leaf x
-    let b ← compileCore model leaf y
-    let va : Q(ℝ) ← mkAppM ``Hex.RealClosure.Tower.Model.value #[model,a.expression]
-    let vb : Q(ℝ) ← mkAppM ``Hex.RealClosure.Tower.Model.value #[model,b.expression]
-    let ha : Q($va = $x) ← pure a.proof
-    let hb : Q($vb = $y) ← pure b.proof
-    let (law,congr) := if op == some ``HAdd.hAdd then
-        (``Hex.RealClosure.Tower.Model.add,q(congrArg₂ (fun x y : ℝ => x + y) $ha $hb))
-      else if op == some ``HSub.hSub then
-        (``Hex.RealClosure.Tower.Model.sub,q(congrArg₂ (fun x y : ℝ => x - y) $ha $hb))
-      else if op == some ``HMul.hMul then
-        (``Hex.RealClosure.Tower.Model.mul,q(congrArg₂ (fun x y : ℝ => x * y) $ha $hb))
-      else (``Hex.RealClosure.Tower.Model.div,q(congrArg₂ (fun x y : ℝ => x / y) $ha $hb))
-    let mapped ← mkAppM law #[model,a.expression,b.expression]
-    let expression ← operand mapped
-    return ← checked model source ⟨expression,← mkEqTrans mapped congr⟩
-  if [``Neg.neg,``Inv.inv].any (op == some ·) && args.size == 3 then
-    let x : Q(ℝ) ← pure args[2]!
-    let canonical := if op == some ``Neg.neg then q(-$x) else q($x⁻¹)
-    unless ← isDefEq e canonical do
-      abort (.unsupported source "nonstandard real unary instance")
-    let a ← compileCore model leaf x
-    let va : Q(ℝ) ← mkAppM ``Hex.RealClosure.Tower.Model.value #[model,a.expression]
-    let ha : Q($va = $x) ← pure a.proof
-    let (law,congr) := if op == some ``Neg.neg then
-        (``Hex.RealClosure.Tower.Model.neg,q(congrArg (fun x : ℝ => -x) $ha))
-      else (``Hex.RealClosure.Tower.Model.inv,q(congrArg (fun x : ℝ => x⁻¹) $ha))
-    let mapped ← mkAppM law #[model,a.expression]
-    let expression ← operand mapped
-    return ← checked model source ⟨expression,← mkEqTrans mapped congr⟩
-  let naturalPower ← if e.isAppOfArity ``HPow.hPow 6 then
-      pure ((← inferType args[5]!).isConstOf ``Nat) else pure false
-  if naturalPower then
-    let x : Q(ℝ) ← pure args[4]!
-    let k : Q(ℕ) ← pure args[5]!
-    unless ← isDefEq e q($x ^ $k) do
-      abort (.unsupported source "nonstandard real power instance")
-    let some n ← getNatValue? k |
-      abort (.unsupported source "coefficient power requires a natural literal")
-    charge .exponent n
-    let a ← compileCore model leaf x
-    let mapped ← mkAppM ``pow_value #[model,a.expression,toExpr n]
-    let expression ← operand mapped
-    let va : Q(ℝ) ← mkAppM ``Hex.RealClosure.Tower.Model.value #[model,a.expression]
-    let ha : Q($va = $x) ← pure a.proof
-    return ← checked model source
-      ⟨expression,← mkEqTrans mapped q(congrArg (fun x : ℝ => x ^ $k) $ha)⟩
-  rational model source
+  if let some term := (← cache.get)[e]? then return term
+  let compute : Unit → ReifyM Term := fun _ => do
+    let state ← get
+    let saved : Meta.SavedState ← liftM (saveState : MetaM Meta.SavedState)
+    match ← leaf e with
+    | some term => return ← checked model source term
+    | none =>
+      liftM (saved.restore : MetaM Unit)
+      let budget := (← get).budget
+      set {state with budget}
+    let args := e.getAppArgs
+    let op := e.getAppFn.constName?
+    if [``HAdd.hAdd,``HSub.hSub,``HMul.hMul,``HDiv.hDiv].any (op == some ·) &&
+        args.size == 6 then
+      let x : Q(ℝ) ← pure args[4]!
+      let y : Q(ℝ) ← pure args[5]!
+      let canonical := if op == some ``HAdd.hAdd then q($x + $y)
+        else if op == some ``HSub.hSub then q($x - $y)
+        else if op == some ``HMul.hMul then q($x * $y) else q($x / $y)
+      unless ← isDefEq e canonical do
+        abort (.unsupported source "nonstandard real arithmetic instance")
+      let a ← compileCore model leaf cache x
+      let b ← compileCore model leaf cache y
+      let va : Q(ℝ) ← mkAppM ``Hex.RealClosure.Tower.Model.value #[model,a.expression]
+      let vb : Q(ℝ) ← mkAppM ``Hex.RealClosure.Tower.Model.value #[model,b.expression]
+      let ha : Q($va = $x) ← pure a.proof
+      let hb : Q($vb = $y) ← pure b.proof
+      let (law,congr) := if op == some ``HAdd.hAdd then
+          (``Hex.RealClosure.Tower.Model.add,q(congrArg₂ (fun x y : ℝ => x + y) $ha $hb))
+        else if op == some ``HSub.hSub then
+          (``Hex.RealClosure.Tower.Model.sub,q(congrArg₂ (fun x y : ℝ => x - y) $ha $hb))
+        else if op == some ``HMul.hMul then
+          (``Hex.RealClosure.Tower.Model.mul,q(congrArg₂ (fun x y : ℝ => x * y) $ha $hb))
+        else (``Hex.RealClosure.Tower.Model.div,q(congrArg₂ (fun x y : ℝ => x / y) $ha $hb))
+      let mapped ← mkAppM law #[model,a.expression,b.expression]
+      let expression ← operand mapped
+      return ← checked model source ⟨expression,← mkEqTrans mapped congr⟩
+    if [``Neg.neg,``Inv.inv].any (op == some ·) && args.size == 3 then
+      let x : Q(ℝ) ← pure args[2]!
+      let canonical := if op == some ``Neg.neg then q(-$x) else q($x⁻¹)
+      unless ← isDefEq e canonical do
+        abort (.unsupported source "nonstandard real unary instance")
+      let a ← compileCore model leaf cache x
+      let va : Q(ℝ) ← mkAppM ``Hex.RealClosure.Tower.Model.value #[model,a.expression]
+      let ha : Q($va = $x) ← pure a.proof
+      let (law,congr) := if op == some ``Neg.neg then
+          (``Hex.RealClosure.Tower.Model.neg,q(congrArg (fun x : ℝ => -x) $ha))
+        else (``Hex.RealClosure.Tower.Model.inv,q(congrArg (fun x : ℝ => x⁻¹) $ha))
+      let mapped ← mkAppM law #[model,a.expression]
+      let expression ← operand mapped
+      return ← checked model source ⟨expression,← mkEqTrans mapped congr⟩
+    let naturalPower ← if e.isAppOfArity ``HPow.hPow 6 then
+        pure ((← inferType args[5]!).isConstOf ``Nat) else pure false
+    if naturalPower then
+      let x : Q(ℝ) ← pure args[4]!
+      let k : Q(ℕ) ← pure args[5]!
+      unless ← isDefEq e q($x ^ $k) do
+        abort (.unsupported source "nonstandard real power instance")
+      let some n ← getNatValue? k |
+        abort (.unsupported source "coefficient power requires a natural literal")
+      charge .exponent n
+      let a ← compileCore model leaf cache x
+      let mapped ← mkAppM ``pow_value #[model,a.expression,toExpr n]
+      let expression ← operand mapped
+      let va : Q(ℝ) ← mkAppM ``Hex.RealClosure.Tower.Model.value #[model,a.expression]
+      let ha : Q($va = $x) ← pure a.proof
+      return ← checked model source
+        ⟨expression,← mkEqTrans mapped q(congrArg (fun x : ℝ => x ^ $k) $ha)⟩
+    rational model source
+  let result ← compute ()
+  cache.modify (·.insert e result)
+  return result
 
 private meta def admitModel (model : Expr) : ReifyM Expr := do
   let budget := (← get).budget
@@ -199,15 +208,21 @@ private meta def admitModel (model : Expr) : ReifyM Expr := do
   return model
 
 /-- Interpret one closed arithmetic expression under a checked retained model.
-Run inside the enclosing quotation transaction; this does not discharge guards. -/
+Run inside the enclosing quotation transaction; this does not discharge guards.
+Checked terms are shared within this call by source expression after removing
+outer metadata. The cache is discarded when the call returns or fails. -/
 meta def compile (model : Expr) (leaf : Expr → ReifyM (Option Term))
     (source : Expr) : ReifyM Term := do
-  compileCore (← admitModel model) leaf source
+  let model ← admitModel model
+  let cache ← IO.mkRef ({} : ExprMap Term)
+  compileCore model leaf cache source
 
 /-- Compile the existing source's coefficient and original-divisor inventories
 in their original order, including guards hidden by cancellation or zero
 multiplication. The second array remains a separate nonvanishing obligation.
-Continue the source preparation's budget in the enclosing request. -/
+Continue the source preparation's budget in the enclosing request. One temporary
+cache shares checked subterms across both inventories; callbacks receive sources
+without outer metadata. Declines restore Meta and frontend state, retaining charged work. -/
 meta def prepareWith (source : Reify.Source) (model : Expr)
     (leaf : Expr → ReifyM (Option Term)) : ReifyM (Array Term × Array Term) := do
   let consumed := (← get).budget.consumed
@@ -216,8 +231,9 @@ meta def prepareWith (source : Reify.Source) (model : Expr)
     unless source.usage.get dimension ≤ consumed.get dimension do
       abort (.internal "tower compilation must continue source preparation accounting")
   let model ← admitModel model
-  let coefficients ← source.coefficients.mapM (compileCore model leaf)
-  let divisors ← source.divisors.mapM (compileCore model leaf)
+  let cache ← IO.mkRef ({} : ExprMap Term)
+  let coefficients ← source.coefficients.mapM (compileCore model leaf cache)
+  let divisors ← source.divisors.mapM (compileCore model leaf cache)
   return (coefficients,divisors)
 
 end Hex.RCF.RealCoefficients.TowerCompile

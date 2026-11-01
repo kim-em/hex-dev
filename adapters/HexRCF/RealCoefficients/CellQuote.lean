@@ -426,7 +426,10 @@ def finishOperations (target program accepted model valuationIdentity : Expr)
       | none => saved.restore
   return result
 
-/-- Assemble the exact source valuation from ordered scalar identities. -/
+/-- Assemble the exact source valuation from ordered scalar identities.
+The model, coordinate function and source valuation must be closed. Scalar
+proofs may use the caller's local hypotheses; the final checked theorem retains
+those hypotheses. Use the enclosing quotation transaction for rollback. -/
 def valuationWith (source : Reify.Source) (model values : Expr) (proofs : Array Expr) :
     Hex.RealFormula.Reify.ReifyM Expr := do
   for input in #[model,values,source.valuation] do
@@ -445,6 +448,14 @@ def valuationWith (source : Reify.Source) (model values : Expr) (proofs : Array 
   let valuation ← withLocalDeclD `i domain fun i => do
     let value ← mkAppM ``Hex.RealClosure.Tower.Model.value #[model,mkApp values i]
     mkLambdaFVars #[i] value
+  for i in [:proofs.size] do
+    let index ← mkAppM ``Fin.mk
+      #[mkNatLit i,← mkDecideProof (← mkLt (mkNatLit i) (mkNatLit proofs.size))]
+    let expected ← mkEq (mkApp valuation index) (mkApp source.valuation index)
+    Hex.RealFormula.Reify.accountProof expected
+    Hex.RealFormula.Reify.accountProof proofs[i]!
+    unless ← isDefEq (← inferType proofs[i]!) expected do
+      throwError "rcf: source coefficient identity does not match its coordinate"
   let family ← withLocalDeclD `i domain fun i => do
     mkLambdaFVars #[i] (← mkEq (mkApp valuation i) (mkApp source.valuation i))
   let pointwise ← buildFamily family proofs
