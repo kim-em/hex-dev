@@ -95,6 +95,13 @@ private def invalidSeeds : Bool := Id.run do
       catch
         | .matrix .dimensions => pure ()
         | _ => return false
+    try
+      let _ ← PairRows.prepare context {} #[basis[0]!,BasisElement.mk {} 0]
+        #[CriticalPair.mk 0 1 lcm 2] .empty
+      return false
+    catch
+      | .matrix .dimensions => pure ()
+      | _ => return false
     return true
   match action.run { table := { arity := 2 } } with
   | (.ok value, _) => value

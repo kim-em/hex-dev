@@ -45,23 +45,29 @@ batch-size, pair-criteria and complete-certificate comparisons. The independent
 175 matrix, 567 SymPy/Singular basis and 1288 division/normal-form/membership
 oracles pass. All 30 benchmark verifications pass. Four Clang ASan/UBSan native
 variants exercise real F4 plus long cache comparisons (116270 scans, 198270
-gathers and 4051 byte comparisons each). Existing native C is unchanged.
-DAG, phase, release-manifest, source/header and admission audits pass.
+gathers, 4092 byte comparisons and 216 product validations each) on the final
+owned-set snapshot `70aacca874da`. Existing native C is unchanged.
+DAG, phase, release-manifest, source/header and admission audits pass. The final
+2070-job targeted validation is archived in `pair-rows-owned-validation.tar.gz`;
+its scope file distinguishes that success from the separate all-project
+conformance build still finishing unrelated kernel replay at archive creation.
 
 Dedicated tests compare each selected S-polynomial with its multiplied faces,
-including a triangle and disconnected same-LCM components. The downstream
+including a triangle, disconnected same-LCM components, shared sources under
+different multipliers, a later sparse reducer, repeated/reversed pairs, seeded
+leads in target tails and rejected duplicate/empty seeds or invalid indices. The downstream
 literal certificate is regenerated to the new six-node derivation and kernel
 replay passes without native_decide or new axioms. Regenerated F4 fixtures keep
 every input and final basis unchanged; matrix and work statistics change as
 recorded. This does not complete the deterministic F4/termination theory.
 
-## Timing contract
+## Timing contract: 064a09798b72 versus 57149c9cc2f7
 
 B is fingerprint `064a09798b72`, the multiplied-row engine built on the final
 context-bound cache/access engine A (`57149c9cc2f7`). Exact staged source blobs,
 driver inputs and frozen executable hashes identify each arm independently of
-rebases. Host chungus2, AMD EPYC 9455, Lean4.35.0-rc3, generated C Clang23.1.0,
-FFI Clang23.1.3. One thread pins to an automatically leased CPU. Every experiment
+rebases. Host chungus2, AMD EPYC 9455, Lean 4.35.0-rc3, generated C Clang 23.1.0,
+FFI Clang 23.1.3. One thread pins to an automatically leased CPU. Every experiment
 runs adjacent AB then BA, with every completed sample retained and no quiet-host
 condition. Candidate time includes canonicalization, F4 and final interreduction;
 process time additionally includes startup, parse and complete output.
@@ -104,9 +110,9 @@ mixed adjacent-arm observations. CPUs are 44 and 66.
 Every regression and outlier remains. No additional unchanged rerun is used.
 These finite fixed inputs do not establish a general complexity law.
 
-## Arena-validated cache baseline
+## Earlier cache baseline: c9fcd659ff93 versus 65d5517c4d57
 
-The final computational snapshot `68086d6576` is content-identical over the benchmark
+The previous computational snapshot `68086d6576` is content-identical over the benchmark
 family to rebased PR commit `d227bebc90`, fingerprint `c9fcd659ff93`.
 A is the frozen arena-validated cache/access engine `65d5517c4d57` (computational
 commit `a74d092a08`); B adds multiplied pair rows. Both source manifests and
@@ -115,11 +121,11 @@ inputs, output contract, limits and adjacent AB/BA schedule above apply.
 This is a separate comparison from the earlier context-bound cache experiment;
 its ratios are not pooled with that experiment.
 
-All 64 diagnostic processes complete on CPU89 with equal full bases. Candidate
+All 64 diagnostic processes complete on CPU 89 with equal full bases. Candidate
 geometric mean is **0.8955**, median **0.8788**, range **0.8343–1.0979**.
 Process geometric mean is **0.9549**, median **0.9666**, range **0.8839–1.0465**.
 Counters retain the changes caused by the different matrices and intermediate
-bases. The registered sweep completes all 120 points on CPU71 with matching
+bases. The registered sweep completes all 120 points on CPU 71 with matching
 full structural basis hashes and five declared repetitions per arm and order.
 
 | Fixed case | Geometric mean B/A | Median | Range |
@@ -135,9 +141,10 @@ Every completed sample, including regressions, remains. No unchanged rerun was
 used for this snapshot. `ldd` confirms these frozen binaries contain the Hex and
 Lean code statically; subsequent worktree edits cannot change either arm.
 
-## Owned target deduplication
+## Owned target deduplication: 70aacca874da versus 65d5517c4d57
 
 The final computational snapshot is `6841f20b1f`, fingerprint `70aacca874da`.
+PR head `f403a08bf9` is content-identical over the benchmark family.
 It uses one owned set keyed by (LCM, source), validates pair indices/nonzero
 sources, classifies duplicate/empty seeds as internal matrix errors, and removes
 the unused traced S-polynomial constructor. Reducer selection and complete
@@ -165,7 +172,7 @@ mean is 0.8953, median 0.9267, range
 0.5181–1.4843; process geometric mean is 0.9834,
 median 0.9660, range 0.3403–3.2657.
 The two fixed sweeps retain 240 points with matching full structural hashes,
-five declared repetitions and actual inner-repeat normalization, CPUs43/8.
+five declared repetitions and actual inner-repeat normalization, CPUs 43/8.
 
 | Fixed case | Original geometric mean | Repeat geometric mean | Pooled geometric mean | Median | Range |
 | --- | ---: | ---: | ---: | ---: | --- |
@@ -189,7 +196,7 @@ Upstream msolve remains at `3672113ee2c696a2ac9c637636e0f7214f500ba1`
 after a fresh fetch. Its GCC16.2/OpenMP build uses `-O3 -march=native`,
 GMP/MPFR/FLINT3.6 and passes all 71 upstream tests. Both arms use one thread,
 full reduced grevlex output, adjacent AB/BA, the same diagnostic inputs and
-limits, and the frozen Hex multiplied-row engine. msolve mode2 is exact default
+limits, and the frozen Hex multiplied-row engine `064a09798b72`. msolve mode2 is exact default
 elimination; mode42 uses probabilistic elimination. Every complete output is
 parsed and compared; neither certificate generation nor kernel checking is timed.
 
@@ -221,16 +228,12 @@ that checkout, and build `production_compare`; fixed cases use
 - [pair-rows-production-records-064a09798b72.tar.gz](raw/pair-rows-production-records-064a09798b72.tar.gz): `6bd76d6c22f2efe6ce795ec289c15f7c978d0f72324b275286da7bc5b2dd4986`
 - [pair-rows-production-records-064a09798b72-repeat.tar.gz](raw/pair-rows-production-records-064a09798b72-repeat.tar.gz): `95dead937e2dc2263b9fec4c45ef8047ed99529fe7b836d93b7ea5f39c1d9897`
 - [pair-rows-validation.tar.gz](raw/pair-rows-validation.tar.gz): `2d62bf540b1096936a56914f543c933322426967a76ce8a33aa3b8d206474eb0`
-
 - [pair-rows-verified-production-bench-c9fcd659ff93.tar.gz](raw/pair-rows-verified-production-bench-c9fcd659ff93.tar.gz): `32f9c3ca2da871270b1e4b5ce62d5f24faa916fa14910ae5fa9044a70482431a`
 - [pair-rows-verified-production-records-c9fcd659ff93.tar.gz](raw/pair-rows-verified-production-records-c9fcd659ff93.tar.gz): `81b0ee3677df574983a0d6d698aba63a241a1a028c3b3652aeaef9d76ec5aa8a`
-
 - [pair-rows-owned-production-bench-70aacca874da-repeat.tar.gz](raw/pair-rows-owned-production-bench-70aacca874da-repeat.tar.gz): `181a1948b799a15fba47ca2ef4d5c50c1fa3454b3ce5f2408b924b50dafc452c`
-
 - [pair-rows-owned-production-bench-70aacca874da.tar.gz](raw/pair-rows-owned-production-bench-70aacca874da.tar.gz): `b741e3f589090e041a5ef192c396ed877be97cd89ea6a095870561feb7d0b02a`
-
 - [pair-rows-owned-production-records-70aacca874da-repeat.tar.gz](raw/pair-rows-owned-production-records-70aacca874da-repeat.tar.gz): `cb94bb2e7d9102f96328705405b5adea479f17df6a3b50812a9c0978e282e7e8`
-
 - [pair-rows-owned-production-records-70aacca874da.tar.gz](raw/pair-rows-owned-production-records-70aacca874da.tar.gz): `3f9707f0a9e243698495876cf1840f61e97a57f1a4a74cbc3e4ac4873a85b455`
-
 - [pair-rows-provenance.tar.gz](raw/pair-rows-provenance.tar.gz): `6a6977a539b48db9c87a7ab12f52e525f2d1b2a401fc6616b9bec738071da3a9`
+
+- [pair-rows-owned-validation.tar.gz](raw/pair-rows-owned-validation.tar.gz): `1068a2bc69482388b79d554e51e6bf13c1140a426f30770641a35fd7881eb904`
