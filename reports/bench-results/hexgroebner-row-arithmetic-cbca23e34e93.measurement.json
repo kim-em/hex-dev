@@ -1,0 +1,208 @@
+{
+  "source_fingerprint": "cbca23e34e93",
+  "baseline_source_fingerprint": "7f850171b281",
+  "binary_sha256": {
+    "A": "42599c0e2a543cc484ee5c8d86368364bb4e6bb018b0a140539ee216b640ff70",
+    "B": "ac66cbd53d4e83d5885c56cc1a628c679f775c3af6b29050610f65b0fac0372c"
+  },
+  "cpu": 64,
+  "affinity": [
+    64
+  ],
+  "host": "chungus2",
+  "load_start": [
+    0.46923828125,
+    0.3935546875,
+    0.857421875
+  ],
+  "threads": 1,
+  "toolchain": "leanprover/lean4:v4.35.0-rc3",
+  "c_compiler": "clang version 23.1.3",
+  "schedule": "2 blocks AB/BA, adjacent arms; every completed sample retained",
+  "contract": "p65537 grevlex, batch cap1024, identical allowances; A previous exact row arithmetic, B 32-bit Barrett where applicable and sign-mask subtraction correction; complete unchecked candidate including decode and structural basis hashing; preparation/certification/native verification/kernel checking excluded",
+  "script": "import hashlib,json,os,pathlib,subprocess,sys,time\nsys.path.insert(0,str(pathlib.Path.cwd()))\nfrom scripts.bench.cpu_lease import cpu_lease\nfrom scripts.bench.sweep_freshness import fingerprint,index_listing\nfrom scripts.bench.groebner_measure import FAMILY\nlisting=index_listing(FAMILY);fp=fingerprint(listing);root=pathlib.Path('reports/bench-results')/f'hexgroebner-row-arithmetic-{fp}'\nif root.with_suffix('.measurement.json').exists():raise SystemExit('retain existing observation')\nroot.with_suffix('.manifest').write_text(listing)\nbinaries={'A':pathlib.Path('/tmp/hex-groebner-branchless-before/hexgroebner_bench'),'B':pathlib.Path('.lake/build/bin/hexgroebner_bench')}\ncpu,lease=cpu_lease();os.sched_setaffinity(0,{cpu})\nmetadata=dict(source_fingerprint=fp,baseline_source_fingerprint='7f850171b281',binary_sha256={k:hashlib.sha256(p.read_bytes()).hexdigest() for k,p in binaries.items()},cpu=cpu,affinity=sorted(os.sched_getaffinity(0)),host=os.uname().nodename,load_start=os.getloadavg(),threads=1,toolchain=pathlib.Path('lean-toolchain').read_text().strip(),c_compiler=subprocess.check_output(['cc','--version'],text=True).splitlines()[0],schedule='2 blocks AB/BA, adjacent arms; every completed sample retained',contract='p65537 grevlex, batch cap1024, identical allowances; A previous exact row arithmetic, B 32-bit Barrett where applicable and sign-mask subtraction correction; complete unchecked candidate including decode and structural basis hashing; preparation/certification/native verification/kernel checking excluded',script=pathlib.Path(__file__).read_text(),commands=[])\nstart=time.monotonic()\ntry:\n for block,order in enumerate(['AB','BA']):\n  for case in ['cyclic5','cyclic6','katsura3','reimer5']:\n   for arm in order:\n    base=pathlib.Path(str(root)+f'-b{block}-{case}-{arm}')\n    command=[str(binaries[arm]),'run','Hex.Groebner.Bench.'+case,'--repeats','3','--min-total-seconds','0.5','--export-file',str(base.with_suffix('.json'))];metadata['commands'].append(command)\n    with base.with_suffix('.log').open('w') as output:result=subprocess.run(command,stdout=output,stderr=subprocess.STDOUT)\n    print(base,'exit',result.returncode,flush=True)\n    if result.returncode:raise SystemExit('failed arm, retained records')\nfinally:\n metadata.update(load_end=os.getloadavg(),elapsed_seconds=time.monotonic()-start);root.with_suffix('.measurement.json').write_text(json.dumps(metadata,indent=2)+'\\n');lease.close()\n",
+  "commands": [
+    [
+      "/tmp/hex-groebner-branchless-before/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.cyclic5",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-row-arithmetic-cbca23e34e93-b0-cyclic5-A.json"
+    ],
+    [
+      ".lake/build/bin/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.cyclic5",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-row-arithmetic-cbca23e34e93-b0-cyclic5-B.json"
+    ],
+    [
+      "/tmp/hex-groebner-branchless-before/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.cyclic6",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-row-arithmetic-cbca23e34e93-b0-cyclic6-A.json"
+    ],
+    [
+      ".lake/build/bin/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.cyclic6",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-row-arithmetic-cbca23e34e93-b0-cyclic6-B.json"
+    ],
+    [
+      "/tmp/hex-groebner-branchless-before/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.katsura3",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-row-arithmetic-cbca23e34e93-b0-katsura3-A.json"
+    ],
+    [
+      ".lake/build/bin/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.katsura3",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-row-arithmetic-cbca23e34e93-b0-katsura3-B.json"
+    ],
+    [
+      "/tmp/hex-groebner-branchless-before/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.reimer5",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-row-arithmetic-cbca23e34e93-b0-reimer5-A.json"
+    ],
+    [
+      ".lake/build/bin/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.reimer5",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-row-arithmetic-cbca23e34e93-b0-reimer5-B.json"
+    ],
+    [
+      ".lake/build/bin/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.cyclic5",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-row-arithmetic-cbca23e34e93-b1-cyclic5-B.json"
+    ],
+    [
+      "/tmp/hex-groebner-branchless-before/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.cyclic5",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-row-arithmetic-cbca23e34e93-b1-cyclic5-A.json"
+    ],
+    [
+      ".lake/build/bin/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.cyclic6",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-row-arithmetic-cbca23e34e93-b1-cyclic6-B.json"
+    ],
+    [
+      "/tmp/hex-groebner-branchless-before/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.cyclic6",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-row-arithmetic-cbca23e34e93-b1-cyclic6-A.json"
+    ],
+    [
+      ".lake/build/bin/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.katsura3",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-row-arithmetic-cbca23e34e93-b1-katsura3-B.json"
+    ],
+    [
+      "/tmp/hex-groebner-branchless-before/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.katsura3",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-row-arithmetic-cbca23e34e93-b1-katsura3-A.json"
+    ],
+    [
+      ".lake/build/bin/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.reimer5",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-row-arithmetic-cbca23e34e93-b1-reimer5-B.json"
+    ],
+    [
+      "/tmp/hex-groebner-branchless-before/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.reimer5",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-row-arithmetic-cbca23e34e93-b1-reimer5-A.json"
+    ]
+  ],
+  "load_end": [
+    1.1884765625,
+    0.65185546875,
+    0.908203125
+  ],
+  "elapsed_seconds": 97.80791279801633
+}

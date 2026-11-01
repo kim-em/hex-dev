@@ -1,0 +1,12 @@
+Hex.Groebner.Bench.cyclic5    [fixed] repeats=5
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a76c5fb-dirty, 2026-10-31T10:45:55Z, host=chungus2
+  repeat 0  10.600 ms
+  repeat 1  10.632 ms
+  repeat 2  10.572 ms
+  repeat 3  10.623 ms
+  repeat 4  10.596 ms
+  median: 10.600 ms    min: 10.572 ms    max: 10.632 ms
+  hash: all repeats agree
+  observed hash: 0xb052d1d60890c253
+  peak RSS: 67_764 kB..67_768 kB (across 5 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10987/reports/bench-results/hexgroebner-cyclic5-68b53125ffac.json

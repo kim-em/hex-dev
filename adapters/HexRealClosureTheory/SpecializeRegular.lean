@@ -76,7 +76,7 @@ theorem regular_neg (embedding : F →+* ℝ) (t : ℝ) (fraction : Hex.Rational
 contain a nonzero fraction whose numerator vanishes at that parameter. -/
 @[expose] noncomputable def regularRing (embedding : F →+* ℝ) (t : ℝ) :
     Subring (Hex.RationalFn F) where
-  carrier := Regular embedding t
+  carrier := {fraction | Regular embedding t fraction}
   zero_mem' := by
     change ((HexPolyTheory.toPolynomial (1 : Hex.DensePoly F)).map embedding).eval t ≠ 0
     rw [HexPolyTheory.toPolynomial_one, Polynomial.map_one, Polynomial.eval_one]

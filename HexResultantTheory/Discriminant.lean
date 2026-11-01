@@ -132,7 +132,7 @@ factor discriminants times the squared cross-resultant. The proof runs both
 resultant multiplicativity laws through `resultant_deriv` and cancels the
 common sign and leading-coefficient factors. -/
 private theorem discr_mul [CommRing R] [IsDomain R]
-    [IsAddTorsionFree R] (f g : Polynomial R)
+    [HasUniqueDiv R] (f g : Polynomial R)
     (hf : 0 < f.natDegree) (hg : 0 < g.natDegree) :
     Polynomial.discr (f * g) =
       Polynomial.discr f * Polynomial.discr g *
@@ -311,7 +311,7 @@ private theorem discr_mul [CommRing R] [IsDomain R]
 The positive-degree hypotheses are essential: Mathlib and the executable API
 assign discriminant one to constants, while multiplying by a nonunit constant
 scales the other discriminant. -/
-theorem disc_mul [CommRing R] [IsDomain R] [IsAddTorsionFree R]
+theorem disc_mul [CommRing R] [IsDomain R] [HasUniqueDiv R]
     [DecidableEq R] [Div R] [Hex.ExactDivLaws R]
     (f g : DensePoly R) (hf : 0 < f.natDegree)
     (hg : 0 < g.natDegree) :
@@ -329,7 +329,7 @@ theorem disc_mul [CommRing R] [IsDomain R] [IsAddTorsionFree R]
 
 /-- A positive-degree polynomial over a characteristic-zero field has
 nonzero executable discriminant exactly when it is separable. -/
-theorem disc_ne_zero_iff_separable [Field R] [IsAddTorsionFree R]
+theorem disc_ne_zero_iff_separable [Field R] [HasUniqueDiv R]
     [DecidableEq R] [Hex.ExactDivLaws R]
     (f : DensePoly R) (hf : 0 < f.natDegree) :
     disc f ≠ 0 ↔ (HexPolyTheory.toPolynomial f).Separable := by

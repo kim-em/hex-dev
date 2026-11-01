@@ -421,7 +421,7 @@ tiny comparison overhead, and no algebraic tower integration claim. The latter
 measurements remain required under #10378. Historical inconclusive samples are
 retained below without changing their verdicts.
 
-The current native implementation has three proved compiler replacements,
+The current native implementation has two proved compiler replacements,
 assessed individually in the [positive quotient](bench-results/ordered-fn-positive-quotient/README.md)
 and [sign/scan](bench-results/ordered-fn-sign-scan/README.md) reports. Their kernel
 reference bodies and public semantic statements are unchanged. Positive quotient
@@ -429,11 +429,12 @@ bounds use two exact rational divisions instead of four; other signs and
 zero-containing denominator refusals retain the reference computation. This
 changes a constant operation count, without enlarging the conservative search
 upper-bound models. The sign zero test inspects normalized numerator storage.
-The coefficient scan adds a shared-zero pointer shortcut and otherwise uses the
-original equality. At each fixed depth it still visits coefficients in order;
-unshared zeros retain the structural fallback. The large three-level gain is
-specific to shared padding in the measured specialization, not a new generic
-constant-time coefficient equality or uniform depth claim.
+The coefficient scan originally added a shared-zero pointer shortcut. Lean
+v4.36.0-rc1 rejects pointer equality for an arbitrary coefficient type, so the
+scan now uses the original equality throughout and the `lowestIndex` compiler
+replacement is gone. The large three-level gain was specific to shared padding in
+the measured specialization; the generic library path compares against a freshly
+allocated zero and never took the shortcut.
 
 The earlier absolute times and scientific verdicts remain observations of their
 recorded source commits. The complete changed-source

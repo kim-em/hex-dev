@@ -847,12 +847,12 @@ guard outside this support family.
 @[expose]
 def liftedTrueSupports (core : Hex.ZPoly) (d : Hex.LiftData) :
     Set (Set (LiftedFactorIndex d)) :=
-  fun U =>
+  {U |
     ∃ (f : Hex.ZPoly) (S : LiftedFactorSubset d),
       Irreducible (HexPolyZTheory.toPolynomial f) ∧
         f ∣ core ∧
           RepresentsIntegerFactorAtLift core d f S ∧
-            (↑S : Set (LiftedFactorIndex d)) = U
+            (↑S : Set (LiftedFactorIndex d)) = U}
 
 namespace liftedTrueSupports
 

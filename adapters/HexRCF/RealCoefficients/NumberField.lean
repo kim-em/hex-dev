@@ -9,10 +9,6 @@ public import HexRCF.RealCoefficients.Samples
 public import HexRCF.RealCoefficients.Coefficients
 public import HexRealClosureTheory.NumberFieldTower
 public import HexRealClosureTheory.ContextModel
--- The original-source factory binding unfolds only `Presentation.model`:
--- its chosen target is the public root conversion model. No owner proof or
--- arithmetic/search implementation is copied into this adapter.
-import all HexRealClosureTheory.NumberFieldTower
 
 public section
 
@@ -59,6 +55,7 @@ private theorem readModel (following : (BaseContext.PackedContext.pack (BaseCont
     {generator : RealAlgebraicNumber}
     (source : Hex.RealClosure.NumberField.Presentation generator registry) :
     source.context.model? following (Hex.RealClosure.NumberField.rationalModel registry) = some source.model := by
+  rw [Hex.RealClosure.NumberField.Presentation.model_eq]
   exact readCast following source.root.conversion_context
     (source.root.conversionModel (Hex.RealClosure.NumberField.rationalModel registry)).target
     (source.root.model (Hex.RealClosure.NumberField.rationalModel registry))

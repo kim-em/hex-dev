@@ -1,0 +1,315 @@
+{
+  "source_fingerprint": "7f850171b281",
+  "metadata": {
+    "protocol": {
+      "pairs": 2,
+      "orders": [
+        "AB",
+        "BA"
+      ],
+      "A": "Hex candidate",
+      "B": "msolve exact sparse",
+      "threads": 1,
+      "timeout_seconds": 10,
+      "address_space_bytes": 17179869184,
+      "output": "full reduced grevlex basis over the explicit prime field",
+      "times": "whole process wall including parse and output; Hex internal candidate separately",
+      "retention": "all samples, failures and outputs; no host-activity filtering"
+    },
+    "suite_sha256": "59cec100d5b9dc6977e61f7b7f747ca26e987584811ab41a445dbd020e567e0b",
+    "cpu": 71,
+    "affinity": [
+      71
+    ],
+    "host": "chungus2",
+    "load_start": [
+      1.65283203125,
+      1.41064453125,
+      1.7275390625
+    ],
+    "hex_binary_sha256": "93d0ce533958e6cc2041b74baea5363fa39a56aae573dc9002461cba74e77f6c",
+    "hex_commit": "83d2d58bc8087c44415fe8b0dfb98ac000f0a335",
+    "msolve_commit": "3672113ee2c696a2ac9c637636e0f7214f500ba1",
+    "msolve_binary_sha256": "9ea2868345c893e561fad25c43dfbab02b38087076ae99034e395a72d2246254",
+    "msolve_build": "nix-shell gcc16.2 gmp mpfr flint3.6; -O3 -march=native; OpenMP enabled; all71 tests pass",
+    "driver_sha256": "5ee5416bcc4ab6697d8055eafe76edd54144c8a782ca40b6dfa7a25283fd4bf4",
+    "timer_sha256": "8828acef748a9954d0d86a727372fbaca9e8b46a9479e7d885567eb2b034ad62",
+    "guarantees": "Hex deterministic unchecked candidate; msolve exact sparse reduced basis; neither Lean kernel checked",
+    "hex_source_fingerprint": "7f850171b281",
+    "hex_source_dirty": true,
+    "toolchain": "leanprover/lean4:v4.35.0-rc3",
+    "script": "import ctypes,hashlib,json,os,pathlib,resource,select,signal,subprocess,sys,time\nsys.path.insert(0,'/home/kim/worktrees/hex-dev/hex-dev-issue-10987')\nfrom scripts.bench.cpu_lease import cpu_lease\nfrom scripts.bench.groebner_measure import FAMILY\nfrom scripts.bench.sweep_freshness import fingerprint,index_listing\nlisting=index_listing(FAMILY)\nassert fingerprint(listing)=='7f850171b281'\nROOT=pathlib.Path(__file__).resolve().parent\nOUT=ROOT/'diagnostic-records-native-monomials-7f850171b281'\nlibc=ctypes.CDLL(None,use_errno=True)\nlibc.pidfd_open.argtypes=[ctypes.c_int,ctypes.c_uint]\nlibc.pidfd_open.restype=ctypes.c_int\nOUT.mkdir(exist_ok=False)\nplan=json.loads((ROOT/'diagnostic-suite.json').read_text());protocol=plan['protocol']\nhexbin=ROOT/'.lake/build/bin/f4_compare';msbin=pathlib.Path('/tmp/hex-groebner-msolve/msolve')\nsha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()\ncpu,lease=cpu_lease();os.sched_setaffinity(0,{cpu})\nenv=dict(os.environ,OMP_NUM_THREADS='1',OPENBLAS_NUM_THREADS='1')\nmeta=dict(protocol=protocol,suite_sha256=sha(ROOT/'diagnostic-suite.json'),cpu=cpu,affinity=sorted(os.sched_getaffinity(0)),host=os.uname().nodename,load_start=os.getloadavg(),hex_binary_sha256=sha(hexbin),hex_commit=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip(),msolve_commit=subprocess.check_output(['git','-C','/tmp/hex-groebner-msolve','rev-parse','HEAD'],text=True).strip(),msolve_binary_sha256=sha(pathlib.Path('/tmp/hex-groebner-msolve/.libs/msolve')),msolve_build='nix-shell gcc16.2 gmp mpfr flint3.6; -O3 -march=native; OpenMP enabled; all71 tests pass',driver_sha256=sha(ROOT/'Main.lean'),timer_sha256=sha(pathlib.Path(__file__)),guarantees='Hex deterministic unchecked candidate; msolve exact sparse reduced basis; neither Lean kernel checked')\n(OUT/'source.manifest').write_text(listing)\nmeta.update(hex_source_fingerprint='7f850171b281',hex_source_dirty=True,toolchain=pathlib.Path('lean-toolchain').read_text().strip(),script=pathlib.Path(__file__).read_text())\n(OUT/'metadata.json').write_text(json.dumps(meta,indent=2)+'\\n')\n\ndef limits():\n    os.setsid()\n    resource.setrlimit(resource.RLIMIT_AS,(protocol['address_space_bytes'],)*2)\n    resource.setrlimit(resource.RLIMIT_FSIZE,(64*1024**2,)*2)\n\ndef sample(case,block,arm):\n    prefix=f\"{case['name']}-b{block}-{arm}\";path=OUT/(prefix+'.basis')\n    if arm=='A':command=[str(hexbin),str(ROOT/(case['name']+'.json'))]\n    else:command=[str(msbin),'-g','2','-t','1','-l','2','-v','2','-f',str(ROOT/(case['name']+'.ms')),'-o',str(path)]\n    start=time.monotonic_ns();load=os.getloadavg();timeout=False\n    with (OUT/(prefix+'.stdout')).open('wb') as stdout,(OUT/(prefix+'.stderr')).open('wb') as stderr:\n        proc=subprocess.Popen(command,stdout=stdout,stderr=stderr,env=env,preexec_fn=limits)\n        fd=libc.pidfd_open(proc.pid,0)\n        if fd < 0: raise OSError(ctypes.get_errno(), \"pidfd_open\")\n        try:\n            ready,_,_=select.select([fd],[],[],protocol['timeout_seconds'])\n            if not ready:\n                timeout=True;os.killpg(proc.pid,signal.SIGKILL)\n            _,status,usage=os.wait4(proc.pid,0)\n            proc.returncode=os.waitstatus_to_exitcode(status)\n        finally:os.close(fd)\n    elapsed=time.monotonic_ns()-start\n    record=dict(case=case['name'],family=case['family'],p=case['p'],block=block,arm=arm,command=command,wall_nanos=elapsed,status='timeout' if timeout else 'ok' if proc.returncode==0 else 'failed',returncode=proc.returncode,peak_rss_kib=usage.ru_maxrss,user_seconds=usage.ru_utime,system_seconds=usage.ru_stime,load_start=load)\n    if arm=='A' and proc.returncode==0:\n        try:\n            result=json.loads((OUT/(prefix+'.stdout')).read_text())\n            record['statistics']={k:v for k,v in result.items() if k!='basis'}\n        except Exception as e:record.update(status='malformed',error=str(e))\n    with (OUT/'samples.jsonl').open('a') as f:f.write(json.dumps(record)+'\\n')\n    print(prefix,record['status'],elapsed/1e9,flush=True)\n\ntry:\n    for case in plan['cases']:\n        for block,order in enumerate(protocol['orders']):\n            for arm in order:sample(case,block,arm)\nfinally:\n    meta['load_end']=os.getloadavg();(OUT/'metadata.json').write_text(json.dumps(meta,indent=2)+'\\n');lease.close()\n",
+    "load_end": [
+      1.78662109375,
+      1.447265625,
+      1.73583984375
+    ]
+  },
+  "samples": 64,
+  "hex_solved": 16,
+  "msolve_solved": 16,
+  "compared_bases": 32,
+  "cases": [
+    {
+      "case": "cyclic5-15",
+      "family": "cyclic",
+      "p": 32003,
+      "paired_hex_over_msolve": 2.117618469105471,
+      "wall_nanos": {
+        "A": [
+          27787851,
+          26448577
+        ],
+        "B": [
+          13875073,
+          11812085
+        ]
+      }
+    },
+    {
+      "case": "cyclic5-31",
+      "family": "cyclic",
+      "p": 2147483647,
+      "paired_hex_over_msolve": 2.2098759642589823,
+      "wall_nanos": {
+        "A": [
+          27670527,
+          28772961
+        ],
+        "B": [
+          13497663,
+          12078350
+        ]
+      }
+    },
+    {
+      "case": "cyclic6-15",
+      "family": "cyclic",
+      "p": 32003,
+      "paired_hex_over_msolve": 3.7505583884138365,
+      "wall_nanos": {
+        "A": [
+          51864832,
+          53364124
+        ],
+        "B": [
+          14795987,
+          13298007
+        ]
+      }
+    },
+    {
+      "case": "cyclic6-31",
+      "family": "cyclic",
+      "p": 2147483647,
+      "paired_hex_over_msolve": 3.8426818284256066,
+      "wall_nanos": {
+        "A": [
+          54955593,
+          55428804
+        ],
+        "B": [
+          15408495,
+          13388081
+        ]
+      }
+    },
+    {
+      "case": "kat6-15",
+      "family": "kat",
+      "p": 32003,
+      "paired_hex_over_msolve": 2.1574273565705933,
+      "wall_nanos": {
+        "A": [
+          26645298,
+          27350964
+        ],
+        "B": [
+          13488409,
+          11608073
+        ]
+      }
+    },
+    {
+      "case": "kat6-31",
+      "family": "kat",
+      "p": 2147483647,
+      "paired_hex_over_msolve": 2.3128921014642794,
+      "wall_nanos": {
+        "A": [
+          28531493,
+          29404947
+        ],
+        "B": [
+          13345087,
+          11752026
+        ]
+      }
+    },
+    {
+      "case": "eco10-15",
+      "family": "eco",
+      "p": 32003,
+      "paired_hex_over_msolve": 18.136251329531973,
+      "wall_nanos": {
+        "A": [
+          1464330883,
+          1465299658
+        ],
+        "B": [
+          82348449,
+          79216417
+        ]
+      }
+    },
+    {
+      "case": "eco10-31",
+      "family": "eco",
+      "p": 2147483647,
+      "paired_hex_over_msolve": 18.534352929180553,
+      "wall_nanos": {
+        "A": [
+          1504114781,
+          1513959160
+        ],
+        "B": [
+          82895499,
+          79966729
+        ]
+      }
+    },
+    {
+      "case": "noon4-15",
+      "family": "noon",
+      "p": 32003,
+      "paired_hex_over_msolve": 2.061786224616245,
+      "wall_nanos": {
+        "A": [
+          27440056,
+          26413695
+        ],
+        "B": [
+          14333923,
+          11894928
+        ]
+      }
+    },
+    {
+      "case": "noon4-31",
+      "family": "noon",
+      "p": 2147483647,
+      "paired_hex_over_msolve": 2.1429887411349196,
+      "wall_nanos": {
+        "A": [
+          27339266,
+          27931693
+        ],
+        "B": [
+          13455871,
+          12357554
+        ]
+      }
+    },
+    {
+      "case": "reimer5-15",
+      "family": "reimer",
+      "p": 32003,
+      "paired_hex_over_msolve": 11.613079123527221,
+      "wall_nanos": {
+        "A": [
+          176769458,
+          178637797
+        ],
+        "B": [
+          16234779,
+          14422463
+        ]
+      }
+    },
+    {
+      "case": "reimer5-31",
+      "family": "reimer",
+      "p": 2147483647,
+      "paired_hex_over_msolve": 11.51354458759675,
+      "wall_nanos": {
+        "A": [
+          183490789,
+          183467645
+        ],
+        "B": [
+          17256343,
+          14716580
+        ]
+      }
+    },
+    {
+      "case": "minrank_d_2_p_2_q_3_r_2-15",
+      "family": "minrank",
+      "p": 32003,
+      "paired_hex_over_msolve": 1.7035266033524274,
+      "wall_nanos": {
+        "A": [
+          24443765,
+          23129978
+        ],
+        "B": [
+          14845841,
+          13123228
+        ]
+      }
+    },
+    {
+      "case": "minrank_d_2_p_2_q_3_r_2-31",
+      "family": "minrank",
+      "p": 2147483647,
+      "paired_hex_over_msolve": 1.9464801086637826,
+      "wall_nanos": {
+        "A": [
+          23656178,
+          24478346
+        ],
+        "B": [
+          13291818,
+          11498530
+        ]
+      }
+    },
+    {
+      "case": "quadratic5-32003",
+      "family": "dense-quadratic",
+      "p": 32003,
+      "paired_hex_over_msolve": 2.092325063677669,
+      "wall_nanos": {
+        "A": [
+          25452610,
+          27063478
+        ],
+        "B": [
+          13556902,
+          11606390
+        ]
+      }
+    },
+    {
+      "case": "quadratic5-2147483647",
+      "family": "dense-quadratic",
+      "p": 2147483647,
+      "paired_hex_over_msolve": 2.2726761850037263,
+      "wall_nanos": {
+        "A": [
+          28525605,
+          28914090
+        ],
+        "B": [
+          13569990,
+          11767650
+        ]
+      }
+    }
+  ],
+  "peak_rss_kib": {
+    "A": 95756,
+    "B": 19316
+  },
+  "archive_sha256": "f11406e88ef56cd75d782492dd1c3ea7b584b81196184ebe867eeeff5eb6a359"
+}

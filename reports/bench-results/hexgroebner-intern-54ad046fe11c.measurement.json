@@ -1,0 +1,61 @@
+{
+  "source_fingerprint": "54ad046fe11c",
+  "include": [
+    "HexGroebner/",
+    "HexGroebner.lean",
+    "HexArith/",
+    "HexArith.lean",
+    "HexArithNative.lean",
+    "HexModArith/",
+    "HexModArith.lean",
+    "HexModArithNative.lean",
+    "HexBasic/",
+    "HexBasic.lean",
+    "HexMvPoly/",
+    "HexMvPoly.lean",
+    "bench/HexGroebner/Bench.lean",
+    "lakefile.lean",
+    "lake-manifest.json",
+    "lean-toolchain"
+  ],
+  "exclude": [
+    "HexGroebner/README.md",
+    "HexArith/README.md",
+    "HexModArith/README.md",
+    "HexMvPoly/README.md",
+    "HexArith/SPEC/",
+    "HexModArith/SPEC/",
+    "HexMvPoly/SPEC/"
+  ],
+  "cpu": 90,
+  "affinity": [
+    90
+  ],
+  "threads": 1,
+  "host": "chungus2",
+  "toolchain": "leanprover/lean4:v4.35.0-rc3",
+  "command": [
+    ".lake/build/bin/hexgroebner_bench",
+    "run",
+    "Hex.Groebner.Bench.internMonomials",
+    "--outer-trials",
+    "3",
+    "--export-file",
+    "reports/bench-results/hexgroebner-intern-54ad046fe11c.json"
+  ],
+  "load_start": [
+    1.30615234375,
+    0.98583984375,
+    0.71044921875
+  ],
+  "binary_sha256": "9c5a4d25a7151916dbbbdd6faa5151d8d92e9e82ec9591655ed24e7fd5167426",
+  "schedule": "lean-bench declared fixed trial-major schedule; 3 outer trials; every completed sample retained",
+  "returncode": 0,
+  "elapsed_seconds": 19.25657613898511,
+  "load_end": [
+    1.52001953125,
+    1.05322265625,
+    0.7392578125
+  ],
+  "peak_child_rss_kib": 139472
+}

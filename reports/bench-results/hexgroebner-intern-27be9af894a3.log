@@ -1,0 +1,29 @@
+Hex.Groebner.Bench.internMonomials    expected complexity: n    [warm cache]
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a76c5fb-dirty, 2026-10-31T10:36:40Z, host=chungus2
+   param  per-call    repeats  C
+   2_048    5.293 ms  ×2^6     C=  2590.655 [trial 1/3] †
+   4_096   18.257 ms  ×2^4     C=  4457.326 [trial 1/3]
+   8_192   79.739 ms  ×2^2     C=  9437.444 [trial 1/3]
+  16_384  845.231 ms  ×2^0     C= 48614.219 [trial 1/3]
+  32_768    5.333 s   ×2^0     C=164924.894 [trial 1/3]
+   2_048    5.306 ms  ×2^6     C=  2590.655 [trial 2/3] †
+   4_096   17.789 ms  ×2^4     C=  4457.326 [trial 2/3]
+   8_192   73.472 ms  ×2^2     C=  9437.444 [trial 2/3]
+  16_384  796.495 ms  ×2^0     C= 48614.219 [trial 2/3]
+  32_768    5.404 s   ×2^0     C=164924.894 [trial 2/3]
+   2_048    5.309 ms  ×2^6     C=  2590.655 [trial 3/3] †
+   4_096   18.518 ms  ×2^4     C=  4457.326 [trial 3/3]
+   8_192   77.312 ms  ×2^2     C=  9437.444 [trial 3/3]
+  16_384  760.655 ms  ×2^0     C= 48614.219 [trial 3/3]
+  32_768    5.451 s   ×2^0     C=164924.894 [trial 3/3]
+  verdict: inconclusive (cMin=4457.326, cMax=164924.894, β=+1.799, looks slower than declared by ~n^1.799)
+  per-spawn floor (harness self-measurement): 22.565 ms
+  peak RSS: 69_780 kB..79_116 kB (across 15 ok row(s))
+  trial summaries (3 trials per param; spread = (max-min)/median):
+     param  trials  median      min         max         spread 
+     2_048  3/3       5.306 ms    5.293 ms    5.309 ms  0.292% 
+     4_096  3/3      18.257 ms   17.789 ms   18.518 ms  3.994% 
+     8_192  3/3      77.312 ms   73.472 ms   79.739 ms  8.106% 
+    16_384  3/3     796.495 ms  760.655 ms  845.231 ms  10.619%
+    32_768  3/3       5.404 s     5.333 s     5.451 s   2.184% 
+exported to reports/bench-results/hexgroebner-intern-27be9af894a3.json

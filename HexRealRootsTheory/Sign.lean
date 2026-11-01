@@ -26,10 +26,3 @@ theorem ContinuousOn.sign {β : Type*} [TopologicalSpace β] {f : β → α} {s 
   refine (continuousOn_of_forall_continuousAt fun y hy => ?_).comp' hf (Set.mapsTo_image _ _)
   obtain ⟨x, hx, rfl⟩ := hy
   exact continuousAt_sign_of_ne_zero (h0 x hx)
-
-/-- A continuous nonvanishing function has constant sign on a preconnected set. -/
-theorem IsPreconnected.sign_eq_of_continuousOn {β : Type*} [TopologicalSpace β] {f : β → α}
-    {s : Set β} (hs : IsPreconnected s) (hf : ContinuousOn f s)
-    (h0 : ∀ x ∈ s, f x ≠ 0) {x y : β} (hx : x ∈ s) (hy : y ∈ s) :
-    SignType.sign (f x) = SignType.sign (f y) :=
-  hs.constant (hf.sign h0) hx hy

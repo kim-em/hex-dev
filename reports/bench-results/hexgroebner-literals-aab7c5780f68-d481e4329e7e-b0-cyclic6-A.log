@@ -1,0 +1,10 @@
+Hex.Groebner.Bench.cyclic6    [fixed] repeats=3
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=c5ada0d-dirty, 2026-10-31T11:15:42Z, host=chungus2
+  repeat 0  177.021 ms  (×2^2, total 708.085 ms)
+  repeat 1  185.770 ms  (×2^2, total 743.078 ms)
+  repeat 2  175.213 ms  (×2^2, total 700.851 ms)
+  median: 177.021 ms    min: 175.213 ms    max: 185.770 ms
+  hash: all repeats agree
+  observed hash: 0xc997cda88375c1ba
+  peak RSS: 68_828 kB..69_044 kB (across 3 ok repeat(s))
+exported to reports/bench-results/hexgroebner-literals-aab7c5780f68-d481e4329e7e-b0-cyclic6-A.json

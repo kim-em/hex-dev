@@ -12,7 +12,7 @@ package Hex where
   leanOptions := #[⟨`doc.verso, true⟩, ⟨`doc.verso.suggestions, false⟩]
 
 require verso from git
-  "https://github.com/leanprover/verso.git" @ "v4.35.0-rc3"
+  "https://github.com/leanprover/verso.git" @ "v4.36.0-rc1"
 
 -- Test-only native oracle. Released Hex libraries do not depend on it.
 require NautyFFI from git
@@ -26,11 +26,11 @@ require «lean-bench» from git
 -- Hasse's theorem for the ECPP companion.
 require TauCeti from git
   "https://github.com/TauCetiProject/TauCeti.git" @
-    "1c497c347f615b3087cb605f8cf743e591376105"
+    "fd8d21ab3673eb0317310160c3a9de98891762ba"
 
 require mathlib from git
   "https://github.com/leanprover-community/mathlib4.git" @
-    "6b7abb3c7686292736be2955bd3eb9ebf63b456a"
+    "2cabef97b63d3275776b8b060d802de6a6fa1055"
 
 private def clmulOTarget (pkg : Package) : FetchM (Job FilePath) := do
   let oFile := pkg.dir / defaultBuildDir / "HexGF2" / "ffi" / "clmul.o"
@@ -86,6 +86,32 @@ target hexarithWideO pkg : FilePath := hexArithOTarget pkg "wide_arith.c"
 -- TODO(lean4#15160): remove extended_gcd.c after the pinned toolchain provides
 -- Nat.extendedGcd: https://github.com/leanprover/lean4/pull/15160
 target hexarithGcdO pkg : FilePath := hexArithOTarget pkg "extended_gcd.c"
+
+target hexgroebnerRowsO pkg : FilePath := do
+  let oFile := pkg.dir / defaultBuildDir / "HexGroebner" / "ffi" / "row_update.o"
+  let source ← inputTextFile <| pkg.dir / "HexGroebner" / "ffi" / "row_update.c"
+  let trie ← inputTextFile <| pkg.dir / "HexGroebner" / "ffi" / "trie_lookup.h"
+  let inputs := source.zipWith (fun source _ => source) trie
+  buildFileAfterDep oFile inputs fun srcFile => do
+    createParentDirs oFile
+    proc {
+      cmd := "cc"
+      args := #["-c", "-o", oFile.toString, srcFile.toString,
+        "-I", (← getLeanIncludeDir).toString, "-fPIC", "-O3", "-DLEAN_EXPORTING"]
+      env := #[("TMPDIR", some (← IO.FS.realPath (oFile.parent.getD ".")).toString)]
+    }
+
+target hexgroebnerScanO pkg : FilePath := do
+  let directory := pkg.dir / "HexGroebner" / "ffi"
+  let source ← inputTextFile (directory / "matrix_scan.c")
+  let simd ← inputTextFile (directory / "matrix_simd.h")
+  let body ← inputTextFile (directory / "matrix_scan_impl.h")
+  let inputs := (source.zipWith (fun source _ => source) simd).zipWith
+    (fun source _ => source) body
+  buildO (pkg.dir / defaultBuildDir / "HexGroebner" / "ffi" / "matrix_scan.o") inputs
+    #["-I", (← getLeanIncludeDir).toString]
+    #["-O3", "-Wall", "-Wextra", "-fPIC", "-DLEAN_EXPORTING"]
+    (extraDepTrace := do addLeanTrace; pure BuildTrace.nil)
 
 target hexmodarithO pkg : FilePath := zmod64MulOTarget pkg
 
@@ -205,6 +231,28 @@ lean_lib HexOrderedFnTests where
     .one `HexOrderedFnTheory.LintTests]
 
 lean_lib HexMvPoly where
+
+lean_lib HexGroebner where
+
+lean_lib HexGroebnerNative where
+  roots := #[`HexGroebnerNative]
+  globs := #[.one `HexGroebnerNative, .one `HexGroebner.Native]
+  precompileModules := true
+  moreLinkObjs := #[hexgroebnerRowsO]
+
+-- Matrix bindings import the row bindings, so they need a separate carrier.
+lean_lib HexGroebnerMatrixNative where
+  roots := #[`HexGroebnerMatrixNative]
+  globs := #[.one `HexGroebnerMatrixNative, .one `HexGroebner.NativeScan,
+    .one `HexGroebner.NativeGather]
+  precompileModules := true
+  moreLinkObjs := #[hexgroebnerScanO]
+
+-- Trie bindings import the row carrier, whose shared library supplies their C symbols.
+lean_lib HexGroebnerTrieNative where
+  roots := #[`HexGroebnerTrieNative]
+  globs := #[.one `HexGroebnerTrieNative, .one `HexGroebner.NativeTrie]
+  precompileModules := true
 
 @[default_target]
 lean_lib HexRealFormula where
@@ -406,6 +454,10 @@ lean_lib HexInterval where
 
 @[default_target]
 lean_lib HexPolyTheory where
+
+@[default_target]
+lean_lib HexGroebnerTheory where
+  roots := #[`HexGroebnerTheory, `HexGroebnerTheory.Examples, `HexGroebnerTheory.MemberExample, `HexGroebnerTheory.DivisionExample, `HexGroebnerTheory.GeneratedExample, `HexGroebnerTheory.PolynomialExample, `HexGroebnerTheory.Audit]
 
 @[default_target]
 lean_lib HexMvPolyTheory where
@@ -815,7 +867,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureTheory.SpecializeSample,
     `HexRealClosureTheory.SpecializeSelected,
     `HexRealClosureTheory.SpecializeDescriptor,
-    `HexRealClosureTheory.Algebraic, `HexRealClosureTheory.AlgebraicClean,
+    `HexRealClosureTheory.ExceptDecidableEq, `HexRealClosureTheory.Algebraic, `HexRealClosureTheory.AlgebraicClean,
     `HexRealClosureTheory.TowerModel, `HexRealClosureTheory.TowerModelTests,
     `HexRealClosureTheory.BaseModel,
     `HexRealClosureTheory.BaseOrder,
@@ -1337,7 +1389,7 @@ def isParkedGlob : Glob → Bool
 lean_lib HexConformance where
   srcDir := "conformance"
   globs := Array.filter (fun g => !isParkedGlob g) <| #[
-`HexPosDef.Conformance, `HexArith.Conformance, `HexArith.CrossCheck, `HexBerlekamp.Conformance, `HexBerlekampZassenhaus.Conformance, `HexBerlekampZassenhaus.CrossCheck, `HexBerlekampZassenhausTheory.Conformance, `HexConway.Conformance, `HexGF2.Conformance, `HexGF2.CrossCheck, `HexGF2.FastCheck, `HexGFq.Conformance, `HexGFq.CrossCheck, `HexGFqField.Conformance, `HexGFqRing.Conformance, `HexGramSchmidt.Conformance, `HexGraphIso.Conformance, `HexHensel.Conformance, `HexHensel.CrossCheck, `HexInterval.Conformance, `HexIntervalTheory.IntervalConformance, `HexInterval.CenterConformance, `HexInterval.ScaleConformance, `HexInterval.PropagatorConformance, `HexInterval.ScopeConformance, `HexInterval.StructuralMatcherConformance, `HexInterval.MatcherSchedulerConformance, `HexInterval.NestedBranchConformance, `HexInterval.StructureViewConformance, `HexInterval.PolicyConformance, `HexInterval.PolicyFrontierConformance, `HexInterval.PolicyDriverConformance, `HexInterval.PackageRegistryConformance, `HexInterval.DyadicIntervalConformance, `HexInterval.DyadicRulesConformance, `HexInterval.PayloadArenaConformance, `HexInterval.PayloadSessionConformance, `HexInterval.PolicySessionConformance, `HexInterval.PolicyFunctionConformance, `HexInterval.SemanticReplayConformance, `HexInterval.ChronologicalReplayConformance, `HexInterval.GenericInstanceReconstructionConformance, `HexInterval.ProofEmitterConformance, `HexInterval.TraceReplayConformance, `HexInterval.SinTenIntervalConformance, `HexIntervalTheory.DyadicIntervalConformance, `HexIntervalTheory.CenteredConformance, `HexIntervalTheory.SineSignConformance, `HexIntervalTheory.SineProofConformance, `HexIntervalTheory.SineTacticConformance, `HexIntervalTheory.ProofRegistryConformance, `HexIntervalTheory.ExpSignConformance, `HexIntervalTheory.ReluConformance, `HexIntervalTheory.RefuteConformance, `HexIntervalTheory.PntLogTableConformance, `HexIntervalTheory.PntNestedLogConformance, `HexIntervalTheory.PntExpTailConformance, `HexIntervalTheory.PntTable12Conformance, `HexIntervalTheory.PntTable12OrdinaryConformance, `HexIntervalAlgebraic.PolynomialDispatchConformance, `HexIntervalTheory.PntTable12LogConformance, `HexIntervalTheory.PntFks2ShardConformance, `HexIntervalTheory.LogTablePrecisionConformance, `HexIntervalTheory.IntegralCanaryConformance, `HexIntervalTheory.PntBKLNWExpConformance, `HexIntervalTheory.PntBKLNWPowConformance, `HexIntervalTheory.PntPrimeLogSmallConformance, `HexIntervalTheory.PntDusartExpConformance, `HexIntervalTheory.SinTenConformance, `HexIntervalTheory.SinTenIntervalConformance, `HexIntervalTheory.CosBillionConformance, `HexHermite.Conformance, `HexLLL.Conformance, `HexMatrix.Conformance, `HexRealFormula.Conformance, `HexRealFormulaTheory.Conformance, `HexRealFormulaTheory.Arithmetic, `HexMvPolyFixtures, `HexMvPoly.Conformance, `HexMvPolyTheory.Conformance, `HexSparsePolyFixtures, `HexSparsePoly.Conformance, `HexRowReduce.Conformance, `HexDeterminant.Conformance, `HexDeterminantalIdealFixtures, `HexDeterminantalIdeal.Conformance, `HexDeterminant.Carriers, `HexBareiss.Fixtures, `HexBareiss.Conformance, `HexModularMatrix.Fixtures, `HexModularMatrix.Conformance, `HexDet.Conformance, `HexDet.Carriers, `HexCharPoly.Fixtures, `HexCharPoly.Carriers, `HexCharPoly.Conformance, `HexModArith.Conformance, `HexModArith.FastCheck, `HexModular.Conformance, `HexPolyZGcd.Conformance, `HexMvGcd.Conformance, `HexNumberField.Conformance, `HexNumberFieldTower.Conformance, `HexPoly.Conformance, `HexPrimality.CertificateProducer, `HexPrimality.ConstructionConformance, `HexPrimality.ConstructionRetry, `HexPrimality.ConstructionRegistration, `HexPrimality.Curve25519Replay, `HexPrimality.Curve448Replay, `HexPrimality.SqufofConformance, `HexPrimality.Conformance, `HexECPP.NativeConformance, `HexECPP.Conformance, `HexECPP.Fixture17, `HexECPP.PolicyProbe, `HexECPP.Fixture65, `HexECPP.Fixture256, `HexECPP.Fixture512, `HexECPP.PariFixtures, `HexECPP.ImportConformance, `HexECPPTheory.NativeConformance, `HexECPPTheory.NativeFixtures, `HexECPPTheory.Conformance, `HexECPPTheory.CompactFixtures, `HexECPPTheory.CompactReject, `HexECPPTheory.PariProcess, `HexECPPTheory.Reject, `HexECPPTheory.HasseAudit, `HexECPPTheory.SoundnessAudit, `HexPrimalityTheory.Conformance, `HexPrimalityTheoryConformance.OptIn, `HexPolyFp.Conformance, `HexPolyZ.Conformance, `HexRCF.Conformance, `HexRealRoots.Conformance, `HexRealRootsTheory.Conformance, `HexResultant.Conformance, `HexRoots.Conformance].map Glob.one ++
+`HexPosDef.Conformance, `HexArith.Conformance, `HexArith.CrossCheck, `HexBerlekamp.Conformance, `HexBerlekampZassenhaus.Conformance, `HexBerlekampZassenhaus.CrossCheck, `HexBerlekampZassenhausTheory.Conformance, `HexConway.Conformance, `HexGF2.Conformance, `HexGF2.CrossCheck, `HexGF2.FastCheck, `HexGFq.Conformance, `HexGFq.CrossCheck, `HexGFqField.Conformance, `HexGFqRing.Conformance, `HexGramSchmidt.Conformance, `HexGraphIso.Conformance, `HexHensel.Conformance, `HexHensel.CrossCheck, `HexInterval.Conformance, `HexIntervalTheory.IntervalConformance, `HexInterval.CenterConformance, `HexInterval.ScaleConformance, `HexInterval.PropagatorConformance, `HexInterval.ScopeConformance, `HexInterval.StructuralMatcherConformance, `HexInterval.MatcherSchedulerConformance, `HexInterval.NestedBranchConformance, `HexInterval.StructureViewConformance, `HexInterval.PolicyConformance, `HexInterval.PolicyFrontierConformance, `HexInterval.PolicyDriverConformance, `HexInterval.PackageRegistryConformance, `HexInterval.DyadicIntervalConformance, `HexInterval.DyadicRulesConformance, `HexInterval.PayloadArenaConformance, `HexInterval.PayloadSessionConformance, `HexInterval.PolicySessionConformance, `HexInterval.PolicyFunctionConformance, `HexInterval.SemanticReplayConformance, `HexInterval.ChronologicalReplayConformance, `HexInterval.GenericInstanceReconstructionConformance, `HexInterval.ProofEmitterConformance, `HexInterval.TraceReplayConformance, `HexInterval.SinTenIntervalConformance, `HexIntervalTheory.DyadicIntervalConformance, `HexIntervalTheory.CenteredConformance, `HexIntervalTheory.SineSignConformance, `HexIntervalTheory.SineProofConformance, `HexIntervalTheory.SineTacticConformance, `HexIntervalTheory.ProofRegistryConformance, `HexIntervalTheory.ExpSignConformance, `HexIntervalTheory.ReluConformance, `HexIntervalTheory.RefuteConformance, `HexIntervalTheory.PntLogTableConformance, `HexIntervalTheory.PntNestedLogConformance, `HexIntervalTheory.PntExpTailConformance, `HexIntervalTheory.PntTable12Conformance, `HexIntervalTheory.PntTable12OrdinaryConformance, `HexIntervalAlgebraic.PolynomialDispatchConformance, `HexIntervalTheory.PntTable12LogConformance, `HexIntervalTheory.PntFks2ShardConformance, `HexIntervalTheory.LogTablePrecisionConformance, `HexIntervalTheory.IntegralCanaryConformance, `HexIntervalTheory.PntBKLNWExpConformance, `HexIntervalTheory.PntBKLNWPowConformance, `HexIntervalTheory.PntPrimeLogSmallConformance, `HexIntervalTheory.PntDusartExpConformance, `HexIntervalTheory.SinTenConformance, `HexIntervalTheory.SinTenIntervalConformance, `HexIntervalTheory.CosBillionConformance, `HexHermite.Conformance, `HexLLL.Conformance, `HexMatrix.Conformance, `HexRealFormula.Conformance, `HexRealFormulaTheory.Conformance, `HexRealFormulaTheory.Arithmetic, `HexMvPolyFixtures, `HexMvPoly.Conformance, `HexGroebner.Conformance, `HexGroebner.CertificateConformance, `HexGroebner.DivisionConformance, `HexGroebner.DivisionAPIConformance, `HexGroebner.MembershipConformance, `HexGroebner.BasisReplayConformance, `HexGroebner.TraceConformance, `HexGroebner.CertificateProducerConformance, `HexGroebner.ProducerConformance, `HexGroebner.BasisConformance, `HexGroebner.NormalFormConformance, `HexGroebner.DivisionFixtures, `HexGroebner.MonomialConformance, `HexGroebner.PackedWordConformance, `HexGroebner.ByteConformance, `HexGroebner.MonomialCompareConformance, `HexGroebner.ProductConformance, `HexGroebner.ReducerCacheConformance, `HexGroebner.ReducerConformance, `HexGroebner.NativeConformance, `HexGroebner.TrieConformance, `HexGroebner.ScanConformance, `HexGroebner.GatherConformance, `HexGroebner.MatrixNativeConformance, `HexGroebner.NativeChecks, `HexGroebner.PairRowsConformance, `HexGroebner.F4Conformance, `HexGroebner.F4Fixtures, `HexGroebner.Fixtures, `HexMvPolyTheory.Conformance, `HexSparsePolyFixtures, `HexSparsePoly.Conformance, `HexRowReduce.Conformance, `HexDeterminant.Conformance, `HexDeterminantalIdealFixtures, `HexDeterminantalIdeal.Conformance, `HexDeterminant.Carriers, `HexBareiss.Fixtures, `HexBareiss.Conformance, `HexModularMatrix.Fixtures, `HexModularMatrix.Conformance, `HexDet.Conformance, `HexDet.Carriers, `HexCharPoly.Fixtures, `HexCharPoly.Carriers, `HexCharPoly.Conformance, `HexModArith.Conformance, `HexModArith.FastCheck, `HexModular.Conformance, `HexPolyZGcd.Conformance, `HexMvGcd.Conformance, `HexNumberField.Conformance, `HexNumberFieldTower.Conformance, `HexPoly.Conformance, `HexPrimality.CertificateProducer, `HexPrimality.ConstructionConformance, `HexPrimality.ConstructionRetry, `HexPrimality.ConstructionRegistration, `HexPrimality.Curve25519Replay, `HexPrimality.Curve448Replay, `HexPrimality.SqufofConformance, `HexPrimality.Conformance, `HexECPP.NativeConformance, `HexECPP.Conformance, `HexECPP.Fixture17, `HexECPP.PolicyProbe, `HexECPP.Fixture65, `HexECPP.Fixture256, `HexECPP.Fixture512, `HexECPP.PariFixtures, `HexECPP.ImportConformance, `HexECPPTheory.NativeConformance, `HexECPPTheory.NativeFixtures, `HexECPPTheory.Conformance, `HexECPPTheory.CompactFixtures, `HexECPPTheory.CompactReject, `HexECPPTheory.PariProcess, `HexECPPTheory.Reject, `HexECPPTheory.HasseAudit, `HexECPPTheory.SoundnessAudit, `HexPrimalityTheory.Conformance, `HexPrimalityTheoryConformance.OptIn, `HexPolyFp.Conformance, `HexPolyZ.Conformance, `HexRCF.Conformance, `HexRealRoots.Conformance, `HexRealRootsTheory.Conformance, `HexResultant.Conformance, `HexRoots.Conformance].map Glob.one ++
     #[`HexRCF.DependentQuoteData, `HexRCF.DependentQuote, `HexRCF.DependentQuoteProofs,
       `HexRCF.DependentScalarQuote, `HexRCF.DependentScalarProofs,
       `HexRCF.PublicSignPacket, `HexRCF.PublicSignPacketValues, `HexRCF.PublicSignPacketControls, `HexRCF.PublicSignPacketProofs,
@@ -1814,6 +1866,49 @@ lean_exe hexsparsepoly_bench where
 lean_exe hexsparsepoly_emit_fixtures where
   srcDir := "conformance"
   root := `HexSparsePoly.EmitFixtures
+
+lean_lib HexGroebnerBenchSupport where
+  srcDir := "bench"
+  globs := #[`HexGroebner.Bench.Cauchy, `HexGroebner.Bench.Mersenne]
+
+-- This dedicated driver never elaborates Lean source or invokes the interpreter.
+-- The pinned SDK's internal archive also requires that extern/export calls
+-- reach only initialized modules. Other compiler revisions use ordinary init
+-- until their internal archive contract has been checked explicitly.
+target hexgroebnerInitialize pkg : FilePath := do
+  let archive := (← getLeanLibDir) / nameToStaticLib "initialize_minimal"
+  if Lean.githash == "470d5ce1400764999581fd26d5d72b00d990b0f4" && (← archive.pathExists) then
+    inputBinFile archive
+  else
+    let source ← inputTextFile (pkg.dir / "HexGroebner" / "ffi" / "initialization_fallback.c")
+    buildO (pkg.dir / defaultBuildDir / "HexGroebner" / "ffi" / "initialization_fallback.o") source
+      #[] #["-O2", "-fPIC"]
+
+lean_lib HexGroebnerDriverSupport where
+  srcDir := "bench"
+  globs := #[.one `HexGroebner.Driver.Input, .one `HexGroebner.Driver.Run]
+
+lean_exe hexgroebner_compute where
+  srcDir := "bench"
+  root := `HexGroebner.Driver
+  moreLinkObjs := #[hexgroebnerInitialize]
+
+-- Independent full-initialization entry point for conformance and comparisons.
+lean_exe hexgroebner_compute_full where
+  srcDir := "bench"
+  root := `HexGroebner.Driver.Full
+
+lean_exe hexgroebner_bench where
+  srcDir := "bench"
+  root := `HexGroebner.Bench
+
+lean_exe hexgroebner_emit_f4 where
+  srcDir := "conformance"
+  root := `HexGroebner.EmitF4
+
+lean_exe hexgroebner_emit_fixtures where
+  srcDir := "conformance"
+  root := `HexGroebner.EmitFixtures
 
 lean_exe hexmvpoly_emit_fixtures where
   srcDir := "conformance"
@@ -3399,3 +3494,7 @@ lean_exe hexrealclosure_samples_bench where
 lean_exe hexrealclosure_trivial_bench where
   srcDir := "bench"
   root := `HexRealClosure.TrivialMeasurements
+
+lean_exe hexgroebner_emit_division where
+  srcDir := "conformance"
+  root := `HexGroebner.EmitDivision

@@ -33,14 +33,14 @@ theorem order_one_spec (G : Group n) : G.order = 1 ↔ closure G.generators = �
 Mathlib derived-series subgroup under the ambient inclusion. -/
 theorem derivedAt_spec (G : Group n) (k : Nat) :
     closure (G.derivedAt k).generators =
-      (_root_.derivedSeries (closure G.generators) k).map (closure G.generators).subtype := by
+      (Subgroup.derivedSeries (closure G.generators) k).map (closure G.generators).subtype := by
   induction k with
   | zero =>
     change closure G.generators = Subgroup.map (closure G.generators).subtype ⊤
     rw [← MonoidHom.range_eq_map, Subgroup.range_subtype]
   | succ k ih =>
     change closure (G.derivedAt k).derived.generators = _
-    rw [derived_spec, ih, _root_.derivedSeries_succ, Subgroup.map_commutator]
+    rw [derived_spec, ih, Subgroup.derivedSeries_succ, Subgroup.map_commutator]
 
 /-- Solvability of the executable group is exactly Mathlib solvability of its
 generated subgroup; negative certificates therefore prove nonsolvability. -/

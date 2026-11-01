@@ -27,10 +27,24 @@ structure Signature where
 
 attribute [-instance] instDecidableEqSignature
 
-/-- Exact equality, with core's sound pointer shortcut for the immutable
-signature shared by every node in one query. -/
+/-- Pointer equality, as an unsafe primitive. -/
+@[inline] unsafe def Signature.withPtrEqUnsafe (a b : Signature) (k : Unit → Bool)
+    (h : a = b → k () = true) : Bool :=
+  _root_.withPtrEqUnsafe a b k h
+
+-- Safety: `Signature` holds only strings, naturals, integers, booleans and lists
+-- of them, so it contains no non-subsingleton erased data.
+/-- Pointer-equality shortcut for `Signature`; logically it always runs `k`. -/
+@[expose, implemented_by Signature.withPtrEqUnsafe]
+def Signature.withPtrEq (a b : Signature) (k : Unit → Bool)
+    (_h : a = b → k () = true) : Bool :=
+  k ()
+
+/-- Exact equality, with a pointer shortcut for the immutable signature shared
+by every node in one query. -/
 instance (priority := high) : DecidableEq Signature := fun a b =>
-  withPtrEqDecEq a b (fun _ => instDecidableEqSignature a b)
+  withPtrEqDecEq Signature.withPtrEq (fun _ _ _ _ => rfl) a b
+    (fun _ => instDecidableEqSignature a b)
 
 @[expose] def Signature.literal (signature : Signature) : Literal :=
   .array (.cons (.array (Literals.ofList (signature.base.constants.map fun key =>

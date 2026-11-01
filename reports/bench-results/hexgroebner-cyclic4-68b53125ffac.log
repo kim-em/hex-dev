@@ -1,0 +1,12 @@
+Hex.Groebner.Bench.cyclic4    [fixed] repeats=5
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=a76c5fb-dirty, 2026-10-31T10:45:43Z, host=chungus2
+  repeat 0  425.195 µs  (×2^2, total 1.701 ms)
+  repeat 1  421.750 µs  (×2^2, total 1.687 ms)
+  repeat 2  426.476 µs  (×2^2, total 1.706 ms)
+  repeat 3  422.328 µs  (×2^2, total 1.689 ms)
+  repeat 4  426.346 µs  (×2^2, total 1.705 ms)
+  median: 425.195 µs    min: 421.750 µs    max: 426.476 µs
+  hash: all repeats agree
+  observed hash: 0x12a8682b6bd4535b
+  peak RSS: 67_768 kB..67_772 kB (across 5 ok repeat(s))
+exported to /home/kim/worktrees/hex-dev/hex-dev-issue-10987/reports/bench-results/hexgroebner-cyclic4-68b53125ffac.json
