@@ -111,6 +111,12 @@ Every structural record is a positional array with exactly the listed fields. An
 optional value is `[]` or `[value]`. Arrays and lists retain their original
 order; matrices are arrays of rows.
 
+`Codec.graph_eq`, `entry_eq` and `node_eq` give the exact outer encoding
+equations through ordinary `import HexSignDet.Codec`. They support proofs
+binding numerical packets to their source records without unfolding hidden
+encoder bodies. They describe stored fields, including malformed supplied data;
+they do not establish decoding success, context agreement or arithmetic validity.
+
 | Record | Fields in order |
 | --- | --- |
 | Graph | `1`, root index, entries |
