@@ -81,6 +81,10 @@ an allocation or a loop over missing input. -/
 def encodeMatrix (a : Matrix Int n m) : Json :=
   array (array Json.of) (a.rows.toArray.map Vector.toArray)
 
+/-- Matrix encoding retains every row and coefficient in its stored order. -/
+theorem encodeMatrix_eq (a : Matrix Int n m) :
+    encodeMatrix a = array (array Json.of) (a.rows.toArray.map Vector.toArray) := (rfl)
+
 /-- Read a natural-number index and require it to be strictly below the supplied bound. -/
 @[expose] def index (n : Nat) (j : Json) : Except String (Fin n) := do
   let i ← Json.decode (α := Nat) j
@@ -90,6 +94,13 @@ def encodeMatrix (a : Matrix Int n m) : Json :=
 def option (encode : α → Json) : Option α → Json
   | none => .arr #[]
   | some a => .arr #[encode a]
+
+/-- Absence has no payload fields. -/
+theorem option_none (encode : α → Json) : option encode none = .arr #[] := (rfl)
+
+/-- Presence retains exactly one encoded payload. -/
+theorem option_some (encode : α → Json) (value : α) :
+    option encode (some value) = .arr #[encode value] := (rfl)
 
 /-- Accept only empty or singleton arrays, using the supplied reader for presence. -/
 @[expose] def readOption (read : Json → Except String α) (j : Json) : Except String (Option α) := do

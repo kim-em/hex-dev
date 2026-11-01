@@ -30,10 +30,14 @@ field count, so extra fields cannot be silently ignored. -/
 def graph (value : ValueCodec E) (context : ValueCodec Ctx) (d : Dag E Ctx) : Json :=
   .arr #[Json.of (1 : Nat), Json.of d.root, array (entry value context) d.entries]
 
-/-- The literal entry fields, available without unfolding the encoder. This
-equation asserts no validity of the node or its child references. -/
+/-- The literal entry fields, without validating the node or child references. -/
 theorem entry_eq (value : ValueCodec E) (context : ValueCodec Ctx) (e : Dag.Entry E Ctx) :
     entry value context e = .arr #[node value context e.node,
+      option (fun (i, j) => Json.arr #[Json.of i, Json.of j]) e.children] := (rfl)
+
+/-- The entry encoder as a function, for rewriting beneath array maps. -/
+theorem entry_fn (value : ValueCodec E) (context : ValueCodec Ctx) :
+    entry value context = fun e => .arr #[node value context e.node,
       option (fun (i, j) => Json.arr #[Json.of i, Json.of j]) e.children] := (rfl)
 
 /-- The version, root and ordered entries of every encoded graph. Encoding

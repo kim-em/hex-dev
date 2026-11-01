@@ -41,8 +41,26 @@ new trusted primitive.
 | `readPreparation` | Read the original-query preprocessing steps |
 
 The already exposed coefficient, endpoint, JSON and binding helpers remain
-unchanged. This audit concerns `readGraph`; it does not claim kernel reduction
+unchanged. This reader audit concerns `readGraph`; it does not claim kernel reduction
 coverage of every byte parser, producer or independent replay operation.
+
+## Encoding equations
+
+`Codec.graph_eq`, `entry_eq` and `node_eq` expose the literal graph, entry and
+node record shapes without exposing the encoder bodies. The `entry_fn` equation
+rewrites the encoder as a function, including inside `Codec.array` maps.
+`option_none` and `option_some` retain both optional payload shapes;
+`system_eq`, `basis_eq` and `encodeMatrix_eq` identify the stored integer fields.
+These are equations for arbitrary raw records, without structural or arithmetic
+acceptance premises. The `tarski`, `chain`, `remainder`, `terminal`,
+`reductionStep`, `reduction` and `preparation` encoders remain opaque.
+
+The ordinary-import `PublicCodec` consumer composes these equations to identify
+a one-entry numerical graph with a size-zero node and no moments, reductions
+or preparation, alongside the general header, entry and
+eleven-field node checks. This does not assert that the encoded witnesses pass
+replay. Exact axiom guards check the permitted logical closure; the equation
+proofs themselves follow their reference encoders by reflexivity.
 
 ## Verification
 
