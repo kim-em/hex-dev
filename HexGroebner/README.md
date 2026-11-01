@@ -405,12 +405,12 @@ lawful Hex orders. Ordinary-kernel byte decoding has an axiom audit.
 
 The literal prime-field example shares Mathlib-free data with an exact
 automatic-generation regression check. The emitter also computes and
-independently certifies every one of the 567
-systems, comparing its accepted basis with fast candidate production. The
+independently certifies all 567 systems with each scheduling strategy, comparing its accepted basis with fast candidate production. The
 indexed API separately certifies supplied candidates, exercises all phase
 allowances and resumes sealed computations with their original input identity.
 
-The 567-system F4 corpus compares complete reduced bases with SymPy F5B and,
+The 567-system F4 corpus has 1134 degree/sugar profiles. It compares complete
+reduced bases with SymPy F5B and,
 when available, Singular over
 seven primes and three orders. Cases include cyclic-3, Katsura-2, generated
 quadratic systems, positive-dimensional systems, nonmonic inputs, raw
@@ -419,7 +419,7 @@ tests cover wrong ideals, missing S-pairs, nonmonic output, wrong orders and
 false Boolean-quotient reductions. Core tests also exercise cumulative-state
 resumption at every work boundary of the S-pair example, every resource
 category, scalar-preserving remainders and sealed checkpoint identities. The
-emitter also recomputes all 567 systems with batch size one and requires the
+emitter also recomputes all 1134 profiles with batch size one and requires the
 same reduced basis. It also compares shared versus separate tail reductions.
 Core resume sweeps switch both pair criteria and final-reduction strategy at
 every work boundary. Product/chain counters demonstrate criterion use.
@@ -481,7 +481,9 @@ is fixed when the computation starts and retained by its sealed continuations.
 LCM total degree; `.sugar` selects the propagated sugar degree. Both use stable
 basis-index ties and process a whole priority class in bounded batches. A new
 inhomogeneous pair may have lower degree than an earlier batch. Sugar remains
-separate propagated metadata under both strategies. Pair coverage, final
+separate propagated metadata under both strategies.
+[Matched scheduling measurements](../reports/bench-results/hexgroebner-scheduling.md)
+retain work reductions, timing regressions and all samples. Pair coverage, final
 interreduction and independent certification remain required.
 
 The default batch cap is 1024; `Limits.batchSize` permits smaller or

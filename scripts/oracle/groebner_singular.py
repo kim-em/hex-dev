@@ -129,8 +129,8 @@ def main():
     args = parser.parse_args()
     records = [json.loads(line) for line in
                (args.check.read_text() if args.check else sys.stdin.read()).splitlines()]
-    if len(records) != 567:
-        raise ValueError(f"incomplete F4 corpus: {len(records)}")
+    from scripts.oracle.groebner_corpus import validate_corpus
+    validate_corpus(records)
     check_available(records, args.require_oracles)
 
 

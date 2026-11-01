@@ -18,6 +18,7 @@ from sympy.polys.orderings import monomial_key
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from scripts.oracle.common import write_failure
+from scripts.oracle.groebner_corpus import validate_corpus
 
 
 def check(value):
@@ -49,6 +50,7 @@ def main():
     parser.add_argument("--require-oracles", action="store_true")
     args = parser.parse_args()
     records = (args.check.read_text() if args.check else sys.stdin.read()).splitlines()
+    validate_corpus([json.loads(line) for line in records])
     seen = set()
     for line in records:
         record = json.loads(line)
@@ -63,7 +65,6 @@ def main():
                 lean_output=record.get("value"), oracle_output=None,
                 oracle_name="SymPy F5B", oracle_version=sympy.__version__, diff=str(exc))
             raise SystemExit(f"{record.get('case')}: {exc}; replay: {path}") from exc
-    assert len(records) == 567, f"incomplete F4 corpus: {len(records)}"
     assert any(json.loads(line)["value"]["productPairs"] > 0 for line in records), "product criterion not exercised"
     assert any(json.loads(line)["value"]["serialRounds"] != json.loads(line)["value"]["rounds"]
                for line in records), "batch schedules not distinguished"

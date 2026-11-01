@@ -5,13 +5,38 @@ from pathlib import Path
 import unittest
 
 from scripts.oracle.groebner_sympy import check
+from scripts.oracle.groebner_corpus import validate_corpus
 
 
 class GroebnerOracleTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         path = Path(__file__).resolve().parents[2] / "conformance-fixtures/HexGroebner/f4.jsonl"
-        cls.cases = {r["case"]: r["value"] for r in map(json.loads, path.read_text().splitlines())}
+        cls.records = list(map(json.loads, path.read_text().splitlines()))
+        cls.cases = {r["case"]: r["value"] for r in cls.records}
+
+    def test_complete_scheduling_profiles(self):
+        validate_corpus(self.records)
+
+    def test_missing_scheduling_case(self):
+        with self.assertRaisesRegex(AssertionError, "incomplete"):
+            validate_corpus(self.records[:-1])
+
+    def test_duplicate_scheduling_case(self):
+        with self.assertRaisesRegex(AssertionError, "duplicate"):
+            validate_corpus(self.records + self.records[:1])
+
+    def test_incompatible_scheduling_problem(self):
+        rows = copy.deepcopy(self.records)
+        next(r for r in rows if r["value"]["scheduling"] == "sugar")["value"]["p"] = 3
+        with self.assertRaisesRegex(AssertionError, "scheduling changes p"):
+            validate_corpus(rows)
+
+    def test_wrong_scheduling_metadata(self):
+        rows = copy.deepcopy(self.records)
+        rows[0]["value"]["scheduling"] = "sugar"
+        with self.assertRaisesRegex(AssertionError, "scheduling case mismatch"):
+            validate_corpus(rows)
 
     def test_valid_basis(self):
         check(self.cases["p3/grevlex/missing-s-pair"])
