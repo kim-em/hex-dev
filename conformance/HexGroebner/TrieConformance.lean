@@ -122,17 +122,21 @@ def policyChecks : Bool := Id.run do
         basis := basis.push ⟨← Polynomial.normalize context limits i raw[i]!,0⟩
       let index ← ReducerIndex.build context limits basis
       let some view := index.packed | return false
-      let monomial ← intern limits #[3,3]
-      let state ← get
-      let actual := Native.Trie.lookup view state.table.width.bytes.toUInt8
-        state.table.count.toUInt64 monomial.toUInt64 state.table.exponents state.table.metadata 4096
-      if actual.status != 1 || actual.reducer != some expected then return false
-      for allowance in [:32] do
-        let budget := { limits with work := state.statistics.work+allowance }
-        let (reference, work) := ReducerIndex.findPortable context index basis state.table
-          monomial state.statistics.work budget.work
-        let (value, next) := (index.find context budget basis monomial).run state
-        if !equal value reference || next.statistics.work != work then return false
+      for query in #[#[3,3], #[1,3], #[3,0], #[0,0]] do
+        let monomial ← intern limits query
+        let state ← get
+        let actual := Native.Trie.lookup view state.table.width.bytes.toUInt8
+          state.table.count.toUInt64 monomial.toUInt64 state.table.exponents state.table.metadata 4096
+        let (reference, _) := ReducerIndex.findPortable context index basis state.table
+          monomial state.statistics.work (state.statistics.work+4096)
+        if actual.status != 1 || !equal (.ok actual.reducer) reference then return false
+        if query == #[3,3] && actual.reducer != some expected then return false
+        for allowance in [:32] do
+          let budget := { limits with work := state.statistics.work+allowance }
+          let (reference, work) := ReducerIndex.findPortable context index basis state.table
+            monomial state.statistics.work budget.work
+          let (value, next) := (index.find context budget basis monomial).run state
+          if !equal value reference || next.statistics.work != work then return false
       return true
     match trial.run ⟨{ arity := 2 },{}⟩ with
     | (.ok true,_) => pure ()

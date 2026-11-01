@@ -3,7 +3,9 @@
 Small basis-specific divisibility indices retain a typed, validated packed tree.
 The validator admits at most 2048 nodes, 2047 edges and arity 4096. Each nonroot
 has exactly one parent and depth increases on every edge; edge spans are exact.
-Leaf records retain the source basis index, term count and leading monomial.
+In the measured `3949a0dadd7a` snapshot, leaf records retain the source basis
+index, term count and leading monomial. The combined implementation uses
+Lean-assigned priorities instead; see [the combined report](hexgroebner-symbolic.md).
 The native validator and lookup borrow immutable inputs and keep no pointers.
 A fixed 2048-entry stack and at most 4095 charged node/edge visits bound lookup.
 All source-array spans are checked before reads. Larger trees, incompatible

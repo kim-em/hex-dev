@@ -19,7 +19,9 @@ the original traversal. The portable packed model and original traversal check
 exact results, ties and exhausted prefixes.
 
 Measured source `a5989cb5e42e`, computational commit
-`764d471c2c`, identifies the revised implementation and runner. A fresh detached
+`764d471c2c`, identifies the revised implementation and runner. Subsequent
+conformance, fixture and report changes leave that measured source fingerprint
+unchanged. A fresh detached
 188-job build freezes both drivers and checks actual initializer linkage. The
 new executable SHA256 is
 `c32894d658346428dfb9adc7bfbcb31ded0d1767389ebd8cce3409d2253b3429`.
@@ -58,6 +60,20 @@ Equal-family process ratio is 0.8825. The 5.3336 candidate outlier is retained;
 Noon and MinRank candidate family means regress. Ratios do not imply a uniform
 gain. At the large prime, Reimer entries fall 960252→435489 and rounds 26→19;
 Eco entries fall 3268590→2939286. Complete bases remain equal.
+
+Noon4 retains 8780 matrix entries, 553 rows and seven rounds at both primes;
+MinRank retains 807 entries, 31 rows and two rounds. Their preparation charges
+increase: Noon work 191168→204845 (32003), 196378→210055 (2147483647);
+MinRank work 7613→8609 and 8004→9000 respectively. Thus these cases show no
+increase in matrix fill or rounds, but do pay for packed preparation and target
+sorting. The largest candidate ratio is Noon4 at 32003, first campaign, BA
+block 1: 2.926528→15.608898 ms (5.3336). Its counters equal the other samples
+of that input in each arm. This isolated duration increase cannot be attributed
+to additional algebraic work from those counters; the samples do not isolate
+scheduling or runtime effects. All samples remain included. The extracted
+[regression counters](raw/ranked-regression-analysis-a5989cb5e42e.json) retain
+the exact input identity and complete outputs; original stdout is in the
+before/after capsules.
 
 | Family | Candidate B/A | Process B/A | Hex/msolve exact | Hex/msolve probabilistic |
 | --- | ---: | ---: | ---: | ---: |
@@ -141,12 +157,16 @@ Cases independently check sparsity, degree, LIFO ties and all small exhausted
 prefixes, requiring genuine native answers for valid arenas. Oversized and
 malformed records are rejected; removing the 2048-node guard is detected by
 sanitizers. Index construction/update attempts fail from importing code. Native
-counts are 2345 lookups, two intentional declines and 484 F4 calls without
-decline. A genuine 78-pair batch and positional independent normal forms have
+counts in the archived validation are 2345 lookups, two intentional declines
+and 484 F4 calls without decline. Additional branch-pruning queries cover
+partial and empty divisor sets, including every small exhaustion allowance;
+their four Clang ASan/UBSan variants pass with 2642 lookups, two intentional
+declines and the same 484 F4 calls. Their [build and runtime log](raw/ranked-pruned-policy-validation-a5989cb5e42e.log.gz) is retained. A genuine 78-pair batch and positional independent normal forms have
 separate regressions. Only three work counters change in 483/567 fixtures from
 the preceding combined implementation.
 
-The linked sparse-target component capsule retains its independent 128-process,
+The [sparse-target component capsule](raw/prototype-sparse-targets-668abb190c63.tar.gz)
+retains its independent 128-process,
 240-point observations and Reimer fixed ratio 0.5361. Rejected source
 `29215102b484` reorders independent normal forms and has a complete-basis
 mismatch. Its two completed outputs and exact source are retained separately
