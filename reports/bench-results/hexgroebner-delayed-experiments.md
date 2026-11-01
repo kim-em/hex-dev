@@ -146,3 +146,86 @@ commit/dirty fields in benchmark exports. SHA-256:
 - [word-production-bench-58b8615b2967.tar.gz](raw/word-production-bench-58b8615b2967.tar.gz): `57673569b4e975716c191f22265222d5b635ca5b8725e42e0b0399fdd96ddceb`
 - [word-production-records-58b8615b2967.tar.gz](raw/word-production-records-58b8615b2967.tar.gz): `95d3c21bb49801f8ebb9deadbd8e929985e8befbc017de5cbc89fdc27da8d92e`
 - [word-production-validation.tar.gz](raw/word-production-validation.tar.gz): `52454f1fc469d7f02eb93f186707832d608ffecdd84ff9239d2fe9cefe9f97b8`
+
+## Eight-lane delayed accumulators
+
+The u32 per-lane snapshot `195f7f005fde` (production commit `8ab94ef992`)
+keeps exact unreduced sums until the next addition would overflow. The baseline
+is the final owned-set multiplied-row snapshot `70aacca874da`. Default routing
+uses this representation only for two-byte prime fields; other fields retain
+the baseline. It consumes four bytes per dense coordinate and preserves exact
+prefix rejection, work limits and independent certification. This snapshot is
+an experiment and is not selected for production.
+
+All64 diagnostic processes complete with identical full bases and non-resource
+counters. Candidate geometric mean B/A is1.0476, median1.0678,
+range0.6014–1.5702 on CPU89. Process geometric mean is1.2833,
+median1.2132, range0.5050–5.0311. The120 fixed points on CPU34 retain
+all variability: geometric means are0.9574 cyclic4,1.3036 cyclic5,
+0.9232 cyclic6,1.1127 katsura3,0.9321 reimer5 and1.1550 cyclic6Small.
+No unchanged repeat is used for this snapshot.
+
+The full declared Cauchy ladder64/128/256/512, three outer trials and adjacent
+AB/BA schedule retain96 points on CPU70. Every complete output hash agrees.
+Contiguous geometric mean B/A at those sizes is1.1022/1.4214/1.6695/1.9142;
+even-column strided is1.0062/1.2993/1.5021/1.6434. All eight complexity fits
+are inconclusive and none is budget-truncated. These finite-size regressions
+do not support adoption. Raw source blobs, binary hashes, samples, analyses and
+protocol corrections are retained. Inherited arm prose was corrected separately;
+the recorded actual commands and binary/source hashes were already correct.
+
+- [delayed32-kernels-195f7f005fde.tar.gz](raw/delayed32-kernels-195f7f005fde.tar.gz), SHA-256 `183fd8647e09135bd222c76c3e6c6bc1b26f6194f1e035ebd65e8517e1042c74`.
+- [delayed32-production-bench-195f7f005fde.tar.gz](raw/delayed32-production-bench-195f7f005fde.tar.gz), SHA-256 `884db527d3ad58b132176bd3b768494a261a051e775319ff3b35b63128f6a633`.
+- [delayed32-production-records-195f7f005fde.tar.gz](raw/delayed32-production-records-195f7f005fde.tar.gz), SHA-256 `6de8614bcdcc6d529acd3bbac77b49d7415337d9011c7d1624ad05b3ddc9f2cc`.
+
+## Eco10 profiles
+
+[Raw Eco10 profiles](raw/pair-rows-eco-profile.tar.gz), SHA-256
+`537244c0f26e8fc1f049d472b1c9328e6a3b5814b847970926447bc5e7b69012`,
+use frozen engine `70aacca874da` on leased CPU55. The archive records exact
+inputs and binary hashes, load context, all eight process outputs per field,
+1999Hz DWARF recordings and reports. There are no lost samples. All eight full
+bases agree within each field. Startup, parsing and output are included; these
+are explanatory profiles, not matched timing comparisons.
+
+The u16 scan accounts for19.84% of self samples at p32003; the u32 scan
+accounts for25.69% at p2147483647. Allocation/deallocation, monomial operations,
+reducer construction and symbolic preprocessing account for additional costs.
+The profiles motivate arithmetic experiments but do not establish a language
+limitation or assign causal costs to individual source operations.
+
+## Block normalization experiment
+
+`160542b663af`, commit `905e7de471`, normalizes all eight u32 lanes when any
+lane would overflow. This reduces per-lane selection overhead and preserves the
+portable model exactly, including non-overflowing lanes normalized by a neighbor.
+A kernel `decide` example checks this block behavior at p257. Native vectors and
+scalar fallback implement the same policy, including malformed-prefix replay.
+
+All64 diagnostic processes match complete bases and non-resource counters.
+On CPU91, candidate geometric mean B/A is1.0684, median1.0206,
+range0.5629–2.2105; process geometric mean1.0228, median1.0707,
+range0.3084–2.6984. All120 fixed points on CPU24 have matching full hashes:
+means1.1958 cyclic4,1.0261 cyclic5,1.4761 cyclic6,1.3190 katsura3,
+0.8685 reimer5 and1.0066 cyclic6Small. Every observation remains.
+
+The96-point kernel sweep on CPU35 has matching full output hashes, all fits
+inconclusive and none budget-truncated. At64/128/256/512, contiguous geometric
+means B/A are1.1522/1.2054/1.2187/1.1889; strided are
+1.2093/1.2973/1.2520/1.3221. This snapshot also remains an experiment.
+No unchanged repeat is used. No compiler/runtime impossibility follows.
+
+The final2070-job targeted build,14042-job full conformance build and all
+175/567/1288 external oracle cases pass. Four Clang and four GCC sanitizer
+variants pass. The AVX2 window counts11836 delayed scans,11776 gathers,
+1469 contiguous vectors and2258 scattered vectors; scalar variants use zero
+vectors. Validation includes guard pages, all residue boundaries, exact
+UInt32 overflow repair, aliases, invalid prefixes, resumed5000-column scans,
+shared derivations and complete cyclic5 F4 comparison.
+
+SHA-256:
+
+- [delayed32-block-kernels-160542b663af.tar.gz](raw/delayed32-block-kernels-160542b663af.tar.gz): `d0fdaa35fa94469da65883d907745ddfb329be776d5b8c85e401b7827e2487cb`
+- [delayed32-block-production-bench-160542b663af.tar.gz](raw/delayed32-block-production-bench-160542b663af.tar.gz): `ff274d2c08882319d44ffc525dcea20f20bbd17abd4741e8ef09f9f3a607ce20`
+- [delayed32-block-production-records-160542b663af.tar.gz](raw/delayed32-block-production-records-160542b663af.tar.gz): `2cc540e06b807ca31753eece803f07bd8387d5fe75cb17513e0ac83fa958196b`
+- [delayed32-validation.tar.gz](raw/delayed32-validation.tar.gz): `61c288dfadde89ae4b97c249c46d71cfa0ffc9b7242e53fc59a0ac872910fbd4`
