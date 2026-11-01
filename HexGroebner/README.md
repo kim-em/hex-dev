@@ -485,13 +485,17 @@ the complete reduced-basis contract. See the retained
 
 ## Standalone candidate computation
 
-`lake build hexgroebner_compute hexgroebner_compute_full` builds a JSON driver
-and an otherwise identical full-initialization reference. The dedicated driver
-never elaborates Lean source or invokes its interpreter. When the SDK supplies
-`libinitialize_minimal`, it links that library ahead of the ordinary initializer;
-otherwise it uses ordinary initialization automatically. This restriction must
-remain true when extending the driver. The benchmark runner and kernel replay
-executables keep their own initialization contracts.
+`lake build hexgroebner_compute hexgroebner_compute_full` builds a JSON driver from
+`bench/HexGroebner/Driver` and an otherwise identical full-initialization reference.
+The default uses the SDK's internal `libinitialize_minimal` archive only on the
+pinned compiler revision `470d5ce1400764999581fd26d5d72b00d990b0f4`, when present.
+Other compiler revisions or missing archives use ordinary initialization. CI
+checks the actual linked initializer as well as complete output agreement.
+The dedicated driver never elaborates Lean source or invokes its interpreter.
+Its import closure must also initialize every module reachable through
+extern/export calls; ordinary imports alone do not guarantee that condition.
+These restrictions require review when extending the driver. Benchmark and
+kernel replay executables keep their own initialization contracts.
 
 For example, save this input as `input.json`:
 
@@ -510,13 +514,22 @@ Successful output has `kind: "unchecked_candidate"`, explicit field/order
 metadata, the complete candidate basis and cumulative statistics. It is not a
 checked basis receipt. Use `certifyWith` or `basisWith` for checked results.
 Malformed input, exhausted allowances, representation exhaustion and internal
-matrix failures have distinct kinds and nonzero exit codes; no partial basis is
+matrix failures have distinct kinds: exit 2 is invalid input, 3 exhaustion,
+4 representation exhaustion and 5 an internal matrix error. Uncaught IO failures
+(such as a broken output stream) use the ordinary Lean process error exit, 1.
+Only `kind` is a stable machine-readable discriminator; `message` is diagnostic
+text. On handled failure, no partial basis is
 reported as a completed candidate. The driver does not serialize resumable
 states; the library APIs retain that facility.
 
-`--help` lists resource options. Allowances are the same absolute cumulative
+`--help` lists resource options; options precede the input filename.
+`--basis` and `--variables` adjust their corresponding bounds.
+`--batch-size 0` selects the effective minimum batch size one. Allowances are the same absolute cumulative
 `Limits` used by `computeWith`; for example `--work 1000000000` raises the work
 cap. Input parsing and filesystem work lie outside those computation counters.
 The deterministic driver returns random state zero without sampling.
 `hexgroebner_compute_full` accepts the same inputs and options, providing a
-reference for SDK initialization and full-output comparisons.
+reference for initialization and full-output comparisons.
+Matched development sweeps use `scripts/bench/groebner_cli_measure.py`; its help
+requires a frozen binary/source manifest, a suite and explicit output directory.
+It retains raw samples and inputs, checks full outputs and applies no timing gate.

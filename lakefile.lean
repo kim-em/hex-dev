@@ -1864,11 +1864,12 @@ lean_lib HexGroebnerBenchSupport where
   globs := #[`HexGroebner.Bench.Cauchy, `HexGroebner.Bench.Mersenne]
 
 -- This dedicated driver never elaborates Lean source or invokes the interpreter.
--- The SDK's minimal initializer is appropriate only under that restriction.
--- Missing archives fall back to ordinary initialization, preserving portability.
+-- The pinned SDK's internal archive also requires that extern/export calls
+-- reach only initialized modules. Other compiler revisions use ordinary init
+-- until their internal archive contract has been checked explicitly.
 target hexgroebnerInitialize pkg : FilePath := do
   let archive := (← getLeanLibDir) / nameToStaticLib "initialize_minimal"
-  if ← archive.pathExists then
+  if Lean.githash == "470d5ce1400764999581fd26d5d72b00d990b0f4" && (← archive.pathExists) then
     inputBinFile archive
   else
     let source ← inputTextFile (pkg.dir / "HexGroebner" / "ffi" / "initialization_fallback.c")

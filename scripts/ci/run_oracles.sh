@@ -204,6 +204,9 @@ for entry in "${FILTERED_ORACLES[@]}"; do
   IFS='|' read -r _ emit _ _ <<<"$entry"
   emits+=("$emit")
 done
+if library_selected HexGroebner; then
+  emits+=("hexgroebner_compute" "hexgroebner_compute_full")
+fi
 if library_selected HexRealClosure; then
   emits+=("hexrealclosure_trivial_tests")
 fi
@@ -340,7 +343,8 @@ run_tuple() {
     fi
   fi
   if [ "$oracle" = "scripts/oracle/groebner_sympy.py" ]; then
-    if ! python3 scripts/ci/check_groebner_driver.py; then
+    if ! python3 scripts/ci/check_groebner_initialization.py ||
+        ! python3 scripts/ci/check_groebner_driver.py; then
       echo "FAIL: HexGroebner :: standalone candidate driver conformance"
       return 1
     fi

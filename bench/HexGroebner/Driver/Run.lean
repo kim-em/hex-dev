@@ -14,12 +14,13 @@ open Lean
 
 namespace Hex.Groebner.Driver
 
-private def usage := "hexgroebner_compute [--work N] [--packed-bytes N] [--monomials N] [--pairs N] [--rounds N] [--matrix-entries N] [--matrix-rows N] [--batch-size N] input.json"
+private def usage := "hexgroebner_compute [--work N] [--packed-bytes N] [--monomials N] [--pairs N] [--rounds N] [--matrix-entries N] [--matrix-rows N] [--batch-size N] [--basis N] [--variables N] input.json"
 
 private def options : List String → Limits → Except String (String × Limits)
   | [filename], limits =>
     if filename.startsWith "--" then .error usage else .ok (filename,limits)
   | key::value::rest, limits => do
+    if !key.startsWith "--" then throw s!"options must precede the input filename; {usage}"
     let some amount := value.toNat? | throw s!"{key}: expected a natural number"
     let limits ← match key with
       | "--work" => pure {limits with work := amount}
@@ -29,7 +30,9 @@ private def options : List String → Limits → Except String (String × Limits
       | "--rounds" => pure {limits with rounds := amount}
       | "--matrix-entries" => pure {limits with matrixEntries := amount}
       | "--matrix-rows" => pure {limits with matrixRows := amount}
-      | "--batch-size" => pure {limits with batchSize := amount}
+      | "--batch-size" => pure {limits with batchSize := max 1 amount}
+      | "--basis" => pure {limits with basis := amount}
+      | "--variables" => pure {limits with variables := amount}
       | _ => throw s!"unknown option {key}; {usage}"
     options rest limits
   | _, _ => .error usage

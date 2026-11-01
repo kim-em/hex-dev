@@ -14,7 +14,8 @@ import tempfile
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def check(binary: Path) -> None:
+def check(binary: Path) -> list[dict]:
+    responses = []
     with tempfile.TemporaryDirectory(prefix="groebner-driver-") as directory:
         path = Path(directory) / "input.json"
 
@@ -30,14 +31,18 @@ def check(binary: Path) -> None:
 
         records = [json.loads(line) for line in
                    (ROOT / "conformance-fixtures/HexGroebner/f4.jsonl").read_text().splitlines()]
-        assert len(records) == 567
+        assert records, "empty F4 conformance corpus"
+        assert len({record["case"] for record in records}) == len(records), "duplicate case names"
         for record in records:
             expected = record["value"]
             value = invoke({key: expected[key] for key in ["p", "variables", "order", "generators"]})
             assert value["basis"] == expected["basis"], record["case"]
             assert (value["p"], value["variables"], value["order"], value["randomState"]) == (
                 expected["p"], expected["variables"], expected["order"], 0)
-            for key in ["work", "pairs", "rounds", "largestBatch", "peakMatrixRows", "peakMatrixEntries"]:
+            response = {key: item for key, item in value.items() if key != "candidateNanos"}
+            responses.append(response)
+            for key in ["work", "pairs", "rounds", "largestBatch", "peakMatrixRows", "peakMatrixEntries",
+                        "productPairs", "chainPairs", "gmPairs", "matrixEntries"]:
                 assert value["statistics"][key] == expected[key], (record["case"], key)
 
         unit = {"p": 7, "variables": 1, "order": "grevlex", "generators": [[[[0], 2]]]}
@@ -57,13 +62,16 @@ def check(binary: Path) -> None:
                           {**unit, "generators": [[[[0], -1]]]}]:
             invoke(malformed, code=2, kind="invalid_input")
         invoke({**unit, "generators": [[[[2**32], 1]]]}, code=4, kind="representation")
-        for option in ["--work", "--packed-bytes", "--monomials", "--matrix-entries", "--matrix-rows"]:
+        for option in ["--work", "--packed-bytes", "--monomials", "--matrix-entries", "--matrix-rows", "--basis", "--variables"]:
             invoke(unit, [option, "0"], code=3, kind="exhausted")
         pair_input = {"p": 7, "variables": 2, "order": "grevlex", "generators": [
             [[[2, 0], 1], [[0, 1], 6]], [[[1, 1], 1], [[0, 0], 6]]]}
         for option in ["--pairs", "--rounds"]:
             invoke(pair_input, [option, "0"], code=3, kind="exhausted")
         invoke({**unit, "variables": 10001, "generators": []}, code=3, kind="exhausted")
+        assert invoke({**unit, "variables": 10001, "generators": []},
+                      ["--variables", "10001"])["basis"] == []
+        assert invoke(unit, ["--basis", "1"])["basis"] == [[[[0], 1]]]
         for options in [["--unknown", "1"], ["--work", "bad"], ["--work", "-1"]]:
             invoke(unit, options, code=2, kind="invalid_input")
         result = subprocess.run([str(binary), str(path.with_name("missing.json"))],
@@ -72,8 +80,15 @@ def check(binary: Path) -> None:
         path.write_text("{malformed json")
         result = subprocess.run([str(binary), str(path)], capture_output=True, text=True, timeout=30)
         assert result.returncode == 2 and json.loads(result.stdout)["kind"] == "invalid_input"
-        assert invoke(unit, ["--batch-size", "1"])["batchSize"] == 1
-    print("candidate driver: 567 complete corpus outputs/counters and input/resource boundaries passed")
+        for batch in ["0", "1"]:
+            assert invoke(unit, ["--batch-size", batch])["batchSize"] == 1
+        help_result = subprocess.run([str(binary), "--help"], capture_output=True, text=True, timeout=30)
+        assert help_result.returncode == 0 and "--variables" in help_result.stdout
+        result = subprocess.run([str(binary), str(path), "--work", "5"],
+                                capture_output=True, text=True, timeout=30)
+        assert result.returncode == 2 and "options must precede" in json.loads(result.stdout)["message"]
+    print(f"candidate driver: {len(records)} complete corpus outputs/counters and input/resource boundaries passed")
+    return responses
 
 
 def main() -> None:
@@ -82,9 +97,13 @@ def main() -> None:
     args = parser.parse_args()
     binaries = args.binary or [ROOT / ".lake/build/bin/hexgroebner_compute",
                                ROOT / ".lake/build/bin/hexgroebner_compute_full"]
+    baseline = None
     for binary in binaries:
         print(f"Checking {binary.name}", flush=True)
-        check(binary.resolve())
+        responses = check(binary.resolve())
+        if baseline is not None:
+            assert responses == baseline, "default/reference non-timing responses differ"
+        baseline = responses
 
 
 if __name__ == "__main__":

@@ -2,15 +2,19 @@
 
 `hexgroebner_compute` reads explicit prime, variable/order and polynomial JSON,
 then emits a complete reduced **unchecked candidate**, cumulative statistics,
-advanced random state and candidate duration. Errors distinguish invalid input,
+unchanged deterministic random state zero and candidate duration. Errors distinguish invalid input,
 representation limits, exhaustion and internal matrix failures; failed responses
 contain no candidate basis. Polynomial, byte, pair, round and matrix allowances
 remain absolute parent budgets. Parsing and file IO are outside those allowances.
 The library API retains resumable states; this driver does not serialize them.
 
-The driver never elaborates Lean source. It uses the SDK's
-`libinitialize_minimal.a`, when available, under that restriction. An SDK without
-that archive falls back to ordinary initialization. `hexgroebner_compute_full`
+The driver never elaborates Lean source. It uses the pinned SDK's internal
+`libinitialize_minimal.a` under that restriction, also requiring initialization
+of modules reachable through extern/export calls. Production enables it only
+for compiler revision `470d5ce1400764999581fd26d5d72b00d990b0f4` with the archive
+present; other revisions and missing archives use ordinary initialization.
+CI checks that the linked default omits a full-init frontend symbol while the
+reference retains it. `hexgroebner_compute_full`
 uses ordinary initialization and the same parsing/computation/output code, giving
 a reference executable for conformance and measurement. No initializer is
 intercepted in either production target. Both targets build in the existing CI
@@ -37,7 +41,7 @@ complete output. Certificate generation, independent final certification and
 kernel checking are excluded. This is a development suite, not held-out evidence
 or the fastest-open-source acceptance suite.
 
-On CPU42, default/reference process B/A is 0.4133 (median 0.3314, range
+On CPU42, default/reference process B/A (A reference, B default; below one favors default) is 0.4133 (median 0.3314, range
 0.1894–0.9689), or 0.4153 after equal family weighting. Peak observed child RSS
 is 42512 KiB for the default and 92584 KiB for the reference. These are separate
 whole-process observations; reduced startup does not imply faster F4 arithmetic.
@@ -49,7 +53,11 @@ linkage are retained. Both msolve modes request full reduced grevlex output,
 one thread, matched time/address-space caps and identical input systems.
 Mode 2 is exact; mode 42 uses probabilistic elimination. Its reported seeds
 are retained in raw stderr; they are uncontrolled and not synchronized with Hex.
-An independent polynomial parser compares complete canonical outputs.
+Each comparator campaign jointly solves 32/32 pairs (16 distinct inputs, twice),
+with 64/64 successful process exits, zero timeouts or failures, and all 32
+complete reduced bases agreeing under an independent polynomial parser.
+These campaigns use their recorded builds and GNU-time protocol; they are not
+pooled with earlier comparator reports.
 
 | Family-balanced process Hex/msolve | Exact, CPU57 | Probabilistic, CPU58 |
 | --- | ---: | ---: |
