@@ -144,3 +144,23 @@ oracle profile is claimed for this prototype. No unchanged repeat is used, and
 it is not selected.
 
 - [prototype-wide-trie-9fdfe4b5fab1.tar.gz](raw/prototype-wide-trie-9fdfe4b5fab1.tar.gz): `6f28f722540d475cb0a7b0fdee94ecefba16d36d95e15e8d5d435c5fa1a89449`.
+
+A separate AVX-512 dispatch variant (`1cabf2b75854`, commit `765c8dbf43`)
+keeps strided Mersenne packets on the eight-entry AVX2 path, including packets
+containing two contiguous eight-entry runs. Its baseline is combined snapshot
+`a5989cb5e42e`. Six Clang ASan/UBSan variants and read-only packet guard tests
+pass; a fresh 188-job build freezes both standalone executables. Its single
+CPU68 campaign has 64 successful processes, 32 equal complete bases and equal
+non-timing counters. Candidate/process ratios are 1.0894/1.1288, with medians
+0.9928/0.9970. Candidate range is 0.7766–5.7746; the largest sample is MinRank
+at 2147483647, BA block 1 (0.681440→3.935043 ms), with unchanged counters.
+
+All 120 registered CPU12 fixed points have equal full structural hashes:
+cyclic4 1.0067, cyclic5 0.9816, cyclic6 0.8851, Katsura3 1.0059, Reimer5
+0.9952 and cyclic6Small 0.9714. Cyclic6's median is 0.9871 and its range
+0.3298–1.0521; the apparent mean gain includes that retained outlier. No
+unchanged repeat, full conformance or independent oracle profile is claimed
+for this variant. These observations establish no consistent system gain,
+so the variant is not selected. Exact source blobs, failed test setup,+corrected guard tests, build logs, all raw samples and analyses are retained.
+
+- [prototype-contiguous512-1cabf2b75854.tar.gz](raw/prototype-contiguous512-1cabf2b75854.tar.gz): `256070b4b5a3cd78cf5fa2ce58414871afc9b069b247b3508a2012eb22765a15`.
