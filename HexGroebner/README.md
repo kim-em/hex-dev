@@ -144,8 +144,7 @@ to Montgomery form; stored coefficients remain canonical residues. For
 64-bit lanes cannot overflow and one correction suffices. Contiguous columns
 use vector loads/stores; other supports use gathers and scalar stores. Narrow
 gathers mask the requested scalar out of a four-byte read and require that the
-entire read lies within the logical buffer. Boundary vectors use scalar updates.
-A vector
+entire read lies within the logical buffer. Boundary vectors use scalar updates. A vector
 is validated before mutation; a malformed vector falls back to scalar handling
 so the exact failure prefix is preserved. Other architectures and CPUs use the
 scalar implementation. No floating-point arithmetic or global ISA flag is

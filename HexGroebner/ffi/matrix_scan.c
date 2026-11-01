@@ -129,6 +129,7 @@ LEAN_EXPORT lean_obj_res lean_hex_scan_transition(uint64_t p,
 #if HEX_GROEBNER_AVX2
     if(p>65536 && (p&1) && hex_avx2_available())
         return hex_scan_avx2(p,slots,pivots,initial,quantum,work,trace,provenance);
+    /* Keep characteristic two scalar; raw even-modulus calls use that fallback too. */
     if((p&1) && hex_avx2_available()) {
         if(p<=256) return hex_scan_avx2_u8(p,slots,pivots,initial,quantum,work,trace,provenance);
         return hex_scan_avx2_u16(p,slots,pivots,initial,quantum,work,trace,provenance);

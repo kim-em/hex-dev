@@ -76,7 +76,7 @@ def equal (a b : Scan.Result) : Bool :=
       (portable 7 slots pivots initial q work traces true)
 
 private def fuzz : Bool := Id.run do
-  for p in [2,3,251,256,257,65521,65536,65537,65538,2147483646,2147483647] do
+  for p in [2,3,251,255,256,257,65521,65535,65536,65537,65538,2147483646,2147483647] do
     let w := Hex.Groebner.Native.width p
     for seed in [:12] do
       let mut rows : Array Scan.Pivot := #[]
@@ -150,7 +150,7 @@ def runtimeChecks : Bool := fuzz && aliases && malformed &&
       (portable 7 slots pivots initial q work traces true)
 
 def runtimeWideChecks : Bool := Id.run do
-  for p in [3,251,257,32003,65521,65537,2147483647] do
+  for p in [3,251,255,257,32003,65521,65535,65537,2147483647] do
     let w := Hex.Groebner.Native.width p
     let support := Array.range 16
     let values := (Array.range 16).map fun i => if i == 0 then 1 else (i*7919)%(p-1)+1
@@ -169,7 +169,7 @@ def runtimeWideChecks : Bool := Id.run do
             if !equal (transition p.toUInt64 slots pivots initial quantum 100000 100 provenance)
                 (portable p.toUInt64 slots pivots initial quantum 100000 100 provenance) then return false
   -- Valid strided vectors exercise gather/scatter independently of malformed fallback.
-  for p in [3,251,257,32003,65521,65537,65538,2147483646,2147483647] do
+  for p in [3,251,255,257,32003,65521,65535,65537,65538,2147483646,2147483647] do
     let w := Hex.Groebner.Native.width p
     for stride in [2,3] do
       let support := (Array.range 16).map (·*stride)
@@ -187,7 +187,7 @@ def runtimeWideChecks : Bool := Id.run do
           if !equal (transition p.toUInt64 slots pivots initial quantum 100000 100 provenance)
               (portable p.toUInt64 slots pivots initial quantum 100000 100 provenance) then return false
   -- Strided gathers require a full four-byte read, even for narrow scalars.
-  for p in [3,251,257,32003,65521,65537] do
+  for p in [3,251,255,257,32003,65521,65535,65537] do
     let w := Hex.Groebner.Native.width p
     for stride in [1,2,3] do
       for padding in [:4] do

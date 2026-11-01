@@ -55,6 +55,30 @@ static void check(uint32_t p,uint32_t factor) {
     cols[7]=UINT32_MAX;
     assert(hex_scan8((uint8_t*)dense,(uint8_t*)cols,(uint8_t*)coeff,0,128,p,f,inverse,4)==0);
 }
+/* Exhaust all odd one-byte moduli, factors and nonzero coefficients. Each
+   vector checks subtraction at zero, p-1, the product and adjacent residues. */
+__attribute__((target("avx2")))
+static void check_u8_products(void) {
+    uint32_t columns[8]={0,1,2,3,4,5,6,7};
+    uint8_t dense[8],coefficients[8],expected[8];
+    for(uint32_t p=3;p<=255;p+=2) {
+        uint32_t reciprocal=(uint32_t)(UINT64_C(4294967296)/p);
+        for(uint32_t factor=0;factor<p;++factor) {
+            for(uint32_t b=1;b<p;++b) {
+                uint32_t product=factor*b%p;
+                for(unsigned i=0;i<8;++i) {
+                    uint32_t a=i%4==0?0:i%4==1?p-1:i%4==2?product:(product+1)%p;
+                    coefficients[i]=(uint8_t)b;dense[i]=(uint8_t)a;
+                    expected[i]=(uint8_t)((a+p-product)%p);
+                }
+                assert(hex_scan8(dense,(const uint8_t*)columns,coefficients,0,8,
+                    p,factor,reciprocal,1)==8);
+                assert(memcmp(dense,expected,sizeof(dense))==0);
+            }
+        }
+    }
+}
+
 #if defined(__unix__) || defined(__APPLE__)
 struct guarded_buffer { uint8_t *mapping,*data;size_t page; };
 static struct guarded_buffer guarded(size_t bytes,unsigned at_end) {
@@ -116,7 +140,7 @@ static void check_narrow(uint32_t p,uint32_t factor,unsigned stride,unsigned pad
  for(unsigned entry=0;entry<16;entry+=8) {
   memcpy(before,d.data,128*w);
   unsigned n=hex_scan8(d.data,c.data,v.data,entry,128,p,f,inverse,w);
-  unsigned should= (stride==1 || w==4 || 128-columns[entry+7]>=4/w)?8:0;
+  unsigned should= (stride==1 || 128-columns[entry+7]>=4/w)?8:0;
   assert(n==should);
   if(n) for(unsigned i=entry;i<entry+8;++i) {
    uint32_t a=read_value(expected,w,columns[i]);uint64_t product=(uint64_t)factor*coefficients[i]%p;
@@ -140,6 +164,7 @@ static void check_narrow(uint32_t p,uint32_t factor,unsigned stride,unsigned pad
 int main(void) {
 #if HEX_GROEBNER_AVX2
     if(hex_avx2_available()) {
+        check_u8_products();
         uint32_t fields[]={65537,65539,131071,1000003,1000000007,2147483629,2147483647};
         for(unsigned i=0;i<sizeof(fields)/sizeof(fields[0]);++i) {
             uint32_t p=fields[i];
@@ -157,7 +182,7 @@ int main(void) {
                 check_guard_pages(2147483647,stride,at_end);
             }
         }
-        uint32_t narrow[]={3,5,127,251,257,32003,65521};
+        uint32_t narrow[]={3,5,127,251,255,257,32003,65521,65535};
         for(unsigned i=0;i<sizeof(narrow)/sizeof(narrow[0]);++i) {
             uint32_t p=narrow[i];
             for(unsigned stride=1;stride<=8;++stride) {

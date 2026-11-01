@@ -85,7 +85,7 @@ private def cauchyOver (coefficientField : PrimeField) (input : Input) :
     Bool × Array (Array (Nat × UInt64)) :=
   match (eliminateWith coefficientField { work := 1000000000 }
       input.columns input.reducers input.targets).result with
-  | .ok e => (e.rows.size == input.columns, e.rows.map (·.row.entries coefficientField))
+  | .ok e => (e.rows.size == input.reducers.size + input.targets.size, e.rows.map (·.row.entries coefficientField))
   | .error _ => (false, #[])
 
 /-- Identical matrix construction and complete-output hashing at modulus 251. -/
@@ -93,6 +93,21 @@ def cauchy8 (input : Input) := cauchyOver field8 input
 
 /-- Identical matrix construction and complete-output hashing at modulus 32003. -/
 def cauchy16 (input : Input) := cauchyOver field16 input
+
+/-- The same Cauchy coefficients in even-numbered columns. Every vector with
+at least eight remaining entries uses a strided gather; trailing padding permits
+its full four-byte reads. The matrix has full row rank and zero odd columns. -/
+def prepare16Strided (n : Nat) : Input := Id.run do
+  let input := prepare16 n
+  let remap (row : SparseRow) : SparseRow := Id.run do
+    let mut columns := ByteArray.emptyWithCapacity row.columns.size
+    for i in [:row.size] do
+      columns := Packed.push .u32 columns (2 * Packed.read .u32 row.columns i)
+    return { row with columns }
+  return ⟨2*n+3, input.reducers.map remap, input.targets.map remap⟩
+
+/-- Full decoded strided output, with the same arithmetic as `cauchy16`. -/
+def cauchy16Strided (input : Input) := cauchyOver field16 input
 
 /-- Two-byte elimination including complete shared derivations. -/
 def cauchy16Trace (input : Input) :
@@ -181,10 +196,10 @@ setup_benchmark cauchy8 n => n * n * n
   with prep := prepare8
   where {
     paramFloor := 32
-    paramCeiling := 96
-    paramSchedule := .custom #[32, 64, 96]
+    paramCeiling := 125
+    paramSchedule := .custom #[32, 64, 96, 125]
     maxSecondsPerCall := 8.0
-    targetInnerNanos := 500000000
+    targetInnerNanos := 1000000000
   }
 
 -- Full-rank Hilbert rows make sum_i sum_{j<i} (n-j) = (n^3-n)/3
@@ -196,7 +211,7 @@ setup_benchmark cauchy16 n => n * n * n
     paramCeiling := 512
     paramSchedule := .custom #[64, 128, 256, 512]
     maxSecondsPerCall := 8.0
-    targetInnerNanos := 500000000
+    targetInnerNanos := 1000000000
   }
 
 -- The same (n^3-n)/3 entry updates, plus O(n^2) shared derivation nodes.
@@ -208,7 +223,19 @@ setup_benchmark cauchy16Trace n => n * n * n
     paramCeiling := 512
     paramSchedule := .custom #[64, 128, 256, 512]
     maxSecondsPerCall := 8.0
-    targetInnerNanos := 500000000
+    targetInnerNanos := 1000000000
+  }
+
+-- The column remapping preserves the exact (n^3-n)/3 entry updates.
+-- Twice as many dense columns add O(n^2) scans; validation and hashing are quadratic.
+setup_benchmark cauchy16Strided n => n * n * n
+  with prep := prepare16Strided
+  where {
+    paramFloor := 64
+    paramCeiling := 512
+    paramSchedule := .custom #[64, 128, 256, 512]
+    maxSecondsPerCall := 8.0
+    targetInnerNanos := 1000000000
   }
 
 -- Independently derived model: 256*n columns need O(n) workspace initialization
