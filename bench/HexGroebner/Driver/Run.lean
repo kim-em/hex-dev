@@ -14,11 +14,17 @@ open Lean
 
 namespace Hex.Groebner.Driver
 
-private def usage := "hexgroebner_compute [--work N] [--packed-bytes N] [--monomials N] [--pairs N] [--rounds N] [--matrix-entries N] [--matrix-rows N] [--batch-size N] [--basis N] [--variables N] input.json"
+private def usage := "hexgroebner_compute [--scheduling degree|sugar] [--work N] [--packed-bytes N] [--monomials N] [--pairs N] [--rounds N] [--matrix-entries N] [--matrix-rows N] [--batch-size N] [--basis N] [--variables N] input.json"
 
 private def options : List String → Limits → Except String (String × Limits)
   | [filename], limits =>
     if filename.startsWith "--" then .error usage else .ok (filename,limits)
+  | "--scheduling"::value::rest, limits => do
+    let scheduling ← match value with
+      | "degree" => pure Scheduling.degree
+      | "sugar" => pure Scheduling.sugar
+      | _ => throw s!"unknown scheduling strategy {value}; {usage}"
+    options rest { limits with scheduling }
   | key::value::rest, limits => do
     if !key.startsWith "--" then throw s!"options must precede the input filename; {usage}"
     let some amount := value.toNat? | throw s!"{key}: expected a natural number"
@@ -68,6 +74,7 @@ def run (args : List String) : IO UInt32 := do
         ("p",toJson context.field.modulus.toNat),("variables",toJson context.variables),
         ("order",toJson order),("basis",.arr (candidate.polynomials.map Driver.polynomial)),
         ("statistics",Driver.statistics stats),("candidateNanos",toJson (stop-start)),
+        ("scheduling",toJson (match candidate.scheduling with | .degree => "degree" | .sugar => "sugar")),
         ("batchSize",toJson candidate.batchSize),("randomState",toJson candidate.randomState.toNat)])
     | .invalid error stats => pure (2,message "invalid_input" (reprStr error) stats)
     | .exhausted resource state => pure (3,message "exhausted" (reprStr resource) state.workspace.statistics)

@@ -18,6 +18,8 @@ structure History where
   monomials : Nat
   monomialBytes : Nat
   basisSize : Nat
+  /-- Completed histories record the initial producer choice explicitly. -/
+  scheduling : Scheduling := .degree
 
 def checkHistory (limits : Limits) (history : History) : Except ComputeError Unit := do
   let s := history.statistics
@@ -47,6 +49,7 @@ structure State where
   workspace : Workspace
   derivation : Derivation
   checkpoint : Checkpoint
+  scheduling : Scheduling
 
 inductive Outcome where
   | candidate (value : Candidate) (statistics : Statistics)
@@ -91,7 +94,8 @@ private def decode (state : State) (limits : Limits) : Work Candidate := do
   let forward ← prune limits state.derivation.nodes roots
   return ⟨state.context,generators,polynomials,forward,
     (← lift get).table.bytes,(← get).derivation.allocatedTerms,(← get).derivation.maxExponentBits,
-    ⟨(← lift get).statistics,(← lift get).table.count,(← lift get).table.bytes,polynomials.size⟩⟩
+    ⟨(← lift get).statistics,(← lift get).table.count,(← lift get).table.bytes,
+      polynomials.size,state.scheduling⟩⟩
 
 private def traceFailure (state : State) : Producer.Error → Outcome
   | .compute error => fail state error
@@ -101,9 +105,11 @@ private def traceFailure (state : State) : Producer.Error → Outcome
   | .certificate resource => .certificateExhausted resource state
 
 /-- Traced F4 checkpoints retain all work/allocation, including failed attempts.
-Only successful stages commit new basis roots and derivation nodes. -/
+Only successful stages commit new basis roots and derivation nodes. The original
+scheduling remains fixed; `limits.scheduling` cannot change it on resumption. -/
 def resumeWith (limits : Limits) (nodeLimit : Nat) (initial : State)
     (termLimit : Nat := 1000000) (exponentBits : Nat := 64) : Outcome := Id.run do
+  let limits := { limits with scheduling := initial.scheduling }
   let mut state := { initial with derivation.termLimit := termLimit,derivation.exponentBits := exponentBits }
   if state.derivation.maxExponentBits > exponentBits then return .certificateExhausted .exponentBits state
   if state.derivation.allocatedTerms > termLimit then return .certificateExhausted .allocatedTerms state
@@ -132,12 +138,15 @@ def resumeWith (limits : Limits) (nodeLimit : Nat) (initial : State)
     | .error error => return traceFailure { state with workspace := execution.workspace, derivation.allocatedTerms := execution.derivation.allocatedTerms, derivation.maxExponentBits := execution.derivation.maxExponentBits } error
   return fail state (.exhausted .rounds)
 
-/-- Start with explicit parent statistics; callers preserve cumulative counters. -/
-def begin (context : Context) (generators : Array RawPolynomial) (statistics : Statistics := {}) : State :=
-  ⟨context,generators,⟨{ arity := context.variables },statistics⟩,{},{}⟩
+/-- Start with explicit parent statistics and an initial scheduling choice
+(default degree). Callers preserve cumulative counters. Later `resumeWith` calls
+retain this choice; pass `scheduling := .sugar` here to start a sugar computation. -/
+def begin (context : Context) (generators : Array RawPolynomial) (statistics : Statistics := {})
+    (scheduling : Scheduling := .degree) : State :=
+  ⟨context,generators,⟨{ arity := context.variables },statistics⟩,{},{},scheduling⟩
 
 def computeWith (context : Context) (limits : Limits) (nodeLimit : Nat)
     (generators : Array RawPolynomial) : Outcome :=
-  resumeWith limits nodeLimit (begin context generators)
+  resumeWith limits nodeLimit (begin context generators (scheduling := limits.scheduling))
 
 end Hex.Groebner.Producer

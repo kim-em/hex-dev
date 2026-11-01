@@ -36,11 +36,16 @@ def check(binary: Path) -> list[dict]:
         assert len({record["case"] for record in records}) == len(records), "duplicate case names"
         for record in records:
             expected = record["value"]
-            value = invoke({key: expected[key] for key in ["p", "variables", "order", "generators"]})
+            scheduling = expected["scheduling"]
+            assert scheduling in ["degree", "sugar"]
+            # Degree profiles deliberately check the unflagged default.
+            selection = [] if scheduling == "degree" else ["--scheduling", scheduling]
+            value = invoke({key: expected[key] for key in ["p", "variables", "order", "generators"]}, selection)
             assert value["basis"] == expected["basis"], record["case"]
             assert value["batchSize"] == expected["batchSize"], record["case"]
             serial = invoke({key: expected[key] for key in ["p", "variables", "order", "generators"]},
-                            ["--batch-size", "1"])
+                            [*selection, "--batch-size", "1"])
+            assert value["scheduling"] == serial["scheduling"] == scheduling, record["case"]
             assert serial["basis"] == expected["basis"], record["case"]
             for key, fixture in [("work", "serialWork"), ("rounds", "serialRounds"),
                                  ("chainPairs", "serialChainPairs")]:
@@ -52,7 +57,9 @@ def check(binary: Path) -> list[dict]:
                 assert value["statistics"][key] == expected[key], (record["case"], key)
 
         unit = {"p": 7, "variables": 1, "order": "grevlex", "generators": [[[[0], 2]]]}
-        assert invoke(unit)["basis"] == [[[[0], 1]]]
+        default = invoke(unit)
+        assert default["scheduling"] == "degree" and default["basis"] == [[[[0], 1]]]
+        assert invoke(unit, ["--scheduling", "sugar", "--scheduling", "degree"])["scheduling"] == "degree"
         assert invoke({**unit, "generators": []})["basis"] == []
         assert invoke({**unit, "generators": [[]]})["basis"] == []
         ordinary_two = {**unit, "p": 2, "generators": [[[[2], 1], [[1], 1]]]}
@@ -78,7 +85,7 @@ def check(binary: Path) -> list[dict]:
         assert invoke({**unit, "variables": 10001, "generators": []},
                       ["--variables", "10001"])["basis"] == []
         assert invoke(unit, ["--basis", "1"])["basis"] == [[[[0], 1]]]
-        for options in [["--unknown", "1"], ["--work", "bad"], ["--work", "-1"]]:
+        for options in [["--scheduling", "unknown"], ["--unknown", "1"], ["--work", "bad"], ["--work", "-1"]]:
             invoke(unit, options, code=2, kind="invalid_input")
         result = subprocess.run([str(binary), str(path.with_name("missing.json"))],
                                 capture_output=True, text=True, timeout=30)

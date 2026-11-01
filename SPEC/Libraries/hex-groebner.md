@@ -234,8 +234,13 @@ Dickson's lemma, together with fair finite processing between insertions,
 for termination. Finiteness of the coefficient field alone does not prove
 termination of a polynomial algorithm.
 
-Inhomogeneous systems use a documented sugar-degree strategy or verified
-homogenization and dehomogenization. If homogenization is used, prove the
+Inhomogeneous systems support documented fair total-degree and sugar-degree
+strategies, with an explicit choice retained across resumption. Total-degree
+selection uses the actual critical-pair LCM degree; sugar labels remain separate
+propagated metadata. A new pair may have lower degree than an earlier batch.
+Neither scheduling strategy replaces pair coverage, the Gröbner-property proof
+or independent final certification. Verified homogenization and dehomogenization
+is another permitted route. If homogenization is used, prove the
 order compatibility and dehomogenization result. Do not assume that a basis
 computed in one order remains a basis after reordering the output.
 

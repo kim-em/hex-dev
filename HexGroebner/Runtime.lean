@@ -68,6 +68,12 @@ inductive ComputeError where
   | matrix (error : MatrixError)
   deriving BEq, Repr
 
+/-- Deterministic critical-pair batching. Both orders break ties by stable
+basis indices; propagated sugar labels remain available with either strategy. -/
+inductive Scheduling where
+  | degree | sugar
+  deriving BEq, DecidableEq, Repr, Inhabited
+
 /-- Absolute cumulative allowances, also used when resuming a computation.
 `packedBytes` counts monomial arenas and a common workspace reservation plus cumulative polynomial/matrix packed
 payload, including eight logical bytes per reducer-cache insertion and
@@ -88,6 +94,8 @@ structure Limits where
   basis : Nat := 100000
   variables : Nat := 10000
   batchSize : Nat := 1024
+  /-- Fixed when a computation starts; resumption retains the original choice. -/
+  scheduling : Scheduling := .degree
   /-- Use the approved native row kernel; false selects scalar Lean updates. -/
   nativeRows : Bool := true
   /-- Use bounded packed monomial preparation and exact collision comparison. -/
