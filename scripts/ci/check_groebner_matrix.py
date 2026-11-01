@@ -75,6 +75,8 @@ def run() -> None:
 #undef lean_hex_groebner_equal_monomial
 #undef lean_hex_groebner_equal_bytes
 #undef lean_hex_groebner_equal_products
+static uint64_t mersenne_vectors=0;
+#define HEX_GROEBNER_MERSENNE_USED() (++mersenne_vectors)
 #define hex_scan8 hex_test_scan8_base
 #include HEADER
 #undef hex_scan8
@@ -126,6 +128,9 @@ LEAN_EXPORT lean_obj_res __wrap_lean_hex_gather(uint64_t p,lean_obj_arg initial,
  b_lean_obj_arg stop,b_lean_obj_arg quantum,b_lean_obj_arg entries,
  b_lean_obj_arg bytes,b_lean_obj_arg work,uint64_t factor) {
  ++gather_calls;return hex_test_gather(p,initial,stop,quantum,entries,bytes,work,factor);
+}
+LEAN_EXPORT lean_obj_res hex_test_mersenne_count(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(mersenne_vectors));
 }
 LEAN_EXPORT lean_obj_res hex_test_byte_count(lean_obj_arg world) {
  (void)world;return lean_io_result_mk_ok(lean_box_uint64(byte_calls));
@@ -193,6 +198,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
 @[extern "hex_test_vector_counts"] opaque vectorCounts : IO (UInt64 × UInt64)
 @[extern "hex_test_avx2"] opaque avx2 : IO Bool
 @[extern "hex_test_widths"] opaque widths : IO UInt32
+@[extern "hex_test_mersenne_count"] opaque mersenneCount : IO UInt64
 def main : IO Unit := do
   Hex.Groebner.NativeChecks.run
   let primitiveCompared ← byteCount
@@ -207,13 +213,18 @@ def main : IO Unit := do
   let cacheProducts ← productCount
   if cacheProducts ≤ f4Products then throw (IO.userError "cache checks did not exercise arena product validation")
   if cacheCompared ≤ f4Compared then throw (IO.userError "cache checks did not exercise byte binding")
+  let beforeMersenne ← mersenneCount
+  Hex.Groebner.NativeChecks.runMersenneF4
+  let mersenne ← mersenneCount
   let (scan,gather) ← counts
   let compared ← byteCount
   if scan == 0 || gather == 0 || compared == 0 then throw (IO.userError "test override was not called")
   let available ← avx2
   let (contiguous,gathered) ← vectorCounts
   let covered ← widths
-  IO.println s!"native call counts: scan={scan}, gather={gather}; AVX2={available}, contiguous={contiguous}, strided={gathered}, width paths={covered}, byte comparisons={compared}, product validations={cacheProducts}"
+  IO.println s!"native call counts: scan={scan}, gather={gather}; AVX2={available}, contiguous={contiguous}, strided={gathered}, width paths={covered}, byte comparisons={compared}, product validations={cacheProducts}, Mersenne vectors={mersenne}"
+  if VECTOR && available && mersenne ≤ beforeMersenne then
+    throw (IO.userError "complete F4 did not exercise Mersenne vectors")
   if VECTOR && available && (contiguous == 0 || gathered == 0 || covered != 63) then
     throw (IO.userError "an AVX2 path was not exercised")
   if VECTOR && (← IO.getEnv "HEX_GROEBNER_REQUIRE_AVX2") == some "1" && !available then

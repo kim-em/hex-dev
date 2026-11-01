@@ -6,6 +6,9 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <string.h>
+#ifndef HEX_GROEBNER_MERSENNE_USED
+#define HEX_GROEBNER_MERSENNE_USED() ((void)0)
+#endif
 
 #if (defined(__x86_64__) || defined(__i386__)) && defined(__GNUC__) && !defined(HEX_GROEBNER_NO_AVX2)
 #define HEX_GROEBNER_AVX2 1
@@ -50,6 +53,16 @@ static inline __m256i hex_mont32_even(__m256i b,__m256i factor,
     __m256i sum=_mm256_add_epi64(t,_mm256_mul_epu32(m,p64));
     __m256i u=_mm256_srli_epi64(sum,32);
     return _mm256_sub_epi64(u,_mm256_and_si256(_mm256_cmpgt_epi64(u,pm1),p64));
+}
+
+/* For p=2^31-1, folding the high31 bits into the low31 bits gives
+   a residue below2p for every product x<p². One subtraction canonicalizes it. */
+__attribute__((target("avx2"),always_inline))
+static inline __m256i hex_mersenne31_even(__m256i b,__m256i factor) {
+    __m256i p=_mm256_set1_epi64x(INT32_MAX),pm1=_mm256_set1_epi64x(INT32_MAX-1);
+    __m256i x=_mm256_mul_epu32(b,factor);
+    __m256i r=_mm256_add_epi64(_mm256_and_si256(x,p),_mm256_srli_epi64(x,31));
+    return _mm256_sub_epi64(r,_mm256_and_si256(_mm256_cmpgt_epi64(r,pm1),p));
 }
 
 /* Eight independent canonical updates, or zero with dense unchanged.
@@ -101,6 +114,15 @@ static inline unsigned hex_scan8(uint8_t *dense,const uint8_t *columns,const uin
         __m256i q=_mm256_or_si256(even,_mm256_slli_epi64(odd,32));
         product=_mm256_sub_epi32(x,_mm256_mullo_epi32(q,pv));
         product=_mm256_sub_epi32(product,_mm256_and_si256(_mm256_cmpgt_epi32(product,_mm256_set1_epi32((int32_t)p-1)),pv));
+    } else if(p==INT32_MAX) {
+        HEX_GROEBNER_MERSENNE_USED();
+        /* The existing caller supplies factor*2^32 mod p. Since2^32=2 mod p,
+           recover factor by modular halving without changing the ABI. */
+        uint32_t canonical=(multiplier>>1)+(multiplier&1)*UINT32_C(1073741824);
+        __m256i f31=_mm256_set1_epi64x(canonical);
+        __m256i even=hex_mersenne31_even(b,f31);
+        __m256i odd=hex_mersenne31_even(_mm256_srli_epi64(b,32),f31);
+        product=_mm256_or_si256(even,_mm256_slli_epi64(odd,32));
     } else {
         __m256i p64=_mm256_set1_epi64x(p),pm1=_mm256_set1_epi64x(p-1);
         __m256i even=hex_mont32_even(b,f,inv,p64,pm1);
