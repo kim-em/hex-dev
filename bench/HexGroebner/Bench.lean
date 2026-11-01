@@ -19,6 +19,10 @@ namespace Hex.Groebner.Bench
 def field : PrimeField :=
   ⟨65537, Hex.Nat.isPrimeTrial_isPrime (by decide), by decide⟩
 
+/-- Primes exercising one- and two-byte coefficient storage. -/
+def field8 : PrimeField := ⟨251, Hex.Nat.isPrimeTrial_isPrime (by decide), by decide⟩
+def field16 : PrimeField := ⟨32003, Hex.Nat.isPrimeTrial_isPrime (by decide), by decide⟩
+
 /-- Immutable packed input, with the first half of the rows serving as reducers. -/
 structure Input where
   columns : Nat
@@ -29,17 +33,21 @@ structure Input where
 /-- Hilbert entries `1 / (i + j + 1)` over the prime field. For the registered
 domain `2*n < p`, all square minors are nonzero. Every elimination update visits
 a dense trailing support, without rank defects or accidental zero pivots. -/
-def prepare (n : Nat) : Input := Id.run do
+private def prepareOver (coefficientField : PrimeField) (n : Nat) : Input := Id.run do
   let mut rows := #[]
   for i in [:n] do
     let mut row : SparseRow := {}
     for j in [:n] do
-      let c := (HexArith.powMod (i + j + 1) 65535 65537).toUInt64
+      let c := (HexArith.powMod (i + j + 1) (coefficientField.modulus.toNat - 2)
+        coefficientField.modulus.toNat).toUInt64
       row := {
         columns := Packed.push .u32 row.columns j.toUInt64
-        coefficients := Packed.push .u32 row.coefficients c }
+        coefficients := Packed.push coefficientField.width row.coefficients c }
     rows := rows.push row
   return ⟨n, rows.extract 0 (n / 2), rows.extract (n / 2) n⟩
+
+/-- The original four-byte Cauchy family. -/
+def prepare (n : Nat) : Input := prepareOver field n
 
 /-- Return the actual decoded result for structural hashing, including an
 explicit failure flag. No parameter-only digest replaces the matrix output. -/
@@ -66,6 +74,32 @@ def cauchyTrace (input : Input) :
     Bool × Array (Array (Nat × UInt64)) × Array (Array UInt64) :=
   match (eliminateWith field { work := 1000000000 } input.columns input.reducers input.targets true).result with
   | .ok e => (e.rows.size == input.columns, e.rows.map (·.row.entries field), e.trace.map wireOp)
+  | .error _ => (false, #[], #[])
+
+/-- Full-rank Cauchy matrices over the one- and two-byte primes. The registered
+sizes satisfy `2*n < p`, so every square minor is nonzero. -/
+def prepare8 (n : Nat) : Input := prepareOver field8 n
+def prepare16 (n : Nat) : Input := prepareOver field16 n
+
+private def cauchyOver (coefficientField : PrimeField) (input : Input) :
+    Bool × Array (Array (Nat × UInt64)) :=
+  match (eliminateWith coefficientField { work := 1000000000 }
+      input.columns input.reducers input.targets).result with
+  | .ok e => (e.rows.size == input.columns, e.rows.map (·.row.entries coefficientField))
+  | .error _ => (false, #[])
+
+/-- Identical matrix construction and complete-output hashing at modulus 251. -/
+def cauchy8 (input : Input) := cauchyOver field8 input
+
+/-- Identical matrix construction and complete-output hashing at modulus 32003. -/
+def cauchy16 (input : Input) := cauchyOver field16 input
+
+/-- Two-byte elimination including complete shared derivations. -/
+def cauchy16Trace (input : Input) :
+    Bool × Array (Array (Nat × UInt64)) × Array (Array UInt64) :=
+  match (eliminateWith field16 { work := 1000000000 }
+      input.columns input.reducers input.targets true).result with
+  | .ok e => (e.rows.size == input.columns, e.rows.map (·.row.entries field16), e.trace.map wireOp)
   | .error _ => (false, #[], #[])
 
 /-- Rectangular matrices with six nonzeros per row and a large zero prefix.
@@ -137,6 +171,38 @@ setup_benchmark cauchyTrace n => n * n * n
     paramFloor := 32
     paramCeiling := 512
     paramSchedule := .custom #[32, 64, 128, 256, 512]
+    maxSecondsPerCall := 8.0
+    targetInnerNanos := 500000000
+  }
+
+-- These are the same cubic fixed-word updates and quadratic validation/scans/
+-- output as cauchy, with p=251 or p=32003 held fixed. Trace output adds O(n^2).
+setup_benchmark cauchy8 n => n * n * n
+  with prep := prepare8
+  where {
+    paramFloor := 32
+    paramCeiling := 96
+    paramSchedule := .custom #[32, 64, 96]
+    maxSecondsPerCall := 8.0
+    targetInnerNanos := 500000000
+  }
+
+setup_benchmark cauchy16 n => n * n * n
+  with prep := prepare16
+  where {
+    paramFloor := 64
+    paramCeiling := 512
+    paramSchedule := .custom #[64, 128, 256, 512]
+    maxSecondsPerCall := 8.0
+    targetInnerNanos := 500000000
+  }
+
+setup_benchmark cauchy16Trace n => n * n * n
+  with prep := prepare16
+  where {
+    paramFloor := 64
+    paramCeiling := 512
+    paramSchedule := .custom #[64, 128, 256, 512]
     maxSecondsPerCall := 8.0
     targetInnerNanos := 500000000
   }
@@ -233,17 +299,17 @@ private def term (p : UInt64) (coefficient : Int) (exponents : Array Nat) : RawT
   ⟨exponents, (coefficient % (p.toNat : Int)).toNat.toUInt64⟩
 
 /-- Standard cyclic polynomial systems, without added field equations. -/
-def cyclic (n : Nat) : Array RawPolynomial := Id.run do
+def cyclic (n : Nat) (modulus : UInt64 := field.modulus) : Array RawPolynomial := Id.run do
   let mut generators := #[]
   for length in [1:n] do
     let mut polynomial := #[]
     for start in [:n] do
       let mut powers := Array.replicate n 0
       for offset in [:length] do powers := powers.modify ((start + offset) % n) (· + 1)
-      polynomial := polynomial.push (term field.modulus 1 powers)
+      polynomial := polynomial.push (term modulus 1 powers)
     generators := generators.push polynomial
-  generators := generators.push #[term field.modulus 1 (Array.replicate n 1),
-    term field.modulus (-1) (Array.replicate n 0)]
+  generators := generators.push #[term modulus 1 (Array.replicate n 1),
+    term modulus (-1) (Array.replicate n 0)]
   return generators
 
 /-- Standard Katsura-n system in n+1 variables, with the symmetric convolution
@@ -283,10 +349,11 @@ initialize reimer5Input : IO.Ref (Array RawPolynomial) ← IO.mkRef (reimer 5)
 initialize cyclic4Input : IO.Ref (Array RawPolynomial) ← IO.mkRef (cyclic 4)
 initialize cyclic5Input : IO.Ref (Array RawPolynomial) ← IO.mkRef (cyclic 5)
 initialize cyclic6Input : IO.Ref (Array RawPolynomial) ← IO.mkRef (cyclic 6)
+initialize cyclic6SmallInput : IO.Ref (Array RawPolynomial) ← IO.mkRef (cyclic 6 field16.modulus)
 initialize katsura3Input : IO.Ref (Array RawPolynomial) ← IO.mkRef (katsura 3)
 
-private def compute (variables : Nat) (input : Array RawPolynomial) (nativeRows := true) (gebauerMoller := true) (batchInterreduce := true) (nativeMonomials := true) : IO (Array RawPolynomial) := do
-  match computeWith ⟨field, variables, .grevlex⟩ { nativeRows, gebauerMoller, batchInterreduce, nativeMonomials, work := 1000000000 } input with
+private def compute (variables : Nat) (input : Array RawPolynomial) (nativeRows := true) (gebauerMoller := true) (batchInterreduce := true) (nativeMonomials := true) (coefficientField : PrimeField := field) : IO (Array RawPolynomial) := do
+  match computeWith ⟨coefficientField, variables, .grevlex⟩ { nativeRows, gebauerMoller, batchInterreduce, nativeMonomials, work := 1000000000 } input with
   | .candidate candidate _ => return candidate.polynomials
   | .exhausted r _ => throw (IO.userError s!"F4 exhausted {reprStr r}")
   | .representation r _ => throw (IO.userError s!"F4 representation {reprStr r}")
@@ -302,6 +369,10 @@ def cyclic5 (_ : Unit) : IO (Array RawPolynomial) := do compute 5 (← cyclic5In
 
 /-- Candidate-only cyclic-6, with a larger matrix/pair sequence. -/
 def cyclic6 (_ : Unit) : IO (Array RawPolynomial) := do compute 6 (← cyclic6Input.get)
+
+/-- Candidate-only cyclic-6 at modulus 32003, with two-byte coefficients. -/
+def cyclic6Small (_ : Unit) : IO (Array RawPolynomial) := do
+  compute 6 (← cyclic6SmallInput.get) (coefficientField := field16)
 
 /-- Identical cyclic-6 candidate call using scalar Lean row updates. -/
 def cyclic6Portable (_ : Unit) : IO (Array RawPolynomial) := do compute 6 (← cyclic6Input.get) (nativeRows := false)
@@ -366,6 +437,7 @@ def reimer5Arrays (_ : Unit) : IO (Array RawPolynomial) := do
 setup_fixed_benchmark cyclic4 where { repeats := 5 }
 setup_fixed_benchmark cyclic5 where { repeats := 5 }
 setup_fixed_benchmark cyclic6 where { repeats := 5 }
+setup_fixed_benchmark cyclic6Small where { repeats := 5 }
 setup_fixed_benchmark cyclic6Portable where { repeats := 5 }
 setup_fixed_benchmark katsura3 where { repeats := 5 }
 setup_fixed_benchmark cyclic5Buchberger where { repeats := 5 }
