@@ -36,6 +36,29 @@ def runF4 : IO Unit := do
   if !(ReducerCacheConformance.f4Checks seed) then
     throw (IO.userError "compiled F4 cache conformance mismatch")
 
+private def mersenneF4 (seed : Nat) : Bool := Id.run do
+  let some field := Fixtures.fields.find? (·.modulus == 2147483647) | return false
+  let context : Context := ⟨field,5,.grevlex⟩
+  let mut generators : Array RawPolynomial := #[]
+  for degree in [1:5] do
+    let mut polynomial := #[]
+    for start in [:5] do
+      let mut exponents := Array.replicate 5 0
+      for step in [:degree] do exponents := exponents.modify ((start+step)%5) (·+1)
+      polynomial := polynomial.push ⟨exponents,1⟩
+    generators := generators.push polynomial
+  generators := generators.push #[⟨Array.replicate 5 1,1⟩,
+    ⟨Array.replicate 5 0,field.modulus-(seed%1023+1).toUInt64⟩]
+  let .candidate actual stats := computeWith context {} generators | return false
+  let .candidate expected reference := computeWith context
+    { nativeRows := false, nativeMonomials := false } generators | return false
+  return actual.polynomials == expected.polynomials && stats == reference
+
+/-- Exercise the wide-field specialized vector path during a complete F4 call. -/
+def runMersenneF4 : IO Unit := do
+  let seed := ((← IO.getEnv "HEX_GROEBNER_TEST_SEED").getD "0").toNat?.getD 0
+  if !mersenneF4 seed then throw (IO.userError "compiled Mersenne F4/reference mismatch")
+
 /-- Exercise cache comparisons crossing multiple bounded native chunks. -/
 def runCache : IO Unit := do
   let seed := ((← IO.getEnv "HEX_GROEBNER_TEST_SEED").getD "0").toNat?.getD 0

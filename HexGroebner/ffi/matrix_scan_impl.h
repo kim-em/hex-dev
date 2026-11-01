@@ -72,7 +72,7 @@ static lean_obj_res HEX_SCAN_NAME(uint64_t p,
                 if(updates>=8) {
                     uint32_t multiplier=w<4?(uint32_t)factor:(uint32_t)((factor<<32)%p);
                     for(uint64_t k=0;k<updates;++k) {
-                        if(updates-k>=8 && hex_scan8(data,cs,vs,(size_t)entry,columns,
+                        if(updates-k>=8 && HEX_SCAN_UPDATE(data,cs,vs,(size_t)entry,columns,
                                 (uint32_t)p,multiplier,reduction,w)) {
                             entry+=8;k+=7;continue;
                         }
