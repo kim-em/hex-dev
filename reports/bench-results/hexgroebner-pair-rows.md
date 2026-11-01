@@ -16,7 +16,8 @@ basis face appears once as a target. Subtracting its known reducer gives the
 selected S-polynomial span. A disconnected same-LCM graph may add valid rows,
 but no selected identity is lost. Every row is an actual multiplied basis
 polynomial; the certificate producer creates its derivation from the current
-basis root and multiplier. Sugar uses the maximum of its group. Field/order
+basis root and multiplier. Sugar uses the maximum of its group, which is exact for the single-sugar batches
+selected by the pair queue. Field/order
 metadata, critical-pair selection and its completed/deferred obligations retain
 their existing contracts.
 
@@ -77,6 +78,7 @@ counters may differ and are retained in raw outputs and analyses.
 | Rerun | 57 | 0.9604 | 0.9385 | 0.4815–2.1338 | 1.1880 | 1.2325 | 0.5208–3.0389 |
 
 Pooled process geometric mean is 1.0644, median 1.0452, range 0.3388–3.0389.
+The rerun process regression despite its candidate gain is unexplained.
 Thus the candidate improvement does not imply a process-time gain. Only one
 unchanged diagnostic rerun follows the mixed original observations. Work and
 allocation decrease for all diagnostic inputs; matrix entries increase for
@@ -102,7 +104,8 @@ These finite fixed inputs do not establish a general complexity law.
 
 ## Arena-validated cache baseline
 
-The final computational snapshot is `68086d6576`, fingerprint `c9fcd659ff93`.
+The final computational snapshot `68086d6576` is content-identical over the benchmark
+family to rebased PR commit `d227bebc90`, fingerprint `c9fcd659ff93`.
 A is the frozen arena-validated cache/access engine `65d5517c4d57` (computational
 commit `a74d092a08`); B adds multiplied pair rows. Both source manifests and
 frozen executable hashes are archived. The same host, toolchain, diagnostic
@@ -140,10 +143,10 @@ limits, and the frozen Hex multiplied-row engine. msolve mode2 is exact default
 elimination; mode42 uses probabilistic elimination. Every complete output is
 parsed and compared; neither certificate generation nor kernel checking is timed.
 
-| msolve mode | CPU | Processes | Equal full bases | Hex/msolve process geometric mean | Median | Range |
+| msolve mode | CPU | Processes | Equal full-basis pairs | Hex/msolve process geometric mean | Median | Range |
 | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| 2 | 48 | 64 | 32 | 6.2498 | 6.6670 | 1.5846–11.2599 |
-| 42 | 28 | 64 | 32 | 6.3449 | 6.1141 | 4.0365–14.3326 |
+| 2 | 48 | 64 | 32/32 | 6.2498 | 6.6670 | 1.5846–11.2599 |
+| 42 | 28 | 64 | 32/32 | 6.3449 | 6.1141 | 4.0365–14.3326 |
 
 These whole-process ratios include different parsing/conversion boundaries and
 startup costs. Internal msolve timers are coarse for tiny systems; no candidate

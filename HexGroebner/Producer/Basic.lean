@@ -82,18 +82,5 @@ structure Element where
 
 def plain (elements : Array Element) : Array BasisElement := elements.map (·.value)
 
-def sPolynomial (context : Context) (limits : Limits) (nodeLimit : Nat)
-    (a b : Element) : Work Element := do
-  let f := a.value.polynomial
-  let g := b.value.polynomial
-  let lcm ← lift (Computation.combine limits .lcm (f.monomial 0) (g.monomial 0))
-  let x ← lift (Computation.combine limits .quotient lcm (f.monomial 0))
-  let y ← lift (Computation.combine limits .quotient lcm (g.monomial 0))
-  let left ← monomial context limits nodeLimit x a.root
-  let right ← monomial context limits nodeLimit y b.root
-  let negative ← emit limits nodeLimit (.scale (context.field.modulus.toNat-1) right)
-  let root ← emit limits nodeLimit (.add left negative)
-  let value ← lift (f.sPolynomial context limits g)
-  return ⟨⟨value,max a.value.sugar b.value.sugar⟩,root⟩
 
 end Hex.Groebner.Producer

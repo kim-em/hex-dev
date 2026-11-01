@@ -39,7 +39,10 @@ namespace SymbolicMatrix
 once and has at most one chosen reducer. Multiplication can extend the arena and
 trigger checked exponent widening, without invalidating any existing identifier.
 Optional initial reducers are nonzero basis multiples with distinct leading IDs;
-their source indices, multipliers and payloads must refer to this basis/arena. -/
+their source indices and multipliers must refer to this basis/arena, and each
+payload must equal that multiplier times its source basis polynomial. This is
+a trusted internal precondition; complete certificate replay independently
+checks the resulting derivations. -/
 def prepareWith (context : Context) (limits : Limits) (index : ReducerIndex)
     (basis : Array BasisElement) (targets : Array BasisElement)
     (cache : ReducerCache := .empty) (initial : Array SymbolicReducer := #[]) :
@@ -51,7 +54,7 @@ def prepareWith (context : Context) (limits : Limits) (index : ReducerIndex)
   let seeded := !initial.isEmpty
   for reducer in initial do
     let p := reducer.polynomial
-    if p.size == 0 || closed.contains (p.monomial 0) then throw (.representation .index)
+    if p.size == 0 || closed.contains (p.monomial 0) then throw (.matrix .dimensions)
     closed := closed.insert (p.monomial 0)
     spend limits (p.size + 1)
     for i in [:p.size] do

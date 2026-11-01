@@ -26,7 +26,6 @@ namespace PairRows
 private structure Group where
   basis : Nat
   sugar : Nat
-  seen : Std.HashSet Nat := {}
 
 private def prefer (basis : Array BasisElement) (a b : Nat) : Bool :=
   let x := basis[a]!.polynomial.size
@@ -54,6 +53,9 @@ def prepare (context : Context) (limits : Limits) (basis : Array BasisElement)
   let mut order := #[]
   for pair in pairs do
     spend limits 4
+    if pair.left ≥ basis.size || pair.right ≥ basis.size then throw (.matrix .dimensions)
+    if basis[pair.left]!.polynomial.size == 0 || basis[pair.right]!.polynomial.size == 0 then
+      throw (.matrix .dimensions)
     let source := if prefer basis pair.left pair.right then pair.left else pair.right
     if let some old := groups[pair.lcm]? then
       let source := if prefer basis source old.basis then source else old.basis
@@ -70,12 +72,13 @@ def prepare (context : Context) (limits : Limits) (basis : Array BasisElement)
     cache := nextCache
     reducers := reducers.push row
   let mut targets := #[]
+  let mut emitted : Std.HashSet (Nat × Nat) := {}
   for pair in pairs do
     for source in [pair.left, pair.right] do
       spend limits 3
       let some group := groups[pair.lcm]? | throw (.representation .index)
-      if source == group.basis || group.seen.contains source then continue
-      groups := groups.insert pair.lcm { group with seen := group.seen.insert source }
+      if source == group.basis || emitted.contains (pair.lcm, source) then continue
+      emitted := emitted.insert (pair.lcm, source)
       let (row, nextCache) ← multiply context limits basis cache source pair.lcm group.sugar
       cache := nextCache
       targets := targets.push row
