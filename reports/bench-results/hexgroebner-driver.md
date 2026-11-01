@@ -16,12 +16,12 @@ uses identical parsing/computation/output code with ordinary initialization.
 CI checks the linked initializer, complete non-timing response equality and
 independent corpus outputs. No production initializer is intercepted.
 
-Measured source fingerprint `1bc68da7b1c1` and its archived source manifest identify
-the timed drivers and measurement runner snapshot. The computational F4 sources remain
-those of packed-comparison fingerprint `802ae51122d7`. Both driver executables
-are byte-identical to those of `b42ce333603b`; the runner changes how msolve is
-launched and strengthens provenance/input checks. Source blobs, executable
-hashes, helper hashes, linker responses, compiler flags and child environment
+Measured source fingerprint `17aa8e10ff23` and its archived source manifest identify
+the current native-comparator campaigns. The computational F4 sources remain
+those of packed-comparison fingerprint `802ae51122d7`. Both Hex executables are
+byte-identical to those of `b42ce333603b` and `1bc68da7b1c1`; later changes concern
+the measurement runner and build provenance. Source blobs, executable hashes,
+helper hashes, linker responses, effective compiler flags and child environment
 settings are retained. Source and binary hashes are checked before and after
 measurement. The SDK archive SHA256 is
 `31e5026b3d16824f7d5c5c30ce41843bf167d262a236978264d4021d1d8538a5`.
@@ -48,43 +48,54 @@ Peak observed RSS is 42348 KiB default and 92652 KiB full. Reduced initializatio
 cost does not imply faster F4 arithmetic.
 
 msolve source is `3672113ee2c696a2ac9c637636e0f7214f500ba1`, built with Clang
-23.1.3, `-O3 -march=native`, GMP 6.3.0, MPFR 4.2.2 and FLINT 3.6.0. Its
-configured SIMD flags enable AVX-512 as well as AVX2; OpenMP is disabled in this
-single-thread build. Full SIMD/CPU/OpenMP flags and configure arguments are
-retained in the build-provenance supplement. Both modes
-execute `.libs/msolve` directly, with its neogb library directory explicitly
-recorded in `LD_LIBRARY_PATH`. The ELF and actual engine hashes are retained.
+23.1.3, `-O3 -march=native`, GMP 6.3.0, MPFR 4.2.2 and FLINT 3.6.0. The current
+build explicitly permits native CPU tuning through the Nix wrapper. Its engine
+ELF records the actual compiler commands; a retained compiler probe resolves
+`-march=native` to `znver5`. Configured SIMD flags enable AVX-512 and AVX2.
+Configure's OpenMP probe cannot find `omp.h` for that Clang, so `OPENMP_CFLAGS`
+is empty. Full SIMD/CPU/OpenMP flags, configure arguments, generated input hashes
+and build logs are retained. Both modes execute `.libs/msolve` directly, with
+its neogb library directory explicitly recorded in `LD_LIBRARY_PATH`. The ELF
+and actual engine hashes are retained.
 Mode 2 is exact; mode 42 uses probabilistic elimination, with uncontrolled seeds
 retained in stderr. Both request full reduced grevlex output, one thread and
 matched time/address-space caps. The runner independently checks characteristic,
 variable order and canonical input generators across JSON and msolve files,
 requires grevlex, and parses every complete output.
 
-| Unadjusted process Hex/msolve | Exact, CPU9 | Probabilistic, CPU10 |
+| Unadjusted process Hex/msolve | Exact, CPU32 | Probabilistic, CPU46 |
 | --- | ---: | ---: |
-| Equal-family geometric mean | 2.1093 | 2.4298 |
-| cyclic | 1.8649 | 2.2553 |
-| katsura | 1.3733 | 1.4997 |
-| eco | 5.5003 | 7.1041 |
-| noon | 1.2549 | 1.2618 |
-| reimer | 8.1418 | 8.5310 |
-| minrank | 0.9477 | 1.0360 |
-| dense quadratic | 1.3619 | 1.8658 |
+| Equal-family geometric mean | 2.1939 | 2.3790 |
+| cyclic | 1.9557 | 2.2242 |
+| katsura | 1.5027 | 1.5165 |
+| eco | 5.5439 | 7.1559 |
+| noon | 1.2079 | 1.3106 |
+| reimer | 9.0055 | 9.0183 |
+| minrank | 1.0002 | 1.0557 |
+| dense quadratic | 1.3800 | 1.4319 |
 
-All-pair geometric means are 2.0771 and 2.4072; medians 1.5315 and 1.6441;
-ranges 0.4646–8.5504 and 0.7406–9.1065. Peak RSS is 42288/42348 KiB for Hex and
-13392 KiB for msolve. Eco and Reimer remain substantial gaps. Wider fields,
+All-pair geometric means are 2.1626 and 2.3591; medians 1.6389 and 1.6637;
+ranges 0.4341–9.2287 and 0.8754–9.1360. Peak RSS is 42060/42064 KiB for Hex and
+13408 KiB for msolve. Eco and Reimer remain substantial gaps. Wider fields,
 extensions, parallel scaling, held-out inputs and the other required comparators
 remain outstanding. These measurements do not establish leadership.
 
 A separate diagnostic uses the one-variable system `[x0]` at both primes, with
-adjacent AB then BA on CPU92: eight successful processes, four agreeing pairs,
-no failures. Hex process time ranges 3.2521–5.3046 ms (geometric mean 4.4413),
-msolve 3.9604–11.1440 ms (5.3172). Every sample, including the 11.1440 ms
-observation, is retained. This quantifies substantial fixed costs in small
-cases. All reported ratios remain unadjusted; small-case process ratios are not
-interpreted as arithmetic speed ratios. This is a one-off diagnostic, with no
-per-change null-control requirement or sample-filtering rule.
+adjacent AB then BA on CPU78: eight successful processes, four agreeing pairs,
+no failures. Hex process time ranges 3.3082–5.5046 ms (geometric mean 4.5234),
+msolve 3.8872–16.1877 ms (5.8371). Every sample is retained, including the slowest msolve
+observation. This quantifies substantial fixed costs in small cases. All
+reported ratios remain unadjusted; small-case process ratios are not interpreted
+as arithmetic speed ratios. This is a one-off diagnostic for each comparator
+build, with no per-change null-control requirement or sample-filtering rule.
+The older CPU92 diagnostic against the previous engine remains archived
+separately (Hex 3.2521–5.3046 ms; msolve 3.9604–11.1440 ms).
+
+The older direct-ELF snapshot `1bc68da7b1c1` used a build that requested
+`-march=native`, but Nix stripped that flag. Explicit AVX-512 flags remained
+enabled. It observed family-balanced ratios 2.1093/2.4298 (exact CPU9 /
+probabilistic CPU10), with all complete bases agreeing. It is retained separately
+and superseded by the effective-native table above. It is not pooled with it.
 
 Earlier snapshots `e0b1cbd73ebf` and `b42ce333603b` retain separate complete
 campaigns and source manifests. Their msolve arms executed a libtool shell
@@ -92,7 +103,7 @@ wrapper that added overhead only to msolve, biasing Hex/msolve ratios in favor
 of Hex. Their equal-family ratios 1.2250/1.2422 and 1.2526/1.2807 are retained
 historical observations and are superseded by the direct-ELF table above.
 They are not pooled or used as evidence of a smaller comparator gap.
-Across the separate `b42ce333603b` and direct campaigns, median new-minus-old
+Across the separate `b42ce333603b` and direct campaigns, median paired per-input new-minus-old
 process shifts are −0.7326 ms Hex and −7.5190 ms msolve in exact mode, and
 −0.8256/−8.0957 ms in probabilistic mode. These are observations on different
 leased CPUs and host contexts, not adjacent wrapper/direct comparisons; they
@@ -120,14 +131,18 @@ avoid that problem. An earlier cached Lake configuration did not actually select
 full initialization; its correction and logs are retained. All driver timing
 campaigns above use the two separate final targets.
 
-[`groebner_freeze.py`](../../scripts/bench/groebner_freeze.py) builds and freezes
-staged sources and driver hashes. A mechanical rebuild at tooling fingerprint
-`f663c8bac968` reproduces both measured executables exactly; its only source
-changes from `1bc68da7b1c1` are three benchmark-tool files. No extra timing run
-is used. The source manifest, build log, helper and equivalent binary hashes are
-retained. Future sweeps additionally reject tracked comparator edits and retain
-full build settings. The post-campaign comparator supplement records clean
-tracked sources and hashes matching those retained before/after measurement.
+[`groebner_freeze.py`](../../scripts/bench/groebner_freeze.py) builds staged
+sources in a fresh detached worktree, reusing only the pinned dependency
+packages, and freezes both executables. At fingerprint `17aa8e10ff23`, 183 actual
+compilation/link jobs reproduce both previously measured Hex executable hashes.
+The source tree, complete source blobs, build log and hashes are retained; the
+initializer checker examines the frozen copies themselves. No extra unchanged
+Hex timing run is used. An earlier cached build/freeze at `f663c8bac968` matched
+those hashes from an existing build tree; its archive remains as historical
+provenance and is not evidence of fresh compilation. Comparator checks reject
+tracked edits and retain generated build-input hashes and recorded engine
+compiler commands when available. Clean tracked sources alone do not certify
+the contents of ignored generated Makefiles, so those are separately hashed.
 
 [`groebner_cli_measure.py`](../../scripts/bench/groebner_cli_measure.py) retains
 all inputs/results and rejects stale sources, changed executables, failures or
@@ -182,3 +197,15 @@ Raw artifacts, each with SHA256:
 
 - [cli-build-provenance-f663c8bac968.tar.gz](raw/cli-build-provenance-f663c8bac968.tar.gz):
   `b0b47d87c387fc3f0a4fd725b177e9cc5882c1f2a37d90477af5f3ba8f4db2ac`.
+
+- [msolve-native-l2-records-17aa8e10ff23.tar.gz](raw/msolve-native-l2-records-17aa8e10ff23.tar.gz):
+  `2035dc06b95f2e6da3c5f9003c21e01dd491ff2dd0c86e83bcb56bece304021f`.
+
+- [msolve-native-l42-records-17aa8e10ff23.tar.gz](raw/msolve-native-l42-records-17aa8e10ff23.tar.gz):
+  `45e5887c41afff8af16ce3785607a28f3642982ca03c3e727e27d8f4b0d914be`.
+
+- [cli-fresh-build-validation-17aa8e10ff23.tar.gz](raw/cli-fresh-build-validation-17aa8e10ff23.tar.gz):
+  `c68c3292f180356e5fd56e748eb0afe22f287c6fe9ffc3655778fdf5c493650d`.
+
+- [msolve-native-startup-records-17aa8e10ff23.tar.gz](raw/msolve-native-startup-records-17aa8e10ff23.tar.gz):
+  `7012d1a3a4e478fcd68977fdf11ddb84d879ab6ff29c2aceb58a85fe3bb31cb2`.
