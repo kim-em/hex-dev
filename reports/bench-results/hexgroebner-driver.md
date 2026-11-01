@@ -2,7 +2,8 @@
 
 `hexgroebner_compute` reads explicit prime, variable/order and polynomial JSON,
 then emits a complete reduced **unchecked candidate**, cumulative statistics,
-unchanged deterministic random state zero and candidate duration. Errors distinguish invalid input,
+unchanged deterministic random state zero and candidate duration. Errors
+distinguish invalid input,
 representation limits, exhaustion and internal matrix failures; failed responses
 contain no candidate basis. Polynomial, byte, pair, round and matrix allowances
 remain absolute parent budgets. Parsing and file IO are outside those allowances.
@@ -22,8 +23,8 @@ job and independently pass all 567 complete corpus outputs and counters, plus
 malformed input, order, zero/unit ideal, ordinary characteristic-two and resource
 boundary checks.
 
-Measured source fingerprint `e0b1cbd73ebf`, commit
-`f8a9f9eddfd683062f4a110e7856f5979edb7c01`, contains the packed comparison
+Current source fingerprint `b42ce333603b`, commit
+`5d8d1e336405832363b6ef19d2fff2ba5a99959b`, contains the packed comparison
 implementation `802ae51122d7` and adds these driver targets without changing F4.
 The frozen SDK initialization archive SHA256 is
 `31e5026b3d16824f7d5c5c30ce41843bf167d262a236978264d4021d1d8538a5`.
@@ -41,9 +42,10 @@ complete output. Certificate generation, independent final certification and
 kernel checking are excluded. This is a development suite, not held-out evidence
 or the fastest-open-source acceptance suite.
 
-On CPU42, default/reference process B/A (A reference, B default; below one favors default) is 0.4133 (median 0.3314, range
-0.1894–0.9689), or 0.4153 after equal family weighting. Peak observed child RSS
-is 42512 KiB for the default and 92584 KiB for the reference. These are separate
+On CPU20, default/reference process B/A (A reference, B default; below one
+favors default) is 0.4293 (median 0.3322, range
+0.1732–1.4866), or 0.4269 after equal family weighting. Peak observed child RSS
+is 42388 KiB for the default and 92704 KiB for the reference. These are separate
 whole-process observations; reduced startup does not imply faster F4 arithmetic.
 
 Current msolve source is `3672113ee2c696a2ac9c637636e0f7214f500ba1`, built with
@@ -59,20 +61,20 @@ complete reduced bases agreeing under an independent polynomial parser.
 These campaigns use their recorded builds and GNU-time protocol; they are not
 pooled with earlier comparator reports.
 
-| Family-balanced process Hex/msolve | Exact, CPU57 | Probabilistic, CPU58 |
+| Family-balanced process Hex/msolve | Exact, CPU19 | Probabilistic, CPU18 |
 | --- | ---: | ---: |
-| All seven families | 1.2250 | 1.2422 |
-| cyclic | 0.9416 | 1.0071 |
-| katsura | 0.6234 | 0.7215 |
-| eco | 5.2312 | 6.3882 |
-| noon | 0.7519 | 0.6558 |
-| reimer | 4.4011 | 4.7094 |
-| minrank | 0.6092 | 0.4874 |
-| dense quadratic | 0.6687 | 0.6531 |
+| All seven families | 1.2526 | 1.2807 |
+| cyclic | 1.0913 | 1.0721 |
+| katsura | 0.6287 | 0.6311 |
+| eco | 5.4088 | 6.4858 |
+| noon | 0.5987 | 0.8762 |
+| reimer | 5.1778 | 4.7193 |
+| minrank | 0.5798 | 0.5041 |
+| dense quadratic | 0.7255 | 0.6178 |
 
-The all-pair geometric means are 1.1853 and 1.2100, with medians 0.7600 and
-0.7497 and ranges 0.2845–5.3060 and 0.4133–7.8948. Peak observed RSS is
-42512/42516 KiB for Hex and 13396 KiB for msolve. Eco and Reimer remain large
+The all-pair geometric means are 1.2312 and 1.2525, with medians 0.7715 and
+0.7708 and ranges 0.4156–6.7432 and 0.3983–8.2644. Peak observed RSS is
+42300/42288 KiB for Hex and 13388 KiB for msolve. Eco and Reimer remain large
 performance gaps. These observations establish neither leadership nor general
 coverage: wider fields, extensions, held-out inputs, parallel scaling and the
 other required comparators remain outstanding.
@@ -82,6 +84,8 @@ Lean 4.35.0-rc3 toolchain, 24 alternating adjacent full/minimal SDK comparisons
 observe a geometric mean ratio 8.2405 (20.7714 versus 2.5206 ms). The unchanged
 reproduction on Lean 4.37.0-nightly-2026-10-30 observes 8.5911 (20.8497 versus
 2.4269 ms), in its own 24 comparisons. These toolchains are not pooled.
+Production minimal initialization remains
+restricted to the pinned revision; the nightly reproduction is diagnostic.
 `EmitC.emitInitFn` selects broad `lean_initialize` for a module using the Lean
 package; narrowing JSON imports alone does not remove that initialization.
 The existing SDK workaround already avoids most of this cost for a tool that
@@ -99,6 +103,23 @@ not actually produce a full-init reference. Its correction, logs and binary
 hashes are retained; only the two separate final targets underlie the driver
 measurements above.
 
+The separate earlier driver snapshot `e0b1cbd73ebf`, commit
+`f8a9f9eddfd683062f4a110e7856f5979edb7c01`, retains its own three 64-process
+campaigns. Default/reference process B/A is 0.4133 on CPU42; family-balanced
+Hex/msolve ratios are 1.2250 exact on CPU57 and 1.2422 probabilistic on CPU58.
+All 32 paired bases agree per campaign, with zero failed processes or timeouts.
+Its sources, binaries and observations are not pooled with the current snapshot.
+
+The readable runner is
+[`groebner_cli_measure.py`](../../scripts/bench/groebner_cli_measure.py). It checks
+frozen executable hashes, retains input files and all completed results, reports
+solved counts/failures and rejects incomplete or mismatched campaigns. The
+initialization symbol check also rejects a deliberate full-init/default swap.
+Both final executables pass all corpus outputs, ten available fixture counters,
+complete non-timing response equality, malformed-input and resource boundaries.
+`--basis`, `--variables`, effective zero batch size, help and option placement
+are included. The oracle runner builds both executables itself.
+
 Raw artifacts, each with SHA256:
 
 - [cli-msolve-l2-production-records-e0b1cbd73ebf.tar.gz](raw/cli-msolve-l2-production-records-e0b1cbd73ebf.tar.gz):
@@ -115,3 +136,15 @@ Raw artifacts, each with SHA256:
 
 - [cli-initialization-reproduction.tar.gz](raw/cli-initialization-reproduction.tar.gz):
   `1ac1594828c6426d6a359b5c603a49afdedcc82f0ca842bda2dceaf1c5050991`.
+
+- [cli-reviewed-msolve-l2-production-records-b42ce333603b.tar.gz](raw/cli-reviewed-msolve-l2-production-records-b42ce333603b.tar.gz):
+  `ccea5488e66bdb4482d6907ecc40ea87bf6b90e823995d2a0b6a0b2569691d1f`.
+
+- [cli-reviewed-msolve-l42-production-records-b42ce333603b.tar.gz](raw/cli-reviewed-msolve-l42-production-records-b42ce333603b.tar.gz):
+  `5347ebd171a9853f93d9b6e2e751e3a328be34c69c88abffb05d8ba61a4bf4ad`.
+
+- [cli-reviewed-production-records-b42ce333603b.tar.gz](raw/cli-reviewed-production-records-b42ce333603b.tar.gz):
+  `764f8799df9b24aec9b991ac76628aa98e3880ef45427f8441e5f72d8e90b87e`.
+
+- [cli-reviewed-validation-b42ce333603b.tar.gz](raw/cli-reviewed-validation-b42ce333603b.tar.gz):
+  `c852f999c2966e632d8106047dfaa63fc94d5765fd4e8bf95e63f1a1731571db`.
