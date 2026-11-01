@@ -133,6 +133,13 @@ errors. Shared states copy the workspace before mutation; unique owners reuse it
 check geometry before access and preserve borrowed source bytes under aliasing.
 The `*Arrays` benchmarks compare complete candidates on these two routes.
 
+Monomial ordering and divisibility use read-only native coordinate comparisons
+for arities through 4096 and u8/u16/u32 exponent storage. Cached degree and mask
+filters run first. Arbitrary-precision indices are checked before narrowing;
+complete row spans are checked before native reads. Larger arities and
+unsupported shapes retain the portable coordinate loops. The primitives have
+transparent portable bodies and preserve borrowed buffers.
+
 `eliminateWith` accepts a fixed column count, canonical sparse reducer rows and
 target rows. Columns must follow decreasing monomial order. Reducers with free
 leading columns install directly; other rows scan their active interval,
