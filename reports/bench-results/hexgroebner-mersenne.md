@@ -203,3 +203,26 @@ SHA-256:
 - [mersenne-dispatch-production-bench-d1278bde9bd5.tar.gz](raw/mersenne-dispatch-production-bench-d1278bde9bd5.tar.gz): `bb59a2aed5eff5e66e4fcb93b09ede5f620969abbf899ee5bdddeae36ace3538`
 - [mersenne-dispatch-production-records-d1278bde9bd5.tar.gz](raw/mersenne-dispatch-production-records-d1278bde9bd5.tar.gz): `4e077b0ffa279a2dc7ff0e5626073aeeaefd1a32e732f1620bf77d826733403c`
 - [mersenne-dispatch-validation.tar.gz](raw/mersenne-dispatch-validation.tar.gz): `7bb52de285ccef834fb3f2c92c1ec07bed6fb53e4a2109cf2526c7179fcf31a7`
+
+## Coverage and source verification
+
+Final validation snapshot `b1e96ea920dd` separates generic u32 and Mersenne
+vector coverage. Both Clang and GCC pass all four sanitizer variants with the
+full eight-path mask 255, including contiguous and scattered vectors for each
+specialization. The F4 window still records 8351 actual Mersenne folds.
+The 2079-job library/theory/emitter rebuild also passes.
+
+The only measured-family source difference from `d1278bde9bd5` is a comment
+in `matrix_simd.h` documenting the mode and multiplier convention. Removing
+block comments makes those two headers identical. Both rebuilt executables
+match the timed executables byte for byte; their hashes and both source
+manifests are retained. Timings remain attached to their original source
+snapshot and are not relabeled or rerun.
+
+The prior 16 linked archives have verified SHA-256 values. Their 1641 candidate
+source blobs and 633 baseline blobs match the Git blob IDs in their manifests.
+The supplement includes the final complete source family and verification
+script. Earlier records sometimes reference a separately archived baseline;
+the final matched dispatch records include both complete source families.
+
+[mersenne-dispatch-coverage-validation.tar.gz](raw/mersenne-dispatch-coverage-validation.tar.gz), SHA-256 `569670364821b62b8b49d0f5d0033c85c6f3c45f028494c885efc32106295c2d`.
