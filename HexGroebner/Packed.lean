@@ -69,6 +69,68 @@ range before use. The portable implementation retains checked byte accesses. -/
   | .u32 => a ||| (data[offset + 1]!.toUInt64 <<< 8) |||
       (data[offset + 2]!.toUInt64 <<< 16) ||| (data[offset + 3]!.toUInt64 <<< 24)
 
+private theorem index_eq (base step : Nat) (h : base + step < USize.size) :
+    (USize.ofNat base + USize.ofNat step).toNat = base + step := by
+  rw [USize.toNat_add,
+    USize.toNat_ofNat_of_lt' (by omega : base < USize.size),
+    USize.toNat_ofNat_of_lt' (by omega : step < USize.size)]
+  exact Nat.mod_eq_of_lt h
+
+/-- Check a complete scalar once, then use unboxed byte indices. The fallback
+preserves every reference byte access, including partially truncated buffers. -/
+@[expose, inline] def readFast (width : Width) (data : @& ByteArray) (index : Nat) : UInt64 :=
+  let offset := index * width.bytes
+  if h : offset + width.bytes ≤ data.size ∧
+      (USize.ofNat (offset + width.bytes)).toNat = offset + width.bytes then
+    have address : offset + width.bytes < USize.size :=
+      h.2 ▸ (USize.ofNat (offset + width.bytes)).toNat_lt_size
+    let pos := USize.ofNat offset
+    have boundAt (i : Nat) (hi : i < width.bytes) :
+        (pos + USize.ofNat i).toNat < data.size := by
+      dsimp only [pos]
+      rw [index_eq _ _ (by omega)]
+      omega
+    have positive : 0 < width.bytes := by cases width <;> decide
+    let a := (data.uget (pos + USize.ofNat 0) (boundAt 0 positive)).toUInt64
+    match width with
+    | .u8 => a
+    | .u16 => a ||| ((data.uget (pos + USize.ofNat 1) (boundAt 1 (by decide))).toUInt64 <<< 8)
+    | .u32 => a ||| ((data.uget (pos + USize.ofNat 1) (boundAt 1 (by decide))).toUInt64 <<< 8) |||
+        ((data.uget (pos + USize.ofNat 2) (boundAt 2 (by decide))).toUInt64 <<< 16) |||
+        ((data.uget (pos + USize.ofNat 3) (boundAt 3 (by decide))).toUInt64 <<< 24)
+  else
+    let a := data[offset]!.toUInt64
+    match width with
+    | .u8 => a
+    | .u16 => a ||| (data[offset + 1]!.toUInt64 <<< 8)
+    | .u32 => a ||| (data[offset + 1]!.toUInt64 <<< 8) |||
+        (data[offset + 2]!.toUInt64 <<< 16) ||| (data[offset + 3]!.toUInt64 <<< 24)
+
+private theorem readFast_model (width : Width) (data : ByteArray) (index : Nat) :
+    readFast width data index = read width data index := by
+  cases data with
+  | mk values =>
+    unfold readFast
+    dsimp only
+    split
+    · rename_i h
+      simp only [ByteArray.size] at h
+      have address := (USize.ofNat (index * width.bytes + width.bytes)).toNat_lt_size
+      rw [h.2] at address
+      cases width <;>
+        simp (disch := (simp only [ByteArray.size,Width.bytes] at * <;> omega)) only
+          [read,Width.bytes,ByteArray.uget,Array.ugetElem_eq_getElem,
+            ByteArray.getElem_eq_getElem_data,ByteArray.size,index_eq,Nat.add_zero,getElem!_pos]
+    · cases width <;> rfl
+
+/-- Compile to checked unboxed indices while retaining the byte model in the kernel. -/
+@[csimp] theorem read_eq : read = readFast := by
+  funext width data index
+  exact (readFast_model width data index).symm
+/-- info: 'Hex.Groebner.Packed.read_eq' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in
+#print axioms read_eq
+
 /-- Append the low bytes of a scalar. Callers validate its range before packing. -/
 @[expose, inline] def push (width : Width) (data : ByteArray) (value : UInt64) : ByteArray :=
   let data := data.push value.toUInt8
