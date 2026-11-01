@@ -30,13 +30,13 @@ def budgetChecks : Bool := Id.run do
   return true
 #guard budgetChecks
 
-private def cacheChecks : Bool := Id.run do
+private def cacheChecks (seed : Nat) : Bool := Id.run do
   let limits : Limits := {work:=1000000,packedBytes:=1000000}
   let action : Computation Bool := do
     let g ← Polynomial.normalize context limits 0 #[⟨#[1,0],1⟩,⟨#[0,0],1⟩]
     let h ← Polynomial.normalize context limits 0 #[⟨#[1,0],1⟩,⟨#[0,1],1⟩]
-    let k ← Polynomial.normalize context limits 0 #[⟨#[1,0],1⟩,⟨#[0,0],2⟩]
-    let target ← Polynomial.normalize context limits 0 #[⟨#[3,0],1⟩]
+    let k ← Polynomial.normalize context limits 0 #[⟨#[1,0],1⟩,⟨#[0,0],(2+seed%5).toUInt64⟩]
+    let target ← Polynomial.normalize context limits 0 #[⟨#[3+seed%2,0],1⟩]
     let basis : Array BasisElement := #[⟨g,1⟩]
     let targets : Array BasisElement := #[⟨target,3⟩]
     let index ← ReducerIndex.build context limits basis
@@ -69,7 +69,7 @@ private def cacheChecks : Bool := Id.run do
   | (.ok result,_) => return result
   | _ => return false
 
-#guard cacheChecks
+#guard cacheChecks 0
 
 private def copy (bytes : ByteArray) : ByteArray := Id.run do
   let mut result := ByteArray.emptyWithCapacity bytes.size
@@ -96,20 +96,26 @@ private def longChecks (seed : Nat) : Bool := Id.run do
     let supportExpected ← changedSupport.multiply context limits multiplier
     if supportResult.support != supportExpected.support || supportResult.coefficients != supportExpected.coefficients then
       return false
-    let changed := { cloned with coefficients := cloned.coefficients.set! (4096 + seed%104) (2 + seed%5).toUInt8 }
-    let (actual, _) ← cache.multiply context limits changed multiplier
-    let expected ← changed.multiply context limits multiplier
-    return actual.support == expected.support && actual.coefficients == expected.coefficients
+    let changedTail := { cloned with support := Packed.set .u32 (copy cloned.support) 4199 multiplier.toUInt64 }
+    let (tailResult, _) ← cache.multiply context limits changedTail multiplier
+    let tailExpected ← changedTail.multiply context limits multiplier
+    if tailResult.support != tailExpected.support || tailResult.coefficients != tailExpected.coefficients then return false
+    for offset in [4096,4150,4199] do
+      let changed := { cloned with coefficients := cloned.coefficients.set! offset (2 + seed%5).toUInt8 }
+      let (actual, _) ← cache.multiply context limits changed multiplier
+      let expected ← changed.multiply context limits multiplier
+      if actual.support != expected.support || actual.coefficients != expected.coefficients then return false
+    return true
   match action.run { table := { arity := 1 } } with
   | (.ok value, _) => return value
   | _ => return false
 
 #guard longChecks 0
 
-private def contextChecks : Bool := Id.run do
+private def contextChecks (seed : Nat) : Bool := Id.run do
   let other : PrimeField := ⟨5,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
   let action : Computation Bool := do
-    let p ← Polynomial.normalize context {} 0 #[⟨#[1,0],1⟩,⟨#[0,0],1⟩]
+    let p ← Polynomial.normalize context {} 0 #[⟨#[1,0],1⟩,⟨#[0,0],(1+seed%3).toUInt64⟩]
     let multiplier ← intern {} #[1,0]
     let (_, cache) ← ReducerCache.empty.multiply context {} p multiplier
     for changed in [{ context with order := .lex }, { context with field := other }] do
@@ -123,7 +129,63 @@ private def contextChecks : Bool := Id.run do
   | (.ok value, _) => return value
   | _ => return false
 
-#guard contextChecks
+#guard contextChecks 0
+
+/-- Byte-equal identifiers from independent arenas must not validate a cached
+product, even when the base and multiplier retain their exponent meanings. -/
+private def arenaChecks (seed : Nat) : Bool := Id.run do
+  let context : Context := ⟨field,1,.grevlex⟩
+  let a := 1+seed%3
+  let first : Computation ReducerCache := do
+    let _ ← intern {} #[0]
+    let p ← Polynomial.normalize context {} 0 #[⟨#[a],1⟩,⟨#[0],1⟩]
+    let multiplier ← intern {} #[a.toUInt64]
+    return (← ReducerCache.empty.multiply context {} p multiplier).2
+  let (.ok cache, _) := first.run { table := { arity := 1 } } | return false
+  for shifted in [false,true] do
+    let second : Computation Bool := do
+      let _ ← intern {} #[0]
+      let exponent := if shifted then 2*a else a
+      let p ← Polynomial.normalize context {} 0 #[⟨#[exponent],1⟩,⟨#[0],1⟩]
+      let _ ← intern {} #[(3*a).toUInt64]
+      let multiplier ← intern {} #[exponent.toUInt64]
+      let (actual, _) ← cache.multiply context {} p multiplier
+      let expected ← p.multiply context {} multiplier
+      return actual.support == expected.support && actual.coefficients == expected.coefficients
+    match second.run { table := { arity := 1 } } with
+    | (.ok true, _) => pure ()
+    | _ => return false
+  return true
+
+#guard arenaChecks 0
+
+private def capacityChecks (seed : Nat) : Bool := Id.run do
+  let context : Context := ⟨field,1,.grevlex⟩
+  let action : Computation Bool := do
+    let p ← Polynomial.normalize context {} 0 #[⟨#[1],1⟩,⟨#[0],(1+seed%3).toUInt64⟩]
+    let mut cache := ReducerCache.empty
+    for exponent in [1:16385] do
+      let multiplier ← intern {} #[exponent.toUInt64]
+      cache := (← cache.multiply context {} p multiplier).2
+    let changed ← Polynomial.normalize context {} 0 #[⟨#[1],1⟩,⟨#[0],(4+seed%3).toUInt64⟩]
+    let first ← intern {} #[1]
+    let before := (← get).statistics.allocatedBytes
+    let (actual, replaced) ← cache.multiply context {} changed first
+    if (← get).statistics.allocatedBytes != before + 16 then return false
+    let (hit, _) ← replaced.multiply context {} changed first
+    if (← get).statistics.allocatedBytes != before + 16 || actual.support != hit.support ||
+        actual.coefficients != hit.coefficients then return false
+    let outside ← intern {} #[16385]
+    let before := (← get).statistics.allocatedBytes
+    let (_, full) ← replaced.multiply context {} changed outside
+    if (← get).statistics.allocatedBytes != before + 8 then return false
+    let _ ← full.multiply context {} changed outside
+    return (← get).statistics.allocatedBytes == before + 16
+  match action.run { table := { arity := 1 } } with
+  | (.ok value, _) => return value
+  | _ => return false
+
+#guard capacityChecks 0
 
 /-- Full F4 execution, called between native-counter observations by the harness. -/
 def f4Checks (seed : Nat) : Bool := Id.run do
@@ -145,6 +207,6 @@ def f4Checks (seed : Nat) : Bool := Id.run do
   | _ => return false
 
 /-- Multi-chunk hits, coefficient-only changes, context changes and widening. -/
-def runtimeChecks (seed : Nat) : Bool := cacheChecks && longChecks seed && contextChecks
+def runtimeChecks (seed : Nat) : Bool := cacheChecks seed && longChecks seed && contextChecks seed && arenaChecks seed && capacityChecks seed
 
 end Hex.Groebner.ReducerCacheConformance

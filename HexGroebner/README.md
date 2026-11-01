@@ -20,7 +20,11 @@ derivations are rebuilt from the current basis. The private cache retains at mos
 16384 entries, charges eight logical key bytes per insertion and all comparison
 work to the parent allowance, and shares already charged polynomial buffers.
 When key storage would not fit, multiplication continues without caching that
-product. Raw internal callers must retain the associated monomial arena.
+product. Every hit also validates all product exponents against the current
+arena, with at most 4096 coordinate comparisons per native call; incompatible
+identifier meanings in public raw calls therefore cannot return a stale row.
+The portable route checks the same exact identities. Full caches permit
+replacement of an existing key, charging each insertion cumulatively.
 The [cache measurements](../reports/bench-results/hexgroebner-reducer-cache.md)
 retain full-system results, small-case regressions and fixed-benchmark variability.
 Final minimal-leading-monomial selection and tail reduction produce canonical
@@ -80,8 +84,8 @@ checkpoints. On exhaustion, no partially processed batch loses unresolved pairs;
 temporary interned monomials and charged work survive. Retrying a stage charges
 its repeated work. Invalid input, internal invariant failures, representation
 exhaustion and consumed allowances remain distinct. `Limits.packedBytes` bounds monomial arenas plus
-cumulative packed polynomial/matrix allocation, eight bytes per cached reducer
-key, and decoded interchange scalar
+cumulative packed polynomial/matrix allocation, eight bytes per reducer-cache
+insertion, and decoded interchange scalar
 payload; it excludes headers and allocator capacity. Pair attempts, rounds,
 basis size, cumulative matrix rows/entries, monomials and variables have
 separate bounds.

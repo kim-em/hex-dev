@@ -68,11 +68,13 @@ def run() -> None:
 #define lean_hex_groebner_prepare_monomial hex_test_unused_prepare
 #define lean_hex_groebner_equal_monomial hex_test_unused_monomial_equal
 #define lean_hex_groebner_equal_bytes hex_test_equal_bytes
+#define lean_hex_groebner_equal_products hex_test_equal_products
 #include ROW_SOURCE
 #undef lean_hex_groebner_subtract_row
 #undef lean_hex_groebner_prepare_monomial
 #undef lean_hex_groebner_equal_monomial
 #undef lean_hex_groebner_equal_bytes
+#undef lean_hex_groebner_equal_products
 #define hex_scan8 hex_test_scan8_base
 #include HEADER
 #undef hex_scan8
@@ -98,7 +100,16 @@ static inline unsigned hex_test_scan8_counted(uint8_t *dense,const uint8_t *colu
 #include SOURCE
 #undef lean_hex_scan_transition
 #undef lean_hex_gather
-static uint64_t scan_calls=0,gather_calls=0,byte_calls=0;
+static uint64_t scan_calls=0,gather_calls=0,byte_calls=0,product_calls=0;
+__typeof__(hex_test_equal_products) __wrap_lean_hex_groebner_equal_products;
+LEAN_EXPORT uint8_t __wrap_lean_hex_groebner_equal_products(uint8_t width,
+ uint64_t arity,uint64_t count,uint64_t multiplier,uint64_t start,uint64_t terms,
+ b_lean_obj_arg arena,b_lean_obj_arg base,b_lean_obj_arg result) {
+ ++product_calls;return hex_test_equal_products(width,arity,count,multiplier,start,terms,arena,base,result);
+}
+LEAN_EXPORT lean_obj_res hex_test_product_count(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(product_calls));
+}
 __typeof__(hex_test_equal_bytes) __wrap_lean_hex_groebner_equal_bytes;
 LEAN_EXPORT uint8_t __wrap_lean_hex_groebner_equal_bytes(b_lean_obj_arg left,
  b_lean_obj_arg right,b_lean_obj_arg start,b_lean_obj_arg count) {
@@ -168,7 +179,8 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
         if sanitize:
             flags += ["-fsanitize=address,undefined", "-fno-sanitize-recover=undefined", "-fno-omit-frame-pointer"]
         link_args = ["-Wl,--wrap=lean_hex_scan_transition", "-Wl,--wrap=lean_hex_gather",
-                     "-Wl,--wrap=lean_hex_groebner_equal_bytes"] + libraries
+                     "-Wl,--wrap=lean_hex_groebner_equal_bytes",
+                     "-Wl,--wrap=lean_hex_groebner_equal_products"] + libraries
         targets = []
         for variant, extra in VARIANTS.items():
             module = "Check" + variant
@@ -177,17 +189,23 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
             (directory / (module + ".lean")).write_text('''import HexGroebner.NativeChecks
 @[extern "hex_test_counts"] opaque counts : IO (UInt64 × UInt64)
 @[extern "hex_test_byte_count"] opaque byteCount : IO UInt64
+@[extern "hex_test_product_count"] opaque productCount : IO UInt64
 @[extern "hex_test_vector_counts"] opaque vectorCounts : IO (UInt64 × UInt64)
 @[extern "hex_test_avx2"] opaque avx2 : IO Bool
 @[extern "hex_test_widths"] opaque widths : IO UInt32
 def main : IO Unit := do
   Hex.Groebner.NativeChecks.run
   let primitiveCompared ← byteCount
+  let primitiveProducts ← productCount
   Hex.Groebner.NativeChecks.runF4
   let f4Compared ← byteCount
+  let f4Products ← productCount
+  if f4Products ≤ primitiveProducts then throw (IO.userError "F4 did not exercise arena product validation")
   if f4Compared ≤ primitiveCompared then throw (IO.userError "F4 did not exercise cache comparison")
   Hex.Groebner.NativeChecks.runCache
   let cacheCompared ← byteCount
+  let cacheProducts ← productCount
+  if cacheProducts ≤ f4Products then throw (IO.userError "cache checks did not exercise arena product validation")
   if cacheCompared ≤ f4Compared then throw (IO.userError "cache checks did not exercise byte binding")
   let (scan,gather) ← counts
   let compared ← byteCount
@@ -195,7 +213,7 @@ def main : IO Unit := do
   let available ← avx2
   let (contiguous,gathered) ← vectorCounts
   let covered ← widths
-  IO.println s!"native call counts: scan={scan}, gather={gather}; AVX2={available}, contiguous={contiguous}, strided={gathered}, width paths={covered}, byte comparisons={compared}"
+  IO.println s!"native call counts: scan={scan}, gather={gather}; AVX2={available}, contiguous={contiguous}, strided={gathered}, width paths={covered}, byte comparisons={compared}, product validations={cacheProducts}"
   if VECTOR && available && (contiguous == 0 || gathered == 0 || covered != 63) then
     throw (IO.userError "an AVX2 path was not exercised")
   if VECTOR && (← IO.getEnv "HEX_GROEBNER_REQUIRE_AVX2") == some "1" && !available then

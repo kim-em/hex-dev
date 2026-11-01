@@ -113,6 +113,36 @@ end Bytes
 
 namespace Monomial
 
+/-- Check a slice of cached support products against the current monomial
+arena. Geometry, identifiers and the 4096-coordinate comparison bound are
+validated before access. Every result exponent must equal base plus multiplier. -/
+@[expose] def productsPortable (width : UInt8) (arity count multiplier start terms : UInt64)
+    (arena base result : @& ByteArray) : Bool := Id.run do
+  let w := width.toNat
+  let n := arity.toNat
+  let count := count.toNat
+  let start := start.toNat
+  let terms := terms.toNat
+  if (w != 1 && w != 2 && w != 4) || n == 0 || n > 4096 || terms*n > 4096 ||
+      multiplier.toNat ≥ count || arena.size != count*n*w || base.size % 4 != 0 ||
+      result.size != base.size || start > base.size/4 || terms > base.size/4-start then
+    return false
+  for i in [start:start+terms] do
+    let a := read base 4 (4*i)
+    let b := read result 4 (4*i)
+    if a ≥ count || b ≥ count then return false
+    for j in [:n] do
+      if read arena w ((a*n+j)*w) + read arena w ((multiplier.toNat*n+j)*w) !=
+          read arena w ((b*n+j)*w) then return false
+  return true
+
+/-- Borrow-only exact product validation. No pointers are retained, no storage
+is mutated, and each call compares at most 4096 exponent coordinates. -/
+@[expose, extern "lean_hex_groebner_equal_products"]
+def products (width : UInt8) (arity count multiplier start terms : UInt64)
+    (arena base result : @& ByteArray) : Bool :=
+  productsPortable width arity count multiplier start terms arena base result
+
 /-- Fill a validated workspace with u32 coordinates and degree/mask/hash/max.
 The remaining coordinate count bounds recursion and each compiled native call. -/
 @[expose] def fill (operation width arity left right index : Nat) (source : @& ByteArray)

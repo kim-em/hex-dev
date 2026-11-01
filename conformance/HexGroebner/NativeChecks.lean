@@ -9,13 +9,17 @@ import HexGroebner.GatherConformance
 import HexGroebner.MatrixNativeConformance
 import HexGroebner.PackedWordConformance
 import HexGroebner.ByteConformance
+import HexGroebner.ProductConformance
 import HexGroebner.ReducerCacheConformance
 
 namespace Hex.Groebner.NativeChecks
 
 /-- Compiled checks for every native build variant. The harness verifies that
-both native symbols were actually called, including in sanitizer builds. -/
+native symbols were actually called, including in sanitizer builds. -/
 def run : IO Unit := do
+  let seed := ((← IO.getEnv "HEX_GROEBNER_TEST_SEED").getD "0").toNat?.getD 0
+  if !ProductConformance.runtimeChecks seed then
+    throw (IO.userError "compiled current-arena product conformance mismatch")
   if !ByteConformance.runtimeChecks then
     throw (IO.userError "compiled bounded-byte conformance mismatch")
   if !PackedWordConformance.runtimeChecks then

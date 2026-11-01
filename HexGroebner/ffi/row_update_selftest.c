@@ -172,8 +172,50 @@ static void check_bytes(void) {
     }
 }
 
+static void check_products(void) {
+    const size_t arities[]={1,2,3,63,64,65,4096};
+    for(unsigned width=1;width<=4;width*=2) {
+        for(size_t k=0;k<sizeof(arities)/sizeof(arities[0]);++k) {
+            size_t n=arities[k],terms=4096/n,stride=n*width,bytes=3*stride;
+            uint8_t *arena=calloc(bytes,1),*base=malloc(terms*4),*result=malloc(terms*4);
+            if(!arena || !base || !result) fail("product allocation");
+            for(size_t j=0;j<n;++j) {
+                uint64_t x=width==1?random_word()%128:width==2?random_word()%32768:random_word()>>1;
+                write_le(arena+stride+j*width,width,x);
+                write_le(arena+2*stride+j*width,width,2*x);
+            }
+            for(size_t i=0;i<terms;++i) {write_le(base+4*i,4,1);write_le(result+4*i,4,2);}
+            if(!equal_products(width,n,3,1,0,terms,arena,bytes,base,terms*4,result,terms*4))
+                fail("valid cached product rejected");
+            if(!equal_products(width,n,3,0,0,terms,arena,bytes,base,terms*4,base,terms*4))
+                fail("aliased cached product rejected");
+            uint64_t last=read_le(arena+bytes-width,width);
+            write_le(arena+bytes-width,width,last+1);
+            if(equal_products(width,n,3,1,0,terms,arena,bytes,base,terms*4,result,terms*4))
+                fail("last product coordinate mismatch accepted");
+            write_le(arena+bytes-width,width,last);
+            if(equal_products(width,n,3,1,0,terms+1,arena,bytes,base,terms*4,result,terms*4) ||
+               equal_products(width,n,3,1,UINT64_MAX,0,arena,bytes,base,terms*4,result,terms*4) ||
+               equal_products(width,n,UINT64_MAX,1,0,terms,arena,bytes,base,terms*4,result,terms*4) ||
+               equal_products(width,n,3,3,0,terms,arena,bytes,base,terms*4,result,terms*4) ||
+               equal_products(3,n,3,1,0,terms,arena,bytes,base,terms*4,result,terms*4) ||
+               equal_products(width,0,3,1,0,0,arena,bytes,base,terms*4,result,terms*4) ||
+               equal_products(width,4097,3,1,0,0,arena,bytes,base,terms*4,result,terms*4) ||
+               equal_products(width,n,3,1,0,terms,arena,bytes-1,base,terms*4,result,terms*4) ||
+               equal_products(width,n,3,1,0,terms,arena,bytes,base,terms*4,result,terms*4-1))
+                fail("malformed cached product accepted");
+            write_le(base+4*(terms-1),4,3);
+            if(equal_products(width,n,3,1,0,terms,arena,bytes,base,terms*4,result,terms*4))
+                fail("invalid cached base identifier accepted");
+            free(arena);free(base);free(result);
+        }
+    }
+    puts("cached products: all widths, coordinate bounds, aliases and malformed arenas passed");
+}
+
 int main(void) {
     check_bytes();
+    check_products();
     check_arithmetic();
     check_monomials();
     const uint64_t moduli[] = {2, 3, 251, 256, 257, 65521, 65536, 65537, 2147483647};

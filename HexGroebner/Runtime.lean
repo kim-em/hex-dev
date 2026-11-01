@@ -70,7 +70,7 @@ inductive ComputeError where
 
 /-- Absolute cumulative allowances, also used when resuming a computation.
 `packedBytes` counts monomial arenas and a common workspace reservation plus cumulative polynomial/matrix packed
-payload, including eight logical bytes per cached reducer key and
+payload, including eight logical bytes per reducer-cache insertion and
 64 logical bytes per recorded row-derivation operation.
 It excludes other object headers and allocator capacity. Pair attempts bound
 pair metadata, including attempts in retried stages. The basis limit bounds
