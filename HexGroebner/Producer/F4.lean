@@ -75,11 +75,14 @@ def round (context : Context) (limits : Limits) (nodeLimit : Nat)
   let (pairs,queue) ← lift (checkpoint.queue.select context limits index values)
   lift (modify fun s => { s with statistics.largestBatch := max s.statistics.largestBatch pairs.size })
   if pairs.isEmpty then return { checkpoint with queue }
+  let rows ← lift (PairRows.prepare context limits values pairs checkpoint.cache)
+  lift (Computation.spend limits rows.targets.size)
   let mut targets := #[]
-  for pair in pairs do
-    let p ← sPolynomial context limits nodeLimit checkpoint.basis[pair.left]! checkpoint.basis[pair.right]!
-    if p.value.polynomial.size != 0 then targets := targets.push { p with value.sugar := pair.sugar }
-  let matrix ← lift (SymbolicMatrix.prepareWith context limits index values (plain targets) checkpoint.cache)
+  for row in rows.targets do
+    let root ← monomial context limits nodeLimit row.multiplier checkpoint.basis[row.basis]!.root
+    targets := targets.push ⟨⟨row.polynomial, row.sugar⟩, root⟩
+  let matrix ← lift (SymbolicMatrix.prepareWith context limits index values (plain targets)
+    rows.cache rows.reducers)
   let new ← solve context limits nodeLimit checkpoint.basis targets matrix true false
   let basis := checkpoint.basis ++ new
   if let some g ← unit limits new then

@@ -37,13 +37,28 @@ namespace SymbolicMatrix
 
 /-- Close every selected term under the required reducers. A monomial is queued
 once and has at most one chosen reducer. Multiplication can extend the arena and
-trigger checked exponent widening, without invalidating any existing identifier. -/
+trigger checked exponent widening, without invalidating any existing identifier.
+Optional initial reducers are nonzero basis multiples with distinct leading IDs;
+their source indices, multipliers and payloads must refer to this basis/arena. -/
 def prepareWith (context : Context) (limits : Limits) (index : ReducerIndex)
     (basis : Array BasisElement) (targets : Array BasisElement)
-    (cache : ReducerCache := .empty) : Computation SymbolicMatrix := do
+    (cache : ReducerCache := .empty) (initial : Array SymbolicReducer := #[]) :
+    Computation SymbolicMatrix := do
   let mut cache := cache
   let mut support : Std.HashSet Nat := {}
   let mut pending : Array Nat := #[]
+  let mut closed : Std.HashSet Nat := {}
+  let seeded := !initial.isEmpty
+  for reducer in initial do
+    let p := reducer.polynomial
+    if p.size == 0 || closed.contains (p.monomial 0) then throw (.representation .index)
+    closed := closed.insert (p.monomial 0)
+    spend limits (p.size + 1)
+    for i in [:p.size] do
+      let id := p.monomial i
+      if !support.contains id then
+        support := support.insert id
+        pending := pending.push id
   for target in targets do
     let p := target.polynomial
     spend limits p.size
@@ -53,11 +68,12 @@ def prepareWith (context : Context) (limits : Limits) (index : ReducerIndex)
         support := support.insert id
         pending := pending.push id
   let mut cursor := 0
-  let mut reducers := #[]
+  let mut reducers := initial
   for _ in [:limits.monomials] do
     if cursor ≥ pending.size then break
     let monomial := pending[cursor]!
     cursor := cursor + 1
+    if seeded && closed.contains monomial then continue
     if let some reducer ← index.find context limits basis monomial then
       let g := basis[reducer]!.polynomial
       let multiplier ← combine limits .quotient monomial (g.monomial 0)
