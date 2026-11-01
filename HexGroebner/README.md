@@ -482,3 +482,41 @@ Selected S-polynomial identities remain in the resulting row span, including
 disconnected same-LCM pair components. Final certification independently checks
 the complete reduced-basis contract. See the retained
 [multiplied-row measurements](../reports/bench-results/hexgroebner-pair-rows.md).
+
+## Standalone candidate computation
+
+`lake build hexgroebner_compute hexgroebner_compute_full` builds a JSON driver
+and an otherwise identical full-initialization reference. The dedicated driver
+never elaborates Lean source or invokes its interpreter. When the SDK supplies
+`libinitialize_minimal`, it links that library ahead of the ordinary initializer;
+otherwise it uses ordinary initialization automatically. This restriction must
+remain true when extending the driver. The benchmark runner and kernel replay
+executables keep their own initialization contracts.
+
+For example, save this input as `input.json`:
+
+```json
+{"p":7,"variables":2,"order":"grevlex","generators":[[[[2,0],1],[[0,1],6]],[[[1,1],1],[[0,0],6]]]}
+```
+
+Run `.lake/build/bin/hexgroebner_compute input.json`. Terms are
+`[exponents, coefficient]`; coefficients must lie in `[0,p)` and exponent-vector
+lengths must equal `variables`. Orders are `lex`, `grlex` and `grevlex`. Field
+bounds are checked before primality testing. The usual canonicalization and
+zero/unit-ideal conventions apply, including ordinary polynomial semantics at
+characteristic two.
+
+Successful output has `kind: "unchecked_candidate"`, explicit field/order
+metadata, the complete candidate basis and cumulative statistics. It is not a
+checked basis receipt. Use `certifyWith` or `basisWith` for checked results.
+Malformed input, exhausted allowances, representation exhaustion and internal
+matrix failures have distinct kinds and nonzero exit codes; no partial basis is
+reported as a completed candidate. The driver does not serialize resumable
+states; the library APIs retain that facility.
+
+`--help` lists resource options. Allowances are the same absolute cumulative
+`Limits` used by `computeWith`; for example `--work 1000000000` raises the work
+cap. Input parsing and filesystem work lie outside those computation counters.
+The deterministic driver returns random state zero without sampling.
+`hexgroebner_compute_full` accepts the same inputs and options, providing a
+reference for SDK initialization and full-output comparisons.

@@ -1863,6 +1863,32 @@ lean_lib HexGroebnerBenchSupport where
   srcDir := "bench"
   globs := #[`HexGroebner.Bench.Cauchy, `HexGroebner.Bench.Mersenne]
 
+-- This dedicated driver never elaborates Lean source or invokes the interpreter.
+-- The SDK's minimal initializer is appropriate only under that restriction.
+-- Missing archives fall back to ordinary initialization, preserving portability.
+target hexgroebnerInitialize pkg : FilePath := do
+  let archive := (← getLeanLibDir) / nameToStaticLib "initialize_minimal"
+  if ← archive.pathExists then
+    inputBinFile archive
+  else
+    let source ← inputTextFile (pkg.dir / "HexGroebner" / "ffi" / "initialization_fallback.c")
+    buildO (pkg.dir / defaultBuildDir / "HexGroebner" / "ffi" / "initialization_fallback.o") source
+      #[] #["-O2", "-fPIC"]
+
+lean_lib HexGroebnerDriverSupport where
+  srcDir := "bench"
+  globs := #[.one `HexGroebner.Driver.Input, .one `HexGroebner.Driver.Run]
+
+lean_exe hexgroebner_compute where
+  srcDir := "bench"
+  root := `HexGroebner.Driver
+  moreLinkObjs := #[hexgroebnerInitialize]
+
+-- Independent full-initialization entry point for conformance and comparisons.
+lean_exe hexgroebner_compute_full where
+  srcDir := "bench"
+  root := `HexGroebner.Driver.Full
+
 lean_exe hexgroebner_bench where
   srcDir := "bench"
   root := `HexGroebner.Bench

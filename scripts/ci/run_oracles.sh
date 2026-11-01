@@ -340,6 +340,10 @@ run_tuple() {
     fi
   fi
   if [ "$oracle" = "scripts/oracle/groebner_sympy.py" ]; then
+    if ! python3 scripts/ci/check_groebner_driver.py; then
+      echo "FAIL: HexGroebner :: standalone candidate driver conformance"
+      return 1
+    fi
     if ! python3 -m unittest scripts.oracle.test_groebner_sympy scripts.oracle.test_groebner_singular; then
       echo "FAIL: $lib :: Groebner oracle rejection checks failed"
       return 1
