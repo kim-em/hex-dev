@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGroebner.Polynomial
+public import HexGroebner.NativeTrie
 
 public section
 
@@ -36,9 +37,72 @@ that every edge points to a distinct child whose depth is its parent depth plus
 one; leaves have depth `context.variables`, and the root has depth zero. Lookup
 requires this invariant, valid basis references and the associated monomial arena. -/
 structure ReducerIndex where
+  private mk ::
   nodes : Array DivisorNode := #[{}]
+  /-- Validated packed encoding for this immutable basis/index version. -/
+  packed : Option Native.Trie.View := none
 
 namespace ReducerIndex
+
+/-- Assign the reducer policy in Lean. Stable sorting of global LIFO leaf
+order retains the first visited leaf for every divisibility-pruned subtree. -/
+private def priorities (table : MonomialTable) (basis : Array BasisElement)
+    (nodes : Array DivisorNode) : Array Nat := Id.run do
+  let mut pending := #[0]
+  let mut leaves : Array (Nat × Nat × Nat) := #[]
+  for _ in [:nodes.size] do
+    if pending.isEmpty then break
+    let node := pending.back!
+    pending := pending.pop
+    let n := nodes[node]!
+    if let some reducer := n.reducer then
+      let p := basis[reducer]!.polynomial
+      leaves := leaves.push (node, p.size, table.degree (p.monomial 0))
+    for i in [:n.edges.size / 8] do
+      pending := pending.push (Packed.read .u32 n.edges (2*i+1)).toNat
+  let ordered := (leaves.toList.mergeSort fun a b =>
+    a.2.1 < b.2.1 || (a.2.1 == b.2.1 && a.2.2 ≥ b.2.2)).toArray
+  let mut ranks := Array.replicate nodes.size 0
+  for i in [:ordered.size] do ranks := ranks.set! ordered[i]!.1 (i+1)
+  return ranks
+
+/-- Encode small tries once, with charged validation and packed payload. Larger
+indices and insufficient preparation allowances retain the ordinary traversal. -/
+private def encode (context : Context) (limits : Limits) (nodes : Array DivisorNode)
+    (basis : Array BasisElement) : Computation (Option Native.Trie.View) := do
+  if context.variables > 4096 || nodes.isEmpty || nodes.size > 2048 then return none
+  let edges := nodes.foldl (fun n node => n+node.edges.size/8) 0
+  if edges+1 != nodes.size then return none
+  let bytes := nodes.size*24+edges*8
+  let leaves := nodes.foldl (fun n node => n + if node.reducer.isSome then 1 else 0) 0
+  let charge := 16*(nodes.size+edges+1) + leaves*(leaves+1).log2
+  let state ← get
+  if state.statistics.work+charge > limits.work ||
+      state.statistics.allocatedBytes+state.table.bytes+bytes > limits.packedBytes then return none
+  spend limits charge
+  allocate limits bytes
+  let mut data := ByteArray.emptyWithCapacity (nodes.size*24)
+  let mut links := ByteArray.emptyWithCapacity (edges*8)
+  let mut maximum : UInt64 := 0
+  let ranks := priorities state.table basis nodes
+  for i in [:nodes.size] do
+    let node := nodes[i]!
+    let mut key := 0
+    let mut priority := 0
+    let mut leading := 0
+    if let some reducer := node.reducer then
+      if reducer ≥ basis.size || reducer ≥ 4294967295 then return none
+      let polynomial := basis[reducer]!.polynomial
+      priority := ranks[i]!
+      leading := polynomial.monomial 0
+      if polynomial.size == 0 || priority == 0 || leading > 4294967295 then return none
+      key := reducer+1
+      maximum := max maximum leading.toUInt64
+    for value in #[node.depth,links.size/8,node.edges.size/8,key,priority,leading] do
+      if value > 4294967295 then return none
+      data := Packed.push .u32 data value.toUInt64
+    links := links++node.edges
+  return Native.Trie.View.check context.variables data links maximum
 
 /-- Build the index once for a symbolic-preprocessing pass. Duplicate leading
 monomials retain the sparsest representative, with deterministic tie breaking. -/
@@ -74,13 +138,13 @@ def build (context : Context) (limits : Limits) (basis : Array BasisElement) :
     let old := nodes[node]!.reducer
     if old.isNone || p.size < basis[old.getD reducer]!.polynomial.size then
       nodes := nodes.modify node fun n => { n with reducer := some reducer }
-  return ⟨nodes⟩
+  return { nodes, packed := ← encode context limits nodes basis }
 
 /-- Exact divisibility lookup. Masks/degrees reject candidates; they never
 replace the exponent tests performed by the trie path. -/
 -- For a fixed immutable basis/index, selection depends only on the monomial.
 -- Shared and separate symbolic closures rely on this deterministic choice.
-private def findWithin (context : Context) (index : ReducerIndex)
+def findPortable (context : Context) (index : ReducerIndex)
     (basis : Array BasisElement) (table : MonomialTable) (monomial initialWork maxWork : Nat) :
     Except ComputeError (Option Nat) × Nat := Id.run do
   let mut work := initialWork
@@ -118,12 +182,24 @@ private def findWithin (context : Context) (index : ReducerIndex)
 
 /-- Perform the read-only trie traversal with local work accounting, then
 commit its exact charged prefix once. This preserves exhausted-call statistics
-without rebuilding the workspace and statistics at every visited node/edge. -/
+without rebuilding the workspace and statistics at every visited node/edge.
+Native dispatch uses precomputed Lean priorities. The index, basis and context
+must be the immutable version supplied to `build`, and the arena may only
+extend or widen while preserving existing monomial values. -/
 def find (context : Context) (limits : Limits) (index : ReducerIndex)
     (basis : Array BasisElement) (monomial : Nat) : Computation (Option Nat) :=
   ExceptT.mk fun state =>
-    let (result, work) := findWithin context index basis state.table monomial
-      state.statistics.work limits.work
+    let native : Native.Trie.Result := if let some view := index.packed then
+      if state.table.count ≤ 4294967295 && monomial ≤ 4294967295 then
+        Native.Trie.lookup view state.table.width.bytes.toUInt8 state.table.count.toUInt64 monomial.toUInt64
+          state.table.exponents state.table.metadata
+          (min (limits.work-state.statistics.work) 4096).toUInt64
+      else { status := 3 }
+      else { status := 3 }
+    let (result, work) := if native.status == (3 : UInt8) then
+      findPortable context index basis state.table monomial state.statistics.work limits.work
+      else (if native.status == (2 : UInt8) then .error (.exhausted .work) else .ok native.reducer,
+        state.statistics.work+native.work)
     (result, { state with statistics.work := work })
 
 /-- Enumerate indexed divisors rather than scanning the entire basis. The trie

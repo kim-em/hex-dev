@@ -430,7 +430,7 @@ private def monomialBudgets : Bool := Id.run do
 
 #guard monomialBudgets
 
-private def largeBatch : Bool := Id.run do
+private def reimerBatch : Bool := Id.run do
   let field : PrimeField := ⟨65537, Hex.Nat.isPrimeTrial_isPrime (by decide), by decide⟩
   let context : Context := ⟨field, 5, .grevlex⟩
   let mut generators : Array RawPolynomial := #[]
@@ -446,8 +446,27 @@ private def largeBatch : Bool := Id.run do
   let .candidate reference previous := computeWith context { work := 1000000000, batchSize := 64 } generators
     | return false
   return actual.polynomials == reference.polynomials && actual.polynomials.size == 38 &&
+    statistics == previous && actual.batchSize == 1024 && reference.batchSize == 64 &&
+    statistics.largestBatch == 61
+
+#guard reimerBatch
+
+/-- Distinct x₀xᵢ leading terms produce 78 genuine same-sugar pairs. The wide
+batch reduces them jointly; a cap of 64 needs another round and matrix. -/
+private def largeBatch : Bool := Id.run do
+  let field : PrimeField := ⟨65537, Hex.Nat.isPrimeTrial_isPrime (by decide), by decide⟩
+  let context : Context := ⟨field, 14, .grevlex⟩
+  let mut generators : Array RawPolynomial := #[]
+  for i in [1:14] do
+    let exponents := (Array.replicate 14 0).set! 0 1 |>.set! i 1
+    generators := generators.push #[⟨exponents,1⟩,⟨Array.replicate 14 0,1⟩]
+  let .candidate actual statistics := computeWith context { work := 1000000000 } generators
+    | return false
+  let .candidate reference previous := computeWith context { work := 1000000000, batchSize := 64 } generators
+    | return false
+  return actual.polynomials == reference.polynomials && actual.polynomials.size == 13 &&
     statistics.rounds < previous.rounds && statistics.matrixEntries < previous.matrixEntries &&
-    actual.batchSize == 1024 && statistics.largestBatch > 64 &&
+    actual.batchSize == 1024 && statistics.largestBatch == 78 && previous.largestBatch == 64 &&
     statistics.peakMatrixRows > statistics.largestBatch && statistics.peakMatrixEntries > 0
 
 #guard largeBatch

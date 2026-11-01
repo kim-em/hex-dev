@@ -132,7 +132,11 @@ private def solve (context : Context) (limits : Limits) (matrix : SymbolicMatrix
     entries := entries + r.size
     inputBytes := inputBytes + r.columns.size + r.coefficients.size
     reducers := reducers.push r
-  for p in matrix.targets do
+  let targetsBySize ← if independent || matrix.targets.size ≤ 1 then pure matrix.targets else do
+    spend limits (matrix.targets.size * (matrix.targets.size + 1).log2)
+    pure ((matrix.targets.toList.mergeSort
+      (fun a b => a.polynomial.size ≤ b.polynomial.size)).toArray)
+  for p in targetsBySize do
     sugars := sugars.push p.sugar
     let r ← row context limits positions p.polynomial
     entries := entries + r.size
@@ -197,7 +201,7 @@ private def solve (context : Context) (limits : Limits) (matrix : SymbolicMatrix
 
 /-- Joint target elimination. Return new target rows spanning the quotient by
 reducer rows. Rows are monic by default; `monic := false` undoes each pivot's
-normalization. Later targets may reduce by earlier target pivots. -/
+normalization. Targets are stably sorted by support size before using preceding target pivots. -/
 def eliminate (context : Context) (limits : Limits) (matrix : SymbolicMatrix) (monic := true) :
     Computation (Array BasisElement) := solve context limits matrix monic false
 
