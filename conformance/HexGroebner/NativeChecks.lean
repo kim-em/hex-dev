@@ -18,6 +18,8 @@ namespace Hex.Groebner.NativeChecks
 native symbols were actually called, including in sanitizer builds. -/
 def run : IO Unit := do
   let seed := ((← IO.getEnv "HEX_GROEBNER_TEST_SEED").getD "0").toNat?.getD 0
+  if !ScanConformance.zeroBoundaryChecks seed then
+    throw (IO.userError "compiled zero-scan reservation boundary mismatch")
   if !ScanConformance.runtimeZeroChecks seed then
     throw (IO.userError "compiled zero-scan prefix mismatch")
   if !ProductConformance.runtimeChecks seed then

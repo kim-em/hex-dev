@@ -19,7 +19,8 @@ Its executables are byte-identical to timed `d1278bde9bd5`; the retained baselin
 manifest includes the equivalence check. Both arms use identical benchmark
 sources and complete-output consumption. All measurements use automatically
 leased CPUs on the shared host, adjacent AB/BA order and one thread. Every
-completed sample, failure and outlier is retained. No unchanged repeat is used.
+completed sample, failure and outlier is retained. Each source snapshot has
+one AB/BA campaign; no unchanged implementation is repeated.
 
 ## Matrix kernels
 
@@ -32,7 +33,9 @@ these operation-count models.
 
 The initial `71a43c11998a` snapshot considers packets before reading the current
 coefficient. Its sparse-kernel regressions motivate the conditional version.
-The snapshots remain separate; their timings are not pooled.
+The snapshots are different compiled implementations: the initial version
+checks before reading a coefficient; the selected version checks only after a
+zero. Their timings are not pooled, and the second is not an unchanged rerun.
 
 | Size | Initial spread mean B/A | Initial sparse mean B/A | Selected spread mean B/A | Median | Range | Selected sparse mean B/A |
 | ---: | ---: | ---: | ---: | ---: | --- | ---: |
@@ -48,6 +51,8 @@ leadership claim. Sparse medians, ranges, fits and every point are retained.
 
 ## Complete F4 systems
 
+Candidate time includes canonicalization, F4 and final interreduction. Process
+time additionally includes startup, parsing and full-output serialization.
 All 64 diagnostic processes per snapshot have matching full bases and every
 non-timing counter. Initial candidate mean B/A is 1.0068, median 1.0003,
 range 0.9083–1.3416 on CPU 17. Selected candidate mean is 1.0125, median
@@ -58,8 +63,10 @@ an overall F4 speedup.
 All 120 fixed points per snapshot have matching full hashes. The selected
 means on CPU 48 are 1.0071 cyclic4, 1.0015 cyclic5, 0.9383 cyclic6,
 1.0091 katsura3, 1.0080 reimer5 and 0.8661 cyclic6Small. Medians are
-1.0058/1.0032/0.9814/1.0064/1.0030/0.9682. Original fixed CPU 67 and all
-outliers remain in the separate analyses; no completed sample is discarded.
+1.0058/1.0032/0.9814/1.0064/1.0030/0.9682. The initial implementation uses CPU 67 with means
+1.0125/1.0249/0.9028/1.0010/1.0097/0.8941 in the same case order. Both source
+snapshots and every outlier remain in separate analyses. These are distinct
+implementations, with no unchanged rerun or discarded sample.
 
 ## Validation and provenance
 
@@ -68,13 +75,13 @@ kernel-replay build pass. All 175 matrix, 567 independent SymPy/Singular basis
 and 1288 division oracle cases pass, along with 32 benchmark verification cases
 and project DAG/phase/manifest/header/line/admission checks. Four Clang and four
 GCC ASan/UBSan variants pass. The instrumented F4 window records 139 actual
-zero packets, with eight vector paths independently covered (mask 255).
+zero packets in aggregate. The arithmetic-update tests separately cover
+eight vector paths (mask 255); that mask does not classify zero packets.
 
 Additional tests check every byte of each packet, guard pages at both ends,
 all 32 alignments, shared buffers, invalid coefficients and unreachable invalid
 slots. Quantum/work boundaries at 7/8/9, 15/16 and 63/64/65 preserve every state
-field and error prefix. Earlier prototype failures are retained with their
-subsequent fixes. No new theorem admission or native_decide is introduced.
+field and error prefix. No new theorem admission or native_decide is introduced.
 
 Archives are authoritative source snapshots; commit references are supplementary.
 They retain both complete source families, compiled-driver source, executable
@@ -89,3 +96,12 @@ SHA-256:
 - [zero-branch-production-records-f3d5acec8365.tar.gz](raw/zero-branch-production-records-f3d5acec8365.tar.gz): `11b97087951c79c662ef539853196132b76ac34b0666ec293bc83de4d786c5a2`
 
 - [zero-scan-validation.tar.gz](raw/zero-scan-validation.tar.gz): `84e83a61ac806df7def6a4fde2f544fb42e9f8f6a08f07da5bcf5f16f7a893f8`
+
+The final boundary tests enumerate all eight starting offsets and reservations
+independently of environment seeds. They also use short active intervals with
+work reserved beyond their ends and an aliased buffer case that actually writes.
+Four sanitizer variants per compiler pass. Isolated C copies with either the
+reservation guard or the active-interval guard removed fail at the new boundary
+check. Production source family `f3d5acec8365` remains unchanged.
+
+[zero-scan-boundary-validation.tar.gz](raw/zero-scan-boundary-validation.tar.gz), SHA-256 `94bc9fdf3d479cd9fac9efb8951f5b50899633b0848b6c3f973c67956fffbfd9`.
