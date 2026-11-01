@@ -29,4 +29,11 @@ for variant in simd scalar; do
   "$row_probe_dir/$variant"
 done
 
+trie_probe_flags=(-O2 -std=c11 -Wall -Wextra -Werror)
+if [ "${HEX_GROEBNER_SANITIZE:-0}" = 1 ]; then
+  trie_probe_flags+=(-fsanitize=address,undefined -fno-sanitize-recover=undefined -fno-omit-frame-pointer)
+fi
+"$row_probe_cc" "${trie_probe_flags[@]}" HexGroebner/ffi/trie_selftest.c -o "$row_probe_dir/trie"
+"$row_probe_dir/trie"
+
 python3 scripts/ci/check_groebner_matrix.py

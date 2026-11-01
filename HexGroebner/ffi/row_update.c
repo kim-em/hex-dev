@@ -313,3 +313,5 @@ LEAN_EXPORT uint8_t lean_hex_groebner_compare_monomials(uint8_t operation,uint8_
 }
 
 #endif
+
+#include "trie_lookup.h"

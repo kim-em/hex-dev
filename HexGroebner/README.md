@@ -11,6 +11,11 @@ discard unneeded pairs. Symbolic preprocessing closes a selected batch under a
 basis-specific divisibility trie and constructs one joint Macaulay matrix.
 The chain test visits indexed LCM divisors; final tail reductions share one
 immutable reducer index.
+Joint matrix elimination stably orders targets by increasing support size before
+choosing new pivots, retaining original order for equal sizes. Sorting work is
+charged before the sort. Independent normal forms retain their input order;
+traced production moves each target's derivation root with its polynomial.
+Sugar pair scheduling and known reducer pivots keep their existing contracts.
 F4 checkpoints retain a `ReducerCache` of multiplied reducers from the same
 append-only monomial arena. Stable IDs survive exponent-width changes. Field/order metadata is checked before
 reuse, and the complete base payload identifies the basis polynomial. A cache
@@ -105,6 +110,18 @@ semantic hash and support mask. Hash buckets use full exponent equality checks.
 Exponent storage widens from 8 to 16 to 32 bits before overflow, preserving
 identifiers and hashes. Larger exponents produce representation exhaustion.
 Divisibility masks only reject candidates; trie paths inspect exact exponents.
+Small immutable reducer indices also retain a validated packed tree. Read-only
+native lookup admits at most 2048 nodes and 2047 edges, preserving sparse-row
+preference, higher-degree tie breaking and LIFO traversal ties.
+Lean assigns explicit priorities once; native lookup selects the least admitted
+priority without implementing the F4 preference policy.
+Its fixed stack and at most 4095 charged node/edge visits bound each call.
+Encoding and validation charge the parent work and packed-byte allowances;
+insufficient preparation allowances and larger trees retain ordinary traversal.
+Queries use the current arena and exponent width, so stable IDs remain valid
+after arena extension or widening. The portable packed model and the original
+node traversal independently check results and exact exhaustion prefixes.
+The native harness includes maximum-stack read-only guard-page probes.
 Polynomials use separate packed stable-identifier and coefficient buffers.
 Coefficients occupy one byte below modulus 256, two below 65536, and four for
 larger supported primes. Interchange decoding occurs outside the hot loops.

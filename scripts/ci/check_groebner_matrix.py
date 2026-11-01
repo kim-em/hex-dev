@@ -70,8 +70,12 @@ def run() -> None:
 #define lean_hex_groebner_equal_bytes hex_test_equal_bytes
 #define lean_hex_groebner_equal_products hex_test_equal_products
 #define lean_hex_groebner_compare_monomials hex_test_compare
+#define lean_hex_groebner_validate_trie hex_test_validate
+#define lean_hex_groebner_lookup_trie hex_test_trie
 #include ROW_SOURCE
 #undef lean_hex_groebner_compare_monomials
+#undef lean_hex_groebner_validate_trie
+#undef lean_hex_groebner_lookup_trie
 #undef lean_hex_groebner_subtract_row
 #undef lean_hex_groebner_prepare_monomial
 #undef lean_hex_groebner_equal_monomial
@@ -134,6 +138,27 @@ LEAN_EXPORT lean_obj_res hex_test_comparison_count(lean_obj_arg world) {
 }
 LEAN_EXPORT lean_obj_res hex_test_comparison_declines(lean_obj_arg world) {
  (void)world;return lean_io_result_mk_ok(lean_box_uint64(comparison_declines));
+}
+static uint64_t trie_calls=0,trie_declines=0;
+__typeof__(hex_test_validate) __wrap_lean_hex_groebner_validate_trie;
+LEAN_EXPORT uint8_t __wrap_lean_hex_groebner_validate_trie(b_lean_obj_arg arity,
+ b_lean_obj_arg nodes,b_lean_obj_arg edges,uint64_t max_leading) {
+ return hex_test_validate(arity,nodes,edges,max_leading);
+}
+
+__typeof__(hex_test_trie) __wrap_lean_hex_groebner_lookup_trie;
+LEAN_EXPORT lean_obj_res __wrap_lean_hex_groebner_lookup_trie(b_lean_obj_arg view,uint8_t width,
+ uint64_t count,uint64_t query,b_lean_obj_arg arena,b_lean_obj_arg metadata,uint64_t remaining) {
+ ++trie_calls;
+ lean_object *result=hex_test_trie(view,width,count,query,arena,metadata,remaining);
+ if(lean_ctor_get_uint8(result,2*sizeof(void*))==3) ++trie_declines;
+ return result;
+}
+LEAN_EXPORT lean_obj_res hex_test_trie_counts(lean_obj_arg world) {
+ (void)world;lean_object *pair=lean_alloc_ctor(0,2,0);
+ lean_ctor_set(pair,0,lean_box_uint64(trie_calls));
+ lean_ctor_set(pair,1,lean_box_uint64(trie_declines));
+ return lean_io_result_mk_ok(pair);
 }
 
 __typeof__(hex_test_equal_products) __wrap_lean_hex_groebner_equal_products;
@@ -206,8 +231,9 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
   let simd ← inputTextFile (FilePath.mk SIMD)
   let body ← inputTextFile (FilePath.mk BODY)
   let row ← inputTextFile (FilePath.mk ROW)
+  let trie ← inputTextFile (FilePath.mk TRIE)
   let inputs := ((source.zipWith (fun s _ => s) scan).zipWith (fun s _ => s) simd).zipWith (fun s _ => s) body
-  let inputs := inputs.zipWith (fun s _ => s) row
+  let inputs := (inputs.zipWith (fun s _ => s) row).zipWith (fun s _ => s) trie
   buildO (pkg.dir / defaultBuildDir / (name ++ ".o")) inputs
     #["-isystem", (← getLeanIncludeDir).toString] flags
     (compiler := FilePath.mk COMPILER)
@@ -215,14 +241,14 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
 '''.replace("ROOT", json.dumps(str(ROOT))).replace("SCAN", json.dumps(str(source))).replace(
             "SIMD", json.dumps(str(source.parent / "matrix_simd.h"))).replace(
             "BODY", json.dumps(str(source.parent / "matrix_scan_impl.h"))).replace(
-            "ROW", json.dumps(str(source.parent / "row_update.c"))).replace("COMPILER", json.dumps(cc))
+            "ROW", json.dumps(str(source.parent / "row_update.c"))).replace("COMPILER", json.dumps(cc)).replace("TRIE", json.dumps(str(source.parent / "trie_lookup.h")))
         flags = ["-O3", "-g", "-Wall", "-Wextra", "-Werror", "-fPIC", "-DLEAN_EXPORTING"]
         if sanitize:
             flags += ["-fsanitize=address,undefined", "-fno-sanitize-recover=undefined", "-fno-omit-frame-pointer"]
         link_args = ["-Wl,--wrap=lean_hex_scan_transition", "-Wl,--wrap=lean_hex_gather",
                      "-Wl,--wrap=lean_hex_groebner_equal_bytes",
                      "-Wl,--wrap=lean_hex_groebner_equal_products",
-                     "-Wl,--wrap=lean_hex_groebner_compare_monomials"] + libraries
+                     "-Wl,--wrap=lean_hex_groebner_compare_monomials", "-Wl,--wrap=lean_hex_groebner_lookup_trie", "-Wl,--wrap=lean_hex_groebner_validate_trie"] + libraries
         targets = []
         for variant, extra in VARIANTS.items():
             module = "Check" + variant
@@ -231,6 +257,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
             (directory / (module + ".lean")).write_text('''import HexGroebner.NativeChecks
 @[extern "hex_test_comparison_count"] opaque comparisonCount : IO UInt64
 @[extern "hex_test_comparison_declines"] opaque comparisonDeclines : IO UInt64
+@[extern "hex_test_trie_counts"] opaque trieCounts : IO (UInt64 × UInt64)
 @[extern "hex_test_counts"] opaque counts : IO (UInt64 × UInt64)
 @[extern "hex_test_byte_count"] opaque byteCount : IO UInt64
 @[extern "hex_test_product_count"] opaque productCount : IO UInt64
@@ -246,7 +273,12 @@ def main : IO Unit := do
   let beforeZero ← zeroCount
   let comparedBefore ← comparisonCount
   let declinedBefore ← comparisonDeclines
+  let trieBefore ← trieCounts
   Hex.Groebner.NativeChecks.runF4
+  let trieAfter ← trieCounts
+  if trieAfter.1 ≤ trieBefore.1 || trieAfter.2 != trieBefore.2 then
+    throw (IO.userError "F4 did not obtain valid native trie answers")
+  IO.println s!"trie calls/declines: {trieAfter}; F4 calls: {trieAfter.1-trieBefore.1}"
   let afterZero ← zeroCount
   let comparedAfter ← comparisonCount
   let declinedAfter ← comparisonDeclines

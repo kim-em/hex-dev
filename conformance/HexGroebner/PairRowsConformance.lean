@@ -109,4 +109,25 @@ private def invalidSeeds : Bool := Id.run do
 
 #guard invalidSeeds
 
+/-- Independent reduction retains the association between each target and its
+remainder, even when the longer target precedes the shorter one. -/
+private def orderedRemainders : Bool := Id.run do
+  let context : Context := ⟨field,1,.lex⟩
+  let action : Computation Bool := do
+    let g ← Polynomial.normalize context {} 0 #[⟨#[2],1⟩,⟨#[0],6⟩]
+    let f ← Polynomial.normalize context {} 1 #[⟨#[3],1⟩,⟨#[1],1⟩,⟨#[0],1⟩]
+    let h ← Polynomial.normalize context {} 2 #[⟨#[0],1⟩]
+    let matrix ← SymbolicMatrix.prepare context {} #[BasisElement.mk g 2]
+      #[BasisElement.mk f 3, BasisElement.mk h 0]
+    let output ← matrix.reduce context {}
+    let table := (← get).table
+    return output.size == 2 &&
+      output[0]!.polynomial.toRaw field table == #[⟨#[1],2⟩,⟨#[0],1⟩] &&
+      output[1]!.polynomial.toRaw field table == #[⟨#[0],1⟩]
+  match action.run { table := { arity := 1 } } with
+  | (.ok result, _) => result
+  | _ => false
+
+#guard orderedRemainders
+
 end Hex.Groebner.PairRowsConformance
