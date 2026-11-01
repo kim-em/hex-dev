@@ -101,6 +101,12 @@ Divisibility masks only reject candidates; trie paths inspect exact exponents.
 Polynomials use separate packed stable-identifier and coefficient buffers.
 Coefficients occupy one byte below modulus 256, two below 65536, and four for
 larger supported primes. Interchange decoding occurs outside the hot loops.
+Packed scalar reads retain their byte-based kernel definition and compile through
+a proved rewrite to one complete range check and unboxed indices. Reducer lookup
+accumulates work locally and commits its exact charged prefix once, including
+exhaustion. [Matched observations](../reports/bench-results/hexgroebner-access.md)
+retain the incremental gains, variability and unresolved cyclic-case result.
+
 Cached 64-bit metadata uses `Packed.read64`. Its byte-based kernel definition
 is preserved while a proved compiler rewrite selects checked unboxed reads.
 The equality covers all byte arrays and offsets, with an explicit platform
