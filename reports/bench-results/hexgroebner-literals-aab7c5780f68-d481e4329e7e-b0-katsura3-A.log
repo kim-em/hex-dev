@@ -1,0 +1,10 @@
+Hex.Groebner.Bench.katsura3    [fixed] repeats=3
+  env: lean=4.35.0-rc3, os=linux, arch=x86_64, commit=c5ada0d-dirty, 2026-10-31T11:15:52Z, host=chungus2
+  repeat 0  602.247 µs  (×2^10, total 616.701 ms)
+  repeat 1  584.793 µs  (×2^10, total 598.828 ms)
+  repeat 2  613.700 µs  (×2^10, total 628.430 ms)
+  median: 602.247 µs    min: 584.793 µs    max: 613.700 µs
+  hash: all repeats agree
+  observed hash: 0x97aae8dcaec9e6c0
+  peak RSS: 62_256 kB..63_480 kB (across 3 ok repeat(s))
+exported to reports/bench-results/hexgroebner-literals-aab7c5780f68-d481e4329e7e-b0-katsura3-A.json

@@ -1,0 +1,208 @@
+{
+  "source_fingerprint": "d42e621f1253",
+  "baseline_source_fingerprint": "723cb50d1fa0",
+  "binary_sha256": {
+    "A": "87ace571e80e99ccaa19d52b393478411098d3239091c81e978d69325e43e006",
+    "B": "9660db9a649d3d01a228bac9f4ae7018c7bc25e38488c72e67c6ff06c86ab255"
+  },
+  "cpu": 65,
+  "affinity": [
+    65
+  ],
+  "host": "chungus2",
+  "load_start": [
+    10.31884765625,
+    13.033203125,
+    7.95556640625
+  ],
+  "threads": 1,
+  "toolchain": "leanprover/lean4:v4.35.0-rc3",
+  "c_compiler": "clang version 23.1.3",
+  "schedule": "2 blocks AB/BA, adjacent arms; every completed sample retained",
+  "contract": "p65537 grevlex, batch cap1024, identical allowances; A nested mutable scan tuples, B one flat scan record; arithmetic, matrix sequence and allowances unchanged; complete unchecked candidate including decode and structural basis hashing; preparation/certification/native verification/kernel checking excluded",
+  "script": "import hashlib,json,os,pathlib,subprocess,sys,time\nsys.path.insert(0,str(pathlib.Path.cwd()))\nfrom scripts.bench.cpu_lease import cpu_lease\nfrom scripts.bench.sweep_freshness import fingerprint,index_listing\nfrom scripts.bench.groebner_measure import FAMILY\nlisting=index_listing(FAMILY);fp=fingerprint(listing);root=pathlib.Path('reports/bench-results')/f'hexgroebner-flat-scan-{fp}'\nif root.with_suffix('.measurement.json').exists():raise SystemExit('retain existing observation')\nroot.with_suffix('.manifest').write_text(listing)\nbinaries={'A':pathlib.Path('/tmp/hex-groebner-flat-before/hexgroebner_bench'),'B':pathlib.Path('.lake/build/bin/hexgroebner_bench')}\ncpu,lease=cpu_lease();os.sched_setaffinity(0,{cpu})\nmetadata=dict(source_fingerprint=fp,baseline_source_fingerprint='723cb50d1fa0',binary_sha256={k:hashlib.sha256(p.read_bytes()).hexdigest() for k,p in binaries.items()},cpu=cpu,affinity=sorted(os.sched_getaffinity(0)),host=os.uname().nodename,load_start=os.getloadavg(),threads=1,toolchain=pathlib.Path('lean-toolchain').read_text().strip(),c_compiler=subprocess.check_output(['cc','--version'],text=True).splitlines()[0],schedule='2 blocks AB/BA, adjacent arms; every completed sample retained',contract='p65537 grevlex, batch cap1024, identical allowances; A nested mutable scan tuples, B one flat scan record; arithmetic, matrix sequence and allowances unchanged; complete unchecked candidate including decode and structural basis hashing; preparation/certification/native verification/kernel checking excluded',script=pathlib.Path(__file__).read_text(),commands=[])\nstart=time.monotonic()\ntry:\n for block,order in enumerate(['AB','BA']):\n  for case in ['cyclic5','cyclic6','katsura3','reimer5']:\n   for arm in order:\n    base=pathlib.Path(str(root)+f'-b{block}-{case}-{arm}')\n    command=[str(binaries[arm]),'run','Hex.Groebner.Bench.'+case,'--repeats','3','--min-total-seconds','0.5','--export-file',str(base.with_suffix('.json'))];metadata['commands'].append(command)\n    with base.with_suffix('.log').open('w') as output:result=subprocess.run(command,stdout=output,stderr=subprocess.STDOUT)\n    print(base,'exit',result.returncode,flush=True)\n    if result.returncode:raise SystemExit('failed arm, retained records')\nfinally:\n metadata.update(load_end=os.getloadavg(),elapsed_seconds=time.monotonic()-start);root.with_suffix('.measurement.json').write_text(json.dumps(metadata,indent=2)+'\\n');lease.close()\n",
+  "commands": [
+    [
+      "/tmp/hex-groebner-flat-before/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.cyclic5",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-flat-scan-d42e621f1253-b0-cyclic5-A.json"
+    ],
+    [
+      ".lake/build/bin/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.cyclic5",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-flat-scan-d42e621f1253-b0-cyclic5-B.json"
+    ],
+    [
+      "/tmp/hex-groebner-flat-before/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.cyclic6",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-flat-scan-d42e621f1253-b0-cyclic6-A.json"
+    ],
+    [
+      ".lake/build/bin/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.cyclic6",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-flat-scan-d42e621f1253-b0-cyclic6-B.json"
+    ],
+    [
+      "/tmp/hex-groebner-flat-before/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.katsura3",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-flat-scan-d42e621f1253-b0-katsura3-A.json"
+    ],
+    [
+      ".lake/build/bin/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.katsura3",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-flat-scan-d42e621f1253-b0-katsura3-B.json"
+    ],
+    [
+      "/tmp/hex-groebner-flat-before/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.reimer5",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-flat-scan-d42e621f1253-b0-reimer5-A.json"
+    ],
+    [
+      ".lake/build/bin/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.reimer5",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-flat-scan-d42e621f1253-b0-reimer5-B.json"
+    ],
+    [
+      ".lake/build/bin/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.cyclic5",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-flat-scan-d42e621f1253-b1-cyclic5-B.json"
+    ],
+    [
+      "/tmp/hex-groebner-flat-before/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.cyclic5",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-flat-scan-d42e621f1253-b1-cyclic5-A.json"
+    ],
+    [
+      ".lake/build/bin/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.cyclic6",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-flat-scan-d42e621f1253-b1-cyclic6-B.json"
+    ],
+    [
+      "/tmp/hex-groebner-flat-before/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.cyclic6",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-flat-scan-d42e621f1253-b1-cyclic6-A.json"
+    ],
+    [
+      ".lake/build/bin/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.katsura3",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-flat-scan-d42e621f1253-b1-katsura3-B.json"
+    ],
+    [
+      "/tmp/hex-groebner-flat-before/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.katsura3",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-flat-scan-d42e621f1253-b1-katsura3-A.json"
+    ],
+    [
+      ".lake/build/bin/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.reimer5",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-flat-scan-d42e621f1253-b1-reimer5-B.json"
+    ],
+    [
+      "/tmp/hex-groebner-flat-before/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.reimer5",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-flat-scan-d42e621f1253-b1-reimer5-A.json"
+    ]
+  ],
+  "load_end": [
+    11.46923828125,
+    12.76904296875,
+    8.359375
+  ],
+  "elapsed_seconds": 93.51190203195438
+}

@@ -1,0 +1,18 @@
+lean-bench profile: perf record -F 199 -g --call-graph dwarf -o /tmp/hex-groebner-intern-perf.data -- /home/kim/worktrees/hex-dev/hex-dev-issue-10987/.lake/build/bin/hexgroebner_bench _child --bench Hex.Groebner.Bench.internMonomials --param 32768 --target-nanos 500000000 --cache-mode cold
+WARNING: Kernel address maps (/proc/{kallsyms,modules}) are restricted,
+check /proc/sys/kernel/kptr_restrict and /proc/sys/kernel/perf_event_paranoid.
+
+Samples in kernel functions may not be resolved if a suitable vmlinux
+file is not found in the buildid cache or in the vmlinux path.
+
+Samples in kernel modules won't be resolved at all.
+
+If some relocation was applied (e.g. kexec) symbols may be misresolved
+even with a suitable vmlinux or kallsyms file.
+
+Couldn't record kernel reference relocation symbol
+Symbol resolution may be skewed if relocation was used (e.g. kexec).
+Check /proc/kallsyms permission or run as root.
+{"schema_version":1,"kind":"parametric","function":"Hex.Groebner.Bench.internMonomials","param":32768,"inner_repeats":1,"total_nanos":5602535891,"per_call_nanos":5602535891.000000,"cache_mode":"cold","result_hash":"0x8f3bba1610cda499","status":"ok","error":null,"alloc_bytes":null,"peak_rss_kb":80036,"env":{"arch":"x86_64","cpu_cores":96,"cpu_model":"AMD EPYC 9455 48-Core Processor","exe_name":"hexgroebner_bench","git_commit":"a76c5fbd57c3a0f5484fb3ff42e92cf5096d839a","git_dirty":true,"hostname":"chungus2","lean_bench_version":"0.1.0","lean_toolchain":"leanprover/lean4:4.35.0-rc3","lean_version":"4.35.0-rc3","os":"linux","platform_target":"x86_64-unknown-linux-gnu","timestamp_iso":"2026-10-31T10:37:59Z","timestamp_unix_ms":1793443079004},"profile_kernel":true}
+[ perf record: Woken up 37 times to write data ]
+[ perf record: Captured and wrote 9.142 MB /tmp/hex-groebner-intern-perf.data (1131 samples) ]

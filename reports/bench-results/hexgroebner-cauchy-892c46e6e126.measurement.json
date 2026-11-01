@@ -1,0 +1,71 @@
+{
+  "source_fingerprint": "892c46e6e126",
+  "include": [
+    "HexGroebner/",
+    "HexGroebner.lean",
+    "HexArith/",
+    "HexArith.lean",
+    "HexArithNative.lean",
+    "HexModArith/",
+    "HexModArithNative.lean",
+    "bench/HexGroebner/Bench.lean",
+    "lakefile.lean",
+    "lean-toolchain",
+    "lake-manifest.json"
+  ],
+  "exclude": [
+    "HexGroebner/README.md",
+    "HexArith/README.md",
+    "HexModArith/README.md",
+    "HexArith/SPEC/",
+    "HexModArith/SPEC/"
+  ],
+  "cpu": 87,
+  "affinity": [
+    87
+  ],
+  "threads": 1,
+  "isa": "portable scalar Lean plus existing HexArith wide multiply",
+  "field": 65537,
+  "output": "monic echelon with fixed columns; structural hash of decoded output and recorded derivations",
+  "provenance": {
+    "cauchy": false,
+    "cauchyTrace": true,
+    "sparse": false,
+    "spread": false
+  },
+  "host": "chungus2",
+  "toolchain": "leanprover/lean4:v4.35.0-rc3",
+  "command": [
+    ".lake/build/bin/hexgroebner_bench",
+    "run",
+    "--filter",
+    "Hex.Groebner.Bench.",
+    "--outer-trials",
+    "3",
+    "--export-file",
+    "reports/bench-results/hexgroebner-cauchy-892c46e6e126.json"
+  ],
+  "load_start": [
+    32.5537109375,
+    28.06591796875,
+    17.8359375
+  ],
+  "schedule": "lean-bench fixed trial-major, 3 outer trials, n=32,64,128,256; no discarded completed samples",
+  "returncode": 0,
+  "elapsed_seconds": 23.27465018600924,
+  "load_end": [
+    32.97607421875,
+    28.45166015625,
+    18.18115234375
+  ],
+  "peak_child_rss_kib": 75020,
+  "families": {
+    "cauchy": "dense Hilbert matrix",
+    "cauchyTrace": "dense Hilbert matrix plus shared provenance",
+    "sparse": "six nonzeros, nonunit leading coefficients, overlapping clustered tails",
+    "spread": "three nonzeros reaching last column"
+  },
+  "c_compiler": "clang version 23.1.3",
+  "lean_c_compiler": "clang version 23.1.0 (https://github.com/llvm/llvm-project ea7d852a70e8bdfaf601d6626a760f9771b2c4b4)"
+}

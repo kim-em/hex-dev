@@ -1,0 +1,115 @@
+{
+  "old_fingerprint": "aab7c5780f68",
+  "new_fingerprint": "d481e4329e7e",
+  "old_sha256": "1ac2f54a3000c3f5fe22189a1e137af712bea0f40b56947886644a843ae90737",
+  "new_sha256": "8f158d04fff1253b1931acc21b3a0fdfd5db30195557088fd1ac763c89c45490",
+  "cpu": 26,
+  "affinity": [
+    26
+  ],
+  "host": "chungus2",
+  "load_start": [
+    10.099609375,
+    8.2099609375,
+    4.1767578125
+  ],
+  "threads": 1,
+  "source": "import hashlib,json,os,pathlib,subprocess,sys,time\nsys.path.insert(0,str(pathlib.Path.cwd()))\nfrom scripts.bench.cpu_lease import cpu_lease\nfrom scripts.bench.sweep_freshness import fingerprint,index_listing,tree_listing\nfrom scripts.bench.groebner_measure import FAMILY\nold=tree_listing(FAMILY,'c5ada0d883');new=index_listing(FAMILY)\nroot=pathlib.Path('reports/bench-results')/f'hexgroebner-literals-{fingerprint(old)}-{fingerprint(new)}'\nif root.with_suffix('.measurement.json').exists():raise SystemExit('retain every observation')\noldbin=pathlib.Path('/tmp/hexgroebner-c5ada0-bench');newbin=pathlib.Path('.lake/build/bin/hexgroebner_bench')\nroot.with_suffix('.old.manifest').write_text(old);root.with_suffix('.new.manifest').write_text(new)\ncpu,lease=cpu_lease();os.sched_setaffinity(0,{cpu})\nmeta=dict(old_fingerprint=fingerprint(old),new_fingerprint=fingerprint(new),old_sha256=hashlib.sha256(oldbin.read_bytes()).hexdigest(),new_sha256=hashlib.sha256(newbin.read_bytes()).hexdigest(),cpu=cpu,affinity=sorted(os.sched_getaffinity(0)),host=os.uname().nodename,load_start=os.getloadavg(),threads=1,source=pathlib.Path(__file__).read_text(),schedule='2 blocks AB/BA; A before, B after; 3 retained repetitions per arm; 0.5 s inner floor; candidate-only full output hashing',commands=[])\nstart=time.monotonic()\ntry:\n for block,order in enumerate(['AB','BA']):\n  for bench in ['cyclic6','katsura3']:\n   for arm in order:\n    base=pathlib.Path(str(root)+f'-b{block}-{bench}-{arm}')\n    if base.with_suffix('.json').exists():raise SystemExit('retain existing samples')\n    command=[str(oldbin if arm=='A' else newbin),'run','Hex.Groebner.Bench.'+bench,'--repeats','3','--min-total-seconds','0.5','--export-file',str(base.with_suffix('.json'))]\n    meta['commands'].append(command)\n    with base.with_suffix('.log').open('w') as output:r=subprocess.run(command,stdout=output,stderr=subprocess.STDOUT)\n    if r.returncode:raise SystemExit(f'benchmark failure {base}: {r.returncode}')\n    print(base,flush=True)\nfinally:\n meta.update(load_end=os.getloadavg(),elapsed_seconds=time.monotonic()-start)\n root.with_suffix('.measurement.json').write_text(json.dumps(meta,indent=2)+'\\n');lease.close()\nprint(root)\n",
+  "schedule": "2 blocks AB/BA; A before, B after; 3 retained repetitions per arm; 0.5 s inner floor; candidate-only full output hashing",
+  "commands": [
+    [
+      "/tmp/hexgroebner-c5ada0-bench",
+      "run",
+      "Hex.Groebner.Bench.cyclic6",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-literals-aab7c5780f68-d481e4329e7e-b0-cyclic6-A.json"
+    ],
+    [
+      ".lake/build/bin/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.cyclic6",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-literals-aab7c5780f68-d481e4329e7e-b0-cyclic6-B.json"
+    ],
+    [
+      "/tmp/hexgroebner-c5ada0-bench",
+      "run",
+      "Hex.Groebner.Bench.katsura3",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-literals-aab7c5780f68-d481e4329e7e-b0-katsura3-A.json"
+    ],
+    [
+      ".lake/build/bin/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.katsura3",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-literals-aab7c5780f68-d481e4329e7e-b0-katsura3-B.json"
+    ],
+    [
+      ".lake/build/bin/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.cyclic6",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-literals-aab7c5780f68-d481e4329e7e-b1-cyclic6-B.json"
+    ],
+    [
+      "/tmp/hexgroebner-c5ada0-bench",
+      "run",
+      "Hex.Groebner.Bench.cyclic6",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-literals-aab7c5780f68-d481e4329e7e-b1-cyclic6-A.json"
+    ],
+    [
+      ".lake/build/bin/hexgroebner_bench",
+      "run",
+      "Hex.Groebner.Bench.katsura3",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-literals-aab7c5780f68-d481e4329e7e-b1-katsura3-B.json"
+    ],
+    [
+      "/tmp/hexgroebner-c5ada0-bench",
+      "run",
+      "Hex.Groebner.Bench.katsura3",
+      "--repeats",
+      "3",
+      "--min-total-seconds",
+      "0.5",
+      "--export-file",
+      "reports/bench-results/hexgroebner-literals-aab7c5780f68-d481e4329e7e-b1-katsura3-A.json"
+    ]
+  ],
+  "load_end": [
+    13.0966796875,
+    9.08056640625,
+    4.63232421875
+  ],
+  "elapsed_seconds": 42.852890932990704
+}

@@ -30,6 +30,18 @@ field count, so extra fields cannot be silently ignored. -/
 def graph (value : ValueCodec E) (context : ValueCodec Ctx) (d : Dag E Ctx) : Json :=
   .arr #[Json.of (1 : Nat), Json.of d.root, array (entry value context) d.entries]
 
+/-- The literal entry fields, available without unfolding the encoder. This
+equation asserts no validity of the node or its child references. -/
+theorem entry_eq (value : ValueCodec E) (context : ValueCodec Ctx) (e : Dag.Entry E Ctx) :
+    entry value context e = .arr #[node value context e.node,
+      option (fun (i, j) => Json.arr #[Json.of i, Json.of j]) e.children] := (rfl)
+
+/-- The version, root and ordered entries of every encoded graph. Encoding
+does not validate the graph; decoding and mathematical replay remain separate. -/
+theorem graph_eq (value : ValueCodec E) (context : ValueCodec Ctx) (d : Dag E Ctx) :
+    graph value context d =
+      .arr #[Json.of (1 : Nat), Json.of d.root, array (entry value context) d.entries] := (rfl)
+
 /-- Read an optional ordered pair, requiring both child indices below the actual prefix size. -/
 @[expose] def readChildren (earlier : Nat) (j : Json) : Except String (Option (Nat × Nat)) :=
   readOption (fun j => do

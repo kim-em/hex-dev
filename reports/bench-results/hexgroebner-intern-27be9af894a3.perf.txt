@@ -1,0 +1,34 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cpu/cycles/P'
+# Event count (approx.): 23722708073
+#
+# Overhead  Command          Shared Object      Symbol                                                                        
+# ........  ...............  .................  ..............................................................................
+#
+    48.86%  hexgroebner_ben  hexgroebner_bench  [.] lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)
+            |
+            ---lean::lean_del_core_other(lean_object*, unsigned char, lean_object*)
+               lean_dec_ref_cold
+
+    42.49%  hexgroebner_ben  hexgroebner_bench  [.] lean_copy_expand_array
+            |
+            ---lean_copy_expand_array
+
+     6.66%  hexgroebner_ben  libc.so.6          [.] __memmove_avx512_unaligned_erms
+            |
+            ---__memmove_avx512_unaligned_erms
+               |          
+                --6.57%--lean_copy_sarray
+                          |          
+                           --5.27%--lp_Hex_Hex_Groebner_MonomialTable_intern
+                                     lp_Hex___private_Init_Data_Range_Basic_0__Std_Legacy_Range_forIn_x27_loop___at___00Hex_Groebner_Bench_internMonomials_spec__0___redArg
+
+
+
+#
+# (Tip: To show information about system the samples were collected on use perf report --header)
+#

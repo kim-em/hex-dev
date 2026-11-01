@@ -1,0 +1,144 @@
+[
+  {
+    "case": "cauchy",
+    "block": 0,
+    "param": 64,
+    "scalar_nanos": 1576076.958984,
+    "native_nanos": 1096433.30957,
+    "ratio": 0.6956724437344756
+  },
+  {
+    "case": "cauchy",
+    "block": 0,
+    "param": 128,
+    "scalar_nanos": 10263085.453125,
+    "native_nanos": 6598329.726562,
+    "ratio": 0.6429187164716512
+  },
+  {
+    "case": "cauchy",
+    "block": 0,
+    "param": 256,
+    "scalar_nanos": 73720446.875,
+    "native_nanos": 43776149.59375,
+    "ratio": 0.5938128626373712
+  },
+  {
+    "case": "cauchy",
+    "block": 0,
+    "param": 512,
+    "scalar_nanos": 558734658.5,
+    "native_nanos": 318520501.75,
+    "ratio": 0.5700747159754007
+  },
+  {
+    "case": "cauchy",
+    "block": 1,
+    "param": 64,
+    "scalar_nanos": 1587065.966797,
+    "native_nanos": 1089006.696289,
+    "ratio": 0.6861760752685171
+  },
+  {
+    "case": "cauchy",
+    "block": 1,
+    "param": 128,
+    "scalar_nanos": 10298399.320312,
+    "native_nanos": 6567265.945312,
+    "ratio": 0.6376977373910024
+  },
+  {
+    "case": "cauchy",
+    "block": 1,
+    "param": 256,
+    "scalar_nanos": 73761050.625,
+    "native_nanos": 43782926.125,
+    "ratio": 0.5935778538132773
+  },
+  {
+    "case": "cauchy",
+    "block": 1,
+    "param": 512,
+    "scalar_nanos": 559484683.5,
+    "native_nanos": 318422303,
+    "ratio": 0.5691349779372468
+  },
+  {
+    "case": "sparse",
+    "block": 0,
+    "param": 32,
+    "scalar_nanos": 206539.861084,
+    "native_nanos": 203260.136963,
+    "ratio": 0.9841206239619473
+  },
+  {
+    "case": "sparse",
+    "block": 0,
+    "param": 64,
+    "scalar_nanos": 386161.883789,
+    "native_nanos": 378413.397949,
+    "ratio": 0.9799346176687035
+  },
+  {
+    "case": "sparse",
+    "block": 0,
+    "param": 128,
+    "scalar_nanos": 767488.495605,
+    "native_nanos": 760340.118164,
+    "ratio": 0.990686013559897
+  },
+  {
+    "case": "sparse",
+    "block": 0,
+    "param": 256,
+    "scalar_nanos": 1542566.677734,
+    "native_nanos": 1525374.693359,
+    "ratio": 0.9888549489476496
+  },
+  {
+    "case": "sparse",
+    "block": 1,
+    "param": 32,
+    "scalar_nanos": 207089.404297,
+    "native_nanos": 202312.498047,
+    "ratio": 0.9769331209087398
+  },
+  {
+    "case": "sparse",
+    "block": 1,
+    "param": 64,
+    "scalar_nanos": 384868.251709,
+    "native_nanos": 380737.036377,
+    "ratio": 0.9892658973203027
+  },
+  {
+    "case": "sparse",
+    "block": 1,
+    "param": 128,
+    "scalar_nanos": 768314.278809,
+    "native_nanos": 761985.054688,
+    "ratio": 0.9917621938110909
+  },
+  {
+    "case": "sparse",
+    "block": 1,
+    "param": 256,
+    "scalar_nanos": 1541682.678711,
+    "native_nanos": 1523245.374023,
+    "ratio": 0.9880407914400289
+  },
+  {
+    "case": "cyclic6",
+    "block": 0,
+    "scalar_nanos": 109436350,
+    "native_nanos": 102699727,
+    "ratio": 0.9384425467406396
+  },
+  {
+    "case": "cyclic6",
+    "block": 1,
+    "scalar_nanos": 108673304,
+    "native_nanos": 103198022,
+    "ratio": 0.9496170467035768
+  }
+]

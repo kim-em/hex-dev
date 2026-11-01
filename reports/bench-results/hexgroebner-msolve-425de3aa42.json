@@ -1,0 +1,384 @@
+[
+  {
+    "case": "cyclic5-15",
+    "family": "cyclic",
+    "p": 32003,
+    "hex_status": [
+      "ok",
+      "ok"
+    ],
+    "msolve_status": [
+      "ok",
+      "ok"
+    ],
+    "hex_wall_ms": [
+      33.8839,
+      32.762637
+    ],
+    "msolve_wall_ms": [
+      13.534976,
+      11.201739
+    ],
+    "hex_rss_kib": 67572,
+    "msolve_rss_kib": 11716,
+    "paired_geometric_mean_ratio": 2.705918120498115
+  },
+  {
+    "case": "cyclic5-31",
+    "family": "cyclic",
+    "p": 2147483647,
+    "hex_status": [
+      "ok",
+      "ok"
+    ],
+    "msolve_status": [
+      "ok",
+      "ok"
+    ],
+    "hex_wall_ms": [
+      33.113278,
+      34.113339
+    ],
+    "msolve_wall_ms": [
+      12.625389,
+      11.099328
+    ],
+    "hex_rss_kib": 67576,
+    "msolve_rss_kib": 11720,
+    "paired_geometric_mean_ratio": 2.8391770502562057
+  },
+  {
+    "case": "cyclic6-15",
+    "family": "cyclic",
+    "p": 32003,
+    "hex_status": [
+      "ok",
+      "ok"
+    ],
+    "msolve_status": [
+      "ok",
+      "ok"
+    ],
+    "hex_wall_ms": [
+      158.217117,
+      159.191941
+    ],
+    "msolve_wall_ms": [
+      14.180723,
+      12.527573
+    ],
+    "hex_rss_kib": 69564,
+    "msolve_rss_kib": 11988,
+    "paired_geometric_mean_ratio": 11.907061983060895
+  },
+  {
+    "case": "cyclic6-31",
+    "family": "cyclic",
+    "p": 2147483647,
+    "hex_status": [
+      "ok",
+      "ok"
+    ],
+    "msolve_status": [
+      "ok",
+      "ok"
+    ],
+    "hex_wall_ms": [
+      181.028157,
+      184.192096
+    ],
+    "msolve_wall_ms": [
+      15.003983,
+      13.414998
+    ],
+    "hex_rss_kib": 69628,
+    "msolve_rss_kib": 12008,
+    "paired_geometric_mean_ratio": 12.870931297423592
+  },
+  {
+    "case": "kat6-15",
+    "family": "kat",
+    "p": 32003,
+    "hex_status": [
+      "ok",
+      "ok"
+    ],
+    "msolve_status": [
+      "ok",
+      "ok"
+    ],
+    "hex_wall_ms": [
+      45.335579,
+      47.367589
+    ],
+    "msolve_wall_ms": [
+      13.770415,
+      11.738524
+    ],
+    "hex_rss_kib": 67576,
+    "msolve_rss_kib": 12012,
+    "paired_geometric_mean_ratio": 3.6448525397500804
+  },
+  {
+    "case": "kat6-31",
+    "family": "kat",
+    "p": 2147483647,
+    "hex_status": [
+      "ok",
+      "ok"
+    ],
+    "msolve_status": [
+      "ok",
+      "ok"
+    ],
+    "hex_wall_ms": [
+      49.928634,
+      51.843893
+    ],
+    "msolve_wall_ms": [
+      13.325265,
+      11.575723
+    ],
+    "hex_rss_kib": 69624,
+    "msolve_rss_kib": 12016,
+    "paired_geometric_mean_ratio": 4.096487695778834
+  },
+  {
+    "case": "eco10-15",
+    "family": "eco",
+    "p": 32003,
+    "hex_status": [
+      "timeout",
+      "timeout"
+    ],
+    "msolve_status": [
+      "ok",
+      "ok"
+    ],
+    "hex_wall_ms": [
+      10014.283553,
+      10014.089756
+    ],
+    "msolve_wall_ms": [
+      136.310957,
+      139.836511
+    ],
+    "hex_rss_kib": 82980,
+    "msolve_rss_kib": 13400
+  },
+  {
+    "case": "eco10-31",
+    "family": "eco",
+    "p": 2147483647,
+    "hex_status": [
+      "timeout",
+      "timeout"
+    ],
+    "msolve_status": [
+      "ok",
+      "ok"
+    ],
+    "hex_wall_ms": [
+      10012.813755,
+      10013.027231
+    ],
+    "msolve_wall_ms": [
+      84.678156,
+      79.661062
+    ],
+    "hex_rss_kib": 81768,
+    "msolve_rss_kib": 13432
+  },
+  {
+    "case": "noon4-15",
+    "family": "noon",
+    "p": 32003,
+    "hex_status": [
+      "ok",
+      "ok"
+    ],
+    "msolve_status": [
+      "ok",
+      "ok"
+    ],
+    "hex_wall_ms": [
+      29.715272,
+      28.739797
+    ],
+    "msolve_wall_ms": [
+      13.842061,
+      11.563004
+    ],
+    "hex_rss_kib": 69624,
+    "msolve_rss_kib": 12020,
+    "paired_geometric_mean_ratio": 2.3099149291979635
+  },
+  {
+    "case": "noon4-31",
+    "family": "noon",
+    "p": 2147483647,
+    "hex_status": [
+      "ok",
+      "ok"
+    ],
+    "msolve_status": [
+      "ok",
+      "ok"
+    ],
+    "hex_wall_ms": [
+      29.84909,
+      30.816043
+    ],
+    "msolve_wall_ms": [
+      12.916139,
+      11.590194
+    ],
+    "hex_rss_kib": 69564,
+    "msolve_rss_kib": 12020,
+    "paired_geometric_mean_ratio": 2.4788044989401987
+  },
+  {
+    "case": "reimer5-15",
+    "family": "reimer",
+    "p": 32003,
+    "hex_status": [
+      "ok",
+      "ok"
+    ],
+    "msolve_status": [
+      "ok",
+      "ok"
+    ],
+    "hex_wall_ms": [
+      1172.675329,
+      1173.558748
+    ],
+    "msolve_wall_ms": [
+      16.086608,
+      14.068357
+    ],
+    "hex_rss_kib": 74732,
+    "msolve_rss_kib": 12492,
+    "paired_geometric_mean_ratio": 77.98074537402631
+  },
+  {
+    "case": "reimer5-31",
+    "family": "reimer",
+    "p": 2147483647,
+    "hex_status": [
+      "ok",
+      "ok"
+    ],
+    "msolve_status": [
+      "ok",
+      "ok"
+    ],
+    "hex_wall_ms": [
+      1335.036327,
+      1251.113609
+    ],
+    "msolve_wall_ms": [
+      17.440844,
+      15.118132
+    ],
+    "hex_rss_kib": 74788,
+    "msolve_rss_kib": 12544,
+    "paired_geometric_mean_ratio": 79.5906589683577
+  },
+  {
+    "case": "minrank_d_2_p_2_q_3_r_2-15",
+    "family": "minrank",
+    "p": 32003,
+    "hex_status": [
+      "ok",
+      "ok"
+    ],
+    "msolve_status": [
+      "ok",
+      "ok"
+    ],
+    "hex_wall_ms": [
+      22.530817,
+      22.132726
+    ],
+    "msolve_wall_ms": [
+      12.97047,
+      10.270619
+    ],
+    "hex_rss_kib": 67568,
+    "msolve_rss_kib": 12544,
+    "paired_geometric_mean_ratio": 1.9347718395653628
+  },
+  {
+    "case": "minrank_d_2_p_2_q_3_r_2-31",
+    "family": "minrank",
+    "p": 2147483647,
+    "hex_status": [
+      "ok",
+      "ok"
+    ],
+    "msolve_status": [
+      "ok",
+      "ok"
+    ],
+    "hex_wall_ms": [
+      23.078417,
+      24.326989
+    ],
+    "msolve_wall_ms": [
+      12.461165,
+      11.366173
+    ],
+    "hex_rss_kib": 67564,
+    "msolve_rss_kib": 12544,
+    "paired_geometric_mean_ratio": 1.9909517410153181
+  },
+  {
+    "case": "quadratic5-32003",
+    "family": "dense-quadratic",
+    "p": 32003,
+    "hex_status": [
+      "ok",
+      "ok"
+    ],
+    "msolve_status": [
+      "ok",
+      "ok"
+    ],
+    "hex_wall_ms": [
+      30.499734,
+      31.699812
+    ],
+    "msolve_wall_ms": [
+      12.82236,
+      11.301737
+    ],
+    "hex_rss_kib": 67516,
+    "msolve_rss_kib": 12548,
+    "paired_geometric_mean_ratio": 2.582972532097181
+  },
+  {
+    "case": "quadratic5-2147483647",
+    "family": "dense-quadratic",
+    "p": 2147483647,
+    "hex_status": [
+      "ok",
+      "ok"
+    ],
+    "msolve_status": [
+      "ok",
+      "ok"
+    ],
+    "hex_wall_ms": [
+      32.897738,
+      33.960664
+    ],
+    "msolve_wall_ms": [
+      13.114173,
+      11.218023
+    ],
+    "hex_rss_kib": 69616,
+    "msolve_rss_kib": 12548,
+    "paired_geometric_mean_ratio": 2.7557669540172256
+  }
+]
