@@ -76,7 +76,7 @@ def equal (a b : Scan.Result) : Bool :=
       (portable 7 slots pivots initial q work traces true)
 
 private def fuzz : Bool := Id.run do
-  for p in [2,3,251,256,257,65521,65536,65537,65538,2147483646,2147483647] do
+  for p in [2,3,251,255,256,257,65521,65535,65536,65537,65538,2147483646,2147483647] do
     let w := Hex.Groebner.Native.width p
     for seed in [:12] do
       let mut rows : Array Scan.Pivot := #[]
@@ -150,7 +150,8 @@ def runtimeChecks : Bool := fuzz && aliases && malformed &&
       (portable 7 slots pivots initial q work traces true)
 
 def runtimeWideChecks : Bool := Id.run do
-  for p in [65537, 2147483647] do
+  for p in [3,251,255,257,32003,65521,65535,65537,2147483647] do
+    let w := Hex.Groebner.Native.width p
     let support := Array.range 16
     let values := (Array.range 16).map fun i => if i == 0 then 1 else (i*7919)%(p-1)+1
     let slots := packed 4 (#[1] ++ Array.replicate 30 0)
@@ -161,22 +162,23 @@ def runtimeWideChecks : Bool := Id.run do
         let coefficients := if kind == 2 then values.set! bad 0 else
           if kind == 3 then values.set! bad p else values
         let dense := if kind == 4 then (Array.replicate 31 1).set! bad p else Array.replicate 31 1
-        let pivots : Array Scan.Pivot := #[⟨packed 4 columns, packed 4 coefficients, 2^90⟩]
-        let initial : Scan.State := { dense := packed 4 dense, column := 0, last := 15, chargedUntil := 0 }
+        let pivots : Array Scan.Pivot := #[⟨packed 4 columns, packed w coefficients, 2^90⟩]
+        let initial : Scan.State := { dense := packed w dense, column := 0, last := 15, chargedUntil := 0 }
         for quantum in [1,2,7,8,9,16,17,32,4096] do
           for provenance in [false,true] do
             if !equal (transition p.toUInt64 slots pivots initial quantum 100000 100 provenance)
                 (portable p.toUInt64 slots pivots initial quantum 100000 100 provenance) then return false
   -- Valid strided vectors exercise gather/scatter independently of malformed fallback.
-  for p in [65537,65538,2147483646,2147483647] do
+  for p in [3,251,255,257,32003,65521,65535,65537,65538,2147483646,2147483647] do
+    let w := Hex.Groebner.Native.width p
     for stride in [2,3] do
       let support := (Array.range 16).map (·*stride)
       let columns := 15*stride+1
       let slots := packed 4 (#[1] ++ Array.replicate (columns-1) 0)
-      let values := (Array.range 16).map fun i => if i == 0 then 1 else p-1-i
-      let pivots : Array Scan.Pivot := #[⟨packed 4 support,packed 4 values,2^90⟩]
+      let values := (Array.range 16).map fun i => if i == 0 then 1 else (i*7919)%(p-1)+1
+      let pivots : Array Scan.Pivot := #[⟨packed 4 support,packed w values,2^90⟩]
       let initial : Scan.State := {
-        dense := packed 4 (Array.replicate columns (p-1))
+        dense := packed w (Array.replicate columns (p-1))
         column := 0
         last := columns-1
         chargedUntil := 0 }
@@ -184,6 +186,26 @@ def runtimeWideChecks : Bool := Id.run do
         for provenance in [false,true] do
           if !equal (transition p.toUInt64 slots pivots initial quantum 100000 100 provenance)
               (portable p.toUInt64 slots pivots initial quantum 100000 100 provenance) then return false
+  -- Strided gathers require a full four-byte read, even for narrow scalars.
+  for p in [3,251,255,257,32003,65521,65535,65537] do
+    let w := Hex.Groebner.Native.width p
+    for stride in [1,2,3] do
+      for padding in [:4] do
+        let support := (Array.range 16).map (·*stride)
+        let columns := 15*stride+1+padding
+        let slots := packed 4 (#[1] ++ Array.replicate (columns-1) 0)
+        let values := (Array.range 16).map fun i => if i == 0 then 1 else (i*7919)%(p-1)+1
+        let pivots : Array Scan.Pivot := #[⟨packed 4 support,packed w values,2^90⟩]
+        let initial : Scan.State := {dense:=packed w (Array.replicate columns (p-1)),column:=0,last:=columns-1,chargedUntil:=0}
+        for quantum in [7,8,9,16,17,31,32,4096] do
+          if !equal (transition p.toUInt64 slots pivots initial quantum 100000 100 true)
+              (portable p.toUInt64 slots pivots initial quantum 100000 100 true) then return false
+    let dense := packed w (Array.replicate 16 1)
+    let pivots : Array Scan.Pivot := #[⟨packed 4 (Array.range 16),dense,5⟩]
+    let slots := packed 4 (#[1] ++ Array.replicate 15 0)
+    let initial : Scan.State := {dense,column:=0,last:=15,chargedUntil:=0}
+    if !equal (transition p.toUInt64 slots pivots initial 4096 10000 100 true)
+        (portable p.toUInt64 slots pivots initial 4096 10000 100 true) then return false
   return true
 
 #guard runtimeWideChecks

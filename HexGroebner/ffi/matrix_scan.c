@@ -90,6 +90,28 @@ static inline int scalar_update(uint8_t *data,const uint8_t *cs,const uint8_t *v
 #undef HEX_SCAN_VECTOR
 #undef HEX_SCAN_WIDTH
 #if HEX_GROEBNER_AVX2
+#define HEX_SCAN_NAME hex_scan_avx2_u8
+#define HEX_SCAN_ATTRIBUTE __attribute__((target("avx2")))
+#define HEX_SCAN_VECTOR 1
+#define HEX_SCAN_WIDTH 1
+#include "matrix_scan_impl.h"
+#undef HEX_SCAN_NAME
+#undef HEX_SCAN_ATTRIBUTE
+#undef HEX_SCAN_VECTOR
+#undef HEX_SCAN_WIDTH
+#endif
+#if HEX_GROEBNER_AVX2
+#define HEX_SCAN_NAME hex_scan_avx2_u16
+#define HEX_SCAN_ATTRIBUTE __attribute__((target("avx2")))
+#define HEX_SCAN_VECTOR 1
+#define HEX_SCAN_WIDTH 2
+#include "matrix_scan_impl.h"
+#undef HEX_SCAN_NAME
+#undef HEX_SCAN_ATTRIBUTE
+#undef HEX_SCAN_VECTOR
+#undef HEX_SCAN_WIDTH
+#endif
+#if HEX_GROEBNER_AVX2
 #define HEX_SCAN_NAME hex_scan_avx2
 #define HEX_SCAN_ATTRIBUTE __attribute__((target("avx2")))
 #define HEX_SCAN_VECTOR 1
@@ -107,6 +129,11 @@ LEAN_EXPORT lean_obj_res lean_hex_scan_transition(uint64_t p,
 #if HEX_GROEBNER_AVX2
     if(p>65536 && (p&1) && hex_avx2_available())
         return hex_scan_avx2(p,slots,pivots,initial,quantum,work,trace,provenance);
+    /* Keep characteristic two scalar; raw even-modulus calls use that fallback too. */
+    if((p&1) && hex_avx2_available()) {
+        if(p<=256) return hex_scan_avx2_u8(p,slots,pivots,initial,quantum,work,trace,provenance);
+        return hex_scan_avx2_u16(p,slots,pivots,initial,quantum,work,trace,provenance);
+    }
 #endif
     if(p<=256) return hex_scan_u8(p,slots,pivots,initial,quantum,work,trace,provenance);
     if(p<=65536) return hex_scan_u16(p,slots,pivots,initial,quantum,work,trace,provenance);

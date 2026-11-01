@@ -68,15 +68,18 @@ def run() -> None:
 #include HEADER
 #undef hex_scan8
 static uint64_t vector_contiguous=0,vector_gather=0;
+static uint32_t vector_widths=0;
 #if HEX_GROEBNER_AVX2
 static __typeof__(hex_test_scan8_base) hex_test_scan8_counted;
 __attribute__((target("avx2"),always_inline))
 static inline unsigned hex_test_scan8_counted(uint8_t *dense,const uint8_t *columns,
  const uint8_t *coefficients,size_t entry,uint64_t column_count,uint32_t p,
- uint32_t factor_mont,uint32_t negative_inverse) {
- unsigned n=hex_test_scan8_base(dense,columns,coefficients,entry,column_count,p,factor_mont,negative_inverse);
+ uint32_t multiplier,uint32_t reduction,unsigned width) {
+ unsigned n=hex_test_scan8_base(dense,columns,coefficients,entry,column_count,p,multiplier,reduction,width);
  if(n) {uint32_t first,last;memcpy(&first,columns+entry*4,4);memcpy(&last,columns+(entry+7)*4,4);
-  if(last-first==7) ++vector_contiguous;else ++vector_gather;}
+  if(last-first==7) ++vector_contiguous;else ++vector_gather;
+  unsigned group=width==1?0:width==2?1:2;
+  vector_widths|=1u<<(2*group+(last-first!=7));}
  return n;
 }
 #define hex_scan8 hex_test_scan8_counted
@@ -110,6 +113,9 @@ LEAN_EXPORT lean_obj_res hex_test_vector_counts(lean_obj_arg world) {
  lean_ctor_set(pair,0,lean_box_uint64(vector_contiguous));
  lean_ctor_set(pair,1,lean_box_uint64(vector_gather));
  return lean_io_result_mk_ok(pair);
+}
+LEAN_EXPORT lean_obj_res hex_test_widths(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint32(vector_widths));
 }
 LEAN_EXPORT lean_obj_res hex_test_avx2(lean_obj_arg world) {
  (void)world;
@@ -151,14 +157,16 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
 @[extern "hex_test_counts"] opaque counts : IO (UInt64 × UInt64)
 @[extern "hex_test_vector_counts"] opaque vectorCounts : IO (UInt64 × UInt64)
 @[extern "hex_test_avx2"] opaque avx2 : IO Bool
+@[extern "hex_test_widths"] opaque widths : IO UInt32
 def main : IO Unit := do
   Hex.Groebner.NativeChecks.run
   let (scan,gather) ← counts
   if scan == 0 || gather == 0 then throw (IO.userError "test override was not called")
   let available ← avx2
   let (contiguous,gathered) ← vectorCounts
-  IO.println s!"native call counts: scan={scan}, gather={gather}; AVX2={available}, contiguous={contiguous}, strided={gathered}"
-  if VECTOR && available && (contiguous == 0 || gathered == 0) then
+  let covered ← widths
+  IO.println s!"native call counts: scan={scan}, gather={gather}; AVX2={available}, contiguous={contiguous}, strided={gathered}, width paths={covered}"
+  if VECTOR && available && (contiguous == 0 || gathered == 0 || covered != 63) then
     throw (IO.userError "an AVX2 path was not exercised")
   if VECTOR && (← IO.getEnv "HEX_GROEBNER_REQUIRE_AVX2") == some "1" && !available then
     throw (IO.userError "AVX2 coverage required but unavailable")
