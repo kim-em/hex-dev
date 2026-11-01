@@ -8,6 +8,8 @@ module
 
 public import HexGroebner.Packed
 public import HexGroebner.Native
+public import HexGroebner.NativeScan
+public import HexGroebner.NativeGather
 
 public section
 
@@ -225,6 +227,67 @@ private structure Scan where
   node : Option Nat
   sugar : Nat
 
+@[noinline] private def takeDense (scan : Scan) : ByteArray × Scan :=
+  (scan.dense,{ scan with dense := {} })
+
+private def nativeScan (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
+    (slots : ByteArray) (pivots : Array Pivot) (nativePivots : Array Native.Scan.Pivot)
+    (first : Nat) (scan : Scan) (provenance : Bool) : Work Scan := do
+  let (dense,scan) := takeDense scan
+  let mut state : Native.Scan.State := {
+    dense, column := first, last := scan.last, chargedUntil := scan.chargedUntil
+    sugar := scan.sugar }
+  let mut trace := scan.trace
+  let mut node := scan.node
+  for _ in [:((columns*(columns+2)+4095)/4096+1)] do
+    let stats ← get
+    let traces := limits.traceNodes-stats.traceNodes
+    let traceBytes := if provenance then (limits.packedBytes-stats.packedBytes)/64 else traces
+    let result := Native.Scan.transition field.modulus slots nativePivots state 4096
+      (limits.work-stats.work) (min traces traceBytes) provenance
+    work limits result.work
+    modify fun s => { s with reductions := s.reductions+result.reductions }
+    for event in result.events do
+      let pivot := pivots[event.1]!
+      if let (some left,some right) := (node,pivot.derivation) then
+        let (nextTrace,nextNode) ← record limits provenance trace
+          (.addScaled left right (field.modulus-event.2))
+        trace := nextTrace
+        node := nextNode
+      else throw .rowUpdate
+    state := result.state
+    if result.status == 1 then
+      return { scan with dense := state.dense, last := state.last, chargedUntil := state.chargedUntil, leading := if state.leading == 0 then none else some (state.leading-1), trace, node, sugar := state.sugar }
+    if result.status == 2 then throw (.exhausted .work)
+    if result.status == 3 then
+      if provenance && traceBytes < traces then
+        let _ ← record limits provenance trace (.input 0)
+        throw .rowUpdate
+      throw (.exhausted .traceNodes)
+    if result.status != 0 then throw .rowUpdate
+  throw .rowUpdate
+
+private def nativeGather (field : PrimeField) (limits : MatrixLimits) (dense : ByteArray)
+    (column last : Nat) (factor : UInt64) : Work (SparseRow × ByteArray) := do
+  let mut state : Native.Gather.State := ⟨dense,{},{},column⟩
+  for _ in [:((last+1-column+4095)/4096+1)] do
+    let stats ← get
+    let result := Native.Gather.gather field.modulus state (last+1) 4096
+      (limits.outputEntries-stats.outputEntries) (limits.packedBytes-stats.packedBytes)
+      (limits.work-stats.work) factor
+    charge .outputEntries result.entries limits.outputEntries (·.outputEntries)
+      fun s n => { s with outputEntries := n }
+    packedBytes limits result.bytes
+    work limits result.work
+    state := result.state
+    if result.status == 1 then return (⟨state.columns,state.coefficients⟩,state.dense)
+    if result.status == 2 then throw (.exhausted .outputEntries)
+    if result.status == 3 then throw (.exhausted .packedBytes)
+    if result.status == 4 then throw (.exhausted .work)
+    if result.status == 5 then throw .dimensions
+    if result.status != 0 then throw .rowUpdate
+  throw .rowUpdate
+
 /-- Reduce against sparse pivots in a fixed column map. Each scalar update uses
 canonical residues: `a + p - (b*c mod p)` fits below `2*p < 2^32`, and the
 Barrett product fits below `p^2 < 2^62`. No floating-point arithmetic is used. -/
@@ -249,6 +312,7 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
   -- A slot stores pivot index + 1. Zero means no pivot, never monomial identity.
   let mut slots := zeros (columns * 4)
   let mut pivots : Array Pivot := #[]
+  let mut nativePivots : Array Native.Scan.Pivot := #[]
   let mut trace : Array RowOp := #[]
   let mut remainders : Array RemainderRow := #[]
   let mut reducerRank := 0
@@ -276,6 +340,7 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
         trace := nextTrace
         slots := Packed.set .u32 slots first (pivots.size + 1).toUInt64
         pivots := pivots.push ⟨output, false, nextNode, inv, sugar⟩
+        if native then nativePivots := nativePivots.push ⟨output.columns,output.coefficients,sugar⟩
         reducerRank := reducerRank + 1
       else
         work limits row.size
@@ -284,31 +349,24 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
           dense := Packed.set width dense column (Packed.read width row.coefficients i)
         let mut scan : Scan := ⟨dense, (Packed.read .u32 row.columns (row.size - 1)).toNat,
           first, none, trace, node, sugar⟩
-        for column in [first:columns] do
-          if column > scan.last then break
-          -- Reserve bounded scan blocks; a pivot can extend the active range.
-          if column ≥ scan.chargedUntil then
-            scan := { scan with chargedUntil := min (column + 64) (scan.last + 1) }
-            work limits (scan.chargedUntil - column)
-          let a := Packed.read width scan.dense column
-          if a != 0 then
-            let slot := (Packed.read .u32 slots column).toNat
-            if slot != 0 then
-              let pivot := pivots[slot - 1]!
-              scan := { scan with
-                sugar := max scan.sugar pivot.sugar
-                last := max scan.last (Packed.read .u32 pivot.row.columns (pivot.row.size - 1)).toNat }
-              work limits pivot.row.size
-              if native then
-                -- Cancellation or additional allowance checks belong between chunks.
-                for chunk in [:((pivot.row.size + 4095) / 4096)] do
-                  let start := chunk * 4096
-                  let count := min 4096 (pivot.row.size - start)
-                  match Native.subtract field.modulus scan.dense pivot.row.columns
-                      pivot.row.coefficients start count a with
-                  | none => throw .rowUpdate
-                  | some next => scan := { scan with dense := next }
-              else
+        if native then
+          scan ← nativeScan field limits columns slots pivots nativePivots first scan provenance
+        else
+          for column in [first:columns] do
+            if column > scan.last then break
+            -- Reserve bounded scan blocks; a pivot can extend the active range.
+            if column ≥ scan.chargedUntil then
+              scan := { scan with chargedUntil := min (column + 64) (scan.last + 1) }
+              work limits (scan.chargedUntil - column)
+            let a := Packed.read width scan.dense column
+            if a != 0 then
+              let slot := (Packed.read .u32 slots column).toNat
+              if slot != 0 then
+                let pivot := pivots[slot - 1]!
+                scan := { scan with
+                  sugar := max scan.sugar pivot.sugar
+                  last := max scan.last (Packed.read .u32 pivot.row.columns (pivot.row.size - 1)).toNat }
+                work limits pivot.row.size
                 for i in [:pivot.row.size] do
                   let j := (Packed.read .u32 pivot.row.columns i).toNat
                   let b := Packed.read width pivot.row.coefficients i
@@ -316,13 +374,13 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
                   let difference := Packed.read width scan.dense j + field.modulus - product
                   let value := if difference ≥ field.modulus then difference - field.modulus else difference
                   scan := { scan with dense := Packed.set width scan.dense j value }
-              modify fun s => { s with reductions := s.reductions + 1 }
-              if let (some left, some right) := (scan.node, pivot.derivation) then
-                let (nextTrace, nextNode) ← record limits provenance scan.trace
-                  (.addScaled left right (field.modulus - a))
-                scan := { scan with trace := nextTrace, node := nextNode }
-            else if scan.leading.isNone then
-              scan := { scan with leading := some column }
+                modify fun s => { s with reductions := s.reductions + 1 }
+                if let (some left, some right) := (scan.node, pivot.derivation) then
+                  let (nextTrace, nextNode) ← record limits provenance scan.trace
+                    (.addScaled left right (field.modulus - a))
+                  scan := { scan with trace := nextTrace, node := nextNode }
+              else if scan.leading.isNone then
+                scan := { scan with leading := some column }
         dense := scan.dense
         trace := scan.trace
         node := scan.node
@@ -339,26 +397,32 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
           trace := nextTrace
           let mut output : SparseRow := {}
           work limits (last + 1 - column)
-          for j in [column:last + 1] do
-            let a := Packed.read width dense j
-            if a != 0 then
-              charge .outputEntries 1 limits.outputEntries (·.outputEntries)
-                fun s n => { s with outputEntries := n }
-              packedBytes limits (4 + width.bytes)
-              if output.columns.size + 4 ≥ USize.size ||
-                  output.coefficients.size + width.bytes ≥ USize.size then throw .dimensions
-              let value ← if inv == 1 then pure a else do
-                work limits 1
-                pure (ctx.mulMod a inv)
-              output := {
-                columns := Packed.push .u32 output.columns j.toUInt64
-                coefficients := Packed.push width output.coefficients value }
-              dense := Packed.set width dense j 0
+          if native then
+            let (row,nextDense) ← nativeGather field limits dense column last inv
+            output := row
+            dense := nextDense
+          else
+            for j in [column:last + 1] do
+              let a := Packed.read width dense j
+              if a != 0 then
+                charge .outputEntries 1 limits.outputEntries (·.outputEntries)
+                  fun s n => { s with outputEntries := n }
+                packedBytes limits (4 + width.bytes)
+                if output.columns.size + 4 ≥ USize.size ||
+                    output.coefficients.size + width.bytes ≥ USize.size then throw .dimensions
+                let value ← if inv == 1 then pure a else do
+                  work limits 1
+                  pure (ctx.mulMod a inv)
+                output := {
+                  columns := Packed.push .u32 output.columns j.toUInt64
+                  coefficients := Packed.push width output.coefficients value }
+                dense := Packed.set width dense j 0
           if independent && fromTarget then
             remainders := remainders.push ⟨output, nextNode, sugar⟩
           else
             slots := Packed.set .u32 slots column (pivots.size + 1).toUInt64
             pivots := pivots.push ⟨output, fromTarget, nextNode, inv, sugar⟩
+            if native then nativePivots := nativePivots.push ⟨output.columns,output.coefficients,sugar⟩
             if !fromTarget then reducerRank := reducerRank + 1
         else
           if independent && fromTarget then remainders := remainders.push ⟨{}, node, sugar⟩
