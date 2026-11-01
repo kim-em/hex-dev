@@ -252,6 +252,8 @@ static void check_inspect(void) {
                     else if(a[i]!=b[i]) {expected=op==1?(b[i]<a[i]?0:2):(a[i]<b[i]?0:2);break;}
                 }
                 if(inspect_monomials(op,w,n,0,1,arena,bytes)!=expected) fail("different packed comparison");
+                /* A partial unused third row is outside both read spans. */
+                if(w*n>1 && inspect_monomials(op,w,n-1,0,0,arena,bytes)!=1) fail("unused partial row");
                 if(inspect_monomials(op,w,n,0,0,arena,bytes)!=1) fail("equal packed comparison");
                 if(inspect_monomials(op,w,n,0,1,arena,bytes-1)!=3) fail("truncated comparison rows");
                 if(inspect_monomials(op,w,n,0,2,arena,bytes)!=3) fail("comparison row bound");

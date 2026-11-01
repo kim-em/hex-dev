@@ -227,8 +227,7 @@ Both rows must fit the arena; zero arity reads no bytes. -/
       left > 4294967295 || right > 4294967295 then return 3
   if arity == 0 then return 1
   let rowBytes := arity*w
-  if arena.size % rowBytes != 0 || left ≥ arena.size/rowBytes ||
-      right ≥ arena.size/rowBytes then return 3
+  if (max left right + 1)*rowBytes > arena.size then return 3
   for k in [:arity] do
     let i := if operation == 1 then arity-1-k else k
     let a := read arena w ((left*arity+i)*w)

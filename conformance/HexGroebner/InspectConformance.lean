@@ -37,6 +37,7 @@ def runtimeChecks (seed : Nat) : Bool := Id.run do
         for operation in [:3] do
           let code := expected operation a b
           let actual := Native.inspect operation.toUInt8 width.bytes.toUInt8 n 0 1 arena
+          if Native.inspect operation.toUInt8 width.bytes.toUInt8 n 0 1 (arena.push 255) != code then return false
           if actual != code || actual != Native.inspectPortable operation.toUInt8
               width.bytes.toUInt8 n 0 1 arena then return false
           if Native.inspect operation.toUInt8 width.bytes.toUInt8 n 0 0 arena != 1 then return false

@@ -186,8 +186,10 @@ static uint8_t inspect_monomials(unsigned op,unsigned w,uint64_t n,uint64_t left
     if(op>2 || (w!=1 && w!=2 && w!=4) || n>4096 ||
        left>UINT32_MAX || right>UINT32_MAX) return 3;
     if(!n) return 1;
-    size_t row_bytes=n*w;
-    if(bytes%row_bytes || left>=bytes/row_bytes || right>=bytes/row_bytes) return 3;
+    /* At most 2^32 rows of at most 16384 bytes: this product fits u64
+       even on a 32-bit host. Only accessed complete row spans are required. */
+    uint64_t row_bytes=n*w,stop=((left>right?left:right)+1)*row_bytes;
+    if(stop>bytes) return 3;
     const uint8_t *a=arena+left*row_bytes,*b=arena+right*row_bytes;
     if(op==0 && w==1) {int c=memcmp(a,b,n);return c<0?0:c>0?2:1;}
     for(size_t k=0;k<n;++k) {
