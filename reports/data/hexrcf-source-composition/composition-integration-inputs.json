@@ -1,0 +1,14 @@
+{
+  "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "63673d40f3714b6e23c9bf3284ee753ef9916952a002d5f22fec6c48478fea00",
+  "adapters/HexRCF/RealCoefficients/CellQuote.lean": "293709ce8bdbd0ad2bb824947b2629d99ce7d545fe8382f087aa6b4b2cad6a3b",
+  "adapters/HexRCF/RealCoefficients/TowerCompile.lean": "087a28bb760f59c4ead756b1c6fa22bd7e70442387b340f81594caf55d6a8d95",
+  "conformance/HexRCF/CellSourceQuote.lean": "77dd49e3892d6fc37b28c65d6a8c105215482924c658e3101decd4871d0a4b1a",
+  "conformance/HexRCF/ProofPaths.lean": "d039e47375a9756803e8ec23086c1df030d142e0a2c8d5a0d8c3d7de4ecb73b4",
+  "conformance/HexRCF/SourceValuationConformance.lean": "745fc307e5d5a5565ad389b5f61c4278d5172a7e7af8de5bf00be445388e8740",
+  "conformance/HexRCF/SourceValuationProofs.lean": "dd1ab7c2748072612bdce147765a879da7ca44a0f78d4de63c523d49cf9a0cca",
+  "conformance/HexRCF/TowerCompileConformance.lean": "251e5017e4e85a5eef43e331635c1ee3d99609b1283a26da96ae30564dfac463",
+  "conformance/HexRCF/TowerCompileProofs.lean": "813fed7508c152d0fd7e7ef054148480e0faf2ad050f0b3164b26084881c8fb8",
+  "conformance/HexRCF/TowerFinishConformance.lean": "3a32be94cf46231a14c1dfe2ae2abd78c8814c4c409b0ba9ef5d892b045c0300",
+  "conformance/HexRCF/TowerFinishProofs.lean": "bc997529da5ccff5174389ee6cd41d2ebc7acf4c2ee8c915ab46ceade6b7f4a1",
+  "lakefile.lean": "93c1ef07094d683d410f4166f302628344fd9d126969135f549932b02f55421a"
+}

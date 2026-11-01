@@ -1,0 +1,94 @@
+[
+  {
+    "label": "desktop",
+    "kind": "api",
+    "text": "\n                  The returned proof identifies the model's value of the stored expression with\nthe source. For an existing prepared sentence,\nprepareWith compiles\nboth ordered inventories: coefficients first and original divisors separately.\nThe enclosing request must continue the source preparation's recorded usage;\nresetting that accounting or lowering a limit below prior usage is rejected.\nEvery original divisor is retained,\nincluding one under zero multiplication. Compiling its arithmetic does not\nprove it nonzero or accept the sentence. A declining leaf restores its\nmetavariables, declarations and frontend state before arithmetic continues,\nwhile retaining charged work; terminal failure and exhaustion use the enclosing\ntransaction's rollback. Checked subterms share a temporary cache across both\ninventories within one call. Separate calls use fresh caches. Leaf recognition\nremoves outer source metadata before matching.",
+    "viewport": 1440,
+    "scrollY": 278657,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752,
+    "descendantOverflow": 0,
+    "overflowElements": []
+  },
+  {
+    "label": "desktop",
+    "kind": "code",
+    "text": "\n                  A supplied-fixture regression compiles a compound coefficient and an original\ndivisor, aligns their interpretations with that fixture's stored values, then\nfinishes the original statement:",
+    "viewport": 1440,
+    "scrollY": 279785,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "CODE",
+    "targetWidth": 740,
+    "targetScrollWidth": 740,
+    "descendantOverflow": 0,
+    "overflowElements": []
+  },
+  {
+    "label": "desktop",
+    "kind": "provenance",
+    "text": "\n                  This request consumes 32,257 charged nodes. Its separate importing audit checks\n30 actual theorem bodies, including the original-divisor proof emitted by\nsource finishing, with 30 nonempty traces and the standard three axioms. The selected\nleaf identity, real model and already checked complete-cell fixture are inputs;\nthis does not construct a new certificate or freshly reduce its literal readers.\nThe model's arithmetic laws and the checker's soundness and domain laws occur\nin the audited dependencies. The final real proposition uses total division,\nso its proof need not retain the separate nonzero preflight proof.",
+    "viewport": 1440,
+    "scrollY": 279930,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752,
+    "descendantOverflow": 0,
+    "overflowElements": []
+  },
+  {
+    "label": "narrow",
+    "kind": "api",
+    "text": "\n                  The returned proof identifies the model's value of the stored expression with\nthe source. For an existing prepared sentence,\nprepareWith compiles\nboth ordered inventories: coefficients first and original divisors separately.\nThe enclosing request must continue the source preparation's recorded usage;\nresetting that accounting or lowering a limit below prior usage is rejected.\nEvery original divisor is retained,\nincluding one under zero multiplication. Compiling its arithmetic does not\nprove it nonzero or accept the sentence. A declining leaf restores its\nmetavariables, declarations and frontend state before arithmetic continues,\nwhile retaining charged work; terminal failure and exhaustion use the enclosing\ntransaction's rollback. Checked subterms share a temporary cache across both\ninventories within one call. Separate calls use fresh caches. Leaf recognition\nremoves outer source metadata before matching.",
+    "viewport": 390,
+    "scrollY": 446764,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343,
+    "descendantOverflow": 0,
+    "overflowElements": []
+  },
+  {
+    "label": "narrow",
+    "kind": "code",
+    "text": "\n                  A supplied-fixture regression compiles a compound coefficient and an original\ndivisor, aligns their interpretations with that fixture's stored values, then\nfinishes the original statement:",
+    "viewport": 390,
+    "scrollY": 448758,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "CODE",
+    "targetWidth": 331,
+    "targetScrollWidth": 337,
+    "descendantOverflow": 6,
+    "overflowElements": [
+      {
+        "tag": "CODE",
+        "classes": "hl lean block",
+        "width": 331,
+        "scroll": 337,
+        "text": "example : ∃ x : ℝ,\n    x^2 - ((Real.sqrt 2 + 1) - 1) ≥ 0 ∧\n    x^2 - ((Real.sqrt 2 + 1) - 1) ≤ 0 ∧\n "
+      }
+    ]
+  },
+  {
+    "label": "narrow",
+    "kind": "provenance",
+    "text": "\n                  This request consumes 32,257 charged nodes. Its separate importing audit checks\n30 actual theorem bodies, including the original-divisor proof emitted by\nsource finishing, with 30 nonempty traces and the standard three axioms. The selected\nleaf identity, real model and already checked complete-cell fixture are inputs;\nthis does not construct a new certificate or freshly reduce its literal readers.\nThe model's arithmetic laws and the checker's soundness and domain laws occur\nin the audited dependencies. The final real proposition uses total division,\nso its proof need not retain the separate nonzero preflight proof.",
+    "viewport": 390,
+    "scrollY": 449014,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343,
+    "descendantOverflow": 0,
+    "overflowElements": []
+  }
+]
