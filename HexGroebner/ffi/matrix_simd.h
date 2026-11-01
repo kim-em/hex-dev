@@ -55,8 +55,8 @@ static inline __m256i hex_mont32_even(__m256i b,__m256i factor,
     return _mm256_sub_epi64(u,_mm256_and_si256(_mm256_cmpgt_epi64(u,pm1),p64));
 }
 
-/* For p=2^31-1, folding the high31 bits into the low31 bits gives
-   a residue below2p for every product x<p². One subtraction canonicalizes it. */
+/* For p=2^31-1, folding the high 31 bits into the low 31 bits gives
+   a residue below 2p for every product x<p². One subtraction canonicalizes it. */
 __attribute__((target("avx2"),always_inline))
 static inline __m256i hex_mersenne31_even(__m256i b,__m256i factor) {
     __m256i p=_mm256_set1_epi64x(INT32_MAX),pm1=_mm256_set1_epi64x(INT32_MAX-1);
@@ -74,8 +74,8 @@ static inline __m256i hex_mersenne31_even(__m256i b,__m256i factor) {
    reduction=-p^-1 mod 2^32. Narrow gathers read four bytes only when the complete
    read lies within the logical dense buffer; otherwise the caller uses scalar updates. */
 __attribute__((target("avx2"),always_inline))
-static inline unsigned hex_scan8(uint8_t *dense,const uint8_t *columns,const uint8_t *coefficients,
-        size_t entry,uint64_t column_count,uint32_t p,uint32_t multiplier,uint32_t reduction,unsigned width) {
+static inline unsigned hex_scan8_mode(uint8_t *dense,const uint8_t *columns,const uint8_t *coefficients,
+        size_t entry,uint64_t column_count,uint32_t p,uint32_t multiplier,uint32_t reduction,unsigned width,unsigned mersenne) {
     __m256i j=_mm256_loadu_si256((const __m256i *)(columns+entry*4));
     __m256i b;
     if(width==1) b=_mm256_cvtepu8_epi32(_mm_loadl_epi64((const __m128i *)(coefficients+entry)));
@@ -114,9 +114,9 @@ static inline unsigned hex_scan8(uint8_t *dense,const uint8_t *columns,const uin
         __m256i q=_mm256_or_si256(even,_mm256_slli_epi64(odd,32));
         product=_mm256_sub_epi32(x,_mm256_mullo_epi32(q,pv));
         product=_mm256_sub_epi32(product,_mm256_and_si256(_mm256_cmpgt_epi32(product,_mm256_set1_epi32((int32_t)p-1)),pv));
-    } else if(p==INT32_MAX && contiguous) {
+    } else if(mersenne && contiguous) {
         HEX_GROEBNER_MERSENNE_USED();
-        /* The existing caller supplies factor*2^32 mod p. Since2^32=2 mod p,
+        /* The existing caller supplies factor*2^32 mod p. Since 2^32=2 mod p,
            recover factor by modular halving without changing the ABI. */
         uint32_t canonical=(multiplier>>1)+(multiplier&1)*UINT32_C(1073741824);
         __m256i f31=_mm256_set1_epi64x(canonical);
@@ -146,6 +146,21 @@ static inline unsigned hex_scan8(uint8_t *dense,const uint8_t *columns,const uin
     for(unsigned k=0;k<8;++k) memcpy(dense+(size_t)indices[k]*width,&values[k],width);
     return 8;
 }
+/* The generic instantiation has no Mersenne branch after inlining. */
+__attribute__((target("avx2"),always_inline))
+static inline unsigned hex_scan8(uint8_t *dense,const uint8_t *columns,const uint8_t *coefficients,
+        size_t entry,uint64_t column_count,uint32_t p,uint32_t multiplier,uint32_t reduction,unsigned width) {
+    return hex_scan8_mode(dense,columns,coefficients,entry,column_count,p,multiplier,reduction,width,0);
+}
+
+/* Selected once per bounded transition, only for the largest admitted prime. */
+__attribute__((target("avx2"),always_inline))
+static inline unsigned hex_scan8_m31(uint8_t *dense,const uint8_t *columns,const uint8_t *coefficients,
+        size_t entry,uint64_t column_count,uint32_t p,uint32_t multiplier,uint32_t reduction,unsigned width) {
+    if(p!=INT32_MAX || width!=4) return 0;
+    return hex_scan8_mode(dense,columns,coefficients,entry,column_count,p,multiplier,reduction,width,1);
+}
+
 #else
 #define HEX_GROEBNER_AVX2 0
 #endif

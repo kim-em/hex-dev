@@ -8,6 +8,8 @@
 #ifdef NDEBUG
 #undef NDEBUG
 #endif
+static unsigned mersenne_products=0;
+#define HEX_GROEBNER_MERSENNE_USED() (++mersenne_products)
 #include "matrix_simd.h"
 #if HEX_GROEBNER_AVX2 && (defined(__unix__) || defined(__APPLE__))
 #include <sys/mman.h>
@@ -22,6 +24,39 @@ static uint32_t random32(void) {
     random_state^=random_state<<13;random_state^=random_state>>7;random_state^=random_state<<17;
     return (uint32_t)random_state;
 }
+__attribute__((target("avx2"),always_inline))
+static inline unsigned checked_scan8(uint8_t *dense,const uint8_t *columns,const uint8_t *coefficients,
+        size_t entry,uint64_t column_count,uint32_t p,uint32_t multiplier,uint32_t reduction,unsigned width) {
+    return p==INT32_MAX?hex_scan8_m31(dense,columns,coefficients,entry,column_count,p,multiplier,reduction,width):
+        hex_scan8(dense,columns,coefficients,entry,column_count,p,multiplier,reduction,width);
+}
+
+__attribute__((target("avx2")))
+static void check_mersenne_products(void) {
+    const uint32_t p=INT32_MAX;
+    uint32_t factors[]={0,1,2,1073741823,1073741824,INT32_MAX-1};
+    uint32_t coefficients[]={1,2,1073741824,1073741825,INT32_MAX-1};
+    uint32_t columns[8]={0,1,2,3,4,5,6,7},b[8],dense[8],generic[8],expected[8];
+    unsigned before=mersenne_products;
+    for(unsigned i=0;i<sizeof(factors)/sizeof(factors[0]);++i)
+        for(unsigned j=0;j<sizeof(coefficients)/sizeof(coefficients[0]);++j) {
+            uint32_t factor=factors[i],coefficient=coefficients[j];
+            uint32_t product=(uint32_t)((uint64_t)factor*coefficient%p);
+            for(unsigned k=0;k<8;++k) {
+                b[k]=coefficient;
+                dense[k]=k%4==0?0:k%4==1?p-1:k%4==2?product:(product+1)%p;
+                expected[k]=(uint32_t)((dense[k]+(uint64_t)p-product)%p);
+            }
+            memcpy(generic,dense,sizeof(dense));
+            uint32_t m=(uint32_t)(((uint64_t)factor<<32)%p),inverse=hex_mont32_inverse(p);
+            assert(hex_scan8_m31((uint8_t*)dense,(uint8_t*)columns,(uint8_t*)b,0,8,p,m,inverse,4)==8);
+            assert(hex_scan8((uint8_t*)generic,(uint8_t*)columns,(uint8_t*)b,0,8,p,m,inverse,4)==8);
+            assert(memcmp(expected,dense,sizeof(dense))==0);
+            assert(memcmp(expected,generic,sizeof(generic))==0);
+        }
+    assert(mersenne_products>before);
+}
+
 __attribute__((target("avx2")))
 static void check(uint32_t p,uint32_t factor) {
     uint32_t inverse=hex_mont32_inverse(p);
@@ -37,23 +72,23 @@ static void check(uint32_t p,uint32_t factor) {
         expected[cols[k]]=(uint32_t)((expected[cols[k]]+(uint64_t)p-product)%p);
     }
     for(unsigned entry=0;entry<16;entry+=8)
-        assert(hex_scan8((uint8_t*)dense,(uint8_t*)cols,(uint8_t*)coeff,entry,128,p,f,inverse,4)==8);
+        assert(checked_scan8((uint8_t*)dense,(uint8_t*)cols,(uint8_t*)coeff,entry,128,p,f,inverse,4)==8);
     assert(memcmp(expected,dense,sizeof(dense))==0);
     for(unsigned bad=0;bad<8;++bad) {
         uint32_t saved=coeff[bad];coeff[bad]=p;
         memcpy(expected,dense,sizeof(dense));
-        assert(hex_scan8((uint8_t*)dense,(uint8_t*)cols,(uint8_t*)coeff,0,128,p,f,inverse,4)==0);
+        assert(checked_scan8((uint8_t*)dense,(uint8_t*)cols,(uint8_t*)coeff,0,128,p,f,inverse,4)==0);
         assert(memcmp(expected,dense,sizeof(dense))==0);coeff[bad]=saved;
         saved=dense[cols[bad]];dense[cols[bad]]=p;
         memcpy(expected,dense,sizeof(dense));
-        assert(hex_scan8((uint8_t*)dense,(uint8_t*)cols,(uint8_t*)coeff,0,128,p,f,inverse,4)==0);
+        assert(checked_scan8((uint8_t*)dense,(uint8_t*)cols,(uint8_t*)coeff,0,128,p,f,inverse,4)==0);
         assert(memcmp(expected,dense,sizeof(dense))==0);dense[cols[bad]]=saved;
     }
     uint32_t saved=cols[4];cols[4]=cols[3];memcpy(expected,dense,sizeof(dense));
-    assert(hex_scan8((uint8_t*)dense,(uint8_t*)cols,(uint8_t*)coeff,0,128,p,f,inverse,4)==0);
+    assert(checked_scan8((uint8_t*)dense,(uint8_t*)cols,(uint8_t*)coeff,0,128,p,f,inverse,4)==0);
     assert(memcmp(expected,dense,sizeof(dense))==0);cols[4]=saved;
     cols[7]=UINT32_MAX;
-    assert(hex_scan8((uint8_t*)dense,(uint8_t*)cols,(uint8_t*)coeff,0,128,p,f,inverse,4)==0);
+    assert(checked_scan8((uint8_t*)dense,(uint8_t*)cols,(uint8_t*)coeff,0,128,p,f,inverse,4)==0);
 }
 /* Exhaust all odd one-byte moduli, factors and nonzero coefficients. Each
    vector checks subtraction at zero, p-1, the product and adjacent residues.
@@ -72,7 +107,7 @@ static void check_u8_products(void) {
                     coefficients[i]=(uint8_t)b;dense[i]=(uint8_t)a;
                     expected[i]=(uint8_t)((a+p-product)%p);
                 }
-                assert(hex_scan8(dense,(const uint8_t*)columns,coefficients,0,8,
+                assert(checked_scan8(dense,(const uint8_t*)columns,coefficients,0,8,
                     p,factor,reciprocal,1)==8);
                 assert(memcmp(dense,expected,sizeof(dense))==0);
             }
@@ -108,20 +143,20 @@ static void check_guard_pages(uint32_t p,unsigned stride,unsigned at_end) {
             (uint64_t)factor*coefficients[i]%p)%p);
     memcpy(d.data,dense,sizeof(dense));memcpy(c.data,columns,sizeof(columns));
     memcpy(v.data,coefficients,sizeof(coefficients));
-    assert(hex_scan8(d.data,c.data,v.data,0,128,p,f,inverse,4)==8);
-    assert(hex_scan8(d.data,c.data,v.data,8,128,p,f,inverse,4)==8);
+    assert(checked_scan8(d.data,c.data,v.data,0,128,p,f,inverse,4)==8);
+    assert(checked_scan8(d.data,c.data,v.data,8,128,p,f,inverse,4)==8);
     assert(memcmp(d.data,expected,sizeof(expected))==0);
     /* Every source ends at its guard page; the last valid dense column is 127.
        Invalid vectors must return before any gather or store. */
     columns[15]=128;memcpy(c.data,columns,sizeof(columns));
-    assert(hex_scan8(d.data,c.data,v.data,8,128,p,f,inverse,4)==0);
+    assert(checked_scan8(d.data,c.data,v.data,8,128,p,f,inverse,4)==0);
     assert(memcmp(d.data,expected,sizeof(expected))==0);
     columns[15]=127;columns[12]=UINT32_MAX;memcpy(c.data,columns,sizeof(columns));
-    assert(hex_scan8(d.data,c.data,v.data,8,128,p,f,inverse,4)==0);
+    assert(checked_scan8(d.data,c.data,v.data,8,128,p,f,inverse,4)==0);
     assert(memcmp(d.data,expected,sizeof(expected))==0);
     columns[12]=127-3*stride;coefficients[15]=p;
     memcpy(c.data,columns,sizeof(columns));memcpy(v.data,coefficients,sizeof(coefficients));
-    assert(hex_scan8(d.data,c.data,v.data,8,128,p,f,inverse,4)==0);
+    assert(checked_scan8(d.data,c.data,v.data,8,128,p,f,inverse,4)==0);
     assert(memcmp(d.data,expected,sizeof(expected))==0);
     release(d);release(c);release(v);
 }
@@ -140,7 +175,7 @@ static void check_narrow(uint32_t p,uint32_t factor,unsigned stride,unsigned pad
  if(w==4) assert((uint32_t)(inverse*p)==UINT32_MAX);
  for(unsigned entry=0;entry<16;entry+=8) {
   memcpy(before,d.data,128*w);
-  unsigned n=hex_scan8(d.data,c.data,v.data,entry,128,p,f,inverse,w);
+  unsigned n=checked_scan8(d.data,c.data,v.data,entry,128,p,f,inverse,w);
   unsigned should= (stride==1 || 128-columns[entry+7]>=4/w)?8:0;
   assert(n==should);
   if(n) for(unsigned i=entry;i<entry+8;++i) {
@@ -151,20 +186,22 @@ static void check_narrow(uint32_t p,uint32_t factor,unsigned stride,unsigned pad
  }
  for(unsigned bad=0;bad<8;++bad) {
   uint32_t saved=coefficients[bad];write_value(v.data,w,bad,p);memcpy(before,d.data,128*w);
-  assert(hex_scan8(d.data,c.data,v.data,0,128,p,f,inverse,w)==0);assert(memcmp(before,d.data,128*w)==0);write_value(v.data,w,bad,saved);
+  assert(checked_scan8(d.data,c.data,v.data,0,128,p,f,inverse,w)==0);assert(memcmp(before,d.data,128*w)==0);write_value(v.data,w,bad,saved);
   saved=read_value(d.data,w,columns[bad]);write_value(d.data,w,columns[bad],p);memcpy(before,d.data,128*w);
-  assert(hex_scan8(d.data,c.data,v.data,0,128,p,f,inverse,w)==0);assert(memcmp(before,d.data,128*w)==0);write_value(d.data,w,columns[bad],saved);
+  assert(checked_scan8(d.data,c.data,v.data,0,128,p,f,inverse,w)==0);assert(memcmp(before,d.data,128*w)==0);write_value(d.data,w,columns[bad],saved);
  }
  columns[15]=128;memcpy(c.data,columns,sizeof(columns));memcpy(before,d.data,128*w);
- assert(hex_scan8(d.data,c.data,v.data,8,128,p,f,inverse,w)==0);assert(memcmp(before,d.data,128*w)==0);
+ assert(checked_scan8(d.data,c.data,v.data,8,128,p,f,inverse,w)==0);assert(memcmp(before,d.data,128*w)==0);
  release(d);release(c);release(v);
 }
 #endif
 
 #endif
 int main(void) {
+    (void)mersenne_products;
 #if HEX_GROEBNER_AVX2
     if(hex_avx2_available()) {
+        check_mersenne_products();
         check_u8_products();
         puts("exhaustive odd one-byte modulus products: passed");
         uint32_t fields[]={65537,65539,131071,1000003,1000000007,2147483629,2147483647};

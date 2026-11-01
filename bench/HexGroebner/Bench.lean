@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexGroebner
+import HexGroebner.Bench.Cauchy
 import HexGroebner.Bench.Mersenne
 import HexArith.Montgomery.Context
 import LeanBench
@@ -23,29 +24,6 @@ def field : PrimeField :=
 /-- Primes exercising one- and two-byte coefficient storage. -/
 def field8 : PrimeField := ⟨251, Hex.Nat.isPrimeTrial_isPrime (by decide), by decide⟩
 def field16 : PrimeField := ⟨32003, Hex.Nat.isPrimeTrial_isPrime (by decide), by decide⟩
-
-/-- Immutable packed input, with the first half of the rows serving as reducers. -/
-structure Input where
-  columns : Nat
-  reducers : Array SparseRow
-  targets : Array SparseRow
-  deriving Hashable
-
-/-- Hilbert entries `1 / (i + j + 1)` over the prime field. For the registered
-domain `2*n < p`, all square minors are nonzero. Every elimination update visits
-a dense trailing support, without rank defects or accidental zero pivots. -/
-private def prepareOver (coefficientField : PrimeField) (n : Nat) : Input := Id.run do
-  let mut rows := #[]
-  for i in [:n] do
-    let mut row : SparseRow := {}
-    for j in [:n] do
-      let c := (HexArith.powMod (i + j + 1) (coefficientField.modulus.toNat - 2)
-        coefficientField.modulus.toNat).toUInt64
-      row := {
-        columns := Packed.push .u32 row.columns j.toUInt64
-        coefficients := Packed.push coefficientField.width row.coefficients c }
-    rows := rows.push row
-  return ⟨n, rows.extract 0 (n / 2), rows.extract (n / 2) n⟩
 
 /-- The original four-byte Cauchy family. -/
 def prepare (n : Nat) : Input := prepareOver field n
@@ -82,13 +60,6 @@ sizes satisfy `2*n < p`, so every square minor is nonzero. -/
 def prepare8 (n : Nat) : Input := prepareOver field8 n
 def prepare16 (n : Nat) : Input := prepareOver field16 n
 
-private def cauchyOver (coefficientField : PrimeField) (input : Input) :
-    Bool × Array (Array (Nat × UInt64)) :=
-  match (eliminateWith coefficientField { work := 1000000000 }
-      input.columns input.reducers input.targets).result with
-  | .ok e => (e.rows.size == input.reducers.size + input.targets.size, e.rows.map (·.row.entries coefficientField))
-  | .error _ => (false, #[])
-
 /-- Identical matrix construction and complete-output hashing at modulus 251. -/
 def cauchy8 (input : Input) := cauchyOver field8 input
 
@@ -98,14 +69,7 @@ def cauchy16 (input : Input) := cauchyOver field16 input
 /-- The same Cauchy coefficients in even-numbered columns. Every vector with
 at least eight remaining entries uses a strided gather; trailing padding permits
 its full four-byte reads. The matrix has full row rank and zero odd columns. -/
-def prepare16Strided (n : Nat) : Input := Id.run do
-  let input := prepare16 n
-  let remap (row : SparseRow) : SparseRow := Id.run do
-    let mut columns := ByteArray.emptyWithCapacity row.columns.size
-    for i in [:row.size] do
-      columns := Packed.push .u32 columns (2 * Packed.read .u32 row.columns i)
-    return { row with columns }
-  return ⟨2*n+3, input.reducers.map remap, input.targets.map remap⟩
+def prepare16Strided (n : Nat) : Input := prepareStridedOver field16 n
 
 /-- Full decoded strided output, with the same arithmetic as `cauchy16`. -/
 def cauchy16Strided (input : Input) := cauchyOver field16 input

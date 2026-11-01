@@ -78,8 +78,10 @@ def run() -> None:
 static uint64_t mersenne_vectors=0;
 #define HEX_GROEBNER_MERSENNE_USED() (++mersenne_vectors)
 #define hex_scan8 hex_test_scan8_base
+#define hex_scan8_m31 hex_test_scan8_m31_base
 #include HEADER
 #undef hex_scan8
+#undef hex_scan8_m31
 static uint64_t vector_contiguous=0,vector_gather=0;
 static uint32_t vector_widths=0;
 #if HEX_GROEBNER_AVX2
@@ -95,7 +97,19 @@ static inline unsigned hex_test_scan8_counted(uint8_t *dense,const uint8_t *colu
   vector_widths|=1u<<(2*group+(last-first!=7));}
  return n;
 }
+__attribute__((target("avx2"),always_inline))
+static inline unsigned hex_test_scan8_m31_counted(uint8_t *dense,const uint8_t *columns,
+ const uint8_t *coefficients,size_t entry,uint64_t column_count,uint32_t p,
+ uint32_t multiplier,uint32_t reduction,unsigned width) {
+ unsigned n=hex_test_scan8_m31_base(dense,columns,coefficients,entry,column_count,p,multiplier,reduction,width);
+ if(n) {uint32_t first,last;memcpy(&first,columns+entry*4,4);memcpy(&last,columns+(entry+7)*4,4);
+  if(last-first==7) ++vector_contiguous;else ++vector_gather;
+  unsigned group=width==1?0:width==2?1:2;
+  vector_widths|=1u<<(2*group+(last-first!=7));}
+ return n;
+}
 #define hex_scan8 hex_test_scan8_counted
+#define hex_scan8_m31 hex_test_scan8_m31_counted
 #endif
 #define lean_hex_scan_transition hex_test_scan
 #define lean_hex_gather hex_test_gather
