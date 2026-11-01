@@ -504,8 +504,9 @@ cube root `a` of `ε`, both `a > ε` and `a² > ε` hold, whereas `a⁴ > ε` is
 false. A second positive infinitesimal `δ` satisfies `δ < ε` and `δ < ε^10`.
 
 Adding `δ` enlarges the actual context containing the cube root. The example
-retains the earlier square root, cube root and all seven computed cubic values;
-it checks the transported equation and signs. The
+retains the earlier square-root descriptor in the enlarged context. It
+transports all seven computed cubic values, including the cube root, then
+checks the transported equation and signs. The
 [comparison record](https://github.com/kim-em/hex-dev/blob/main/reports/real-closure-original-ex2/README.md)
 links the existing emitter, exact Z3 oracle and mutation controls. The original
 `10^28` comparison is separate from the retained `10^27` regression.
@@ -598,7 +599,7 @@ coefficient data, selected roots and arithmetic records.
 
 The existing nested fixture starts over two successive infinitesimals `ε`
 and `δ`. It selects a root `α` of `X - (ε + δ)`, then the positive selected
-root of `Y² - α`. Its public theorem `GuardJointPublic.exists_points` gives
+root of `Y² - α`. Its exported theorem `GuardJointPublic.exists_points` gives
 one interpretation of the requested coefficient data and two real coordinates.
 The coefficient interpretation is a ring homomorphism on a subring containing
 the required finite inventory.
@@ -609,11 +610,14 @@ original guard and the computed native product.
 The ordinary-import consumer
 [`GuardJointUse.coordinates`](https://github.com/kim-em/hex-dev/blob/main/experiments/KernelReplay/GuardJointUse.lean)
 extracts those witnesses and proves both original defining-polynomial equations
-and the native square equation at them. Reuse that checked consumer; its
+and the native square equation at them. See that checked consumer and its
 [joint realization record](https://github.com/kim-em/hex-dev/blob/main/reports/real-closure-joint-replay.md)
 links the full proposition and the independent body/dependency audit. The audit
 checks the permitted standard-three axiom closure and excludes the older
 cached operand and whole-field reference construction.
+
+This experiment-tree fixture is checked locally. Routine CI builds its shared
+auditor and small controls, and the fixture is not part of a published library.
 
 This is a fixed two-level example. The general recursive exporter for
 arbitrary interleaved live collections, direct `Sample.realizeReplay`, strict

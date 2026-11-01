@@ -60,6 +60,8 @@ for its original guards and computed product together. Its ordinary-import
 consumer derives both original root equations and the native square equation
 at those witnesses. This fixed example does not supply the general exporter
 or an ordinary-real embedding of the infinitesimal field.
+The full fixture is checked locally; CI builds its shared auditor and small
+controls. Its experiment-tree declarations are not published library APIs.
 Producer totality is distinct from soundness of arbitrary accepted evidence.
 Source-expression divisors erased by cancellation remain the consumer's guards.
 
