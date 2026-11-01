@@ -130,8 +130,8 @@ def main():
     records = [json.loads(line) for line in
                (args.check.read_text() if args.check else sys.stdin.read()).splitlines()]
     from scripts.oracle.groebner_corpus import validate_corpus
-    validate_corpus(records)
-    check_available(records, args.require_oracles)
+    unique = validate_corpus(records)
+    check_available(unique, args.require_oracles)
 
 
 if __name__ == "__main__":

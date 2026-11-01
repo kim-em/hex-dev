@@ -409,8 +409,9 @@ independently certifies all 567 systems with each scheduling strategy, comparing
 indexed API separately certifies supplied candidates, exercises all phase
 allowances and resumes sealed computations with their original input identity.
 
-The 567-system F4 corpus has 1134 degree/sugar profiles. It compares complete
-reduced bases with SymPy F5B and,
+The 567-system F4 corpus has 1134 degree/sugar profiles. Exact problem and basis
+equality binds the paired profiles; each unique problem is checked once by
+SymPy F5B and,
 when available, Singular over
 seven primes and three orders. Cases include cyclic-3, Katsura-2, generated
 quadratic systems, positive-dimensional systems, nonmonic inputs, raw
@@ -476,6 +477,10 @@ Those stable monomials remain in the arena and count against `monomials` and
 route. Native execution, pair criteria, final reduction and batch-cap controls
 may change on resume; allowances remain absolute cumulative bounds. Scheduling
 is fixed when the computation starts and retained by its sealed continuations.
+
+Scheduling timing evidence currently covers grevlex only; relative lex/grlex
+performance remains unmeasured. All three orders have independent correctness
+coverage with both strategies.
 
 `Limits.scheduling` defaults to `.degree`, selecting the actual critical-pair
 LCM total degree; `.sugar` selects the propagated sugar degree. Both use stable

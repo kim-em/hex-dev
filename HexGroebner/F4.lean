@@ -236,7 +236,8 @@ private def decode (state : ResumeState) (limits : Limits) : Computation Candida
 
 /-- Resume under new absolute cumulative allowances. Used work is never reset;
 restarting an exhausted stage charges its work again. Identity is sealed inside
-the state, so resumption cannot change its field, order or generators. -/
+the state, so resumption cannot change its field, order, generators or scheduling.
+`limits.scheduling` is ignored in favor of the original state choice. -/
 def resumeWith (limits : Limits) (initial : ResumeState) : ComputeResult := Id.run do
   let limits := { limits with scheduling := initial.scheduling }
   let mut state := initial

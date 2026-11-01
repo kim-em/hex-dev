@@ -18,6 +18,7 @@ structure History where
   monomials : Nat
   monomialBytes : Nat
   basisSize : Nat
+  /-- Completed histories record the initial producer choice explicitly. -/
   scheduling : Scheduling := .degree
 
 def checkHistory (limits : Limits) (history : History) : Except ComputeError Unit := do
@@ -104,7 +105,8 @@ private def traceFailure (state : State) : Producer.Error → Outcome
   | .certificate resource => .certificateExhausted resource state
 
 /-- Traced F4 checkpoints retain all work/allocation, including failed attempts.
-Only successful stages commit new basis roots and derivation nodes. -/
+Only successful stages commit new basis roots and derivation nodes. The original
+scheduling remains fixed; `limits.scheduling` cannot change it on resumption. -/
 def resumeWith (limits : Limits) (nodeLimit : Nat) (initial : State)
     (termLimit : Nat := 1000000) (exponentBits : Nat := 64) : Outcome := Id.run do
   let limits := { limits with scheduling := initial.scheduling }
@@ -136,7 +138,9 @@ def resumeWith (limits : Limits) (nodeLimit : Nat) (initial : State)
     | .error error => return traceFailure { state with workspace := execution.workspace, derivation.allocatedTerms := execution.derivation.allocatedTerms, derivation.maxExponentBits := execution.derivation.maxExponentBits } error
   return fail state (.exhausted .rounds)
 
-/-- Start with explicit parent statistics; callers preserve cumulative counters. -/
+/-- Start with explicit parent statistics and an initial scheduling choice
+(default degree). Callers preserve cumulative counters. Later `resumeWith` calls
+retain this choice; pass `scheduling := .sugar` here to start a sugar computation. -/
 def begin (context : Context) (generators : Array RawPolynomial) (statistics : Statistics := {})
     (scheduling : Scheduling := .degree) : State :=
   ⟨context,generators,⟨{ arity := context.variables },statistics⟩,{},{},scheduling⟩

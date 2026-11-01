@@ -3,6 +3,8 @@ import copy
 import json
 from pathlib import Path
 import unittest
+import subprocess
+import sys
 
 from scripts.oracle.groebner_sympy import check
 from scripts.oracle.groebner_corpus import validate_corpus
@@ -16,27 +18,48 @@ class GroebnerOracleTests(unittest.TestCase):
         cls.cases = {r["case"]: r["value"] for r in cls.records}
 
     def test_complete_scheduling_profiles(self):
-        validate_corpus(self.records)
+        unique = validate_corpus(self.records)
+        self.assertEqual(len(unique), 567)
+        self.assertTrue(all(r["value"]["scheduling"] == "degree" for r in unique))
 
     def test_missing_scheduling_case(self):
-        with self.assertRaisesRegex(AssertionError, "incomplete"):
+        with self.assertRaisesRegex(ValueError, "incomplete"):
             validate_corpus(self.records[:-1])
 
     def test_duplicate_scheduling_case(self):
-        with self.assertRaisesRegex(AssertionError, "duplicate"):
+        with self.assertRaisesRegex(ValueError, "duplicate"):
             validate_corpus(self.records + self.records[:1])
 
     def test_incompatible_scheduling_problem(self):
         rows = copy.deepcopy(self.records)
         next(r for r in rows if r["value"]["scheduling"] == "sugar")["value"]["p"] = 3
-        with self.assertRaisesRegex(AssertionError, "scheduling changes p"):
+        with self.assertRaisesRegex(ValueError, "scheduling changes p"):
             validate_corpus(rows)
 
     def test_wrong_scheduling_metadata(self):
         rows = copy.deepcopy(self.records)
         rows[0]["value"]["scheduling"] = "sugar"
-        with self.assertRaisesRegex(AssertionError, "scheduling case mismatch"):
+        with self.assertRaisesRegex(ValueError, "scheduling case mismatch"):
             validate_corpus(rows)
+
+    def test_missing_scheduling_metadata(self):
+        rows = copy.deepcopy(self.records)
+        del rows[0]["value"]["scheduling"]
+        with self.assertRaisesRegex(ValueError, "missing scheduling metadata"):
+            validate_corpus(rows)
+
+    def test_invalid_sugar_header(self):
+        rows = copy.deepcopy(self.records)
+        next(r for r in rows if r["value"]["scheduling"] == "sugar")["op"] = "other"
+        with self.assertRaisesRegex(ValueError, "invalid F4 record header"):
+            validate_corpus(rows)
+
+    def test_optimized_validation(self):
+        result = subprocess.run([sys.executable, "-O", "-c",
+            "from scripts.oracle.groebner_corpus import validate_corpus; validate_corpus([])"],
+            capture_output=True, text=True)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("ValueError: incomplete scheduling corpus", result.stderr)
 
     def test_valid_basis(self):
         check(self.cases["p3/grevlex/missing-s-pair"])

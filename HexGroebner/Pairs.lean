@@ -24,7 +24,8 @@ structure CriticalPair where
   right : Nat
   lcm : Nat
   sugar : Nat
-  /-- Cached scheduling key, distinct from the propagated sugar label. -/
+  /-- Cached scheduling key, distinct from the propagated sugar label. Queue
+  installation supplies it explicitly; manually constructed pairs default to sugar. -/
   priority : Nat := sugar
   deriving Inhabited
 

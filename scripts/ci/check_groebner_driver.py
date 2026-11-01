@@ -38,7 +38,8 @@ def check(binary: Path) -> list[dict]:
             expected = record["value"]
             scheduling = expected["scheduling"]
             assert scheduling in ["degree", "sugar"]
-            selection = ["--scheduling", scheduling]
+            # Degree profiles deliberately check the unflagged default.
+            selection = [] if scheduling == "degree" else ["--scheduling", scheduling]
             value = invoke({key: expected[key] for key in ["p", "variables", "order", "generators"]}, selection)
             assert value["basis"] == expected["basis"], record["case"]
             assert value["batchSize"] == expected["batchSize"], record["case"]
@@ -56,7 +57,9 @@ def check(binary: Path) -> list[dict]:
                 assert value["statistics"][key] == expected[key], (record["case"], key)
 
         unit = {"p": 7, "variables": 1, "order": "grevlex", "generators": [[[[0], 2]]]}
-        assert invoke(unit)["basis"] == [[[[0], 1]]]
+        default = invoke(unit)
+        assert default["scheduling"] == "degree" and default["basis"] == [[[[0], 1]]]
+        assert invoke(unit, ["--scheduling", "sugar", "--scheduling", "degree"])["scheduling"] == "degree"
         assert invoke({**unit, "generators": []})["basis"] == []
         assert invoke({**unit, "generators": [[]]})["basis"] == []
         ordinary_two = {**unit, "p": 2, "generators": [[[[2], 1], [[1], 1]]]}
