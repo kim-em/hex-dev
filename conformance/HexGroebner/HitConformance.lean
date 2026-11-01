@@ -28,7 +28,7 @@ private def sameAttempt (a b : MonomialTable.Attempt) : Bool :=
 /-- Compare the fused native path with its full reference, including every
 returned byte, aliases, budget prefixes, hash collisions and fallback arities. -/
 def runtimeChecks (seed : Nat) : Bool := Id.run do
-  for arity in [1,2,5,65,2048,2049,4096] do
+  for arity in [1,2,5,65,2047,2048,2049,4096] do
     for hashBits in [0,3,64] do
       for count in [13,30,32] do
         let mut table : MonomialTable := { arity, hashBits }
@@ -85,5 +85,53 @@ def malformedChecks (seed : Nat) : Bool := Id.run do
 #guard malformedChecks 0
 
 #guard runtimeChecks 0
+
+/-- Build independently allocated equal tables with spare index and exponent
+capacity. Inputs differing by seven have equal values without sharing buffers. -/
+@[noinline] private def ownedTable (seed : Nat) (alias : Bool) : Option MonomialTable := Id.run do
+  let mut table : MonomialTable := { arity := 1, hashBits := 0 }
+  for id in [:32] do
+    let next := table.internOwned #[(id+1+seed%7).toUInt64] 100 1000000
+    if !next.result.isOk then return none
+    table := next.table
+  let mut heads := ByteArray.emptyWithCapacity 512
+  for _ in [:512] do heads := heads.push 0
+  let mut index : MonomialIndex := { heads }
+  for id in [:32] do index := index.insert id (table.hashAt id) table.hashAt
+  let mut exponents := ByteArray.emptyWithCapacity 128
+  for id in [:32] do exponents := exponents.push (id+1+seed%7).toUInt8
+  let workspace := if alias then exponents else ByteArray.empty
+  return some { table with index, exponents, workspace }
+
+/-- Consume independent equal tables so native mutation is compared directly
+with the reference, including workspace/exponent aliasing and insertion bounds.
+The compiled harness requires an accepted unique-table aliased insertion. -/
+def ownedChecks (seed : Nat) : Bool := Id.run do
+  for alias in [false,true] do
+    for operation in [MonomialTable.Operation.lcm,.product] do
+      let some input := ownedTable (seed+7) alias | return false
+      let bytes := input.bytes
+      let initial := input.work
+      let .accepted expected := input.attemptPortable operation 31 31 100 1000000 1000000 true
+        | return false
+      if !expected.result.isOk then return false
+      let outputBytes := expected.table.bytes
+      let totalWork := expected.table.work
+      for count in [31,32,33,100,2^90] do
+        for limit in [0,bytes-1,bytes,outputBytes-1,outputBytes,1000000,2^90] do
+          let some reference := ownedTable (seed+7) alias | return false
+          let expected := reference.attemptPortable operation 31 31 count limit 1000000 true
+          let some actual := ownedTable seed alias | return false
+          let actual := actual.attempt operation 31 31 count limit 1000000 true
+          if !sameAttempt actual expected then return false
+      for work in [0,initial-1,initial,initial+1,totalWork-1,totalWork,totalWork+1,2^90] do
+        let some reference := ownedTable (seed+7) alias | return false
+        let expected := reference.attemptPortable operation 31 31 100 1000000 work true
+        let some actual := ownedTable seed alias | return false
+        let actual := actual.attempt operation 31 31 100 1000000 work true
+        if !sameAttempt actual expected then return false
+  return true
+
+#guard ownedChecks 0
 
 end Hex.Groebner.HitConformance

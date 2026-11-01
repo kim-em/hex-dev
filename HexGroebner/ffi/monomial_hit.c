@@ -11,6 +11,13 @@
 #define HEX_GROEBNER_HIT_FOUND() ((void)0)
 #endif
 
+#ifndef HEX_GROEBNER_DEFERRED
+#define HEX_GROEBNER_DEFERRED() ((void)0)
+#endif
+#ifndef HEX_GROEBNER_UNIQUE_ALIAS
+#define HEX_GROEBNER_UNIQUE_ALIAS() ((void)0)
+#endif
+
 #ifndef HEX_GROEBNER_INSERT_FOUND
 #define HEX_GROEBNER_INSERT_FOUND() ((void)0)
 #endif
@@ -32,7 +39,7 @@ static lean_obj_res hit_extend(lean_obj_arg bytes,size_t size) {
     }
     size_t capacity=old<=SIZE_MAX/2?old*2:size;
     if(capacity<size) capacity=size;
-    bytes=lean_copy_sarray(bytes,capacity);
+    bytes=lean_copy_sarray_nonlinear(bytes,capacity);
     lean_sarray_set_size(bytes,size);return bytes;
 }
 static void hit_write64(uint8_t *p,uint64_t value) {
@@ -43,7 +50,7 @@ static void hit_write64(uint8_t *p,uint64_t value) {
    inputs and every error or growth boundary return deferred input unchanged.
    The stack workspace plus candidate comparisons visit at most4096 coordinates;
    chain headers are limited to4096 as well. */
-LEAN_EXPORT lean_obj_res lean_hex_groebner_combine_hit(lean_obj_arg table,uint8_t operation,
+static lean_obj_res hit_compute(lean_obj_arg table,uint8_t operation,
         lean_obj_arg a,lean_obj_arg b,lean_obj_arg max_count,lean_obj_arg max_bytes,
         lean_obj_arg max_work,lean_obj_arg initial_work) {
     lean_object *arity_arg=lean_ctor_get(table,0),*count_arg=lean_ctor_get(table,3);
@@ -60,13 +67,13 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_combine_hit(lean_obj_arg table,uint8_
     lean_object *index=lean_ctor_get(table,5),*workspace=lean_ctor_get(table,4);
     lean_object *heads=lean_ctor_get(index,0),*links=lean_ctor_get(index,1);
     size_t head_bytes=lean_sarray_size(heads),capacity=head_bytes/4,size;
-    if(!arity || arity>2048 || count>UINT32_MAX || bits>64 || operation>2 ||
+    if(!arity || arity>2047 || count>UINT32_MAX || bits>64 || operation>2 ||
        left>=count || right>=count || work>allowance || arity>allowance-work ||
        head_bytes%4 || !capacity || (capacity&(capacity-1)) || capacity<count*2 ||
        lean_sarray_size(metadata)!=count*24 || lean_sarray_size(links)!=count*4)
         goto fallback;
     size=(size_t)arity*4+28;
-    uint8_t prepared[2048*4+28];
+    uint8_t prepared[2047*4+28];
     if(!prepare_monomial(operation,width,arity,count,left,right,
         lean_sarray_cptr(exponents),lean_sarray_size(exponents),prepared,size)) goto fallback;
     work+=arity;
@@ -108,6 +115,8 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_combine_hit(lean_obj_arg table,uint8_
        caller aliases retain their own references and force a copy. */
     lean_object *fields[8],*updated;
     int exclusive=lean_is_exclusive(table);
+    if(exclusive && append && workspace==exponents && lean_sarray_size(workspace)==size)
+        HEX_GROEBNER_UNIQUE_ALIAS();
     for(unsigned i=0;i<8;++i) {
         fields[i]=lean_ctor_get(table,i);
         if(!exclusive) lean_inc(fields[i]);
@@ -147,6 +156,7 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_combine_hit(lean_obj_arg table,uint8_
     lean_object *accepted=lean_alloc_ctor(0,1,0);lean_ctor_set(accepted,0,result);
     return accepted;
 fallback:
+    HEX_GROEBNER_DEFERRED();
     lean_dec(a);lean_dec(b);lean_dec(max_count);lean_dec(max_bytes);lean_dec(max_work);lean_dec(initial_work);
     lean_object *deferred=lean_alloc_ctor(1,1,0);lean_ctor_set(deferred,0,table);return deferred;
 }
@@ -167,7 +177,7 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_combine_owned(lean_obj_arg table,uint
     lean_object *workspace=lean_ctor_get(table,4),*index=lean_ctor_get(table,5);
     lean_object *heads=lean_ctor_get(index,0),*links=lean_ctor_get(index,1);
     size_t head_bytes=lean_sarray_size(heads),capacity=head_bytes/4;
-    if(!arity || arity>2048 || !count || count>UINT32_MAX || left>=count || right>=count ||
+    if(!arity || arity>2047 || !count || count>UINT32_MAX || left>=count || right>=count ||
        lean_sarray_size(exponents)!=count*arity*width || lean_sarray_size(metadata)!=count*24 ||
        lean_sarray_size(links)!=count*4 || head_bytes%4 || capacity<count*2 ||
        (capacity&(capacity-1)) || work>allowed || arity>allowed-work) goto fallback_owned;
@@ -179,9 +189,10 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_combine_owned(lean_obj_arg table,uint
     if(reserved>UINT64_MAX-bytes) goto fallback_owned;
     bytes+=reserved;
     if(bytes>lean_unbox(max_bytes) || bytes>=SIZE_MAX) goto fallback_owned;
-    return lean_hex_groebner_combine_hit(table,operation,a,b,max_count,max_bytes,max_work,
+    return hit_compute(table,operation,a,b,max_count,max_bytes,max_work,
         lean_uint64_to_nat(work+arity));
 fallback_owned:
+    HEX_GROEBNER_DEFERRED();
     lean_dec(a);lean_dec(b);lean_dec(max_count);lean_dec(max_bytes);lean_dec(max_work);
     lean_object *deferred=lean_alloc_ctor(1,1,0);lean_ctor_set(deferred,0,table);return deferred;
 }

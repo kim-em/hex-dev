@@ -76,7 +76,7 @@ old arena; rebuilding visits identifiers in increasing order, deterministically.
   if capacity != index.capacity then
     let mut heads := ByteArray.emptyWithCapacity (capacity * 4)
     for _ in [:capacity * 4] do heads := heads.push 0
-    let mut rebuilt : MonomialIndex := ⟨heads, ByteArray.emptyWithCapacity (count * 4)⟩
+    let mut rebuilt : MonomialIndex := ⟨heads, ByteArray.emptyWithCapacity ((count + 1) * 4)⟩
     for id in [:count] do
       let hash := hashAt id
       let head := rebuilt.head hash

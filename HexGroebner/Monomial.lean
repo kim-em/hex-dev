@@ -62,11 +62,13 @@ structure MonomialTable where
   index : MonomialIndex := {}
   /-- Reducing hash bits is useful for exact-collision conformance tests. -/
   hashBits : Nat := 64
-  /-- Cumulative exponent visits and collision comparisons. -/
+  /-- Cumulative work: one unit per visited exponent or chain link, two per
+  insertion, and `capacity + 3 * count` when rebuilding the packed index.
+  Validation, preparation and widening each charge their exponent visits. -/
   work : Nat := 0
 
 /-- Owned operations always return the table, on success and failure. This
-avoids retaining a rollback alias while growing its packed buffers/hash map.
+avoids retaining a rollback alias while growing its packed buffers and index.
 On failure, `MonomialFailure.work` is the full charged counter; `table.work`
 retains the portable interning boundary's counter. -/
 structure InternResult where
@@ -310,7 +312,7 @@ private def combinePacked (table : MonomialTable) (operation : Operation) (a b :
   return append { table with workspace := prepared } width degree mask hash
     (fun i => Packed.read .u32 prepared i) work maxCount maxBytes maxWork
 
-/-- Portable packed operation exported for native fast-path fallback. -/
+/-- Portable packed operation used after a bounded native attempt defers. -/
 def packedReference (table : MonomialTable) (operation : Operation) (a b : Nat)
     (maxCount maxBytes maxWork work : Nat) : InternResult :=
   combinePacked table operation a b maxCount maxBytes maxWork work
@@ -347,7 +349,7 @@ same exponent width, index capacity and bounded work quantum. -/
     table.metadata.size == table.count * 24 && table.index.shape table.count
   if !native || !small table.arity || !small table.count || !small table.hashBits ||
       !small table.work || !small a || !small b || !small maxBytes || !small maxWork ||
-      table.arity == 0 || table.arity > 2048 || table.count == 0 || table.count > 4294967295 ||
+      table.arity == 0 || table.arity > 2047 || table.count == 0 || table.count > 4294967295 ||
       table.hashBits > 64 || a ≥ table.count || b ≥ table.count || !shape ||
       table.work + table.arity > maxWork || table.bytes > maxBytes ||
       table.bytes + 1 ≥ USize.size then return .deferred table

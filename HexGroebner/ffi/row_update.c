@@ -34,7 +34,7 @@ static inline void write_le(uint8_t *p, unsigned width, uint64_t value) {
 }
 
 /* Geometry validation is shared by the Lean wrapper and the standalone probe. */
-static unsigned row_shape(uint64_t modulus, size_t dense_bytes, size_t column_bytes,
+static inline unsigned row_shape(uint64_t modulus, size_t dense_bytes, size_t column_bytes,
                           size_t coefficient_bytes, size_t start, size_t count,
                           uint64_t factor) {
     if (modulus < 2 || modulus >= UINT64_C(2147483648) ||
@@ -50,7 +50,7 @@ static unsigned row_shape(uint64_t modulus, size_t dense_bytes, size_t column_by
 /* Buffers have the validated geometry and out does not alias either input.
    A failed residue/index check may leave partial internal work in out; callers
    discard it and never return a partial buffer as a successful result. */
-static int update_bytes(uint64_t modulus, unsigned width, uint8_t *out,
+static inline int update_bytes(uint64_t modulus, unsigned width, uint8_t *out,
                         size_t dense_bytes, const uint8_t *cols, const uint8_t *coeffs,
                         size_t start, size_t count, uint64_t factor) {
     size_t dense_elements = dense_bytes / width;
@@ -146,7 +146,7 @@ static inline int equal_monomial(unsigned width, uint64_t arity, uint64_t id,
 
 
 /* Exact bounded comparison. Subtraction-based checks avoid start+count wrap. */
-static int equal_bytes(const uint8_t *left,size_t left_size,const uint8_t *right,
+static inline int equal_bytes(const uint8_t *left,size_t left_size,const uint8_t *right,
         size_t right_size,size_t start,size_t count) {
     if(count>4096 || start>left_size || start>right_size ||
        count>left_size-start || count>right_size-start) return 0;
@@ -181,7 +181,7 @@ static inline int equal_products(unsigned width,uint64_t arity,uint64_t count,
 
 /* Read-only comparisons share the packed representation and a bounded call.
    Result 3 declines unsupported geometry without touching any source byte. */
-static uint8_t compare_monomials(unsigned op,unsigned w,uint64_t n,uint64_t left,uint64_t right,
+static inline uint8_t compare_monomials(unsigned op,unsigned w,uint64_t n,uint64_t left,uint64_t right,
         const uint8_t *arena,size_t bytes) {
     if(op>2 || (w!=1 && w!=2 && w!=4) || n>4096 ||
        left>UINT32_MAX || right>UINT32_MAX) return 3;

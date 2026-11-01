@@ -19,6 +19,12 @@ import HexGroebner.ReducerCacheConformance
 
 namespace Hex.Groebner.NativeChecks
 
+/-- Direct exclusive-table comparison, separately instrumented by the harness. -/
+def runOwned : IO Unit := do
+  let seed := ((← IO.getEnv "HEX_GROEBNER_TEST_SEED").getD "0").toNat?.getD 0
+  if !HitConformance.ownedChecks seed then
+    throw (IO.userError "exclusive monomial operation mismatch")
+
 /-- Compiled checks for every native build variant. The harness verifies that
 native symbols were actually called, including in sanitizer builds. -/
 def run : IO Unit := do

@@ -24,7 +24,7 @@ Monomial hash buckets and collision links use packed `UInt32` buffers. Hashes
 only filter candidates; exact exponent comparison decides equality. Index
 growth, rebuilding work and peak packed payload are charged before allocation.
 A bounded owned native operation can complete lookup or insertion within the
-current width and index capacity, for up to 2048 variables and 4096 additional
+current width and index capacity, for up to 2047 variables and 4096 additional
 work units. Unsupported shapes, widening, index growth and tight allowances
 return the unchanged table; portable continuation starts after the native frame
 returns. Shared and aliased buffers retain their original contents. Field/order metadata is checked before
