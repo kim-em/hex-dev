@@ -53,12 +53,14 @@ private def orderAgreement : Bool := Id.run do
 -- Exercise every exponent width through the actual table methods, including
 -- the portable dispatch beyond the 4096-coordinate native bound.
 def orderChecks : Bool := Id.run do
-  for n in [3,65,4097] do
+  for n in [3,65,4096,4097] do
     for base in [2,257,65537] do
       let zero := Array.replicate n 0
       let common := Array.replicate n base
       let values := #[zero,common,common.set! 0 (base+1) |>.set! (n-1) (base-1),
-        common.set! (n-1) (base+1),zero.set! (n-1) (base+2)]
+        common.set! (n-1) (base+1),zero.set! (n-1) (base+2),
+        (common.set! 0 (base+1)).set! 1 (base-1),
+        (common.set! (n-2) (base+1)).set! (n-1) (base-1)]
       let mut table : MonomialTable := { arity := n }
       for exponents in values do
         let .ok (_, next) := table.intern (exponents.map Nat.toUInt64) 10 1000000 1000000000

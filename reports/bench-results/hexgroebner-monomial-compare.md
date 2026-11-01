@@ -8,12 +8,13 @@ IDs, storage, field arithmetic, scheduling and resource counters are unchanged.
 Larger arities and unsupported shapes use the original portable loops.
 
 Arbitrary-precision indices are bounded before conversion to the u64 ABI. The
-current `802ae51122d7` implementation checks complete accessed row spans;
+current implementation checks complete accessed row spans;
 `(max(id)+1)*arity*width ≤ 2^46`, so validation cannot overflow even on 32-bit
 hosts. Unused partial trailing rows require no access. Calls mutate no storage
 and retain no pointers. The pure bodies remain available to the kernel.
 
-The current `802ae51122d7` snapshot exposes typed `Native.Monomial.compare`
+Source fingerprint `802ae51122d7`, commit
+`e896a5bcea7891a0a501d196c6621db52286304f`, exposes typed `Native.Monomial.compare`
 and `divides` wrappers. The kernel theorem `compareCode_eq` proves that checked
 Nat narrowing equals the unrestricted portable definition for every input; its
 axiom audit reports only `propext` and `Quot.sound`.
@@ -38,60 +39,25 @@ establish which snapshot is faster. The API and accessed-span semantics select
 the current design, whose own measurements support a candidate-computation
 improvement. These development observations do not establish leadership.
 
-The earlier `03abfd63909b` implementation validates whole-arena row geometry
-using division. The row-span version removes those division instructions from
-the native helper; disassemblies of both frozen binaries are retained. This
-instruction change does not establish a full-system speedup over that earlier
-snapshot. Each snapshot is compared separately with the same frozen zero-scan
-baseline, `f3d5acec8365`, whose source agrees with merged #11002.
-
 Both arms use identical drivers and benchmark sources. The 16-input development
-suite covers seven families at primes 32003 and 2147483647. Every input runs
+suite covers seven families at primes 32003 and 2147483647. Each input runs
 adjacent AB then BA, one thread on an automatically leased CPU. Complete reduced
-bases and every non-timing counter must agree. Every completed sample and
-outlier is retained. Candidate time includes canonicalization, F4 and final
-interreduction; process time adds startup, parsing and complete output.
-Certificate generation, independent final certification and kernel checking
-are excluded. This is not a held-out or fastest-open-source acceptance suite.
+bases and every non-timing counter agree. All completed samples and outliers are
+retained. Candidate time includes canonicalization, F4 and final interreduction;
+process time adds startup, parsing and complete output. Certificate generation,
+independent final certification and kernel checking are excluded. This is a
+development suite, not a held-out or fastest-open-source acceptance suite.
 
-| Snapshot / campaign | CPU | Processes | Candidate geometric mean B/A | Median | Range | Process geometric mean |
-| --- | ---: | ---: | ---: | ---: | --- | ---: |
-| 03abfd63909b | 47 | 64 | 0.9510 | 0.9522 | 0.8686–0.9944 | 0.9967 |
-| 7ad863391bb7 | 38 | 64 | 0.9784 | 0.9700 | 0.8097–1.3473 | 1.0006 |
-| 7ad863391bb7, permitted repeat | 56 | 64 | 0.9600 | 0.9622 | 0.8709–1.0158 | 0.9851 |
-
-All 96 paired complete bases and non-timing counter sets agree across the
-three earlier campaigns. The first row-span observation is inconclusive, so one unchanged repeat is used.
-Eco10 at p32003, block 0, supplies the 1.3473 candidate and 1.4124 process
-maxima. Eco10 at p2147483647, block 0, supplies the 0.8097 candidate and 0.7383
-process minima. Both campaigns are retained and pooled below. No further unchanged repeat is used. Pooling only the two
-row-span campaigns gives candidate B/A 0.9691, median 0.9648 and range
-0.8097–1.3473; process B/A is 0.9928, median 0.9871 and range 0.7383–1.4124.
-The row-span design is selected because it validates exactly the bytes read by
-the portable loops, accommodates unused trailing storage and avoids division.
-These separate campaigns do not establish which geometry variant is faster.
-The initial geometry snapshot is not pooled with the row-span implementation.
-The observations support an improvement in candidate computation; whole-process
-time remains near parity and the overall performance milestone is not met.
-
-The registered fixed cases retain five declared repetitions and normalize by
-actual inner repeats. Complete structural basis hashes agree. The initial
-snapshot retains 120 points on CPU45. The earlier row-span snapshot retains 120 points
-on CPU53 and its one permitted repeat retains 120 on CPU35.
-
-| Fixed case | Initial geometry B/A | Row-span first B/A | Row-span repeat B/A | Row-span pooled B/A | Pooled median | Pooled range |
-| --- | ---: | ---: | ---: | ---: | ---: | --- |
-| cyclic4 | 0.9796 | 0.8601 | 0.9604 | 0.9089 | 0.9641 | 0.4409–1.1886 |
-| cyclic5 | 0.9786 | 0.9395 | 0.9684 | 0.9538 | 0.9640 | 0.8842–0.9933 |
-| cyclic6 | 0.9686 | 0.9242 | 0.9621 | 0.9429 | 0.9613 | 0.8180–0.9772 |
-| katsura3 | 0.9631 | 0.8785 | 0.9509 | 0.9140 | 0.9367 | 0.6427–1.0160 |
-| reimer5 | 0.9739 | 0.9266 | 0.9751 | 0.9505 | 0.9752 | 0.5884–0.9849 |
-| cyclic6Small | 0.9414 | 1.1413 | 0.9624 | 1.0481 | 0.9649 | 0.9451–1.9699 |
-
-The wide fixed-case ranges also limit conclusions from their means alone.
-The pooled cyclic6Small mean regresses despite its lower median. Its completed
-outlier remains included. These small development cases do not meet the
-SPEC's family-balanced leadership requirements.
+The baseline is source fingerprint `f3d5acec8365`, the
+[bounded zero-scan implementation](https://github.com/kim-em/hex-dev/pull/11002).
+Earlier source fingerprints `03abfd63909b` (whole-arena geometry) and
+`7ad863391bb7` (accessed-row spans) have separate archives below. The latter
+used its one permitted unchanged repeat after an inconclusive observation;
+both campaigns and their outliers remain included in its archived analyses.
+Those observations, including a cyclic6Small fixed-case regression, are not
+pooled with the current implementation. Accessed-span semantics are selected
+because they validate exactly the bytes read by the portable loops and avoid
+division. Separate campaigns do not establish which geometry variant is faster.
 
 Clang and GCC pass all four ASan/UBSan variants. Standalone tests check 2700
 array-oracle cases, maximum coordinates, read-only guard pages at both ends,
@@ -100,19 +66,20 @@ native result with portable behavior and independent list order/inequalities,
 including distinct arity-4096 rows, oversized left/right Nat inputs and unused
 trailing bytes. Table-level tests compare all three orders with `TermOrder.cmp`
 and divisibility with integer inequalities across u8/u16/u32 storage and arity
-4097, exercising the portable dispatch as well as native calls. At the
-latest F4 window, counters record 23064 native comparisons, 3553 during full
-F4 calls. Matrix arithmetic mask 255 and zero-packet counters remain separate.
+4096/4097, exercising the portable dispatch as well as native calls. The current
+compiled window records 23724 calls and 4485 declines across all positive and
+malformed primitive/table cases. Its F4 window accepts 3553 native answers and
+declines zero. The harness requires positive accepted F4 work with zero declines.
+Matrix arithmetic mask 255 and zero-packet counters remain separate.
 The 1950-job relevant library/theory conformance build, independent 175 matrix,
 567 basis and 1288 division checks, and all 32 fast benchmark checks pass.
 Their operational duration is not scientific timing evidence.
 
 Archives retain exact source manifests and Git blobs for both arms, executable
-hashes, full outputs, samples, memory, failures, analysis, source and compiler
-identity. The current measured commit is
-`e896a5bcea7891a0a501d196c6621db52286304f`. The earlier row-span commit is
-`2487deec4c4689575c50d8f77e88c1321d231558`; the content-preserving rebase onto
-merged `96c4c114debdbabe487113d81c53d121817d213c` has the same source family.
+hashes, full outputs, samples, memory, failures, analysis, compiler identity and
+validation logs. All twelve archive hashes and 2794 source blobs were
+verified against the recorded Git IDs. The measured current source is identical
+to the production source after the later conformance-only coverage changes.
 
 - [inspect-production-bench-03abfd63909b.tar.gz](raw/inspect-production-bench-03abfd63909b.tar.gz): `4def1eca0e5da8ab4e62de15245f7d58ae4884436dcc0018ee4a3be4058eed78`
 - [inspect-production-records-03abfd63909b.tar.gz](raw/inspect-production-records-03abfd63909b.tar.gz): `2e5f102781cb68b737ede5af384e4eaae9f60b09f9d9cc3e2a5e1592af3da789`
@@ -126,3 +93,5 @@ merged `96c4c114debdbabe487113d81c53d121817d213c` has the same source family.
 - [typed-compare-production-bench-802ae51122d7.tar.gz](raw/typed-compare-production-bench-802ae51122d7.tar.gz): `7287fe65a4929b797a9cf8bfded4554a8d8962bed7de31c7bff0a1b98f77fc61`
 - [typed-compare-production-records-802ae51122d7.tar.gz](raw/typed-compare-production-records-802ae51122d7.tar.gz): `635fece8c60beb74e0734d3c193332dc0e313aaeb93682fe272ec56f3d714c52`
 - [typed-compare-validation.tar.gz](raw/typed-compare-validation.tar.gz): `faa3a33523a914c8dcc00dcfa830f3da22f287e5fa8021de580b898c4cae34e5`
+
+- [monomial-comparison-final-coverage.tar.gz](raw/monomial-comparison-final-coverage.tar.gz): `99104ed5f9df161dcd85fc07e09b0a27141cebf2127939b395a3502464c9b93d`
