@@ -137,3 +137,7 @@ impossibility. The issue remains open.
 - [target-columns-967ae620e941.tar.gz](raw/target-columns-967ae620e941.tar.gz): `671e9846ef47d06b8dc56f74e55b4e711b2389ca3dddd49d6bb5a064f0bac6fc`.
 - [target-columns-validated-b9c671b4f9af.tar.gz](raw/target-columns-validated-b9c671b4f9af.tar.gz): `1eba883d758a6e716f85423e899cb6c2972f0838ace3e2d7b7cd16e5da41f1a1`.
 - [target-columns-input-provenance.tar.gz](raw/target-columns-input-provenance.tar.gz): `ec291ab3a050ca1eec4792e2afa9ea61347d3b689df21c1335e06f34626456b1`.
+
+The [input provenance and public-source license](raw/target-columns-input-provenance-licensed.tar.gz)
+include GamBa’s GPLv3 text; no comparator executable is redistributed.
+SHA256: `2cad4241016c694bfb237673eba9a3e6370fe550ac723085995203ec62e6021d`.
