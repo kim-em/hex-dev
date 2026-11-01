@@ -7,6 +7,13 @@ The original choice is sealed through candidate, traced, checked-preparation
 and candidate-validation continuations. A different resume allowance cannot
 change it. CLI output and checked history retain the selected strategy.
 
+At the large prime, Reimer matrix entries fall 435489→176082, Eco
+2939286→2326029 and cyclic6 93597→69325. Cyclic5 entries instead rise
+8757→9067 and rounds 13→14. These deterministic work changes motivate the
+strategy choice; the timing observations below retain its regressions and
+substantial variation. All timed inputs are grevlex. Relative lex/grlex
+performance remains unmeasured; both have independent correctness coverage.
+
 Pair coverage, reduced output, complete certificates, deterministic producer
 correctness and termination remain obligations under either strategy. New
 inhomogeneous pairs can have lower degree than earlier batches. This scheduling
@@ -19,6 +26,15 @@ The subsequent independent-oracle corpus guard changes only
 `scripts/oracle/groebner_singular.py` within that source family. A second fresh
 188-job build of `6ede9cb261a4` produces byte-identical default and full-init
 executables; exact source comparisons and both manifests are retained.
+A further fresh freeze of `0cb80bf73a4a`, with stronger continuation tests,
+explicit API documentation and unique-problem oracle validation, again
+produces those same two executables. All retained timings therefore apply
+to the strengthened implementation without additional timing reruns.
+Twelve-character IDs here are source-family fingerprints, not Git commits.
+A freeze manifest records the checked-out parent in `commit`, the staged tree
+in `source_tree`/`source_snapshot`, and every measured Git blob in its source
+manifest. Squash merging changes mainline ancestry; archived `root-sources`
+provide the exact build inputs independently of those historical parent IDs.
 
 The same-binary experiment compares explicit sugar (A) with explicit degree
 (B). The before/after experiment compares the previous sugar implementation
@@ -51,14 +67,26 @@ Process medians/ranges are 0.9256 / 0.3088–4.3296 (same binary) and
 preclude a uniform speedup claim. Same-binary family means and exact work
 changes are reported together below.
 
+The same-binary inputs naturally divide into the following counter strata.
+All observations remain in the full aggregate above. Equal counters do not
+establish an identical execution trace, and their timing ratios do not measure
+a change in algebraic work. This is analysis of the existing samples, without
+extra control runs. [Exact grouping](raw/scheduling-counter-strata-bf00a2b578a8.json)
+is retained.
+
+| Counter stratum | Pairs | Candidate B/A | Median | Process B/A |
+| --- | ---: | ---: | ---: | ---: |
+| Changed counters | 32 | 0.8585 | 0.8417 | 0.8805 |
+| Unchanged counters | 32 | 0.9245 | 1.0367 | 1.0214 |
+
 | Family | Candidate degree/sugar | Process degree/sugar | Hex/msolve exact | Hex/msolve probabilistic |
 | --- | ---: | ---: | ---: | ---: |
 | cyclic | 1.0808 | 1.0510 | 3.0552 | 2.8253 |
-| dense-quadratic | 1.9015 | 1.3456 | 1.7349 | 1.7214 |
+| dense-quadratic (counters unchanged) | 1.9015 | 1.3456 | 1.7349 | 1.7214 |
 | eco | 0.8022 | 0.8699 | 4.5390 | 5.5131 |
-| kat | 0.8909 | 1.0048 | 2.3510 | 2.4594 |
-| minrank | 0.7455 | 0.9260 | 1.7075 | 1.4346 |
-| noon | 0.5786 | 0.8694 | 1.6405 | 1.5519 |
+| kat (counters unchanged) | 0.8909 | 1.0048 | 2.3510 | 2.4594 |
+| minrank (counters unchanged) | 0.7455 | 0.9260 | 1.7075 | 1.4346 |
+| noon (counters unchanged) | 0.5786 | 0.8694 | 1.6405 | 1.5519 |
 | reimer | 0.5797 | 0.6254 | 3.2250 | 3.3308 |
 
 The next table uses the same-binary experiment. Every repeated instance of
@@ -136,9 +164,11 @@ Build inputs, binary hashes and complete input/output comparisons are retained.
 Matched before/after observations estimate default-change effects; shifts
 between independent comparator campaigns also include host variation.
 
-Validation passes 1957 conformance/theory targets, both 1134-profile CLI
-corpora, 175 matrix cases, 1134 independent SymPy/Singular basis cases and
-1288 division cases. All 567 sugar profiles preserve every previous field and
+The initial validation passes 1957 conformance/theory targets, both 1134-profile CLI
+corpora, 175 matrix cases, 567 unique mathematical basis problems represented
+by 1134 equal strategy profiles, and 1288 division cases. The retained initial
+validation queried both profiles independently; the current oracle runner
+checks paired problem/basis equality before querying each unique problem once. All 567 sugar profiles preserve every previous field and
 counter; degree changes no reduced basis. New negative oracle tests reject
 missing/duplicate strategy cases, incompatible polynomial problems and false
 strategy metadata. Both strategies exercise traced derivations, independent
@@ -148,6 +178,11 @@ and dependency/phase/release/header/size audits pass. Native counts include
 2668 trie calls, two intentional declines, 510 F4 calls without decline, and
 4089 accepted F4 monomial comparisons without decline. Original constructor
 and corpus-size integration failures are retained with their corrections.
+The strengthened validation passes 1958 targets, every work-boundary
+continuation comparison including counters/derivations, both strategies'
+batch-cap regressions and 24 oracle rejection tests. Removing either
+producer's scheduling override fails its intended new regression guard.
+The unflagged CLI default is checked across all 567 degree profiles.
 
 Capsules retain source blobs, frozen executable hashes, schedules, raw samples,
 full outputs, failures and analysis scripts. SHA256:
@@ -163,3 +198,5 @@ full outputs, failures and analysis scripts. SHA256:
 - [scheduling-scheduling-production-bench-6ede9cb261a4.tar.gz](raw/scheduling-scheduling-production-bench-6ede9cb261a4.tar.gz): `73ee30609a2fc75b705cb23bbd38d6561336c9349e49017475acae8b923a6807`.
 - [scheduling-scheduling-production-bench-repeat-6ede9cb261a4.tar.gz](raw/scheduling-scheduling-production-bench-repeat-6ede9cb261a4.tar.gz): `5b0709d11d545b2d10089476637401eba791da23793596946baa1aefbf8794eb`.
 - [scheduling-validation-6ede9cb261a4.tar.gz](raw/scheduling-validation-6ede9cb261a4.tar.gz): `1e4f632a10a7024c90aae412e4fc812f758e6bdf661536975602d0be7f5361de`.
+
+- [scheduling-strengthened-validation-0cb80bf73a4a.tar.gz](raw/scheduling-strengthened-validation-0cb80bf73a4a.tar.gz): `9209983ffb1d44026f35e994f740c5ff86b4f5a79d1debf7738b59cea1f4a2dd`.
