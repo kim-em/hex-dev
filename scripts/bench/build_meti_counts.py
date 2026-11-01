@@ -16,7 +16,7 @@ import subprocess
 import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
-from scripts.bench.build_nested_normalization_counts import digest, recipe
+from scripts.bench.lake_recipe import digest, recipe
 from scripts.bench.meti_counts import KINDS, instrument
 
 
@@ -48,7 +48,7 @@ def main():
         purpose='operation counts only; no timing or complexity verdict',
         builder_sha256=digest(Path(__file__)),
         selector_sha256=digest(root / 'scripts/bench/meti_counts.py'),
-        recipe_reader_sha256=digest(root / 'scripts/bench/build_nested_normalization_counts.py'),
+        recipe_reader_sha256=digest(root / 'scripts/bench/lake_recipe.py'),
         ordinary_binary_sha256=digest(executable), rsp_sha256=digest(rsp),
         toolchain_sha256=digest(root / 'lean-toolchain'),
         lake_manifest_sha256=digest(root / 'lake-manifest.json'),

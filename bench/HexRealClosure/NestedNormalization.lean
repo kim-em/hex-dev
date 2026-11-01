@@ -14,16 +14,6 @@ namespace Hex.RealClosure.NestedNormalization
 
 open SignDet
 
-/-- Runtime diagnostics preserve the ordinary kernel computation. The event
-counts one executed callback; rational gcds internal to Rat are not observed. -/
-def traceOp {A : Type} (enabled : Bool) (depth : Nat) (operation : String)
-    (run : Unit → A) : A :=
-  if enabled then dbgTrace s!"NESTED {depth} {operation}" run else run ()
-
-theorem traceOp_eq {A : Type} (enabled : Bool) (depth : Nat) (operation : String)
-    (run : Unit → A) : traceOp enabled depth operation run = run () := by
-  cases enabled <;> rfl
-
 /-- Ordinary coefficient operations. Raw algebraic values are deliberately
 not given a ring or field instance. Each arm changes packing at every level. -/
 structure Level where
@@ -63,25 +53,21 @@ instance (level : Level) : NatCast level.Carrier := level.nat
 
 private def ratJson (q : Rat) : Codec.Json := .arr #[.number q.num, .number q.den]
 
-/-- Rat retains its exact ordinary primitives. Trace wrappers add no arithmetic
-and never reject a completed operation or timing sample. -/
-def rational (trace : Bool) : Level where
+/-- Rat retains its exact ordinary primitives. -/
+def rational : Level where
   Carrier := Rat
   zero := inferInstance
-  equality := fun a b =>
-    if trace then traceOp true 0 (if a.num == 0 || b.num == 0 then "zero" else "eq")
-      (fun _ => inferInstanceAs (Decidable (a = b)))
-    else inferInstanceAs (Decidable (a = b))
+  equality := fun a b => inferInstanceAs (Decidable (a = b))
   one := inferInstance
-  add := ⟨fun a b => traceOp trace 0 "add" (fun _ => a + b)⟩
-  neg := ⟨fun a => traceOp trace 0 "neg" (fun _ => -a)⟩
-  sub := ⟨fun a b => traceOp trace 0 "sub" (fun _ => a - b)⟩
-  mul := ⟨fun a b => traceOp trace 0 "mul" (fun _ => a * b)⟩
-  inv := ⟨fun a => traceOp trace 0 "inv" (fun _ => a⁻¹)⟩
-  div := ⟨fun a b => traceOp trace 0 "div" (fun _ => a / b)⟩
+  add := ⟨fun a b => a + b⟩
+  neg := ⟨fun a => -a⟩
+  sub := ⟨fun a b => a - b⟩
+  mul := ⟨fun a b => a * b⟩
+  inv := ⟨fun a => a⁻¹⟩
+  div := ⟨fun a b => a / b⟩
   nat := inferInstance
   alpha := 1
-  sign := fun a => traceOp trace 0 "sign" (fun _ => OrderedFn.orderSign a)
+  sign := fun a => OrderedFn.orderSign a
   clean := fun a => decide (a.den = 1)
   encode := ratJson
   decode := ValueCodec.rat.decode
@@ -98,20 +84,6 @@ variable {E : Type} [Zero E] [DecidableEq E] [One E] [Add E] [Neg E]
   [Sub E] [Mul E] [Inv E] [Div E] [NatCast E] {sign : E → Int}
   {context : Algebraic.Context E Unit sign ()}
 
-/-- Execute inverseFactor and xgcdLeft once each, following the production
-inverseCandidate. The split event observes the already computed local gcd. These events count
-only the local inverse sites; gcd calls within other kernels are not counted. -/
-def inverseRaw (trace : Bool) (depth : Nat) (a : Algebraic.Element context) : DensePoly E :=
-  let factors := traceOp trace depth "inverse_gcd" (fun _ => a.inverseFactor)
-  let factors := traceOp (trace && factors.1.natDegree > 0) depth "split" (fun _ => factors)
-  let eg := traceOp trace depth "inverse_xgcd" (fun _ => DensePoly.xgcdLeft a.polynomial factors.2)
-  DensePoly.scale eg.gcd.leadingCoeff⁻¹ eg.left
-
-theorem inverseRaw_eq (trace : Bool) (depth : Nat) (a : Algebraic.Element context) :
-    inverseRaw trace depth a = a.inverseCandidate := by
-  simp only [inverseRaw, traceOp_eq]
-  rfl
-
 private def treeNodes : Replay E Unit → Nat
   | .leaf _ => 1
   | .split _ left right => 1 + treeNodes left + treeNodes right
@@ -126,7 +98,7 @@ private def graphJson (level : Level) (tree : Replay level.Carrier Unit) : Codec
 root 3. The nonmonic family uses `(2X² - alpha)(X - 3)` and interval `(0,1]`;
 the monic family uses `(X² - alpha)(X - 3)` and interval `(0,2]`.
 Eager uses a monic working polynomial while retaining the original descriptor. -/
-def adjoin (parent : Level) (depth : Nat) (eager trace : Bool)
+def adjoin (parent : Level) (eager : Bool)
     (monicDefinition : Bool := false) : Option Level :=
   let quadratic := DensePoly.monomial 2 (NatCast.natCast (if monicDefinition then 1 else 2) : parent.Carrier) - DensePoly.C parent.alpha
   let linear := DensePoly.monomial 1 (1 : parent.Carrier) - DensePoly.C (NatCast.natCast 3 : parent.Carrier)
@@ -142,29 +114,25 @@ def adjoin (parent : Level) (depth : Nat) (eager trace : Bool)
         if eager then Algebraic.Element.ofPoly (DensePoly.divModMonic p working monic).2
         else Algebraic.Element.ofPoly p
       let inverse (a : Algebraic.Element context) : Algebraic.Element context :=
-        traceOp trace depth "inv" fun _ =>
-          match a.stored with
-          | none => 0
-          | some _ => pack (inverseRaw trace depth a)
+        match a.stored with
+        | none => 0
+        | some _ => pack a.inverseCandidate
       let multiply (a b : Algebraic.Element context) : Algebraic.Element context :=
-        traceOp trace depth "mul" fun _ => pack (a.polynomial * b.polynomial)
+        pack (a.polynomial * b.polynomial)
       some {
         Carrier := Algebraic.Element context
         zero := inferInstance
-        equality := fun a b =>
-        if trace then traceOp true depth (if a.stored.isNone || b.stored.isNone then "zero" else "eq")
-          (fun _ => inferInstanceAs (Decidable (a = b)))
-        else inferInstanceAs (Decidable (a = b))
+        equality := fun a b => inferInstanceAs (Decidable (a = b))
         one := ⟨pack 1⟩
-        add := ⟨fun a b => traceOp trace depth "add" (fun _ => pack (a.polynomial + b.polynomial))⟩
-        neg := ⟨fun a => traceOp trace depth "neg" (fun _ => pack (0 - a.polynomial))⟩
-        sub := ⟨fun a b => traceOp trace depth "sub" (fun _ => pack (a.polynomial - b.polynomial))⟩
+        add := ⟨fun a b => pack (a.polynomial + b.polynomial)⟩
+        neg := ⟨fun a => pack (0 - a.polynomial)⟩
+        sub := ⟨fun a b => pack (a.polynomial - b.polynomial)⟩
         mul := ⟨multiply⟩
         inv := ⟨inverse⟩
-        div := ⟨fun a b => traceOp trace depth "div" (fun _ => multiply a (inverse b))⟩
+        div := ⟨fun a b => multiply a (inverse b)⟩
         nat := ⟨fun n => pack (DensePoly.C n)⟩
         alpha := pack (DensePoly.monomial 1 1)
-        sign := fun a => traceOp trace depth "sign" (fun _ => a.sign)
+        sign := fun a => a.sign
         clean := Algebraic.Element.isClean
         encode := fun a => Codec.poly (codec parent) a.polynomial
         decode := fun j => do
@@ -193,10 +161,10 @@ def adjoin (parent : Level) (depth : Nat) (eager trace : Bool)
     else none
 
 /-- Assemble actual cached contexts outside the measured workload. -/
-def prepare (depth : Nat) (eager trace : Bool) (monicDefinition : Bool := false) : Option Level := do
-  let mut level := if monicDefinition then { rational trace with alpha := (rational trace).nat.natCast 2 } else rational trace
-  for index in List.range depth do
-    level ← adjoin level (index + 1) eager trace monicDefinition
+def prepare (depth : Nat) (eager : Bool) (monicDefinition : Bool := false) : Option Level := do
+  let mut level := if monicDefinition then { rational with alpha := rational.nat.natCast 2 } else rational
+  for _ in List.range depth do
+    level ← adjoin level eager monicDefinition
   return level
 
 /-- This grows the stored multiplication chain and exercises a genuine local
@@ -211,24 +179,18 @@ private def leanJson (value : Codec.Json) : Except String Lean.Json :=
 
 /-- Functional output only. A scientific protocol, frozen source and capture
 schedule must be registered before elapsed times are used as evidence. -/
-def emit (depth steps : Nat) (eager trace : Bool) (reportHash : Bool := true)
+def emit (depth steps : Nat) (eager : Bool) (reportHash : Bool := true)
     (monicDefinition : Bool := false) : IO Unit := do
-  let some level := prepare depth eager trace monicDefinition | throw (IO.userError "nested context preparation failed")
+  let some level := prepare depth eager monicDefinition | throw (IO.userError "nested context preparation failed")
   if monicDefinition then
     unless level.reductions.size == depth && level.reductions.all id do
       throw (IO.userError "monic clean production reduction was not enabled")
   let input ← IO.mkRef (some level.alpha)
   let some alpha ← input.get | throw (IO.userError "missing nested input")
-  if trace then
-    (← IO.getStderr).putStrLn "NESTED BEGIN"
-    (← IO.getStderr).flush
   let value := run level steps alpha
   let encoded := level.encode value
   let digest := hash encoded
   if reportHash then IO.println s!"hash {digest}"
-  if trace then
-    (← IO.getStderr).putStrLn "NESTED END"
-    (← IO.getStderr).flush
   let .ok proof := level.evidence value | throw (IO.userError "query evidence production failed")
   let .ok decoded := level.decode encoded | throw (IO.userError "value reader rejected")
   unless level.encode decoded == encoded do throw (IO.userError "value roundtrip mismatch")
@@ -266,14 +228,14 @@ def install : IO Unit := do
   let mut inputs := []
   for depth in [1, 2] do
     for eager in [false, true] do
-      let some level := prepare depth eager false | throw (IO.userError "measurement context rejected")
+      let some level := prepare depth eager | throw (IO.userError "measurement context rejected")
       for steps in [2, 4, 8, 16] do
         let compute ← action level steps
         inputs := inputs ++ [((depth, steps, eager), compute)]
   actions.set inputs
   let mut monicInputs := []
   for depth in [1, 2] do
-    let some level := prepare depth false false true
+    let some level := prepare depth false true
       | throw (IO.userError "monic context rejected")
     unless level.reductions.size == depth && level.reductions.all id do
       throw (IO.userError "monic clean reduction was not enabled")
@@ -525,8 +487,8 @@ end Hex.RealClosure.NestedNormalization
 def main (args : List String) : IO UInt32 := do
   match args with
   | [] =>
-    Hex.RealClosure.NestedNormalization.emit 2 2 false false false
-    Hex.RealClosure.NestedNormalization.emit 2 2 true false false
+    Hex.RealClosure.NestedNormalization.emit 2 2 false false
+    Hex.RealClosure.NestedNormalization.emit 2 2 true false
   | "run" :: _ | "compare" :: _ | "profile" :: _ | "_probe_floor" :: _ |
       "_child" :: _ | "verify" :: _ | "list" :: _ | "--help" :: _ =>
     Hex.RealClosure.NestedNormalization.Measure.install
@@ -534,23 +496,17 @@ def main (args : List String) : IO UInt32 := do
   | ["monic"] =>
     for depth in [1, 2] do
       for steps in [2, 4, 8, 16] do
-        Hex.RealClosure.NestedNormalization.emit depth steps false false false true
+        Hex.RealClosure.NestedNormalization.emit depth steps false false true
   | ["monic", depth, steps] =>
     let some depth := depth.toNat? | throw (IO.userError "invalid depth")
     let some steps := steps.toNat? | throw (IO.userError "invalid steps")
     unless depth > 0 do throw (IO.userError "positive depth required")
-    Hex.RealClosure.NestedNormalization.emit depth steps false false true true
-  | ["monic", depth, steps, "trace"] =>
+    Hex.RealClosure.NestedNormalization.emit depth steps false true true
+  | [depth, steps, policy, "plain"] =>
     let some depth := depth.toNat? | throw (IO.userError "invalid depth")
     let some steps := steps.toNat? | throw (IO.userError "invalid steps")
-    unless depth > 0 do throw (IO.userError "positive depth required")
-    Hex.RealClosure.NestedNormalization.emit depth steps false true true true
-  | [depth, steps, policy, diagnostic] =>
-    let some depth := depth.toNat? | throw (IO.userError "invalid depth")
-    let some steps := steps.toNat? | throw (IO.userError "invalid steps")
-    unless depth > 0 && (policy == "clean" || policy == "eager") &&
-        (diagnostic == "plain" || diagnostic == "trace") do
-      throw (IO.userError "usage: hexrealclosure_nested_normalization depth steps clean|eager plain|trace")
-    Hex.RealClosure.NestedNormalization.emit depth steps (policy == "eager") (diagnostic == "trace")
-  | _ => throw (IO.userError "usage: hexrealclosure_nested_normalization depth steps clean|eager plain|trace")
+    unless depth > 0 && (policy == "clean" || policy == "eager") do
+      throw (IO.userError "usage: hexrealclosure_nested_normalization depth steps clean|eager plain")
+    Hex.RealClosure.NestedNormalization.emit depth steps (policy == "eager")
+  | _ => throw (IO.userError "usage: hexrealclosure_nested_normalization depth steps clean|eager plain")
   return 0
