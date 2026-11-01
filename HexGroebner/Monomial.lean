@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexGroebner.Packed
+public import HexGroebner.PackedWord
 public import HexGroebner.Native
 public import HexMvPoly.Mono
 public import Std.Data.HashMap
@@ -76,7 +76,7 @@ structure InternResult where
 namespace MonomialTable
 
 private def word64 (bytes : @& ByteArray) (index : Nat) : UInt64 :=
-  Packed.read .u32 bytes index ||| (Packed.read .u32 bytes (index + 1) <<< 32)
+  Packed.read64 bytes (index*4)
 
 private def read64 (bytes : @& ByteArray) (index : Nat) : UInt64 := word64 bytes (2 * index)
 
