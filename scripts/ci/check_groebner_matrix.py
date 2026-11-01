@@ -182,6 +182,13 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
 @[extern "hex_test_widths"] opaque widths : IO UInt32
 def main : IO Unit := do
   Hex.Groebner.NativeChecks.run
+  let primitiveCompared ← byteCount
+  Hex.Groebner.NativeChecks.runF4
+  let f4Compared ← byteCount
+  if f4Compared ≤ primitiveCompared then throw (IO.userError "F4 did not exercise cache comparison")
+  Hex.Groebner.NativeChecks.runCache
+  let cacheCompared ← byteCount
+  if cacheCompared ≤ f4Compared then throw (IO.userError "cache checks did not exercise byte binding")
   let (scan,gather) ← counts
   let compared ← byteCount
   if scan == 0 || gather == 0 || compared == 0 then throw (IO.userError "test override was not called")

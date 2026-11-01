@@ -12,7 +12,8 @@ basis-specific divisibility trie and constructs one joint Macaulay matrix.
 The chain test visits indexed LCM divisors; final tail reductions share one
 immutable reducer index.
 F4 checkpoints retain a `ReducerCache` of multiplied reducers from the same
-append-only monomial arena. Stable IDs survive exponent-width changes. A cache
+append-only monomial arena. Stable IDs survive exponent-width changes. Field/order metadata is checked before
+reuse, and the complete base payload identifies the basis polynomial. A cache
 hit checks the complete base polynomial, comparing at most 4096 bytes per native
 call; basis changes cannot silently reuse a different row. Sugar and certificate
 derivations are rebuilt from the current basis. The private cache retains at most
@@ -79,7 +80,8 @@ checkpoints. On exhaustion, no partially processed batch loses unresolved pairs;
 temporary interned monomials and charged work survive. Retrying a stage charges
 its repeated work. Invalid input, internal invariant failures, representation
 exhaustion and consumed allowances remain distinct. `Limits.packedBytes` bounds monomial arenas plus
-cumulative packed polynomial/matrix allocation and decoded interchange scalar
+cumulative packed polynomial/matrix allocation, eight bytes per cached reducer
+key, and decoded interchange scalar
 payload; it excludes headers and allocator capacity. Pair attempts, rounds,
 basis size, cumulative matrix rows/entries, monomials and variables have
 separate bounds.

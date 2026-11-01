@@ -9,6 +9,7 @@ import HexGroebner.GatherConformance
 import HexGroebner.MatrixNativeConformance
 import HexGroebner.PackedWordConformance
 import HexGroebner.ByteConformance
+import HexGroebner.ReducerCacheConformance
 
 namespace Hex.Groebner.NativeChecks
 
@@ -24,5 +25,17 @@ def run : IO Unit := do
       MatrixNativeConformance.engineRuntimeChecks then
     IO.println "native matrix checks: portable equality, aliases, malformed prefixes and budgets passed"
   else throw (IO.userError "native matrix conformance mismatch")
+
+/-- Exercise complete cached F4 calls under each instrumented native provider. -/
+def runF4 : IO Unit := do
+  let seed := ((← IO.getEnv "HEX_GROEBNER_TEST_SEED").getD "0").toNat?.getD 0
+  if !(ReducerCacheConformance.f4Checks seed) then
+    throw (IO.userError "compiled F4 cache conformance mismatch")
+
+/-- Exercise cache comparisons crossing multiple bounded native chunks. -/
+def runCache : IO Unit := do
+  let seed := ((← IO.getEnv "HEX_GROEBNER_TEST_SEED").getD "0").toNat?.getD 0
+  if !(ReducerCacheConformance.runtimeChecks seed) then
+    throw (IO.userError "compiled reducer-cache conformance mismatch")
 
 end Hex.Groebner.NativeChecks

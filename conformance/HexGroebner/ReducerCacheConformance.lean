@@ -35,6 +35,7 @@ private def cacheChecks : Bool := Id.run do
   let action : Computation Bool := do
     let g ← Polynomial.normalize context limits 0 #[⟨#[1,0],1⟩,⟨#[0,0],1⟩]
     let h ← Polynomial.normalize context limits 0 #[⟨#[1,0],1⟩,⟨#[0,1],1⟩]
+    let k ← Polynomial.normalize context limits 0 #[⟨#[1,0],1⟩,⟨#[0,0],2⟩]
     let target ← Polynomial.normalize context limits 0 #[⟨#[3,0],1⟩]
     let basis : Array BasisElement := #[⟨g,1⟩]
     let targets : Array BasisElement := #[⟨target,3⟩]
@@ -54,13 +55,14 @@ private def cacheChecks : Bool := Id.run do
     if widened.reducers.size != first.reducers.size then return false
     for (a,b) in first.reducers.zip widened.reducers do
       if a.polynomial.support != b.polynomial.support || a.polynomial.coefficients != b.polynomial.coefficients then return false
-    let changed : Array BasisElement := #[⟨h,1⟩]
-    let index ← ReducerIndex.build context limits changed
-    let reused ← SymbolicMatrix.prepareWith context limits index changed targets second.cache
-    let fresh ← SymbolicMatrix.prepareWith context limits index changed targets
-    if reused.reducers.size != fresh.reducers.size then return false
-    for (a,b) in reused.reducers.zip fresh.reducers do
-      if a.polynomial.support != b.polynomial.support || a.polynomial.coefficients != b.polynomial.coefficients then return false
+    for polynomial in [h,k] do
+      let changed : Array BasisElement := #[⟨polynomial,1⟩]
+      let index ← ReducerIndex.build context limits changed
+      let reused ← SymbolicMatrix.prepareWith context limits index changed targets second.cache
+      let fresh ← SymbolicMatrix.prepareWith context limits index changed targets
+      if reused.reducers.size != fresh.reducers.size then return false
+      for (a,b) in reused.reducers.zip fresh.reducers do
+        if a.polynomial.support != b.polynomial.support || a.polynomial.coefficients != b.polynomial.coefficients then return false
     return true
   let workspace : Workspace := {table:={arity:=context.variables}}
   match action.run workspace with
@@ -68,5 +70,81 @@ private def cacheChecks : Bool := Id.run do
   | _ => return false
 
 #guard cacheChecks
+
+private def copy (bytes : ByteArray) : ByteArray := Id.run do
+  let mut result := ByteArray.emptyWithCapacity bytes.size
+  for i in [:bytes.size] do result := result.push bytes[i]!
+  return result
+
+private def longChecks (seed : Nat) : Bool := Id.run do
+  let context : Context := ⟨field,1,.grevlex⟩
+  let limits : Limits := { work := 1000000, packedBytes := 1000000 }
+  let action : Computation Bool := do
+    let p ← Polynomial.normalize context limits 0
+      ((Array.range 4200).map fun i => RawTerm.mk #[2*i] 1)
+    let multiplier ← intern limits #[1]
+    let (first, cache) ← ReducerCache.empty.multiply context limits p multiplier
+    let cloned : Polynomial := { support := copy p.support, coefficients := copy p.coefficients }
+    let before := (← get).statistics.allocatedBytes
+    let (hit, _) ← cache.multiply context limits cloned multiplier
+    if (← get).statistics.allocatedBytes != before then return false
+    if hit.support != first.support || hit.coefficients != first.coefficients then return false
+    let replacement ← intern limits #[5399]
+    let changedSupport := { cloned with
+      support := Packed.set .u32 (copy cloned.support) 1500 replacement.toUInt64 }
+    let (supportResult, _) ← cache.multiply context limits changedSupport multiplier
+    let supportExpected ← changedSupport.multiply context limits multiplier
+    if supportResult.support != supportExpected.support || supportResult.coefficients != supportExpected.coefficients then
+      return false
+    let changed := { cloned with coefficients := cloned.coefficients.set! (4096 + seed%104) (2 + seed%5).toUInt8 }
+    let (actual, _) ← cache.multiply context limits changed multiplier
+    let expected ← changed.multiply context limits multiplier
+    return actual.support == expected.support && actual.coefficients == expected.coefficients
+  match action.run { table := { arity := 1 } } with
+  | (.ok value, _) => return value
+  | _ => return false
+
+#guard longChecks 0
+
+private def contextChecks : Bool := Id.run do
+  let other : PrimeField := ⟨5,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let action : Computation Bool := do
+    let p ← Polynomial.normalize context {} 0 #[⟨#[1,0],1⟩,⟨#[0,0],1⟩]
+    let multiplier ← intern {} #[1,0]
+    let (_, cache) ← ReducerCache.empty.multiply context {} p multiplier
+    for changed in [{ context with order := .lex }, { context with field := other }] do
+      let before := (← get).statistics.allocatedBytes
+      let (actual, _) ← cache.multiply changed {} p multiplier
+      if (← get).statistics.allocatedBytes == before then return false
+      let expected ← p.multiply changed {} multiplier
+      if actual.support != expected.support || actual.coefficients != expected.coefficients then return false
+    return true
+  match action.run { table := { arity := context.variables } } with
+  | (.ok value, _) => return value
+  | _ => return false
+
+#guard contextChecks
+
+/-- Full F4 execution, called between native-counter observations by the harness. -/
+def f4Checks (seed : Nat) : Bool := Id.run do
+  let field : PrimeField := ⟨65537,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let context : Context := ⟨field,5,.grevlex⟩
+  let mut generators : Array RawPolynomial := #[]
+  for degree in [1:5] do
+    let mut polynomial := #[]
+    for start in [:5] do
+      let mut exponents := Array.replicate 5 0
+      for step in [:degree] do
+        exponents := exponents.modify ((start+step)%5) (·+1)
+      polynomial := polynomial.push ⟨exponents,1⟩
+    generators := generators.push polynomial
+  generators := generators.push #[⟨Array.replicate 5 1,1⟩,
+    ⟨Array.replicate 5 0,(65537 - (seed%65536 + 1)).toUInt64⟩]
+  match computeWith context {} generators with
+  | .candidate value statistics => return !value.polynomials.isEmpty && statistics.matrixCalls > 1
+  | _ => return false
+
+/-- Multi-chunk hits, coefficient-only changes, context changes and widening. -/
+def runtimeChecks (seed : Nat) : Bool := cacheChecks && longChecks seed && contextChecks
 
 end Hex.Groebner.ReducerCacheConformance

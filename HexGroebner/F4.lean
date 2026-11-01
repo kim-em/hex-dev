@@ -30,7 +30,7 @@ inductive Phase where
   | input | pairs | interreduce | complete
   deriving BEq, Inhabited
 
-/-- Basis and unresolved pairs are committed only after a whole stage succeeds.
+/-- Basis, unresolved pairs and reducer cache commit only after a whole stage succeeds.
 On exhaustion the old checkpoint remains valid, including all pair obligations. -/
 structure Checkpoint where
   basis : Array BasisElement := #[]
