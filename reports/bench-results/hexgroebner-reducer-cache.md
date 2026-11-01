@@ -3,7 +3,7 @@
 Explicit checkpoint caches avoid repeating symbolic reducer multiplication.
 On the fixed diagnostic suite, candidate B/A has geometric mean **0.9227**,
 median **0.9401** and range **0.7736–1.0220**. Eco-10 improves by about 16% and
-Reimer-5 by about 22%; small cyclic cases can be slightly slower. All complete
+Reimer-5 by about 22%; small cyclic cases can be slightly slower, and MinRank has a 1.0220 observation. All complete
 bases and non-resource counters agree. These are Hex before/after observations,
 with no fresh external-comparator sweep for the cache and no performance
 leadership claim.
@@ -11,7 +11,9 @@ leadership claim.
 ## Representation and correctness
 
 `ReducerCache` retains at most 16384 entries in the F4 checkpoint, associated
-with its append-only monomial arena. The constructor and entries are private.
+with its append-only monomial arena. Explicit context binding clears entries
+when the field or order changes; complete base payloads identify each cached
+basis polynomial. The constructor and entries are private.
 A 64-bit key packs the stable leading and multiplier IDs. A hit also compares
 the entire base polynomial, so a changed reducer with the same leading monomial
 cannot reuse a different row. Exponent-width changes preserve IDs and cached
@@ -70,7 +72,9 @@ The host is chungus2, AMD EPYC 9455, Lean 4.35.0-rc3. Generated C uses bundled
 Clang 23.1.0; FFI uses system Clang 23.1.3. Both arms use one computation thread
 pinned to an automatically leased CPU, frozen executables and adjacent AB then
 BA comparisons. Source fingerprint B is `f4edebd7a46e`; the algorithm is at
-`41976a14b5`, with subsequent harness tests in `ee19e19fef`. Baseline A is the
+`41976a14b5` (PR equivalent `c8cabe7c63`), with subsequent harness tests in
+`ee19e19fef` (PR equivalent `3ffa999849`). These equivalents differ only in
+unrelated narrow-SIMD comments, selftests, registrations and report base drift. Baseline A is the
 narrow-SIMD production engine, measured fingerprint `04e1c0a5f392`, corresponding
 to the computational sources in PR #10998's `98ee31c93e` snapshot. Exact source
 blobs and executable hashes identify each arm independently of rebased ancestry.
@@ -117,6 +121,11 @@ substantial process-startup cost; their process ratios do not isolate F4.
 | minrank_d_2_p_2_q_3_r_2-31 | 1.0220 | 0.9273 | 1.0070 | 0.9931 |
 | quadratic5-32003 | 0.9254 | 0.9075 | 0.9303 | 0.9468 |
 | quadratic5-2147483647 | 0.9241 | 0.9232 | 0.9462 | 0.9534 |
+
+MinRank work increases by 0.08%/0.70% from comparison overhead; a tight work
+allowance that previously succeeded can therefore exhaust. The 16384-entry
+cap is enforced, but peak occupancy was not instrumented in these measurements.
+The first insertion into a shared checkpoint map can copy its bucket array.
 
 ## Registered fixed lean-bench cases
 
@@ -192,3 +201,7 @@ profile, rather than a speed comparison or an external-comparator observation.
 
 - [cache-rebased-validation.tar.gz](raw/cache-rebased-validation.tar.gz): `791abf3b35a8e5fba809a244d8dd6f9be1fb868ce70b43dd3966f259c0c127c6`
 - [cache-production-profile.tar.gz](raw/cache-production-profile.tar.gz): `29475a1daeb3467e03e2406a06d16ea307d5b29a5a20a4100bf1f5d90c5ac364`
+
+The frozen incremental measurements above precede the explicit context guard.
+They describe their recorded source snapshots; final combined measurements and
+expanded validation are reported separately.

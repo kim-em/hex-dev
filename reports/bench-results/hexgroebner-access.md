@@ -67,9 +67,9 @@ startup, parsing and complete output. Certificates, independent certification
 and kernel checking are excluded. All full bases and every non-time counter
 agree in all **192 processes**, giving 96 exact paired comparisons.
 
-Packed-read B is fingerprint `096016b0e9fe` at `31b60e116c`, against the frozen
-cache engine `f4edebd7a46e`. Lookup B is fingerprint `cfb2c79989e2`, with its
-algorithm at `bf3916ff27` (rebased to `92ab4fe1e0`), against that frozen packed-
+Packed-read B is fingerprint `096016b0e9fe` at `31b60e116c` (identical tree
+to PR commit `972cc6fcc3`), against the frozen cache engine `f4edebd7a46e`. Lookup B is fingerprint `cfb2c79989e2`, with its
+algorithm at `bf3916ff27` (PR equivalent `c42506d087`), against that frozen packed-
 read engine. Later benchmark success guards and standalone selftest prints do
 not change computational functions. Exact source blobs and executable hashes
 identify the measured arms independently of rebased ancestry. Source manifests
@@ -103,20 +103,20 @@ by actual inner repeats before pairing. Packed-read's first cyclic6 observations
 change direction between AB and BA, motivating its one unchanged rerun; lookup
 has no unchanged fixed-case rerun. The two changes' points are never pooled.
 
-| Change | Case | First geometric mean | Rerun geometric mean | Combined median | Combined range |
-| --- | --- | ---: | ---: | ---: | --- |
-| Packed read | cyclic4 | 0.9772 | 0.9784 | 0.9619 | 0.8655–1.2856 |
-| Packed read | cyclic5 | 0.9657 | 0.9860 | 0.9658 | 0.8991–1.1240 |
-| Packed read | cyclic6 | 1.0067 | 1.0034 | 0.9847 | 0.6969–1.6191 |
-| Packed read | katsura3 | 0.9724 | 0.9878 | 0.9751 | 0.7651–1.2476 |
-| Packed read | reimer5 | 0.9569 | 0.9825 | 0.9576 | 0.8608–1.3037 |
-| Packed read | cyclic6Small | 0.9872 | 0.9576 | 0.9844 | 0.8338–1.0863 |
-| Lookup | cyclic4 | 0.9637 | — | 0.9626 | 0.9478–0.9791 |
-| Lookup | cyclic5 | 0.9618 | — | 0.9620 | 0.9354–1.0041 |
-| Lookup | cyclic6 | 0.9630 | — | 0.9610 | 0.9569–0.9757 |
-| Lookup | katsura3 | 0.9693 | — | 0.9686 | 0.9541–0.9856 |
-| Lookup | reimer5 | 0.9458 | — | 0.9464 | 0.9377–0.9533 |
-| Lookup | cyclic6Small | 0.9666 | — | 0.9662 | 0.9602–0.9730 |
+| Change | Case | First geometric mean | Rerun geometric mean | Combined geometric mean | Combined median | Combined range |
+| --- | --- | ---: | ---: | ---: | ---: | --- |
+| Packed read | cyclic4 | 0.9772 | 0.9784 | 0.9778 | 0.9619 | 0.8655–1.2856 |
+| Packed read | cyclic5 | 0.9657 | 0.9860 | 0.9758 | 0.9658 | 0.8991–1.1240 |
+| Packed read | cyclic6 | 1.0067 | 1.0034 | 1.0051 | 0.9847 | 0.6969–1.6191 |
+| Packed read | katsura3 | 0.9724 | 0.9878 | 0.9801 | 0.9751 | 0.7651–1.2476 |
+| Packed read | reimer5 | 0.9569 | 0.9825 | 0.9696 | 0.9576 | 0.8608–1.3037 |
+| Packed read | cyclic6Small | 0.9872 | 0.9576 | 0.9723 | 0.9844 | 0.8338–1.0863 |
+| Lookup | cyclic4 | 0.9637 | — | 0.9637 | 0.9626 | 0.9478–0.9791 |
+| Lookup | cyclic5 | 0.9618 | — | 0.9618 | 0.9620 | 0.9354–1.0041 |
+| Lookup | cyclic6 | 0.9630 | — | 0.9630 | 0.9610 | 0.9569–0.9757 |
+| Lookup | katsura3 | 0.9693 | — | 0.9693 | 0.9686 | 0.9541–0.9856 |
+| Lookup | reimer5 | 0.9458 | — | 0.9458 | 0.9464 | 0.9377–0.9533 |
+| Lookup | cyclic6Small | 0.9666 | — | 0.9666 | 0.9662 | 0.9602–0.9730 |
 
 Packed-read CPUs are 55 and 60; lookup uses CPU 60. The packed-read rerun has
 large observations in both directions, including cyclic6 ratios 0.6969–1.6191.
