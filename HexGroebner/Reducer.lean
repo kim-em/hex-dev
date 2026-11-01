@@ -29,26 +29,16 @@ structure DivisorNode where
   reducer : Option Nat := none
   /-- Path length from the root, so traversal stacks store only node IDs. -/
   depth : Nat := 0
-  /-- Best support size below this node; zero denotes an empty subtree. -/
-  minSize : Nat := 0
-  /-- Largest leading degree among descendants with `minSize` terms. -/
-  maxDegree : Nat := 0
   deriving Inhabited
 
 /-- Leading-monomial index for one immutable basis version. `build` establishes
 that every edge points to a distinct child whose depth is its parent depth plus
-one, and subtree bounds contain every descendant reducer; leaves have depth `context.variables`, and the root has depth zero. Lookup
+one; leaves have depth `context.variables`, and the root has depth zero. Lookup
 requires this invariant, valid basis references and the associated monomial arena. -/
 structure ReducerIndex where
   nodes : Array DivisorNode := #[{}]
 
 namespace ReducerIndex
-
-private def bound (nodes : Array DivisorNode) (node terms degree : Nat) : Array DivisorNode :=
-  nodes.modify node fun n =>
-    if n.minSize == 0 || terms < n.minSize || (terms == n.minSize && degree > n.maxDegree) then
-      { n with minSize := terms, maxDegree := degree }
-    else n
 
 /-- Build the index once for a symbolic-preprocessing pass. Duplicate leading
 monomials retain the sparsest representative, with deterministic tie breaking. -/
@@ -60,11 +50,8 @@ def build (context : Context) (limits : Limits) (basis : Array BasisElement) :
     let p := basis[reducer]!.polynomial
     if p.size == 0 then continue
     let leading := p.monomial 0
-    let degree := table.degree leading
     let mut node := 0
     for coordinate in [:context.variables] do
-      spend limits 1
-      nodes := bound nodes node p.size degree
       let exponent := table.exponent leading coordinate
       let edges := nodes[node]!.edges
       spend limits (edges.size / 8 + 1)
@@ -83,8 +70,7 @@ def build (context : Context) (limits : Limits) (basis : Array BasisElement) :
         nodes := nodes.modify node fun n => { n with edges }
         nodes := nodes.push { depth := coordinate + 1 }
         node := id
-    spend limits 2
-    nodes := bound nodes node p.size degree
+    spend limits 1
     let old := nodes[node]!.reducer
     if old.isNone || p.size < basis[old.getD reducer]!.polynomial.size then
       nodes := nodes.modify node fun n => { n with reducer := some reducer }
@@ -108,13 +94,6 @@ private def findWithin (context : Context) (index : ReducerIndex)
     if work + 1 > maxWork then return (.error (.exhausted .work), work)
     work := work + 1
     let n := index.nodes[node]!
-    if let some old := result then
-      if n.minSize != 0 then
-        if work + 1 > maxWork then return (.error (.exhausted .work), work)
-        work := work + 1
-        let q := basis[old]!.polynomial
-        if n.minSize > q.size || (n.minSize == q.size && n.maxDegree ≤ table.degree (q.monomial 0)) then
-          continue
     let coordinate := n.depth
     if coordinate == context.variables then
       if let some candidate := n.reducer then
@@ -139,9 +118,7 @@ private def findWithin (context : Context) (index : ReducerIndex)
 
 /-- Perform the read-only trie traversal with local work accounting, then
 commit its exact charged prefix once. This preserves exhausted-call statistics
-without rebuilding the workspace and statistics at every visited node/edge.
-Subtrees whose best possible sparsity/degree cannot improve the current choice
-are skipped. Equal-priority ties retain the original depth-first choice. -/
+without rebuilding the workspace and statistics at every visited node/edge. -/
 def find (context : Context) (limits : Limits) (index : ReducerIndex)
     (basis : Array BasisElement) (monomial : Nat) : Computation (Option Nat) :=
   ExceptT.mk fun state =>
