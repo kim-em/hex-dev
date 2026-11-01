@@ -12,6 +12,52 @@ open Hex Hex.SignDet
 
 namespace Hex.SignDet.PublicCodec
 
+section Encoding
+
+variable {E Ctx : Type} [Zero E] [DecidableEq E]
+
+/-- The complete graph header is available through an ordinary public import. -/
+theorem graph_encode (value : ValueCodec E) (context : ValueCodec Ctx) (data : Dag E Ctx) :
+    Codec.graph value context data = Codec.Json.arr
+      #[Codec.Json.of (1 : Nat), Codec.Json.of data.root,
+        Codec.array (Codec.entry value context) data.entries] :=
+  Codec.graph_eq value context data
+
+/-- Entry encoding retains the actual node and both optional child indices. -/
+theorem entry_encode (value : ValueCodec E) (context : ValueCodec Ctx)
+    (data : Dag.Entry E Ctx) :
+    Codec.entry value context data = Codec.Json.arr #[Codec.node value context data.node,
+      Codec.option (fun (i, j) => Codec.Json.arr #[Codec.Json.of i, Codec.Json.of j])
+        data.children] :=
+  Codec.entry_eq value context data
+
+/-- The node equation exposes all eleven stored fields without a private import. -/
+theorem node_fields (value : ValueCodec E) (context : ValueCodec Ctx) (data : Node E Ctx) :
+    (Codec.node value context data).getArr?.map Array.size = .ok 11 := by
+  rw [Codec.node_eq]
+  rfl
+
+/-- info: 'Hex.SignDet.Codec.graph_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Codec.graph_eq
+/-- info: 'Hex.SignDet.Codec.entry_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Codec.entry_eq
+/-- info: 'Hex.SignDet.Codec.node_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Codec.node_eq
+/-- info: 'Hex.SignDet.PublicCodec.graph_encode' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms graph_encode
+/-- info: 'Hex.SignDet.PublicCodec.entry_encode' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms entry_encode
+/-- info: 'Hex.SignDet.PublicCodec.node_fields' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms node_fields
+
+end Encoding
+
 /-- A public graph reader reduces during an ordinary kernel proof. -/
 theorem graph_empty : (Codec.readGraph ValueCodec.rat ValueCodec.nat (0 : Nat)
     (DensePoly.ofList ([1] : List Rat)) .negInf .posInf (.arr #[])).toOption.isNone = true := by
