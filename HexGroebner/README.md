@@ -11,6 +11,23 @@ discard unneeded pairs. Symbolic preprocessing closes a selected batch under a
 basis-specific divisibility trie and constructs one joint Macaulay matrix.
 The chain test visits indexed LCM divisors; final tail reductions share one
 immutable reducer index.
+F4 checkpoints retain a `ReducerCache` of multiplied reducers from the same
+append-only monomial arena. Stable IDs survive exponent-width changes. Field/order metadata is checked before
+reuse, and the complete base payload identifies the basis polynomial. A cache
+hit checks the complete base polynomial, comparing at most 4096 bytes per native
+call; basis changes cannot silently reuse a different row. Sugar and certificate
+derivations are rebuilt from the current basis. The private cache retains at most
+16384 entries, charges eight logical key bytes per insertion and all comparison
+work to the parent allowance, and shares already charged polynomial buffers.
+When key storage would not fit, multiplication continues without caching that
+product. Every hit also validates all product exponents against the current
+arena, with at most 4096 coordinate comparisons per native call; incompatible
+identifier meanings in public raw calls over arenas produced by the interning
+API therefore cannot return a stale row.
+The portable route checks the same exact identities. Full caches permit
+replacement of an existing key, charging each insertion cumulatively.
+The [cache measurements](../reports/bench-results/hexgroebner-arena-cache.md)
+retain full-system results, small-case regressions and fixed-benchmark variability.
 Final minimal-leading-monomial selection and tail reduction produce canonical
 monic, sorted, reduced output. Empty/all-zero input produces an empty basis;
 the unit ideal produces `[1]`, including zero-variable inputs. Ordinary
@@ -68,7 +85,8 @@ checkpoints. On exhaustion, no partially processed batch loses unresolved pairs;
 temporary interned monomials and charged work survive. Retrying a stage charges
 its repeated work. Invalid input, internal invariant failures, representation
 exhaustion and consumed allowances remain distinct. `Limits.packedBytes` bounds monomial arenas plus
-cumulative packed polynomial/matrix allocation and decoded interchange scalar
+cumulative packed polynomial/matrix allocation, eight bytes per reducer-cache
+insertion, and decoded interchange scalar
 payload; it excludes headers and allocator capacity. Pair attempts, rounds,
 basis size, cumulative matrix rows/entries, monomials and variables have
 separate bounds.
@@ -90,6 +108,12 @@ Divisibility masks only reject candidates; trie paths inspect exact exponents.
 Polynomials use separate packed stable-identifier and coefficient buffers.
 Coefficients occupy one byte below modulus 256, two below 65536, and four for
 larger supported primes. Interchange decoding occurs outside the hot loops.
+Packed scalar reads retain their byte-based kernel definition and compile through
+a proved rewrite to one complete range check and unboxed indices. Reducer lookup
+accumulates work locally and commits its exact charged prefix once, including
+exhaustion. [Matched observations](../reports/bench-results/hexgroebner-access.md)
+retain the incremental gains, variability and unresolved cyclic-case result.
+
 Cached 64-bit metadata uses `Packed.read64`. Its byte-based kernel definition
 is preserved while a proved compiler rewrite selects checked unboxed reads.
 The equality covers all byte arrays and offsets, with an explicit platform

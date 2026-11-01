@@ -30,12 +30,13 @@ inductive Phase where
   | input | pairs | interreduce | complete
   deriving BEq, Inhabited
 
-/-- Basis and unresolved pairs are committed only after a whole stage succeeds.
+/-- Basis, unresolved pairs and reducer cache commit only after a whole stage succeeds.
 On exhaustion the old checkpoint remains valid, including all pair obligations. -/
 structure Checkpoint where
   basis : Array BasisElement := #[]
   queue : PairQueue := {}
   phase : Phase := .input
+  cache : ReducerCache := .empty
 
 private def degree (limits : Limits) (p : Polynomial) : Computation Nat := do
   spend limits p.size
@@ -88,7 +89,7 @@ private def round (context : Context) (limits : Limits) (checkpoint : Checkpoint
     let g := checkpoint.basis[pair.right]!.polynomial
     let p ← f.sPolynomial context limits g
     if p.size != 0 then targets := targets.push ⟨p, pair.sugar⟩
-  let matrix ← SymbolicMatrix.prepareWith context limits index checkpoint.basis targets
+  let matrix ← SymbolicMatrix.prepareWith context limits index checkpoint.basis targets checkpoint.cache
   let new ← matrix.eliminate context limits
   let basis := checkpoint.basis ++ new
   if let some g ← unit limits new then
@@ -97,9 +98,9 @@ private def round (context : Context) (limits : Limits) (checkpoint : Checkpoint
   let mut queue := queue
   for pair in pairs do queue ← queue.resolve limits pair.left pair.right
   queue ← install context limits basis queue checkpoint.basis.size
-  return { basis, queue, phase := .pairs }
+  return { basis, queue, phase := .pairs, cache := matrix.cache }
 
-private def interreduce (context : Context) (limits : Limits) (basis : Array BasisElement) :
+private def interreduce (context : Context) (limits : Limits) (basis : Array BasisElement) (cache : ReducerCache) :
     Computation (Array BasisElement) := do
   let table := (← get).table
   let mut minimal := #[]
@@ -129,7 +130,7 @@ private def interreduce (context : Context) (limits : Limits) (basis : Array Bas
     spend limits inputs.size
     let nonzero := inputs.filter (fun p => p.polynomial.size != 0)
     if nonzero.isEmpty then pure inputs else
-      let matrix ← SymbolicMatrix.prepareWith context limits index minimal nonzero
+      let matrix ← SymbolicMatrix.prepareWith context limits index minimal nonzero cache
       let remainders ← matrix.reduce context limits
       let mut cursor := 0
       let mut output := #[]
@@ -171,7 +172,7 @@ def step (context : Context) (limits : Limits) (raw : Array RawPolynomial)
   | .input => inputBasis context limits raw
   | .pairs => round context limits checkpoint
   | .interreduce =>
-    let basis ← interreduce context limits checkpoint.basis
+    let basis ← interreduce context limits checkpoint.basis checkpoint.cache
     return { checkpoint with basis, phase := .complete }
   | .complete => return checkpoint
 

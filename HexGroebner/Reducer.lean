@@ -80,9 +80,10 @@ def build (context : Context) (limits : Limits) (basis : Array BasisElement) :
 replace the exponent tests performed by the trie path. -/
 -- For a fixed immutable basis/index, selection depends only on the monomial.
 -- Shared and separate symbolic closures rely on this deterministic choice.
-def find (context : Context) (limits : Limits) (index : ReducerIndex)
-    (basis : Array BasisElement) (monomial : Nat) : Computation (Option Nat) := do
-  let table := (← get).table
+private def findWithin (context : Context) (index : ReducerIndex)
+    (basis : Array BasisElement) (table : MonomialTable) (monomial initialWork maxWork : Nat) :
+    Except ComputeError (Option Nat) × Nat := Id.run do
+  let mut work := initialWork
   let mut pending := #[0]
   let mut result : Option Nat := none
   -- Each trie node has one parent, so at most nodes.size nodes can be visited.
@@ -90,7 +91,8 @@ def find (context : Context) (limits : Limits) (index : ReducerIndex)
     if pending.isEmpty then break
     let node := pending.back!
     pending := pending.pop
-    spend limits 1
+    if work + 1 > maxWork then return (.error (.exhausted .work), work)
+    work := work + 1
     let n := index.nodes[node]!
     let coordinate := n.depth
     if coordinate == context.variables then
@@ -106,11 +108,23 @@ def find (context : Context) (limits : Limits) (index : ReducerIndex)
           else result := some candidate
     else
       let exponent := table.exponent monomial coordinate
-      spend limits (n.edges.size / 8)
+      let charge := n.edges.size / 8
+      if work + charge > maxWork then return (.error (.exhausted .work), work)
+      work := work + charge
       for i in [:n.edges.size / 8] do
         if Packed.read .u32 n.edges (2 * i) ≤ exponent then
           pending := pending.push (Packed.read .u32 n.edges (2 * i + 1)).toNat
-  return result
+  return (.ok result, work)
+
+/-- Perform the read-only trie traversal with local work accounting, then
+commit its exact charged prefix once. This preserves exhausted-call statistics
+without rebuilding the workspace and statistics at every visited node/edge. -/
+def find (context : Context) (limits : Limits) (index : ReducerIndex)
+    (basis : Array BasisElement) (monomial : Nat) : Computation (Option Nat) :=
+  ExceptT.mk fun state =>
+    let (result, work) := findWithin context index basis state.table monomial
+      state.statistics.work limits.work
+    (result, { state with statistics.work := work })
 
 /-- Enumerate indexed divisors rather than scanning the entire basis. The trie
 stores one representative per distinct leading monomial; F4 basis leading

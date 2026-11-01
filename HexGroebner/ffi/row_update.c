@@ -7,6 +7,7 @@
 #endif
 #include <stdint.h>
 #include <stddef.h>
+#include <string.h>
 
 /* Implements Native.subtractPortable exactly. Logical arrays are byte arrays,
    with explicit little-endian u32 columns and 1/2/4-byte modular residues.
@@ -143,11 +144,73 @@ static inline int equal_monomial(unsigned width, uint64_t arity, uint64_t id,
     return 1;
 }
 
+
+/* Exact bounded comparison. Subtraction-based checks avoid start+count wrap. */
+static int equal_bytes(const uint8_t *left,size_t left_size,const uint8_t *right,
+        size_t right_size,size_t start,size_t count) {
+    if(count>4096 || start>left_size || start>right_size ||
+       count>left_size-start || count>right_size-start) return 0;
+    if(!count || left==right) return 1;
+    return memcmp(left+start,right+start,count)==0;
+}
+
+/* Exact cached-product validation against the current arena, independent of
+   hash values and insertion history. All inputs are borrowed and may alias. */
+static inline int equal_products(unsigned width,uint64_t arity,uint64_t count,
+        uint64_t multiplier,uint64_t start,uint64_t terms,const uint8_t *arena,
+        size_t arena_bytes,const uint8_t *base,size_t base_bytes,
+        const uint8_t *result,size_t result_bytes) {
+    if((width!=1 && width!=2 && width!=4) || !arity || arity>4096 ||
+       terms>4096/arity || multiplier>=count || base_bytes%4 ||
+       result_bytes!=base_bytes || start>base_bytes/4 || terms>base_bytes/4-start)
+        return 0;
+    size_t stride=(size_t)arity*width;
+    if(count>SIZE_MAX/stride || arena_bytes!=(size_t)count*stride) return 0;
+    for(size_t i=(size_t)start;i<(size_t)(start+terms);++i) {
+        uint64_t a=read_le(base+4*i,4),b=read_le(result+4*i,4);
+        if(a>=count || b>=count) return 0;
+        for(size_t j=0;j<(size_t)arity;++j) {
+            uint64_t x=read_le(arena+(size_t)a*stride+j*width,width);
+            uint64_t y=read_le(arena+(size_t)multiplier*stride+j*width,width);
+            uint64_t z=read_le(arena+(size_t)b*stride+j*width,width);
+            if(x+y!=z) return 0;
+        }
+    }
+    return 1;
+}
+
 #ifndef HEX_GROEBNER_NO_LEAN
 static inline lean_object *some_buffer(lean_object *data) {
     lean_object *result = lean_alloc_ctor(1, 1, 0);
     lean_ctor_set(result, 0, data);
     return result;
+}
+
+
+LEAN_EXPORT uint8_t lean_hex_groebner_equal_products(uint8_t width,
+        uint64_t arity,uint64_t count,uint64_t multiplier,uint64_t start,uint64_t terms,
+        b_lean_obj_arg arena,b_lean_obj_arg base,b_lean_obj_arg result) {
+    return (uint8_t)equal_products(width,arity,count,multiplier,start,terms,
+        lean_sarray_cptr(arena),lean_sarray_size(arena),
+        lean_sarray_cptr(base),lean_sarray_size(base),
+        lean_sarray_cptr(result),lean_sarray_size(result));
+}
+
+LEAN_EXPORT uint8_t lean_hex_groebner_equal_bytes(b_lean_obj_arg left,
+        b_lean_obj_arg right,b_lean_obj_arg start_arg,b_lean_obj_arg count_arg) {
+    if(!lean_is_scalar(count_arg)) return 0;
+    size_t count=lean_unbox(count_arg);
+    if(count>4096) return 0;
+    size_t left_size=lean_sarray_size(left),right_size=lean_sarray_size(right),start;
+    if(lean_is_scalar(start_arg)) start=lean_unbox(start_arg);
+    else {
+        lean_object *limit=lean_usize_to_nat(left_size<right_size?left_size:right_size);
+        int valid=lean_nat_dec_le(start_arg,limit);lean_dec(limit);
+        if(!valid) return 0;
+        start=lean_usize_of_nat(start_arg);
+    }
+    return (uint8_t)equal_bytes(lean_sarray_cptr(left),left_size,
+        lean_sarray_cptr(right),right_size,start,count);
 }
 
 LEAN_EXPORT lean_obj_res lean_hex_groebner_subtract_row(
