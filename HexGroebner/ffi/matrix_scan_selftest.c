@@ -56,7 +56,8 @@ static void check(uint32_t p,uint32_t factor) {
     assert(hex_scan8((uint8_t*)dense,(uint8_t*)cols,(uint8_t*)coeff,0,128,p,f,inverse,4)==0);
 }
 /* Exhaust all odd one-byte moduli, factors and nonzero coefficients. Each
-   vector checks subtraction at zero, p-1, the product and adjacent residues. */
+   vector checks subtraction at zero, p-1, the product and adjacent residues.
+   Contiguous and gathered paths share this exact arithmetic. */
 __attribute__((target("avx2")))
 static void check_u8_products(void) {
     uint32_t columns[8]={0,1,2,3,4,5,6,7};
@@ -165,6 +166,7 @@ int main(void) {
 #if HEX_GROEBNER_AVX2
     if(hex_avx2_available()) {
         check_u8_products();
+        puts("exhaustive odd one-byte modulus products: passed");
         uint32_t fields[]={65537,65539,131071,1000003,1000000007,2147483629,2147483647};
         for(unsigned i=0;i<sizeof(fields)/sizeof(fields[0]);++i) {
             uint32_t p=fields[i];

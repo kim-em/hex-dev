@@ -114,7 +114,8 @@ def cauchy16Trace (input : Input) :
     Bool × Array (Array (Nat × UInt64)) × Array (Array UInt64) :=
   match (eliminateWith field16 { work := 1000000000 }
       input.columns input.reducers input.targets true).result with
-  | .ok e => (e.rows.size == input.columns, e.rows.map (·.row.entries field16), e.trace.map wireOp)
+  | .ok e => (e.rows.size == input.reducers.size + input.targets.size,
+      e.rows.map (·.row.entries field16), e.trace.map wireOp)
   | .error _ => (false, #[], #[])
 
 /-- Rectangular matrices with six nonzeros per row and a large zero prefix.
@@ -160,6 +161,10 @@ def sparse (input : Input) : Bool × Array (Array (Nat × UInt64)) :=
 #guard (cauchy (prepare 4)).1
 #guard (cauchy (prepare 16)).1
 #guard (cauchyTrace (prepare 16)).1
+#guard (cauchy8 (prepare8 16)).1
+#guard (cauchy16 (prepare16 16)).1
+#guard (cauchy16Trace (prepare16 16)).1
+#guard (cauchy16Strided (prepare16Strided 16)).1
 #guard (sparse (prepareSparse 16)).1
 #guard (sparse (prepareSpread 16)).1
 
