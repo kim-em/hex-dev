@@ -176,7 +176,7 @@ denominator form a ring. This permits intermediate polynomial arithmetic
 without requiring regular canonical coefficients at every intermediate step. -/
 noncomputable def fractionRing (domain : Subring F) (value : domain →+* G) :
     Subring (Hex.RationalFn F) where
-  carrier := fun fraction => Nonempty (FractionPresentation domain value fraction)
+  carrier := {fraction | Nonempty (FractionPresentation domain value fraction)}
   zero_mem' := ⟨FractionPresentation.zero domain value⟩
   one_mem' := ⟨FractionPresentation.one domain value⟩
   add_mem' := by
