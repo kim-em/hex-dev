@@ -203,10 +203,24 @@
     "number": 10959,
     "head": "4b4ad56b515f85f5afa39e0e41985dc00b9b9c26",
     "merged_at": "2026-10-16T04:08:08Z",
-    "note": "This distinct protocol PR merged after collection started. The bound decision names PR10945 as its before-collection merge precondition."
+    "note": "This distinct protocol PR merged after collection started. The bound decision names PR10945 as its before-collection merge precondition.",
+    "role": "Contains the executed resolution collector and admission logic, not only the protocol text.",
+    "ci_run": 38838627286,
+    "ci_job": 116773664528,
+    "ci_head": "4b4ad56b515f85f5afa39e0e41985dc00b9b9c26",
+    "ci_completed_at": "2026-10-16T03:49:23Z",
+    "ci_conclusion": "success",
+    "tooling_freeze": "199ee1a9179aeee0506551b5a365dbe138278f0b",
+    "matching_tool_sources": {
+      "scripts/bench/sturm_regression.py": "6f35f4b87aa0e514eb805726bc9222efc65054682b745508de44f6fc4a3f460b",
+      "scripts/bench/cpu_lease.py": "2da6fe01f5637f57b1f92a4baf743c8cfaa47ed61a51632f8b60173bc6436cdb",
+      "scripts/bench/sweep_freshness.py": "882e1d255d32fe2a8c97d3ed5e16ff050e8bcbaffbbe20529a80517923f36ad2",
+      "bench/HexSturm/CompareExports.lean": "6cf17f2047a4326b5d301705fbb47a975167ee4905de1101878b66823811710a"
+    }
   },
   "unchanged_native_configuration": {
     "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
     "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4"
-  }
+  },
+  "ci_head": "f44197c7b24182b0860eeec215273ff2b1bb6dbb"
 }

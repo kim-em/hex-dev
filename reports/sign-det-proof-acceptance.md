@@ -143,12 +143,13 @@ and families. This consumed attempt is not eligible for the completed-inconclusi
 rerun allowance. The collector correction preserves such exports for an
 inconclusive native verdict, without changing the thresholds. The separately
 reserved matched-resolution campaign completes all 31 workloads and four blocks,
-with matching answers and intact sources, but reports two regressions:
+with matching answers, intact candidate sources and unchanged executable
+hashes, but reports two regressions:
 `Joint.runCheckDirect` at size 127 (+25.086030%) and `Joint.runReduced` at
 size 255 (+38.631075%). All observations and the consumed reservation remain
 retained. The [untimed source-bound native replay](bench-results/sign-det-phase6-comparison/native-replay-v1/manifest.json)
 retains its fresh comparator build, commands and all 31 byte-identical reports,
-without new timings or a historical binary-identity claim.
+with the same historical checker hash and no new timings.
 The source cause and resolution remain open. No unchanged retry or phase
 advance is justified by this completed result.
 

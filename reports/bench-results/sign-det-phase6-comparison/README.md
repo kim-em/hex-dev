@@ -110,10 +110,13 @@ required collector PR [#10945](https://github.com/kim-em/hex-dev/pull/10945):
 its exact-head CI completed successfully on October 15 at 20:05:58 UTC, and
 its merge followed at 20:08:01 UTC. The first timed export is dated October 16
 at 02:09:33 UTC. All 188 recorded monorepo native inputs match that merge.
-This is distinct from resolution-protocol PR
+This is distinct from the resolution collector/protocol PR
 [#10959](https://github.com/kim-em/hex-dev/pull/10959), which merged at
-04:08:08 UTC after collection started. The bound decision names #10945 as its
-before-collection merge precondition.
+04:08:08 UTC after collection started. Its four executed tool-source hashes
+match tooling freeze `199ee1a9179aeee0506551b5a365dbe138278f0b`; its exact-head
+CI completed at 03:49:23 UTC, also after collection started. Thus the executed
+resolution changes had not completed CI when timing began. The bound decision
+names #10945, not #10959, as its before-collection merge precondition.
 
 The run completes 248 source exports: 31 workloads × four blocks × two arms,
 in adjacent AB/BA/AB/BA order on automatically leased CPU 23. Both native
@@ -130,15 +133,17 @@ is `regression`, not failed collection or insufficient timing resolution.
 
 For parameterized workloads the pinned checker averages the two middle values
 of the four pooled observations. Fixed workloads use the upper-middle value.
-Both use the unchanged ten-percent rule.
+Both use the unchanged ten-percent rule. The immutable decision's generic
+upper-middle median wording describes the fixed path; the parameterized path
+uses the pinned comparator's mean-of-middle-two rule.
 Every other workload passes its full ladder or fixed comparison. The retained
 [untimed native replay](native-replay-v1/manifest.json) rebuilds the comparator
 from the same eleven hash-bound source inputs and pinned toolchain. Its build
-log, new executable hash, commands, all 31 reports, raw streams and exit codes
+log, executable hashing command and output, commands, all 31 reports, raw streams and exit codes
 are archived. Every JSON report is byte-identical to the collected report;
-the outcome remains 29 passing workloads and two regressions. This is a fresh
-source-bound rebuild, not a claim of binary identity with the historical
-checker. It runs no benchmark and collects no new timings.
+the outcome remains 29 passing workloads and two regressions. The rebuilt checker's computed SHA-256 matches the historical checker's hash.
+This identity and all report hashes are retained. The replay runs no benchmark
+and collects no new timings.
 
 The raw per-call seconds at the two flagged parameters vary across blocks:
 
