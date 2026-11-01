@@ -173,6 +173,19 @@ retains all 132 points and inconclusive fits. The Barrett-prototype archive
 notes its stale hard-coded baseline label; its exact source manifest, binary
 hashes and embedded source snapshot identify the actual computational sources.
 
+## Remaining full-system costs
+
+A retained [production profile](raw/small-fields-production-profile.tar.gz)
+of Eco-10 at modulus 32003 uses the frozen production driver, leased CPU 66,
+1999-Hz cycle sampling and DWARF call graphs. No samples are reported lost.
+About 16.6% of sampled cycles are in the narrow native scan; two reducer-trie
+lookup loops account for about 8.7%, and monomial preparation, allocation and
+reference-count operations also remain visible. These are sampled cycle
+attributions, not isolated time savings or external-comparator evidence. The
+profile explains why the matrix improvement exceeds the full-system gain and
+motivates further work outside elimination. The raw recording and report are
+retained; restricted kernel symbols do not resolve.
+
 ## Reproduction and evidence
 
 Overlay each archive's `root-sources` onto its recorded baseline, using its
@@ -201,3 +214,4 @@ Archive SHA-256 values:
 - `small-fields-wide-barrett-records-022db869dd08.tar.gz`: `86306784392c636b1ccd4cd595b2b2923876e6db4b0c7f73dbcfc78fd5f439b3`
 - `small-fields-wide-scalar-records-b3c928b09605.tar.gz`: `c2da6eb853ab3bb0e8bd3b9fbc0028f3997ec0a647c15311efe301c2e06316ca`
 - `small-fields-wide-simd-records-b3c928b09605.tar.gz`: `59014f800b1860b792815cd6073229dfc9acbd41521e8d4c4a81fad928625975`
+- `small-fields-production-profile.tar.gz`: `40fd77f7d711087865eff1402ffa5455827bce820ced4db734b939c018893356`
