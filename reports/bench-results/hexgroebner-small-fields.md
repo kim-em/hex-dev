@@ -7,8 +7,8 @@ ratio **0.3865** (median 0.3859, range 0.3833–0.3910). With derivations record
 its ratio is **0.4744**. Eco-10 over 32003 has full F4 candidate ratios 0.8773
 and 0.8838 in adjacent AB/BA comparisons. Across the fixed diagnostic suite,
 the candidate geometric mean is **0.9854**, median **0.9895**; the matrix gain
-is substantially larger than the full-system gain. There is no fresh external
-comparator or fastest-open-source claim.
+is substantially larger than the full-system gain. A diagnostic comparison with current msolve is reported below; it shows a
+substantial remaining gap and does not establish the balanced acceptance milestone.
 
 ## Arithmetic, bounds and ownership
 
@@ -173,6 +173,41 @@ retains all 132 points and inconclusive fits. The Barrett-prototype archive
 notes its stale hard-coded baseline label; its exact source manifest, binary
 hashes and embedded source snapshot identify the actual computational sources.
 
+## Remaining gap to current msolve
+
+Before the comparator sweeps, `git fetch origin master` confirmed that the
+msolve checkout still matches upstream commit
+`3672113ee2c696a2ac9c637636e0f7214f500ba1` (2026-10-25), version 0.11.0.
+Its GCC 16.2 build uses `-O3 -march=native`, FLINT 3.6 and OpenMP support; all
+71 upstream tests pass. Both arms run one thread on the same leased CPU.
+`-g 2` requests the full reduced grevlex basis without FGLM/root solving.
+The default exact sparse `-l 2` and probabilistic sparse/dense `-l 42` routes
+are measured separately. Every exponent and coefficient in all 64 paired
+basis comparisons agrees; every process completes under the same ten-second/
+16-GiB limits. Native verification, certificates and kernel checking are excluded.
+
+| Comparator route | CPU | Hex/msolve process geometric mean | Median | Range | Evidence |
+| --- | ---: | ---: | ---: | --- | --- |
+| Default exact sparse, `-l 2` | 8 | 3.1321 | 2.3475 | 1.7314–9.0112 | [raw](raw/small-fields-msolve-l2-records-8142939751e3.tar.gz) |
+| Probabilistic sparse/dense, `-l 42` | 23 | 3.1936 | 2.3148 | 1.6922–12.8799 | [raw](raw/small-fields-msolve-l42-records-8142939751e3.tar.gz) |
+
+These are whole-process comparisons, including each executable's startup,
+parsing and full output, not isolated algorithm ratios. Hex's candidate-only
+counter is recorded separately and is not divided by an unavailable matching
+msolve timer. On Eco and Reimer the process gap is about 7.6–9.1 times against
+the default route; wider-prime Eco reaches about 12.4–12.9 times against the
+probabilistic route. Smaller inputs include substantial startup cost. Every
+completed sample is retained. This suite is diagnostic, gives cyclic two sizes,
+and has no held-out or family-balanced acceptance claim. Other comparator
+routes, current systems and parallel sweeps remain obligations.
+
+The comparator archives include a source-metadata correction: their inherited
+`hex_source_dirty` label was hard-coded and does not describe the clean execution
+checkout. Exact executable hashes identify the measured `04e1c0a5f392` production
+build; the archived `8142939751e3` source differs only in benchmark comments and
+produces the byte-identical benchmark executable. No samples were changed or
+excluded because of this metadata correction.
+
 ## Remaining full-system costs
 
 A retained [production profile](raw/small-fields-production-profile.tar.gz)
@@ -215,3 +250,5 @@ Archive SHA-256 values:
 - `small-fields-wide-scalar-records-b3c928b09605.tar.gz`: `c2da6eb853ab3bb0e8bd3b9fbc0028f3997ec0a647c15311efe301c2e06316ca`
 - `small-fields-wide-simd-records-b3c928b09605.tar.gz`: `59014f800b1860b792815cd6073229dfc9acbd41521e8d4c4a81fad928625975`
 - `small-fields-production-profile.tar.gz`: `40fd77f7d711087865eff1402ffa5455827bce820ced4db734b939c018893356`
+- `small-fields-msolve-l2-records-8142939751e3.tar.gz`: `c0a62a1f8a78969c684509c1b12f72e38f5becd07162a92013b481e9bb9adc61`
+- `small-fields-msolve-l42-records-8142939751e3.tar.gz`: `81feb001c467fbd692ae21d8a6d5fe8690ab76ca688f3662ae62abb22bff2b1c`
