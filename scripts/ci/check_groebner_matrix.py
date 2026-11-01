@@ -83,9 +83,9 @@ def run() -> None:
 #undef lean_hex_groebner_search_monomial
 #undef lean_hex_groebner_equal_bytes
 #undef lean_hex_groebner_equal_products
-static uint64_t fused_success=0,fused_insert=0,fused_unique=0,fused_deferred=0,unique_alias=0;
+static uint64_t fused_success=0,fused_insert=0,fused_unique=0,fused_deferred=0,unique_alias=0,unique_alias_mask=0;
 #define HEX_GROEBNER_DEFERRED() (++fused_deferred)
-#define HEX_GROEBNER_UNIQUE_ALIAS() (++unique_alias)
+#define HEX_GROEBNER_UNIQUE_ALIAS(mask) (++unique_alias,unique_alias_mask|=(mask))
 #define HEX_GROEBNER_TABLE_UNIQUE() (++fused_unique)
 #define HEX_GROEBNER_INSERT_FOUND() (++fused_insert)
 #define HEX_GROEBNER_HIT_FOUND() (++fused_success)
@@ -93,6 +93,29 @@ static uint64_t fused_success=0,fused_insert=0,fused_unique=0,fused_deferred=0,u
 #define lean_hex_groebner_combine_owned hex_test_combine_owned
 #include HITCODE
 #undef lean_hex_groebner_combine_owned
+LEAN_EXPORT lean_obj_res hex_test_owned_runtime(lean_obj_arg world) {
+ (void)world;int ok=1;
+ for(size_t capacity=1;capacity<=8;capacity*=8) {
+  lean_object *bytes=lean_alloc_sarray(1,1,capacity);lean_sarray_cptr(bytes)[0]=37;
+  lean_sarray_mark_linear_core(bytes);bytes=hit_extend(bytes,2);
+  ok=ok && lean_sarray_is_marked_linear(bytes) && lean_sarray_size(bytes)==2 &&
+      lean_sarray_cptr(bytes)[0]==37;lean_dec(bytes);
+ }
+ lean_object *fake=lean_alloc_ctor(0,7,0);
+ for(unsigned i=0;i<7;++i) lean_ctor_set(fake,i,lean_box(0));
+ lean_object *result=hex_test_combine_owned(fake,0,lean_box(0),lean_box(0),
+   lean_box(100),lean_box(10000),lean_box(10000),1);
+ ok=ok && lean_obj_tag(result)==1 && lean_ctor_get(result,0)==fake;
+ lean_dec(result);
+ fake=lean_alloc_ctor(0,8,1);
+ for(unsigned i=0;i<8;++i) lean_ctor_set(fake,i,lean_box(0));
+ lean_object *index=lean_alloc_ctor(0,1,0);lean_ctor_set(index,0,lean_box(0));
+ lean_ctor_set(fake,5,index);lean_ctor_set_uint8(fake,8*sizeof(void*),0);
+ result=hex_test_combine_owned(fake,0,lean_box(0),lean_box(0),lean_box(100),
+   lean_box(10000),lean_box(10000),1);
+ ok=ok && lean_obj_tag(result)==1 && lean_ctor_get(result,0)==fake;lean_dec(result);
+ return lean_io_result_mk_ok(lean_box(ok));
+}
 static uint64_t mersenne_vectors=0,zero_scans=0;
 #define HEX_GROEBNER_ZERO_SCAN_USED() (++zero_scans)
 #define HEX_GROEBNER_MERSENNE_USED() (++mersenne_vectors)
@@ -145,6 +168,9 @@ LEAN_EXPORT lean_obj_res __wrap_lean_hex_groebner_combine_owned(lean_obj_arg tab
 }
 LEAN_EXPORT lean_obj_res hex_test_deferred_count(lean_obj_arg world) {
  (void)world;return lean_io_result_mk_ok(lean_box_uint64(fused_deferred));
+}
+LEAN_EXPORT lean_obj_res hex_test_alias_mask(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(unique_alias_mask));
 }
 LEAN_EXPORT lean_obj_res hex_test_alias_count(lean_obj_arg world) {
  (void)world;return lean_io_result_mk_ok(lean_box_uint64(unique_alias));
@@ -313,7 +339,9 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
 @[extern "hex_test_accept_count"] opaque acceptedCount : IO UInt64
 @[extern "hex_test_insert_count"] opaque insertCount : IO UInt64
 @[extern "hex_test_unique_count"] opaque uniqueCount : IO UInt64
+@[extern "hex_test_owned_runtime"] opaque ownedRuntime : IO Bool
 @[extern "hex_test_deferred_count"] opaque deferredCount : IO UInt64
+@[extern "hex_test_alias_mask"] opaque aliasMask : IO UInt64
 @[extern "hex_test_alias_count"] opaque aliasCount : IO UInt64
 @[extern "hex_test_product_count"] opaque productCount : IO UInt64
 @[extern "hex_test_vector_counts"] opaque vectorCounts : IO (UInt64 × UInt64)
@@ -322,12 +350,14 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
 @[extern "hex_test_zero_count"] opaque zeroCount : IO UInt64
 @[extern "hex_test_mersenne_count"] opaque mersenneCount : IO UInt64
 def main : IO Unit := do
+  if !(← ownedRuntime) then throw (IO.userError "native layout or linear resize mismatch")
+  IO.println "native constructor layout and marked-linear growth passed"
   let beforeOwned ← uniqueCount
   let beforeAlias ← aliasCount
   Hex.Groebner.NativeChecks.runOwned
   let afterOwned ← uniqueCount
   let afterAlias ← aliasCount
-  if afterOwned ≤ beforeOwned || afterAlias ≤ beforeAlias then
+  if afterOwned ≤ beforeOwned || afterAlias ≤ beforeAlias || (← aliasMask) != 15 then
     throw (IO.userError "exclusive alias insertion was not exercised")
   IO.println s!"exclusive owned comparisons: reuses={afterOwned-beforeOwned}, aliased insertions={afterAlias-beforeAlias}"
   Hex.Groebner.NativeChecks.run
@@ -401,7 +431,8 @@ lean_exe {target} where
         print("matrix variants compiler:", subprocess.check_output([cc, "--version"], text=True).splitlines()[0], flush=True)
         subprocess.run(["lake", "build", *targets], cwd=directory, check=True)
         env = dict(os.environ, ASAN_OPTIONS=os.environ.get("ASAN_OPTIONS", "detect_leaks=0"),
-                   UBSAN_OPTIONS=os.environ.get("UBSAN_OPTIONS", "halt_on_error=1"))
+                   UBSAN_OPTIONS=os.environ.get("UBSAN_OPTIONS", "halt_on_error=1"),
+                   LEAN_ABORT_ON_NONLINEAR="1")
         loader = os.environ.get("HEX_GROEBNER_TEST_LOADER")
         for target in targets:
             command = [str(directory / ".lake/build/bin" / target)]

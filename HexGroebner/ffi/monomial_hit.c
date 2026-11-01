@@ -15,7 +15,7 @@
 #define HEX_GROEBNER_DEFERRED() ((void)0)
 #endif
 #ifndef HEX_GROEBNER_UNIQUE_ALIAS
-#define HEX_GROEBNER_UNIQUE_ALIAS() ((void)0)
+#define HEX_GROEBNER_UNIQUE_ALIAS(mask) ((void)(mask))
 #endif
 
 #ifndef HEX_GROEBNER_INSERT_FOUND
@@ -39,7 +39,11 @@ static lean_obj_res hit_extend(lean_obj_arg bytes,size_t size) {
     }
     size_t capacity=old<=SIZE_MAX/2?old*2:size;
     if(capacity<size) capacity=size;
-    bytes=lean_copy_sarray_nonlinear(bytes,capacity);
+    if(lean_is_exclusive(bytes)) {
+        int linear=lean_sarray_is_marked_linear(bytes);
+        bytes=lean_copy_sarray(bytes,capacity);
+        if(linear) lean_sarray_mark_linear_core(bytes);
+    } else bytes=lean_copy_sarray_nonlinear(bytes,capacity);
     lean_sarray_set_size(bytes,size);return bytes;
 }
 static void hit_write64(uint8_t *p,uint64_t value) {
@@ -48,8 +52,8 @@ static void hit_write64(uint8_t *p,uint64_t value) {
 
 /* Only a complete, bounded lookup or same-width, same-capacity insertion is handled here. All unsupported
    inputs and every error or growth boundary return deferred input unchanged.
-   The stack workspace plus candidate comparisons visit at most4096 coordinates;
-   chain headers are limited to4096 as well. */
+   The stack workspace plus candidate comparisons visit at most 4096 coordinates;
+   chain headers are limited to 4096 as well. */
 static lean_obj_res hit_compute(lean_obj_arg table,uint8_t operation,
         lean_obj_arg a,lean_obj_arg b,lean_obj_arg max_count,lean_obj_arg max_bytes,
         lean_obj_arg max_work,lean_obj_arg initial_work) {
@@ -115,8 +119,11 @@ static lean_obj_res hit_compute(lean_obj_arg table,uint8_t operation,
        caller aliases retain their own references and force a copy. */
     lean_object *fields[8],*updated;
     int exclusive=lean_is_exclusive(table);
-    if(exclusive && append && workspace==exponents && lean_sarray_size(workspace)==size)
-        HEX_GROEBNER_UNIQUE_ALIAS();
+    if(exclusive && append && lean_sarray_size(workspace)==size) {
+        unsigned aliases=(workspace==exponents?1:0)|(workspace==metadata?2:0)|
+            (workspace==heads?4:0)|(workspace==links?8:0);
+        if(aliases) HEX_GROEBNER_UNIQUE_ALIAS(aliases);
+    }
     for(unsigned i=0;i<8;++i) {
         fields[i]=lean_ctor_get(table,i);
         if(!exclusive) lean_inc(fields[i]);
@@ -161,9 +168,35 @@ fallback:
     lean_object *deferred=lean_alloc_ctor(1,1,0);lean_ctor_set(deferred,0,table);return deferred;
 }
 
+/* MonomialTable has eight object fields and one trailing Width byte;
+   MonomialIndex has two object fields. Attempt tags are accepted=0/deferred=1,
+   InternResult is a two-field constructor and Except.ok has tag1.
+   Object counts do not detect reordered fields or changes to the scalar area.
+   Keep the complete ABI synchronized with Monomial.lean and MonomialIndex.lean. */
+static int hit_layout(b_lean_obj_arg table) {
+    if(lean_is_scalar(table) || !lean_is_ctor(table) ||
+       lean_ctor_num_objs(table)!=8) return 0;
+    lean_object *index=lean_ctor_get(table,5);
+    if(lean_is_scalar(index) || !lean_is_ctor(index) ||
+       lean_ctor_num_objs(index)!=2) return 0;
+    unsigned positions[3]={1,2,4};
+    for(unsigned i=0;i<3;++i) {
+        lean_object *bytes=lean_ctor_get(table,positions[i]);
+        if(lean_is_scalar(bytes) || !lean_is_sarray(bytes) ||
+           lean_sarray_elem_size(bytes)!=1) return 0;
+    }
+    for(unsigned i=0;i<2;++i) {
+        lean_object *bytes=lean_ctor_get(index,i);
+        if(lean_is_scalar(bytes) || !lean_is_sarray(bytes) ||
+           lean_sarray_elem_size(bytes)!=1) return 0;
+    }
+    return lean_ctor_get_uint8(table,8*sizeof(void*))<=2;
+}
+
 LEAN_EXPORT lean_obj_res lean_hex_groebner_combine_owned(lean_obj_arg table,uint8_t operation,
         lean_obj_arg a,lean_obj_arg b,lean_obj_arg max_count,lean_obj_arg max_bytes,
         lean_obj_arg max_work,uint8_t native) {
+    if(!hit_layout(table)) goto fallback_owned;
     lean_object *arity_arg=lean_ctor_get(table,0),*count_arg=lean_ctor_get(table,3);
     lean_object *work_arg=lean_ctor_get(table,7);
     if(!native || !lean_is_scalar(arity_arg) || !lean_is_scalar(count_arg) ||

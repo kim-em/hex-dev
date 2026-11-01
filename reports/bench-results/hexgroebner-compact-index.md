@@ -8,8 +8,8 @@ exponent equality decides identity. Exponent arenas keep their typed widths and
 overflow-safe widening, and identifiers remain stable.
 
 A bounded owned native operation combines preparation, exact lookup and
-in-capacity insertion. It admits up to 2048 variables and 4096 additional work
-units. Unsupported geometry, widening, rehashing, arithmetic/representation
+in-capacity insertion. This snapshot checks an arity ceiling of 2048, while
+the 4096-unit work bound can force earlier fallback. Unsupported geometry, widening, rehashing, arithmetic/representation
 bounds and insufficient allowances return the unchanged owned table. Portable
 continuation starts after the native frame returns. Shared and aliased buffers
 retain their original contents; compiled tests instrument actual exclusive
@@ -99,8 +99,8 @@ snapshot fails because the new native carrier is missing from its allowlist;
 its error is retained in the capsule. The combined implementation supplies
 that registration and stronger ownership coverage. The capsule's generic audit
 success summary is overbroad; the retained dependency error is authoritative.
-The exact packed-byte regression changes from 114 to190 bytes and the next
-insertion from140 to220 because the index is now charged. The initial
+The exact packed-byte regression changes from 114 to 190 bytes and the next
+insertion from 140 to 220 because the index is now charged. The initial
 outdated-byte assertion and fixture comparison failures are retained alongside
 corrected checks. Of 1134 F4 fixture profiles, 1050 change only work,
 serialWork and referenceWork; mathematical output, metadata and all other

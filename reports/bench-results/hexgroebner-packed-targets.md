@@ -76,7 +76,22 @@ first BA rises 6.008586→24.461379 ms. Every outlier remains; counters alone
 do not isolate runtime or host causes.
 
 Peak baseline/new RSS is 42016/56384 KiB (small) and 97352/100680 KiB (medium).
-Lower logical index storage does not establish lower observed process RSS.
+This is an observed process-memory regression: about 34% on the small suite.
+Packed indexing describes the storage format; it is not a claim of lower total
+process memory. A separate explanatory allocator profile retains eight adjacent
+AB/BA executions on the frozen baseline and measured implementation, with equal
+complete bases. Eco10 at 32003 uses 39676/56440 KiB on AB and 40496/56440 KiB
+on BA. Eco11 at 2147483647 uses 97804/99804 KiB on AB and 97804/99808 KiB on BA.
+Mimalloc's Eco10 AB committed-memory peaks are 37.8/57.3 MiB, with no purges or
+resets. Eco11 committed-memory peaks are 93.7/104.3 MiB. Logical
+`allocatedBytes` decreases 17227710→15985568 for Eco10 and
+80548128→72674108 for Eco11; peak matrix entries also decrease. The packed-byte
+allowance counts logical payload, rather than spare capacity or total process
+RSS. Larger buffers, temporary copies and allocator retention are possible
+contributors; these measurements do not distinguish them. The binary's reported section sizes increase by only 49232 bytes.
+Higher allocator commitment is established; the precise allocation pattern
+responsible remains unresolved. These profiling runs are excluded from timing
+estimates and do not constitute another unchanged timing repeat.
 
 Deterministic matrix entries at 2147483647 give evidence of changed elimination
 work with the same output. Work-counter units also change with the packed
@@ -125,10 +140,11 @@ capsule audit success summary was overbroad: its retained dependency error is
 authoritative. The current source supplies registration, explicit work units,
 private C helpers, toolchain-traced build flags and stronger ownership tests.
 
-The current 2161-job conformance/theory/driver/bench build passes, as do all
+The measured `23688dd217ce` snapshot passes a 2161-job
+conformance/theory/driver/bench build, as well as all
 175 matrix, 567 unique SymPy/Singular basis and 1288 division oracle cases,
 1134 degree/sugar profiles, both CLI corpus checks, four Clang and four GCC
-ASan/UBSan native variants, 32 bench smoke checks and every dependency, phase,
+ASan/UBSan native variants, 32 bench checks and every dependency, phase,
 release, copyright and line-count audit. Independent equal tables are consumed
 by native and portable paths at count/byte/work boundaries, including arbitrary
 precision limits. Each native variant records 46 exclusive reuses and six
@@ -138,6 +154,44 @@ separate native object compiles but fails the direct ownership comparison;
 production source is unchanged. Instrumentation separates accepted operations,
 non-inserting lookups, insertions and deferrals, including five F4 deferrals.
 
+The revised source `8d139a1e1c57` adds constructor object-count and packed-buffer
+checks before native field access, and preserves the runtime's marked-linear
+flag when an exclusive byte array grows. Its fresh 272-job detached driver build
+has compute SHA256
+`203fedf6e95345a36ced1630bad1cf90ba1731a92c7b3be0e63cb9a004b9e06c`.
+A 2170-job full local build, the same independent oracles, both 1134-output CLI
+corpus checks, 32 bench checks and every project audit pass. Four Clang and
+four GCC sanitizer variants include a dedicated marked-linear resize test with
+`LEAN_ABORT_ON_NONLINEAR=1`; ordinary F4 arrays are not marked linear. Each records
+115 exclusive reuses and 24 accepted aliased insertions. An asserted bit mask
+requires accepted workspace aliases to exponents, metadata, bucket heads and
+chain links. Deliberately malformed constructor layouts defer without access to
+missing fields. Replacing only the resize helper with its old version in a
+separate native object builds, then exits with the expected marked-linear panic.
+The scheduling regression retains exact fresh counters at the known-sufficient
+work endpoint, rejects exhaustion at that endpoint, and compares resumed
+counters between both incoming strategies. Object-count guards do not detect
+scalar-layout changes or reordered fields; the complete ABI remains synchronized
+by explicit source comments and native/portable comparisons. Exclusive aliases
+between non-workspace buffers are not directly covered by the alias mask.
+
+A separate initial campaign compares this revised source against `23688dd217ce`
+on CPUs 5/77 for the small/medium suites. All 120 processes succeed and all 60
+complete basis pairs and algorithm counters agree. Candidate geometric means
+are 1.0387/1.0027; process means are 0.9919/0.9880, with equal-family small
+process mean 0.9912. Candidate ranges are 0.0455–15.2785 and 0.0604–5.2110;
+process ranges are 0.2953–2.9274 and 0.3162–2.7956. There is no established speed
+change in this observation and no unchanged repeat. These measurements are kept
+separate from the earlier source and are not pooled or multiplied into its
+ratios. Native execution on Windows and macOS remains unverified; the current
+upstream workflow has one Ubuntu job.
+
+Final source `9bac12f60779` adds the explicit ABI limitation comments. Its fresh
+272-job detached build reproduces both driver hashes from `8d139a1e1c57`
+exactly. The strengthened endpoint/owned conformance build passes all 279 jobs.
+No new timing campaign is collected for this source, and no source fingerprints
+are pooled. Final source blobs and exact strengthened tests are retained.
+
 The issue stays open. Finite extensions, parallel scaling, probabilistic and
 trace support, remaining producer proofs, broader comparator/held-out coverage
 and the fastest-open-source milestone remain required. No compiler/runtime
@@ -145,3 +199,9 @@ impossibility is established.
 
 - [packed-targets-reviewed-23688dd217ce.tar.gz](raw/packed-targets-reviewed-23688dd217ce.tar.gz): `d7378fde4c4ad9df323090980cd54fd6cf44d777c7275335c6a16aeb46dcd5f0`.
 - [packed-targets-0dc44fb7437c.tar.gz](raw/packed-targets-0dc44fb7437c.tar.gz): `1aa783178061bb159838407192508d591a40c3bce74fc2b0d4fc3ec558ca3317`.
+
+- [packed-targets-memory-profile.tar.gz](raw/packed-targets-memory-profile.tar.gz): `d9ae3b0c2062e34b385da69cda01ba9bdd6ae61bca8165ad9a3e63379ab64d79`.
+
+- [packed-targets-guards-8d139a1e1c57.tar.gz](raw/packed-targets-guards-8d139a1e1c57.tar.gz): `dcfaf003ffc68e4294d1b049cb6c51f2cf42666e8fef07ef908d8921e00b0e7b`.
+
+- [packed-targets-final-9bac12f60779.tar.gz](raw/packed-targets-final-9bac12f60779.tar.gz): `dffbaac056b2c1742e94e2acea970e00f9733c18fa4c6366dfa389329580ae3e`.

@@ -50,7 +50,10 @@ structure MonomialFailure where
 
 /-- Cached degree, support mask and semantic hash occupy 24 bytes per monomial.
 Operations require arenas and bucket identifiers produced by this API; raw
-record fabrication does not establish these internal invariants. -/
+record fabrication does not establish these internal invariants. The native
+binding in `ffi/monomial_hit.c` mirrors the eight object fields in declaration
+order and the trailing `Width` byte. Object-count guards cannot detect scalar
+layout changes or reordered fields; update the complete binding on any change. -/
 structure MonomialTable where
   arity : Nat
   width : Width := .u8

@@ -86,49 +86,59 @@ def malformedChecks (seed : Nat) : Bool := Id.run do
 
 #guard runtimeChecks 0
 
-/-- Build independently allocated equal tables with spare index and exponent
-capacity. Inputs differing by seven have equal values without sharing buffers. -/
-@[noinline] private def ownedTable (seed : Nat) (alias : Bool) : Option MonomialTable := Id.run do
-  let mut table : MonomialTable := { arity := 1, hashBits := 0 }
-  for id in [:32] do
-    let next := table.internOwned #[(id+1+seed%7).toUInt64] 100 1000000
+/-- Build independently allocated equal tables with workspace aliases to each
+packed buffer. Inputs differing by seven have equal values without sharing. -/
+@[noinline] private def ownedTable (seed mode : Nat) : Option MonomialTable := Id.run do
+  let arity := if mode == 2 then 5 else if mode == 3 then 9 else 1
+  let count := if mode == 2 || mode == 3 then 2 else if mode == 4 then 8 else 32
+  let mut table : MonomialTable := { arity, hashBits := 0 }
+  for id in [:count] do
+    let next := table.internOwned (Array.replicate arity (id+1+seed%7).toUInt64) 100 1000000
     if !next.result.isOk then return none
     table := next.table
-  let mut heads := ByteArray.emptyWithCapacity 512
-  for _ in [:512] do heads := heads.push 0
+  let capacity := if mode == 3 then 16 else 128
+  let mut heads := ByteArray.emptyWithCapacity (4*capacity)
+  for _ in [:4*capacity] do heads := heads.push 0
   let mut index : MonomialIndex := { heads }
-  for id in [:32] do index := index.insert id (table.hashAt id) table.hashAt
+  for id in [:count] do index := index.insert id (table.hashAt id) table.hashAt
   let mut exponents := ByteArray.emptyWithCapacity 128
-  for id in [:32] do exponents := exponents.push (id+1+seed%7).toUInt8
-  let workspace := if alias then exponents else ByteArray.empty
+  for byte in table.exponents.data do exponents := exponents.push byte
+  let workspace := match mode with
+    | 1 => exponents
+    | 2 => table.metadata
+    | 3 => index.heads
+    | 4 => index.links
+    | _ => ByteArray.empty
   return some { table with index, exponents, workspace }
 
 /-- Consume independent equal tables so native mutation is compared directly
-with the reference, including workspace/exponent aliasing and insertion bounds.
+with the reference, including aliases to all four packed buffers and insertion bounds.
 The compiled harness requires an accepted unique-table aliased insertion. -/
 def ownedChecks (seed : Nat) : Bool := Id.run do
-  for alias in [false,true] do
+  for mode in [0,1,2,3,4] do
     for operation in [MonomialTable.Operation.lcm,.product] do
-      let some input := ownedTable (seed+7) alias | return false
+      let some input := ownedTable (seed+7) mode | return false
       let bytes := input.bytes
       let initial := input.work
-      let .accepted expected := input.attemptPortable operation 31 31 100 1000000 1000000 true
+      let last := input.count-1
+      let countLimit := input.count
+      let .accepted expected := input.attemptPortable operation last last 100 1000000 1000000 true
         | return false
       if !expected.result.isOk then return false
       let outputBytes := expected.table.bytes
       let totalWork := expected.table.work
-      for count in [31,32,33,100,2^90] do
+      for count in [countLimit-1,countLimit,countLimit+1,100,2^90] do
         for limit in [0,bytes-1,bytes,outputBytes-1,outputBytes,1000000,2^90] do
-          let some reference := ownedTable (seed+7) alias | return false
-          let expected := reference.attemptPortable operation 31 31 count limit 1000000 true
-          let some actual := ownedTable seed alias | return false
-          let actual := actual.attempt operation 31 31 count limit 1000000 true
+          let some reference := ownedTable (seed+7) mode | return false
+          let expected := reference.attemptPortable operation last last count limit 1000000 true
+          let some actual := ownedTable seed mode | return false
+          let actual := actual.attempt operation last last count limit 1000000 true
           if !sameAttempt actual expected then return false
       for work in [0,initial-1,initial,initial+1,totalWork-1,totalWork,totalWork+1,2^90] do
-        let some reference := ownedTable (seed+7) alias | return false
-        let expected := reference.attemptPortable operation 31 31 100 1000000 work true
-        let some actual := ownedTable seed alias | return false
-        let actual := actual.attempt operation 31 31 100 1000000 work true
+        let some reference := ownedTable (seed+7) mode | return false
+        let expected := reference.attemptPortable operation last last 100 1000000 work true
+        let some actual := ownedTable seed mode | return false
+        let actual := actual.attempt operation last last 100 1000000 work true
         if !sameAttempt actual expected then return false
   return true
 
