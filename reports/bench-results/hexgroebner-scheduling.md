@@ -12,8 +12,8 @@ correctness and termination remain obligations under either strategy. New
 inhomogeneous pairs can have lower degree than earlier batches. This scheduling
 choice supplies no substitute for those obligations.
 
-Computational commit `c73e6196c3`, source family `bf00a2b578a8`, is frozen by a
-fresh 188-job build. Its default executable SHA256 is
+Measured source family `bf00a2b578a8`, retained by implementation commit
+`8f1485df5f`, is frozen by a fresh 188-job build. Its default executable SHA256 is
 `2ece3bf2646f90393331ce349043b8a19adb02d236ee1bf300337ceaf9e9bd67`.
 The subsequent independent-oracle corpus guard changes only
 `scripts/oracle/groebner_singular.py` within that source family. A second fresh
