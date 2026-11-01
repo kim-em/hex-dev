@@ -85,7 +85,7 @@ def summarize(files, omitted, recipes):
         require(artifacts['sources/' + name] == checksum, 'changed frozen source binding')
     source_build = [('builder_sha256', 'scripts/bench/build_meti_counts.py'),
                     ('selector_sha256', 'scripts/bench/meti_counts.py'),
-                    ('recipe_reader_sha256', 'scripts/bench/build_nested_normalization_counts.py'),
+                    ('recipe_reader_sha256', 'scripts/bench/lake_recipe.py'),
                     ('observer_sha256', 'scripts/bench/ffi/meti_counts.c')]
     for key, name in source_build:
         require(build[key] == record['source_hashes'][name], 'changed builder source binding')

@@ -9,7 +9,6 @@ No elapsed time or asymptotic conclusion is derived here.
 from __future__ import annotations
 
 import argparse
-from collections import Counter
 from importlib.metadata import version
 import json
 import math
@@ -180,57 +179,6 @@ def verify(row):
                 query=graph_statistics(row['query']))
 
 
-def trace_data(path):
-    """Count callback diagnostics strictly between the workload markers."""
-    active = False
-    started = ended = 0
-    counts = Counter()
-    aggregate = None
-    operations = None
-    for line in Path(path).read_text().splitlines():
-        if line == 'NESTED BEGIN':
-            require(not active and started == 0, 'duplicate workload start')
-            active = True
-            started += 1
-        elif line == 'NESTED END':
-            require(active, 'workload end without start')
-            active = False
-            ended += 1
-        elif line.startswith('NESTED COUNTERS '):
-            require(ended == 1 and not active and operations is None, 'misplaced operation counters')
-            operations = json.loads(line.removeprefix('NESTED COUNTERS '))
-            keys = {'poly_gcd', 'poly_xgcd', 'poly_xgcd_left', 'poly_pseudo_gcd',
-                    'lean_nat_gcd', 'gmp_gcd', 'gmp_gcdext'}
-            require(isinstance(operations, dict) and set(operations) == keys and
-                    all(type(value) is int and value >= 0 for value in operations.values()),
-                    'bad operation counters')
-        elif line.startswith('NESTED CALLBACKS '):
-            require(ended == 1 and not active and aggregate is None, 'misplaced callback aggregate')
-            packet = json.loads(line.removeprefix('NESTED CALLBACKS '))
-            require(packet.get('overflow') is False, 'callback counter overflow')
-            aggregate = packet.get('counts')
-            require(isinstance(aggregate, dict) and all(
-                len(key.split(':')) == 2 and key.split(':')[0].isdecimal() and
-                key.split(':')[1] in {'add', 'sub', 'neg', 'mul', 'inv', 'div', 'sign', 'zero',
-                                      'eq', 'split', 'inverse_gcd', 'inverse_xgcd'} and
-                type(value) is int and value >= 0 for key, value in aggregate.items()),
-                'bad callback aggregate')
-        elif active and line.startswith('NESTED '):
-            _, depth, operation = line.split()
-            require(depth.isdecimal(), 'invalid callback depth')
-            counts[f'{depth}:{operation}'] += 1
-    require(started == ended == 1 and not active, 'incomplete workload trace')
-    if aggregate is not None:
-        require(not counts or dict(counts) == aggregate, 'callback trace disagrees with aggregate')
-        require(operations is not None, 'missing operation counters')
-        counts = aggregate
-    return dict(callback_counts=dict(sorted(counts.items())), operation_counts=operations)
-
-
-def trace_counts(path):
-    return trace_data(path)['callback_counts']
-
-
 def verify_pairs(rows, results, unpaired=False):
     groups = {}
     for row, result in zip(rows, results):
@@ -246,43 +194,18 @@ def verify_pairs(rows, results, unpaired=False):
             require(ra['field_residue'] == rb['field_residue'], 'policy values disagree')
 
 
-def validate_trace(row, trace):
-    counts = trace['callback_counts']
-    depth, steps = row['depth'], row['steps']
-    require(all(int(key.split(':')[0]) <= depth for key in counts), 'trace has deeper context')
-    require(counts.get(f'{depth}:mul', 0) == steps + 1, 'trace product count disagrees with row')
-    for operation in ['add', 'sub', 'inv', 'div', 'split', 'inverse_gcd', 'inverse_xgcd']:
-        require(counts.get(f'{depth}:{operation}', 0) == 1, f'trace {operation} disagrees with row')
-    operations = trace['operation_counts']
-    if operations is not None:
-        require(operations['poly_gcd'] == sum(value for key, value in counts.items()
-                                              if key.endswith(':inverse_gcd')),
-                'polynomial gcd does not match observed inverse sites')
-        require(operations['poly_xgcd_left'] == sum(value for key, value in counts.items()
-                                                    if key.endswith(':inverse_xgcd')),
-                'polynomial xgcdLeft does not match observed inverse sites')
-
-
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('inputs', nargs='*', type=Path)
-    parser.add_argument('--trace', action='append', default=[], type=Path)
     parser.add_argument('--unpaired', action='store_true', help='allow a single diagnostic arm')
     args = parser.parse_args()
-    require(not args.trace or len(args.trace) == len(args.inputs), 'one trace per explicit input required')
     texts = [path.read_text() for path in args.inputs] if args.inputs else [sys.stdin.read()]
     results, all_rows = [], []
-    for index, text in enumerate(texts):
+    for text in texts:
         rows = [json.loads(line) for line in text.splitlines() if line.startswith('{')]
         require(bool(rows), 'missing functional rows')
-        require(not args.trace or len(rows) == 1, 'one traced row per input required')
         for row in rows:
-            checked = verify(row)
-            if args.trace:
-                trace = trace_data(args.trace[index])
-                validate_trace(row, trace)
-                checked.update(trace)
-            results.append(checked)
+            results.append(verify(row))
             all_rows.append(row)
     verify_pairs(all_rows, results, args.unpaired)
     print(json.dumps(dict(oracle='python-flint', version=version('python-flint'),
