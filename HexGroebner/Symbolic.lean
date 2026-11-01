@@ -132,7 +132,10 @@ private def solve (context : Context) (limits : Limits) (matrix : SymbolicMatrix
     entries := entries + r.size
     inputBytes := inputBytes + r.columns.size + r.coefficients.size
     reducers := reducers.push r
-  for p in matrix.targets do
+  let targetsBySize := (matrix.targets.toList.mergeSort
+    (fun a b => a.polynomial.size ≤ b.polynomial.size)).toArray
+  spend limits (matrix.targets.size * (matrix.targets.size + 1).log2)
+  for p in targetsBySize do
     sugars := sugars.push p.sugar
     let r ← row context limits positions p.polynomial
     entries := entries + r.size
