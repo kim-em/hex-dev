@@ -16,7 +16,7 @@ namespace Hex.Groebner.Native.Trie
 def word (bytes : @& ByteArray) (i : Nat) : Nat := Native.read bytes 4 (i*4)
 
 /-- Check a bounded rooted tree and all packed spans before creating its witness.
-Node records contain depth, edge start/count, reducer-plus-one, term count and
+Node records contain depth, edge start/count, reducer-plus-one, explicit positive priority and
 leading monomial. Edges contain exponent/child pairs. Every nonroot has exactly
 one parent; depths increase along edges. -/
 def validPortable (arity : Nat) (nodes edges : ByteArray) (maxLeading : UInt64) : Bool := Id.run do
@@ -31,13 +31,13 @@ def validPortable (arity : Nat) (nodes edges : ByteArray) (maxLeading : UInt64) 
     let start := word nodes (6*i+1)
     let count := word nodes (6*i+2)
     let key := word nodes (6*i+3)
-    let terms := word nodes (6*i+4)
+    let priority := word nodes (6*i+4)
     let leading := word nodes (6*i+5)
     if depth > arity || start != cursor || start+count > e ||
         (depth == arity && count != 0) then return false
     if key == 0 then
-      if terms != 0 || leading != 0 then return false
-    else if depth != arity || terms == 0 || leading > maxLeading.toNat then return false
+      if priority != 0 || leading != 0 then return false
+    else if depth != arity || priority == 0 || leading > maxLeading.toNat then return false
     for k in [:count] do
       let child := word edges (2*(start+k)+1)
       if child == 0 || child ≥ n || word nodes (6*child) != depth+1 then return false
@@ -79,8 +79,9 @@ structure Result where
 def degree (metadata : @& ByteArray) (id : Nat) : Nat := Native.read metadata 8 (24*id)
 def mask (metadata : @& ByteArray) (id : Nat) : UInt64 := (Native.read metadata 8 (24*id+8)).toUInt64
 
-/-- Read-only bounded lookup over a validated tree. Quality prefers sparse rows,
-then greater leading degree; traversal preserves insertion-order tie breaking. -/
+/-- Read-only bounded lookup chooses the least explicit priority among dividing
+leaves. Equal priorities retain the first leaf in LIFO traversal order. The
+priority values are data; reducer-selection policy is assigned by the Lean caller. -/
 def lookupPortable (view : @& View) (width : UInt8) (count monomial : UInt64)
     (arena metadata : @& ByteArray) (remaining : UInt64) : Result := Id.run do
   let n := view.nodes.size/24
@@ -94,8 +95,7 @@ def lookupPortable (view : @& View) (width : UInt8) (count monomial : UInt64)
   let queryMask := mask metadata query
   let mut pending := #[0]
   let mut out : Result := {}
-  let mut bestSize := 0
-  let mut bestLeading := 0
+  let mut bestPriority := 0
   for _ in [:n] do
     if pending.isEmpty then break
     let node := pending.back!
@@ -106,14 +106,12 @@ def lookupPortable (view : @& View) (width : UInt8) (count monomial : UInt64)
     if depth == view.arity then
       let key := word view.nodes (6*node+3)
       if key != 0 then
-        let terms := word view.nodes (6*node+4)
+        let priority := word view.nodes (6*node+4)
         let leading := word view.nodes (6*node+5)
         if degree metadata leading ≤ queryDegree && mask metadata leading &&& queryMask == mask metadata leading then
-          if out.reducer.isNone || terms < bestSize ||
-              (terms == bestSize && degree metadata leading > degree metadata bestLeading) then
+          if out.reducer.isNone || priority < bestPriority then
             out := { out with reducer := some (key-1) }
-            bestSize := terms
-            bestLeading := leading
+            bestPriority := priority
     else
       let start := word view.nodes (6*node+1)
       let count := word view.nodes (6*node+2)
@@ -126,7 +124,11 @@ def lookupPortable (view : @& View) (width : UInt8) (count monomial : UInt64)
   return out
 
 /-- Native lookup consumes only the validated tree witness and borrowed arenas.
-Its node/edge visits fit the fixed 4096-unit bound. -/
+Its node/edge visits fit the fixed 4096-unit bound. `arena` has exactly
+`count*arity*width` little-endian exponent bytes; metadata has `count` records of
+24 bytes (u64 degree, support mask and hash). Status 3 declines an unsupported
+query without charging work. Tree leaves and leading identifiers must belong
+to the same immutable basis/arena snapshot; append and widening preserve IDs. -/
 @[extern "lean_hex_groebner_lookup_trie"]
 def lookup (view : @& View) (width : UInt8) (count monomial : UInt64)
     (arena metadata : @& ByteArray) (remaining : UInt64) : Result :=

@@ -48,7 +48,7 @@ def runtimeChecks (seed : Nat) : Bool := Id.run do
                 monomial.toUInt64 state.table.exponents state.table.metadata (min allowance 4096).toUInt64
               let b := Native.Trie.lookupPortable view state.table.width.bytes.toUInt8 state.table.count.toUInt64
                 monomial.toUInt64 state.table.exponents state.table.metadata (min allowance 4096).toUInt64
-              if a.reducer != b.reducer || a.work != b.work || a.status != b.status then return false
+              if a.status == 3 || a.reducer != b.reducer || a.work != b.work || a.status != b.status then return false
         return true
       match trial.run ⟨{arity := n},{}⟩ with
       | (.ok true,_) => pure ()
@@ -73,15 +73,19 @@ def boundaryChecks : Bool := Id.run do
         state.table.exponents state.table.metadata (min allowance 4096).toUInt64
       let b := Native.Trie.lookupPortable view 4 state.table.count.toUInt64 monomial.toUInt64
         state.table.exponents state.table.metadata (min allowance 4096).toUInt64
-      if a.reducer != b.reducer || a.work != b.work || a.status != b.status then return false
+      if a.status == 3 || a.reducer != b.reducer || a.work != b.work || a.status != b.status then return false
       if allowance ≥ 4095 && (a.status != 1 || a.work != 4095 || a.reducer != some 0) then return false
     for viewData in [view.nodes.extract 0 (view.nodes.size-1),
         Native.write view.nodes 4 0 1,Native.write view.nodes 4 4 1,
-        Native.write view.nodes 4 8 2,Native.write view.nodes 4 12 1] do
+        Native.write view.nodes 4 8 2,Native.write view.nodes 4 12 1,
+        Native.write view.nodes 4 (24*(index.nodes.size-1)+16) 0,
+        Native.write view.nodes 4 (24*(index.nodes.size-1)+20) (view.maxLeading.toNat+1),
+        Native.write view.nodes 4 28 0] do
       if (Native.Trie.View.check view.arity viewData view.edges view.maxLeading).isSome then return false
       if Native.Trie.valid view.arity viewData view.edges view.maxLeading !=
           Native.Trie.validPortable view.arity viewData view.edges view.maxLeading then return false
-    for links in [view.edges.extract 0 (view.edges.size-1),
+    for links in [view.edges.extract 0 (view.edges.size-8),
+        view.edges.extract 0 (view.edges.size-1),
         Native.write view.edges 4 4 0,Native.write view.edges 4 4 2048,
         Native.write view.edges 4 12 1] do
       if (Native.Trie.View.check view.arity view.nodes links view.maxLeading).isSome then return false
@@ -101,6 +105,10 @@ def boundaryChecks : Bool := Id.run do
   match trial.run ⟨{arity := 2047},{}⟩ with
   | (.ok true,_) => return true
   | _ => return false
+
+-- An importing caller cannot forge a packed snapshot or replace its trie nodes.
+#check_failure ReducerIndex.mk
+#check_failure fun (index : ReducerIndex) => ({ index with nodes := #[] } : ReducerIndex)
 
 #guard boundaryChecks
 

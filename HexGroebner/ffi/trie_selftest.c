@@ -54,7 +54,7 @@ static void release(struct buffer b) {
 }
 /* A maximum-size root with 2047 leaf children reaches the largest stack and
    every last byte of all borrowed inputs. The independent answer is the last
-   leaf, with the unique smallest term count. Both edge placements catch
+   leaf, with the unique least priority. Both edge placements catch
    overreads and underreads; read protection catches writes to borrowed data. */
 static void bush(unsigned width,unsigned end) {
     const unsigned n=2048;const size_t edge_bytes=(n-1)*8;
@@ -70,6 +70,19 @@ static void bush(unsigned width,unsigned end) {
         put(arena.data+i*width,width,maximum);
     }
     require(trie_valid(1,nodes.data,nodes.size,edges.data,edges.size,n-1),"valid full bush");
+    uint8_t *leaf=nodes.data+(n-1)*24;
+    uint64_t priority=trie_read(leaf+16,4);
+    put(leaf+16,4,0);
+    require(!trie_valid(1,nodes.data,nodes.size,edges.data,edges.size,n-1),"zero leaf priority");
+    put(leaf+16,4,priority);
+    put(leaf+20,4,n);
+    require(!trie_valid(1,nodes.data,nodes.size,edges.data,edges.size,n-1),"leading beyond maximum");
+    put(leaf+20,4,n-1);
+    put(nodes.data+24+4,4,0);
+    require(!trie_valid(1,nodes.data,nodes.size,edges.data,edges.size,n-1),"nonroot cursor mismatch");
+    put(nodes.data+24+4,4,n-1);
+    require(!trie_valid(1,nodes.data,nodes.size,edges.data,edges.size-8,n-1),"aligned edge-count mismatch");
+
     readonly(&nodes);readonly(&edges);readonly(&arena);readonly(&metadata);
     struct trie_result r=trie_lookup(1,n-1,width,n,n-1,arena.data,arena.size,
         metadata.data,metadata.size,nodes.data,nodes.size,edges.data,edges.size,4095);
@@ -102,9 +115,26 @@ static void constant(unsigned end) {
     require(r.status==1 && r.key==1 && r.work==1,"zero-variable lookup");
     release(nodes);release(edges);release(arena);release(metadata);
 }
+/* Removing the node-limit guard from the validator makes the final child
+   overrun its fixed parents array; ASan must catch that mutation. */
+static void oversized(unsigned end) {
+    const unsigned n=2049;
+    struct buffer nodes=buffer_new(n*24,end),edges=buffer_new((n-1)*8,end);
+    put(nodes.data+8,4,n-1);
+    for(unsigned i=1;i<n;++i) {
+        uint8_t *record=nodes.data+i*24;
+        put(record,4,1);put(record+4,4,n-1);
+        put(record+12,4,i);put(record+16,4,i);
+        put(edges.data+(i-1)*8+4,4,i);
+    }
+    readonly(&nodes);readonly(&edges);
+    require(!trie_valid(1,nodes.data,nodes.size,edges.data,edges.size,0),"2049-node tree rejected");
+    release(nodes);release(edges);
+}
 int main(void) {
     for(unsigned end=0;end<2;++end) {
         constant(end);
+        oversized(end);
         for(unsigned width=1;width<=4;width*=2) bush(width,end);
     }
     puts("trie_selftest: maximum tree/stack, read-only guard pages and exact budgets passed");

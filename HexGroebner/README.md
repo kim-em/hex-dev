@@ -112,7 +112,9 @@ identifiers and hashes. Larger exponents produce representation exhaustion.
 Divisibility masks only reject candidates; trie paths inspect exact exponents.
 Small immutable reducer indices also retain a validated packed tree. Read-only
 native lookup admits at most 2048 nodes and 2047 edges, preserving sparse-row
-preference, higher-degree tie breaking and insertion-order traversal ties.
+preference, higher-degree tie breaking and LIFO traversal ties.
+Lean assigns explicit priorities once; native lookup selects the least admitted
+priority without implementing the F4 preference policy.
 Its fixed stack and at most 4095 charged node/edge visits bound each call.
 Encoding and validation charge the parent work and packed-byte allowances;
 insufficient preparation allowances and larger trees retain ordinary traversal.

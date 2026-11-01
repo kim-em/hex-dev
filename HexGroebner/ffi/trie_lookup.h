@@ -25,10 +25,10 @@ static uint8_t trie_valid(uint64_t arity,const uint8_t *nodes,size_t node_bytes,
     for(uint64_t i=0;i<n;++i) {
         const uint8_t *record=nodes+i*24;
         uint64_t depth=trie_read(record,4),start=trie_read(record+4,4),count=trie_read(record+8,4);
-        uint64_t key=trie_read(record+12,4),terms=trie_read(record+16,4),leading=trie_read(record+20,4);
+        uint64_t key=trie_read(record+12,4),priority=trie_read(record+16,4),leading=trie_read(record+20,4);
         if(depth>arity || start!=cursor || start+count>e || (depth==arity && count)) return 0;
-        if(!key) {if(terms || leading) return 0;}
-        else if(depth!=arity || !terms || leading>max_leading) return 0;
+        if(!key) {if(priority || leading) return 0;}
+        else if(depth!=arity || !priority || leading>max_leading) return 0;
         for(uint64_t k=0;k<count;++k) {
             uint64_t child=trie_read(edges+(start+k)*8+4,4);
             if(!child || child>=n || trie_read(nodes+child*24,4)!=depth+1 || parents[child]) return 0;
@@ -59,7 +59,7 @@ static struct trie_result trie_lookup(uint64_t arity,uint64_t max_leading,unsign
        arena_bytes!=count*arity*w || metadata_bytes!=count*24) return trie_decline();
     uint32_t pending[2048],sp=1;
     pending[0]=0;
-    uint32_t best=0,best_size=0,best_leading=0;
+    uint32_t best=0,best_priority=0;
     uint64_t work=0,query_degree=trie_read(metadata+query*24,8);
     uint64_t query_mask=trie_read(metadata+query*24+8,8);
     for(uint64_t visited=0;visited<n && sp;++visited) {
@@ -73,15 +73,14 @@ static struct trie_result trie_lookup(uint64_t arity,uint64_t max_leading,unsign
         if(depth==arity) {
             uint32_t key=(uint32_t)trie_read(record+12,4);
             if(key) {
-                uint32_t terms=(uint32_t)trie_read(record+16,4);
+                uint32_t priority=(uint32_t)trie_read(record+16,4);
                 uint32_t leading=(uint32_t)trie_read(record+20,4);
-                if(leading>=count || !terms) return trie_decline();
+                if(leading>=count || !priority) return trie_decline();
                 uint64_t degree=trie_read(metadata+(uint64_t)leading*24,8);
                 uint64_t mask=trie_read(metadata+(uint64_t)leading*24+8,8);
                 if(degree<=query_degree && (mask&query_mask)==mask &&
-                   (!best || terms<best_size || (terms==best_size &&
-                    degree>trie_read(metadata+(uint64_t)best_leading*24,8)))) {
-                    best=key;best_size=terms;best_leading=leading;
+                   (!best || priority<best_priority)) {
+                    best=key;best_priority=priority;
                 }
             }
         } else {

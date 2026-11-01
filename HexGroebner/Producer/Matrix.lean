@@ -47,7 +47,7 @@ def solve (context : Context) (limits : Limits) (nodeLimit : Nat)
     inputBytes := inputBytes + r.columns.size + r.coefficients.size
     reducers := reducers.push r
   if matrix.targets.size != targetsTraced.size then throw (.matrix .dimensions)
-  let targetPairs ← if independent then pure (matrix.targets.zip targetsTraced) else do
+  let targetPairs ← if independent || matrix.targets.size ≤ 1 then pure (matrix.targets.zip targetsTraced) else do
     lift (Computation.spend limits (matrix.targets.size * (matrix.targets.size + 1).log2))
     pure (((matrix.targets.zip targetsTraced).toList.mergeSort
       (fun a b => a.1.polynomial.size ≤ b.1.polynomial.size)).toArray)

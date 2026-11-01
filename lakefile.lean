@@ -248,6 +248,7 @@ lean_lib HexGroebnerMatrixNative where
   precompileModules := true
   moreLinkObjs := #[hexgroebnerScanO]
 
+-- Trie bindings import the row carrier, whose shared library supplies their C symbols.
 lean_lib HexGroebnerTrieNative where
   roots := #[`HexGroebnerTrieNative]
   globs := #[.one `HexGroebnerTrieNative, .one `HexGroebner.NativeTrie]
