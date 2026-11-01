@@ -23,6 +23,8 @@ class ComparatorBuildTests(unittest.TestCase):
         configure.write_text("#!/bin/sh\nprintf '%s\\n' '--disable-openmp'\n")
         configure.chmod(0o755)
         self.git("init", "--quiet")
+        self.git("config", "user.name", "Test")
+        self.git("config", "user.email", "test@example.invalid")
         self.git("add", ".")
         self.git("-c", "user.name=Test", "-c", "user.email=test@example.invalid",
                  "commit", "--quiet", "-m", "fixture")
