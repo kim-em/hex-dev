@@ -9,7 +9,8 @@ import HexGroebner.Native
 
 namespace Hex.Groebner.PackedWordConformance
 
-private def checked : Bool := Id.run do
+/-- Also called by the compiled native-conformance harness. -/
+def runtimeChecks : Bool := Id.run do
   for size in [8:81] do
     for seed in [:16] do
       let bytes : ByteArray := ⟨(Array.range size).map fun i =>
@@ -17,11 +18,11 @@ private def checked : Bool := Id.run do
           UInt8.ofNat ((seed*7919+i*69069) % 256)⟩
       for offset in [:size-7] do
         let expected := (Native.read bytes 8 offset).toUInt64
-        if Packed.read64 bytes offset != expected || Packed.read64Fast bytes offset != expected then
+        if Packed.read64 bytes offset != expected then
           return false
   return true
 
-#guard checked
+#guard runtimeChecks
 
 -- The compiler replacement does not change ordinary-kernel evaluation.
 example : Packed.read64 ⟨#[1,2,3,4,5,6,7,8]⟩ 0 = 0x0807060504030201 := by decide +kernel

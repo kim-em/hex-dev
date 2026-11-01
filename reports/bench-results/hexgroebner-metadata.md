@@ -1,8 +1,8 @@
 # Proved packed-word reads for monomial metadata
 
 The final compiler-rewrite implementation has observed candidate-time ratio
-**0.9480** against the preceding production engine on the fixed 16-case
-diagnostic suite. Whole-process ratio is **0.9764**. All 32 full reduced-basis
+**0.9271** against the preceding production engine on the fixed 16-case
+diagnostic suite. Whole-process ratio is **0.9474**. All 32 full reduced-basis
 comparisons and every recorded operation counter agree. This is a Hex before/
 after comparison, without a fresh external comparator; it does not establish
 the SPEC's fastest-open-source milestone.
@@ -12,8 +12,10 @@ the SPEC's fastest-open-source milestone.
 Degree, support-mask and hash reads previously assembled each cached word from
 two four-byte reads, each with per-byte bounds checks. `Packed.read64` retains
 a byte-based logical definition. A proved `csimp` equality selects an
-implementation with one complete-range check, one addressability check and
-unboxed `ByteArray.uget` indices. The fallback contains the original reads,
+implementation with one complete-range check, a scalar `USize` round-trip
+addressability check and unboxed `ByteArray.uget` indices. The round trip avoids
+a big-number comparison against `2^64` on 64-bit platforms. Metadata offsets
+use one multiplication, and prepared workspace words use byte offsets directly. The fallback contains the original reads,
 so partially available or mathematically unaddressable words retain their
 logical behavior. The complete fast/reference equality is proved for every
 byte array and natural offset, on either supported word size. Agreement with
@@ -21,19 +23,23 @@ two aligned packed 32-bit reads is also proved. The compiler equality uses only
 `propext` and `Quot.sound`; ordinary-kernel examples retain direct reduction
 of the reference definition. No new C binding or ISA requirement is introduced.
 
-Compiled conformance compares valid aligned/unaligned words with an independent
+The `#guard` conformance check evaluates in the IR interpreter. The existing
+native-conformance executable harness also calls the check, exercising the
+Clang-compiled reader. Both compare valid aligned/unaligned words with an independent
 recursive natural-number decoder, including zero and all-one bytes and words
 ending at the final byte. Existing 175 matrix, 567 SymPy/Singular basis and 1288
 division/normal-form/membership oracle cases pass, as do the complete library/
-theory/conformance build and all 25 benchmark smoke cases.
+theory/conformance build and all 25 benchmark verification cases.
 
 ## Measurement contract
 
 A is the production engine at `da900e60cb6136159c3b644c6cf8e4f01c765b13`,
 source-family fingerprint `3940d502ee50`. The subsequent parent commit
 `a2c60b61a34fc8c238954570fec50e59ae4eece7` changes only tests/documentation;
-its benchmark executable is byte-identical. B has measured source fingerprint
-`022db869dd08`. Each archive retains exact indexed source blobs, the driver
+its benchmark executable is byte-identical. The merged commit
+`a4aad390a6baab4e0a1dc1525f1d728e5da3fb3b`
+has the same tree as `a2c60b61`; it provides a permanent baseline. The final B
+has measured source fingerprint `6bb2e9080284`. Each archive retains exact indexed source blobs, the driver
 project, commands, input/output data, binary hashes, failures, memory and raw
 samples. Both executables are frozen copies, so later builds cannot replace
 them during measurement.
@@ -51,7 +57,8 @@ suite. Suite SHA-256 is
 `59cec100d5b9dc6977e61f7b7f747ca26e987584811ab41a445dbd020e567e0b`.
 Each input has adjacent AB then BA comparisons, one computation thread pinned
 to a leased CPU, a ten-second timeout and a 16-GiB address-space allowance.
-All completed samples are retained, including regressions. There are no
+The headline ratios are geometric means of the 32 paired per-input B/A ratios,
+without family balancing. All completed samples are retained, including regressions. There are no
 failures, timeouts, discarded samples or unchanged reruns in these experiments.
 Candidate production through final interreduction is timed internally; whole-
 process time additionally includes startup, parsing and complete output.
@@ -69,6 +76,7 @@ engine, not repeated samples pooled for one implementation.
 | One checked range, natural indices | 23 | 0.9754 | 0.9887 | [raw](raw/metadata-checked-records-09e9e300a801.tar.gz) |
 | Checked unboxed indices | 25 | 0.9478 | 0.9747 | [raw](raw/metadata-usize-records-a169746e3a13.tar.gz) |
 | Proved compiler rewrite, retained kernel definition | 1 | 0.9480 | 0.9764 | [raw](raw/metadata-csimp-records-022db869dd08.tar.gz) |
+| Scalar address round trip, collapsed metadata offsets | 11 | 0.9271 | 0.9474 | [raw](raw/metadata-roundtrip-records-6bb2e9080284.tar.gz) |
 
 Inlining alone regresses the suite and is not retained. The selected version
 has the unboxed reader's observed gain while keeping the original logical
@@ -80,41 +88,49 @@ the experiment rather than quantifying an isolated wall-time saving.
 ## Final full-system results
 
 The ratios below are the two adjacent candidate-time comparisons, separately.
-The wider-prime MinRank BA regression is retained.
+The Noon BA regression and unusually large cyclic-6 AB gain are retained;
+their variation limits interpretation of the aggregate as an isolated saving.
 
 | Input | AB B/A | BA B/A |
 | --- | ---: | ---: |
-| cyclic5-15 | 0.9444 | 0.9459 |
-| cyclic5-31 | 0.9396 | 0.9480 |
-| cyclic6-15 | 0.9438 | 0.9419 |
-| cyclic6-31 | 0.9458 | 0.9470 |
-| kat6-15 | 0.9485 | 0.9540 |
-| kat6-31 | 0.9366 | 0.9447 |
-| eco10-15 | 0.9606 | 0.9519 |
-| eco10-31 | 0.9595 | 0.9564 |
-| noon4-15 | 0.9521 | 0.9443 |
-| noon4-31 | 0.9616 | 0.9410 |
-| reimer5-15 | 0.9404 | 0.9256 |
-| reimer5-31 | 0.9353 | 0.9331 |
-| minrank_d_2_p_2_q_3_r_2-15 | 0.9356 | 0.9697 |
-| minrank_d_2_p_2_q_3_r_2-31 | 0.9534 | 1.0077 |
-| quadratic5-32003 | 0.9462 | 0.9435 |
-| quadratic5-2147483647 | 0.9415 | 0.9400 |
+| cyclic5-15 | 0.9523 | 0.9421 |
+| cyclic5-31 | 0.9421 | 0.9402 |
+| cyclic6-15 | 0.6001 | 0.9291 |
+| cyclic6-31 | 0.9438 | 0.9391 |
+| kat6-15 | 0.9822 | 0.9489 |
+| kat6-31 | 0.9383 | 0.9720 |
+| eco10-15 | 0.8933 | 0.9504 |
+| eco10-31 | 0.9419 | 0.8186 |
+| noon4-15 | 0.9520 | 1.1024 |
+| noon4-31 | 0.9460 | 0.9832 |
+| reimer5-15 | 0.9213 | 0.8441 |
+| reimer5-31 | 0.9341 | 0.8166 |
+| minrank_d_2_p_2_q_3_r_2-15 | 0.9910 | 0.9184 |
+| minrank_d_2_p_2_q_3_r_2-31 | 0.9721 | 0.9876 |
+| quadratic5-32003 | 0.9479 | 0.9446 |
+| quadratic5-2147483647 | 0.9483 | 0.9444 |
 
 ## Registered lean-bench cases
 
-[Final raw exports](raw/metadata-csimp-bench-records-022db869dd08.tar.gz) use the
+[Final raw exports](raw/metadata-roundtrip-bench-records-6bb2e9080284.tar.gz) use the
 existing fixed F4 registrations at modulus 65537, their default five measured
 repetitions and complete result structural hashing. Per case, the two frozen
-programs run adjacent AB then BA on leased CPU 63. All 80 measurement points complete, and all result hashes agree. Each ratio is the geometric mean of ten paired per-call
+programs run adjacent AB then BA on leased CPU 16. All 80 measurement points complete, and all result hashes agree. Each ratio is the geometric mean of ten paired per-call
 ratios, normalizing each total by its actual inner-repeat count.
 
 | Case | B/A |
 | --- | ---: |
-| cyclic4 | 0.9449 |
-| cyclic5 | 0.9288 |
-| cyclic6 | 0.9216 |
-| reimer5 | 0.9171 |
+| cyclic4 | 0.8629 |
+| cyclic5 | 0.9117 |
+| cyclic6 | 0.9069 |
+| reimer5 | 0.9034 |
+
+Cyclic-4 has substantial shared-host variation: its ten paired ratios range
+from 0.4932 to 1.0868. Every point is retained. The longer cyclic-5/6 and Reimer
+cases have narrower ranges in the raw exports.
+
+The preceding compiler-rewrite [exports](raw/metadata-csimp-bench-records-022db869dd08.tar.gz)
+remain available separately and are not pooled with the final measurements.
 
 The earlier unboxed-reader [exports](raw/metadata-lean-bench-records-a169746e3a13.tar.gz)
 are retained separately. Their adjacent arms are whole four-case suite
@@ -145,6 +161,13 @@ Archive SHA-256 values:
 - `metadata-inline-records-419928896e5a.tar.gz`: `121e35040eef199b428a44ccdd2e3b80b99f5e7064969934797906d17b8c962f`
 - `metadata-lean-bench-records-a169746e3a13.tar.gz`: `c5eaa74e5fc99f12a1cc5d7e7edb15ae5ede4f52bd37be131e4892553a8eb4d7`
 - `metadata-usize-records-a169746e3a13.tar.gz`: `4253d0fa5bdcd2950abeb18534e7e17ee490fcd4001dd4d3874f3e9fb272fb09`
+- `metadata-roundtrip-records-6bb2e9080284.tar.gz`: `556a78e07d37a4d5b9e1e780eb27e8b75556d885ad2c7ea6b9833e8c8955fa8d`
+- `metadata-roundtrip-bench-records-6bb2e9080284.tar.gz`: `45d1f5b21418ee0cfdbe36f1ea6d7512869b03c95aaddbfe3eb749a973972ce2`
+- `metadata-validation.tar.gz`: `cc6acb3a341bfa2d3065b5abfe298db8fd349318c23a24b546882d24f4feb64f`
 
-[Compiler trace, assembly and validation logs](raw/metadata-validation.tar.gz)
-retain the final generated-code and correctness checks.
+- `metadata-roundtrip-validation.tar.gz`: `80c0365ea99f5323b8a5ed3199511b0af9ab929c2aa182430b34d0c706ae6ca1`
+
+[Final compiler trace, assembly and validation logs](raw/metadata-roundtrip-validation.tar.gz)
+retain the generated-code and correctness checks, including the compiled reader
+in all four native variants. The preceding [validation archive](raw/metadata-validation.tar.gz)
+is retained separately.

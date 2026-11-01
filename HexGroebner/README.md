@@ -97,7 +97,6 @@ address bound; it needs no custom native binding. The
 [metadata measurements](../reports/bench-results/hexgroebner-metadata.md) retain
 full-system and registered lean-bench comparisons, including slower variants.
 
-
 For arities 1 through 4096, `MonomialTable.combineOwned` uses bounded native
 packed preparation and full-coordinate collision comparisons. LCM, product and
 exact quotient share one owned reusable buffer for u32 coordinates and cached

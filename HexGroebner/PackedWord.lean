@@ -30,7 +30,9 @@ private theorem offset_eq (base step : Nat) (h : base + step < USize.size) :
 
 /-- Checked unboxed implementation, selected through the proved compiler rewrite. -/
 @[expose] def read64Fast (bytes : @& ByteArray) (offset : Nat) : UInt64 :=
-  if h : offset + 8 ≤ bytes.size ∧ offset + 8 ≤ USize.size then
+  if h : offset + 8 ≤ bytes.size ∧ (USize.ofNat (offset + 8)).toNat = offset + 8 then
+    have address : offset + 8 < USize.size :=
+      h.2 ▸ (USize.ofNat (offset + 8)).toNat_lt_size
     let pos := USize.ofNat offset
     have boundAt (i : Nat) (hi : i < 8) : (pos + USize.ofNat i).toNat < bytes.size := by
       dsimp only [pos]
@@ -61,6 +63,8 @@ private theorem read64Fast_model (bytes : ByteArray) (offset : Nat) :
     split
     · rename_i h
       simp only [ByteArray.size] at h
+      have address := (USize.ofNat (offset + 8)).toNat_lt_size
+      rw [h.2] at address
       have index_eq (i : Nat) (hi : i < 8) :
           (USize.ofNat (offset)+USize.ofNat i).toNat = offset + i :=
         offset_eq _ _ (by omega)
