@@ -1,5 +1,12 @@
 # Portable F4 performance gaps and literal bounds
 
+Historical comparator-build caveat: compiler labels and `-march=native` commands
+below record the original build description. Nix can strip requested native CPU
+tuning, and effective flags were not independently established for every older
+build. These samples remain retained observations. The direct-ELF comparison
+with recorded effective native flags in [the driver report](hexgroebner-driver.md)
+supersedes them as evidence of the current msolve gap.
+
 The portable candidate engine at `425de3aa42` solves 14 of 16 frozen diagnostic
 inputs within the matched ten-second limit; msolve solves all 16. All 28 pairs
 of completed reduced bases agree coefficient-for-coefficient. Hex times out on

@@ -482,3 +482,56 @@ Selected S-polynomial identities remain in the resulting row span, including
 disconnected same-LCM pair components. Final certification independently checks
 the complete reduced-basis contract. See the retained
 [multiplied-row measurements](../reports/bench-results/hexgroebner-pair-rows.md).
+
+## Standalone candidate computation
+
+`lake build hexgroebner_compute hexgroebner_compute_full` builds a JSON driver from
+`bench/HexGroebner/Driver` and an otherwise identical full-initialization reference.
+The default uses the SDK's internal `libinitialize_minimal` archive only on the
+pinned compiler revision `470d5ce1400764999581fd26d5d72b00d990b0f4`, when present.
+Other compiler revisions or missing archives use ordinary initialization. CI
+checks the actual linked initializer as well as complete output agreement.
+The dedicated driver never elaborates Lean source or invokes its interpreter.
+Its import closure must also initialize every module reachable through
+extern/export calls; ordinary imports alone do not guarantee that condition.
+These restrictions require review when extending the driver. Benchmark and
+kernel replay executables keep their own initialization contracts.
+
+For example, save this input as `input.json`:
+
+```json
+{"p":7,"variables":2,"order":"grevlex","generators":[[[[2,0],1],[[0,1],6]],[[[1,1],1],[[0,0],6]]]}
+```
+
+Run `.lake/build/bin/hexgroebner_compute input.json`. Terms are
+`[exponents, coefficient]`; coefficients must lie in `[0,p)` and exponent-vector
+lengths must equal `variables`. Orders are `lex`, `grlex` and `grevlex`. Field
+bounds are checked before primality testing. The usual canonicalization and
+zero/unit-ideal conventions apply, including ordinary polynomial semantics at
+characteristic two.
+
+Successful output has `kind: "unchecked_candidate"`, explicit field/order
+metadata, the complete candidate basis and cumulative statistics. It is not a
+checked basis receipt. Use `certifyWith` or `basisWith` for checked results.
+Malformed input, exhausted allowances, representation exhaustion and internal
+matrix failures have distinct kinds: exit 2 is invalid input, 3 exhaustion,
+4 representation exhaustion and 5 an internal matrix error. Uncaught IO failures
+(such as a broken output stream) use the ordinary Lean process error exit, 1.
+Only `kind` is a stable machine-readable discriminator; `message` is diagnostic
+text. On handled failure, no partial basis is
+reported as a completed candidate. The driver does not serialize resumable
+states; the library APIs retain that facility.
+
+`--help` lists resource options; options precede the input filename.
+`--basis` and `--variables` adjust their corresponding bounds.
+`--batch-size 0` selects the effective minimum batch size one. Allowances are the same absolute cumulative
+`Limits` used by `computeWith`; for example `--work 1000000000` raises the work
+cap. Input parsing and filesystem work lie outside those computation counters.
+The deterministic driver returns random state zero without sampling.
+`hexgroebner_compute_full` accepts the same inputs and options, providing a
+reference for initialization and full-output comparisons.
+Freeze a staged build with `python3 scripts/bench/groebner_freeze.py output-dir`.
+Matched development sweeps use `scripts/bench/groebner_cli_measure.py`; its help
+requires that frozen binary/source manifest, a suite and explicit output directory.
+msolve comparisons require its `.libs/msolve` ELF and a clean source tree.
+It retains raw samples and inputs, checks full outputs and applies no timing gate.

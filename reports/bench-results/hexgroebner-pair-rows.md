@@ -1,5 +1,12 @@
 # F4 matrices from multiplied critical-pair rows
 
+Historical comparator-build caveat: compiler labels and `-march=native` commands
+below record the original build description. Nix can strip requested native CPU
+tuning, and effective flags were not independently established for every older
+build. These samples remain retained observations. The direct-ELF comparison
+with recorded effective native flags in [the driver report](hexgroebner-driver.md)
+supersedes them as evidence of the current msolve gap.
+
 Grouping multiplied basis faces by their actual LCM avoids constructing explicit
 S-polynomial differences before symbolic preprocessing. The final owned-set
 snapshot has diagnostic candidate B/A geometric mean **0.8953**, median

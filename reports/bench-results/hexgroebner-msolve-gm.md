@@ -1,5 +1,12 @@
 # Matched msolve diagnostics with native rows and pair pruning
 
+Historical comparator-build caveat: compiler labels and `-march=native` commands
+below record the original build description. Nix can strip requested native CPU
+tuning, and effective flags were not independently established for every older
+build. These samples remain retained observations. The direct-ELF comparison
+with recorded effective native flags in [the driver report](hexgroebner-driver.md)
+supersedes them as evidence of the current msolve gap.
+
 Hex source fingerprint `9f64edec57c7` and msolve both complete all 16 inputs of
 the frozen diagnostic suite within the same ten-second/16 GiB per-child limits.
 All 32 paired reduced bases agree at every coefficient and exponent. The

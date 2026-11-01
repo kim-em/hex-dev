@@ -1,5 +1,12 @@
 # Packed native monomial preparation
 
+Historical comparator-build caveat: compiler labels and `-march=native` commands
+below record the original build description. Nix can strip requested native CPU
+tuning, and effective flags were not independently established for every older
+build. These samples remain retained observations. The direct-ELF comparison
+with recorded effective native flags in [the driver report](hexgroebner-driver.md)
+supersedes them as evidence of the current msolve gap.
+
 Source fingerprint `7f850171b281`, Lean `v4.35.0-rc3`, AMD EPYC 9455,
 `chungus2`. Native preparation fuses LCM/product/exact-quotient coordinates,
 degree, support mask, semantic hash and maximum-coordinate computation into

@@ -1863,6 +1863,33 @@ lean_lib HexGroebnerBenchSupport where
   srcDir := "bench"
   globs := #[`HexGroebner.Bench.Cauchy, `HexGroebner.Bench.Mersenne]
 
+-- This dedicated driver never elaborates Lean source or invokes the interpreter.
+-- The pinned SDK's internal archive also requires that extern/export calls
+-- reach only initialized modules. Other compiler revisions use ordinary init
+-- until their internal archive contract has been checked explicitly.
+target hexgroebnerInitialize pkg : FilePath := do
+  let archive := (← getLeanLibDir) / nameToStaticLib "initialize_minimal"
+  if Lean.githash == "470d5ce1400764999581fd26d5d72b00d990b0f4" && (← archive.pathExists) then
+    inputBinFile archive
+  else
+    let source ← inputTextFile (pkg.dir / "HexGroebner" / "ffi" / "initialization_fallback.c")
+    buildO (pkg.dir / defaultBuildDir / "HexGroebner" / "ffi" / "initialization_fallback.o") source
+      #[] #["-O2", "-fPIC"]
+
+lean_lib HexGroebnerDriverSupport where
+  srcDir := "bench"
+  globs := #[.one `HexGroebner.Driver.Input, .one `HexGroebner.Driver.Run]
+
+lean_exe hexgroebner_compute where
+  srcDir := "bench"
+  root := `HexGroebner.Driver
+  moreLinkObjs := #[hexgroebnerInitialize]
+
+-- Independent full-initialization entry point for conformance and comparisons.
+lean_exe hexgroebner_compute_full where
+  srcDir := "bench"
+  root := `HexGroebner.Driver.Full
+
 lean_exe hexgroebner_bench where
   srcDir := "bench"
   root := `HexGroebner.Bench
