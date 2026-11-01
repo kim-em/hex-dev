@@ -13,8 +13,8 @@ library, so its native carrier can resolve the C binding on every platform.
 The byte layout and rejection behavior are part of the pure function's contract.
 Matrix callers validate entire rows before calling it on chunks of at most
 4096 entries; the native provider repeats shape and access checks defensively.
-Monomial calls validate packed geometry and process at most 4096 coordinates,
-reusing an owned preparation buffer. -/
+Monomial calls validate packed geometry and process at most 4096 coordinates.
+Preparation reuses an owned buffer; comparisons borrow their source arrays. -/
 
 namespace Hex.Groebner.Native
 
@@ -213,14 +213,12 @@ contract. Hashes never replace this full coordinate comparison. -/
 def equal (width : UInt8) (arity id : UInt64) (source candidate : @& ByteArray) : Bool :=
   equalPortable width arity id source candidate
 
-end Monomial
-
 /-- Bounded packed comparisons: operation 0 is lexicographic, 1 is reverse
 lexicographic with reversed inequality, and 2 is pointwise divisibility.
 Results 0/1/2 mean less/equal/greater for orders and 0/1 mean false/true
 for divisibility. Result 3 requests the unrestricted portable fallback.
 Both rows must fit the arena; zero arity reads no bytes. -/
-@[expose] def inspectPortable (operation width : UInt8) (arity left right : Nat)
+@[expose] def comparePortable (operation width : UInt8) (arity left right : Nat)
     (arena : @& ByteArray) : UInt8 := Id.run do
   let w := width.toNat
   if operation > 2 || (w != 1 && w != 2 && w != 4) || arity > 4096 ||
@@ -241,15 +239,47 @@ Both rows must fit the arena; zero arity reads no bytes. -/
 
 /-- Borrow-only native comparison, bounded to 4096 coordinates. No pointer or
 allocation survives the call; unsupported shapes select the Lean fallback. -/
-@[expose, extern "lean_hex_groebner_inspect_monomials"]
-def inspectPacked (operation width : UInt8) (arity left right : UInt64)
+@[expose, extern "lean_hex_groebner_compare_monomials"]
+def comparePacked (operation width : UInt8) (arity left right : UInt64)
     (arena : @& ByteArray) : UInt8 :=
-  inspectPortable operation width arity.toNat left.toNat right.toNat arena
+  comparePortable operation width arity.toNat left.toNat right.toNat arena
 
 /-- Validate arbitrary-precision dimensions before narrowing to the native ABI. -/
-@[inline] def inspect (operation width : UInt8) (arity left right : Nat)
+@[inline] def compareCode (operation width : UInt8) (arity left right : Nat)
     (arena : @& ByteArray) : UInt8 :=
   if arity > 4096 || left > 4294967295 || right > 4294967295 then 3 else
-    inspectPacked operation width arity.toUInt64 left.toUInt64 right.toUInt64 arena
+    comparePacked operation width arity.toUInt64 left.toUInt64 right.toUInt64 arena
+
+/-- Checking the Nat bounds before narrowing preserves the portable operation. -/
+theorem compareCode_eq (operation width : UInt8) (arity left right : Nat)
+    (arena : ByteArray) :
+    compareCode operation width arity left right arena =
+      comparePortable operation width arity left right arena := by
+  by_cases hn : arity > 4096
+  · simp [compareCode, comparePortable, hn]
+  by_cases hl : left > 4294967295
+  · simp [compareCode, comparePortable, hl]
+  by_cases hr : right > 4294967295
+  · simp [compareCode, comparePortable, hr]
+  have hn64 : arity < 2^64 := by omega
+  have hl64 : left < 2^64 := by omega
+  have hr64 : right < 2^64 := by omega
+  simp [compareCode, comparePacked, hn, hl, hr, Nat.toUInt64,
+    UInt64.toNat_ofNat', Nat.mod_eq_of_lt hn64, Nat.mod_eq_of_lt hl64, Nat.mod_eq_of_lt hr64]
+
+/-- Typed monomial ordering, after the caller's optional degree comparison. -/
+@[inline] def compare (reverse : Bool) (width : UInt8) (arity left right : Nat)
+    (arena : @& ByteArray) : Option Ordering :=
+  let code := compareCode (if reverse then 1 else 0) width arity left right arena
+  if code == 0 then some .lt else if code == 1 then some .eq
+  else if code == 2 then some .gt else none
+
+/-- Typed pointwise divisibility, after the caller's degree and mask filters. -/
+@[inline] def divides (width : UInt8) (arity left right : Nat)
+    (arena : @& ByteArray) : Option Bool :=
+  let code := compareCode 2 width arity left right arena
+  if code < 2 then some (code == 1) else none
+
+end Monomial
 
 end Hex.Groebner.Native

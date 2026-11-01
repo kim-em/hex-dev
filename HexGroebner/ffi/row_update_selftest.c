@@ -228,7 +228,7 @@ static void check_products(void) {
     puts("cached products: all widths, coordinate bounds, aliases and malformed arenas passed");
 }
 
-static void check_inspect(void) {
+static void check_comparison(void) {
     unsigned cases=0;
     for(unsigned w=1;w<=4;w*=2) {
         uint64_t bound=UINT64_C(1)<<(w*8);
@@ -251,28 +251,37 @@ static void check_inspect(void) {
                     if(op==2) {if(a[i]>b[i]) {expected=0;break;}}
                     else if(a[i]!=b[i]) {expected=op==1?(b[i]<a[i]?0:2):(a[i]<b[i]?0:2);break;}
                 }
-                if(inspect_monomials(op,w,n,0,1,arena,bytes)!=expected) fail("different packed comparison");
-                /* A partial unused third row is outside both read spans. */
-                if(w*n>1 && inspect_monomials(op,w,n-1,0,0,arena,bytes)!=1) fail("unused partial row");
-                if(inspect_monomials(op,w,n,0,0,arena,bytes)!=1) fail("equal packed comparison");
-                if(inspect_monomials(op,w,n,0,1,arena,bytes-1)!=3) fail("truncated comparison rows");
-                if(inspect_monomials(op,w,n,0,2,arena,bytes)!=3) fail("comparison row bound");
+                if(compare_monomials(op,w,n,0,1,arena,bytes)!=expected) fail("different packed comparison");
+                /* Two shorter distinct rows leave a partial third row unused. */
+                if(n>3) {
+                    size_t m=n-1;uint8_t partial=1;
+                    for(size_t k=0;k<m;++k) {
+                        size_t i=op==1?m-1-k:k;
+                        uint64_t x=a[i],y=m+i<n?a[m+i]:b[m+i-n];
+                        if(op==2) {if(x>y) {partial=0;break;}}
+                        else if(x!=y) {partial=op==1?(y<x?0:2):(x<y?0:2);break;}
+                    }
+                    if(compare_monomials(op,w,m,0,1,arena,bytes)!=partial) fail("unused partial row");
+                }
+                if(compare_monomials(op,w,n,0,0,arena,bytes)!=1) fail("equal packed comparison");
+                if(compare_monomials(op,w,n,0,1,arena,bytes-1)!=3) fail("truncated comparison rows");
+                if(compare_monomials(op,w,n,0,2,arena,bytes)!=3) fail("comparison row bound");
                 ++cases;
             }
             if(memcmp(saved,arena,bytes)) fail("borrowed comparison mutated");
             free(arena);free(saved);free(a);free(b);
         }
-        if(inspect_monomials(0,w,0,0,0,NULL,0)!=1) fail("zero arity comparison");
-        if(inspect_monomials(2,w,4097,0,0,NULL,0)!=3 ||
-           inspect_monomials(2,w,UINT64_MAX,0,0,NULL,0)!=3 ||
-           inspect_monomials(2,w,1,UINT64_MAX,0,NULL,0)!=3) fail("comparison integer boundary");
+        if(compare_monomials(0,w,0,0,0,NULL,0)!=1) fail("zero arity comparison");
+        if(compare_monomials(2,w,4097,0,0,NULL,0)!=3 ||
+           compare_monomials(2,w,UINT64_MAX,0,0,NULL,0)!=3 ||
+           compare_monomials(2,w,1,UINT64_MAX,0,NULL,0)!=3) fail("comparison integer boundary");
     }
-    if(inspect_monomials(3,1,0,0,0,NULL,0)!=3 ||
-       inspect_monomials(0,3,0,0,0,NULL,0)!=3) fail("comparison opcode/width");
+    if(compare_monomials(3,1,0,0,0,NULL,0)!=3 ||
+       compare_monomials(0,3,0,0,0,NULL,0)!=3) fail("comparison opcode/width");
     printf("packed monomial comparisons: %u array-oracle cases and malformed boundaries OK\n",cases);
 }
 
-static void check_inspect_pages(void) {
+static void check_comparison_pages(void) {
 #if defined(__linux__)
     long page_value=sysconf(_SC_PAGESIZE);
     if(page_value<=0) fail("comparison page size");
@@ -284,19 +293,19 @@ static void check_inspect_pages(void) {
         uint8_t *arena=end?mapping+(pages+1)*page-bytes:mapping+page;
         for(size_t i=0;i<n;++i) {write_le(arena+i*w,w,i%17);write_le(arena+(n+i)*w,w,i%17+(i==n-1));}
         if(mprotect(mapping+page,pages*page,PROT_READ)) fail("comparison read-only mapping");
-        if(inspect_monomials(0,w,n,0,1,arena,bytes)!=0 ||
-           inspect_monomials(1,w,n,0,1,arena,bytes)!=2 ||
-           inspect_monomials(2,w,n,0,1,arena,bytes)!=1) fail("comparison guarded result");
-        if(inspect_monomials(2,w,n,0,2,arena,bytes)!=3 ||
-           inspect_monomials(0,w,n,0,1,arena,bytes-1)!=3) fail("comparison guarded rejection");
+        if(compare_monomials(0,w,n,0,1,arena,bytes)!=0 ||
+           compare_monomials(1,w,n,0,1,arena,bytes)!=2 ||
+           compare_monomials(2,w,n,0,1,arena,bytes)!=1) fail("comparison guarded result");
+        if(compare_monomials(2,w,n,0,2,arena,bytes)!=3 ||
+           compare_monomials(0,w,n,0,1,arena,bytes-1)!=3) fail("comparison guarded rejection");
         if(munmap(mapping,total)) fail("comparison guard unmap");
     }
 #endif
 }
 
 int main(void) {
-    check_inspect();
-    check_inspect_pages();
+    check_comparison();
+    check_comparison_pages();
     check_bytes();
     check_products();
     check_arithmetic();

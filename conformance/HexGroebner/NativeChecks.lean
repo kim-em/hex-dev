@@ -4,7 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
-import HexGroebner.InspectConformance
+import HexGroebner.MonomialConformance
+import HexGroebner.MonomialCompareConformance
 import HexGroebner.ScanConformance
 import HexGroebner.GatherConformance
 import HexGroebner.MatrixNativeConformance
@@ -23,7 +24,9 @@ def run : IO Unit := do
     throw (IO.userError "compiled zero-scan reservation boundary mismatch")
   if !ScanConformance.runtimeZeroChecks seed then
     throw (IO.userError "compiled zero-scan prefix mismatch")
-  if !InspectConformance.runtimeChecks seed then
+  if !MonomialConformance.orderChecks then
+    throw (IO.userError "compiled monomial table order mismatch")
+  if !MonomialCompareConformance.runtimeChecks seed then
     throw (IO.userError "packed monomial comparison mismatch")
   if !ProductConformance.runtimeChecks seed then
     throw (IO.userError "compiled current-arena product conformance mismatch")

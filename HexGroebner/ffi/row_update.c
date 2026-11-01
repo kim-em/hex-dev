@@ -181,7 +181,7 @@ static inline int equal_products(unsigned width,uint64_t arity,uint64_t count,
 
 /* Read-only comparisons share the packed representation and a bounded call.
    Result 3 declines unsupported geometry without touching any source byte. */
-static uint8_t inspect_monomials(unsigned op,unsigned w,uint64_t n,uint64_t left,uint64_t right,
+static uint8_t compare_monomials(unsigned op,unsigned w,uint64_t n,uint64_t left,uint64_t right,
         const uint8_t *arena,size_t bytes) {
     if(op>2 || (w!=1 && w!=2 && w!=4) || n>4096 ||
        left>UINT32_MAX || right>UINT32_MAX) return 3;
@@ -306,9 +306,9 @@ LEAN_EXPORT uint8_t lean_hex_groebner_equal_monomial(
         lean_sarray_cptr(candidate), lean_sarray_size(candidate));
 }
 
-LEAN_EXPORT uint8_t lean_hex_groebner_inspect_monomials(uint8_t operation,uint8_t width,
+LEAN_EXPORT uint8_t lean_hex_groebner_compare_monomials(uint8_t operation,uint8_t width,
         uint64_t arity,uint64_t left,uint64_t right,b_lean_obj_arg arena) {
-    return inspect_monomials(operation,width,arity,left,right,
+    return compare_monomials(operation,width,arity,left,right,
         lean_sarray_cptr(arena),lean_sarray_size(arena));
 }
 
