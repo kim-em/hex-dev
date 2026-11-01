@@ -10,6 +10,10 @@
 #define HEX_GROEBNER_MERSENNE_USED() ((void)0)
 #endif
 
+#ifndef HEX_GROEBNER_ZERO_SCAN_USED
+#define HEX_GROEBNER_ZERO_SCAN_USED() ((void)0)
+#endif
+
 #if (defined(__x86_64__) || defined(__i386__)) && defined(__GNUC__) && !defined(HEX_GROEBNER_NO_AVX2)
 #define HEX_GROEBNER_AVX2 1
 #include <immintrin.h>
@@ -63,6 +67,15 @@ static inline __m256i hex_mersenne31_even(__m256i b,__m256i factor) {
     __m256i x=_mm256_mul_epu32(b,factor);
     __m256i r=_mm256_add_epi64(_mm256_and_si256(x,p),_mm256_srli_epi64(x,31));
     return _mm256_sub_epi64(r,_mm256_and_si256(_mm256_cmpgt_epi64(r,pm1),p));
+}
+
+/* The caller checks eight logical entries before this bounded load. */
+__attribute__((target("avx2"),always_inline))
+static inline int hex_scan_zero8(const uint8_t *dense,unsigned width) {
+    if(width==1) {uint64_t word;memcpy(&word,dense,8);return word==0;}
+    if(width==2) {__m128i word=_mm_loadu_si128((const __m128i *)dense);return _mm_testz_si128(word,word);}
+    __m256i word=_mm256_loadu_si256((const __m256i *)dense);
+    return _mm256_testz_si256(word,word);
 }
 
 /* Eight independent canonical updates, or zero with dense unchanged.

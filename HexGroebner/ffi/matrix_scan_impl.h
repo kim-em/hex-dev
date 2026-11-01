@@ -98,6 +98,15 @@ static lean_obj_res HEX_SCAN_NAME(uint64_t p,
                 if(work+charge>work_limit) {status=2;break;}
                 work+=charge;charged=stop;
             }
+#if HEX_SCAN_VECTOR
+            /* Preserve the scalar quantum and already-reserved work prefix.
+               Zero coefficients cannot reduce, set a leading term or reject. */
+            if(quantum-tick>=8 && col+8<=charged && col+8<=columns && col+8<=last+1 &&
+                    hex_scan_zero8(data+(size_t)col*w,w)) {
+                HEX_GROEBNER_ZERO_SCAN_USED();
+                col+=8;tick+=7;continue;
+            }
+#endif
             uint64_t a=rd(data+(size_t)col*w,w);
             if(a>=p) {status=4;break;}
             uint64_t slot=rd(slot_bytes+(size_t)col*4,4);
