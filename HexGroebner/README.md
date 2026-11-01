@@ -11,6 +11,17 @@ discard unneeded pairs. Symbolic preprocessing closes a selected batch under a
 basis-specific divisibility trie and constructs one joint Macaulay matrix.
 The chain test visits indexed LCM divisors; final tail reductions share one
 immutable reducer index.
+F4 checkpoints retain a `ReducerCache` of multiplied reducers from the same
+append-only monomial arena. Stable IDs survive exponent-width changes. A cache
+hit checks the complete base polynomial, comparing at most 4096 bytes per native
+call; basis changes cannot silently reuse a different row. Sugar and certificate
+derivations are rebuilt from the current basis. The private cache retains at most
+16384 entries, charges eight logical key bytes per insertion and all comparison
+work to the parent allowance, and shares already charged polynomial buffers.
+When key storage would not fit, multiplication continues without caching that
+product. Raw internal callers must retain the associated monomial arena.
+The [cache measurements](../reports/bench-results/hexgroebner-reducer-cache.md)
+retain full-system results, small-case regressions and fixed-benchmark variability.
 Final minimal-leading-monomial selection and tail reduction produce canonical
 monic, sorted, reduced output. Empty/all-zero input produces an empty basis;
 the unit ideal produces `[1]`, including zero-variable inputs. Ordinary
