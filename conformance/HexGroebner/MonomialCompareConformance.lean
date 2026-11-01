@@ -65,7 +65,7 @@ example : Native.Monomial.comparePortable 1 1 2 0 1 ⟨#[1,2,1,3]⟩ = 2 := by d
 example : Native.Monomial.comparePortable 2 1 2 0 1 ⟨#[1,2,1,3]⟩ = 1 := by decide +kernel
 example : Native.Monomial.comparePortable 2 1 4097 0 0 {} = 3 := by decide +kernel
 
-/-- info: 'Hex.Groebner.Native.Monomial.compareCode_eq' depends on axioms: [propext, Quot.sound] -/
+/-- info: 'Hex.Groebner.Native.Monomial.compareCode_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Native.Monomial.compareCode_eq
 

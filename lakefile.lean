@@ -867,7 +867,7 @@ lean_lib HexQuerySemantics where
     `HexRealClosureTheory.SpecializeSample,
     `HexRealClosureTheory.SpecializeSelected,
     `HexRealClosureTheory.SpecializeDescriptor,
-    `HexRealClosureTheory.Algebraic, `HexRealClosureTheory.AlgebraicClean,
+    `HexRealClosureTheory.ExceptDecidableEq, `HexRealClosureTheory.Algebraic, `HexRealClosureTheory.AlgebraicClean,
     `HexRealClosureTheory.TowerModel, `HexRealClosureTheory.TowerModelTests,
     `HexRealClosureTheory.BaseModel,
     `HexRealClosureTheory.BaseOrder,
