@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 import HexGroebner.MonomialConformance
 import HexGroebner.MonomialCompareConformance
+import HexGroebner.TrieConformance
 import HexGroebner.ScanConformance
 import HexGroebner.GatherConformance
 import HexGroebner.MatrixNativeConformance
@@ -20,6 +21,8 @@ namespace Hex.Groebner.NativeChecks
 native symbols were actually called, including in sanitizer builds. -/
 def run : IO Unit := do
   let seed := ((← IO.getEnv "HEX_GROEBNER_TEST_SEED").getD "0").toNat?.getD 0
+  if !(TrieConformance.runtimeChecks seed && TrieConformance.boundaryChecks) then
+    throw (IO.userError "validated trie lookup mismatch")
   if !ScanConformance.zeroBoundaryChecks seed then
     throw (IO.userError "compiled zero-scan reservation boundary mismatch")
   if !ScanConformance.runtimeZeroChecks seed then
