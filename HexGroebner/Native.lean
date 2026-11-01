@@ -215,4 +215,42 @@ def equal (width : UInt8) (arity id : UInt64) (source candidate : @& ByteArray) 
 
 end Monomial
 
+/-- Bounded packed comparisons: operation 0 is lexicographic, 1 is reverse
+lexicographic with reversed inequality, and 2 is pointwise divisibility.
+Results 0/1/2 mean less/equal/greater for orders and 0/1 mean false/true
+for divisibility. Result 3 requests the unrestricted portable fallback.
+Both rows must fit the arena; zero arity reads no bytes. -/
+@[expose] def inspectPortable (operation width : UInt8) (arity left right : Nat)
+    (arena : @& ByteArray) : UInt8 := Id.run do
+  let w := width.toNat
+  if operation > 2 || (w != 1 && w != 2 && w != 4) || arity > 4096 ||
+      left > 4294967295 || right > 4294967295 then return 3
+  if arity == 0 then return 1
+  let rowBytes := arity*w
+  if arena.size % rowBytes != 0 || left ≥ arena.size/rowBytes ||
+      right ≥ arena.size/rowBytes then return 3
+  for k in [:arity] do
+    let i := if operation == 1 then arity-1-k else k
+    let a := read arena w ((left*arity+i)*w)
+    let b := read arena w ((right*arity+i)*w)
+    if operation == 2 then
+      if a > b then return 0
+    else if a != b then
+      return if operation == 1 then (if b < a then 0 else 2)
+        else (if a < b then 0 else 2)
+  return 1
+
+/-- Borrow-only native comparison, bounded to 4096 coordinates. No pointer or
+allocation survives the call; unsupported shapes select the Lean fallback. -/
+@[expose, extern "lean_hex_groebner_inspect_monomials"]
+def inspectPacked (operation width : UInt8) (arity left right : UInt64)
+    (arena : @& ByteArray) : UInt8 :=
+  inspectPortable operation width arity.toNat left.toNat right.toNat arena
+
+/-- Validate arbitrary-precision dimensions before narrowing to the native ABI. -/
+@[inline] def inspect (operation width : UInt8) (arity left right : Nat)
+    (arena : @& ByteArray) : UInt8 :=
+  if arity > 4096 || left > 4294967295 || right > 4294967295 then 3 else
+    inspectPacked operation width arity.toUInt64 left.toUInt64 right.toUInt64 arena
+
 end Hex.Groebner.Native

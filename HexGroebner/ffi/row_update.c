@@ -179,6 +179,26 @@ static inline int equal_products(unsigned width,uint64_t arity,uint64_t count,
     return 1;
 }
 
+/* Read-only comparisons share the packed representation and a bounded call.
+   Result 3 declines unsupported geometry without touching any source byte. */
+static uint8_t inspect_monomials(unsigned op,unsigned w,uint64_t n,uint64_t left,uint64_t right,
+        const uint8_t *arena,size_t bytes) {
+    if(op>2 || (w!=1 && w!=2 && w!=4) || n>4096 ||
+       left>UINT32_MAX || right>UINT32_MAX) return 3;
+    if(!n) return 1;
+    size_t row_bytes=n*w;
+    if(bytes%row_bytes || left>=bytes/row_bytes || right>=bytes/row_bytes) return 3;
+    const uint8_t *a=arena+left*row_bytes,*b=arena+right*row_bytes;
+    if(op==0 && w==1) {int c=memcmp(a,b,n);return c<0?0:c>0?2:1;}
+    for(size_t k=0;k<n;++k) {
+        size_t i=op==1?n-1-k:k;
+        uint64_t x=read_le(a+i*w,w),y=read_le(b+i*w,w);
+        if(op==2) {if(x>y) return 0;}
+        else if(x!=y) return op==1?(y<x?0:2):(x<y?0:2);
+    }
+    return 1;
+}
+
 #ifndef HEX_GROEBNER_NO_LEAN
 static inline lean_object *some_buffer(lean_object *data) {
     lean_object *result = lean_alloc_ctor(1, 1, 0);
@@ -282,6 +302,12 @@ LEAN_EXPORT uint8_t lean_hex_groebner_equal_monomial(
     return (uint8_t)equal_monomial(width, arity, id,
         lean_sarray_cptr(source), lean_sarray_size(source),
         lean_sarray_cptr(candidate), lean_sarray_size(candidate));
+}
+
+LEAN_EXPORT uint8_t lean_hex_groebner_inspect_monomials(uint8_t operation,uint8_t width,
+        uint64_t arity,uint64_t left,uint64_t right,b_lean_obj_arg arena) {
+    return inspect_monomials(operation,width,arity,left,right,
+        lean_sarray_cptr(arena),lean_sarray_size(arena));
 }
 
 #endif

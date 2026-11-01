@@ -69,7 +69,9 @@ def run() -> None:
 #define lean_hex_groebner_equal_monomial hex_test_unused_monomial_equal
 #define lean_hex_groebner_equal_bytes hex_test_equal_bytes
 #define lean_hex_groebner_equal_products hex_test_equal_products
+#define lean_hex_groebner_inspect_monomials hex_test_inspect
 #include ROW_SOURCE
+#undef lean_hex_groebner_inspect_monomials
 #undef lean_hex_groebner_subtract_row
 #undef lean_hex_groebner_prepare_monomial
 #undef lean_hex_groebner_equal_monomial
@@ -118,6 +120,16 @@ static inline unsigned hex_test_scan8_m31_counted(uint8_t *dense,const uint8_t *
 #undef lean_hex_scan_transition
 #undef lean_hex_gather
 static uint64_t scan_calls=0,gather_calls=0,byte_calls=0,product_calls=0;
+static uint64_t inspect_calls=0;
+__typeof__(hex_test_inspect) __wrap_lean_hex_groebner_inspect_monomials;
+LEAN_EXPORT uint8_t __wrap_lean_hex_groebner_inspect_monomials(uint8_t operation,uint8_t width,
+ uint64_t arity,uint64_t left,uint64_t right,b_lean_obj_arg arena) {
+ ++inspect_calls;return hex_test_inspect(operation,width,arity,left,right,arena);
+}
+LEAN_EXPORT lean_obj_res hex_test_inspect_count(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(inspect_calls));
+}
+
 __typeof__(hex_test_equal_products) __wrap_lean_hex_groebner_equal_products;
 LEAN_EXPORT uint8_t __wrap_lean_hex_groebner_equal_products(uint8_t width,
  uint64_t arity,uint64_t count,uint64_t multiplier,uint64_t start,uint64_t terms,
@@ -203,13 +215,15 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
             flags += ["-fsanitize=address,undefined", "-fno-sanitize-recover=undefined", "-fno-omit-frame-pointer"]
         link_args = ["-Wl,--wrap=lean_hex_scan_transition", "-Wl,--wrap=lean_hex_gather",
                      "-Wl,--wrap=lean_hex_groebner_equal_bytes",
-                     "-Wl,--wrap=lean_hex_groebner_equal_products"] + libraries
+                     "-Wl,--wrap=lean_hex_groebner_equal_products",
+                     "-Wl,--wrap=lean_hex_groebner_inspect_monomials"] + libraries
         targets = []
         for variant, extra in VARIANTS.items():
             module = "Check" + variant
             target = "check" + variant
             targets.append(target)
             (directory / (module + ".lean")).write_text('''import HexGroebner.NativeChecks
+@[extern "hex_test_inspect_count"] opaque inspectCount : IO UInt64
 @[extern "hex_test_counts"] opaque counts : IO (UInt64 × UInt64)
 @[extern "hex_test_byte_count"] opaque byteCount : IO UInt64
 @[extern "hex_test_product_count"] opaque productCount : IO UInt64
@@ -223,8 +237,12 @@ def main : IO Unit := do
   let primitiveCompared ← byteCount
   let primitiveProducts ← productCount
   let beforeZero ← zeroCount
+  let inspectedBefore ← inspectCount
   Hex.Groebner.NativeChecks.runF4
   let afterZero ← zeroCount
+  let inspectedAfter ← inspectCount
+  if inspectedAfter ≤ inspectedBefore then throw (IO.userError "F4 did not exercise monomial comparisons")
+  IO.println s!"native monomial comparisons: {inspectedAfter}, F4 delta: {inspectedAfter-inspectedBefore}"
   let f4Compared ← byteCount
   let f4Products ← productCount
   if f4Products ≤ primitiveProducts then throw (IO.userError "F4 did not exercise arena product validation")
