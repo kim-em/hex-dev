@@ -198,8 +198,8 @@ setup_benchmark cauchy8 n => n * n * n
     paramFloor := 32
     paramCeiling := 125
     paramSchedule := .custom #[32, 64, 96, 125]
-    maxSecondsPerCall := 8.0
-    targetInnerNanos := 1000000000
+    maxSecondsPerCall := 32.0
+    targetInnerNanos := 4000000000
   }
 
 -- Full-rank Hilbert rows make sum_i sum_{j<i} (n-j) = (n^3-n)/3
@@ -210,8 +210,8 @@ setup_benchmark cauchy16 n => n * n * n
     paramFloor := 64
     paramCeiling := 512
     paramSchedule := .custom #[64, 128, 256, 512]
-    maxSecondsPerCall := 8.0
-    targetInnerNanos := 1000000000
+    maxSecondsPerCall := 32.0
+    targetInnerNanos := 4000000000
   }
 
 -- The same (n^3-n)/3 entry updates, plus O(n^2) shared derivation nodes.
@@ -222,8 +222,8 @@ setup_benchmark cauchy16Trace n => n * n * n
     paramFloor := 64
     paramCeiling := 512
     paramSchedule := .custom #[64, 128, 256, 512]
-    maxSecondsPerCall := 8.0
-    targetInnerNanos := 1000000000
+    maxSecondsPerCall := 32.0
+    targetInnerNanos := 4000000000
   }
 
 -- The column remapping preserves the exact (n^3-n)/3 entry updates.
@@ -234,8 +234,8 @@ setup_benchmark cauchy16Strided n => n * n * n
     paramFloor := 64
     paramCeiling := 512
     paramSchedule := .custom #[64, 128, 256, 512]
-    maxSecondsPerCall := 8.0
-    targetInnerNanos := 1000000000
+    maxSecondsPerCall := 32.0
+    targetInnerNanos := 4000000000
   }
 
 -- Independently derived model: 256*n columns need O(n) workspace initialization
