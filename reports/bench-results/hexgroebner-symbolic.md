@@ -119,6 +119,19 @@ statistics with caps 64 and 1024. A distinct regression checks positional
 independent normal forms. Dependency, phase, release-manifest, copyright,
 file-size and 32-check benchmark-verification gates pass.
 
+An explanatory Eco31 profile retains eight complete runs whose bases and
+counters all agree with the campaign. It records 8493 samples at 1999 Hz with
+zero lost samples. Flat sampled shares include Mersenne row scanning 17.42%,
+monomial combination and its loop 6.09%, geometry checks 3.02%, matrix validation
+2.37%, symbolic row translation 1.87% and native reducer lookup 1.72%.
+Reference-count release, small-object allocation and free together account for
+10.71%. These whole-process shares include profiler overhead; they are not
+uninstrumented timing estimates. Kernel symbols are unresolved and some unwind
+chains are unreliable, so only flat leaf-IP symbols are interpreted. Every raw
+sample and full output is retained. This motivates investigating matrix and
+representation overhead alongside arithmetic; it does not establish a compiler
+limitation or replace the matched measurements.
+
 - [combined-before-after-a00d1a3e57a9.tar.gz](raw/combined-before-after-a00d1a3e57a9.tar.gz): `db6d788f85ad37e0d0e3967143fddb023b1df57c1c1353924f32a0fa0e5c6701`.
 - [combined-before-after-repeat-a00d1a3e57a9.tar.gz](raw/combined-before-after-repeat-a00d1a3e57a9.tar.gz): `8e766493dd6b4a7072ea776ad6383c1a3aede9ea1b3a0218f76cac53886172a0`.
 - [combined-msolve-l2-a00d1a3e57a9.tar.gz](raw/combined-msolve-l2-a00d1a3e57a9.tar.gz): `30a7dd7c89e30dc82c803de1a4e5e613fbe0336c5ab521884b9ae11f15b8c8f5`.
@@ -126,3 +139,4 @@ file-size and 32-check benchmark-verification gates pass.
 - [combined-msolve-l42-a00d1a3e57a9.tar.gz](raw/combined-msolve-l42-a00d1a3e57a9.tar.gz): `fa16764e07f30a21d9653ddb4c08cf19bd99376913f834b040049ab37df57ece`.
 - [combined-msolve-l42-repeat-a00d1a3e57a9.tar.gz](raw/combined-msolve-l42-repeat-a00d1a3e57a9.tar.gz): `3598fc8b32bd8f5617a6dcb08384f2e0cf7ae0ce2f1d55843da4b255ccacd569`.
 - [combined-validation-a00d1a3e57a9.tar.gz](raw/combined-validation-a00d1a3e57a9.tar.gz): `68ae47af6f8f03089d13ea80cd5cd65c360e11b8570dee7a11f02f9cb8089f26`.
+- [combined-profile-eco-a00d1a3e57a9.tar.gz](raw/combined-profile-eco-a00d1a3e57a9.tar.gz): `9e847c241e255248b0cceb720721b2a6cbc99b9e417d8e6dd251dcc40419866d`.
