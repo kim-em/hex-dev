@@ -243,7 +243,7 @@ def main : IO Unit := do
   let available ← avx2
   let (contiguous,gathered) ← vectorCounts
   let covered ← widths
-  IO.println s!"native call counts: scan={scan}, gather={gather}; AVX2={available}, contiguous={contiguous}, strided={gathered}, width paths={covered}, byte comparisons={compared}, product validations={cacheProducts}, Mersenne vectors={mersenne}, zero blocks={afterZero}"
+  IO.println s!"native call counts: scan={scan}, gather={gather}; AVX2={available}, contiguous={contiguous}, strided={gathered}, width paths={covered}, byte comparisons={compared}, product validations={cacheProducts}, Mersenne vectors={mersenne}, zero blocks={afterZero}, F4 zero blocks={afterZero-beforeZero}"
   if VECTOR && available && afterZero ≤ beforeZero then
     throw (IO.userError "complete F4 did not exercise zero blocks")
   if VECTOR && available && mersenne ≤ beforeMersenne then
