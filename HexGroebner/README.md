@@ -25,7 +25,7 @@ arena, with at most 4096 coordinate comparisons per native call; incompatible
 identifier meanings in public raw calls therefore cannot return a stale row.
 The portable route checks the same exact identities. Full caches permit
 replacement of an existing key, charging each insertion cumulatively.
-The [cache measurements](../reports/bench-results/hexgroebner-reducer-cache.md)
+The [cache measurements](../reports/bench-results/hexgroebner-arena-cache.md)
 retain full-system results, small-case regressions and fixed-benchmark variability.
 Final minimal-leading-monomial selection and tail reduction produce canonical
 monic, sorted, reduced output. Empty/all-zero input produces an empty basis;
