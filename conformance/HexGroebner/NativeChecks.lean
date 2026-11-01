@@ -21,7 +21,7 @@ namespace Hex.Groebner.NativeChecks
 native symbols were actually called, including in sanitizer builds. -/
 def run : IO Unit := do
   let seed := ((← IO.getEnv "HEX_GROEBNER_TEST_SEED").getD "0").toNat?.getD 0
-  if !(TrieConformance.runtimeChecks seed && TrieConformance.boundaryChecks) then
+  if !(TrieConformance.runtimeChecks seed && TrieConformance.boundaryChecks && TrieConformance.policyChecks) then
     throw (IO.userError "validated trie lookup mismatch")
   if !ScanConformance.zeroBoundaryChecks seed then
     throw (IO.userError "compiled zero-scan reservation boundary mismatch")

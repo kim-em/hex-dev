@@ -106,6 +106,41 @@ def boundaryChecks : Bool := Id.run do
   | (.ok true,_) => return true
   | _ => return false
 
+/-- Independent preference cases force a later visited leaf to win by sparsity
+or degree, and distinguish LIFO ties from basis-index order. -/
+def policyChecks : Bool := Id.run do
+  let context : Context := ⟨field,2,.lex⟩
+  let cases : Array (Array RawPolynomial × Nat) := #[
+    (#[#[⟨#[0,1],1⟩], #[⟨#[1,1],1⟩,⟨#[0,0],1⟩],
+      #[⟨#[2,0],1⟩,⟨#[0,1],1⟩,⟨#[0,0],1⟩]], 0),
+    (#[#[⟨#[2,1],1⟩], #[⟨#[1,0],1⟩], #[⟨#[0,2],1⟩]], 0),
+    (#[#[⟨#[2,0],1⟩,⟨#[0,0],1⟩], #[⟨#[0,2],1⟩,⟨#[0,0],1⟩]], 1)]
+  for (raw, expected) in cases do
+    let trial : Computation Bool := do
+      let mut basis : Array BasisElement := #[]
+      for i in [:raw.size] do
+        basis := basis.push ⟨← Polynomial.normalize context limits i raw[i]!,0⟩
+      let index ← ReducerIndex.build context limits basis
+      let some view := index.packed | return false
+      let monomial ← intern limits #[3,3]
+      let state ← get
+      let actual := Native.Trie.lookup view state.table.width.bytes.toUInt8
+        state.table.count.toUInt64 monomial.toUInt64 state.table.exponents state.table.metadata 4096
+      if actual.status != 1 || actual.reducer != some expected then return false
+      for allowance in [:32] do
+        let budget := { limits with work := state.statistics.work+allowance }
+        let (reference, work) := ReducerIndex.findPortable context index basis state.table
+          monomial state.statistics.work budget.work
+        let (value, next) := (index.find context budget basis monomial).run state
+        if !equal value reference || next.statistics.work != work then return false
+      return true
+    match trial.run ⟨{ arity := 2 },{}⟩ with
+    | (.ok true,_) => pure ()
+    | _ => return false
+  return true
+
+#guard policyChecks
+
 -- An importing caller cannot forge a packed snapshot or replace its trie nodes.
 #check_failure ReducerIndex.mk
 #check_failure fun (index : ReducerIndex) => ({ index with nodes := #[] } : ReducerIndex)
