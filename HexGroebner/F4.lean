@@ -8,6 +8,7 @@ module
 
 public import HexGroebner.Symbolic
 public import HexGroebner.Pairs
+public import HexGroebner.PairRows
 
 public section
 
@@ -83,13 +84,11 @@ private def round (context : Context) (limits : Limits) (checkpoint : Checkpoint
   let (pairs, queue) ← checkpoint.queue.select context limits index checkpoint.basis
   modify fun s => { s with statistics.largestBatch := max s.statistics.largestBatch pairs.size }
   if pairs.isEmpty then return { checkpoint with queue }
-  let mut targets := #[]
-  for pair in pairs do
-    let f := checkpoint.basis[pair.left]!.polynomial
-    let g := checkpoint.basis[pair.right]!.polynomial
-    let p ← f.sPolynomial context limits g
-    if p.size != 0 then targets := targets.push ⟨p, pair.sugar⟩
-  let matrix ← SymbolicMatrix.prepareWith context limits index checkpoint.basis targets checkpoint.cache
+  let rows ← PairRows.prepare context limits checkpoint.basis pairs checkpoint.cache
+  spend limits rows.targets.size
+  let targets := rows.targets.map fun row => BasisElement.mk row.polynomial row.sugar
+  let matrix ← SymbolicMatrix.prepareWith context limits index checkpoint.basis targets
+    rows.cache rows.reducers
   let new ← matrix.eliminate context limits
   let basis := checkpoint.basis ++ new
   if let some g ← unit limits new then

@@ -19,9 +19,9 @@ def certificate : Certificate.Basis := {
   forward := {
     nodes := [
       .generator 0, .generator 1,
-      .multiply [([0, 1], 1)] 0, .multiply [([1, 0], 1)] 1,
-      .scale 6 3, .add 2 4, .scale 6 5]
-    roots := #[0, 1, 6] }
+      .multiply [([1, 0], 1)] 1, .multiply [([0, 1], 1)] 0,
+      .scale 6 3, .add 2 4]
+    roots := #[0, 1, 5] }
   backward := {
     nodes := [
       .zero, .generator 0, .multiply [([0, 0], 1)] 1, .add 0 2,
