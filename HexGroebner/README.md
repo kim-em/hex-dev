@@ -90,6 +90,12 @@ Divisibility masks only reject candidates; trie paths inspect exact exponents.
 Polynomials use separate packed stable-identifier and coefficient buffers.
 Coefficients occupy one byte below modulus 256, two below 65536, and four for
 larger supported primes. Interchange decoding occurs outside the hot loops.
+Cached 64-bit metadata uses `Packed.read64`. Its byte-based kernel definition
+is preserved while a proved compiler rewrite selects checked unboxed reads.
+The equality covers all byte arrays and offsets, with an explicit platform
+address bound; it needs no custom native binding. The
+[metadata measurements](../reports/bench-results/hexgroebner-metadata.md) retain
+full-system and registered lean-bench comparisons, including slower variants.
 
 For arities 1 through 4096, `MonomialTable.combineOwned` uses bounded native
 packed preparation and full-coordinate collision comparisons. LCM, product and

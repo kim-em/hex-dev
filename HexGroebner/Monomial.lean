@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexGroebner.Packed
+public import HexGroebner.PackedWord
 public import HexGroebner.Native
 public import HexMvPoly.Mono
 public import Std.Data.HashMap
@@ -75,10 +75,8 @@ structure InternResult where
 
 namespace MonomialTable
 
-private def word64 (bytes : @& ByteArray) (index : Nat) : UInt64 :=
-  Packed.read .u32 bytes index ||| (Packed.read .u32 bytes (index + 1) <<< 32)
-
-private def read64 (bytes : @& ByteArray) (index : Nat) : UInt64 := word64 bytes (2 * index)
+private def metaWord (bytes : @& ByteArray) (index : Nat) : UInt64 :=
+  Packed.read64 bytes (index*8)
 
 @[inline] private def reserve (arity : Nat) : Nat :=
   if arity > 0 && arity ≤ 4096 then arity * 4 + 28 else 0
@@ -105,15 +103,15 @@ private def push64 (bytes : ByteArray) (value : UInt64) : ByteArray :=
 
 /-- Cached total degree. -/
 @[inline] def degree (table : @& MonomialTable) (id : Nat) : Nat :=
-  (read64 table.metadata (3 * id)).toNat
+  (metaWord table.metadata (3 * id)).toNat
 
 /-- Cached support mask. A failed subset test disproves divisibility. -/
 @[inline] def mask (table : @& MonomialTable) (id : Nat) : UInt64 :=
-  read64 table.metadata (3 * id + 1)
+  metaWord table.metadata (3 * id + 1)
 
 /-- Cached hash, independent of the selected exponent width. -/
 @[inline] def hashAt (table : @& MonomialTable) (id : Nat) : UInt64 :=
-  read64 table.metadata (3 * id + 2)
+  metaWord table.metadata (3 * id + 2)
 
 /-- Decode only at an interchange boundary. Hot operations read packed exponents. -/
 def exponentsAt (table : MonomialTable) (id : Nat) : Array Nat :=
@@ -264,9 +262,9 @@ private def combinePacked (table : MonomialTable) (operation : Operation) (a b :
   let table := { table with work }
   work := work + table.arity
   if work > maxWork then return ⟨.error ⟨.work, maxWork⟩, { table with workspace := prepared }⟩
-  let degree := word64 prepared table.arity
-  let mask := word64 prepared (table.arity + 2)
-  let mut hash := word64 prepared (table.arity + 4)
+  let degree := Packed.read64 prepared (table.arity * 4)
+  let mask := Packed.read64 prepared ((table.arity + 2) * 4)
+  let mut hash := Packed.read64 prepared ((table.arity + 4) * 4)
   let largest := Packed.read .u32 prepared (table.arity + 6)
   let width := if largest > 65535 then Width.u32 else
     if largest > 255 && table.width == .u8 then Width.u16 else table.width
