@@ -29,7 +29,7 @@ theorem entry_encode (value : ValueCodec E) (context : ValueCodec Ctx)
     Codec.entry value context data = Codec.Json.arr #[Codec.node value context data.node,
       Codec.option (fun (i, j) => Codec.Json.arr #[Codec.Json.of i, Codec.Json.of j])
         data.children] :=
-  congrFun (Codec.entry_eq value context) data
+  Codec.entry_eq value context data
 
 /-- Present child indices are preserved even when they are invalid references. -/
 theorem entry_children (value : ValueCodec E) (context : ValueCodec Ctx)
@@ -37,7 +37,7 @@ theorem entry_children (value : ValueCodec E) (context : ValueCodec Ctx)
     Codec.entry value context ⟨data, some (left, right)⟩ =
       Codec.Json.arr #[Codec.node value context data,
         Codec.Json.arr #[Codec.Json.arr #[Codec.Json.of left, Codec.Json.of right]]] := by
-  simp only [Codec.entry_eq, Codec.option_some]
+  simp only [Codec.entry_fn, Codec.option_some]
 
 /-- The node equation exposes all eleven stored fields without a private import. -/
 theorem node_fields (value : ValueCodec E) (context : ValueCodec Ctx) (data : Node E Ctx) :
@@ -51,6 +51,9 @@ theorem node_fields (value : ValueCodec E) (context : ValueCodec Ctx) (data : No
 /-- info: 'Hex.SignDet.Codec.entry_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Codec.entry_eq
+/-- info: 'Hex.SignDet.Codec.entry_fn' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Codec.entry_fn
 /-- info: 'Hex.SignDet.Codec.node_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms Codec.node_eq
@@ -112,7 +115,7 @@ def graph : Codec.Json := .arr #[natural 1, natural 0,
 /-- Public equations compose from a source record to a complete numerical packet. -/
 theorem graph_literal : Codec.graph ValueCodec.rat ValueCodec.nat
     (⟨#[⟨rawNode, none⟩], 0⟩ : Dag Rat Nat) = graph := by
-  rw [Codec.graph_eq, Codec.entry_eq]
+  rw [Codec.graph_eq, Codec.entry_fn]
   simp only [Codec.array, Array.map_singleton, Codec.option_none]
   rw [Codec.node_eq, Codec.system_eq, Codec.basis_eq]
   simp only [rawNode, Codec.encodeMatrix_eq, Matrix.rows_ofRows, Codec.option_none,
