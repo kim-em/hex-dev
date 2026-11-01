@@ -64,6 +64,8 @@ def boundaryChecks : Bool := Id.run do
     let index ← ReducerIndex.build context limits basis
     let some view := index.packed | return false
     if index.nodes.size != 2048 then return false
+    if Native.Trie.valid view.arity view.nodes view.edges view.maxLeading !=
+        Native.Trie.validPortable view.arity view.nodes view.edges view.maxLeading then return false
     let state ← get
     let monomial := p.monomial 0
     for allowance in [0,1,2,3,4093,4094,4095,4096,2^90] do
@@ -77,10 +79,18 @@ def boundaryChecks : Bool := Id.run do
         Native.write view.nodes 4 0 1,Native.write view.nodes 4 4 1,
         Native.write view.nodes 4 8 2,Native.write view.nodes 4 12 1] do
       if (Native.Trie.View.check view.arity viewData view.edges view.maxLeading).isSome then return false
+      if Native.Trie.valid view.arity viewData view.edges view.maxLeading !=
+          Native.Trie.validPortable view.arity viewData view.edges view.maxLeading then return false
     for links in [view.edges.extract 0 (view.edges.size-1),
         Native.write view.edges 4 4 0,Native.write view.edges 4 4 2048,
         Native.write view.edges 4 12 1] do
       if (Native.Trie.View.check view.arity view.nodes links view.maxLeading).isSome then return false
+      if Native.Trie.valid view.arity view.nodes links view.maxLeading !=
+          Native.Trie.validPortable view.arity view.nodes links view.maxLeading then return false
+    for arity in [0,1,2047,4097,2^90] do
+      for maximum in [0,1,4294967295,4294967296,18446744073709551615] do
+        if Native.Trie.valid arity view.nodes view.edges maximum !=
+            Native.Trie.validPortable arity view.nodes view.edges maximum then return false
     for arena in [state.table.exponents.extract 0 (state.table.exponents.size-1),{}] do
       let a := Native.Trie.lookup view 4 state.table.count.toUInt64 monomial.toUInt64
         arena state.table.metadata 4096

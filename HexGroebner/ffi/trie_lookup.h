@@ -14,6 +14,33 @@ static inline uint64_t trie_read(const uint8_t *p,unsigned width) {
     return out;
 }
 
+/* Bounded read-only validator for the portable View constructor. */
+static uint8_t trie_valid(uint64_t arity,const uint8_t *nodes,size_t node_bytes,
+        const uint8_t *edges,size_t edge_bytes,uint64_t max_leading) {
+    uint64_t n=node_bytes/24,e=edge_bytes/8;
+    if(arity>4096 || node_bytes%24 || !n || n>2048 || edge_bytes%8 || e+1!=n ||
+       max_leading>UINT32_MAX || trie_read(nodes,4)!=0) return 0;
+    uint8_t parents[2048]={0};
+    uint64_t cursor=0;
+    for(uint64_t i=0;i<n;++i) {
+        const uint8_t *record=nodes+i*24;
+        uint64_t depth=trie_read(record,4),start=trie_read(record+4,4),count=trie_read(record+8,4);
+        uint64_t key=trie_read(record+12,4),terms=trie_read(record+16,4),leading=trie_read(record+20,4);
+        if(depth>arity || start!=cursor || start+count>e || (depth==arity && count)) return 0;
+        if(!key) {if(terms || leading) return 0;}
+        else if(depth!=arity || !terms || leading>max_leading) return 0;
+        for(uint64_t k=0;k<count;++k) {
+            uint64_t child=trie_read(edges+(start+k)*8+4,4);
+            if(!child || child>=n || trie_read(nodes+child*24,4)!=depth+1 || parents[child]) return 0;
+            parents[child]=1;
+        }
+        cursor+=count;
+    }
+    if(cursor!=e || parents[0]) return 0;
+    for(uint64_t i=1;i<n;++i) if(!parents[i]) return 0;
+    return 1;
+}
+
 struct trie_result {uint32_t key;uint64_t work;uint8_t status;};
 static inline struct trie_result trie_decline(void) {return (struct trie_result){0,0,3};}
 
@@ -78,6 +105,13 @@ static struct trie_result trie_lookup(uint64_t arity,uint64_t max_leading,unsign
 }
 
 #ifndef HEX_GROEBNER_NO_LEAN
+LEAN_EXPORT uint8_t lean_hex_groebner_validate_trie(b_lean_obj_arg arity,
+        b_lean_obj_arg nodes,b_lean_obj_arg edges,uint64_t max_leading) {
+    if(!lean_is_scalar(arity)) return 0;
+    return trie_valid(lean_unbox(arity),lean_sarray_cptr(nodes),lean_sarray_size(nodes),
+        lean_sarray_cptr(edges),lean_sarray_size(edges),max_leading);
+}
+
 LEAN_EXPORT lean_obj_res lean_hex_groebner_lookup_trie(b_lean_obj_arg view,uint8_t width,
         uint64_t count,uint64_t query,b_lean_obj_arg arena,b_lean_obj_arg metadata,uint64_t remaining) {
     lean_object *nodes=lean_ctor_get(view,1),*edges=lean_ctor_get(view,2);

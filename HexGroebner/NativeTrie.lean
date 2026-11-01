@@ -19,7 +19,7 @@ def word (bytes : @& ByteArray) (i : Nat) : Nat := Native.read bytes 4 (i*4)
 Node records contain depth, edge start/count, reducer-plus-one, term count and
 leading monomial. Edges contain exponent/child pairs. Every nonroot has exactly
 one parent; depths increase along edges. -/
-def valid (arity : Nat) (nodes edges : ByteArray) (maxLeading : UInt64) : Bool := Id.run do
+def validPortable (arity : Nat) (nodes edges : ByteArray) (maxLeading : UInt64) : Bool := Id.run do
   let n := nodes.size/24
   let e := edges.size/8
   if arity > 4096 || nodes.size%24 != 0 || n == 0 || n > 2048 ||
@@ -49,13 +49,18 @@ def valid (arity : Nat) (nodes edges : ByteArray) (maxLeading : UInt64) : Bool :
     if parents[i]! != 1 then return false
   return true
 
+/-- The same bounded representation check without boxed per-node temporaries. -/
+@[extern "lean_hex_groebner_validate_trie"]
+def valid (arity : @& Nat) (nodes edges : @& ByteArray) (maxLeading : UInt64) : Bool :=
+  validPortable arity nodes edges maxLeading
+
 /-- The executable validator establishes the representation witness. -/
 structure View where
   arity : Nat
   nodes : ByteArray
   edges : ByteArray
   maxLeading : UInt64
-  lawful : valid arity nodes edges maxLeading = true
+  lawful : validPortable arity nodes edges maxLeading = true
 
 namespace View
 

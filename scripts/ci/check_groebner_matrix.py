@@ -70,9 +70,11 @@ def run() -> None:
 #define lean_hex_groebner_equal_bytes hex_test_equal_bytes
 #define lean_hex_groebner_equal_products hex_test_equal_products
 #define lean_hex_groebner_compare_monomials hex_test_compare
+#define lean_hex_groebner_validate_trie hex_test_validate
 #define lean_hex_groebner_lookup_trie hex_test_trie
 #include ROW_SOURCE
 #undef lean_hex_groebner_compare_monomials
+#undef lean_hex_groebner_validate_trie
 #undef lean_hex_groebner_lookup_trie
 #undef lean_hex_groebner_subtract_row
 #undef lean_hex_groebner_prepare_monomial
@@ -138,6 +140,12 @@ LEAN_EXPORT lean_obj_res hex_test_comparison_declines(lean_obj_arg world) {
  (void)world;return lean_io_result_mk_ok(lean_box_uint64(comparison_declines));
 }
 static uint64_t trie_calls=0,trie_declines=0;
+__typeof__(hex_test_validate) __wrap_lean_hex_groebner_validate_trie;
+LEAN_EXPORT uint8_t __wrap_lean_hex_groebner_validate_trie(b_lean_obj_arg arity,
+ b_lean_obj_arg nodes,b_lean_obj_arg edges,uint64_t max_leading) {
+ return hex_test_validate(arity,nodes,edges,max_leading);
+}
+
 __typeof__(hex_test_trie) __wrap_lean_hex_groebner_lookup_trie;
 LEAN_EXPORT lean_obj_res __wrap_lean_hex_groebner_lookup_trie(b_lean_obj_arg view,uint8_t width,
  uint64_t count,uint64_t query,b_lean_obj_arg arena,b_lean_obj_arg metadata,uint64_t remaining) {
@@ -240,7 +248,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
         link_args = ["-Wl,--wrap=lean_hex_scan_transition", "-Wl,--wrap=lean_hex_gather",
                      "-Wl,--wrap=lean_hex_groebner_equal_bytes",
                      "-Wl,--wrap=lean_hex_groebner_equal_products",
-                     "-Wl,--wrap=lean_hex_groebner_compare_monomials", "-Wl,--wrap=lean_hex_groebner_lookup_trie"] + libraries
+                     "-Wl,--wrap=lean_hex_groebner_compare_monomials", "-Wl,--wrap=lean_hex_groebner_lookup_trie", "-Wl,--wrap=lean_hex_groebner_validate_trie"] + libraries
         targets = []
         for variant, extra in VARIANTS.items():
             module = "Check" + variant
