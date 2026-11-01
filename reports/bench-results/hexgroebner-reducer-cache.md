@@ -175,3 +175,20 @@ Retained evidence (SHA-256):
 - [cache-production-records-f4edebd7a46e.tar.gz](raw/cache-production-records-f4edebd7a46e.tar.gz): `bbc92b1bd8aa219f5c73d16acfaf7489910e1ed96eb8afa69283467ed3159ca7`
 - [cache-production-validation.tar.gz](raw/cache-production-validation.tar.gz): `791c29885bddfabaf8cfbeacbf66d2213b1a0fb72ba87841696f54df1ff387c9`
 - [cache-prototype-evidence.tar.gz](raw/cache-prototype-evidence.tar.gz): `2f26a14d81aa8102780d4cd3b5e561ab8b77a8073258474c44e636e8e65d77a2`
+
+The combined tree with the calibrated narrow-field SIMD registrations also
+passes the full 14187-job build, all 175/567/1288 oracle cases, all 30 benchmark
+verifications and the four compiled native variants. The expanded native test
+counts are 116054 scans, 198139 gathers and 3920 byte comparisons per variant.
+These checks cover the integration; the earlier frozen timings are unchanged.
+
+A separate post-cache Eco-10 profile uses the frozen `f4edebd7a46e` executable
+and one leased CPU with 1999-Hz DWARF cycle sampling. No samples are lost.
+The native narrow scan accounts for about 13.5% of sampled cycles; the two
+reducer-lookup loops account for about 7.1%, and monomial preparation, allocation
+and reference counting remain visible. Kernel symbols are restricted and some
+sampled kernel work does not resolve. This is cost attribution from one retained
+profile, rather than a speed comparison or an external-comparator observation.
+
+- [cache-rebased-validation.tar.gz](raw/cache-rebased-validation.tar.gz): `791abf3b35a8e5fba809a244d8dd6f9be1fb868ce70b43dd3966f259c0c127c6`
+- [cache-production-profile.tar.gz](raw/cache-production-profile.tar.gz): `29475a1daeb3467e03e2406a06d16ea307d5b29a5a20a4100bf1f5d90c5ac364`
