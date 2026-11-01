@@ -29,6 +29,7 @@ private def effective (budget : Budget) : Limits × Certificate.Budget :=
 inductive Stage where
   | validation (context : Context) (generators : Array RawPolynomial)
       (expected : Array Certificate.Polynomial) (usage : Certificate.Usage)
+      (scheduling : Scheduling)
   | computation (state : State) (usage : Certificate.Usage)
   | certification (state : CertState) (history : History)
 
@@ -86,16 +87,16 @@ private def validate (context : Context) (budget : Certificate.Budget)
 validation and certificate generation are atomic; retries charge repeated work. -/
 def resumeBasisWith (budget : Budget) (state : BasisState) : BasisResult :=
   match state.stage with
-  | .validation context generators expected previous =>
+  | .validation context generators expected previous scheduling =>
     match Certificate.checkUsage (effective budget).2 previous with
     | .error (.exhausted resource) => .certificateExhausted resource state
     | .error _ => .internal previous
     | .ok _ =>
       let (result,usage) := (validate context (effective budget).2 expected).run previous
-      let state : BasisState := ⟨.validation context generators expected usage,some expected⟩
+      let state : BasisState := ⟨.validation context generators expected usage scheduling,some expected⟩
       match result with
       | .ok _ =>
-        let initial := begin context generators { work := usage.work,allocatedBytes := usage.allocatedBytes }
+        let initial := begin context generators { work := usage.work,allocatedBytes := usage.allocatedBytes } scheduling
         produced budget (some expected) usage
           (resumeWith (effective budget).1 ((effective budget).2.nodes-usage.nodes) initial
             ((effective budget).2.allocatedTerms-usage.allocatedTerms) (effective budget).2.exponentBits)
@@ -119,14 +120,14 @@ def resumeBasisWith (budget : Budget) (state : BasisState) : BasisResult :=
 /-- Compute a packed F4 candidate, construct its complete witness, and replay it
 independently before exposing an accepted-basis receipt. -/
 def basisWith (context : Context) (budget : Budget) (generators : Array RawPolynomial) : BasisResult :=
-  resumeBasisWith budget ⟨.computation (begin context generators) {},none⟩
+  resumeBasisWith budget ⟨.computation (begin context generators (scheduling := budget.computation.scheduling)) {},none⟩
 
 /-- Certify canonical external candidate data with no producer-seed or strategy
 precondition. A separate traced rerun constructs its forward derivation; complete
 independent replay proves the final postcondition. -/
 def certifyWith (context : Context) (budget : Budget) (generators : Array RawPolynomial)
     (candidate : Array Certificate.Polynomial) : BasisResult :=
-  resumeBasisWith budget ⟨.validation context generators candidate {},some candidate⟩
+  resumeBasisWith budget ⟨.validation context generators candidate {} budget.computation.scheduling,some candidate⟩
 
 end Hex.Groebner.Producer
 
@@ -136,10 +137,10 @@ namespace Hex.Groebner.Producer
 def basisFrom (context : Context) (budget : Budget) (generators : Array RawPolynomial)
     (usage : Certificate.Usage) : BasisResult :=
   resumeBasisWith budget ⟨.computation
-    (begin context generators { work := usage.work,allocatedBytes := usage.allocatedBytes }) usage,none⟩
+    (begin context generators { work := usage.work,allocatedBytes := usage.allocatedBytes } budget.computation.scheduling) usage,none⟩
 
 def certifyCandidateFrom (context : Context) (budget : Budget) (generators : Array RawPolynomial)
     (candidate : Array Certificate.Polynomial) (usage : Certificate.Usage) : BasisResult :=
-  resumeBasisWith budget ⟨.validation context generators candidate usage,some candidate⟩
+  resumeBasisWith budget ⟨.validation context generators candidate usage budget.computation.scheduling,some candidate⟩
 
 end Hex.Groebner.Producer

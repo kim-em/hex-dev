@@ -24,7 +24,7 @@ structure Basis (context : Context) (generators : Array Certificate.Polynomial)
   candidate_eq : ∀ candidate, expected = some candidate → value.polynomials = candidate
 
 private inductive Stage where
-  | prepare (usage : Certificate.Usage)
+  | prepare (usage : Certificate.Usage) (scheduling : Scheduling)
   | running (state : Producer.BasisState)
   | receipt (value : CheckedBasis) (usage : Certificate.Usage) (history : Producer.History)
 
@@ -128,7 +128,8 @@ def resumeWith {context : Context} {generators : Array Certificate.Polynomial}
   match state.stage with
   | .running computation => return produced context budget generators expected (Producer.resumeBasisWith budget computation)
   | .receipt value usage history => return finish context budget generators expected value usage history
-  | .prepare previous =>
+  | .prepare previous scheduling =>
+    let budget := { budget with computation := { budget.computation with scheduling } }
     let cb : Certificate.Budget := { budget.certificate with
       work := min budget.certificate.work budget.computation.work
       allocatedBytes := min budget.certificate.allocatedBytes budget.computation.packedBytes
@@ -138,7 +139,7 @@ def resumeWith {context : Context} {generators : Array Certificate.Polynomial}
     | .error _ => return .internal previous
     | .ok _ => pure ()
     let (result,usage) := (prepare context cb generators).run previous
-    let state : State context generators expected := ⟨.prepare usage⟩
+    let state : State context generators expected := ⟨.prepare usage scheduling⟩
     match result with
     | .ok raw =>
       return produced context budget generators expected (match expected with
@@ -152,11 +153,11 @@ def resumeWith {context : Context} {generators : Array Certificate.Polynomial}
 
 def basisWith (context : Context) (budget : Producer.Budget)
     (generators : Array Certificate.Polynomial) : Result context generators none :=
-  resumeWith budget ⟨.prepare {}⟩
+  resumeWith budget ⟨.prepare {} budget.computation.scheduling⟩
 
 def certifyWith (context : Context) (budget : Producer.Budget)
     (generators candidate : Array Certificate.Polynomial) : Result context generators (some candidate) :=
-  resumeWith budget ⟨.prepare {}⟩
+  resumeWith budget ⟨.prepare {} budget.computation.scheduling⟩
 
 end Hex.Groebner.Checked
 

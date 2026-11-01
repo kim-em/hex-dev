@@ -1,0 +1,38 @@
+{
+  "source_fingerprint": "bf00a2b578a8",
+  "scope": "Stratification of all retained same-binary pairs by exact non-timing counter equality; no observations omitted from the full aggregate and no additional runs or controls.",
+  "groups": {
+    "Changed counters": {
+      "inputs": [
+        "cyclic5-15",
+        "cyclic5-31",
+        "cyclic6-15",
+        "cyclic6-31",
+        "eco10-15",
+        "eco10-31",
+        "reimer5-15",
+        "reimer5-31"
+      ],
+      "pairs": 32,
+      "candidate_geomean": 0.8585150861259672,
+      "candidate_median": 0.8416534380144438,
+      "process_geomean": 0.8804742236766843
+    },
+    "Unchanged counters": {
+      "inputs": [
+        "kat6-15",
+        "kat6-31",
+        "minrank_d_2_p_2_q_3_r_2-15",
+        "minrank_d_2_p_2_q_3_r_2-31",
+        "noon4-15",
+        "noon4-31",
+        "quadratic5-2147483647",
+        "quadratic5-32003"
+      ],
+      "pairs": 32,
+      "candidate_geomean": 0.9245443238869951,
+      "candidate_median": 1.0367018572002265,
+      "process_geomean": 1.0214098114279708
+    }
+  }
+}

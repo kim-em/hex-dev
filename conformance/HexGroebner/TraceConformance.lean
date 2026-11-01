@@ -30,13 +30,14 @@ private def corpus : Bool := Id.run do
       let cases := F4Fixtures.cases field
       if !names.all (fun name => cases.any (fun c => c.name == name)) then return false
       for c in cases.filter (fun c => names.contains c.name) do
-        for batchInterreduce in [false, true] do
-          let context : Context := ⟨field,c.variables,order⟩
-          let .candidate expected _ := computeWith context { batchInterreduce } c.generators | return false
-          let .candidate actual _ := Producer.computeWith context { batchInterreduce } 1000000 c.generators | return false
-          if actual.polynomials != expected.polynomials.map (canonical field.modulus.toNat) ||
-              !Certificate.checkContainment field.modulus.toNat c.variables actual.generators
-                actual.polynomials actual.forward then return false
+        for scheduling in [Scheduling.degree,.sugar] do
+          for batchInterreduce in [false, true] do
+            let context : Context := ⟨field,c.variables,order⟩
+            let .candidate expected _ := computeWith context { batchInterreduce, scheduling } c.generators | return false
+            let .candidate actual _ := Producer.computeWith context { batchInterreduce, scheduling } 1000000 c.generators | return false
+            if actual.polynomials != expected.polynomials.map (canonical field.modulus.toNat) ||
+                !Certificate.checkContainment field.modulus.toNat c.variables actual.generators
+                  actual.polynomials actual.forward then return false
   return true
 
 #guard corpus
