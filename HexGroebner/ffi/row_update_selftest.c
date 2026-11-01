@@ -147,7 +147,33 @@ static void check_monomials(void) {
     printf("monomial_selftest: %u cases and malformed boundaries OK\n", cases);
 }
 
+static void check_bytes(void) {
+    uint8_t left[8193],right[8193];
+    for(size_t i=0;i<sizeof(left);++i) left[i]=right[i]=(uint8_t)(i*7919+17);
+    const size_t sizes[]={0,1,7,4095,4096,4097,8193};
+    for(size_t changed=0;changed<sizeof(left);changed+=1024) {
+        right[changed]^=1;
+        for(size_t k=0;k<sizeof(sizes)/sizeof(sizes[0]);++k) {
+            size_t size=sizes[k];
+            const size_t offsets[]={0,1,size/2,size,size+1,SIZE_MAX};
+            const size_t counts[]={0,1,7,4095,4096,4097,SIZE_MAX};
+            for(size_t i=0;i<sizeof(offsets)/sizeof(offsets[0]);++i) {
+                for(size_t j=0;j<sizeof(counts)/sizeof(counts[0]);++j) {
+                    size_t start=offsets[i],count=counts[j];
+                    int valid=count<=4096 && start<=size && count<=size-start;
+                    int expected=valid;
+                    if(valid) for(size_t n=0;n<count;++n) if(left[start+n]!=right[start+n]) expected=0;
+                    if(equal_bytes(left,size,right,size,start,count)!=expected) fail("byte slice equality");
+                    if(equal_bytes(left,size,left,size,start,count)!=valid) fail("aliased byte slice geometry");
+                }
+            }
+        }
+        right[changed]^=1;
+    }
+}
+
 int main(void) {
+    check_bytes();
     check_arithmetic();
     check_monomials();
     const uint64_t moduli[] = {2, 3, 251, 256, 257, 65521, 65536, 65537, 2147483647};

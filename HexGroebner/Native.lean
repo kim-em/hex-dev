@@ -89,6 +89,28 @@ def subtract (modulus : UInt64) (dense : ByteArray)
     Option ByteArray :=
   subtractPortable modulus dense columns coefficients start count factor
 
+
+namespace Bytes
+
+/-- Exact equality of one borrowed byte slice, with a 4096-byte call bound.
+Invalid offsets, lengths or a larger quantum return false, including empty
+slices whose starting offset lies beyond either buffer. -/
+@[expose] def equalPortable (left right : @& ByteArray) (start count : Nat) : Bool := Id.run do
+  if count > 4096 || start > left.size || start > right.size ||
+      count > left.size - start || count > right.size - start then return false
+  for i in [:count] do
+    if left[start+i]! != right[start+i]! then return false
+  return true
+
+/-- Bounded native byte comparison. Both buffers are borrowed and may alias.
+The implementation checks the complete slice before access, mutates no bytes,
+retains no pointers and makes no alignment or byte-order assumption. -/
+@[expose, extern "lean_hex_groebner_equal_bytes"]
+def equal (left right : @& ByteArray) (start count : @& Nat) : Bool :=
+  equalPortable left right start count
+
+end Bytes
+
 namespace Monomial
 
 /-- Fill a validated workspace with u32 coordinates and degree/mask/hash/max.

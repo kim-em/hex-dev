@@ -21,6 +21,7 @@ structure Checkpoint where
   basis : Array Element := #[]
   queue : PairQueue := {}
   phase : F4.Phase := .input
+  cache : ReducerCache := .empty
 
 def degree (limits : Limits) (p : Polynomial) : Work Nat := do
   lift (Computation.spend limits p.size)
@@ -78,7 +79,7 @@ def round (context : Context) (limits : Limits) (nodeLimit : Nat)
   for pair in pairs do
     let p ← sPolynomial context limits nodeLimit checkpoint.basis[pair.left]! checkpoint.basis[pair.right]!
     if p.value.polynomial.size != 0 then targets := targets.push { p with value.sugar := pair.sugar }
-  let matrix ← lift (SymbolicMatrix.prepareWith context limits index values (plain targets))
+  let matrix ← lift (SymbolicMatrix.prepareWith context limits index values (plain targets) checkpoint.cache)
   let new ← solve context limits nodeLimit checkpoint.basis targets matrix true false
   let basis := checkpoint.basis ++ new
   if let some g ← unit limits new then
@@ -87,10 +88,10 @@ def round (context : Context) (limits : Limits) (nodeLimit : Nat)
   let mut queue := queue
   for pair in pairs do queue ← lift (queue.resolve limits pair.left pair.right)
   queue ← install context limits basis queue checkpoint.basis.size
-  return { basis,queue,phase := .pairs }
+  return { basis,queue,phase := .pairs,cache := matrix.cache }
 
 def interreduce (context : Context) (limits : Limits) (nodeLimit : Nat)
-    (basis : Array Element) : Work (Array Element) := do
+    (basis : Array Element) (cache : ReducerCache) : Work (Array Element) := do
   let table := (← lift get).table
   let mut minimal := #[]
   for i in [:basis.size] do
@@ -118,7 +119,7 @@ def interreduce (context : Context) (limits : Limits) (nodeLimit : Nat)
     lift (Computation.spend limits inputs.size)
     let nonzero := inputs.filter fun p => p.value.polynomial.size != 0
     if nonzero.isEmpty then pure inputs else
-      let matrix ← lift (SymbolicMatrix.prepareWith context limits index values (plain nonzero))
+      let matrix ← lift (SymbolicMatrix.prepareWith context limits index values (plain nonzero) cache)
       let remainders ← solve context limits nodeLimit minimal nonzero matrix false true
       let mut cursor := 0
       let mut output := #[]
@@ -166,7 +167,7 @@ def step (context : Context) (limits : Limits) (nodeLimit : Nat)
   | .input => initial context limits nodeLimit raw
   | .pairs => round context limits nodeLimit checkpoint
   | .interreduce => return { checkpoint with
-      basis := ← interreduce context limits nodeLimit checkpoint.basis,phase := .complete }
+      basis := ← interreduce context limits nodeLimit checkpoint.basis checkpoint.cache,phase := .complete }
   | .complete => return checkpoint
 
 end Hex.Groebner.Producer

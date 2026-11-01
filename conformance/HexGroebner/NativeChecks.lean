@@ -8,12 +8,15 @@ import HexGroebner.ScanConformance
 import HexGroebner.GatherConformance
 import HexGroebner.MatrixNativeConformance
 import HexGroebner.PackedWordConformance
+import HexGroebner.ByteConformance
 
 namespace Hex.Groebner.NativeChecks
 
 /-- Compiled checks for every native build variant. The harness verifies that
 both native symbols were actually called, including in sanitizer builds. -/
 def run : IO Unit := do
+  if !ByteConformance.runtimeChecks then
+    throw (IO.userError "compiled bounded-byte conformance mismatch")
   if !PackedWordConformance.runtimeChecks then
     throw (IO.userError "compiled packed-word conformance mismatch")
   if ScanConformance.runtimeChecks && ScanConformance.runtimeWideChecks &&

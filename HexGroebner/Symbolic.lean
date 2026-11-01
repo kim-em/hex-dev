@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGroebner.Reducer
+public import HexGroebner.ReducerCache
 
 public section
 
@@ -30,6 +31,7 @@ structure SymbolicMatrix where
   columns : Array Nat
   reducers : Array SymbolicReducer
   targets : Array BasisElement
+  cache : ReducerCache := .empty
 
 namespace SymbolicMatrix
 
@@ -37,7 +39,9 @@ namespace SymbolicMatrix
 once and has at most one chosen reducer. Multiplication can extend the arena and
 trigger checked exponent widening, without invalidating any existing identifier. -/
 def prepareWith (context : Context) (limits : Limits) (index : ReducerIndex)
-    (basis : Array BasisElement) (targets : Array BasisElement) : Computation SymbolicMatrix := do
+    (basis : Array BasisElement) (targets : Array BasisElement)
+    (cache : ReducerCache := .empty) : Computation SymbolicMatrix := do
+  let mut cache := cache
   let mut support : Std.HashSet Nat := {}
   let mut pending : Array Nat := #[]
   for target in targets do
@@ -57,7 +61,8 @@ def prepareWith (context : Context) (limits : Limits) (index : ReducerIndex)
     if let some reducer ← index.find context limits basis monomial then
       let g := basis[reducer]!.polynomial
       let multiplier ← combine limits .quotient monomial (g.monomial 0)
-      let p ← g.multiply context limits multiplier
+      let (p, nextCache) ← cache.multiply context limits g multiplier
+      cache := nextCache
       reducers := reducers.push ⟨reducer, multiplier, p,
         basis[reducer]!.sugar + (← get).table.degree multiplier⟩
       spend limits p.size
@@ -68,7 +73,7 @@ def prepareWith (context : Context) (limits : Limits) (index : ReducerIndex)
           pending := pending.push id
   if cursor < pending.size then throw (.exhausted .monomials)
   let columns ← sort context limits pending
-  return ⟨columns, reducers, targets⟩
+  return ⟨columns, reducers, targets, cache⟩
 
 /-- Build a basis-specific reducer index and close the selected supports.
 Call `prepareWith` when the immutable basis index can be reused. -/

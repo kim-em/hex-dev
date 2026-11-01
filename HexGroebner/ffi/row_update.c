@@ -7,6 +7,7 @@
 #endif
 #include <stdint.h>
 #include <stddef.h>
+#include <string.h>
 
 /* Implements Native.subtractPortable exactly. Logical arrays are byte arrays,
    with explicit little-endian u32 columns and 1/2/4-byte modular residues.
@@ -143,11 +144,39 @@ static inline int equal_monomial(unsigned width, uint64_t arity, uint64_t id,
     return 1;
 }
 
+
+/* Exact bounded comparison. Subtraction-based checks avoid start+count wrap. */
+static int equal_bytes(const uint8_t *left,size_t left_size,const uint8_t *right,
+        size_t right_size,size_t start,size_t count) {
+    if(count>4096 || start>left_size || start>right_size ||
+       count>left_size-start || count>right_size-start) return 0;
+    if(!count || left==right) return 1;
+    return memcmp(left+start,right+start,count)==0;
+}
+
 #ifndef HEX_GROEBNER_NO_LEAN
 static inline lean_object *some_buffer(lean_object *data) {
     lean_object *result = lean_alloc_ctor(1, 1, 0);
     lean_ctor_set(result, 0, data);
     return result;
+}
+
+
+LEAN_EXPORT uint8_t lean_hex_groebner_equal_bytes(b_lean_obj_arg left,
+        b_lean_obj_arg right,b_lean_obj_arg start_arg,b_lean_obj_arg count_arg) {
+    if(!lean_is_scalar(count_arg)) return 0;
+    size_t count=lean_unbox(count_arg);
+    if(count>4096) return 0;
+    size_t left_size=lean_sarray_size(left),right_size=lean_sarray_size(right),start;
+    if(lean_is_scalar(start_arg)) start=lean_unbox(start_arg);
+    else {
+        lean_object *limit=lean_usize_to_nat(left_size<right_size?left_size:right_size);
+        int valid=lean_nat_dec_le(start_arg,limit);lean_dec(limit);
+        if(!valid) return 0;
+        start=lean_usize_of_nat(start_arg);
+    }
+    return (uint8_t)equal_bytes(lean_sarray_cptr(left),left_size,
+        lean_sarray_cptr(right),right_size,start,count);
 }
 
 LEAN_EXPORT lean_obj_res lean_hex_groebner_subtract_row(
