@@ -38,6 +38,7 @@ BUILD_ONLY_LIBS = {
     "HexPermGroupTheoryProofProbe",
     "HexLLLBenchSupport",
     "HexGF2BenchSupport",
+    "HexGroebnerBenchSupport",
     "HexRankBenchSupport",
     "HexSignDetBenchSupport",
     "HexSturmBenchSupport",

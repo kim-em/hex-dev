@@ -29,7 +29,7 @@ FAMILY = Family(
     include=("HexGroebner/", "HexGroebner.lean", "HexGroebnerNative.lean", "HexGroebnerMatrixNative.lean", "HexArith/", "HexArith.lean",
              "HexArithNative.lean", "HexModArith/", "HexModArith.lean",
              "HexModArithNative.lean", "HexBasic/", "HexBasic.lean", "HexMvPoly/",
-             "HexMvPoly.lean", "bench/HexGroebner/Bench.lean", "lakefile.lean",
+             "HexMvPoly.lean", "bench/HexGroebner/Bench.lean", "bench/HexGroebner/Bench/Mersenne.lean", "lakefile.lean",
              "lake-manifest.json", "lean-toolchain", "scripts/bench/groebner_measure.py"),
     exclude=("HexGroebner/README.md", "HexArith/README.md", "HexModArith/README.md",
              "HexMvPoly/README.md", "HexArith/SPEC/", "HexModArith/SPEC/", "HexMvPoly/SPEC/"))

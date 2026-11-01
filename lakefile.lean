@@ -1859,6 +1859,10 @@ lean_exe hexsparsepoly_emit_fixtures where
   srcDir := "conformance"
   root := `HexSparsePoly.EmitFixtures
 
+lean_lib HexGroebnerBenchSupport where
+  srcDir := "bench"
+  globs := #[`HexGroebner.Bench.Mersenne]
+
 lean_exe hexgroebner_bench where
   srcDir := "bench"
   root := `HexGroebner.Bench

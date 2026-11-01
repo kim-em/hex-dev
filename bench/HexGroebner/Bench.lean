@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexGroebner
+import HexGroebner.Bench.Mersenne
 import HexArith.Montgomery.Context
 import LeanBench
 
