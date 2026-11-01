@@ -75,7 +75,8 @@ def run() -> None:
 #undef lean_hex_groebner_equal_monomial
 #undef lean_hex_groebner_equal_bytes
 #undef lean_hex_groebner_equal_products
-static uint64_t mersenne_vectors=0;
+static uint64_t mersenne_vectors=0,zero_scans=0;
+#define HEX_GROEBNER_ZERO_SCAN_USED() (++zero_scans)
 #define HEX_GROEBNER_MERSENNE_USED() (++mersenne_vectors)
 #define hex_scan8 hex_test_scan8_base
 #define hex_scan8_m31 hex_test_scan8_m31_base
@@ -142,6 +143,9 @@ LEAN_EXPORT lean_obj_res __wrap_lean_hex_gather(uint64_t p,lean_obj_arg initial,
  b_lean_obj_arg stop,b_lean_obj_arg quantum,b_lean_obj_arg entries,
  b_lean_obj_arg bytes,b_lean_obj_arg work,uint64_t factor) {
  ++gather_calls;return hex_test_gather(p,initial,stop,quantum,entries,bytes,work,factor);
+}
+LEAN_EXPORT lean_obj_res hex_test_zero_count(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(zero_scans));
 }
 LEAN_EXPORT lean_obj_res hex_test_mersenne_count(lean_obj_arg world) {
  (void)world;return lean_io_result_mk_ok(lean_box_uint64(mersenne_vectors));
@@ -212,12 +216,15 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
 @[extern "hex_test_vector_counts"] opaque vectorCounts : IO (UInt64 × UInt64)
 @[extern "hex_test_avx2"] opaque avx2 : IO Bool
 @[extern "hex_test_widths"] opaque widths : IO UInt32
+@[extern "hex_test_zero_count"] opaque zeroCount : IO UInt64
 @[extern "hex_test_mersenne_count"] opaque mersenneCount : IO UInt64
 def main : IO Unit := do
   Hex.Groebner.NativeChecks.run
   let primitiveCompared ← byteCount
   let primitiveProducts ← productCount
+  let beforeZero ← zeroCount
   Hex.Groebner.NativeChecks.runF4
+  let afterZero ← zeroCount
   let f4Compared ← byteCount
   let f4Products ← productCount
   if f4Products ≤ primitiveProducts then throw (IO.userError "F4 did not exercise arena product validation")
@@ -236,7 +243,9 @@ def main : IO Unit := do
   let available ← avx2
   let (contiguous,gathered) ← vectorCounts
   let covered ← widths
-  IO.println s!"native call counts: scan={scan}, gather={gather}; AVX2={available}, contiguous={contiguous}, strided={gathered}, width paths={covered}, byte comparisons={compared}, product validations={cacheProducts}, Mersenne vectors={mersenne}"
+  IO.println s!"native call counts: scan={scan}, gather={gather}; AVX2={available}, contiguous={contiguous}, strided={gathered}, width paths={covered}, byte comparisons={compared}, product validations={cacheProducts}, Mersenne vectors={mersenne}, zero blocks={afterZero}"
+  if VECTOR && available && afterZero ≤ beforeZero then
+    throw (IO.userError "complete F4 did not exercise zero blocks")
   if VECTOR && available && mersenne ≤ beforeMersenne then
     throw (IO.userError "complete F4 did not exercise Mersenne vectors")
   if VECTOR && available && (contiguous == 0 || gathered == 0 || covered != 255) then

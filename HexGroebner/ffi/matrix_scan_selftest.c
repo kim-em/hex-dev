@@ -129,6 +129,22 @@ static void release(struct guarded_buffer buffer) {
     assert(munmap(buffer.mapping,3*buffer.page)==0);
 }
 __attribute__((target("avx2")))
+static void check_zero_guard(unsigned width,unsigned at_end) {
+    struct guarded_buffer b=guarded(8*width,at_end);
+    memset(b.data,0,8*width);
+    assert(hex_scan_zero8(b.data,width));
+    for(unsigned i=0;i<8*width;++i) {
+        b.data[i]=1;assert(!hex_scan_zero8(b.data,width));b.data[i]=0;
+    }
+    release(b);
+    uint8_t unaligned[96];
+    for(unsigned offset=0;offset<32;++offset) {
+        memset(unaligned,255,sizeof(unaligned));memset(unaligned+offset,0,8*width);
+        assert(hex_scan_zero8(unaligned+offset,width));
+    }
+}
+
+__attribute__((target("avx2")))
 static void check_guard_pages(uint32_t p,unsigned stride,unsigned at_end) {
     struct guarded_buffer d=guarded(128*4,at_end),c=guarded(16*4,at_end),v=guarded(16*4,at_end);
     uint32_t columns[16],coefficients[16],dense[128],expected[128];
@@ -215,6 +231,8 @@ int main(void) {
             check(p,random32()%p);
         }
 #if defined(__unix__) || defined(__APPLE__)
+        for(unsigned width=1;width<=4;width*=2)
+            for(unsigned at_end=0;at_end<2;++at_end) check_zero_guard(width,at_end);
         for(unsigned stride=1;stride<=8;++stride) {
             for(unsigned at_end=0;at_end<2;++at_end) {
                 check_guard_pages(65537,stride,at_end);
