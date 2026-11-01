@@ -135,12 +135,17 @@ four-byte scalar loops. Scalar products use uint128 Barrett reduction when
 available and exact word remainder otherwise. One- and two-byte residues use a
 32-bit reciprocal; four-byte residues use a 64-bit reciprocal. Products fit below
 `p² < 2^62`; subtraction uses an unsigned wrap mask.
-On x86 with runtime AVX2 support, odd four-byte moduli additionally use eight
-exact Montgomery products at a time. The factor alone is temporarily converted
+On x86 with runtime AVX2 support, odd moduli use eight exact products at a time.
+One- and two-byte coefficients use a 32-bit Barrett reciprocal: the product is
+below `2^32`, so the approximate quotient is low by at most one. Four-byte
+coefficients use Montgomery products. The factor alone is temporarily converted
 to Montgomery form; stored coefficients remain canonical residues. For
 `R = 2^32`, the unreduced numerator is below `p² + R*p < 3*2^62`, so unsigned
 64-bit lanes cannot overflow and one correction suffices. Contiguous columns
-use vector loads/stores; other supports use gathers and scalar stores. A vector
+use vector loads/stores; other supports use gathers and scalar stores. Narrow
+gathers mask the requested scalar out of a four-byte read and require that the
+entire read lies within the logical buffer. Boundary vectors use scalar updates.
+A vector
 is validated before mutation; a malformed vector falls back to scalar handling
 so the exact failure prefix is preserved. Other architectures and CPUs use the
 scalar implementation. No floating-point arithmetic or global ISA flag is
@@ -152,7 +157,8 @@ compiled matrix harness. `scripts/ci/check_groebner_matrix.py` compares all four
 SIMD/scalar and Barrett/remainder build combinations with the portable model,
 including valid strided vectors and even moduli. Native call counters ensure
 that the linked test implementations actually run; successful contiguous and
-strided SIMD calls are counted separately. `HEX_GROEBNER_REQUIRE_AVX2=1` requires
+strided SIMD calls are counted separately at each of the three coefficient
+widths. `HEX_GROEBNER_REQUIRE_AVX2=1` requires
 hardware SIMD coverage. Set `HEX_GROEBNER_SANITIZE=1` for UBSan and ASan on
 C-owned memory (the kernel buffers themselves are Lean sarrays), and
 `HEX_GROEBNER_NATIVE_LOG_DIR` to retain its generated Lake project. The compiled
@@ -163,6 +169,11 @@ lack ASan heap redzones; the standalone SIMD tests instead place each buffer's
 last valid byte immediately before a protected page and exercise contiguous,
 strided and rejected boundary vectors. UBSan failures are fatal regardless of
 `UBSAN_OPTIONS`.
+
+The [small-field measurements](../reports/bench-results/hexgroebner-small-fields.md)
+retain matched production comparisons, full-system observations and alternative
+accumulator measurements. These extend the registered matrix cases to moduli
+251 and 32003 and add a cyclic-6 case at modulus 32003.
 
 `reduceRowsWith` instead reduces every target independently against the same
 reducer echelon space. It preserves scalars, input order and zero rows; no target
@@ -388,7 +399,7 @@ claimed from these kernel or candidate measurements.
 
 Deterministic producer correctness/termination, finite-extension adapters,
 elimination block orders, the full pair-coverage proof, checked probabilistic
-computation, validated learning/traces, delayed reduction, SIMD/parallel kernels
+computation, validated learning/traces, delayed reduction, additional SIMD and parallel kernels
 and balanced multi-comparator acceptance comparisons remain outstanding.
 Complete basis, division and both membership checkers and soundness proofs are
 available; standalone pure predicates have no operational allowance.
