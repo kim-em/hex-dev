@@ -67,6 +67,7 @@ def run() -> None:
         (directory / "probe.c").write_text('''#define lean_hex_groebner_subtract_row hex_test_unused_subtract
 #define lean_hex_groebner_prepare_monomial hex_test_unused_prepare
 #define lean_hex_groebner_equal_monomial hex_test_unused_monomial_equal
+#define lean_hex_groebner_search_monomial hex_test_search_monomial
 #define lean_hex_groebner_equal_bytes hex_test_equal_bytes
 #define lean_hex_groebner_equal_products hex_test_equal_products
 #define lean_hex_groebner_compare_monomials hex_test_compare
@@ -79,8 +80,19 @@ def run() -> None:
 #undef lean_hex_groebner_subtract_row
 #undef lean_hex_groebner_prepare_monomial
 #undef lean_hex_groebner_equal_monomial
+#undef lean_hex_groebner_search_monomial
 #undef lean_hex_groebner_equal_bytes
 #undef lean_hex_groebner_equal_products
+static uint64_t fused_success=0,fused_insert=0,fused_unique=0;
+#define HEX_GROEBNER_TABLE_UNIQUE() (++fused_unique)
+#define HEX_GROEBNER_INSERT_FOUND() (++fused_insert)
+#define HEX_GROEBNER_HIT_FOUND() (++fused_success)
+#define HEX_GROEBNER_HIT_HELPERS
+#define lean_hex_groebner_combine_hit hex_test_combine_hit
+#define lean_hex_groebner_combine_owned hex_test_combine_owned
+#include HITCODE
+#undef lean_hex_groebner_combine_hit
+#undef lean_hex_groebner_combine_owned
 static uint64_t mersenne_vectors=0,zero_scans=0;
 #define HEX_GROEBNER_ZERO_SCAN_USED() (++zero_scans)
 #define HEX_GROEBNER_MERSENNE_USED() (++mersenne_vectors)
@@ -124,6 +136,39 @@ static inline unsigned hex_test_scan8_m31_counted(uint8_t *dense,const uint8_t *
 #undef lean_hex_scan_transition
 #undef lean_hex_gather
 static uint64_t scan_calls=0,gather_calls=0,byte_calls=0,product_calls=0;
+static uint64_t search_calls=0;
+__typeof__(hex_test_combine_owned) __wrap_lean_hex_groebner_combine_owned;
+LEAN_EXPORT lean_obj_res __wrap_lean_hex_groebner_combine_owned(lean_obj_arg table,uint8_t operation,
+ lean_obj_arg a,lean_obj_arg b,lean_obj_arg max_count,lean_obj_arg max_bytes,
+ lean_obj_arg max_work,uint8_t native) {
+ return hex_test_combine_owned(table,operation,a,b,max_count,max_bytes,max_work,native);
+}
+__typeof__(hex_test_combine_hit) __wrap_lean_hex_groebner_combine_hit;
+LEAN_EXPORT lean_obj_res __wrap_lean_hex_groebner_combine_hit(lean_obj_arg table,uint8_t operation,
+ lean_obj_arg a,lean_obj_arg b,lean_obj_arg max_count,lean_obj_arg max_bytes,
+ lean_obj_arg max_work,lean_obj_arg work) {
+ return hex_test_combine_hit(table,operation,a,b,max_count,max_bytes,max_work,work);
+}
+LEAN_EXPORT lean_obj_res hex_test_unique_count(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(fused_unique));
+}
+LEAN_EXPORT lean_obj_res hex_test_insert_count(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(fused_insert));
+}
+LEAN_EXPORT lean_obj_res hex_test_hit_count(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(fused_success));
+}
+__typeof__(hex_test_search_monomial) __wrap_lean_hex_groebner_search_monomial;
+LEAN_EXPORT lean_obj_res __wrap_lean_hex_groebner_search_monomial(uint8_t width,
+ uint64_t arity,uint64_t count,uint64_t hash,uint64_t link,uint64_t quantum,
+ b_lean_obj_arg exponents,b_lean_obj_arg metadata,b_lean_obj_arg links,
+ b_lean_obj_arg candidate,b_lean_obj_arg allowance) {
+ ++search_calls;
+ return hex_test_search_monomial(width,arity,count,hash,link,quantum,exponents,metadata,links,candidate,allowance);
+}
+LEAN_EXPORT lean_obj_res hex_test_search_count(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(search_calls));
+}
 static uint64_t comparison_calls=0,comparison_declines=0;
 __typeof__(hex_test_compare) __wrap_lean_hex_groebner_compare_monomials;
 LEAN_EXPORT uint8_t __wrap_lean_hex_groebner_compare_monomials(uint8_t operation,uint8_t width,
@@ -219,7 +264,7 @@ LEAN_EXPORT lean_obj_res hex_test_avx2(lean_obj_arg world) {
  return lean_io_result_mk_ok(lean_box(0));
 #endif
 }
-'''.replace("ROW_SOURCE", json.dumps(str(ROOT / "HexGroebner/ffi/row_update.c"))).replace("SOURCE", json.dumps(str(source))).replace("HEADER", json.dumps(str(source.parent / "matrix_simd.h"))))
+'''.replace("HITCODE", json.dumps(str(ROOT / "HexGroebner/ffi/monomial_hit.c"))).replace("ROW_SOURCE", json.dumps(str(ROOT / "HexGroebner/ffi/row_update.c"))).replace("SOURCE", json.dumps(str(source))).replace("HEADER", json.dumps(str(source.parent / "matrix_simd.h"))))
         config = '''import Lake
 open Lake DSL System
 package GroebnerMatrixChecks
@@ -232,8 +277,10 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
   let body ← inputTextFile (FilePath.mk BODY)
   let row ← inputTextFile (FilePath.mk ROW)
   let trie ← inputTextFile (FilePath.mk TRIE)
+  let hit ← inputTextFile (FilePath.mk HITCODE)
   let inputs := ((source.zipWith (fun s _ => s) scan).zipWith (fun s _ => s) simd).zipWith (fun s _ => s) body
   let inputs := (inputs.zipWith (fun s _ => s) row).zipWith (fun s _ => s) trie
+  let inputs := inputs.zipWith (fun s _ => s) hit
   buildO (pkg.dir / defaultBuildDir / (name ++ ".o")) inputs
     #["-isystem", (← getLeanIncludeDir).toString] flags
     (compiler := FilePath.mk COMPILER)
@@ -241,13 +288,16 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
 '''.replace("ROOT", json.dumps(str(ROOT))).replace("SCAN", json.dumps(str(source))).replace(
             "SIMD", json.dumps(str(source.parent / "matrix_simd.h"))).replace(
             "BODY", json.dumps(str(source.parent / "matrix_scan_impl.h"))).replace(
-            "ROW", json.dumps(str(source.parent / "row_update.c"))).replace("COMPILER", json.dumps(cc)).replace("TRIE", json.dumps(str(source.parent / "trie_lookup.h")))
+            "ROW", json.dumps(str(source.parent / "row_update.c"))).replace("COMPILER", json.dumps(cc)).replace("TRIE", json.dumps(str(source.parent / "trie_lookup.h"))).replace("HITCODE", json.dumps(str(source.parent / "monomial_hit.c")))
         flags = ["-O3", "-g", "-Wall", "-Wextra", "-Werror", "-fPIC", "-DLEAN_EXPORTING"]
         if sanitize:
             flags += ["-fsanitize=address,undefined", "-fno-sanitize-recover=undefined", "-fno-omit-frame-pointer"]
         link_args = ["-Wl,--wrap=lean_hex_scan_transition", "-Wl,--wrap=lean_hex_gather",
                      "-Wl,--wrap=lean_hex_groebner_equal_bytes",
                      "-Wl,--wrap=lean_hex_groebner_equal_products",
+                     "-Wl,--wrap=lean_hex_groebner_combine_hit",
+                     "-Wl,--wrap=lean_hex_groebner_combine_owned",
+                     "-Wl,--wrap=lean_hex_groebner_search_monomial",
                      "-Wl,--wrap=lean_hex_groebner_compare_monomials", "-Wl,--wrap=lean_hex_groebner_lookup_trie", "-Wl,--wrap=lean_hex_groebner_validate_trie"] + libraries
         targets = []
         for variant, extra in VARIANTS.items():
@@ -260,6 +310,10 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
 @[extern "hex_test_trie_counts"] opaque trieCounts : IO (UInt64 × UInt64)
 @[extern "hex_test_counts"] opaque counts : IO (UInt64 × UInt64)
 @[extern "hex_test_byte_count"] opaque byteCount : IO UInt64
+@[extern "hex_test_search_count"] opaque searchCount : IO UInt64
+@[extern "hex_test_hit_count"] opaque hitCount : IO UInt64
+@[extern "hex_test_insert_count"] opaque insertCount : IO UInt64
+@[extern "hex_test_unique_count"] opaque uniqueCount : IO UInt64
 @[extern "hex_test_product_count"] opaque productCount : IO UInt64
 @[extern "hex_test_vector_counts"] opaque vectorCounts : IO (UInt64 × UInt64)
 @[extern "hex_test_avx2"] opaque avx2 : IO Bool
@@ -274,7 +328,19 @@ def main : IO Unit := do
   let comparedBefore ← comparisonCount
   let declinedBefore ← comparisonDeclines
   let trieBefore ← trieCounts
+  let primitiveUnique ← uniqueCount
+  let primitiveInserts ← insertCount
+  let primitiveHits ← hitCount
+  let primitiveSearches ← searchCount
   Hex.Groebner.NativeChecks.runF4
+  let f4Unique ← uniqueCount
+  if f4Unique ≤ primitiveUnique then throw (IO.userError "F4 did not exercise exclusive table reuse")
+  let f4Inserts ← insertCount
+  if f4Inserts ≤ primitiveInserts then throw (IO.userError "F4 did not exercise native monomial insertion")
+  let f4Hits ← hitCount
+  if f4Hits ≤ primitiveHits then throw (IO.userError "F4 did not exercise fused monomial lookup")
+  let f4Searches ← searchCount
+  if f4Searches < primitiveSearches then throw (IO.userError "invalid monomial-search counter")
   let trieAfter ← trieCounts
   if trieAfter.1 ≤ trieBefore.1 || trieAfter.2 != trieBefore.2 then
     throw (IO.userError "F4 did not obtain valid native trie answers")
@@ -286,6 +352,7 @@ def main : IO Unit := do
   if accepted == 0 || declinedAfter != declinedBefore then
     throw (IO.userError "F4 did not obtain bounded native comparison answers")
   IO.println s!"native monomial calls: {comparedAfter}, declines: {declinedAfter}; F4 accepted: {accepted}, F4 declines: {declinedAfter-declinedBefore}"
+  IO.println s!"packed interning: searches={f4Searches}, hits={f4Hits}, insertions={f4Inserts}, unique={f4Unique}"
   let f4Compared ← byteCount
   let f4Products ← productCount
   if f4Products ≤ primitiveProducts then throw (IO.userError "F4 did not exercise arena product validation")

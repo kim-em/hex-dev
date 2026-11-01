@@ -4,6 +4,8 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
+import HexGroebner.SearchConformance
+import HexGroebner.HitConformance
 import HexGroebner.MonomialConformance
 import HexGroebner.MonomialCompareConformance
 import HexGroebner.TrieConformance
@@ -21,6 +23,10 @@ namespace Hex.Groebner.NativeChecks
 native symbols were actually called, including in sanitizer builds. -/
 def run : IO Unit := do
   let seed := ((← IO.getEnv "HEX_GROEBNER_TEST_SEED").getD "0").toNat?.getD 0
+  if !HitConformance.runtimeChecks seed || !HitConformance.malformedChecks seed then
+    throw (IO.userError "compiled fused monomial lookup mismatch")
+  if !SearchConformance.runtimeChecks seed || !SearchConformance.longChecks (seed+2047) then
+    throw (IO.userError "compiled packed-chain search mismatch")
   if !(TrieConformance.runtimeChecks seed && TrieConformance.boundaryChecks && TrieConformance.policyChecks) then
     throw (IO.userError "validated trie lookup mismatch")
   if !ScanConformance.zeroBoundaryChecks seed then

@@ -312,6 +312,44 @@ LEAN_EXPORT uint8_t lean_hex_groebner_compare_monomials(uint8_t operation,uint8_
         lean_sarray_cptr(arena),lean_sarray_size(arena));
 }
 
+static lean_obj_res monomial_search_result(uint64_t id,uint64_t link,uint64_t work,uint8_t status) {
+    lean_object *r=lean_alloc_ctor(0,3,1);
+    lean_ctor_set(r,0,lean_uint64_to_nat(id));lean_ctor_set(r,1,lean_uint64_to_nat(link));
+    lean_ctor_set(r,2,lean_uint64_to_nat(work));lean_ctor_set_uint8(r,3*sizeof(void*),status);
+    return r;
+}
+LEAN_EXPORT lean_obj_res lean_hex_groebner_search_monomial(uint8_t width,
+        uint64_t arity,uint64_t count,uint64_t hash,uint64_t link,uint64_t quantum,
+        b_lean_obj_arg exponents,b_lean_obj_arg metadata,b_lean_obj_arg links,
+        b_lean_obj_arg candidate,b_lean_obj_arg allowance) {
+    if((width!=1 && width!=2 && width!=4) || !arity || arity>4096 || count>UINT32_MAX ||
+       link>UINT32_MAX || quantum>4096 || quantum*arity>4096 ||
+       lean_sarray_size(exponents)!=count*arity*width || lean_sarray_size(metadata)!=count*24 ||
+       lean_sarray_size(links)!=count*4 || lean_sarray_size(candidate)!=arity*4+28)
+        return monomial_search_result(0,link,0,4);
+    uint64_t allowed=8193;
+    if(lean_is_scalar(allowance)) {uint64_t n=lean_unbox(allowance);if(n<allowed) allowed=n;}
+    uint64_t work=0;
+    const uint8_t *es=lean_sarray_cptr(exponents),*ms=lean_sarray_cptr(metadata);
+    const uint8_t *ls=lean_sarray_cptr(links),*cs=lean_sarray_cptr(candidate);
+    for(uint64_t i=0;i<quantum;++i) {
+        if(!link) return monomial_search_result(0,0,work,2);
+        if(work+1>allowed) return monomial_search_result(0,link,work,3);
+        ++work;
+        uint64_t id=link-1;
+        if(id>=count) return monomial_search_result(0,link,work,4);
+        link=read_le(ls+(size_t)id*4,4);
+        const uint8_t *m=ms+(size_t)id*24+16;
+        uint64_t actual=read_le(m,4) | (read_le(m+4,4)<<32);
+        if(actual!=hash) continue;
+        if(work+arity>allowed) return monomial_search_result(0,link,work,3);
+        work+=arity;
+        if(equal_monomial(width,arity,id,es,lean_sarray_size(exponents),cs,lean_sarray_size(candidate)))
+            return monomial_search_result(id,link,work,1);
+    }
+    return monomial_search_result(0,link,work,0);
+}
+
 #endif
 
 #include "trie_lookup.h"
