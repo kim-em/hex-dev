@@ -11,8 +11,10 @@ discard unneeded pairs. Symbolic preprocessing closes a selected batch under a
 basis-specific divisibility trie and constructs one joint Macaulay matrix.
 The chain test visits indexed LCM divisors; final tail reductions share one
 immutable reducer index.
-Joint matrix elimination stably orders targets by increasing support size before
-choosing new pivots, retaining original order for equal sizes. Sorting work is
+Joint matrix elimination stably orders targets by decreasing leading-column
+index, then increasing support size, retaining input order for equal keys.
+This starts with smaller leading monomials in the decreasing monomial column
+map. Sorting work is
 charged before the sort. Independent normal forms retain their input order;
 traced production moves each target's derivation root with its polynomial.
 Known reducer pivots retain their contracts with either scheduling strategy.

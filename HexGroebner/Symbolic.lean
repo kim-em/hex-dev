@@ -206,7 +206,8 @@ private def solve (context : Context) (limits : Limits) (matrix : SymbolicMatrix
 
 /-- Joint target elimination. Return new target rows spanning the quotient by
 reducer rows. Rows are monic by default; `monic := false` undoes each pivot's
-normalization. Targets are stably sorted by support size before using preceding target pivots. -/
+normalization. Targets are stably ordered by decreasing leading-column index,
+then increasing support size, before using preceding target pivots. -/
 def eliminate (context : Context) (limits : Limits) (matrix : SymbolicMatrix) (monic := true) :
     Computation (Array BasisElement) := solve context limits matrix monic false
 
