@@ -46,7 +46,12 @@ def solve (context : Context) (limits : Limits) (nodeLimit : Nat)
     entries := entries + r.size
     inputBytes := inputBytes + r.columns.size + r.coefficients.size
     reducers := reducers.push r
-  for p in matrix.targets do
+  if matrix.targets.size != targetsTraced.size then throw (.matrix .dimensions)
+  let targetPairs ← if independent then pure (matrix.targets.zip targetsTraced) else do
+    lift (Computation.spend limits (matrix.targets.size * (matrix.targets.size + 1).log2))
+    pure (((matrix.targets.zip targetsTraced).toList.mergeSort
+      (fun a b => a.1.polynomial.size ≤ b.1.polynomial.size)).toArray)
+  for (p, _) in targetPairs do
     sugars := sugars.push p.sugar
     let r ← lift (row context limits positions p.polynomial)
     entries := entries + r.size
@@ -56,7 +61,7 @@ def solve (context : Context) (limits : Limits) (nodeLimit : Nat)
   for reducer in matrix.reducers do
     let some source := basis[reducer.basis]? | throw (.matrix .dimensions)
     inputRoots := inputRoots.push (← monomial context limits nodeLimit reducer.multiplier source.root)
-  for target in targetsTraced do inputRoots := inputRoots.push target.root
+  for (_, target) in targetPairs do inputRoots := inputRoots.push target.root
   let rows := reducers.size + targets.size
   -- Input records reuse roots and consume no polynomial certificate node.
   let traceCapacity := min (nodeLimit-(← get).derivation.nodes.size+rows)
