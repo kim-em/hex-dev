@@ -8,7 +8,7 @@ IDs, storage, field arithmetic, scheduling and resource counters are unchanged.
 Larger arities and unsupported shapes use the original portable loops.
 
 Arbitrary-precision indices are bounded before conversion to the u64 ABI. The
-selected `7ad863391bb7` implementation checks complete accessed row spans;
+current `802ae51122d7` implementation checks complete accessed row spans;
 `(max(id)+1)*arity*width ≤ 2^46`, so validation cannot overflow even on 32-bit
 hosts. Unused partial trailing rows require no access. Calls mutate no storage
 and retain no pointers. The pure bodies remain available to the kernel.
