@@ -53,8 +53,8 @@ def solve (context : Context) (limits : Limits) (nodeLimit : Nat)
       (fun a b =>
         let x := a.1.polynomial
         let y := b.1.polynomial
-        let left := if x.size == 0 then matrix.columns.size else positions[x.monomial 0]!
-        let right := if y.size == 0 then matrix.columns.size else positions[y.monomial 0]!
+        let left := if x.size == 0 then matrix.columns.size else positions.getD (x.monomial 0) matrix.columns.size
+        let right := if y.size == 0 then matrix.columns.size else positions.getD (y.monomial 0) matrix.columns.size
         left > right || (left == right && x.size ≤ y.size))).toArray)
   for (p, _) in targetPairs do
     sugars := sugars.push p.sugar

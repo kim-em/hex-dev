@@ -130,4 +130,19 @@ private def orderedRemainders : Bool := Id.run do
 
 #guard orderedRemainders
 
+/-- Missing symbolic columns preserve the explicit representation error even
+when several joint targets require ordering before row translation. -/
+private def missingColumns : Bool := Id.run do
+  let context : Context := ⟨field,2,.grevlex⟩
+  let trial : Computation (Array BasisElement) := do
+    let p ← Polynomial.normalize context {} 0 #[⟨#[1,0],1⟩]
+    let q ← Polynomial.normalize context {} 0 #[⟨#[0,1],1⟩,⟨#[0,0],1⟩]
+    let matrix : SymbolicMatrix := { columns := #[],reducers := #[],targets := #[⟨p,1⟩,⟨q,1⟩] }
+    matrix.eliminate context {}
+  match trial.run ⟨{ arity := 2 },{}⟩ with
+  | (.error (.representation .index),_) => return true
+  | _ => return false
+
+#guard missingColumns
+
 end Hex.Groebner.PairRowsConformance

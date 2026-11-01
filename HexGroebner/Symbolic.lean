@@ -138,8 +138,8 @@ private def solve (context : Context) (limits : Limits) (matrix : SymbolicMatrix
       (fun a b =>
         let x := a.polynomial
         let y := b.polynomial
-        let left := if x.size == 0 then matrix.columns.size else positions[x.monomial 0]!
-        let right := if y.size == 0 then matrix.columns.size else positions[y.monomial 0]!
+        let left := if x.size == 0 then matrix.columns.size else positions.getD (x.monomial 0) matrix.columns.size
+        let right := if y.size == 0 then matrix.columns.size else positions.getD (y.monomial 0) matrix.columns.size
         left > right || (left == right && x.size ≤ y.size))).toArray)
   for p in orderedTargets do
     sugars := sugars.push p.sugar
