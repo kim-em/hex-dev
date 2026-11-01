@@ -29,7 +29,15 @@ theorem entry_encode (value : ValueCodec E) (context : ValueCodec Ctx)
     Codec.entry value context data = Codec.Json.arr #[Codec.node value context data.node,
       Codec.option (fun (i, j) => Codec.Json.arr #[Codec.Json.of i, Codec.Json.of j])
         data.children] :=
-  Codec.entry_eq value context data
+  congrFun (Codec.entry_eq value context) data
+
+/-- Present child indices are preserved even when they are invalid references. -/
+theorem entry_children (value : ValueCodec E) (context : ValueCodec Ctx)
+    (data : Node E Ctx) (left right : Nat) :
+    Codec.entry value context ⟨data, some (left, right)⟩ =
+      Codec.Json.arr #[Codec.node value context data,
+        Codec.Json.arr #[Codec.Json.arr #[Codec.Json.of left, Codec.Json.of right]]] := by
+  simp only [Codec.entry_eq, Codec.option_some]
 
 /-- The node equation exposes all eleven stored fields without a private import. -/
 theorem node_fields (value : ValueCodec E) (context : ValueCodec Ctx) (data : Node E Ctx) :
@@ -52,6 +60,9 @@ theorem node_fields (value : ValueCodec E) (context : ValueCodec Ctx) (data : No
 /-- info: 'Hex.SignDet.PublicCodec.entry_encode' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms entry_encode
+/-- info: 'Hex.SignDet.PublicCodec.entry_children' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms entry_children
 /-- info: 'Hex.SignDet.PublicCodec.node_fields' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in
 #print axioms node_fields
@@ -77,6 +88,58 @@ def node : Codec.Json := .arr #[natural 0,
 /-- One raw node without children. -/
 def graph : Codec.Json := .arr #[natural 1, natural 0,
   .arr #[.arr #[node, empty]]]
+
+/-- Raw zero-size records, with no assertion of arithmetic acceptance. -/
+@[expose] def rawNode : Node Rat Nat where
+  context := 0
+  head := DensePoly.C 1
+  lower := .negInf
+  upper := .posInf
+  queries := []
+  size := 0
+  system := {
+    rows := #v[]
+    columns := #v[]
+    counts := #v[]
+    values := #v[]
+    inverse := Matrix.ofRows #v[]
+    denominator := 1 }
+  moments := #v[]
+  reductions := #v[]
+  preparation := none
+  basis := { rank := 0, rows := #v[], cols := #v[], denom := 1, adj := Matrix.ofRows #v[] }
+
+/-- Public equations compose from a source record to a complete numerical packet. -/
+theorem graph_literal : Codec.graph ValueCodec.rat ValueCodec.nat
+    (⟨#[⟨rawNode, none⟩], 0⟩ : Dag Rat Nat) = graph := by
+  rw [Codec.graph_eq, Codec.entry_eq]
+  simp only [Codec.array, Array.map_singleton, Codec.option_none]
+  rw [Codec.node_eq, Codec.system_eq, Codec.basis_eq]
+  simp only [rawNode, Codec.encodeMatrix_eq, Matrix.rows_ofRows, Codec.option_none,
+    Codec.Json.of_array, Codec.array, Codec.list, Array.map_empty]
+  simp only [graph, node, empty, natural, Codec.poly, Codec.endpoint,
+    ValueCodec.rat, ValueCodec.nat, DensePoly.toArray,
+    DensePoly.coeffs_C_of_ne_zero (show (1 : Rat) ≠ 0 by decide),
+    Codec.array, Array.map_singleton] <;> rfl
+
+/-- info: 'Hex.SignDet.Codec.encodeMatrix_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Codec.encodeMatrix_eq
+/-- info: 'Hex.SignDet.Codec.option_none' does not depend on any axioms -/
+#guard_msgs in
+#print axioms Codec.option_none
+/-- info: 'Hex.SignDet.Codec.option_some' does not depend on any axioms -/
+#guard_msgs in
+#print axioms Codec.option_some
+/-- info: 'Hex.SignDet.Codec.system_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Codec.system_eq
+/-- info: 'Hex.SignDet.Codec.basis_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms Codec.basis_eq
+/-- info: 'Hex.SignDet.PublicCodec.graph_literal' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in
+#print axioms graph_literal
 
 /-- Reduction reaches a complete node, rather than only an early shape error. -/
 theorem graph_node : (Codec.readGraph ValueCodec.rat ValueCodec.nat (0 : Nat)
