@@ -64,7 +64,16 @@ def run() -> None:
         (directory / "lean-toolchain").write_bytes((ROOT / "lean-toolchain").read_bytes())
         # The included source gets private names; only our counted wrappers use --wrap.
         source = ROOT / "HexGroebner/ffi/matrix_scan.c"
-        (directory / "probe.c").write_text('''#define hex_scan8 hex_test_scan8_base
+        (directory / "probe.c").write_text('''#define lean_hex_groebner_subtract_row hex_test_unused_subtract
+#define lean_hex_groebner_prepare_monomial hex_test_unused_prepare
+#define lean_hex_groebner_equal_monomial hex_test_unused_monomial_equal
+#define lean_hex_groebner_equal_bytes hex_test_equal_bytes
+#include ROW_SOURCE
+#undef lean_hex_groebner_subtract_row
+#undef lean_hex_groebner_prepare_monomial
+#undef lean_hex_groebner_equal_monomial
+#undef lean_hex_groebner_equal_bytes
+#define hex_scan8 hex_test_scan8_base
 #include HEADER
 #undef hex_scan8
 static uint64_t vector_contiguous=0,vector_gather=0;
@@ -89,7 +98,12 @@ static inline unsigned hex_test_scan8_counted(uint8_t *dense,const uint8_t *colu
 #include SOURCE
 #undef lean_hex_scan_transition
 #undef lean_hex_gather
-static uint64_t scan_calls=0,gather_calls=0;
+static uint64_t scan_calls=0,gather_calls=0,byte_calls=0;
+__typeof__(hex_test_equal_bytes) __wrap_lean_hex_groebner_equal_bytes;
+LEAN_EXPORT uint8_t __wrap_lean_hex_groebner_equal_bytes(b_lean_obj_arg left,
+ b_lean_obj_arg right,b_lean_obj_arg start,b_lean_obj_arg count) {
+ ++byte_calls;return hex_test_equal_bytes(left,right,start,count);
+}
 __typeof__(hex_test_scan) __wrap_lean_hex_scan_transition;
 __typeof__(hex_test_gather) __wrap_lean_hex_gather;
 LEAN_EXPORT lean_obj_res __wrap_lean_hex_scan_transition(uint64_t p,
@@ -101,6 +115,9 @@ LEAN_EXPORT lean_obj_res __wrap_lean_hex_gather(uint64_t p,lean_obj_arg initial,
  b_lean_obj_arg stop,b_lean_obj_arg quantum,b_lean_obj_arg entries,
  b_lean_obj_arg bytes,b_lean_obj_arg work,uint64_t factor) {
  ++gather_calls;return hex_test_gather(p,initial,stop,quantum,entries,bytes,work,factor);
+}
+LEAN_EXPORT lean_obj_res hex_test_byte_count(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(byte_calls));
 }
 LEAN_EXPORT lean_obj_res hex_test_counts(lean_obj_arg world) {
  (void)world;lean_object *pair=lean_alloc_ctor(0,2,0);
@@ -125,7 +142,7 @@ LEAN_EXPORT lean_obj_res hex_test_avx2(lean_obj_arg world) {
  return lean_io_result_mk_ok(lean_box(0));
 #endif
 }
-'''.replace("SOURCE", json.dumps(str(source))).replace("HEADER", json.dumps(str(source.parent / "matrix_simd.h"))))
+'''.replace("ROW_SOURCE", json.dumps(str(ROOT / "HexGroebner/ffi/row_update.c"))).replace("SOURCE", json.dumps(str(source))).replace("HEADER", json.dumps(str(source.parent / "matrix_simd.h"))))
         config = '''import Lake
 open Lake DSL System
 package GroebnerMatrixChecks
@@ -136,18 +153,22 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
   let scan ← inputTextFile (FilePath.mk SCAN)
   let simd ← inputTextFile (FilePath.mk SIMD)
   let body ← inputTextFile (FilePath.mk BODY)
+  let row ← inputTextFile (FilePath.mk ROW)
   let inputs := ((source.zipWith (fun s _ => s) scan).zipWith (fun s _ => s) simd).zipWith (fun s _ => s) body
+  let inputs := inputs.zipWith (fun s _ => s) row
   buildO (pkg.dir / defaultBuildDir / (name ++ ".o")) inputs
     #["-isystem", (← getLeanIncludeDir).toString] flags
     (compiler := FilePath.mk COMPILER)
     (extraDepTrace := do addPureTrace COMPILER "compiler"; pure BuildTrace.nil)
 '''.replace("ROOT", json.dumps(str(ROOT))).replace("SCAN", json.dumps(str(source))).replace(
             "SIMD", json.dumps(str(source.parent / "matrix_simd.h"))).replace(
-            "BODY", json.dumps(str(source.parent / "matrix_scan_impl.h"))).replace("COMPILER", json.dumps(cc))
+            "BODY", json.dumps(str(source.parent / "matrix_scan_impl.h"))).replace(
+            "ROW", json.dumps(str(source.parent / "row_update.c"))).replace("COMPILER", json.dumps(cc))
         flags = ["-O3", "-g", "-Wall", "-Wextra", "-Werror", "-fPIC", "-DLEAN_EXPORTING"]
         if sanitize:
             flags += ["-fsanitize=address,undefined", "-fno-sanitize-recover=undefined", "-fno-omit-frame-pointer"]
-        link_args = ["-Wl,--wrap=lean_hex_scan_transition", "-Wl,--wrap=lean_hex_gather"] + libraries
+        link_args = ["-Wl,--wrap=lean_hex_scan_transition", "-Wl,--wrap=lean_hex_gather",
+                     "-Wl,--wrap=lean_hex_groebner_equal_bytes"] + libraries
         targets = []
         for variant, extra in VARIANTS.items():
             module = "Check" + variant
@@ -155,17 +176,19 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
             targets.append(target)
             (directory / (module + ".lean")).write_text('''import HexGroebner.NativeChecks
 @[extern "hex_test_counts"] opaque counts : IO (UInt64 × UInt64)
+@[extern "hex_test_byte_count"] opaque byteCount : IO UInt64
 @[extern "hex_test_vector_counts"] opaque vectorCounts : IO (UInt64 × UInt64)
 @[extern "hex_test_avx2"] opaque avx2 : IO Bool
 @[extern "hex_test_widths"] opaque widths : IO UInt32
 def main : IO Unit := do
   Hex.Groebner.NativeChecks.run
   let (scan,gather) ← counts
-  if scan == 0 || gather == 0 then throw (IO.userError "test override was not called")
+  let compared ← byteCount
+  if scan == 0 || gather == 0 || compared == 0 then throw (IO.userError "test override was not called")
   let available ← avx2
   let (contiguous,gathered) ← vectorCounts
   let covered ← widths
-  IO.println s!"native call counts: scan={scan}, gather={gather}; AVX2={available}, contiguous={contiguous}, strided={gathered}, width paths={covered}"
+  IO.println s!"native call counts: scan={scan}, gather={gather}; AVX2={available}, contiguous={contiguous}, strided={gathered}, width paths={covered}, byte comparisons={compared}"
   if VECTOR && available && (contiguous == 0 || gathered == 0 || covered != 63) then
     throw (IO.userError "an AVX2 path was not exercised")
   if VECTOR && (← IO.getEnv "HEX_GROEBNER_REQUIRE_AVX2") == some "1" && !available then
