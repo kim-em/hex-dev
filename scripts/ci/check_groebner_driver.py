@@ -27,6 +27,7 @@ def check(binary: Path) -> list[dict]:
             value = json.loads(result.stdout)
             assert value["kind"] == kind, value
             assert "basis" in value if code == 0 else "basis" not in value, value
+            responses.append({key: item for key, item in value.items() if key != "candidateNanos"})
             return value
 
         records = [json.loads(line) for line in
@@ -37,10 +38,15 @@ def check(binary: Path) -> list[dict]:
             expected = record["value"]
             value = invoke({key: expected[key] for key in ["p", "variables", "order", "generators"]})
             assert value["basis"] == expected["basis"], record["case"]
+            assert value["batchSize"] == expected["batchSize"], record["case"]
+            serial = invoke({key: expected[key] for key in ["p", "variables", "order", "generators"]},
+                            ["--batch-size", "1"])
+            assert serial["basis"] == expected["basis"], record["case"]
+            for key, fixture in [("work", "serialWork"), ("rounds", "serialRounds"),
+                                 ("chainPairs", "serialChainPairs")]:
+                assert serial["statistics"][key] == expected[fixture], (record["case"], fixture)
             assert (value["p"], value["variables"], value["order"], value["randomState"]) == (
                 expected["p"], expected["variables"], expected["order"], 0)
-            response = {key: item for key, item in value.items() if key != "candidateNanos"}
-            responses.append(response)
             for key in ["work", "pairs", "rounds", "largestBatch", "peakMatrixRows", "peakMatrixEntries",
                         "productPairs", "chainPairs", "gmPairs", "matrixEntries"]:
                 assert value["statistics"][key] == expected[key], (record["case"], key)

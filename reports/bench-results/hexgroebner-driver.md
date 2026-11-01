@@ -2,123 +2,122 @@
 
 `hexgroebner_compute` reads explicit prime, variable/order and polynomial JSON,
 then emits a complete reduced **unchecked candidate**, cumulative statistics,
-unchanged deterministic random state zero and candidate duration. Errors
-distinguish invalid input,
-representation limits, exhaustion and internal matrix failures; failed responses
-contain no candidate basis. Polynomial, byte, pair, round and matrix allowances
-remain absolute parent budgets. Parsing and file IO are outside those allowances.
-The library API retains resumable states; this driver does not serialize them.
+unchanged deterministic random state zero and candidate duration. Invalid input,
+representation limits, exhaustion and internal matrix failures are distinct;
+failed responses contain no candidate basis. Parent allowances cover computation;
+parsing and file IO are outside them. The library API retains resumable states.
 
-The driver never elaborates Lean source. It uses the pinned SDK's internal
-`libinitialize_minimal.a` under that restriction, also requiring initialization
-of modules reachable through extern/export calls. Production enables it only
-for compiler revision `470d5ce1400764999581fd26d5d72b00d990b0f4` with the archive
-present; other revisions and missing archives use ordinary initialization.
-CI checks that the linked default omits a full-init frontend symbol while the
-reference retains it. `hexgroebner_compute_full`
-uses ordinary initialization and the same parsing/computation/output code, giving
-a reference executable for conformance and measurement. No initializer is
-intercepted in either production target. Both targets build in the existing CI
-job and independently pass all 567 complete corpus outputs and counters, plus
-malformed input, order, zero/unit ideal, ordinary characteristic-two and resource
-boundary checks.
+This bench-tree driver never elaborates Lean source or invokes its interpreter.
+It uses the SDK's internal minimal-initialization archive only for compiler
+revision `470d5ce1400764999581fd26d5d72b00d990b0f4`, when present. Other revisions
+and missing archives use ordinary initialization. Its import closure must also
+initialize modules reachable through extern/export calls. The full reference
+uses identical parsing/computation/output code with ordinary initialization.
+CI checks the linked initializer, complete non-timing response equality and
+independent corpus outputs. No production initializer is intercepted.
 
-Current source fingerprint `b42ce333603b`, commit
-`5d8d1e336405832363b6ef19d2fff2ba5a99959b`, contains the packed comparison
-implementation `802ae51122d7` and adds these driver targets without changing F4.
-The frozen SDK initialization archive SHA256 is
+Current source fingerprint `1bc68da7b1c1` and its archived source manifest identify
+this implementation and measurement runner. The computational F4 sources remain
+those of packed-comparison fingerprint `802ae51122d7`. Both driver executables
+are byte-identical to those of `b42ce333603b`; the runner changes how msolve is
+launched and strengthens provenance/input checks. Source blobs, executable
+hashes, helper hashes, linker responses, compiler flags and child environment
+settings are retained. Source and binary hashes are checked before and after
+measurement. The SDK archive SHA256 is
 `31e5026b3d16824f7d5c5c30ce41843bf167d262a236978264d4021d1d8538a5`.
-The final default and reference executable hashes, linker response files, all
-input files and Git source blobs accompany the samples.
 
-Each campaign retains 64 processes: 16 development inputs from seven families,
-primes 32003 and 2147483647, adjacent AB then BA, one algorithm thread on an
-automatically leased CPU. All 32 paired complete reduced bases agree in every
-campaign; default/reference non-timing responses agree too. All completed
-samples, failures and outliers are retained. No unchanged repeat is used.
-GNU time wraps both arms identically and supplies post-exec peak RSS. Process
+Each full campaign retains 64 processes: 16 development inputs from seven
+families, primes 32003 and 2147483647, adjacent AB then BA, one algorithm thread
+on an automatically leased CPU. Every campaign jointly solves 32/32 pairs,
+with 64/64 successful process exits, zero timeouts/failures and all 32 complete
+reduced bases agreeing. Full/default non-timing responses agree too. No unchanged
+repeat is used. All completed samples and outliers remain included.
+
+GNU time wraps both arms identically, supplying post-exec peak RSS. Process
 time includes that wrapper, launch, initialization, parsing, computation and
 complete output. Certificate generation, independent final certification and
-kernel checking are excluded. This is a development suite, not held-out evidence
-or the fastest-open-source acceptance suite.
+kernel checking are excluded. This is a development suite, with no held-out or
+fastest-open-source acceptance claim. The shared host is an AMD EPYC 9455;
+Hex dispatches exact AVX2 kernels with portable fallbacks. Generated C uses the
+pinned Lean SDK; FFI uses Clang 23.1.3. ISA availability and toolchain context are
+retained, without filtering host activity.
 
-On CPU20, default/reference process B/A (A reference, B default; below one
-favors default) is 0.4293 (median 0.3322, range
-0.1732–1.4866), or 0.4269 after equal family weighting. Peak observed child RSS
-is 42388 KiB for the default and 92704 KiB for the reference. These are separate
-whole-process observations; reduced startup does not imply faster F4 arithmetic.
+On CPU95, default/full process B/A is 0.4145 (A full, B default; below one favors
+default), median 0.3338, range 0.2096–0.9646, or 0.4167 with equal family weights.
+Peak observed RSS is 42348 KiB default and 92652 KiB full. Reduced initialization
+cost does not imply faster F4 arithmetic.
 
-Current msolve source is `3672113ee2c696a2ac9c637636e0f7214f500ba1`, built with
-Clang 23.1.3, `-O3 -march=native`, GMP 6.3.0, MPFR 4.2.2 and FLINT 3.6.0.
-The CLI and actual `libneogb` engine hashes, source archive, compiler flags and
-linkage are retained. Both msolve modes request full reduced grevlex output,
-one thread, matched time/address-space caps and identical input systems.
-Mode 2 is exact; mode 42 uses probabilistic elimination. Its reported seeds
-are retained in raw stderr; they are uncontrolled and not synchronized with Hex.
-Each comparator campaign jointly solves 32/32 pairs (16 distinct inputs, twice),
-with 64/64 successful process exits, zero timeouts or failures, and all 32
-complete reduced bases agreeing under an independent polynomial parser.
-These campaigns use their recorded builds and GNU-time protocol; they are not
-pooled with earlier comparator reports.
+msolve source is `3672113ee2c696a2ac9c637636e0f7214f500ba1`, built with Clang
+23.1.3, `-O3 -march=native`, GMP 6.3.0, MPFR 4.2.2 and FLINT 3.6.0. Both modes
+execute `.libs/msolve` directly, with its neogb library directory explicitly
+recorded in `LD_LIBRARY_PATH`. The ELF and actual engine hashes are retained.
+Mode 2 is exact; mode 42 uses probabilistic elimination, with uncontrolled seeds
+retained in stderr. Both request full reduced grevlex output, one thread and
+matched time/address-space caps. The runner independently checks characteristic,
+variable order and canonical input generators across JSON and msolve files,
+requires grevlex, and parses every complete output.
 
-| Family-balanced process Hex/msolve | Exact, CPU19 | Probabilistic, CPU18 |
+| Unadjusted process Hex/msolve | Exact, CPU9 | Probabilistic, CPU10 |
 | --- | ---: | ---: |
-| All seven families | 1.2526 | 1.2807 |
-| cyclic | 1.0913 | 1.0721 |
-| katsura | 0.6287 | 0.6311 |
-| eco | 5.4088 | 6.4858 |
-| noon | 0.5987 | 0.8762 |
-| reimer | 5.1778 | 4.7193 |
-| minrank | 0.5798 | 0.5041 |
-| dense quadratic | 0.7255 | 0.6178 |
+| Equal-family geometric mean | 2.1093 | 2.4298 |
+| cyclic | 1.8649 | 2.2553 |
+| katsura | 1.3733 | 1.4997 |
+| eco | 5.5003 | 7.1041 |
+| noon | 1.2549 | 1.2618 |
+| reimer | 8.1418 | 8.5310 |
+| minrank | 0.9477 | 1.0360 |
+| dense quadratic | 1.3619 | 1.8658 |
 
-The all-pair geometric means are 1.2312 and 1.2525, with medians 0.7715 and
-0.7708 and ranges 0.4156–6.7432 and 0.3983–8.2644. Peak observed RSS is
-42300/42288 KiB for Hex and 13388 KiB for msolve. Eco and Reimer remain large
-performance gaps. These observations establish neither leadership nor general
-coverage: wider fields, extensions, held-out inputs, parallel scaling and the
-other required comparators remain outstanding.
+All-pair geometric means are 2.0771 and 2.4072; medians 1.5315 and 1.6441;
+ranges 0.4646–8.5504 and 0.7406–9.1065. Peak RSS is 42288/42348 KiB for Hex and
+13392 KiB for msolve. Eco and Reimer remain substantial gaps. Wider fields,
+extensions, parallel scaling, held-out inputs and the other required comparators
+remain outstanding. These measurements do not establish leadership.
 
-A small JSON parse/print reproduction isolates initialization. On the pinned
-Lean 4.35.0-rc3 toolchain, 24 alternating adjacent full/minimal SDK comparisons
-observe a geometric mean ratio 8.2405 (20.7714 versus 2.5206 ms). The unchanged
-reproduction on Lean 4.37.0-nightly-2026-10-30 observes 8.5911 (20.8497 versus
-2.4269 ms), in its own 24 comparisons. These toolchains are not pooled.
-Production minimal initialization remains
-restricted to the pinned revision; the nightly reproduction is diagnostic.
-`EmitC.emitInitFn` selects broad `lean_initialize` for a module using the Lean
-package; narrowing JSON imports alone does not remove that initialization.
-The existing SDK workaround already avoids most of this cost for a tool that
-never elaborates Lean source. A reproduction and measured costs are recorded on
+A separate diagnostic uses the one-variable system `[x0]` at both primes, with
+adjacent AB then BA on CPU92: eight successful processes, four agreeing pairs,
+no failures. Hex process time ranges 3.2521–5.3046 ms (geometric mean 4.4413),
+msolve 3.9604–11.1440 ms (5.3172). Every sample, including the 11.1440 ms
+observation, is retained. This quantifies substantial fixed costs in small
+cases. All reported ratios remain unadjusted; small-case process ratios are not
+interpreted as arithmetic speed ratios. This is a one-off diagnostic, with no
+per-change null-control requirement or sample-filtering rule.
+
+Earlier snapshots `e0b1cbd73ebf` and `b42ce333603b` retain separate complete
+campaigns and source manifests. Their msolve arms executed a libtool shell
+wrapper that added overhead only to msolve, biasing Hex/msolve ratios in favor
+of Hex. Their equal-family ratios 1.2250/1.2422 and 1.2526/1.2807 are retained
+historical observations and are superseded by the direct-ELF table above.
+They are not pooled or used as evidence of a smaller comparator gap. Their
+initialization-only default/full observations, 0.4133 and 0.4293 respectively,
+remain separate from the current 0.4145. The older protocol arm labels were
+inherited from an exact-comparator suite; the current runner records each mode
+and both named-manifest and executed-arm hashes explicitly.
+
+A JSON parse/print reproduction isolates initialization. Twenty-four alternating
+adjacent full/minimal comparisons on pinned Lean 4.35.0-rc3 observe a geometric
+mean ratio 8.2405 (20.7714/2.5206 ms). The unchanged reproduction on Lean
+4.37.0-nightly-2026-10-30 observes 8.5911 (20.8497/2.4269 ms), in its own
+24 comparisons. These toolchains are not pooled; the nightly is diagnostic.
+The pinned compiler's broad `lean_initialize` choice and existing internal SDK
+workaround are recorded on
 [Lean's initialization/linking issue](https://github.com/leanprover/lean4/issues/16082#issuecomment-6558865563).
-There is no established requirement for a language change to reach F4 leadership.
+No requirement for a language change to reach F4 leadership is established.
 
-The reproduction archive also retains an unsupported runtime-only initializer
-interception used solely for diagnosis, never production. Its original
-`wait4.ru_maxrss` values inherit a large Python-parent floor and are invalid as
-child memory estimates; they remain unchanged and explicitly marked. A separate
-GNU-time memory supplement and the final driver campaigns avoid that problem.
-An earlier configuration experiment reused a cached Lake configuration and did
-not actually produce a full-init reference. Its correction, logs and binary
-hashes are retained; only the two separate final targets underlie the driver
-measurements above.
+The reproduction retains an unsupported initializer interception used solely for
+diagnosis, never production. Original reproduction `wait4.ru_maxrss` readings
+inherit a Python-parent floor and are invalid child-memory estimates; they are
+retained and marked. A separate GNU-time supplement and the driver campaigns
+avoid that problem. An earlier cached Lake configuration did not actually select
+full initialization; its correction and logs are retained. All driver timing
+campaigns above use the two separate final targets.
 
-The separate earlier driver snapshot `e0b1cbd73ebf`, commit
-`f8a9f9eddfd683062f4a110e7856f5979edb7c01`, retains its own three 64-process
-campaigns. Default/reference process B/A is 0.4133 on CPU42; family-balanced
-Hex/msolve ratios are 1.2250 exact on CPU57 and 1.2422 probabilistic on CPU58.
-All 32 paired bases agree per campaign, with zero failed processes or timeouts.
-Its sources, binaries and observations are not pooled with the current snapshot.
-
-The readable runner is
-[`groebner_cli_measure.py`](../../scripts/bench/groebner_cli_measure.py). It checks
-frozen executable hashes, retains input files and all completed results, reports
-solved counts/failures and rejects incomplete or mismatched campaigns. The
-initialization symbol check also rejects a deliberate full-init/default swap.
-Both final executables pass all corpus outputs, ten available fixture counters,
-complete non-timing response equality, malformed-input and resource boundaries.
-`--basis`, `--variables`, effective zero batch size, help and option placement
-are included. The oracle runner builds both executables itself.
+[`groebner_cli_measure.py`](../../scripts/bench/groebner_cli_measure.py) retains
+all inputs/results and rejects stale sources, changed executables, failures or
+mismatches. Both final drivers pass the 567-case corpus, ten default fixture
+counters, batch metadata and three serial-batch counters, plus boundary/error
+response agreement. The oracle runner builds both itself. A deliberate
+full-init/default swap is rejected by the committed initializer checker.
 
 Raw artifacts, each with SHA256:
 
@@ -148,3 +147,18 @@ Raw artifacts, each with SHA256:
 
 - [cli-reviewed-validation-b42ce333603b.tar.gz](raw/cli-reviewed-validation-b42ce333603b.tar.gz):
   `c852f999c2966e632d8106047dfaa63fc94d5765fd4e8bf95e63f1a1731571db`.
+
+- [cli-direct-msolve-l2-production-records-1bc68da7b1c1.tar.gz](raw/cli-direct-msolve-l2-production-records-1bc68da7b1c1.tar.gz):
+  `ec6205e7cac3ef4aaae3f0785b509cc6705c2bd40643ba5cfebd22ea27ffcb9f`.
+
+- [cli-direct-msolve-l42-production-records-1bc68da7b1c1.tar.gz](raw/cli-direct-msolve-l42-production-records-1bc68da7b1c1.tar.gz):
+  `124ca42f7840263d81e8ee9cf724b91bcab2d6ddb6c643b14ca3643dd42fa3cc`.
+
+- [cli-direct-production-records-1bc68da7b1c1.tar.gz](raw/cli-direct-production-records-1bc68da7b1c1.tar.gz):
+  `8a498a15c0ab4661d84752dd23f1a17ff975c60bccc82cbb91a4db5f65f25fb3`.
+
+- [cli-startup-diagnostic-records-1bc68da7b1c1.tar.gz](raw/cli-startup-diagnostic-records-1bc68da7b1c1.tar.gz):
+  `cd47a9dffaa68272ad4d2c7315452b2044a161e8009dab1e92f4568c03d8fce3`.
+
+- [cli-direct-validation-1bc68da7b1c1.tar.gz](raw/cli-direct-validation-1bc68da7b1c1.tar.gz):
+  `c8f279f26d5855917b2a95cbd5a7eabbd3ed48322e03e4754cef0f7b6e2799fe`.
