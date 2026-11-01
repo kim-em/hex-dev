@@ -14,7 +14,9 @@ import argparse, os, sys, json, hashlib, subprocess, time, resource, select, sig
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 from scripts.bench.cpu_lease import cpu_lease
-from scripts.oracle.groebner_singular import polynomial, canonical
+from scripts.oracle.groebner_singular import polynomial, canonical, expression
+from scripts.bench.groebner_measure import FAMILY
+from scripts.bench.sweep_freshness import fingerprint, index_listing
 
 
 def main():
@@ -44,7 +46,29 @@ def main():
     mode = args.msolve_mode if args.msolve else None
     out = args.output.resolve()
     out.mkdir(exist_ok=False)
-    sha = lambda f: hashlib.file_digest(f.open("rb"), "sha256").hexdigest()
+
+    def sha(path):
+        with path.open("rb") as stream:
+            return hashlib.file_digest(stream, "sha256").hexdigest()
+
+    def check_sources():
+        dirty = subprocess.check_output(
+            ["git", "diff", "--name-only"], cwd=ROOT, text=True
+        ).splitlines()
+        dirty += subprocess.check_output(
+            ["git", "ls-files", "--others", "--exclude-standard"], cwd=ROOT, text=True
+        ).splitlines()
+        if any(FAMILY.matches(path) for path in dirty):
+            parser.error("stage every measured source before fingerprinting")
+        listing = index_listing(FAMILY)
+        if (
+            listing != manifest["source_manifest"]
+            or fingerprint(listing) != manifest["source_fingerprint"]
+        ):
+            parser.error("current staged sources differ from the frozen manifest")
+        return fingerprint(listing)
+
+    check_sources()
     cpu, lease = cpu_lease()
     os.sched_setaffinity(0, {cpu})
     env = dict(os.environ, OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1")
@@ -65,6 +89,30 @@ def main():
                 root / (case["name"] + extension), inputs / (case["name"] + extension)
             )
     root = inputs
+    if mode:
+        for case in plan["cases"]:
+            payload = json.loads((root / (case["name"] + ".json")).read_text())
+            assert payload["order"] == "grevlex", "msolve mode requires grevlex"
+            assert (payload["p"], payload["variables"]) == (
+                case["p"],
+                case["variables"],
+            )
+            lines = (root / (case["name"] + ".ms")).read_text().splitlines()
+            assert lines[0].split(",") == [f"x{i}" for i in range(case["variables"])]
+            assert int(lines[1]) == case["p"]
+            texts = [
+                text.strip() for text in "".join(lines[2:]).split(",") if text.strip()
+            ]
+            observed = [
+                polynomial(text, case["variables"], case["p"]) for text in texts
+            ]
+            expected = [
+                polynomial(expression(f), case["variables"], case["p"])
+                for f in payload["generators"]
+            ]
+            assert [f for f in observed if f] == [f for f in expected if f], (
+                "generator mismatch"
+            )
     cliargs = [
         "--work",
         "100000000000",
@@ -81,6 +129,13 @@ def main():
         "A": (args.hex if mode else args.reference).resolve(),
         "B": (args.msolve if mode else args.hex).resolve(),
     }
+    environments = {arm: dict(env) for arm in ["A", "B"]}
+    if mode:
+        library_path = str(args.msolve_source.resolve() / "src/neogb/.libs")
+        inherited = environments["B"].get("LD_LIBRARY_PATH", "")
+        environments["B"]["LD_LIBRARY_PATH"] = library_path + (
+            ":" + inherited if inherited else ""
+        )
     m = {
         **manifest,
         "cpu": cpu,
@@ -97,13 +152,49 @@ def main():
         "binary_sha256": {a: sha(f) for a, f in binaries.items()},
         "time_version": time_version,
         "time_sha256": sha(Path(args.time).resolve()),
-        "protocol": plan["protocol"],
+        "protocol": {
+            **plan["protocol"],
+            "A": "Hex unchecked candidate"
+            if mode
+            else "identical driver, full initialization",
+            "B": f"msolve direct ELF, mode {mode}"
+            if mode
+            else "identical driver, minimal initialization",
+        },
+        "manifest_binary_sha256": manifest["binary_sha256"],
+        "helper_sha256": {
+            name: sha(ROOT / name)
+            for name in [
+                "scripts/bench/cpu_lease.py",
+                "scripts/oracle/groebner_singular.py",
+                "scripts/oracle/common.py",
+                "scripts/bench/sweep_freshness.py",
+            ]
+        },
+        "child_environment": {
+            arm: {
+                key: value
+                for key, value in environment.items()
+                if key
+                in [
+                    "LD_LIBRARY_PATH",
+                    "LD_PRELOAD",
+                    "LANG",
+                    "LC_ALL",
+                    "TZ",
+                    "OMP_NUM_THREADS",
+                    "OPENBLAS_NUM_THREADS",
+                    "MKL_NUM_THREADS",
+                ]
+            }
+            for arm, environment in environments.items()
+        },
         "input_sha256": {f.name: sha(f) for f in sorted(inputs.iterdir())},
     }
     if mode:
         ms = args.msolve_source.resolve()
-        assert args.msolve.resolve() == (ms / "msolve").resolve(), (
-            "msolve wrapper must belong to the recorded source tree"
+        assert args.msolve.resolve() == (ms / ".libs/msolve").resolve(), (
+            "execute the recorded source tree's .libs/msolve ELF directly"
         )
         m.update(
             msolve_commit=subprocess.check_output(
@@ -176,7 +267,7 @@ def main():
                             command,
                             stdout=stdout,
                             stderr=stderr,
-                            env=env,
+                            env=environments[arm],
                             preexec_fn=limits,
                         )
                         fd = libc.pidfd_open(proc.pid, 0)
@@ -221,9 +312,14 @@ def main():
                                     if not line.startswith("#")
                                 ).strip()
                                 assert data.startswith("[") and data.endswith("]:")
-                                bases[arm] = sorted(
-                                    polynomial(s, case["variables"], case["p"])
-                                    for s in data[1:-2].split(",")
+                                body = data[1:-2].strip()
+                                bases[arm] = (
+                                    sorted(
+                                        polynomial(text, case["variables"], case["p"])
+                                        for text in body.split(",")
+                                    )
+                                    if body
+                                    else []
                                 )
                             else:
                                 payload = json.loads(
@@ -259,6 +355,28 @@ def main():
                 for sample in m["samples"][-2:]:
                     sample["complete_basis_equal"] = equal
     finally:
+        m["binary_sha256_after"] = {
+            arm: sha(binary) for arm, binary in binaries.items()
+        }
+        after = index_listing(FAMILY)
+        dirty = subprocess.check_output(
+            ["git", "diff", "--name-only"], cwd=ROOT, text=True
+        ).splitlines()
+        dirty += subprocess.check_output(
+            ["git", "ls-files", "--others", "--exclude-standard"], cwd=ROOT, text=True
+        ).splitlines()
+        m["source_fingerprint_after"] = fingerprint(after)
+        m["source_unchanged"] = after == manifest["source_manifest"] and not any(
+            FAMILY.matches(p) for p in dirty
+        )
+        if mode:
+            m["msolve_engine_sha256_after"] = sha(
+                ms / "src/neogb/.libs/libneogb.so.4.0.0"
+            )
+            m["source_unchanged"] = (
+                m["source_unchanged"]
+                and m["msolve_engine_sha256_after"] == m["msolve_engine_sha256"]
+            )
         m["load_end"] = os.getloadavg()
         (out / "metadata.json").write_text(json.dumps(m, indent=2) + "\n")
         lease.close()
@@ -322,7 +440,9 @@ def main():
     print(json.dumps(summary, indent=2))
 
     if (
-        summary["failed_processes"]
+        not m["source_unchanged"]
+        or m["binary_sha256_after"] != m["binary_sha256"]
+        or summary["failed_processes"]
         or summary["complete_bases_equal"] != summary["paired_inputs"]
     ):
         raise SystemExit(1)
