@@ -32,15 +32,18 @@ The baselines are fresh builds of unmodified committed sources:
 
 The reconstructed binaries differ from the original retained binaries. Their
 complete source/pin inventories describe these fresh builds; they do not
-reconstruct unrecorded original inputs or original timings. Both campaigns use
+reconstruct unrecorded original inputs or original timings. All three campaigns use
 the pinned LeanBench comparison and its ten-percent rule, with automatically
 leased CPUs on the shared host. Every completed observation is retained.
 
 The primary selection contains all 25 parameterized and six fixed timing
 workloads; three tiny reference solves are correctness controls only. The
 interacting selection contains both fixed workloads. Four trial-major adjacent
-AB/BA/AB/BA blocks were specified, with original ladders, repeats, targets,
-floors and deadlines. The archived in-run native verifications pass before timing. Separate source
+AB/BA/AB/BA blocks were specified. The original primary and interacting
+campaigns use their original ladders, repeats, targets, floors and deadlines.
+The resolution campaign preserves those settings except for its four matched
+inner-work targets, as detailed below. The archived in-run native verifications
+pass before timing. Separate source
 preflights also passed; their output directories remain local and are not part
 of this archive.
 
@@ -97,13 +100,27 @@ original-byte bindings. The collector source is
 `audit/issue-10575-sign-det-resolution-input-v1`. The source arms and checker
 are unchanged from the original primary campaign. Only the four named
 floor-filtered workloads use the matched 2.25-second targets specified by the
-protocol; all other workload settings remain unchanged.
+protocol; all other workload settings remain unchanged. The archived decision's
+generic schedule wording says original inner targets are unchanged; its explicit
+`resolution_protocol` supplies these four overrides. The immutable decision is
+retained as collected.
+
+The [collection-precondition record](collector-precondition.json) binds the
+required collector PR [#10945](https://github.com/kim-em/hex-dev/pull/10945):
+its exact-head CI completed successfully on October 15 at 20:05:58 UTC, and
+its merge followed at 20:08:01 UTC. The first timed export is dated October 16
+at 02:09:33 UTC. All 188 recorded monorepo native inputs match that merge.
+This is distinct from resolution-protocol PR
+[#10959](https://github.com/kim-em/hex-dev/pull/10959), which merged at
+04:08:08 UTC after collection started. The bound decision names #10945 as its
+before-collection merge precondition.
 
 The run completes 248 source exports: 31 workloads × four blocks × two arms,
 in adjacent AB/BA/AB/BA order on automatically leased CPU 23. Both native
 preflights cover the 31 timed workloads and three correctness-only references.
-All timed rows succeed with matching answer hashes. Final source, helper,
-collector, checker and executable integrity checks pass. The terminal outcome
+All timed rows succeed with matching answer hashes. Final candidate-source,
+helper, collector and checker integrity checks pass; both executable hashes are
+unchanged. The collector does not recheck baseline source files at the end. The terminal outcome
 is `regression`, not failed collection or insufficient timing resolution.
 
 | Workload | Parameter | Baseline median ns/call | Candidate median ns/call | Change | Native result |
@@ -111,10 +128,17 @@ is `regression`, not failed collection or insufficient timing resolution.
 | `Joint.runCheckDirect` | 127 | 53,490,330,879.5 | 66,908,931,470 | +25.086030% | Regression |
 | `Joint.runReduced` | 255 | 794,628,001,023.5 | 1,101,601,341,997 | +38.631075% | Regression |
 
-These are the pinned checker's pooled medians and unchanged ten-percent rule.
-Every other workload passes its full ladder or fixed comparison. Replaying all
-31 comparisons with the hash-bound native checker reproduces the saved JSON
-reports and exit codes without collecting new timings.
+For parameterized workloads the pinned checker averages the two middle values
+of the four pooled observations. Fixed workloads use the upper-middle value.
+Both use the unchanged ten-percent rule.
+Every other workload passes its full ladder or fixed comparison. The retained
+[untimed native replay](native-replay-v1/manifest.json) rebuilds the comparator
+from the same eleven hash-bound source inputs and pinned toolchain. Its build
+log, new executable hash, commands, all 31 reports, raw streams and exit codes
+are archived. Every JSON report is byte-identical to the collected report;
+the outcome remains 29 passing workloads and two regressions. This is a fresh
+source-bound rebuild, not a claim of binary identity with the historical
+checker. It runs no benchmark and collects no new timings.
 
 The raw per-call seconds at the two flagged parameters vary across blocks:
 
@@ -125,6 +149,9 @@ The raw per-call seconds at the two flagged parameters vary across blocks:
 | 2 | 53.161157650 | 54.811123042 | 776.104551960 | 1,324.823202195 |
 | 3 | 53.707424740 | 54.237685017 | 1,132.217426261 | 878.379481799 |
 
+Variation also occurs in the baseline at smaller `runReduced` parameters in
+block 1. The flags do not grow with parameter size: direct checking at 255 is
++1.132235%, while reduced production at 127 is −0.072646%.
 All observations remain in the verdict. Recorded host load and memory provide
 context; they do not justify removing samples or attributing the findings to
 host activity. A source cause has not been established. Both findings remain
@@ -159,7 +186,7 @@ from pathlib import Path
 import gzip, hashlib, json
 root = Path('reports/bench-results/sign-det-phase6-comparison')
 for directory in ('initial-capture', 'interacting-complete-v1',
-                  'resolution-complete-v1'):
+                  'resolution-complete-v1', 'native-replay-v1'):
     archive = root / directory
     manifest = json.loads((archive / 'manifest.json').read_text())
     for item in manifest['files']:
