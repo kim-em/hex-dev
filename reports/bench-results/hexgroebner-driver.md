@@ -16,8 +16,8 @@ uses identical parsing/computation/output code with ordinary initialization.
 CI checks the linked initializer, complete non-timing response equality and
 independent corpus outputs. No production initializer is intercepted.
 
-Current source fingerprint `1bc68da7b1c1` and its archived source manifest identify
-this implementation and measurement runner. The computational F4 sources remain
+Measured source fingerprint `1bc68da7b1c1` and its archived source manifest identify
+the timed drivers and measurement runner snapshot. The computational F4 sources remain
 those of packed-comparison fingerprint `802ae51122d7`. Both driver executables
 are byte-identical to those of `b42ce333603b`; the runner changes how msolve is
 launched and strengthens provenance/input checks. Source blobs, executable
@@ -48,7 +48,10 @@ Peak observed RSS is 42348 KiB default and 92652 KiB full. Reduced initializatio
 cost does not imply faster F4 arithmetic.
 
 msolve source is `3672113ee2c696a2ac9c637636e0f7214f500ba1`, built with Clang
-23.1.3, `-O3 -march=native`, GMP 6.3.0, MPFR 4.2.2 and FLINT 3.6.0. Both modes
+23.1.3, `-O3 -march=native`, GMP 6.3.0, MPFR 4.2.2 and FLINT 3.6.0. Its
+configured SIMD flags enable AVX-512 as well as AVX2; OpenMP is disabled in this
+single-thread build. Full SIMD/CPU/OpenMP flags and configure arguments are
+retained in the build-provenance supplement. Both modes
 execute `.libs/msolve` directly, with its neogb library directory explicitly
 recorded in `LD_LIBRARY_PATH`. The ELF and actual engine hashes are retained.
 Mode 2 is exact; mode 42 uses probabilistic elimination, with uncontrolled seeds
@@ -88,7 +91,12 @@ campaigns and source manifests. Their msolve arms executed a libtool shell
 wrapper that added overhead only to msolve, biasing Hex/msolve ratios in favor
 of Hex. Their equal-family ratios 1.2250/1.2422 and 1.2526/1.2807 are retained
 historical observations and are superseded by the direct-ELF table above.
-They are not pooled or used as evidence of a smaller comparator gap. Their
+They are not pooled or used as evidence of a smaller comparator gap.
+Across the separate `b42ce333603b` and direct campaigns, median new-minus-old
+process shifts are −0.7326 ms Hex and −7.5190 ms msolve in exact mode, and
+−0.8256/−8.0957 ms in probabilistic mode. These are observations on different
+leased CPUs and host contexts, not adjacent wrapper/direct comparisons; they
+do not isolate the wrapper's entire contribution. Their
 initialization-only default/full observations, 0.4133 and 0.4293 respectively,
 remain separate from the current 0.4145. The older protocol arm labels were
 inherited from an exact-comparator suite; the current runner records each mode
@@ -112,10 +120,19 @@ avoid that problem. An earlier cached Lake configuration did not actually select
 full initialization; its correction and logs are retained. All driver timing
 campaigns above use the two separate final targets.
 
+[`groebner_freeze.py`](../../scripts/bench/groebner_freeze.py) builds and freezes
+staged sources and driver hashes. A mechanical rebuild at tooling fingerprint
+`f663c8bac968` reproduces both measured executables exactly; its only source
+changes from `1bc68da7b1c1` are three benchmark-tool files. No extra timing run
+is used. The source manifest, build log, helper and equivalent binary hashes are
+retained. Future sweeps additionally reject tracked comparator edits and retain
+full build settings. The post-campaign comparator supplement records clean
+tracked sources and hashes matching those retained before/after measurement.
+
 [`groebner_cli_measure.py`](../../scripts/bench/groebner_cli_measure.py) retains
 all inputs/results and rejects stale sources, changed executables, failures or
 mismatches. Both final drivers pass the 567-case corpus, ten default fixture
-counters, batch metadata and three serial-batch counters, plus boundary/error
+counters, batch metadata and three serial-batch counters, plus shared boundary/error
 response agreement. The oracle runner builds both itself. A deliberate
 full-init/default swap is rejected by the committed initializer checker.
 
@@ -162,3 +179,6 @@ Raw artifacts, each with SHA256:
 
 - [cli-direct-validation-1bc68da7b1c1.tar.gz](raw/cli-direct-validation-1bc68da7b1c1.tar.gz):
   `c8f279f26d5855917b2a95cbd5a7eabbd3ed48322e03e4754cef0f7b6e2799fe`.
+
+- [cli-build-provenance-f663c8bac968.tar.gz](raw/cli-build-provenance-f663c8bac968.tar.gz):
+  `b0b47d87c387fc3f0a4fd725b177e9cc5882c1f2a37d90477af5f3ba8f4db2ac`.

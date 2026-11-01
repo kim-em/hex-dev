@@ -30,7 +30,7 @@ FAMILY = Family(
              "HexArithNative.lean", "HexModArith/", "HexModArith.lean",
              "HexModArithNative.lean", "HexBasic/", "HexBasic.lean", "HexMvPoly/",
              "HexMvPoly.lean", "bench/HexGroebner/", "lakefile.lean",
-             "lake-manifest.json", "lean-toolchain", "scripts/bench/groebner_measure.py", "scripts/bench/groebner_cli_measure.py", "scripts/bench/cpu_lease.py",
+             "lake-manifest.json", "lean-toolchain", "scripts/bench/groebner_measure.py", "scripts/bench/groebner_cli_measure.py", "scripts/bench/groebner_freeze.py", "scripts/bench/cpu_lease.py",
              "scripts/oracle/groebner_singular.py", "scripts/oracle/common.py",
              "scripts/bench/sweep_freshness.py"),
     exclude=("HexGroebner/README.md", "HexArith/README.md", "HexModArith/README.md",

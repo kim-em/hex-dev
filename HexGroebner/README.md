@@ -530,6 +530,8 @@ cap. Input parsing and filesystem work lie outside those computation counters.
 The deterministic driver returns random state zero without sampling.
 `hexgroebner_compute_full` accepts the same inputs and options, providing a
 reference for initialization and full-output comparisons.
+Freeze a staged build with `python3 scripts/bench/groebner_freeze.py output-dir`.
 Matched development sweeps use `scripts/bench/groebner_cli_measure.py`; its help
-requires a frozen binary/source manifest, a suite and explicit output directory.
+requires that frozen binary/source manifest, a suite and explicit output directory.
+msolve comparisons require its `.libs/msolve` ELF and a clean source tree.
 It retains raw samples and inputs, checks full outputs and applies no timing gate.

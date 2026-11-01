@@ -16,6 +16,7 @@ sys.path.insert(0, str(ROOT))
 from scripts.bench.cpu_lease import cpu_lease
 from scripts.oracle.groebner_singular import polynomial, canonical, expression
 from scripts.bench.groebner_measure import FAMILY
+from scripts.bench.groebner_freeze import msolve_build
 from scripts.bench.sweep_freshness import fingerprint, index_listing
 
 
@@ -166,6 +167,7 @@ def main():
             name: sha(ROOT / name)
             for name in [
                 "scripts/bench/cpu_lease.py",
+                "scripts/bench/groebner_freeze.py",
                 "scripts/oracle/groebner_singular.py",
                 "scripts/oracle/common.py",
                 "scripts/bench/sweep_freshness.py",
@@ -196,6 +198,7 @@ def main():
         assert args.msolve.resolve() == (ms / ".libs/msolve").resolve(), (
             "execute the recorded source tree's .libs/msolve ELF directly"
         )
+        m["msolve_build"] = msolve_build(ms)
         m.update(
             msolve_commit=subprocess.check_output(
                 ["git", "rev-parse", "HEAD"], cwd=ms, text=True
@@ -370,6 +373,10 @@ def main():
             FAMILY.matches(p) for p in dirty
         )
         if mode:
+            m["msolve_build_after"] = msolve_build(ms, require_clean=False)
+            m["source_unchanged"] = (
+                m["source_unchanged"] and m["msolve_build_after"] == m["msolve_build"]
+            )
             m["msolve_engine_sha256_after"] = sha(
                 ms / "src/neogb/.libs/libneogb.so.4.0.0"
             )
