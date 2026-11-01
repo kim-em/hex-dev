@@ -114,7 +114,7 @@ static inline unsigned hex_scan8(uint8_t *dense,const uint8_t *columns,const uin
         __m256i q=_mm256_or_si256(even,_mm256_slli_epi64(odd,32));
         product=_mm256_sub_epi32(x,_mm256_mullo_epi32(q,pv));
         product=_mm256_sub_epi32(product,_mm256_and_si256(_mm256_cmpgt_epi32(product,_mm256_set1_epi32((int32_t)p-1)),pv));
-    } else if(p==INT32_MAX) {
+    } else if(p==INT32_MAX && contiguous) {
         HEX_GROEBNER_MERSENNE_USED();
         /* The existing caller supplies factor*2^32 mod p. Since2^32=2 mod p,
            recover factor by modular halving without changing the ABI. */
