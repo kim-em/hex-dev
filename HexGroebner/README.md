@@ -460,3 +460,13 @@ completion; earlier resumed stages may have used different controls.
 validated input-plus-output entries of one matrix call, including failed calls.
 These are matrix-size counters, separate from process peak RSS and cumulative
 matrix work.
+
+
+F4 batches group multiplied basis rows by their actual critical-pair LCM.
+Each group uses its sparsest participating face as a known reducer and retains
+every other face once as a target. Symbolic closure preserves those pivots;
+certificate production records fresh basis multiples before matrix operations.
+Selected S-polynomial identities remain in the resulting row span, including
+disconnected same-LCM pair components. Final certification independently checks
+the complete reduced-basis contract. See the retained
+[multiplied-row measurements](../reports/bench-results/hexgroebner-pair-rows.md).
