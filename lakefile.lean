@@ -263,6 +263,7 @@ lean_lib HexOrderedFnTests where
 lean_lib HexMvPoly where
 
 lean_lib HexGroebner where
+  roots := #[`HexGroebner, `HexGroebner.ScanProof]
 
 lean_lib HexGroebnerNative where
   roots := #[`HexGroebnerNative]
