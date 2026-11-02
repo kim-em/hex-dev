@@ -51,5 +51,32 @@
       "compute-reference": "fbbcddd1bb06158d4fdc2eadf84812e26778e0c68692a4af349e9a81800f4f0a"
     },
     "published_head": "4cfdb89a1c9116181e1ba58003e736e0fae1234a"
+  },
+  "adaptive": {
+    "source_fingerprint": "88dc2e32d9ca",
+    "source_snapshot": "1b21b57b6cd40d2c636b9b46e53911a3cd95fb8b",
+    "source_manifest_sha256": "88dc2e32d9cabe85bc4191eceb56a9544c8f5a44a53e7993a8ab8ce15e324cc6",
+    "git_trees": {
+      "HexGroebner": "63d157eb361933b5607cafee8609196659931032",
+      "bench/HexGroebner": "817e9f602ad3a7848aa738abf738167aa1ebf266"
+    },
+    "binary_sha256": {
+      "compute": "3c0abeb68a3fe58d857f26d59eefd5aa384cd82fa7d7f42bc13149544476d4e9",
+      "compute-reference": "8452dd105c83d40b9205cb312b64ba6c1fc6d4df014e4552a7cbb40b27703911"
+    }
+  },
+  "reviewed": {
+    "source_fingerprint": "5166fcd8b3df",
+    "source_snapshot": "9aae96875f849fb5f8aa49e9ccb621c11a8a0f6b",
+    "source_manifest_sha256": "5166fcd8b3df1d0c9dbb1a1bb432828d70e906709b3ed2f1e78819a113c69611",
+    "git_trees": {
+      "HexGroebner": "35a16e0c7cb187ad9f1b7fd3086fa955889f5f37",
+      "bench/HexGroebner": "03bf6734e75c27cbfe0429747dea21ebc012fd03"
+    },
+    "binary_sha256": {
+      "compute": "ac6068db5657d72677caa604daae0fb1ead9d3e7de2d36df5f5e81537b6ec32e",
+      "compute-reference": "77c765aadbfe835619a0b916cd754cd5e5b54b9995f168ef794ce3a6cb9b321e"
+    },
+    "verification_head": "b2dc5953f27a0077d0dcf7e73cf01a7312eddd97"
   }
 }
