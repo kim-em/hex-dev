@@ -19,6 +19,8 @@ import HexGroebner.GatherConformance
 import HexGroebner.MatrixNativeConformance
 import HexGroebner.PackedWordConformance
 import HexGroebner.ByteConformance
+import HexGroebner.PolynomialBatchConformance
+import HexGroebner.ProductBatchConformance
 import HexGroebner.ProductConformance
 import HexGroebner.ReducerCacheConformance
 
@@ -36,6 +38,18 @@ def runOwned : IO Unit := do
   let seed ← readSeed
   if !HitConformance.ownedChecks seed then
     throw (IO.userError "exclusive monomial operation mismatch")
+
+/-- Isolated successful adaptive multiplication for the provider-counter window. -/
+def runProductWide : IO Unit := do
+  let seed ← readSeed
+  if !PolynomialBatchConformance.wide seed then
+    throw (IO.userError "adaptive wide polynomial mismatch")
+
+/-- Isolated last-term miss for the discarded-prefix counter window. -/
+def runProductMiss : IO Unit := do
+  let seed ← readSeed
+  if !ProductBatchConformance.lastMiss seed then
+    throw (IO.userError "last-term product miss mismatch")
 
 /-- Compiled checks for every native build variant. The harness verifies that
 native symbols were actually called, including in sanitizer builds. -/
@@ -75,6 +89,13 @@ def run : IO Unit := do
     throw (IO.userError "compiled monomial table order mismatch")
   if !MonomialCompareConformance.runtimeChecks seed then
     throw (IO.userError "packed monomial comparison mismatch")
+  if !PolynomialBatchConformance.checks seed then
+    throw (IO.userError "compiled polynomial batch/scalar mismatch")
+  if !ProductBatchConformance.capacityChecks then
+    throw (IO.userError "exact batch capacity admission mismatch")
+  if !ProductBatchConformance.checks seed || !ProductBatchConformance.boundaryChecks seed ||
+      !ProductBatchConformance.malformedChecks seed then
+    throw (IO.userError "compiled monomial-product batch mismatch")
   if !ProductConformance.runtimeChecks seed then
     throw (IO.userError "compiled current-arena product conformance mismatch")
   if !ByteConformance.runtimeChecks then

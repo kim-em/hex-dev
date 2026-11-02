@@ -74,11 +74,19 @@ def monic (context : Context) (limits : Limits) (p : Polynomial) : Computation P
 def multiply (_context : Context) (limits : Limits) (p : Polynomial) (monomial : Nat) :
     Computation Polynomial := do
   if (← get).table.degree monomial == 0 then return p
+  let arity := (← get).table.arity
+  -- Leave room for additional collision-chain headers beyond the first hit.
+  let batchSize := max 1 (min 64 (4096/(3*arity+4)))
   allocate limits p.support.size
   let mut support := ByteArray.emptyWithCapacity p.support.size
-  for i in [:p.size] do
-    let id ← combine limits .product (p.monomial i) monomial
-    support := Packed.push .u32 support id.toUInt64
+  if !limits.nativeMonomials || batchSize == 1 then
+    for i in [:p.size] do
+      let id ← combine limits .product (p.monomial i) monomial
+      support := Packed.push .u32 support id.toUInt64
+  else
+    for batch in [:(p.size+batchSize-1)/batchSize] do
+      let slice ← products limits p.support monomial (batch*batchSize) batchSize
+      support := support ++ slice
   return { p with support }
 
 /-- Linear subtraction of canonical supports, with exact modular coefficients. -/

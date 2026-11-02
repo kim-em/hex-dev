@@ -85,7 +85,8 @@ static inline int hex_scan_zero8(const uint8_t *dense,unsigned width) {
    Width is 1, 2 or 4. For narrow widths, multiplier is the canonical factor and
    reduction=floor(2^32/p). For width 4, multiplier=factor*2^32 mod p and
    reduction=-p^-1 mod 2^32. Mode mersenne=1 requires width 4 and p=2^31-1;
-   its contiguous fold recovers the factor from that same Montgomery multiplier.
+   its fold recovers the factor from that same Montgomery multiplier for both
+   contiguous and strided vectors.
    The guarded m31 wrapper enforces these preconditions; mode 0 is generic.
    Narrow gathers read four bytes only when the complete read lies within the
    logical dense buffer; otherwise the caller uses scalar updates. */
@@ -130,7 +131,7 @@ static inline unsigned hex_scan8_mode(uint8_t *dense,const uint8_t *columns,cons
         __m256i q=_mm256_or_si256(even,_mm256_slli_epi64(odd,32));
         product=_mm256_sub_epi32(x,_mm256_mullo_epi32(q,pv));
         product=_mm256_sub_epi32(product,_mm256_and_si256(_mm256_cmpgt_epi32(product,_mm256_set1_epi32((int32_t)p-1)),pv));
-    } else if(mersenne && contiguous) {
+    } else if(mersenne) {
         HEX_GROEBNER_MERSENNE_USED();
         /* The existing caller supplies factor*2^32 mod p. Since 2^32=2 mod p,
            recover factor by modular halving without changing the ABI. */
