@@ -43,6 +43,10 @@ private meta def checkTags (name : Name) (expected : Array String) : CoreM Unit 
   let actual := (info.ctors.map Name.getString!).toArray
   unless actual == expected do
     throwError "native constructor tags changed for {name}: expected {expected}, got {actual}"
+  for i in [:expected.size] do
+    let layout ← getCtorLayout info.ctors[i]!
+    unless layout.ctorInfo.cidx == i do
+      throwError "native compiler tag changed for {name}.{expected[i]!}: {layout.ctorInfo.cidx}"
 
 private meta def checkCtor (name : Name) (objects scalars : Nat)
     (fields : Array String) : CoreM Unit := do
