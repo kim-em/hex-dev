@@ -1,0 +1,27 @@
+{
+  "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10358",
+  "runner": "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+  "argv": [
+    "env",
+    "COMPILER_PATH=/home/kim/.codex/tasks/hex-10358/native-linker",
+    "lake",
+    "build",
+    "HexRCF.CellSourceProofs",
+    "HexRCF.TowerCompileProofs",
+    "HexRCF.SourceValuationProofs",
+    "HexRCF.TowerFinishProofs",
+    "HexRCF.HandlerTests",
+    "HexRCF.RealCoefficientTactic",
+    "HexRCFRealCoefficients",
+    "HexSignDet.PublicCodec",
+    "HexManual",
+    "HexGroebner.HitConformance",
+    "HexGroebner.SearchConformance",
+    "HexGroebner.SchedulingResumeConformance"
+  ],
+  "memory_max": "32G",
+  "memory_swap_max": 0,
+  "lean_num_threads": 2,
+  "rayon_num_threads": 2,
+  "scope": "Operational compatibility; bundled clang and its flags retained, task-local linker wrapper selects current installed Nix support."
+}
