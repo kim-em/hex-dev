@@ -284,8 +284,9 @@ another `IsCharP` instance.
 
 Only literal natural exponents recognized by `reifyRing?` are polynomial
 powers. A symbolic exponent makes the whole power application an atom. The
-reflection-node, exponent, output-term, and proof-reconstruction budgets are
-checked before an accepted literal power can cause excessive expansion.
+reflection-node, exponent, coefficient-size, and proof-reconstruction budgets
+bound the request. Guarded expansion limits the number of terms in intermediate
+polynomials; the resulting terms are charged to the session's remaining budget.
 
 ### Division and other operations
 
@@ -367,7 +368,7 @@ The Meta proof returned to a caller is assembled as follows:
    the quoted polynomial. This is a kernel equality of finite reflected data,
    discharged by reduction or by kernel `decide`.
 3. Apply the general conversion soundness theorem.
-4. Use `denoteRingExpr'` (the explicit-atoms form) and definitional equality to relate the reflected
+4. Use `denoteRingExpr` and definitional equality to relate the reflected
    syntax and atom array to the canonical source expression.
 5. Compose with the definitional equality between the caller's instantiated
    source and its canonical form.
@@ -545,9 +546,14 @@ the dimension, limit, consumed amount, and requested increment.
 Lean's `Sym.Arith.State.exp` and `getExpThreshold`, `setExpThreshold`, and
 `withExpThreshold` govern numeral evaluation during classification and
 reification. Hex configures that threshold explicitly, but does not mistake it
-for a polynomial-expansion limit. Its own exponent, output-term, coefficient,
-and proof budgets guard `toPoly`, `toPolyC`, `MvPoly.ofTerms`, and
-proof construction before each potentially expanding step.
+for a polynomial-expansion limit. Conversion sets the expansion threshold to
+the session's literal exponent limit and uses `Sym.Arith.toPoly?` with the
+remaining term budget as the limit for intermediate polynomials. The final
+term count is charged cumulatively across conversions, and a cached conversion
+does not consume it again. Coefficient growth is checked before expansion:
+the shared computation does not bound coefficient size. Proof construction
+has its own budget. The pure `toPoly` and `toPolyC` computations remain in the
+conversion certificates checked by the kernel.
 
 Shared decline reasons distinguish at least unsupported view, unsupported
 carrier, unresolved metavariable, missing capability, ambiguous provider,
@@ -630,7 +636,7 @@ Lean.
 | `MonadVar.lean` | `MonadMkVar`, `mkVar`, `MonadGetVar`, `getVar` | Public monad interfaces; unstable. The lawful standalone pairing is owned by Hex. |
 | `Functions.lean` | `getAddFn`, `getMulFn`, `getSubFn`, `getNegFn`, `getPowFn`, `getIntCastFn`, `getNatCastFn`, `getAddFn'`, `getMulFn'`, `getPowFn'`, `getNatCastFn'` | Public cached getters; unstable. `checkInst` and all `mk*Fn` helpers are private. Hex normally reaches the getters through reification and denotation. Public `getInvFn` was checked but is not used because division and inversion are atoms. |
 | `Reify.lean` | `isAddInst`, `isMulInst`, `isSubInst`, `isNegInst`, `isPowInst`, `isIntCastInst`, `isNatCastInst`, `reifyRing?`, `reifySemiring?` | Public definitions; unstable. The reifiers require caller-supplied monad instances. The two reporting helpers are private. |
-| `DenoteExpr.lean` | `denoteRingExpr'` | Public; unstable. Takes the sealed atom array; `denoteRingExpr` reads atoms from a `MonadGetVar` instance instead. `denoteRingExprCore` is private and must not be used. Public `denotePoly` is not needed by the initial proof route. |
+| `DenoteExpr.lean` | `denoteRingExpr` | Public; unstable. `denoteRingExprCore` is private and must not be used. Public `denotePoly` is not needed by the initial proof route. |
 | `ToExpr.lean` | `ofRingExpr` and the `ToExpr Lean.Grind.CommRing.Expr` instance | Public; unstable. They quote the concrete reflected syntax used by proof reconstruction. |
 | `VarRename.lean` | no required declaration | Public `Lean.Grind.CommRing.Expr.renameVars` and `Expr.collectVars` were checked. They remain in the Grind namespace and are optional utilities, not substitutes for sealing checks. |
 | `Poly.lean` | no required declaration | Its public `Lean.Grind.CommRing.Mon` and `Poly` utilities were checked. The initial conversion instead uses the normalization functions and soundness theorems in `Init/Grind/Ring/CommSolver.lean`. |
