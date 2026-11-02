@@ -643,8 +643,9 @@ metadata, intermediate states and charged counters. A proof relating its
 completed execution to the existing reference remains required before that
 integration. `finishState_done` proves that the shape-based allowance suffices
 for terminal completion, including suspended scan/gather states. Per-row
-scan/gather quantum exhaustion can still produce `rowUpdate`; this theorem
-does not exclude it. Its kernel benchmarks compare
+scan/gather quantum exhaustion can still produce `rowUpdate`; these quantum
+counts and error boundaries match the reference, and neither implementation
+currently has a proof excluding that error on validated inputs. Its kernel benchmarks compare
 standalone matrix frames; they make no full-system performance claim.
 
 Terminal continuations retain their workspace for inspection of exact phase
@@ -679,5 +680,6 @@ agreement for arbitrary completion quanta and either provider's Lean definition;
 `finishState_resume` proves exact agreement after arbitrary bounded suspension.
 `advance_one` identifies single-phase calls, and `finishState_next` supplies their
 resumption corollary. Native C agreement remains separately audited and tested.
-Equivalence with `Elimination.reference` and exclusion of per-row quantum exhaustion
-on validated inputs remain required before integration.
+Equivalence with `Elimination.reference` remains required before integration.
+Excluding per-row quantum exhaustion on validated inputs is a separate proof
+obligation shared with the reference.

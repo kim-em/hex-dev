@@ -16,6 +16,10 @@ meta import Std.Tactic.Do
 
 public section
 
+/-! These owning proofs may inspect private continuation bodies. Keep public
+state construction behind `start` and the executable transitions; do not expose
+unchecked State builders from this proof module. -/
+
 namespace Hex.Groebner.MatrixState
 
 /-- Fixed field, allowances and input identity of a matrix continuation. -/

@@ -88,9 +88,9 @@ theorem completion_example (steps quantum : Nat) (native : Bool) :
     let state := advance (start field {} 3 #[] #[row] #[2] false) steps
     let out := finishState quantum state native
     out.phase = .done ∧ out.result.isSome = true := by
-  exact ⟨finishState_done _ quantum native (advance_geometry _ steps (start_geometry ..)),
-    finishState_result _ quantum native (advance_geometry _ steps (start_geometry ..))
-      (advance_closed _ steps (start_closed ..))⟩
+  refine ⟨finishState_done _ quantum native ?_,finishState_result _ quantum native ?_⟩
+  · exact (advance_valid _ steps (start_valid ..)).1
+  · exact advance_valid _ steps (start_valid ..)
 
 /-- info: 'Hex.Groebner.MatrixStateReplay.completion_example' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in #print axioms completion_example
@@ -126,6 +126,23 @@ theorem error_completion_example :
 
 /-- info: 'Hex.Groebner.MatrixStateReplay.error_completion_example' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in #print axioms error_completion_example
+/-- Evaluate an exhausted validation with a nonzero charged prefix. The second
+work charge fails after input entries and packed bytes have already been charged. -/
+theorem charged_completion_example :
+    let field : PrimeField := ⟨7,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+    let r : SparseRow := ⟨⟨#[0,0,0,0,2,0,0,0]⟩,⟨#[2,1]⟩⟩
+    let t : SparseRow := ⟨⟨#[0,0,0,0,1,0,0,0]⟩,⟨#[4,1]⟩⟩
+    let initial := start field { work := 2 } 3 #[r] #[t] #[] false
+    finishWith 0 initial false =
+      (.error (.exhausted .work),{ work := 1,inputEntries := 2,packedBytes := 10 }) := by
+  dsimp only
+  unfold finishWith finishState State.allowance advancePortable advanceWith start advancePhase step
+    liftWork Matrix.validate Matrix.work Matrix.charge
+  simp only [Std.Legacy.Range.forIn_eq_forIn_range']
+  rfl
+
+/-- info: 'Hex.Groebner.MatrixStateReplay.charged_completion_example' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms charged_completion_example
 /-- info: 'Hex.Groebner.MatrixState.finishState_valid' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in #print axioms MatrixState.finishState_valid
 /-- info: 'Hex.Groebner.MatrixState.advance_one' depends on axioms: [propext, Classical.choice, Quot.sound] -/

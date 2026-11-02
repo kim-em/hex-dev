@@ -14,6 +14,10 @@ meta import Std.Tactic.Do
 
 public section
 
+/-! These owning proofs may inspect private continuation bodies. Keep public
+state construction behind `start` and the executable transitions; do not expose
+unchecked State builders from this proof module. -/
+
 namespace Hex.Groebner.MatrixState
 
 /-- A decreasing phase count. Per-row weight covers input, scan and gather;
@@ -220,7 +224,7 @@ theorem finishState_done (state : State) (quantum : Nat) (native : Bool)
 def State.closed (state : State) : Prop := state.phase = .done → state.result.isSome = true
 
 /-- Workspace bounds and the terminal-result invariant needed for completion. -/
-def State.valid (state : State) : Prop := state.geometry ∧ state.closed
+@[expose] def State.valid (state : State) : Prop := state.geometry ∧ state.closed
 
 /-- New computations have no terminal-result obligation yet. -/
 theorem start_closed (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
@@ -332,10 +336,9 @@ theorem finishState_valid (state : State) (quantum : Nat) (native : Bool)
 whose terminal states have results. The empty-result fallback is unreachable.
 Per-row quantum exhaustion can still be a stored `rowUpdate` error. -/
 theorem finishState_result (state : State) (quantum : Nat) (native : Bool)
-    (hgeometry : state.geometry) (hclosed : state.closed) :
-    (finishState quantum state native).result.isSome = true :=
-  ((finish_closed_spec state quantum native hclosed) True.intro)
-    (finishState_done state quantum native hgeometry)
+    (hvalid : state.valid) : (finishState quantum state native).result.isSome = true :=
+  finishState_closed state quantum native hvalid.2
+    (finishState_done state quantum native hvalid.1)
 
 /-- info: 'Hex.Groebner.MatrixState.finishState_result' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in #print axioms finishState_result
