@@ -59,7 +59,7 @@ def run : IO Unit := do
     throw (IO.userError s!"native matrix primitive mismatch: {MatrixPrimitiveConformance.failure.getD "unknown case"}")
   if !MatrixPrimitiveConformance.lengthChecks then
     throw (IO.userError "native matrix primitive row-length boundary mismatch")
-  if !MatrixStateConformance.workspaceChecks then
+  if !MatrixStateConformance.workspaceChecks || !MatrixStateConformance.wideWorkspaces then
     throw (IO.userError "native matrix workspace boundaries mismatch")
   if !MatrixStateConformance.validationChecks then
     throw (IO.userError "native matrix validation mismatch")

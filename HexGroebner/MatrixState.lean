@@ -137,8 +137,10 @@ private def step (native : Bool) : Work Unit := do
     liftWork (Matrix.packedBytes s.limits bytes)
     work bytes
     modify fun s => { s with
-      dense := Matrix.zeros (s.columns*s.field.width.bytes)
-      slots := Matrix.zeros (s.columns*4), phase := .input }
+      dense := if native then Matrix.zerosWith (s.columns*s.field.width.bytes)
+        else Matrix.zeros (s.columns*s.field.width.bytes)
+      slots := if native then Matrix.zerosWith (s.columns*4)
+        else Matrix.zeros (s.columns*4), phase := .input }
   | .input =>
     if s.input >= s.reducers.size+s.targets.size then
       set { s with phase := .order }
@@ -257,6 +259,9 @@ private def step (native : Bool) : Work Unit := do
       result := some (.ok (⟨ordered,s.rank,#[]⟩,s.remainders)) }
   | .done => pure ()
 
+private theorem step_spec (native : Bool) : step native = step false := by
+  cases native <;> simp only [step,Matrix.zerosWith_spec] <;> rfl
+
 private def advancePhase (state : State) (native : Bool) : State := Id.run do
   if state.phase == .done then return state
   let (result,state) := (step native).run state
@@ -272,7 +277,8 @@ def next (state : State) : State := advancePhase state true
 /-- Scalar model of one phase, including terminal error preservation. -/
 def nextPortable (state : State) : State := advancePhase state false
 
-@[simp] theorem next_spec (state : State) : next state = nextPortable state := by rfl
+@[simp] theorem next_spec (state : State) : next state = nextPortable state := by
+  simp only [next,nextPortable,advancePhase,step_spec]
 
 /-- Advance a bounded number of atomic phases. The shape-dependent cap budgets
 workspace initialization, pending sparse-row charges and array growth
@@ -292,7 +298,8 @@ def advancePortable (state : State) (steps : Nat) : State := advanceWith state s
 def advanceKernels (state : State) (steps : Nat) : State := advanceWith state steps true
 
 @[simp] theorem advanceKernels_spec (state : State) (steps : Nat) :
-    advanceKernels state steps = advancePortable state steps := by rfl
+    advanceKernels state steps = advancePortable state steps := by
+  simp only [advanceKernels,advancePortable,advanceWith,advancePhase,step_spec]
 
 /-- A native call uses the 64-bit ABI and admits at most 65536 columns and input rows. Other shapes take no transition
 here, allowing the caller to use Lean scheduling with native scan/gather kernels.
@@ -424,7 +431,7 @@ private theorem next_workspace (state : State) (packedStats stats : MatrixStats)
       | .error error => { state with phase := .done,stats := stats,result := some (.error error) } := by
   cases outcome
   all_goals
-    simp only [next,advancePhase,hphase]
+    simp only [next,advancePhase,hphase,step_spec]
     dsimp [step,liftWork,work,ExceptT.run,ExceptT.bind,ExceptT.bindCont,ExceptT.lift,
       ExceptT.mk,StateT.bind,StateT.get,StateT.set,StateT.pure,
       Bind.bind,MonadState.get,MonadStateOf.get,MonadStateOf.set,

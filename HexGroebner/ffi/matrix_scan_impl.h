@@ -48,11 +48,21 @@ static lean_obj_res HEX_SCAN_NAME(uint64_t p,
 #if HEX_SCAN_VECTOR
     uint32_t reduction=w<4?(uint32_t)(UINT64_C(4294967296)/p):hex_mont32_inverse((uint32_t)p);
 #endif
+    /* Pivot buffers are borrowed and immutable for this call. Reuse the exact
+       shape check between selecting a pivot, updating it and completing it.
+       A resumed pending pivot is checked before its first access here.
+       The accumulator was made exclusive above, preserving borrowed aliases. */
+    lean_object *checked_pivot=NULL;
+    uint64_t checked_size=0;
     for(uint64_t tick=0;tick<quantum;++tick) {
         if(pending) {
             lean_object *pivot=lean_array_cptr(pivots)[pending-1];
-            uint64_t size;
-            if(!geometry(pivot,w,&size) || entry>size) {status=4;break;}
+            if(pivot!=checked_pivot) {
+                if(!geometry(pivot,w,&checked_size)) {status=4;break;}
+                checked_pivot=pivot;
+            }
+            uint64_t size=checked_size;
+            if(entry>size) {status=4;break;}
             if(entry==size) {
                 ++reductions;
                 if(provenance) {
@@ -119,6 +129,7 @@ static lean_obj_res HEX_SCAN_NAME(uint64_t p,
                 lean_object *pivot=lean_array_cptr(pivots)[slot-1];
                 uint64_t size;
                 if(!geometry(pivot,w,&size)) {status=4;break;}
+                checked_pivot=pivot;checked_size=size;
                 const uint8_t *cs=lean_sarray_cptr(lean_ctor_get(pivot,0));
                 const uint8_t *vs=lean_sarray_cptr(lean_ctor_get(pivot,1));
                 if(rd(cs,4)!=col || rd(vs,w)!=1) {status=4;break;}

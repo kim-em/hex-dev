@@ -674,6 +674,12 @@ The admitted native workspace phase charges packed bytes and work before
 allocating its zeroed dense and slot buffers. At most 524,288 bytes are
 allocated for the admitted column/width geometry. Exhaustion retains the
 exact charged prefix and leaves the previous buffers unchanged.
+Every Lean workspace phase in `advanceKernels` or the exported `next` uses
+`Matrix.zerosWith` for each buffer: a native zeroing call admits at most one MiB, with larger buffers falling
+back to portable initialization. Address and cumulative byte/work checks precede
+both allocations. `advancePortable` retains independent scalar initialization.
+[Wide-frame measurements](../reports/bench-results/hexgroebner-workspace-zero.md)
+report the effect separately from full-system F4 timings.
 
 `MatrixValidation.validateFrom_zero` equates combined-cursor validation with the
 reference's reducer-then-target loops, including first errors and charged

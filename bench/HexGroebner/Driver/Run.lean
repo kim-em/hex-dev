@@ -46,6 +46,31 @@ private def options : List String → Limits → Except String (String × Limits
 private def message (kind text : String) (stats : Statistics := {}) : Json :=
   Json.mkObj [("kind",toJson kind),("message",toJson text),("statistics",Driver.statistics stats)]
 
+private def appendNat (out : String) (n : Nat) : String :=
+  if n < 10 then out.push (Char.ofNat (48+n)) else out ++ toString n
+
+/-- Write the numeric interchange basis directly into the owned output string.
+Only fixed JSON punctuation and natural numbers occur here; the metadata still
+uses Lean's JSON encoder. This avoids an intermediate tree for every exponent. -/
+private def appendBasis (out : String) (polynomials : Array RawPolynomial) : String := Id.run do
+  let mut out := out.push '['
+  for i in [:polynomials.size] do
+    if i != 0 then out := out.push ','
+    out := out.push '['
+    let polynomial := polynomials[i]!
+    for j in [:polynomial.size] do
+      if j != 0 then out := out.push ','
+      out := (out.push '[').push '['
+      let term := polynomial[j]!
+      for k in [:term.exponents.size] do
+        if k != 0 then out := out.push ','
+        out := appendNat out term.exponents[k]!
+      out := (out.push ']').push ','
+      out := appendNat out term.coefficient.toNat
+      out := out.push ']'
+    out := out.push ']'
+  return out.push ']'
+
 /-- This tool only produces unchecked candidates. It never promotes an output
 to a checked basis, elaborates Lean source or invokes the interpreter. -/
 def run (args : List String) : IO UInt32 := do
@@ -70,17 +95,21 @@ def run (args : List String) : IO UInt32 := do
     | .candidate candidate stats => do
       let stop ← IO.monoNanosNow
       let order := match context.order with | .lex => "lex" | .grlex => "grlex" | .grevlex => "grevlex"
-      pure (0,Json.mkObj [("kind",toJson "unchecked_candidate"),
+      let metadata := (Json.mkObj [("kind",toJson "unchecked_candidate"),
         ("p",toJson context.field.modulus.toNat),("variables",toJson context.variables),
-        ("order",toJson order),("basis",.arr (candidate.polynomials.map Driver.polynomial)),
+        ("order",toJson order),
         ("statistics",Driver.statistics stats),("candidateNanos",toJson (stop-start)),
         ("scheduling",toJson (match candidate.scheduling with | .degree => "degree" | .sugar => "sugar")),
-        ("batchSize",toJson candidate.batchSize),("randomState",toJson candidate.randomState.toNat)])
-    | .invalid error stats => pure (2,message "invalid_input" (reprStr error) stats)
-    | .exhausted resource state => pure (3,message "exhausted" (reprStr resource) state.workspace.statistics)
-    | .representation error state => pure (4,message "representation" (reprStr error) state.workspace.statistics)
-    | .internal error stats => pure (5,message "internal_error" (reprStr error) stats)
-  IO.println response.2.compress
+        ("batchSize",toJson candidate.batchSize),("randomState",toJson candidate.randomState.toNat)]).compress
+      -- This fixed nonempty JSON object ends in `}`; insert the numeric basis there.
+      -- JSON object field order is not part of the interchange contract.
+      let output := appendBasis (metadata.dropEnd 1 |>.toString |>.append ",\"basis\":") candidate.polynomials
+      pure (0,output.push '}')
+    | .invalid error stats => pure (2,(message "invalid_input" (reprStr error) stats).compress)
+    | .exhausted resource state => pure (3,(message "exhausted" (reprStr resource) state.workspace.statistics).compress)
+    | .representation error state => pure (4,(message "representation" (reprStr error) state.workspace.statistics).compress)
+    | .internal error stats => pure (5,(message "internal_error" (reprStr error) stats).compress)
+  IO.println response.2
   return response.1
 
 end Hex.Groebner.Driver
