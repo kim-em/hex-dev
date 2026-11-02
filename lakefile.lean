@@ -3528,7 +3528,3 @@ lean_exe hexrealclosure_trivial_bench where
 lean_exe hexgroebner_emit_division where
   srcDir := "conformance"
   root := `HexGroebner.EmitDivision
-
-lean_exe hexgroebner_elimination_checks where
-  root := `HexGroebner.EliminationChecks
-  srcDir := "conformance"

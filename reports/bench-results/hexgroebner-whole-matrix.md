@@ -47,7 +47,7 @@ initialization, parsing, output and identical GNU-time wrappers. Certificate
 generation, independent final certification and kernel replay are separate
 and excluded; these timings describe unchecked candidate production.
 
-| Observation | Complete pairs | Candidate B/A | Median | Process B/A | Equal-family process |
+| Observation | Complete pairs | Candidate B/A | Candidate median | Process B/A | Equal-family process |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | small | 64 | 0.9179 | 0.9283 | 0.9462 | 0.9286 |
 | medium | 56 | 0.9294 | 0.9739 | 0.9648 | 0.9648 |
@@ -77,18 +77,32 @@ Fresh fixed-benchmark builds complete 394/398 jobs for baseline/new. The fixed
 sweep retains 240 points, with five declared repetitions, actual inner repeats
 normalized and all complete structural output hashes equal.
 
-| Fixed case | B/A mean | Median | Range |
-| --- | ---: | ---: | --- |
-| cyclic4 | 0.8408 | 0.8854 | 0.1695–1.8997 |
-| cyclic5 | 1.4558 | 0.9317 | 0.5015–12.7527 |
-| cyclic6 | 0.9870 | 0.9334 | 0.4346–2.9190 |
-| katsura3 | 0.8271 | 0.8529 | 0.4499–1.4408 |
-| reimer5 | 1.0917 | 0.9436 | 0.7238–2.6594 |
-| cyclic6Small | 0.9694 | 0.9331 | 0.3514–3.2520 |
+| Campaign | CPU | One-minute host load start→end |
+| --- | ---: | ---: |
+| first | 39 | 11.16→15.85 |
+| repeat | 86 | 2.92→2.92 |
 
-Cyclic5 and Reimer5 geometric means regress despite lower medians. Extreme
-outliers remain in the estimates. These observations do not establish a uniform
-speedup or isolate host, allocator or generated-code causes.
+| Campaign | CPU | Fixed case | B/A mean | Candidate median | Range |
+| --- | ---: | --- | ---: | ---: | --- |
+| first | 39 | cyclic4 | 0.7936 | 0.8342 | 0.1695–1.8997 |
+| first | 39 | cyclic5 | 2.2976 | 2.3265 | 0.5015–12.7527 |
+| first | 39 | cyclic6 | 1.0415 | 1.0621 | 0.4346–2.9190 |
+| first | 39 | katsura3 | 0.8044 | 0.7512 | 0.4499–1.4408 |
+| first | 39 | reimer5 | 1.2652 | 1.2203 | 0.7238–2.6594 |
+| first | 39 | cyclic6Small | 1.0149 | 0.8753 | 0.3514–3.2520 |
+| repeat | 86 | cyclic4 | 0.8909 | 0.8879 | 0.8816–0.9113 |
+| repeat | 86 | cyclic5 | 0.9224 | 0.9282 | 0.8955–0.9335 |
+| repeat | 86 | cyclic6 | 0.9353 | 0.9334 | 0.9264–0.9445 |
+| repeat | 86 | katsura3 | 0.8504 | 0.8562 | 0.8199–0.8808 |
+| repeat | 86 | reimer5 | 0.9420 | 0.9400 | 0.9362–0.9550 |
+| repeat | 86 | cyclic6Small | 0.9260 | 0.9331 | 0.8952–0.9429 |
+
+The campaigns disagree materially for Cyclic5, Cyclic6, Reimer5 and
+Cyclic6Small; these fixed results are inconclusive. In the first campaign the
+Cyclic5/Reimer5 medians regress too, while the repeat has a tight cluster below
+one. The pooled lower medians are not representative of each campaign. Host
+load is recorded context, not a basis for dropping samples or attributing the
+difference. Every sample remains, and no further unchanged repeat is used.
 
 The matched medium msolve sweeps use the effective native Clang 23.1.3/znver5
 build at commit `3672113ee2c6`, direct executable, one thread and full reduced
@@ -96,7 +110,7 @@ grevlex bases. The helper records complete source/build/ISA identities. Each
 mode retains its first adjacent AB/BA sweep, 56 processes and 28 complete basis
 pairs, with zero measured failures or timeouts.
 
-| msolve mode | CPU | Hex/msolve process | Median | Range | RSS Hex/msolve KiB |
+| msolve mode | CPU | Hex/msolve process | Process median | Range | RSS Hex/msolve KiB |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | 2 | 50 | 3.5590 | 4.0518 | 0.8338–7.5445 | 93320/20312 |
 | 42 | 38 | 3.4374 | 3.6245 | 0.7149–9.1560 | 94868/20312 |
@@ -105,6 +119,22 @@ The fastest-open-source milestone is not met. Older source `8cf25024fa12`,
 with the original linker arrangement, observed msolve ratios 2.2566/2.5293.
 These are separate observations, not an adjacent comparison with this build;
 the change cannot be attributed to the algorithm or linker from these sweeps.
+The current A/B ratios apply to the archived wrapper build; transfer to an
+ordinary toolchain build is unestablished. A separate explanatory profile
+compares the original and wrapper baseline builds below; it is not pooled with
+these timing observations.
+
+A separate baseline-only profile compares identical source `9bac12f60779`
+built with the original linker arrangement (`203fed…`) and the restored wrapper
+(`70a1c3…`). CPU 69 runs adjacent AB/BA for Cyclic7-31 and Eco11-31, eight
+processes, with full basis/counter equality. User-cycle samples at 1999 Hz have
+zero lost samples. The estimated cycle counts and native M31 scan shares remain
+close within each input; Eco is dominated by the same scan and geometry work.
+Allocator statistics and ELF headers are retained. The original executable has
+an additional runpath; text/data/bss sizes also differ. These observations do
+not explain the separate msolve-sweep gap or establish a causal linker penalty.
+Profiled durations are excluded from timing estimates and no further unchanged
+timing repeat is used.
 
 An explanatory shape profile of that older source runs four complete systems
 on CPU 45, with equal bases/counters and 80 recorded whole-matrix calls. Native
@@ -121,7 +151,16 @@ measured source manifest. Independent checks cover 175 matrices, 567 unique SymP
 32 benchmark checks and dependency, phase, released-manifest, copyright and
 line-count audits pass. Four Clang and four GCC ASan/UBSan variants pass.
 
-Direct tests sweep work, packed bytes and output entries, exact `2^20` and
+Final source `2392d71af66b` rebuilds both drivers with exactly the same
+SHA256s as measured source `e878b78cf727`. The changes add erased reference
+proofs, ABI cross-references, boundary tests and documentation; the unused
+developer-only executable is removed. Its portable compiler helper reads flags
+from beside itself and accepts an explicit SDK override. A separate supplement
+retains these sources and fresh validation logs without rewriting historical
+archives.
+
+Direct tests sweep 64/65 targets, 1024/1025 reducers, work, packed bytes and
+output entries, exact `2^20` and
 `2^20 + 1` shape bounds, `2^63 - 1`/`2^63` limits and sugars, and shared
 reducer/target arrays. Compiled counters require accepted joint and independent
 calls. A seed-dependent F4 work-budget sweep compares every result/counter
@@ -147,3 +186,5 @@ open; no language-change impossibility is established.
 - [whole-matrix-capped-607b158b16db.tar.gz](raw/whole-matrix-capped-607b158b16db.tar.gz): `375976b7ce43ac6009cd6ae41e91bbf0b788b1bba23dea19619162589831a014`.
 - [whole-matrix-64-8cf25024fa12.tar.gz](raw/whole-matrix-64-8cf25024fa12.tar.gz): `7026976f987fb0ff3f6925c0124172b9c93b161ec19e58c638fe9dc762be121f`.
 - [whole-matrix-reviewed-e878b78cf727.tar.gz](raw/whole-matrix-reviewed-e878b78cf727.tar.gz): `0a7a8c9b2e20dc0cbcd4b3021881201d1fa6e09b6a0be39a1be947e7b9e3af73`.
+
+- [whole-matrix-final-2392d71af66b.tar.gz](raw/whole-matrix-final-2392d71af66b.tar.gz): `f1e75e58daf981ac61704246b355464723c5a8557d765c45a2e91395a96df1fc`; final source, portable helper, fresh checks and baseline-only profile.

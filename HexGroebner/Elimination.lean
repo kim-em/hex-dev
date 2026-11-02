@@ -51,7 +51,7 @@ inductive MatrixError where
   deriving BEq, Repr
 
 /-- Bounds for one matrix call. All sizes use `Nat` arithmetic, so size products
-are checked before narrowing or allocation. There is no unbounded fallback. -/
+are checked before narrowing or allocation. There is no unbounded fallback.  Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c`. -/
 structure MatrixLimits where
   columns : Nat := 1000000
   rows : Nat := 100000
@@ -62,7 +62,7 @@ structure MatrixLimits where
   traceNodes : Nat := 1000000
   deriving Inhabited
 
-/-- Charged work is retained on failure as well as success. -/
+/-- Charged work is retained on failure as well as success.  Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c`. -/
 structure MatrixStats where
   work : Nat := 0
   inputEntries : Nat := 0
@@ -88,7 +88,7 @@ inductive RowOp where
   deriving Repr, BEq
 
 /-- A monic sparse pivot, optionally referring to its derivation. Target pivots
-are precisely the rows adding dimension beyond the reducer row space. -/
+are precisely the rows adding dimension beyond the reducer row space.  Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c`. -/
 structure Pivot where
   row : SparseRow
   fromTarget : Bool
@@ -102,7 +102,7 @@ structure Pivot where
 
 /-- Echelon rows in increasing pivot-column order, without permuting columns.
 The reducer rank separates the reducer subspace from new target information.
-No reduced-basis or polynomial-ideal conclusion is attached to this result. -/
+No reduced-basis or polynomial-ideal conclusion is attached to this result.  Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c`. -/
 structure Echelon where
   rows : Array Pivot
   reducerRank : Nat
@@ -110,7 +110,7 @@ structure Echelon where
 
 /-- An unscaled target remainder after reduction by the supplied reducer rows.
 Targets are independent: none becomes a reducer for another target. Empty rows
-retain their input position and optional zero derivation. -/
+retain their input position and optional zero derivation.  Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c`. -/
 structure RemainderRow where
   row : SparseRow
   derivation : Option Nat
@@ -441,7 +441,7 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
 
 namespace Elimination
 
-/-- Complete matrix outcome used by the optional bulk provider. -/
+/-- Complete matrix outcome used by the optional bulk provider.  Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c`. -/
 structure Result where
   result : Except MatrixError (Echelon × Array RemainderRow)
   stats : MatrixStats
@@ -543,12 +543,28 @@ def run (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
       (eliminate field limits columns reducers targets provenance sugars native independent).run {}
     ⟨result,stats⟩
 
+/-- The optimized untraced route has exactly the deterministic reference result. -/
+theorem run_spec (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
+    (reducers targets : Array SparseRow) (sugars : Array Nat) (independent : Bool) :
+    run field limits columns reducers targets false sugars true independent =
+      reference field limits columns reducers targets sugars independent := by
+  unfold run attempt
+  change (match attemptPortable field limits columns reducers targets sugars independent with
+    | some result => result
+    | none => reference field limits columns reducers targets sugars independent) = _
+  have h := attemptPortable_spec field limits columns reducers targets sugars independent
+  cases hx : attemptPortable field limits columns reducers targets sugars independent with
+  | none => rfl
+  | some result => simpa only [hx, Option.getD_some] using h
+
 end Elimination
 
 /-- Deterministic finite-prime-field Macaulay elimination, with sparse reducers,
 packed dense accumulation, monic output, stable columns and optional provenance.
 `native := false` retains scalar Lean updates; the default uses bounded native
-chunks with identical rows, provenance and counters. Input rows must be canonical
+chunks with identical rows, provenance and counters. Untraced 64-bit calls first
+try a complete frame bounded by 4096 columns, 1024 reducers, 64 targets and
+`2^20` work; cancellation is observed between calls. Input rows must be canonical
 and use the field's coefficient width. Limits cover
 validation and nested arithmetic as well as elimination. Successful rows span
 the input row space; they are echelon, not reduced echelon. The polynomial layer
@@ -562,6 +578,8 @@ def eliminateWith (field : PrimeField) (limits : MatrixLimits)
 /-- Reduce each target by the same reducer echelon space, preserving its scalar
 and input position. Targets never reduce each other. Validation, sparse reducer
 installation, bounded native updates and allowances are shared with elimination.
+Untraced 64-bit calls use the same optional `2^20`-work matrix frame and shape
+caps as `eliminateWith`; other cases retain bounded scan/gather chunks.
 This is a linear triangular solve; polynomial normal-form claims additionally
 require the symbolic closure and a Gröbner basis. -/
 def reduceRowsWith (field : PrimeField) (limits : MatrixLimits)

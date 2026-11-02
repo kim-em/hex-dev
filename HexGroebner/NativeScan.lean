@@ -12,13 +12,14 @@ public import HexGroebner.Native
 
 namespace Hex.Groebner.Native.Scan
 
+/-- Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c`. -/
 structure Pivot where
   columns : ByteArray
   coefficients : ByteArray
   sugar : Nat := 0
   deriving Inhabited
 
-/-- Optional indices use index+1. A pending row is already charged in full. -/
+/-- Optional indices use index+1. A pending row is already charged in full.  Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c`. -/
 structure State where
   dense : ByteArray
   column : Nat
@@ -31,7 +32,7 @@ structure State where
   factor : UInt64 := 0
 
 /-- Status: 0 quantum ended, 1 complete, 2 work exhausted, 3 trace exhausted,
-4 malformed. Events give pivot index and subtracted scalar, in execution order. -/
+4 malformed. Events give pivot index and subtracted scalar, in execution order.  Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c`. -/
 structure Result where
   state : State
   events : Array (Nat × UInt64) := #[]

@@ -189,6 +189,20 @@ def sharedChecks (seed : Nat) : Bool := Id.run do
 
 #guard sharedChecks 0
 
+/-- Check both sides of every separately copied matrix-size cap. -/
+def sizeChecks (seed : Nat) : Bool := Id.run do
+  for (columns,nr,nt) in [(3,0,64),(3,0,65),(1025,1024,1),(1025,1025,1)] do
+    let some (er,et,es) := rows field columns nr nt (seed+7) | return false
+    let some (ar,actualTargets,actualSugars) := rows field columns nr nt seed | return false
+    let expected := Elimination.attemptPortable field {} columns er et es false
+    let actual := Elimination.attempt field {} columns ar actualTargets actualSugars false
+    if !sameAttempt actual expected || !sameRows ar er || !sameRows actualTargets et then return false
+    if USize.size == 2^64 && ((nr == 1024 || nt == 64) && actual.isNone) then return false
+    if (nr == 1025 || nt == 65) && actual.isSome then return false
+  return true
+
+#guard sizeChecks 0
+
 def runtimeChecks (seed : Nat) : Bool := Id.run do
   for field in Fixtures.fields do
     for columns in [0,1,3,9,65,257] do

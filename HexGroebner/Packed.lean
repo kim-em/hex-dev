@@ -156,7 +156,7 @@ end Packed
 
 /-- Sparse row in a fixed column map. Columns are increasing unsigned 32-bit
 indices; coefficients have the width selected by the field. Empty rows encode
-zero. Raw construction is allowed; elimination always validates it. -/
+zero. Raw construction is allowed; elimination always validates it.  Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c`. -/
 structure SparseRow where
   columns : ByteArray := ByteArray.empty
   coefficients : ByteArray := ByteArray.empty

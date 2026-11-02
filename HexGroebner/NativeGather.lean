@@ -12,6 +12,7 @@ public import HexGroebner.Native
 
 namespace Hex.Groebner.Native.Gather
 
+/-- Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c`. -/
 structure State where
   dense : ByteArray
   columns : ByteArray
@@ -20,7 +21,7 @@ structure State where
 
 /-- Status: 0 quantum ended, 1 complete, 2 entries exhausted, 3 bytes exhausted,
 4 work exhausted, 5 geometry/addressability, 6 noncanonical data. Work counts
-normalization products; the caller separately charges the whole scan interval. -/
+normalization products; the caller separately charges the whole scan interval.  Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c`. -/
 structure Result where
   state : State
   entries : Nat := 0
