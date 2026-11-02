@@ -385,6 +385,14 @@ private theorem next_validate (state : State) (stats : MatrixStats)
     simp only [hphase]
     rfl
 
+/-- Read-only contents preserved by validation. Phase, validation cursor, result
+and charged statistics are stated separately by the transition lemmas. -/
+def State.contents (state : State) :=
+  (state.field,state.limits,state.columns,state.reducers,state.targets,state.sugars,
+    state.independent,state.input,state.dense,state.slots,state.pivots,state.nativePivots,
+    state.remainders,state.rank,state.scan,state.gather,state.leading,state.sugar,
+    state.inverse,state.quanta)
+
 /-- A successful validator advances one cursor and preserves its exact charges.
 This is an equation for the Lean phase model. -/
 theorem validate_ok (state : State) (stats : MatrixStats)
@@ -397,10 +405,9 @@ theorem validate_ok (state : State) (stats : MatrixStats)
         (.ok (), stats)) :
     let out := next state
     out.validation = state.validation + 1 ∧ out.phase = .validate ∧ out.stats = stats ∧
-      (out.field,out.limits,out.columns,out.reducers,out.targets) =
-        (state.field,state.limits,state.columns,state.reducers,state.targets) := by
+      out.contents = state.contents ∧ out.result = state.result := by
   rw [next_validate state stats (.ok ()) hphase hcursor hvalidate]
-  exact ⟨rfl, hphase, rfl, rfl⟩
+  exact ⟨rfl, hphase, rfl, rfl, rfl⟩
 
 /-- A failed validator retains its exact error and charged prefix in a terminal state.
 This is an equation for the Lean phase model. -/
@@ -415,8 +422,7 @@ theorem validate_error (state : State) (stats : MatrixStats) (error : MatrixErro
     let out := next state
     out.phase = .done ∧ out.result = some (.error error) ∧ out.stats = stats ∧
       out.validation = state.validation ∧
-      (out.field,out.limits,out.columns,out.reducers,out.targets) =
-        (state.field,state.limits,state.columns,state.reducers,state.targets) := by
+      out.contents = state.contents := by
   rw [next_validate state stats (.error error) hphase hcursor hvalidate]
   exact ⟨rfl, rfl, rfl, rfl, rfl⟩
 

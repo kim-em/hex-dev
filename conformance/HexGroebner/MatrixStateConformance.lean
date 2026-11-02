@@ -151,6 +151,8 @@ def validationChecks : Bool := Id.run do
       for targets in [false,true] do
         let reducers := if targets then #[valid] else #[valid,row]
         let targetRows := if targets then #[valid,row] else #[valid]
+        -- The preceding two-entry valid row charges 1+2 work. Limits 3 and 4
+        -- therefore distinguish initial-work and entry-work exhaustion.
         for limits in ([{}, {inputEntries := 3}, {packedBytes := 25},
             {work := 3}, {work := 4}, {work := 2^90, packedBytes := 2^90}] : List MatrixLimits) do
           let mut state := MatrixState.start field limits 3 reducers targetRows #[] false
@@ -183,8 +185,9 @@ def workspaceChecks : Bool := Id.run do
     let bytes := 3*(field.width.bytes+4)
     let total := validated.stats.packedBytes+bytes
     let work := validated.stats.work+bytes
-    for limits in ([{packedBytes := total-1},{packedBytes := total},
-        {work := work-1},{work}] : List MatrixLimits) do
+    for (limits,failure) in ([({packedBytes := total-1},some Resource.packedBytes),
+        ({packedBytes := total},none),({work := work-1},some Resource.work),
+        ({work},none)] : List (MatrixLimits × Option Resource)) do
       let mut state := MatrixState.start field limits 3 #[row] #[row] #[] false
       for _ in [:8] do
         if state.phase == .workspace then break
@@ -193,6 +196,16 @@ def workspaceChecks : Bool := Id.run do
       let saved := snapshot state
       let expected := MatrixState.advancePortable state 1
       let actual := MatrixState.advance state 1
+      match failure with
+      | none =>
+        if expected.phase != .input || expected.result.isSome ||
+            expected.stats.packedBytes != total || expected.stats.work != work then return false
+      | some resource =>
+        if expected.phase != .done then return false
+        match expected.result with
+        | some (.error (.exhausted actualResource)) =>
+          if actualResource != resource then return false
+        | _ => return false
       if expected.phase != actual.phase || snapshot expected != snapshot actual ||
           snapshot state != saved then return false
       if expected.phase == .done then
