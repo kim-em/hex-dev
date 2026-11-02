@@ -19,6 +19,8 @@ import HexGroebner.GatherConformance
 import HexGroebner.MatrixNativeConformance
 import HexGroebner.PackedWordConformance
 import HexGroebner.ByteConformance
+import HexGroebner.PolynomialBatchConformance
+import HexGroebner.ProductBatchConformance
 import HexGroebner.ProductConformance
 import HexGroebner.ReducerCacheConformance
 
@@ -75,6 +77,11 @@ def run : IO Unit := do
     throw (IO.userError "compiled monomial table order mismatch")
   if !MonomialCompareConformance.runtimeChecks seed then
     throw (IO.userError "packed monomial comparison mismatch")
+  if !PolynomialBatchConformance.checks seed then
+    throw (IO.userError "compiled polynomial batch/scalar mismatch")
+  if !ProductBatchConformance.checks seed || !ProductBatchConformance.boundaryChecks seed ||
+      !ProductBatchConformance.malformedChecks seed then
+    throw (IO.userError "compiled monomial-product batch mismatch")
   if !ProductConformance.runtimeChecks seed then
     throw (IO.userError "compiled current-arena product conformance mismatch")
   if !ByteConformance.runtimeChecks then

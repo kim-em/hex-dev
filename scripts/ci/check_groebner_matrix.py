@@ -225,6 +225,8 @@ LEAN_EXPORT lean_obj_res hex_test_index_aliases(lean_obj_arg world) {
  }
  return lean_io_result_mk_ok(lean_box(ok));
 }
+static uint64_t batch_hits=0,batch_terms=0;
+#define HEX_GROEBNER_PRODUCTS_FOUND(n) (++batch_hits,batch_terms+=(n))
 static uint64_t fused_success=0,fused_insert=0,fused_unique=0,fused_deferred=0,unique_alias=0,unique_alias_mask=0;
 #define HEX_GROEBNER_DEFERRED() (++fused_deferred)
 #define HEX_GROEBNER_UNIQUE_ALIAS(mask) (++unique_alias,unique_alias_mask|=(mask))
@@ -232,9 +234,11 @@ static uint64_t fused_success=0,fused_insert=0,fused_unique=0,fused_deferred=0,u
 #define HEX_GROEBNER_INSERT_FOUND() (++fused_insert)
 #define HEX_GROEBNER_HIT_FOUND() (++fused_success)
 #define HEX_GROEBNER_HIT_HELPERS
+#define lean_hex_monomial_products_attempt hex_test_products_attempt
 #define lean_hex_groebner_combine_owned hex_test_combine_owned
 #include HITCODE
 #undef lean_hex_groebner_combine_owned
+#undef lean_hex_monomial_products_attempt
 LEAN_EXPORT lean_obj_res hex_test_owned_runtime(lean_obj_arg world) {
  (void)world;int ok=1;
  for(size_t capacity=1;capacity<=8;capacity*=8) {
@@ -430,6 +434,18 @@ LEAN_EXPORT lean_obj_res hex_test_primitive_admissions(lean_obj_arg world) {
  lean_ctor_set(outer,0,a);lean_ctor_set(outer,1,b);return lean_io_result_mk_ok(outer);
 }
 static uint64_t scan_calls=0,gather_calls=0,byte_calls=0,product_calls=0;
+__typeof__(hex_test_products_attempt) __wrap_lean_hex_monomial_products_attempt;
+LEAN_EXPORT lean_obj_res __wrap_lean_hex_monomial_products_attempt(lean_obj_arg table,
+ b_lean_obj_arg support,lean_obj_arg monomial,lean_obj_arg start,lean_obj_arg count,
+ lean_obj_arg max_count,lean_obj_arg max_bytes,lean_obj_arg max_work,uint8_t native) {
+ return hex_test_products_attempt(table,support,monomial,start,count,max_count,max_bytes,max_work,native);
+}
+LEAN_EXPORT lean_obj_res hex_test_batch_counts(lean_obj_arg world) {
+ (void)world;lean_object *out=lean_alloc_ctor(0,2,0);
+ lean_ctor_set(out,0,lean_box_uint64(batch_hits));
+ lean_ctor_set(out,1,lean_box_uint64(batch_terms));return lean_io_result_mk_ok(out);
+}
+
 static uint64_t search_calls=0;
 __typeof__(hex_test_combine_owned) __wrap_lean_hex_groebner_combine_owned;
 LEAN_EXPORT lean_obj_res __wrap_lean_hex_groebner_combine_owned(lean_obj_arg table,uint8_t operation,
@@ -610,7 +626,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
         flags = ["-O3", "-g", "-Wall", "-Wextra", "-Werror", "-fPIC", "-DLEAN_EXPORTING"]
         if sanitize:
             flags += ["-fsanitize=address,undefined", "-fno-sanitize-recover=undefined", "-fno-omit-frame-pointer"]
-        link_args = ["-Wl,--wrap=lean_hex_matrix_validate", "-Wl,--wrap=lean_hex_matrix_zeros", "-Wl,--wrap=lean_hex_matrix_advance", "-Wl,--wrap=lean_hex_groebner_remap_index", "-Wl,--wrap=lean_hex_groebner_append_zeros", "-Wl,--wrap=lean_hex_groebner_remap_columns", "-Wl,--wrap=lean_hex_scan_transition", "-Wl,--wrap=lean_hex_gather",
+        link_args = ["-Wl,--wrap=lean_hex_monomial_products_attempt", "-Wl,--wrap=lean_hex_matrix_validate", "-Wl,--wrap=lean_hex_matrix_zeros", "-Wl,--wrap=lean_hex_matrix_advance", "-Wl,--wrap=lean_hex_groebner_remap_index", "-Wl,--wrap=lean_hex_groebner_append_zeros", "-Wl,--wrap=lean_hex_groebner_remap_columns", "-Wl,--wrap=lean_hex_scan_transition", "-Wl,--wrap=lean_hex_gather",
                      "-Wl,--wrap=lean_hex_groebner_equal_bytes",
                      "-Wl,--wrap=lean_hex_groebner_equal_products",
                      "-Wl,--wrap=lean_hex_groebner_eliminate_matrix",
@@ -623,6 +639,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
             target = "check" + variant
             targets.append(target)
             (directory / (module + ".lean")).write_text('''import HexGroebner.NativeChecks
+@[extern "hex_test_batch_counts"] opaque batchCounts : IO (UInt64 × UInt64)
 @[extern "hex_test_matrix_primitives"] opaque matrixPrimitives : IO (UInt64 × UInt64)
 @[extern "hex_test_primitive_admissions"] opaque primitiveAdmissions : IO ((UInt64 × UInt64) × (UInt64 × UInt64))
 @[extern "hex_test_remap_count"] opaque remapCount : IO UInt64
@@ -679,6 +696,7 @@ def main : IO Unit := do
   let beforePortableIndex ← indexCount
   let beforePortableZeros ← zeroAppendCount
   let beforePortableContinuation ← continuationCount
+  let beforePortableBatches ← batchCounts
   let beforePortableProducts ← productCount
   let beforePortable ← matrixPrimitives
   for offset in [:6] do
@@ -691,7 +709,7 @@ def main : IO Unit := do
       (← remapCount) != beforePortableRemap || (← indexCount) != beforePortableIndex ||
       (← zeroAppendCount) != beforePortableZeros ||
       (← continuationCount) != beforePortableContinuation ||
-      (← productCount) != beforePortableProducts then
+      (← productCount) != beforePortableProducts || (← batchCounts) != beforePortableBatches then
     throw (IO.userError "public portable F4 called a native row/bulk/column/byte provider")
   let beforeIntegrated ← primitiveAdmissions
   for offset in [:6] do
@@ -702,6 +720,9 @@ def main : IO Unit := do
     throw (IO.userError "traced elimination did not admit both native primitives")
   IO.println s!"traced elimination primitive admissions: validation={afterIntegrated.1.1-beforeIntegrated.1.1}, zero={afterIntegrated.2.1-beforeIntegrated.2.1}"
   Hex.Groebner.NativeChecks.run
+  let batches ← batchCounts
+  if batches.1 == 0 || batches.2 == 0 then throw (IO.userError "monomial product batch unused")
+  IO.println s!"monomial product batches/terms: {batches}"
   let primitives ← matrixPrimitives
   IO.println s!"native matrix validation/zero-buffer primitives: {primitives}"
   let continuationCalls ← continuationCount
@@ -742,8 +763,13 @@ def main : IO Unit := do
   let primitiveInserts ← insertCount
   let primitiveAccepted ← acceptedCount
   let primitiveDeferred ← deferredCount
+  let beforeF4Batches ← batchCounts
   let beforeF4Primitives ← primitiveAdmissions
   Hex.Groebner.NativeChecks.runF4
+  let afterF4Batches ← batchCounts
+  if afterF4Batches.1 ≤ beforeF4Batches.1 || afterF4Batches.2 ≤ beforeF4Batches.2 then
+    throw (IO.userError "F4 did not exercise accepted monomial batches")
+  IO.println s!"F4 monomial batches/terms: {afterF4Batches.1-beforeF4Batches.1}/{afterF4Batches.2-beforeF4Batches.2}"
   let afterF4Primitives ← primitiveAdmissions
   if afterF4Primitives.1.1 ≤ beforeF4Primitives.1.1 || afterF4Primitives.2.1 ≤ beforeF4Primitives.2.1 then
     throw (IO.userError "F4 did not admit validation and zero-buffer primitives")

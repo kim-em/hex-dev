@@ -27,7 +27,14 @@ A bounded owned native operation can complete lookup or insertion within the
 current width and index capacity, for up to 2047 variables and 4096 additional
 work units. Unsupported shapes, widening, index growth and tight allowances
 return the unchanged table; portable continuation starts after the native frame
-returns. Shared and aliased buffers retain their original contents. Field/order metadata is checked before
+returns. Multiplied polynomial supports use slices of at most 64 identifiers.
+A native batch can complete existing-product lookups within 4096 total charged
+visits, returning the complete final workspace and table work. Misses, insertion,
+errors and unsupported geometry defer the unchanged table to scalar operations.
+Every slice uses the remaining parent allowances and preserves scalar failure
+prefixes. `productsWith_spec` proves the pure wrapper equal to those operations;
+conformance checks the C provider's result and exact admission decisions.
+Shared and aliased buffers retain their original contents. Field/order metadata is checked before
 reuse, and the complete base payload identifies the basis polynomial. A cache
 hit checks the complete base polynomial, comparing at most 4096 bytes per native
 call; basis changes cannot silently reuse a different row. Sugar and certificate

@@ -229,3 +229,117 @@ fallback_owned:
     lean_dec(a);lean_dec(b);lean_dec(max_count);lean_dec(max_bytes);lean_dec(max_work);
     lean_object *deferred=lean_alloc_ctor(1,1,0);lean_ctor_set(deferred,0,table);return deferred;
 }
+
+/* Read-only multi-hit lookup. At most 64 IDs and 4096 charged exponent/link
+   visits are inspected. No arena or index is copied. Only the final prepared
+   workspace (at most 8216 bytes) and the result (at most 256 bytes) are written.
+   A miss, error, long chain or unsupported representation leaves all arguments
+   unchanged and defers to the ordinary Lean reference outside this native frame. */
+#ifndef HEX_GROEBNER_PRODUCTS_FOUND
+#define HEX_GROEBNER_PRODUCTS_FOUND(n) ((void)(n))
+#endif
+static lean_object *products_hits(b_lean_obj_arg table,b_lean_obj_arg support,
+        b_lean_obj_arg monomial,b_lean_obj_arg start_arg,b_lean_obj_arg count_arg,
+        b_lean_obj_arg max_bytes,b_lean_obj_arg max_work,uint8_t native) {
+    if(!native || !hit_layout(table) || !lean_is_scalar(monomial) ||
+       !lean_is_scalar(start_arg) || !lean_is_scalar(count_arg) ||
+       !lean_is_scalar(max_bytes) || !lean_is_scalar(max_work)) return NULL;
+    unsigned positions[4]={0,3,6,7};
+    for(unsigned i=0;i<4;++i)
+        if(!lean_is_scalar(lean_ctor_get(table,positions[i]))) return NULL;
+    uint64_t arity=lean_unbox(lean_ctor_get(table,0));
+    uint64_t count=lean_unbox(lean_ctor_get(table,3));
+    uint64_t bits=lean_unbox(lean_ctor_get(table,6));
+    uint64_t work=lean_unbox(lean_ctor_get(table,7)),initial=work;
+    uint64_t allowed=lean_unbox(max_work),right=lean_unbox(monomial);
+    if(!arity || arity>2047 || !count || count>UINT32_MAX || bits>64 ||
+       right>=count || work>allowed) return NULL;
+    size_t start=lean_unbox(start_arg),terms=lean_unbox(count_arg);
+    size_t available=lean_sarray_size(support)/4;
+    if(start>=available || !terms) return NULL;
+    if(terms>available-start) terms=available-start;
+    if(terms>64) return NULL;
+    uint8_t tag=lean_ctor_get_uint8(table,8*sizeof(void*));
+    unsigned width=tag==0?1:tag==1?2:4;
+    lean_object *exponents=lean_ctor_get(table,1),*metadata=lean_ctor_get(table,2);
+    lean_object *workspace=lean_ctor_get(table,4),*index=lean_ctor_get(table,5);
+    lean_object *heads=lean_ctor_get(index,0),*links=lean_ctor_get(index,1);
+    size_t head_bytes=lean_sarray_size(heads),capacity=head_bytes/4;
+    if(lean_sarray_size(exponents)!=count*arity*width ||
+       lean_sarray_size(metadata)!=count*24 || lean_sarray_size(links)!=count*4 ||
+       head_bytes%4 || capacity<count*2 || (capacity&(capacity-1))) return NULL;
+    size_t size=(size_t)arity*4+28;
+    uint64_t reserved=lean_sarray_size(workspace);
+    if(reserved<size) reserved=size;
+    uint64_t bytes=count*(arity*width+28);
+    if(head_bytes>UINT64_MAX-bytes) return NULL;
+    bytes+=head_bytes;
+    if(reserved>UINT64_MAX-bytes) return NULL;
+    bytes+=reserved;
+    if(bytes>lean_unbox(max_bytes) || bytes>=SIZE_MAX) return NULL;
+    uint8_t prepared[2047*4+28],output[64*4];
+    for(size_t term=0;term<terms;++term) {
+        uint64_t left=read_le(lean_sarray_cptr(support)+(start+term)*4,4);
+        if(left>=count || 2*arity>allowed-work || 2*arity>4096-(work-initial)) return NULL;
+        if(!prepare_monomial(1,width,arity,count,left,right,
+            lean_sarray_cptr(exponents),lean_sarray_size(exponents),prepared,size)) return NULL;
+        work+=2*arity;
+        uint64_t hash=read_le(prepared+arity*4+16,4) |
+            (read_le(prepared+arity*4+20,4)<<32);
+        if(bits<64) hash&=(UINT64_C(1)<<bits)-1;
+        uint64_t link=read_le(lean_sarray_cptr(heads)+(hit_mix(hash)&(capacity-1))*4,4);
+        uint64_t visited=0,found=UINT64_MAX;
+        while(link && visited<count) {
+            if(work==allowed || work-initial==4096) return NULL;
+            ++work;++visited;
+            uint64_t id=link-1;
+            if(id>=count) return NULL;
+            link=read_le(lean_sarray_cptr(links)+(size_t)id*4,4);
+            const uint8_t *m=lean_sarray_cptr(metadata)+(size_t)id*24+16;
+            uint64_t stored=read_le(m,4) | (read_le(m+4,4)<<32);
+            if(stored!=hash) continue;
+            if(arity>allowed-work || arity>4096-(work-initial)) return NULL;
+            work+=arity;
+            if(equal_monomial(width,arity,id,lean_sarray_cptr(exponents),
+                lean_sarray_size(exponents),prepared,size)) {found=id;break;}
+        }
+        if(found==UINT64_MAX) return NULL;
+        write_le(output+term*4,4,found);
+    }
+    /* Borrowed table: retain fields before constructing an independent result.
+       Workspace aliases are read completely before allocating its replacement. */
+    lean_object *updated=lean_alloc_ctor(0,8,1);
+    for(unsigned i=0;i<8;++i) {
+        lean_object *field=lean_ctor_get(table,i);
+        if(i==4) {
+            field=lean_alloc_sarray(1,size,size);
+            memcpy(lean_sarray_cptr(field),prepared,size);
+        } else if(i==7) field=lean_uint64_to_nat(work);
+        else lean_inc(field);
+        lean_ctor_set(updated,i,field);
+    }
+    lean_ctor_set_uint8(updated,8*sizeof(void*),tag);
+    lean_object *ids=lean_alloc_sarray(1,terms*4,terms*4);
+    memcpy(lean_sarray_cptr(ids),output,terms*4);
+    lean_object *ok=lean_alloc_ctor(1,1,0);lean_ctor_set(ok,0,ids);
+    lean_object *result=lean_alloc_ctor(0,2,0);
+    lean_ctor_set(result,0,ok);lean_ctor_set(result,1,updated);
+    HEX_GROEBNER_PRODUCTS_FOUND(terms);
+    return result;
+}
+LEAN_EXPORT lean_obj_res lean_hex_monomial_products_attempt(lean_obj_arg table,
+        b_lean_obj_arg support,lean_obj_arg monomial,lean_obj_arg start,
+        lean_obj_arg count,lean_obj_arg max_count,lean_obj_arg max_bytes,
+        lean_obj_arg max_work,uint8_t native) {
+    lean_object *result=products_hits(table,support,monomial,start,count,max_bytes,max_work,native);
+    if(result) {
+        lean_dec(table);lean_dec(monomial);lean_dec(start);lean_dec(count);
+        lean_dec(max_count);lean_dec(max_bytes);lean_dec(max_work);
+        lean_object *accepted=lean_alloc_ctor(0,1,0);lean_ctor_set(accepted,0,result);
+        return accepted;
+    }
+    lean_dec(monomial);lean_dec(start);lean_dec(count);
+    lean_dec(max_count);lean_dec(max_bytes);lean_dec(max_work);
+    lean_object *deferred=lean_alloc_ctor(1,1,0);lean_ctor_set(deferred,0,table);
+    return deferred;
+}
