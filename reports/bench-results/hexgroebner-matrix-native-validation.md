@@ -32,10 +32,10 @@ actual phase cost or allocator-copy bytes. Shape/copy bounds remain analytical.
 Mimalloc limits sanitizer coverage and leak detection is disabled; explicit
 ownership/snapshot tests supplement it.
 
-`MatrixValidation.validate_rows` proves that combined-cursor validation equals
+`MatrixValidation.validateFrom_zero` proves that combined-cursor validation equals
 the reference's reducer loop followed by its target loop, preserving first
 errors and charged prefixes. The component success/failure/terminal laws and
-`Native.Scan.events_eq` are kernel checked. Axiom audits use only `propext`,
+`Native.Scan.untraced_events` are kernel checked. Axiom audits use only `propext`,
 `Classical.choice` and `Quot.sound`; `Matrix.charge_run` uses no axioms.
 These lemmas are reusable support, not a completed-continuation equivalence
 or general fuel theorem. F4 retains its existing routing.

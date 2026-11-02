@@ -116,8 +116,7 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
   if columns > limits.columns then throw (.exhausted .columns)
   if reducers.size + targets.size > limits.rows then throw (.exhausted .rows)
   if !sugars.isEmpty && sugars.size != reducers.size + targets.size then throw .dimensions
-  for i in [:reducers.size] do validate field limits columns i reducers[i]!
-  for i in [:targets.size] do validate field limits columns (reducers.size + i) targets[i]!
+  validateRows field limits columns reducers targets
   let width := field.width
   let workspaceBytes := columns * (width.bytes + 4)
   -- Keep all allocation sizes inside both the logical limit and the platform's

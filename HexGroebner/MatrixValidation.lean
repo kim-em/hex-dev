@@ -21,7 +21,7 @@ def validateFrom (field : PrimeField) (limits : MatrixLimits)
     Matrix.validate field limits columns i
       (if i < reducers.size then reducers[i]! else targets[i-reducers.size]!)
 
-theorem validate_tail (field : PrimeField) (limits : MatrixLimits)
+theorem validateFrom_succ (field : PrimeField) (limits : MatrixLimits)
     (columns : Nat) (reducers targets : Array SparseRow) (cursor : Nat)
     (h : cursor < reducers.size+targets.size) :
     validateFrom field limits columns reducers targets cursor = (do
@@ -35,14 +35,14 @@ theorem validate_tail (field : PrimeField) (limits : MatrixLimits)
   rw [length, List.range'_succ]
   simp
 
-theorem validate_done (field : PrimeField) (limits : MatrixLimits)
+theorem validateFrom_of_le (field : PrimeField) (limits : MatrixLimits)
     (columns : Nat) (reducers targets : Array SparseRow) (cursor : Nat)
     (h : reducers.size+targets.size ≤ cursor) :
     validateFrom field limits columns reducers targets cursor = pure () := by
   simp [validateFrom, Std.Legacy.Range.forIn_eq_forIn_range',
     Std.Legacy.Range.size, Nat.sub_eq_zero_of_le h]
 
-theorem validate_error_run (field : PrimeField) (limits : MatrixLimits)
+theorem validateFrom_error (field : PrimeField) (limits : MatrixLimits)
     (columns : Nat) (reducers targets : Array SparseRow) (cursor : Nat)
     (stats nextStats : MatrixStats) (error : MatrixError)
     (h : cursor < reducers.size+targets.size)
@@ -51,13 +51,13 @@ theorem validate_error_run (field : PrimeField) (limits : MatrixLimits)
         stats = (.error error,nextStats)) :
     (validateFrom field limits columns reducers targets cursor).run stats =
       (.error error,nextStats) := by
-  rw [validate_tail field limits columns reducers targets cursor h]
+  rw [validateFrom_succ field limits columns reducers targets cursor h]
   dsimp [ExceptT.run, Bind.bind, ExceptT.bind, ExceptT.bindCont,
     ExceptT.mk, StateT.bind, Pure.pure, StateT.pure]
   simp only [ExceptT.run] at hrow
   rw [hrow] <;> rfl
 
-theorem validate_ok_run (field : PrimeField) (limits : MatrixLimits)
+theorem validateFrom_ok (field : PrimeField) (limits : MatrixLimits)
     (columns : Nat) (reducers targets : Array SparseRow) (cursor : Nat)
     (stats nextStats : MatrixStats)
     (h : cursor < reducers.size+targets.size)
@@ -66,7 +66,7 @@ theorem validate_ok_run (field : PrimeField) (limits : MatrixLimits)
         stats = (.ok (),nextStats)) :
     (validateFrom field limits columns reducers targets cursor).run stats =
       (validateFrom field limits columns reducers targets (cursor+1)).run nextStats := by
-  rw [validate_tail field limits columns reducers targets cursor h]
+  rw [validateFrom_succ field limits columns reducers targets cursor h]
   dsimp [ExceptT.run, Bind.bind, ExceptT.bind, ExceptT.bindCont,
     ExceptT.mk, StateT.bind, Pure.pure, StateT.pure]
   simp only [ExceptT.run] at hrow
@@ -82,7 +82,7 @@ private theorem forIn_unit (indices : List Nat) (action : Nat → Matrix.Work Un
 
 
 /-- Validate reducers followed by targets with their original input indices. -/
-def validateRows (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
+@[inline] def validateRows (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
     (reducers targets : Array SparseRow) : Matrix.Work Unit := do
   for i in [:reducers.size] do validate field limits columns i reducers[i]!
   for i in [:targets.size] do validate field limits columns (reducers.size+i) targets[i]!
@@ -99,7 +99,7 @@ private theorem forM_congr (indices : List Nat) (f g : Nat → Matrix.Work Unit)
 
 /-- Combined-cursor validation equals the reference's reducer/target loops,
 including every first error and charged prefix. -/
-theorem validate_rows (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
+theorem validateFrom_zero (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
     (reducers targets : Array SparseRow) :
     validateFrom field limits columns reducers targets 0 =
       validateRows field limits columns reducers targets := by

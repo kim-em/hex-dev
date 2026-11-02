@@ -24,6 +24,7 @@ extern lean_obj_res lean_hex_matrix_step(lean_obj_arg);
 #define HEX_GROEBNER_CONT_DECLINE(width) ((void)0)
 #define HEX_GROEBNER_CONT_EDGE(width) ((void)0)
 #define HEX_GROEBNER_CONT_ALLOCATE(width) ((void)0)
+#define HEX_GROEBNER_CONT_VALIDATE_WORK(site,width) ((void)0)
 #endif
 
 #if UINTPTR_MAX == UINT64_MAX
@@ -123,7 +124,7 @@ static lean_object *cont_empty_gather(void) {
 /* Enforce every buffer bound before a direct write. A failed preflight uses
    the checked Lean phase, before charges or mutable buffers have changed. */
 static int cont_bounds(continuation *c) {
-    if(c->phase==2) return c->p>=2 && c->p<UINT64_C(2147483648);
+    if(c->phase==2) return c->columns<=65536 && c->p>=2 && c->p<UINT64_C(2147483648);
     if(c->phase==1) {
         if(!lean_is_scalar(c->v[5])) return 0;
         uint64_t cursor=lean_unbox(c->v[5]),nr=lean_array_size(c->v[2]);
@@ -178,14 +179,14 @@ static void cont_invalid(continuation *c,unsigned tag,uint64_t row,uint64_t entr
 static void cont_validate(continuation *c) {
     uint64_t cursor=lean_unbox(c->v[5]),nr=lean_array_size(c->v[2]);
     if(cursor>=nr+lean_array_size(c->v[3])) {c->phase=2;return;}
-    if(!cont_work(c,1)) {cont_error(c,5);return;}
+    if(!cont_work(c,1)) {HEX_GROEBNER_CONT_VALIDATE_WORK(0,c->width);cont_error(c,5);return;}
     lean_object *row=lean_array_get_core(c->v[cursor<nr?2:3],(size_t)(cursor<nr?cursor:cursor-nr));
     lean_object *ids=lean_ctor_get(row,0),*coeff=lean_ctor_get(row,1);
     uint64_t bytes=lean_sarray_size(ids),size=bytes/4,coefficient_bytes=lean_sarray_size(coeff);
     if(bytes%4 || coefficient_bytes!=size*c->width) {cont_invalid(c,2,cursor,0);return;}
     if(!cont_charge(c,1,2,size)) {cont_error(c,2);return;}
     if(!cont_charge(c,3,4,bytes+coefficient_bytes)) {cont_error(c,4);return;}
-    if(!cont_work(c,size)) {cont_error(c,5);return;}
+    if(!cont_work(c,size)) {HEX_GROEBNER_CONT_VALIDATE_WORK(1,c->width);cont_error(c,5);return;}
     uint64_t previous=0;
     for(uint64_t i=0;i<size;++i) {
         uint64_t column=cont_read(lean_sarray_cptr(ids)+4*i,4);

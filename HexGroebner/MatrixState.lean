@@ -396,9 +396,11 @@ theorem validate_ok (state : State) (stats : MatrixStats)
           else state.targets[state.validation-state.reducers.size]!)).run state.stats =
         (.ok (), stats)) :
     let out := next state
-    out.validation = state.validation + 1 ∧ out.phase = .validate ∧ out.stats = stats := by
+    out.validation = state.validation + 1 ∧ out.phase = .validate ∧ out.stats = stats ∧
+      (out.field,out.limits,out.columns,out.reducers,out.targets) =
+        (state.field,state.limits,state.columns,state.reducers,state.targets) := by
   rw [next_validate state stats (.ok ()) hphase hcursor hvalidate]
-  exact ⟨rfl, hphase, rfl⟩
+  exact ⟨rfl, hphase, rfl, rfl⟩
 
 /-- A failed validator retains its exact error and charged prefix in a terminal state.
 This is an equation for the Lean phase model. -/
@@ -411,9 +413,12 @@ theorem validate_error (state : State) (stats : MatrixStats) (error : MatrixErro
           else state.targets[state.validation-state.reducers.size]!)).run state.stats =
         (.error error, stats)) :
     let out := next state
-    out.phase = .done ∧ out.result = some (.error error) ∧ out.stats = stats := by
+    out.phase = .done ∧ out.result = some (.error error) ∧ out.stats = stats ∧
+      out.validation = state.validation ∧
+      (out.field,out.limits,out.columns,out.reducers,out.targets) =
+        (state.field,state.limits,state.columns,state.reducers,state.targets) := by
   rw [next_validate state stats (.error error) hphase hcursor hvalidate]
-  exact ⟨rfl, rfl, rfl⟩
+  exact ⟨rfl, rfl, rfl, rfl, rfl⟩
 
 /-- Advancing by zero phases preserves the complete continuation. -/
 @[simp] theorem advance_zero (state : State) : advance state 0 = state := by

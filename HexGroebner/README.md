@@ -640,8 +640,8 @@ allocating its zeroed dense and slot buffers. At most 524,288 bytes are
 allocated for the admitted column/width geometry. Exhaustion retains the
 exact charged prefix and leaves the previous buffers unchanged.
 
-`MatrixValidation.validate_rows` equates combined-cursor validation with the
+`MatrixValidation.validateFrom_zero` equates combined-cursor validation with the
 reference's reducer-then-target loops, including first errors and charged
-prefixes. `Native.Scan.events_eq` proves that an untraced scalar scan produces
+prefixes. `Native.Scan.untraced_events` proves that an untraced scalar scan produces
 no derivation events. These reusable component lemmas do not prove completed
 continuation equivalence or its general phase-fuel bound.

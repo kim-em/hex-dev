@@ -32,7 +32,7 @@ private theorem events_spec (modulus : UInt64) (slots : ByteArray)
       (onContinue := fun _ out => ⌜out.events = #[]⌝)
   all_goals simp_all
 
-theorem events_eq (modulus : UInt64) (slots : ByteArray)
+theorem untraced_events (modulus : UInt64) (slots : ByteArray)
     (pivots : Array Native.Scan.Pivot) (initial : Native.Scan.State)
     (quantum workLimit traceLimit : Nat) :
     (Native.Scan.portable modulus slots pivots initial quantum workLimit traceLimit false).events = #[] := by

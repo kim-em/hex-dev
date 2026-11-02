@@ -152,7 +152,7 @@ def validationChecks : Bool := Id.run do
         let reducers := if targets then #[valid] else #[valid,row]
         let targetRows := if targets then #[valid,row] else #[valid]
         for limits in ([{}, {inputEntries := 3}, {packedBytes := 25},
-            {work := 4}, {work := 2^90, packedBytes := 2^90}] : List MatrixLimits) do
+            {work := 3}, {work := 4}, {work := 2^90, packedBytes := 2^90}] : List MatrixLimits) do
           let mut state := MatrixState.start field limits 3 reducers targetRows #[] false
           for _ in [:32] do
             if state.phase == .done then break
@@ -184,7 +184,7 @@ def workspaceChecks : Bool := Id.run do
     let total := validated.stats.packedBytes+bytes
     let work := validated.stats.work+bytes
     for limits in ([{packedBytes := total-1},{packedBytes := total},
-        {work := work-1}] : List MatrixLimits) do
+        {work := work-1},{work}] : List MatrixLimits) do
       let mut state := MatrixState.start field limits 3 #[row] #[row] #[] false
       for _ in [:8] do
         if state.phase == .workspace then break

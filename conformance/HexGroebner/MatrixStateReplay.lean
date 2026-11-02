@@ -52,9 +52,9 @@ theorem validation_example :
 /-- info: 'Hex.Groebner.MatrixState.validate_error' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in #print axioms MatrixState.validate_error
 
-/-- info: 'Hex.Groebner.Matrix.validate_rows' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in #print axioms Matrix.validate_rows
-/-- info: 'Hex.Groebner.Native.Scan.events_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
-#guard_msgs in #print axioms Native.Scan.events_eq
+/-- info: 'Hex.Groebner.Matrix.validateFrom_zero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms Matrix.validateFrom_zero
+/-- info: 'Hex.Groebner.Native.Scan.untraced_events' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms Native.Scan.untraced_events
 
 end Hex.Groebner.MatrixStateReplay

@@ -305,6 +305,8 @@ static uint64_t whole_accepted=0,whole_deferred=0,whole_joint=0,whole_independen
 #define lean_hex_groebner_eliminate_matrix hex_test_whole
 static uint64_t continuation_phases[8]={0};
 static uint64_t cont_exhausted[8][7]={{0}},cont_invalid_masks[6]={0};
+static uint64_t cont_validation_work[2]={0};
+#define HEX_GROEBNER_CONT_VALIDATE_WORK(s,w) (cont_validation_work[s]|=UINT64_C(1)<<(w))
 static uint64_t cont_declined_mask=0,cont_edge_mask=0,cont_allocated_mask=0;
 #define HEX_GROEBNER_CONT_EXHAUSTED(p,r,w) (cont_exhausted[p][r]|=UINT64_C(1)<<(w))
 #define HEX_GROEBNER_CONT_INVALID(t,w) (cont_invalid_masks[t]|=UINT64_C(1)<<(w))
@@ -336,7 +338,7 @@ LEAN_EXPORT lean_obj_res hex_test_continuation_count(lean_obj_arg world) {
 }
 LEAN_EXPORT lean_obj_res hex_test_continuation_outcomes(lean_obj_arg world) {
  const uint64_t widths=(UINT64_C(1)<<1)|(UINT64_C(1)<<2)|(UINT64_C(1)<<4);
- int ok=cont_declined_mask==widths && cont_edge_mask==widths && cont_allocated_mask==widths;
+ int ok=cont_validation_work[0]==widths && cont_validation_work[1]==widths && cont_declined_mask==widths && cont_edge_mask==widths && cont_allocated_mask==widths;
  for(unsigned t=2;t<=4;++t) ok=ok && cont_invalid_masks[t]==widths;
  ok=ok && cont_exhausted[1][2]==widths && cont_exhausted[1][4]==widths && cont_exhausted[1][5]==widths;
  ok=ok && cont_exhausted[2][4]==widths && cont_exhausted[2][5]==widths;
