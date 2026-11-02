@@ -34,4 +34,15 @@ theorem validation_example :
 /-- info: 'Hex.Groebner.MatrixStateReplay.validation_example' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in #print axioms validation_example
 
+/-- info: 'Hex.Groebner.Matrix.charge_run' does not depend on any axioms -/
+#guard_msgs in #print axioms Matrix.charge_run
+/-- info: 'Hex.Groebner.MatrixState.advance_zero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms MatrixState.advance_zero
+/-- info: 'Hex.Groebner.MatrixState.next_done' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms MatrixState.next_done
+/-- info: 'Hex.Groebner.MatrixState.advance_done' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms MatrixState.advance_done
+/-- info: 'Hex.Groebner.MatrixState.finish_done' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms MatrixState.finish_done
+
 end Hex.Groebner.MatrixStateReplay

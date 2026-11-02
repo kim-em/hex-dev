@@ -9,6 +9,7 @@ module
 public import HexGroebner.Matrix
 public import HexGroebner.NativeScan
 public import HexGroebner.NativeGather
+import Init.Data.Range.Lemmas
 
 public section
 
@@ -350,6 +351,37 @@ theorem finish_spec (quantum : Nat) (state : State) (native : Bool) :
 
 /-- Complete the continuation in native batches of 64 phases. -/
 def finish (state : State) := finishWith 64 state
+
+/-- Advancing by zero phases preserves the complete continuation. -/
+@[simp] theorem advance_zero (state : State) : advance state 0 = state := by
+  rw [advance_spec]
+  simp [advancePortable, advanceWith, Std.Legacy.Range.forIn_eq_forIn_range',
+    Std.Legacy.Range.size]
+
+/-- Taking a phase of a terminal continuation preserves its complete state. -/
+theorem next_done (state : State) (h : state.phase = .done) : next state = state := by
+  simp only [next, advancePhase, h]
+  rfl
+
+/-- A terminal continuation is immutable under every subsequent advance. -/
+theorem advance_done (state : State) (steps : Nat) (h : state.phase = .done) :
+    advance state steps = state := by
+  rw [advance_spec]
+  simp only [advancePortable, advanceWith, Id.run]
+  rw [Std.Legacy.Range.forIn_eq_forIn_range']
+  generalize hx : List.range' _ _ _ = xs
+  cases xs <;> simp [h] <;> rfl
+
+/-- Completing an already terminal continuation preserves its result and charges. -/
+theorem finish_done (quantum : Nat) (state : State) (native : Bool)
+    (h : state.phase = .done) :
+    finishWith quantum state native =
+      (state.result.getD (.error .rowUpdate), state.stats) := by
+  simp only [finishWith, Id.run]
+  rw [Std.Legacy.Range.forIn_eq_forIn_range']
+  generalize hx : List.range' _ _ _ = xs
+  cases xs <;> simp [h] <;> rfl
+
 
 
 end Hex.Groebner.MatrixState
