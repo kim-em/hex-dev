@@ -43,8 +43,8 @@ prototype changes no complete basis or operational counter.
 
 ## Full-system measurements
 
-Host chungus2, shared AMD EPYC9455, Lean4.35.0-rc3, generated C Clang23.1.0,
-FFI Clang23.1.3. One thread uses an automatically leased CPU. Every experiment
+Host chungus2, shared AMD EPYC 9455, Lean 4.35.0-rc3, generated C Clang 23.1.0,
+FFI Clang 23.1.3. One thread uses an automatically leased CPU. Every experiment
 runs adjacent AB then BA. The unchanged 16-system diagnostic suite uses p32003
 and 2147483647, ten-second per-process and 16-GiB address-space limits, complete
 reduced grevlex output and equality of every full basis. Candidate time includes
@@ -77,7 +77,7 @@ this delayed path. Scalar has one unchanged rerun; AVX2 and metadata have none.
 | cyclic6Small | 1.0343 | 1.0028 | 1.0288 |
 
 Scalar retains 240 points on its original and repeat CPUs; AVX2 retains 120 on
-CPU62 and metadata 120 on CPU18. Medians, every individual ratio, CPU affinity,
+CPU 62 and metadata 120 on CPU 18. Medians, every individual ratio, CPU affinity,
 load observations, failures and ranges remain in the raw analyses. Large
 outliers in unaffected cases are retained, not filtered or used as evidence of
 an algorithm change. No later rerun is used to select favorable samples.
@@ -108,14 +108,14 @@ no points were discarded. The SIMD campaign requests the actual full ladder.
 | cauchy16Strided/256 | 1.3795 | 1.1012 |
 | cauchy16Strided/512 | 1.4218 | 1.0748 |
 
-Scalar uses CPU7; SIMD uses CPU21. Both remain slower than the existing exact
+Scalar uses CPU 7; SIMD uses CPU 21. Both remain slower than the existing exact
 minimal-width AVX2 kernels on these sizes, despite the SIMD improvement over
 scalar delayed arithmetic. Wider dense storage and four rather than eight
 vector lanes are implementation tradeoffs; the timings alone do not isolate
 their causal costs.
 
 To explain the lack of a full-system benefit, two sequential two-second,
-one-repetition perf captures profile cyclic6Small, CPU44, 1999Hz with DWARF
+one-repetition perf captures profile cyclic6Small, CPU 44, 1999 Hz with DWARF
 stacks. Neither loses samples. Baseline/native scan self samples are 3.41% and
 3.60%; monomial combine is 6.93% and 6.74%, reference-count decrement 8.47% and
 8.25%, allocation 5.68% and 5.18%, free 5.44% and 5.35%. Baseline and delayed
@@ -157,18 +157,18 @@ the baseline. It consumes four bytes per dense coordinate and preserves exact
 prefix rejection, work limits and independent certification. This snapshot is
 an experiment and is not selected for production.
 
-All64 diagnostic processes complete with identical full bases and non-resource
-counters. Candidate geometric mean B/A is1.0476, median1.0678,
-range0.6014–1.5702 on CPU89. Process geometric mean is1.2833,
-median1.2132, range0.5050–5.0311. The120 fixed points on CPU34 retain
-all variability: geometric means are0.9574 cyclic4,1.3036 cyclic5,
-0.9232 cyclic6,1.1127 katsura3,0.9321 reimer5 and1.1550 cyclic6Small.
+All 64 diagnostic processes complete with identical full bases and non-resource
+counters. Candidate geometric mean B/A is 1.0476, median 1.0678,
+range 0.6014–1.5702 on CPU 89. Process geometric mean is 1.2833,
+median 1.2132, range 0.5050–5.0311. The 120 fixed points on CPU 34 retain
+all variability: geometric means are 0.9574 cyclic4, 1.3036 cyclic5,
+0.9232 cyclic6, 1.1127 katsura3, 0.9321 reimer5 and 1.1550 cyclic6Small.
 No unchanged repeat is used for this snapshot.
 
-The full declared Cauchy ladder64/128/256/512, three outer trials and adjacent
-AB/BA schedule retain96 points on CPU70. Every complete output hash agrees.
-Contiguous geometric mean B/A at those sizes is1.1022/1.4214/1.6695/1.9142;
-even-column strided is1.0062/1.2993/1.5021/1.6434. All eight complexity fits
+The full declared Cauchy ladder 64/128/256/512, three outer trials and adjacent
+AB/BA schedule retain 96 points on CPU 70. Every complete output hash agrees.
+Contiguous geometric mean B/A at those sizes is 1.1022/1.4214/1.6695/1.9142;
+even-column strided is 1.0062/1.2993/1.5021/1.6434. All eight complexity fits
 are inconclusive and none is budget-truncated. These finite-size regressions
 do not support adoption. Raw source blobs, binary hashes, samples, analyses and
 protocol corrections are retained. Inherited arm prose was corrected separately;
@@ -182,14 +182,14 @@ the recorded actual commands and binary/source hashes were already correct.
 
 [Raw Eco10 profiles](raw/pair-rows-eco-profile.tar.gz), SHA-256
 `537244c0f26e8fc1f049d472b1c9328e6a3b5814b847970926447bc5e7b69012`,
-use frozen engine `70aacca874da` on leased CPU55. The archive records exact
+use frozen engine `70aacca874da` on leased CPU 55. The archive records exact
 inputs and binary hashes, load context, all eight process outputs per field,
-1999Hz DWARF recordings and reports. There are no lost samples. All eight full
+1999 Hz DWARF recordings and reports. There are no lost samples. All eight full
 bases agree within each field. Startup, parsing and output are included; these
 are explanatory profiles, not matched timing comparisons.
 
-The u16 scan accounts for19.84% of self samples at p32003; the u32 scan
-accounts for25.69% at p2147483647. Allocation/deallocation, monomial operations,
+The u16 scan accounts for 19.84% of self samples at p32003; the u32 scan
+accounts for 25.69% at p2147483647. Allocation/deallocation, monomial operations,
 reducer construction and symbolic preprocessing account for additional costs.
 The profiles motivate arithmetic experiments but do not establish a language
 limitation or assign causal costs to individual source operations.
@@ -202,25 +202,25 @@ portable model exactly, including non-overflowing lanes normalized by a neighbor
 A kernel `decide` example checks this block behavior at p257. Native vectors and
 scalar fallback implement the same policy, including malformed-prefix replay.
 
-All64 diagnostic processes match complete bases and non-resource counters.
-On CPU91, candidate geometric mean B/A is1.0684, median1.0206,
-range0.5629–2.2105; process geometric mean1.0228, median1.0707,
-range0.3084–2.6984. All120 fixed points on CPU24 have matching full hashes:
-means1.1958 cyclic4,1.0261 cyclic5,1.4761 cyclic6,1.3190 katsura3,
-0.8685 reimer5 and1.0066 cyclic6Small. Every observation remains.
+All 64 diagnostic processes match complete bases and non-resource counters.
+On CPU 91, candidate geometric mean B/A is 1.0684, median 1.0206,
+range 0.5629–2.2105; process geometric mean 1.0228, median 1.0707,
+range 0.3084–2.6984. All 120 fixed points on CPU 24 have matching full hashes:
+means1.1958 cyclic4, 1.0261 cyclic5, 1.4761 cyclic6, 1.3190 katsura3,
+0.8685 reimer5 and 1.0066 cyclic6Small. Every observation remains.
 
-The96-point kernel sweep on CPU35 has matching full output hashes, all fits
+The 96-point kernel sweep on CPU 35 has matching full output hashes, all fits
 inconclusive and none budget-truncated. At64/128/256/512, contiguous geometric
-means B/A are1.1522/1.2054/1.2187/1.1889; strided are
+means B/A are 1.1522/1.2054/1.2187/1.1889; strided are
 1.2093/1.2973/1.2520/1.3221. This snapshot also remains an experiment.
 No unchanged repeat is used. No compiler/runtime impossibility follows.
 
-The final2070-job targeted build,14042-job full conformance build and all
+The final2070-job targeted build, 14042-job full conformance build and all
 175/567/1288 external oracle cases pass. Four Clang and four GCC sanitizer
-variants pass. The AVX2 window counts11836 delayed scans,11776 gathers,
-1469 contiguous vectors and2258 scattered vectors; scalar variants use zero
+variants pass. The AVX2 window counts11836 delayed scans, 11776 gathers,
+1469 contiguous vectors and 2258 scattered vectors; scalar variants use zero
 vectors. Validation includes guard pages, all residue boundaries, exact
-UInt32 overflow repair, aliases, invalid prefixes, resumed5000-column scans,
+UInt32 overflow repair, aliases, invalid prefixes, resumed 5000-column scans,
 shared derivations and complete cyclic5 F4 comparison.
 
 SHA-256:
@@ -262,7 +262,7 @@ CPU per sweep, adjacent AB then BA and retained completed samples. No unchanged
 repeat is used, and the two distinct field suites are not pooled.
 
 The original 16-input development suite retains 64 successful processes and
-32 complete-basis agreements on CPU13. Candidate geometric mean B/A is 1.0063,
+32 complete-basis agreements on CPU 13. Candidate geometric mean B/A is 1.0063,
 median 1.0037 and range 0.9737–1.0691. Process geometric mean is 0.9743.
 Candidate ratios separated by field are 0.9999 at 32003 and 1.0128 at
 2147483647. Candidate timing includes canonicalization, F4 and final reduction;
@@ -272,18 +272,18 @@ are excluded from both timing claims.
 
 The companion wide-field suite lifts the same eight p31 systems through signed
 integer coefficients into 65537 and 2147483629. Its generator, exact inputs,
-separate suite hash and runner are retained. On CPU61, all 64 processes succeed
+separate suite hash and runner are retained. On CPU 61, all 64 processes succeed
 and all 32 complete bases agree. Candidate B/A is 1.0269, median 1.0207 and
 range 0.9695–1.2771; process B/A is 1.0212. Field-specific candidate ratios
 are 1.0366 at 65537 and 1.0173 at 2147483629. These are additional development
 inputs, with no held-out or leadership claim.
 
-All 120 registered fixed points complete on CPU16 with equal structural basis
+All 120 registered fixed points complete on CPU 16 with equal structural basis
 hashes and five declared repetitions. The case geometric means are cyclic4
 1.0152, cyclic5 1.0120, cyclic6 1.0014, Katsura3 1.0068, Reimer5 1.0257 and
 cyclic6Small 1.0031. Individual ratios, medians and ranges remain in the archive.
 
-The complete 64/128/256/512 Cauchy kernel ladders retain 96 points on CPU14,
+The complete 64/128/256/512 Cauchy kernel ladders retain 96 points on CPU 14,
 three outer trials, four-second inner targets and 32-second call caps. All
 complete output hashes agree. All eight fit verdicts are inconclusive; none is
 budget-truncated. The following are finite-size observations, not fitted

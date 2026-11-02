@@ -58,8 +58,7 @@ recovers some candidate time but remains flat overall. Their pooled fixed
 `cyclic6Small` ratio is 1.0446, so this is not a uniform improvement.
 
 The current packed reducer trie avoids boxed node temporaries and preserves
-portable traversal choice, order and exact work exhaustion. It has the strongest
-candidate evidence here (0.9237), but individual fixed cases remain mixed. The
+portable traversal choice, order and exact work exhaustion. Its pooled candidate ratio is 0.9237, but individual fixed cases remain mixed. The
 new preparation cost changes only work/allocated counters, with all basis and
 matrix statistics preserved. Separate later checks cover the maximum tree/stack
 with read-only guard pages and Clang/GCC sanitizers; the 175/567/1288 independent
@@ -161,6 +160,10 @@ cyclic4 1.0067, cyclic5 0.9816, cyclic6 0.8851, Katsura3 1.0059, Reimer5
 0.3298–1.0521; the apparent mean gain includes that retained outlier. No
 unchanged repeat, full conformance or independent oracle profile is claimed
 for this variant. These observations establish no consistent system gain,
-so the variant is not selected. Exact source blobs, failed test setup,+corrected guard tests, build logs, all raw samples and analyses are retained.
+so the variant is not selected. Exact source blobs, failed test setup, corrected guard tests, build logs, all raw samples and analyses are retained.
 
 - [prototype-contiguous512-1cabf2b75854.tar.gz](raw/prototype-contiguous512-1cabf2b75854.tar.gz): `256070b4b5a3cd78cf5fa2ce58414871afc9b069b247b3508a2012eb22765a15`.
+
+The prototype capsules retain fixed observations but omit standalone
+fixed-analysis scripts. The reported figures are independently recomputable
+from exported `total_nanos`, `inner_repeats` and complete result hashes.

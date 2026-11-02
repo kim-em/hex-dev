@@ -7,9 +7,11 @@ The baseline is the dedicated Mersenne dispatch family `b1e96ea920dd`.
 Field arithmetic, matrix kernels, pair criteria and benchmark sources agree.
 Algorithm counters may differ: this experiment changes the algebraic work.
 
-This is not a production selection. The governing SPEC requires sugar-degree
-scheduling or verified homogenization for inhomogeneous systems. Allowing the
-experimental policy for those systems requires resolving that restriction.
+This is an intermediate prototype; its own source is not the production
+selection. At measurement time, the SPEC restricted inhomogeneous systems to
+sugar scheduling or verified homogenization. The current SPEC permits fair
+total-degree scheduling too; the [scheduling implementation](hexgroebner-scheduling.md)
+provides both policies and uses total degree by default.
 Complete-output comparisons below are evidence, not a producer correctness or
 termination proof. The prototype also changes the critical-pair constructor;
 existing conformance clients need updating, and the previous large-batch

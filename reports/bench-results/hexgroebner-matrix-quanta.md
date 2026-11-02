@@ -15,7 +15,7 @@ All measurements are manual on the shared EPYC 9455 host with one requested algo
 
 All 240 CLI processes succeed; 120 complete basis pairs and all algorithm counters agree. Small/medium pooled candidate ratios are 0.9642/0.9380, process ratios 0.9892/0.9487, and equal-family process ratios 1.0219/0.9487. The first and repeat campaigns differ materially. Candidate ratios span 0.3224–2.9414 on small and 0.1536–5.7022 on medium. There are zero measured failures or timeouts.
 
-| Fixed campaign | CPU | Case | B/A mean | Candidate median | Range |
+| Fixed campaign | CPU | Case | B/A geomean | Per-call median | Range |
 | --- | ---: | --- | ---: | ---: | --- |
 | first | 1 | cyclic4 | 0.8160 | 1.0010 | 0.1635–1.7834 |
 | first | 1 | cyclic5 | 0.6416 | 1.0085 | 0.0317–12.2793 |
@@ -30,7 +30,7 @@ All 240 CLI processes succeed; 120 complete basis pairs and all algorithm counte
 | repeat | 70 | reimer5 | 1.4789 | 1.0286 | 0.7374–4.3443 |
 | repeat | 70 | cyclic6Small | 1.1100 | 1.0697 | 0.2317–4.5044 |
 
-All 240 fixed points succeed with equal complete structural output hashes. Fixed Reimer5 regresses in both campaigns; several other cases have extreme variability and inconsistent mean/median evidence. No further unchanged repeat is used. The raw records retain CPU, host load, child RSS, full source/build identities, all samples and commands. The fixed-run contract prose truncates the baseline compute hash; the archived baseline manifest and this report give its complete identity. No uniform speedup claim is supported.
+All 240 fixed points succeed with equal complete structural output hashes. Fixed Reimer5 has geomeans 1.3452/1.4789 and medians 1.0913/1.0286 in the first/repeat campaigns. Several cyclic cases also have lower geomeans, with broad variability and means that differ from their medians. These tradeoffs do not establish a uniform gain. No further unchanged repeat is used. The raw records retain CPU, host load, child RSS, full source/build identities, all samples and commands. The fixed-run contract prose truncates the baseline compute hash; the archived baseline manifest and this report give its complete identity. No uniform speedup claim is supported.
 
 Validation passes the library/theory and conformance build, independent matrix/basis/division oracles, both 1134-output CLI corpora, 32 benchmark checks and every project audit. Four Clang and four GCC ASan/UBSan variants pass. Direct tests exercise 5000 reductions/events/entries, a pending 5000-entry row, every coefficient width, quantum boundaries 4096/4097/65535/65536/65537 and separate work, trace, output-entry and packed-byte exhaustion prefixes. The initial model-build command ran in the parent worktree; the corrected build and an updated malformed-quantum guard pass. Retained logs distinguish these development attempts.
 

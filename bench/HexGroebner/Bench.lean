@@ -6,6 +6,7 @@ Authors: Kim Morrison
 
 import HexGroebner
 import HexGroebner.Bench.Cauchy
+import HexGroebner.Bench.Columns
 import HexGroebner.Bench.Mersenne
 import HexArith.Montgomery.Context
 import LeanBench

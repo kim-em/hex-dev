@@ -16,25 +16,25 @@ Portable and native paths share the same charged contract. Forced collisions,
 Nat budgets and every returned full basis agree with the reference.
 
 A 14201-job build passes, including theory and all conformance. Clang/GCC four
-ASan/UBSan variants pass with15978 native chain searches in the real F4 counter
-window. All175 matrix,567 SymPy/Singular basis and1288 division oracles pass
-after updating only the three work-counter fields for525 of567 F4 fixtures.
+ASan/UBSan variants pass with 15978 native chain searches in the real F4 counter
+window. All 175 matrix, 567 SymPy/Singular basis and 1288 division oracles pass
+after updating only the three work-counter fields for 525 of 567 F4 fixtures.
 The initial oracle run reports that intentional fixture difference and remains
 in the validation logs. All other fixture fields and full bases are unchanged.
 DAG, phase, manifest, source/header audits pass.
 
-Host chungus2, shared EPYC9455, Lean4.35.0-rc3, generated C Clang23.1.0 and
-FFI Clang23.1.3. One thread, leased CPU91 for diagnostics and77 for fixed cases.
-Adjacent AB then BA, unchanged16-system diagnostic suite over32003/2147483647,
-10-second and16-GiB process limits, complete reduced grevlex basis comparison.
+Host chungus2, shared EPYC 9455, Lean 4.35.0-rc3, generated C Clang 23.1.0 and
+FFI Clang 23.1.3. One thread, leased CPU 91 for diagnostics and 77 for fixed cases.
+Adjacent AB then BA, unchanged 16-system diagnostic suite over 32003/2147483647,
+10-second and 16-GiB process limits, complete reduced grevlex basis comparison.
 Candidate time includes canonicalization/F4/final interreduction; process time
 includes startup/parse/output. Certification and kernel checking are excluded.
-All64 processes complete and full bases/nonresource counters agree. Candidate
-B/A geometric mean1.0652, median1.0735, range0.9732–1.1190; process geometric
-mean0.9730, median0.9549, range0.8980–1.0520. These distinct boundaries do not
+All 64 processes complete and full bases/nonresource counters agree. Candidate
+B/A geometric mean 1.0652, median 1.0735, range 0.9732–1.1190; process geometric
+mean 0.9730, median 0.9549, range 0.8980–1.0520. These distinct boundaries do not
 support an algorithmic gain. No unchanged rerun is used.
 
-All120 registered fixed points complete with matching structural basis hashes,
+All 120 registered fixed points complete with matching structural basis hashes,
 five declared repetitions and actual inner-repeat normalization:
 
 | Case | Geometric mean B/A | Median | Range |
@@ -46,10 +46,10 @@ five declared repetitions and actual inner-repeat normalization:
 | reimer5 | 1.0777 | 1.0763 | 1.0717–1.0899 |
 | cyclic6Small | 1.0925 | 1.0927 | 1.0801–1.1024 |
 
-The regression motivated sequential perf captures on CPU74,1999Hz,DWARF,
-one repetition with a two-second inner target forcyclic6Small. Neither loses
-samples. Packed combine self samples6.53%, its loop3.96%, combineOwned3.18%,
-native prepare2.88%, native search2.68%; allocation5.22%, decref8.85%,free5.23%.
+The regression motivated sequential perf captures on CPU 74, 1999 Hz, DWARF,
+one repetition with a two-second inner target for cyclic6Small. Neither loses
+samples. Packed combine self samples 6.53%, its loop 3.96%, combineOwned 3.18%,
+native prepare 2.88%, native search 2.68%; allocation 5.22%, decref 8.85%, free 5.23%.
 These profiles point to repeated metadata reads and boundary bookkeeping as
 further work. Sequential profiler runs are not matched timing evidence, and
 unresolved kernel symbols remain unattributed. No language limitation follows.
@@ -65,20 +65,20 @@ baseline and build the archived driver. SHA-256:
 
 ## Fused lookup and validation snapshots
 
-`e6dfbee3f2fc` (commit`05a36cbcaf`) fuses prepared-coordinate construction,
+`e6dfbee3f2fc` (commit `05a36cbcaf`) fuses prepared-coordinate construction,
 exact collision search and a successful table update. `fda88fabd49f`
-(commit`382b0a405a`) additionally fuses validation. Both defer unsupported cases
+(commit `382b0a405a`) additionally fuses validation. Both defer unsupported cases
 to the exact reference. They retain the original table and budgets on failed
 stages; prepared workspace bytes and every returned table field agree with the
 reference, including aliased inputs and large Nat bounds. Four Clang/GCC
-ASan/UBSan variants pass, with4819 successful native operations at the end of
-the F4 counter window. The2111-job library/theory/bench/emitter builds and all
+ASan/UBSan variants pass, with 4819 successful native operations at the end of
+the F4 counter window. The 2111-job library/theory/bench/emitter builds and all
 175/567/1288 independent oracles pass. These prototypes are intermediate
 experiments; their C-to-Lean fallback is superseded by an explicit deferred
 result returned to Lean before reference execution in later work.
 
-The same baseline, suite, host and AB/BA protocol above apply. All64 diagnostic
-processes per snapshot and120 fixed points per snapshot complete with equal
+The same baseline, suite, host and AB/BA protocol above apply. All 64 diagnostic
+processes per snapshot and 120 fixed points per snapshot complete with equal
 full bases/hashes. Only resource counters change. Neither uses an unchanged
 repeat. Candidate and process boundaries retain their separate definitions.
 
@@ -96,24 +96,24 @@ repeat. Candidate and process boundaries retain their separate definitions.
 | reimer5 | 1.0745 | 0.8440 |
 | cyclic6Small | 1.0002 | 1.0175 |
 
-Fixed CPUs are17 and58. Complete per-case medians, ranges, individual ratios,
+Fixed CPUs are 17 and 58. Complete per-case medians, ranges, individual ratios,
 raw outputs, failures and load observations remain in the analyses. These
 mixed observations do not justify selecting either snapshot for production.
 
 ## Native insertion snapshot
 
-`e5a66b00cdff` (commit`b75ed97ee1`) additionally appends monomials without
+`e5a66b00cdff` (commit `b75ed97ee1`) additionally appends monomials without
 crossing back to Lean when exponent width and hash capacity stay unchanged.
 Growth and widening use the reference. All widths and aliased workspaces
 match every reference result byte. Four Clang/GCC sanitizer variants pass,
-with6625 successful native operations including1207 insertions at the end of
-the F4 counter window. A14213-job full build and all external oracles pass.
+with 6625 successful native operations including1207 insertions at the end of
+the F4 counter window. A 14213-job full build and all external oracles pass.
 The final counters include the late all-width tests; the earlier1196-insertion
 run is also retained. Earlier failed prototype builds are retained and fixed.
 
 The original has substantial variability, so exactly one unchanged repeat
-follows. Every completed sample remains; neither run is discarded. All128
-processes and240 fixed points complete with matching full bases/hashes.
+follows. Every completed sample remains; neither run is discarded. All 128
+processes and 240 fixed points complete with matching full bases/hashes.
 
 | Diagnostic experiment | CPU | Candidate geometric mean B/A | Median | Range | Process geometric mean |
 | --- | ---: | ---: | ---: | --- | ---: |
@@ -133,7 +133,7 @@ median 0.9645, range 0.4802–2.7160.
 | reimer5 | 0.9887 | 0.9587 | 0.9736 | 0.9606 | 0.6554–1.3448 |
 | cyclic6Small | 1.3935 | 1.0069 | 1.1845 | 1.0262 | 0.9544–2.4847 |
 
-Fixed CPUs54/50. The repeated cyclic5 regression and the original15.54 ratio
+Fixed CPUs 54/50. The repeated cyclic5 regression and the original15.54 ratio
 remain. No additional unchanged repeat is used. Neither a consistent gain nor
 a language limitation is established by these observations.
 
@@ -176,7 +176,7 @@ repeat. Every full basis, fixed output hash and non-resource counter agrees.
 
 Across 128 processes, candidate geometric mean is 0.9881, median 0.9820,
 range 0.9605–1.0621. Process geometric mean is 0.9916, median 0.9905,
-range 0.9504–1.0357. Fixed measurements retain 240 points on CPUs84/67.
+range 0.9504–1.0357. Fixed measurements retain 240 points on CPUs 84/67.
 
 | Fixed case | Pooled geometric mean B/A | Median | Range |
 | --- | ---: | ---: | --- |
@@ -188,13 +188,13 @@ range 0.9504–1.0357. Fixed measurements retain 240 points on CPUs84/67.
 | cyclic6Small | 0.9573 | 0.9586 | 0.9406–0.9678 |
 
 These are modest gains on this snapshot, with small regressions retained.
-A14213-job full build,2111-job targeted build and175 matrix/567 basis/1288
-division oracle cases pass. All567 native/portable/criteria/batch/certificate
-comparisons pass. Fixture differences affect only work accounting in525 cases.
+A 14213-job full build, 2111-job targeted build and 175 matrix/567 basis/1288
+division oracle cases pass. All 567 native/portable/criteria/batch/certificate
+comparisons pass. Fixture differences affect only work accounting in 525 cases.
 Four Clang/GCC sanitizer variants pass, including later malformed-buffer,
 huge-Nat and exact machine-scalar-boundary tests at test commit `d2a2558abb`.
-The final instrumented F4 window counts14285 searches,6421 successful fused
-operations,1095 insertions and5079 exclusive constructor reuses.
+The final instrumented F4 window counts14285 searches, 6421 successful fused
+operations, 1095 insertions and 5079 exclusive constructor reuses.
 
 Raw archives retain source blobs, frozen binary hashes, all samples and
 protocol corrections. The corrections identify stale inherited arm descriptions;
@@ -214,7 +214,7 @@ SHA-256:
 code, based on merged `f8c21c8235`. The measured pre-rebase commit is
 `45dc1fc110`; the content-preserving rebase is `125c621531`. The frozen
 baseline is `70aacca874da`. Full bases and non-resource counters agree across
-all128 processes. All240 fixed output hashes agree. Exactly one unchanged
+all 128 processes. All 240 fixed output hashes agree. Exactly one unchanged
 repeat is retained, including every outlier.
 
 | Diagnostic run | CPU | Candidate geometric mean B/A | Median | Range | Process geometric mean |
@@ -222,15 +222,15 @@ repeat is retained, including every outlier.
 | Original | 58 | 1.5613 | 1.2488 | 0.5326–12.9568 | 0.8635 |
 | Repeat | 62 | 1.7746 | 1.1151 | 0.7488–19.6089 | 0.9608 |
 
-Pooled candidate geometric mean is1.6645, median1.1550, range0.5326–19.6089.
-Process geometric mean is0.9109, median0.8559, range0.1832–4.2777.
-Fixed pooled geometric means are0.9929 cyclic4,1.8775 cyclic5,1.5163 cyclic6,
-1.0083 katsura3,1.0198 reimer5 and1.4438 cyclic6Small. CPUs57/0, including
-ratios through16.5548. These results do not support production adoption of the
+Pooled candidate geometric mean is 1.6645, median 1.1550, range 0.5326–19.6089.
+Process geometric mean is 0.9109, median 0.8559, range 0.1832–4.2777.
+Fixed pooled geometric means are 0.9929 cyclic4, 1.8775 cyclic5, 1.5163 cyclic6,
+1.0083 katsura3, 1.0198 reimer5 and 1.4438 cyclic6Small. CPUs 57/0, including
+ratios through 16.5548. These results do not support production adoption of the
 combined snapshot. The earlier small gain against the older baseline does not
 establish a gain here. No further unchanged repeat is used.
 
-The2121-job library/theory/emitter build and all175/567/1288 external oracle
+The 2121-job library/theory/emitter build and all 175/567/1288 external oracle
 cases pass. Four Clang and four GCC sanitizer variants preserve complete results,
 aliases, malformed prefixes and budgets; final counters equal the earlier bounded
 snapshot. Global conformance completion is recorded separately. Two exploratory

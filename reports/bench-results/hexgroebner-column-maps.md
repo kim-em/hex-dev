@@ -27,7 +27,7 @@ Manual shared-host measurements use EPYC 9455, one requested algorithm thread an
 
 Each source retains 240 successful CLI processes, 120 complete basis pairs and all algorithm statistics. Work and packed allocation differ from the baseline. Emission of all 1,134 F4 fixture records was compared before regeneration: only `work`, `referenceWork` and `serialWork` changed. The fixture does not contain packed-byte counters; exact map tests separately assert those. Several campaigns disagree materially and contain extreme ratios; pooled means must not be read as uniform improvements.
 
-| Source | Fixed campaign | CPU | Case | B/A geomean | Candidate median | Range |
+| Source | Fixed campaign | CPU | Case | B/A geomean | Per-call median | Range |
 | --- | --- | ---: | --- | ---: | ---: | --- |
 | `7df198fe184d` | first | 50 | cyclic4 | 1.0385 | 1.0104 | 0.9848–1.3929 |
 | `7df198fe184d` | first | 50 | cyclic5 | 1.0171 | 1.0370 | 0.7928–1.2261 |
@@ -66,7 +66,10 @@ Each source retains 240 successful CLI processes, 120 complete basis pairs and a
 | `605f1e427e55` | repeat | 9 | reimer5 | 1.1675 | 0.9936 | 0.8850–2.8269 |
 | `605f1e427e55` | repeat | 9 | cyclic6Small | 0.9766 | 0.9507 | 0.5526–2.0885 |
 
-All 240 fixed points per source succeed with equal complete structural output hashes. The first prototype has mixed fixed results; the byte-push native variant regresses Cyclic4, Cyclic5 and Katsura3 in both campaigns. The reserve/store variant remains mixed, with Cyclic5 and Reimer5 regressions. No general speedup is established.
+All 240 fixed points per source succeed with equal complete structural output hashes. The first prototype has mixed fixed results; the byte-push native variant regresses Cyclic4, Cyclic5 and Katsura3 in both campaigns. The reserve/store variant remains mixed: Cyclic5 first/repeat geomeans are
+0.9836/1.4687, with medians 1.0447/1.1528; its first geomean improves while
+the repeat regresses. Reimer5 geomeans are 1.0498/1.1675, with medians
+1.2479/0.9936. These are campaign-specific tradeoffs, not uniform regressions.
 
 Each variant passes library/theory/conformance builds, independent matrix/basis/division oracles, both 1,134-output CLI checks, 32 benchmark checks and project audits. Both native variants also pass four Clang and four GCC ASan/UBSan variants. Counters record 9,269 native column translations from F4 per sanitizer variant. Direct C checks cover a uniquely owned output also passed borrowed. The reserve/store variant additionally checks marked-linear aliases, exclusive growth and reserved capacity; its exact layout and charge tests include pre-existing table bytes and all resource boundaries.
 
@@ -77,3 +80,10 @@ Candidate time includes packing, F4 and final interreduction; process time addit
 - [column-map-7df198fe184d.tar.gz](raw/column-map-7df198fe184d.tar.gz): `632b99bd15f0ff3bcc627807b56904d23d80f3d66bc503948c8f26384eeb7783`.
 - [column-map-native-9811bea91f2c.tar.gz](raw/column-map-native-9811bea91f2c.tar.gz): `da8e7536b45fe44eff94c6b30cbd3bb9367c84984fd82c921ad355d20988c792`.
 - [column-map-reserved-605f1e427e55.tar.gz](raw/column-map-reserved-605f1e427e55.tar.gz): `e6d475998a8153eecf10ad15b5063a11845df8bdb941ec6f467a76ff8ee227de`.
+
+The digest-pinned `9811bea91f2c` capsule includes later policy/reserve build
+logs from `605f1e427e55` because its packaging glob matched those filenames.
+They do not validate the earlier measured implementation. The `7df198fe184d`
+and `9811bea91f2c` scope strings describe both historical variants identically;
+the source manifests and native versus portable files distinguish them. Their
+samples remain separate, and this note does not rewrite either archive.

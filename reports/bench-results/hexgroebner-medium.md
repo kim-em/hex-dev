@@ -61,7 +61,9 @@ The release archive digest is
 Release metadata and measured executable hashes are retained. Its README
 states that parts remain closed source and a source build is unavailable;
 this comparator is not classified as fully open source. No executable is
-redistributed.
+redistributed. The process ratio is below one on four of seven families and
+the median is 0.9875. Fixed startup can dominate these smaller cases; no
+per-family algorithmic superiority is inferred from this single campaign.
 
 Giac is the packaged 2.0.0-19 binary, with binary and engine hashes retained.
 Upstream currency, build flags and native tuning are not established. The
@@ -81,8 +83,9 @@ are retained. Julia and BLAS thread counts are one.
 The Julia ratio compares Hex's internal candidate interval with Julia's
 second call, including file reading and Nemo polynomial construction through
 F4/interreduction. Hex's interval starts after JSON parsing and includes
-canonical packing. These boundaries differ, and Julia's first call includes
-JIT work. Its process duration includes both computations plus JIT, so no
+canonical packing. These boundaries differ: Julia includes text parsing and BigInt-based term
+construction while Hex excludes JSON parsing, biasing this ratio in Hex's
+favour. Julia's first call also includes JIT work. Its process duration includes both computations plus JIT, so no
 matched whole-process ratio is claimed. Peak Julia RSS includes compilation.
 
 The Hex candidate/Julia second-call mean is 5.3322,
@@ -100,13 +103,16 @@ not an acceptance ranking across equivalent timing boundaries.
 | minrank | 1.1529 | 1.0398 | 0.3725 | 0.7781 | 3.5574 |
 | dense-quadratic | 1.8335 | 1.5474 | 0.2939 | 1.1967 | 9.1971 |
 
-An explanatory cyclic7 profile samples eight Hex calls at 1999 Hz, with 6421
+An explanatory cyclic7 profile on CPU 7 samples eight Hex calls at 1999 Hz, with 6421
 user-cycle samples and zero lost samples. All eight complete outputs and
 non-timing counters agree. Flat shares include native M31 row scanning 15.23%,
 monomial combination 10.17%, reference decrement 9.50%, object free 9.14%,
 allocation 7.29%, allocator free 3.47%, monomial preparation 3.62%, packed
 64-bit reading 2.49% and symbolic preprocessing 2.15%. Raw perf data and
-symbols are retained. These whole-process samples include profiler overhead;
+symbols are retained. Its source is bound by an archived fallback manifest
+identical to the GamBa capsule's manifest and measured Hex binary. CPU 7 also
+served the Giac observation; placement does not establish non-overlap, and no
+isolation or causal attribution is inferred. These whole-process samples include profiler overhead;
 they motivate algorithm, allocation and representation work without assigning
 a causal timing cost or proving a compiler limit.
 

@@ -3,13 +3,22 @@
 The frozen Hex engine uses source family `b1e96ea920dd`, commit `d031fbf200`,
 with executables byte-identical to measured `d1278bde9bd5`. Source manifests,
 source blobs, binary hashes and the equivalence check are retained. The msolve
-source is `3672113ee2c696a2ac9c637636e0f7214f500ba1`, also the fetched upstream
-master. Its source tree is clean. Both the CLI and libneogb configure with
+source is captured commit `3672113ee2c696a2ac9c637636e0f7214f500ba1`. Its source tree is clean. Both the CLI and libneogb configure with
 Clang 23.1.3, `-O3 -march=native`; GMP 6.3.0, MPFR 4.2.2 and FLINT 3.6.0 are
 identified in the captured linkage. The reused script's GCC compiler label is
 stale. Separate protocol corrections retain the configure settings, both
 Makefile compiler lines and the actual libneogb SHA-256. GNU runtime/startup
 objects explain the executable's GCC comment. Raw metadata is unchanged.
+
+This historical comparison is superseded for comparator ranking by the
+[effective-native medium comparison](hexgroebner-medium.md). Its retained
+command invokes `/tmp/hex-groebner-msolve/msolve`, the top-level path, rather
+than explicitly selecting `.libs/msolve`. The capsule records configured
+flags, but does not establish their effective ISA or a direct-ELF timing
+boundary. The known Nix flag-stripping and libtool-wrapper failure modes
+therefore remain unresolved here; these ratios are not used as tuned-msolve
+performance evidence. Raw results and the logical-stage profile remain useful
+historical observations, with these limitations.
 
 The fixed development suite has 16 inputs: two fields, 32003 and 2147483647,
 across cyclic5/cyclic6, Katsura6, Eco10, Noon4, Reimer5, MinRank and dense
