@@ -353,3 +353,114 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_search_monomial(uint8_t width,
 #endif
 
 #include "trie_lookup.h"
+
+#ifndef HEX_GROEBNER_NO_LEAN
+/* Reserve once, preserving marked-linear ownership on exclusive growth or an
+   explicitly supported borrowed/output alias. Other sharing uses ordinary COW. */
+static lean_object *remap_reserve(lean_obj_arg bytes,size_t size,int alias) {
+    size_t old=lean_sarray_size(bytes);
+    if(!alias && lean_is_exclusive(bytes) && lean_sarray_capacity(bytes)>=size) return bytes;
+    size_t capacity=old<=SIZE_MAX/2?old*2:size;
+    if(capacity<size) capacity=size;
+    if(alias || lean_is_exclusive(bytes)) {
+        int linear=lean_sarray_is_marked_linear(bytes);
+        bytes=lean_copy_sarray(bytes,capacity);
+        if(linear) lean_sarray_mark_linear_core(bytes);
+    } else bytes=lean_copy_sarray_nonlinear(bytes,capacity);
+    return bytes;
+}
+
+/* Native.Columns.remapPortable: borrowed little-endian u32 buffers and an
+   owned output prefix. Validate and write <=4096 entries past the logical end;
+   commit the new size only on success. Invalid input never changes a borrowed
+   buffer or the observable prefix. Borrowed/output aliases retain their owner. */
+LEAN_EXPORT lean_obj_res lean_hex_groebner_remap_columns(
+        b_lean_obj_arg positions,b_lean_obj_arg support,
+        b_lean_obj_arg start_arg,b_lean_obj_arg count_arg,lean_obj_arg output) {
+    size_t pb=lean_sarray_size(positions),sb=lean_sarray_size(support);
+    size_t start=0,count=0,old=lean_sarray_size(output);
+    const uint8_t *ps=lean_sarray_cptr(positions),*ss=lean_sarray_cptr(support);
+    lean_object *alias=NULL,*result;
+    uint8_t *target;
+    if(pb%4 || !lean_is_scalar(start_arg) || !lean_is_scalar(count_arg)) goto invalid;
+    start=lean_unbox(start_arg);count=lean_unbox(count_arg);
+    if(count>4096 || start>sb/4 || count>sb/4-start || count*4>SIZE_MAX-old) goto invalid;
+    if(count) {
+        if(output==positions || output==support) {alias=output;lean_inc(alias);}
+        output=remap_reserve(output,old+count*4,alias!=NULL);
+        target=lean_sarray_cptr(output)+old;
+        for(size_t i=0;i<count;++i) {
+            uint64_t id=read_le(ss+(start+i)*4,4),value;
+            if(id>=pb/4) goto invalid;
+            value=read_le(ps+(size_t)id*4,4);
+            if(!value) goto invalid;
+            write_le(target+i*4,4,value-1);
+        }
+        lean_sarray_set_size(output,old+count*4);
+    }
+    if(alias) lean_dec(alias);
+    result=lean_alloc_ctor(1,1,0);lean_ctor_set(result,0,output);return result;
+invalid:
+    if(alias) lean_dec(alias);
+    lean_dec(output);return lean_box(0);
+}
+static uint64_t column_hash(uint64_t h) {
+    h=(h^(h>>30))*UINT64_C(0xbf58476d1ce4e5b9);
+    h=(h^(h>>27))*UINT64_C(0x94d049bb133111eb);
+    return h^(h>>31);
+}
+
+/* Exact bounded probing. Empty value zero is distinct from key ID zero.
+   Only a successful lookup commits appended bytes; borrowed aliases survive. */
+LEAN_EXPORT lean_obj_res lean_hex_groebner_remap_index(
+        b_lean_obj_arg slots,b_lean_obj_arg support,b_lean_obj_arg start_arg,
+        b_lean_obj_arg count_arg,b_lean_obj_arg probes_arg,lean_obj_arg output) {
+    size_t pb=lean_sarray_size(slots),sb=lean_sarray_size(support),capacity=pb/8;
+    size_t start=0,count=0,probes=0,old=lean_sarray_size(output);
+    const uint8_t *ps=lean_sarray_cptr(slots),*ss=lean_sarray_cptr(support);
+    uint8_t *target;
+    lean_object *alias=NULL,*result;
+    if(pb%8 || !capacity || (capacity&(capacity-1)) || !lean_is_scalar(start_arg) ||
+       !lean_is_scalar(count_arg) || !lean_is_scalar(probes_arg)) goto invalid_index;
+    start=lean_unbox(start_arg);count=lean_unbox(count_arg);probes=lean_unbox(probes_arg);
+    if(probes>64 || count>4096 || start>sb/4 || count>sb/4-start || count*4>SIZE_MAX-old)
+        goto invalid_index;
+    if(count) {
+        if(output==slots || output==support) {alias=output;lean_inc(alias);}
+        output=remap_reserve(output,old+count*4,alias!=NULL);
+        target=lean_sarray_cptr(output)+old;
+        for(size_t i=0;i<count;++i) {
+            uint64_t id=read_le(ss+(start+i)*4,4),value=0;
+            size_t bucket=(size_t)(column_hash(id)&(capacity-1));
+            for(size_t j=0;j<probes;++j) {
+                uint64_t v=read_le(ps+bucket*8+4,4);
+                if(!v) goto invalid_index;
+                if(read_le(ps+bucket*8,4)==id) {value=v;break;}
+                bucket=(bucket+1)&(capacity-1);
+            }
+            if(!value) goto invalid_index;
+            write_le(target+i*4,4,value-1);
+        }
+        lean_sarray_set_size(output,old+count*4);
+    }
+    if(alias) lean_dec(alias);
+    result=lean_alloc_ctor(1,1,0);lean_ctor_set(result,0,output);return result;
+invalid_index:
+    if(alias) lean_dec(alias);
+    lean_dec(output);return lean_box(0);
+}
+
+LEAN_EXPORT lean_obj_res lean_hex_groebner_append_zeros(lean_obj_arg output,b_lean_obj_arg count_arg) {
+    size_t old=lean_sarray_size(output),count;
+    lean_object *result;
+    if(!lean_is_scalar(count_arg)) {lean_dec(output);return lean_box(0);}
+    count=lean_unbox(count_arg);
+    if(count>4096 || count>SIZE_MAX-old) {lean_dec(output);return lean_box(0);}
+    if(count) {
+        output=remap_reserve(output,old+count,0);
+        memset(lean_sarray_cptr(output)+old,0,count);
+        lean_sarray_set_size(output,old+count);
+    }
+    result=lean_alloc_ctor(1,1,0);lean_ctor_set(result,0,output);return result;
+}
+#endif

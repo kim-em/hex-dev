@@ -7,22 +7,19 @@ Authors: Kim Morrison
 module
 
 public import HexGroebner.Producer.Basic
+public import HexGroebner.ColumnMap
 
 public section
 
 namespace Hex.Groebner.Producer
 open Computation
 
-private def row (_context : Context) (limits : Limits) (positions : Std.HashMap Nat Nat)
+private def row (_context : Context) (limits : Limits) (positions : ColumnMap)
     (p : Polynomial) : Computation SparseRow := do
-  spend limits p.size
+  spend limits (p.size * positions.lookupCost)
   allocate limits p.support.size
-  let mut columns := ByteArray.emptyWithCapacity p.support.size
-  for i in [:p.size] do
-    let id := p.monomial i
-    match positions[id]? with
-    | none => throw (.representation .index)
-    | some column => columns := Packed.push .u32 columns column.toUInt64
+  let some columns := positions.encode p.support limits.nativeRows |
+    throw (.representation .index)
   return ⟨columns, p.coefficients⟩
 
 /-- Run the matrix kernel within the remaining parent allowances. Its validated
@@ -32,9 +29,8 @@ def solve (context : Context) (limits : Limits) (nodeLimit : Nat)
     (basis targetsTraced : Array Element) (matrix : SymbolicMatrix)
     (monic independent : Bool) :
     Work (Array Element) := do
-  lift (Computation.spend limits (matrix.columns.size))
-  let mut positions : Std.HashMap Nat Nat := {}
-  for i in [:matrix.columns.size] do positions := positions.insert matrix.columns[i]! i
+  if matrix.columns.size > 4294967295 then throw (.representation .index)
+  let positions ← lift (ColumnMap.build limits matrix.columns)
   let mut reducers := #[]
   let mut targets := #[]
   let mut entries := 0
@@ -48,7 +44,7 @@ def solve (context : Context) (limits : Limits) (nodeLimit : Nat)
     reducers := reducers.push r
   if matrix.targets.size != targetsTraced.size then throw (.matrix .dimensions)
   let targetPairs ← if independent || matrix.targets.size ≤ 1 then pure (matrix.targets.zip targetsTraced) else do
-    lift (Computation.spend limits (matrix.targets.size * (matrix.targets.size + 1).log2))
+    lift (Computation.spend limits (2 * matrix.targets.size * (matrix.targets.size + 1).log2 * positions.lookupCost))
     pure (((matrix.targets.zip targetsTraced).toList.mergeSort
       (fun a b =>
         let x := a.1.polynomial
@@ -72,7 +68,7 @@ def solve (context : Context) (limits : Limits) (nodeLimit : Nat)
   let traceCapacity := min (nodeLimit-(← get).derivation.nodes.size+rows)
     (rows*(matrix.columns.size+2))
   let s ← lift get
-  if matrix.columns.size > 4294967295 || rows > 4294967295 then throw (.representation .index)
+  if rows > 4294967295 then throw (.representation .index)
   if matrix.columns.size * (context.field.width.bytes + 4) ≥ USize.size then
     throw (.representation .address)
   if s.statistics.matrixRows + rows > limits.matrixRows then throw (.exhausted .matrixRows)

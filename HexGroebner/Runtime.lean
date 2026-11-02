@@ -96,7 +96,7 @@ structure Limits where
   batchSize : Nat := 1024
   /-- Fixed when a computation starts; resumption retains the original choice. -/
   scheduling : Scheduling := .degree
-  /-- Use the approved native row kernel; false selects scalar Lean updates. -/
+  /-- Use bounded native row translation and elimination; false selects Lean models. -/
   nativeRows : Bool := true
   /-- Use bounded packed monomial preparation and exact collision comparison. -/
   nativeMonomials : Bool := true

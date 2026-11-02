@@ -249,6 +249,23 @@ across nonzero tails and uses this mode. `Limits.batchInterreduce := false`
 retains separate tail calls. The `*Separate` lean-bench registrations compare
 these routes under identical fields, inputs and allowances.
 
+`ColumnMap` assigns matrix positions using packed u32 positions plus one for
+identifier prefixes with at most eight slots per column, or exact open-addressed
+u32 key/value buckets for sparse IDs. Full keys resolve every hash collision.
+Geometry alone selects the representation; unsupported IDs, addressability and
+insertion chains beyond 64 probes retain the hash-map route. Every attempted
+probe and initialized packed payload is charged, including a discarded index.
+Rows reserve the maximum recorded probe count per entry; sorting reserves
+two such lookups per comparison. Consequently this
+conservative work model and cumulative packed-byte charges can exhaust earlier
+than the old unit-cost hash map. Both candidate and certificate row construction
+use the same map. Bounded native translation consumes at most 4096 IDs per call;
+`nativeRows := false` retains its scalar Lean model. Marked borrowed/output
+alias handling is defensive support for C callers with one output owner; it
+does not extend Lean’s marked-linearity contract to shared marked values. The
+encoder creates fresh unmarked output. Kernel benchmarks cover
+construction, translation and complete map/output hashing over fixed sizes.
+
 `MatrixLimits` bounds one call's columns, rows, input/output nonzeros, packed
 payload, work and optional provenance nodes. Packed payload counts input,
 workspace and output buffers plus 64 logical bytes per recorded derivation

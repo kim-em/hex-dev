@@ -5,6 +5,7 @@ Authors: Kim Morrison
 -/
 
 import HexGroebner.EliminationConformance
+import HexGroebner.ColumnMapConformance
 import HexGroebner.SearchConformance
 import HexGroebner.HitConformance
 import HexGroebner.MonomialConformance
@@ -30,6 +31,9 @@ def runOwned : IO Unit := do
 native symbols were actually called, including in sanitizer builds. -/
 def run : IO Unit := do
   let seed := ((← IO.getEnv "HEX_GROEBNER_TEST_SEED").getD "0").toNat?.getD 0
+  if !ColumnMapConformance.checks seed || !ColumnMapConformance.remapChecks seed ||
+      !ColumnMapConformance.indexChecks seed || !ColumnMapConformance.collisionChecks then
+    throw (IO.userError "packed column map mismatch")
   if !EliminationConformance.sizeChecks seed ||
       !EliminationConformance.thresholdChecks ||
       !EliminationConformance.sharedChecks seed ||

@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGroebner.Reducer
+public import HexGroebner.ColumnMap
 public import HexGroebner.ReducerCache
 
 public section
@@ -100,16 +101,12 @@ def prepare (context : Context) (limits : Limits) (basis : Array BasisElement)
     (targets : Array BasisElement) : Computation SymbolicMatrix := do
   prepareWith context limits (← ReducerIndex.build context limits basis) basis targets
 
-private def row (_context : Context) (limits : Limits) (positions : Std.HashMap Nat Nat)
+private def row (_context : Context) (limits : Limits) (positions : ColumnMap)
     (p : Polynomial) : Computation SparseRow := do
-  spend limits p.size
+  spend limits (p.size * positions.lookupCost)
   allocate limits p.support.size
-  let mut columns := ByteArray.emptyWithCapacity p.support.size
-  for i in [:p.size] do
-    let id := p.monomial i
-    match positions[id]? with
-    | none => throw (.representation .index)
-    | some column => columns := Packed.push .u32 columns column.toUInt64
+  let some columns := positions.encode p.support limits.nativeRows |
+    throw (.representation .index)
   return ⟨columns, p.coefficients⟩
 
 /-- Run the matrix kernel within the remaining parent allowances. Its validated
@@ -118,9 +115,8 @@ charged to the cumulative allocation counter. -/
 private def solve (context : Context) (limits : Limits) (matrix : SymbolicMatrix)
     (monic independent : Bool) :
     Computation (Array BasisElement) := do
-  spend limits matrix.columns.size
-  let mut positions : Std.HashMap Nat Nat := {}
-  for i in [:matrix.columns.size] do positions := positions.insert matrix.columns[i]! i
+  if matrix.columns.size > 4294967295 then throw (.representation .index)
+  let positions ← ColumnMap.build limits matrix.columns
   let mut reducers := #[]
   let mut targets := #[]
   let mut entries := 0
@@ -133,7 +129,7 @@ private def solve (context : Context) (limits : Limits) (matrix : SymbolicMatrix
     inputBytes := inputBytes + r.columns.size + r.coefficients.size
     reducers := reducers.push r
   let orderedTargets ← if independent || matrix.targets.size ≤ 1 then pure matrix.targets else do
-    spend limits (matrix.targets.size * (matrix.targets.size + 1).log2)
+    spend limits (2 * matrix.targets.size * (matrix.targets.size + 1).log2 * positions.lookupCost)
     pure ((matrix.targets.toList.mergeSort
       (fun a b =>
         let x := a.polynomial
@@ -149,7 +145,7 @@ private def solve (context : Context) (limits : Limits) (matrix : SymbolicMatrix
     targets := targets.push r
   let s ← get
   let rows := reducers.size + targets.size
-  if matrix.columns.size > 4294967295 || rows > 4294967295 then throw (.representation .index)
+  if rows > 4294967295 then throw (.representation .index)
   if matrix.columns.size * (context.field.width.bytes + 4) ≥ USize.size then
     throw (.representation .address)
   if s.statistics.matrixRows + rows > limits.matrixRows then throw (.exhausted .matrixRows)
