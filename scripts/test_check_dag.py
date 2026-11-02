@@ -191,6 +191,8 @@ class SealedImportAllTest(unittest.TestCase):
                 Path("HexGroebner/EliminationWorkProof.lean"),
                 Path("HexGroebner/EliminationValidationProof.lean"),
                 Path("HexGroebner/EliminationPhaseProof.lean"),
+                Path("HexGroebner/EliminationGatherStep.lean"),
+                Path("HexGroebner/EliminationGatherProof.lean"),
                 Path("conformance/HexGroebner/MatrixStateReplay.lean"),
             ]
             denied = [

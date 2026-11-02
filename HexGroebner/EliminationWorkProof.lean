@@ -97,6 +97,12 @@ private theorem run_of_triple (action : Matrix.Work α) (initial : MatrixStats)
     cases result <;>
       simpa [Std.Do.WP.wp,ExceptT.run,StateT.run,Id.run,Pure.pure,hr] using h
 
+@[spec] private theorem charge_run (resource : Resource) (amount limit : Nat)
+    (read : MatrixStats → Nat) (write : MatrixStats → Nat → MatrixStats) (post : Post Unit) :
+    Triple (Matrix.charge resource amount limit read write)
+      (pre (Matrix.charge resource amount limit read write) post) post :=
+  triple_run _ post
+
 @[spec] private theorem work_run (limits : MatrixLimits) (amount : Nat) (post : Post Unit) :
     Triple (Matrix.work limits amount) (pre (Matrix.work limits amount) post) post :=
   triple_run _ post

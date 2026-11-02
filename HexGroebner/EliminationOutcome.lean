@@ -62,6 +62,22 @@ private theorem outcome_error (state out : MatrixState.State) (error : MatrixErr
   rw [update] at same
   simpa [outcome,MatrixState.finish_done] using same.symm
 
+/-- Interpret one unfinished phase's exact run without discarding its error
+state's statistics. Successful states continue with their completed outcome. -/
+private theorem outcome_run (state : MatrixState.State) (hgeometry : state.geometry)
+    (hphase : state.phase ≠ .done) :
+    outcome state = match (MatrixState.step false).run state with
+      | (.error error,out) => (.error error,out.stats)
+      | (.ok _,out) => outcome out := by
+  cases hr : (MatrixState.step false).run state with
+  | mk result out =>
+    cases result with
+    | error error => exact outcome_error state out error hgeometry hphase hr
+    | ok value =>
+      cases value
+      exact (outcome_ok state out hgeometry hphase hr).2.symm
+
+
 #print axioms outcome_error
 
 end Hex.Groebner
