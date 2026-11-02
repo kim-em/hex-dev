@@ -108,4 +108,12 @@ private theorem validate_ok_run (field : PrimeField) (limits : MatrixLimits)
   simp only [ExceptT.run] at hrow
   rw [hrow] <;> rfl
 
+private theorem forIn_unit (indices : List Nat) (action : Nat → Matrix.Work Unit) :
+    forIn indices () (fun i _ => do action i; pure (.yield ())) =
+      ForM.forM indices action := by
+  induction indices with
+  | nil => rfl
+  | cons i indices ih =>
+    simp only [List.forIn_cons, List.forM_cons, bind_assoc, pure_bind, ih]
+
 end Hex.Groebner.MatrixStateReplay
