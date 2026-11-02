@@ -33,22 +33,25 @@ def checked : Bool := Id.run do
       for index in [0,2^90] do
         for columns in [0,2,3,65536,65537,2^90] do
           for allowance in [0,1,2,3,4,8,16,64,2^90] do
-            let limits : MatrixLimits := {
-              work := allowance,inputEntries := allowance,packedBytes := allowance }
-            for stats in ([{}, {work := 1,inputEntries := 2,packedBytes := 3,outputEntries := 4,traceNodes := 5,processedRows := 6,reductions := 7,zeroRows := 8},
-                {work := 2^62-1},{work := 2^62},{zeroRows := 2^90}] : List MatrixStats) do
-              let expected := (Matrix.validate field limits columns index input).run stats
-              let actual := (Matrix.validateWith field limits columns index input).run stats
-              if !same expected actual then return false
-              let admitted := USize.size == 2^64 && columns <= 65536 && input.size <= columns+1 &&
-                ([stats.work,stats.inputEntries,stats.outputEntries,stats.packedBytes,
-                  stats.traceNodes,stats.processedRows,stats.reductions,stats.zeroRows].all (· <= 2^62-1))
-              let attempted := Matrix.attemptValidation field limits columns index input stats
-              if attempted.isSome != admitted then return false
-              if let some result := attempted then
-                if !same result expected then return false
-              if saved != (input.columns.data.toList,input.coefficients.data.toList) then
-                return false
+            for limits in ([
+                {work := allowance,inputEntries := allowance,packedBytes := allowance},
+                {work := allowance},{inputEntries := allowance},{packedBytes := allowance},
+                {work := allowance+1,inputEntries := allowance,packedBytes := allowance+7}]
+                : List MatrixLimits) do
+              for stats in ([{}, {work := 1,inputEntries := 2,packedBytes := 3,outputEntries := 4,traceNodes := 5,processedRows := 6,reductions := 7,zeroRows := 8},
+                  {work := 2^62-1},{work := 2^62},{zeroRows := 2^90}] : List MatrixStats) do
+                let expected := (Matrix.validate field limits columns index input).run stats
+                let actual := (Matrix.validateWith field limits columns index input).run stats
+                if !same expected actual then return false
+                let admitted := USize.size == 2^64 && columns <= 65536 && input.size <= columns+1 &&
+                  ([stats.work,stats.inputEntries,stats.outputEntries,stats.packedBytes,
+                    stats.traceNodes,stats.processedRows,stats.reductions,stats.zeroRows].all (· <= 2^62-1))
+                let attempted := Matrix.attemptValidation field limits columns index input stats
+                if attempted.isSome != admitted then return false
+                if let some result := attempted then
+                  if !same result expected then return false
+                if saved != (input.columns.data.toList,input.coefficients.data.toList) then
+                  return false
   for size in [0,1,4095,4096,4097,65536,1048576,1048577] do
     let actual := Matrix.zerosWith size
     if actual.size != size || !actual.data.all (· == 0) then return false
@@ -60,14 +63,25 @@ def checked : Bool := Id.run do
 
 /-- The disabled native-row route succeeds on every field fixture. The compiled
 harness additionally requires both primitive call counters to remain unchanged. -/
-def portable : Bool := Id.run do
+@[noinline] def portable (seed : Nat) : Bool := Id.run do
   for field in Fixtures.fields do
     let some row := SparseRow.ofEntries field 3 #[(0,1),(2,1)] | return false
-    let result := Elimination.run field {} 3 #[row] #[row] false #[] false false
+    let result := Elimination.run field {} (3+seed%2) #[row] #[row] false #[] false false
     if !result.result.isOk then return false
   return true
 
-#guard portable
+/-- Traced native elimination bypasses the bulk provider and must exercise
+both bounded primitives. The harness checks admission counters around this call. -/
+@[noinline] def integrated (seed : Nat) : Bool := Id.run do
+  for field in Fixtures.fields do
+    let some row := SparseRow.ofEntries field 3 #[(0,1),(2,1)] | return false
+    let result := Elimination.run field {} (3+seed%2) #[row] #[row] true #[] true false
+    if !result.result.isOk then return false
+  return true
+
+#guard integrated 0
+
+#guard portable 0
 
 #guard checked
 

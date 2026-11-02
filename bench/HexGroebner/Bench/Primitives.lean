@@ -40,7 +40,7 @@ def matrixZeros (n : Nat) := Matrix.zerosWith n
 /-- The original checked byte-by-byte zero-buffer model. -/
 def matrixZerosReference (n : Nat) := Matrix.zeros n
 
-#guard (#[0,1,64,256,1024,4096,16384,65536].all fun n =>
+#guard (#[0,1,4,16,64,256,1024,4096,16384,65536].all fun n =>
   let row := prepareValidation n
   (matrixValidate row).1 && matrixValidate row == matrixValidateReference row &&
     (matrixZeros n).data == (matrixZerosReference n).data)
@@ -49,9 +49,9 @@ def matrixZerosReference (n : Nat) := Matrix.zeros n
 setup_benchmark matrixValidate n => n
   with prep := prepareValidation
   where {
-    paramFloor := 64
+    paramFloor := 1
     paramCeiling := 65536
-    paramSchedule := .custom #[64,256,1024,4096,16384,65536]
+    paramSchedule := .custom #[1,4,16,64,256,1024,4096,16384,65536]
     targetInnerNanos := 4000000000
     maxSecondsPerCall := 32.0
   }
@@ -60,9 +60,9 @@ setup_benchmark matrixValidate n => n
 setup_benchmark matrixValidateReference n => n
   with prep := prepareValidation
   where {
-    paramFloor := 64
+    paramFloor := 1
     paramCeiling := 65536
-    paramSchedule := .custom #[64,256,1024,4096,16384,65536]
+    paramSchedule := .custom #[1,4,16,64,256,1024,4096,16384,65536]
     targetInnerNanos := 4000000000
     maxSecondsPerCall := 32.0
   }
@@ -70,9 +70,9 @@ setup_benchmark matrixValidateReference n => n
 -- Allocation/zeroing and complete byte consumption each cost O(n).
 setup_benchmark matrixZeros n => n
   where {
-    paramFloor := 64
+    paramFloor := 1
     paramCeiling := 65536
-    paramSchedule := .custom #[64,256,1024,4096,16384,65536]
+    paramSchedule := .custom #[1,4,16,64,256,1024,4096,16384,65536]
     targetInnerNanos := 4000000000
     maxSecondsPerCall := 32.0
   }
@@ -80,9 +80,9 @@ setup_benchmark matrixZeros n => n
 -- Portable allocation/zeroing and identical complete byte consumption cost O(n).
 setup_benchmark matrixZerosReference n => n
   where {
-    paramFloor := 64
+    paramFloor := 1
     paramCeiling := 65536
-    paramSchedule := .custom #[64,256,1024,4096,16384,65536]
+    paramSchedule := .custom #[1,4,16,64,256,1024,4096,16384,65536]
     targetInnerNanos := 4000000000
     maxSecondsPerCall := 32.0
   }
