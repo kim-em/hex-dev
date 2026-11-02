@@ -366,8 +366,27 @@ LEAN_EXPORT lean_obj_res hex_test_continuation_bounds(lean_obj_arg world) {
  return lean_io_result_mk_ok(pair);
 }
 
+#define lean_hex_matrix_validate hex_test_matrix_validate
+#define lean_hex_matrix_zeros hex_test_matrix_zeros
 #include WHOLECODE
+#undef lean_hex_matrix_validate
+#undef lean_hex_matrix_zeros
 #undef lean_hex_groebner_eliminate_matrix
+static uint64_t primitive_validations=0,primitive_zeros=0;
+__typeof__(hex_test_matrix_validate) __wrap_lean_hex_matrix_validate;
+LEAN_EXPORT lean_obj_res __wrap_lean_hex_matrix_validate(uint64_t p,b_lean_obj_arg limits,
+ b_lean_obj_arg columns,b_lean_obj_arg index,b_lean_obj_arg row,b_lean_obj_arg stats) {
+ ++primitive_validations;return hex_test_matrix_validate(p,limits,columns,index,row,stats);
+}
+__typeof__(hex_test_matrix_zeros) __wrap_lean_hex_matrix_zeros;
+LEAN_EXPORT lean_obj_res __wrap_lean_hex_matrix_zeros(b_lean_obj_arg size) {
+ ++primitive_zeros;return hex_test_matrix_zeros(size);
+}
+LEAN_EXPORT lean_obj_res hex_test_matrix_primitives(lean_obj_arg world) {
+ (void)world;lean_object *pair=lean_alloc_ctor(0,2,0);
+ lean_ctor_set(pair,0,lean_box_uint64(primitive_validations));
+ lean_ctor_set(pair,1,lean_box_uint64(primitive_zeros));return lean_io_result_mk_ok(pair);
+}
 static uint64_t scan_calls=0,gather_calls=0,byte_calls=0,product_calls=0;
 static uint64_t search_calls=0;
 __typeof__(hex_test_combine_owned) __wrap_lean_hex_groebner_combine_owned;
@@ -549,7 +568,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
         flags = ["-O3", "-g", "-Wall", "-Wextra", "-Werror", "-fPIC", "-DLEAN_EXPORTING"]
         if sanitize:
             flags += ["-fsanitize=address,undefined", "-fno-sanitize-recover=undefined", "-fno-omit-frame-pointer"]
-        link_args = ["-Wl,--wrap=lean_hex_matrix_advance", "-Wl,--wrap=lean_hex_groebner_remap_index", "-Wl,--wrap=lean_hex_groebner_append_zeros", "-Wl,--wrap=lean_hex_groebner_remap_columns", "-Wl,--wrap=lean_hex_scan_transition", "-Wl,--wrap=lean_hex_gather",
+        link_args = ["-Wl,--wrap=lean_hex_matrix_validate", "-Wl,--wrap=lean_hex_matrix_zeros", "-Wl,--wrap=lean_hex_matrix_advance", "-Wl,--wrap=lean_hex_groebner_remap_index", "-Wl,--wrap=lean_hex_groebner_append_zeros", "-Wl,--wrap=lean_hex_groebner_remap_columns", "-Wl,--wrap=lean_hex_scan_transition", "-Wl,--wrap=lean_hex_gather",
                      "-Wl,--wrap=lean_hex_groebner_equal_bytes",
                      "-Wl,--wrap=lean_hex_groebner_equal_products",
                      "-Wl,--wrap=lean_hex_groebner_eliminate_matrix",
@@ -562,6 +581,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
             target = "check" + variant
             targets.append(target)
             (directory / (module + ".lean")).write_text('''import HexGroebner.NativeChecks
+@[extern "hex_test_matrix_primitives"] opaque matrixPrimitives : IO (UInt64 × UInt64)
 @[extern "hex_test_remap_count"] opaque remapCount : IO UInt64
 @[extern "hex_test_continuation_count"] opaque continuationCount : IO UInt64
 @[extern "hex_test_continuation_validations"] opaque continuationValidations : IO UInt64
@@ -608,6 +628,10 @@ def main : IO Unit := do
     throw (IO.userError "exclusive alias insertion was not exercised")
   IO.println s!"exclusive owned comparisons: reuses={afterOwned-beforeOwned}, aliased insertions={afterAlias-beforeAlias}"
   Hex.Groebner.NativeChecks.run
+  let primitives ← matrixPrimitives
+  if primitives.1 == 0 || primitives.2 == 0 then
+    throw (IO.userError "native matrix validation/zero-buffer primitives unused")
+  IO.println s!"native matrix validation/zero-buffer primitives: {primitives}"
   let continuationCalls ← continuationCount
   if continuationCalls == 0 then throw (IO.userError "native continuation unused")
   if !(← continuationOutcomes) then

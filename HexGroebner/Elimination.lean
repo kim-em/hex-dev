@@ -124,9 +124,9 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
   if workspaceBytes ≥ USize.size then throw .dimensions
   packedBytes limits workspaceBytes
   work limits workspaceBytes
-  let mut dense := zeros (columns * width.bytes)
+  let mut dense := zerosWith (columns * width.bytes)
   -- A slot stores pivot index + 1. Zero means no pivot, never monomial identity.
-  let mut slots := zeros (columns * 4)
+  let mut slots := zerosWith (columns * 4)
   let mut pivots : Array Pivot := #[]
   let mut nativePivots : Array Native.Scan.Pivot := #[]
   let mut trace : Array RowOp := #[]

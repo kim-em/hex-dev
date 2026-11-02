@@ -84,8 +84,8 @@ private theorem forIn_unit (indices : List Nat) (action : Nat → Matrix.Work Un
 /-- Validate reducers followed by targets with their original input indices. -/
 @[inline] def validateRows (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
     (reducers targets : Array SparseRow) : Matrix.Work Unit := do
-  for i in [:reducers.size] do validate field limits columns i reducers[i]!
-  for i in [:targets.size] do validate field limits columns (reducers.size+i) targets[i]!
+  for i in [:reducers.size] do validateWith field limits columns i reducers[i]!
+  for i in [:targets.size] do validateWith field limits columns (reducers.size+i) targets[i]!
 
 private theorem forM_congr (indices : List Nat) (f g : Nat → Matrix.Work Unit)
     (h : ∀ i ∈ indices, f i = g i) :
@@ -103,7 +103,7 @@ theorem validateFrom_zero (field : PrimeField) (limits : MatrixLimits) (columns 
     (reducers targets : Array SparseRow) :
     validateFrom field limits columns reducers targets 0 =
       validateRows field limits columns reducers targets := by
-  simp only [validateFrom, validateRows, Std.Legacy.Range.forIn_eq_forIn_range',
+  simp only [validateFrom, validateRows, validateWith_spec, Std.Legacy.Range.forIn_eq_forIn_range',
     Std.Legacy.Range.size, Nat.sub_zero, Nat.add_sub_cancel, Nat.div_one]
   simp only [forIn_unit]
   rw [← List.range'_append_1 (s := 0) (m := reducers.size) (n := targets.size)]
