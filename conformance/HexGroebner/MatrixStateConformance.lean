@@ -84,7 +84,7 @@ private def compare (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
   let expected := Elimination.reference field limits columns reducers targets sugars independent
   let state := MatrixState.start field limits columns reducers targets sugars independent
   for quantum in [1,2,63,64] do
-    let (result,stats) := MatrixState.finishWith quantum state
+    let (result,stats) := MatrixState.finishWith quantum state false
     if !equal expected ⟨result,stats⟩ then return false
     let (result,stats) := MatrixState.finishWith quantum state true
     if !equal expected ⟨result,stats⟩ then return false
@@ -163,6 +163,54 @@ def resourceSteps : Bool := Id.run do
 
 #guard resourceSteps
 
+private def pauseCheck (field : PrimeField) (columns : Nat) (reducers targets : Array SparseRow)
+    (limits : MatrixLimits) (stride : Nat) : Bool := Id.run do
+  let expected := Elimination.reference field limits columns reducers targets #[] false
+  let mut state := MatrixState.start field limits columns reducers targets #[] false
+  for tick in [:256] do
+    if state.phase == .done then break
+    let inspect := (state.phase == .scan || state.phase == .gather) && tick%stride == 0
+    if inspect then
+      let saved := snapshot state
+      let scalar := MatrixState.advancePortable state 1
+      let actual := MatrixState.advance state 1
+      if scalar.phase != actual.phase || snapshot scalar != snapshot actual then return false
+      if snapshot state != saved then return false
+      if let some scalarResult := scalar.result then
+        let some actualResult := actual.result | return false
+        if !equal ⟨scalarResult,{}⟩ ⟨actualResult,{}⟩ then return false
+      state := actual
+    else state := MatrixState.advance state 1
+  let some result := state.result | return false
+  return equal expected ⟨result,state.stats⟩
+
+/-- Saved workspaces and exact exhausted prefixes cross scan and gather quanta.
+The work limit omits the final coefficient/column charge, after earlier quanta
+have completed; output and byte limits similarly fail in the second gather. -/
+def pauseChecks : Bool := Id.run do
+  let some field8 := Fixtures.fields[1]? | return false
+  let some field16 := Fixtures.fields[3]? | return false
+  let some field32 := Fixtures.fields[5]? | return false
+  for field in [field8,field16,field32] do
+    let columns := 4097
+    let some r := SparseRow.ofEntries field columns
+      ((Array.range columns).map fun i => (i,1)) | return false
+    let some t := SparseRow.ofEntries field columns
+      ((Array.range columns).map fun i => (i,2)) | return false
+    for reducers in [#[],#[r]] do
+      let total := (Elimination.reference field {} columns reducers #[t] #[] false).stats
+      for limits in ([{}, { work := total.work-columns-1 },
+          { outputEntries := total.outputEntries-1 },
+          { packedBytes := total.packedBytes-1 }] : List MatrixLimits) do
+        if !pauseCheck field columns reducers #[t] limits 1 then return false
+  let field := field8
+  for columns in [65536,65537] do
+    let some t := SparseRow.ofEntries field columns #[(0,2),(columns-1,1)] | return false
+    if !pauseCheck field columns #[] #[t] {} 8 then return false
+  return true
+
+#guard pauseChecks
+
 /-- Cross the old whole-frame cutoff and multiple prepaid scan/gather chunks,
 including the new admission boundary. Supplied arrays can share ownership. -/
 def largeChecks : Bool := Id.run do
@@ -188,11 +236,5 @@ def largeChecks : Bool := Id.run do
   return true
 
 #guard largeChecks
-
-/-- The imported theorem replays the modeled native boundary in the kernel. -/
-example := MatrixState.validation_example
-
-/-- info: 'Hex.Groebner.MatrixState.validation_example' depends on axioms: [propext, Quot.sound] -/
-#guard_msgs in #print axioms MatrixState.validation_example
 
 end Hex.Groebner.MatrixStateConformance

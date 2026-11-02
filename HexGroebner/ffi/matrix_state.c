@@ -6,10 +6,11 @@
 #include <string.h>
 
 extern lean_obj_res lean_hex_matrix_step(lean_obj_arg);
-extern lean_obj_res lean_hex_scan_transition(uint64_t,b_lean_obj_arg,b_lean_obj_arg,
-    lean_obj_arg,b_lean_obj_arg,b_lean_obj_arg,b_lean_obj_arg,uint8_t);
-extern lean_obj_res lean_hex_gather(uint64_t,lean_obj_arg,b_lean_obj_arg,
-    b_lean_obj_arg,b_lean_obj_arg,b_lean_obj_arg,b_lean_obj_arg,uint64_t);
+#include "matrix_runtime.h"
+
+#ifndef HEX_GROEBNER_CONT_PHASE
+#define HEX_GROEBNER_CONT_PHASE(phase) ((void)0)
+#endif
 
 #if UINTPTR_MAX == UINT64_MAX
 
@@ -43,10 +44,6 @@ static void cont_replace(continuation *c,unsigned i,lean_obj_arg value) {
     if(c->v[i]) lean_dec(c->v[i]);
     c->v[i]=value;
 }
-static lean_object *cont_exclusive(lean_obj_arg bytes) {
-    if(lean_is_exclusive(bytes)) return bytes;
-    return lean_copy_sarray_nonlinear(bytes,lean_sarray_capacity(bytes));
-}
 static void cont_unpack(continuation *c,lean_obj_arg s) {
     c->p=lean_ctor_get_uint64(s,20*sizeof(void*));
     c->inverse=lean_ctor_get_uint64(s,20*sizeof(void*)+8);
@@ -66,7 +63,8 @@ static int cont_counts(continuation *c) {
         lean_object *n=lean_ctor_get(c->v[0],i);
         c->limits[i]=lean_is_scalar(n)?lean_unbox(n):UINT64_MAX/2;
     }
-    return 1;
+    return c->stats[0]<=c->limits[5] && c->stats[1]<=c->limits[2] &&
+        c->stats[2]<=c->limits[3] && c->stats[3]<=c->limits[4] && c->stats[4]<=c->limits[6];
 }
 static void cont_save_counts(continuation *c) {
     lean_object *s=lean_alloc_ctor(0,8,0);
@@ -96,6 +94,45 @@ static void cont_internal(continuation *c) {
     lean_object *r=lean_alloc_ctor(0,1,0);lean_ctor_set(r,0,lean_box(1));
     lean_object *some=lean_alloc_ctor(1,1,0);lean_ctor_set(some,0,r);
     cont_replace(c,18,some);c->phase=7;
+}
+static lean_object *cont_empty_scan(void) {
+    lean_object *s=lean_alloc_ctor(0,8,8);lean_ctor_set(s,0,cont_empty());
+    for(unsigned i=1;i<8;++i) lean_ctor_set(s,i,lean_box(0));
+    lean_ctor_set_uint64(s,8*sizeof(void*),0);return s;
+}
+static lean_object *cont_empty_gather(void) {
+    lean_object *s=lean_alloc_ctor(0,4,0);
+    for(unsigned i=0;i<3;++i) lean_ctor_set(s,i,cont_empty());
+    lean_ctor_set(s,3,lean_box(0));return s;
+}
+/* Enforce every buffer bound before a direct write. A failed preflight uses
+   the checked Lean phase, before charges or mutable buffers have changed. */
+static int cont_bounds(continuation *c) {
+    if(c->p<2 || c->p>=UINT64_C(2147483648) ||
+       lean_sarray_size(c->v[8])!=c->columns*4 || !lean_is_scalar(c->v[6]) ||
+       !lean_is_scalar(c->v[12]) || !lean_is_scalar(c->v[19])) return 0;
+    if(c->phase==3) {
+        if(lean_sarray_size(c->v[7])!=c->columns*c->width) return 0;
+        uint64_t input=lean_unbox(c->v[6]),nr=lean_array_size(c->v[2]);
+        if(input>=nr+lean_array_size(c->v[3])) return 1;
+        lean_object *row=lean_array_get_core(c->v[input<nr?2:3],(size_t)(input<nr?input:input-nr));
+        if(lean_is_scalar(row) || lean_obj_tag(row)!=0 || lean_ctor_num_objs(row)!=2) return 0;
+        lean_object *ids=lean_ctor_get(row,0),*coeff=lean_ctor_get(row,1);
+        size_t bytes=lean_sarray_size(ids),n=bytes/4;
+        if(bytes%4 || n>c->columns || lean_sarray_size(coeff)!=n*c->width) return 0;
+        for(size_t i=0;i<n;++i) if(cont_read(lean_sarray_cptr(ids)+4*i,4)>=c->columns) return 0;
+        return 1;
+    }
+    if(c->phase==4) {
+        lean_object *scan=c->v[13];
+        return !lean_is_scalar(scan) && lean_obj_tag(scan)==0 && lean_ctor_num_objs(scan)==8 &&
+            lean_sarray_size(lean_ctor_get(scan,0))==c->columns*c->width;
+    }
+    lean_object *gather=c->v[14],*scan=c->v[13];
+    return !lean_is_scalar(gather) && lean_obj_tag(gather)==0 && lean_ctor_num_objs(gather)==4 &&
+        !lean_is_scalar(scan) && lean_obj_tag(scan)==0 && lean_ctor_num_objs(scan)==8 &&
+        lean_sarray_size(lean_ctor_get(gather,0))==c->columns*c->width &&
+        lean_is_scalar(c->v[15]) && lean_unbox(c->v[15])<c->columns;
 }
 static int cont_target(continuation *c) {
     return lean_unbox(c->v[6])>=lean_array_size(c->v[2]);
@@ -143,7 +180,7 @@ static void cont_install(continuation *c,lean_obj_arg row,uint64_t column,uint64
         lean_ctor_set_uint64(pivot,3*sizeof(void*),inverse);
         lean_ctor_set_uint8(pivot,3*sizeof(void*)+8,(uint8_t)target);
         c->v[9]=lean_array_push(c->v[9],pivot);
-        c->v[8]=cont_exclusive(c->v[8]);
+        c->v[8]=lean_sarray_ensure_exclusive(c->v[8]);
         cont_write(lean_sarray_cptr(c->v[8])+column*4,4,id+1);
         if(!target) cont_replace(c,12,lean_uint64_to_nat(lean_unbox(c->v[12])+1));
     }
@@ -177,7 +214,7 @@ static void cont_input(continuation *c) {
         cont_install(c,output,first,inverse);return;
     }
     if(!cont_work(c,size)) {cont_error(c,5);return;}
-    lean_object *dense=cont_exclusive(c->v[7]);c->v[7]=cont_empty();
+    lean_object *dense=lean_sarray_ensure_exclusive(c->v[7]);c->v[7]=cont_empty();
     for(uint64_t i=0;i<size;++i) {
         uint64_t col=cont_read(lean_sarray_cptr(ids)+i*4,4);
         cont_write(lean_sarray_cptr(dense)+col*c->width,c->width,
@@ -209,10 +246,13 @@ static void cont_scan(continuation *c) {
         lean_box(4096),remaining,lean_box(0),0);c->v[13]=NULL;lean_dec(remaining);
     uint8_t status=lean_ctor_get_uint8(out,5*sizeof(void*));
     uint64_t work=lean_unbox(lean_ctor_get(out,2)),reductions=lean_unbox(lean_ctor_get(out,3));
+    if(!cont_work(c,work)) {
+        lean_dec(out);c->v[13]=cont_empty_scan();cont_error(c,5);return;
+    }
     c->v[13]=cont_take(out,0);lean_dec(out);
-    if(!cont_work(c,work)) {cont_error(c,5);return;}
     c->stats[6]+=reductions;
     if(status==2) {cont_error(c,5);return;}
+    if(status==3) {cont_error(c,6);return;}
     if(status!=0 && status!=1) {cont_internal(c);return;}
     if(status!=1) {if(quanta==1) cont_internal(c);return;}
     cont_replace(c,16,cont_take(c->v[13],7));
@@ -244,10 +284,12 @@ static void cont_gather(continuation *c) {
     c->v[14]=NULL;lean_dec(stop);lean_dec(entries);lean_dec(bytes);lean_dec(work);
     uint8_t status=lean_ctor_get_uint8(out,4*sizeof(void*));
     uint64_t ne=lean_unbox(lean_ctor_get(out,1)),nb=lean_unbox(lean_ctor_get(out,2)),nw=lean_unbox(lean_ctor_get(out,3));
+    unsigned failure=0;
+    if(!cont_charge(c,2,3,ne)) failure=3;
+    else if(!cont_charge(c,3,4,nb)) failure=4;
+    else if(!cont_work(c,nw)) failure=5;
+    if(failure) {lean_dec(out);c->v[14]=cont_empty_gather();cont_error(c,failure);return;}
     c->v[14]=cont_take(out,0);lean_dec(out);
-    if(!cont_charge(c,2,3,ne)) {cont_error(c,3);return;}
-    if(!cont_charge(c,3,4,nb)) {cont_error(c,4);return;}
-    if(!cont_work(c,nw)) {cont_error(c,5);return;}
     if(status==2 || status==3 || status==4) {cont_error(c,status+1);return;}
     if(status==5) {
         lean_object *r=lean_alloc_ctor(0,1,0);lean_ctor_set(r,0,lean_box(0));
@@ -267,12 +309,14 @@ static void cont_gather(continuation *c) {
 /* Each call performs cap*(8c+2r+4224) phase units, plus at most one copy
    of each shared buffer/array: conservatively 16c bytes and 2r object entries.
    Here c is columns and r is input rows. This is a hard shape-dependent bound,
-   not a count of machine instructions. The private shape
+   not a count of machine instructions. Nat metadata retains its ordinary bit
+   complexity. The private shape
    gate admits <=65536 columns and input rows; larger states take no transition here. Checks,
    validation, initialization and final ordering use the exported Lean phase,
    so malformed rows and arbitrary Nat resource limits retain their exact
    failures and counters. Scan and gather each advance at most 4096 steps. */
 LEAN_EXPORT lean_obj_res lean_hex_matrix_advance(lean_obj_arg state,b_lean_obj_arg steps) {
+    if(lean_is_scalar(state) || lean_obj_tag(state)!=0 || lean_ctor_num_objs(state)!=20) return state;
     lean_object *columns=lean_ctor_get(state,1);
     if(!lean_is_scalar(columns) || lean_unbox(columns)>65536) return state;
     uint64_t rows=lean_array_size(lean_ctor_get(state,2))+lean_array_size(lean_ctor_get(state,3));
@@ -285,7 +329,8 @@ LEAN_EXPORT lean_obj_res lean_hex_matrix_advance(lean_obj_arg state,b_lean_obj_a
     continuation c;cont_unpack(&c,state);
     int fast=cont_counts(&c),dirty=0;
     for(uint64_t i=0;i<count && c.phase!=7;++i) {
-        if(fast && c.phase>=3 && c.phase<=5) {
+        if(fast && c.phase>=3 && c.phase<=5 && cont_bounds(&c)) {
+            HEX_GROEBNER_CONT_PHASE(c.phase);
             if(c.phase==3) cont_input(&c);
             else if(c.phase==4) cont_scan(&c);
             else cont_gather(&c);

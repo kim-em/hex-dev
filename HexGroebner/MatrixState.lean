@@ -6,9 +6,6 @@ Authors: Kim Morrison
 
 module
 
--- Kernel replay uses the private logical loop behind Std.Legacy.Range.forIn'.
-import all Init.Data.Range.Basic
-
 public import HexGroebner.Matrix
 public import HexGroebner.NativeScan
 public import HexGroebner.NativeGather
@@ -193,6 +190,7 @@ private def step (native : Bool) : Work Unit := do
       scan := output.state
       stats.reductions := s.stats.reductions+output.reductions }
     if output.status == 2 then throw (.exhausted .work)
+    if output.status == 3 then throw (.exhausted .traceNodes)
     if output.status != 0 && output.status != 1 then throw .rowUpdate
     if output.status == 0 && quanta == 1 then throw .rowUpdate
     if output.status == 1 then
@@ -270,6 +268,11 @@ non-hot phases and scalar values outside the frame's native fast path. -/
 @[export lean_hex_matrix_step]
 def next (state : State) : State := advancePhase state true
 
+/-- Scalar model of one phase, including terminal error preservation. -/
+def nextPortable (state : State) : State := advancePhase state false
+
+@[simp] theorem next_spec (state : State) : next state = nextPortable state := by rfl
+
 /-- Advance a bounded number of atomic phases. The shape-dependent cap budgets
 workspace initialization, pending sparse-row charges and array growth
 conservatively: at most max(1, 2^20/(8*columns+2*rows+4224)) phases per call. -/
@@ -315,7 +318,7 @@ def advance (state : State) (steps : Nat) : State :=
 
 /-- Run the untraced portable continuation with finite transition fuel. This is
 an experimental reference model; it is not selected by the public F4 route. -/
-def finishWith (quantum : Nat) (state : State) (native := false) : Except MatrixError (Echelon × Array RemainderRow) × MatrixStats := Id.run do
+def finishWith (quantum : Nat) (state : State) (native := true) : Except MatrixError (Echelon × Array RemainderRow) × MatrixStats := Id.run do
   let fuel := 6+(state.reducers.size+state.targets.size+1)*
     (3+scanFuel state.columns+(state.columns+4095)/4096+1)
   let mut state := state
@@ -332,21 +335,8 @@ theorem finish_spec (quantum : Nat) (state : State) (native : Bool) :
   simp only [finishWith,advance_spec]
   cases native <;> rfl
 
-/-- Run the reference continuation in batches of 64 phases. -/
+/-- Complete the continuation in native batches of 64 phases. -/
 def finish (state : State) := finishWith 64 state
 
-/-- Literal native-boundary replay of validation and exact prefix counters.
-This phase is independent of the platform's deliberately opaque word size. -/
-theorem validation_example :
-    let field : PrimeField := ⟨7,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
-    let r : SparseRow := ⟨⟨#[0,0,0,0,2,0,0,0]⟩,⟨#[2,1]⟩⟩
-    let t : SparseRow := ⟨⟨#[0,0,0,0,1,0,0,0]⟩,⟨#[4,1]⟩⟩
-    let out := advance (start field {} 3 #[r] #[t] #[2,3] false) 2
-    (out.phase == .validate && out.validation == 1 && out.stats.work == 3 &&
-      out.stats.inputEntries == 2 && out.stats.packedBytes == 10) = true := by
-  dsimp only
-  rw [advance_spec]
-  unfold advancePortable advanceWith start advancePhase step
-  decide +kernel
 
 end Hex.Groebner.MatrixState

@@ -23,7 +23,8 @@ theorem native_width (field : PrimeField) :
     show (65536 : UInt64).toNat = 65536 from rfl]
   split <;> (try split) <;> rfl
 
-/-- Resource categories. Packed bytes count logical input, workspace and output
+/-- Constructor indices are mirrored in `ffi/matrix_state.c`.
+Resource categories. Packed bytes count logical input, workspace and output
 payload and 64 logical bytes per recorded derivation operation, excluding
 allocator capacity and other Lean object headers. Work counts row
 visits, sparse entry updates (including their product), dense column visits,
@@ -32,7 +33,8 @@ inductive Resource where
   | columns | rows | inputEntries | outputEntries | packedBytes | work | traceNodes
   deriving BEq, Repr
 
-/-- Invalid serialized data, resource exhaustion and internal row-provider failure remain distinct. -/
+/-- Constructor tags are mirrored in `ffi/matrix_state.c`.
+Invalid serialized data, resource exhaustion and internal row-provider failure remain distinct. -/
 inductive MatrixError where
   | dimensions
   /-- The checked native row provider rejected a validated row; internal invariant failure. -/
@@ -45,7 +47,7 @@ inductive MatrixError where
 
 /-- Bounds for one matrix call. All sizes use `Nat` arithmetic, so size products
 are checked before narrowing or allocation. There is no unbounded fallback.
-Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c`. -/
+Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c` and `matrix_state.c`. -/
 structure MatrixLimits where
   columns : Nat := 1000000
   rows : Nat := 100000
@@ -57,7 +59,7 @@ structure MatrixLimits where
   deriving Inhabited
 
 /-- Charged work is retained on failure as well as success.
-Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c`. -/
+Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c` and `matrix_state.c`. -/
 structure MatrixStats where
   work : Nat := 0
   inputEntries : Nat := 0
@@ -84,7 +86,7 @@ inductive RowOp where
 
 /-- A monic sparse pivot, optionally referring to its derivation. Target pivots
 are precisely the rows adding dimension beyond the reducer row space.
-Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c`. -/
+Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c` and `matrix_state.c`. -/
 structure Pivot where
   row : SparseRow
   fromTarget : Bool
@@ -99,7 +101,7 @@ structure Pivot where
 /-- Echelon rows in increasing pivot-column order, without permuting columns.
 The reducer rank separates the reducer subspace from new target information.
 No reduced-basis or polynomial-ideal conclusion is attached to this result.
-Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c`. -/
+Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c` and `matrix_state.c`. -/
 structure Echelon where
   rows : Array Pivot
   reducerRank : Nat
@@ -108,7 +110,7 @@ structure Echelon where
 /-- An unscaled target remainder after reduction by the supplied reducer rows.
 Targets are independent: none becomes a reducer for another target. Empty rows
 retain their input position and optional zero derivation.
-Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c`. -/
+Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c` and `matrix_state.c`. -/
 structure RemainderRow where
   row : SparseRow
   derivation : Option Nat

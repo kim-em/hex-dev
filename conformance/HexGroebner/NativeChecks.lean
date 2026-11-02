@@ -34,7 +34,7 @@ def run : IO Unit := do
   let seed := ((← IO.getEnv "HEX_GROEBNER_TEST_SEED").getD "0").toNat?.getD 0
   if !MatrixStateConformance.checked || !MatrixStateConformance.boundaries ||
       !MatrixStateConformance.stepChecks || !MatrixStateConformance.largeChecks ||
-      !MatrixStateConformance.resourceSteps then
+      !MatrixStateConformance.resourceSteps || !MatrixStateConformance.pauseChecks then
     throw (IO.userError "native continuation mismatch")
   if !ColumnMapConformance.checks seed || !ColumnMapConformance.remapChecks seed ||
       !ColumnMapConformance.indexChecks seed || !ColumnMapConformance.collisionChecks then
