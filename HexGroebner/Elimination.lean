@@ -51,7 +51,8 @@ inductive MatrixError where
   deriving BEq, Repr
 
 /-- Bounds for one matrix call. All sizes use `Nat` arithmetic, so size products
-are checked before narrowing or allocation. There is no unbounded fallback.  Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c`. -/
+are checked before narrowing or allocation. There is no unbounded fallback.
+Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c`. -/
 structure MatrixLimits where
   columns : Nat := 1000000
   rows : Nat := 100000
@@ -62,7 +63,8 @@ structure MatrixLimits where
   traceNodes : Nat := 1000000
   deriving Inhabited
 
-/-- Charged work is retained on failure as well as success.  Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c`. -/
+/-- Charged work is retained on failure as well as success.
+Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c`. -/
 structure MatrixStats where
   work : Nat := 0
   inputEntries : Nat := 0
@@ -88,7 +90,8 @@ inductive RowOp where
   deriving Repr, BEq
 
 /-- A monic sparse pivot, optionally referring to its derivation. Target pivots
-are precisely the rows adding dimension beyond the reducer row space.  Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c`. -/
+are precisely the rows adding dimension beyond the reducer row space.
+Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c`. -/
 structure Pivot where
   row : SparseRow
   fromTarget : Bool
@@ -102,7 +105,8 @@ structure Pivot where
 
 /-- Echelon rows in increasing pivot-column order, without permuting columns.
 The reducer rank separates the reducer subspace from new target information.
-No reduced-basis or polynomial-ideal conclusion is attached to this result.  Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c`. -/
+No reduced-basis or polynomial-ideal conclusion is attached to this result.
+Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c`. -/
 structure Echelon where
   rows : Array Pivot
   reducerRank : Nat
@@ -110,7 +114,8 @@ structure Echelon where
 
 /-- An unscaled target remainder after reduction by the supplied reducer rows.
 Targets are independent: none becomes a reducer for another target. Empty rows
-retain their input position and optional zero derivation.  Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c`. -/
+retain their input position and optional zero derivation.
+Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c`. -/
 structure RemainderRow where
   row : SparseRow
   derivation : Option Nat
@@ -441,7 +446,8 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
 
 namespace Elimination
 
-/-- Complete matrix outcome used by the optional bulk provider.  Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c`. -/
+/-- Complete matrix outcome used by the optional bulk provider.
+Layout mirrored in `HexGroebner/ffi/matrix_eliminate.c`. -/
 structure Result where
   result : Except MatrixError (Echelon × Array RemainderRow)
   stats : MatrixStats
@@ -562,7 +568,7 @@ end Elimination
 /-- Deterministic finite-prime-field Macaulay elimination, with sparse reducers,
 packed dense accumulation, monic output, stable columns and optional provenance.
 `native := false` retains scalar Lean updates; the default uses bounded native
-chunks with identical rows, provenance and counters. Untraced 64-bit calls first
+chunks with identical rows, provenance and counters. Untraced native 64-bit calls first
 try a complete frame bounded by 4096 columns, 1024 reducers, 64 targets and
 `2^20` work; cancellation is observed between calls. Input rows must be canonical
 and use the field's coefficient width. Limits cover
@@ -578,8 +584,9 @@ def eliminateWith (field : PrimeField) (limits : MatrixLimits)
 /-- Reduce each target by the same reducer echelon space, preserving its scalar
 and input position. Targets never reduce each other. Validation, sparse reducer
 installation, bounded native updates and allowances are shared with elimination.
-Untraced 64-bit calls use the same optional `2^20`-work matrix frame and shape
-caps as `eliminateWith`; other cases retain bounded scan/gather chunks.
+Untraced native 64-bit calls use the same optional `2^20`-work matrix frame and shape
+caps as `eliminateWith`; other native calls use bounded scan/gather chunks.
+`native := false` uses scalar Lean operations.
 This is a linear triangular solve; polynomial normal-form claims additionally
 require the symbolic closure and a Gröbner basis. -/
 def reduceRowsWith (field : PrimeField) (limits : MatrixLimits)

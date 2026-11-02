@@ -82,7 +82,7 @@ normalized and all complete structural output hashes equal.
 | first | 39 | 11.16→15.85 |
 | repeat | 86 | 2.92→2.92 |
 
-| Campaign | CPU | Fixed case | B/A mean | Candidate median | Range |
+| Campaign | CPU | Fixed case | B/A geomean | Candidate median | Range |
 | --- | ---: | --- | ---: | ---: | --- |
 | first | 39 | cyclic4 | 0.7936 | 0.8342 | 0.1695–1.8997 |
 | first | 39 | cyclic5 | 2.2976 | 2.3265 | 0.5015–12.7527 |
@@ -98,7 +98,7 @@ normalized and all complete structural output hashes equal.
 | repeat | 86 | cyclic6Small | 0.9260 | 0.9331 | 0.8952–0.9429 |
 
 The campaigns disagree materially for Cyclic5, Cyclic6, Reimer5 and
-Cyclic6Small; these fixed results are inconclusive. In the first campaign the
+Cyclic6Small; the fixed results for those four cases are inconclusive. In the first campaign the
 Cyclic5/Reimer5 medians regress too, while the repeat has a tight cluster below
 one. The pooled lower medians are not representative of each campaign. Host
 load is recorded context, not a basis for dropping samples or attributing the
@@ -128,9 +128,13 @@ A separate baseline-only profile compares identical source `9bac12f60779`
 built with the original linker arrangement (`203fed…`) and the restored wrapper
 (`70a1c3…`). CPU 69 runs adjacent AB/BA for Cyclic7-31 and Eco11-31, eight
 processes, with full basis/counter equality. User-cycle samples at 1999 Hz have
-zero lost samples. The estimated cycle counts and native M31 scan shares remain
-close within each input; Eco is dominated by the same scan and geometry work.
-Allocator statistics and ELF headers are retained. The original executable has
+zero lost samples. The B/A estimated user-cycle ratios are 1.0093 for Cyclic7 and 1.0058 for
+Eco11. These two baseline observations make a 40% linker penalty unlikely on
+these inputs; they do not explain the separate msolve-sweep shift. Eco is
+dominated by the same scan and geometry work.
+Allocator statistics, flat profiles and ELF headers are archived. Raw perf
+recordings remain on the shared host at `/tmp/hex-groebner-baseline-build-profile`;
+regenerable sanitizer binaries remain in the retained local harness directories. The original executable has
 an additional runpath; text/data/bss sizes also differ. These observations do
 not explain the separate msolve-sweep gap or establish a causal linker penalty.
 Profiled durations are excluded from timing estimates and no further unchanged
@@ -151,7 +155,7 @@ measured source manifest. Independent checks cover 175 matrices, 567 unique SymP
 32 benchmark checks and dependency, phase, released-manifest, copyright and
 line-count audits pass. Four Clang and four GCC ASan/UBSan variants pass.
 
-Final source `2392d71af66b` rebuilds both drivers with exactly the same
+Validated source `2392d71af66b` rebuilds both drivers with exactly the same
 SHA256s as measured source `e878b78cf727`. The changes add erased reference
 proofs, ABI cross-references, boundary tests and documentation; the unused
 developer-only executable is removed. Its portable compiler helper reads flags
@@ -187,4 +191,4 @@ open; no language-change impossibility is established.
 - [whole-matrix-64-8cf25024fa12.tar.gz](raw/whole-matrix-64-8cf25024fa12.tar.gz): `7026976f987fb0ff3f6925c0124172b9c93b161ec19e58c638fe9dc762be121f`.
 - [whole-matrix-reviewed-e878b78cf727.tar.gz](raw/whole-matrix-reviewed-e878b78cf727.tar.gz): `0a7a8c9b2e20dc0cbcd4b3021881201d1fa6e09b6a0be39a1be947e7b9e3af73`.
 
-- [whole-matrix-final-2392d71af66b.tar.gz](raw/whole-matrix-final-2392d71af66b.tar.gz): `f1e75e58daf981ac61704246b355464723c5a8557d765c45a2e91395a96df1fc`; final source, portable helper, fresh checks and baseline-only profile.
+- [whole-matrix-final-2392d71af66b.tar.gz](raw/whole-matrix-final-2392d71af66b.tar.gz): `0214d2ac955e69f6f36b8205dfbec60a279dd2cbfa5d623ed6329c6409f62af5`; final source, portable helper, fresh checks and baseline-only profile.
