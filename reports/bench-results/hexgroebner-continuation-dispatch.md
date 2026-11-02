@@ -4,7 +4,7 @@ Production uses bounded native continuations after the small bulk frame declines
 provided there are at most 65,536 columns and total input rows. Larger matrices
 retain the reference route with bounded native scan/gather kernels. The shape
 guard avoids a measured roughly fourfold regression in Lean-scheduled continuation
-completion above the native frame's column cap. The unrestricted continuation
+completion above the native phase scheduler's 65,536-column cap. The unrestricted continuation
 remains available and measured for further optimization.
 
 `MatrixState.finish_reference` proves exact equality with `Elimination.reference`
@@ -24,8 +24,10 @@ load context, exact commands, inputs, outputs, failures and RSS are retained.
 No host-activity filtering or quiet-core wait is used. Each campaign has adjacent
 AB then BA arms; kernel arms alternate whole sweeps. Source snapshots are fresh
 detached worktrees sharing only pinned dependency packages. Lean is 4.35.0-rc3;
-the recorded SDK Clang wrapper and link flags are archived. Runtime patches and
-source blobs permit reconstruction from main commit
+the recorded SDK Clang wrapper and link flags are archived. The [source audit](hexgroebner-continuation-source.json) confirms that commit
+`b082c42f362d2f7b3e74f7879e6b5e4365f3dd10` has the exact frozen runtime source
+manifest and fingerprint `0a7fa663e970`. Runtime patches and source blobs permit
+reconstruction from main commit
 `1420b84ce3aa2e48781f11244dc51a5b504c090b`.
 
 | Source fingerprint | Frozen snapshot | Compute SHA-256 |
@@ -69,6 +71,13 @@ Memory A/B follows the archived arms: before/after A is baseline and B is select
 for comparators A is Hex and B is msolve. The paired internal candidate-time
 geometric mean is 0.9864, with ratio range 0.9614–1.0359. These internal durations
 are separate from process wall time.
+
+The largest final process ratio, 1.2968, is `quadratic6-31` in block 1:
+baseline 10.621 ms versus selected 13.772 ms. Internal candidate time is
+3.267 ms versus 3.222 ms, so the excess occurs outside that interval. The other
+three dense-quadratic paired process ratios are 0.9924–1.0099; the outlier lifts
+the family mean to 1.0688. Short-process overhead and shared-host variability
+are consistent with this observation, but these records do not isolate a cause.
 
 The equal-family mean first combines paired observations geometrically within
 each family, then weights the seven families equally. The final before/after
@@ -127,7 +136,14 @@ not a pooled before/after claim. The unrestricted continuation's approximately
 4× cost above 65,536 columns motivates the production guard. Raw exports retain
 all repeats, durations, RSS, result hashes, signal-floor flags and complexity
 verdicts. These finite observations do not establish an asymptotic model.
-Kernel paired signal-floor flags: 0 of 16 pairs; all are retained.
+Above 65,536 columns both selected/reference arms execute the reference code,
+with only dispatch overhead differing. Their observed 0.57–1.11 spread therefore
+shows substantial order/host variability; it is not an optimization gain or a
+statistical resolution bound. The comparison supports the coarse distinction
+between that route and the approximately 4× unrestricted continuation. The
+65,536-column entries do not resolve a performance difference. Kernel paired
+signal-floor flags are 0 of 16 pairs; clearing that floor does not eliminate
+this observed variability. Every sample is retained.
 
 Four diagnostic user-cycle profiles of cyclic7 at the two prime widths explain
 why matrix-frame selection has limited full-system effect. Each arm completes
@@ -152,7 +168,7 @@ inverse, the configured phase-loop cap and zero admissions to
 standalone matrix primitives. The loop counter does not measure actual machine
 instructions, elapsed time or allocation volume inside each phase. Larger
 production shapes may legitimately use those reference primitives. Native tests
-cover saved snapshots and malformed prefixes. Benchmark verification, 14 DAG regression tests and DAG/phase/release/
+cover saved snapshots and malformed prefixes. Benchmark verification, 15 DAG regression tests and DAG/phase/release/
 header/line checks pass. Sanitizer leak detection is disabled under mimalloc;
 ownership and saved-snapshot checks supplement it.
 

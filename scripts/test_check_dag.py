@@ -32,14 +32,27 @@ class GroebnerProofImportTest(unittest.TestCase):
             (root / "HexGroebner").mkdir()
             entry = root / "HexGroebner/Elimination.lean"
             helper = root / "HexGroebner/MatrixState.lean"
-            proof = root / "HexGroebner/EliminationProof.lean"
             entry.write_text("public import HexGroebner.MatrixState\n")
-            helper.write_text("")
-            proof.write_text("public import HexGroebner.Elimination\n")
-            self.assertEqual(check_groebner_imports(root), [])
-            helper.write_text("import all HexGroebner.EliminationProof\n")
+            for name in ["EliminationProof", "MatrixStateFuel"]:
+                with self.subTest(module=name):
+                    helper.write_text("")
+                    (root / f"HexGroebner/{name}.lean").write_text(
+                        "public import HexGroebner.Elimination\n")
+                    self.assertEqual(check_groebner_imports(root), [])
+                    helper.write_text(f"import all HexGroebner.{name}\n")
+                    self.assertEqual(check_groebner_imports(root), [
+                        f"HexGroebner executable imports optional proof module HexGroebner.{name}"])
+
+    def test_umbrella_imports_are_checked_independently(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "HexGroebner").mkdir()
+            (root / "HexGroebner.lean").write_text("import HexGroebner.Runtime\n")
+            (root / "HexGroebner/Runtime.lean").write_text(
+                "import HexGroebner.EliminationDispatchProof\n")
+            (root / "HexGroebner/EliminationDispatchProof.lean").write_text("")
             self.assertEqual(check_groebner_imports(root), [
-                "HexGroebner.Elimination imports optional proof module HexGroebner.EliminationProof"])
+                "HexGroebner executable imports optional proof module HexGroebner.EliminationDispatchProof"])
 
 
 class AdapterOwnershipTest(unittest.TestCase):

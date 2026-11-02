@@ -262,12 +262,18 @@ def import_closure_in_library(
 
 
 def check_groebner_imports(root: Path) -> list[str]:
-    """Keep optional phase/dispatch proofs out of the executable import graph."""
-    modules = import_closure_in_library(root, "HexGroebner.Elimination", "HexGroebner")
+    """Keep optional phase/dispatch proofs out of executable library roots."""
+    modules: set[str] = set()
+    for entry in ["HexGroebner", "HexGroebner.Elimination"]:
+        modules |= import_closure_in_library(root, entry, "HexGroebner")
+    optional = {
+        module_name_for(path)
+        for path in SEALED_IMPORT_ALL_ALLOWLIST["HexGroebner.MatrixState"]
+        if path.parts[0] == "HexGroebner"
+    } | {"HexGroebner.EliminationDispatchProof"}
     return [
-        f"HexGroebner.Elimination imports optional proof module {module}"
-        for module in sorted(modules)
-        if module.rsplit(".", 1)[-1].endswith("Proof")
+        f"HexGroebner executable imports optional proof module {module}"
+        for module in sorted(modules & optional)
     ]
 
 
