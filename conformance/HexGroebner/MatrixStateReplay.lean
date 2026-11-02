@@ -12,7 +12,7 @@ public import HexGroebner.MatrixValidation
 import all HexGroebner.MatrixState
 import all Init.Data.Range.Basic
 public import HexGroebner.ScanProof
-public import HexGroebner.MatrixStateProof
+public import HexGroebner.MatrixStateFuel
 
 public section
 
@@ -79,5 +79,24 @@ theorem geometry_example (steps : Nat) :
 #guard_msgs in #print axioms MatrixState.workspace_work_error
 /-- info: 'Hex.Groebner.MatrixState.workspace_size_error' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in #print axioms MatrixState.workspace_size_error
+
+/-- Kernel replay covers every quantum and either scheduler after an arbitrary
+bounded prefix, including zero-step prefixes and already completed prefixes. -/
+theorem completion_example (steps quantum : Nat) (native : Bool) :
+    let field : PrimeField := ⟨7,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+    let row : SparseRow := ⟨⟨#[0,0,0,0,2,0,0,0]⟩,⟨#[2,1]⟩⟩
+    let state := advance (start field {} 3 #[] #[row] #[2] false) steps
+    let out := finishState quantum state native
+    out.phase = .done ∧ out.result.isSome = true := by
+  exact ⟨finishState_done _ quantum native (advance_geometry _ steps (start_geometry ..)),
+    finishState_result _ quantum native (advance_geometry _ steps (start_geometry ..))
+      (advance_closed _ steps (start_closed ..))⟩
+
+/-- info: 'Hex.Groebner.MatrixStateReplay.completion_example' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms completion_example
+/-- info: 'Hex.Groebner.MatrixState.finishState_done' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms MatrixState.finishState_done
+/-- info: 'Hex.Groebner.MatrixState.finishState_result' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms MatrixState.finishState_result
 
 end Hex.Groebner.MatrixStateReplay

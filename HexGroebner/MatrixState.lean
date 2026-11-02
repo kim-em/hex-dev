@@ -317,36 +317,53 @@ def advance (state : State) (steps : Nat) : State :=
   unfold advance advanceSmall
   split <;> simp_all [advanceKernels_spec]
 
+/-- Shape-dependent outer phase allowance, independent of consumed budgets. -/
+def State.allowance (state : State) : Nat :=
+  6+(state.reducers.size+state.targets.size+1)*
+    (3+scanFuel state.columns+(state.columns+4095)/4096+1)
+
 /-- Run the untraced continuation with the selected native or scalar scheduler.
 It is not selected by the public F4 route.
 
-For a state reached from `start`, let `n` be the input row count, `c` the column
-count, `S = ceil(c*(c+2)/4096)+1` and `G = ceil(c/4096)+1`. Check, workspace,
-ordering and the validate-to-workspace/input-to-order transitions take five
-phases; validation takes at most `n`; each input row takes
-one input phase, at most `S` scan phases and at most `G` gather phases. A scan
-or gather that remains unfinished at its last quantum fails immediately.
-Thus `5+n+n*(1+S+G)` bounds the remaining phases. The allowance below,
-`6+(n+1)*(3+S+G)`, dominates it, and every unfinished call advances at least
-one phase because the requested quantum is clamped to one. Exhausting this
-shape allowance therefore indicates a broken internal invariant and returns
-`rowUpdate`; a general proof of the bound remains required. -/
-def finishWith (quantum : Nat) (state : State) (native := true) : Except MatrixError (Echelon × Array RemainderRow) × MatrixStats := Id.run do
-  let fuel := 6+(state.reducers.size+state.targets.size+1)*
-    (3+scanFuel state.columns+(state.columns+4095)/4096+1)
+The shape allowance covers validation, workspace setup, input rows, bounded
+scan/gather quanta and final ordering. Each unfinished call advances at least
+one phase because the requested quantum is clamped to one. `MatrixStateFuel`
+proves that every geometrically valid continuation reaches a terminal state
+within this allowance, including states resumed partway through a row. -/
+def finishState (quantum : Nat) (state : State) (native := true) : State := Id.run do
+  let fuel := state.allowance
   let mut state := state
   for _ in [:fuel] do
     if state.phase == .done then break
     state := if native then advance state (max 1 quantum)
       else advancePortable state (max 1 quantum)
-  return (state.result.getD (.error .rowUpdate),state.stats)
+  return state
+
+/-- Return the completed continuation's result and exact charged statistics.
+The optional result retains the internal-invariant fallback. -/
+def finishWith (quantum : Nat) (state : State) (native := true) :
+    Except MatrixError (Echelon × Array RemainderRow) × MatrixStats :=
+  let out := finishState quantum state native
+  (out.result.getD (.error .rowUpdate),out.stats)
+
+/-- The completion loop returns its final state's exact result and statistics,
+including the internal-invariant fallback. -/
+theorem finishWith_loop (quantum : Nat) (state : State) (native : Bool) :
+    finishWith quantum state native = Id.run (do
+      let fuel := state.allowance
+      let mut state := state
+      for _ in [:fuel] do
+        if state.phase == .done then break
+        state := if native then advance state (max 1 quantum)
+          else advancePortable state (max 1 quantum)
+      return (state.result.getD (.error .rowUpdate),state.stats)) := by rfl
 
 /-- Selecting the native scheduler preserves the Lean model's complete result
 and counters. Agreement of C with that model is a separately audited and tested
 native obligation; this theorem does not verify C machine code. -/
 theorem finish_spec (quantum : Nat) (state : State) (native : Bool) :
     finishWith quantum state native = finishWith quantum state false := by
-  simp only [finishWith,advance_spec]
+  simp only [finishWith,finishState,advance_spec]
   cases native <;> rfl
 
 /-- Complete the continuation in native batches of 64 phases. -/
@@ -611,10 +628,11 @@ theorem finish_done (quantum : Nat) (state : State) (native : Bool)
     (h : state.phase = .done) :
     finishWith quantum state native =
       (state.result.getD (.error .rowUpdate), state.stats) := by
-  simp only [finishWith, Id.run]
+  simp only [finishWith,finishState,State.allowance,Id.run]
   rw [Std.Legacy.Range.forIn_eq_forIn_range']
   generalize hx : List.range' _ _ _ = xs
-  cases xs <;> simp [h] <;> rfl
+  cases xs <;> simp [h,show (Phase.done == Phase.done) = true from rfl,
+    Pure.pure,Bind.bind]
 
 
 
