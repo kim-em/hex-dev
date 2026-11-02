@@ -82,6 +82,8 @@ def stepChecks : Bool := Id.run do
 private def compare (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
     (reducers targets : Array SparseRow) (sugars : Array Nat) (independent : Bool) : Bool := Id.run do
   let expected := Elimination.reference field limits columns reducers targets sugars independent
+  if !equal expected (Elimination.run field limits columns reducers targets false sugars true independent) then
+    return false
   let state := MatrixState.start field limits columns reducers targets sugars independent
   for quantum in [1,2,63,64] do
     let (result,stats) := MatrixState.finishWith quantum state false
@@ -308,6 +310,8 @@ def largeChecks : Bool := Id.run do
       for independent in [false,true] do
         let limits : MatrixLimits := { work := 2^90,packedBytes := 2^90 }
         let expected := Elimination.reference field limits columns #[r] #[t] #[2^90,3] independent
+        if !equal expected (Elimination.run field limits columns #[r] #[t] false #[2^90,3] true independent) then
+          return false
         let start := MatrixState.start field limits columns #[r] #[t] #[2^90,3] independent
         let (result,stats) := MatrixState.finishWith 64 start true
         if !equal expected ⟨result,stats⟩ then return false

@@ -217,6 +217,16 @@ private def capacityChecks (seed : Nat) : Bool := Id.run do
 
 #guard capacityChecks 0
 
+/-- Compare every candidate field, accounting for the explicitly different
+native-provider choices of the two computations. -/
+def sameCandidate (actual expected : Candidate) : Bool :=
+  decide (actual.context = expected.context) &&
+  actual.polynomials == expected.polynomials &&
+  actual.randomState == expected.randomState && actual.batchSize == expected.batchSize &&
+  actual.nativeRows && actual.nativeMonomials && !expected.nativeRows && !expected.nativeMonomials &&
+  actual.gebauerMoller == expected.gebauerMoller &&
+  actual.batchInterreduce == expected.batchInterreduce && actual.scheduling == expected.scheduling
+
 /-- Full F4 execution, called between native-counter observations by the harness. -/
 def f4Checks (seed : Nat) : Bool := Id.run do
   let field : PrimeField := ⟨65537,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
@@ -232,9 +242,11 @@ def f4Checks (seed : Nat) : Bool := Id.run do
     generators := generators.push polynomial
   generators := generators.push #[⟨Array.replicate 5 1,1⟩,
     ⟨Array.replicate 5 0,(65537 - (seed%65536 + 1)).toUInt64⟩]
-  match computeWith context {} generators with
-  | .candidate value statistics => return !value.polynomials.isEmpty && statistics.matrixCalls > 1
-  | _ => return false
+  let .candidate actual statistics := computeWith context {} generators | return false
+  let .candidate expected reference := computeWith context
+    { nativeRows := false,nativeMonomials := false } generators | return false
+  return !actual.polynomials.isEmpty && statistics.matrixCalls > 1 &&
+    sameCandidate actual expected && statistics == reference
 
 /-- Multi-chunk hits, coefficient-only changes, context changes and widening. -/
 def runtimeChecks (seed : Nat) : Bool := cacheChecks seed && longChecks seed && contextChecks seed && arenaChecks seed && longArenaChecks seed && capacityChecks seed

@@ -154,4 +154,68 @@ setup_benchmark matrixSparseBulk n => n
     maxSecondsPerCall := 32.0
   }
 
+/-- Eight known pivots and eight targets, with width independent of row count.
+The final column forces a complete scan. Widths above 65536 decline the native
+phase scheduler and exercise the Lean scheduler with native row kernels. -/
+def prepareWideFrame (n : Nat) : Input := Id.run do
+  let half := n/2
+  let mut reducers := #[]
+  let mut targets := #[]
+  for i in [:8] do
+    let columns := Packed.push .u32 (Packed.push .u32 {} i.toUInt64) (half+i).toUInt64
+    let coefficients := Packed.push frameField.width
+      (Packed.push frameField.width {} 1) 1
+    reducers := reducers.push ⟨columns,coefficients⟩
+    targets := targets.push ⟨Packed.push .u32 columns (n-1).toUInt64,
+      Packed.push frameField.width coefficients 1⟩
+  return ⟨n,reducers,targets⟩
+
+/-- Sparse elimination across the native scheduler's column boundary. -/
+def matrixWide (input : Input) := matrixSparse input
+
+/-- Identical wide sparse input and complete output through the reference. -/
+def matrixWideReference (input : Input) := matrixSparseReference input
+
+/-- Production dispatch retains the reference kernels above the scheduler cap. -/
+def matrixWideSelected (input : Input) := matrixSparseBulk input
+
+#guard (#[64,65537].all fun n =>
+  let input := prepareWideFrame n
+  let actual := matrixWide input
+  actual.1 && actual == matrixWideReference input && actual == matrixWideSelected input)
+
+-- Eight fixed targets each scan O(n) columns; workspace initialization and
+-- pivot ordering also visit n columns. Full rows and all counters are hashed.
+setup_benchmark matrixWide n => n
+  with prep := prepareWideFrame
+  where {
+    paramFloor := 65536
+    paramCeiling := 262144
+    paramSchedule := .custom #[65536,65537,131072,262144]
+    targetInnerNanos := 1000000000
+    maxSecondsPerCall := 32.0
+  }
+
+-- Same sparse rows, field, allowances and linear work as matrixWide.
+setup_benchmark matrixWideReference n => n
+  with prep := prepareWideFrame
+  where {
+    paramFloor := 65536
+    paramCeiling := 262144
+    paramSchedule := .custom #[65536,65537,131072,262144]
+    targetInnerNanos := 1000000000
+    maxSecondsPerCall := 32.0
+  }
+
+-- Identical inputs and complete outputs, with O(n) scanning and initialization.
+setup_benchmark matrixWideSelected n => n
+  with prep := prepareWideFrame
+  where {
+    paramFloor := 65536
+    paramCeiling := 262144
+    paramSchedule := .custom #[65536,65537,131072,262144]
+    targetInnerNanos := 1000000000
+    maxSecondsPerCall := 32.0
+  }
+
 end Hex.Groebner.Bench

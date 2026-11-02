@@ -144,6 +144,23 @@ def runPortableF4 (seed : Nat) : IO Unit := do
   if stats.matrixCalls == 0 || stats.matrixRows == 0 || stats.matrixEntries == 0 then
     throw (IO.userError "portable F4 did not perform matrix elimination")
 
+/-- The initial 65 target rows exceed the bulk frame's target cap. A complete
+F4 candidate and all counters must agree with both native providers disabled. -/
+def runOversizedF4 : IO Unit := do
+  let field : PrimeField := ⟨7,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let context : Context := ⟨field,1,.grevlex⟩
+  -- Equal leading terms collide. The first pair leaves constant 2, requiring
+  -- inverse 4 in F7; subsequent collisions produce zero rows.
+  let generators : Array RawPolynomial := (Array.range 65).map fun i =>
+    #[⟨#[i/2+1],1⟩,⟨#[0],if i%2 == 0 then 2 else 4⟩]
+  let .candidate actual stats := computeWith context {} generators |
+    throw (IO.userError "oversized F4 did not complete")
+  let .candidate expected reference := computeWith context
+      { nativeRows := false,nativeMonomials := false } generators |
+    throw (IO.userError "portable oversized F4 did not complete")
+  if !ReducerCacheConformance.sameCandidate actual expected || stats != reference || stats.peakMatrixRows < 65 then
+    throw (IO.userError "oversized F4 complete output/counter mismatch")
+
 /-- Exercise complete cached F4 calls under each instrumented native provider. -/
 def runF4 : IO Unit := do
   let seed ← readSeed

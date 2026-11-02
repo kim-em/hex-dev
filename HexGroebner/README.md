@@ -637,16 +637,22 @@ shapes use ordinary Lean scheduling with bounded native scan/gather. The
 scalar `advancePortable` is independent of those kernels. `advance_spec`
 relates their Lean models; agreement with C is a tested native obligation.
 
-The continuation has a separate native carrier and does not replace the F4
-matrix route or `Elimination.reference`. Conformance compares complete rows,
-metadata, intermediate states and charged counters. A proof relating its
-completed execution to the existing reference remains required before that
-integration. `finishState_done` proves that the shape-based allowance suffices
-for terminal completion, including suspended scan/gather states. Per-row
-scan/gather quantum exhaustion can still produce `rowUpdate`; these quantum
-counts and error boundaries match the reference, and neither implementation
-currently has a proof excluding that error on validated inputs. Its kernel benchmarks compare
-standalone matrix frames; they make no full-system performance claim.
+The continuation has a separate native carrier. Untraced F4 matrix calls retain
+the small bounded bulk frame. When it declines, calls within the native
+scheduler's 65,536-column/input-row limits use the continuation; larger frames
+retain the reference's bounded native scan/gather kernels.
+`MatrixState.finish_reference` proves that completion returns exactly the
+`Elimination.reference` result and counters for every input, budget, quantum and
+provider choice. Import `HexGroebner.EliminationDispatchProof` for
+`Elimination.run_spec`, which covers production dispatch without adding proof
+modules to the executable import graph.
+Conformance compares complete rows, metadata, intermediate states and charged
+counters. `finishState_done` proves that the shape-based allowance suffices for
+terminal completion, including suspended scan/gather states. Per-row scan/gather
+quantum exhaustion can still produce `rowUpdate`; these quantum counts and
+error boundaries match the reference, and neither implementation currently has
+a proof excluding that error on validated inputs. Standalone matrix kernel
+benchmarks make no full-system performance claim.
 
 Terminal continuations retain their workspace for inspection of exact phase
 state and charged prefixes. `finishState` returns this terminal state with its

@@ -1,0 +1,25 @@
+{
+  "commit": "b082c42f362d2f7b3e74f7879e6b5e4365f3dd10",
+  "tree": "a8d4926ae86c2db9fec7908b3dc933db859cb6e8",
+  "family": "hexgroebner-f4",
+  "source_fingerprint": "0a7fa663e970",
+  "source_manifest_sha256": "0a7fa663e9705a95732c963fb9395d9e2718149ffdd8572458e17caee7b03575",
+  "frozen_snapshot": "8d83b29c3ef99062f4816ba6217117412f88f802",
+  "frozen_tree": "9ff4036ef529b92dc30c131eb32df2234b27928f",
+  "exact_runtime_manifest_match": true,
+  "binary_sha256": {
+    "compute": "e913bc8129e2027e18056f4bfb9afb56d26cbfa3b7ca01005b9d384b0f6b5d50",
+    "compute-reference": "033eb8259654610fb9542fda76a149698e1884bb4b61836d2f99845b99650715"
+  },
+  "reproduce_python": [
+    "from scripts.bench.groebner_measure import FAMILY",
+    "from scripts.bench.sweep_freshness import tree_listing, fingerprint",
+    "print(fingerprint(tree_listing(FAMILY, 'b082c42f362d2f7b3e74f7879e6b5e4365f3dd10')))"
+  ],
+  "dag_regression_command": [
+    "python3",
+    "scripts/test_check_dag.py"
+  ],
+  "dag_regression_output": "...............\n----------------------------------------------------------------------\nRan 15 tests in 0.016s\n\nOK\n",
+  "scope": "The runtime source family matches exactly. Whole git trees differ because reports and test/provenance files are outside this runtime source family. The committed benchmark capsules retain frozen source blobs and runtime patches; the runtime-identity record links the two fresh measured/final executable pairs."
+}

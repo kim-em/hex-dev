@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_dag import (
     KNOWN_EXCEPTIONS,
     check_adapter_imports,
+    check_groebner_imports,
     check_sealed_import_all,
     import_roots,
     import_closure_in_library,
@@ -22,6 +23,36 @@ from check_dag import (
 )
 from libgraph import (load_libraries, library_owner_for_path, may_import,
                       reachable_dependencies)
+
+
+class GroebnerProofImportTest(unittest.TestCase):
+    def test_proof_root_is_optional_and_indirect_import_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "HexGroebner").mkdir()
+            entry = root / "HexGroebner/Elimination.lean"
+            helper = root / "HexGroebner/MatrixState.lean"
+            entry.write_text("public import HexGroebner.MatrixState\n")
+            for name in ["EliminationProof", "MatrixStateFuel"]:
+                with self.subTest(module=name):
+                    helper.write_text("")
+                    (root / f"HexGroebner/{name}.lean").write_text(
+                        "public import HexGroebner.Elimination\n")
+                    self.assertEqual(check_groebner_imports(root), [])
+                    helper.write_text(f"import all HexGroebner.{name}\n")
+                    self.assertEqual(check_groebner_imports(root), [
+                        f"HexGroebner executable imports optional proof module HexGroebner.{name}"])
+
+    def test_umbrella_imports_are_checked_independently(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "HexGroebner").mkdir()
+            (root / "HexGroebner.lean").write_text("import HexGroebner.Runtime\n")
+            (root / "HexGroebner/Runtime.lean").write_text(
+                "import HexGroebner.EliminationDispatchProof\n")
+            (root / "HexGroebner/EliminationDispatchProof.lean").write_text("")
+            self.assertEqual(check_groebner_imports(root), [
+                "HexGroebner executable imports optional proof module HexGroebner.EliminationDispatchProof"])
 
 
 class AdapterOwnershipTest(unittest.TestCase):
@@ -187,6 +218,18 @@ class SealedImportAllTest(unittest.TestCase):
                 Path("HexGroebner/MatrixStateProof.lean"),
                 Path("HexGroebner/MatrixStateFuel.lean"),
                 Path("HexGroebner/MatrixStateSchedule.lean"),
+                Path("HexGroebner/EliminationOutcome.lean"),
+                Path("HexGroebner/EliminationWorkProof.lean"),
+                Path("HexGroebner/EliminationValidationProof.lean"),
+                Path("HexGroebner/EliminationPhaseProof.lean"),
+                Path("HexGroebner/EliminationGatherStep.lean"),
+                Path("HexGroebner/EliminationGatherProof.lean"),
+                Path("HexGroebner/EliminationScanStep.lean"),
+                Path("HexGroebner/EliminationScanLoop.lean"),
+                Path("HexGroebner/EliminationOrderProof.lean"),
+                Path("HexGroebner/EliminationInputProof.lean"),
+                Path("HexGroebner/EliminationInvariant.lean"),
+                Path("HexGroebner/EliminationProof.lean"),
                 Path("conformance/HexGroebner/MatrixStateReplay.lean"),
             ]
             denied = [

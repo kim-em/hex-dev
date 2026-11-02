@@ -309,7 +309,17 @@ static uint64_t whole_accepted=0,whole_deferred=0,whole_joint=0,whole_independen
 #define HEX_GROEBNER_MATRIX_ACCEPTED() (++whole_accepted,independent?++whole_independent:++whole_joint)
 #define HEX_GROEBNER_MATRIX_DEFERRED() (++whole_deferred)
 #define lean_hex_groebner_eliminate_matrix hex_test_whole
-static uint64_t continuation_phases[8]={0};
+static uint64_t continuation_phases[8]={0},continuation_successes=0;
+/* cont_counts can leave its scalar cache partial for arbitrary Nat counters.
+   Inspect that cache only while fast is true; the isolated F4 window uses it. */
+static uint64_t continuation_reduced=0,continuation_zero=0,continuation_inverses=0;
+#define HEX_GROEBNER_CONT_INVERSE() (++continuation_inverses)
+#define HEX_GROEBNER_CONT_SUCCESS(initial,phase,result,reductions,zero_rows) do { \
+ if((initial)!=7 && (phase)==7 && !lean_is_scalar(result) && lean_obj_tag(result)==1) { \
+  lean_object *answer=lean_ctor_get(result,0); \
+  if(!lean_is_scalar(answer) && lean_obj_tag(answer)==1) { ++continuation_successes; continuation_reduced+=fast && (reductions)>0; continuation_zero+=fast && (zero_rows)>0; } \
+ } \
+} while(0)
 static uint64_t cont_exhausted[8][7]={{0}},cont_invalid_masks[6]={0};
 static uint64_t cont_validation_work[2]={0};
 #define HEX_GROEBNER_CONT_VALIDATE_WORK(s,w) (cont_validation_work[s]|=UINT64_C(1)<<(w))
@@ -341,6 +351,22 @@ LEAN_EXPORT lean_obj_res __wrap_lean_hex_matrix_advance(lean_obj_arg state,b_lea
 }
 LEAN_EXPORT lean_obj_res hex_test_continuation_count(lean_obj_arg world) {
  (void)world;return lean_io_result_mk_ok(lean_box_uint64(continuation_calls));
+}
+LEAN_EXPORT lean_obj_res hex_test_continuation_successes(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(continuation_successes));
+}
+LEAN_EXPORT lean_obj_res hex_test_continuation_arithmetic(lean_obj_arg world) {
+ (void)world;
+ lean_object *tail=lean_alloc_ctor(0,2,0);
+ lean_ctor_set(tail,0,lean_box_uint64(continuation_zero));
+ lean_ctor_set(tail,1,lean_box_uint64(continuation_inverses));
+ lean_object *out=lean_alloc_ctor(0,2,0);
+ lean_ctor_set(out,0,lean_box_uint64(continuation_reduced));lean_ctor_set(out,1,tail);
+ return lean_io_result_mk_ok(out);
+}
+LEAN_EXPORT lean_obj_res hex_test_continuation_reset_bounds(lean_obj_arg world) {
+ (void)world;cont_max_ticks=cont_max_units=cont_violations=0;
+ return lean_io_result_mk_ok(lean_box(0));
 }
 LEAN_EXPORT lean_obj_res hex_test_continuation_outcomes(lean_obj_arg world) {
  const uint64_t widths=(UINT64_C(1)<<1)|(UINT64_C(1)<<2)|(UINT64_C(1)<<4);
@@ -653,6 +679,9 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
 @[extern "hex_test_primitive_admissions"] opaque primitiveAdmissions : IO ((UInt64 × UInt64) × (UInt64 × UInt64))
 @[extern "hex_test_remap_count"] opaque remapCount : IO UInt64
 @[extern "hex_test_continuation_count"] opaque continuationCount : IO UInt64
+@[extern "hex_test_continuation_successes"] opaque continuationSuccesses : IO UInt64
+@[extern "hex_test_continuation_arithmetic"] opaque continuationArithmetic : IO (UInt64 × UInt64 × UInt64)
+@[extern "hex_test_continuation_reset_bounds"] opaque resetContinuationBounds : IO Unit
 @[extern "hex_test_continuation_validations"] opaque continuationValidations : IO UInt64
 @[extern "hex_test_continuation_workspaces"] opaque continuationWorkspaces : IO UInt64
 @[extern "hex_test_continuation_outcomes"] opaque continuationOutcomes : IO Bool
@@ -792,7 +821,27 @@ def main : IO Unit := do
   let beforeF4Deferrals ← batchDeferrals
   let beforeF4Batches ← batchCounts
   let beforeF4Primitives ← primitiveAdmissions
+  resetContinuationBounds
+  let beforeF4Continuation ← continuationCount
+  let beforeF4Validations ← continuationValidations
+  let beforeF4Workspaces ← continuationWorkspaces
+  let beforeF4Phases ← continuationPhases
   Hex.Groebner.NativeChecks.runF4
+  let beforeOversizedSuccess ← continuationSuccesses
+  let beforeOversizedArithmetic ← continuationArithmetic
+  let beforeOversizedWhole ← wholeCounts
+  Hex.Groebner.NativeChecks.runOversizedF4
+  let afterOversizedSuccess ← continuationSuccesses
+  let afterOversizedArithmetic ← continuationArithmetic
+  let afterOversizedWhole ← wholeCounts
+  if afterOversizedSuccess ≤ beforeOversizedSuccess || afterOversizedWhole.2 ≤ beforeOversizedWhole.2 then
+    throw (IO.userError "successful oversized F4 did not complete a deferred native continuation")
+  if afterOversizedArithmetic.1 ≤ beforeOversizedArithmetic.1 ||
+      afterOversizedArithmetic.2.1 ≤ beforeOversizedArithmetic.2.1 ||
+      afterOversizedArithmetic.2.2 ≤ beforeOversizedArithmetic.2.2 then
+    throw (IO.userError "oversized F4 did not exercise successful reductions, zero rows and non-unit inverses")
+  IO.println s!"oversized F4 reduced/zero successes/non-unit inverses: {afterOversizedArithmetic.1-beforeOversizedArithmetic.1}/{afterOversizedArithmetic.2.1-beforeOversizedArithmetic.2.1}/{afterOversizedArithmetic.2.2-beforeOversizedArithmetic.2.2}"
+  IO.println s!"oversized F4 successful continuations/bulk deferrals: {afterOversizedSuccess-beforeOversizedSuccess}/{afterOversizedWhole.2-beforeOversizedWhole.2}"
   let afterF4Deferrals ← batchDeferrals
   if afterF4Deferrals.2.2 != 0 then throw (IO.userError "batch visit cap exceeded")
   IO.println s!"F4 deferred batches/discarded visit reservations: {afterF4Deferrals.1-beforeF4Deferrals.1}/{afterF4Deferrals.2.1-beforeF4Deferrals.2.1}"
@@ -801,9 +850,27 @@ def main : IO Unit := do
     throw (IO.userError "F4 did not exercise accepted monomial batches")
   IO.println s!"F4 monomial batches/terms: {afterF4Batches.1-beforeF4Batches.1}/{afterF4Batches.2-beforeF4Batches.2}"
   let afterF4Primitives ← primitiveAdmissions
-  if afterF4Primitives.1.1 ≤ beforeF4Primitives.1.1 || afterF4Primitives.2.1 ≤ beforeF4Primitives.2.1 then
-    throw (IO.userError "F4 did not admit validation and zero-buffer primitives")
+  -- All F4-window matrices fit the continuation scheduler's geometry. Larger
+  -- production frames legitimately retain the reference's native primitives.
+  if afterF4Primitives != beforeF4Primitives then
+    throw (IO.userError "bounded-shape F4 window used deselected standalone matrix primitives")
   IO.println s!"F4 primitive validation admitted/declined: {afterF4Primitives.1.1-beforeF4Primitives.1.1}/{afterF4Primitives.1.2-beforeF4Primitives.1.2}; zero admitted/declined: {afterF4Primitives.2.1-beforeF4Primitives.2.1}/{afterF4Primitives.2.2-beforeF4Primitives.2.2}"
+  let afterF4Continuation ← continuationCount
+  let afterF4Validations ← continuationValidations
+  let afterF4Workspaces ← continuationWorkspaces
+  let afterF4Phases ← continuationPhases
+  if afterF4Continuation ≤ beforeF4Continuation || afterF4Validations ≤ beforeF4Validations ||
+      afterF4Workspaces ≤ beforeF4Workspaces then
+    throw (IO.userError "F4 did not exercise native continuation validation and workspace setup")
+  if afterF4Phases.1 ≤ beforeF4Phases.1 || afterF4Phases.2.1 ≤ beforeF4Phases.2.1 ||
+      afterF4Phases.2.2 ≤ beforeF4Phases.2.2 then
+    throw (IO.userError "F4 did not exercise native continuation input, scan and gather")
+  -- These counters check the configured phase-loop cap, not measured machine
+  -- instructions, allocation volume or elapsed time inside each phase.
+  let f4Bounds ← continuationBounds
+  if f4Bounds.1 == 0 || f4Bounds.2.1 == 0 || f4Bounds.2.1 > 1048576 || f4Bounds.2.2 != 0 then
+    throw (IO.userError "F4 native continuation configured loop cap violated")
+  IO.println s!"F4 continuation calls/validation/workspace: {afterF4Continuation-beforeF4Continuation}/{afterF4Validations-beforeF4Validations}/{afterF4Workspaces-beforeF4Workspaces}; input/scan/gather: {afterF4Phases.1-beforeF4Phases.1}/{afterF4Phases.2.1-beforeF4Phases.2.1}/{afterF4Phases.2.2-beforeF4Phases.2.2}"
   let wholeAfter ← wholeCounts
   if wholeAfter.1 ≤ wholeBefore.1 || wholeAfter.2 ≤ wholeBefore.2 then throw (IO.userError "F4 did not exercise accepted/deferred whole matrices")
   IO.println s!"whole matrix accepted/deferred: {wholeAfter}; F4 accepted/deferred: {wholeAfter.1-wholeBefore.1}/{wholeAfter.2-wholeBefore.2}"
