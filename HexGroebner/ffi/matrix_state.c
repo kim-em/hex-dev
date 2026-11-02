@@ -8,6 +8,13 @@
 extern lean_obj_res lean_hex_matrix_step(lean_obj_arg);
 #include "matrix_runtime.h"
 
+#ifndef HEX_GROEBNER_CONT_SUCCESS
+#define HEX_GROEBNER_CONT_SUCCESS(initial_phase,phase,result,reductions,zero_rows) ((void)(initial_phase))
+#endif
+#ifndef HEX_GROEBNER_CONT_INVERSE
+#define HEX_GROEBNER_CONT_INVERSE() ((void)0)
+#endif
+
 #ifndef HEX_GROEBNER_CONT_PHASE
 #define HEX_GROEBNER_CONT_PHASE(phase) ((void)0)
 #endif
@@ -230,6 +237,7 @@ static void cont_zero(continuation *c) {
 static int cont_inverse(continuation *c,uint64_t a,uint64_t *inverse) {
     uint64_t exponent=c->p-2,value=1;
     if(a==1) {*inverse=1;return 1;}
+    HEX_GROEBNER_CONT_INVERSE();
     while(exponent) {
         if(exponent&1) {
             if(!cont_work(c,1)) {cont_error(c,5);return 0;}
@@ -408,6 +416,7 @@ LEAN_EXPORT lean_obj_res lean_hex_matrix_advance(lean_obj_arg state,b_lean_obj_a
     if(!count) return state;
     HEX_GROEBNER_CONT_BEGIN(cols,rows,count);
     continuation c;cont_unpack(&c,state);
+    uint8_t initial_phase=c.phase;
     int fast=cont_counts(&c),dirty=0;
     for(uint64_t i=0;i<count && c.phase!=7;++i) {
         HEX_GROEBNER_CONT_TICK();
@@ -427,6 +436,7 @@ LEAN_EXPORT lean_obj_res lean_hex_matrix_advance(lean_obj_arg state,b_lean_obj_a
     }
     if(dirty) cont_save_counts(&c);
     HEX_GROEBNER_CONT_END();
+    HEX_GROEBNER_CONT_SUCCESS(initial_phase,c.phase,c.v[18],c.stats[6],c.stats[7]);
     return cont_pack(&c);
 }
 

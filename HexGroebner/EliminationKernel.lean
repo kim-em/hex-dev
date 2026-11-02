@@ -319,7 +319,7 @@ is an unboxed Boolean. `Result` holds an `Except` matrix/remainder pair and eigh
 reference result, including exact rows, aliases, sugars and counters. It admits
 at most 4096 columns, 1024 known reducers and 64 targets, with distinct known
 leading columns and at most `2^20` charged work. Large limits saturate above all
-possible accepted totals; non-machine-size sugars use portable continuation.
+possible accepted totals; non-machine-size sugars use checked Lean arithmetic.
 
 The matrix owns its dense workspace; all inputs remain immutable, including
 shared reducer/target arrays. Unsupported shapes return `none` without changing

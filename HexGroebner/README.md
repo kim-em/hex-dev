@@ -638,10 +638,14 @@ scalar `advancePortable` is independent of those kernels. `advance_spec`
 relates their Lean models; agreement with C is a tested native obligation.
 
 The continuation has a separate native carrier. Untraced F4 matrix calls retain
-the small bounded bulk frame and use the continuation when that frame declines.
+the small bounded bulk frame. When it declines, calls within the native
+scheduler's 65,536-column/input-row limits use the continuation; larger frames
+retain the reference's bounded native scan/gather kernels.
 `MatrixState.finish_reference` proves that completion returns exactly the
 `Elimination.reference` result and counters for every input, budget, quantum and
-provider choice; `Elimination.run_spec` covers the production dispatch.
+provider choice. Import `HexGroebner.EliminationDispatchProof` for
+`Elimination.run_spec`, which covers production dispatch without adding proof
+modules to the executable import graph.
 Conformance compares complete rows, metadata, intermediate states and charged
 counters. `finishState_done` proves that the shape-based allowance suffices for
 terminal completion, including suspended scan/gather states. Per-row scan/gather

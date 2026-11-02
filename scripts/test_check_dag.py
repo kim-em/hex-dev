@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_dag import (
     KNOWN_EXCEPTIONS,
     check_adapter_imports,
+    check_groebner_imports,
     check_sealed_import_all,
     import_roots,
     import_closure_in_library,
@@ -22,6 +23,23 @@ from check_dag import (
 )
 from libgraph import (load_libraries, library_owner_for_path, may_import,
                       reachable_dependencies)
+
+
+class GroebnerProofImportTest(unittest.TestCase):
+    def test_proof_root_is_optional_and_indirect_import_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "HexGroebner").mkdir()
+            entry = root / "HexGroebner/Elimination.lean"
+            helper = root / "HexGroebner/MatrixState.lean"
+            proof = root / "HexGroebner/EliminationProof.lean"
+            entry.write_text("public import HexGroebner.MatrixState\n")
+            helper.write_text("")
+            proof.write_text("public import HexGroebner.Elimination\n")
+            self.assertEqual(check_groebner_imports(root), [])
+            helper.write_text("import all HexGroebner.EliminationProof\n")
+            self.assertEqual(check_groebner_imports(root), [
+                "HexGroebner.Elimination imports optional proof module HexGroebner.EliminationProof"])
 
 
 class AdapterOwnershipTest(unittest.TestCase):

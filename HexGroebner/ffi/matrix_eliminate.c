@@ -189,8 +189,8 @@ static lean_object *matrix_gather(matrix_context *c,uint64_t column,uint64_t las
    Dense workspace is owned; inputs, including overlapping arrays, are immutable.
    Some(Result(Except.ok(Prod(Echelon(rows,rank,emptyTrace),remainders)),stats))
    contains exact reference rows and eight Nat counters, using the layouts in
-   Elimination.lean. None releases all local owners and permits portable
-   continuation outside C. Charged speculative work before a decline is bounded
+   EliminationKernel.lean. None releases all local owners and permits bounded
+   continuation outside this frame. Charged speculative work before a decline is bounded
    by min(parent remaining work,2^20); such a decline implies reference failure.
    Scan/gather symbols come from HexGroebnerMatrixNative. Lake links its complete
    imported shared library; keep that carrier dependency and these ABIs intact. */

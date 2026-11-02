@@ -1,6 +1,6 @@
-# Finite-field F4 medium comparison with current msolve
+# Finite-field F4 pre-selection baseline dd2370a9e993
 
-Hex source `dd2370a9e993` remains slower than msolve on this fixed
+Hex source fingerprint `dd2370a9e993` remains slower than msolve on this fixed
 medium development suite. Its family-balanced whole-process ratio is 1.9147
 against exact mode 2 and 2.1551 against probabilistic mode 42. These observations
 do not satisfy the SPEC's fastest-open-source milestone or establish a compiler
@@ -17,12 +17,14 @@ The Hex driver is freshly built from snapshot `4f744b62fbfb25087abd963ef6cfd19bc
 parent `67c70e5e4c7c83c3649789c12a4bdae135e5f823`, with only pinned dependency packages shared. Lean is
 4.35.0-rc3. SHA-256 identifies the measured executable as
 `c585b436028c7fe3bb3627d0c024b3e0f782e67bacc3895301f630c927dab803`. Its complete source manifest, source blobs,
-initialization checks and build log are retained. Candidate production includes
+initialization checks and build log are retained. The measured tree equals
+`1420b84ce3aa2e48781f11244dc51a5b504c090b` on main ([PR #11017](https://github.com/kim-em/hex-dev/pull/11017));
+the snapshot and parent above identify its pre-merge build. Candidate production includes
 canonical packing, F4 and final interreduction; certificate generation,
 independent final certification and kernel checking are excluded. The matrix
 continuation remains unselected in this engine.
 
-The current upstream msolve checkout is clean at
+The measured upstream msolve checkout is clean at
 `3672113ee2c696a2ac9c637636e0f7214f500ba1`. The build uses Clang 23.1.3, `-O3 -march=native`
 with `NIX_ENFORCE_NO_NATIVE=0`; the recorded driver resolves to `znver5`.
 The engine's ELF records the native compiler command. GMP 6.3.0, MPFR 4.2.2

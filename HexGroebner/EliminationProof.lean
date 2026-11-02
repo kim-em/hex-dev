@@ -55,7 +55,10 @@ open Std.Do
       (Matrix.Work.pre (nativeGather field limits dense first last inverse) post) post :=
   Matrix.Work.triple_run _ post
 
--- Shared transformer rules cover distinct successful and failed charge branches.
+-- The pinned vcgen cannot infer this exact transformer specification; mvcgen
+-- supplies loop invariants. Its deprecated syntax is scoped to this composition.
+-- Named VC tags identify the semantic branches; shared transformer rules cover
+-- distinct successful and failed charges.
 set_option linter.unusedSimpArgs false in
 set_option linter.deprecated.syntax false in
 set_option maxHeartbeats 2000000 in

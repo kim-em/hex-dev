@@ -261,6 +261,16 @@ def import_closure_in_library(
     return seen
 
 
+def check_groebner_imports(root: Path) -> list[str]:
+    """Keep optional phase/dispatch proofs out of the executable import graph."""
+    modules = import_closure_in_library(root, "HexGroebner.Elimination", "HexGroebner")
+    return [
+        f"HexGroebner.Elimination imports optional proof module {module}"
+        for module in sorted(modules)
+        if module.rsplit(".", 1)[-1].endswith("Proof")
+    ]
+
+
 def check_umbrella_completeness(
     root: Path, libraries, build_roots: set[str]
 ) -> list[str]:
@@ -416,6 +426,7 @@ def main() -> int:
 
     lean_files = project_lean_files(root)
     errors.extend(check_sealed_import_all(root, lean_files))
+    errors.extend(check_groebner_imports(root))
     errors.extend(check_adapter_imports(root, lean_files, libraries))
 
     for rel_path in lean_files:

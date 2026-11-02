@@ -6,8 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexGroebner.Elimination
-public import HexGroebner.EliminationProof
+public import HexGroebner.EliminationDispatchProof
 public import HexGroebner.MatrixStateSchedule
 
 public section

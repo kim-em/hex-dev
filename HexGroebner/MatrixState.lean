@@ -295,7 +295,7 @@ def advanceKernels (state : State) (steps : Nat) : State := advanceWith state st
     advanceKernels state steps = advancePortable state steps := by rfl
 
 /-- A native call uses the 64-bit ABI and admits at most 65536 columns and input rows. Other shapes take no transition
-here, allowing the caller to run the portable continuation outside native code.
+here, allowing the caller to use Lean scheduling with native scan/gather kernels.
 The state is owned and steps is borrowed Nat. C mirrors every intermediate
 cursor, pending update, sugar label, charged prefix and terminal outcome.
 Large counter values use the bounded Lean phase within the admitted geometry;
@@ -323,8 +323,8 @@ def State.allowance (state : State) : Nat :=
     (3+scanFuel state.columns+(state.columns+4095)/4096+1)
 
 /-- Run the untraced continuation with the selected native or scalar scheduler.
-Untraced F4 dispatch uses this completion when the small bounded matrix frame
-declines. `EliminationProof` proves exact agreement with the reference eliminator.
+Untraced F4 dispatch uses this completion within the native scheduler's shape
+limits when the small bounded matrix frame declines. `EliminationProof` proves exact agreement with the reference eliminator.
 
 The shape allowance covers validation, workspace setup, input rows, bounded
 scan/gather quanta and final ordering. Each unfinished call advances at least
