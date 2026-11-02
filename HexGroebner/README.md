@@ -11,13 +11,23 @@ discard unneeded pairs. Symbolic preprocessing closes a selected batch under a
 basis-specific divisibility trie and constructs one joint Macaulay matrix.
 The chain test visits indexed LCM divisors; final tail reductions share one
 immutable reducer index.
-Joint matrix elimination stably orders targets by increasing support size before
-choosing new pivots, retaining original order for equal sizes. Sorting work is
+Joint matrix elimination stably orders targets by decreasing leading-column
+index, then increasing support size, retaining input order for equal keys.
+This starts with smaller leading monomials in the decreasing monomial column
+map. Sorting work is
 charged before the sort. Independent normal forms retain their input order;
 traced production moves each target's derivation root with its polynomial.
 Known reducer pivots retain their contracts with either scheduling strategy.
 F4 checkpoints retain a `ReducerCache` of multiplied reducers from the same
-append-only monomial arena. Stable IDs survive exponent-width changes. Field/order metadata is checked before
+append-only monomial arena. Stable IDs survive exponent-width changes.
+Monomial hash buckets and collision links use packed `UInt32` buffers. Hashes
+only filter candidates; exact exponent comparison decides equality. Index
+growth, rebuilding work and peak packed payload are charged before allocation.
+A bounded owned native operation can complete lookup or insertion within the
+current width and index capacity, for up to 2047 variables and 4096 additional
+work units. Unsupported shapes, widening, index growth and tight allowances
+return the unchanged table; portable continuation starts after the native frame
+returns. Shared and aliased buffers retain their original contents. Field/order metadata is checked before
 reuse, and the complete base payload identifies the basis polynomial. A cache
 hit checks the complete base polynomial, comparing at most 4096 bytes per native
 call; basis changes cannot silently reuse a different row. Sugar and certificate

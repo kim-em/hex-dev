@@ -50,7 +50,12 @@ def solve (context : Context) (limits : Limits) (nodeLimit : Nat)
   let targetPairs ← if independent || matrix.targets.size ≤ 1 then pure (matrix.targets.zip targetsTraced) else do
     lift (Computation.spend limits (matrix.targets.size * (matrix.targets.size + 1).log2))
     pure (((matrix.targets.zip targetsTraced).toList.mergeSort
-      (fun a b => a.1.polynomial.size ≤ b.1.polynomial.size)).toArray)
+      (fun a b =>
+        let x := a.1.polynomial
+        let y := b.1.polynomial
+        let left := if x.size == 0 then matrix.columns.size else positions.getD (x.monomial 0) matrix.columns.size
+        let right := if y.size == 0 then matrix.columns.size else positions.getD (y.monomial 0) matrix.columns.size
+        left > right || (left == right && x.size ≤ y.size))).toArray)
   for (p, _) in targetPairs do
     sugars := sugars.push p.sugar
     let r ← lift (row context limits positions p.polynomial)

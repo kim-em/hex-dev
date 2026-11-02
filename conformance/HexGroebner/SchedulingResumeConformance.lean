@@ -26,13 +26,20 @@ private def checkpoints : Bool := Id.run do
   if degree == sugar then return false
   for scheduling in [Scheduling.degree,.sugar] do
     let limits : Limits := { scheduling }
-    let .candidate _ total := computeWith context limits generators 42 | return false
+    let .candidate expected total := computeWith context limits generators 42 | return false
     let mut queued := false
     let mut attempted := false
     for work in [:total.work+1] do
       match computeWith context { limits with work } generators 42 with
-      | .candidate _ statistics => if statistics != total then return false
+      | .candidate actual statistics =>
+        if work == total.work && statistics != total then return false
+        -- Optional packed index preparation can be skipped at a tight budget.
+        -- Resumed counters are compared between the two incoming strategies.
+        -- The known-sufficient fresh budget also retains the exact full-run check.
+        if actual.polynomials != expected.polynomials || statistics.work > work ||
+            actual.scheduling != scheduling then return false
       | .exhausted .work state =>
+        if work == total.work then return false
         queued := queued || (state.checkpoint.phase == .pairs && !state.checkpoint.queue.heap.isEmpty)
         attempted := attempted || state.workspace.statistics.rounds > 0
         let .candidate control previous := resumeWith limits state | return false
@@ -56,13 +63,17 @@ private def traced : Bool := Id.run do
   if degree == sugar then return false
   for scheduling in [Scheduling.degree,.sugar] do
     let limits : Limits := { scheduling }
-    let .candidate _ total := Producer.computeWith context limits 1000000 generators | return false
+    let .candidate expected total := Producer.computeWith context limits 1000000 generators | return false
     let mut queued := false
     let mut attempted := false
     for work in [:total.work+1] do
       match Producer.computeWith context { limits with work } 1000000 generators with
-      | .candidate _ statistics => if statistics != total then return false
+      | .candidate actual statistics =>
+        if work == total.work && statistics != total then return false
+        if actual.polynomials != expected.polynomials || actual.forward != expected.forward ||
+            statistics.work > work || actual.history.scheduling != scheduling then return false
       | .exhausted .work state =>
+        if work == total.work then return false
         queued := queued || (state.checkpoint.phase == .pairs && !state.checkpoint.queue.heap.isEmpty)
         attempted := attempted || state.workspace.statistics.rounds > 0
         let .candidate control previous := Producer.resumeWith limits 1000000 state | return false

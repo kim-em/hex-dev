@@ -280,6 +280,49 @@ theorem compareCode_eq (operation width : UInt8) (arity left right : Nat)
   let code := compareCode 2 width arity left right arena
   if code < 2 then some (code == 1) else none
 
+structure SearchResult where
+  id : Nat
+  link : Nat
+  work : Nat
+  status : UInt8
+  deriving BEq
+
+/-- Portable exact packed lookup. A call visits at most 4096 links and at most
+4096 coordinates. Input buffers are borrowed and may alias. Zero link ends the
+chain; other links encode stable identifiers plus one. No hash match alone
+establishes equality. Invalid geometry is rejected before any reads. -/
+@[expose] def searchPortable (width : UInt8) (arity count hash link quantum : UInt64)
+    (exponents metadata links candidate : @& ByteArray) (allowance : @& Nat) : SearchResult := Id.run do
+  let w := width.toNat
+  let n := arity.toNat
+  let c := count.toNat
+  let q := quantum.toNat
+  let mut link := link.toNat
+  if (w != 1 && w != 2 && w != 4) || n == 0 || n > 4096 || c > 4294967295 ||
+      link > 4294967295 || q > 4096 || q*n > 4096 ||
+      exponents.size != c*n*w || metadata.size != c*24 || links.size != c*4 ||
+      candidate.size != n*4+28 then return ⟨0,link,0,4⟩
+  let mut work := 0
+  for _ in [:q] do
+    if link == 0 then return ⟨0,0,work,2⟩
+    if work + 1 > allowance then return ⟨0,link,work,3⟩
+    work := work + 1
+    let id := link - 1
+    if id ≥ c then return ⟨0,link,work,4⟩
+    link := read links 4 (id*4)
+    if (read metadata 8 (id*24+16)).toUInt64 != hash then continue
+    if work + n > allowance then return ⟨0,link,work,3⟩
+    work := work + n
+    if equalPortable width arity id.toUInt64 exponents candidate then return ⟨id,link,work,1⟩
+  return ⟨0,link,work,0⟩
+
+/-- Native exact chain search with the same bounded reads and budget prefixes. -/
+@[expose, extern "lean_hex_groebner_search_monomial"]
+def search (width : UInt8) (arity count hash link quantum : UInt64)
+    (exponents metadata links candidate : @& ByteArray) (allowance : @& Nat) : SearchResult :=
+  searchPortable width arity count hash link quantum exponents metadata links candidate allowance
+
+
 end Monomial
 
 end Hex.Groebner.Native
