@@ -114,18 +114,25 @@ Separate component sources retain their own measurements. Scan geometry reuse
 process ratios 0.9836 and 0.9832, internal candidate ratios 0.9948 and 0.9817.
 The second is the one allowed unchanged repeat after an inconclusive first
 campaign. Cyclic7/Eco11 candidate ratios in that repeat are roughly 0.96–0.98.
+The scan-cache timing is inconclusive. A similar candidate-time shift occurs
+with the driver-only source, whose change follows the timed interval; these
+separate campaigns cannot isolate a matrix speedup.
 Direct numeric serialization `ac18b44c91fd` has process mean 0.9191, internal
 candidate mean 0.9724 and peak baseline/new RSS 124008/95444 KiB. Both 1,134-case
 drivers pass. These source-specific campaigns are not pooled or added together;
-the combined campaign above measures the actual composition.
+the combined campaign above measures the actual composition. The serializer
+observation includes that candidate-time shift: it does not establish an 8%
+output-only improvement. Subtracting the observed candidate intervals from
+process intervals is also not a controlled isolation of output time.
 
-Diagnostic Eco11 user-cycle profiles report no lost samples: about 39% of Hex
-samples are in scan arithmetic and 9–10% in pivot shape checks at both prime
-widths. Native trie lookup remains active (about 3%). The vendor binary lacks
-useful symbol names in its capture, so no internal algorithm attribution is
-made for it. Profiles include startup and output and are cost attribution,
-not matched timing comparisons. Borrowed pivot geometry is constant during
-one scan call, motivating reuse while preserving all numeric validation.
+Diagnostic Eco11 user-cycle profiles of the pre-cache source `0a7fa663e970`
+report no lost samples. About 39% of samples are attributed to the scan function
+and 9–10% to `geometry` at both prime widths; native trie lookup is about 3%.
+These are coarse symbol shares, including associated header/data loads and
+memory stalls. They do not isolate shape-check arithmetic or establish a cache
+speedup. The vendor binary lacks useful symbol names in its capture, so no
+internal algorithm attribution is made for it. Profiles include startup/output
+and provide cost attribution rather than matched timing evidence.
 
 Combined library/theory/conformance builds, independent matrix/division/basis
 oracles, both 1,134-case drivers, eight Clang/GCC sanitizer/scalar/SIMD/remainder
@@ -133,7 +140,12 @@ configurations, kernel replay/axiom guards, benchmark verification and project
 DAG/phase/release/header/line checks pass. The native tests include malformed
 prefixes (including resumed pending pivots), guard pages, aliases, snapshots,
 late exhaustion and large widths. Workspace tests cover the one-MiB native zero
-limit and scalar fallback for both coefficient-width layouts.
+limit and scalar fallback at all three coefficient widths. An isolated harness
+window requires exactly six admitted and six declined provider calls.
+The full check run reuses Lake artifacts; it is not a fresh whole-graph build.
+The two CLI identity builds above are fresh. The workspace-zero kernel figures
+belong to the separate `a3938be198b4` source, which has the old scan code; no
+identity with a final combined benchmark binary is asserted.
 The serializer is checked against complete independently recomputed corpus
 outputs and both driver initialization paths. No checked-result API or
 certificate contract is changed.
@@ -151,3 +163,11 @@ kernel-checking costs remain required. Issue #10987 remains open.
 [Raw capsule f4-combined-performance-fd0313c0ed28](raw/f4-combined-performance-fd0313c0ed28.tar.gz): SHA-256 `ceb95beadbc9cc4e7e7eae24345b5d05ba6c5fee819056ee8db176d90d474373`, 1558 payloads, each read back and digest checked.
 
 [Final-source audit f4-performance-review-8f56f7677ce6](raw/f4-performance-review-8f56f7677ce6.tar.gz): SHA-256 `e2377fb7f57872ce2977d07196e28912b979603d7b60ca6fb21aeb9f897d3389`, 222 payloads, each read back and digest checked. It retains the final fresh-build identity, all nine project checks and eight sanitizer variants, their source identities, generated probes and complete logs.
+
+[`groebner_performance_audit.py`](../../scripts/bench/groebner_performance_audit.py)
+recomputes all campaign tables, component means, candidate ranges, vendor totals
+and RSS from the retained sample metadata. For every before/after pair it reads
+the complete stdout objects, compares every field except `candidateNanos`, and
+checks counters/scheduling against metadata. The earlier analysis script is also
+retained at `reproduction/analyze-equivalence-candidates.py` in each relevant raw
+capsule; the new audit makes this stronger comparison directly reusable.

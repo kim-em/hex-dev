@@ -603,6 +603,8 @@ characteristic two.
 Successful output has `kind: "unchecked_candidate"`, explicit field/order
 metadata, `scheduling: "degree"` or `"sugar"`, the complete candidate basis and cumulative statistics. It is not a
 checked basis receipt. Use `certifyWith` or `basisWith` for checked results.
+Consumers must compare parsed JSON values: object field order and whitespace
+are not part of the output contract. The driver emits `basis` after its metadata.
 Malformed input, exhausted allowances, representation exhaustion and internal
 matrix failures have distinct kinds: exit 2 is invalid input, 3 exhaustion,
 4 representation exhaustion and 5 an internal matrix error. Uncaught IO failures

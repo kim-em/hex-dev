@@ -217,13 +217,15 @@ def workspaceChecks : Bool := Id.run do
 
 #guard workspaceChecks
 
-/-- Exercise the Lean workspace phase across both native-zero boundaries.
-The first shape declines the native scheduler; the second slot buffer also
-exceeds the one-MiB zero-provider cap. Saved prepared buffers stay empty. -/
+/-- Exercise the Lean workspace phase after the native scheduler declines.
+All three coefficient widths cover the one-MiB zero-provider cap or fallback;
+the six shapes admit six buffers and decline six. Saved buffers stay empty. -/
 def wideWorkspaces : Bool := Id.run do
   let narrow : PrimeField := ⟨7,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let medium : PrimeField := ⟨257,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
   let wide : PrimeField := ⟨65537,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
-  for (field,columns) in [(narrow,65537),(narrow,262145),(wide,262144),(wide,262145)] do
+  for (field,columns) in [(narrow,65537),(narrow,262145),
+      (medium,524288),(medium,524289),(wide,262144),(wide,262145)] do
     let initial := MatrixState.start field {} columns #[] #[] #[] false
     let prepared := MatrixState.advancePortable (MatrixState.advancePortable initial 1) 1
     if prepared.phase != .workspace then return false
