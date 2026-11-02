@@ -1,5 +1,10 @@
 # Matrix primitives with a fully portable disabled route
 
+Build commit and snapshot identifiers in these records may be local,
+capsule-only identifiers after rebasing; they are not promised to resolve on
+GitHub. Each linked capsule retains its exact family source overlay, build
+metadata and artifact digests independently of those Git references.
+
 The existing F4 matrix loop uses bounded validation and zero-buffer primitives
 when native rows are enabled. Disabling native rows uses the original Lean
 validation and allocation models as well as scalar row operations. Neither

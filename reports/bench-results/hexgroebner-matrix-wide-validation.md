@@ -1,5 +1,10 @@
 # Sparse validation across the UInt32 column range
 
+Build commit and snapshot identifiers in these records may be local,
+capsule-only identifiers after rebasing; they are not promised to resolve on
+GitHub. Each linked capsule retains its exact family source overlay, build
+metadata and artifact digests independently of those Git references.
+
 The native row validator now admits at most 65,537 entries independently of
 ambient column count, up to 2^32−1 columns. This replaces the former
 65,536-column cutoff. The uninterruptible work bound remains 65,537 entry

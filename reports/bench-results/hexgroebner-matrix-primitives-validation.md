@@ -1,5 +1,10 @@
 # Bounded matrix primitive validation
 
+Build commit and snapshot identifiers in these records may be local,
+capsule-only identifiers after rebasing; they are not promised to resolve on
+GitHub. Each linked capsule retains its exact family source overlay, build
+metadata and artifact digests independently of those Git references.
+
 Commit `8033b52781065cd37044b4b9c9d0346cfa728ed9` passes all nine local
 project checks: library/theory/conformance builds and axiom audits, independent
 basis/normal-form oracles, both 1,134-case standalone drivers, all 43 benchmarks,

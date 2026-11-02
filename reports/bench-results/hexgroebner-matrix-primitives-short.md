@@ -1,5 +1,10 @@
 # Short-row matrix primitive kernels
 
+Build commit and snapshot identifiers in these records may be local,
+capsule-only identifiers after rebasing; they are not promised to resolve on
+GitHub. Each linked capsule retains its exact family source overlay, build
+metadata and artifact digests independently of those Git references.
+
 Source fingerprint `d16e17592b4a`, commit `8033b52781065cd37044b4b9c9d0346cfa728ed9`,
 snapshot `8b950081de749f61de39185b4f4dd81225f8d4ef`, fresh benchmark SHA256
 `81c15f89070a0d50011fabe89e49d807e386440f3b47fb1fda52ee44f3eea249`.

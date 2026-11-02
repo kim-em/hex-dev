@@ -34,8 +34,10 @@ def runOwned : IO Unit := do
 native symbols were actually called, including in sanitizer builds. -/
 def run : IO Unit := do
   let seed := ((← IO.getEnv "HEX_GROEBNER_TEST_SEED").getD "0").toNat?.getD 0
-  if !MatrixPrimitiveConformance.checked || !MatrixPrimitiveConformance.lengthChecks then
-    throw (IO.userError "native matrix row/workspace primitive mismatch")
+  if !MatrixPrimitiveConformance.checked then
+    throw (IO.userError s!"native matrix primitive mismatch: {MatrixPrimitiveConformance.failure.getD "unknown case"}")
+  if !MatrixPrimitiveConformance.lengthChecks then
+    throw (IO.userError "native matrix primitive row-length boundary mismatch")
   if !MatrixStateConformance.workspaceChecks then
     throw (IO.userError "native matrix workspace boundaries mismatch")
   if !MatrixStateConformance.validationChecks then
@@ -102,16 +104,18 @@ private def budgetF4 (seed : Nat) : Bool := Id.run do
 
 /-- Exercise the public F4 option with every native row operation disabled. -/
 def runPortableF4 : IO Unit := do
-  let seed ← IO.monoNanosNow
+  let seed := ((← IO.getEnv "HEX_GROEBNER_TEST_SEED").getD "0").toNat?.getD 0
   let field : PrimeField := ⟨7, Hex.Nat.isPrimeTrial_isPrime (by decide), by decide⟩
   let context : Context := ⟨field,3,.grevlex⟩
   let coefficient := (seed%6+1).toUInt64
   let generators : Array RawPolynomial := #[
     #[⟨#[1,1,0],1⟩,⟨#[0,0,1],field.modulus-coefficient⟩],
     #[⟨#[1,0,1],1⟩,⟨#[0,1,0],6⟩]]
-  let .candidate _ _ := computeWith context
+  let .candidate _ stats := computeWith context
     { nativeRows := false,nativeMonomials := false } generators |
     throw (IO.userError "compiled portable F4 failed")
+  if stats.matrixCalls == 0 || stats.matrixRows == 0 || stats.matrixEntries == 0 then
+    throw (IO.userError "portable F4 did not perform matrix elimination")
 
 /-- Exercise complete cached F4 calls under each instrumented native provider. -/
 def runF4 : IO Unit := do

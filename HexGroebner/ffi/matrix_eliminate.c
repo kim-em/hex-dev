@@ -394,7 +394,6 @@ result:;
 
 LEAN_EXPORT lean_obj_res lean_hex_matrix_zeros(b_lean_obj_arg size) {
     if(!lean_is_scalar(size) || lean_unbox(size)>1048576) return lean_box(0);
-    lean_object *bytes=lean_alloc_sarray(1,lean_unbox(size),lean_unbox(size));
-    if(lean_unbox(size)) memset(lean_sarray_cptr(bytes),0,lean_unbox(size));
+    lean_object *bytes=matrix_zeros(lean_unbox(size));
     lean_object *some=lean_alloc_ctor(1,1,0);lean_ctor_set(some,0,bytes);return some;
 }
