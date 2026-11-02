@@ -34,7 +34,7 @@ def matrixValidate (row : SparseRow) :=
 def matrixValidateReference (row : SparseRow) :=
   consumeValidation ((Matrix.validate primitiveField {} row.size 0 row).run {})
 
-/-- Short rows in the full UInt32 column range, without a wide dense workspace. -/
+/-- Short rows with a large ambient column count, without a wide dense workspace. -/
 def matrixValidateWide (row : SparseRow) :=
   consumeValidation ((Matrix.validateWith primitiveField {} 4294967295 0 row).run {})
 

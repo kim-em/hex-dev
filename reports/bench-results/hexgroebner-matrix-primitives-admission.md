@@ -1,5 +1,10 @@
 # Matrix primitive admission and ownership checks
 
+Build and snapshot identifiers below may be capsule-only identifiers after a
+squash merge. The public head `1d902daa8e` differs from the measured validation
+source `ec3800f694` only in reports and capsules; their implementation sources
+are identical. Later test refinements have their own validation record.
+
 Source fingerprint `1e1015abfc77`, commit `ec3800f694598dd3cdf69180328fda43b955cf11`,
 snapshot `8672bd465e0262b22a29f22c975c22d9cfe8aaa2`. Fresh compute SHA256
 `9844bd85e3d231c6440de965fc611e62abe681f2b404372a6bd1dad67cdfbf82` and reference

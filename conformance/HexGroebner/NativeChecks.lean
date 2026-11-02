@@ -24,16 +24,23 @@ import HexGroebner.ReducerCacheConformance
 
 namespace Hex.Groebner.NativeChecks
 
+/-- Reproducible test input; malformed values are rejected explicitly. -/
+def readSeed : IO Nat := do
+  let value := (← IO.getEnv "HEX_GROEBNER_TEST_SEED").getD "0"
+  let some seed := value.toNat? | throw (IO.userError s!"invalid HEX_GROEBNER_TEST_SEED: {value}")
+  IO.println s!"native conformance seed: {seed}"
+  return seed
+
 /-- Direct exclusive-table comparison, separately instrumented by the harness. -/
 def runOwned : IO Unit := do
-  let seed := ((← IO.getEnv "HEX_GROEBNER_TEST_SEED").getD "0").toNat?.getD 0
+  let seed ← readSeed
   if !HitConformance.ownedChecks seed then
     throw (IO.userError "exclusive monomial operation mismatch")
 
 /-- Compiled checks for every native build variant. The harness verifies that
 native symbols were actually called, including in sanitizer builds. -/
 def run : IO Unit := do
-  let seed := ((← IO.getEnv "HEX_GROEBNER_TEST_SEED").getD "0").toNat?.getD 0
+  let seed ← readSeed
   if !MatrixPrimitiveConformance.checked then
     throw (IO.userError s!"native matrix primitive mismatch: {MatrixPrimitiveConformance.failure.getD "unknown case"}")
   if !MatrixPrimitiveConformance.lengthChecks then
@@ -103,8 +110,7 @@ private def budgetF4 (seed : Nat) : Bool := Id.run do
   return true
 
 /-- Exercise the public F4 option with every native row operation disabled. -/
-def runPortableF4 : IO Unit := do
-  let seed := ((← IO.getEnv "HEX_GROEBNER_TEST_SEED").getD "0").toNat?.getD 0
+def runPortableF4 (seed : Nat) : IO Unit := do
   let field : PrimeField := ⟨7, Hex.Nat.isPrimeTrial_isPrime (by decide), by decide⟩
   let context : Context := ⟨field,3,.grevlex⟩
   let coefficient := (seed%6+1).toUInt64
@@ -119,8 +125,10 @@ def runPortableF4 : IO Unit := do
 
 /-- Exercise complete cached F4 calls under each instrumented native provider. -/
 def runF4 : IO Unit := do
-  let seed := ((← IO.getEnv "HEX_GROEBNER_TEST_SEED").getD "0").toNat?.getD 0
-  if !budgetF4 seed then throw (IO.userError "compiled F4 work-boundary mismatch")
+  let seed ← readSeed
+  for offset in [:6] do
+    if !budgetF4 (seed+offset) then
+      throw (IO.userError s!"compiled F4 work-boundary mismatch, seed={seed+offset}")
   if !(ReducerCacheConformance.f4Checks seed) then
     throw (IO.userError "compiled F4 cache conformance mismatch")
 
@@ -144,12 +152,14 @@ private def mersenneF4 (seed : Nat) : Bool := Id.run do
 
 /-- Exercise the wide-field specialized vector path during a complete F4 call. -/
 def runMersenneF4 : IO Unit := do
-  let seed := ((← IO.getEnv "HEX_GROEBNER_TEST_SEED").getD "0").toNat?.getD 0
-  if !mersenneF4 seed then throw (IO.userError "compiled Mersenne F4/reference mismatch")
+  let seed ← readSeed
+  for offset in [:6] do
+    if !mersenneF4 (seed+offset) then
+      throw (IO.userError s!"compiled Mersenne F4/reference mismatch, seed={seed+offset}")
 
 /-- Exercise cache comparisons crossing multiple bounded native chunks. -/
 def runCache : IO Unit := do
-  let seed := ((← IO.getEnv "HEX_GROEBNER_TEST_SEED").getD "0").toNat?.getD 0
+  let seed ← readSeed
   if !(ReducerCacheConformance.runtimeChecks seed) then
     throw (IO.userError "compiled reducer-cache conformance mismatch")
 

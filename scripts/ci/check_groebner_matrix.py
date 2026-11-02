@@ -670,25 +670,33 @@ def main : IO Unit := do
   if afterOwned ≤ beforeOwned || afterAlias ≤ beforeAlias || (← aliasMask) != 15 then
     throw (IO.userError "exclusive alias insertion was not exercised")
   IO.println s!"exclusive owned comparisons: reuses={afterOwned-beforeOwned}, aliased insertions={afterAlias-beforeAlias}"
-  let primitiveSeed := ((← IO.getEnv "HEX_GROEBNER_TEST_SEED").getD "0").toNat?.getD 0
+  let primitiveSeed ← Hex.Groebner.NativeChecks.readSeed
   IO.println s!"primitive conformance seed: {primitiveSeed}"
   let beforePortableScan ← counts
   let beforePortableWhole ← wholeCounts
   let beforePortableBytes ← byteCount
+  let beforePortableRemap ← remapCount
+  let beforePortableIndex ← indexCount
+  let beforePortableZeros ← zeroAppendCount
+  let beforePortableContinuation ← continuationCount
+  let beforePortableProducts ← productCount
   let beforePortable ← matrixPrimitives
-  if !Hex.Groebner.MatrixPrimitiveConformance.portable primitiveSeed then
-    throw (IO.userError "portable matrix route failed")
-  if (← matrixPrimitives) != beforePortable then
-    throw (IO.userError "disabled native matrix route called a row/workspace primitive")
-  Hex.Groebner.NativeChecks.runPortableF4
-  if (← matrixPrimitives) != beforePortable then
-    throw (IO.userError "public F4 nativeRows=false called a matrix primitive")
-  if (← counts) != beforePortableScan || (← wholeCounts) != beforePortableWhole ||
-      (← byteCount) != beforePortableBytes then
-    throw (IO.userError "public portable F4 called a native row/bulk/byte provider")
+  for offset in [:6] do
+    let seed := primitiveSeed+offset
+    if !Hex.Groebner.MatrixPrimitiveConformance.portable seed then
+      throw (IO.userError s!"portable matrix route failed, seed={seed}")
+    Hex.Groebner.NativeChecks.runPortableF4 seed
+  if (← matrixPrimitives) != beforePortable || (← counts) != beforePortableScan ||
+      (← wholeCounts) != beforePortableWhole || (← byteCount) != beforePortableBytes ||
+      (← remapCount) != beforePortableRemap || (← indexCount) != beforePortableIndex ||
+      (← zeroAppendCount) != beforePortableZeros ||
+      (← continuationCount) != beforePortableContinuation ||
+      (← productCount) != beforePortableProducts then
+    throw (IO.userError "public portable F4 called a native row/bulk/column/byte provider")
   let beforeIntegrated ← primitiveAdmissions
-  if !Hex.Groebner.MatrixPrimitiveConformance.integrated primitiveSeed then
-    throw (IO.userError "traced native matrix integration failed")
+  for offset in [:6] do
+    if !Hex.Groebner.MatrixPrimitiveConformance.integrated (primitiveSeed+offset) then
+      throw (IO.userError s!"traced native matrix integration failed, seed={primitiveSeed+offset}")
   let afterIntegrated ← primitiveAdmissions
   if afterIntegrated.1.1 ≤ beforeIntegrated.1.1 || afterIntegrated.2.1 ≤ beforeIntegrated.2.1 then
     throw (IO.userError "traced elimination did not admit both native primitives")

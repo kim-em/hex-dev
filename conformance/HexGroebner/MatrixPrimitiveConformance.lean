@@ -27,21 +27,23 @@ private def checkCases (full : Bool) : Option String := Id.run do
       columns := (Array.range n).foldl (fun b i => Packed.push .u32 b i.toUInt64) {}
       coefficients := (Array.range n).foldl (fun b _ => Packed.push field.width b 1) {} }
     let shared := (ordinal 2).columns
-    let rows := #[{},ordinal 4,ordinal 5,row,{columns := shared,coefficients := shared},
+    let aliased : SparseRow := {columns := shared,coefficients := shared}
+    let noncanonical := {row with coefficients := Packed.set field.width row.coefficients 1 field.modulus}
+    let rows := #[{},ordinal 4,ordinal 5,row,aliased,
       {row with columns := Packed.set .u32 row.columns 1 65536},
       {row with columns := Packed.set .u32 row.columns 1 65537},
       {row with columns := Packed.set .u32 row.columns 1 4294967295},
       {row with columns := Packed.set .u32 row.columns 1 4294967294},{row with columns := row.columns.push 0},
       {row with coefficients := row.coefficients.push 0},
       {row with coefficients := Packed.set field.width row.coefficients 1 0},
-      {row with coefficients := Packed.set field.width row.coefficients 1 field.modulus},
+      noncanonical,
       {row with columns := Packed.set .u32 row.columns 1 0},
       {row with columns := Packed.set .u32 row.columns 1 3}]
-    for input in (if full then rows else #[row,rows[4]!,rows[12]!]) do
+    for input in (if full then rows else #[row,aliased,noncanonical]) do
       let saved := (input.columns.data.toList,input.coefficients.data.toList)
       for index in [0,2^90] do
         for columns in (if full then [0,2,3,65536,65537,65538,4294967295,4294967296,2^90]
-            else [0,3,65538,4294967295]) do
+            else [0,3,65538,4294967295,4294967296]) do
           for allowance in (if full then [0,1,2,3,4,8,16,64,2^62+17,2^63-1,2^90]
               else [0,1,8,2^90]) do
             for limits in ([
@@ -53,7 +55,7 @@ private def checkCases (full : Bool) : Option String := Id.run do
                 {work := 2^62+17,inputEntries := allowance,packedBytes := 2^90}]
                 : List MatrixLimits) do
               for stats in (([{}, {work := 1,inputEntries := 2,packedBytes := 3,outputEntries := 4,traceNodes := 5,processedRows := 6,reductions := 7,zeroRows := 8},
-                  {work := 2^62-1},{work := 2^62},{zeroRows := 2^90}] : List MatrixStats).take (if full then 5 else 2)) do
+                  {work := 2^62-1},{work := 2^62},{zeroRows := 2^90}] : List MatrixStats).filter (fun stats => full || stats.work != 2^62-1)) do
                 let savedLimits := [limits.columns,limits.rows,limits.inputEntries,
                   limits.outputEntries,limits.packedBytes,limits.work,limits.traceNodes]
                 let savedStats := [stats.work,stats.inputEntries,stats.outputEntries,
