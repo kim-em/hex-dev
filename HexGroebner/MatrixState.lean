@@ -352,6 +352,69 @@ theorem finish_spec (quantum : Nat) (state : State) (native : Bool) :
 /-- Complete the continuation in native batches of 64 phases. -/
 def finish (state : State) := finishWith 64 state
 
+/-- Validation preserves the exact successful or failed charged prefix. -/
+private theorem next_validate (state : State) (stats : MatrixStats)
+    (outcome : Except MatrixError Unit)
+    (hphase : state.phase = .validate)
+    (hcursor : state.validation < state.reducers.size + state.targets.size)
+    (hvalidate :
+      (Matrix.validate state.field state.limits state.columns state.validation
+        (if state.validation < state.reducers.size then state.reducers[state.validation]!
+          else state.targets[state.validation-state.reducers.size]!)).run state.stats =
+        (outcome, stats)) :
+    next state = match outcome with
+      | .ok _ => { state with validation := state.validation + 1, stats := stats }
+      | .error e => { state with stats := stats, phase := .done, result := some (.error e) } := by
+  cases outcome
+  all_goals
+    simp only [next, advancePhase, hphase]
+    dsimp [step, liftWork, ExceptT.run, ExceptT.bind, ExceptT.bindCont, ExceptT.lift,
+      ExceptT.mk, StateT.bind, StateT.get, StateT.set, StateT.pure,
+      Bind.bind, MonadState.get, MonadStateOf.get, MonadStateOf.set,
+      MonadExcept.throw, MonadExceptOf.throw, liftM,
+      MonadLiftT.monadLift, MonadLift.monadLift, getThe, throwThe,
+      StateT.map, StateT.mk, Functor.map, Pure.pure]
+    simp only [hphase, show (Phase.validate == Phase.done) = false from rfl,
+      Bool.false_eq_true, ite_false, Nat.not_le_of_lt hcursor]
+    dsimp [StateT.bind, ExceptT.bindCont, Id.run]
+    simp only [ExceptT.run] at hvalidate
+    rw [hvalidate]
+    dsimp [modify, modifyThe, MonadStateOf.modifyGet, liftM,
+      MonadLiftT.monadLift, MonadLift.monadLift, ExceptT.lift, ExceptT.mk,
+      StateT.modifyGet, StateT.map, Functor.map, Pure.pure]
+    simp only [hphase]
+    rfl
+
+/-- A successful validator advances one cursor and preserves its exact charges.
+This is an equation for the Lean phase model. -/
+theorem validate_ok (state : State) (stats : MatrixStats)
+    (hphase : state.phase = .validate)
+    (hcursor : state.validation < state.reducers.size + state.targets.size)
+    (hvalidate :
+      (Matrix.validate state.field state.limits state.columns state.validation
+        (if state.validation < state.reducers.size then state.reducers[state.validation]!
+          else state.targets[state.validation-state.reducers.size]!)).run state.stats =
+        (.ok (), stats)) :
+    let out := next state
+    out.validation = state.validation + 1 ∧ out.phase = .validate ∧ out.stats = stats := by
+  rw [next_validate state stats (.ok ()) hphase hcursor hvalidate]
+  exact ⟨rfl, hphase, rfl⟩
+
+/-- A failed validator retains its exact error and charged prefix in a terminal state.
+This is an equation for the Lean phase model. -/
+theorem validate_error (state : State) (stats : MatrixStats) (error : MatrixError)
+    (hphase : state.phase = .validate)
+    (hcursor : state.validation < state.reducers.size + state.targets.size)
+    (hvalidate :
+      (Matrix.validate state.field state.limits state.columns state.validation
+        (if state.validation < state.reducers.size then state.reducers[state.validation]!
+          else state.targets[state.validation-state.reducers.size]!)).run state.stats =
+        (.error error, stats)) :
+    let out := next state
+    out.phase = .done ∧ out.result = some (.error error) ∧ out.stats = stats := by
+  rw [next_validate state stats (.error error) hphase hcursor hvalidate]
+  exact ⟨rfl, rfl, rfl⟩
+
 /-- Advancing by zero phases preserves the complete continuation. -/
 @[simp] theorem advance_zero (state : State) : advance state 0 = state := by
   rw [advance_spec]
