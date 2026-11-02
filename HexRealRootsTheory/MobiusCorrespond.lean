@@ -584,8 +584,7 @@ theorem sturm_signVariations_range_eq (P : Polynomial ℝ) :
   · subst P
     simp
   have hasc_rev : ((List.range (P.natDegree + 1)).map P.coeff).reverse = P.coeffList := by
-    rw [Polynomial.coeffList, Polynomial.withBotSucc_degree_eq_natDegree_add_one hP,
-      List.map_reverse]
+    rw [Polynomial.coeffList_of_ne_zero hP, List.map_reverse]
   rw [← signVariations_reverse ((List.range (P.natDegree + 1)).map P.coeff), hasc_rev]
   rfl
 

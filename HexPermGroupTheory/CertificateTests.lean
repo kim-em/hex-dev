@@ -54,7 +54,7 @@ example : Nat.card (Subgroup.closure
     {x : Equiv.Perm (Fin 3) | x ∈ [Kernel.permOfImages 3 [1, 2, 0]]}) = 3 := by
   perm_group
 example : Kernel.permOfImages 3 [1, 0, 2] ∉ Subgroup.closure
-    ((fun x : Equiv.Perm (Fin 3) => x ∈ [Kernel.permOfImages 3 [1, 2, 0]]) : Set _) := by
+    (Set.ofPred fun x : Equiv.Perm (Fin 3) => x ∈ [Kernel.permOfImages 3 [1, 2, 0]]) := by
   perm_group
 
 -- The previous certificate emitter used these assembly lemmas.

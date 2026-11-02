@@ -102,11 +102,10 @@ theorem prod_map_signedSums {M : Type*} [CommMonoid M] :
       rw [← Equiv.prod_comp (Fin.snocEquiv fun _ : Fin (n + 1) => Bool)
         (fun ε : Fin (n + 1) → Bool => g (∑ i, if ε i then r i else -r i))]
       rw [Fintype.prod_prod_type]
-      simp only [Fin.snocEquiv_apply]
-      rw [Fintype.prod_bool]
-      simp only [hsplit]
+      simp only [Fin.snocEquiv_apply, Fintype.prod_bool]
       rw [← Finset.prod_mul_distrib]
-      exact Finset.prod_congr rfl fun ε _ => by simp [sub_eq_add_neg]
+      exact Finset.prod_congr rfl fun ε _ => by
+        erw [hsplit ε true, hsplit ε false]; simp [sub_eq_add_neg]
 
 /-- The two sign-pattern products are the same polynomial: the `List.prod` the
 iterated norm computes and the `Finset.prod` the tower theorem is about. -/

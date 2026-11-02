@@ -105,10 +105,6 @@ example (h : Acc (Next trial) 2) : firstSome trial 2 h = -1 :=
 #guard_msgs in
 #print axioms Oracle.Bounds.div_eq_impl
 
-/-- info: 'Hex.OrderedFn.Infinitesimal.lowestIndex_eq_impl' depends on axioms: [propext, Quot.sound] -/
-#guard_msgs in
-#print axioms Infinitesimal.lowestIndex_eq_impl
-
 /-- info: 'Hex.OrderedFn.Infinitesimal.sign_eq_impl' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in
 #print axioms Infinitesimal.sign_eq_impl

@@ -50,11 +50,13 @@ unsafe def elaborate : CommandElab := fun _ => liftTermElabM do
     ("RootSet", reprStr samples.roots, samples.roots.writeText)]
   for (kind, expression, wire) in packedCases do
     let expected := ReprFormat.quote wire
+    -- Destructure `value` so elaboration never unifies through the decoded
+    -- text: on Lean v4.36.0-rc1 unifying `value.context` reduces the decoder.
     let observation := if kind == "Element" then
-        " && value.context.sign value.value == 1"
+        " && (match value with | ⟨context, v⟩ => context.sign v == 1)"
       else if kind == "Polynomial" then
-        " && value.context.sign (value.value.coeff 0) == -1" ++
-        " && value.context.sign (value.value.coeff 1) == 1"
+        " && (match value with | ⟨context, v⟩ =>" ++
+        " context.sign (v.coeff 0) == -1 && context.sign (v.coeff 1) == 1)"
       else ""
     let source := "let catalog := " ++ bindings ++ "catalog 1; let value : " ++
       tower ++ "Packed" ++ kind ++ " " ++ bindings ++ "registry := " ++ expression ++
