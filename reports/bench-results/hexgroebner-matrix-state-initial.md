@@ -5,15 +5,20 @@ These measurements bind content fingerprint `87692e081b76`, staged snapshot
 `ae2a3c06f9e7616947fcc05536c31790be934efc99d2e6b5b005f533874e9aee`. Both arms use the same fresh detached executable.
 The monorepo base is commit `53831dd285e7c79fd79929e0f316fc565890f1d2`; the capsule supplies the measured family overlay.
 A is the existing `Elimination.reference`; B is the nineteen-object continuation.
-The current twenty-object continuation has different ownership handling, per-row
-fuel, shape-based completion fuel and carrier registration. These observations
-are not pooled with, or transferred to, that source.
+The twenty-object source has different ownership handling, per-row fuel,
+shape-based completion fuel and carrier registration. These observations
+apply only to the nineteen-object source and are not pooled with other sources.
 
 Cauchy matrices over prime 65537 have full rank. Preparation is excluded;
 validation, allocation, elimination, complete decoded rows, multipliers, sugars
 and every resource counter are consumed and structurally hashed. All sixteen
 processes complete successfully, with identical complete result hashes at every
-size. All rows are above the runner's signal floor. No unchanged repeat is used.
+size. The benchmark Boolean incorrectly expects zero reducer rank despite
+half of the rows being reducers, so that flag is false in both arms. The
+complete successful echelon rows and counters are still consumed; errors would
+produce empty arrays. These records do not validate that erroneous predicate.
+The corrected benchmark requires the actual reducer count and successful
+complete equality at every timed size. All rows are above the runner's signal floor. No unchanged repeat is used.
 
 The manual shared EPYC 9455 host run uses one requested algorithm thread and CPU
 2, automatically leased. Whole four-size sweeps alternate AB/BA.
