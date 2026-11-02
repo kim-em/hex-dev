@@ -19,7 +19,7 @@ namespace Hex.Groebner.MatrixState
 
 /-- Canonical completion by individual portable phases. The recursion is
 well-founded on the proved phase count rather than an arbitrary fuel. -/
-private def complete (state : State) (hgeometry : state.geometry) : State :=
+private noncomputable def complete (state : State) (hgeometry : state.geometry) : State :=
   if _hdone : state.phase == .done then state
   else complete (advancePhase state false) (phase_geometry state false hgeometry)
 termination_by state.remaining
@@ -87,6 +87,17 @@ private theorem finish_complete_spec (state : State) (quantum : Nat) (native : B
   all_goals try simp_all
   all_goals grind
 
+/-- A single bounded advance is exactly one phase, including terminal states. -/
+theorem advance_one (state : State) : advance state 1 = next state := by
+  rw [advance_spec,next_spec]
+  unfold advancePortable advanceWith
+  have count : min 1 (max 1 (1048576 /
+      (8*state.columns+2*(state.reducers.size+state.targets.size)+4224))) = 1 := by omega
+  rw [count]
+  simp only [Id.run,Std.Legacy.Range.forIn_eq_forIn_range']
+  by_cases hdone : state.phase == .done
+  all_goals simp [nextPortable,advancePhase,hdone,Pure.pure,Bind.bind,Id.run]
+
 /-- Every bounded completion schedule produces the same entire final state,
 including error outcomes, counters and workspace contents. -/
 theorem finishState_schedule (state : State) (quantum₁ quantum₂ : Nat) (native₁ native₂ : Bool)
@@ -131,6 +142,20 @@ theorem finishWith_resume (state : State) (steps quantum : Nat) (native : Bool)
     finishWith quantum (advance state steps) native = finishWith quantum state native := by
   simp only [finishWith]
   rw [finishState_resume state steps quantum native hgeometry]
+
+/-- Resuming after a single phase preserves the entire completed state. -/
+theorem finishState_next (state : State) (quantum : Nat) (native : Bool)
+    (hgeometry : state.geometry) :
+    finishState quantum (next state) native = finishState quantum state native := by
+  rw [← advance_one]
+  exact finishState_resume state 1 quantum native hgeometry
+
+/-- One phase preserves the eventual result and exact resource counters. -/
+theorem finishWith_next (state : State) (quantum : Nat) (native : Bool)
+    (hgeometry : state.geometry) :
+    finishWith quantum (next state) native = finishWith quantum state native := by
+  simp only [finishWith]
+  rw [finishState_next state quantum native hgeometry]
 
 /-- info: 'Hex.Groebner.MatrixState.finishState_schedule' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in #print axioms finishState_schedule

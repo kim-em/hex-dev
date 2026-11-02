@@ -329,7 +329,9 @@ The shape allowance covers validation, workspace setup, input rows, bounded
 scan/gather quanta and final ordering. Each unfinished call advances at least
 one phase because the requested quantum is clamped to one. `MatrixStateFuel`
 proves that every geometrically valid continuation reaches a terminal state
-within this allowance, including states resumed partway through a row. -/
+within this allowance, including states resumed partway through a row.
+A scan or gather still unfinished at its last per-row quantum returns
+`rowUpdate`; terminal completion alone does not rule out that error. -/
 def finishState (quantum : Nat) (state : State) (native := true) : State := Id.run do
   let fuel := state.allowance
   let mut state := state

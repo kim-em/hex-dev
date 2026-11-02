@@ -36,16 +36,6 @@ def State.remaining (state : State) : Nat :=
 theorem remaining_pos (state : State) : 0 < state.remaining ↔ state.phase ≠ .done := by
   cases h : state.phase <;> simp [State.remaining,h] <;> omega
 
-/-- The existing outer allowance strictly exceeds the initial phase count. -/
-theorem start_remaining (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
-    (reducers targets : Array SparseRow) (sugars : Array Nat) (independent : Bool) :
-    (start field limits columns reducers targets sugars independent).remaining <
-      6+(reducers.size+targets.size+1)*
-        (3+((columns*(columns+2)+4095)/4096+1)+(columns+4095)/4096+1) := by
-  simp only [start,State.remaining,scanFuel,Nat.sub_zero]
-  simp only [Nat.add_mul,Nat.mul_add,Nat.one_mul,Nat.mul_one]
-  omega
-
 private theorem row_remaining (rows input weight : Nat) (h : input < rows) :
     (rows-input)*weight = (rows-input-1)*weight+weight := by
   rw [show rows-input = (rows-input-1)+1 from by omega,Nat.add_mul,Nat.one_mul]
@@ -83,18 +73,14 @@ private theorem step_remaining_spec (initial : State) (native : Bool)
       try omega
     all_goals
       simp only [Native.Scan.transition,ite_self] at *
-      have bound := fun work => scan_geometry initial.field initial.columns initial.slots
-        initial.nativePivots initial.scan work false
-      simp only [Bool.false_eq_true,ite_false] at bound
       generalize hremaining : initial.limits.work - _ = remaining at *
       have hdense : initial.scan.dense.size = initial.columns*initial.field.width.bytes := by grind
       have hstatus : (Native.Scan.portable initial.field.modulus initial.slots initial.nativePivots
           initial.scan 4096 remaining 0 false).status ≠ 4 := by
         intro bad
         simp_all
-      have actual := bound remaining hdense hstatus
+      have actual := scan_bounds initial remaining hdense hstatus
       rcases actual with ⟨hbytes,hlast,hleading⟩
-      clear bound
       omega
 
 private theorem phase_remaining (state : State) (native : Bool)
@@ -180,6 +166,13 @@ theorem remaining_lt_allowance (state : State) (hgeometry : state.geometry) :
 /-- info: 'Hex.Groebner.MatrixState.remaining_lt_allowance' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in #print axioms remaining_lt_allowance
 
+/-- The outer allowance strictly exceeds a new computation's phase count. -/
+theorem start_remaining (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
+    (reducers targets : Array SparseRow) (sugars : Array Nat) (independent : Bool) :
+    (start field limits columns reducers targets sugars independent).remaining <
+      (start field limits columns reducers targets sugars independent).allowance :=
+  remaining_lt_allowance _ (start_geometry ..)
+
 set_option maxHeartbeats 1000000 in
 set_option linter.deprecated.syntax false in
 open Std.Do in
@@ -225,6 +218,9 @@ theorem finishState_done (state : State) (quantum : Nat) (native : Bool)
 
 /-- Terminal continuations carry a completed success or error result. -/
 def State.closed (state : State) : Prop := state.phase = .done → state.result.isSome = true
+
+/-- Workspace bounds and the terminal-result invariant needed for completion. -/
+def State.valid (state : State) : Prop := state.geometry ∧ state.closed
 
 /-- New computations have no terminal-result obligation yet. -/
 theorem start_closed (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
@@ -302,8 +298,39 @@ private theorem finish_closed_spec (state : State) (quantum : Nat) (native : Boo
   · ⟨fun ⟨_,out⟩ => ⌜out.closed⌝,ExceptConds.false⟩
   all_goals simp_all
 
+/-- Completion preserves the active-workspace bounds. -/
+theorem finishState_geometry (state : State) (quantum : Nat) (native : Bool)
+    (hgeometry : state.geometry) : (finishState quantum state native).geometry :=
+  ((finish_state_spec state quantum native hgeometry) True.intro).1
+
+/-- Terminal results survive completion, including already completed inputs. -/
+theorem finishState_closed (state : State) (quantum : Nat) (native : Bool)
+    (hclosed : state.closed) : (finishState quantum state native).closed :=
+  (finish_closed_spec state quantum native hclosed) True.intro
+
+/-- New continuations satisfy both completion invariants. -/
+theorem start_valid (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
+    (reducers targets : Array SparseRow) (sugars : Array Nat) (independent : Bool) :
+    (start field limits columns reducers targets sugars independent).valid :=
+  ⟨start_geometry ..,start_closed field limits columns reducers targets sugars independent⟩
+
+/-- One phase preserves both completion invariants. -/
+theorem next_valid (state : State) (hvalid : state.valid) : (next state).valid :=
+  ⟨next_geometry state hvalid.1,next_closed state hvalid.2⟩
+
+/-- Every bounded schedule preserves both completion invariants. -/
+theorem advance_valid (state : State) (steps : Nat) (hvalid : state.valid) :
+    (advance state steps).valid :=
+  ⟨advance_geometry state steps hvalid.1,advance_closed state steps hvalid.2⟩
+
+/-- Completing a valid continuation retains both invariants. -/
+theorem finishState_valid (state : State) (quantum : Nat) (native : Bool)
+    (hvalid : state.valid) : (finishState quantum state native).valid :=
+  ⟨finishState_geometry state quantum native hvalid.1,finishState_closed state quantum native hvalid.2⟩
+
 /-- Completion always has a stored success or error, for any valid resumed state
-whose terminal states have results. The empty-result fallback is unreachable. -/
+whose terminal states have results. The empty-result fallback is unreachable.
+Per-row quantum exhaustion can still be a stored `rowUpdate` error. -/
 theorem finishState_result (state : State) (quantum : Nat) (native : Bool)
     (hgeometry : state.geometry) (hclosed : state.closed) :
     (finishState quantum state native).result.isSome = true :=

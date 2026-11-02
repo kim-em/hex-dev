@@ -39,6 +39,7 @@ IMPORT_ALL_RE = re.compile(
 SEALED_IMPORT_ALL_ALLOWLIST: dict[str, frozenset[Path]] = {
     # Owning proofs inspect phase bodies and workspace updates. Replay creates
     # states only through public start; consumers retain the constructor seal.
+    # These proof modules must not expose public unchecked State builders.
     "HexGroebner.MatrixState": frozenset({
         Path("HexGroebner/MatrixStateProof.lean"),
         Path("HexGroebner/MatrixStateFuel.lean"),

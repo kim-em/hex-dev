@@ -59,8 +59,8 @@ theorem validation_example :
 #guard_msgs in #print axioms Native.Scan.untraced_events
 
 
-/-- The universal advance invariant replays through arbitrary bounded schedules,
-including suspended and terminal calls, for this concrete prime-field input. -/
+/-- Instantiate the universal advance invariant on a concrete prime-field input,
+checking that its public signature supports arbitrary bounded schedules. -/
 theorem geometry_example (steps : Nat) :
     let field : PrimeField := ⟨7,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
     let row : SparseRow := ⟨⟨#[0,0,0,0,2,0,0,0]⟩,⟨#[2,1]⟩⟩
@@ -80,8 +80,8 @@ theorem geometry_example (steps : Nat) :
 /-- info: 'Hex.Groebner.MatrixState.workspace_size_error' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in #print axioms MatrixState.workspace_size_error
 
-/-- Kernel replay covers every quantum and either scheduler after an arbitrary
-bounded prefix, including zero-step prefixes and already completed prefixes. -/
+/-- Instantiate the completion theorem on a concrete input with symbolic
+prefix length, quantum and provider; this checks its public signature. -/
 theorem completion_example (steps quantum : Nat) (native : Bool) :
     let field : PrimeField := ⟨7,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
     let row : SparseRow := ⟨⟨#[0,0,0,0,2,0,0,0]⟩,⟨#[2,1]⟩⟩
@@ -99,8 +99,8 @@ theorem completion_example (steps quantum : Nat) (native : Bool) :
 /-- info: 'Hex.Groebner.MatrixState.finishState_result' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in #print axioms MatrixState.finishState_result
 
-/-- The full result and all counters agree after arbitrary suspension and
-resumption, with no evaluation of native code in the kernel. -/
+/-- Instantiate exact resumption on a concrete input with symbolic prefix and
+quantum. The kernel checks the proof without evaluating the matrix algorithm. -/
 theorem resumption_example (steps quantum : Nat) (native : Bool) :
     let field : PrimeField := ⟨7,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
     let row : SparseRow := ⟨⟨#[0,0,0,0,2,0,0,0]⟩,⟨#[2,1]⟩⟩
@@ -112,5 +112,25 @@ theorem resumption_example (steps quantum : Nat) (native : Bool) :
 #guard_msgs in #print axioms resumption_example
 /-- info: 'Hex.Groebner.MatrixState.finishState_schedule' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in #print axioms MatrixState.finishState_schedule
+
+/-- Evaluate an actual terminal error and its exact counters in the kernel.
+The explicit column limit fails before the platform-dependent workspace check. -/
+theorem error_completion_example :
+    let field : PrimeField := ⟨7,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+    let initial := start field { columns := 2 } 3 #[] #[] #[] false
+    finishWith 0 initial false = (.error (.exhausted .columns),{}) := by
+  dsimp only
+  unfold finishWith finishState State.allowance advancePortable advanceWith start advancePhase step
+  simp only [Std.Legacy.Range.forIn_eq_forIn_range']
+  rfl
+
+/-- info: 'Hex.Groebner.MatrixStateReplay.error_completion_example' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms error_completion_example
+/-- info: 'Hex.Groebner.MatrixState.finishState_valid' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms MatrixState.finishState_valid
+/-- info: 'Hex.Groebner.MatrixState.advance_one' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms MatrixState.advance_one
+/-- info: 'Hex.Groebner.MatrixState.finishWith_next' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms MatrixState.finishWith_next
 
 end Hex.Groebner.MatrixStateReplay

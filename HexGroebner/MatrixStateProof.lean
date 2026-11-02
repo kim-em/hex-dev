@@ -151,6 +151,17 @@ private theorem scan_geometry (field : PrimeField) (columns : Nat) (slots : Byte
     simp only [hsize,native_width,Nat.mul_div_cancel _ (width_pos field)] at bounds
     exact bounds
 
+/-- Common portable scan bounds used by geometry preservation and phase descent. -/
+private theorem scan_bounds (state : State) (remaining : Nat)
+    (hsize : state.scan.dense.size = state.columns*state.field.width.bytes)
+    (hstatus : (Native.Scan.portable state.field.modulus state.slots state.nativePivots
+      state.scan 4096 remaining 0 false).status ≠ 4) :
+    let out := Native.Scan.portable state.field.modulus state.slots state.nativePivots
+      state.scan 4096 remaining 0 false
+    out.state.dense.size = state.columns*state.field.width.bytes ∧
+      out.state.last < max 1 state.columns ∧ out.state.leading ≤ state.columns :=
+  scan_geometry state.field state.columns state.slots state.nativePivots state.scan remaining false hsize hstatus
+
 private theorem gather_size (field : PrimeField) (initial : Native.Gather.State)
     (stop entries bytes work : Nat) (factor : UInt64) (native : Bool) :
     (if native then Native.Gather.gather field.modulus initial stop 4096 entries bytes work factor
@@ -187,18 +198,14 @@ private theorem step_geometry_spec (initial : State) (native : Bool) (hgeometry 
     all_goals try grind [State.geometry,State.frame,State.contents,State.identity,scan_geometry,gather_size]
     all_goals
       simp only [Native.Scan.transition,ite_self] at *
-      have bound := fun work => scan_geometry initial.field initial.columns initial.slots
-        initial.nativePivots initial.scan work false
-      simp only [Bool.false_eq_true,ite_false] at bound
       generalize hremaining : initial.limits.work - _ = remaining at *
       have hdense : initial.scan.dense.size = initial.columns*initial.field.width.bytes := by grind
       have hstatus : (Native.Scan.portable initial.field.modulus initial.slots initial.nativePivots
           initial.scan 4096 remaining 0 false).status ≠ 4 := by
         intro bad
         simp_all
-      have actual := bound remaining hdense hstatus
+      have actual := scan_bounds initial remaining hdense hstatus
       rcases actual with ⟨hbytes,hlast,hleading⟩
-      clear bound
       try simp only [hbytes,true_and]
       all_goals omega
 
