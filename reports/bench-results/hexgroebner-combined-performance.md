@@ -171,3 +171,5 @@ the complete stdout objects, compares every field except `candidateNanos`, and
 checks counters/scheduling against metadata. The earlier analysis script is also
 retained at `reproduction/analyze-equivalence-candidates.py` in each relevant raw
 capsule; the new audit makes this stronger comparison directly reusable.
+
+[Current conformance and figure audit f4-performance-audit-ec583f66a7](raw/f4-performance-audit-ec583f66a7.tar.gz): SHA-256 `524ff8b5b9b5653817799268fa1f621e2d0331b69ad9d0141cd9b16a452ab8db`, 52 payloads, each read back and digest checked. It retains all eight expanded sanitizer variants, the isolated six-admitted/six-declined runtime window, project checks, report audit, negative audit cases and runtime-source identity.
