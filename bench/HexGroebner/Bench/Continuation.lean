@@ -22,7 +22,7 @@ private def consumeFrame (input : Input) (result : Elimination.Result) :
   match result.result with
   | .error _ => (false,#[],#[])
   | .ok (e,r) =>
-    (e.reducerRank == 0 && e.rows.size == input.columns && e.trace.isEmpty && r.isEmpty,
+    (e.reducerRank == input.reducers.size && e.rows.size == input.columns && e.trace.isEmpty && r.isEmpty,
       e.rows.map fun row => (row.row.entries frameField,row.fromTarget,row.multiplier,row.sugar),
       let s := result.stats
       #[s.work,s.inputEntries,s.outputEntries,s.packedBytes,s.traceNodes,
