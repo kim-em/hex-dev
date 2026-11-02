@@ -19,13 +19,17 @@ private def same (a b : Except MatrixError Unit × MatrixStats) : Bool :=
 def checked : Bool := Id.run do
   for field in Fixtures.fields do
     let some row := SparseRow.ofEntries field 3 #[(0,1),(2,1)] | return false
-    let rows := #[row,{row with columns := row.columns.push 0},
+    let ordinal (n : Nat) : SparseRow := {
+      columns := (Array.range n).foldl (fun b i => Packed.push .u32 b i.toUInt64) {}
+      coefficients := (Array.range n).foldl (fun b _ => Packed.push field.width b 1) {} }
+    let rows := #[{},ordinal 4,ordinal 5,row,{row with columns := row.columns.push 0},
       {row with coefficients := row.coefficients.push 0},
       {row with coefficients := Packed.set field.width row.coefficients 1 0},
       {row with coefficients := Packed.set field.width row.coefficients 1 field.modulus},
       {row with columns := Packed.set .u32 row.columns 1 0},
       {row with columns := Packed.set .u32 row.columns 1 3}]
     for input in rows do
+      let saved := (input.columns.data.toList,input.coefficients.data.toList)
       for index in [0,2^90] do
         for columns in [0,2,3,65536,65537,2^90] do
           for allowance in [0,1,2,3,4,8,16,64,2^90] do
@@ -43,6 +47,8 @@ def checked : Bool := Id.run do
               if attempted.isSome != admitted then return false
               if let some result := attempted then
                 if !same result expected then return false
+              if saved != (input.columns.data.toList,input.coefficients.data.toList) then
+                return false
   for size in [0,1,4095,4096,4097,65536,1048576,1048577] do
     let actual := Matrix.zerosWith size
     if actual.size != size || !actual.data.all (· == 0) then return false
@@ -53,5 +59,10 @@ def checked : Bool := Id.run do
   return true
 
 #guard checked
+
+/-- info: 'Hex.Groebner.Matrix.validateWith_spec' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms Matrix.validateWith_spec
+/-- info: 'Hex.Groebner.Matrix.zerosWith_spec' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms Matrix.zerosWith_spec
 
 end Hex.Groebner.MatrixPrimitiveConformance
