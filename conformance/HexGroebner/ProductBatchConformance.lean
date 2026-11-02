@@ -130,17 +130,18 @@ def capacityChecks : Bool := Id.run do
 
 /-- Exactly the final product is missing; a discarded nonempty prefix must
 reach ordinary scalar insertion while preserving the complete reference state. -/
-def lastMiss : Bool := Id.run do
+def lastMiss (seed : Nat) : Bool := Id.run do
   let mut table : MonomialTable := { arity := 3 }
+  let step := 1+seed%7
   for i in [:64] do
-    let next := table.internOwned (Array.replicate 3 i.toUInt64) 1000 10000000 1000000000
+    let next := table.internOwned (Array.replicate 3 (i*step).toUInt64) 1000 10000000 1000000000
     let .ok _ := next.result | return false
     table := next.table
   let support := (Array.range 64).foldl (fun bytes i => Packed.push .u32 bytes i.toUInt64) {}
   return check table support 1 0 64 1000 10000000 1000000000 true
 
 #guard capacityChecks
-#guard lastMiss
+#guard lastMiss 0
 
 #guard checks 0
 #guard malformedChecks 0

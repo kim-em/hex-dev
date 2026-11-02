@@ -47,7 +47,8 @@ def runProductWide : IO Unit := do
 
 /-- Isolated last-term miss for the discarded-prefix counter window. -/
 def runProductMiss : IO Unit := do
-  if !ProductBatchConformance.lastMiss then
+  let seed ← readSeed
+  if !ProductBatchConformance.lastMiss seed then
     throw (IO.userError "last-term product miss mismatch")
 
 /-- Compiled checks for every native build variant. The harness verifies that
