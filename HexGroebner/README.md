@@ -627,3 +627,10 @@ manual drivers should drop references to their terminal state after extracting t
 The build-time `MatrixLayout` conformance check compares the listed matrix records and tags with the layout table mirrored
 from `matrix_state.c`, including field names, object slots, scalar offsets
 and same-type swaps.
+
+Within the admitted 64-bit geometry, native validation scans at most
+`columns+1` entries per phase and preserves the first error's row/entry indices
+and resource prefix. Larger well-shaped rows use the checked Lean phase.
+Malformed packed lengths fail before the entry loop. `validate_ok` and
+`validate_error` state the corresponding successful and failed Lean model
+transitions; agreement with C is checked by native conformance.

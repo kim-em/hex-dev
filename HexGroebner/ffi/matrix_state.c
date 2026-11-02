@@ -114,6 +114,18 @@ static lean_object *cont_empty_gather(void) {
 /* Enforce every buffer bound before a direct write. A failed preflight uses
    the checked Lean phase, before charges or mutable buffers have changed. */
 static int cont_bounds(continuation *c) {
+    if(c->phase==1) {
+        if(!lean_is_scalar(c->v[5])) return 0;
+        uint64_t cursor=lean_unbox(c->v[5]),nr=lean_array_size(c->v[2]);
+        if(cursor>=nr+lean_array_size(c->v[3])) return 1;
+        lean_object *row=lean_array_get_core(c->v[cursor<nr?2:3],(size_t)(cursor<nr?cursor:cursor-nr));
+        if(lean_is_scalar(row) || lean_obj_tag(row)!=0 || lean_ctor_num_objs(row)!=2) return 0;
+        uint64_t bytes=lean_sarray_size(lean_ctor_get(row,0)),n=bytes/4;
+        /* A malformed length fails before the row loop. Larger well-shaped
+           rows use the checked Lean phase and never enter this native loop. */
+        if(bytes%4 || lean_sarray_size(lean_ctor_get(row,1))!=n*c->width) return 1;
+        return n<=c->columns+1;
+    }
     if(c->p<2 || c->p>=UINT64_C(2147483648) ||
        lean_sarray_size(c->v[8])!=c->columns*4 || !lean_is_scalar(c->v[6]) ||
        !lean_is_scalar(c->v[12]) || !lean_is_scalar(c->v[19])) return 0;
@@ -139,6 +151,36 @@ static int cont_bounds(continuation *c) {
         !lean_is_scalar(scan) && lean_obj_tag(scan)==0 && lean_ctor_num_objs(scan)==8 &&
         lean_sarray_size(lean_ctor_get(gather,0))==c->columns*c->width &&
         lean_is_scalar(c->v[15]) && lean_unbox(c->v[15])<c->columns;
+}
+/* Validator errors carry the original input index and first failing entry. */
+static void cont_invalid(continuation *c,unsigned tag,uint64_t row,uint64_t entry) {
+    lean_object *e=lean_alloc_ctor(tag,tag==2?1:2,0);
+    lean_ctor_set(e,0,lean_uint64_to_nat(row));
+    if(tag!=2) lean_ctor_set(e,1,lean_uint64_to_nat(entry));
+    lean_object *r=lean_alloc_ctor(0,1,0);lean_ctor_set(r,0,e);
+    lean_object *some=lean_alloc_ctor(1,1,0);lean_ctor_set(some,0,r);
+    cont_replace(c,18,some);c->phase=7;
+}
+static void cont_validate(continuation *c) {
+    uint64_t cursor=lean_unbox(c->v[5]),nr=lean_array_size(c->v[2]);
+    if(cursor>=nr+lean_array_size(c->v[3])) {c->phase=2;return;}
+    if(!cont_work(c,1)) {cont_error(c,5);return;}
+    lean_object *row=lean_array_get_core(c->v[cursor<nr?2:3],(size_t)(cursor<nr?cursor:cursor-nr));
+    lean_object *ids=lean_ctor_get(row,0),*coeff=lean_ctor_get(row,1);
+    uint64_t bytes=lean_sarray_size(ids),size=bytes/4,coefficient_bytes=lean_sarray_size(coeff);
+    if(bytes%4 || coefficient_bytes!=size*c->width) {cont_invalid(c,2,cursor,0);return;}
+    if(!cont_charge(c,1,2,size)) {cont_error(c,2);return;}
+    if(!cont_charge(c,3,4,bytes+coefficient_bytes)) {cont_error(c,4);return;}
+    if(!cont_work(c,size)) {cont_error(c,5);return;}
+    uint64_t previous=0;
+    for(uint64_t i=0;i<size;++i) {
+        uint64_t column=cont_read(lean_sarray_cptr(ids)+4*i,4);
+        if(column>=c->columns || (i && column<=previous)) {cont_invalid(c,3,cursor,i);return;}
+        uint64_t value=cont_read(lean_sarray_cptr(coeff)+c->width*i,c->width);
+        if(!value || value>=c->p) {cont_invalid(c,4,cursor,i);return;}
+        previous=column;
+    }
+    cont_replace(c,5,lean_uint64_to_nat(cursor+1));
 }
 static int cont_target(continuation *c) {
     return lean_unbox(c->v[6])>=lean_array_size(c->v[2]);
@@ -318,7 +360,9 @@ static void cont_gather(continuation *c) {
    not a count of machine instructions. Nat metadata retains its ordinary bit
    complexity. The private shape
    check admits <=65536 columns and input rows; larger states take no transition here. Checks,
-   validation, initialization and final ordering use the exported Lean phase,
+   initialization and final ordering use the exported Lean phase. Validation
+   examines at most c+1 entries per native phase, with larger well-shaped rows
+   handled by the checked Lean phase,
    so malformed rows and arbitrary Nat resource limits retain their exact
    failures and counters. Scan and gather each advance at most 4096 steps. */
 LEAN_EXPORT lean_obj_res lean_hex_matrix_advance(lean_obj_arg state,b_lean_obj_arg steps) {
@@ -337,9 +381,10 @@ LEAN_EXPORT lean_obj_res lean_hex_matrix_advance(lean_obj_arg state,b_lean_obj_a
     int fast=cont_counts(&c),dirty=0;
     for(uint64_t i=0;i<count && c.phase!=7;++i) {
         HEX_GROEBNER_CONT_TICK();
-        if(fast && c.phase>=3 && c.phase<=5 && cont_bounds(&c)) {
+        if(fast && (c.phase==1 || (c.phase>=3 && c.phase<=5)) && cont_bounds(&c)) {
             HEX_GROEBNER_CONT_PHASE(c.phase);
-            if(c.phase==3) cont_input(&c);
+            if(c.phase==1) cont_validate(&c);
+            else if(c.phase==3) cont_input(&c);
             else if(c.phase==4) cont_scan(&c);
             else cont_gather(&c);
             dirty=1;

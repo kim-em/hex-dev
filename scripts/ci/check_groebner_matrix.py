@@ -326,6 +326,9 @@ LEAN_EXPORT lean_obj_res __wrap_lean_hex_matrix_advance(lean_obj_arg state,b_lea
 LEAN_EXPORT lean_obj_res hex_test_continuation_count(lean_obj_arg world) {
  (void)world;return lean_io_result_mk_ok(lean_box_uint64(continuation_calls));
 }
+LEAN_EXPORT lean_obj_res hex_test_continuation_validations(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(continuation_phases[1]));
+}
 LEAN_EXPORT lean_obj_res hex_test_continuation_phases(lean_obj_arg world) {
  (void)world;lean_object *tail=lean_alloc_ctor(0,2,0),*pair=lean_alloc_ctor(0,2,0);
  lean_ctor_set(tail,0,lean_box_uint64(continuation_phases[4]));
@@ -540,6 +543,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
             (directory / (module + ".lean")).write_text('''import HexGroebner.NativeChecks
 @[extern "hex_test_remap_count"] opaque remapCount : IO UInt64
 @[extern "hex_test_continuation_count"] opaque continuationCount : IO UInt64
+@[extern "hex_test_continuation_validations"] opaque continuationValidations : IO UInt64
 @[extern "hex_test_continuation_phases"] opaque continuationPhases : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_continuation_bounds"] opaque continuationBounds : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_index_count"] opaque indexCount : IO UInt64
@@ -583,6 +587,9 @@ def main : IO Unit := do
   Hex.Groebner.NativeChecks.run
   let continuationCalls ← continuationCount
   if continuationCalls == 0 then throw (IO.userError "native continuation unused")
+  let validations ← continuationValidations
+  if validations == 0 then throw (IO.userError "native continuation validation unused")
+  IO.println s!"native continuation validations: {validations}"
   let phases ← continuationPhases
   if phases.1 == 0 || phases.2.1 == 0 || phases.2.2 == 0 then
     throw (IO.userError "native continuation fast phases unused")
