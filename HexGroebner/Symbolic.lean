@@ -129,7 +129,7 @@ private def solve (context : Context) (limits : Limits) (matrix : SymbolicMatrix
     inputBytes := inputBytes + r.columns.size + r.coefficients.size
     reducers := reducers.push r
   let orderedTargets ← if independent || matrix.targets.size ≤ 1 then pure matrix.targets else do
-    spend limits (matrix.targets.size * (matrix.targets.size + 1).log2 * positions.lookupCost)
+    spend limits (2 * matrix.targets.size * (matrix.targets.size + 1).log2 * positions.lookupCost)
     pure ((matrix.targets.toList.mergeSort
       (fun a b =>
         let x := a.polynomial

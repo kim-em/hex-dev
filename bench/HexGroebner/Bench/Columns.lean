@@ -53,7 +53,7 @@ def columnIndex (input : ColumnInput) := columnMap input true
 
 #guard (columnDirect (prepareColumns 16)).1
 #guard (columnIndex (prepareColumnIndex 16)).1
-#guard (#[1024,2048,4096,8192,16384].all fun n =>
+#guard (#[1024,1536,2048,3072,4096,8192,16384,32768,65536].all fun n =>
   (columnDirect (prepareColumns n)).1 && (columnIndex (prepareColumnIndex n)).1)
 
 -- Both models are O(n): direct initialization visits n slots; the hash table
@@ -65,19 +65,22 @@ setup_benchmark columnDirect n => n
   with prep := prepareColumns
   where {
     paramFloor := 1024
-    paramCeiling := 16384
-    paramSchedule := .custom #[1024,2048,4096,8192,16384]
-    targetInnerNanos := 500000000
+    paramCeiling := 65536
+    paramSchedule := .custom #[1024,1536,2048,3072,4096,8192,16384,32768,65536]
+    targetInnerNanos := 4000000000
     maxSecondsPerCall := 8.0
   }
 
+-- At load at most one half, initialization visits fewer than 4*n buckets.
+-- Each insertion and lookup is capped at 64 probes; translation, validation
+-- and hashing also visit O(n) bytes. Non-power-of-two sizes vary the load.
 setup_benchmark columnIndex n => n
   with prep := prepareColumnIndex
   where {
     paramFloor := 1024
-    paramCeiling := 16384
-    paramSchedule := .custom #[1024,2048,4096,8192,16384]
-    targetInnerNanos := 500000000
+    paramCeiling := 65536
+    paramSchedule := .custom #[1024,1536,2048,3072,4096,8192,16384,32768,65536]
+    targetInnerNanos := 4000000000
     maxSecondsPerCall := 8.0
   }
 

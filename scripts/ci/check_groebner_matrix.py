@@ -150,7 +150,11 @@ LEAN_EXPORT lean_obj_res hex_test_remap_aliases(lean_obj_arg world) {
 LEAN_EXPORT lean_obj_res hex_test_index_aliases(lean_obj_arg world) {
  (void)world;int ok=1;
  for(unsigned linear=0;linear<2;++linear) for(unsigned mode=0;mode<4;++mode)
- for(unsigned fail=0;fail<3;++fail) {
+ for(unsigned test=0;test<4;++test) {
+  int fail=test==1 || test==2,observe=test>=2;
+  /* Marked sharing outside an explicitly supported borrowed alias violates
+     the runtime linearity contract; test ordinary COW there instead. */
+  if(linear && observe && mode>=2) continue;
   lean_object *slots=lean_alloc_sarray(1,128,128),*support=lean_alloc_sarray(1,12,12);
   memset(lean_sarray_cptr(slots),0,128);
   for(unsigned i=0;i<3;++i) {
@@ -160,29 +164,47 @@ LEAN_EXPORT lean_obj_res hex_test_index_aliases(lean_obj_arg world) {
    write_le(lean_sarray_cptr(slots)+bucket*8+4,4,i+1);
    write_le(lean_sarray_cptr(support)+4*i,4,fail && i==2?777:i);
   }
-  lean_object *out=mode==0?support:slots,*keeper=out;size_t old=lean_sarray_size(out);
+  uint8_t slot_snapshot[128],support_snapshot[12],output_snapshot[128];
+  memcpy(slot_snapshot,lean_sarray_cptr(slots),128);memcpy(support_snapshot,lean_sarray_cptr(support),12);
+  lean_object *out=mode==0?support:slots;size_t old=lean_sarray_size(out);
   if(mode>=2) {out=lean_alloc_sarray(1,4,mode==2?4:32);write_le(lean_sarray_cptr(out),4,37);old=4;}
+  memcpy(output_snapshot,lean_sarray_cptr(out),old);lean_object *keeper=out;
   if(linear) lean_sarray_mark_linear_core(out);
-  if(fail==2) lean_inc(keeper);
+  if(observe) lean_inc(keeper);
   lean_object *result=hex_test_remap_index(slots,support,lean_box(0),lean_box(3),lean_box(64),out);
   ok=ok && (lean_obj_tag(result)==(fail?0:1));
   if(!fail && lean_obj_tag(result)==1) {
-   lean_object *bytes=lean_ctor_get(result,0);ok=ok && lean_sarray_size(bytes)==old+12;
+   lean_object *bytes=lean_ctor_get(result,0);
+   ok=ok && lean_is_exclusive(bytes) && lean_sarray_size(bytes)==old+12;
    if(linear) ok=ok && lean_sarray_is_marked_linear(bytes);
-   if(lean_sarray_size(bytes)==old+12) for(unsigned i=0;i<3;++i)
-    ok=ok && read_le(lean_sarray_cptr(bytes)+old+4*i,4)==i;
+   if(lean_sarray_size(bytes)==old+12) {
+    ok=ok && memcmp(lean_sarray_cptr(bytes),output_snapshot,old)==0;
+    for(unsigned i=0;i<3;++i) ok=ok && read_le(lean_sarray_cptr(bytes)+old+4*i,4)==i;
+   }
+   if(observe) ok=ok && lean_sarray_cptr(bytes)!=lean_sarray_cptr(keeper);
   }
-  if(fail==2) {ok=ok && lean_sarray_size(keeper)==(mode==0?12:128);lean_dec(keeper);}
+  if(observe) {
+   ok=ok && lean_is_exclusive(keeper) && lean_sarray_size(keeper)==old;
+   ok=ok && memcmp(lean_sarray_cptr(keeper),output_snapshot,old)==0;lean_dec(keeper);
+  }
+  if(mode!=1) ok=ok && lean_is_exclusive(slots) && memcmp(lean_sarray_cptr(slots),slot_snapshot,128)==0;
+  if(mode!=0) ok=ok && lean_is_exclusive(support) && memcmp(lean_sarray_cptr(support),support_snapshot,12)==0;
   lean_dec(result);if(mode!=1) lean_dec(slots);if(mode!=0) lean_dec(support);
  }
- for(unsigned capacity=4;capacity<=32;capacity*=8) {
+ for(unsigned capacity=4;capacity<=32;capacity*=8) for(unsigned shared=0;shared<2;++shared) {
   lean_object *bytes=lean_alloc_sarray(1,4,capacity);memset(lean_sarray_cptr(bytes),37,4);
-  lean_sarray_mark_linear_core(bytes);
-  lean_object *result=hex_test_append_zeros(bytes,lean_box(12));
-  ok=ok && lean_obj_tag(result)==1;
+  lean_object *keeper=bytes;
+  if(shared) lean_inc(keeper);else lean_sarray_mark_linear_core(bytes);
+  lean_object *result=hex_test_append_zeros(bytes,lean_box(12));ok=ok && lean_obj_tag(result)==1;
   if(lean_obj_tag(result)==1) {
-   bytes=lean_ctor_get(result,0);ok=ok && lean_sarray_is_marked_linear(bytes) && lean_sarray_size(bytes)==16;
+   bytes=lean_ctor_get(result,0);ok=ok && lean_is_exclusive(bytes) && lean_sarray_size(bytes)==16;
+   if(!shared) ok=ok && lean_sarray_is_marked_linear(bytes);
+   if(shared) ok=ok && lean_sarray_cptr(bytes)!=lean_sarray_cptr(keeper);
    for(unsigned i=0;i<16;++i) ok=ok && lean_sarray_cptr(bytes)[i]==(i<4?37:0);
+  }
+  if(shared) {
+   ok=ok && lean_is_exclusive(keeper) && lean_sarray_size(keeper)==4;
+   for(unsigned i=0;i<4;++i) ok=ok && lean_sarray_cptr(keeper)[i]==37;lean_dec(keeper);
   }
   lean_dec(result);
  }
@@ -559,10 +581,10 @@ def main : IO Unit := do
   let indexAfter ← indexCount
   let zeroAppendAfter ← zeroAppendCount
   if indexAfter ≤ indexBefore || zeroAppendAfter ≤ zeroAppendBefore then
-    throw (IO.userError "F4 did not exercise packed index/zero kernels")
+    throw (IO.userError "F4/cache checks did not exercise packed index/zero kernels")
   IO.println s!"native index remaps: total={indexAfter}, F4/cache={indexAfter-indexBefore}; zero appends={zeroAppendAfter}"
   let remapAfter ← remapCount
-  if remapAfter ≤ remapBefore then throw (IO.userError "F4 did not exercise native column remapping")
+  if remapAfter ≤ remapBefore then throw (IO.userError "F4/cache checks did not exercise native column remapping")
   IO.println s!"native column remaps: total={remapAfter}, F4/cache={remapAfter-remapBefore}"
   let (scan,gather) ← counts
   let compared ← byteCount

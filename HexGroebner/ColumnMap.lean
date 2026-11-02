@@ -34,7 +34,8 @@ namespace ColumnMap
 @[inline] def getD (positions : @& ColumnMap) (id fallback : Nat) : Nat :=
   (positions.get? id).getD fallback
 
-/-- Conservative probes per lookup, charged by row construction and sorting. -/
+/-- Maximum per-key probe count. Rows charge per key; each sort comparison
+charges two such lookups. -/
 @[inline] def lookupCost : ColumnMap → Nat
   | .indexed _ probes => max 1 probes
   | _ => 1
@@ -115,7 +116,8 @@ private def index (limits : Limits) (columns : Array Nat) : Computation ColumnMa
 
 /-- Build a column map with at most eight packed slots per column. Geometry
 alone selects the layout; initialization and packed payload are charged before
-allocation. Increasing an allowance cannot change the chosen layout or charges.
+allocation. Increasing an allowance cannot change the chosen layout or charges. Layout
+and counters can differ between 32-bit and 64-bit address widths.
 Indexed maps charge bucket initialization and every attempted insertion probe.
 Chains longer than 64 retain the charged attempt and build the hash-map fallback;
 addressability and non-u32 IDs also retain that route. Row construction charges

@@ -54,6 +54,7 @@ def checks (seed : Nat) : Bool := Id.run do
   let table := ({ arity := 1 } : MonomialTable).internOwned #[0] 1000 10000 10000
   for initialTable in [({ arity := 0 } : MonomialTable),table.table] do
     for columns in [#[],#[0],#[0,1,2],#[4,1,4,0],#[7],#[8],#[4294967295],
+        #[100,300,500,100],(Array.range 300).map (fun i => i*997),
         #[2^80],(Array.range 257).map fun i => (i * 17 + seed) % 257] do
       let mut expected : Std.HashMap Nat Nat := {}
       for i in [:columns.size] do expected := expected.insert columns[i]! i
@@ -133,6 +134,17 @@ def collisionChecks : Bool := Id.run do
     if Native.Columns.remapIndex slots support 0 64 64 {} != some expected then return false
     if Native.Columns.remapIndex slots (buffer 1 (fun _ => colliders[64]!.toUInt64)) 0 1 64 {} != none then
       return false
+    for (ids,n,capacity,attempt,complete) in [(first,64,128,2272,2272),(colliders,65,256,2465,2530)] do
+      let payload := capacity*8
+      for work in [0,n-1,n,n+capacity-1,n+capacity,n+capacity+1,n+capacity+2,
+          attempt-2,attempt-1,attempt,attempt+1,complete-1,complete,complete+1] do
+        for bytes in [0,payload-1,payload,payload+1] do
+          let (result,state) := (ColumnMap.build { limits with work,packedBytes := bytes } ids).run workspace
+          let charged := if work < n then 0 else if work < n+capacity then n else
+            if bytes < payload then n+capacity else if work < complete then min work attempt else complete
+          let allocated := if work >= n+capacity && bytes >= payload then payload else 0
+          if state.statistics.work != charged || state.statistics.allocatedBytes != allocated then return false
+          if result.isOk != (work >= complete && bytes >= payload) then return false
     let (.ok (.hashed positions),state) := (ColumnMap.build limits colliders).run workspace | return false
     if state.statistics.work != 2530 || state.statistics.allocatedBytes != 2048 then return false
     for i in [:colliders.size] do
