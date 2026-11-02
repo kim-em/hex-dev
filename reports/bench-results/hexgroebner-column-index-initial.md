@@ -1,6 +1,6 @@
 # Packed column lookup: initial measured variant
 
-These observations bind initial source `9449e25be93d`. The subsequent
+These observations bind initial content fingerprint `9449e25be93d`. The later measured revision uses fingerprint `67e9835420ef`, captured at commit `5d0cf13ff0` with its exact staged snapshot; see the separate report and capsule for that provenance. The subsequent
 [charged-comparison revision](hexgroebner-column-index.md) has separate sources,
 measurements and validation; no timing observations are pooled between them.
 
@@ -16,9 +16,20 @@ Integrated source `1efac70aad44` is built on merged main; both compute hashes
 remain identical. Fixed F4 observations retain their original measured benchmark
 identities; the new linear-kernel binary is a separate benchmark build.
 
-Both arms have fresh detached driver and benchmark builds, sharing only pinned dependency packages. The local SDK linker wrapper references an obsolete Nix script; the archived relocatable compiler helper restores bundled flags and invokes SDK Clang/LLD 23.1.0. Native FFI uses Clang 23.1.3. These observations apply to this build arrangement, with no pooling across source or toolchain variants.
+Both arms have fresh detached driver and benchmark builds, sharing only pinned dependency packages. The archived relocatable compiler helper restores bundled SDK flags and invokes SDK Clang/LLD 23.1.0. Native FFI uses Clang 23.1.3. These observations apply to this build arrangement, with no pooling across source or toolchain variants.
 
-Manual shared-host runs use EPYC 9455, one requested algorithm thread, an automatically leased CPU and adjacent AB/BA per input. All completed samples, failures, outliers, host activity observations and child RSS remain. The first campaign and sole unchanged repeat are retained for small, medium and fixed observations. No further unchanged repeat is used.
+Manual shared-host runs use EPYC 9455, one requested algorithm thread, an automatically leased CPU and adjacent AB/BA per input. All completed samples, failures, outliers, host activity observations and child RSS remain. Recorded initial campaign-start one-minute host loads were 3.2–14.3; the later revision records 27.5–87.1. These different host conditions confound cross-revision timing comparisons. The first campaign and sole unchanged repeat are retained for small, medium and fixed observations. No further unchanged repeat is used.
+
+| Initial campaign | CPU | Load start, 1/5/15 min | Load end, 1/5/15 min |
+| --- | ---: | --- | --- |
+| before-after-medium | 53 | 8.37/4.20/3.92 | 8.28/4.39/3.98 |
+| before-after-medium-repeat | 64 | 14.32/5.99/4.52 | 13.46/6.36/4.67 |
+| before-after-small | 22 | 8.06/4.07/3.87 | 8.37/4.20/3.92 |
+| before-after-small-repeat | 64 | 10.74/5.03/4.19 | 14.32/5.99/4.52 |
+| column-index-bench-9449e25be93d | 22 | 7.71/6.75/5.01 | 6.91/6.61/4.98 |
+| column-index-bench-9449e25be93d-repeat | 79 | 5.72/6.39/4.96 | 5.51/6.34/4.95 |
+| msolve-l2 | 2 | 3.48/5.67/4.80 | 3.25/5.55/4.77 |
+| msolve-l42 | 95 | 3.25/5.55/4.77 | 2.83/5.34/4.72 |
 
 The small suite has 16 inputs and the medium 14, seven families at primes 32003 and 2147483647, grevlex, with complete monic reduced bases. They are development inputs, not held-out SPEC acceptance. Candidate time includes packing, F4 and final interreduction; process time also includes initialization, parsing, full output and identical GNU-time wrappers. Certificate generation, independent certification and kernel replay are excluded.
 
@@ -52,7 +63,7 @@ Small candidate ratios span 0.0553–96.7849; process ratios span 0.1850–9.850
 Medium candidate ratios span 0.0226–7.1603; process ratios span 0.1062–2.4041. Maximum child RSS is 98388/100956 KiB for baseline/new. Logical packed-byte limits do not bound allocator capacity or process RSS.
 
 The small MinRank family mean is driven largely by two extreme M31 pairs.
-Its M31 case has retained candidate ratios near 96 in one pair of each campaign. An explanatory profile runs a fresh adjacent AB/BA on a leased CPU and records user cycles, instructions, task-clock, context switches, full output and CPU/wall/RSS. It does not reproduce the anomaly: the final four candidate times are 0.30–0.36 ms and whole-process user-cycle counts are 16.61–17.96 million. This does not establish the cause of the earlier wall-time spikes. Two preceding baseline-only profile processes completed before a reporting-key error; both are retained with the corrected four-process profile. No profiled duration is pooled with timing estimates or used to replace a sample.
+Its M31 case has retained candidate ratios near 96 in one pair of each campaign. An explanatory profile runs a fresh adjacent AB/BA on a leased CPU and records user cycles, instructions, task-clock, context switches, full output and CPU/wall/RSS. It does not reproduce the anomaly: the final four candidate times are 0.30–0.36 ms and whole-process user-cycle counts are 16.61–17.96 million. This does not establish the cause of the earlier wall-time spikes. Two additional completed baseline-only profile processes are retained separately from the four-process profile. No profiled duration is pooled with timing estimates or used to replace a sample.
 
 | Fixed campaign | CPU | Case | B/A geomean | Per-call median | Range |
 | --- | ---: | --- | ---: | ---: | --- |

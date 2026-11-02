@@ -255,7 +255,8 @@ u32 key/value buckets for sparse IDs. Full keys resolve every hash collision.
 Geometry alone selects the representation; unsupported IDs, addressability and
 insertion chains beyond 64 probes retain the hash-map route. Every attempted
 probe and initialized packed payload is charged, including a discarded index.
-Rows reserve the maximum recorded probe count per entry. Consequently this
+Rows reserve the maximum recorded probe count per entry; sorting reserves
+two such lookups per comparison. Consequently this
 conservative work model and cumulative packed-byte charges can exhaust earlier
 than the old unit-cost hash map. Both candidate and certificate row construction
 use the same map. Bounded native translation consumes at most 4096 IDs per call;

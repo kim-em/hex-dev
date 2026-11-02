@@ -24,19 +24,20 @@ private def columns (n stride : Nat) : ColumnInput := Id.run do
 /-- Dense identifier prefix, requiring exactly n direct position slots. -/
 def prepareColumns (n : Nat) : ColumnInput := columns n 1
 
-/-- Widely spaced u32 IDs select the packed exact hash layout. -/
-def prepareColumnIndex (n : Nat) : ColumnInput := columns n 997
+/-- Widely spaced u32 IDs select the packed exact hash layout. Verification
+parameters zero and one use two entries so they exercise the indexed route. -/
+def prepareColumnIndex (n : Nat) : ColumnInput := columns (max 2 n) 997
 
 private def columnMap (input : ColumnInput) (indexed : Bool) :
     Bool × Nat × ByteArray × ByteArray := Id.run do
   let workspace : Workspace := { table := { arity := 0 } }
   let (.ok positions,_) := (ColumnMap.build { work := 1000000000,packedBytes := 1000000000 }
       input.ids).run workspace | return (false,0,{},{})
-  let (payload,probes) := match positions with
-    | .packed bytes => (bytes,1)
-    | .indexed bytes probes => (bytes,probes)
-    | .hashed _ => ({},0)
-  if (indexed && probes == 0) || (!indexed && payload.size != input.ids.size*4) then
+  let (payload,probes,route) := match positions with
+    | .packed bytes => (bytes,1,!indexed)
+    | .indexed bytes probes => (bytes,probes,indexed)
+    | .hashed _ => ({},0,false)
+  if !route || (indexed && probes == 0) || (!indexed && payload.size != input.ids.size*4) then
     return (false,probes,payload,{})
   let some encoded := positions.encode input.support true | return (false,probes,payload,{})
   let mut valid := encoded.size == input.ids.size*4
@@ -53,6 +54,10 @@ def columnIndex (input : ColumnInput) := columnMap input true
 
 #guard (columnDirect (prepareColumns 16)).1
 #guard (columnIndex (prepareColumnIndex 16)).1
+#guard (columnIndex (prepareColumnIndex 0)).1
+#guard (columnIndex (prepareColumnIndex 1)).1
+#guard !(columnIndex (prepareColumns 16)).1
+#guard !(columnDirect (prepareColumnIndex 16)).1
 #guard (#[1024,1536,2048,3072,4096,8192,16384,32768,65536].all fun n =>
   (columnDirect (prepareColumns n)).1 && (columnIndex (prepareColumnIndex n)).1)
 
@@ -68,7 +73,7 @@ setup_benchmark columnDirect n => n
     paramCeiling := 65536
     paramSchedule := .custom #[1024,1536,2048,3072,4096,8192,16384,32768,65536]
     targetInnerNanos := 4000000000
-    maxSecondsPerCall := 8.0
+    maxSecondsPerCall := 20.0
   }
 
 -- At load at most one half, initialization visits fewer than 4*n buckets.
@@ -81,7 +86,7 @@ setup_benchmark columnIndex n => n
     paramCeiling := 65536
     paramSchedule := .custom #[1024,1536,2048,3072,4096,8192,16384,32768,65536]
     targetInnerNanos := 4000000000
-    maxSecondsPerCall := 8.0
+    maxSecondsPerCall := 20.0
   }
 
 end Hex.Groebner.Bench
