@@ -175,3 +175,13 @@ retained at `reproduction/analyze-equivalence-candidates.py` in each relevant ra
 capsule; the new audit makes this stronger comparison re-runnable for this report.
 
 [Current conformance and figure audit f4-performance-audit-ec583f66a7](raw/f4-performance-audit-ec583f66a7.tar.gz): SHA-256 `524ff8b5b9b5653817799268fa1f621e2d0331b69ad9d0141cd9b16a452ab8db`, 52 payloads, each read back and digest checked. It retains the rejected pre-runtime-window counter check under its own source identity and all eight expanded sanitizer variants, the isolated six-admitted/six-declined runtime window, project checks, report audit, negative audit cases and runtime-source identity.
+
+At `e8c25bde8d`, the runtime source remains `8f56f7677ce6`. The strict JSON
+parser rejects duplicate object keys in the report audit and both driver paths;
+both 1,134-case driver corpora pass. The report-specific audit also rejects
+twelve altered-evidence cases, including a changed basis, coherently changed
+output/metadata counters, changed candidate time, missing/duplicate keys,
+changed summary values and altered driver/candidate sentences. A matching number
+elsewhere in the report cannot satisfy those anchored sentence checks.
+
+[Strict report/driver audit f4-report-audit-e8c25bde8d](raw/f4-report-audit-e8c25bde8d.tar.gz): SHA-256 `21e134b258de633b807eae3f9a9c28bec6c0d2c686ee7f37e7668fecebfcffd8`, 23 payloads, each read back and digest checked. It records the exact checked scripts, complete command outputs, negative cases, rebuild/static checks and source identities.
