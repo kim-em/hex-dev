@@ -12,6 +12,7 @@ public import HexGroebner.MatrixValidation
 import all HexGroebner.MatrixState
 import all Init.Data.Range.Basic
 public import HexGroebner.ScanProof
+public import HexGroebner.MatrixStateProof
 
 public section
 
@@ -56,5 +57,27 @@ theorem validation_example :
 #guard_msgs in #print axioms Matrix.validateFrom_zero
 /-- info: 'Hex.Groebner.Native.Scan.untraced_events' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in #print axioms Native.Scan.untraced_events
+
+
+/-- The universal advance invariant replays through arbitrary bounded schedules,
+including suspended and terminal calls, for this concrete prime-field input. -/
+theorem geometry_example (steps : Nat) :
+    let field : PrimeField := ⟨7,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+    let row : SparseRow := ⟨⟨#[0,0,0,0,2,0,0,0]⟩,⟨#[2,1]⟩⟩
+    (advance (start field {} 3 #[] #[row] #[2] false) steps).geometry := by
+  exact advance_geometry _ steps (start_geometry ..)
+
+/-- info: 'Hex.Groebner.MatrixStateReplay.geometry_example' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms geometry_example
+/-- info: 'Hex.Groebner.MatrixState.advance_identity' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms MatrixState.advance_identity
+/-- info: 'Hex.Groebner.MatrixState.workspace_ok' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms MatrixState.workspace_ok
+/-- info: 'Hex.Groebner.MatrixState.workspace_bytes_error' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms MatrixState.workspace_bytes_error
+/-- info: 'Hex.Groebner.MatrixState.workspace_work_error' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms MatrixState.workspace_work_error
+/-- info: 'Hex.Groebner.MatrixState.workspace_size_error' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms MatrixState.workspace_size_error
 
 end Hex.Groebner.MatrixStateReplay

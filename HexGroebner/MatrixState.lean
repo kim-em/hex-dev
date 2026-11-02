@@ -385,6 +385,91 @@ private theorem next_validate (state : State) (stats : MatrixStats)
     simp only [hphase]
     rfl
 
+/-- Workspace setup preserves the exact work-charge outcome after its byte
+allowance succeeds. Buffer allocation follows only successful work charging. -/
+private theorem next_workspace (state : State) (packedStats stats : MatrixStats)
+    (outcome : Except MatrixError Unit)
+    (hphase : state.phase = .workspace)
+    (hsize : state.columns*(state.field.width.bytes+4) < USize.size)
+    (hpacked : (Matrix.packedBytes state.limits
+      (state.columns*(state.field.width.bytes+4))).run state.stats = (.ok (),packedStats))
+    (hwork : (Matrix.work state.limits
+      (state.columns*(state.field.width.bytes+4))).run packedStats = (outcome,stats)) :
+    next state = match outcome with
+      | .ok _ => { state with
+          phase := .input
+          dense := Matrix.zeros (state.columns*state.field.width.bytes)
+          slots := Matrix.zeros (state.columns*4)
+          stats := stats }
+      | .error error => { state with phase := .done,stats := stats,result := some (.error error) } := by
+  cases outcome
+  all_goals
+    simp only [next,advancePhase,hphase]
+    dsimp [step,liftWork,work,ExceptT.run,ExceptT.bind,ExceptT.bindCont,ExceptT.lift,
+      ExceptT.mk,StateT.bind,StateT.get,StateT.set,StateT.pure,
+      Bind.bind,MonadState.get,MonadStateOf.get,MonadStateOf.set,
+      MonadExcept.throw,MonadExceptOf.throw,liftM,
+      MonadLiftT.monadLift,MonadLift.monadLift,getThe,throwThe,
+      StateT.map,StateT.mk,Functor.map,Pure.pure]
+    simp only [hphase,show (Phase.workspace == Phase.done) = false from rfl,
+      Bool.false_eq_true,ite_false,Nat.not_le_of_lt hsize]
+    dsimp [StateT.bind,ExceptT.bindCont,Id.run]
+    simp only [ExceptT.run] at hpacked hwork
+    rw [hpacked]
+    dsimp [modify,modifyThe,MonadStateOf.modifyGet,liftM,
+      MonadLiftT.monadLift,MonadLift.monadLift,ExceptT.lift,ExceptT.mk,
+      ExceptT.bind,ExceptT.bindCont,StateT.bind,StateT.get,StateT.set,StateT.pure,
+      Bind.bind,MonadState.get,MonadStateOf.get,MonadStateOf.set,getThe,
+      StateT.modifyGet,StateT.map,Functor.map,Pure.pure]
+    rw [hwork]
+    dsimp [modify,modifyThe,MonadStateOf.modifyGet,liftM,
+      MonadLiftT.monadLift,MonadLift.monadLift,ExceptT.lift,ExceptT.mk,
+      ExceptT.bind,ExceptT.bindCont,StateT.bind,StateT.get,StateT.set,StateT.pure,
+      Bind.bind,MonadState.get,MonadStateOf.get,MonadStateOf.set,getThe,
+      StateT.modifyGet,StateT.map,Functor.map,Pure.pure]
+  all_goals rfl
+
+/-- A failed byte reservation returns before work charging or allocation. -/
+private theorem next_workspace_bytes (state : State) (stats : MatrixStats) (error : MatrixError)
+    (hphase : state.phase = .workspace)
+    (hsize : state.columns*(state.field.width.bytes+4) < USize.size)
+    (hpacked : (Matrix.packedBytes state.limits
+      (state.columns*(state.field.width.bytes+4))).run state.stats = (.error error,stats)) :
+    next state = { state with phase := .done,stats := stats,result := some (.error error) } := by
+  simp only [next,advancePhase,hphase]
+  dsimp [step,liftWork,work,ExceptT.run,ExceptT.bind,ExceptT.bindCont,ExceptT.lift,
+    ExceptT.mk,StateT.bind,StateT.get,StateT.set,StateT.pure,
+    Bind.bind,MonadState.get,MonadStateOf.get,MonadStateOf.set,
+    MonadExcept.throw,MonadExceptOf.throw,liftM,
+    MonadLiftT.monadLift,MonadLift.monadLift,getThe,throwThe,
+    StateT.map,StateT.mk,Functor.map,Pure.pure]
+  simp only [hphase,show (Phase.workspace == Phase.done) = false from rfl,
+    Bool.false_eq_true,ite_false,Nat.not_le_of_lt hsize]
+  dsimp [StateT.bind,ExceptT.bindCont,Id.run]
+  simp only [ExceptT.run] at hpacked
+  rw [hpacked]
+  dsimp [modify,modifyThe,MonadStateOf.modifyGet,liftM,
+    MonadLiftT.monadLift,MonadLift.monadLift,ExceptT.lift,ExceptT.mk,
+    ExceptT.bind,ExceptT.bindCont,StateT.bind,StateT.get,StateT.set,StateT.pure,
+    Bind.bind,MonadState.get,MonadStateOf.get,MonadStateOf.set,getThe,
+    StateT.modifyGet,StateT.map,Functor.map,Pure.pure]
+
+/-- Unaddressable workspaces fail before either charge or allocation. -/
+private theorem next_workspace_size (state : State)
+    (hphase : state.phase = .workspace)
+    (hsize : USize.size ≤ state.columns*(state.field.width.bytes+4)) :
+    next state = { state with phase := .done,result := some (.error .dimensions) } := by
+  simp only [next,advancePhase,hphase]
+  dsimp [step,liftWork,work,ExceptT.run,ExceptT.bind,ExceptT.bindCont,ExceptT.lift,
+    ExceptT.mk,StateT.bind,StateT.get,StateT.set,StateT.pure,
+    Bind.bind,MonadState.get,MonadStateOf.get,MonadStateOf.set,
+    MonadExcept.throw,MonadExceptOf.throw,liftM,
+    MonadLiftT.monadLift,MonadLift.monadLift,getThe,throwThe,
+    StateT.map,StateT.mk,Functor.map,Pure.pure]
+  simp only [hphase,show (Phase.workspace == Phase.done) = false from rfl,
+    Bool.false_eq_true,ite_false,hsize,ite_true]
+  rfl
+
 /-- Read-only contents preserved by validation. Phase, validation cursor, result
 and charged statistics are stated separately by the transition lemmas. -/
 def State.contents (state : State) :=
@@ -392,6 +477,81 @@ def State.contents (state : State) :=
     state.independent,state.input,state.dense,state.slots,state.pivots,state.nativePivots,
     state.remainders,state.rank,state.scan,state.gather,state.leading,state.sugar,
     state.inverse,state.quanta)
+
+/-- Fields preserved by workspace setup. Buffer contents, phase, result and
+charged statistics are stated separately by its transition contracts. -/
+def State.workspaceFrame (state : State) :=
+  (state.field,state.limits,state.columns,state.reducers,state.targets,state.sugars,
+    state.independent,state.validation,state.input,state.pivots,state.nativePivots,
+    state.remainders,state.rank,state.scan,state.gather,state.leading,state.sugar,
+    state.inverse,state.quanta)
+
+/-- Workspace setup installs the charged buffers and preserves every other
+state field after byte and work charges succeed. -/
+theorem workspace_ok (state : State) (packedStats stats : MatrixStats)
+    (hphase : state.phase = .workspace)
+    (hsize : state.columns*(state.field.width.bytes+4) < USize.size)
+    (hpacked : (Matrix.packedBytes state.limits
+      (state.columns*(state.field.width.bytes+4))).run state.stats = (.ok (),packedStats))
+    (hwork : (Matrix.work state.limits
+      (state.columns*(state.field.width.bytes+4))).run packedStats = (.ok (),stats)) :
+    let out := next state
+    out.phase = .input ∧ out.dense = Matrix.zeros (state.columns*state.field.width.bytes) ∧
+      out.slots = Matrix.zeros (state.columns*4) ∧ out.stats = stats ∧
+      out.result = state.result ∧ out.workspaceFrame = state.workspaceFrame := by
+  rw [next_workspace state packedStats stats (.ok ()) hphase hsize hpacked hwork]
+  exact ⟨rfl,rfl,rfl,rfl,rfl,rfl⟩
+
+/-- A work-charge failure after reserving bytes preserves both existing
+buffers and the full returned charge prefix in a terminal continuation. -/
+theorem workspace_work_error (state : State) (packedStats stats : MatrixStats) (error : MatrixError)
+    (hphase : state.phase = .workspace)
+    (hsize : state.columns*(state.field.width.bytes+4) < USize.size)
+    (hpacked : (Matrix.packedBytes state.limits
+      (state.columns*(state.field.width.bytes+4))).run state.stats = (.ok (),packedStats))
+    (hwork : (Matrix.work state.limits
+      (state.columns*(state.field.width.bytes+4))).run packedStats = (.error error,stats)) :
+    let out := next state
+    out.phase = .done ∧ out.result = some (.error error) ∧ out.stats = stats ∧
+      out.dense = state.dense ∧ out.slots = state.slots ∧
+      out.workspaceFrame = state.workspaceFrame := by
+  rw [next_workspace state packedStats stats (.error error) hphase hsize hpacked hwork]
+  exact ⟨rfl,rfl,rfl,rfl,rfl,rfl⟩
+
+/-- A failed packed-byte allowance preserves existing workspace buffers and
+returns the validator's exact terminal charged prefix. -/
+theorem workspace_bytes_error (state : State) (stats : MatrixStats) (error : MatrixError)
+    (hphase : state.phase = .workspace)
+    (hsize : state.columns*(state.field.width.bytes+4) < USize.size)
+    (hpacked : (Matrix.packedBytes state.limits
+      (state.columns*(state.field.width.bytes+4))).run state.stats = (.error error,stats)) :
+    let out := next state
+    out.phase = .done ∧ out.result = some (.error error) ∧ out.stats = stats ∧
+      out.dense = state.dense ∧ out.slots = state.slots ∧
+      out.workspaceFrame = state.workspaceFrame := by
+  rw [next_workspace_bytes state stats error hphase hsize hpacked]
+  exact ⟨rfl,rfl,rfl,rfl,rfl,rfl⟩
+
+/-- Addressability failure preserves every buffer, field and statistic. -/
+theorem workspace_size_error (state : State)
+    (hphase : state.phase = .workspace)
+    (hsize : USize.size ≤ state.columns*(state.field.width.bytes+4)) :
+    let out := next state
+    out.phase = .done ∧ out.result = some (.error .dimensions) ∧ out.stats = state.stats ∧
+      out.dense = state.dense ∧ out.slots = state.slots ∧
+      out.workspaceFrame = state.workspaceFrame := by
+  rw [next_workspace_size state hphase hsize]
+  exact ⟨rfl,rfl,rfl,rfl,rfl,rfl⟩
+
+/-- info: 'Hex.Groebner.MatrixState.workspace_work_error' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms workspace_work_error
+/-- info: 'Hex.Groebner.MatrixState.workspace_bytes_error' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms workspace_bytes_error
+/-- info: 'Hex.Groebner.MatrixState.workspace_size_error' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms workspace_size_error
+
+/-- info: 'Hex.Groebner.MatrixState.workspace_ok' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms workspace_ok
 
 /-- A successful validator advances one cursor and preserves its exact charges.
 This is an equation for the Lean phase model. -/

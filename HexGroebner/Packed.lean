@@ -154,6 +154,13 @@ index and a scalar fitting the selected width; matrix callers validate these. -/
   | .u32 => ((data.set! (offset + 1) (value >>> 8).toUInt8).set!
       (offset + 2) (value >>> 16).toUInt8).set! (offset + 3) (value >>> 24).toUInt8
 
+
+/-- Replacing packed scalars preserves the logical buffer length, including
+out-of-range byte updates in the total portable definition. -/
+@[simp] theorem size_set (width : Width) (data : ByteArray) (index : Nat) (value : UInt64) :
+    (set width data index value).size = data.size := by
+  cases width <;> simp [set]
+
 end Packed
 
 /-- Sparse row in a fixed column map. Columns are increasing unsigned 32-bit
