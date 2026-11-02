@@ -264,7 +264,8 @@ lean_lib HexMvPoly where
 
 lean_lib HexGroebner where
   roots := #[`HexGroebner, `HexGroebner.ScanProof, `HexGroebner.GatherProof,
-    `HexGroebner.MatrixProof, `HexGroebner.MatrixStateProof, `HexGroebner.MatrixStateFuel]
+    `HexGroebner.MatrixProof, `HexGroebner.MatrixStateProof, `HexGroebner.MatrixStateFuel,
+    `HexGroebner.MatrixStateSchedule]
 
 lean_lib HexGroebnerNative where
   roots := #[`HexGroebnerNative]

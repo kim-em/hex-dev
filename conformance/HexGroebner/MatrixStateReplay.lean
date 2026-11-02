@@ -12,7 +12,7 @@ public import HexGroebner.MatrixValidation
 import all HexGroebner.MatrixState
 import all Init.Data.Range.Basic
 public import HexGroebner.ScanProof
-public import HexGroebner.MatrixStateFuel
+public import HexGroebner.MatrixStateSchedule
 
 public section
 
@@ -98,5 +98,19 @@ theorem completion_example (steps quantum : Nat) (native : Bool) :
 #guard_msgs in #print axioms MatrixState.finishState_done
 /-- info: 'Hex.Groebner.MatrixState.finishState_result' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs in #print axioms MatrixState.finishState_result
+
+/-- The full result and all counters agree after arbitrary suspension and
+resumption, with no evaluation of native code in the kernel. -/
+theorem resumption_example (steps quantum : Nat) (native : Bool) :
+    let field : PrimeField := ⟨7,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+    let row : SparseRow := ⟨⟨#[0,0,0,0,2,0,0,0]⟩,⟨#[2,1]⟩⟩
+    let initial := start field {} 3 #[] #[row] #[2] false
+    finishWith quantum (advance initial steps) native = finishWith quantum initial native := by
+  exact finishWith_resume _ steps quantum native (start_geometry ..)
+
+/-- info: 'Hex.Groebner.MatrixStateReplay.resumption_example' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms resumption_example
+/-- info: 'Hex.Groebner.MatrixState.finishState_schedule' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms MatrixState.finishState_schedule
 
 end Hex.Groebner.MatrixStateReplay
