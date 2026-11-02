@@ -634,3 +634,8 @@ and resource prefix. Larger well-shaped rows use the checked Lean phase.
 Malformed packed lengths fail before the entry loop. `validate_ok` and
 `validate_error` state the corresponding successful and failed Lean model
 transitions; agreement with C is checked by native conformance.
+
+The admitted native workspace phase charges packed bytes and work before
+allocating its zeroed dense and slot buffers. At most 524,288 bytes are
+allocated for the admitted column/width geometry. Exhaustion retains the
+exact charged prefix and leaves the previous buffers unchanged.

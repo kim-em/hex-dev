@@ -78,4 +78,34 @@ private theorem validate_done (field : PrimeField) (limits : MatrixLimits)
   simp [validateFrom, Std.Legacy.Range.forIn_eq_forIn_range',
     Std.Legacy.Range.size, Nat.sub_eq_zero_of_le h]
 
+private theorem validate_error_run (field : PrimeField) (limits : MatrixLimits)
+    (columns : Nat) (reducers targets : Array SparseRow) (cursor : Nat)
+    (stats nextStats : MatrixStats) (error : MatrixError)
+    (h : cursor < reducers.size+targets.size)
+    (hrow : (Matrix.validate field limits columns cursor
+      (if cursor < reducers.size then reducers[cursor]! else targets[cursor-reducers.size]!)).run
+        stats = (.error error,nextStats)) :
+    (validateFrom field limits columns reducers targets cursor).run stats =
+      (.error error,nextStats) := by
+  rw [validate_tail field limits columns reducers targets cursor h]
+  dsimp [ExceptT.run, Bind.bind, ExceptT.bind, ExceptT.bindCont,
+    ExceptT.mk, StateT.bind, Pure.pure, StateT.pure]
+  simp only [ExceptT.run] at hrow
+  rw [hrow] <;> rfl
+
+private theorem validate_ok_run (field : PrimeField) (limits : MatrixLimits)
+    (columns : Nat) (reducers targets : Array SparseRow) (cursor : Nat)
+    (stats nextStats : MatrixStats)
+    (h : cursor < reducers.size+targets.size)
+    (hrow : (Matrix.validate field limits columns cursor
+      (if cursor < reducers.size then reducers[cursor]! else targets[cursor-reducers.size]!)).run
+        stats = (.ok (),nextStats)) :
+    (validateFrom field limits columns reducers targets cursor).run stats =
+      (validateFrom field limits columns reducers targets (cursor+1)).run nextStats := by
+  rw [validate_tail field limits columns reducers targets cursor h]
+  dsimp [ExceptT.run, Bind.bind, ExceptT.bind, ExceptT.bindCont,
+    ExceptT.mk, StateT.bind, Pure.pure, StateT.pure]
+  simp only [ExceptT.run] at hrow
+  rw [hrow] <;> rfl
+
 end Hex.Groebner.MatrixStateReplay

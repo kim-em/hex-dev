@@ -114,6 +114,7 @@ static lean_object *cont_empty_gather(void) {
 /* Enforce every buffer bound before a direct write. A failed preflight uses
    the checked Lean phase, before charges or mutable buffers have changed. */
 static int cont_bounds(continuation *c) {
+    if(c->phase==2) return c->p>=2 && c->p<UINT64_C(2147483648);
     if(c->phase==1) {
         if(!lean_is_scalar(c->v[5])) return 0;
         uint64_t cursor=lean_unbox(c->v[5]),nr=lean_array_size(c->v[2]);
@@ -181,6 +182,19 @@ static void cont_validate(continuation *c) {
         previous=column;
     }
     cont_replace(c,5,lean_uint64_to_nat(cursor+1));
+}
+/* The admitted 64-bit geometry has at most 524288 workspace bytes, so
+   the model's USize addressability check succeeds before either charge. */
+static void cont_workspace(continuation *c) {
+    uint64_t dense_bytes=c->columns*c->width,slot_bytes=c->columns*4;
+    uint64_t bytes=dense_bytes+slot_bytes;
+    if(!cont_charge(c,3,4,bytes)) {cont_error(c,4);return;}
+    if(!cont_work(c,bytes)) {cont_error(c,5);return;}
+    lean_object *dense=lean_alloc_sarray(1,(size_t)dense_bytes,(size_t)dense_bytes);
+    lean_object *slots=lean_alloc_sarray(1,(size_t)slot_bytes,(size_t)slot_bytes);
+    if(dense_bytes) memset(lean_sarray_cptr(dense),0,(size_t)dense_bytes);
+    if(slot_bytes) memset(lean_sarray_cptr(slots),0,(size_t)slot_bytes);
+    cont_replace(c,7,dense);cont_replace(c,8,slots);c->phase=3;
 }
 static int cont_target(continuation *c) {
     return lean_unbox(c->v[6])>=lean_array_size(c->v[2]);
@@ -359,8 +373,9 @@ static void cont_gather(continuation *c) {
    Here c is columns and r is input rows. This is a hard shape-dependent bound,
    not a count of machine instructions. Nat metadata retains its ordinary bit
    complexity. The private shape
-   check admits <=65536 columns and input rows; larger states take no transition here. Checks,
-   initialization and final ordering use the exported Lean phase. Validation
+   check admits <=65536 columns and input rows; larger states take no transition
+   here. Checks and final ordering use the exported Lean phase. The native workspace
+   phase charges bytes before allocating bounded zeroed buffers. Validation
    examines at most c+1 entries per native phase, with larger well-shaped rows
    handled by the checked Lean phase,
    so malformed rows and arbitrary Nat resource limits retain their exact
@@ -381,9 +396,10 @@ LEAN_EXPORT lean_obj_res lean_hex_matrix_advance(lean_obj_arg state,b_lean_obj_a
     int fast=cont_counts(&c),dirty=0;
     for(uint64_t i=0;i<count && c.phase!=7;++i) {
         HEX_GROEBNER_CONT_TICK();
-        if(fast && (c.phase==1 || (c.phase>=3 && c.phase<=5)) && cont_bounds(&c)) {
+        if(fast && (c.phase>=1 && c.phase<=5) && cont_bounds(&c)) {
             HEX_GROEBNER_CONT_PHASE(c.phase);
             if(c.phase==1) cont_validate(&c);
+            else if(c.phase==2) cont_workspace(&c);
             else if(c.phase==3) cont_input(&c);
             else if(c.phase==4) cont_scan(&c);
             else cont_gather(&c);
