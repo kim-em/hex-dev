@@ -44,3 +44,26 @@ claimed here.
 `fbf2594639c06d1b8aa78197143e75983ebfbdf8350413bc9f4a2a709419cc61`; 41 verified payload digests,
 including generated probe/wrapper sources, compiled artifact hashes, source
 files, full check logs and the retained initial failed test log.
+
+
+Commit `588a1b444ffff716a937d2eb50b02e2143b49d77` additionally covers high
+column indices 65536, 65537 and 2^32−1; aliased column/coefficient buffers;
+independent mixed saturated/exhausted limits; and scalar limits between 2^62
+and 2^63. The C wrapper snapshots borrowed limits/statistics/row records and
+all row bytes up to one MiB per buffer, then checks them after the native call.
+The public `computeWith {nativeRows := false}` call is measured between counter
+snapshots and adds no matrix primitive calls. Complete native F4 must admit both
+primitives. The internal validateRows flag is now explicit at every call site.
+
+All nine local project checks and eight Clang/GCC sanitizer variants pass at
+this source. Each variant records 1,143,068 validation calls and 29,892 zero
+calls before F4 diagnostics; traced integration adds 14 of each, and the
+complete F4 diagnostic adds 653/0 admitted/declined validation calls and 232/0
+zero calls. The primitive C implementation is unchanged from the timed source;
+these stronger test sources have separate validation artifacts.
+
+[Boundary validation capsule](raw/matrix-primitives-boundary-validation.tar.gz),
+SHA256 `4ef1c342112080eaf3f1218525b5e53506ba7f17f98af4a7ce0bb239d0dc2026`;
+42 verified payload digests, including exact sources, generated native wrappers,
+artifact hashes and full logs. [Short-row kernel evidence](hexgroebner-matrix-primitives-short.md)
+records the separate nine-size schedule and its complete observations.
