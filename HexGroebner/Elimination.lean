@@ -17,6 +17,9 @@ public section
 before target rows; the column map is fixed throughout. Only sparse pivot
 rows are retained, with one reusable packed dense accumulator. -/
 
+/- The elimination carrier may import only other carrier-owned modules.
+Do not introduce an executable-library import here; see PLAN/Conventions.md. -/
+
 namespace Hex.Groebner
 
 /-- Both representations choose the same minimal residue width. -/
@@ -436,6 +439,112 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
     if slot != 0 then ordered := ordered.push pivots[slot - 1]!
   return (⟨ordered, reducerRank, trace⟩, remainders)
 
+namespace Elimination
+
+/-- Complete matrix outcome used by the optional bulk provider. -/
+structure Result where
+  result : Except MatrixError (Echelon × Array RemainderRow)
+  stats : MatrixStats
+
+/-- Deterministic reference for an untraced whole matrix operation. -/
+def reference (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
+    (reducers targets : Array SparseRow) (sugars : Array Nat) (independent : Bool) : Result :=
+  let (result, stats) :=
+    (eliminate field limits columns reducers targets false sugars true independent).run {}
+  ⟨result, stats⟩
+
+/-- Known reducers have distinct leading columns. The conservative work bound
+uses `65 * rows` for row visits and inversion products, `2 * entries` for
+validation, sparse scaling and scattering, and `columns * (width + 4)` for
+workspace initialization. For each target, `entries` covers known-pivot updates,
+`(targets + 3) * columns` covers target-pivot updates, dense scanning, gathering
+and normalization, and 64 allows inversion. A pivot is used at most once per
+target because scanning advances through its leading column. The final
+`columns` covers pivot ordering. These deliberately overlapping bounds ensure
+at most `2^20` work on every supported successful reference computation. -/
+def fits (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
+    (reducers targets : Array SparseRow) (sugars : Array Nat) : Bool := Id.run do
+  let rows := reducers.size + targets.size
+  if USize.size != 2^64 then return false
+  if columns > 4096 || reducers.size > 1024 || targets.size > 64 ||
+      columns > limits.columns || rows > limits.rows ||
+      (!sugars.isEmpty && sugars.size != rows) then return false
+  if !(sugars.all (· < USize.size / 2)) then return false
+  let workspace := columns * (field.width.bytes + 4)
+  if limits.work < 2 * rows + workspace || limits.packedBytes < workspace then return false
+  let mut entries := 0
+  for group in [reducers, targets] do
+    for row in group do
+      if row.columns.size % 4 != 0 ||
+          row.coefficients.size != row.size * field.width.bytes then return false
+      entries := entries + row.size
+  let bound := rows * 65 + 2 * entries + columns * (field.width.bytes + 4) +
+    targets.size * (entries + (targets.size + 3) * columns + 64) + columns
+  if bound > 2^20 then return false
+  let mut seen := Array.replicate columns false
+  for row in reducers do
+    if row.size != 0 then
+      let column := (Packed.read .u32 row.columns 0).toNat
+      if column ≥ columns || seen[column]! then return false
+      seen := seen.set! column true
+  return true
+
+/-- A successful bulk attempt has the complete reference result; unsupported
+inputs and reference failures retain the ordinary matrix boundary. -/
+def attemptPortable (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
+    (reducers targets : Array SparseRow) (sugars : Array Nat) (independent : Bool) :
+    Option Result :=
+  if !(fits field limits columns reducers targets sugars) then none else
+    let result := reference field limits columns reducers targets sugars independent
+    if result.result.isOk && result.stats.work ≤ 2^20 then some result else none
+
+/-- On the 64-bit ABI, `PrimeField` is passed as its `UInt64` modulus; limits,
+column count, row arrays and sugars are borrowed Lean objects, and `independent`
+is an unboxed Boolean. `Result` holds an `Except` matrix/remainder pair and eight
+`Nat` counters. Native code returns `some` only for a complete successful
+reference result, including exact rows, aliases, sugars and counters. It admits
+at most 4096 columns, 1024 known reducers and 64 targets, with distinct known
+leading columns and at most `2^20` charged work. Large limits saturate above all
+possible accepted totals; non-machine-size sugars use portable continuation.
+
+The matrix owns its dense workspace; all inputs remain immutable, including
+shared reducer/target arrays. Unsupported shapes return `none` without changing
+inputs, and the ordinary reference runs after the native frame. A declined
+attempt's physical work is unreported but bounded by the remaining allowance
+and `2^20`. By `fits`'s bound, a decline after charged work implies reference
+failure; F4 terminates that computation/resumption at the matrix failure, so
+there is at most one such speculative failure per computation or resumption. -/
+@[extern "lean_hex_groebner_eliminate_matrix"]
+def attempt (field : PrimeField) (limits : @& MatrixLimits) (columns : @& Nat)
+    (reducers targets : @& Array SparseRow) (sugars : @& Array Nat) (independent : Bool) :
+    Option Result := attemptPortable field limits columns reducers targets sugars independent
+
+/-- The transparent provider returns its reference result or declines. -/
+theorem attemptPortable_spec (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
+    (reducers targets : Array SparseRow) (sugars : Array Nat) (independent : Bool) :
+    (attemptPortable field limits columns reducers targets sugars independent).getD
+      (reference field limits columns reducers targets sugars independent) =
+      reference field limits columns reducers targets sugars independent := by
+  unfold attemptPortable
+  split <;> simp only [Option.getD_none]
+  split <;> rfl
+
+/-- Select bounded bulk elimination for untraced native calls. Deferred calls
+retain the ordinary matrix operation and its exact failure/counter boundary. -/
+def run (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
+    (reducers targets : Array SparseRow) (provenance : Bool) (sugars : Array Nat)
+    (native independent : Bool) : Result :=
+  if native && !provenance then
+    match attempt field limits columns reducers targets sugars independent with
+    | some result => result
+    | none => reference field limits columns reducers targets sugars independent
+  else
+    let (result,stats) :=
+      (eliminate field limits columns reducers targets provenance sugars native independent).run {}
+    ⟨result,stats⟩
+
+end Elimination
+
 /-- Deterministic finite-prime-field Macaulay elimination, with sparse reducers,
 packed dense accumulation, monic output, stable columns and optional provenance.
 `native := false` retains scalar Lean updates; the default uses bounded native
@@ -447,8 +556,8 @@ is responsible for supplying columns in the chosen lawful monomial order. -/
 def eliminateWith (field : PrimeField) (limits : MatrixLimits)
     (columns : Nat) (reducers targets : Array SparseRow) (provenance : Bool := false)
     (sugars : Array Nat := #[]) (native : Bool := true) : MatrixResult :=
-  let (result, stats) := (eliminate field limits columns reducers targets provenance sugars native false).run {}
-  ⟨result.map Prod.fst, stats⟩
+  let output := Elimination.run field limits columns reducers targets provenance sugars native false
+  ⟨output.result.map Prod.fst, output.stats⟩
 
 /-- Reduce each target by the same reducer echelon space, preserving its scalar
 and input position. Targets never reduce each other. Validation, sparse reducer
@@ -458,8 +567,7 @@ require the symbolic closure and a Gröbner basis. -/
 def reduceRowsWith (field : PrimeField) (limits : MatrixLimits)
     (columns : Nat) (reducers targets : Array SparseRow) (provenance : Bool := false)
     (sugars : Array Nat := #[]) (native : Bool := true) : RemainderResult :=
-  let (result, stats) :=
-    (eliminate field limits columns reducers targets provenance sugars native true).run {}
-  ⟨result.map (fun (e, rows) => ⟨rows, e.trace⟩), stats⟩
+  let output := Elimination.run field limits columns reducers targets provenance sugars native true
+  ⟨output.result.map (fun (e, rows) => ⟨rows, e.trace⟩), output.stats⟩
 
 end Hex.Groebner
