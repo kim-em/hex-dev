@@ -152,6 +152,12 @@ def allocate (limits : Limits) (amount : Nat) : Computation Unit := do
   if amount ≥ USize.size then throw (.representation .address)
   set { s with statistics.allocatedBytes := allocated }
 
+@[inline] private def tableError : MonomialError → ComputeError
+  | .work => .exhausted .work
+  | .monomials => .exhausted .monomials
+  | .packedBytes => .exhausted .packedBytes
+  | error => .representation error
+
 private def tableResult (limits : Limits)
     (operation : MonomialTable → Nat → Nat → Nat → InternResult) : Computation Nat :=
   ExceptT.mk fun state =>
@@ -163,11 +169,7 @@ private def tableResult (limits : Limits)
     | .ok id =>
       (.ok id, ⟨outcome.table, { statistics with work := outcome.table.work }⟩)
     | .error failure =>
-      let error := match failure.error with
-        | .work => ComputeError.exhausted .work
-        | .monomials => ComputeError.exhausted .monomials
-        | .packedBytes => ComputeError.exhausted .packedBytes
-        | e => ComputeError.representation e
+      let error := tableError failure.error
       (.error error, ⟨outcome.table, { statistics with work := failure.work }⟩)
 
 /-- Multiply one support slice against the remaining parent allowance. Batch
@@ -184,11 +186,7 @@ def products (limits : Limits) (support : ByteArray) (monomial start count : Nat
     | .ok support =>
       (.ok support, ⟨outcome.table,{ statistics with work := outcome.table.work }⟩)
     | .error failure =>
-      let error := match failure.error with
-        | .work => ComputeError.exhausted .work
-        | .monomials => ComputeError.exhausted .monomials
-        | .packedBytes => ComputeError.exhausted .packedBytes
-        | e => ComputeError.representation e
+      let error := tableError failure.error
       (.error error, ⟨outcome.table,{ statistics with work := failure.work }⟩)
 
 /-- Intern a raw monomial using the remaining shared allowance. -/

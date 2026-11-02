@@ -225,7 +225,8 @@ LEAN_EXPORT lean_obj_res hex_test_index_aliases(lean_obj_arg world) {
  }
  return lean_io_result_mk_ok(lean_box(ok));
 }
-static uint64_t batch_hits=0,batch_terms=0;
+static uint64_t batch_hits=0,batch_terms=0,batch_deferrals=0,batch_waste=0,batch_bound_errors=0;
+#define HEX_GROEBNER_PRODUCTS_DEFERRED(w) (++batch_deferrals,batch_waste+=(w),batch_bound_errors+=((w)>4096))
 #define HEX_GROEBNER_PRODUCTS_FOUND(n) (++batch_hits,batch_terms+=(n))
 static uint64_t fused_success=0,fused_insert=0,fused_unique=0,fused_deferred=0,unique_alias=0,unique_alias_mask=0;
 #define HEX_GROEBNER_DEFERRED() (++fused_deferred)
@@ -446,6 +447,13 @@ LEAN_EXPORT lean_obj_res hex_test_batch_counts(lean_obj_arg world) {
  lean_ctor_set(out,1,lean_box_uint64(batch_terms));return lean_io_result_mk_ok(out);
 }
 
+LEAN_EXPORT lean_obj_res hex_test_batch_deferrals(lean_obj_arg world) {
+ (void)world;lean_object *out=lean_alloc_ctor(0,2,0),*tail=lean_alloc_ctor(0,2,0);
+ lean_ctor_set(out,0,lean_box_uint64(batch_deferrals));
+ lean_ctor_set(tail,0,lean_box_uint64(batch_waste));
+ lean_ctor_set(tail,1,lean_box_uint64(batch_bound_errors));
+ lean_ctor_set(out,1,tail);return lean_io_result_mk_ok(out);
+}
 static uint64_t search_calls=0;
 __typeof__(hex_test_combine_owned) __wrap_lean_hex_groebner_combine_owned;
 LEAN_EXPORT lean_obj_res __wrap_lean_hex_groebner_combine_owned(lean_obj_arg table,uint8_t operation,
@@ -639,6 +647,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
             target = "check" + variant
             targets.append(target)
             (directory / (module + ".lean")).write_text('''import HexGroebner.NativeChecks
+@[extern "hex_test_batch_deferrals"] opaque batchDeferrals : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_batch_counts"] opaque batchCounts : IO (UInt64 × UInt64)
 @[extern "hex_test_matrix_primitives"] opaque matrixPrimitives : IO (UInt64 × UInt64)
 @[extern "hex_test_primitive_admissions"] opaque primitiveAdmissions : IO ((UInt64 × UInt64) × (UInt64 × UInt64))
@@ -763,9 +772,13 @@ def main : IO Unit := do
   let primitiveInserts ← insertCount
   let primitiveAccepted ← acceptedCount
   let primitiveDeferred ← deferredCount
+  let beforeF4Deferrals ← batchDeferrals
   let beforeF4Batches ← batchCounts
   let beforeF4Primitives ← primitiveAdmissions
   Hex.Groebner.NativeChecks.runF4
+  let afterF4Deferrals ← batchDeferrals
+  if afterF4Deferrals.2.2 != 0 then throw (IO.userError "batch visit cap exceeded")
+  IO.println s!"F4 deferred batches/discarded visit reservations: {afterF4Deferrals.1-beforeF4Deferrals.1}/{afterF4Deferrals.2.1-beforeF4Deferrals.2.1}"
   let afterF4Batches ← batchCounts
   if afterF4Batches.1 ≤ beforeF4Batches.1 || afterF4Batches.2 ≤ beforeF4Batches.2 then
     throw (IO.userError "F4 did not exercise accepted monomial batches")

@@ -76,3 +76,26 @@ timing observations to a different binary.
 
 [Validation capsule](raw/matrix-m31-strided-final-validation.tar.gz), SHA256
 `dfdd89bc0da015c115fef8916d09b9860073dab93f82903bf7823fc6be5451ff`; 150 source blobs and 182 verified payload digests.
+
+
+Measured Git tree IDs: `HexGroebner` = `c263e11a7bcd68253eed969ab43cdc588ae01626`;
+`bench/HexGroebner` = `2ac172e7f138892beee9bdcca3f9e2449a050a5c`.
+The [source index](hexgroebner-product-sources.json) records the source-manifest
+digest and executable hashes alongside these content-addressed trees. The
+combined measured trees equal those at published head `4cfdb89a1c9116181e1ba58003e736e0fae1234a`.
+
+
+The per-prime results below keep the unaffected 32003 cases as explicit
+controls. The M31 case for the optimization rests on the direct strided kernel;
+these variable full-system observations do not establish a broad F4 speedup.
+
+| Campaign | Suite | Prime | Candidate GM B/A | Median | Range |
+| --- | --- | ---: | ---: | ---: | ---: |
+| first | small | 32003 | 1.0289 | 1.0176 | 0.9767–1.2093 |
+| first | small | 2147483647 | 1.0341 | 1.0242 | 0.9816–1.1797 |
+| first | medium | 32003 | 1.0101 | 1.0065 | 0.9735–1.0542 |
+| first | medium | 2147483647 | 0.9971 | 0.9942 | 0.9593–1.0679 |
+| repeat | small | 32003 | 0.9204 | 1.0371 | 0.1273–1.2105 |
+| repeat | small | 2147483647 | 1.2270 | 1.0354 | 0.9748–15.5108 |
+| repeat | medium | 32003 | 0.9782 | 1.0014 | 0.6799–1.0563 |
+| repeat | medium | 2147483647 | 0.9265 | 0.9912 | 0.3053–1.1497 |

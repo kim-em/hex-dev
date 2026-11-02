@@ -40,7 +40,7 @@ private def check (context : Context) (limits : Limits) (workspace : Workspace)
 loop, including successful lookups, insertions, allowance prefixes and overflow. -/
 def checks (seed : Nat) (full := true) : Bool := Id.run do
   let field : PrimeField := ⟨7,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
-  for arity in (if full then [1,3,21] else [1,3]) do
+  for arity in (if full then [1,3,21,22] else [1,3,22]) do
     let context : Context := ⟨field,arity,.grevlex⟩
     for n in (if full then [0,1,2,63,64,65,129] else [1,2,65]) do
       for step in ([1,257,65537] : List Nat) do
@@ -78,6 +78,16 @@ def checks (seed : Nat) (full := true) : Bool := Id.run do
   let p : Polynomial := ⟨Packed.push .u32 {} 1,Packed.push field.width {} 1⟩
   for work in [:12] do
     if !check ⟨field,1,.grevlex⟩ { work } ⟨table,{}⟩ p 1 then return false
+  -- Beyond the one-hit quantum bound, multiplication keeps its scalar loop.
+  let mut largeTable : MonomialTable := { arity := 1366 }
+  for id in [:68] do
+    let next := largeTable.internOwned (Array.replicate 1366 id.toUInt64) 1000 10000000 1000000000
+    let .ok _ := next.result | return false
+    largeTable := next.table
+  let mut largeP : Polynomial := {}
+  for i in [:65] do
+    largeP := ⟨Packed.push .u32 largeP.support (64-i).toUInt64,Packed.push field.width largeP.coefficients 1⟩
+  if !check ⟨field,1366,.grevlex⟩ { work := 1000000000 } ⟨largeTable,{}⟩ largeP 1 then return false
   return true
 
 #guard checks 0 false

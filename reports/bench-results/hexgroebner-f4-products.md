@@ -46,3 +46,15 @@ boundaries. ASan is limited by mimalloc; leak checking is disabled.
 `b0bd6af2250ebfb200bfea9eb93c82f8e5b958d4bac01f36da62e018901afeb1`; 158 baseline / 159 candidate family
 source blobs, 153 verification source blobs and 1004 verified payload digests.
 No fastest-open-source milestone or external performance leadership is demonstrated.
+
+
+Measured Git tree IDs: `HexGroebner` = `7f8da056f783697c4e33d23432bc2393e67b308c`;
+`bench/HexGroebner` = `c8216a0a056a318836050319064f36942b7c5abc`.
+The [source index](hexgroebner-product-sources.json) records the source-manifest
+digest and executable hashes alongside these content-addressed trees. The
+combined measured trees equal those at published head `4cfdb89a1c9116181e1ba58003e736e0fae1234a`.
+
+These F4 suites have 2, 4, 5, 6 or 10 variables (small) and 3, 5, 6, 7, 8
+or 11 variables (medium). Their gains apply to that measured regime. These
+measurements do not cover the adaptive scheduling used at 22 or more variables.
+The positive batch counts establish path use and are not an admission rate.

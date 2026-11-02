@@ -27,12 +27,16 @@ A bounded owned native operation can complete lookup or insertion within the
 current width and index capacity, for up to 2047 variables and 4096 additional
 work units. Unsupported shapes, widening, index growth and tight allowances
 return the unchanged table; portable continuation starts after the native frame
-returns. Multiplied polynomial supports use slices of at most 64 identifiers.
+returns. Multiplied polynomial supports use slices of at most 64 identifiers,
+reduced to `max(1, floor(4096/(3*arity+4)))` as arity grows, leaving room
+for extra collision-chain headers. Arity 1366 and above
+retains the scalar loop, since even one hit would exceed the native quantum.
 A native batch can complete existing-product lookups within 4096 total charged
 visits, returning the complete final workspace and table work. Misses, insertion,
 errors and unsupported geometry defer the unchanged table to scalar operations.
-Every slice uses the remaining parent allowances and preserves scalar failure
-prefixes. `productsWith_spec` proves the pure wrapper equal to those operations;
+Every slice uses the remaining parent allowances. Conformance compares the
+complete slice loop with the original scalar failure prefixes.
+`productsWith_spec` proves the pure wrapper equal to its scalar model;
 conformance checks the C provider's result and exact admission decisions.
 Shared and aliased buffers retain their original contents. Field/order metadata is checked before
 reuse, and the complete base payload identifies the basis polynomial. A cache
@@ -163,7 +167,9 @@ zero and larger arities use it automatically. Both routes preserve stable IDs,
 exact overflow rejection and successful work counters. Both backends reserve the same workspace payload after the first monomial,
 including when the physical buffer has not yet been allocated or was consumed
 by a failed operation. Byte and monomial-count exhaustion are explicit distinct
-errors. Shared states copy the workspace before mutation; unique owners reuse it. Native primitives have transparent portable bodies,
+errors. The single-monomial operation copies shared workspaces and reuses
+uniquely owned buffers. A successful lookup batch allocates a fresh final
+workspace and result slice. Native primitives have transparent portable bodies,
 check geometry before access and preserve borrowed source bytes under aliasing.
 The `*Arrays` benchmarks compare complete candidates on these two routes.
 
