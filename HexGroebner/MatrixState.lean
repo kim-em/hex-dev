@@ -317,36 +317,55 @@ def advance (state : State) (steps : Nat) : State :=
   unfold advance advanceSmall
   split <;> simp_all [advanceKernels_spec]
 
+/-- Shape-dependent outer phase allowance, independent of consumed budgets. -/
+def State.allowance (state : State) : Nat :=
+  6+(state.reducers.size+state.targets.size+1)*
+    (3+scanFuel state.columns+(state.columns+4095)/4096+1)
+
 /-- Run the untraced continuation with the selected native or scalar scheduler.
 It is not selected by the public F4 route.
 
-For a state reached from `start`, let `n` be the input row count, `c` the column
-count, `S = ceil(c*(c+2)/4096)+1` and `G = ceil(c/4096)+1`. Check, workspace,
-ordering and the validate-to-workspace/input-to-order transitions take five
-phases; validation takes at most `n`; each input row takes
-one input phase, at most `S` scan phases and at most `G` gather phases. A scan
-or gather that remains unfinished at its last quantum fails immediately.
-Thus `5+n+n*(1+S+G)` bounds the remaining phases. The allowance below,
-`6+(n+1)*(3+S+G)`, dominates it, and every unfinished call advances at least
-one phase because the requested quantum is clamped to one. Exhausting this
-shape allowance therefore indicates a broken internal invariant and returns
-`rowUpdate`; a general proof of the bound remains required. -/
-def finishWith (quantum : Nat) (state : State) (native := true) : Except MatrixError (Echelon × Array RemainderRow) × MatrixStats := Id.run do
-  let fuel := 6+(state.reducers.size+state.targets.size+1)*
-    (3+scanFuel state.columns+(state.columns+4095)/4096+1)
+The shape allowance covers validation, workspace setup, input rows, bounded
+scan/gather quanta and final ordering. Each unfinished call advances at least
+one phase because the requested quantum is clamped to one. `MatrixStateFuel`
+proves that every geometrically valid continuation reaches a terminal state
+within this allowance, including states resumed partway through a row.
+A scan or gather still unfinished at its last per-row quantum returns
+`rowUpdate`; terminal completion alone does not rule out that error. -/
+def finishState (quantum : Nat) (state : State) (native := true) : State := Id.run do
+  let fuel := state.allowance
   let mut state := state
   for _ in [:fuel] do
     if state.phase == .done then break
     state := if native then advance state (max 1 quantum)
       else advancePortable state (max 1 quantum)
-  return (state.result.getD (.error .rowUpdate),state.stats)
+  return state
+
+/-- Return the completed continuation's result and exact charged statistics.
+The optional result retains the internal-invariant fallback. -/
+def finishWith (quantum : Nat) (state : State) (native := true) :
+    Except MatrixError (Echelon × Array RemainderRow) × MatrixStats :=
+  let out := finishState quantum state native
+  (out.result.getD (.error .rowUpdate),out.stats)
+
+/-- The completion loop returns its final state's exact result and statistics,
+including the internal-invariant fallback. -/
+theorem finishWith_loop (quantum : Nat) (state : State) (native : Bool) :
+    finishWith quantum state native = Id.run (do
+      let fuel := state.allowance
+      let mut state := state
+      for _ in [:fuel] do
+        if state.phase == .done then break
+        state := if native then advance state (max 1 quantum)
+          else advancePortable state (max 1 quantum)
+      return (state.result.getD (.error .rowUpdate),state.stats)) := by rfl
 
 /-- Selecting the native scheduler preserves the Lean model's complete result
 and counters. Agreement of C with that model is a separately audited and tested
 native obligation; this theorem does not verify C machine code. -/
 theorem finish_spec (quantum : Nat) (state : State) (native : Bool) :
     finishWith quantum state native = finishWith quantum state false := by
-  simp only [finishWith,advance_spec]
+  simp only [finishWith,finishState,advance_spec]
   cases native <;> rfl
 
 /-- Complete the continuation in native batches of 64 phases. -/
@@ -385,6 +404,91 @@ private theorem next_validate (state : State) (stats : MatrixStats)
     simp only [hphase]
     rfl
 
+/-- Workspace setup preserves the exact work-charge outcome after its byte
+allowance succeeds. Buffer allocation follows only successful work charging. -/
+private theorem next_workspace (state : State) (packedStats stats : MatrixStats)
+    (outcome : Except MatrixError Unit)
+    (hphase : state.phase = .workspace)
+    (hsize : state.columns*(state.field.width.bytes+4) < USize.size)
+    (hpacked : (Matrix.packedBytes state.limits
+      (state.columns*(state.field.width.bytes+4))).run state.stats = (.ok (),packedStats))
+    (hwork : (Matrix.work state.limits
+      (state.columns*(state.field.width.bytes+4))).run packedStats = (outcome,stats)) :
+    next state = match outcome with
+      | .ok _ => { state with
+          phase := .input
+          dense := Matrix.zeros (state.columns*state.field.width.bytes)
+          slots := Matrix.zeros (state.columns*4)
+          stats := stats }
+      | .error error => { state with phase := .done,stats := stats,result := some (.error error) } := by
+  cases outcome
+  all_goals
+    simp only [next,advancePhase,hphase]
+    dsimp [step,liftWork,work,ExceptT.run,ExceptT.bind,ExceptT.bindCont,ExceptT.lift,
+      ExceptT.mk,StateT.bind,StateT.get,StateT.set,StateT.pure,
+      Bind.bind,MonadState.get,MonadStateOf.get,MonadStateOf.set,
+      MonadExcept.throw,MonadExceptOf.throw,liftM,
+      MonadLiftT.monadLift,MonadLift.monadLift,getThe,throwThe,
+      StateT.map,StateT.mk,Functor.map,Pure.pure]
+    simp only [hphase,show (Phase.workspace == Phase.done) = false from rfl,
+      Bool.false_eq_true,ite_false,Nat.not_le_of_lt hsize]
+    dsimp [StateT.bind,ExceptT.bindCont,Id.run]
+    simp only [ExceptT.run] at hpacked hwork
+    rw [hpacked]
+    dsimp [modify,modifyThe,MonadStateOf.modifyGet,liftM,
+      MonadLiftT.monadLift,MonadLift.monadLift,ExceptT.lift,ExceptT.mk,
+      ExceptT.bind,ExceptT.bindCont,StateT.bind,StateT.get,StateT.set,StateT.pure,
+      Bind.bind,MonadState.get,MonadStateOf.get,MonadStateOf.set,getThe,
+      StateT.modifyGet,StateT.map,Functor.map,Pure.pure]
+    rw [hwork]
+    dsimp [modify,modifyThe,MonadStateOf.modifyGet,liftM,
+      MonadLiftT.monadLift,MonadLift.monadLift,ExceptT.lift,ExceptT.mk,
+      ExceptT.bind,ExceptT.bindCont,StateT.bind,StateT.get,StateT.set,StateT.pure,
+      Bind.bind,MonadState.get,MonadStateOf.get,MonadStateOf.set,getThe,
+      StateT.modifyGet,StateT.map,Functor.map,Pure.pure]
+  all_goals rfl
+
+/-- A failed byte reservation returns before work charging or allocation. -/
+private theorem next_workspace_bytes (state : State) (stats : MatrixStats) (error : MatrixError)
+    (hphase : state.phase = .workspace)
+    (hsize : state.columns*(state.field.width.bytes+4) < USize.size)
+    (hpacked : (Matrix.packedBytes state.limits
+      (state.columns*(state.field.width.bytes+4))).run state.stats = (.error error,stats)) :
+    next state = { state with phase := .done,stats := stats,result := some (.error error) } := by
+  simp only [next,advancePhase,hphase]
+  dsimp [step,liftWork,work,ExceptT.run,ExceptT.bind,ExceptT.bindCont,ExceptT.lift,
+    ExceptT.mk,StateT.bind,StateT.get,StateT.set,StateT.pure,
+    Bind.bind,MonadState.get,MonadStateOf.get,MonadStateOf.set,
+    MonadExcept.throw,MonadExceptOf.throw,liftM,
+    MonadLiftT.monadLift,MonadLift.monadLift,getThe,throwThe,
+    StateT.map,StateT.mk,Functor.map,Pure.pure]
+  simp only [hphase,show (Phase.workspace == Phase.done) = false from rfl,
+    Bool.false_eq_true,ite_false,Nat.not_le_of_lt hsize]
+  dsimp [StateT.bind,ExceptT.bindCont,Id.run]
+  simp only [ExceptT.run] at hpacked
+  rw [hpacked]
+  dsimp [modify,modifyThe,MonadStateOf.modifyGet,liftM,
+    MonadLiftT.monadLift,MonadLift.monadLift,ExceptT.lift,ExceptT.mk,
+    ExceptT.bind,ExceptT.bindCont,StateT.bind,StateT.get,StateT.set,StateT.pure,
+    Bind.bind,MonadState.get,MonadStateOf.get,MonadStateOf.set,getThe,
+    StateT.modifyGet,StateT.map,Functor.map,Pure.pure]
+
+/-- Unaddressable workspaces fail before either charge or allocation. -/
+private theorem next_workspace_size (state : State)
+    (hphase : state.phase = .workspace)
+    (hsize : USize.size ≤ state.columns*(state.field.width.bytes+4)) :
+    next state = { state with phase := .done,result := some (.error .dimensions) } := by
+  simp only [next,advancePhase,hphase]
+  dsimp [step,liftWork,work,ExceptT.run,ExceptT.bind,ExceptT.bindCont,ExceptT.lift,
+    ExceptT.mk,StateT.bind,StateT.get,StateT.set,StateT.pure,
+    Bind.bind,MonadState.get,MonadStateOf.get,MonadStateOf.set,
+    MonadExcept.throw,MonadExceptOf.throw,liftM,
+    MonadLiftT.monadLift,MonadLift.monadLift,getThe,throwThe,
+    StateT.map,StateT.mk,Functor.map,Pure.pure]
+  simp only [hphase,show (Phase.workspace == Phase.done) = false from rfl,
+    Bool.false_eq_true,ite_false,hsize,ite_true]
+  rfl
+
 /-- Read-only contents preserved by validation. Phase, validation cursor, result
 and charged statistics are stated separately by the transition lemmas. -/
 def State.contents (state : State) :=
@@ -392,6 +496,81 @@ def State.contents (state : State) :=
     state.independent,state.input,state.dense,state.slots,state.pivots,state.nativePivots,
     state.remainders,state.rank,state.scan,state.gather,state.leading,state.sugar,
     state.inverse,state.quanta)
+
+/-- Fields preserved by workspace setup. Buffer contents, phase, result and
+charged statistics are stated separately by its transition contracts. -/
+def State.workspaceFrame (state : State) :=
+  (state.field,state.limits,state.columns,state.reducers,state.targets,state.sugars,
+    state.independent,state.validation,state.input,state.pivots,state.nativePivots,
+    state.remainders,state.rank,state.scan,state.gather,state.leading,state.sugar,
+    state.inverse,state.quanta)
+
+/-- Workspace setup installs the charged buffers and preserves every other
+state field after byte and work charges succeed. -/
+theorem workspace_ok (state : State) (packedStats stats : MatrixStats)
+    (hphase : state.phase = .workspace)
+    (hsize : state.columns*(state.field.width.bytes+4) < USize.size)
+    (hpacked : (Matrix.packedBytes state.limits
+      (state.columns*(state.field.width.bytes+4))).run state.stats = (.ok (),packedStats))
+    (hwork : (Matrix.work state.limits
+      (state.columns*(state.field.width.bytes+4))).run packedStats = (.ok (),stats)) :
+    let out := next state
+    out.phase = .input ∧ out.dense = Matrix.zeros (state.columns*state.field.width.bytes) ∧
+      out.slots = Matrix.zeros (state.columns*4) ∧ out.stats = stats ∧
+      out.result = state.result ∧ out.workspaceFrame = state.workspaceFrame := by
+  rw [next_workspace state packedStats stats (.ok ()) hphase hsize hpacked hwork]
+  exact ⟨rfl,rfl,rfl,rfl,rfl,rfl⟩
+
+/-- A work-charge failure after reserving bytes preserves both existing
+buffers and the full returned charge prefix in a terminal continuation. -/
+theorem workspace_work_error (state : State) (packedStats stats : MatrixStats) (error : MatrixError)
+    (hphase : state.phase = .workspace)
+    (hsize : state.columns*(state.field.width.bytes+4) < USize.size)
+    (hpacked : (Matrix.packedBytes state.limits
+      (state.columns*(state.field.width.bytes+4))).run state.stats = (.ok (),packedStats))
+    (hwork : (Matrix.work state.limits
+      (state.columns*(state.field.width.bytes+4))).run packedStats = (.error error,stats)) :
+    let out := next state
+    out.phase = .done ∧ out.result = some (.error error) ∧ out.stats = stats ∧
+      out.dense = state.dense ∧ out.slots = state.slots ∧
+      out.workspaceFrame = state.workspaceFrame := by
+  rw [next_workspace state packedStats stats (.error error) hphase hsize hpacked hwork]
+  exact ⟨rfl,rfl,rfl,rfl,rfl,rfl⟩
+
+/-- A failed packed-byte allowance preserves existing workspace buffers and
+returns the validator's exact terminal charged prefix. -/
+theorem workspace_bytes_error (state : State) (stats : MatrixStats) (error : MatrixError)
+    (hphase : state.phase = .workspace)
+    (hsize : state.columns*(state.field.width.bytes+4) < USize.size)
+    (hpacked : (Matrix.packedBytes state.limits
+      (state.columns*(state.field.width.bytes+4))).run state.stats = (.error error,stats)) :
+    let out := next state
+    out.phase = .done ∧ out.result = some (.error error) ∧ out.stats = stats ∧
+      out.dense = state.dense ∧ out.slots = state.slots ∧
+      out.workspaceFrame = state.workspaceFrame := by
+  rw [next_workspace_bytes state stats error hphase hsize hpacked]
+  exact ⟨rfl,rfl,rfl,rfl,rfl,rfl⟩
+
+/-- Addressability failure preserves every buffer, field and statistic. -/
+theorem workspace_size_error (state : State)
+    (hphase : state.phase = .workspace)
+    (hsize : USize.size ≤ state.columns*(state.field.width.bytes+4)) :
+    let out := next state
+    out.phase = .done ∧ out.result = some (.error .dimensions) ∧ out.stats = state.stats ∧
+      out.dense = state.dense ∧ out.slots = state.slots ∧
+      out.workspaceFrame = state.workspaceFrame := by
+  rw [next_workspace_size state hphase hsize]
+  exact ⟨rfl,rfl,rfl,rfl,rfl,rfl⟩
+
+/-- info: 'Hex.Groebner.MatrixState.workspace_work_error' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms workspace_work_error
+/-- info: 'Hex.Groebner.MatrixState.workspace_bytes_error' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms workspace_bytes_error
+/-- info: 'Hex.Groebner.MatrixState.workspace_size_error' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms workspace_size_error
+
+/-- info: 'Hex.Groebner.MatrixState.workspace_ok' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms workspace_ok
 
 /-- A successful validator advances one cursor and preserves its exact charges.
 This is an equation for the Lean phase model. -/
@@ -451,10 +630,11 @@ theorem finish_done (quantum : Nat) (state : State) (native : Bool)
     (h : state.phase = .done) :
     finishWith quantum state native =
       (state.result.getD (.error .rowUpdate), state.stats) := by
-  simp only [finishWith, Id.run]
+  simp only [finishWith,finishState,State.allowance,Id.run]
   rw [Std.Legacy.Range.forIn_eq_forIn_range']
   generalize hx : List.range' _ _ _ = xs
-  cases xs <;> simp [h] <;> rfl
+  cases xs <;> simp [h,show (Phase.done == Phase.done) = true from rfl,
+    Pure.pure,Bind.bind]
 
 
 

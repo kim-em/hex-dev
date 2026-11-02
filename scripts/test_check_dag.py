@@ -180,6 +180,29 @@ class SealedImportAllTest(unittest.TestCase):
                 "trusted-internals allowlist"
             ])
 
+    def test_matrix_state_proof_exceptions_are_exact(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            allowed = [
+                Path("HexGroebner/MatrixStateProof.lean"),
+                Path("HexGroebner/MatrixStateFuel.lean"),
+                Path("HexGroebner/MatrixStateSchedule.lean"),
+                Path("conformance/HexGroebner/MatrixStateReplay.lean"),
+            ]
+            denied = [
+                Path("HexGroebner/OtherProof.lean"),
+                Path("adapters/HexGroebner/MatrixStateProof.lean"),
+                Path("conformance/Other/MatrixStateReplay.lean"),
+            ]
+            for path in allowed + denied:
+                full_path = root / path
+                full_path.parent.mkdir(parents=True, exist_ok=True)
+                full_path.write_text("import all HexGroebner.MatrixState\n", encoding="utf-8")
+            self.assertEqual(check_sealed_import_all(root, allowed + denied), [
+                f"{path}:1 uses `import all HexGroebner.MatrixState` outside its exact "
+                "trusted-internals allowlist" for path in denied
+            ])
+
     def test_sturm_replay_exception_is_exact(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

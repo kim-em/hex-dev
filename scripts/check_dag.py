@@ -37,8 +37,13 @@ IMPORT_ALL_RE = re.compile(
 # every owning exception must be an exact reviewed path rather than a suffix or
 # directory convention. The ECM diagnostic observes private preparation costs.
 SEALED_IMPORT_ALL_ALLOWLIST: dict[str, frozenset[Path]] = {
-    # Replay sees logical bodies but creates states only through public start.
+    # Owning proofs inspect phase bodies and workspace updates. Replay creates
+    # states only through public start; consumers retain the constructor seal.
+    # These proof modules must not expose public unchecked State builders.
     "HexGroebner.MatrixState": frozenset({
+        Path("HexGroebner/MatrixStateProof.lean"),
+        Path("HexGroebner/MatrixStateFuel.lean"),
+        Path("HexGroebner/MatrixStateSchedule.lean"),
         Path("conformance/HexGroebner/MatrixStateReplay.lean")}),
     "HexIntFactor.EcmStage2": frozenset({
         Path("bench/HexPrimality/EcmDiagnostics/EcmPreparation.lean")}),

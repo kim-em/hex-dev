@@ -34,6 +34,14 @@ namespace Hex.Groebner.Native
   | 0 => bytes
   | n + 1 => write (bytes.set! offset (UInt8.ofNat value)) n (offset + 1) (value / 256)
 
+/-- Packed writes preserve the logical buffer length, including out-of-range
+writes whose portable byte update leaves the corresponding byte unchanged. -/
+@[simp] theorem size_write (bytes : ByteArray) (width offset value : Nat) :
+    (write bytes width offset value).size = bytes.size := by
+  induction width generalizing bytes offset value with
+  | zero => rfl
+  | succ width ih => simp only [write,ih,ByteArray.size_set!]
+
 /-- Structurally recursive logical update. Row reads use the original borrowed
 buffers, while dense reads observe all preceding updates. -/
 @[expose] def update (modulus factor width : Nat) (columns coefficients : @& ByteArray)

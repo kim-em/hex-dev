@@ -641,13 +641,18 @@ The continuation has a separate native carrier and does not replace the F4
 matrix route or `Elimination.reference`. Conformance compares complete rows,
 metadata, intermediate states and charged counters. A proof relating its
 completed execution to the existing reference remains required before that
-integration. `finishWith` has finite shape-based fuel and preserves the
-reference's per-row scan/gather fuel boundaries. Its kernel benchmarks compare
+integration. `finishState_done` proves that the shape-based allowance suffices
+for terminal completion, including suspended scan/gather states. Per-row
+scan/gather quantum exhaustion can still produce `rowUpdate`; these quantum
+counts and error boundaries match the reference, and neither implementation
+currently has a proof excluding that error on validated inputs. Its kernel benchmarks compare
 standalone matrix frames; they make no full-system performance claim.
 
 Terminal continuations retain their workspace for inspection of exact phase
-state and charged prefixes. `finishWith` releases that state when it returns;
-manual drivers should drop references to their terminal state after extracting the result.
+state and charged prefixes. `finishState` returns this terminal state with its
+workspace attached; `finishWith` extracts the result and statistics and releases
+the state. Manual drivers should drop terminal-state references after extracting
+the result.
 The build-time `MatrixLayout` conformance check compares the listed matrix records and tags with the layout table mirrored
 from `matrix_state.c`, including field names, object slots, scalar offsets
 and same-type swaps.
@@ -667,5 +672,14 @@ exact charged prefix and leaves the previous buffers unchanged.
 `MatrixValidation.validateFrom_zero` equates combined-cursor validation with the
 reference's reducer-then-target loops, including first errors and charged
 prefixes. `Native.Scan.untraced_events` proves that an untraced scalar scan produces
-no derivation events. These reusable component lemmas do not prove completed
-continuation equivalence or its general phase-fuel bound.
+no derivation events. `State.valid` combines workspace geometry and the
+terminal-result invariant, preserved by `next_valid`, `advance_valid` and
+`finishState_valid`. `finishState_result` guarantees a stored success or error,
+excluding the empty-result fallback. `finishState_schedule` proves exact whole-state
+agreement for arbitrary completion quanta and either provider's Lean definition;
+`finishState_resume` proves exact agreement after arbitrary bounded suspension.
+`advance_one` identifies single-phase calls, and `finishState_next` supplies their
+resumption corollary. Native C agreement remains separately audited and tested.
+Equivalence with `Elimination.reference` remains required before integration.
+Excluding per-row quantum exhaustion on validated inputs is a separate proof
+obligation shared with the reference.
