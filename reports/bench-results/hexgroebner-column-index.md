@@ -1,113 +1,156 @@
-# Packed direct and exact hash column lookup
+# Packed F4 column positions and charged translation
 
-Symbolic row construction uses compact u32 column positions. Dense monomial-ID prefixes use direct positions plus one; sparse u32 IDs use eight-byte open-addressed buckets with full key comparisons. Zero values mark empty slots. Hash collisions never establish equality. Geometry alone selects the route. A chain beyond 64 probes retains the charged attempt and builds the ordinary hash map; non-u32 IDs or unsupported addressability also retain that route.
+Symbolic candidate and certificate row construction use compact u32 positions. Dense ID prefixes use positions plus one; sparse u32 IDs use exact open-addressed key/value buckets. Hashes are filters: every successful lookup compares the complete key. Geometry alone selects the layout. A chain beyond 64 probes retains the charged attempt and builds the ordinary hash map; unsupported IDs and addressability also retain it.
 
-Both candidate production and certificate generation use this representation. Bounded native calls translate up to 4,096 IDs, reserve output once, write little-endian u32 values and commit the logical size only on success. They preserve borrowed/output aliases and marked-linear ownership. The scalar Lean model has identical successful output and failure behavior. Bounded zero initialization visits at most 4,096 bytes per call.
+Native calls translate at most 4,096 entries, reserve owned output once and commit its logical size only on success. Borrowed/output aliases, shared prefixes and marked-linear growth agree with the scalar Lean definitions. Zero initialization processes at most 4,096 bytes per call. Initialization, insertion probes and packed payload are charged before work. Rows reserve the maximum probe count per key; sorting reserves two such lookups per comparison. Cumulative bytes and conservative work bounds can exhaust earlier than the previous unit-cost hash-map route. Layout and counts can differ across 32-bit and 64-bit address widths.
 
-Packed initialization, insertion probes and payload are charged before work. Row construction reserves the largest successful probe count per entry, at most 64. These conservative charges and cumulative packed payload can exhaust earlier than the old unit-cost hash route. Increasing a limit cannot change the selected layout. No partial matrix is returned as a successful computation.
+This revision is source `67e9835420ef`, compute SHA256 `4018867411b786bfcdafcdffd13d0412d8c36504f09e997b30400d126c391be1` and reference-driver SHA256 `09817bff776a62d96f8a2218e54a8a0a7f43e3f18afc516ce3b73b7f5d513628`. Baseline is `e878b78cf727`, compute `fb6a033166de667e753df9ba554203503bb7bb9e89ad893f351f18f064eb2a1d`. The [initial variant](hexgroebner-column-index-initial.md) has separate measurements and binaries; no observations are pooled across that source or configuration.
 
-Measured source `9449e25be93d` has compute SHA256 `5ae4c7005f44ca0f85e1a8ba65cbe141414588a3e156e3c275af01601058580a` and reference-driver SHA256 `18b4838a4e76503d5f2f28220f1d3cf393258263ca15d7be7a874c8f733b07b7`. Baseline `e878b78cf727` has `fb6a033166de667e753df9ba554203503bb7bb9e89ad893f351f18f064eb2a1d`. Validation source `88c20c2efbd1` adds documentation and erased/test changes; benchmark source `8267339d38e6` also registers the two kernels. Both compute binaries remain byte-identical to the measured drivers.
+Both arms have fresh detached driver and benchmark builds sharing only pinned dependency packages. The archived relocatable compiler helper restores the local SDK flags and directly invokes SDK Clang/LLD 23.1.0 after an obsolete Nix linker wrapper failed. Native FFI uses Clang 23.1.3. Results apply to this build arrangement.
 
-Integrated source `1efac70aad44` is built on merged main; both compute hashes
-remain identical. Fixed F4 observations retain their original measured benchmark
-identities; the new linear-kernel binary is a separate benchmark build.
+All timings are manual observations on the shared EPYC 9455 host, one requested algorithm thread and automatically leased CPUs. Each input uses adjacent AB/BA. Every completed sample, failure, outlier, host-activity observation and child RSS remains. Small, medium and fixed observations retain the first campaign and sole unchanged repeat; no further unchanged repeat is used. These are development suites, not held-out SPEC acceptance.
 
-Both arms have fresh detached driver and benchmark builds, sharing only pinned dependency packages. The local SDK linker wrapper references an obsolete Nix script; the archived relocatable compiler helper restores bundled flags and invokes SDK Clang/LLD 23.1.0. Native FFI uses Clang 23.1.3. These observations apply to this build arrangement, with no pooling across source or toolchain variants.
-
-Manual shared-host runs use EPYC 9455, one requested algorithm thread, an automatically leased CPU and adjacent AB/BA per input. All completed samples, failures, outliers, host activity observations and child RSS remain. The first campaign and sole unchanged repeat are retained for small, medium and fixed observations. No further unchanged repeat is used.
-
-The small suite has 16 inputs and the medium 14, seven families at primes 32003 and 2147483647, grevlex, with complete monic reduced bases. They are development inputs, not held-out SPEC acceptance. Candidate time includes packing, F4 and final interreduction; process time also includes initialization, parsing, full output and identical GNU-time wrappers. Certificate generation, independent certification and kernel replay are excluded.
+Candidate time includes packing, F4 and final interreduction. Process time additionally includes initialization, parsing, complete output and identical GNU-time wrappers. Certificate generation, independent certification and kernel replay are separate and excluded. Large process/candidate discrepancies are not attributed to the representation change.
 
 | Suite | Campaign | CPU | Candidate B/A | Process B/A |
 | --- | --- | ---: | ---: | ---: |
-| small | first | 22 | 1.1227 | 1.0989 |
-| small | repeat | 64 | 1.4084 | 1.2992 |
-| medium | first | 53 | 0.9288 | 0.9606 |
-| medium | repeat | 64 | 0.8879 | 0.8228 |
+| small | first | 58 | 1.0914 | 1.1352 |
+| small | repeat | 71 | 0.9524 | 0.9387 |
+| medium | first | 82 | 0.9753 | 0.8855 |
+| medium | repeat | 41 | 0.8385 | 0.9322 |
 
 | Suite | Complete pairs | Candidate B/A | Candidate median | Process B/A | Equal-family process |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| small | 64 | 1.2575 | 0.9934 | 1.1949 | 1.1975 |
-| medium | 56 | 0.9081 | 0.9361 | 0.8890 | 0.8890 |
+| small | 64 | 1.0195 | 0.9838 | 1.0323 | 1.0484 |
+| medium | 56 | 0.9044 | 0.9571 | 0.9086 | 0.9086 |
 
-All 240 CLI processes succeed and all 120 complete basis pairs agree, with zero measured failures or timeouts. Work and packed-allocation counters differ by representation and are retained per process; other algorithm metadata agrees. Small-suite aggregate regressions remain material evidence, despite its near-one candidate median. No uniform speedup is established.
+All 240 processes succeed and all 120 complete basis pairs agree. Every non-resource algorithm counter agrees. Work and packed-allocation differences remain below. There are zero measured failures or timeouts. Small results remain mixed and medium aggregate improvements do not establish a uniform gain.
 
 | Family | Small candidate | Small process | Medium candidate | Medium process |
 | --- | ---: | ---: | ---: | ---: |
-| cyclic | 1.1800 | 1.1769 | 0.9240 | 0.9045 |
-| dense-quadratic | 1.2266 | 1.5413 | 0.9237 | 0.7322 |
-| eco | 0.9662 | 0.9696 | 0.9260 | 0.9320 |
-| kat | 0.8576 | 0.8271 | 1.1966 | 1.0494 |
-| minrank | 3.4195 | 1.4438 | 0.6393 | 0.7441 |
-| noon | 1.3802 | 1.5066 | 0.9727 | 1.0716 |
-| reimer | 0.9361 | 1.1156 | 0.8659 | 0.8499 |
+| cyclic | 0.8246 | 0.9263 | 1.0154 | 0.9886 |
+| dense-quadratic | 2.4627 | 1.2890 | 1.0340 | 1.2781 |
+| eco | 0.9401 | 0.9312 | 0.9402 | 0.9278 |
+| kat | 1.8505 | 1.2765 | 0.9697 | 0.6959 |
+| minrank | 0.3115 | 1.1292 | 0.6592 | 0.6961 |
+| noon | 1.2183 | 0.7704 | 0.8331 | 0.8883 |
+| reimer | 1.0561 | 1.1276 | 0.9412 | 1.0133 |
 
-Small candidate ratios span 0.0553–96.7849; process ratios span 0.1850–9.8500. Maximum child RSS is 56888/56732 KiB for baseline/new. Logical packed-byte limits do not bound allocator capacity or process RSS.
+Small candidate ratios span 0.0234–52.7853; process ratios span 0.2326–4.5721. Maximum child RSS is 50260/52668 KiB for baseline/new. Logical packed bytes do not bound allocator capacity or RSS.
 
-Medium candidate ratios span 0.0226–7.1603; process ratios span 0.1062–2.4041. Maximum child RSS is 98388/100956 KiB for baseline/new. Logical packed-byte limits do not bound allocator capacity or process RSS.
+Medium candidate ratios span 0.0848–9.5833; process ratios span 0.1748–3.8618. Maximum child RSS is 97520/94592 KiB for baseline/new. Logical packed bytes do not bound allocator capacity or RSS.
 
-The small MinRank M31 case has retained candidate ratios near 96 in one pair of each campaign. An explanatory profile runs a fresh adjacent AB/BA on a leased CPU and records user cycles, instructions, task-clock, context switches, full output and CPU/wall/RSS. It does not reproduce the anomaly: the final four candidate times are 0.30–0.36 ms and whole-process user-cycle counts are 16.61–17.96 million. This does not establish the cause of the earlier wall-time spikes. Two preceding baseline-only profile processes completed before a reporting-key error; both are retained with the corrected four-process profile. No profiled duration is pooled with timing estimates or used to replace a sample.
+The unexplained small MinRank spikes in the initial source are explicitly outlier-driven; its family aggregate is not a stable per-family superiority or regression claim. The absolute revised small-case intervals below retain every AB/BA sample, rather than replacing a range with a pooled median. The initial MinRank CPU profile did not reproduce the anomaly and does not identify its cause.
+
+| Small input | Campaign | Baseline candidate ms, min–max | New candidate ms, min–max |
+| --- | --- | ---: | ---: |
+| cyclic6-31 | first | 18.369–54.445 | 24.810–31.219 |
+| cyclic6-31 | repeat | 23.345–41.722 | 15.703–30.149 |
+| noon4-31 | first | 2.250–4.261 | 3.370–30.757 |
+| noon4-31 | repeat | 2.559–4.013 | 2.081–4.055 |
+| minrank_d_2_p_2_q_3_r_2-31 | first | 0.466–8.359 | 8.001–24.590 |
+| minrank_d_2_p_2_q_3_r_2-31 | repeat | 15.834–15.995 | 0.878–28.149 |
+| quadratic5-2147483647 | first | 2.912–4.861 | 2.637–3.761 |
+| quadratic5-2147483647 | repeat | 4.107–4.395 | 28.246–86.303 |
+
+| Initial-source small route profile | Direct | Indexed | Hash fallback | Maximum indexed probes |
+| --- | ---: | ---: | ---: | ---: |
+| cyclic6-31 | 11 | 9 | 0 | 9 |
+| noon4-31 | 9 | 0 | 0 | n/a |
+| minrank_d_2_p_2_q_3_r_2-31 | 4 | 0 | 0 | n/a |
+| quadratic5-2147483647 | 7 | 0 | 0 | n/a |
+
+This explanatory profile binds initial source `9449e25be93d`, CPU 86, and one instrumented plus one uninstrumented run per input. Full bases and counters agree. MinRank, Noon and dense-quadratic are direct-only, so indexed probing cannot explain those initial regressions. The revised source changes sorting charges, not lookup geometry. No profile duration is pooled into timing estimates.
 
 | Fixed campaign | CPU | Case | B/A geomean | Per-call median | Range |
 | --- | ---: | --- | ---: | ---: | --- |
-| first | 22 | cyclic4 | 0.9940 | 0.9948 | 0.9622–1.0112 |
-| first | 22 | cyclic5 | 0.9954 | 0.9940 | 0.9559–1.0449 |
-| first | 22 | cyclic6 | 0.9986 | 1.0017 | 0.9787–1.0148 |
-| first | 22 | katsura3 | 0.9836 | 0.9828 | 0.9693–0.9961 |
-| first | 22 | reimer5 | 0.9418 | 0.9430 | 0.9249–0.9620 |
-| first | 22 | cyclic6Small | 0.9784 | 0.9806 | 0.9559–0.9953 |
-| repeat | 79 | cyclic4 | 1.0036 | 1.0020 | 0.9746–1.0550 |
-| repeat | 79 | cyclic5 | 1.0029 | 1.0057 | 0.9635–1.0343 |
-| repeat | 79 | cyclic6 | 0.9730 | 0.9738 | 0.9614–0.9859 |
-| repeat | 79 | katsura3 | 0.9902 | 0.9865 | 0.9807–1.0044 |
-| repeat | 79 | reimer5 | 0.9188 | 0.9217 | 0.8874–0.9341 |
-| repeat | 79 | cyclic6Small | 0.9750 | 0.9757 | 0.9679–0.9810 |
+| first | 26 | cyclic4 | 0.9773 | 0.9992 | 0.6265–1.4807 |
+| first | 26 | cyclic5 | 0.7472 | 0.8328 | 0.0731–4.5556 |
+| first | 26 | cyclic6 | 1.3412 | 1.3561 | 0.2921–4.1758 |
+| first | 26 | katsura3 | 1.1065 | 1.1915 | 0.1500–4.5956 |
+| first | 26 | reimer5 | 0.8544 | 0.8882 | 0.4483–1.8710 |
+| first | 26 | cyclic6Small | 0.9802 | 1.3569 | 0.2846–2.4575 |
+| repeat | 67 | cyclic4 | 0.8964 | 0.9385 | 0.6449–1.0752 |
+| repeat | 67 | cyclic5 | 0.9302 | 0.8582 | 0.0660–29.4634 |
+| repeat | 67 | cyclic6 | 0.7699 | 0.5580 | 0.1357–7.1009 |
+| repeat | 67 | katsura3 | 0.9625 | 1.0176 | 0.2179–1.8386 |
+| repeat | 67 | reimer5 | 1.0672 | 1.0716 | 0.2905–4.7233 |
+| repeat | 67 | cyclic6Small | 1.9708 | 2.2349 | 0.6797–4.1096 |
 
-All 240 fixed points succeed with equal complete structural output hashes. Reimer5 improves in both campaigns; Cyclic4 and Cyclic5 remain near parity. This is bounded implementation evidence, not the SPEC fastest-open-source milestone.
+All 240 fixed points succeed and complete structural output hashes agree. Several campaigns disagree materially. Their per-call intervals include complete result consumption and hashing, and remain distinct from the CLI candidate interval. No uniform fixed-case improvement is inferred.
 
-| Profiled input | Direct maps | Indexed maps | Hash-map fallback | Maximum indexed probes |
+The total work increase is explicit for every input. Packed payload is charged cumulatively; it is not inferred from work-only fixture fields. Each row gives the deterministic counter from the retained processes.
+
+| Suite/input | Baseline work | New work | Ratio | Baseline/new allocated bytes |
 | --- | ---: | ---: | ---: | ---: |
-| cyclic7-31 | 11 | 17 | 0 | 12 |
-| eco11-31 | 18 | 3 | 0 | 16 |
-| reimer6-31 | 19 | 7 | 0 | 9 |
-| minrank_d_2_p_2_q_4_r_2-31 | 5 | 0 | 0 | 1 |
+| small/cyclic5-15 | 293573 | 304253 | 1.0364 | 120750/132886 |
+| small/cyclic5-31 | 297587 | 308267 | 1.0359 | 131080/143216 |
+| small/cyclic6-15 | 2199392 | 2300020 | 1.0458 | 688444/728332 |
+| small/cyclic6-31 | 2213935 | 2314563 | 1.0455 | 755116/795004 |
+| small/eco10-15 | 87701921 | 94245659 | 1.0746 | 15985568/16481544 |
+| small/eco10-31 | 88678999 | 95222737 | 1.0738 | 18051592/18547568 |
+| small/kat6-15 | 350554 | 353046 | 1.0071 | 158582/164666 |
+| small/kat6-31 | 358192 | 360684 | 1.0070 | 177096/183180 |
+| small/minrank_d_2_p_2_q_3_r_2-15 | 9057 | 9225 | 1.0185 | 9310/9654 |
+| small/minrank_d_2_p_2_q_3_r_2-31 | 9448 | 9616 | 1.0178 | 10572/10916 |
+| small/noon4-15 | 212429 | 215477 | 1.0143 | 102118/109586 |
+| small/noon4-31 | 217588 | 220636 | 1.0140 | 113628/121096 |
+| small/quadratic5-2147483647 | 324443 | 326242 | 1.0055 | 186648/190752 |
+| small/quadratic5-32003 | 317014 | 318813 | 1.0057 | 165786/169890 |
+| small/reimer5-15 | 2841737 | 2871978 | 1.0106 | 1262550/1319914 |
+| small/reimer5-31 | 2915248 | 2945489 | 1.0104 | 1432652/1490016 |
+| medium/cyclic7-15 | 126478860 | 134706691 | 1.0651 | 19338382/19649222 |
+| medium/cyclic7-31 | 126833412 | 135061243 | 1.0649 | 21445260/21756100 |
+| medium/eco11-15 | 565171559 | 571186118 | 1.0106 | 64071088/65680008 |
+| medium/eco11-31 | 569701788 | 575716437 | 1.0106 | 72674108/74283028 |
+| medium/kat8-15 | 9325622 | 9379221 | 1.0057 | 2350972/2393324 |
+| medium/kat8-31 | 9444384 | 9497983 | 1.0057 | 2633184/2675536 |
+| medium/minrank_d_2_p_2_q_4_r_2-15 | 100029 | 100781 | 1.0075 | 81444/83120 |
+| medium/minrank_d_2_p_2_q_4_r_2-31 | 102164 | 102916 | 1.0074 | 92152/93828 |
+| medium/noon5-15 | 1653344 | 1668953 | 1.0094 | 610862/650902 |
+| medium/noon5-31 | 1685263 | 1700872 | 1.0093 | 683704/723744 |
+| medium/quadratic6-15 | 857405 | 861676 | 1.0050 | 324622/335798 |
+| medium/quadratic6-31 | 867596 | 871867 | 1.0049 | 359780/370956 |
+| medium/reimer6-15 | 37045207 | 37461672 | 1.0112 | 12952222/13218270 |
+| medium/reimer6-31 | 38020259 | 38436732 | 1.0110 | 14857324/15123372 |
 
-The explanatory route profile uses CPU 17 and four complete systems. Full bases and counters agree with uninstrumented same-source execution; build-call totals equal `matrixCalls`. Instrumented durations are excluded from timing estimates. Every matrix uses a packed layout on this corpus; the direct-map density threshold and fallback remain explicit implementation choices.
+An explanatory CPU profile directly compares initial `9449e25be93d` with this
+sort-charge revision on Cyclic7-31 and Eco11-31, adjacent AB/BA, one leased CPU,
+eight complete processes. Complete bases and non-resource counters agree;
+zero samples are lost. Estimated user-cycle B/A ratios are 1.0427 and 0.9836.
+These two inputs do not show the roughly twofold shift between the separate
+msolve sweeps. The external-ratio change remains unattributed; profile durations
+are not additional timing samples and replace none of the retained observations.
 
-Two registered lean-bench kernels measure map construction, bounded row translation,
-independent output validation and full packed map/support hashing. Input generation
-is excluded. A fresh detached build uses source `8267339d38e6`, with byte-identical
-compute drivers to the measured source. The explicit five-trial, five-size sweep
-uses `--target-inner-nanos 4000000000` on leased CPU 67. All 50 completed rows
-are retained. Both verdicts are consistent with the declared linear model.
+Two registered lean-bench kernels cover allocation, construction, translation, independent complete-output validation and full map/support hashing. Their registered four-second inner batches are measured with five trials at nine fixed sizes, including non-powers of two and values through 65,536. Preparation is excluded. The direct and indexed kernels hash different payload lengths; their timing ratio is not an isolated map-construction comparison.
 
-| Kernel | n=1024 median | n=16384 median | Normalized slope | Signal-floor flags |
-| --- | ---: | ---: | ---: | ---: |
-| columnDirect | 8.821 µs | 137.621 µs | -0.005115 | 2 |
-| columnIndex | 72.622 µs | 1228.183 µs | 0.012571 | 0 |
+| Campaign/kernel | Complete points | Verdict | Median at 1024 | Median at 65536 | Signal-floor flags |
+| --- | ---: | --- | ---: | ---: | ---: |
+| first/columnDirect | 45 | consistent with declared complexity | 10.876 µs | 749.311 µs | 9 |
+| first/columnIndex | 45 | consistent with declared complexity | 91.534 µs | 6368.088 µs | 38 |
+| repeat/columnDirect | 45 | consistent with declared complexity | 9.672 µs | 1355.717 µs | 9 |
+| repeat/columnIndex | 45 | consistent with declared complexity | 91.871 µs | 7350.946 µs | 10 |
 
-Signal-floor flags and lean-bench warmup/fit decisions remain in the exports;
-no completed point is removed. The first setup assumed five outer trials, while
-the tool defaults to one: its five direct-map points remain. The next explicit
-five-trial 500 ms direct-map sweep retained 25 successful points but was below
-the signal floor. The four-second-batch observation is a separate configuration;
-neither earlier observation is pooled into its summary, and no further unchanged
-rerun is used. This finite scaling evidence does not prove asymptotic complexity.
+All 180 completed kernel rows remain. Medians above include all successful rows;
+lean-bench fits separately retain their signal-floor and warmup decisions. The
+single unchanged repeat follows the first sweep's many below-floor rows. These
+flags limit resolution; no further unchanged repeat is used. This finite scaling
+observation is neither an asymptotic proof nor an isolated map-cost comparison.
+Earlier short-batch/five-size observations remain tied to their initial source
+and are not pooled with this registered wider configuration.
 
-| msolve mode | CPU | Hex/msolve process | Process median | Range | RSS Hex/msolve KiB |
+| msolve `-l` | CPU | Hex/msolve process | Median | Range | RSS Hex/msolve KiB |
 | --- | ---: | ---: | ---: | --- | ---: |
-| 2 | 2 | 2.2242 | 2.2388 | 0.8447–4.1916 | 111992/20312 |
-| 42 | 95 | 2.3915 | 2.2588 | 0.7091–5.7307 | 111992/20312 |
+| 2 | 52 | 4.5873 | 5.0279 | 1.4854–8.5137 | 94552/20336 |
+| 42 | 66 | 5.0274 | 5.6865 | 1.0784–10.4327 | 93880/20352 |
 
-Each matched msolve mode retains its first sweep, 56 successful processes and 28 equal complete basis pairs, with no failures or timeouts. The comparator is effective native Clang 23.1.3/znver5 msolve commit `3672113ee2c6`, direct executable, one thread and the same full reduced grevlex output. Complete source/build/ISA identities are archived. Earlier whole-matrix msolve ratios 3.5590/3.4374 are separate observations, not an adjacent comparison; the change is not attributed to this implementation from those external sweeps.
+Here `-l 2` selects sparse exact elimination and `-l 42` probabilistic sparse/dense elimination in the pinned msolve version. Each mode retains its first matched 56-process sweep with 28 equal complete bases and no failures/timeouts. msolve is commit `3672113ee2c6`, effective native Clang 23.1.3/znver5, direct executable, one thread and full reduced grevlex output. Exact build/ISA identities are retained. These observations remain separate from all earlier sweeps and do not establish leadership.
 
-Validation passes the 2,180-job integrated library/theory/conformance build, independent 175-matrix/567 unique SymPy–Singular basis/1,288-division oracles, both 1,134-output CLI corpus checks, 34 benchmark checks and all project audits. Four Clang and four GCC ASan/UBSan variants pass. Compiled counters require actual index, direct-remap and zero-init calls, including complete F4 and cache checks.
+Local validation covers library/theory/conformance builds, independent matrix/basis/division oracles, both CLI corpora, 34 benchmark checks and project audits. Four Clang and four GCC ASan/UBSan variants exercise the new kernels and all prior paths. Because Lean uses mimalloc, ASan does not instrument every runtime allocation, and leak detection is disabled. Ownership evidence therefore also includes explicit refcount/exclusivity checks, unchanged original bytes and distinct output storage in borrowed/output aliases, with and without an observer. Shared prefixes, marked-linear aliases, exclusive growth and zero-buffer reuse have direct C checks.
 
-Direct tests compare multi-element, repeated-ID and large sparse maps with an independently populated hash map. The 64-collider indexed case charges exactly 2,272 work and 1,024 bytes; 65 colliders trigger the hash fallback after exactly 2,530 work and 2,048 bytes. Other tests cover malformed geometry, absent keys, maximum probe/chunk sizes, large scalar arguments, shared buffers, exclusive borrowed/output aliases and marked-linear growth. Exact resource tests include pre-existing table payload. The emitted corpus is regenerated only after all 1,134 baseline records agree except the charged work fields.
+Exact tests cover multi-element sparse maps against an independent hash map, repeated/missing IDs, malformed slices, machine-size boundaries, exhaustion before initialization, partway through insertion and before the charged fallback. The 64-collider indexed case costs 2,272 work/1,024 bytes; 65 colliders fall back after 2,530 work/2,048 bytes. The emitted 1,134 records were compared before regeneration and differ only in charged work fields. Failed setup, lint and test-build records remain separately identified in the capsule.
 
-An expanded C test initially marked a buffer linear after adding an observer owner; this violated the runtime marking precondition. The corrected test marks while exclusive, then adds the observer. Both the failed and corrected logs are retained. The implementation is unchanged by that harness correction.
-
-Windows/macOS native execution is unverified. Parallel scaling, extension adapters, larger native matrices, probabilistic/trace features, remaining theory and broader held-out/comparator coverage remain required. The issue stays open. These measurements establish neither leadership nor a language/runtime impossibility.
+Windows/macOS execution, broader fields/extensions, parallel scaling, larger native matrix coverage, probabilistic/trace features, complete theory and held-out/comparator acceptance remain required. The issue stays open. No fastest-open-source or language/runtime-impossibility claim is made.
 
 
-- [column-index-9449e25be93d.tar.gz](raw/column-index-9449e25be93d.tar.gz): `0fe6fded5e42b717259358e8983e54d719f03d3e619498725275eb79c65a54ab`; measured, baseline, final and kernel source blobs plus all raw observations and final validation.
+- [column-revised-67e9835420ef.tar.gz](raw/column-revised-67e9835420ef.tar.gz): `913a8786886fc1484ab83a67ad64fec2703bb5ee10f613d683c1c22e87aae5c1`; exact revised, initial and baseline sources, validation, all timing rows and separate profiles.
