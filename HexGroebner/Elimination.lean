@@ -116,7 +116,7 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
   if columns > limits.columns then throw (.exhausted .columns)
   if reducers.size + targets.size > limits.rows then throw (.exhausted .rows)
   if !sugars.isEmpty && sugars.size != reducers.size + targets.size then throw .dimensions
-  validateRows field limits columns reducers targets
+  validateRows field limits columns reducers targets native
   let width := field.width
   let workspaceBytes := columns * (width.bytes + 4)
   -- Keep all allocation sizes inside both the logical limit and the platform's
@@ -124,9 +124,9 @@ private def eliminate (field : PrimeField) (limits : MatrixLimits) (columns : Na
   if workspaceBytes ≥ USize.size then throw .dimensions
   packedBytes limits workspaceBytes
   work limits workspaceBytes
-  let mut dense := zerosWith (columns * width.bytes)
+  let mut dense := if native then zerosWith (columns * width.bytes) else zeros (columns * width.bytes)
   -- A slot stores pivot index + 1. Zero means no pivot, never monomial identity.
-  let mut slots := zerosWith (columns * 4)
+  let mut slots := if native then zerosWith (columns * 4) else zeros (columns * 4)
   let mut pivots : Array Pivot := #[]
   let mut nativePivots : Array Native.Scan.Pivot := #[]
   let mut trace : Array RowOp := #[]

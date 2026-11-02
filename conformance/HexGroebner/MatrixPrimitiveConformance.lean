@@ -58,6 +58,17 @@ def checked : Bool := Id.run do
       if bytes.data != actual.data then return false
   return true
 
+/-- The disabled native-row route succeeds on every field fixture. The compiled
+harness additionally requires both primitive call counters to remain unchanged. -/
+def portable : Bool := Id.run do
+  for field in Fixtures.fields do
+    let some row := SparseRow.ofEntries field 3 #[(0,1),(2,1)] | return false
+    let result := Elimination.run field {} 3 #[row] #[row] false #[] false false
+    if !result.result.isOk then return false
+  return true
+
+#guard portable
+
 #guard checked
 
 /-- info: 'Hex.Groebner.Matrix.validateWith_spec' depends on axioms: [propext, Quot.sound] -/

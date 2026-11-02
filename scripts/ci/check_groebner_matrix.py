@@ -627,6 +627,11 @@ def main : IO Unit := do
   if afterOwned ≤ beforeOwned || afterAlias ≤ beforeAlias || (← aliasMask) != 15 then
     throw (IO.userError "exclusive alias insertion was not exercised")
   IO.println s!"exclusive owned comparisons: reuses={afterOwned-beforeOwned}, aliased insertions={afterAlias-beforeAlias}"
+  let beforePortable ← matrixPrimitives
+  if !Hex.Groebner.MatrixPrimitiveConformance.portable then
+    throw (IO.userError "portable matrix route failed")
+  if (← matrixPrimitives) != beforePortable then
+    throw (IO.userError "disabled native matrix route called a row/workspace primitive")
   Hex.Groebner.NativeChecks.run
   let primitives ← matrixPrimitives
   if primitives.1 == 0 || primitives.2 == 0 then

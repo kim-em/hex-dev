@@ -83,9 +83,13 @@ private theorem forIn_unit (indices : List Nat) (action : Nat → Matrix.Work Un
 
 /-- Validate reducers followed by targets with their original input indices. -/
 @[inline] def validateRows (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
-    (reducers targets : Array SparseRow) : Matrix.Work Unit := do
-  for i in [:reducers.size] do validateWith field limits columns i reducers[i]!
-  for i in [:targets.size] do validateWith field limits columns (reducers.size+i) targets[i]!
+    (reducers targets : Array SparseRow) (native : Bool := true) : Matrix.Work Unit := do
+  for i in [:reducers.size] do
+    if native then validateWith field limits columns i reducers[i]!
+    else validate field limits columns i reducers[i]!
+  for i in [:targets.size] do
+    if native then validateWith field limits columns (reducers.size+i) targets[i]!
+    else validate field limits columns (reducers.size+i) targets[i]!
 
 private theorem forM_congr (indices : List Nat) (f g : Nat → Matrix.Work Unit)
     (h : ∀ i ∈ indices, f i = g i) :
@@ -100,10 +104,10 @@ private theorem forM_congr (indices : List Nat) (f g : Nat → Matrix.Work Unit)
 /-- Combined-cursor validation equals the reference's reducer/target loops,
 including every first error and charged prefix. -/
 theorem validateFrom_zero (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
-    (reducers targets : Array SparseRow) :
+    (reducers targets : Array SparseRow) (native : Bool := true) :
     validateFrom field limits columns reducers targets 0 =
-      validateRows field limits columns reducers targets := by
-  simp only [validateFrom, validateRows, validateWith_spec, Std.Legacy.Range.forIn_eq_forIn_range',
+      validateRows field limits columns reducers targets native := by
+  simp only [validateFrom, validateRows, validateWith_spec, ite_self, Std.Legacy.Range.forIn_eq_forIn_range',
     Std.Legacy.Range.size, Nat.sub_zero, Nat.add_sub_cancel, Nat.div_one]
   simp only [forIn_unit]
   rw [← List.range'_append_1 (s := 0) (m := reducers.size) (n := targets.size)]
