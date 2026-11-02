@@ -21,7 +21,10 @@ The shared host is chungus2, an EPYC 9455 with 96 logical CPUs. One algorithm th
 | 1 | 512 | 34.3068 | 32.8684 | 0.9581 | 76480 | 76460 |
 | 1 | 1024 | 230.6286 | 231.5594 | 1.0040 | 117444 | 110800 |
 
-All complete result hashes agree; 2 rows are flagged below the signal floor. Exported cubic-model verdicts and normalized slopes:
+All complete result hashes agree. Two rows are flagged below the signal floor:
+block 0 reference at 256 columns (128 repeats, 0.738-second batch) and block 1
+continuation at 256 columns (64 repeats, 0.336-second batch). They remain in
+the table and raw exports. Exported cubic-model verdicts and normalized slopes:
 
 | Block | Arm | Verdict | Slope |
 | --- | --- | --- | ---: |
