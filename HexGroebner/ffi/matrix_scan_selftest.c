@@ -36,25 +36,32 @@ static void check_mersenne_products(void) {
     const uint32_t p=INT32_MAX;
     uint32_t factors[]={0,1,2,1073741823,1073741824,INT32_MAX-1};
     uint32_t coefficients[]={1,2,1073741824,1073741825,INT32_MAX-1};
-    uint32_t columns[8]={0,1,2,3,4,5,6,7},b[8],dense[8],generic[8],expected[8];
-    unsigned before=mersenne_products;
-    for(unsigned i=0;i<sizeof(factors)/sizeof(factors[0]);++i)
-        for(unsigned j=0;j<sizeof(coefficients)/sizeof(coefficients[0]);++j) {
-            uint32_t factor=factors[i],coefficient=coefficients[j];
-            uint32_t product=(uint32_t)((uint64_t)factor*coefficient%p);
-            for(unsigned k=0;k<8;++k) {
-                b[k]=coefficient;
-                dense[k]=k%4==0?0:k%4==1?p-1:k%4==2?product:(product+1)%p;
-                expected[k]=(uint32_t)((dense[k]+(uint64_t)p-product)%p);
+    uint32_t strides[]={1,2,7};
+    for(unsigned stride=0;stride<sizeof(strides)/sizeof(strides[0]);++stride) {
+        unsigned before=mersenne_products;
+        for(unsigned i=0;i<sizeof(factors)/sizeof(factors[0]);++i)
+            for(unsigned j=0;j<sizeof(coefficients)/sizeof(coefficients[0]);++j) {
+                uint32_t factor=factors[i],coefficient=coefficients[j];
+                uint32_t columns[8],b[8],dense[64],generic[64],expected[64];
+                for(unsigned k=0;k<64;++k)dense[k]=k%3==0?0:k%3==1?p-1:random32()%p;
+                memcpy(expected,dense,sizeof(dense));
+                for(unsigned k=0;k<8;++k) {
+                    columns[k]=k*strides[stride];b[k]=coefficient;
+                    expected[columns[k]]=(uint32_t)((dense[columns[k]]+(uint64_t)p-
+                        (uint64_t)factor*coefficient%p)%p);
+                }
+                memcpy(generic,dense,sizeof(dense));
+                uint32_t multiplier=(uint32_t)(((uint64_t)factor<<32)%p);
+                uint32_t inverse=hex_mont32_inverse(p);
+                assert(hex_scan8_m31((uint8_t*)dense,(uint8_t*)columns,(uint8_t*)b,
+                    0,64,p,multiplier,inverse,4)==8);
+                assert(hex_scan8((uint8_t*)generic,(uint8_t*)columns,(uint8_t*)b,
+                    0,64,p,multiplier,inverse,4)==8);
+                assert(memcmp(dense,expected,sizeof(dense))==0);
+                assert(memcmp(generic,expected,sizeof(generic))==0);
             }
-            memcpy(generic,dense,sizeof(dense));
-            uint32_t m=(uint32_t)(((uint64_t)factor<<32)%p),inverse=hex_mont32_inverse(p);
-            assert(hex_scan8_m31((uint8_t*)dense,(uint8_t*)columns,(uint8_t*)b,0,8,p,m,inverse,4)==8);
-            assert(hex_scan8((uint8_t*)generic,(uint8_t*)columns,(uint8_t*)b,0,8,p,m,inverse,4)==8);
-            assert(memcmp(expected,dense,sizeof(dense))==0);
-            assert(memcmp(expected,generic,sizeof(generic))==0);
-        }
-    assert(mersenne_products>before);
+        assert(mersenne_products>before);
+    }
 }
 
 __attribute__((target("avx2")))
