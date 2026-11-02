@@ -67,3 +67,12 @@ F4 comparisons remain covered. ASan is limited by mimalloc; leaks are disabled.
 `b6a6a4277a28f60a58d9c8432d34dc168677d20109616e1ea71caf7fa98e3c5b`; 158 baseline and 158 candidate source
 blobs, 1238 verified payload digests. No fastest-open-source milestone
 or external performance leadership is demonstrated.
+
+
+The published source includes the final validation harness with six adjacent
+seeds for portable and traced F4. All nine project checks and eight compiler /
+sanitizer variants pass on commit `640dd15054bd31e1c4dee4ffa945754585f92193`. This validation does not transfer
+timing observations to a different binary.
+
+[Validation capsule](raw/matrix-m31-strided-final-validation.tar.gz), SHA256
+`dfdd89bc0da015c115fef8916d09b9860073dab93f82903bf7823fc6be5451ff`; 150 source blobs and 182 verified payload digests.
