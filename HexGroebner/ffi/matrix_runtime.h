@@ -10,4 +10,7 @@ extern lean_obj_res lean_hex_scan_transition(uint64_t,b_lean_obj_arg,b_lean_obj_
     lean_obj_arg,b_lean_obj_arg,b_lean_obj_arg,b_lean_obj_arg,uint8_t);
 extern lean_obj_res lean_hex_gather(uint64_t,lean_obj_arg,b_lean_obj_arg,
     b_lean_obj_arg,b_lean_obj_arg,b_lean_obj_arg,b_lean_obj_arg,uint64_t);
+extern lean_obj_res lean_hex_matrix_validate(uint64_t,b_lean_obj_arg,
+    b_lean_obj_arg,b_lean_obj_arg,b_lean_obj_arg,b_lean_obj_arg);
+extern lean_obj_res lean_hex_matrix_zeros(b_lean_obj_arg);
 #endif

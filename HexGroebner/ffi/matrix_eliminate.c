@@ -337,3 +337,63 @@ LEAN_EXPORT lean_obj_res lean_hex_groebner_eliminate_matrix(uint64_t p,
 defer:
     matrix_cleanup(&c);HEX_GROEBNER_MATRIX_DEFERRED();return lean_box(0);
 }
+
+/* Independent row/workspace primitives retain the original Lean validator
+   as their model; unsupported shapes defer before any charged work. */
+LEAN_EXPORT lean_obj_res lean_hex_matrix_validate(uint64_t p,b_lean_obj_arg limits,
+        b_lean_obj_arg columns,b_lean_obj_arg index,b_lean_obj_arg row,b_lean_obj_arg stats) {
+#if UINTPTR_MAX == UINT64_MAX
+    if(!lean_is_scalar(columns) || lean_unbox(columns)>UINT32_MAX) return lean_box(0);
+    uint64_t cols=lean_unbox(columns),n=lean_sarray_size(lean_ctor_get(row,0))/4;
+    /* Bound inspected row entries independently of the ambient column count.
+       At most 524296 valid payload bytes are read before returning to Lean. */
+    if(n>65537) return lean_box(0);
+    uint64_t counts[8],allow[7];
+    for(unsigned i=0;i<8;++i) {
+        lean_object *v=lean_ctor_get(stats,i);
+        if(!lean_is_scalar(v) || lean_unbox(v)>(UINT64_C(1)<<62)-1) return lean_box(0);
+        counts[i]=lean_unbox(v);
+    }
+    for(unsigned i=0;i<7;++i) {
+        lean_object *v=lean_ctor_get(limits,i);
+        allow[i]=lean_is_scalar(v)?lean_unbox(v):UINT64_MAX/2;
+    }
+    unsigned width=p<=256?1:p<=65536?2:4;
+    lean_object *ids=lean_ctor_get(row,0),*coeff=lean_ctor_get(row,1),*error=NULL;
+    uint64_t column_bytes=lean_sarray_size(ids),coefficient_bytes=lean_sarray_size(coeff);
+    unsigned resource=0,tag=0;uint64_t entry=0;
+    if(!matrix_charge(&counts[0],1,allow[5])) {resource=5;goto exhausted;}
+    if(column_bytes%4 || coefficient_bytes!=n*width) {tag=2;goto invalid;}
+    if(!matrix_charge(&counts[1],n,allow[2])) {resource=2;goto exhausted;}
+    if(!matrix_charge(&counts[3],column_bytes+coefficient_bytes,allow[4])) {resource=4;goto exhausted;}
+    if(!matrix_charge(&counts[0],n,allow[5])) {resource=5;goto exhausted;}
+    uint64_t previous=0;
+    for(entry=0;entry<n;++entry) {
+        uint64_t col=matrix_read(lean_sarray_cptr(ids)+4*entry,4);
+        if(col>=cols || (entry && col<=previous)) {tag=3;goto invalid;}
+        uint64_t value=matrix_read(lean_sarray_cptr(coeff)+width*entry,width);
+        if(!value || value>=p) {tag=4;goto invalid;}
+        previous=col;
+    }
+    goto result;
+exhausted:
+    error=lean_alloc_ctor(5,0,1);lean_ctor_set_uint8(error,0,(uint8_t)resource);goto result;
+invalid:
+    error=lean_alloc_ctor(tag,tag==2?1:2,0);lean_inc(index);lean_ctor_set(error,0,index);
+    if(tag!=2) lean_ctor_set(error,1,lean_uint64_to_nat(entry));
+result:;
+    lean_object *out_stats=lean_alloc_ctor(0,8,0);
+    for(unsigned i=0;i<8;++i) lean_ctor_set(out_stats,i,lean_uint64_to_nat(counts[i]));
+    lean_object *outcome=lean_alloc_ctor(error?0:1,1,0);lean_ctor_set(outcome,0,error?error:lean_box(0));
+    lean_object *pair=lean_alloc_ctor(0,2,0);lean_ctor_set(pair,0,outcome);lean_ctor_set(pair,1,out_stats);
+    lean_object *some=lean_alloc_ctor(1,1,0);lean_ctor_set(some,0,pair);return some;
+#else
+    (void)p;(void)limits;(void)columns;(void)index;(void)row;(void)stats;return lean_box(0);
+#endif
+}
+
+LEAN_EXPORT lean_obj_res lean_hex_matrix_zeros(b_lean_obj_arg size) {
+    if(!lean_is_scalar(size) || lean_unbox(size)>1048576) return lean_box(0);
+    lean_object *bytes=matrix_zeros(lean_unbox(size));
+    lean_object *some=lean_alloc_ctor(1,1,0);lean_ctor_set(some,0,bytes);return some;
+}

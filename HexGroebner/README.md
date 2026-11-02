@@ -193,6 +193,17 @@ also support ordinary-kernel replay independently of the C implementation.
 Owned accumulator/output buffers use copy-on-write when aliased; input pivot
 buffers remain borrowed.
 
+The ordinary matrix loop also uses native validation for rows of at most 65,537
+entries and at most 2^32−1 ambient columns on 64-bit hosts, with input counters
+below 2^62. Calls decline before charges outside that geometry. Native zeroed
+buffer allocation admits at most one MiB per call; larger buffers use the
+portable allocator. Both bindings borrow inputs and return fresh owned results.
+`Matrix.validateWith_spec` and `Matrix.zerosWith_spec` equate their Lean models
+to the original operations, including exact first errors and charge prefixes.
+The C implementations are audited and compared independently. Disabling native
+rows also disables these validation/allocation calls. The existing column-map
+builder separately uses the 4096-byte append-zero provider in chunks.
+
 The native scan dispatches once per bounded call to specialized one-, two- or
 four-byte scalar loops. Scalar products use uint128 Barrett reduction when
 available and exact word remainder otherwise. One- and two-byte residues use a

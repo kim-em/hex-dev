@@ -64,7 +64,8 @@ def run() -> None:
         (directory / "lean-toolchain").write_bytes((ROOT / "lean-toolchain").read_bytes())
         # The included source gets private names; only our counted wrappers use --wrap.
         source = ROOT / "HexGroebner/ffi/matrix_scan.c"
-        (directory / "probe.c").write_text('''#include RUNTIME_HEADER
+        (directory / "probe.c").write_text('''#include <assert.h>
+#include RUNTIME_HEADER
 #define lean_hex_groebner_subtract_row hex_test_unused_subtract
 #define lean_hex_groebner_remap_columns hex_test_remap
 #define lean_hex_groebner_remap_index hex_test_remap_index
@@ -366,8 +367,68 @@ LEAN_EXPORT lean_obj_res hex_test_continuation_bounds(lean_obj_arg world) {
  return lean_io_result_mk_ok(pair);
 }
 
+#define lean_hex_matrix_validate hex_test_matrix_validate
+#define lean_hex_matrix_zeros hex_test_matrix_zeros
 #include WHOLECODE
+#undef lean_hex_matrix_validate
+#undef lean_hex_matrix_zeros
 #undef lean_hex_groebner_eliminate_matrix
+static uint64_t primitive_validations=0,primitive_zeros=0;
+static uint64_t primitive_validate_admitted=0,primitive_validate_declined=0;
+static uint64_t primitive_zero_admitted=0,primitive_zero_declined=0;
+__typeof__(hex_test_matrix_validate) __wrap_lean_hex_matrix_validate;
+LEAN_EXPORT lean_obj_res __wrap_lean_hex_matrix_validate(uint64_t p,b_lean_obj_arg limits,
+ b_lean_obj_arg columns,b_lean_obj_arg index,b_lean_obj_arg row,b_lean_obj_arg stats) {
+ lean_object *saved_limits[7],*saved_stats[8],*saved_row[2];
+ for(unsigned i=0;i<7;++i)saved_limits[i]=lean_ctor_get(limits,i);
+ for(unsigned i=0;i<8;++i)saved_stats[i]=lean_ctor_get(stats,i);
+ for(unsigned i=0;i<2;++i)saved_row[i]=lean_ctor_get(row,i);
+ size_t a=lean_sarray_size(saved_row[0]),b=lean_sarray_size(saved_row[1]);
+ uint8_t *snapshot=NULL;
+ if(a<=1048576 && b<=1048576) {
+  snapshot=malloc(a+b+1);assert(snapshot);
+  memcpy(snapshot,lean_sarray_cptr(saved_row[0]),a);
+  memcpy(snapshot+a,lean_sarray_cptr(saved_row[1]),b);
+ }
+ ++primitive_validations;lean_object *result=hex_test_matrix_validate(p,limits,columns,index,row,stats);
+ for(unsigned i=0;i<7;++i)assert(saved_limits[i]==lean_ctor_get(limits,i));
+ for(unsigned i=0;i<8;++i)assert(saved_stats[i]==lean_ctor_get(stats,i));
+ for(unsigned i=0;i<2;++i)assert(saved_row[i]==lean_ctor_get(row,i));
+ if(snapshot) {
+  assert(a==lean_sarray_size(saved_row[0]) && b==lean_sarray_size(saved_row[1]));
+  assert(memcmp(snapshot,lean_sarray_cptr(saved_row[0]),a)==0);
+  assert(memcmp(snapshot+a,lean_sarray_cptr(saved_row[1]),b)==0);free(snapshot);
+ }
+ if(lean_is_scalar(result))++primitive_validate_declined;else {
+  ++primitive_validate_admitted;assert(lean_is_exclusive(result));
+  lean_object *pair=lean_ctor_get(result,0);assert(lean_is_exclusive(pair));
+  assert(lean_is_exclusive(lean_ctor_get(pair,0)));
+  assert(lean_is_exclusive(lean_ctor_get(pair,1)));
+ }
+ return result;
+}
+__typeof__(hex_test_matrix_zeros) __wrap_lean_hex_matrix_zeros;
+LEAN_EXPORT lean_obj_res __wrap_lean_hex_matrix_zeros(b_lean_obj_arg size) {
+ ++primitive_zeros;lean_object *result=hex_test_matrix_zeros(size);
+ if(lean_is_scalar(result))++primitive_zero_declined;else {
+  ++primitive_zero_admitted;assert(lean_is_exclusive(result));
+  assert(lean_is_exclusive(lean_ctor_get(result,0)));
+ }
+ return result;
+}
+LEAN_EXPORT lean_obj_res hex_test_matrix_primitives(lean_obj_arg world) {
+ (void)world;lean_object *pair=lean_alloc_ctor(0,2,0);
+ lean_ctor_set(pair,0,lean_box_uint64(primitive_validations));
+ lean_ctor_set(pair,1,lean_box_uint64(primitive_zeros));return lean_io_result_mk_ok(pair);
+}
+LEAN_EXPORT lean_obj_res hex_test_primitive_admissions(lean_obj_arg world) {
+ (void)world;lean_object *outer=lean_alloc_ctor(0,2,0),*a=lean_alloc_ctor(0,2,0),*b=lean_alloc_ctor(0,2,0);
+ lean_ctor_set(a,0,lean_box_uint64(primitive_validate_admitted));
+ lean_ctor_set(a,1,lean_box_uint64(primitive_validate_declined));
+ lean_ctor_set(b,0,lean_box_uint64(primitive_zero_admitted));
+ lean_ctor_set(b,1,lean_box_uint64(primitive_zero_declined));
+ lean_ctor_set(outer,0,a);lean_ctor_set(outer,1,b);return lean_io_result_mk_ok(outer);
+}
 static uint64_t scan_calls=0,gather_calls=0,byte_calls=0,product_calls=0;
 static uint64_t search_calls=0;
 __typeof__(hex_test_combine_owned) __wrap_lean_hex_groebner_combine_owned;
@@ -549,7 +610,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
         flags = ["-O3", "-g", "-Wall", "-Wextra", "-Werror", "-fPIC", "-DLEAN_EXPORTING"]
         if sanitize:
             flags += ["-fsanitize=address,undefined", "-fno-sanitize-recover=undefined", "-fno-omit-frame-pointer"]
-        link_args = ["-Wl,--wrap=lean_hex_matrix_advance", "-Wl,--wrap=lean_hex_groebner_remap_index", "-Wl,--wrap=lean_hex_groebner_append_zeros", "-Wl,--wrap=lean_hex_groebner_remap_columns", "-Wl,--wrap=lean_hex_scan_transition", "-Wl,--wrap=lean_hex_gather",
+        link_args = ["-Wl,--wrap=lean_hex_matrix_validate", "-Wl,--wrap=lean_hex_matrix_zeros", "-Wl,--wrap=lean_hex_matrix_advance", "-Wl,--wrap=lean_hex_groebner_remap_index", "-Wl,--wrap=lean_hex_groebner_append_zeros", "-Wl,--wrap=lean_hex_groebner_remap_columns", "-Wl,--wrap=lean_hex_scan_transition", "-Wl,--wrap=lean_hex_gather",
                      "-Wl,--wrap=lean_hex_groebner_equal_bytes",
                      "-Wl,--wrap=lean_hex_groebner_equal_products",
                      "-Wl,--wrap=lean_hex_groebner_eliminate_matrix",
@@ -562,6 +623,8 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
             target = "check" + variant
             targets.append(target)
             (directory / (module + ".lean")).write_text('''import HexGroebner.NativeChecks
+@[extern "hex_test_matrix_primitives"] opaque matrixPrimitives : IO (UInt64 × UInt64)
+@[extern "hex_test_primitive_admissions"] opaque primitiveAdmissions : IO ((UInt64 × UInt64) × (UInt64 × UInt64))
 @[extern "hex_test_remap_count"] opaque remapCount : IO UInt64
 @[extern "hex_test_continuation_count"] opaque continuationCount : IO UInt64
 @[extern "hex_test_continuation_validations"] opaque continuationValidations : IO UInt64
@@ -607,7 +670,40 @@ def main : IO Unit := do
   if afterOwned ≤ beforeOwned || afterAlias ≤ beforeAlias || (← aliasMask) != 15 then
     throw (IO.userError "exclusive alias insertion was not exercised")
   IO.println s!"exclusive owned comparisons: reuses={afterOwned-beforeOwned}, aliased insertions={afterAlias-beforeAlias}"
+  let primitiveSeed ← Hex.Groebner.NativeChecks.readSeed
+  IO.println s!"primitive conformance seed: {primitiveSeed}"
+  let beforePortableScan ← counts
+  let beforePortableWhole ← wholeCounts
+  let beforePortableBytes ← byteCount
+  let beforePortableRemap ← remapCount
+  let beforePortableIndex ← indexCount
+  let beforePortableZeros ← zeroAppendCount
+  let beforePortableContinuation ← continuationCount
+  let beforePortableProducts ← productCount
+  let beforePortable ← matrixPrimitives
+  for offset in [:6] do
+    let seed := primitiveSeed+offset
+    if !Hex.Groebner.MatrixPrimitiveConformance.portable seed then
+      throw (IO.userError s!"portable matrix route failed, seed={seed}")
+    Hex.Groebner.NativeChecks.runPortableF4 seed
+  if (← matrixPrimitives) != beforePortable || (← counts) != beforePortableScan ||
+      (← wholeCounts) != beforePortableWhole || (← byteCount) != beforePortableBytes ||
+      (← remapCount) != beforePortableRemap || (← indexCount) != beforePortableIndex ||
+      (← zeroAppendCount) != beforePortableZeros ||
+      (← continuationCount) != beforePortableContinuation ||
+      (← productCount) != beforePortableProducts then
+    throw (IO.userError "public portable F4 called a native row/bulk/column/byte provider")
+  let beforeIntegrated ← primitiveAdmissions
+  for offset in [:6] do
+    if !Hex.Groebner.MatrixPrimitiveConformance.integrated (primitiveSeed+offset) then
+      throw (IO.userError s!"traced native matrix integration failed, seed={primitiveSeed+offset}")
+  let afterIntegrated ← primitiveAdmissions
+  if afterIntegrated.1.1 ≤ beforeIntegrated.1.1 || afterIntegrated.2.1 ≤ beforeIntegrated.2.1 then
+    throw (IO.userError "traced elimination did not admit both native primitives")
+  IO.println s!"traced elimination primitive admissions: validation={afterIntegrated.1.1-beforeIntegrated.1.1}, zero={afterIntegrated.2.1-beforeIntegrated.2.1}"
   Hex.Groebner.NativeChecks.run
+  let primitives ← matrixPrimitives
+  IO.println s!"native matrix validation/zero-buffer primitives: {primitives}"
   let continuationCalls ← continuationCount
   if continuationCalls == 0 then throw (IO.userError "native continuation unused")
   if !(← continuationOutcomes) then
@@ -646,7 +742,12 @@ def main : IO Unit := do
   let primitiveInserts ← insertCount
   let primitiveAccepted ← acceptedCount
   let primitiveDeferred ← deferredCount
+  let beforeF4Primitives ← primitiveAdmissions
   Hex.Groebner.NativeChecks.runF4
+  let afterF4Primitives ← primitiveAdmissions
+  if afterF4Primitives.1.1 ≤ beforeF4Primitives.1.1 || afterF4Primitives.2.1 ≤ beforeF4Primitives.2.1 then
+    throw (IO.userError "F4 did not admit validation and zero-buffer primitives")
+  IO.println s!"F4 primitive validation admitted/declined: {afterF4Primitives.1.1-beforeF4Primitives.1.1}/{afterF4Primitives.1.2-beforeF4Primitives.1.2}; zero admitted/declined: {afterF4Primitives.2.1-beforeF4Primitives.2.1}/{afterF4Primitives.2.2-beforeF4Primitives.2.2}"
   let wholeAfter ← wholeCounts
   if wholeAfter.1 ≤ wholeBefore.1 || wholeAfter.2 ≤ wholeBefore.2 then throw (IO.userError "F4 did not exercise accepted/deferred whole matrices")
   IO.println s!"whole matrix accepted/deferred: {wholeAfter}; F4 accepted/deferred: {wholeAfter.1-wholeBefore.1}/{wholeAfter.2-wholeBefore.2}"

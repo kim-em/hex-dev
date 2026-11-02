@@ -23,7 +23,7 @@ theorem native_width (field : PrimeField) :
     show (65536 : UInt64).toNat = 65536 from rfl]
   split <;> (try split) <;> rfl
 
-/-- Constructor indices are mirrored in `ffi/matrix_state.c`.
+/-- Constructor indices are mirrored in `ffi/matrix_state.c` and `matrix_eliminate.c`.
 Resource categories. Packed bytes count logical input, workspace and output
 payload and 64 logical bytes per recorded derivation operation, excluding
 allocator capacity and other Lean object headers. Work counts row
@@ -33,7 +33,7 @@ inductive Resource where
   | columns | rows | inputEntries | outputEntries | packedBytes | work | traceNodes
   deriving BEq, Repr
 
-/-- Constructor tags are mirrored in `ffi/matrix_state.c`.
+/-- Constructor tags are mirrored in `ffi/matrix_state.c` and `matrix_eliminate.c`.
 Invalid serialized data, resource exhaustion and internal row-provider failure remain distinct. -/
 inductive MatrixError where
   | dimensions
@@ -186,10 +186,69 @@ def validate (field : PrimeField) (limits : MatrixLimits)
     if c == 0 || c ≥ field.modulus then throw (.coefficient index i)
     previous := some column
 
+/-- Bounded native row validation. `PrimeField` is its UInt64 modulus; all
+remaining inputs are borrowed Lean records, Nat indices and packed byte arrays.
+Native code returns `some` exactly on the admitted 64-bit geometry: at most
+`2^32−1` columns and 65537 entries, with counters below `2^62`. This caps one
+uninterruptible row call at 65537 entry inspections and 524296 payload bytes.
+Larger allowances saturate above every reachable total; error indices remain
+arbitrary Nat. A decline happens before charges and uses the original validator.
+
+The owned result is `Option (Except MatrixError Unit × MatrixStats)`, with
+standard Option/Except/Prod tags and fresh result/statistics records. An error
+retains the borrowed input index by reference; every other input stays immutable,
+including aliased row buffers and records. The result contains the exact original
+validator error and charged prefix. -/
+@[extern "lean_hex_matrix_validate"]
+def attemptValidation (field : PrimeField) (limits : @& MatrixLimits)
+    (columns index : @& Nat) (row : @& SparseRow) (stats : @& MatrixStats) :
+    Option (Except MatrixError Unit × MatrixStats) :=
+  if USize.size != 2^64 || columns > 4294967295 || row.size > 65537 ||
+      stats.work > 2^62-1 || stats.inputEntries > 2^62-1 ||
+      stats.outputEntries > 2^62-1 || stats.packedBytes > 2^62-1 ||
+      stats.traceNodes > 2^62-1 || stats.processedRows > 2^62-1 ||
+      stats.reductions > 2^62-1 || stats.zeroRows > 2^62-1 then none
+  else some ((validate field limits columns index row).run stats)
+
+/-- Validate a row using the bounded native provider where admitted. -/
+def validateWith (field : PrimeField) (limits : MatrixLimits)
+    (columns index : Nat) (row : SparseRow) : Work Unit := ExceptT.mk fun stats =>
+  match attemptValidation field limits columns index row stats with
+  | some result => result
+  | none => (validate field limits columns index row).run stats
+
+/-- The original validation action, including every failure prefix, is preserved. -/
+theorem validateWith_spec (field : PrimeField) (limits : MatrixLimits)
+    (columns index : Nat) (row : SparseRow) :
+    validateWith field limits columns index row = validate field limits columns index row := by
+  funext stats
+  simp only [validateWith, attemptValidation, ExceptT.mk]
+  split <;> split at * <;> simp_all [ExceptT.run]
+
 def zeros (size : Nat) : ByteArray := Id.run do
   let mut data := ByteArray.emptyWithCapacity size
   for _ in [:size] do data := data.push 0
   return data
+
+/-- Bounded native allocation/initialization of at most one MiB per call. The
+borrowed Nat size admits exactly `size≤1048576`, on every supported platform;
+this fixed cap bounds uninterruptible zeroing work. The owned Option contains a
+fresh byte array of that size with every byte zero. `none` allocates no buffer
+and the caller uses the original implementation; there are no borrowed buffers
+to mutate or alias. Larger-workspace native initialization remains future work. -/
+@[extern "lean_hex_matrix_zeros"]
+def attemptZeros (size : @& Nat) : Option ByteArray :=
+  if size > 1048576 then none else some (zeros size)
+
+/-- Allocate a zeroed workspace, with portable allocation outside the native cap. -/
+def zerosWith (size : Nat) : ByteArray :=
+  match attemptZeros size with
+  | some bytes => bytes
+  | none => zeros size
+
+@[simp] theorem zerosWith_spec (size : Nat) : zerosWith size = zeros size := by
+  simp only [zerosWith, attemptZeros]
+  split <;> split at * <;> simp_all
 
 /-- Square-and-multiply, with each multiply charged to the parent allowance.
 The modulus bit length bounds the loop; `PrimeField.bound` makes it at most
