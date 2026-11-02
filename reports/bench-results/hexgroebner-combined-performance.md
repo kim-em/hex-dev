@@ -134,10 +134,12 @@ speedup. The vendor binary lacks useful symbol names in its capture, so no
 internal algorithm attribution is made for it. Profiles include startup/output
 and provide cost attribution rather than matched timing evidence.
 
-Combined library/theory/conformance builds, independent matrix/division/basis
-oracles, both 1,134-case drivers, eight Clang/GCC sanitizer/scalar/SIMD/remainder
-configurations, kernel replay/axiom guards, benchmark verification and project
-DAG/phase/release/header/line checks pass. The native tests include malformed
+At code commit `65884c900e`, the nine-stage run passes library/theory/conformance
+builds, independent matrix/division/basis oracles, both 1,134-case drivers,
+kernel replay/axiom guards, benchmark verification and project
+DAG/phase/release/header/line checks. At `ec583f66a7`, all eight expanded
+Clang/GCC sanitizer/scalar/SIMD/remainder configurations and six static/figure
+checks pass. The native tests include malformed
 prefixes (including resumed pending pivots), guard pages, aliases, snapshots,
 late exhaustion and large widths. Workspace tests cover the one-MiB native zero
 limit and scalar fallback at all three coefficient widths. An isolated harness
@@ -170,6 +172,6 @@ and RSS from the retained sample metadata. For every before/after pair it reads
 the complete stdout objects, compares every field except `candidateNanos`, and
 checks counters/scheduling against metadata. The earlier analysis script is also
 retained at `reproduction/analyze-equivalence-candidates.py` in each relevant raw
-capsule; the new audit makes this stronger comparison directly reusable.
+capsule; the new audit makes this stronger comparison re-runnable for this report.
 
-[Current conformance and figure audit f4-performance-audit-ec583f66a7](raw/f4-performance-audit-ec583f66a7.tar.gz): SHA-256 `524ff8b5b9b5653817799268fa1f621e2d0331b69ad9d0141cd9b16a452ab8db`, 52 payloads, each read back and digest checked. It retains all eight expanded sanitizer variants, the isolated six-admitted/six-declined runtime window, project checks, report audit, negative audit cases and runtime-source identity.
+[Current conformance and figure audit f4-performance-audit-ec583f66a7](raw/f4-performance-audit-ec583f66a7.tar.gz): SHA-256 `524ff8b5b9b5653817799268fa1f621e2d0331b69ad9d0141cd9b16a452ab8db`, 52 payloads, each read back and digest checked. It retains the rejected pre-runtime-window counter check under its own source identity and all eight expanded sanitizer variants, the isolated six-admitted/six-declined runtime window, project checks, report audit, negative audit cases and runtime-source identity.

@@ -11,10 +11,16 @@ import json
 import math
 from pathlib import Path
 import statistics
+import sys
+
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
+from scripts.bench.groebner_json import loads
 
 
 def load(path: Path):
-    return json.loads(path.read_text())
+    return loads(path.read_text())
 
 
 def mean(values):
@@ -121,13 +127,22 @@ def main():
             results[label + "/" + suffix] = campaign(result / suffix)
     cache = [results["scan-cache/" + suffix] for suffix in ["before-after", "before-after-repeat"]]
     driver = results["driver-output/before-after"]
-    for metric in ["family_balanced_geomean", "candidate_geomean"]:
-        check(f"{cache[0][metric]:.4f} and {cache[1][metric]:.4f}" in report, "component ratio mismatch")
-    for metric in ["family_balanced_geomean", "candidate_geomean"]:
-        check(f"{driver[metric]:.4f}" in report, "driver ratio mismatch")
-    check(f"{driver['peak_rss_kib']['A']}/{driver['peak_rss_kib']['B']} KiB" in report, "driver RSS mismatch")
-    for key in ["candidate_geomean", "candidate_minimum", "candidate_maximum"]:
-        check(f"{selected[key]:.4f}" in report, "combined candidate ratio mismatch")
+    prose = " ".join(report.split())
+    cache_phrase = (f"process ratios {cache[0]['family_balanced_geomean']:.4f} and "
+                    f"{cache[1]['family_balanced_geomean']:.4f}, internal candidate ratios "
+                    f"{cache[0]['candidate_geomean']:.4f} and {cache[1]['candidate_geomean']:.4f}")
+    check(cache_phrase in prose, "component ratio phrase mismatch")
+    driver_phrase = (f"has process mean {driver['family_balanced_geomean']:.4f}, internal "
+                     f"candidate mean {driver['candidate_geomean']:.4f} and peak baseline/new "
+                     f"RSS {driver['peak_rss_kib']['A']}/{driver['peak_rss_kib']['B']} KiB")
+    check(driver_phrase in prose, "driver ratio phrase mismatch")
+    candidate_phrase = (f"internal candidate-time mean is {selected['candidate_geomean']:.4f}, "
+                        f"with range {selected['candidate_minimum']:.4f}–{selected['candidate_maximum']:.4f}")
+    check(candidate_phrase in prose, "combined candidate phrase mismatch")
+    comparator_phrase = (f"process ratios are {results['msolve-l2']['family_balanced_geomean']:.4f} "
+                         f"(exact mode 2) and {results['msolve-l42']['family_balanced_geomean']:.4f} "
+                         "(probabilistic mode 42)")
+    check(comparator_phrase in prose, "comparator headline mismatch")
     print(json.dumps(dict(scope="Recomputed report figures and all before/after JSON fields except candidateNanos, including counters and scheduling", campaigns=results), indent=2))
 
 

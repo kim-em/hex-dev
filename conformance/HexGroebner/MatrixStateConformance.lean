@@ -219,7 +219,8 @@ def workspaceChecks : Bool := Id.run do
 
 /-- Exercise the Lean workspace phase after the native scheduler declines.
 All three coefficient widths cover the one-MiB zero-provider cap or fallback;
-the six shapes admit six buffers and decline six. Saved buffers stay empty. -/
+the six shapes admit six buffers and decline six. Saved buffers stay empty.
+The runtime seed prevents evaluation before the provider-counter window. -/
 def wideWorkspaces (seed : Nat := 0) : Bool := Id.run do
   let narrow : PrimeField := ⟨7,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
   let medium : PrimeField := ⟨257,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩

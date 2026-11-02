@@ -97,7 +97,8 @@ paused states, malformed inputs, exhaustion and saved-buffer ownership.
 Additional compiled checks compare the exact workspace-phase buffers and
 counters of `advanceKernels` and `advancePortable` at 65,537 and 262,145
 columns, including the native-zero fallback boundary. Prepared saved buffers
-remain empty.
+remain empty. The [combined report](hexgroebner-combined-performance.md)
+records the expanded six-shape, three-width runtime provider-counter checks.
 Sanitizer leak detection is disabled under mimalloc; explicit saved-snapshot
 checks supplement it.
 
