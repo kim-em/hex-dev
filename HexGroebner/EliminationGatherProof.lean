@@ -76,7 +76,8 @@ private theorem nativeGather_spec (base : MatrixState.State) (hphase : base.phas
     Triple (m := Matrix.Work) (ps := .except MatrixError (.arg MatrixStats .pure))
       (nativeGather base.field base.limits base.gather.dense base.leading base.scan.last base.inverse)
       (fun stats => ⌜stats = base.stats⌝)
-      (fun result stats => ⌜∃ quanta, outcome
+      (fun result stats => ⌜∃ quanta,
+          (gatheredState base result.1 result.2 quanta stats).geometry ∧ outcome
           (gatheredState base result.1 result.2 quanta stats) = outcome base⌝,
         fun error stats => ⌜outcome base = (.error error,stats)⌝,PUnit.unit) := by
   have fresh := hstart.symm
@@ -85,7 +86,8 @@ private theorem nativeGather_spec (base : MatrixState.State) (hphase : base.phas
   simp only [Native.Gather.gather]
   mvcgen invariants
   · Invariant.withEarlyReturnNewDo
-      (onReturn := fun result _ stats => ⌜∃ quanta, outcome
+      (onReturn := fun result _ stats => ⌜∃ quanta,
+        (gatheredState base result.1 result.2 quanta stats).geometry ∧ outcome
         (gatheredState base result.1 result.2 quanta stats) = outcome base⌝)
       (onContinue := fun cursor data stats => ⌜
         (gatherState base data cursor.suffix.length stats).geometry ∧
@@ -145,7 +147,10 @@ private theorem nativeGather_spec (base : MatrixState.State) (hphase : base.phas
                     simpa [current,gathered_update,hphase] using step.symm
                   simp [hs1,Std.Do.WP.wp,ExceptT.run,ExceptT.mk,ExceptT.pure,
                     StateT.pure,StateT.run,Pure.pure,Id.run]
-                  exact ⟨suff.length,finish⟩
+                  have completeGeometry := gathered_geometry base
+                    ⟨output.state.columns,output.state.coefficients⟩ output.state.dense
+                    suff.length finalStats (hdense.trans currentGeometry.1)
+                  exact ⟨suff.length,completeGeometry,finish⟩
                 · by_cases hs0 : output.status = 0
                   · rw [gather_continue current output finalStats rfl currentGeometry hdense hs0] at step
                     have nextGeometry := gather_geometry current output.state (current.quanta-1)

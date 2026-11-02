@@ -238,6 +238,17 @@ private theorem scan_normalize (state : MatrixState.State) (output : Native.Scan
     MonadStateOf.modifyGet,StateT.modifyGet,modifyGet,Id.run]
   all_goals grind
 
+private theorem normalization_geometry (state : MatrixState.State) (data : Native.Scan.State)
+    (inverse : UInt64) (stats : MatrixStats) (hphase : state.phase = .scan)
+    (hgeometry : state.geometry) (hdense : data.dense.size = state.columns*state.field.width.bytes)
+    (hlast : data.last < max 1 state.columns) (hleading : data.leading ≤ state.columns)
+    (hpositive : data.leading ≠ 0) : (gatheredScan state data inverse stats).geometry := by
+  simp only [MatrixState.State.geometry,hphase] at hgeometry
+  simp only [gatheredScan,MatrixState.State.geometry]
+  refine ⟨hdense,hgeometry.2.1,?_,?_⟩ <;> omega
+
+#print axioms normalization_geometry
+
 #print axioms scan_normalize
 
 #print axioms scan_work_error

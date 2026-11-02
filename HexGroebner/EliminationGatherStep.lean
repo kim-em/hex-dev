@@ -121,6 +121,16 @@ private theorem gather_outcome (state : MatrixState.State) (hphase : state.phase
 
 
 
+private theorem gathered_geometry (base : MatrixState.State) (row : SparseRow)
+    (dense : ByteArray) (quanta : Nat) (stats : MatrixStats)
+    (hdense : dense.size = base.columns*base.field.width.bytes) :
+    (gatheredState base row dense quanta stats).geometry := by
+  by_cases independent : base.independent = true ∧ base.input ≥ base.reducers.size
+  all_goals simp [gatheredState,install_run,MatrixState.State.geometry,MatrixState.isTarget,
+    independent,hdense]
+
+#print axioms gathered_geometry
+
 #print axioms gather_outcome
 #print axioms gather_zero
 
