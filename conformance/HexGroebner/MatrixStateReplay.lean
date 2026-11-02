@@ -50,4 +50,32 @@ theorem validation_example :
 /-- info: 'Hex.Groebner.MatrixState.validate_error' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in #print axioms MatrixState.validate_error
 
+/-- Residual validation follows the same input indices as the continuation. -/
+private noncomputable def validateFrom (field : PrimeField) (limits : MatrixLimits)
+    (columns : Nat) (reducers targets : Array SparseRow) (cursor : Nat) : Matrix.Work Unit := do
+  for i in [cursor:reducers.size+targets.size] do
+    Matrix.validate field limits columns i
+      (if i < reducers.size then reducers[i]! else targets[i-reducers.size]!)
+
+private theorem validate_tail (field : PrimeField) (limits : MatrixLimits)
+    (columns : Nat) (reducers targets : Array SparseRow) (cursor : Nat)
+    (h : cursor < reducers.size+targets.size) :
+    validateFrom field limits columns reducers targets cursor = (do
+      Matrix.validate field limits columns cursor
+        (if cursor < reducers.size then reducers[cursor]! else targets[cursor-reducers.size]!)
+      validateFrom field limits columns reducers targets (cursor+1)) := by
+  simp only [validateFrom, Std.Legacy.Range.forIn_eq_forIn_range',
+    Std.Legacy.Range.size, Nat.add_sub_cancel, Nat.div_one]
+  have length : reducers.size+targets.size-cursor =
+      (reducers.size+targets.size-(cursor+1))+1 := by omega
+  rw [length, List.range'_succ]
+  simp
+
+private theorem validate_done (field : PrimeField) (limits : MatrixLimits)
+    (columns : Nat) (reducers targets : Array SparseRow) (cursor : Nat)
+    (h : reducers.size+targets.size ≤ cursor) :
+    validateFrom field limits columns reducers targets cursor = pure () := by
+  simp [validateFrom, Std.Legacy.Range.forIn_eq_forIn_range',
+    Std.Legacy.Range.size, Nat.sub_eq_zero_of_le h]
+
 end Hex.Groebner.MatrixStateReplay
