@@ -4,7 +4,7 @@ Source fingerprint `14564559e1b2`, snapshot `1cbdc7e22dc1b59e256a6efffba98c971bf
 
 Every coefficient is one, exercising the unit-inverse alias shortcut. Each matrix over prime 65537 has n columns, n/2 two-entry reducers with distinct leading columns, and eight three-entry targets. There is one new target pivot and seven zero target rows. The known-pivot installation path is exercised n/2 times. Validation, installation, fixed-eight-target scanning and full output consumption are linear in n. Preparation is excluded. Every registered size (64, 128, 256, 512, 1024) has build-time checks for native bulk admission, successful completion and equality of complete rows, target flags, multipliers, sugars and every resource counter.
 
-Two separate comparisons use adjacent AB/BA whole five-size sweeps, one trial per sweep (block 0 AB, block 1 BA): A is either `Elimination.reference` (ordinary Lean scheduling with bounded native scan/gather) or `Elimination.run` (the admitted whole-matrix native route); B is the bounded continuation. This is the first campaign for this sparse family, with forty completed samples and no unchanged repeat. It is separate from the dense Cauchy records. All samples, including signal-floor flags, are retained.
+Two separate comparisons use adjacent AB/BA whole five-size sweeps, one trial per sweep (block 0 AB, block 1 BA): A is either `Elimination.reference` (ordinary Lean scheduling with bounded native scan/gather) or `Elimination.run` (the admitted whole-matrix native route); B is the bounded continuation. This is the first reference/bulk campaign for this measured source, with forty completed samples and no unchanged repeat. It is separate from the dense Cauchy records. All samples, including signal-floor flags, are retained.
 
 The shared EPYC 9455 host has 96 logical CPUs. One algorithm thread is requested on automatically leased CPU 31. Recorded loads (1/5/15 minutes): [31.208984375, 21.61279296875, 16.99609375] → [29.11376953125, 25.1875, 19.0224609375]. There is no host-activity filtering. The registered inner target is four seconds and the call cap thirty-two seconds; actual batches, repeats, effective targets and spawn floors are retained.
 
@@ -31,7 +31,7 @@ The shared EPYC 9455 host has 96 logical CPUs. One algorithm thread is requested
 | bulk | 1 | 512 | 46.075 | 67.055 | 1.4553 | 67632 | 67700 | False/False |
 | bulk | 1 | 1024 | 85.840 | 126.473 | 1.4733 | 67580 | 67644 | False/False |
 
-Complete result hashes agree across all three functions at every size. 0 samples are below the runner signal floor; their table flags and raw exports remain. Exported linear-model fits:
+Complete result hashes agree across all three functions at every size. No sample is below the runner signal floor. Exported linear-model fits:
 
 | Comparator | Block | Arm | Verdict | Slope |
 | --- | ---: | --- | --- | ---: |
@@ -48,12 +48,11 @@ These observations cover this sparse family and do not imply a general F4 speedu
 
 Fresh F4 compute/reference SHA256 values remain `fb8e8c73858b122576cc3fe631a47876d10c6af06ec86b6d4ad93d980b76b617` and `7936068cb67aab7824434fe4e2bfeb5f3ecadf13427e3f63b01ccd852f338ad0`, byte-identical to the earlier twenty-object refactoring source. Existing full-system observations retain their original provenance. Candidate production, certificate generation, independent certification and kernel checking are not measured by these standalone kernels.
 
-Build-time conformance now checks field names, object slots, scalar offsets and phase/resource/error constructor order against the native ABI, including a negative same-kind permutation check. Eight Clang/GCC ASan/UBSan variants pass with loop-schedule instrumentation: maximum 105 loop iterations and a 528,516 cap-arithmetic product, zero loop-count errors. These counters check only loop schedule/cap arithmetic, not actual phase cost. Copy-byte bounds are analytical and supported by alias/snapshot tests; the harness does not instrument every allocator copy. Mimalloc limits sanitizer coverage and leak detection is disabled. Current library/conformance/benchmark builds, all 39 benchmark verifications, DAG, phase, release-manifest, header and line checks pass; independent oracles and both 1,134-case drivers also pass for this source.
+Build-time conformance now checks field names, object slots, scalar offsets and phase/resource/error constructor order against the manually mirrored matrix-layout table, including a negative same-kind permutation check. Eight Clang/GCC ASan/UBSan variants pass with loop-schedule instrumentation: maximum 105 loop iterations and a 528,516 cap-arithmetic product, zero loop-count errors. These counters check only loop schedule/cap arithmetic, not actual phase cost. Copy-byte bounds are analytical and supported by alias/snapshot tests; the harness does not instrument every allocator copy. Mimalloc limits sanitizer coverage and leak detection is disabled. Current library/conformance/benchmark builds, all 39 benchmark verifications, DAG, phase, release-manifest, header and line checks pass; independent oracles and both 1,134-case drivers also pass for this source.
 
 [Raw capsule](raw/matrix-validation-14564559e1b2.tar.gz), SHA256 `7c6c7adcc9ceaa46c7ac7ad7fb5bf883c27457d1efbdb7db4be2e53402177429`; 155 exact Git source blobs and 280 payload digests verified after packing.
 
 [Dense Cauchy measurements](hexgroebner-matrix-state-guarded.md) use their separate source and capsule. The [generated-C comparison](hexgroebner-matrix-state-reviewed.md) records why code-generation neutrality is not asserted.
-
 
 The first direct before/after campaign compares the original continuation A (source `f9ebaf35e308`, benchmark SHA256 `93e56c3ab18c62ab084dbbac10359a9bd47365dce57e7fb20744bb7a6234b632`) with native validation B. It uses the same unit-coefficient family and full result consumption, adjacent AB/BA whole sweeps, one trial per sweep. Complete hashes agree at every size. Sources remain separate.
 
