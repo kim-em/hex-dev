@@ -49,3 +49,13 @@ Library/theory builds, independent oracles, both 1,134-case drivers, all 36 benc
 
 - [Raw capsule](raw/matrix-state-c5e1f57fbe8c.tar.gz): SHA256 `2b343ccd8dcdf838b82ab084b6e8831b93e2e3ac027003af638d0561a2b130fb`; 154 measured and 149 baseline Git blobs, 826 verified payload digests.
 - [Nineteen-object measurements](hexgroebner-matrix-state-initial.md) use a separate source and capsule.
+
+A [generated-C comparison](raw/matrix-refactor-codegen.tar.gz) retains the direct
+`eliminate` function before/after helper extraction, full C sources and the
+comparison script. SHA256:
+`98350fc141d08b212b156c1295bc11d28947b3b8c12b7c57ff90c7c4ef7cf4e2`;
+eight payload digests verified. Alpha-renaming local variables and mapping the
+extracted helper symbols does **not** make those bodies identical. This limited
+comparison excludes closed-constant definitions, callees and compiler/linker
+optimization. It establishes neither runtime neutrality nor a cause for the
+observed timing spread; the report makes neither claim.

@@ -12,6 +12,12 @@ extern lean_obj_res lean_hex_matrix_step(lean_obj_arg);
 #define HEX_GROEBNER_CONT_PHASE(phase) ((void)0)
 #endif
 
+#ifndef HEX_GROEBNER_CONT_BEGIN
+#define HEX_GROEBNER_CONT_BEGIN(columns,rows,count) ((void)0)
+#define HEX_GROEBNER_CONT_TICK() ((void)0)
+#define HEX_GROEBNER_CONT_END() ((void)0)
+#endif
+
 #if UINTPTR_MAX == UINT64_MAX
 
 /* State: 20 objects; modulus/inverse UInt64, independent/phase UInt8.
@@ -311,7 +317,7 @@ static void cont_gather(continuation *c) {
    Here c is columns and r is input rows. This is a hard shape-dependent bound,
    not a count of machine instructions. Nat metadata retains its ordinary bit
    complexity. The private shape
-   gate admits <=65536 columns and input rows; larger states take no transition here. Checks,
+   check admits <=65536 columns and input rows; larger states take no transition here. Checks,
    validation, initialization and final ordering use the exported Lean phase,
    so malformed rows and arbitrary Nat resource limits retain their exact
    failures and counters. Scan and gather each advance at most 4096 steps. */
@@ -326,9 +332,11 @@ LEAN_EXPORT lean_obj_res lean_hex_matrix_advance(lean_obj_arg state,b_lean_obj_a
     uint64_t count=lean_is_scalar(steps)?lean_unbox(steps):cap;
     if(count>cap) count=cap;
     if(!count) return state;
+    HEX_GROEBNER_CONT_BEGIN(cols,rows,count);
     continuation c;cont_unpack(&c,state);
     int fast=cont_counts(&c),dirty=0;
     for(uint64_t i=0;i<count && c.phase!=7;++i) {
+        HEX_GROEBNER_CONT_TICK();
         if(fast && c.phase>=3 && c.phase<=5 && cont_bounds(&c)) {
             HEX_GROEBNER_CONT_PHASE(c.phase);
             if(c.phase==3) cont_input(&c);
@@ -342,6 +350,7 @@ LEAN_EXPORT lean_obj_res lean_hex_matrix_advance(lean_obj_arg state,b_lean_obj_a
         }
     }
     if(dirty) cont_save_counts(&c);
+    HEX_GROEBNER_CONT_END();
     return cont_pack(&c);
 }
 

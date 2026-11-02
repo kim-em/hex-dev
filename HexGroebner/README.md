@@ -611,7 +611,7 @@ by the matrix shape. Saved snapshots and input buffers remain immutable.
 The 64-bit native frame admits up to 65,536 columns and input rows; other
 shapes use ordinary Lean scheduling with bounded native scan/gather. The
 scalar `advancePortable` is independent of those kernels. `advance_spec`
-relates these implementations to the same phase model.
+relates their Lean models; agreement with C is a tested native obligation.
 
 The continuation has a separate native carrier and does not replace the F4
 matrix route or `Elimination.reference`. Conformance compares complete rows,
@@ -620,3 +620,9 @@ completed execution to the existing reference remains required before that
 integration. `finishWith` has finite shape-based fuel and preserves the
 reference's per-row scan/gather fuel boundaries. Its kernel benchmarks compare
 standalone matrix frames; they make no full-system performance claim.
+
+Terminal continuations retain their workspace for inspection of exact phase
+state and charged prefixes. `finishWith` releases that state when it returns;
+manual drivers should release their terminal state after extracting the result.
+The build-time `MatrixLayout` conformance check matches field names, object
+slots and scalar offsets against the native ABI, including same-type swaps.

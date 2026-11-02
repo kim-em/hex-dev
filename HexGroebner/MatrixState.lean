@@ -263,7 +263,7 @@ private def advancePhase (state : State) (native : Bool) : State := Id.run do
   | .ok _ => return state
   | .error e => return { state with phase := .done,result := some (.error e) }
 
-/-- One phase using bounded native scan/gather. The exported bridge handles
+/-- One phase using bounded native scan/gather. The exported Lean phase handles
 non-hot phases and scalar values outside the frame's native fast path. -/
 @[export lean_hex_matrix_step]
 def next (state : State) : State := advancePhase state true
@@ -316,8 +316,19 @@ def advance (state : State) (steps : Nat) : State :=
   unfold advance advanceSmall
   split <;> simp_all [advanceKernels_spec]
 
-/-- Run the untraced portable continuation with finite transition fuel. This is
-an experimental reference model; it is not selected by the public F4 route. -/
+/-- Run the untraced continuation with the selected native or scalar scheduler.
+It is not selected by the public F4 route.
+
+For a state reached from `start`, let `n` be the input row count, `c` the column
+count, `S = ceil(c*(c+2)/4096)+1` and `G = ceil(c/4096)+1`. Check, workspace and
+ordering take three phases; validation takes at most `n`; each input row takes
+one input phase, at most `S` scan phases and at most `G` gather phases. A scan
+or gather that remains unfinished at its last quantum fails immediately.
+Thus `3+n+n*(1+S+G)` bounds the remaining phases. The allowance below,
+`6+(n+1)*(3+S+G)`, dominates it, and every unfinished call advances at least
+one phase because the requested quantum is clamped to one. Exhausting this
+shape allowance therefore indicates a broken internal invariant and returns
+`rowUpdate`; a general proof of the bound remains required. -/
 def finishWith (quantum : Nat) (state : State) (native := true) : Except MatrixError (Echelon × Array RemainderRow) × MatrixStats := Id.run do
   let fuel := 6+(state.reducers.size+state.targets.size+1)*
     (3+scanFuel state.columns+(state.columns+4095)/4096+1)
@@ -328,8 +339,9 @@ def finishWith (quantum : Nat) (state : State) (native := true) : Except MatrixE
       else advancePortable state (max 1 quantum)
   return (state.result.getD (.error .rowUpdate),state.stats)
 
-/-- Native phase scheduling preserves the complete scalar result and counters.
-Agreement of C with its primitive model remains an audited native obligation. -/
+/-- Selecting the native scheduler preserves the Lean model's complete result
+and counters. Agreement of C with that model is a separately audited and tested
+native obligation; this theorem does not verify C machine code. -/
 theorem finish_spec (quantum : Nat) (state : State) (native : Bool) :
     finishWith quantum state native = finishWith quantum state false := by
   simp only [finishWith,advance_spec]

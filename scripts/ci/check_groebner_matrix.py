@@ -304,6 +304,16 @@ static uint64_t whole_accepted=0,whole_deferred=0,whole_joint=0,whole_independen
 #define HEX_GROEBNER_MATRIX_DEFERRED() (++whole_deferred)
 #define lean_hex_groebner_eliminate_matrix hex_test_whole
 static uint64_t continuation_phases[8]={0};
+static uint64_t cont_count=0,cont_factor=0,cont_ticks=0,cont_max_ticks=0,cont_max_units=0,cont_violations=0;
+#define HEX_GROEBNER_CONT_BEGIN(c,r,n) do {cont_count=(n);cont_factor=8*(c)+2*(r)+4224;cont_ticks=0;} while(0)
+#define HEX_GROEBNER_CONT_TICK() (++cont_ticks)
+#define HEX_GROEBNER_CONT_END() do { \
+ uint64_t units=cont_ticks*cont_factor; \
+ if(cont_ticks>cont_count || units>1048576) ++cont_violations; \
+ if(cont_ticks>cont_max_ticks) cont_max_ticks=cont_ticks; \
+ if(units>cont_max_units) cont_max_units=units; \
+} while(0)
+
 #define HEX_GROEBNER_CONT_PHASE(p) (++continuation_phases[p])
 #define lean_hex_matrix_advance hex_test_matrix_advance
 #include STATECODE
@@ -321,6 +331,14 @@ LEAN_EXPORT lean_obj_res hex_test_continuation_phases(lean_obj_arg world) {
  lean_ctor_set(tail,0,lean_box_uint64(continuation_phases[4]));
  lean_ctor_set(tail,1,lean_box_uint64(continuation_phases[5]));
  lean_ctor_set(pair,0,lean_box_uint64(continuation_phases[3]));lean_ctor_set(pair,1,tail);
+ return lean_io_result_mk_ok(pair);
+}
+
+LEAN_EXPORT lean_obj_res hex_test_continuation_bounds(lean_obj_arg world) {
+ (void)world;lean_object *tail=lean_alloc_ctor(0,2,0),*pair=lean_alloc_ctor(0,2,0);
+ lean_ctor_set(tail,0,lean_box_uint64(cont_max_units));
+ lean_ctor_set(tail,1,lean_box_uint64(cont_violations));
+ lean_ctor_set(pair,0,lean_box_uint64(cont_max_ticks));lean_ctor_set(pair,1,tail);
  return lean_io_result_mk_ok(pair);
 }
 
@@ -523,6 +541,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
 @[extern "hex_test_remap_count"] opaque remapCount : IO UInt64
 @[extern "hex_test_continuation_count"] opaque continuationCount : IO UInt64
 @[extern "hex_test_continuation_phases"] opaque continuationPhases : IO (UInt64 × UInt64 × UInt64)
+@[extern "hex_test_continuation_bounds"] opaque continuationBounds : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_index_count"] opaque indexCount : IO UInt64
 @[extern "hex_test_zero_append_count"] opaque zeroAppendCount : IO UInt64
 @[extern "hex_test_remap_aliases"] opaque remapAliases : IO Bool
@@ -568,6 +587,10 @@ def main : IO Unit := do
   if phases.1 == 0 || phases.2.1 == 0 || phases.2.2 == 0 then
     throw (IO.userError "native continuation fast phases unused")
   IO.println s!"native continuation calls: {continuationCalls}; fast input/scan/gather: {phases}"
+  let bounds ← continuationBounds
+  if bounds.1 == 0 || bounds.2.1 == 0 || bounds.2.1 > 1048576 || bounds.2.2 != 0 then
+    throw (IO.userError "native continuation phase bound violated")
+  IO.println s!"native continuation maximum phases/units/violations: {bounds}"
   let modes ← wholeModes
   if modes.1 == 0 || modes.2 == 0 then throw (IO.userError "native joint/independent matrices not covered")
   IO.println s!"whole matrix joint/independent accepted: {modes}"
