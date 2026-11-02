@@ -53,7 +53,8 @@ def runProductMiss : IO Unit := do
 
 /-- Isolated wide workspaces for the zero-provider admission-counter window. -/
 def runWideWorkspaces : IO Unit := do
-  if !MatrixStateConformance.wideWorkspaces then
+  let seed ← readSeed
+  if !MatrixStateConformance.wideWorkspaces seed then
     throw (IO.userError "wide native matrix workspace boundaries mismatch")
 
 /-- Compiled checks for every native build variant. The harness verifies that
