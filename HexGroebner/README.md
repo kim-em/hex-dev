@@ -602,3 +602,21 @@ Matched development sweeps use `scripts/bench/groebner_cli_measure.py`; its help
 requires that frozen binary/source manifest, a suite and explicit output directory.
 msolve comparisons require its `.libs/msolve` ELF and a clean source tree.
 It retains raw samples and inputs, checks full outputs and applies no timing gate.
+
+Import `HexGroebnerStateNative` to use the matrix continuation separately.
+`MatrixState` provides an owned continuation for untraced matrix elimination.
+`start` fixes the field, inputs, column map and resource limits. `advance`
+returns an exact paused state or a terminal result; its phase count is bounded
+by the matrix shape. Saved snapshots and input buffers remain immutable.
+The 64-bit native frame admits up to 65,536 columns and input rows; other
+shapes use ordinary Lean scheduling with bounded native scan/gather. The
+scalar `advancePortable` is independent of those kernels. `advance_spec`
+relates these implementations to the same phase model.
+
+The continuation has a separate native carrier and does not replace the F4
+matrix route or `Elimination.reference`. Conformance compares complete rows,
+metadata, intermediate states and charged counters. A proof relating its
+completed execution to the existing reference remains required before that
+integration. `finishWith` has finite shape-based fuel and preserves the
+reference's per-row scan/gather fuel boundaries. Its kernel benchmarks compare
+standalone matrix frames; they make no full-system performance claim.

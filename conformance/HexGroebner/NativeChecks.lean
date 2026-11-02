@@ -4,6 +4,7 @@ Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Kim Morrison
 -/
 
+import HexGroebner.MatrixStateConformance
 import HexGroebner.EliminationConformance
 import HexGroebner.ColumnMapConformance
 import HexGroebner.SearchConformance
@@ -31,6 +32,10 @@ def runOwned : IO Unit := do
 native symbols were actually called, including in sanitizer builds. -/
 def run : IO Unit := do
   let seed := ((← IO.getEnv "HEX_GROEBNER_TEST_SEED").getD "0").toNat?.getD 0
+  if !MatrixStateConformance.checked || !MatrixStateConformance.boundaries ||
+      !MatrixStateConformance.stepChecks || !MatrixStateConformance.largeChecks ||
+      !MatrixStateConformance.resourceSteps then
+    throw (IO.userError "native continuation mismatch")
   if !ColumnMapConformance.checks seed || !ColumnMapConformance.remapChecks seed ||
       !ColumnMapConformance.indexChecks seed || !ColumnMapConformance.collisionChecks then
     throw (IO.userError "packed column map mismatch")

@@ -302,6 +302,17 @@ static uint64_t whole_accepted=0,whole_deferred=0,whole_joint=0,whole_independen
 #define HEX_GROEBNER_MATRIX_ACCEPTED() (++whole_accepted,independent?++whole_independent:++whole_joint)
 #define HEX_GROEBNER_MATRIX_DEFERRED() (++whole_deferred)
 #define lean_hex_groebner_eliminate_matrix hex_test_whole
+#define lean_hex_matrix_advance hex_test_matrix_advance
+#include STATECODE
+#undef lean_hex_matrix_advance
+static uint64_t continuation_calls=0;
+__typeof__(hex_test_matrix_advance) __wrap_lean_hex_matrix_advance;
+LEAN_EXPORT lean_obj_res __wrap_lean_hex_matrix_advance(lean_obj_arg state,b_lean_obj_arg steps) {
+ ++continuation_calls;return hex_test_matrix_advance(state,steps);
+}
+LEAN_EXPORT lean_obj_res hex_test_continuation_count(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(continuation_calls));
+}
 #include WHOLECODE
 #undef lean_hex_groebner_eliminate_matrix
 static uint64_t scan_calls=0,gather_calls=0,byte_calls=0,product_calls=0;
@@ -452,7 +463,7 @@ LEAN_EXPORT lean_obj_res hex_test_avx2(lean_obj_arg world) {
  return lean_io_result_mk_ok(lean_box(0));
 #endif
 }
-'''.replace("WHOLECODE", json.dumps(str(ROOT / "HexGroebner/ffi/matrix_eliminate.c"))).replace("HITCODE", json.dumps(str(ROOT / "HexGroebner/ffi/monomial_hit.c"))).replace("ROW_SOURCE", json.dumps(str(ROOT / "HexGroebner/ffi/row_update.c"))).replace("SOURCE", json.dumps(str(source))).replace("HEADER", json.dumps(str(source.parent / "matrix_simd.h"))))
+'''.replace("STATECODE", json.dumps(str(ROOT / "HexGroebner/ffi/matrix_state.c"))).replace("WHOLECODE", json.dumps(str(ROOT / "HexGroebner/ffi/matrix_eliminate.c"))).replace("HITCODE", json.dumps(str(ROOT / "HexGroebner/ffi/monomial_hit.c"))).replace("ROW_SOURCE", json.dumps(str(ROOT / "HexGroebner/ffi/row_update.c"))).replace("SOURCE", json.dumps(str(source))).replace("HEADER", json.dumps(str(source.parent / "matrix_simd.h"))))
         config = '''import Lake
 open Lake DSL System
 package GroebnerMatrixChecks
@@ -467,10 +478,11 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
   let trie ← inputTextFile (FilePath.mk TRIE)
   let hit ← inputTextFile (FilePath.mk HITCODE)
   let whole ← inputTextFile (FilePath.mk WHOLECODE)
+  let continuation ← inputTextFile (FilePath.mk STATECODE)
   let inputs := ((source.zipWith (fun s _ => s) scan).zipWith (fun s _ => s) simd).zipWith (fun s _ => s) body
   let inputs := (inputs.zipWith (fun s _ => s) row).zipWith (fun s _ => s) trie
   let inputs := inputs.zipWith (fun s _ => s) hit
-  let inputs := inputs.zipWith (fun s _ => s) whole
+  let inputs := (inputs.zipWith (fun s _ => s) whole).zipWith (fun s _ => s) continuation
   buildO (pkg.dir / defaultBuildDir / (name ++ ".o")) inputs
     #["-isystem", (← getLeanIncludeDir).toString] flags
     (compiler := FilePath.mk COMPILER)
@@ -478,11 +490,11 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
 '''.replace("ROOT", json.dumps(str(ROOT))).replace("SCAN", json.dumps(str(source))).replace(
             "SIMD", json.dumps(str(source.parent / "matrix_simd.h"))).replace(
             "BODY", json.dumps(str(source.parent / "matrix_scan_impl.h"))).replace(
-            "ROW", json.dumps(str(source.parent / "row_update.c"))).replace("COMPILER", json.dumps(cc)).replace("TRIE", json.dumps(str(source.parent / "trie_lookup.h"))).replace("HITCODE", json.dumps(str(source.parent / "monomial_hit.c"))).replace("WHOLECODE", json.dumps(str(source.parent / "matrix_eliminate.c")))
+            "ROW", json.dumps(str(source.parent / "row_update.c"))).replace("COMPILER", json.dumps(cc)).replace("TRIE", json.dumps(str(source.parent / "trie_lookup.h"))).replace("HITCODE", json.dumps(str(source.parent / "monomial_hit.c"))).replace("STATECODE", json.dumps(str(source.parent / "matrix_state.c"))).replace("WHOLECODE", json.dumps(str(source.parent / "matrix_eliminate.c")))
         flags = ["-O3", "-g", "-Wall", "-Wextra", "-Werror", "-fPIC", "-DLEAN_EXPORTING"]
         if sanitize:
             flags += ["-fsanitize=address,undefined", "-fno-sanitize-recover=undefined", "-fno-omit-frame-pointer"]
-        link_args = ["-Wl,--wrap=lean_hex_groebner_remap_index", "-Wl,--wrap=lean_hex_groebner_append_zeros", "-Wl,--wrap=lean_hex_groebner_remap_columns", "-Wl,--wrap=lean_hex_scan_transition", "-Wl,--wrap=lean_hex_gather",
+        link_args = ["-Wl,--wrap=lean_hex_matrix_advance", "-Wl,--wrap=lean_hex_groebner_remap_index", "-Wl,--wrap=lean_hex_groebner_append_zeros", "-Wl,--wrap=lean_hex_groebner_remap_columns", "-Wl,--wrap=lean_hex_scan_transition", "-Wl,--wrap=lean_hex_gather",
                      "-Wl,--wrap=lean_hex_groebner_equal_bytes",
                      "-Wl,--wrap=lean_hex_groebner_equal_products",
                      "-Wl,--wrap=lean_hex_groebner_eliminate_matrix",
@@ -496,6 +508,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
             targets.append(target)
             (directory / (module + ".lean")).write_text('''import HexGroebner.NativeChecks
 @[extern "hex_test_remap_count"] opaque remapCount : IO UInt64
+@[extern "hex_test_continuation_count"] opaque continuationCount : IO UInt64
 @[extern "hex_test_index_count"] opaque indexCount : IO UInt64
 @[extern "hex_test_zero_append_count"] opaque zeroAppendCount : IO UInt64
 @[extern "hex_test_remap_aliases"] opaque remapAliases : IO Bool
@@ -535,6 +548,9 @@ def main : IO Unit := do
     throw (IO.userError "exclusive alias insertion was not exercised")
   IO.println s!"exclusive owned comparisons: reuses={afterOwned-beforeOwned}, aliased insertions={afterAlias-beforeAlias}"
   Hex.Groebner.NativeChecks.run
+  let continuationCalls ← continuationCount
+  if continuationCalls == 0 then throw (IO.userError "native continuation unused")
+  IO.println s!"native continuation calls: {continuationCalls}"
   let modes ← wholeModes
   if modes.1 == 0 || modes.2 == 0 then throw (IO.userError "native joint/independent matrices not covered")
   IO.println s!"whole matrix joint/independent accepted: {modes}"
