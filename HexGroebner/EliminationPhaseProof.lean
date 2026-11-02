@@ -64,10 +64,9 @@ private theorem check_run (state : MatrixState.State) (hphase : state.phase = .c
         (.error .dimensions,state)
       else (.ok (),{ state with phase := .validate }) := by
   simp [MatrixState.step,hphase,ExceptT.run,ExceptT.mk,ExceptT.bind,ExceptT.bindCont,
-    ExceptT.lift,StateT.bind,StateT.get,StateT.set,StateT.pure,Bind.bind,MonadState.get,
+    ExceptT.lift,StateT.bind,StateT.get,Bind.bind,MonadState.get,
     MonadStateOf.get,MonadStateOf.set,MonadExcept.throw,MonadExceptOf.throw,liftM,
-    MonadLiftT.monadLift,MonadLift.monadLift,getThe,throwThe,StateT.map,Functor.map,Pure.pure,
-    Id.run]
+    MonadLiftT.monadLift,MonadLift.monadLift,getThe,throwThe,StateT.map,Functor.map,Pure.pure]
   all_goals (try split) <;> try simp_all
   all_goals (try split) <;> try simp_all
   all_goals (try split) <;> try simp_all

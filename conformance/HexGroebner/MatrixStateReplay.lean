@@ -7,6 +7,7 @@ Authors: Kim Morrison
 module
 
 public import HexGroebnerStateNative
+public import HexGroebner.EliminationReplay
 public import HexGroebner.MatrixValidation
 -- Inspect logical loop bodies only; states are created exclusively by start.
 import all HexGroebner.MatrixState

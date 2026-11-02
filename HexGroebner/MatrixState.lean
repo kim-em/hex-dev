@@ -323,7 +323,8 @@ def State.allowance (state : State) : Nat :=
     (3+scanFuel state.columns+(state.columns+4095)/4096+1)
 
 /-- Run the untraced continuation with the selected native or scalar scheduler.
-It is not selected by the public F4 route.
+Untraced F4 dispatch uses this completion when the small bounded matrix frame
+declines. `EliminationProof` proves exact agreement with the reference eliminator.
 
 The shape allowance covers validation, workspace setup, input rows, bounded
 scan/gather quanta and final ordering. Each unfinished call advances at least

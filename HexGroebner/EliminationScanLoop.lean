@@ -10,7 +10,7 @@ import all HexGroebner.MatrixState
 import all HexGroebner.MatrixStateProof
 import all HexGroebner.EliminationOutcome
 import all HexGroebner.EliminationScanStep
-import all HexGroebner.Elimination
+import all HexGroebner.EliminationKernel
 import all HexGroebner.EliminationWorkProof
 public import HexGroebner.EliminationScanProof
 public import HexGroebner.EliminationScanStep

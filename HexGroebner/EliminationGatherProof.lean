@@ -11,7 +11,7 @@ import all HexGroebner.MatrixStateProof
 import all HexGroebner.EliminationOutcome
 import all HexGroebner.EliminationPhaseProof
 import all HexGroebner.EliminationGatherStep
-import all HexGroebner.Elimination
+import all HexGroebner.EliminationKernel
 import all HexGroebner.EliminationWorkProof
 public import HexGroebner.EliminationGatherStep
 public import Std.Do

@@ -6,8 +6,8 @@ Authors: Kim Morrison
 
 module
 
-import all HexGroebner.Elimination
-public import HexGroebner.Elimination
+import all HexGroebner.EliminationKernel
+public import HexGroebner.EliminationKernel
 public import HexGroebner.ScanProof
 public import Std.Do
 meta import Std.Tactic.Do

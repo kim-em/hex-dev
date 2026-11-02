@@ -792,6 +792,10 @@ def main : IO Unit := do
   let beforeF4Deferrals ← batchDeferrals
   let beforeF4Batches ← batchCounts
   let beforeF4Primitives ← primitiveAdmissions
+  let beforeF4Continuation ← continuationCount
+  let beforeF4Validations ← continuationValidations
+  let beforeF4Workspaces ← continuationWorkspaces
+  let beforeF4Phases ← continuationPhases
   Hex.Groebner.NativeChecks.runF4
   let afterF4Deferrals ← batchDeferrals
   if afterF4Deferrals.2.2 != 0 then throw (IO.userError "batch visit cap exceeded")
@@ -801,9 +805,21 @@ def main : IO Unit := do
     throw (IO.userError "F4 did not exercise accepted monomial batches")
   IO.println s!"F4 monomial batches/terms: {afterF4Batches.1-beforeF4Batches.1}/{afterF4Batches.2-beforeF4Batches.2}"
   let afterF4Primitives ← primitiveAdmissions
-  if afterF4Primitives.1.1 ≤ beforeF4Primitives.1.1 || afterF4Primitives.2.1 ≤ beforeF4Primitives.2.1 then
-    throw (IO.userError "F4 did not admit validation and zero-buffer primitives")
   IO.println s!"F4 primitive validation admitted/declined: {afterF4Primitives.1.1-beforeF4Primitives.1.1}/{afterF4Primitives.1.2-beforeF4Primitives.1.2}; zero admitted/declined: {afterF4Primitives.2.1-beforeF4Primitives.2.1}/{afterF4Primitives.2.2-beforeF4Primitives.2.2}"
+  let afterF4Continuation ← continuationCount
+  let afterF4Validations ← continuationValidations
+  let afterF4Workspaces ← continuationWorkspaces
+  let afterF4Phases ← continuationPhases
+  if afterF4Continuation ≤ beforeF4Continuation || afterF4Validations ≤ beforeF4Validations ||
+      afterF4Workspaces ≤ beforeF4Workspaces then
+    throw (IO.userError "F4 did not exercise native continuation validation and workspace setup")
+  if afterF4Phases.1 ≤ beforeF4Phases.1 || afterF4Phases.2.1 ≤ beforeF4Phases.2.1 ||
+      afterF4Phases.2.2 ≤ beforeF4Phases.2.2 then
+    throw (IO.userError "F4 did not exercise native continuation input, scan and gather")
+  let f4Bounds ← continuationBounds
+  if f4Bounds.2.1 > 1048576 || f4Bounds.2.2 != 0 then
+    throw (IO.userError "F4 native continuation phase bound violated")
+  IO.println s!"F4 continuation calls/validation/workspace: {afterF4Continuation-beforeF4Continuation}/{afterF4Validations-beforeF4Validations}/{afterF4Workspaces-beforeF4Workspaces}; input/scan/gather: {afterF4Phases.1-beforeF4Phases.1}/{afterF4Phases.2.1-beforeF4Phases.2.1}/{afterF4Phases.2.2-beforeF4Phases.2.2}"
   let wholeAfter ← wholeCounts
   if wholeAfter.1 ≤ wholeBefore.1 || wholeAfter.2 ≤ wholeBefore.2 then throw (IO.userError "F4 did not exercise accepted/deferred whole matrices")
   IO.println s!"whole matrix accepted/deferred: {wholeAfter}; F4 accepted/deferred: {wholeAfter.1-wholeBefore.1}/{wholeAfter.2-wholeBefore.2}"

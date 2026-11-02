@@ -33,10 +33,9 @@ private theorem gather_zero (state : MatrixState.State) (hphase : state.phase = 
     outcome state = (.error .rowUpdate,state.stats) := by
   apply outcome_error state state .rowUpdate hgeometry (by simp [hphase])
   simp [MatrixState.step,hphase,hquanta,ExceptT.run,ExceptT.mk,ExceptT.bind,ExceptT.bindCont,
-    ExceptT.lift,StateT.bind,StateT.get,StateT.set,StateT.pure,Bind.bind,MonadState.get,
-    MonadStateOf.get,MonadStateOf.set,MonadExcept.throw,MonadExceptOf.throw,liftM,
-    MonadLiftT.monadLift,MonadLift.monadLift,getThe,throwThe,StateT.map,Functor.map,Pure.pure,
-    Id.run]
+    ExceptT.lift,StateT.bind,StateT.get,StateT.pure,Bind.bind,MonadState.get,
+    MonadStateOf.get,MonadExcept.throw,MonadExceptOf.throw,liftM,
+    MonadLiftT.monadLift,MonadLift.monadLift,getThe,throwThe,StateT.map,Functor.map,Pure.pure]
 
 private noncomputable def gatherTail (state : MatrixState.State) (output : Native.Gather.Result)
     (stats : MatrixStats) : Except MatrixError (Echelon × Array RemainderRow) × MatrixStats :=

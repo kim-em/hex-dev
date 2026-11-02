@@ -7,6 +7,8 @@ Authors: Kim Morrison
 module
 
 import all HexGroebner.MatrixState
+import all HexGroebner.Matrix
+import all HexGroebner.MatrixValidation
 import all HexGroebner.MatrixStateProof
 import all HexGroebner.EliminationInvariant
 import all HexGroebner.EliminationOutcome
@@ -20,8 +22,8 @@ import all HexGroebner.EliminationScanLoop
 import all HexGroebner.EliminationGatherStep
 import all HexGroebner.EliminationGatherProof
 import all HexGroebner.EliminationOrderProof
-import all HexGroebner.Elimination
-public import HexGroebner.Elimination
+import all HexGroebner.EliminationKernel
+public import HexGroebner.EliminationKernel
 public import HexGroebner.EliminationInvariant
 public import HexGroebner.EliminationInputProof
 public import HexGroebner.EliminationScanLoop
@@ -447,6 +449,27 @@ private theorem eliminate_spec (field : PrimeField) (limits : MatrixLimits) (col
                                                       MatrixState.State.identity,MatrixState.State.geometry,
                                                       MatrixState.isTarget,MatrixState.start]
                                                   all_goals grind
+
+namespace Elimination
+
+/-- Empty matrices complete successfully without any charged work, on every
+platform, field and resource allowance. -/
+theorem reference_empty (field : PrimeField) (limits : MatrixLimits) (independent : Bool) :
+    reference field limits 0 #[] #[] #[] independent =
+      ⟨.ok (⟨#[],0,#[]⟩,#[]),{}⟩ := by
+  cases independent
+  all_goals simp [reference,eliminate,Matrix.validateRows,Matrix.zerosWith_spec,Matrix.zeros,
+    Matrix.work,Matrix.packedBytes,Matrix.charge,Std.Legacy.Range.forIn_eq_forIn_range',
+    Std.Legacy.Range.size,ExceptT.run,ExceptT.mk,ExceptT.pure,ExceptT.bind,
+    ExceptT.bindCont,ExceptT.lift,StateT.bind,StateT.get,StateT.set,StateT.pure,Bind.bind,
+    MonadState.get,MonadStateOf.get,MonadStateOf.set,liftM,MonadLiftT.monadLift,
+    MonadLift.monadLift,getThe,StateT.map,Functor.map,Pure.pure,Id.run,modify,modifyGet,
+    MonadStateOf.modifyGet]
+
+/-- info: 'Hex.Groebner.Elimination.reference_empty' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms reference_empty
+
+end Elimination
 
 namespace MatrixState
 

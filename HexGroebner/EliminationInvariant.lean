@@ -69,7 +69,7 @@ private theorem input_finish (base : MatrixState.State) (dense slots : ByteArray
   simp only [hlimits,hcolumns,hslots,hpivots,hremainders,hrank,hstats,hindependent,htrace]
     at result ⊢
   by_cases independent : base.independent = true
-  all_goals simp only [independent,ite_true,ite_false] at result ⊢
+  all_goals simp only [independent,ite_true] at result ⊢
   · exact result
   · cases hw : (Matrix.work base.limits base.columns).run stats with
     | mk value finalStats =>
