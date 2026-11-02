@@ -49,3 +49,23 @@ fields in those raw outputs are not scientific performance samples.
 The source overlays are self-contained; local build/snapshot identifiers need
 not resolve as public GitHub commits after rebasing. The fastest-open-source
 milestone remains open.
+
+
+The final coverage source is commit `c5ae6c427c4839d3bca0f40d4f7f2b591ca5a137`, family fingerprint
+`4dce30af383e`. All nine project checks and eight sanitizer variants
+pass. Test seeds are parsed strictly and printed; six adjacent seeds cover
+both 3/4-column shapes, all six nonzero F7 coefficients and six Mersenne
+constants. Malformed seed input is rejected explicitly. The public portable
+F4 check additionally watches column translation, index remapping, zero append,
+continuation and product counters. The elaboration sweep includes both column
+and counter declines, using named row cases.
+
+Each variant records 1,771,570 validation and 29,962 zero-buffer calls before
+its F4 diagnostics. The six traced integration cases admit 84 calls of each.
+These counts belong to this validation source; the older counts above retain
+their original source scope. No implementation or timing claim is transferred.
+
+[Final coverage capsule](raw/matrix-primitives-seed-coverage.tar.gz), SHA256
+`218392b095efb3ab4106b299b43542513e1912555d91d15afbd2e1ff0e0c2467`; 150 source blobs and 189 payload digests verified.
+Local commit identifiers can become capsule-only identifiers after squash
+merging. Original environment failures and their successful retries remain.
