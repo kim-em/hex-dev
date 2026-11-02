@@ -42,7 +42,11 @@ def matrixFrameReference (input : Input) :=
 
 #guard (matrixFrame (prepareFrame 0)).1
 #guard (matrixFrame (prepareFrame 1)).1
-#guard matrixFrame (prepareFrame 16) == matrixFrameReference (prepareFrame 16)
+#guard (#[16,64,128,256,512,1024].all fun n =>
+  let input := prepareFrame n
+  let native := matrixFrame input
+  let reference := matrixFrameReference input
+  native.1 && reference.1 && native == reference)
 
 -- Cauchy elimination performs (n^3-n)/3 sparse entry updates. Validation,
 -- workspace initialization, packing of outputs and full hashing cost O(n^2).
@@ -50,8 +54,8 @@ setup_benchmark matrixFrame n => n*n*n
   with prep := prepareFrame
   where {
     paramFloor := 64
-    paramCeiling := 512
-    paramSchedule := .custom #[64,128,256,512]
+    paramCeiling := 1024
+    paramSchedule := .custom #[64,128,256,512,1024]
     targetInnerNanos := 4000000000
     maxSecondsPerCall := 32.0
   }
@@ -62,8 +66,8 @@ setup_benchmark matrixFrameReference n => n*n*n
   with prep := prepareFrame
   where {
     paramFloor := 64
-    paramCeiling := 512
-    paramSchedule := .custom #[64,128,256,512]
+    paramCeiling := 1024
+    paramSchedule := .custom #[64,128,256,512,1024]
     targetInnerNanos := 4000000000
     maxSecondsPerCall := 32.0
   }
