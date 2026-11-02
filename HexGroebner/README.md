@@ -260,7 +260,10 @@ two such lookups per comparison. Consequently this
 conservative work model and cumulative packed-byte charges can exhaust earlier
 than the old unit-cost hash map. Both candidate and certificate row construction
 use the same map. Bounded native translation consumes at most 4096 IDs per call;
-`nativeRows := false` retains its scalar Lean model. Kernel benchmarks cover
+`nativeRows := false` retains its scalar Lean model. Marked borrowed/output
+alias handling is defensive support for C callers with one output owner; it
+does not extend Lean’s marked-linearity contract to shared marked values. The
+encoder creates fresh unmarked output. Kernel benchmarks cover
 construction, translation and complete map/output hashing over fixed sizes.
 
 `MatrixLimits` bounds one call's columns, rows, input/output nonzeros, packed
