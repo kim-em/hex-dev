@@ -65,6 +65,9 @@ def run() -> None:
         # The included source gets private names; only our counted wrappers use --wrap.
         source = ROOT / "HexGroebner/ffi/matrix_scan.c"
         (directory / "probe.c").write_text('''#define lean_hex_groebner_subtract_row hex_test_unused_subtract
+#define lean_hex_groebner_remap_columns hex_test_remap
+#define lean_hex_groebner_remap_index hex_test_remap_index
+#define lean_hex_groebner_append_zeros hex_test_append_zeros
 #define lean_hex_groebner_prepare_monomial hex_test_unused_prepare
 #define lean_hex_groebner_equal_monomial hex_test_unused_monomial_equal
 #define lean_hex_groebner_search_monomial hex_test_search_monomial
@@ -78,11 +81,148 @@ def run() -> None:
 #undef lean_hex_groebner_validate_trie
 #undef lean_hex_groebner_lookup_trie
 #undef lean_hex_groebner_subtract_row
+#undef lean_hex_groebner_remap_columns
+#undef lean_hex_groebner_remap_index
+#undef lean_hex_groebner_append_zeros
 #undef lean_hex_groebner_prepare_monomial
 #undef lean_hex_groebner_equal_monomial
 #undef lean_hex_groebner_search_monomial
 #undef lean_hex_groebner_equal_bytes
 #undef lean_hex_groebner_equal_products
+static uint64_t remap_calls=0;
+__typeof__(hex_test_remap) __wrap_lean_hex_groebner_remap_columns;
+LEAN_EXPORT lean_obj_res __wrap_lean_hex_groebner_remap_columns(
+ b_lean_obj_arg positions,b_lean_obj_arg support,b_lean_obj_arg start,
+ b_lean_obj_arg count,lean_obj_arg output) {
+ ++remap_calls;return hex_test_remap(positions,support,start,count,output);
+}
+static uint64_t index_calls=0,zero_calls=0;
+__typeof__(hex_test_remap_index) __wrap_lean_hex_groebner_remap_index;
+LEAN_EXPORT lean_obj_res __wrap_lean_hex_groebner_remap_index(
+ b_lean_obj_arg slots,b_lean_obj_arg support,b_lean_obj_arg start,
+ b_lean_obj_arg count,b_lean_obj_arg probes,lean_obj_arg output) {
+ ++index_calls;return hex_test_remap_index(slots,support,start,count,probes,output);
+}
+__typeof__(hex_test_append_zeros) __wrap_lean_hex_groebner_append_zeros;
+LEAN_EXPORT lean_obj_res __wrap_lean_hex_groebner_append_zeros(lean_obj_arg output,b_lean_obj_arg count) {
+ ++zero_calls;return hex_test_append_zeros(output,count);
+}
+LEAN_EXPORT lean_obj_res hex_test_index_count(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(index_calls));
+}
+LEAN_EXPORT lean_obj_res hex_test_zero_append_count(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(zero_calls));
+}
+LEAN_EXPORT lean_obj_res hex_test_remap_count(lean_obj_arg world) {
+ (void)world;return lean_io_result_mk_ok(lean_box_uint64(remap_calls));
+}
+LEAN_EXPORT lean_obj_res hex_test_remap_aliases(lean_obj_arg world) {
+ (void)world;int ok=1;
+ for(unsigned linear=0;linear<2;++linear) for(unsigned mode=0;mode<4;++mode)
+ for(unsigned test=0;test<4;++test) {
+  int fail=test==1 || test==2,observe=test>=2;
+  /* A marked output may be a borrowed alias, but cannot have another owner. */
+  if(linear && observe) continue;
+  lean_object *positions=lean_alloc_sarray(1,12,12),*support=lean_alloc_sarray(1,12,12);
+  for(unsigned i=0;i<3;++i) {
+   write_le(lean_sarray_cptr(positions)+4*i,4,i+1);
+   write_le(lean_sarray_cptr(support)+4*i,4,fail && i==2?777:i);
+  }
+  uint8_t position_snapshot[12],support_snapshot[12],output_snapshot[12];
+  memcpy(position_snapshot,lean_sarray_cptr(positions),12);
+  memcpy(support_snapshot,lean_sarray_cptr(support),12);
+  lean_object *out=mode==0?support:positions;size_t old=12;
+  if(mode>=2) {out=lean_alloc_sarray(1,4,mode==2?4:32);write_le(lean_sarray_cptr(out),4,37);old=4;}
+  memcpy(output_snapshot,lean_sarray_cptr(out),old);lean_object *keeper=out;
+  if(linear) lean_sarray_mark_linear_core(out);
+  if(observe) lean_inc(keeper);
+  lean_object *result=hex_test_remap(positions,support,lean_box(0),lean_box(3),out);
+  ok=ok && lean_obj_tag(result)==(fail?0:1);
+  if(!fail && lean_obj_tag(result)==1) {
+   lean_object *bytes=lean_ctor_get(result,0);
+   ok=ok && lean_is_exclusive(bytes) && lean_sarray_size(bytes)==old+12;
+   if(linear) ok=ok && lean_sarray_is_marked_linear(bytes);
+   if(lean_sarray_size(bytes)==old+12) {
+    ok=ok && memcmp(lean_sarray_cptr(bytes),output_snapshot,old)==0;
+    for(unsigned i=0;i<3;++i) ok=ok && read_le(lean_sarray_cptr(bytes)+old+4*i,4)==i;
+   }
+   if(observe) ok=ok && lean_sarray_cptr(bytes)!=lean_sarray_cptr(keeper);
+  }
+  if(observe) {
+   ok=ok && lean_is_exclusive(keeper) && lean_sarray_size(keeper)==old;
+   ok=ok && memcmp(lean_sarray_cptr(keeper),output_snapshot,old)==0;lean_dec(keeper);
+  }
+  if(mode!=1) ok=ok && lean_is_exclusive(positions) &&
+    memcmp(lean_sarray_cptr(positions),position_snapshot,12)==0;
+  if(mode!=0) ok=ok && lean_is_exclusive(support) &&
+    memcmp(lean_sarray_cptr(support),support_snapshot,12)==0;
+  lean_dec(result);if(mode!=1) lean_dec(positions);if(mode!=0) lean_dec(support);
+ }
+ return lean_io_result_mk_ok(lean_box(ok));
+}
+LEAN_EXPORT lean_obj_res hex_test_index_aliases(lean_obj_arg world) {
+ (void)world;int ok=1;
+ for(unsigned linear=0;linear<2;++linear) for(unsigned mode=0;mode<4;++mode)
+ for(unsigned test=0;test<4;++test) {
+  int fail=test==1 || test==2,observe=test>=2;
+  /* A marked output may be a borrowed alias, but cannot have another owner. */
+  if(linear && observe) continue;
+  lean_object *slots=lean_alloc_sarray(1,128,128),*support=lean_alloc_sarray(1,12,12);
+  memset(lean_sarray_cptr(slots),0,128);
+  for(unsigned i=0;i<3;++i) {
+   size_t bucket=(size_t)(column_hash(i)&15);
+   while(read_le(lean_sarray_cptr(slots)+bucket*8+4,4)) bucket=(bucket+1)&15;
+   write_le(lean_sarray_cptr(slots)+bucket*8,4,i);
+   write_le(lean_sarray_cptr(slots)+bucket*8+4,4,i+1);
+   write_le(lean_sarray_cptr(support)+4*i,4,fail && i==2?777:i);
+  }
+  uint8_t slot_snapshot[128],support_snapshot[12],output_snapshot[128];
+  memcpy(slot_snapshot,lean_sarray_cptr(slots),128);memcpy(support_snapshot,lean_sarray_cptr(support),12);
+  lean_object *out=mode==0?support:slots;size_t old=lean_sarray_size(out);
+  if(mode>=2) {out=lean_alloc_sarray(1,4,mode==2?4:32);write_le(lean_sarray_cptr(out),4,37);old=4;}
+  memcpy(output_snapshot,lean_sarray_cptr(out),old);lean_object *keeper=out;
+  if(linear) lean_sarray_mark_linear_core(out);
+  if(observe) lean_inc(keeper);
+  lean_object *result=hex_test_remap_index(slots,support,lean_box(0),lean_box(3),lean_box(64),out);
+  ok=ok && (lean_obj_tag(result)==(fail?0:1));
+  if(!fail && lean_obj_tag(result)==1) {
+   lean_object *bytes=lean_ctor_get(result,0);
+   ok=ok && lean_is_exclusive(bytes) && lean_sarray_size(bytes)==old+12;
+   if(linear) ok=ok && lean_sarray_is_marked_linear(bytes);
+   if(lean_sarray_size(bytes)==old+12) {
+    ok=ok && memcmp(lean_sarray_cptr(bytes),output_snapshot,old)==0;
+    for(unsigned i=0;i<3;++i) ok=ok && read_le(lean_sarray_cptr(bytes)+old+4*i,4)==i;
+   }
+   if(observe) ok=ok && lean_sarray_cptr(bytes)!=lean_sarray_cptr(keeper);
+  }
+  if(observe) {
+   ok=ok && lean_is_exclusive(keeper) && lean_sarray_size(keeper)==old;
+   ok=ok && memcmp(lean_sarray_cptr(keeper),output_snapshot,old)==0;lean_dec(keeper);
+  }
+  if(mode!=1) ok=ok && lean_is_exclusive(slots) && memcmp(lean_sarray_cptr(slots),slot_snapshot,128)==0;
+  if(mode!=0) ok=ok && lean_is_exclusive(support) && memcmp(lean_sarray_cptr(support),support_snapshot,12)==0;
+  lean_dec(result);if(mode!=1) lean_dec(slots);if(mode!=0) lean_dec(support);
+ }
+ for(unsigned capacity=4;capacity<=32;capacity*=8) for(unsigned shared=0;shared<2;++shared) {
+  lean_object *bytes=lean_alloc_sarray(1,4,capacity);memset(lean_sarray_cptr(bytes),37,4);
+  lean_object *keeper=bytes;
+  if(shared) lean_inc(keeper);else lean_sarray_mark_linear_core(bytes);
+  lean_object *result=hex_test_append_zeros(bytes,lean_box(12));ok=ok && lean_obj_tag(result)==1;
+  if(lean_obj_tag(result)==1) {
+   bytes=lean_ctor_get(result,0);ok=ok && lean_is_exclusive(bytes) && lean_sarray_size(bytes)==16;
+   if(!shared) ok=ok && lean_sarray_is_marked_linear(bytes);
+   if(shared) ok=ok && lean_sarray_cptr(bytes)!=lean_sarray_cptr(keeper);
+   for(unsigned i=0;i<16;++i) ok=ok && lean_sarray_cptr(bytes)[i]==(i<4?37:0);
+  }
+  if(shared) {
+   ok=ok && lean_is_exclusive(keeper) && lean_sarray_size(keeper)==4;
+   for(unsigned i=0;i<4;++i) ok=ok && lean_sarray_cptr(keeper)[i]==37;
+   lean_dec(keeper);
+  }
+  lean_dec(result);
+ }
+ return lean_io_result_mk_ok(lean_box(ok));
+}
 static uint64_t fused_success=0,fused_insert=0,fused_unique=0,fused_deferred=0,unique_alias=0,unique_alias_mask=0;
 #define HEX_GROEBNER_DEFERRED() (++fused_deferred)
 #define HEX_GROEBNER_UNIQUE_ALIAS(mask) (++unique_alias,unique_alias_mask|=(mask))
@@ -342,7 +482,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
         flags = ["-O3", "-g", "-Wall", "-Wextra", "-Werror", "-fPIC", "-DLEAN_EXPORTING"]
         if sanitize:
             flags += ["-fsanitize=address,undefined", "-fno-sanitize-recover=undefined", "-fno-omit-frame-pointer"]
-        link_args = ["-Wl,--wrap=lean_hex_scan_transition", "-Wl,--wrap=lean_hex_gather",
+        link_args = ["-Wl,--wrap=lean_hex_groebner_remap_index", "-Wl,--wrap=lean_hex_groebner_append_zeros", "-Wl,--wrap=lean_hex_groebner_remap_columns", "-Wl,--wrap=lean_hex_scan_transition", "-Wl,--wrap=lean_hex_gather",
                      "-Wl,--wrap=lean_hex_groebner_equal_bytes",
                      "-Wl,--wrap=lean_hex_groebner_equal_products",
                      "-Wl,--wrap=lean_hex_groebner_eliminate_matrix",
@@ -355,6 +495,11 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
             target = "check" + variant
             targets.append(target)
             (directory / (module + ".lean")).write_text('''import HexGroebner.NativeChecks
+@[extern "hex_test_remap_count"] opaque remapCount : IO UInt64
+@[extern "hex_test_index_count"] opaque indexCount : IO UInt64
+@[extern "hex_test_zero_append_count"] opaque zeroAppendCount : IO UInt64
+@[extern "hex_test_remap_aliases"] opaque remapAliases : IO Bool
+@[extern "hex_test_index_aliases"] opaque indexAliases : IO Bool
 @[extern "hex_test_comparison_count"] opaque comparisonCount : IO UInt64
 @[extern "hex_test_comparison_declines"] opaque comparisonDeclines : IO UInt64
 @[extern "hex_test_trie_counts"] opaque trieCounts : IO (UInt64 × UInt64)
@@ -377,6 +522,8 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
 @[extern "hex_test_zero_count"] opaque zeroCount : IO UInt64
 @[extern "hex_test_mersenne_count"] opaque mersenneCount : IO UInt64
 def main : IO Unit := do
+  if !(← indexAliases) then throw (IO.userError "exclusive index/zero ownership mismatch")
+  if !(← remapAliases) then throw (IO.userError "exclusive borrowed column-map alias mismatch")
   if !(← ownedRuntime) then throw (IO.userError "native layout or linear resize mismatch")
   IO.println "native constructor layout and marked-linear growth passed"
   let beforeOwned ← uniqueCount
@@ -391,6 +538,11 @@ def main : IO Unit := do
   let modes ← wholeModes
   if modes.1 == 0 || modes.2 == 0 then throw (IO.userError "native joint/independent matrices not covered")
   IO.println s!"whole matrix joint/independent accepted: {modes}"
+  let indexBefore ← indexCount
+  let zeroAppendBefore ← zeroAppendCount
+  if indexBefore == 0 || zeroAppendBefore == 0 then throw (IO.userError "packed index/zero native checks unused")
+  let remapBefore ← remapCount
+  if remapBefore == 0 then throw (IO.userError "native column remapping not exercised")
   let wholeBefore ← wholeCounts
   let primitiveCompared ← byteCount
   let primitiveProducts ← productCount
@@ -439,6 +591,14 @@ def main : IO Unit := do
   let beforeMersenne ← mersenneCount
   Hex.Groebner.NativeChecks.runMersenneF4
   let mersenne ← mersenneCount
+  let indexAfter ← indexCount
+  let zeroAppendAfter ← zeroAppendCount
+  if indexAfter ≤ indexBefore || zeroAppendAfter ≤ zeroAppendBefore then
+    throw (IO.userError "F4/cache checks did not exercise packed index/zero kernels")
+  IO.println s!"native index remaps: total={indexAfter}, F4/cache={indexAfter-indexBefore}; zero appends={zeroAppendAfter}"
+  let remapAfter ← remapCount
+  if remapAfter ≤ remapBefore then throw (IO.userError "F4/cache checks did not exercise native column remapping")
+  IO.println s!"native column remaps: total={remapAfter}, F4/cache={remapAfter-remapBefore}"
   let (scan,gather) ← counts
   let compared ← byteCount
   if scan == 0 || gather == 0 || compared == 0 then throw (IO.userError "test override was not called")
