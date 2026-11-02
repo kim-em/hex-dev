@@ -48,3 +48,15 @@ remains unchanged (SHA256
 `915e3b80fd32c9f36862a0e92b41f1efc16c4cc5db6bf28f879ea2a0382d4643`).
 It predates the explicit scan-proof root and contains the first DAG failure;
 the capsule above additionally records the corrected packaging checks.
+
+Additional records bind commit `b95c20360e`, where elimination directly calls
+the shared inline `validateRows` function, the validation transition lemmas
+preserve the field/limits/column/input context, and separate native masks
+require both validation work-exhaustion sites across all coefficient widths.
+Workspace work tests cover one below and exactly at the boundary. Eight
+Clang/GCC sanitizer variants and all nine full project checks pass. Earlier
+capsules retain their original sources and counts.
+
+[Additional validation capsule](raw/matrix-native-review-validation.tar.gz),
+SHA256 `bb48607a91ef0e24b5e4bf1632beae0c8accfed3deab2b2ce394b8e4f77e2fb0`;
+46 verified payload digests. These are validation records, not timings.
