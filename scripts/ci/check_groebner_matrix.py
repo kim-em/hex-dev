@@ -204,7 +204,8 @@ LEAN_EXPORT lean_obj_res hex_test_index_aliases(lean_obj_arg world) {
   }
   if(shared) {
    ok=ok && lean_is_exclusive(keeper) && lean_sarray_size(keeper)==4;
-   for(unsigned i=0;i<4;++i) ok=ok && lean_sarray_cptr(keeper)[i]==37;lean_dec(keeper);
+   for(unsigned i=0;i<4;++i) ok=ok && lean_sarray_cptr(keeper)[i]==37;
+   lean_dec(keeper);
   }
   lean_dec(result);
  }
