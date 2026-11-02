@@ -105,6 +105,43 @@ def malformedChecks (seed : Nat) : Bool := Id.run do
           if !check input bytes 0 0 64 maxCount maxBytes maxWork native then return false
   return true
 
+/-- Repeating the newest collision-chain head makes every hit cost exactly
+`3*arity+1`. Require positive admission at the work cap and deferral above it. -/
+def capacityChecks : Bool := Id.run do
+  for arity in [21,22,65,1365] do
+    let mut table : MonomialTable := { arity,hashBits := 0 }
+    for value in ([0,1] : List UInt64) do
+      let next := table.internOwned (Array.replicate arity value) 100 1000000 1000000
+      let .ok _ := next.result | return false
+      table := next.table
+    table := { table with work := 0 }
+    let count := 4096/(3*arity+1)
+    let support := (Array.range (count+1)).foldl (fun bytes _ => Packed.push .u32 bytes 1) {}
+    for attempt in [table.productsAttempt support 0 0 count 100 1000000 1000000 true,
+        table.productsAttemptPortable support 0 0 count 100 1000000 1000000 true] do
+      let .accepted result := attempt | return false
+      if !result.result.isOk || result.table.work != count*(3*arity+1) then return false
+    for attempt in [table.productsAttempt support 0 0 (count+1) 100 1000000 1000000 true,
+        table.productsAttemptPortable support 0 0 (count+1) 100 1000000 1000000 true] do
+      let .deferred returned := attempt | return false
+      if !same ⟨.ok {},returned⟩ ⟨.ok {},table⟩ then return false
+    if !check table support 0 0 count 100 1000000 1000000 true then return false
+  return true
+
+/-- Exactly the final product is missing; a discarded nonempty prefix must
+reach ordinary scalar insertion while preserving the complete reference state. -/
+def lastMiss : Bool := Id.run do
+  let mut table : MonomialTable := { arity := 3 }
+  for i in [:64] do
+    let next := table.internOwned (Array.replicate 3 i.toUInt64) 1000 10000000 1000000000
+    let .ok _ := next.result | return false
+    table := next.table
+  let support := (Array.range 64).foldl (fun bytes i => Packed.push .u32 bytes i.toUInt64) {}
+  return check table support 1 0 64 1000 10000000 1000000000 true
+
+#guard capacityChecks
+#guard lastMiss
+
 #guard checks 0
 #guard malformedChecks 0
 #guard boundaryChecks 0 false

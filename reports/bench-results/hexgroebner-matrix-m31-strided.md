@@ -81,8 +81,9 @@ timing observations to a different binary.
 Measured Git tree IDs: `HexGroebner` = `c263e11a7bcd68253eed969ab43cdc588ae01626`;
 `bench/HexGroebner` = `2ac172e7f138892beee9bdcca3f9e2449a050a5c`.
 The [source index](hexgroebner-product-sources.json) records the source-manifest
-digest and executable hashes alongside these content-addressed trees. The
-combined measured trees equal those at published head `4cfdb89a1c9116181e1ba58003e736e0fae1234a`.
+digest and executable hashes alongside these content-addressed trees. The combined campaign’s two trees
+(separate from this report’s individual campaign where applicable) equal those
+at published head `4cfdb89a1c9116181e1ba58003e736e0fae1234a`.
 
 
 The per-prime results below keep the unaffected 32003 cases as explicit

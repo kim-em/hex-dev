@@ -78,17 +78,35 @@ def checks (seed : Nat) (full := true) : Bool := Id.run do
   let p : Polynomial := ⟨Packed.push .u32 {} 1,Packed.push field.width {} 1⟩
   for work in [:12] do
     if !check ⟨field,1,.grevlex⟩ { work } ⟨table,{}⟩ p 1 then return false
-  -- Beyond the one-hit quantum bound, multiplication keeps its scalar loop.
-  let mut largeTable : MonomialTable := { arity := 1366 }
-  for id in [:68] do
-    let next := largeTable.internOwned (Array.replicate 1366 id.toUInt64) 1000 10000000 1000000000
-    let .ok _ := next.result | return false
-    largeTable := next.table
-  let mut largeP : Polynomial := {}
-  for i in [:65] do
-    largeP := ⟨Packed.push .u32 largeP.support (64-i).toUInt64,Packed.push field.width largeP.coefficients 1⟩
-  if !check ⟨field,1366,.grevlex⟩ { work := 1000000000 } ⟨largeTable,{}⟩ largeP 1 then return false
+  -- Check the two-term/one-term and admitted/scalar quantum boundaries.
+  for arity in [681,682,1365,1366] do
+    let mut largeTable : MonomialTable := { arity }
+    for id in [:68] do
+      let next := largeTable.internOwned (Array.replicate arity id.toUInt64) 1000 10000000 1000000000
+      let .ok _ := next.result | return false
+      largeTable := next.table
+    let mut largeP : Polynomial := {}
+    for i in [:65] do
+      largeP := ⟨Packed.push .u32 largeP.support (64-i).toUInt64,Packed.push field.width largeP.coefficients 1⟩
+    if !check ⟨field,arity,.grevlex⟩ { work := 1000000000 } ⟨largeTable,{}⟩ largeP 1 then return false
   return true
+
+/-- A real 128-term polynomial uses adaptive multi-term native slices at 22
+variables. Its provider acceptance is checked separately by the native harness. -/
+def wide (seed : Nat) : Bool := Id.run do
+  let field : PrimeField := ⟨7,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
+  let mut table : MonomialTable := { arity := 22 }
+  for id in [:132] do
+    let next := table.internOwned (Array.replicate 22 id.toUInt64) 1000 10000000 1000000000
+    let .ok _ := next.result | return false
+    table := next.table
+  let mut p : Polynomial := {}
+  for i in [:128] do
+    p := ⟨Packed.push .u32 p.support (127-i).toUInt64,
+      Packed.push field.width p.coefficients (1+seed%6).toUInt64⟩
+  return check ⟨field,22,.grevlex⟩ { work := 1000000000 } ⟨table,{}⟩ p 1
+
+#guard wide 0
 
 #guard checks 0 false
 

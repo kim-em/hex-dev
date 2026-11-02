@@ -154,7 +154,7 @@ setup_benchmark productWide n => n
     maxSecondsPerCall := 8.0
   }
 
--- Identical monomials and complete output consumption through scalar lookups.
+-- O(n) expected scalar lookup at fixed arity, assembly and output consumption.
 setup_benchmark productWideReference n => n
   with prep := prepareProducts22
   where {

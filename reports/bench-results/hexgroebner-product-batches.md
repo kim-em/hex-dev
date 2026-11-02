@@ -73,10 +73,11 @@ No fastest-open-source milestone or external leadership is demonstrated.
 Measured Git tree IDs: `HexGroebner` = `cfd93761d7a05496689a7bc9286b01b3811c9937`;
 `bench/HexGroebner` = `c8216a0a056a318836050319064f36942b7c5abc`.
 The [source index](hexgroebner-product-sources.json) records the source-manifest
-digest and executable hashes alongside these content-addressed trees. The
-combined measured trees equal those at published head `4cfdb89a1c9116181e1ba58003e736e0fae1234a`.
+digest and executable hashes alongside these content-addressed trees. The combined campaign’s two trees
+(separate from this report’s individual campaign where applicable) equal those
+at published head `4cfdb89a1c9116181e1ba58003e736e0fae1234a`.
 
 These F4 suites have 2, 4, 5, 6 or 10 variables (small) and 3, 5, 6, 7, 8
 or 11 variables (medium). Their gains apply to that measured regime. These
-measurements do not cover the adaptive scheduling used at 22 or more variables.
+measurements do not cover the adaptive scheduling used at 21 or more variables.
 The positive batch counts establish path use and are not an admission rate.

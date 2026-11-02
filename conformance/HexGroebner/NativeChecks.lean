@@ -39,6 +39,17 @@ def runOwned : IO Unit := do
   if !HitConformance.ownedChecks seed then
     throw (IO.userError "exclusive monomial operation mismatch")
 
+/-- Isolated successful adaptive multiplication for the provider-counter window. -/
+def runProductWide : IO Unit := do
+  let seed ← readSeed
+  if !PolynomialBatchConformance.wide seed then
+    throw (IO.userError "adaptive wide polynomial mismatch")
+
+/-- Isolated last-term miss for the discarded-prefix counter window. -/
+def runProductMiss : IO Unit := do
+  if !ProductBatchConformance.lastMiss then
+    throw (IO.userError "last-term product miss mismatch")
+
 /-- Compiled checks for every native build variant. The harness verifies that
 native symbols were actually called, including in sanitizer builds. -/
 def run : IO Unit := do
@@ -79,6 +90,8 @@ def run : IO Unit := do
     throw (IO.userError "packed monomial comparison mismatch")
   if !PolynomialBatchConformance.checks seed then
     throw (IO.userError "compiled polynomial batch/scalar mismatch")
+  if !ProductBatchConformance.capacityChecks then
+    throw (IO.userError "exact batch capacity admission mismatch")
   if !ProductBatchConformance.checks seed || !ProductBatchConformance.boundaryChecks seed ||
       !ProductBatchConformance.malformedChecks seed then
     throw (IO.userError "compiled monomial-product batch mismatch")

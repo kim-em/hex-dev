@@ -79,7 +79,7 @@ def multiply (_context : Context) (limits : Limits) (p : Polynomial) (monomial :
   let batchSize := max 1 (min 64 (4096/(3*arity+4)))
   allocate limits p.support.size
   let mut support := ByteArray.emptyWithCapacity p.support.size
-  if !limits.nativeMonomials || arity ≥ 1366 then
+  if !limits.nativeMonomials || batchSize == 1 then
     for i in [:p.size] do
       let id ← combine limits .product (p.monomial i) monomial
       support := Packed.push .u32 support id.toUInt64

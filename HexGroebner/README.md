@@ -29,8 +29,8 @@ work units. Unsupported shapes, widening, index growth and tight allowances
 return the unchanged table; portable continuation starts after the native frame
 returns. Multiplied polynomial supports use slices of at most 64 identifiers,
 reduced to `max(1, floor(4096/(3*arity+4)))` as arity grows, leaving room
-for extra collision-chain headers. Arity 1366 and above
-retains the scalar loop, since even one hit would exceed the native quantum.
+for extra collision-chain headers. A one-term slice retains the scalar loop
+to reuse its workspace; this starts at arity 682.
 A native batch can complete existing-product lookups within 4096 total charged
 visits, returning the complete final workspace and table work. Misses, insertion,
 errors and unsupported geometry defer the unchanged table to scalar operations.

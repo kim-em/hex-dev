@@ -705,6 +705,7 @@ def main : IO Unit := do
   let beforePortableIndex ← indexCount
   let beforePortableZeros ← zeroAppendCount
   let beforePortableContinuation ← continuationCount
+  let beforePortableBatchDeferrals ← batchDeferrals
   let beforePortableBatches ← batchCounts
   let beforePortableProducts ← productCount
   let beforePortable ← matrixPrimitives
@@ -718,7 +719,8 @@ def main : IO Unit := do
       (← remapCount) != beforePortableRemap || (← indexCount) != beforePortableIndex ||
       (← zeroAppendCount) != beforePortableZeros ||
       (← continuationCount) != beforePortableContinuation ||
-      (← productCount) != beforePortableProducts || (← batchCounts) != beforePortableBatches then
+      (← productCount) != beforePortableProducts || (← batchCounts) != beforePortableBatches ||
+      (← batchDeferrals) != beforePortableBatchDeferrals then
     throw (IO.userError "public portable F4 called a native row/bulk/column/byte provider")
   let beforeIntegrated ← primitiveAdmissions
   for offset in [:6] do
@@ -728,6 +730,21 @@ def main : IO Unit := do
   if afterIntegrated.1.1 ≤ beforeIntegrated.1.1 || afterIntegrated.2.1 ≤ beforeIntegrated.2.1 then
     throw (IO.userError "traced elimination did not admit both native primitives")
   IO.println s!"traced elimination primitive admissions: validation={afterIntegrated.1.1-beforeIntegrated.1.1}, zero={afterIntegrated.2.1-beforeIntegrated.2.1}"
+  let beforeWide ← batchCounts
+  let beforeWideDeferrals ← batchDeferrals
+  Hex.Groebner.NativeChecks.runProductWide
+  let afterWide ← batchCounts
+  let wideBatches := afterWide.1-beforeWide.1
+  if wideBatches == 0 || wideBatches ≥ 128 || afterWide.2-beforeWide.2 != 128 ||
+      (← batchDeferrals) != beforeWideDeferrals then
+    throw (IO.userError "adaptive 22-variable multiplication did not batch every term")
+  IO.println s!"adaptive 22-variable accepted batches/terms: {wideBatches}/128; deferrals=0"
+  let beforeMiss ← batchDeferrals
+  Hex.Groebner.NativeChecks.runProductMiss
+  let afterMiss ← batchDeferrals
+  if afterMiss.1 ≤ beforeMiss.1 || afterMiss.2.1 ≤ beforeMiss.2.1 then
+    throw (IO.userError "last-term miss did not exercise discarded-visit diagnostic")
+  IO.println s!"last-term-miss deferred calls/reservations: {afterMiss.1-beforeMiss.1}/{afterMiss.2.1-beforeMiss.2.1}"
   Hex.Groebner.NativeChecks.run
   let batches ← batchCounts
   if batches.1 == 0 || batches.2 == 0 then throw (IO.userError "monomial product batch unused")
