@@ -67,3 +67,17 @@ SHA256 `4ef1c342112080eaf3f1218525b5e53506ba7f17f98af4a7ce0bb239d0dc2026`;
 42 verified payload digests, including exact sources, generated native wrappers,
 artifact hashes and full logs. [Short-row kernel evidence](hexgroebner-matrix-primitives-short.md)
 records the separate nine-size schedule and its complete observations.
+
+
+The combined source on PR #11014's final reviewed base is fingerprint
+`9c3b7f1adeb3`, commit `8404ac313dbef53503aef1f5dad00d4a4548638f`.
+All nine project checks and eight Clang/GCC sanitizer variants pass again.
+The reviewed base `593b2721167cef672c5a3637a3d457ca054f51e8` and its merged
+commit `7137dd275734d5f79d5ab406206eab14af882fac` have the identical complete
+source tree `2bc6724daa0ef2cb93f6f70793c6b1f8a11af940`.
+
+[Combined validation capsule](raw/matrix-primitives-reviewed-base-validation.tar.gz),
+SHA256 `e7956796fed601847c725e575c21eecd94d21ee70d07098c4b7180f8b80bdfae`;
+158 source blobs and 187 payload digests verified, including exact sources,
+generated wrappers, artifact hashes and full logs. This validates the combined
+implementation; it adds no performance-timing claim.
