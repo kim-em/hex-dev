@@ -1951,7 +1951,7 @@ lean_exe hexsparsepoly_emit_fixtures where
 
 lean_lib HexGroebnerBenchSupport where
   srcDir := "bench"
-  globs := #[`HexGroebner.Bench.Cauchy, `HexGroebner.Bench.Mersenne, `HexGroebner.Bench.Columns, `HexGroebner.Bench.Continuation]
+  globs := #[`HexGroebner.Bench.Cauchy, `HexGroebner.Bench.Mersenne, `HexGroebner.Bench.Columns, `HexGroebner.Bench.Continuation, `HexGroebner.Bench.Primitives]
 
 -- This dedicated driver never elaborates Lean source or invokes the interpreter.
 -- The pinned SDK's internal archive also requires that extern/export calls
