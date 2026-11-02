@@ -1,0 +1,15 @@
+{
+  "source_commit": "e928d26d22ba0468004056542084eb7158778a9a",
+  "owner_merge": "0738244bdda275a1273fc28a444cabc424dcf71e",
+  "argv": [
+    "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+    "lake",
+    "build",
+    "HexRealClosureTheory.NumberFieldTower",
+    "HexRCF.NumberField",
+    "HexRCF.AlgebraicCellsConformance",
+    "HexRCF.AlgebraicPreparationConformance",
+    "HexRCFRealCoefficients"
+  ],
+  "scope": "Merged public model equation and actual ordinary-import adapter, native source/cell/preparation compatibility, optional umbrella. No new full source quotation/manual/scientific rerun."
+}

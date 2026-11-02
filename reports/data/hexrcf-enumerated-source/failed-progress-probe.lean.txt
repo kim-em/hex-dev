@@ -1,0 +1,35 @@
+/-
+Copyright (c) 2026 Lean FRO, LLC. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Kim Morrison
+-/
+module
+public import HexRCF.RealCoefficients.ScalarPacket
+public import HexSignDetTheory.SelectedProducer
+public section
+namespace Hex.RCF.RealCoefficients.ScalarPacket
+open Hex Hex.RealClosure Hex.RealClosure.Tower Hex.SignDet
+variable {registry : BaseContext.Registry} {parent : Tower.Context registry}
+
+/-- Actual selected-sign production supplies a packet at every polynomial
+query over a lawful ordinary-real parent. No successful producer result is
+assumed. Independent frozen acceptance remains a separate obligation. -/
+theorem buildParts_success (model : Model parent ℝ)
+    (context : Algebraic.Context parent.Value Signature parent.sign parent.signature)
+    (value : ValueCodec parent.Value) (polynomial : DensePoly parent.Value) :
+    ∃ proposal, buildParts context value polynomial = some proposal := by
+  obtain ⟨signs, produced⟩ := context.root.buildSigns_success model.value model.zero_iff
+    model.one model.add model.sub model.mul model.nat model.sign model.neg model.inv
+    [context.queryPoly polynomial]
+  simp [buildParts, Algebraic.Context.buildSigns_eq, produced]
+
+/-- Literal assembly preserves the actual producer's unconditional progress
+for a validated descriptor in its ordinary-real parent model. -/
+theorem build_success (model : Model parent ℝ)
+    (context : Algebraic.Context parent.Value Signature parent.sign parent.signature)
+    (value : ValueCodec parent.Value) (polynomial : DensePoly parent.Value) :
+    ∃ packet, build context value polynomial = some packet := by
+  obtain ⟨proposal, produced⟩ := buildParts_success model context value polynomial
+  exact ⟨proposal.packet, by simp only [build, produced, Option.map_some]⟩
+
+end Hex.RCF.RealCoefficients.ScalarPacket

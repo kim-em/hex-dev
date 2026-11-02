@@ -109,7 +109,7 @@ run_meta do
         RootQuote.runWith (RootQuote.quoteOptionWith reader fun expression => do
           unless ← sentinel.mvarId!.isAssigned do sentinel.mvarId!.assign (mkNatLit 9)
           let _ ← mkFreshExprMVar (mkConst ``Nat)
-          controlDecoder expression)
+          controlDecoder expression) quoteConfig
       | throwError "public quotation did not reject changed {label}"
     unless key == `Hex.RCF.RealCoefficients.RootQuote && version == 0 do
       throwError "changed {label} failed at a different boundary"

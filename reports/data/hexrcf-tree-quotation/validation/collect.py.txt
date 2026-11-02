@@ -1,0 +1,47 @@
+from pathlib import Path
+import gzip,hashlib,json,subprocess,shutil
+repo=Path.cwd(); task=Path('/home/kim/.codex/tasks/hex-10358'); out=repo/'reports/data/hexrcf-tree-quotation'
+out.mkdir(parents=True,exist_ok=True)
+git=lambda *a:subprocess.check_output(['git',*a],cwd=repo)
+sha=lambda raw:hashlib.sha256(raw).hexdigest()
+source=git('rev-parse','HEAD').decode().strip(); baseline='4da7dc2e6fbf34509aa1a532cc2ddf1726e2caf4'
+old=json.loads((repo/'reports/data/hexrcf-quotient-branches/context.json').read_text())
+paths=set(old['sources'])|set(git('diff','--name-only',baseline,source).decode().splitlines())
+record=dict(source_commit=source,source_tree=git('rev-parse',source+'^{tree}').decode().strip(),baseline_commit=baseline,sources={},unchanged_guards=old['unchanged_guards'],artifacts=[],validation={},visually_inspected_captures=[],complete_packet_accepted=False)
+for path in sorted(paths):
+ raw=git('show',source+':'+path);assert (repo/path).read_bytes()==raw,path;record['sources'][path]=sha(raw)
+def retain(file,path,compress=False):
+ raw=file.read_bytes(); dest=out/path;dest.parent.mkdir(parents=True,exist_ok=True);dest.write_bytes(gzip.compress(raw,mtime=0) if compress else raw);data=dest.read_bytes();item=dict(path=path,bytes=len(data),sha256=sha(data))
+ if compress:item['uncompressed_sha256']=sha(raw)
+ record['artifacts'].append(item);return path
+for key,name in dict(integration='tree-quote-integration-4.log',public='tree-quote-public-1.log',audit='tree-quote-audit-1.log',render='tree-quotation-render-2.log',browser='tree-quotation-browser-2.log').items():
+ assert 'code=exited, status=0/SUCCESS' in (task/name).read_text(),name;record['validation'][key]=retain(task/name,'validation/'+name+'.gz',True)
+metadata=json.loads((task/'tree-quote-metadata.json').read_text());assert all(x['exit_code']==0 for x in metadata)
+retain(task/'tree-quote-metadata.json','validation/metadata.json')
+for row in metadata:retain(task/row['log'],'validation/'+row['log']+'.gz',True)
+for name in ['tree-quote-metadata.py','tree-quote-integration-targets.txt','tree-memory-policy.txt']:
+ retain(task/name,'validation/'+name+'.gz',True)
+retain(task/'bin/run-bounded','validation/run-bounded.sh');retain(task/'collect-tree-quotation.py','validation/collect.py.txt')
+retain(task/'scalar-review-render/TreeReviewRender.lean','validation/render.lean.txt')
+retain(task/'tree-quotation-browser.mjs','captures/browser.mjs')
+for sourceName,dest in [('tree-quotation-inspection.json','inspection.json'),('tree-quotation-visual-review.json','visual-review.json'),('tree-quotation-section-overflow.json','section-overflow.json')]:retain(task/sourceName,'captures/'+dest)
+for label in ['desktop','narrow']:
+ for kind in ['introduction','example','budget']:
+  name=f'tree-quotation-{label}-{kind}.png';record['visually_inspected_captures'].append(retain(task/name,'captures/'+name))
+for file in sorted((task/'tree-quotation-overflow-attempt-1').iterdir()):retain(file,'diagnostics/narrow-overflow/'+file.name+'.gz',True)
+for pattern in ['tree-quote-integration-[123].log','quote-snapshot-*.log','quote-snapshot-*-interrupt.json','fresh-complete-snapshot-*.log','fresh-complete-snapshot-*-interrupt.*','fresh-complete-profile-1*.log','fresh-complete-profile-1-interrupt.txt','fresh-complete-replay-1*.log','replay-equations-1.log','replay-quote-*.log','replay-boundary-*.lean.txt','snapshot-diagnostic-*.lean.txt','isolated-step*.txt','snapshot-shape.txt']:
+ for file in sorted(task.glob(pattern)):
+  dest='diagnostics/'+file.name+'.gz'
+  if not any(x['path']==dest for x in record['artifacts']):retain(file,dest,True)
+for name in ['QuoteSnapshot','SnapshotSeed','SnapshotRead','SnapshotReject','SnapshotLocalRead','SnapshotReplay','SnapshotRepair','SnapshotParts','SnapshotBridge','SnapshotInner','SnapshotShape','SnapshotExplicit']:
+ retain(task/'scalar-review-render'/(name+'.lean'),'diagnostics/current-debug-sources/'+name+'.lean.txt.gz',True)
+core=git('show',source+':adapters/HexRCF/RealCoefficients/RootQuote.lean')
+assert (task/'replay-boundary-RootReplayQuoteProbe.lean.txt').read_bytes()==core.replace(b'RootQuote',b'RootReplayQuoteProbe')
+record['diagnostic_source_note']='The full five-million-node run uses exactly the recorded production algorithm with only the quoter namespace changed. Debug source files under current-debug-sources are the final corrected tools; earlier failed/interrupted tool attempts are retained as diagnostics and are not claimed to have run those final bytes. No compiled debug snapshot is proof evidence or a dependency of the ordinary conformance.'
+record['snapshot']=json.loads((task/'fresh-complete-snapshot-2-interrupt.json').read_text())
+record['compiled_files']=[]
+for name in ['TreeQuoteData','TreeQuote','TreeQuotePublic','TreeQuoteProofs']:
+ path='.lake/build/lib/lean/HexRCF/'+name+'.olean';raw=(repo/path).read_bytes();record['compiled_files'].append(dict(path=path,bytes=len(raw),sha256=sha(raw)))
+record['scope']='Public leaf/split quotation, ordinary importing examples, exact/below budgets, failure rollback, strict fresh-body audits, compatibility and complete manual. All six changed desktop/narrow targets were actually inspected.'
+record['limits']='Complete original-source literal packet still exhausts five million proof nodes, 5,000,000+1, after passing the old conversion stall. No source-goal acceptance, complete backend or algebraic completeness follows. Interrupted diagnostics and differently bounded runs are not matched AB/BA speed evidence. Compiled module sizes and charged proof nodes are not physical DAG or certificate sizes. Existing page/section overflow remains separate from the zero-overflow changed content.'
+(out/'context.json').write_text(json.dumps(record,indent=2)+'\n');print(f'Retained {len(record["artifacts"])} artifacts/{len(record["sources"])} sources at {source}')

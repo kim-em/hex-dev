@@ -14,6 +14,8 @@ public meta import HexRCF.RealCoefficients.AlgebraicBounds
 public meta import HexRCF.RealCoefficients.Finite
 public meta import HexRCF.RealCoefficients.Reify
 public meta import HexRCF.RealCoefficients.Interpret
+public import HexRCF.RealCoefficients.TowerCompile
+public meta import HexRCF.RealCoefficients.TowerCompile
 public import HexRCF.RealCoefficients.RationalRoot
 public meta import HexRCF.RealCoefficients.RationalRoot
 public import HexRCF.RealCoefficients.RootAliases
@@ -24,6 +26,8 @@ public import HexRCF.RealCoefficients.Formula
 public import HexRCF.RealCoefficients.Field
 public import HexRCF.RealCoefficients.CommonPresentation
 public import HexRCF.RealCoefficients.SourceIdentity
+public meta import HexRCF.RealCoefficients.SourceIdentityQuote
+public import HexRCF.RealCoefficients.SourceBuild
 public import HexRCF.RealCoefficients.LiteralSign
 public import HexRCF.RealCoefficients.SignIndex
 public import HexRCF.RealCoefficients.FieldIndex
@@ -52,6 +56,12 @@ public meta import HexRCF.RealCoefficients.Quote
 public import HexRCF.RealCoefficients.RootReplay
 public import HexRCF.RealCoefficients.RootBuild
 public import HexRCF.RealCoefficients.RootQuote
+public import HexRCF.RealCoefficients.RowQuote
+public meta import HexRCF.RealCoefficients.RowQuote
+public meta import HexRCF.RealCoefficients.RootHeader
+public meta import HexRCF.RealCoefficients.RootPrepare
+public meta import HexRCF.RealCoefficients.RootContext
+public meta import HexRCF.RealCoefficients.SignatureQuote
 public meta import HexRCF.RealCoefficients.RootQuote
 public meta import HexRCF.RealCoefficients.RationalQuote
 public import HexRCF.RealCoefficients.ScalarQuote

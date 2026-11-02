@@ -1,0 +1,60 @@
+[
+  {
+    "name": "copyright",
+    "command": [
+      "python3",
+      "scripts/check_copyright_headers.py"
+    ],
+    "log": "quotient-quotation-metadata-copyright.log",
+    "exit_code": 0
+  },
+  {
+    "name": "lines",
+    "command": [
+      "python3",
+      "scripts/check_file_line_counts.py",
+      "--base",
+      "origin/main"
+    ],
+    "log": "quotient-quotation-metadata-lines.log",
+    "exit_code": 0
+  },
+  {
+    "name": "dag",
+    "command": [
+      "python3",
+      "scripts/check_dag.py"
+    ],
+    "log": "quotient-quotation-metadata-dag.log",
+    "exit_code": 0
+  },
+  {
+    "name": "admissions",
+    "command": [
+      "python3",
+      "scripts/ci/check_named_admissions.py"
+    ],
+    "log": "quotient-quotation-metadata-admissions.log",
+    "exit_code": 0
+  },
+  {
+    "name": "diff",
+    "command": [
+      "git",
+      "diff",
+      "--check"
+    ],
+    "log": "quotient-quotation-metadata-diff.log",
+    "exit_code": 0
+  },
+  {
+    "name": "selected-admissions",
+    "log": "quotient-quotation-metadata-selected-admissions.log",
+    "exit_code": 0
+  },
+  {
+    "name": "relative",
+    "log": "quotient-quotation-metadata-relative.log",
+    "exit_code": 0
+  }
+]

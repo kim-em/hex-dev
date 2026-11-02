@@ -1,0 +1,8 @@
+{
+  "production_checker_matches_validated_prototype": true,
+  "sha256": "26021113d121cfc9ab0d6e7ea7ce8d02eb6c4637c42bbdd2647ecd2d9291f3fb",
+  "main_source_commit": "637da4c86e",
+  "isolated_audit": "1193/202/1353, standard-three only; PASS",
+  "new_test": "19+3; final state restored; PASS",
+  "integration": "PASS; same original Lake process completed, no restart"
+}

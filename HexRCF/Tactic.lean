@@ -74,17 +74,48 @@ private meta opaque evalHandler (name : Name) : MetaM Handler
 private meta def ordinaryAxiom (name : Name) : Bool :=
   [``propext, ``Classical.choice, ``Quot.sound].contains name
 
+/-- Visit each local dependency once within one admission check. Imported
+closures use Lean's authoritative module inventories, including hidden bodies.
+The state is discarded before returning; no environment-sensitive cache persists. -/
+private meta partial def checkConstant (handler : Name) (environment : Environment)
+    (root current : Name) : StateRefT NameSet MetaM Unit := do
+  let seen : NameSet ← get
+  if seen.contains current then return
+  modify fun (seen : NameSet) => seen.insert current
+  if (environment.getModuleIdxFor? current).isSome then
+    for dependency in ← collectAxioms current do
+      unless ordinaryAxiom dependency do
+        throwError "rcf: handler {handler} proposed a proof using forbidden axiom {dependency} (through {root})"
+    return
+  let visit (expression : Expr) := expression.getUsedConstants.forM fun dependency =>
+    checkConstant handler environment root dependency
+  match environment.checked.get.find? current with
+  | some (.axiomInfo info) =>
+      unless ordinaryAxiom current do
+        throwError "rcf: handler {handler} proposed a proof using forbidden axiom {current} (through {root})"
+      visit info.type
+  | some (.defnInfo info) => visit info.type; visit info.value
+  | some (.thmInfo info) => visit info.type; visit info.value
+  | some (.opaqueInfo info) => visit info.type; visit info.value
+  | some (.quotInfo _) => pure ()
+  | some (.ctorInfo info) => visit info.type
+  | some (.recInfo info) => visit info.type
+  | some (.inductInfo info) =>
+      visit info.type
+      info.ctors.forM (checkConstant handler environment root)
+  | none => pure ()
+
 /-- Optional solvers may depend only on Lean's standard logical axioms.
 Imported dependency inventories also cover theorem bodies hidden by modules. -/
 meta def checkAxioms (name : Name) (proof : Expr) : MetaM Unit := do
-  let proof ← instantiateMVars proof
-  -- Universe metavariables do not hide declarations in an inventory probe.
-  -- Expression metavariables can hide arbitrary proof dependencies.
-  if proof.hasExprMVar then throwError "rcf: handler {name} returned an unresolved proof"
-  for constant in proof.getUsedConstants do
-    for dependency in ← collectAxioms constant do
-      unless ordinaryAxiom dependency do
-        throwError "rcf: handler {name} proposed a proof using forbidden axiom {dependency} (through {constant})"
+  profileitM Exception "rcf axiom dependency check" (← getOptions) do
+    let proof ← instantiateMVars proof
+    -- Universe metavariables do not hide declarations in an inventory probe.
+    -- Expression metavariables can hide arbitrary proof dependencies.
+    if proof.hasExprMVar then throwError "rcf: handler {name} returned an unresolved proof"
+    let environment ← getEnv
+    let _ ← (proof.getUsedConstants.forM fun constant =>
+      checkConstant name environment constant constant).run ({} : NameSet)
 
 /-- Screen closed expression data before native evaluation or proof acceptance.
 Local hypotheses remain permitted; unresolved and nonstandard dependencies do not. -/
@@ -92,7 +123,9 @@ meta def checkExpr (name : Name) (expression : Expr) : MetaM Expr := do
   let expression ← instantiateMVars expression
   if expression.hasMVar then throwError "rcf: {name} contains unresolved metavariables"
   checkAxioms name expression
-  if (← getEnv).hasUnsafe expression then
+  let usesUnsafe ← profileitM Exception "rcf unsafe dependency check" (← getOptions) do
+    pure ((← getEnv).hasUnsafe expression)
+  if usesUnsafe then
     throwError "rcf: {name} uses an unsafe declaration"
   return expression
 
@@ -110,7 +143,9 @@ meta def checkProof (name : Name) (target proof : Expr)
   unless agrees do
     throwError "rcf: handler {name} proposed a proof of a different goal"
   checkAxioms name proof
-  if (← getEnv).hasUnsafe proof then
+  let usesUnsafe ← profileitM Exception "rcf unsafe dependency check" (← getOptions) do
+    pure ((← getEnv).hasUnsafe proof)
+  if usesUnsafe then
     throwError "rcf: handler {name} proposed a proof using an unsafe declaration"
   let proof ← profileitM Exception (category ++ " candidate check") (← getOptions) do
     withOptions (fun opts => debug.skipKernelTC.set (Elab.async.set opts false) false) do

@@ -1,0 +1,23 @@
+{
+  "source_sha256": "8b8469ec320bfe1487aec6896d2133ca4e70e17c0dfe836099aa1e4fbe32e369",
+  "old_head": "73d7ae29113be739bb2c579d9ec86cb7fb12c551",
+  "upstream_commit": "87a142bdcd2ef708edfd30002f3c55704e8554f5",
+  "merge_base": "bf3cfebc2db57b8bb6976c5b086dedd49b045343",
+  "checks": [
+    {
+      "name": "prior_actual_conflict",
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "shared_line_edit",
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "tail_append",
+      "expected": 0,
+      "actual": 0
+    }
+  ]
+}

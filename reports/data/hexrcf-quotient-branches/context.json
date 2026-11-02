@@ -1,0 +1,336 @@
+{
+  "source_commit": "c2869b45acb31cb6aa4975916cdfaf21a0440220",
+  "source_tree": "3148fc3826a2ad4e1f2c6eac1cb8f142aa351910",
+  "baseline_commit": "e2a43c3597e7439916f54e0aa2ea41ff7d30675f",
+  "sources": {
+    ".github/workflows/ci.yml": "bf3ef0c4e00ef2397ef5857a629a391e24252b864c093198b08775b6977c563d",
+    "AGENTS.md": "4e0a48cf49a61e56ed84c8b28e232b5bfad29f2da20571377692be6e1c316f30",
+    "HexManual/Chapters/HexRCF/RootQuote.lean": "1e7ae6741abb543bef7115703737a2df5d33ff040f372024b9233cef534d7676",
+    "HexManual/Chapters/HexRCF/RootTableQuote.lean": "c96054f7024d60f1d5b654a8bded87959e2642e07c82d580557b72399deeafc3",
+    "HexRCF/README.md": "3830d758a8a75d59df1a6dd01f59204a86858b5eda3e43a78f9e9e9c2d769a8a",
+    "HexRCF/SPEC/hex-rcf.md": "df8c6bb2435a2794faa36bc77e41f4c936f06ae149f29c3e68fe0d79f4ebfafb",
+    "HexRCF/Tactic.lean": "09d895ba1dd2c1af0bfffca197494f2614380ded268ff13e4e0b02fea22b9224",
+    "HexRealClosure/Algebraic.lean": "d05f9fb72fe9544ae9ddc685dff17080f876aa4c99c70e8992d511e011f6a454",
+    "HexRealClosure/ContextData.lean": "ca29790752b8d25f10d03a9877690a5ff40f1fdf6815c96fe9693941206e662c",
+    "HexRealClosure/SignCodec.lean": "7126323c97b77204386795a0f252f1babfd0ed7f3dba7ee3927a99b9d5c1852a",
+    "HexRealClosure/SignFacts.lean": "9c22837e93e6f50cc96310163e352ac608fbcfbd6275edab33751da2fd84f47c",
+    "HexRealClosure/SignatureCodecTests.lean": "ffc72777523ac0e92b563481804bdfb581fb0173fe7a021009737d57959b4462",
+    "HexRealClosure/TowerContext.lean": "6ef8b87b2d81cb177505a4bbc88befa078b20578cedd49e836d850753c203ee3",
+    "PLAN.md": "e94a60324486913b4a04650edd617c4ff8bef469dc7fd311adea8407c6662ea0",
+    "SPEC/real-closure-execution.md": "bc0948ad7de6969baaed89c0b3052cb0d21d64d634f8a336f9a7dde446b057f5",
+    "adapters/HexRCF/RealCoefficients.lean": "f16eff0302ef0296fc034f59619d232be1921c2f06247dca69db4c53c06c68de",
+    "adapters/HexRCF/RealCoefficients/RationalQuote.lean": "675e2ba065b696f257adefc07fe30ddb0190f321d86005444579ea5a0744bdf5",
+    "adapters/HexRCF/RealCoefficients/RealModel.lean": "712b4fd3edff8eaa6f93e501da5debf04529d1ea8c11a18389820f866d179c43",
+    "adapters/HexRCF/RealCoefficients/Reify.lean": "ea8474b9e253f93a1583064ca99ec0bf376dadf5457fd60b57e9e18460cf449c",
+    "adapters/HexRCF/RealCoefficients/RootContext.lean": "792176eab63e5e62b759a10893569946ef6d019566b8116c85237b3e16fcdb86",
+    "adapters/HexRCF/RealCoefficients/RootHeader.lean": "681f2a964bc30f65a92a0fb1a58b4d4013eb396df37ca813962702065fb46261",
+    "adapters/HexRCF/RealCoefficients/RootPrepare.lean": "de72a8e3ac4adb13365801476467bf691e630d0952b018ccecd88846c3bdb025",
+    "adapters/HexRCF/RealCoefficients/RootQuote.lean": "669045d99b1dd188099ff85732faa5c1925b2297b69fd0ba531005b5151b0735",
+    "adapters/HexRCF/RealCoefficients/ScalarPacket.lean": "9ae62bea85dab43ec01329defa9f788af4843e74b24f40f6c6f1b28adaadc6bf",
+    "adapters/HexRCF/RealCoefficients/ScalarQuote.lean": "fee2617a998f29d05c8959b484060ac1d719359c6d851a8ff6699fa9cb370acc",
+    "adapters/HexRCF/RealCoefficients/SignatureQuote.lean": "c3bb71b52c2a544b902bc256b3a162e1c3c4e7f94ae6b21808914e67109710eb",
+    "adapters/HexRealClosureTheory/Algebraic.lean": "2495153acbe4e468521913a2f5d6569831cd05f5ee48d5ddb26fc31a43438c7e",
+    "adapters/HexRealClosureTheory/SignFacts.lean": "c2b8cf96de0cccc2c0c3cbe83f0afd7c40ab9736b75f377ec5bfedc0907f34e3",
+    "adapters/HexRealClosureTheory/TowerModel.lean": "70d0e57e8ecc78eb9b7675d875157462d27cf9494d49d72bba019eaa6dd1d788",
+    "conformance/HexRCF/DependentQuote.lean": "0df154544a17857334480e7c577ecbcf1afe04165fa2da1a5a6407bf41e85518",
+    "conformance/HexRCF/DependentQuoteData.lean": "ed254475e78fa6edb27d4e55222a598b07b7357154ea0495d6195f2f1d39ee46",
+    "conformance/HexRCF/DependentQuoteProofs.lean": "5875aa9748f50340668e58aea97b196d3353313352fb8c819ae5ee3542556980",
+    "conformance/HexRCF/DependentScalarProofs.lean": "9e8da19d71e1496babd31ecb13430d74abb5f383738d47cbc1bc066b27902cfe",
+    "conformance/HexRCF/DependentScalarQuote.lean": "e20dd7346c337dd17126c394965f268e568706730f475844d7c0907051224933",
+    "conformance/HexRCF/FrozenSignatureConformance.lean": "8e7d432aecb87fb89bb188e4c579e86fb5c3348c5430f1e2b1a00f1f820a940e",
+    "conformance/HexRCF/FrozenSignatureProofs.lean": "55de6da9b0b3dc2d1e384d6c838d13294287c44060afb8e70aa2a0c8e01a81cb",
+    "conformance/HexRCF/ProofFunctionPublic.lean": "f928c9f0dd0a704d34a516b6282cfa6a7a4eb6c112d49689c450647a44370a6b",
+    "conformance/HexRCF/PublicSignPacket.lean": "c32d73c5634376907b965e1ea6cf69352fdda1f1945ce2f34a378cc217778102",
+    "conformance/HexRCF/PublicSignPacketControls.lean": "b4f98bd8ef190a361dd7752d4d5ece0cfbd862ff4face5a06dfabecf87096028",
+    "conformance/HexRCF/PublicSignPacketProofs.lean": "8c230e45826eee079662a91506a16be1b772788636377eb9e442ade195f1cddb",
+    "conformance/HexRCF/PublicSignPacketValues.lean": "72705dba30f04f986188903fb49b983c6f0a664895116fca8bd8b6b46b6517e5",
+    "conformance/HexRCF/QuotientQuote.lean": "97b2cbc9abdb46db33a9a91328f331edf8dea055cc244489158121cde8dc1903",
+    "conformance/HexRCF/QuotientQuoteData.lean": "ec26777d655a7898d7f7922fcea8f426a3f8c77a53000b69b6fe1755a0348870",
+    "conformance/HexRCF/QuotientQuoteProofs.lean": "f1d95accf6caed1c7354408b3a1a0b29493a526e82036390e39102ebe80c6752",
+    "conformance/HexRCF/QuotientQuotePublic.lean": "a3bd9a082df14a0ac93ba3798e13c6ebbf9dff98d7613264713aa281a5a18bea",
+    "conformance/HexRCF/RationalQuoteConformance.lean": "1d6eba51bca64783cf96435d771f230064eeace592ea9cf133e9cb09fcae6a4f",
+    "conformance/HexRCF/RootContextConformance.lean": "0c52084609ec3de8afd51330a7d2cc97f7bae1d8b2bbc421138783940fc7db37",
+    "conformance/HexRCF/RootContextProofs.lean": "13cf69a5712dd4055c5f594640c26d88e3af6d73280fb24b76c6d561b155a0c4",
+    "conformance/HexRCF/RootHeaderBudget.lean": "db30b6b7781fabd238ea2c934477e5ae281cc6cd905f11848ce46eb66ef45fe0",
+    "conformance/HexRCF/RootHeaderControls.lean": "aca063af3bfe475166aef92193f162c25a0e53eea094087cf334406a3d513157",
+    "conformance/HexRCF/RootHeaderPacket.lean": "e924a3b799cfff2573e2861e3533be94147a6505aa11837a99dc8985ba0ae7dc",
+    "conformance/HexRCF/RootHeaderProofs.lean": "e9dd89bb62a096cbc485a4e490db1fc80cb7ae5e11626ea582ff771f450598f0",
+    "conformance/HexRCF/RootHeaderValues.lean": "de9a8fc7c2e9371cbd3324eb700180411e49865dbc6535a74d2c882f74e38e13",
+    "conformance/HexRCF/RootPrepareControls.lean": "5a6e3731eac813867b34e9f902a2f7d5f090b2fae6af9c2b859a3be76b68ae85",
+    "conformance/HexRCF/RootPreparePacket.lean": "e33b5b2921ec13559eb4d6b1d8a3f3cc5ccfd4dd7deb66753806c3f3b39e7a8b",
+    "conformance/HexRCF/RootPrepareProofs.lean": "71ce391d038c5dba043b882e26191d01800dcc36fc9399c222fb0346ea9a16e6",
+    "conformance/HexRCF/RootPreparePublic.lean": "a9e09cbe8d1287b97dde71ad1c6dbe149cfbacb6f81f41a8493ee802416d0805",
+    "conformance/HexRCF/RootQuoteCases.lean": "602d15ef501e969183bffbda7fb3c0f00a174ba5c2dbc35370ee7fce896944dd",
+    "conformance/HexRCF/RootQuoteConformance.lean": "7b3c16bd944470a29bb3f5ecbc52e2d61a50c413caa918df47e489eda76e2ef7",
+    "conformance/HexRCF/RootQuoteData.lean": "faa259d129d5c65a063c7143e45d5d9d19573ed49862aa5ecb3978ff389cb514",
+    "conformance/HexRCF/RootQuoteSource.lean": "aca1654efc1a452aca8ef573bb8ea3a435a4e1e18a4dca854d9bcc8e350d511d",
+    "conformance/HexRCF/RootTableQuote/Conformance.lean": "81756914e039e467e16f9de0fb6a742cd25c5c5706a60ed988bd23f942b9875b",
+    "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "12e7e2e3f4667a76dc89c4b36796bff177f3c187b81adc5eb5e049ff1ce6669d",
+    "conformance/HexRCF/SignPacketProofs.lean": "744b4f9e7a3e6135bc2d3bf456f0a44ba396d87fe008fec2f95382ab7ecc89f9",
+    "conformance/HexRCF/SignPacketQuote.lean": "d16c28d44fd9acb3b829a9817463364bd642b29bc72b2cff02c65250af0dd76f",
+    "conformance/HexRCF/SignatureQuoteConformance.lean": "26f16c37cb9e0d5c09a082787f4a66673437adbf998023fd5e9625db16ff5d3f",
+    "experiments/KernelReplay/AxiomClosure.lean": "f49377265f05f52b633b10a59255a03731e08d022cc54763de9851c5b5325034",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "lakefile.lean": "f654e824794d6a4b727a90d6d9d6904aacc41754478235df3c2c1cb700c151ca",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "libraries.yml": "14e3dd1c01bb0c369b2216e2733378d61172040fd9f69dd0354d4e1267d9c5c1",
+    "reports/hexrcf-packet-quotation.md": "2b0f0b40a29fe3232ee588ec06b3bdfefb2facced7327049c8ad1cd70b6ca35e",
+    "reports/hexrcf-proof-functions.md": "ff410e9c4714476913d5651dd04d61a7ec55289b6143a6b1d29ccda331cd8989",
+    "reports/hexrcf-public-packet-quotation.md": "019ff6fe31e6699ec10e126a1d477a6a4b4f78b67893b5ce447cfe2aa637b316",
+    "reports/hexrcf-root-context.md": "fa967a71370454f5d1fcdb757ebf6ab6fa669538f253c3cc6cb6b6f826361c8a",
+    "reports/hexrcf-root-header-quotation.md": "62ecb8f293a9144b8a8a0bdc4910c473bd87063162bb656b94f1be53eb2e4617",
+    "reports/hexrcf-root-preparation.md": "23b6fc84e7b54447e224a166228f275f9ad239c90b2c6c8e4ea38d2f93e55cef",
+    "reports/hexrcf-sign-packet-quotation.md": "64adc6438ad1593d1018e14f2757cb6193614db26141af9c0c76d359084d9d99"
+  },
+  "unchanged_guards": [
+    "conformance/HexRCF/SelectedRoot/KernelCheck.lean",
+    "experiments/KernelReplay/AxiomClosure.lean",
+    "AGENTS.md",
+    "PLAN.md",
+    ".github/workflows/ci.yml"
+  ],
+  "artifacts": [
+    {
+      "path": "validation/branch-seal-integration-4.log.gz",
+      "bytes": 23425,
+      "sha256": "12f618da022dbde67e1eadf2c3ebf1826a87e74d21e2ac4a9b8afd6b016d838f",
+      "uncompressed_sha256": "9a07e173cd3584b6ee5ea84d4c383d6ff4fc0c9d45d7a3e46db66acc1599834d"
+    },
+    {
+      "path": "validation/quotient-quotation-render-1.log.gz",
+      "bytes": 15571,
+      "sha256": "638803ccd947ab893283bc79ccefcf7866ee88ce4c62a843653b9370671ec626",
+      "uncompressed_sha256": "db52b52cde3feb801ea6cfe09f6110d85ed5a2d5590d212a4abb309c3a6bb3d0"
+    },
+    {
+      "path": "validation/quotient-quotation-browser-1.log.gz",
+      "bytes": 242,
+      "sha256": "64ec93b76f5101781e01eb10c0acd6eccb9a11758ac3f9d6b96030aab958032a",
+      "uncompressed_sha256": "68fd796a18ce4c0404d8e93208c1d317395c36217b0d9794a2b6569efd8bd936"
+    },
+    {
+      "path": "validation/branch-seal-small-1.log.gz",
+      "bytes": 9031,
+      "sha256": "e378a718e2d6dad5c0b18f664767069683e203b00a44265032e6e13e20afc849",
+      "uncompressed_sha256": "99ae14d8491ee9f53c1629d2788eac92d41905c6a0701115413bcf357d90e244"
+    },
+    {
+      "path": "validation/branch-seal-compatibility-2.log.gz",
+      "bytes": 7026,
+      "sha256": "61e028b0b90e36e40ee9cbab750b38d9a31f94107e0908beba0eca5ab7ebf987",
+      "uncompressed_sha256": "3dcb5062bb9994240647cb62f315b24c152d7e4e707a8b5fc468fcb40e0b35e2"
+    },
+    {
+      "path": "validation/metadata.json",
+      "bytes": 1183,
+      "sha256": "78244646a9a07ad5fa61f096cb71793c0314fd8ad67773824aed0ba2adc0aac0"
+    },
+    {
+      "path": "validation/quotient-quotation-metadata-copyright.log.gz",
+      "bytes": 20,
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "validation/quotient-quotation-metadata-lines.log.gz",
+      "bytes": 20,
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "validation/quotient-quotation-metadata-dag.log.gz",
+      "bytes": 20,
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "validation/quotient-quotation-metadata-admissions.log.gz",
+      "bytes": 100,
+      "sha256": "86c87a2ada5a49d30e4cd149bf8df52d3fb00b84114c38699923e6ac6e77bb5a",
+      "uncompressed_sha256": "8bf794423604b32f2d2d8a505029ff9a7cf277c93c236dccff21af2e2aeaefb1"
+    },
+    {
+      "path": "validation/quotient-quotation-metadata-diff.log.gz",
+      "bytes": 20,
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "validation/quotient-quotation-metadata-selected-admissions.log.gz",
+      "bytes": 135,
+      "sha256": "c4881afb71ab03cfda3bf476ffcb3fb9af6595f0aa3517009b15d6265b2745b9",
+      "uncompressed_sha256": "f410d5e90bc47b4f9f541b17141b2974b46c5a372e8a2e42d010aef9c6515c52"
+    },
+    {
+      "path": "validation/quotient-quotation-metadata-relative.log.gz",
+      "bytes": 105,
+      "sha256": "c43d1ba9fa5a6ea3d05919ed8b5f63ae6d92bdbc66b09a9c0e2db03229da84e9",
+      "uncompressed_sha256": "5b6d65aeb6cb570bc5e9b14d70d6222627b455a17e51016ce5d0bf8c9d5cd4c3"
+    },
+    {
+      "path": "validation/metadata-driver.py.txt",
+      "bytes": 3301,
+      "sha256": "327cd55402b788e0dabd834879345576ae40415243f2e18204eaae7dd7ece819"
+    },
+    {
+      "path": "validation/run-bounded.sh",
+      "bytes": 302,
+      "sha256": "63bc5f97337e6b039bb3a9b1ba2a500be96fd1c2a2f73b43dae284aa9b18dda8"
+    },
+    {
+      "path": "validation/collect.py.txt",
+      "bytes": 4684,
+      "sha256": "a5380fe26e7cb7e6b38889196f10e94b662c075421b4f33fe39eae56479411d4"
+    },
+    {
+      "path": "validation/memory-policy.txt.gz",
+      "bytes": 115,
+      "sha256": "3e6fac7cd523fa0b62215d32298b7d0c8e9d64cec845f747a5933b89ac8bbe4c",
+      "uncompressed_sha256": "0edf6756b5d05dbaf9548ca67dab3016e60179882745fdb10086fc4dca416297"
+    },
+    {
+      "path": "captures/browser.mjs",
+      "bytes": 5549,
+      "sha256": "629d64ad670b76aede5ad10ff614ceb052bc78afb1d05b44a3bf1b9dd9a3a530"
+    },
+    {
+      "path": "captures/inspection.json",
+      "bytes": 3892,
+      "sha256": "29f6f5f95a3895bc93615e3a26aa6ca7d58d1e7fe91d9e822847c9230b133484"
+    },
+    {
+      "path": "captures/section-overflow.json",
+      "bytes": 28918,
+      "sha256": "25db43ef941a9fb81f6f2fa4f236dd824c6f3472d4f79fefdc2d7b0b1ab16dda"
+    },
+    {
+      "path": "validation/render.lean.txt",
+      "bytes": 206,
+      "sha256": "664d37e07421cd5f5ee5df6e4fdb3f18fb67b1e58e3688267ff6ca6909180ef3"
+    },
+    {
+      "path": "captures/quotient-quotation-desktop-introduction.png",
+      "bytes": 270028,
+      "sha256": "49826c2a588a0ec816b1bdb5b7ad4d3a497676dcdc7cc0fa5deead8a32f0f9d4"
+    },
+    {
+      "path": "captures/quotient-quotation-desktop-example.png",
+      "bytes": 263700,
+      "sha256": "3cd92fa313a947f46390ea1b3c97873f006ce63230daa7761f794d58ccb39d4e"
+    },
+    {
+      "path": "captures/quotient-quotation-desktop-budget.png",
+      "bytes": 262992,
+      "sha256": "6b56b51028fb1360101697dbba2283008cf15630ac2d098d5880e8fb85f767e1"
+    },
+    {
+      "path": "captures/quotient-quotation-narrow-introduction.png",
+      "bytes": 91788,
+      "sha256": "6aac2ac3e65b01425945cbfe253bc5bd29358910e1010bdaef0a18f9ba4217b0"
+    },
+    {
+      "path": "captures/quotient-quotation-narrow-example.png",
+      "bytes": 96822,
+      "sha256": "5aa75c36ffb316c8c22a5e653791c2d7544c4fb86ad412890e863a5f6d817628"
+    },
+    {
+      "path": "captures/quotient-quotation-narrow-budget.png",
+      "bytes": 92112,
+      "sha256": "cb88a632ca2325dd17a050b7aa3dd4d92a3dbf9a7c517d825ef549a1f76a4616"
+    },
+    {
+      "path": "diagnostics/fresh-complete-frozen-13.log.gz",
+      "bytes": 23606,
+      "sha256": "8f546bbc8999f16af82add1eee96cb6497ff35ac7f7b9232470833acc5140b13",
+      "uncompressed_sha256": "354b4af6ee30560cfb77e3a41043a4abda8b701856156fea347b54a3426dd832"
+    },
+    {
+      "path": "diagnostics/fresh-complete-frozen-14.log.gz",
+      "bytes": 7740,
+      "sha256": "a682de61b122d2308f642af017891b95398680d4dac44e32090a80ac97e315ca",
+      "uncompressed_sha256": "81b915744c7fe0a28adaac29c42946d9edf02b7d51cf460b87380b2efaf26c46"
+    },
+    {
+      "path": "diagnostics/fresh-complete-frozen-14-progress.log.gz",
+      "bytes": 1883,
+      "sha256": "6dc31472b2b618c31190657391d6afe0de0d362eea4bb86088fdab41b97c4225",
+      "uncompressed_sha256": "47b483424d94c85f0bfb160be573d1e104597c6dce8062aafa1dffd1699d3dda"
+    },
+    {
+      "path": "diagnostics/fresh-complete-frozen-14.lean.txt.gz",
+      "bytes": 3275,
+      "sha256": "12e5e7e86d3602ade1ff0a226cc7307e6b9a49c0a92942067553a6ad9ffe2ddc",
+      "uncompressed_sha256": "5c1de1b65b251b5ca5c187a69ea1fa48552f62c2c8a9499678c121b08300c1af"
+    },
+    {
+      "path": "diagnostics/frozen-14-RootQuote.lean.txt.gz",
+      "bytes": 9168,
+      "sha256": "e81865392c308a1f689a40de87189190c76150d9980fae8a5e77d52cac420aae",
+      "uncompressed_sha256": "669045d99b1dd188099ff85732faa5c1925b2297b69fd0ba531005b5151b0735"
+    },
+    {
+      "path": "diagnostics/branch-seal-integration-1.log.gz",
+      "bytes": 18176,
+      "sha256": "bad5196eeefc675fa589a339d12a3253d5302edc3da8fd50526cef504576e0bb",
+      "uncompressed_sha256": "90c7f22e7a93831111ef44af7890b4216968596ba44f79155a2913fc46ba2e90"
+    },
+    {
+      "path": "diagnostics/branch-seal-integration-2.log.gz",
+      "bytes": 22601,
+      "sha256": "e55db1e0536f38f794db2c6b8f6298215f7f48f3e595b4373de847de555d920a",
+      "uncompressed_sha256": "065af21d7d7922c4eb8919e1c77864e330b78182a068323947bf1f6352bc36ef"
+    },
+    {
+      "path": "diagnostics/branch-seal-integration-3.log.gz",
+      "bytes": 23453,
+      "sha256": "8b84107f3f3e1892ee5c4a271330b1f254db997e2e329feb3f8a7b1d60255b26",
+      "uncompressed_sha256": "744eb0cdcf309b4f1b8be2705263683af8c0802a3343f01a6fa269d86e10e1c4"
+    },
+    {
+      "path": "diagnostics/branch-seal-compatibility-1.log.gz",
+      "bytes": 9324,
+      "sha256": "414d37c7e1fe93b9d7b89056436c22f818f60ece33673dc933319e0adc11ff41",
+      "uncompressed_sha256": "c14566fee4e306dc211af2bb2ff5958e4f2a1971b9d85f064f4f5117b3d1b866"
+    }
+  ],
+  "validation": {
+    "integration": "validation/branch-seal-integration-4.log.gz",
+    "render": "validation/quotient-quotation-render-1.log.gz",
+    "browser": "validation/quotient-quotation-browser-1.log.gz",
+    "quotient": "validation/branch-seal-small-1.log.gz",
+    "root": "validation/branch-seal-compatibility-2.log.gz"
+  },
+  "visually_inspected_captures": [
+    "captures/quotient-quotation-desktop-introduction.png",
+    "captures/quotient-quotation-desktop-example.png",
+    "captures/quotient-quotation-desktop-budget.png",
+    "captures/quotient-quotation-narrow-introduction.png",
+    "captures/quotient-quotation-narrow-example.png",
+    "captures/quotient-quotation-narrow-budget.png"
+  ],
+  "complete_packet_accepted": false,
+  "compiled_files": [
+    {
+      "path": ".lake/build/lib/lean/HexRCF/QuotientQuoteData.olean",
+      "bytes": 29920,
+      "sha256": "1eb8b8c5d91d02edf1bd4b8f6bd9752ba0ef283546ffd70a433924ba3832ff39"
+    },
+    {
+      "path": ".lake/build/lib/lean/HexRCF/QuotientQuote.olean",
+      "bytes": 61648,
+      "sha256": "c1cbd340f8a4a0b6ef20b3cb6acfe7d348484abd2bdc59b2ca41113bf7d8ccfd"
+    },
+    {
+      "path": ".lake/build/lib/lean/HexRCF/QuotientQuotePublic.olean",
+      "bytes": 4408,
+      "sha256": "bc7001e03effa43a9b29a768dda87ae069a3559c38b996c805af7d926b9b8761"
+    },
+    {
+      "path": ".lake/build/lib/lean/HexRCF/QuotientQuoteProofs.olean",
+      "bytes": 3160,
+      "sha256": "c65a711e5a078c6746b114d9904dafe410db67cec07a7ef18cab419f4db0a864"
+    }
+  ],
+  "scope": "Closed quotient representative traversal and independently checked Boolean branch proofs; actual public-module polynomial reader, strict budgets, rollback, guarded fresh-body compatibility, complete manual and six inspected targets. No new generic complete-cell acceptance, source/provider/history authentication or algebraic completeness claim.",
+  "limits": "Frozen13 is a historical kernel failure. Frozen14 passes that failure point but exhausts 2M proof nodes; original-source finishing and its prepared audit were not reached. These completed diagnostic runs are not an AB/BA speed comparison. Compiled file sizes are module sizes, not serialized certificates or proof DAGs. Browser targets have no local overflow; pre-existing section/global overflow is retained separately. Future row-factoring experiments are not covered by this snapshot."
+}

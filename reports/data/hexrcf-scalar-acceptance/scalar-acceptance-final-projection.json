@@ -1,0 +1,9 @@
+{
+  "base": "48644cb18d42e2f70bc39de850a5409c018c5640",
+  "changed": [
+    "adapters/HexRCF/RealCoefficients/ScalarPacket.lean",
+    "adapters/HexRCF/RealCoefficients/SourceBuild.lean",
+    "conformance/HexRCF/BoundedSource.lean"
+  ],
+  "result": "PASS final projection; newtheorems/fresh11-bodyaudit/fourowner-or-adapterproofimports only; all originalruntimebytes retained"
+}

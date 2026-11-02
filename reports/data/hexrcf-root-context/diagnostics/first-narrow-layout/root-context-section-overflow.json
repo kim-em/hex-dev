@@ -1,0 +1,54 @@
+[
+  {
+    "label": "desktop",
+    "width": 1440,
+    "targets": [
+      {
+        "tag": "P",
+        "text": "\n                  RootContext.packWith\nthen assembles an actual native root context from a closed retained parent and\nits checked descriptor. It keeps the exis",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The same decoded coefficient can be interpreted through the owner's ordinary\nreal model of the packed context, retaining its selected value a",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.RootContextCases in\nexample : model.value\n    Hex.RCF.RootHeaderPacket.coefficient =\n    Hex.RCF.RootHeaderPacket.realRoot :=\n  value_checked\n\nopen",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The packing budget covers context and signature proof construction. Model\nconstruction is checked separately; its cost is not included in tha",
+        "overflow": 0
+      }
+    ]
+  },
+  {
+    "label": "narrow",
+    "width": 390,
+    "targets": [
+      {
+        "tag": "P",
+        "text": "\n                  RootContext.packWith\nthen assembles an actual native root context from a closed retained parent and\nits checked descriptor. It keeps the exis",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The same decoded coefficient can be interpreted through the owner's ordinary\nreal model of the packed context, retaining its selected value a",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.RootContextCases in\nexample : model.value\n    Hex.RCF.RootHeaderPacket.coefficient =\n    Hex.RCF.RootHeaderPacket.realRoot :=\n  value_checked\n\nopen",
+        "overflow": 18
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The packing budget covers context and signature proof construction. Model\nconstruction is checked separately; its cost is not included in tha",
+        "overflow": 0
+      }
+    ]
+  }
+]

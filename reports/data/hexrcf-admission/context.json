@@ -1,0 +1,520 @@
+{
+  "source_commit": "637da4c86e71f453980d68a9c455c281359283d8",
+  "base_commit": "1a666ea7c85d63cd9bc9372f78c8fdbbe1bf191d",
+  "parent_context_sha256": "cf782db33344b6a8a3595ba47e03c694b7c569029ef96cfca71491d0d89e3347",
+  "sources": {
+    ".github/workflows/ci.yml": "5db61a70eb52d7478994377179c1b35b360a794fcff4b1c257496b5a6394231c",
+    "AGENTS.md": "4e0a48cf49a61e56ed84c8b28e232b5bfad29f2da20571377692be6e1c316f30",
+    "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "4fd07893031c5857cf27dbc70e2dd571369a02d358923e50520815da37029451",
+    "HexManual/Chapters/HexRCF/RootQuote.lean": "0fe7ecb8568a5b3492aeea8310a4816797802d0a764093b824673a635ecf628a",
+    "HexManual/Chapters/HexRCF/RootTableQuote.lean": "78d1be637a32593b03f000ab153c7fdf05a1b5332ea3efb9c186aacfd68f0ae5",
+    "HexRCF/HandlerTests/Admission.lean": "770518931dd3f7ab1934e327460b80607338207b17d97363b82c2a5c93669c36",
+    "HexRCF/README.md": "3830d758a8a75d59df1a6dd01f59204a86858b5eda3e43a78f9e9e9c2d769a8a",
+    "HexRCF/SPEC/hex-rcf.md": "df8c6bb2435a2794faa36bc77e41f4c936f06ae149f29c3e68fe0d79f4ebfafb",
+    "HexRCF/Tactic.lean": "26021113d121cfc9ab0d6e7ea7ce8d02eb6c4637c42bbdd2647ecd2d9291f3fb",
+    "HexRealClosure/Algebraic.lean": "d05f9fb72fe9544ae9ddc685dff17080f876aa4c99c70e8992d511e011f6a454",
+    "HexRealClosure/ContextData.lean": "ca29790752b8d25f10d03a9877690a5ff40f1fdf6815c96fe9693941206e662c",
+    "HexRealClosure/SignCodec.lean": "7126323c97b77204386795a0f252f1babfd0ed7f3dba7ee3927a99b9d5c1852a",
+    "HexRealClosure/SignFacts.lean": "9c22837e93e6f50cc96310163e352ac608fbcfbd6275edab33751da2fd84f47c",
+    "HexRealClosure/SignatureCodecTests.lean": "ffc72777523ac0e92b563481804bdfb581fb0173fe7a021009737d57959b4462",
+    "HexRealClosure/TowerContext.lean": "6ef8b87b2d81cb177505a4bbc88befa078b20578cedd49e836d850753c203ee3",
+    "PLAN.md": "e94a60324486913b4a04650edd617c4ff8bef469dc7fd311adea8407c6662ea0",
+    "SPEC/real-closure-execution.md": "bc0948ad7de6969baaed89c0b3052cb0d21d64d634f8a336f9a7dde446b057f5",
+    "adapters/HexRCF/RealCoefficients.lean": "0056d497cd09f465ce44102b6a80b42fa3be35f46e60208179a5473447e7e1b5",
+    "adapters/HexRCF/RealCoefficients/CellOperations.lean": "3561cc80c7c866141f05a387ce1100ee0cadd98281a03395551cebcde5bd6e2a",
+    "adapters/HexRCF/RealCoefficients/CellQuote.lean": "c572911d7be36001e0f1885c3460f3eb19425d90e78345b1c46878ddf3e6c6ea",
+    "adapters/HexRCF/RealCoefficients/CellRead.lean": "65274f89c940bad74eab8c9075f9256c6ed3d8b90d3294aec4e85883e425fb10",
+    "adapters/HexRCF/RealCoefficients/RationalQuote.lean": "675e2ba065b696f257adefc07fe30ddb0190f321d86005444579ea5a0744bdf5",
+    "adapters/HexRCF/RealCoefficients/RealModel.lean": "712b4fd3edff8eaa6f93e501da5debf04529d1ea8c11a18389820f866d179c43",
+    "adapters/HexRCF/RealCoefficients/Reify.lean": "ea8474b9e253f93a1583064ca99ec0bf376dadf5457fd60b57e9e18460cf449c",
+    "adapters/HexRCF/RealCoefficients/RootContext.lean": "792176eab63e5e62b759a10893569946ef6d019566b8116c85237b3e16fcdb86",
+    "adapters/HexRCF/RealCoefficients/RootHeader.lean": "681f2a964bc30f65a92a0fb1a58b4d4013eb396df37ca813962702065fb46261",
+    "adapters/HexRCF/RealCoefficients/RootPrepare.lean": "de72a8e3ac4adb13365801476467bf691e630d0952b018ccecd88846c3bdb025",
+    "adapters/HexRCF/RealCoefficients/RootQuote.lean": "89f3ad4b0c4a8ae058560201900877035d896427176b944b34acde9f9b23d7e8",
+    "adapters/HexRCF/RealCoefficients/RowPacketQuote.lean": "edbb3d23f72422f5a1dea163c283848ec285418b7bdb9eedba553b83066121af",
+    "adapters/HexRCF/RealCoefficients/RowQuote.lean": "3b7e7d2ebcbd53a6ea893bc8f4c884d767430f8b98a3f1ca770fe7c7b122f3c9",
+    "adapters/HexRCF/RealCoefficients/ScalarPacket.lean": "9ae62bea85dab43ec01329defa9f788af4843e74b24f40f6c6f1b28adaadc6bf",
+    "adapters/HexRCF/RealCoefficients/ScalarQuote.lean": "fee2617a998f29d05c8959b484060ac1d719359c6d851a8ff6699fa9cb370acc",
+    "adapters/HexRCF/RealCoefficients/SignatureQuote.lean": "c3bb71b52c2a544b902bc256b3a162e1c3c4e7f94ae6b21808914e67109710eb",
+    "adapters/HexRCF/RealCoefficients/SourceIdentity.lean": "d98ae0c746003be89edfc969e464383e6a6bda253e0dae8c290605e8b98ce3c3",
+    "adapters/HexRCF/RealCoefficients/SourceIdentityQuote.lean": "37c54a56f48b265d0ddca38ecae2c572871e8b7f1600b54f330ff3da60252fa7",
+    "adapters/HexRealClosureTheory/Algebraic.lean": "2495153acbe4e468521913a2f5d6569831cd05f5ee48d5ddb26fc31a43438c7e",
+    "adapters/HexRealClosureTheory/SignFacts.lean": "c2b8cf96de0cccc2c0c3cbe83f0afd7c40ab9736b75f377ec5bfedc0907f34e3",
+    "adapters/HexRealClosureTheory/TowerModel.lean": "70d0e57e8ecc78eb9b7675d875157462d27cf9494d49d72bba019eaa6dd1d788",
+    "conformance-fixtures/HexRCF/source-identity.json": "93540b60174e0d8bd85ca80d99c6cbdc427815f341a12a6e38f4b38613073f53",
+    "conformance/HexRCF/CellFinishCases.lean": "619208fd6528c4f12d4e12bc4ee6fd4016ab0948db16a61237a2aefbcd523a7c",
+    "conformance/HexRCF/CellFinishProofs.lean": "fd232e3b4a64f444d834ae244a110ad0910aa35c4773a90b6a3b26a48693e22c",
+    "conformance/HexRCF/CellQuoteStageProofs.lean": "a14f3f20e1add07f569ab222994995c409552aededef738972a70c864b94b919",
+    "conformance/HexRCF/CellQuoteStages.lean": "e4593f2c8169af00398ff608dd53cbbfbe6b8408ddbdd07de6f64f59acf8a25f",
+    "conformance/HexRCF/CellSourceProofs.lean": "cea22d1a532dc4415130ff1c9c20f43707ab9696c7df53c858bdfa41ad76f018",
+    "conformance/HexRCF/CellSourceQuote.lean": "bea057fe5c9470d701e02974fbd6a83e945bbaba1225ca294830f54ef762f504",
+    "conformance/HexRCF/DependentQuote.lean": "0df154544a17857334480e7c577ecbcf1afe04165fa2da1a5a6407bf41e85518",
+    "conformance/HexRCF/DependentQuoteData.lean": "ed254475e78fa6edb27d4e55222a598b07b7357154ea0495d6195f2f1d39ee46",
+    "conformance/HexRCF/DependentQuoteProofs.lean": "5875aa9748f50340668e58aea97b196d3353313352fb8c819ae5ee3542556980",
+    "conformance/HexRCF/DependentScalarProofs.lean": "9fe3f3871f929e28355985c574c0b8c742be062ae5f19033d7d8bf9e67cd88d8",
+    "conformance/HexRCF/DependentScalarQuote.lean": "e20dd7346c337dd17126c394965f268e568706730f475844d7c0907051224933",
+    "conformance/HexRCF/FrozenSignatureConformance.lean": "8e7d432aecb87fb89bb188e4c579e86fb5c3348c5430f1e2b1a00f1f820a940e",
+    "conformance/HexRCF/FrozenSignatureProofs.lean": "55de6da9b0b3dc2d1e384d6c838d13294287c44060afb8e70aa2a0c8e01a81cb",
+    "conformance/HexRCF/ProofFunctionPublic.lean": "f928c9f0dd0a704d34a516b6282cfa6a7a4eb6c112d49689c450647a44370a6b",
+    "conformance/HexRCF/PublicSignPacket.lean": "c32d73c5634376907b965e1ea6cf69352fdda1f1945ce2f34a378cc217778102",
+    "conformance/HexRCF/PublicSignPacketControls.lean": "b4f98bd8ef190a361dd7752d4d5ece0cfbd862ff4face5a06dfabecf87096028",
+    "conformance/HexRCF/PublicSignPacketProofs.lean": "442f6d3e04a36db25611f0396103a1eee5ee411c40e8f3cc93df1acf7898bbbb",
+    "conformance/HexRCF/PublicSignPacketValues.lean": "72705dba30f04f986188903fb49b983c6f0a664895116fca8bd8b6b46b6517e5",
+    "conformance/HexRCF/QuotientQuote.lean": "97b2cbc9abdb46db33a9a91328f331edf8dea055cc244489158121cde8dc1903",
+    "conformance/HexRCF/QuotientQuoteData.lean": "ec26777d655a7898d7f7922fcea8f426a3f8c77a53000b69b6fe1755a0348870",
+    "conformance/HexRCF/QuotientQuoteProofs.lean": "f1d95accf6caed1c7354408b3a1a0b29493a526e82036390e39102ebe80c6752",
+    "conformance/HexRCF/QuotientQuotePublic.lean": "a3bd9a082df14a0ac93ba3798e13c6ebbf9dff98d7613264713aa281a5a18bea",
+    "conformance/HexRCF/RationalQuoteConformance.lean": "f03844d4a44a5c61b702ed0b1697619da9b20f4ac42122b9d1a6d3fa4a2de9ac",
+    "conformance/HexRCF/RecursiveScalarQuote.lean": "83ba1f3ed63afdbb148f171736a0aacebc7eef4ae3bf32dca29811515c3f051b",
+    "conformance/HexRCF/ReplayBoundary.lean": "bbc09553d62198a18e897981d5f443c81f09dba8d371d2cdaeaa846d22cbc2f8",
+    "conformance/HexRCF/ReplayBoundaryProofs.lean": "d755462a7344dc9f5304fba255bcefb42188c1de5a51d92d8567a27f22482dc2",
+    "conformance/HexRCF/ReplayHelperProofs.lean": "6dd68829399ec8908a877a3f7705cc9321e49b9581d0d577d114950242e43a57",
+    "conformance/HexRCF/ReplayHelpers.lean": "4501fa39e52a8a2bb52fdd7b183c16801090dd026304105afb4342a1c441c2a3",
+    "conformance/HexRCF/RootContextConformance.lean": "0c52084609ec3de8afd51330a7d2cc97f7bae1d8b2bbc421138783940fc7db37",
+    "conformance/HexRCF/RootContextProofs.lean": "b4c2e3ce686ce8bc60bfdafe2be2f566c6de46758f4827d307f3d5592b59d2e9",
+    "conformance/HexRCF/RootHeaderBudget.lean": "db30b6b7781fabd238ea2c934477e5ae281cc6cd905f11848ce46eb66ef45fe0",
+    "conformance/HexRCF/RootHeaderControls.lean": "aca063af3bfe475166aef92193f162c25a0e53eea094087cf334406a3d513157",
+    "conformance/HexRCF/RootHeaderPacket.lean": "dcd8e63c1d656fc800690b35554a0f835a1ee0bb96312215f8c12348d8a0e79a",
+    "conformance/HexRCF/RootHeaderProofs.lean": "e6630f0464fd0096b9af74b4640d2abc514a62c0b0fc706b4a2e74c9602eeb8c",
+    "conformance/HexRCF/RootHeaderValues.lean": "de9a8fc7c2e9371cbd3324eb700180411e49865dbc6535a74d2c882f74e38e13",
+    "conformance/HexRCF/RootPrepareControls.lean": "b36af8efd1e12227188b6fb7bde258e80d5c1c874338a324cb53c5ccc6c1330f",
+    "conformance/HexRCF/RootPreparePacket.lean": "86185bcc5fdddb1f700d869a115a91034954714f69a83171fd0e96f601e76fe3",
+    "conformance/HexRCF/RootPrepareProofs.lean": "4a5bc6655576a6592fcd5cd801bcfebd425243b1bb6cb39b0bb46d500a3938be",
+    "conformance/HexRCF/RootPreparePublic.lean": "a9e09cbe8d1287b97dde71ad1c6dbe149cfbacb6f81f41a8493ee802416d0805",
+    "conformance/HexRCF/RootQuoteCases.lean": "602d15ef501e969183bffbda7fb3c0f00a174ba5c2dbc35370ee7fce896944dd",
+    "conformance/HexRCF/RootQuoteConformance.lean": "f6a652a243ba62cffc671d1365c6ab47b6618179acb172019ec5609ea0324d3c",
+    "conformance/HexRCF/RootQuoteData.lean": "faa259d129d5c65a063c7143e45d5d9d19573ed49862aa5ecb3978ff389cb514",
+    "conformance/HexRCF/RootQuoteSource.lean": "aca1654efc1a452aca8ef573bb8ea3a435a4e1e18a4dca854d9bcc8e350d511d",
+    "conformance/HexRCF/RootTableQuote/Conformance.lean": "ec5bd136df58cc24a40ca989e3d33e55923082aed7591b234f55c70c013c74ad",
+    "conformance/HexRCF/RowPacketControls.lean": "ab69c57b66fe8129be5f07e5e5f42b7b35d60a23b305ec224d2d7dca28ac7c82",
+    "conformance/HexRCF/RowQuoteCases.lean": "8d2ebddc05d5f0d08b62b50d3498b34b47ab0b3accc4d0a572e621fd83d606d4",
+    "conformance/HexRCF/RowQuoteData.lean": "ce60cb18f548f55e929d4803c7ed824ad0a7621fd4abda09a191f76393fabf0c",
+    "conformance/HexRCF/RowQuoteDepth.lean": "6ada3c44bea055425d223dc57eafb4f0c88349713d815ded4beec9720f7802ad",
+    "conformance/HexRCF/RowQuoteProofs.lean": "317d4f981f32bb28666fcabc6248f4a57fe67c95a7fe431f7993aeacfa377ed3",
+    "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "12e7e2e3f4667a76dc89c4b36796bff177f3c187b81adc5eb5e049ff1ce6669d",
+    "conformance/HexRCF/SharedQuoteCallbacks.lean": "6132cc3722af3cf251d11c857a572f09128d3614d931724965cbcf488dc4db6d",
+    "conformance/HexRCF/SignPacketProofs.lean": "3980cad31637f5798b2c351e1efc2a29b946de1d90e06fb11acd85e2a5c46321",
+    "conformance/HexRCF/SignPacketQuote.lean": "fcda11e6c75353d4519c4eb0e9c302b84d7e41030316c99fcacb885dabf97545",
+    "conformance/HexRCF/SignatureQuoteConformance.lean": "26f16c37cb9e0d5c09a082787f4a66673437adbf998023fd5e9625db16ff5d3f",
+    "conformance/HexRCF/SourceIdentityControls.lean": "c655486606139658d73e5b4d394228c3632596fec366e3b410ea9deb5b085553",
+    "conformance/HexRCF/SourceIdentityEmit.lean": "aa12f1517efc675698c0795c5a463a77d7a3466bcc146d4981d82e913059ed99",
+    "conformance/HexRCF/SourceIdentityLiterals.lean": "61ee2ce703d4965b00e1e20cc62288a0bde4e839d68ca09e1b66281f4a3e48d0",
+    "conformance/HexRCF/SourceIdentityPacket.lean": "614b3132274de5bebebeecb09cf479ac68723f1518e1f52912543a812985a4a9",
+    "conformance/HexRCF/SourceIdentityProofs.lean": "c449238d5f915dbe1f337688bc4f7357f3a93e31ad79eaa9e8e159c280749173",
+    "conformance/HexRCF/SourceSelectionCases.lean": "368ded3f07bb4be269f26a2fd2b7044904ea16d1dd1cba41d8bccb373d004005",
+    "conformance/HexRCF/TreeQuote.lean": "049065aa64bb13432b1d7183759979d28eebba98d18b6f54ab849e5953ce92c1",
+    "conformance/HexRCF/TreeQuoteData.lean": "c595c2278d2997483b755aa585da874c27eed40e4e1a8106d7f553e4f574776b",
+    "conformance/HexRCF/TreeQuoteProofs.lean": "f9a40248237480f8972df62dff548ef0599205b76014e070866e72586f161933",
+    "conformance/HexRCF/TreeQuotePublic.lean": "adc6dc6871208f31970cf5ae0c2472fd325a72e1df8114a6e8178ef8b2c71570",
+    "experiments/KernelReplay/AxiomClosure.lean": "f49377265f05f52b633b10a59255a03731e08d022cc54763de9851c5b5325034",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "lakefile.lean": "6c3a0ec428c7d7d027f00278cfdeb14dbf639f115b5b442150ce327c7175deea",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "libraries.yml": "14e3dd1c01bb0c369b2216e2733378d61172040fd9f69dd0354d4e1267d9c5c1",
+    "scripts/rcf/source_identity_literals.py": "ea5d7df949871c4975367a759b9632d033f3a240523c2c917c9141220ffdfd78"
+  },
+  "artifacts": [
+    {
+      "path": "Admission.lean.pending",
+      "bytes": 3474,
+      "sha256": "237cb076dc5729033c865b326a0a53bd8d09d7595453c822b8f1dc6c4cfd639f"
+    },
+    {
+      "path": "ForestAudit.lean.txt",
+      "bytes": 4923,
+      "sha256": "899ab18e467d0738e252881b6e236c9ad0ecf942fddfef9fe9d9dd31b229666e"
+    },
+    {
+      "path": "README.md",
+      "bytes": 1776,
+      "sha256": "c80e91714ca3eeb5cdc594b69a6a6579dff42627feaf9543c61a63dbe6368586"
+    },
+    {
+      "path": "axiom-forest-admission-1.log.gz",
+      "bytes": 429,
+      "sha256": "1734518637465d54f4a7322b20ecc51827f4233ab25e9553e6a566cfeeb76ef8"
+    },
+    {
+      "path": "axiom-forest-admission-2.log.gz",
+      "bytes": 404,
+      "sha256": "fa55fbc9bb6b9bd5656f27fe6221c5c905d174053d588dd24500415341147779"
+    },
+    {
+      "path": "axiom-forest-audit-1.log.gz",
+      "bytes": 12304,
+      "sha256": "636fc33c74035de8e3e2b9f624c9cd58fce1b56c88d2245981cde95b341f4215"
+    },
+    {
+      "path": "axiom-forest-checks-1-inputs/AxiomForestChecks.lean.txt",
+      "bytes": 1895,
+      "sha256": "2b626a4ca4a91f5918f6aa1b391150784cf4701c50fb6e2b083262125d64c7f7"
+    },
+    {
+      "path": "axiom-forest-checks-1.log.gz",
+      "bytes": 687,
+      "sha256": "c8db64fac19baa0f470c6b29a9fbb8e6a1e3c8574297ffda3cce453a003f375e"
+    },
+    {
+      "path": "axiom-forest-checks-2.log.gz",
+      "bytes": 350,
+      "sha256": "f642ca2f87998de337409aba0cc8a470ab704014f8f59c531e74c882045e2d7c"
+    },
+    {
+      "path": "axiom-forest-core-1.log.gz",
+      "bytes": 274,
+      "sha256": "f89bbefa8c8737bb4056ad1a347a1501a576b384af320c6f96ef5202e7c44660"
+    },
+    {
+      "path": "axiom-forest-cost-1.log.gz",
+      "bytes": 466,
+      "sha256": "e77f27d63cbdcec63cc21bc16d304ae2e2b97a575aeb23e58f5f9a5079c9c927"
+    },
+    {
+      "path": "axiom-forest-cost-context.json",
+      "bytes": 299,
+      "sha256": "8496239217f4394d1ba28ea5beac08dc215bc6adeec0d86e6a052e6b3ce9d3ba"
+    },
+    {
+      "path": "axiom-forest-full-1-inputs/AxiomForestChecks.lean.txt",
+      "bytes": 2306,
+      "sha256": "d9b762c360be6f78ffc5c345878bf0b5d8aa884f4465147fabbfdd6d16fefc6f"
+    },
+    {
+      "path": "axiom-forest-full-1-inputs/AxiomForestCost.lean.txt",
+      "bytes": 1287,
+      "sha256": "ea337f33db23855c3054128cc39de8ad61a714c90de00a29f78e75c8b79a9508"
+    },
+    {
+      "path": "axiom-forest-full-1-inputs/CellSourceCost.lean.txt",
+      "bytes": 11383,
+      "sha256": "f3e9f93c0f1f1529a84a5c6befc8a2a087909f63271a86c327d3791de4491957"
+    },
+    {
+      "path": "axiom-forest-full-1-inputs/Tactic.lean.txt",
+      "bytes": 13998,
+      "sha256": "26021113d121cfc9ab0d6e7ea7ce8d02eb6c4637c42bbdd2647ecd2d9291f3fb"
+    },
+    {
+      "path": "axiom-forest-full-1.log.gz",
+      "bytes": 12376,
+      "sha256": "ad793c063843689889a41aa55f9930dfa5ae71d8d5dd5c1ec750f05ae5373965"
+    },
+    {
+      "path": "axiom-forest-integration-1.log.gz",
+      "bytes": 29952,
+      "sha256": "40ef514e40c05c1b80ffeea250d410c7afaa5755688113a7e46883817043ff4a"
+    },
+    {
+      "path": "axiom-forest-integration-invocation.json",
+      "bytes": 1899,
+      "sha256": "1e5571b3835cf20e3fbb196cde354fcf5f5b1973921427a409414088bf2055bb"
+    },
+    {
+      "path": "axiom-forest-integration-memory-policy.txt",
+      "bytes": 98,
+      "sha256": "eb88d7b4a2b5d2e0553d29508ef32a7da01f62d902ca0892338c4fb7f54ed84b"
+    },
+    {
+      "path": "axiom-forest-metadata-admissions.log.gz",
+      "bytes": 100,
+      "sha256": "a03bc6497f7874bd347cf6ba4b9b9ab91996c92cd706008e36105c28964247c3"
+    },
+    {
+      "path": "axiom-forest-metadata-copyright.log.gz",
+      "bytes": 20,
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    {
+      "path": "axiom-forest-metadata-dag.log.gz",
+      "bytes": 20,
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    {
+      "path": "axiom-forest-metadata-diff.log.gz",
+      "bytes": 20,
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    {
+      "path": "axiom-forest-metadata-lines.log.gz",
+      "bytes": 20,
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    {
+      "path": "axiom-forest-metadata-negative-probe-failure.log.gz",
+      "bytes": 220,
+      "sha256": "8b1fd54c293c4689740a501f58fdab9a04499890761853f6161d7ab0f0667602"
+    },
+    {
+      "path": "axiom-forest-metadata-relative.log.gz",
+      "bytes": 105,
+      "sha256": "c43d1ba9fa5a6ea3d05919ed8b5f63ae6d92bdbc66b09a9c0e2db03229da84e9"
+    },
+    {
+      "path": "axiom-forest-metadata-selected-admissions.log.gz",
+      "bytes": 204,
+      "sha256": "4e5f78d1cdb8e29446c2e801dcffb2d245def5838ba80efece31a9fbe8e431c0"
+    },
+    {
+      "path": "axiom-forest-metadata-summary.log.gz",
+      "bytes": 79,
+      "sha256": "3956b87a47b24f981cca11f7704b8421254b1df0ae1f7d3f1e180cbfcc9ad50e"
+    },
+    {
+      "path": "axiom-forest-metadata.json",
+      "bytes": 1155,
+      "sha256": "1a9dd323bee7a5e718fb6efb72a94951264a5b80b87f2bdaed14d6b6358d4518"
+    },
+    {
+      "path": "axiom-forest-metadata.py",
+      "bytes": 3896,
+      "sha256": "73fcea3b3031cecaf28101c3f8a2d5dfd9109db461c814d33356bc3386bd701d"
+    },
+    {
+      "path": "axiom-forest-prototype.json",
+      "bytes": 1142,
+      "sha256": "8c6d03d8eef75c5489ff65eaaf8a13eeba485b0f80f048f759cef3f478e03058"
+    },
+    {
+      "path": "axiom-forest-prototype.patch.gz",
+      "bytes": 1540,
+      "sha256": "2dda4307c1857d675aef48cecd00ddce0b747d59bb77773f7fd17ef2c0950f5b"
+    },
+    {
+      "path": "axiom-forest-source-equivalence.json",
+      "bytes": 368,
+      "sha256": "8655efc3ee1952fbaf9f39b1c2f9e678c7e5fc3e04688a3a870c1392cc96761e"
+    },
+    {
+      "path": "cell-source-cost-1.log.gz",
+      "bytes": 10409,
+      "sha256": "49d35388ab2cb93e8a9b0c29664f6d41d1a01b1bf1b0121319cfa70362b9215d"
+    },
+    {
+      "path": "cell-source-cost-inputs.json",
+      "bytes": 723,
+      "sha256": "b903a24ff7884af0c85b384e697bf7870b17ce17b17b1e3a026d9c93e1107f5e"
+    },
+    {
+      "path": "cell-source-cost-invocation.json",
+      "bytes": 146,
+      "sha256": "25007240325b68710e22446db73e3d9fdbaa5c9c9c0fd8825b968b948838cf21"
+    },
+    {
+      "path": "cell-source-cost-memory-policy.txt",
+      "bytes": 388,
+      "sha256": "bcd60928bece986758499f7160c443b9a722ebe3ab645c2038a0968c19ed3b55"
+    },
+    {
+      "path": "cell-source-cost-profiler-semantics.lean.txt",
+      "bytes": 2075,
+      "sha256": "bb6f45b4c357fa61c9bc647e4129343489af018505cdbc2422a92081053c890f"
+    },
+    {
+      "path": "cell-source-cost-results.json",
+      "bytes": 1823,
+      "sha256": "2789abbc8a485c9d970cf718c3428a7fccaafdabf311564471191b0298176064"
+    },
+    {
+      "path": "cpu_lease.py.txt",
+      "bytes": 765,
+      "sha256": "2da6fe01f5637f57b1f92a4baf743c8cfaa47ed61a51632f8b60173bc6436cdb"
+    },
+    {
+      "path": "guard-cost-core-1-inputs/Tactic.lean.txt",
+      "bytes": 12457,
+      "sha256": "0816fb99d08180075762058d50a18ffbf483ed4446861e838087b95de4e35f54"
+    },
+    {
+      "path": "guard-cost-core-1.log.gz",
+      "bytes": 662,
+      "sha256": "b6451964bdf0b058a592e43f510c1310848ad8c64477ac1092d5b04f886ebb5e"
+    },
+    {
+      "path": "guard-cost-core-2.log.gz",
+      "bytes": 273,
+      "sha256": "be93c5d2af83f2404fae2f3421abbde0cd6aff28f4d7813bc46a9d82595f9c4b"
+    },
+    {
+      "path": "guard-cost-dependencies.json",
+      "bytes": 944,
+      "sha256": "a66500f5a9b53abeb52464876e86ddd6430f9c9f56451871e3977f2e3fb020d0"
+    },
+    {
+      "path": "guard-cost-full-1-inputs/CellSourceCost.lean.txt",
+      "bytes": 11383,
+      "sha256": "f3e9f93c0f1f1529a84a5c6befc8a2a087909f63271a86c327d3791de4491957"
+    },
+    {
+      "path": "guard-cost-full-1-inputs/Tactic.lean.txt",
+      "bytes": 12473,
+      "sha256": "d79561a41df94ffa3be63b5259665af29f1b14628217d07dfcd055ec40444417"
+    },
+    {
+      "path": "guard-cost-full-1-inputs/lakefile.lean.txt",
+      "bytes": 140,
+      "sha256": "abd5e5ade29434a8b69b489b39bc121ddfec2374fb73d91d253247e5f03011d8"
+    },
+    {
+      "path": "guard-cost-full-1.log.gz",
+      "bytes": 3723,
+      "sha256": "84d51c75b3812af702689c6303c67130aa3353804351f16181088d2f7850b41d"
+    },
+    {
+      "path": "guard-cost-full-2.log.gz",
+      "bytes": 6894,
+      "sha256": "c5520c035aebbd373cd1e9d31be8170a6eb97a572793ef34287f2e1af67e1088"
+    },
+    {
+      "path": "guard-cost-full-3-invocation.json",
+      "bytes": 146,
+      "sha256": "14a98821b75303f2226b27818cbc33d2ed7e97283698dc7ed2b61f7ec407f8d0"
+    },
+    {
+      "path": "guard-cost-full-3-memory-policy.txt",
+      "bytes": 388,
+      "sha256": "bcd60928bece986758499f7160c443b9a722ebe3ab645c2038a0968c19ed3b55"
+    },
+    {
+      "path": "guard-cost-full-3.log.gz",
+      "bytes": 13058,
+      "sha256": "09679ae77250ac4150cd029e72f7e05b6490cd2c537cb34e5d67abb3ae4671c8"
+    },
+    {
+      "path": "guard-cost-guard-equivalence.txt",
+      "bytes": 190,
+      "sha256": "ea9829fb095a87301efededdef09d7365058d82abe0a3ebbd712396310e335af"
+    },
+    {
+      "path": "guard-cost-inputs.json",
+      "bytes": 623,
+      "sha256": "d97c1b73b2d4a6678904a21d6fe4dff386cf5e47171bdc43e13714ec5916793f"
+    },
+    {
+      "path": "guard-cost-results.json",
+      "bytes": 1574,
+      "sha256": "bea500ac74aa3460c406f86b863571dc96e3dc75e6078bbdcdc667f0dd77e07a"
+    },
+    {
+      "path": "guard-cost-setup-notes.txt",
+      "bytes": 636,
+      "sha256": "d1b6b1e6a9c8d191e74eb752d619d80655ec1ecac0c7b4cb81e1122f9e144f15"
+    },
+    {
+      "path": "guard-cost-validated-tactic.lean.txt",
+      "bytes": 12473,
+      "sha256": "d79561a41df94ffa3be63b5259665af29f1b14628217d07dfcd055ec40444417"
+    },
+    {
+      "path": "initial-profile-inputs/CellSourceCost.lean.txt",
+      "bytes": 11383,
+      "sha256": "f3e9f93c0f1f1529a84a5c6befc8a2a087909f63271a86c327d3791de4491957"
+    },
+    {
+      "path": "initial-profile-inputs/lakefile.lean.txt",
+      "bytes": 4913,
+      "sha256": "7e05d5129f84b805940a2fa56ddb0d22c0835340d4c4310f42f5623ce353cb82"
+    },
+    {
+      "path": "initial-profile-inputs/lean-toolchain.txt",
+      "bytes": 29,
+      "sha256": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47"
+    },
+    {
+      "path": "lakefile.lean.txt",
+      "bytes": 213,
+      "sha256": "b799808bc28d65f5edbf1b8a8f19df7ed01158a8dcf888fc73fbf1b58debc5fa"
+    },
+    {
+      "path": "lean-toolchain.txt",
+      "bytes": 29,
+      "sha256": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47"
+    },
+    {
+      "path": "original-Tactic.lean.txt",
+      "bytes": 12157,
+      "sha256": "09d895ba1dd2c1af0bfffca197494f2614380ded268ff13e4e0b02fea22b9224"
+    },
+    {
+      "path": "run-axiom-forest-cost.py",
+      "bytes": 812,
+      "sha256": "5bfee616c739a3013b13cda258c9c62f02e9946f39683428d447cd11fbbd57a9"
+    },
+    {
+      "path": "run-bounded.txt",
+      "bytes": 302,
+      "sha256": "63bc5f97337e6b039bb3a9b1ba2a500be96fd1c2a2f73b43dae284aa9b18dda8"
+    },
+    {
+      "path": "source.patch.gz",
+      "bytes": 2893,
+      "sha256": "085626f6292a52f224da59231ab6865335067aefe6dc960552094b63cdde4a7a"
+    },
+    {
+      "path": "verify.py",
+      "bytes": 3922,
+      "sha256": "701a78398a1785e0b079ef1269802e6e1b373ac70cf20a9dc83c6d8c3b297dea"
+    }
+  ],
+  "metadata": [
+    {
+      "name": "copyright",
+      "command": [
+        "python3",
+        "scripts/check_copyright_headers.py"
+      ],
+      "log": "axiom-forest-metadata-copyright.log",
+      "exit_code": 0
+    },
+    {
+      "name": "lines",
+      "command": [
+        "python3",
+        "scripts/check_file_line_counts.py",
+        "--base",
+        "origin/main"
+      ],
+      "log": "axiom-forest-metadata-lines.log",
+      "exit_code": 0
+    },
+    {
+      "name": "dag",
+      "command": [
+        "python3",
+        "scripts/check_dag.py"
+      ],
+      "log": "axiom-forest-metadata-dag.log",
+      "exit_code": 0
+    },
+    {
+      "name": "admissions",
+      "command": [
+        "python3",
+        "scripts/ci/check_named_admissions.py"
+      ],
+      "log": "axiom-forest-metadata-admissions.log",
+      "exit_code": 0
+    },
+    {
+      "name": "diff",
+      "command": [
+        "git",
+        "diff",
+        "HEAD",
+        "--check"
+      ],
+      "log": "axiom-forest-metadata-diff.log",
+      "exit_code": 0
+    },
+    {
+      "name": "selected-admissions",
+      "log": "axiom-forest-metadata-selected-admissions.log",
+      "exit_code": 0
+    },
+    {
+      "name": "relative",
+      "log": "axiom-forest-metadata-relative.log",
+      "exit_code": 0
+    }
+  ],
+  "scope": "Per-call admission forest; exact existing kernel/unsafe/axiom policy. 19+3 negative/rollback cases, fresh1193/202/1353 audit and 51-target integration. Fixed guard-only AB/BA experiment; full-source profiles are separate diagnostics, not a whole-tactic speedup or scaling claim."
+}

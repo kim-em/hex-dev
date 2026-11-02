@@ -1,0 +1,12 @@
+module
+public import HexRCF.DependentQuoteData
+public section
+namespace ProofFunctionData
+open Hex.RCF.DependentQuote
+@[expose] noncomputable def reader : Option Nat :=
+  @Option.rec Nat
+    (fun result => ((query = result) → Nat) → (query = result) → Option Nat)
+    (fun f h => some (f h))
+    (fun _ f h => some (f h))
+    query (fun _ => 7) rfl
+end ProofFunctionData

@@ -1,0 +1,16 @@
+{
+  "argv": [
+    "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+    "lake",
+    "build",
+    "HexRCFRealCoefficients",
+    "+HexRCF.CellSourceProofs",
+    "+HexRCF.BoundedSource.Proofs",
+    "+HexRCF.SourceIdentityProofs",
+    "+HexRCF.SourceBuild",
+    "+HexRCF.BoundedSource",
+    "HexManual"
+  ],
+  "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10358",
+  "scope": "Same-request source authentication and complete goal proof, actual fresh audit forbidding prior imported source identities, compact source API and native compatibility plus full current manual; not entire default conformance or scientific timing study"
+}

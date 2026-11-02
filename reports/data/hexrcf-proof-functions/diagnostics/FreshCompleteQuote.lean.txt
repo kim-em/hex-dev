@@ -1,0 +1,34 @@
+import HexRCF.CellReplay.Operations
+import HexRCF.RealCoefficients.RootQuote
+import HexRCF.RealCoefficients.RationalQuote
+open Lean Meta Hex Hex.RealClosure Hex.SignDet Hex.RCF.RealCoefficients
+open Hex.RCF.RealCoefficients.CellReplayTests
+open Hex.RCF.RealCoefficients.CellReplayTests.Algebraic
+namespace FreshCompleteQuote
+set_option maxHeartbeats 12000000
+set_option maxRecDepth 32768
+run_meta do
+  withoutExporting do
+    let cells := mkApp (mkConst ``Codec.Json.Value.array)
+      (mkApp2 (mkConst ``Codec.Json.Values.cons) (mkConst ``Literals.sections)
+        (mkApp2 (mkConst ``Codec.Json.Values.cons) (mkConst ``Literals.sectors)
+          (mkConst ``Codec.Json.Values.nil)))
+    let program ← mkAppM ``CellOperations.accept?
+      #[mkConst ``Operations.operations,mkConst ``Operations.codec,mkConst ``Schema.values,
+        mkConst ``Schema.formula,← mkAppOptM ``List.nil #[some (← mkAppM ``Tower.Context.Value
+          #[mkConst ``Schema.parent])],mkConst ``Canonical.cert,
+        mkConst ``Hex.RealFormula.Quantifier.existsReal,mkConst ``Literals.roots,cells]
+    let basic : Hex.RealFormula.Reify.Config := {}
+    let config := {basic with ring := {basic.ring with budget :=
+      {basic.ring.budget with proofNodes := 5000000}}}
+    let outcome ← RootQuote.runWith (RootQuote.quoteOptionWith program) config
+    let result ← match outcome with
+      | .ok result => pure result
+      | .error error => throwError "fresh complete literal quote refused: {Hex.RealFormula.Reify.Error.toMessageData error}"
+    let target ← mkEq program (← mkAppM ``Option.some #[mkConst ``Unit.unit])
+    let proof ← Hex.RCF.checkProof `freshCompleteLiteral target result.proof
+    let axioms ← collectAxioms proof.getAppFn.constName!
+    unless axioms.all (fun name => [``propext,``Classical.choice,``Quot.sound].contains name) do
+      throwError "fresh complete literal quote has inadmissible dependencies"
+    logInfo m!"fresh complete literal quote proofNodes={result.usage.proofNodes}; axioms={axioms}"
+end FreshCompleteQuote

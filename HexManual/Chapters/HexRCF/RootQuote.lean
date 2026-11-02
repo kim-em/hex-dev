@@ -11,6 +11,12 @@ import HexRCF.SharedQuoteCases
 import HexRCF.RecursiveScalarPublic
 import HexRCF.SignPacketQuote
 import HexRCF.PublicSignPacketValues
+import HexRCF.RootHeaderValues
+import HexRCF.RootContextConformance
+import HexRCF.FrozenSignatureProofs
+import HexRCF.ProofFunctionPublic
+import HexRCF.QuotientQuotePublic
+import HexRCF.TreeQuotePublic
 open Verso.Genre Manual
 open Verso.Genre.Manual.InlineLean
 
@@ -49,6 +55,105 @@ meta def quoteSuppliedRoot
     config used
 ```
 
+Quotation follows the representative of a closed quotient when selecting
+reducibility boundaries. This lets a formula polynomial stored in a tree map
+expose its term list. Protected replay functions and canonical coefficient
+decoders retain their existing boundaries. The public regression checks the
+original reader for a two-term polynomial:
+
+```lean
+open Hex.RCF in
+example :
+    QuotientQuote.reader = some 7 :=
+  QuotientQuotePublic.accepted
+```
+
+Its exact 92-node budget succeeds, one node less exhausts, and a wrong term
+count rejects. The controls check caller-state restoration; a fresh importing
+audit checks nine theorem bodies and four definitions with the unchanged
+producer guard and complete standard-three axiom closure.
+
+Tree replay uses its public leaf and split equations before opening the local
+node checks. Keeping that boundary explicit avoids kernel conversion through
+an entire replay merely to compare two Boolean expressions. The checked
+readers retain different values for a valid split and its swapped children:
+
+```lean
+open Hex.RCF in
+example :
+    TreeQuote.splitTrue.toOption =
+      some 31 :=
+  TreeQuotePublic.split_true
+
+open Hex.RCF in
+example :
+    TreeQuote.splitFalse.toOption =
+      some 37 :=
+  TreeQuotePublic.split_false
+```
+
+The second reader selects its diagnostic branch; it does not accept the
+changed certificate. Readers returning an error abort quotation and restore
+caller state. The controls also check exact and one-node-below budgets.
+These reader equations still need source binding and real interpretation
+before they can prove a real goal.
+
+Checked replay data may occur inside a Boolean condition. Quotation keeps
+closed helpers whose types mention a protected replay function attached to
+that function during conversion. The conformance examples cover inline proof
+terms and separately retained checked arrays, including false results and
+caller-state restoration. The original reader must expose the protected
+boundary; an opaque hiding definition still returns a structured rejection.
+
+Conversion preserves data type arguments while rewriting their Boolean
+computations. A helper's type can itself mention another checked replay helper;
+quotation retains those dependencies in order. Exposed function definitions
+remain available for the reductions used by the reader. Opaque proof helpers
+remain parameters. Function-valued conditionals retain their applied arguments.
+Dependencies appearing in retained function bodies are collected as well.
+Closed data constructors with proof fields depending on replay retain their
+ordinary projection reductions. The same data is retained in helper types and
+bodies, so changing the computational context does not change those proof
+indices.
+
+The helper controls cover stored arrays with table-dependent element types and
+functions with fixed replay-dependent proof types. Matching and changed contexts,
+exact and one-node-below budgets, wrong-goal proposals and complete caller
+restoration are checked. Their fresh importing audit checks 96 theorem bodies
+and three definitions with the same producer and axiom restrictions.
+
+{name Hex.RCF.RealCoefficients.RowQuote.decoder}`RowQuote.decoder` reads the
+literal value of a checked selected-sign row through query, root and operation
+transports. It uses the row's recorded values and checked public equations.
+A backend can combine it with its existing scalar decoder in the same request:
+
+```lean
+open Lean Hex.RealFormula in
+open Hex.Reflect in
+open Hex.RCF.RealCoefficients in
+meta def quoteRootRows
+    (reader : Expr)
+    (scalar : RootQuote.DecoderM)
+    (config : Reify.Config)
+    (used : BudgetUsage) :=
+  RootQuote.run reader
+    (fun expression => do
+      let result ←
+        RowQuote.decoder expression
+      if let some proof := result then
+        return some proof
+      scalar expression)
+    config used
+```
+
+The row controls check positive, zero, negative and false comparisons, exact
+and one-node-below budgets, wrong-goal proposals and caller restoration.
+Opaque query transports at depths 1, 16 and 24 consume the same reflection
+budget; the recursion limit remains the caller's Lean limit. A fresh importing
+audit checks 70 theorem bodies and eight definitions, including the stored-value
+law for restoring supplied operations. These are reader and data-access proofs;
+source binding and real interpretation remain separate obligations.
+
 For a rational predecessor, `RationalQuote.decoder` supplies these proposals
 without a fixed list of permitted numerators. It recognizes canonical
 `[0,n,d]` payloads with a positive coprime denominator and requires the whole
@@ -79,7 +184,7 @@ it does not reconstruct registry or provider histories. Regression tests check
 positive and negative fractions, noncanonical or malformed payloads, and a
 different codec whose decoding function is unchanged. The generic callback
 also quotes the same frozen cubic independently of the original finite callback.
-Its fresh importing audit checks 192 actual generated theorem bodies under
+Its fresh importing audit checks 208 actual generated theorem bodies under
 kernel producer diagnostics, with only the standard three axioms.
 
 The [cubic regression](https://github.com/kim-em/hex-dev/blob/main/conformance/HexRCF/RootQuoteSource.lean) reads a
@@ -104,7 +209,9 @@ reflection budget remains exhaustion; exceptions, heartbeat limits, recursion
 limits and cancellation remain terminal. No error selects another solver.
 The failure regressions include a changed count with its unchanged matrix,
 well-typed forged equations, inadmissible proposals and callback mutations before
-decline or failure. Both dependent conditional branches are checked. The helper
+decline or failure. Both dependent conditional branches are checked. Each
+selected branch proof is kernel checked separately before it is used in the
+conditional equation. The helper
 forces ordinary kernel checking even when the caller disables it. A successful
 call restores caller metavariables and retains checked auxiliaries together
 with the environment effects of accepted callbacks. Rejection and failure restore
@@ -131,14 +238,17 @@ prevent abstraction; type and kernel failures remain terminal. A late rejection 
 the completed callback's auxiliaries. The fresh importing audit rechecks all
 65 reachable callback/module theorem bodies and 14 definitions, forbidding
 both native producers and canonical-codec unfolding. Exact and one-below nested
-budgets also cover the added transport work: 9,143 proof nodes, with exhaustion
-at the final 1,006-node charge after 8,137 nodes were consumed. The predecessor
+budgets also cover the added transport work: 19,448 proof nodes, with exhaustion
+at the final 1,006-node charge after 18,442 nodes were consumed. The predecessor
 callback is required to run exactly once and retain 17 source nodes.
 
-All quotation regressions use `maxHeartbeats := 12000000`. The original root and rational
-cases use `maxRecDepth := 8192`; scalar, sign-packet, shared, callback/module examples and
-fresh body audits use depth 32768. Success under Lean's default limits has
-not been established. Each rewrite motive contains the current reader, so
+The original root and rational cases use `maxHeartbeats := 12000000` and
+`maxRecDepth := 8192`. Scalar, sign-packet, shared, callback/module examples and
+fresh body audits use depth 32768 with their declared heartbeat limits. The
+row and replay-helper controls use two million heartbeats; the deeper query
+transport controls use four million. Preparation budget repetition and
+wrong-sign rejection run as separate commands, each with twelve million
+heartbeats. Success under Lean's default limits has not been established. Each rewrite motive contains the current reader, so
 proof storage and charged work can grow with the number of steps times the
 reader size. Larger packets can exhaust the default reflection budget.
 
@@ -303,9 +413,9 @@ meta def quoteSelectedReader
 
 The two-level regression checks one visit to its selected context followed by
 one visit to its selected predecessor. Its lookup adds 19 source nodes per visit;
-the two charges retain 38 source nodes. It uses 14,374 proof nodes; one node less
+the two charges retain 38 source nodes. It uses 30,316 proof nodes; one node less
 exhausts
-at the final 925-node charge after 13,449 consumed nodes. Missing facts decline
+at the final 925-node charge after 29,391 consumed nodes. Missing facts decline
 without proposing another decode to the base callback after refusal.
 Wrong-context facts and exhaustion remain terminal and restore the enclosing state.
 Generic kernel-error restoration is covered by the root-quotation regressions.
@@ -323,8 +433,8 @@ A fresh importing audit checks the two-level fixture and this public consumer,
 including accepted annotated decodes and a charged decline followed by acceptance:
 87 actual theorem bodies and five definitions, complete standard-three axiom
 closure, and no native producer or canonical-codec reduction. The direct constant
-and annotated cases use 12,792 and 12,801 proof nodes. A successful inner decline
-and retry uses 15,069 proof nodes and retains all three 19-node source charges.
+and annotated cases use 28,294 and 28,307 proof nodes. A successful inner decline
+and retry uses 31,022 proof nodes and retains all three 19-node source charges.
 This helper consumes explicit facts; it does not authenticate original source expressions, discover
 predecessor histories, produce missing sign evidence or install the general tactic.
 
@@ -366,9 +476,9 @@ example :
   decoded_value
 ```
 
-Quoting the parent and packet in one request consumes 73,992 proof nodes.
+Quoting the parent and packet in one request consumes 268,798 proof nodes.
 With the frozen parent and its equality already available, the packet consumes
-44,385; a limit one node lower exhausts at the final 23-node charge. Decoding the
+174,189; a limit one node lower exhausts at the final 23-node charge. Decoding the
 coefficient from that fact consumes 966 more nodes in its separate request.
 The controls check caller metavariable restoration after successful decoding
 and final exhaustion, reject an empty graph, and reject a forged context equality
@@ -411,8 +521,22 @@ For a dependent match, quotation moves trailing branch-equality proofs along
 the checked equation for the match's subject. This uses ordinary equality
 elimination with an abstract subject, then instantiates the checked equation.
 Moved proofs are checked separately before later replay steps. The result type
-must stay fixed. Independent trailing data is retained; data whose type depends
-on the subject or its branch proofs remains unsupported. During replay-law
+must stay fixed. Independent trailing data is retained. A function with one
+proof argument can also move when its result type reduces to a fixed type.
+The original function is retained and only its proof input is transported.
+Other data indexed by the changed subject or its branch proofs is still refused,
+including functions returning such data.
+The public consumer checks the preserved result:
+
+```lean
+open Hex.RCF in
+example :
+    DependentQuote.continuedFunction =
+      some 29 :=
+  ProofFunctionPublic.continued
+```
+
+During replay-law
 conversion, an explicit checked function boundary is first kept abstract, then instantiated
 with the actual function and its public equation. The fresh importing audit
 checks the resulting private bodies as well as their full axiom closure.
@@ -423,3 +547,140 @@ handled without consulting that callback.
 Wrong signs, changed polynomials and context swaps in either nodes or nested
 moments are checked refusal cases. These helpers consume supplied histories
 and evidence; they do not install the general real-coefficient tactic.
+
+
+{name Hex.RCF.RealCoefficients.RootHeader.quoteWith}`RootHeader.quoteWith`
+accepts the complete original `RootReplay.readDescriptor` application. It quotes
+that reader, obtains the independently parsed raw subject through the public
+`readDescriptor_subject` law, and checks that the reconstructed root has exactly
+that raw subject. All original instance arguments are retained. The caller runs
+the action inside `RootQuote.runWith`, so both reads and the final binding share
+one budget and transaction. No pre-existing equation for the proposed root's
+header is required.
+
+The public regression constructs a new root and context from that result,
+quotes the sign packet for X with fully numerical graph fields, and decodes a
+coefficient using its fact. The
+coefficient denotes the newly reconstructed root and is positive:
+
+```lean
+open Hex.RCF.RootHeaderPacket in
+example : coefficientReal = realRoot :=
+  coefficient_value
+
+open Hex.RCF.RootHeaderPacket in
+example : 0 < coefficientReal :=
+  coefficient_positive
+```
+
+The fresh importing audit includes the generated binding, packet reader,
+coefficient decoding and real-value proofs. It rejects dependencies on the
+older fixture's handwritten header and reader equations. Invalid root-reader
+versions and counts restore caller state; packet controls also change the
+polynomial, sign and node or nested-moment context.
+
+The default quotation rules recognize `Signature.codec.decode` applied to the
+canonical encoding of its actual signature argument, using the existing public
+roundtrip law. This handles distinct signature subjects without a fixture
+callback. It does not connect a separately frozen numerical signature to that
+encoding. {name Hex.RCF.RealCoefficients.SignatureQuote.decoder}`SignatureQuote.decoder`
+uses the owner's public literal equation and a checked binding of the supplied
+JSON to its exact signature. It handles signature payloads selected from frozen
+graph fields without running the signature parser during proof construction.
+Distinct signature subjects, wrong bindings, exact budgets and one-node-below
+budgets are checked in a fresh importing regression:
+
+```lean
+open Hex.RCF.FrozenSignature in
+example : readFirst.toOption =
+    some first :=
+  readFirst_checked
+
+open Hex.RCF.FrozenSignature in
+example : readSecond.toOption =
+    some second :=
+  readSecond_checked
+```
+
+The cubic packet retains frozen numerical node and nested-moment signatures
+for its rational predecessor. A signature's serialization identity does not
+validate a registry or selected root, and does not construct literal bindings
+for arbitrary root frames in a deeper tower. These helpers consume supplied
+readers and histories; they do not discover an
+arbitrary real source's selected embedding or install the general tactic.
+
+
+{name Hex.RCF.RealCoefficients.RootContext.packWith}`RootContext.packWith`
+then assembles an actual native root context from a closed retained parent and
+its checked descriptor. It keeps the existing native operations, checks the
+child signature, and returns the frame's encoding equation. The frame remains
+the owner's `rootData` serialization expression. Constructing this typed
+context does not freeze that expression or authenticate an arbitrary history.
+
+The same decoded coefficient can be interpreted through the owner's ordinary
+real model of the packed context, retaining its selected value and sign:
+
+```lean
+open Hex.RCF in
+open RootContextCases in
+open RootHeaderPacket in
+example : model.value coefficient =
+    realRoot :=
+  value_checked
+
+open Hex.RCF in
+open RootContextCases in
+open RootHeaderPacket in
+example : 0 < model.value coefficient :=
+  positive_checked
+```
+
+The packing budget covers context and signature proof construction. Model
+construction is checked separately; its cost is not included in that packing
+count. Exact and one-node-below budgets are tested. A descriptor for the parent
+carrier cannot be packed into its child carrier, and the failing call restores
+caller assignments and declarations. Fresh importing checks audit the actual
+metadata, model and value proofs. The new packing bodies must not evaluate
+root-data serialization or graph encoding, in addition to the existing native
+producer exclusions. Fully numerical frame/history reconstruction and the
+general source-goal tactic remain separate obligations.
+
+{name Hex.RCF.RealCoefficients.RootPrepare.prepareWith}`RootPrepare.prepareWith`
+prepares the native context of a reconstructed descriptor for subsequent
+quotation. It checks closed inputs and the exact raw-header binding, then
+retains the descriptor and context behind checked private definitions. Its
+`source` is the original constructed context; `context` is the retained one,
+and `same` proves their equality. `rootEq` also retains the descriptor identity.
+The supplied cleanliness function is preserved.
+
+```lean
+open Lean Hex.RealFormula in
+open Hex.RCF.RealCoefficients in
+meta def prepareRootContext
+    (reader clean : Expr)
+    (scalar : RootQuote.DecoderM) :
+    Reify.ReifyM RootPrepare.Result := do
+  let header ← RootHeader.quoteWith
+    reader scalar
+  RootPrepare.prepareWith header clean
+```
+
+Run this action and subsequent quotation in one `RootQuote.runWith` request.
+Combine its decoder with the exact predecessor's scalar and signature
+decoders, and use `ScalarPacket.quoteWith` with `context` and `same` to restore
+the original reader's equation. The shared proof budget includes retained
+data, equations, simplifier visits and generated proof expressions. The
+simplifier's step limit is separately configurable; its exceptions remain
+terminal. Retention does not freeze root frames, authenticate a real source,
+or construct an ordinary-real model. Those conclusions require their existing
+separate bridges.
+
+A separate [selected-source packet study](https://github.com/kim-em/hex-dev/blob/b842ec5cc39b32e8a68cd1754b06222d29b9eb05/reports/hexrcf-source-replay-dimensions.md)
+retains 440 observations on 22 adapter-produced packets, varying degree, query count,
+coefficient size, interval precision and predecessor depth independently. It includes
+common and repeated roots, malformed evidence and resource-limit controls, and records
+serialized size, row sharing and memory. On this host, median cumulative selected-sign
+replay is about 0.84 ms at depth zero and 7.93 ms at depth two. Preparation and proof
+construction are excluded; reconstruction retains native predecessor arithmetic.
+These are numerical component observations, not full tactic timings or a general
+complexity bound.

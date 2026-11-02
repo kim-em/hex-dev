@@ -779,7 +779,7 @@ lean_lib HexRCFRealFormula where
 @[default_target]
 lean_lib HexRCFRealCoefficients where
   srcDir := "adapters"
-  globs := #[`HexRCF.RealCoefficients.FieldSelection, `HexRCF.RealCoefficients.SourceSelection, `HexRCF.RealCoefficients.RootQuote, `HexRCF.RealCoefficients.RationalQuote, `HexRCF.RealCoefficients.ScalarQuote, `HexRCF.RealCoefficients.ScalarPacketQuote,
+  globs := #[`HexRCF.RealCoefficients.TowerCompile, `HexRCF.RealCoefficients.FieldSelection, `HexRCF.RealCoefficients.SourceSelection, `HexRCF.RealCoefficients.RootQuote, `HexRCF.RealCoefficients.RowQuote, `HexRCF.RealCoefficients.RowPacketQuote, `HexRCF.RealCoefficients.RootHeader, `HexRCF.RealCoefficients.RootPrepare, `HexRCF.RealCoefficients.RootContext, `HexRCF.RealCoefficients.SignatureQuote, `HexRCF.RealCoefficients.RationalQuote, `HexRCF.RealCoefficients.ScalarQuote, `HexRCF.RealCoefficients.ScalarPacketQuote,
     `HexRCF.RealCoefficients.RowOperations, `HexRCF.RealCoefficients.CellReuse, `HexRCF.RealCoefficients.CellPackets,
     `HexRCF.RealCoefficients.CellOperations, `HexRCF.RealCoefficients.CompleteReplay, `HexRCF.RealCoefficients.RootTableCodec, `HexRCF.RealCoefficients.RootCodec, `HexRCF.RealCoefficients.CellFootprint, `HexRCF.RealCoefficients.CellEncode, `HexRCF.RealCoefficients.CellCodec, `HexRCF.RealCoefficients.SectorEncode, `HexRCF.RealCoefficients.CellPacketRead, `HexRCF.RealCoefficients.CellPacketConvert,
     `HexRCF.RealCoefficients.CellPacketTransport, `HexRCF.RealCoefficients.RepresentationCarrier, `HexRCF.RealCoefficients.RootCells, `HexRCF.RealCoefficients.RepresentationCells, `HexRCF.RealCoefficients.BoundarySigns, `HexRCF.RealCoefficients.SectorSamples, `HexRCF.RealCoefficients.PointRows, `HexRCF.RealCoefficients.CellReplay, `HexRCF.RealCoefficients.RowReplay, `HexRCF.RealCoefficients.SectorReplay, `HexRCF.RealCoefficients.CellRead, `HexRCF.RealCoefficients.CellBuild, `HexRCF.RealCoefficients.CellDiscover, `HexRCF.RealCoefficients.CellAlignment, `HexRCF.RealCoefficients.SectorRequest, `HexRCF.RealCoefficients.CellProgress, `HexRCF.RealCoefficients.CellDecision, `HexRCF.RealCoefficients.CellExecution, `HexRCF.RealCoefficients.NumberFieldCells, `HexRCF.RealCoefficients.RowEncode, `HexRCF.RealCoefficients.CellQuote, `HexRCF.RealCoefficients, `HexRCF.RealCoefficients.Reify,
@@ -793,6 +793,8 @@ lean_lib HexRCFRealCoefficients where
     `HexRCF.RealCoefficients.IntervalSign, `HexRCF.RealCoefficients.SquareRoot,
     `HexRCF.RealCoefficients.CommonTactic,
     `HexRCF.RealCoefficients.CommonPresentation, `HexRCF.RealCoefficients.SourceIdentity,
+    `HexRCF.RealCoefficients.SourceBuild,
+    `HexRCF.RealCoefficients.SourceIdentityQuote,
     `HexRCF.RealCoefficients.FieldSpecialize,
     `HexRCF.RealCoefficients.RepresentationSpecialize,
     `HexRCF.RealCoefficients.Samples, `HexRCF.RealCoefficients.Gather, `HexRCF.RealCoefficients.GatherCells, `HexRCF.RealCoefficients.AlgebraicCells,
@@ -1446,6 +1448,32 @@ lean_lib HexConformance where
       `HexRCF.SelectedRoot.Row, `HexRCF.SelectedRoot.RowCollect, `HexRCF.SelectedRoot.RowIntermediates,
       `HexRCF.SelectedRoot.RowTools, `HexRCF.SelectedRoot.Source, `HexRCF.SelectedRoot.Upper].map Glob.one
 
+    ++ #[
+      `HexRCF.FrozenSignatureConformance, `HexRCF.FrozenSignatureProofs, `HexRCF.RootContextConformance,
+      `HexRCF.RootContextProofs, `HexRCF.RootPreparePacket, `HexRCF.RootPreparePublic,
+      `HexRCF.RootPrepareProofs, `HexRCF.RootPrepareControls, `HexRCF.RootHeaderPacket,
+      `HexRCF.RootHeaderValues, `HexRCF.RootHeaderControls, `HexRCF.RootHeaderProofs,
+      `HexRCF.RootHeaderBudget, `HexRCF.SignatureQuoteConformance, `HexRCF.ProofFunctionPublic,
+      `HexRCF.QuotientQuoteData, `HexRCF.QuotientQuote, `HexRCF.QuotientQuotePublic,
+      `HexRCF.QuotientQuoteProofs, `HexRCF.RowQuoteData, `HexRCF.RowQuoteCases,
+      `HexRCF.RowQuoteDepth, `HexRCF.RowQuoteProofs, `HexRCF.ReplayBoundary,
+      `HexRCF.ReplayBoundaryProofs, `HexRCF.ReplayHelpers, `HexRCF.ReplayHelperProofs,
+      `HexRCF.CellQuoteStages, `HexRCF.CellQuoteStageProofs, `HexRCF.CellFinishCases,
+      `HexRCF.CellFinishProofs, `HexRCF.CellSourceQuote, `HexRCF.CellSourceProofs,
+      `HexRCF.RowPacketControls, `HexRCF.SourceIdentityLiterals, `HexRCF.SourceIdentityPacket,
+      `HexRCF.SourceIdentityControls, `HexRCF.SourceIdentityProofs, `HexRCF.SourceIdentityEmit,
+      `HexRCF.SourceBuild, `HexRCF.EnumeratedSource.PositiveData0, `HexRCF.EnumeratedSource.Positive,
+      `HexRCF.EnumeratedSource.NegativeData0, `HexRCF.EnumeratedSource.Negative, `HexRCF.EnumeratedSource.CubicData0,
+      `HexRCF.EnumeratedSource.Cubic, `HexRCF.EnumeratedSource.Inputs, `HexRCF.EnumeratedSource.Quote,
+      `HexRCF.EnumeratedSource.Proofs, `HexRCF.BoundedSource, `HexRCF.BoundedSource.Positive,
+      `HexRCF.BoundedSource.Negative, `HexRCF.BoundedSource.Cubic, `HexRCF.BoundedSource.Inputs,
+      `HexRCF.BoundedSource.Quote, `HexRCF.BoundedSource.Proofs, `HexRCF.TreeQuoteData,
+      `HexRCF.TreeQuote, `HexRCF.TreeQuotePublic, `HexRCF.TreeQuoteProofs,
+      `HexRCF.SourceValuationConformance, `HexRCF.SourceValuationProofs, `HexRCF.TowerCompileConformance,
+      `HexRCF.TowerCompileProofs, `HexRCF.TowerFinishConformance, `HexRCF.TowerFinishProofs,
+      `HexRCF.ProofPaths
+    ].map Glob.one
+
     ++ #[`HexRealAlgebraic.Conformance, `HexRealAlgebraic.Checks,
       `HexRealAlgebraic.FieldSignConformance, `HexNumberField.ComplexChecks,
       `HexRealAlgebraic.ReprChecks, `HexRealClosure.ReprChecks, `HexRealAlgebraicTheory.FieldSignConformance].map Glob.one
@@ -1645,6 +1673,7 @@ lean_lib HexReleaseTests where
     `HexRCF.DecisionTests,
     `HexRCF.ReifyTests,
     `HexRCF.HandlerTests.Support, `HexRCF.HandlerTests.Async,
+    `HexRCF.HandlerTests.Admission,
     `HexRCF.HandlerTests,
     `HexRCF.LintTests]
     -- a name array mapped through Glob.one: an array literal this long is

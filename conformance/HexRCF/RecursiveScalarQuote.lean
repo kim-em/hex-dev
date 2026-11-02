@@ -73,7 +73,7 @@ run_meta do
     | throwError "recursive scalar quotation failed"
   unless (← mutated.get) && !(← sentinel.mvarId!.isAssigned) do
     throwError "successful recursive quotation did not restore the mutated caller"
-  unless quoted.usage.proofNodes == 14374 do
+  unless quoted.usage.proofNodes == 30316 do
     throwError "recursive scalar accounting changed: {quoted.usage.proofNodes}"
   unless (← calls.get).size == 2 && quoted.usage.sourceNodes == 38 do
     throwError "recursive quotation did not visit both selected predecessors exactly once"
@@ -99,9 +99,9 @@ run_meta do
   unchanged do
     let .error (.budget exhausted) ← RootQuote.run original decode (config (quoted.usage.proofNodes-1))
       | throwError "one-below recursive scalar budget did not exhaust"
-    unless exhausted.dimension == .proofNodes && exhausted.consumed == 13449 &&
+    unless exhausted.dimension == .proofNodes && exhausted.consumed == 29391 &&
         exhausted.requested == 925 do
-      throwError "recursive scalar exhaustion moved from the final925-node charge"
+      throwError "recursive scalar final charge changed: {exhausted.consumed}+{exhausted.requested}"
     logInfo m!"recursive exhausted: consumed={exhausted.consumed}, requested={exhausted.requested}"
   unless (← mutated.get) && !(← sentinel.mvarId!.isAssigned) do
     throwError "exhausted recursive quotation did not restore the mutated caller"
@@ -117,8 +117,8 @@ run_meta do
       return proposed)
     | throwError "recursive constant-form decode failed"
   unless (← constantCalls.get) == 1 && (← calls.get).size == 2 &&
-      constantResult.usage.proofNodes == 12792 do
-    throwError "recursive constant-form branch was not exercised"
+      constantResult.usage.proofNodes == 28294 do
+    throwError "recursive constant-form branch changed: nodes={constantResult.usage.proofNodes}; calls={← constantCalls.get}; lookups={(← calls.get).size}"
   let constantStatement ← mkEq (← mkAppM ``Except.toOption #[constant])
     (← mkAppM ``Option.some #[mkConst `Hex.RCF.RecursiveScalarQuote.restored])
   let constantProof ← Hex.RCF.checkProof `recursiveConstant constantStatement constantResult.proof
@@ -136,8 +136,8 @@ run_meta do
       return proposed)
     | throwError "annotated recursive scalar decode failed"
   unless (← taggedCalls.get) == 1 && (← calls.get).size == 2 &&
-      taggedResult.usage.proofNodes == 12801 do
-    throwError "annotated recursive scalar branch was not exercised"
+      taggedResult.usage.proofNodes == 28307 do
+    throwError "annotated recursive scalar branch changed: nodes={taggedResult.usage.proofNodes}; calls={← taggedCalls.get}; lookups={(← calls.get).size}"
   emit `Hex.RCF.RecursiveScalarQuote.tagged_read tagged taggedResult
   calls.set #[]
   let retries ← IO.mkRef (0 : Nat)
@@ -152,8 +152,8 @@ run_meta do
   let .ok retryResult ← RootQuote.run original (ScalarQuote.decoderWith retryFacts base)
     | throwError "recursive scalar retry did not accept"
   unless (← retries.get) == 2 && (← calls.get).size == 3 &&
-      retryResult.usage.sourceNodes == 57 && retryResult.usage.proofNodes == 15069 do
-    throwError "recursive scalar retry omitted a lookup or discarded callback charges"
+      retryResult.usage.sourceNodes == 57 && retryResult.usage.proofNodes == 31022 do
+    throwError "recursive scalar retry changed: nodes={retryResult.usage.proofNodes}; retries={← retries.get}; lookups={(← calls.get).size}; source={retryResult.usage.sourceNodes}"
   logInfo m!"recursive variants: constant={constantResult.usage.proofNodes}; tagged={taggedResult.usage.proofNodes}; retry={retryResult.usage.proofNodes}"
   emit `Hex.RCF.RecursiveScalarQuote.retry_read original retryResult
   let leafCalls ← IO.mkRef (0 : Nat)

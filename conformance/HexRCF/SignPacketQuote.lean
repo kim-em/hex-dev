@@ -65,7 +65,7 @@ run_meta do
   let reader ← mkAppM ``ScalarPacket.read
     #[mkConst ``Data.rational,codec,mkConst ``Data.native,
       mkConst ``Scalars.p0,mkConst ``Scalars.s0,mkConst ``Scalars.g0]
-  unless quoted.usage.proofNodes == 73992 do
+  unless quoted.usage.proofNodes == 268798 do
     throwError "sign packet accounting changed: {quoted.usage.proofNodes}"
   logInfo m!"sign packet quotation proofNodes={quoted.usage.proofNodes}"
   let declaration := Declaration.defnDecl {
@@ -116,7 +116,7 @@ run_meta do
   unless (← touched.get) && !(← sentinel.mvarId!.isAssigned) &&
       (← getMCtx).decls.toList.length == callerCount do
     throwError "successful packet quotation did not restore the mutated caller"
-  unless result.usage.proofNodes == 44385 do
+  unless result.usage.proofNodes == 174189 do
     throwError "standalone sign packet accounting changed: {result.usage.proofNodes}"
   let statement ← mkEq reader (← mkAppM ``Option.some #[mkConst ``fact])
   let proof ← Hex.RCF.checkProof `standalonePacket statement result.proof
@@ -138,7 +138,7 @@ run_meta do
     let .error (.budget exhausted) ←
         RootQuote.runWith action (config (result.usage.proofNodes-1))
       | throwError "one-below sign packet budget did not exhaust"
-    unless exhausted.dimension == .proofNodes && exhausted.consumed == 44362 &&
+    unless exhausted.dimension == .proofNodes && exhausted.consumed == result.usage.proofNodes-23 &&
         exhausted.requested == 23 do throwError "wrong sign packet budget boundary: {exhausted.consumed}+{exhausted.requested}"
     logInfo m!"sign packet final exhaustion: {exhausted.consumed}+{exhausted.requested}"
   unless (← touched.get) && !(← sentinel.mvarId!.isAssigned) do

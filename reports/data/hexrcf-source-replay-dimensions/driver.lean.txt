@@ -1,0 +1,48 @@
+import HexRealClosure.RootBytes
+import HexSignDet.DagSelectedSigns
+
+namespace SourceReplayDriver
+open Hex Hex.RealClosure Hex.SignDet
+
+def fields (input : ByteArray) : Except String (Vector Codec.Json 4) := do
+  Codec.tuple 4 (← Codec.parse {} input)
+
+def lexical (input : ByteArray) : Bool := (Codec.checkBytes {} input).isOk
+
+def parsed (input : ByteArray) : Bool := (fields input).isOk
+
+def restoreFields (packet : Vector Codec.Json 4) :
+    Except String (Tower.PackedRoot (fun _ => none)) :=
+  match Tower.Serialized.codec.decode packet[0] with
+  | .error error => .error error
+  | .ok subject => (Tower.Catalog.empty (fun _ => none)).restoreRoot subject
+
+def restore (input : ByteArray) : Except String (Tower.PackedRoot (fun _ => none)) :=
+  match fields input with
+  | .error error => .error error
+  | .ok packet => restoreFields packet
+
+def restored (input : ByteArray) : Bool := (restore input).isOk
+
+def replayPacked (packet : Vector Codec.Json 4)
+    (source : Tower.PackedRoot (fun _ => none)) : Except String Bool :=
+  match source.root with
+  | .point _ => .ok false
+  | .selected descriptor _ _ => do
+    let queries ← Codec.readList (Codec.readPoly source.parent.codec) packet[1]
+    let values ← Codec.vector queries.length (Codec.Json.decode (α := Int)) packet[2]
+    let graph ← Codec.readGraph source.parent.codec Tower.Signature.codec
+      source.parent.signature descriptor.raw.head descriptor.raw.lower descriptor.raw.upper packet[3]
+    return (graph.selectedSigns? descriptor queries values).isSome
+
+def replay (input : ByteArray) : Except String Bool :=
+  match fields input with
+  | .error error => .error error
+  | .ok packet =>
+    match restoreFields packet with
+    | .error error => .error error
+    | .ok source => replayPacked packet source
+
+def replayed (input : ByteArray) : Bool := (replay input).toOption.getD false
+
+end SourceReplayDriver

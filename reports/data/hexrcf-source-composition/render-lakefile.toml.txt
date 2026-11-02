@@ -1,0 +1,9 @@
+name = "rcfManualRender"
+version = "0.1.0"
+
+[[require]]
+name = "Hex"
+path = "/home/kim/worktrees/hex-dev/hex-dev-issue-10358"
+
+[[lean_lib]]
+name = "FullRender"

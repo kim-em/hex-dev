@@ -1,0 +1,324 @@
+import Lake
+open Lake DSL
+package scalarReviewRender
+require Hex from "/home/kim/worktrees/hex-dev/hex-dev-issue-10358"
+lean_lib ScalarReviewRender
+lean_lib SourceSelectionProbe
+
+lean_lib SourceSelectionEmitter
+
+lean_lib SignPacketEncodedProbe
+
+lean_lib PublicFrameProbe
+
+lean_lib RelativeScalarProbe
+
+lean_lib ScratchRootQuote
+
+lean_lib MajorSource
+lean_lib MajorProbe
+
+lean_lib SignPacketEncodedAudit
+
+lean_lib PacketBodyProbe
+
+lean_lib PacketBodyCheck
+
+lean_lib PacketConversions
+
+lean_lib MomentHeadProof
+
+lean_lib SignatureQuote
+lean_lib SignatureProbe
+
+lean_lib SignatureControls
+lean_lib SignatureAudit
+
+lean_lib SignatureRoundtrip
+
+lean_lib HeaderQuote
+lean_lib HeaderProbe
+
+lean_lib TransportCases
+lean_lib TransportProbe
+
+lean_lib TransportAudit
+
+lean_lib TransportQuote
+lean_lib TransportFixedProbe
+lean_lib TransportFixedAudit
+
+lean_lib OldRootQuote
+lean_lib MixedHeadData
+lean_lib MixedHeadProbe
+
+lean_lib CodecTransportCases
+lean_lib CodecTransportProbe
+lean_lib CodecTransportAudit
+
+lean_lib LiteralCallbackProbe
+lean_lib TransportPacket
+lean_lib TransportPacketValues
+lean_lib TransportPacketAudit
+
+lean_lib ContextQuote
+
+lean_lib MultiCodecQuote
+lean_lib MultiCodecAudit
+
+lean_lib HeaderPacket
+
+lean_lib HeaderPacketAudit
+
+lean_lib HeaderPacketValues
+
+lean_lib HeaderPacketControls
+
+lean_lib HeaderControls
+
+lean_lib HelperOrderData
+lean_lib HelperOrderProbe
+
+lean_lib PackedHeader
+
+lean_lib PackedHeaderAudit
+
+lean_lib RootDecode
+
+lean_lib RootDecodeProbe
+
+lean_lib RootDecodeAudit
+
+lean_lib FrameBindingProbe
+
+lean_lib GraphEncodingProbe
+
+lean_lib RootDecodeInlineProbe
+
+lean_lib PreparedRootDecode
+
+lean_lib PreparedInlineProbe
+
+lean_lib ReflexiveDecode
+
+lean_lib RetainedInlineProbe
+
+lean_lib RetainedInlineAudit
+
+lean_lib RootPrepareImport
+lean_lib RootPreparePrivateImport
+
+lean_lib RootPrepareInspect
+
+lean_lib FreshCompleteQuote
+
+lean_lib ProofFunctionData
+
+lean_lib ProofFunctionQuote
+
+lean_lib FreshCompleteFrozen
+
+lean_lib FormulaTerms
+
+lean_lib FreshCompleteAudit
+
+lean_lib FreshSourcePreflight
+
+lean_lib RootCacheProbe
+
+lean_lib FreshCompleteCached
+
+lean_lib BooleanCacheData
+
+lean_lib BooleanCacheControls
+
+lean_lib FreshCachedAudit
+
+lean_lib FreshCompleteBaseline
+
+lean_lib FreshBaselineAudit
+
+lean_lib RootProfileProbe
+
+lean_lib FreshCompleteProfile
+
+lean_lib FreshProfileAudit
+
+lean_lib QuoteSnapshot
+
+lean_lib SnapshotSeed
+
+lean_lib SnapshotRead
+
+lean_lib SnapshotReject
+
+lean_lib RootSnapshotProbe
+
+lean_lib FreshCompleteSnapshot
+
+lean_lib SnapshotLocalRead
+
+lean_lib SnapshotReplay
+
+lean_lib FreshSnapshotAudit
+
+lean_lib FreshCompleteRead
+
+lean_lib SnapshotRepair
+
+lean_lib SnapshotParts
+
+lean_lib SnapshotBridge
+
+lean_lib SnapshotInner
+
+lean_lib SnapshotReflexive
+
+lean_lib ReplayEquationProbe
+
+lean_lib SnapshotShape
+
+lean_lib RootReplayQuoteProbe
+
+lean_lib SnapshotExplicit
+
+lean_lib ReplayQuoteControls
+
+lean_lib ReplayQuoteAudit
+
+lean_lib FreshCompleteReplay
+
+lean_lib FreshReplayAudit
+
+lean_lib FreshCompletePublished
+
+lean_lib FreshPublishedAudit
+
+lean_lib TreeReviewRender
+
+lean_lib RootFailureProbe
+
+lean_lib RadicalBoundaryProbe
+
+lean_lib CollectBoundaryProbe
+
+lean_lib ReadCollectFailure
+
+lean_lib FreshCompleteFailure
+
+lean_lib CollectQuoteProbe
+
+lean_lib CollectQuoteCases
+
+lean_lib ReadBooleanFailure
+
+lean_lib BooleanFailureSummary
+
+lean_lib SelectedProjectionProbe
+
+lean_lib SelectedProjectionRepair
+
+lean_lib SelectedProjectionQuote
+
+lean_lib SelectedProjectionCallback
+
+lean_lib ProjectionCaseData
+
+lean_lib ProjectionCases
+
+lean_lib ProjectionAudit
+
+lean_lib FreshCompleteProjected
+
+lean_lib FreshProjectedAudit
+
+lean_lib BoundaryCase
+
+lean_lib BoundaryQuoteProbe
+
+lean_lib BoundaryCaseProbe
+
+lean_lib ProjectionDepthCases
+
+lean_lib RowReviewRender
+
+lean_lib BoundaryTable
+
+lean_lib BoundaryTableProbe
+
+lean_lib BoundaryTypeOrder
+
+lean_lib BoundaryTypeOrderBase
+
+lean_lib BoundaryTypeHiddenBase
+lean_lib BoundaryTypeHidden
+
+lean_lib BoundaryTypeAudit
+
+lean_lib BoundaryProductionAudit
+
+lean_lib PrefixQuoteProbe
+lean_lib FunctionReplay
+
+lean_lib ReplayHelperReviewRender
+
+lean_lib PhaseQuote
+lean_lib SourcePhaseProfile
+
+lean_lib FreshStaged
+
+lean_lib FreshStagedAudit
+
+lean_lib StagedZeroProbe
+
+lean_lib PhaseCellQuote
+
+lean_lib ConstructorProfile
+
+lean_lib ConstructorAlgebraicProfile
+
+lean_lib FormulaShapeProbe
+
+lean_lib BoundaryCellQuote
+
+lean_lib RowBoundaryProbe
+
+lean_lib PhaseCellPointwise
+
+lean_lib CellPointwiseProfile
+
+lean_lib HelperCostProbe
+
+lean_lib SignPacketCostProbe
+
+lean_lib CellQuotationReviewRender
+
+lean_lib RecursiveCostProbe
+
+lean_lib RowReadStage
+
+lean_lib RowReadStageProbe
+
+lean_lib RowReadStageAudit
+
+lean_lib RowReadMemo
+
+lean_lib RowReadMemoProbe
+
+lean_lib RowReadMemoAudit
+
+lean_lib CellMemoReviewRender
+
+lean_lib SourceIdentityEmitter
+
+lean_lib SourceIdentityLiterals
+
+lean_lib SourceIdentityProbe
+
+lean_lib SourceIdentityAudit
+
+lean_lib SourceIdentityControls
+
+lean_lib SourceIdentityReviewRender
+
+lean_lib CellSourceCost

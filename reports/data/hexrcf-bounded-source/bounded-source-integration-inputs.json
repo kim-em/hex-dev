@@ -1,0 +1,16 @@
+{
+  "conformance-fixtures/HexRCF/bounded-source.json": "566c5f1f092abab73312bb630a02e24873e6723942d450320dae2b52aaa30a75",
+  "conformance/HexRCF/BoundedSource.lean": "5d759fa26433a5f25c6423e9b70b770394459c2b969b33b15a180023269fb9cd",
+  "conformance/HexRCF/BoundedSource/Cubic.lean": "da1c0e1b549fce22cb1f7ea7bb6888dff1d7b59c1219c5b580376bbb4a25ecde",
+  "conformance/HexRCF/BoundedSource/Inputs.lean": "7ffcd6d62f175f3027e2327fd4a86885e933e0715a85ab7afb9b112d76d49a39",
+  "conformance/HexRCF/BoundedSource/Negative.lean": "abb7ef67395b2b90f9e12f551bcc0d16146cca067bf3567707e924c2ecd2fb77",
+  "conformance/HexRCF/BoundedSource/Positive.lean": "d83184a9d54264ba7e1c138eb674db1d67df39681575fa91d96a4681af774321",
+  "conformance/HexRCF/BoundedSource/Proofs.lean": "7f9d47d59dd47aafa90a09d23a966efc0d2ca7fbfa3cdce5ae4771ae1da01a9f",
+  "conformance/HexRCF/BoundedSource/Quote.lean": "70da87d5868d0c3d725e9ed2a531a4b22221e42d794cfd259359f6524be1eaef",
+  "scripts/bench/proof_only_runtime_exemptions/lakefile-rcf-bounded-source-fea47caa-baeeaf73.json": "eaea20ebc9579f4c50ff88344d8c9be3da9fc7c7d0981e9e0d5251dd04a6ab3f",
+  "HexManual/Chapters/HexRCF/AlgebraicCells.lean": "a2d782538a51590f4748dd207b93e80ecdae1c0a5b92f7a10fbc28e763025985",
+  "adapters/HexRCF/RealCoefficients/SourceBuild.lean": "c47f7bc1a968019674c10b1826fb328536ca466e973a1ad38e2f00f30781ab89",
+  "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "499299274a75c6e2a70630c8ae442f21ab7d0514c7d23cffdde3f09fd17421cb",
+  "lakefile.lean": "0b45717104644561ca7415d4c9f43bae6b318cf75eb00e0757a44c9f7db700bc",
+  "scripts/rcf/selected_literals.py": "03e02fa50575882c0784894b76746ff8e594b9a1eb0a285811bc76ee87265e72"
+}

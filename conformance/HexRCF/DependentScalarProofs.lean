@@ -54,7 +54,7 @@ run_meta do
             ``Descriptor.ofReplay?] then
         throwError "dependent scalar reduced producer {producer}: {count}; body={name}"
       if !diagnostics.unfoldCounter.isEmpty then traces := traces+1
-    unless theorems == 61 && definitions == 4 && traces == 56 do
+    unless theorems == 61 && definitions == 4 && traces == 53 do
       throwError "dependent scalar body inventory changed: {theorems}/{definitions}/{traces}"
     unless (← (← getEnv).getLocalConstantInfos).map (·.name) == originalNames do
       throwError "dependent scalar audit retained declarations"

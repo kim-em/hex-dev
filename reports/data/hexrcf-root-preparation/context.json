@@ -1,0 +1,559 @@
+{
+  "source_commit": "1875bff14eff22279fcffb1d58b498784ab5f17a",
+  "source_tree": "f6f9ca0b7b2c60da0496b4d454e5e66793d3c15d",
+  "baseline_commit": "e92beebc18c626ad94d0e64791b23239cdfdb9bb",
+  "sources": {
+    ".github/workflows/ci.yml": "bf3ef0c4e00ef2397ef5857a629a391e24252b864c093198b08775b6977c563d",
+    "AGENTS.md": "4e0a48cf49a61e56ed84c8b28e232b5bfad29f2da20571377692be6e1c316f30",
+    "HexManual/Chapters/HexRCF/RootQuote.lean": "347d0587879e4c95c8dbbb81503b8d36a635de73e06451a2167571321301f649",
+    "HexManual/Chapters/HexRCF/RootTableQuote.lean": "88c50284803d69ccdceee1f0c7d892f19143b1dca60a6f7f502303da07d079cc",
+    "HexRCF/README.md": "3830d758a8a75d59df1a6dd01f59204a86858b5eda3e43a78f9e9e9c2d769a8a",
+    "HexRCF/SPEC/hex-rcf.md": "df8c6bb2435a2794faa36bc77e41f4c936f06ae149f29c3e68fe0d79f4ebfafb",
+    "HexRCF/Tactic.lean": "09d895ba1dd2c1af0bfffca197494f2614380ded268ff13e4e0b02fea22b9224",
+    "HexRealClosure/Algebraic.lean": "d05f9fb72fe9544ae9ddc685dff17080f876aa4c99c70e8992d511e011f6a454",
+    "HexRealClosure/ContextData.lean": "ca29790752b8d25f10d03a9877690a5ff40f1fdf6815c96fe9693941206e662c",
+    "HexRealClosure/SignCodec.lean": "7126323c97b77204386795a0f252f1babfd0ed7f3dba7ee3927a99b9d5c1852a",
+    "HexRealClosure/SignFacts.lean": "9c22837e93e6f50cc96310163e352ac608fbcfbd6275edab33751da2fd84f47c",
+    "HexRealClosure/SignatureCodecTests.lean": "ffc72777523ac0e92b563481804bdfb581fb0173fe7a021009737d57959b4462",
+    "HexRealClosure/TowerContext.lean": "6ef8b87b2d81cb177505a4bbc88befa078b20578cedd49e836d850753c203ee3",
+    "PLAN.md": "e94a60324486913b4a04650edd617c4ff8bef469dc7fd311adea8407c6662ea0",
+    "SPEC/real-closure-execution.md": "bc0948ad7de6969baaed89c0b3052cb0d21d64d634f8a336f9a7dde446b057f5",
+    "adapters/HexRCF/RealCoefficients.lean": "f16eff0302ef0296fc034f59619d232be1921c2f06247dca69db4c53c06c68de",
+    "adapters/HexRCF/RealCoefficients/RationalQuote.lean": "675e2ba065b696f257adefc07fe30ddb0190f321d86005444579ea5a0744bdf5",
+    "adapters/HexRCF/RealCoefficients/RealModel.lean": "712b4fd3edff8eaa6f93e501da5debf04529d1ea8c11a18389820f866d179c43",
+    "adapters/HexRCF/RealCoefficients/Reify.lean": "ea8474b9e253f93a1583064ca99ec0bf376dadf5457fd60b57e9e18460cf449c",
+    "adapters/HexRCF/RealCoefficients/RootContext.lean": "792176eab63e5e62b759a10893569946ef6d019566b8116c85237b3e16fcdb86",
+    "adapters/HexRCF/RealCoefficients/RootHeader.lean": "681f2a964bc30f65a92a0fb1a58b4d4013eb396df37ca813962702065fb46261",
+    "adapters/HexRCF/RealCoefficients/RootPrepare.lean": "de72a8e3ac4adb13365801476467bf691e630d0952b018ccecd88846c3bdb025",
+    "adapters/HexRCF/RealCoefficients/RootQuote.lean": "849643cacfe40a89c6f23a7da0be063ff2cd780cdbbd2f1f36e890c19902af3b",
+    "adapters/HexRCF/RealCoefficients/ScalarPacket.lean": "9ae62bea85dab43ec01329defa9f788af4843e74b24f40f6c6f1b28adaadc6bf",
+    "adapters/HexRCF/RealCoefficients/ScalarQuote.lean": "fee2617a998f29d05c8959b484060ac1d719359c6d851a8ff6699fa9cb370acc",
+    "adapters/HexRCF/RealCoefficients/SignatureQuote.lean": "c3bb71b52c2a544b902bc256b3a162e1c3c4e7f94ae6b21808914e67109710eb",
+    "adapters/HexRealClosureTheory/Algebraic.lean": "2495153acbe4e468521913a2f5d6569831cd05f5ee48d5ddb26fc31a43438c7e",
+    "adapters/HexRealClosureTheory/SignFacts.lean": "c2b8cf96de0cccc2c0c3cbe83f0afd7c40ab9736b75f377ec5bfedc0907f34e3",
+    "adapters/HexRealClosureTheory/TowerModel.lean": "70d0e57e8ecc78eb9b7675d875157462d27cf9494d49d72bba019eaa6dd1d788",
+    "conformance/HexRCF/DependentQuote.lean": "519876284605f5077abd4dbeddd5ca9aa0921460ba8f2c7dbf237e4b184c92c4",
+    "conformance/HexRCF/DependentQuoteData.lean": "48bfdfa8e62d87233a96c525d5157b57f831964a521674dc33ea094ceb51be0a",
+    "conformance/HexRCF/DependentQuoteProofs.lean": "b0d510908b8f64e31236f5d06812e89121b48a3d5375ad3d63915a9b5853c297",
+    "conformance/HexRCF/DependentScalarProofs.lean": "9e8da19d71e1496babd31ecb13430d74abb5f383738d47cbc1bc066b27902cfe",
+    "conformance/HexRCF/DependentScalarQuote.lean": "e20dd7346c337dd17126c394965f268e568706730f475844d7c0907051224933",
+    "conformance/HexRCF/FrozenSignatureConformance.lean": "8e7d432aecb87fb89bb188e4c579e86fb5c3348c5430f1e2b1a00f1f820a940e",
+    "conformance/HexRCF/FrozenSignatureProofs.lean": "55de6da9b0b3dc2d1e384d6c838d13294287c44060afb8e70aa2a0c8e01a81cb",
+    "conformance/HexRCF/PublicSignPacket.lean": "c32d73c5634376907b965e1ea6cf69352fdda1f1945ce2f34a378cc217778102",
+    "conformance/HexRCF/PublicSignPacketControls.lean": "b4f98bd8ef190a361dd7752d4d5ece0cfbd862ff4face5a06dfabecf87096028",
+    "conformance/HexRCF/PublicSignPacketProofs.lean": "1889c6da5afae5ab2324e88aa06d7148a3f305af347e0b86507a8d5f3801a92d",
+    "conformance/HexRCF/PublicSignPacketValues.lean": "72705dba30f04f986188903fb49b983c6f0a664895116fca8bd8b6b46b6517e5",
+    "conformance/HexRCF/RationalQuoteConformance.lean": "947d8da0a708a95cca5334682e3084c505c9c16e645c3763bfbda0adb53a36b6",
+    "conformance/HexRCF/RootContextConformance.lean": "0c52084609ec3de8afd51330a7d2cc97f7bae1d8b2bbc421138783940fc7db37",
+    "conformance/HexRCF/RootContextProofs.lean": "5c4d52f98b5cd720e7f7cc6822da91b6bc80b3213fa6ba87b3b3acd19d5e274a",
+    "conformance/HexRCF/RootHeaderBudget.lean": "db30b6b7781fabd238ea2c934477e5ae281cc6cd905f11848ce46eb66ef45fe0",
+    "conformance/HexRCF/RootHeaderControls.lean": "aca063af3bfe475166aef92193f162c25a0e53eea094087cf334406a3d513157",
+    "conformance/HexRCF/RootHeaderPacket.lean": "e924a3b799cfff2573e2861e3533be94147a6505aa11837a99dc8985ba0ae7dc",
+    "conformance/HexRCF/RootHeaderProofs.lean": "92eb1c4e4fd785543286fc1d3ad8fad11dccac57e5267893a12a87ba37d77410",
+    "conformance/HexRCF/RootHeaderValues.lean": "de9a8fc7c2e9371cbd3324eb700180411e49865dbc6535a74d2c882f74e38e13",
+    "conformance/HexRCF/RootPrepareControls.lean": "5a6e3731eac813867b34e9f902a2f7d5f090b2fae6af9c2b859a3be76b68ae85",
+    "conformance/HexRCF/RootPreparePacket.lean": "e33b5b2921ec13559eb4d6b1d8a3f3cc5ccfd4dd7deb66753806c3f3b39e7a8b",
+    "conformance/HexRCF/RootPrepareProofs.lean": "0acb47e3bb5175f6cb4af362bdc53a5e995b8534850c88298b7230b07cc02988",
+    "conformance/HexRCF/RootPreparePublic.lean": "a9e09cbe8d1287b97dde71ad1c6dbe149cfbacb6f81f41a8493ee802416d0805",
+    "conformance/HexRCF/RootQuoteCases.lean": "602d15ef501e969183bffbda7fb3c0f00a174ba5c2dbc35370ee7fce896944dd",
+    "conformance/HexRCF/RootQuoteConformance.lean": "e329ff2abf7d26cdccdaa63c8c25154c4af50493cd288b35b731efb586957b5f",
+    "conformance/HexRCF/RootQuoteData.lean": "faa259d129d5c65a063c7143e45d5d9d19573ed49862aa5ecb3978ff389cb514",
+    "conformance/HexRCF/RootQuoteSource.lean": "aca1654efc1a452aca8ef573bb8ea3a435a4e1e18a4dca854d9bcc8e350d511d",
+    "conformance/HexRCF/RootTableQuote/Conformance.lean": "c19a69b2c5bb9238ae0322e9df9f48fcad3856bb2e2e5f43ef8bf28cc049b81f",
+    "conformance/HexRCF/SelectedRoot/KernelCheck.lean": "12e7e2e3f4667a76dc89c4b36796bff177f3c187b81adc5eb5e049ff1ce6669d",
+    "conformance/HexRCF/SignPacketProofs.lean": "86f2e8740de57e74fae8029059a1607818105d3bf4028bb4f902145ef328cd18",
+    "conformance/HexRCF/SignPacketQuote.lean": "f75edcf7edc30beb0bc5e401b3b23f7d5275bf26bdaa96f8b0bb36b51964abfb",
+    "conformance/HexRCF/SignatureQuoteConformance.lean": "26f16c37cb9e0d5c09a082787f4a66673437adbf998023fd5e9625db16ff5d3f",
+    "experiments/KernelReplay/AxiomClosure.lean": "f49377265f05f52b633b10a59255a03731e08d022cc54763de9851c5b5325034",
+    "lake-manifest.json": "fd2dc4df30cd44e4d30568489d616e7bcc8a78747500139134be56f35ae746a4",
+    "lakefile.lean": "8d24ad957a60f49f23125b5619cf3750579c7a066210b6c4dfd467bed04312fc",
+    "lean-toolchain": "bc84812c94489d1e3e191baa1dc10d5eb684382d7fe9d2a5ab085e72c1c67e47",
+    "libraries.yml": "14e3dd1c01bb0c369b2216e2733378d61172040fd9f69dd0354d4e1267d9c5c1",
+    "reports/hexrcf-public-packet-quotation.md": "97f61b615ab41c9ea085e9ec6c3ea873bc46e611c09c5a179f29efd4309dfc09",
+    "reports/hexrcf-root-context.md": "fa967a71370454f5d1fcdb757ebf6ab6fa669538f253c3cc6cb6b6f826361c8a",
+    "reports/hexrcf-root-header-quotation.md": "62ecb8f293a9144b8a8a0bdc4910c473bd87063162bb656b94f1be53eb2e4617",
+    "reports/hexrcf-root-preparation.md": "23b6fc84e7b54447e224a166228f275f9ad239c90b2c6c8e4ea38d2f93e55cef",
+    "reports/hexrcf-sign-packet-quotation.md": "64adc6438ad1593d1018e14f2757cb6193614db26141af9c0c76d359084d9d99"
+  },
+  "unchanged_guards": [
+    "conformance/HexRCF/SelectedRoot/KernelCheck.lean",
+    "experiments/KernelReplay/AxiomClosure.lean",
+    "AGENTS.md",
+    "PLAN.md",
+    ".github/workflows/ci.yml"
+  ],
+  "artifacts": [
+    {
+      "path": "validation/root-prepare-final-integration-1.log.gz",
+      "bytes": 21698,
+      "sha256": "b07ca2c34690b678a6dbd9d0cf0f6ec684872a02fe8dd7daac752c4dae09bdb7",
+      "uncompressed_sha256": "018ed71cff071ed126604f4947b0a38078314a7a4f8b770c3a64551c8a15423c"
+    },
+    {
+      "path": "validation/root-prepare-controls-1.log.gz",
+      "bytes": 6819,
+      "sha256": "b9fe6b76f3ce5ec30ae303a40e83087ddab0e60abb5c0553eddbba27dc67842d",
+      "uncompressed_sha256": "083fdad1e079c74a59d947e049b757eb38b358e036a2431f1534c2e37ad1e060"
+    },
+    {
+      "path": "validation/root-preparation-render-1.log.gz",
+      "bytes": 15291,
+      "sha256": "cb4a378e874447285ccf34541f4a69a3734213c2b498b8bfae06aff36a1bfb04",
+      "uncompressed_sha256": "a90dfb20bb7ba1cf4dde6cecaf1c31f8b26bfc60b74963373af0daeb51dc95a2"
+    },
+    {
+      "path": "validation/root-preparation-browser-1.log.gz",
+      "bytes": 241,
+      "sha256": "f3ea6c061c78d3b1aaec26154b1f040fb1fd3614b8d69c51b615998a92fb6586",
+      "uncompressed_sha256": "8ee80254b034252fd93288e859cb90084dbdd250181c9ab11f6598fccf6a6531"
+    },
+    {
+      "path": "validation/metadata.json",
+      "bytes": 1169,
+      "sha256": "f7bdf6cd0ed95646565025db0c417f526bbe0ead6e4a31c907aaf11457ff325a"
+    },
+    {
+      "path": "validation/root-preparation-metadata-copyright.log.gz",
+      "bytes": 20,
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "validation/root-preparation-metadata-lines.log.gz",
+      "bytes": 20,
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "validation/root-preparation-metadata-dag.log.gz",
+      "bytes": 20,
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "validation/root-preparation-metadata-admissions.log.gz",
+      "bytes": 100,
+      "sha256": "86c87a2ada5a49d30e4cd149bf8df52d3fb00b84114c38699923e6ac6e77bb5a",
+      "uncompressed_sha256": "8bf794423604b32f2d2d8a505029ff9a7cf277c93c236dccff21af2e2aeaefb1"
+    },
+    {
+      "path": "validation/root-preparation-metadata-diff.log.gz",
+      "bytes": 20,
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "validation/root-preparation-metadata-selected-admissions.log.gz",
+      "bytes": 134,
+      "sha256": "d55221e0ffeb29a3ec10e0d9e5b5b33cb73ee6b07257374713f37e32c30e2d01",
+      "uncompressed_sha256": "a1811b8166a1759d3b63598254853433e541a984dfd7e2cd00ddd78745709090"
+    },
+    {
+      "path": "validation/root-preparation-metadata-relative.log.gz",
+      "bytes": 107,
+      "sha256": "2fbbc46ff305eb8a378fb5c4f90619def7b965f57d985c5d9903523e40e4597c",
+      "uncompressed_sha256": "1f32fbcb8bc06ce3201ba26b1b3f1b550ace2ab7c34610b7effe41d98e26e193"
+    },
+    {
+      "path": "validation/memory-policy.txt.gz",
+      "bytes": 242,
+      "sha256": "be57345ae3b27a8145cfa645e9bab52c9cec6135fbeb86816b83c71e6ac98405",
+      "uncompressed_sha256": "bcd60928bece986758499f7160c443b9a722ebe3ab645c2038a0968c19ed3b55"
+    },
+    {
+      "path": "validation/run-bounded.sh",
+      "bytes": 302,
+      "sha256": "63bc5f97337e6b039bb3a9b1ba2a500be96fd1c2a2f73b43dae284aa9b18dda8"
+    },
+    {
+      "path": "validation/metadata-driver.py.txt",
+      "bytes": 3289,
+      "sha256": "2fd7de57f5635663232a04e6b4f61d5451879e10bf71030f62a7c0183abc3737"
+    },
+    {
+      "path": "validation/integration-targets.txt",
+      "bytes": 496,
+      "sha256": "0845fd1e0ce18dbcdce9e8d2fad6bf24e33884bc8e4fcc16c018a5785e1fea76"
+    },
+    {
+      "path": "validation/compiled-sizes.json",
+      "bytes": 2498,
+      "sha256": "b463346e62e70488b585f7bb43249c5058959f81b39ac60c027813c9ae721957"
+    },
+    {
+      "path": "captures/browser.mjs",
+      "bytes": 5605,
+      "sha256": "e9d40a5b517a419e8863c0bb663fa71bf4baad31605852b66c6d38d652c2d651"
+    },
+    {
+      "path": "captures/inspection.json",
+      "bytes": 4968,
+      "sha256": "d8e3b1a0e4daaa3194a581c0f4fd7a6a9c5a1c8fabbc94833f19ac93ce2d599c"
+    },
+    {
+      "path": "captures/section-overflow.json",
+      "bytes": 26708,
+      "sha256": "8e5ce7bdf00cc9e758bea062f75c7ce8a3bb9f4f50306df85a1a3e32e55d3fb6"
+    },
+    {
+      "path": "validation/render.lean.txt",
+      "bytes": 206,
+      "sha256": "664d37e07421cd5f5ee5df6e4fdb3f18fb67b1e58e3688267ff6ca6909180ef3"
+    },
+    {
+      "path": "validation/render-lakefile.lean.txt",
+      "bytes": 1825,
+      "sha256": "c0930bd3e5680bd8b52d15bd2fb4e5e43dbfd5c0b85d80e4c3244faf65f384aa"
+    },
+    {
+      "path": "validation/render-lake-manifest.json",
+      "bytes": 6334,
+      "sha256": "6ee53eeef0c9336cd671e6bc4605ca7e097b73af8541fc2bdb92a941dc3974d2"
+    },
+    {
+      "path": "captures/root-preparation-desktop-introduction.png",
+      "bytes": 269185,
+      "sha256": "daa449407164b23be9e6260988c51f196659a31b8f3bc62e452206be068b3098"
+    },
+    {
+      "path": "captures/root-preparation-desktop-example.png",
+      "bytes": 280172,
+      "sha256": "4847868d998543a9863838fb87fc02d3aafe681513f4bda6143c33c6ca5b5c1b"
+    },
+    {
+      "path": "captures/root-preparation-desktop-budget.png",
+      "bytes": 272829,
+      "sha256": "6bb6f8e53cd5d313afc56779ecd5e5dbb95ccc5e70ca9a327f2f01c9d217efbb"
+    },
+    {
+      "path": "captures/root-preparation-narrow-introduction.png",
+      "bytes": 100759,
+      "sha256": "cd1846954f4a9b98aacdd395e6a7806074b7a1f9aa4de6c61a1c7743294932b1"
+    },
+    {
+      "path": "captures/root-preparation-narrow-example.png",
+      "bytes": 96963,
+      "sha256": "1cfdf74abd46befd8abb3faf9f807012210665cdab32d8d1be75bee8c02f1ee1"
+    },
+    {
+      "path": "captures/root-preparation-narrow-budget.png",
+      "bytes": 99363,
+      "sha256": "6c89fa23861eafd5848303b24f68fbbaaa3e2aec6a2d283b4094c877c1f0494e"
+    },
+    {
+      "path": "diagnostics/root-prepare-audit-1.log.gz",
+      "bytes": 7475,
+      "sha256": "f15ba51a9999d5cd61619d7ea240b062f361439e9d416689748b3977f592770b",
+      "uncompressed_sha256": "52b59aa8f4118fb2e0bb4baeb9afa8109bfa9e0e9c46fb8a23a4f94cd7f57fea"
+    },
+    {
+      "path": "diagnostics/root-prepare-audit-2-progress.log.gz",
+      "bytes": 1328,
+      "sha256": "99226a2210ff834e05782214e3083054cc8a3c5caae9690f71ae2a56b3c212dc",
+      "uncompressed_sha256": "e1ffdcd6f2bef879efd59a0daa9f02f4a619dd8005a79bbe06d7004bc613f132"
+    },
+    {
+      "path": "diagnostics/root-prepare-audit-2.log.gz",
+      "bytes": 7467,
+      "sha256": "197a0b7ca733c7102f57bcd3d0814555c91e752c9fb78fa2472f925a9f87d2d4",
+      "uncompressed_sha256": "5c98e573c607c309f0b98b71bfe9b26a8610a9abe845086f21157031fa82183d"
+    },
+    {
+      "path": "diagnostics/root-prepare-core-1.log.gz",
+      "bytes": 5468,
+      "sha256": "cffdc7edc008583b2127800f896fce1ffde785f72cd049c79dc873e21f1d2005",
+      "uncompressed_sha256": "1d9c19ce2082fd176264dc4216dbf049650b1d5e007b31ef923636824b022b11"
+    },
+    {
+      "path": "diagnostics/root-prepare-core-2.log.gz",
+      "bytes": 5143,
+      "sha256": "57f45d8b3381cdb9aaa09d5bf12e0aaa0083f733d61839db9f609c11384202c4",
+      "uncompressed_sha256": "257b6a5708420b6ea539b77e858aef9b6c242cb7fec9a47359be2aaf2c0584ab"
+    },
+    {
+      "path": "diagnostics/root-prepare-core-3.log.gz",
+      "bytes": 5139,
+      "sha256": "803033a3a1c7127c249c91d44b3cbf8bf4ce21b01250e43f19af5aee5558cd25",
+      "uncompressed_sha256": "fc361e24265d0f347b9e64567f6e8e49518a325d2cc8c209f169eedc7bc70373"
+    },
+    {
+      "path": "diagnostics/root-prepare-dag-1.log.gz",
+      "bytes": 20,
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "diagnostics/root-prepare-dag-2.log.gz",
+      "bytes": 20,
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+      "uncompressed_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "diagnostics/root-prepare-import-1.log.gz",
+      "bytes": 7114,
+      "sha256": "62c16dd900203e5f6264f4433ad91a3f7eeaa1c15bd79ad89ec6f558b2a102f6",
+      "uncompressed_sha256": "ea448ee87438ca841b3dd785d8c1c6b12371c75b6461f62c5a9e44f68e2c59f0"
+    },
+    {
+      "path": "diagnostics/root-prepare-import-2.log.gz",
+      "bytes": 6711,
+      "sha256": "ade1831f321bc986cb91a666ed88ff7e7906d6104b4d5f056b58ea0093243b7e",
+      "uncompressed_sha256": "1a57d1891a51c664f59a8c31605acd6eaa005d10701d5939b89081d214057fef"
+    },
+    {
+      "path": "diagnostics/root-prepare-inspect-1.log.gz",
+      "bytes": 7500,
+      "sha256": "7f72ab80bf7720228757c9fcac108bdff05b3b678f8bb500056421b9556bcdae",
+      "uncompressed_sha256": "a6e7257825e6f36bdad61be86b6faf0cea6757feb37c84a9caf0644551c09e4b"
+    },
+    {
+      "path": "diagnostics/root-prepare-inspect-2.log.gz",
+      "bytes": 8131,
+      "sha256": "84aa12b5194f2a85c78a4244fba84f1a6e84f68adf3f608884f2b64296987463",
+      "uncompressed_sha256": "e8d38c1cad51f82c19f25b641103085d1998ba50f2ab1b503d9cb0327d2e9650"
+    },
+    {
+      "path": "diagnostics/root-prepare-legacy-1.log.gz",
+      "bytes": 12803,
+      "sha256": "e06734436fb34440319d7bf450f98216448aecce4a8533dac2b5eaddfc0077be",
+      "uncompressed_sha256": "6609447788b6e6e7c4da03ed7fcf0198b203e6c6db6b0874fce2cb5d22505910"
+    },
+    {
+      "path": "diagnostics/root-prepare-legacy-2.log.gz",
+      "bytes": 8392,
+      "sha256": "0ed1377918b26e023d4a394c019ecdd5a0bd205bd86dda2be972188d1cee9464",
+      "uncompressed_sha256": "a72d9a98131282e85812ae8581ec8e0edcdffbb15ed5af2b33851f013ab5ea3c"
+    },
+    {
+      "path": "diagnostics/root-prepare-legacy-3.log.gz",
+      "bytes": 10455,
+      "sha256": "1a7e77ea6cd1147f772ed9670e98fca0ad6e5bab2b0bc399d95d6a24ca00eb3c",
+      "uncompressed_sha256": "f0f7b99a76814326cacd8ca2082c0d30150017a3551e01a97af628f51e16485d"
+    },
+    {
+      "path": "diagnostics/root-prepare-packet-1.log.gz",
+      "bytes": 6692,
+      "sha256": "4581f8f92eda013e45401709914bf6f95bd5f8c2ee3a6e9f88d49e206623fba8",
+      "uncompressed_sha256": "14d19e454f2d83b730e490700d2d5cd7a1add43ae3548b246061491bd47c49c1"
+    },
+    {
+      "path": "diagnostics/root-prepare-packet-2.log.gz",
+      "bytes": 6688,
+      "sha256": "900c7b138b417901fc5d04ee058325385542bf0fb0827da422ff44772c0495c0",
+      "uncompressed_sha256": "27c684f207fddf8521c90d1daab52fcc159aee5b6820c45358d49964fadc1dc9"
+    },
+    {
+      "path": "diagnostics/root-prepare-public-1.log.gz",
+      "bytes": 6693,
+      "sha256": "763165b33f34b7c9665e69a78151f7666849e8dddafe361df9bdef7c666455e0",
+      "uncompressed_sha256": "aaa03e7ff2b7adf34e9ca654236cb6554ba15e1c0ef2b0a5bc2c21c75635178e"
+    },
+    {
+      "path": "diagnostics/root-quote-enclosing-audit-1-progress.log.gz",
+      "bytes": 3255,
+      "sha256": "160d6055469a0c5fee22657f003e805e48f73359546d72301854bed912787bf7",
+      "uncompressed_sha256": "7c2d62152e4a069e77f2839b274dca5a2c4cd5144d8f918cce80e4064869a6bb"
+    },
+    {
+      "path": "diagnostics/root-quote-enclosing-audit-1.log.gz",
+      "bytes": 10703,
+      "sha256": "8024b586d32c62c9b0ecc15a3ae6dfc1146d002fc23cdbb22789a721bbee9421",
+      "uncompressed_sha256": "6ecf176329dded8e5d6b5fd604e39b8c925f2e5f5a14a8b8ba3b0a71dcd8ec17"
+    },
+    {
+      "path": "diagnostics/root-quote-enclosing-core-1.log.gz",
+      "bytes": 5161,
+      "sha256": "4d0976d590c9ccae2263668289bf6d7ec6e9c3536cce22cfeb4f16f804cfd064",
+      "uncompressed_sha256": "8f3cb09ff08a7c33bbeac767d708edb391766d2a3d40a43e4d8156e126dcb201"
+    },
+    {
+      "path": "diagnostics/root-quote-enclosing-packet-1.log.gz",
+      "bytes": 7182,
+      "sha256": "94b28aee6718a15bb59018e8b8bcfc65b5a8219debeab0ca2748d04d020544fe",
+      "uncompressed_sha256": "72eccdf64c861c5e38dfbe1449f1d48b2a82a23abfcdbb8d7ece5654d6252e4e"
+    },
+    {
+      "path": "diagnostics/root-quote-enclosing-packet-2.log.gz",
+      "bytes": 7133,
+      "sha256": "df8e23c89013f94d8468905b5471219bf37361c417db0aaf424ab8066e49449c",
+      "uncompressed_sha256": "7365833d06f9e20de9e155669418e3e5131ded2c612306eedf07d7b4ee36a76d"
+    },
+    {
+      "path": "diagnostics/root-quote-enclosing-packet-3.log.gz",
+      "bytes": 6693,
+      "sha256": "2cb1caf256de10d1a9e7cafb32a41846f31fdf78dc70960f7dca59ddc2d50319",
+      "uncompressed_sha256": "338ad175846b17cf916223f89b610d4e3ffd95758e9ccf4f9427da239a598883"
+    },
+    {
+      "path": "diagnostics/root-decode-inline-1.log.gz",
+      "bytes": 7075,
+      "sha256": "264edf374d1c72da57cea522e056196a7bc1c205558adfb612556bf4c9193f5b",
+      "uncompressed_sha256": "f822190f35554c8c107b852eaad8dca1fdfe8013f6e226187818d80a42d801d0"
+    },
+    {
+      "path": "diagnostics/root-decode-inline-2.log.gz",
+      "bytes": 7043,
+      "sha256": "9d9b5985c5c3a41c6fcee7340bbfc19173071bf82e3f974addeb75c4ce03d37e",
+      "uncompressed_sha256": "63906684aee1654705fea8679947f8440b0442a885c76557b3710c53c56e5025"
+    },
+    {
+      "path": "diagnostics/root-decode-inline-3.log.gz",
+      "bytes": 7203,
+      "sha256": "4de61456bbed5e0c09eb16475217a92af1aec748a62af378c895dadc18bbb564",
+      "uncompressed_sha256": "31099ecea05210d5c47958e378397f37f52ec0fee00f3fde5485976132e07de9"
+    },
+    {
+      "path": "diagnostics/root-decode-inline-4.log.gz",
+      "bytes": 7075,
+      "sha256": "459b3a9993071afc1a559a4fe95d95c129949c4e34c43eecd35f8bb4f2734b03",
+      "uncompressed_sha256": "21e0ca7149db34be85d50f104ef45cefec16b2a96c573c4ce0b8e0029191c513"
+    },
+    {
+      "path": "diagnostics/root-decode-inline-5.log.gz",
+      "bytes": 8244,
+      "sha256": "362d6e6f753771f73e8614a73f427cdc50594e86333d5f368c5b92e442997a4b",
+      "uncompressed_sha256": "c2618bc956cbf763d0b288cfc17a990cea35b4951301d79fd5fe10171fde5fc7"
+    },
+    {
+      "path": "diagnostics/root-decode-inline-6.log.gz",
+      "bytes": 7102,
+      "sha256": "b770c46318bbf50d011d0e7b6b499cb7832042babd576a25c959b9cc9fe9aa2d",
+      "uncompressed_sha256": "97756e66341546f69e7fe97463d2e3e13b9ec3f4fc5b8558084e76a72f463c7b"
+    },
+    {
+      "path": "diagnostics/root-decode-inline-7.log.gz",
+      "bytes": 6644,
+      "sha256": "e8e198f1b41544375dfcdced82eac7a834c983924ed3997ce4876caca12a6028",
+      "uncompressed_sha256": "11e460a49cba45e933627bd6512df002ef76b64c1b98796c77d1f5df4c39a724"
+    },
+    {
+      "path": "diagnostics/retained-inline-1.log.gz",
+      "bytes": 7101,
+      "sha256": "610c5cafe80271058b8444c11d2a2ad841994ebb18a609fb196103e2592bc7a4",
+      "uncompressed_sha256": "ed7d3a7224178cf6528056965d5e124db9d78ba4354fa5c34418dc327ece52f2"
+    },
+    {
+      "path": "diagnostics/retained-inline-2.log.gz",
+      "bytes": 6745,
+      "sha256": "d9668a18c1c9b46597b375c76a101caae2e5a56de8280fa085b669e341042d2c",
+      "uncompressed_sha256": "b9f320f624cfeeb4159bb74000fce485e5d30f99014f9c0a159b7bcbd1a5bee7"
+    },
+    {
+      "path": "diagnostics/retained-inline-audit-1.log.gz",
+      "bytes": 7116,
+      "sha256": "e0ae5ceede3912ba6eb5614015afd3e3f94971af2148a65211c5f4e24634d5c2",
+      "uncompressed_sha256": "3b2fb243a847b2f9f4e857f07c363675249663f67120d952b9b84430da4a2738"
+    },
+    {
+      "path": "diagnostics/root-preparation-metadata-diagnostic-2.log.gz",
+      "bytes": 291,
+      "sha256": "53d7be0c84cf19ba2da7208cb97f2f8c7bab10cb8690e110e5cd77b16318c169",
+      "uncompressed_sha256": "f7065688e869cfb1ef8055a4b89c349fd179e2281631866f7f5249cea5b4a965"
+    }
+  ],
+  "validation": {
+    "integration": "validation/root-prepare-final-integration-1.log.gz",
+    "controls": "validation/root-prepare-controls-1.log.gz",
+    "audit": "validation/root-prepare-final-integration-1.log.gz",
+    "render": "validation/root-preparation-render-1.log.gz",
+    "browser": "validation/root-preparation-browser-1.log.gz"
+  },
+  "diagnostics": {
+    "diagnostics/root-prepare-audit-1.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/root-prepare-audit-2-progress.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/root-prepare-audit-2.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/root-prepare-core-1.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/root-prepare-core-2.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/root-prepare-core-3.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/root-prepare-dag-1.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/root-prepare-dag-2.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/root-prepare-import-1.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/root-prepare-import-2.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/root-prepare-inspect-1.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/root-prepare-inspect-2.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/root-prepare-legacy-1.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/root-prepare-legacy-2.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/root-prepare-legacy-3.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/root-prepare-packet-1.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/root-prepare-packet-2.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/root-prepare-public-1.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/root-quote-enclosing-audit-1-progress.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/root-quote-enclosing-audit-1.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/root-quote-enclosing-core-1.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/root-quote-enclosing-packet-1.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/root-quote-enclosing-packet-2.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/root-quote-enclosing-packet-3.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/root-decode-inline-1.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/root-decode-inline-2.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/root-decode-inline-3.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/root-decode-inline-4.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/root-decode-inline-5.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/root-decode-inline-6.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/root-decode-inline-7.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/retained-inline-1.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/retained-inline-2.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/retained-inline-audit-1.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative.",
+    "diagnostics/root-preparation-metadata-diagnostic-2.log.gz": "Development artifact; not final acceptance or a matched performance sample. The recorded exit/signal is authoritative."
+  },
+  "visually_inspected_captures": [
+    "captures/root-preparation-desktop-introduction.png",
+    "captures/root-preparation-desktop-example.png",
+    "captures/root-preparation-desktop-budget.png",
+    "captures/root-preparation-narrow-introduction.png",
+    "captures/root-preparation-narrow-example.png",
+    "captures/root-preparation-narrow-budget.png"
+  ],
+  "audit_counts": {
+    "retained root/context": [
+      807,
+      63,
+      855
+    ],
+    "root/header packet": [
+      710,
+      66,
+      761
+    ],
+    "root context": [
+      718,
+      68,
+      771
+    ],
+    "public packet": [
+      692,
+      67,
+      749
+    ],
+    "frozen signature": [
+      23,
+      7,
+      16
+    ],
+    "dependent quotation": [
+      114,
+      14,
+      64
+    ],
+    "dependent scalar": [
+      61,
+      4,
+      56
+    ]
+  },
+  "body_scope": [
+    "HexRCF.RootPreparePacket",
+    "HexRCF.RootPreparePublic",
+    "HexRCF.RealCoefficients.RootPrepare",
+    "HexRCF.RealCoefficients.RootQuote",
+    "HexRCF.RealCoefficients.RootHeader",
+    "HexRCF.RootHeaderPacket",
+    "HexRCF.RootQuoteCases",
+    "HexRCF.RootQuoteSource",
+    "HexRCF.RootQuoteData",
+    "HexRCF.RealCoefficients.ScalarPacket",
+    "HexRCF.RealCoefficients.ScalarPacketQuote"
+  ],
+  "diagnostic_limits": "Interrupted retained-inline and root-prepare audits and the verbose root-decode-inline-7 trace are incomplete, not passes. Compatibility attempts retain obsolete count/budget failures before observed inventories were updated. Initial public export failed because private helpers leaked into a theorem type; the final ordinary public consumer fixes it. The initial general context abstraction failed the non-Boolean dependent-reader kernel check; the final fallback is restricted to Boolean conversions. Metadata diagnostics record prose/interpolated diagnostic false positives before the scan scope was made explicit.",
+  "scope": "Checked reconstructed-context retention and exact original anonymous cubic packet quotation, ordinary public acceptance/sign consumers, scoped actual-body producer diagnostics and full transitive standard-three axiom closure. No source/provider authentication, frozen history, complete-cell tactic or algebraic-completeness claim.",
+  "measurement_limits": "Dependency-reusing build observations and compiled file bytes/hashes only; no matched comparison, scaling, unique-DAG, expanded-work, physical-sharing or speedup claim."
+}

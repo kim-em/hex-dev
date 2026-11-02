@@ -1,0 +1,204 @@
+{
+  "status": "pass",
+  "cases": [
+    {
+      "case": "degree-2",
+      "axis": "degree",
+      "parameter": 2,
+      "bytes": 9916,
+      "row_unique_nodes": 3,
+      "row_expanded_nodes": 3,
+      "sha256": "d8c1b3971787eb855565fa87d266572b08dc7409dbd87e35a2a810dce311581b"
+    },
+    {
+      "case": "degree-3",
+      "axis": "degree",
+      "parameter": 3,
+      "bytes": 11770,
+      "row_unique_nodes": 3,
+      "row_expanded_nodes": 3,
+      "sha256": "ef15189a1ed48356b417a1dec50e46a280552b51f81af6ec4f4fa9a768ec9a51"
+    },
+    {
+      "case": "degree-4",
+      "axis": "degree",
+      "parameter": 4,
+      "bytes": 13110,
+      "row_unique_nodes": 3,
+      "row_expanded_nodes": 3,
+      "sha256": "0df805651e04fcb75222d5d9af773c3b136558d76b5494ddb77ebe2bc2aa6609"
+    },
+    {
+      "case": "degree-5",
+      "axis": "degree",
+      "parameter": 5,
+      "bytes": 14259,
+      "row_unique_nodes": 3,
+      "row_expanded_nodes": 3,
+      "sha256": "78051c5a3260b9b22d3175fa18545627bef8d73b251646dcb0e93249d27fd5d6"
+    },
+    {
+      "case": "atoms-1",
+      "axis": "atoms",
+      "parameter": 1,
+      "bytes": 4899,
+      "row_unique_nodes": 1,
+      "row_expanded_nodes": 1,
+      "sha256": "af7ed0a9e1d7c8c754dbe1e0dcb4b36b42274d1384d12f7db8dd734aee191682"
+    },
+    {
+      "case": "atoms-2",
+      "axis": "atoms",
+      "parameter": 2,
+      "bytes": 9916,
+      "row_unique_nodes": 3,
+      "row_expanded_nodes": 3,
+      "sha256": "d8c1b3971787eb855565fa87d266572b08dc7409dbd87e35a2a810dce311581b"
+    },
+    {
+      "case": "atoms-3",
+      "axis": "atoms",
+      "parameter": 3,
+      "bytes": 15093,
+      "row_unique_nodes": 5,
+      "row_expanded_nodes": 5,
+      "sha256": "0899f680d5cbd4e70a032fe512a57cbadf7dcb932ca93952344d856c82f10ebb"
+    },
+    {
+      "case": "atoms-4",
+      "axis": "atoms",
+      "parameter": 4,
+      "bytes": 20269,
+      "row_unique_nodes": 7,
+      "row_expanded_nodes": 7,
+      "sha256": "f7389acf60f007361a6785b727dccd42863656d64e24b3ce1f55de30aaaecaba"
+    },
+    {
+      "case": "bits-4",
+      "axis": "bits",
+      "parameter": 4,
+      "bytes": 9572,
+      "row_unique_nodes": 3,
+      "row_expanded_nodes": 3,
+      "sha256": "cae1b8df94693a6ad24d28babbfc17455e801c51f421152bd84225276f00cd3f"
+    },
+    {
+      "case": "bits-16",
+      "axis": "bits",
+      "parameter": 16,
+      "bytes": 9916,
+      "row_unique_nodes": 3,
+      "row_expanded_nodes": 3,
+      "sha256": "d8c1b3971787eb855565fa87d266572b08dc7409dbd87e35a2a810dce311581b"
+    },
+    {
+      "case": "bits-64",
+      "axis": "bits",
+      "parameter": 64,
+      "bytes": 11337,
+      "row_unique_nodes": 3,
+      "row_expanded_nodes": 3,
+      "sha256": "67fd6a3413196b8a5e3d7b54918f46dcd316e79cfd3a878a0c8b953269faa6db"
+    },
+    {
+      "case": "bits-128",
+      "axis": "bits",
+      "parameter": 128,
+      "bytes": 13230,
+      "row_unique_nodes": 3,
+      "row_expanded_nodes": 3,
+      "sha256": "ed37810eff123c1724543ae77844e248a22dcfe5a4f795552adb12ba8b7e3837"
+    },
+    {
+      "case": "precision-0",
+      "axis": "precision",
+      "parameter": 0,
+      "bytes": 9916,
+      "row_unique_nodes": 3,
+      "row_expanded_nodes": 3,
+      "sha256": "d8c1b3971787eb855565fa87d266572b08dc7409dbd87e35a2a810dce311581b"
+    },
+    {
+      "case": "precision-4",
+      "axis": "precision",
+      "parameter": 4,
+      "bytes": 9955,
+      "row_unique_nodes": 3,
+      "row_expanded_nodes": 3,
+      "sha256": "34a603b79985538fcc990544c73a39cd41945c25a9c5eff7356d1ee867052e56"
+    },
+    {
+      "case": "precision-8",
+      "axis": "precision",
+      "parameter": 8,
+      "bytes": 10020,
+      "row_unique_nodes": 3,
+      "row_expanded_nodes": 3,
+      "sha256": "1251f25bf0d146643b8be8c81b3ea8b33e815b5e1985121cebea8f9ed0451977"
+    },
+    {
+      "case": "precision-12",
+      "axis": "precision",
+      "parameter": 12,
+      "bytes": 10046,
+      "row_unique_nodes": 3,
+      "row_expanded_nodes": 3,
+      "sha256": "98c80f87fea4b70e33243b74d26291f342bc8525971d5d77609c072e7e20ef11"
+    },
+    {
+      "case": "depth-0",
+      "axis": "depth",
+      "parameter": 0,
+      "bytes": 9916,
+      "row_unique_nodes": 3,
+      "row_expanded_nodes": 3,
+      "sha256": "d8c1b3971787eb855565fa87d266572b08dc7409dbd87e35a2a810dce311581b"
+    },
+    {
+      "case": "depth-1",
+      "axis": "depth",
+      "parameter": 1,
+      "bytes": 28321,
+      "row_unique_nodes": 3,
+      "row_expanded_nodes": 3,
+      "sha256": "568883eb1730999c243ad8a8da4ea7023c7ccb3580ef6046671ae0b830e8d350"
+    },
+    {
+      "case": "depth-2",
+      "axis": "depth",
+      "parameter": 2,
+      "bytes": 53744,
+      "row_unique_nodes": 3,
+      "row_expanded_nodes": 3,
+      "sha256": "19fb8808b60a8951fc961f3b48d86a98b1a0d1bdc4cdca65f447734ea3b12ead"
+    },
+    {
+      "case": "repeated-4",
+      "axis": "repeated",
+      "parameter": 4,
+      "bytes": 8097,
+      "row_unique_nodes": 3,
+      "row_expanded_nodes": 7,
+      "sha256": "b3d7c2af7995b804e518cc76cfa9e15578653b89ac0ec36556c040fc7593892c"
+    },
+    {
+      "case": "common-2",
+      "axis": "common",
+      "parameter": 2,
+      "bytes": 8268,
+      "row_unique_nodes": 3,
+      "row_expanded_nodes": 3,
+      "sha256": "811f840d94eb3144cf1eac4f522c07a804f1ab79c13fa60641b97c45f0469403"
+    },
+    {
+      "case": "repeated-roots-2",
+      "axis": "repeated-roots",
+      "parameter": 2,
+      "bytes": 9613,
+      "row_unique_nodes": 3,
+      "row_expanded_nodes": 3,
+      "sha256": "f3565e01c928833686659b589921d1f2baf48e606ac68dcc65d74cf5e56df16f"
+    }
+  ],
+  "scope": "Independent declared parameters, actual query/sign counts, serialized bytes, rowDAG bounds and expanded-node counts; mathematical source interpretation remains separate."
+}

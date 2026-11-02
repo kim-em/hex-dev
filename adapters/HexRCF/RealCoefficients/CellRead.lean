@@ -57,6 +57,17 @@ theorem collectWith_success {ε : Type} {m : Nat} (failure : ε) (P : Fin m → 
   apply cast_entry
   simp only [Fin.getElem_fin, Vector.getElem_ofFn]
 
+/-- Pointwise checked readers restore the supplied dependent family exactly. -/
+theorem collectWith_eq {ε : Type} {m : Nat} (failure : ε) (P : Fin m → Type)
+    (read : (i : Fin m) → Except ε (P i)) (values : (i : Fin m) → P i)
+    (produced : ∀ i, read i = .ok (values i)) :
+    collectWith failure P read = .ok values := by
+  obtain ⟨restored,checked,entries⟩ := collectWith_success failure P read
+    (fun i => ⟨values i,produced i⟩)
+  have same : restored = values := funext fun i =>
+    Except.ok.inj ((entries i).symm.trans (produced i))
+  simpa only [same] using checked
+
 /-- Restore every section and sector in exact order after original guard
 preflight. All child errors propagate through the strict finite collection. -/
 @[expose] def read (value : ValueCodec parent.Value) (guards : List parent.Value)

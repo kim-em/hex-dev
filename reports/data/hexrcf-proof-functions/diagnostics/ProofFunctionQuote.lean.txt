@@ -1,0 +1,18 @@
+module
+public import ProofFunctionData
+public meta import HexRCF.RealCoefficients.RootQuote
+open Lean Meta Hex.RCF.RealCoefficients
+run_meta do
+  let .ok result ← RootQuote.runWith
+      (RootQuote.quoteOptionWith (mkConst ``ProofFunctionData.reader) fun expression => do
+        if expression.isConstOf ``Hex.RCF.DependentQuote.query then
+          return some (mkConst ``Hex.RCF.DependentQuote.query_eq)
+        return none)
+    | throwError "proof-indexed function quotation declined"
+  let target ← mkEq (mkConst ``ProofFunctionData.reader)
+    (← mkAppM ``Option.some #[mkNatLit 7])
+  let proof ← Hex.RCF.checkProof `proofFunctionReader target result.proof
+  let axioms ← collectAxioms proof.getAppFn.constName!
+  unless axioms.all (fun name => [``propext,``Classical.choice,``Quot.sound].contains name) do
+    throwError "proof-indexed function quotation has an inadmissible dependency"
+  logInfo m!"proof-indexed function quotation checked; nodes={result.usage.proofNodes}"

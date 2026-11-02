@@ -1,0 +1,3 @@
+import HexRCF.RealCoefficients.SourceBuild
+set_option pp.proofs false
+#print Hex.RCF.RealCoefficients.SourceBuild.select

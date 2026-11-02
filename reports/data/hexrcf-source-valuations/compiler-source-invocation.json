@@ -1,0 +1,12 @@
+{
+  "parent_head": "805d2ab1135a4ffca23322665729347b77907758",
+  "source_path": "conformance/HexRCF/CellSourceQuote.lean",
+  "source_sha256": "391d5d3f2a710e656d2310c8e43eba8eb0bf6bc54a20a576968438f6fdf317c4",
+  "argv": [
+    "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+    "lake",
+    "build",
+    "HexRCF.CellSourceQuote"
+  ],
+  "scope": "Unchanged original existential goal; source inventory now passes through TowerCompile.prepareWith and uses its checked coefficient proof. Supplied parent/model, original alias/maps and seed facts remain. No arbitrary history discovery or strict generic record completeness claim."
+}

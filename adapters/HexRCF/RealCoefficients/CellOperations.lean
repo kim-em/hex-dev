@@ -315,6 +315,34 @@ theorem formulaSector_eq (operations : Hex.RealClosure.Replay.Operations parent.
     formulaSector operations value roots cut values formula sectorFields[cut])
   return ⟨sections, fun cut => (sectors cut).sector, fun cut => (sectors cut).row⟩
 
+/-- Checked layout and pointwise row equations restore the complete dependent
+cell family. Original guards precede every layout and row read. -/
+theorem readCells_of_parts (operations : Hex.RealClosure.Replay.Operations parent.sign)
+    (value : ValueCodec parent.Value) (guards : List parent.Value)
+    (roots : RootReplay.Result p .negInf .posInf) (values : Fin n → parent.Value)
+    (formula : RealFormula.QF (n+1)) (packet : Codec.Json)
+    (fields : Vector Codec.Json 2)
+    (sectionFields : Vector Codec.Json roots.roots.length)
+    (sectorFields : Vector Codec.Json (roots.roots.length+1))
+    (sections : (i : Fin roots.roots.length) →
+      SelectedSigns (roots.roots.get i) (RepresentationSpecialize.prepare values formula))
+    (sectors : (cut : Fin (roots.roots.length+1)) → SectorReplay.Result roots cut values formula)
+    (guarded : guards.all (fun d => Decidable.decide (d ≠ 0)) = true)
+    (layout : Codec.tuple 2 packet = .ok fields)
+    (sectionLayout : Codec.tuple roots.roots.length fields[0] = .ok sectionFields)
+    (sectorLayout : Codec.tuple (roots.roots.length+1) fields[1] = .ok sectorFields)
+    (sectionChecked : ∀ i, formulaRow operations value (roots.roots.get i) values formula
+      sectionFields[i] = .ok (sections i))
+    (sectorChecked : ∀ cut, formulaSector operations value roots cut values formula
+      sectorFields[cut] = .ok (sectors cut)) :
+    readCells operations value guards roots values formula packet =
+      .ok ⟨sections, fun cut => (sectors cut).sector, fun cut => (sectors cut).row⟩ := by
+  have sectionRead := CellRead.collectWith_eq .binding _ _ sections sectionChecked
+  have sectorRead := CellRead.collectWith_eq .binding _ _ sectors sectorChecked
+  simp only [readCells, guarded, ite_true,
+    layout, sectionLayout, sectorLayout, CellRead.collect, sectionRead, sectorRead,
+    bind, Except.bind, pure, Except.pure]
+
 theorem readCells_eq (operations : Hex.RealClosure.Replay.Operations parent.sign)
     (value : ValueCodec parent.Value) (guards : List parent.Value)
     (roots : RootReplay.Result p .negInf .posInf) (values : Fin n → parent.Value)
@@ -387,6 +415,25 @@ theorem check_eq (operations : Hex.RealClosure.Replay.Operations parent.sign)
     check operations value values formula guards cert quantifier rootGraph cells =
       CompleteReplay.check value values formula guards cert quantifier rootGraph cells := by
   simp only [check, CompleteReplay.check, read_eq, fold_eq]
+
+/-- Compose independently checked root, cell and fold equations at the exact
+original packet. The dependent cell type retains the root reader's result. -/
+theorem check_of_parts (operations : Hex.RealClosure.Replay.Operations parent.sign)
+    (value : ValueCodec parent.Value) (values : Fin n → parent.Value)
+    (formula : RealFormula.QF (n+1)) (guards : List parent.Value)
+    (cert : RadicalCert parent.Value Signature) (quantifier : RealFormula.Quantifier)
+    (rootGraph cells : Codec.Json) (roots : RootReplay.Result cert.core .negInf .posInf)
+    (data : CellReplay.Evidence roots values formula) (verdict : Bool)
+    (rootChecked : RootReplay.readWith value guards cert.core .negInf .posInf
+      operations.one operations.add operations.sub operations.mul operations.natCast
+      operations.one_eq operations.add_eq operations.sub_eq operations.mul_eq operations.natCast_eq
+      rootGraph = .ok roots)
+    (cellsChecked : readCells operations value guards roots values formula cells = .ok data)
+    (foldChecked : fold operations values formula guards cert roots data quantifier = .ok verdict) :
+    check operations value values formula guards cert quantifier rootGraph cells = .ok verdict := by
+  simpa only [check, read, rootChecked, cellsChecked, bind, Except.bind, pure, Except.pure]
+    using foldChecked
+
 /-- The owner assembly API checks an optional success predicate. Only an
 accepted true verdict is a success; the public checker retains typed failures
 and the diagnostic false result. -/

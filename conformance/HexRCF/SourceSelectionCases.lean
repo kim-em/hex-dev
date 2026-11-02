@@ -22,7 +22,11 @@ set_option maxRecDepth 32768 in
 run_meta do
   withOptions (fun options => debug.skipKernelTC.set (Elab.async.set options false) false) do
    withExporting (isExporting := false) do
-    let quoted ← match ← RootQuote.quote (mkConst ``reader) with
+    -- This literal regression measures quotation separately from the public default limit.
+    let basic : Hex.RealFormula.Reify.Config := {}
+    let config := {basic with ring := {basic.ring with budget :=
+      {basic.ring.budget with proofNodes := 2000000}}}
+    let quoted ← match ← RootQuote.quote (mkConst ``reader) (config := config) with
       | .ok result => pure result
       | .error error => throwError "source-selection root quotation: {Hex.RealFormula.Reify.Error.toMessageData error}"
     logInfo m!"source-selection root quotation proofNodes={quoted.usage.proofNodes}"

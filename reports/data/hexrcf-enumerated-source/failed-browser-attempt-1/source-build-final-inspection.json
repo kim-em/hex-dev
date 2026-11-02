@@ -1,0 +1,94 @@
+[
+  {
+    "label": "desktop",
+    "kind": "api",
+    "text": "\n                  The native producer SourceBuild.build\ncan discover a selected source from its defining polynomial and a window\npolynomial whose sign is positive at exactly one of its real roots. For an\nisolating square, use SourceIdentity.margin as that window. The producer\nenumerates roots with the existing family algorithm, visits every candidate,\nand proposes the equation and window packets for the unique positive match.\nTwo matches produce ambiguous; no match produces unselected. A failed\nequation or enclosure calculation remains an error.",
+    "viewport": 1440,
+    "scrollY": 277472,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752,
+    "descendantOverflow": 0,
+    "overflowElements": []
+  },
+  {
+    "label": "desktop",
+    "kind": "apicode",
+    "text": "\n                  This direct API example proposes the positive root of X²−2, using its checked\nsource square:",
+    "viewport": 1440,
+    "scrollY": 277729,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "CODE",
+    "targetWidth": 740,
+    "targetScrollWidth": 740,
+    "descendantOverflow": 0,
+    "overflowElements": []
+  },
+  {
+    "label": "desktop",
+    "kind": "source",
+    "text": "\n                  The enumerated-source controls\nproduce both quadratic conjugates and a positive cubic root from X³−2, compare\ntheir complete bytes with frozen constructor literals, and independently\nvalidate all six scalar graphs. They also reject an ambiguous window, empty\nand zero windows, a wrong source equation and duplicate roots. The separate\nordinary quotation\nidentifies these roots from the frozen descriptors and packets, with the\nrational model, alias selection and coefficient-map laws supplied. Its three\nquotation requests charge 6,371,355, 6,442,217 and 8,127,841 proof nodes\nrespectively; the separate final driver checks and exports are outside those\ncounts. The combined build\ntook 624 seconds and peaked at 2.2 GiB on the shared host. These costs describe\nthree fixed proof constructions. General predecessor-history assembly and\nautomatic source discovery from a tactic goal remain separate work.",
+    "viewport": 1440,
+    "scrollY": 278247,
+    "paragraphWidth": 752,
+    "scrollWidth": 752,
+    "targetTag": "P",
+    "targetWidth": 752,
+    "targetScrollWidth": 752,
+    "descendantOverflow": 0,
+    "overflowElements": []
+  },
+  {
+    "label": "narrow",
+    "kind": "api",
+    "text": "\n                  The native producer SourceBuild.build\ncan discover a selected source from its defining polynomial and a window\npolynomial whose sign is positive at exactly one of its real roots. For an\nisolating square, use SourceIdentity.margin as that window. The producer\nenumerates roots with the existing family algorithm, visits every candidate,\nand proposes the equation and window packets for the unique positive match.\nTwo matches produce ambiguous; no match produces unselected. A failed\nequation or enclosure calculation remains an error.",
+    "viewport": 390,
+    "scrollY": 445080,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343,
+    "descendantOverflow": 0,
+    "overflowElements": []
+  },
+  {
+    "label": "narrow",
+    "kind": "apicode",
+    "text": "\n                  This direct API example proposes the positive root of X²−2, using its checked\nsource square:",
+    "viewport": 390,
+    "scrollY": 445496,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "CODE",
+    "targetWidth": 331,
+    "targetScrollWidth": 493,
+    "descendantOverflow": 162,
+    "overflowElements": [
+      {
+        "tag": "CODE",
+        "classes": "hl lean block",
+        "width": 331,
+        "scroll": 493,
+        "text": "open Hex Hex.RealClosure\nopen Hex.RCF.RealCoefficients\n\ndef proposeSquareRoot\n    (registry : BaseCo"
+      }
+    ]
+  },
+  {
+    "label": "narrow",
+    "kind": "source",
+    "text": "\n                  The enumerated-source controls\nproduce both quadratic conjugates and a positive cubic root from X³−2, compare\ntheir complete bytes with frozen constructor literals, and independently\nvalidate all six scalar graphs. They also reject an ambiguous window, empty\nand zero windows, a wrong source equation and duplicate roots. The separate\nordinary quotation\nidentifies these roots from the frozen descriptors and packets, with the\nrational model, alias selection and coefficient-map laws supplied. Its three\nquotation requests charge 6,371,355, 6,442,217 and 8,127,841 proof nodes\nrespectively; the separate final driver checks and exports are outside those\ncounts. The combined build\ntook 624 seconds and peaked at 2.2 GiB on the shared host. These costs describe\nthree fixed proof constructions. General predecessor-history assembly and\nautomatic source discovery from a tactic goal remain separate work.",
+    "viewport": 390,
+    "scrollY": 446403,
+    "paragraphWidth": 343,
+    "scrollWidth": 343,
+    "targetTag": "P",
+    "targetWidth": 343,
+    "targetScrollWidth": 343,
+    "descendantOverflow": 0,
+    "overflowElements": []
+  }
+]

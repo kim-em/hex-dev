@@ -1,0 +1,644 @@
+[
+  {
+    "label": "desktop",
+    "width": 1440,
+    "targets": [
+      {
+        "tag": "P",
+        "text": "\n                  RootQuote.quote accepts a Lean\nexpression for an Except ε α replay reader, including structured errors. It returns the reconstructed\ndata and",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  A scalar decoder may propose an equality for the exact demanded decode. The\nhelper checks its type, dependencies and kernel proof before usin",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  For example, this helper continues a request's existing budget and returns the\nupdated usage together with the checked equation:",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean Hex.RealFormula in\nopen Hex.Reflect in\nopen Hex.RCF.RealCoefficients in\nmeta def quoteSuppliedRoot\n    (reader : Expr)\n    (scalar : RootQuote.Decoder",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Quotation follows the representative of a closed quotient when selecting\nreducibility boundaries. This lets a formula polynomial stored in a ",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF in\nexample :\n    QuotientQuote.reader = some 7 :=\n  QuotientQuotePublic.accepted\n",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Its exact 92-node budget succeeds, one node less exhausts, and a wrong term\ncount rejects. The controls check caller-state restoration; a fre",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Tree replay uses its public leaf and split equations before opening the local\nnode checks. Keeping that boundary explicit avoids kernel conve",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF in\nexample :\n    TreeQuote.splitTrue.toOption =\n      some 31 :=\n  TreeQuotePublic.split_true\n\nopen Hex.RCF in\nexample :\n    TreeQuote.splitFalse.t",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The second reader selects its diagnostic branch; it does not accept the\nchanged certificate. Readers returning an error abort quotation and r",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  For a rational predecessor, RationalQuote.decoder supplies these proposals\nwithout a fixed list of permitted numerators. It recognizes canoni",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean Hex.RealFormula in\nopen Hex.Reflect in\nopen Hex.RCF.RealCoefficients in\nmeta def quoteRationalRoot\n    (reader registry : Expr)\n    (config : Reify.Co",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The registry argument is a Lean expression of type\nHex.RealClosure.BaseContext.Registry. This helper supplies scalar equations;\nit does not r",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The cubic regression reads a\nsupplied replay for X³−3 on the open interval (−8,8). A fresh public consumer\nproves that the accepted descripto",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  A reader that rejects its input or replay returns structured invalid-provider\nevidence. Non-readers and unsupported shapes raise terminal exc",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Canonical Element.codec decodes remain protected throughout quotation,\nincluding predecessor decodes with an explicit Element.codec head. Exp",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  All quotation regressions use maxHeartbeats := 12000000. The original root and rational\ncases use maxRecDepth := 8192; scalar, sign-packet, s",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  This API does not register a tactic handler or establish complete root coverage.\nThe acceptance equation alone does not authenticate original",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  For a coefficient in a selected algebraic extension,\nScalarQuote.quote uses the owner's Element.signCodec with supplied checked\nsign facts, t",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Pass the original, fully applied Element.codec expression, retaining its\nimplicit arguments. Reinferring definitionally equal context aliases",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean Hex.RealFormula in\nopen Hex.Reflect in\nopen Hex.RCF.RealCoefficients in\nmeta def quoteSuppliedScalar\n    (codec facts literal : Expr)\n    (predecessor",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The monorepo regression imports HexRCF.ScalarQuoteCases. It decodes the\nnonrational coefficient −2√2 in the existing selected positive √2 con",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.SelectedRootTests in\nopen Hex.RCF.ScalarQuoteTests in\nexample :\n    Data.original.value restored =\n      -2 * Real.sqrt 2 :=\n  restored_value\n",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The fresh audit rechecks 13 reachable quotation-case theorem bodies, including this value\nidentity, with only the standard three axioms and n",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Regressions cover continued/exact/exhausted proof budgets, rollback after the\nstrict stage succeeds, missing or mismatched facts, zero withou",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  For a polynomial over the same selected extension,\nScalarQuote.quotePolyWith\nquotes the coefficient array through its finite sign reader and ",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean Hex.RealFormula in\nopen Hex.Reflect in\nopen Hex.RCF.RealCoefficients in\nmeta def quoteSuppliedPolynomial\n    (reader facts : Expr)\n    (predecessor : ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The regression polynomial contains two copies of −2√2. The checked original\nreader restores both positions. Its first coefficient has this or",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.SelectedRootTests in\nopen Hex.RCF.SharedQuoteTests in\nexample :\n    Data.original.value\n      (restored.coeff 0) =\n      -2 * Real.sqrt 2 :=\n  valu",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The fresh importing audit pins seven reachable theorem bodies and three data\ndefinitions, their actual owner refinement and supplied sign evi",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  RootQuote.runWith supplies the transaction for a sequence of quoteWith\nactions. RootQuote.run supplies it for a reader with DecoderM callback",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  This scalar API does not reconstruct provider or predecessor histories,\nproduce missing signs, or install a general source-goal solver. The s",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  ScalarQuote.decoderWith composes checked scalar decoding through several\nselected-field predecessors. Its lookup receives each exact canonica",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean Hex.RealFormula in\nopen Hex.RCF.RealCoefficients in\nmeta def quoteSelectedReader\n    (reader registry : Expr)\n    (factsFor :\n      Expr → Reify.Reify",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The two-level regression checks one visit to its selected context followed by\none visit to its selected predecessor. Its lookup adds 19 sourc",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  An ordinary module consumer also runs the callback factory and exports the\nchecked scalar reader equation. Its sign follows from the owner's ",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.RecursiveScalarPublic in\nexample : restored.sign = 1 := sign\n",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  A fresh importing audit checks the two-level fixture and this public consumer,\nincluding accepted annotated decodes and a charged decline fol",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  ScalarPacket.quoteWith checks a supplied optional sign-packet reader. Its\nprepared context has a checked equality to the original context; a ",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean in\nopen Hex.RCF.RealCoefficients in\nmeta def quoteSuppliedSignPacket\n    (reader prepared same : Expr)\n    (predecessor :\n      RootQuote.DecoderM) :=",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The regression quotes the parent descriptor and one packet for the polynomial\n−2X at the selected positive square root of 2. The resulting fa",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RealClosure in\nopen Hex.RCF.SelectedRootTests in\nopen Hex.RCF.SignPacketQuote in\nexample :\n    Option.map Data.original.value\n      (Except.toOption\n  ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Quoting the parent and packet in one request consumes 121,490 proof nodes.\nWith the frozen parent and its equality already available, the pac",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The caller still supplies and authenticates the parent history and packet.\nPredecessor arithmetic retains its supplied implementation; this h",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  A separate public-module example quotes a packet for X at the selected real\nroot of X³−3. Its context slots retain closed applications of the",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.PublicSignPacket in\nexample :\n    coefficientReal =\n      Hex.RCF.RootQuoteTests.realRoot :=\n  coefficient_value\n\nopen Hex.RCF.PublicSignPacket in\n",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  For a dependent match, quotation moves trailing branch-equality proofs along\nthe checked equation for the match's subject. This uses ordinary",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF in\nexample :\n    DependentQuote.continuedFunction =\n      some 29 :=\n  ProofFunctionPublic.continued\n",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  During replay-law\nconversion, an explicit checked function boundary is first kept abstract, then instantiated\nwith the actual function and it",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  RootHeader.quoteWith\naccepts the complete original RootReplay.readDescriptor application. It quotes\nthat reader, obtains the independently pa",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The public regression constructs a new root and context from that result,\nquotes the sign packet for X with fully numerical graph fields, and",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.RootHeaderPacket in\nexample : coefficientReal = realRoot :=\n  coefficient_value\n\nopen Hex.RCF.RootHeaderPacket in\nexample : 0 < coefficientReal :=\n",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The fresh importing audit includes the generated binding, packet reader,\ncoefficient decoding and real-value proofs. It rejects dependencies ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The default quotation rules recognize Signature.codec.decode applied to the\ncanonical encoding of its actual signature argument, using the ex",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.FrozenSignature in\nexample : readFirst.toOption =\n    some first :=\n  readFirst_checked\n\nopen Hex.RCF.FrozenSignature in\nexample : readSecond.toOpt",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The cubic packet retains frozen numerical node and nested-moment signatures\nfor its rational predecessor. A signature's serialization identit",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  RootContext.packWith\nthen assembles an actual native root context from a closed retained parent and\nits checked descriptor. It keeps the exis",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The same decoded coefficient can be interpreted through the owner's ordinary\nreal model of the packed context, retaining its selected value a",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF in\nopen RootContextCases in\nopen RootHeaderPacket in\nexample : model.value coefficient =\n    realRoot :=\n  value_checked\n\nopen Hex.RCF in\nopen Root",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The packing budget covers context and signature proof construction. Model\nconstruction is checked separately; its cost is not included in tha",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  RootPrepare.prepareWith\nprepares the native context of a reconstructed descriptor for subsequent\nquotation. It checks closed inputs and the e",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean Hex.RealFormula in\nopen Hex.RCF.RealCoefficients in\nmeta def prepareRootContext\n    (reader clean : Expr)\n    (scalar : RootQuote.DecoderM) :\n    Reif",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Run this action and subsequent quotation in one RootQuote.runWith request.\nCombine its decoder with the exact predecessor's scalar and signat",
+        "overflow": 0
+      }
+    ]
+  },
+  {
+    "label": "narrow",
+    "width": 390,
+    "targets": [
+      {
+        "tag": "P",
+        "text": "\n                  RootQuote.quote accepts a Lean\nexpression for an Except ε α replay reader, including structured errors. It returns the reconstructed\ndata and",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  A scalar decoder may propose an equality for the exact demanded decode. The\nhelper checks its type, dependencies and kernel proof before usin",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  For example, this helper continues a request's existing budget and returns the\nupdated usage together with the checked equation:",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean Hex.RealFormula in\nopen Hex.Reflect in\nopen Hex.RCF.RealCoefficients in\nmeta def quoteSuppliedRoot\n    (reader : Expr)\n    (scalar : RootQuote.Decoder",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Quotation follows the representative of a closed quotient when selecting\nreducibility boundaries. This lets a formula polynomial stored in a ",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF in\nexample :\n    QuotientQuote.reader = some 7 :=\n  QuotientQuotePublic.accepted\n",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Its exact 92-node budget succeeds, one node less exhausts, and a wrong term\ncount rejects. The controls check caller-state restoration; a fre",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Tree replay uses its public leaf and split equations before opening the local\nnode checks. Keeping that boundary explicit avoids kernel conve",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF in\nexample :\n    TreeQuote.splitTrue.toOption =\n      some 31 :=\n  TreeQuotePublic.split_true\n\nopen Hex.RCF in\nexample :\n    TreeQuote.splitFalse.t",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The second reader selects its diagnostic branch; it does not accept the\nchanged certificate. Readers returning an error abort quotation and r",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  For a rational predecessor, RationalQuote.decoder supplies these proposals\nwithout a fixed list of permitted numerators. It recognizes canoni",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean Hex.RealFormula in\nopen Hex.Reflect in\nopen Hex.RCF.RealCoefficients in\nmeta def quoteRationalRoot\n    (reader registry : Expr)\n    (config : Reify.Co",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The registry argument is a Lean expression of type\nHex.RealClosure.BaseContext.Registry. This helper supplies scalar equations;\nit does not r",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The cubic regression reads a\nsupplied replay for X³−3 on the open interval (−8,8). A fresh public consumer\nproves that the accepted descripto",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  A reader that rejects its input or replay returns structured invalid-provider\nevidence. Non-readers and unsupported shapes raise terminal exc",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Canonical Element.codec decodes remain protected throughout quotation,\nincluding predecessor decodes with an explicit Element.codec head. Exp",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  All quotation regressions use maxHeartbeats := 12000000. The original root and rational\ncases use maxRecDepth := 8192; scalar, sign-packet, s",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  This API does not register a tactic handler or establish complete root coverage.\nThe acceptance equation alone does not authenticate original",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  For a coefficient in a selected algebraic extension,\nScalarQuote.quote uses the owner's Element.signCodec with supplied checked\nsign facts, t",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Pass the original, fully applied Element.codec expression, retaining its\nimplicit arguments. Reinferring definitionally equal context aliases",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean Hex.RealFormula in\nopen Hex.Reflect in\nopen Hex.RCF.RealCoefficients in\nmeta def quoteSuppliedScalar\n    (codec facts literal : Expr)\n    (predecessor",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The monorepo regression imports HexRCF.ScalarQuoteCases. It decodes the\nnonrational coefficient −2√2 in the existing selected positive √2 con",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.SelectedRootTests in\nopen Hex.RCF.ScalarQuoteTests in\nexample :\n    Data.original.value restored =\n      -2 * Real.sqrt 2 :=\n  restored_value\n",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The fresh audit rechecks 13 reachable quotation-case theorem bodies, including this value\nidentity, with only the standard three axioms and n",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Regressions cover continued/exact/exhausted proof budgets, rollback after the\nstrict stage succeeds, missing or mismatched facts, zero withou",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  For a polynomial over the same selected extension,\nScalarQuote.quotePolyWith\nquotes the coefficient array through its finite sign reader and ",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean Hex.RealFormula in\nopen Hex.Reflect in\nopen Hex.RCF.RealCoefficients in\nmeta def quoteSuppliedPolynomial\n    (reader facts : Expr)\n    (predecessor : ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The regression polynomial contains two copies of −2√2. The checked original\nreader restores both positions. Its first coefficient has this or",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.SelectedRootTests in\nopen Hex.RCF.SharedQuoteTests in\nexample :\n    Data.original.value\n      (restored.coeff 0) =\n      -2 * Real.sqrt 2 :=\n  valu",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The fresh importing audit pins seven reachable theorem bodies and three data\ndefinitions, their actual owner refinement and supplied sign evi",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  RootQuote.runWith supplies the transaction for a sequence of quoteWith\nactions. RootQuote.run supplies it for a reader with DecoderM callback",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  This scalar API does not reconstruct provider or predecessor histories,\nproduce missing signs, or install a general source-goal solver. The s",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  ScalarQuote.decoderWith composes checked scalar decoding through several\nselected-field predecessors. Its lookup receives each exact canonica",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean Hex.RealFormula in\nopen Hex.RCF.RealCoefficients in\nmeta def quoteSelectedReader\n    (reader registry : Expr)\n    (factsFor :\n      Expr → Reify.Reify",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The two-level regression checks one visit to its selected context followed by\none visit to its selected predecessor. Its lookup adds 19 sourc",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  An ordinary module consumer also runs the callback factory and exports the\nchecked scalar reader equation. Its sign follows from the owner's ",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.RecursiveScalarPublic in\nexample : restored.sign = 1 := sign\n",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  A fresh importing audit checks the two-level fixture and this public consumer,\nincluding accepted annotated decodes and a charged decline fol",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  ScalarPacket.quoteWith checks a supplied optional sign-packet reader. Its\nprepared context has a checked equality to the original context; a ",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean in\nopen Hex.RCF.RealCoefficients in\nmeta def quoteSuppliedSignPacket\n    (reader prepared same : Expr)\n    (predecessor :\n      RootQuote.DecoderM) :=",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The regression quotes the parent descriptor and one packet for the polynomial\n−2X at the selected positive square root of 2. The resulting fa",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RealClosure in\nopen Hex.RCF.SelectedRootTests in\nopen Hex.RCF.SignPacketQuote in\nexample :\n    Option.map Data.original.value\n      (Except.toOption\n  ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Quoting the parent and packet in one request consumes 121,490 proof nodes.\nWith the frozen parent and its equality already available, the pac",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The caller still supplies and authenticates the parent history and packet.\nPredecessor arithmetic retains its supplied implementation; this h",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  A separate public-module example quotes a packet for X at the selected real\nroot of X³−3. Its context slots retain closed applications of the",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.PublicSignPacket in\nexample :\n    coefficientReal =\n      Hex.RCF.RootQuoteTests.realRoot :=\n  coefficient_value\n\nopen Hex.RCF.PublicSignPacket in\n",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  For a dependent match, quotation moves trailing branch-equality proofs along\nthe checked equation for the match's subject. This uses ordinary",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF in\nexample :\n    DependentQuote.continuedFunction =\n      some 29 :=\n  ProofFunctionPublic.continued\n",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  During replay-law\nconversion, an explicit checked function boundary is first kept abstract, then instantiated\nwith the actual function and it",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  RootHeader.quoteWith\naccepts the complete original RootReplay.readDescriptor application. It quotes\nthat reader, obtains the independently pa",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The public regression constructs a new root and context from that result,\nquotes the sign packet for X with fully numerical graph fields, and",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.RootHeaderPacket in\nexample : coefficientReal = realRoot :=\n  coefficient_value\n\nopen Hex.RCF.RootHeaderPacket in\nexample : 0 < coefficientReal :=\n",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The fresh importing audit includes the generated binding, packet reader,\ncoefficient decoding and real-value proofs. It rejects dependencies ",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The default quotation rules recognize Signature.codec.decode applied to the\ncanonical encoding of its actual signature argument, using the ex",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF.FrozenSignature in\nexample : readFirst.toOption =\n    some first :=\n  readFirst_checked\n\nopen Hex.RCF.FrozenSignature in\nexample : readSecond.toOpt",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The cubic packet retains frozen numerical node and nested-moment signatures\nfor its rational predecessor. A signature's serialization identit",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  RootContext.packWith\nthen assembles an actual native root context from a closed retained parent and\nits checked descriptor. It keeps the exis",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The same decoded coefficient can be interpreted through the owner's ordinary\nreal model of the packed context, retaining its selected value a",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Hex.RCF in\nopen RootContextCases in\nopen RootHeaderPacket in\nexample : model.value coefficient =\n    realRoot :=\n  value_checked\n\nopen Hex.RCF in\nopen Root",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  The packing budget covers context and signature proof construction. Model\nconstruction is checked separately; its cost is not included in tha",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  RootPrepare.prepareWith\nprepares the native context of a reconstructed descriptor for subsequent\nquotation. It checks closed inputs and the e",
+        "overflow": 0
+      },
+      {
+        "tag": "CODE",
+        "text": "open Lean Hex.RealFormula in\nopen Hex.RCF.RealCoefficients in\nmeta def prepareRootContext\n    (reader clean : Expr)\n    (scalar : RootQuote.DecoderM) :\n    Reif",
+        "overflow": 0
+      },
+      {
+        "tag": "P",
+        "text": "\n                  Run this action and subsequent quotation in one RootQuote.runWith request.\nCombine its decoder with the exact predecessor's scalar and signat",
+        "overflow": 0
+      }
+    ]
+  }
+]

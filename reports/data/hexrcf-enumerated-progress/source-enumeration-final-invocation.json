@@ -1,0 +1,14 @@
+{
+  "argv": [
+    "/home/kim/.codex/tasks/hex-10358/bin/run-bounded",
+    "lake",
+    "build",
+    "HexRCFRealCoefficients",
+    "+HexRCF.SourceBuild",
+    "+HexRCF.BoundedSource",
+    "+HexRCF.BoundedSource.Proofs",
+    "+HexRCF.EnumeratedSource.Proofs"
+  ],
+  "cwd": "/home/kim/worktrees/hex-dev/hex-dev-issue-10358",
+  "scope": "New source progress/acceptance declarations and fresh audit plus original native controls, optional umbrella and unchanged frozen proof compatibility; not full conformance/manual or new timing study"
+}

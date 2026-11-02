@@ -70,4 +70,37 @@ theorem select (sourceP : ZPoly) (square : DyadicSquare)
   have realPart := congrArg Complex.re same
   simpa only [Complex.ofReal_re, selected] using realPart
 
+/-- Bind an original source to one selected root using two checked facts in
+that same root context. The equation alone cannot select a real conjugate;
+the strictly positive square margin fixes the original embedding. -/
+theorem identify {registry : BaseContext.Registry} {parent : Tower.Context registry}
+    (model : Tower.Model parent ℝ)
+    (root : SignDet.Descriptor parent.Value Tower.Signature parent.sign parent.signature)
+    (sourceP : ZPoly) (square : DyadicSquare)
+    (hw : atomWitness sourceP square) (hp : (mahlerPrec sourceP : Int) ≤ square.prec)
+    (anchor : ℝ) (selected : (Field.literalRep sourceP square hw hp).root.re = anchor)
+    (equation enclosure : Algebraic.SignFact (Algebraic.Context.adjoin root parent.isClean))
+    (equation_value : HexPolyTheory.Interpret.interpret model.value model.zero_iff
+      equation.polynomial = LiteralSign.realPoly (ZPoly.toRatPoly sourceP))
+    (enclosure_value : HexPolyTheory.Interpret.interpret model.value model.zero_iff
+      enclosure.polynomial = LiteralSign.realPoly (margin square))
+    (zero : equation.sign = 0) (positive : enclosure.sign = 1) :
+    root.root model.value model.zero_iff model.one model.add model.sub model.mul
+      model.nat model.sign = anchor := by
+  let x := root.root model.value model.zero_iff model.one model.add model.sub model.mul
+    model.nat model.sign
+  have equation_sign := (observe model root equation.polynomial
+    (ZPoly.toRatPoly sourceP) equation_value equation rfl).trans zero
+  have enclosure_sign := (observe model root enclosure.polynomial
+    (margin square) enclosure_value enclosure rfl).trans positive
+  have vanishing : (LiteralSign.realPoly (ZPoly.toRatPoly sourceP)).IsRoot x := by
+    apply sign_eq_zero_iff.mp
+    cases tagged : SignType.sign ((LiteralSign.realPoly (ZPoly.toRatPoly sourceP)).eval x) <;>
+      simp_all [x]
+  apply select sourceP square hw hp anchor x selected vanishing
+  rw [← margin_eval]
+  apply sign_eq_one_iff.mp
+  cases tagged : SignType.sign ((LiteralSign.realPoly (margin square)).eval x) <;>
+    simp_all [x]
+
 end Hex.RCF.RealCoefficients.SourceIdentity

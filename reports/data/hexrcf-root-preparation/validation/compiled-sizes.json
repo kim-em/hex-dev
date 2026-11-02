@@ -1,0 +1,65 @@
+{
+  "scope": "Built artifact sizes only; no unique DAG, expanded-work, scaling or speedup claim. Final source-bound record still required.",
+  "artifacts": [
+    {
+      "path": ".lake/build/lib/lean/HexRCF/RealCoefficients/RootQuote.olean",
+      "bytes": 1210864,
+      "sha256": "db4506f5fdece6a5f4260c24d89a434b49fedf50ca09255a40861308166dbed1"
+    },
+    {
+      "path": ".lake/build/lib/lean/HexRCF/RealCoefficients/RootQuote.olean.private",
+      "bytes": 2686536,
+      "sha256": "6a91448f533816e282b133426b65c0309a968de09a39ba1954916b42936e4161"
+    },
+    {
+      "path": ".lake/build/lib/lean/HexRCF/RealCoefficients/RootQuote.ir",
+      "bytes": 1175592,
+      "sha256": "eb49c314b21d9c63f4713c60084de1d7e41f072d55d264a44beed6268d51cc7f"
+    },
+    {
+      "path": ".lake/build/lib/lean/HexRCF/RealCoefficients/RootPrepare.olean",
+      "bytes": 256624,
+      "sha256": "8bf43072fa3facad42ff80f6dceae9c205df1a9aedd9266975fd67ed51288ab9"
+    },
+    {
+      "path": ".lake/build/lib/lean/HexRCF/RealCoefficients/RootPrepare.olean.private",
+      "bytes": 397456,
+      "sha256": "fb2926ea7e9a2248f88445c0db600b096f273e770583f6357791fc19f4df3c99"
+    },
+    {
+      "path": ".lake/build/lib/lean/HexRCF/RealCoefficients/RootPrepare.ir",
+      "bytes": 211320,
+      "sha256": "b7fae9dcb90ffbd575e87595bb6cd3f73e089d9b02bbf5c7f34f4756418a9519"
+    },
+    {
+      "path": ".lake/build/lib/lean/HexRCF/RootPreparePacket.olean",
+      "bytes": 388832,
+      "sha256": "958ba6edf6ffcaf8805ddc781b240d6a0b34e5c75b12c11b4d52d249b03fb31c"
+    },
+    {
+      "path": ".lake/build/lib/lean/HexRCF/RootPreparePacket.olean.private",
+      "bytes": 3450432,
+      "sha256": "39987ec16032451a7b1a22e2fc3c9b5e381ac00ea1758f7fca899ce307100243"
+    },
+    {
+      "path": ".lake/build/lib/lean/HexRCF/RootPreparePacket.ir",
+      "bytes": 845168,
+      "sha256": "3fcf11b6968e977be5a468d94e6e71a924a50067705a637b1a048ff7ca5942b3"
+    },
+    {
+      "path": ".lake/build/lib/lean/HexRCF/RootPreparePublic.olean",
+      "bytes": 10440,
+      "sha256": "b334b5c1be037b8f5f650e6f34f60647485aff5c4d408d7932307ebc3e9521d8"
+    },
+    {
+      "path": ".lake/build/lib/lean/HexRCF/RootPreparePublic.olean.private",
+      "bytes": 4840,
+      "sha256": "a9ede16def77dd958889cdda3d4392df3008db0c325930859952b692134d1be8"
+    },
+    {
+      "path": ".lake/build/lib/lean/HexRCF/RootPreparePublic.ir",
+      "bytes": 1432,
+      "sha256": "96ecd92467c261ebb21e27bc899baa6a8ea268fda3d25708336d52e76c217767"
+    }
+  ]
+}

@@ -33,7 +33,8 @@ run_meta do
   for name in [``Hex.RCF.DependentQuote.reader,``Hex.RCF.DependentQuote.nested,
       ``Hex.RCF.DependentQuote.continued,``Hex.RCF.DependentQuote.queried,
       ``Hex.RCF.DependentQuote.boolReader,``Hex.RCF.DependentQuote.multiple,
-      ``Hex.RCF.DependentQuote.independent] do
+      ``Hex.RCF.DependentQuote.independent,``Hex.RCF.DependentQuote.proofFunction,
+      ``Hex.RCF.DependentQuote.continuedFunction] do
     let sentinel ← mkFreshExprMVar (mkConst ``Nat)
     let levelSentinel ← mkFreshLevelMVar
     let before ← getMCtx
@@ -157,8 +158,9 @@ run_meta do
         if expression.isConstOf ``Hex.RCF.DependentQuote.gate then mutate
         return none)
   unchanged
-  refused "non-proof argument" do
-    RootQuote.runWith (RootQuote.quoteOptionWith (mkConst ``Hex.RCF.DependentQuote.dependentData) decoder)
-  unchanged
+  for name in [``Hex.RCF.DependentQuote.dependentData,``Hex.RCF.DependentQuote.dependentFunction] do
+    refused "non-proof argument" do
+      RootQuote.runWith (RootQuote.quoteOptionWith (mkConst name) decoder)
+    unchanged
   logInfo "dependent major: charged decline, wrong proof, terminal failure, decline-only and non-proof trailing controls checked"
 end Hex.RCF.DependentQuote

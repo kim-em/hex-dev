@@ -1,0 +1,65 @@
+{
+  "captures": [
+    {
+      "path": "captures/source-identity-final-desktop-api.png",
+      "sha256": "67a5d3da3538750787d651c78df10310982ace4eacdeebe1a7cfe76c73b8353d",
+      "viewed": true
+    },
+    {
+      "path": "captures/source-identity-final-desktop-apicode.png",
+      "sha256": "9c3c0a0e73cd5ef069311570fdde3cb98cbcf9ee8e2da472856845bca1ba9d4f",
+      "viewed": true
+    },
+    {
+      "path": "captures/source-identity-final-desktop-controls.png",
+      "sha256": "fd266150763bb493d43f94832078528c31a2f2d3ee42ca58782601d61bd600e1",
+      "viewed": true
+    },
+    {
+      "path": "captures/source-identity-final-desktop-limits.png",
+      "sha256": "80a62b895459a0cb058c4393cce0a681104a08cd2ed0ac477a0e2531e3ce53bd",
+      "viewed": true
+    },
+    {
+      "path": "captures/source-identity-final-desktop-source.png",
+      "sha256": "1f057a94992b478650fc0cad404174bdfd12966568bdfa83072b5f3ea3a7644a",
+      "viewed": true
+    },
+    {
+      "path": "captures/source-identity-final-desktop-sourcecode.png",
+      "sha256": "a038519ad765bd5f7b49b292c34e339002ac9d44e83fb11dd268488ab48595e6",
+      "viewed": true
+    },
+    {
+      "path": "captures/source-identity-final-narrow-api.png",
+      "sha256": "910cdf5010e8f280a25ebcaeaaf8a72d221e0982657464b51ff24b789de26a4c",
+      "viewed": true
+    },
+    {
+      "path": "captures/source-identity-final-narrow-apicode.png",
+      "sha256": "2568a1e72107df10419035e47b74376e78895f45b39c13a4053a89269736eb76",
+      "viewed": true
+    },
+    {
+      "path": "captures/source-identity-final-narrow-controls.png",
+      "sha256": "3616f0390c227d0cbb379f7a95ae0608927b645a29c29ba361a4b524b03094f5",
+      "viewed": true
+    },
+    {
+      "path": "captures/source-identity-final-narrow-limits.png",
+      "sha256": "41d13aa41a3acfe555445d5ac00f0c53a9a329b53df476a7065ede80f3e5d360",
+      "viewed": true
+    },
+    {
+      "path": "captures/source-identity-final-narrow-source.png",
+      "sha256": "f40303dec607306f52293b015fcd2b1ec843cc82c7b211108bf4b20f10592be2",
+      "viewed": true
+    },
+    {
+      "path": "captures/source-identity-final-narrow-sourcecode.png",
+      "sha256": "50e2fd082b930d377d21b3e32023c50fbda2e9a0febc4e921441470ae82f46ad",
+      "viewed": true
+    }
+  ],
+  "finding": "All twelve final desktop/narrow captures actually inspected. Changed prose and code are readable and locally contained. Existing unrelated page overflow remains outside this change."
+}

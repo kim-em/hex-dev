@@ -1,0 +1,6 @@
+{
+  "path": "lakefile.lean",
+  "baseline_blob": "fea47caa0a9c4cdc271c9e126cc12cf4020b2994",
+  "current_blob": "f1117c9ca553db82ee65e1d16c6f314401655dc3",
+  "reason": "Relative to the previously accepted issue-10358 lakefile blob 2a88622a986e242054e4eb284630f1961aee9cc8, the sole change adds HexRCF.HandlerTests.Admission to the existing HexReleaseTests literal glob list. This module contains rejection/rollback tests for the RCF meta proof-admission checker, not executable factorization code. No package option, dependency, native archive, factor service declaration, linker input or factorization-library build setting changes. HexReleaseTests already lists factorization tests, so the conservative factor-build rule fingerprints its entire declaration even though the added RCF test cannot be imported by HexBench.FactorService. The baseline-to-previously-accepted leg retains the existing exact exemptions and checked build-only transitions; this exact endpoint additionally covers only the one RCF test registration. No performance data, measurement input or runtime implementation is changed."
+}

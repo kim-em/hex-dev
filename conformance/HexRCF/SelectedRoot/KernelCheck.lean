@@ -21,7 +21,12 @@ def producers : Array Name := #[``Read.rootRead, ``Hex.RealClosure.Roots.roots?,
     ``NumberField.Presentation.roots, ``NumberField.Presentation.roots?, ``Algebraic.Context.signPoly,
     ``Algebraic.Context.buildSigns, ``Descriptor.buildSigns, ``Descriptor.buildSignsPrepared,
     ``Hex.SignDet.buildPrepared, ``Hex.SignDet.buildTree, ``Hex.SignDet.buildTreeFrom,
-    ``Algebraic.Element.ofPoly, ``Descriptor.prepareQueries]
+    ``Algebraic.Element.ofPoly, ``Descriptor.prepareQueries,
+    -- Literal names keep native adapter production out of proof-only imports.
+    `Hex.RCF.RealCoefficients.SourceBuild.build,
+    `Hex.RCF.RealCoefficients.SourceBuild.buildOn,
+    `Hex.RCF.RealCoefficients.SourceBuild.select,
+    `Hex.RCF.RealCoefficients.ScalarPacket.buildParts]
 
 /-- Return the exact prohibited reduction observed by a checked declaration. -/
 def violation? (diagnostics : Kernel.Diagnostics) (extra : Array Name := #[]) : Option (Name × Nat) :=
