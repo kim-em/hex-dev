@@ -44,6 +44,10 @@ SEALED_IMPORT_ALL_ALLOWLIST: dict[str, frozenset[Path]] = {
         Path("HexGroebner/MatrixStateProof.lean"),
         Path("HexGroebner/MatrixStateFuel.lean"),
         Path("HexGroebner/MatrixStateSchedule.lean"),
+        Path("HexGroebner/EliminationOutcome.lean"),
+        Path("HexGroebner/EliminationWorkProof.lean"),
+        Path("HexGroebner/EliminationValidationProof.lean"),
+        Path("HexGroebner/EliminationPhaseProof.lean"),
         Path("conformance/HexGroebner/MatrixStateReplay.lean")}),
     "HexIntFactor.EcmStage2": frozenset({
         Path("bench/HexPrimality/EcmDiagnostics/EcmPreparation.lean")}),
