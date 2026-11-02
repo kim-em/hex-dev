@@ -268,7 +268,7 @@ lean_lib HexGroebner where
     `HexGroebner.MatrixStateSchedule, `HexGroebner.EliminationOutcome,
     `HexGroebner.EliminationWorkProof, `HexGroebner.EliminationScanProof,
     `HexGroebner.EliminationValidationProof, `HexGroebner.EliminationPhaseProof,
-    `HexGroebner.EliminationGatherProof]
+    `HexGroebner.EliminationGatherProof, `HexGroebner.EliminationScanStep]
 
 lean_lib HexGroebnerNative where
   roots := #[`HexGroebnerNative]
