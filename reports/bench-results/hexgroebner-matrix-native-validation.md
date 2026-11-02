@@ -60,3 +60,15 @@ capsules retain their original sources and counts.
 [Additional validation capsule](raw/matrix-native-review-validation.tar.gz),
 SHA256 `bb48607a91ef0e24b5e4bf1632beae0c8accfed3deab2b2ce394b8e4f77e2fb0`;
 46 verified payload digests. These are validation records, not timings.
+
+The final test/proof refinement additionally asserts explicit workspace outcomes:
+exact byte/work limits reach input processing, and one below yields the
+corresponding exhaustion. Public validation lemmas preserve the read-only
+`State.contents` of all unchanged fields, with cursor, phase, result and
+statistics stated separately. The native C source is unchanged. Four Clang
+sanitizer variants pass these stronger assertions in addition to the preceding
+eight-variant C checks.
+
+[Refined validation records](raw/matrix-native-frame-validation.tar.gz), SHA256
+`367b417ee1e54065f1b65469d1715957c6c9105b2df184366112750fcfb69468`;
+12 verified payloads. No timing data is associated with this refinement.
