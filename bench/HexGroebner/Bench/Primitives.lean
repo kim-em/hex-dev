@@ -56,7 +56,7 @@ setup_benchmark matrixValidate n => n
     maxSecondsPerCall := 32.0
   }
 
--- The original validator visits the same n entries and returns the same counters.
+-- O(n): the original validator visits n entries once and consumes eight counters.
 setup_benchmark matrixValidateReference n => n
   with prep := prepareValidation
   where {
