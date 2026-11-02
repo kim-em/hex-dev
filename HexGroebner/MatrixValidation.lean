@@ -83,7 +83,7 @@ private theorem forIn_unit (indices : List Nat) (action : Nat → Matrix.Work Un
 
 /-- Validate reducers followed by targets with their original input indices. -/
 @[inline] def validateRows (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
-    (reducers targets : Array SparseRow) (native : Bool := true) : Matrix.Work Unit := do
+    (reducers targets : Array SparseRow) (native : Bool) : Matrix.Work Unit := do
   for i in [:reducers.size] do
     if native then validateWith field limits columns i reducers[i]!
     else validate field limits columns i reducers[i]!
@@ -104,7 +104,7 @@ private theorem forM_congr (indices : List Nat) (f g : Nat → Matrix.Work Unit)
 /-- Combined-cursor validation equals the reference's reducer/target loops,
 including every first error and charged prefix. -/
 theorem validateFrom_zero (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
-    (reducers targets : Array SparseRow) (native : Bool := true) :
+    (reducers targets : Array SparseRow) (native : Bool) :
     validateFrom field limits columns reducers targets 0 =
       validateRows field limits columns reducers targets native := by
   simp only [validateFrom, validateRows, validateWith_spec, ite_self, Std.Legacy.Range.forIn_eq_forIn_range',

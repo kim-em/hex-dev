@@ -378,7 +378,26 @@ static uint64_t primitive_zero_admitted=0,primitive_zero_declined=0;
 __typeof__(hex_test_matrix_validate) __wrap_lean_hex_matrix_validate;
 LEAN_EXPORT lean_obj_res __wrap_lean_hex_matrix_validate(uint64_t p,b_lean_obj_arg limits,
  b_lean_obj_arg columns,b_lean_obj_arg index,b_lean_obj_arg row,b_lean_obj_arg stats) {
+ lean_object *saved_limits[7],*saved_stats[8],*saved_row[2];
+ for(unsigned i=0;i<7;++i)saved_limits[i]=lean_ctor_get(limits,i);
+ for(unsigned i=0;i<8;++i)saved_stats[i]=lean_ctor_get(stats,i);
+ for(unsigned i=0;i<2;++i)saved_row[i]=lean_ctor_get(row,i);
+ size_t a=lean_sarray_size(saved_row[0]),b=lean_sarray_size(saved_row[1]);
+ uint8_t *snapshot=NULL;
+ if(a<=1048576 && b<=1048576) {
+  snapshot=malloc(a+b+1);assert(snapshot);
+  memcpy(snapshot,lean_sarray_cptr(saved_row[0]),a);
+  memcpy(snapshot+a,lean_sarray_cptr(saved_row[1]),b);
+ }
  ++primitive_validations;lean_object *result=hex_test_matrix_validate(p,limits,columns,index,row,stats);
+ for(unsigned i=0;i<7;++i)assert(saved_limits[i]==lean_ctor_get(limits,i));
+ for(unsigned i=0;i<8;++i)assert(saved_stats[i]==lean_ctor_get(stats,i));
+ for(unsigned i=0;i<2;++i)assert(saved_row[i]==lean_ctor_get(row,i));
+ if(snapshot) {
+  assert(a==lean_sarray_size(saved_row[0]) && b==lean_sarray_size(saved_row[1]));
+  assert(memcmp(snapshot,lean_sarray_cptr(saved_row[0]),a)==0);
+  assert(memcmp(snapshot+a,lean_sarray_cptr(saved_row[1]),b)==0);free(snapshot);
+ }
  if(lean_is_scalar(result))++primitive_validate_declined;else ++primitive_validate_admitted;
  return result;
 }
@@ -648,6 +667,9 @@ def main : IO Unit := do
     throw (IO.userError "portable matrix route failed")
   if (← matrixPrimitives) != beforePortable then
     throw (IO.userError "disabled native matrix route called a row/workspace primitive")
+  Hex.Groebner.NativeChecks.runPortableF4
+  if (← matrixPrimitives) != beforePortable then
+    throw (IO.userError "public F4 nativeRows=false called a matrix primitive")
   let beforeIntegrated ← primitiveAdmissions
   if !Hex.Groebner.MatrixPrimitiveConformance.integrated primitiveSeed then
     throw (IO.userError "traced native matrix integration failed")
@@ -701,6 +723,8 @@ def main : IO Unit := do
   let beforeF4Primitives ← primitiveAdmissions
   Hex.Groebner.NativeChecks.runF4
   let afterF4Primitives ← primitiveAdmissions
+  if afterF4Primitives.1.1 ≤ beforeF4Primitives.1.1 || afterF4Primitives.2.1 ≤ beforeF4Primitives.2.1 then
+    throw (IO.userError "F4 did not admit validation and zero-buffer primitives")
   IO.println s!"F4 primitive validation admitted/declined: {afterF4Primitives.1.1-beforeF4Primitives.1.1}/{afterF4Primitives.1.2-beforeF4Primitives.1.2}; zero admitted/declined: {afterF4Primitives.2.1-beforeF4Primitives.2.1}/{afterF4Primitives.2.2-beforeF4Primitives.2.2}"
   let wholeAfter ← wholeCounts
   if wholeAfter.1 ≤ wholeBefore.1 || wholeAfter.2 ≤ wholeBefore.2 then throw (IO.userError "F4 did not exercise accepted/deferred whole matrices")

@@ -100,6 +100,19 @@ private def budgetF4 (seed : Nat) : Bool := Id.run do
     | _,_ => return false
   return true
 
+/-- Exercise the public F4 option with every native row operation disabled. -/
+def runPortableF4 : IO Unit := do
+  let seed ← IO.monoNanosNow
+  let field : PrimeField := ⟨7, Hex.Nat.isPrimeTrial_isPrime (by decide), by decide⟩
+  let context : Context := ⟨field,3,.grevlex⟩
+  let coefficient := (seed%6+1).toUInt64
+  let generators : Array RawPolynomial := #[
+    #[⟨#[1,1,0],1⟩,⟨#[0,0,1],field.modulus-coefficient⟩],
+    #[⟨#[1,0,1],1⟩,⟨#[0,1,0],6⟩]]
+  let .candidate _ _ := computeWith context
+    { nativeRows := false,nativeMonomials := false } generators |
+    throw (IO.userError "compiled portable F4 failed")
+
 /-- Exercise complete cached F4 calls under each instrumented native provider. -/
 def runF4 : IO Unit := do
   let seed := ((← IO.getEnv "HEX_GROEBNER_TEST_SEED").getD "0").toNat?.getD 0
