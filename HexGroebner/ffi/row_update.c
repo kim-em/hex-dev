@@ -34,7 +34,7 @@ static inline void write_le(uint8_t *p, unsigned width, uint64_t value) {
 }
 
 /* Geometry validation is shared by the Lean wrapper and the standalone probe. */
-static unsigned row_shape(uint64_t modulus, size_t dense_bytes, size_t column_bytes,
+static inline unsigned row_shape(uint64_t modulus, size_t dense_bytes, size_t column_bytes,
                           size_t coefficient_bytes, size_t start, size_t count,
                           uint64_t factor) {
     if (modulus < 2 || modulus >= UINT64_C(2147483648) ||
@@ -50,7 +50,7 @@ static unsigned row_shape(uint64_t modulus, size_t dense_bytes, size_t column_by
 /* Buffers have the validated geometry and out does not alias either input.
    A failed residue/index check may leave partial internal work in out; callers
    discard it and never return a partial buffer as a successful result. */
-static int update_bytes(uint64_t modulus, unsigned width, uint8_t *out,
+static inline int update_bytes(uint64_t modulus, unsigned width, uint8_t *out,
                         size_t dense_bytes, const uint8_t *cols, const uint8_t *coeffs,
                         size_t start, size_t count, uint64_t factor) {
     size_t dense_elements = dense_bytes / width;
@@ -146,7 +146,7 @@ static inline int equal_monomial(unsigned width, uint64_t arity, uint64_t id,
 
 
 /* Exact bounded comparison. Subtraction-based checks avoid start+count wrap. */
-static int equal_bytes(const uint8_t *left,size_t left_size,const uint8_t *right,
+static inline int equal_bytes(const uint8_t *left,size_t left_size,const uint8_t *right,
         size_t right_size,size_t start,size_t count) {
     if(count>4096 || start>left_size || start>right_size ||
        count>left_size-start || count>right_size-start) return 0;
@@ -181,7 +181,7 @@ static inline int equal_products(unsigned width,uint64_t arity,uint64_t count,
 
 /* Read-only comparisons share the packed representation and a bounded call.
    Result 3 declines unsupported geometry without touching any source byte. */
-static uint8_t compare_monomials(unsigned op,unsigned w,uint64_t n,uint64_t left,uint64_t right,
+static inline uint8_t compare_monomials(unsigned op,unsigned w,uint64_t n,uint64_t left,uint64_t right,
         const uint8_t *arena,size_t bytes) {
     if(op>2 || (w!=1 && w!=2 && w!=4) || n>4096 ||
        left>UINT32_MAX || right>UINT32_MAX) return 3;
@@ -310,6 +310,44 @@ LEAN_EXPORT uint8_t lean_hex_groebner_compare_monomials(uint8_t operation,uint8_
         uint64_t arity,uint64_t left,uint64_t right,b_lean_obj_arg arena) {
     return compare_monomials(operation,width,arity,left,right,
         lean_sarray_cptr(arena),lean_sarray_size(arena));
+}
+
+static lean_obj_res monomial_search_result(uint64_t id,uint64_t link,uint64_t work,uint8_t status) {
+    lean_object *r=lean_alloc_ctor(0,3,1);
+    lean_ctor_set(r,0,lean_uint64_to_nat(id));lean_ctor_set(r,1,lean_uint64_to_nat(link));
+    lean_ctor_set(r,2,lean_uint64_to_nat(work));lean_ctor_set_uint8(r,3*sizeof(void*),status);
+    return r;
+}
+LEAN_EXPORT lean_obj_res lean_hex_groebner_search_monomial(uint8_t width,
+        uint64_t arity,uint64_t count,uint64_t hash,uint64_t link,uint64_t quantum,
+        b_lean_obj_arg exponents,b_lean_obj_arg metadata,b_lean_obj_arg links,
+        b_lean_obj_arg candidate,b_lean_obj_arg allowance) {
+    if((width!=1 && width!=2 && width!=4) || !arity || arity>4096 || count>UINT32_MAX ||
+       link>UINT32_MAX || quantum>4096 || quantum*arity>4096 ||
+       lean_sarray_size(exponents)!=count*arity*width || lean_sarray_size(metadata)!=count*24 ||
+       lean_sarray_size(links)!=count*4 || lean_sarray_size(candidate)!=arity*4+28)
+        return monomial_search_result(0,link,0,4);
+    uint64_t allowed=8193;
+    if(lean_is_scalar(allowance)) {uint64_t n=lean_unbox(allowance);if(n<allowed) allowed=n;}
+    uint64_t work=0;
+    const uint8_t *es=lean_sarray_cptr(exponents),*ms=lean_sarray_cptr(metadata);
+    const uint8_t *ls=lean_sarray_cptr(links),*cs=lean_sarray_cptr(candidate);
+    for(uint64_t i=0;i<quantum;++i) {
+        if(!link) return monomial_search_result(0,0,work,2);
+        if(work+1>allowed) return monomial_search_result(0,link,work,3);
+        ++work;
+        uint64_t id=link-1;
+        if(id>=count) return monomial_search_result(0,link,work,4);
+        link=read_le(ls+(size_t)id*4,4);
+        const uint8_t *m=ms+(size_t)id*24+16;
+        uint64_t actual=read_le(m,4) | (read_le(m+4,4)<<32);
+        if(actual!=hash) continue;
+        if(work+arity>allowed) return monomial_search_result(0,link,work,3);
+        work+=arity;
+        if(equal_monomial(width,arity,id,es,lean_sarray_size(exponents),cs,lean_sarray_size(candidate)))
+            return monomial_search_result(id,link,work,1);
+    }
+    return monomial_search_result(0,link,work,0);
 }
 
 #endif

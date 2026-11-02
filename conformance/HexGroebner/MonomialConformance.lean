@@ -140,11 +140,11 @@ private def packed : Bool := Id.run do
     if !same native portable then return false
   let .ok (a, t) := ({ arity := 2 } : MonomialTable).intern #[1, 0] 10 10000 | return false
   let .ok (b, t) := t.intern #[0, 1] 10 10000 | return false
-  let output := t.combineOwned .product a b 10 114
-  if !output.result.isOk || output.table.bytes != 114 then return false
-  if (t.combineOwned .product a b 10 113).result.isOk then return false
-  if (output.table.internOwned #[2, 0] 10 139).result.isOk then return false
-  if !(output.table.internOwned #[2, 0] 10 140).result.isOk then return false
+  let output := t.combineOwned .product a b 10 190
+  if !output.result.isOk || output.table.bytes != 190 then return false
+  if (t.combineOwned .product a b 10 189).result.isOk then return false
+  if (output.table.internOwned #[2, 0] 10 219).result.isOk then return false
+  if !(output.table.internOwned #[2, 0] 10 220).result.isOk then return false
   for work in [:output.table.work] do
     let result := t.combineOwned .product a b 10 10000 work
     if result.result.isOk then return false
@@ -192,7 +192,7 @@ private def storage : Bool := Id.run do
     | return false
   for malformed in [{ t with exponents := t.exponents.push 0 },
       { t with metadata := t.metadata.push 0 },
-      { t with buckets := t.buckets.insert 0 #[10] }] do
+      { t with index.heads := ⟨#[10,0,0,0] ++ Array.replicate 60 0⟩ }] do
     for native in [false, true] do
       match (malformed.combineOwned .lcm 0 0 10 10000 10000 native).result with
       | .error error => if error.error != .storage then return false

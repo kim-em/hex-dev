@@ -453,7 +453,7 @@ private def reimerBatch (scheduling : Scheduling) : Bool := Id.run do
   return actual.polynomials == reference.polynomials && actual.polynomials.size == 38 &&
     actual.batchSize == 1024 && reference.batchSize == 64 &&
     statistics.largestBatch ≤ 1024 && previous.largestBatch ≤ 64 &&
-    (scheduling != .sugar || (statistics == previous && statistics.largestBatch == 61))
+    (scheduling != .sugar || (statistics == previous && statistics.largestBatch == 58))
 
 #guard reimerBatch .degree
 #guard reimerBatch .sugar
