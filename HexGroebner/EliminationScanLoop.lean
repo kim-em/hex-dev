@@ -58,14 +58,14 @@ private theorem nativeScan_spec (base : MatrixState.State) (initial : Scan)
     (hphase : base.phase = .scan) (hgeometry : base.geometry)
     (hstart : base.scan = {
       dense := initial.dense
-      column := base.leading
+      column := base.scan.column
       last := initial.last
       chargedUntil := initial.chargedUntil
       sugar := initial.sugar })
     (hquanta : base.quanta = MatrixState.scanFuel base.columns) :
     Triple (m := Matrix.Work) (ps := .except MatrixError (.arg MatrixStats .pure))
       (nativeScan base.field base.limits base.columns base.slots base.pivots base.nativePivots
-        base.leading initial false)
+        base.scan.column initial false)
       (fun stats => ⌜stats = base.stats⌝)
       (fun result stats => ⌜scanReturn base initial result stats⌝,
         fun error stats => ⌜outcome base = (.error error,stats)⌝,PUnit.unit) := by

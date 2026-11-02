@@ -269,7 +269,7 @@ lean_lib HexGroebner where
     `HexGroebner.EliminationWorkProof, `HexGroebner.EliminationScanProof,
     `HexGroebner.EliminationValidationProof, `HexGroebner.EliminationPhaseProof,
     `HexGroebner.EliminationGatherProof, `HexGroebner.EliminationScanStep,
-    `HexGroebner.EliminationScanLoop]
+    `HexGroebner.EliminationScanLoop, `HexGroebner.EliminationOrderProof]
 
 lean_lib HexGroebnerNative where
   roots := #[`HexGroebnerNative]
