@@ -176,7 +176,12 @@ Outputs are monic echelon rows in the original column order. `fromTarget`
 identifies added row-space dimension. The retained reducer rows span the input
 reducer space. Pivot metadata retains the normalization scalar and propagated
 sugar, allowing ordinary remainders to preserve their original coefficients.
-Native scan and row-extraction calls process at most 4096 transitions or
+Untraced native elimination first tries a complete matrix frame on the 64-bit
+ABI, with at most 4096 columns, 1024 known reducers, 64 targets and a conservative
+`2^20` work quantum. Unsupported shapes continue outside the native frame.
+Cancellation is observed between these bounded calls; the whole-matrix quantum
+is coarser than a scan or gather chunk. Native scan and row-extraction calls
+within this frame or the ordinary route process at most 4096 transitions or
 columns. A scan transition visits a column, updates one sparse entry, or completes
 one reduction; a long row resumes with its work already reserved. Row extraction
 normalizes nonzero entries and clears the accumulator. Both operations retain

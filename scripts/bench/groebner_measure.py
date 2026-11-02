@@ -26,7 +26,7 @@ from scripts.bench.sweep_freshness import Family, fingerprint, index_listing
 
 FAMILY = Family(
     name="hexgroebner-f4",
-    include=("HexGroebner/", "HexGroebner.lean", "HexGroebnerNative.lean", "HexGroebnerMatrixNative.lean", "HexGroebnerTrieNative.lean", "HexGroebnerMonomialNative.lean", "HexArith/", "HexArith.lean",
+    include=("HexGroebner/", "HexGroebner.lean", "HexGroebnerNative.lean", "HexGroebnerMatrixNative.lean", "HexGroebnerTrieNative.lean", "HexGroebnerMonomialNative.lean", "HexGroebnerEliminationNative.lean", "HexArith/", "HexArith.lean",
              "HexArithNative.lean", "HexModArith/", "HexModArith.lean",
              "HexModArithNative.lean", "HexBasic/", "HexBasic.lean", "HexMvPoly/",
              "HexMvPoly.lean", "bench/HexGroebner/", "lakefile.lean",
