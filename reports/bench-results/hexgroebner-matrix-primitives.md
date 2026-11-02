@@ -11,6 +11,8 @@ The corrected portable-route full-system observations are in
 [the separate report](hexgroebner-matrix-primitives-portable.md), short-row
 operation timings are in [the nine-size study](hexgroebner-matrix-primitives-short.md),
 and source-specific checks are in [the validation record](hexgroebner-matrix-primitives-validation.md).
+The current ownership checks and timing-suite admission counts are in
+[the admission diagnostic](hexgroebner-matrix-primitives-admission.md).
 The older observations below are historical, including a source whose disabled
 native-row route still used the new primitives. They do not describe the current
 driver's performance.
