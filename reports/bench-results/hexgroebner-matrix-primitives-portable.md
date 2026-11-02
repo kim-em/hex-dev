@@ -30,13 +30,17 @@ Candidate time covers candidate production. Process wall time includes startup,
 parsing and output. Certificate generation, independent certification and kernel
 checking are separate and are not timed here. Complete outputs, every completed
 sample, process RSS, variability, CPU leases, host activity and build context
-remain in the capsule. These modest local effects do not demonstrate external
+remain in the capsule. Small-suite CPU 51 loads are 3.49/2.58/3.53 at start
+and end; medium-suite CPU 48 loads are 3.49/2.58/3.53 → 2.94/2.51/3.49.
+These modest local effects do not demonstrate external
 leadership or identify the remaining bottleneck. The fastest-open-source
 milestone remains open.
 
 This source predates the expanded independent-limit tests, runtime integration
 counter checks, admission diagnostics and short-row benchmark registration.
-Those changes have separate validation; their ELFs inherit no timing claims.
+Those changes have [separate validation](hexgroebner-matrix-primitives-validation.md).
+A fresh driver build is byte-identical to this measured source; the new kernel
+benchmark executable has separate timing evidence.
 
 [Raw capsule](raw/matrix-primitives-portable-16c437c35eac.tar.gz), SHA256
 `0344e56ba8b9873e70c17f993e9f8962958169ecee3c8c148c40f3ae043dd231`;
