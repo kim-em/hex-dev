@@ -18,6 +18,15 @@ extern lean_obj_res lean_hex_matrix_step(lean_obj_arg);
 #define HEX_GROEBNER_CONT_END() ((void)0)
 #endif
 
+#ifndef HEX_GROEBNER_CONT_EXHAUSTED
+#define HEX_GROEBNER_CONT_EXHAUSTED(phase,resource,width) ((void)0)
+#define HEX_GROEBNER_CONT_INVALID(tag,width) ((void)0)
+#define HEX_GROEBNER_CONT_DECLINE(width) ((void)0)
+#define HEX_GROEBNER_CONT_EDGE(width) ((void)0)
+#define HEX_GROEBNER_CONT_ALLOCATE(width) ((void)0)
+#define HEX_GROEBNER_CONT_VALIDATE_WORK(site,width) ((void)0)
+#endif
+
 #if UINTPTR_MAX == UINT64_MAX
 
 /* State: 20 objects; modulus/inverse UInt64, independent/phase UInt8.
@@ -57,7 +66,7 @@ static void cont_unpack(continuation *c,lean_obj_arg s) {
     c->phase=lean_ctor_get_uint8(s,20*sizeof(void*)+17);
     for(unsigned i=0;i<20;++i) c->v[i]=cont_take(s,i);
     lean_dec(s);
-    c->columns=lean_unbox(c->v[1]);c->width=c->p<256?1:c->p<65536?2:4;
+    c->columns=lean_unbox(c->v[1]);c->width=c->p<=256?1:c->p<=65536?2:4;
 }
 static int cont_counts(continuation *c) {
     for(unsigned i=0;i<8;++i) {
@@ -91,6 +100,7 @@ static int cont_charge(continuation *c,unsigned stat,unsigned limit,uint64_t amo
 }
 static int cont_work(continuation *c,uint64_t n) {return cont_charge(c,0,5,n);}
 static void cont_error(continuation *c,unsigned resource) {
+    HEX_GROEBNER_CONT_EXHAUSTED(c->phase,resource,c->width);
     lean_object *e=lean_alloc_ctor(5,0,1);lean_ctor_set_uint8(e,0,(uint8_t)resource);
     lean_object *r=lean_alloc_ctor(0,1,0);lean_ctor_set(r,0,e);
     lean_object *some=lean_alloc_ctor(1,1,0);lean_ctor_set(some,0,r);
@@ -114,6 +124,22 @@ static lean_object *cont_empty_gather(void) {
 /* Enforce every buffer bound before a direct write. A failed preflight uses
    the checked Lean phase, before charges or mutable buffers have changed. */
 static int cont_bounds(continuation *c) {
+    if(c->phase==2) return c->columns<=65536 && c->p>=2 && c->p<UINT64_C(2147483648);
+    if(c->phase==1) {
+        if(!lean_is_scalar(c->v[5])) return 0;
+        uint64_t cursor=lean_unbox(c->v[5]),nr=lean_array_size(c->v[2]);
+        if(cursor>=nr+lean_array_size(c->v[3])) return 1;
+        lean_object *row=lean_array_get_core(c->v[cursor<nr?2:3],(size_t)(cursor<nr?cursor:cursor-nr));
+        if(lean_is_scalar(row) || lean_obj_tag(row)!=0 || lean_ctor_num_objs(row)!=2) return 0;
+        uint64_t bytes=lean_sarray_size(lean_ctor_get(row,0)),n=bytes/4;
+        /* A malformed length fails before the row loop. The size admission
+           bounds charge amounts as well as reads, keeping saturated large
+           limits exact. Larger well-shaped rows use the checked Lean phase. */
+        if(bytes%4 || lean_sarray_size(lean_ctor_get(row,1))!=n*c->width) return 1;
+        if(n>c->columns+1) {HEX_GROEBNER_CONT_DECLINE(c->width);return 0;}
+        if(n==c->columns+1) HEX_GROEBNER_CONT_EDGE(c->width);
+        return 1;
+    }
     if(c->p<2 || c->p>=UINT64_C(2147483648) ||
        lean_sarray_size(c->v[8])!=c->columns*4 || !lean_is_scalar(c->v[6]) ||
        !lean_is_scalar(c->v[12]) || !lean_is_scalar(c->v[19])) return 0;
@@ -139,6 +165,51 @@ static int cont_bounds(continuation *c) {
         !lean_is_scalar(scan) && lean_obj_tag(scan)==0 && lean_ctor_num_objs(scan)==8 &&
         lean_sarray_size(lean_ctor_get(gather,0))==c->columns*c->width &&
         lean_is_scalar(c->v[15]) && lean_unbox(c->v[15])<c->columns;
+}
+/* Validator errors carry the original input index and first failing entry. */
+static void cont_invalid(continuation *c,unsigned tag,uint64_t row,uint64_t entry) {
+    HEX_GROEBNER_CONT_INVALID(tag,c->width);
+    lean_object *e=lean_alloc_ctor(tag,tag==2?1:2,0);
+    lean_ctor_set(e,0,lean_uint64_to_nat(row));
+    if(tag!=2) lean_ctor_set(e,1,lean_uint64_to_nat(entry));
+    lean_object *r=lean_alloc_ctor(0,1,0);lean_ctor_set(r,0,e);
+    lean_object *some=lean_alloc_ctor(1,1,0);lean_ctor_set(some,0,r);
+    cont_replace(c,18,some);c->phase=7;
+}
+static void cont_validate(continuation *c) {
+    uint64_t cursor=lean_unbox(c->v[5]),nr=lean_array_size(c->v[2]);
+    if(cursor>=nr+lean_array_size(c->v[3])) {c->phase=2;return;}
+    if(!cont_work(c,1)) {HEX_GROEBNER_CONT_VALIDATE_WORK(0,c->width);cont_error(c,5);return;}
+    lean_object *row=lean_array_get_core(c->v[cursor<nr?2:3],(size_t)(cursor<nr?cursor:cursor-nr));
+    lean_object *ids=lean_ctor_get(row,0),*coeff=lean_ctor_get(row,1);
+    uint64_t bytes=lean_sarray_size(ids),size=bytes/4,coefficient_bytes=lean_sarray_size(coeff);
+    if(bytes%4 || coefficient_bytes!=size*c->width) {cont_invalid(c,2,cursor,0);return;}
+    if(!cont_charge(c,1,2,size)) {cont_error(c,2);return;}
+    if(!cont_charge(c,3,4,bytes+coefficient_bytes)) {cont_error(c,4);return;}
+    if(!cont_work(c,size)) {HEX_GROEBNER_CONT_VALIDATE_WORK(1,c->width);cont_error(c,5);return;}
+    uint64_t previous=0;
+    for(uint64_t i=0;i<size;++i) {
+        uint64_t column=cont_read(lean_sarray_cptr(ids)+4*i,4);
+        if(column>=c->columns || (i && column<=previous)) {cont_invalid(c,3,cursor,i);return;}
+        uint64_t value=cont_read(lean_sarray_cptr(coeff)+c->width*i,c->width);
+        if(!value || value>=c->p) {cont_invalid(c,4,cursor,i);return;}
+        previous=column;
+    }
+    cont_replace(c,5,lean_uint64_to_nat(cursor+1));
+}
+/* The admitted 64-bit geometry has at most 524288 workspace bytes, so
+   the model's USize addressability check succeeds before either charge. */
+static void cont_workspace(continuation *c) {
+    uint64_t dense_bytes=c->columns*c->width,slot_bytes=c->columns*4;
+    uint64_t bytes=dense_bytes+slot_bytes;
+    if(!cont_charge(c,3,4,bytes)) {cont_error(c,4);return;}
+    if(!cont_work(c,bytes)) {cont_error(c,5);return;}
+    lean_object *dense=lean_alloc_sarray(1,(size_t)dense_bytes,(size_t)dense_bytes);
+    lean_object *slots=lean_alloc_sarray(1,(size_t)slot_bytes,(size_t)slot_bytes);
+    if(dense_bytes) memset(lean_sarray_cptr(dense),0,(size_t)dense_bytes);
+    if(slot_bytes) memset(lean_sarray_cptr(slots),0,(size_t)slot_bytes);
+    HEX_GROEBNER_CONT_ALLOCATE(c->width);
+    cont_replace(c,7,dense);cont_replace(c,8,slots);c->phase=3;
 }
 static int cont_target(continuation *c) {
     return lean_unbox(c->v[6])>=lean_array_size(c->v[2]);
@@ -317,8 +388,11 @@ static void cont_gather(continuation *c) {
    Here c is columns and r is input rows. This is a hard shape-dependent bound,
    not a count of machine instructions. Nat metadata retains its ordinary bit
    complexity. The private shape
-   check admits <=65536 columns and input rows; larger states take no transition here. Checks,
-   validation, initialization and final ordering use the exported Lean phase,
+   check admits <=65536 columns and input rows; larger states take no transition
+   here. Checks and final ordering use the exported Lean phase. The native workspace
+   phase charges bytes before allocating bounded zeroed buffers. Validation
+   examines at most c+1 entries per native phase, with larger well-shaped rows
+   handled by the checked Lean phase,
    so malformed rows and arbitrary Nat resource limits retain their exact
    failures and counters. Scan and gather each advance at most 4096 steps. */
 LEAN_EXPORT lean_obj_res lean_hex_matrix_advance(lean_obj_arg state,b_lean_obj_arg steps) {
@@ -337,9 +411,11 @@ LEAN_EXPORT lean_obj_res lean_hex_matrix_advance(lean_obj_arg state,b_lean_obj_a
     int fast=cont_counts(&c),dirty=0;
     for(uint64_t i=0;i<count && c.phase!=7;++i) {
         HEX_GROEBNER_CONT_TICK();
-        if(fast && c.phase>=3 && c.phase<=5 && cont_bounds(&c)) {
+        if(fast && (c.phase>=1 && c.phase<=5) && cont_bounds(&c)) {
             HEX_GROEBNER_CONT_PHASE(c.phase);
-            if(c.phase==3) cont_input(&c);
+            if(c.phase==1) cont_validate(&c);
+            else if(c.phase==2) cont_workspace(&c);
+            else if(c.phase==3) cont_input(&c);
             else if(c.phase==4) cont_scan(&c);
             else cont_gather(&c);
             dirty=1;

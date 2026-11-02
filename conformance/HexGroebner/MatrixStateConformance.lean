@@ -133,6 +133,90 @@ def boundaries : Bool := Id.run do
         if !compare field limits 3 #[r,r] #[t,t] #[2,3,4,2^90] independent then return false
   return true
 
+/-- Native validation preserves malformed-input errors, charged prefixes and
+shared paused states across coefficient widths and the native row-size bound. -/
+def validationChecks : Bool := Id.run do
+  for field in Fixtures.fields do
+    let some valid := SparseRow.ofEntries field 3 #[(0,1),(2,1)] | return false
+    let raw (columns : Array Nat) (coefficients : Array UInt64) : SparseRow :=
+      ⟨columns.foldl (fun b c => Packed.push .u32 b c.toUInt64) {},
+        coefficients.foldl (fun b c => Packed.push field.width b c) {}⟩
+    let rows : Array SparseRow := #[
+      {valid with columns := valid.columns.push 0},
+      {valid with coefficients := valid.coefficients.push 0},
+      raw #[0,2] #[1,0], raw #[0,2] #[1,field.modulus],
+      raw #[0,1,2,3] #[1,1,1,1], raw #[0,1,2,2] #[1,1,1,1],
+      raw #[0,0,0,0,0] #[1,1,1,1,1]]
+    for row in rows do
+      for targets in [false,true] do
+        let reducers := if targets then #[valid] else #[valid,row]
+        let targetRows := if targets then #[valid,row] else #[valid]
+        -- The preceding two-entry valid row charges 1+2 work. Limits 3 and 4
+        -- therefore distinguish initial-work and entry-work exhaustion.
+        for limits in ([{}, {inputEntries := 3}, {packedBytes := 25},
+            {work := 3}, {work := 4}, {work := 2^90, packedBytes := 2^90}] : List MatrixLimits) do
+          let mut state := MatrixState.start field limits 3 reducers targetRows #[] false
+          for _ in [:32] do
+            if state.phase == .done then break
+            let saved := snapshot state
+            for quantum in [1,2,64] do
+              let expected := MatrixState.advancePortable state quantum
+              let actual := MatrixState.advance state quantum
+              if expected.phase != actual.phase || snapshot expected != snapshot actual ||
+                  snapshot state != saved then return false
+              if expected.phase == .done then
+                if !equal ⟨expected.result.getD (.error .rowUpdate),expected.stats⟩
+                    ⟨actual.result.getD (.error .rowUpdate),actual.stats⟩ then return false
+            state := MatrixState.advance state 1
+          if state.phase != .done then return false
+  return true
+
+/-- Exercise workspace charges immediately below/at the exact boundary for
+all coefficient widths, including a work failure after the byte charge. -/
+def workspaceChecks : Bool := Id.run do
+  for field in Fixtures.fields do
+    let some row := SparseRow.ofEntries field 3 #[(0,1),(2,1)] | return false
+    let initial := MatrixState.start field {} 3 #[row] #[row] #[] false
+    let mut validated := initial
+    for _ in [:8] do
+      if validated.phase == .workspace then break
+      validated := MatrixState.advancePortable validated 1
+    if validated.phase != .workspace then return false
+    let bytes := 3*(field.width.bytes+4)
+    let total := validated.stats.packedBytes+bytes
+    let work := validated.stats.work+bytes
+    for (limits,failure) in ([({packedBytes := total-1},some Resource.packedBytes),
+        ({packedBytes := total},none),({work := work-1},some Resource.work),
+        ({work},none)] : List (MatrixLimits × Option Resource)) do
+      let mut state := MatrixState.start field limits 3 #[row] #[row] #[] false
+      for _ in [:8] do
+        if state.phase == .workspace then break
+        state := MatrixState.advance state 1
+      if state.phase != .workspace then return false
+      let saved := snapshot state
+      let expected := MatrixState.advancePortable state 1
+      let actual := MatrixState.advance state 1
+      match failure with
+      | none =>
+        if expected.phase != .input || expected.result.isSome ||
+            expected.stats.packedBytes != total || expected.stats.work != work then return false
+      | some resource =>
+        if expected.phase != .done then return false
+        match expected.result with
+        | some (.error (.exhausted actualResource)) =>
+          if actualResource != resource then return false
+        | _ => return false
+      if expected.phase != actual.phase || snapshot expected != snapshot actual ||
+          snapshot state != saved then return false
+      if expected.phase == .done then
+        if !equal ⟨expected.result.getD (.error .rowUpdate),expected.stats⟩
+            ⟨actual.result.getD (.error .rowUpdate),actual.stats⟩ then return false
+  return true
+
+#guard workspaceChecks
+
+#guard validationChecks
+
 #guard boundaries
 
 /-- Paused failure states, not only terminal counters, agree under every

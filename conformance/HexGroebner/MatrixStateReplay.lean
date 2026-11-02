@@ -7,9 +7,11 @@ Authors: Kim Morrison
 module
 
 public import HexGroebnerStateNative
+public import HexGroebner.MatrixValidation
 -- Inspect logical loop bodies only; states are created exclusively by start.
 import all HexGroebner.MatrixState
 import all Init.Data.Range.Basic
+public import HexGroebner.ScanProof
 
 public section
 
@@ -33,5 +35,26 @@ theorem validation_example :
 
 /-- info: 'Hex.Groebner.MatrixStateReplay.validation_example' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in #print axioms validation_example
+
+/-- info: 'Hex.Groebner.Matrix.charge_run' does not depend on any axioms -/
+#guard_msgs in #print axioms Matrix.charge_run
+/-- info: 'Hex.Groebner.MatrixState.advance_zero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms MatrixState.advance_zero
+/-- info: 'Hex.Groebner.MatrixState.next_done' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms MatrixState.next_done
+/-- info: 'Hex.Groebner.MatrixState.advance_done' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms MatrixState.advance_done
+/-- info: 'Hex.Groebner.MatrixState.finish_done' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms MatrixState.finish_done
+
+/-- info: 'Hex.Groebner.MatrixState.validate_ok' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms MatrixState.validate_ok
+/-- info: 'Hex.Groebner.MatrixState.validate_error' depends on axioms: [propext, Quot.sound] -/
+#guard_msgs in #print axioms MatrixState.validate_error
+
+/-- info: 'Hex.Groebner.Matrix.validateFrom_zero' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms Matrix.validateFrom_zero
+/-- info: 'Hex.Groebner.Native.Scan.untraced_events' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms Native.Scan.untraced_events
 
 end Hex.Groebner.MatrixStateReplay

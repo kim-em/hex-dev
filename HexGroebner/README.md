@@ -627,3 +627,21 @@ manual drivers should drop references to their terminal state after extracting t
 The build-time `MatrixLayout` conformance check compares the listed matrix records and tags with the layout table mirrored
 from `matrix_state.c`, including field names, object slots, scalar offsets
 and same-type swaps.
+
+Within the admitted 64-bit geometry, native validation admits at most
+`columns+1` entries per phase, bounding charge amounts as well as reads and preserves the first error's row/entry indices
+and resource prefix. Larger well-shaped rows use the checked Lean phase.
+Malformed packed lengths fail before the entry loop. `validate_ok` and
+`validate_error` state the corresponding successful and failed Lean model
+transitions; agreement with C is checked by native conformance.
+
+The admitted native workspace phase charges packed bytes and work before
+allocating its zeroed dense and slot buffers. At most 524,288 bytes are
+allocated for the admitted column/width geometry. Exhaustion retains the
+exact charged prefix and leaves the previous buffers unchanged.
+
+`MatrixValidation.validateFrom_zero` equates combined-cursor validation with the
+reference's reducer-then-target loops, including first errors and charged
+prefixes. `Native.Scan.untraced_events` proves that an untraced scalar scan produces
+no derivation events. These reusable component lemmas do not prove completed
+continuation equivalence or its general phase-fuel bound.

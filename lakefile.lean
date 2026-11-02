@@ -263,6 +263,7 @@ lean_lib HexOrderedFnTests where
 lean_lib HexMvPoly where
 
 lean_lib HexGroebner where
+  roots := #[`HexGroebner, `HexGroebner.ScanProof]
 
 lean_lib HexGroebnerNative where
   roots := #[`HexGroebnerNative]
@@ -280,6 +281,7 @@ lean_lib HexGroebnerMonomialNative where
 lean_lib HexGroebnerEliminationNative where
   roots := #[`HexGroebnerEliminationNative]
   globs := #[.one `HexGroebnerEliminationNative, .one `HexGroebner.Matrix,
+    .one `HexGroebner.MatrixValidation,
     .one `HexGroebner.Elimination]
   precompileModules := true
   moreLinkObjs := #[hexgroebnerEliminationO]

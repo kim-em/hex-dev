@@ -144,6 +144,22 @@ def charge (resource : Resource) (amount limit : Nat)
   if count > limit then throw (.exhausted resource)
   set (setCount stats count)
 
+/-- A failed charge leaves the exact previously charged prefix unchanged. -/
+theorem charge_run (resource : Resource) (amount limit : Nat)
+    (getCount : MatrixStats → Nat) (setCount : MatrixStats → Nat → MatrixStats)
+    (stats : MatrixStats) :
+    (charge resource amount limit getCount setCount).run stats =
+      if getCount stats + amount > limit then
+        (.error (.exhausted resource), stats)
+      else (.ok (), setCount stats (getCount stats + amount)) := by
+  dsimp [charge, ExceptT.run, ExceptT.bind, ExceptT.bindCont, ExceptT.lift,
+    ExceptT.mk, StateT.bind, StateT.get, StateT.set, StateT.pure,
+    Bind.bind, MonadState.get, MonadStateOf.get, MonadStateOf.set,
+    MonadExcept.throw, MonadExceptOf.throw, liftM,
+    MonadLiftT.monadLift, MonadLift.monadLift, getThe, throwThe,
+    StateT.map, StateT.mk, Functor.map, Pure.pure]
+  split <;> rfl
+
 def work (limits : MatrixLimits) (amount : Nat) : Work Unit :=
   charge .work amount limits.work (·.work) fun s n => { s with work := n }
 
