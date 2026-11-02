@@ -52,7 +52,9 @@ def statistics (s : Statistics) : Json := Json.mkObj [
   ("work",toJson s.work),("allocatedBytes",toJson s.allocatedBytes),
   ("pairs",toJson s.pairs),("rounds",toJson s.rounds),
   ("matrixCalls",toJson s.matrixCalls),("matrixEntries",toJson s.matrixEntries),
-  ("matrixRows",toJson s.matrixRows),("largestBatch",toJson s.largestBatch),
+  ("matrixRows",toJson s.matrixRows),("matrixTargets",toJson s.matrixTargets),
+  ("matrixReductions",toJson s.matrixReductions),("matrixZeroRows",toJson s.matrixZeroRows),
+  ("largestBatch",toJson s.largestBatch),
   ("peakMatrixRows",toJson s.peakMatrixRows),("peakMatrixEntries",toJson s.peakMatrixEntries),
   ("productPairs",toJson s.productPairs),("chainPairs",toJson s.chainPairs),("gmPairs",toJson s.gmPairs)]
 

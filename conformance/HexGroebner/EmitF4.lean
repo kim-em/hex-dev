@@ -31,6 +31,9 @@ private def canonical (p : Nat) (raw : RawPolynomial) : Certificate.Polynomial :
   raw.foldl (fun f term => if term.coefficient == 0 then f else
     Hex.MvPoly.Kernel.addMod p f [(term.exponents.toList,term.coefficient.toNat)]) []
 
+private def matrixCounts (s : Statistics) : Nat × Nat × Nat :=
+  (s.matrixTargets,s.matrixReductions,s.matrixZeroRows)
+
 private def emit : IO Unit := do
   for field in Fixtures.fields do
     for order in [TermOrder.lex, .grlex, .grevlex] do
@@ -50,6 +53,8 @@ private def emit : IO Unit := do
             | .success value _ => pure value
             | _ => throw (IO.userError s!"{c.name}: checked F4 computation failed")
           if checked.history.scheduling != scheduling then throw (IO.userError "checked scheduling metadata mismatch")
+          if matrixCounts checked.history.statistics != matrixCounts stats then
+            throw (IO.userError s!"{c.name}: traced/candidate matrix counters mismatch")
           if checked.value.polynomials != candidate.polynomials.map (canonical field.modulus.toNat) then
             throw (IO.userError s!"{c.name}: checked/candidate reduced basis mismatch")
           let (serial, serialStats) ← match computeWith context { limits with batchSize := 1 } c.generators with
@@ -94,6 +99,8 @@ private def emit : IO Unit := do
             s!",\"rounds\":{stats.rounds},\"pairs\":{stats.pairs},\"work\":{stats.work}," ++
             s!"\"batchSize\":{candidate.batchSize},\"largestBatch\":{stats.largestBatch}," ++
             s!"\"peakMatrixRows\":{stats.peakMatrixRows},\"peakMatrixEntries\":{stats.peakMatrixEntries}," ++
+            s!"\"matrixTargets\":{stats.matrixTargets},\"matrixReductions\":{stats.matrixReductions},\"matrixZeroRows\":{stats.matrixZeroRows}," ++
+            s!"\"serialMatrixTargets\":{serialStats.matrixTargets},\"serialMatrixReductions\":{serialStats.matrixReductions},\"serialMatrixZeroRows\":{serialStats.matrixZeroRows}," ++
             s!"\"productPairs\":{stats.productPairs},\"chainPairs\":{stats.chainPairs},\"gmPairs\":{stats.gmPairs}," ++
             s!"\"serialChainPairs\":{serialStats.chainPairs},\"serialWork\":{serialStats.work}," ++
             s!"\"serialRounds\":{serialStats.rounds},\"referenceWork\":{referenceStats.work}," ++

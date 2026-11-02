@@ -51,12 +51,14 @@ def check(binary: Path) -> list[dict]:
             assert value["scheduling"] == serial["scheduling"] == scheduling, record["case"]
             assert serial["basis"] == expected["basis"], record["case"]
             for key, fixture in [("work", "serialWork"), ("rounds", "serialRounds"),
-                                 ("chainPairs", "serialChainPairs")]:
+                                 ("chainPairs", "serialChainPairs"), ("matrixTargets", "serialMatrixTargets"),
+                                 ("matrixReductions", "serialMatrixReductions"), ("matrixZeroRows", "serialMatrixZeroRows")]:
                 assert serial["statistics"][key] == expected[fixture], (record["case"], fixture)
             assert (value["p"], value["variables"], value["order"], value["randomState"]) == (
                 expected["p"], expected["variables"], expected["order"], 0)
             for key in ["work", "pairs", "rounds", "largestBatch", "peakMatrixRows", "peakMatrixEntries",
-                        "productPairs", "chainPairs", "gmPairs", "matrixEntries"]:
+                        "productPairs", "chainPairs", "gmPairs", "matrixEntries",
+                        "matrixTargets", "matrixReductions", "matrixZeroRows"]:
                 assert value["statistics"][key] == expected[key], (record["case"], key)
 
         unit = {"p": 7, "variables": 1, "order": "grevlex", "generators": [[[[0], 2]]]}

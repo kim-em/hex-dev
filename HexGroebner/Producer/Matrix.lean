@@ -89,14 +89,7 @@ def solve (context : Context) (limits : Limits) (nodeLimit : Nat)
     let outcome := eliminateWith context.field matrixLimits matrix.columns.size reducers targets true sugars limits.nativeRows
     (outcome.result.map (fun e => (e.rows.filterMap fun r => if r.fromTarget then
       some (r.row,r.multiplier,r.sugar,r.derivation) else none,e.trace)),outcome.stats)
-  lift (set { s with statistics := { s.statistics with
-    work := s.statistics.work + stats.work
-    allocatedBytes := s.statistics.allocatedBytes + (stats.packedBytes - inputBytes)
-    matrixEntries := s.statistics.matrixEntries + stats.inputEntries + stats.outputEntries
-    matrixRows := s.statistics.matrixRows + rows
-    matrixCalls := s.statistics.matrixCalls + 1
-    peakMatrixRows := max s.statistics.peakMatrixRows rows
-    peakMatrixEntries := max s.statistics.peakMatrixEntries (stats.inputEntries + stats.outputEntries) } })
+  lift (set { s with statistics := s.statistics.recordMatrix stats inputBytes rows targets.size })
   let (rows,trace) ← match result with
     | .ok e => pure e
     | .error (.exhausted r) => match r with
