@@ -5,10 +5,7 @@
 #include <stdint.h>
 #include <string.h>
 
-extern lean_obj_res lean_hex_scan_transition(uint64_t,b_lean_obj_arg,b_lean_obj_arg,
-    lean_obj_arg,b_lean_obj_arg,b_lean_obj_arg,b_lean_obj_arg,uint8_t);
-extern lean_obj_res lean_hex_gather(uint64_t,lean_obj_arg,b_lean_obj_arg,
-    b_lean_obj_arg,b_lean_obj_arg,b_lean_obj_arg,b_lean_obj_arg,uint64_t);
+#include "matrix_runtime.h"
 
 #ifndef HEX_GROEBNER_MATRIX_ACCEPTED
 #define HEX_GROEBNER_MATRIX_ACCEPTED() ((void)0)

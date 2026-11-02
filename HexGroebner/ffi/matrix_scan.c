@@ -6,6 +6,7 @@
 #include <stddef.h>
 #include <string.h>
 #include "matrix_simd.h"
+#include "matrix_runtime.h"
 
 static inline uint64_t rd(const uint8_t *p, unsigned w) {
     uint64_t v=p[0];

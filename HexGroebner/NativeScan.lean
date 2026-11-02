@@ -13,7 +13,7 @@ public import HexGroebner.Native
 namespace Hex.Groebner.Native.Scan
 
 /-- Layout mirrored in C (`matrix_scan.c`, `matrix_scan_impl.h`,
-`matrix_eliminate.c`). -/
+`matrix_eliminate.c`, `matrix_state.c`). -/
 structure Pivot where
   columns : ByteArray
   coefficients : ByteArray
@@ -21,7 +21,7 @@ structure Pivot where
   deriving Inhabited
 
 /-- Optional indices use index+1. A pending row is already charged in full.
-Layout mirrored in C (`matrix_scan.c`, `matrix_scan_impl.h`, `matrix_eliminate.c`). -/
+Layout mirrored in C (`matrix_scan.c`, `matrix_scan_impl.h`, `matrix_eliminate.c`, `matrix_state.c`). -/
 structure State where
   dense : ByteArray
   column : Nat
@@ -35,7 +35,7 @@ structure State where
 
 /-- Status: 0 quantum ended, 1 complete, 2 work exhausted, 3 trace exhausted,
 4 malformed. Events give pivot index and subtracted scalar, in execution order.
-Layout mirrored in C (`matrix_scan.c`, `matrix_scan_impl.h`, `matrix_eliminate.c`). -/
+Layout mirrored in C (`matrix_scan.c`, `matrix_scan_impl.h`, `matrix_eliminate.c`, `matrix_state.c`). -/
 structure Result where
   state : State
   events : Array (Nat × UInt64) := #[]
