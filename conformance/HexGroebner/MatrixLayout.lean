@@ -38,7 +38,19 @@ private meta def checkLayout (name : Name) (objects scalars : Nat)
     unless actualName == field && actual == expected do
       throwError "native layout changed for {name}.{field}: expected {expected}, got {actualName}:{actual}"
 
+private meta def checkTags (name : Name) (expected : Array String) : CoreM Unit := do
+  let info ← getConstInfoInduct name
+  let actual := (info.ctors.map Name.getString!).toArray
+  unless actual == expected do
+    throwError "native constructor tags changed for {name}: expected {expected}, got {actual}"
+
 run_meta do
+  checkTags ``Hex.Groebner.MatrixState.Phase
+    #["check","validate","workspace","input","scan","gather","order","done"]
+  checkTags ``Hex.Groebner.Resource
+    #["columns","rows","inputEntries","outputEntries","packedBytes","work","traceNodes"]
+  checkTags ``Hex.Groebner.MatrixError
+    #["dimensions","rowUpdate","rowLength","column","coefficient","exhausted"]
   checkLayout ``Hex.Groebner.MatrixState.State 20 18 #[
     ("field","s8@0"),("limits","o0"),("columns","o1"),("reducers","o2"),
     ("targets","o3"),("sugars","o4"),("independent","s1@16"),("phase","s1@17"),
