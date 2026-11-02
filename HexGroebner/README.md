@@ -623,6 +623,7 @@ standalone matrix frames; they make no full-system performance claim.
 
 Terminal continuations retain their workspace for inspection of exact phase
 state and charged prefixes. `finishWith` releases that state when it returns;
-manual drivers should release their terminal state after extracting the result.
-The build-time `MatrixLayout` conformance check matches field names, object
-slots and scalar offsets against the native ABI, including same-type swaps.
+manual drivers should drop references to their terminal state after extracting the result.
+The build-time `MatrixLayout` conformance check compares the listed matrix records and tags with the layout table mirrored
+from `matrix_state.c`, including field names, object slots, scalar offsets
+and same-type swaps.

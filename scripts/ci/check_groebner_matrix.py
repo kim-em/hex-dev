@@ -590,7 +590,7 @@ def main : IO Unit := do
   let bounds ← continuationBounds
   if bounds.1 == 0 || bounds.2.1 == 0 || bounds.2.1 > 1048576 || bounds.2.2 != 0 then
     throw (IO.userError "native continuation phase bound violated")
-  IO.println s!"native continuation maximum phases/units/violations: {bounds}"
+  IO.println s!"native continuation loop count/declared product/schedule errors: {bounds}"
   let modes ← wholeModes
   if modes.1 == 0 || modes.2 == 0 then throw (IO.userError "native joint/independent matrices not covered")
   IO.println s!"whole matrix joint/independent accepted: {modes}"

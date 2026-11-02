@@ -320,11 +320,12 @@ def advance (state : State) (steps : Nat) : State :=
 It is not selected by the public F4 route.
 
 For a state reached from `start`, let `n` be the input row count, `c` the column
-count, `S = ceil(c*(c+2)/4096)+1` and `G = ceil(c/4096)+1`. Check, workspace and
-ordering take three phases; validation takes at most `n`; each input row takes
+count, `S = ceil(c*(c+2)/4096)+1` and `G = ceil(c/4096)+1`. Check, workspace,
+ordering and the validate-to-workspace/input-to-order transitions take five
+phases; validation takes at most `n`; each input row takes
 one input phase, at most `S` scan phases and at most `G` gather phases. A scan
 or gather that remains unfinished at its last quantum fails immediately.
-Thus `3+n+n*(1+S+G)` bounds the remaining phases. The allowance below,
+Thus `5+n+n*(1+S+G)` bounds the remaining phases. The allowance below,
 `6+(n+1)*(3+S+G)`, dominates it, and every unfinished call advances at least
 one phase because the requested quantum is clamped to one. Exhausting this
 shape allowance therefore indicates a broken internal invariant and returns

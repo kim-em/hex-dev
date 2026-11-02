@@ -312,7 +312,7 @@ static void cont_gather(continuation *c) {
     cont_replace(c,14,gather);cont_install(c,row,lean_unbox(c->v[15]),c->inverse);
 }
 
-/* Each call performs cap*(8c+2r+4224) phase units, plus at most one copy
+/* Each call performs at most cap*(8c+2r+4224) phase units, plus at most one copy
    of each shared buffer/array: conservatively 16c bytes and 2r object entries.
    Here c is columns and r is input rows. This is a hard shape-dependent bound,
    not a count of machine instructions. Nat metadata retains its ordinary bit

@@ -115,6 +115,8 @@ def matrixSparseBulk (input : Input) :=
   let bulk := matrixSparseBulk input
   Elimination.fits frameField { work := 1000000000 } input.columns
     input.reducers input.targets #[] &&
+    (Elimination.attempt frameField { work := 1000000000 } input.columns
+      input.reducers input.targets #[] false).isSome &&
     candidate.1 && reference.1 && bulk.1 && candidate == reference && bulk == reference)
 
 -- There are n/2 two-entry known rows and eight targets. Row installation,

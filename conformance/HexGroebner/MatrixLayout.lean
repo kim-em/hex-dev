@@ -44,6 +44,22 @@ private meta def checkTags (name : Name) (expected : Array String) : CoreM Unit 
   unless actual == expected do
     throwError "native constructor tags changed for {name}: expected {expected}, got {actual}"
 
+private meta def checkCtor (name : Name) (objects scalars : Nat)
+    (fields : Array String) : CoreM Unit := do
+  let layout ← getCtorLayout name
+  unless layout.ctorInfo.size == objects && layout.ctorInfo.usize == 0 &&
+      layout.ctorInfo.ssize == scalars && layout.fieldInfo.size == fields.size do
+    throwError "native constructor shape changed for {name}"
+  for i in [:fields.size] do
+    let actual := match layout.fieldInfo[i]! with
+      | .object slot _ => s!"o{slot}"
+      | .scalar size offset _ => s!"s{size}@{offset}"
+      | .usize slot => s!"u{slot}"
+      | .erased => "erased"
+      | .void => "void"
+    unless actual == fields[i]! do
+      throwError "native constructor field changed for {name} at {i}: {actual}"
+
 run_meta do
   checkTags ``Hex.Groebner.MatrixState.Phase
     #["check","validate","workspace","input","scan","gather","order","done"]
@@ -51,6 +67,25 @@ run_meta do
     #["columns","rows","inputEntries","outputEntries","packedBytes","work","traceNodes"]
   checkTags ``Hex.Groebner.MatrixError
     #["dimensions","rowUpdate","rowLength","column","coefficient","exhausted"]
+  checkCtor ``Hex.Groebner.MatrixError.dimensions 0 0 #[]
+  checkCtor ``Hex.Groebner.MatrixError.rowUpdate 0 0 #[]
+  checkCtor ``Hex.Groebner.MatrixError.rowLength 1 0 #["o0"]
+  checkCtor ``Hex.Groebner.MatrixError.column 2 0 #["o0","o1"]
+  checkCtor ``Hex.Groebner.MatrixError.coefficient 2 0 #["o0","o1"]
+  checkCtor ``Hex.Groebner.MatrixError.exhausted 0 1 #["s1@0"]
+  checkLayout ``Hex.Groebner.SparseRow 2 0 #[
+    ("columns","o0"),("coefficients","o1")]
+  checkLayout ``Hex.Groebner.RemainderRow 3 0 #[
+    ("row","o0"),("derivation","o1"),("sugar","o2")]
+  checkLayout ``Hex.Groebner.Echelon 3 0 #[
+    ("rows","o0"),("reducerRank","o1"),("trace","o2")]
+  checkLayout ``Hex.Groebner.Elimination.Result 2 0 #[
+    ("result","o0"),("stats","o1")]
+  checkLayout ``Hex.Groebner.Native.Scan.Result 5 1 #[
+    ("state","o0"),("events","o1"),("work","o2"),("reductions","o3"),
+    ("traceNodes","o4"),("status","s1@0")]
+  checkLayout ``Hex.Groebner.Native.Gather.Result 4 1 #[
+    ("state","o0"),("entries","o1"),("bytes","o2"),("work","o3"),("status","s1@0")]
   checkLayout ``Hex.Groebner.MatrixState.State 20 18 #[
     ("field","s8@0"),("limits","o0"),("columns","o1"),("reducers","o2"),
     ("targets","o3"),("sugars","o4"),("independent","s1@16"),("phase","s1@17"),
