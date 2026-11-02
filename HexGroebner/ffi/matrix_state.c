@@ -18,6 +18,14 @@ extern lean_obj_res lean_hex_matrix_step(lean_obj_arg);
 #define HEX_GROEBNER_CONT_END() ((void)0)
 #endif
 
+#ifndef HEX_GROEBNER_CONT_EXHAUSTED
+#define HEX_GROEBNER_CONT_EXHAUSTED(phase,resource,width) ((void)0)
+#define HEX_GROEBNER_CONT_INVALID(tag,width) ((void)0)
+#define HEX_GROEBNER_CONT_DECLINE(width) ((void)0)
+#define HEX_GROEBNER_CONT_EDGE(width) ((void)0)
+#define HEX_GROEBNER_CONT_ALLOCATE(width) ((void)0)
+#endif
+
 #if UINTPTR_MAX == UINT64_MAX
 
 /* State: 20 objects; modulus/inverse UInt64, independent/phase UInt8.
@@ -57,7 +65,7 @@ static void cont_unpack(continuation *c,lean_obj_arg s) {
     c->phase=lean_ctor_get_uint8(s,20*sizeof(void*)+17);
     for(unsigned i=0;i<20;++i) c->v[i]=cont_take(s,i);
     lean_dec(s);
-    c->columns=lean_unbox(c->v[1]);c->width=c->p<256?1:c->p<65536?2:4;
+    c->columns=lean_unbox(c->v[1]);c->width=c->p<=256?1:c->p<=65536?2:4;
 }
 static int cont_counts(continuation *c) {
     for(unsigned i=0;i<8;++i) {
@@ -91,6 +99,7 @@ static int cont_charge(continuation *c,unsigned stat,unsigned limit,uint64_t amo
 }
 static int cont_work(continuation *c,uint64_t n) {return cont_charge(c,0,5,n);}
 static void cont_error(continuation *c,unsigned resource) {
+    HEX_GROEBNER_CONT_EXHAUSTED(c->phase,resource,c->width);
     lean_object *e=lean_alloc_ctor(5,0,1);lean_ctor_set_uint8(e,0,(uint8_t)resource);
     lean_object *r=lean_alloc_ctor(0,1,0);lean_ctor_set(r,0,e);
     lean_object *some=lean_alloc_ctor(1,1,0);lean_ctor_set(some,0,r);
@@ -122,10 +131,13 @@ static int cont_bounds(continuation *c) {
         lean_object *row=lean_array_get_core(c->v[cursor<nr?2:3],(size_t)(cursor<nr?cursor:cursor-nr));
         if(lean_is_scalar(row) || lean_obj_tag(row)!=0 || lean_ctor_num_objs(row)!=2) return 0;
         uint64_t bytes=lean_sarray_size(lean_ctor_get(row,0)),n=bytes/4;
-        /* A malformed length fails before the row loop. Larger well-shaped
-           rows use the checked Lean phase and never enter this native loop. */
+        /* A malformed length fails before the row loop. The size admission
+           bounds charge amounts as well as reads, keeping saturated large
+           limits exact. Larger well-shaped rows use the checked Lean phase. */
         if(bytes%4 || lean_sarray_size(lean_ctor_get(row,1))!=n*c->width) return 1;
-        return n<=c->columns+1;
+        if(n>c->columns+1) {HEX_GROEBNER_CONT_DECLINE(c->width);return 0;}
+        if(n==c->columns+1) HEX_GROEBNER_CONT_EDGE(c->width);
+        return 1;
     }
     if(c->p<2 || c->p>=UINT64_C(2147483648) ||
        lean_sarray_size(c->v[8])!=c->columns*4 || !lean_is_scalar(c->v[6]) ||
@@ -155,6 +167,7 @@ static int cont_bounds(continuation *c) {
 }
 /* Validator errors carry the original input index and first failing entry. */
 static void cont_invalid(continuation *c,unsigned tag,uint64_t row,uint64_t entry) {
+    HEX_GROEBNER_CONT_INVALID(tag,c->width);
     lean_object *e=lean_alloc_ctor(tag,tag==2?1:2,0);
     lean_ctor_set(e,0,lean_uint64_to_nat(row));
     if(tag!=2) lean_ctor_set(e,1,lean_uint64_to_nat(entry));
@@ -194,6 +207,7 @@ static void cont_workspace(continuation *c) {
     lean_object *slots=lean_alloc_sarray(1,(size_t)slot_bytes,(size_t)slot_bytes);
     if(dense_bytes) memset(lean_sarray_cptr(dense),0,(size_t)dense_bytes);
     if(slot_bytes) memset(lean_sarray_cptr(slots),0,(size_t)slot_bytes);
+    HEX_GROEBNER_CONT_ALLOCATE(c->width);
     cont_replace(c,7,dense);cont_replace(c,8,slots);c->phase=3;
 }
 static int cont_target(continuation *c) {

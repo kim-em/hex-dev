@@ -7,9 +7,11 @@ Authors: Kim Morrison
 module
 
 public import HexGroebnerStateNative
+public import HexGroebner.MatrixValidation
 -- Inspect logical loop bodies only; states are created exclusively by start.
 import all HexGroebner.MatrixState
 import all Init.Data.Range.Basic
+public import HexGroebner.ScanProof
 
 public section
 
@@ -50,70 +52,9 @@ theorem validation_example :
 /-- info: 'Hex.Groebner.MatrixState.validate_error' depends on axioms: [propext, Quot.sound] -/
 #guard_msgs in #print axioms MatrixState.validate_error
 
-/-- Residual validation follows the same input indices as the continuation. -/
-private noncomputable def validateFrom (field : PrimeField) (limits : MatrixLimits)
-    (columns : Nat) (reducers targets : Array SparseRow) (cursor : Nat) : Matrix.Work Unit := do
-  for i in [cursor:reducers.size+targets.size] do
-    Matrix.validate field limits columns i
-      (if i < reducers.size then reducers[i]! else targets[i-reducers.size]!)
-
-private theorem validate_tail (field : PrimeField) (limits : MatrixLimits)
-    (columns : Nat) (reducers targets : Array SparseRow) (cursor : Nat)
-    (h : cursor < reducers.size+targets.size) :
-    validateFrom field limits columns reducers targets cursor = (do
-      Matrix.validate field limits columns cursor
-        (if cursor < reducers.size then reducers[cursor]! else targets[cursor-reducers.size]!)
-      validateFrom field limits columns reducers targets (cursor+1)) := by
-  simp only [validateFrom, Std.Legacy.Range.forIn_eq_forIn_range',
-    Std.Legacy.Range.size, Nat.add_sub_cancel, Nat.div_one]
-  have length : reducers.size+targets.size-cursor =
-      (reducers.size+targets.size-(cursor+1))+1 := by omega
-  rw [length, List.range'_succ]
-  simp
-
-private theorem validate_done (field : PrimeField) (limits : MatrixLimits)
-    (columns : Nat) (reducers targets : Array SparseRow) (cursor : Nat)
-    (h : reducers.size+targets.size ≤ cursor) :
-    validateFrom field limits columns reducers targets cursor = pure () := by
-  simp [validateFrom, Std.Legacy.Range.forIn_eq_forIn_range',
-    Std.Legacy.Range.size, Nat.sub_eq_zero_of_le h]
-
-private theorem validate_error_run (field : PrimeField) (limits : MatrixLimits)
-    (columns : Nat) (reducers targets : Array SparseRow) (cursor : Nat)
-    (stats nextStats : MatrixStats) (error : MatrixError)
-    (h : cursor < reducers.size+targets.size)
-    (hrow : (Matrix.validate field limits columns cursor
-      (if cursor < reducers.size then reducers[cursor]! else targets[cursor-reducers.size]!)).run
-        stats = (.error error,nextStats)) :
-    (validateFrom field limits columns reducers targets cursor).run stats =
-      (.error error,nextStats) := by
-  rw [validate_tail field limits columns reducers targets cursor h]
-  dsimp [ExceptT.run, Bind.bind, ExceptT.bind, ExceptT.bindCont,
-    ExceptT.mk, StateT.bind, Pure.pure, StateT.pure]
-  simp only [ExceptT.run] at hrow
-  rw [hrow] <;> rfl
-
-private theorem validate_ok_run (field : PrimeField) (limits : MatrixLimits)
-    (columns : Nat) (reducers targets : Array SparseRow) (cursor : Nat)
-    (stats nextStats : MatrixStats)
-    (h : cursor < reducers.size+targets.size)
-    (hrow : (Matrix.validate field limits columns cursor
-      (if cursor < reducers.size then reducers[cursor]! else targets[cursor-reducers.size]!)).run
-        stats = (.ok (),nextStats)) :
-    (validateFrom field limits columns reducers targets cursor).run stats =
-      (validateFrom field limits columns reducers targets (cursor+1)).run nextStats := by
-  rw [validate_tail field limits columns reducers targets cursor h]
-  dsimp [ExceptT.run, Bind.bind, ExceptT.bind, ExceptT.bindCont,
-    ExceptT.mk, StateT.bind, Pure.pure, StateT.pure]
-  simp only [ExceptT.run] at hrow
-  rw [hrow] <;> rfl
-
-private theorem forIn_unit (indices : List Nat) (action : Nat → Matrix.Work Unit) :
-    forIn indices () (fun i _ => do action i; pure (.yield ())) =
-      ForM.forM indices action := by
-  induction indices with
-  | nil => rfl
-  | cons i indices ih =>
-    simp only [List.forIn_cons, List.forM_cons, bind_assoc, pure_bind, ih]
+/-- info: 'Hex.Groebner.Matrix.validate_rows' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms Matrix.validate_rows
+/-- info: 'Hex.Groebner.Native.Scan.events_eq' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs in #print axioms Native.Scan.events_eq
 
 end Hex.Groebner.MatrixStateReplay

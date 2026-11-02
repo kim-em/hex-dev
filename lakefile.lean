@@ -280,6 +280,7 @@ lean_lib HexGroebnerMonomialNative where
 lean_lib HexGroebnerEliminationNative where
   roots := #[`HexGroebnerEliminationNative]
   globs := #[.one `HexGroebnerEliminationNative, .one `HexGroebner.Matrix,
+    .one `HexGroebner.MatrixValidation,
     .one `HexGroebner.Elimination]
   precompileModules := true
   moreLinkObjs := #[hexgroebnerEliminationO]

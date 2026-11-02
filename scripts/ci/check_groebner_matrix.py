@@ -304,6 +304,14 @@ static uint64_t whole_accepted=0,whole_deferred=0,whole_joint=0,whole_independen
 #define HEX_GROEBNER_MATRIX_DEFERRED() (++whole_deferred)
 #define lean_hex_groebner_eliminate_matrix hex_test_whole
 static uint64_t continuation_phases[8]={0};
+static uint64_t cont_exhausted[8][7]={{0}},cont_invalid_masks[6]={0};
+static uint64_t cont_declined_mask=0,cont_edge_mask=0,cont_allocated_mask=0;
+#define HEX_GROEBNER_CONT_EXHAUSTED(p,r,w) (cont_exhausted[p][r]|=UINT64_C(1)<<(w))
+#define HEX_GROEBNER_CONT_INVALID(t,w) (cont_invalid_masks[t]|=UINT64_C(1)<<(w))
+#define HEX_GROEBNER_CONT_DECLINE(w) (cont_declined_mask|=UINT64_C(1)<<(w))
+#define HEX_GROEBNER_CONT_EDGE(w) (cont_edge_mask|=UINT64_C(1)<<(w))
+#define HEX_GROEBNER_CONT_ALLOCATE(w) (cont_allocated_mask|=UINT64_C(1)<<(w))
+
 static uint64_t cont_count=0,cont_factor=0,cont_ticks=0,cont_max_ticks=0,cont_max_units=0,cont_violations=0;
 #define HEX_GROEBNER_CONT_BEGIN(c,r,n) do {cont_count=(n);cont_factor=8*(c)+2*(r)+4224;cont_ticks=0;} while(0)
 #define HEX_GROEBNER_CONT_TICK() (++cont_ticks)
@@ -325,6 +333,14 @@ LEAN_EXPORT lean_obj_res __wrap_lean_hex_matrix_advance(lean_obj_arg state,b_lea
 }
 LEAN_EXPORT lean_obj_res hex_test_continuation_count(lean_obj_arg world) {
  (void)world;return lean_io_result_mk_ok(lean_box_uint64(continuation_calls));
+}
+LEAN_EXPORT lean_obj_res hex_test_continuation_outcomes(lean_obj_arg world) {
+ const uint64_t widths=(UINT64_C(1)<<1)|(UINT64_C(1)<<2)|(UINT64_C(1)<<4);
+ int ok=cont_declined_mask==widths && cont_edge_mask==widths && cont_allocated_mask==widths;
+ for(unsigned t=2;t<=4;++t) ok=ok && cont_invalid_masks[t]==widths;
+ ok=ok && cont_exhausted[1][2]==widths && cont_exhausted[1][4]==widths && cont_exhausted[1][5]==widths;
+ ok=ok && cont_exhausted[2][4]==widths && cont_exhausted[2][5]==widths;
+ (void)world;return lean_io_result_mk_ok(lean_box(ok));
 }
 LEAN_EXPORT lean_obj_res hex_test_continuation_workspaces(lean_obj_arg world) {
  (void)world;return lean_io_result_mk_ok(lean_box_uint64(continuation_phases[2]));
@@ -548,6 +564,7 @@ def probeO (pkg : Package) (name : String) (flags : Array String) : FetchM (Job 
 @[extern "hex_test_continuation_count"] opaque continuationCount : IO UInt64
 @[extern "hex_test_continuation_validations"] opaque continuationValidations : IO UInt64
 @[extern "hex_test_continuation_workspaces"] opaque continuationWorkspaces : IO UInt64
+@[extern "hex_test_continuation_outcomes"] opaque continuationOutcomes : IO Bool
 @[extern "hex_test_continuation_phases"] opaque continuationPhases : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_continuation_bounds"] opaque continuationBounds : IO (UInt64 × UInt64 × UInt64)
 @[extern "hex_test_index_count"] opaque indexCount : IO UInt64
@@ -591,6 +608,9 @@ def main : IO Unit := do
   Hex.Groebner.NativeChecks.run
   let continuationCalls ← continuationCount
   if continuationCalls == 0 then throw (IO.userError "native continuation unused")
+  if !(← continuationOutcomes) then
+    throw (IO.userError "native validation/workspace outcomes missing at some coefficient width")
+  IO.println "native validation/workspace outcomes: all widths, errors, exhaustion, admission edges and allocation"
   let workspaces ← continuationWorkspaces
   if workspaces == 0 then throw (IO.userError "native continuation workspace unused")
   IO.println s!"native continuation workspaces: {workspaces}"

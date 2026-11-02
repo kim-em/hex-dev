@@ -169,6 +169,39 @@ def validationChecks : Bool := Id.run do
           if state.phase != .done then return false
   return true
 
+/-- Exercise workspace charges immediately below/at the exact boundary for
+all coefficient widths, including a work failure after the byte charge. -/
+def workspaceChecks : Bool := Id.run do
+  for field in Fixtures.fields do
+    let some row := SparseRow.ofEntries field 3 #[(0,1),(2,1)] | return false
+    let initial := MatrixState.start field {} 3 #[row] #[row] #[] false
+    let mut validated := initial
+    for _ in [:8] do
+      if validated.phase == .workspace then break
+      validated := MatrixState.advancePortable validated 1
+    if validated.phase != .workspace then return false
+    let bytes := 3*(field.width.bytes+4)
+    let total := validated.stats.packedBytes+bytes
+    let work := validated.stats.work+bytes
+    for limits in ([{packedBytes := total-1},{packedBytes := total},
+        {work := work-1}] : List MatrixLimits) do
+      let mut state := MatrixState.start field limits 3 #[row] #[row] #[] false
+      for _ in [:8] do
+        if state.phase == .workspace then break
+        state := MatrixState.advance state 1
+      if state.phase != .workspace then return false
+      let saved := snapshot state
+      let expected := MatrixState.advancePortable state 1
+      let actual := MatrixState.advance state 1
+      if expected.phase != actual.phase || snapshot expected != snapshot actual ||
+          snapshot state != saved then return false
+      if expected.phase == .done then
+        if !equal ⟨expected.result.getD (.error .rowUpdate),expected.stats⟩
+            ⟨actual.result.getD (.error .rowUpdate),actual.stats⟩ then return false
+  return true
+
+#guard workspaceChecks
+
 #guard validationChecks
 
 #guard boundaries

@@ -628,8 +628,8 @@ The build-time `MatrixLayout` conformance check compares the listed matrix recor
 from `matrix_state.c`, including field names, object slots, scalar offsets
 and same-type swaps.
 
-Within the admitted 64-bit geometry, native validation scans at most
-`columns+1` entries per phase and preserves the first error's row/entry indices
+Within the admitted 64-bit geometry, native validation admits at most
+`columns+1` entries per phase, bounding charge amounts as well as reads and preserves the first error's row/entry indices
 and resource prefix. Larger well-shaped rows use the checked Lean phase.
 Malformed packed lengths fail before the entry loop. `validate_ok` and
 `validate_error` state the corresponding successful and failed Lean model
@@ -639,3 +639,9 @@ The admitted native workspace phase charges packed bytes and work before
 allocating its zeroed dense and slot buffers. At most 524,288 bytes are
 allocated for the admitted column/width geometry. Exhaustion retains the
 exact charged prefix and leaves the previous buffers unchanged.
+
+`MatrixValidation.validate_rows` equates combined-cursor validation with the
+reference's reducer-then-target loops, including first errors and charged
+prefixes. `Native.Scan.events_eq` proves that an untraced scalar scan produces
+no derivation events. These reusable component lemmas do not prove completed
+continuation equivalence or its general phase-fuel bound.

@@ -31,7 +31,7 @@ The shared EPYC 9455 host has 96 logical CPUs. One algorithm thread is requested
 | bulk | 1 | 512 | 46.075 | 67.055 | 1.4553 | 67632 | 67700 | False/False |
 | bulk | 1 | 1024 | 85.840 | 126.473 | 1.4733 | 67580 | 67644 | False/False |
 
-Complete result hashes agree across all three functions at every size. No sample is below the runner signal floor. Exported linear-model fits:
+Complete result hashes agree across all three functions at every size. No sample is below the runner signal floor. The fitted slope is the regression of log(time/n) against log(n); zero corresponds to the declared linear model. Exported linear-model fits:
 
 | Comparator | Block | Arm | Verdict | Slope |
 | --- | ---: | --- | --- | ---: |
@@ -48,7 +48,7 @@ These observations cover this sparse family and do not imply a general F4 speedu
 
 Fresh F4 compute/reference SHA256 values remain `fb8e8c73858b122576cc3fe631a47876d10c6af06ec86b6d4ad93d980b76b617` and `7936068cb67aab7824434fe4e2bfeb5f3ecadf13427e3f63b01ccd852f338ad0`, byte-identical to the earlier twenty-object refactoring source. Existing full-system observations retain their original provenance. Candidate production, certificate generation, independent certification and kernel checking are not measured by these standalone kernels.
 
-Build-time conformance now checks field names, object slots, scalar offsets and phase/resource/error constructor order against the manually mirrored matrix-layout table, including a negative same-kind permutation check. Eight Clang/GCC ASan/UBSan variants pass with loop-schedule instrumentation: maximum 105 loop iterations and a 528,516 cap-arithmetic product, zero loop-count errors. These counters check only loop schedule/cap arithmetic, not actual phase cost. Copy-byte bounds are analytical and supported by alias/snapshot tests; the harness does not instrument every allocator copy. Mimalloc limits sanitizer coverage and leak detection is disabled. Current library/conformance/benchmark builds, all 39 benchmark verifications, DAG, phase, release-manifest, header and line checks pass; independent oracles and both 1,134-case drivers also pass for this source.
+Build-time conformance checks field names, object slots, scalar offsets and phase/resource/error constructor order against the manually mirrored matrix-layout table, including a negative same-kind permutation check. Eight Clang/GCC ASan/UBSan variants pass with loop-schedule instrumentation: maximum 105 loop iterations and a 528,516 cap-arithmetic product, zero loop-count errors. These counters check only loop schedule/cap arithmetic, not actual phase cost. Copy-byte bounds are analytical and supported by alias/snapshot tests; the harness does not instrument every allocator copy. Mimalloc limits sanitizer coverage and leak detection is disabled. Current library/conformance/benchmark builds, all 39 benchmark verifications, DAG, phase, release-manifest, header and line checks pass; independent oracles and both 1,134-case drivers also pass for this source.
 
 [Raw capsule](raw/matrix-validation-14564559e1b2.tar.gz), SHA256 `7c6c7adcc9ceaa46c7ac7ad7fb5bf883c27457d1efbdb7db4be2e53402177429`; 155 exact Git source blobs and 280 payload digests verified after packing.
 
@@ -72,3 +72,17 @@ The first direct before/after campaign compares the original continuation A (sou
 The direct campaign leases CPU 20, with host loads [25.6904296875, 24.99560546875, 19.43798828125] → [23.7255859375, 24.49365234375, 19.6123046875]. All twenty samples remain. Native validation takes 0.475–0.517 times the old continuation time in these samples. All exported linear-model fits are consistent with the model; finite timings are not an asymptotic proof or a universal speedup claim.
 
 Each sanitizer variant executes 302,467 native validation phases. Tests cover malformed lengths, coefficients and columns at all seven field fixtures, saved paused states, exact errors and resource prefixes, the native row-size boundary and its checked fallback. `validate_ok` and `validate_error` audit to `propext` and `Quot.sound`; the exact charge-result lemma has no axioms. Residual validation-tail lemmas preserve monadic failure behavior. These are component lemmas; complete legacy-reference equivalence and the general fuel proof remain outstanding.
+
+The measured snapshots have per-phase counters, so their result comparisons
+do not establish native branch coverage. Subsequent conformance adds outcome
+masks for every coefficient width, requiring native malformed-input errors,
+validation/workspace exhaustion, the row admission edge and fallback, and
+workspace allocation. Exact workspace byte/work boundaries are tested for
+each field. These additions have separate logs and do not replace the raw
+measured snapshots. Validation charge admission bounds saturation arithmetic
+as well as reads; it is not merely a loop limit.
+
+In bulk block 1 both arms slow substantially relative to block 0; the ratio
+at 64 columns consequently falls below one. All observations remain, with no
+cause inferred or sample discarded. Those ratios are local observations, not
+a uniform advantage over bulk elimination.

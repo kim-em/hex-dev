@@ -6,7 +6,7 @@ Authors: Kim Morrison
 
 module
 
-public import HexGroebner.Matrix
+public import HexGroebner.MatrixValidation
 public import HexGroebner.Native
 public import HexGroebner.NativeScan
 public import HexGroebner.NativeGather
