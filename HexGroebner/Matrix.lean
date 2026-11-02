@@ -189,7 +189,7 @@ def validate (field : PrimeField) (limits : MatrixLimits)
 /-- Bounded native row validation. `PrimeField` is its UInt64 modulus; all
 remaining inputs are borrowed Lean records, Nat indices and packed byte arrays.
 Native code returns `some` exactly on the admitted 64-bit geometry: at most
-65536 columns and `columns+1` entries, with counters below `2^62`. This caps one
+`2^32−1` columns and 65537 entries, with counters below `2^62`. This caps one
 uninterruptible row call at 65537 entry inspections and 524296 payload bytes.
 Larger allowances saturate above every reachable total; error indices remain
 arbitrary Nat. A decline happens before charges and uses the original validator.
@@ -203,7 +203,7 @@ validator error and charged prefix. -/
 def attemptValidation (field : PrimeField) (limits : @& MatrixLimits)
     (columns index : @& Nat) (row : @& SparseRow) (stats : @& MatrixStats) :
     Option (Except MatrixError Unit × MatrixStats) :=
-  if USize.size != 2^64 || columns > 65536 || row.size > columns+1 ||
+  if USize.size != 2^64 || columns > 4294967295 || row.size > 65537 ||
       stats.work > 2^62-1 || stats.inputEntries > 2^62-1 ||
       stats.outputEntries > 2^62-1 || stats.packedBytes > 2^62-1 ||
       stats.traceNodes > 2^62-1 || stats.processedRows > 2^62-1 ||

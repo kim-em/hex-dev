@@ -343,9 +343,11 @@ defer:
 LEAN_EXPORT lean_obj_res lean_hex_matrix_validate(uint64_t p,b_lean_obj_arg limits,
         b_lean_obj_arg columns,b_lean_obj_arg index,b_lean_obj_arg row,b_lean_obj_arg stats) {
 #if UINTPTR_MAX == UINT64_MAX
-    if(!lean_is_scalar(columns) || lean_unbox(columns)>65536) return lean_box(0);
+    if(!lean_is_scalar(columns) || lean_unbox(columns)>UINT32_MAX) return lean_box(0);
     uint64_t cols=lean_unbox(columns),n=lean_sarray_size(lean_ctor_get(row,0))/4;
-    if(n>cols+1) return lean_box(0);
+    /* Bound inspected row entries independently of the ambient column count.
+       At most 524296 valid payload bytes are read before returning to Lean. */
+    if(n>65537) return lean_box(0);
     uint64_t counts[8],allow[7];
     for(unsigned i=0;i<8;++i) {
         lean_object *v=lean_ctor_get(stats,i);

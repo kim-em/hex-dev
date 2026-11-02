@@ -26,7 +26,8 @@ def checked : Bool := Id.run do
     let rows := #[{},ordinal 4,ordinal 5,row,{columns := shared,coefficients := shared},
       {row with columns := Packed.set .u32 row.columns 1 65536},
       {row with columns := Packed.set .u32 row.columns 1 65537},
-      {row with columns := Packed.set .u32 row.columns 1 4294967295},{row with columns := row.columns.push 0},
+      {row with columns := Packed.set .u32 row.columns 1 4294967295},
+      {row with columns := Packed.set .u32 row.columns 1 4294967294},{row with columns := row.columns.push 0},
       {row with coefficients := row.coefficients.push 0},
       {row with coefficients := Packed.set field.width row.coefficients 1 0},
       {row with coefficients := Packed.set field.width row.coefficients 1 field.modulus},
@@ -35,7 +36,7 @@ def checked : Bool := Id.run do
     for input in rows do
       let saved := (input.columns.data.toList,input.coefficients.data.toList)
       for index in [0,2^90] do
-        for columns in [0,2,3,65536,65537,2^90] do
+        for columns in [0,2,3,65536,65537,65538,4294967295,4294967296,2^90] do
           for allowance in [0,1,2,3,4,8,16,64,2^62+17,2^63-1,2^90] do
             for limits in ([
                 {work := allowance,inputEntries := allowance,packedBytes := allowance},
@@ -54,7 +55,7 @@ def checked : Bool := Id.run do
                 let expected := (Matrix.validate field limits columns index input).run stats
                 let actual := (Matrix.validateWith field limits columns index input).run stats
                 if !same expected actual then return false
-                let admitted := USize.size == 2^64 && columns <= 65536 && input.size <= columns+1 &&
+                let admitted := USize.size == 2^64 && columns <= 4294967295 && input.size <= 65537 &&
                   ([stats.work,stats.inputEntries,stats.outputEntries,stats.packedBytes,
                     stats.traceNodes,stats.processedRows,stats.reductions,stats.zeroRows].all (· <= 2^62-1))
                 let attempted := Matrix.attemptValidation field limits columns index input stats
@@ -76,6 +77,28 @@ def checked : Bool := Id.run do
     if let some bytes := attempted then
       if bytes.data != actual.data then return false
   return true
+
+/-- Row length bounds native work independently of the ambient column count. -/
+def lengthChecks : Bool := Id.run do
+  for field in Fixtures.fields do
+    let make (n : Nat) : SparseRow := Id.run do
+      let mut row : SparseRow := {}
+      for i in [:n] do
+        row := {
+          columns := Packed.push .u32 row.columns i.toUInt64
+          coefficients := Packed.push field.width row.coefficients 1 }
+      return row
+    for n in [65537,65538] do
+      let row := make n
+      for columns in [0,65536,65537,4294967295] do
+        let expected := (Matrix.validate field {} columns (2^90) row).run {}
+        let actual := (Matrix.validateWith field {} columns (2^90) row).run {}
+        if !same expected actual then return false
+        let attempted := Matrix.attemptValidation field {} columns (2^90) row {}
+        if attempted.isSome != (USize.size == 2^64 && n <= 65537) then return false
+  return true
+
+#guard lengthChecks
 
 /-- The disabled native-row route succeeds on every field fixture. The compiled
 harness additionally requires both primitive call counters to remain unchanged. -/

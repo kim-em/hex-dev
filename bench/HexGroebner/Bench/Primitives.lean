@@ -34,6 +34,18 @@ def matrixValidate (row : SparseRow) :=
 def matrixValidateReference (row : SparseRow) :=
   consumeValidation ((Matrix.validate primitiveField {} row.size 0 row).run {})
 
+/-- Short rows in the full UInt32 column range, without a wide dense workspace. -/
+def matrixValidateWide (row : SparseRow) :=
+  consumeValidation ((Matrix.validateWith primitiveField {} 4294967295 0 row).run {})
+
+/-- The same wide geometry through the original portable validator. -/
+def matrixValidateWideReference (row : SparseRow) :=
+  consumeValidation ((Matrix.validate primitiveField {} 4294967295 0 row).run {})
+
+#guard (#[1,4,16,64,256,1024,4096,16384,65536].all fun n =>
+  let row := prepareValidation n
+  (matrixValidateWide row).1 && matrixValidateWide row == matrixValidateWideReference row)
+
 /-- All zero-buffer bytes are consumed by structural hashing. -/
 def matrixZeros (n : Nat) := Matrix.zerosWith n
 
@@ -79,6 +91,29 @@ setup_benchmark matrixZeros n => n
 
 -- Portable allocation/zeroing and identical complete byte consumption cost O(n).
 setup_benchmark matrixZerosReference n => n
+  where {
+    paramFloor := 1
+    paramCeiling := 65536
+    paramSchedule := .custom #[1,4,16,64,256,1024,4096,16384,65536]
+    targetInnerNanos := 4000000000
+    maxSecondsPerCall := 32.0
+  }
+
+
+-- O(n): ambient column count is metadata; validation reads n sparse entries.
+setup_benchmark matrixValidateWide n => n
+  with prep := prepareValidation
+  where {
+    paramFloor := 1
+    paramCeiling := 65536
+    paramSchedule := .custom #[1,4,16,64,256,1024,4096,16384,65536]
+    targetInnerNanos := 4000000000
+    maxSecondsPerCall := 32.0
+  }
+
+-- O(n): the original validator reads the same n entries and exact counters.
+setup_benchmark matrixValidateWideReference n => n
+  with prep := prepareValidation
   where {
     paramFloor := 1
     paramCeiling := 65536
