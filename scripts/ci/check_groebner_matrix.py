@@ -846,6 +846,9 @@ def main : IO Unit := do
   IO.println s!"exclusive owned comparisons: reuses={afterOwned-beforeOwned}, aliased insertions={afterAlias-beforeAlias}"
   let primitiveSeed ← Hex.Groebner.NativeChecks.readSeed
   IO.println s!"primitive conformance seed: {primitiveSeed}"
+  if !Hex.Groebner.DenseMatrixConformance.frameChecks primitiveSeed then
+    throw (IO.userError "dense normalized/target frame boundaries differ")
+  IO.println "dense normalized/target frames: exact parent refusal and density boundaries passed"
   let beforeDense ← denseCounts
   if !Hex.Groebner.DenseConformance.packetChecks primitiveSeed ||
       !Hex.Groebner.DenseMatrixConformance.admissionChecks primitiveSeed ||
@@ -885,9 +888,14 @@ def main : IO Unit := do
     throw (IO.userError "dense pivot native materialization/update was not exercised")
   IO.println s!"dense pivot calls: {afterDense}"
   let beforeDenseF4 ← denseCounts
+  let beforeDenseF4Frames ← wholeCounts
   if !Hex.Groebner.DenseMatrixConformance.fullChecks primitiveSeed then
     throw (IO.userError "complete dense/sparse F4 basis differs")
   let afterDenseF4 ← denseCounts
+  let afterDenseF4Frames ← wholeCounts
+  if afterDenseF4Frames.2 ≤ beforeDenseF4Frames.2 then
+    throw (IO.userError "complete F4 fixture did not reach the continuation")
+  IO.println s!"dense full-F4 bulk declines: {afterDenseF4Frames.2-beforeDenseF4Frames.2}"
   if afterDenseF4.2.2 ≤ beforeDenseF4.2.2 then
     throw (IO.userError "complete F4 did not exercise dense pivot updates")
   IO.println s!"dense full-F4 updates: {afterDenseF4.2.2-beforeDenseF4.2.2}"

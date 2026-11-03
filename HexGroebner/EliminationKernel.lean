@@ -280,8 +280,9 @@ workspace initialization. For each target, `entries` covers known-pivot updates,
 `(targets + 3) * columns` covers target-pivot updates, dense scanning, gathering
 and normalization, and 64 allows inversion. A pivot is used at most once per
 target because scanning advances through its leading column. The final
-`columns` covers pivot ordering. These deliberately overlapping bounds ensure
-at most `2^20` work on every supported successful reference computation. -/
+`columns` covers pivot ordering. These deliberately overlapping bounds cover
+the sparse computation. Optional dense preparation adds separately charged work;
+`attemptPortable` also checks the final total against `2^20`. -/
 def fits (field : PrimeField) (limits : MatrixLimits) (columns : Nat)
     (reducers targets : Array SparseRow) (sugars : Array Nat) : Bool := Id.run do
   let rows := reducers.size + targets.size
@@ -331,9 +332,11 @@ The matrix owns its dense workspace; all inputs remain immutable, including
 shared reducer/target arrays. Unsupported shapes return `none` without changing
 inputs, and a reference-equivalent continuation runs after the native frame. A declined
 attempt's physical work is unreported but bounded by the remaining allowance
-and `2^20`. By `fits`'s bound, a decline after charged work implies reference
-failure; F4 terminates that computation/resumption at the matrix failure, so
-there is at most one such speculative failure per computation or resumption. -/
+and `2^20`. Without dense preparation, the shape bound makes a charged decline
+imply reference failure. With dense preparation, a successful reference may
+exceed the frame quantum and continue outside the frame. Such a declined
+prefix costs less than that frame's reference work; this can occur on multiple
+matrices, so the overhead bound is per frame rather than per computation. -/
 @[extern "lean_hex_groebner_eliminate_matrix"]
 def attempt (field : PrimeField) (limits : @& MatrixLimits) (columns : @& Nat)
     (reducers targets : @& Array SparseRow) (sugars : @& Array Nat) (independent : Bool) :

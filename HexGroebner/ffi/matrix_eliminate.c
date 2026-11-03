@@ -207,7 +207,11 @@ static lean_object *matrix_gather(matrix_context *c,uint64_t column,uint64_t las
    contains exact reference rows and eight Nat counters, using the layouts in
    EliminationKernel.lean. None releases all local owners and permits bounded
    continuation outside this frame. Charged speculative work before a decline is bounded
-   by min(parent remaining work,2^20); such a decline implies reference failure.
+   by min(parent remaining work,2^20). With optional preparation, the reference
+   may succeed above the frame quantum. A declined prefix then costs less than
+   its own reference computation; this per-frame overhead can recur on multiple
+   matrices. Without preparation, the shape bound makes a charged decline imply
+   reference failure.
    Scan/gather symbols come from HexGroebnerMatrixNative. Lake links its complete
    imported shared library; keep that carrier dependency and these ABIs intact. */
 LEAN_EXPORT lean_obj_res lean_hex_groebner_eliminate_matrix(uint64_t p,

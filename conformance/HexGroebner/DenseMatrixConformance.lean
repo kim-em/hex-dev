@@ -134,6 +134,8 @@ def mixedChecks (seed : Nat) : Bool := Id.run do
     if (cache.rows[0]?.map (·.dense.isEmpty)).getD true ||
         !(cache.rows[1]?.map (·.dense.isEmpty)).getD false ||
         (cache.rows[2]?.map (·.dense.isEmpty)).getD true then return false
+    for i in [3:cache.rows.size] do
+      if !(cache.rows[i]?.map (·.dense.isEmpty)).getD false then return false
     if independent && (a.remainders.size != 3 || a.remainders.any (·.row.size != 1)) then return false
   return true
 
@@ -163,7 +165,8 @@ def dispatchChecks (seed : Nat) (boundaries : Bool) : Bool := Id.run do
 
 /-- Preparation charges can exhaust the bulk frame's fixed quantum even when
 its original sparse shape bound admits the frame. Accepted and declined results
-agree with the independent reference evaluation. -/
+agree with the independent reference evaluation. A quantum decline can be
+followed by a successful reference and is bounded per frame. -/
 def capChecks (seed : Nat) : Bool := Id.run do
   for count in [512,1024] do
     let mut rows : Array SparseRow := #[]
@@ -180,6 +183,56 @@ def capChecks (seed : Nat) : Bool := Id.run do
     if !resultEq (a.map (·.result)) (b.map (·.result)) || a.map (·.stats) != b.map (·.stats) ||
         a.isSome != (count == 512) then return false
   return true
+
+private def attempts (limits : MatrixLimits) (columns : Nat)
+    (reducers targets : Array SparseRow) : Bool :=
+  let a := Elimination.attempt field limits columns reducers targets #[] false
+  let b := Elimination.attemptPortable field limits columns reducers targets #[] false
+  resultEq (a.map (·.result)) (b.map (·.result)) && a.map (·.stats) == b.map (·.stats)
+
+/-- Non-monic reducers and newly installed target pivots pin the density
+boundary and the parent's exact refusal/acceptance split before native fallback. -/
+def frameChecks (seed : Nat) : Bool := Id.run do
+  let mut refused := false
+  for span in [170,171] do
+    let mut row : SparseRow := ⟨{},{}⟩
+    for i in [:128] do
+      let column := if i == 127 then span-1 else i
+      row := ⟨Packed.push .u32 row.columns column.toUInt64,
+        Packed.push .u32 row.coefficients (i+2+seed%7).toUInt64⟩
+    for target in [false,true] do
+      let reducers := if target then #[] else #[row]
+      let targets := #[row,row]
+      let limits : MatrixLimits := { work := 10000000,densePivots := true }
+      let dense := Elimination.run field limits 174 reducers targets false #[] false false
+      let sparse := Elimination.run field { limits with densePivots := false } 174
+        reducers targets false #[] false false
+      if !dense.result.isOk || !sparse.result.isOk || !attempts limits 174 reducers targets then return false
+      let cost := dense.stats.work-sparse.stats.work
+      let bytes := dense.stats.packedBytes-sparse.stats.packedBytes
+      if (span == 170 && (cost == 0 || bytes == 0)) || (span == 171 && (cost != 0 || bytes != 0)) then return false
+      if span == 170 then
+        let mut checkpoint := MatrixState.start field limits 174 reducers targets #[] false
+        for _ in [:32] do
+          checkpoint := MatrixState.advancePortable checkpoint 1
+          if checkpoint.pivots.size == 1 then break
+        if checkpoint.pivots.size != 1 then return false
+        let pre := checkpoint.stats.work-cost
+        let preBytes := checkpoint.stats.packedBytes-bytes
+        if sparse.stats.work ≥ pre+cost then return false
+        for budget in [pre+cost-1,pre+cost,sparse.stats.work] do
+          let bounded := { limits with work := budget }
+          if !attempts bounded 174 reducers targets then return false
+          let result := Elimination.attempt field bounded 174 reducers targets #[] false
+          if budget < pre+cost then
+            let some result := result | return false
+            if result.stats.work != sparse.stats.work then return false
+            refused := true
+        for budget in [preBytes+bytes-1,preBytes+bytes,sparse.stats.packedBytes] do
+          if !attempts { limits with packedBytes := budget } 174 reducers targets then return false
+  return refused
+
+#guard frameChecks 0
 
 #guard capChecks 0
 
