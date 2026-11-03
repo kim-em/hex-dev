@@ -41,7 +41,8 @@ inductive Phase where
 are fixed by `start`; only absolute cumulative allowances may change on resume.
 Known reducers must be monic with distinct leading columns. Targets are sampled
 with full-field coefficients using `Hex.Rand.nat` rejection draws. A completed
-state does not assert preservation of rank or the Gröbner property. -/
+state does not assert preservation of rank or the Gröbner property. The row
+allowance counts supplied reducers, original targets and generated combinations. -/
 structure State where
   private mk ::
   field : PrimeField

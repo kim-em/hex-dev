@@ -34,7 +34,7 @@ private def options : List String → Nat → Sampling.Config → List String �
   | _,_,_,_ => .error usage
 
 private def sampling (s : Hex.Groebner.Sampled.Statistics) : Json := Json.mkObj [
-  ("calls",toJson s.calls),("randomWords",toJson s.randomWords),
+  ("calls",toJson s.calls),("inputTargets",toJson s.inputTargets),("randomWords",toJson s.randomWords),
   ("combinations",toJson s.combinations),("combinationEntries",toJson s.combinationEntries),
   ("completedBlocks",toJson s.completedBlocks)]
 

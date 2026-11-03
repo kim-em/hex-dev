@@ -109,6 +109,8 @@ private def step (limits : MatrixLimits) (native : Bool) : Work Unit := do
         stop,row := s.start,zeros := 0,trials := 0,sugar,phase := .draw }
   | .draw =>
     if s.row == s.stop then
+      if s.reducers.size+s.targets.size+s.statistics.combinations+1 > limits.rows then
+        throw (.exhausted .rows)
       let dense ← takeDense
       modify fun s => { s with
         phase := .scan,
@@ -244,7 +246,7 @@ private def nextWith (limits : MatrixLimits) (state : State) (native : Bool) : S
   | some _ => return state
   | none => pure ()
   if state.columns > limits.columns then return { state with failure := some (.exhausted .columns) }
-  if state.reducers.size+state.targets.size > limits.rows then return { state with failure := some (.exhausted .rows) }
+  if state.reducers.size+state.targets.size+state.statistics.combinations > limits.rows then return { state with failure := some (.exhausted .rows) }
   let stats := state.statistics.matrix
   if stats.work > limits.work then return { state with failure := some (.exhausted .work) }
   if stats.packedBytes > limits.packedBytes then return { state with failure := some (.exhausted .packedBytes) }

@@ -16,6 +16,7 @@ namespace Hex.Groebner.Sampled
 certification. Counters include every consumed prefix of exhausted calls. -/
 structure Statistics where
   calls : Nat := 0
+  inputTargets : Nat := 0
   randomWords : Nat := 0
   combinations : Nat := 0
   combinationEntries : Nat := 0
@@ -134,7 +135,8 @@ def resumeWith (limits : Limits) (initial : State) (slices := 1000000) : Result 
       | .ok (checkpoint,pending) =>
         state := { state with
           checkpoint,pending,
-          statistics.calls := state.statistics.calls+(if pending.isSome then 1 else 0) }
+          statistics.calls := state.statistics.calls+(if pending.isSome then 1 else 0),
+          statistics.inputTargets := state.statistics.inputTargets+(pending.map (·.matrix.targets.size)).getD 0 }
     else
       let (result,workspace) := (F4.step state.context limits state.generators state.checkpoint).run state.workspace
       state := { state with workspace }

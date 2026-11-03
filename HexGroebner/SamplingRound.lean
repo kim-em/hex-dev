@@ -29,6 +29,7 @@ structure Round where
   inputBytes : Nat
   inputEntries : Nat
   accounted : MatrixStats := {}
+  accountedCombinations : Nat := 0
 
 private def translate (context : Context) (limits : Limits) (matrix : SymbolicMatrix)
     (queue : PairQueue) (pairs : Array CriticalPair) (random : Hex.Rand)
@@ -118,12 +119,16 @@ def Round.account (round : Round) (workspace : Workspace) : Round × Workspace :
     work := stats.work+(current.work-old.work)
     allocatedBytes := stats.allocatedBytes+
       ((current.packedBytes-round.inputBytes)-(old.packedBytes-round.inputBytes))
+    matrixRows := stats.matrixRows+(round.matrix.statistics.combinations-round.accountedCombinations)
+    matrixTargets := stats.matrixTargets+(round.matrix.statistics.combinations-round.accountedCombinations)
+    peakMatrixRows := max stats.peakMatrixRows
+      (round.matrix.reducers.size+round.matrix.targets.size+round.matrix.statistics.combinations)
     matrixEntries := stats.matrixEntries+
       ((current.inputEntries+current.outputEntries)-(old.inputEntries+old.outputEntries))
     matrixReductions := stats.matrixReductions+(current.reductions-old.reductions)
     matrixZeroRows := stats.matrixZeroRows+(current.zeroRows-old.zeroRows)
     peakMatrixEntries := max stats.peakMatrixEntries (current.inputEntries+current.outputEntries) }
-  ({ round with accounted := current },{ workspace with statistics })
+  ({ round with accounted := current,accountedCombinations := round.matrix.statistics.combinations },{ workspace with statistics })
 
 /-- Commit completed unchecked sample pivots to the F4 basis and pair queue.
 This does not certify that their span equals that of all selected targets. -/
