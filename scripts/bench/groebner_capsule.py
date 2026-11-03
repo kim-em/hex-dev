@@ -35,7 +35,7 @@ class Capsule:
                 if member.name != manifest_name and hashlib.sha256(data).hexdigest() != manifest[relative]:
                     raise ValueError("capsule payload digest mismatch: " + relative)
                 self.payloads[relative] = data
-        self.count = len(self.payloads)
+        self.count = len(self.payloads)-1
 
     def read(self, relative):
         return self.payloads[relative]

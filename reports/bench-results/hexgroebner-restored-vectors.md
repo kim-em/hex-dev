@@ -12,7 +12,7 @@ contiguous stores or scatter, runtime CPU/OS feature detection and the existing
 eight-lane/scalar tails. All 8 source-identified Clang/GCC sanitizer
 variants pass, including guarded buffers, malformed lanes, aliasing, resumed
 prefixes and instrumented complete F4 calls on both vector layouts. The separate
-one-line `always_inline` variant changes only geometry helper compilation;
+one-line `always_inline` variant (`b1072a0a1dcb`) changes only geometry helper compilation;
 its fresh CLI build and complete before/after output comparisons pass.
 
 All campaigns compare against frozen source `8f56f7677ce6`, with adjacent
@@ -49,6 +49,6 @@ inputs to the corresponding capsule members before consuming them. Fixed schedul
 there is no retry-until-faster selection. Issue #10987 remains open.
 
 [Raw restored-experiment capsule](raw/f4-rejected-vectors-00dfa6f38a1c.tar.gz): SHA-256
-`393d3b8c2d50b5403807efe5fbe2cdc014c6d723b00ce152928df48e952490ee`, 1032 payloads, each read back and digest
-checked. It contains source patches/manifests, compiler/build/native logs,
+`393d3b8c2d50b5403807efe5fbe2cdc014c6d723b00ce152928df48e952490ee`, 1031 data payloads, each read back and digest
+checked, plus the digest manifest. It contains source patches/manifests, compiler/build/native logs,
 all three campaigns, independent analyses and raw profiles/annotations.

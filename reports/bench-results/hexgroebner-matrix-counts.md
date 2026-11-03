@@ -17,9 +17,8 @@ The external `F4.step` runner separates input normalization, pair rounds and
 final interreduction. Its complete bases and all five matrix counters match
 the separately built candidate driver from the same runtime source; final interchange decoding work is
 absent from that runner and is not equated. All stage source/build records
-are retained. The completed Eco11 M31 stage run is retained and reused by the
-collector. Its per-run binary hash was not separately recorded; the collector
-records a shared binary/source identity for the stage data. Aggregate zero fractions mix these different stages and do not
+are retained. Eco11 M31 stage data has collector-level binary/source identity,
+without a separate per-run binary attestation. Aggregate zero fractions mix these different stages and do not
 predict the rank of an individual sampling block.
 
 | Case | All targets | All zero rows | Pair-round targets | Pair-round zero rows | Pair-round zero fraction | Pair-round pivot applications |
@@ -46,8 +45,9 @@ among 3308 pair-round targets. Its
 concrete candidate for a block-sampling experiment. They establish neither a
 sampling success probability nor a speedup; no sampler is implemented here.
 
-At `285a8a09902b81731fcedf14af06499091724b0d`, all 9 project checks and 8 source-identified
-Clang/GCC sanitizer/SIMD/scalar/remainder variants pass. The emitter verifies
+All 9 project checks pass at `983eb622ba4d651c7c5a0b7256d96bf0e37e7b75`. At
+`285a8a09902b81731fcedf14af06499091724b0d`, all 9 project checks and 8 source-identified
+Clang/GCC sanitizer/SIMD/scalar/remainder variants also pass. The reviewed emitter verifies
 traced/untraced and native/portable counts on 1,134 profiles, and the regenerated
 fixtures preserve every pre-existing field. All 2 complete driver corpora pass.
 The hand-checkable matrix with reducer `x` and targets `1,x` has two targets,
@@ -64,15 +64,15 @@ rechecks the old output fields, raw diagnostic counts, stage sums and complete
 bases before generating this table. Every input consumed from unpacked paths is byte-bound to a capsule member,
 and every payload digest is verified before analysis. The guard command and
 its complete log are read from a separate verified capsule. The historical
-source identifiers are resolved through the retained source patch, tree hashes
-and blob manifest; they need not be independently hosted commit refs.
+source identifiers are bound through the retained source patch, tree hashes
+and blob manifest.
 Candidate production, certificate generation, native verification and kernel
 checking remain distinct. This change makes no performance milestone claim;
 issue #10987 remains open.
 
 [Raw matrix-count capsule](raw/f4-matrix-counts-b6822c6a5f65.tar.gz): SHA-256
-`d10192c5af478079b4222a7781e1c50fc6826d918ca6800c20c1a5d6776dd346`, 303 payloads, each read back and digest
-checked. The raw comparison outputs come from the previously retained
+`d10192c5af478079b4222a7781e1c50fc6826d918ca6800c20c1a5d6776dd346`, 302 data payloads, each read back and digest
+checked, plus the digest manifest. The raw comparison outputs come from the previously retained
 [combined campaign](hexgroebner-combined-performance.md), SHA-256
 `ceb95beadbc9cc4e7e7eae24345b5d05ba6c5fee819056ee8db176d90d474373`. The separate guard capsule is
 [guard validation](raw/f4-matrix-counts-review-983eb622ba4d.tar.gz), SHA-256 `2535cd85ef911a328fd8750707d0b77c4789958e553bc6337fc202c40eea6f9c`.

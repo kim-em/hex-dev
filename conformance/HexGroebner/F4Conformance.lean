@@ -51,7 +51,7 @@ private def matrixCounts (native : Bool) : Bool := Id.run do
   let limits : Limits := { nativeRows := native }
   let (result, workspace) := (countMatrix limits).run ⟨{ arity := 2 },{}⟩
   if !result.isOk || !counts workspace.statistics then return false
-  -- Ordering charges two columns, followed by one support-translation unit.
+  -- Final pivot ordering charges two columns, followed by one support-translation unit.
   -- Leave only one ordering unit: the completed reduction/zero prefix survives.
   let capped := { limits with work := workspace.statistics.work-2 }
   let (result, failed) := (countMatrix capped).run ⟨{ arity := 2 },{}⟩

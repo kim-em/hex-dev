@@ -348,7 +348,8 @@ run_tuple() {
       echo "FAIL: HexGroebner :: standalone candidate driver conformance"
       return 1
     fi
-    if ! python3 -m unittest scripts.oracle.test_groebner_sympy scripts.oracle.test_groebner_singular; then
+    if ! python3 -m unittest scripts.oracle.test_groebner_sympy scripts.oracle.test_groebner_singular \
+        scripts.bench.test_groebner_capsule; then
       echo "FAIL: $lib :: Groebner oracle rejection checks failed"
       return 1
     fi

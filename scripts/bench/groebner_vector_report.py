@@ -21,6 +21,12 @@ def main():
     packed = Capsule(args.archive)
     archive = dict(path=str(args.archive), sha256=packed.sha256, payloads=packed.count)
     vector_manifest = packed.json("avx512-production/manifest.json")
+    inline_manifest = packed.json("geometry-inline-production/manifest.json")
+    inline_patch = packed.text("geometry-inline.patch")
+    additions = [line[1:] for line in inline_patch.splitlines() if line.startswith("+") and not line.startswith("+++")]
+    deletions = [line[1:] for line in inline_patch.splitlines() if line.startswith("-") and not line.startswith("---")]
+    if additions != ["__attribute__((always_inline))"] or deletions or inline_patch.count("diff --git ") != 1 or "diff --git a/HexGroebner/ffi/matrix_scan.c b/HexGroebner/ffi/matrix_scan.c" not in inline_patch:
+        raise ValueError("inline experiment differs from one attribute")
     native = packed.json("reproduction/avx512-native-status.json")
     if len(native) != 2 or {x["name"] for x in native} != {"clang", "gcc"} or any(x["exit_code"] != 0 or len(x["variants"]) != 4 or set(x["variants"]) != {"Native", "Scalar", "Remainder", "ScalarRemainder"} or
                               x["source_fingerprint"] != vector_manifest["source_fingerprint"] for x in native):
@@ -40,7 +46,7 @@ contiguous stores or scatter, runtime CPU/OS feature detection and the existing
 eight-lane/scalar tails. All {sum(len(x['variants']) for x in native)} source-identified Clang/GCC sanitizer
 variants pass, including guarded buffers, malformed lanes, aliasing, resumed
 prefixes and instrumented complete F4 calls on both vector layouts. The separate
-one-line `always_inline` variant changes only geometry helper compilation;
+one-line `always_inline` variant (`{inline_manifest['source_fingerprint']}`) changes only geometry helper compilation;
 its fresh CLI build and complete before/after output comparisons pass.
 
 All campaigns compare against frozen source `{baseline}`, with adjacent
@@ -60,6 +66,9 @@ host context. Sources are never pooled across campaigns.
         for name in ["metadata.json", "analysis.json", "candidate-analysis.json"]:
             packed.bind(directory / name, relative + "/" + name)
         metadata = packed.json(relative + "/metadata.json")
+        expected = inline_manifest if label == "Forced inline" else vector_manifest
+        if metadata["source_fingerprint"] != expected["source_fingerprint"] or metadata["source_fingerprint_after"] != expected["source_fingerprint"] or not metadata["source_unchanged"] or metadata["manifest_binary_sha256"] != expected["binary_sha256"] or metadata["binary_sha256"]["B"] != expected["binary_sha256"]["compute"] or metadata["binary_sha256"]["A"] != metadata["baseline_manifest"]["binary_sha256"]["compute"]:
+            raise ValueError("vector campaign source mismatch")
         if metadata["baseline_source_fingerprint"] != baseline:
             raise ValueError("vector baseline mismatch")
         for sample in metadata["samples"]:
@@ -91,8 +100,8 @@ inputs to the corresponding capsule members before consuming them. Fixed schedul
 there is no retry-until-faster selection. Issue #10987 remains open.
 
 [Raw restored-experiment capsule](raw/{Path(archive['path']).name}): SHA-256
-`{archive['sha256']}`, {archive['payloads']} payloads, each read back and digest
-checked. It contains source patches/manifests, compiler/build/native logs,
+`{archive['sha256']}`, {archive['payloads']} data payloads, each read back and digest
+checked, plus the digest manifest. It contains source patches/manifests, compiler/build/native logs,
 all three campaigns, independent analyses and raw profiles/annotations.
 '''
     if args.check:

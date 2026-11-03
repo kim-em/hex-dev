@@ -67,7 +67,8 @@ private def pruneExample : Bool :=
 
 /-- Trace-node exhaustion must retain the matrix prefix before Producer.solve
 maps the failed matrix result. Joint and independent calls reach different
-prefixes because independent targets retain their original order. -/
+prefixes because independent targets retain their original order. The joint
+case pins counting a completed pivot application before recording its trace node. -/
 private def matrixPrefix (native independent : Bool) : Bool := Id.run do
   let field : PrimeField := ⟨7,Hex.Nat.isPrimeTrial_isPrime (by decide),by decide⟩
   let context : Context := ⟨field,2,.grevlex⟩
