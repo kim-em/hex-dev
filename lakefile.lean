@@ -1995,6 +1995,10 @@ lean_exe hexgroebner_compute_full where
   srcDir := "bench"
   root := `HexGroebner.Driver.Full
 
+lean_exe hexgroebner_sample_full where
+  srcDir := "bench"
+  root := `HexGroebner.Driver.SampledFull
+
 lean_exe hexgroebner_sampling_checks where
   srcDir := "conformance"
   root := `HexGroebner.SampledChecks
