@@ -207,12 +207,52 @@ def verify_guards(guards, current, expanded=False, bulk=False):
             require(guards.text(compiler+'.log').splitlines().count('public M31 cached-option bulk frames: 12 accepted; exact boundary counters and work cap passed')==4,'bulk-frame boundary coverage missing')
     return runtime_sha,checks_sha
 
+def executable_text(blob, lean):
+    """Remove comments while preserving quoted C/Lean strings and all code."""
+    data=blob.decode();out=[];i=0
+    opening,closing=('/-','-/')if lean else('/*','*/')
+    while i<len(data):
+        if data[i]=='"'or(not lean and data[i]=="'"):
+            quote=data[i];start=i;i+=1
+            while i<len(data)and data[i]!=quote:
+                i+=2 if data[i]=='\\'else 1
+            require(i<len(data),'unterminated quoted source');i+=1;out.append(data[start:i])
+        elif data.startswith(opening,i):
+            i+=2;depth=1
+            while i<len(data)and depth:
+                if lean and data.startswith(opening,i):depth+=1;i+=2
+                elif data.startswith(closing,i):depth-=1;i+=2
+                else:i+=1
+            require(depth==0,'unterminated source comment');out.append(' ')
+        elif data.startswith('--'if lean else'//',i):
+            end=data.find('\n',i);i=len(data)if end<0 else end
+        else:out.append(data[i]);i+=1
+    return ''.join(out)
+
+
+def documentation_only(science, guards):
+    measured=science.json('dense-bulk/manifest.json')['source_manifest']
+    current=guards.text('runtime.manifest')
+    def paths(listing):return {line.split('\t',1)[1]for line in listing.splitlines()}
+    require(paths(measured)==paths(current),'verification runtime paths differ')
+    changed=set()
+    for path in paths(measured):
+        a=science.read('dense-bulk/root-sources/'+path);b=guards.read('runtime-sources/'+path)
+        if a==b:continue
+        changed.add(path)
+        require(path in {'HexGroebner/EliminationKernel.lean','HexGroebner/ffi/matrix_eliminate.c'}and
+                executable_text(a,path.endswith('.lean'))==executable_text(b,path.endswith('.lean')),
+                'executable source changed after the timed revision')
+    require(changed=={'HexGroebner/EliminationKernel.lean','HexGroebner/ffi/matrix_eliminate.c'},'documentation correction coverage differs')
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     for name in ['experiments','first','final','baseline','old-baseline','guards','report']:
         parser.add_argument('--'+name,type=Path,required=True)
     parser.add_argument('--reviewed',type=Path);parser.add_argument('--reviewed-guards',type=Path)
     parser.add_argument('--bulk',type=Path);parser.add_argument('--bulk-guards',type=Path)
+    parser.add_argument('--verified-guards',type=Path)
     parser.add_argument('--check',action='store_true');parser.add_argument('--current',action='store_true')
     args=parser.parse_args()
     experiments,first,final,baseline,old,guards=map(Capsule,[args.experiments,args.first,args.final,args.baseline,args.old_baseline,args.guards])
@@ -237,6 +277,18 @@ def main():
         current=bulk.json('dense-bulk/manifest.json')
         runtime_sha,checks_sha=verify_guards(bulk_guards,current,True,True)
         latest_science,latest_guards,latest_label=bulk,bulk_guards,'dense-bulk'
+    verified=None
+    if args.verified_guards:
+        require(bulk is not None,'final verification requires measured bulk history')
+        verified=Capsule(args.verified_guards)
+        documentation_only(bulk,verified)
+        runtime_sha,checks_sha=verify_guards(verified,{'source_manifest':verified.text('runtime.manifest')},True,True)
+        latest_guards=verified
+        for compiler in ['clang','gcc']:
+            lines=verified.text(compiler+'.log').splitlines()
+            require(lines.count('dense normalized/target frames: exact parent refusal and density boundaries passed')==4,'normalized/target native coverage missing')
+            counts=[int(line.rsplit(': ',1)[1])for line in lines if line.startswith('dense full-F4 bulk declines: ')]
+            require(len(counts)==4 and all(v>0 for v in counts),'complete F4 continuation coverage missing')
     if args.current:
         identity=source_identity();require(identity['source_manifest_sha256']==runtime_sha and identity['checks_manifest_sha256']==checks_sha,'current sources differ')
     campaigns=[(first,'dense-state/'+name)for name in ['enabled','control','combined']]+[(final,'dense-active/'+name)for name in ['enabled','control','combined']]
@@ -369,7 +421,10 @@ sequential collector; full-F4 per-process timestamps were not recorded.
         text+='\nBulk elimination now preserves ordinary frame eligibility. Its known canonical monic rows determine the same optional preparation work and packed-payload reservations as the reference; refused preparations charge zero. Unused cache buffers are not materialized. Consequently `allocatedBytes` here records the shared logical packed-payload reservation rather than actual process allocation; peak RSS is recorded separately, and the factory-call counts describe actual materializations. Exact public-dispatch comparisons cover 128/129/174 columns, 127/128 entries, independent targets and parent work/byte boundaries. A separate 512/1024-reducer comparison checks acceptance and rejection when preparation charges cross the fixed bulk work quantum. Out-of-range continuation rows skip the factory call.\n'
         for title,path,capsule in [('Bulk integration',args.bulk,bulk),('Bulk verification',args.bulk_guards,bulk_guards)]:
             text+=f'\n{title}: [{path.name}](raw/{path.name}), SHA-256 `{capsule.sha256}`, {capsule.count} payloads plus manifest.\n'
-    text+='\nRegenerate with `python3 scripts/bench/groebner_dense_report.py '+' '.join('--'+name+' '+str(getattr(args,name.replace('-','_')))for name in ['experiments','first','final','baseline','old-baseline','guards','report'])+ ((' --reviewed '+str(args.reviewed)+' --reviewed-guards '+str(args.reviewed_guards))if reviewed else '')+ ((' --bulk '+str(args.bulk)+' --bulk-guards '+str(args.bulk_guards))if bulk else '')+' --check`. Add `--current` to require the present runtime and verification sources. Collectors include host-specific commands and paths; adapt those locations when replaying on another host.\n'
+    if verified:
+        text+='\nFinal verification adds native normalization/refusal and continuation checks and corrects the per-frame decline contract. The verifier checks that the measured and final runtime sources differ only in comments in the two contract files; executable text is unchanged. Timings remain attached to their original source manifests, and no further unchanged timing repeat was taken.\n'
+        text+=f'\nFinal verification: [{args.verified_guards.name}](raw/{args.verified_guards.name}), SHA-256 `{verified.sha256}`, {verified.count} payloads plus manifest.\n'
+    text+='\nRegenerate with `python3 scripts/bench/groebner_dense_report.py '+' '.join('--'+name+' '+str(getattr(args,name.replace('-','_')))for name in ['experiments','first','final','baseline','old-baseline','guards','report'])+ ((' --reviewed '+str(args.reviewed)+' --reviewed-guards '+str(args.reviewed_guards))if reviewed else '')+ ((' --bulk '+str(args.bulk)+' --bulk-guards '+str(args.bulk_guards))if bulk else '')+ ((' --verified-guards '+str(args.verified_guards))if verified else '')+' --check`. Add `--current` to require the present runtime and verification sources. Collectors include host-specific commands and paths; adapt those locations when replaying on another host.\n'
     if args.check:require(args.report.read_text()==text,'report differs from verified data')
     else:args.report.write_text(text)
     print('dense-pivot report verified'if args.check else'dense-pivot report generated')

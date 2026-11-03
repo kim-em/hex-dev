@@ -4,8 +4,8 @@ Dense pivot buffers preserve their exact sparse sources through typed cache
 provenance. Preparation reserves its work and packed payload against the parent
 allowances. Dense updates preserve zero gaps, invalid-target prefixes, pending
 cursors and trace events. The deterministic continuation and whole-eliminator
-proofs include preparation charges. Final runtime `c51287ca48e9` and
-verification sources `402474ae1f77` pass eight Clang/GCC sanitizer variants
+proofs include preparation charges. Final runtime `08e04a666b85` and
+verification sources `a736d03697b6` pass eight Clang/GCC sanitizer variants
 and nine project gates. One synthetic 238-variable linear-ideal F4 fixture exercises exactly one native
 dense update in each compiler variant. Kernel checking remains separate from native testing.
 
@@ -196,4 +196,8 @@ Bulk integration: [f4-dense-bulk-c51287ca48e9.tar.xz](raw/f4-dense-bulk-c51287ca
 
 Bulk verification: [f4-dense-checks-402474ae1f77.tar.xz](raw/f4-dense-checks-402474ae1f77.tar.xz), SHA-256 `e8e8d103149ebb8eb9f54f6f0cc5488ee9b14166cf109c7c1149a8873072512b`, 530 payloads plus manifest.
 
-Regenerate with `python3 scripts/bench/groebner_dense_report.py --experiments reports/bench-results/raw/f4-dense-experiments-afec08f91ee7.tar.xz --first reports/bench-results/raw/f4-dense-state-6ebe0f52c27e.tar.xz --final reports/bench-results/raw/f4-dense-active-7af81facc404.tar.xz --baseline reports/bench-results/raw/f4-trie-format-20c0f7e7df0d.tar.xz --old-baseline reports/bench-results/raw/f4-sampling-a1eb7697c27d.tar.xz --guards reports/bench-results/raw/f4-dense-checks-20fb9d9dfc65.tar.xz --report reports/bench-results/hexgroebner-dense-pivots.md --reviewed reports/bench-results/raw/f4-dense-review-b672e7fcc65e.tar.xz --reviewed-guards reports/bench-results/raw/f4-dense-checks-467877f9757b.tar.xz --bulk reports/bench-results/raw/f4-dense-bulk-c51287ca48e9.tar.xz --bulk-guards reports/bench-results/raw/f4-dense-checks-402474ae1f77.tar.xz --check`. Add `--current` to require the present runtime and verification sources. Collectors include host-specific commands and paths; adapt those locations when replaying on another host.
+Final verification adds native normalization/refusal and continuation checks and corrects the per-frame decline contract. The verifier checks that the measured and final runtime sources differ only in comments in the two contract files; executable text is unchanged. Timings remain attached to their original source manifests, and no further unchanged timing repeat was taken.
+
+Final verification: [f4-dense-checks-a736d03697b6.tar.xz](raw/f4-dense-checks-a736d03697b6.tar.xz), SHA-256 `9e2d4983eab6bfbeb0e357d5ebc2aed158fe6f75995d963790de61e10a539161`, 530 payloads plus manifest.
+
+Regenerate with `python3 scripts/bench/groebner_dense_report.py --experiments reports/bench-results/raw/f4-dense-experiments-afec08f91ee7.tar.xz --first reports/bench-results/raw/f4-dense-state-6ebe0f52c27e.tar.xz --final reports/bench-results/raw/f4-dense-active-7af81facc404.tar.xz --baseline reports/bench-results/raw/f4-trie-format-20c0f7e7df0d.tar.xz --old-baseline reports/bench-results/raw/f4-sampling-a1eb7697c27d.tar.xz --guards reports/bench-results/raw/f4-dense-checks-20fb9d9dfc65.tar.xz --report reports/bench-results/hexgroebner-dense-pivots.md --reviewed reports/bench-results/raw/f4-dense-review-b672e7fcc65e.tar.xz --reviewed-guards reports/bench-results/raw/f4-dense-checks-467877f9757b.tar.xz --bulk reports/bench-results/raw/f4-dense-bulk-c51287ca48e9.tar.xz --bulk-guards reports/bench-results/raw/f4-dense-checks-402474ae1f77.tar.xz --verified-guards reports/bench-results/raw/f4-dense-checks-a736d03697b6.tar.xz --check`. Add `--current` to require the present runtime and verification sources. Collectors include host-specific commands and paths; adapt those locations when replaying on another host.
