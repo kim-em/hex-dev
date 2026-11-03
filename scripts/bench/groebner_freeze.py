@@ -102,7 +102,7 @@ def compiler_provenance(native_cc: str | None = None) -> dict:
     for kind, command in commands.items():
         if command is None:
             raise ValueError("native C compiler is unavailable")
-        path = Path(command).resolve()
+        path = Path(shutil.which(command) or command).resolve()
         result[kind] = {"command": command, "resolved": str(path), "sha256": sha(path),
                         "version": subprocess.check_output([command,"--version"], text=True)}
     return result
@@ -118,6 +118,8 @@ def main() -> None:
     parser.add_argument("--compiler-input", type=Path, action="append", default=[],
                         help="retain an external compiler wrapper/config input")
     args = parser.parse_args()
+    if args.native_cc is not None:
+        args.native_cc = str(Path(shutil.which(args.native_cc) or args.native_cc).resolve())
     listing = sources()
     compilers = compiler_provenance(args.native_cc)
     compiler_inputs = {str(path.resolve()):sha(path) for path in args.compiler_input}
